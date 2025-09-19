@@ -41,6 +41,7 @@ import (
 	"github.com/vanti-dev/sc-bos/pkg/auth/token"
 	"github.com/vanti-dev/sc-bos/pkg/gen"
 	"github.com/vanti-dev/sc-bos/pkg/gentrait/devicespb"
+	"github.com/vanti-dev/sc-bos/pkg/gentrait/healthpb"
 	"github.com/vanti-dev/sc-bos/pkg/manage/enrollment"
 	"github.com/vanti-dev/sc-bos/pkg/node"
 	"github.com/vanti-dev/sc-bos/pkg/task"
@@ -285,6 +286,12 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	devicesApi := devices.NewServer(rootNode, devicesApiOpts...)
 	devicesApi.Register(grpcServer)
 
+	// HealthApi, HealthHistoryApi, and adding health checks to the DevicesApi
+	checkRegistry, closeHealthStore, err := setupHealthRegistry(ctx, config, deviceStore, rootNode, logger.Named("health"))
+	if err != nil {
+		return nil, err
+	}
+
 	grpcWebServer := grpcweb.WrapServer(grpcServer,
 		grpcweb.WithOriginFunc(func(origin string) bool {
 			return true
@@ -350,6 +357,8 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		Logger:           logger,
 		Node:             rootNode,
 		Devices:          gen.NewDevicesApiClient(wrap.ServerToClient(gen.DevicesApi_ServiceDesc, devicesApi)),
+		CheckRegistry:    checkRegistry,
+		DeviceStore:      deviceStore,
 		Tasks:            &task.Group{},
 		Database:         db,
 		Stores:           store,
@@ -366,6 +375,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	}
 	c.Defer(manager.Close)
 	c.Defer(store.Close)
+	c.Defer(closeHealthStore)
 	return c, nil
 }
 
@@ -424,12 +434,14 @@ type Controller struct {
 	Logger          *zap.Logger
 	Node            *node.Node
 	Devices         gen.DevicesApiClient
+	DeviceStore     *devicespb.Collection // for low level control of devices
 	Tasks           *task.Group
 	Database        *bolthold.Store
 	TokenValidators *token.ValidatorSet
 	GRPCCerts       *pki.SourceSet
 	Stores          *stores.Stores
 	Accounts        *account.Store
+	CheckRegistry   *healthpb.Registry
 
 	ReflectionServer *reflectionapi.Server
 

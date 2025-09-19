@@ -10,6 +10,7 @@ import (
 
 	"github.com/vanti-dev/sc-bos/pkg/app/stores"
 	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/vanti-dev/sc-bos/pkg/gentrait/healthpb"
 	"github.com/vanti-dev/sc-bos/pkg/node"
 	"github.com/vanti-dev/sc-bos/pkg/task/service"
 )
@@ -25,6 +26,7 @@ type Services struct {
 	ClientTLSConfig *tls.Config
 	Now             func() time.Time
 	Config          service.ConfigUpdater
+	Health          *healthpb.Checks
 }
 
 // Factory constructs new automation instances.

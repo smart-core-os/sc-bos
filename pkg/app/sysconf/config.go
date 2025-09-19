@@ -3,6 +3,7 @@ package sysconf
 
 import (
 	"os"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/vanti-dev/sc-bos/pkg/block"
 	"github.com/vanti-dev/sc-bos/pkg/driver"
 	"github.com/vanti-dev/sc-bos/pkg/system"
+	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
 	"github.com/vanti-dev/sc-bos/pkg/util/netutil"
 	"github.com/vanti-dev/sc-bos/pkg/zone"
 )
@@ -73,6 +75,8 @@ type Config struct {
 	Cors          http.CorsConfig            `json:"cors,omitempty"`
 
 	DisablePprof bool `json:"disablePprof"` // don't register net/http/pprof handlers
+
+	Health *Health `json:"health,omitempty"`
 
 	Systems map[string]system.RawConfig `json:"systems,omitempty"`
 
@@ -152,8 +156,24 @@ const (
 	PolicyCheck PolicyMode = "check" // Check requests against the policy if the request has a token or client cert.
 )
 
+// Health configures the health check system.
+type Health struct {
+	// DBPath is the location of the SQLite database file used to store health check results.
+	// Relative paths are relative to DataDir.
+	// Defaults to "health/checks.sqlite3".
+	DBPath string    `json:"dbPath,omitempty"`
+	TTL    HealthTTL `json:"ttl,omitempty"` // how long to keep health check results
+}
+
+type HealthTTL struct {
+	MinCount *int                `json:"minCount,omitempty"` // defaults to 1, setting to 0 can disable seeding
+	MaxCount *int                `json:"maxCount,omitempty"` // defaults to no max count
+	MaxAge   *jsontypes.Duration `json:"maxAge,omitempty"`   // defaults to 1 week
+}
+
 func Default() Config {
 	logConf := zap.NewDevelopmentConfig()
+	one := 1
 	config := Config{
 		ConfigDirs:  []string{".conf"},
 		ConfigFiles: []string{"system.conf.json", "system.json"},
@@ -171,6 +191,14 @@ func Default() Config {
 			CorsOrigins: []string{"*"},
 		},
 		StaticHosting: []http.StaticHostingConfig{},
+
+		Health: &Health{
+			DBPath: "health/checks.sqlite3",
+			TTL: HealthTTL{
+				MinCount: &one,
+				MaxAge:   &jsontypes.Duration{Duration: 7 * 24 * time.Hour},
+			},
+		},
 
 		CertConfig: &Certs{
 			KeyFile:      "grpc.key.pem",

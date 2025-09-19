@@ -7,6 +7,7 @@ import (
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 
+	"github.com/vanti-dev/sc-bos/pkg/gentrait/healthpb"
 	"github.com/vanti-dev/sc-bos/pkg/node"
 	"github.com/vanti-dev/sc-bos/pkg/task/service"
 )
@@ -18,6 +19,7 @@ type Services struct {
 	HTTPMux         *http.ServeMux
 	Config          service.ConfigUpdater
 	Database        *bolthold.Store
+	Health          *healthpb.Checks
 }
 
 type Factory interface {
