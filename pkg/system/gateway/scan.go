@@ -92,6 +92,8 @@ func (s *System) pullSelf(ctx context.Context, node *remoteNode) (task.Next, err
 		}
 		c := cs.Changes[len(cs.Changes)-1]
 		md := c.Metadata
+		// note: we don't fetch health checks for the self node,
+		// this will be handled by the devices query
 		node.Self.Set(remoteDesc{name: md.Name, md: md})
 	}
 }
@@ -162,7 +164,7 @@ func (s *System) pullDevices(ctx context.Context, node *remoteNode) (task.Next, 
 				continue // device deleted
 			}
 			// Set covers both add and update cases
-			node.Devices.Set(remoteDesc{name: c.NewValue.Name, md: c.NewValue.Metadata})
+			node.Devices.Set(remoteDesc{name: c.NewValue.Name, md: c.NewValue.Metadata, health: c.NewValue.HealthChecks})
 		}
 	}
 }
