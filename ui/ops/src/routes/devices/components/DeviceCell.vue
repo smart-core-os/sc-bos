@@ -82,10 +82,13 @@
     <with-status v-if="hasCell('StatusLog')" v-slot="{ resource }" :name="props.item.name" :paused="props.paused">
       <status-log-cell v-bind="resource"/>
     </with-status>
+
+    <health-checks-cell v-if="healthExperiment" :model-value="props.item.healthChecksList"/>
   </span>
 </template>
 
 <script setup>
+import {useExperiment} from '@/composables/experiments.js';
 import AccessAttemptCell from '@/traits/access/AccessAttemptCell.vue';
 import WithAccess from '@/traits/access/WithAccess.vue';
 import AirTemperatureCell from '@/traits/airTemperature/AirTemperatureCell.vue';
@@ -98,6 +101,7 @@ import EnergyStorageCell from '@/traits/energyStorage/EnergyStorageCell.vue';
 import WithEnergyStorage from '@/traits/energyStorage/WithEnergyStorage.vue';
 import EnterLeaveEventCell from '@/traits/enterLeave/EnterLeaveEventCell.vue';
 import WithEnterLeave from '@/traits/enterLeave/WithEnterLeave.vue';
+import HealthChecksCell from '@/traits/health/HealthChecksCell.vue';
 import LightCell from '@/traits/light/LightCell.vue';
 import MeterCell from '@/traits/meter/MeterCell.vue';
 import WithMeter from '@/traits/meter/WithMeter.vue';
@@ -121,6 +125,8 @@ const props = defineProps({
     }
   }
 });
+
+const healthExperiment = useExperiment('health');
 
 const visibleCells = computed(() => {
   const cells = {};
