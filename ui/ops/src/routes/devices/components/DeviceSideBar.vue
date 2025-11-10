@@ -24,7 +24,6 @@ const traits = computed(() => {
   }
   return traits;
 });
-
 </script>
 
 <style scoped>
