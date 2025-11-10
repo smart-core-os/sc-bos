@@ -1,6 +1,6 @@
 <template>
   <side-bar>
-    <device-side-bar-content :device-id="deviceId" :traits="traits"/>
+    <device-side-bar-content :device-id="deviceId" :traits="traits" :health-checks="healthChecks"/>
   </side-bar>
 </template>
 
@@ -23,6 +23,10 @@ const traits = computed(() => {
     sidebar.data.metadata.traitsList.forEach((trait) => traits[trait.name] = true);
   }
   return traits;
+});
+
+const healthChecks = computed(() => {
+  return sidebar.data?.healthChecksList ?? [];
 });
 
 </script>
