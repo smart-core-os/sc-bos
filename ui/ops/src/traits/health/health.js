@@ -1,7 +1,39 @@
 import {timestampToDate} from '@/api/convpb.js';
+import {closeResource, newResourceCollection} from '@/api/resource.js';
+import {pullHealthChecks} from '@/api/sc/traits/health.js';
 import {format} from '@/util/number.js';
 import {hasOneOf} from '@/util/proto.js';
+import {toQueryObject, watchResource} from '@/util/traits.js';
 import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/health_pb';
+import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
+
+/**
+ * Pull all health checks for a device to get measured values and live updates.
+ *
+ * @param {import('vue').MaybeRefOrGetter<string|import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').PullHealthChecksRequest.AsObject|null>} request
+ * @param {import('vue').MaybeRefOrGetter<boolean>} paused
+ * @return {import('vue').ToRefs<ResourceCollection<import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.AsObject, PullHealthChecksResponse>>}
+ */
+export function usePullHealthChecks(request, paused = false) {
+  const resource = reactive(
+      /** @type {ResourceCollection<import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.AsObject, PullHealthChecksResponse>} */
+      newResourceCollection()
+  );
+  onScopeDispose(() => closeResource(resource));
+
+  const queryObject = computed(() => toQueryObject(request));
+
+  watchResource(
+      () => toValue(queryObject),
+      () => toValue(paused),
+      (req) => {
+        pullHealthChecks(req, resource);
+        return () => closeResource(resource);
+      }
+  );
+
+  return toRefs(resource);
+}
 
 /**
  * Counts the number of checks in a specific state.
