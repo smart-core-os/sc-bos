@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/multierr"
@@ -17,6 +18,7 @@ import (
 
 var (
 	ErrStoreClosed        = errors.New("closed")
+	ErrPreviousConnection = errors.New("previous connection attempt failed")
 	ErrStoreNotConfigured = errors.New("not configured")
 )
 
@@ -31,6 +33,8 @@ type Config struct {
 type PostgresConfig struct {
 	pgxutil.ConnectConfig
 }
+
+var defaultMinimumDelayBetweenConnectionAttempts = 100 * time.Millisecond
 
 // New creates a new Stores instance based on cfg, which must be non-nil.
 func New(cfg *Config) *Stores {
@@ -70,10 +74,10 @@ func (s *Stores) Close() error {
 type postgresStore struct {
 	cfg *PostgresConfig
 
-	mu          sync.Mutex
-	r, w, admin *pgxpool.Pool
-	err         error
-	closed      bool
+	mu            sync.Mutex
+	r, w, admin   *pgxpool.Pool
+	err           error
+	latestErrTime time.Time
 }
 
 // Postgres returns shared postgres connection pools.
@@ -81,23 +85,38 @@ type postgresStore struct {
 func (s *postgresStore) Postgres() (r, w, admin *pgxpool.Pool, _ error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.r != nil || s.err != nil {
-		return s.r, s.w, s.admin, s.err
-	}
 
 	fail := func(err error) (_, _, _ *pgxpool.Pool, _ error) {
 		s.err = err
 		return nil, nil, nil, err
 	}
+
+	// during shutdown, a caller may sporadically try to get a store
+	// after close has been called
+	if errors.Is(s.err, ErrStoreClosed) {
+		return nil, nil, nil, s.err
+	}
+
+	if s.r != nil {
+		return s.r, s.w, s.admin, nil
+	}
+
 	if s.cfg == nil {
-		return fail(fmt.Errorf("%w: postgres", ErrStoreNotConfigured))
+		return fail(fmt.Errorf("postgres: %w", ErrStoreNotConfigured))
+	}
+
+	if time.Since(s.latestErrTime) < defaultMinimumDelayBetweenConnectionAttempts {
+		// prevent rapid reconnect attempts
+		return fail(fmt.Errorf("%s: %w", s.err.Error(), ErrPreviousConnection))
 	}
 
 	// todo: support r, w, and admin pools
 	pool, err := pgxutil.Connect(context.Background(), s.cfg.ConnectConfig)
 	if err != nil {
+		s.latestErrTime = time.Now()
 		return fail(err)
 	}
+
 	s.r, s.w, s.admin = pool, pool, pool
 	return s.r, s.w, s.admin, nil
 }
@@ -105,7 +124,7 @@ func (s *postgresStore) Postgres() (r, w, admin *pgxpool.Pool, _ error) {
 func (s *postgresStore) close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.err = fmt.Errorf("%w: postgres", ErrStoreClosed)
+	s.err = fmt.Errorf("postgres: %w", ErrStoreClosed)
 	if s.r == nil {
 		return nil
 	}
