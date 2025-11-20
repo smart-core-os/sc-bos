@@ -260,3 +260,109 @@ var HealthApi_ServiceDesc = grpc.ServiceDesc{
 	},
 	Metadata: "health.proto",
 }
+
+const (
+	HealthHistory_ListHealthCheckHistory_FullMethodName = "/smartcore.bos.HealthHistory/ListHealthCheckHistory"
+)
+
+// HealthHistoryClient is the client API for HealthHistory service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// HealthHistory provides access to historical records for HealthApi service resources.
+type HealthHistoryClient interface {
+	ListHealthCheckHistory(ctx context.Context, in *ListHealthCheckHistoryRequest, opts ...grpc.CallOption) (*ListHealthCheckHistoryResponse, error)
+}
+
+type healthHistoryClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewHealthHistoryClient(cc grpc.ClientConnInterface) HealthHistoryClient {
+	return &healthHistoryClient{cc}
+}
+
+func (c *healthHistoryClient) ListHealthCheckHistory(ctx context.Context, in *ListHealthCheckHistoryRequest, opts ...grpc.CallOption) (*ListHealthCheckHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListHealthCheckHistoryResponse)
+	err := c.cc.Invoke(ctx, HealthHistory_ListHealthCheckHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// HealthHistoryServer is the server API for HealthHistory service.
+// All implementations must embed UnimplementedHealthHistoryServer
+// for forward compatibility.
+//
+// HealthHistory provides access to historical records for HealthApi service resources.
+type HealthHistoryServer interface {
+	ListHealthCheckHistory(context.Context, *ListHealthCheckHistoryRequest) (*ListHealthCheckHistoryResponse, error)
+	mustEmbedUnimplementedHealthHistoryServer()
+}
+
+// UnimplementedHealthHistoryServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedHealthHistoryServer struct{}
+
+func (UnimplementedHealthHistoryServer) ListHealthCheckHistory(context.Context, *ListHealthCheckHistoryRequest) (*ListHealthCheckHistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListHealthCheckHistory not implemented")
+}
+func (UnimplementedHealthHistoryServer) mustEmbedUnimplementedHealthHistoryServer() {}
+func (UnimplementedHealthHistoryServer) testEmbeddedByValue()                       {}
+
+// UnsafeHealthHistoryServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to HealthHistoryServer will
+// result in compilation errors.
+type UnsafeHealthHistoryServer interface {
+	mustEmbedUnimplementedHealthHistoryServer()
+}
+
+func RegisterHealthHistoryServer(s grpc.ServiceRegistrar, srv HealthHistoryServer) {
+	// If the following call pancis, it indicates UnimplementedHealthHistoryServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&HealthHistory_ServiceDesc, srv)
+}
+
+func _HealthHistory_ListHealthCheckHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListHealthCheckHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HealthHistoryServer).ListHealthCheckHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HealthHistory_ListHealthCheckHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HealthHistoryServer).ListHealthCheckHistory(ctx, req.(*ListHealthCheckHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// HealthHistory_ServiceDesc is the grpc.ServiceDesc for HealthHistory service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var HealthHistory_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "smartcore.bos.HealthHistory",
+	HandlerType: (*HealthHistoryServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListHealthCheckHistory",
+			Handler:    _HealthHistory_ListHealthCheckHistory_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "health.proto",
+}

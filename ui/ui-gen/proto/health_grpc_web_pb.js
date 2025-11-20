@@ -27,6 +27,8 @@ var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/fie
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js')
 
 var types_change_pb = require('@smart-core-os/sc-api-grpc-web/types/change_pb.js')
+
+var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js')
 const proto = {};
 proto.smartcore = {};
 proto.smartcore.bos = require('./health_pb.js');
@@ -314,6 +316,119 @@ proto.smartcore.bos.HealthApiPromiseClient.prototype.pullHealthCheck =
       request,
       metadata || {},
       methodDescriptor_HealthApi_PullHealthCheck);
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.smartcore.bos.HealthHistoryClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.smartcore.bos.HealthHistoryPromiseClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.smartcore.bos.ListHealthCheckHistoryRequest,
+ *   !proto.smartcore.bos.ListHealthCheckHistoryResponse>}
+ */
+const methodDescriptor_HealthHistory_ListHealthCheckHistory = new grpc.web.MethodDescriptor(
+  '/smartcore.bos.HealthHistory/ListHealthCheckHistory',
+  grpc.web.MethodType.UNARY,
+  proto.smartcore.bos.ListHealthCheckHistoryRequest,
+  proto.smartcore.bos.ListHealthCheckHistoryResponse,
+  /**
+   * @param {!proto.smartcore.bos.ListHealthCheckHistoryRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.smartcore.bos.ListHealthCheckHistoryResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.smartcore.bos.ListHealthCheckHistoryRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.ListHealthCheckHistoryResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.ListHealthCheckHistoryResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.smartcore.bos.HealthHistoryClient.prototype.listHealthCheckHistory =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/smartcore.bos.HealthHistory/ListHealthCheckHistory',
+      request,
+      metadata || {},
+      methodDescriptor_HealthHistory_ListHealthCheckHistory,
+      callback);
+};
+
+
+/**
+ * @param {!proto.smartcore.bos.ListHealthCheckHistoryRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.smartcore.bos.ListHealthCheckHistoryResponse>}
+ *     Promise that resolves to the response
+ */
+proto.smartcore.bos.HealthHistoryPromiseClient.prototype.listHealthCheckHistory =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/smartcore.bos.HealthHistory/ListHealthCheckHistory',
+      request,
+      metadata || {},
+      methodDescriptor_HealthHistory_ListHealthCheckHistory);
 };
 
 
