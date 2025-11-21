@@ -1,6 +1,10 @@
 <template>
   <span>
     <metadata-card/>
+    <template v-if="healthExperiment && healthChecks?.length > 0">
+      <v-divider class="mt-4 mb-1"/>
+      <health-checks-card :model-value="healthChecks"/>
+    </template>
     <with-status v-if="traits['smartcore.bos.Status']" :name="deviceId" v-slot="{resource}">
       <v-divider class="mt-4 mb-1"/>
       <status-log-card v-bind="resource"/>
@@ -56,6 +60,7 @@
 </template>
 
 <script setup>
+import {useExperiment} from '@/composables/experiments.js';
 import AirQualityCard from '@/traits/airQuality/AirQualityCard.vue';
 import WithAirQuality from '@/traits/airQuality/WithAirQuality.vue';
 import AirTemperatureCard from '@/traits/airTemperature/AirTemperatureCard.vue';
@@ -65,6 +70,7 @@ import WithElectricDemand from '@/traits/electricDemand/WithElectricDemand.vue';
 import EmergencyLight from '@/traits/emergency/EmergencyLight.vue';
 import EnergyStorageCard from '@/traits/energyStorage/EnergyStorageCard.vue';
 import WithEnergyStorage from '@/traits/energyStorage/WithEnergyStorage.vue';
+import HealthChecksCard from '@/traits/health/HealthChecksCard.vue';
 import LightCard from '@/traits/light/LightCard.vue';
 import MetadataCard from '@/traits/metadata/MetadataCard.vue';
 import MeterCard from '@/traits/meter/MeterCard.vue';
@@ -90,6 +96,13 @@ defineProps({
     type: Object,
     default: () => {
     }
+  },
+  healthChecks: {
+    /** @type {import('vue').PropType<import('@vanti-dev/sc-bos-ui-gen/proto/health_pb').HealthCheck.AsObject[]>} */
+    type: Array,
+    default: null
   }
 });
+
+const healthExperiment = useExperiment('health');
 </script>
