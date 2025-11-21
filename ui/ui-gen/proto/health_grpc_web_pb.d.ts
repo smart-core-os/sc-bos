@@ -34,6 +34,20 @@ export class HealthApiClient {
 
 }
 
+export class HealthHistoryClient {
+  constructor (hostname: string,
+               credentials?: null | { [index: string]: string; },
+               options?: null | { [index: string]: any; });
+
+  listHealthCheckHistory(
+    request: health_pb.ListHealthCheckHistoryRequest,
+    metadata: grpcWeb.Metadata | undefined,
+    callback: (err: grpcWeb.RpcError,
+               response: health_pb.ListHealthCheckHistoryResponse) => void
+  ): grpcWeb.ClientReadableStream<health_pb.ListHealthCheckHistoryResponse>;
+
+}
+
 export class HealthApiPromiseClient {
   constructor (hostname: string,
                credentials?: null | { [index: string]: string; },
@@ -58,6 +72,18 @@ export class HealthApiPromiseClient {
     request: health_pb.PullHealthCheckRequest,
     metadata?: grpcWeb.Metadata
   ): grpcWeb.ClientReadableStream<health_pb.PullHealthCheckResponse>;
+
+}
+
+export class HealthHistoryPromiseClient {
+  constructor (hostname: string,
+               credentials?: null | { [index: string]: string; },
+               options?: null | { [index: string]: any; });
+
+  listHealthCheckHistory(
+    request: health_pb.ListHealthCheckHistoryRequest,
+    metadata?: grpcWeb.Metadata
+  ): Promise<health_pb.ListHealthCheckHistoryResponse>;
 
 }
 
