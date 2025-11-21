@@ -50,7 +50,7 @@ func NewCamera(client *api.Client, logger *zap.Logger, conf *config.Camera) *Cam
 	}
 }
 
-func (c *Camera) UpdatePtz(_ context.Context, request *traits.UpdatePtzRequest) (*traits.Ptz, error) {
+func (c *Camera) UpdatePtz(ctx context.Context, request *traits.UpdatePtzRequest) (*traits.Ptz, error) {
 	if request.State == nil {
 		return nil, status.Error(codes.InvalidArgument, "no PTZ state in request")
 	}
@@ -60,7 +60,7 @@ func (c *Camera) UpdatePtz(_ context.Context, request *traits.UpdatePtzRequest) 
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, "invalid preset, [1,256]")
 		}
-		_, err = c.client.CameraPtzControl(&api.PtzRequest{
+		_, err = c.client.CameraPtzControl(ctx, &api.PtzRequest{
 			CameraIndexCode: c.conf.IndexCode,
 			Action:          1, // stop
 			Command:         "GOTO_PRESET",
@@ -89,7 +89,7 @@ func (c *Camera) UpdatePtz(_ context.Context, request *traits.UpdatePtzRequest) 
 			return nil, status.Error(codes.InvalidArgument, "invalid speed, [20,60]")
 		}
 		cmd := api.MovementToCommand(mov)
-		_, err := c.client.CameraPtzControl(&api.PtzRequest{
+		_, err := c.client.CameraPtzControl(ctx, &api.PtzRequest{
 			CameraIndexCode: c.conf.IndexCode,
 			Action:          1, // stop
 			Command:         cmd,
@@ -105,7 +105,7 @@ func (c *Camera) UpdatePtz(_ context.Context, request *traits.UpdatePtzRequest) 
 	return nil, nil
 }
 
-func (c *Camera) Stop(_ context.Context, _ *traits.StopPtzRequest) (*traits.Ptz, error) {
+func (c *Camera) Stop(ctx context.Context, _ *traits.StopPtzRequest) (*traits.Ptz, error) {
 	wg := sync.WaitGroup{}
 
 	// we don't know which command(s) are running, so stop them all!
@@ -115,7 +115,7 @@ func (c *Camera) Stop(_ context.Context, _ *traits.StopPtzRequest) (*traits.Ptz,
 		command := command // save for goroutine usage
 		wg.Add(1)
 		go func() {
-			_, err := c.client.CameraPtzControl(&api.PtzRequest{
+			_, err := c.client.CameraPtzControl(ctx, &api.PtzRequest{
 				CameraIndexCode: c.conf.IndexCode,
 				Action:          1, // stop
 				Command:         command,
@@ -270,7 +270,7 @@ func (c *Camera) getEvents(ctx context.Context) {
 	pageNum := 1
 	pageSize := 100
 	for {
-		res, err := c.client.ListEvents(&api.EventsRequest{
+		res, err := c.client.ListEvents(ctx, &api.EventsRequest{
 			EventTypes: strings.Join([]string{
 				api.VideoLossAlarm,
 				api.VideoTamperingAlarm,
@@ -335,7 +335,7 @@ func (c *Camera) getOcc(ctx context.Context) {
 	pageNum := 1
 	pageSize := 100
 	for {
-		res, err := c.client.GetCameraPeopleStats(&api.StatsRequest{
+		res, err := c.client.GetCameraPeopleStats(ctx, &api.StatsRequest{
 			CameraIndexCodes: c.conf.IndexCode,
 			StatisticsType:   api.StatisticsTypeByHour,
 			StartTime:        formatTime(start),
@@ -369,7 +369,7 @@ func (c *Camera) getOcc(ctx context.Context) {
 
 func (c *Camera) getStream(ctx context.Context) {
 	logger := c.logger.With(zap.String("method", "getStream"))
-	res, err := c.client.GetCameraPreviewUrl(&api.CameraPreviewRequest{CameraRequest: api.CameraRequest{CameraIndexCode: c.conf.IndexCode}})
+	res, err := c.client.GetCameraPreviewUrl(ctx, &api.CameraPreviewRequest{CameraRequest: api.CameraRequest{CameraIndexCode: c.conf.IndexCode}})
 	if err != nil {
 		logger.Warn("response error", zap.String("error", err.Error()))
 	} else {
@@ -384,7 +384,7 @@ func (c *Camera) getStream(ctx context.Context) {
 
 func (c *Camera) getInfo(ctx context.Context) {
 	logger := c.logger.With(zap.String("method", "getInfo"))
-	res, err := c.client.GetCameraInfo(&api.CameraRequest{CameraIndexCode: c.conf.IndexCode})
+	res, err := c.client.GetCameraInfo(ctx, &api.CameraRequest{CameraIndexCode: c.conf.IndexCode})
 	if err != nil {
 		logger.Warn("response error", zap.String("error", err.Error()))
 	} else {
@@ -478,4 +478,8 @@ const RFC3339NumericZone = "2006-01-02T15:04:05-07:00"
 
 func formatTime(t time.Time) string {
 	return t.Format(RFC3339NumericZone)
+}
+
+func parseTime(s string) (time.Time, error) {
+	return time.Parse(RFC3339NumericZone, s)
 }

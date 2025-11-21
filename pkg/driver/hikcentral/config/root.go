@@ -20,6 +20,9 @@ type Root struct {
 	// Metadata applied to all cameras
 	Metadata *traits.Metadata `json:"metadata,omitempty"`
 	Cameras  []*Camera        `json:"cameras,omitempty"`
+
+	GrantManagement *GrantManagement `json:"grantManagement,omitempty"`
+	ANPRCameras     []ANPR           `json:"anprCameras,omitempty"`
 }
 
 type API struct {
@@ -31,10 +34,37 @@ type API struct {
 }
 
 type Settings struct {
-	InfoPoll      *jsontypes.Duration `json:"infoPoll,omitempty"`      // How often to poll for camera info updates. Defaults to 5 minutes
-	OccupancyPoll *jsontypes.Duration `json:"occupancyPoll,omitempty"` // How often to poll for occupancy updates. Defaults to 1 minute
-	EventsPoll    *jsontypes.Duration `json:"eventsPoll,omitempty"`    // How often to poll for events updates. Defaults to 30 seconds
-	StreamPoll    *jsontypes.Duration `json:"streamPoll,omitempty"`    // How often to poll for stream updates. Defaults to 1 minute
+	InfoPoll       *jsontypes.Duration `json:"infoPoll,omitempty"`       // How often to poll for camera info updates. Defaults to 5 minutes
+	OccupancyPoll  *jsontypes.Duration `json:"occupancyPoll,omitempty"`  // How often to poll for occupancy updates. Defaults to 1 minute
+	EventsPoll     *jsontypes.Duration `json:"eventsPoll,omitempty"`     // How often to poll for events updates. Defaults to 30 seconds
+	StreamPoll     *jsontypes.Duration `json:"streamPoll,omitempty"`     // How often to poll for stream updates. Defaults to 1 minute
+	ANPREventsPoll *jsontypes.Duration `json:"anprEventsPoll,omitempty"` // How often to poll for ANPR events. Defaults to 1 minute
+}
+
+type GrantManagement struct {
+	// smart core name of the grant management API server
+	// to create, update and delete access grants
+	Name     string           `json:"name,omitempty"`
+	Metadata *traits.Metadata `json:"metadata,omitempty"`
+
+	// MaxListAccessGrants is the maximum number of access grants to fetch in a single call to ListAccessGrants.
+	// If not set, defaults to 10.
+	MaxListAccessGrants int `json:"maxListAccessGrants,omitempty"`
+
+	// EnableSmartCoreApproval indicates whether the SmartCore access API server should automatically approve access grants
+	// if the HikCentral service is configured to require manual approval
+	EnableSmartCoreApproval bool `json:"EnableSmartCoreApproval,omitempty"`
+}
+
+type ANPR struct {
+	// smart core name of the access API server
+	// to get and pull access attempts
+	Name     string           `json:"name,omitempty"`
+	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	// EntranceCameraIndexCode is the camera used to detect AccessAttempts at entrances
+	EntranceCameraIndexCode string `json:"entranceCameraIndexCode,omitempty"`
+	// ExitCameraIndexCode is the camera used to detect AccessAttempts at exits
+	ExitCameraIndexCode string `json:"exitCameraIndexCode,omitempty"`
 }
 
 type Camera struct {
@@ -63,11 +93,16 @@ func ReadBytes(raw []byte) (dst Root, err error) {
 	}
 	if dst.Settings == nil {
 		dst.Settings = &Settings{
-			InfoPoll:      &jsontypes.Duration{Duration: 5 * time.Minute},
-			OccupancyPoll: &jsontypes.Duration{Duration: 1 * time.Minute},
-			EventsPoll:    &jsontypes.Duration{Duration: 30 * time.Second},
-			StreamPoll:    &jsontypes.Duration{Duration: 1 * time.Minute},
+			InfoPoll:       &jsontypes.Duration{Duration: 5 * time.Minute},
+			OccupancyPoll:  &jsontypes.Duration{Duration: 1 * time.Minute},
+			EventsPoll:     &jsontypes.Duration{Duration: 30 * time.Second},
+			StreamPoll:     &jsontypes.Duration{Duration: 1 * time.Minute},
+			ANPREventsPoll: &jsontypes.Duration{Duration: 1 * time.Minute},
 		}
+	}
+
+	if dst.GrantManagement != nil && dst.GrantManagement.MaxListAccessGrants <= 0 {
+		dst.GrantManagement.MaxListAccessGrants = 10
 	}
 
 	return
