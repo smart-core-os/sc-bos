@@ -59,8 +59,9 @@ func newRemoteNode(addr string, conn *grpc.ClientConn) *remoteNode {
 
 // remoteDesc describes the name and metadata for a remote entity; node or name.
 type remoteDesc struct {
-	name string           // the announced name, this is the routing key
-	md   *traits.Metadata // used to support the DevicesApi locally
+	name   string           // the announced name, this is the routing key
+	md     *traits.Metadata // used to support the DevicesApi locally
+	health []*gen.HealthCheck
 }
 
 // remoteSystems describes relevant systems a remote node has.
