@@ -1989,6 +1989,82 @@
       "type": "history",
       "source": {"name": "van/uk/brum/ugs/zones/areas/service", "trait": "smartcore.traits.AirTemperature"},
       "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/health/air-temperature-range",
+      "type": "healthbounds",
+      "devices": [{"field": "metadata.traits.name", "stringEqual": "smartcore.traits.AirTemperature"}],
+      "source": {"trait": "smartcore.traits.AirTemperature", "value": "ambientTemperature.valueCelsius"},
+      "check": {
+        "displayName": "Comfortable Air Temperature",
+        "description": "Checks that the air temperature is within a comfortable range",
+        "occupantImpact": "COMFORT",
+        "bounds": {
+          "normalRange": {
+            "low": {"floatValue": 18},
+            "high": {"floatValue": 24},
+            "deadband": {"floatValue": 1}
+          },
+          "displayUnit": "°C"
+        }
+      }
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/health/air-temperature-manufacturer-range",
+      "type": "healthbounds",
+      "devices": [{"field": "metadata.traits.name", "stringEqual": "smartcore.traits.AirTemperature"}],
+      "source": {"trait": "smartcore.traits.AirTemperature", "value": "ambientTemperature.valueCelsius"},
+      "check": {
+        "displayName": "Manufacturer Air Temperature Range",
+        "description": "Checks that the air temperature is within the manufacturer's recommended range",
+        "equipmentImpact": "LIFESPAN",
+        "bounds": {
+          "normalRange": {
+            "low": {"floatValue": 10},
+            "high": {"floatValue": 35},
+            "deadband": {"floatValue": 2}
+          },
+          "displayUnit": "°C"
+        }
+      }
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/health/emergency-light-function-test",
+      "type": "healthbounds",
+      "devices": [{"field": "metadata.traits.name", "stringEqual": "smartcore.bos.EmergencyLight"}],
+      "source": {"trait": "smartcore.bos.EmergencyLight", "value": "functionTest.result"},
+      "check": {
+        "displayName": "Emergency Light Function Test",
+        "description": "Checks that an emergency lights function test is passing without error",
+        "complianceImpacts": [
+          {
+            "standard": {"displayName": "BS 5266"},
+            "contribution": "FAIL"
+          }
+        ],
+        "bounds": {
+          "normalValues": {"values": [{"stringValue": "TEST_RESULT_PENDING"}, {"stringValue": "TEST_PASSED"}]}
+        }
+      }
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/health/emergency-light-duration-test",
+      "type": "healthbounds",
+      "devices": [{"field": "metadata.traits.name", "stringEqual": "smartcore.bos.EmergencyLight"}],
+      "source": {"trait": "smartcore.bos.EmergencyLight", "value": "durationTest.result"},
+      "check": {
+        "displayName": "Emergency Light Duration Test",
+        "description": "Checks that an emergency lights duration test is passing without error",
+        "complianceImpacts": [
+          {
+            "standard": {"displayName": "BS 5266"},
+            "contribution": "FAIL"
+          }
+        ],
+        "bounds": {
+          "normalValues": {"values": [{"stringValue": "TEST_RESULT_PENDING"}, {"stringValue": "TEST_PASSED"}]}
+        }
+      }
     }
   ]
 }

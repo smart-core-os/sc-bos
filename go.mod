@@ -30,6 +30,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/smart-core-os/sc-api/go v1.0.0-beta.57
 	github.com/smart-core-os/sc-golang v0.0.0-20251030120622-735d53ae1132
+	github.com/stoewer/go-strcase v1.3.1
 	github.com/stretchr/testify v1.10.0
 	github.com/timshannon/bolthold v0.0.0-20210913165410-232392fc8a6a
 	github.com/vanti-dev/gobacnet v0.0.0-20250122134204-5b55cc2d13fe
