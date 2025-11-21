@@ -11,6 +11,7 @@ import (
 	"github.com/vanti-dev/sc-bos/pkg/gentrait/button"
 	"github.com/vanti-dev/sc-bos/pkg/gentrait/dalipb"
 	"github.com/vanti-dev/sc-bos/pkg/gentrait/emergencylightpb"
+	"github.com/vanti-dev/sc-bos/pkg/gentrait/healthpb"
 	"github.com/vanti-dev/sc-bos/pkg/gentrait/meter"
 	"github.com/vanti-dev/sc-bos/pkg/gentrait/mqttpb"
 	"github.com/vanti-dev/sc-bos/pkg/gentrait/report"
@@ -60,6 +61,7 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	button.TraitName:           {gen.ButtonApi_ServiceDesc},
 	dalipb.TraitName:           {gen.DaliApi_ServiceDesc},
 	emergencylightpb.TraitName: {gen.DaliApi_ServiceDesc, gen.EmergencyLightApi_ServiceDesc},
+	healthpb.TraitName:         {gen.HealthApi_ServiceDesc, gen.HealthHistory_ServiceDesc},
 	meter.TraitName:            {gen.MeterApi_ServiceDesc, gen.MeterInfo_ServiceDesc, gen.MeterHistory_ServiceDesc},
 	mqttpb.TraitName:           {gen.MqttService_ServiceDesc},
 	report.TraitName:           {gen.ReportApi_ServiceDesc},

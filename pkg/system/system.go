@@ -13,6 +13,7 @@ import (
 	"github.com/vanti-dev/sc-bos/internal/util/pki"
 	"github.com/vanti-dev/sc-bos/pkg/app/stores"
 	"github.com/vanti-dev/sc-bos/pkg/auth/token"
+	"github.com/vanti-dev/sc-bos/pkg/gen"
 	"github.com/vanti-dev/sc-bos/pkg/node"
 	"github.com/vanti-dev/sc-bos/pkg/task/service"
 )
@@ -23,6 +24,7 @@ type Services struct {
 	Logger          *zap.Logger
 	GRPCEndpoint    string     // host:port of this controllers grpc api
 	Node            *node.Node // for advertising devices
+	HealthChecks    HealthCheckCollection
 	CohortManager   node.Remote
 	Database        *bolthold.Store
 	Stores          *stores.Stores
@@ -50,4 +52,12 @@ type FactoryFunc func(services Services) service.Lifecycle
 
 func (f FactoryFunc) New(services Services) service.Lifecycle {
 	return f(services)
+}
+
+// HealthCheckCollection allows the modification of health checks for named devices.
+type HealthCheckCollection interface {
+	// MergeHealthChecks adds or updates checks for name based on existing check ids.
+	MergeHealthChecks(name string, checks ...*gen.HealthCheck) error
+	// RemoveHealthChecks removes any present ids from names checks.
+	RemoveHealthChecks(name string, ids ...string) error
 }
