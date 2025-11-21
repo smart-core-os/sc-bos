@@ -32,6 +32,8 @@ export const builtinWidgets = {
   // from elsewhere in our codebase
   'devices/DeviceTable': defineAsyncComponent(() => import('@/routes/devices/components/DeviceTable.vue')),
   'environmental/AirTemperatureChip': defineAsyncComponent(() => import('@/traits/airTemperature/AirTemperatureChip.vue')),
+  'health/ImpactBreakdown': defineAsyncComponent(() => import('@/traits/health/HealthImpactBreakdownsCard.vue')),
+  'health/CheckTable': defineAsyncComponent(() => import('@/traits/health/HealthCheckTable.vue')),
   'lighting/LightIcon': defineAsyncComponent(() => import('@/traits/light/LightIcon.vue')),
   'meter/ConsumptionCard': defineAsyncComponent(() => import('@/traits/meter/ConsumptionCard.vue')),
 };
