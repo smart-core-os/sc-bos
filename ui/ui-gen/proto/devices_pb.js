@@ -33,6 +33,8 @@ var types_change_pb = require('@smart-core-os/sc-api-grpc-web/types/change_pb.js
 goog.object.extend(proto, types_change_pb);
 var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js');
 goog.object.extend(proto, types_time_period_pb);
+var health_pb = require('./health_pb.js');
+goog.object.extend(proto, health_pb);
 goog.exportSymbol('proto.smartcore.bos.Device', null, global);
 goog.exportSymbol('proto.smartcore.bos.Device.Query', null, global);
 goog.exportSymbol('proto.smartcore.bos.Device.Query.Condition', null, global);
@@ -65,7 +67,7 @@ goog.exportSymbol('proto.smartcore.bos.PullDevicesResponse.Change', null, global
  * @constructor
  */
 proto.smartcore.bos.Device = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.smartcore.bos.Device.repeatedFields_, null);
 };
 goog.inherits(proto.smartcore.bos.Device, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -475,6 +477,13 @@ if (goog.DEBUG && !COMPILED) {
   proto.smartcore.bos.DownloadDevicesUrl.displayName = 'proto.smartcore.bos.DownloadDevicesUrl';
 }
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.smartcore.bos.Device.repeatedFields_ = [3];
+
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -507,7 +516,9 @@ proto.smartcore.bos.Device.prototype.toObject = function(opt_includeInstance) {
 proto.smartcore.bos.Device.toObject = function(includeInstance, msg) {
   var f, obj = {
 name: jspb.Message.getFieldWithDefault(msg, 1, ""),
-metadata: (f = msg.getMetadata()) && traits_metadata_pb.Metadata.toObject(includeInstance, f)
+metadata: (f = msg.getMetadata()) && traits_metadata_pb.Metadata.toObject(includeInstance, f),
+healthChecksList: jspb.Message.toObjectList(msg.getHealthChecksList(),
+    health_pb.HealthCheck.toObject, includeInstance)
   };
 
   if (includeInstance) {
@@ -553,6 +564,11 @@ proto.smartcore.bos.Device.deserializeBinaryFromReader = function(msg, reader) {
       reader.readMessage(value,traits_metadata_pb.Metadata.deserializeBinaryFromReader);
       msg.setMetadata(value);
       break;
+    case 3:
+      var value = new health_pb.HealthCheck;
+      reader.readMessage(value,health_pb.HealthCheck.deserializeBinaryFromReader);
+      msg.addHealthChecks(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -595,6 +611,14 @@ proto.smartcore.bos.Device.serializeBinaryToWriter = function(message, writer) {
       2,
       f,
       traits_metadata_pb.Metadata.serializeBinaryToWriter
+    );
+  }
+  f = message.getHealthChecksList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      3,
+      f,
+      health_pb.HealthCheck.serializeBinaryToWriter
     );
   }
 };
@@ -1988,6 +2012,44 @@ proto.smartcore.bos.Device.prototype.clearMetadata = function() {
  */
 proto.smartcore.bos.Device.prototype.hasMetadata = function() {
   return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * repeated HealthCheck health_checks = 3;
+ * @return {!Array<!proto.smartcore.bos.HealthCheck>}
+ */
+proto.smartcore.bos.Device.prototype.getHealthChecksList = function() {
+  return /** @type{!Array<!proto.smartcore.bos.HealthCheck>} */ (
+    jspb.Message.getRepeatedWrapperField(this, health_pb.HealthCheck, 3));
+};
+
+
+/**
+ * @param {!Array<!proto.smartcore.bos.HealthCheck>} value
+ * @return {!proto.smartcore.bos.Device} returns this
+*/
+proto.smartcore.bos.Device.prototype.setHealthChecksList = function(value) {
+  return jspb.Message.setRepeatedWrapperField(this, 3, value);
+};
+
+
+/**
+ * @param {!proto.smartcore.bos.HealthCheck=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.smartcore.bos.HealthCheck}
+ */
+proto.smartcore.bos.Device.prototype.addHealthChecks = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 3, opt_value, proto.smartcore.bos.HealthCheck, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.smartcore.bos.Device} returns this
+ */
+proto.smartcore.bos.Device.prototype.clearHealthChecksList = function() {
+  return this.setHealthChecksList([]);
 };
 
 

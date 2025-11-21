@@ -10,6 +10,7 @@ import "google/protobuf/timestamp.proto";
 import "traits/metadata.proto";
 import "types/change.proto";
 import "types/time/period.proto";
+import "health.proto";
 
 // DevicesApi allows you to query for devices by metadata.
 service DevicesApi {
@@ -25,6 +26,8 @@ service DevicesApi {
 message Device {
   string name = 1;
   smartcore.traits.Metadata metadata = 2;
+  // A list of health checks associated with the device
+  repeated smartcore.bos.HealthCheck health_checks = 3;
 
   message Query {
     message Condition {

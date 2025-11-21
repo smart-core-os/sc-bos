@@ -31,6 +31,8 @@ var traits_metadata_pb = require('@smart-core-os/sc-api-grpc-web/traits/metadata
 var types_change_pb = require('@smart-core-os/sc-api-grpc-web/types/change_pb.js')
 
 var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js')
+
+var health_pb = require('./health_pb.js')
 const proto = {};
 proto.smartcore = {};
 proto.smartcore.bos = require('./devices_pb.js');
