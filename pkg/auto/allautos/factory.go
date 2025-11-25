@@ -6,6 +6,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto/bms"
 	"github.com/smart-core-os/sc-bos/pkg/auto/export"
 	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp"
+	"github.com/smart-core-os/sc-bos/pkg/auto/healthbounds"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history"
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights"
 	"github.com/smart-core-os/sc-bos/pkg/auto/meteremail"
@@ -24,6 +25,7 @@ func Factories() map[string]auto.Factory {
 		azureiot.FactoryName:        azureiot.Factory,
 		bms.AutoType:                bms.Factory,
 		"export-mqtt":               export.MQTTFactory,
+		healthbounds.AutoName:       healthbounds.Factory,
 		"history":                   history.Factory,
 		lights.AutoType:             lights.Factory,
 		meteremail.AutoName:         meteremail.Factory,
