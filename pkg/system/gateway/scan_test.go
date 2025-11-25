@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"path"
+	"slices"
 	"strings"
 	"testing"
 	"testing/synctest"
@@ -18,19 +19,25 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
+	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/rx"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
+	"github.com/smart-core-os/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
@@ -50,6 +57,9 @@ func TestSystem_scanRemoteHub(t *testing.T) {
 		ac1.announceDeviceTraits("ac1/dev2", trait.OnOff)
 		ac2.announceDeviceTraits("ac2/dev1", meter.TraitName)
 		hub.announceDeviceTraits("hub/dev1", trait.OnOff)
+		ac1.announceDeviceHealth("ac1/dev1", "-working", ">overheat")
+		ac2.announceDeviceHealth("ac2/dev1", "+working")
+		hub.announceDeviceHealth("hub/dev1", "+working")
 
 		gw1Sys := &System{
 			logger:     zaptest.NewLogger(t).With(zap.String("server", "gw1")),
@@ -64,15 +74,25 @@ func TestSystem_scanRemoteHub(t *testing.T) {
 		synctest.Wait() // all scanning done
 		gw1CohortTester := newCohortTester(t, gw1Cohort)
 		gw1CohortTester.assertNodes("hub", "gw2", "ac1", "ac2")
-		gw1CohortTester.node("hub").assertDevices("hub/dev1")
-		gw1CohortTester.node("gw2").assertDevices()
-		gw1CohortTester.node("ac1").assertDevices("ac1/dev1", "ac1/dev2")
-		gw1CohortTester.node("ac2").assertDevices("ac2/dev1")
+		hubNode := gw1CohortTester.node("hub")
+		hubNode.assertDevices("hub/dev1")
+		hubNode.assertDeviceTraits("hub/dev1", trait.OnOff)
+		hubNode.assertDeviceHealth("hub/dev1", "+working")
+		gw2Node := gw1CohortTester.node("gw2")
+		gw2Node.assertDevices()
+		ac1Node := gw1CohortTester.node("ac1")
+		ac1Node.assertDevices("ac1/dev1", "ac1/dev2")
+		ac1Node.assertDeviceTraits("ac1/dev1", meter.TraitName, trait.OnOff)
+		ac1Node.assertDeviceHealth("ac1/dev1", "-working", ">overheat")
+		ac1Node.assertDeviceTraits("ac1/dev2", trait.OnOff)
+		ac2Node := gw1CohortTester.node("ac2")
+		ac2Node.assertDevices("ac2/dev1")
+		ac2Node.assertDeviceTraits("ac2/dev1", meter.TraitName)
+		ac2Node.assertDeviceHealth("ac2/dev1", "+working")
 
 		// test node modifications
 		_, nodeChanges := gw1Cohort.Nodes.Sub(t.Context())
-		ac3 := env.newNode("ac3")
-		ac3.announceDeviceTraits("ac3/dev1", trait.OnOff)
+		env.newNode("ac3")
 		synctest.Wait()
 		assertChanVal(t, nodeChanges, func(ch rx.Change[*remoteNode]) {
 			if ch.Type != rx.Add || ch.New.addr != "ac3" {
@@ -81,7 +101,7 @@ func TestSystem_scanRemoteHub(t *testing.T) {
 		})
 
 		// test device modifications
-		_, ac1DeviceChanges := gw1CohortTester.node("ac1").node.Devices.Sub(t.Context())
+		_, ac1DeviceChanges := ac1Node.node.Devices.Sub(t.Context())
 		ac1.announceDeviceTraits("ac1/dev2", meter.TraitName) // a new trait for an existing device
 		synctest.Wait()
 		assertChanVal(t, ac1DeviceChanges, func(c rx.Change[remoteDesc]) {
@@ -112,6 +132,18 @@ func TestSystem_scanRemoteHub(t *testing.T) {
 			if diff := cmp.Diff(wantNewMd, c.New.md, protocmp.Transform()); diff != "" {
 				t.Fatalf("unexpected new metadata for device update (-want +got):\n%s", diff)
 			}
+		})
+		ac1.announceDeviceHealth("ac1/dev1", "+working") // was -working
+		synctest.Wait()
+		assertChanVal(t, ac1DeviceChanges, func(c rx.Change[remoteDesc]) {
+			if c.Type != rx.Update {
+				t.Fatalf("device update: want Update, got %v", c.Type)
+			}
+			if want := "ac1/dev1"; c.Old.name != want || c.New.name != want {
+				t.Fatalf("device update: unexpected names: want=%q, got old=%q new=%q", want, c.Old.name, c.New.name)
+			}
+			assertDeviceHealth(t, c.Old, "-working", ">overheat")
+			assertDeviceHealth(t, c.New, "+working", ">overheat")
 		})
 	})
 }
@@ -164,7 +196,8 @@ func (c *mockCohort) newGatewayNode(name string) *mockRemoteNode {
 
 func newMockRemoteNode(t *testing.T, name string) *mockRemoteNode {
 	t.Helper()
-	n := node.New(name)
+	devs := devicespb.NewCollection()
+	n := node.New(name, nodeopts.WithStore(devs))
 	lis, conn := newLocalConn(t)
 	server := grpc.NewServer(grpc.UnknownServiceHandler(n.ServerHandler()))
 
@@ -180,6 +213,7 @@ func newMockRemoteNode(t *testing.T, name string) *mockRemoteNode {
 		server:   server,
 		reflect:  reflectionServer,
 		node:     n,
+		checks:   devicesToHealthCheckCollection(devs),
 		services: make(map[serviceId]service.Lifecycle),
 	}
 	rn.systems = service.NewMap(rn.newService, service.IdIsRequired)
@@ -223,6 +257,8 @@ type mockRemoteNode struct {
 	reflect *reflectionapi.Server
 	// named trait apis, including each of the service types
 	node *node.Node
+	// underlying health check management
+	checks system.HealthCheckCollection
 	// different types of service
 	systems, autos, drivers, zones *service.Map
 	// running services
@@ -327,6 +363,53 @@ func (n *mockRemoteNode) announceDeviceTraits(name string, tns ...trait.Name) {
 		opts = append(opts, node.HasTrait(tn, node.WithClients(client)))
 	}
 	n.node.Announce(name, opts...)
+}
+
+// announceDeviceHealth announces health checks for the named device.
+// Each check becomes the id and display name of the health check.
+// If the check starts with:
+//   - '+' it is normal (the default)
+//   - '-' it is abnormal
+//   - '>' it is high
+//   - '<' it is low
+func (n *mockRemoteNode) announceDeviceHealth(name string, checks ...string) {
+	n.t.Helper()
+	if len(checks) == 0 {
+		n.t.Fatalf("no health checks provided for device %q", name)
+	}
+	var hc []*gen.HealthCheck
+	for _, desc := range checks {
+		hc = append(hc, makeHealthCheck(desc))
+	}
+	err := n.checks.MergeHealthChecks(name, hc...)
+	if err != nil {
+		n.t.Fatalf("failed to announce health checks for device %q: %v", name, err)
+	}
+}
+
+func makeHealthCheck(desc string) *gen.HealthCheck {
+	normality := gen.HealthCheck_NORMAL
+	if len(desc) > 0 {
+		switch desc[0] {
+		case '+': // normal
+			desc = strings.TrimSpace(desc[1:])
+		case '-': // abnormal
+			normality = gen.HealthCheck_ABNORMAL
+			desc = strings.TrimSpace(desc[1:])
+		case '>': // high
+			normality = gen.HealthCheck_HIGH
+			desc = strings.TrimSpace(desc[1:])
+		case '<': // low
+			normality = gen.HealthCheck_LOW
+			desc = strings.TrimSpace(desc[1:])
+		}
+	}
+	// simple check, just needs to have enough info to identify it
+	return &gen.HealthCheck{
+		Id:          desc,
+		Normality:   normality,
+		DisplayName: desc,
+	}
 }
 
 func newMockHubServer(t *testing.T) *mockHubServer {
@@ -450,6 +533,48 @@ func (ctn *cohortTesterNode) assertDevices(names ...string) {
 	}
 }
 
+func (ctn *cohortTesterNode) assertDeviceTraits(name string, wantTraits ...trait.Name) {
+	ctn.t.Helper()
+	_, got, found := ctn.node.Devices.Find(remoteDesc{name: name})
+	if !found {
+		ctn.t.Fatalf("device %q not found on node %q", name, ctn.node.addr)
+	}
+
+	// all devices will have Metadata
+	wantTraits = append(wantTraits, trait.Metadata)
+	slices.Sort(wantTraits)
+
+	var gotTraits []trait.Name
+	for _, tm := range got.md.Traits {
+		gotTraits = append(gotTraits, trait.Name(tm.GetName()))
+	}
+	if diff := cmp.Diff(wantTraits, gotTraits, cmpopts.SortSlices(strings.Compare)); diff != "" {
+		ctn.t.Fatalf("unexpected traits for device %q on node %q (-want +got):\n%s", name, ctn.node.addr, diff)
+	}
+}
+
+func (ctn *cohortTesterNode) assertDeviceHealth(name string, wantChecks ...string) {
+	ctn.t.Helper()
+	_, got, found := ctn.node.Devices.Find(remoteDesc{name: name})
+	if !found {
+		ctn.t.Fatalf("device %q not found on node %q", name, ctn.node.addr)
+	}
+	assertDeviceHealth(ctn.t, got, wantChecks...)
+}
+
+func assertDeviceHealth(t *testing.T, got remoteDesc, wantChecks ...string) {
+	t.Helper()
+	want := make([]*gen.HealthCheck, 0, len(wantChecks))
+	for _, desc := range wantChecks {
+		want = append(want, makeHealthCheck(desc))
+	}
+	if diff := cmp.Diff(want, got.health, protocmp.Transform(), cmpopts.SortSlices(func(a, b *gen.HealthCheck) int {
+		return strings.Compare(a.Id, b.Id)
+	})); diff != "" {
+		t.Fatalf("unexpected health checks for device %q(-want +got):\n%s", got.name, diff)
+	}
+}
+
 func assertChanVal[T any](t *testing.T, ch <-chan T, fn func(T)) {
 	t.Helper()
 	select {
@@ -486,4 +611,33 @@ func newLocalConn(t *testing.T) (*bufconn.Listener, *grpc.ClientConn) {
 		}
 	})
 	return lis, c
+}
+
+// todo: reuse this code which is duplicated in pkg/app
+
+func devicesToHealthCheckCollection(d *devicespb.Collection) system.HealthCheckCollection {
+	return (*devicesHealthCheckCollection)(d)
+}
+
+type devicesHealthCheckCollection devicespb.Collection
+
+func (d *devicesHealthCheckCollection) MergeHealthChecks(name string, checks ...*gen.HealthCheck) error {
+	_, err := (*devicespb.Collection)(d).Update(&gen.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+		dstDev := dst.(*gen.Device)
+		dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, checks...)
+	}), resource.WithCreateIfAbsent())
+	return err
+}
+
+func (d *devicesHealthCheckCollection) RemoveHealthChecks(name string, ids ...string) error {
+	_, err := (*devicespb.Collection)(d).Update(&gen.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
+		dstDev := dst.(*gen.Device)
+		for _, id := range ids {
+			dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
+		}
+	}))
+	if code := status.Code(err); code == codes.NotFound {
+		err = nil
+	}
+	return err
 }

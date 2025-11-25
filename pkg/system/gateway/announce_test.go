@@ -14,6 +14,7 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
@@ -41,7 +42,7 @@ func TestSystem_announceCohort(t *testing.T) {
 		th.assertSimpleDevices("hub/d1")
 	})
 	newAnnounceTest("delayed node name", t, func(th *announceTester) {
-		ac1 := th.newRemoteNode("ac1", remoteDesc{}, remoteSystems{msgRecvd: true}, "ac1/d1")
+		ac1 := th.newRemoteNode("ac1", remoteDesc{}, remoteSystems{msgRecvd: true}, rds("ac1/d1")...)
 		th.c.Nodes.Set(ac1)
 		th.runAnnounceCohort()
 		th.assertSimpleDevices() // no devices yet because no name for node
@@ -50,7 +51,7 @@ func TestSystem_announceCohort(t *testing.T) {
 		th.assertSimpleDevices("ac1/d1") // now we have devices
 	})
 	newAnnounceTest("delayed node name timeout", t, func(th *announceTester) {
-		ac1 := th.newRemoteNode("ac1", remoteDesc{}, remoteSystems{msgRecvd: true}, "ac1/d1")
+		ac1 := th.newRemoteNode("ac1", remoteDesc{}, remoteSystems{msgRecvd: true}, rds("ac1/d1")...)
 		th.c.Nodes.Set(ac1)
 		th.runAnnounceCohort()
 		th.assertSimpleDevices() // no devices yet because no name for node
@@ -59,7 +60,7 @@ func TestSystem_announceCohort(t *testing.T) {
 		th.assertSimpleDevices("ac1/d1") // now we have devices
 	})
 	newAnnounceTest("delayed gateway", t, func(th *announceTester) {
-		gw1 := th.newRemoteNode("gw1", rd("gw1"), remoteSystems{}, "gw1/d1")
+		gw1 := th.newRemoteNode("gw1", rd("gw1"), remoteSystems{}, rds("gw1/d1")...)
 		th.c.Nodes.Set(gw1)
 		th.runAnnounceCohort()
 		th.assertSimpleDevices() // no devices yet
@@ -69,7 +70,7 @@ func TestSystem_announceCohort(t *testing.T) {
 		th.assertSimpleDevices() // still no devices because it's a gateway
 	})
 	newAnnounceTest("delayed gateway timeout", t, func(th *announceTester) {
-		gw1 := th.newRemoteNode("gw1", rd("gw1"), remoteSystems{}, "gw1/d1")
+		gw1 := th.newRemoteNode("gw1", rd("gw1"), remoteSystems{}, rds("gw1/d1")...)
 		th.c.Nodes.Set(gw1)
 		th.runAnnounceCohort()
 		th.assertSimpleDevices() // no devices yet
@@ -201,6 +202,45 @@ func TestSystem_announceCohort(t *testing.T) {
 			// expected, no update should be sent
 		}
 	})
+	// health checks
+	newAnnounceTest("preloaded node health", t, func(th *announceTester) {
+		rn := th.newRemoteNode("ac1", rd("ac1"), remoteSystems{msgRecvd: true},
+			rd("ac1/d1", hcs("+online", ">hot")...),
+			rd("ac1/d2", hcs("-off")...),
+		)
+		th.c.Nodes.Set(rn)
+		th.runAnnounceCohort()
+		th.assertDevices(
+			newSimpleDevice("ac1/d1", hcs("+online", ">hot")...),
+			newSimpleDevice("ac1/d2", hcs("-off")...),
+		)
+	})
+	newAnnounceTest("health check update", t, func(th *announceTester) {
+		rn := th.newRemoteNode("ac1", rd("ac1"), remoteSystems{msgRecvd: true},
+			rd("ac1/d1", hcs("-online", ">hot")...),
+		)
+		th.c.Nodes.Set(rn)
+		th.runAnnounceCohort()
+		stream := th.n.PullDevices(th.Context(), resource.WithUpdatesOnly(true))
+		rn.Devices.Set(rd("ac1/d1", hcs("+online", "+cold")...))
+
+		wantOld := newSimpleDevice("ac1/d1", hcs("-online", ">hot")...)
+		wantNew := newSimpleDevice("ac1/d1", hcs("+online", "+cold")...)
+		assertDeviceUpdate(th.T, stream, wantOld, wantNew, time.Now())
+	})
+	newAnnounceTest("health device removed", t, func(th *announceTester) {
+		rn := th.newRemoteNode("ac1", rd("ac1"), remoteSystems{msgRecvd: true},
+			rd("ac1/d1", hcs("+online", ">hot")...),
+		)
+		th.c.Nodes.Set(rn)
+		th.runAnnounceCohort()
+		th.assertDevices(
+			newSimpleDevice("ac1/d1", hcs("+online", ">hot")...),
+		)
+		rn.Devices.Remove(remoteDesc{name: "ac1/d1"})
+		synctest.Wait()
+		th.assertDevices()
+	})
 }
 
 func newAnnounceTest(name string, t *testing.T, f func(t *announceTester)) {
@@ -212,12 +252,8 @@ func newAnnounceTest(name string, t *testing.T, f func(t *announceTester)) {
 	})
 }
 
-// assertDeviceUpdate asserts that a device update is received on the stream.
-// Updates are subject to a backpressure mechanism that can cause complications in tests.
-// The full expanded steps for an update are:
-// 1. Reset the device back to the minimum metadata state, aka undo the previous metadata announcement
-// 2. Announce the new metadata on the device
-// With backpressure mitigation, these two steps can be coalesced into one step which skips the empty md state.
+// assertDeviceUpdate asserts that device updates are received that transition a device from wantOld to wantNew.
+// Any sequence of updates that connect together to join the two states are accepted.
 func assertDeviceUpdate(t *testing.T, stream <-chan devicespb.DevicesChange, wantOld, wantNew *gen.Device, now time.Time) {
 	t.Helper()
 	// all updates look a bit like this, with different old/new values
@@ -225,40 +261,31 @@ func assertDeviceUpdate(t *testing.T, stream <-chan devicespb.DevicesChange, wan
 		Id:         "ac1/d1",
 		ChangeType: types.ChangeType_UPDATE,
 		ChangeTime: now,
+		OldValue:   wantOld,
+		NewValue:   wantNew,
 	}
-
-	synctest.Wait()
-	got, ok := <-stream
-	if !ok {
-		t.Fatal("device update stream closed")
-	}
-
-	// first check for the coalesced update
-	want.OldValue = wantOld
-	want.NewValue = wantNew
-	if diff := cmp.Diff(want, got, protocmp.Transform()); diff == "" {
-		return // the update was coalesced directly to the new state
-	}
-
-	// expected, but optional, intermediate state undoing the previous metadata announcement
-	want.NewValue = &gen.Device{
-		Name:     wantOld.Name,
-		Metadata: &traits.Metadata{Name: wantOld.Name, Traits: ts(trait.Metadata)},
-	}
-	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
-		t.Fatalf("device update mismatch (-want +got):\n%s", diff)
-	}
-
-	synctest.Wait()
-	got, ok = <-stream
-	if !ok {
-		t.Fatal("device update stream closed")
-	}
-	// the new announcement
-	want.OldValue = want.NewValue
-	want.NewValue = wantNew
-	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
-		t.Fatalf("device update mismatch (-want +got):\n%s", diff)
+	for {
+		synctest.Wait()
+		got, ok := <-stream
+		if !ok {
+			t.Fatal("device update stream closed")
+		}
+		if diff := cmp.Diff(want, got, protocmp.Transform()); diff == "" {
+			return // we reached the desired state
+		}
+		// We are in an intermediate update state.
+		// We can't predict the exact state transition, but we can verify the old state
+		wantIntermediate := devicespb.DevicesChange{
+			Id:         "ac1/d1",
+			ChangeType: types.ChangeType_UPDATE,
+			ChangeTime: now,
+			OldValue:   want.OldValue,
+		}
+		want.OldValue = got.NewValue
+		got.NewValue = nil // because we can't predict it, clear for comparison
+		if diff := cmp.Diff(wantIntermediate, got, protocmp.Transform()); diff != "" {
+			t.Fatalf("intermediate update breaks chain on old value (-want +got):\n%s", diff)
+		}
 	}
 }
 
@@ -266,11 +293,31 @@ func newFakeClientConn() *grpc.ClientConn {
 	return &grpc.ClientConn{} // can do nothing with this
 }
 
-func rd(name string) remoteDesc {
+func rd(name string, checks ...*gen.HealthCheck) remoteDesc {
 	return remoteDesc{
-		name: name,
-		md:   md(name),
+		name:   name,
+		md:     md(name),
+		health: checks,
 	}
+}
+
+func rds(names ...string) []remoteDesc {
+	var rds []remoteDesc
+	for _, n := range names {
+		rds = append(rds, rd(n))
+	}
+	return rds
+}
+
+func hcs(descs ...string) []*gen.HealthCheck {
+	var hcs []*gen.HealthCheck
+	for _, d := range descs {
+		hcs = append(hcs, makeHealthCheck(d))
+	}
+	slices.SortFunc(hcs, func(a, b *gen.HealthCheck) int {
+		return strings.Compare(a.Id, b.Id)
+	})
+	return hcs
 }
 
 func md(name string, traitList ...*traits.TraitMetadata) *traits.Metadata {
@@ -290,12 +337,14 @@ func ts[S ~string](name ...S) []*traits.TraitMetadata {
 }
 
 func newAnnounceTester(t *testing.T) *announceTester {
-	n := node.New("self")
+	devs := devicespb.NewCollection()
+	n := node.New("self", nodeopts.WithStore(devs))
 	rs := reflectionapi.NewServer(n)
 	sys := &System{
 		self:       n,
 		reflection: rs,
 		announcer:  n,
+		checks:     devicesToHealthCheckCollection(devs),
 		logger:     zaptest.NewLogger(t),
 	}
 	c := newCohort()
@@ -322,30 +371,30 @@ func (t *announceTester) runAnnounceCohort() {
 }
 
 func (t *announceTester) addNode(addr string, devices ...string) *remoteNode {
-	rn := t.newRemoteNode(addr, rd(addr), remoteSystems{msgRecvd: true}, devices...)
+	rn := t.newRemoteNode(addr, rd(addr), remoteSystems{msgRecvd: true}, rds(devices...)...)
 	t.c.Nodes.Set(rn)
 	return rn
 }
 
 func (t *announceTester) addGateway(addr string, devices ...string) *remoteNode {
-	rn := t.newRemoteNode(addr, rd(addr), remoteSystems{msgRecvd: true, gateway: &gen.Service{Active: true}}, devices...)
+	rn := t.newRemoteNode(addr, rd(addr), remoteSystems{msgRecvd: true, gateway: &gen.Service{Active: true}}, rds(devices...)...)
 	t.c.Nodes.Set(rn)
 	return rn
 }
 
 func (t *announceTester) addHub(addr string, devices ...string) *remoteNode {
-	rn := t.newRemoteNode(addr, rd(addr), remoteSystems{msgRecvd: true}, devices...)
+	rn := t.newRemoteNode(addr, rd(addr), remoteSystems{msgRecvd: true}, rds(devices...)...)
 	rn.isHub = true
 	t.c.Nodes.Set(rn)
 	return rn
 }
 
-func (t *announceTester) newRemoteNode(addr string, self remoteDesc, systems remoteSystems, devices ...string) *remoteNode {
+func (t *announceTester) newRemoteNode(addr string, self remoteDesc, systems remoteSystems, devices ...remoteDesc) *remoteNode {
 	rn := newRemoteNode(addr, newFakeClientConn())
 	rn.Self.Set(self)
 	rn.Systems.Set(systems)
 	for _, d := range devices {
-		rn.Devices.Set(rd(d))
+		rn.Devices.Set(d)
 	}
 	return rn
 }
@@ -354,9 +403,17 @@ func (t *announceTester) assertSimpleDevices(wantNames ...string) {
 	t.Helper()
 	var wantDevices []*gen.Device
 	for _, name := range wantNames {
-		wantDevices = append(wantDevices, &gen.Device{Name: name, Metadata: md(name, ts(trait.Metadata)...)})
+		wantDevices = append(wantDevices, newSimpleDevice(name))
 	}
 	t.assertDevices(wantDevices...)
+}
+
+func newSimpleDevice(name string, checks ...*gen.HealthCheck) *gen.Device {
+	return &gen.Device{
+		Name:         name,
+		Metadata:     md(name, ts(trait.Metadata)...),
+		HealthChecks: checks,
+	}
 }
 
 func (t *announceTester) assertDevices(want ...*gen.Device) {
@@ -367,6 +424,13 @@ func (t *announceTester) assertDevices(want ...*gen.Device) {
 	if i, ok := slices.BinarySearchFunc(want, selfDevice, cmpDevices); !ok {
 		want = slices.Insert(want, i, selfDevice)
 	}
+	// health checks in devices should be ordered by id
+	for _, device := range want {
+		slices.SortFunc(device.HealthChecks, func(a, b *gen.HealthCheck) int {
+			return strings.Compare(a.Id, b.Id)
+		})
+	}
+
 	got := t.n.ListDevices()
 	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
 		t.Errorf("announced devices mismatch (-want +got):\n%s", diff)
