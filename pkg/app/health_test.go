@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap/zaptest"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -84,6 +85,131 @@ func Test_setupHealthRegistry(t *testing.T) {
 		h.assertCheckNormality(t, deviceName, oldNormality)
 		h.assertCheckHasFaultWithDetails(t, deviceName, faultSummary, faultDetails)
 	})
+
+	t.Run("value filtering", func(t *testing.T) {
+		t.Run("measured values in HealthApi", func(t *testing.T) {
+			h := newHealthTestHarness(t)
+			check := h.createBoundsCheck("dev3", "temperature check", 25.5)
+			defer check.Dispose()
+			h.assertCheckHasCurrentValue(t, "dev3", 25.5)
+		})
+
+		t.Run("measured values omitted from DevicesApi", func(t *testing.T) {
+			h := newHealthTestHarness(t)
+			check := h.createBoundsCheck("dev4", "humidity check", 60.0)
+			defer check.Dispose()
+			h.assertDeviceCheckHasNoCurrentValue(t, "dev4")
+		})
+
+		t.Run("update measured value", func(t *testing.T) {
+			h := newHealthTestHarness(t)
+			check := h.createBoundsCheck("dev5", "pressure check", 100.0)
+			defer check.Dispose()
+
+			check.UpdateValue(h.ctx, healthpb.FloatValue(120.0))
+			h.assertCheckHasCurrentValue(t, "dev5", 120.0)
+			h.assertDeviceCheckHasNoCurrentValue(t, "dev5")
+		})
+	})
+}
+
+func Test_removeMeasuredValues(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        *gen.HealthCheck
+		wantVal      *gen.HealthCheck
+		wantNoChange bool
+	}{
+		{
+			name:         "nil check",
+			input:        nil,
+			wantNoChange: true,
+		},
+		{
+			name: "fault check unchanged",
+			input: &gen.HealthCheck{
+				Id:          "test-id",
+				DisplayName: "test check",
+				Check: &gen.HealthCheck_Faults_{
+					Faults: &gen.HealthCheck_Faults{
+						CurrentFaults: []*gen.HealthCheck_Error{
+							{SummaryText: "test error"},
+						},
+					},
+				},
+			},
+			wantNoChange: true,
+		},
+		{
+			name: "bounds check without current_value unchanged",
+			input: &gen.HealthCheck{
+				Id:          "test-id",
+				DisplayName: "test check",
+				Check: &gen.HealthCheck_Bounds_{
+					Bounds: &gen.HealthCheck_Bounds{
+						Expected: &gen.HealthCheck_Bounds_NormalValue{
+							NormalValue: healthpb.FloatValue(20.0),
+						},
+						DisplayUnit: "°C",
+					},
+				},
+			},
+			wantNoChange: true,
+		},
+		{
+			name: "bounds check with current_value removed",
+			input: &gen.HealthCheck{
+				Id:          "temp-check",
+				DisplayName: "Room Temperature",
+				Check: &gen.HealthCheck_Bounds_{
+					Bounds: &gen.HealthCheck_Bounds{
+						CurrentValue: healthpb.FloatValue(21.5),
+						Expected: &gen.HealthCheck_Bounds_NormalRange{
+							NormalRange: &gen.HealthCheck_ValueRange{
+								Low:  healthpb.FloatValue(18.0),
+								High: healthpb.FloatValue(24.0),
+							},
+						},
+						DisplayUnit: "°C",
+					},
+				},
+			},
+			wantVal: &gen.HealthCheck{
+				Id:          "temp-check",
+				DisplayName: "Room Temperature",
+				Check: &gen.HealthCheck_Bounds_{
+					Bounds: &gen.HealthCheck_Bounds{
+						Expected: &gen.HealthCheck_Bounds_NormalRange{
+							NormalRange: &gen.HealthCheck_ValueRange{
+								Low:  healthpb.FloatValue(18.0),
+								High: healthpb.FloatValue(24.0),
+							},
+						},
+						DisplayUnit: "°C",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			beforeTransform := proto.Clone(tt.input)
+			got := removeMeasuredValues(tt.input)
+			want := tt.wantVal
+			if tt.wantNoChange {
+				want = tt.input
+			}
+
+			if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+				t.Errorf("removeMeasuredValues() mismatch (-want +got):\n%s", diff)
+			}
+			// make sure input was not modified
+			if diff := cmp.Diff(beforeTransform, tt.input, protocmp.Transform()); diff != "" {
+				t.Errorf("input was modified (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
 
 // healthTestHarness provides a convenient interface for testing health registry functionality
@@ -141,6 +267,28 @@ func (h *healthTestHarness) createFaultCheck(deviceName, displayName string) *he
 	return check
 }
 
+func (h *healthTestHarness) createBoundsCheck(deviceName, displayName string, currentValue float64) *healthpb.BoundsCheck {
+	check, err := h.registry.ForOwner(h.owner).NewBoundsCheck(deviceName, &gen.HealthCheck{
+		DisplayName: displayName,
+		Check: &gen.HealthCheck_Bounds_{
+			Bounds: &gen.HealthCheck_Bounds{
+				Expected: &gen.HealthCheck_Bounds_NormalRange{
+					NormalRange: &gen.HealthCheck_ValueRange{
+						Low:  healthpb.FloatValue(0.0),
+						High: healthpb.FloatValue(100.0),
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		h.t.Fatalf("NewBoundsCheck() error = %v", err)
+	}
+	// Set initial value
+	check.UpdateValue(h.ctx, healthpb.FloatValue(currentValue))
+	return check
+}
+
 func (h *healthTestHarness) getOnlyCheck(t *testing.T, deviceName string) *gen.HealthCheck {
 	t.Helper()
 	apiChecks, err := h.healthApiClient.ListHealthChecks(h.ctx, &gen.ListHealthChecksRequest{Name: deviceName})
@@ -171,7 +319,9 @@ func (h *healthTestHarness) assertCheckInDevicesApi(t *testing.T, deviceName str
 	if dev == nil {
 		t.Fatalf("GetDevice() returned nil device")
 	}
-	assertHealthChecks(t, dev.HealthChecks, want)
+	// Device API should omit measured values
+	wantWithoutMeasured := removeMeasuredValues(want)
+	assertHealthChecks(t, dev.HealthChecks, wantWithoutMeasured)
 }
 
 func (h *healthTestHarness) assertCheckNormality(t *testing.T, deviceName string, want gen.HealthCheck_Normality) {
@@ -260,6 +410,44 @@ func (h *healthTestHarness) assertCheckDeleted(t *testing.T, deviceName string) 
 		if len(dev.HealthChecks) != 0 {
 			t.Errorf("expected 0 checks in device after disposal, got %d", len(dev.HealthChecks))
 		}
+	}
+}
+
+func (h *healthTestHarness) assertCheckHasCurrentValue(t *testing.T, deviceName string, expectedValue float64) {
+	t.Helper()
+	gotCheck := h.getOnlyCheck(t, deviceName)
+	bounds := gotCheck.GetBounds()
+	if bounds == nil {
+		t.Fatalf("expected bounds check, got %T", gotCheck.GetCheck())
+	}
+	currentValue := bounds.GetCurrentValue()
+	if currentValue == nil {
+		t.Fatalf("expected current_value to be set, got nil")
+	}
+	gotValue := currentValue.GetFloatValue()
+	if gotValue != expectedValue {
+		t.Errorf("expected current_value %v, got %v", expectedValue, gotValue)
+	}
+}
+
+func (h *healthTestHarness) assertDeviceCheckHasNoCurrentValue(t *testing.T, deviceName string) {
+	t.Helper()
+	dev, err := h.devices.GetDevice(deviceName)
+	if err != nil {
+		t.Fatalf("GetDevice() error = %v", err)
+	}
+	if dev == nil {
+		t.Fatalf("GetDevice() returned nil device")
+	}
+	if len(dev.HealthChecks) == 0 {
+		t.Fatalf("expected at least 1 check in device, got 0")
+	}
+	bounds := dev.HealthChecks[0].GetBounds()
+	if bounds == nil {
+		t.Fatalf("expected bounds check, got %T", dev.HealthChecks[0].GetCheck())
+	}
+	if bounds.GetCurrentValue() != nil {
+		t.Errorf("expected current_value to be nil in device API, got %v", bounds.GetCurrentValue())
 	}
 }
 

@@ -26,7 +26,12 @@ service DevicesApi {
 message Device {
   string name = 1;
   smartcore.traits.Metadata metadata = 2;
-  // A list of health checks associated with the device
+  // A list of health checks associated with the device.
+  //
+  // Measured values, like bounds.current_value, will be omitted.
+  // Use the HealthApi to collect this information.
+  // These values can change frequently without affecting the checks
+  // normality or reliability and are omitted to reduce churn.
   repeated smartcore.bos.HealthCheck health_checks = 3;
 
   message Query {
