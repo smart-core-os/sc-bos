@@ -99,7 +99,7 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 			// update the devices api
 			_, err = deviceStore.Update(&gen.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
 				dstDev := dst.(*gen.Device)
-				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, c)
+				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, removeMeasuredValues(c))
 			}))
 			if err != nil {
 				logger.Error("update device with health check", zap.String("name", name), zap.String("checkId", c.Id), zap.Error(err))
@@ -131,7 +131,7 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 			// update the devices api
 			_, err = deviceStore.Update(&gen.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
 				dstDev := dst.(*gen.Device)
-				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, c)
+				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, removeMeasuredValues(c))
 			}))
 			if err != nil {
 				logger.Error("update device with health check", zap.String("name", name), zap.String("checkId", c.Id), zap.Error(err))
@@ -174,4 +174,30 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 		}),
 	)
 	return checkRegistry, close, nil
+}
+
+// removeMeasuredValues returns a (possible) copy of c with any measured values removed.
+func removeMeasuredValues(c *gen.HealthCheck) *gen.HealthCheck {
+	// We do the removal here, instead of in the DevicesApi server,
+	// because here is the write point for those devices.
+	// Doing the removal on write means we don't have to worry about
+	// filtering the properties during reads, queries, or any of that.
+
+	if c == nil {
+		return nil
+	}
+	// clone clones its argument once only, returning an uncloned value on subsequent calls.
+	var clone func(*gen.HealthCheck) *gen.HealthCheck
+	clone = func(c *gen.HealthCheck) *gen.HealthCheck {
+		cc := proto.Clone(c).(*gen.HealthCheck)
+		clone = func(c *gen.HealthCheck) *gen.HealthCheck { return c }
+		return cc
+	}
+
+	if v := c.GetBounds().GetCurrentValue(); v != nil {
+		c = clone(c)
+		c.GetBounds().CurrentValue = nil
+	}
+
+	return c
 }

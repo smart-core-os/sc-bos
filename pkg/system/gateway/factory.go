@@ -69,6 +69,7 @@ func (f *factory) New(services system.Services) service.Lifecycle {
 	s := &System{
 		self:   services.Node,
 		hub:    services.CohortManager,
+		checks: services.HealthChecks,
 		ignore: []string{services.GRPCEndpoint}, // avoid infinite recursion
 		newClient: func(address string) (*grpc.ClientConn, error) {
 			return grpc.NewClient(address, grpc.WithTransportCredentials(credentials.NewTLS(services.ClientTLSConfig)))
@@ -83,6 +84,7 @@ func (f *factory) New(services system.Services) service.Lifecycle {
 type System struct {
 	self       *node.Node
 	hub        node.Remote
+	checks     system.HealthCheckCollection
 	ignore     []string
 	reflection *reflectionapi.Server
 	announcer  node.Announcer

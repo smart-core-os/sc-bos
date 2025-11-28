@@ -31,7 +31,12 @@ type Device struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Name     string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Metadata *traits.Metadata       `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	// A list of health checks associated with the device
+	// A list of health checks associated with the device.
+	//
+	// Measured values, like bounds.current_value, will be omitted.
+	// Use the HealthApi to collect this information.
+	// These values can change frequently without affecting the checks
+	// normality or reliability and are omitted to reduce churn.
 	HealthChecks  []*HealthCheck `protobuf:"bytes,3,rep,name=health_checks,json=healthChecks,proto3" json:"health_checks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

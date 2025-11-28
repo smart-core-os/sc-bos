@@ -96,12 +96,15 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 
 	// external store for devices so we can attach multiple resources to it,
 	// like metadata and health checks.
-	deviceStore := devicespb.NewCollection(resource.WithIDInterceptor(func(oldID string) (newID string) {
-		if oldID == "" {
-			return cName
-		}
-		return oldID
-	}))
+	deviceStore := devicespb.NewCollection(
+		resource.WithIDInterceptor(func(oldID string) (newID string) {
+			if oldID == "" {
+				return cName
+			}
+			return oldID
+		}),
+		resource.WithNoDuplicates(),
+	)
 	rootNode := node.New(cName, nodeopts.WithStore(deviceStore))
 	rootNode.Logger = logger.Named("node")
 
