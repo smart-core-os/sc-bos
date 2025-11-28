@@ -31,6 +31,7 @@ require (
 	github.com/smart-core-os/gobacnet v0.0.0-20251125122155-d2579441f7ee
 	github.com/smart-core-os/sc-api/go v1.0.0-beta.57
 	github.com/smart-core-os/sc-golang v0.0.0-20251030120622-735d53ae1132
+	github.com/stoewer/go-strcase v1.3.1
 	github.com/stretchr/testify v1.10.0
 	github.com/timshannon/bolthold v0.0.0-20210913165410-232392fc8a6a
 	go.etcd.io/bbolt v1.3.10
