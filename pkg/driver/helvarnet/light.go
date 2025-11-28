@@ -22,6 +22,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
@@ -35,7 +36,6 @@ type TestResults struct {
 
 // Light represents a single light device within the HelvarNet system.
 type Light struct {
-	gen.UnimplementedStatusApiServer
 	traits.UnimplementedLightApiServer
 	gen.UnimplementedEmergencyLightApiServer
 	gen.UnimplementedUdmiServiceServer
@@ -44,8 +44,7 @@ type Light struct {
 	client          *tcpClient
 	conf            *config.Device
 	logger          *zap.Logger
-	helvarnetStatus uint32          // The status flags field from the device, unique to Helvarnet protocol. See config.DeviceStatuses
-	status          *resource.Value // *gen.StatusLog
+	helvarnetStatus int64 // The status flags field from the device, unique to Helvarnet protocol. See deviceStatuses
 	udmiBus         minibus.Bus[*gen.PullExportMessagesResponse]
 
 	// stores device test results, key is device name, value is TestResults
@@ -62,7 +61,6 @@ func newLight(client *tcpClient, l *zap.Logger, conf *config.Device, db *bolthol
 		database:   db,
 		isEm:       em,
 		logger:     l,
-		status:     resource.NewValue(resource.WithInitialValue(&gen.StatusLog{}), resource.WithNoDuplicates()),
 		testResultSet: resource.NewValue(resource.WithInitialValue(&gen.TestResultSet{
 			DurationTest: &gen.EmergencyTestResult{},
 			FunctionTest: &gen.EmergencyTestResult{},
@@ -120,41 +118,27 @@ func (l *Light) refreshBrightness() error {
 }
 
 // refreshDeviceStatus queries the device and updates the status value
-func (l *Light) refreshDeviceStatus() error {
+func (l *Light) refreshDeviceStatus() (int64, error) {
 	command := queryDeviceState(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
 	r, err := l.client.sendAndReceive(command, want)
 	if err != nil {
-		return err
+		return DeviceOfflineCode, err
 	}
 
 	split := strings.Split(r, "=")
 	if len(split) < 2 {
-		return fmt.Errorf("invalid response in refreshDeviceStatus: %s", r)
+		return BadResponseCode, fmt.Errorf("invalid response in refreshDeviceStatus: %s", r)
 	}
 
 	s := strings.TrimSuffix(split[1], "#")
 	statusInt, err := strconv.Atoi(s)
 	if err != nil {
-		return err
+		return BadResponseCode, err
 	}
 
-	l.helvarnetStatus = uint32(statusInt)
-	log := &gen.StatusLog{
-		RecordTime: timestamppb.Now(),
-	}
-	for _, ds := range config.DeviceStatuses {
-		if (ds.FlagValue & l.helvarnetStatus) > 0 {
-			log.Problems = append(log.Problems, &gen.StatusLog_Problem{
-				Level:       ds.Level,
-				Name:        ds.State,
-				Description: ds.Description,
-			})
-		}
-	}
-	_, _ = l.status.Set(log)
-	return nil
+	return int64(statusInt), nil
 }
 
 // UpdateBrightness update the brightness level or preset (scene) of the device
@@ -229,29 +213,6 @@ func (l *Light) PullBrightness(_ *traits.PullBrightnessRequest, server traits.Li
 	return nil
 }
 
-func (l *Light) GetCurrentStatus(context.Context, *gen.GetCurrentStatusRequest) (*gen.StatusLog, error) {
-	value := l.status.Get()
-	s := value.(*gen.StatusLog)
-	return s, nil
-}
-
-func (l *Light) PullCurrentStatus(_ *gen.PullCurrentStatusRequest, server gen.StatusApi_PullCurrentStatusServer) error {
-	for value := range l.status.Pull(server.Context()) {
-		statusLog := value.Value.(*gen.StatusLog)
-		err := server.Send(&gen.PullCurrentStatusResponse{Changes: []*gen.PullCurrentStatusResponse_Change{
-			{
-				Name:          l.conf.Name,
-				ChangeTime:    timestamppb.New(value.ChangeTime),
-				CurrentStatus: statusLog,
-			},
-		}})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (l *Light) udmiPointsetFromData() (*gen.MqttMessage, error) {
 	points := make(udmi.PointsEvent)
 	brightness := l.brightness.Get().(*traits.Brightness)
@@ -261,8 +222,13 @@ func (l *Light) udmiPointsetFromData() (*gen.MqttMessage, error) {
 		points["Preset"] = udmi.PointValue{PresentValue: brightness.Preset.Title}
 	}
 
-	statuses := config.GetStatusListFromFlag(l.helvarnetStatus)
-	points["Status"] = udmi.PointValue{PresentValue: strings.Join(statuses, ", ")}
+	statuses := getStatusListFromFlag(l.helvarnetStatus)
+
+	statusStrings := make([]string, len(statuses))
+	for i, s := range statuses {
+		statusStrings[i] = s.State + ": " + s.Description
+	}
+	points["Status"] = udmi.PointValue{PresentValue: strings.Join(statusStrings, "; ")}
 
 	b, err := json.Marshal(points)
 	if err != nil {
@@ -288,11 +254,8 @@ func (l *Light) sendUdmiMessage(ctx context.Context) {
 }
 
 func (l *Light) refreshData(ctx context.Context) {
-	err := l.refreshDeviceStatus()
-	if err != nil {
-		l.logger.Error("failed to refresh device status, will try again on next run...", zap.Error(err))
-	}
-	err = l.refreshBrightness()
+
+	err := l.refreshBrightness()
 	if err != nil {
 		l.logger.Error("failed to refresh brightness, will try again on next run...", zap.Error(err))
 	}
@@ -329,7 +292,8 @@ func (l *Light) refreshData(ctx context.Context) {
 }
 
 // queryDevice runs queries on a schedule to check the statuses of the device.
-func (l *Light) queryDevice(ctx context.Context, t time.Duration) error {
+func (l *Light) queryDevice(ctx context.Context, t time.Duration, fc *healthpb.FaultCheck) error {
+
 	ticker := time.NewTicker(t)
 	defer ticker.Stop()
 	l.refreshData(ctx)
@@ -339,6 +303,13 @@ func (l *Light) queryDevice(ctx context.Context, t time.Duration) error {
 			return nil
 		case <-ticker.C:
 			l.refreshData(ctx)
+
+			s, err := l.refreshDeviceStatus()
+			if err != nil {
+				l.logger.Error("failed to refresh device status, will try again on next run...", zap.Error(err))
+			}
+			l.helvarnetStatus = s
+			updateDeviceFaults(ctx, l.helvarnetStatus, fc)
 		}
 	}
 }

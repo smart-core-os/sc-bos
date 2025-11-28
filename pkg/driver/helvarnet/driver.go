@@ -13,7 +13,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylightpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -36,6 +36,7 @@ type Driver struct {
 	logger    *zap.Logger
 	clients   map[string]*tcpClient
 	database  *bolthold.Store
+	health    *healthpb.Checks
 }
 
 func (f factory) New(services driver.Services) service.Lifecycle {
@@ -45,6 +46,7 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 		logger:    logger,
 		announcer: node.NewReplaceAnnouncer(services.Node),
 		database:  services.Database,
+		health:    services.Health,
 	}
 
 	d.Service = service.New(
@@ -63,6 +65,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	rootAnnouncer := d.announcer.Replace(ctx)
 	grp, ctx := errgroup.WithContext(ctx)
 	d.clients = make(map[string]*tcpClient)
+	var faultChecks []*healthpb.FaultCheck
 
 	for _, l := range cfg.LightingGroups {
 		if _, ok := d.clients[l.IpAddress]; !ok {
@@ -99,18 +102,24 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			}
 			d.clients[l.IpAddress] = newTcpClient(tcpAddr, d.logger, &cfg)
 		}
+
 		lum := newLight(d.clients[l.IpAddress], d.logger, l, d.database, false)
+
+		faultCheck, err := d.health.NewFaultCheck(l.Name, getDeviceHealthCheck())
+		if err != nil {
+			d.logger.Error("failed to create health check", zap.String("device", l.Name), zap.Error(err))
+			return err
+		}
+		faultChecks = append(faultChecks, faultCheck)
 
 		rootAnnouncer.Announce(l.Name,
 			node.HasTrait(trait.Light,
 				node.WithClients(lightpb.WrapApi(lum))),
-			node.HasTrait(statuspb.TraitName,
-				node.WithClients(gen.WrapStatusApi(lum))),
 			node.HasTrait(udmipb.TraitName,
 				node.WithClients(gen.WrapUdmiService(lum))),
 			node.HasMetadata(l.Meta))
 		grp.Go(func() error {
-			return lum.queryDevice(ctx, cfg.RefreshStatus.Duration)
+			return lum.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck)
 		})
 	}
 
@@ -148,18 +157,23 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			d.logger.Error("loadTestResults error", zap.Error(err))
 		}
 
+		faultCheck, err := d.health.NewFaultCheck(em.Name, getDeviceHealthCheck())
+		if err != nil {
+			d.logger.Error("failed to create health check", zap.String("device", em.Name), zap.Error(err))
+			return err
+		}
+		faultChecks = append(faultChecks, faultCheck)
+
 		rootAnnouncer.Announce(em.Name,
 			node.HasTrait(trait.Light,
 				node.WithClients(lightpb.WrapApi(emergencyLight))),
-			node.HasTrait(statuspb.TraitName,
-				node.WithClients(gen.WrapStatusApi(emergencyLight))),
 			node.HasTrait(emergencylightpb.TraitName,
 				node.WithClients(gen.WrapEmergencyLightApi(emergencyLight))),
 			node.HasTrait(udmipb.TraitName,
 				node.WithClients(gen.WrapUdmiService(emergencyLight))),
 			node.HasMetadata(em.Meta))
 		grp.Go(func() error {
-			return emergencyLight.queryDevice(ctx, cfg.RefreshStatus.Duration)
+			return emergencyLight.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck)
 		})
 	}
 
@@ -170,9 +184,24 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 				client.close()
 			}
 		}
+		for _, fc := range faultChecks {
+			fc.Dispose()
+		}
 		if err != nil {
 			d.logger.Error("run error", zap.String("error", err.Error()))
 		}
 	}()
 	return nil
+}
+
+// this health check monitors the device to check if it is online, communicating properly and if it is reporting a fault itself
+// via the status register in the device.
+func getDeviceHealthCheck() *gen.HealthCheck {
+	return &gen.HealthCheck{
+		Id:              "deviceStatusCheck",
+		DisplayName:     "Device Status Check",
+		Description:     "Checks the status from the device itself and also if communication is healthy",
+		OccupantImpact:  gen.HealthCheck_COMFORT,
+		EquipmentImpact: gen.HealthCheck_FUNCTION,
+	}
 }
