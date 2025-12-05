@@ -223,9 +223,8 @@ func TestDetermineGenerators(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	// Skip if protomod is not available
-	if _, err := exec.LookPath("protomod"); err != nil {
-		t.Skip("protomod not found in PATH, skipping test")
+	if _, err := exec.LookPath("protoc"); err != nil {
+		t.Skip("protoc not installed")
 	}
 
 	tests := []struct {
@@ -269,9 +268,8 @@ func TestAnalyzeProtoFiles(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	// Skip if protomod is not available
-	if _, err := exec.LookPath("protomod"); err != nil {
-		t.Skip("protomod not found in PATH, skipping test")
+	if _, err := exec.LookPath("protoc"); err != nil {
+		t.Skip("protoc not installed")
 	}
 
 	tests := []struct {

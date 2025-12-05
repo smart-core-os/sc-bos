@@ -15,7 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/history"
 )
 
-//go:generate protomod protoc -- -I . -I ../../../proto --go_out=paths=source_relative:. historypb_page.proto
+//go:generate go tool protomod protoc -- -I . -I ../../../proto --go_out=paths=source_relative:. historypb_page.proto
 
 // NewPageReader returns a new PageReader capable of reading pages from a history.Store.
 func NewPageReader[R proto.Message](decodePayload func(r history.Record) (R, error)) PageReader[R] {

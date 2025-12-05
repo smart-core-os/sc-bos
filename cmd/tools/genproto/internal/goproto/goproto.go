@@ -6,13 +6,12 @@ package goproto
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/generator"
+	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/toolchain"
 )
 
 var Step = generator.Step{
@@ -111,24 +110,10 @@ func generateProtos(ctx *generator.Context, protoDir, genDir, rootDir string, ge
 
 	args = append(args, files...)
 
-	return runProtomod(ctx, protoDir, args...)
-}
-
-// runProtomod executes protomod with the given arguments.
-func runProtomod(ctx *generator.Context, workDir string, args ...string) error {
 	if ctx.DryRun {
 		ctx.Info("[DRY RUN] Would run: protomod %s", strings.Join(args, " "))
 		return nil
 	}
 
-	cmd := exec.Command("protomod", args...)
-	cmd.Dir = workDir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("running protomod: %w", err)
-	}
-
-	return nil
+	return toolchain.RunProtomod(protoDir, args...)
 }

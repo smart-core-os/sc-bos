@@ -1,15 +1,14 @@
 package goproto
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
+
+	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/protofile"
 )
 
 // analyzeProtoFiles returns the required generators for each proto file in protoDir.
@@ -55,7 +54,7 @@ func determineGenerators(filePath string) (Generator, error) {
 	protoDir := filepath.Dir(filePath)
 	fileName := filepath.Base(filePath)
 
-	fileDesc, err := parseProtoFile(protoDir, fileName)
+	fileDesc, err := protofile.Parse(protoDir, fileName)
 	if err != nil {
 		return 0, fmt.Errorf("parsing proto file: %w", err)
 	}
@@ -79,47 +78,6 @@ func determineGeneratorsFromDescriptor(fileDesc *descriptorpb.FileDescriptorProt
 		gen |= GenRouter
 	}
 	return gen
-}
-
-// parseProtoFile uses protomod protoc to parse a proto file and return its descriptor.
-func parseProtoFile(protoDir, fileName string) (*descriptorpb.FileDescriptorProto, error) {
-	// Use protomod protoc to handle proto.mod dependencies
-	protomodPath, err := exec.LookPath("protomod")
-	if err != nil {
-		return nil, fmt.Errorf("protomod not found in PATH: %w", err)
-	}
-
-	cmd := exec.Command(protomodPath, "protoc", "--",
-		"-I", protoDir,
-		"--descriptor_set_out=/dev/stdout",
-		"--include_imports",
-		fileName,
-	)
-	cmd.Dir = protoDir
-
-	output, err := cmd.Output()
-	if err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			return nil, fmt.Errorf("protomod protoc failed: %s", string(exitErr.Stderr))
-		}
-		return nil, fmt.Errorf("running protomod protoc: %w", err)
-	}
-
-	// Parse the descriptor set
-	var fds descriptorpb.FileDescriptorSet
-	if err := proto.Unmarshal(output, &fds); err != nil {
-		return nil, fmt.Errorf("unmarshaling descriptor set: %w", err)
-	}
-
-	// Find the file descriptor for our file
-	for _, fd := range fds.GetFile() {
-		if fd.GetName() == fileName {
-			return fd, nil
-		}
-	}
-
-	return nil, fmt.Errorf("file descriptor not found for %s", fileName)
 }
 
 // isRoutedAPI determines if a proto file defines a routed API.

@@ -33,7 +33,7 @@ import (
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
-//go:generate protomod protoc -- -I . -I ../../../proto --go_out=paths=source_relative:. download.proto
+//go:generate go tool protomod protoc -- -I . -I ../../../proto --go_out=paths=source_relative:. download.proto
 
 type tokenClaims struct {
 	Body string `json:"b"`

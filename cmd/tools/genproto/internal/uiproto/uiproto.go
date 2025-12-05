@@ -4,11 +4,12 @@ package uiproto
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/generator"
+	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/protofile"
+	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/toolchain"
 )
 
 var Step = generator.Step{
@@ -30,7 +31,7 @@ func run(ctx *generator.Context) error {
 	}
 
 	// Discover proto files
-	protoFiles, err := discoverProtoFiles(protoDir)
+	protoFiles, err := protofile.Discover(protoDir)
 	if err != nil {
 		return fmt.Errorf("discovering proto files: %w", err)
 	}
@@ -49,35 +50,6 @@ func run(ctx *generator.Context) error {
 	return nil
 }
 
-// discoverProtoFiles finds all .proto files in protoDir.
-func discoverProtoFiles(protoDir string) ([]string, error) {
-	var files []string
-
-	err := filepath.Walk(protoDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() || !strings.HasSuffix(info.Name(), ".proto") {
-			return nil
-		}
-
-		relPath, err := filepath.Rel(protoDir, path)
-		if err != nil {
-			return fmt.Errorf("getting relative path: %w", err)
-		}
-
-		files = append(files, relPath)
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return files, nil
-}
-
 // generateProtos generates JavaScript and TypeScript code from proto files.
 func generateProtos(ctx *generator.Context, protoDir, outDir string, files []string) error {
 	if len(files) == 0 {
@@ -93,26 +65,12 @@ func generateProtos(ctx *generator.Context, protoDir, outDir string, files []str
 	)
 	args = append(args, files...)
 
-	return runProtomod(ctx, protoDir, args...)
-}
-
-// runProtomod executes protomod with the given arguments.
-func runProtomod(ctx *generator.Context, workDir string, args ...string) error {
 	if ctx.DryRun {
 		ctx.Info("[DRY RUN] Would run: protomod %s", strings.Join(args, " "))
 		return nil
 	}
 
-	cmd := exec.Command("protomod", args...)
-	cmd.Dir = workDir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("running protomod: %w", err)
-	}
-
-	return nil
+	return toolchain.RunProtomod(protoDir, args...)
 }
 
 // fixGeneratedFiles applies import path fixes to generated JavaScript and TypeScript files.
