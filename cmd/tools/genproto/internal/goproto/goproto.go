@@ -94,18 +94,46 @@ func generateProtos(ctx *generator.Context, protoDir, genDir, rootDir string, ge
 	}
 
 	ctx.Verbose("Generating %s: %s", gen, strings.Join(files, ", "))
+	goPluginPath, err := toolchain.GetGoToolPath("protoc-gen-go")
+	if err != nil {
+		return fmt.Errorf("getting protoc-gen-go path: %w", err)
+	}
+	ctx.Verbose("  protoc-gen-go path: %q", goPluginPath)
+	grpcPluginPath, err := toolchain.GetGoToolPath("protoc-gen-go-grpc")
+	if err != nil {
+		return fmt.Errorf("getting protoc-gen-go-grpc path: %w", err)
+	}
+	ctx.Verbose("  protoc-gen-go-grpc path: %q", grpcPluginPath)
 
 	args := []string{"protoc", "--", "-I", protoDir}
 	args = append(args,
+		"--plugin=protoc-gen-go="+goPluginPath,
 		"--go_out=paths=source_relative:"+genDir,
+		"--plugin=protoc-gen-go-grpc="+grpcPluginPath,
 		"--go-grpc_out=paths=source_relative:"+genDir,
 	)
 
 	if gen.Has(GenRouter) {
-		args = append(args, "--router_out="+rootDir)
+		routerPluginPath, err := toolchain.GetGoToolPath("protoc-gen-router")
+		if err != nil {
+			return fmt.Errorf("getting protoc-gen-router path: %w", err)
+		}
+		ctx.Verbose("  protoc-gen-router path: %q", routerPluginPath)
+		args = append(args,
+			"--plugin=protoc-gen-router="+routerPluginPath,
+			"--router_out="+rootDir,
+		)
 	}
 	if gen.Has(GenWrapper) {
-		args = append(args, "--wrapper_out="+rootDir)
+		wrapperPluginPath, err := toolchain.GetGoToolPath("protoc-gen-wrapper")
+		if err != nil {
+			return fmt.Errorf("getting protoc-gen-wrapper path: %w", err)
+		}
+		ctx.Verbose("  protoc-gen-wrapper path: %q", wrapperPluginPath)
+		args = append(args,
+			"--plugin=protoc-gen-wrapper="+wrapperPluginPath,
+			"--wrapper_out="+rootDir,
+		)
 	}
 
 	args = append(args, files...)

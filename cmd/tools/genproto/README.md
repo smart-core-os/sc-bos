@@ -43,17 +43,6 @@ For JetBrains IDEs (GoLand, IntelliJ IDEA), use the "gen-proto" run configuratio
 
 The following tools must be installed and available on your PATH:
 
-```bash
-# Go protobuf tools
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-
-# Smart Core tools
-go install github.com/smart-core-os/sc-golang/cmd/protoc-gen-router@latest
-go install github.com/smart-core-os/sc-golang/cmd/protoc-gen-wrapper@latest
-```
-
-Also required:
 - `protoc` - Protocol Buffers compiler (https://grpc.io/docs/protoc-installation/)
 - `protoc-gen-grpc-web` - JavaScript/TypeScript gRPC-Web plugin
 - `protoc-gen-js` - JavaScript/TypeScript Protocol Buffers plugin

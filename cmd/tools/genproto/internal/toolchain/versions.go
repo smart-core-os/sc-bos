@@ -7,17 +7,15 @@ import (
 	"strings"
 )
 
-// Expected tool versions for proto code generation.
+// Expected tool versions for non-managed proto code generation tools.
 //
 // To update these versions:
-//  1. Update the tool on your system (e.g. brew upgrade protobuf, go install google.golang.org/protobuf/cmd/protoc-gen-go@latest)
+//  1. Update the tool on your system (e.g. brew upgrade protobuf)
 //  2. Verify the new version by running the tool with --version (e.g., protoc --version)
 //  3. Update the corresponding constant below with the new version number
 //  4. Run the code generator to update generated files with new version headers
 const (
 	ExpectedProtoc           = "32.1"
-	ExpectedProtocGenGo      = "1.36.10"
-	ExpectedProtocGenGoGRPC  = "1.5.1"
 	ExpectedProtocGenJS      = "4.0.1"
 	ExpectedProtocGenGRPCWeb = "2.0.2"
 )
@@ -36,18 +34,6 @@ var tools = []Tool{
 		VersionArg:      "--version",
 		VersionPattern:  regexp.MustCompile(`libprotoc (\d+\.\d+(?:\.\d+)?)`),
 		ExpectedVersion: ExpectedProtoc,
-	},
-	{
-		Name:            "protoc-gen-go",
-		VersionArg:      "--version",
-		VersionPattern:  regexp.MustCompile(`protoc-gen-go v(\d+\.\d+\.\d+)`),
-		ExpectedVersion: ExpectedProtocGenGo,
-	},
-	{
-		Name:            "protoc-gen-go-grpc",
-		VersionArg:      "--version",
-		VersionPattern:  regexp.MustCompile(`protoc-gen-go-grpc (\d+\.\d+\.\d+)`),
-		ExpectedVersion: ExpectedProtocGenGoGRPC,
 	},
 	{
 		Name:            "protoc-gen-js",
