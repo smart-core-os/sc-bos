@@ -679,6 +679,12 @@ func WithDownloadUrlBase(base url.URL) Option {
 	}
 }
 
+func WithHMACKeyGen(keyGen func() ([]byte, error)) Option {
+	return func(s *Server) {
+		s.downloadKey = keyGen
+	}
+}
+
 // readDownloadToken is the default implementation of DownloadTokenReader.
 func readDownloadToken(r *http.Request) (string, error) {
 	return r.URL.Query().Get("ddt"), nil
