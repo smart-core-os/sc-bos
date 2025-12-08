@@ -122,7 +122,7 @@ message ListAirTemperatureHistoryResponse {
 }
 
 
-// MeterHistory provides access to historical records for smartcore.box.MeterApi service resources.
+// MeterHistory provides access to historical records for smartcore.bos.MeterApi service resources.
 service MeterHistory {
   rpc ListMeterReadingHistory(ListMeterReadingHistoryRequest) returns (ListMeterReadingHistoryResponse);
 }

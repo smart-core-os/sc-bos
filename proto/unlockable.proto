@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/time/period.proto";
+
+// UnlockableAPI is the mechanical or technical ability to lock or unlock an resource.
+// It is distinct from the access trait which instead models the ability to use, enter or retrieve a resource.
+// An unlockable resource might be a house (unlockable bank) with many individual, unlockable doors (unlockable).
+// The access trait would then describe the ability to enter the house once the corresponding devices have been mechanically locked or unlocked.
+// In the context of where sc-bos is often deployed, an unlockable bank can be a locker bank with many lockers (unlockable).
+service UnlockableAPI {
+  // Fetches all unlockable banks and their unlockable devices.
+  rpc ListUnlockables(ListUnlockablesRequest) returns (ListUnlockablesResponse);
+  // Unlocks an unlockable.
+  rpc UnlockUnlockable(UnlockUnlockableRequest) returns (UnlockUnlockableResponse);
+  // Locks an unlockable.
+  rpc LockUnlockable(LockUnlockableRequest) returns (LockUnlockableResponse);
+}
+
+
+// UnlockableHistory provides access to usage history for an unlockable resource.
+service UnlockableHistory {
+  // Lists the history of unlockable records for a given unlockable resource.
+  rpc ListUnlockableHistory(ListUnlockableHistoryRequest) returns (ListUnlockableHistoryResponse);
+}
+
+message ListUnlockablesRequest {
+  // The name of the Unlockable trait driver implementation.
+  string name = 1;
+}
+
+message ListUnlockablesResponse {
+  repeated UnlockableBank unlockable_banks = 1;
+}
+
+message ListUnlockableHistoryRequest {
+  string name = 1;
+  smartcore.types.time.Period period = 2;
+  // Fields to fetch relative to the UnlockableRecord type
+  google.protobuf.FieldMask read_mask = 3;
+  // The maximum number of records to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 4;
+  // A page token, received from a previous `ListUnlockableHistoryResponse` call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 5;
+  // Specify the order of the returned records.
+  // The default is `record_time asc` - aka oldest record first.
+  // The format is `field_name [asc|desc]`, with asc being the default.
+  // Only `record_time` is supported.
+  string order_by = 6;
+}
+
+message ListUnlockableHistoryResponse {
+  repeated UnlockableRecord unlockable_records = 1;
+  // A token to retrieve the next page of results.
+  // Pass this value in the `page_token` field of a subsequent `ListUnlockableHistoryRequest` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+  // If non-zero this is the total number of records matched by the query.
+  // This may be an estimate.
+  int32 total_size = 3;
+}
+
+message UnlockableRecord {
+  Unlockable unlockable = 1;
+  google.protobuf.Timestamp record_time = 2;
+}
+
+
+// An Unlockable represents a single lockable/unlockable resource, like a locker or door.
+message Unlockable {
+  // Unique identifier for this unlockable native to the subsystem.
+  string id = 1;
+  string title = 2;
+  string unlockable_bank_id = 3;
+
+  // The number of allocations for this unlockable.
+  int32 allocations = 4;
+  // Is the lockable functionality currently usable.
+  bool is_usable = 5;
+  // The last time this unlockable was updated.
+  google.protobuf.Timestamp last_updated = 6;
+  bool is_locked = 7;
+
+  optional string location_id = 10;
+  optional bool shared_to_user = 11;
+  optional bool is_shared = 12;
+  optional bool is_shareable = 13;
+  optional string shared_by = 14;
+  // The physical pin code for this unlockable, if applicable.
+  optional string physical_pin = 15;
+  optional google.protobuf.Timestamp expires_date_time = 16;
+  optional google.protobuf.Timestamp start_date_time = 17;
+}
+
+// An UnlockableBank represents a collection of unlockable resources, like a locker bank or a building with doors.
+message UnlockableBank {
+  // The unique identifier for this unlockable bank native to the subsystem.
+  string id = 1;
+  string title = 2;
+  string location_id = 3;
+  repeated Unlockable unlockables = 4;
+}
+
+message UnlockUnlockableRequest {
+  string name = 1;
+  // The id of the unlockable to unlock.
+  string unlockable_id = 2;
+  // The id of the user requesting the unlock.
+  string user_id = 3;
+  // The time in seconds that the unlockable should remain open.
+  int32 open_time_seconds = 4;
+}
+
+message UnlockUnlockableResponse {
+  // The id of the unlockable that was unlocked.
+  string unlockable_id = 1;
+}
+
+message LockUnlockableRequest {
+  string name = 1;
+  // The id of the unlockable to lock.
+  string unlockable_id = 2;
+  // The id of the user requesting the lock.
+  string user_id = 3;
+}
+
+message LockUnlockableResponse {
+  // The id of the unlockable that was locked.
+  string unlockable_id = 1;
+}
