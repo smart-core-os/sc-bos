@@ -9,6 +9,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/generator"
 	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/goproto"
+	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/toolchain"
 	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/uiproto"
 )
 
@@ -47,6 +48,7 @@ func main() {
 	flag.Parse()
 
 	allSteps := []generator.Step{
+		toolchain.Step,
 		goproto.Step,
 		uiproto.Step,
 	}

@@ -56,4 +56,4 @@ go install github.com/smart-core-os/sc-golang/cmd/protoc-gen-wrapper@latest
 Also required:
 - `protoc` - Protocol Buffers compiler (https://grpc.io/docs/protoc-installation/)
 - `protoc-gen-grpc-web` - JavaScript/TypeScript gRPC-Web plugin
-- `yarn` - JavaScript package manager
+- `protoc-gen-js` - JavaScript/TypeScript Protocol Buffers plugin
