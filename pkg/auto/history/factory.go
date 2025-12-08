@@ -21,6 +21,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/unlockablepb"
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/history/apistore"
 	"github.com/smart-core-os/sc-bos/pkg/history/boltstore"
@@ -186,6 +187,9 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 	case trait.EnterLeaveSensor:
 		serverClient = gen.WrapEnterLeaveHistory(historypb.NewEnterLeaveSensorServer(store))
 		collect = a.collectEnterLeaveEventChanges
+	case unlockablepb.TraitName:
+		serverClient = gen.WrapUnlockableAPI(historypb.NewUnlockableServer(store))
+		collect = a.collectLockerChanges
 	case meter.TraitName:
 		serverClient = gen.WrapMeterHistory(historypb.NewMeterServer(store))
 		collect = a.collectMeterReadingChanges
