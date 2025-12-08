@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -283,6 +284,19 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	} else {
 		logger.Error("failed to determine external http endpoint - download URLs unavailable", zap.Error(err))
 	}
+
+	if config.Devices != nil && config.Devices.DownloadHMACKeyFile != "" {
+		hmacKey, err := os.ReadFile(config.Devices.DownloadHMACKeyFile)
+		if err != nil {
+			logger.Warn("failed to read download HMAC key file, using random HMAC key generator", zap.Error(err))
+		} else {
+			hmacKey = bytes.TrimSpace(hmacKey)
+			devicesApiOpts = append(devicesApiOpts, devices.WithHMACKeyGen(func() ([]byte, error) {
+				return hmacKey, nil
+			}))
+		}
+	}
+
 	devicesApi := devices.NewServer(rootNode, devicesApiOpts...)
 	devicesApi.Register(grpcServer)
 
