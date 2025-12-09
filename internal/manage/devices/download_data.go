@@ -511,6 +511,6 @@ func openClosePositionsToRow(d *traits.OpenClosePositions) map[string]string {
 
 func soundLevelToRow(d *gen.SoundLevel) map[string]string {
 	return map[string]string{
-		"sound.pressurelevel": fmt.Sprintf("%.1f", d.GetSoundPressureLevel()),
+		"sound.soundpressurelevel": fmt.Sprintf("%.1f", d.GetSoundPressureLevel()),
 	}
 }
