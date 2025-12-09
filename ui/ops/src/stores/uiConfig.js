@@ -64,6 +64,11 @@ export const useUiConfigStore = defineStore('uiConfig', () => {
     return a ?? b ?? toValue(def);
   }
 
+  const getEnvOrDefault = (env, def) => {
+    const ev = import.meta.env[env];
+    return ev ? ev : def;
+  }
+
   return {
     configUrl,
     loadConfig,
@@ -73,6 +78,7 @@ export const useUiConfigStore = defineStore('uiConfig', () => {
     getOrDefault: configGetOrDefault, // alias for configGetOrDefault
     configGetOrDefault,
     experimentsGetOrDefault,
+    getEnvOrDefault,
     ...useSiteMap(_config),
     ...useTheme(_config),
     auth: useAuth(_config)
