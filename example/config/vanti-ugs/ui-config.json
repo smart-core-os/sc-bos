@@ -1044,8 +1044,9 @@
                   "id": "Weather",
                   "component": "builtin:general/OpenWeatherMap",
                   "props": {
-                    "apiKey": "TODO",
+                    "apiKeyEnvVar": "VITE_OPENWEATHERMAP_API_KEY",
                     "city": "Birmingham",
+                    "country": "GB",
                     "hideToolbar": true,
                     "color": "transparent"
                   }

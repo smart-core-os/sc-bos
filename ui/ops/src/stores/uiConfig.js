@@ -11,7 +11,7 @@ export const useUiConfigStore = defineStore('uiConfig', () => {
   const configPromise = new Promise((resolve) => _configResolve = resolve);
 
   /** @type {import('vue').ComputedRef<string>} */
-  const configUrl = computed(() => import.meta.env.VITE_UI_CONFIG_URL || '/__/scos/ui-config.json');
+  const configUrl = computed(() => getEnvOrDefault('VITE_UI_CONFIG_URL', '/__/scos/ui-config.json'));
 
   /**
    * Loads the config from the server
@@ -55,6 +55,7 @@ export const useUiConfigStore = defineStore('uiConfig', () => {
    */
   const experimentsGetOrDefault = (path, def) => getOrDefault(path, def, _config.value?.experiments, _defaultConfig?.experiments)
 
+
   const getOrDefault = (path, def, a, b) => {
     const parts = path.split('.');
     for (let i = 0; i < parts.length; i++) {
@@ -64,6 +65,13 @@ export const useUiConfigStore = defineStore('uiConfig', () => {
     return a ?? b ?? toValue(def);
   }
 
+  /**
+   * Gets the value of an environment variable or returns the default if not set.
+   *
+   * @param {string} env
+   * @param {string} def
+   * @return {string}
+   */
   const getEnvOrDefault = (env, def) => {
     const ev = import.meta.env[env];
     return ev ? ev : def;

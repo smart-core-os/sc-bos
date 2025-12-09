@@ -39,12 +39,13 @@
 
 <script setup>
 import {MINUTE} from '@/components/now.js';
+import {useUiConfigStore} from '@/stores/uiConfig.js';
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue';
 import OwmIcon from './open-weather-logo.svg'
 
 // Props
 const props = defineProps({
-  apiKey: {
+  apiKeyEnvVar: {
     type: String,
     required: true
   },
@@ -80,13 +81,18 @@ const weatherIconUrl = computed(() => {
   return `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 });
 
+const apiKey = computed(() => {
+  const {getEnvOrDefault} = useUiConfigStore();
+  return getEnvOrDefault(props.apiKeyEnvVar, '');
+});
+
 const fetchWeather = async () => {
   loading.value = !weatherData.value;
   try {
-    let url = `https://api.openweathermap.org/data/2.5/weather?q=${props.city}&units=metric&appid=${props.apiKey}`
+    let url = `https://api.openweathermap.org/data/2.5/weather?q=${props.city}&units=metric&appid=${apiKey.value}`
 
     if (props.country !== '') {
-      url = `https://api.openweathermap.org/data/2.5/weather?q=${props.city},${props.country}&units=metric&appid=${props.apiKey}`
+      url = `https://api.openweathermap.org/data/2.5/weather?q=${props.city},${props.country}&units=metric&appid=${apiKey.value}`
     }
 
     const response = await fetch(url);
