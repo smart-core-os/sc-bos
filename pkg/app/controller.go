@@ -27,6 +27,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors"
+	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors/protopkg"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/internal/util/pki/expire"
@@ -237,6 +238,16 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsGRPCClientConfig)))
 
 	var grpcOpts []grpc.ServerOption
+
+	// Enable forward compatibility while we transition to versioned gRPC APIs.
+	// This allows new clients to communicate with old servers as part of a rolling upgrade.
+	// Must be done before the interceptors.CorrectStreamInfo call so the /service/methos is correct.
+	migrationInterceptor := protopkg.NewNewToOldInterceptor()
+	grpcOpts = append(grpcOpts,
+		grpc.ChainUnaryInterceptor(migrationInterceptor.UnaryInterceptor()),
+		grpc.ChainStreamInterceptor(migrationInterceptor.StreamInterceptor()),
+	)
+
 	grpcOpts = append(grpcOpts,
 		grpc.Creds(credentials.NewTLS(tlsGRPCServerConfig)),
 		grpc.ChainStreamInterceptor(interceptors.CorrectStreamInfo(rootNode)),
