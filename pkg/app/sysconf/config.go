@@ -74,6 +74,8 @@ type Config struct {
 	CertConfig    *Certs                     `json:"certs,omitempty"`
 	Cors          http.CorsConfig            `json:"cors,omitempty"`
 
+	Devices *Devices `json:"devices,omitempty"`
+
 	DisablePprof bool `json:"disablePprof"` // don't register net/http/pprof handlers
 
 	Health *Health `json:"health,omitempty"`
@@ -89,6 +91,14 @@ type Config struct {
 	AutoFactories   map[string]auto.Factory   `json:"-"` // keyed by automation type
 	SystemFactories map[string]system.Factory `json:"-"` // keyed by system type
 	ZoneFactories   map[string]zone.Factory   `json:"-"` // keyed by zone type
+}
+
+// Devices configures the devices API server for functionality such as handling Download URLs.
+type Devices struct {
+	// DownloadHMACKeyFile is a path to a file that contains the HMAC key used to sign and verify download requests.
+	// This key can be shared securely between nodes in a SmartCore cohort to allow re-use of cryptographic signatures.
+	// If not specified, the app.Controller will use a HMAC key that is randomly generated on each startup.
+	DownloadHMACKeyFile string `json:"downloadHMACKeyFile,omitempty"`
 }
 
 // DriverConfigBlocks returns a map of driver type to a block list that describes the config for that driver.

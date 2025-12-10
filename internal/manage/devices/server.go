@@ -31,10 +31,10 @@ type Server struct {
 	downloadUrlBase      url.URL // defaults to /dl/devices
 	downloadTokenWriter  DownloadTokenWriter
 	downloadTokenReader  DownloadTokenReader
-	downloadKey          func() ([]byte, error)
-	downloadExpiry       time.Duration // defaults to 1 hour
-	downloadExpiryLeeway time.Duration // defaults to 1 minute
-	downloadPageTimeout  time.Duration // defaults to 10 seconds, applies to get and history cursor calls
+	downloadKey          func() ([]byte, error) // initialise using WithHMACKeyGen if keys need to persist between nodes across the SmartCore cohort
+	downloadExpiry       time.Duration          // defaults to 1 hour
+	downloadExpiryLeeway time.Duration          // defaults to 1 minute
+	downloadPageTimeout  time.Duration          // defaults to 10 seconds, applies to get and history cursor calls
 }
 
 // Collection contains a list of devices.
@@ -56,7 +56,7 @@ func NewServer(m Model, opts ...Option) *Server {
 		downloadUrlBase:      url.URL{Path: "/dl/devices"},
 		downloadExpiry:       time.Hour,
 		downloadExpiryLeeway: time.Minute,
-		downloadKey:          newHMACKeyGen(64), // todo: replace with something that works between nodes
+		downloadKey:          newHMACKeyGen(64),
 		downloadPageTimeout:  10 * time.Second,
 	}
 	for _, opt := range opts {
