@@ -102,12 +102,7 @@ func (e *enterLeave) PullOccupancy(request *traits.PullOccupancyRequest, server 
 						res, err := stream.Recv()
 						if err != nil {
 							e.storeErr(name, err)
-
-							if e.groupErrored() {
-								return e.mergeErrors()
-							}
-
-							continue
+							return err
 						}
 						e.removeErr(name)
 
