@@ -2,12 +2,11 @@
   <configuration default="false" name="gen-proto" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="sc-bos" />
     <working_directory value="$PROJECT_DIR$" />
+    <parameters value="-v" />
     <kind value="PACKAGE" />
     <package value="github.com/smart-core-os/sc-bos/cmd/tools/genproto" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/cmd/tools/genproto/main.go" />
-    <output_directory value="$PROJECT_DIR$/build" />
-    <parameters value="-v" />
     <method v="2" />
   </configuration>
 </component>
