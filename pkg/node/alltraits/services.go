@@ -8,6 +8,7 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/anprcamera"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/button"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/dalipb"
@@ -58,6 +59,7 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	trait.Vending:          {traits.VendingApi_ServiceDesc, traits.VendingInfo_ServiceDesc},
 
 	// sc-bos private traits
+	allocationpb.TraitName:     {gen.AllocationApi_ServiceDesc, gen.AllocationHistory_ServiceDesc},
 	accesspb.TraitName:         {gen.AccessApi_ServiceDesc},
 	anprcamera.TraitName:       {gen.AnprCameraApi_ServiceDesc},
 	button.TraitName:           {gen.ButtonApi_ServiceDesc},
