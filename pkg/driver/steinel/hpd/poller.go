@@ -8,7 +8,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 )
 
@@ -53,11 +52,9 @@ func (p *poller) startPoll(ctx context.Context) {
 func (p *poller) process(ctx context.Context) {
 	response := SensorResponse{}
 	if err := doGetRequest(p.client, &response, "sensor"); err != nil {
-		h := &gen.HealthCheck_Reliability{}
+		h := noResponse
 		var unsupportedTypeErr *json.UnmarshalTypeError
 		if errors.Is(err, unsupportedTypeErr) {
-			h = noResponse
-		} else {
 			h = badResponse
 		}
 		p.faultCheck.UpdateReliability(ctx, h)
