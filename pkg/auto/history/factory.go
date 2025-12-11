@@ -16,6 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
@@ -174,6 +175,9 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 	payloads := make(chan []byte)
 	var collect collector
 	switch cfg.Source.Trait {
+	case allocationpb.TraitName:
+		serverClient = gen.WrapAllocationHistory(historypb.NewAllocationServer(store))
+		collect = a.collectAllocationChanges
 	case trait.AirQualitySensor:
 		serverClient = gen.WrapAirQualitySensorHistory(historypb.NewAirQualitySensorServer(store))
 		collect = a.collectAirQualityChanges
