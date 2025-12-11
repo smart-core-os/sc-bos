@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd/config"
@@ -35,8 +36,8 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 
 type Driver struct {
 	*service.Service[config.Root]
-	logger    *zap.Logger
 	announcer *node.ReplaceAnnouncer
+	logger    *zap.Logger
 
 	client *Client
 
@@ -49,9 +50,7 @@ type Driver struct {
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer := d.announcer.Replace(ctx)
-	if cfg.Metadata != nil {
-		announcer.Announce(cfg.Name, node.HasMetadata(cfg.Metadata))
-	}
+	grp, ctx := errgroup.WithContext(ctx)
 
 	p, err := cfg.LoadPassword()
 	if err != nil {
@@ -64,20 +63,29 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	d.client = NewInsecureClient(cfg.IpAddress, p)
 
 	d.airQualitySensor = NewAirQualitySensor(d.client, d.logger.Named("AirQualityValue").With(zap.String("ipAddress", cfg.IpAddress)))
-	announcer.Announce(cfg.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(d.airQualitySensor))))
-
 	d.occupancy = NewOccupancySensor(d.client, d.logger.Named("Occupancy").With(zap.String("ipAddress", cfg.IpAddress)))
-	announcer.Announce(cfg.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(d.occupancy))))
-
 	d.temperature = NewTemperatureSensor(d.client, d.logger.Named("Temperature").With(zap.String("ipAddress", cfg.IpAddress)))
-	announcer.Announce(cfg.Name, node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(d.temperature))))
-
 	d.udmiServiceServer = NewUdmiServiceServer(d.logger.Named("UdmiServiceServer"), d.airQualitySensor.AirQualityValue, d.occupancy.OccupancyValue, d.temperature.TemperatureValue, cfg.UDMITopicPrefix)
-	announcer.Announce(cfg.Name, node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(d.udmiServiceServer))))
+
+	announcer.Announce(cfg.Name,
+		node.HasMetadata(cfg.Metadata),
+		node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(d.airQualitySensor))),
+		node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(d.occupancy))),
+		node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(d.temperature))),
+		node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(d.udmiServiceServer))),
+	)
 
 	poller := NewPoller(d.client, 0, d.logger.Named("SteinelPoller").With(zap.String("ipAddress", cfg.IpAddress)), d.airQualitySensor, d.occupancy, d.temperature)
 
-	go poller.startPoll(ctx)
+	grp.Go(func() error {
+		poller.startPoll(ctx)
+		return nil
+	})
+
+	go func() {
+		_ = grp.Wait() // won't error in current implementation
+		d.client.Client.CloseIdleConnections()
+	}()
 
 	return nil
 }
