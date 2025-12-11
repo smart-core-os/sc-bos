@@ -1,0 +1,34 @@
+This test verifies that JSDoc imports are logged when they cannot be replaced automatically.
+This happens when no HistoryClient is found to determine the trait name.
+expected_changes: 0
+
+-- input/ui/ops/test.js --
+import {SomeOtherClient} from '@smart-core-os/sc-bos-ui-gen/proto/other_pb';
+
+/**
+ * Updates segments with the data found in records.
+ * Modified segments will be compacted.
+ *
+ * @param {import('@smart-core-os/sc-bos-ui-gen/proto/history_pb').ElectricDemandRecord.AsObject[]} records - in descending order
+ * @param {Date[]} edges - in ascending order
+ */
+export function updateSegments(records, edges) {
+  // implementation
+}
+/** @type {Record<string, import('@smart-core-os/sc-bos-ui-gen/proto/history_pb').ElectricDemandRecord.AsObject>} */
+const recordMap = {};
+-- output/ui/ops/test.js --
+import {SomeOtherClient} from '@smart-core-os/sc-bos-ui-gen/proto/other_pb';
+
+/**
+ * Updates segments with the data found in records.
+ * Modified segments will be compacted.
+ *
+ * @param {import('@smart-core-os/sc-bos-ui-gen/proto/history_pb').ElectricDemandRecord.AsObject[]} records - in descending order
+ * @param {Date[]} edges - in ascending order
+ */
+export function updateSegments(records, edges) {
+  // implementation
+}
+/** @type {Record<string, import('@smart-core-os/sc-bos-ui-gen/proto/history_pb').ElectricDemandRecord.AsObject>} */
+const recordMap = {};

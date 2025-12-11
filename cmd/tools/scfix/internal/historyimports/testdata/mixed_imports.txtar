@@ -1,0 +1,30 @@
+This test verifies mixed single and multi-line imports in the same file.
+expected_changes: 2
+
+-- input/ui/ops/test.js --
+import {StatusApiPromiseClient, StatusHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/status_grpc_web_pb';
+import {
+  CurrentStatus,
+  ListCurrentStatusHistoryRequest,
+  StatusLog,
+  GetCurrentStatusRequest
+} from '@smart-core-os/sc-bos-ui-gen/proto/status_pb';
+
+export function getStatus() {
+  // implementation
+}
+-- output/ui/ops/test.js --
+import {StatusApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/status_grpc_web_pb';
+import {StatusHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/status_history_grpc_web_pb';
+import {
+  CurrentStatus,
+  StatusLog,
+  GetCurrentStatusRequest,
+} from '@smart-core-os/sc-bos-ui-gen/proto/status_pb';
+import {
+  ListCurrentStatusHistoryRequest,
+} from '@smart-core-os/sc-bos-ui-gen/proto/status_history_pb';
+
+export function getStatus() {
+  // implementation
+}

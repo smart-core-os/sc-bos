@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/fixer"
+	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/historyimports"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/optclients"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/wrap"
 )
@@ -22,6 +23,7 @@ type fix struct {
 // allFixes contains all available fixes and their default enabled state.
 var allFixes = []fix{
 	{Fix: optclients.Fix, Enabled: true},
+	{Fix: historyimports.Fix, Enabled: false},
 	{Fix: wrap.Fix, Enabled: false},
 }
 

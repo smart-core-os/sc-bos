@@ -1,0 +1,30 @@
+This test verifies that imports with .js extensions are handled correctly.
+expected_changes: 2
+
+-- input/ui/ops/test.js --
+import {StatusApiPromiseClient, StatusHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/status_grpc_web_pb.js';
+import {
+  CurrentStatus,
+  ListCurrentStatusHistoryRequest,
+  StatusLog,
+  GetCurrentStatusRequest
+} from '@smart-core-os/sc-bos-ui-gen/proto/status_pb.js';
+
+export function getStatus() {
+  // implementation
+}
+-- output/ui/ops/test.js --
+import {StatusApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/status_grpc_web_pb.js';
+import {StatusHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/status_history_grpc_web_pb.js';
+import {
+  CurrentStatus,
+  StatusLog,
+  GetCurrentStatusRequest,
+} from '@smart-core-os/sc-bos-ui-gen/proto/status_pb.js';
+import {
+  ListCurrentStatusHistoryRequest,
+} from '@smart-core-os/sc-bos-ui-gen/proto/status_history_pb.js';
+
+export function getStatus() {
+  // implementation
+}
