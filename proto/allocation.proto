@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/time/period.proto";
+import "actor.proto";
+
+// AllocationApi characterizes the availability of a resource that may be allocated to an actor for a period of time.
+// Examples include meeting rooms, desks, parking spots, or shared equipment such as lockers.
+service AllocationApi {
+  // Get the current allocation for a resource.
+  rpc GetAllocation(GetAllocationRequest) returns (Allocation);
+  // Create or update an allocation for a resource.
+  rpc UpdateAllocation(UpdateAllocationRequest) returns (Allocation);
+  // Subscribe to changes in allocations for a resource.
+  rpc PullAllocations(PullAllocationsRequest) returns (stream PullAllocationsResponse);
+  // Lists all allocatable resources and their current allocations.
+  rpc ListAllocatableResources(ListAllocatableResourcesRequest) returns (ListAllocatableResourcesResponse);
+}
+
+service AllocationHistory {
+  // Lists the history of allocations for a given resource.
+  rpc ListAllocationHistory(ListAllocationHistoryRequest) returns (ListAllocationHistoryResponse);
+}
+
+// Allocation represents the allocation of a resource to an actor for a specific period of time.
+message Allocation {
+  enum Assignment {
+    // The assignment status is unspecified.
+    ASSIGNMENT_UNSPECIFIED = 0;
+    // The resource is unassigned and available for allocation.
+    UNASSIGNED = 1;
+    // The resource is assigned to only a single actor.
+    ASSIGNED = 2;
+    // The resource is reserved to only a single actor at a future point in time.
+    RESERVED = 3;
+    // The resource is allocated to more than one actors (e.g. a shared resource).
+    ALLOCATED = 4;
+    // The resource is booked but not assigned to any actor (e.g. a ticketed resource).
+    BOOKED = 5;
+  }
+  // The unique identifier for the allocation native to the subsystem managing it.
+  // Output only.
+  string id = 1;
+  // The assignment status of the allocation.
+  Assignment assignment = 2;
+  // The actor to whom the resource is allocated.
+  optional Actor actor = 3;
+  // The time period for which the resource is allocated.
+  optional smartcore.types.time.Period period = 4;
+  // The id of the group this allocation belongs to.
+  // For instance a locker bank, parking lot, or desk area.
+  optional string group_id = 5;
+}
+
+message GetAllocationRequest {
+  // The name of the subsystem device or headend.
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  // The id of the allocation to retrieve natively from the subsystem.
+  string allocation_id = 3;
+}
+
+message UpdateAllocationRequest {
+  // The name of the subsystem device or headend.
+  string name = 1;
+  // The allocation to create or update.
+  Allocation allocation = 2;
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message PullAllocationsRequest {
+  // The name of the subsystem device or headend.
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+  // The id of the allocation to subscribe to natively from the subsystem.
+  string allocation_id = 4;
+}
+
+message PullAllocationsResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    Allocation allocation = 3;
+  }
+}
+
+message ListAllocatableResourcesRequest {
+  // The name of the subsystem device or headend.
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message ListAllocatableResourcesResponse {
+  repeated Allocation allocations = 1;
+}
+
+message ListAllocationHistoryRequest {
+  // The name of the subsystem device or headend.
+  string name = 1;
+  smartcore.types.time.Period period = 2;
+  // Fields to fetch relative to the Allocation type
+  google.protobuf.FieldMask read_mask = 3;
+  // The maximum number of devices to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 4;
+  // A page token, received from a previous `ListAllocationHistoryRequest` call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 5;
+  // Specify the order of the returned records.
+  // The default is `record_time asc` - aka oldest record first.
+  // The format is `field_name [asc|desc]`, with asc being the default.
+  // Only `record_time` is supported.
+  string order_by = 6;
+}
+
+message AllocationRecord {
+  Allocation allocation = 1;
+  google.protobuf.Timestamp record_time = 2;
+}
+
+message ListAllocationHistoryResponse {
+  repeated AllocationRecord allocation_records = 1;
+  // A token to retrieve the next page of results.
+  // Pass this value in the `page_token` field of a subsequent `ListAllocationHistoryRequest` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+  // If non-zero this is the total number of records matched by the query.
+  // This may be an estimate.
+  int32 total_size = 3;
+}

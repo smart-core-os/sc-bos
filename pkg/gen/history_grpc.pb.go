@@ -276,7 +276,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// MeterHistory provides access to historical records for smartcore.box.MeterApi service resources.
+// MeterHistory provides access to historical records for smartcore.bos.MeterApi service resources.
 type MeterHistoryClient interface {
 	ListMeterReadingHistory(ctx context.Context, in *ListMeterReadingHistoryRequest, opts ...grpc.CallOption) (*ListMeterReadingHistoryResponse, error)
 }
@@ -303,7 +303,7 @@ func (c *meterHistoryClient) ListMeterReadingHistory(ctx context.Context, in *Li
 // All implementations must embed UnimplementedMeterHistoryServer
 // for forward compatibility.
 //
-// MeterHistory provides access to historical records for smartcore.box.MeterApi service resources.
+// MeterHistory provides access to historical records for smartcore.bos.MeterApi service resources.
 type MeterHistoryServer interface {
 	ListMeterReadingHistory(context.Context, *ListMeterReadingHistoryRequest) (*ListMeterReadingHistoryResponse, error)
 	mustEmbedUnimplementedMeterHistoryServer()
