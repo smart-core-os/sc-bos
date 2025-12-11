@@ -36,7 +36,7 @@ func Test_PullExportMessages(t *testing.T) {
 		{
 			name: "occupancy",
 			createClient: func() gen.UdmiServiceClient {
-				server := NewUdmiServiceServer(nil, e, o, "prefix")
+				server := newUdmiServiceServer(nil, e, o, "prefix")
 				return gen.WrapUdmiService(server)
 			},
 			set: func() {
@@ -54,7 +54,7 @@ func Test_PullExportMessages(t *testing.T) {
 		{
 			name: "enterleave",
 			createClient: func() gen.UdmiServiceClient {
-				server := NewUdmiServiceServer(nil, e, o, "prefix")
+				server := newUdmiServiceServer(nil, e, o, "prefix")
 				return gen.WrapUdmiService(server)
 			},
 			set: func() {
@@ -72,7 +72,7 @@ func Test_PullExportMessages(t *testing.T) {
 		{
 			name: "enterleave_occupancy_nil",
 			createClient: func() gen.UdmiServiceClient {
-				server := NewUdmiServiceServer(nil, e, nil, "prefix")
+				server := newUdmiServiceServer(nil, e, nil, "prefix")
 				return gen.WrapUdmiService(server)
 			},
 			set: func() {
@@ -90,7 +90,7 @@ func Test_PullExportMessages(t *testing.T) {
 		{
 			name: "occupancy_enterleave_nil",
 			createClient: func() gen.UdmiServiceClient {
-				server := NewUdmiServiceServer(nil, nil, o, "prefix")
+				server := newUdmiServiceServer(nil, nil, o, "prefix")
 				return gen.WrapUdmiService(server)
 			},
 			set: func() {

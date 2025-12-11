@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type Client struct {
+type client struct {
 	// BaseURL is the root of the API.
 	// e.g. https://1.2.3.4/api/v5
 	BaseURL  url.URL
@@ -23,9 +23,9 @@ type Client struct {
 	Password string
 }
 
-// NewInsecureClient creates a Client that connects over HTTPS but does not verify the server certificate.
-func NewInsecureClient(host string, username string, password string) *Client {
-	return &Client{
+// newInsecureClient creates a client that connects over HTTPS but does not verify the server certificate.
+func newInsecureClient(host string, username string, password string) *client {
+	return &client{
 		BaseURL: url.URL{
 			Scheme: "https",
 			Host:   host,
@@ -43,7 +43,7 @@ func NewInsecureClient(host string, username string, password string) *Client {
 	}
 }
 
-func (c *Client) newRequest(method string, endpoint string) *http.Request {
+func (c *client) newRequest(method string, endpoint string) *http.Request {
 	req := &http.Request{
 		Method: method,
 		URL:    c.BaseURL.JoinPath(endpoint),
@@ -88,7 +88,7 @@ type DeviceInfo struct {
 	HWID      string `json:"hw_id"`
 }
 
-func GetDeviceInfo(conn *Client) (DeviceInfo, error) {
+func getDeviceInfo(conn *client) (DeviceInfo, error) {
 	req := conn.newRequest("GET", "/device/info")
 	res, err := conn.Client.Do(req)
 	if err != nil {
@@ -129,7 +129,7 @@ type Count struct {
 	Value int    `json:"value"`
 }
 
-func doGet(conn *Client, target any, endpoint string) error {
+func doGet(conn *client, target any, endpoint string) error {
 	req := conn.newRequest("GET", endpoint)
 	res, err := conn.Client.Do(req)
 	if err != nil {
@@ -139,7 +139,7 @@ func doGet(conn *Client, target any, endpoint string) error {
 	return err
 }
 
-func doPost(conn *Client, target any, endpoint string, body any) error {
+func doPost(conn *client, target any, endpoint string, body any) error {
 	req := conn.newRequest("POST", endpoint)
 	if body != nil {
 		req.Header.Add("Content-Type", "application/json")
@@ -157,7 +157,7 @@ func doPost(conn *Client, target any, endpoint string, body any) error {
 	return err
 }
 
-func GetLiveLogics(conn *Client, multiSensor bool) (res LiveLogicsResponse, err error) {
+func getLiveLogics(conn *client, multiSensor bool) (res LiveLogicsResponse, err error) {
 	if multiSensor {
 		err = doGet(conn, &res, "/multisensor/data/live/logics")
 	} else {
@@ -166,7 +166,7 @@ func GetLiveLogics(conn *Client, multiSensor bool) (res LiveLogicsResponse, err 
 	return
 }
 
-func GetLiveLogic(conn *Client, multiSensor bool, id int) (res LiveLogicResponse, err error) {
+func getLiveLogic(conn *client, multiSensor bool, id int) (res LiveLogicResponse, err error) {
 	if multiSensor {
 		err = doGet(conn, &res, fmt.Sprintf("/multisensor/data/live/logics/%d", id))
 	} else {
@@ -175,7 +175,7 @@ func GetLiveLogic(conn *Client, multiSensor bool, id int) (res LiveLogicResponse
 	return
 }
 
-func ResetLiveLogic(conn *Client, multiSensor bool, id int) error {
+func resetLiveLogic(conn *client, multiSensor bool, id int) error {
 	var res []byte
 	if multiSensor {
 		return doPost(conn, &res, fmt.Sprintf("/multisensor/data/live/logics/%d/reset", id), nil)

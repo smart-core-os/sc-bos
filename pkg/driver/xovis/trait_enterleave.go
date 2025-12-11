@@ -18,7 +18,7 @@ import (
 
 type enterLeaveServer struct {
 	traits.UnimplementedEnterLeaveSensorApiServer
-	client      *Client
+	client      *client
 	logicID     int
 	multiSensor bool
 	bus         *minibus.Bus[PushData]
@@ -31,7 +31,7 @@ type enterLeaveServer struct {
 }
 
 func (e *enterLeaveServer) GetEnterLeaveEvent(ctx context.Context, request *traits.GetEnterLeaveEventRequest) (*traits.EnterLeaveEvent, error) {
-	res, err := GetLiveLogic(e.client, e.multiSensor, e.logicID)
+	res, err := getLiveLogic(e.client, e.multiSensor, e.logicID)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
@@ -57,12 +57,12 @@ func (e *enterLeaveServer) GetEnterLeaveEvent(ctx context.Context, request *trai
 }
 
 func (e *enterLeaveServer) ResetEnterLeaveTotals(ctx context.Context, request *traits.ResetEnterLeaveTotalsRequest) (*traits.ResetEnterLeaveTotalsResponse, error) {
-	return nil, ResetLiveLogic(e.client, e.multiSensor, e.logicID)
+	return nil, resetLiveLogic(e.client, e.multiSensor, e.logicID)
 }
 
 func (e *enterLeaveServer) PullEnterLeaveEvents(request *traits.PullEnterLeaveEventsRequest, server traits.EnterLeaveSensorApi_PullEnterLeaveEventsServer) error {
 	// get the initial value of the logics so we can compare later
-	res, err := GetLiveLogic(e.client, e.multiSensor, e.logicID)
+	res, err := getLiveLogic(e.client, e.multiSensor, e.logicID)
 	if err != nil {
 		return status.Error(codes.Unavailable, err.Error())
 	}
@@ -223,7 +223,7 @@ func (e *enterLeaveServer) doPollInit() {
 	e.pollInit.Do(func() {
 		e.polls = &minibus.Bus[LiveLogicResponse]{}
 		e.poll = task.Poll(func(ctx context.Context) {
-			res, err := GetLiveLogic(e.client, e.multiSensor, e.logicID)
+			res, err := getLiveLogic(e.client, e.multiSensor, e.logicID)
 			if err != nil {
 				// todo: log error
 				return

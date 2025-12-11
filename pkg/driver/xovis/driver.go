@@ -9,14 +9,16 @@ import (
 	"mime"
 	"net"
 	"net/http"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/driver/xovis/config"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -34,34 +36,37 @@ var Factory driver.Factory = factory{}
 type factory struct{}
 
 func (f factory) New(services driver.Services) service.Lifecycle {
-	services.Logger = services.Logger.Named(DriverName)
+
 	d := &Driver{
-		Services:    services,
+		health:      services.Health,
+		httpMux:     services.HTTPMux,
+		logger:      services.Logger.Named(DriverName),
 		pushDataBus: &minibus.Bus[PushData]{},
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
-		service.WithParser(ParseConfig),
+		service.WithParser(config.ParseConfig),
 	)
 	return d
 }
 
 type Driver struct {
-	*service.Service[DriverConfig]
-	driver.Services
+	*service.Service[config.Root]
+	announcer   *node.ReplaceAnnouncer
+	health      *healthpb.Checks
+	httpMux     *http.ServeMux
+	logger      *zap.Logger
 	pushDataBus *minibus.Bus[PushData]
 
-	m                 sync.Mutex
-	config            DriverConfig
-	client            *Client
-	server            *http.Server // only used if httpPort is configured for the webhook
-	unannounceDevices []node.Undo
-	udmiServers       []*UdmiServiceServer
+	config      config.Root
+	client      *client
+	server      *http.Server // only used if httpPort is configured for the webhook
+	udmiServers []*udmiServiceServer
 }
 
-func (d *Driver) applyConfig(_ context.Context, conf DriverConfig) error {
-	d.m.Lock()
-	defer d.m.Unlock()
+func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
+	announcer := d.announcer.Replace(ctx)
+	grp, ctx := errgroup.WithContext(ctx)
 
 	// A route can't be removed from an HTTP ServeMux, so if it's been changed or removed then we can't support the
 	// new configuration. This is likely to be rare in practice. Adding a route is fine.
@@ -81,18 +86,12 @@ func (d *Driver) applyConfig(_ context.Context, conf DriverConfig) error {
 	if err != nil {
 		return err
 	}
-	d.client = NewInsecureClient(conf.Host, conf.Username, pass)
-	// unannounce any devices left over from a previous configuration
-	for _, unannounce := range d.unannounceDevices {
-		unannounce()
-	}
-	d.unannounceDevices = nil
+	d.client = newInsecureClient(conf.Host, conf.Username, pass)
+
 	// announce new devices
 	for _, dev := range conf.Devices {
-		var features []node.Feature
-		if dev.Metadata != nil {
-			features = append(features, node.HasMetadata(dev.Metadata))
-		}
+		features := []node.Feature{node.HasMetadata(dev.Metadata)}
+
 		var occupancyVal *resource.Value
 		if dev.Occupancy != nil {
 			occupancy := &occupancyServer{
@@ -122,13 +121,13 @@ func (d *Driver) applyConfig(_ context.Context, conf DriverConfig) error {
 		}
 
 		if enterLeaveVal != nil || occupancyVal != nil {
-			server := NewUdmiServiceServer(d.Logger.Named("UdmiServiceServer"), enterLeaveVal, occupancyVal, dev.UDMITopicPrefix)
+			server := newUdmiServiceServer(d.logger.Named("udmiServiceServer"), enterLeaveVal, occupancyVal, dev.UDMITopicPrefix)
 			d.udmiServers = append(d.udmiServers, server)
 			features = append(features, node.HasTrait(udmipb.TraitName,
 				node.WithClients(gen.WrapUdmiService(server))))
 		}
 
-		d.unannounceDevices = append(d.unannounceDevices, d.Node.Announce(dev.Name, features...))
+		announcer.Announce(dev.Name, features...)
 	}
 	// register data push webhook
 	if d.server != nil {
@@ -147,13 +146,25 @@ func (d *Driver) applyConfig(_ context.Context, conf DriverConfig) error {
 			d.server = &http.Server{
 				Handler: mux,
 			}
-			go d.server.Serve(lis)
+			grp.Go(func() error {
+				return d.server.Serve(lis)
+			})
 		} else {
-			d.HTTPMux.HandleFunc(dp.WebhookPath, d.handleWebhook)
+			d.httpMux.HandleFunc(dp.WebhookPath, d.handleWebhook)
 		}
 	}
 
 	d.config = conf
+	go func() {
+		err = grp.Wait()
+		if err != nil {
+			d.logger.Error("xovis driver stopped unexpectedly", zap.Error(err))
+		}
+		if d.server != nil {
+			_ = d.server.Close()
+		}
+		d.client.Client.CloseIdleConnections()
+	}()
 
 	return nil
 }
@@ -189,7 +200,7 @@ func (d *Driver) handleWebhook(response http.ResponseWriter, request *http.Reque
 	var body PushData
 	err = json.Unmarshal(rawBody, &body)
 	if err != nil {
-		d.Logger.Debug("failed to parse webhook body", zap.Error(err))
+		d.logger.Debug("failed to parse webhook body", zap.Error(err))
 		response.WriteHeader(http.StatusBadRequest)
 		_, _ = response.Write([]byte(err.Error()))
 		return
@@ -199,7 +210,7 @@ func (d *Driver) handleWebhook(response http.ResponseWriter, request *http.Reque
 	if len(rawBody) < n {
 		n = len(rawBody)
 	}
-	d.Logger.Debug("received webhook", zap.ByteString("body", rawBody[:n]))
+	d.logger.Debug("received webhook", zap.ByteString("body", rawBody[:n]))
 
 	// send the data to the bus
 	ctx, cancel := context.WithTimeout(request.Context(), 5*time.Second)
