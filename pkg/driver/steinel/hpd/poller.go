@@ -17,7 +17,7 @@ type sensor interface {
 	GetName() string
 }
 
-type Poller struct {
+type poller struct {
 	client       *Client
 	pollInterval time.Duration
 	logger       *zap.Logger
@@ -25,12 +25,8 @@ type Poller struct {
 	faultCheck   *healthpb.FaultCheck
 }
 
-func NewPoller(client *Client, pollInterval time.Duration, logger *zap.Logger, fc *healthpb.FaultCheck, sensors ...sensor) *Poller {
-	if pollInterval <= 0 {
-		pollInterval = time.Second * 60
-	}
-
-	return &Poller{
+func newPoller(client *Client, pollInterval time.Duration, logger *zap.Logger, fc *healthpb.FaultCheck, sensors ...sensor) *poller {
+	return &poller{
 		client:       client,
 		pollInterval: pollInterval,
 		logger:       logger,
@@ -39,7 +35,7 @@ func NewPoller(client *Client, pollInterval time.Duration, logger *zap.Logger, f
 	}
 }
 
-func (p *Poller) startPoll(ctx context.Context) {
+func (p *poller) startPoll(ctx context.Context) {
 	ticker := time.NewTicker(p.pollInterval)
 	defer ticker.Stop()
 	p.process(ctx)
@@ -54,7 +50,7 @@ func (p *Poller) startPoll(ctx context.Context) {
 	}
 }
 
-func (p *Poller) process(ctx context.Context) {
+func (p *poller) process(ctx context.Context) {
 	response := SensorResponse{}
 	if err := doGetRequest(p.client, &response, "sensor"); err != nil {
 		h := &gen.HealthCheck_Reliability{}

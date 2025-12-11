@@ -2,7 +2,6 @@ package hpd
 
 import (
 	"context"
-	"fmt"
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -31,7 +30,10 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 		announcer: node.NewReplaceAnnouncer(services.Node),
 		health:    services.Health,
 	}
-	d.Service = service.New(service.MonoApply(d.applyConfig))
+	d.Service = service.New(
+		service.MonoApply(d.applyConfig),
+		service.WithParser[config.Root](config.ParseConfig),
+	)
 	d.logger = services.Logger.Named(DriverName)
 	return d
 }
@@ -55,15 +57,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer := d.announcer.Replace(ctx)
 	grp, ctx := errgroup.WithContext(ctx)
 
-	p, err := cfg.LoadPassword()
-	if err != nil {
-		return err
-	}
-
-	if cfg.IpAddress == "" {
-		return fmt.Errorf("ipAddress is required")
-	}
-	d.client = NewInsecureClient(cfg.IpAddress, p)
+	d.client = NewInsecureClient(cfg.IpAddress, cfg.Password)
 
 	d.airQualitySensor = NewAirQualitySensor(d.client, d.logger.Named("AirQualityValue").With(zap.String("ipAddress", cfg.IpAddress)))
 	d.occupancy = NewOccupancySensor(d.client, d.logger.Named("Occupancy").With(zap.String("ipAddress", cfg.IpAddress)))
@@ -84,7 +78,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		return err
 	}
 
-	poller := NewPoller(d.client, 0, d.logger.Named("SteinelPoller").With(zap.String("ipAddress", cfg.IpAddress)), faultCheck, d.airQualitySensor, d.occupancy, d.temperature)
+	poller := newPoller(d.client, cfg.PollInterval.Duration, d.logger.Named("SteinelPoller").With(zap.String("ipAddress", cfg.IpAddress)), faultCheck, d.airQualitySensor, d.occupancy, d.temperature)
 
 	grp.Go(func() error {
 		poller.startPoll(ctx)
