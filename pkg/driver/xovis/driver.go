@@ -92,10 +92,17 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 	for _, dev := range conf.Devices {
 		features := []node.Feature{node.HasMetadata(dev.Metadata)}
 
+		faultCheck, err := d.health.NewFaultCheck(dev.Name, commsHealthCheck)
+		if err != nil {
+			d.logger.Error("failed to create health check", zap.String("device", dev.Name), zap.Error(err))
+			return err
+		}
+
 		var occupancyVal *resource.Value
 		if dev.Occupancy != nil {
 			occupancy := &occupancyServer{
 				client:         d.client,
+				faultCheck:     faultCheck,
 				multiSensor:    conf.MultiSensor,
 				logicID:        dev.Occupancy.ID,
 				bus:            d.pushDataBus,
@@ -109,6 +116,7 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 		if dev.EnterLeave != nil {
 			enterLeave := &enterLeaveServer{
 				client:          d.client,
+				faultCheck:      faultCheck,
 				logicID:         dev.EnterLeave.ID,
 				multiSensor:     conf.MultiSensor,
 				bus:             d.pushDataBus,

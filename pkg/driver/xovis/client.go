@@ -2,8 +2,10 @@ package xovis
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +14,8 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 )
 
 type client struct {
@@ -157,29 +161,51 @@ func doPost(conn *client, target any, endpoint string, body any) error {
 	return err
 }
 
-func getLiveLogics(conn *client, multiSensor bool) (res LiveLogicsResponse, err error) {
+func getLiveLogics(ctx context.Context, conn *client, multiSensor bool, fc *healthpb.FaultCheck) (res LiveLogicsResponse, err error) {
 	if multiSensor {
 		err = doGet(conn, &res, "/multisensor/data/live/logics")
 	} else {
 		err = doGet(conn, &res, "/singlesensor/data/live/logics")
 	}
+
+	updateReliability(ctx, fc, err)
 	return
 }
 
-func getLiveLogic(conn *client, multiSensor bool, id int) (res LiveLogicResponse, err error) {
+func getLiveLogic(ctx context.Context, conn *client, multiSensor bool, id int, fc *healthpb.FaultCheck) (res LiveLogicResponse, err error) {
+
 	if multiSensor {
 		err = doGet(conn, &res, fmt.Sprintf("/multisensor/data/live/logics/%d", id))
 	} else {
 		err = doGet(conn, &res, fmt.Sprintf("/singlesensor/data/live/logics/%d", id))
 	}
+
+	updateReliability(ctx, fc, err)
 	return
 }
 
-func resetLiveLogic(conn *client, multiSensor bool, id int) error {
+func resetLiveLogic(ctx context.Context, conn *client, multiSensor bool, id int, fc *healthpb.FaultCheck) error {
 	var res []byte
+	var err error
 	if multiSensor {
-		return doPost(conn, &res, fmt.Sprintf("/multisensor/data/live/logics/%d/reset", id), nil)
+		err = doPost(conn, &res, fmt.Sprintf("/multisensor/data/live/logics/%d/reset", id), nil)
 	} else {
-		return doPost(conn, &res, fmt.Sprintf("/singlesensor/data/live/logics/%d/reset", id), nil)
+		err = doPost(conn, &res, fmt.Sprintf("/singlesensor/data/live/logics/%d/reset", id), nil)
+	}
+
+	updateReliability(ctx, fc, err)
+	return err
+}
+
+func updateReliability(ctx context.Context, fc *healthpb.FaultCheck, err error) {
+	if err != nil {
+		h := noResponse
+		var unsupportedTypeErr *json.UnmarshalTypeError
+		if errors.Is(err, unsupportedTypeErr) {
+			h = badResponse
+		}
+		fc.UpdateReliability(ctx, h)
+	} else {
+		fc.UpdateReliability(ctx, reliable)
 	}
 }

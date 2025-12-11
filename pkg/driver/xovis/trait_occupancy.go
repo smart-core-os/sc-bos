@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
@@ -23,9 +24,10 @@ type occupancyServer struct {
 	multiSensor bool
 	logicID     int
 
-	pollInit sync.Once
-	poll     *task.Intermittent
-	polls    *minibus.Bus[LiveLogicResponse]
+	faultCheck *healthpb.FaultCheck
+	pollInit   sync.Once
+	poll       *task.Intermittent
+	polls      *minibus.Bus[LiveLogicResponse]
 
 	OccupancyTotal *resource.Value
 }
@@ -33,7 +35,7 @@ type occupancyServer struct {
 var errDataFormat = status.Error(codes.FailedPrecondition, "data received from sensor did not match expected format")
 
 func (o *occupancyServer) GetOccupancy(ctx context.Context, request *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
-	res, err := getLiveLogic(o.client, o.multiSensor, o.logicID)
+	res, err := getLiveLogic(ctx, o.client, o.multiSensor, o.logicID, o.faultCheck)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
@@ -49,7 +51,7 @@ func (o *occupancyServer) GetOccupancy(ctx context.Context, request *traits.GetO
 
 func (o *occupancyServer) PullOccupancy(request *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
 	// fetch the initial occupancy state
-	res, err := getLiveLogic(o.client, o.multiSensor, o.logicID)
+	res, err := getLiveLogic(server.Context(), o.client, o.multiSensor, o.logicID, o.faultCheck)
 	if err != nil {
 		return status.Error(codes.Unavailable, err.Error())
 	}
@@ -158,7 +160,7 @@ func (o *occupancyServer) doPollInit() {
 	o.pollInit.Do(func() {
 		o.polls = &minibus.Bus[LiveLogicResponse]{}
 		o.poll = task.Poll(func(ctx context.Context) {
-			res, err := getLiveLogic(o.client, o.multiSensor, o.logicID)
+			res, err := getLiveLogic(ctx, o.client, o.multiSensor, o.logicID, o.faultCheck)
 			if err != nil {
 				// todo: log error
 				return
