@@ -17,7 +17,7 @@ var (
 		Id:              "commsCheck",
 		DisplayName:     "Comms Check",
 		Description:     "Checks if the device is online and communicating properly",
-		OccupantImpact:  gen.HealthCheck_COMFORT,
+		OccupantImpact:  gen.HealthCheck_NO_OCCUPANT_IMPACT,
 		EquipmentImpact: gen.HealthCheck_FUNCTION,
 	}
 
