@@ -10,6 +10,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd/config"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -28,6 +29,7 @@ type factory struct{}
 func (f factory) New(services driver.Services) service.Lifecycle {
 	d := &Driver{
 		announcer: node.NewReplaceAnnouncer(services.Node),
+		health:    services.Health,
 	}
 	d.Service = service.New(service.MonoApply(d.applyConfig))
 	d.logger = services.Logger.Named(DriverName)
@@ -37,6 +39,7 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 type Driver struct {
 	*service.Service[config.Root]
 	announcer *node.ReplaceAnnouncer
+	health    *healthpb.Checks
 	logger    *zap.Logger
 
 	client *Client
@@ -75,7 +78,13 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(d.udmiServiceServer))),
 	)
 
-	poller := NewPoller(d.client, 0, d.logger.Named("SteinelPoller").With(zap.String("ipAddress", cfg.IpAddress)), d.airQualitySensor, d.occupancy, d.temperature)
+	faultCheck, err := d.health.NewFaultCheck(cfg.Name, commsHealthCheck)
+	if err != nil {
+		d.logger.Error("failed to create health check", zap.String("device", cfg.Name), zap.Error(err))
+		return err
+	}
+
+	poller := NewPoller(d.client, 0, d.logger.Named("SteinelPoller").With(zap.String("ipAddress", cfg.IpAddress)), faultCheck, d.airQualitySensor, d.occupancy, d.temperature)
 
 	grp.Go(func() error {
 		poller.startPoll(ctx)
@@ -84,6 +93,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	go func() {
 		_ = grp.Wait() // won't error in current implementation
+		faultCheck.Dispose()
 		d.client.Client.CloseIdleConnections()
 	}()
 
