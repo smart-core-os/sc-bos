@@ -1,0 +1,17 @@
+This test verifies imports with no history symbols (no change needed).
+expected_changes: 0
+
+-- input/ui/ops/test.js --
+import {TransportApiPromiseClient, TransportInfoPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/transport_grpc_web_pb';
+import {DescribeTransportRequest, PullTransportRequest} from '@smart-core-os/sc-bos-ui-gen/proto/transport_pb';
+
+export function pullTransport(request, resource) {
+  // implementation
+}
+-- output/ui/ops/test.js --
+import {TransportApiPromiseClient, TransportInfoPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/transport_grpc_web_pb';
+import {DescribeTransportRequest, PullTransportRequest} from '@smart-core-os/sc-bos-ui-gen/proto/transport_pb';
+
+export function pullTransport(request, resource) {
+  // implementation
+}

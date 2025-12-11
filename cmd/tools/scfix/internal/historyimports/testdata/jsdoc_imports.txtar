@@ -1,0 +1,45 @@
+This test verifies that JSDoc comments with proto import paths are automatically replaced.
+JSDoc @param types with import() statements are replaced when a HistoryClient trait can be determined.
+Only history-related types (containing "History" or "Record") are replaced.
+expected_changes: 5
+
+-- input/ui/ops/test.js --
+import {ElectricHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/history_grpc_web_pb';
+import {ElectricDemand, ListElectricDemandHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/history_pb';
+
+/**
+ * Updates segments with the data found in records.
+ * Modified segments will be compacted.
+ *
+ * @param {import('@smart-core-os/sc-bos-ui-gen/proto/history_pb').ElectricDemandRecord.AsObject[]} records - in descending order
+ * @param {Date[]} edges - in ascending order
+ */
+export function updateSegments(records, edges) {
+  // implementation
+}
+/** @type {Record<string, import('@smart-core-os/sc-bos-ui-gen/proto/history_pb').ElectricDemandRecord.AsObject>} */
+const demandRecords = {};
+/** @type {Record<string, import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheckRecord.AsObject>} */
+const checkRecords = {};
+/** @type {import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck[]} */
+const checks = [];
+-- output/ui/ops/test.js --
+import {ElectricHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/electric_history_grpc_web_pb';
+import {ElectricDemand, ListElectricDemandHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/electric_history_pb';
+
+/**
+ * Updates segments with the data found in records.
+ * Modified segments will be compacted.
+ *
+ * @param {import('@smart-core-os/sc-bos-ui-gen/proto/electric_history_pb').ElectricDemandRecord.AsObject[]} records - in descending order
+ * @param {Date[]} edges - in ascending order
+ */
+export function updateSegments(records, edges) {
+  // implementation
+}
+/** @type {Record<string, import('@smart-core-os/sc-bos-ui-gen/proto/electric_history_pb').ElectricDemandRecord.AsObject>} */
+const demandRecords = {};
+/** @type {Record<string, import('@smart-core-os/sc-bos-ui-gen/proto/health_history_pb').HealthCheckRecord.AsObject>} */
+const checkRecords = {};
+/** @type {import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck[]} */
+const checks = [];
