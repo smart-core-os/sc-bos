@@ -1,0 +1,57 @@
+Test that files importing traits from external locations (like traits/) are correctly grouped.
+air_temperature_history.proto imports traits/air_temperature.proto (not a local file),
+so it should go to airtemperature/v1/ directory.
+expected_changes: 1
+
+-- input/proto/air_temperature_history.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+import "traits/air_temperature.proto";
+
+service AirTemperatureHistory {
+  rpc ListTemperatureHistory(ListTemperatureHistoryRequest) returns (ListTemperatureHistoryResponse);
+}
+
+message TemperatureRecord {
+  smartcore.traits.AirTemperature reading = 1;
+  google.protobuf.Timestamp record_time = 2;
+}
+
+message ListTemperatureHistoryRequest {
+  string name = 1;
+}
+
+message ListTemperatureHistoryResponse {
+  repeated TemperatureRecord records = 1;
+}
+-- output/proto/smartcore/bos/airtemperature/v1/air_temperature_history.proto --
+syntax = "proto3";
+
+package smartcore.bos.airtemperature.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+import "traits/air_temperature.proto";
+
+service AirTemperatureHistory {
+  rpc ListTemperatureHistory(ListTemperatureHistoryRequest) returns (ListTemperatureHistoryResponse);
+}
+
+message TemperatureRecord {
+  smartcore.traits.AirTemperature reading = 1;
+  google.protobuf.Timestamp record_time = 2;
+}
+
+message ListTemperatureHistoryRequest {
+  string name = 1;
+}
+
+message ListTemperatureHistoryResponse {
+  repeated TemperatureRecord records = 1;
+}

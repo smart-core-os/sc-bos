@@ -1,0 +1,60 @@
+Test that files that don't need any changes result in 0 changes counted.
+This includes non-root files without services that don't reference moved files.
+expected_changes: 0
+
+-- input/proto/smartcore/bos/meter/v1/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service MeterApi {
+  rpc GetMeter(GetMeterRequest) returns (Meter);
+}
+
+message Meter {
+  string id = 1;
+}
+
+message GetMeterRequest {
+  string name = 1;
+}
+-- input/internal/account/page_token.proto --
+syntax = "proto3";
+
+package smartcore.bos.account;
+
+option go_package = "github.com/smart-core-os/sc-bos/internal/account";
+
+message PageToken {
+  int64 last_id = 1;
+}
+-- output/proto/smartcore/bos/meter/v1/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service MeterApi {
+  rpc GetMeter(GetMeterRequest) returns (Meter);
+}
+
+message Meter {
+  string id = 1;
+}
+
+message GetMeterRequest {
+  string name = 1;
+}
+-- output/internal/account/page_token.proto --
+syntax = "proto3";
+
+package smartcore.bos.account;
+
+option go_package = "github.com/smart-core-os/sc-bos/internal/account";
+
+message PageToken {
+  int64 last_id = 1;
+}

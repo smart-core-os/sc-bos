@@ -1,0 +1,133 @@
+Test that files with nested package structures are migrated to versioned packages.
+Files like dali.proto with "package smartcore.bos.driver.dali;" should be migrated to "smartcore.bos.driver.dali.v1".
+Files like tenants.proto with "package smartcore.bos.tenants;" should be migrated to "smartcore.bos.tenants.v1".
+expected_changes: 3
+
+-- input/proto/dali.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.dali;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service DaliApi {
+  rpc GetStatus(GetStatusRequest) returns (Status);
+}
+
+message Status {
+  string id = 1;
+  bool online = 2;
+}
+
+message GetStatusRequest {
+  string name = 1;
+}
+-- input/proto/axiomxa.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.axiomxa;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service AxiomXaDriverService {
+  rpc SaveCredential(SaveCredentialRequest) returns (SaveCredentialResponse);
+}
+
+message SaveCredentialRequest {
+  string name = 1;
+  uint64 card_number = 2;
+}
+
+message SaveCredentialResponse {}
+-- input/proto/tenants.proto --
+syntax = "proto3";
+
+package smartcore.bos.tenants;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+
+service TenantApi {
+  rpc CreateTenant(CreateTenantRequest) returns (Tenant);
+  rpc GetTenant(GetTenantRequest) returns (Tenant);
+}
+
+message Tenant {
+  string id = 1;
+  string title = 2;
+  google.protobuf.Timestamp create_time = 3;
+  repeated string zone_names = 4;
+}
+
+message CreateTenantRequest {
+  Tenant tenant = 1;
+}
+
+message GetTenantRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/driver/dali/v1/dali.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.dali.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service DaliApi {
+  rpc GetStatus(GetStatusRequest) returns (Status);
+}
+
+message Status {
+  string id = 1;
+  bool online = 2;
+}
+
+message GetStatusRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/driver/axiomxa/v1/axiomxa.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.axiomxa.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service AxiomXaDriverService {
+  rpc SaveCredential(SaveCredentialRequest) returns (SaveCredentialResponse);
+}
+
+message SaveCredentialRequest {
+  string name = 1;
+  uint64 card_number = 2;
+}
+
+message SaveCredentialResponse {}
+-- output/proto/smartcore/bos/tenants/v1/tenants.proto --
+syntax = "proto3";
+
+package smartcore.bos.tenants.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+
+service TenantApi {
+  rpc CreateTenant(CreateTenantRequest) returns (Tenant);
+  rpc GetTenant(GetTenantRequest) returns (Tenant);
+}
+
+message Tenant {
+  string id = 1;
+  string title = 2;
+  google.protobuf.Timestamp create_time = 3;
+  repeated string zone_names = 4;
+}
+
+message CreateTenantRequest {
+  Tenant tenant = 1;
+}
+
+message GetTenantRequest {
+  string name = 1;
+}

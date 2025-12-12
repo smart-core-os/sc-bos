@@ -64,6 +64,26 @@ client := airqualitysensorpb.WrapApi(server)
 client := traits.NewAirQualitySensorApiClient(wrap.ServerToClient(traits.AirQualitySensorApi_ServiceDesc, server))
 ```
 
+### protov1
+
+Migrates proto files from unversioned to v1 versioned packages.
+
+```protobuf
+// Before: proto/meter.proto
+package smartcore.bos;
+import "health.proto";
+
+service MeterApi { ... }
+
+// After: proto/smartcore/bos/meter/v1/meter.proto
+package smartcore.bos.meter.v1;
+import "smartcore/bos/health/v1/health.proto";
+
+service MeterApi { ... }
+```
+
+Related files (e.g., `meter_history.proto` that imports `meter.proto`) are automatically grouped together in the same trait directory.
+
 ### historyimports
 
 Updates JavaScript/TypeScript imports for history aspects extracted to separate proto files.
