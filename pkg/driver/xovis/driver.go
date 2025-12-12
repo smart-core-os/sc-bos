@@ -38,6 +38,7 @@ type factory struct{}
 func (f factory) New(services driver.Services) service.Lifecycle {
 
 	d := &Driver{
+		announcer:   node.NewReplaceAnnouncer(services.Node),
 		health:      services.Health,
 		httpMux:     services.HTTPMux,
 		logger:      services.Logger.Named(DriverName),
