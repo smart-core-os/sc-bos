@@ -1,4 +1,4 @@
-package api
+package hikcentral
 
 import (
 	"crypto/hmac"
