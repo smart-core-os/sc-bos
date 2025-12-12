@@ -40,7 +40,7 @@ type EventPoints struct {
 type EventPoint[T any] struct {
 	PresentValue T `json:"present_value"`
 }
-type UdmiServiceServer struct {
+type udmiServiceServer struct {
 	gen.UnimplementedUdmiServiceServer
 
 	logger *zap.Logger
@@ -50,8 +50,8 @@ type UdmiServiceServer struct {
 	udmiTopicPrefix string
 }
 
-func NewUdmiServiceServer(logger *zap.Logger, e *resource.Value, o *resource.Value, udmiPrefix string) *UdmiServiceServer {
-	return &UdmiServiceServer{
+func newUdmiServiceServer(logger *zap.Logger, e *resource.Value, o *resource.Value, udmiPrefix string) *udmiServiceServer {
+	return &udmiServiceServer{
 		logger:          logger,
 		enterLeave:      e,
 		occupancy:       o,
@@ -59,20 +59,20 @@ func NewUdmiServiceServer(logger *zap.Logger, e *resource.Value, o *resource.Val
 	}
 }
 
-func (u *UdmiServiceServer) PullControlTopics(_ *gen.PullControlTopicsRequest, _ gen.UdmiService_PullControlTopicsServer) error {
+func (u *udmiServiceServer) PullControlTopics(_ *gen.PullControlTopicsRequest, _ gen.UdmiService_PullControlTopicsServer) error {
 	// we don't have any control topics
 	return status.Error(codes.Unimplemented, "not implemented")
 }
-func (u *UdmiServiceServer) OnMessage(_ context.Context, _ *gen.OnMessageRequest) (*gen.OnMessageResponse, error) {
+func (u *udmiServiceServer) OnMessage(_ context.Context, _ *gen.OnMessageRequest) (*gen.OnMessageResponse, error) {
 	// we don't support doing anything here
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
-func (u *UdmiServiceServer) GetExportMessage(_ context.Context, _ *gen.GetExportMessageRequest) (*gen.MqttMessage, error) {
+func (u *udmiServiceServer) GetExportMessage(_ context.Context, _ *gen.GetExportMessageRequest) (*gen.MqttMessage, error) {
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
-func (u *UdmiServiceServer) PullExportMessages(request *gen.PullExportMessagesRequest, server gen.UdmiService_PullExportMessagesServer) error {
+func (u *udmiServiceServer) PullExportMessages(request *gen.PullExportMessagesRequest, server gen.UdmiService_PullExportMessagesServer) error {
 	ctx, cancel := context.WithCancel(server.Context())
 	defer cancel()
 

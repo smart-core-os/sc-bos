@@ -1,4 +1,4 @@
-package xovis
+package config
 
 import (
 	"encoding/json"
@@ -9,19 +9,19 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 )
 
-func DefaultConfig() DriverConfig {
-	return DriverConfig{
+func DefaultConfig() Root {
+	return Root{
 		PasswordFile: "/run/secrets/xovis-password",
 	}
 }
 
-func ParseConfig(raw []byte) (DriverConfig, error) {
+func ParseConfig(raw []byte) (Root, error) {
 	parsed := DefaultConfig()
 	err := json.Unmarshal(raw, &parsed)
 	return parsed, err
 }
 
-type DriverConfig struct {
+type Root struct {
 	driver.BaseConfig
 	MultiSensor  bool            `json:"multiSensor"`
 	Host         string          `json:"host"`
@@ -32,7 +32,7 @@ type DriverConfig struct {
 	Devices      []DeviceConfig  `json:"devices,omitempty"`
 }
 
-func (c DriverConfig) LoadPassword() (string, error) {
+func (c Root) LoadPassword() (string, error) {
 	if c.Password != "" {
 		return c.Password, nil
 	}
