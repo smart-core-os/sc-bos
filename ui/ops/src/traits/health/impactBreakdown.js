@@ -31,6 +31,7 @@ export function useOccupantImpactBreakdown(conditions) {
       {title: 'Life', key: 'LIFE'},
       {title: 'Health', key: 'HEALTH'},
       {title: 'Comfort', key: 'COMFORT'},
+      {title: 'Security', key: 'SECURITY'},
     ]
   });
 }
