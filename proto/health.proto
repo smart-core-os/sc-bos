@@ -87,6 +87,9 @@ message HealthCheck {
     // Abnormal values for this check can impact the life-safety of occupants.
     // For example, a gas leak check out of range in a gas safety system.
     LIFE = 4;
+    // Abnormal values for this check can impact the physical security of occupants.
+    // For example, a video loss check in a CCTV system.
+    SECURITY = 5;
   }
 
   // The impact abnormal values for this check can have on occupants.

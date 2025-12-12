@@ -896,7 +896,8 @@ proto.smartcore.bos.HealthCheck.OccupantImpact = {
   NO_OCCUPANT_IMPACT: 1,
   COMFORT: 2,
   HEALTH: 3,
-  LIFE: 4
+  LIFE: 4,
+  SECURITY: 5
 };
 
 /**

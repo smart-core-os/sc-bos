@@ -534,6 +534,7 @@ export namespace HealthCheck {
     COMFORT = 2,
     HEALTH = 3,
     LIFE = 4,
+    SECURITY = 5,
   }
 
   export enum EquipmentImpact {
