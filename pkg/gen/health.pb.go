@@ -42,6 +42,9 @@ const (
 	// Abnormal values for this check can impact the life-safety of occupants.
 	// For example, a gas leak check out of range in a gas safety system.
 	HealthCheck_LIFE HealthCheck_OccupantImpact = 4
+	// Abnormal values for this check can impact the physical security of occupants.
+	// For example, a video loss check in a CCTV system.
+	HealthCheck_SECURITY HealthCheck_OccupantImpact = 5
 )
 
 // Enum value maps for HealthCheck_OccupantImpact.
@@ -52,6 +55,7 @@ var (
 		2: "COMFORT",
 		3: "HEALTH",
 		4: "LIFE",
+		5: "SECURITY",
 	}
 	HealthCheck_OccupantImpact_value = map[string]int32{
 		"OCCUPANT_IMPACT_UNSPECIFIED": 0,
@@ -59,6 +63,7 @@ var (
 		"COMFORT":                     2,
 		"HEALTH":                      3,
 		"LIFE":                        4,
+		"SECURITY":                    5,
 	}
 )
 
@@ -2408,7 +2413,7 @@ var File_health_proto protoreflect.FileDescriptor
 
 const file_health_proto_rawDesc = "" +
 	"\n" +
-	"\fhealth.proto\x12\rsmartcore.bos\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\x1a\x17types/time/period.proto\"\xfd\x1c\n" +
+	"\fhealth.proto\x12\rsmartcore.bos\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\x1a\x17types/time/period.proto\"\x8b\x1d\n" +
 	"\vHealthCheck\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12 \n" +
@@ -2504,14 +2509,15 @@ const file_health_proto_rawDesc = "" +
 	"\n" +
 	"\bexpected\x1aQ\n" +
 	"\x06Faults\x12G\n" +
-	"\x0ecurrent_faults\x18\x01 \x03(\v2 .smartcore.bos.HealthCheck.ErrorR\rcurrentFaults\"l\n" +
+	"\x0ecurrent_faults\x18\x01 \x03(\v2 .smartcore.bos.HealthCheck.ErrorR\rcurrentFaults\"z\n" +
 	"\x0eOccupantImpact\x12\x1f\n" +
 	"\x1bOCCUPANT_IMPACT_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12NO_OCCUPANT_IMPACT\x10\x01\x12\v\n" +
 	"\aCOMFORT\x10\x02\x12\n" +
 	"\n" +
 	"\x06HEALTH\x10\x03\x12\b\n" +
-	"\x04LIFE\x10\x04\"v\n" +
+	"\x04LIFE\x10\x04\x12\f\n" +
+	"\bSECURITY\x10\x05\"v\n" +
 	"\x0fEquipmentImpact\x12 \n" +
 	"\x1cEQUIPMENT_IMPACT_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13NO_EQUIPMENT_IMPACT\x10\x01\x12\f\n" +

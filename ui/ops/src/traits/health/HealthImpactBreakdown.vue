@@ -88,6 +88,12 @@ const props = defineProps({
         prevCount: 1,
         affect: 13,
       },
+      {
+        title: 'Security',
+        count: 1,
+        prevCount: 1,
+        affect: '-',
+      },
     ])
   },
   errorCount: {

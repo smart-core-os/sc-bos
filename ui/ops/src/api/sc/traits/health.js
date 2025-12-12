@@ -161,6 +161,8 @@ export function occupantImpactToString(impact) {
       return 'Health';
     case HealthCheck.OccupantImpact.LIFE:
       return 'Life Safety';
+    case HealthCheck.OccupantImpact.SECURITY:
+      return 'Security';
     default:
       return 'Unknown';
   }
