@@ -1,0 +1,24 @@
+This test verifies that non-history JSDoc imports don't trigger manual replacement warnings.
+Only history_pb/history_grpc_web_pb imports should be flagged when no HistoryClient is present.
+expected_changes: 0
+
+-- input/ui/ops/test.js --
+import {StatusApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/status_grpc_web_pb';
+
+/**
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/status_pb').StatusLog} StatusLog
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/status_pb').PullCurrentStatusRequest} PullCurrentStatusRequest
+ */
+export function test() {
+  // implementation
+}
+-- output/ui/ops/test.js --
+import {StatusApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/status_grpc_web_pb';
+
+/**
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/status_pb').StatusLog} StatusLog
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/status_pb').PullCurrentStatusRequest} PullCurrentStatusRequest
+ */
+export function test() {
+  // implementation
+}
