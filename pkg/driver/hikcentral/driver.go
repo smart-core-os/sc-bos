@@ -30,9 +30,10 @@ type factory struct{}
 
 func (f factory) New(services driver.Services) service.Lifecycle {
 	d := &Driver{
-		announcer: services.Node,
+		announcer: node.NewReplaceAnnouncer(services.Node),
+		logger:    services.Logger.Named(DriverName),
 	}
-	d.logger = services.Logger.Named(DriverName)
+
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
 		service.WithParser(config.ReadBytes),
@@ -46,13 +47,14 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 
 type Driver struct {
 	*service.Service[config.Root]
+
+	announcer *node.ReplaceAnnouncer
 	logger    *zap.Logger
-	announcer node.Announcer
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
-	// AnnounceContext only makes sense if using MonoApply, which we are in New
-	announcer, undo := node.AnnounceScope(d.announcer)
+
+	rootAnnouncer := d.announcer.Replace(ctx)
 	logger := d.logger.With(zap.String("host", cfg.API.Address))
 
 	client := api.NewClient(cfg.API)
@@ -67,7 +69,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	for _, camera := range cfg.Cameras {
 		logger := logger.With(zap.String("device", camera.Name))
 		cam := NewCamera(client, logger, camera)
-		announcer.Announce(camera.Name,
+		rootAnnouncer.Announce(camera.Name,
 			node.HasMetadata(camera.Metadata),
 			node.HasMetadata(camera.Metadata),
 			node.HasClient(gen.WrapMqttService(cam)),
@@ -83,7 +85,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	go func() {
 		err := grp.Wait()
 		logger.Error("run error", zap.String("error", err.Error()))
-		undo()
+		client.HTTPClient.CloseIdleConnections()
 	}()
 	return nil
 }
