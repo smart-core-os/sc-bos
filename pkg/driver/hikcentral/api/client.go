@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -31,34 +32,34 @@ func NewClient(conf *config.API) *Client {
 	}
 }
 
-func (c *Client) ListCameraInfo(req *CamerasRequest) (*CamerasResponse, error) {
-	return makeReq[CamerasRequest, CamerasResponse](c, resourcePrefix+"/cameras", req)
+func (c *Client) ListCameraInfo(ctx context.Context, req *CamerasRequest) (*CamerasResponse, error) {
+	return makeReq[CamerasRequest, CamerasResponse](ctx, c, resourcePrefix+"/cameras", req)
 }
 
-func (c *Client) GetCameraInfo(req *CameraRequest) (*CameraInfo, error) {
-	return makeReq[CameraRequest, CameraInfo](c, resourcePrefix+"/cameras/indexCode", req)
+func (c *Client) GetCameraInfo(ctx context.Context, req *CameraRequest) (*CameraInfo, error) {
+	return makeReq[CameraRequest, CameraInfo](ctx, c, resourcePrefix+"/cameras/indexCode", req)
 }
 
-func (c *Client) GetCameraPreviewUrl(req *CameraPreviewRequest) (*CameraPreviewResponse, error) {
+func (c *Client) GetCameraPreviewUrl(ctx context.Context, req *CameraPreviewRequest) (*CameraPreviewResponse, error) {
 	if req.Protocol == "" {
 		req.Protocol = "rtsp" // the spec says this is optional, but it's not
 	}
-	return makeReq[CameraPreviewRequest, CameraPreviewResponse](c, "/artemis/api/video/v1/cameras/previewURLs", req)
+	return makeReq[CameraPreviewRequest, CameraPreviewResponse](ctx, c, "/artemis/api/video/v1/cameras/previewURLs", req)
 }
 
-func (c *Client) GetCameraPeopleStats(req *StatsRequest) (*StatsResponse, error) {
-	return makeReq[StatsRequest, StatsResponse](c, "/artemis/api/aiapplication/v1/people/statisticsTotalNumByTime", req)
+func (c *Client) GetCameraPeopleStats(ctx context.Context, req *StatsRequest) (*StatsResponse, error) {
+	return makeReq[StatsRequest, StatsResponse](ctx, c, "/artemis/api/aiapplication/v1/people/statisticsTotalNumByTime", req)
 }
 
-func (c *Client) CameraPtzControl(req *PtzRequest) (*PtzResponse, error) {
-	return makeReq[PtzRequest, PtzResponse](c, "/artemis/api/video/v1/ptzs/controlling", req)
+func (c *Client) CameraPtzControl(ctx context.Context, req *PtzRequest) (*PtzResponse, error) {
+	return makeReq[PtzRequest, PtzResponse](ctx, c, "/artemis/api/video/v1/ptzs/controlling", req)
 }
 
-func (c *Client) ListEvents(req *EventsRequest) (*EventsResponse, error) {
-	return makeReq[EventsRequest, EventsResponse](c, "/artemis/api/eventService/v1/eventRecords/page", req)
+func (c *Client) ListEvents(ctx context.Context, req *EventsRequest) (*EventsResponse, error) {
+	return makeReq[EventsRequest, EventsResponse](ctx, c, "/artemis/api/eventService/v1/eventRecords/page", req)
 }
 
-func makeReq[R any, T any](client *Client, path string, r *R) (*T, error) {
+func makeReq[R any, T any](ctx context.Context, client *Client, path string, r *R) (*T, error) {
 	body, err := json.Marshal(r)
 	if err != nil {
 		return nil, fmt.Errorf("marshal: %w", err)
@@ -67,7 +68,7 @@ func makeReq[R any, T any](client *Client, path string, r *R) (*T, error) {
 	if err != nil {
 		return nil, fmt.Errorf("joinPath: %w", err)
 	}
-	req, err := http.NewRequest(http.MethodPost, u, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("newRequest: %w", err)
 	}
