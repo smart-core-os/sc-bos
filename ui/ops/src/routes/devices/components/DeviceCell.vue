@@ -83,7 +83,7 @@
       <status-log-cell v-bind="resource"/>
     </with-status>
 
-    <health-checks-cell v-if="healthExperiment" :model-value="props.item.healthChecksList"/>
+    <health-checks-cell v-if="healthExperiment" :model-value="props.item?.healthChecksList ?? []"/>
   </span>
 </template>
 
