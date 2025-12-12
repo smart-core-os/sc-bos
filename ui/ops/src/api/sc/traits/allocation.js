@@ -2,9 +2,11 @@ import {fieldMaskFromObject, setProperties, timestampToDate} from '@/api/convpb.
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setValue, trackAction} from '@/api/resource.js';
 import {periodFromObject} from '@/api/sc/types/period.js';
-import {AllocationApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_grpc_web_pb.d.ts';
-import {ListAllocationHistoryRequest, PullAllocationsRequest} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_pb.d.ts';
-import {AllocationHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_grpc_web_pb.d.ts';
+import {AllocationApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_grpc_web_pb';
+import {ListAllocationHistoryRequest, PullAllocationsRequest} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_pb';
+import {AllocationHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_grpc_web_pb';
+
+
 /**
  * @param {Partial<PullAllocationsRequest.AsObject>} request
  * @param {ResourceValue<Allocation.AsObject>} resource
@@ -23,6 +25,11 @@ export function pullAllocations(request, resource) {
   });
 }
 
+/**
+ * @param {Partial<ListAllocationHistoryRequest.AsObject>} request
+ * @param {ActionTracker<ListAllocationHistoryResponse.AsObject>} [tracker]
+ * @return {Promise<ListAllocationHistoryResponse.AsObject>}
+ */
 export function listAllocationsHistory(request, tracker) {
   return trackAction('Allocation.listAllocationsHistory', tracker ?? {}, (endpoint) => {
     const api = historyClient(endpoint);
@@ -32,7 +39,7 @@ export function listAllocationsHistory(request, tracker) {
 
 /**
  * @param {AllocationRecord | AllocationRecord.AsObject} obj
- * @returns {AllocationRecord.AsObject & {recordTime: Date|undefined}}
+ * @return {AllocationRecord.AsObject & {recordTime: Date|undefined}}
  */
 export function allocationRecordToObject(obj) {
   if (!obj) return undefined;
@@ -58,7 +65,7 @@ function historyClient(endpoint) {
 }
 
 /**
- * @param obj
+ * @param {PullAllocationsRequest.AsObject} obj
  * @return {PullAllocationsRequest|undefined}
  */
 function pullAllocationsRequestFromObject(obj) {
