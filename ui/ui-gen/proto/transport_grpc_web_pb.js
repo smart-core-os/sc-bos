@@ -27,8 +27,6 @@ var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/fie
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js')
 
 var types_info_pb = require('@smart-core-os/sc-api-grpc-web/types/info_pb.js')
-
-var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js')
 const proto = {};
 proto.smartcore = {};
 proto.smartcore.bos = require('./transport_pb.js');
@@ -312,119 +310,6 @@ proto.smartcore.bos.TransportInfoPromiseClient.prototype.describeTransport =
       request,
       metadata || {},
       methodDescriptor_TransportInfo_DescribeTransport);
-};
-
-
-/**
- * @param {string} hostname
- * @param {?Object} credentials
- * @param {?grpc.web.ClientOptions} options
- * @constructor
- * @struct
- * @final
- */
-proto.smartcore.bos.TransportHistoryClient =
-    function(hostname, credentials, options) {
-  if (!options) options = {};
-  options.format = 'text';
-
-  /**
-   * @private @const {!grpc.web.GrpcWebClientBase} The client
-   */
-  this.client_ = new grpc.web.GrpcWebClientBase(options);
-
-  /**
-   * @private @const {string} The hostname
-   */
-  this.hostname_ = hostname.replace(/\/+$/, '');
-
-};
-
-
-/**
- * @param {string} hostname
- * @param {?Object} credentials
- * @param {?grpc.web.ClientOptions} options
- * @constructor
- * @struct
- * @final
- */
-proto.smartcore.bos.TransportHistoryPromiseClient =
-    function(hostname, credentials, options) {
-  if (!options) options = {};
-  options.format = 'text';
-
-  /**
-   * @private @const {!grpc.web.GrpcWebClientBase} The client
-   */
-  this.client_ = new grpc.web.GrpcWebClientBase(options);
-
-  /**
-   * @private @const {string} The hostname
-   */
-  this.hostname_ = hostname.replace(/\/+$/, '');
-
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.smartcore.bos.ListTransportHistoryRequest,
- *   !proto.smartcore.bos.ListTransportHistoryResponse>}
- */
-const methodDescriptor_TransportHistory_ListTransportHistory = new grpc.web.MethodDescriptor(
-  '/smartcore.bos.TransportHistory/ListTransportHistory',
-  grpc.web.MethodType.UNARY,
-  proto.smartcore.bos.ListTransportHistoryRequest,
-  proto.smartcore.bos.ListTransportHistoryResponse,
-  /**
-   * @param {!proto.smartcore.bos.ListTransportHistoryRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.smartcore.bos.ListTransportHistoryResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.smartcore.bos.ListTransportHistoryRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.ListTransportHistoryResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.ListTransportHistoryResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.smartcore.bos.TransportHistoryClient.prototype.listTransportHistory =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/smartcore.bos.TransportHistory/ListTransportHistory',
-      request,
-      metadata || {},
-      methodDescriptor_TransportHistory_ListTransportHistory,
-      callback);
-};
-
-
-/**
- * @param {!proto.smartcore.bos.ListTransportHistoryRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.smartcore.bos.ListTransportHistoryResponse>}
- *     Promise that resolves to the response
- */
-proto.smartcore.bos.TransportHistoryPromiseClient.prototype.listTransportHistory =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/smartcore.bos.TransportHistory/ListTransportHistory',
-      request,
-      metadata || {},
-      methodDescriptor_TransportHistory_ListTransportHistory);
 };
 
 

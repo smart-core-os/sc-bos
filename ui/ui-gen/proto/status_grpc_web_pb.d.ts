@@ -22,20 +22,6 @@ export class StatusApiClient {
 
 }
 
-export class StatusHistoryClient {
-  constructor (hostname: string,
-               credentials?: null | { [index: string]: string; },
-               options?: null | { [index: string]: any; });
-
-  listCurrentStatusHistory(
-    request: status_pb.ListCurrentStatusHistoryRequest,
-    metadata: grpcWeb.Metadata | undefined,
-    callback: (err: grpcWeb.RpcError,
-               response: status_pb.ListCurrentStatusHistoryResponse) => void
-  ): grpcWeb.ClientReadableStream<status_pb.ListCurrentStatusHistoryResponse>;
-
-}
-
 export class StatusApiPromiseClient {
   constructor (hostname: string,
                credentials?: null | { [index: string]: string; },
@@ -50,18 +36,6 @@ export class StatusApiPromiseClient {
     request: status_pb.PullCurrentStatusRequest,
     metadata?: grpcWeb.Metadata
   ): grpcWeb.ClientReadableStream<status_pb.PullCurrentStatusResponse>;
-
-}
-
-export class StatusHistoryPromiseClient {
-  constructor (hostname: string,
-               credentials?: null | { [index: string]: string; },
-               options?: null | { [index: string]: any; });
-
-  listCurrentStatusHistory(
-    request: status_pb.ListCurrentStatusHistoryRequest,
-    metadata?: grpcWeb.Metadata
-  ): Promise<status_pb.ListCurrentStatusHistoryResponse>;
 
 }
 

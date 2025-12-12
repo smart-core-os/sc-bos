@@ -23,8 +23,6 @@ grpc.web = require('grpc-web');
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js')
 
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js')
-
-var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js')
 const proto = {};
 proto.smartcore = {};
 proto.smartcore.bos = require('./status_pb.js');
@@ -195,119 +193,6 @@ proto.smartcore.bos.StatusApiPromiseClient.prototype.pullCurrentStatus =
       request,
       metadata || {},
       methodDescriptor_StatusApi_PullCurrentStatus);
-};
-
-
-/**
- * @param {string} hostname
- * @param {?Object} credentials
- * @param {?grpc.web.ClientOptions} options
- * @constructor
- * @struct
- * @final
- */
-proto.smartcore.bos.StatusHistoryClient =
-    function(hostname, credentials, options) {
-  if (!options) options = {};
-  options.format = 'text';
-
-  /**
-   * @private @const {!grpc.web.GrpcWebClientBase} The client
-   */
-  this.client_ = new grpc.web.GrpcWebClientBase(options);
-
-  /**
-   * @private @const {string} The hostname
-   */
-  this.hostname_ = hostname.replace(/\/+$/, '');
-
-};
-
-
-/**
- * @param {string} hostname
- * @param {?Object} credentials
- * @param {?grpc.web.ClientOptions} options
- * @constructor
- * @struct
- * @final
- */
-proto.smartcore.bos.StatusHistoryPromiseClient =
-    function(hostname, credentials, options) {
-  if (!options) options = {};
-  options.format = 'text';
-
-  /**
-   * @private @const {!grpc.web.GrpcWebClientBase} The client
-   */
-  this.client_ = new grpc.web.GrpcWebClientBase(options);
-
-  /**
-   * @private @const {string} The hostname
-   */
-  this.hostname_ = hostname.replace(/\/+$/, '');
-
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.smartcore.bos.ListCurrentStatusHistoryRequest,
- *   !proto.smartcore.bos.ListCurrentStatusHistoryResponse>}
- */
-const methodDescriptor_StatusHistory_ListCurrentStatusHistory = new grpc.web.MethodDescriptor(
-  '/smartcore.bos.StatusHistory/ListCurrentStatusHistory',
-  grpc.web.MethodType.UNARY,
-  proto.smartcore.bos.ListCurrentStatusHistoryRequest,
-  proto.smartcore.bos.ListCurrentStatusHistoryResponse,
-  /**
-   * @param {!proto.smartcore.bos.ListCurrentStatusHistoryRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.smartcore.bos.ListCurrentStatusHistoryResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.smartcore.bos.ListCurrentStatusHistoryRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.ListCurrentStatusHistoryResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.ListCurrentStatusHistoryResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.smartcore.bos.StatusHistoryClient.prototype.listCurrentStatusHistory =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/smartcore.bos.StatusHistory/ListCurrentStatusHistory',
-      request,
-      metadata || {},
-      methodDescriptor_StatusHistory_ListCurrentStatusHistory,
-      callback);
-};
-
-
-/**
- * @param {!proto.smartcore.bos.ListCurrentStatusHistoryRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.smartcore.bos.ListCurrentStatusHistoryResponse>}
- *     Promise that resolves to the response
- */
-proto.smartcore.bos.StatusHistoryPromiseClient.prototype.listCurrentStatusHistory =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/smartcore.bos.StatusHistory/ListCurrentStatusHistory',
-      request,
-      metadata || {},
-      methodDescriptor_StatusHistory_ListCurrentStatusHistory);
 };
 
 

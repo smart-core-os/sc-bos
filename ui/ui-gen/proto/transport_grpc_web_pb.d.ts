@@ -36,20 +36,6 @@ export class TransportInfoClient {
 
 }
 
-export class TransportHistoryClient {
-  constructor (hostname: string,
-               credentials?: null | { [index: string]: string; },
-               options?: null | { [index: string]: any; });
-
-  listTransportHistory(
-    request: transport_pb.ListTransportHistoryRequest,
-    metadata: grpcWeb.Metadata | undefined,
-    callback: (err: grpcWeb.RpcError,
-               response: transport_pb.ListTransportHistoryResponse) => void
-  ): grpcWeb.ClientReadableStream<transport_pb.ListTransportHistoryResponse>;
-
-}
-
 export class TransportApiPromiseClient {
   constructor (hostname: string,
                credentials?: null | { [index: string]: string; },
@@ -76,18 +62,6 @@ export class TransportInfoPromiseClient {
     request: transport_pb.DescribeTransportRequest,
     metadata?: grpcWeb.Metadata
   ): Promise<transport_pb.TransportSupport>;
-
-}
-
-export class TransportHistoryPromiseClient {
-  constructor (hostname: string,
-               credentials?: null | { [index: string]: string; },
-               options?: null | { [index: string]: any; });
-
-  listTransportHistory(
-    request: transport_pb.ListTransportHistoryRequest,
-    metadata?: grpcWeb.Metadata
-  ): Promise<transport_pb.ListTransportHistoryResponse>;
 
 }
 

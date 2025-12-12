@@ -36,20 +36,6 @@ export class AllocationApiClient {
 
 }
 
-export class AllocationHistoryClient {
-  constructor (hostname: string,
-               credentials?: null | { [index: string]: string; },
-               options?: null | { [index: string]: any; });
-
-  listAllocationHistory(
-    request: allocation_pb.ListAllocationHistoryRequest,
-    metadata: grpcWeb.Metadata | undefined,
-    callback: (err: grpcWeb.RpcError,
-               response: allocation_pb.ListAllocationHistoryResponse) => void
-  ): grpcWeb.ClientReadableStream<allocation_pb.ListAllocationHistoryResponse>;
-
-}
-
 export class AllocationApiPromiseClient {
   constructor (hostname: string,
                credentials?: null | { [index: string]: string; },
@@ -74,18 +60,6 @@ export class AllocationApiPromiseClient {
     request: allocation_pb.ListAllocatableResourcesRequest,
     metadata?: grpcWeb.Metadata
   ): Promise<allocation_pb.ListAllocatableResourcesResponse>;
-
-}
-
-export class AllocationHistoryPromiseClient {
-  constructor (hostname: string,
-               credentials?: null | { [index: string]: string; },
-               options?: null | { [index: string]: any; });
-
-  listAllocationHistory(
-    request: allocation_pb.ListAllocationHistoryRequest,
-    metadata?: grpcWeb.Metadata
-  ): Promise<allocation_pb.ListAllocationHistoryResponse>;
 
 }
 
