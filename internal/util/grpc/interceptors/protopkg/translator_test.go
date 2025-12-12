@@ -18,6 +18,7 @@ var pathPairs = []pathPair{
 	{"AlertApi", "/smartcore.bos.AlertApi/ListAlerts", "/smartcore.bos.alert.v1.AlertApi/ListAlerts"},
 	{"AlertAdminApi", "/smartcore.bos.AlertAdminApi/CreateAlert", "/smartcore.bos.alert.v1.AlertAdminApi/CreateAlert"},
 	{"ElectricHistory", "/smartcore.bos.ElectricHistory/ListElectricDemandHistory", "/smartcore.bos.electric.v1.ElectricHistory/ListElectricDemandHistory"},
+	{"SoundSensorApi", "/smartcore.bos.SoundSensorApi/GetSoundLevel", "/smartcore.bos.soundsensor.v1.SoundSensorApi/GetSoundLevel"},
 }
 
 func TestNewToOld(t *testing.T) {
