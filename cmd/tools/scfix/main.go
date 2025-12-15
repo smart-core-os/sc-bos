@@ -23,7 +23,7 @@ type fix struct {
 // allFixes contains all available fixes and their default enabled state.
 var allFixes = []fix{
 	{Fix: optclients.Fix, Enabled: true},
-	{Fix: historyimports.Fix, Enabled: false},
+	{Fix: historyimports.Fix, Enabled: true},
 	{Fix: wrap.Fix, Enabled: false},
 }
 
