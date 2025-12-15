@@ -472,12 +472,12 @@ func testReflection(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 	wantServices := []*reflectionpb.ServiceResponse{
 		{Name: "grpc.reflection.v1.ServerReflection"},
 		{Name: "grpc.reflection.v1alpha.ServerReflection"},
-		{Name: "smartcore.bos.DevicesApi"},
-		{Name: "smartcore.bos.EnrollmentApi"},
-		{Name: "smartcore.bos.HealthApi"},
-		{Name: "smartcore.bos.HealthHistory"},
-		{Name: "smartcore.bos.HubApi"},
-		{Name: "smartcore.bos.ServicesApi"},
+		{Name: "smartcore.bos.devices.v1.DevicesApi"},
+		{Name: "smartcore.bos.enrollment.v1.EnrollmentApi"},
+		{Name: "smartcore.bos.health.v1.HealthApi"},
+		{Name: "smartcore.bos.health.v1.HealthHistory"},
+		{Name: "smartcore.bos.hub.v1.HubApi"},
+		{Name: "smartcore.bos.services.v1.ServicesApi"},
 		{Name: "smartcore.traits.MetadataApi"},
 		{Name: "smartcore.traits.OnOffApi"},
 		{Name: "smartcore.traits.OnOffInfo"},
@@ -489,7 +489,7 @@ func testReflection(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 
 	types := []string{
 		"smartcore.traits.OnOffApi",
-		"smartcore.bos.DevicesApi",
+		"smartcore.bos.devices.v1.DevicesApi",
 	}
 	for _, typ := range types {
 		_, err = reflectionapi.FileContainingSymbol(stream, typ)

@@ -248,10 +248,10 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 
 	var grpcOpts []grpc.ServerOption
 
-	// Enable forward compatibility while we transition to versioned gRPC APIs.
-	// This allows new clients to communicate with old servers as part of a rolling upgrade.
-	// Must be done before the interceptors.CorrectStreamInfo call so the /service/methos is correct.
-	migrationInterceptor := protopkg.NewNewToOldInterceptor()
+	// Enable backwards compatibility while we transition to versioned gRPC APIs.
+	// This allows old clients to communicate with new servers as part of a rolling upgrade.
+	// Must be done before the interceptors.CorrectStreamInfo call so the /service/method is correct.
+	migrationInterceptor := protopkg.NewOldToNewInterceptor()
 	grpcOpts = append(grpcOpts,
 		grpc.ChainUnaryInterceptor(migrationInterceptor.UnaryInterceptor()),
 		grpc.ChainStreamInterceptor(migrationInterceptor.StreamInterceptor()),

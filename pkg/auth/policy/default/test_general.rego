@@ -37,25 +37,25 @@ test_operator_UpdateBrightness {
   data.smartcore.allow with input as user_request("smartcore.traits.LightApi", "UpdateBrightness", {}, ["operator"])
 }
 test_operator_StartService {
-  data.smartcore.bos.ServicesApi.allow with input as user_request("smartcore.bos.ServicesApi", "StartService", {}, ["operator"])
+  data.smartcore.bos.ServicesApi.allow with input as user_request("smartcore.bos.services.v1.ServicesApi", "StartService", {}, ["operator"])
 }
 test_operator_ConfigureService {
-  not data.smartcore.bos.ServicesApi.allow with input as user_request("smartcore.bos.ServicesApi", "ConfigureService", {}, ["operator"])
-  not data.smartcore.bos.allow with input as user_request("smartcore.bos.ServicesApi", "ConfigureService", {}, ["operator"])
-  not data.smartcore.allow with input as user_request("smartcore.bos.ServicesApi", "ConfigureService", {}, ["operator"])
-  not data.grpc_default.allow with input as user_request("smartcore.bos.ServicesApi", "ConfigureService", {}, ["operator"])
+  not data.smartcore.bos.services.v1.ServicesApi.allow with input as user_request("smartcore.bos.services.v1.ServicesApi", "ConfigureService", {}, ["operator"])
+  not data.smartcore.bos.allow with input as user_request("smartcore.bos.services.v1.ServicesApi", "ConfigureService", {}, ["operator"])
+  not data.smartcore.allow with input as user_request("smartcore.bos.services.v1.ServicesApi", "ConfigureService", {}, ["operator"])
+  not data.grpc_default.allow with input as user_request("smartcore.bos.services.v1.ServicesApi", "ConfigureService", {}, ["operator"])
 }
 test_operator_ConfigureService_zones {
-  input := user_request("smartcore.bos.ServicesApi", "ConfigureService", {
+  input := user_request("smartcore.bos.services.v1.ServicesApi", "ConfigureService", {
     "name": "zones"
   }, ["operator"])
-  data.smartcore.bos.ServicesApi.allow with input as input
+  data.smartcore.bos.services.v1.ServicesApi.allow with input as input
 }
 test_operator_ConfigureService_zones {
-  input := user_request("smartcore.bos.ServicesApi", "ConfigureService", {
+  input := user_request("smartcore.bos.services.v1.ServicesApi", "ConfigureService", {
     "name": "ns/1/zones"
   }, ["operator"])
-  data.smartcore.bos.ServicesApi.allow with input as input
+  data.smartcore.bos.services.v1.ServicesApi.allow with input as input
 }
 test_operator_DaliApi {
   data.smartcore.bos.driver.dali.DaliApi.allow with input as user_request("smartcore.bos.driver.dali.DaliApi", "StartTest", {}, ["operator"])

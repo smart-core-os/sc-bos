@@ -190,7 +190,7 @@ func TestDefaultPolicy_Traits(t *testing.T) {
 
 	attrs := Attributes{
 		Protocol: ProtocolGRPC,
-		Service:  "smartcore.bos.SoundSensorApi",
+		Service:  "smartcore.bos.soundsensor.v1.SoundSensorApi",
 		Method:   "GetSoundLevel",
 		Request: &gen.GetSoundLevelRequest{
 			Name: "foo/testsoundsensor",
