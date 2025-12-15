@@ -1,6 +1,9 @@
 <template>
-  <div>
+  <div class="chart__container">
     <bar :data="chartData" :options="chartOptions" :plugins="[themeColorPlugin]"/>
+    <div v-if="!hasData" class="no-data-overlay">
+      <no-data-graphic class="no-data-graphic"/>
+    </div>
   </div>
 </template>
 
@@ -15,6 +18,7 @@ import {startOfDay, startOfYear} from 'date-fns';
 import {computed, toRef} from 'vue';
 import {Bar} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
+import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
 
 ChartJS.register(Title, Tooltip, BarElement, LinearScale, TimeScale, Legend);
 
@@ -130,8 +134,17 @@ const chartData = computed(() => {
     ]
   };
 });
+
+const hasData = computed(() => {
+  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val != null));
+});
 </script>
 
-<style scoped>
-
+<style scoped lang="scss">
+.chart__container {
+  min-height: 100%;
+  /* The chart seems to have a padding no mater what we do, this gets rid of it */
+  margin: -6px;
+  position: relative;
+}
 </style>

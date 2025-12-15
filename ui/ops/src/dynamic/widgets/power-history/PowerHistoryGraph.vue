@@ -1,17 +1,22 @@
 <template>
-  <line-chart
-      :chart-options="chartOptions"
-      :chart-data="chartData"
-      :chart-title="props.chartTitle"
-      dataset-id-key="label"
-      :hide-legends="props.hideLegends">
-    <template #options>
-      <power-history-graph-options-menu
-          v-model:duration-option="durationOption"
-          v-model:show-conversion="showConversion"
-          @export-csv="onDownloadClick"/>
-    </template>
-  </line-chart>
+  <div class="chart__container">
+    <line-chart
+        :chart-options="chartOptions"
+        :chart-data="chartData"
+        :chart-title="props.chartTitle"
+        dataset-id-key="label"
+        :hide-legends="props.hideLegends">
+      <template #options>
+        <power-history-graph-options-menu
+            v-model:duration-option="durationOption"
+            v-model:show-conversion="showConversion"
+            @export-csv="onDownloadClick"/>
+      </template>
+    </line-chart>
+    <div v-if="!hasData" class="no-data-overlay">
+      <no-data-graphic class="no-data-graphic"/>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -24,6 +29,7 @@ import useMeterHistory from '@/dynamic/widgets/power-history/useMeterHistory.js'
 import {useCarbonIntensity} from '@/stores/carbonIntensity.js';
 import {computed, ref} from 'vue';
 import {useTheme} from 'vuetify';
+import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
 
 const props = defineProps({
   chartTitle: {
@@ -198,6 +204,9 @@ const chartData = computed(() => {
   return {datasets};
 });
 
+const hasData = computed(() => {
+  return chartData.value.datasets.some(ds => ds.data.some(point => point.y !== 0 && point.y != null));
+});
 
 const chartOptions = computed(() => {
   return /** @type {ChartOptions<line>} */ {
@@ -352,3 +361,11 @@ const chartOptions = computed(() => {
   };
 });
 </script>
+
+<style scoped lang="scss">
+.chart__container {
+  position: relative;
+  height: 100%;
+}
+</style>
+

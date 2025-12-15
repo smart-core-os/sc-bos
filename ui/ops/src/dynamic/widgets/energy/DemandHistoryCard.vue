@@ -38,6 +38,9 @@
                     :options="chartOptions"
                     :data="chartData"
                     :plugins="[vueLegendPlugin, themeColorPlugin]"/>
+        <div v-if="!hasData" class="no-data-overlay">
+          <no-data-graphic class="no-data-graphic"/>
+        </div>
       </div>
     </v-card-text>
     <demand-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit" :unit="unit" :show-total="stacked"/>
@@ -59,6 +62,7 @@ import {startOfDay, startOfYear} from 'date-fns';
 import {computed, ref, toRef} from 'vue';
 import {Line as LineChart} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
+import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
 
 ChartJS.register(Title, Tooltip, LineElement, LinearScale, PointElement, TimeScale, Legend);
 const chartRef = ref(null);
@@ -245,6 +249,10 @@ const chartData = computed(() => {
   };
 });
 
+const hasData = computed(() => {
+  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val != null));
+});
+
 // download CSV...
 const visibleNames = () => {
   const names = [];
@@ -323,5 +331,6 @@ const onDownloadClick = async () => {
   min-height: v-bind(minChartHeight);
   /* The chart seems to have a padding no mater what we do, this gets rid of it */
   margin: -6px;
+  position: relative;
 }
 </style>
