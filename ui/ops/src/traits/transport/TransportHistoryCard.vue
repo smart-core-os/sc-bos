@@ -26,6 +26,7 @@
 </template>
 
 <script setup>
+import {batchLargeArray, iterateLargeArray} from '@/util/array.js';
 import equal from 'fast-deep-equal/es6';
 import {onUnmounted, ref, watch} from 'vue';
 
@@ -63,7 +64,8 @@ watch(props.history, (arr) => {
   let prev = null;
   const now = new Date();
   reset();
-  arr.forEach((item) => {
+
+  iterateLargeArray(batchLargeArray(arr), (item) => {
     if (equal(clean(item.transport, ignoreFields), clean(prev?.transport || {}, ignoreFields))) {
       prev = item;
       return;
@@ -81,13 +83,9 @@ watch(props.history, (arr) => {
     if (diffDays <= 30) {
       table.value.month += 1;
     }
-  });
+  }, true);
 }, {immediate: true, deep: true});
 </script>
 
 <style scoped>
-.v-list-item {
-  min-height: auto;
-}
-
 </style>

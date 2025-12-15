@@ -83,13 +83,15 @@
 <script setup>
 import {timestampToDate} from '@/api/convpb.js';
 import {
-  emergencyLightResultToString, getTestResultSet,
+  emergencyLightResultToString,
+  getTestResultSet,
   startDurationTest,
   startFunctionTest
 } from '@/api/sc/traits/emergency-light.js';
 import {listDevices} from '@/api/ui/devices.js';
 import ContentCard from '@/components/ContentCard.vue';
-import {ref, onMounted, computed} from 'vue';
+import {batchLargeArray, mapLargeArray} from '@/util/array.js';
+import {computed, onMounted, ref} from 'vue';
 
 const headers = [
   {title: 'Name', key: 'name'},
@@ -128,7 +130,7 @@ const getDeviceTestResults = async () => {
   totalDevices.value = allDevices.length;
 
   for (const item of allDevices) {
-    getTestResultSet({ name: item.name, queryDevice: true })
+    getTestResultSet({name: item.name, queryDevice: true})
         .then(testResult => {
           testResults.value.push({
             name: item.name,
@@ -171,7 +173,7 @@ async function downloadCSV() {
   const csvHeaders = headers.map(h => h.title).join(',');
   const getValue = (item, key) => key.split('.').reduce((o, k) => (o ? o[k] : ''), item);
 
-  const csvRows = testResults.value.map(item =>
+  const csvRows = mapLargeArray(batchLargeArray(testResults), item =>
       headers.map(h => {
         let val;
         if (h.key.startsWith('functionTest') && !item.functionTest) {
@@ -188,11 +190,10 @@ async function downloadCSV() {
           val = timestampToDate(val).toLocaleString();
         }
         return `"${(val ?? '').toString().replace(/"/g, '""')}"`;
-      }).join(',')
-  );
+      }).join(','), true);
 
   const csvContent = [csvHeaders, ...csvRows].join('\r\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.setAttribute('download', 'emergency_lighting.csv');
