@@ -77,28 +77,31 @@ func generateProtos(ctx *generator.Context, protoDir, outDir string, files []str
 func fixGeneratedFiles(ctx *generator.Context, outDir string) error {
 	ctx.Verbose("Fixing generated files in %s", outDir)
 
-	// Find all _pb.js files
-	jsFiles, err := filepath.Glob(filepath.Join(outDir, "*_pb.js"))
-	if err != nil {
-		return fmt.Errorf("finding _pb.js files: %w", err)
-	}
-
-	for _, file := range jsFiles {
-		if err := fixJSFile(ctx, file); err != nil {
-			return fmt.Errorf("fixing %s: %w", filepath.Base(file), err)
+	err := filepath.WalkDir(outDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-	}
-
-	// Find all _pb.d.ts files
-	dtsFiles, err := filepath.Glob(filepath.Join(outDir, "*_pb.d.ts"))
-	if err != nil {
-		return fmt.Errorf("finding _pb.d.ts files: %w", err)
-	}
-
-	for _, file := range dtsFiles {
-		if err := fixDTSFile(ctx, file); err != nil {
-			return fmt.Errorf("fixing %s: %w", filepath.Base(file), err)
+		if d.IsDir() {
+			return nil
 		}
+
+		// Check file extension and fix accordingly
+		name := d.Name()
+		if strings.HasSuffix(name, "_pb.js") {
+			if err := fixJSFile(ctx, path); err != nil {
+				return fmt.Errorf("fixing %s: %w", name, err)
+			}
+		} else if strings.HasSuffix(name, "_pb.d.ts") {
+			if err := fixDTSFile(ctx, path); err != nil {
+				return fmt.Errorf("fixing %s: %w", name, err)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("walking directory tree: %w", err)
 	}
 
 	return nil

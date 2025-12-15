@@ -1,0 +1,13 @@
+-- device_pb.d.ts --
+import * as jspb from 'google-protobuf'
+
+-- services/api_pb.d.ts --
+import * as jspb from 'google-protobuf'
+import * as traits_on_off_pb from '../traits/on_off_pb';
+import * as types_change_pb from '../types/change_pb';
+
+-- deep/nested/controller_pb.d.ts --
+import * as jspb from 'google-protobuf'
+import * as traits_brightness_pb from '../../traits/brightness_pb';
+import * as info_device_pb from '../../info/device_pb';
+import * as types_info_pb from '../../types/info_pb';
