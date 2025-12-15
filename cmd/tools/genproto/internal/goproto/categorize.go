@@ -32,7 +32,7 @@ func analyzeProtoFiles(protoDir string) (map[string]Generator, error) {
 			return fmt.Errorf("getting relative path: %w", err)
 		}
 
-		gen, err := determineGenerators(path)
+		gen, err := determineGenerators(protoDir, relPath)
 		if err != nil {
 			return fmt.Errorf("analyzing %s: %w", relPath, err)
 		}
@@ -49,12 +49,8 @@ func analyzeProtoFiles(protoDir string) (map[string]Generator, error) {
 }
 
 // determineGenerators analyzes a proto file to determine which generators it needs.
-func determineGenerators(filePath string) (Generator, error) {
-	// Get the proto directory (parent of the file)
-	protoDir := filepath.Dir(filePath)
-	fileName := filepath.Base(filePath)
-
-	fileDesc, err := protofile.Parse(protoDir, fileName)
+func determineGenerators(protoDir, relPath string) (Generator, error) {
+	fileDesc, err := protofile.Parse(protoDir, relPath)
 	if err != nil {
 		return 0, fmt.Errorf("parsing proto file: %w", err)
 	}

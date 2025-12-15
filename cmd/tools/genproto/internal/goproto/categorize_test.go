@@ -234,7 +234,7 @@ func TestDetermineGenerators(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:  "service with routed API",
+			name:  "service with routed API and imports",
 			txtar: "service_routed.txtar",
 			want:  GenRouter | GenWrapper,
 		},
@@ -251,8 +251,14 @@ func TestDetermineGenerators(t *testing.T) {
 			// Extract the proto file
 			protoFile := extractProtoFile(t, archive, tmpDir)
 
+			// Get the relative path from tmpDir to protoFile
+			relPath, err := filepath.Rel(tmpDir, protoFile)
+			if err != nil {
+				t.Fatalf("getting relative path: %v", err)
+			}
+
 			// Test determineGenerators
-			got, err := determineGenerators(protoFile)
+			got, err := determineGenerators(tmpDir, relPath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("determineGenerators() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -427,6 +433,7 @@ func loadTxtar(t *testing.T, name string) *txtar.Archive {
 	return txtar.Parse(data)
 }
 
+// extractProtoFile extracts to dir all files in archive, returning the absolute path the last .proto file found.
 func extractProtoFile(t *testing.T, archive *txtar.Archive, dir string) string {
 	t.Helper()
 	var protoFile string

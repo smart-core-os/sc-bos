@@ -1,11 +1,24 @@
 -- proto.mod --
 module github.com/example/proto
--- routed.proto --
+-- common/types.proto --
 syntax = "proto3";
 
-package example;
+package example.common;
 
-option go_package = "github.com/example/gen";
+option go_package = "github.com/example/gen/common";
+
+message Metadata {
+  string created_by = 1;
+  int64 timestamp = 2;
+}
+-- smartcore/devices/v1/device.proto --
+syntax = "proto3";
+
+package example.devices.v1;
+
+import "common/types.proto";
+
+option go_package = "github.com/example/gen/devices/v1";
 
 // Routed API - all request messages have 'name' string field
 service DeviceApi {
@@ -21,6 +34,7 @@ message GetDeviceRequest {
 message UpdateDeviceRequest {
   string name = 1;  // Required for routing
   Device device = 2;
+  example.common.Metadata metadata = 3;
 }
 
 message DeleteDeviceRequest {
@@ -30,5 +44,6 @@ message DeleteDeviceRequest {
 message Device {
   string id = 1;
   string model = 2;
+  example.common.Metadata metadata = 3;
 }
 
