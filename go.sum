@@ -523,8 +523,8 @@ github.com/sirupsen/logrus v1.6.0/go.mod h1:7uNnSEd1DgxDLC74fIahvMZmmYsHGZGEOFrf
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af h1:Sp5TG9f7K39yfB+If0vjp97vuT74F72r8hfRpP8jLU0=
 github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
-github.com/smart-core-os/gobacnet v0.0.0-20251125122155-d2579441f7ee h1:dlaivyB5zXGtEH79SAmL+6Pd/OC6LOSpt/BShDlKlZA=
-github.com/smart-core-os/gobacnet v0.0.0-20251125122155-d2579441f7ee/go.mod h1:M2W4eWzY3mw02foMQNwGL5SZ4lbdaJZ7e/WirbhvSHM=
+github.com/smart-core-os/gobacnet v0.0.0-20251215143300-eec746ea1612 h1:ysTq8hD72Je0YDF+i60mL8ibRxFk6RBKCnGs4pIG04c=
+github.com/smart-core-os/gobacnet v0.0.0-20251215143300-eec746ea1612/go.mod h1:M2W4eWzY3mw02foMQNwGL5SZ4lbdaJZ7e/WirbhvSHM=
 github.com/smart-core-os/protomod v0.0.0-20240905140020-cf3f34d700b0 h1:Ps2FM3FIbrsqk9iDiLxuklP0KC3JOP9hPupKazTKG5Y=
 github.com/smart-core-os/protomod v0.0.0-20240905140020-cf3f34d700b0/go.mod h1:ITloJNN3Eec4Gpg6lycFWtvRi6iLAV3k3ixf8Zj6Puc=
 github.com/smart-core-os/sc-api/go v1.0.0-beta.57 h1:AqSJVEKhA1l6zIgx7Nz9UjSTnkUxsz7hXyCDg1mbeWg=
