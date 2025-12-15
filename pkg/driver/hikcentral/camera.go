@@ -394,42 +394,42 @@ func (c *Camera) getInfo(ctx context.Context) {
 }
 
 func (c *Camera) updateCount(ctx context.Context, count string) {
-	c.lock.Lock()
-	c.state.CamOcc = count
-	stateCopy := c.copyState()
-	c.lock.Unlock()
-	c.bus.Send(ctx, stateCopy)
+	c.updateAndNotify(ctx, func() {
+		c.state.CamOcc = count
+	})
 }
 
 func (c *Camera) updateVideo(ctx context.Context, video string) {
-	c.lock.Lock()
-	c.state.CamVideo = video
-	stateCopy := c.copyState()
-	c.lock.Unlock()
-	c.bus.Send(ctx, stateCopy)
+	c.updateAndNotify(ctx, func() {
+		c.state.CamVideo = video
+	})
 }
 
 func (c *Camera) updateFault(ctx context.Context, fault bool) {
-	c.lock.Lock()
-	c.state.CamFlt = fault
-	c.state.CamFltTime = c.now()
-	stateCopy := c.copyState()
-	c.lock.Unlock()
-	c.bus.Send(ctx, stateCopy)
+	c.updateAndNotify(ctx, func() {
+		c.state.CamFlt = fault
+		c.state.CamFltTime = c.now()
+	})
 }
 
 func (c *Camera) updateActive(ctx context.Context, active bool) {
-	c.lock.Lock()
-	c.state.CamState = active
-	c.state.CamStateTime = c.now()
-	stateCopy := c.copyState()
-	c.lock.Unlock()
-	c.bus.Send(ctx, stateCopy)
+	c.updateAndNotify(ctx, func() {
+		c.state.CamState = active
+		c.state.CamStateTime = c.now()
+	})
 }
 
 func (c *Camera) updateState(ctx context.Context, new *CameraState) {
+	c.updateAndNotify(ctx, func() {
+		c.state = new
+	})
+}
+
+// updateAndNotify safely updates the camera state and notifies listeners.
+// The updateFn is called while holding the lock, then a copy is made and sent to the bus.
+func (c *Camera) updateAndNotify(ctx context.Context, updateFn func()) {
 	c.lock.Lock()
-	c.state = new
+	updateFn()
 	stateCopy := c.copyState()
 	c.lock.Unlock()
 	c.bus.Send(ctx, stateCopy)
