@@ -213,9 +213,18 @@ func TestDefaultPolicy_Traits(t *testing.T) {
 		t.Errorf("expected access to be allowed, got error: %v", err)
 	}
 
-	attrs.Service = "smartcore.bos.NonExistentApi"
+	// try an API that has nothing to do with any known trait
+	attrs.Service = "smartcore.bos.NonExistentTraitApi"
 	_, err = Validate(context.Background(), policy, attrs)
 	if !errors.Is(err, ErrPermissionDenied) {
-		t.Errorf("expected permission denied, got: %v", err)
+		t.Errorf("%s: expected permission denied, got: %v", attrs.Service, err)
+	}
+
+	// try an API that looks like a trait API, but isn't registered
+	// this would have been allowed by a previous, looser implementation of trait matching, but shouldn't be
+	attrs.Service = "smartcore.bos.SoundSensorFoobar"
+	_, err = Validate(context.Background(), policy, attrs)
+	if !errors.Is(err, ErrPermissionDenied) {
+		t.Errorf("%s: expected permission denied, got: %v", attrs.Service, err)
 	}
 }

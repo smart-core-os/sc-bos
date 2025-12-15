@@ -8,7 +8,7 @@ import data.system.known_traits
 
 trait_request {
   some trait in known_traits
-  startswith(input.service, trait)
+  input.service in trait.grpc_services
 }
 
 allow {

@@ -141,9 +141,27 @@ func init() {
 	defaultCompiler = compiler
 	defaultStore = inmem.NewFromObject(map[string]any{
 		"system": systemData{
-			KnownTraits: alltraits.Names(),
+			KnownTraits: builtinTraits(),
 		},
 	})
+}
+
+// builtinTraits derives the list of known traits from the alltraits registry.
+func builtinTraits() []knownTrait {
+	names := alltraits.Names()
+	knownTraits := make([]knownTrait, 0, len(names))
+	for _, name := range names {
+		serviceDescs := alltraits.ServiceDesc(name)
+		serviceNames := make([]string, 0, len(serviceDescs))
+		for _, sd := range serviceDescs {
+			serviceNames = append(serviceNames, sd.ServiceName)
+		}
+		knownTraits = append(knownTraits, knownTrait{
+			Name:         name,
+			GRPCServices: serviceNames,
+		})
+	}
+	return knownTraits
 }
 
 func Default(cached bool) Policy {
@@ -164,5 +182,10 @@ func FromFS(f fs.FS) (Policy, error) {
 }
 
 type systemData struct {
-	KnownTraits []trait.Name `json:"known_traits"`
+	KnownTraits []knownTrait `json:"known_traits"`
+}
+
+type knownTrait struct {
+	Name         trait.Name `json:"name"`
+	GRPCServices []string   `json:"grpc_services"`
 }

@@ -17,5 +17,6 @@ Core apis. Exceptions are encoded into specific rpc rego files.
 The policy package injects some global data into the policy evaluation context. 
 
 ### `data.system` - Information about the Smart Core system
-- `data.system.known_traits` - A list of fully qualified trait names recognised by BOS. These are prefixes for the
-   corresponding gRPC trait APIs. This can be used by the policies to tell which gRPC requests are for trait APIs.
+- `data.system.known_traits` - A list of fully qualified traits recognised by BOS. 
+  Each entry is an object like `{"name": "smartcore.bos.SoundSensor", "grpc_services": ["smartcore.bos.SoundSensorApi"]}`.
+  This can be used by the policies to tell which gRPC requests are for trait APIs.
