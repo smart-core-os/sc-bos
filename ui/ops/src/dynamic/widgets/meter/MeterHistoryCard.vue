@@ -56,6 +56,9 @@
     <v-card-text class="flex-1-1-100 pt-0">
       <div class="chart__container">
         <bar ref="chartRef" :options="chartOptions" :data="chartData" :plugins="[vueLegendPlugin, themeColorPlugin]"/>
+        <div v-if="!hasData" class="no-data-overlay">
+          <no-data-graphic class="no-data-graphic"/>
+        </div>
       </div>
     </v-card-text>
     <meter-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit" :unit="displayUnit" :hide-total-consumption="metricType === 'scaled'"/>
@@ -78,6 +81,7 @@ import {computed, ref, toRef} from 'vue';
 import {Bar} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
 import {useMeterConsumption, useMetersConsumption} from './consumption.js';
+import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
 
 ChartJS.register(Title, Tooltip, BarElement, LinearScale, TimeScale, Legend);
 const chartRef = ref(null);
@@ -281,6 +285,10 @@ const chartData = computed(() => {
   return baseData;
 });
 
+const hasData = computed(() => {
+  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val != null));
+});
+
 // download CSV...
 const visibleNames = () => {
   const names = [];
@@ -357,5 +365,6 @@ const onDownloadClick = async () => {
   min-height: v-bind(minChartHeight);
   /* The chart seems to have a padding no mater what we do, this gets rid of it */
   margin: -6px;
+  position: relative;
 }
 </style>
