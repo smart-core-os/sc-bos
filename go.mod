@@ -28,7 +28,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/cors v1.8.3
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
-	github.com/smart-core-os/gobacnet v0.0.0-20251125122155-d2579441f7ee
+	github.com/smart-core-os/gobacnet v0.0.0-20251215143300-eec746ea1612
 	github.com/smart-core-os/sc-api/go v1.0.0-beta.57
 	github.com/smart-core-os/sc-golang v0.0.0-20251030120622-735d53ae1132
 	github.com/stretchr/testify v1.11.1
