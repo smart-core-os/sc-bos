@@ -51,7 +51,6 @@ func (g Generator) String() string {
 func run(ctx *generator.Context) error {
 	protoDir := filepath.Join(ctx.RootDir, "proto")
 	genDir := filepath.Join(ctx.RootDir, "pkg", "gen")
-	rootDir := ctx.RootDir
 
 	// Discover proto files and their required generators
 	fileGenerators, err := analyzeProtoFiles(protoDir)
@@ -62,13 +61,9 @@ func run(ctx *generator.Context) error {
 	ctx.Verbose("Found %d proto files in %d generator groups", len(fileGenerators), len(groups))
 
 	for gen, files := range groups {
-		if err := generateProtos(ctx, protoDir, genDir, rootDir, gen, files); err != nil {
+		if err := generateProtos(ctx, protoDir, genDir, gen, files); err != nil {
 			return err
 		}
-	}
-
-	if err := fixGeneratedFiles(ctx, genDir); err != nil {
-		return err
 	}
 
 	return nil
@@ -88,10 +83,11 @@ func groupByGeneratorSet(fileGenerators map[string]Generator) map[Generator][]st
 }
 
 // generateProtos generates code for a set of proto files with the same generator requirements.
-func generateProtos(ctx *generator.Context, protoDir, genDir, rootDir string, gen Generator, files []string) error {
+func generateProtos(ctx *generator.Context, protoDir, genDir string, gen Generator, files []string) error {
 	if len(files) == 0 {
 		return nil
 	}
+	modulePrefix := "github.com/smart-core-os/sc-bos/pkg/gen"
 
 	ctx.Verbose("Generating %s: %s", gen, strings.Join(files, ", "))
 	goPluginPath, err := toolchain.GetGoToolPath("protoc-gen-go")
@@ -108,9 +104,11 @@ func generateProtos(ctx *generator.Context, protoDir, genDir, rootDir string, ge
 	args := []string{"protoc", "--", "-I", protoDir}
 	args = append(args,
 		"--plugin=protoc-gen-go="+goPluginPath,
-		"--go_out=paths=source_relative:"+genDir,
+		"--go_opt=module="+modulePrefix,
+		"--go_out="+genDir,
 		"--plugin=protoc-gen-go-grpc="+grpcPluginPath,
-		"--go-grpc_out=paths=source_relative:"+genDir,
+		"--go-grpc_opt=module="+modulePrefix,
+		"--go-grpc_out="+genDir,
 	)
 
 	if gen.Has(GenRouter) {
@@ -121,7 +119,9 @@ func generateProtos(ctx *generator.Context, protoDir, genDir, rootDir string, ge
 		ctx.Verbose("  protoc-gen-router path: %q", routerPluginPath)
 		args = append(args,
 			"--plugin=protoc-gen-router="+routerPluginPath,
-			"--router_out="+rootDir,
+			"--router_opt=usePaths=true",
+			"--router_opt=module="+modulePrefix,
+			"--router_out="+genDir,
 		)
 	}
 	if gen.Has(GenWrapper) {
@@ -132,7 +132,9 @@ func generateProtos(ctx *generator.Context, protoDir, genDir, rootDir string, ge
 		ctx.Verbose("  protoc-gen-wrapper path: %q", wrapperPluginPath)
 		args = append(args,
 			"--plugin=protoc-gen-wrapper="+wrapperPluginPath,
-			"--wrapper_out="+rootDir,
+			"--wrapper_opt=usePaths=true",
+			"--wrapper_opt=module="+modulePrefix,
+			"--wrapper_out="+genDir,
 		)
 	}
 
