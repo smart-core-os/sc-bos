@@ -11,6 +11,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
@@ -33,6 +34,8 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 
 	d := &Driver{
 		announcer: node.NewReplaceAnnouncer(services.Node),
+		health:    services.Health,
+		logger:    logger,
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
@@ -41,32 +44,33 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 			logContext.LogTo("applyConfig", logger)
 		}), service.RetryWithMinDelay(5*time.Second), service.RetryWithInitialDelay(5*time.Second)),
 	)
-	d.logger = services.Logger.Named(DriverName)
 	return d
 }
 
 type Driver struct {
 	*service.Service[config.Root]
-	logger    *zap.Logger
 	announcer *node.ReplaceAnnouncer
+	health    *healthpb.Checks
+	logger    *zap.Logger
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	a := d.announcer.Replace(ctx)
+	healthSystemName = cfg.SystemHealth.SystemName
 
-	opcClient, err := opcua.NewClient(cfg.Conn.Endpoint)
+	systemCheck, err := d.health.NewFaultCheck(cfg.Name, getSystemHealthCheck(cfg.SystemHealth.OccupantImpact, cfg.SystemHealth.EquipmentImpact))
 	if err != nil {
-		d.logger.Warn("NewClient error", zap.String("error", err.Error()))
+		d.logger.Warn("failed to create system fault check", zap.Error(err))
 		return err
 	}
 
-	err = opcClient.Connect(ctx)
+	opcClient, err := d.connectOpcClient(ctx, cfg, systemCheck)
 	if err != nil {
-		d.logger.Warn("Connect error", zap.String("error", err.Error()))
 		return err
 	}
 
+	systemCheck.ClearFaults()
 	client := NewClient(opcClient, d.logger, cfg.Conn.SubscriptionInterval.Duration, cfg.Conn.ClientId)
 
 	if cfg.Meta != nil {
@@ -76,8 +80,15 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	grp, ctx := errgroup.WithContext(ctx)
 	var errs error
 	for _, dev := range cfg.Devices {
+
+		faultCheck, err := d.health.NewFaultCheck(dev.Name, getDeviceHealthCheck(cfg.SystemHealth.OccupantImpact, cfg.SystemHealth.EquipmentImpact))
+		if err != nil {
+			d.logger.Error("failed to create device fault check", zap.String("device", dev.Name), zap.Error(err))
+			return err
+		}
+
 		var allFeatures []node.Feature
-		opcDev := NewDevice(&dev, d.logger, client)
+		opcDev := newDevice(&dev, d.logger, client, faultCheck)
 
 		for _, t := range dev.Traits {
 			switch t.Kind {
@@ -124,14 +135,45 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		a.Announce(dev.Name, allFeatures...)
 		grp.Go(func() error {
-			return opcDev.run(ctx)
+			return opcDev.subscribe(ctx)
 		})
 	}
 
 	go func() {
 		err := grp.Wait()
-		d.logger.Error("run error", zap.String("error", err.Error()))
+		d.logger.Error("run error", zap.Error(err))
 		_ = opcClient.Close(ctx)
 	}()
 	return nil
+}
+
+func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, faultCheck *healthpb.FaultCheck) (*opcua.Client, error) {
+	rel := &gen.HealthCheck_Reliability{}
+	opcClient, err := opcua.NewClient(cfg.Conn.Endpoint)
+	if err != nil {
+		rel.State = gen.HealthCheck_Reliability_UNRELIABLE
+		rel.LastError = &gen.HealthCheck_Error{
+			SummaryText: "Internal Driver Error",
+			DetailsText: "The device has an unrecognised internal status code",
+			Code:        statusToHealthCode(DriverConfigError),
+		}
+		faultCheck.UpdateReliability(ctx, rel)
+		d.logger.Error("error creating new client", zap.Error(err))
+		return nil, err
+	}
+
+	err = opcClient.Connect(ctx)
+	if err != nil {
+		rel.State = gen.HealthCheck_Reliability_NO_RESPONSE
+		rel.LastError = &gen.HealthCheck_Error{
+			SummaryText: "Server Unreachable",
+			DetailsText: "The opcua server is unreachable",
+			Code:        statusToHealthCode(ServerUnreachable),
+		}
+		faultCheck.UpdateReliability(ctx, rel)
+		d.logger.Error("error connecting to opc ua server", zap.Error(err))
+		return nil, err
+	}
+
+	return opcClient, nil
 }

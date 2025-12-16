@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gopcua/opcua/ua"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -45,12 +47,21 @@ type Device struct {
 	Variables []*Variable `json:"variables,omitempty"`
 	// Traits a map Smart Core traits the device implements
 	Traits []RawTrait `json:"traits,omitempty"`
+	// Health contains settings for an opc ua device health check
+	// If not configured, the occupant and equipment impact will default to UNSPECIFIED
+	Health Health `json:"health"`
 }
 
 type Timing struct {
 	Timeout      jsontypes.Duration `json:"timeout,omitempty,omitzero"`
 	BackoffStart jsontypes.Duration `json:"backoffStart,omitempty,omitzero"`
 	BackoffMax   jsontypes.Duration `json:"backoffMax,omitempty,omitzero"`
+}
+
+type Health struct {
+	OccupantImpact  gen.HealthCheck_OccupantImpact  `json:"occupantImpact"`
+	EquipmentImpact gen.HealthCheck_EquipmentImpact `json:"equipmentImpact"`
+	SystemName      string                          `json:"systemName,omitempty"`
 }
 
 type Root struct {
@@ -60,12 +71,18 @@ type Root struct {
 	Conn    Conn             `json:"conn,omitempty"`
 	Devices []Device         `json:"devices,omitempty"`
 	Timing  Timing           `json:"Timing,omitempty"`
+
+	// settings for the opc ua system health check
+	SystemHealth *Health `json:"systemHealth,omitempty"`
 }
 
 func ReadBytes(data []byte) (cfg Root, err error) {
 	err = json.Unmarshal(data, &cfg)
 	if err != nil {
 		return cfg, err
+	}
+	if cfg.SystemHealth == nil || cfg.SystemHealth.SystemName == "" {
+		return cfg, fmt.Errorf("opcua driver config must specify systemHealth.systemName")
 	}
 	if cfg.Conn.SubscriptionInterval == nil {
 		cfg.Conn.SubscriptionInterval = &jsontypes.Duration{Duration: 5 * time.Second}

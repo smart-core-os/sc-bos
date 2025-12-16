@@ -10,6 +10,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 )
 
 type Device struct {
@@ -21,25 +22,18 @@ type Device struct {
 	meter     *Meter
 	transport *Transport
 	udmi      *Udmi
+
+	faultCheck *healthpb.FaultCheck
 }
 
-func NewDevice(device *config.Device, logger *zap.Logger, client *Client) *Device {
+func newDevice(device *config.Device, logger *zap.Logger, client *Client, check *healthpb.FaultCheck) *Device {
 
 	return &Device{
-		conf:   device,
-		logger: logger,
-		client: client,
+		client:     client,
+		conf:       device,
+		faultCheck: check,
+		logger:     logger,
 	}
-}
-
-func (d *Device) run(ctx context.Context) error {
-	grp, ctx := errgroup.WithContext(ctx)
-
-	grp.Go(func() error {
-		return d.subscribe(ctx)
-	})
-
-	return grp.Wait()
 }
 
 func (d *Device) subscribe(ctx context.Context) error {
@@ -50,8 +44,7 @@ func (d *Device) subscribe(ctx context.Context) error {
 		c, err := d.client.Subscribe(ctx, pointName)
 		if err != nil {
 			d.logger.Error("failed to subscribe to point", zap.Stringer("point", pointName), zap.Error(err))
-			// if the client is connected but can't subscribe, it is bad config
-			// just log the error and move on
+			raiseConfigFault("Failed to subscribe to point "+pointName.String(), d.faultCheck)
 			continue
 		}
 		grp.Go(func() error {
@@ -81,9 +74,11 @@ func (d *Device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 			}
 
 			if errors.Is(item.Value.Status, ua.StatusOK) {
+				clearPointFault(node.String(), d.faultCheck)
 				value := item.Value.Value.Value()
 				d.handleTraitEvent(ctx, node, value)
 			} else {
+				raisePointFault(node.String(), item.Value.Status.Error(), d.faultCheck)
 				d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", item.Value.Status.Error()))
 			}
 		}
@@ -93,8 +88,10 @@ func (d *Device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 			for _, field := range item.EventFields {
 				if errors.Is(field.StatusCode(), ua.StatusOK) {
 					value := field.Value()
+					clearPointFault(node.String(), d.faultCheck)
 					d.handleTraitEvent(ctx, node, value)
 				} else {
+					raisePointFault(node.String(), field.StatusCode().Error(), d.faultCheck)
 					d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", field.StatusCode().Error()))
 				}
 			}
@@ -121,6 +118,6 @@ func (d *Device) handleTraitEvent(ctx context.Context, node *ua.NodeID, value an
 	}
 }
 
-func NodeIdsAreEqual(nodeId string, n *ua.NodeID) bool {
+func nodeIdsAreEqual(nodeId string, n *ua.NodeID) bool {
 	return n != nil && nodeId == n.String()
 }

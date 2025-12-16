@@ -68,7 +68,7 @@ func (e *Electric) handleElectricEvent(node *ua.NodeID, value any) {
 		return
 	}
 	switch {
-	case e.cfg.Demand.ApparentPower != nil && NodeIdsAreEqual(e.cfg.Demand.ApparentPower.NodeId, node):
+	case e.cfg.Demand.ApparentPower != nil && nodeIdsAreEqual(e.cfg.Demand.ApparentPower.NodeId, node):
 		ap, err := conv.Float32Value(value)
 		if err != nil {
 			e.logger.Warn("error reading float32 for apparent power", zap.String("error", err.Error()))
@@ -78,7 +78,7 @@ func (e *Electric) handleElectricEvent(node *ua.NodeID, value any) {
 		}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
 			Paths: []string{"apparent_power"},
 		}))
-	case e.cfg.Demand.ReactivePower != nil && NodeIdsAreEqual(e.cfg.Demand.ReactivePower.NodeId, node):
+	case e.cfg.Demand.ReactivePower != nil && nodeIdsAreEqual(e.cfg.Demand.ReactivePower.NodeId, node):
 		rp, err := conv.Float32Value(value)
 		if err != nil {
 			e.logger.Warn("error reading float32 for reactive power", zap.String("error", err.Error()))
@@ -88,7 +88,7 @@ func (e *Electric) handleElectricEvent(node *ua.NodeID, value any) {
 		}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
 			Paths: []string{"reactive_power"},
 		}))
-	case e.cfg.Demand.RealPower != nil && NodeIdsAreEqual(e.cfg.Demand.RealPower.NodeId, node):
+	case e.cfg.Demand.RealPower != nil && nodeIdsAreEqual(e.cfg.Demand.RealPower.NodeId, node):
 		rp, err := conv.Float32Value(value)
 		if err != nil {
 			e.logger.Warn("error reading float32 for real power", zap.String("error", err.Error()))
@@ -98,7 +98,7 @@ func (e *Electric) handleElectricEvent(node *ua.NodeID, value any) {
 		}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
 			Paths: []string{"real_power"},
 		}))
-	case e.cfg.Demand.PowerFactor != nil && NodeIdsAreEqual(e.cfg.Demand.PowerFactor.NodeId, node):
+	case e.cfg.Demand.PowerFactor != nil && nodeIdsAreEqual(e.cfg.Demand.PowerFactor.NodeId, node):
 		pf, err := conv.Float32Value(value)
 		if err != nil {
 			e.logger.Warn("error reading float32 for power factor", zap.String("error", err.Error()))
