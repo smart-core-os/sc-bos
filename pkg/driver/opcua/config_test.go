@@ -189,14 +189,14 @@ func TestReadBytes_ValidatesTraitConfigs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := config.ReadBytes([]byte(tt.configJSON))
+			_, err := config.ParseConfig([]byte(tt.configJSON))
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ReadBytes() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParseConfig() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if err != nil && tt.errMsg != "" {
 				if err.Error() != tt.errMsg && !containsString(err.Error(), tt.errMsg) {
-					t.Errorf("ReadBytes() error = %v, want error containing %v", err.Error(), tt.errMsg)
+					t.Errorf("ParseConfig() error = %v, want error containing %v", err.Error(), tt.errMsg)
 				}
 			}
 		})

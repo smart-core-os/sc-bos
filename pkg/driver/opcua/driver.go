@@ -43,13 +43,13 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
-		service.WithParser(config.ReadBytes),
+		service.WithParser(config.ParseConfig),
 		service.WithRetry[config.Root](
 			service.RetryWithLogger(func(logContext service.RetryContext) {
 				logContext.LogTo("applyConfig", logger)
 			}),
 			// Use config timing values for retry policy
-			// These defaults match config.ReadBytes defaults (BackoffStart: 2s, BackoffMax: 30s)
+			// These defaults match config.ParseConfig defaults (BackoffStart: 2s, BackoffMax: 30s)
 			service.RetryWithInitialDelay(2*time.Second),
 			service.RetryWithMinDelay(2*time.Second),
 			service.RetryWithMaxDelay(30*time.Second),

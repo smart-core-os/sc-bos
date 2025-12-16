@@ -73,16 +73,56 @@ type Root struct {
 	Timing  Timing           `json:"Timing,omitempty"`
 }
 
+func ParseConfig(data []byte) (cfg Root, err error) {
+	err = json.Unmarshal(data, &cfg)
+	if err != nil {
+		return cfg, err
+	}
+	if cfg.Conn.SubscriptionInterval == nil {
+		cfg.Conn.SubscriptionInterval = &jsontypes.Duration{Duration: 5 * time.Second}
+	}
+	if cfg.Timing.Timeout.Duration == 0 {
+		cfg.Timing.Timeout = jsontypes.Duration{Duration: 10 * time.Second}
+	}
+	if cfg.Timing.BackoffStart.Duration == 0 {
+		cfg.Timing.BackoffStart = jsontypes.Duration{Duration: 2 * time.Second}
+	}
+	if cfg.Timing.BackoffMax.Duration == 0 {
+		cfg.Timing.BackoffMax = jsontypes.Duration{Duration: 30 * time.Second}
+	}
+	if cfg.Timing.BackoffMax.Duration < cfg.Timing.BackoffStart.Duration {
+		cfg.Timing.BackoffMax = cfg.Timing.BackoffStart
+	}
+	if cfg.Conn.ClientId == 0 {
+		cfg.Conn.ClientId = rand.Uint32()
+	}
+
+	for _, d := range cfg.Devices {
+		for _, v := range d.Variables {
+			nId, err := ua.ParseNodeID(v.NodeId)
+			if err != nil {
+				return cfg, err
+			}
+			v.ParsedNodeId = nId
+		}
+
+		if err := validateDeviceTraits(&d); err != nil {
+			return cfg, err
+		}
+	}
+
+	return cfg, nil
+}
+
 // validateDeviceTraits validates trait configurations and checks that all nodeIds referenced in traits
 // exist in the device's variable list.
 func validateDeviceTraits(device *Device) error {
-	// Build a set of valid nodeIds for this device
+
 	validNodeIds := make(map[string]bool)
 	for _, v := range device.Variables {
 		validNodeIds[v.NodeId] = true
 	}
 
-	// Helper function to check if a nodeId exists in device variables
 	checkNodeId := func(nodeId, context string) error {
 		if nodeId != "" && !validNodeIds[nodeId] {
 			return fmt.Errorf("device '%s': %s references nodeId '%s' which is not in device variables list",
@@ -91,7 +131,6 @@ func validateDeviceTraits(device *Device) error {
 		return nil
 	}
 
-	// Helper function to validate a ValueSource's nodeId
 	validateValueSource := func(vs *ValueSource, context string) error {
 		if vs != nil {
 			return checkNodeId(vs.NodeId, context)
@@ -99,7 +138,6 @@ func validateDeviceTraits(device *Device) error {
 		return nil
 	}
 
-	// Validate each trait
 	for _, t := range device.Traits {
 		switch t.Kind {
 		case meterpb.TraitName:
@@ -222,47 +260,4 @@ func validateDeviceTraits(device *Device) error {
 	}
 
 	return nil
-}
-
-func ReadBytes(data []byte) (cfg Root, err error) {
-	err = json.Unmarshal(data, &cfg)
-	if err != nil {
-		return cfg, err
-	}
-	if cfg.Conn.SubscriptionInterval == nil {
-		cfg.Conn.SubscriptionInterval = &jsontypes.Duration{Duration: 5 * time.Second}
-	}
-	if cfg.Timing.Timeout.Duration == 0 {
-		cfg.Timing.Timeout = jsontypes.Duration{Duration: 10 * time.Second}
-	}
-	if cfg.Timing.BackoffStart.Duration == 0 {
-		cfg.Timing.BackoffStart = jsontypes.Duration{Duration: 2 * time.Second}
-	}
-	if cfg.Timing.BackoffMax.Duration == 0 {
-		cfg.Timing.BackoffMax = jsontypes.Duration{Duration: 30 * time.Second}
-	}
-	if cfg.Timing.BackoffMax.Duration < cfg.Timing.BackoffStart.Duration {
-		cfg.Timing.BackoffMax = cfg.Timing.BackoffStart
-	}
-	if cfg.Conn.ClientId == 0 {
-		cfg.Conn.ClientId = rand.Uint32()
-	}
-
-	for _, d := range cfg.Devices {
-		// Parse and validate variable node IDs
-		for _, v := range d.Variables {
-			nId, err := ua.ParseNodeID(v.NodeId)
-			if err != nil {
-				return cfg, err
-			}
-			v.ParsedNodeId = nId
-		}
-
-		// Validate traits and cross-check nodeIds against device variables
-		if err := validateDeviceTraits(&d); err != nil {
-			return cfg, err
-		}
-	}
-
-	return cfg, nil
 }
