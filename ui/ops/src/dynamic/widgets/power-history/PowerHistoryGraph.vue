@@ -13,7 +13,7 @@
             @export-csv="onDownloadClick"/>
       </template>
     </line-chart>
-    <div v-if="!hasData" class="no-data-overlay">
+    <div v-if="showNoData" class="no-data-overlay">
       <no-data-graphic class="no-data-graphic"/>
     </div>
   </div>
@@ -27,7 +27,7 @@ import useTimePeriod from '@/composables/useTimePeriod.js';
 import PowerHistoryGraphOptionsMenu from '@/dynamic/widgets/power-history/PowerHistoryGraphOptionsMenu.vue';
 import useMeterHistory from '@/dynamic/widgets/power-history/useMeterHistory.js';
 import {useCarbonIntensity} from '@/stores/carbonIntensity.js';
-import {computed, ref} from 'vue';
+import {computed, ref, watch} from 'vue';
 import {useTheme} from 'vuetify';
 import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
 
@@ -207,6 +207,24 @@ const chartData = computed(() => {
 const hasData = computed(() => {
   return chartData.value.datasets.some(ds => ds.data.some(point => point.y !== 0 && point.y != null));
 });
+
+// Track if initial data load is complete to avoid showing no-data graphic during fetch
+const hasLoadedData = ref(false);
+
+// Reset loading state when date range changes
+watch([periodStart, periodEnd], () => {
+  hasLoadedData.value = false;
+});
+
+watch(chartData, (data) => {
+  // Check if we have any non-null data points (even if they're zero)
+  const hasAnyData = data.datasets.some(ds => ds.data.some(point => point.y != null));
+  if (hasAnyData && !hasLoadedData.value) {
+    hasLoadedData.value = true;
+  }
+}, {immediate: true});
+
+const showNoData = computed(() => !hasData.value && hasLoadedData.value);
 
 const chartOptions = computed(() => {
   return /** @type {ChartOptions<line>} */ {

@@ -38,7 +38,7 @@
                     :options="chartOptions"
                     :data="chartData"
                     :plugins="[vueLegendPlugin, themeColorPlugin]"/>
-        <div v-if="!hasData" class="no-data-overlay">
+        <div v-if="showNoData" class="no-data-overlay">
           <no-data-graphic class="no-data-graphic"/>
         </div>
       </div>
@@ -59,7 +59,7 @@ import PeriodChooserRows from '@/components/PeriodChooserRows.vue';
 import {useLocalProp} from '@/util/vue.js';
 import {Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js'
 import {startOfDay, startOfYear} from 'date-fns';
-import {computed, ref, toRef} from 'vue';
+import {computed, ref, toRef, watch} from 'vue';
 import {Line as LineChart} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
 import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
@@ -252,6 +252,24 @@ const chartData = computed(() => {
 const hasData = computed(() => {
   return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val != null));
 });
+
+// Track if initial data load is complete to avoid showing no-data graphic during fetch
+const hasLoadedData = ref(false);
+
+// Reset loading state when date range changes
+watch([startDate, endDate], () => {
+  hasLoadedData.value = false;
+});
+
+watch(chartData, (data) => {
+  // Check if we have any non-null data points (even if they're zero)
+  const hasAnyData = data.datasets.some(ds => ds.data.some(val => val != null));
+  if (hasAnyData && !hasLoadedData.value) {
+    hasLoadedData.value = true;
+  }
+}, {immediate: true});
+
+const showNoData = computed(() => !hasData.value && hasLoadedData.value);
 
 // download CSV...
 const visibleNames = () => {
