@@ -138,7 +138,6 @@ const chartData = computed(() => {
     });
   }
 
-  console.log('chartData', datasets, totalUsageCounts.value);
   return {
     labels: chartLabels.value,
     datasets: datasets,

@@ -104,7 +104,6 @@ async function readUsageCountSeries(names, edges, countBefore) {
   let copySrc;
 
   for (const name of names) {
-    console.log(name);
     const req = {
       name,
       period: {
@@ -124,8 +123,6 @@ async function readUsageCountSeries(names, edges, countBefore) {
         console.error('Error reading allocation history for', name, e);
         break;
       }
-
-      console.log(resp,name);
 
       if (resp.allocationRecordsList.length === 0) break;
 
