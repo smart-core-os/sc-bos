@@ -28,6 +28,7 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
+		service.WithParser(config.ParseConfig),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logCtx service.RetryContext) {
 			logCtx.LogTo("applyConfig", d.logger)
 		}), service.RetryWithMinDelay(10*time.Second)),
@@ -43,11 +44,20 @@ type Driver struct {
 
 	devices map[string]*PestSensor
 
-	client mqtt.Client
+	client       mqtt.Client
+	currentTopic string
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer := d.announcer.Replace(ctx)
+
+	if d.client != nil && d.client.IsConnected() {
+		if d.currentTopic != "" {
+			token := d.client.Unsubscribe(d.currentTopic)
+			token.Wait()
+		}
+		d.client.Disconnect(250)
+	}
 
 	// Connect to MQTT
 	var err error
@@ -75,12 +85,17 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	var responseHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
-		go handleResponse(msg.Payload(), d.devices, d.logger)
+		handleResponse(msg.Payload(), d.devices, d.logger)
 	}
 
-	token := d.client.Subscribe(cfg.Broker.Topic, 0, responseHandler)
+	token := d.client.Subscribe(cfg.Broker.Topic, *cfg.Broker.QoS, responseHandler)
 	token.Wait()
-
+	if token.Error() != nil {
+		d.logger.Error("failed to subscribe", zap.String("topic", cfg.Broker.Topic), zap.Error(token.Error()))
+		return token.Error()
+	}
+	d.currentTopic = cfg.Broker.Topic
+	d.logger.Debug("subscribed to topic", zap.String("topic", d.currentTopic))
 	return nil
 }
 
