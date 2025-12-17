@@ -14,6 +14,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/config"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/button"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/fluidflowpb"
@@ -163,6 +164,9 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 	case trait.AirTemperature:
 		model := airtemperaturepb.NewModel()
 		return []wrap.ServiceUnwrapper{airtemperaturepb.WrapApi(airtemperaturepb.NewModelServer(model))}, auto.AirTemperatureAuto(model)
+	case allocationpb.TraitName:
+		model := allocationpb.NewModel()
+		return []wrap.ServiceUnwrapper{gen.WrapAllocationApi(allocationpb.NewModelServer(model))}, auto.AllocationAuto(model)
 	case trait.Booking:
 		return []wrap.ServiceUnwrapper{bookingpb.WrapApi(bookingpb.NewModelServer(bookingpb.NewModel()))}, nil
 	case trait.BrightnessSensor:
