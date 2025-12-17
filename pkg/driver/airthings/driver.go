@@ -15,11 +15,13 @@ import (
 	"net/http"
 	"sync"
 
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/smart-core-os/sc-bos/pkg/block"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/api"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
@@ -34,33 +36,35 @@ var Factory driver.Factory = factory{}
 type factory struct{}
 
 func (f factory) New(services driver.Services) service.Lifecycle {
-	services.Logger = services.Logger.Named(DriverName)
+
 	d := &Driver{
 		Services:  services,
 		announcer: node.NewReplaceAnnouncer(services.Node),
+		logger:    services.Logger.Named(DriverName),
 	}
 	d.Service = service.New(service.MonoApply(d.applyConfig))
 	return d
 }
 
 func (_ factory) ConfigBlocks() []block.Block {
-	return Blocks
+	return config.Blocks
 }
 
 type Driver struct {
-	*service.Service[Config]
+	*service.Service[config.Root]
 	driver.Services
 	announcer *node.ReplaceAnnouncer
 
-	cfg    Config
+	cfg    config.Root
 	client *http.Client
 
 	listLocationsOnce sync.Once
 	locationsErr      error
 	locations         api.GetLocationsResponse
+	logger            *zap.Logger
 }
 
-func (d *Driver) applyConfig(ctx context.Context, cfg Config) error {
+func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer := d.announcer.Replace(ctx)
 	d.listLocationsOnce = sync.Once{}
 	d.cfg = cfg
@@ -89,11 +93,17 @@ func (d *Driver) applyConfig(ctx context.Context, cfg Config) error {
 				Description: "Device configured successfully",
 				Name:        n + ":setup",
 			})
-			err = d.announceDevice(ctx, announcer, device, ll, status)
+			err = d.announceDevice(ctx, announcer, device, ll)
 			if err != nil {
 				return err // failure of configuration, not runtime
 			}
 		}
 	}
+	go func() {
+		err := grp.Wait()
+		if err != nil {
+			d.logger.Error("driver stopped unexpectedly", zap.Error(err))
+		}
+	}()
 	return nil
 }
