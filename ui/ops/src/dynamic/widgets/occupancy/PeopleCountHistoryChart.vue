@@ -136,7 +136,7 @@ const chartData = computed(() => {
 });
 
 const hasData = computed(() => {
-  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val != null));
+  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val));
 });
 
 // Track if initial data load is complete to avoid showing no-data graphic during fetch
