@@ -145,6 +145,8 @@ func NewClient(ptr any, conn grpc.ClientConnInterface) (ok bool) {
 	case *gen.WasteInfoClient:
 		*ptr = gen.NewWasteInfoClient(conn)
 
+	case *gen.AllocationHistoryClient:
+		*ptr = gen.NewAllocationHistoryClient(conn)
 	case *gen.AirTemperatureHistoryClient:
 		*ptr = gen.NewAirTemperatureHistoryClient(conn)
 	case *gen.ElectricHistoryClient:

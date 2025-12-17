@@ -96,7 +96,7 @@ func (r *AllocationApiRouter) UpdateAllocation(ctx context.Context, request *Upd
 	return child.UpdateAllocation(ctx, request)
 }
 
-func (r *AllocationApiRouter) PullAllocations(request *PullAllocationsRequest, server AllocationApi_PullAllocationsServer) error {
+func (r *AllocationApiRouter) PullAllocation(request *PullAllocationRequest, server AllocationApi_PullAllocationServer) error {
 	child, err := r.GetAllocationApiClient(request.Name)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (r *AllocationApiRouter) PullAllocations(request *PullAllocationsRequest, s
 	// so we can cancel our forwarding request if we can't send responses to our caller
 	reqCtx, reqDone := context.WithCancel(server.Context())
 	// issue the request
-	stream, err := child.PullAllocations(reqCtx, request)
+	stream, err := child.PullAllocation(reqCtx, request)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (r *AllocationApiRouter) PullAllocations(request *PullAllocationsRequest, s
 		// Impl note: we could improve throughput here by issuing the Recv and Send in different goroutines, but we're doing
 		// it synchronously until we have a need to change the behaviour
 
-		var msg *PullAllocationsResponse
+		var msg *PullAllocationResponse
 		msg, err = stream.Recv()
 		if err != nil {
 			break
@@ -153,13 +153,4 @@ func (r *AllocationApiRouter) PullAllocations(request *PullAllocationsRequest, s
 		}
 		return err
 	}
-}
-
-func (r *AllocationApiRouter) ListAllocatableResources(ctx context.Context, request *ListAllocatableResourcesRequest) (*ListAllocatableResourcesResponse, error) {
-	child, err := r.GetAllocationApiClient(request.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	return child.ListAllocatableResources(ctx, request)
 }

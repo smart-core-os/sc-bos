@@ -24,8 +24,6 @@ var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/fie
 
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js')
 
-var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js')
-
 var actor_pb = require('./actor_pb.js')
 const proto = {};
 proto.smartcore = {};
@@ -208,117 +206,56 @@ proto.smartcore.bos.AllocationApiPromiseClient.prototype.updateAllocation =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
- *   !proto.smartcore.bos.PullAllocationsRequest,
- *   !proto.smartcore.bos.PullAllocationsResponse>}
+ *   !proto.smartcore.bos.PullAllocationRequest,
+ *   !proto.smartcore.bos.PullAllocationResponse>}
  */
-const methodDescriptor_AllocationApi_PullAllocations = new grpc.web.MethodDescriptor(
-  '/smartcore.bos.AllocationApi/PullAllocations',
+const methodDescriptor_AllocationApi_PullAllocation = new grpc.web.MethodDescriptor(
+  '/smartcore.bos.AllocationApi/PullAllocation',
   grpc.web.MethodType.SERVER_STREAMING,
-  proto.smartcore.bos.PullAllocationsRequest,
-  proto.smartcore.bos.PullAllocationsResponse,
+  proto.smartcore.bos.PullAllocationRequest,
+  proto.smartcore.bos.PullAllocationResponse,
   /**
-   * @param {!proto.smartcore.bos.PullAllocationsRequest} request
+   * @param {!proto.smartcore.bos.PullAllocationRequest} request
    * @return {!Uint8Array}
    */
   function(request) {
     return request.serializeBinary();
   },
-  proto.smartcore.bos.PullAllocationsResponse.deserializeBinary
+  proto.smartcore.bos.PullAllocationResponse.deserializeBinary
 );
 
 
 /**
- * @param {!proto.smartcore.bos.PullAllocationsRequest} request The request proto
+ * @param {!proto.smartcore.bos.PullAllocationRequest} request The request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
- * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.PullAllocationsResponse>}
+ * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.PullAllocationResponse>}
  *     The XHR Node Readable Stream
  */
-proto.smartcore.bos.AllocationApiClient.prototype.pullAllocations =
+proto.smartcore.bos.AllocationApiClient.prototype.pullAllocation =
     function(request, metadata) {
   return this.client_.serverStreaming(this.hostname_ +
-      '/smartcore.bos.AllocationApi/PullAllocations',
+      '/smartcore.bos.AllocationApi/PullAllocation',
       request,
       metadata || {},
-      methodDescriptor_AllocationApi_PullAllocations);
+      methodDescriptor_AllocationApi_PullAllocation);
 };
 
 
 /**
- * @param {!proto.smartcore.bos.PullAllocationsRequest} request The request proto
+ * @param {!proto.smartcore.bos.PullAllocationRequest} request The request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
- * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.PullAllocationsResponse>}
+ * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.PullAllocationResponse>}
  *     The XHR Node Readable Stream
  */
-proto.smartcore.bos.AllocationApiPromiseClient.prototype.pullAllocations =
+proto.smartcore.bos.AllocationApiPromiseClient.prototype.pullAllocation =
     function(request, metadata) {
   return this.client_.serverStreaming(this.hostname_ +
-      '/smartcore.bos.AllocationApi/PullAllocations',
+      '/smartcore.bos.AllocationApi/PullAllocation',
       request,
       metadata || {},
-      methodDescriptor_AllocationApi_PullAllocations);
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.smartcore.bos.ListAllocatableResourcesRequest,
- *   !proto.smartcore.bos.ListAllocatableResourcesResponse>}
- */
-const methodDescriptor_AllocationApi_ListAllocatableResources = new grpc.web.MethodDescriptor(
-  '/smartcore.bos.AllocationApi/ListAllocatableResources',
-  grpc.web.MethodType.UNARY,
-  proto.smartcore.bos.ListAllocatableResourcesRequest,
-  proto.smartcore.bos.ListAllocatableResourcesResponse,
-  /**
-   * @param {!proto.smartcore.bos.ListAllocatableResourcesRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.smartcore.bos.ListAllocatableResourcesResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.smartcore.bos.ListAllocatableResourcesRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.ListAllocatableResourcesResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.ListAllocatableResourcesResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.smartcore.bos.AllocationApiClient.prototype.listAllocatableResources =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/smartcore.bos.AllocationApi/ListAllocatableResources',
-      request,
-      metadata || {},
-      methodDescriptor_AllocationApi_ListAllocatableResources,
-      callback);
-};
-
-
-/**
- * @param {!proto.smartcore.bos.ListAllocatableResourcesRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.smartcore.bos.ListAllocatableResourcesResponse>}
- *     Promise that resolves to the response
- */
-proto.smartcore.bos.AllocationApiPromiseClient.prototype.listAllocatableResources =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/smartcore.bos.AllocationApi/ListAllocatableResources',
-      request,
-      metadata || {},
-      methodDescriptor_AllocationApi_ListAllocatableResources);
+      methodDescriptor_AllocationApi_PullAllocation);
 };
 
 
