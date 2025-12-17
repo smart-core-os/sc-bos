@@ -74,7 +74,7 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	soundsensorpb.TraitName:    {gen.SoundSensorApi_ServiceDesc, gen.SoundSensorInfo_ServiceDesc},
 	statusTraitName:            {gen.StatusApi_ServiceDesc, gen.StatusHistory_ServiceDesc},
 	temperaturepb.TraitName:    {gen.TemperatureApi_ServiceDesc},
-	transport.TraitName:        {gen.TransportApi_ServiceDesc, gen.TransportInfo_ServiceDesc},
+	transport.TraitName:        {gen.TransportApi_ServiceDesc, gen.TransportInfo_ServiceDesc, gen.TransportHistory_ServiceDesc},
 	udmipb.TraitName:           {gen.UdmiService_ServiceDesc},
 	wastepb.TraitName:          {gen.WasteApi_ServiceDesc, gen.WasteInfo_ServiceDesc},
 }
