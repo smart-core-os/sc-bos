@@ -254,6 +254,12 @@
       "type": "mock",
       "devices": [
         {
+          "name": "van/uk/brum/ugs/devices/LOK-L00-01",
+          "traits": [{"name": "smartcore.bos.Allocation"}],
+          "membership": {"subsystem": "lockers"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
+        {
           "name": "van/uk/brum/ugs/devices/LTF-L00-01",
           "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
           "appearance": {"title": "Entrance Lights"},
@@ -1487,6 +1493,12 @@
       "storage": {"type": "postgres"}
     },
     {
+      "name": "van/uk/brum/ugs/automation/allocation-history/LOK-L00-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/LOK-L00-01", "trait": "smartcore.bos.Allocation"},
+      "storage": {"type": "postgres"}
+    },
+    {
       "name": "van/uk/brum/ugs/automation/electric-history/building",
       "type": "history",
       "source": {"name": "van/uk/brum/ugs/zones/building", "trait": "smartcore.traits.Electric"},
@@ -1522,6 +1534,7 @@
       "source": {"name": "van/uk/brum/ugs/zones/areas/lab", "trait": "smartcore.traits.Electric"},
       "storage": {"type": "postgres"}
     },
+
     {
       "name": "van/uk/brum/ugs/automation/electric-history/comms-room",
       "type": "history",

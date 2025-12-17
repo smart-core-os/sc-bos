@@ -15,7 +15,9 @@ type Model struct {
 }
 
 func NewModel() *Model {
-	return &Model{}
+	return &Model{
+		allocation: resource.NewValue(resource.WithInitialValue(&gen.Allocation{})),
+	}
 }
 
 func (m *Model) UpdateAllocation(a *gen.Allocation, opts ...resource.WriteOption) {
