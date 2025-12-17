@@ -536,7 +536,7 @@
         {
           "name": "van/uk/brum/ugs/devices/ACR-L00-01",
           "traits": [
-            {"name": "smartcore.bos.Access"}, {"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}
+            {"name": "smartcore.bos.Access"}, {"name": "smartcore.traits.EnterLeaveSensor"}, {"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}
           ],
           "appearance": {"title": "Main Door"},
           "membership": {"subsystem": "acs"},

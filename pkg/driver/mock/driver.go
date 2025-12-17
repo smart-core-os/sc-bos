@@ -197,7 +197,8 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 		}
 		return []wrap.ServiceUnwrapper{energystoragepb.WrapApi(energystoragepb.NewModelServer(model))}, auto.EnergyStorage(model, kind)
 	case trait.EnterLeaveSensor:
-		return []wrap.ServiceUnwrapper{enterleavesensorpb.WrapApi(enterleavesensorpb.NewModelServer(enterleavesensorpb.NewModel()))}, nil
+		model := enterleavesensorpb.NewModel()
+		return []wrap.ServiceUnwrapper{enterleavesensorpb.WrapApi(enterleavesensorpb.NewModelServer(model))}, auto.EnterLeaveAuto(model)
 	case trait.ExtendRetract:
 		// todo: return []any{extendretract.WrapApi(extendretract.NewModelServer(extendretract.NewModel()))}, nil
 		return nil, nil
