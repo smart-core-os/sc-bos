@@ -3,8 +3,6 @@ package pestsense
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"strconv"
 
 	"go.uber.org/zap"
 
@@ -22,7 +20,7 @@ type Response struct {
 }
 
 func handleResponse(body []byte, devices map[string]*PestSensor, logger *zap.Logger) {
-	fmt.Printf("Received message: %s\n", body)
+
 	response := Response{}
 
 	err := json.Unmarshal(body, &response)
@@ -38,17 +36,17 @@ func handleResponse(body []byte, devices map[string]*PestSensor, logger *zap.Log
 		logger.Warn("Unexpected packet type")
 		return
 	}
-	logger.Debug("Occupied: " + strconv.FormatBool(occupied))
+	logger.Debug("Occupied: ", zap.Bool("occupied", occupied))
 
 	device, exists := devices[response.DeviceNumber]
 
 	if exists {
 		if occupied {
 			logger.Debug("Setting occupied for device " + response.DeviceNumber)
-			device.Occupancy.Set(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			_, _ = device.occupancy.Set(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
 		} else {
 			logger.Debug("Setting unoccupied for device " + response.DeviceNumber)
-			device.Occupancy.Set(&traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			_, _ = device.occupancy.Set(&traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
 		}
 	}
 }

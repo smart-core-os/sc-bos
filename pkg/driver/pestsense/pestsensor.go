@@ -12,40 +12,35 @@ import (
 type PestSensor struct {
 	traits.UnimplementedOccupancySensorApiServer
 
-	Id        string
-	Occupancy *resource.Value
+	id        string
+	name      string
+	occupancy *resource.Value // *traits.Occupancy
 }
 
-func NewPestSensor(id string) *PestSensor {
+func NewPestSensor(id, name string) *PestSensor {
 	return &PestSensor{
-		Id:        id,
-		Occupancy: resource.NewValue(resource.WithInitialValue(&traits.Occupancy{}), resource.WithNoDuplicates()),
+		id:        id,
+		name:      name,
+		occupancy: resource.NewValue(resource.WithInitialValue(&traits.Occupancy{}), resource.WithNoDuplicates()),
 	}
 }
 
-func (s *PestSensor) GetOccupancy(ctx context.Context, request *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
-	value := s.Occupancy.Get()
+func (p *PestSensor) GetOccupancy(_ context.Context, _ *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
+	value := p.occupancy.Get()
 	occupancy := value.(*traits.Occupancy)
 	return occupancy, nil
 }
 
-func (o *PestSensor) PullOccupancy(request *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
-	ctx, cancel := context.WithCancel(server.Context())
-	defer cancel()
-	// TODO: refresh initial occupancy value
-
-	changes := o.Occupancy.Pull(ctx, resource.WithBackpressure(false))
-	for change := range changes {
-		occupancy := change.Value.(*traits.Occupancy)
-		resChange := &traits.PullOccupancyResponse_Change{
-			Occupancy:  occupancy,
-			ChangeTime: timestamppb.New(change.ChangeTime),
-		}
-		res := &traits.PullOccupancyResponse{
-			Changes: []*traits.PullOccupancyResponse_Change{resChange},
-		}
-
-		err := server.Send(res)
+func (p *PestSensor) PullOccupancy(_ *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+	for value := range p.occupancy.Pull(server.Context()) {
+		occupancy := value.Value.(*traits.Occupancy)
+		err := server.Send(&traits.PullOccupancyResponse{Changes: []*traits.PullOccupancyResponse_Change{
+			{
+				Name:       p.name,
+				ChangeTime: timestamppb.New(value.ChangeTime),
+				Occupancy:  occupancy,
+			},
+		}})
 		if err != nil {
 			return err
 		}
