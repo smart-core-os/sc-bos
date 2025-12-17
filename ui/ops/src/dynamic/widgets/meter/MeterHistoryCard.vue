@@ -56,6 +56,9 @@
     <v-card-text class="flex-1-1-100 pt-0">
       <div class="chart__container">
         <bar ref="chartRef" :options="chartOptions" :data="chartData" :plugins="[vueLegendPlugin, themeColorPlugin]"/>
+        <div v-if="showNoData" class="no-data-overlay">
+          <no-data-graphic class="no-data-graphic"/>
+        </div>
       </div>
     </v-card-text>
     <meter-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit" :unit="displayUnit" :hide-total-consumption="metricType === 'scaled'"/>
@@ -74,10 +77,11 @@ import {isNullOrUndef} from '@/util/types.js';
 import {useLocalProp} from '@/util/vue.js';
 import {BarElement, Chart as ChartJS, Legend, LinearScale, TimeScale, Title, Tooltip} from 'chart.js'
 import {startOfDay, startOfYear} from 'date-fns';
-import {computed, ref, toRef} from 'vue';
+import {computed, ref, toRef, watch} from 'vue';
 import {Bar} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
 import {useMeterConsumption, useMetersConsumption} from './consumption.js';
+import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
 
 ChartJS.register(Title, Tooltip, BarElement, LinearScale, TimeScale, Legend);
 const chartRef = ref(null);
@@ -281,6 +285,28 @@ const chartData = computed(() => {
   return baseData;
 });
 
+const hasData = computed(() => {
+  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val));
+});
+
+// Track if initial data load is complete to avoid showing no-data graphic during fetch
+const hasLoadedData = ref(false);
+
+// Reset loading state when date range changes
+watch([startDate, endDate], () => {
+  hasLoadedData.value = false;
+});
+
+watch(chartData, (data) => {
+  // Check if we have any non-null data points (even if they're zero)
+  const hasAnyData = data.datasets.some(ds => ds.data.some(val => val != null));
+  if (hasAnyData && !hasLoadedData.value) {
+    hasLoadedData.value = true;
+  }
+}, {immediate: true});
+
+const showNoData = computed(() => !hasData.value && hasLoadedData.value);
+
 // download CSV...
 const visibleNames = () => {
   const names = [];
@@ -357,5 +383,6 @@ const onDownloadClick = async () => {
   min-height: v-bind(minChartHeight);
   /* The chart seems to have a padding no mater what we do, this gets rid of it */
   margin: -6px;
+  position: relative;
 }
 </style>
