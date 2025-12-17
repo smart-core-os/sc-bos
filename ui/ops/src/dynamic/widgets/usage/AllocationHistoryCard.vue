@@ -114,10 +114,9 @@ const onDownloadClick = async () => {
           {name: 'timestamp', title: 'Time'},
           {name: 'md.name', title: 'Device Name'},
           // see devices/download_data.go for list of available fields
-          {name: "allocation.assignment", title: "Assignment"},
+          {name: 'allocation.state', title: "Assignment"},
           {name: 'allocation.actor.title', title: 'User'},
-          {name: 'allocation.period.startTime', title: 'Period Start'},
-          {name: 'allocation.period.endTime', title: 'Period End'},
+          {name: "allocation.allocationTotal", title: 'Usage Total'},
           {name: "allocation.groupId", title: "Group Name"}
         ]
       }

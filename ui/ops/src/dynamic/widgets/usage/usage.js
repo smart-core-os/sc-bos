@@ -16,7 +16,6 @@ import {computed, reactive, toValue} from 'vue';
 export function useUsageCount(names, edges) {
   // As there's no way to SUM aggregate results by groupId from the history api we have to do it ourselves.
   // There could be quite a lot of data, we need to be careful not to keep it all around in memory.
-
   const countsByEdge = reactive(
       /** @type {{number: Record<string, {x: Date, y: number, last: number}>}} */
       {} // keyed by the leading edges .getTime()
@@ -105,6 +104,7 @@ async function readUsageCountSeries(names, edges, countBefore) {
   let copySrc;
 
   for (const name of names) {
+    console.log(name);
     const req = {
       name,
       period: {
@@ -120,9 +120,12 @@ async function readUsageCountSeries(names, edges, countBefore) {
 
       try {
         resp = await listAllocationHistory(req, {});
-      } catch {
+      } catch (e) {
+        console.error('Error reading allocation history for', name, e);
         break;
       }
+
+      console.log(resp,name);
 
       if (resp.allocationRecordsList.length === 0) break;
 
@@ -139,12 +142,12 @@ async function readUsageCountSeries(names, edges, countBefore) {
             d = [...dstArr]
 
           if (d[beforeIdx]) {
-            d[beforeIdx].y+= record.allocation.allocationTotal;
+            d[beforeIdx].y = Math.max(d[beforeIdx].y, record.allocation.allocationTotal);
           } else {
             d[beforeIdx] = {x: before, y: record.allocation.allocationTotal, last: 0};
           }
 
-          d[beforeIdx].last = d[beforeIdx].last + record.allocation.allocationTotal;
+          d[beforeIdx].last = Math.max(d[beforeIdx].last, record.allocation.allocationTotal);
           dst[record.allocation.groupId] = d;
       }
 
@@ -178,11 +181,11 @@ async function readUsageCountSeries(names, edges, countBefore) {
 
   for (const dataset in dst) {
     const d = dst[dataset];
-    if (d[0] === null) {
+    if (!d[0]) {
       d[0] = copySrc;
     }
     // if d[0] is still null, fill it with a null chart record so the subsequent fill works
-    if (d[0] === null) {
+    if (!d[0]) {
       d[0] = {x: edges[0], y: 0, last: 0};
     }
     // fill any null dst indexes with the value from the previous index
