@@ -16,6 +16,15 @@ import (
 
 const resourcePrefix = "/artemis/api/resource/v1"
 
+type badStatusError struct {
+	statusCode int
+	status     string
+}
+
+func (e *badStatusError) Error() string {
+	return fmt.Sprintf("unexpected status code %d: %s", e.statusCode, e.status)
+}
+
 type client struct {
 	address    string
 	appKey     string
@@ -94,13 +103,13 @@ func makeReq[R any, T any](ctx context.Context, client *client, path string, r *
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, &badStatusError{statusCode: resp.StatusCode, status: resp.Status}
+	}
+
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("body.read: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("response: %s", resp.Status)
 	}
 
 	var respType api.ResponseRaw

@@ -64,7 +64,8 @@ func updateReliability(ctx context.Context, err error, fc *healthpb.FaultCheck) 
 	if err != nil {
 		rel = noResponseReliability()
 		var unsupportedTypeErr *json.UnmarshalTypeError
-		if errors.As(err, &unsupportedTypeErr) {
+		var badStatusErr *badStatusError
+		if errors.As(err, &unsupportedTypeErr) || errors.As(err, &badStatusErr) {
 			rel = badResponseReliability()
 		}
 	} else {
