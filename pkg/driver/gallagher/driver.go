@@ -27,7 +27,7 @@ const (
 
 type Driver struct {
 	*service.Service[config.Root]
-	announcer node.Announcer
+	announcer *node.ReplaceAnnouncer
 	logger    *zap.Logger
 	ticker    *time.Ticker
 }
@@ -37,24 +37,24 @@ var Factory driver.Factory = factory{}
 type factory struct{}
 
 func (f factory) New(services driver.Services) service.Lifecycle {
-	logger := services.Logger.Named(DriverName)
+
 	d := &Driver{
-		announcer: services.Node,
+		announcer: node.NewReplaceAnnouncer(services.Node),
+		logger:    services.Logger.Named(DriverName),
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
+		service.WithParser[config.Root](config.ParseConfig),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
-			logContext.LogTo("applyConfig", logger)
-		})),
+			logContext.LogTo("applyConfig", d.logger)
+		}), service.RetryWithMinDelay(10*time.Second)),
 	)
-	d.logger = logger
 	return d
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
-	cfg.ApplyDefaults()
-	announcer, undo := node.AnnounceScope(d.announcer)
+	announcer := d.announcer.Replace(ctx)
 	grp, ctx := errgroup.WithContext(ctx)
 
 	if d.ticker != nil {
@@ -69,7 +69,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	if cfg.HTTP.BaseURL == "" {
 		d.logger.Error("baseURL is not set")
-		return fmt.Errorf("gallagher BaseURL is not set")
+		return fmt.Errorf("gallagher baseURL is not set")
 	}
 
 	bytes, err := os.ReadFile(cfg.HTTP.ApiKeyFile)
@@ -78,9 +78,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 	client, err := newHttpClient(cfg.HTTP.BaseURL, string(bytes), cfg.CaPath, cfg.ClientCertPath, cfg.ClientKeyPath)
 
-	if client == nil {
+	if err != nil {
 		d.logger.Error("failed to create client", zap.Error(err))
-		return nil
+		return err
 	}
 
 	cc := newCardholderController(client, cfg.TopicPrefix, d.logger)
@@ -89,7 +89,6 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	})
 
 	dc := newDoorController(client, cfg.TopicPrefix, d.logger)
-	_ = dc.refreshDoors(announcer, cfg.ScNamePrefix) // make a blocking call to fetch the doors before we request the sc
 	grp.Go(func() error {
 		return dc.run(ctx, cfg.RefreshDoors, announcer, cfg.ScNamePrefix)
 	})
@@ -104,10 +103,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		occupancyCtrl := newOccupancyEventController(client, d.logger, cfg.RefreshOccupancyInterval.Or(defaultOccupancyRefreshInterval))
 		announcer.Announce(path.Join(cfg.ScNamePrefix, "occupancy"), node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(occupancyCtrl))))
 		grp.Go(func() error {
-			if err := occupancyCtrl.run(ctx); err != nil {
-				return err
-			}
-			return nil
+			return occupancyCtrl.run(ctx)
 		})
 	}
 
@@ -117,8 +113,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	go func() {
 		err := grp.Wait()
-		d.logger.Error("run error", zap.String("error", err.Error()))
-		undo()
+		if err != nil {
+			d.logger.Error("gallagher driver error", zap.Error(err))
+		}
+		d.ticker.Stop()
 	}()
 	return nil
 }

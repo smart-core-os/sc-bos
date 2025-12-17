@@ -54,7 +54,7 @@ type Alarm struct {
 type SecurityEventController struct {
 	gen.UnimplementedSecurityEventApiServer
 
-	client *Client
+	client *client
 	logger *zap.Logger
 	mu     sync.Mutex
 	// security events is a circular buffer, it always points to the oldest security event
@@ -63,7 +63,7 @@ type SecurityEventController struct {
 	updates        minibus.Bus[*gen.PullSecurityEventsResponse_Change]
 }
 
-func newSecurityEventController(client *Client, logger *zap.Logger, n int) *SecurityEventController {
+func newSecurityEventController(client *client, logger *zap.Logger, n int) *SecurityEventController {
 	return &SecurityEventController{
 		client:         client,
 		logger:         logger,
@@ -73,12 +73,12 @@ func newSecurityEventController(client *Client, logger *zap.Logger, n int) *Secu
 }
 
 // getAlarms gets the top level list of alarms, the returned list is sorted in oldest first order
-func (sc *SecurityEventController) getAlarms() ([]*Alarm, error) {
+func (sc *SecurityEventController) getAlarms(ctx context.Context) ([]*Alarm, error) {
 	var result []*Alarm
 	url := sc.client.getUrl("alarms")
 
 	for {
-		body, err := sc.client.doRequest(url)
+		body, err := sc.client.doRequest(ctx, url)
 		if err != nil {
 			sc.logger.Error("failed to get alarms", zap.Error(err))
 			return nil, err
@@ -96,7 +96,7 @@ func (sc *SecurityEventController) getAlarms() ([]*Alarm, error) {
 			a := &Alarm{
 				AlarmPayload: alarm,
 			}
-			sc.getAlarmDetails(a)
+			sc.getAlarmDetails(ctx, a)
 			result = append(result, a)
 		}
 
@@ -120,8 +120,8 @@ func (sc *SecurityEventController) getAlarms() ([]*Alarm, error) {
 }
 
 // getAlarmDetails gets & populates the full details for the given alarms
-func (sc *SecurityEventController) getAlarmDetails(alarm *Alarm) {
-	resp, err := sc.client.doRequest(alarm.Href)
+func (sc *SecurityEventController) getAlarmDetails(ctx context.Context, alarm *Alarm) {
+	resp, err := sc.client.doRequest(ctx, alarm.Href)
 	if err != nil {
 		sc.logger.Error("failed to get alarm", zap.Error(err))
 		return
@@ -135,7 +135,7 @@ func (sc *SecurityEventController) getAlarmDetails(alarm *Alarm) {
 
 // refreshAlarms call the Gallagher alarms API and add any new ones to the sc that are newer than our current newest
 func (sc *SecurityEventController) refreshAlarms(ctx context.Context) error {
-	alarms, err := sc.getAlarms()
+	alarms, err := sc.getAlarms(ctx)
 	if err != nil {
 		sc.logger.Error("failed to get alarms", zap.Error(err))
 		return err

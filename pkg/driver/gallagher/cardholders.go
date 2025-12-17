@@ -68,13 +68,13 @@ type Cardholder struct {
 
 type CardholderController struct {
 	cardholders map[string]*Cardholder
-	client      *Client
+	client      *client
 	logger      *zap.Logger
 	mu          sync.Mutex
 	topicPrefix string
 }
 
-func newCardholderController(client *Client, topicPrefix string, logger *zap.Logger) *CardholderController {
+func newCardholderController(client *client, topicPrefix string, logger *zap.Logger) *CardholderController {
 	return &CardholderController{
 		cardholders: make(map[string]*Cardholder),
 		client:      client,
@@ -84,12 +84,12 @@ func newCardholderController(client *Client, topicPrefix string, logger *zap.Log
 }
 
 // getCardholders gets top level list of all the cardholders from the Gallagher API
-func (cc *CardholderController) getCardholders() (map[string]*Cardholder, error) {
+func (cc *CardholderController) getCardholders(ctx context.Context) (map[string]*Cardholder, error) {
 
 	result := make(map[string]*Cardholder)
 	url := cc.client.getUrl("cardholders")
 	for {
-		body, err := cc.client.doRequest(url)
+		body, err := cc.client.doRequest(ctx, url)
 		if err != nil {
 			return result, err
 		}
@@ -118,8 +118,8 @@ func (cc *CardholderController) getCardholders() (map[string]*Cardholder, error)
 }
 
 // getCardholderDetails gets & populates the full details for the given cardholder
-func (cc *CardholderController) getCardholderDetails(cardholder *Cardholder) {
-	resp, err := cc.client.doRequest(cardholder.Href)
+func (cc *CardholderController) getCardholderDetails(ctx context.Context, cardholder *Cardholder) {
+	resp, err := cc.client.doRequest(ctx, cardholder.Href)
 	if err != nil {
 		cc.logger.Error("failed to get cardholder details", zap.Error(err), zap.String("href", cardholder.Href))
 		return
@@ -155,11 +155,11 @@ func (cc *CardholderController) getCardholderDetails(cardholder *Cardholder) {
 
 // refreshCardholders get the list of cardholders and compare it to the previous list. Announce any new cardholders
 // and undo (unannounce) any that are no longer present. Then update the cardholder details.
-func (cc *CardholderController) refreshCardholders(announcer node.Announcer, scNamePrefix string) error {
+func (cc *CardholderController) refreshCardholders(ctx context.Context, announcer node.Announcer, scNamePrefix string) error {
 
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
-	cardholders, err := cc.getCardholders()
+	cardholders, err := cc.getCardholders(ctx)
 	if err != nil {
 		return err
 	}
@@ -182,7 +182,7 @@ func (cc *CardholderController) refreshCardholders(announcer node.Announcer, scN
 			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasMetadata(c.Meta)))
 			cc.cardholders[id] = c
 		}
-		cc.getCardholderDetails(c)
+		cc.getCardholderDetails(ctx, c)
 	}
 
 	// look for cardholders that have been removed, unannounce them
@@ -201,7 +201,7 @@ func (cc *CardholderController) refreshCardholders(announcer node.Announcer, scN
 // run is the main loop for the cardholder controller, it refreshes the cardholders on a schedule
 func (cc *CardholderController) run(ctx context.Context, schedule *jsontypes.Schedule, announcer node.Announcer, scNamePrefix string) error {
 
-	err := cc.refreshCardholders(announcer, scNamePrefix)
+	err := cc.refreshCardholders(ctx, announcer, scNamePrefix)
 	if err != nil {
 		cc.logger.Error("failed to refresh cardholders, will try again on next run...", zap.Error(err))
 	}
@@ -216,7 +216,7 @@ func (cc *CardholderController) run(ctx context.Context, schedule *jsontypes.Sch
 			t = next
 		}
 
-		err := cc.refreshCardholders(announcer, scNamePrefix)
+		err := cc.refreshCardholders(ctx, announcer, scNamePrefix)
 		if err != nil {
 			cc.logger.Error("failed to refresh cardholders, will try again on next run...", zap.Error(err))
 		}
@@ -268,8 +268,13 @@ func (c *Cardholder) OnMessage(context.Context, *gen.OnMessageRequest) (*gen.OnM
 func (cc *CardholderController) sendUdmiMessages(ctx context.Context) {
 
 	cc.mu.Lock()
-	defer cc.mu.Unlock()
+	snapshot := make([]*Cardholder, 0, len(cc.cardholders))
 	for _, c := range cc.cardholders {
+		snapshot = append(snapshot, c)
+	}
+	cc.mu.Unlock()
+
+	for _, c := range snapshot {
 		zoneName := ""
 		if c.LastSuccessfulAccessZone != nil {
 			zoneName = c.LastSuccessfulAccessZone.Name

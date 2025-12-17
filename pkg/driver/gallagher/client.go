@@ -1,21 +1,23 @@
 package gallagher
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"time"
 )
 
-type Client struct {
-	BaseURL    string
-	HTTPClient *http.Client
-	ApiKey     string
+type client struct {
+	baseURL    string
+	httpClient *http.Client
+	apiKey     string
 }
 
-func newHttpClient(baseURL string, apiKey string, caPath string, certPath string, keyPath string) (*Client, error) {
+func newHttpClient(baseURL string, apiKey string, caPath string, certPath string, keyPath string) (*client, error) {
 
 	caCert, err := os.ReadFile(caPath)
 	if err != nil {
@@ -24,11 +26,15 @@ func newHttpClient(baseURL string, apiKey string, caPath string, certPath string
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	clientCert, _ := tls.LoadX509KeyPair(certPath, keyPath)
+	clientCert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	if err != nil {
+		return nil, err
+	}
 
-	return &Client{
-		BaseURL: baseURL,
-		HTTPClient: &http.Client{
+	return &client{
+		baseURL: baseURL,
+		httpClient: &http.Client{
+			Timeout: time.Second * 10,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
 					RootCAs:      caCertPool,
@@ -36,24 +42,24 @@ func newHttpClient(baseURL string, apiKey string, caPath string, certPath string
 				},
 			},
 		},
-		ApiKey: apiKey,
+		apiKey: apiKey,
 	}, nil
 }
 
-func (c *Client) getUrl(p string) string {
-	return fmt.Sprintf("%s/%s", c.BaseURL, p)
+func (c *client) getUrl(p string) string {
+	return fmt.Sprintf("%s/%s", c.baseURL, p)
 }
 
-func (c *Client) doRequest(url string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
+func (c *client) doRequest(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", "GGL-API-KEY "+c.ApiKey)
+	req.Header.Set("Authorization", "GGL-API-KEY "+c.apiKey)
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

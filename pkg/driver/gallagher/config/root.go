@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/smart-core-os/sc-api/go/traits"
@@ -43,7 +44,16 @@ type HTTP struct {
 	ApiKeyFile string `json:"apiKeyFile,omitempty"`
 }
 
-func (cfg *Root) ApplyDefaults() {
+func ParseConfig(data []byte) (Root, error) {
+
+	cfg := Root{}
+
+	err := json.Unmarshal(data, &cfg)
+
+	if err != nil {
+		return Root{}, err
+	}
+
 	if cfg.RefreshCardholders == nil {
 		cfg.RefreshCardholders = jsontypes.MustParseSchedule("* * * * *")
 	}
@@ -63,4 +73,5 @@ func (cfg *Root) ApplyDefaults() {
 	if cfg.NumSecurityEvents == 0 {
 		cfg.NumSecurityEvents = 200
 	}
+	return cfg, nil
 }

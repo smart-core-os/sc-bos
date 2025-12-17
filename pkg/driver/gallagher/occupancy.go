@@ -17,7 +17,7 @@ import (
 type OccupancyEventController struct {
 	traits.OccupancySensorApiServer
 
-	client   *Client
+	client   *client
 	interval time.Duration
 
 	lastRefreshCycle time.Time
@@ -30,7 +30,7 @@ type OccupancyEventController struct {
 	notifyPull chan struct{}
 }
 
-func newOccupancyEventController(client *Client, logger *zap.Logger, interval time.Duration) *OccupancyEventController {
+func newOccupancyEventController(client *client, logger *zap.Logger, interval time.Duration) *OccupancyEventController {
 	return &OccupancyEventController{
 		client:     client,
 		bootupTime: time.Now(),
@@ -49,7 +49,7 @@ func (o *OccupancyEventController) run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case latest := <-ticker.C:
-			if err := o.refresh(); err != nil {
+			if err := o.refresh(ctx); err != nil {
 				continue
 			}
 			o.lastRefreshCycle = latest
@@ -62,11 +62,11 @@ func (o *OccupancyEventController) run(ctx context.Context) error {
 	}
 }
 
-func (o *OccupancyEventController) refresh() error {
+func (o *OccupancyEventController) refresh(ctx context.Context) error {
 
 	reqUrl := fmt.Sprintf("%s?after=%s&fields=source&top=1000", o.client.getUrl("events"), o.lastRefreshCycle.Format(time.RFC3339))
 
-	bytes, err := o.client.doRequest(reqUrl)
+	bytes, err := o.client.doRequest(ctx, reqUrl)
 
 	if err != nil {
 		o.logger.Error("failed to fetch events", zap.Error(err))

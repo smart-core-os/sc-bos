@@ -41,13 +41,13 @@ type Door struct {
 }
 
 type DoorController struct {
-	client      *Client
+	client      *client
 	topicPrefix string
 	doors       map[string]*Door
 	logger      *zap.Logger
 }
 
-func newDoorController(client *Client, topicPrefix string, logger *zap.Logger) *DoorController {
+func newDoorController(client *client, topicPrefix string, logger *zap.Logger) *DoorController {
 	return &DoorController{
 		client:      client,
 		doors:       make(map[string]*Door),
@@ -57,12 +57,12 @@ func newDoorController(client *Client, topicPrefix string, logger *zap.Logger) *
 }
 
 // getDoors gets top level list of all the doors from the Gallagher API
-func (dc *DoorController) getDoors() (map[string]*Door, error) {
+func (dc *DoorController) getDoors(ctx context.Context) (map[string]*Door, error) {
 
 	result := make(map[string]*Door)
 	url := dc.client.getUrl("doors")
 	for {
-		body, err := dc.client.doRequest(url)
+		body, err := dc.client.doRequest(ctx, url)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +78,7 @@ func (dc *DoorController) getDoors() (map[string]*Door, error) {
 			result[door.Id] = &Door{
 				DoorPayload: door,
 			}
-			dc.getDoorDetails(result[door.Id])
+			dc.getDoorDetails(ctx, result[door.Id])
 		}
 
 		if resultsList.Next == nil || resultsList.Next.Href == "" {
@@ -92,9 +92,9 @@ func (dc *DoorController) getDoors() (map[string]*Door, error) {
 }
 
 // getDoorDetails gets the full details for each door
-func (dc *DoorController) getDoorDetails(door *Door) {
+func (dc *DoorController) getDoorDetails(ctx context.Context, door *Door) {
 
-	resp, err := dc.client.doRequest(door.Href)
+	resp, err := dc.client.doRequest(ctx, door.Href)
 	if err != nil {
 		dc.logger.Error("failed to get door", zap.Error(err))
 		return
@@ -108,9 +108,9 @@ func (dc *DoorController) getDoorDetails(door *Door) {
 
 // refreshDoors get the list of doors and compare it to the previous list. Announce any new doors
 // and undo (unannounce) any that are no longer present. Then update the doors details.
-func (dc *DoorController) refreshDoors(announcer node.Announcer, scNamePrefix string) error {
+func (dc *DoorController) refreshDoors(ctx context.Context, announcer node.Announcer, scNamePrefix string) error {
 
-	doors, err := dc.getDoors()
+	doors, err := dc.getDoors(ctx)
 	if err != nil {
 		return err
 	}
@@ -151,6 +151,11 @@ func (dc *DoorController) refreshDoors(announcer node.Announcer, scNamePrefix st
 // run is the main loop for the door controller, it refreshes the doors on a schedule
 func (dc *DoorController) run(ctx context.Context, schedule *jsontypes.Schedule, announcer node.Announcer, scNamePrefix string) error {
 
+	err := dc.refreshDoors(ctx, announcer, scNamePrefix)
+	if err != nil {
+		dc.logger.Error("failed to refresh doors, will try again on next run...", zap.Error(err))
+	}
+
 	t := time.Now()
 	for {
 		next := schedule.Next(t)
@@ -161,7 +166,7 @@ func (dc *DoorController) run(ctx context.Context, schedule *jsontypes.Schedule,
 			t = next
 		}
 
-		err := dc.refreshDoors(announcer, scNamePrefix)
+		err := dc.refreshDoors(ctx, announcer, scNamePrefix)
 		if err != nil {
 			dc.logger.Error("failed to refresh doors, will try again on next run...", zap.Error(err))
 		}
