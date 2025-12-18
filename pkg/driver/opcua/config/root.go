@@ -52,21 +52,12 @@ type Device struct {
 	Traits []RawTrait `json:"traits,omitempty"`
 }
 
-// Timing configuration for OPC UA driver operations and retry behavior.
-// Note: Timing values set the defaults used by the service framework's retry policy.
-// Changes to these values require a driver restart to take effect.
-type Timing struct {
-	// Timeout for individual OPC UA operations (currently unused, reserved for future use)
-	Timeout jsontypes.Duration `json:"timeout,omitempty,omitzero"`
-}
-
 type Root struct {
 	driver.BaseConfig
 
 	Meta    *traits.Metadata `json:"meta,omitempty"`
 	Conn    Conn             `json:"conn,omitempty"`
 	Devices []Device         `json:"devices,omitempty"`
-	Timing  Timing           `json:"Timing,omitempty"`
 }
 
 func ParseConfig(data []byte) (cfg Root, err error) {
@@ -76,9 +67,6 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 	}
 	if cfg.Conn.SubscriptionInterval == nil {
 		cfg.Conn.SubscriptionInterval = &jsontypes.Duration{Duration: 5 * time.Second}
-	}
-	if cfg.Timing.Timeout.Duration == 0 {
-		cfg.Timing.Timeout = jsontypes.Duration{Duration: 10 * time.Second}
 	}
 	if cfg.Conn.ClientId == 0 {
 		cfg.Conn.ClientId = rand.Uint32()
