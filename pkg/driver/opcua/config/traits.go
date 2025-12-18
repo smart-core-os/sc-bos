@@ -62,7 +62,7 @@ func (v *ValueSource) Validate(fieldName string) error {
 }
 
 // GetValueFromIntKey get the value from the enum map given an integer OPC UA value
-func (v ValueSource) GetValueFromIntKey(val any) any {
+func (v *ValueSource) GetValueFromIntKey(val any) any {
 	if v.Enum != nil {
 		i, err := conv.IntValue(val)
 		if err == nil {
@@ -77,7 +77,7 @@ func (v ValueSource) GetValueFromIntKey(val any) any {
 // Scaled returns val scaled by the Scale factor.
 // If Scale is 0 or 1, or val is not a number, then val is returned unchanged.
 // The value is multiplied by Scale when reading (e.g., kW * 1000 = W).
-func (v ValueSource) Scaled(val any) any {
+func (v *ValueSource) Scaled(val any) any {
 	if val == nil {
 		return val
 	}

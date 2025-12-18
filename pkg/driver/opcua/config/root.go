@@ -58,10 +58,6 @@ type Device struct {
 type Timing struct {
 	// Timeout for individual OPC UA operations (currently unused, reserved for future use)
 	Timeout jsontypes.Duration `json:"timeout,omitempty,omitzero"`
-	// BackoffStart is the initial retry delay when applyConfig fails (default: 2s)
-	BackoffStart jsontypes.Duration `json:"backoffStart,omitempty,omitzero"`
-	// BackoffMax is the maximum retry delay when applyConfig fails (default: 30s)
-	BackoffMax jsontypes.Duration `json:"backoffMax,omitempty,omitzero"`
 }
 
 type Root struct {
@@ -83,15 +79,6 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 	}
 	if cfg.Timing.Timeout.Duration == 0 {
 		cfg.Timing.Timeout = jsontypes.Duration{Duration: 10 * time.Second}
-	}
-	if cfg.Timing.BackoffStart.Duration == 0 {
-		cfg.Timing.BackoffStart = jsontypes.Duration{Duration: 2 * time.Second}
-	}
-	if cfg.Timing.BackoffMax.Duration == 0 {
-		cfg.Timing.BackoffMax = jsontypes.Duration{Duration: 30 * time.Second}
-	}
-	if cfg.Timing.BackoffMax.Duration < cfg.Timing.BackoffStart.Duration {
-		cfg.Timing.BackoffMax = cfg.Timing.BackoffStart
 	}
 	if cfg.Conn.ClientId == 0 {
 		cfg.Conn.ClientId = rand.Uint32()
@@ -117,7 +104,6 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 // validateDeviceTraits validates trait configurations and checks that all nodeIds referenced in traits
 // exist in the device's variable list.
 func validateDeviceTraits(device *Device) error {
-
 	validNodeIds := make(map[string]bool)
 	for _, v := range device.Variables {
 		validNodeIds[v.NodeId] = true
@@ -139,123 +125,153 @@ func validateDeviceTraits(device *Device) error {
 	}
 
 	for _, t := range device.Traits {
+		var err error
 		switch t.Kind {
 		case meterpb.TraitName:
-			var cfg MeterConfig
-			if err := json.Unmarshal(t.Raw, &cfg); err != nil {
-				return fmt.Errorf("device '%s': failed to parse meter trait: %w", device.Name, err)
-			}
-			if err := cfg.Validate(); err != nil {
-				return fmt.Errorf("device '%s': %w", device.Name, err)
-			}
-			if err := validateValueSource(cfg.Usage, "meter trait usage"); err != nil {
-				return err
-			}
-
+			err = validateMeterTrait(device.Name, t.Raw, validateValueSource)
 		case trait.Electric:
-			var cfg ElectricConfig
-			if err := json.Unmarshal(t.Raw, &cfg); err != nil {
-				return fmt.Errorf("device '%s': failed to parse electric trait: %w", device.Name, err)
-			}
-			if err := cfg.Validate(); err != nil {
-				return fmt.Errorf("device '%s': %w", device.Name, err)
-			}
-			// Validate single phase nodeIds
-			if cfg.Demand.ElectricPhaseConfig != nil {
-				if err := validateValueSource(cfg.Demand.Current, "electric trait current"); err != nil {
-					return err
-				}
-				if err := validateValueSource(cfg.Demand.Voltage, "electric trait voltage"); err != nil {
-					return err
-				}
-				if err := validateValueSource(cfg.Demand.Rating, "electric trait rating"); err != nil {
-					return err
-				}
-				if err := validateValueSource(cfg.Demand.PowerFactor, "electric trait powerFactor"); err != nil {
-					return err
-				}
-				if err := validateValueSource(cfg.Demand.RealPower, "electric trait realPower"); err != nil {
-					return err
-				}
-				if err := validateValueSource(cfg.Demand.ApparentPower, "electric trait apparentPower"); err != nil {
-					return err
-				}
-				if err := validateValueSource(cfg.Demand.ReactivePower, "electric trait reactivePower"); err != nil {
-					return err
-				}
-			}
-			// Validate multi-phase nodeIds
-			for i, phase := range cfg.Demand.Phases {
-				if err := validateValueSource(phase.Current, fmt.Sprintf("electric trait phase[%d] current", i)); err != nil {
-					return err
-				}
-				if err := validateValueSource(phase.Voltage, fmt.Sprintf("electric trait phase[%d] voltage", i)); err != nil {
-					return err
-				}
-				if err := validateValueSource(phase.Rating, fmt.Sprintf("electric trait phase[%d] rating", i)); err != nil {
-					return err
-				}
-				if err := validateValueSource(phase.PowerFactor, fmt.Sprintf("electric trait phase[%d] powerFactor", i)); err != nil {
-					return err
-				}
-				if err := validateValueSource(phase.RealPower, fmt.Sprintf("electric trait phase[%d] realPower", i)); err != nil {
-					return err
-				}
-				if err := validateValueSource(phase.ApparentPower, fmt.Sprintf("electric trait phase[%d] apparentPower", i)); err != nil {
-					return err
-				}
-				if err := validateValueSource(phase.ReactivePower, fmt.Sprintf("electric trait phase[%d] reactivePower", i)); err != nil {
-					return err
-				}
-			}
-
+			err = validateElectricTrait(device.Name, t.Raw, validateValueSource)
 		case transportpb.TraitName:
-			var cfg TransportConfig
-			if err := json.Unmarshal(t.Raw, &cfg); err != nil {
-				return fmt.Errorf("device '%s': failed to parse transport trait: %w", device.Name, err)
-			}
-			if err := cfg.Validate(); err != nil {
-				return fmt.Errorf("device '%s': %w", device.Name, err)
-			}
-			if err := validateValueSource(cfg.ActualPosition, "transport trait actualPosition"); err != nil {
-				return err
-			}
-			if err := validateValueSource(cfg.Load, "transport trait load"); err != nil {
-				return err
-			}
-			if err := validateValueSource(cfg.MovingDirection, "transport trait movingDirection"); err != nil {
-				return err
-			}
-			if err := validateValueSource(cfg.OperatingMode, "transport trait operatingMode"); err != nil {
-				return err
-			}
-			if err := validateValueSource(cfg.Speed, "transport trait speed"); err != nil {
-				return err
-			}
-			for i, door := range cfg.Doors {
-				if err := validateValueSource(door.Status, fmt.Sprintf("transport trait door[%d] status", i)); err != nil {
-					return err
-				}
-			}
-			for i, dest := range cfg.NextDestinations {
-				if err := validateValueSource(&dest.Source, fmt.Sprintf("transport trait nextDestinations[%d]", i)); err != nil {
-					return err
-				}
-			}
-
+			err = validateTransportTrait(device.Name, t.Raw, validateValueSource)
 		case udmipb.TraitName:
-			var cfg UdmiConfig
-			if err := json.Unmarshal(t.Raw, &cfg); err != nil {
-				return fmt.Errorf("device '%s': failed to parse udmi trait: %w", device.Name, err)
-			}
-			if err := cfg.Validate(); err != nil {
-				return fmt.Errorf("device '%s': %w", device.Name, err)
-			}
-			for name, point := range cfg.Points {
-				if err := validateValueSource(point, fmt.Sprintf("udmi trait point '%s'", name)); err != nil {
-					return err
-				}
-			}
+			err = validateUdmiTrait(device.Name, t.Raw, validateValueSource)
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateMeterTrait(deviceName string, rawTrait json.RawMessage, validateValueSource func(*ValueSource, string) error) error {
+	var cfg MeterConfig
+	if err := json.Unmarshal(rawTrait, &cfg); err != nil {
+		return fmt.Errorf("device '%s': failed to parse meter trait: %w", deviceName, err)
+	}
+	if err := cfg.Validate(); err != nil {
+		return fmt.Errorf("device '%s': %w", deviceName, err)
+	}
+	if err := validateValueSource(cfg.Usage, "meter trait usage"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateElectricTrait(deviceName string, rawTrait json.RawMessage, validateValueSource func(*ValueSource, string) error) error {
+	var cfg ElectricConfig
+	if err := json.Unmarshal(rawTrait, &cfg); err != nil {
+		return fmt.Errorf("device '%s': failed to parse electric trait: %w", deviceName, err)
+	}
+	if err := cfg.Validate(); err != nil {
+		return fmt.Errorf("device '%s': %w", deviceName, err)
+	}
+
+	// Validate single phase nodeIds
+	if cfg.Demand.ElectricPhaseConfig != nil {
+		if err := validateValueSource(cfg.Demand.Current, "electric trait current"); err != nil {
+			return err
+		}
+		if err := validateValueSource(cfg.Demand.Voltage, "electric trait voltage"); err != nil {
+			return err
+		}
+		if err := validateValueSource(cfg.Demand.Rating, "electric trait rating"); err != nil {
+			return err
+		}
+		if err := validateValueSource(cfg.Demand.PowerFactor, "electric trait powerFactor"); err != nil {
+			return err
+		}
+		if err := validateValueSource(cfg.Demand.RealPower, "electric trait realPower"); err != nil {
+			return err
+		}
+		if err := validateValueSource(cfg.Demand.ApparentPower, "electric trait apparentPower"); err != nil {
+			return err
+		}
+		if err := validateValueSource(cfg.Demand.ReactivePower, "electric trait reactivePower"); err != nil {
+			return err
+		}
+	}
+
+	// Validate multi-phase nodeIds
+	for i, phase := range cfg.Demand.Phases {
+		if err := validateValueSource(phase.Current, fmt.Sprintf("electric trait phase[%d] current", i)); err != nil {
+			return err
+		}
+		if err := validateValueSource(phase.Voltage, fmt.Sprintf("electric trait phase[%d] voltage", i)); err != nil {
+			return err
+		}
+		if err := validateValueSource(phase.Rating, fmt.Sprintf("electric trait phase[%d] rating", i)); err != nil {
+			return err
+		}
+		if err := validateValueSource(phase.PowerFactor, fmt.Sprintf("electric trait phase[%d] powerFactor", i)); err != nil {
+			return err
+		}
+		if err := validateValueSource(phase.RealPower, fmt.Sprintf("electric trait phase[%d] realPower", i)); err != nil {
+			return err
+		}
+		if err := validateValueSource(phase.ApparentPower, fmt.Sprintf("electric trait phase[%d] apparentPower", i)); err != nil {
+			return err
+		}
+		if err := validateValueSource(phase.ReactivePower, fmt.Sprintf("electric trait phase[%d] reactivePower", i)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateTransportTrait(deviceName string, rawTrait json.RawMessage, validateValueSource func(*ValueSource, string) error) error {
+	var cfg TransportConfig
+	if err := json.Unmarshal(rawTrait, &cfg); err != nil {
+		return fmt.Errorf("device '%s': failed to parse transport trait: %w", deviceName, err)
+	}
+	if err := cfg.Validate(); err != nil {
+		return fmt.Errorf("device '%s': %w", deviceName, err)
+	}
+
+	if err := validateValueSource(cfg.ActualPosition, "transport trait actualPosition"); err != nil {
+		return err
+	}
+	if err := validateValueSource(cfg.Load, "transport trait load"); err != nil {
+		return err
+	}
+	if err := validateValueSource(cfg.MovingDirection, "transport trait movingDirection"); err != nil {
+		return err
+	}
+	if err := validateValueSource(cfg.OperatingMode, "transport trait operatingMode"); err != nil {
+		return err
+	}
+	if err := validateValueSource(cfg.Speed, "transport trait speed"); err != nil {
+		return err
+	}
+
+	for i, door := range cfg.Doors {
+		if err := validateValueSource(door.Status, fmt.Sprintf("transport trait door[%d] status", i)); err != nil {
+			return err
+		}
+	}
+
+	for i, dest := range cfg.NextDestinations {
+		if err := validateValueSource(&dest.Source, fmt.Sprintf("transport trait nextDestinations[%d]", i)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateUdmiTrait(deviceName string, rawTrait json.RawMessage, validateValueSource func(*ValueSource, string) error) error {
+	var cfg UdmiConfig
+	if err := json.Unmarshal(rawTrait, &cfg); err != nil {
+		return fmt.Errorf("device '%s': failed to parse udmi trait: %w", deviceName, err)
+	}
+	if err := cfg.Validate(); err != nil {
+		return fmt.Errorf("device '%s': %w", deviceName, err)
+	}
+
+	for name, point := range cfg.Points {
+		if err := validateValueSource(point, fmt.Sprintf("udmi trait point '%s'", name)); err != nil {
+			return err
 		}
 	}
 
