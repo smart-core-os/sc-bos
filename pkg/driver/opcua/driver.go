@@ -94,7 +94,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			case meter.TraitName:
 				opcDev.meter, err = newMeter(dev.Name, t, d.logger)
 				if err != nil {
-					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.String("trait", string(meter.TraitName)), zap.Error(err))
+					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", meter.TraitName), zap.Error(err))
 					return err
 				}
 				allFeatures = append(allFeatures, node.HasTrait(meter.TraitName, node.WithClients(gen.WrapMeterApi(opcDev.meter), gen.WrapMeterInfo(opcDev.meter))))
@@ -102,7 +102,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			case transport.TraitName:
 				opcDev.transport, err = newTransport(dev.Name, t, d.logger)
 				if err != nil {
-					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.String("trait", string(transport.TraitName)), zap.Error(err))
+					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", transport.TraitName), zap.Error(err))
 					return err
 				}
 				allFeatures = append(allFeatures, node.HasTrait(transport.TraitName, node.WithClients(gen.WrapTransportApi(opcDev.transport), gen.WrapTransportInfo(opcDev.transport))))
@@ -110,7 +110,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			case udmipb.TraitName:
 				opcDev.udmi, err = newUdmi(dev.Name, t, d.logger)
 				if err != nil {
-					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.String("trait", string(udmipb.TraitName)), zap.Error(err))
+					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", udmipb.TraitName), zap.Error(err))
 					return err
 				}
 				allFeatures = append(allFeatures, node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(opcDev.udmi))))
@@ -118,7 +118,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			case trait.Electric:
 				opcDev.electric, err = newElectric(dev.Name, t, d.logger)
 				if err != nil {
-					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.String("trait", string(trait.Electric)), zap.Error(err))
+					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", trait.Electric), zap.Error(err))
 					return err
 				}
 				allFeatures = append(allFeatures, node.HasTrait(trait.Electric, node.WithClients(electricpb.WrapApi(opcDev.electric))))

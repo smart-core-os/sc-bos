@@ -159,52 +159,43 @@ func validateElectricTrait(deviceName string, rawTrait json.RawMessage, validate
 
 	// Validate single phase nodeIds
 	if cfg.Demand.ElectricPhaseConfig != nil {
-		if err := validateValueSource(cfg.Demand.Current, "electric trait current"); err != nil {
-			return err
-		}
-		if err := validateValueSource(cfg.Demand.Voltage, "electric trait voltage"); err != nil {
-			return err
-		}
-		if err := validateValueSource(cfg.Demand.Rating, "electric trait rating"); err != nil {
-			return err
-		}
-		if err := validateValueSource(cfg.Demand.PowerFactor, "electric trait powerFactor"); err != nil {
-			return err
-		}
-		if err := validateValueSource(cfg.Demand.RealPower, "electric trait realPower"); err != nil {
-			return err
-		}
-		if err := validateValueSource(cfg.Demand.ApparentPower, "electric trait apparentPower"); err != nil {
-			return err
-		}
-		if err := validateValueSource(cfg.Demand.ReactivePower, "electric trait reactivePower"); err != nil {
+		if err := validateElectricPhase(cfg.Demand.ElectricPhaseConfig, "electric trait", validateValueSource); err != nil {
 			return err
 		}
 	}
 
 	// Validate multi-phase nodeIds
 	for i, phase := range cfg.Demand.Phases {
-		if err := validateValueSource(phase.Current, fmt.Sprintf("electric trait phase[%d] current", i)); err != nil {
+		if err := validateElectricPhase(&phase, fmt.Sprintf("electric trait phase[%d]", i), validateValueSource); err != nil {
 			return err
 		}
-		if err := validateValueSource(phase.Voltage, fmt.Sprintf("electric trait phase[%d] voltage", i)); err != nil {
-			return err
-		}
-		if err := validateValueSource(phase.Rating, fmt.Sprintf("electric trait phase[%d] rating", i)); err != nil {
-			return err
-		}
-		if err := validateValueSource(phase.PowerFactor, fmt.Sprintf("electric trait phase[%d] powerFactor", i)); err != nil {
-			return err
-		}
-		if err := validateValueSource(phase.RealPower, fmt.Sprintf("electric trait phase[%d] realPower", i)); err != nil {
-			return err
-		}
-		if err := validateValueSource(phase.ApparentPower, fmt.Sprintf("electric trait phase[%d] apparentPower", i)); err != nil {
-			return err
-		}
-		if err := validateValueSource(phase.ReactivePower, fmt.Sprintf("electric trait phase[%d] reactivePower", i)); err != nil {
-			return err
-		}
+	}
+
+	return nil
+}
+
+// validateElectricPhase validates all fields in an ElectricPhaseConfig.
+func validateElectricPhase(phase *ElectricPhaseConfig, prefix string, validateValueSource func(*ValueSource, string) error) error {
+	if err := validateValueSource(phase.Current, fmt.Sprintf("%s current", prefix)); err != nil {
+		return err
+	}
+	if err := validateValueSource(phase.Voltage, fmt.Sprintf("%s voltage", prefix)); err != nil {
+		return err
+	}
+	if err := validateValueSource(phase.Rating, fmt.Sprintf("%s rating", prefix)); err != nil {
+		return err
+	}
+	if err := validateValueSource(phase.PowerFactor, fmt.Sprintf("%s powerFactor", prefix)); err != nil {
+		return err
+	}
+	if err := validateValueSource(phase.RealPower, fmt.Sprintf("%s realPower", prefix)); err != nil {
+		return err
+	}
+	if err := validateValueSource(phase.ApparentPower, fmt.Sprintf("%s apparentPower", prefix)); err != nil {
+		return err
+	}
+	if err := validateValueSource(phase.ReactivePower, fmt.Sprintf("%s reactivePower", prefix)); err != nil {
+		return err
 	}
 
 	return nil
