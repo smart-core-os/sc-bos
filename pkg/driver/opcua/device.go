@@ -59,7 +59,7 @@ func (d *device) subscribe(ctx context.Context) error {
 		pointName := point.ParsedNodeId
 		c, err := d.client.Subscribe(ctx, pointName)
 		if err != nil {
-			d.logger.Error("failed to subscribe to point", zap.String("name", d.conf.Name), zap.Stringer("point", pointName), zap.Error(err))
+			d.logger.Error("failed to subscribe to point", d.deviceNameField(), zap.Stringer("point", pointName), zap.Error(err))
 			// if the client is connected but can't subscribe, it is bad config
 			// just log the error and move on
 			continue
@@ -97,7 +97,7 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 				value := item.Value.Value.Value()
 				d.handleTraitEvent(ctx, node, value)
 			} else {
-				d.logger.Warn("error monitoring node", zap.String("device", d.conf.Name), zap.Stringer("node", node), zap.String("code", item.Value.Status.Error()))
+				d.logger.Warn("error monitoring node", d.deviceNameField(), zap.Stringer("node", node), zap.String("code", item.Value.Status.Error()))
 			}
 		}
 
@@ -108,13 +108,13 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 					value := field.Value()
 					d.handleTraitEvent(ctx, node, value)
 				} else {
-					d.logger.Warn("error monitoring node", zap.String("device", d.conf.Name), zap.Stringer("node", node), zap.String("code", field.StatusCode().Error()))
+					d.logger.Warn("error monitoring node", d.deviceNameField(), zap.Stringer("node", node), zap.String("code", field.StatusCode().Error()))
 				}
 			}
 		}
 
 	default:
-		d.logger.Warn("unhandled event", zap.String("device", d.conf.Name), zap.Any("energyValue", event.Value))
+		d.logger.Warn("unhandled event", d.deviceNameField(), zap.Any("energyValue", event.Value))
 	}
 }
 
@@ -134,6 +134,11 @@ func (d *device) handleTraitEvent(ctx context.Context, node *ua.NodeID, value an
 	if d.udmi != nil {
 		d.udmi.sendUdmiMessage(ctx, node, value)
 	}
+}
+
+// deviceNameField returns a zap field for the device name, ensuring consistent logging across all device operations.
+func (d *device) deviceNameField() zap.Field {
+	return zap.String("device", d.conf.Name)
 }
 
 // nodeIdsAreEqual compares a string node ID with a ua.NodeID for equality.
