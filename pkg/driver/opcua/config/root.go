@@ -123,6 +123,8 @@ func validateDeviceTraits(device *Device) error {
 			err = validateTransportTrait(device.Name, t.Raw, validateValueSource)
 		case udmipb.TraitName:
 			err = validateUdmiTrait(device.Name, t.Raw, validateValueSource)
+		default:
+			return fmt.Errorf("device '%s': unknown trait kind '%s'", device.Name, t.Kind)
 		}
 		if err != nil {
 			return err
