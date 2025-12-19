@@ -127,6 +127,18 @@ func (c *UdmiConfig) Validate() error {
 	return nil
 }
 
+// valueSources returns all ValueSource fields in the UdmiConfig for validation.
+func (c *UdmiConfig) valueSources() []valueSourceField {
+	fields := make([]valueSourceField, 0, len(c.Points))
+	for name, point := range c.Points {
+		fields = append(fields, valueSourceField{
+			desc:  fmt.Sprintf("udmi trait point '%s'", name),
+			value: point,
+		})
+	}
+	return fields
+}
+
 // MeterConfig is configured by a Device that wants to implement the Meter trait.
 type MeterConfig struct {
 	Trait
@@ -140,6 +152,13 @@ func (c *MeterConfig) Validate() error {
 		return fmt.Errorf("meter trait: usage is required")
 	}
 	return c.Usage.Validate("meter usage")
+}
+
+// valueSources returns all ValueSource fields in the MeterConfig for validation.
+func (c *MeterConfig) valueSources() []valueSourceField {
+	return []valueSourceField{
+		{"meter trait usage", c.Usage},
+	}
 }
 
 type Door struct {
@@ -234,6 +253,33 @@ func (c *TransportConfig) Validate() error {
 	return nil
 }
 
+// valueSources returns all ValueSource fields in the TransportConfig for validation.
+func (c *TransportConfig) valueSources() []valueSourceField {
+	fields := []valueSourceField{
+		{"transport trait actualPosition", c.ActualPosition},
+		{"transport trait load", c.Load},
+		{"transport trait movingDirection", c.MovingDirection},
+		{"transport trait operatingMode", c.OperatingMode},
+		{"transport trait speed", c.Speed},
+	}
+
+	for i, door := range c.Doors {
+		fields = append(fields, valueSourceField{
+			desc:  fmt.Sprintf("transport trait door[%d] status", i),
+			value: door.Status,
+		})
+	}
+
+	for i, dest := range c.NextDestinations {
+		fields = append(fields, valueSourceField{
+			desc:  fmt.Sprintf("transport trait nextDestinations[%d]", i),
+			value: &dest.Source,
+		})
+	}
+
+	return fields
+}
+
 type ElectricConfig struct {
 	Trait
 	Demand *ElectricDemandConfig `json:"demand,omitempty"`
@@ -245,6 +291,24 @@ func (c *ElectricConfig) Validate() error {
 		return fmt.Errorf("electric trait: demand is required")
 	}
 	return c.Demand.Validate()
+}
+
+// valueSources returns all ValueSource fields in the ElectricConfig for validation.
+func (c *ElectricConfig) valueSources() []valueSourceField {
+	var fields []valueSourceField
+	if c.Demand != nil {
+		// Single phase
+		if c.Demand.ElectricPhaseConfig != nil {
+			fields = append(fields, c.Demand.ElectricPhaseConfig.valueSources("electric trait")...)
+		}
+		// Multi-phase
+		for i, phase := range c.Demand.Phases {
+			if phase.hasAnyField() {
+				fields = append(fields, phase.valueSources(fmt.Sprintf("electric trait phase[%d]", i))...)
+			}
+		}
+	}
+	return fields
 }
 
 type ElectricDemandConfig struct {
@@ -327,4 +391,17 @@ func (c *ElectricPhaseConfig) Validate(prefix string) error {
 		return err
 	}
 	return nil
+}
+
+// valueSources returns all ValueSource fields in the ElectricPhaseConfig for validation.
+func (c *ElectricPhaseConfig) valueSources(prefix string) []valueSourceField {
+	return []valueSourceField{
+		{prefix + " current", c.Current},
+		{prefix + " voltage", c.Voltage},
+		{prefix + " rating", c.Rating},
+		{prefix + " powerFactor", c.PowerFactor},
+		{prefix + " realPower", c.RealPower},
+		{prefix + " apparentPower", c.ApparentPower},
+		{prefix + " reactivePower", c.ReactivePower},
+	}
 }

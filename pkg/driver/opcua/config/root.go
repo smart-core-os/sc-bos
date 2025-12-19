@@ -21,6 +21,12 @@ const (
 	PointsEventTopicSuffix = "/event/pointset"
 )
 
+// valueSourceField represents a ValueSource field with its description for validation.
+type valueSourceField struct {
+	desc  string
+	value *ValueSource
+}
+
 // Conn config related to communicating with the OPC UA server.
 type Conn struct {
 	// Endpoint is the OPC UA server endpoint.
@@ -97,164 +103,50 @@ func validateDeviceTraits(device *Device) error {
 		validNodeIds[v.NodeId] = true
 	}
 
-	checkNodeId := func(nodeId, context string) error {
-		if nodeId != "" && !validNodeIds[nodeId] {
-			return fmt.Errorf("device '%s': %s references nodeId '%s' which is not in device variables list",
-				device.Name, context, nodeId)
-		}
-		return nil
-	}
-
-	validateValueSource := func(vs *ValueSource, context string) error {
-		if vs != nil {
-			return checkNodeId(vs.NodeId, context)
-		}
-		return nil
-	}
-
 	for _, t := range device.Traits {
+		var valueSources []valueSourceField
 		var err error
+
 		switch t.Kind {
 		case meterpb.TraitName:
-			err = validateMeterTrait(device.Name, t.Raw, validateValueSource)
+			valueSources, err = getValueSourcesForTrait[*MeterConfig](device.Name, t.Raw)
 		case trait.Electric:
-			err = validateElectricTrait(device.Name, t.Raw, validateValueSource)
+			valueSources, err = getValueSourcesForTrait[*ElectricConfig](device.Name, t.Raw)
 		case transportpb.TraitName:
-			err = validateTransportTrait(device.Name, t.Raw, validateValueSource)
+			valueSources, err = getValueSourcesForTrait[*TransportConfig](device.Name, t.Raw)
 		case udmipb.TraitName:
-			err = validateUdmiTrait(device.Name, t.Raw, validateValueSource)
+			valueSources, err = getValueSourcesForTrait[*UdmiConfig](device.Name, t.Raw)
 		default:
 			return fmt.Errorf("device '%s': unknown trait kind '%s'", device.Name, t.Kind)
 		}
 		if err != nil {
 			return err
 		}
-	}
 
-	return nil
-}
-
-func validateMeterTrait(deviceName string, rawTrait json.RawMessage, validateValueSource func(*ValueSource, string) error) error {
-	var cfg MeterConfig
-	if err := json.Unmarshal(rawTrait, &cfg); err != nil {
-		return fmt.Errorf("device '%s': failed to parse meter trait: %w", deviceName, err)
-	}
-	if err := cfg.Validate(); err != nil {
-		return fmt.Errorf("device '%s': %w", deviceName, err)
-	}
-	if err := validateValueSource(cfg.Usage, "meter trait usage"); err != nil {
-		return err
-	}
-	return nil
-}
-
-func validateElectricTrait(deviceName string, rawTrait json.RawMessage, validateValueSource func(*ValueSource, string) error) error {
-	var cfg ElectricConfig
-	if err := json.Unmarshal(rawTrait, &cfg); err != nil {
-		return fmt.Errorf("device '%s': failed to parse electric trait: %w", deviceName, err)
-	}
-	if err := cfg.Validate(); err != nil {
-		return fmt.Errorf("device '%s': %w", deviceName, err)
-	}
-
-	// Validate single phase nodeIds
-	if cfg.Demand.ElectricPhaseConfig != nil {
-		if err := validateElectricPhase(cfg.Demand.ElectricPhaseConfig, "electric trait", validateValueSource); err != nil {
-			return err
-		}
-	}
-
-	// Validate multi-phase nodeIds
-	for i, phase := range cfg.Demand.Phases {
-		if err := validateElectricPhase(&phase, fmt.Sprintf("electric trait phase[%d]", i), validateValueSource); err != nil {
-			return err
+		for _, field := range valueSources {
+			if field.value != nil && field.value.NodeId != "" && !validNodeIds[field.value.NodeId] {
+				return fmt.Errorf("device '%s': %s references nodeId '%s' which is not in device variables list",
+					device.Name, field.desc, field.value.NodeId)
+			}
 		}
 	}
 
 	return nil
 }
 
-// validateElectricPhase validates all fields in an ElectricPhaseConfig.
-func validateElectricPhase(phase *ElectricPhaseConfig, prefix string, validateValueSource func(*ValueSource, string) error) error {
-	if err := validateValueSource(phase.Current, fmt.Sprintf("%s current", prefix)); err != nil {
-		return err
-	}
-	if err := validateValueSource(phase.Voltage, fmt.Sprintf("%s voltage", prefix)); err != nil {
-		return err
-	}
-	if err := validateValueSource(phase.Rating, fmt.Sprintf("%s rating", prefix)); err != nil {
-		return err
-	}
-	if err := validateValueSource(phase.PowerFactor, fmt.Sprintf("%s powerFactor", prefix)); err != nil {
-		return err
-	}
-	if err := validateValueSource(phase.RealPower, fmt.Sprintf("%s realPower", prefix)); err != nil {
-		return err
-	}
-	if err := validateValueSource(phase.ApparentPower, fmt.Sprintf("%s apparentPower", prefix)); err != nil {
-		return err
-	}
-	if err := validateValueSource(phase.ReactivePower, fmt.Sprintf("%s reactivePower", prefix)); err != nil {
-		return err
-	}
-
-	return nil
+type traitWithValueSources interface {
+	Validate() error
+	valueSources() []valueSourceField
 }
 
-func validateTransportTrait(deviceName string, rawTrait json.RawMessage, validateValueSource func(*ValueSource, string) error) error {
-	var cfg TransportConfig
-	if err := json.Unmarshal(rawTrait, &cfg); err != nil {
-		return fmt.Errorf("device '%s': failed to parse transport trait: %w", deviceName, err)
+// getValueSourcesForTrait parses a trait config, validates it, and returns all its ValueSource fields.
+func getValueSourcesForTrait[T traitWithValueSources](deviceName string, rawTrait json.RawMessage) ([]valueSourceField, error) {
+	cfg := new(T)
+	if err := json.Unmarshal(rawTrait, cfg); err != nil {
+		return nil, fmt.Errorf("device '%s': failed to parse trait: %w", deviceName, err)
 	}
-	if err := cfg.Validate(); err != nil {
-		return fmt.Errorf("device '%s': %w", deviceName, err)
+	if err := (*cfg).Validate(); err != nil {
+		return nil, fmt.Errorf("device '%s': %w", deviceName, err)
 	}
-
-	if err := validateValueSource(cfg.ActualPosition, "transport trait actualPosition"); err != nil {
-		return err
-	}
-	if err := validateValueSource(cfg.Load, "transport trait load"); err != nil {
-		return err
-	}
-	if err := validateValueSource(cfg.MovingDirection, "transport trait movingDirection"); err != nil {
-		return err
-	}
-	if err := validateValueSource(cfg.OperatingMode, "transport trait operatingMode"); err != nil {
-		return err
-	}
-	if err := validateValueSource(cfg.Speed, "transport trait speed"); err != nil {
-		return err
-	}
-
-	for i, door := range cfg.Doors {
-		if err := validateValueSource(door.Status, fmt.Sprintf("transport trait door[%d] status", i)); err != nil {
-			return err
-		}
-	}
-
-	for i, dest := range cfg.NextDestinations {
-		if err := validateValueSource(&dest.Source, fmt.Sprintf("transport trait nextDestinations[%d]", i)); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func validateUdmiTrait(deviceName string, rawTrait json.RawMessage, validateValueSource func(*ValueSource, string) error) error {
-	var cfg UdmiConfig
-	if err := json.Unmarshal(rawTrait, &cfg); err != nil {
-		return fmt.Errorf("device '%s': failed to parse udmi trait: %w", deviceName, err)
-	}
-	if err := cfg.Validate(); err != nil {
-		return fmt.Errorf("device '%s': %w", deviceName, err)
-	}
-
-	for name, point := range cfg.Points {
-		if err := validateValueSource(point, fmt.Sprintf("udmi trait point '%s'", name)); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return (*cfg).valueSources(), nil
 }
