@@ -246,6 +246,13 @@
           "appearance": {"title": "Kaolin Sound Sensor"},
           "membership": {"subsystem": "sensors"},
           "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/CHW-L00-01",
+          "traits": [{"name":  "smartcore.bos.Temperature"}],
+          "appearance": {"title": "Main Chilled Water"},
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Basement"}
         }
       ]
     },
