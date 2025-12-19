@@ -1,7 +1,6 @@
 package opcua
 
 import (
-	"context"
 	"testing"
 
 	"github.com/gopcua/opcua/ua"
@@ -22,7 +21,7 @@ func TestElectric_GetDemand(t *testing.T) {
 		t.Fatalf("newElectric() error = %v", err)
 	}
 
-	demand, err := electric.GetDemand(context.Background(), &traits.GetDemandRequest{})
+	demand, err := electric.GetDemand(t.Context(), &traits.GetDemandRequest{})
 	if err != nil {
 		t.Errorf("GetDemand() error = %v", err)
 	}
@@ -128,7 +127,7 @@ func TestElectric_handleElectricEvent(t *testing.T) {
 			nodeId, _ := ua.ParseNodeID(tt.nodeId)
 			electric.handleElectricEvent(nodeId, tt.value)
 
-			demand, _ := electric.GetDemand(context.Background(), &traits.GetDemandRequest{})
+			demand, _ := electric.GetDemand(t.Context(), &traits.GetDemandRequest{})
 
 			var actualValue float32
 			switch tt.checkField {

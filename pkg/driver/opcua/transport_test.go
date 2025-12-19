@@ -1,7 +1,6 @@
 package opcua
 
 import (
-	"context"
 	"testing"
 
 	"github.com/gopcua/opcua/ua"
@@ -22,7 +21,7 @@ func TestTransport_GetTransport(t *testing.T) {
 		t.Fatalf("newTransport() error = %v", err)
 	}
 
-	state, err := transport.GetTransport(context.Background(), &gen.GetTransportRequest{})
+	state, err := transport.GetTransport(t.Context(), &gen.GetTransportRequest{})
 	if err != nil {
 		t.Errorf("GetTransport() error = %v", err)
 	}
@@ -42,7 +41,7 @@ func TestTransport_DescribeTransport(t *testing.T) {
 		t.Fatalf("newTransport() error = %v", err)
 	}
 
-	support, err := transport.DescribeTransport(context.Background(), &gen.DescribeTransportRequest{})
+	support, err := transport.DescribeTransport(t.Context(), &gen.DescribeTransportRequest{})
 	if err != nil {
 		t.Errorf("DescribeTransport() error = %v", err)
 	}
@@ -137,7 +136,7 @@ func TestTransport_handleTransportEvent(t *testing.T) {
 			nodeId, _ := ua.ParseNodeID(tt.nodeId)
 			transport.handleTransportEvent(nodeId, tt.value)
 
-			state, _ := transport.GetTransport(context.Background(), &gen.GetTransportRequest{})
+			state, _ := transport.GetTransport(t.Context(), &gen.GetTransportRequest{})
 
 			switch tt.checkField {
 			case "actualPosition":
@@ -198,7 +197,7 @@ func TestTransport_handleTransportEvent_Doors(t *testing.T) {
 	}
 
 	// Check initial door setup
-	state, _ := transport.GetTransport(context.Background(), &gen.GetTransportRequest{})
+	state, _ := transport.GetTransport(t.Context(), &gen.GetTransportRequest{})
 	if len(state.Doors) != 1 {
 		t.Fatalf("Initial doors count = %v, want 1", len(state.Doors))
 	}
@@ -210,7 +209,7 @@ func TestTransport_handleTransportEvent_Doors(t *testing.T) {
 	nodeId, _ := ua.ParseNodeID("ns=2;s=DoorStatus")
 	transport.handleTransportEvent(nodeId, int32(1))
 
-	state, _ = transport.GetTransport(context.Background(), &gen.GetTransportRequest{})
+	state, _ = transport.GetTransport(t.Context(), &gen.GetTransportRequest{})
 	if state.Doors[0].Status != gen.Transport_Door_OPEN {
 		t.Errorf("Door status = %v, want OPEN", state.Doors[0].Status)
 	}

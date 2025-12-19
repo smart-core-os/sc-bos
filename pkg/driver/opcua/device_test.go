@@ -1,7 +1,6 @@
 package opcua
 
 import (
-	"context"
 	"testing"
 
 	"github.com/gopcua/opcua"
@@ -32,7 +31,7 @@ func TestDevice_newDevice(t *testing.T) {
 	}
 }
 
-func TestDevice_nodeIdsAreEqual(t *testing.T) {
+func Test_nodeIdsAreEqual(t *testing.T) {
 	tests := []struct {
 		name     string
 		nodeId   string
@@ -130,7 +129,7 @@ func TestDevice_handleTraitEvent(t *testing.T) {
 	}
 	dev.udmi = udmi
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Test Meter event
 	meterNodeId := mustParseNodeID("ns=2;s=Tag1")
@@ -172,7 +171,7 @@ func TestDevice_handleTraitEvent_NilTraits(t *testing.T) {
 		logger: logger,
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	nodeId := mustParseNodeID("ns=2;s=Tag1")
 
 	// Should not panic with nil traits
@@ -197,7 +196,7 @@ func TestDevice_handleEvent_DataChangeNotification(t *testing.T) {
 	}
 	dev.meter = meter
 
-	ctx := context.Background()
+	ctx := t.Context()
 	nodeId := mustParseNodeID("ns=2;s=Tag1")
 
 	// Create a mock DataChangeNotification
@@ -237,7 +236,7 @@ func TestDevice_handleEvent_NilValue(t *testing.T) {
 		logger: logger,
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	nodeId := mustParseNodeID("ns=2;s=Tag1")
 
 	// Test with nil Value in MonitoredItemNotification
@@ -272,7 +271,7 @@ func TestDevice_handleEvent_BadStatus(t *testing.T) {
 	meter, _ := newMeter("test/device", meterCfg, logger)
 	dev.meter = meter
 
-	ctx := context.Background()
+	ctx := t.Context()
 	nodeId := mustParseNodeID("ns=2;s=Tag1")
 
 	// Create notification with bad status
@@ -312,7 +311,7 @@ func TestDevice_handleEvent_UnknownEventType(t *testing.T) {
 		logger: logger,
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	nodeId := mustParseNodeID("ns=2;s=Tag1")
 
 	// Unknown event type

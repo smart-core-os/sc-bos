@@ -1,7 +1,6 @@
 package opcua
 
 import (
-	"context"
 	"testing"
 
 	"github.com/gopcua/opcua/ua"
@@ -23,7 +22,7 @@ func TestMeter_GetMeterReading(t *testing.T) {
 	}
 
 	// Test initial state
-	reading, err := meter.GetMeterReading(context.Background(), &gen.GetMeterReadingRequest{})
+	reading, err := meter.GetMeterReading(t.Context(), &gen.GetMeterReadingRequest{})
 	if err != nil {
 		t.Errorf("GetMeterReading() error = %v", err)
 	}
@@ -46,7 +45,7 @@ func TestMeter_DescribeMeterReading(t *testing.T) {
 		t.Fatalf("newMeter() error = %v", err)
 	}
 
-	support, err := meter.DescribeMeterReading(context.Background(), &gen.DescribeMeterReadingRequest{})
+	support, err := meter.DescribeMeterReading(t.Context(), &gen.DescribeMeterReadingRequest{})
 	if err != nil {
 		t.Errorf("DescribeMeterReading() error = %v", err)
 	}
@@ -119,7 +118,7 @@ func TestMeter_handleMeterEvent(t *testing.T) {
 			nodeId, _ := ua.ParseNodeID(tt.nodeId)
 			meter.handleMeterEvent(nodeId, tt.value)
 
-			reading, _ := meter.GetMeterReading(context.Background(), &gen.GetMeterReadingRequest{})
+			reading, _ := meter.GetMeterReading(t.Context(), &gen.GetMeterReadingRequest{})
 			if reading.Usage != tt.wantUsage {
 				t.Errorf("After handleMeterEvent, usage = %v, want %v", reading.Usage, tt.wantUsage)
 			}

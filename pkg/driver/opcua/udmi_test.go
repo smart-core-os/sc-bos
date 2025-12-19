@@ -28,7 +28,7 @@ func TestUdmi_GetExportMessage(t *testing.T) {
 		t.Fatalf("newUdmi() error = %v", err)
 	}
 
-	msg, err := udmi.GetExportMessage(context.Background(), &gen.GetExportMessageRequest{})
+	msg, err := udmi.GetExportMessage(t.Context(), &gen.GetExportMessageRequest{})
 	if err != nil {
 		t.Errorf("GetExportMessage() error = %v", err)
 	}
@@ -102,7 +102,7 @@ func TestUdmi_sendUdmiMessage(t *testing.T) {
 				t.Fatalf("newUdmi() error = %v", err)
 			}
 
-			ctx := context.Background()
+			ctx := t.Context()
 			nodeId, _ := ua.ParseNodeID(tt.nodeId)
 
 			// Send message
@@ -142,7 +142,7 @@ func TestUdmi_PullControlTopics(t *testing.T) {
 	}
 
 	// Create a mock server that we can cancel
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	// Start pulling in goroutine
 	errCh := make(chan error, 1)
@@ -178,7 +178,7 @@ func TestUdmi_OnMessage(t *testing.T) {
 	}
 
 	// OnMessage currently returns empty response
-	resp, err := udmi.OnMessage(context.Background(), &gen.OnMessageRequest{})
+	resp, err := udmi.OnMessage(t.Context(), &gen.OnMessageRequest{})
 	if err != nil {
 		t.Errorf("OnMessage() error = %v", err)
 	}
