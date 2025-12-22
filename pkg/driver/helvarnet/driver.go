@@ -82,8 +82,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		lightingGroup := newLightingGroup(d.clients[l.IpAddress], d.logger, l, *l.GroupNumber)
 		// try to get the last scene on a restart of the area controller
-		lightingGroup.getLastScene()
-		err := lightingGroup.getSceneNames()
+		lightingGroup.getLastScene(ctx)
+		err := lightingGroup.getSceneNames(ctx)
 		if err != nil {
 			d.logger.Error("getSceneNames error", zap.String("error", err.Error()))
 		}

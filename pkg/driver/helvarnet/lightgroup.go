@@ -40,12 +40,12 @@ func newLightingGroup(client *tcpClient, l *zap.Logger, conf *config.Device, n i
 }
 
 // sends the query commands to get the last known scene for this group
-func (lg *LightGroup) getLastScene() {
+func (lg *LightGroup) getLastScene(ctx context.Context) {
 
 	command := queryLastSceneInGroup(lg.number)
 	want := "?" + command[1:len(command)-1]
 
-	response, err := lg.client.sendAndReceive(command, want)
+	response, err := lg.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		lg.logger.Warn("failed to get last scene", zap.Error(err))
 		return
@@ -70,10 +70,10 @@ func (lg *LightGroup) getLastScene() {
 // there are 8 blocks of 16 scenes, I am not sure what constant actually does, from the spec:
 // "To call a constant light scene, use the Constant Light flag (with a parameter brightness of 1).
 // The scene called will only be a constant light scene if configured so in Designer."
-func (lg *LightGroup) setScene(block string, scene string, constant string) error {
+func (lg *LightGroup) setScene(ctx context.Context, block string, scene string, constant string) error {
 	command := recallGroupScene(lg.number, block, scene, constant)
 
-	_, err := lg.client.sendAndReceive(command, "")
+	_, err := lg.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -81,21 +81,21 @@ func (lg *LightGroup) setScene(block string, scene string, constant string) erro
 }
 
 // setLevel sends the command to set the level for the lighting group
-func (lg *LightGroup) setLevel(level int) error {
+func (lg *LightGroup) setLevel(ctx context.Context, level int) error {
 	command := changeGroupLevel(lg.number, level)
 
-	_, err := lg.client.sendAndReceive(command, "")
+	_, err := lg.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (lg *LightGroup) getSceneNames() error {
+func (lg *LightGroup) getSceneNames(ctx context.Context) error {
 	command := querySceneNames()
 	want := "?" + command[1:len(command)-1] + "="
 
-	r, err := lg.client.sendAndReceive(command, want)
+	r, err := lg.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (lg *LightGroup) getSceneNames() error {
 
 // UpdateBrightness update the brightness level or preset (scene) of the lighting group
 // if the request has a present included, this takes precedence and the level percent is ignored
-func (lg *LightGroup) UpdateBrightness(_ context.Context, req *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
+func (lg *LightGroup) UpdateBrightness(ctx context.Context, req *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
 	if req.Brightness == nil {
 		return nil, status.Error(codes.InvalidArgument, "no brightness in request")
 	}
@@ -164,7 +164,7 @@ func (lg *LightGroup) UpdateBrightness(_ context.Context, req *traits.UpdateBrig
 		if len(sceneSplit) == 3 {
 			constant = sceneSplit[2]
 		}
-		err := lg.setScene(block, scene, constant)
+		err := lg.setScene(ctx, block, scene, constant)
 		if err != nil {
 			return nil, status.Error(codes.DeadlineExceeded, "failed to set scene")
 		}
@@ -176,7 +176,7 @@ func (lg *LightGroup) UpdateBrightness(_ context.Context, req *traits.UpdateBrig
 	} else {
 		lg.logger.Debug(fmt.Sprintf("setting level %f for device %s", req.Brightness.LevelPercent, lg.conf.Name))
 		level := req.Brightness.LevelPercent
-		err := lg.setLevel(int(level))
+		err := lg.setLevel(ctx, int(level))
 		if err != nil {
 			return nil, status.Error(codes.DeadlineExceeded, "failed to set scene")
 		}
