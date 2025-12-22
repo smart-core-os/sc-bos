@@ -10,7 +10,9 @@
         :hide-default-footer="_hidePaging"
         v-bind="tableAttrs"
         disable-sort
-        :items-length="queryTotalCount">
+        :items-length="queryTotalCount"
+        fixed-header
+        height="80vh">
       <template #top v-if="showCardHeader">
         <v-toolbar color="transparent">
           <v-toolbar-title v-if="showCardHeader" class="text-h4">{{ props.title }}</v-toolbar-title>

@@ -11,6 +11,8 @@
           v-bind="tableAttrs"
           disable-sort
           :items-length="queryTotalCount"
+          fixed-header
+          height="80vh"
           class="pt-4">
         <template #item.createTime="{ item }">
           {{ timestampToDate(item.wasteCreateTime).toLocaleString() }}
