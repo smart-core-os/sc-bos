@@ -14,6 +14,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylightpb"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/temperaturepb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
@@ -67,6 +68,12 @@ var (
 			desc: (&traits.OnOff{}).ProtoReflect().Descriptor(),
 			get:  getter(traits.NewOnOffApiClient, traits.OnOffApiClient.GetOnOff),
 			pull: puller(traits.NewOnOffApiClient, traits.OnOffApiClient.PullOnOff, (*traits.PullOnOffResponse_Change).GetOnOff),
+		})
+		knownTraits.add(temperaturepb.TraitName, Resource{
+			name: "Temperature",
+			desc: (&gen.Temperature{}).ProtoReflect().Descriptor(),
+			get:  getter(gen.NewTemperatureApiClient, gen.TemperatureApiClient.GetTemperature),
+			pull: puller(gen.NewTemperatureApiClient, gen.TemperatureApiClient.PullTemperature, (*gen.PullTemperatureResponse_Change).GetTemperature),
 		})
 	})
 )
