@@ -1,5 +1,5 @@
 This test verifies all trait wrapping transformations.
-expected_changes: 92
+expected_changes: 91
 
 -- input/test.go --
 package test
@@ -140,8 +140,6 @@ func wrapAllTraits() {
 	_, _ = alertAdminClient, alertApiClient
 	anprCameraClient := gen.WrapAnprCameraApi(nil)
 	_ = anprCameraClient
-	axiomXaClient := gen.WrapAxiomXaDriverService(nil)
-	_ = axiomXaClient
 	buttonClient := gen.WrapButtonApi(nil)
 	_ = buttonClient
 	daliClient := gen.WrapDaliApi(nil)
@@ -308,8 +306,6 @@ func wrapAllTraits() {
 	_, _ = alertAdminClient, alertApiClient
 	anprCameraClient := gen.NewAnprCameraApiClient(wrap.ServerToClient(gen.AnprCameraApi_ServiceDesc, nil))
 	_ = anprCameraClient
-	axiomXaClient := gen.NewAxiomXaDriverServiceClient(wrap.ServerToClient(gen.AxiomXaDriverService_ServiceDesc, nil))
-	_ = axiomXaClient
 	buttonClient := gen.NewButtonApiClient(wrap.ServerToClient(gen.ButtonApi_ServiceDesc, nil))
 	_ = buttonClient
 	daliClient := gen.NewDaliApiClient(wrap.ServerToClient(gen.DaliApi_ServiceDesc, nil))

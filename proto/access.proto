@@ -20,8 +20,9 @@ service AccessApi {
   rpc GetAccessGrant(GetAccessGrantsRequest) returns (AccessGrant) {}
   rpc ListAccessGrants(ListAccessGrantsRequest) returns (ListAccessGrantsResponse) {}
 
-  // todo: rpc CreateActor... to replace axiomxa service
-  // todo: rpc GrantAccess for manually granting access to an actor
+  rpc CreateActor(CreateActorRequest) returns (CreateActorResponse) {}
+  rpc GrantAccess(GrantAccessRequest) returns (GrantAccessResponse) {}
+  rpc SaveQRCredential(SaveQRCredentialRequest) returns (SaveQRCredentialResponse);
 }
 
 message AccessAttempt {
@@ -190,3 +191,56 @@ message ListAccessGrantsResponse {
   // This may be an estimate.
   int32 total_size = 3;
 }
+
+message CreateActorRequest {
+  // The name of the device to create Actor for.
+  string name = 1;
+  // The Actor to create.
+  Actor actor = 2;
+}
+
+message CreateActorResponse {
+  enum Result {
+    RESULT_UNSPECIFIED = 0;
+    CREATED_SUCCESSFULLY = 1;
+    ALREADY_EXISTS = 2;
+    PERMISSION_DENIED = 3;
+    INVALID_ARGUMENT = 4;
+    TEMPORARILY_UNAVAILABLE = 5;
+  }
+  Result result = 1;
+  // Optional reason for the result.
+  optional string reason = 2;
+  // The created Actor with any system-generated fields populated.
+  Actor actor = 3;
+}
+
+message GrantAccessRequest {
+  // The name of the device to grant access for.
+  string name = 1;
+  // The actor to grant access to.
+  Actor actor = 2;
+  // Optional reason for granting access.
+  optional string reason = 3;
+}
+
+message GrantAccessResponse {
+  // The access attempt result from granting access.
+  AccessAttempt access_attempt = 1;
+}
+
+message SaveQRCredentialRequest {
+  // The name of the driver instance
+  string name = 1;
+  // The number that is encoded into the card
+  uint64 card_number = 2;
+  // The name of the card holder
+  string first_name = 3;
+  string last_name = 4;
+
+  // Times when the card is active between.
+  google.protobuf.Timestamp active_time = 5;
+  google.protobuf.Timestamp expire_time = 6;
+}
+
+message SaveQRCredentialResponse {}
