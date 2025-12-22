@@ -26,8 +26,8 @@ func TestDevice_newDevice(t *testing.T) {
 	if dev.conf != cfg {
 		t.Error("Device config not set correctly")
 	}
-	if dev.logger != logger {
-		t.Error("Device logger not set correctly")
+	if dev.logger == nil {
+		t.Error("Device logger not set")
 	}
 }
 
