@@ -176,6 +176,14 @@ func (a *impl) newCheck(ctx context.Context, device *gen.Device, checkCfg *gen.H
 				check.UpdateReliability(ctx, healthpb.ReliabilityFromErr(err))
 				continue
 			}
+
+			if !pathFieldsAreSet(values, change.Proto()) {
+				logger.Debug("value path has unset fields (nil message)")
+				err := fmt.Errorf("field %s.%s[%q] from %q is not set (nil message field)", source.Trait, r.Name(), source.Value, device.GetName())
+				check.UpdateReliability(ctx, healthpb.ReliabilityFromErr(err))
+				continue
+			}
+
 			healthVal, err := healthValueFromReflectValue(values)
 			if err != nil {
 				logger.Debug("health value conversion failed", zap.Any("path", values), zap.Error(err))
@@ -223,6 +231,36 @@ func resourceFetcher(conn grpc.ClientConnInterface, req anytrait.ReadRequest, r 
 			return nil
 		},
 	)
+}
+
+// pathFieldsAreSet checks if all message fields along the path are actually set (not nil/default).
+// This distinguishes between "field is set to zero value" and "field is not set at all".
+func pathFieldsAreSet(path protopath.Values, msg proto.Message) bool {
+	msgReflect := msg.ProtoReflect()
+
+	for i := 1; i < len(path.Path); i++ {
+		step := path.Path[i]
+
+		switch step.Kind() {
+		case protopath.FieldAccessStep:
+			fd := step.FieldDescriptor()
+
+			if !msgReflect.Has(fd) {
+				return false
+			}
+
+			if fd.Kind() == protoreflect.MessageKind && i < len(path.Path)-1 {
+				msgReflect = msgReflect.Get(fd).Message()
+			}
+
+		case protopath.ListIndexStep, protopath.MapIndexStep, protopath.AnyExpandStep:
+			continue
+		default:
+			return false
+		}
+	}
+
+	return true
 }
 
 func healthValueFromReflectValue(path protopath.Values) (*gen.HealthCheck_Value, error) {
