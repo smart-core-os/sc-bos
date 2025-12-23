@@ -24,6 +24,7 @@ list.
 
 Currently supported traits include:
 
+- `smartcore.traits.AirQualitySensor` - Monitor air quality readings
 - `smartcore.traits.AirTemperature` - Monitor air temperature readings
 - `smartcore.bos.EmergencyLight` - Monitor emergency light test results
 - `smartcore.bos.Meter` - Monitor meter readings

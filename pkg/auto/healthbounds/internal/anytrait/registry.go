@@ -45,6 +45,12 @@ var (
 		knownTraits = &Resolver{
 			byName: make(map[trait.Name]Trait),
 		}
+		knownTraits.add(trait.AirQualitySensor, Resource{
+			name: "AirQualitySensor",
+			desc: (&traits.AirQuality{}).ProtoReflect().Descriptor(),
+			get:  getter(traits.NewAirQualitySensorApiClient, traits.AirQualitySensorApiClient.GetAirQuality),
+			pull: puller(traits.NewAirQualitySensorApiClient, traits.AirQualitySensorApiClient.PullAirQuality, (*traits.PullAirQualityResponse_Change).GetAirQuality),
+		})
 		knownTraits.add(trait.AirTemperature, Resource{
 			name: "AirTemperature",
 			desc: (&traits.AirTemperature{}).ProtoReflect().Descriptor(),
