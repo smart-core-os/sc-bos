@@ -74,3 +74,4 @@ range:
 - Health checks are automatically created when devices appear and removed when they disappear
 - The automation handles connection reliability and will update health check reliability status accordingly
 - Field paths in `source.value` use camelCase, which are automatically converted to snake_case for protobuf
+- The automation talks to the devices API on the node it is running on, so will not work if configured on a hub. 
