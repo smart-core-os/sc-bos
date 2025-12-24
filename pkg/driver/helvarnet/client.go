@@ -1,6 +1,7 @@
 package helvarnet
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strings"
@@ -59,11 +60,16 @@ func (c *tcpClient) close() {
 // make 3 attempts to try to send pkt and receive response. want is the prefix of the response we are expecting.
 // if no response is expected, want should be an empty string.
 // if the response is not what we expect, we return an error
-func (c *tcpClient) sendAndReceive(pkt string, want string) (string, error) {
+func (c *tcpClient) sendAndReceive(ctx context.Context, pkt string, want string) (string, error) {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for tries := 3; tries > 0; tries-- {
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		default:
+		}
 		var err error
 		err = c.sendPacket(pkt)
 		if err != nil {

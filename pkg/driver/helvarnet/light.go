@@ -69,10 +69,10 @@ func newLight(client *tcpClient, l *zap.Logger, conf *config.Device, db *bolthol
 }
 
 // setScene sets the lighting scene for the device
-func (l *Light) setScene(block string, scene string, constant string) error {
+func (l *Light) setScene(ctx context.Context, block string, scene string, constant string) error {
 	command := recallDeviceScene(l.conf.Address, block, scene, constant)
 
-	_, err := l.client.sendAndReceive(command, "")
+	_, err := l.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -80,10 +80,10 @@ func (l *Light) setScene(block string, scene string, constant string) error {
 }
 
 // setLevel sets the light level for this device
-func (l *Light) setLevel(level int) error {
+func (l *Light) setLevel(ctx context.Context, level int) error {
 	command := changeDeviceLevel(l.conf.Address, level)
 
-	_, err := l.client.sendAndReceive(command, "")
+	_, err := l.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -91,11 +91,11 @@ func (l *Light) setLevel(level int) error {
 }
 
 // refreshBrightness queries the device's load and updates the brightness value
-func (l *Light) refreshBrightness() error {
+func (l *Light) refreshBrightness(ctx context.Context) error {
 	command := queryLoadLevel(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return err
 	}
@@ -118,11 +118,11 @@ func (l *Light) refreshBrightness() error {
 }
 
 // refreshDeviceStatus queries the device and updates the status value
-func (l *Light) refreshDeviceStatus() (int64, error) {
+func (l *Light) refreshDeviceStatus(ctx context.Context) (int64, error) {
 	command := queryDeviceState(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return DeviceOfflineCode, err
 	}
@@ -143,7 +143,7 @@ func (l *Light) refreshDeviceStatus() (int64, error) {
 
 // UpdateBrightness update the brightness level or preset (scene) of the device
 // if the request has a present included, this takes precedence and the level percent is ignored
-func (l *Light) UpdateBrightness(_ context.Context, req *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
+func (l *Light) UpdateBrightness(ctx context.Context, req *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
 	if req.Brightness == nil {
 		return nil, status.Error(codes.InvalidArgument, "no brightness in request")
 	}
@@ -163,7 +163,7 @@ func (l *Light) UpdateBrightness(_ context.Context, req *traits.UpdateBrightness
 		if len(sceneSplit) == 3 {
 			constant = sceneSplit[2]
 		}
-		err := l.setScene(block, scene, constant)
+		err := l.setScene(ctx, block, scene, constant)
 		if err != nil {
 			return nil, status.Error(codes.DeadlineExceeded, "failed to set scene")
 		}
@@ -174,7 +174,7 @@ func (l *Light) UpdateBrightness(_ context.Context, req *traits.UpdateBrightness
 		})
 	} else {
 		level := req.Brightness.LevelPercent
-		err := l.setLevel(int(level))
+		err := l.setLevel(ctx, int(level))
 		if err != nil {
 			return nil, status.Error(codes.DeadlineExceeded, "failed to set scene")
 		}
@@ -186,8 +186,8 @@ func (l *Light) UpdateBrightness(_ context.Context, req *traits.UpdateBrightness
 	return nil, nil
 }
 
-func (l *Light) GetBrightness(_ context.Context, _ *traits.GetBrightnessRequest) (*traits.Brightness, error) {
-	err := l.refreshBrightness()
+func (l *Light) GetBrightness(ctx context.Context, _ *traits.GetBrightnessRequest) (*traits.Brightness, error) {
+	err := l.refreshBrightness(ctx)
 	if err != nil {
 		return nil, status.Error(codes.DeadlineExceeded, "failed to get brightness")
 	}
@@ -255,7 +255,7 @@ func (l *Light) sendUdmiMessage(ctx context.Context) {
 
 func (l *Light) refreshData(ctx context.Context) {
 
-	err := l.refreshBrightness()
+	err := l.refreshBrightness(ctx)
 	if err != nil {
 		l.logger.Error("failed to refresh brightness, will try again on next run...", zap.Error(err))
 	}
@@ -264,7 +264,7 @@ func (l *Light) refreshData(ctx context.Context) {
 	if l.isEm {
 		currentResults := l.testResultSet.Get().(*gen.TestResultSet)
 		newResults := &gen.TestResultSet{}
-		fRes, err := getTestResult(l.getFunctionTestResult, l.getFunctionTestCompletionTime)
+		fRes, err := getTestResult(ctx, l.getFunctionTestResult, l.getFunctionTestCompletionTime)
 		if err == nil {
 			// update the stored test result set with the new result
 			newResults.FunctionTest = fRes
@@ -272,7 +272,7 @@ func (l *Light) refreshData(ctx context.Context) {
 			l.logger.Error("Failed to get function test result", zap.String("name", l.conf.Name), zap.Error(err))
 		}
 
-		dRes, err := getTestResult(l.getDurationTestResult, l.getDurationTestCompletionTime)
+		dRes, err := getTestResult(ctx, l.getDurationTestResult, l.getDurationTestCompletionTime)
 		if err == nil {
 			newResults.DurationTest = dRes
 		} else {
@@ -304,7 +304,7 @@ func (l *Light) queryDevice(ctx context.Context, t time.Duration, fc *healthpb.F
 		case <-ticker.C:
 			l.refreshData(ctx)
 
-			s, err := l.refreshDeviceStatus()
+			s, err := l.refreshDeviceStatus(ctx)
 			if err != nil {
 				l.logger.Error("failed to refresh device status, will try again on next run...", zap.Error(err))
 			}
@@ -316,10 +316,10 @@ func (l *Light) queryDevice(ctx context.Context, t time.Duration, fc *healthpb.F
 
 // runFunctionTest requests a function test from the device. Does not expect a response.
 // To get the result of the function test, you need to call queryEmergencyFunctionTestState
-func (l *Light) runFunctionTest() error {
+func (l *Light) runFunctionTest(ctx context.Context) error {
 	command := deviceEmergencyFunctionTest(l.conf.Address)
 
-	_, err := l.client.sendAndReceive(command, "")
+	_, err := l.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -328,10 +328,10 @@ func (l *Light) runFunctionTest() error {
 
 // runDurationTest requests a duration test from the device. Does not expect a response.
 // To get the result of the duration test, you need to call queryEmergencyDurationTestState
-func (l *Light) runDurationTest() error {
+func (l *Light) runDurationTest(ctx context.Context) error {
 	command := deviceEmergencyDurationTest(l.conf.Address)
 
-	_, err := l.client.sendAndReceive(command, "")
+	_, err := l.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -339,10 +339,10 @@ func (l *Light) runDurationTest() error {
 }
 
 // stopTest stops any running emergency test on the device.
-func (l *Light) stopTest() error {
+func (l *Light) stopTest(ctx context.Context) error {
 	command := deviceStopEmergencyTests(l.conf.Address)
 
-	_, err := l.client.sendAndReceive(command, "")
+	_, err := l.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -415,12 +415,12 @@ func parseGetResultResponse(r string) (*EmergencyState, error) {
 
 // getFunctionTestResult queries the device for the result of the last function test.
 // The result is a valid EmergencyState value as defined by the protocol, else an error is returned.
-func (l *Light) getFunctionTestResult() (*EmergencyState, error) {
+func (l *Light) getFunctionTestResult(ctx context.Context) (*EmergencyState, error) {
 
 	command := queryEmergencyFunctionTestState(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return nil, err
 	}
@@ -430,12 +430,12 @@ func (l *Light) getFunctionTestResult() (*EmergencyState, error) {
 
 // getDurationTestResult queries the device for the result of the last duration test.
 // The result is a valid EmergencyState value as defined by the protocol, else an error is returned.
-func (l *Light) getDurationTestResult() (*EmergencyState, error) {
+func (l *Light) getDurationTestResult(ctx context.Context) (*EmergencyState, error) {
 
 	command := queryEmergencyDurationTestState(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return nil, err
 	}
@@ -468,12 +468,12 @@ func parseGetCompletionTimeResponse(r string) (*time.Time, error) {
 }
 
 // getFunctionTestCompletionTime queries the device for the finish time of the last function test.
-func (l *Light) getFunctionTestCompletionTime() (*time.Time, error) {
+func (l *Light) getFunctionTestCompletionTime(ctx context.Context) (*time.Time, error) {
 
 	command := queryEmergencyFunctionTestTime(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return nil, err
 	}
@@ -482,12 +482,12 @@ func (l *Light) getFunctionTestCompletionTime() (*time.Time, error) {
 }
 
 // getDurationTestCompletionTime queries the device for the finish time of the last duration test.
-func (l *Light) getDurationTestCompletionTime() (*time.Time, error) {
+func (l *Light) getDurationTestCompletionTime(ctx context.Context) (*time.Time, error) {
 
 	command := queryEmergencyDurationTestTime(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return nil, err
 	}
@@ -495,9 +495,9 @@ func (l *Light) getDurationTestCompletionTime() (*time.Time, error) {
 	return parseGetCompletionTimeResponse(r)
 }
 
-func (l *Light) StartFunctionTest(context.Context, *gen.StartEmergencyTestRequest) (*gen.StartEmergencyTestResponse, error) {
+func (l *Light) StartFunctionTest(ctx context.Context, _ *gen.StartEmergencyTestRequest) (*gen.StartEmergencyTestResponse, error) {
 	l.logger.Info("Starting function test for light", zap.String("name", l.conf.Name))
-	err := l.runFunctionTest()
+	err := l.runFunctionTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to start function test", zap.String("name", l.conf.Name), zap.Error(err))
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to start function test"))
@@ -512,9 +512,9 @@ func (l *Light) StartFunctionTest(context.Context, *gen.StartEmergencyTestReques
 	}, nil
 }
 
-func (l *Light) StartDurationTest(context.Context, *gen.StartEmergencyTestRequest) (*gen.StartEmergencyTestResponse, error) {
+func (l *Light) StartDurationTest(ctx context.Context, _ *gen.StartEmergencyTestRequest) (*gen.StartEmergencyTestResponse, error) {
 	l.logger.Info("Starting duration test for light", zap.String("name", l.conf.Name))
-	err := l.runDurationTest()
+	err := l.runDurationTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to start duration test", zap.String("name", l.conf.Name), zap.Error(err))
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to start duration test"))
@@ -534,9 +534,9 @@ func (l *Light) StartDurationTest(context.Context, *gen.StartEmergencyTestReques
 	}, nil
 }
 
-func (l *Light) StopEmergencyTest(context.Context, *gen.StopEmergencyTestsRequest) (*gen.StopEmergencyTestsResponse, error) {
+func (l *Light) StopEmergencyTest(ctx context.Context, _ *gen.StopEmergencyTestsRequest) (*gen.StopEmergencyTestsResponse, error) {
 	l.logger.Info("Stopping test for light", zap.String("name", l.conf.Name))
-	err := l.stopTest()
+	err := l.stopTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to stop test", zap.String("name", l.conf.Name), zap.Error(err))
 		return nil, status.Error(codes.Internal, "failed to stop test")
@@ -577,16 +577,16 @@ func (l *Light) PullTestResultSets(request *gen.PullTestResultRequest, server gr
 	return nil
 }
 
-func getTestResult(getResult func() (*EmergencyState, error), getTime func() (*time.Time, error)) (*gen.EmergencyTestResult, error) {
+func getTestResult(ctx context.Context, getResult func(ctx context.Context) (*EmergencyState, error), getTime func(ctx context.Context) (*time.Time, error)) (*gen.EmergencyTestResult, error) {
 
-	eState, err := getResult()
+	eState, err := getResult(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to getResult test result")
 	}
 	result := &gen.EmergencyTestResult{}
 	result.Result = helvarResultToTrait(eState)
 	if hasTestCompleted(eState) {
-		t, _ := getTime()
+		t, _ := getTime(ctx)
 		if t != nil {
 			result.EndTime = timestamppb.New(*t)
 		} else {
