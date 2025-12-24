@@ -176,6 +176,28 @@ func TestHealthCheckProperties(t *testing.T) {
 	})
 }
 
+// TestHandlesNilAmbientTemperature verifies that the automation handles
+// nil AmbientTemperature and returns bad response reliability.
+func TestHandlesNilAmbientTemperature(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newTestHarness(t)
+		h.configureAirTempMonitor()
+
+		airTempModel := airtemperaturepb.NewModel()
+		h.addAirTempDevice("room-1", airTempModel)
+		h.waitForHealthCheck("room-1")
+
+		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
+			AmbientTemperature: nil,
+		})
+
+		synctest.Wait()
+		h.assertHealthCheckExists("room-1")
+		h.assertHealthCheckNormality("room-1", gen.HealthCheck_NORMALITY_UNSPECIFIED)
+		h.assertHealthCheckReliability("room-1", gen.HealthCheck_Reliability_BAD_RESPONSE)
+	})
+}
+
 // testHarness provides a convenient test environment for healthbounds automation.
 type testHarness struct {
 	t      *testing.T
@@ -385,6 +407,27 @@ func (h *testHarness) assertHealthCheckNormality(deviceName string, expected gen
 	got := check.GetNormality()
 	if diff := cmp.Diff(expected, got, protocmp.Transform()); diff != "" {
 		h.t.Errorf("Health check normality mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func (h *testHarness) assertHealthCheckReliability(deviceName string, expected gen.HealthCheck_Reliability_State) {
+	h.t.Helper()
+	synctest.Wait()
+
+	h.mu.Lock()
+	model, ok := h.models[deviceName]
+	h.mu.Unlock()
+
+	if !ok {
+		h.t.Fatalf("Health model for device %q not found", deviceName)
+	}
+	check, err := model.GetHealthCheck("healthbounds")
+	if err != nil {
+		h.t.Fatalf("Health check for device %q not found: %v", deviceName, err)
+	}
+	got := check.GetReliability().GetState()
+	if diff := cmp.Diff(expected, got, protocmp.Transform()); diff != "" {
+		h.t.Errorf("Health check reliability mismatch (-want +got):\n%s", diff)
 	}
 }
 

@@ -24,10 +24,12 @@ list.
 
 Currently supported traits include:
 
+- `smartcore.traits.AirQualitySensor` - Monitor air quality readings
 - `smartcore.traits.AirTemperature` - Monitor air temperature readings
 - `smartcore.bos.EmergencyLight` - Monitor emergency light test results
 - `smartcore.bos.Meter` - Monitor meter readings
 - `smartcore.traits.OnOff` - Monitor on/off state
+- `smartcore.bos.Temperature` - Monitor temperature readings
 
 More traits can be added by registering them in the internal trait registry.
 
@@ -73,3 +75,4 @@ range:
 - Health checks are automatically created when devices appear and removed when they disappear
 - The automation handles connection reliability and will update health check reliability status accordingly
 - Field paths in `source.value` use camelCase, which are automatically converted to snake_case for protobuf
+- The automation talks to the devices API on the node it is running on, so will not work if configured on a hub. 
