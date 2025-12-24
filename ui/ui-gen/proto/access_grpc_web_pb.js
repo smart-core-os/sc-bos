@@ -503,5 +503,188 @@ proto.smartcore.bos.AccessApiPromiseClient.prototype.listAccessGrants =
 };
 
 
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.smartcore.bos.CreateActorRequest,
+ *   !proto.smartcore.bos.CreateActorResponse>}
+ */
+const methodDescriptor_AccessApi_CreateActor = new grpc.web.MethodDescriptor(
+  '/smartcore.bos.AccessApi/CreateActor',
+  grpc.web.MethodType.UNARY,
+  proto.smartcore.bos.CreateActorRequest,
+  proto.smartcore.bos.CreateActorResponse,
+  /**
+   * @param {!proto.smartcore.bos.CreateActorRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.smartcore.bos.CreateActorResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.smartcore.bos.CreateActorRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.CreateActorResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.CreateActorResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.smartcore.bos.AccessApiClient.prototype.createActor =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/smartcore.bos.AccessApi/CreateActor',
+      request,
+      metadata || {},
+      methodDescriptor_AccessApi_CreateActor,
+      callback);
+};
+
+
+/**
+ * @param {!proto.smartcore.bos.CreateActorRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.smartcore.bos.CreateActorResponse>}
+ *     Promise that resolves to the response
+ */
+proto.smartcore.bos.AccessApiPromiseClient.prototype.createActor =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/smartcore.bos.AccessApi/CreateActor',
+      request,
+      metadata || {},
+      methodDescriptor_AccessApi_CreateActor);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.smartcore.bos.GrantAccessRequest,
+ *   !proto.smartcore.bos.GrantAccessResponse>}
+ */
+const methodDescriptor_AccessApi_GrantAccess = new grpc.web.MethodDescriptor(
+  '/smartcore.bos.AccessApi/GrantAccess',
+  grpc.web.MethodType.UNARY,
+  proto.smartcore.bos.GrantAccessRequest,
+  proto.smartcore.bos.GrantAccessResponse,
+  /**
+   * @param {!proto.smartcore.bos.GrantAccessRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.smartcore.bos.GrantAccessResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.smartcore.bos.GrantAccessRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.GrantAccessResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.GrantAccessResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.smartcore.bos.AccessApiClient.prototype.grantAccess =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/smartcore.bos.AccessApi/GrantAccess',
+      request,
+      metadata || {},
+      methodDescriptor_AccessApi_GrantAccess,
+      callback);
+};
+
+
+/**
+ * @param {!proto.smartcore.bos.GrantAccessRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.smartcore.bos.GrantAccessResponse>}
+ *     Promise that resolves to the response
+ */
+proto.smartcore.bos.AccessApiPromiseClient.prototype.grantAccess =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/smartcore.bos.AccessApi/GrantAccess',
+      request,
+      metadata || {},
+      methodDescriptor_AccessApi_GrantAccess);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.smartcore.bos.SaveQRCredentialRequest,
+ *   !proto.smartcore.bos.SaveQRCredentialResponse>}
+ */
+const methodDescriptor_AccessApi_SaveQRCredential = new grpc.web.MethodDescriptor(
+  '/smartcore.bos.AccessApi/SaveQRCredential',
+  grpc.web.MethodType.UNARY,
+  proto.smartcore.bos.SaveQRCredentialRequest,
+  proto.smartcore.bos.SaveQRCredentialResponse,
+  /**
+   * @param {!proto.smartcore.bos.SaveQRCredentialRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.smartcore.bos.SaveQRCredentialResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.smartcore.bos.SaveQRCredentialRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.SaveQRCredentialResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.SaveQRCredentialResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.smartcore.bos.AccessApiClient.prototype.saveQRCredential =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/smartcore.bos.AccessApi/SaveQRCredential',
+      request,
+      metadata || {},
+      methodDescriptor_AccessApi_SaveQRCredential,
+      callback);
+};
+
+
+/**
+ * @param {!proto.smartcore.bos.SaveQRCredentialRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.smartcore.bos.SaveQRCredentialResponse>}
+ *     Promise that resolves to the response
+ */
+proto.smartcore.bos.AccessApiPromiseClient.prototype.saveQRCredential =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/smartcore.bos.AccessApi/SaveQRCredential',
+      request,
+      metadata || {},
+      methodDescriptor_AccessApi_SaveQRCredential);
+};
+
+
 module.exports = proto.smartcore.bos;
 

@@ -444,3 +444,182 @@ export namespace ListAccessGrantsResponse {
   };
 }
 
+export class CreateActorRequest extends jspb.Message {
+  getName(): string;
+  setName(value: string): CreateActorRequest;
+
+  getActor(): actor_pb.Actor | undefined;
+  setActor(value?: actor_pb.Actor): CreateActorRequest;
+  hasActor(): boolean;
+  clearActor(): CreateActorRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateActorRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateActorRequest): CreateActorRequest.AsObject;
+  static serializeBinaryToWriter(message: CreateActorRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateActorRequest;
+  static deserializeBinaryFromReader(message: CreateActorRequest, reader: jspb.BinaryReader): CreateActorRequest;
+}
+
+export namespace CreateActorRequest {
+  export type AsObject = {
+    name: string;
+    actor?: actor_pb.Actor.AsObject;
+  };
+}
+
+export class CreateActorResponse extends jspb.Message {
+  getResult(): CreateActorResponse.Result;
+  setResult(value: CreateActorResponse.Result): CreateActorResponse;
+
+  getReason(): string;
+  setReason(value: string): CreateActorResponse;
+  hasReason(): boolean;
+  clearReason(): CreateActorResponse;
+
+  getActor(): actor_pb.Actor | undefined;
+  setActor(value?: actor_pb.Actor): CreateActorResponse;
+  hasActor(): boolean;
+  clearActor(): CreateActorResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateActorResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateActorResponse): CreateActorResponse.AsObject;
+  static serializeBinaryToWriter(message: CreateActorResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateActorResponse;
+  static deserializeBinaryFromReader(message: CreateActorResponse, reader: jspb.BinaryReader): CreateActorResponse;
+}
+
+export namespace CreateActorResponse {
+  export type AsObject = {
+    result: CreateActorResponse.Result;
+    reason?: string;
+    actor?: actor_pb.Actor.AsObject;
+  };
+
+  export enum Result {
+    RESULT_UNSPECIFIED = 0,
+    CREATED_SUCCESSFULLY = 1,
+    ALREADY_EXISTS = 2,
+    PERMISSION_DENIED = 3,
+    INVALID_ARGUMENT = 4,
+    TEMPORARILY_UNAVAILABLE = 5,
+  }
+
+  export enum ReasonCase {
+    _REASON_NOT_SET = 0,
+    REASON = 2,
+  }
+}
+
+export class GrantAccessRequest extends jspb.Message {
+  getName(): string;
+  setName(value: string): GrantAccessRequest;
+
+  getActor(): actor_pb.Actor | undefined;
+  setActor(value?: actor_pb.Actor): GrantAccessRequest;
+  hasActor(): boolean;
+  clearActor(): GrantAccessRequest;
+
+  getReason(): string;
+  setReason(value: string): GrantAccessRequest;
+  hasReason(): boolean;
+  clearReason(): GrantAccessRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GrantAccessRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GrantAccessRequest): GrantAccessRequest.AsObject;
+  static serializeBinaryToWriter(message: GrantAccessRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GrantAccessRequest;
+  static deserializeBinaryFromReader(message: GrantAccessRequest, reader: jspb.BinaryReader): GrantAccessRequest;
+}
+
+export namespace GrantAccessRequest {
+  export type AsObject = {
+    name: string;
+    actor?: actor_pb.Actor.AsObject;
+    reason?: string;
+  };
+
+  export enum ReasonCase {
+    _REASON_NOT_SET = 0,
+    REASON = 3,
+  }
+}
+
+export class GrantAccessResponse extends jspb.Message {
+  getAccessAttempt(): AccessAttempt | undefined;
+  setAccessAttempt(value?: AccessAttempt): GrantAccessResponse;
+  hasAccessAttempt(): boolean;
+  clearAccessAttempt(): GrantAccessResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GrantAccessResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: GrantAccessResponse): GrantAccessResponse.AsObject;
+  static serializeBinaryToWriter(message: GrantAccessResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GrantAccessResponse;
+  static deserializeBinaryFromReader(message: GrantAccessResponse, reader: jspb.BinaryReader): GrantAccessResponse;
+}
+
+export namespace GrantAccessResponse {
+  export type AsObject = {
+    accessAttempt?: AccessAttempt.AsObject;
+  };
+}
+
+export class SaveQRCredentialRequest extends jspb.Message {
+  getName(): string;
+  setName(value: string): SaveQRCredentialRequest;
+
+  getCardNumber(): number;
+  setCardNumber(value: number): SaveQRCredentialRequest;
+
+  getFirstName(): string;
+  setFirstName(value: string): SaveQRCredentialRequest;
+
+  getLastName(): string;
+  setLastName(value: string): SaveQRCredentialRequest;
+
+  getActiveTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setActiveTime(value?: google_protobuf_timestamp_pb.Timestamp): SaveQRCredentialRequest;
+  hasActiveTime(): boolean;
+  clearActiveTime(): SaveQRCredentialRequest;
+
+  getExpireTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setExpireTime(value?: google_protobuf_timestamp_pb.Timestamp): SaveQRCredentialRequest;
+  hasExpireTime(): boolean;
+  clearExpireTime(): SaveQRCredentialRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SaveQRCredentialRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: SaveQRCredentialRequest): SaveQRCredentialRequest.AsObject;
+  static serializeBinaryToWriter(message: SaveQRCredentialRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SaveQRCredentialRequest;
+  static deserializeBinaryFromReader(message: SaveQRCredentialRequest, reader: jspb.BinaryReader): SaveQRCredentialRequest;
+}
+
+export namespace SaveQRCredentialRequest {
+  export type AsObject = {
+    name: string;
+    cardNumber: number;
+    firstName: string;
+    lastName: string;
+    activeTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    expireTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+  };
+}
+
+export class SaveQRCredentialResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SaveQRCredentialResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: SaveQRCredentialResponse): SaveQRCredentialResponse.AsObject;
+  static serializeBinaryToWriter(message: SaveQRCredentialResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SaveQRCredentialResponse;
+  static deserializeBinaryFromReader(message: SaveQRCredentialResponse, reader: jspb.BinaryReader): SaveQRCredentialResponse;
+}
+
+export namespace SaveQRCredentialResponse {
+  export type AsObject = {
+  };
+}
+

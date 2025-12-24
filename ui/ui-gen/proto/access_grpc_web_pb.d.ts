@@ -55,6 +55,27 @@ export class AccessApiClient {
                response: access_pb.ListAccessGrantsResponse) => void
   ): grpcWeb.ClientReadableStream<access_pb.ListAccessGrantsResponse>;
 
+  createActor(
+    request: access_pb.CreateActorRequest,
+    metadata: grpcWeb.Metadata | undefined,
+    callback: (err: grpcWeb.RpcError,
+               response: access_pb.CreateActorResponse) => void
+  ): grpcWeb.ClientReadableStream<access_pb.CreateActorResponse>;
+
+  grantAccess(
+    request: access_pb.GrantAccessRequest,
+    metadata: grpcWeb.Metadata | undefined,
+    callback: (err: grpcWeb.RpcError,
+               response: access_pb.GrantAccessResponse) => void
+  ): grpcWeb.ClientReadableStream<access_pb.GrantAccessResponse>;
+
+  saveQRCredential(
+    request: access_pb.SaveQRCredentialRequest,
+    metadata: grpcWeb.Metadata | undefined,
+    callback: (err: grpcWeb.RpcError,
+               response: access_pb.SaveQRCredentialResponse) => void
+  ): grpcWeb.ClientReadableStream<access_pb.SaveQRCredentialResponse>;
+
 }
 
 export class AccessApiPromiseClient {
@@ -96,6 +117,21 @@ export class AccessApiPromiseClient {
     request: access_pb.ListAccessGrantsRequest,
     metadata?: grpcWeb.Metadata
   ): Promise<access_pb.ListAccessGrantsResponse>;
+
+  createActor(
+    request: access_pb.CreateActorRequest,
+    metadata?: grpcWeb.Metadata
+  ): Promise<access_pb.CreateActorResponse>;
+
+  grantAccess(
+    request: access_pb.GrantAccessRequest,
+    metadata?: grpcWeb.Metadata
+  ): Promise<access_pb.GrantAccessResponse>;
+
+  saveQRCredential(
+    request: access_pb.SaveQRCredentialRequest,
+    metadata?: grpcWeb.Metadata
+  ): Promise<access_pb.SaveQRCredentialResponse>;
 
 }
 

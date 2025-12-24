@@ -26,6 +26,9 @@ const (
 	AccessApi_DeleteAccessGrant_FullMethodName    = "/smartcore.bos.AccessApi/DeleteAccessGrant"
 	AccessApi_GetAccessGrant_FullMethodName       = "/smartcore.bos.AccessApi/GetAccessGrant"
 	AccessApi_ListAccessGrants_FullMethodName     = "/smartcore.bos.AccessApi/ListAccessGrants"
+	AccessApi_CreateActor_FullMethodName          = "/smartcore.bos.AccessApi/CreateActor"
+	AccessApi_GrantAccess_FullMethodName          = "/smartcore.bos.AccessApi/GrantAccess"
+	AccessApi_SaveQRCredential_FullMethodName     = "/smartcore.bos.AccessApi/SaveQRCredential"
 )
 
 // AccessApiClient is the client API for AccessApi service.
@@ -42,6 +45,9 @@ type AccessApiClient interface {
 	DeleteAccessGrant(ctx context.Context, in *DeleteAccessGrantRequest, opts ...grpc.CallOption) (*DeleteAccessGrantResponse, error)
 	GetAccessGrant(ctx context.Context, in *GetAccessGrantsRequest, opts ...grpc.CallOption) (*AccessGrant, error)
 	ListAccessGrants(ctx context.Context, in *ListAccessGrantsRequest, opts ...grpc.CallOption) (*ListAccessGrantsResponse, error)
+	CreateActor(ctx context.Context, in *CreateActorRequest, opts ...grpc.CallOption) (*CreateActorResponse, error)
+	GrantAccess(ctx context.Context, in *GrantAccessRequest, opts ...grpc.CallOption) (*GrantAccessResponse, error)
+	SaveQRCredential(ctx context.Context, in *SaveQRCredentialRequest, opts ...grpc.CallOption) (*SaveQRCredentialResponse, error)
 }
 
 type accessApiClient struct {
@@ -131,6 +137,36 @@ func (c *accessApiClient) ListAccessGrants(ctx context.Context, in *ListAccessGr
 	return out, nil
 }
 
+func (c *accessApiClient) CreateActor(ctx context.Context, in *CreateActorRequest, opts ...grpc.CallOption) (*CreateActorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateActorResponse)
+	err := c.cc.Invoke(ctx, AccessApi_CreateActor_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accessApiClient) GrantAccess(ctx context.Context, in *GrantAccessRequest, opts ...grpc.CallOption) (*GrantAccessResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GrantAccessResponse)
+	err := c.cc.Invoke(ctx, AccessApi_GrantAccess_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accessApiClient) SaveQRCredential(ctx context.Context, in *SaveQRCredentialRequest, opts ...grpc.CallOption) (*SaveQRCredentialResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveQRCredentialResponse)
+	err := c.cc.Invoke(ctx, AccessApi_SaveQRCredential_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccessApiServer is the server API for AccessApi service.
 // All implementations must embed UnimplementedAccessApiServer
 // for forward compatibility.
@@ -145,6 +181,9 @@ type AccessApiServer interface {
 	DeleteAccessGrant(context.Context, *DeleteAccessGrantRequest) (*DeleteAccessGrantResponse, error)
 	GetAccessGrant(context.Context, *GetAccessGrantsRequest) (*AccessGrant, error)
 	ListAccessGrants(context.Context, *ListAccessGrantsRequest) (*ListAccessGrantsResponse, error)
+	CreateActor(context.Context, *CreateActorRequest) (*CreateActorResponse, error)
+	GrantAccess(context.Context, *GrantAccessRequest) (*GrantAccessResponse, error)
+	SaveQRCredential(context.Context, *SaveQRCredentialRequest) (*SaveQRCredentialResponse, error)
 	mustEmbedUnimplementedAccessApiServer()
 }
 
@@ -175,6 +214,15 @@ func (UnimplementedAccessApiServer) GetAccessGrant(context.Context, *GetAccessGr
 }
 func (UnimplementedAccessApiServer) ListAccessGrants(context.Context, *ListAccessGrantsRequest) (*ListAccessGrantsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAccessGrants not implemented")
+}
+func (UnimplementedAccessApiServer) CreateActor(context.Context, *CreateActorRequest) (*CreateActorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateActor not implemented")
+}
+func (UnimplementedAccessApiServer) GrantAccess(context.Context, *GrantAccessRequest) (*GrantAccessResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GrantAccess not implemented")
+}
+func (UnimplementedAccessApiServer) SaveQRCredential(context.Context, *SaveQRCredentialRequest) (*SaveQRCredentialResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveQRCredential not implemented")
 }
 func (UnimplementedAccessApiServer) mustEmbedUnimplementedAccessApiServer() {}
 func (UnimplementedAccessApiServer) testEmbeddedByValue()                   {}
@@ -316,6 +364,60 @@ func _AccessApi_ListAccessGrants_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccessApi_CreateActor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateActorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccessApiServer).CreateActor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccessApi_CreateActor_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccessApiServer).CreateActor(ctx, req.(*CreateActorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccessApi_GrantAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GrantAccessRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccessApiServer).GrantAccess(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccessApi_GrantAccess_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccessApiServer).GrantAccess(ctx, req.(*GrantAccessRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccessApi_SaveQRCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveQRCredentialRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccessApiServer).SaveQRCredential(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccessApi_SaveQRCredential_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccessApiServer).SaveQRCredential(ctx, req.(*SaveQRCredentialRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AccessApi_ServiceDesc is the grpc.ServiceDesc for AccessApi service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -346,6 +448,18 @@ var AccessApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListAccessGrants",
 			Handler:    _AccessApi_ListAccessGrants_Handler,
+		},
+		{
+			MethodName: "CreateActor",
+			Handler:    _AccessApi_CreateActor_Handler,
+		},
+		{
+			MethodName: "GrantAccess",
+			Handler:    _AccessApi_GrantAccess_Handler,
+		},
+		{
+			MethodName: "SaveQRCredential",
+			Handler:    _AccessApi_SaveQRCredential_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

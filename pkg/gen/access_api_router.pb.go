@@ -190,3 +190,30 @@ func (r *AccessApiRouter) ListAccessGrants(ctx context.Context, request *ListAcc
 
 	return child.ListAccessGrants(ctx, request)
 }
+
+func (r *AccessApiRouter) CreateActor(ctx context.Context, request *CreateActorRequest) (*CreateActorResponse, error) {
+	child, err := r.GetAccessApiClient(request.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return child.CreateActor(ctx, request)
+}
+
+func (r *AccessApiRouter) GrantAccess(ctx context.Context, request *GrantAccessRequest) (*GrantAccessResponse, error) {
+	child, err := r.GetAccessApiClient(request.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return child.GrantAccess(ctx, request)
+}
+
+func (r *AccessApiRouter) SaveQRCredential(ctx context.Context, request *SaveQRCredentialRequest) (*SaveQRCredentialResponse, error) {
+	child, err := r.GetAccessApiClient(request.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return child.SaveQRCredential(ctx, request)
+}
