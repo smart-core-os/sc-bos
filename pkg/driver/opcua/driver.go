@@ -1,8 +1,14 @@
+// Package opcua implements a Smart Core driver for OPC UA servers.
+// It subscribes to OPC UA variable nodes and exposes their values through Smart Core traits
+// including Meter, Electric, Transport, and UDMI.
+//
+// The driver creates an internal device instance for each configured device, which manages
+// OPC UA subscriptions and routes value changes to the appropriate trait handlers.
 package opcua
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/gopcua/opcua"
@@ -33,15 +39,20 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 
 	d := &Driver{
 		announcer: node.NewReplaceAnnouncer(services.Node),
+		logger:    logger,
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
-		service.WithParser(config.ReadBytes),
-		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
-			logContext.LogTo("applyConfig", logger)
-		}), service.RetryWithMinDelay(5*time.Second), service.RetryWithInitialDelay(5*time.Second)),
+		service.WithParser(config.ParseConfig),
+		service.WithRetry[config.Root](
+			service.RetryWithLogger(func(logContext service.RetryContext) {
+				logContext.LogTo("applyConfig", logger)
+			}),
+			service.RetryWithInitialDelay(2*time.Second),
+			service.RetryWithMinDelay(2*time.Second),
+			service.RetryWithMaxDelay(30*time.Second),
+		),
 	)
-	d.logger = services.Logger.Named(DriverName)
 	return d
 }
 
@@ -57,13 +68,13 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	opcClient, err := opcua.NewClient(cfg.Conn.Endpoint)
 	if err != nil {
-		d.logger.Warn("NewClient error", zap.String("error", err.Error()))
+		d.logger.Warn("NewClient error", zap.Error(err))
 		return err
 	}
 
 	err = opcClient.Connect(ctx)
 	if err != nil {
-		d.logger.Warn("Connect error", zap.String("error", err.Error()))
+		d.logger.Warn("Connect error", zap.Error(err))
 		return err
 	}
 
@@ -74,64 +85,67 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	grp, ctx := errgroup.WithContext(ctx)
-	var errs error
 	for _, dev := range cfg.Devices {
-		var allFeatures []node.Feature
-		opcDev := NewDevice(&dev, d.logger, client)
+		allFeatures := []node.Feature{node.HasMetadata(dev.Meta)}
+		opcDev := newDevice(&dev, d.logger, client)
 
 		for _, t := range dev.Traits {
 			switch t.Kind {
 			case meter.TraitName:
 				opcDev.meter, err = newMeter(dev.Name, t, d.logger)
 				if err != nil {
-					errs = fmt.Errorf("failed to add trait for device %s: %w", dev.Name, err)
-				} else {
-					allFeatures = append(allFeatures, node.HasTrait(meter.TraitName, node.WithClients(gen.WrapMeterApi(opcDev.meter), gen.WrapMeterInfo(opcDev.meter))))
+					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", meter.TraitName), zap.Error(err))
+					return err
 				}
+				allFeatures = append(allFeatures, node.HasTrait(meter.TraitName, node.WithClients(gen.WrapMeterApi(opcDev.meter), gen.WrapMeterInfo(opcDev.meter))))
+
 			case transport.TraitName:
 				opcDev.transport, err = newTransport(dev.Name, t, d.logger)
 				if err != nil {
-					errs = fmt.Errorf("failed to add trait for device %s: %w", dev.Name, err)
-				} else {
-					allFeatures = append(allFeatures, node.HasTrait(transport.TraitName, node.WithClients(gen.WrapTransportApi(opcDev.transport), gen.WrapTransportInfo(opcDev.transport))))
+					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", transport.TraitName), zap.Error(err))
+					return err
 				}
+				allFeatures = append(allFeatures, node.HasTrait(transport.TraitName, node.WithClients(gen.WrapTransportApi(opcDev.transport), gen.WrapTransportInfo(opcDev.transport))))
+
 			case udmipb.TraitName:
 				opcDev.udmi, err = newUdmi(dev.Name, t, d.logger)
 				if err != nil {
-					errs = fmt.Errorf("failed to add trait for device %s: %w", dev.Name, err)
-				} else {
-					allFeatures = append(allFeatures, node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(opcDev.udmi))))
+					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", udmipb.TraitName), zap.Error(err))
+					return err
 				}
+				allFeatures = append(allFeatures, node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(opcDev.udmi))))
+
 			case trait.Electric:
 				opcDev.electric, err = newElectric(dev.Name, t, d.logger)
 				if err != nil {
-					errs = fmt.Errorf("failed to add trait for device %s: %w", dev.Name, err)
-				} else {
-					allFeatures = append(allFeatures, node.HasTrait(trait.Electric, node.WithClients(electricpb.WrapApi(opcDev.electric))))
+					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", trait.Electric), zap.Error(err))
+					return err
 				}
+				allFeatures = append(allFeatures, node.HasTrait(trait.Electric, node.WithClients(electricpb.WrapApi(opcDev.electric))))
+
 			default:
 				d.logger.Error("unknown trait", zap.String("trait", t.Name))
 			}
 		}
 
-		if dev.Meta != nil {
-			allFeatures = append(allFeatures, node.HasMetadata(dev.Meta))
-		}
-
-		if errs != nil {
-			d.logger.Error("errors encountered whilst loading driver", zap.String("device", dev.Name), zap.Error(errs))
-		}
-
 		a.Announce(dev.Name, allFeatures...)
+		dev := opcDev
 		grp.Go(func() error {
-			return opcDev.run(ctx)
+			return dev.run(ctx)
 		})
 	}
 
 	go func() {
 		err := grp.Wait()
-		d.logger.Error("run error", zap.String("error", err.Error()))
-		_ = opcClient.Close(ctx)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			d.logger.Error("run error", zap.Error(err))
+		}
+
+		closeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err = opcClient.Close(closeCtx); err != nil {
+			d.logger.Warn("failed to close opcua client", zap.Error(err))
+		}
 	}()
 	return nil
 }
