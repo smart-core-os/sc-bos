@@ -29,6 +29,8 @@
         :show-select="showSelect"
         item-value="name"
         :class="tableClasses"
+        fixed-header
+        height="80vh"
         @click:row="showDevice">
       <template #item.metadata.membership.subsystem="{ item }">
         <subsystem-icon size="20px" :subsystem="item.metadata?.membership?.subsystem" no-default/>

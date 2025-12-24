@@ -51,7 +51,9 @@
         show-select
         item-value="name"
         v-model="selectedLights"
-        item-key="name">
+        item-key="name"
+        fixed-header
+        height="80vh">
       <template #top>
         <span v-if="selectedLights.length > 0">
           <v-btn
