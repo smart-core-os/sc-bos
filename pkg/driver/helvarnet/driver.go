@@ -82,10 +82,12 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		lightingGroup := newLightingGroup(d.clients[l.IpAddress], d.logger, l, *l.GroupNumber)
 		// try to get the last scene on a restart of the area controller
-		lightingGroup.getLastScene(ctx)
+		if err := lightingGroup.getLastScene(ctx); err != nil {
+			d.logger.Error("getLastScene error", zap.Error(err))
+		}
 		err := lightingGroup.getSceneNames(ctx)
 		if err != nil {
-			d.logger.Error("getSceneNames error", zap.String("error", err.Error()))
+			d.logger.Error("getSceneNames error", zap.Error(err))
 		}
 		rootAnnouncer.Announce(l.Name,
 			node.HasTrait(trait.Light,
@@ -188,7 +190,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			fc.Dispose()
 		}
 		if err != nil {
-			d.logger.Error("run error", zap.String("error", err.Error()))
+			d.logger.Error("run error", zap.Error(err))
 		}
 	}()
 	return nil

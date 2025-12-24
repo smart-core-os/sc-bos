@@ -40,7 +40,7 @@ func newLightingGroup(client *tcpClient, l *zap.Logger, conf *config.Device, n i
 }
 
 // sends the query commands to get the last known scene for this group
-func (lg *LightGroup) getLastScene(ctx context.Context) {
+func (lg *LightGroup) getLastScene(ctx context.Context) error {
 
 	command := queryLastSceneInGroup(lg.number)
 	want := "?" + command[1:len(command)-1]
@@ -48,13 +48,13 @@ func (lg *LightGroup) getLastScene(ctx context.Context) {
 	response, err := lg.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		lg.logger.Warn("failed to get last scene", zap.Error(err))
-		return
+		return err
 	}
 
 	split := strings.Split(response, "=")
 	if len(split) < 2 {
 		lg.logger.Warn("invalid response in getLastScene", zap.String("response", response))
-		return
+		return err
 	}
 
 	sceneNumber := strings.TrimSuffix(split[1], "#")
@@ -64,6 +64,7 @@ func (lg *LightGroup) getLastScene(ctx context.Context) {
 		},
 	})
 	lg.logger.Info(fmt.Sprintf("last scene for %s was %s", lg.conf.Name, sceneNumber))
+	return nil
 }
 
 // setScene sends the command to set the scene for the lighting group
