@@ -17,7 +17,7 @@ func (a *automation) collectAllocationChanges(ctx context.Context, source config
 	dedupe := newDeduper[*gen.Allocation](cmp.Equal())
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
-		stream, err := client.PullAllocations(ctx, &gen.PullAllocationsRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
+		stream, err := client.PullAllocation(ctx, &gen.PullAllocationRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
 
 		if err != nil {
 			return err
