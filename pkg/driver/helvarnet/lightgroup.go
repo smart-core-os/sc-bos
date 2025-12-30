@@ -47,14 +47,12 @@ func (lg *LightGroup) getLastScene(ctx context.Context) error {
 
 	response, err := lg.client.sendAndReceive(ctx, command, want)
 	if err != nil {
-		lg.logger.Warn("failed to get last scene", zap.Error(err))
-		return err
+		return fmt.Errorf("failed to get last scene for group %d: %v", lg.number, err)
 	}
 
 	split := strings.Split(response, "=")
 	if len(split) < 2 {
-		lg.logger.Warn("invalid response in getLastScene", zap.String("response", response))
-		return err
+		return fmt.Errorf("invalid response in getLastScene: %s", response)
 	}
 
 	sceneNumber := strings.TrimSuffix(split[1], "#")
