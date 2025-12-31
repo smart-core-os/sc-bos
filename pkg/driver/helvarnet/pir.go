@@ -44,11 +44,11 @@ func newPir(client *tcpClient, l *zap.Logger, conf *config.Device) *Pir {
 }
 
 // refreshOccupancyStatus refreshes the occupancy by querying the input state of the sensor
-func (p *Pir) refreshOccupancyStatus() error {
+func (p *Pir) refreshOccupancyStatus(ctx context.Context) error {
 	command := queryInputState(p.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := p.client.sendAndReceive(command, want)
+	r, err := p.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (p *Pir) PullOccupancy(_ *traits.PullOccupancyRequest, server traits.Occupa
 
 func (p *Pir) runUpdateState(ctx context.Context, t time.Duration) error {
 
-	err := p.refreshOccupancyStatus()
+	err := p.refreshOccupancyStatus(ctx)
 	if err != nil {
 		p.logger.Error("failed to refresh occupancy status", zap.Error(err))
 	}
@@ -114,7 +114,7 @@ func (p *Pir) runUpdateState(ctx context.Context, t time.Duration) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			err := p.refreshOccupancyStatus()
+			err := p.refreshOccupancyStatus(ctx)
 			if err != nil {
 				p.logger.Error("failed to refresh occupancy status", zap.Error(err))
 			}
