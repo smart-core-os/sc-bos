@@ -1,17 +1,31 @@
 package opcua
 
 import (
+	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/ua"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-golang/pkg/wrap"
 )
 
 func TestDevice_newDevice(t *testing.T) {
 	logger := zaptest.NewLogger(t)
+	fc := newSimpleFaultCheck(t)
 	cfg := &config.Device{
 		Name: "test-device",
 		Variables: []*config.Variable{
@@ -19,16 +33,11 @@ func TestDevice_newDevice(t *testing.T) {
 		},
 	}
 
-	dev := newDevice(cfg, logger, nil)
-	if dev == nil {
-		t.Fatal("newDevice() returned nil")
-	}
-	if dev.conf != cfg {
-		t.Error("Device config not set correctly")
-	}
-	if dev.logger == nil {
-		t.Error("Device logger not set")
-	}
+	dev := newDevice(cfg, logger, nil, "test_system", fc)
+	require.NotNil(t, dev)
+	require.Equal(t, cfg, dev.conf)
+	require.NotNil(t, dev.logger)
+	require.Equal(t, "test_system", dev.systemName)
 }
 
 func Test_nodeIdsAreEqual(t *testing.T) {
@@ -76,258 +85,448 @@ func Test_nodeIdsAreEqual(t *testing.T) {
 
 func TestDevice_handleTraitEvent(t *testing.T) {
 	logger := zaptest.NewLogger(t)
-
-	// Create a device with all trait types
+	fc := newSimpleFaultCheck(t)
 	dev := &device{
-		conf:   &config.Device{Name: "test-device"},
-		logger: logger,
+		conf:       &config.Device{Name: "test-device"},
+		logger:     logger,
+		faultCheck: fc,
 	}
 
-	// Add a Meter trait
 	meterCfg := config.RawTrait{
 		Raw: []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"ns=2;s=Tag1"}}`),
 	}
 	meter, err := newMeter("test/device", meterCfg, logger)
-	if err != nil {
-		t.Fatalf("newMeter() error = %v", err)
-	}
+	require.NoError(t, err)
 	dev.meter = meter
 
-	// Add an Electric trait
 	electricCfg := config.RawTrait{
 		Raw: []byte(`{"kind":"smartcore.traits.Electric","demand":{"realPower":{"nodeId":"ns=2;s=Power"}}}`),
 	}
 	electric, err := newElectric("test/device", electricCfg, logger)
-	if err != nil {
-		t.Fatalf("newElectric() error = %v", err)
-	}
+	require.NoError(t, err)
 	dev.electric = electric
 
-	// Add a Transport trait
 	transportCfg := config.RawTrait{
 		Raw: []byte(`{"kind":"smartcore.bos.Transport","actualPosition":{"nodeId":"ns=2;s=Position"}}`),
 	}
 	transport, err := newTransport("test/device", transportCfg, logger)
-	if err != nil {
-		t.Fatalf("newTransport() error = %v", err)
-	}
+	require.NoError(t, err)
 	dev.transport = transport
 
-	// Add UDMI trait
 	udmiCfg := config.RawTrait{
-		Raw: []byte(`{
-			"kind":"smartcore.bos.UDMI",
-			"topicPrefix":"test/device",
-			"points":{
-				"temp":{"nodeId":"ns=2;s=Temp","name":"Temperature"}
-			}
-		}`),
+		Raw: []byte(`{"kind":"smartcore.bos.UDMI","topicPrefix":"test/device","points":{"temp":{"nodeId":"ns=2;s=Temp","name":"Temperature"}}}`),
 	}
 	udmi, err := newUdmi("test/device", udmiCfg, logger)
-	if err != nil {
-		t.Fatalf("newUdmi() error = %v", err)
-	}
+	require.NoError(t, err)
 	dev.udmi = udmi
 
 	ctx := t.Context()
 
-	// Test Meter event
-	meterNodeId := mustParseNodeID("ns=2;s=Tag1")
-	dev.handleTraitEvent(ctx, meterNodeId, float32(100.5))
-
-	// Verify Meter was updated
+	dev.handleTraitEvent(ctx, mustParseNodeID("ns=2;s=Tag1"), float32(100.5))
 	reading, _ := meter.GetMeterReading(ctx, nil)
-	if reading.Usage != 100.5 {
-		t.Errorf("Meter usage = %v, want 100.5", reading.Usage)
-	}
+	require.Equal(t, float32(100.5), reading.Usage)
 
-	// Test Electric event
-	powerNodeId := mustParseNodeID("ns=2;s=Power")
-	dev.handleTraitEvent(ctx, powerNodeId, float32(1500.0))
-
-	// Verify Electric was updated
+	dev.handleTraitEvent(ctx, mustParseNodeID("ns=2;s=Power"), float32(1500.0))
 	demand, _ := electric.GetDemand(ctx, nil)
-	if demand.RealPower == nil || *demand.RealPower != 1500.0 {
-		t.Errorf("Electric real power = %v, want 1500.0", demand.RealPower)
-	}
+	require.NotNil(t, demand.RealPower)
+	require.Equal(t, float32(1500.0), *demand.RealPower)
 
-	// Test Transport event
-	positionNodeId := mustParseNodeID("ns=2;s=Position")
-	dev.handleTraitEvent(ctx, positionNodeId, "5")
-
-	// Verify Transport was updated
+	dev.handleTraitEvent(ctx, mustParseNodeID("ns=2;s=Position"), "5")
 	state, _ := transport.GetTransport(ctx, nil)
-	if state.ActualPosition == nil || state.ActualPosition.Floor != "5" {
-		t.Errorf("Transport position = %v, want 5", state.ActualPosition)
-	}
+	require.NotNil(t, state.ActualPosition)
+	require.Equal(t, "5", state.ActualPosition.Floor)
 }
 
 func TestDevice_handleTraitEvent_NilTraits(t *testing.T) {
 	logger := zaptest.NewLogger(t)
-
-	// Create device with no traits
+	fc := newSimpleFaultCheck(t)
 	dev := &device{
-		conf:   &config.Device{Name: "test-device"},
-		logger: logger,
+		conf:       &config.Device{Name: "test-device"},
+		logger:     logger,
+		faultCheck: fc,
 	}
 
 	ctx := t.Context()
 	nodeId := mustParseNodeID("ns=2;s=Tag1")
-
-	// Should not panic with nil traits
 	dev.handleTraitEvent(ctx, nodeId, float32(100.0))
 }
 
-func TestDevice_handleEvent_DataChangeNotification(t *testing.T) {
-	logger := zaptest.NewLogger(t)
-
-	// Create device with Meter trait
-	dev := &device{
-		conf:   &config.Device{Name: "test-device"},
-		logger: logger,
-	}
-
-	meterCfg := config.RawTrait{
-		Raw: []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"ns=2;s=Tag1"}}`),
-	}
-	meter, err := newMeter("test/device", meterCfg, logger)
-	if err != nil {
-		t.Fatalf("newMeter() error = %v", err)
-	}
-	dev.meter = meter
-
-	ctx := t.Context()
-	nodeId := mustParseNodeID("ns=2;s=Tag1")
-
-	// Create a mock DataChangeNotification
-	variant, _ := ua.NewVariant(float32(150.5))
-	dataValue := &ua.DataValue{
-		Value:  variant,
-		Status: ua.StatusOK,
-	}
-
-	notification := &ua.DataChangeNotification{
-		MonitoredItems: []*ua.MonitoredItemNotification{
-			{
-				ClientHandle: 1,
-				Value:        dataValue,
+func TestDevice_handleEvent(t *testing.T) {
+	tests := []struct {
+		name           string
+		setupMeter     bool
+		eventValue     any
+		expectUsage    float32
+		shouldNotPanic bool
+	}{
+		{
+			name:       "OK status updates meter",
+			setupMeter: true,
+			eventValue: &ua.DataChangeNotification{
+				MonitoredItems: []*ua.MonitoredItemNotification{
+					{Value: &ua.DataValue{Value: ua.MustVariant(float32(150.5)), Status: ua.StatusOK}},
+				},
 			},
+			expectUsage: 150.5,
+		},
+		{
+			name:       "nil value does not panic",
+			setupMeter: false,
+			eventValue: &ua.DataChangeNotification{
+				MonitoredItems: []*ua.MonitoredItemNotification{{Value: nil}},
+			},
+			shouldNotPanic: true,
+		},
+		{
+			name:       "bad status does not update meter",
+			setupMeter: true,
+			eventValue: &ua.DataChangeNotification{
+				MonitoredItems: []*ua.MonitoredItemNotification{
+					{Value: &ua.DataValue{Value: ua.MustVariant(float32(150.5)), Status: ua.StatusBadNotFound}},
+				},
+			},
+			expectUsage: 0,
+		},
+		{
+			name:           "unknown event type does not panic",
+			setupMeter:     false,
+			eventValue:     "unknown event type",
+			shouldNotPanic: true,
 		},
 	}
 
-	event := &opcua.PublishNotificationData{
-		Value: notification,
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := zaptest.NewLogger(t)
+			fc := newSimpleFaultCheck(t)
+			dev := &device{
+				conf:       &config.Device{Name: "test-device"},
+				logger:     logger,
+				faultCheck: fc,
+			}
 
-	dev.handleEvent(ctx, event, nodeId)
+			var meter *Meter
+			if tt.setupMeter {
+				meterCfg := config.RawTrait{
+					Raw: []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"ns=2;s=Tag1"}}`),
+				}
+				var err error
+				meter, err = newMeter("test/device", meterCfg, logger)
+				require.NoError(t, err)
+				dev.meter = meter
+			}
 
-	// Verify Meter was updated
-	reading, _ := meter.GetMeterReading(ctx, nil)
-	if reading.Usage != 150.5 {
-		t.Errorf("Meter usage = %v, want 150.5", reading.Usage)
-	}
-}
+			ctx := t.Context()
+			nodeId := mustParseNodeID("ns=2;s=Tag1")
+			event := &opcua.PublishNotificationData{Value: tt.eventValue}
 
-func TestDevice_handleEvent_NilValue(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+			dev.handleEvent(ctx, event, nodeId)
 
-	dev := &device{
-		conf:   &config.Device{Name: "test-device"},
-		logger: logger,
-	}
-
-	ctx := t.Context()
-	nodeId := mustParseNodeID("ns=2;s=Tag1")
-
-	// Test with nil Value in MonitoredItemNotification
-	notification := &ua.DataChangeNotification{
-		MonitoredItems: []*ua.MonitoredItemNotification{
-			{
-				ClientHandle: 1,
-				Value:        nil,
-			},
-		},
-	}
-
-	event := &opcua.PublishNotificationData{
-		Value: notification,
-	}
-
-	// Should not panic
-	dev.handleEvent(ctx, event, nodeId)
-}
-
-func TestDevice_handleEvent_BadStatus(t *testing.T) {
-	logger := zaptest.NewLogger(t)
-
-	dev := &device{
-		conf:   &config.Device{Name: "test-device"},
-		logger: logger,
-	}
-
-	meterCfg := config.RawTrait{
-		Raw: []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"ns=2;s=Tag1"}}`),
-	}
-	meter, _ := newMeter("test/device", meterCfg, logger)
-	dev.meter = meter
-
-	ctx := t.Context()
-	nodeId := mustParseNodeID("ns=2;s=Tag1")
-
-	// Create notification with bad status
-	variant, _ := ua.NewVariant(float32(150.5))
-	dataValue := &ua.DataValue{
-		Value:  variant,
-		Status: ua.StatusBadNotFound,
-	}
-
-	notification := &ua.DataChangeNotification{
-		MonitoredItems: []*ua.MonitoredItemNotification{
-			{
-				ClientHandle: 1,
-				Value:        dataValue,
-			},
-		},
-	}
-
-	event := &opcua.PublishNotificationData{
-		Value: notification,
-	}
-
-	dev.handleEvent(ctx, event, nodeId)
-
-	// Verify Meter was NOT updated
-	reading, _ := meter.GetMeterReading(ctx, nil)
-	if reading.Usage != 0 {
-		t.Errorf("Meter usage = %v, want 0 (should not update on bad status)", reading.Usage)
+			if tt.setupMeter {
+				reading, _ := meter.GetMeterReading(ctx, nil)
+				require.Equal(t, tt.expectUsage, reading.Usage)
+			}
+		})
 	}
 }
 
-func TestDevice_handleEvent_UnknownEventType(t *testing.T) {
-	logger := zaptest.NewLogger(t)
-
-	dev := &device{
-		conf:   &config.Device{Name: "test-device"},
-		logger: logger,
-	}
-
-	ctx := t.Context()
-	nodeId := mustParseNodeID("ns=2;s=Tag1")
-
-	// Unknown event type
-	event := &opcua.PublishNotificationData{
-		Value: "unknown event type",
-	}
-
-	// Should log warning but not panic
-	dev.handleEvent(ctx, event, nodeId)
-}
-
-// Helper function to parse node ID without error handling
 func mustParseNodeID(s string) *ua.NodeID {
 	nodeId, err := ua.ParseNodeID(s)
 	if err != nil {
 		panic(err)
 	}
 	return nodeId
+}
+
+func newSimpleFaultCheck(t *testing.T) *healthpb.FaultCheck {
+	devs := devicespb.NewCollection()
+	reg := newTestRegistry(devs)
+	healthChecks := reg.ForOwner("test")
+	_, _ = devs.Update(&gen.Device{Name: "test-device"}, resource.WithCreateIfAbsent())
+	check := getDeviceHealthCheck(gen.HealthCheck_OCCUPANT_IMPACT_UNSPECIFIED, gen.HealthCheck_EQUIPMENT_IMPACT_UNSPECIFIED)
+	fc, err := healthChecks.NewFaultCheck("test-device", check)
+	require.NoError(t, err)
+	t.Cleanup(fc.Dispose)
+	return fc
+}
+
+func newTestRegistry(devs *devicespb.Collection) *healthpb.Registry {
+	return healthpb.NewRegistry(
+		healthpb.WithOnCheckCreate(func(name string, c *gen.HealthCheck) *gen.HealthCheck {
+			_, _ = devs.Update(&gen.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*gen.Device)
+				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, c)
+			}), resource.WithCreateIfAbsent(), resource.WithExpectAbsent())
+			return nil
+		}),
+		healthpb.WithOnCheckUpdate(func(name string, c *gen.HealthCheck) {
+			_, _ = devs.Update(&gen.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*gen.Device)
+				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, c)
+			}))
+		}),
+		healthpb.WithOnCheckDelete(func(name, id string) {
+			_, _ = devs.Update(&gen.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*gen.Device)
+				dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
+			}), resource.WithAllowMissing(true))
+		}),
+	)
+}
+
+type testHarness struct {
+	devs   *devicespb.Collection
+	client gen.DevicesApiClient
+	fc     *healthpb.FaultCheck
+	ctx    context.Context
+}
+
+func setupTestHarness(t *testing.T) *testHarness {
+	devs := devicespb.NewCollection()
+	server := devices.NewServer(devicesServerModel{Collection: devs})
+	deviceName := "opcua-device-1"
+	reg := newTestRegistry(devs)
+	healthChecks := reg.ForOwner("example")
+
+	_, _ = devs.Update(&gen.Device{Name: deviceName}, resource.WithCreateIfAbsent())
+
+	check := getDeviceHealthCheck(gen.HealthCheck_OCCUPANT_IMPACT_UNSPECIFIED, gen.HealthCheck_EQUIPMENT_IMPACT_UNSPECIFIED)
+	fc, err := healthChecks.NewFaultCheck(deviceName, check)
+	require.NoError(t, err)
+	t.Cleanup(fc.Dispose)
+
+	return &testHarness{
+		devs:   devs,
+		client: gen.NewDevicesApiClient(wrap.ServerToClient(gen.DevicesApi_ServiceDesc, server)),
+		fc:     fc,
+		ctx:    context.Background(),
+	}
+}
+
+func (h *testHarness) getHealthChecks(t *testing.T) []*gen.HealthCheck {
+	deviceList, err := h.client.ListDevices(context.TODO(), &gen.ListDevicesRequest{})
+	require.NoError(t, err)
+	require.Len(t, deviceList.Devices, 1)
+	return deviceList.Devices[0].GetHealthChecks()
+}
+
+func (h *testHarness) assertFaults(t *testing.T, expectedCount int, normality gen.HealthCheck_Normality) {
+	checks := h.getHealthChecks(t)
+	require.Len(t, checks, 1)
+	require.Equal(t, normality, checks[0].Normality)
+	require.Len(t, checks[0].GetFaults().CurrentFaults, expectedCount)
+}
+
+// Health tests
+
+func TestOpcuaConfigFault(t *testing.T) {
+	h := setupTestHarness(t)
+	const testSystemName = "test_opcua_system"
+
+	raiseConfigFault("Failed to subscribe to point ns=2;s=InvalidNode", testSystemName, h.fc)
+
+	checks := h.getHealthChecks(t)
+	require.Len(t, checks, 1)
+	require.Equal(t, gen.HealthCheck_ABNORMAL, checks[0].Normality)
+
+	faults := checks[0].GetFaults().GetCurrentFaults()
+	require.Len(t, faults, 1)
+	require.Equal(t, DeviceConfigError, faults[0].Code.Code)
+	require.Equal(t, testSystemName, faults[0].Code.System)
+	require.Contains(t, faults[0].SummaryText, "configuration")
+}
+
+func TestOpcuaPointFaults(t *testing.T) {
+	h := setupTestHarness(t)
+	const testSystemName = "test_opcua_system"
+	nodeId1, nodeId2 := "ns=2;s=Tag1", "ns=2;s=Tag2"
+
+	raisePointFault(nodeId1, "BadNodeIdUnknown", testSystemName, h.fc)
+	checks := h.getHealthChecks(t)
+	faults := checks[0].GetFaults().GetCurrentFaults()
+	require.Len(t, faults, 1)
+	require.Equal(t, nodeId1, faults[0].Code.Code)
+	require.Contains(t, faults[0].SummaryText, "non OK status")
+	require.Contains(t, faults[0].DetailsText, nodeId1)
+
+	raisePointFault(nodeId2, "BadTimeout", testSystemName, h.fc)
+	faults = h.getHealthChecks(t)[0].GetFaults().GetCurrentFaults()
+	require.Len(t, faults, 2)
+
+	clearPointFault(nodeId1, testSystemName, h.fc)
+	faults = h.getHealthChecks(t)[0].GetFaults().GetCurrentFaults()
+	require.Len(t, faults, 1)
+	require.Equal(t, nodeId2, faults[0].Code.Code)
+
+	clearPointFault(nodeId2, testSystemName, h.fc)
+	h.assertFaults(t, 0, gen.HealthCheck_NORMAL)
+}
+
+func TestOpcuaFaultLifecycle(t *testing.T) {
+	const testSystemName = "test_opcua_system"
+	tests := []struct {
+		name  string
+		steps []struct {
+			action      func(*testHarness)
+			faultCount  int
+			normality   gen.HealthCheck_Normality
+			description string
+		}
+	}{
+		{
+			name: "raise multiple point faults then clear all",
+			steps: []struct {
+				action      func(*testHarness)
+				faultCount  int
+				normality   gen.HealthCheck_Normality
+				description string
+			}{
+				{
+					action: func(h *testHarness) {
+						raisePointFault("ns=2;s=Tag1", "BadNodeIdUnknown", testSystemName, h.fc)
+						raisePointFault("ns=2;s=Tag2", "BadTimeout", testSystemName, h.fc)
+						raisePointFault("ns=2;s=Tag3", "BadCommunicationError", testSystemName, h.fc)
+					},
+					faultCount:  3,
+					normality:   gen.HealthCheck_ABNORMAL,
+					description: "three point faults raised",
+				},
+				{
+					action: func(h *testHarness) {
+						clearPointFault("ns=2;s=Tag1", testSystemName, h.fc)
+						clearPointFault("ns=2;s=Tag2", testSystemName, h.fc)
+						clearPointFault("ns=2;s=Tag3", testSystemName, h.fc)
+					},
+					faultCount:  0,
+					normality:   gen.HealthCheck_NORMAL,
+					description: "all faults cleared",
+				},
+			},
+		},
+		{
+			name: "mix config and point faults",
+			steps: []struct {
+				action      func(*testHarness)
+				faultCount  int
+				normality   gen.HealthCheck_Normality
+				description string
+			}{
+				{
+					action: func(h *testHarness) {
+						raiseConfigFault("Invalid subscription", testSystemName, h.fc)
+					},
+					faultCount:  1,
+					normality:   gen.HealthCheck_ABNORMAL,
+					description: "config fault raised",
+				},
+				{
+					action: func(h *testHarness) {
+						raisePointFault("ns=2;s=Tag1", "BadNodeIdUnknown", testSystemName, h.fc)
+					},
+					faultCount:  2,
+					normality:   gen.HealthCheck_ABNORMAL,
+					description: "point fault added to config fault",
+				},
+				{
+					action: func(h *testHarness) {
+						clearPointFault("ns=2;s=Tag1", testSystemName, h.fc)
+					},
+					faultCount:  1,
+					normality:   gen.HealthCheck_ABNORMAL,
+					description: "point fault cleared, config fault remains",
+				},
+			},
+		},
+		{
+			name: "update same fault",
+			steps: []struct {
+				action      func(*testHarness)
+				faultCount  int
+				normality   gen.HealthCheck_Normality
+				description string
+			}{
+				{
+					action: func(h *testHarness) {
+						raisePointFault("ns=2;s=Tag1", "BadNodeIdUnknown", testSystemName, h.fc)
+					},
+					faultCount:  1,
+					normality:   gen.HealthCheck_ABNORMAL,
+					description: "initial fault",
+				},
+				{
+					action: func(h *testHarness) {
+						raisePointFault("ns=2;s=Tag1", "BadTimeout", testSystemName, h.fc)
+					},
+					faultCount:  1,
+					normality:   gen.HealthCheck_ABNORMAL,
+					description: "same node fault updated, not duplicated",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := setupTestHarness(t)
+
+			for i, step := range tt.steps {
+				step.action(h)
+
+				checks := h.getHealthChecks(t)
+				require.Len(t, checks, 1)
+
+				if diff := cmp.Diff(step.normality, checks[0].Normality, protocmp.Transform()); diff != "" {
+					t.Errorf("step %d (%s): normality mismatch (-want +got):\n%s", i, step.description, diff)
+				}
+
+				faults := checks[0].GetFaults().GetCurrentFaults()
+				if diff := cmp.Diff(step.faultCount, len(faults)); diff != "" {
+					t.Errorf("step %d (%s): fault count mismatch (-want +got):\n%s", i, step.description, diff)
+				}
+			}
+		})
+	}
+}
+
+func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
+	logger := zaptest.NewLogger(t)
+	h := setupTestHarness(t)
+	dev := &device{
+		conf:       &config.Device{Name: "test-device"},
+		logger:     logger,
+		faultCheck: h.fc,
+	}
+	ctx := context.Background()
+	nodeId := mustParseNodeID("ns=2;s=Tag1")
+
+	makeEvent := func(status ua.StatusCode) *opcua.PublishNotificationData {
+		return &opcua.PublishNotificationData{
+			Value: &ua.DataChangeNotification{
+				MonitoredItems: []*ua.MonitoredItemNotification{
+					{Value: &ua.DataValue{Value: ua.MustVariant(float32(100.0)), Status: status}},
+				},
+			},
+		}
+	}
+
+	dev.handleEvent(ctx, makeEvent(ua.StatusOK), nodeId)
+	h.assertFaults(t, 0, gen.HealthCheck_NORMAL)
+
+	dev.handleEvent(ctx, makeEvent(ua.StatusBadNodeIDUnknown), nodeId)
+	checks := h.getHealthChecks(t)
+	faults := checks[0].GetFaults().GetCurrentFaults()
+	require.Len(t, faults, 1)
+	require.Equal(t, nodeId.String(), faults[0].Code.Code)
+	require.Contains(t, faults[0].SummaryText, "non OK status")
+
+	dev.handleEvent(ctx, makeEvent(ua.StatusOK), nodeId)
+	h.assertFaults(t, 0, gen.HealthCheck_NORMAL)
+}
+
+type devicesServerModel struct {
+	devices.Collection
+}
+
+func (m devicesServerModel) ClientConn() grpc.ClientConnInterface {
+	return nil
 }

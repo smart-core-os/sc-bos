@@ -10,6 +10,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 )
 
 // device represents an OPC UA device that subscribes to variable nodes and updates trait implementations.
@@ -24,44 +25,34 @@ type device struct {
 	meter     *Meter
 	transport *Transport
 	udmi      *Udmi
+
+	systemName string
+	faultCheck *healthpb.FaultCheck
 }
 
 // newDevice creates a new device instance for the given configuration.
 // Trait implementations (Electric, Meter, Transport, udmi) must be assigned separately before calling run.
-func newDevice(d *config.Device, logger *zap.Logger, client *Client) *device {
-
+func newDevice(conf *config.Device, logger *zap.Logger, client *Client, systemName string, check *healthpb.FaultCheck) *device {
 	return &device{
-		conf:   d,
-		logger: logger.With(zap.String("device", d.Name)),
-		client: client,
+		client:     client,
+		conf:       conf,
+		systemName: systemName,
+		faultCheck: check,
+		logger:     logger,
 	}
-}
-
-// run starts the device subscription lifecycle and blocks until the context is cancelled.
-// It manages a goroutine for subscribing to OPC UA variables and returns when all subscriptions are complete.
-func (d *device) run(ctx context.Context) error {
-	grp, ctx := errgroup.WithContext(ctx)
-
-	grp.Go(func() error {
-		return d.subscribe(ctx)
-	})
-
-	return grp.Wait()
 }
 
 // subscribe creates OPC UA subscriptions for all configured variables and spawns goroutines to handle events.
 // If a subscription fails, it logs the error and continues with remaining variables.
 // The method blocks until the context is cancelled or all subscriptions fail.
 func (d *device) subscribe(ctx context.Context) error {
-
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, point := range d.conf.Variables {
 		pointName := point.ParsedNodeId
 		c, err := d.client.Subscribe(ctx, pointName)
 		if err != nil {
 			d.logger.Error("failed to subscribe to point", zap.Stringer("point", pointName), zap.Error(err))
-			// if the client is connected but can't subscribe, it is bad config
-			// just log the error and move on
+			raiseConfigFault("Failed to subscribe to point "+pointName.String(), d.systemName, d.faultCheck)
 			continue
 		}
 		grp.Go(func() error {
@@ -94,9 +85,11 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 			}
 
 			if errors.Is(item.Value.Status, ua.StatusOK) {
+				clearPointFault(node.String(), d.systemName, d.faultCheck)
 				value := item.Value.Value.Value()
 				d.handleTraitEvent(ctx, node, value)
 			} else {
+				raisePointFault(node.String(), item.Value.Status.Error(), d.systemName, d.faultCheck)
 				d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", item.Value.Status.Error()))
 			}
 		}
@@ -106,8 +99,10 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 			for _, field := range item.EventFields {
 				if errors.Is(field.StatusCode(), ua.StatusOK) {
 					value := field.Value()
+					clearPointFault(node.String(), d.systemName, d.faultCheck)
 					d.handleTraitEvent(ctx, node, value)
 				} else {
+					raisePointFault(node.String(), field.StatusCode().Error(), d.systemName, d.faultCheck)
 					d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", field.StatusCode().Error()))
 				}
 			}
