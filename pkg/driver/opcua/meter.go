@@ -14,6 +14,8 @@ import (
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
+// Meter implements the Smart Core Meter trait for OPC UA devices.
+// It maps OPC UA variable nodes to Meter usage readings.
 type Meter struct {
 	gen.UnimplementedMeterApiServer
 	gen.UnimplementedMeterInfoServer
@@ -70,13 +72,21 @@ func (m *Meter) DescribeMeterReading(context.Context, *gen.DescribeMeterReadingR
 
 func (m *Meter) handleMeterEvent(node *ua.NodeID, value any) {
 
-	if m.meterConfig.Usage != nil && NodeIdsAreEqual(m.meterConfig.Usage.NodeId, node) {
+	if m.meterConfig.Usage != nil && nodeIdsAreEqual(m.meterConfig.Usage.NodeId, node) {
 		v, err := conv.Float32Value(value)
 		if err != nil {
-			m.logger.Error("failed to convert value", zap.Error(err))
+			m.logger.Error("failed to convert value", zap.String("device", m.scName), zap.Error(err))
+			return
+		}
+
+		scaled := m.meterConfig.Usage.Scaled(v)
+		usage, ok := scaled.(float32)
+		if !ok {
+			m.logger.Error("scaled value is not float32", zap.String("device", m.scName), zap.Any("value", scaled))
+			return
 		}
 		_, _ = m.energyValue.Set(&gen.MeterReading{
-			Usage:   v,
+			Usage:   usage,
 			EndTime: timestamppb.Now(),
 		})
 	}

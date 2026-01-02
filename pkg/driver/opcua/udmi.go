@@ -14,6 +14,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 )
 
+// Udmi implements the Smart Core UDMI (Universal Device Management Interface) trait for OPC UA devices.
+// It collects OPC UA variable values and publishes them as UDMI point events to an MQTT-style message bus.
 type Udmi struct {
 	config.Trait
 	gen.UnimplementedUdmiServiceServer
@@ -65,7 +67,7 @@ func (u *Udmi) sendUdmiMessage(ctx context.Context, node *ua.NodeID, value any) 
 
 		body, err := json.Marshal(u.pointEvents)
 		if err != nil {
-			u.logger.Error("failed to marshal points event", zap.Error(err))
+			u.logger.Error("failed to marshal points event", zap.String("device", u.scName), zap.Error(err))
 			return
 		}
 
@@ -106,7 +108,7 @@ func (u *Udmi) GetExportMessage(context.Context, *gen.GetExportMessageRequest) (
 
 	body, err := json.Marshal(u.pointEvents)
 	if err != nil {
-		u.logger.Error("failed to marshal points event", zap.Error(err))
+		u.logger.Error("failed to marshal points event", zap.String("device", u.scName), zap.Error(err))
 		return nil, err
 	}
 	return &gen.MqttMessage{

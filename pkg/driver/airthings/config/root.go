@@ -1,4 +1,4 @@
-package airthings
+package config
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ var (
 	DefaultScopes = []string{"read:device"}
 )
 
-type Config struct {
+type Root struct {
 	driver.BaseConfig
 	Auth    Auth   `json:"auth,omitempty"`
 	BaseURL string `json:"baseUrl,omitempty"` // default: "https://ext-api.airthings.com"
@@ -72,12 +72,12 @@ type ClientSecret struct {
 //
 // Example:
 //
-//	c.BaseURL = "https://ext-api.airthings.com"
+//	c.baseURL = "https://ext-api.airthings.com"
 //	c.URL("/v1/locations")
 //	// "https://ext-api.airthings.com/v1/locations"
 //	c.URL("/v1/locations/%v/latest-samples", 123)
 //	// "https://ext-api.airthings.com/v1/locations/123/latest-samples"
-func (c Config) URL(p string, args ...any) string {
+func (c Root) URL(p string, args ...any) string {
 	b := c.BaseURL
 	if b == "" {
 		b = DefaultBaseURL

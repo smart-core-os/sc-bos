@@ -23,6 +23,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb"
@@ -201,7 +202,8 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 		}
 		return []wrap.ServiceUnwrapper{energystoragepb.WrapApi(energystoragepb.NewModelServer(model))}, auto.EnergyStorage(model, kind)
 	case trait.EnterLeaveSensor:
-		return []wrap.ServiceUnwrapper{enterleavesensorpb.WrapApi(enterleavesensorpb.NewModelServer(enterleavesensorpb.NewModel()))}, nil
+		model := enterleavesensorpb.NewModel()
+		return []wrap.ServiceUnwrapper{enterleavesensorpb.WrapApi(enterleavesensorpb.NewModelServer(model))}, auto.EnterLeaveAuto(model)
 	case trait.ExtendRetract:
 		// todo: return []any{extendretract.WrapApi(extendretract.NewModelServer(extendretract.NewModel()))}, nil
 		return nil, nil
@@ -308,6 +310,9 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 		// set an initial value or Pull methods can hang
 		_, _ = model.UpdateProblem(&gen.StatusLog_Problem{Name: deviceName, Level: gen.StatusLog_NOMINAL})
 		return []wrap.ServiceUnwrapper{gen.WrapStatusApi(statuspb.NewModelServer(model))}, auto.Status(model, deviceName)
+	case temperaturepb.TraitName:
+		model := temperaturepb.NewModel()
+		return []wrap.ServiceUnwrapper{gen.WrapTemperatureApi(temperaturepb.NewModelServer(model))}, auto.TemperatureAuto(model)
 	case transport.TraitName:
 		model := transport.NewModel()
 		maxFloor := 10

@@ -3,6 +3,7 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -35,9 +36,9 @@ func (m *Location) GetLatestSample(deviceID string) (api.DeviceSampleResponseEnr
 
 // PullLatestSamples subscribes to changes to the latest sample for the given device.
 // Changes will be published to the returned chan, the current value will be returned immediately.
-// Call the returned func to unsubscribe, the chan will be closed.
-// It is safe to unsubscribe on a different goroutine.
-func (m *Location) PullLatestSamples(deviceID string) (api.DeviceSampleResponseEnriched, <-chan api.DeviceSampleResponseEnriched, func()) {
+// The chan will be closed when the context is cancelled.
+// The goroutine will clean up automatically when ctx is done.
+func (m *Location) PullLatestSamples(ctx context.Context, deviceID string) (api.DeviceSampleResponseEnriched, <-chan api.DeviceSampleResponseEnriched) {
 	topic := fmt.Sprintf("sample/%s/change", deviceID)
 	m.mu.RLock()
 	latestSample, _ := m.latestSamplesByDevice[deviceID]
@@ -45,36 +46,33 @@ func (m *Location) PullLatestSamples(deviceID string) (api.DeviceSampleResponseE
 	m.mu.RUnlock()
 
 	ch := make(chan api.DeviceSampleResponseEnriched)
-	off := func() {
-		m.bus.Off(topic, stream)
-		// don't close ch here, wait for the translation goroutine to close it,
-		// this avoids races between send and close
-
-		// There's a possible leak in the below go routine:
-		// if the caller calls off() while there's still a sample to send on ch,
-		// then the ch <- sample will block indefinitely.
-		// We <-ch here to unblock that.
-		//  - If ch got closed (because the goroutine returned) then all is good
-		//  - If ch has a sample waiting, then we'll get it rather than the caller,
-		//    which is also fine because they called off anyway.
-		select {
-		case <-ch:
-		default:
-		}
-	}
 
 	go func() {
 		defer close(ch)
-		for event := range stream {
-			sample, ok := event.Args[0].(api.DeviceSampleResponseEnriched)
-			if !ok {
-				continue
+		defer m.bus.Off(topic, stream)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event, ok := <-stream:
+				if !ok {
+					return
+				}
+				sample, ok := event.Args[0].(api.DeviceSampleResponseEnriched)
+				if !ok {
+					continue
+				}
+				select {
+				case ch <- sample:
+				case <-ctx.Done():
+					return
+				}
 			}
-			ch <- sample
 		}
 	}()
 
-	return latestSample, ch, off
+	return latestSample, ch
 }
 
 // UpdateLatestSamples writes updates and notifies subscribers.

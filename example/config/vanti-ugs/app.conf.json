@@ -246,6 +246,13 @@
           "appearance": {"title": "Kaolin Sound Sensor"},
           "membership": {"subsystem": "sensors"},
           "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/CHW-L00-01",
+          "traits": [{"name":  "smartcore.bos.Temperature"}],
+          "appearance": {"title": "Main Chilled Water"},
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Basement"}
         }
       ]
     },
@@ -542,7 +549,7 @@
         {
           "name": "van/uk/brum/ugs/devices/ACR-L00-01",
           "traits": [
-            {"name": "smartcore.bos.Access"}, {"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}
+            {"name": "smartcore.bos.Access"}, {"name": "smartcore.traits.EnterLeaveSensor"}, {"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}
           ],
           "appearance": {"title": "Main Door"},
           "membership": {"subsystem": "acs"},

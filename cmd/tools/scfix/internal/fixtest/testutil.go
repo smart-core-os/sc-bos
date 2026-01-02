@@ -30,7 +30,9 @@ func Run(t *testing.T, txtarPath string, runFunc func(*fixer.Context) (int, erro
 		}
 
 		assertChangeCount(t, tc.ExpectedChanges, changes)
-		AssertFileContent(t, tc.TestFile, tc.InputContent)
+
+		// In dry-run mode, verify input files are unchanged
+		AssertAllFilesMatch(t, tc.TempDir, tc.InputFiles)
 	})
 
 	t.Run("Apply", func(t *testing.T) {
@@ -43,24 +45,25 @@ func Run(t *testing.T, txtarPath string, runFunc func(*fixer.Context) (int, erro
 		}
 
 		assertChangeCount(t, tc.ExpectedChanges, changes)
-		AssertFileContent(t, tc.TestFile, tc.OutputContent)
+
+		// Verify all output files exist with correct content
+		AssertAllFilesMatch(t, tc.TempDir, tc.OutputFiles)
 	})
 }
 
 // TestCase represents a single test case from a txtar archive.
 type TestCase struct {
 	Archive         *txtar.Archive
-	InputContent    []byte
-	OutputContent   []byte
+	InputFiles      map[string][]byte // Map of relative path to content for all input files
+	OutputFiles     map[string][]byte // Map of relative path to content for all output files
 	ExpectedChanges int
 	TempDir         string
-	TestFile        string
 }
 
 // ReadTestCase loads and prepares a test case from a txtar file.
 // The txtar file should contain:
-// - input/test.ext: the input source code (any extension)
-// - output/test.ext: the expected output source code (matching extension)
+// - input/path/to/file: input files (can be multiple)
+// - output/path/to/file: expected output files (can be multiple, may have different paths than input for file moves)
 // - a comment with "expected_changes: N" indicating the expected number of changes.
 func ReadTestCase(t *testing.T, txtarPath string) *TestCase {
 	t.Helper()
@@ -72,50 +75,48 @@ func ReadTestCase(t *testing.T, txtarPath string) *TestCase {
 
 	tempDir := t.TempDir()
 
-	var inputContent, outputContent []byte
-	var inputFile string
+	inputFiles := make(map[string][]byte)
+	outputFiles := make(map[string][]byte)
 
-	// Find input and output files with any extension
+	// Process all files in the archive
 	for _, file := range archive.Files {
 		if strings.HasPrefix(file.Name, "input/") {
-			inputContent = file.Data
-			inputFile = file.Name
+			// Extract relative path from input/
+			relPath := strings.TrimPrefix(file.Name, "input/")
+			inputFiles[relPath] = file.Data
+
+			// Write input file to temp directory
+			fullPath := filepath.Join(tempDir, relPath)
+			if dir := filepath.Dir(fullPath); dir != "" {
+				if err := os.MkdirAll(dir, 0755); err != nil {
+					t.Fatalf("Failed to create parent directories for %s: %v", relPath, err)
+				}
+			}
+			if err := os.WriteFile(fullPath, file.Data, 0644); err != nil {
+				t.Fatalf("Failed to write input file %s: %v", relPath, err)
+			}
 		} else if strings.HasPrefix(file.Name, "output/") {
-			outputContent = file.Data
+			// Extract relative path from output/
+			relPath := strings.TrimPrefix(file.Name, "output/")
+			outputFiles[relPath] = file.Data
 		}
 	}
 
-	if len(inputContent) == 0 {
-		t.Fatal("input/test.* not found in txtar")
+	if len(inputFiles) == 0 {
+		t.Fatal("No input files found in txtar (files should start with 'input/')")
 	}
-	if len(outputContent) == 0 {
-		t.Fatal("output/test.* not found in txtar")
-	}
-
-	// Extract filename from input path (preserving subdirectories)
-	testFileName := strings.TrimPrefix(inputFile, "input/")
-	testFile := filepath.Join(tempDir, testFileName)
-
-	// Create parent directories if needed
-	if dir := filepath.Dir(testFile); dir != "" {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			t.Fatalf("Failed to create parent directories: %v", err)
-		}
-	}
-
-	if err := os.WriteFile(testFile, inputContent, 0644); err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
+	if len(outputFiles) == 0 {
+		t.Fatal("No output files found in txtar (files should start with 'output/')")
 	}
 
 	expectedChanges := parseExpectedChanges(t, string(archive.Comment))
 
 	return &TestCase{
 		Archive:         archive,
-		InputContent:    inputContent,
-		OutputContent:   outputContent,
+		InputFiles:      inputFiles,
+		OutputFiles:     outputFiles,
 		ExpectedChanges: expectedChanges,
 		TempDir:         tempDir,
-		TestFile:        testFile,
 	}
 }
 
@@ -160,19 +161,58 @@ func assertChangeCount(t *testing.T, expected, got int) {
 	}
 }
 
-// AssertFileContent verifies output using line-by-line comparison with diff output.
-func AssertFileContent(t *testing.T, testFile string, expectedContent []byte) {
+// AssertAllFilesMatch verifies that the directory contains exactly the expected output files
+// with the correct content. This is useful for fixers that move or remove files.
+func AssertAllFilesMatch(t *testing.T, rootDir string, expectedFiles map[string][]byte) {
 	t.Helper()
 
-	modified, err := os.ReadFile(testFile)
+	// Collect all actual files in the directory
+	actualFiles := make(map[string][]byte)
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(rootDir, path)
+		if err != nil {
+			return err
+		}
+
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		actualFiles[relPath] = content
+		return nil
+	})
 	if err != nil {
-		t.Fatalf("Failed to read modified file: %v", err)
+		t.Fatalf("Failed to walk directory: %v", err)
 	}
 
-	expectedLines := strings.Split(string(expectedContent), "\n")
-	gotLines := strings.Split(string(modified), "\n")
+	// Check for unexpected files
+	for relPath := range actualFiles {
+		if _, expected := expectedFiles[relPath]; !expected {
+			t.Errorf("Unexpected file exists: %s", relPath)
+		}
+	}
 
-	if diff := cmp.Diff(expectedLines, gotLines); diff != "" {
-		t.Errorf("Output mismatch (-want +got):\n%s", diff)
+	// Check all expected files exist with correct content
+	for relPath, expectedContent := range expectedFiles {
+		actualContent, exists := actualFiles[relPath]
+		if !exists {
+			t.Errorf("Expected file missing: %s", relPath)
+			continue
+		}
+
+		expectedLines := strings.Split(string(expectedContent), "\n")
+		gotLines := strings.Split(string(actualContent), "\n")
+
+		if diff := cmp.Diff(expectedLines, gotLines); diff != "" {
+			t.Errorf("Content mismatch for %s (-want +got):\n%s", relPath, diff)
+		}
 	}
 }

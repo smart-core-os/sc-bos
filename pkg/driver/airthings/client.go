@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/api"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 )
@@ -27,7 +28,7 @@ func (d *Driver) listLocations(ctx context.Context) (api.GetLocationsResponse, e
 	return locations, nil
 }
 
-func (d *Driver) hydrateLocation(ctx context.Context, location Location) (Location, error) {
+func (d *Driver) hydrateLocation(ctx context.Context, location config.Location) (config.Location, error) {
 	if location.ID != "" {
 		return location, nil
 	}
@@ -62,7 +63,7 @@ func (d *Driver) hydrateLocation(ctx context.Context, location Location) (Locati
 
 // pollLocationsLatestSamples polls the latest samples for the given location.
 // Results will be placed into dst.
-func (d *Driver) pollLocationLatestSamples(ctx context.Context, location Location, dst *local.Location) error {
+func (d *Driver) pollLocationLatestSamples(ctx context.Context, location config.Location, dst *local.Location) error {
 	location, err := d.hydrateLocation(ctx, location)
 	if err != nil {
 		return fmt.Errorf("hydrate location %w", err)
@@ -72,7 +73,7 @@ func (d *Driver) pollLocationLatestSamples(ctx context.Context, location Locatio
 	}
 	url := d.cfg.URL("/v1/locations/%v/latest-samples", location.ID)
 
-	delay := location.Poll.Or(DefaultPoll)
+	delay := location.Poll.Or(config.DefaultPoll)
 	ticker := time.NewTicker(delay)
 	defer ticker.Stop()
 	for {

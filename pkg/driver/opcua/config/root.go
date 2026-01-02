@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gopcua/opcua/ua"
@@ -9,12 +10,22 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	transportpb "github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
 const (
 	PointsEventTopicSuffix = "/event/pointset"
 )
+
+// valueSourceField represents a ValueSource field with its description for validation.
+type valueSourceField struct {
+	desc  string
+	value *ValueSource
+}
 
 // Conn config related to communicating with the OPC UA server.
 type Conn struct {
@@ -47,40 +58,21 @@ type Device struct {
 	Traits []RawTrait `json:"traits,omitempty"`
 }
 
-type Timing struct {
-	Timeout      jsontypes.Duration `json:"timeout,omitempty,omitzero"`
-	BackoffStart jsontypes.Duration `json:"backoffStart,omitempty,omitzero"`
-	BackoffMax   jsontypes.Duration `json:"backoffMax,omitempty,omitzero"`
-}
-
 type Root struct {
 	driver.BaseConfig
 
 	Meta    *traits.Metadata `json:"meta,omitempty"`
 	Conn    Conn             `json:"conn,omitempty"`
 	Devices []Device         `json:"devices,omitempty"`
-	Timing  Timing           `json:"Timing,omitempty"`
 }
 
-func ReadBytes(data []byte) (cfg Root, err error) {
+func ParseConfig(data []byte) (cfg Root, err error) {
 	err = json.Unmarshal(data, &cfg)
 	if err != nil {
 		return cfg, err
 	}
 	if cfg.Conn.SubscriptionInterval == nil {
 		cfg.Conn.SubscriptionInterval = &jsontypes.Duration{Duration: 5 * time.Second}
-	}
-	if cfg.Timing.Timeout.Duration == 0 {
-		cfg.Timing.Timeout = jsontypes.Duration{Duration: 10 * time.Second}
-	}
-	if cfg.Timing.BackoffStart.Duration == 0 {
-		cfg.Timing.BackoffStart = jsontypes.Duration{Duration: 2 * time.Second}
-	}
-	if cfg.Timing.BackoffMax.Duration == 0 {
-		cfg.Timing.BackoffMax = jsontypes.Duration{Duration: 30 * time.Second}
-	}
-	if cfg.Timing.BackoffMax.Duration < cfg.Timing.BackoffStart.Duration {
-		cfg.Timing.BackoffMax = cfg.Timing.BackoffStart
 	}
 	if cfg.Conn.ClientId == 0 {
 		cfg.Conn.ClientId = rand.Uint32()
@@ -94,7 +86,67 @@ func ReadBytes(data []byte) (cfg Root, err error) {
 			}
 			v.ParsedNodeId = nId
 		}
+
+		if err := validateDeviceTraits(&d); err != nil {
+			return cfg, err
+		}
 	}
 
 	return cfg, nil
+}
+
+// validateDeviceTraits validates trait configurations and checks that all nodeIds referenced in traits
+// exist in the device's variable list.
+func validateDeviceTraits(device *Device) error {
+	validNodeIds := make(map[string]bool)
+	for _, v := range device.Variables {
+		validNodeIds[v.NodeId] = true
+	}
+
+	for _, t := range device.Traits {
+		var valueSources []valueSourceField
+		var err error
+
+		switch t.Kind {
+		case meterpb.TraitName:
+			valueSources, err = getValueSourcesForTrait[*MeterConfig](device.Name, t.Raw)
+		case trait.Electric:
+			valueSources, err = getValueSourcesForTrait[*ElectricConfig](device.Name, t.Raw)
+		case transportpb.TraitName:
+			valueSources, err = getValueSourcesForTrait[*TransportConfig](device.Name, t.Raw)
+		case udmipb.TraitName:
+			valueSources, err = getValueSourcesForTrait[*UdmiConfig](device.Name, t.Raw)
+		default:
+			return fmt.Errorf("device '%s': unknown trait kind '%s'", device.Name, t.Kind)
+		}
+		if err != nil {
+			return err
+		}
+
+		for _, field := range valueSources {
+			if field.value != nil && field.value.NodeId != "" && !validNodeIds[field.value.NodeId] {
+				return fmt.Errorf("device '%s': %s references nodeId '%s' which is not in device variables list",
+					device.Name, field.desc, field.value.NodeId)
+			}
+		}
+	}
+
+	return nil
+}
+
+type traitWithValueSources interface {
+	Validate() error
+	valueSources() []valueSourceField
+}
+
+// getValueSourcesForTrait parses a trait config, validates it, and returns all its ValueSource fields.
+func getValueSourcesForTrait[T traitWithValueSources](deviceName string, rawTrait json.RawMessage) ([]valueSourceField, error) {
+	cfg := new(T)
+	if err := json.Unmarshal(rawTrait, cfg); err != nil {
+		return nil, fmt.Errorf("device '%s': failed to parse trait: %w", deviceName, err)
+	}
+	if err := (*cfg).Validate(); err != nil {
+		return nil, fmt.Errorf("device '%s': %w", deviceName, err)
+	}
+	return (*cfg).valueSources(), nil
 }
