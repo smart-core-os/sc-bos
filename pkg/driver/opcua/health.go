@@ -17,8 +17,7 @@ const (
 
 	DeviceConfigError = "DeviceConfig"
 
-	PointReadNotOk = "PointReadNotOk"
-	SystemName     = "OPCUA"
+	SystemName = "OPCUA"
 )
 
 func getSystemHealthCheck(occupant gen.HealthCheck_OccupantImpact, equipment gen.HealthCheck_EquipmentImpact) *gen.HealthCheck {
@@ -41,18 +40,18 @@ func getDeviceHealthCheck(occupant gen.HealthCheck_OccupantImpact, equipment gen
 	}
 }
 
-func statusToHealthCode(code string, systemName string) *gen.HealthCheck_Error_Code {
+func statusToHealthCode(code string) *gen.HealthCheck_Error_Code {
 	return &gen.HealthCheck_Error_Code{
 		Code:   code,
-		System: systemName,
+		System: SystemName,
 	}
 }
 
-func raiseConfigFault(details string, systemName string, fc *healthpb.FaultCheck) {
+func raiseConfigFault(details string, fc *healthpb.FaultCheck) {
 	fc.AddOrUpdateFault(&gen.HealthCheck_Error{
 		SummaryText: "An issue has been detected with the device's configuration",
 		DetailsText: details,
-		Code:        statusToHealthCode(DeviceConfigError, systemName),
+		Code:        statusToHealthCode(DeviceConfigError),
 	})
 }
 
@@ -62,10 +61,7 @@ func setPointReadNotOk(ctx context.Context, nodeId string, status ua.StatusCode,
 		LastError: &gen.HealthCheck_Error{
 			SummaryText: fmt.Sprintf("Attempt to read device point returned non OK status: %s", status.Error()),
 			DetailsText: fmt.Sprintf("NodeID: %s, Status: %s", nodeId, status.Error()),
-			Code: &gen.HealthCheck_Error_Code{
-				Code:   strconv.Itoa(int(status)),
-				System: SystemName,
-			},
+			Code:        statusToHealthCode(strconv.Itoa(int(status))),
 		},
 	})
 }

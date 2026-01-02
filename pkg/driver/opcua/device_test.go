@@ -33,11 +33,10 @@ func TestDevice_newDevice(t *testing.T) {
 		},
 	}
 
-	dev := newDevice(cfg, logger, nil, "test_system", fc)
+	dev := newDevice(cfg, logger, nil, fc)
 	require.NotNil(t, dev)
 	require.Equal(t, cfg, dev.conf)
 	require.NotNil(t, dev.logger)
-	require.Equal(t, "test_system", dev.systemName)
 }
 
 func Test_nodeIdsAreEqual(t *testing.T) {
@@ -317,13 +316,10 @@ func (h *testHarness) assertFaults(t *testing.T, expectedCount int, normality ge
 	require.Len(t, checks[0].GetFaults().CurrentFaults, expectedCount)
 }
 
-// Health tests
-
 func TestOpcuaConfigFault(t *testing.T) {
 	h := setupTestHarness(t)
-	const testSystemName = "test_opcua_system"
 
-	raiseConfigFault("Failed to subscribe to point ns=2;s=InvalidNode", testSystemName, h.fc)
+	raiseConfigFault("Failed to subscribe to point ns=2;s=InvalidNode", h.fc)
 
 	checks := h.getHealthChecks(t)
 	require.Len(t, checks, 1)
@@ -332,7 +328,7 @@ func TestOpcuaConfigFault(t *testing.T) {
 	faults := checks[0].GetFaults().GetCurrentFaults()
 	require.Len(t, faults, 1)
 	require.Equal(t, DeviceConfigError, faults[0].Code.Code)
-	require.Equal(t, testSystemName, faults[0].Code.System)
+	require.Equal(t, SystemName, faults[0].Code.System)
 	require.Contains(t, faults[0].SummaryText, "configuration")
 }
 
@@ -355,12 +351,9 @@ func TestOpcuaPointFaults(t *testing.T) {
 	rel = checks[0].GetReliability()
 	require.Equal(t, gen.HealthCheck_Reliability_BAD_RESPONSE, rel.State)
 	require.Contains(t, rel.LastError.DetailsText, nodeId2)
-
-	// Note: Error code is now the StatusCode integer, not the PointReadNotOk constant
 }
 
 func TestOpcuaFaultLifecycle(t *testing.T) {
-	const testSystemName = "test_opcua_system"
 	tests := []struct {
 		name  string
 		steps []struct {
@@ -414,7 +407,7 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 			}{
 				{
 					action: func(h *testHarness) {
-						raiseConfigFault("Invalid subscription", testSystemName, h.fc)
+						raiseConfigFault("Invalid subscription", h.fc)
 					},
 					reliabilityState: gen.HealthCheck_Reliability_RELIABLE,
 					description:      "config fault raised (uses AddOrUpdateFault, sets reliability to RELIABLE)",
@@ -476,7 +469,6 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 
 				if step.expectNodeInDetail != "" {
 					require.NotNil(t, rel.LastError, "step %d (%s): last error should not be nil", i, step.description)
-					// Error code is now the StatusCode integer value, not a constant string
 					require.Equal(t, SystemName, rel.LastError.Code.System, "step %d (%s): error system should be SystemName constant", i, step.description)
 					require.Contains(t, rel.LastError.DetailsText, step.expectNodeInDetail, "step %d (%s): details should contain node ID", i, step.description)
 				}
@@ -488,12 +480,10 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	h := setupTestHarness(t)
-	const testSystemName = "test_system"
 	dev := &device{
 		conf:       &config.Device{Name: "opcua-device-1"},
 		logger:     logger,
 		faultCheck: h.fc,
-		systemName: testSystemName,
 	}
 	ctx := context.Background()
 	nodeId := mustParseNodeID("ns=2;s=Tag1")
@@ -507,23 +497,21 @@ func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
 			},
 		}
 	}
-	// Bad status updates reliability to BAD_RESPONSE
 	dev.handleEvent(ctx, makeEvent(ua.StatusBadNodeIDUnknown), nodeId)
 	checks := h.getHealthChecks(t)
 	rel := checks[0].GetReliability()
 	require.NotNil(t, rel)
 	require.Equal(t, gen.HealthCheck_Reliability_BAD_RESPONSE, rel.State)
 	require.NotNil(t, rel.LastError)
-	// Error code is now the StatusCode integer value
+
 	require.Equal(t, SystemName, rel.LastError.Code.System)
 	require.Contains(t, rel.LastError.SummaryText, "non OK status")
 	require.Contains(t, rel.LastError.DetailsText, nodeId.String())
 
-	// OK status should set reliability back to RELIABLE
 	dev.handleEvent(ctx, makeEvent(ua.StatusOK), nodeId)
 	checks = h.getHealthChecks(t)
 	require.Equal(t, gen.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().GetState())
-	// Faults list should remain empty (reliability doesn't add to faults)
+
 	faults := checks[0].GetFaults().GetCurrentFaults()
 	require.Len(t, faults, 0)
 }

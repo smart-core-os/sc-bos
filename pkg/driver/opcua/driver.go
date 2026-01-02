@@ -67,7 +67,6 @@ type Driver struct {
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	a := d.announcer.Replace(ctx)
-	systemName := cfg.SystemHealth.SystemName
 
 	systemCheck, err := d.health.NewFaultCheck(cfg.Name, getSystemHealthCheck(cfg.SystemHealth.OccupantImpact.ToProto(), cfg.SystemHealth.EquipmentImpact.ToProto()))
 	if err != nil {
@@ -75,7 +74,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		return err
 	}
 
-	opcClient, err := d.connectOpcClient(ctx, cfg, systemName, systemCheck)
+	opcClient, err := d.connectOpcClient(ctx, cfg, systemCheck)
 	if err != nil {
 		d.logger.Warn("Connect error", zap.Error(err))
 		return err
@@ -99,7 +98,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		checks = append(checks, faultCheck)
 
-		opcDev := newDevice(&dev, d.logger, client, systemName, faultCheck)
+		opcDev := newDevice(&dev, d.logger, client, faultCheck)
 
 		for _, t := range dev.Traits {
 			switch t.Kind {
@@ -167,7 +166,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, systemName string, faultCheck *healthpb.FaultCheck) (*opcua.Client, error) {
+func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, faultCheck *healthpb.FaultCheck) (*opcua.Client, error) {
 	rel := &gen.HealthCheck_Reliability{}
 	opcClient, err := opcua.NewClient(cfg.Conn.Endpoint)
 	if err != nil {
@@ -175,7 +174,7 @@ func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, systemNa
 		rel.LastError = &gen.HealthCheck_Error{
 			SummaryText: "Internal Driver Error",
 			DetailsText: "Failed to create new OPC UA client",
-			Code:        statusToHealthCode(DriverConfigError, systemName),
+			Code:        statusToHealthCode(DriverConfigError),
 		}
 		faultCheck.UpdateReliability(ctx, rel)
 		d.logger.Error("error creating new client", zap.Error(err))
@@ -188,7 +187,7 @@ func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, systemNa
 		rel.LastError = &gen.HealthCheck_Error{
 			SummaryText: "Server Unreachable",
 			DetailsText: "The opcua server is unreachable",
-			Code:        statusToHealthCode(ServerUnreachable, systemName),
+			Code:        statusToHealthCode(ServerUnreachable),
 		}
 		faultCheck.UpdateReliability(ctx, rel)
 		d.logger.Error("error connecting to opc ua server", zap.Error(err))

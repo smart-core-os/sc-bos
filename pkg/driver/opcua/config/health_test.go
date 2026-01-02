@@ -123,8 +123,7 @@ func TestEquipmentImpact_UnmarshalJSON(t *testing.T) {
 func TestHealth_UnmarshalJSON(t *testing.T) {
 	jsonData := `{
 		"occupantImpact": "COMFORT",
-		"equipmentImpact": "WARRANTY",
-		"systemName": "test-system"
+		"equipmentImpact": "WARRANTY"
 	}`
 
 	var h Health
@@ -132,5 +131,4 @@ func TestHealth_UnmarshalJSON(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, gen.HealthCheck_COMFORT, h.OccupantImpact.ToProto())
 	require.Equal(t, gen.HealthCheck_WARRANTY, h.EquipmentImpact.ToProto())
-	require.Equal(t, "test-system", h.SystemName)
 }

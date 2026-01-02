@@ -26,17 +26,15 @@ type device struct {
 	transport *Transport
 	udmi      *Udmi
 
-	systemName string
 	faultCheck *healthpb.FaultCheck
 }
 
 // newDevice creates a new device instance for the given configuration.
 // Trait implementations (Electric, Meter, Transport, udmi) must be assigned separately before calling run.
-func newDevice(conf *config.Device, logger *zap.Logger, client *Client, systemName string, check *healthpb.FaultCheck) *device {
+func newDevice(conf *config.Device, logger *zap.Logger, client *Client, check *healthpb.FaultCheck) *device {
 	return &device{
 		client:     client,
 		conf:       conf,
-		systemName: systemName,
 		faultCheck: check,
 		logger:     logger,
 	}
@@ -52,7 +50,7 @@ func (d *device) subscribe(ctx context.Context) error {
 		c, err := d.client.Subscribe(ctx, pointName)
 		if err != nil {
 			d.logger.Error("failed to subscribe to point", zap.Stringer("point", pointName), zap.Error(err))
-			raiseConfigFault("Failed to subscribe to point "+pointName.String(), d.systemName, d.faultCheck)
+			raiseConfigFault("Failed to subscribe to point "+pointName.String(), d.faultCheck)
 			continue
 		}
 		grp.Go(func() error {

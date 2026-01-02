@@ -112,7 +112,6 @@ type Device struct {
 type Health struct {
 	OccupantImpact  OccupantImpact  `json:"occupantImpact"`
 	EquipmentImpact EquipmentImpact `json:"equipmentImpact"`
-	SystemName      string          `json:"systemName"`
 }
 
 type Root struct {
@@ -131,9 +130,7 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 	if err != nil {
 		return cfg, err
 	}
-	if cfg.SystemHealth.SystemName == "" {
-		return cfg, fmt.Errorf("opcua driver config must specify systemHealth.systemName")
-	}
+
 	if cfg.Conn.SubscriptionInterval == nil {
 		cfg.Conn.SubscriptionInterval = &jsontypes.Duration{Duration: 5 * time.Second}
 	}
