@@ -7,11 +7,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap/zaptest"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
+	"github.com/smart-core-os/sc-bos/internal/protobuf/protopath2"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
@@ -555,4 +557,174 @@ func TestConfigValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPathFieldsAreSet(t *testing.T) {
+	tests := []struct {
+		name    string
+		message proto.Message
+		path    string
+		want    bool
+	}{
+		{
+			name: "scalar field set to zero value",
+			message: &traits.AirTemperature{
+				AmbientTemperature: &types.Temperature{
+					ValueCelsius: 0,
+				},
+			},
+			path: "ambientTemperature.valueCelsius",
+			want: true,
+		},
+		{
+			name: "scalar field set to non-zero value",
+			message: &traits.AirTemperature{
+				AmbientTemperature: &types.Temperature{
+					ValueCelsius: 25.5,
+				},
+			},
+			path: "ambientTemperature.valueCelsius",
+			want: true,
+		},
+		{
+			name: "message field is nil",
+			message: &traits.AirTemperature{
+				AmbientTemperature: nil,
+			},
+			path: "ambientTemperature.valueCelsius",
+			want: false,
+		},
+		{
+			name: "accessing message field that is set",
+			message: &traits.AirTemperature{
+				AmbientTemperature: &types.Temperature{
+					ValueCelsius: 20,
+				},
+			},
+			path: "ambientTemperature",
+			want: true,
+		},
+		{
+			name: "accessing message field that is nil",
+			message: &traits.AirTemperature{
+				AmbientTemperature: nil,
+			},
+			path: "ambientTemperature",
+			want: false,
+		},
+		{
+			name: "deeply nested with all fields set",
+			message: &traits.AirTemperature{
+				AmbientTemperature: &types.Temperature{
+					ValueCelsius: 22,
+				},
+				DewPoint: &types.Temperature{
+					ValueCelsius: 10,
+				},
+			},
+			path: "ambientTemperature.valueCelsius",
+			want: true,
+		},
+		{
+			name: "empty string scalar is valid",
+			message: &traits.AirTemperature{
+				AmbientTemperature: &types.Temperature{
+					ValueCelsius: 0,
+				},
+			},
+			path: "ambientTemperature.valueCelsius",
+			want: true,
+		},
+		{
+			name: "accessing root message",
+			message: &traits.AirTemperature{
+				AmbientTemperature: &types.Temperature{
+					ValueCelsius: 15,
+				},
+			},
+			path: "ambientTemperature.valueCelsius",
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rpath, err := protopath2.ParsePath(tt.message.ProtoReflect().Descriptor(), tt.path)
+			if err != nil {
+				t.Fatalf("Failed to parse path %q: %v", tt.path, err)
+			}
+
+			values, err := protopath2.PathValues(rpath, tt.message)
+			if err != nil {
+				if tt.want {
+					t.Fatalf("PathValues failed for path %q: %v", tt.path, err)
+				}
+				return
+			}
+
+			got := pathFieldsAreSet(values)
+			if got != tt.want {
+				t.Errorf("pathFieldsAreSet() = %v, want %v", got, tt.want)
+				t.Logf("Message: %v", tt.message)
+				t.Logf("Path: %q", tt.path)
+			}
+		})
+	}
+}
+
+func TestPathFieldsAreSet_EdgeCases(t *testing.T) {
+	t.Run("nil message with nested path", func(t *testing.T) {
+		msg := &traits.AirTemperature{
+			AmbientTemperature: nil,
+		}
+		rpath, _ := protopath2.ParsePath(msg.ProtoReflect().Descriptor(), "ambientTemperature.valueCelsius")
+		values, err := protopath2.PathValues(rpath, msg)
+		if err != nil {
+			t.Fatalf("PathValues failed: %v", err)
+		}
+
+		if pathFieldsAreSet(values) {
+			t.Error("Expected pathFieldsAreSet to return false for nil intermediate message")
+		}
+	})
+
+	t.Run("multiple nested messages all set", func(t *testing.T) {
+		msg := &traits.AirTemperature{
+			AmbientTemperature: &types.Temperature{
+				ValueCelsius: 0,
+			},
+		}
+		rpath, _ := protopath2.ParsePath(msg.ProtoReflect().Descriptor(), "ambientTemperature.valueCelsius")
+		values, err := protopath2.PathValues(rpath, msg)
+		if err != nil {
+			t.Fatalf("PathValues failed: %v", err)
+		}
+
+		if !pathFieldsAreSet(values) {
+			t.Error("Expected pathFieldsAreSet to return true when all messages are set")
+		}
+	})
+
+	t.Run("distinguishes zero from nil", func(t *testing.T) {
+		msgWithZero := &traits.AirTemperature{
+			AmbientTemperature: &types.Temperature{
+				ValueCelsius: 0,
+			},
+		}
+		msgWithNil := &traits.AirTemperature{
+			AmbientTemperature: nil,
+		}
+
+		rpath, _ := protopath2.ParsePath(msgWithZero.ProtoReflect().Descriptor(), "ambientTemperature.valueCelsius")
+
+		valuesZero, _ := protopath2.PathValues(rpath, msgWithZero)
+		if !pathFieldsAreSet(valuesZero) {
+			t.Error("Zero-valued scalar should be considered set")
+		}
+
+		valuesNil, _ := protopath2.PathValues(rpath, msgWithNil)
+		if pathFieldsAreSet(valuesNil) {
+			t.Error("Nil message should not be considered set")
+		}
+	})
 }
