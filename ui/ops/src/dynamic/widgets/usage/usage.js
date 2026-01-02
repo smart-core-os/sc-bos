@@ -7,14 +7,14 @@ import {computed, reactive, toValue} from 'vue';
 
 /**
  * Returns the usage count for periods between edges.
- * The usage at index i will be the total usage for the period between edges[i] and edges[i+1].
+ * The usage at index i will be the maximum usage for the period between edges[i] and edges[i+1].
  *
  * @param {import('vue').MaybeRefOrGetter<string[]>} names
  * @param {import('vue').MaybeRefOrGetter<Date[]>} edges
  * @return {import('vue').ComputedRef<{x: Date, groups: Record<string, {x: Date, y: number, last: number}>}[]>}
  */
 export function useUsageCount(names, edges) {
-  // As there's no way to SUM aggregate results by groupId from the history api we have to do it ourselves.
+  // As there's no way to MAX aggregate results by groupId from the history api we have to do it ourselves.
   // There could be quite a lot of data, we need to be careful not to keep it all around in memory.
   const countsByEdge = reactive(
       /** @type {{number: Record<string, {x: Date, y: number, last: number}>}} */
@@ -72,8 +72,8 @@ export function useUsageCount(names, edges) {
 }
 
 /**
- * Reads and calculates the total usage count for each span between the edges, returning it as a data series.
- * The y property at index i in the response will be the total usage count for the period between edges[i] and edges[i+1].
+ * Reads and calculates the maximum usage count for each span between the edges, returning it as a data series.
+ * The y property at index i in the response will be the maximum usage count for the period between edges[i] and edges[i+1].
  * The last property at index i will be the most recent recorded usage count for the period between edges[i] and edges[i+1].
  * The results are grouped by allocation group id.
  *
