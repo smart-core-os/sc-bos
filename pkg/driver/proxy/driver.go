@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/proxy/config"
+	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/node/alltraits"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -157,13 +157,13 @@ type proxy struct {
 // Network level errors will be retried. If the server responds with codes.Unimplemented for both Pull and List calls
 // then AnnounceChildren will give up and return an error.
 func (p *proxy) AnnounceChildren(ctx context.Context) error {
-	changes := make(chan *traits.PullChildrenResponse_Change)
+	changes := make(chan *gen.PullDevicesResponse_Change)
 	defer close(changes)
 
 	go p.announceChanges(changes)
 
-	fetcher := &childrenFetcher{name: p.config.Name, client: traits.NewParentApiClient(p.conn)}
-	return pull.Changes[*traits.PullChildrenResponse_Change](ctx, fetcher, changes, pull.WithLogger(p.logger))
+	fetcher := &childrenFetcher{name: p.config.Name, client: gen.NewDevicesApiClient(p.conn)}
+	return pull.Changes[*gen.PullDevicesResponse_Change](ctx, fetcher, changes, pull.WithLogger(p.logger))
 }
 
 func (p *proxy) announceExplicitChildren(children []config.Child) {
@@ -172,7 +172,7 @@ func (p *proxy) announceExplicitChildren(children []config.Child) {
 	}
 }
 
-func (p *proxy) announceChanges(changes <-chan *traits.PullChildrenResponse_Change) {
+func (p *proxy) announceChanges(changes <-chan *gen.PullDevicesResponse_Change) {
 	announced := announcedTraits{}
 	defer announced.deleteAll()
 	for change := range changes {
@@ -180,7 +180,7 @@ func (p *proxy) announceChanges(changes <-chan *traits.PullChildrenResponse_Chan
 	}
 }
 
-func (p *proxy) announceChange(announced announcedTraits, change *traits.PullChildrenResponse_Change) {
+func (p *proxy) announceChange(announced announcedTraits, change *gen.PullDevicesResponse_Change) {
 	needAnnouncing := announced.updateChild(change.OldValue, change.NewValue)
 	childName := change.GetNewValue().GetName() // nil safe way to get the name
 	p.announceTraits(announced, childName, needAnnouncing)
@@ -232,7 +232,7 @@ func (a announcedTraits) add(name string, tn trait.Name, undo node.Undo) {
 // updateChild compares oldChild and newChild and undoes and deletes any child traits that no longer exist.
 // oldChild and/or newChild may be nil.
 // updateChild returns any traits that newChild has that `a` does not know about.
-func (a announcedTraits) updateChild(oldChild, newChild *traits.Child) []trait.Name {
+func (a announcedTraits) updateChild(oldChild, newChild *gen.Device) []trait.Name {
 	if oldChild != nil && newChild == nil {
 		a.deleteChild(oldChild)
 		return nil
@@ -245,12 +245,12 @@ func (a announcedTraits) updateChild(oldChild, newChild *traits.Child) []trait.N
 	var needAnnouncing []trait.Name
 	var needDeleting map[trait.Name]struct{}
 	if oldChild != nil {
-		needDeleting = make(map[trait.Name]struct{}, len(oldChild.Traits))
-		for _, t := range oldChild.Traits {
+		needDeleting = make(map[trait.Name]struct{}, len(oldChild.Metadata.Traits))
+		for _, t := range oldChild.Metadata.Traits {
 			needDeleting[trait.Name(t.Name)] = struct{}{}
 		}
 	}
-	for _, t := range newChild.Traits {
+	for _, t := range newChild.Metadata.Traits {
 		tn := trait.Name(t.Name)
 		delete(needDeleting, tn)
 
@@ -265,15 +265,17 @@ func (a announcedTraits) updateChild(oldChild, newChild *traits.Child) []trait.N
 		// announce a new client trait
 		needAnnouncing = append(needAnnouncing, tn)
 	}
-	for tn, _ := range needDeleting {
-		a.deleteChildTrait(oldChild.Name, tn)
+	if oldChild != nil {
+		for tn := range needDeleting {
+			a.deleteChildTrait(oldChild.Name, tn)
+		}
 	}
 	return needAnnouncing
 }
 
 // deleteChild undoes and removes all the traits child has.
-func (a announcedTraits) deleteChild(child *traits.Child) {
-	for _, t := range child.Traits {
+func (a announcedTraits) deleteChild(child *gen.Device) {
+	for _, t := range child.Metadata.Traits {
 		a.deleteChildTrait(child.Name, trait.Name(t.Name))
 	}
 }
