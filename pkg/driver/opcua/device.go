@@ -85,11 +85,11 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 			}
 
 			if errors.Is(item.Value.Status, ua.StatusOK) {
-				clearPointFault(node.String(), d.systemName, d.faultCheck)
+				d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
 				value := item.Value.Value.Value()
 				d.handleTraitEvent(ctx, node, value)
 			} else {
-				raisePointFault(node.String(), item.Value.Status.Error(), d.systemName, d.faultCheck)
+				updateReliabilityBadResponse(ctx, node.String(), item.Value.Status.Error(), d.systemName, d.faultCheck)
 				d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", item.Value.Status.Error()))
 			}
 		}
@@ -99,10 +99,10 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 			for _, field := range item.EventFields {
 				if errors.Is(field.StatusCode(), ua.StatusOK) {
 					value := field.Value()
-					clearPointFault(node.String(), d.systemName, d.faultCheck)
+					d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
 					d.handleTraitEvent(ctx, node, value)
 				} else {
-					raisePointFault(node.String(), field.StatusCode().Error(), d.systemName, d.faultCheck)
+					updateReliabilityBadResponse(ctx, node.String(), field.StatusCode().Error(), d.systemName, d.faultCheck)
 					d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", field.StatusCode().Error()))
 				}
 			}

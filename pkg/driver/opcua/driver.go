@@ -81,7 +81,6 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		return err
 	}
 
-	systemCheck.ClearFaults()
 	client := NewClient(opcClient, d.logger, cfg.Conn.SubscriptionInterval.Duration, cfg.Conn.ClientId)
 
 	if cfg.Meta != nil {
@@ -195,6 +194,6 @@ func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, systemNa
 		d.logger.Error("error connecting to opc ua server", zap.Error(err))
 		return nil, err
 	}
-	faultCheck.ClearFaults()
+	faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
 	return opcClient, nil
 }

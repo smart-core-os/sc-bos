@@ -1,6 +1,7 @@
 package opcua
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/smart-core-os/sc-bos/pkg/gen"
@@ -49,17 +50,14 @@ func raiseConfigFault(details string, systemName string, fc *healthpb.FaultCheck
 	})
 }
 
-func raisePointFault(nodeId string, errorString string, systemName string, fc *healthpb.FaultCheck) {
-	fc.AddOrUpdateFault(&gen.HealthCheck_Error{
-		SummaryText: fmt.Sprintf("Attempt to read device point returned non OK status: %s", errorString),
-		DetailsText: fmt.Sprintf("NodeID: %s, Status: %s", nodeId, errorString),
-		Code:        getPointHealthCode(nodeId, systemName),
-	})
-}
-
-func clearPointFault(nodeId string, systemName string, fc *healthpb.FaultCheck) {
-	fc.RemoveFault(&gen.HealthCheck_Error{
-		Code: getPointHealthCode(nodeId, systemName),
+func updateReliabilityBadResponse(ctx context.Context, nodeId string, errorString string, systemName string, fc *healthpb.FaultCheck) {
+	fc.UpdateReliability(ctx, &gen.HealthCheck_Reliability{
+		State: gen.HealthCheck_Reliability_BAD_RESPONSE,
+		LastError: &gen.HealthCheck_Error{
+			SummaryText: fmt.Sprintf("Attempt to read device point returned non OK status: %s", errorString),
+			DetailsText: fmt.Sprintf("NodeID: %s, Status: %s", nodeId, errorString),
+			Code:        getPointHealthCode(nodeId, systemName),
+		},
 	})
 }
 
