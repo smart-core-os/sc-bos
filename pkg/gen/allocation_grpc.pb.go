@@ -19,17 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AllocationApi_GetAllocation_FullMethodName            = "/smartcore.bos.AllocationApi/GetAllocation"
-	AllocationApi_UpdateAllocation_FullMethodName         = "/smartcore.bos.AllocationApi/UpdateAllocation"
-	AllocationApi_PullAllocations_FullMethodName          = "/smartcore.bos.AllocationApi/PullAllocations"
-	AllocationApi_ListAllocatableResources_FullMethodName = "/smartcore.bos.AllocationApi/ListAllocatableResources"
+	AllocationApi_GetAllocation_FullMethodName    = "/smartcore.bos.AllocationApi/GetAllocation"
+	AllocationApi_UpdateAllocation_FullMethodName = "/smartcore.bos.AllocationApi/UpdateAllocation"
+	AllocationApi_PullAllocation_FullMethodName   = "/smartcore.bos.AllocationApi/PullAllocation"
 )
 
 // AllocationApiClient is the client API for AllocationApi service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// AllocationApi characterizes the availability of a resource that may be allocated to an actor for a period of time.
+// AllocationApi characterizes the availability of a resource that may be allocated to an actor at any instant in time.
 // Examples include meeting rooms, desks, parking spots, or shared equipment such as lockers.
 type AllocationApiClient interface {
 	// Get the current allocation for a resource.
@@ -37,9 +36,7 @@ type AllocationApiClient interface {
 	// Create or update an allocation for a resource.
 	UpdateAllocation(ctx context.Context, in *UpdateAllocationRequest, opts ...grpc.CallOption) (*Allocation, error)
 	// Subscribe to changes in allocations for a resource.
-	PullAllocations(ctx context.Context, in *PullAllocationsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PullAllocationsResponse], error)
-	// Lists all allocatable resources and their current allocations.
-	ListAllocatableResources(ctx context.Context, in *ListAllocatableResourcesRequest, opts ...grpc.CallOption) (*ListAllocatableResourcesResponse, error)
+	PullAllocation(ctx context.Context, in *PullAllocationRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PullAllocationResponse], error)
 }
 
 type allocationApiClient struct {
@@ -70,13 +67,13 @@ func (c *allocationApiClient) UpdateAllocation(ctx context.Context, in *UpdateAl
 	return out, nil
 }
 
-func (c *allocationApiClient) PullAllocations(ctx context.Context, in *PullAllocationsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PullAllocationsResponse], error) {
+func (c *allocationApiClient) PullAllocation(ctx context.Context, in *PullAllocationRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PullAllocationResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &AllocationApi_ServiceDesc.Streams[0], AllocationApi_PullAllocations_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &AllocationApi_ServiceDesc.Streams[0], AllocationApi_PullAllocation_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[PullAllocationsRequest, PullAllocationsResponse]{ClientStream: stream}
+	x := &grpc.GenericClientStream[PullAllocationRequest, PullAllocationResponse]{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -87,23 +84,13 @@ func (c *allocationApiClient) PullAllocations(ctx context.Context, in *PullAlloc
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AllocationApi_PullAllocationsClient = grpc.ServerStreamingClient[PullAllocationsResponse]
-
-func (c *allocationApiClient) ListAllocatableResources(ctx context.Context, in *ListAllocatableResourcesRequest, opts ...grpc.CallOption) (*ListAllocatableResourcesResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListAllocatableResourcesResponse)
-	err := c.cc.Invoke(ctx, AllocationApi_ListAllocatableResources_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
+type AllocationApi_PullAllocationClient = grpc.ServerStreamingClient[PullAllocationResponse]
 
 // AllocationApiServer is the server API for AllocationApi service.
 // All implementations must embed UnimplementedAllocationApiServer
 // for forward compatibility.
 //
-// AllocationApi characterizes the availability of a resource that may be allocated to an actor for a period of time.
+// AllocationApi characterizes the availability of a resource that may be allocated to an actor at any instant in time.
 // Examples include meeting rooms, desks, parking spots, or shared equipment such as lockers.
 type AllocationApiServer interface {
 	// Get the current allocation for a resource.
@@ -111,9 +98,7 @@ type AllocationApiServer interface {
 	// Create or update an allocation for a resource.
 	UpdateAllocation(context.Context, *UpdateAllocationRequest) (*Allocation, error)
 	// Subscribe to changes in allocations for a resource.
-	PullAllocations(*PullAllocationsRequest, grpc.ServerStreamingServer[PullAllocationsResponse]) error
-	// Lists all allocatable resources and their current allocations.
-	ListAllocatableResources(context.Context, *ListAllocatableResourcesRequest) (*ListAllocatableResourcesResponse, error)
+	PullAllocation(*PullAllocationRequest, grpc.ServerStreamingServer[PullAllocationResponse]) error
 	mustEmbedUnimplementedAllocationApiServer()
 }
 
@@ -130,11 +115,8 @@ func (UnimplementedAllocationApiServer) GetAllocation(context.Context, *GetAlloc
 func (UnimplementedAllocationApiServer) UpdateAllocation(context.Context, *UpdateAllocationRequest) (*Allocation, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateAllocation not implemented")
 }
-func (UnimplementedAllocationApiServer) PullAllocations(*PullAllocationsRequest, grpc.ServerStreamingServer[PullAllocationsResponse]) error {
-	return status.Errorf(codes.Unimplemented, "method PullAllocations not implemented")
-}
-func (UnimplementedAllocationApiServer) ListAllocatableResources(context.Context, *ListAllocatableResourcesRequest) (*ListAllocatableResourcesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListAllocatableResources not implemented")
+func (UnimplementedAllocationApiServer) PullAllocation(*PullAllocationRequest, grpc.ServerStreamingServer[PullAllocationResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method PullAllocation not implemented")
 }
 func (UnimplementedAllocationApiServer) mustEmbedUnimplementedAllocationApiServer() {}
 func (UnimplementedAllocationApiServer) testEmbeddedByValue()                       {}
@@ -193,34 +175,16 @@ func _AllocationApi_UpdateAllocation_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AllocationApi_PullAllocations_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(PullAllocationsRequest)
+func _AllocationApi_PullAllocation_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(PullAllocationRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(AllocationApiServer).PullAllocations(m, &grpc.GenericServerStream[PullAllocationsRequest, PullAllocationsResponse]{ServerStream: stream})
+	return srv.(AllocationApiServer).PullAllocation(m, &grpc.GenericServerStream[PullAllocationRequest, PullAllocationResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AllocationApi_PullAllocationsServer = grpc.ServerStreamingServer[PullAllocationsResponse]
-
-func _AllocationApi_ListAllocatableResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListAllocatableResourcesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AllocationApiServer).ListAllocatableResources(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AllocationApi_ListAllocatableResources_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AllocationApiServer).ListAllocatableResources(ctx, req.(*ListAllocatableResourcesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
+type AllocationApi_PullAllocationServer = grpc.ServerStreamingServer[PullAllocationResponse]
 
 // AllocationApi_ServiceDesc is the grpc.ServiceDesc for AllocationApi service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -237,15 +201,11 @@ var AllocationApi_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "UpdateAllocation",
 			Handler:    _AllocationApi_UpdateAllocation_Handler,
 		},
-		{
-			MethodName: "ListAllocatableResources",
-			Handler:    _AllocationApi_ListAllocatableResources_Handler,
-		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "PullAllocations",
-			Handler:       _AllocationApi_PullAllocations_Handler,
+			StreamName:    "PullAllocation",
+			Handler:       _AllocationApi_PullAllocation_Handler,
 			ServerStreams: true,
 		},
 	},
