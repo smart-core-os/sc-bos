@@ -1,6 +1,6 @@
 <template>
   <v-card :class="props.class" :style="props.style">
-    <security-events-table v-bind="$attrs"/>
+    <security-events-table v-bind="$attrs" :fixed-header="false"/>
   </v-card>
 </template>
 
