@@ -163,6 +163,7 @@ function enumToDisplayName(e) {
  *   actualPosition: ComputedRef<string>,
  *   doorStatus: ComputedRef<Array<{label:string, value:string}>>,
  *   movingDirection: ComputedRef<string>,
+ *   movingDirectionDisplay: ComputedRef<string>,
  *   nextDestination: ComputedRef<string>,
  *   load: ComputedRef<string>,
  *   table: ComputedRef<Array<{label:string, value:string}>>
@@ -217,8 +218,12 @@ export function useTransport(value, support = null) {
 
   const movingDirection = computed(() => {
     const v = _v.value;
-    if (!v) return '';
-    return enumToDisplayName(movingDirectionById[v.movingDirection] ?? '');
+    if (!v) return 'DIRECTION_UNSPECIFIED';
+    return movingDirectionById[v.movingDirection] ?? 'DIRECTION_UNSPECIFIED';
+  });
+
+  const movingDirectionDisplay = computed(() => {
+    return enumToDisplayName(movingDirection.value);
   });
 
   const operatingMode = computed(() => {
@@ -261,7 +266,7 @@ export function useTransport(value, support = null) {
     },
       {
         label: 'Moving Direction',
-        value: movingDirection.value
+        value: movingDirectionDisplay.value
       },
       {
         label: 'Next Destination',
@@ -287,6 +292,7 @@ export function useTransport(value, support = null) {
     actualPosition,
     doorStatus,
     movingDirection,
+    movingDirectionDisplay,
     nextDestination,
     operatingMode,
     loadStr,
