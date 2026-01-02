@@ -3,6 +3,9 @@ package opcua
 import (
 	"context"
 	"fmt"
+	"strconv"
+
+	"github.com/gopcua/opcua/ua"
 
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
@@ -13,6 +16,9 @@ const (
 	ServerUnreachable = "ServerUnreachable"
 
 	DeviceConfigError = "DeviceConfig"
+
+	PointReadNotOk = "PointReadNotOk"
+	SystemName     = "OPCUA"
 )
 
 func getSystemHealthCheck(occupant gen.HealthCheck_OccupantImpact, equipment gen.HealthCheck_EquipmentImpact) *gen.HealthCheck {
@@ -50,20 +56,16 @@ func raiseConfigFault(details string, systemName string, fc *healthpb.FaultCheck
 	})
 }
 
-func updateReliabilityBadResponse(ctx context.Context, nodeId string, errorString string, systemName string, fc *healthpb.FaultCheck) {
+func setPointReadNotOk(ctx context.Context, nodeId string, status ua.StatusCode, fc *healthpb.FaultCheck) {
 	fc.UpdateReliability(ctx, &gen.HealthCheck_Reliability{
 		State: gen.HealthCheck_Reliability_BAD_RESPONSE,
 		LastError: &gen.HealthCheck_Error{
-			SummaryText: fmt.Sprintf("Attempt to read device point returned non OK status: %s", errorString),
-			DetailsText: fmt.Sprintf("NodeID: %s, Status: %s", nodeId, errorString),
-			Code:        getPointHealthCode(nodeId, systemName),
+			SummaryText: fmt.Sprintf("Attempt to read device point returned non OK status: %s", status.Error()),
+			DetailsText: fmt.Sprintf("NodeID: %s, Status: %s", nodeId, status.Error()),
+			Code: &gen.HealthCheck_Error_Code{
+				Code:   strconv.Itoa(int(status)),
+				System: SystemName,
+			},
 		},
 	})
-}
-
-func getPointHealthCode(nodeId string, systemName string) *gen.HealthCheck_Error_Code {
-	return &gen.HealthCheck_Error_Code{
-		Code:   nodeId,
-		System: systemName,
-	}
 }

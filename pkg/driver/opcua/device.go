@@ -89,7 +89,7 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 				value := item.Value.Value.Value()
 				d.handleTraitEvent(ctx, node, value)
 			} else {
-				updateReliabilityBadResponse(ctx, node.String(), item.Value.Status.Error(), d.systemName, d.faultCheck)
+				setPointReadNotOk(ctx, node.String(), item.Value.Status, d.faultCheck)
 				d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", item.Value.Status.Error()))
 			}
 		}
@@ -102,7 +102,7 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 					d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
 					d.handleTraitEvent(ctx, node, value)
 				} else {
-					updateReliabilityBadResponse(ctx, node.String(), field.StatusCode().Error(), d.systemName, d.faultCheck)
+					setPointReadNotOk(ctx, node.String(), field.StatusCode(), d.faultCheck)
 					d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", field.StatusCode().Error()))
 				}
 			}

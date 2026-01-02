@@ -338,28 +338,25 @@ func TestOpcuaConfigFault(t *testing.T) {
 
 func TestOpcuaPointFaults(t *testing.T) {
 	h := setupTestHarness(t)
-	const testSystemName = "test_opcua_system"
 	nodeId1, nodeId2 := "ns=2;s=Tag1", "ns=2;s=Tag2"
 
-	updateReliabilityBadResponse(h.ctx, nodeId1, "BadNodeIdUnknown", testSystemName, h.fc)
+	setPointReadNotOk(h.ctx, nodeId1, ua.StatusBadNodeIDUnknown, h.fc)
 	checks := h.getHealthChecks(t)
 	require.Len(t, checks, 1)
 	rel := checks[0].GetReliability()
 	require.NotNil(t, rel)
 	require.Equal(t, gen.HealthCheck_Reliability_BAD_RESPONSE, rel.State)
 	require.NotNil(t, rel.LastError)
-	require.Equal(t, nodeId1, rel.LastError.Code.Code)
 	require.Contains(t, rel.LastError.SummaryText, "non OK status")
 	require.Contains(t, rel.LastError.DetailsText, nodeId1)
 
-	updateReliabilityBadResponse(h.ctx, nodeId2, "BadTimeout", testSystemName, h.fc)
+	setPointReadNotOk(h.ctx, nodeId2, ua.StatusBadTimeout, h.fc)
 	checks = h.getHealthChecks(t)
 	rel = checks[0].GetReliability()
 	require.Equal(t, gen.HealthCheck_Reliability_BAD_RESPONSE, rel.State)
-	require.Equal(t, nodeId2, rel.LastError.Code.Code)
+	require.Contains(t, rel.LastError.DetailsText, nodeId2)
 
-	// Note: updateReliabilityNormal still removes faults from the faults list, not reliability
-	// To clear reliability, we'd need a different approach
+	// Note: Error code is now the StatusCode integer, not the PointReadNotOk constant
 }
 
 func TestOpcuaFaultLifecycle(t *testing.T) {
@@ -367,53 +364,53 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 	tests := []struct {
 		name  string
 		steps []struct {
-			action           func(*testHarness)
-			reliabilityState gen.HealthCheck_Reliability_State
-			lastErrorNodeId  string
-			description      string
+			action             func(*testHarness)
+			reliabilityState   gen.HealthCheck_Reliability_State
+			expectNodeInDetail string
+			description        string
 		}
 	}{
 		{
 			name: "raise multiple point faults then clear last",
 			steps: []struct {
-				action           func(*testHarness)
-				reliabilityState gen.HealthCheck_Reliability_State
-				lastErrorNodeId  string
-				description      string
+				action             func(*testHarness)
+				reliabilityState   gen.HealthCheck_Reliability_State
+				expectNodeInDetail string
+				description        string
 			}{
 				{
 					action: func(h *testHarness) {
-						updateReliabilityBadResponse(h.ctx, "ns=2;s=Tag1", "BadNodeIdUnknown", testSystemName, h.fc)
+						setPointReadNotOk(h.ctx, "ns=2;s=Tag1", ua.StatusBadNodeIDUnknown, h.fc)
 					},
-					reliabilityState: gen.HealthCheck_Reliability_BAD_RESPONSE,
-					lastErrorNodeId:  "ns=2;s=Tag1",
-					description:      "first point fault raised",
+					reliabilityState:   gen.HealthCheck_Reliability_BAD_RESPONSE,
+					expectNodeInDetail: "ns=2;s=Tag1",
+					description:        "first point fault raised",
 				},
 				{
 					action: func(h *testHarness) {
-						updateReliabilityBadResponse(h.ctx, "ns=2;s=Tag2", "BadTimeout", testSystemName, h.fc)
+						setPointReadNotOk(h.ctx, "ns=2;s=Tag2", ua.StatusBadTimeout, h.fc)
 					},
-					reliabilityState: gen.HealthCheck_Reliability_BAD_RESPONSE,
-					lastErrorNodeId:  "ns=2;s=Tag2",
-					description:      "second point fault overwrites first in reliability",
+					reliabilityState:   gen.HealthCheck_Reliability_BAD_RESPONSE,
+					expectNodeInDetail: "ns=2;s=Tag2",
+					description:        "second point fault overwrites first in reliability",
 				},
 				{
 					action: func(h *testHarness) {
-						updateReliabilityBadResponse(h.ctx, "ns=2;s=Tag3", "BadCommunicationError", testSystemName, h.fc)
+						setPointReadNotOk(h.ctx, "ns=2;s=Tag3", ua.StatusBadCommunicationError, h.fc)
 					},
-					reliabilityState: gen.HealthCheck_Reliability_BAD_RESPONSE,
-					lastErrorNodeId:  "ns=2;s=Tag3",
-					description:      "third point fault overwrites second in reliability",
+					reliabilityState:   gen.HealthCheck_Reliability_BAD_RESPONSE,
+					expectNodeInDetail: "ns=2;s=Tag3",
+					description:        "third point fault overwrites second in reliability",
 				},
 			},
 		},
 		{
 			name: "mix config and point faults",
 			steps: []struct {
-				action           func(*testHarness)
-				reliabilityState gen.HealthCheck_Reliability_State
-				lastErrorNodeId  string
-				description      string
+				action             func(*testHarness)
+				reliabilityState   gen.HealthCheck_Reliability_State
+				expectNodeInDetail string
+				description        string
 			}{
 				{
 					action: func(h *testHarness) {
@@ -424,37 +421,37 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 				},
 				{
 					action: func(h *testHarness) {
-						updateReliabilityBadResponse(h.ctx, "ns=2;s=Tag1", "BadNodeIdUnknown", testSystemName, h.fc)
+						setPointReadNotOk(h.ctx, "ns=2;s=Tag1", ua.StatusBadNodeIDUnknown, h.fc)
 					},
-					reliabilityState: gen.HealthCheck_Reliability_BAD_RESPONSE,
-					lastErrorNodeId:  "ns=2;s=Tag1",
-					description:      "point fault updates reliability to BAD_RESPONSE",
+					reliabilityState:   gen.HealthCheck_Reliability_BAD_RESPONSE,
+					expectNodeInDetail: "ns=2;s=Tag1",
+					description:        "point fault updates reliability to BAD_RESPONSE",
 				},
 			},
 		},
 		{
 			name: "update same fault",
 			steps: []struct {
-				action           func(*testHarness)
-				reliabilityState gen.HealthCheck_Reliability_State
-				lastErrorNodeId  string
-				description      string
+				action             func(*testHarness)
+				reliabilityState   gen.HealthCheck_Reliability_State
+				expectNodeInDetail string
+				description        string
 			}{
 				{
 					action: func(h *testHarness) {
-						updateReliabilityBadResponse(h.ctx, "ns=2;s=Tag1", "BadNodeIdUnknown", testSystemName, h.fc)
+						setPointReadNotOk(h.ctx, "ns=2;s=Tag1", ua.StatusBadNodeIDUnknown, h.fc)
 					},
-					reliabilityState: gen.HealthCheck_Reliability_BAD_RESPONSE,
-					lastErrorNodeId:  "ns=2;s=Tag1",
-					description:      "initial fault",
+					reliabilityState:   gen.HealthCheck_Reliability_BAD_RESPONSE,
+					expectNodeInDetail: "ns=2;s=Tag1",
+					description:        "initial fault",
 				},
 				{
 					action: func(h *testHarness) {
-						updateReliabilityBadResponse(h.ctx, "ns=2;s=Tag1", "BadTimeout", testSystemName, h.fc)
+						setPointReadNotOk(h.ctx, "ns=2;s=Tag1", ua.StatusBadTimeout, h.fc)
 					},
-					reliabilityState: gen.HealthCheck_Reliability_BAD_RESPONSE,
-					lastErrorNodeId:  "ns=2;s=Tag1",
-					description:      "same node fault updated with different error",
+					reliabilityState:   gen.HealthCheck_Reliability_BAD_RESPONSE,
+					expectNodeInDetail: "ns=2;s=Tag1",
+					description:        "same node fault updated with different error",
 				},
 			},
 		},
@@ -477,9 +474,11 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 					t.Errorf("step %d (%s): reliability state mismatch (-want +got):\n%s", i, step.description, diff)
 				}
 
-				if step.lastErrorNodeId != "" {
+				if step.expectNodeInDetail != "" {
 					require.NotNil(t, rel.LastError, "step %d (%s): last error should not be nil", i, step.description)
-					require.Equal(t, step.lastErrorNodeId, rel.LastError.Code.Code, "step %d (%s): last error node id mismatch", i, step.description)
+					// Error code is now the StatusCode integer value, not a constant string
+					require.Equal(t, SystemName, rel.LastError.Code.System, "step %d (%s): error system should be SystemName constant", i, step.description)
+					require.Contains(t, rel.LastError.DetailsText, step.expectNodeInDetail, "step %d (%s): details should contain node ID", i, step.description)
 				}
 			}
 		})
@@ -508,19 +507,23 @@ func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
 			},
 		}
 	}
-
+	// Bad status updates reliability to BAD_RESPONSE
 	dev.handleEvent(ctx, makeEvent(ua.StatusBadNodeIDUnknown), nodeId)
 	checks := h.getHealthChecks(t)
 	rel := checks[0].GetReliability()
 	require.NotNil(t, rel)
 	require.Equal(t, gen.HealthCheck_Reliability_BAD_RESPONSE, rel.State)
 	require.NotNil(t, rel.LastError)
-	require.Equal(t, nodeId.String(), rel.LastError.Code.Code)
+	// Error code is now the StatusCode integer value
+	require.Equal(t, SystemName, rel.LastError.Code.System)
 	require.Contains(t, rel.LastError.SummaryText, "non OK status")
+	require.Contains(t, rel.LastError.DetailsText, nodeId.String())
 
+	// OK status should set reliability back to RELIABLE
 	dev.handleEvent(ctx, makeEvent(ua.StatusOK), nodeId)
 	checks = h.getHealthChecks(t)
 	require.Equal(t, gen.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().GetState())
+	// Faults list should remain empty (reliability doesn't add to faults)
 	faults := checks[0].GetFaults().GetCurrentFaults()
 	require.Len(t, faults, 0)
 }
