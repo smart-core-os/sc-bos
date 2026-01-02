@@ -20,8 +20,10 @@ export function useUsageCount(names, edges) {
       /** @type {{number: Record<string, {x: Date, y: number, last: number}>}} */
       {} // keyed by the leading edges .getTime()
   );
-  asyncWatch([() => toValue(names), () => toValue(edges)], async ([names, edges], [oldNames]) => {
-    if (names !== oldNames) {
+  asyncWatch([() => toValue(names), () => toValue(edges)], async ([names, edges], [oldNames, oldEdges]) => {
+    if (names !== oldNames || edges !== oldEdges) {
+      // if the names have changed, recompute all counts
+      // likewise, if the edges have changed, counts from previous edges [and alternative time resolutions] are undesirable too.
       Object.keys(countsByEdge).forEach(k => delete countsByEdge[k]);
     }
 
@@ -34,28 +36,33 @@ export function useUsageCount(names, edges) {
     }
 
     for (let i = 0; i < edges.length - 1; i++) {
-      const leadingEdge = edges[i];
-      if (!countsByEdge[leadingEdge.getTime()]) {
-        const toFetch = [leadingEdge];
-        for (let j = i + 1; j < edges.length; j++) {
-          const e = edges[j];
-          toFetch.push(e);
-          if (countsByEdge[e.getTime()]) {
-            i = j - 1; // will i++ in the loop
-            break;
-          }
+      if (countsByEdge[edges[i].getTime()]) {
+        continue;   // skip if already fetched data
+      }
+
+      const toFetch = [edges[i]];
+      for (let j = i + 1; j < edges.length; j++) {
+        const e = edges[j];
+        toFetch.push(e);
+        if (countsByEdge[e.getTime()]) {
+          i = j - 1; // will i++ in the loop
+          break;
         }
-
-        const countBefore = countsByEdge[edges[i - 1]?.getTime()]?.last ?? null;
-        const records = await readUsageCountSeries(names, toFetch, countBefore);
-        for (const dataset in records) {
-          const groupData = records[dataset];
-          for (const record of groupData) {
-            if (!countsByEdge[record.x.getTime()])
-              countsByEdge[record.x.getTime()] = {};
-
-            countsByEdge[record.x.getTime()][dataset] = record.y;
+      }
+      let countBefore = i > 0 ? countsByEdge[edges[i - 1]?.getTime()]?.last ?? null : null;
+      const records = await readUsageCountSeries(names, toFetch, countBefore);
+      if (Object.keys(records).length === 0) {
+        countsByEdge[edges[i].getTime()] = {};
+        continue;
+      }
+      for (const dataset in records) {
+        const groupData = records[dataset];
+        for (const record of groupData) {
+          if (!countsByEdge[record.x.getTime()]) {
+            countsByEdge[record.x.getTime()] = {};
           }
+
+          countsByEdge[record.x.getTime()][dataset] = record.y;
         }
       }
     }
@@ -135,17 +142,19 @@ async function readUsageCountSeries(names, edges, countBefore) {
           ({before, after, beforeIdx} = findEdges(edges, recordTime));
           if (!after) break;
         }
-          if (!d)
-            d = [...dstArr]
 
-          if (d[beforeIdx]) {
-            d[beforeIdx].y = Math.max(d[beforeIdx].y, record.allocation.allocationTotal);
-          } else {
-            d[beforeIdx] = {x: before, y: record.allocation.allocationTotal, last: 0};
-          }
+        if (!d) {
+          d = [...dstArr]
+        }
 
-          d[beforeIdx].last = Math.max(d[beforeIdx].last, record.allocation.allocationTotal);
-          dst[record.allocation.groupId] = d;
+        if (d[beforeIdx]) {
+          d[beforeIdx].y = Math.max(d[beforeIdx].y, record.allocation.allocationTotal);
+        } else {
+          d[beforeIdx] = {x: before, y: record.allocation.allocationTotal, last: record.allocation.allocationTotal};
+        }
+
+        d[beforeIdx].last = Math.max(d[beforeIdx].last, record.allocation.allocationTotal);
+        dst[record.allocation.groupId] = d;
       }
 
       req.pageToken = resp.nextPageToken;
@@ -155,8 +164,8 @@ async function readUsageCountSeries(names, edges, countBefore) {
     // handle edge pairs that don't have any records in them.
     // Usage count in subsequent spans will be the same as the last reading in the span before.
     // If the first span has no records, then we find the most recent record before the first edge.
-    if (countBefore !== null) {
-      copySrc = {x: edges[0], y: countBefore, last: countBefore};
+    if (!countBefore) {
+      copySrc = {x: edges[0], y: 0, last: countBefore};
     } else {
       try {
         const res = await listAllocationHistory({
@@ -168,7 +177,7 @@ async function readUsageCountSeries(names, edges, countBefore) {
         if (res.allocationRecordsList.length > 0) {
           const rec = res.allocationRecordsList[0];
           const assignedCount = rec.allocation.allocationTotal;
-          copySrc = {x: edges[0], y: assignedCount, last: assignedCount};
+          copySrc = {x: edges[0], y: 0, last: assignedCount};
         }
       } catch {
         // ignore
@@ -187,7 +196,7 @@ async function readUsageCountSeries(names, edges, countBefore) {
     }
     // fill any null dst indexes with the value from the previous index
     for (let i = 1; i < d.length; i++) {
-      if (d[i] === null) {
+      if (!d[i]) {
         const last = d[i - 1].last;
         d[i] = {x: edges[i], y: 0, last: last};
       }

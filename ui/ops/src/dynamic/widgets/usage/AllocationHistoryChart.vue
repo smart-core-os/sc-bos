@@ -129,7 +129,7 @@ const chartData = computed(() => {
   for (const groupId of groupIds) {
     const data = [];
     for (const time of totalUsageCounts.value) {
-      const count = time.groups[groupId] || 0;
+      const count = time.groups[groupId] ?? 0;
       data.push(count);
     }
     datasets.push({
