@@ -176,6 +176,19 @@ func (a *impl) newCheck(ctx context.Context, device *gen.Device, checkCfg *gen.H
 				check.UpdateReliability(ctx, healthpb.ReliabilityFromErr(err))
 				continue
 			}
+
+			// protopath2.PathValues returns a value for each step in rpath, even when traversing
+			// through nil/unset message fields. This means it can return "success" with a zero/default
+			// value when the actual field path doesn't exist in the message. We need to explicitly
+			// check that all message fields along the path are actually set to distinguish between
+			// "field is set to zero value" vs "field is not set at all (nil pointer)".
+			if !pathFieldsAreSet(values) {
+				logger.Debug("value path has unset fields (nil message)")
+				err := fmt.Errorf("field %s.%s[%q] from %q is not set (nil message field)", source.Trait, r.Name(), source.Value, device.GetName())
+				check.UpdateReliability(ctx, healthpb.ReliabilityFromErr(err))
+				continue
+			}
+
 			healthVal, err := healthValueFromReflectValue(values)
 			if err != nil {
 				logger.Debug("health value conversion failed", zap.Any("path", values), zap.Error(err))
@@ -223,6 +236,33 @@ func resourceFetcher(conn grpc.ClientConnInterface, req anytrait.ReadRequest, r 
 			return nil
 		},
 	)
+}
+
+// pathFieldsAreSet checks if all message fields along the path are actually set (not nil/default).
+// This distinguishes between "field is set to zero value" and "field is not set at all".
+func pathFieldsAreSet(path protopath.Values) bool {
+	for i := 1; i < len(path.Path); i++ {
+		step := path.Path[i]
+
+		switch step.Kind() {
+		case protopath.FieldAccessStep:
+			fd := step.FieldDescriptor()
+			parentMsg := path.Index(i - 1).Value.Message()
+
+			if fd.HasPresence() {
+				if !parentMsg.Has(fd) {
+					return false
+				}
+			}
+
+		case protopath.ListIndexStep, protopath.MapIndexStep, protopath.AnyExpandStep:
+			continue
+		default:
+			return false
+		}
+	}
+
+	return true
 }
 
 func healthValueFromReflectValue(path protopath.Values) (*gen.HealthCheck_Value, error) {

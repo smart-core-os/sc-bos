@@ -7,11 +7,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap/zaptest"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
+	"github.com/smart-core-os/sc-bos/internal/protobuf/protopath2"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
@@ -173,6 +175,28 @@ func TestHealthCheckProperties(t *testing.T) {
 		}
 
 		h.assertHealthCheck("room-1", want)
+	})
+}
+
+// TestHandlesNilAmbientTemperature verifies that the automation handles
+// nil AmbientTemperature and returns bad response reliability.
+func TestHandlesNilAmbientTemperature(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newTestHarness(t)
+		h.configureAirTempMonitor()
+
+		airTempModel := airtemperaturepb.NewModel()
+		h.addAirTempDevice("room-1", airTempModel)
+		h.waitForHealthCheck("room-1")
+
+		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
+			AmbientTemperature: nil,
+		})
+
+		synctest.Wait()
+		h.assertHealthCheckExists("room-1")
+		h.assertHealthCheckNormality("room-1", gen.HealthCheck_NORMALITY_UNSPECIFIED)
+		h.assertHealthCheckReliability("room-1", gen.HealthCheck_Reliability_BAD_RESPONSE)
 	})
 }
 
@@ -388,6 +412,27 @@ func (h *testHarness) assertHealthCheckNormality(deviceName string, expected gen
 	}
 }
 
+func (h *testHarness) assertHealthCheckReliability(deviceName string, expected gen.HealthCheck_Reliability_State) {
+	h.t.Helper()
+	synctest.Wait()
+
+	h.mu.Lock()
+	model, ok := h.models[deviceName]
+	h.mu.Unlock()
+
+	if !ok {
+		h.t.Fatalf("Health model for device %q not found", deviceName)
+	}
+	check, err := model.GetHealthCheck("healthbounds")
+	if err != nil {
+		h.t.Fatalf("Health check for device %q not found: %v", deviceName, err)
+	}
+	got := check.GetReliability().GetState()
+	if diff := cmp.Diff(expected, got, protocmp.Transform()); diff != "" {
+		h.t.Errorf("Health check reliability mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func (h *testHarness) assertHealthCheck(deviceName string, expected *gen.HealthCheck) {
 	h.t.Helper()
 	synctest.Wait()
@@ -509,6 +554,115 @@ func TestConfigValidation(t *testing.T) {
 			}
 			if !tt.wantError && err != nil {
 				t.Errorf("Expected no error but got: %v", err)
+			}
+		})
+	}
+}
+
+func TestPathFieldsAreSet(t *testing.T) {
+	tests := []struct {
+		name    string
+		message proto.Message
+		path    string
+		want    bool
+	}{
+		{
+			name: "scalar field set to zero value",
+			message: &traits.AirTemperature{
+				AmbientTemperature: &types.Temperature{
+					ValueCelsius: 0,
+				},
+			},
+			path: "ambientTemperature.valueCelsius",
+			want: true,
+		},
+		{
+			name: "scalar field set to non-zero value",
+			message: &traits.AirTemperature{
+				AmbientTemperature: &types.Temperature{
+					ValueCelsius: 25.5,
+				},
+			},
+			path: "ambientTemperature.valueCelsius",
+			want: true,
+		},
+		{
+			name: "message field is nil",
+			message: &traits.AirTemperature{
+				AmbientTemperature: nil,
+			},
+			path: "ambientTemperature.valueCelsius",
+			want: false,
+		},
+		{
+			name: "accessing message field that is set",
+			message: &traits.AirTemperature{
+				AmbientTemperature: &types.Temperature{
+					ValueCelsius: 20,
+				},
+			},
+			path: "ambientTemperature",
+			want: true,
+		},
+		{
+			name: "accessing message field that is nil",
+			message: &traits.AirTemperature{
+				AmbientTemperature: nil,
+			},
+			path: "ambientTemperature",
+			want: false,
+		},
+		{
+			name: "deeply nested with all fields set",
+			message: &traits.AirTemperature{
+				AmbientTemperature: &types.Temperature{
+					ValueCelsius: 22,
+				},
+				DewPoint: &types.Temperature{
+					ValueCelsius: 10,
+				},
+			},
+			path: "ambientTemperature.valueCelsius",
+			want: true,
+		},
+		{
+			name: "empty string scalar is valid",
+			message: &traits.Brightness{
+				Preset: &traits.LightPreset{
+					Name: "",
+				},
+			},
+			path: "preset.name",
+			want: true,
+		},
+		{
+			name:    "absent optional scalar",
+			message: &gen.Pressure{},
+			path:    "pressure",
+			want:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rpath, err := protopath2.ParsePath(tt.message.ProtoReflect().Descriptor(), tt.path)
+			if err != nil {
+				t.Fatalf("Failed to parse path %q: %v", tt.path, err)
+			}
+
+			values, err := protopath2.PathValues(rpath, tt.message)
+			if err != nil {
+				if tt.want {
+					t.Fatalf("PathValues failed for path %q: %v", tt.path, err)
+				}
+				return
+			}
+
+			got := pathFieldsAreSet(values)
+			if got != tt.want {
+				t.Errorf("pathFieldsAreSet() = %v, want %v", got, tt.want)
+				t.Logf("Message: %v", tt.message)
+				t.Logf("Path: %q", tt.path)
 			}
 		})
 	}
