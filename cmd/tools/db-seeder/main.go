@@ -88,7 +88,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		for _, d := range sd.airQuality {
-			err = SeedAirTemperature(ctx, db, d, lookBack)
+			err = SeedAirQuality(ctx, db, d, lookBack)
 			if err != nil {
 				panic(err)
 			}
