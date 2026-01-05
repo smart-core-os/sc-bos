@@ -2,106 +2,108 @@ package proxy
 
 import (
 	"context"
-	"errors"
 	"testing"
-
-	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
+	devicesmanage "github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
 func TestDeviceFetcher_Poll(t *testing.T) {
 	tests := []struct {
 		name      string
 		initial   map[string]*gen.Device
-		responses []*gen.ListDevicesResponse
+		devices   []*gen.Device
 		wantAdds  []string
 		wantUpdts []string
 		wantRems  []string
 		wantErr   bool
 	}{
 		{
-			name:    "empty response",
-			initial: nil,
-			responses: []*gen.ListDevicesResponse{
-				{Devices: []*gen.Device{}},
-			},
+			name:     "empty response",
+			initial:  nil,
+			devices:  nil,
 			wantAdds: nil,
 		},
 		{
 			name:    "new devices added",
 			initial: nil,
-			responses: []*gen.ListDevicesResponse{
-				{
-					Devices: []*gen.Device{
-						{Name: "device1", Metadata: &traits.Metadata{}},
-						{Name: "device2", Metadata: &traits.Metadata{}},
-					},
-				},
+			devices: []*gen.Device{
+				{Name: "device1", Metadata: &traits.Metadata{
+					Name:   "device1",
+					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
+				}},
+				{Name: "device2", Metadata: &traits.Metadata{
+					Name: "device2",
+				}},
 			},
 			wantAdds: []string{"device1", "device2"},
 		},
 		{
 			name: "devices updated",
 			initial: map[string]*gen.Device{
-				"device1": {Name: "device1", Metadata: &traits.Metadata{}},
+				"device1": {Name: "device1", Metadata: &traits.Metadata{
+					Name:   "device1",
+					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
+				}},
 			},
-			responses: []*gen.ListDevicesResponse{
-				{
-					Devices: []*gen.Device{
-						{Name: "device1", Metadata: &traits.Metadata{
-							Traits: []*traits.TraitMetadata{{Name: "OnOff"}},
-						}},
-					},
-				},
+			devices: []*gen.Device{
+				{Name: "device1", Metadata: &traits.Metadata{
+					Name:   "device1",
+					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}, {Name: "OnOff"}},
+				}},
 			},
 			wantUpdts: []string{"device1"},
 		},
 		{
 			name: "devices removed",
 			initial: map[string]*gen.Device{
-				"device1": {Name: "device1", Metadata: &traits.Metadata{}},
-				"device2": {Name: "device2", Metadata: &traits.Metadata{}},
+				"device1": {Name: "device1", Metadata: &traits.Metadata{
+					Name:   "device1",
+					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
+				}},
+				"device2": {Name: "device2", Metadata: &traits.Metadata{
+					Name:   "device2",
+					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
+				}},
 			},
-			responses: []*gen.ListDevicesResponse{
-				{
-					Devices: []*gen.Device{
-						{Name: "device1", Metadata: &traits.Metadata{}},
-					},
-				},
+			devices: []*gen.Device{
+				{Name: "device1", Metadata: &traits.Metadata{
+					Name: "device1",
+				}},
 			},
 			wantRems: []string{"device2"},
 		},
 		{
 			name: "no change if proto equal",
 			initial: map[string]*gen.Device{
-				"device1": {Name: "device1", Metadata: &traits.Metadata{}},
+				"device1": {Name: "device1", Metadata: &traits.Metadata{
+					Name:   "device1",
+					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
+				}},
 			},
-			responses: []*gen.ListDevicesResponse{
-				{
-					Devices: []*gen.Device{
-						{Name: "device1", Metadata: &traits.Metadata{}},
-					},
-				},
+			devices: []*gen.Device{
+				{Name: "device1", Metadata: &traits.Metadata{
+					Name:   "device1",
+					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
+				}},
 			},
 		},
 		{
 			name:    "paginated response",
 			initial: nil,
-			responses: []*gen.ListDevicesResponse{
-				{
-					Devices: []*gen.Device{
-						{Name: "device1", Metadata: &traits.Metadata{}},
-					},
-					NextPageToken: "page2",
-				},
-				{
-					Devices: []*gen.Device{
-						{Name: "device2", Metadata: &traits.Metadata{}},
-					},
-				},
+			devices: []*gen.Device{
+				{Name: "device1", Metadata: &traits.Metadata{
+					Name:   "device1",
+					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
+				}},
+				{Name: "device2", Metadata: &traits.Metadata{
+					Name:   "device2",
+					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
+				}},
 			},
 			wantAdds: []string{"device1", "device2"},
 		},
@@ -109,10 +111,19 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &mockDevicesClient{responses: tt.responses}
+			n := node.New("test")
+
+			if len(tt.devices) > 0 {
+				addDevices(n, tt.devices...)
+			}
+
+			client := gen.WrapDevicesApi(devicesmanage.NewServer(n))
+
+			initial := tt.initial
+
 			fetcher := &deviceFetcher{
 				client: client,
-				known:  tt.initial,
+				known:  initial,
 			}
 
 			ctx := context.Background()
@@ -131,13 +142,23 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 			var gotRems []string
 
 			for change := range changes {
+				var name string
 				switch change.Type {
 				case types.ChangeType_ADD:
-					gotAdds = append(gotAdds, change.NewValue.Name)
+					name = change.NewValue.Name
+					if name != "test" { // filter out the root node
+						gotAdds = append(gotAdds, name)
+					}
 				case types.ChangeType_UPDATE:
-					gotUpdts = append(gotUpdts, change.NewValue.Name)
+					name = change.NewValue.Name
+					if name != "test" {
+						gotUpdts = append(gotUpdts, name)
+					}
 				case types.ChangeType_REMOVE:
-					gotRems = append(gotRems, change.OldValue.Name)
+					name = change.OldValue.Name
+					if name != "test" {
+						gotRems = append(gotRems, name)
+					}
 				}
 			}
 
@@ -155,12 +176,16 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 }
 
 func TestDeviceFetcher_Poll_Error(t *testing.T) {
-	client := &mockDevicesClient{err: errors.New("network error")}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	n := node.New("test")
+	client := gen.WrapDevicesApi(devicesmanage.NewServer(n))
+
 	fetcher := &deviceFetcher{
 		client: client,
 	}
 
-	ctx := context.Background()
 	changes := make(chan *gen.PullDevicesResponse_Change, 10)
 
 	err := fetcher.Poll(ctx, changes)
@@ -171,33 +196,15 @@ func TestDeviceFetcher_Poll_Error(t *testing.T) {
 
 func TestDeviceFetcher_Pull(t *testing.T) {
 	t.Run("streams changes", func(t *testing.T) {
-		stream := &mockPullDevicesClient{
-			changes: []*gen.PullDevicesResponse{
-				{
-					Changes: []*gen.PullDevicesResponse_Change{
-						{
-							Type:     types.ChangeType_ADD,
-							NewValue: &gen.Device{Name: "device1"},
-						},
-					},
-				},
-				{
-					Changes: []*gen.PullDevicesResponse_Change{
-						{
-							Type:     types.ChangeType_UPDATE,
-							NewValue: &gen.Device{Name: "device1"},
-						},
-					},
-				},
-			},
-		}
+		n := node.New("test")
+		client := gen.WrapDevicesApi(devicesmanage.NewServer(n))
 
-		client := &mockDevicesClient{stream: stream}
 		fetcher := &deviceFetcher{
 			client: client,
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		changes := make(chan *gen.PullDevicesResponse_Change, 10)
 
 		errCh := make(chan error, 1)
@@ -205,87 +212,67 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 			errCh <- fetcher.Pull(ctx, changes)
 		}()
 
-		// Read the changes
-		var got []*gen.PullDevicesResponse_Change
-		for i := 0; i < 2; i++ {
-			select {
-			case change := <-changes:
-				got = append(got, change)
+		readNextChange := func() *gen.PullDevicesResponse_Change {
+			for {
+				change := <-changes
+				if change.NewValue != nil && change.NewValue.Name != "test" {
+					return change
+				}
 			}
+		}
+
+		n.Announce("device1", node.HasMetadata(&traits.Metadata{}))
+		change1 := readNextChange()
+		if change1.Type != types.ChangeType_ADD {
+			t.Errorf("expected ADD change for device1, got %v", change1.Type)
+		}
+		if change1.NewValue.Name != "device1" {
+			t.Errorf("expected device1, got %v", change1.NewValue.Name)
+		}
+
+		n.Announce("device1", node.HasMetadata(&traits.Metadata{
+			Traits: []*traits.TraitMetadata{{Name: "OnOff"}},
+		}), node.HasTrait(trait.OnOff))
+		change2 := readNextChange()
+		if change2.Type != types.ChangeType_ADD && change2.Type != types.ChangeType_UPDATE {
+			t.Errorf("expected ADD or UPDATE change for device1 update, got %v", change2.Type)
 		}
 
 		cancel()
 		<-errCh
-
-		if len(got) != 2 {
-			t.Errorf("Pull() got %d changes, want 2", len(got))
-		}
 	})
 
-	t.Run("handles stream error", func(t *testing.T) {
-		stream := &mockPullDevicesClient{
-			err: errors.New("stream error"),
-		}
+	t.Run("handles context cancellation", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
 
-		client := &mockDevicesClient{stream: stream}
+		n := node.New("test")
+		client := gen.WrapDevicesApi(devicesmanage.NewServer(n))
+
 		fetcher := &deviceFetcher{
 			client: client,
 		}
 
-		ctx := context.Background()
 		changes := make(chan *gen.PullDevicesResponse_Change, 10)
 
 		err := fetcher.Pull(ctx, changes)
 		if err == nil {
-			t.Error("Pull() expected error, got nil")
+			t.Error("Pull() expected error with canceled context, got nil")
 		}
 	})
 }
 
-type mockDevicesClient struct {
-	gen.DevicesApiClient
-	responses []*gen.ListDevicesResponse
-	stream    *mockPullDevicesClient
-	err       error
-	callCount int
-}
+func addDevices(n *node.Node, devices ...*gen.Device) {
 
-func (m *mockDevicesClient) ListDevices(_ context.Context, _ *gen.ListDevicesRequest, _ ...grpc.CallOption) (*gen.ListDevicesResponse, error) {
-	if m.err != nil {
-		return nil, m.err
+	for _, device := range devices {
+		opts := []node.Feature{
+			node.HasMetadata(device.Metadata),
+		}
+		for _, t := range device.Metadata.Traits {
+			opts = append(opts, node.HasTrait(trait.Name(t.Name)))
+		}
+		n.Announce(device.Name, opts...)
 	}
-	if m.callCount >= len(m.responses) {
-		return &gen.ListDevicesResponse{}, nil
-	}
-	resp := m.responses[m.callCount]
-	m.callCount++
-	return resp, nil
-}
-
-func (m *mockDevicesClient) PullDevices(_ context.Context, _ *gen.PullDevicesRequest, _ ...grpc.CallOption) (gen.DevicesApi_PullDevicesClient, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-	return m.stream, nil
-}
-
-type mockPullDevicesClient struct {
-	gen.DevicesApi_PullDevicesClient
-	changes []*gen.PullDevicesResponse
-	index   int
-	err     error
-}
-
-func (m *mockPullDevicesClient) Recv() (*gen.PullDevicesResponse, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-	if m.index >= len(m.changes) {
-		return nil, context.Canceled
-	}
-	msg := m.changes[m.index]
-	m.index++
-	return msg, nil
 }
 
 func stringSlicesEqual(a, b []string) bool {

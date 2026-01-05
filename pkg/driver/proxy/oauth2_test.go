@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/proxy/config"
@@ -243,29 +244,32 @@ func TestNewOAuth2Credentials(t *testing.T) {
 
 func TestFetchNewToken(t *testing.T) {
 	t.Run("successful token fetch", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			resp := map[string]interface{}{
-				"access_token": "fetched-token",
-				"expires_in":   1800,
+		synctest.Test(t, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				resp := map[string]interface{}{
+					"access_token": "fetched-token",
+					"expires_in":   1800,
+				}
+				_ = json.NewEncoder(w).Encode(resp)
+			}))
+			defer server.Close()
+
+			startTime := time.Now()
+			ctx := context.Background()
+			token, expires, err := fetchNewToken(ctx, server.Client(), server.URL, "client", "secret")
+			if err != nil {
+				t.Fatalf("fetchNewToken error: %v", err)
 			}
-			_ = json.NewEncoder(w).Encode(resp)
-		}))
-		defer server.Close()
 
-		ctx := context.Background()
-		token, expires, err := fetchNewToken(ctx, server.Client(), server.URL, "client", "secret")
-		if err != nil {
-			t.Fatalf("fetchNewToken error: %v", err)
-		}
+			if token != "fetched-token" {
+				t.Errorf("token = %s, want fetched-token", token)
+			}
 
-		if token != "fetched-token" {
-			t.Errorf("token = %s, want fetched-token", token)
-		}
-
-		expectedExpiry := time.Now().Add(1800 * time.Second)
-		if expires.Before(expectedExpiry.Add(-10*time.Second)) || expires.After(expectedExpiry.Add(10*time.Second)) {
-			t.Errorf("expires = %v, want around %v", expires, expectedExpiry)
-		}
+			expectedExpiry := startTime.Add(1800 * time.Second)
+			if !expires.Equal(expectedExpiry) {
+				t.Errorf("expires = %v, want %v", expires, expectedExpiry)
+			}
+		})
 	})
 
 	t.Run("handles HTTP error", func(t *testing.T) {
