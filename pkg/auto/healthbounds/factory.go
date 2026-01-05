@@ -247,14 +247,14 @@ func pathFieldsAreSet(path protopath.Values) bool {
 		switch step.Kind() {
 		case protopath.FieldAccessStep:
 			fd := step.FieldDescriptor()
-			// Only check message fields for being nil/unset
-			// Scalar fields (int, string, bool, etc.) can be zero and that's fine
-			if fd.Kind() == protoreflect.MessageKind {
-				parentMsg := path.Index(i - 1).Value.Message()
+			parentMsg := path.Index(i - 1).Value.Message()
+
+			if fd.HasPresence() {
 				if !parentMsg.Has(fd) {
 					return false
 				}
 			}
+
 		case protopath.ListIndexStep, protopath.MapIndexStep, protopath.AnyExpandStep:
 			continue
 		default:
