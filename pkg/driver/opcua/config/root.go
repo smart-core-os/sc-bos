@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gopcua/opcua/ua"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/gen"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	transportpb "github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
@@ -25,6 +27,52 @@ const (
 type valueSourceField struct {
 	desc  string
 	value *ValueSource
+}
+
+// OccupantImpact wraps gen.HealthCheck_OccupantImpact to support JSON unmarshaling from strings.
+type OccupantImpact gen.HealthCheck_OccupantImpact
+
+func (o *OccupantImpact) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	s = strings.ToUpper(s)
+	val, ok := gen.HealthCheck_OccupantImpact_value[s]
+	if !ok {
+		return fmt.Errorf("invalid OccupantImpact value: %q (valid values: OCCUPANT_IMPACT_UNSPECIFIED, NO_OCCUPANT_IMPACT, COMFORT, HEALTH, LIFE, SECURITY)", s)
+	}
+
+	*o = OccupantImpact(val)
+	return nil
+}
+
+func (o OccupantImpact) ToProto() gen.HealthCheck_OccupantImpact {
+	return gen.HealthCheck_OccupantImpact(o)
+}
+
+// EquipmentImpact wraps gen.HealthCheck_EquipmentImpact to support JSON unmarshaling from strings.
+type EquipmentImpact gen.HealthCheck_EquipmentImpact
+
+func (e *EquipmentImpact) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	s = strings.ToUpper(s)
+	val, ok := gen.HealthCheck_EquipmentImpact_value[s]
+	if !ok {
+		return fmt.Errorf("invalid EquipmentImpact value: %q (valid values: EQUIPMENT_IMPACT_UNSPECIFIED, NO_EQUIPMENT_IMPACT, WARRANTY, LIFESPAN, FUNCTION)", s)
+	}
+
+	*e = EquipmentImpact(val)
+	return nil
+}
+
+func (e EquipmentImpact) ToProto() gen.HealthCheck_EquipmentImpact {
+	return gen.HealthCheck_EquipmentImpact(e)
 }
 
 // Conn config related to communicating with the OPC UA server.
@@ -56,6 +104,14 @@ type Device struct {
 	Variables []*Variable `json:"variables,omitempty"`
 	// Traits a map Smart Core traits the device implements
 	Traits []RawTrait `json:"traits,omitempty"`
+	// Health contains settings for an opc ua device health check
+	// If not configured, the occupant and equipment impact will default to UNSPECIFIED
+	Health Health `json:"health"`
+}
+
+type Health struct {
+	OccupantImpact  OccupantImpact  `json:"occupantImpact"`
+	EquipmentImpact EquipmentImpact `json:"equipmentImpact"`
 }
 
 type Root struct {
@@ -64,6 +120,9 @@ type Root struct {
 	Meta    *traits.Metadata `json:"meta,omitempty"`
 	Conn    Conn             `json:"conn,omitempty"`
 	Devices []Device         `json:"devices,omitempty"`
+
+	// settings for the opc ua system health check
+	SystemHealth Health `json:"systemHealth,omitempty"`
 }
 
 func ParseConfig(data []byte) (cfg Root, err error) {
@@ -71,6 +130,7 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 	if err != nil {
 		return cfg, err
 	}
+
 	if cfg.Conn.SubscriptionInterval == nil {
 		cfg.Conn.SubscriptionInterval = &jsontypes.Duration{Duration: 5 * time.Second}
 	}

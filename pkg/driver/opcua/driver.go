@@ -17,6 +17,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
@@ -39,6 +40,7 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 
 	d := &Driver{
 		announcer: node.NewReplaceAnnouncer(services.Node),
+		health:    services.Health,
 		logger:    logger,
 	}
 	d.Service = service.New(
@@ -58,21 +60,21 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 
 type Driver struct {
 	*service.Service[config.Root]
-	logger    *zap.Logger
 	announcer *node.ReplaceAnnouncer
+	health    *healthpb.Checks
+	logger    *zap.Logger
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
-
 	a := d.announcer.Replace(ctx)
 
-	opcClient, err := opcua.NewClient(cfg.Conn.Endpoint)
+	systemCheck, err := d.health.NewFaultCheck(cfg.Name, getSystemHealthCheck(cfg.SystemHealth.OccupantImpact.ToProto(), cfg.SystemHealth.EquipmentImpact.ToProto()))
 	if err != nil {
 		d.logger.Warn("NewClient error", zap.Error(err))
 		return err
 	}
 
-	err = opcClient.Connect(ctx)
+	opcClient, err := d.connectOpcClient(ctx, cfg, systemCheck)
 	if err != nil {
 		d.logger.Warn("Connect error", zap.Error(err))
 		return err
@@ -84,10 +86,19 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		a.Announce(cfg.Name, node.HasMetadata(cfg.Meta))
 	}
 
+	var checks []*healthpb.FaultCheck
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, dev := range cfg.Devices {
 		allFeatures := []node.Feature{node.HasMetadata(dev.Meta)}
-		opcDev := newDevice(&dev, d.logger, client)
+
+		faultCheck, err := d.health.NewFaultCheck(dev.Name, getDeviceHealthCheck(dev.Health.OccupantImpact.ToProto(), dev.Health.EquipmentImpact.ToProto()))
+		if err != nil {
+			d.logger.Error("failed to create device fault check", zap.String("device", dev.Name), zap.Error(err))
+			return err
+		}
+		checks = append(checks, faultCheck)
+
+		opcDev := newDevice(&dev, d.logger, client, faultCheck)
 
 		for _, t := range dev.Traits {
 			switch t.Kind {
@@ -131,7 +142,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		a.Announce(dev.Name, allFeatures...)
 		dev := opcDev
 		grp.Go(func() error {
-			return dev.run(ctx)
+			return dev.subscribe(ctx)
 		})
 	}
 
@@ -146,6 +157,42 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		if err = opcClient.Close(closeCtx); err != nil {
 			d.logger.Warn("failed to close opcua client", zap.Error(err))
 		}
+
+		systemCheck.Dispose()
+		for _, c := range checks {
+			c.Dispose()
+		}
 	}()
 	return nil
+}
+
+func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, faultCheck *healthpb.FaultCheck) (*opcua.Client, error) {
+	rel := &gen.HealthCheck_Reliability{}
+	opcClient, err := opcua.NewClient(cfg.Conn.Endpoint)
+	if err != nil {
+		rel.State = gen.HealthCheck_Reliability_UNRELIABLE
+		rel.LastError = &gen.HealthCheck_Error{
+			SummaryText: "Internal Driver Error",
+			DetailsText: "Failed to create new OPC UA client",
+			Code:        statusToHealthCode(DriverConfigError),
+		}
+		faultCheck.UpdateReliability(ctx, rel)
+		d.logger.Error("error creating new client", zap.Error(err))
+		return nil, err
+	}
+
+	err = opcClient.Connect(ctx)
+	if err != nil {
+		rel.State = gen.HealthCheck_Reliability_NO_RESPONSE
+		rel.LastError = &gen.HealthCheck_Error{
+			SummaryText: "Server Unreachable",
+			DetailsText: "The opcua server is unreachable",
+			Code:        statusToHealthCode(ServerUnreachable),
+		}
+		faultCheck.UpdateReliability(ctx, rel)
+		d.logger.Error("error connecting to opc ua server", zap.Error(err))
+		return nil, err
+	}
+	faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
+	return opcClient, nil
 }
