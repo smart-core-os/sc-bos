@@ -20,11 +20,6 @@ type Node struct {
 	// TLS allows us to override the default enrollment managed TLS configuration.
 	TLS TLS `json:"tls,omitempty"`
 
-	// Name is the Smart Core name for the remote node.
-	// Used when discovering traits.
-	// If absent then the remote node should support empty/default names for Parent requests.
-	Name string `json:"name,omitempty"`
-
 	// Children is a list of devices that should be announced by the proxy server.
 	// If empty then all devices on the proxy host will be available (provided the user has authorization)
 	// Deprecated: use Devices instead.

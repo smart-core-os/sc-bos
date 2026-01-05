@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
@@ -13,21 +14,13 @@ import (
 // deviceFetcher implements pull.Fetcher to pull or poll devices from a client
 type deviceFetcher struct {
 	client gen.DevicesApiClient
-	name   string
 	known  map[string]*gen.Device // in case of polling, this tracks seen devices so we correctly send changes
 }
 
 func (c *deviceFetcher) Pull(ctx context.Context, changes chan<- *gen.PullDevicesResponse_Change) error {
 	stream, err := c.client.PullDevices(ctx, &gen.PullDevicesRequest{
-		Query: &gen.Device_Query{
-			Conditions: []*gen.Device_Query_Condition{
-				{
-					Field: "name",
-					Value: &gen.Device_Query_Condition_StringEqual{
-						StringEqual: c.name,
-					},
-				},
-			},
+		ReadMask: &fieldmaskpb.FieldMask{
+			Paths: []string{"name", "metadata"},
 		},
 	})
 	if err != nil {
@@ -56,15 +49,8 @@ func (c *deviceFetcher) Poll(ctx context.Context, changes chan<- *gen.PullDevice
 	}
 
 	req := &gen.ListDevicesRequest{
-		Query: &gen.Device_Query{
-			Conditions: []*gen.Device_Query_Condition{
-				{
-					Field: "name",
-					Value: &gen.Device_Query_Condition_StringEqual{
-						StringEqual: c.name,
-					},
-				},
-			},
+		ReadMask: &fieldmaskpb.FieldMask{
+			Paths: []string{"name", "metadata"},
 		},
 	}
 	for {

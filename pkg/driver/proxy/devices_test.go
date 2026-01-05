@@ -112,7 +112,6 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 			client := &mockDevicesClient{responses: tt.responses}
 			fetcher := &deviceFetcher{
 				client: client,
-				name:   "test-parent",
 				known:  tt.initial,
 			}
 
@@ -159,7 +158,6 @@ func TestDeviceFetcher_Poll_Error(t *testing.T) {
 	client := &mockDevicesClient{err: errors.New("network error")}
 	fetcher := &deviceFetcher{
 		client: client,
-		name:   "test-parent",
 	}
 
 	ctx := context.Background()
@@ -197,7 +195,6 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 		client := &mockDevicesClient{stream: stream}
 		fetcher := &deviceFetcher{
 			client: client,
-			name:   "test-parent",
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -233,7 +230,6 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 		client := &mockDevicesClient{stream: stream}
 		fetcher := &deviceFetcher{
 			client: client,
-			name:   "test-parent",
 		}
 
 		ctx := context.Background()

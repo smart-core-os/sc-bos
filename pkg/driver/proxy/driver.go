@@ -162,7 +162,7 @@ func (p *proxy) AnnounceDevices(ctx context.Context) error {
 
 	go p.announceChanges(changes)
 
-	fetcher := &deviceFetcher{name: p.config.Name, client: gen.NewDevicesApiClient(p.conn)}
+	fetcher := &deviceFetcher{client: gen.NewDevicesApiClient(p.conn)}
 	return pull.Changes[*gen.PullDevicesResponse_Change](ctx, fetcher, changes, pull.WithLogger(p.logger))
 }
 
