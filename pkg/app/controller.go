@@ -27,6 +27,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/account"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
+	"github.com/smart-core-os/sc-bos/internal/router"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors/protopkg"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
@@ -96,18 +97,25 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		cName = config.Name
 	}
 
+	// idOrNodeName returns the given oldID if non-empty, otherwise returns the node name.
+	idOrNodeName := func(oldID string) (newID string) {
+		if oldID == "" {
+			return cName
+		}
+		return oldID
+	}
 	// external store for devices so we can attach multiple resources to it,
 	// like metadata and health checks.
 	deviceStore := devicespb.NewCollection(
-		resource.WithIDInterceptor(func(oldID string) (newID string) {
-			if oldID == "" {
-				return cName
-			}
-			return oldID
-		}),
+		resource.WithIDInterceptor(idOrNodeName),
 		resource.WithNoDuplicates(),
 	)
-	rootNode := node.New(cName, nodeopts.WithStore(deviceStore))
+	// dynamic router for API clients, allows non-Announced services to also be served via rootNode.ClientConn()
+	nodeRouter := router.New(router.WithKeyInterceptor(func(key string) (mappedKey string, err error) {
+		return idOrNodeName(key), nil
+	}))
+
+	rootNode := node.New(cName, nodeopts.WithStore(deviceStore), nodeopts.WithRouter(nodeRouter))
 	rootNode.Logger = logger.Named("node")
 
 	var accountStore *account.Store
@@ -282,9 +290,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	grpcServer := grpc.NewServer(grpcOpts...)
 
 	reflectionServer := reflectionapi.NewServer(grpcServer, rootNode)
-	reflectionServer.Register(grpcServer)
+	reflectionServer.Register(nodeRouter)
 
-	gen.RegisterEnrollmentApiServer(grpcServer, enrollServer)
+	gen.RegisterEnrollmentApiServer(nodeRouter, enrollServer)
 
 	// DevicesApi
 	var devicesApiOpts []devices.Option
@@ -312,7 +320,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	}
 
 	devicesApi := devices.NewServer(rootNode, devicesApiOpts...)
-	devicesApi.Register(grpcServer)
+	devicesApi.Register(nodeRouter)
 
 	// HealthApi, HealthHistoryApi, and adding health checks to the DevicesApi
 	checkRegistry, closeHealthStore, err := setupHealthRegistry(ctx, config, deviceStore, rootNode, logger.Named("health"))

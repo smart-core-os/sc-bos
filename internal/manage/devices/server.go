@@ -65,7 +65,7 @@ func NewServer(m Model, opts ...Option) *Server {
 	return s
 }
 
-func (s *Server) Register(server *grpc.Server) {
+func (s *Server) Register(server grpc.ServiceRegistrar) {
 	gen.RegisterDevicesApiServer(server, s)
 }
 
