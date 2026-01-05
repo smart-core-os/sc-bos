@@ -10,14 +10,14 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 )
 
-// childrenFetcher implements pull.Fetcher to pull or poll children from a client
-type childrenFetcher struct {
+// deviceFetcher implements pull.Fetcher to pull or poll devices from a client
+type deviceFetcher struct {
 	client gen.DevicesApiClient
 	name   string
-	known  map[string]*gen.Device // in case of polling, this tracks seen children so we correctly send changes
+	known  map[string]*gen.Device // in case of polling, this tracks seen devices so we correctly send changes
 }
 
-func (c *childrenFetcher) Pull(ctx context.Context, changes chan<- *gen.PullDevicesResponse_Change) error {
+func (c *deviceFetcher) Pull(ctx context.Context, changes chan<- *gen.PullDevicesResponse_Change) error {
 	stream, err := c.client.PullDevices(ctx, &gen.PullDevicesRequest{
 		Query: &gen.Device_Query{
 			Conditions: []*gen.Device_Query_Condition{
@@ -46,7 +46,7 @@ func (c *childrenFetcher) Pull(ctx context.Context, changes chan<- *gen.PullDevi
 	}
 }
 
-func (c *childrenFetcher) Poll(ctx context.Context, changes chan<- *gen.PullDevicesResponse_Change) error {
+func (c *deviceFetcher) Poll(ctx context.Context, changes chan<- *gen.PullDevicesResponse_Change) error {
 	if c.known == nil {
 		c.known = make(map[string]*gen.Device)
 	}

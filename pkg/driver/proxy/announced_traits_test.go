@@ -8,21 +8,21 @@ import (
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
-func TestAnnouncedTraits_UpdateChild(t *testing.T) {
+func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 	tests := []struct {
 		name           string
 		initial        announcedTraits
-		oldChild       *gen.Device
-		newChild       *gen.Device
+		oldDevice      *gen.Device
+		newDevice      *gen.Device
 		wantAnnouncing []trait.Name
 		wantRemaining  int
 		wantDeleted    int
 	}{
 		{
-			name:     "nil old, new child added",
-			initial:  announcedTraits{},
-			oldChild: nil,
-			newChild: &gen.Device{
+			name:      "nil old, new device added",
+			initial:   announcedTraits{},
+			oldDevice: nil,
+			newDevice: &gen.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -37,18 +37,18 @@ func TestAnnouncedTraits_UpdateChild(t *testing.T) {
 		{
 			name:           "both nil",
 			initial:        announcedTraits{},
-			oldChild:       nil,
-			newChild:       nil,
+			oldDevice:      nil,
+			newDevice:      nil,
 			wantAnnouncing: nil,
 			wantRemaining:  0,
 		},
 		{
-			name: "old child removed",
+			name: "old device removed",
 			initial: announcedTraits{
-				childTrait{name: "device1", trait: "OnOff"}: func() {},
-				childTrait{name: "device1", trait: "Light"}: func() {},
+				deviceTrait{name: "device1", trait: "OnOff"}: func() {},
+				deviceTrait{name: "device1", trait: "Light"}: func() {},
 			},
-			oldChild: &gen.Device{
+			oldDevice: &gen.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -57,17 +57,17 @@ func TestAnnouncedTraits_UpdateChild(t *testing.T) {
 					},
 				},
 			},
-			newChild:       nil,
+			newDevice:      nil,
 			wantAnnouncing: nil,
 			wantRemaining:  0,
 			wantDeleted:    2,
 		},
 		{
-			name: "traits added to existing child",
+			name: "traits added to existing device",
 			initial: announcedTraits{
-				childTrait{name: "device1", trait: "OnOff"}: func() {},
+				deviceTrait{name: "device1", trait: "OnOff"}: func() {},
 			},
-			oldChild: &gen.Device{
+			oldDevice: &gen.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -75,7 +75,7 @@ func TestAnnouncedTraits_UpdateChild(t *testing.T) {
 					},
 				},
 			},
-			newChild: &gen.Device{
+			newDevice: &gen.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -89,13 +89,13 @@ func TestAnnouncedTraits_UpdateChild(t *testing.T) {
 			wantRemaining:  1,
 		},
 		{
-			name: "traits removed from existing child",
+			name: "traits removed from existing device",
 			initial: announcedTraits{
-				childTrait{name: "device1", trait: "OnOff"}:      func() {},
-				childTrait{name: "device1", trait: "Light"}:      func() {},
-				childTrait{name: "device1", trait: "Brightness"}: func() {},
+				deviceTrait{name: "device1", trait: "OnOff"}:      func() {},
+				deviceTrait{name: "device1", trait: "Light"}:      func() {},
+				deviceTrait{name: "device1", trait: "Brightness"}: func() {},
 			},
-			oldChild: &gen.Device{
+			oldDevice: &gen.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -105,7 +105,7 @@ func TestAnnouncedTraits_UpdateChild(t *testing.T) {
 					},
 				},
 			},
-			newChild: &gen.Device{
+			newDevice: &gen.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -127,10 +127,10 @@ func TestAnnouncedTraits_UpdateChild(t *testing.T) {
 				a[k] = func() { deleteCount++ }
 			}
 
-			got := a.updateChild(tt.oldChild, tt.newChild)
+			got := a.updateDevice(tt.oldDevice, tt.newDevice)
 
 			if !traitNamesEqual(got, tt.wantAnnouncing) {
-				t.Errorf("updateChild() = %v, want %v", got, tt.wantAnnouncing)
+				t.Errorf("updateDevice() = %v, want %v", got, tt.wantAnnouncing)
 			}
 
 			if len(a) != tt.wantRemaining {
@@ -151,17 +151,17 @@ func TestAnnouncedTraits_DeleteOperations(t *testing.T) {
 		operation     func(announcedTraits) int
 		wantRemaining int
 		wantDeleted   int
-		checkKey      *childTrait
+		checkKey      *deviceTrait
 	}{
 		{
-			name: "deleteChild removes all child traits",
+			name: "deleteDevice removes all device traits",
 			initial: announcedTraits{
-				childTrait{name: "device1", trait: "OnOff"}: func() {},
-				childTrait{name: "device1", trait: "Light"}: func() {},
-				childTrait{name: "device2", trait: "OnOff"}: func() {},
+				deviceTrait{name: "device1", trait: "OnOff"}: func() {},
+				deviceTrait{name: "device1", trait: "Light"}: func() {},
+				deviceTrait{name: "device2", trait: "OnOff"}: func() {},
 			},
 			operation: func(a announcedTraits) int {
-				a.deleteChild(&gen.Device{
+				a.deleteDevice(&gen.Device{
 					Name: "device1",
 					Metadata: &traits.Metadata{
 						Traits: []*traits.TraitMetadata{
@@ -174,29 +174,29 @@ func TestAnnouncedTraits_DeleteOperations(t *testing.T) {
 			},
 			wantRemaining: 1,
 			wantDeleted:   2,
-			checkKey:      &childTrait{name: "device2", trait: "OnOff"},
+			checkKey:      &deviceTrait{name: "device2", trait: "OnOff"},
 		},
 		{
-			name: "deleteChildTrait removes single trait",
+			name: "deleteDeviceTrait removes single trait",
 			initial: announcedTraits{
-				childTrait{name: "device1", trait: "OnOff"}: func() {},
-				childTrait{name: "device1", trait: "Light"}: func() {},
+				deviceTrait{name: "device1", trait: "OnOff"}: func() {},
+				deviceTrait{name: "device1", trait: "Light"}: func() {},
 			},
 			operation: func(a announcedTraits) int {
-				a.deleteChildTrait("device1", "OnOff")
+				a.deleteDeviceTrait("device1", "OnOff")
 				return 0
 			},
 			wantRemaining: 1,
 			wantDeleted:   1,
-			checkKey:      &childTrait{name: "device1", trait: "Light"},
+			checkKey:      &deviceTrait{name: "device1", trait: "Light"},
 		},
 		{
-			name: "deleteChildTrait non-existent does not panic",
+			name: "deleteDeviceTrait non-existent does not panic",
 			initial: announcedTraits{
-				childTrait{name: "device1", trait: "Light"}: func() {},
+				deviceTrait{name: "device1", trait: "Light"}: func() {},
 			},
 			operation: func(a announcedTraits) int {
-				a.deleteChildTrait("device1", "NonExistent")
+				a.deleteDeviceTrait("device1", "NonExistent")
 				return 0
 			},
 			wantRemaining: 1,
@@ -205,9 +205,9 @@ func TestAnnouncedTraits_DeleteOperations(t *testing.T) {
 		{
 			name: "deleteAll removes everything",
 			initial: announcedTraits{
-				childTrait{name: "device1", trait: "OnOff"}: func() {},
-				childTrait{name: "device1", trait: "Light"}: func() {},
-				childTrait{name: "device2", trait: "OnOff"}: func() {},
+				deviceTrait{name: "device1", trait: "OnOff"}: func() {},
+				deviceTrait{name: "device1", trait: "Light"}: func() {},
+				deviceTrait{name: "device2", trait: "OnOff"}: func() {},
 			},
 			operation: func(a announcedTraits) int {
 				a.deleteAll()
@@ -256,7 +256,7 @@ func TestAnnouncedTraits_Add(t *testing.T) {
 		t.Errorf("len(a) = %d, want 1", len(a))
 	}
 
-	key := childTrait{name: "device1", trait: "OnOff"}
+	key := deviceTrait{name: "device1", trait: "OnOff"}
 	if fn, ok := a[key]; !ok {
 		t.Error("trait not added")
 	} else {

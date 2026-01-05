@@ -12,7 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 )
 
-func TestChildrenFetcher_Poll(t *testing.T) {
+func TestDeviceFetcher_Poll(t *testing.T) {
 	tests := []struct {
 		name      string
 		initial   map[string]*gen.Device
@@ -110,7 +110,7 @@ func TestChildrenFetcher_Poll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &mockDevicesClient{responses: tt.responses}
-			fetcher := &childrenFetcher{
+			fetcher := &deviceFetcher{
 				client: client,
 				name:   "test-parent",
 				known:  tt.initial,
@@ -155,9 +155,9 @@ func TestChildrenFetcher_Poll(t *testing.T) {
 	}
 }
 
-func TestChildrenFetcher_Poll_Error(t *testing.T) {
+func TestDeviceFetcher_Poll_Error(t *testing.T) {
 	client := &mockDevicesClient{err: errors.New("network error")}
-	fetcher := &childrenFetcher{
+	fetcher := &deviceFetcher{
 		client: client,
 		name:   "test-parent",
 	}
@@ -171,7 +171,7 @@ func TestChildrenFetcher_Poll_Error(t *testing.T) {
 	}
 }
 
-func TestChildrenFetcher_Pull(t *testing.T) {
+func TestDeviceFetcher_Pull(t *testing.T) {
 	t.Run("streams changes", func(t *testing.T) {
 		stream := &mockPullDevicesClient{
 			changes: []*gen.PullDevicesResponse{
@@ -195,7 +195,7 @@ func TestChildrenFetcher_Pull(t *testing.T) {
 		}
 
 		client := &mockDevicesClient{stream: stream}
-		fetcher := &childrenFetcher{
+		fetcher := &deviceFetcher{
 			client: client,
 			name:   "test-parent",
 		}
@@ -231,7 +231,7 @@ func TestChildrenFetcher_Pull(t *testing.T) {
 		}
 
 		client := &mockDevicesClient{stream: stream}
-		fetcher := &childrenFetcher{
+		fetcher := &deviceFetcher{
 			client: client,
 			name:   "test-parent",
 		}

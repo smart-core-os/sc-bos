@@ -15,14 +15,14 @@ func Test_proxy_announceChange(t *testing.T) {
 	tests := []struct {
 		name        string
 		change      *gen.PullDevicesResponse_Change
-		wantPresent []childTrait
-		wantAbsent  []childTrait
+		wantPresent []deviceTrait
+		wantAbsent  []deviceTrait
 	}{
 		{
-			name: "new child",
+			name: "new device",
 			change: &gen.PullDevicesResponse_Change{
 				NewValue: &gen.Device{
-					Name: "child01",
+					Name: "device01",
 					Metadata: &traits.Metadata{
 						Traits: []*traits.TraitMetadata{
 							{Name: trait.OnOff.String()},
@@ -31,16 +31,16 @@ func Test_proxy_announceChange(t *testing.T) {
 					},
 				},
 			},
-			wantPresent: []childTrait{
-				{name: "child01", trait: trait.OnOff},
-				{name: "child01", trait: trait.Hail},
+			wantPresent: []deviceTrait{
+				{name: "device01", trait: trait.OnOff},
+				{name: "device01", trait: trait.Hail},
 			},
 		},
 		{
-			name: "child adds new trait",
+			name: "device adds new trait",
 			change: &gen.PullDevicesResponse_Change{
 				NewValue: &gen.Device{
-					Name: "child01",
+					Name: "device01",
 					Metadata: &traits.Metadata{
 						Traits: []*traits.TraitMetadata{
 							{Name: trait.OnOff.String()},
@@ -50,17 +50,17 @@ func Test_proxy_announceChange(t *testing.T) {
 					},
 				},
 			},
-			wantPresent: []childTrait{
-				{name: "child01", trait: trait.OnOff},
-				{name: "child01", trait: trait.Hail},
-				{name: "child01", trait: trait.Light},
+			wantPresent: []deviceTrait{
+				{name: "device01", trait: trait.OnOff},
+				{name: "device01", trait: trait.Hail},
+				{name: "device01", trait: trait.Light},
 			},
 		},
 		{
-			name: "child removes trait",
+			name: "device removes trait",
 			change: &gen.PullDevicesResponse_Change{
 				OldValue: &gen.Device{
-					Name: "child01",
+					Name: "device01",
 					Metadata: &traits.Metadata{
 						Traits: []*traits.TraitMetadata{
 							{Name: trait.OnOff.String()},
@@ -70,7 +70,7 @@ func Test_proxy_announceChange(t *testing.T) {
 					},
 				},
 				NewValue: &gen.Device{
-					Name: "child01",
+					Name: "device01",
 					Metadata: &traits.Metadata{
 						Traits: []*traits.TraitMetadata{
 							{Name: trait.OnOff.String()},
@@ -79,12 +79,12 @@ func Test_proxy_announceChange(t *testing.T) {
 					},
 				},
 			},
-			wantPresent: []childTrait{
-				{name: "child01", trait: trait.OnOff},
-				{name: "child01", trait: trait.Light},
+			wantPresent: []deviceTrait{
+				{name: "device01", trait: trait.OnOff},
+				{name: "device01", trait: trait.Light},
 			},
-			wantAbsent: []childTrait{
-				{name: "child01", trait: trait.Hail},
+			wantAbsent: []deviceTrait{
+				{name: "device01", trait: trait.Hail},
 			},
 		},
 	}
