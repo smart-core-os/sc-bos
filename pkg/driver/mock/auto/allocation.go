@@ -12,7 +12,7 @@ import (
 )
 
 func AllocationAuto(model *allocationpb.Model) service.Lifecycle {
-	states := maps.Values(gen.Allocation_States_value)
+	states := maps.Values(gen.Allocation_State_value)
 
 	states = states[1:] // remove the UNKNOWN state
 
@@ -37,7 +37,7 @@ func AllocationAuto(model *allocationpb.Model) service.Lifecycle {
 			unallocationTotal := int32(0)
 
 			for {
-				allocation := gen.Allocation_States(states[rand.IntN(len(states))])
+				allocation := gen.Allocation_State(states[rand.IntN(len(states))])
 
 				switch allocation {
 				case gen.Allocation_ALLOCATED:

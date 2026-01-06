@@ -16,6 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
 	"github.com/smart-core-os/sc-bos/pkg/driver/alldrivers"
 	mockcfg "github.com/smart-core-os/sc-bos/pkg/driver/mock/config"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
 	airqualitycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality/config"
@@ -144,6 +145,18 @@ func main() {
 		}
 	}()
 
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for _, d := range sd.allocation {
+			err = SeedAllocation(ctx, db, d, lookBack)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("seeded allocation device %s\n", d)
+		}
+	}()
+
 	wg.Wait()
 }
 
@@ -214,6 +227,7 @@ type seedDevices struct {
 	airTemperature []string
 	soundSensor    []string
 	occupancy      []string
+	allocation     []string
 }
 
 func (sd *seedDevices) normalise() {
@@ -253,6 +267,8 @@ func parseDeviceConfig(sd *seedDevices, appConf *appconf.Config) error {
 					sd.airTemperature = append(sd.airTemperature, device.Name)
 				case soundsensorpb.TraitName:
 					sd.soundSensor = append(sd.soundSensor, device.Name)
+				case allocationpb.TraitName:
+					sd.allocation = append(sd.allocation, device.Name)
 				}
 			}
 		}
