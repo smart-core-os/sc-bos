@@ -29,6 +29,7 @@ Currently supported traits include:
 - `smartcore.bos.EmergencyLight` - Monitor emergency light test results
 - `smartcore.bos.Meter` - Monitor meter readings
 - `smartcore.traits.OnOff` - Monitor on/off state
+- `smartcore.bos.SoundSensor` - Monitor sound level readings
 - `smartcore.bos.Temperature` - Monitor temperature readings
 
 More traits can be added by registering them in the internal trait registry.
