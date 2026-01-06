@@ -51,11 +51,14 @@ func (g Generator) String() string {
 
 func run(ctx *generator.Context) error {
 	protoDir := filepath.Join(ctx.RootDir, "proto")
-	genDir := filepath.Join(ctx.RootDir, "pkg", "gen")
-
-	// Clean up old generated files
-	if err := cleanGeneratedFiles(ctx, genDir); err != nil {
-		return fmt.Errorf("cleaning generated files: %w", err)
+	for _, dir := range []string{
+		filepath.Join(ctx.RootDir, "pkg", "gen"),   // generated code used to go here
+		filepath.Join(ctx.RootDir, "pkg", "proto"), // current location for generated code
+	} {
+		// Clean up old generated files
+		if err := cleanGeneratedFiles(ctx, dir); err != nil {
+			return fmt.Errorf("cleaning generated files %q: %w", dir, err)
+		}
 	}
 
 	// Discover proto files and their required generators
@@ -67,7 +70,7 @@ func run(ctx *generator.Context) error {
 	ctx.Verbose("Found %d proto files in %d generator groups", len(fileGenerators), len(groups))
 
 	for gen, files := range groups {
-		if err := generateProtos(ctx, protoDir, genDir, gen, files); err != nil {
+		if err := generateProtos(ctx, protoDir, gen, files); err != nil {
 			return err
 		}
 	}
@@ -166,11 +169,12 @@ func cleanGeneratedFiles(ctx *generator.Context, genDir string) error {
 }
 
 // generateProtos generates code for a set of proto files with the same generator requirements.
-func generateProtos(ctx *generator.Context, protoDir, genDir string, gen Generator, files []string) error {
+func generateProtos(ctx *generator.Context, protoDir string, gen Generator, files []string) error {
 	if len(files) == 0 {
 		return nil
 	}
-	modulePrefix := "github.com/smart-core-os/sc-bos/pkg/gen"
+	modulePrefix := "github.com/smart-core-os/sc-bos"
+	outDir := ctx.RootDir
 
 	ctx.Verbose("Generating %s: %s", gen, strings.Join(files, ", "))
 	goPluginPath, err := toolchain.GetGoToolPath("protoc-gen-go")
@@ -188,10 +192,10 @@ func generateProtos(ctx *generator.Context, protoDir, genDir string, gen Generat
 	args = append(args,
 		"--plugin=protoc-gen-go="+goPluginPath,
 		"--go_opt=module="+modulePrefix,
-		"--go_out="+genDir,
+		"--go_out="+outDir,
 		"--plugin=protoc-gen-go-grpc="+grpcPluginPath,
 		"--go-grpc_opt=module="+modulePrefix,
-		"--go-grpc_out="+genDir,
+		"--go-grpc_out="+outDir,
 	)
 
 	if gen.Has(GenRouter) {
@@ -204,7 +208,7 @@ func generateProtos(ctx *generator.Context, protoDir, genDir string, gen Generat
 			"--plugin=protoc-gen-router="+routerPluginPath,
 			"--router_opt=usePaths=true",
 			"--router_opt=module="+modulePrefix,
-			"--router_out="+genDir,
+			"--router_out="+outDir,
 		)
 	}
 	if gen.Has(GenWrapper) {
@@ -217,7 +221,7 @@ func generateProtos(ctx *generator.Context, protoDir, genDir string, gen Generat
 			"--plugin=protoc-gen-wrapper="+wrapperPluginPath,
 			"--wrapper_opt=usePaths=true",
 			"--wrapper_opt=module="+modulePrefix,
-			"--wrapper_out="+genDir,
+			"--wrapper_out="+outDir,
 		)
 	}
 
