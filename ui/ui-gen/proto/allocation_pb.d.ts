@@ -6,8 +6,8 @@ import * as actor_pb from './actor_pb'; // proto import: "actor.proto"
 
 
 export class Allocation extends jspb.Message {
-  getState(): Allocation.States;
-  setState(value: Allocation.States): Allocation;
+  getState(): Allocation.State;
+  setState(value: Allocation.State): Allocation;
 
   getActor(): actor_pb.Actor | undefined;
   setActor(value?: actor_pb.Actor): Allocation;
@@ -39,15 +39,15 @@ export class Allocation extends jspb.Message {
 
 export namespace Allocation {
   export type AsObject = {
-    state: Allocation.States;
+    state: Allocation.State;
     actor?: actor_pb.Actor.AsObject;
     groupId?: string;
     unallocationTotal?: number;
     allocationTotal?: number;
   };
 
-  export enum States {
-    ASSIGNMENT_UNSPECIFIED = 0,
+  export enum State {
+    STATE_UNSPECIFIED = 0,
     UNALLOCATED = 1,
     ALLOCATED = 2,
   }

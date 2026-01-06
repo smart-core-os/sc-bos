@@ -21,16 +21,16 @@ service AllocationApi {
 
 // Allocation represents the allocation of a resource to an actor.
 message Allocation {
-  enum States {
-    // The assignment status is unspecified.
-    ASSIGNMENT_UNSPECIFIED = 0;
+  enum State {
+    // The allocation State is unspecified.
+    STATE_UNSPECIFIED = 0;
     // The resource is unallocated and available for allocation.
     UNALLOCATED = 1;
     // The resource is allocated.
     ALLOCATED = 2;
   }
-  // The allocation state of the allocation.
-  States state = 1;
+  // The state of the allocation.
+  State state = 1;
   // The actor to whom the resource is allocated.
   optional Actor actor = 2;
   // The id of the group this allocation belongs to.

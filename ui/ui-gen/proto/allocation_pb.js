@@ -22,7 +22,7 @@ goog.object.extend(proto, google_protobuf_timestamp_pb);
 var actor_pb = require('./actor_pb.js');
 goog.object.extend(proto, actor_pb);
 goog.exportSymbol('proto.smartcore.bos.Allocation', null, global);
-goog.exportSymbol('proto.smartcore.bos.Allocation.States', null, global);
+goog.exportSymbol('proto.smartcore.bos.Allocation.State', null, global);
 goog.exportSymbol('proto.smartcore.bos.GetAllocationRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.PullAllocationRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.PullAllocationResponse', null, global);
@@ -228,7 +228,7 @@ proto.smartcore.bos.Allocation.deserializeBinaryFromReader = function(msg, reade
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {!proto.smartcore.bos.Allocation.States} */ (reader.readEnum());
+      var value = /** @type {!proto.smartcore.bos.Allocation.State} */ (reader.readEnum());
       msg.setState(value);
       break;
     case 2:
@@ -319,23 +319,23 @@ proto.smartcore.bos.Allocation.serializeBinaryToWriter = function(message, write
 /**
  * @enum {number}
  */
-proto.smartcore.bos.Allocation.States = {
-  ASSIGNMENT_UNSPECIFIED: 0,
+proto.smartcore.bos.Allocation.State = {
+  STATE_UNSPECIFIED: 0,
   UNALLOCATED: 1,
   ALLOCATED: 2
 };
 
 /**
- * optional States state = 1;
- * @return {!proto.smartcore.bos.Allocation.States}
+ * optional State state = 1;
+ * @return {!proto.smartcore.bos.Allocation.State}
  */
 proto.smartcore.bos.Allocation.prototype.getState = function() {
-  return /** @type {!proto.smartcore.bos.Allocation.States} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+  return /** @type {!proto.smartcore.bos.Allocation.State} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
 };
 
 
 /**
- * @param {!proto.smartcore.bos.Allocation.States} value
+ * @param {!proto.smartcore.bos.Allocation.State} value
  * @return {!proto.smartcore.bos.Allocation} returns this
  */
 proto.smartcore.bos.Allocation.prototype.setState = function(value) {

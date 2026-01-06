@@ -23,63 +23,63 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Allocation_States int32
+type Allocation_State int32
 
 const (
-	// The assignment status is unspecified.
-	Allocation_ASSIGNMENT_UNSPECIFIED Allocation_States = 0
+	// The allocation State is unspecified.
+	Allocation_STATE_UNSPECIFIED Allocation_State = 0
 	// The resource is unallocated and available for allocation.
-	Allocation_UNALLOCATED Allocation_States = 1
+	Allocation_UNALLOCATED Allocation_State = 1
 	// The resource is allocated.
-	Allocation_ALLOCATED Allocation_States = 2
+	Allocation_ALLOCATED Allocation_State = 2
 )
 
-// Enum value maps for Allocation_States.
+// Enum value maps for Allocation_State.
 var (
-	Allocation_States_name = map[int32]string{
-		0: "ASSIGNMENT_UNSPECIFIED",
+	Allocation_State_name = map[int32]string{
+		0: "STATE_UNSPECIFIED",
 		1: "UNALLOCATED",
 		2: "ALLOCATED",
 	}
-	Allocation_States_value = map[string]int32{
-		"ASSIGNMENT_UNSPECIFIED": 0,
-		"UNALLOCATED":            1,
-		"ALLOCATED":              2,
+	Allocation_State_value = map[string]int32{
+		"STATE_UNSPECIFIED": 0,
+		"UNALLOCATED":       1,
+		"ALLOCATED":         2,
 	}
 )
 
-func (x Allocation_States) Enum() *Allocation_States {
-	p := new(Allocation_States)
+func (x Allocation_State) Enum() *Allocation_State {
+	p := new(Allocation_State)
 	*p = x
 	return p
 }
 
-func (x Allocation_States) String() string {
+func (x Allocation_State) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (Allocation_States) Descriptor() protoreflect.EnumDescriptor {
+func (Allocation_State) Descriptor() protoreflect.EnumDescriptor {
 	return file_allocation_proto_enumTypes[0].Descriptor()
 }
 
-func (Allocation_States) Type() protoreflect.EnumType {
+func (Allocation_State) Type() protoreflect.EnumType {
 	return &file_allocation_proto_enumTypes[0]
 }
 
-func (x Allocation_States) Number() protoreflect.EnumNumber {
+func (x Allocation_State) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use Allocation_States.Descriptor instead.
-func (Allocation_States) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use Allocation_State.Descriptor instead.
+func (Allocation_State) EnumDescriptor() ([]byte, []int) {
 	return file_allocation_proto_rawDescGZIP(), []int{0, 0}
 }
 
 // Allocation represents the allocation of a resource to an actor.
 type Allocation struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The allocation state of the allocation.
-	State Allocation_States `protobuf:"varint,1,opt,name=state,proto3,enum=smartcore.bos.Allocation_States" json:"state,omitempty"`
+	// The state of the allocation.
+	State Allocation_State `protobuf:"varint,1,opt,name=state,proto3,enum=smartcore.bos.Allocation_State" json:"state,omitempty"`
 	// The actor to whom the resource is allocated.
 	Actor *Actor `protobuf:"bytes,2,opt,name=actor,proto3,oneof" json:"actor,omitempty"`
 	// The id of the group this allocation belongs to.
@@ -123,11 +123,11 @@ func (*Allocation) Descriptor() ([]byte, []int) {
 	return file_allocation_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Allocation) GetState() Allocation_States {
+func (x *Allocation) GetState() Allocation_State {
 	if x != nil {
 		return x.State
 	}
-	return Allocation_ASSIGNMENT_UNSPECIFIED
+	return Allocation_STATE_UNSPECIFIED
 }
 
 func (x *Allocation) GetActor() *Actor {
@@ -442,16 +442,16 @@ var File_allocation_proto protoreflect.FileDescriptor
 
 const file_allocation_proto_rawDesc = "" +
 	"\n" +
-	"\x10allocation.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\vactor.proto\"\x82\x03\n" +
+	"\x10allocation.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\vactor.proto\"\xfb\x02\n" +
 	"\n" +
-	"Allocation\x126\n" +
-	"\x05state\x18\x01 \x01(\x0e2 .smartcore.bos.Allocation.StatesR\x05state\x12/\n" +
+	"Allocation\x125\n" +
+	"\x05state\x18\x01 \x01(\x0e2\x1f.smartcore.bos.Allocation.StateR\x05state\x12/\n" +
 	"\x05actor\x18\x02 \x01(\v2\x14.smartcore.bos.ActorH\x00R\x05actor\x88\x01\x01\x12\x1e\n" +
 	"\bgroup_id\x18\x03 \x01(\tH\x01R\agroupId\x88\x01\x01\x122\n" +
 	"\x12unallocation_total\x18\x04 \x01(\x05H\x02R\x11unallocationTotal\x88\x01\x01\x12.\n" +
-	"\x10allocation_total\x18\x05 \x01(\x05H\x03R\x0fallocationTotal\x88\x01\x01\"D\n" +
-	"\x06States\x12\x1a\n" +
-	"\x16ASSIGNMENT_UNSPECIFIED\x10\x00\x12\x0f\n" +
+	"\x10allocation_total\x18\x05 \x01(\x05H\x03R\x0fallocationTotal\x88\x01\x01\">\n" +
+	"\x05State\x12\x15\n" +
+	"\x11STATE_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vUNALLOCATED\x10\x01\x12\r\n" +
 	"\tALLOCATED\x10\x02B\b\n" +
 	"\x06_actorB\v\n" +
@@ -501,7 +501,7 @@ func file_allocation_proto_rawDescGZIP() []byte {
 var file_allocation_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_allocation_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_allocation_proto_goTypes = []any{
-	(Allocation_States)(0),                // 0: smartcore.bos.Allocation.States
+	(Allocation_State)(0),                 // 0: smartcore.bos.Allocation.State
 	(*Allocation)(nil),                    // 1: smartcore.bos.Allocation
 	(*GetAllocationRequest)(nil),          // 2: smartcore.bos.GetAllocationRequest
 	(*UpdateAllocationRequest)(nil),       // 3: smartcore.bos.UpdateAllocationRequest
@@ -513,7 +513,7 @@ var file_allocation_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),         // 9: google.protobuf.Timestamp
 }
 var file_allocation_proto_depIdxs = []int32{
-	0,  // 0: smartcore.bos.Allocation.state:type_name -> smartcore.bos.Allocation.States
+	0,  // 0: smartcore.bos.Allocation.state:type_name -> smartcore.bos.Allocation.State
 	7,  // 1: smartcore.bos.Allocation.actor:type_name -> smartcore.bos.Actor
 	8,  // 2: smartcore.bos.GetAllocationRequest.read_mask:type_name -> google.protobuf.FieldMask
 	1,  // 3: smartcore.bos.UpdateAllocationRequest.allocation:type_name -> smartcore.bos.Allocation
