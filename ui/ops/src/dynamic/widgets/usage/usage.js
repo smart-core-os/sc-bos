@@ -156,15 +156,15 @@ async function readUsageCountSeries(names, edges, countBefore) {
 
         if (d[beforeIdx]) {
           d[beforeIdx].total = Math.max((record.allocation.allocationTotal ?? 0) - (record.allocation.unallocationTotal ?? 0), d[beforeIdx].total);
-          if (record.allocation.state === Allocation.States.ALLOCATED) {
+          if (record.allocation.state === Allocation.State.ALLOCATED) {
             d[beforeIdx].sum += 1;
-          } else if (record.allocation.state === Allocation.States.UNALLOCATED) {
+          } else if (record.allocation.state === Allocation.State.UNALLOCATED) {
             d[beforeIdx].sum -= 1;
           }
         } else {
           d[beforeIdx] = {
             x: before,
-            sum: record.allocation.state === Allocation.States.ALLOCATED ? 1 : 0,
+            sum: record.allocation.state === Allocation.State.ALLOCATED ? 1 : 0,
             total: (record.allocation.allocationTotal ?? 0) - (record.allocation.unallocationTotal ?? 0),
             last: 0
           };
@@ -196,7 +196,7 @@ async function readUsageCountSeries(names, edges, countBefore) {
           if (totalAssignedCount > 1) {
             copySrc = {x: edges[0], y: totalAssignedCount, last: totalAssignedCount};
           } else {
-            const sumAssignedCount = rec.allocation.state === Allocation.States.ALLOCATED ? 1 : 0
+            const sumAssignedCount = rec.allocation.state === Allocation.State.ALLOCATED ? 1 : 0
             copySrc = {x: edges[0], y: sumAssignedCount, last: sumAssignedCount};
           }
         }

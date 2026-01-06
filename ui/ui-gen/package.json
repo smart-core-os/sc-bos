@@ -1,6 +1,6 @@
 {
   "name": "@smart-core-os/sc-bos-ui-gen",
-  "version": "1.0.0-beta.24",
+  "version": "1.0.0-beta.25",
   "type": "commonjs",
   "scripts": {
     "gen": "go run ../../cmd/tools/genproto -only uiproto"
