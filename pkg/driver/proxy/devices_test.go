@@ -3,6 +3,7 @@ package proxy
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
@@ -196,50 +197,45 @@ func TestDeviceFetcher_Poll_Error(t *testing.T) {
 
 func TestDeviceFetcher_Pull(t *testing.T) {
 	t.Run("streams changes", func(t *testing.T) {
-		n := node.New("test")
-		client := gen.WrapDevicesApi(devicesmanage.NewServer(n))
+		synctest.Test(t, func(t *testing.T) {
+			n := node.New("test")
+			client := gen.WrapDevicesApi(devicesmanage.NewServer(n))
 
-		fetcher := &deviceFetcher{
-			client: client,
-		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		changes := make(chan *gen.PullDevicesResponse_Change, 10)
-
-		errCh := make(chan error, 1)
-		go func() {
-			errCh <- fetcher.Pull(ctx, changes)
-		}()
-
-		readNextChange := func() *gen.PullDevicesResponse_Change {
-			for {
-				change := <-changes
-				if change.NewValue != nil && change.NewValue.Name != "test" {
-					return change
-				}
+			fetcher := &deviceFetcher{
+				client: client,
 			}
-		}
 
-		n.Announce("device1", node.HasMetadata(&traits.Metadata{}))
-		change1 := readNextChange()
-		if change1.Type != types.ChangeType_ADD {
-			t.Errorf("expected ADD change for device1, got %v", change1.Type)
-		}
-		if change1.NewValue.Name != "device1" {
-			t.Errorf("expected device1, got %v", change1.NewValue.Name)
-		}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			changes := make(chan *gen.PullDevicesResponse_Change, 10)
 
-		n.Announce("device1", node.HasMetadata(&traits.Metadata{
-			Traits: []*traits.TraitMetadata{{Name: "OnOff"}},
-		}), node.HasTrait(trait.OnOff))
-		change2 := readNextChange()
-		if change2.Type != types.ChangeType_ADD && change2.Type != types.ChangeType_UPDATE {
-			t.Errorf("expected ADD or UPDATE change for device1 update, got %v", change2.Type)
-		}
+			errCh := make(chan error, 1)
+			go func() {
+				errCh <- fetcher.Pull(ctx, changes)
+			}()
 
-		cancel()
-		<-errCh
+			n.Announce("device1", node.HasMetadata(&traits.Metadata{}))
+			synctest.Wait()
+			change1 := <-changes
+			if change1.Type != types.ChangeType_ADD {
+				t.Errorf("expected ADD change for device1, got %v", change1.Type)
+			}
+			if change1.NewValue.Name != "device1" {
+				t.Errorf("expected device1, got %v", change1.NewValue.Name)
+			}
+
+			n.Announce("device1", node.HasMetadata(&traits.Metadata{
+				Traits: []*traits.TraitMetadata{{Name: "OnOff"}},
+			}), node.HasTrait(trait.OnOff))
+			synctest.Wait()
+			change2 := <-changes
+			if change2.Type != types.ChangeType_ADD && change2.Type != types.ChangeType_UPDATE {
+				t.Errorf("expected ADD or UPDATE change for device1 update, got %v", change2.Type)
+			}
+
+			cancel()
+			<-errCh
+		})
 	})
 
 	t.Run("handles context cancellation", func(t *testing.T) {
