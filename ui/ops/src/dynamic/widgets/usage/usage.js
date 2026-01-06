@@ -1,6 +1,7 @@
 import {timestampToDate} from '@/api/convpb.js';
 import {listAllocationHistory} from '@/api/sc/traits/allocation.js';
 import {asyncWatch} from '@/util/vue.js';
+import {Allocation} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_pb';
 import binarySearch from 'binary-search';
 import {computed, reactive, toValue} from 'vue';
 
@@ -104,7 +105,13 @@ async function readUsageCountSeries(names, edges, countBefore) {
     return res;
   }
 
-  /** @type {({x: Date, y: number, last: number}[])} */
+  const calcY = (d, beforeIdx) => {
+    d[beforeIdx].last = Math.max(d[beforeIdx].last, d[beforeIdx].total, d[beforeIdx].sum);
+    d[beforeIdx].y = Math.max(d[beforeIdx].total, d[beforeIdx].sum);
+    if (d[beforeIdx].y < 0) d[beforeIdx].y = 0;
+  }
+
+  /** @type {({x: Date, y: number, total: number, sum: number, last: number}[])} */
   const dstArr = Array(edges.length - 1).fill(null);
   /** @type {{string: {x: Date, y: number, last: number}[]}} */
   const dst = {};
@@ -148,24 +155,33 @@ async function readUsageCountSeries(names, edges, countBefore) {
         }
 
         if (d[beforeIdx]) {
-          d[beforeIdx].y = Math.max(d[beforeIdx].y, record.allocation.allocationTotal);
+          d[beforeIdx].total = Math.max((record.allocation.allocationTotal ?? 0) - (record.allocation.unallocationTotal ?? 0), d[beforeIdx].total);
+          if (record.allocation.state === Allocation.States.ALLOCATED) {
+            d[beforeIdx].sum += 1;
+          } else if (record.allocation.state === Allocation.States.UNALLOCATED) {
+            d[beforeIdx].sum -= 1;
+          }
         } else {
-          d[beforeIdx] = {x: before, y: record.allocation.allocationTotal, last: record.allocation.allocationTotal};
+          d[beforeIdx] = {
+            x: before,
+            sum: record.allocation.state === Allocation.States.ALLOCATED ? 1 : 0,
+            total: (record.allocation.allocationTotal ?? 0) - (record.allocation.unallocationTotal ?? 0),
+            last: 0
+          };
         }
 
-        d[beforeIdx].last = Math.max(d[beforeIdx].last, record.allocation.allocationTotal);
+        calcY(d, beforeIdx);
         dst[record.allocation.groupId] = d;
       }
 
       req.pageToken = resp.nextPageToken;
     } while (req.pageToken);
 
-
     // handle edge pairs that don't have any records in them.
     // Usage count in subsequent spans will be the same as the last reading in the span before.
     // If the first span has no records, then we find the most recent record before the first edge.
     if (!countBefore) {
-      copySrc = {x: edges[0], y: 0, last: countBefore};
+      copySrc = {x: edges[0], y: 0, total: 0, sum: 0, last: countBefore};
     } else {
       try {
         const res = await listAllocationHistory({
@@ -176,8 +192,13 @@ async function readUsageCountSeries(names, edges, countBefore) {
         }, {});
         if (res.allocationRecordsList.length > 0) {
           const rec = res.allocationRecordsList[0];
-          const assignedCount = rec.allocation.allocationTotal;
-          copySrc = {x: edges[0], y: 0, last: assignedCount};
+          const totalAssignedCount = rec.allocation.allocationTotal;
+          if (totalAssignedCount > 1) {
+            copySrc = {x: edges[0], y: totalAssignedCount, last: totalAssignedCount};
+          } else {
+            const sumAssignedCount = rec.allocation.state === Allocation.States.ALLOCATED ? 1 : 0
+            copySrc = {x: edges[0], y: sumAssignedCount, last: sumAssignedCount};
+          }
         }
       } catch {
         // ignore
@@ -202,6 +223,7 @@ async function readUsageCountSeries(names, edges, countBefore) {
       }
     }
 
+    calcY(d, 0);
     dst[dataset] = d;
   }
 
