@@ -21,6 +21,10 @@ const datasetSourceName = Symbol('datasetSourceName');
 ChartJS.register(Title, Tooltip, BarElement, LinearScale, TimeScale, Legend);
 
 const props = defineProps({
+  title: {
+    type: String,
+    default: 'Resource Allocations'
+  },
   source: {
     type: [String, Array],
     default: null
@@ -73,7 +77,7 @@ const chartOptions = computed(() => {
         stacked: true,
         title: {
           display: true,
-          text: 'Locker Usage'
+          text: props.title || 'Allocations',
         },
         border: {
           color: 'transparent'

@@ -36,6 +36,7 @@
       <allocation-history-chart
           class="flex-grow-1 ma-n2"
           v-bind="$attrs"
+          :title="props.title"
           :source="props.source"
           :start="_start"
           :end="_end"
