@@ -24,14 +24,16 @@ func extractPackageName(content []byte) string {
 	return ""
 }
 
-// extractFirstService extracts the first service name from proto content.
-// Returns empty string if no service is found.
-func extractFirstService(content []byte) string {
-	matches := serviceRe.FindSubmatch(content)
-	if len(matches) > 1 {
-		return string(matches[1])
+// extractAllServices extracts all service names from proto content.
+func extractAllServices(content []byte) []string {
+	var services []string
+	matches := serviceRe.FindAllSubmatch(content, -1)
+	for _, match := range matches {
+		if len(match) > 1 {
+			services = append(services, string(match[1]))
+		}
 	}
-	return ""
+	return services
 }
 
 // extractTypeNames extracts all top-level message and enum names defined in a proto file.

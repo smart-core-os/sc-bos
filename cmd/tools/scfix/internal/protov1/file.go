@@ -13,14 +13,15 @@ import (
 
 // protoFile represents a proto file being migrated.
 type protoFile struct {
-	oldPath    string // absolute path
-	newPath    string // absolute path
-	baseDir    string // base directory for computing import paths
-	oldContent []byte
-	newContent []byte
-	oldPackage string   // e.g., "smartcore.bos" or "smartcore.bos.driver.dali"
-	newPackage string   // e.g., "smartcore.bos.meter.v1" or "smartcore.bos.driver.dali.v1"
-	types      []string // type names defined in this file
+	oldPath        string // absolute path
+	newPath        string // absolute path
+	baseDir        string // base directory for computing import paths
+	oldContent     []byte
+	newContent     []byte
+	oldPackage     string            // e.g., "smartcore.bos" or "smartcore.bos.driver.dali"
+	newPackage     string            // e.g., "smartcore.bos.meter.v1" or "smartcore.bos.driver.dali.v1"
+	serviceRenames map[string]string // maps old service names to new service names
+	types          []string          // type names defined in this file
 }
 
 // getOldImportPath returns the old import path for this file.
@@ -95,13 +96,48 @@ func collectProtoFilesFromDir(ctx *fixer.Context, protoDir string, shouldMove bo
 			return nil
 		}
 
-		service, hasService := deriveServiceName(content, filename)
-		newFQService := protopkg.V0ToV1(currentPkg + "." + service)
-		newPackage, _ := splitPackageService(newFQService)
+		// Extract all services and build rename mapping
+		services := extractAllServices(content)
+		serviceRenames := make(map[string]string)
+
+		// For determining newPackage, use the first service (or derive from filename if no service)
+		var newPackage string
+		if len(services) > 0 {
+			// Use first service to determine the new package
+			firstService := services[0]
+			newFQService := protopkg.V0ToV1(currentPkg + "." + firstService)
+			newPackage, _ = splitPackageService(newFQService)
+
+			// Build rename map for all services and validate they all map to the same package
+			for _, service := range services {
+				oldFQN := currentPkg + "." + service
+				newFQN := protopkg.V0ToV1(oldFQN)
+				servicePkg, newService := splitPackageService(newFQN)
+
+				// Check if this service maps to a different package than the first service
+				if servicePkg != newPackage {
+					return fmt.Errorf(
+						"file %s contains multiple services that map to different packages: %s -> %s, %s -> %s",
+						relPath(ctx.RootDir, path),
+						firstService, newPackage,
+						service, servicePkg,
+					)
+				}
+
+				if service != newService {
+					serviceRenames[service] = newService
+				}
+			}
+		} else {
+			// No services in file, use filename to determine package
+			derivedService := serviceNameFromFileName(filename)
+			newFQService := protopkg.V0ToV1(currentPkg + "." + derivedService)
+			newPackage, _ = splitPackageService(newFQService)
+		}
 
 		// For proto files that aren't moving and without services, don't version the package.
 		// This includes files like page_token.proto and other message-only files.
-		if !shouldMove && !hasService {
+		if !shouldMove && len(services) == 0 {
 			newPackage = currentPkg
 		}
 
@@ -123,13 +159,14 @@ func collectProtoFilesFromDir(ctx *fixer.Context, protoDir string, shouldMove bo
 		}
 
 		files = append(files, protoFile{
-			oldPath:    path,
-			newPath:    newPath,
-			baseDir:    baseDir,
-			oldContent: content,
-			oldPackage: currentPkg,
-			newPackage: newPackage,
-			types:      typeNames,
+			oldPath:        path,
+			newPath:        newPath,
+			baseDir:        baseDir,
+			oldContent:     content,
+			oldPackage:     currentPkg,
+			newPackage:     newPackage,
+			serviceRenames: serviceRenames,
+			types:          typeNames,
 		})
 		return nil
 	})
@@ -206,16 +243,11 @@ func splitPackageService(fqn string) (pkg, service string) {
 	return fqn[:lastDot], fqn[lastDot+1:]
 }
 
-// deriveServiceName extracts the service name from content, or derives it from the filename.
-// Returns the service name and a boolean indicating whether a service was found in the file.
-func deriveServiceName(content []byte, filename string) (string, bool) {
-	service := extractFirstService(content)
-	if service == "" {
-		base := strings.TrimSuffix(filename, ".proto")
-		service = toTitle(strings.ReplaceAll(base, "_", "")) + "Api"
-		return service, false
-	}
-	return service, true
+// serviceNameFromFileName derives a service name from a proto filename.
+// This is used to determine the package for files without services (message-only files).
+func serviceNameFromFileName(filename string) string {
+	base := strings.TrimSuffix(filename, ".proto")
+	return toTitle(strings.ReplaceAll(base, "_", "")) + "Api"
 }
 
 // relPath computes a relative path for logging purposes.

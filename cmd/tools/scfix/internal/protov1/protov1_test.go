@@ -22,6 +22,7 @@ func TestProtomove(t *testing.T) {
 		{"non-root protos", "testdata/non_root_protos.txtar"},
 		{"no changes needed", "testdata/no_changes_needed.txtar"},
 		{"import aware types", "testdata/import_aware_types.txtar"},
+		{"service rename", "testdata/service_rename.txtar"},
 	}
 
 	for _, tt := range tests {

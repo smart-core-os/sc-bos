@@ -47,6 +47,7 @@ func processProtoFile(file *protoFile, allFiles []protoFile) error {
 
 	content := string(file.oldContent)
 	content = updatePackageDeclaration(content, file.oldPackage, file.newPackage)
+	content = updateServiceDeclarations(content, file.serviceRenames)
 	content = updateImportPaths(content, allFiles)
 	content = updateTypeReferences(content, file.newPackage, importedTypes)
 
@@ -61,6 +62,39 @@ func updatePackageDeclaration(content, oldPkg, newPkg string) string {
 	}
 	re := regexp.MustCompile(`(?m)^package\s+` + regexp.QuoteMeta(oldPkg) + `\s*;`)
 	return re.ReplaceAllString(content, fmt.Sprintf("package %s;", newPkg))
+}
+
+// updateServiceDeclarations updates all service declarations in the file using the serviceRenames map.
+func updateServiceDeclarations(content string, serviceRenames map[string]string) string {
+	if len(serviceRenames) == 0 {
+		return content
+	}
+
+	// Find all matches and their positions
+	matches := serviceRe.FindAllStringSubmatchIndex(content, -1)
+	if len(matches) == 0 {
+		return content
+	}
+
+	// Build the result by replacing matches in reverse order (to preserve indices)
+	result := content
+	for i := len(matches) - 1; i >= 0; i-- {
+		match := matches[i]
+		// match[0], match[1] are the full match start/end
+		// match[2], match[3] are the service name (first capture group) start/end
+		if len(match) < 4 {
+			continue
+		}
+
+		oldService := content[match[2]:match[3]]
+		if newService, shouldRename := serviceRenames[oldService]; shouldRename {
+			// Replace the entire service declaration with the renamed version
+			replacement := fmt.Sprintf("service %s {", newService)
+			result = result[:match[0]] + replacement + result[match[1]:]
+		}
+	}
+
+	return result
 }
 
 // updateImportPaths rewrites local proto imports to use versioned paths and sorts imports alphabetically.

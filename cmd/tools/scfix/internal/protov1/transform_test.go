@@ -313,3 +313,133 @@ message Status {
 		})
 	}
 }
+
+// TestUpdateServiceDeclarations tests renaming of service declarations
+func TestUpdateServiceDeclarations(t *testing.T) {
+	tests := []struct {
+		name           string
+		content        string
+		serviceRenames map[string]string
+		want           string
+	}{
+		{
+			name: "single service rename",
+			content: `syntax = "proto3";
+
+service EnterLeaveHistory {
+  rpc ListHistory(Request) returns (Response);
+}`,
+			serviceRenames: map[string]string{
+				"EnterLeaveHistory": "EnterLeaveSensorHistory",
+			},
+			want: `syntax = "proto3";
+
+service EnterLeaveSensorHistory {
+  rpc ListHistory(Request) returns (Response);
+}`,
+		},
+		{
+			name: "multiple services - all renamed",
+			content: `syntax = "proto3";
+
+service EnterLeaveHistory {
+  rpc ListHistory(Request) returns (Response);
+}
+
+service EnterLeaveInfo {
+  rpc GetInfo(Request) returns (Response);
+}`,
+			serviceRenames: map[string]string{
+				"EnterLeaveHistory": "EnterLeaveSensorHistory",
+				"EnterLeaveInfo":    "EnterLeaveSensorInfo",
+			},
+			want: `syntax = "proto3";
+
+service EnterLeaveSensorHistory {
+  rpc ListHistory(Request) returns (Response);
+}
+
+service EnterLeaveSensorInfo {
+  rpc GetInfo(Request) returns (Response);
+}`,
+		},
+		{
+			name: "multiple services - partial rename",
+			content: `syntax = "proto3";
+
+service TenantApi {
+  rpc GetTenant(Request) returns (Response);
+}
+
+service MeterApi {
+  rpc GetMeter(Request) returns (Response);
+}`,
+			serviceRenames: map[string]string{
+				"TenantApi": "TenantServiceApi", // Only this one gets renamed
+				// MeterApi stays the same
+			},
+			want: `syntax = "proto3";
+
+service TenantServiceApi {
+  rpc GetTenant(Request) returns (Response);
+}
+
+service MeterApi {
+  rpc GetMeter(Request) returns (Response);
+}`,
+		},
+		{
+			name: "no renames - empty map",
+			content: `syntax = "proto3";
+
+service MeterApi {
+  rpc GetMeter(Request) returns (Response);
+}`,
+			serviceRenames: map[string]string{},
+			want: `syntax = "proto3";
+
+service MeterApi {
+  rpc GetMeter(Request) returns (Response);
+}`,
+		},
+		{
+			name: "no renames - nil map",
+			content: `syntax = "proto3";
+
+service AlertApi {
+  rpc GetAlert(Request) returns (Response);
+}`,
+			serviceRenames: nil,
+			want: `syntax = "proto3";
+
+service AlertApi {
+  rpc GetAlert(Request) returns (Response);
+}`,
+		},
+		{
+			name: "service with extra spaces in declaration",
+			content: `syntax = "proto3";
+
+service  EnterLeaveHistory  {
+  rpc ListHistory(Request) returns (Response);
+}`,
+			serviceRenames: map[string]string{
+				"EnterLeaveHistory": "EnterLeaveSensorHistory",
+			},
+			want: `syntax = "proto3";
+
+service EnterLeaveSensorHistory {
+  rpc ListHistory(Request) returns (Response);
+}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := updateServiceDeclarations(tt.content, tt.serviceRenames)
+			if got != tt.want {
+				t.Errorf("updateServiceDeclarations() %s:\ngot:\n%s\nwant:\n%s", tt.name, got, tt.want)
+			}
+		})
+	}
+}
