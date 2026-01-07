@@ -11,6 +11,7 @@ import (
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/fixer"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/historyimports"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/optclients"
+	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protogopkg"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1go"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1js"
@@ -31,6 +32,7 @@ var allFixes = []fix{
 	{Fix: protov1.Fix, Enabled: false},
 	{Fix: protov1go.Fix, Enabled: false},
 	{Fix: protov1js.Fix, Enabled: false},
+	{Fix: protogopkg.Fix, Enabled: false},
 }
 
 // stringSliceFlag allows flags to be specified multiple times or as comma-separated values.
