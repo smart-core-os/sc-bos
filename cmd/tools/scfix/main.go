@@ -12,6 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/historyimports"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/optclients"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1"
+	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1go"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1js"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/wrap"
 )
@@ -28,6 +29,7 @@ var allFixes = []fix{
 	{Fix: historyimports.Fix, Enabled: true},
 	{Fix: wrap.Fix, Enabled: false},
 	{Fix: protov1.Fix, Enabled: false},
+	{Fix: protov1go.Fix, Enabled: false},
 	{Fix: protov1js.Fix, Enabled: false},
 }
 
