@@ -1,0 +1,41 @@
+This test verifies Go import replacement for multiple traits (splits into multiple imports).
+expected_changes: 3
+
+-- input/pkg/test/multi.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+)
+
+func ProcessData(ctx context.Context) {
+	meter := &gen.MeterReading{Usage: 100.5}
+	hub := &gen.HubNode{Name: "test"}
+	service := &gen.Service{Id: "svc1"}
+
+	_ = meter
+	_ = hub
+	_ = service
+}
+-- output/pkg/test/multi.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+)
+
+func ProcessData(ctx context.Context) {
+	meter := &meterpb.MeterReading{Usage: 100.5}
+	hub := &hubpb.HubNode{Name: "test"}
+	service := &servicespb.Service{Id: "svc1"}
+
+	_ = meter
+	_ = hub
+	_ = service
+}

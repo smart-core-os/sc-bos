@@ -1,0 +1,33 @@
+This test verifies that gen.Type references in comments are updated.
+expected_changes: 5
+
+-- input/pkg/test/comments.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+)
+
+// GetMeter returns a [gen.MeterReading] from the system.
+// It uses the gen.MeterApiClient to fetch meter data.
+func GetMeter(ctx context.Context) (*gen.MeterReading, error) {
+	// Create a gen.MeterReading instance
+	return &gen.MeterReading{Usage: 100.5}, nil
+}
+-- output/pkg/test/comments.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+// GetMeter returns a [meterpb.MeterReading] from the system.
+// It uses the meterpb.MeterApiClient to fetch meter data.
+func GetMeter(ctx context.Context) (*meterpb.MeterReading, error) {
+	// Create a meterpb.MeterReading instance
+	return &meterpb.MeterReading{Usage: 100.5}, nil
+}
