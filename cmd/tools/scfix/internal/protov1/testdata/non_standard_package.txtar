@@ -103,10 +103,10 @@ message SaveCredentialRequest {
 }
 
 message SaveCredentialResponse {}
--- output/proto/smartcore/bos/tenants/v1/tenants.proto --
+-- output/proto/smartcore/bos/tenant/v1/tenants.proto --
 syntax = "proto3";
 
-package smartcore.bos.tenants.v1;
+package smartcore.bos.tenant.v1;
 
 option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
 

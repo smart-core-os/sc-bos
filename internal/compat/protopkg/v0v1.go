@@ -19,41 +19,51 @@ package protopkg
 
 import (
 	"strings"
+	"sync"
 )
 
-// V0ToV1 returns the V1 package name for the given pkg and service.
+// V0ToV1 returns the V1 service name for the given service name.
+// Both versions are fully qualified names ([package].[service]).
 // See the package documentation for format details.
-// The returned package will be unchanged if it is not a recognized V0 package.
-func V0ToV1(pkg, service string) string {
+// The returned service name will be unchanged if it is not a recognized V0 package.
+func V0ToV1(fqn string) string {
+	if v1, ok := v0ToV1SpecialCase(fqn); ok {
+		return v1
+	}
+	pkg, service := splitPackageService(fqn)
 	if !isBOSPackage(pkg) {
-		return pkg
+		return fqn
 	}
 	if isVersioned(pkg) {
-		return pkg
+		return fqn
 	}
 	if pkg == "smartcore.bos" {
 		resource := extractResource(service)
-		return "smartcore.bos." + resource + ".v1"
+		return "smartcore.bos." + resource + ".v1." + service
 	}
 
-	return pkg + ".v1"
+	return pkg + ".v1." + service
 }
 
-// V1ToV0 returns the V0 package name for the given pkg and service.
+// V1ToV0 returns the V0 service name for the given service name.
+// Both versions are fully qualified names ([package].[service]).
 // See the package documentation for format details.
-// The returned package will be unchanged if it is not a recognized V1 package.
-func V1ToV0(pkg, service string) string {
-	_ = service // unused, kept for API consistency
+// The returned service name will be unchanged if it is not a recognized V1 package.
+func V1ToV0(fqn string) string {
+	if v0, ok := v1ToV0SpecialCase(fqn); ok {
+		return v0
+	}
+	pkg, service := splitPackageService(fqn)
 	if !isBOSPackage(pkg) {
-		return pkg
+		return fqn
 	}
 	if !strings.HasSuffix(pkg, ".v1") {
-		return pkg
+		return fqn
 	}
 	v0Pkg := strings.TrimSuffix(pkg, ".v1")
 
 	if v0Pkg == "smartcore.bos" {
-		return pkg // invalid: smartcore.bos.v1
+		return fqn // invalid: smartcore.bos.v1
 	}
 
 	rest := strings.TrimPrefix(v0Pkg, "smartcore.bos.")
@@ -62,12 +72,17 @@ func V1ToV0(pkg, service string) string {
 	// or the bit after smartcore.bos is a known special case
 	// then we don't touch it any more
 	if isNestedPackage(rest) {
-		return v0Pkg
+		return v0Pkg + "." + service
 	}
-	if isKnownNamespace(rest) {
-		return v0Pkg
+	return "smartcore.bos." + service
+}
+
+func splitPackageService(fqn string) (pkg, service string) {
+	lastDot := strings.LastIndex(fqn, ".")
+	if lastDot == -1 {
+		return "", fqn
 	}
-	return "smartcore.bos"
+	return fqn[:lastDot], fqn[lastDot+1:]
 }
 
 func isBOSPackage(pkg string) bool {
@@ -96,18 +111,6 @@ func isDigit(b byte) bool {
 	return b >= '0' && b <= '9'
 }
 
-func isKnownNamespace(segment string) bool {
-	// Non-standard namespaces that don't follow the resource extraction pattern.
-	// These have their own proto files and should not collapse to "smartcore.bos".
-	knownNamespaces := []string{"tenants"}
-	for _, ns := range knownNamespaces {
-		if segment == ns {
-			return true
-		}
-	}
-	return false
-}
-
 // extractResource derives the resource name from a service name.
 // Examples: MeterApi -> meter, MeterHistory -> meter, AlertAdminApi -> alert
 func extractResource(service string) string {
@@ -121,4 +124,37 @@ func extractResource(service string) string {
 	}
 
 	return strings.ToLower(service)
+}
+
+var (
+	specialCases = []struct{ v0, v1 string }{
+		{"smartcore.bos.tenants.TenantApi", "smartcore.bos.tenant.v1.TenantApi"},
+		{"smartcore.bos.EnterLeaveHistory", "smartcore.bos.enterleavesensor.v1.EnterLeaveSensorHistory"},
+	}
+	specialCaseV0ToV1      map[string]string
+	buildSpecialCaseV0ToV1 = sync.OnceFunc(func() {
+		specialCaseV0ToV1 = make(map[string]string)
+		for _, sc := range specialCases {
+			specialCaseV0ToV1[sc.v0] = sc.v1
+		}
+	})
+	specialCaseV1ToV0      map[string]string
+	buildSpecialCaseV1ToV0 = sync.OnceFunc(func() {
+		specialCaseV1ToV0 = make(map[string]string)
+		for _, sc := range specialCases {
+			specialCaseV1ToV0[sc.v1] = sc.v0
+		}
+	})
+)
+
+func v0ToV1SpecialCase(fqn string) (string, bool) {
+	buildSpecialCaseV0ToV1()
+	v1, ok := specialCaseV0ToV1[fqn]
+	return v1, ok
+}
+
+func v1ToV0SpecialCase(fqn string) (string, bool) {
+	buildSpecialCaseV1ToV0()
+	v0, ok := specialCaseV1ToV0[fqn]
+	return v0, ok
 }

@@ -96,7 +96,8 @@ func collectProtoFilesFromDir(ctx *fixer.Context, protoDir string, shouldMove bo
 		}
 
 		service, hasService := deriveServiceName(content, filename)
-		newPackage := protopkg.V0ToV1(currentPkg, service)
+		newFQService := protopkg.V0ToV1(currentPkg + "." + service)
+		newPackage, _ := splitPackageService(newFQService)
 
 		// For proto files that aren't moving and without services, don't version the package.
 		// This includes files like page_token.proto and other message-only files.
@@ -194,6 +195,15 @@ func toTitle(s string) string {
 		return s
 	}
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// splitPackageService splits a fully qualified name into package and service components.
+func splitPackageService(fqn string) (pkg, service string) {
+	lastDot := strings.LastIndex(fqn, ".")
+	if lastDot == -1 {
+		return "", fqn
+	}
+	return fqn[:lastDot], fqn[lastDot+1:]
 }
 
 // deriveServiceName extracts the service name from content, or derives it from the filename.
