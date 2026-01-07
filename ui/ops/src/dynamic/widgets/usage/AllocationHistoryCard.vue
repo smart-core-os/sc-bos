@@ -121,8 +121,7 @@ const onDownloadClick = async () => {
         ]
       }
   );
-}
-
+};
 </script>
 
 

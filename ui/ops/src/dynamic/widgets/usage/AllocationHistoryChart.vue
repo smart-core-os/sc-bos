@@ -1,12 +1,12 @@
 <template>
   <div>
-    <bar :data="chartData" :options="chartOptions" :plugins="[themeColorPlugin]"/>
+    <bar :data="chartData" :options="chartOptions" :plugins="[themeColorPlugin, vueLegendPlugin]"/>
   </div>
 </template>
 <script setup>
 
 import {useDateScale} from '@/components/charts/date.js';
-import {useThemeColorPlugin} from '@/components/charts/plugins.js';
+import {useThemeColorPlugin, useVueLegendPlugin} from '@/components/charts/plugins.js';
 import {defineChartOptions} from '@/components/charts/util.js';
 import {useUsageCount} from '@/dynamic/widgets/usage/usage.js';
 import {useLocalProp} from '@/util/vue.js';
@@ -15,6 +15,8 @@ import {startOfDay, startOfYear} from 'date-fns';
 import 'chartjs-adapter-date-fns';
 import {computed, toRef} from 'vue';
 import {Bar} from 'vue-chartjs';
+
+const datasetSourceName = Symbol('datasetSourceName');
 
 ChartJS.register(Title, Tooltip, BarElement, LinearScale, TimeScale, Legend);
 
@@ -45,6 +47,12 @@ const {edges, pastEdges, tickUnit} = useDateScale(_start, _end, _offset);
 const totalUsageCounts = useUsageCount(toRef(props, 'source'), pastEdges);
 
 const {themeColorPlugin} = useThemeColorPlugin();
+
+const datasetNames = computed(() => {
+  return chartData.value.datasets.map(item => {
+    return item[datasetSourceName];
+  });
+});
 
 const chartOptions = computed(() => {
   return defineChartOptions({
@@ -142,6 +150,15 @@ const chartData = computed(() => {
     labels: chartLabels.value,
     datasets: datasets,
   };
+});
+
+// Always use both plugins
+const {legendItems, vueLegendPlugin} = useVueLegendPlugin();
+
+// Expose chart reference for parent component
+defineExpose({
+  legendItems,
+  datasetNames,
 });
 </script>
 
