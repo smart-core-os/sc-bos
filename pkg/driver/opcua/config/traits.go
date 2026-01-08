@@ -108,7 +108,7 @@ func (v *ValueSource) Scaled(val any) any {
 // UdmiConfig is configured by a Device that wants to implement the UDMI trait.
 type UdmiConfig struct {
 	Trait
-	// TopicPrefix is the prefix prepended to the topic in a gen.MqttMessage
+	// TopicPrefix is the prefix prepended to the topic in a mqttpb.MqttMessage
 	TopicPrefix string `json:"topicPrefix,omitempty"`
 	// Points the points we want to send to the UDMI bus. point name -> point config (nodeId and optional enum)
 	Points map[string]*ValueSource `json:"points"`

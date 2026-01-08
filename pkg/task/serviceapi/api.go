@@ -1,4 +1,4 @@
-// Package serviceapi implements gen.ServiceApi backed by a service.Map.
+// Package serviceapi implements servicespb.ServicesApiServer backed by a service.Map.
 package serviceapi
 
 import (

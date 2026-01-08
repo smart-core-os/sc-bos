@@ -375,7 +375,7 @@ func Test_conditionToCmpFunc(t *testing.T) {
 
 	condTestName := func(cond *devicespb.Device_Query_Condition) string {
 		name := fmt.Sprintf("%T", cond.Value)
-		name = strings.TrimPrefix(name, "*gen.Device_Query_Condition_")
+		name = strings.TrimPrefix(name, "*devicespb.Device_Query_Condition_")
 		return name
 	}
 
