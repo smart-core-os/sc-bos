@@ -225,7 +225,7 @@ export function useHealthCheckFilters(forcedFilters) {
   const filterCtx = useFilterCtx(filterOpts);
 
   const toCondition = (field, value) => {
-    if (value === undefined || value === null) return null;
+    if (value == null) return null;
     switch (field) {
       case 'metadata.location.floor':
         return {field: 'metadata.location.floor', stringEqualFold: value === NO_FLOOR ? '' : value};
