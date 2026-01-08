@@ -41,7 +41,7 @@ func TestTemperatureSensor_GetAirTemperature(t *testing.T) {
 		Client:   server.Client(),
 		Password: password,
 	}
-	tempSensor := NewTemperatureSensor(client, nil)
+	tempSensor := newTemperatureSensor(client, nil)
 
 	res, err := tempSensor.GetAirTemperature(context.Background(), &traits.GetAirTemperatureRequest{})
 	if err != nil {

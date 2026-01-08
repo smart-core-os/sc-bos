@@ -24,7 +24,7 @@ type Occupancy struct {
 
 var _ sensor = (*Occupancy)(nil)
 
-func NewOccupancySensor(client *Client, logger *zap.Logger) *Occupancy {
+func newOccupancySensor(client *Client, logger *zap.Logger) *Occupancy {
 	return &Occupancy{
 		client:         client,
 		logger:         logger,

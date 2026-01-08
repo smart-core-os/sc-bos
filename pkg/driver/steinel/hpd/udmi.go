@@ -59,7 +59,7 @@ type UdmiServiceServer struct {
 	udmiTopicPrefix string
 }
 
-func NewUdmiServiceServer(logger *zap.Logger, aq *resource.Value, o *resource.Value, t *resource.Value, udmiPrefix string) *UdmiServiceServer {
+func newUdmiServiceServer(logger *zap.Logger, aq *resource.Value, o *resource.Value, t *resource.Value, udmiPrefix string) *UdmiServiceServer {
 	return &UdmiServiceServer{
 		logger:          logger,
 		airQuality:      aq,
