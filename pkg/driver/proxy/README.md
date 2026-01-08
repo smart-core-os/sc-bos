@@ -1,8 +1,8 @@
 # Smart Core Proxy Driver
 
 This driver maps a local Smart Core Trait to a remote Smart Core Trait. You configure it by specifying some remote host
-and port `10.100.1.100:23557`, the driver will attempt to inspect the remote node by asking the parent trait what
-children exist. Each child will be announced with the root node for the controller.
+and port `10.100.1.100:23557`, the driver will attempt to inspect the remote node by querying the DeviceApi. 
+Each device will be announced with the root node for the controller.
 
 Config for this driver looks similar to this:
 

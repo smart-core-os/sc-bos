@@ -4,21 +4,25 @@ import (
 	"context"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 )
 
-// childrenFetcher implements pull.Fetcher to pull or poll children from a client
-type childrenFetcher struct {
-	client traits.ParentApiClient
-	name   string
-	known  map[string]*traits.Child // in case of polling, this tracks seen children so we correctly send changes
+// deviceFetcher implements pull.Fetcher to pull or poll devices from a client
+type deviceFetcher struct {
+	client gen.DevicesApiClient
+	known  map[string]*gen.Device // in case of polling, this tracks seen devices so we correctly send changes
 }
 
-func (c *childrenFetcher) Pull(ctx context.Context, changes chan<- *traits.PullChildrenResponse_Change) error {
-	stream, err := c.client.PullChildren(ctx, &traits.PullChildrenRequest{Name: c.name})
+func (c *deviceFetcher) Pull(ctx context.Context, changes chan<- *gen.PullDevicesResponse_Change) error {
+	stream, err := c.client.PullDevices(ctx, &gen.PullDevicesRequest{
+		ReadMask: &fieldmaskpb.FieldMask{
+			Paths: []string{"name", "metadata"},
+		},
+	})
 	if err != nil {
 		return err
 	}
@@ -35,25 +39,29 @@ func (c *childrenFetcher) Pull(ctx context.Context, changes chan<- *traits.PullC
 	}
 }
 
-func (c *childrenFetcher) Poll(ctx context.Context, changes chan<- *traits.PullChildrenResponse_Change) error {
+func (c *deviceFetcher) Poll(ctx context.Context, changes chan<- *gen.PullDevicesResponse_Change) error {
 	if c.known == nil {
-		c.known = make(map[string]*traits.Child)
+		c.known = make(map[string]*gen.Device)
 	}
 	unseen := make(map[string]struct{}, len(c.known))
 	for s := range c.known {
 		unseen[s] = struct{}{}
 	}
 
-	req := &traits.ListChildrenRequest{Name: c.name, PageSize: 1000}
+	req := &gen.ListDevicesRequest{
+		ReadMask: &fieldmaskpb.FieldMask{
+			Paths: []string{"name", "metadata"},
+		},
+	}
 	for {
-		res, err := c.client.ListChildren(ctx, req)
+		res, err := c.client.ListDevices(ctx, req)
 		if err != nil {
 			return err
 		}
 
-		for _, node := range res.Children {
+		for _, node := range res.Devices {
 			// we do extra work here to try and send out more accurate changes to make callers lives easier
-			change := &traits.PullChildrenResponse_Change{
+			change := &gen.PullDevicesResponse_Change{
 				Type:     types.ChangeType_ADD,
 				NewValue: node,
 			}
@@ -81,7 +89,7 @@ func (c *childrenFetcher) Poll(ctx context.Context, changes chan<- *traits.PullC
 	for name := range unseen {
 		node := c.known[name]
 		delete(c.known, name)
-		change := &traits.PullChildrenResponse_Change{
+		change := &gen.PullDevicesResponse_Change{
 			Type:     types.ChangeType_REMOVE,
 			OldValue: node,
 		}
