@@ -22,17 +22,10 @@ export class AllocationApiClient {
                response: allocation_pb.Allocation) => void
   ): grpcWeb.ClientReadableStream<allocation_pb.Allocation>;
 
-  pullAllocations(
-    request: allocation_pb.PullAllocationsRequest,
+  pullAllocation(
+    request: allocation_pb.PullAllocationRequest,
     metadata?: grpcWeb.Metadata
-  ): grpcWeb.ClientReadableStream<allocation_pb.PullAllocationsResponse>;
-
-  listAllocatableResources(
-    request: allocation_pb.ListAllocatableResourcesRequest,
-    metadata: grpcWeb.Metadata | undefined,
-    callback: (err: grpcWeb.RpcError,
-               response: allocation_pb.ListAllocatableResourcesResponse) => void
-  ): grpcWeb.ClientReadableStream<allocation_pb.ListAllocatableResourcesResponse>;
+  ): grpcWeb.ClientReadableStream<allocation_pb.PullAllocationResponse>;
 
 }
 
@@ -51,15 +44,10 @@ export class AllocationApiPromiseClient {
     metadata?: grpcWeb.Metadata
   ): Promise<allocation_pb.Allocation>;
 
-  pullAllocations(
-    request: allocation_pb.PullAllocationsRequest,
+  pullAllocation(
+    request: allocation_pb.PullAllocationRequest,
     metadata?: grpcWeb.Metadata
-  ): grpcWeb.ClientReadableStream<allocation_pb.PullAllocationsResponse>;
-
-  listAllocatableResources(
-    request: allocation_pb.ListAllocatableResourcesRequest,
-    metadata?: grpcWeb.Metadata
-  ): Promise<allocation_pb.ListAllocatableResourcesResponse>;
+  ): grpcWeb.ClientReadableStream<allocation_pb.PullAllocationResponse>;
 
 }
 

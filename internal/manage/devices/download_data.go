@@ -10,6 +10,7 @@ import (
 	timepb "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
@@ -34,6 +35,42 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 					return nil, err
 				}
 				return accessAttemptToRow(data), nil
+			},
+		},
+		string(allocationpb.TraitName): {
+			headers: []string{"allocation.state", "allocation.actor.title", "allocation.groupId", "allocation.allocationTotal", "allocation.unallocationTotal"},
+			get: func(ctx context.Context, name string) (map[string]string, error) {
+				c := gen.NewAllocationApiClient(s.m.ClientConn())
+				data, err := c.GetAllocation(ctx, &gen.GetAllocationRequest{Name: name})
+				if err != nil {
+					return nil, err
+				}
+				return allocationToRow(data), nil
+			},
+			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
+				c := gen.NewAllocationHistoryClient(s.m.ClientConn())
+				return &historyCursor{
+					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
+						page, err := c.ListAllocationHistory(ctx, &gen.ListAllocationHistoryRequest{
+							Name:      name,
+							PageToken: token,
+							PageSize:  pageSize,
+							Period:    period,
+						})
+						if err != nil {
+							return nil, "", err
+						}
+
+						records := make([]historyRecord, 0, len(page.AllocationRecords))
+						for _, record := range page.AllocationRecords {
+							records = append(records, historyRecord{
+								at:   record.GetRecordTime().AsTime(),
+								vals: allocationToRow(record.GetAllocation()),
+							})
+						}
+						return records, page.NextPageToken, nil
+					},
+				}
 			},
 		},
 		string(meter.TraitName): {
@@ -359,6 +396,18 @@ type historyRecord struct {
 	at   time.Time
 	vals map[string]string
 	use  func()
+}
+
+func allocationToRow(d *gen.Allocation) map[string]string {
+	vals := make(map[string]string)
+	vals["allocation.state"] = d.GetState().String()
+	if actor := d.GetActor(); actor != nil {
+		vals["allocation.actor.title"] = actor.Title
+	}
+	vals["allocation.groupId"] = d.GetGroupId()
+	vals["allocation.allocationTotal"] = fmt.Sprintf("%d", d.GetAllocationTotal())
+	vals["allocation.unallocationTotal"] = fmt.Sprintf("%d", d.GetUnallocationTotal())
+	return vals
 }
 
 func accessAttemptToRow(d *gen.AccessAttempt) map[string]string {

@@ -7,7 +7,6 @@
 package gen
 
 import (
-	time "github.com/smart-core-os/sc-api/go/types/time"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -24,87 +23,74 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Allocation_Assignment int32
+type Allocation_State int32
 
 const (
-	// The assignment status is unspecified.
-	Allocation_ASSIGNMENT_UNSPECIFIED Allocation_Assignment = 0
-	// The resource is unassigned and available for allocation.
-	Allocation_UNASSIGNED Allocation_Assignment = 1
-	// The resource is assigned to only a single actor.
-	Allocation_ASSIGNED Allocation_Assignment = 2
-	// The resource is reserved to only a single actor at a future point in time.
-	Allocation_RESERVED Allocation_Assignment = 3
-	// The resource is allocated to more than one actors (e.g. a shared resource).
-	Allocation_ALLOCATED Allocation_Assignment = 4
-	// The resource is booked but not assigned to any actor (e.g. a ticketed resource).
-	Allocation_BOOKED Allocation_Assignment = 5
+	// The allocation State is unspecified.
+	Allocation_STATE_UNSPECIFIED Allocation_State = 0
+	// The resource is unallocated and available for allocation.
+	Allocation_UNALLOCATED Allocation_State = 1
+	// The resource is allocated.
+	Allocation_ALLOCATED Allocation_State = 2
 )
 
-// Enum value maps for Allocation_Assignment.
+// Enum value maps for Allocation_State.
 var (
-	Allocation_Assignment_name = map[int32]string{
-		0: "ASSIGNMENT_UNSPECIFIED",
-		1: "UNASSIGNED",
-		2: "ASSIGNED",
-		3: "RESERVED",
-		4: "ALLOCATED",
-		5: "BOOKED",
+	Allocation_State_name = map[int32]string{
+		0: "STATE_UNSPECIFIED",
+		1: "UNALLOCATED",
+		2: "ALLOCATED",
 	}
-	Allocation_Assignment_value = map[string]int32{
-		"ASSIGNMENT_UNSPECIFIED": 0,
-		"UNASSIGNED":             1,
-		"ASSIGNED":               2,
-		"RESERVED":               3,
-		"ALLOCATED":              4,
-		"BOOKED":                 5,
+	Allocation_State_value = map[string]int32{
+		"STATE_UNSPECIFIED": 0,
+		"UNALLOCATED":       1,
+		"ALLOCATED":         2,
 	}
 )
 
-func (x Allocation_Assignment) Enum() *Allocation_Assignment {
-	p := new(Allocation_Assignment)
+func (x Allocation_State) Enum() *Allocation_State {
+	p := new(Allocation_State)
 	*p = x
 	return p
 }
 
-func (x Allocation_Assignment) String() string {
+func (x Allocation_State) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (Allocation_Assignment) Descriptor() protoreflect.EnumDescriptor {
+func (Allocation_State) Descriptor() protoreflect.EnumDescriptor {
 	return file_allocation_proto_enumTypes[0].Descriptor()
 }
 
-func (Allocation_Assignment) Type() protoreflect.EnumType {
+func (Allocation_State) Type() protoreflect.EnumType {
 	return &file_allocation_proto_enumTypes[0]
 }
 
-func (x Allocation_Assignment) Number() protoreflect.EnumNumber {
+func (x Allocation_State) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use Allocation_Assignment.Descriptor instead.
-func (Allocation_Assignment) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use Allocation_State.Descriptor instead.
+func (Allocation_State) EnumDescriptor() ([]byte, []int) {
 	return file_allocation_proto_rawDescGZIP(), []int{0, 0}
 }
 
-// Allocation represents the allocation of a resource to an actor for a specific period of time.
+// Allocation represents the allocation of a resource to an actor.
 type Allocation struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The unique identifier for the allocation native to the subsystem managing it.
-	// Output only.
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// The assignment status of the allocation.
-	Assignment Allocation_Assignment `protobuf:"varint,2,opt,name=assignment,proto3,enum=smartcore.bos.Allocation_Assignment" json:"assignment,omitempty"`
+	// The state of the allocation.
+	State Allocation_State `protobuf:"varint,1,opt,name=state,proto3,enum=smartcore.bos.Allocation_State" json:"state,omitempty"`
 	// The actor to whom the resource is allocated.
-	Actor *Actor `protobuf:"bytes,3,opt,name=actor,proto3,oneof" json:"actor,omitempty"`
-	// The time period for which the resource is allocated.
-	Period *time.Period `protobuf:"bytes,4,opt,name=period,proto3,oneof" json:"period,omitempty"`
+	Actor *Actor `protobuf:"bytes,2,opt,name=actor,proto3,oneof" json:"actor,omitempty"`
 	// The id of the group this allocation belongs to.
 	// For instance a locker bank, parking lot, or desk area.
-	GroupId       *string `protobuf:"bytes,5,opt,name=group_id,json=groupId,proto3,oneof" json:"group_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	GroupId *string `protobuf:"bytes,3,opt,name=group_id,json=groupId,proto3,oneof" json:"group_id,omitempty"`
+	// Unallocation total is the total number of unallocation events that have been recognised by the device.
+	UnallocationTotal *int32 `protobuf:"varint,4,opt,name=unallocation_total,json=unallocationTotal,proto3,oneof" json:"unallocation_total,omitempty"`
+	// Allocation total is the total number of allocation events that have been recognised by the device.
+	AllocationTotal *int32 `protobuf:"varint,5,opt,name=allocation_total,json=allocationTotal,proto3,oneof" json:"allocation_total,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Allocation) Reset() {
@@ -137,30 +123,16 @@ func (*Allocation) Descriptor() ([]byte, []int) {
 	return file_allocation_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Allocation) GetId() string {
+func (x *Allocation) GetState() Allocation_State {
 	if x != nil {
-		return x.Id
+		return x.State
 	}
-	return ""
-}
-
-func (x *Allocation) GetAssignment() Allocation_Assignment {
-	if x != nil {
-		return x.Assignment
-	}
-	return Allocation_ASSIGNMENT_UNSPECIFIED
+	return Allocation_STATE_UNSPECIFIED
 }
 
 func (x *Allocation) GetActor() *Actor {
 	if x != nil {
 		return x.Actor
-	}
-	return nil
-}
-
-func (x *Allocation) GetPeriod() *time.Period {
-	if x != nil {
-		return x.Period
 	}
 	return nil
 }
@@ -172,13 +144,25 @@ func (x *Allocation) GetGroupId() string {
 	return ""
 }
 
+func (x *Allocation) GetUnallocationTotal() int32 {
+	if x != nil && x.UnallocationTotal != nil {
+		return *x.UnallocationTotal
+	}
+	return 0
+}
+
+func (x *Allocation) GetAllocationTotal() int32 {
+	if x != nil && x.AllocationTotal != nil {
+		return *x.AllocationTotal
+	}
+	return 0
+}
+
 type GetAllocationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The name of the subsystem device or headend.
-	Name     string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	ReadMask *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
-	// The id of the allocation to retrieve natively from the subsystem.
-	AllocationId  string `protobuf:"bytes,3,opt,name=allocation_id,json=allocationId,proto3" json:"allocation_id,omitempty"`
+	// The name of the subsystem device.
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	ReadMask      *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -227,16 +211,9 @@ func (x *GetAllocationRequest) GetReadMask() *fieldmaskpb.FieldMask {
 	return nil
 }
 
-func (x *GetAllocationRequest) GetAllocationId() string {
-	if x != nil {
-		return x.AllocationId
-	}
-	return ""
-}
-
 type UpdateAllocationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The name of the subsystem device or headend.
+	// The name of the subsystem device.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The allocation to create or update.
 	Allocation    *Allocation            `protobuf:"bytes,2,opt,name=allocation,proto3" json:"allocation,omitempty"`
@@ -296,32 +273,30 @@ func (x *UpdateAllocationRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
 	return nil
 }
 
-type PullAllocationsRequest struct {
+type PullAllocationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The name of the subsystem device or headend.
-	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	ReadMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
-	UpdatesOnly bool                   `protobuf:"varint,3,opt,name=updates_only,json=updatesOnly,proto3" json:"updates_only,omitempty"`
-	// The id of the allocation to subscribe to natively from the subsystem.
-	AllocationId  string `protobuf:"bytes,4,opt,name=allocation_id,json=allocationId,proto3" json:"allocation_id,omitempty"`
+	// The name of the subsystem device.
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	ReadMask      *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
+	UpdatesOnly   bool                   `protobuf:"varint,3,opt,name=updates_only,json=updatesOnly,proto3" json:"updates_only,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PullAllocationsRequest) Reset() {
-	*x = PullAllocationsRequest{}
+func (x *PullAllocationRequest) Reset() {
+	*x = PullAllocationRequest{}
 	mi := &file_allocation_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PullAllocationsRequest) String() string {
+func (x *PullAllocationRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PullAllocationsRequest) ProtoMessage() {}
+func (*PullAllocationRequest) ProtoMessage() {}
 
-func (x *PullAllocationsRequest) ProtoReflect() protoreflect.Message {
+func (x *PullAllocationRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_allocation_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -333,60 +308,53 @@ func (x *PullAllocationsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PullAllocationsRequest.ProtoReflect.Descriptor instead.
-func (*PullAllocationsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use PullAllocationRequest.ProtoReflect.Descriptor instead.
+func (*PullAllocationRequest) Descriptor() ([]byte, []int) {
 	return file_allocation_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *PullAllocationsRequest) GetName() string {
+func (x *PullAllocationRequest) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *PullAllocationsRequest) GetReadMask() *fieldmaskpb.FieldMask {
+func (x *PullAllocationRequest) GetReadMask() *fieldmaskpb.FieldMask {
 	if x != nil {
 		return x.ReadMask
 	}
 	return nil
 }
 
-func (x *PullAllocationsRequest) GetUpdatesOnly() bool {
+func (x *PullAllocationRequest) GetUpdatesOnly() bool {
 	if x != nil {
 		return x.UpdatesOnly
 	}
 	return false
 }
 
-func (x *PullAllocationsRequest) GetAllocationId() string {
-	if x != nil {
-		return x.AllocationId
-	}
-	return ""
-}
-
-type PullAllocationsResponse struct {
-	state         protoimpl.MessageState            `protogen:"open.v1"`
-	Changes       []*PullAllocationsResponse_Change `protobuf:"bytes,1,rep,name=changes,proto3" json:"changes,omitempty"`
+type PullAllocationResponse struct {
+	state         protoimpl.MessageState           `protogen:"open.v1"`
+	Changes       []*PullAllocationResponse_Change `protobuf:"bytes,1,rep,name=changes,proto3" json:"changes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PullAllocationsResponse) Reset() {
-	*x = PullAllocationsResponse{}
+func (x *PullAllocationResponse) Reset() {
+	*x = PullAllocationResponse{}
 	mi := &file_allocation_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PullAllocationsResponse) String() string {
+func (x *PullAllocationResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PullAllocationsResponse) ProtoMessage() {}
+func (*PullAllocationResponse) ProtoMessage() {}
 
-func (x *PullAllocationsResponse) ProtoReflect() protoreflect.Message {
+func (x *PullAllocationResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_allocation_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -398,116 +366,19 @@ func (x *PullAllocationsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PullAllocationsResponse.ProtoReflect.Descriptor instead.
-func (*PullAllocationsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use PullAllocationResponse.ProtoReflect.Descriptor instead.
+func (*PullAllocationResponse) Descriptor() ([]byte, []int) {
 	return file_allocation_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *PullAllocationsResponse) GetChanges() []*PullAllocationsResponse_Change {
+func (x *PullAllocationResponse) GetChanges() []*PullAllocationResponse_Change {
 	if x != nil {
 		return x.Changes
 	}
 	return nil
 }
 
-type ListAllocatableResourcesRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The name of the subsystem device or headend.
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	ReadMask      *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListAllocatableResourcesRequest) Reset() {
-	*x = ListAllocatableResourcesRequest{}
-	mi := &file_allocation_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListAllocatableResourcesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListAllocatableResourcesRequest) ProtoMessage() {}
-
-func (x *ListAllocatableResourcesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_allocation_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListAllocatableResourcesRequest.ProtoReflect.Descriptor instead.
-func (*ListAllocatableResourcesRequest) Descriptor() ([]byte, []int) {
-	return file_allocation_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ListAllocatableResourcesRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *ListAllocatableResourcesRequest) GetReadMask() *fieldmaskpb.FieldMask {
-	if x != nil {
-		return x.ReadMask
-	}
-	return nil
-}
-
-type ListAllocatableResourcesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Allocations   []*Allocation          `protobuf:"bytes,1,rep,name=allocations,proto3" json:"allocations,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListAllocatableResourcesResponse) Reset() {
-	*x = ListAllocatableResourcesResponse{}
-	mi := &file_allocation_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListAllocatableResourcesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListAllocatableResourcesResponse) ProtoMessage() {}
-
-func (x *ListAllocatableResourcesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_allocation_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListAllocatableResourcesResponse.ProtoReflect.Descriptor instead.
-func (*ListAllocatableResourcesResponse) Descriptor() ([]byte, []int) {
-	return file_allocation_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *ListAllocatableResourcesResponse) GetAllocations() []*Allocation {
-	if x != nil {
-		return x.Allocations
-	}
-	return nil
-}
-
-type PullAllocationsResponse_Change struct {
+type PullAllocationResponse_Change struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	ChangeTime    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=change_time,json=changeTime,proto3" json:"change_time,omitempty"`
@@ -516,21 +387,21 @@ type PullAllocationsResponse_Change struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PullAllocationsResponse_Change) Reset() {
-	*x = PullAllocationsResponse_Change{}
-	mi := &file_allocation_proto_msgTypes[7]
+func (x *PullAllocationResponse_Change) Reset() {
+	*x = PullAllocationResponse_Change{}
+	mi := &file_allocation_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PullAllocationsResponse_Change) String() string {
+func (x *PullAllocationResponse_Change) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PullAllocationsResponse_Change) ProtoMessage() {}
+func (*PullAllocationResponse_Change) ProtoMessage() {}
 
-func (x *PullAllocationsResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_allocation_proto_msgTypes[7]
+func (x *PullAllocationResponse_Change) ProtoReflect() protoreflect.Message {
+	mi := &file_allocation_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -541,26 +412,26 @@ func (x *PullAllocationsResponse_Change) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PullAllocationsResponse_Change.ProtoReflect.Descriptor instead.
-func (*PullAllocationsResponse_Change) Descriptor() ([]byte, []int) {
+// Deprecated: Use PullAllocationResponse_Change.ProtoReflect.Descriptor instead.
+func (*PullAllocationResponse_Change) Descriptor() ([]byte, []int) {
 	return file_allocation_proto_rawDescGZIP(), []int{4, 0}
 }
 
-func (x *PullAllocationsResponse_Change) GetName() string {
+func (x *PullAllocationResponse_Change) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *PullAllocationsResponse_Change) GetChangeTime() *timestamppb.Timestamp {
+func (x *PullAllocationResponse_Change) GetChangeTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ChangeTime
 	}
 	return nil
 }
 
-func (x *PullAllocationsResponse_Change) GetAllocation() *Allocation {
+func (x *PullAllocationResponse_Change) GetAllocation() *Allocation {
 	if x != nil {
 		return x.Allocation
 	}
@@ -571,64 +442,49 @@ var File_allocation_proto protoreflect.FileDescriptor
 
 const file_allocation_proto_rawDesc = "" +
 	"\n" +
-	"\x10allocation.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17types/time/period.proto\x1a\vactor.proto\"\x81\x03\n" +
+	"\x10allocation.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\vactor.proto\"\xfb\x02\n" +
 	"\n" +
-	"Allocation\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12D\n" +
-	"\n" +
-	"assignment\x18\x02 \x01(\x0e2$.smartcore.bos.Allocation.AssignmentR\n" +
-	"assignment\x12/\n" +
-	"\x05actor\x18\x03 \x01(\v2\x14.smartcore.bos.ActorH\x00R\x05actor\x88\x01\x01\x129\n" +
-	"\x06period\x18\x04 \x01(\v2\x1c.smartcore.types.time.PeriodH\x01R\x06period\x88\x01\x01\x12\x1e\n" +
-	"\bgroup_id\x18\x05 \x01(\tH\x02R\agroupId\x88\x01\x01\"o\n" +
-	"\n" +
-	"Assignment\x12\x1a\n" +
-	"\x16ASSIGNMENT_UNSPECIFIED\x10\x00\x12\x0e\n" +
-	"\n" +
-	"UNASSIGNED\x10\x01\x12\f\n" +
-	"\bASSIGNED\x10\x02\x12\f\n" +
-	"\bRESERVED\x10\x03\x12\r\n" +
-	"\tALLOCATED\x10\x04\x12\n" +
-	"\n" +
-	"\x06BOOKED\x10\x05B\b\n" +
-	"\x06_actorB\t\n" +
-	"\a_periodB\v\n" +
-	"\t_group_id\"\x88\x01\n" +
+	"Allocation\x125\n" +
+	"\x05state\x18\x01 \x01(\x0e2\x1f.smartcore.bos.Allocation.StateR\x05state\x12/\n" +
+	"\x05actor\x18\x02 \x01(\v2\x14.smartcore.bos.ActorH\x00R\x05actor\x88\x01\x01\x12\x1e\n" +
+	"\bgroup_id\x18\x03 \x01(\tH\x01R\agroupId\x88\x01\x01\x122\n" +
+	"\x12unallocation_total\x18\x04 \x01(\x05H\x02R\x11unallocationTotal\x88\x01\x01\x12.\n" +
+	"\x10allocation_total\x18\x05 \x01(\x05H\x03R\x0fallocationTotal\x88\x01\x01\">\n" +
+	"\x05State\x12\x15\n" +
+	"\x11STATE_UNSPECIFIED\x10\x00\x12\x0f\n" +
+	"\vUNALLOCATED\x10\x01\x12\r\n" +
+	"\tALLOCATED\x10\x02B\b\n" +
+	"\x06_actorB\v\n" +
+	"\t_group_idB\x15\n" +
+	"\x13_unallocation_totalB\x13\n" +
+	"\x11_allocation_total\"c\n" +
 	"\x14GetAllocationRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
-	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12#\n" +
-	"\rallocation_id\x18\x03 \x01(\tR\fallocationId\"\xa5\x01\n" +
+	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\xa5\x01\n" +
 	"\x17UpdateAllocationRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x129\n" +
 	"\n" +
 	"allocation\x18\x02 \x01(\v2\x19.smartcore.bos.AllocationR\n" +
 	"allocation\x12;\n" +
 	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
-	"updateMask\"\xad\x01\n" +
-	"\x16PullAllocationsRequest\x12\x12\n" +
+	"updateMask\"\x87\x01\n" +
+	"\x15PullAllocationRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\x12#\n" +
-	"\rallocation_id\x18\x04 \x01(\tR\fallocationId\"\xf9\x01\n" +
-	"\x17PullAllocationsResponse\x12G\n" +
-	"\achanges\x18\x01 \x03(\v2-.smartcore.bos.PullAllocationsResponse.ChangeR\achanges\x1a\x94\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xf7\x01\n" +
+	"\x16PullAllocationResponse\x12F\n" +
+	"\achanges\x18\x01 \x03(\v2,.smartcore.bos.PullAllocationResponse.ChangeR\achanges\x1a\x94\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"changeTime\x129\n" +
 	"\n" +
 	"allocation\x18\x03 \x01(\v2\x19.smartcore.bos.AllocationR\n" +
-	"allocation\"n\n" +
-	"\x1fListAllocatableResourcesRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
-	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"_\n" +
-	" ListAllocatableResourcesResponse\x12;\n" +
-	"\vallocations\x18\x01 \x03(\v2\x19.smartcore.bos.AllocationR\vallocations2\x98\x03\n" +
+	"allocation2\x98\x02\n" +
 	"\rAllocationApi\x12O\n" +
 	"\rGetAllocation\x12#.smartcore.bos.GetAllocationRequest\x1a\x19.smartcore.bos.Allocation\x12U\n" +
-	"\x10UpdateAllocation\x12&.smartcore.bos.UpdateAllocationRequest\x1a\x19.smartcore.bos.Allocation\x12b\n" +
-	"\x0fPullAllocations\x12%.smartcore.bos.PullAllocationsRequest\x1a&.smartcore.bos.PullAllocationsResponse0\x01\x12{\n" +
-	"\x18ListAllocatableResources\x12..smartcore.bos.ListAllocatableResourcesRequest\x1a/.smartcore.bos.ListAllocatableResourcesResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\x10UpdateAllocation\x12&.smartcore.bos.UpdateAllocationRequest\x1a\x19.smartcore.bos.Allocation\x12_\n" +
+	"\x0ePullAllocation\x12$.smartcore.bos.PullAllocationRequest\x1a%.smartcore.bos.PullAllocationResponse0\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
 	file_allocation_proto_rawDescOnce sync.Once
@@ -643,48 +499,40 @@ func file_allocation_proto_rawDescGZIP() []byte {
 }
 
 var file_allocation_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_allocation_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_allocation_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_allocation_proto_goTypes = []any{
-	(Allocation_Assignment)(0),               // 0: smartcore.bos.Allocation.Assignment
-	(*Allocation)(nil),                       // 1: smartcore.bos.Allocation
-	(*GetAllocationRequest)(nil),             // 2: smartcore.bos.GetAllocationRequest
-	(*UpdateAllocationRequest)(nil),          // 3: smartcore.bos.UpdateAllocationRequest
-	(*PullAllocationsRequest)(nil),           // 4: smartcore.bos.PullAllocationsRequest
-	(*PullAllocationsResponse)(nil),          // 5: smartcore.bos.PullAllocationsResponse
-	(*ListAllocatableResourcesRequest)(nil),  // 6: smartcore.bos.ListAllocatableResourcesRequest
-	(*ListAllocatableResourcesResponse)(nil), // 7: smartcore.bos.ListAllocatableResourcesResponse
-	(*PullAllocationsResponse_Change)(nil),   // 8: smartcore.bos.PullAllocationsResponse.Change
-	(*Actor)(nil),                            // 9: smartcore.bos.Actor
-	(*time.Period)(nil),                      // 10: smartcore.types.time.Period
-	(*fieldmaskpb.FieldMask)(nil),            // 11: google.protobuf.FieldMask
-	(*timestamppb.Timestamp)(nil),            // 12: google.protobuf.Timestamp
+	(Allocation_State)(0),                 // 0: smartcore.bos.Allocation.State
+	(*Allocation)(nil),                    // 1: smartcore.bos.Allocation
+	(*GetAllocationRequest)(nil),          // 2: smartcore.bos.GetAllocationRequest
+	(*UpdateAllocationRequest)(nil),       // 3: smartcore.bos.UpdateAllocationRequest
+	(*PullAllocationRequest)(nil),         // 4: smartcore.bos.PullAllocationRequest
+	(*PullAllocationResponse)(nil),        // 5: smartcore.bos.PullAllocationResponse
+	(*PullAllocationResponse_Change)(nil), // 6: smartcore.bos.PullAllocationResponse.Change
+	(*Actor)(nil),                         // 7: smartcore.bos.Actor
+	(*fieldmaskpb.FieldMask)(nil),         // 8: google.protobuf.FieldMask
+	(*timestamppb.Timestamp)(nil),         // 9: google.protobuf.Timestamp
 }
 var file_allocation_proto_depIdxs = []int32{
-	0,  // 0: smartcore.bos.Allocation.assignment:type_name -> smartcore.bos.Allocation.Assignment
-	9,  // 1: smartcore.bos.Allocation.actor:type_name -> smartcore.bos.Actor
-	10, // 2: smartcore.bos.Allocation.period:type_name -> smartcore.types.time.Period
-	11, // 3: smartcore.bos.GetAllocationRequest.read_mask:type_name -> google.protobuf.FieldMask
-	1,  // 4: smartcore.bos.UpdateAllocationRequest.allocation:type_name -> smartcore.bos.Allocation
-	11, // 5: smartcore.bos.UpdateAllocationRequest.update_mask:type_name -> google.protobuf.FieldMask
-	11, // 6: smartcore.bos.PullAllocationsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	8,  // 7: smartcore.bos.PullAllocationsResponse.changes:type_name -> smartcore.bos.PullAllocationsResponse.Change
-	11, // 8: smartcore.bos.ListAllocatableResourcesRequest.read_mask:type_name -> google.protobuf.FieldMask
-	1,  // 9: smartcore.bos.ListAllocatableResourcesResponse.allocations:type_name -> smartcore.bos.Allocation
-	12, // 10: smartcore.bos.PullAllocationsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 11: smartcore.bos.PullAllocationsResponse.Change.allocation:type_name -> smartcore.bos.Allocation
-	2,  // 12: smartcore.bos.AllocationApi.GetAllocation:input_type -> smartcore.bos.GetAllocationRequest
-	3,  // 13: smartcore.bos.AllocationApi.UpdateAllocation:input_type -> smartcore.bos.UpdateAllocationRequest
-	4,  // 14: smartcore.bos.AllocationApi.PullAllocations:input_type -> smartcore.bos.PullAllocationsRequest
-	6,  // 15: smartcore.bos.AllocationApi.ListAllocatableResources:input_type -> smartcore.bos.ListAllocatableResourcesRequest
-	1,  // 16: smartcore.bos.AllocationApi.GetAllocation:output_type -> smartcore.bos.Allocation
-	1,  // 17: smartcore.bos.AllocationApi.UpdateAllocation:output_type -> smartcore.bos.Allocation
-	5,  // 18: smartcore.bos.AllocationApi.PullAllocations:output_type -> smartcore.bos.PullAllocationsResponse
-	7,  // 19: smartcore.bos.AllocationApi.ListAllocatableResources:output_type -> smartcore.bos.ListAllocatableResourcesResponse
-	16, // [16:20] is the sub-list for method output_type
-	12, // [12:16] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	0,  // 0: smartcore.bos.Allocation.state:type_name -> smartcore.bos.Allocation.State
+	7,  // 1: smartcore.bos.Allocation.actor:type_name -> smartcore.bos.Actor
+	8,  // 2: smartcore.bos.GetAllocationRequest.read_mask:type_name -> google.protobuf.FieldMask
+	1,  // 3: smartcore.bos.UpdateAllocationRequest.allocation:type_name -> smartcore.bos.Allocation
+	8,  // 4: smartcore.bos.UpdateAllocationRequest.update_mask:type_name -> google.protobuf.FieldMask
+	8,  // 5: smartcore.bos.PullAllocationRequest.read_mask:type_name -> google.protobuf.FieldMask
+	6,  // 6: smartcore.bos.PullAllocationResponse.changes:type_name -> smartcore.bos.PullAllocationResponse.Change
+	9,  // 7: smartcore.bos.PullAllocationResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	1,  // 8: smartcore.bos.PullAllocationResponse.Change.allocation:type_name -> smartcore.bos.Allocation
+	2,  // 9: smartcore.bos.AllocationApi.GetAllocation:input_type -> smartcore.bos.GetAllocationRequest
+	3,  // 10: smartcore.bos.AllocationApi.UpdateAllocation:input_type -> smartcore.bos.UpdateAllocationRequest
+	4,  // 11: smartcore.bos.AllocationApi.PullAllocation:input_type -> smartcore.bos.PullAllocationRequest
+	1,  // 12: smartcore.bos.AllocationApi.GetAllocation:output_type -> smartcore.bos.Allocation
+	1,  // 13: smartcore.bos.AllocationApi.UpdateAllocation:output_type -> smartcore.bos.Allocation
+	5,  // 14: smartcore.bos.AllocationApi.PullAllocation:output_type -> smartcore.bos.PullAllocationResponse
+	12, // [12:15] is the sub-list for method output_type
+	9,  // [9:12] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_allocation_proto_init() }
@@ -700,7 +548,7 @@ func file_allocation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_allocation_proto_rawDesc), len(file_allocation_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -2,31 +2,32 @@ import * as jspb from 'google-protobuf'
 
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
-import * as types_time_period_pb from '@smart-core-os/sc-api-grpc-web/types/time/period_pb'; // proto import: "types/time/period.proto"
 import * as actor_pb from './actor_pb'; // proto import: "actor.proto"
 
 
 export class Allocation extends jspb.Message {
-  getId(): string;
-  setId(value: string): Allocation;
-
-  getAssignment(): Allocation.Assignment;
-  setAssignment(value: Allocation.Assignment): Allocation;
+  getState(): Allocation.State;
+  setState(value: Allocation.State): Allocation;
 
   getActor(): actor_pb.Actor | undefined;
   setActor(value?: actor_pb.Actor): Allocation;
   hasActor(): boolean;
   clearActor(): Allocation;
 
-  getPeriod(): types_time_period_pb.Period | undefined;
-  setPeriod(value?: types_time_period_pb.Period): Allocation;
-  hasPeriod(): boolean;
-  clearPeriod(): Allocation;
-
   getGroupId(): string;
   setGroupId(value: string): Allocation;
   hasGroupId(): boolean;
   clearGroupId(): Allocation;
+
+  getUnallocationTotal(): number;
+  setUnallocationTotal(value: number): Allocation;
+  hasUnallocationTotal(): boolean;
+  clearUnallocationTotal(): Allocation;
+
+  getAllocationTotal(): number;
+  setAllocationTotal(value: number): Allocation;
+  hasAllocationTotal(): boolean;
+  clearAllocationTotal(): Allocation;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Allocation.AsObject;
@@ -38,35 +39,37 @@ export class Allocation extends jspb.Message {
 
 export namespace Allocation {
   export type AsObject = {
-    id: string;
-    assignment: Allocation.Assignment;
+    state: Allocation.State;
     actor?: actor_pb.Actor.AsObject;
-    period?: types_time_period_pb.Period.AsObject;
     groupId?: string;
+    unallocationTotal?: number;
+    allocationTotal?: number;
   };
 
-  export enum Assignment {
-    ASSIGNMENT_UNSPECIFIED = 0,
-    UNASSIGNED = 1,
-    ASSIGNED = 2,
-    RESERVED = 3,
-    ALLOCATED = 4,
-    BOOKED = 5,
+  export enum State {
+    STATE_UNSPECIFIED = 0,
+    UNALLOCATED = 1,
+    ALLOCATED = 2,
   }
 
   export enum ActorCase {
     _ACTOR_NOT_SET = 0,
-    ACTOR = 3,
-  }
-
-  export enum PeriodCase {
-    _PERIOD_NOT_SET = 0,
-    PERIOD = 4,
+    ACTOR = 2,
   }
 
   export enum GroupIdCase {
     _GROUP_ID_NOT_SET = 0,
-    GROUP_ID = 5,
+    GROUP_ID = 3,
+  }
+
+  export enum UnallocationTotalCase {
+    _UNALLOCATION_TOTAL_NOT_SET = 0,
+    UNALLOCATION_TOTAL = 4,
+  }
+
+  export enum AllocationTotalCase {
+    _ALLOCATION_TOTAL_NOT_SET = 0,
+    ALLOCATION_TOTAL = 5,
   }
 }
 
@@ -78,9 +81,6 @@ export class GetAllocationRequest extends jspb.Message {
   setReadMask(value?: google_protobuf_field_mask_pb.FieldMask): GetAllocationRequest;
   hasReadMask(): boolean;
   clearReadMask(): GetAllocationRequest;
-
-  getAllocationId(): string;
-  setAllocationId(value: string): GetAllocationRequest;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetAllocationRequest.AsObject;
@@ -94,7 +94,6 @@ export namespace GetAllocationRequest {
   export type AsObject = {
     name: string;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
-    allocationId: string;
   };
 }
 
@@ -128,55 +127,51 @@ export namespace UpdateAllocationRequest {
   };
 }
 
-export class PullAllocationsRequest extends jspb.Message {
+export class PullAllocationRequest extends jspb.Message {
   getName(): string;
-  setName(value: string): PullAllocationsRequest;
+  setName(value: string): PullAllocationRequest;
 
   getReadMask(): google_protobuf_field_mask_pb.FieldMask | undefined;
-  setReadMask(value?: google_protobuf_field_mask_pb.FieldMask): PullAllocationsRequest;
+  setReadMask(value?: google_protobuf_field_mask_pb.FieldMask): PullAllocationRequest;
   hasReadMask(): boolean;
-  clearReadMask(): PullAllocationsRequest;
+  clearReadMask(): PullAllocationRequest;
 
   getUpdatesOnly(): boolean;
-  setUpdatesOnly(value: boolean): PullAllocationsRequest;
-
-  getAllocationId(): string;
-  setAllocationId(value: string): PullAllocationsRequest;
+  setUpdatesOnly(value: boolean): PullAllocationRequest;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): PullAllocationsRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: PullAllocationsRequest): PullAllocationsRequest.AsObject;
-  static serializeBinaryToWriter(message: PullAllocationsRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): PullAllocationsRequest;
-  static deserializeBinaryFromReader(message: PullAllocationsRequest, reader: jspb.BinaryReader): PullAllocationsRequest;
+  toObject(includeInstance?: boolean): PullAllocationRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: PullAllocationRequest): PullAllocationRequest.AsObject;
+  static serializeBinaryToWriter(message: PullAllocationRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PullAllocationRequest;
+  static deserializeBinaryFromReader(message: PullAllocationRequest, reader: jspb.BinaryReader): PullAllocationRequest;
 }
 
-export namespace PullAllocationsRequest {
+export namespace PullAllocationRequest {
   export type AsObject = {
     name: string;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
     updatesOnly: boolean;
-    allocationId: string;
   };
 }
 
-export class PullAllocationsResponse extends jspb.Message {
-  getChangesList(): Array<PullAllocationsResponse.Change>;
-  setChangesList(value: Array<PullAllocationsResponse.Change>): PullAllocationsResponse;
-  clearChangesList(): PullAllocationsResponse;
-  addChanges(value?: PullAllocationsResponse.Change, index?: number): PullAllocationsResponse.Change;
+export class PullAllocationResponse extends jspb.Message {
+  getChangesList(): Array<PullAllocationResponse.Change>;
+  setChangesList(value: Array<PullAllocationResponse.Change>): PullAllocationResponse;
+  clearChangesList(): PullAllocationResponse;
+  addChanges(value?: PullAllocationResponse.Change, index?: number): PullAllocationResponse.Change;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): PullAllocationsResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: PullAllocationsResponse): PullAllocationsResponse.AsObject;
-  static serializeBinaryToWriter(message: PullAllocationsResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): PullAllocationsResponse;
-  static deserializeBinaryFromReader(message: PullAllocationsResponse, reader: jspb.BinaryReader): PullAllocationsResponse;
+  toObject(includeInstance?: boolean): PullAllocationResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: PullAllocationResponse): PullAllocationResponse.AsObject;
+  static serializeBinaryToWriter(message: PullAllocationResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PullAllocationResponse;
+  static deserializeBinaryFromReader(message: PullAllocationResponse, reader: jspb.BinaryReader): PullAllocationResponse;
 }
 
-export namespace PullAllocationsResponse {
+export namespace PullAllocationResponse {
   export type AsObject = {
-    changesList: Array<PullAllocationsResponse.Change.AsObject>;
+    changesList: Array<PullAllocationResponse.Change.AsObject>;
   };
 
   export class Change extends jspb.Message {
@@ -209,49 +204,5 @@ export namespace PullAllocationsResponse {
     };
   }
 
-}
-
-export class ListAllocatableResourcesRequest extends jspb.Message {
-  getName(): string;
-  setName(value: string): ListAllocatableResourcesRequest;
-
-  getReadMask(): google_protobuf_field_mask_pb.FieldMask | undefined;
-  setReadMask(value?: google_protobuf_field_mask_pb.FieldMask): ListAllocatableResourcesRequest;
-  hasReadMask(): boolean;
-  clearReadMask(): ListAllocatableResourcesRequest;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ListAllocatableResourcesRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: ListAllocatableResourcesRequest): ListAllocatableResourcesRequest.AsObject;
-  static serializeBinaryToWriter(message: ListAllocatableResourcesRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ListAllocatableResourcesRequest;
-  static deserializeBinaryFromReader(message: ListAllocatableResourcesRequest, reader: jspb.BinaryReader): ListAllocatableResourcesRequest;
-}
-
-export namespace ListAllocatableResourcesRequest {
-  export type AsObject = {
-    name: string;
-    readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
-  };
-}
-
-export class ListAllocatableResourcesResponse extends jspb.Message {
-  getAllocationsList(): Array<Allocation>;
-  setAllocationsList(value: Array<Allocation>): ListAllocatableResourcesResponse;
-  clearAllocationsList(): ListAllocatableResourcesResponse;
-  addAllocations(value?: Allocation, index?: number): Allocation;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ListAllocatableResourcesResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: ListAllocatableResourcesResponse): ListAllocatableResourcesResponse.AsObject;
-  static serializeBinaryToWriter(message: ListAllocatableResourcesResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ListAllocatableResourcesResponse;
-  static deserializeBinaryFromReader(message: ListAllocatableResourcesResponse, reader: jspb.BinaryReader): ListAllocatableResourcesResponse;
-}
-
-export namespace ListAllocatableResourcesResponse {
-  export type AsObject = {
-    allocationsList: Array<Allocation.AsObject>;
-  };
 }
 

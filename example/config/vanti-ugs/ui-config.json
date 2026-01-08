@@ -58,6 +58,13 @@
                 "source": "van/uk/brum/ugs/zones/building",
                 "metric": "ambientTemperature"
               }
+            },
+            {
+              "component": "builtin:usage/AllocationHistoryCard",
+              "props": {
+                "source": ["van/uk/brum/ugs/devices/LOK-L00-01"],
+                "title": "Locker Usage"
+              }
             }
           ],
           "after": [
