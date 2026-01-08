@@ -4,6 +4,7 @@ package nodeopts
 import (
 	"context"
 
+	"github.com/smart-core-os/sc-bos/internal/router"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
@@ -26,6 +27,13 @@ func WithStore(store Store) Option {
 	})
 }
 
+// WithRouter sets the Router used by the Node to route gRPC clients.
+func WithRouter(r *router.Router) Option {
+	return optionFunc(func(o *Struct) {
+		o.Router = r
+	})
+}
+
 // Join combines multiple options into a single struct.
 func Join(opts ...Option) Struct {
 	var o Struct
@@ -37,7 +45,8 @@ func Join(opts ...Option) Struct {
 
 // Struct contains all options for a Node as a struct for easy access.
 type Struct struct {
-	Store Store
+	Store  Store
+	Router *router.Router
 }
 
 func (s Struct) apply(o *Struct) {
