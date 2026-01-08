@@ -38,6 +38,16 @@ export const navItems = [
     }
   },
   {
+    title: 'Downloads',
+    icon: 'mdi-download',
+    link: {path: '/ops/downloads'},
+    badgeType: null,
+    enabled: () => {
+      const uiConfig = useUiConfigStore();
+      return uiConfig.pathEnabled('/downloads') && uiConfig.config?.ops?.downloadsServerEndpoint;
+    }
+  },
+  {
     title: 'Emergency Lighting',
     icon: 'mdi-alarm-light-outline',
     link: {path: '/ops/emergency-lighting'},

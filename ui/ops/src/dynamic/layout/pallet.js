@@ -5,6 +5,7 @@ export const builtinLayouts = {
   'LayoutGrid': defineAsyncComponent(() => import('@/dynamic/layout/LayoutGrid.vue')),
   // full pages, not widget containers
   'page/AirQuality': defineAsyncComponent(() => import('@/routes/ops/air-quality/AirQuality.vue')),
+  'page/DynamicDownloads': defineAsyncComponent(() => import('@/routes/ops/downloads/DownloadFileCard.vue')),
   'page/EmergencyLighting': defineAsyncComponent(() => import('@/routes/ops/emergency-lighting/EmergencyLighting.vue')),
   'page/EmergencyLightingV2': defineAsyncComponent(() => import('@/routes/ops/emergency-lighting/EmergencyLightingV2.vue')),
   'page/Reports': defineAsyncComponent(() => import('@/routes/ops/reports/Reports.vue')),
