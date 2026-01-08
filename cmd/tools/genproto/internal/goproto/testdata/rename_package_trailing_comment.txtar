@@ -1,9 +1,0 @@
--- input.go --
-package genpb // some comment
-
-func main() {}
--- want.go --
-package gen // some comment
-
-func main() {}
-

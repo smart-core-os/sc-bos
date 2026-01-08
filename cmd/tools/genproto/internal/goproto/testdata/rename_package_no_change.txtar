@@ -1,9 +1,0 @@
--- input.go --
-package gen
-
-func main() {}
--- want.go --
-package gen
-
-func main() {}
-
