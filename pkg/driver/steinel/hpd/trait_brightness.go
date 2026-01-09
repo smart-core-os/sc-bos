@@ -25,7 +25,7 @@ func newBrightnessSensor(client *Client, logger *zap.Logger) *brightnessSensor {
 	return &brightnessSensor{
 		client: client,
 		logger: logger,
-		value:  resource.NewValue(resource.WithInitialValue(&traits.Brightness{}), resource.WithNoDuplicates()),
+		value:  resource.NewValue(resource.WithInitialValue(&traits.AmbientBrightness{}), resource.WithNoDuplicates()),
 	}
 }
 
