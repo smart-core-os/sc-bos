@@ -1,0 +1,33 @@
+expected_changes: 1
+
+Test basic client replacement from var declaration + Client call to direct constructor.
+
+-- input/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+func example(n *node.Node) error {
+	var client traits.OnOffApiClient
+	err := n.Client(&client)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+-- output/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+func example(n *node.Node) error {
+	client := traits.NewOnOffApiClient(n.ClientConn())
+
+	return nil
+}
