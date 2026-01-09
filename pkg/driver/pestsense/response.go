@@ -43,10 +43,16 @@ func handleResponse(body []byte, devices map[string]*pestSensor, logger *zap.Log
 	if exists {
 		if occupied {
 			logger.Debug("setting device state", zap.String("deviceId", response.DeviceNumber), zap.Bool("occupied", true))
-			_, _ = device.occupancy.Set(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			_, err = device.occupancy.Set(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			if err != nil {
+				logger.Error("failed to set occupancy state", zap.String("deviceId", response.DeviceNumber), zap.Error(err))
+			}
 		} else {
 			logger.Debug("setting device state", zap.String("deviceId", response.DeviceNumber), zap.Bool("occupied", false))
-			_, _ = device.occupancy.Set(&traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			_, err = device.occupancy.Set(&traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			if err != nil {
+				logger.Error("failed to set occupancy state", zap.String("deviceId", response.DeviceNumber), zap.Error(err))
+			}
 		}
 	} else {
 		logger.Warn("received data for unknown device", zap.String("deviceNumber", response.DeviceNumber))
