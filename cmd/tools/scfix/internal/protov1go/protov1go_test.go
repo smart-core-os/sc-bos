@@ -7,18 +7,7 @@ import (
 )
 
 func TestProtov1go(t *testing.T) {
-	tests := []struct {
-		name string
-		file string
-	}{
-		{"enter leave history", "testdata/enter_leave_history.txtar"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fixtest.Run(t, tt.file, run)
-		})
-	}
+	fixtest.RunDir(t, "testdata", run)
 }
 
 func TestTryRenameSymbol(t *testing.T) {

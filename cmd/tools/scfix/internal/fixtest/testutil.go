@@ -14,6 +14,35 @@ import (
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/fixer"
 )
 
+// RunDir runs tests for all txtar files in the specified directory.
+// Each txtar file represents a separate test case.
+// Argument dirPath is the path to the directory containing txtar files.
+// Argument runFunc should run the fix and return the number of changes that were/would have been made.
+func RunDir(t *testing.T, dirPath string, runFunc func(*fixer.Context) (int, error)) {
+	t.Helper()
+
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		t.Fatalf("Failed to read directory %s: %v", dirPath, err)
+	}
+
+	if len(entries) == 0 {
+		t.Fatalf("No test files found in directory %s", dirPath)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".txtar") {
+			continue
+		}
+
+		txtarPath := filepath.Join(dirPath, entry.Name())
+		name := strings.TrimSuffix(entry.Name(), ".txtar")
+		t.Run(name, func(t *testing.T) {
+			Run(t, txtarPath, runFunc)
+		})
+	}
+}
+
 // Run runs tests to check the fixer correctly transforms the input into output from txtarPath.
 // Argument txtarPath should refer to a file path of a txtar file, see [ReadTestCase] for details of contents.
 // Argument runFunc should run the fix and return the number of changes that were/would have been made.

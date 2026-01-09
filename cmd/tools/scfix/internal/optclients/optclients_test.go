@@ -7,5 +7,5 @@ import (
 )
 
 func TestOptClients(t *testing.T) {
-	fixtest.Run(t, "testdata/optclients.txtar", run)
+	fixtest.RunDir(t, "testdata", run)
 }
