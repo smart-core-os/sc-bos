@@ -10,12 +10,14 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd/config"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-golang/pkg/trait/brightnesssensorpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
 )
 
@@ -47,7 +49,9 @@ type Driver struct {
 	client *Client
 
 	airQualitySensor *AirQualitySensor
+	brightnessSensor *brightnessSensor
 	occupancy        *Occupancy
+	soundSensor      *soundSensor
 	temperature      *TemperatureSensor
 
 	udmiServiceServer *UdmiServiceServer
@@ -57,18 +61,22 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer := d.announcer.Replace(ctx)
 	grp, ctx := errgroup.WithContext(ctx)
 
-	d.client = NewInsecureClient(cfg.IpAddress, cfg.Password)
+	d.client = newInsecureClient(cfg.IpAddress, cfg.Password)
 
-	d.airQualitySensor = NewAirQualitySensor(d.client, d.logger.Named("AirQualityValue").With(zap.String("ipAddress", cfg.IpAddress)))
-	d.occupancy = NewOccupancySensor(d.client, d.logger.Named("Occupancy").With(zap.String("ipAddress", cfg.IpAddress)))
-	d.temperature = NewTemperatureSensor(d.client, d.logger.Named("Temperature").With(zap.String("ipAddress", cfg.IpAddress)))
-	d.udmiServiceServer = NewUdmiServiceServer(d.logger.Named("UdmiServiceServer"), d.airQualitySensor.AirQualityValue, d.occupancy.OccupancyValue, d.temperature.TemperatureValue, cfg.UDMITopicPrefix)
+	d.airQualitySensor = newAirQualitySensor(d.client, d.logger.Named("AirQualityValue").With(zap.String("ipAddress", cfg.IpAddress)))
+	d.brightnessSensor = newBrightnessSensor(d.client, d.logger.Named("Brightness").With(zap.String("ipAddress", cfg.IpAddress)))
+	d.occupancy = newOccupancySensor(d.client, d.logger.Named("Occupancy").With(zap.String("ipAddress", cfg.IpAddress)))
+	d.soundSensor = newSoundSensor(d.client, d.logger.Named("soundSensor").With(zap.String("ipAddress", cfg.IpAddress)))
+	d.temperature = newTemperatureSensor(d.client, d.logger.Named("Temperature").With(zap.String("ipAddress", cfg.IpAddress)))
+	d.udmiServiceServer = newUdmiServiceServer(d.logger.Named("UdmiServiceServer"), d.airQualitySensor.AirQualityValue, d.occupancy.OccupancyValue, d.temperature.TemperatureValue, cfg.UDMITopicPrefix)
 
 	announcer.Announce(cfg.Name,
 		node.HasMetadata(cfg.Metadata),
 		node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(d.airQualitySensor))),
-		node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(d.occupancy))),
 		node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(d.temperature))),
+		node.HasTrait(trait.BrightnessSensor, node.WithClients(brightnesssensorpb.WrapApi(d.brightnessSensor))),
+		node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(d.occupancy))),
+		node.HasTrait(soundsensorpb.TraitName, node.WithClients(gen.WrapSoundSensorApi(d.soundSensor))),
 		node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(d.udmiServiceServer))),
 	)
 
@@ -92,4 +100,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	}()
 
 	return nil
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }

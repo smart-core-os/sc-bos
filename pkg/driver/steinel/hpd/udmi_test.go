@@ -23,7 +23,7 @@ func Test_PullExportMessages(t *testing.T) {
 	o := resource.NewValue(resource.WithInitialValue(&traits.Occupancy{PeopleCount: 0, State: traits.Occupancy_OCCUPIED}), resource.WithNoDuplicates())
 	temp := resource.NewValue(resource.WithInitialValue(&traits.AirTemperature{AmbientTemperature: &types.Temperature{ValueCelsius: 0}, AmbientHumidity: &humidity}), resource.WithNoDuplicates())
 
-	server := NewUdmiServiceServer(nil, aq, o, temp, "prefix")
+	server := newUdmiServiceServer(nil, aq, o, temp, "prefix")
 	client := gen.WrapUdmiService(server)
 
 	req := &gen.PullExportMessagesRequest{

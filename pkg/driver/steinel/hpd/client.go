@@ -49,8 +49,8 @@ func getAllowedCiphers() []uint16 {
 	}
 }
 
-// NewInsecureClient creates a Client that connects over HTTPS but does not verify the server certificate.
-func NewInsecureClient(host string, password string) *Client {
+// newInsecureClient creates a Client that connects over HTTPS but does not verify the server certificate.
+func newInsecureClient(host string, password string) *Client {
 	client := &Client{
 		BaseURL: url.URL{
 			Scheme: "https",

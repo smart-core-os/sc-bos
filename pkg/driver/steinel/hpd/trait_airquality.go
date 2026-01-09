@@ -25,7 +25,7 @@ type AirQualitySensor struct {
 
 var _ sensor = (*AirQualitySensor)(nil)
 
-func NewAirQualitySensor(client *Client, logger *zap.Logger) *AirQualitySensor {
+func newAirQualitySensor(client *Client, logger *zap.Logger) *AirQualitySensor {
 	return &AirQualitySensor{
 		client:          client,
 		logger:          logger,
