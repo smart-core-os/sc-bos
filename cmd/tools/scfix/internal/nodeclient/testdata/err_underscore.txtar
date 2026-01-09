@@ -1,0 +1,27 @@
+expected_changes: 1
+
+Test assigning error to underscore.
+
+-- input/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+func example(n *node.Node) {
+	var client traits.OnOffApiClient
+	_ = n.Client(&client)
+}
+-- output/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+func example(n *node.Node) {
+	client := traits.NewOnOffApiClient(n.ClientConn())
+}
