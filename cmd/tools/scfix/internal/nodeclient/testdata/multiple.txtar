@@ -1,0 +1,41 @@
+expected_changes: 2
+
+Test multiple client replacements in the same function.
+
+-- input/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+func example(n *node.Node) error {
+	var onOffClient traits.OnOffApiClient
+	err := n.Client(&onOffClient)
+	if err != nil {
+		return err
+	}
+
+	var brightnessClient traits.BrightnessSensorApiClient
+	err = n.Client(&brightnessClient)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+-- output/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+func example(n *node.Node) error {
+	onOffClient := traits.NewOnOffApiClient(n.ClientConn())
+	brightnessClient := traits.NewBrightnessSensorApiClient(n.ClientConn())
+
+	return nil
+}

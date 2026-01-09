@@ -1,0 +1,38 @@
+expected_changes: 0
+
+Test that files without Client calls remain unchanged.
+
+-- input/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	not "github.com/smart-core-os/sc-bos/pkg/not/node"
+)
+
+func example(n *node.Node) error {
+	return nil
+}
+
+func _(n *not.Node) error {
+	var client traits.OnOffApiClient
+	return n.Client(&client)
+}
+-- output/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	not "github.com/smart-core-os/sc-bos/pkg/not/node"
+)
+
+func example(n *node.Node) error {
+	return nil
+}
+
+func _(n *not.Node) error {
+	var client traits.OnOffApiClient
+	return n.Client(&client)
+}
