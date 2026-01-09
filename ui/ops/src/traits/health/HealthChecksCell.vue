@@ -35,7 +35,7 @@ const iconInfo = computed(() => {
 });
 const tooltipStr = computed(() => {
   if (!hasChecks.value) {
-    return 'No health checks are set up for this device';
+    return 'No health checks are currently set up';
   }
   const checkPlural = totalCount.value === 1 ? 'check is' : 'checks are';
   if (hasAbnormal.value) {
