@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.enrollment.v1;
 
-option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb";
 
 // A service used to enroll a Smart Core node into a centrally managed installation.
 // Establishes a trust relationship between the node serving this API (the target node) and the node calling it

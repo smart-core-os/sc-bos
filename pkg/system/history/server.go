@@ -8,17 +8,17 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/history"
+	gen_historypb "github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 )
 
 type storeServer struct {
-	gen.UnimplementedHistoryAdminApiServer
+	gen_historypb.UnimplementedHistoryAdminApiServer
 	store func(source string) history.Store
 }
 
-func (s *storeServer) CreateHistoryRecord(ctx context.Context, request *gen.CreateHistoryRecordRequest) (*gen.HistoryRecord, error) {
+func (s *storeServer) CreateHistoryRecord(ctx context.Context, request *gen_historypb.CreateHistoryRecordRequest) (*gen_historypb.HistoryRecord, error) {
 	if err := validateCreateRequest(request); err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (s *storeServer) CreateHistoryRecord(ctx context.Context, request *gen.Crea
 	return storeRecordToProtoRecord(record.Source, r), nil
 }
 
-func (s *storeServer) ListHistoryRecords(ctx context.Context, request *gen.ListHistoryRecordsRequest) (*gen.ListHistoryRecordsResponse, error) {
+func (s *storeServer) ListHistoryRecords(ctx context.Context, request *gen_historypb.ListHistoryRecordsRequest) (*gen_historypb.ListHistoryRecordsResponse, error) {
 	source := request.GetQuery().GetSourceEqual()
 	if source == "" {
 		return nil, status.Error(codes.InvalidArgument, "source_equal must be set")
@@ -45,15 +45,15 @@ func (s *storeServer) ListHistoryRecords(ctx context.Context, request *gen.ListH
 		return nil, err
 	}
 
-	return &gen.ListHistoryRecordsResponse{
+	return &gen_historypb.ListHistoryRecordsResponse{
 		Records:       page,
 		NextPageToken: nextToken,
 		TotalSize:     int32(size),
 	}, nil
 }
 
-func newPageReader(source string) historypb.PageReader[*gen.HistoryRecord] {
-	pr := historypb.NewPageReader(func(r history.Record) (*gen.HistoryRecord, error) {
+func newPageReader(source string) historypb.PageReader[*gen_historypb.HistoryRecord] {
+	pr := historypb.NewPageReader(func(r history.Record) (*gen_historypb.HistoryRecord, error) {
 		return storeRecordToProtoRecord(source, r), nil
 	})
 	// we use create_time in our API, so override the default record_time parsing
@@ -72,7 +72,7 @@ func newPageReader(source string) historypb.PageReader[*gen.HistoryRecord] {
 	return pr
 }
 
-func protoRecordToStoreRecord(r *gen.HistoryRecord) (string, history.Record) {
+func protoRecordToStoreRecord(r *gen_historypb.HistoryRecord) (string, history.Record) {
 	hRecord := history.Record{
 		ID:      r.GetId(),
 		Payload: r.GetPayload(),
@@ -83,8 +83,8 @@ func protoRecordToStoreRecord(r *gen.HistoryRecord) (string, history.Record) {
 	return r.GetSource(), hRecord
 }
 
-func storeRecordToProtoRecord(source string, r history.Record) *gen.HistoryRecord {
-	pbRecord := &gen.HistoryRecord{
+func storeRecordToProtoRecord(source string, r history.Record) *gen_historypb.HistoryRecord {
+	pbRecord := &gen_historypb.HistoryRecord{
 		Id:      r.ID,
 		Source:  source,
 		Payload: r.Payload,
@@ -95,7 +95,7 @@ func storeRecordToProtoRecord(source string, r history.Record) *gen.HistoryRecor
 	return pbRecord
 }
 
-func validateCreateRequest(request *gen.CreateHistoryRecordRequest) error {
+func validateCreateRequest(request *gen_historypb.CreateHistoryRecordRequest) error {
 	switch {
 	case request.GetRecord().GetId() != "":
 		return status.Error(codes.InvalidArgument, "id must not be set")

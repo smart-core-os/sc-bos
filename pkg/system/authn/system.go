@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/smart-core-os/sc-bos/internal/auth/accesstoken"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/tenantpb"
 	"github.com/smart-core-os/sc-bos/pkg/system/authn/config"
 )
 
@@ -26,7 +26,7 @@ func (s *System) systemTenantVerifier(cfg config.Root) (accesstoken.Verifier, er
 	// verify system accounts using the local systems/tenants package, via TenantApi
 	nodeVerifier := accesstoken.NeverVerify(errors.New("tenant system verification not enabled"))
 	if cfg.System.TenantAccounts {
-		client := gen.NewTenantApiClient(s.clienter.ClientConn())
+		client := tenantpb.NewTenantApiClient(s.clienter.ClientConn())
 		nodeVerifier = accesstoken.VerifierFunc(func(ctx context.Context, id, secret string) (accesstoken.SecretData, error) {
 			return accesstoken.RemoteVerify(ctx, id, secret, client)
 		})
@@ -43,7 +43,7 @@ func (s *System) systemTenantVerifier(cfg config.Root) (accesstoken.Verifier, er
 			if conn == nil {
 				return data, errors.New("cohort manager not available")
 			}
-			return accesstoken.RemoteVerify(ctx, id, secret, gen.NewTenantApiClient(conn))
+			return accesstoken.RemoteVerify(ctx, id, secret, tenantpb.NewTenantApiClient(conn))
 		})
 	}
 

@@ -15,7 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/auth/permission"
 	"github.com/smart-core-os/sc-bos/internal/util/pass"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
 // Verifier verifies that an id is associated with a given secret.
@@ -369,7 +369,7 @@ func LegacyZonePermission(zone string) token.PermissionAssignment {
 	return token.PermissionAssignment{
 		Permission:   permission.TraitWrite,
 		Scoped:       true,
-		ResourceType: token.ResourceType(gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+		ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
 		Resource:     zone,
 	}
 }

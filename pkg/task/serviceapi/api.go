@@ -14,15 +14,15 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/page"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
 )
 
-// Api implements a gen.ServicesApiServer backed by service.Map.
+// Api implements a servicespb.ServicesApiServer backed by service.Map.
 type Api struct {
-	gen.UnimplementedServicesApiServer
+	servicespb.UnimplementedServicesApiServer
 	m   *service.Map
 	now func() time.Time
 
@@ -39,7 +39,7 @@ func NewApi(m *service.Map, opts ...Option) *Api {
 	return a
 }
 
-func (a *Api) GetService(_ context.Context, request *gen.GetServiceRequest) (*gen.Service, error) {
+func (a *Api) GetService(_ context.Context, request *servicespb.GetServiceRequest) (*servicespb.Service, error) {
 	if request.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id missing")
 	}
@@ -54,7 +54,7 @@ func (a *Api) GetService(_ context.Context, request *gen.GetServiceRequest) (*ge
 	return p, nil
 }
 
-func (a *Api) PullService(request *gen.PullServiceRequest, server gen.ServicesApi_PullServiceServer) error {
+func (a *Api) PullService(request *servicespb.PullServiceRequest, server servicespb.ServicesApi_PullServiceServer) error {
 	if request.Id == "" {
 		return status.Error(codes.InvalidArgument, "id missing")
 	}
@@ -100,7 +100,7 @@ func (a *Api) PullService(request *gen.PullServiceRequest, server gen.ServicesAp
 	}
 }
 
-func (a *Api) CreateService(ctx context.Context, request *gen.CreateServiceRequest) (*gen.Service, error) {
+func (a *Api) CreateService(ctx context.Context, request *servicespb.CreateServiceRequest) (*servicespb.Service, error) {
 	id, kind, state := protoToState(request.Service)
 	id, state, err := a.m.Create(id, kind, state)
 	if err != nil {
@@ -114,7 +114,7 @@ func (a *Api) CreateService(ctx context.Context, request *gen.CreateServiceReque
 	return stateToProto(id, kind, state), nil
 }
 
-func (a *Api) DeleteService(ctx context.Context, request *gen.DeleteServiceRequest) (*gen.Service, error) {
+func (a *Api) DeleteService(ctx context.Context, request *servicespb.DeleteServiceRequest) (*servicespb.Service, error) {
 	if request.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id missing")
 	}
@@ -132,7 +132,7 @@ func (a *Api) DeleteService(ctx context.Context, request *gen.DeleteServiceReque
 	return stateToProto(request.Id, "", state), nil
 }
 
-func (a *Api) ListServices(_ context.Context, request *gen.ListServicesRequest) (*gen.ListServicesResponse, error) {
+func (a *Api) ListServices(_ context.Context, request *servicespb.ListServicesRequest) (*servicespb.ListServicesResponse, error) {
 	idFunc := func(r *service.Record) string { return r.Id }
 	values, totalSize, nextPageToken, err := page.List(request, idFunc, func() []*service.Record {
 		return a.m.Values()
@@ -141,25 +141,25 @@ func (a *Api) ListServices(_ context.Context, request *gen.ListServicesRequest) 
 		return nil, err
 	}
 
-	res := &gen.ListServicesResponse{
-		Services:      make([]*gen.Service, len(values)),
+	res := &servicespb.ListServicesResponse{
+		Services:      make([]*servicespb.Service, len(values)),
 		TotalSize:     int32(totalSize),
 		NextPageToken: nextPageToken,
 	}
 	filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 	for i, value := range values {
-		res.Services[i] = filter.FilterClone(recordToProto(value)).(*gen.Service)
+		res.Services[i] = filter.FilterClone(recordToProto(value)).(*servicespb.Service)
 	}
 
 	return res, nil
 }
 
-func (a *Api) PullServices(request *gen.PullServicesRequest, server gen.ServicesApi_PullServicesServer) error {
+func (a *Api) PullServices(request *servicespb.PullServicesRequest, server servicespb.ServicesApi_PullServicesServer) error {
 	ctx, stop := context.WithCancel(server.Context())
 	defer stop()
 
 	for c := range a.pullServices(ctx, request) {
-		change := &gen.PullServicesResponse{Changes: []*gen.PullServicesResponse_Change{c}}
+		change := &servicespb.PullServicesResponse{Changes: []*servicespb.PullServicesResponse_Change{c}}
 		if err := server.Send(change); err != nil {
 			return err
 		}
@@ -168,23 +168,23 @@ func (a *Api) PullServices(request *gen.PullServicesRequest, server gen.Services
 	return nil
 }
 
-func (a *Api) pullServices(ctx context.Context, request *gen.PullServicesRequest) <-chan *gen.PullServicesResponse_Change {
-	out := make(chan *gen.PullServicesResponse_Change)
+func (a *Api) pullServices(ctx context.Context, request *servicespb.PullServicesRequest) <-chan *servicespb.PullServicesResponse_Change {
+	out := make(chan *servicespb.PullServicesResponse_Change)
 	// protects out to make sure that the watchRecord goroutines can never get hold of
 	// out after it's closed.
-	outSem := make(chan chan *gen.PullServicesResponse_Change, 1)
+	outSem := make(chan chan *servicespb.PullServicesResponse_Change, 1)
 	outSem <- out
 
 	ctx, stop := context.WithCancel(ctx)
 
 	// publish sends change to out unless ctx is done.
 	// Returns true if sending to out won, false if ctx is done.
-	publish := func(change *gen.PullServicesResponse_Change) bool {
+	publish := func(change *servicespb.PullServicesResponse_Change) bool {
 		// it's not valid to send on a channel that might be closed, even if another select case
 		// (sucn as <-ctx.Done()) is already complete.
 		// Therefore we protect out with outSem, so that publish can only get hold of the channel
 		// when it isn't closed yet. After outSem is closed, it will never be sent back to outSem.
-		var out chan *gen.PullServicesResponse_Change
+		var out chan *servicespb.PullServicesResponse_Change
 		select {
 		case <-ctx.Done():
 			return false
@@ -206,7 +206,7 @@ func (a *Api) pullServices(ctx context.Context, request *gen.PullServicesRequest
 	watchRecord := func(ctx context.Context, stop context.CancelFunc, record *service.Record, updateOnly bool) {
 		defer stop() // we shouldn't need this, ctx cancellation is the only way to exit this func anyway
 
-		var last *gen.Service // used for updates as OldValue
+		var last *servicespb.Service // used for updates as OldValue
 
 		var serviceChanges <-chan service.State
 		if updateOnly {
@@ -215,7 +215,7 @@ func (a *Api) pullServices(ctx context.Context, request *gen.PullServicesRequest
 			var state service.State
 			state, serviceChanges = record.Service.StateAndChanges(ctx)
 			last = stateToProto(record.Id, record.Kind, state)
-			change := &gen.PullServicesResponse_Change{
+			change := &servicespb.PullServicesResponse_Change{
 				Name:       request.Name,
 				ChangeTime: timestamppb.New(a.now()),
 				Type:       types.ChangeType_ADD,
@@ -229,7 +229,7 @@ func (a *Api) pullServices(ctx context.Context, request *gen.PullServicesRequest
 		for state := range serviceChanges {
 			old := last
 			last = stateToProto(record.Id, record.Kind, state)
-			change := &gen.PullServicesResponse_Change{
+			change := &servicespb.PullServicesResponse_Change{
 				Name:       request.Name,
 				ChangeTime: timestamppb.New(a.now()),
 				Type:       types.ChangeType_UPDATE,
@@ -271,7 +271,7 @@ func (a *Api) pullServices(ctx context.Context, request *gen.PullServicesRequest
 					if stop, ok := listeners[c.OldValue.Id]; ok {
 						delete(listeners, c.OldValue.Id)
 						stop()
-						change := &gen.PullServicesResponse_Change{
+						change := &servicespb.PullServicesResponse_Change{
 							Name:       request.Name,
 							ChangeTime: timestamppb.New(c.ChangeTime),
 							Type:       types.ChangeType_REMOVE,
@@ -295,7 +295,7 @@ func (a *Api) pullServices(ctx context.Context, request *gen.PullServicesRequest
 	return out
 }
 
-func (a *Api) StartService(_ context.Context, request *gen.StartServiceRequest) (*gen.Service, error) {
+func (a *Api) StartService(_ context.Context, request *servicespb.StartServiceRequest) (*servicespb.Service, error) {
 	if request.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id missing")
 	}
@@ -321,7 +321,7 @@ func (a *Api) StartService(_ context.Context, request *gen.StartServiceRequest) 
 	return stateToProto(r.Id, r.Kind, state), nil
 }
 
-func (a *Api) ConfigureService(ctx context.Context, request *gen.ConfigureServiceRequest) (*gen.Service, error) {
+func (a *Api) ConfigureService(ctx context.Context, request *servicespb.ConfigureServiceRequest) (*servicespb.Service, error) {
 	if request.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id missing")
 	}
@@ -346,7 +346,7 @@ func (a *Api) ConfigureService(ctx context.Context, request *gen.ConfigureServic
 	return stateToProto(r.Id, r.Kind, state), nil
 }
 
-func (a *Api) StopService(_ context.Context, request *gen.StopServiceRequest) (*gen.Service, error) {
+func (a *Api) StopService(_ context.Context, request *servicespb.StopServiceRequest) (*servicespb.Service, error) {
 	if request.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id missing")
 	}
@@ -370,7 +370,7 @@ func (a *Api) StopService(_ context.Context, request *gen.StopServiceRequest) (*
 	return stateToProto(r.Id, r.Kind, state), nil
 }
 
-func (a *Api) GetServiceMetadata(_ context.Context, request *gen.GetServiceMetadataRequest) (*gen.ServiceMetadata, error) {
+func (a *Api) GetServiceMetadata(_ context.Context, request *servicespb.GetServiceMetadataRequest) (*servicespb.ServiceMetadata, error) {
 	md := a.newMetadata()
 	a.seedMetadata(md, a.m.States())
 
@@ -380,7 +380,7 @@ func (a *Api) GetServiceMetadata(_ context.Context, request *gen.GetServiceMetad
 	return md, nil
 }
 
-func (a *Api) PullServiceMetadata(request *gen.PullServiceMetadataRequest, server gen.ServicesApi_PullServiceMetadataServer) error {
+func (a *Api) PullServiceMetadata(request *servicespb.PullServiceMetadataRequest, server servicespb.ServicesApi_PullServiceMetadataServer) error {
 	md := a.newMetadata()
 
 	ctx, stop := context.WithCancel(server.Context())
@@ -391,20 +391,20 @@ func (a *Api) PullServiceMetadata(request *gen.PullServiceMetadataRequest, serve
 
 	filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 
-	var lastSent *gen.ServiceMetadata
-	send := func(md *gen.ServiceMetadata) error {
-		md = proto.Clone(md).(*gen.ServiceMetadata)
+	var lastSent *servicespb.ServiceMetadata
+	send := func(md *servicespb.ServiceMetadata) error {
+		md = proto.Clone(md).(*servicespb.ServiceMetadata)
 		filter.Filter(md)
 		if proto.Equal(md, lastSent) {
 			return nil // no change, don't send
 		}
 		lastSent = md
-		change := &gen.PullServiceMetadataResponse_Change{
+		change := &servicespb.PullServiceMetadataResponse_Change{
 			Name:       request.Name,
 			Metadata:   md,
 			ChangeTime: timestamppb.Now(),
 		}
-		response := &gen.PullServiceMetadataResponse{Changes: []*gen.PullServiceMetadataResponse_Change{change}}
+		response := &servicespb.PullServiceMetadataResponse{Changes: []*servicespb.PullServiceMetadataResponse_Change{change}}
 		return server.Send(response)
 	}
 
@@ -423,8 +423,8 @@ func (a *Api) PullServiceMetadata(request *gen.PullServiceMetadataRequest, serve
 	return nil
 }
 
-func (a *Api) newMetadata() *gen.ServiceMetadata {
-	md := &gen.ServiceMetadata{
+func (a *Api) newMetadata() *servicespb.ServiceMetadata {
+	md := &servicespb.ServiceMetadata{
 		TypeCounts: make(map[string]uint32),
 	}
 	for _, knownType := range a.knownTypes {
@@ -433,13 +433,13 @@ func (a *Api) newMetadata() *gen.ServiceMetadata {
 	return md
 }
 
-func (a *Api) seedMetadata(md *gen.ServiceMetadata, states []*service.StateRecord) {
+func (a *Api) seedMetadata(md *servicespb.ServiceMetadata, states []*service.StateRecord) {
 	for _, record := range states {
 		incRecord(md, record, 1)
 	}
 }
 
-func incRecord(md *gen.ServiceMetadata, record *service.StateRecord, inc int) {
+func incRecord(md *servicespb.ServiceMetadata, record *service.StateRecord, inc int) {
 	addIntP(&md.TotalCount, inc)
 	md.TypeCounts[record.Kind] = addInt(md.TypeCounts[record.Kind], inc)
 	s := record.State
@@ -451,7 +451,7 @@ func incRecord(md *gen.ServiceMetadata, record *service.StateRecord, inc int) {
 	}
 }
 
-func updateRecord(md *gen.ServiceMetadata, oldVal, newVal *service.StateRecord) {
+func updateRecord(md *servicespb.ServiceMetadata, oldVal, newVal *service.StateRecord) {
 	// this does a little more than strictly needed, but works and is simple
 	if oldVal != nil {
 		incRecord(md, oldVal, -1)

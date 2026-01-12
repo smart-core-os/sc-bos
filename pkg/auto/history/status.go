@@ -7,16 +7,16 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
 func (a *automation) collectCurrentStatusChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
-	client := gen.NewStatusApiClient(a.clients.ClientConn())
+	client := statuspb.NewStatusApiClient(a.clients.ClientConn())
 
-	last := newDeduper[*gen.StatusLog](nil)
+	last := newDeduper[*statuspb.StatusLog](nil)
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
-		stream, err := client.PullCurrentStatus(ctx, &gen.PullCurrentStatusRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
+		stream, err := client.PullCurrentStatus(ctx, &statuspb.PullCurrentStatusRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}
@@ -44,7 +44,7 @@ func (a *automation) collectCurrentStatusChanges(ctx context.Context, source con
 		}
 	}
 	pollFn := func(ctx context.Context, changes chan<- []byte) error {
-		resp, err := client.GetCurrentStatus(ctx, &gen.GetCurrentStatusRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
+		resp, err := client.GetCurrentStatus(ctx, &statuspb.GetCurrentStatusRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}

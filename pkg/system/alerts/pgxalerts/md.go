@@ -7,28 +7,28 @@ import (
 	"github.com/jackc/pgx/v4"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 	"github.com/smart-core-os/sc-bos/pkg/system/alerts/alertmd"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
-func (s *Server) GetAlertMetadata(ctx context.Context, request *gen.GetAlertMetadataRequest) (*gen.AlertMetadata, error) {
+func (s *Server) GetAlertMetadata(ctx context.Context, request *alertpb.GetAlertMetadataRequest) (*alertpb.AlertMetadata, error) {
 	if err := s.initAlertMetadata(ctx); err != nil {
 		return nil, err
 	}
-	return s.md.Get(resource.WithReadMask(request.ReadMask)).(*gen.AlertMetadata), nil
+	return s.md.Get(resource.WithReadMask(request.ReadMask)).(*alertpb.AlertMetadata), nil
 }
 
-func (s *Server) PullAlertMetadata(request *gen.PullAlertMetadataRequest, server gen.AlertApi_PullAlertMetadataServer) error {
+func (s *Server) PullAlertMetadata(request *alertpb.PullAlertMetadataRequest, server alertpb.AlertApi_PullAlertMetadataServer) error {
 	if err := s.initAlertMetadata(server.Context()); err != nil {
 		return err
 	}
 	for change := range s.md.Pull(server.Context(), resource.WithReadMask(request.GetReadMask()), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&gen.PullAlertMetadataResponse{Changes: []*gen.PullAlertMetadataResponse_Change{
+		err := server.Send(&alertpb.PullAlertMetadataResponse{Changes: []*alertpb.PullAlertMetadataResponse_Change{
 			{
 				Name:       request.Name,
 				ChangeTime: timestamppb.New(change.ChangeTime),
-				Metadata:   change.Value.(*gen.AlertMetadata),
+				Metadata:   change.Value.(*alertpb.AlertMetadata),
 			},
 		}})
 		if err != nil {
@@ -71,7 +71,7 @@ func (s *Server) initAlertMetadata(ctx context.Context) error {
 		// There is space between our transaction and other RPC transactions (like AckAlert)
 		// for events to be missed or duplicated.
 		// I apologise to any future maintainer who find this comment and has to fix it, likely under pressure.
-		var events <-chan *gen.PullAlertsResponse_Change
+		var events <-chan *alertpb.PullAlertsResponse_Change
 		var eventsCtx context.Context
 		var eventsCancel context.CancelFunc
 
@@ -209,7 +209,7 @@ func queryGroupCounts[K comparable](ctx context.Context, tx pgx.Tx, col string, 
 	return all, nil
 }
 
-func severityCountMapToProto(m map[gen.Alert_Severity]uint32) map[int32]uint32 {
+func severityCountMapToProto(m map[alertpb.Alert_Severity]uint32) map[int32]uint32 {
 	dst := make(map[int32]uint32, len(m))
 	for k, v := range m {
 		dst[int32(k)] = v

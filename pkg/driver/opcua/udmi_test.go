@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 )
 
 func TestUdmi_GetExportMessage(t *testing.T) {
@@ -28,7 +28,7 @@ func TestUdmi_GetExportMessage(t *testing.T) {
 		t.Fatalf("newUdmi() error = %v", err)
 	}
 
-	msg, err := udmi.GetExportMessage(t.Context(), &gen.GetExportMessageRequest{})
+	msg, err := udmi.GetExportMessage(t.Context(), &udmipb.GetExportMessageRequest{})
 	if err != nil {
 		t.Errorf("GetExportMessage() error = %v", err)
 	}
@@ -109,7 +109,7 @@ func TestUdmi_sendUdmiMessage(t *testing.T) {
 			udmi.sendUdmiMessage(ctx, nodeId, tt.value)
 
 			// Check if message was recorded in pointEvents
-			msg, err := udmi.GetExportMessage(ctx, &gen.GetExportMessageRequest{})
+			msg, err := udmi.GetExportMessage(ctx, &udmipb.GetExportMessageRequest{})
 			if err != nil {
 				t.Fatalf("GetExportMessage() error = %v", err)
 			}
@@ -147,7 +147,7 @@ func TestUdmi_PullControlTopics(t *testing.T) {
 	// Start pulling in goroutine
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- udmi.PullControlTopics(&gen.PullControlTopicsRequest{}, &mockUdmiControlTopicsServer{ctx: ctx})
+		errCh <- udmi.PullControlTopics(&udmipb.PullControlTopicsRequest{}, &mockUdmiControlTopicsServer{ctx: ctx})
 	}()
 
 	// Cancel context
@@ -178,7 +178,7 @@ func TestUdmi_OnMessage(t *testing.T) {
 	}
 
 	// OnMessage currently returns empty response
-	resp, err := udmi.OnMessage(t.Context(), &gen.OnMessageRequest{})
+	resp, err := udmi.OnMessage(t.Context(), &udmipb.OnMessageRequest{})
 	if err != nil {
 		t.Errorf("OnMessage() error = %v", err)
 	}
@@ -226,7 +226,7 @@ func TestUdmi_newUdmi_InvalidConfig(t *testing.T) {
 
 // Mock server for testing PullControlTopics
 type mockUdmiControlTopicsServer struct {
-	gen.UdmiService_PullControlTopicsServer
+	udmipb.UdmiService_PullControlTopicsServer
 	ctx context.Context
 }
 
@@ -234,6 +234,6 @@ func (m *mockUdmiControlTopicsServer) Context() context.Context {
 	return m.ctx
 }
 
-func (m *mockUdmiControlTopicsServer) Send(*gen.PullControlTopicsResponse) error {
+func (m *mockUdmiControlTopicsServer) Send(*udmipb.PullControlTopicsResponse) error {
 	return nil
 }

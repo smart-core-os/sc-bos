@@ -13,10 +13,12 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
@@ -218,17 +220,17 @@ func devicesToHealthCheckCollection(d *devicespb.Collection) system.HealthCheckC
 
 type devicesHealthCheckCollection devicespb.Collection
 
-func (d *devicesHealthCheckCollection) MergeHealthChecks(name string, checks ...*gen.HealthCheck) error {
-	_, err := (*devicespb.Collection)(d).Update(&gen.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-		dstDev := dst.(*gen.Device)
+func (d *devicesHealthCheckCollection) MergeHealthChecks(name string, checks ...*gen_healthpb.HealthCheck) error {
+	_, err := (*devicespb.Collection)(d).Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+		dstDev := dst.(*gen_devicespb.Device)
 		dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, checks...)
 	}), resource.WithCreateIfAbsent())
 	return err
 }
 
 func (d *devicesHealthCheckCollection) RemoveHealthChecks(name string, ids ...string) error {
-	_, err := (*devicespb.Collection)(d).Update(&gen.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
-		dstDev := dst.(*gen.Device)
+	_, err := (*devicespb.Collection)(d).Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
+		dstDev := dst.(*gen_devicespb.Device)
 		for _, id := range ids {
 			dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
 		}
@@ -240,7 +242,7 @@ func (d *devicesHealthCheckCollection) RemoveHealthChecks(name string, ids ...st
 }
 
 func announceServices[M ~map[string]T, T any](c *Controller, name string, services *service.Map, factories M, store serviceapi.Store) node.Undo {
-	client := gen.WrapServicesApi(serviceapi.NewApi(services,
+	client := servicespb.WrapApi(serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 		serviceapi.WithStore(store),
@@ -250,7 +252,7 @@ func announceServices[M ~map[string]T, T any](c *Controller, name string, servic
 
 func announceAutoServices[M ~map[string]T, T any](c *Controller, services *service.Map, factories M) node.Undo {
 	// special because the config name isn't the name we announce as
-	client := gen.WrapServicesApi(serviceapi.NewApi(services,
+	client := servicespb.WrapApi(serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 		serviceapi.WithStore(c.ControllerConfig.Automations()),
@@ -261,7 +263,7 @@ func announceAutoServices[M ~map[string]T, T any](c *Controller, services *servi
 func announceSystemServices[M ~map[string]T, T any](c *Controller, services *service.Map, factories M) node.Undo {
 	// special because we don't support writing this config, yet
 	// todo: support writing system config
-	client := gen.WrapServicesApi(serviceapi.NewApi(services,
+	client := servicespb.WrapApi(serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 	))

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.lightingtest.v1;
 
-option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/lightingtestpb";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";

@@ -5,18 +5,19 @@ import (
 	"math/rand/v2"
 	"time"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
+	gen_allocationpb "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
 )
 
 func AllocationAuto(model *allocationpb.Model) service.Lifecycle {
-	states := maps.Values(gen.Allocation_State_value)
+	states := maps.Values(gen_allocationpb.Allocation_State_value)
 
 	states = states[1:] // remove the UNKNOWN state
 
-	actors := []*gen.Actor{
+	actors := []*actorpb.Actor{
 		nil,
 		{DisplayName: "Scott Lang", Ids: map[string]string{"card": "1234567890"}},
 		{DisplayName: "Hope Van Dyne", Ids: map[string]string{"card": "0987654321"}},
@@ -37,16 +38,16 @@ func AllocationAuto(model *allocationpb.Model) service.Lifecycle {
 			unallocationTotal := int32(0)
 
 			for {
-				allocation := gen.Allocation_State(states[rand.IntN(len(states))])
+				allocation := gen_allocationpb.Allocation_State(states[rand.IntN(len(states))])
 
 				switch allocation {
-				case gen.Allocation_ALLOCATED:
+				case gen_allocationpb.Allocation_ALLOCATED:
 					allocationTotal++
-				case gen.Allocation_UNALLOCATED:
+				case gen_allocationpb.Allocation_UNALLOCATED:
 					unallocationTotal++
 				}
 
-				state := &gen.Allocation{
+				state := &gen_allocationpb.Allocation{
 					State:             allocation,
 					Actor:             actors[rand.IntN(len(actors))],
 					GroupId:           &groupIds[rand.IntN(len(groupIds))],

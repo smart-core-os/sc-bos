@@ -15,8 +15,10 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/rx"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	scslices "github.com/smart-core-os/sc-bos/pkg/util/slices"
@@ -440,9 +442,9 @@ func (a *announcer) ignoreRemoteService(rs protoreflect.ServiceDescriptor) bool 
 	switch name {
 	// services that are handled explicitly via other mechanisms
 	case
-		gen.DevicesApi_ServiceDesc.ServiceName,                // handled by the node outside the gateway service
-		gen.EnrollmentApi_ServiceDesc.ServiceName,             // handled by the app controller during boot
-		gen.ServicesApi_ServiceDesc.ServiceName,               // see announceServiceApi
+		devicespb.DevicesApi_ServiceDesc.ServiceName,          // handled by the node outside the gateway service
+		enrollmentpb.EnrollmentApi_ServiceDesc.ServiceName,    // handled by the app controller during boot
+		servicespb.ServicesApi_ServiceDesc.ServiceName,        // see announceServiceApi
 		reflectionpb.ServerReflection_ServiceDesc.ServiceName, // see setup/closeReflection in announceRemoteNode
 		reflectionv1alphapb.ServerReflection_ServiceDesc.ServiceName:
 		return true

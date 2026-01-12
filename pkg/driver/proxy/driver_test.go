@@ -6,22 +6,22 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
 func Test_proxy_announceChange(t *testing.T) {
 	tests := []struct {
 		name        string
-		change      *gen.PullDevicesResponse_Change
+		change      *devicespb.PullDevicesResponse_Change
 		wantPresent []deviceTrait
 		wantAbsent  []deviceTrait
 	}{
 		{
 			name: "new device",
-			change: &gen.PullDevicesResponse_Change{
-				NewValue: &gen.Device{
+			change: &devicespb.PullDevicesResponse_Change{
+				NewValue: &devicespb.Device{
 					Name: "device01",
 					Metadata: &traits.Metadata{
 						Traits: []*traits.TraitMetadata{
@@ -38,8 +38,8 @@ func Test_proxy_announceChange(t *testing.T) {
 		},
 		{
 			name: "device adds new trait",
-			change: &gen.PullDevicesResponse_Change{
-				NewValue: &gen.Device{
+			change: &devicespb.PullDevicesResponse_Change{
+				NewValue: &devicespb.Device{
 					Name: "device01",
 					Metadata: &traits.Metadata{
 						Traits: []*traits.TraitMetadata{
@@ -58,8 +58,8 @@ func Test_proxy_announceChange(t *testing.T) {
 		},
 		{
 			name: "device removes trait",
-			change: &gen.PullDevicesResponse_Change{
-				OldValue: &gen.Device{
+			change: &devicespb.PullDevicesResponse_Change{
+				OldValue: &devicespb.Device{
 					Name: "device01",
 					Metadata: &traits.Metadata{
 						Traits: []*traits.TraitMetadata{
@@ -69,7 +69,7 @@ func Test_proxy_announceChange(t *testing.T) {
 						},
 					},
 				},
-				NewValue: &gen.Device{
+				NewValue: &devicespb.Device{
 					Name: "device01",
 					Metadata: &traits.Metadata{
 						Traits: []*traits.TraitMetadata{
@@ -119,8 +119,8 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 	tests := []struct {
 		name           string
 		initial        announcedTraits
-		oldDevice      *gen.Device
-		newDevice      *gen.Device
+		oldDevice      *devicespb.Device
+		newDevice      *devicespb.Device
 		wantAnnouncing []trait.Name
 		wantRemaining  int
 		wantDeleted    int
@@ -129,7 +129,7 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 			name:      "nil old, new device added",
 			initial:   announcedTraits{},
 			oldDevice: nil,
-			newDevice: &gen.Device{
+			newDevice: &devicespb.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -155,7 +155,7 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 				deviceTrait{name: "device1", trait: "OnOff"}: func() {},
 				deviceTrait{name: "device1", trait: "Light"}: func() {},
 			},
-			oldDevice: &gen.Device{
+			oldDevice: &devicespb.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -174,7 +174,7 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 			initial: announcedTraits{
 				deviceTrait{name: "device1", trait: "OnOff"}: func() {},
 			},
-			oldDevice: &gen.Device{
+			oldDevice: &devicespb.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -182,7 +182,7 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 					},
 				},
 			},
-			newDevice: &gen.Device{
+			newDevice: &devicespb.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -202,7 +202,7 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 				deviceTrait{name: "device1", trait: "Light"}:      func() {},
 				deviceTrait{name: "device1", trait: "Brightness"}: func() {},
 			},
-			oldDevice: &gen.Device{
+			oldDevice: &devicespb.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -212,7 +212,7 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 					},
 				},
 			},
-			newDevice: &gen.Device{
+			newDevice: &devicespb.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -255,7 +255,7 @@ func TestAnnouncedTraits_DeleteDevice(t *testing.T) {
 	tests := []struct {
 		name          string
 		initial       announcedTraits
-		device        *gen.Device
+		device        *devicespb.Device
 		wantRemaining int
 		wantDeleted   int
 		checkKey      *deviceTrait
@@ -267,7 +267,7 @@ func TestAnnouncedTraits_DeleteDevice(t *testing.T) {
 				deviceTrait{name: "device1", trait: "Light"}: func() {},
 				deviceTrait{name: "device2", trait: "OnOff"}: func() {},
 			},
-			device: &gen.Device{
+			device: &devicespb.Device{
 				Name: "device1",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{
@@ -285,7 +285,7 @@ func TestAnnouncedTraits_DeleteDevice(t *testing.T) {
 			initial: announcedTraits{
 				deviceTrait{name: "device1", trait: "OnOff"}: func() {},
 			},
-			device: &gen.Device{
+			device: &devicespb.Device{
 				Name: "device2",
 				Metadata: &traits.Metadata{
 					Traits: []*traits.TraitMetadata{},

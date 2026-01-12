@@ -6,45 +6,45 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 func TestOccupantImpact_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
 		name    string
 		json    string
-		want    gen.HealthCheck_OccupantImpact
+		want    healthpb.HealthCheck_OccupantImpact
 		wantErr bool
 	}{
 		{
 			name: "OCCUPANT_IMPACT_UNSPECIFIED",
 			json: `"OCCUPANT_IMPACT_UNSPECIFIED"`,
-			want: gen.HealthCheck_OCCUPANT_IMPACT_UNSPECIFIED,
+			want: healthpb.HealthCheck_OCCUPANT_IMPACT_UNSPECIFIED,
 		},
 		{
 			name: "NO_OCCUPANT_IMPACT",
 			json: `"NO_OCCUPANT_IMPACT"`,
-			want: gen.HealthCheck_NO_OCCUPANT_IMPACT,
+			want: healthpb.HealthCheck_NO_OCCUPANT_IMPACT,
 		},
 		{
 			name: "COMFORT lowercase",
 			json: `"comfort"`,
-			want: gen.HealthCheck_COMFORT,
+			want: healthpb.HealthCheck_COMFORT,
 		},
 		{
 			name: "HEALTH",
 			json: `"HEALTH"`,
-			want: gen.HealthCheck_HEALTH,
+			want: healthpb.HealthCheck_HEALTH,
 		},
 		{
 			name: "LIFE",
 			json: `"LIFE"`,
-			want: gen.HealthCheck_LIFE,
+			want: healthpb.HealthCheck_LIFE,
 		},
 		{
 			name: "SECURITY",
 			json: `"SECURITY"`,
-			want: gen.HealthCheck_SECURITY,
+			want: healthpb.HealthCheck_SECURITY,
 		},
 		{
 			name:    "invalid value",
@@ -71,33 +71,33 @@ func TestEquipmentImpact_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
 		name    string
 		json    string
-		want    gen.HealthCheck_EquipmentImpact
+		want    healthpb.HealthCheck_EquipmentImpact
 		wantErr bool
 	}{
 		{
 			name: "EQUIPMENT_IMPACT_UNSPECIFIED",
 			json: `"EQUIPMENT_IMPACT_UNSPECIFIED"`,
-			want: gen.HealthCheck_EQUIPMENT_IMPACT_UNSPECIFIED,
+			want: healthpb.HealthCheck_EQUIPMENT_IMPACT_UNSPECIFIED,
 		},
 		{
 			name: "NO_EQUIPMENT_IMPACT",
 			json: `"NO_EQUIPMENT_IMPACT"`,
-			want: gen.HealthCheck_NO_EQUIPMENT_IMPACT,
+			want: healthpb.HealthCheck_NO_EQUIPMENT_IMPACT,
 		},
 		{
 			name: "WARRANTY lowercase",
 			json: `"warranty"`,
-			want: gen.HealthCheck_WARRANTY,
+			want: healthpb.HealthCheck_WARRANTY,
 		},
 		{
 			name: "LIFESPAN",
 			json: `"LIFESPAN"`,
-			want: gen.HealthCheck_LIFESPAN,
+			want: healthpb.HealthCheck_LIFESPAN,
 		},
 		{
 			name: "FUNCTION",
 			json: `"FUNCTION"`,
-			want: gen.HealthCheck_FUNCTION,
+			want: healthpb.HealthCheck_FUNCTION,
 		},
 		{
 			name:    "invalid value",
@@ -129,6 +129,6 @@ func TestHealth_UnmarshalJSON(t *testing.T) {
 	var h Health
 	err := json.Unmarshal([]byte(jsonData), &h)
 	require.NoError(t, err)
-	require.Equal(t, gen.HealthCheck_COMFORT, h.OccupantImpact.ToProto())
-	require.Equal(t, gen.HealthCheck_WARRANTY, h.EquipmentImpact.ToProto())
+	require.Equal(t, healthpb.HealthCheck_COMFORT, h.OccupantImpact.ToProto())
+	require.Equal(t, healthpb.HealthCheck_WARRANTY, h.EquipmentImpact.ToProto())
 }

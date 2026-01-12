@@ -7,9 +7,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config"
@@ -40,9 +40,9 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 	logger := f.logger
 
 	conn := f.clients.ClientConn()
-	apiClient := gen.NewMeterApiClient(conn)
-	infoClient := gen.NewMeterInfoClient(conn)
-	historyClient := gen.NewMeterHistoryClient(conn)
+	apiClient := meterpb.NewMeterApiClient(conn)
+	infoClient := meterpb.NewMeterInfoClient(conn)
+	historyClient := meterpb.NewMeterHistoryClient(conn)
 	announceGroup := func(name string, devices []string) {
 		if len(devices) == 0 {
 			return
@@ -60,7 +60,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 			historyBackupConf: cfg.HistoryBackup,
 		}
 		f.devices.Add(devices...)
-		announce.Announce(name, node.HasTrait(meter.TraitName, node.WithClients(gen.WrapMeterApi(group), gen.WrapMeterInfo(group))))
+		announce.Announce(name, node.HasTrait(meter.TraitName, node.WithClients(meterpb.WrapApi(group), meterpb.WrapInfo(group))))
 	}
 
 	announceGroup(cfg.Name, cfg.Meters)

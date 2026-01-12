@@ -46,8 +46,8 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/config"
 	"github.com/smart-core-os/sc-bos/pkg/task"
@@ -116,7 +116,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		go s.scanRemoteHub(ctx, c, hubConn)
 	case config.HubModeLocal:
-		hubClient := gen.NewHubApiClient(s.self.ClientConn())
+		hubClient := hubpb.NewHubApiClient(s.self.ClientConn())
 		go s.scanLocalHub(ctx, c, hubClient)
 	}
 

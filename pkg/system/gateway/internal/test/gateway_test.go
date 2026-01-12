@@ -28,7 +28,10 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/test/shared"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
@@ -216,13 +219,13 @@ func configureCohort(t *testing.T, ctx context.Context) {
 		}
 	}
 
-	client := gen.NewHubApiClient(hubConn)
+	client := hubpb.NewHubApiClient(hubConn)
 	for _, addr := range shared.ACGRPCAddrs {
-		_, err := client.EnrollHubNode(ctx, &gen.EnrollHubNodeRequest{Node: &gen.HubNode{Address: addr}})
+		_, err := client.EnrollHubNode(ctx, &hubpb.EnrollHubNodeRequest{Node: &hubpb.HubNode{Address: addr}})
 		checkErr(addr, err)
 	}
 	for _, addr := range shared.GWGRPCAddrs {
-		_, err := client.EnrollHubNode(ctx, &gen.EnrollHubNodeRequest{Node: &gen.HubNode{Address: addr}})
+		_, err := client.EnrollHubNode(ctx, &hubpb.EnrollHubNodeRequest{Node: &hubpb.HubNode{Address: addr}})
 		checkErr(addr, err)
 	}
 }
@@ -275,10 +278,10 @@ func testGW(t *testing.T, ctx context.Context, addr string) {
 
 	// tests that devices appear in gw DevicesApi responses
 	t.Run("devices api includes devices", func(t *testing.T) {
-		client := gen.NewDevicesApiClient(conn)
-		testDevicesApiHasNames(t, ctx, addr, onOffDevices, client, &gen.ListDevicesRequest{
-			Query: &gen.Device_Query{Conditions: []*gen.Device_Query_Condition{
-				{Field: "metadata.traits.name", Value: &gen.Device_Query_Condition_StringEqual{StringEqual: string(trait.OnOff)}},
+		client := devicespb.NewDevicesApiClient(conn)
+		testDevicesApiHasNames(t, ctx, addr, onOffDevices, client, &devicespb.ListDevicesRequest{
+			Query: &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
+				{Field: "metadata.traits.name", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: string(trait.OnOff)}},
 			}},
 		})
 	})
@@ -290,22 +293,22 @@ func testGW(t *testing.T, ctx context.Context, addr string) {
 		}
 	})
 	t.Run("services respond", func(t *testing.T) {
-		client := gen.NewServicesApiClient(conn)
+		client := servicespb.NewServicesApiClient(conn)
 		for _, name := range serviceDevices {
 			testServicesApi(t, ctx, addr, name, client)
 		}
 	})
 	t.Run("has health check", func(t *testing.T) {
-		client := gen.NewHealthApiClient(conn)
+		client := healthpb.NewHealthApiClient(conn)
 		for _, name := range onOffDevices {
 			testHealthApi(t, ctx, addr, name, client)
 		}
 	})
 	t.Run("devices api has health checks", func(t *testing.T) {
-		client := gen.NewDevicesApiClient(conn)
-		testDevicesApiHasNames(t, ctx, addr, onOffDevices, client, &gen.ListDevicesRequest{
-			Query: &gen.Device_Query{Conditions: []*gen.Device_Query_Condition{
-				{Field: "health_checks.bounds.normal_value.string_value", Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "ON"}},
+		client := devicespb.NewDevicesApiClient(conn)
+		testDevicesApiHasNames(t, ctx, addr, onOffDevices, client, &devicespb.ListDevicesRequest{
+			Query: &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
+				{Field: "health_checks.bounds.normal_value.string_value", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "ON"}},
 			}},
 		})
 	})
@@ -334,7 +337,7 @@ func waitForDevice(t *testing.T, ctx context.Context, conn *grpc.ClientConn, nam
 	}
 }
 
-func testDevicesApiHasNames(t *testing.T, ctx context.Context, addr string, names []string, client gen.DevicesApiClient, request *gen.ListDevicesRequest) {
+func testDevicesApiHasNames(t *testing.T, ctx context.Context, addr string, names []string, client devicespb.DevicesApiClient, request *devicespb.ListDevicesRequest) {
 	t.Helper()
 
 	res, err := client.ListDevices(ctx, request)
@@ -423,18 +426,18 @@ func testOnOffApi(t *testing.T, ctx context.Context, addr, name string, client t
 	}
 }
 
-func testServicesApi(t *testing.T, ctx context.Context, addr, name string, client gen.ServicesApiClient) {
+func testServicesApi(t *testing.T, ctx context.Context, addr, name string, client servicespb.ServicesApiClient) {
 	t.Helper()
 
-	_, err := client.ListServices(ctx, &gen.ListServicesRequest{Name: name})
+	_, err := client.ListServices(ctx, &servicespb.ListServicesRequest{Name: name})
 	if err != nil {
 		t.Fatalf("[%s] list services %s: %v", addr, name, err)
 	}
 }
 
-func testHealthApi(t *testing.T, ctx context.Context, addr, name string, client gen.HealthApiClient) {
+func testHealthApi(t *testing.T, ctx context.Context, addr, name string, client healthpb.HealthApiClient) {
 	t.Helper()
-	res, err := client.ListHealthChecks(ctx, &gen.ListHealthChecksRequest{Name: name})
+	res, err := client.ListHealthChecks(ctx, &healthpb.ListHealthChecksRequest{Name: name})
 	if err != nil {
 		t.Fatalf("[%s] list health checks %s: %v", addr, name, err)
 	}
@@ -513,15 +516,15 @@ func testReflection(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 func testStableDeviceList(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 	ctx, stop := context.WithTimeout(ctx, 2*time.Second)
 	defer stop()
-	client := gen.NewDevicesApiClient(conn)
+	client := devicespb.NewDevicesApiClient(conn)
 	type totals struct{ add, update, remove, replace int }
 	// used to track what is being unstable,
 	// technically we could fail on the first event,
 	// but this way gives more info about what is unstable.
 	events := make(map[string]totals)
 	// this stream shouldn't receive anything
-	openStream := func() grpc.ServerStreamingClient[gen.PullDevicesResponse] {
-		stream, err := client.PullDevices(ctx, &gen.PullDevicesRequest{UpdatesOnly: true})
+	openStream := func() grpc.ServerStreamingClient[devicespb.PullDevicesResponse] {
+		stream, err := client.PullDevices(ctx, &devicespb.PullDevicesRequest{UpdatesOnly: true})
 		if code := status.Code(err); code == codes.DeadlineExceeded {
 			return nil
 		}
@@ -580,8 +583,8 @@ func testHubApis(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 	t.Helper()
 
 	t.Run("HubApi", func(t *testing.T) {
-		client := gen.NewHubApiClient(conn)
-		res, err := client.ListHubNodes(ctx, &gen.ListHubNodesRequest{})
+		client := hubpb.NewHubApiClient(conn)
+		res, err := client.ListHubNodes(ctx, &hubpb.ListHubNodesRequest{})
 		if err != nil {
 			t.Fatalf("list hub nodes: %v", err)
 		}

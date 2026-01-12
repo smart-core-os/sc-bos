@@ -11,10 +11,11 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/ptzpb"
@@ -79,9 +80,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		cam := NewCamera(client, logger, camera, faultCheck)
 		rootAnnouncer.Announce(camera.Name,
 			node.HasMetadata(camera.Metadata),
-			node.HasClient(gen.WrapMqttService(cam)),
+			node.HasClient(mqttpb.WrapService(cam)),
 			node.HasTrait(trait.Ptz, node.WithClients(ptzpb.WrapApi(cam))),
-			node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(cam))),
+			node.HasTrait(udmipb.TraitName, node.WithClients(gen_udmipb.WrapService(cam))),
 		)
 		cameras = append(cameras, cam)
 	}

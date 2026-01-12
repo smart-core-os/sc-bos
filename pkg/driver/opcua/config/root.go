@@ -11,10 +11,10 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	transportpb "github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
@@ -29,8 +29,8 @@ type valueSourceField struct {
 	value *ValueSource
 }
 
-// OccupantImpact wraps gen.HealthCheck_OccupantImpact to support JSON unmarshaling from strings.
-type OccupantImpact gen.HealthCheck_OccupantImpact
+// OccupantImpact wraps healthpb.HealthCheck_OccupantImpact to support JSON unmarshaling from strings.
+type OccupantImpact healthpb.HealthCheck_OccupantImpact
 
 func (o *OccupantImpact) UnmarshalJSON(data []byte) error {
 	var s string
@@ -39,7 +39,7 @@ func (o *OccupantImpact) UnmarshalJSON(data []byte) error {
 	}
 
 	s = strings.ToUpper(s)
-	val, ok := gen.HealthCheck_OccupantImpact_value[s]
+	val, ok := healthpb.HealthCheck_OccupantImpact_value[s]
 	if !ok {
 		return fmt.Errorf("invalid OccupantImpact value: %q (valid values: OCCUPANT_IMPACT_UNSPECIFIED, NO_OCCUPANT_IMPACT, COMFORT, HEALTH, LIFE, SECURITY)", s)
 	}
@@ -48,12 +48,12 @@ func (o *OccupantImpact) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (o OccupantImpact) ToProto() gen.HealthCheck_OccupantImpact {
-	return gen.HealthCheck_OccupantImpact(o)
+func (o OccupantImpact) ToProto() healthpb.HealthCheck_OccupantImpact {
+	return healthpb.HealthCheck_OccupantImpact(o)
 }
 
-// EquipmentImpact wraps gen.HealthCheck_EquipmentImpact to support JSON unmarshaling from strings.
-type EquipmentImpact gen.HealthCheck_EquipmentImpact
+// EquipmentImpact wraps healthpb.HealthCheck_EquipmentImpact to support JSON unmarshaling from strings.
+type EquipmentImpact healthpb.HealthCheck_EquipmentImpact
 
 func (e *EquipmentImpact) UnmarshalJSON(data []byte) error {
 	var s string
@@ -62,7 +62,7 @@ func (e *EquipmentImpact) UnmarshalJSON(data []byte) error {
 	}
 
 	s = strings.ToUpper(s)
-	val, ok := gen.HealthCheck_EquipmentImpact_value[s]
+	val, ok := healthpb.HealthCheck_EquipmentImpact_value[s]
 	if !ok {
 		return fmt.Errorf("invalid EquipmentImpact value: %q (valid values: EQUIPMENT_IMPACT_UNSPECIFIED, NO_EQUIPMENT_IMPACT, WARRANTY, LIFESPAN, FUNCTION)", s)
 	}
@@ -71,8 +71,8 @@ func (e *EquipmentImpact) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (e EquipmentImpact) ToProto() gen.HealthCheck_EquipmentImpact {
-	return gen.HealthCheck_EquipmentImpact(e)
+func (e EquipmentImpact) ToProto() healthpb.HealthCheck_EquipmentImpact {
+	return healthpb.HealthCheck_EquipmentImpact(e)
 }
 
 // Conn config related to communicating with the OPC UA server.

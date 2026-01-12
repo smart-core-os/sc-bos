@@ -17,7 +17,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/meteremail/config"
 	"github.com/smart-core-os/sc-bos/pkg/block"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
@@ -47,13 +47,13 @@ func (_ factory) ConfigBlocks() []block.Block {
 
 // getMeterReadingAndSource gets the meter reading for the given meter and also the location metadata for the meter
 func (a *autoImpl) getMeterReadingAndSource(ctx context.Context, meterName string, meterType MeterType,
-	meterClient gen.MeterApiClient, metadataClient traits.MetadataApiClient, timing *config.Timing) (*config.Source, *MeterReading, error) {
+	meterClient meterpb.MeterApiClient, metadataClient traits.MetadataApiClient, timing *config.Timing) (*config.Source, *MeterReading, error) {
 
-	meterReq := &gen.GetMeterReadingRequest{
+	meterReq := &meterpb.GetMeterReadingRequest{
 		Name: meterName,
 	}
 
-	meterRes, err := retryT(ctx, timing, func(ctx context.Context) (*gen.MeterReading, error) {
+	meterRes, err := retryT(ctx, timing, func(ctx context.Context) (*meterpb.MeterReading, error) {
 		withTimeoutCtx, cancel := context.WithTimeout(ctx, timing.Timeout.Duration)
 		defer cancel()
 		return meterClient.GetMeterReading(withTimeoutCtx, meterReq)
@@ -208,7 +208,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	logger = logger.With(zap.String("snmp.addr", cfg.Destination.Addr()))
 	applyDefaults(&cfg.Timing)
 
-	meterClient := gen.NewMeterApiClient(a.Node.ClientConn())
+	meterClient := meterpb.NewMeterApiClient(a.Node.ClientConn())
 	metadataClient := traits.NewMetadataApiClient(a.Node.ClientConn())
 
 	sendTime := cfg.Destination.SendTime

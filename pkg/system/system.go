@@ -13,8 +13,8 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
@@ -57,7 +57,7 @@ func (f FactoryFunc) New(services Services) service.Lifecycle {
 // HealthCheckCollection allows the modification of health checks for named devices.
 type HealthCheckCollection interface {
 	// MergeHealthChecks adds or updates checks for name based on existing check ids.
-	MergeHealthChecks(name string, checks ...*gen.HealthCheck) error
+	MergeHealthChecks(name string, checks ...*healthpb.HealthCheck) error
 	// RemoveHealthChecks removes any present ids from names checks.
 	RemoveHealthChecks(name string, ids ...string) error
 }

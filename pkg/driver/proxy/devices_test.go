@@ -8,16 +8,16 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
 	devicesmanage "github.com/smart-core-os/sc-bos/internal/manage/devices"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
 func TestDeviceFetcher_Poll(t *testing.T) {
 	tests := []struct {
 		name      string
-		initial   map[string]*gen.Device
-		devices   []*gen.Device
+		initial   map[string]*devicespb.Device
+		devices   []*devicespb.Device
 		wantAdds  []string
 		wantUpdts []string
 		wantRems  []string
@@ -32,7 +32,7 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 		{
 			name:    "new devices added",
 			initial: nil,
-			devices: []*gen.Device{
+			devices: []*devicespb.Device{
 				{Name: "device1", Metadata: &traits.Metadata{
 					Name:   "device1",
 					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
@@ -45,13 +45,13 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 		},
 		{
 			name: "devices updated",
-			initial: map[string]*gen.Device{
+			initial: map[string]*devicespb.Device{
 				"device1": {Name: "device1", Metadata: &traits.Metadata{
 					Name:   "device1",
 					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
 				}},
 			},
-			devices: []*gen.Device{
+			devices: []*devicespb.Device{
 				{Name: "device1", Metadata: &traits.Metadata{
 					Name:   "device1",
 					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}, {Name: "OnOff"}},
@@ -61,7 +61,7 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 		},
 		{
 			name: "devices removed",
-			initial: map[string]*gen.Device{
+			initial: map[string]*devicespb.Device{
 				"device1": {Name: "device1", Metadata: &traits.Metadata{
 					Name:   "device1",
 					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
@@ -71,7 +71,7 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
 				}},
 			},
-			devices: []*gen.Device{
+			devices: []*devicespb.Device{
 				{Name: "device1", Metadata: &traits.Metadata{
 					Name: "device1",
 				}},
@@ -80,13 +80,13 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 		},
 		{
 			name: "no change if proto equal",
-			initial: map[string]*gen.Device{
+			initial: map[string]*devicespb.Device{
 				"device1": {Name: "device1", Metadata: &traits.Metadata{
 					Name:   "device1",
 					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
 				}},
 			},
-			devices: []*gen.Device{
+			devices: []*devicespb.Device{
 				{Name: "device1", Metadata: &traits.Metadata{
 					Name:   "device1",
 					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
@@ -96,7 +96,7 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 		{
 			name:    "paginated response",
 			initial: nil,
-			devices: []*gen.Device{
+			devices: []*devicespb.Device{
 				{Name: "device1", Metadata: &traits.Metadata{
 					Name:   "device1",
 					Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}},
@@ -118,7 +118,7 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 				addDevices(n, tt.devices...)
 			}
 
-			client := gen.WrapDevicesApi(devicesmanage.NewServer(n))
+			client := devicespb.WrapApi(devicesmanage.NewServer(n))
 
 			initial := tt.initial
 
@@ -128,7 +128,7 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			changes := make(chan *gen.PullDevicesResponse_Change, 10)
+			changes := make(chan *devicespb.PullDevicesResponse_Change, 10)
 
 			err := fetcher.Poll(ctx, changes)
 			close(changes)
@@ -181,13 +181,13 @@ func TestDeviceFetcher_Poll_Error(t *testing.T) {
 	cancel()
 
 	n := node.New("test")
-	client := gen.WrapDevicesApi(devicesmanage.NewServer(n))
+	client := devicespb.WrapApi(devicesmanage.NewServer(n))
 
 	fetcher := &deviceFetcher{
 		client: client,
 	}
 
-	changes := make(chan *gen.PullDevicesResponse_Change, 10)
+	changes := make(chan *devicespb.PullDevicesResponse_Change, 10)
 
 	err := fetcher.Poll(ctx, changes)
 	if err == nil {
@@ -199,7 +199,7 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 	t.Run("streams changes", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			n := node.New("test")
-			client := gen.WrapDevicesApi(devicesmanage.NewServer(n))
+			client := devicespb.WrapApi(devicesmanage.NewServer(n))
 
 			fetcher := &deviceFetcher{
 				client: client,
@@ -207,7 +207,7 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			changes := make(chan *gen.PullDevicesResponse_Change, 10)
+			changes := make(chan *devicespb.PullDevicesResponse_Change, 10)
 
 			errCh := make(chan error, 1)
 			go func() {
@@ -243,13 +243,13 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 		cancel()
 
 		n := node.New("test")
-		client := gen.WrapDevicesApi(devicesmanage.NewServer(n))
+		client := devicespb.WrapApi(devicesmanage.NewServer(n))
 
 		fetcher := &deviceFetcher{
 			client: client,
 		}
 
-		changes := make(chan *gen.PullDevicesResponse_Change, 10)
+		changes := make(chan *devicespb.PullDevicesResponse_Change, 10)
 
 		err := fetcher.Pull(ctx, changes)
 		if err == nil {
@@ -258,7 +258,7 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 	})
 }
 
-func addDevices(n *node.Node, devices ...*gen.Device) {
+func addDevices(n *node.Node, devices ...*devicespb.Device) {
 
 	for _, device := range devices {
 		opts := []node.Feature{

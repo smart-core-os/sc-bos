@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/internal/account/queries"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
 func parseID(id string) (int64, bool) {
@@ -22,24 +22,24 @@ func formatID(id int64) string {
 	return strconv.FormatInt(id, 10)
 }
 
-func accountToProto(account queries.AccountDetail, clientSecret string) *gen.Account {
+func accountToProto(account queries.AccountDetail, clientSecret string) *accountpb.Account {
 	id := formatID(account.ID)
-	converted := &gen.Account{
+	converted := &accountpb.Account{
 		Id:          id,
 		DisplayName: account.DisplayName,
-		Type:        gen.Account_Type(gen.Account_Type_value[account.Type]), // default to ACCOUNT_TYPE_UNSPECIFIED
+		Type:        accountpb.Account_Type(accountpb.Account_Type_value[account.Type]), // default to ACCOUNT_TYPE_UNSPECIFIED
 		CreateTime:  timestamppb.New(account.CreateTime),
 	}
 	switch converted.Type {
-	case gen.Account_USER_ACCOUNT:
-		converted.Details = &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+	case accountpb.Account_USER_ACCOUNT:
+		converted.Details = &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 			HasPassword: account.PasswordHash != nil,
 		}}
 		if account.Username.Valid {
 			converted.GetUserDetails().Username = account.Username.String
 		}
-	case gen.Account_SERVICE_ACCOUNT:
-		converted.Details = &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{
+	case accountpb.Account_SERVICE_ACCOUNT:
+		converted.Details = &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{
 			ClientId:     id,
 			ClientSecret: clientSecret,
 		}}
@@ -53,8 +53,8 @@ func accountToProto(account queries.AccountDetail, clientSecret string) *gen.Acc
 	return converted
 }
 
-func roleToProto(role queries.Role, permissions []string) *gen.Role {
-	protoRole := &gen.Role{
+func roleToProto(role queries.Role, permissions []string) *accountpb.Role {
+	protoRole := &accountpb.Role{
 		Id:            formatID(role.ID),
 		DisplayName:   role.DisplayName,
 		PermissionIds: permissions,
@@ -69,16 +69,16 @@ func roleToProto(role queries.Role, permissions []string) *gen.Role {
 	return protoRole
 }
 
-func roleAssignmentToProto(assignment queries.RoleAssignment) *gen.RoleAssignment {
-	ra := &gen.RoleAssignment{
+func roleAssignmentToProto(assignment queries.RoleAssignment) *accountpb.RoleAssignment {
+	ra := &accountpb.RoleAssignment{
 		Id:        formatID(assignment.ID),
 		AccountId: formatID(assignment.AccountID),
 		RoleId:    formatID(assignment.RoleID),
 	}
 	if assignment.ScopeType.Valid && assignment.ScopeResource.Valid {
-		ra.Scope = &gen.RoleAssignment_Scope{
+		ra.Scope = &accountpb.RoleAssignment_Scope{
 			// defaults to RESOURCE_KIND_UNSPECIFIED
-			ResourceType: gen.RoleAssignment_ResourceType(gen.RoleAssignment_ResourceType_value[assignment.ScopeType.String]),
+			ResourceType: accountpb.RoleAssignment_ResourceType(accountpb.RoleAssignment_ResourceType_value[assignment.ScopeType.String]),
 			Resource:     assignment.ScopeResource.String,
 		}
 	}

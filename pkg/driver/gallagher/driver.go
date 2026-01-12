@@ -12,9 +12,9 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
@@ -95,7 +95,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	})
 
 	sc := newSecurityEventController(client, d.logger, cfg.NumSecurityEvents)
-	announcer.Announce(cfg.ScNamePrefix, node.HasTrait(securityevent.TraitName, node.WithClients(gen.WrapSecurityEventApi(sc))))
+	announcer.Announce(cfg.ScNamePrefix, node.HasTrait(securityevent.TraitName, node.WithClients(securityeventpb.WrapApi(sc))))
 	grp.Go(func() error {
 		return sc.run(ctx, cfg.RefreshAlarms)
 	})

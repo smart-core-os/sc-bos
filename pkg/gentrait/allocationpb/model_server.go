@@ -6,12 +6,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 type ModelServer struct {
-	gen.UnimplementedAllocationApiServer
+	allocationpb.UnimplementedAllocationApiServer
 	Model *Model
 }
 
@@ -22,26 +22,26 @@ func NewModelServer(model *Model) *ModelServer {
 }
 
 func (m *ModelServer) Register(server *grpc.Server) {
-	gen.RegisterAllocationApiServer(server, m)
+	allocationpb.RegisterAllocationApiServer(server, m)
 }
 
 func (m *ModelServer) Unwrap() any {
 	return m.Model
 }
 
-func (m *ModelServer) GetAllocation(ctx context.Context, request *gen.GetAllocationRequest) (*gen.Allocation, error) {
+func (m *ModelServer) GetAllocation(ctx context.Context, request *allocationpb.GetAllocationRequest) (*allocationpb.Allocation, error) {
 	allocation := m.Model.GetAllocation()
 	return allocation, nil
 }
 
-func (m *ModelServer) UpdateAllocation(ctx context.Context, request *gen.UpdateAllocationRequest) (*gen.Allocation, error) {
+func (m *ModelServer) UpdateAllocation(ctx context.Context, request *allocationpb.UpdateAllocationRequest) (*allocationpb.Allocation, error) {
 	m.Model.UpdateAllocation(request.Allocation, resource.WithUpdateMask(request.UpdateMask))
 	return request.Allocation, nil
 }
 
-func (m *ModelServer) PullAllocations(request *gen.PullAllocationRequest, server gen.AllocationApi_PullAllocationServer) error {
+func (m *ModelServer) PullAllocations(request *allocationpb.PullAllocationRequest, server allocationpb.AllocationApi_PullAllocationServer) error {
 	for change := range m.Model.PullAllocation(server.Context(), resource.WithReadMask(request.ReadMask)) {
-		msg := &gen.PullAllocationResponse{Changes: []*gen.PullAllocationResponse_Change{{
+		msg := &allocationpb.PullAllocationResponse{Changes: []*allocationpb.PullAllocationResponse_Change{{
 			Name:       request.Name,
 			ChangeTime: timestamppb.New(change.ChangeTime),
 			Allocation: change.Value,

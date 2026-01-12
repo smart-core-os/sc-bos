@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
 //go:embed testdata/*
@@ -21,23 +21,23 @@ var testdata embed.FS
 func TestMigrations(t *testing.T) {
 	type testCase struct {
 		dumpFile       string
-		expectAccounts []*gen.Account
-		expectRoles    []*gen.Role
-		expectAssigns  []*gen.RoleAssignment
+		expectAccounts []*accountpb.Account
+		expectRoles    []*accountpb.Role
+		expectAssigns  []*accountpb.RoleAssignment
 	}
 
 	cases := map[string]testCase{
 		"schema_0001": {
 			dumpFile: "testdata/from_schema_0001.sql",
-			expectAccounts: []*gen.Account{
+			expectAccounts: []*accountpb.Account{
 				{
 					Id:          "2",
 					DisplayName: "My Service 0",
 					Description: "A service with 0 service credentials",
-					Type:        gen.Account_SERVICE_ACCOUNT,
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					CreateTime:  timestamppb.New(time.Date(2025, 3, 19, 12, 20, 0, 0, time.UTC)),
-					Details: &gen.Account_ServiceDetails{
-						ServiceDetails: &gen.ServiceAccount{
+					Details: &accountpb.Account_ServiceDetails{
+						ServiceDetails: &accountpb.ServiceAccount{
 							ClientId: "2",
 						},
 					},
@@ -46,10 +46,10 @@ func TestMigrations(t *testing.T) {
 					Id:          "3",
 					DisplayName: "My Service 1",
 					Description: "A service with 1 service credential",
-					Type:        gen.Account_SERVICE_ACCOUNT,
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					CreateTime:  timestamppb.New(time.Date(2025, 3, 19, 12, 21, 0, 0, time.UTC)),
-					Details: &gen.Account_ServiceDetails{
-						ServiceDetails: &gen.ServiceAccount{
+					Details: &accountpb.Account_ServiceDetails{
+						ServiceDetails: &accountpb.ServiceAccount{
 							ClientId: "3",
 						},
 					},
@@ -58,10 +58,10 @@ func TestMigrations(t *testing.T) {
 					Id:          "4",
 					DisplayName: "My Service 2",
 					Description: "A service with 2 service credentials",
-					Type:        gen.Account_SERVICE_ACCOUNT,
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					CreateTime:  timestamppb.New(time.Date(2025, 3, 19, 12, 22, 0, 0, time.UTC)),
-					Details: &gen.Account_ServiceDetails{
-						ServiceDetails: &gen.ServiceAccount{
+					Details: &accountpb.Account_ServiceDetails{
+						ServiceDetails: &accountpb.ServiceAccount{
 							ClientId:                 "4",
 							PreviousSecretExpireTime: timestamppb.New(time.Date(2025, 3, 19, 12, 30, 0, 0, time.UTC)),
 						},
@@ -70,10 +70,10 @@ func TestMigrations(t *testing.T) {
 				{
 					Id:          "6",
 					DisplayName: "User With Password",
-					Type:        gen.Account_USER_ACCOUNT,
+					Type:        accountpb.Account_USER_ACCOUNT,
 					CreateTime:  timestamppb.New(time.Date(2025, 3, 19, 12, 23, 0, 0, time.UTC)),
-					Details: &gen.Account_UserDetails{
-						UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{
+						UserDetails: &accountpb.UserAccount{
 							Username:    "userpassword",
 							HasPassword: true,
 						},
@@ -82,16 +82,16 @@ func TestMigrations(t *testing.T) {
 				{
 					Id:          "7",
 					DisplayName: "User Without Password",
-					Type:        gen.Account_USER_ACCOUNT,
+					Type:        accountpb.Account_USER_ACCOUNT,
 					CreateTime:  timestamppb.New(time.Date(2025, 3, 19, 12, 24, 0, 0, time.UTC)),
-					Details: &gen.Account_UserDetails{
-						UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{
+						UserDetails: &accountpb.UserAccount{
 							Username: "usernopassword",
 						},
 					},
 				},
 			},
-			expectRoles: []*gen.Role{
+			expectRoles: []*accountpb.Role{
 				{
 					Id:            "1",
 					DisplayName:   "My Role",
@@ -133,13 +133,13 @@ func TestMigrations(t *testing.T) {
 					Protected:      true,
 				},
 			},
-			expectAssigns: []*gen.RoleAssignment{
+			expectAssigns: []*accountpb.RoleAssignment{
 				{
 					Id:        "1",
 					AccountId: "6",
 					RoleId:    "1",
-					Scope: &gen.RoleAssignment_Scope{
-						ResourceType: gen.RoleAssignment_ZONE,
+					Scope: &accountpb.RoleAssignment_Scope{
+						ResourceType: accountpb.RoleAssignment_ZONE,
 						Resource:     "foo",
 					},
 				},
@@ -205,13 +205,13 @@ func restoreDump(t *testing.T, dump string) (dbPath string) {
 	return dbPath
 }
 
-func listAccounts(t *testing.T, server *Server) []*gen.Account {
+func listAccounts(t *testing.T, server *Server) []*accountpb.Account {
 	t.Helper()
 	ctx := context.Background()
 	var nextPageToken string
-	var accounts []*gen.Account
+	var accounts []*accountpb.Account
 	for {
-		resp, err := server.ListAccounts(ctx, &gen.ListAccountsRequest{PageToken: nextPageToken})
+		resp, err := server.ListAccounts(ctx, &accountpb.ListAccountsRequest{PageToken: nextPageToken})
 		if err != nil {
 			t.Fatalf("ListAccounts: %v", err)
 		}
@@ -224,13 +224,13 @@ func listAccounts(t *testing.T, server *Server) []*gen.Account {
 	return accounts
 }
 
-func listRoles(t *testing.T, server *Server) []*gen.Role {
+func listRoles(t *testing.T, server *Server) []*accountpb.Role {
 	t.Helper()
 	ctx := context.Background()
 	var nextPageToken string
-	var roles []*gen.Role
+	var roles []*accountpb.Role
 	for {
-		resp, err := server.ListRoles(ctx, &gen.ListRolesRequest{PageToken: nextPageToken})
+		resp, err := server.ListRoles(ctx, &accountpb.ListRolesRequest{PageToken: nextPageToken})
 		if err != nil {
 			t.Fatalf("ListRoles: %v", err)
 		}
@@ -243,13 +243,13 @@ func listRoles(t *testing.T, server *Server) []*gen.Role {
 	return roles
 }
 
-func listRoleAssignments(t *testing.T, server *Server) []*gen.RoleAssignment {
+func listRoleAssignments(t *testing.T, server *Server) []*accountpb.RoleAssignment {
 	t.Helper()
 	ctx := context.Background()
 	var nextPageToken string
-	var roleAssignments []*gen.RoleAssignment
+	var roleAssignments []*accountpb.RoleAssignment
 	for {
-		resp, err := server.ListRoleAssignments(ctx, &gen.ListRoleAssignmentsRequest{PageToken: nextPageToken})
+		resp, err := server.ListRoleAssignments(ctx, &accountpb.ListRoleAssignmentsRequest{PageToken: nextPageToken})
 		if err != nil {
 			t.Fatalf("ListRoleAssignments: %v", err)
 		}

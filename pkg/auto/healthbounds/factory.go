@@ -20,8 +20,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/healthbounds/config"
 	"github.com/smart-core-os/sc-bos/pkg/auto/healthbounds/internal/anytrait"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
@@ -48,7 +49,7 @@ type impl struct {
 }
 
 func (a *impl) applyConfig(ctx context.Context, cfg config.Root) error {
-	devicesMask, err := fieldmaskpb.New(&gen.Device{}, "name")
+	devicesMask, err := fieldmaskpb.New(&devicespb.Device{}, "name")
 	if err != nil {
 		return err
 	}
@@ -63,9 +64,9 @@ func (a *impl) applyConfig(ctx context.Context, cfg config.Root) error {
 		}()
 		// the task is configured to retry forever (until ctx is done) so the error is ignored.
 		_ = task.Run(ctx, func(ctx context.Context) (task.Next, error) {
-			stream, err := devicesApi.PullDevices(ctx, &gen.PullDevicesRequest{
+			stream, err := devicesApi.PullDevices(ctx, &devicespb.PullDevicesRequest{
 				ReadMask: devicesMask,
-				Query:    &gen.Device_Query{Conditions: cfg.DevicesPb()},
+				Query:    &devicespb.Device_Query{Conditions: cfg.DevicesPb()},
 			})
 			if err != nil {
 				return task.Normal, err
@@ -108,7 +109,7 @@ func (a *impl) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func (a *impl) newCheck(ctx context.Context, device *gen.Device, checkCfg *gen.HealthCheck, source config.Source) (func(), error) {
+func (a *impl) newCheck(ctx context.Context, device *devicespb.Device, checkCfg *gen_healthpb.HealthCheck, source config.Source) (func(), error) {
 	// find the trait resource we are checking
 	t, err := anytrait.FindByName(source.Trait)
 	if err != nil {
@@ -147,7 +148,7 @@ func (a *impl) newCheck(ctx context.Context, device *gen.Device, checkCfg *gen.H
 	}
 
 	// make the check instance
-	checkCfg = proto.Clone(checkCfg).(*gen.HealthCheck) // clone because NewBoundsCheck modifies the config
+	checkCfg = proto.Clone(checkCfg).(*gen_healthpb.HealthCheck) // clone because NewBoundsCheck modifies the config
 	check, err := a.Health.NewBoundsCheck(device.GetName(), checkCfg)
 	if err != nil {
 		return nil, fmt.Errorf("create check: %w", err)
@@ -265,7 +266,7 @@ func pathFieldsAreSet(path protopath.Values) bool {
 	return true
 }
 
-func healthValueFromReflectValue(path protopath.Values) (*gen.HealthCheck_Value, error) {
+func healthValueFromReflectValue(path protopath.Values) (*gen_healthpb.HealthCheck_Value, error) {
 	lastStep := path.Index(-1)
 	switch goValue := lastStep.Value.Interface().(type) {
 	case nil:
@@ -287,9 +288,9 @@ func healthValueFromReflectValue(path protopath.Values) (*gen.HealthCheck_Value,
 	case string:
 		return healthpb.StringValue(goValue), nil
 	case *timestamppb.Timestamp:
-		return &gen.HealthCheck_Value{Value: &gen.HealthCheck_Value_TimestampValue{TimestampValue: goValue}}, nil
+		return &gen_healthpb.HealthCheck_Value{Value: &gen_healthpb.HealthCheck_Value_TimestampValue{TimestampValue: goValue}}, nil
 	case *durationpb.Duration:
-		return &gen.HealthCheck_Value{Value: &gen.HealthCheck_Value_DurationValue{DurationValue: goValue}}, nil
+		return &gen_healthpb.HealthCheck_Value{Value: &gen_healthpb.HealthCheck_Value_DurationValue{DurationValue: goValue}}, nil
 	case protoreflect.EnumNumber:
 		// use the enum name instead of its number where we can
 		fd := lastFieldDescriptor(path)

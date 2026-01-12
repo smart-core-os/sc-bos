@@ -9,8 +9,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
 func ptr[T any](v T, err error) (*T, error) {
@@ -34,9 +34,9 @@ var (
 )
 
 func initTraitStatus(statuses *statuspb.Map, name, trait string) {
-	statuses.UpdateProblem(name, &gen.StatusLog_Problem{
+	statuses.UpdateProblem(name, &gen_statuspb.StatusLog_Problem{
 		Name:        name + ":" + trait,
-		Level:       gen.StatusLog_NOMINAL,
+		Level:       gen_statuspb.StatusLog_NOMINAL,
 		Description: "Waiting for first interaction",
 	})
 }

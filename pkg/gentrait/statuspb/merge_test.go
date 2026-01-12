@@ -8,40 +8,40 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
 func TestProblemMerger(t *testing.T) {
 	t.Run("highest level (nothing nominal)", func(t *testing.T) {
 		now := time.Unix(0, 0)
 		pm := &ProblemMerger{}
-		pm.AddProblem(&gen.StatusLog_Problem{
+		pm.AddProblem(&statuspb.StatusLog_Problem{
 			Name:        "p2",
-			Level:       gen.StatusLog_NOTICE,
+			Level:       statuspb.StatusLog_NOTICE,
 			Description: "p2 is a notice",
 			RecordTime:  timestamppb.New(now.Add(-2 * time.Second)),
 		})
-		pm.AddProblem(&gen.StatusLog_Problem{
+		pm.AddProblem(&statuspb.StatusLog_Problem{
 			Name:        "p1",
-			Level:       gen.StatusLog_NON_FUNCTIONAL,
+			Level:       statuspb.StatusLog_NON_FUNCTIONAL,
 			Description: "p1 is non-functional",
 			RecordTime:  timestamppb.New(now.Add(-time.Second)),
 		})
 		sl := pm.Build()
-		want := &gen.StatusLog{
-			Level:       gen.StatusLog_NON_FUNCTIONAL,
+		want := &statuspb.StatusLog{
+			Level:       statuspb.StatusLog_NON_FUNCTIONAL,
 			Description: "p1 is non-functional",
 			RecordTime:  timestamppb.New(now.Add(-time.Second)),
-			Problems: []*gen.StatusLog_Problem{
+			Problems: []*statuspb.StatusLog_Problem{
 				{
 					Name:        "p2",
-					Level:       gen.StatusLog_NOTICE,
+					Level:       statuspb.StatusLog_NOTICE,
 					Description: "p2 is a notice",
 					RecordTime:  timestamppb.New(now.Add(-2 * time.Second)),
 				},
 				{
 					Name:        "p1",
-					Level:       gen.StatusLog_NON_FUNCTIONAL,
+					Level:       statuspb.StatusLog_NON_FUNCTIONAL,
 					Description: "p1 is non-functional",
 					RecordTime:  timestamppb.New(now.Add(-time.Second)),
 				},
@@ -55,27 +55,27 @@ func TestProblemMerger(t *testing.T) {
 	t.Run("some offline", func(t *testing.T) {
 		now := time.Unix(0, 0)
 		pm := &ProblemMerger{}
-		pm.AddProblem(&gen.StatusLog_Problem{
+		pm.AddProblem(&statuspb.StatusLog_Problem{
 			Name:        "p2",
-			Level:       gen.StatusLog_NOMINAL,
+			Level:       statuspb.StatusLog_NOMINAL,
 			Description: "p2 nominal",
 			RecordTime:  timestamppb.New(now.Add(-2 * time.Second)),
 		})
-		pm.AddProblem(&gen.StatusLog_Problem{
+		pm.AddProblem(&statuspb.StatusLog_Problem{
 			Name:        "p1",
-			Level:       gen.StatusLog_OFFLINE,
+			Level:       statuspb.StatusLog_OFFLINE,
 			Description: "p1 is offline",
 			RecordTime:  timestamppb.New(now.Add(-time.Second)),
 		})
 		sl := pm.Build()
-		want := &gen.StatusLog{
-			Level:       gen.StatusLog_REDUCED_FUNCTION,
+		want := &statuspb.StatusLog{
+			Level:       statuspb.StatusLog_REDUCED_FUNCTION,
 			Description: "p1 is offline",
 			RecordTime:  timestamppb.New(now.Add(-time.Second)),
-			Problems: []*gen.StatusLog_Problem{
+			Problems: []*statuspb.StatusLog_Problem{
 				{
 					Name:        "p1",
-					Level:       gen.StatusLog_OFFLINE,
+					Level:       statuspb.StatusLog_OFFLINE,
 					Description: "p1 is offline",
 					RecordTime:  timestamppb.New(now.Add(-time.Second)),
 				},
@@ -89,33 +89,33 @@ func TestProblemMerger(t *testing.T) {
 	t.Run("all offline", func(t *testing.T) {
 		now := time.Unix(0, 0)
 		pm := &ProblemMerger{}
-		pm.AddProblem(&gen.StatusLog_Problem{
+		pm.AddProblem(&statuspb.StatusLog_Problem{
 			Name:        "p2",
-			Level:       gen.StatusLog_OFFLINE,
+			Level:       statuspb.StatusLog_OFFLINE,
 			Description: "p2 is offline",
 			RecordTime:  timestamppb.New(now.Add(-2 * time.Second)),
 		})
-		pm.AddProblem(&gen.StatusLog_Problem{
+		pm.AddProblem(&statuspb.StatusLog_Problem{
 			Name:        "p1",
-			Level:       gen.StatusLog_OFFLINE,
+			Level:       statuspb.StatusLog_OFFLINE,
 			Description: "p1 is offline",
 			RecordTime:  timestamppb.New(now.Add(-time.Second)),
 		})
 		sl := pm.Build()
-		want := &gen.StatusLog{
-			Level:       gen.StatusLog_OFFLINE,
+		want := &statuspb.StatusLog{
+			Level:       statuspb.StatusLog_OFFLINE,
 			Description: "p2 is offline",
 			RecordTime:  timestamppb.New(now.Add(-2 * time.Second)),
-			Problems: []*gen.StatusLog_Problem{
+			Problems: []*statuspb.StatusLog_Problem{
 				{
 					Name:        "p2",
-					Level:       gen.StatusLog_OFFLINE,
+					Level:       statuspb.StatusLog_OFFLINE,
 					Description: "p2 is offline",
 					RecordTime:  timestamppb.New(now.Add(-2 * time.Second)),
 				},
 				{
 					Name:        "p1",
-					Level:       gen.StatusLog_OFFLINE,
+					Level:       statuspb.StatusLog_OFFLINE,
 					Description: "p1 is offline",
 					RecordTime:  timestamppb.New(now.Add(-time.Second)),
 				},
@@ -129,19 +129,19 @@ func TestProblemMerger(t *testing.T) {
 	t.Run("nominal", func(t *testing.T) {
 		now := time.Unix(0, 0)
 		pm := &ProblemMerger{}
-		pm.AddStatusLog(&gen.StatusLog{
-			Level:       gen.StatusLog_NOMINAL,
+		pm.AddStatusLog(&statuspb.StatusLog{
+			Level:       statuspb.StatusLog_NOMINAL,
 			Description: "p2 is nominal",
 			RecordTime:  timestamppb.New(now.Add(-2 * time.Second)),
 		})
-		pm.AddStatusLog(&gen.StatusLog{
-			Level:       gen.StatusLog_NOMINAL,
+		pm.AddStatusLog(&statuspb.StatusLog{
+			Level:       statuspb.StatusLog_NOMINAL,
 			Description: "p1 is nominal",
 			RecordTime:  timestamppb.New(now.Add(-time.Second)),
 		})
 		sl := pm.Build()
-		want := &gen.StatusLog{
-			Level:       gen.StatusLog_NOMINAL,
+		want := &statuspb.StatusLog{
+			Level:       statuspb.StatusLog_NOMINAL,
 			Description: "p1 is nominal",
 			RecordTime:  timestamppb.New(now.Add(-time.Second)),
 		}

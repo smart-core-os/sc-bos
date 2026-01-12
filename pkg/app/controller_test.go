@@ -11,9 +11,10 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
 
 // TestController_protoPkgCompat tests that both versioned and unversioned proto packages are served.
@@ -30,7 +31,7 @@ func TestController_protoPkgCompat(t *testing.T) {
 	// so there's something to return
 	c.Node.Announce("test-device",
 		node.HasTrait(meter.TraitName,
-			node.WithClients(gen.WrapMeterApi(meter.NewModelServer(meter.NewModel()))),
+			node.WithClients(meterpb.WrapApi(meter.NewModelServer(meter.NewModel()))),
 		),
 	)
 
@@ -60,8 +61,8 @@ func TestController_protoPkgCompat(t *testing.T) {
 	defer cc.Close()
 
 	// devices api (statically registered)
-	devReq := &gen.ListDevicesRequest{}
-	revRes := new(gen.ListDevicesResponse)
+	devReq := &devicespb.ListDevicesRequest{}
+	revRes := new(devicespb.ListDevicesResponse)
 	if err := cc.Invoke(t.Context(), "/smartcore.bos.DevicesApi/ListDevices", devReq, revRes); err != nil {
 		t.Errorf("unversioned ListDevices() error = %v", err)
 	}
@@ -69,8 +70,8 @@ func TestController_protoPkgCompat(t *testing.T) {
 		t.Errorf("versioned ListDevices() error = %v", err)
 	}
 	// trait api (dynamically registered)
-	meterReq := &gen.GetMeterReadingRequest{Name: "test-device"}
-	meterRes := new(gen.MeterReading)
+	meterReq := &meterpb.GetMeterReadingRequest{Name: "test-device"}
+	meterRes := new(meterpb.MeterReading)
 	if err := cc.Invoke(t.Context(), "/smartcore.bos.MeterApi/GetMeterReading", meterReq, meterRes); err != nil {
 		t.Errorf("unversioned GetMeterReading() error = %v", err)
 	}

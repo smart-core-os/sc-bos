@@ -3,23 +3,23 @@ package statusalerts
 import (
 	"context"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
-func pullFrom(ctx context.Context, name string, client gen.StatusApiClient, c chan<- *gen.StatusLog) error {
+func pullFrom(ctx context.Context, name string, client statuspb.StatusApiClient, c chan<- *statuspb.StatusLog) error {
 	puller := statusLogPuller{client: client, name: name}
-	return pull.Changes[*gen.StatusLog](ctx, puller, c)
+	return pull.Changes[*statuspb.StatusLog](ctx, puller, c)
 }
 
 type statusLogPuller struct {
-	client gen.StatusApiClient
+	client statuspb.StatusApiClient
 	name   string
 }
 
-func (s statusLogPuller) Pull(ctx context.Context, changes chan<- *gen.StatusLog) error {
-	stream, err := s.client.PullCurrentStatus(ctx, &gen.PullCurrentStatusRequest{Name: s.name})
+func (s statusLogPuller) Pull(ctx context.Context, changes chan<- *statuspb.StatusLog) error {
+	stream, err := s.client.PullCurrentStatus(ctx, &statuspb.PullCurrentStatusRequest{Name: s.name})
 	if err != nil {
 		return err
 	}
@@ -37,8 +37,8 @@ func (s statusLogPuller) Pull(ctx context.Context, changes chan<- *gen.StatusLog
 	}
 }
 
-func (s statusLogPuller) Poll(ctx context.Context, changes chan<- *gen.StatusLog) error {
-	status, err := s.client.GetCurrentStatus(ctx, &gen.GetCurrentStatusRequest{Name: s.name})
+func (s statusLogPuller) Poll(ctx context.Context, changes chan<- *statuspb.StatusLog) error {
+	status, err := s.client.GetCurrentStatus(ctx, &statuspb.GetCurrentStatusRequest{Name: s.name})
 	if err != nil {
 		return err
 	}

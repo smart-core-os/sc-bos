@@ -7,8 +7,9 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb/standard"
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 var (
@@ -23,14 +24,14 @@ var (
 // to track how comfortable the environment is for its occupants.
 func ExampleBoundsCheck() {
 	// This bounds check monitors when a value exceeds a normal range.
-	tempCheck, _ := checks.NewBoundsCheck(deviceName, &gen.HealthCheck{
+	tempCheck, _ := checks.NewBoundsCheck(deviceName, &healthpb.HealthCheck{
 		// Id can be absent if this owner only ever has one check per device
 		DisplayName:     "Ambient Temperature",
 		Description:     "Checks the ambient air temperature is within a comfortable range",
-		OccupantImpact:  gen.HealthCheck_COMFORT,
-		EquipmentImpact: gen.HealthCheck_NO_EQUIPMENT_IMPACT,
-		Check: &gen.HealthCheck_Bounds_{Bounds: &gen.HealthCheck_Bounds{
-			Expected: &gen.HealthCheck_Bounds_NormalRange{NormalRange: &gen.HealthCheck_ValueRange{
+		OccupantImpact:  healthpb.HealthCheck_COMFORT,
+		EquipmentImpact: healthpb.HealthCheck_NO_EQUIPMENT_IMPACT,
+		Check: &healthpb.HealthCheck_Bounds_{Bounds: &healthpb.HealthCheck_Bounds{
+			Expected: &healthpb.HealthCheck_Bounds_NormalRange{NormalRange: &healthpb.HealthCheck_ValueRange{
 				Low:      FloatValue(15),
 				High:     FloatValue(25),
 				Deadband: FloatValue(2),
@@ -62,45 +63,45 @@ func ExampleBoundsCheck() {
 // This example demonstrates how emergency lighting test results can be monitored
 // using two FaultCheck health checks, one for function tests and one for duration tests.
 func ExampleFaultCheck() {
-	funcTest, _ := checks.NewFaultCheck(deviceName, &gen.HealthCheck{
+	funcTest, _ := checks.NewFaultCheck(deviceName, &healthpb.HealthCheck{
 		Id:              "el_function_test",
 		DisplayName:     "Emergency Light Function Test",
 		Description:     "Checks the emergency light function test status",
-		OccupantImpact:  gen.HealthCheck_LIFE,
-		EquipmentImpact: gen.HealthCheck_NO_EQUIPMENT_IMPACT,
-		ComplianceImpacts: []*gen.HealthCheck_ComplianceImpact{
-			{Standard: standard.BS5266_1_2016, Contribution: gen.HealthCheck_ComplianceImpact_FAIL},
+		OccupantImpact:  healthpb.HealthCheck_LIFE,
+		EquipmentImpact: healthpb.HealthCheck_NO_EQUIPMENT_IMPACT,
+		ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
+			{Standard: standard.BS5266_1_2016, Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
 		},
 	})
 	defer funcTest.Dispose()
-	durTest, _ := checks.NewFaultCheck(deviceName, &gen.HealthCheck{
+	durTest, _ := checks.NewFaultCheck(deviceName, &healthpb.HealthCheck{
 		Id:              "el_duration_test",
 		DisplayName:     "Emergency Light Duration Test",
 		Description:     "Checks the emergency light duration test status",
-		OccupantImpact:  gen.HealthCheck_LIFE,
-		EquipmentImpact: gen.HealthCheck_NO_EQUIPMENT_IMPACT,
-		ComplianceImpacts: []*gen.HealthCheck_ComplianceImpact{
-			{Standard: standard.BS5266_1_2016, Contribution: gen.HealthCheck_ComplianceImpact_FAIL},
+		OccupantImpact:  healthpb.HealthCheck_LIFE,
+		EquipmentImpact: healthpb.HealthCheck_NO_EQUIPMENT_IMPACT,
+		ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
+			{Standard: standard.BS5266_1_2016, Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
 		},
 	})
 	defer durTest.Dispose()
 
 	// A utility for updating test results
-	updateTestResults := func(c *FaultCheck, r *gen.EmergencyTestResult) {
+	updateTestResults := func(c *FaultCheck, r *emergencylightpb.EmergencyTestResult) {
 		switch code := r.GetResult(); code {
-		case gen.EmergencyTestResult_TEST_PASSED:
+		case emergencylightpb.EmergencyTestResult_TEST_PASSED:
 			c.ClearFaults()
 		default:
-			c.SetFault(&gen.HealthCheck_Error{
+			c.SetFault(&healthpb.HealthCheck_Error{
 				SummaryText: code.String(),
 				DetailsText: fmt.Sprintf("device reported test failure: %s", code),
-				Code:        &gen.HealthCheck_Error_Code{Code: code.String(), System: "Smart Core"},
+				Code:        &healthpb.HealthCheck_Error_Code{Code: code.String(), System: "Smart Core"},
 			})
 		}
 	}
 
-	client := gen.NewEmergencyLightApiClient(clientConn)
-	stream, err := client.PullTestResultSets(ctx, &gen.PullTestResultRequest{Name: deviceName})
+	client := emergencylightpb.NewEmergencyLightApiClient(clientConn)
+	stream, err := client.PullTestResultSets(ctx, &emergencylightpb.PullTestResultRequest{Name: deviceName})
 	funcTest.UpdateReliability(ctx, ReliabilityFromErr(err))
 	if err != nil {
 		return

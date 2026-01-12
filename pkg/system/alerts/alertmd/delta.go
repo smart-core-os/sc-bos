@@ -3,14 +3,14 @@ package alertmd
 import (
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
-func ApplyMdDelta(md *resource.Value, e *gen.PullAlertsResponse_Change) error {
+func ApplyMdDelta(md *resource.Value, e *alertpb.PullAlertsResponse_Change) error {
 	// note: AlertMetadata uses uint32 so we can't use it to store our deltas
-	_, err := md.Set(&gen.AlertMetadata{}, resource.InterceptBefore(func(old, new proto.Message) {
-		oldMd, newMd := old.(*gen.AlertMetadata), new.(*gen.AlertMetadata)
+	_, err := md.Set(&alertpb.AlertMetadata{}, resource.InterceptBefore(func(old, new proto.Message) {
+		oldMd, newMd := old.(*alertpb.AlertMetadata), new.(*alertpb.AlertMetadata)
 		proto.Merge(newMd, oldMd)
 		// proto.Merge doesn't set maps that are empty but non-nil!
 		// Without this explicit copy we'd end up with nil maps that we then assign to, which panics
@@ -47,11 +47,11 @@ func ApplyMdDelta(md *resource.Value, e *gen.PullAlertsResponse_Change) error {
 		}
 
 		// ack/nak
-		boolMapDelta(e.OldValue, e.NewValue, newMd.AcknowledgedCounts, func(v *gen.Alert) bool {
+		boolMapDelta(e.OldValue, e.NewValue, newMd.AcknowledgedCounts, func(v *alertpb.Alert) bool {
 			return v.GetAcknowledgement().GetAcknowledgeTime() != nil
 		})
 		// resolved/unresolved
-		boolMapDelta(e.OldValue, e.NewValue, newMd.ResolvedCounts, func(v *gen.Alert) bool {
+		boolMapDelta(e.OldValue, e.NewValue, newMd.ResolvedCounts, func(v *alertpb.Alert) bool {
 			return v.GetResolveTime() != nil
 		})
 
@@ -83,7 +83,7 @@ func mapDelta[T comparable](o, n T, m map[T]uint32) {
 	}
 }
 
-func boolMapDelta(o, n *gen.Alert, m map[bool]uint32, f func(*gen.Alert) bool) {
+func boolMapDelta(o, n *alertpb.Alert, m map[bool]uint32, f func(*alertpb.Alert) bool) {
 	switch {
 	case o == nil && n != nil:
 		m[f(n)]++
@@ -110,7 +110,7 @@ func mapCmpBool[K comparable](k K, o, n bool, m map[K]uint32) {
 	}
 }
 
-func needsAttentionMap(o, n *gen.Alert, m map[string]uint32) {
+func needsAttentionMap(o, n *alertpb.Alert, m map[string]uint32) {
 	switch {
 	case o == nil && n != nil:
 		ackResolved, ackUnresolved, nackResolved, nackUnresolved := needsAttentionFlags(n)
@@ -150,7 +150,7 @@ func needsAttentionMap(o, n *gen.Alert, m map[string]uint32) {
 	}
 }
 
-func needsAttentionFlags(a *gen.Alert) (ackResolved, ackUnresolved, nackResolved, nackUnresolved bool) {
+func needsAttentionFlags(a *alertpb.Alert) (ackResolved, ackUnresolved, nackResolved, nackUnresolved bool) {
 	if a == nil {
 		return
 	}

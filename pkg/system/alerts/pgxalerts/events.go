@@ -6,12 +6,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 )
 
-func (s *Server) notifyAdd(name string, alert *gen.Alert) {
+func (s *Server) notifyAdd(name string, alert *alertpb.Alert) {
 	// notify
-	s.bus.Send(context.Background(), &gen.PullAlertsResponse_Change{
+	s.bus.Send(context.Background(), &alertpb.PullAlertsResponse_Change{
 		Name:       name,
 		Type:       types.ChangeType_ADD,
 		ChangeTime: alert.CreateTime,
@@ -19,8 +19,8 @@ func (s *Server) notifyAdd(name string, alert *gen.Alert) {
 	})
 }
 
-func (s *Server) notifyUpdate(name string, original *gen.Alert, updated *gen.Alert) int {
-	return s.bus.Send(context.Background(), &gen.PullAlertsResponse_Change{
+func (s *Server) notifyUpdate(name string, original *alertpb.Alert, updated *alertpb.Alert) int {
+	return s.bus.Send(context.Background(), &alertpb.PullAlertsResponse_Change{
 		Name:       name,
 		Type:       types.ChangeType_UPDATE,
 		ChangeTime: timestamppb.Now(),
@@ -29,8 +29,8 @@ func (s *Server) notifyUpdate(name string, original *gen.Alert, updated *gen.Ale
 	})
 }
 
-func (s *Server) notifyRemove(name string, existing *gen.Alert) int {
-	return s.bus.Send(context.Background(), &gen.PullAlertsResponse_Change{
+func (s *Server) notifyRemove(name string, existing *alertpb.Alert) int {
+	return s.bus.Send(context.Background(), &alertpb.PullAlertsResponse_Change{
 		Name:       name,
 		Type:       types.ChangeType_REMOVE,
 		ChangeTime: timestamppb.Now(),

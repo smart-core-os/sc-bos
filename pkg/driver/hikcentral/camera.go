@@ -18,15 +18,16 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api"
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 )
 
 type Camera struct {
 	traits.UnimplementedPtzApiServer
-	gen.UnimplementedMqttServiceServer
-	gen.UnimplementedUdmiServiceServer
+	mqttpb.UnimplementedMqttServiceServer
+	udmipb.UnimplementedUdmiServiceServer
 
 	client *client
 	logger *zap.Logger
@@ -133,7 +134,7 @@ func (c *Camera) Stop(ctx context.Context, _ *traits.StopPtzRequest) (*traits.Pt
 	return nil, multiErr
 }
 
-func (c *Camera) PullMessages(_ *gen.PullMessagesRequest, server gen.MqttService_PullMessagesServer) error {
+func (c *Camera) PullMessages(_ *mqttpb.PullMessagesRequest, server mqttpb.MqttService_PullMessagesServer) error {
 	changes := c.bus.Listen(server.Context())
 
 	for change := range changes {
@@ -142,7 +143,7 @@ func (c *Camera) PullMessages(_ *gen.PullMessagesRequest, server gen.MqttService
 			c.logger.Warn("unable to marshal message as JSON", zap.Error(err), zap.Any("change", change))
 			continue
 		}
-		msg := &gen.PullMessagesResponse{
+		msg := &mqttpb.PullMessagesResponse{
 			Name:    c.conf.Name,
 			Topic:   c.conf.Topic,
 			Payload: string(asJson),
@@ -155,15 +156,15 @@ func (c *Camera) PullMessages(_ *gen.PullMessagesRequest, server gen.MqttService
 	return server.Context().Err()
 }
 
-func (c *Camera) PullControlTopics(request *gen.PullControlTopicsRequest, server gen.UdmiService_PullControlTopicsServer) error {
+func (c *Camera) PullControlTopics(request *udmipb.PullControlTopicsRequest, server udmipb.UdmiService_PullControlTopicsServer) error {
 	return c.UnimplementedUdmiServiceServer.PullControlTopics(request, server)
 }
 
-func (c *Camera) OnMessage(ctx context.Context, request *gen.OnMessageRequest) (*gen.OnMessageResponse, error) {
+func (c *Camera) OnMessage(ctx context.Context, request *udmipb.OnMessageRequest) (*udmipb.OnMessageResponse, error) {
 	return c.UnimplementedUdmiServiceServer.OnMessage(ctx, request)
 }
 
-func (c *Camera) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen.UdmiService_PullExportMessagesServer) error {
+func (c *Camera) PullExportMessages(_ *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
 	changes := c.bus.Listen(server.Context())
 
 	for change := range changes {
@@ -172,9 +173,9 @@ func (c *Camera) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen
 			c.logger.Warn("unable to marshal message as JSON", zap.Error(err), zap.Any("change", change))
 			continue
 		}
-		msg := &gen.PullExportMessagesResponse{
+		msg := &udmipb.PullExportMessagesResponse{
 			Name: c.conf.Name,
-			Message: &gen.MqttMessage{
+			Message: &udmipb.MqttMessage{
 				Topic:   c.conf.Topic + "/event/pointset/points",
 				Payload: string(asJson),
 			},

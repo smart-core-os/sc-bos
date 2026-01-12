@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.udmi.v1;
 
-option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/udmipb";
 
 // UdmiService defines the service needed to add UDMI support to a driver or system.
 // The implementer is responsible for message payloads and topic definitions. This will not be validated.

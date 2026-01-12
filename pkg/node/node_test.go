@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
@@ -68,7 +68,7 @@ func TestNode_Announce_metadata(t *testing.T) {
 }
 
 func TestAnnounce_undo(t *testing.T) {
-	simpleDevice := func(name string, traitNames ...trait.Name) *gen.Device {
+	simpleDevice := func(name string, traitNames ...trait.Name) *devicespb.Device {
 		traitList := []*traits.TraitMetadata{{Name: string(trait.Metadata)}}
 		for _, tn := range traitNames {
 			traitList = append(traitList, &traits.TraitMetadata{Name: string(tn)})
@@ -157,12 +157,12 @@ func TestNode_ListDevices(t *testing.T) {
 
 	// the metadata representing the node itself
 	nodeMd := &traits.Metadata{Name: "-test", Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}, {Name: string(trait.Parent)}}}
-	nodeDev := &gen.Device{Name: nodeMd.Name, Metadata: nodeMd}
+	nodeDev := &devicespb.Device{Name: nodeMd.Name, Metadata: nodeMd}
 
 	t.Run("no announce", func(t *testing.T) {
 		n := newNode()
 		got := n.ListDevices()
-		want := []*gen.Device{
+		want := []*devicespb.Device{
 			nodeDev,
 		}
 		if diff := cmp.Diff(want, got, cmpopts.EquateEmpty(), protocmp.Transform()); diff != "" {
@@ -173,7 +173,7 @@ func TestNode_ListDevices(t *testing.T) {
 		n := newNode()
 		n.Announce("d1")
 		got := n.ListDevices()
-		want := []*gen.Device{
+		want := []*devicespb.Device{
 			nodeDev,
 			dev(&traits.Metadata{Name: "d1", Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}}}),
 		}
@@ -185,7 +185,7 @@ func TestNode_ListDevices(t *testing.T) {
 		n := newNode()
 		n.Announce("d1", HasMetadata(&traits.Metadata{Appearance: &traits.Metadata_Appearance{Title: "Foo"}}))
 		got := n.ListDevices()
-		want := []*gen.Device{
+		want := []*devicespb.Device{
 			nodeDev,
 			dev(&traits.Metadata{Name: "d1", Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}}, Appearance: &traits.Metadata_Appearance{Title: "Foo"}}),
 		}
@@ -207,7 +207,7 @@ func TestNode_ListDevices(t *testing.T) {
 		n.Announce("d1", HasMetadata(&traits.Metadata{Appearance: &traits.Metadata_Appearance{Title: "Foo", Description: "Desc"}}))
 		n.Announce("d1", HasMetadata(&traits.Metadata{Appearance: &traits.Metadata_Appearance{Title: "Bar"}, Membership: &traits.Metadata_Membership{Subsystem: "Tests"}}))
 		got := n.ListDevices()
-		want := []*gen.Device{
+		want := []*devicespb.Device{
 			nodeDev,
 			dev(&traits.Metadata{Name: "d1", Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}}, Appearance: &traits.Metadata_Appearance{Title: "Bar", Description: "Desc"}, Membership: &traits.Metadata_Membership{Subsystem: "Tests"}}),
 		}
@@ -221,7 +221,7 @@ func TestNode_ListDevices(t *testing.T) {
 		n.Announce("d1", HasMetadata(&traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "Foo"}}}))
 		n.Announce("d1", HasMetadata(&traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "Bar"}}}))
 		got := n.ListDevices()
-		want := []*gen.Device{
+		want := []*devicespb.Device{
 			nodeDev,
 			dev(&traits.Metadata{Name: "d1", Traits: []*traits.TraitMetadata{{Name: "Bar"}, {Name: "Foo"}, {Name: string(trait.Metadata)}}}),
 		}
@@ -234,7 +234,7 @@ func TestNode_ListDevices(t *testing.T) {
 		n := newNode()
 		n.Announce("d1", HasTrait(trait.Light))
 		got := n.ListDevices()
-		want := []*gen.Device{
+		want := []*devicespb.Device{
 			nodeDev,
 			dev(&traits.Metadata{Name: "d1", Traits: []*traits.TraitMetadata{{Name: string(trait.Light)}, {Name: string(trait.Metadata)}}}),
 		}
@@ -248,7 +248,7 @@ func TestNode_ListDevices(t *testing.T) {
 		n.Announce("d1", HasTrait(trait.Light))
 		n.Announce("d1", HasTrait(trait.Booking))
 		got := n.ListDevices()
-		want := []*gen.Device{
+		want := []*devicespb.Device{
 			nodeDev,
 			dev(&traits.Metadata{Name: "d1", Traits: []*traits.TraitMetadata{{Name: string(trait.Booking)}, {Name: string(trait.Light)}, {Name: string(trait.Metadata)}}}),
 		}
@@ -258,6 +258,6 @@ func TestNode_ListDevices(t *testing.T) {
 	})
 }
 
-func dev(md *traits.Metadata) *gen.Device {
-	return &gen.Device{Name: md.Name, Metadata: md}
+func dev(md *traits.Metadata) *devicespb.Device {
+	return &devicespb.Device{Name: md.Name, Metadata: md}
 }

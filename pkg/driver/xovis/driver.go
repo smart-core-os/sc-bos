@@ -17,11 +17,11 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/xovis/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -133,7 +133,7 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 			server := newUdmiServiceServer(d.logger.Named("udmiServiceServer"), enterLeaveVal, occupancyVal, dev.UDMITopicPrefix)
 			d.udmiServers = append(d.udmiServers, server)
 			features = append(features, node.HasTrait(udmipb.TraitName,
-				node.WithClients(gen.WrapUdmiService(server))))
+				node.WithClients(gen_udmipb.WrapService(server))))
 		}
 
 		announcer.Announce(dev.Name, features...)

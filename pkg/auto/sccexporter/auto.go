@@ -16,9 +16,10 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
@@ -36,8 +37,8 @@ type AutoImpl struct {
 	airQualityClient     traits.AirQualitySensorApiClient
 	airTemperatureClient traits.AirTemperatureApiClient
 	metadataClient       traits.MetadataApiClient
-	meterClient          gen.MeterApiClient
-	meterInfoClient      gen.MeterInfoClient
+	meterClient          gen_meterpb.MeterApiClient
+	meterInfoClient      gen_meterpb.MeterInfoClient
 	occupancyClient      traits.OccupancySensorApiClient
 }
 
@@ -54,8 +55,8 @@ func (a *AutoImpl) initialiseClients(n *node.Node) {
 	a.airQualityClient = traits.NewAirQualitySensorApiClient(n.ClientConn())
 	a.airTemperatureClient = traits.NewAirTemperatureApiClient(n.ClientConn())
 	a.metadataClient = traits.NewMetadataApiClient(n.ClientConn())
-	a.meterClient = gen.NewMeterApiClient(n.ClientConn())
-	a.meterInfoClient = gen.NewMeterInfoClient(n.ClientConn())
+	a.meterClient = gen_meterpb.NewMeterApiClient(n.ClientConn())
+	a.meterInfoClient = gen_meterpb.NewMeterInfoClient(n.ClientConn())
 	a.occupancyClient = traits.NewOccupancySensorApiClient(n.ClientConn())
 }
 
@@ -156,12 +157,12 @@ func (a *AutoImpl) refreshDevices(ctx context.Context, traits []string, allDevic
 
 // getAllTraitImplementors populates the devices map with devices that have the given trait
 func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.Name, devices map[string]*device) error {
-	resp, err := a.Services.Devices.ListDevices(ctx, &gen.ListDevicesRequest{
-		Query: &gen.Device_Query{
-			Conditions: []*gen.Device_Query_Condition{
+	resp, err := a.Services.Devices.ListDevices(ctx, &devicespb.ListDevicesRequest{
+		Query: &devicespb.Device_Query{
+			Conditions: []*devicespb.Device_Query_Condition{
 				{
 					Field: "metadata.traits.name",
-					Value: &gen.Device_Query_Condition_StringEqual{
+					Value: &devicespb.Device_Query_Condition_StringEqual{
 						StringEqual: string(traitName),
 					},
 				},
@@ -275,7 +276,7 @@ func (a *AutoImpl) getMeterInfo(ctx context.Context, traitName trait.Name, devic
 			continue
 		}
 
-		support, err := a.meterInfoClient.DescribeMeterReading(ctx, &gen.DescribeMeterReadingRequest{
+		support, err := a.meterInfoClient.DescribeMeterReading(ctx, &gen_meterpb.DescribeMeterReadingRequest{
 			Name: deviceName,
 		})
 		if err != nil {

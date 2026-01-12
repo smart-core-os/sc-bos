@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/fluidflowpb"
+	gen_fluidflowpb "github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
@@ -14,9 +14,9 @@ func FluidFlow(model *fluidflowpb.Model) service.Lifecycle {
 		go func() {
 			timer := time.NewTimer(durationBetween(30*time.Second, 2*time.Minute))
 			for {
-				direction := oneOf(gen.FluidFlow_FLOW, gen.FluidFlow_RETURN, gen.FluidFlow_BLOCKING)
+				direction := oneOf(gen_fluidflowpb.FluidFlow_FLOW, gen_fluidflowpb.FluidFlow_RETURN, gen_fluidflowpb.FluidFlow_BLOCKING)
 
-				state := &gen.FluidFlow{
+				state := &gen_fluidflowpb.FluidFlow{
 					FlowRate:             ptr(float32Between(1, 100)),
 					DriveFrequency:       ptr(float32Between(0, 100)),
 					TargetFlowRate:       ptr(float32Between(1, 100)),
@@ -24,7 +24,7 @@ func FluidFlow(model *fluidflowpb.Model) service.Lifecycle {
 					Direction:            direction,
 				}
 
-				if direction == gen.FluidFlow_BLOCKING {
+				if direction == gen_fluidflowpb.FluidFlow_BLOCKING {
 					state.FlowRate = ptr(float32(0))
 					state.TargetFlowRate = ptr(float32(0))
 					state.DriveFrequency = ptr(float32(0))

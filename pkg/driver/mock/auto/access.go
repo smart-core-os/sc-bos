@@ -7,14 +7,15 @@ import (
 
 	"golang.org/x/exp/rand"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
+	gen_accesspb "github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
 )
 
 func Access(model *accesspb.Model) service.Lifecycle {
-	grants := maps.Values(gen.AccessAttempt_Grant_value)
+	grants := maps.Values(gen_accesspb.AccessAttempt_Grant_value)
 	slices.Sort(grants)
 	grants = grants[1:]
 	reasons := []string{
@@ -23,7 +24,7 @@ func Access(model *accesspb.Model) service.Lifecycle {
 		"",
 		"Card expired",
 	}
-	actors := []*gen.Actor{
+	actors := []*actorpb.Actor{
 		nil,
 		{DisplayName: "Scott Lang", Ids: map[string]string{"card": "1234567890"}},
 		{DisplayName: "Hope Van Dyne", Ids: map[string]string{"card": "0987654321"}},
@@ -34,8 +35,8 @@ func Access(model *accesspb.Model) service.Lifecycle {
 		go func() {
 			timer := time.NewTimer((30 * time.Second) + time.Duration(rand.Float32())*time.Minute)
 			for {
-				state := &gen.AccessAttempt{
-					Grant:  gen.AccessAttempt_Grant(grants[rand.Intn(len(grants))]),
+				state := &gen_accesspb.AccessAttempt{
+					Grant:  gen_accesspb.AccessAttempt_Grant(grants[rand.Intn(len(grants))]),
 					Reason: reasons[rand.Intn(len(reasons))],
 					Actor:  actors[rand.Intn(len(actors))],
 				}

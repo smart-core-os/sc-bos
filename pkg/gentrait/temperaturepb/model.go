@@ -3,17 +3,17 @@ package temperaturepb
 import (
 	"context"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 type Model struct {
-	temperature *resource.Value // of *gen.Temperature
+	temperature *resource.Value // of *temperaturepb.Temperature
 }
 
 func NewModel(opts ...resource.Option) *Model {
-	defaultOpts := []resource.Option{resource.WithInitialValue(&gen.Temperature{})}
+	defaultOpts := []resource.Option{resource.WithInitialValue(&temperaturepb.Temperature{})}
 	opts = append(defaultOpts, opts...)
 
 	return &Model{
@@ -21,20 +21,20 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) GetTemperature(opts ...resource.ReadOption) (*gen.Temperature, error) {
-	return m.temperature.Get(opts...).(*gen.Temperature), nil
+func (m *Model) GetTemperature(opts ...resource.ReadOption) (*temperaturepb.Temperature, error) {
+	return m.temperature.Get(opts...).(*temperaturepb.Temperature), nil
 }
 
-func (m *Model) UpdateTemperature(temperature *gen.Temperature, opts ...resource.WriteOption) (*gen.Temperature, error) {
+func (m *Model) UpdateTemperature(temperature *temperaturepb.Temperature, opts ...resource.WriteOption) (*temperaturepb.Temperature, error) {
 	res, err := m.temperature.Set(temperature, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*gen.Temperature), nil
+	return res.(*temperaturepb.Temperature), nil
 }
 
 func (m *Model) PullTemperature(ctx context.Context, opts ...resource.ReadOption) <-chan PullTemperatureChange {
-	return resources.PullValue[*gen.Temperature](ctx, m.temperature.Pull(ctx, opts...))
+	return resources.PullValue[*temperaturepb.Temperature](ctx, m.temperature.Pull(ctx, opts...))
 }
 
-type PullTemperatureChange = resources.ValueChange[*gen.Temperature]
+type PullTemperatureChange = resources.ValueChange[*temperaturepb.Temperature]

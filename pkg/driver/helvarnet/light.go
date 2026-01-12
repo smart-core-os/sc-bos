@@ -21,9 +21,10 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
@@ -37,19 +38,19 @@ type TestResults struct {
 // Light represents a single light device within the HelvarNet system.
 type Light struct {
 	traits.UnimplementedLightApiServer
-	gen.UnimplementedEmergencyLightApiServer
-	gen.UnimplementedUdmiServiceServer
+	emergencylightpb.UnimplementedEmergencyLightApiServer
+	udmipb.UnimplementedUdmiServiceServer
 
 	brightness      *resource.Value // *traits.Brightness
 	client          *tcpClient
 	conf            *config.Device
 	logger          *zap.Logger
 	helvarnetStatus int64 // The status flags field from the device, unique to Helvarnet protocol. See deviceStatuses
-	udmiBus         minibus.Bus[*gen.PullExportMessagesResponse]
+	udmiBus         minibus.Bus[*udmipb.PullExportMessagesResponse]
 
 	// stores device test results, key is device name, value is TestResults
 	database      *bolthold.Store
-	testResultSet *resource.Value // *gen.TestResultSet
+	testResultSet *resource.Value // *emergencylightpb.TestResultSet
 	isEm          bool
 }
 
@@ -61,9 +62,9 @@ func newLight(client *tcpClient, l *zap.Logger, conf *config.Device, db *bolthol
 		database:   db,
 		isEm:       em,
 		logger:     l,
-		testResultSet: resource.NewValue(resource.WithInitialValue(&gen.TestResultSet{
-			DurationTest: &gen.EmergencyTestResult{},
-			FunctionTest: &gen.EmergencyTestResult{},
+		testResultSet: resource.NewValue(resource.WithInitialValue(&emergencylightpb.TestResultSet{
+			DurationTest: &emergencylightpb.EmergencyTestResult{},
+			FunctionTest: &emergencylightpb.EmergencyTestResult{},
 		}), resource.WithNoDuplicates()),
 	}
 }
@@ -213,7 +214,7 @@ func (l *Light) PullBrightness(_ *traits.PullBrightnessRequest, server traits.Li
 	return nil
 }
 
-func (l *Light) udmiPointsetFromData() (*gen.MqttMessage, error) {
+func (l *Light) udmiPointsetFromData() (*udmipb.MqttMessage, error) {
 	points := make(udmi.PointsEvent)
 	brightness := l.brightness.Get().(*traits.Brightness)
 	points["BrightnessLvl%"] = udmi.PointValue{PresentValue: brightness.LevelPercent}
@@ -234,7 +235,7 @@ func (l *Light) udmiPointsetFromData() (*gen.MqttMessage, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal udmi points: %w", err)
 	}
-	return &gen.MqttMessage{
+	return &udmipb.MqttMessage{
 		Topic:   l.conf.TopicPrefix + "/event/pointset/points",
 		Payload: string(b),
 	}, nil
@@ -247,7 +248,7 @@ func (l *Light) sendUdmiMessage(ctx context.Context) {
 		return
 	}
 
-	l.udmiBus.Send(ctx, &gen.PullExportMessagesResponse{
+	l.udmiBus.Send(ctx, &udmipb.PullExportMessagesResponse{
 		Name:    l.conf.Name,
 		Message: m,
 	})
@@ -262,8 +263,8 @@ func (l *Light) refreshData(ctx context.Context) {
 
 	// if this light is an emergency light, get the test results
 	if l.isEm {
-		currentResults := l.testResultSet.Get().(*gen.TestResultSet)
-		newResults := &gen.TestResultSet{}
+		currentResults := l.testResultSet.Get().(*emergencylightpb.TestResultSet)
+		newResults := &emergencylightpb.TestResultSet{}
 		fRes, err := getTestResult(ctx, l.getFunctionTestResult, l.getFunctionTestCompletionTime)
 		if err == nil {
 			// update the stored test result set with the new result
@@ -495,32 +496,32 @@ func (l *Light) getDurationTestCompletionTime(ctx context.Context) (*time.Time, 
 	return parseGetCompletionTimeResponse(r)
 }
 
-func (l *Light) StartFunctionTest(ctx context.Context, _ *gen.StartEmergencyTestRequest) (*gen.StartEmergencyTestResponse, error) {
+func (l *Light) StartFunctionTest(ctx context.Context, _ *emergencylightpb.StartEmergencyTestRequest) (*emergencylightpb.StartEmergencyTestResponse, error) {
 	l.logger.Info("Starting function test for light", zap.String("name", l.conf.Name))
 	err := l.runFunctionTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to start function test", zap.String("name", l.conf.Name), zap.Error(err))
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to start function test"))
 	}
-	_, _ = l.testResultSet.Set(&gen.TestResultSet{
-		FunctionTest: &gen.EmergencyTestResult{
+	_, _ = l.testResultSet.Set(&emergencylightpb.TestResultSet{
+		FunctionTest: &emergencylightpb.EmergencyTestResult{
 			StartTime: timestamppb.Now(),
 		},
 	}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{Paths: []string{"function_test.start_time"}}))
-	return &gen.StartEmergencyTestResponse{
+	return &emergencylightpb.StartEmergencyTestResponse{
 		StartTime: timestamppb.Now(),
 	}, nil
 }
 
-func (l *Light) StartDurationTest(ctx context.Context, _ *gen.StartEmergencyTestRequest) (*gen.StartEmergencyTestResponse, error) {
+func (l *Light) StartDurationTest(ctx context.Context, _ *emergencylightpb.StartEmergencyTestRequest) (*emergencylightpb.StartEmergencyTestResponse, error) {
 	l.logger.Info("Starting duration test for light", zap.String("name", l.conf.Name))
 	err := l.runDurationTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to start duration test", zap.String("name", l.conf.Name), zap.Error(err))
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to start duration test"))
 	}
-	_, _ = l.testResultSet.Set(&gen.TestResultSet{
-		DurationTest: &gen.EmergencyTestResult{
+	_, _ = l.testResultSet.Set(&emergencylightpb.TestResultSet{
+		DurationTest: &emergencylightpb.EmergencyTestResult{
 			StartTime: timestamppb.Now(),
 		},
 	}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{Paths: []string{"duration_test.start_time"}}))
@@ -528,13 +529,13 @@ func (l *Light) StartDurationTest(ctx context.Context, _ *gen.StartEmergencyTest
 	if l.conf.DurationTestLength != nil {
 		duration = durationpb.New(l.conf.DurationTestLength.Duration)
 	}
-	return &gen.StartEmergencyTestResponse{
+	return &emergencylightpb.StartEmergencyTestResponse{
 		StartTime: timestamppb.Now(),
 		Duration:  duration,
 	}, nil
 }
 
-func (l *Light) StopEmergencyTest(ctx context.Context, _ *gen.StopEmergencyTestsRequest) (*gen.StopEmergencyTestsResponse, error) {
+func (l *Light) StopEmergencyTest(ctx context.Context, _ *emergencylightpb.StopEmergencyTestsRequest) (*emergencylightpb.StopEmergencyTestsResponse, error) {
 	l.logger.Info("Stopping test for light", zap.String("name", l.conf.Name))
 	err := l.stopTest(ctx)
 	if err != nil {
@@ -542,28 +543,28 @@ func (l *Light) StopEmergencyTest(ctx context.Context, _ *gen.StopEmergencyTests
 		return nil, status.Error(codes.Internal, "failed to stop test")
 	}
 	// when we stop tests clear any current data
-	_, _ = l.testResultSet.Set(&gen.TestResultSet{})
-	return &gen.StopEmergencyTestsResponse{}, nil
+	_, _ = l.testResultSet.Set(&emergencylightpb.TestResultSet{})
+	return &emergencylightpb.StopEmergencyTestsResponse{}, nil
 }
 
-func (l *Light) GetTestResultSet(_ context.Context, req *gen.GetTestResultSetRequest) (*gen.TestResultSet, error) {
+func (l *Light) GetTestResultSet(_ context.Context, req *emergencylightpb.GetTestResultSetRequest) (*emergencylightpb.TestResultSet, error) {
 
-	result := &gen.TestResultSet{}
+	result := &emergencylightpb.TestResultSet{}
 
 	if req.ReadMask == nil || slices.Contains(req.ReadMask.Paths, "function_test") {
-		result.FunctionTest = l.testResultSet.Get().(*gen.TestResultSet).FunctionTest
+		result.FunctionTest = l.testResultSet.Get().(*emergencylightpb.TestResultSet).FunctionTest
 	}
 	if req.ReadMask == nil || slices.Contains(req.ReadMask.Paths, "duration_test") {
-		result.DurationTest = l.testResultSet.Get().(*gen.TestResultSet).DurationTest
+		result.DurationTest = l.testResultSet.Get().(*emergencylightpb.TestResultSet).DurationTest
 	}
 
 	return result, nil
 }
 
-func (l *Light) PullTestResultSets(request *gen.PullTestResultRequest, server grpc.ServerStreamingServer[gen.PullTestResultsResponse]) error {
+func (l *Light) PullTestResultSets(request *emergencylightpb.PullTestResultRequest, server grpc.ServerStreamingServer[emergencylightpb.PullTestResultsResponse]) error {
 	for value := range l.testResultSet.Pull(server.Context(), resource.WithReadMask(request.GetReadMask()), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		resultSet := value.Value.(*gen.TestResultSet)
-		err := server.Send(&gen.PullTestResultsResponse{Changes: []*gen.PullTestResultsResponse_Change{
+		resultSet := value.Value.(*emergencylightpb.TestResultSet)
+		err := server.Send(&emergencylightpb.PullTestResultsResponse{Changes: []*emergencylightpb.PullTestResultsResponse_Change{
 			{
 				Name:       l.conf.Name,
 				ChangeTime: timestamppb.New(value.ChangeTime),
@@ -577,13 +578,13 @@ func (l *Light) PullTestResultSets(request *gen.PullTestResultRequest, server gr
 	return nil
 }
 
-func getTestResult(ctx context.Context, getResult func(ctx context.Context) (*EmergencyState, error), getTime func(ctx context.Context) (*time.Time, error)) (*gen.EmergencyTestResult, error) {
+func getTestResult(ctx context.Context, getResult func(ctx context.Context) (*EmergencyState, error), getTime func(ctx context.Context) (*time.Time, error)) (*emergencylightpb.EmergencyTestResult, error) {
 
 	eState, err := getResult(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to getResult test result")
 	}
-	result := &gen.EmergencyTestResult{}
+	result := &emergencylightpb.EmergencyTestResult{}
 	result.Result = helvarResultToTrait(eState)
 	if hasTestCompleted(eState) {
 		t, _ := getTime(ctx)
@@ -597,30 +598,30 @@ func getTestResult(ctx context.Context, getResult func(ctx context.Context) (*Em
 	return result, nil
 }
 
-func helvarResultToTrait(e *EmergencyState) gen.EmergencyTestResult_Result {
+func helvarResultToTrait(e *EmergencyState) emergencylightpb.EmergencyTestResult_Result {
 	if e == nil {
-		return gen.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
+		return emergencylightpb.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
 	}
 	switch *e {
 	case Pass:
-		return gen.EmergencyTestResult_TEST_PASSED
+		return emergencylightpb.EmergencyTestResult_TEST_PASSED
 	case LampFailure:
-		return gen.EmergencyTestResult_LAMP_FAILURE
+		return emergencylightpb.EmergencyTestResult_LAMP_FAILURE
 	case BatteryFailure:
-		return gen.EmergencyTestResult_BATTERY_FAILURE
+		return emergencylightpb.EmergencyTestResult_BATTERY_FAILURE
 	case Faulty:
-		return gen.EmergencyTestResult_LIGHT_FAULTY
+		return emergencylightpb.EmergencyTestResult_LIGHT_FAULTY
 	case Failure:
-		return gen.EmergencyTestResult_TEST_FAILED
+		return emergencylightpb.EmergencyTestResult_TEST_FAILED
 	case TestPending:
-		return gen.EmergencyTestResult_TEST_RESULT_PENDING
+		return emergencylightpb.EmergencyTestResult_TEST_RESULT_PENDING
 	case Unknown:
-		return gen.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
+		return emergencylightpb.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
 	}
-	return gen.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
+	return emergencylightpb.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
 }
 
-func (l *Light) GetExportMessage(context.Context, *gen.GetExportMessageRequest) (*gen.MqttMessage, error) {
+func (l *Light) GetExportMessage(context.Context, *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
 	m, err := l.udmiPointsetFromData()
 	if err != nil {
 		l.logger.Error("failed to create udmi pointset message", zap.Error(err))
@@ -629,7 +630,7 @@ func (l *Light) GetExportMessage(context.Context, *gen.GetExportMessageRequest) 
 	return m, nil
 }
 
-func (l *Light) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen.UdmiService_PullExportMessagesServer) error {
+func (l *Light) PullExportMessages(_ *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
 	for msg := range l.udmiBus.Listen(server.Context()) {
 		err := server.Send(msg)
 		if err != nil {
@@ -639,11 +640,11 @@ func (l *Light) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen.
 	return nil
 }
 
-func (l *Light) PullControlTopics(*gen.PullControlTopicsRequest, grpc.ServerStreamingServer[gen.PullControlTopicsResponse]) error {
+func (l *Light) PullControlTopics(*udmipb.PullControlTopicsRequest, grpc.ServerStreamingServer[udmipb.PullControlTopicsResponse]) error {
 	return status.Error(codes.Unimplemented, "PullControlTopics is not implemented for Light")
 }
 
-func (l *Light) OnMessage(context.Context, *gen.OnMessageRequest) (*gen.OnMessageResponse, error) {
+func (l *Light) OnMessage(context.Context, *udmipb.OnMessageRequest) (*udmipb.OnMessageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "OnMessage is not implemented for Light")
 }
 
@@ -653,12 +654,12 @@ func (l *Light) loadTestResults() error {
 	if err := l.database.Get(l.conf.Name, &testResult); err != nil {
 		return fmt.Errorf("failed to load test results for key %s: %w", l.conf.Name, err)
 	}
-	result := &gen.TestResultSet{
-		FunctionTest: &gen.EmergencyTestResult{
-			Result: gen.EmergencyTestResult_Result(testResult.FunctionResult),
+	result := &emergencylightpb.TestResultSet{
+		FunctionTest: &emergencylightpb.EmergencyTestResult{
+			Result: emergencylightpb.EmergencyTestResult_Result(testResult.FunctionResult),
 		},
-		DurationTest: &gen.EmergencyTestResult{
-			Result: gen.EmergencyTestResult_Result(testResult.DurationResult),
+		DurationTest: &emergencylightpb.EmergencyTestResult{
+			Result: emergencylightpb.EmergencyTestResult_Result(testResult.DurationResult),
 		},
 	}
 	if testResult.FunctionTestTime != nil {
@@ -672,7 +673,7 @@ func (l *Light) loadTestResults() error {
 }
 
 // updateFromProto updates the TestResults struct from a TestResultSet proto message.
-func (tr *TestResults) updateFromProto(proto *gen.TestResultSet) {
+func (tr *TestResults) updateFromProto(proto *emergencylightpb.TestResultSet) {
 	if proto.FunctionTest != nil {
 		tr.FunctionResult = int32(proto.FunctionTest.Result)
 		if proto.FunctionTest.EndTime != nil {
@@ -691,7 +692,7 @@ func (tr *TestResults) updateFromProto(proto *gen.TestResultSet) {
 
 func (l *Light) saveTestResults() error {
 
-	value := l.testResultSet.Get().(*gen.TestResultSet)
+	value := l.testResultSet.Get().(*emergencylightpb.TestResultSet)
 	var testResult TestResults
 	testResult.updateFromProto(value)
 	if err := l.database.Upsert(l.conf.Name, &testResult); err != nil {
@@ -702,7 +703,7 @@ func (l *Light) saveTestResults() error {
 
 // testResultSetEqual compares two TestResultSet objects for equality.
 // both the Duration and Function tests for each TestResultSet must be equal for the sets to be considered equal.
-func testResultSetEqual(a, b *gen.TestResultSet) bool {
+func testResultSetEqual(a, b *emergencylightpb.TestResultSet) bool {
 	if a == nil || b == nil {
 		return a == b
 	}
@@ -712,7 +713,7 @@ func testResultSetEqual(a, b *gen.TestResultSet) bool {
 }
 
 // areTestResultsEqual compares two EmergencyTestResult objects for equality.
-func areTestResultsEqual(a, b *gen.EmergencyTestResult) bool {
+func areTestResultsEqual(a, b *emergencylightpb.EmergencyTestResult) bool {
 	if (a == nil) != (b == nil) {
 		return false
 	}

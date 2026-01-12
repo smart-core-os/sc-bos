@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.hub.v1;
 
-option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/hubpb";
 
 import "google/protobuf/timestamp.proto";
 import "traits/metadata.proto";

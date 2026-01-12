@@ -18,7 +18,8 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices/testdata/testproto/querypb"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 func Test_getMessageString(t *testing.T) {
@@ -67,7 +68,7 @@ func Test_getMessageString(t *testing.T) {
 }
 
 func Example_isMessageValueStringFunc() {
-	msg := &gen.Device{
+	msg := &devicespb.Device{
 		Name: "MyDevice",
 		Metadata: &traits.Metadata{
 			Membership: &traits.Metadata_Membership{
@@ -357,12 +358,12 @@ var transformReflectValue = cmp.Transformer("", func(v protoreflect.Value) any {
 
 func Test_conditionToCmpFunc(t *testing.T) {
 	// helper for making StringList values
-	sl := func(s ...string) *gen.Device_Query_StringList {
-		return &gen.Device_Query_StringList{Strings: s}
+	sl := func(s ...string) *devicespb.Device_Query_StringList {
+		return &devicespb.Device_Query_StringList{Strings: s}
 	}
 
 	t.Run("nil", func(t *testing.T) {
-		cmpFunc := conditionToCmpFunc(&gen.Device_Query_Condition{})
+		cmpFunc := conditionToCmpFunc(&devicespb.Device_Query_Condition{})
 		if cmpFunc == nil {
 			t.Errorf("expected nil condition value to return non-nil cmpFunc, got %T", cmpFunc)
 		}
@@ -372,7 +373,7 @@ func Test_conditionToCmpFunc(t *testing.T) {
 		}
 	})
 
-	condTestName := func(cond *gen.Device_Query_Condition) string {
+	condTestName := func(cond *devicespb.Device_Query_Condition) string {
 		name := fmt.Sprintf("%T", cond.Value)
 		name = strings.TrimPrefix(name, "*gen.Device_Query_Condition_")
 		return name
@@ -380,36 +381,36 @@ func Test_conditionToCmpFunc(t *testing.T) {
 
 	t.Run("strings", func(t *testing.T) {
 		tests := []struct {
-			cond               *gen.Device_Query_Condition
+			cond               *devicespb.Device_Query_Condition
 			positive, negative []string
 		}{
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "foo"}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "foo"}},
 				positive: []string{"foo"},
 				negative: []string{"", "bar", "FOO", "foO", "fooo", "-foo", "10"},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_StringEqualFold{StringEqualFold: "fOo"}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_StringEqualFold{StringEqualFold: "fOo"}},
 				positive: []string{"fOo", "FOO", "foo"},
 				negative: []string{"", "bar", "fOoO", "-fOo", "10"},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_StringContains{StringContains: "apple"}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_StringContains{StringContains: "apple"}},
 				positive: []string{"apple pie", "apple", "pineapple", "apple123"},
 				negative: []string{"", "pple", "appl", "Apple"},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_StringContainsFold{StringContainsFold: "aPPle"}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_StringContainsFold{StringContainsFold: "aPPle"}},
 				positive: []string{"aPPle pie", "apple", "pineappLE", "aPPle123"},
 				negative: []string{"", "pple", "appl", "banana"},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_StringIn{StringIn: sl("foo", "BAR")}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_StringIn{StringIn: sl("foo", "BAR")}},
 				positive: []string{"foo", "BAR"},
 				negative: []string{"", "FOO", "bar", "foO", "fooo", "-foo", "10"},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_StringInFold{StringInFold: sl("foo", "BAR")}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_StringInFold{StringInFold: sl("foo", "BAR")}},
 				positive: []string{"foo", "BAR", "FOO", "bar", "foO"},
 				negative: []string{"", "fooo", "-foo", "10"},
 			},
@@ -444,31 +445,31 @@ func Test_conditionToCmpFunc(t *testing.T) {
 		now := time.Date(2025, 8, 10, 12, 5, 40, 111, time.UTC)
 		var zero time.Time // zero time is used to test empty timestamps
 		tests := []struct {
-			cond               *gen.Device_Query_Condition
+			cond               *devicespb.Device_Query_Condition
 			positive, negative []time.Time
 		}{
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_TimestampEqual{TimestampEqual: timestamppb.New(now)}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_TimestampEqual{TimestampEqual: timestamppb.New(now)}},
 				positive: []time.Time{now},
 				negative: []time.Time{zero, now.Add(1), now.Add(-1)},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_TimestampLt{TimestampLt: timestamppb.New(now)}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_TimestampLt{TimestampLt: timestamppb.New(now)}},
 				positive: []time.Time{now.Add(-1), now.Add(-10 * time.Second)},
 				negative: []time.Time{zero, now, now.Add(1), now.Add(10 * time.Second)},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_TimestampLte{TimestampLte: timestamppb.New(now)}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_TimestampLte{TimestampLte: timestamppb.New(now)}},
 				positive: []time.Time{now, now.Add(-1), now.Add(-10 * time.Second)},
 				negative: []time.Time{zero, now.Add(1), now.Add(10 * time.Second)},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_TimestampGt{TimestampGt: timestamppb.New(now)}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_TimestampGt{TimestampGt: timestamppb.New(now)}},
 				positive: []time.Time{now.Add(1), now.Add(10 * time.Second)},
 				negative: []time.Time{zero, now, now.Add(-1), now.Add(-10 * time.Second)},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_TimestampGte{TimestampGte: timestamppb.New(now)}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_TimestampGte{TimestampGte: timestamppb.New(now)}},
 				positive: []time.Time{now, now.Add(1), now.Add(10 * time.Second)},
 				negative: []time.Time{zero, now.Add(-1), now.Add(-10 * time.Second)},
 			},
@@ -487,7 +488,7 @@ func Test_conditionToCmpFunc(t *testing.T) {
 				fd: (&querypb.Result{}).ProtoReflect().Descriptor().Fields().ByName("string_val"),
 				v:  protoreflect.ValueOfString("not a timestamp"),
 			}
-			cmpFunc := conditionToCmpFunc(&gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_TimestampEqual{TimestampEqual: timestamppb.New(now)}})
+			cmpFunc := conditionToCmpFunc(&devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_TimestampEqual{TimestampEqual: timestamppb.New(now)}})
 			if cmpFunc(l) {
 				t.Errorf("expected condition to not match non-timestamp value, got true")
 			}
@@ -512,27 +513,27 @@ func Test_conditionToCmpFunc(t *testing.T) {
 
 	t.Run("names", func(t *testing.T) {
 		tests := []struct {
-			cond     *gen.Device_Query_Condition
+			cond     *devicespb.Device_Query_Condition
 			positive []string
 			negative []string
 		}{
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_NameDescendant{NameDescendant: "a/b"}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_NameDescendant{NameDescendant: "a/b"}},
 				positive: []string{"a/b/c", "a/b/c/d"},
 				negative: []string{"", "a", "a/", "a/b", "a/bc", "a/b/", "x/b/c"},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_NameDescendantInc{NameDescendantInc: "a/b"}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_NameDescendantInc{NameDescendantInc: "a/b"}},
 				positive: []string{"a/b", "a/b/c", "a/b/c/d"},
 				negative: []string{"", "a", "a/", "a/bc", "a/b/", "x/b/c"},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_NameDescendantIn{NameDescendantIn: sl("a/b", "1/2")}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_NameDescendantIn{NameDescendantIn: sl("a/b", "1/2")}},
 				positive: []string{"a/b/c", "a/b/c/d", "1/2/3", "1/2/3/4"},
 				negative: []string{"", "a", "a/", "a/b", "a/bc", "a/b/", "x/b/c", "1", "1/2"},
 			},
 			{
-				cond:     &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_NameDescendantIncIn{NameDescendantIncIn: sl("a/b", "1/2")}},
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_NameDescendantIncIn{NameDescendantIncIn: sl("a/b", "1/2")}},
 				positive: []string{"a/b", "a/b/c", "a/b/c/d", "1/2", "1/2/3", "1/2/3/4"},
 				negative: []string{"", "a", "a/", "a/bc", "a/b/", "x/b/c", "1", "2"},
 			},
@@ -572,12 +573,12 @@ func Test_conditionToCmpFunc(t *testing.T) {
 			}
 		}
 		tests := []struct {
-			cond     *gen.Device_Query_Condition
+			cond     *devicespb.Device_Query_Condition
 			positive []value
 			negative []value
 		}{
 			{
-				cond: &gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_Present{Present: &emptypb.Empty{}}},
+				cond: &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_Present{Present: &emptypb.Empty{}}},
 				positive: []value{
 					mkValue("string_val", protoreflect.ValueOfString("a")),
 					mkValue("r_string", protoreflect.ValueOfString("b")),
@@ -623,7 +624,7 @@ func Test_conditionToCmpFunc(t *testing.T) {
 
 		tests := []struct {
 			name     string
-			conds    []*gen.Device_Query_Condition
+			conds    []*devicespb.Device_Query_Condition
 			positive []value
 			negative []value
 		}{
@@ -636,7 +637,7 @@ func Test_conditionToCmpFunc(t *testing.T) {
 			},
 			{
 				name:  "match any",
-				conds: []*gen.Device_Query_Condition{{Value: &gen.Device_Query_Condition_StringContains{StringContains: "apple"}}},
+				conds: []*devicespb.Device_Query_Condition{{Value: &devicespb.Device_Query_Condition_StringContains{StringContains: "apple"}}},
 				positive: []value{
 					newVal(&querypb.Result{StringVal: "apple"}),
 					newVal(&querypb.Result{RString: []string{"apple"}}),
@@ -656,7 +657,7 @@ func Test_conditionToCmpFunc(t *testing.T) {
 			},
 			{
 				name:  "match field",
-				conds: []*gen.Device_Query_Condition{{Field: "string_val", Value: &gen.Device_Query_Condition_StringContains{StringContains: "apple"}}},
+				conds: []*devicespb.Device_Query_Condition{{Field: "string_val", Value: &devicespb.Device_Query_Condition_StringContains{StringContains: "apple"}}},
 				positive: []value{
 					newVal(&querypb.Result{StringVal: "apple"}),
 				},
@@ -670,9 +671,9 @@ func Test_conditionToCmpFunc(t *testing.T) {
 			},
 			{
 				name: "match multiple any",
-				conds: []*gen.Device_Query_Condition{
-					{Value: &gen.Device_Query_Condition_StringContains{StringContains: "apple"}},
-					{Value: &gen.Device_Query_Condition_StringContains{StringContains: "pie"}},
+				conds: []*devicespb.Device_Query_Condition{
+					{Value: &devicespb.Device_Query_Condition_StringContains{StringContains: "apple"}},
+					{Value: &devicespb.Device_Query_Condition_StringContains{StringContains: "pie"}},
 				},
 				positive: []value{
 					newVal(&querypb.Result{StringVal: "apple pie"}),
@@ -695,9 +696,9 @@ func Test_conditionToCmpFunc(t *testing.T) {
 			},
 			{
 				name: "match multiple fields",
-				conds: []*gen.Device_Query_Condition{
-					{Field: "string_val", Value: &gen.Device_Query_Condition_StringContains{StringContains: "apple"}},
-					{Field: "r_string", Value: &gen.Device_Query_Condition_StringContains{StringContains: "pie"}},
+				conds: []*devicespb.Device_Query_Condition{
+					{Field: "string_val", Value: &devicespb.Device_Query_Condition_StringContains{StringContains: "apple"}},
+					{Field: "r_string", Value: &devicespb.Device_Query_Condition_StringContains{StringContains: "pie"}},
 				},
 				positive: []value{
 					newVal(&querypb.Result{StringVal: "apple", RString: []string{"pie"}}),
@@ -719,9 +720,9 @@ func Test_conditionToCmpFunc(t *testing.T) {
 			},
 			{
 				name: "mixed fields and any",
-				conds: []*gen.Device_Query_Condition{
-					{Field: "string_val", Value: &gen.Device_Query_Condition_StringContains{StringContains: "apple"}},
-					{Value: &gen.Device_Query_Condition_StringContains{StringContains: "pie"}},
+				conds: []*devicespb.Device_Query_Condition{
+					{Field: "string_val", Value: &devicespb.Device_Query_Condition_StringContains{StringContains: "apple"}},
+					{Value: &devicespb.Device_Query_Condition_StringContains{StringContains: "pie"}},
 				},
 				positive: []value{
 					newVal(&querypb.Result{StringVal: "apple", RString: []string{"pie"}}),
@@ -736,7 +737,7 @@ func Test_conditionToCmpFunc(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				cmpFunc := conditionToCmpFunc(&gen.Device_Query_Condition{Value: &gen.Device_Query_Condition_Matches{Matches: &gen.Device_Query{Conditions: tt.conds}}})
+				cmpFunc := conditionToCmpFunc(&devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_Matches{Matches: &devicespb.Device_Query{Conditions: tt.conds}}})
 				for i, v := range tt.positive {
 					if !cmpFunc(v) {
 						t.Errorf("[%d] expected %+v to match conditions %+v", i, v, tt.conds)
@@ -754,89 +755,89 @@ func Test_conditionToCmpFunc(t *testing.T) {
 
 func Example_healthyDevices() {
 	// all checks for this device are normal
-	device01 := &gen.Device{
+	device01 := &devicespb.Device{
 		Name: "Device01",
 		Metadata: &traits.Metadata{Location: &traits.Metadata_Location{
 			Floor: "Ground Floor",
 		}},
-		HealthChecks: []*gen.HealthCheck{
-			{Id: "Online", Normality: gen.HealthCheck_NORMAL},
-			{Id: "Temperature", Normality: gen.HealthCheck_NORMAL},
+		HealthChecks: []*healthpb.HealthCheck{
+			{Id: "Online", Normality: healthpb.HealthCheck_NORMAL},
+			{Id: "Temperature", Normality: healthpb.HealthCheck_NORMAL},
 		},
 	}
 	// some checks for this device are normal, some are abnormal
-	device02 := &gen.Device{
+	device02 := &devicespb.Device{
 		Name: "Device02",
 		Metadata: &traits.Metadata{Location: &traits.Metadata_Location{
 			Floor: "Floor 1",
 		}},
-		HealthChecks: []*gen.HealthCheck{
-			{Id: "Online", Normality: gen.HealthCheck_NORMAL},
-			{Id: "Temperature", Normality: gen.HealthCheck_HIGH},
+		HealthChecks: []*healthpb.HealthCheck{
+			{Id: "Online", Normality: healthpb.HealthCheck_NORMAL},
+			{Id: "Temperature", Normality: healthpb.HealthCheck_HIGH},
 		},
 	}
 	// all checks for this device are abnormal
-	device03 := &gen.Device{
+	device03 := &devicespb.Device{
 		Name: "Device03",
 		Metadata: &traits.Metadata{Location: &traits.Metadata_Location{
 			Floor: "Floor 2",
 		}},
-		HealthChecks: []*gen.HealthCheck{
-			{Id: "Online", Normality: gen.HealthCheck_ABNORMAL},
-			{Id: "Temperature", Normality: gen.HealthCheck_LOW},
+		HealthChecks: []*healthpb.HealthCheck{
+			{Id: "Online", Normality: healthpb.HealthCheck_ABNORMAL},
+			{Id: "Temperature", Normality: healthpb.HealthCheck_LOW},
 		},
 	}
 
 	// a device is only normal if ALL health checks are normal
-	normalDevicesQuery := &gen.Device_Query{
-		Conditions: []*gen.Device_Query_Condition{
+	normalDevicesQuery := &devicespb.Device_Query{
+		Conditions: []*devicespb.Device_Query_Condition{
 			{
 				Field:   "health_checks.normality",
-				Matcher: gen.Device_Query_Condition_ALL,
-				Value:   &gen.Device_Query_Condition_StringEqual{StringEqual: "NORMAL"},
+				Matcher: devicespb.Device_Query_Condition_ALL,
+				Value:   &devicespb.Device_Query_Condition_StringEqual{StringEqual: "NORMAL"},
 			},
 		},
 	}
 	fmt.Println("Healthy devices:")
-	for _, device := range []*gen.Device{device01, device02, device03} {
+	for _, device := range []*devicespb.Device{device01, device02, device03} {
 		fmt.Printf("  %s matches: %v\n", device.Name, deviceMatchesQuery(normalDevicesQuery, device))
 	}
 
 	// a device is abnormal if ANY health check is abnormal
-	abnormalDevicesQuery := &gen.Device_Query{
-		Conditions: []*gen.Device_Query_Condition{
+	abnormalDevicesQuery := &devicespb.Device_Query{
+		Conditions: []*devicespb.Device_Query_Condition{
 			{
 				Field:   "health_checks.normality",
-				Matcher: gen.Device_Query_Condition_ANY,
-				Value: &gen.Device_Query_Condition_StringIn{StringIn: &gen.Device_Query_StringList{Strings: []string{
+				Matcher: devicespb.Device_Query_Condition_ANY,
+				Value: &devicespb.Device_Query_Condition_StringIn{StringIn: &devicespb.Device_Query_StringList{Strings: []string{
 					"ABNORMAL", "HIGH", "LOW",
 				}}},
 			},
 		},
 	}
 	fmt.Println("Unhealthy devices:")
-	for _, device := range []*gen.Device{device01, device02, device03} {
+	for _, device := range []*devicespb.Device{device01, device02, device03} {
 		fmt.Printf("  %s matches: %v\n", device.Name, deviceMatchesQuery(abnormalDevicesQuery, device))
 	}
 
 	// you can combine multiple conditions as needed
-	abnormalFloor1DevicesQuery := &gen.Device_Query{
-		Conditions: []*gen.Device_Query_Condition{
+	abnormalFloor1DevicesQuery := &devicespb.Device_Query{
+		Conditions: []*devicespb.Device_Query_Condition{
 			{
 				Field: "metadata.location.floor",
-				Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "Floor 1"},
+				Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "Floor 1"},
 			},
 			{
 				Field: "health_checks.normality",
 				// Matcher defaults to ANY
-				Value: &gen.Device_Query_Condition_StringIn{StringIn: &gen.Device_Query_StringList{Strings: []string{
+				Value: &devicespb.Device_Query_Condition_StringIn{StringIn: &devicespb.Device_Query_StringList{Strings: []string{
 					"ABNORMAL", "HIGH", "LOW",
 				}}},
 			},
 		},
 	}
 	fmt.Println("Abnormal devices on Floor 1:")
-	for _, device := range []*gen.Device{device01, device02, device03} {
+	for _, device := range []*devicespb.Device{device01, device02, device03} {
 		fmt.Printf("  %s matches: %v\n", device.Name, deviceMatchesQuery(abnormalFloor1DevicesQuery, device))
 	}
 

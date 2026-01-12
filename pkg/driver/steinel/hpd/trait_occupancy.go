@@ -7,13 +7,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 type Occupancy struct {
 	traits.UnimplementedOccupancySensorApiServer
-	gen.UnimplementedUdmiServiceServer
+	udmipb.UnimplementedUdmiServiceServer
 
 	logger *zap.Logger
 

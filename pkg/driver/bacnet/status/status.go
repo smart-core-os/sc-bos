@@ -18,8 +18,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
 type Monitor struct {
@@ -94,9 +94,9 @@ func propPtr(p property.ID) *config.PropertyID {
 }
 
 type Object struct {
-	Name  string              `json:"name,omitempty"` // the name we associate problems with
-	Test  string              `json:"test,omitempty"` // problem name suffix
-	Level gen.StatusLog_Level `json:"level,omitempty"`
+	Name  string                       `json:"name,omitempty"` // the name we associate problems with
+	Test  string                       `json:"test,omitempty"` // problem name suffix
+	Level gen_statuspb.StatusLog_Level `json:"level,omitempty"`
 
 	// these help us to determine the health of the object
 	EventState   *config.ValueSource `json:"eventState,omitempty"`
@@ -196,14 +196,14 @@ func (m *Monitor) Poll(ctx context.Context) error {
 			handleErr("PresentValue", err)
 		}
 
-		problem := &gen.StatusLog_Problem{Name: fmt.Sprintf("%s:%s", o.Name, o.Test)}
+		problem := &gen_statuspb.StatusLog_Problem{Name: fmt.Sprintf("%s:%s", o.Name, o.Test)}
 		problemLevel := o.Level
 		if problemLevel == 0 {
-			problemLevel = gen.StatusLog_REDUCED_FUNCTION
+			problemLevel = gen_statuspb.StatusLog_REDUCED_FUNCTION
 		}
 
 		level, desc := SummariseRequestErrors(o.Test, reqs, errs)
-		if o.Level != 0 && level == gen.StatusLog_REDUCED_FUNCTION {
+		if o.Level != 0 && level == gen_statuspb.StatusLog_REDUCED_FUNCTION {
 			level = o.Level
 		}
 		problem.Level = level
@@ -254,7 +254,7 @@ func (m *Monitor) Poll(ctx context.Context) error {
 			// )
 		}
 
-		if problem.Level == gen.StatusLog_LEVEL_UNDEFINED {
+		if problem.Level == gen_statuspb.StatusLog_LEVEL_UNDEFINED {
 			continue
 		}
 		m.status.UpdateProblem(o.Name, problem)

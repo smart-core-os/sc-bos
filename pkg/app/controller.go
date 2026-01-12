@@ -40,11 +40,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/manage/enrollment"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
+	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
@@ -126,7 +128,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			return nil, fmt.Errorf("load accounts: %w", err)
 		}
 		rootNode.Announce(rootNode.Name(),
-			node.HasServer[gen.AccountApiServer](gen.RegisterAccountApiServer, account.NewServer(accountStore, accountLogger.Named("server"))),
+			node.HasServer[accountpb.AccountApiServer](accountpb.RegisterAccountApiServer, account.NewServer(accountStore, accountLogger.Named("server"))),
 		)
 	}
 
@@ -292,7 +294,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	reflectionServer := reflectionapi.NewServer(grpcServer, rootNode)
 	reflectionServer.Register(nodeRouter)
 
-	gen.RegisterEnrollmentApiServer(nodeRouter, enrollServer)
+	enrollmentpb.RegisterEnrollmentApiServer(nodeRouter, enrollServer)
 
 	// DevicesApi
 	var devicesApiOpts []devices.Option
@@ -392,7 +394,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		Enrollment:       enrollServer,
 		Logger:           logger,
 		Node:             rootNode,
-		Devices:          gen.NewDevicesApiClient(wrap.ServerToClient(gen.DevicesApi_ServiceDesc, devicesApi)),
+		Devices:          gen_devicespb.NewDevicesApiClient(wrap.ServerToClient(gen_devicespb.DevicesApi_ServiceDesc, devicesApi)),
 		CheckRegistry:    checkRegistry,
 		DeviceStore:      deviceStore,
 		Tasks:            &task.Group{},
@@ -469,7 +471,7 @@ type Controller struct {
 	// services for drivers/automations
 	Logger          *zap.Logger
 	Node            *node.Node
-	Devices         gen.DevicesApiClient
+	Devices         gen_devicespb.DevicesApiClient
 	DeviceStore     *devicespb.Collection // for low level control of devices
 	Tasks           *task.Group
 	Database        *bolthold.Store

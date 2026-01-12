@@ -9,9 +9,9 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
+	gen_allocationpb "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 )
 
 func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
@@ -32,15 +32,15 @@ func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 	for current.Before(now) {
 		chance := rand.Intn(2)
 		// Randomly pick between ALLOCATED and UNALLOCATED
-		state := gen.Allocation_State(gen.Allocation_State_value[gen.Allocation_State_name[int32(chance+1)]])
+		state := gen_allocationpb.Allocation_State(gen_allocationpb.Allocation_State_value[gen_allocationpb.Allocation_State_name[int32(chance+1)]])
 
-		if state == gen.Allocation_ALLOCATED {
+		if state == gen_allocationpb.Allocation_ALLOCATED {
 			allocationTotal += int32(rand.Intn(5) + 1)
 		} else {
 			unallocationTotal += int32(rand.Intn(5) + 1)
 		}
 
-		payload, err := proto.Marshal(&gen.Allocation{
+		payload, err := proto.Marshal(&gen_allocationpb.Allocation{
 			State:             state,
 			GroupId:           ptr("GroupA"),
 			AllocationTotal:   ptr(allocationTotal),

@@ -11,11 +11,14 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylightpb"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/temperaturepb"
+	gen_emergencylightpb "github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
+	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	gen_temperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
@@ -60,15 +63,15 @@ var (
 		})
 		knownTraits.add(emergencylightpb.TraitName, Resource{
 			name: "TestResultSet",
-			desc: (&gen.TestResultSet{}).ProtoReflect().Descriptor(),
-			get:  getter(gen.NewEmergencyLightApiClient, gen.EmergencyLightApiClient.GetTestResultSet),
-			pull: puller(gen.NewEmergencyLightApiClient, gen.EmergencyLightApiClient.PullTestResultSets, (*gen.PullTestResultsResponse_Change).GetTestResult),
+			desc: (&gen_emergencylightpb.TestResultSet{}).ProtoReflect().Descriptor(),
+			get:  getter(gen_emergencylightpb.NewEmergencyLightApiClient, gen_emergencylightpb.EmergencyLightApiClient.GetTestResultSet),
+			pull: puller(gen_emergencylightpb.NewEmergencyLightApiClient, gen_emergencylightpb.EmergencyLightApiClient.PullTestResultSets, (*gen_emergencylightpb.PullTestResultsResponse_Change).GetTestResult),
 		})
 		knownTraits.add(meterpb.TraitName, Resource{
 			name: "MeterReading",
-			desc: (&gen.MeterReading{}).ProtoReflect().Descriptor(),
-			get:  getter(gen.NewMeterApiClient, gen.MeterApiClient.GetMeterReading),
-			pull: puller(gen.NewMeterApiClient, gen.MeterApiClient.PullMeterReadings, (*gen.PullMeterReadingsResponse_Change).GetMeterReading),
+			desc: (&gen_meterpb.MeterReading{}).ProtoReflect().Descriptor(),
+			get:  getter(gen_meterpb.NewMeterApiClient, gen_meterpb.MeterApiClient.GetMeterReading),
+			pull: puller(gen_meterpb.NewMeterApiClient, gen_meterpb.MeterApiClient.PullMeterReadings, (*gen_meterpb.PullMeterReadingsResponse_Change).GetMeterReading),
 		})
 		knownTraits.add(trait.OnOff, Resource{
 			name: "OnOff",
@@ -78,15 +81,15 @@ var (
 		})
 		knownTraits.add(soundsensorpb.TraitName, Resource{
 			name: "SoundLevel",
-			desc: (&gen.SoundLevel{}).ProtoReflect().Descriptor(),
-			get:  getter(gen.NewSoundSensorApiClient, gen.SoundSensorApiClient.GetSoundLevel),
-			pull: puller(gen.NewSoundSensorApiClient, gen.SoundSensorApiClient.PullSoundLevel, (*gen.PullSoundLevelResponse_Change).GetSoundLevel),
+			desc: (&gen_soundsensorpb.SoundLevel{}).ProtoReflect().Descriptor(),
+			get:  getter(gen_soundsensorpb.NewSoundSensorApiClient, gen_soundsensorpb.SoundSensorApiClient.GetSoundLevel),
+			pull: puller(gen_soundsensorpb.NewSoundSensorApiClient, gen_soundsensorpb.SoundSensorApiClient.PullSoundLevel, (*gen_soundsensorpb.PullSoundLevelResponse_Change).GetSoundLevel),
 		})
 		knownTraits.add(temperaturepb.TraitName, Resource{
 			name: "Temperature",
-			desc: (&gen.Temperature{}).ProtoReflect().Descriptor(),
-			get:  getter(gen.NewTemperatureApiClient, gen.TemperatureApiClient.GetTemperature),
-			pull: puller(gen.NewTemperatureApiClient, gen.TemperatureApiClient.PullTemperature, (*gen.PullTemperatureResponse_Change).GetTemperature),
+			desc: (&gen_temperaturepb.Temperature{}).ProtoReflect().Descriptor(),
+			get:  getter(gen_temperaturepb.NewTemperatureApiClient, gen_temperaturepb.TemperatureApiClient.GetTemperature),
+			pull: puller(gen_temperaturepb.NewTemperatureApiClient, gen_temperaturepb.TemperatureApiClient.PullTemperature, (*gen_temperaturepb.PullTemperatureResponse_Change).GetTemperature),
 		})
 
 	})

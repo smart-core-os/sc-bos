@@ -14,11 +14,11 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config"
 )
@@ -112,8 +112,8 @@ func TestGroup_PullMeterReadings(t *testing.T) {
 			}
 
 			group := &Group{
-				apiClient:        gen.NewMeterApiClient(n.ClientConn()),
-				historyApiClient: gen.NewMeterHistoryClient(n.ClientConn()),
+				apiClient:        gen_meterpb.NewMeterApiClient(n.ClientConn()),
+				historyApiClient: gen_meterpb.NewMeterHistoryClient(n.ClientConn()),
 				names:            maps.Keys(tt.meters),
 				historyBackupConf: &config.HistoryBackup{
 					Disabled:                     false,
@@ -127,9 +127,9 @@ func TestGroup_PullMeterReadings(t *testing.T) {
 				n.Announce(meter, node.HasTrait(
 					meterpb.TraitName,
 					node.WithClients(
-						gen.WrapMeterApi(m),
-						gen.WrapMeterInfo(m),
-						gen.WrapMeterHistory(historypb.NewMeterServer(tt.meters[meter].store)),
+						gen_meterpb.WrapApi(m),
+						gen_meterpb.WrapInfo(m),
+						gen_meterpb.WrapHistory(historypb.NewMeterServer(tt.meters[meter].store)),
 					),
 				))
 			}
@@ -137,7 +137,7 @@ func TestGroup_PullMeterReadings(t *testing.T) {
 			for idx := range tt.meters[maps.Keys(tt.meters)[0]].events {
 				for meter := range tt.meters {
 					if tt.meters[meter].events[idx].err == nil {
-						rec, err := proto.Marshal(&gen.MeterReading{
+						rec, err := proto.Marshal(&gen_meterpb.MeterReading{
 							Usage: tt.meters[meter].events[idx].usage,
 						})
 						if err != nil {
@@ -152,10 +152,10 @@ func TestGroup_PullMeterReadings(t *testing.T) {
 				}
 			}
 
-			res := make(chan *gen.PullMeterReadingsResponse)
+			res := make(chan *gen_meterpb.PullMeterReadingsResponse)
 
 			go func() {
-				err := group.PullMeterReadings(&gen.PullMeterReadingsRequest{Name: "group"}, &mockPullServer{
+				err := group.PullMeterReadings(&gen_meterpb.PullMeterReadingsRequest{Name: "group"}, &mockPullServer{
 					ctx:     ctx,
 					changes: res,
 				})
@@ -391,8 +391,8 @@ func TestGroup_GetMeterReading(t *testing.T) {
 			}
 
 			group := &Group{
-				apiClient:        gen.NewMeterApiClient(n.ClientConn()),
-				historyApiClient: gen.NewMeterHistoryClient(n.ClientConn()),
+				apiClient:        gen_meterpb.NewMeterApiClient(n.ClientConn()),
+				historyApiClient: gen_meterpb.NewMeterHistoryClient(n.ClientConn()),
 				names:            maps.Keys(tt.meters),
 				historyBackupConf: &config.HistoryBackup{
 					Disabled:                     false,
@@ -407,9 +407,9 @@ func TestGroup_GetMeterReading(t *testing.T) {
 				n.Announce(meter, node.HasTrait(
 					meterpb.TraitName,
 					node.WithClients(
-						gen.WrapMeterApi(m),
-						gen.WrapMeterInfo(m),
-						gen.WrapMeterHistory(historypb.NewMeterServer(tt.meters[meter].store)),
+						gen_meterpb.WrapApi(m),
+						gen_meterpb.WrapInfo(m),
+						gen_meterpb.WrapHistory(historypb.NewMeterServer(tt.meters[meter].store)),
 					),
 				))
 			}
@@ -417,7 +417,7 @@ func TestGroup_GetMeterReading(t *testing.T) {
 			for idx, want := range tt.want {
 				for meter := range tt.meters {
 					if tt.meters[meter].events[idx].err == nil {
-						rec, err := proto.Marshal(&gen.MeterReading{
+						rec, err := proto.Marshal(&gen_meterpb.MeterReading{
 							Usage: tt.meters[meter].events[idx].usage,
 						})
 						if err != nil {
@@ -430,7 +430,7 @@ func TestGroup_GetMeterReading(t *testing.T) {
 						}
 					}
 				}
-				got, err := group.GetMeterReading(ctx, &gen.GetMeterReadingRequest{Name: "group"})
+				got, err := group.GetMeterReading(ctx, &gen_meterpb.GetMeterReadingRequest{Name: "group"})
 				if len(tt.wantErrs) <= idx && err != nil {
 					t.Errorf("GetMeterReading() unexpected error: %v", err)
 					return
@@ -452,15 +452,15 @@ func TestGroup_GetMeterReading(t *testing.T) {
 
 func Test_mergeMeterReading(t *testing.T) {
 	err := errors.New("expected error")
-	reading := func(val float32) *gen.MeterReading {
-		return &gen.MeterReading{
+	reading := func(val float32) *gen_meterpb.MeterReading {
+		return &gen_meterpb.MeterReading{
 			Usage: val,
 		}
 	}
 
 	tests := []struct {
 		in      []value
-		want    *gen.MeterReading
+		want    *gen_meterpb.MeterReading
 		wantErr bool
 	}{
 		// simple cases

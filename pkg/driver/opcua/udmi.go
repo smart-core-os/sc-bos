@@ -10,15 +10,15 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 )
 
 // Udmi implements the Smart Core UDMI (Universal Device Management Interface) trait for OPC UA devices.
 // It collects OPC UA variable values and publishes them as UDMI point events to an MQTT-style message bus.
 type Udmi struct {
 	config.Trait
-	gen.UnimplementedUdmiServiceServer
+	udmipb.UnimplementedUdmiServiceServer
 
 	logger *zap.Logger
 	// the points that have been configured to be monitored. node id -> value source
@@ -26,7 +26,7 @@ type Udmi struct {
 	pointEvents     udmi.PointsEvent
 	pointsMu        sync.Mutex
 	scName          string
-	udmiBus         minibus.Bus[*gen.PullExportMessagesResponse]
+	udmiBus         minibus.Bus[*udmipb.PullExportMessagesResponse]
 	udmiConfig      config.UdmiConfig
 }
 
@@ -71,9 +71,9 @@ func (u *Udmi) sendUdmiMessage(ctx context.Context, node *ua.NodeID, value any) 
 			return
 		}
 
-		u.udmiBus.Send(ctx, &gen.PullExportMessagesResponse{
+		u.udmiBus.Send(ctx, &udmipb.PullExportMessagesResponse{
 			Name: u.scName,
-			Message: &gen.MqttMessage{
+			Message: &udmipb.MqttMessage{
 				Topic:   u.udmiConfig.TopicPrefix + config.PointsEventTopicSuffix,
 				Payload: string(body),
 			},
@@ -81,18 +81,18 @@ func (u *Udmi) sendUdmiMessage(ctx context.Context, node *ua.NodeID, value any) 
 	}
 }
 
-func (u *Udmi) PullControlTopics(_ *gen.PullControlTopicsRequest, topicsServer gen.UdmiService_PullControlTopicsServer) error {
+func (u *Udmi) PullControlTopics(_ *udmipb.PullControlTopicsRequest, topicsServer udmipb.UdmiService_PullControlTopicsServer) error {
 	// we don't have any control topics, yet
 	<-topicsServer.Context().Done()
 	return nil
 }
 
-func (u *Udmi) OnMessage(context.Context, *gen.OnMessageRequest) (*gen.OnMessageResponse, error) {
+func (u *Udmi) OnMessage(context.Context, *udmipb.OnMessageRequest) (*udmipb.OnMessageResponse, error) {
 	// we don't support doing anything here, yet
-	return &gen.OnMessageResponse{}, nil
+	return &udmipb.OnMessageResponse{}, nil
 }
 
-func (u *Udmi) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen.UdmiService_PullExportMessagesServer) error {
+func (u *Udmi) PullExportMessages(_ *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
 	for msg := range u.udmiBus.Listen(server.Context()) {
 		err := server.Send(msg)
 		if err != nil {
@@ -102,7 +102,7 @@ func (u *Udmi) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen.U
 	return nil
 }
 
-func (u *Udmi) GetExportMessage(context.Context, *gen.GetExportMessageRequest) (*gen.MqttMessage, error) {
+func (u *Udmi) GetExportMessage(context.Context, *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
 	u.pointsMu.Lock()
 	defer u.pointsMu.Unlock()
 
@@ -111,7 +111,7 @@ func (u *Udmi) GetExportMessage(context.Context, *gen.GetExportMessageRequest) (
 		u.logger.Error("failed to marshal points event", zap.String("device", u.scName), zap.Error(err))
 		return nil, err
 	}
-	return &gen.MqttMessage{
+	return &udmipb.MqttMessage{
 		Topic:   u.udmiConfig.TopicPrefix + config.PointsEventTopicSuffix,
 		Payload: string(body),
 	}, nil

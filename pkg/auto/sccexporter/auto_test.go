@@ -15,9 +15,10 @@ import (
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
@@ -37,7 +38,7 @@ func TestMetadata(t *testing.T) {
 		Services: auto.Services{
 			Logger:  logger,
 			Node:    root,
-			Devices: gen.NewDevicesApiClient(root.ClientConn()),
+			Devices: devicespb.NewDevicesApiClient(root.ClientConn()),
 		},
 	}
 
@@ -318,7 +319,7 @@ func TestGetMeterDeviceAndData(t *testing.T) {
 	startTime := time.Now().Add(-time.Hour)
 	endTime := time.Now()
 
-	meterReading := &gen.MeterReading{
+	meterReading := &gen_meterpb.MeterReading{
 		Usage:     123.45,
 		StartTime: timestamppb.New(startTime),
 		EndTime:   timestamppb.New(endTime),
@@ -328,17 +329,17 @@ func TestGetMeterDeviceAndData(t *testing.T) {
 	devicesApi := devices.NewServer(root)
 	meterModel := meterpb.NewModel(resource.WithInitialValue(meterReading))
 	modelServer := meterpb.NewModelServer(meterModel)
-	meterClient := node.WithClients(gen.WrapMeterApi(modelServer))
+	meterClient := node.WithClients(gen_meterpb.WrapApi(modelServer))
 	root.Announce("foo",
 		node.HasTrait(meterpb.TraitName, meterClient),
-		node.HasServices(root.ClientConn(), gen.DevicesApi_ServiceDesc),
+		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
 	sccexporter := &AutoImpl{
 		Services: auto.Services{
 			Logger:  logger,
 			Node:    root,
-			Devices: gen.NewDevicesApiClient(wrap.ServerToClient(gen.DevicesApi_ServiceDesc, devicesApi)),
+			Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
 		},
 	}
 	sccexporter.initialiseClients(root)
@@ -360,7 +361,7 @@ func TestGetMeterDeviceAndData(t *testing.T) {
 	// Verify the structure contains meterReading resource
 	require.Contains(t, traitData, "meterReading")
 
-	reading := gen.MeterReading{}
+	reading := gen_meterpb.MeterReading{}
 	err = protojson.Unmarshal(traitData["meterReading"], &reading)
 	require.NoError(t, err)
 
@@ -379,14 +380,14 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	startTime := time.Now().Add(-time.Hour)
 	endTime := time.Now()
 
-	meterReading := &gen.MeterReading{
+	meterReading := &gen_meterpb.MeterReading{
 		Usage:     123.45,
 		StartTime: timestamppb.New(startTime),
 		EndTime:   timestamppb.New(endTime),
 		Produced:  67.89,
 	}
 
-	meterInfo := &gen.MeterReadingSupport{
+	meterInfo := &gen_meterpb.MeterReadingSupport{
 		UsageUnit:    "kWh",
 		ProducedUnit: "kWh",
 	}
@@ -396,19 +397,19 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	modelServer := meterpb.NewModelServer(meterModel)
 	infoServer := &meterpb.InfoServer{MeterReading: meterInfo}
 	meterClient := node.WithClients(
-		gen.WrapMeterApi(modelServer),
-		gen.WrapMeterInfo(infoServer),
+		gen_meterpb.WrapApi(modelServer),
+		gen_meterpb.WrapInfo(infoServer),
 	)
 	root.Announce("foo",
 		node.HasTrait(meterpb.TraitName, meterClient),
-		node.HasServices(root.ClientConn(), gen.DevicesApi_ServiceDesc),
+		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
 	sccexporter := &AutoImpl{
 		Services: auto.Services{
 			Logger:  logger,
 			Node:    root,
-			Devices: gen.NewDevicesApiClient(wrap.ServerToClient(gen.DevicesApi_ServiceDesc, devicesApi)),
+			Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
 		},
 	}
 	sccexporter.initialiseClients(root)
@@ -425,7 +426,7 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	sccexporter.getMeterInfo(context.Background(), meterpb.TraitName, allDevices)
 
 	require.NotNil(t, dev.info[meterpb.TraitName])
-	support, ok := dev.info[meterpb.TraitName].(*gen.MeterReadingSupport)
+	support, ok := dev.info[meterpb.TraitName].(*gen_meterpb.MeterReadingSupport)
 	require.True(t, ok)
 	require.Equal(t, "kWh", support.UsageUnit)
 	require.Equal(t, "kWh", support.ProducedUnit)
@@ -440,14 +441,14 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	require.Contains(t, traitData, "meterReadingInfo")
 
 	// Verify meter reading data
-	var reading gen.MeterReading
+	var reading gen_meterpb.MeterReading
 	err = protojson.Unmarshal(traitData["meterReading"], &reading)
 	require.NoError(t, err)
 	require.Equal(t, meterReading.Usage, reading.Usage)
 	require.Equal(t, meterReading.Produced, reading.Produced)
 
 	// Verify meter reading info
-	var info gen.MeterReadingSupport
+	var info gen_meterpb.MeterReadingSupport
 	err = protojson.Unmarshal(traitData["meterReadingInfo"], &info)
 	require.NoError(t, err)
 	require.Equal(t, "kWh", info.UsageUnit)
@@ -476,14 +477,14 @@ func TestGetAirQualityDeviceAndData(t *testing.T) {
 	airQualityClient := node.WithClients(airqualitysensorpb.WrapApi(modelServer))
 	root.Announce("foo",
 		node.HasTrait(trait.AirQualitySensor, airQualityClient),
-		node.HasServices(root.ClientConn(), gen.DevicesApi_ServiceDesc),
+		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
 	sccexporter := &AutoImpl{
 		Services: auto.Services{
 			Logger:  logger,
 			Node:    root,
-			Devices: gen.NewDevicesApiClient(wrap.ServerToClient(gen.DevicesApi_ServiceDesc, devicesApi)),
+			Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
 		},
 	}
 	sccexporter.initialiseClients(root)
@@ -533,14 +534,14 @@ func TestGetAirTemperatureDeviceAndData(t *testing.T) {
 	airTemperatureClient := node.WithClients(airtemperaturepb.WrapApi(modelServer))
 	root.Announce("foo",
 		node.HasTrait(trait.AirTemperature, airTemperatureClient),
-		node.HasServices(root.ClientConn(), gen.DevicesApi_ServiceDesc),
+		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
 	sccexporter := &AutoImpl{
 		Services: auto.Services{
 			Logger:  logger,
 			Node:    root,
-			Devices: gen.NewDevicesApiClient(wrap.ServerToClient(gen.DevicesApi_ServiceDesc, devicesApi)),
+			Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
 		},
 	}
 	sccexporter.initialiseClients(root)
@@ -591,14 +592,14 @@ func TestGetOccupancyDeviceAndData(t *testing.T) {
 	occupancyClient := node.WithClients(occupancysensorpb.WrapApi(modelServer))
 	root.Announce("foo",
 		node.HasTrait(trait.OccupancySensor, occupancyClient),
-		node.HasServices(root.ClientConn(), gen.DevicesApi_ServiceDesc),
+		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
 	sccexporter := &AutoImpl{
 		Services: auto.Services{
 			Logger:  logger,
 			Node:    root,
-			Devices: gen.NewDevicesApiClient(wrap.ServerToClient(gen.DevicesApi_ServiceDesc, devicesApi)),
+			Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
 		},
 	}
 	sccexporter.initialiseClients(root)

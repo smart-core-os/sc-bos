@@ -7,18 +7,18 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 )
 
 // deviceFetcher implements pull.Fetcher to pull or poll devices from a client
 type deviceFetcher struct {
-	client gen.DevicesApiClient
-	known  map[string]*gen.Device // in case of polling, this tracks seen devices so we correctly send changes
+	client devicespb.DevicesApiClient
+	known  map[string]*devicespb.Device // in case of polling, this tracks seen devices so we correctly send changes
 }
 
-func (c *deviceFetcher) Pull(ctx context.Context, changes chan<- *gen.PullDevicesResponse_Change) error {
-	stream, err := c.client.PullDevices(ctx, &gen.PullDevicesRequest{
+func (c *deviceFetcher) Pull(ctx context.Context, changes chan<- *devicespb.PullDevicesResponse_Change) error {
+	stream, err := c.client.PullDevices(ctx, &devicespb.PullDevicesRequest{
 		ReadMask: &fieldmaskpb.FieldMask{
 			Paths: []string{"name", "metadata"},
 		},
@@ -39,16 +39,16 @@ func (c *deviceFetcher) Pull(ctx context.Context, changes chan<- *gen.PullDevice
 	}
 }
 
-func (c *deviceFetcher) Poll(ctx context.Context, changes chan<- *gen.PullDevicesResponse_Change) error {
+func (c *deviceFetcher) Poll(ctx context.Context, changes chan<- *devicespb.PullDevicesResponse_Change) error {
 	if c.known == nil {
-		c.known = make(map[string]*gen.Device)
+		c.known = make(map[string]*devicespb.Device)
 	}
 	unseen := make(map[string]struct{}, len(c.known))
 	for s := range c.known {
 		unseen[s] = struct{}{}
 	}
 
-	req := &gen.ListDevicesRequest{
+	req := &devicespb.ListDevicesRequest{
 		ReadMask: &fieldmaskpb.FieldMask{
 			Paths: []string{"name", "metadata"},
 		},
@@ -61,7 +61,7 @@ func (c *deviceFetcher) Poll(ctx context.Context, changes chan<- *gen.PullDevice
 
 		for _, node := range res.Devices {
 			// we do extra work here to try and send out more accurate changes to make callers lives easier
-			change := &gen.PullDevicesResponse_Change{
+			change := &devicespb.PullDevicesResponse_Change{
 				Type:     types.ChangeType_ADD,
 				NewValue: node,
 			}
@@ -89,7 +89,7 @@ func (c *deviceFetcher) Poll(ctx context.Context, changes chan<- *gen.PullDevice
 	for name := range unseen {
 		node := c.known[name]
 		delete(c.known, name)
-		change := &gen.PullDevicesResponse_Change{
+		change := &devicespb.PullDevicesResponse_Change{
 			Type:     types.ChangeType_REMOVE,
 			OldValue: node,
 		}

@@ -7,7 +7,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 var (
@@ -23,8 +23,8 @@ type Registry struct {
 	byName map[string]*namedChecks
 
 	onNameCreate  func(name string)
-	onCheckCreate func(name string, c *gen.HealthCheck) *gen.HealthCheck
-	onCheckUpdate func(name string, c *gen.HealthCheck)
+	onCheckCreate func(name string, c *healthpb.HealthCheck) *healthpb.HealthCheck
+	onCheckUpdate func(name string, c *healthpb.HealthCheck)
 	onCheckDelete func(name, id string)
 	onNameDelete  func(name string)
 }
@@ -58,14 +58,14 @@ func WithOnNameCreate(f func(name string)) RegistryOption {
 
 // WithOnCheckCreate configures a callback that is invoked when a new check is created.
 // The callback may return a different HealthCheck instance to be used instead of the one passed in.
-func WithOnCheckCreate(f func(name string, c *gen.HealthCheck) *gen.HealthCheck) RegistryOption {
+func WithOnCheckCreate(f func(name string, c *healthpb.HealthCheck) *healthpb.HealthCheck) RegistryOption {
 	return registryOptionFunc(func(r *Registry) {
 		r.onCheckCreate = f
 	})
 }
 
 // WithOnCheckUpdate configures a callback that is invoked when a check is updated.
-func WithOnCheckUpdate(f func(name string, c *gen.HealthCheck)) RegistryOption {
+func WithOnCheckUpdate(f func(name string, c *healthpb.HealthCheck)) RegistryOption {
 	return registryOptionFunc(func(r *Registry) {
 		r.onCheckUpdate = f
 	})
@@ -85,7 +85,7 @@ func WithOnNameDelete(f func(name string)) RegistryOption {
 	})
 }
 
-func (r *Registry) GetCheck(name, id string) *gen.HealthCheck {
+func (r *Registry) GetCheck(name, id string) *healthpb.HealthCheck {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	nc, ok := r.byName[name]
@@ -141,12 +141,12 @@ func (r *Registry) addCheck(name, id string, c *checkBase) error {
 			c.check = created
 		}
 	}
-	c.onCommit = func(c *gen.HealthCheck) {
+	c.onCommit = func(c *healthpb.HealthCheck) {
 		if r.onCheckUpdate != nil {
 			r.onCheckUpdate(name, c)
 		}
 	}
-	c.onDispose = func(c *gen.HealthCheck) {
+	c.onDispose = func(c *healthpb.HealthCheck) {
 		// clean up our own state
 		r.mu.Lock()
 		delete(nc.byId, id)
@@ -166,7 +166,7 @@ func (r *Registry) addCheck(name, id string, c *checkBase) error {
 	return nil
 }
 
-func (r *Registry) initHealthCheck(hc *gen.HealthCheck) {
+func (r *Registry) initHealthCheck(hc *healthpb.HealthCheck) {
 	if hc.GetCreateTime() == nil {
 		hc.CreateTime = timestamppb.Now()
 	}
@@ -175,9 +175,9 @@ func (r *Registry) initHealthCheck(hc *gen.HealthCheck) {
 // Checks provides a mechanism to create managed health checks against named devices.
 //
 // For each factory method:
-//   - [gen.HealthCheck.Id] must be unique per name per [Checks] instance, or [ErrAlreadyExists] is returned. An absent id is equivalent to the empty string.
-//   - The [gen.HealthCheck] instance must not be modified after the call.
-//   - [ErrInvalid] is returned if the passed [gen.HealthCheck] is not valid for the type of check being created.
+//   - [healthpb.HealthCheck.Id] must be unique per name per [Checks] instance, or [ErrAlreadyExists] is returned. An absent id is equivalent to the empty string.
+//   - The [healthpb.HealthCheck] instance must not be modified after the call.
+//   - [ErrInvalid] is returned if the passed [healthpb.HealthCheck] is not valid for the type of check being created.
 type Checks struct {
 	r     *Registry
 	owner string
@@ -185,7 +185,7 @@ type Checks struct {
 
 // NewBoundsCheck creates a new health check that updates normality by comparing a value against bounds.
 // The returned BoundsCheck takes ownership of c, populating any missing fields as necessary.
-func (hc *Checks) NewBoundsCheck(name string, c *gen.HealthCheck) (*BoundsCheck, error) {
+func (hc *Checks) NewBoundsCheck(name string, c *healthpb.HealthCheck) (*BoundsCheck, error) {
 	hc.adjustId(c)
 	check, err := newBoundsCheck(c)
 	if err != nil {
@@ -199,7 +199,7 @@ func (hc *Checks) NewBoundsCheck(name string, c *gen.HealthCheck) (*BoundsCheck,
 
 // NewFaultCheck creates a new health check that tracks normality via one or more faults.
 // The returned FaultCheck takes ownership of c, populating any missing fields as necessary.
-func (hc *Checks) NewFaultCheck(name string, c *gen.HealthCheck) (*FaultCheck, error) {
+func (hc *Checks) NewFaultCheck(name string, c *healthpb.HealthCheck) (*FaultCheck, error) {
 	hc.adjustId(c)
 	check, err := newFaultCheck(c)
 	if err != nil {
@@ -211,7 +211,7 @@ func (hc *Checks) NewFaultCheck(name string, c *gen.HealthCheck) (*FaultCheck, e
 	return check, nil
 }
 
-func (hc *Checks) adjustId(c *gen.HealthCheck) {
+func (hc *Checks) adjustId(c *healthpb.HealthCheck) {
 	c.Id = AbsID(hc.owner, c.Id)
 }
 

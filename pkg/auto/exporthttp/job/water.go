@@ -8,14 +8,14 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/types"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
 
 // WaterJob gets the water consumed over the previous execution interval (typically 24 hours)
 type WaterJob struct {
 	BaseJob
-	client     gen.MeterHistoryClient
-	infoClient gen.MeterInfoClient
+	client     meterpb.MeterHistoryClient
+	infoClient meterpb.MeterInfoClient
 	Meters     []string
 }
 
@@ -71,7 +71,7 @@ func (w *WaterJob) Do(ctx context.Context, sendFn sender) error {
 }
 
 func (w *WaterJob) getUnitMultiplier(ctx context.Context, meter string) (float32, error) {
-	infoResp, err := w.infoClient.DescribeMeterReading(ctx, &gen.DescribeMeterReadingRequest{Name: meter})
+	infoResp, err := w.infoClient.DescribeMeterReading(ctx, &meterpb.DescribeMeterReadingRequest{Name: meter})
 
 	if err != nil {
 		return 1, err

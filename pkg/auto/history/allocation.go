@@ -7,17 +7,17 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
 )
 
 func (a *automation) collectAllocationChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
-	client := gen.NewAllocationApiClient(a.clients.ClientConn())
+	client := allocationpb.NewAllocationApiClient(a.clients.ClientConn())
 
-	dedupe := newDeduper[*gen.Allocation](cmp.Equal())
+	dedupe := newDeduper[*allocationpb.Allocation](cmp.Equal())
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
-		stream, err := client.PullAllocation(ctx, &gen.PullAllocationRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
+		stream, err := client.PullAllocation(ctx, &allocationpb.PullAllocationRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
 
 		if err != nil {
 			return err
@@ -47,7 +47,7 @@ func (a *automation) collectAllocationChanges(ctx context.Context, source config
 	}
 
 	pollFn := func(ctx context.Context, changes chan<- []byte) error {
-		resp, err := client.GetAllocation(ctx, &gen.GetAllocationRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
+		resp, err := client.GetAllocation(ctx, &allocationpb.GetAllocationRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}

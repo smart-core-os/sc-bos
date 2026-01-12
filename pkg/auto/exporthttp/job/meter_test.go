@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
 
 func Test_processMeter(t *testing.T) {
@@ -29,30 +29,30 @@ func Test_processMeter(t *testing.T) {
 	tests := []struct {
 		name         string
 		args         args
-		wantEarliest *gen.MeterReadingRecord
-		wantLatest   *gen.MeterReadingRecord
+		wantEarliest *meterpb.MeterReadingRecord
+		wantLatest   *meterpb.MeterReadingRecord
 		wantErr      error
 		consumption  float32
 	}{
 		{
 			name: "happy path",
 			args: args{
-				historyFn: func(ctx context.Context, in *gen.ListMeterReadingHistoryRequest, opts ...grpc.CallOption) (*gen.ListMeterReadingHistoryResponse, error) {
+				historyFn: func(ctx context.Context, in *meterpb.ListMeterReadingHistoryRequest, opts ...grpc.CallOption) (*meterpb.ListMeterReadingHistoryResponse, error) {
 					return twoMeterReadingPages(ctx, start, now, in, opts...)
 				},
 				now:        now,
 				filterTime: -24 * time.Hour,
 			},
-			wantEarliest: &gen.MeterReadingRecord{
-				MeterReading: &gen.MeterReading{
+			wantEarliest: &meterpb.MeterReadingRecord{
+				MeterReading: &meterpb.MeterReading{
 					Usage:     0,
 					StartTime: timestamppb.New(start),
 					EndTime:   timestamppb.New(start.Add(time.Minute)),
 				},
 				RecordTime: timestamppb.New(start.Add(time.Minute)),
 			},
-			wantLatest: &gen.MeterReadingRecord{
-				MeterReading: &gen.MeterReading{
+			wantLatest: &meterpb.MeterReadingRecord{
+				MeterReading: &meterpb.MeterReading{
 					Usage:     45,
 					StartTime: timestamppb.New(start.Add(18 * time.Minute)),
 					EndTime:   timestamppb.New(start.Add(30 * time.Minute)),
@@ -65,7 +65,7 @@ func Test_processMeter(t *testing.T) {
 		{
 			name: "error path",
 			args: args{
-				historyFn: func(ctx context.Context, in *gen.ListMeterReadingHistoryRequest, opts ...grpc.CallOption) (*gen.ListMeterReadingHistoryResponse, error) {
+				historyFn: func(ctx context.Context, in *meterpb.ListMeterReadingHistoryRequest, opts ...grpc.CallOption) (*meterpb.ListMeterReadingHistoryResponse, error) {
 					return nil, fmt.Errorf("some error")
 				},
 			},
@@ -90,12 +90,12 @@ func Test_processMeter(t *testing.T) {
 	}
 }
 
-func twoMeterReadingPages(_ context.Context, start, now time.Time, in *gen.ListMeterReadingHistoryRequest, _ ...grpc.CallOption) (*gen.ListMeterReadingHistoryResponse, error) {
+func twoMeterReadingPages(_ context.Context, start, now time.Time, in *meterpb.ListMeterReadingHistoryRequest, _ ...grpc.CallOption) (*meterpb.ListMeterReadingHistoryResponse, error) {
 	if in.GetPeriod().EndTime.AsTime().Equal(now) {
-		return &gen.ListMeterReadingHistoryResponse{
-			MeterReadingRecords: []*gen.MeterReadingRecord{
+		return &meterpb.ListMeterReadingHistoryResponse{
+			MeterReadingRecords: []*meterpb.MeterReadingRecord{
 				{
-					MeterReading: &gen.MeterReading{
+					MeterReading: &meterpb.MeterReading{
 						Usage:     45,
 						StartTime: timestamppb.New(start.Add(18 * time.Minute)),
 						EndTime:   timestamppb.New(start.Add(30 * time.Minute)),
@@ -105,10 +105,10 @@ func twoMeterReadingPages(_ context.Context, start, now time.Time, in *gen.ListM
 			},
 		}, nil
 	}
-	return &gen.ListMeterReadingHistoryResponse{
-		MeterReadingRecords: []*gen.MeterReadingRecord{
+	return &meterpb.ListMeterReadingHistoryResponse{
+		MeterReadingRecords: []*meterpb.MeterReadingRecord{
 			{
-				MeterReading: &gen.MeterReading{
+				MeterReading: &meterpb.MeterReading{
 					Usage:     0,
 					StartTime: timestamppb.New(start),
 					EndTime:   timestamppb.New(start.Add(time.Minute)),

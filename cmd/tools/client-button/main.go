@@ -1,4 +1,4 @@
-// Command client-button provides a CLI tool for interacting with a [gen.ButtonApiClient].
+// Command client-button provides a CLI tool for interacting with a [buttonpb.ButtonApiClient].
 package main
 
 import (
@@ -20,7 +20,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/client"
 )
 
@@ -74,7 +74,7 @@ func run(ctx context.Context) (err error) {
 		return fmt.Errorf("dial %s: %w", clientConfig.Endpoint, err)
 	}
 
-	buttonClient := gen.NewButtonApiClient(conn)
+	buttonClient := buttonpb.NewButtonApiClient(conn)
 
 	if clientConfig.Get {
 		err = poll(ctx, buttonClient, out)
@@ -85,7 +85,7 @@ func run(ctx context.Context) (err error) {
 		group.Go(func() error {
 		outer:
 			for ctx.Err() == nil {
-				stream, err := buttonClient.PullButtonState(ctx, &gen.PullButtonStateRequest{Name: clientConfig.Name})
+				stream, err := buttonClient.PullButtonState(ctx, &buttonpb.PullButtonStateRequest{Name: clientConfig.Name})
 				if err != nil {
 					_, _ = fmt.Fprintf(rl.Stderr(), "PullButtonState failed: %s\n", err.Error())
 					time.Sleep(5 * time.Second)
@@ -144,8 +144,8 @@ func run(ctx context.Context) (err error) {
 	return group.Wait()
 }
 
-func poll(ctx context.Context, client gen.ButtonApiClient, out io.Writer) error {
-	buttonState, err := client.GetButtonState(ctx, &gen.GetButtonStateRequest{
+func poll(ctx context.Context, client buttonpb.ButtonApiClient, out io.Writer) error {
+	buttonState, err := client.GetButtonState(ctx, &buttonpb.GetButtonStateRequest{
 		Name: clientConfig.Name,
 	})
 	if err != nil {
@@ -157,7 +157,7 @@ func poll(ctx context.Context, client gen.ButtonApiClient, out io.Writer) error 
 
 var splitRegexp = regexp.MustCompile(`\s+`)
 
-func handleUpdate(ctx context.Context, args []string, client gen.ButtonApiClient, stdout io.Writer) error {
+func handleUpdate(ctx context.Context, args []string, client buttonpb.ButtonApiClient, stdout io.Writer) error {
 	if len(args) == 0 {
 		return errors.New("must supply subcommand name")
 	}
@@ -173,8 +173,8 @@ func handleUpdate(ctx context.Context, args []string, client gen.ButtonApiClient
 	}
 }
 
-func handleClick(ctx context.Context, args []string, client gen.ButtonApiClient, stdout io.Writer) error {
-	mask, err := fieldmaskpb.New(&gen.ButtonState{},
+func handleClick(ctx context.Context, args []string, client buttonpb.ButtonApiClient, stdout io.Writer) error {
+	mask, err := fieldmaskpb.New(&buttonpb.ButtonState{},
 		"most_recent_gesture",
 		"most_recent_gesture.id",
 		"most_recent_gesture.kind",
@@ -195,13 +195,13 @@ func handleClick(ctx context.Context, args []string, client gen.ButtonApiClient,
 	}
 
 	t := timestamppb.Now()
-	updated, err := client.UpdateButtonState(ctx, &gen.UpdateButtonStateRequest{
+	updated, err := client.UpdateButtonState(ctx, &buttonpb.UpdateButtonStateRequest{
 		Name:       clientConfig.Name,
 		UpdateMask: mask,
-		ButtonState: &gen.ButtonState{
-			MostRecentGesture: &gen.ButtonState_Gesture{
+		ButtonState: &buttonpb.ButtonState{
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{
 				Id:        uuid.New(),
-				Kind:      gen.ButtonState_Gesture_CLICK,
+				Kind:      buttonpb.ButtonState_Gesture_CLICK,
 				Count:     int32(count),
 				StartTime: t,
 				EndTime:   t,

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.mqtt.v1;
 
-option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/mqttpb";
 
 service MqttService {
   rpc PullMessages(PullMessagesRequest) returns (stream PullMessagesResponse);

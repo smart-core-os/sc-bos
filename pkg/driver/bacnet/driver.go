@@ -24,9 +24,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/merge"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
@@ -102,9 +102,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			rootAnnouncer.Announce(device.Name, node.HasMetadata(device.Metadata))
 		}
 
-		statuses.UpdateProblem(scDeviceName, &gen.StatusLog_Problem{
+		statuses.UpdateProblem(scDeviceName, &gen_statuspb.StatusLog_Problem{
 			Name:        scDeviceName + ":setup",
-			Level:       gen.StatusLog_NON_FUNCTIONAL,
+			Level:       gen_statuspb.StatusLog_NON_FUNCTIONAL,
 			Description: "device has not yet been configured",
 		})
 
@@ -208,9 +208,9 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 		_, msg := status.SummariseRequestErrors("net handshake:",
 			[]string{"MaxApduLengthAccepted", "SegmentationSupported", "VendorIdentifier"},
 			multierr.Errors(err))
-		statuses.UpdateProblem(scDeviceName, &gen.StatusLog_Problem{
+		statuses.UpdateProblem(scDeviceName, &gen_statuspb.StatusLog_Problem{
 			Name:        scDeviceName + ":setup",
-			Level:       gen.StatusLog_OFFLINE,
+			Level:       gen_statuspb.StatusLog_OFFLINE,
 			Description: msg,
 		})
 		return fmt.Errorf("device comm handshake: %w", ctxerr.Cause(ctx, err))
@@ -223,9 +223,9 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 	}
 
 	// assume we're online unless we get an error
-	statuses.UpdateProblem(scDeviceName, &gen.StatusLog_Problem{
+	statuses.UpdateProblem(scDeviceName, &gen_statuspb.StatusLog_Problem{
 		Name:        scDeviceName + ":setup",
-		Level:       gen.StatusLog_NOMINAL,
+		Level:       gen_statuspb.StatusLog_NOMINAL,
 		Description: "handshake successful",
 	})
 	adapt.Device(scDeviceName, d.client, bacDevice, devices, statuses).AnnounceSelf(rootAnnouncer)

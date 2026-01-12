@@ -13,9 +13,9 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
+	"github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 )
 
 func Test_storeServer_ListHistoryRecords(t *testing.T) {
@@ -43,7 +43,7 @@ func Test_storeServer_ListHistoryRecords(t *testing.T) {
 	now = time.Unix(60, 0)
 
 	tests := []struct {
-		req  *gen.ListHistoryRecordsRequest
+		req  *historypb.ListHistoryRecordsRequest
 		want [][]history.Record
 	}{
 		{req: reqTo(2, "", 60), want: pages(records[0:2], records[2:4], records[4:6])},
@@ -61,7 +61,7 @@ func Test_storeServer_ListHistoryRecords(t *testing.T) {
 			for _, page := range want {
 				wantTotalSize += int32(len(page))
 			}
-			req := proto.Clone(tt.req).(*gen.ListHistoryRecordsRequest)
+			req := proto.Clone(tt.req).(*historypb.ListHistoryRecordsRequest)
 			var pageNum int
 			for {
 				res, err := server.ListHistoryRecords(context.Background(), req)
@@ -94,7 +94,7 @@ func Test_storeServer_ListHistoryRecords(t *testing.T) {
 	}
 }
 
-func reqToName(req *gen.ListHistoryRecordsRequest) string {
+func reqToName(req *historypb.ListHistoryRecordsRequest) string {
 	q := req.GetQuery()
 	period := make([]string, 2)
 	if q.FromRecord != nil {
@@ -106,14 +106,14 @@ func reqToName(req *gen.ListHistoryRecordsRequest) string {
 	return fmt.Sprintf("[%v) %v", strings.Join(period, ","), req.OrderBy)
 }
 
-func reqBetween(pageSize int32, orderBy string, from, to int64) *gen.ListHistoryRecordsRequest {
-	return &gen.ListHistoryRecordsRequest{
-		Query: &gen.HistoryRecord_Query{
-			Source: &gen.HistoryRecord_Query_SourceEqual{SourceEqual: "test"},
-			FromRecord: &gen.HistoryRecord{
+func reqBetween(pageSize int32, orderBy string, from, to int64) *historypb.ListHistoryRecordsRequest {
+	return &historypb.ListHistoryRecordsRequest{
+		Query: &historypb.HistoryRecord_Query{
+			Source: &historypb.HistoryRecord_Query_SourceEqual{SourceEqual: "test"},
+			FromRecord: &historypb.HistoryRecord{
 				CreateTime: timestamppb.New(time.Unix(from, 0)),
 			},
-			ToRecord: &gen.HistoryRecord{
+			ToRecord: &historypb.HistoryRecord{
 				CreateTime: timestamppb.New(time.Unix(to, 0)),
 			},
 		},
@@ -122,11 +122,11 @@ func reqBetween(pageSize int32, orderBy string, from, to int64) *gen.ListHistory
 	}
 }
 
-func reqFrom(pageSize int32, orderBy string, from int64) *gen.ListHistoryRecordsRequest {
-	return &gen.ListHistoryRecordsRequest{
-		Query: &gen.HistoryRecord_Query{
-			Source: &gen.HistoryRecord_Query_SourceEqual{SourceEqual: "test"},
-			FromRecord: &gen.HistoryRecord{
+func reqFrom(pageSize int32, orderBy string, from int64) *historypb.ListHistoryRecordsRequest {
+	return &historypb.ListHistoryRecordsRequest{
+		Query: &historypb.HistoryRecord_Query{
+			Source: &historypb.HistoryRecord_Query_SourceEqual{SourceEqual: "test"},
+			FromRecord: &historypb.HistoryRecord{
 				CreateTime: timestamppb.New(time.Unix(from, 0)),
 			},
 		},
@@ -135,11 +135,11 @@ func reqFrom(pageSize int32, orderBy string, from int64) *gen.ListHistoryRecords
 	}
 }
 
-func reqTo(pageSize int32, orderBy string, to int64) *gen.ListHistoryRecordsRequest {
-	return &gen.ListHistoryRecordsRequest{
-		Query: &gen.HistoryRecord_Query{
-			Source: &gen.HistoryRecord_Query_SourceEqual{SourceEqual: "test"},
-			ToRecord: &gen.HistoryRecord{
+func reqTo(pageSize int32, orderBy string, to int64) *historypb.ListHistoryRecordsRequest {
+	return &historypb.ListHistoryRecordsRequest{
+		Query: &historypb.HistoryRecord_Query{
+			Source: &historypb.HistoryRecord_Query_SourceEqual{SourceEqual: "test"},
+			ToRecord: &historypb.HistoryRecord{
 				CreateTime: timestamppb.New(time.Unix(to, 0)),
 			},
 		},
@@ -159,8 +159,8 @@ func r(records []history.Record) []history.Record {
 	return c
 }
 
-func modelToProto(records []history.Record) []*gen.HistoryRecord {
-	models := make([]*gen.HistoryRecord, len(records))
+func modelToProto(records []history.Record) []*historypb.HistoryRecord {
+	models := make([]*historypb.HistoryRecord, len(records))
 	for i, r := range records {
 		models[i] = storeRecordToProtoRecord("test", r)
 	}

@@ -7,34 +7,34 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/history"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 )
 
 type AllocationServer struct {
-	gen.UnimplementedAllocationHistoryServer
-	store history.Store // payloads of *gen.Allocation
+	allocationpb.UnimplementedAllocationHistoryServer
+	store history.Store // payloads of *allocationpb.Allocation
 }
 
-var allocationPager = NewPageReader(func(r history.Record) (*gen.AllocationRecord, error) {
-	v := &gen.Allocation{}
+var allocationPager = NewPageReader(func(r history.Record) (*allocationpb.AllocationRecord, error) {
+	v := &allocationpb.Allocation{}
 	err := proto.Unmarshal(r.Payload, v)
 	if err != nil {
 		return nil, err
 	}
-	return &gen.AllocationRecord{
+	return &allocationpb.AllocationRecord{
 		RecordTime: timestamppb.New(r.CreateTime),
 		Allocation: v,
 	}, nil
 })
 
-func (a *AllocationServer) ListAllocationHistory(ctx context.Context, request *gen.ListAllocationHistoryRequest) (*gen.ListAllocationHistoryResponse, error) {
+func (a *AllocationServer) ListAllocationHistory(ctx context.Context, request *allocationpb.ListAllocationHistoryRequest) (*allocationpb.ListAllocationHistoryResponse, error) {
 	page, size, nextToken, err := allocationPager.ListRecords(ctx, a.store, request.Period, int(request.PageSize), request.PageToken, request.OrderBy)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gen.ListAllocationHistoryResponse{
+	return &allocationpb.ListAllocationHistoryResponse{
 		TotalSize:         int32(size),
 		NextPageToken:     nextToken,
 		AllocationRecords: page,
@@ -46,7 +46,7 @@ func NewAllocationServer(store history.Store) *AllocationServer {
 }
 
 func (a *AllocationServer) Register(server *grpc.Server) {
-	gen.RegisterAllocationHistoryServer(server, a)
+	allocationpb.RegisterAllocationHistoryServer(server, a)
 }
 
 func (a *AllocationServer) Unwrap() any {

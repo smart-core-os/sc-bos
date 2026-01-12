@@ -7,12 +7,12 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 // MergeCheck merges src into dst, which must share the same id.
 // This is similar to proto.Merge, but some repeated fields are replaced instead of appended to.
-func MergeCheck(merge func(dst, src proto.Message), dst, src *gen.HealthCheck) {
+func MergeCheck(merge func(dst, src proto.Message), dst, src *healthpb.HealthCheck) {
 	if src == nil || dst == nil {
 		return
 	}
@@ -79,7 +79,7 @@ func earliestTimestamp(dst, src *timestamppb.Timestamp) *timestamppb.Timestamp {
 // MergeChecks adds src checks into dst, merging when ids match, returning the union.
 // The dst checks must be sorted by ID in ascending order.
 // The returned checks will be sorted by ID in ascending order as well.
-func MergeChecks(merge func(dst, src proto.Message), dst []*gen.HealthCheck, src ...*gen.HealthCheck) []*gen.HealthCheck {
+func MergeChecks(merge func(dst, src proto.Message), dst []*healthpb.HealthCheck, src ...*healthpb.HealthCheck) []*healthpb.HealthCheck {
 	if len(src) == 0 {
 		return dst
 	}
@@ -104,7 +104,7 @@ func MergeChecks(merge func(dst, src proto.Message), dst []*gen.HealthCheck, src
 
 // RemoveCheck removes the check with the given id from dst, returning the modified slice.
 // If no such check exists, dst is returned unmodified.
-func RemoveCheck(dst []*gen.HealthCheck, id string) []*gen.HealthCheck {
+func RemoveCheck(dst []*healthpb.HealthCheck, id string) []*healthpb.HealthCheck {
 	index, found := findCheck(id, dst)
 	if !found {
 		return dst
@@ -113,14 +113,14 @@ func RemoveCheck(dst []*gen.HealthCheck, id string) []*gen.HealthCheck {
 }
 
 // sortChecks sorts the checks by their ID in ascending order.
-func sortChecks(checks []*gen.HealthCheck) {
-	slices.SortFunc(checks, func(a, b *gen.HealthCheck) int {
+func sortChecks(checks []*healthpb.HealthCheck) {
+	slices.SortFunc(checks, func(a, b *healthpb.HealthCheck) int {
 		return strings.Compare(a.Id, b.Id)
 	})
 }
 
-func findCheck(id string, checks []*gen.HealthCheck) (int, bool) {
-	return slices.BinarySearchFunc(checks, id, func(check *gen.HealthCheck, id string) int {
+func findCheck(id string, checks []*healthpb.HealthCheck) (int, bool) {
+	return slices.BinarySearchFunc(checks, id, func(check *healthpb.HealthCheck, id string) int {
 		return strings.Compare(check.Id, id)
 	})
 }

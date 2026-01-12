@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 )
 
 func TestIntValue(t *testing.T) {
@@ -263,38 +263,38 @@ func TestToTraitEnum(t *testing.T) {
 		input     any
 		enumMap   map[string]string
 		traitMap  map[string]int32
-		want      gen.Transport_Door_DoorStatus
+		want      transportpb.Transport_Door_DoorStatus
 		wantError bool
 	}{
 		{
 			name:      "valid string conversion",
 			input:     "1",
 			enumMap:   enumMap,
-			traitMap:  gen.Transport_Door_DoorStatus_value,
-			want:      gen.Transport_Door_OPENING,
+			traitMap:  transportpb.Transport_Door_DoorStatus_value,
+			want:      transportpb.Transport_Door_OPENING,
 			wantError: false,
 		},
 		{
 			name:      "valid int32 conversion",
 			input:     int32(2),
 			enumMap:   enumMap,
-			traitMap:  gen.Transport_Door_DoorStatus_value,
-			want:      gen.Transport_Door_CLOSED,
+			traitMap:  transportpb.Transport_Door_DoorStatus_value,
+			want:      transportpb.Transport_Door_CLOSED,
 			wantError: false,
 		},
 		{
 			name:      "valid int8 conversion",
 			input:     int8(3),
 			enumMap:   enumMap,
-			traitMap:  gen.Transport_Door_DoorStatus_value,
-			want:      gen.Transport_Door_CLOSING,
+			traitMap:  transportpb.Transport_Door_DoorStatus_value,
+			want:      transportpb.Transport_Door_CLOSING,
 			wantError: false,
 		},
 		{
 			name:      "nil enum map",
 			input:     "1",
 			enumMap:   nil,
-			traitMap:  gen.Transport_Door_DoorStatus_value,
+			traitMap:  transportpb.Transport_Door_DoorStatus_value,
 			want:      0,
 			wantError: true,
 		},
@@ -302,7 +302,7 @@ func TestToTraitEnum(t *testing.T) {
 			name:      "value not in enum map",
 			input:     "99",
 			enumMap:   enumMap,
-			traitMap:  gen.Transport_Door_DoorStatus_value,
+			traitMap:  transportpb.Transport_Door_DoorStatus_value,
 			want:      0,
 			wantError: true,
 		},
@@ -310,7 +310,7 @@ func TestToTraitEnum(t *testing.T) {
 			name:      "value not in trait map",
 			input:     "1",
 			enumMap:   map[string]string{"1": "INVALID_VALUE"},
-			traitMap:  gen.Transport_Door_DoorStatus_value,
+			traitMap:  transportpb.Transport_Door_DoorStatus_value,
 			want:      0,
 			wantError: true,
 		},
@@ -318,7 +318,7 @@ func TestToTraitEnum(t *testing.T) {
 			name:      "unsupported input type",
 			input:     true,
 			enumMap:   enumMap,
-			traitMap:  gen.Transport_Door_DoorStatus_value,
+			traitMap:  transportpb.Transport_Door_DoorStatus_value,
 			want:      0,
 			wantError: true,
 		},
@@ -326,7 +326,7 @@ func TestToTraitEnum(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ToTraitEnum[gen.Transport_Door_DoorStatus](tt.input, tt.enumMap, tt.traitMap)
+			got, err := ToTraitEnum[transportpb.Transport_Door_DoorStatus](tt.input, tt.enumMap, tt.traitMap)
 			if (err != nil) != tt.wantError {
 				t.Errorf("ToTraitEnum() error = %v, wantError %v", err, tt.wantError)
 				return
@@ -346,11 +346,11 @@ func TestToTraitEnum_DifferentTypes(t *testing.T) {
 		"2": "DOWN",
 	}
 
-	direction, err := ToTraitEnum[gen.Transport_Direction](int32(1), directionMap, gen.Transport_Direction_value)
+	direction, err := ToTraitEnum[transportpb.Transport_Direction](int32(1), directionMap, transportpb.Transport_Direction_value)
 	if err != nil {
 		t.Errorf("ToTraitEnum() for Direction failed: %v", err)
 	}
-	if direction != gen.Transport_UP {
+	if direction != transportpb.Transport_UP {
 		t.Errorf("ToTraitEnum() for Direction = %v, want UP", direction)
 	}
 
@@ -360,11 +360,11 @@ func TestToTraitEnum_DifferentTypes(t *testing.T) {
 		"1": "EMERGENCY",
 	}
 
-	mode, err := ToTraitEnum[gen.Transport_OperatingMode](int32(0), modeMap, gen.Transport_OperatingMode_value)
+	mode, err := ToTraitEnum[transportpb.Transport_OperatingMode](int32(0), modeMap, transportpb.Transport_OperatingMode_value)
 	if err != nil {
 		t.Errorf("ToTraitEnum() for OperatingMode failed: %v", err)
 	}
-	if mode != gen.Transport_NORMAL {
+	if mode != transportpb.Transport_NORMAL {
 		t.Errorf("ToTraitEnum() for OperatingMode = %v, want NORMAL", mode)
 	}
 }

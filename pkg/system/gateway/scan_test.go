@@ -27,11 +27,15 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/rx"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -204,7 +208,7 @@ func newMockRemoteNode(t *testing.T, name string) *mockRemoteNode {
 	reflectionServer := reflectionapi.NewServer(server, n)
 	reflectionServer.Register(server)
 
-	gen.RegisterDevicesApiServer(server, devices.NewServer(n))
+	gen_devicespb.RegisterDevicesApiServer(server, devices.NewServer(n))
 
 	rn := &mockRemoteNode{
 		t:        t,
@@ -231,7 +235,7 @@ func newMockRemoteNode(t *testing.T, name string) *mockRemoteNode {
 		{"zones", rn.zones},
 	}
 	for _, svc := range services {
-		client := gen.WrapServicesApi(serviceapi.NewApi(svc.store))
+		client := servicespb.WrapApi(serviceapi.NewApi(svc.store))
 		n.Announce(svc.base, node.HasClient(client))
 		n.Announce(path.Join(name, svc.base), node.HasClient(client))
 	}
@@ -268,7 +272,7 @@ type mockRemoteNode struct {
 func (n *mockRemoteNode) makeHub() *mockHubServer {
 	n.t.Helper()
 	hubServer := newMockHubServer(n.t)
-	hubSvc, err := node.RegistryService(gen.HubApi_ServiceDesc, hubServer)
+	hubSvc, err := node.RegistryService(hubpb.HubApi_ServiceDesc, hubServer)
 	if err != nil {
 		n.t.Fatalf("failed to create hub service: %v", err)
 	}
@@ -354,7 +358,7 @@ func (n *mockRemoteNode) announceDeviceTraits(name string, tns ...trait.Name) {
 		var client wrap.ServiceUnwrapper
 		switch tn {
 		case meter.TraitName:
-			client = gen.WrapMeterApi(meter.NewModelServer(meter.NewModel()))
+			client = meterpb.WrapApi(meter.NewModelServer(meter.NewModel()))
 		case trait.OnOff:
 			client = onoffpb.WrapApi(onoffpb.NewModelServer(onoffpb.NewModel()))
 		default:
@@ -377,7 +381,7 @@ func (n *mockRemoteNode) announceDeviceHealth(name string, checks ...string) {
 	if len(checks) == 0 {
 		n.t.Fatalf("no health checks provided for device %q", name)
 	}
-	var hc []*gen.HealthCheck
+	var hc []*gen_healthpb.HealthCheck
 	for _, desc := range checks {
 		hc = append(hc, makeHealthCheck(desc))
 	}
@@ -387,25 +391,25 @@ func (n *mockRemoteNode) announceDeviceHealth(name string, checks ...string) {
 	}
 }
 
-func makeHealthCheck(desc string) *gen.HealthCheck {
-	normality := gen.HealthCheck_NORMAL
+func makeHealthCheck(desc string) *gen_healthpb.HealthCheck {
+	normality := gen_healthpb.HealthCheck_NORMAL
 	if len(desc) > 0 {
 		switch desc[0] {
 		case '+': // normal
 			desc = strings.TrimSpace(desc[1:])
 		case '-': // abnormal
-			normality = gen.HealthCheck_ABNORMAL
+			normality = gen_healthpb.HealthCheck_ABNORMAL
 			desc = strings.TrimSpace(desc[1:])
 		case '>': // high
-			normality = gen.HealthCheck_HIGH
+			normality = gen_healthpb.HealthCheck_HIGH
 			desc = strings.TrimSpace(desc[1:])
 		case '<': // low
-			normality = gen.HealthCheck_LOW
+			normality = gen_healthpb.HealthCheck_LOW
 			desc = strings.TrimSpace(desc[1:])
 		}
 	}
 	// simple check, just needs to have enough info to identify it
-	return &gen.HealthCheck{
+	return &gen_healthpb.HealthCheck{
 		Id:          desc,
 		Normality:   normality,
 		DisplayName: desc,
@@ -421,15 +425,15 @@ func newMockHubServer(t *testing.T) *mockHubServer {
 }
 
 type mockHubServer struct {
-	gen.UnimplementedHubApiServer
+	hubpb.UnimplementedHubApiServer
 	t     *testing.T
-	nodes *resource.Collection // of *gen.HubNode, keyed by address
+	nodes *resource.Collection // of *hubpb.HubNode, keyed by address
 }
 
 func (h *mockHubServer) AddHubNode(n *mockRemoteNode) {
 	h.t.Helper()
 	addr := n.node.Name()
-	_, err := h.nodes.Add(addr, &gen.HubNode{
+	_, err := h.nodes.Add(addr, &hubpb.HubNode{
 		Name:    addr,
 		Address: addr,
 	})
@@ -438,25 +442,25 @@ func (h *mockHubServer) AddHubNode(n *mockRemoteNode) {
 	}
 }
 
-func (h *mockHubServer) GetHubNode(_ context.Context, req *gen.GetHubNodeRequest) (*gen.HubNode, error) {
+func (h *mockHubServer) GetHubNode(_ context.Context, req *hubpb.GetHubNodeRequest) (*hubpb.HubNode, error) {
 	res, ok := h.nodes.Get(req.GetAddress())
 	if !ok {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
-	return res.(*gen.HubNode), nil
+	return res.(*hubpb.HubNode), nil
 }
 
-func (h *mockHubServer) ListHubNodes(_ context.Context, _ *gen.ListHubNodesRequest) (*gen.ListHubNodesResponse, error) {
-	var nodes []*gen.HubNode
+func (h *mockHubServer) ListHubNodes(_ context.Context, _ *hubpb.ListHubNodesRequest) (*hubpb.ListHubNodesResponse, error) {
+	var nodes []*hubpb.HubNode
 	for _, r := range h.nodes.List() {
-		nodes = append(nodes, r.(*gen.HubNode))
+		nodes = append(nodes, r.(*hubpb.HubNode))
 	}
-	return &gen.ListHubNodesResponse{Nodes: nodes}, nil
+	return &hubpb.ListHubNodesResponse{Nodes: nodes}, nil
 }
 
-func (h *mockHubServer) PullHubNodes(req *gen.PullHubNodesRequest, g grpc.ServerStreamingServer[gen.PullHubNodesResponse]) error {
-	for c := range resources.PullCollection[*gen.HubNode](g.Context(), h.nodes.Pull(g.Context(), resource.WithUpdatesOnly(req.GetUpdatesOnly()))) {
-		err := g.Send(&gen.PullHubNodesResponse{Changes: []*gen.PullHubNodesResponse_Change{
+func (h *mockHubServer) PullHubNodes(req *hubpb.PullHubNodesRequest, g grpc.ServerStreamingServer[hubpb.PullHubNodesResponse]) error {
+	for c := range resources.PullCollection[*hubpb.HubNode](g.Context(), h.nodes.Pull(g.Context(), resource.WithUpdatesOnly(req.GetUpdatesOnly()))) {
+		err := g.Send(&hubpb.PullHubNodesResponse{Changes: []*hubpb.PullHubNodesResponse_Change{
 			{Type: c.ChangeType, NewValue: c.NewValue, OldValue: c.OldValue, ChangeTime: timestamppb.New(c.ChangeTime)},
 		}})
 		if err != nil {
@@ -564,11 +568,11 @@ func (ctn *cohortTesterNode) assertDeviceHealth(name string, wantChecks ...strin
 
 func assertDeviceHealth(t *testing.T, got remoteDesc, wantChecks ...string) {
 	t.Helper()
-	want := make([]*gen.HealthCheck, 0, len(wantChecks))
+	want := make([]*gen_healthpb.HealthCheck, 0, len(wantChecks))
 	for _, desc := range wantChecks {
 		want = append(want, makeHealthCheck(desc))
 	}
-	if diff := cmp.Diff(want, got.health, protocmp.Transform(), cmpopts.SortSlices(func(a, b *gen.HealthCheck) int {
+	if diff := cmp.Diff(want, got.health, protocmp.Transform(), cmpopts.SortSlices(func(a, b *gen_healthpb.HealthCheck) int {
 		return strings.Compare(a.Id, b.Id)
 	})); diff != "" {
 		t.Fatalf("unexpected health checks for device %q(-want +got):\n%s", got.name, diff)
@@ -621,17 +625,17 @@ func devicesToHealthCheckCollection(d *devicespb.Collection) system.HealthCheckC
 
 type devicesHealthCheckCollection devicespb.Collection
 
-func (d *devicesHealthCheckCollection) MergeHealthChecks(name string, checks ...*gen.HealthCheck) error {
-	_, err := (*devicespb.Collection)(d).Update(&gen.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-		dstDev := dst.(*gen.Device)
+func (d *devicesHealthCheckCollection) MergeHealthChecks(name string, checks ...*gen_healthpb.HealthCheck) error {
+	_, err := (*devicespb.Collection)(d).Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+		dstDev := dst.(*gen_devicespb.Device)
 		dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, checks...)
 	}), resource.WithCreateIfAbsent())
 	return err
 }
 
 func (d *devicesHealthCheckCollection) RemoveHealthChecks(name string, ids ...string) error {
-	_, err := (*devicespb.Collection)(d).Update(&gen.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
-		dstDev := dst.(*gen.Device)
+	_, err := (*devicespb.Collection)(d).Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
+		dstDev := dst.(*gen_devicespb.Device)
 		for _, id := range ids {
 			dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
 		}

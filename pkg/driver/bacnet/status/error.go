@@ -9,27 +9,27 @@ import (
 	"github.com/smart-core-os/gobacnet/enum/errorcode"
 	bactypes "github.com/smart-core-os/gobacnet/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
 func UpdatePollErrorStatus(statuses *statuspb.Map, name, task string, requests []string, errs []error) {
 	problemName := fmt.Sprintf("%s:%s", name, task)
 	level, desc := SummariseRequestErrors(task, requests, errs)
-	if level == gen.StatusLog_LEVEL_UNDEFINED {
+	if level == gen_statuspb.StatusLog_LEVEL_UNDEFINED {
 		return
 	}
 
-	statuses.UpdateProblem(name, &gen.StatusLog_Problem{
+	statuses.UpdateProblem(name, &gen_statuspb.StatusLog_Problem{
 		Name:        problemName,
 		Level:       level,
 		Description: desc,
 	})
 }
 
-func SummariseRequestErrors(name string, requests []string, errs []error) (gen.StatusLog_Level, string) {
+func SummariseRequestErrors(name string, requests []string, errs []error) (gen_statuspb.StatusLog_Level, string) {
 	if len(errs) == 0 || len(requests) == 0 {
-		return gen.StatusLog_NOMINAL, fmt.Sprintf("%s nominal", name)
+		return gen_statuspb.StatusLog_NOMINAL, fmt.Sprintf("%s nominal", name)
 	}
 	var readPropErrs []comm.ErrReadProperty
 	var miscErrs []error
@@ -45,11 +45,11 @@ func SummariseRequestErrors(name string, requests []string, errs []error) (gen.S
 	cancelled, notFoundCount, timeoutCount, otherCount := countErrTypes(errs...)
 	switch {
 	case cancelled > 0:
-		return gen.StatusLog_LEVEL_UNDEFINED, fmt.Sprintf("%s request cancelled", name)
+		return gen_statuspb.StatusLog_LEVEL_UNDEFINED, fmt.Sprintf("%s request cancelled", name)
 	case notFoundCount == len(requests):
-		return gen.StatusLog_NOTICE, fmt.Sprintf("%s points not found on device", name)
+		return gen_statuspb.StatusLog_NOTICE, fmt.Sprintf("%s points not found on device", name)
 	case timeoutCount == len(requests):
-		return gen.StatusLog_REDUCED_FUNCTION, fmt.Sprintf("%s points timed out", name)
+		return gen_statuspb.StatusLog_REDUCED_FUNCTION, fmt.Sprintf("%s points timed out", name)
 	default:
 		failedPropNames := failedPropReads(errs...)
 		var desc strings.Builder
@@ -70,11 +70,11 @@ func SummariseRequestErrors(name string, requests []string, errs []error) (gen.S
 				fmt.Fprintf(&desc, " and %d more", skipped)
 			}
 		}
-		level := gen.StatusLog_REDUCED_FUNCTION
+		level := gen_statuspb.StatusLog_REDUCED_FUNCTION
 		switch {
 		case notFoundCount > 0 && timeoutCount == 0 && otherCount == 0:
 			fmt.Fprintf(&desc, " not found on device")
-			level = gen.StatusLog_NOTICE
+			level = gen_statuspb.StatusLog_NOTICE
 		case notFoundCount == 0 && timeoutCount > 0 && otherCount == 0:
 			fmt.Fprintf(&desc, " timed out")
 		case notFoundCount == 0 && timeoutCount == 0 && otherCount > 0:

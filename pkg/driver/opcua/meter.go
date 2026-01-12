@@ -10,17 +10,17 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/conv"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 // Meter implements the Smart Core Meter trait for OPC UA devices.
 // It maps OPC UA variable nodes to Meter usage readings.
 type Meter struct {
-	gen.UnimplementedMeterApiServer
-	gen.UnimplementedMeterInfoServer
+	meterpb.UnimplementedMeterApiServer
+	meterpb.UnimplementedMeterInfoServer
 
-	energyValue *resource.Value // *gen.MeterReading
+	energyValue *resource.Value // *meterpb.MeterReading
 	logger      *zap.Logger
 	meterConfig config.MeterConfig
 	scName      string
@@ -37,24 +37,24 @@ func newMeter(n string, config config.RawTrait, l *zap.Logger) (*Meter, error) {
 		return nil, err
 	}
 	return &Meter{
-		energyValue: resource.NewValue(resource.WithInitialValue(&gen.MeterReading{}), resource.WithNoDuplicates()),
+		energyValue: resource.NewValue(resource.WithInitialValue(&meterpb.MeterReading{}), resource.WithNoDuplicates()),
 		logger:      l,
 		meterConfig: cfg,
 		scName:      n,
 	}, nil
 }
 
-func (m *Meter) GetMeterReading(_ context.Context, _ *gen.GetMeterReadingRequest) (*gen.MeterReading, error) {
-	return m.energyValue.Get().(*gen.MeterReading), nil
+func (m *Meter) GetMeterReading(_ context.Context, _ *meterpb.GetMeterReadingRequest) (*meterpb.MeterReading, error) {
+	return m.energyValue.Get().(*meterpb.MeterReading), nil
 }
 
-func (m *Meter) PullMeterReadings(_ *gen.PullMeterReadingsRequest, server gen.MeterApi_PullMeterReadingsServer) error {
+func (m *Meter) PullMeterReadings(_ *meterpb.PullMeterReadingsRequest, server meterpb.MeterApi_PullMeterReadingsServer) error {
 	for value := range m.energyValue.Pull(server.Context()) {
-		err := server.Send(&gen.PullMeterReadingsResponse{Changes: []*gen.PullMeterReadingsResponse_Change{
+		err := server.Send(&meterpb.PullMeterReadingsResponse{Changes: []*meterpb.PullMeterReadingsResponse_Change{
 			{
 				Name:         m.scName,
 				ChangeTime:   timestamppb.New(value.ChangeTime),
-				MeterReading: m.energyValue.Get().(*gen.MeterReading),
+				MeterReading: m.energyValue.Get().(*meterpb.MeterReading),
 			},
 		}})
 		if err != nil {
@@ -64,8 +64,8 @@ func (m *Meter) PullMeterReadings(_ *gen.PullMeterReadingsRequest, server gen.Me
 	return nil
 }
 
-func (m *Meter) DescribeMeterReading(context.Context, *gen.DescribeMeterReadingRequest) (*gen.MeterReadingSupport, error) {
-	return &gen.MeterReadingSupport{
+func (m *Meter) DescribeMeterReading(context.Context, *meterpb.DescribeMeterReadingRequest) (*meterpb.MeterReadingSupport, error) {
+	return &meterpb.MeterReadingSupport{
 		UsageUnit: m.meterConfig.Unit,
 	}, nil
 }
@@ -85,7 +85,7 @@ func (m *Meter) handleMeterEvent(node *ua.NodeID, value any) {
 			m.logger.Error("scaled value is not float32", zap.String("device", m.scName), zap.Any("value", scaled))
 			return
 		}
-		_, _ = m.energyValue.Set(&gen.MeterReading{
+		_, _ = m.energyValue.Set(&meterpb.MeterReading{
 			Usage:   usage,
 			EndTime: timestamppb.Now(),
 		})

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.devices.v1;
 
-option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/devicespb";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";

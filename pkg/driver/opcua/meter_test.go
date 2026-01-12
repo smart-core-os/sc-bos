@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
 
 func TestMeter_GetMeterReading(t *testing.T) {
@@ -22,7 +22,7 @@ func TestMeter_GetMeterReading(t *testing.T) {
 	}
 
 	// Test initial state
-	reading, err := meter.GetMeterReading(t.Context(), &gen.GetMeterReadingRequest{})
+	reading, err := meter.GetMeterReading(t.Context(), &meterpb.GetMeterReadingRequest{})
 	if err != nil {
 		t.Errorf("GetMeterReading() error = %v", err)
 	}
@@ -45,7 +45,7 @@ func TestMeter_DescribeMeterReading(t *testing.T) {
 		t.Fatalf("newMeter() error = %v", err)
 	}
 
-	support, err := meter.DescribeMeterReading(t.Context(), &gen.DescribeMeterReadingRequest{})
+	support, err := meter.DescribeMeterReading(t.Context(), &meterpb.DescribeMeterReadingRequest{})
 	if err != nil {
 		t.Errorf("DescribeMeterReading() error = %v", err)
 	}
@@ -118,7 +118,7 @@ func TestMeter_handleMeterEvent(t *testing.T) {
 			nodeId, _ := ua.ParseNodeID(tt.nodeId)
 			meter.handleMeterEvent(nodeId, tt.value)
 
-			reading, _ := meter.GetMeterReading(t.Context(), &gen.GetMeterReadingRequest{})
+			reading, _ := meter.GetMeterReading(t.Context(), &meterpb.GetMeterReadingRequest{})
 			if reading.Usage != tt.wantUsage {
 				t.Errorf("After handleMeterEvent, usage = %v, want %v", reading.Usage, tt.wantUsage)
 			}

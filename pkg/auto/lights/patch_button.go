@@ -5,13 +5,13 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
 type ButtonPatches struct {
 	name   deviceName
-	client gen.ButtonApiClient
+	client buttonpb.ButtonApiClient
 	logger *zap.Logger
 }
 
@@ -23,7 +23,7 @@ func (p *ButtonPatches) Subscribe(ctx context.Context, changes chan<- Patcher) e
 }
 
 func (p *ButtonPatches) Pull(ctx context.Context, changes chan<- Patcher) error {
-	stream, err := p.client.PullButtonState(ctx, &gen.PullButtonStateRequest{Name: p.name})
+	stream, err := p.client.PullButtonState(ctx, &buttonpb.PullButtonStateRequest{Name: p.name})
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (p *ButtonPatches) Pull(ctx context.Context, changes chan<- Patcher) error 
 }
 
 func (p *ButtonPatches) Poll(ctx context.Context, changes chan<- Patcher) error {
-	res, err := p.client.GetButtonState(ctx, &gen.GetButtonStateRequest{Name: p.name})
+	res, err := p.client.GetButtonState(ctx, &buttonpb.GetButtonStateRequest{Name: p.name})
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (p *ButtonPatches) Poll(ctx context.Context, changes chan<- Patcher) error 
 }
 
 type pullButtonStatePatcher struct {
-	response *gen.PullButtonStateResponse
+	response *buttonpb.PullButtonStateResponse
 }
 
 func (p pullButtonStatePatcher) Patch(state *ReadState) {
@@ -73,7 +73,7 @@ func (p pullButtonStatePatcher) Patch(state *ReadState) {
 
 type getButtonStatePatcher struct {
 	name        deviceName
-	buttonState *gen.ButtonState
+	buttonState *buttonpb.ButtonState
 }
 
 func (p getButtonStatePatcher) Patch(state *ReadState) {
@@ -88,7 +88,7 @@ func (name clearButtonStatePatcher) Patch(state *ReadState) {
 
 // Might want this for decided if I should action button press
 // does the button state contain a single click gesture that we haven't processed before?
-// func isNewSingleClick(oldState, newState *gen.ButtonState) (t time.Time, ok bool) {
+// func isNewSingleClick(oldState, newState *buttonpb.ButtonState) (t time.Time, ok bool) {
 // 	oldGesture := oldState.GetMostRecentGesture()
 // 	newGesture := newState.GetMostRecentGesture()
 //
@@ -96,7 +96,7 @@ func (name clearButtonStatePatcher) Patch(state *ReadState) {
 // 		return time.Time{}, false
 // 	}
 // 	hasNewID := oldGesture.GetId() != newGesture.GetId()
-// 	isSingleClick := newGesture.Kind == gen.ButtonState_Gesture_CLICK && newGesture.Count == 1
+// 	isSingleClick := newGesture.Kind == buttonpb.ButtonState_Gesture_CLICK && newGesture.Count == 1
 // 	if hasNewID && isSingleClick {
 // 		ok = true
 // 		t = newGesture.GetEndTime().AsTime()

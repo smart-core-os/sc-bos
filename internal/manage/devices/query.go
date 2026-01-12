@@ -15,11 +15,11 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 )
 
 // deviceMatchesQuery returns true if all the conditions in query match fields of device.
-func deviceMatchesQuery(query *gen.Device_Query, device *gen.Device) bool {
+func deviceMatchesQuery(query *devicespb.Device_Query, device *devicespb.Device) bool {
 	if query == nil {
 		return true
 	}
@@ -36,7 +36,7 @@ func deviceMatchesQuery(query *gen.Device_Query, device *gen.Device) bool {
 // conditionMatchesMessage returns true if the condition matches values in msg.
 // If the condition has a path, only values matching the path are considered,
 // otherwise all leafs in msg are considered.
-func conditionMatchesMessage(cond *gen.Device_Query_Condition, msg proto.Message) bool {
+func conditionMatchesMessage(cond *devicespb.Device_Query_Condition, msg proto.Message) bool {
 	cmp := conditionToCmpFunc(cond)
 	values, err := rangeMessage(cond.Field, msg)
 	if err != nil {
@@ -46,7 +46,7 @@ func conditionMatchesMessage(cond *gen.Device_Query_Condition, msg proto.Message
 }
 
 // valueMatchesQuery returns true if all the conditions in query match fields of v.
-func valueMatchesQuery(query *gen.Device_Query, v value) bool {
+func valueMatchesQuery(query *devicespb.Device_Query, v value) bool {
 	for _, condition := range query.Conditions {
 		if !conditionMatchesValue(condition, v) {
 			return false
@@ -58,7 +58,7 @@ func valueMatchesQuery(query *gen.Device_Query, v value) bool {
 // conditionMatchesValue returns true if the condition matches values in v.
 // If the condition has a path, only values matching the path are considered,
 // otherwise all leafs in v are considered, including v itself.
-func conditionMatchesValue(cond *gen.Device_Query_Condition, v value) bool {
+func conditionMatchesValue(cond *devicespb.Device_Query_Condition, v value) bool {
 	cmp := conditionToCmpFunc(cond)
 	values, err := rangeValue(cond.Field, v)
 	if err != nil {
@@ -69,16 +69,16 @@ func conditionMatchesValue(cond *gen.Device_Query_Condition, v value) bool {
 
 // conditionMatchesValues returns true if values match according to cmp.
 // cond.RepeatedMatch determines whether any or all values must match.
-func conditionMatchesValues(cond *gen.Device_Query_Condition, values iter.Seq[value], cmp func(value) bool) bool {
+func conditionMatchesValues(cond *devicespb.Device_Query_Condition, values iter.Seq[value], cmp func(value) bool) bool {
 	switch cond.Matcher {
-	case gen.Device_Query_Condition_MATCHER_UNSPECIFIED, gen.Device_Query_Condition_ANY:
+	case devicespb.Device_Query_Condition_MATCHER_UNSPECIFIED, devicespb.Device_Query_Condition_ANY:
 		for v := range values {
 			if cmp(v) {
 				return true
 			}
 		}
 		return false
-	case gen.Device_Query_Condition_ALL:
+	case devicespb.Device_Query_Condition_ALL:
 		found := false
 		for v := range values {
 			found = true
@@ -93,7 +93,7 @@ func conditionMatchesValues(cond *gen.Device_Query_Condition, values iter.Seq[va
 }
 
 // conditionToCmpFunc converts a Device_Query_Condition into a function that checks if value values match the condition.
-func conditionToCmpFunc(cond *gen.Device_Query_Condition) func(value) bool {
+func conditionToCmpFunc(cond *devicespb.Device_Query_Condition) func(value) bool {
 	strCmp := func(f func(string) bool) func(v value) bool {
 		return func(v value) bool {
 			s, ok := v.toString()
@@ -122,24 +122,24 @@ func conditionToCmpFunc(cond *gen.Device_Query_Condition) func(value) bool {
 	}
 
 	switch c := cond.Value.(type) {
-	case *gen.Device_Query_Condition_StringEqual:
+	case *devicespb.Device_Query_Condition_StringEqual:
 		return strCmp(func(v string) bool {
 			return v == c.StringEqual
 		})
-	case *gen.Device_Query_Condition_StringEqualFold:
+	case *devicespb.Device_Query_Condition_StringEqualFold:
 		return strCmp(func(v string) bool {
 			return strings.EqualFold(v, c.StringEqualFold)
 		})
-	case *gen.Device_Query_Condition_StringContains:
+	case *devicespb.Device_Query_Condition_StringContains:
 		return strCmp(func(v string) bool {
 			return strings.Contains(v, c.StringContains)
 		})
-	case *gen.Device_Query_Condition_StringContainsFold:
+	case *devicespb.Device_Query_Condition_StringContainsFold:
 		ls := strings.ToLower(c.StringContainsFold)
 		return strCmp(func(v string) bool {
 			return strings.Contains(strings.ToLower(v), ls)
 		})
-	case *gen.Device_Query_Condition_StringIn:
+	case *devicespb.Device_Query_Condition_StringIn:
 		set := make(map[string]struct{}, len(c.StringIn.Strings))
 		for _, s := range c.StringIn.Strings {
 			set[s] = struct{}{}
@@ -148,7 +148,7 @@ func conditionToCmpFunc(cond *gen.Device_Query_Condition) func(value) bool {
 			_, ok := set[v]
 			return ok
 		})
-	case *gen.Device_Query_Condition_StringInFold:
+	case *devicespb.Device_Query_Condition_StringInFold:
 		set := make(map[string]struct{}, len(c.StringInFold.Strings))
 		for _, s := range c.StringInFold.Strings {
 			set[strings.ToLower(s)] = struct{}{}
@@ -158,19 +158,19 @@ func conditionToCmpFunc(cond *gen.Device_Query_Condition) func(value) bool {
 			return ok
 		})
 
-	case *gen.Device_Query_Condition_TimestampEqual:
+	case *devicespb.Device_Query_Condition_TimestampEqual:
 		return timestampCmp(func(t *timestamppb.Timestamp) bool {
 			return t.AsTime().Equal(c.TimestampEqual.AsTime())
 		})
-	case *gen.Device_Query_Condition_TimestampGt:
+	case *devicespb.Device_Query_Condition_TimestampGt:
 		return timestampCmp(func(t *timestamppb.Timestamp) bool {
 			return t.AsTime().After(c.TimestampGt.AsTime())
 		})
-	case *gen.Device_Query_Condition_TimestampGte:
+	case *devicespb.Device_Query_Condition_TimestampGte:
 		return timestampCmp(func(t *timestamppb.Timestamp) bool {
 			return !t.AsTime().Before(c.TimestampGte.AsTime())
 		})
-	case *gen.Device_Query_Condition_TimestampLt:
+	case *devicespb.Device_Query_Condition_TimestampLt:
 		return timestampCmp(func(t *timestamppb.Timestamp) bool {
 			// zero times shouldn't match
 			goT := t.AsTime()
@@ -179,7 +179,7 @@ func conditionToCmpFunc(cond *gen.Device_Query_Condition) func(value) bool {
 			}
 			return goT.Before(c.TimestampLt.AsTime())
 		})
-	case *gen.Device_Query_Condition_TimestampLte:
+	case *devicespb.Device_Query_Condition_TimestampLte:
 		return timestampCmp(func(t *timestamppb.Timestamp) bool {
 			// zero times shouldn't match
 			goT := t.AsTime()
@@ -189,33 +189,33 @@ func conditionToCmpFunc(cond *gen.Device_Query_Condition) func(value) bool {
 			return !goT.After(c.TimestampLte.AsTime())
 		})
 
-	case *gen.Device_Query_Condition_NameDescendant:
+	case *devicespb.Device_Query_Condition_NameDescendant:
 		return descendantCmp(func(v string) bool {
 			return strings.HasPrefix(v, c.NameDescendant+"/")
 		})
-	case *gen.Device_Query_Condition_NameDescendantInc:
+	case *devicespb.Device_Query_Condition_NameDescendantInc:
 		return descendantCmp(func(v string) bool {
 			return v == c.NameDescendantInc || strings.HasPrefix(v, c.NameDescendantInc+"/")
 		})
-	case *gen.Device_Query_Condition_NameDescendantIn:
+	case *devicespb.Device_Query_Condition_NameDescendantIn:
 		tree := newTreeFromPaths(c.NameDescendantIn.Strings...)
 		return descendantCmp(func(v string) bool {
 			n, self := tree.matchDescendant(v)
 			return n != nil && !self
 		})
-	case *gen.Device_Query_Condition_NameDescendantIncIn:
+	case *devicespb.Device_Query_Condition_NameDescendantIncIn:
 		tree := newTreeFromPaths(c.NameDescendantIncIn.Strings...)
 		return descendantCmp(func(v string) bool {
 			n, _ := tree.matchDescendant(v)
 			return n != nil
 		})
 
-	case *gen.Device_Query_Condition_Present:
+	case *devicespb.Device_Query_Condition_Present:
 		return func(v value) bool {
 			return v.v.IsValid()
 		}
 
-	case *gen.Device_Query_Condition_Matches:
+	case *devicespb.Device_Query_Condition_Matches:
 		return func(v value) bool {
 			return valueMatchesQuery(c.Matches, v)
 		}

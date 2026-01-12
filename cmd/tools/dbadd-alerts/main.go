@@ -25,7 +25,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 )
 
 var (
@@ -49,9 +50,9 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("grpc.NewClient: %w", err)
 	}
 
-	devicesClient := gen.NewDevicesApiClient(conn)
-	alertClient := gen.NewAlertApiClient(conn)
-	alertAdminClient := gen.NewAlertAdminApiClient(conn)
+	devicesClient := devicespb.NewDevicesApiClient(conn)
+	alertClient := alertpb.NewAlertApiClient(conn)
+	alertAdminClient := alertpb.NewAlertAdminApiClient(conn)
 
 	// get the devices that will be used as sources for the alerts
 	devices, err := listDevices(ctx, devicesClient)
@@ -61,21 +62,21 @@ func run(ctx context.Context) error {
 	if len(devices) == 0 {
 		return fmt.Errorf("no devices found, nothing to act as alert sources")
 	}
-	randDevice := func() *gen.Device {
+	randDevice := func() *devicespb.Device {
 		return devices[rand.Intn(len(devices))]
 	}
-	writeAlert := func() (*gen.Alert, bool, error) {
+	writeAlert := func() (*alertpb.Alert, bool, error) {
 		d := randDevice()
 		a := genAlert(d)
 		// randomly resolve some alerts instead of updating them
 		if rand.Intn(10) == 0 {
-			_, err := alertAdminClient.ResolveAlert(ctx, &gen.ResolveAlertRequest{Alert: a, AllowMissing: true})
+			_, err := alertAdminClient.ResolveAlert(ctx, &alertpb.ResolveAlertRequest{Alert: a, AllowMissing: true})
 			if err != nil {
 				return nil, false, fmt.Errorf("resolve alert: %w", err)
 			}
 			return a, true, nil
 		}
-		_, err := alertAdminClient.CreateAlert(ctx, &gen.CreateAlertRequest{Alert: a, MergeSource: true})
+		_, err := alertAdminClient.CreateAlert(ctx, &alertpb.CreateAlertRequest{Alert: a, MergeSource: true})
 		if err != nil {
 			return nil, false, fmt.Errorf("add alert: %w", err)
 		}
@@ -116,9 +117,9 @@ func run(ctx context.Context) error {
 	}
 }
 
-func listDevices(ctx context.Context, devicesClient gen.DevicesApiClient) ([]*gen.Device, error) {
-	req := &gen.ListDevicesRequest{}
-	var res []*gen.Device
+func listDevices(ctx context.Context, devicesClient devicespb.DevicesApiClient) ([]*devicespb.Device, error) {
+	req := &devicespb.ListDevicesRequest{}
+	var res []*devicespb.Device
 
 	for {
 		resp, err := devicesClient.ListDevices(ctx, req)
@@ -134,11 +135,11 @@ func listDevices(ctx context.Context, devicesClient gen.DevicesApiClient) ([]*ge
 	return res, nil
 }
 
-func getSeedState(ctx context.Context, alertClient gen.AlertApiClient) (startTime time.Time, alertsNeeded int, err error) {
+func getSeedState(ctx context.Context, alertClient alertpb.AlertApiClient) (startTime time.Time, alertsNeeded int, err error) {
 	fail := func(err error) (time.Time, int, error) {
 		return time.Time{}, 0, err
 	}
-	alerts, err := alertClient.ListAlerts(ctx, &gen.ListAlertsRequest{PageSize: 1})
+	alerts, err := alertClient.ListAlerts(ctx, &alertpb.ListAlertsRequest{PageSize: 1})
 	if err != nil {
 		return fail(err)
 	}
@@ -148,7 +149,7 @@ func getSeedState(ctx context.Context, alertClient gen.AlertApiClient) (startTim
 		startTime = alerts.Alerts[0].CreateTime.AsTime()
 	}
 
-	metadata, err := alertClient.GetAlertMetadata(ctx, &gen.GetAlertMetadataRequest{})
+	metadata, err := alertClient.GetAlertMetadata(ctx, &alertpb.GetAlertMetadataRequest{})
 	if err != nil {
 		return fail(err)
 	}
@@ -159,8 +160,8 @@ func getSeedState(ctx context.Context, alertClient gen.AlertApiClient) (startTim
 	return startTime, alertsNeeded, nil
 }
 
-func genAlert(d *gen.Device) *gen.Alert {
-	return &gen.Alert{
+func genAlert(d *devicespb.Device) *alertpb.Alert {
+	return &alertpb.Alert{
 		Description: fmt.Sprintf("Something happened to %s", d.Name),
 		CreateTime:  timestamppb.Now(),
 		Severity:    randSeverity(),
@@ -171,9 +172,9 @@ func genAlert(d *gen.Device) *gen.Alert {
 	}
 }
 
-var severities = maps.Keys(gen.Alert_Severity_name)
+var severities = maps.Keys(alertpb.Alert_Severity_name)
 
-func randSeverity() gen.Alert_Severity {
+func randSeverity() alertpb.Alert_Severity {
 	// don't include unspecified
-	return gen.Alert_Severity(severities[rand.Intn(len(severities)-1)+1])
+	return alertpb.Alert_Severity(severities[rand.Intn(len(severities)-1)+1])
 }

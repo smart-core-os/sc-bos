@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
 var (
@@ -18,15 +18,15 @@ func updateRequestErrorStatus(statuses *statuspb.Map, name, request string, err 
 	problemName := fmt.Sprintf("%s.%s", name, "request")
 	switch {
 	case err == nil:
-		statuses.UpdateProblem(name, &gen.StatusLog_Problem{
+		statuses.UpdateProblem(name, &gen_statuspb.StatusLog_Problem{
 			Name:        problemName,
-			Level:       gen.StatusLog_NOMINAL,
+			Level:       gen_statuspb.StatusLog_NOMINAL,
 			Description: fmt.Sprintf("request success %s", request),
 		})
 	case errors.Is(err, context.DeadlineExceeded):
-		statuses.UpdateProblem(name, &gen.StatusLog_Problem{
+		statuses.UpdateProblem(name, &gen_statuspb.StatusLog_Problem{
 			Name:        problemName,
-			Level:       gen.StatusLog_OFFLINE,
+			Level:       gen_statuspb.StatusLog_OFFLINE,
 			Description: fmt.Sprintf("timeout during %s", request),
 		})
 	}

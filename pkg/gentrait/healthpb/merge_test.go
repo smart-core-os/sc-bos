@@ -9,32 +9,32 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 func TestCheck(t *testing.T) {
 	tests := []struct {
 		name           string
-		src, dst, want *gen.HealthCheck
+		src, dst, want *healthpb.HealthCheck
 		ignore         string
 	}{
 		{
 			name: "oneof changes",
-			src: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Bounds_{
-					Bounds: &gen.HealthCheck_Bounds{
+			src: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
 						CurrentValue: intValue(1),
 					},
 				},
 			},
-			dst: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Faults_{
-					Faults: &gen.HealthCheck_Faults{},
+			dst: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Faults_{
+					Faults: &healthpb.HealthCheck_Faults{},
 				},
 			},
-			want: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Bounds_{
-					Bounds: &gen.HealthCheck_Bounds{
+			want: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
 						CurrentValue: intValue(1),
 					},
 				},
@@ -42,43 +42,43 @@ func TestCheck(t *testing.T) {
 		},
 		{
 			name: "oneof changes reverse",
-			src: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Faults_{
-					Faults: &gen.HealthCheck_Faults{},
+			src: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Faults_{
+					Faults: &healthpb.HealthCheck_Faults{},
 				},
 			},
-			dst: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Bounds_{
-					Bounds: &gen.HealthCheck_Bounds{
+			dst: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
 						CurrentValue: intValue(1),
 					},
 				},
 			},
-			want: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Faults_{
-					Faults: &gen.HealthCheck_Faults{},
+			want: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Faults_{
+					Faults: &healthpb.HealthCheck_Faults{},
 				},
 			},
 		},
 		{
 			name: "bounds.normal_values",
-			src: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Bounds_{
-					Bounds: &gen.HealthCheck_Bounds{
+			src: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
 						Expected: intNormalValues(1, 2),
 					},
 				},
 			},
-			dst: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Bounds_{
-					Bounds: &gen.HealthCheck_Bounds{
+			dst: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
 						Expected: intNormalValues(10, 20),
 					},
 				},
 			},
-			want: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Bounds_{
-					Bounds: &gen.HealthCheck_Bounds{
+			want: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
 						Expected: intNormalValues(1, 2),
 					},
 				},
@@ -86,23 +86,23 @@ func TestCheck(t *testing.T) {
 		},
 		{
 			name: "bounds.abnormal_values",
-			src: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Bounds_{
-					Bounds: &gen.HealthCheck_Bounds{
+			src: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
 						Expected: intAbnormalValues(1, 2),
 					},
 				},
 			},
-			dst: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Bounds_{
-					Bounds: &gen.HealthCheck_Bounds{
+			dst: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
 						Expected: intAbnormalValues(10, 20),
 					},
 				},
 			},
-			want: &gen.HealthCheck{
-				Check: &gen.HealthCheck_Bounds_{
-					Bounds: &gen.HealthCheck_Bounds{
+			want: &healthpb.HealthCheck{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
 						Expected: intAbnormalValues(1, 2),
 					},
 				},
@@ -110,82 +110,82 @@ func TestCheck(t *testing.T) {
 		},
 		{
 			name: "compliance_impact",
-			src: &gen.HealthCheck{
-				ComplianceImpacts: []*gen.HealthCheck_ComplianceImpact{
-					{Contribution: gen.HealthCheck_ComplianceImpact_FAIL},
+			src: &healthpb.HealthCheck{
+				ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
+					{Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
 				},
 			},
-			dst: &gen.HealthCheck{
-				ComplianceImpacts: []*gen.HealthCheck_ComplianceImpact{
-					{Contribution: gen.HealthCheck_ComplianceImpact_RATING},
+			dst: &healthpb.HealthCheck{
+				ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
+					{Contribution: healthpb.HealthCheck_ComplianceImpact_RATING},
 				},
 			},
-			want: &gen.HealthCheck{
-				ComplianceImpacts: []*gen.HealthCheck_ComplianceImpact{
-					{Contribution: gen.HealthCheck_ComplianceImpact_FAIL},
+			want: &healthpb.HealthCheck{
+				ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
+					{Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
 				},
 			},
 		},
 		{
 			ignore: "consistency with other merge functions",
 			name:   "timestamp",
-			src: &gen.HealthCheck{
+			src: &healthpb.HealthCheck{
 				AbnormalTime: timestamppb.New(time.Unix(100, 0)),
 			},
-			dst: &gen.HealthCheck{
+			dst: &healthpb.HealthCheck{
 				AbnormalTime: timestamppb.New(time.Unix(10, 100)),
 			},
-			want: &gen.HealthCheck{
+			want: &healthpb.HealthCheck{
 				AbnormalTime: timestamppb.New(time.Unix(100, 0)),
 			},
 		},
 		{
 			name: "create_time both nil",
-			src:  &gen.HealthCheck{},
-			dst:  &gen.HealthCheck{},
-			want: &gen.HealthCheck{},
+			src:  &healthpb.HealthCheck{},
+			dst:  &healthpb.HealthCheck{},
+			want: &healthpb.HealthCheck{},
 		},
 		{
 			name: "create_time src nil",
-			src:  &gen.HealthCheck{},
-			dst: &gen.HealthCheck{
+			src:  &healthpb.HealthCheck{},
+			dst: &healthpb.HealthCheck{
 				CreateTime: timestamppb.New(time.Unix(10, 0)),
 			},
-			want: &gen.HealthCheck{
+			want: &healthpb.HealthCheck{
 				CreateTime: timestamppb.New(time.Unix(10, 0)),
 			},
 		},
 		{
 			name: "create_time dst nil",
-			src: &gen.HealthCheck{
+			src: &healthpb.HealthCheck{
 				CreateTime: timestamppb.New(time.Unix(10, 0)),
 			},
-			dst: &gen.HealthCheck{},
-			want: &gen.HealthCheck{
+			dst: &healthpb.HealthCheck{},
+			want: &healthpb.HealthCheck{
 				CreateTime: timestamppb.New(time.Unix(10, 0)),
 			},
 		},
 		{
 			name: "create_time src < dst",
-			src: &gen.HealthCheck{
+			src: &healthpb.HealthCheck{
 				CreateTime: timestamppb.New(time.Unix(10, 0)),
 			},
-			dst: &gen.HealthCheck{
+			dst: &healthpb.HealthCheck{
 				CreateTime: timestamppb.New(time.Unix(20, 0)),
 			},
-			want: &gen.HealthCheck{
+			want: &healthpb.HealthCheck{
 				CreateTime: timestamppb.New(time.Unix(10, 0)),
 			},
 		},
 		{
 			name: "create_time src > dst",
-			src: &gen.HealthCheck{
+			src: &healthpb.HealthCheck{
 				CreateTime: timestamppb.New(time.Unix(20, 0)),
 			},
-			dst: &gen.HealthCheck{
+			dst: &healthpb.HealthCheck{
 				CreateTime: timestamppb.New(time.Unix(10, 0)),
 			},
-			want: &gen.HealthCheck{
+			want: &healthpb.HealthCheck{
 				CreateTime: timestamppb.New(time.Unix(10, 0)),
 			},
 		},
@@ -206,72 +206,72 @@ func TestCheck(t *testing.T) {
 func TestChecks(t *testing.T) {
 	tests := []struct {
 		name string
-		dst  []*gen.HealthCheck
-		src  []*gen.HealthCheck
-		want []*gen.HealthCheck
+		dst  []*healthpb.HealthCheck
+		src  []*healthpb.HealthCheck
+		want []*healthpb.HealthCheck
 	}{
 		{
 			name: "empty dst",
 			dst:  nil,
-			src: []*gen.HealthCheck{
+			src: []*healthpb.HealthCheck{
 				{Id: "b"},
 				{Id: "a"},
 			},
-			want: []*gen.HealthCheck{
+			want: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "b"},
 			},
 		},
 		{
 			name: "empty src",
-			dst: []*gen.HealthCheck{
+			dst: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "b"},
 			},
 			src: nil,
-			want: []*gen.HealthCheck{
+			want: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "b"},
 			},
 		},
 		{
 			name: "merge existing",
-			dst: []*gen.HealthCheck{
+			dst: []*healthpb.HealthCheck{
 				{
 					Id: "test",
-					ComplianceImpacts: []*gen.HealthCheck_ComplianceImpact{
-						{Contribution: gen.HealthCheck_ComplianceImpact_RATING},
+					ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
+						{Contribution: healthpb.HealthCheck_ComplianceImpact_RATING},
 					},
 				},
 			},
-			src: []*gen.HealthCheck{
+			src: []*healthpb.HealthCheck{
 				{
 					Id: "test",
-					ComplianceImpacts: []*gen.HealthCheck_ComplianceImpact{
-						{Contribution: gen.HealthCheck_ComplianceImpact_FAIL},
+					ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
+						{Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
 					},
 				},
 			},
-			want: []*gen.HealthCheck{
+			want: []*healthpb.HealthCheck{
 				{
 					Id: "test",
-					ComplianceImpacts: []*gen.HealthCheck_ComplianceImpact{
-						{Contribution: gen.HealthCheck_ComplianceImpact_FAIL},
+					ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
+						{Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
 					},
 				},
 			},
 		},
 		{
 			name: "add new checks",
-			dst: []*gen.HealthCheck{
+			dst: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "c"},
 			},
-			src: []*gen.HealthCheck{
+			src: []*healthpb.HealthCheck{
 				{Id: "b"},
 				{Id: "d"},
 			},
-			want: []*gen.HealthCheck{
+			want: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "b"},
 				{Id: "c"},
@@ -280,29 +280,29 @@ func TestChecks(t *testing.T) {
 		},
 		{
 			name: "mixed merge and add",
-			dst: []*gen.HealthCheck{
+			dst: []*healthpb.HealthCheck{
 				{
 					Id: "a",
-					ComplianceImpacts: []*gen.HealthCheck_ComplianceImpact{
-						{Contribution: gen.HealthCheck_ComplianceImpact_RATING},
+					ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
+						{Contribution: healthpb.HealthCheck_ComplianceImpact_RATING},
 					},
 				},
 				{Id: "c"},
 			},
-			src: []*gen.HealthCheck{
+			src: []*healthpb.HealthCheck{
 				{
 					Id: "a",
-					ComplianceImpacts: []*gen.HealthCheck_ComplianceImpact{
-						{Contribution: gen.HealthCheck_ComplianceImpact_FAIL},
+					ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
+						{Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
 					},
 				},
 				{Id: "b"},
 			},
-			want: []*gen.HealthCheck{
+			want: []*healthpb.HealthCheck{
 				{
 					Id: "a",
-					ComplianceImpacts: []*gen.HealthCheck_ComplianceImpact{
-						{Contribution: gen.HealthCheck_ComplianceImpact_FAIL},
+					ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
+						{Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
 					},
 				},
 				{Id: "b"},
@@ -324,9 +324,9 @@ func TestChecks(t *testing.T) {
 func TestRemove(t *testing.T) {
 	tests := []struct {
 		name string
-		dst  []*gen.HealthCheck
+		dst  []*healthpb.HealthCheck
 		id   string
-		want []*gen.HealthCheck
+		want []*healthpb.HealthCheck
 	}{
 		{
 			name: "empty slice",
@@ -336,13 +336,13 @@ func TestRemove(t *testing.T) {
 		},
 		{
 			name: "non-existent id",
-			dst: []*gen.HealthCheck{
+			dst: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "b"},
 				{Id: "c"},
 			},
 			id: "d",
-			want: []*gen.HealthCheck{
+			want: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "b"},
 				{Id: "c"},
@@ -350,50 +350,50 @@ func TestRemove(t *testing.T) {
 		},
 		{
 			name: "remove first element",
-			dst: []*gen.HealthCheck{
+			dst: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "b"},
 				{Id: "c"},
 			},
 			id: "a",
-			want: []*gen.HealthCheck{
+			want: []*healthpb.HealthCheck{
 				{Id: "b"},
 				{Id: "c"},
 			},
 		},
 		{
 			name: "remove middle element",
-			dst: []*gen.HealthCheck{
+			dst: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "b"},
 				{Id: "c"},
 			},
 			id: "b",
-			want: []*gen.HealthCheck{
+			want: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "c"},
 			},
 		},
 		{
 			name: "remove last element",
-			dst: []*gen.HealthCheck{
+			dst: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "b"},
 				{Id: "c"},
 			},
 			id: "c",
-			want: []*gen.HealthCheck{
+			want: []*healthpb.HealthCheck{
 				{Id: "a"},
 				{Id: "b"},
 			},
 		},
 		{
 			name: "remove only element",
-			dst: []*gen.HealthCheck{
+			dst: []*healthpb.HealthCheck{
 				{Id: "a"},
 			},
 			id:   "a",
-			want: []*gen.HealthCheck{},
+			want: []*healthpb.HealthCheck{},
 		},
 	}
 
@@ -407,28 +407,28 @@ func TestRemove(t *testing.T) {
 	}
 }
 
-func intValue(value int) *gen.HealthCheck_Value {
-	return &gen.HealthCheck_Value{
-		Value: &gen.HealthCheck_Value_IntValue{IntValue: int64(value)},
+func intValue(value int) *healthpb.HealthCheck_Value {
+	return &healthpb.HealthCheck_Value{
+		Value: &healthpb.HealthCheck_Value_IntValue{IntValue: int64(value)},
 	}
 }
 
-func intNormalValues(values ...int) *gen.HealthCheck_Bounds_NormalValues {
-	valuespb := make([]*gen.HealthCheck_Value, len(values))
+func intNormalValues(values ...int) *healthpb.HealthCheck_Bounds_NormalValues {
+	valuespb := make([]*healthpb.HealthCheck_Value, len(values))
 	for i, v := range values {
 		valuespb[i] = intValue(v)
 	}
-	return &gen.HealthCheck_Bounds_NormalValues{
-		NormalValues: &gen.HealthCheck_Values{Values: valuespb},
+	return &healthpb.HealthCheck_Bounds_NormalValues{
+		NormalValues: &healthpb.HealthCheck_Values{Values: valuespb},
 	}
 }
 
-func intAbnormalValues(values ...int) *gen.HealthCheck_Bounds_AbnormalValues {
-	valuespb := make([]*gen.HealthCheck_Value, len(values))
+func intAbnormalValues(values ...int) *healthpb.HealthCheck_Bounds_AbnormalValues {
+	valuespb := make([]*healthpb.HealthCheck_Value, len(values))
 	for i, v := range values {
 		valuespb[i] = intValue(v)
 	}
-	return &gen.HealthCheck_Bounds_AbnormalValues{
-		AbnormalValues: &gen.HealthCheck_Values{Values: valuespb},
+	return &healthpb.HealthCheck_Bounds_AbnormalValues{
+		AbnormalValues: &healthpb.HealthCheck_Values{Values: valuespb},
 	}
 }

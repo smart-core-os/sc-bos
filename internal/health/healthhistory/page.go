@@ -6,8 +6,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/internal/health/healthdb"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 // These are the same as those in the historypb package.
@@ -16,7 +16,7 @@ const (
 	maxPageSize     = 1000
 )
 
-func parsePageInfo(req *gen.ListHealthCheckHistoryRequest) (nextID healthdb.RecordID, pageSize, totalSize int32, _ error) {
+func parsePageInfo(req *healthpb.ListHealthCheckHistoryRequest) (nextID healthdb.RecordID, pageSize, totalSize int32, _ error) {
 	pageToken, err := unmarshalToken(req.GetPageToken())
 	if err != nil {
 		return 0, 0, 0, err

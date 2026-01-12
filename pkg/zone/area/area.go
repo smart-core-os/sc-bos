@@ -10,8 +10,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/block"
 	"github.com/smart-core-os/sc-bos/pkg/block/mdblock"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
@@ -145,7 +145,7 @@ func (a *Area) applyConfig(ctx context.Context, cfg config.Root) error {
 	// make the zone area implement the ServicesApi
 	m := service.NewMapOf(featureImpls)
 	api := serviceapi.NewApi(m)
-	announce.Announce(cfg.Name, node.HasClient(gen.WrapServicesApi(api)))
+	announce.Announce(cfg.Name, node.HasClient(servicespb.WrapApi(api)))
 
 	// stop all features if the area is stopped
 	go func() {

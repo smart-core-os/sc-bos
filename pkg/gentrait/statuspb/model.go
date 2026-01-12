@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
@@ -21,7 +21,7 @@ import (
 // Model provides an in-memory model for storing and retrieving problems as a status log.
 // A Model can be used as a backing store for the StatusApi.
 type Model struct {
-	problems *resource.Collection // of *gen.StatusLog_Problem
+	problems *resource.Collection // of *statuspb.StatusLog_Problem
 
 	equivalence cmp.Message
 }
@@ -35,15 +35,15 @@ func NewModel(opts ...resource.Option) *Model {
 }
 
 // GetCurrentStatus returns all known problems as a status log.
-func (m *Model) GetCurrentStatus(readMask *fieldmaskpb.FieldMask) (*gen.StatusLog, error) {
+func (m *Model) GetCurrentStatus(readMask *fieldmaskpb.FieldMask) (*statuspb.StatusLog, error) {
 	out := m.problemsToStatusLog(m.problems.List())
 
 	filter := masks.NewResponseFilter(masks.WithFieldMask(readMask))
 	clone := filter.FilterClone(out)
-	return clone.(*gen.StatusLog), nil
+	return clone.(*statuspb.StatusLog), nil
 }
 
-func (m *Model) problemsToStatusLog(problemMsgs []proto.Message) *gen.StatusLog {
+func (m *Model) problemsToStatusLog(problemMsgs []proto.Message) *statuspb.StatusLog {
 	pm := &ProblemMerger{}
 	pm.AddProblemMessages(problemMsgs)
 	return pm.Build()
@@ -51,7 +51,7 @@ func (m *Model) problemsToStatusLog(problemMsgs []proto.Message) *gen.StatusLog 
 
 // UpdateProblem will add or update the given problem in the model.
 // Pull methods will be notified.
-func (m *Model) UpdateProblem(problem *gen.StatusLog_Problem) (*gen.StatusLog_Problem, error) {
+func (m *Model) UpdateProblem(problem *statuspb.StatusLog_Problem) (*statuspb.StatusLog_Problem, error) {
 	if problem.RecordTime == nil {
 		problem.RecordTime = timestamppb.New(m.problems.Clock().Now())
 	}
@@ -59,9 +59,9 @@ func (m *Model) UpdateProblem(problem *gen.StatusLog_Problem) (*gen.StatusLog_Pr
 		if old == nil {
 			return
 		}
-		var oldp, newp *gen.StatusLog_Problem
-		oldp = old.(*gen.StatusLog_Problem)
-		newp = new.(*gen.StatusLog_Problem)
+		var oldp, newp *statuspb.StatusLog_Problem
+		oldp = old.(*statuspb.StatusLog_Problem)
+		newp = new.(*statuspb.StatusLog_Problem)
 		if oldp.RecordTime == nil {
 			return
 		}
@@ -72,7 +72,7 @@ func (m *Model) UpdateProblem(problem *gen.StatusLog_Problem) (*gen.StatusLog_Pr
 	if err != nil {
 		return nil, err
 	}
-	return res.(*gen.StatusLog_Problem), nil
+	return res.(*statuspb.StatusLog_Problem), nil
 }
 
 // DeleteProblem removes the named problem if it exists.
@@ -81,7 +81,7 @@ func (m *Model) DeleteProblem(name string) {
 }
 
 type StatusLogChange struct {
-	StatusLog  *gen.StatusLog
+	StatusLog  *statuspb.StatusLog
 	ChangeTime time.Time
 }
 
@@ -93,13 +93,13 @@ func (m *Model) PullCurrentStatus(ctx context.Context, readMask *fieldmaskpb.Fie
 	go func() {
 		defer close(send)
 
-		var lastSend *gen.StatusLog
+		var lastSend *statuspb.StatusLog
 		var problems []proto.Message // sorted by name
 		filter := masks.NewResponseFilter(masks.WithFieldMask(readMask))
 		seeding := true
 		for change := range stream {
 			i, found := sort.Find(len(problems), func(i int) int {
-				return strings.Compare(problems[i].(*gen.StatusLog_Problem).Name, change.Id)
+				return strings.Compare(problems[i].(*statuspb.StatusLog_Problem).Name, change.Id)
 			})
 			switch {
 			case change.NewValue == nil:
@@ -122,7 +122,7 @@ func (m *Model) PullCurrentStatus(ctx context.Context, readMask *fieldmaskpb.Fie
 			}
 
 			statusLog := m.problemsToStatusLog(problems)
-			statusLog = filter.FilterClone(statusLog).(*gen.StatusLog)
+			statusLog = filter.FilterClone(statusLog).(*statuspb.StatusLog)
 			if m.equivalence(statusLog, lastSend) {
 				continue
 			}

@@ -3,17 +3,17 @@ package soundsensorpb
 import (
 	"context"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 type Model struct {
-	soundLevel *resource.Value // of *gen.SoundLevel
+	soundLevel *resource.Value // of *soundsensorpb.SoundLevel
 }
 
 func NewModel(opts ...resource.Option) *Model {
-	defaultOpts := []resource.Option{resource.WithInitialValue(&gen.SoundLevel{})}
+	defaultOpts := []resource.Option{resource.WithInitialValue(&soundsensorpb.SoundLevel{})}
 	opts = append(defaultOpts, opts...)
 
 	return &Model{
@@ -21,20 +21,20 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) GetSoundLevel(opts ...resource.ReadOption) (*gen.SoundLevel, error) {
-	return m.soundLevel.Get(opts...).(*gen.SoundLevel), nil
+func (m *Model) GetSoundLevel(opts ...resource.ReadOption) (*soundsensorpb.SoundLevel, error) {
+	return m.soundLevel.Get(opts...).(*soundsensorpb.SoundLevel), nil
 }
 
 func (m *Model) PullSoundLevel(ctx context.Context, opts ...resource.ReadOption) <-chan PullSoundLevelChange {
-	return resources.PullValue[*gen.SoundLevel](ctx, m.soundLevel.Pull(ctx, opts...))
+	return resources.PullValue[*soundsensorpb.SoundLevel](ctx, m.soundLevel.Pull(ctx, opts...))
 }
 
-func (m *Model) UpdateSoundLevel(soundLevel *gen.SoundLevel, opts ...resource.WriteOption) (*gen.SoundLevel, error) {
+func (m *Model) UpdateSoundLevel(soundLevel *soundsensorpb.SoundLevel, opts ...resource.WriteOption) (*soundsensorpb.SoundLevel, error) {
 	res, err := m.soundLevel.Set(soundLevel, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*gen.SoundLevel), nil
+	return res.(*soundsensorpb.SoundLevel), nil
 }
 
-type PullSoundLevelChange = resources.ValueChange[*gen.SoundLevel]
+type PullSoundLevelChange = resources.ValueChange[*soundsensorpb.SoundLevel]

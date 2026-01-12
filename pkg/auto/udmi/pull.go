@@ -6,16 +6,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 )
 
 type udmiExportMessagePuller struct {
-	client gen.UdmiServiceClient
+	client udmipb.UdmiServiceClient
 	name   string
 }
 
-func (m *udmiExportMessagePuller) Pull(ctx context.Context, changes chan<- *gen.PullExportMessagesResponse) error {
-	stream, err := m.client.PullExportMessages(ctx, &gen.PullExportMessagesRequest{Name: m.name})
+func (m *udmiExportMessagePuller) Pull(ctx context.Context, changes chan<- *udmipb.PullExportMessagesResponse) error {
+	stream, err := m.client.PullExportMessages(ctx, &udmipb.PullExportMessagesRequest{Name: m.name})
 	if err != nil {
 		return err
 	}
@@ -33,17 +33,17 @@ func (m *udmiExportMessagePuller) Pull(ctx context.Context, changes chan<- *gen.
 	}
 }
 
-func (m *udmiExportMessagePuller) Poll(_ context.Context, _ chan<- *gen.PullExportMessagesResponse) error {
+func (m *udmiExportMessagePuller) Poll(_ context.Context, _ chan<- *udmipb.PullExportMessagesResponse) error {
 	return status.Error(codes.Unimplemented, "not supported")
 }
 
 type udmiControlTopicsPuller struct {
-	client gen.UdmiServiceClient
+	client udmipb.UdmiServiceClient
 	name   string
 }
 
-func (m *udmiControlTopicsPuller) Pull(ctx context.Context, changes chan<- *gen.PullControlTopicsResponse) error {
-	stream, err := m.client.PullControlTopics(ctx, &gen.PullControlTopicsRequest{Name: m.name})
+func (m *udmiControlTopicsPuller) Pull(ctx context.Context, changes chan<- *udmipb.PullControlTopicsResponse) error {
+	stream, err := m.client.PullControlTopics(ctx, &udmipb.PullControlTopicsRequest{Name: m.name})
 	if err != nil {
 		return err
 	}
@@ -61,6 +61,6 @@ func (m *udmiControlTopicsPuller) Pull(ctx context.Context, changes chan<- *gen.
 	}
 }
 
-func (m *udmiControlTopicsPuller) Poll(_ context.Context, _ chan<- *gen.PullControlTopicsResponse) error {
+func (m *udmiControlTopicsPuller) Poll(_ context.Context, _ chan<- *udmipb.PullControlTopicsResponse) error {
 	return status.Error(codes.Unimplemented, "not supported")
 }

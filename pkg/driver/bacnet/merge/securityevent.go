@@ -16,10 +16,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
@@ -32,10 +33,10 @@ type securityEventSource struct {
 	OkLowerBound *float64 `json:"okLowerBound,omitempty"` // if the point is equal to or greater than this value, it is ok.
 	OkUpperBound *float64 `json:"okUpperBound,omitempty"` // if the point is equal to or less than this value, it is ok.
 
-	Actor     *string                      `json:"actor,omitempty"`     // Optional. Actor of the security event, e.g. "John Doe"
-	EventType *gen.SecurityEvent_EventType `json:"eventType,omitempty"` // Optional. the type of event, must be one of gen.SecurityEvent_EventType
-	Priority  *int32                       `json:"priority,omitempty"`  // Optional. Priority of the security event, lower is more important
-	Source    *string                      `json:"source,omitempty"`    // Optional. Source of the security event, e.g. "Door 1"
+	Actor     *string                                  `json:"actor,omitempty"`     // Optional. Actor of the security event, e.g. "John Doe"
+	EventType *securityeventpb.SecurityEvent_EventType `json:"eventType,omitempty"` // Optional. the type of event, must be one of securityeventpb.SecurityEvent_EventType
+	Priority  *int32                                   `json:"priority,omitempty"`  // Optional. Priority of the security event, lower is more important
+	Source    *string                                  `json:"source,omitempty"`    // Optional. Source of the security event, e.g. "Door 1"
 
 	IsString      bool   `json:"isString,omitempty"`      // Optional. If true, the value source is a string, otherwise it is a float64.
 	OkStringValue string `json:"okStringValue,omitempty"` // if IsString is true, this is the value that is considered OK i.e. will deactivate the security event.
@@ -135,10 +136,10 @@ func (s *securityEventImpl) startPoll(init context.Context) (stop task.StopFn, e
 }
 
 func (s *securityEventImpl) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(s.config.Name, node.HasTrait(securityevent.TraitName, node.WithClients(gen.WrapSecurityEventApi(s))))
+	return a.Announce(s.config.Name, node.HasTrait(securityevent.TraitName, node.WithClients(securityeventpb.WrapApi(s))))
 }
 
-func (s *securityEventImpl) ListSecurityEvents(ctx context.Context, request *gen.ListSecurityEventsRequest) (*gen.ListSecurityEventsResponse, error) {
+func (s *securityEventImpl) ListSecurityEvents(ctx context.Context, request *securityeventpb.ListSecurityEventsRequest) (*securityeventpb.ListSecurityEventsResponse, error) {
 	err := s.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -146,13 +147,13 @@ func (s *securityEventImpl) ListSecurityEvents(ctx context.Context, request *gen
 	return s.ModelServer.ListSecurityEvents(ctx, request)
 }
 
-func (s *securityEventImpl) PullSecurityEvents(request *gen.PullSecurityEventsRequest, server gen.SecurityEventApi_PullSecurityEventsServer) error {
+func (s *securityEventImpl) PullSecurityEvents(request *securityeventpb.PullSecurityEventsRequest, server securityeventpb.SecurityEventApi_PullSecurityEventsServer) error {
 	_ = s.pollTask.Attach(server.Context())
 	return s.ModelServer.PullSecurityEvents(request, server)
 }
 
 func (s *securityEventImpl) pollPeer(ctx context.Context) error {
-	var data []*gen.SecurityEvent
+	var data []*securityeventpb.SecurityEvent
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
 	var requestNames []string
@@ -196,8 +197,8 @@ func (s *securityEventImpl) pollPeer(ctx context.Context) error {
 	return errors.Join(errs...)
 }
 
-func (se *securityEvent) checkResponseForSecurityEvent(response any) (*gen.SecurityEvent, error) {
-	data := &gen.SecurityEvent{}
+func (se *securityEvent) checkResponseForSecurityEvent(response any) (*securityeventpb.SecurityEvent, error) {
+	data := &securityeventpb.SecurityEvent{}
 
 	if se.cfg.IsString {
 		value, err := comm.StringValue(response)
@@ -251,12 +252,12 @@ func (se *securityEvent) checkResponseForSecurityEvent(response any) (*gen.Secur
 	return nil, nil
 }
 
-func (se *securityEvent) cfgDefaults(data *gen.SecurityEvent) {
+func (se *securityEvent) cfgDefaults(data *securityeventpb.SecurityEvent) {
 	data.Id = uuid.New()
 	data.SecurityEventTime = timestamppb.Now() // not strictly true but as long as the bacnet poll is not too slow, this should be fine
 
 	if se.cfg.Actor != nil {
-		data.Actor = &gen.Actor{
+		data.Actor = &actorpb.Actor{
 			Name: *se.cfg.Actor,
 		}
 	}
@@ -270,7 +271,7 @@ func (se *securityEvent) cfgDefaults(data *gen.SecurityEvent) {
 	}
 
 	if se.cfg.Source != nil {
-		data.Source = &gen.SecurityEvent_Source{
+		data.Source = &securityeventpb.SecurityEvent_Source{
 			Name: *se.cfg.Source,
 		}
 	}

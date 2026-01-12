@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 )
 
 func TestTransport_GetTransport(t *testing.T) {
@@ -21,7 +21,7 @@ func TestTransport_GetTransport(t *testing.T) {
 		t.Fatalf("newTransport() error = %v", err)
 	}
 
-	state, err := transport.GetTransport(t.Context(), &gen.GetTransportRequest{})
+	state, err := transport.GetTransport(t.Context(), &transportpb.GetTransportRequest{})
 	if err != nil {
 		t.Errorf("GetTransport() error = %v", err)
 	}
@@ -41,7 +41,7 @@ func TestTransport_DescribeTransport(t *testing.T) {
 		t.Fatalf("newTransport() error = %v", err)
 	}
 
-	support, err := transport.DescribeTransport(t.Context(), &gen.DescribeTransportRequest{})
+	support, err := transport.DescribeTransport(t.Context(), &transportpb.DescribeTransportRequest{})
 	if err != nil {
 		t.Errorf("DescribeTransport() error = %v", err)
 	}
@@ -105,7 +105,7 @@ func TestTransport_handleTransportEvent(t *testing.T) {
 			nodeId:     "ns=2;s=Direction",
 			value:      int32(1),
 			checkField: "movingDirection",
-			wantValue:  gen.Transport_UP,
+			wantValue:  transportpb.Transport_UP,
 		},
 		{
 			name:       "operating mode with enum",
@@ -113,7 +113,7 @@ func TestTransport_handleTransportEvent(t *testing.T) {
 			nodeId:     "ns=2;s=Mode",
 			value:      int32(0),
 			checkField: "operatingMode",
-			wantValue:  gen.Transport_NORMAL,
+			wantValue:  transportpb.Transport_NORMAL,
 		},
 		{
 			name:       "next destinations - single floor",
@@ -136,7 +136,7 @@ func TestTransport_handleTransportEvent(t *testing.T) {
 			nodeId, _ := ua.ParseNodeID(tt.nodeId)
 			transport.handleTransportEvent(nodeId, tt.value)
 
-			state, _ := transport.GetTransport(t.Context(), &gen.GetTransportRequest{})
+			state, _ := transport.GetTransport(t.Context(), &transportpb.GetTransportRequest{})
 
 			switch tt.checkField {
 			case "actualPosition":
@@ -161,11 +161,11 @@ func TestTransport_handleTransportEvent(t *testing.T) {
 					t.Errorf("Speed = %v, want %v", *state.Speed, tt.wantValue)
 				}
 			case "movingDirection":
-				if state.MovingDirection != tt.wantValue.(gen.Transport_Direction) {
+				if state.MovingDirection != tt.wantValue.(transportpb.Transport_Direction) {
 					t.Errorf("MovingDirection = %v, want %v", state.MovingDirection, tt.wantValue)
 				}
 			case "operatingMode":
-				if state.OperatingMode != tt.wantValue.(gen.Transport_OperatingMode) {
+				if state.OperatingMode != tt.wantValue.(transportpb.Transport_OperatingMode) {
 					t.Errorf("OperatingMode = %v, want %v", state.OperatingMode, tt.wantValue)
 				}
 			case "nextDestinations":
@@ -197,7 +197,7 @@ func TestTransport_handleTransportEvent_Doors(t *testing.T) {
 	}
 
 	// Check initial door setup
-	state, _ := transport.GetTransport(t.Context(), &gen.GetTransportRequest{})
+	state, _ := transport.GetTransport(t.Context(), &transportpb.GetTransportRequest{})
 	if len(state.Doors) != 1 {
 		t.Fatalf("Initial doors count = %v, want 1", len(state.Doors))
 	}
@@ -209,8 +209,8 @@ func TestTransport_handleTransportEvent_Doors(t *testing.T) {
 	nodeId, _ := ua.ParseNodeID("ns=2;s=DoorStatus")
 	transport.handleTransportEvent(nodeId, int32(1))
 
-	state, _ = transport.GetTransport(t.Context(), &gen.GetTransportRequest{})
-	if state.Doors[0].Status != gen.Transport_Door_OPEN {
+	state, _ = transport.GetTransport(t.Context(), &transportpb.GetTransportRequest{})
+	if state.Doors[0].Status != transportpb.Transport_Door_OPEN {
 		t.Errorf("Door status = %v, want OPEN", state.Doors[0].Status)
 	}
 }

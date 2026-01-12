@@ -11,7 +11,8 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/auth/permission"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 )
 
 func TestValidate(t *testing.T) {
@@ -192,7 +193,7 @@ func TestDefaultPolicy_Traits(t *testing.T) {
 		Protocol: ProtocolGRPC,
 		Service:  "smartcore.bos.soundsensor.v1.SoundSensorApi",
 		Method:   "GetSoundLevel",
-		Request: &gen.GetSoundLevelRequest{
+		Request: &soundsensorpb.GetSoundLevelRequest{
 			Name: "foo/testsoundsensor",
 		},
 		TokenPresent: true,
@@ -202,7 +203,7 @@ func TestDefaultPolicy_Traits(t *testing.T) {
 				{
 					Permission:   permission.TraitRead,
 					Scoped:       true,
-					ResourceType: token.ResourceType(gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+					ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
 					Resource:     "foo",
 				},
 			},

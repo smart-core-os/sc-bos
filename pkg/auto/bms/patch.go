@@ -12,7 +12,7 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/bms/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
@@ -82,7 +82,7 @@ func (a *Auto) setupPatchers(ctx context.Context, configChanged <-chan config.Ro
 				return &MeanOATempPatches{
 					name:          name,
 					apiClient:     traits.NewAirTemperatureApiClient(conn),
-					historyClient: gen.NewAirTemperatureHistoryClient(conn),
+					historyClient: airtemperaturepb.NewAirTemperatureHistoryClient(conn),
 					logger:        logger.Named("meanOATemp"),
 				}
 			},

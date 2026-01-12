@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
@@ -22,7 +22,7 @@ type tcpClient struct {
 	conn   net.Conn
 	logger *zap.Logger
 	mu     sync.Mutex
-	status *resource.Value // *gen.StatusLog
+	status *resource.Value // *statuspb.StatusLog
 }
 
 func newTcpClient(addr *net.TCPAddr, l *zap.Logger, cfg *config.Root) *tcpClient {
@@ -32,7 +32,7 @@ func newTcpClient(addr *net.TCPAddr, l *zap.Logger, cfg *config.Root) *tcpClient
 		conn:   nil,
 		logger: l,
 		mu:     sync.Mutex{},
-		status: resource.NewValue(resource.WithInitialValue(&gen.StatusLog{}), resource.WithNoDuplicates()),
+		status: resource.NewValue(resource.WithInitialValue(&statuspb.StatusLog{}), resource.WithNoDuplicates()),
 	}
 }
 
@@ -97,8 +97,8 @@ func (c *tcpClient) sendAndReceive(ctx context.Context, pkt string, want string)
 				c.close()
 				continue
 			}
-			_, _ = c.status.Set(&gen.StatusLog{
-				Level:       gen.StatusLog_NOMINAL,
+			_, _ = c.status.Set(&statuspb.StatusLog{
+				Level:       statuspb.StatusLog_NOMINAL,
 				RecordTime:  timestamppb.New(time.Now()),
 				Description: "Communication with lighting server successful",
 			})
@@ -106,8 +106,8 @@ func (c *tcpClient) sendAndReceive(ctx context.Context, pkt string, want string)
 		}
 		time.Sleep(c.cfg.RetrySleepDuration.Duration)
 	}
-	_, _ = c.status.Set(&gen.StatusLog{
-		Level:       gen.StatusLog_NON_FUNCTIONAL,
+	_, _ = c.status.Set(&statuspb.StatusLog{
+		Level:       statuspb.StatusLog_NON_FUNCTIONAL,
 		RecordTime:  timestamppb.New(time.Now()),
 		Description: "Can't connect to the lighting server",
 	})

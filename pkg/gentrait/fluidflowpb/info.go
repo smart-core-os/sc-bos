@@ -1,14 +1,12 @@
 package fluidflowpb
 
-import (
-	"github.com/smart-core-os/sc-bos/pkg/gen"
-)
+import "github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb"
 
 type InfoServer struct {
-	gen.UnimplementedFluidFlowInfoServer
-	FluidFlowSupport *gen.FluidFlowSupport
+	fluidflowpb.UnimplementedFluidFlowInfoServer
+	FluidFlowSupport *fluidflowpb.FluidFlowSupport
 }
 
-func (i *InfoServer) DescribeFluidFlow(_ *gen.DescribeFluidFlowRequest) (*gen.FluidFlowSupport, error) {
+func (i *InfoServer) DescribeFluidFlow(_ *fluidflowpb.DescribeFluidFlowRequest) (*fluidflowpb.FluidFlowSupport, error) {
 	return i.FluidFlowSupport, nil
 }

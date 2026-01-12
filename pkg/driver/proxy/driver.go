@@ -14,9 +14,9 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/proxy/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/node/alltraits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -157,13 +157,13 @@ type proxy struct {
 // Network level errors will be retried. If the server responds with codes.Unimplemented for both Pull and List calls
 // then AnnounceDevices will give up and return an error.
 func (p *proxy) AnnounceDevices(ctx context.Context) error {
-	changes := make(chan *gen.PullDevicesResponse_Change)
+	changes := make(chan *devicespb.PullDevicesResponse_Change)
 	defer close(changes)
 
 	go p.announceChanges(changes)
 
-	fetcher := &deviceFetcher{client: gen.NewDevicesApiClient(p.conn)}
-	return pull.Changes[*gen.PullDevicesResponse_Change](ctx, fetcher, changes, pull.WithLogger(p.logger))
+	fetcher := &deviceFetcher{client: devicespb.NewDevicesApiClient(p.conn)}
+	return pull.Changes[*devicespb.PullDevicesResponse_Change](ctx, fetcher, changes, pull.WithLogger(p.logger))
 }
 
 func (p *proxy) announceExplicitDevices(devices []config.Device) {
@@ -172,7 +172,7 @@ func (p *proxy) announceExplicitDevices(devices []config.Device) {
 	}
 }
 
-func (p *proxy) announceChanges(changes <-chan *gen.PullDevicesResponse_Change) {
+func (p *proxy) announceChanges(changes <-chan *devicespb.PullDevicesResponse_Change) {
 	announced := announcedTraits{}
 	defer announced.deleteAll()
 	for change := range changes {
@@ -180,7 +180,7 @@ func (p *proxy) announceChanges(changes <-chan *gen.PullDevicesResponse_Change) 
 	}
 }
 
-func (p *proxy) announceChange(announced announcedTraits, change *gen.PullDevicesResponse_Change) {
+func (p *proxy) announceChange(announced announcedTraits, change *devicespb.PullDevicesResponse_Change) {
 	needAnnouncing := announced.updateDevice(change.OldValue, change.NewValue)
 	deviceName := change.GetNewValue().GetName() // nil safe way to get the name
 	p.announceTraits(announced, deviceName, needAnnouncing)
@@ -232,7 +232,7 @@ func (a announcedTraits) add(name string, tn trait.Name, undo node.Undo) {
 // updateDevice compares oldDevice and newDevice and undoes and deletes any device traits that no longer exist.
 // oldDevice and/or newDevice may be nil.
 // updateDevice returns any traits that newDevice has that `a` does not know about.
-func (a announcedTraits) updateDevice(oldDevice, newDevice *gen.Device) []trait.Name {
+func (a announcedTraits) updateDevice(oldDevice, newDevice *devicespb.Device) []trait.Name {
 	if oldDevice != nil && newDevice == nil {
 		a.deleteDevice(oldDevice)
 		return nil
@@ -274,7 +274,7 @@ func (a announcedTraits) updateDevice(oldDevice, newDevice *gen.Device) []trait.
 }
 
 // deleteDevice undoes and removes all the traits the device has.
-func (a announcedTraits) deleteDevice(device *gen.Device) {
+func (a announcedTraits) deleteDevice(device *devicespb.Device) {
 	for _, t := range device.Metadata.Traits {
 		a.deleteDeviceTrait(device.Name, trait.Name(t.Name))
 	}

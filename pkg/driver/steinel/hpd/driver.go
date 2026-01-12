@@ -8,11 +8,12 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
@@ -76,8 +77,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(d.temperature))),
 		node.HasTrait(trait.BrightnessSensor, node.WithClients(brightnesssensorpb.WrapApi(d.brightnessSensor))),
 		node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(d.occupancy))),
-		node.HasTrait(soundsensorpb.TraitName, node.WithClients(gen.WrapSoundSensorApi(d.soundSensor))),
-		node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(d.udmiServiceServer))),
+		node.HasTrait(soundsensorpb.TraitName, node.WithClients(gen_soundsensorpb.WrapApi(d.soundSensor))),
+		node.HasTrait(udmipb.TraitName, node.WithClients(gen_udmipb.WrapService(d.udmiServiceServer))),
 	)
 
 	faultCheck, err := d.health.NewFaultCheck(cfg.Name, commsHealthCheck)

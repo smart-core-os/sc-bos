@@ -7,12 +7,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 type ModelServer struct {
-	gen.UnimplementedUdmiServiceServer
+	udmipb.UnimplementedUdmiServiceServer
 	model *Model
 }
 
@@ -21,14 +21,14 @@ func NewModelServer(model *Model) *ModelServer {
 }
 
 func (m *ModelServer) Register(server *grpc.Server) {
-	gen.RegisterUdmiServiceServer(server, m)
+	udmipb.RegisterUdmiServiceServer(server, m)
 }
 
 func (m *ModelServer) Unwrap() any {
 	return m.model
 }
 
-func (m *ModelServer) GetExportMessage(_ context.Context, request *gen.GetExportMessageRequest) (*gen.MqttMessage, error) {
+func (m *ModelServer) GetExportMessage(_ context.Context, request *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
 	msg, err := m.model.GetExportMessage()
 	if err != nil {
 		return nil, err
@@ -39,9 +39,9 @@ func (m *ModelServer) GetExportMessage(_ context.Context, request *gen.GetExport
 	return msg, nil
 }
 
-func (m *ModelServer) PullExportMessages(request *gen.PullExportMessagesRequest, server grpc.ServerStreamingServer[gen.PullExportMessagesResponse]) error {
+func (m *ModelServer) PullExportMessages(request *udmipb.PullExportMessagesRequest, server grpc.ServerStreamingServer[udmipb.PullExportMessagesResponse]) error {
 	for change := range m.model.PullExportMessages(server.Context(), resource.WithUpdatesOnly(!request.IncludeLast)) {
-		msg := &gen.PullExportMessagesResponse{
+		msg := &udmipb.PullExportMessagesResponse{
 			Name:    request.Name,
 			Message: change.Value,
 		}
