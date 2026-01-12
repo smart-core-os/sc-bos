@@ -34,7 +34,7 @@ var allFixes = []fix{
 	{Fix: protov1go.Fix, Enabled: true},
 	{Fix: protov1js.Fix, Enabled: true},
 	{Fix: protogopkg.Fix, Enabled: false},
-	{Fix: goprotoimports.Fix, Enabled: false},
+	{Fix: goprotoimports.Fix, Enabled: true},
 }
 
 // stringSliceFlag allows flags to be specified multiple times or as comma-separated values.
