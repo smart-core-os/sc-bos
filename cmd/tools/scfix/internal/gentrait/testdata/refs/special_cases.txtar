@@ -1,0 +1,31 @@
+Test special case mappings (dalipb, lighttest, servicepb).
+expected_changes: 1
+
+-- input/pkg/driver/test/driver.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/dalipb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/lighttest"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/servicepb"
+)
+
+type Driver struct {
+	daliConfig *dalipb.Config
+	lightTest *lighttest.Holder
+	service *servicepb.Service
+}
+-- output/pkg/driver/test/driver.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/driver/dalipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightingtestpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+)
+
+type Driver struct {
+	daliConfig *dalipb.Config
+	lightTest  *lightingtestpb.Holder
+	service    *servicespb.Service
+}
