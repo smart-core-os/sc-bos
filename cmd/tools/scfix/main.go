@@ -31,8 +31,8 @@ var allFixes = []fix{
 	{Fix: historyimports.Fix, Enabled: true},
 	{Fix: wrap.Fix, Enabled: false},
 	{Fix: protov1.Fix, Enabled: false},
-	{Fix: protov1go.Fix, Enabled: false},
-	{Fix: protov1js.Fix, Enabled: false},
+	{Fix: protov1go.Fix, Enabled: true},
+	{Fix: protov1js.Fix, Enabled: true},
 	{Fix: protogopkg.Fix, Enabled: false},
 	{Fix: goprotoimports.Fix, Enabled: false},
 }
