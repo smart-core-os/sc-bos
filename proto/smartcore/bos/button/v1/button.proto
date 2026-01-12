@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package smartcore.bos.button.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// The state and events from a momentary push-button input.
+// This trait facilitates reactions to basic user input.
+// Both the basic button state (pressed or not) as well as higher-level input events like "double click" are supported.
+service ButtonApi {
+  // Gets the current state of the button.
+  // Contain the most recent gesture, so clients using polling can still detect and respond to gestures.
+  // However, to reduce latency, PullButtonState is recommended for this use case.
+  rpc GetButtonState(GetButtonStateRequest) returns (ButtonState);
+  // Fetches changes to button Press state and gestures, and optionally the initial state.
+  rpc PullButtonState(PullButtonStateRequest) returns (stream PullButtonStateResponse);
+
+  // Updates the stored button state according to the write mask.
+  // Real (physical) buttons are not expected to implement this method - it is intended for virtual or mock buttons
+  rpc UpdateButtonState(UpdateButtonStateRequest) returns (ButtonState);
+}
+
+message ButtonState {
+  // Instantaneous button state.
+  enum Press {
+    PRESS_UNSPECIFIED = 0;
+    // Button is in its neutral position.
+    UNPRESSED = 1;
+    // Button is being pushed in.
+    PRESSED = 2;
+  }
+
+  // A representation of user intent, deduced from a pattern of button presses.
+  // The way that the device converts button presses into gestures is implementation-defined.
+  // There may be a delay between the button presses and the registration of a gesture.
+  message Gesture {
+    enum Kind {
+      KIND_UNSPECIFIED = 0;
+      // One or more short press-and-release actions.
+      // Clicks in short succession may be fused into double-clicks, triple-clicks etc. - in this case, the number
+      // of fused clicks is stored in the count field.
+      // When clicks are fused in this way, the gesture will not appear at all until the final click has finished -
+      // it's not possible for a single gesture to be first reported as a single click, and then modified to a double click.
+      CLICK = 1;
+      // Button is kept in the pressed state for an extended period.
+      // Buttons may support repeat events, in which case the count will increment for each repeat event, keeping id
+      // the same because it's part of the same gesture.
+      // For HOLD gestures, the end_time is not set until the button has been released, allowing the client to determine
+      // when the gesture has ended.
+      HOLD = 2;
+    }
+
+    // Opaque identifier changes each time a new gesture begins.
+    // The gesture will remain in the ButtonState even when the client has already seen it; the client can use the id
+    // to detect when a new gesture has begun.
+    string id = 1;
+    Kind kind = 2;
+    // A counter for sub-events that occur within a single gesture. See the Kind for details of meaning.
+    int32 count = 3;
+    // The time when the gesture was first recognised.
+    google.protobuf.Timestamp start_time = 4;
+    // The time when the gesture was recognised as completed. For HOLD gestures, this remains unset until the button
+    // is released.
+    google.protobuf.Timestamp end_time = 5;
+  }
+
+  Press state = 1;
+  // The time that state changed to its present value.
+  google.protobuf.Timestamp state_change_time = 2;
+
+  // The gesture that is currently in progress, or finished most recently.
+  // May be absent, if there is no gesture recorded for this button.
+  Gesture most_recent_gesture = 3;
+}
+
+message GetButtonStateRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullButtonStateRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  // By default, PullButtonState sends the initial ButtonState when the stream opens, followed by changes.
+  // Setting updates_only true will disable this behaviour, sending only when the ButtonState changes.
+  bool updates_only = 3;
+}
+message PullButtonStateResponse {
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    ButtonState button_state = 3;
+  }
+
+  repeated Change changes = 1;
+}
+
+message UpdateButtonStateRequest {
+  string name = 1;
+  google.protobuf.FieldMask update_mask = 2;
+  ButtonState button_state = 3;
+}

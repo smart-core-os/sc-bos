@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: history.proto
+// source: smartcore/bos/history/v1/history.proto
 
 package gen
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	HistoryAdminApi_CreateHistoryRecord_FullMethodName = "/smartcore.bos.HistoryAdminApi/CreateHistoryRecord"
-	HistoryAdminApi_ListHistoryRecords_FullMethodName  = "/smartcore.bos.HistoryAdminApi/ListHistoryRecords"
+	HistoryAdminApi_CreateHistoryRecord_FullMethodName = "/smartcore.bos.history.v1.HistoryAdminApi/CreateHistoryRecord"
+	HistoryAdminApi_ListHistoryRecords_FullMethodName  = "/smartcore.bos.history.v1.HistoryAdminApi/ListHistoryRecords"
 )
 
 // HistoryAdminApiClient is the client API for HistoryAdminApi service.
@@ -146,7 +146,7 @@ func _HistoryAdminApi_ListHistoryRecords_Handler(srv interface{}, ctx context.Co
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var HistoryAdminApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.HistoryAdminApi",
+	ServiceName: "smartcore.bos.history.v1.HistoryAdminApi",
 	HandlerType: (*HistoryAdminApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -159,5 +159,5 @@ var HistoryAdminApi_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "history.proto",
+	Metadata: "smartcore/bos/history/v1/history.proto",
 }

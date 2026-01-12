@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: account.proto
+// source: smartcore/bos/account/v1/account.proto
 
 package gen
 
@@ -56,11 +56,11 @@ func (x Account_Type) String() string {
 }
 
 func (Account_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_account_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_account_v1_account_proto_enumTypes[0].Descriptor()
 }
 
 func (Account_Type) Type() protoreflect.EnumType {
-	return &file_account_proto_enumTypes[0]
+	return &file_smartcore_bos_account_v1_account_proto_enumTypes[0]
 }
 
 func (x Account_Type) Number() protoreflect.EnumNumber {
@@ -69,7 +69,7 @@ func (x Account_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Account_Type.Descriptor instead.
 func (Account_Type) EnumDescriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{28, 0}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{28, 0}
 }
 
 type RoleAssignment_ResourceType int32
@@ -132,11 +132,11 @@ func (x RoleAssignment_ResourceType) String() string {
 }
 
 func (RoleAssignment_ResourceType) Descriptor() protoreflect.EnumDescriptor {
-	return file_account_proto_enumTypes[1].Descriptor()
+	return file_smartcore_bos_account_v1_account_proto_enumTypes[1].Descriptor()
 }
 
 func (RoleAssignment_ResourceType) Type() protoreflect.EnumType {
-	return &file_account_proto_enumTypes[1]
+	return &file_smartcore_bos_account_v1_account_proto_enumTypes[1]
 }
 
 func (x RoleAssignment_ResourceType) Number() protoreflect.EnumNumber {
@@ -145,7 +145,7 @@ func (x RoleAssignment_ResourceType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use RoleAssignment_ResourceType.Descriptor instead.
 func (RoleAssignment_ResourceType) EnumDescriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{32, 0}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{32, 0}
 }
 
 type GetAccountRequest struct {
@@ -160,7 +160,7 @@ type GetAccountRequest struct {
 
 func (x *GetAccountRequest) Reset() {
 	*x = GetAccountRequest{}
-	mi := &file_account_proto_msgTypes[0]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -172,7 +172,7 @@ func (x *GetAccountRequest) String() string {
 func (*GetAccountRequest) ProtoMessage() {}
 
 func (x *GetAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[0]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -185,7 +185,7 @@ func (x *GetAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccountRequest.ProtoReflect.Descriptor instead.
 func (*GetAccountRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GetAccountRequest) GetName() string {
@@ -220,7 +220,7 @@ type CreateAccountRequest struct {
 
 func (x *CreateAccountRequest) Reset() {
 	*x = CreateAccountRequest{}
-	mi := &file_account_proto_msgTypes[1]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -232,7 +232,7 @@ func (x *CreateAccountRequest) String() string {
 func (*CreateAccountRequest) ProtoMessage() {}
 
 func (x *CreateAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[1]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -245,7 +245,7 @@ func (x *CreateAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAccountRequest.ProtoReflect.Descriptor instead.
 func (*CreateAccountRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CreateAccountRequest) GetName() string {
@@ -285,7 +285,7 @@ type ListAccountsRequest struct {
 
 func (x *ListAccountsRequest) Reset() {
 	*x = ListAccountsRequest{}
-	mi := &file_account_proto_msgTypes[2]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -297,7 +297,7 @@ func (x *ListAccountsRequest) String() string {
 func (*ListAccountsRequest) ProtoMessage() {}
 
 func (x *ListAccountsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[2]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -310,7 +310,7 @@ func (x *ListAccountsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccountsRequest.ProtoReflect.Descriptor instead.
 func (*ListAccountsRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListAccountsRequest) GetName() string {
@@ -349,7 +349,7 @@ type ListAccountsResponse struct {
 
 func (x *ListAccountsResponse) Reset() {
 	*x = ListAccountsResponse{}
-	mi := &file_account_proto_msgTypes[3]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -361,7 +361,7 @@ func (x *ListAccountsResponse) String() string {
 func (*ListAccountsResponse) ProtoMessage() {}
 
 func (x *ListAccountsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[3]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -374,7 +374,7 @@ func (x *ListAccountsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccountsResponse.ProtoReflect.Descriptor instead.
 func (*ListAccountsResponse) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListAccountsResponse) GetAccounts() []*Account {
@@ -413,7 +413,7 @@ type UpdateAccountRequest struct {
 
 func (x *UpdateAccountRequest) Reset() {
 	*x = UpdateAccountRequest{}
-	mi := &file_account_proto_msgTypes[4]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -425,7 +425,7 @@ func (x *UpdateAccountRequest) String() string {
 func (*UpdateAccountRequest) ProtoMessage() {}
 
 func (x *UpdateAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[4]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -438,7 +438,7 @@ func (x *UpdateAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAccountRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAccountRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UpdateAccountRequest) GetName() string {
@@ -481,7 +481,7 @@ type UpdateAccountPasswordRequest struct {
 
 func (x *UpdateAccountPasswordRequest) Reset() {
 	*x = UpdateAccountPasswordRequest{}
-	mi := &file_account_proto_msgTypes[5]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -493,7 +493,7 @@ func (x *UpdateAccountPasswordRequest) String() string {
 func (*UpdateAccountPasswordRequest) ProtoMessage() {}
 
 func (x *UpdateAccountPasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[5]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -506,7 +506,7 @@ func (x *UpdateAccountPasswordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAccountPasswordRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAccountPasswordRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UpdateAccountPasswordRequest) GetName() string {
@@ -545,7 +545,7 @@ type UpdateAccountPasswordResponse struct {
 
 func (x *UpdateAccountPasswordResponse) Reset() {
 	*x = UpdateAccountPasswordResponse{}
-	mi := &file_account_proto_msgTypes[6]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -557,7 +557,7 @@ func (x *UpdateAccountPasswordResponse) String() string {
 func (*UpdateAccountPasswordResponse) ProtoMessage() {}
 
 func (x *UpdateAccountPasswordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[6]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -570,7 +570,7 @@ func (x *UpdateAccountPasswordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAccountPasswordResponse.ProtoReflect.Descriptor instead.
 func (*UpdateAccountPasswordResponse) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{6}
 }
 
 type RotateAccountClientSecretRequest struct {
@@ -588,7 +588,7 @@ type RotateAccountClientSecretRequest struct {
 
 func (x *RotateAccountClientSecretRequest) Reset() {
 	*x = RotateAccountClientSecretRequest{}
-	mi := &file_account_proto_msgTypes[7]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -600,7 +600,7 @@ func (x *RotateAccountClientSecretRequest) String() string {
 func (*RotateAccountClientSecretRequest) ProtoMessage() {}
 
 func (x *RotateAccountClientSecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[7]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -613,7 +613,7 @@ func (x *RotateAccountClientSecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RotateAccountClientSecretRequest.ProtoReflect.Descriptor instead.
 func (*RotateAccountClientSecretRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *RotateAccountClientSecretRequest) GetName() string {
@@ -647,7 +647,7 @@ type RotateAccountClientSecretResponse struct {
 
 func (x *RotateAccountClientSecretResponse) Reset() {
 	*x = RotateAccountClientSecretResponse{}
-	mi := &file_account_proto_msgTypes[8]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -659,7 +659,7 @@ func (x *RotateAccountClientSecretResponse) String() string {
 func (*RotateAccountClientSecretResponse) ProtoMessage() {}
 
 func (x *RotateAccountClientSecretResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[8]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -672,7 +672,7 @@ func (x *RotateAccountClientSecretResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use RotateAccountClientSecretResponse.ProtoReflect.Descriptor instead.
 func (*RotateAccountClientSecretResponse) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{8}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *RotateAccountClientSecretResponse) GetClientSecret() string {
@@ -697,7 +697,7 @@ type DeleteAccountRequest struct {
 
 func (x *DeleteAccountRequest) Reset() {
 	*x = DeleteAccountRequest{}
-	mi := &file_account_proto_msgTypes[9]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -709,7 +709,7 @@ func (x *DeleteAccountRequest) String() string {
 func (*DeleteAccountRequest) ProtoMessage() {}
 
 func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[9]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -722,7 +722,7 @@ func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAccountRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{9}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteAccountRequest) GetName() string {
@@ -754,7 +754,7 @@ type DeleteAccountResponse struct {
 
 func (x *DeleteAccountResponse) Reset() {
 	*x = DeleteAccountResponse{}
-	mi := &file_account_proto_msgTypes[10]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -766,7 +766,7 @@ func (x *DeleteAccountResponse) String() string {
 func (*DeleteAccountResponse) ProtoMessage() {}
 
 func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[10]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -779,7 +779,7 @@ func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAccountResponse) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{10}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{10}
 }
 
 type GetRoleRequest struct {
@@ -795,7 +795,7 @@ type GetRoleRequest struct {
 
 func (x *GetRoleRequest) Reset() {
 	*x = GetRoleRequest{}
-	mi := &file_account_proto_msgTypes[11]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -807,7 +807,7 @@ func (x *GetRoleRequest) String() string {
 func (*GetRoleRequest) ProtoMessage() {}
 
 func (x *GetRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[11]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -820,7 +820,7 @@ func (x *GetRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoleRequest.ProtoReflect.Descriptor instead.
 func (*GetRoleRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{11}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetRoleRequest) GetName() string {
@@ -852,7 +852,7 @@ type ListRolesRequest struct {
 
 func (x *ListRolesRequest) Reset() {
 	*x = ListRolesRequest{}
-	mi := &file_account_proto_msgTypes[12]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -864,7 +864,7 @@ func (x *ListRolesRequest) String() string {
 func (*ListRolesRequest) ProtoMessage() {}
 
 func (x *ListRolesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[12]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -877,7 +877,7 @@ func (x *ListRolesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRolesRequest.ProtoReflect.Descriptor instead.
 func (*ListRolesRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{12}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListRolesRequest) GetName() string {
@@ -916,7 +916,7 @@ type ListRolesResponse struct {
 
 func (x *ListRolesResponse) Reset() {
 	*x = ListRolesResponse{}
-	mi := &file_account_proto_msgTypes[13]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -928,7 +928,7 @@ func (x *ListRolesResponse) String() string {
 func (*ListRolesResponse) ProtoMessage() {}
 
 func (x *ListRolesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[13]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -941,7 +941,7 @@ func (x *ListRolesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRolesResponse.ProtoReflect.Descriptor instead.
 func (*ListRolesResponse) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{13}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ListRolesResponse) GetRoles() []*Role {
@@ -977,7 +977,7 @@ type CreateRoleRequest struct {
 
 func (x *CreateRoleRequest) Reset() {
 	*x = CreateRoleRequest{}
-	mi := &file_account_proto_msgTypes[14]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -989,7 +989,7 @@ func (x *CreateRoleRequest) String() string {
 func (*CreateRoleRequest) ProtoMessage() {}
 
 func (x *CreateRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[14]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1002,7 +1002,7 @@ func (x *CreateRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoleRequest.ProtoReflect.Descriptor instead.
 func (*CreateRoleRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{14}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CreateRoleRequest) GetName() string {
@@ -1034,7 +1034,7 @@ type UpdateRoleRequest struct {
 
 func (x *UpdateRoleRequest) Reset() {
 	*x = UpdateRoleRequest{}
-	mi := &file_account_proto_msgTypes[15]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1046,7 +1046,7 @@ func (x *UpdateRoleRequest) String() string {
 func (*UpdateRoleRequest) ProtoMessage() {}
 
 func (x *UpdateRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[15]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1059,7 +1059,7 @@ func (x *UpdateRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRoleRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRoleRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{15}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *UpdateRoleRequest) GetName() string {
@@ -1098,7 +1098,7 @@ type DeleteRoleRequest struct {
 
 func (x *DeleteRoleRequest) Reset() {
 	*x = DeleteRoleRequest{}
-	mi := &file_account_proto_msgTypes[16]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1110,7 +1110,7 @@ func (x *DeleteRoleRequest) String() string {
 func (*DeleteRoleRequest) ProtoMessage() {}
 
 func (x *DeleteRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[16]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1123,7 +1123,7 @@ func (x *DeleteRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRoleRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRoleRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{16}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *DeleteRoleRequest) GetName() string {
@@ -1155,7 +1155,7 @@ type DeleteRoleResponse struct {
 
 func (x *DeleteRoleResponse) Reset() {
 	*x = DeleteRoleResponse{}
-	mi := &file_account_proto_msgTypes[17]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1167,7 +1167,7 @@ func (x *DeleteRoleResponse) String() string {
 func (*DeleteRoleResponse) ProtoMessage() {}
 
 func (x *DeleteRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[17]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1180,7 +1180,7 @@ func (x *DeleteRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRoleResponse.ProtoReflect.Descriptor instead.
 func (*DeleteRoleResponse) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{17}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{17}
 }
 
 type GetRoleAssignmentRequest struct {
@@ -1196,7 +1196,7 @@ type GetRoleAssignmentRequest struct {
 
 func (x *GetRoleAssignmentRequest) Reset() {
 	*x = GetRoleAssignmentRequest{}
-	mi := &file_account_proto_msgTypes[18]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1208,7 +1208,7 @@ func (x *GetRoleAssignmentRequest) String() string {
 func (*GetRoleAssignmentRequest) ProtoMessage() {}
 
 func (x *GetRoleAssignmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[18]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1221,7 +1221,7 @@ func (x *GetRoleAssignmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoleAssignmentRequest.ProtoReflect.Descriptor instead.
 func (*GetRoleAssignmentRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{18}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetRoleAssignmentRequest) GetName() string {
@@ -1262,7 +1262,7 @@ type ListRoleAssignmentsRequest struct {
 
 func (x *ListRoleAssignmentsRequest) Reset() {
 	*x = ListRoleAssignmentsRequest{}
-	mi := &file_account_proto_msgTypes[19]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1274,7 +1274,7 @@ func (x *ListRoleAssignmentsRequest) String() string {
 func (*ListRoleAssignmentsRequest) ProtoMessage() {}
 
 func (x *ListRoleAssignmentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[19]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1287,7 +1287,7 @@ func (x *ListRoleAssignmentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRoleAssignmentsRequest.ProtoReflect.Descriptor instead.
 func (*ListRoleAssignmentsRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{19}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListRoleAssignmentsRequest) GetName() string {
@@ -1333,7 +1333,7 @@ type ListRoleAssignmentsResponse struct {
 
 func (x *ListRoleAssignmentsResponse) Reset() {
 	*x = ListRoleAssignmentsResponse{}
-	mi := &file_account_proto_msgTypes[20]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1345,7 +1345,7 @@ func (x *ListRoleAssignmentsResponse) String() string {
 func (*ListRoleAssignmentsResponse) ProtoMessage() {}
 
 func (x *ListRoleAssignmentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[20]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1358,7 +1358,7 @@ func (x *ListRoleAssignmentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRoleAssignmentsResponse.ProtoReflect.Descriptor instead.
 func (*ListRoleAssignmentsResponse) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{20}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ListRoleAssignmentsResponse) GetRoleAssignments() []*RoleAssignment {
@@ -1395,7 +1395,7 @@ type CreateRoleAssignmentRequest struct {
 
 func (x *CreateRoleAssignmentRequest) Reset() {
 	*x = CreateRoleAssignmentRequest{}
-	mi := &file_account_proto_msgTypes[21]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1407,7 +1407,7 @@ func (x *CreateRoleAssignmentRequest) String() string {
 func (*CreateRoleAssignmentRequest) ProtoMessage() {}
 
 func (x *CreateRoleAssignmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[21]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1420,7 +1420,7 @@ func (x *CreateRoleAssignmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoleAssignmentRequest.ProtoReflect.Descriptor instead.
 func (*CreateRoleAssignmentRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{21}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *CreateRoleAssignmentRequest) GetName() string {
@@ -1452,7 +1452,7 @@ type DeleteRoleAssignmentRequest struct {
 
 func (x *DeleteRoleAssignmentRequest) Reset() {
 	*x = DeleteRoleAssignmentRequest{}
-	mi := &file_account_proto_msgTypes[22]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1464,7 +1464,7 @@ func (x *DeleteRoleAssignmentRequest) String() string {
 func (*DeleteRoleAssignmentRequest) ProtoMessage() {}
 
 func (x *DeleteRoleAssignmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[22]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1477,7 +1477,7 @@ func (x *DeleteRoleAssignmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRoleAssignmentRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRoleAssignmentRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{22}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *DeleteRoleAssignmentRequest) GetName() string {
@@ -1509,7 +1509,7 @@ type DeleteRoleAssignmentResponse struct {
 
 func (x *DeleteRoleAssignmentResponse) Reset() {
 	*x = DeleteRoleAssignmentResponse{}
-	mi := &file_account_proto_msgTypes[23]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1521,7 +1521,7 @@ func (x *DeleteRoleAssignmentResponse) String() string {
 func (*DeleteRoleAssignmentResponse) ProtoMessage() {}
 
 func (x *DeleteRoleAssignmentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[23]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1534,7 +1534,7 @@ func (x *DeleteRoleAssignmentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRoleAssignmentResponse.ProtoReflect.Descriptor instead.
 func (*DeleteRoleAssignmentResponse) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{23}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{23}
 }
 
 type GetPermissionRequest struct {
@@ -1550,7 +1550,7 @@ type GetPermissionRequest struct {
 
 func (x *GetPermissionRequest) Reset() {
 	*x = GetPermissionRequest{}
-	mi := &file_account_proto_msgTypes[24]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1562,7 +1562,7 @@ func (x *GetPermissionRequest) String() string {
 func (*GetPermissionRequest) ProtoMessage() {}
 
 func (x *GetPermissionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[24]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1575,7 +1575,7 @@ func (x *GetPermissionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPermissionRequest.ProtoReflect.Descriptor instead.
 func (*GetPermissionRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{24}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GetPermissionRequest) GetName() string {
@@ -1607,7 +1607,7 @@ type ListPermissionsRequest struct {
 
 func (x *ListPermissionsRequest) Reset() {
 	*x = ListPermissionsRequest{}
-	mi := &file_account_proto_msgTypes[25]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1619,7 +1619,7 @@ func (x *ListPermissionsRequest) String() string {
 func (*ListPermissionsRequest) ProtoMessage() {}
 
 func (x *ListPermissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[25]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1632,7 +1632,7 @@ func (x *ListPermissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPermissionsRequest.ProtoReflect.Descriptor instead.
 func (*ListPermissionsRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{25}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ListPermissionsRequest) GetName() string {
@@ -1670,7 +1670,7 @@ type ListPermissionsResponse struct {
 
 func (x *ListPermissionsResponse) Reset() {
 	*x = ListPermissionsResponse{}
-	mi := &file_account_proto_msgTypes[26]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1682,7 +1682,7 @@ func (x *ListPermissionsResponse) String() string {
 func (*ListPermissionsResponse) ProtoMessage() {}
 
 func (x *ListPermissionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[26]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1695,7 +1695,7 @@ func (x *ListPermissionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPermissionsResponse.ProtoReflect.Descriptor instead.
 func (*ListPermissionsResponse) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{26}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ListPermissionsResponse) GetPermissions() []*Permission {
@@ -1729,7 +1729,7 @@ type GetAccountLimitsRequest struct {
 
 func (x *GetAccountLimitsRequest) Reset() {
 	*x = GetAccountLimitsRequest{}
-	mi := &file_account_proto_msgTypes[27]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1741,7 +1741,7 @@ func (x *GetAccountLimitsRequest) String() string {
 func (*GetAccountLimitsRequest) ProtoMessage() {}
 
 func (x *GetAccountLimitsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[27]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1754,7 +1754,7 @@ func (x *GetAccountLimitsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccountLimitsRequest.ProtoReflect.Descriptor instead.
 func (*GetAccountLimitsRequest) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{27}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *GetAccountLimitsRequest) GetName() string {
@@ -1775,7 +1775,7 @@ type Account struct {
 	// Describes which type of account this is, which changes how authentication is handled.
 	// Required for account creation.
 	// Immutable.
-	Type Account_Type `protobuf:"varint,3,opt,name=type,proto3,enum=smartcore.bos.Account_Type" json:"type,omitempty"`
+	Type Account_Type `protobuf:"varint,3,opt,name=type,proto3,enum=smartcore.bos.account.v1.Account_Type" json:"type,omitempty"`
 	// A human-readable name for this account, for display purposes. Required.
 	DisplayName string `protobuf:"bytes,4,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	// A longer human-readable description of this account. Optional.
@@ -1795,7 +1795,7 @@ type Account struct {
 
 func (x *Account) Reset() {
 	*x = Account{}
-	mi := &file_account_proto_msgTypes[28]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1807,7 +1807,7 @@ func (x *Account) String() string {
 func (*Account) ProtoMessage() {}
 
 func (x *Account) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[28]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1820,7 +1820,7 @@ func (x *Account) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Account.ProtoReflect.Descriptor instead.
 func (*Account) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{28}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *Account) GetId() string {
@@ -1913,7 +1913,7 @@ type UserAccount struct {
 
 func (x *UserAccount) Reset() {
 	*x = UserAccount{}
-	mi := &file_account_proto_msgTypes[29]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1925,7 +1925,7 @@ func (x *UserAccount) String() string {
 func (*UserAccount) ProtoMessage() {}
 
 func (x *UserAccount) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[29]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1938,7 +1938,7 @@ func (x *UserAccount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserAccount.ProtoReflect.Descriptor instead.
 func (*UserAccount) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{29}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *UserAccount) GetUsername() string {
@@ -1973,7 +1973,7 @@ type ServiceAccount struct {
 
 func (x *ServiceAccount) Reset() {
 	*x = ServiceAccount{}
-	mi := &file_account_proto_msgTypes[30]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1985,7 +1985,7 @@ func (x *ServiceAccount) String() string {
 func (*ServiceAccount) ProtoMessage() {}
 
 func (x *ServiceAccount) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[30]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1998,7 +1998,7 @@ func (x *ServiceAccount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceAccount.ProtoReflect.Descriptor instead.
 func (*ServiceAccount) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{30}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ServiceAccount) GetClientId() string {
@@ -2047,7 +2047,7 @@ type Role struct {
 
 func (x *Role) Reset() {
 	*x = Role{}
-	mi := &file_account_proto_msgTypes[31]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2059,7 +2059,7 @@ func (x *Role) String() string {
 func (*Role) ProtoMessage() {}
 
 func (x *Role) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[31]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2072,7 +2072,7 @@ func (x *Role) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Role.ProtoReflect.Descriptor instead.
 func (*Role) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{31}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *Role) GetId() string {
@@ -2137,7 +2137,7 @@ type RoleAssignment struct {
 
 func (x *RoleAssignment) Reset() {
 	*x = RoleAssignment{}
-	mi := &file_account_proto_msgTypes[32]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2149,7 +2149,7 @@ func (x *RoleAssignment) String() string {
 func (*RoleAssignment) ProtoMessage() {}
 
 func (x *RoleAssignment) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[32]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2162,7 +2162,7 @@ func (x *RoleAssignment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleAssignment.ProtoReflect.Descriptor instead.
 func (*RoleAssignment) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{32}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *RoleAssignment) GetId() string {
@@ -2208,7 +2208,7 @@ type Permission struct {
 
 func (x *Permission) Reset() {
 	*x = Permission{}
-	mi := &file_account_proto_msgTypes[33]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2220,7 +2220,7 @@ func (x *Permission) String() string {
 func (*Permission) ProtoMessage() {}
 
 func (x *Permission) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[33]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2233,7 +2233,7 @@ func (x *Permission) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Permission.ProtoReflect.Descriptor instead.
 func (*Permission) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{33}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *Permission) GetId() string {
@@ -2269,7 +2269,7 @@ type AccountLimits struct {
 
 func (x *AccountLimits) Reset() {
 	*x = AccountLimits{}
-	mi := &file_account_proto_msgTypes[34]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2281,7 +2281,7 @@ func (x *AccountLimits) String() string {
 func (*AccountLimits) ProtoMessage() {}
 
 func (x *AccountLimits) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[34]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2294,7 +2294,7 @@ func (x *AccountLimits) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AccountLimits.ProtoReflect.Descriptor instead.
 func (*AccountLimits) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{34}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *AccountLimits) GetUsername() *AccountLimits_Field {
@@ -2327,7 +2327,7 @@ func (x *AccountLimits) GetDescription() *AccountLimits_Field {
 
 type RoleAssignment_Scope struct {
 	state         protoimpl.MessageState      `protogen:"open.v1"`
-	ResourceType  RoleAssignment_ResourceType `protobuf:"varint,1,opt,name=resource_type,json=resourceType,proto3,enum=smartcore.bos.RoleAssignment_ResourceType" json:"resource_type,omitempty"`
+	ResourceType  RoleAssignment_ResourceType `protobuf:"varint,1,opt,name=resource_type,json=resourceType,proto3,enum=smartcore.bos.account.v1.RoleAssignment_ResourceType" json:"resource_type,omitempty"`
 	Resource      string                      `protobuf:"bytes,2,opt,name=resource,proto3" json:"resource,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2335,7 +2335,7 @@ type RoleAssignment_Scope struct {
 
 func (x *RoleAssignment_Scope) Reset() {
 	*x = RoleAssignment_Scope{}
-	mi := &file_account_proto_msgTypes[35]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2347,7 +2347,7 @@ func (x *RoleAssignment_Scope) String() string {
 func (*RoleAssignment_Scope) ProtoMessage() {}
 
 func (x *RoleAssignment_Scope) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[35]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2360,7 +2360,7 @@ func (x *RoleAssignment_Scope) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleAssignment_Scope.ProtoReflect.Descriptor instead.
 func (*RoleAssignment_Scope) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{32, 0}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{32, 0}
 }
 
 func (x *RoleAssignment_Scope) GetResourceType() RoleAssignment_ResourceType {
@@ -2387,7 +2387,7 @@ type AccountLimits_Field struct {
 
 func (x *AccountLimits_Field) Reset() {
 	*x = AccountLimits_Field{}
-	mi := &file_account_proto_msgTypes[36]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2399,7 +2399,7 @@ func (x *AccountLimits_Field) String() string {
 func (*AccountLimits_Field) ProtoMessage() {}
 
 func (x *AccountLimits_Field) ProtoReflect() protoreflect.Message {
-	mi := &file_account_proto_msgTypes[36]
+	mi := &file_smartcore_bos_account_v1_account_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2412,7 +2412,7 @@ func (x *AccountLimits_Field) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AccountLimits_Field.ProtoReflect.Descriptor instead.
 func (*AccountLimits_Field) Descriptor() ([]byte, []int) {
-	return file_account_proto_rawDescGZIP(), []int{34, 0}
+	return file_smartcore_bos_account_v1_account_proto_rawDescGZIP(), []int{34, 0}
 }
 
 func (x *AccountLimits_Field) GetMinLength() int32 {
@@ -2429,31 +2429,31 @@ func (x *AccountLimits_Field) GetMaxLength() int32 {
 	return 0
 }
 
-var File_account_proto protoreflect.FileDescriptor
+var File_smartcore_bos_account_v1_account_proto protoreflect.FileDescriptor
 
-const file_account_proto_rawDesc = "" +
+const file_smartcore_bos_account_v1_account_proto_rawDesc = "" +
 	"\n" +
-	"\raccount.proto\x12\rsmartcore.bos\x1a\x1fgoogle/protobuf/timestamp.proto\x1a google/protobuf/field_mask.proto\"7\n" +
+	"&smartcore/bos/account/v1/account.proto\x12\x18smartcore.bos.account.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"7\n" +
 	"\x11GetAccountRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\tR\x02id\"x\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\"\x83\x01\n" +
 	"\x14CreateAccountRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x120\n" +
-	"\aaccount\x18\x02 \x01(\v2\x16.smartcore.bos.AccountR\aaccount\x12\x1a\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
+	"\aaccount\x18\x02 \x01(\v2!.smartcore.bos.account.v1.AccountR\aaccount\x12\x1a\n" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\"e\n" +
 	"\x13ListAccountsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x03 \x01(\tR\tpageToken\"\x91\x01\n" +
-	"\x14ListAccountsResponse\x122\n" +
-	"\baccounts\x18\x01 \x03(\v2\x16.smartcore.bos.AccountR\baccounts\x12&\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"\x9c\x01\n" +
+	"\x14ListAccountsResponse\x12=\n" +
+	"\baccounts\x18\x01 \x03(\v2!.smartcore.bos.account.v1.AccountR\baccounts\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\x99\x01\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xa4\x01\n" +
 	"\x14UpdateAccountRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x120\n" +
-	"\aaccount\x18\x02 \x01(\v2\x16.smartcore.bos.AccountR\aaccount\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
+	"\aaccount\x18\x02 \x01(\v2!.smartcore.bos.account.v1.AccountR\aaccount\x12;\n" +
 	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\"\x88\x01\n" +
 	"\x1cUpdateAccountPasswordRequest\x12\x12\n" +
@@ -2480,18 +2480,18 @@ const file_account_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x03 \x01(\tR\tpageToken\"\x85\x01\n" +
-	"\x11ListRolesResponse\x12)\n" +
-	"\x05roles\x18\x01 \x03(\v2\x13.smartcore.bos.RoleR\x05roles\x12&\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"\x90\x01\n" +
+	"\x11ListRolesResponse\x124\n" +
+	"\x05roles\x18\x01 \x03(\v2\x1e.smartcore.bos.account.v1.RoleR\x05roles\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize\"P\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"[\n" +
 	"\x11CreateRoleRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12'\n" +
-	"\x04role\x18\x02 \x01(\v2\x13.smartcore.bos.RoleR\x04role\"\x8d\x01\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x122\n" +
+	"\x04role\x18\x02 \x01(\v2\x1e.smartcore.bos.account.v1.RoleR\x04role\"\x98\x01\n" +
 	"\x11UpdateRoleRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12'\n" +
-	"\x04role\x18\x02 \x01(\v2\x13.smartcore.bos.RoleR\x04role\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x122\n" +
+	"\x04role\x18\x02 \x01(\v2\x1e.smartcore.bos.account.v1.RoleR\x04role\x12;\n" +
 	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\"\\\n" +
 	"\x11DeleteRoleRequest\x12\x12\n" +
@@ -2507,15 +2507,15 @@ const file_account_proto_rawDesc = "" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x03 \x01(\tR\tpageToken\x12\x16\n" +
-	"\x06filter\x18\x04 \x01(\tR\x06filter\"\xae\x01\n" +
-	"\x1bListRoleAssignmentsResponse\x12H\n" +
-	"\x10role_assignments\x18\x01 \x03(\v2\x1d.smartcore.bos.RoleAssignmentR\x0froleAssignments\x12&\n" +
+	"\x06filter\x18\x04 \x01(\tR\x06filter\"\xb9\x01\n" +
+	"\x1bListRoleAssignmentsResponse\x12S\n" +
+	"\x10role_assignments\x18\x01 \x03(\v2(.smartcore.bos.account.v1.RoleAssignmentR\x0froleAssignments\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize\"y\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\x84\x01\n" +
 	"\x1bCreateRoleAssignmentRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12F\n" +
-	"\x0frole_assignment\x18\x02 \x01(\v2\x1d.smartcore.bos.RoleAssignmentR\x0eroleAssignment\"f\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12Q\n" +
+	"\x0frole_assignment\x18\x02 \x01(\v2(.smartcore.bos.account.v1.RoleAssignmentR\x0eroleAssignment\"f\n" +
 	"\x1bDeleteRoleAssignmentRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12#\n" +
@@ -2528,23 +2528,23 @@ const file_account_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x03 \x01(\tR\tpageToken\"\x9d\x01\n" +
-	"\x17ListPermissionsResponse\x12;\n" +
-	"\vpermissions\x18\x01 \x03(\v2\x19.smartcore.bos.PermissionR\vpermissions\x12&\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"\xa8\x01\n" +
+	"\x17ListPermissionsResponse\x12F\n" +
+	"\vpermissions\x18\x01 \x03(\v2$.smartcore.bos.account.v1.PermissionR\vpermissions\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
 	"total_size\x18\x03 \x01(\x05R\ttotalSize\"-\n" +
 	"\x17GetAccountLimitsRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"\xaf\x03\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\xd0\x03\n" +
 	"\aAccount\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12;\n" +
 	"\vcreate_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTime\x12/\n" +
-	"\x04type\x18\x03 \x01(\x0e2\x1b.smartcore.bos.Account.TypeR\x04type\x12!\n" +
+	"createTime\x12:\n" +
+	"\x04type\x18\x03 \x01(\x0e2&.smartcore.bos.account.v1.Account.TypeR\x04type\x12!\n" +
 	"\fdisplay_name\x18\x04 \x01(\tR\vdisplayName\x12 \n" +
-	"\vdescription\x18\x05 \x01(\tR\vdescription\x12?\n" +
-	"\fuser_details\x18\x06 \x01(\v2\x1a.smartcore.bos.UserAccountH\x00R\vuserDetails\x12H\n" +
-	"\x0fservice_details\x18\a \x01(\v2\x1d.smartcore.bos.ServiceAccountH\x00R\x0eserviceDetails\"K\n" +
+	"\vdescription\x18\x05 \x01(\tR\vdescription\x12J\n" +
+	"\fuser_details\x18\x06 \x01(\v2%.smartcore.bos.account.v1.UserAccountH\x00R\vuserDetails\x12S\n" +
+	"\x0fservice_details\x18\a \x01(\v2(.smartcore.bos.account.v1.ServiceAccountH\x00R\x0eserviceDetails\"K\n" +
 	"\x04Type\x12\x1c\n" +
 	"\x18ACCOUNT_TYPE_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fUSER_ACCOUNT\x10\x01\x12\x13\n" +
@@ -2563,15 +2563,15 @@ const file_account_proto_rawDesc = "" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12%\n" +
 	"\x0epermission_ids\x18\x04 \x03(\tR\rpermissionIds\x12(\n" +
 	"\x10legacy_role_name\x18\x05 \x01(\tR\x0elegacyRoleName\x12\x1c\n" +
-	"\tprotected\x18\a \x01(\bR\tprotected\"\x90\x03\n" +
+	"\tprotected\x18\a \x01(\bR\tprotected\"\xa6\x03\n" +
 	"\x0eRoleAssignment\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x02 \x01(\tR\taccountId\x12\x17\n" +
-	"\arole_id\x18\x03 \x01(\tR\x06roleId\x129\n" +
-	"\x05scope\x18\x04 \x01(\v2#.smartcore.bos.RoleAssignment.ScopeR\x05scope\x1at\n" +
-	"\x05Scope\x12O\n" +
-	"\rresource_type\x18\x01 \x01(\x0e2*.smartcore.bos.RoleAssignment.ResourceTypeR\fresourceType\x12\x1a\n" +
+	"\arole_id\x18\x03 \x01(\tR\x06roleId\x12D\n" +
+	"\x05scope\x18\x04 \x01(\v2..smartcore.bos.account.v1.RoleAssignment.ScopeR\x05scope\x1a\x7f\n" +
+	"\x05Scope\x12Z\n" +
+	"\rresource_type\x18\x01 \x01(\x0e25.smartcore.bos.account.v1.RoleAssignment.ResourceTypeR\fresourceType\x12\x1a\n" +
 	"\bresource\x18\x02 \x01(\tR\bresource\"\x84\x01\n" +
 	"\fResourceType\x12\x1d\n" +
 	"\x19RESOURCE_TYPE_UNSPECIFIED\x10\x00\x12\x12\n" +
@@ -2584,163 +2584,163 @@ const file_account_proto_rawDesc = "" +
 	"Permission\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\"\xe9\x02\n" +
-	"\rAccountLimits\x12>\n" +
-	"\busername\x18\x01 \x01(\v2\".smartcore.bos.AccountLimits.FieldR\busername\x12>\n" +
-	"\bpassword\x18\x02 \x01(\v2\".smartcore.bos.AccountLimits.FieldR\bpassword\x12E\n" +
-	"\fdisplay_name\x18\x03 \x01(\v2\".smartcore.bos.AccountLimits.FieldR\vdisplayName\x12D\n" +
-	"\vdescription\x18\x04 \x01(\v2\".smartcore.bos.AccountLimits.FieldR\vdescription\x1aE\n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\"\x95\x03\n" +
+	"\rAccountLimits\x12I\n" +
+	"\busername\x18\x01 \x01(\v2-.smartcore.bos.account.v1.AccountLimits.FieldR\busername\x12I\n" +
+	"\bpassword\x18\x02 \x01(\v2-.smartcore.bos.account.v1.AccountLimits.FieldR\bpassword\x12P\n" +
+	"\fdisplay_name\x18\x03 \x01(\v2-.smartcore.bos.account.v1.AccountLimits.FieldR\vdisplayName\x12O\n" +
+	"\vdescription\x18\x04 \x01(\v2-.smartcore.bos.account.v1.AccountLimits.FieldR\vdescription\x1aE\n" +
 	"\x05Field\x12\x1d\n" +
 	"\n" +
 	"min_length\x18\x01 \x01(\x05R\tminLength\x12\x1d\n" +
 	"\n" +
-	"max_length\x18\x02 \x01(\x05R\tmaxLengthJ\x04\b\x05\x10\x062\xa4\v\n" +
+	"max_length\x18\x02 \x01(\x05R\tmaxLengthJ\x04\b\x05\x10\x062\x88\x0e\n" +
 	"\n" +
-	"AccountApi\x12F\n" +
+	"AccountApi\x12\\\n" +
 	"\n" +
-	"GetAccount\x12 .smartcore.bos.GetAccountRequest\x1a\x16.smartcore.bos.Account\x12W\n" +
-	"\fListAccounts\x12\".smartcore.bos.ListAccountsRequest\x1a#.smartcore.bos.ListAccountsResponse\x12L\n" +
-	"\rCreateAccount\x12#.smartcore.bos.CreateAccountRequest\x1a\x16.smartcore.bos.Account\x12L\n" +
-	"\rUpdateAccount\x12#.smartcore.bos.UpdateAccountRequest\x1a\x16.smartcore.bos.Account\x12r\n" +
-	"\x15UpdateAccountPassword\x12+.smartcore.bos.UpdateAccountPasswordRequest\x1a,.smartcore.bos.UpdateAccountPasswordResponse\x12~\n" +
-	"\x19RotateAccountClientSecret\x12/.smartcore.bos.RotateAccountClientSecretRequest\x1a0.smartcore.bos.RotateAccountClientSecretResponse\x12Z\n" +
-	"\rDeleteAccount\x12#.smartcore.bos.DeleteAccountRequest\x1a$.smartcore.bos.DeleteAccountResponse\x12=\n" +
-	"\aGetRole\x12\x1d.smartcore.bos.GetRoleRequest\x1a\x13.smartcore.bos.Role\x12N\n" +
-	"\tListRoles\x12\x1f.smartcore.bos.ListRolesRequest\x1a .smartcore.bos.ListRolesResponse\x12C\n" +
+	"GetAccount\x12+.smartcore.bos.account.v1.GetAccountRequest\x1a!.smartcore.bos.account.v1.Account\x12m\n" +
+	"\fListAccounts\x12-.smartcore.bos.account.v1.ListAccountsRequest\x1a..smartcore.bos.account.v1.ListAccountsResponse\x12b\n" +
+	"\rCreateAccount\x12..smartcore.bos.account.v1.CreateAccountRequest\x1a!.smartcore.bos.account.v1.Account\x12b\n" +
+	"\rUpdateAccount\x12..smartcore.bos.account.v1.UpdateAccountRequest\x1a!.smartcore.bos.account.v1.Account\x12\x88\x01\n" +
+	"\x15UpdateAccountPassword\x126.smartcore.bos.account.v1.UpdateAccountPasswordRequest\x1a7.smartcore.bos.account.v1.UpdateAccountPasswordResponse\x12\x94\x01\n" +
+	"\x19RotateAccountClientSecret\x12:.smartcore.bos.account.v1.RotateAccountClientSecretRequest\x1a;.smartcore.bos.account.v1.RotateAccountClientSecretResponse\x12p\n" +
+	"\rDeleteAccount\x12..smartcore.bos.account.v1.DeleteAccountRequest\x1a/.smartcore.bos.account.v1.DeleteAccountResponse\x12S\n" +
+	"\aGetRole\x12(.smartcore.bos.account.v1.GetRoleRequest\x1a\x1e.smartcore.bos.account.v1.Role\x12d\n" +
+	"\tListRoles\x12*.smartcore.bos.account.v1.ListRolesRequest\x1a+.smartcore.bos.account.v1.ListRolesResponse\x12Y\n" +
 	"\n" +
-	"CreateRole\x12 .smartcore.bos.CreateRoleRequest\x1a\x13.smartcore.bos.Role\x12C\n" +
+	"CreateRole\x12+.smartcore.bos.account.v1.CreateRoleRequest\x1a\x1e.smartcore.bos.account.v1.Role\x12Y\n" +
 	"\n" +
-	"UpdateRole\x12 .smartcore.bos.UpdateRoleRequest\x1a\x13.smartcore.bos.Role\x12Q\n" +
+	"UpdateRole\x12+.smartcore.bos.account.v1.UpdateRoleRequest\x1a\x1e.smartcore.bos.account.v1.Role\x12g\n" +
 	"\n" +
-	"DeleteRole\x12 .smartcore.bos.DeleteRoleRequest\x1a!.smartcore.bos.DeleteRoleResponse\x12[\n" +
-	"\x11GetRoleAssignment\x12'.smartcore.bos.GetRoleAssignmentRequest\x1a\x1d.smartcore.bos.RoleAssignment\x12l\n" +
-	"\x13ListRoleAssignments\x12).smartcore.bos.ListRoleAssignmentsRequest\x1a*.smartcore.bos.ListRoleAssignmentsResponse\x12a\n" +
-	"\x14CreateRoleAssignment\x12*.smartcore.bos.CreateRoleAssignmentRequest\x1a\x1d.smartcore.bos.RoleAssignment\x12o\n" +
-	"\x14DeleteRoleAssignment\x12*.smartcore.bos.DeleteRoleAssignmentRequest\x1a+.smartcore.bos.DeleteRoleAssignmentResponse2\x9a\x02\n" +
-	"\vAccountInfo\x12O\n" +
-	"\rGetPermission\x12#.smartcore.bos.GetPermissionRequest\x1a\x19.smartcore.bos.Permission\x12`\n" +
-	"\x0fListPermissions\x12%.smartcore.bos.ListPermissionsRequest\x1a&.smartcore.bos.ListPermissionsResponse\x12X\n" +
-	"\x10GetAccountLimits\x12&.smartcore.bos.GetAccountLimitsRequest\x1a\x1c.smartcore.bos.AccountLimitsB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"DeleteRole\x12+.smartcore.bos.account.v1.DeleteRoleRequest\x1a,.smartcore.bos.account.v1.DeleteRoleResponse\x12q\n" +
+	"\x11GetRoleAssignment\x122.smartcore.bos.account.v1.GetRoleAssignmentRequest\x1a(.smartcore.bos.account.v1.RoleAssignment\x12\x82\x01\n" +
+	"\x13ListRoleAssignments\x124.smartcore.bos.account.v1.ListRoleAssignmentsRequest\x1a5.smartcore.bos.account.v1.ListRoleAssignmentsResponse\x12w\n" +
+	"\x14CreateRoleAssignment\x125.smartcore.bos.account.v1.CreateRoleAssignmentRequest\x1a(.smartcore.bos.account.v1.RoleAssignment\x12\x85\x01\n" +
+	"\x14DeleteRoleAssignment\x125.smartcore.bos.account.v1.DeleteRoleAssignmentRequest\x1a6.smartcore.bos.account.v1.DeleteRoleAssignmentResponse2\xdc\x02\n" +
+	"\vAccountInfo\x12e\n" +
+	"\rGetPermission\x12..smartcore.bos.account.v1.GetPermissionRequest\x1a$.smartcore.bos.account.v1.Permission\x12v\n" +
+	"\x0fListPermissions\x120.smartcore.bos.account.v1.ListPermissionsRequest\x1a1.smartcore.bos.account.v1.ListPermissionsResponse\x12n\n" +
+	"\x10GetAccountLimits\x121.smartcore.bos.account.v1.GetAccountLimitsRequest\x1a'.smartcore.bos.account.v1.AccountLimitsB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_account_proto_rawDescOnce sync.Once
-	file_account_proto_rawDescData []byte
+	file_smartcore_bos_account_v1_account_proto_rawDescOnce sync.Once
+	file_smartcore_bos_account_v1_account_proto_rawDescData []byte
 )
 
-func file_account_proto_rawDescGZIP() []byte {
-	file_account_proto_rawDescOnce.Do(func() {
-		file_account_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_account_proto_rawDesc), len(file_account_proto_rawDesc)))
+func file_smartcore_bos_account_v1_account_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_account_v1_account_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_account_v1_account_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_account_v1_account_proto_rawDesc), len(file_smartcore_bos_account_v1_account_proto_rawDesc)))
 	})
-	return file_account_proto_rawDescData
+	return file_smartcore_bos_account_v1_account_proto_rawDescData
 }
 
-var file_account_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_account_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
-var file_account_proto_goTypes = []any{
-	(Account_Type)(0),                         // 0: smartcore.bos.Account.Type
-	(RoleAssignment_ResourceType)(0),          // 1: smartcore.bos.RoleAssignment.ResourceType
-	(*GetAccountRequest)(nil),                 // 2: smartcore.bos.GetAccountRequest
-	(*CreateAccountRequest)(nil),              // 3: smartcore.bos.CreateAccountRequest
-	(*ListAccountsRequest)(nil),               // 4: smartcore.bos.ListAccountsRequest
-	(*ListAccountsResponse)(nil),              // 5: smartcore.bos.ListAccountsResponse
-	(*UpdateAccountRequest)(nil),              // 6: smartcore.bos.UpdateAccountRequest
-	(*UpdateAccountPasswordRequest)(nil),      // 7: smartcore.bos.UpdateAccountPasswordRequest
-	(*UpdateAccountPasswordResponse)(nil),     // 8: smartcore.bos.UpdateAccountPasswordResponse
-	(*RotateAccountClientSecretRequest)(nil),  // 9: smartcore.bos.RotateAccountClientSecretRequest
-	(*RotateAccountClientSecretResponse)(nil), // 10: smartcore.bos.RotateAccountClientSecretResponse
-	(*DeleteAccountRequest)(nil),              // 11: smartcore.bos.DeleteAccountRequest
-	(*DeleteAccountResponse)(nil),             // 12: smartcore.bos.DeleteAccountResponse
-	(*GetRoleRequest)(nil),                    // 13: smartcore.bos.GetRoleRequest
-	(*ListRolesRequest)(nil),                  // 14: smartcore.bos.ListRolesRequest
-	(*ListRolesResponse)(nil),                 // 15: smartcore.bos.ListRolesResponse
-	(*CreateRoleRequest)(nil),                 // 16: smartcore.bos.CreateRoleRequest
-	(*UpdateRoleRequest)(nil),                 // 17: smartcore.bos.UpdateRoleRequest
-	(*DeleteRoleRequest)(nil),                 // 18: smartcore.bos.DeleteRoleRequest
-	(*DeleteRoleResponse)(nil),                // 19: smartcore.bos.DeleteRoleResponse
-	(*GetRoleAssignmentRequest)(nil),          // 20: smartcore.bos.GetRoleAssignmentRequest
-	(*ListRoleAssignmentsRequest)(nil),        // 21: smartcore.bos.ListRoleAssignmentsRequest
-	(*ListRoleAssignmentsResponse)(nil),       // 22: smartcore.bos.ListRoleAssignmentsResponse
-	(*CreateRoleAssignmentRequest)(nil),       // 23: smartcore.bos.CreateRoleAssignmentRequest
-	(*DeleteRoleAssignmentRequest)(nil),       // 24: smartcore.bos.DeleteRoleAssignmentRequest
-	(*DeleteRoleAssignmentResponse)(nil),      // 25: smartcore.bos.DeleteRoleAssignmentResponse
-	(*GetPermissionRequest)(nil),              // 26: smartcore.bos.GetPermissionRequest
-	(*ListPermissionsRequest)(nil),            // 27: smartcore.bos.ListPermissionsRequest
-	(*ListPermissionsResponse)(nil),           // 28: smartcore.bos.ListPermissionsResponse
-	(*GetAccountLimitsRequest)(nil),           // 29: smartcore.bos.GetAccountLimitsRequest
-	(*Account)(nil),                           // 30: smartcore.bos.Account
-	(*UserAccount)(nil),                       // 31: smartcore.bos.UserAccount
-	(*ServiceAccount)(nil),                    // 32: smartcore.bos.ServiceAccount
-	(*Role)(nil),                              // 33: smartcore.bos.Role
-	(*RoleAssignment)(nil),                    // 34: smartcore.bos.RoleAssignment
-	(*Permission)(nil),                        // 35: smartcore.bos.Permission
-	(*AccountLimits)(nil),                     // 36: smartcore.bos.AccountLimits
-	(*RoleAssignment_Scope)(nil),              // 37: smartcore.bos.RoleAssignment.Scope
-	(*AccountLimits_Field)(nil),               // 38: smartcore.bos.AccountLimits.Field
+var file_smartcore_bos_account_v1_account_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_smartcore_bos_account_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
+var file_smartcore_bos_account_v1_account_proto_goTypes = []any{
+	(Account_Type)(0),                         // 0: smartcore.bos.account.v1.Account.Type
+	(RoleAssignment_ResourceType)(0),          // 1: smartcore.bos.account.v1.RoleAssignment.ResourceType
+	(*GetAccountRequest)(nil),                 // 2: smartcore.bos.account.v1.GetAccountRequest
+	(*CreateAccountRequest)(nil),              // 3: smartcore.bos.account.v1.CreateAccountRequest
+	(*ListAccountsRequest)(nil),               // 4: smartcore.bos.account.v1.ListAccountsRequest
+	(*ListAccountsResponse)(nil),              // 5: smartcore.bos.account.v1.ListAccountsResponse
+	(*UpdateAccountRequest)(nil),              // 6: smartcore.bos.account.v1.UpdateAccountRequest
+	(*UpdateAccountPasswordRequest)(nil),      // 7: smartcore.bos.account.v1.UpdateAccountPasswordRequest
+	(*UpdateAccountPasswordResponse)(nil),     // 8: smartcore.bos.account.v1.UpdateAccountPasswordResponse
+	(*RotateAccountClientSecretRequest)(nil),  // 9: smartcore.bos.account.v1.RotateAccountClientSecretRequest
+	(*RotateAccountClientSecretResponse)(nil), // 10: smartcore.bos.account.v1.RotateAccountClientSecretResponse
+	(*DeleteAccountRequest)(nil),              // 11: smartcore.bos.account.v1.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil),             // 12: smartcore.bos.account.v1.DeleteAccountResponse
+	(*GetRoleRequest)(nil),                    // 13: smartcore.bos.account.v1.GetRoleRequest
+	(*ListRolesRequest)(nil),                  // 14: smartcore.bos.account.v1.ListRolesRequest
+	(*ListRolesResponse)(nil),                 // 15: smartcore.bos.account.v1.ListRolesResponse
+	(*CreateRoleRequest)(nil),                 // 16: smartcore.bos.account.v1.CreateRoleRequest
+	(*UpdateRoleRequest)(nil),                 // 17: smartcore.bos.account.v1.UpdateRoleRequest
+	(*DeleteRoleRequest)(nil),                 // 18: smartcore.bos.account.v1.DeleteRoleRequest
+	(*DeleteRoleResponse)(nil),                // 19: smartcore.bos.account.v1.DeleteRoleResponse
+	(*GetRoleAssignmentRequest)(nil),          // 20: smartcore.bos.account.v1.GetRoleAssignmentRequest
+	(*ListRoleAssignmentsRequest)(nil),        // 21: smartcore.bos.account.v1.ListRoleAssignmentsRequest
+	(*ListRoleAssignmentsResponse)(nil),       // 22: smartcore.bos.account.v1.ListRoleAssignmentsResponse
+	(*CreateRoleAssignmentRequest)(nil),       // 23: smartcore.bos.account.v1.CreateRoleAssignmentRequest
+	(*DeleteRoleAssignmentRequest)(nil),       // 24: smartcore.bos.account.v1.DeleteRoleAssignmentRequest
+	(*DeleteRoleAssignmentResponse)(nil),      // 25: smartcore.bos.account.v1.DeleteRoleAssignmentResponse
+	(*GetPermissionRequest)(nil),              // 26: smartcore.bos.account.v1.GetPermissionRequest
+	(*ListPermissionsRequest)(nil),            // 27: smartcore.bos.account.v1.ListPermissionsRequest
+	(*ListPermissionsResponse)(nil),           // 28: smartcore.bos.account.v1.ListPermissionsResponse
+	(*GetAccountLimitsRequest)(nil),           // 29: smartcore.bos.account.v1.GetAccountLimitsRequest
+	(*Account)(nil),                           // 30: smartcore.bos.account.v1.Account
+	(*UserAccount)(nil),                       // 31: smartcore.bos.account.v1.UserAccount
+	(*ServiceAccount)(nil),                    // 32: smartcore.bos.account.v1.ServiceAccount
+	(*Role)(nil),                              // 33: smartcore.bos.account.v1.Role
+	(*RoleAssignment)(nil),                    // 34: smartcore.bos.account.v1.RoleAssignment
+	(*Permission)(nil),                        // 35: smartcore.bos.account.v1.Permission
+	(*AccountLimits)(nil),                     // 36: smartcore.bos.account.v1.AccountLimits
+	(*RoleAssignment_Scope)(nil),              // 37: smartcore.bos.account.v1.RoleAssignment.Scope
+	(*AccountLimits_Field)(nil),               // 38: smartcore.bos.account.v1.AccountLimits.Field
 	(*fieldmaskpb.FieldMask)(nil),             // 39: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),             // 40: google.protobuf.Timestamp
 }
-var file_account_proto_depIdxs = []int32{
-	30, // 0: smartcore.bos.CreateAccountRequest.account:type_name -> smartcore.bos.Account
-	30, // 1: smartcore.bos.ListAccountsResponse.accounts:type_name -> smartcore.bos.Account
-	30, // 2: smartcore.bos.UpdateAccountRequest.account:type_name -> smartcore.bos.Account
-	39, // 3: smartcore.bos.UpdateAccountRequest.update_mask:type_name -> google.protobuf.FieldMask
-	40, // 4: smartcore.bos.RotateAccountClientSecretRequest.previous_secret_expire_time:type_name -> google.protobuf.Timestamp
-	33, // 5: smartcore.bos.ListRolesResponse.roles:type_name -> smartcore.bos.Role
-	33, // 6: smartcore.bos.CreateRoleRequest.role:type_name -> smartcore.bos.Role
-	33, // 7: smartcore.bos.UpdateRoleRequest.role:type_name -> smartcore.bos.Role
-	39, // 8: smartcore.bos.UpdateRoleRequest.update_mask:type_name -> google.protobuf.FieldMask
-	34, // 9: smartcore.bos.ListRoleAssignmentsResponse.role_assignments:type_name -> smartcore.bos.RoleAssignment
-	34, // 10: smartcore.bos.CreateRoleAssignmentRequest.role_assignment:type_name -> smartcore.bos.RoleAssignment
-	35, // 11: smartcore.bos.ListPermissionsResponse.permissions:type_name -> smartcore.bos.Permission
-	40, // 12: smartcore.bos.Account.create_time:type_name -> google.protobuf.Timestamp
-	0,  // 13: smartcore.bos.Account.type:type_name -> smartcore.bos.Account.Type
-	31, // 14: smartcore.bos.Account.user_details:type_name -> smartcore.bos.UserAccount
-	32, // 15: smartcore.bos.Account.service_details:type_name -> smartcore.bos.ServiceAccount
-	40, // 16: smartcore.bos.ServiceAccount.previous_secret_expire_time:type_name -> google.protobuf.Timestamp
-	37, // 17: smartcore.bos.RoleAssignment.scope:type_name -> smartcore.bos.RoleAssignment.Scope
-	38, // 18: smartcore.bos.AccountLimits.username:type_name -> smartcore.bos.AccountLimits.Field
-	38, // 19: smartcore.bos.AccountLimits.password:type_name -> smartcore.bos.AccountLimits.Field
-	38, // 20: smartcore.bos.AccountLimits.display_name:type_name -> smartcore.bos.AccountLimits.Field
-	38, // 21: smartcore.bos.AccountLimits.description:type_name -> smartcore.bos.AccountLimits.Field
-	1,  // 22: smartcore.bos.RoleAssignment.Scope.resource_type:type_name -> smartcore.bos.RoleAssignment.ResourceType
-	2,  // 23: smartcore.bos.AccountApi.GetAccount:input_type -> smartcore.bos.GetAccountRequest
-	4,  // 24: smartcore.bos.AccountApi.ListAccounts:input_type -> smartcore.bos.ListAccountsRequest
-	3,  // 25: smartcore.bos.AccountApi.CreateAccount:input_type -> smartcore.bos.CreateAccountRequest
-	6,  // 26: smartcore.bos.AccountApi.UpdateAccount:input_type -> smartcore.bos.UpdateAccountRequest
-	7,  // 27: smartcore.bos.AccountApi.UpdateAccountPassword:input_type -> smartcore.bos.UpdateAccountPasswordRequest
-	9,  // 28: smartcore.bos.AccountApi.RotateAccountClientSecret:input_type -> smartcore.bos.RotateAccountClientSecretRequest
-	11, // 29: smartcore.bos.AccountApi.DeleteAccount:input_type -> smartcore.bos.DeleteAccountRequest
-	13, // 30: smartcore.bos.AccountApi.GetRole:input_type -> smartcore.bos.GetRoleRequest
-	14, // 31: smartcore.bos.AccountApi.ListRoles:input_type -> smartcore.bos.ListRolesRequest
-	16, // 32: smartcore.bos.AccountApi.CreateRole:input_type -> smartcore.bos.CreateRoleRequest
-	17, // 33: smartcore.bos.AccountApi.UpdateRole:input_type -> smartcore.bos.UpdateRoleRequest
-	18, // 34: smartcore.bos.AccountApi.DeleteRole:input_type -> smartcore.bos.DeleteRoleRequest
-	20, // 35: smartcore.bos.AccountApi.GetRoleAssignment:input_type -> smartcore.bos.GetRoleAssignmentRequest
-	21, // 36: smartcore.bos.AccountApi.ListRoleAssignments:input_type -> smartcore.bos.ListRoleAssignmentsRequest
-	23, // 37: smartcore.bos.AccountApi.CreateRoleAssignment:input_type -> smartcore.bos.CreateRoleAssignmentRequest
-	24, // 38: smartcore.bos.AccountApi.DeleteRoleAssignment:input_type -> smartcore.bos.DeleteRoleAssignmentRequest
-	26, // 39: smartcore.bos.AccountInfo.GetPermission:input_type -> smartcore.bos.GetPermissionRequest
-	27, // 40: smartcore.bos.AccountInfo.ListPermissions:input_type -> smartcore.bos.ListPermissionsRequest
-	29, // 41: smartcore.bos.AccountInfo.GetAccountLimits:input_type -> smartcore.bos.GetAccountLimitsRequest
-	30, // 42: smartcore.bos.AccountApi.GetAccount:output_type -> smartcore.bos.Account
-	5,  // 43: smartcore.bos.AccountApi.ListAccounts:output_type -> smartcore.bos.ListAccountsResponse
-	30, // 44: smartcore.bos.AccountApi.CreateAccount:output_type -> smartcore.bos.Account
-	30, // 45: smartcore.bos.AccountApi.UpdateAccount:output_type -> smartcore.bos.Account
-	8,  // 46: smartcore.bos.AccountApi.UpdateAccountPassword:output_type -> smartcore.bos.UpdateAccountPasswordResponse
-	10, // 47: smartcore.bos.AccountApi.RotateAccountClientSecret:output_type -> smartcore.bos.RotateAccountClientSecretResponse
-	12, // 48: smartcore.bos.AccountApi.DeleteAccount:output_type -> smartcore.bos.DeleteAccountResponse
-	33, // 49: smartcore.bos.AccountApi.GetRole:output_type -> smartcore.bos.Role
-	15, // 50: smartcore.bos.AccountApi.ListRoles:output_type -> smartcore.bos.ListRolesResponse
-	33, // 51: smartcore.bos.AccountApi.CreateRole:output_type -> smartcore.bos.Role
-	33, // 52: smartcore.bos.AccountApi.UpdateRole:output_type -> smartcore.bos.Role
-	19, // 53: smartcore.bos.AccountApi.DeleteRole:output_type -> smartcore.bos.DeleteRoleResponse
-	34, // 54: smartcore.bos.AccountApi.GetRoleAssignment:output_type -> smartcore.bos.RoleAssignment
-	22, // 55: smartcore.bos.AccountApi.ListRoleAssignments:output_type -> smartcore.bos.ListRoleAssignmentsResponse
-	34, // 56: smartcore.bos.AccountApi.CreateRoleAssignment:output_type -> smartcore.bos.RoleAssignment
-	25, // 57: smartcore.bos.AccountApi.DeleteRoleAssignment:output_type -> smartcore.bos.DeleteRoleAssignmentResponse
-	35, // 58: smartcore.bos.AccountInfo.GetPermission:output_type -> smartcore.bos.Permission
-	28, // 59: smartcore.bos.AccountInfo.ListPermissions:output_type -> smartcore.bos.ListPermissionsResponse
-	36, // 60: smartcore.bos.AccountInfo.GetAccountLimits:output_type -> smartcore.bos.AccountLimits
+var file_smartcore_bos_account_v1_account_proto_depIdxs = []int32{
+	30, // 0: smartcore.bos.account.v1.CreateAccountRequest.account:type_name -> smartcore.bos.account.v1.Account
+	30, // 1: smartcore.bos.account.v1.ListAccountsResponse.accounts:type_name -> smartcore.bos.account.v1.Account
+	30, // 2: smartcore.bos.account.v1.UpdateAccountRequest.account:type_name -> smartcore.bos.account.v1.Account
+	39, // 3: smartcore.bos.account.v1.UpdateAccountRequest.update_mask:type_name -> google.protobuf.FieldMask
+	40, // 4: smartcore.bos.account.v1.RotateAccountClientSecretRequest.previous_secret_expire_time:type_name -> google.protobuf.Timestamp
+	33, // 5: smartcore.bos.account.v1.ListRolesResponse.roles:type_name -> smartcore.bos.account.v1.Role
+	33, // 6: smartcore.bos.account.v1.CreateRoleRequest.role:type_name -> smartcore.bos.account.v1.Role
+	33, // 7: smartcore.bos.account.v1.UpdateRoleRequest.role:type_name -> smartcore.bos.account.v1.Role
+	39, // 8: smartcore.bos.account.v1.UpdateRoleRequest.update_mask:type_name -> google.protobuf.FieldMask
+	34, // 9: smartcore.bos.account.v1.ListRoleAssignmentsResponse.role_assignments:type_name -> smartcore.bos.account.v1.RoleAssignment
+	34, // 10: smartcore.bos.account.v1.CreateRoleAssignmentRequest.role_assignment:type_name -> smartcore.bos.account.v1.RoleAssignment
+	35, // 11: smartcore.bos.account.v1.ListPermissionsResponse.permissions:type_name -> smartcore.bos.account.v1.Permission
+	40, // 12: smartcore.bos.account.v1.Account.create_time:type_name -> google.protobuf.Timestamp
+	0,  // 13: smartcore.bos.account.v1.Account.type:type_name -> smartcore.bos.account.v1.Account.Type
+	31, // 14: smartcore.bos.account.v1.Account.user_details:type_name -> smartcore.bos.account.v1.UserAccount
+	32, // 15: smartcore.bos.account.v1.Account.service_details:type_name -> smartcore.bos.account.v1.ServiceAccount
+	40, // 16: smartcore.bos.account.v1.ServiceAccount.previous_secret_expire_time:type_name -> google.protobuf.Timestamp
+	37, // 17: smartcore.bos.account.v1.RoleAssignment.scope:type_name -> smartcore.bos.account.v1.RoleAssignment.Scope
+	38, // 18: smartcore.bos.account.v1.AccountLimits.username:type_name -> smartcore.bos.account.v1.AccountLimits.Field
+	38, // 19: smartcore.bos.account.v1.AccountLimits.password:type_name -> smartcore.bos.account.v1.AccountLimits.Field
+	38, // 20: smartcore.bos.account.v1.AccountLimits.display_name:type_name -> smartcore.bos.account.v1.AccountLimits.Field
+	38, // 21: smartcore.bos.account.v1.AccountLimits.description:type_name -> smartcore.bos.account.v1.AccountLimits.Field
+	1,  // 22: smartcore.bos.account.v1.RoleAssignment.Scope.resource_type:type_name -> smartcore.bos.account.v1.RoleAssignment.ResourceType
+	2,  // 23: smartcore.bos.account.v1.AccountApi.GetAccount:input_type -> smartcore.bos.account.v1.GetAccountRequest
+	4,  // 24: smartcore.bos.account.v1.AccountApi.ListAccounts:input_type -> smartcore.bos.account.v1.ListAccountsRequest
+	3,  // 25: smartcore.bos.account.v1.AccountApi.CreateAccount:input_type -> smartcore.bos.account.v1.CreateAccountRequest
+	6,  // 26: smartcore.bos.account.v1.AccountApi.UpdateAccount:input_type -> smartcore.bos.account.v1.UpdateAccountRequest
+	7,  // 27: smartcore.bos.account.v1.AccountApi.UpdateAccountPassword:input_type -> smartcore.bos.account.v1.UpdateAccountPasswordRequest
+	9,  // 28: smartcore.bos.account.v1.AccountApi.RotateAccountClientSecret:input_type -> smartcore.bos.account.v1.RotateAccountClientSecretRequest
+	11, // 29: smartcore.bos.account.v1.AccountApi.DeleteAccount:input_type -> smartcore.bos.account.v1.DeleteAccountRequest
+	13, // 30: smartcore.bos.account.v1.AccountApi.GetRole:input_type -> smartcore.bos.account.v1.GetRoleRequest
+	14, // 31: smartcore.bos.account.v1.AccountApi.ListRoles:input_type -> smartcore.bos.account.v1.ListRolesRequest
+	16, // 32: smartcore.bos.account.v1.AccountApi.CreateRole:input_type -> smartcore.bos.account.v1.CreateRoleRequest
+	17, // 33: smartcore.bos.account.v1.AccountApi.UpdateRole:input_type -> smartcore.bos.account.v1.UpdateRoleRequest
+	18, // 34: smartcore.bos.account.v1.AccountApi.DeleteRole:input_type -> smartcore.bos.account.v1.DeleteRoleRequest
+	20, // 35: smartcore.bos.account.v1.AccountApi.GetRoleAssignment:input_type -> smartcore.bos.account.v1.GetRoleAssignmentRequest
+	21, // 36: smartcore.bos.account.v1.AccountApi.ListRoleAssignments:input_type -> smartcore.bos.account.v1.ListRoleAssignmentsRequest
+	23, // 37: smartcore.bos.account.v1.AccountApi.CreateRoleAssignment:input_type -> smartcore.bos.account.v1.CreateRoleAssignmentRequest
+	24, // 38: smartcore.bos.account.v1.AccountApi.DeleteRoleAssignment:input_type -> smartcore.bos.account.v1.DeleteRoleAssignmentRequest
+	26, // 39: smartcore.bos.account.v1.AccountInfo.GetPermission:input_type -> smartcore.bos.account.v1.GetPermissionRequest
+	27, // 40: smartcore.bos.account.v1.AccountInfo.ListPermissions:input_type -> smartcore.bos.account.v1.ListPermissionsRequest
+	29, // 41: smartcore.bos.account.v1.AccountInfo.GetAccountLimits:input_type -> smartcore.bos.account.v1.GetAccountLimitsRequest
+	30, // 42: smartcore.bos.account.v1.AccountApi.GetAccount:output_type -> smartcore.bos.account.v1.Account
+	5,  // 43: smartcore.bos.account.v1.AccountApi.ListAccounts:output_type -> smartcore.bos.account.v1.ListAccountsResponse
+	30, // 44: smartcore.bos.account.v1.AccountApi.CreateAccount:output_type -> smartcore.bos.account.v1.Account
+	30, // 45: smartcore.bos.account.v1.AccountApi.UpdateAccount:output_type -> smartcore.bos.account.v1.Account
+	8,  // 46: smartcore.bos.account.v1.AccountApi.UpdateAccountPassword:output_type -> smartcore.bos.account.v1.UpdateAccountPasswordResponse
+	10, // 47: smartcore.bos.account.v1.AccountApi.RotateAccountClientSecret:output_type -> smartcore.bos.account.v1.RotateAccountClientSecretResponse
+	12, // 48: smartcore.bos.account.v1.AccountApi.DeleteAccount:output_type -> smartcore.bos.account.v1.DeleteAccountResponse
+	33, // 49: smartcore.bos.account.v1.AccountApi.GetRole:output_type -> smartcore.bos.account.v1.Role
+	15, // 50: smartcore.bos.account.v1.AccountApi.ListRoles:output_type -> smartcore.bos.account.v1.ListRolesResponse
+	33, // 51: smartcore.bos.account.v1.AccountApi.CreateRole:output_type -> smartcore.bos.account.v1.Role
+	33, // 52: smartcore.bos.account.v1.AccountApi.UpdateRole:output_type -> smartcore.bos.account.v1.Role
+	19, // 53: smartcore.bos.account.v1.AccountApi.DeleteRole:output_type -> smartcore.bos.account.v1.DeleteRoleResponse
+	34, // 54: smartcore.bos.account.v1.AccountApi.GetRoleAssignment:output_type -> smartcore.bos.account.v1.RoleAssignment
+	22, // 55: smartcore.bos.account.v1.AccountApi.ListRoleAssignments:output_type -> smartcore.bos.account.v1.ListRoleAssignmentsResponse
+	34, // 56: smartcore.bos.account.v1.AccountApi.CreateRoleAssignment:output_type -> smartcore.bos.account.v1.RoleAssignment
+	25, // 57: smartcore.bos.account.v1.AccountApi.DeleteRoleAssignment:output_type -> smartcore.bos.account.v1.DeleteRoleAssignmentResponse
+	35, // 58: smartcore.bos.account.v1.AccountInfo.GetPermission:output_type -> smartcore.bos.account.v1.Permission
+	28, // 59: smartcore.bos.account.v1.AccountInfo.ListPermissions:output_type -> smartcore.bos.account.v1.ListPermissionsResponse
+	36, // 60: smartcore.bos.account.v1.AccountInfo.GetAccountLimits:output_type -> smartcore.bos.account.v1.AccountLimits
 	42, // [42:61] is the sub-list for method output_type
 	23, // [23:42] is the sub-list for method input_type
 	23, // [23:23] is the sub-list for extension type_name
@@ -2748,12 +2748,12 @@ var file_account_proto_depIdxs = []int32{
 	0,  // [0:23] is the sub-list for field type_name
 }
 
-func init() { file_account_proto_init() }
-func file_account_proto_init() {
-	if File_account_proto != nil {
+func init() { file_smartcore_bos_account_v1_account_proto_init() }
+func file_smartcore_bos_account_v1_account_proto_init() {
+	if File_smartcore_bos_account_v1_account_proto != nil {
 		return
 	}
-	file_account_proto_msgTypes[28].OneofWrappers = []any{
+	file_smartcore_bos_account_v1_account_proto_msgTypes[28].OneofWrappers = []any{
 		(*Account_UserDetails)(nil),
 		(*Account_ServiceDetails)(nil),
 	}
@@ -2761,18 +2761,18 @@ func file_account_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_account_proto_rawDesc), len(file_account_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_account_v1_account_proto_rawDesc), len(file_smartcore_bos_account_v1_account_proto_rawDesc)),
 			NumEnums:      2,
 			NumMessages:   37,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_account_proto_goTypes,
-		DependencyIndexes: file_account_proto_depIdxs,
-		EnumInfos:         file_account_proto_enumTypes,
-		MessageInfos:      file_account_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_account_v1_account_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_account_v1_account_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_account_v1_account_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_account_v1_account_proto_msgTypes,
 	}.Build()
-	File_account_proto = out.File
-	file_account_proto_goTypes = nil
-	file_account_proto_depIdxs = nil
+	File_smartcore_bos_account_v1_account_proto = out.File
+	file_smartcore_bos_account_v1_account_proto_goTypes = nil
+	file_smartcore_bos_account_v1_account_proto_depIdxs = nil
 }

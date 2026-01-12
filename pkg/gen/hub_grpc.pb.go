@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: hub.proto
+// source: smartcore/bos/hub/v1/hub.proto
 
 package gen
 
@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	HubApi_GetHubNode_FullMethodName     = "/smartcore.bos.HubApi/GetHubNode"
-	HubApi_ListHubNodes_FullMethodName   = "/smartcore.bos.HubApi/ListHubNodes"
-	HubApi_PullHubNodes_FullMethodName   = "/smartcore.bos.HubApi/PullHubNodes"
-	HubApi_InspectHubNode_FullMethodName = "/smartcore.bos.HubApi/InspectHubNode"
-	HubApi_EnrollHubNode_FullMethodName  = "/smartcore.bos.HubApi/EnrollHubNode"
-	HubApi_RenewHubNode_FullMethodName   = "/smartcore.bos.HubApi/RenewHubNode"
-	HubApi_TestHubNode_FullMethodName    = "/smartcore.bos.HubApi/TestHubNode"
-	HubApi_ForgetHubNode_FullMethodName  = "/smartcore.bos.HubApi/ForgetHubNode"
+	HubApi_GetHubNode_FullMethodName     = "/smartcore.bos.hub.v1.HubApi/GetHubNode"
+	HubApi_ListHubNodes_FullMethodName   = "/smartcore.bos.hub.v1.HubApi/ListHubNodes"
+	HubApi_PullHubNodes_FullMethodName   = "/smartcore.bos.hub.v1.HubApi/PullHubNodes"
+	HubApi_InspectHubNode_FullMethodName = "/smartcore.bos.hub.v1.HubApi/InspectHubNode"
+	HubApi_EnrollHubNode_FullMethodName  = "/smartcore.bos.hub.v1.HubApi/EnrollHubNode"
+	HubApi_RenewHubNode_FullMethodName   = "/smartcore.bos.hub.v1.HubApi/RenewHubNode"
+	HubApi_TestHubNode_FullMethodName    = "/smartcore.bos.hub.v1.HubApi/TestHubNode"
+	HubApi_ForgetHubNode_FullMethodName  = "/smartcore.bos.hub.v1.HubApi/ForgetHubNode"
 )
 
 // HubApiClient is the client API for HubApi service.
@@ -372,7 +372,7 @@ func _HubApi_ForgetHubNode_Handler(srv interface{}, ctx context.Context, dec fun
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var HubApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.HubApi",
+	ServiceName: "smartcore.bos.hub.v1.HubApi",
 	HandlerType: (*HubApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -411,5 +411,5 @@ var HubApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "hub.proto",
+	Metadata: "smartcore/bos/hub/v1/hub.proto",
 }

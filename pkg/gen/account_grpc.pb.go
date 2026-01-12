@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: account.proto
+// source: smartcore/bos/account/v1/account.proto
 
 package gen
 
@@ -19,22 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AccountApi_GetAccount_FullMethodName                = "/smartcore.bos.AccountApi/GetAccount"
-	AccountApi_ListAccounts_FullMethodName              = "/smartcore.bos.AccountApi/ListAccounts"
-	AccountApi_CreateAccount_FullMethodName             = "/smartcore.bos.AccountApi/CreateAccount"
-	AccountApi_UpdateAccount_FullMethodName             = "/smartcore.bos.AccountApi/UpdateAccount"
-	AccountApi_UpdateAccountPassword_FullMethodName     = "/smartcore.bos.AccountApi/UpdateAccountPassword"
-	AccountApi_RotateAccountClientSecret_FullMethodName = "/smartcore.bos.AccountApi/RotateAccountClientSecret"
-	AccountApi_DeleteAccount_FullMethodName             = "/smartcore.bos.AccountApi/DeleteAccount"
-	AccountApi_GetRole_FullMethodName                   = "/smartcore.bos.AccountApi/GetRole"
-	AccountApi_ListRoles_FullMethodName                 = "/smartcore.bos.AccountApi/ListRoles"
-	AccountApi_CreateRole_FullMethodName                = "/smartcore.bos.AccountApi/CreateRole"
-	AccountApi_UpdateRole_FullMethodName                = "/smartcore.bos.AccountApi/UpdateRole"
-	AccountApi_DeleteRole_FullMethodName                = "/smartcore.bos.AccountApi/DeleteRole"
-	AccountApi_GetRoleAssignment_FullMethodName         = "/smartcore.bos.AccountApi/GetRoleAssignment"
-	AccountApi_ListRoleAssignments_FullMethodName       = "/smartcore.bos.AccountApi/ListRoleAssignments"
-	AccountApi_CreateRoleAssignment_FullMethodName      = "/smartcore.bos.AccountApi/CreateRoleAssignment"
-	AccountApi_DeleteRoleAssignment_FullMethodName      = "/smartcore.bos.AccountApi/DeleteRoleAssignment"
+	AccountApi_GetAccount_FullMethodName                = "/smartcore.bos.account.v1.AccountApi/GetAccount"
+	AccountApi_ListAccounts_FullMethodName              = "/smartcore.bos.account.v1.AccountApi/ListAccounts"
+	AccountApi_CreateAccount_FullMethodName             = "/smartcore.bos.account.v1.AccountApi/CreateAccount"
+	AccountApi_UpdateAccount_FullMethodName             = "/smartcore.bos.account.v1.AccountApi/UpdateAccount"
+	AccountApi_UpdateAccountPassword_FullMethodName     = "/smartcore.bos.account.v1.AccountApi/UpdateAccountPassword"
+	AccountApi_RotateAccountClientSecret_FullMethodName = "/smartcore.bos.account.v1.AccountApi/RotateAccountClientSecret"
+	AccountApi_DeleteAccount_FullMethodName             = "/smartcore.bos.account.v1.AccountApi/DeleteAccount"
+	AccountApi_GetRole_FullMethodName                   = "/smartcore.bos.account.v1.AccountApi/GetRole"
+	AccountApi_ListRoles_FullMethodName                 = "/smartcore.bos.account.v1.AccountApi/ListRoles"
+	AccountApi_CreateRole_FullMethodName                = "/smartcore.bos.account.v1.AccountApi/CreateRole"
+	AccountApi_UpdateRole_FullMethodName                = "/smartcore.bos.account.v1.AccountApi/UpdateRole"
+	AccountApi_DeleteRole_FullMethodName                = "/smartcore.bos.account.v1.AccountApi/DeleteRole"
+	AccountApi_GetRoleAssignment_FullMethodName         = "/smartcore.bos.account.v1.AccountApi/GetRoleAssignment"
+	AccountApi_ListRoleAssignments_FullMethodName       = "/smartcore.bos.account.v1.AccountApi/ListRoleAssignments"
+	AccountApi_CreateRoleAssignment_FullMethodName      = "/smartcore.bos.account.v1.AccountApi/CreateRoleAssignment"
+	AccountApi_DeleteRoleAssignment_FullMethodName      = "/smartcore.bos.account.v1.AccountApi/DeleteRoleAssignment"
 )
 
 // AccountApiClient is the client API for AccountApi service.
@@ -634,7 +634,7 @@ func _AccountApi_DeleteRoleAssignment_Handler(srv interface{}, ctx context.Conte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AccountApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.AccountApi",
+	ServiceName: "smartcore.bos.account.v1.AccountApi",
 	HandlerType: (*AccountApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -703,13 +703,13 @@ var AccountApi_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "account.proto",
+	Metadata: "smartcore/bos/account/v1/account.proto",
 }
 
 const (
-	AccountInfo_GetPermission_FullMethodName    = "/smartcore.bos.AccountInfo/GetPermission"
-	AccountInfo_ListPermissions_FullMethodName  = "/smartcore.bos.AccountInfo/ListPermissions"
-	AccountInfo_GetAccountLimits_FullMethodName = "/smartcore.bos.AccountInfo/GetAccountLimits"
+	AccountInfo_GetPermission_FullMethodName    = "/smartcore.bos.account.v1.AccountInfo/GetPermission"
+	AccountInfo_ListPermissions_FullMethodName  = "/smartcore.bos.account.v1.AccountInfo/ListPermissions"
+	AccountInfo_GetAccountLimits_FullMethodName = "/smartcore.bos.account.v1.AccountInfo/GetAccountLimits"
 )
 
 // AccountInfoClient is the client API for AccountInfo service.
@@ -864,7 +864,7 @@ func _AccountInfo_GetAccountLimits_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AccountInfo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.AccountInfo",
+	ServiceName: "smartcore.bos.account.v1.AccountInfo",
 	HandlerType: (*AccountInfoServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -881,5 +881,5 @@ var AccountInfo_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "account.proto",
+	Metadata: "smartcore/bos/account/v1/account.proto",
 }

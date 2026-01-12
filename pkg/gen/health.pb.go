@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: health.proto
+// source: smartcore/bos/health/v1/health.proto
 
 package gen
 
@@ -77,11 +77,11 @@ func (x HealthCheck_OccupantImpact) String() string {
 }
 
 func (HealthCheck_OccupantImpact) Descriptor() protoreflect.EnumDescriptor {
-	return file_health_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_health_v1_health_proto_enumTypes[0].Descriptor()
 }
 
 func (HealthCheck_OccupantImpact) Type() protoreflect.EnumType {
-	return &file_health_proto_enumTypes[0]
+	return &file_smartcore_bos_health_v1_health_proto_enumTypes[0]
 }
 
 func (x HealthCheck_OccupantImpact) Number() protoreflect.EnumNumber {
@@ -90,7 +90,7 @@ func (x HealthCheck_OccupantImpact) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HealthCheck_OccupantImpact.Descriptor instead.
 func (HealthCheck_OccupantImpact) EnumDescriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 0}
 }
 
 // EquipmentImpact represents the impact abnormal values for this check can have on equipment.
@@ -140,11 +140,11 @@ func (x HealthCheck_EquipmentImpact) String() string {
 }
 
 func (HealthCheck_EquipmentImpact) Descriptor() protoreflect.EnumDescriptor {
-	return file_health_proto_enumTypes[1].Descriptor()
+	return file_smartcore_bos_health_v1_health_proto_enumTypes[1].Descriptor()
 }
 
 func (HealthCheck_EquipmentImpact) Type() protoreflect.EnumType {
-	return &file_health_proto_enumTypes[1]
+	return &file_smartcore_bos_health_v1_health_proto_enumTypes[1]
 }
 
 func (x HealthCheck_EquipmentImpact) Number() protoreflect.EnumNumber {
@@ -153,7 +153,7 @@ func (x HealthCheck_EquipmentImpact) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HealthCheck_EquipmentImpact.Descriptor instead.
 func (HealthCheck_EquipmentImpact) EnumDescriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 1}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 1}
 }
 
 // Normality describes the possible normal states for the check.
@@ -200,11 +200,11 @@ func (x HealthCheck_Normality) String() string {
 }
 
 func (HealthCheck_Normality) Descriptor() protoreflect.EnumDescriptor {
-	return file_health_proto_enumTypes[2].Descriptor()
+	return file_smartcore_bos_health_v1_health_proto_enumTypes[2].Descriptor()
 }
 
 func (HealthCheck_Normality) Type() protoreflect.EnumType {
-	return &file_health_proto_enumTypes[2]
+	return &file_smartcore_bos_health_v1_health_proto_enumTypes[2]
 }
 
 func (x HealthCheck_Normality) Number() protoreflect.EnumNumber {
@@ -213,7 +213,7 @@ func (x HealthCheck_Normality) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HealthCheck_Normality.Descriptor instead.
 func (HealthCheck_Normality) EnumDescriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 2}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 2}
 }
 
 // Contribution describes how this check contributes to compliance with the standard.
@@ -261,11 +261,11 @@ func (x HealthCheck_ComplianceImpact_Contribution) String() string {
 }
 
 func (HealthCheck_ComplianceImpact_Contribution) Descriptor() protoreflect.EnumDescriptor {
-	return file_health_proto_enumTypes[3].Descriptor()
+	return file_smartcore_bos_health_v1_health_proto_enumTypes[3].Descriptor()
 }
 
 func (HealthCheck_ComplianceImpact_Contribution) Type() protoreflect.EnumType {
-	return &file_health_proto_enumTypes[3]
+	return &file_smartcore_bos_health_v1_health_proto_enumTypes[3]
 }
 
 func (x HealthCheck_ComplianceImpact_Contribution) Number() protoreflect.EnumNumber {
@@ -274,7 +274,7 @@ func (x HealthCheck_ComplianceImpact_Contribution) Number() protoreflect.EnumNum
 
 // Deprecated: Use HealthCheck_ComplianceImpact_Contribution.Descriptor instead.
 func (HealthCheck_ComplianceImpact_Contribution) EnumDescriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 0, 0}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
 type HealthCheck_Reliability_State int32
@@ -340,11 +340,11 @@ func (x HealthCheck_Reliability_State) String() string {
 }
 
 func (HealthCheck_Reliability_State) Descriptor() protoreflect.EnumDescriptor {
-	return file_health_proto_enumTypes[4].Descriptor()
+	return file_smartcore_bos_health_v1_health_proto_enumTypes[4].Descriptor()
 }
 
 func (HealthCheck_Reliability_State) Type() protoreflect.EnumType {
-	return &file_health_proto_enumTypes[4]
+	return &file_smartcore_bos_health_v1_health_proto_enumTypes[4]
 }
 
 func (x HealthCheck_Reliability_State) Number() protoreflect.EnumNumber {
@@ -353,7 +353,7 @@ func (x HealthCheck_Reliability_State) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HealthCheck_Reliability_State.Descriptor instead.
 func (HealthCheck_Reliability_State) EnumDescriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 2, 0}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 2, 0}
 }
 
 // HealthCheck represents some check against the health of a device.
@@ -394,9 +394,9 @@ type HealthCheck struct {
 	// Output only.
 	CreateTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// The impact abnormal values for this check can have on occupants.
-	OccupantImpact HealthCheck_OccupantImpact `protobuf:"varint,10,opt,name=occupant_impact,json=occupantImpact,proto3,enum=smartcore.bos.HealthCheck_OccupantImpact" json:"occupant_impact,omitempty"`
+	OccupantImpact HealthCheck_OccupantImpact `protobuf:"varint,10,opt,name=occupant_impact,json=occupantImpact,proto3,enum=smartcore.bos.health.v1.HealthCheck_OccupantImpact" json:"occupant_impact,omitempty"`
 	// The impact abnormal values for this check can have on the equipment.
-	EquipmentImpact HealthCheck_EquipmentImpact `protobuf:"varint,11,opt,name=equipment_impact,json=equipmentImpact,proto3,enum=smartcore.bos.HealthCheck_EquipmentImpact" json:"equipment_impact,omitempty"`
+	EquipmentImpact HealthCheck_EquipmentImpact `protobuf:"varint,11,opt,name=equipment_impact,json=equipmentImpact,proto3,enum=smartcore.bos.health.v1.HealthCheck_EquipmentImpact" json:"equipment_impact,omitempty"`
 	// A list of compliance standards and how this check impacts them.
 	ComplianceImpacts []*HealthCheck_ComplianceImpact `protobuf:"bytes,12,rep,name=compliance_impacts,json=complianceImpacts,proto3" json:"compliance_impacts,omitempty"`
 	// A measure of how reliable the measured health is.
@@ -405,7 +405,7 @@ type HealthCheck struct {
 	// Normality represents whether the behaviour of the device this check is monitoring is normal.
 	// Any Normality enum value greater than NORMAL is considered abnormal.
 	// Where possible a device will report the most specific abnormal state.
-	Normality HealthCheck_Normality `protobuf:"varint,21,opt,name=normality,proto3,enum=smartcore.bos.HealthCheck_Normality" json:"normality,omitempty"`
+	Normality HealthCheck_Normality `protobuf:"varint,21,opt,name=normality,proto3,enum=smartcore.bos.health.v1.HealthCheck_Normality" json:"normality,omitempty"`
 	// The time when normality last entered NORMAL.
 	NormalTime *timestamppb.Timestamp `protobuf:"bytes,22,opt,name=normal_time,json=normalTime,proto3" json:"normal_time,omitempty"`
 	// The time when normality last entered a non-NORMAL state.
@@ -425,7 +425,7 @@ type HealthCheck struct {
 
 func (x *HealthCheck) Reset() {
 	*x = HealthCheck{}
-	mi := &file_health_proto_msgTypes[0]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -437,7 +437,7 @@ func (x *HealthCheck) String() string {
 func (*HealthCheck) ProtoMessage() {}
 
 func (x *HealthCheck) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[0]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -450,7 +450,7 @@ func (x *HealthCheck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck.ProtoReflect.Descriptor instead.
 func (*HealthCheck) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *HealthCheck) GetId() string {
@@ -593,7 +593,7 @@ type ListHealthChecksRequest struct {
 
 func (x *ListHealthChecksRequest) Reset() {
 	*x = ListHealthChecksRequest{}
-	mi := &file_health_proto_msgTypes[1]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -605,7 +605,7 @@ func (x *ListHealthChecksRequest) String() string {
 func (*ListHealthChecksRequest) ProtoMessage() {}
 
 func (x *ListHealthChecksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[1]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -618,7 +618,7 @@ func (x *ListHealthChecksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHealthChecksRequest.ProtoReflect.Descriptor instead.
 func (*ListHealthChecksRequest) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListHealthChecksRequest) GetName() string {
@@ -664,7 +664,7 @@ type ListHealthChecksResponse struct {
 
 func (x *ListHealthChecksResponse) Reset() {
 	*x = ListHealthChecksResponse{}
-	mi := &file_health_proto_msgTypes[2]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -676,7 +676,7 @@ func (x *ListHealthChecksResponse) String() string {
 func (*ListHealthChecksResponse) ProtoMessage() {}
 
 func (x *ListHealthChecksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[2]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -689,7 +689,7 @@ func (x *ListHealthChecksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHealthChecksResponse.ProtoReflect.Descriptor instead.
 func (*ListHealthChecksResponse) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListHealthChecksResponse) GetHealthChecks() []*HealthCheck {
@@ -728,7 +728,7 @@ type PullHealthChecksRequest struct {
 
 func (x *PullHealthChecksRequest) Reset() {
 	*x = PullHealthChecksRequest{}
-	mi := &file_health_proto_msgTypes[3]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -740,7 +740,7 @@ func (x *PullHealthChecksRequest) String() string {
 func (*PullHealthChecksRequest) ProtoMessage() {}
 
 func (x *PullHealthChecksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[3]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -753,7 +753,7 @@ func (x *PullHealthChecksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullHealthChecksRequest.ProtoReflect.Descriptor instead.
 func (*PullHealthChecksRequest) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PullHealthChecksRequest) GetName() string {
@@ -787,7 +787,7 @@ type PullHealthChecksResponse struct {
 
 func (x *PullHealthChecksResponse) Reset() {
 	*x = PullHealthChecksResponse{}
-	mi := &file_health_proto_msgTypes[4]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -799,7 +799,7 @@ func (x *PullHealthChecksResponse) String() string {
 func (*PullHealthChecksResponse) ProtoMessage() {}
 
 func (x *PullHealthChecksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[4]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -812,7 +812,7 @@ func (x *PullHealthChecksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullHealthChecksResponse.ProtoReflect.Descriptor instead.
 func (*PullHealthChecksResponse) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullHealthChecksResponse) GetChanges() []*PullHealthChecksResponse_Change {
@@ -836,7 +836,7 @@ type GetHealthCheckRequest struct {
 
 func (x *GetHealthCheckRequest) Reset() {
 	*x = GetHealthCheckRequest{}
-	mi := &file_health_proto_msgTypes[5]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -848,7 +848,7 @@ func (x *GetHealthCheckRequest) String() string {
 func (*GetHealthCheckRequest) ProtoMessage() {}
 
 func (x *GetHealthCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[5]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -861,7 +861,7 @@ func (x *GetHealthCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetHealthCheckRequest.ProtoReflect.Descriptor instead.
 func (*GetHealthCheckRequest) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetHealthCheckRequest) GetName() string {
@@ -902,7 +902,7 @@ type PullHealthCheckRequest struct {
 
 func (x *PullHealthCheckRequest) Reset() {
 	*x = PullHealthCheckRequest{}
-	mi := &file_health_proto_msgTypes[6]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -914,7 +914,7 @@ func (x *PullHealthCheckRequest) String() string {
 func (*PullHealthCheckRequest) ProtoMessage() {}
 
 func (x *PullHealthCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[6]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -927,7 +927,7 @@ func (x *PullHealthCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullHealthCheckRequest.ProtoReflect.Descriptor instead.
 func (*PullHealthCheckRequest) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PullHealthCheckRequest) GetName() string {
@@ -968,7 +968,7 @@ type PullHealthCheckResponse struct {
 
 func (x *PullHealthCheckResponse) Reset() {
 	*x = PullHealthCheckResponse{}
-	mi := &file_health_proto_msgTypes[7]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -980,7 +980,7 @@ func (x *PullHealthCheckResponse) String() string {
 func (*PullHealthCheckResponse) ProtoMessage() {}
 
 func (x *PullHealthCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[7]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -993,7 +993,7 @@ func (x *PullHealthCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullHealthCheckResponse.ProtoReflect.Descriptor instead.
 func (*PullHealthCheckResponse) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PullHealthCheckResponse) GetChanges() []*PullHealthCheckResponse_Change {
@@ -1011,14 +1011,14 @@ type HealthCheck_ComplianceImpact struct {
 	Standard *HealthCheck_ComplianceImpact_Standard `protobuf:"bytes,1,opt,name=standard,proto3" json:"standard,omitempty"`
 	// How this check contributes to compliance with the standard.
 	// Required.
-	Contribution  HealthCheck_ComplianceImpact_Contribution `protobuf:"varint,2,opt,name=contribution,proto3,enum=smartcore.bos.HealthCheck_ComplianceImpact_Contribution" json:"contribution,omitempty"`
+	Contribution  HealthCheck_ComplianceImpact_Contribution `protobuf:"varint,2,opt,name=contribution,proto3,enum=smartcore.bos.health.v1.HealthCheck_ComplianceImpact_Contribution" json:"contribution,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *HealthCheck_ComplianceImpact) Reset() {
 	*x = HealthCheck_ComplianceImpact{}
-	mi := &file_health_proto_msgTypes[8]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1030,7 +1030,7 @@ func (x *HealthCheck_ComplianceImpact) String() string {
 func (*HealthCheck_ComplianceImpact) ProtoMessage() {}
 
 func (x *HealthCheck_ComplianceImpact) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[8]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1043,7 +1043,7 @@ func (x *HealthCheck_ComplianceImpact) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck_ComplianceImpact.ProtoReflect.Descriptor instead.
 func (*HealthCheck_ComplianceImpact) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *HealthCheck_ComplianceImpact) GetStandard() *HealthCheck_ComplianceImpact_Standard {
@@ -1076,7 +1076,7 @@ type HealthCheck_Error struct {
 
 func (x *HealthCheck_Error) Reset() {
 	*x = HealthCheck_Error{}
-	mi := &file_health_proto_msgTypes[9]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1088,7 +1088,7 @@ func (x *HealthCheck_Error) String() string {
 func (*HealthCheck_Error) ProtoMessage() {}
 
 func (x *HealthCheck_Error) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[9]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1101,7 +1101,7 @@ func (x *HealthCheck_Error) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck_Error.ProtoReflect.Descriptor instead.
 func (*HealthCheck_Error) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 1}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *HealthCheck_Error) GetSummaryText() string {
@@ -1130,7 +1130,7 @@ func (x *HealthCheck_Error) GetCode() *HealthCheck_Error_Code {
 type HealthCheck_Reliability struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The state of the connection.
-	State HealthCheck_Reliability_State `protobuf:"varint,1,opt,name=state,proto3,enum=smartcore.bos.HealthCheck_Reliability_State" json:"state,omitempty"`
+	State HealthCheck_Reliability_State `protobuf:"varint,1,opt,name=state,proto3,enum=smartcore.bos.health.v1.HealthCheck_Reliability_State" json:"state,omitempty"`
 	// The time when the state last entered RELIABLE.
 	// Reconnections during normal operation will not update this time.
 	// Temporary bad responses will not update this time.
@@ -1152,7 +1152,7 @@ type HealthCheck_Reliability struct {
 
 func (x *HealthCheck_Reliability) Reset() {
 	*x = HealthCheck_Reliability{}
-	mi := &file_health_proto_msgTypes[10]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1164,7 +1164,7 @@ func (x *HealthCheck_Reliability) String() string {
 func (*HealthCheck_Reliability) ProtoMessage() {}
 
 func (x *HealthCheck_Reliability) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[10]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1177,7 +1177,7 @@ func (x *HealthCheck_Reliability) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck_Reliability.ProtoReflect.Descriptor instead.
 func (*HealthCheck_Reliability) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 2}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 2}
 }
 
 func (x *HealthCheck_Reliability) GetState() HealthCheck_Reliability_State {
@@ -1241,7 +1241,7 @@ type HealthCheck_Value struct {
 
 func (x *HealthCheck_Value) Reset() {
 	*x = HealthCheck_Value{}
-	mi := &file_health_proto_msgTypes[11]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1253,7 +1253,7 @@ func (x *HealthCheck_Value) String() string {
 func (*HealthCheck_Value) ProtoMessage() {}
 
 func (x *HealthCheck_Value) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[11]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1266,7 +1266,7 @@ func (x *HealthCheck_Value) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck_Value.ProtoReflect.Descriptor instead.
 func (*HealthCheck_Value) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 3}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 3}
 }
 
 func (x *HealthCheck_Value) GetValue() isHealthCheck_Value_Value {
@@ -1407,7 +1407,7 @@ type HealthCheck_ValueRange struct {
 
 func (x *HealthCheck_ValueRange) Reset() {
 	*x = HealthCheck_ValueRange{}
-	mi := &file_health_proto_msgTypes[12]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1419,7 +1419,7 @@ func (x *HealthCheck_ValueRange) String() string {
 func (*HealthCheck_ValueRange) ProtoMessage() {}
 
 func (x *HealthCheck_ValueRange) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[12]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1432,7 +1432,7 @@ func (x *HealthCheck_ValueRange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck_ValueRange.ProtoReflect.Descriptor instead.
 func (*HealthCheck_ValueRange) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 4}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 4}
 }
 
 func (x *HealthCheck_ValueRange) GetLow() *HealthCheck_Value {
@@ -1466,7 +1466,7 @@ type HealthCheck_Values struct {
 
 func (x *HealthCheck_Values) Reset() {
 	*x = HealthCheck_Values{}
-	mi := &file_health_proto_msgTypes[13]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1478,7 +1478,7 @@ func (x *HealthCheck_Values) String() string {
 func (*HealthCheck_Values) ProtoMessage() {}
 
 func (x *HealthCheck_Values) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[13]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1491,7 +1491,7 @@ func (x *HealthCheck_Values) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck_Values.ProtoReflect.Descriptor instead.
 func (*HealthCheck_Values) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 5}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 5}
 }
 
 func (x *HealthCheck_Values) GetValues() []*HealthCheck_Value {
@@ -1523,7 +1523,7 @@ type HealthCheck_Bounds struct {
 
 func (x *HealthCheck_Bounds) Reset() {
 	*x = HealthCheck_Bounds{}
-	mi := &file_health_proto_msgTypes[14]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1535,7 +1535,7 @@ func (x *HealthCheck_Bounds) String() string {
 func (*HealthCheck_Bounds) ProtoMessage() {}
 
 func (x *HealthCheck_Bounds) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[14]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1548,7 +1548,7 @@ func (x *HealthCheck_Bounds) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck_Bounds.ProtoReflect.Descriptor instead.
 func (*HealthCheck_Bounds) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 6}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 6}
 }
 
 func (x *HealthCheck_Bounds) GetCurrentValue() *HealthCheck_Value {
@@ -1676,7 +1676,7 @@ type HealthCheck_Faults struct {
 
 func (x *HealthCheck_Faults) Reset() {
 	*x = HealthCheck_Faults{}
-	mi := &file_health_proto_msgTypes[15]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1688,7 +1688,7 @@ func (x *HealthCheck_Faults) String() string {
 func (*HealthCheck_Faults) ProtoMessage() {}
 
 func (x *HealthCheck_Faults) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[15]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1701,7 +1701,7 @@ func (x *HealthCheck_Faults) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck_Faults.ProtoReflect.Descriptor instead.
 func (*HealthCheck_Faults) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 7}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 7}
 }
 
 func (x *HealthCheck_Faults) GetCurrentFaults() []*HealthCheck_Error {
@@ -1738,7 +1738,7 @@ type HealthCheck_ComplianceImpact_Standard struct {
 
 func (x *HealthCheck_ComplianceImpact_Standard) Reset() {
 	*x = HealthCheck_ComplianceImpact_Standard{}
-	mi := &file_health_proto_msgTypes[16]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1750,7 +1750,7 @@ func (x *HealthCheck_ComplianceImpact_Standard) String() string {
 func (*HealthCheck_ComplianceImpact_Standard) ProtoMessage() {}
 
 func (x *HealthCheck_ComplianceImpact_Standard) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[16]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1763,7 +1763,7 @@ func (x *HealthCheck_ComplianceImpact_Standard) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use HealthCheck_ComplianceImpact_Standard.ProtoReflect.Descriptor instead.
 func (*HealthCheck_ComplianceImpact_Standard) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 0, 0}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
 func (x *HealthCheck_ComplianceImpact_Standard) GetDisplayName() string {
@@ -1818,7 +1818,7 @@ type HealthCheck_Error_Code struct {
 
 func (x *HealthCheck_Error_Code) Reset() {
 	*x = HealthCheck_Error_Code{}
-	mi := &file_health_proto_msgTypes[17]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1830,7 +1830,7 @@ func (x *HealthCheck_Error_Code) String() string {
 func (*HealthCheck_Error_Code) ProtoMessage() {}
 
 func (x *HealthCheck_Error_Code) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[17]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1843,7 +1843,7 @@ func (x *HealthCheck_Error_Code) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck_Error_Code.ProtoReflect.Descriptor instead.
 func (*HealthCheck_Error_Code) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 1, 0}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 1, 0}
 }
 
 func (x *HealthCheck_Error_Code) GetCode() string {
@@ -1878,7 +1878,7 @@ type HealthCheck_Reliability_Cause struct {
 
 func (x *HealthCheck_Reliability_Cause) Reset() {
 	*x = HealthCheck_Reliability_Cause{}
-	mi := &file_health_proto_msgTypes[18]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1890,7 +1890,7 @@ func (x *HealthCheck_Reliability_Cause) String() string {
 func (*HealthCheck_Reliability_Cause) ProtoMessage() {}
 
 func (x *HealthCheck_Reliability_Cause) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[18]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1903,7 +1903,7 @@ func (x *HealthCheck_Reliability_Cause) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck_Reliability_Cause.ProtoReflect.Descriptor instead.
 func (*HealthCheck_Reliability_Cause) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 2, 0}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 2, 0}
 }
 
 func (x *HealthCheck_Reliability_Cause) GetName() string {
@@ -1940,7 +1940,7 @@ type HealthCheck_Reliability_Effects struct {
 
 func (x *HealthCheck_Reliability_Effects) Reset() {
 	*x = HealthCheck_Reliability_Effects{}
-	mi := &file_health_proto_msgTypes[19]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1952,7 +1952,7 @@ func (x *HealthCheck_Reliability_Effects) String() string {
 func (*HealthCheck_Reliability_Effects) ProtoMessage() {}
 
 func (x *HealthCheck_Reliability_Effects) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[19]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1965,7 +1965,7 @@ func (x *HealthCheck_Reliability_Effects) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheck_Reliability_Effects.ProtoReflect.Descriptor instead.
 func (*HealthCheck_Reliability_Effects) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0, 2, 1}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 2, 1}
 }
 
 func (x *HealthCheck_Reliability_Effects) GetCount() int32 {
@@ -1993,7 +1993,7 @@ type PullHealthChecksResponse_Change struct {
 
 func (x *PullHealthChecksResponse_Change) Reset() {
 	*x = PullHealthChecksResponse_Change{}
-	mi := &file_health_proto_msgTypes[20]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2005,7 +2005,7 @@ func (x *PullHealthChecksResponse_Change) String() string {
 func (*PullHealthChecksResponse_Change) ProtoMessage() {}
 
 func (x *PullHealthChecksResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[20]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2018,7 +2018,7 @@ func (x *PullHealthChecksResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullHealthChecksResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullHealthChecksResponse_Change) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{4, 0}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{4, 0}
 }
 
 func (x *PullHealthChecksResponse_Change) GetName() string {
@@ -2070,7 +2070,7 @@ type PullHealthCheckResponse_Change struct {
 
 func (x *PullHealthCheckResponse_Change) Reset() {
 	*x = PullHealthCheckResponse_Change{}
-	mi := &file_health_proto_msgTypes[21]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2082,7 +2082,7 @@ func (x *PullHealthCheckResponse_Change) String() string {
 func (*PullHealthCheckResponse_Change) ProtoMessage() {}
 
 func (x *PullHealthCheckResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[21]
+	mi := &file_smartcore_bos_health_v1_health_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2095,7 +2095,7 @@ func (x *PullHealthCheckResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullHealthCheckResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullHealthCheckResponse_Change) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{7, 0}
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{7, 0}
 }
 
 func (x *PullHealthCheckResponse_Change) GetName() string {
@@ -2119,31 +2119,31 @@ func (x *PullHealthCheckResponse_Change) GetChangeTime() *timestamppb.Timestamp 
 	return nil
 }
 
-var File_health_proto protoreflect.FileDescriptor
+var File_smartcore_bos_health_v1_health_proto protoreflect.FileDescriptor
 
-const file_health_proto_rawDesc = "" +
+const file_smartcore_bos_health_v1_health_proto_rawDesc = "" +
 	"\n" +
-	"\fhealth.proto\x12\rsmartcore.bos\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\"\x8b\x1d\n" +
+	"$smartcore/bos/health/v1/health.proto\x12\x17smartcore.bos.health.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\"\x90\x1f\n" +
 	"\vHealthCheck\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12;\n" +
 	"\vcreate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTime\x12R\n" +
+	"createTime\x12\\\n" +
 	"\x0foccupant_impact\x18\n" +
-	" \x01(\x0e2).smartcore.bos.HealthCheck.OccupantImpactR\x0eoccupantImpact\x12U\n" +
-	"\x10equipment_impact\x18\v \x01(\x0e2*.smartcore.bos.HealthCheck.EquipmentImpactR\x0fequipmentImpact\x12Z\n" +
-	"\x12compliance_impacts\x18\f \x03(\v2+.smartcore.bos.HealthCheck.ComplianceImpactR\x11complianceImpacts\x12H\n" +
-	"\vreliability\x18\x14 \x01(\v2&.smartcore.bos.HealthCheck.ReliabilityR\vreliability\x12B\n" +
-	"\tnormality\x18\x15 \x01(\x0e2$.smartcore.bos.HealthCheck.NormalityR\tnormality\x12;\n" +
+	" \x01(\x0e23.smartcore.bos.health.v1.HealthCheck.OccupantImpactR\x0eoccupantImpact\x12_\n" +
+	"\x10equipment_impact\x18\v \x01(\x0e24.smartcore.bos.health.v1.HealthCheck.EquipmentImpactR\x0fequipmentImpact\x12d\n" +
+	"\x12compliance_impacts\x18\f \x03(\v25.smartcore.bos.health.v1.HealthCheck.ComplianceImpactR\x11complianceImpacts\x12R\n" +
+	"\vreliability\x18\x14 \x01(\v20.smartcore.bos.health.v1.HealthCheck.ReliabilityR\vreliability\x12L\n" +
+	"\tnormality\x18\x15 \x01(\x0e2..smartcore.bos.health.v1.HealthCheck.NormalityR\tnormality\x12;\n" +
 	"\vnormal_time\x18\x16 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"normalTime\x12?\n" +
-	"\rabnormal_time\x18\x17 \x01(\v2\x1a.google.protobuf.TimestampR\fabnormalTime\x12;\n" +
-	"\x06bounds\x18\x1e \x01(\v2!.smartcore.bos.HealthCheck.BoundsH\x00R\x06bounds\x12;\n" +
-	"\x06faults\x18\x1f \x01(\v2!.smartcore.bos.HealthCheck.FaultsH\x00R\x06faults\x1a\xc7\x03\n" +
-	"\x10ComplianceImpact\x12P\n" +
-	"\bstandard\x18\x01 \x01(\v24.smartcore.bos.HealthCheck.ComplianceImpact.StandardR\bstandard\x12\\\n" +
-	"\fcontribution\x18\x02 \x01(\x0e28.smartcore.bos.HealthCheck.ComplianceImpact.ContributionR\fcontribution\x1a\xa7\x01\n" +
+	"\rabnormal_time\x18\x17 \x01(\v2\x1a.google.protobuf.TimestampR\fabnormalTime\x12E\n" +
+	"\x06bounds\x18\x1e \x01(\v2+.smartcore.bos.health.v1.HealthCheck.BoundsH\x00R\x06bounds\x12E\n" +
+	"\x06faults\x18\x1f \x01(\v2+.smartcore.bos.health.v1.HealthCheck.FaultsH\x00R\x06faults\x1a\xdb\x03\n" +
+	"\x10ComplianceImpact\x12Z\n" +
+	"\bstandard\x18\x01 \x01(\v2>.smartcore.bos.health.v1.HealthCheck.ComplianceImpact.StandardR\bstandard\x12f\n" +
+	"\fcontribution\x18\x02 \x01(\x0e2B.smartcore.bos.health.v1.HealthCheck.ComplianceImpact.ContributionR\fcontribution\x1a\xa7\x01\n" +
 	"\bStandard\x12!\n" +
 	"\fdisplay_name\x18\x01 \x01(\tR\vdisplayName\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
@@ -2156,25 +2156,25 @@ const file_health_proto_rawDesc = "" +
 	"\n" +
 	"\x06RATING\x10\x02\x12\v\n" +
 	"\aWARNING\x10\x03\x12\b\n" +
-	"\x04FAIL\x10\x04\x1a\xbc\x01\n" +
+	"\x04FAIL\x10\x04\x1a\xc6\x01\n" +
 	"\x05Error\x12!\n" +
 	"\fsummary_text\x18\x01 \x01(\tR\vsummaryText\x12!\n" +
-	"\fdetails_text\x18\x02 \x01(\tR\vdetailsText\x129\n" +
-	"\x04code\x18\x03 \x01(\v2%.smartcore.bos.HealthCheck.Error.CodeR\x04code\x1a2\n" +
+	"\fdetails_text\x18\x02 \x01(\tR\vdetailsText\x12C\n" +
+	"\x04code\x18\x03 \x01(\v2/.smartcore.bos.health.v1.HealthCheck.Error.CodeR\x04code\x1a2\n" +
 	"\x04Code\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12\x16\n" +
-	"\x06system\x18\x02 \x01(\tR\x06system\x1a\xf5\x05\n" +
-	"\vReliability\x12B\n" +
-	"\x05state\x18\x01 \x01(\x0e2,.smartcore.bos.HealthCheck.Reliability.StateR\x05state\x12?\n" +
+	"\x06system\x18\x02 \x01(\tR\x06system\x1a\xa8\x06\n" +
+	"\vReliability\x12L\n" +
+	"\x05state\x18\x01 \x01(\x0e26.smartcore.bos.health.v1.HealthCheck.Reliability.StateR\x05state\x12?\n" +
 	"\rreliable_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\freliableTime\x12C\n" +
-	"\x0funreliable_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x0eunreliableTime\x12?\n" +
+	"\x0funreliable_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x0eunreliableTime\x12I\n" +
 	"\n" +
-	"last_error\x18\x04 \x01(\v2 .smartcore.bos.HealthCheck.ErrorR\tlastError\x12B\n" +
-	"\x05cause\x18\x05 \x01(\v2,.smartcore.bos.HealthCheck.Reliability.CauseR\x05cause\x12H\n" +
-	"\aeffects\x18\x06 \x01(\v2..smartcore.bos.HealthCheck.Reliability.EffectsR\aeffects\x1av\n" +
+	"last_error\x18\x04 \x01(\v2*.smartcore.bos.health.v1.HealthCheck.ErrorR\tlastError\x12L\n" +
+	"\x05cause\x18\x05 \x01(\v26.smartcore.bos.health.v1.HealthCheck.Reliability.CauseR\x05cause\x12R\n" +
+	"\aeffects\x18\x06 \x01(\v28.smartcore.bos.health.v1.HealthCheck.Reliability.EffectsR\aeffects\x1a\x80\x01\n" +
 	"\x05Cause\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
-	"\x05error\x18\x02 \x01(\v2 .smartcore.bos.HealthCheck.ErrorR\x05error\x12!\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12@\n" +
+	"\x05error\x18\x02 \x01(\v2*.smartcore.bos.health.v1.HealthCheck.ErrorR\x05error\x12!\n" +
 	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName\x1a\x1f\n" +
 	"\aEffects\x12\x14\n" +
 	"\x05count\x18\x01 \x01(\x05R\x05count\"\xb3\x01\n" +
@@ -2200,26 +2200,26 @@ const file_health_proto_rawDesc = "" +
 	"floatValue\x12E\n" +
 	"\x0ftimestamp_value\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x0etimestampValue\x12B\n" +
 	"\x0eduration_value\x18\a \x01(\v2\x19.google.protobuf.DurationH\x00R\rdurationValueB\a\n" +
-	"\x05value\x1a\xb4\x01\n" +
+	"\x05value\x1a\xd2\x01\n" +
 	"\n" +
-	"ValueRange\x122\n" +
-	"\x03low\x18\x01 \x01(\v2 .smartcore.bos.HealthCheck.ValueR\x03low\x124\n" +
-	"\x04high\x18\x02 \x01(\v2 .smartcore.bos.HealthCheck.ValueR\x04high\x12<\n" +
-	"\bdeadband\x18\x03 \x01(\v2 .smartcore.bos.HealthCheck.ValueR\bdeadband\x1aB\n" +
-	"\x06Values\x128\n" +
-	"\x06values\x18\x01 \x03(\v2 .smartcore.bos.HealthCheck.ValueR\x06values\x1a\xf4\x03\n" +
-	"\x06Bounds\x12E\n" +
-	"\rcurrent_value\x18\x01 \x01(\v2 .smartcore.bos.HealthCheck.ValueR\fcurrentValue\x12E\n" +
-	"\fnormal_value\x18\x02 \x01(\v2 .smartcore.bos.HealthCheck.ValueH\x00R\vnormalValue\x12I\n" +
-	"\x0eabnormal_value\x18\x03 \x01(\v2 .smartcore.bos.HealthCheck.ValueH\x00R\rabnormalValue\x12J\n" +
-	"\fnormal_range\x18\x04 \x01(\v2%.smartcore.bos.HealthCheck.ValueRangeH\x00R\vnormalRange\x12H\n" +
-	"\rnormal_values\x18\x06 \x01(\v2!.smartcore.bos.HealthCheck.ValuesH\x00R\fnormalValues\x12L\n" +
-	"\x0fabnormal_values\x18\a \x01(\v2!.smartcore.bos.HealthCheck.ValuesH\x00R\x0eabnormalValues\x12!\n" +
+	"ValueRange\x12<\n" +
+	"\x03low\x18\x01 \x01(\v2*.smartcore.bos.health.v1.HealthCheck.ValueR\x03low\x12>\n" +
+	"\x04high\x18\x02 \x01(\v2*.smartcore.bos.health.v1.HealthCheck.ValueR\x04high\x12F\n" +
+	"\bdeadband\x18\x03 \x01(\v2*.smartcore.bos.health.v1.HealthCheck.ValueR\bdeadband\x1aL\n" +
+	"\x06Values\x12B\n" +
+	"\x06values\x18\x01 \x03(\v2*.smartcore.bos.health.v1.HealthCheck.ValueR\x06values\x1a\xb0\x04\n" +
+	"\x06Bounds\x12O\n" +
+	"\rcurrent_value\x18\x01 \x01(\v2*.smartcore.bos.health.v1.HealthCheck.ValueR\fcurrentValue\x12O\n" +
+	"\fnormal_value\x18\x02 \x01(\v2*.smartcore.bos.health.v1.HealthCheck.ValueH\x00R\vnormalValue\x12S\n" +
+	"\x0eabnormal_value\x18\x03 \x01(\v2*.smartcore.bos.health.v1.HealthCheck.ValueH\x00R\rabnormalValue\x12T\n" +
+	"\fnormal_range\x18\x04 \x01(\v2/.smartcore.bos.health.v1.HealthCheck.ValueRangeH\x00R\vnormalRange\x12R\n" +
+	"\rnormal_values\x18\x06 \x01(\v2+.smartcore.bos.health.v1.HealthCheck.ValuesH\x00R\fnormalValues\x12V\n" +
+	"\x0fabnormal_values\x18\a \x01(\v2+.smartcore.bos.health.v1.HealthCheck.ValuesH\x00R\x0eabnormalValues\x12!\n" +
 	"\fdisplay_unit\x18\b \x01(\tR\vdisplayUnitB\n" +
 	"\n" +
-	"\bexpected\x1aQ\n" +
-	"\x06Faults\x12G\n" +
-	"\x0ecurrent_faults\x18\x01 \x03(\v2 .smartcore.bos.HealthCheck.ErrorR\rcurrentFaults\"z\n" +
+	"\bexpected\x1a[\n" +
+	"\x06Faults\x12Q\n" +
+	"\x0ecurrent_faults\x18\x01 \x03(\v2*.smartcore.bos.health.v1.HealthCheck.ErrorR\rcurrentFaults\"z\n" +
 	"\x0eOccupantImpact\x12\x1f\n" +
 	"\x1bOCCUPANT_IMPACT_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12NO_OCCUPANT_IMPACT\x10\x01\x12\v\n" +
@@ -2247,23 +2247,23 @@ const file_health_proto_rawDesc = "" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\"\xa2\x01\n" +
-	"\x18ListHealthChecksResponse\x12?\n" +
-	"\rhealth_checks\x18\x01 \x03(\v2\x1a.smartcore.bos.HealthCheckR\fhealthChecks\x12&\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"\xac\x01\n" +
+	"\x18ListHealthChecksResponse\x12I\n" +
+	"\rhealth_checks\x18\x01 \x03(\v2$.smartcore.bos.health.v1.HealthCheckR\fhealthChecks\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
 	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\x89\x01\n" +
 	"\x17PullHealthChecksRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xe3\x02\n" +
-	"\x18PullHealthChecksResponse\x12H\n" +
-	"\achanges\x18\x01 \x03(\v2..smartcore.bos.PullHealthChecksResponse.ChangeR\achanges\x1a\xfc\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x81\x03\n" +
+	"\x18PullHealthChecksResponse\x12R\n" +
+	"\achanges\x18\x01 \x03(\v28.smartcore.bos.health.v1.PullHealthChecksResponse.ChangeR\achanges\x1a\x90\x02\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x127\n" +
-	"\tnew_value\x18\x03 \x01(\v2\x1a.smartcore.bos.HealthCheckR\bnewValue\x127\n" +
-	"\told_value\x18\x04 \x01(\v2\x1a.smartcore.bos.HealthCheckR\boldValue\x12;\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12A\n" +
+	"\tnew_value\x18\x03 \x01(\v2$.smartcore.bos.health.v1.HealthCheckR\bnewValue\x12A\n" +
+	"\told_value\x18\x04 \x01(\v2$.smartcore.bos.health.v1.HealthCheckR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"changeTime\"t\n" +
 	"\x15GetHealthCheckRequest\x12\x12\n" +
@@ -2274,122 +2274,122 @@ const file_health_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x127\n" +
 	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x04 \x01(\bR\vupdatesOnly\"\xfd\x01\n" +
-	"\x17PullHealthCheckResponse\x12G\n" +
-	"\achanges\x18\x01 \x03(\v2-.smartcore.bos.PullHealthCheckResponse.ChangeR\achanges\x1a\x98\x01\n" +
+	"\fupdates_only\x18\x04 \x01(\bR\vupdatesOnly\"\x91\x02\n" +
+	"\x17PullHealthCheckResponse\x12Q\n" +
+	"\achanges\x18\x01 \x03(\v27.smartcore.bos.health.v1.PullHealthCheckResponse.ChangeR\achanges\x1a\xa2\x01\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12=\n" +
-	"\fhealth_check\x18\x03 \x01(\v2\x1a.smartcore.bos.HealthCheckR\vhealthCheck\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12G\n" +
+	"\fhealth_check\x18\x03 \x01(\v2$.smartcore.bos.health.v1.HealthCheckR\vhealthCheck\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime2\x8f\x03\n" +
-	"\tHealthApi\x12c\n" +
-	"\x10ListHealthChecks\x12&.smartcore.bos.ListHealthChecksRequest\x1a'.smartcore.bos.ListHealthChecksResponse\x12e\n" +
-	"\x10PullHealthChecks\x12&.smartcore.bos.PullHealthChecksRequest\x1a'.smartcore.bos.PullHealthChecksResponse0\x01\x12R\n" +
-	"\x0eGetHealthCheck\x12$.smartcore.bos.GetHealthCheckRequest\x1a\x1a.smartcore.bos.HealthCheck\x12b\n" +
-	"\x0fPullHealthCheck\x12%.smartcore.bos.PullHealthCheckRequest\x1a&.smartcore.bos.PullHealthCheckResponse0\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"changeTime2\xdf\x03\n" +
+	"\tHealthApi\x12w\n" +
+	"\x10ListHealthChecks\x120.smartcore.bos.health.v1.ListHealthChecksRequest\x1a1.smartcore.bos.health.v1.ListHealthChecksResponse\x12y\n" +
+	"\x10PullHealthChecks\x120.smartcore.bos.health.v1.PullHealthChecksRequest\x1a1.smartcore.bos.health.v1.PullHealthChecksResponse0\x01\x12f\n" +
+	"\x0eGetHealthCheck\x12..smartcore.bos.health.v1.GetHealthCheckRequest\x1a$.smartcore.bos.health.v1.HealthCheck\x12v\n" +
+	"\x0fPullHealthCheck\x12/.smartcore.bos.health.v1.PullHealthCheckRequest\x1a0.smartcore.bos.health.v1.PullHealthCheckResponse0\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_health_proto_rawDescOnce sync.Once
-	file_health_proto_rawDescData []byte
+	file_smartcore_bos_health_v1_health_proto_rawDescOnce sync.Once
+	file_smartcore_bos_health_v1_health_proto_rawDescData []byte
 )
 
-func file_health_proto_rawDescGZIP() []byte {
-	file_health_proto_rawDescOnce.Do(func() {
-		file_health_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_health_proto_rawDesc), len(file_health_proto_rawDesc)))
+func file_smartcore_bos_health_v1_health_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_health_v1_health_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_health_v1_health_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_health_v1_health_proto_rawDesc), len(file_smartcore_bos_health_v1_health_proto_rawDesc)))
 	})
-	return file_health_proto_rawDescData
+	return file_smartcore_bos_health_v1_health_proto_rawDescData
 }
 
-var file_health_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_health_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
-var file_health_proto_goTypes = []any{
-	(HealthCheck_OccupantImpact)(0),                // 0: smartcore.bos.HealthCheck.OccupantImpact
-	(HealthCheck_EquipmentImpact)(0),               // 1: smartcore.bos.HealthCheck.EquipmentImpact
-	(HealthCheck_Normality)(0),                     // 2: smartcore.bos.HealthCheck.Normality
-	(HealthCheck_ComplianceImpact_Contribution)(0), // 3: smartcore.bos.HealthCheck.ComplianceImpact.Contribution
-	(HealthCheck_Reliability_State)(0),             // 4: smartcore.bos.HealthCheck.Reliability.State
-	(*HealthCheck)(nil),                            // 5: smartcore.bos.HealthCheck
-	(*ListHealthChecksRequest)(nil),                // 6: smartcore.bos.ListHealthChecksRequest
-	(*ListHealthChecksResponse)(nil),               // 7: smartcore.bos.ListHealthChecksResponse
-	(*PullHealthChecksRequest)(nil),                // 8: smartcore.bos.PullHealthChecksRequest
-	(*PullHealthChecksResponse)(nil),               // 9: smartcore.bos.PullHealthChecksResponse
-	(*GetHealthCheckRequest)(nil),                  // 10: smartcore.bos.GetHealthCheckRequest
-	(*PullHealthCheckRequest)(nil),                 // 11: smartcore.bos.PullHealthCheckRequest
-	(*PullHealthCheckResponse)(nil),                // 12: smartcore.bos.PullHealthCheckResponse
-	(*HealthCheck_ComplianceImpact)(nil),           // 13: smartcore.bos.HealthCheck.ComplianceImpact
-	(*HealthCheck_Error)(nil),                      // 14: smartcore.bos.HealthCheck.Error
-	(*HealthCheck_Reliability)(nil),                // 15: smartcore.bos.HealthCheck.Reliability
-	(*HealthCheck_Value)(nil),                      // 16: smartcore.bos.HealthCheck.Value
-	(*HealthCheck_ValueRange)(nil),                 // 17: smartcore.bos.HealthCheck.ValueRange
-	(*HealthCheck_Values)(nil),                     // 18: smartcore.bos.HealthCheck.Values
-	(*HealthCheck_Bounds)(nil),                     // 19: smartcore.bos.HealthCheck.Bounds
-	(*HealthCheck_Faults)(nil),                     // 20: smartcore.bos.HealthCheck.Faults
-	(*HealthCheck_ComplianceImpact_Standard)(nil),  // 21: smartcore.bos.HealthCheck.ComplianceImpact.Standard
-	(*HealthCheck_Error_Code)(nil),                 // 22: smartcore.bos.HealthCheck.Error.Code
-	(*HealthCheck_Reliability_Cause)(nil),          // 23: smartcore.bos.HealthCheck.Reliability.Cause
-	(*HealthCheck_Reliability_Effects)(nil),        // 24: smartcore.bos.HealthCheck.Reliability.Effects
-	(*PullHealthChecksResponse_Change)(nil),        // 25: smartcore.bos.PullHealthChecksResponse.Change
-	(*PullHealthCheckResponse_Change)(nil),         // 26: smartcore.bos.PullHealthCheckResponse.Change
+var file_smartcore_bos_health_v1_health_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_smartcore_bos_health_v1_health_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_smartcore_bos_health_v1_health_proto_goTypes = []any{
+	(HealthCheck_OccupantImpact)(0),                // 0: smartcore.bos.health.v1.HealthCheck.OccupantImpact
+	(HealthCheck_EquipmentImpact)(0),               // 1: smartcore.bos.health.v1.HealthCheck.EquipmentImpact
+	(HealthCheck_Normality)(0),                     // 2: smartcore.bos.health.v1.HealthCheck.Normality
+	(HealthCheck_ComplianceImpact_Contribution)(0), // 3: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Contribution
+	(HealthCheck_Reliability_State)(0),             // 4: smartcore.bos.health.v1.HealthCheck.Reliability.State
+	(*HealthCheck)(nil),                            // 5: smartcore.bos.health.v1.HealthCheck
+	(*ListHealthChecksRequest)(nil),                // 6: smartcore.bos.health.v1.ListHealthChecksRequest
+	(*ListHealthChecksResponse)(nil),               // 7: smartcore.bos.health.v1.ListHealthChecksResponse
+	(*PullHealthChecksRequest)(nil),                // 8: smartcore.bos.health.v1.PullHealthChecksRequest
+	(*PullHealthChecksResponse)(nil),               // 9: smartcore.bos.health.v1.PullHealthChecksResponse
+	(*GetHealthCheckRequest)(nil),                  // 10: smartcore.bos.health.v1.GetHealthCheckRequest
+	(*PullHealthCheckRequest)(nil),                 // 11: smartcore.bos.health.v1.PullHealthCheckRequest
+	(*PullHealthCheckResponse)(nil),                // 12: smartcore.bos.health.v1.PullHealthCheckResponse
+	(*HealthCheck_ComplianceImpact)(nil),           // 13: smartcore.bos.health.v1.HealthCheck.ComplianceImpact
+	(*HealthCheck_Error)(nil),                      // 14: smartcore.bos.health.v1.HealthCheck.Error
+	(*HealthCheck_Reliability)(nil),                // 15: smartcore.bos.health.v1.HealthCheck.Reliability
+	(*HealthCheck_Value)(nil),                      // 16: smartcore.bos.health.v1.HealthCheck.Value
+	(*HealthCheck_ValueRange)(nil),                 // 17: smartcore.bos.health.v1.HealthCheck.ValueRange
+	(*HealthCheck_Values)(nil),                     // 18: smartcore.bos.health.v1.HealthCheck.Values
+	(*HealthCheck_Bounds)(nil),                     // 19: smartcore.bos.health.v1.HealthCheck.Bounds
+	(*HealthCheck_Faults)(nil),                     // 20: smartcore.bos.health.v1.HealthCheck.Faults
+	(*HealthCheck_ComplianceImpact_Standard)(nil),  // 21: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Standard
+	(*HealthCheck_Error_Code)(nil),                 // 22: smartcore.bos.health.v1.HealthCheck.Error.Code
+	(*HealthCheck_Reliability_Cause)(nil),          // 23: smartcore.bos.health.v1.HealthCheck.Reliability.Cause
+	(*HealthCheck_Reliability_Effects)(nil),        // 24: smartcore.bos.health.v1.HealthCheck.Reliability.Effects
+	(*PullHealthChecksResponse_Change)(nil),        // 25: smartcore.bos.health.v1.PullHealthChecksResponse.Change
+	(*PullHealthCheckResponse_Change)(nil),         // 26: smartcore.bos.health.v1.PullHealthCheckResponse.Change
 	(*timestamppb.Timestamp)(nil),                  // 27: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),                  // 28: google.protobuf.FieldMask
 	(*durationpb.Duration)(nil),                    // 29: google.protobuf.Duration
 	(types.ChangeType)(0),                          // 30: smartcore.types.ChangeType
 }
-var file_health_proto_depIdxs = []int32{
-	27, // 0: smartcore.bos.HealthCheck.create_time:type_name -> google.protobuf.Timestamp
-	0,  // 1: smartcore.bos.HealthCheck.occupant_impact:type_name -> smartcore.bos.HealthCheck.OccupantImpact
-	1,  // 2: smartcore.bos.HealthCheck.equipment_impact:type_name -> smartcore.bos.HealthCheck.EquipmentImpact
-	13, // 3: smartcore.bos.HealthCheck.compliance_impacts:type_name -> smartcore.bos.HealthCheck.ComplianceImpact
-	15, // 4: smartcore.bos.HealthCheck.reliability:type_name -> smartcore.bos.HealthCheck.Reliability
-	2,  // 5: smartcore.bos.HealthCheck.normality:type_name -> smartcore.bos.HealthCheck.Normality
-	27, // 6: smartcore.bos.HealthCheck.normal_time:type_name -> google.protobuf.Timestamp
-	27, // 7: smartcore.bos.HealthCheck.abnormal_time:type_name -> google.protobuf.Timestamp
-	19, // 8: smartcore.bos.HealthCheck.bounds:type_name -> smartcore.bos.HealthCheck.Bounds
-	20, // 9: smartcore.bos.HealthCheck.faults:type_name -> smartcore.bos.HealthCheck.Faults
-	28, // 10: smartcore.bos.ListHealthChecksRequest.read_mask:type_name -> google.protobuf.FieldMask
-	5,  // 11: smartcore.bos.ListHealthChecksResponse.health_checks:type_name -> smartcore.bos.HealthCheck
-	28, // 12: smartcore.bos.PullHealthChecksRequest.read_mask:type_name -> google.protobuf.FieldMask
-	25, // 13: smartcore.bos.PullHealthChecksResponse.changes:type_name -> smartcore.bos.PullHealthChecksResponse.Change
-	28, // 14: smartcore.bos.GetHealthCheckRequest.read_mask:type_name -> google.protobuf.FieldMask
-	28, // 15: smartcore.bos.PullHealthCheckRequest.read_mask:type_name -> google.protobuf.FieldMask
-	26, // 16: smartcore.bos.PullHealthCheckResponse.changes:type_name -> smartcore.bos.PullHealthCheckResponse.Change
-	21, // 17: smartcore.bos.HealthCheck.ComplianceImpact.standard:type_name -> smartcore.bos.HealthCheck.ComplianceImpact.Standard
-	3,  // 18: smartcore.bos.HealthCheck.ComplianceImpact.contribution:type_name -> smartcore.bos.HealthCheck.ComplianceImpact.Contribution
-	22, // 19: smartcore.bos.HealthCheck.Error.code:type_name -> smartcore.bos.HealthCheck.Error.Code
-	4,  // 20: smartcore.bos.HealthCheck.Reliability.state:type_name -> smartcore.bos.HealthCheck.Reliability.State
-	27, // 21: smartcore.bos.HealthCheck.Reliability.reliable_time:type_name -> google.protobuf.Timestamp
-	27, // 22: smartcore.bos.HealthCheck.Reliability.unreliable_time:type_name -> google.protobuf.Timestamp
-	14, // 23: smartcore.bos.HealthCheck.Reliability.last_error:type_name -> smartcore.bos.HealthCheck.Error
-	23, // 24: smartcore.bos.HealthCheck.Reliability.cause:type_name -> smartcore.bos.HealthCheck.Reliability.Cause
-	24, // 25: smartcore.bos.HealthCheck.Reliability.effects:type_name -> smartcore.bos.HealthCheck.Reliability.Effects
-	27, // 26: smartcore.bos.HealthCheck.Value.timestamp_value:type_name -> google.protobuf.Timestamp
-	29, // 27: smartcore.bos.HealthCheck.Value.duration_value:type_name -> google.protobuf.Duration
-	16, // 28: smartcore.bos.HealthCheck.ValueRange.low:type_name -> smartcore.bos.HealthCheck.Value
-	16, // 29: smartcore.bos.HealthCheck.ValueRange.high:type_name -> smartcore.bos.HealthCheck.Value
-	16, // 30: smartcore.bos.HealthCheck.ValueRange.deadband:type_name -> smartcore.bos.HealthCheck.Value
-	16, // 31: smartcore.bos.HealthCheck.Values.values:type_name -> smartcore.bos.HealthCheck.Value
-	16, // 32: smartcore.bos.HealthCheck.Bounds.current_value:type_name -> smartcore.bos.HealthCheck.Value
-	16, // 33: smartcore.bos.HealthCheck.Bounds.normal_value:type_name -> smartcore.bos.HealthCheck.Value
-	16, // 34: smartcore.bos.HealthCheck.Bounds.abnormal_value:type_name -> smartcore.bos.HealthCheck.Value
-	17, // 35: smartcore.bos.HealthCheck.Bounds.normal_range:type_name -> smartcore.bos.HealthCheck.ValueRange
-	18, // 36: smartcore.bos.HealthCheck.Bounds.normal_values:type_name -> smartcore.bos.HealthCheck.Values
-	18, // 37: smartcore.bos.HealthCheck.Bounds.abnormal_values:type_name -> smartcore.bos.HealthCheck.Values
-	14, // 38: smartcore.bos.HealthCheck.Faults.current_faults:type_name -> smartcore.bos.HealthCheck.Error
-	14, // 39: smartcore.bos.HealthCheck.Reliability.Cause.error:type_name -> smartcore.bos.HealthCheck.Error
-	30, // 40: smartcore.bos.PullHealthChecksResponse.Change.type:type_name -> smartcore.types.ChangeType
-	5,  // 41: smartcore.bos.PullHealthChecksResponse.Change.new_value:type_name -> smartcore.bos.HealthCheck
-	5,  // 42: smartcore.bos.PullHealthChecksResponse.Change.old_value:type_name -> smartcore.bos.HealthCheck
-	27, // 43: smartcore.bos.PullHealthChecksResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	5,  // 44: smartcore.bos.PullHealthCheckResponse.Change.health_check:type_name -> smartcore.bos.HealthCheck
-	27, // 45: smartcore.bos.PullHealthCheckResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	6,  // 46: smartcore.bos.HealthApi.ListHealthChecks:input_type -> smartcore.bos.ListHealthChecksRequest
-	8,  // 47: smartcore.bos.HealthApi.PullHealthChecks:input_type -> smartcore.bos.PullHealthChecksRequest
-	10, // 48: smartcore.bos.HealthApi.GetHealthCheck:input_type -> smartcore.bos.GetHealthCheckRequest
-	11, // 49: smartcore.bos.HealthApi.PullHealthCheck:input_type -> smartcore.bos.PullHealthCheckRequest
-	7,  // 50: smartcore.bos.HealthApi.ListHealthChecks:output_type -> smartcore.bos.ListHealthChecksResponse
-	9,  // 51: smartcore.bos.HealthApi.PullHealthChecks:output_type -> smartcore.bos.PullHealthChecksResponse
-	5,  // 52: smartcore.bos.HealthApi.GetHealthCheck:output_type -> smartcore.bos.HealthCheck
-	12, // 53: smartcore.bos.HealthApi.PullHealthCheck:output_type -> smartcore.bos.PullHealthCheckResponse
+var file_smartcore_bos_health_v1_health_proto_depIdxs = []int32{
+	27, // 0: smartcore.bos.health.v1.HealthCheck.create_time:type_name -> google.protobuf.Timestamp
+	0,  // 1: smartcore.bos.health.v1.HealthCheck.occupant_impact:type_name -> smartcore.bos.health.v1.HealthCheck.OccupantImpact
+	1,  // 2: smartcore.bos.health.v1.HealthCheck.equipment_impact:type_name -> smartcore.bos.health.v1.HealthCheck.EquipmentImpact
+	13, // 3: smartcore.bos.health.v1.HealthCheck.compliance_impacts:type_name -> smartcore.bos.health.v1.HealthCheck.ComplianceImpact
+	15, // 4: smartcore.bos.health.v1.HealthCheck.reliability:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability
+	2,  // 5: smartcore.bos.health.v1.HealthCheck.normality:type_name -> smartcore.bos.health.v1.HealthCheck.Normality
+	27, // 6: smartcore.bos.health.v1.HealthCheck.normal_time:type_name -> google.protobuf.Timestamp
+	27, // 7: smartcore.bos.health.v1.HealthCheck.abnormal_time:type_name -> google.protobuf.Timestamp
+	19, // 8: smartcore.bos.health.v1.HealthCheck.bounds:type_name -> smartcore.bos.health.v1.HealthCheck.Bounds
+	20, // 9: smartcore.bos.health.v1.HealthCheck.faults:type_name -> smartcore.bos.health.v1.HealthCheck.Faults
+	28, // 10: smartcore.bos.health.v1.ListHealthChecksRequest.read_mask:type_name -> google.protobuf.FieldMask
+	5,  // 11: smartcore.bos.health.v1.ListHealthChecksResponse.health_checks:type_name -> smartcore.bos.health.v1.HealthCheck
+	28, // 12: smartcore.bos.health.v1.PullHealthChecksRequest.read_mask:type_name -> google.protobuf.FieldMask
+	25, // 13: smartcore.bos.health.v1.PullHealthChecksResponse.changes:type_name -> smartcore.bos.health.v1.PullHealthChecksResponse.Change
+	28, // 14: smartcore.bos.health.v1.GetHealthCheckRequest.read_mask:type_name -> google.protobuf.FieldMask
+	28, // 15: smartcore.bos.health.v1.PullHealthCheckRequest.read_mask:type_name -> google.protobuf.FieldMask
+	26, // 16: smartcore.bos.health.v1.PullHealthCheckResponse.changes:type_name -> smartcore.bos.health.v1.PullHealthCheckResponse.Change
+	21, // 17: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.standard:type_name -> smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Standard
+	3,  // 18: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.contribution:type_name -> smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Contribution
+	22, // 19: smartcore.bos.health.v1.HealthCheck.Error.code:type_name -> smartcore.bos.health.v1.HealthCheck.Error.Code
+	4,  // 20: smartcore.bos.health.v1.HealthCheck.Reliability.state:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability.State
+	27, // 21: smartcore.bos.health.v1.HealthCheck.Reliability.reliable_time:type_name -> google.protobuf.Timestamp
+	27, // 22: smartcore.bos.health.v1.HealthCheck.Reliability.unreliable_time:type_name -> google.protobuf.Timestamp
+	14, // 23: smartcore.bos.health.v1.HealthCheck.Reliability.last_error:type_name -> smartcore.bos.health.v1.HealthCheck.Error
+	23, // 24: smartcore.bos.health.v1.HealthCheck.Reliability.cause:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability.Cause
+	24, // 25: smartcore.bos.health.v1.HealthCheck.Reliability.effects:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability.Effects
+	27, // 26: smartcore.bos.health.v1.HealthCheck.Value.timestamp_value:type_name -> google.protobuf.Timestamp
+	29, // 27: smartcore.bos.health.v1.HealthCheck.Value.duration_value:type_name -> google.protobuf.Duration
+	16, // 28: smartcore.bos.health.v1.HealthCheck.ValueRange.low:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	16, // 29: smartcore.bos.health.v1.HealthCheck.ValueRange.high:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	16, // 30: smartcore.bos.health.v1.HealthCheck.ValueRange.deadband:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	16, // 31: smartcore.bos.health.v1.HealthCheck.Values.values:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	16, // 32: smartcore.bos.health.v1.HealthCheck.Bounds.current_value:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	16, // 33: smartcore.bos.health.v1.HealthCheck.Bounds.normal_value:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	16, // 34: smartcore.bos.health.v1.HealthCheck.Bounds.abnormal_value:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	17, // 35: smartcore.bos.health.v1.HealthCheck.Bounds.normal_range:type_name -> smartcore.bos.health.v1.HealthCheck.ValueRange
+	18, // 36: smartcore.bos.health.v1.HealthCheck.Bounds.normal_values:type_name -> smartcore.bos.health.v1.HealthCheck.Values
+	18, // 37: smartcore.bos.health.v1.HealthCheck.Bounds.abnormal_values:type_name -> smartcore.bos.health.v1.HealthCheck.Values
+	14, // 38: smartcore.bos.health.v1.HealthCheck.Faults.current_faults:type_name -> smartcore.bos.health.v1.HealthCheck.Error
+	14, // 39: smartcore.bos.health.v1.HealthCheck.Reliability.Cause.error:type_name -> smartcore.bos.health.v1.HealthCheck.Error
+	30, // 40: smartcore.bos.health.v1.PullHealthChecksResponse.Change.type:type_name -> smartcore.types.ChangeType
+	5,  // 41: smartcore.bos.health.v1.PullHealthChecksResponse.Change.new_value:type_name -> smartcore.bos.health.v1.HealthCheck
+	5,  // 42: smartcore.bos.health.v1.PullHealthChecksResponse.Change.old_value:type_name -> smartcore.bos.health.v1.HealthCheck
+	27, // 43: smartcore.bos.health.v1.PullHealthChecksResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	5,  // 44: smartcore.bos.health.v1.PullHealthCheckResponse.Change.health_check:type_name -> smartcore.bos.health.v1.HealthCheck
+	27, // 45: smartcore.bos.health.v1.PullHealthCheckResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	6,  // 46: smartcore.bos.health.v1.HealthApi.ListHealthChecks:input_type -> smartcore.bos.health.v1.ListHealthChecksRequest
+	8,  // 47: smartcore.bos.health.v1.HealthApi.PullHealthChecks:input_type -> smartcore.bos.health.v1.PullHealthChecksRequest
+	10, // 48: smartcore.bos.health.v1.HealthApi.GetHealthCheck:input_type -> smartcore.bos.health.v1.GetHealthCheckRequest
+	11, // 49: smartcore.bos.health.v1.HealthApi.PullHealthCheck:input_type -> smartcore.bos.health.v1.PullHealthCheckRequest
+	7,  // 50: smartcore.bos.health.v1.HealthApi.ListHealthChecks:output_type -> smartcore.bos.health.v1.ListHealthChecksResponse
+	9,  // 51: smartcore.bos.health.v1.HealthApi.PullHealthChecks:output_type -> smartcore.bos.health.v1.PullHealthChecksResponse
+	5,  // 52: smartcore.bos.health.v1.HealthApi.GetHealthCheck:output_type -> smartcore.bos.health.v1.HealthCheck
+	12, // 53: smartcore.bos.health.v1.HealthApi.PullHealthCheck:output_type -> smartcore.bos.health.v1.PullHealthCheckResponse
 	50, // [50:54] is the sub-list for method output_type
 	46, // [46:50] is the sub-list for method input_type
 	46, // [46:46] is the sub-list for extension type_name
@@ -2397,16 +2397,16 @@ var file_health_proto_depIdxs = []int32{
 	0,  // [0:46] is the sub-list for field type_name
 }
 
-func init() { file_health_proto_init() }
-func file_health_proto_init() {
-	if File_health_proto != nil {
+func init() { file_smartcore_bos_health_v1_health_proto_init() }
+func file_smartcore_bos_health_v1_health_proto_init() {
+	if File_smartcore_bos_health_v1_health_proto != nil {
 		return
 	}
-	file_health_proto_msgTypes[0].OneofWrappers = []any{
+	file_smartcore_bos_health_v1_health_proto_msgTypes[0].OneofWrappers = []any{
 		(*HealthCheck_Bounds_)(nil),
 		(*HealthCheck_Faults_)(nil),
 	}
-	file_health_proto_msgTypes[11].OneofWrappers = []any{
+	file_smartcore_bos_health_v1_health_proto_msgTypes[11].OneofWrappers = []any{
 		(*HealthCheck_Value_BoolValue)(nil),
 		(*HealthCheck_Value_StringValue)(nil),
 		(*HealthCheck_Value_IntValue)(nil),
@@ -2415,7 +2415,7 @@ func file_health_proto_init() {
 		(*HealthCheck_Value_TimestampValue)(nil),
 		(*HealthCheck_Value_DurationValue)(nil),
 	}
-	file_health_proto_msgTypes[14].OneofWrappers = []any{
+	file_smartcore_bos_health_v1_health_proto_msgTypes[14].OneofWrappers = []any{
 		(*HealthCheck_Bounds_NormalValue)(nil),
 		(*HealthCheck_Bounds_AbnormalValue)(nil),
 		(*HealthCheck_Bounds_NormalRange)(nil),
@@ -2426,18 +2426,18 @@ func file_health_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_health_proto_rawDesc), len(file_health_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_health_v1_health_proto_rawDesc), len(file_smartcore_bos_health_v1_health_proto_rawDesc)),
 			NumEnums:      5,
 			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_health_proto_goTypes,
-		DependencyIndexes: file_health_proto_depIdxs,
-		EnumInfos:         file_health_proto_enumTypes,
-		MessageInfos:      file_health_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_health_v1_health_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_health_v1_health_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_health_v1_health_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_health_v1_health_proto_msgTypes,
 	}.Build()
-	File_health_proto = out.File
-	file_health_proto_goTypes = nil
-	file_health_proto_depIdxs = nil
+	File_smartcore_bos_health_v1_health_proto = out.File
+	file_smartcore_bos_health_v1_health_proto_goTypes = nil
+	file_smartcore_bos_health_v1_health_proto_depIdxs = nil
 }

@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package smartcore.bos.transport.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/transport/v1/transport.proto";
+import "types/time/period.proto";
+
+service TransportHistory {
+  rpc ListTransportHistory(ListTransportHistoryRequest) returns (ListTransportHistoryResponse);
+}
+
+message TransportRecord {
+  smartcore.bos.transport.v1.Transport transport = 1;
+  google.protobuf.Timestamp record_time = 2;
+}
+
+message ListTransportHistoryRequest {
+  string name = 1;
+  smartcore.types.time.Period period = 2;
+
+  // Fields to fetch relative to the TransportRecord type
+  google.protobuf.FieldMask read_mask = 3;
+  // The maximum number of records to return. The server may return fewer records than requested.
+  // If unset, the service will return at most 50 items.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 4;
+  // A page token, received from a previous ListTransportHistory call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 5;
+  // Specify the order of the returned records.
+  // The default is `record_time acs` - aka oldest first.
+  // The format is field_name [acs|desc], with asc being the default.
+  // Only `record_time` is supported as a field_name.
+  string order_by = 6;
+}
+
+message ListTransportHistoryResponse {
+  // The transport records that match the request.
+  repeated TransportRecord transport_records = 1;
+  // A token to retrieve the next page of results.
+  // Pass this value in the ListTransportHistoryRequest.page_token field in the subsequent call to the TransportHistory.ListTransportHistory method to retrieve the next page of results.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+  // The total number of records matching the request.
+  // This may be an estimate.
+  int32 total_size = 3;
+}

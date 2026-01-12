@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: anpr_camera.proto
+// source: smartcore/bos/anprcamera/v1/anpr_camera.proto
 
 package gen
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AnprCameraApi_ListAnprEvents_FullMethodName = "/smartcore.bos.AnprCameraApi/ListAnprEvents"
-	AnprCameraApi_PullAnprEvents_FullMethodName = "/smartcore.bos.AnprCameraApi/PullAnprEvents"
+	AnprCameraApi_ListAnprEvents_FullMethodName = "/smartcore.bos.anprcamera.v1.AnprCameraApi/ListAnprEvents"
+	AnprCameraApi_PullAnprEvents_FullMethodName = "/smartcore.bos.anprcamera.v1.AnprCameraApi/PullAnprEvents"
 )
 
 // AnprCameraApiClient is the client API for AnprCameraApi service.
@@ -148,7 +148,7 @@ type AnprCameraApi_PullAnprEventsServer = grpc.ServerStreamingServer[PullAnprEve
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AnprCameraApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.AnprCameraApi",
+	ServiceName: "smartcore.bos.anprcamera.v1.AnprCameraApi",
 	HandlerType: (*AnprCameraApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -163,5 +163,5 @@ var AnprCameraApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "anpr_camera.proto",
+	Metadata: "smartcore/bos/anprcamera/v1/anpr_camera.proto",
 }

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: health_history.proto
+// source: smartcore/bos/health/v1/health_history.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	HealthHistory_ListHealthCheckHistory_FullMethodName = "/smartcore.bos.HealthHistory/ListHealthCheckHistory"
+	HealthHistory_ListHealthCheckHistory_FullMethodName = "/smartcore.bos.health.v1.HealthHistory/ListHealthCheckHistory"
 )
 
 // HealthHistoryClient is the client API for HealthHistory service.
@@ -112,7 +112,7 @@ func _HealthHistory_ListHealthCheckHistory_Handler(srv interface{}, ctx context.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var HealthHistory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.HealthHistory",
+	ServiceName: "smartcore.bos.health.v1.HealthHistory",
 	HandlerType: (*HealthHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -121,5 +121,5 @@ var HealthHistory_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "health_history.proto",
+	Metadata: "smartcore/bos/health/v1/health_history.proto",
 }

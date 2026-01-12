@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: enrollment.proto
+// source: smartcore/bos/enrollment/v1/enrollment.proto
 
 package gen
 
@@ -72,7 +72,7 @@ type Enrollment struct {
 
 func (x *Enrollment) Reset() {
 	*x = Enrollment{}
-	mi := &file_enrollment_proto_msgTypes[0]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -84,7 +84,7 @@ func (x *Enrollment) String() string {
 func (*Enrollment) ProtoMessage() {}
 
 func (x *Enrollment) ProtoReflect() protoreflect.Message {
-	mi := &file_enrollment_proto_msgTypes[0]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -97,7 +97,7 @@ func (x *Enrollment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Enrollment.ProtoReflect.Descriptor instead.
 func (*Enrollment) Descriptor() ([]byte, []int) {
-	return file_enrollment_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Enrollment) GetTargetName() string {
@@ -150,7 +150,7 @@ type GetEnrollmentRequest struct {
 
 func (x *GetEnrollmentRequest) Reset() {
 	*x = GetEnrollmentRequest{}
-	mi := &file_enrollment_proto_msgTypes[1]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -162,7 +162,7 @@ func (x *GetEnrollmentRequest) String() string {
 func (*GetEnrollmentRequest) ProtoMessage() {}
 
 func (x *GetEnrollmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_enrollment_proto_msgTypes[1]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -175,7 +175,7 @@ func (x *GetEnrollmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEnrollmentRequest.ProtoReflect.Descriptor instead.
 func (*GetEnrollmentRequest) Descriptor() ([]byte, []int) {
-	return file_enrollment_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescGZIP(), []int{1}
 }
 
 type CreateEnrollmentRequest struct {
@@ -187,7 +187,7 @@ type CreateEnrollmentRequest struct {
 
 func (x *CreateEnrollmentRequest) Reset() {
 	*x = CreateEnrollmentRequest{}
-	mi := &file_enrollment_proto_msgTypes[2]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -199,7 +199,7 @@ func (x *CreateEnrollmentRequest) String() string {
 func (*CreateEnrollmentRequest) ProtoMessage() {}
 
 func (x *CreateEnrollmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_enrollment_proto_msgTypes[2]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -212,7 +212,7 @@ func (x *CreateEnrollmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateEnrollmentRequest.ProtoReflect.Descriptor instead.
 func (*CreateEnrollmentRequest) Descriptor() ([]byte, []int) {
-	return file_enrollment_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CreateEnrollmentRequest) GetEnrollment() *Enrollment {
@@ -231,7 +231,7 @@ type UpdateEnrollmentRequest struct {
 
 func (x *UpdateEnrollmentRequest) Reset() {
 	*x = UpdateEnrollmentRequest{}
-	mi := &file_enrollment_proto_msgTypes[3]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -243,7 +243,7 @@ func (x *UpdateEnrollmentRequest) String() string {
 func (*UpdateEnrollmentRequest) ProtoMessage() {}
 
 func (x *UpdateEnrollmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_enrollment_proto_msgTypes[3]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -256,7 +256,7 @@ func (x *UpdateEnrollmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateEnrollmentRequest.ProtoReflect.Descriptor instead.
 func (*UpdateEnrollmentRequest) Descriptor() ([]byte, []int) {
-	return file_enrollment_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *UpdateEnrollmentRequest) GetEnrollment() *Enrollment {
@@ -274,7 +274,7 @@ type DeleteEnrollmentRequest struct {
 
 func (x *DeleteEnrollmentRequest) Reset() {
 	*x = DeleteEnrollmentRequest{}
-	mi := &file_enrollment_proto_msgTypes[4]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -286,7 +286,7 @@ func (x *DeleteEnrollmentRequest) String() string {
 func (*DeleteEnrollmentRequest) ProtoMessage() {}
 
 func (x *DeleteEnrollmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_enrollment_proto_msgTypes[4]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -299,7 +299,7 @@ func (x *DeleteEnrollmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteEnrollmentRequest.ProtoReflect.Descriptor instead.
 func (*DeleteEnrollmentRequest) Descriptor() ([]byte, []int) {
-	return file_enrollment_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescGZIP(), []int{4}
 }
 
 type TestEnrollmentRequest struct {
@@ -310,7 +310,7 @@ type TestEnrollmentRequest struct {
 
 func (x *TestEnrollmentRequest) Reset() {
 	*x = TestEnrollmentRequest{}
-	mi := &file_enrollment_proto_msgTypes[5]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -322,7 +322,7 @@ func (x *TestEnrollmentRequest) String() string {
 func (*TestEnrollmentRequest) ProtoMessage() {}
 
 func (x *TestEnrollmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_enrollment_proto_msgTypes[5]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -335,7 +335,7 @@ func (x *TestEnrollmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestEnrollmentRequest.ProtoReflect.Descriptor instead.
 func (*TestEnrollmentRequest) Descriptor() ([]byte, []int) {
-	return file_enrollment_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescGZIP(), []int{5}
 }
 
 type TestEnrollmentResponse struct {
@@ -352,7 +352,7 @@ type TestEnrollmentResponse struct {
 
 func (x *TestEnrollmentResponse) Reset() {
 	*x = TestEnrollmentResponse{}
-	mi := &file_enrollment_proto_msgTypes[6]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -364,7 +364,7 @@ func (x *TestEnrollmentResponse) String() string {
 func (*TestEnrollmentResponse) ProtoMessage() {}
 
 func (x *TestEnrollmentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_enrollment_proto_msgTypes[6]
+	mi := &file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -377,7 +377,7 @@ func (x *TestEnrollmentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestEnrollmentResponse.ProtoReflect.Descriptor instead.
 func (*TestEnrollmentResponse) Descriptor() ([]byte, []int) {
-	return file_enrollment_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *TestEnrollmentResponse) GetError() string {
@@ -394,11 +394,11 @@ func (x *TestEnrollmentResponse) GetCode() int32 {
 	return 0
 }
 
-var File_enrollment_proto protoreflect.FileDescriptor
+var File_smartcore_bos_enrollment_v1_enrollment_proto protoreflect.FileDescriptor
 
-const file_enrollment_proto_rawDesc = "" +
+const file_smartcore_bos_enrollment_v1_enrollment_proto_rawDesc = "" +
 	"\n" +
-	"\x10enrollment.proto\x12\rsmartcore.bos\"\xdd\x01\n" +
+	",smartcore/bos/enrollment/v1/enrollment.proto\x12\x1bsmartcore.bos.enrollment.v1\"\xdd\x01\n" +
 	"\n" +
 	"Enrollment\x12\x1f\n" +
 	"\vtarget_name\x18\x01 \x01(\tR\n" +
@@ -408,62 +408,62 @@ const file_enrollment_proto_rawDesc = "" +
 	"\x0fmanager_address\x18\x04 \x01(\tR\x0emanagerAddress\x12 \n" +
 	"\vcertificate\x18\x05 \x01(\fR\vcertificate\x12\x19\n" +
 	"\broot_cas\x18\x06 \x01(\fR\arootCas\"\x16\n" +
-	"\x14GetEnrollmentRequest\"T\n" +
-	"\x17CreateEnrollmentRequest\x129\n" +
+	"\x14GetEnrollmentRequest\"b\n" +
+	"\x17CreateEnrollmentRequest\x12G\n" +
 	"\n" +
-	"enrollment\x18\x01 \x01(\v2\x19.smartcore.bos.EnrollmentR\n" +
-	"enrollment\"T\n" +
-	"\x17UpdateEnrollmentRequest\x129\n" +
+	"enrollment\x18\x01 \x01(\v2'.smartcore.bos.enrollment.v1.EnrollmentR\n" +
+	"enrollment\"b\n" +
+	"\x17UpdateEnrollmentRequest\x12G\n" +
 	"\n" +
-	"enrollment\x18\x01 \x01(\v2\x19.smartcore.bos.EnrollmentR\n" +
+	"enrollment\x18\x01 \x01(\v2'.smartcore.bos.enrollment.v1.EnrollmentR\n" +
 	"enrollment\"\x19\n" +
 	"\x17DeleteEnrollmentRequest\"\x17\n" +
 	"\x15TestEnrollmentRequest\"B\n" +
 	"\x16TestEnrollmentResponse\x12\x14\n" +
 	"\x05error\x18\x01 \x01(\tR\x05error\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code2\xce\x03\n" +
-	"\rEnrollmentApi\x12Q\n" +
-	"\rGetEnrollment\x12#.smartcore.bos.GetEnrollmentRequest\x1a\x19.smartcore.bos.Enrollment\"\x00\x12W\n" +
-	"\x10CreateEnrollment\x12&.smartcore.bos.CreateEnrollmentRequest\x1a\x19.smartcore.bos.Enrollment\"\x00\x12W\n" +
-	"\x10UpdateEnrollment\x12&.smartcore.bos.UpdateEnrollmentRequest\x1a\x19.smartcore.bos.Enrollment\"\x00\x12W\n" +
-	"\x10DeleteEnrollment\x12&.smartcore.bos.DeleteEnrollmentRequest\x1a\x19.smartcore.bos.Enrollment\"\x00\x12_\n" +
-	"\x0eTestEnrollment\x12$.smartcore.bos.TestEnrollmentRequest\x1a%.smartcore.bos.TestEnrollmentResponse\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\x04code\x18\x02 \x01(\x05R\x04code2\xda\x04\n" +
+	"\rEnrollmentApi\x12m\n" +
+	"\rGetEnrollment\x121.smartcore.bos.enrollment.v1.GetEnrollmentRequest\x1a'.smartcore.bos.enrollment.v1.Enrollment\"\x00\x12s\n" +
+	"\x10CreateEnrollment\x124.smartcore.bos.enrollment.v1.CreateEnrollmentRequest\x1a'.smartcore.bos.enrollment.v1.Enrollment\"\x00\x12s\n" +
+	"\x10UpdateEnrollment\x124.smartcore.bos.enrollment.v1.UpdateEnrollmentRequest\x1a'.smartcore.bos.enrollment.v1.Enrollment\"\x00\x12s\n" +
+	"\x10DeleteEnrollment\x124.smartcore.bos.enrollment.v1.DeleteEnrollmentRequest\x1a'.smartcore.bos.enrollment.v1.Enrollment\"\x00\x12{\n" +
+	"\x0eTestEnrollment\x122.smartcore.bos.enrollment.v1.TestEnrollmentRequest\x1a3.smartcore.bos.enrollment.v1.TestEnrollmentResponse\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_enrollment_proto_rawDescOnce sync.Once
-	file_enrollment_proto_rawDescData []byte
+	file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescOnce sync.Once
+	file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescData []byte
 )
 
-func file_enrollment_proto_rawDescGZIP() []byte {
-	file_enrollment_proto_rawDescOnce.Do(func() {
-		file_enrollment_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_enrollment_proto_rawDesc), len(file_enrollment_proto_rawDesc)))
+func file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_enrollment_v1_enrollment_proto_rawDesc), len(file_smartcore_bos_enrollment_v1_enrollment_proto_rawDesc)))
 	})
-	return file_enrollment_proto_rawDescData
+	return file_smartcore_bos_enrollment_v1_enrollment_proto_rawDescData
 }
 
-var file_enrollment_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_enrollment_proto_goTypes = []any{
-	(*Enrollment)(nil),              // 0: smartcore.bos.Enrollment
-	(*GetEnrollmentRequest)(nil),    // 1: smartcore.bos.GetEnrollmentRequest
-	(*CreateEnrollmentRequest)(nil), // 2: smartcore.bos.CreateEnrollmentRequest
-	(*UpdateEnrollmentRequest)(nil), // 3: smartcore.bos.UpdateEnrollmentRequest
-	(*DeleteEnrollmentRequest)(nil), // 4: smartcore.bos.DeleteEnrollmentRequest
-	(*TestEnrollmentRequest)(nil),   // 5: smartcore.bos.TestEnrollmentRequest
-	(*TestEnrollmentResponse)(nil),  // 6: smartcore.bos.TestEnrollmentResponse
+var file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_smartcore_bos_enrollment_v1_enrollment_proto_goTypes = []any{
+	(*Enrollment)(nil),              // 0: smartcore.bos.enrollment.v1.Enrollment
+	(*GetEnrollmentRequest)(nil),    // 1: smartcore.bos.enrollment.v1.GetEnrollmentRequest
+	(*CreateEnrollmentRequest)(nil), // 2: smartcore.bos.enrollment.v1.CreateEnrollmentRequest
+	(*UpdateEnrollmentRequest)(nil), // 3: smartcore.bos.enrollment.v1.UpdateEnrollmentRequest
+	(*DeleteEnrollmentRequest)(nil), // 4: smartcore.bos.enrollment.v1.DeleteEnrollmentRequest
+	(*TestEnrollmentRequest)(nil),   // 5: smartcore.bos.enrollment.v1.TestEnrollmentRequest
+	(*TestEnrollmentResponse)(nil),  // 6: smartcore.bos.enrollment.v1.TestEnrollmentResponse
 }
-var file_enrollment_proto_depIdxs = []int32{
-	0, // 0: smartcore.bos.CreateEnrollmentRequest.enrollment:type_name -> smartcore.bos.Enrollment
-	0, // 1: smartcore.bos.UpdateEnrollmentRequest.enrollment:type_name -> smartcore.bos.Enrollment
-	1, // 2: smartcore.bos.EnrollmentApi.GetEnrollment:input_type -> smartcore.bos.GetEnrollmentRequest
-	2, // 3: smartcore.bos.EnrollmentApi.CreateEnrollment:input_type -> smartcore.bos.CreateEnrollmentRequest
-	3, // 4: smartcore.bos.EnrollmentApi.UpdateEnrollment:input_type -> smartcore.bos.UpdateEnrollmentRequest
-	4, // 5: smartcore.bos.EnrollmentApi.DeleteEnrollment:input_type -> smartcore.bos.DeleteEnrollmentRequest
-	5, // 6: smartcore.bos.EnrollmentApi.TestEnrollment:input_type -> smartcore.bos.TestEnrollmentRequest
-	0, // 7: smartcore.bos.EnrollmentApi.GetEnrollment:output_type -> smartcore.bos.Enrollment
-	0, // 8: smartcore.bos.EnrollmentApi.CreateEnrollment:output_type -> smartcore.bos.Enrollment
-	0, // 9: smartcore.bos.EnrollmentApi.UpdateEnrollment:output_type -> smartcore.bos.Enrollment
-	0, // 10: smartcore.bos.EnrollmentApi.DeleteEnrollment:output_type -> smartcore.bos.Enrollment
-	6, // 11: smartcore.bos.EnrollmentApi.TestEnrollment:output_type -> smartcore.bos.TestEnrollmentResponse
+var file_smartcore_bos_enrollment_v1_enrollment_proto_depIdxs = []int32{
+	0, // 0: smartcore.bos.enrollment.v1.CreateEnrollmentRequest.enrollment:type_name -> smartcore.bos.enrollment.v1.Enrollment
+	0, // 1: smartcore.bos.enrollment.v1.UpdateEnrollmentRequest.enrollment:type_name -> smartcore.bos.enrollment.v1.Enrollment
+	1, // 2: smartcore.bos.enrollment.v1.EnrollmentApi.GetEnrollment:input_type -> smartcore.bos.enrollment.v1.GetEnrollmentRequest
+	2, // 3: smartcore.bos.enrollment.v1.EnrollmentApi.CreateEnrollment:input_type -> smartcore.bos.enrollment.v1.CreateEnrollmentRequest
+	3, // 4: smartcore.bos.enrollment.v1.EnrollmentApi.UpdateEnrollment:input_type -> smartcore.bos.enrollment.v1.UpdateEnrollmentRequest
+	4, // 5: smartcore.bos.enrollment.v1.EnrollmentApi.DeleteEnrollment:input_type -> smartcore.bos.enrollment.v1.DeleteEnrollmentRequest
+	5, // 6: smartcore.bos.enrollment.v1.EnrollmentApi.TestEnrollment:input_type -> smartcore.bos.enrollment.v1.TestEnrollmentRequest
+	0, // 7: smartcore.bos.enrollment.v1.EnrollmentApi.GetEnrollment:output_type -> smartcore.bos.enrollment.v1.Enrollment
+	0, // 8: smartcore.bos.enrollment.v1.EnrollmentApi.CreateEnrollment:output_type -> smartcore.bos.enrollment.v1.Enrollment
+	0, // 9: smartcore.bos.enrollment.v1.EnrollmentApi.UpdateEnrollment:output_type -> smartcore.bos.enrollment.v1.Enrollment
+	0, // 10: smartcore.bos.enrollment.v1.EnrollmentApi.DeleteEnrollment:output_type -> smartcore.bos.enrollment.v1.Enrollment
+	6, // 11: smartcore.bos.enrollment.v1.EnrollmentApi.TestEnrollment:output_type -> smartcore.bos.enrollment.v1.TestEnrollmentResponse
 	7, // [7:12] is the sub-list for method output_type
 	2, // [2:7] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -471,26 +471,26 @@ var file_enrollment_proto_depIdxs = []int32{
 	0, // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_enrollment_proto_init() }
-func file_enrollment_proto_init() {
-	if File_enrollment_proto != nil {
+func init() { file_smartcore_bos_enrollment_v1_enrollment_proto_init() }
+func file_smartcore_bos_enrollment_v1_enrollment_proto_init() {
+	if File_smartcore_bos_enrollment_v1_enrollment_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_enrollment_proto_rawDesc), len(file_enrollment_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_enrollment_v1_enrollment_proto_rawDesc), len(file_smartcore_bos_enrollment_v1_enrollment_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_enrollment_proto_goTypes,
-		DependencyIndexes: file_enrollment_proto_depIdxs,
-		MessageInfos:      file_enrollment_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_enrollment_v1_enrollment_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_enrollment_v1_enrollment_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_enrollment_v1_enrollment_proto_msgTypes,
 	}.Build()
-	File_enrollment_proto = out.File
-	file_enrollment_proto_goTypes = nil
-	file_enrollment_proto_depIdxs = nil
+	File_smartcore_bos_enrollment_v1_enrollment_proto = out.File
+	file_smartcore_bos_enrollment_v1_enrollment_proto_goTypes = nil
+	file_smartcore_bos_enrollment_v1_enrollment_proto_depIdxs = nil
 }

@@ -1,7 +1,7 @@
 import {convertProperties, fieldMaskFromObject, setProperties, timestampFromObject} from '@/api/convpb.js';
 import {clientOptions} from '@/api/grpcweb.js';
 import {trackAction} from '@/api/resource.js';
-import {AccountApiPromiseClient, AccountInfoPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/account_grpc_web_pb';
+import {AccountApiPromiseClient, AccountInfoPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_grpc_web_pb';
 import {
   Account,
   CreateAccountRequest,
@@ -26,7 +26,7 @@ import {
   UpdateAccountRequest,
   UpdateRoleRequest,
   UserAccount
-} from '@smart-core-os/sc-bos-ui-gen/proto/account_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_pb';
 
 /**
  * @param {Partial<GetAccountRequest.AsObject>} request

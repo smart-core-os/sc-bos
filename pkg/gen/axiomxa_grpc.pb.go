@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: axiomxa.proto
+// source: smartcore/bos/driver/axiomxa/v1/axiomxa.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AxiomXaDriverService_SaveQRCredential_FullMethodName = "/smartcore.bos.driver.axiomxa.AxiomXaDriverService/SaveQRCredential"
+	AxiomXaDriverService_SaveQRCredential_FullMethodName = "/smartcore.bos.driver.axiomxa.v1.AxiomXaDriverService/SaveQRCredential"
 )
 
 // AxiomXaDriverServiceClient is the client API for AxiomXaDriverService service.
@@ -108,7 +108,7 @@ func _AxiomXaDriverService_SaveQRCredential_Handler(srv interface{}, ctx context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AxiomXaDriverService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.driver.axiomxa.AxiomXaDriverService",
+	ServiceName: "smartcore.bos.driver.axiomxa.v1.AxiomXaDriverService",
 	HandlerType: (*AxiomXaDriverServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -117,5 +117,5 @@ var AxiomXaDriverService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "axiomxa.proto",
+	Metadata: "smartcore/bos/driver/axiomxa/v1/axiomxa.proto",
 }

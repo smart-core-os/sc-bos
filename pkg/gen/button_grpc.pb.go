@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: button.proto
+// source: smartcore/bos/button/v1/button.proto
 
 package gen
 
@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ButtonApi_GetButtonState_FullMethodName    = "/smartcore.bos.ButtonApi/GetButtonState"
-	ButtonApi_PullButtonState_FullMethodName   = "/smartcore.bos.ButtonApi/PullButtonState"
-	ButtonApi_UpdateButtonState_FullMethodName = "/smartcore.bos.ButtonApi/UpdateButtonState"
+	ButtonApi_GetButtonState_FullMethodName    = "/smartcore.bos.button.v1.ButtonApi/GetButtonState"
+	ButtonApi_PullButtonState_FullMethodName   = "/smartcore.bos.button.v1.ButtonApi/PullButtonState"
+	ButtonApi_UpdateButtonState_FullMethodName = "/smartcore.bos.button.v1.ButtonApi/UpdateButtonState"
 )
 
 // ButtonApiClient is the client API for ButtonApi service.
@@ -198,7 +198,7 @@ func _ButtonApi_UpdateButtonState_Handler(srv interface{}, ctx context.Context, 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ButtonApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.ButtonApi",
+	ServiceName: "smartcore.bos.button.v1.ButtonApi",
 	HandlerType: (*ButtonApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -217,5 +217,5 @@ var ButtonApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "button.proto",
+	Metadata: "smartcore/bos/button/v1/button.proto",
 }

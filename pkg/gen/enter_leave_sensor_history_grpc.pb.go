@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: enter_leave_sensor_history.proto
+// source: smartcore/bos/enterleavesensor/v1/enter_leave_sensor_history.proto
 
 package gen
 
@@ -19,103 +19,104 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	EnterLeaveHistory_ListEnterLeaveSensorHistory_FullMethodName = "/smartcore.bos.EnterLeaveHistory/ListEnterLeaveSensorHistory"
+	EnterLeaveSensorHistory_ListEnterLeaveSensorHistory_FullMethodName = "/smartcore.bos.enterleavesensor.v1.EnterLeaveSensorHistory/ListEnterLeaveSensorHistory"
 )
 
-// EnterLeaveHistoryClient is the client API for EnterLeaveHistory service.
+// EnterLeaveSensorHistoryClient is the client API for EnterLeaveSensorHistory service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type EnterLeaveHistoryClient interface {
+type EnterLeaveSensorHistoryClient interface {
 	ListEnterLeaveSensorHistory(ctx context.Context, in *ListEnterLeaveHistoryRequest, opts ...grpc.CallOption) (*ListEnterLeaveHistoryResponse, error)
 }
 
-type enterLeaveHistoryClient struct {
+type enterLeaveSensorHistoryClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewEnterLeaveHistoryClient(cc grpc.ClientConnInterface) EnterLeaveHistoryClient {
-	return &enterLeaveHistoryClient{cc}
+func NewEnterLeaveSensorHistoryClient(cc grpc.ClientConnInterface) EnterLeaveSensorHistoryClient {
+	return &enterLeaveSensorHistoryClient{cc}
 }
 
-func (c *enterLeaveHistoryClient) ListEnterLeaveSensorHistory(ctx context.Context, in *ListEnterLeaveHistoryRequest, opts ...grpc.CallOption) (*ListEnterLeaveHistoryResponse, error) {
+func (c *enterLeaveSensorHistoryClient) ListEnterLeaveSensorHistory(ctx context.Context, in *ListEnterLeaveHistoryRequest, opts ...grpc.CallOption) (*ListEnterLeaveHistoryResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListEnterLeaveHistoryResponse)
-	err := c.cc.Invoke(ctx, EnterLeaveHistory_ListEnterLeaveSensorHistory_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, EnterLeaveSensorHistory_ListEnterLeaveSensorHistory_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// EnterLeaveHistoryServer is the server API for EnterLeaveHistory service.
-// All implementations must embed UnimplementedEnterLeaveHistoryServer
+// EnterLeaveSensorHistoryServer is the server API for EnterLeaveSensorHistory service.
+// All implementations must embed UnimplementedEnterLeaveSensorHistoryServer
 // for forward compatibility.
-type EnterLeaveHistoryServer interface {
+type EnterLeaveSensorHistoryServer interface {
 	ListEnterLeaveSensorHistory(context.Context, *ListEnterLeaveHistoryRequest) (*ListEnterLeaveHistoryResponse, error)
-	mustEmbedUnimplementedEnterLeaveHistoryServer()
+	mustEmbedUnimplementedEnterLeaveSensorHistoryServer()
 }
 
-// UnimplementedEnterLeaveHistoryServer must be embedded to have
+// UnimplementedEnterLeaveSensorHistoryServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedEnterLeaveHistoryServer struct{}
+type UnimplementedEnterLeaveSensorHistoryServer struct{}
 
-func (UnimplementedEnterLeaveHistoryServer) ListEnterLeaveSensorHistory(context.Context, *ListEnterLeaveHistoryRequest) (*ListEnterLeaveHistoryResponse, error) {
+func (UnimplementedEnterLeaveSensorHistoryServer) ListEnterLeaveSensorHistory(context.Context, *ListEnterLeaveHistoryRequest) (*ListEnterLeaveHistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListEnterLeaveSensorHistory not implemented")
 }
-func (UnimplementedEnterLeaveHistoryServer) mustEmbedUnimplementedEnterLeaveHistoryServer() {}
-func (UnimplementedEnterLeaveHistoryServer) testEmbeddedByValue()                           {}
+func (UnimplementedEnterLeaveSensorHistoryServer) mustEmbedUnimplementedEnterLeaveSensorHistoryServer() {
+}
+func (UnimplementedEnterLeaveSensorHistoryServer) testEmbeddedByValue() {}
 
-// UnsafeEnterLeaveHistoryServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to EnterLeaveHistoryServer will
+// UnsafeEnterLeaveSensorHistoryServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to EnterLeaveSensorHistoryServer will
 // result in compilation errors.
-type UnsafeEnterLeaveHistoryServer interface {
-	mustEmbedUnimplementedEnterLeaveHistoryServer()
+type UnsafeEnterLeaveSensorHistoryServer interface {
+	mustEmbedUnimplementedEnterLeaveSensorHistoryServer()
 }
 
-func RegisterEnterLeaveHistoryServer(s grpc.ServiceRegistrar, srv EnterLeaveHistoryServer) {
-	// If the following call pancis, it indicates UnimplementedEnterLeaveHistoryServer was
+func RegisterEnterLeaveSensorHistoryServer(s grpc.ServiceRegistrar, srv EnterLeaveSensorHistoryServer) {
+	// If the following call pancis, it indicates UnimplementedEnterLeaveSensorHistoryServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&EnterLeaveHistory_ServiceDesc, srv)
+	s.RegisterService(&EnterLeaveSensorHistory_ServiceDesc, srv)
 }
 
-func _EnterLeaveHistory_ListEnterLeaveSensorHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EnterLeaveSensorHistory_ListEnterLeaveSensorHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListEnterLeaveHistoryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EnterLeaveHistoryServer).ListEnterLeaveSensorHistory(ctx, in)
+		return srv.(EnterLeaveSensorHistoryServer).ListEnterLeaveSensorHistory(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: EnterLeaveHistory_ListEnterLeaveSensorHistory_FullMethodName,
+		FullMethod: EnterLeaveSensorHistory_ListEnterLeaveSensorHistory_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EnterLeaveHistoryServer).ListEnterLeaveSensorHistory(ctx, req.(*ListEnterLeaveHistoryRequest))
+		return srv.(EnterLeaveSensorHistoryServer).ListEnterLeaveSensorHistory(ctx, req.(*ListEnterLeaveHistoryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// EnterLeaveHistory_ServiceDesc is the grpc.ServiceDesc for EnterLeaveHistory service.
+// EnterLeaveSensorHistory_ServiceDesc is the grpc.ServiceDesc for EnterLeaveSensorHistory service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var EnterLeaveHistory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.EnterLeaveHistory",
-	HandlerType: (*EnterLeaveHistoryServer)(nil),
+var EnterLeaveSensorHistory_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "smartcore.bos.enterleavesensor.v1.EnterLeaveSensorHistory",
+	HandlerType: (*EnterLeaveSensorHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "ListEnterLeaveSensorHistory",
-			Handler:    _EnterLeaveHistory_ListEnterLeaveSensorHistory_Handler,
+			Handler:    _EnterLeaveSensorHistory_ListEnterLeaveSensorHistory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "enter_leave_sensor_history.proto",
+	Metadata: "smartcore/bos/enterleavesensor/v1/enter_leave_sensor_history.proto",
 }

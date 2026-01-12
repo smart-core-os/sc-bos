@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: enter_leave_sensor_history.proto
+// source: smartcore/bos/enterleavesensor/v1/enter_leave_sensor_history.proto
 
 package gen
 
@@ -35,7 +35,7 @@ type EnterLeaveEventRecord struct {
 
 func (x *EnterLeaveEventRecord) Reset() {
 	*x = EnterLeaveEventRecord{}
-	mi := &file_enter_leave_sensor_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +47,7 @@ func (x *EnterLeaveEventRecord) String() string {
 func (*EnterLeaveEventRecord) ProtoMessage() {}
 
 func (x *EnterLeaveEventRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_enter_leave_sensor_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +60,7 @@ func (x *EnterLeaveEventRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnterLeaveEventRecord.ProtoReflect.Descriptor instead.
 func (*EnterLeaveEventRecord) Descriptor() ([]byte, []int) {
-	return file_enter_leave_sensor_history_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *EnterLeaveEventRecord) GetEnterLeaveEvent() *traits.EnterLeaveEvent {
@@ -102,7 +102,7 @@ type ListEnterLeaveHistoryRequest struct {
 
 func (x *ListEnterLeaveHistoryRequest) Reset() {
 	*x = ListEnterLeaveHistoryRequest{}
-	mi := &file_enter_leave_sensor_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -114,7 +114,7 @@ func (x *ListEnterLeaveHistoryRequest) String() string {
 func (*ListEnterLeaveHistoryRequest) ProtoMessage() {}
 
 func (x *ListEnterLeaveHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_enter_leave_sensor_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -127,7 +127,7 @@ func (x *ListEnterLeaveHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEnterLeaveHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListEnterLeaveHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_enter_leave_sensor_history_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListEnterLeaveHistoryRequest) GetName() string {
@@ -187,7 +187,7 @@ type ListEnterLeaveHistoryResponse struct {
 
 func (x *ListEnterLeaveHistoryResponse) Reset() {
 	*x = ListEnterLeaveHistoryResponse{}
-	mi := &file_enter_leave_sensor_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -199,7 +199,7 @@ func (x *ListEnterLeaveHistoryResponse) String() string {
 func (*ListEnterLeaveHistoryResponse) ProtoMessage() {}
 
 func (x *ListEnterLeaveHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_enter_leave_sensor_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -212,7 +212,7 @@ func (x *ListEnterLeaveHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEnterLeaveHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListEnterLeaveHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_enter_leave_sensor_history_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListEnterLeaveHistoryResponse) GetEnterLeaveRecords() []*EnterLeaveEventRecord {
@@ -236,11 +236,11 @@ func (x *ListEnterLeaveHistoryResponse) GetTotalSize() int32 {
 	return 0
 }
 
-var File_enter_leave_sensor_history_proto protoreflect.FileDescriptor
+var File_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto protoreflect.FileDescriptor
 
-const file_enter_leave_sensor_history_proto_rawDesc = "" +
+const file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDesc = "" +
 	"\n" +
-	" enter_leave_sensor_history.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17types/time/period.proto\x1a\x1ftraits/enter_leave_sensor.proto\"\xa3\x01\n" +
+	"Bsmartcore/bos/enterleavesensor/v1/enter_leave_sensor_history.proto\x12!smartcore.bos.enterleavesensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1ftraits/enter_leave_sensor.proto\x1a\x17types/time/period.proto\"\xa3\x01\n" +
 	"\x15EnterLeaveEventRecord\x12M\n" +
 	"\x11enter_leave_event\x18\x01 \x01(\v2!.smartcore.traits.EnterLeaveEventR\x0fenterLeaveEvent\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -252,45 +252,45 @@ const file_enter_leave_sensor_history_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x05 \x01(\tR\tpageToken\x12\x19\n" +
-	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xbc\x01\n" +
-	"\x1dListEnterLeaveHistoryResponse\x12T\n" +
-	"\x13enter_leave_records\x18\x01 \x03(\v2$.smartcore.bos.EnterLeaveEventRecordR\x11enterLeaveRecords\x12&\n" +
+	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xd0\x01\n" +
+	"\x1dListEnterLeaveHistoryResponse\x12h\n" +
+	"\x13enter_leave_records\x18\x01 \x03(\v28.smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecordR\x11enterLeaveRecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x8f\x01\n" +
-	"\x11EnterLeaveHistory\x12z\n" +
-	"\x1bListEnterLeaveSensorHistory\x12+.smartcore.bos.ListEnterLeaveHistoryRequest\x1a,.smartcore.bos.ListEnterLeaveHistoryResponse\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"total_size\x18\x03 \x01(\x05R\ttotalSize2\xbe\x01\n" +
+	"\x17EnterLeaveSensorHistory\x12\xa2\x01\n" +
+	"\x1bListEnterLeaveSensorHistory\x12?.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest\x1a@.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryResponse\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_enter_leave_sensor_history_proto_rawDescOnce sync.Once
-	file_enter_leave_sensor_history_proto_rawDescData []byte
+	file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDescOnce sync.Once
+	file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDescData []byte
 )
 
-func file_enter_leave_sensor_history_proto_rawDescGZIP() []byte {
-	file_enter_leave_sensor_history_proto_rawDescOnce.Do(func() {
-		file_enter_leave_sensor_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_enter_leave_sensor_history_proto_rawDesc), len(file_enter_leave_sensor_history_proto_rawDesc)))
+func file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDesc), len(file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDesc)))
 	})
-	return file_enter_leave_sensor_history_proto_rawDescData
+	return file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDescData
 }
 
-var file_enter_leave_sensor_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_enter_leave_sensor_history_proto_goTypes = []any{
-	(*EnterLeaveEventRecord)(nil),         // 0: smartcore.bos.EnterLeaveEventRecord
-	(*ListEnterLeaveHistoryRequest)(nil),  // 1: smartcore.bos.ListEnterLeaveHistoryRequest
-	(*ListEnterLeaveHistoryResponse)(nil), // 2: smartcore.bos.ListEnterLeaveHistoryResponse
+var file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_goTypes = []any{
+	(*EnterLeaveEventRecord)(nil),         // 0: smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord
+	(*ListEnterLeaveHistoryRequest)(nil),  // 1: smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest
+	(*ListEnterLeaveHistoryResponse)(nil), // 2: smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryResponse
 	(*traits.EnterLeaveEvent)(nil),        // 3: smartcore.traits.EnterLeaveEvent
 	(*timestamppb.Timestamp)(nil),         // 4: google.protobuf.Timestamp
 	(*time.Period)(nil),                   // 5: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),         // 6: google.protobuf.FieldMask
 }
-var file_enter_leave_sensor_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.EnterLeaveEventRecord.enter_leave_event:type_name -> smartcore.traits.EnterLeaveEvent
-	4, // 1: smartcore.bos.EnterLeaveEventRecord.record_time:type_name -> google.protobuf.Timestamp
-	5, // 2: smartcore.bos.ListEnterLeaveHistoryRequest.period:type_name -> smartcore.types.time.Period
-	6, // 3: smartcore.bos.ListEnterLeaveHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
-	0, // 4: smartcore.bos.ListEnterLeaveHistoryResponse.enter_leave_records:type_name -> smartcore.bos.EnterLeaveEventRecord
-	1, // 5: smartcore.bos.EnterLeaveHistory.ListEnterLeaveSensorHistory:input_type -> smartcore.bos.ListEnterLeaveHistoryRequest
-	2, // 6: smartcore.bos.EnterLeaveHistory.ListEnterLeaveSensorHistory:output_type -> smartcore.bos.ListEnterLeaveHistoryResponse
+var file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_depIdxs = []int32{
+	3, // 0: smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.enter_leave_event:type_name -> smartcore.traits.EnterLeaveEvent
+	4, // 1: smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.record_time:type_name -> google.protobuf.Timestamp
+	5, // 2: smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.period:type_name -> smartcore.types.time.Period
+	6, // 3: smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
+	0, // 4: smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryResponse.enter_leave_records:type_name -> smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord
+	1, // 5: smartcore.bos.enterleavesensor.v1.EnterLeaveSensorHistory.ListEnterLeaveSensorHistory:input_type -> smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest
+	2, // 6: smartcore.bos.enterleavesensor.v1.EnterLeaveSensorHistory.ListEnterLeaveSensorHistory:output_type -> smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryResponse
 	6, // [6:7] is the sub-list for method output_type
 	5, // [5:6] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -298,26 +298,26 @@ var file_enter_leave_sensor_history_proto_depIdxs = []int32{
 	0, // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_enter_leave_sensor_history_proto_init() }
-func file_enter_leave_sensor_history_proto_init() {
-	if File_enter_leave_sensor_history_proto != nil {
+func init() { file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_init() }
+func file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_init() {
+	if File_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_enter_leave_sensor_history_proto_rawDesc), len(file_enter_leave_sensor_history_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDesc), len(file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_enter_leave_sensor_history_proto_goTypes,
-		DependencyIndexes: file_enter_leave_sensor_history_proto_depIdxs,
-		MessageInfos:      file_enter_leave_sensor_history_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_msgTypes,
 	}.Build()
-	File_enter_leave_sensor_history_proto = out.File
-	file_enter_leave_sensor_history_proto_goTypes = nil
-	file_enter_leave_sensor_history_proto_depIdxs = nil
+	File_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto = out.File
+	file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_goTypes = nil
+	file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_depIdxs = nil
 }

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: lighting_test.proto
+// source: smartcore/bos/lightingtest/v1/lighting_test.proto
 
 package gen
 
@@ -68,11 +68,11 @@ func (x LightFault) String() string {
 }
 
 func (LightFault) Descriptor() protoreflect.EnumDescriptor {
-	return file_lighting_test_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_enumTypes[0].Descriptor()
 }
 
 func (LightFault) Type() protoreflect.EnumType {
-	return &file_lighting_test_proto_enumTypes[0]
+	return &file_smartcore_bos_lightingtest_v1_lighting_test_proto_enumTypes[0]
 }
 
 func (x LightFault) Number() protoreflect.EnumNumber {
@@ -81,7 +81,7 @@ func (x LightFault) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use LightFault.Descriptor instead.
 func (LightFault) EnumDescriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{0}
 }
 
 type LightHealth struct {
@@ -90,7 +90,7 @@ type LightHealth struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The last time this data was updated.
 	UpdateTime       *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
-	Faults           []LightFault           `protobuf:"varint,3,rep,packed,name=faults,proto3,enum=smartcore.bos.LightFault" json:"faults,omitempty"`
+	Faults           []LightFault           `protobuf:"varint,3,rep,packed,name=faults,proto3,enum=smartcore.bos.lightingtest.v1.LightFault" json:"faults,omitempty"`
 	LastFunctionTest *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_function_test,json=lastFunctionTest,proto3" json:"last_function_test,omitempty"`
 	LastDurationTest *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=last_duration_test,json=lastDurationTest,proto3" json:"last_duration_test,omitempty"`
 	unknownFields    protoimpl.UnknownFields
@@ -99,7 +99,7 @@ type LightHealth struct {
 
 func (x *LightHealth) Reset() {
 	*x = LightHealth{}
-	mi := &file_lighting_test_proto_msgTypes[0]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -111,7 +111,7 @@ func (x *LightHealth) String() string {
 func (*LightHealth) ProtoMessage() {}
 
 func (x *LightHealth) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[0]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -124,7 +124,7 @@ func (x *LightHealth) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LightHealth.ProtoReflect.Descriptor instead.
 func (*LightHealth) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *LightHealth) GetName() string {
@@ -179,7 +179,7 @@ type LightingEvent struct {
 
 func (x *LightingEvent) Reset() {
 	*x = LightingEvent{}
-	mi := &file_lighting_test_proto_msgTypes[1]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -191,7 +191,7 @@ func (x *LightingEvent) String() string {
 func (*LightingEvent) ProtoMessage() {}
 
 func (x *LightingEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[1]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -204,7 +204,7 @@ func (x *LightingEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LightingEvent.ProtoReflect.Descriptor instead.
 func (*LightingEvent) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *LightingEvent) GetName() string {
@@ -293,7 +293,7 @@ type GetLightHealthRequest struct {
 
 func (x *GetLightHealthRequest) Reset() {
 	*x = GetLightHealthRequest{}
-	mi := &file_lighting_test_proto_msgTypes[2]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -305,7 +305,7 @@ func (x *GetLightHealthRequest) String() string {
 func (*GetLightHealthRequest) ProtoMessage() {}
 
 func (x *GetLightHealthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[2]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -318,7 +318,7 @@ func (x *GetLightHealthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLightHealthRequest.ProtoReflect.Descriptor instead.
 func (*GetLightHealthRequest) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetLightHealthRequest) GetName() string {
@@ -342,7 +342,7 @@ type ListLightHealthRequest struct {
 
 func (x *ListLightHealthRequest) Reset() {
 	*x = ListLightHealthRequest{}
-	mi := &file_lighting_test_proto_msgTypes[3]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -354,7 +354,7 @@ func (x *ListLightHealthRequest) String() string {
 func (*ListLightHealthRequest) ProtoMessage() {}
 
 func (x *ListLightHealthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[3]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -367,7 +367,7 @@ func (x *ListLightHealthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLightHealthRequest.ProtoReflect.Descriptor instead.
 func (*ListLightHealthRequest) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListLightHealthRequest) GetPageSize() int32 {
@@ -394,7 +394,7 @@ type ListLightHealthResponse struct {
 
 func (x *ListLightHealthResponse) Reset() {
 	*x = ListLightHealthResponse{}
-	mi := &file_lighting_test_proto_msgTypes[4]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -406,7 +406,7 @@ func (x *ListLightHealthResponse) String() string {
 func (*ListLightHealthResponse) ProtoMessage() {}
 
 func (x *ListLightHealthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[4]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -419,7 +419,7 @@ func (x *ListLightHealthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLightHealthResponse.ProtoReflect.Descriptor instead.
 func (*ListLightHealthResponse) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ListLightHealthResponse) GetEmergencyLights() []*LightHealth {
@@ -446,7 +446,7 @@ type ListLightEventsRequest struct {
 
 func (x *ListLightEventsRequest) Reset() {
 	*x = ListLightEventsRequest{}
-	mi := &file_lighting_test_proto_msgTypes[5]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -458,7 +458,7 @@ func (x *ListLightEventsRequest) String() string {
 func (*ListLightEventsRequest) ProtoMessage() {}
 
 func (x *ListLightEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[5]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -471,7 +471,7 @@ func (x *ListLightEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLightEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListLightEventsRequest) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListLightEventsRequest) GetPageSize() int32 {
@@ -506,7 +506,7 @@ type ListLightEventsResponse struct {
 
 func (x *ListLightEventsResponse) Reset() {
 	*x = ListLightEventsResponse{}
-	mi := &file_lighting_test_proto_msgTypes[6]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -518,7 +518,7 @@ func (x *ListLightEventsResponse) String() string {
 func (*ListLightEventsResponse) ProtoMessage() {}
 
 func (x *ListLightEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[6]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -531,7 +531,7 @@ func (x *ListLightEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLightEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListLightEventsResponse) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListLightEventsResponse) GetEvents() []*LightingEvent {
@@ -565,7 +565,7 @@ type GetReportCSVRequest struct {
 
 func (x *GetReportCSVRequest) Reset() {
 	*x = GetReportCSVRequest{}
-	mi := &file_lighting_test_proto_msgTypes[7]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -577,7 +577,7 @@ func (x *GetReportCSVRequest) String() string {
 func (*GetReportCSVRequest) ProtoMessage() {}
 
 func (x *GetReportCSVRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[7]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -590,7 +590,7 @@ func (x *GetReportCSVRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetReportCSVRequest.ProtoReflect.Descriptor instead.
 func (*GetReportCSVRequest) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetReportCSVRequest) GetIncludeHeader() bool {
@@ -609,7 +609,7 @@ type ReportCSV struct {
 
 func (x *ReportCSV) Reset() {
 	*x = ReportCSV{}
-	mi := &file_lighting_test_proto_msgTypes[8]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -621,7 +621,7 @@ func (x *ReportCSV) String() string {
 func (*ReportCSV) ProtoMessage() {}
 
 func (x *ReportCSV) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[8]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -634,7 +634,7 @@ func (x *ReportCSV) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportCSV.ProtoReflect.Descriptor instead.
 func (*ReportCSV) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{8}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ReportCSV) GetCsv() []byte {
@@ -653,7 +653,7 @@ type LightingEvent_DurationTestPass struct {
 
 func (x *LightingEvent_DurationTestPass) Reset() {
 	*x = LightingEvent_DurationTestPass{}
-	mi := &file_lighting_test_proto_msgTypes[9]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -665,7 +665,7 @@ func (x *LightingEvent_DurationTestPass) String() string {
 func (*LightingEvent_DurationTestPass) ProtoMessage() {}
 
 func (x *LightingEvent_DurationTestPass) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[9]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -678,7 +678,7 @@ func (x *LightingEvent_DurationTestPass) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LightingEvent_DurationTestPass.ProtoReflect.Descriptor instead.
 func (*LightingEvent_DurationTestPass) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{1, 0}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{1, 0}
 }
 
 func (x *LightingEvent_DurationTestPass) GetAchievedDuration() *durationpb.Duration {
@@ -696,7 +696,7 @@ type LightingEvent_FunctionTestPass struct {
 
 func (x *LightingEvent_FunctionTestPass) Reset() {
 	*x = LightingEvent_FunctionTestPass{}
-	mi := &file_lighting_test_proto_msgTypes[10]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -708,7 +708,7 @@ func (x *LightingEvent_FunctionTestPass) String() string {
 func (*LightingEvent_FunctionTestPass) ProtoMessage() {}
 
 func (x *LightingEvent_FunctionTestPass) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[10]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -721,19 +721,19 @@ func (x *LightingEvent_FunctionTestPass) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LightingEvent_FunctionTestPass.ProtoReflect.Descriptor instead.
 func (*LightingEvent_FunctionTestPass) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{1, 1}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{1, 1}
 }
 
 type LightingEvent_StatusReport struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Faults        []LightFault           `protobuf:"varint,1,rep,packed,name=faults,proto3,enum=smartcore.bos.LightFault" json:"faults,omitempty"`
+	Faults        []LightFault           `protobuf:"varint,1,rep,packed,name=faults,proto3,enum=smartcore.bos.lightingtest.v1.LightFault" json:"faults,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LightingEvent_StatusReport) Reset() {
 	*x = LightingEvent_StatusReport{}
-	mi := &file_lighting_test_proto_msgTypes[11]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -745,7 +745,7 @@ func (x *LightingEvent_StatusReport) String() string {
 func (*LightingEvent_StatusReport) ProtoMessage() {}
 
 func (x *LightingEvent_StatusReport) ProtoReflect() protoreflect.Message {
-	mi := &file_lighting_test_proto_msgTypes[11]
+	mi := &file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -758,7 +758,7 @@ func (x *LightingEvent_StatusReport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LightingEvent_StatusReport.ProtoReflect.Descriptor instead.
 func (*LightingEvent_StatusReport) Descriptor() ([]byte, []int) {
-	return file_lighting_test_proto_rawDescGZIP(), []int{1, 2}
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP(), []int{1, 2}
 }
 
 func (x *LightingEvent_StatusReport) GetFaults() []LightFault {
@@ -768,46 +768,46 @@ func (x *LightingEvent_StatusReport) GetFaults() []LightFault {
 	return nil
 }
 
-var File_lighting_test_proto protoreflect.FileDescriptor
+var File_smartcore_bos_lightingtest_v1_lighting_test_proto protoreflect.FileDescriptor
 
-const file_lighting_test_proto_rawDesc = "" +
+const file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDesc = "" +
 	"\n" +
-	"\x13lighting_test.proto\x12\rsmartcore.bos\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/duration.proto\"\xa5\x02\n" +
+	"1smartcore/bos/lightingtest/v1/lighting_test.proto\x12\x1dsmartcore.bos.lightingtest.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb5\x02\n" +
 	"\vLightHealth\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vupdate_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\x121\n" +
-	"\x06faults\x18\x03 \x03(\x0e2\x19.smartcore.bos.LightFaultR\x06faults\x12H\n" +
+	"updateTime\x12A\n" +
+	"\x06faults\x18\x03 \x03(\x0e2).smartcore.bos.lightingtest.v1.LightFaultR\x06faults\x12H\n" +
 	"\x12last_function_test\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x10lastFunctionTest\x12H\n" +
-	"\x12last_duration_test\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x10lastDurationTest\"\xb9\x04\n" +
+	"\x12last_duration_test\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x10lastDurationTest\"\xf9\x04\n" +
 	"\rLightingEvent\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x128\n" +
-	"\ttimestamp\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12]\n" +
-	"\x12duration_test_pass\x18\x04 \x01(\v2-.smartcore.bos.LightingEvent.DurationTestPassH\x00R\x10durationTestPass\x12]\n" +
-	"\x12function_test_pass\x18\x05 \x01(\v2-.smartcore.bos.LightingEvent.FunctionTestPassH\x00R\x10functionTestPass\x12P\n" +
-	"\rstatus_report\x18\x06 \x01(\v2).smartcore.bos.LightingEvent.StatusReportH\x00R\fstatusReport\x1aZ\n" +
+	"\ttimestamp\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12m\n" +
+	"\x12duration_test_pass\x18\x04 \x01(\v2=.smartcore.bos.lightingtest.v1.LightingEvent.DurationTestPassH\x00R\x10durationTestPass\x12m\n" +
+	"\x12function_test_pass\x18\x05 \x01(\v2=.smartcore.bos.lightingtest.v1.LightingEvent.FunctionTestPassH\x00R\x10functionTestPass\x12`\n" +
+	"\rstatus_report\x18\x06 \x01(\v29.smartcore.bos.lightingtest.v1.LightingEvent.StatusReportH\x00R\fstatusReport\x1aZ\n" +
 	"\x10DurationTestPass\x12F\n" +
 	"\x11achieved_duration\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\x10achievedDuration\x1a\x12\n" +
-	"\x10FunctionTestPass\x1aA\n" +
-	"\fStatusReport\x121\n" +
-	"\x06faults\x18\x01 \x03(\x0e2\x19.smartcore.bos.LightFaultR\x06faultsB\a\n" +
+	"\x10FunctionTestPass\x1aQ\n" +
+	"\fStatusReport\x12A\n" +
+	"\x06faults\x18\x01 \x03(\x0e2).smartcore.bos.lightingtest.v1.LightFaultR\x06faultsB\a\n" +
 	"\x05event\"+\n" +
 	"\x15GetLightHealthRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"T\n" +
 	"\x16ListLightHealthRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x88\x01\n" +
-	"\x17ListLightHealthResponse\x12E\n" +
-	"\x10emergency_lights\x18\x01 \x03(\v2\x1a.smartcore.bos.LightHealthR\x0femergencyLights\x12&\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"\x98\x01\n" +
+	"\x17ListLightHealthResponse\x12U\n" +
+	"\x10emergency_lights\x18\x01 \x03(\v2*.smartcore.bos.lightingtest.v1.LightHealthR\x0femergencyLights\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"T\n" +
 	"\x16ListLightEventsRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\xa3\x01\n" +
-	"\x17ListLightEventsResponse\x124\n" +
-	"\x06events\x18\x01 \x03(\v2\x1c.smartcore.bos.LightingEventR\x06events\x12&\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"\xb3\x01\n" +
+	"\x17ListLightEventsResponse\x12D\n" +
+	"\x06events\x18\x01 \x03(\v2,.smartcore.bos.lightingtest.v1.LightingEventR\x06events\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12*\n" +
 	"\x11future_page_token\x18\x03 \x01(\tR\x0ffuturePageToken\"<\n" +
 	"\x13GetReportCSVRequest\x12%\n" +
@@ -823,65 +823,65 @@ const file_lighting_test_proto_rawDesc = "" +
 	"\n" +
 	"LAMP_FAULT\x10\x04\x12\x19\n" +
 	"\x15COMMUNICATION_FAILURE\x10\x05\x12\x0f\n" +
-	"\vOTHER_FAULT\x10\x062\xf7\x02\n" +
-	"\x0fLightingTestApi\x12R\n" +
-	"\x0eGetLightHealth\x12$.smartcore.bos.GetLightHealthRequest\x1a\x1a.smartcore.bos.LightHealth\x12`\n" +
-	"\x0fListLightHealth\x12%.smartcore.bos.ListLightHealthRequest\x1a&.smartcore.bos.ListLightHealthResponse\x12`\n" +
-	"\x0fListLightEvents\x12%.smartcore.bos.ListLightEventsRequest\x1a&.smartcore.bos.ListLightEventsResponse\x12L\n" +
-	"\fGetReportCSV\x12\".smartcore.bos.GetReportCSVRequest\x1a\x18.smartcore.bos.ReportCSVB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\vOTHER_FAULT\x10\x062\xf9\x03\n" +
+	"\x0fLightingTestApi\x12r\n" +
+	"\x0eGetLightHealth\x124.smartcore.bos.lightingtest.v1.GetLightHealthRequest\x1a*.smartcore.bos.lightingtest.v1.LightHealth\x12\x80\x01\n" +
+	"\x0fListLightHealth\x125.smartcore.bos.lightingtest.v1.ListLightHealthRequest\x1a6.smartcore.bos.lightingtest.v1.ListLightHealthResponse\x12\x80\x01\n" +
+	"\x0fListLightEvents\x125.smartcore.bos.lightingtest.v1.ListLightEventsRequest\x1a6.smartcore.bos.lightingtest.v1.ListLightEventsResponse\x12l\n" +
+	"\fGetReportCSV\x122.smartcore.bos.lightingtest.v1.GetReportCSVRequest\x1a(.smartcore.bos.lightingtest.v1.ReportCSVB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_lighting_test_proto_rawDescOnce sync.Once
-	file_lighting_test_proto_rawDescData []byte
+	file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescOnce sync.Once
+	file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescData []byte
 )
 
-func file_lighting_test_proto_rawDescGZIP() []byte {
-	file_lighting_test_proto_rawDescOnce.Do(func() {
-		file_lighting_test_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_lighting_test_proto_rawDesc), len(file_lighting_test_proto_rawDesc)))
+func file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDesc), len(file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDesc)))
 	})
-	return file_lighting_test_proto_rawDescData
+	return file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescData
 }
 
-var file_lighting_test_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_lighting_test_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
-var file_lighting_test_proto_goTypes = []any{
-	(LightFault)(0),                        // 0: smartcore.bos.LightFault
-	(*LightHealth)(nil),                    // 1: smartcore.bos.LightHealth
-	(*LightingEvent)(nil),                  // 2: smartcore.bos.LightingEvent
-	(*GetLightHealthRequest)(nil),          // 3: smartcore.bos.GetLightHealthRequest
-	(*ListLightHealthRequest)(nil),         // 4: smartcore.bos.ListLightHealthRequest
-	(*ListLightHealthResponse)(nil),        // 5: smartcore.bos.ListLightHealthResponse
-	(*ListLightEventsRequest)(nil),         // 6: smartcore.bos.ListLightEventsRequest
-	(*ListLightEventsResponse)(nil),        // 7: smartcore.bos.ListLightEventsResponse
-	(*GetReportCSVRequest)(nil),            // 8: smartcore.bos.GetReportCSVRequest
-	(*ReportCSV)(nil),                      // 9: smartcore.bos.ReportCSV
-	(*LightingEvent_DurationTestPass)(nil), // 10: smartcore.bos.LightingEvent.DurationTestPass
-	(*LightingEvent_FunctionTestPass)(nil), // 11: smartcore.bos.LightingEvent.FunctionTestPass
-	(*LightingEvent_StatusReport)(nil),     // 12: smartcore.bos.LightingEvent.StatusReport
+var file_smartcore_bos_lightingtest_v1_lighting_test_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_smartcore_bos_lightingtest_v1_lighting_test_proto_goTypes = []any{
+	(LightFault)(0),                        // 0: smartcore.bos.lightingtest.v1.LightFault
+	(*LightHealth)(nil),                    // 1: smartcore.bos.lightingtest.v1.LightHealth
+	(*LightingEvent)(nil),                  // 2: smartcore.bos.lightingtest.v1.LightingEvent
+	(*GetLightHealthRequest)(nil),          // 3: smartcore.bos.lightingtest.v1.GetLightHealthRequest
+	(*ListLightHealthRequest)(nil),         // 4: smartcore.bos.lightingtest.v1.ListLightHealthRequest
+	(*ListLightHealthResponse)(nil),        // 5: smartcore.bos.lightingtest.v1.ListLightHealthResponse
+	(*ListLightEventsRequest)(nil),         // 6: smartcore.bos.lightingtest.v1.ListLightEventsRequest
+	(*ListLightEventsResponse)(nil),        // 7: smartcore.bos.lightingtest.v1.ListLightEventsResponse
+	(*GetReportCSVRequest)(nil),            // 8: smartcore.bos.lightingtest.v1.GetReportCSVRequest
+	(*ReportCSV)(nil),                      // 9: smartcore.bos.lightingtest.v1.ReportCSV
+	(*LightingEvent_DurationTestPass)(nil), // 10: smartcore.bos.lightingtest.v1.LightingEvent.DurationTestPass
+	(*LightingEvent_FunctionTestPass)(nil), // 11: smartcore.bos.lightingtest.v1.LightingEvent.FunctionTestPass
+	(*LightingEvent_StatusReport)(nil),     // 12: smartcore.bos.lightingtest.v1.LightingEvent.StatusReport
 	(*timestamppb.Timestamp)(nil),          // 13: google.protobuf.Timestamp
 	(*durationpb.Duration)(nil),            // 14: google.protobuf.Duration
 }
-var file_lighting_test_proto_depIdxs = []int32{
-	13, // 0: smartcore.bos.LightHealth.update_time:type_name -> google.protobuf.Timestamp
-	0,  // 1: smartcore.bos.LightHealth.faults:type_name -> smartcore.bos.LightFault
-	13, // 2: smartcore.bos.LightHealth.last_function_test:type_name -> google.protobuf.Timestamp
-	13, // 3: smartcore.bos.LightHealth.last_duration_test:type_name -> google.protobuf.Timestamp
-	13, // 4: smartcore.bos.LightingEvent.timestamp:type_name -> google.protobuf.Timestamp
-	10, // 5: smartcore.bos.LightingEvent.duration_test_pass:type_name -> smartcore.bos.LightingEvent.DurationTestPass
-	11, // 6: smartcore.bos.LightingEvent.function_test_pass:type_name -> smartcore.bos.LightingEvent.FunctionTestPass
-	12, // 7: smartcore.bos.LightingEvent.status_report:type_name -> smartcore.bos.LightingEvent.StatusReport
-	1,  // 8: smartcore.bos.ListLightHealthResponse.emergency_lights:type_name -> smartcore.bos.LightHealth
-	2,  // 9: smartcore.bos.ListLightEventsResponse.events:type_name -> smartcore.bos.LightingEvent
-	14, // 10: smartcore.bos.LightingEvent.DurationTestPass.achieved_duration:type_name -> google.protobuf.Duration
-	0,  // 11: smartcore.bos.LightingEvent.StatusReport.faults:type_name -> smartcore.bos.LightFault
-	3,  // 12: smartcore.bos.LightingTestApi.GetLightHealth:input_type -> smartcore.bos.GetLightHealthRequest
-	4,  // 13: smartcore.bos.LightingTestApi.ListLightHealth:input_type -> smartcore.bos.ListLightHealthRequest
-	6,  // 14: smartcore.bos.LightingTestApi.ListLightEvents:input_type -> smartcore.bos.ListLightEventsRequest
-	8,  // 15: smartcore.bos.LightingTestApi.GetReportCSV:input_type -> smartcore.bos.GetReportCSVRequest
-	1,  // 16: smartcore.bos.LightingTestApi.GetLightHealth:output_type -> smartcore.bos.LightHealth
-	5,  // 17: smartcore.bos.LightingTestApi.ListLightHealth:output_type -> smartcore.bos.ListLightHealthResponse
-	7,  // 18: smartcore.bos.LightingTestApi.ListLightEvents:output_type -> smartcore.bos.ListLightEventsResponse
-	9,  // 19: smartcore.bos.LightingTestApi.GetReportCSV:output_type -> smartcore.bos.ReportCSV
+var file_smartcore_bos_lightingtest_v1_lighting_test_proto_depIdxs = []int32{
+	13, // 0: smartcore.bos.lightingtest.v1.LightHealth.update_time:type_name -> google.protobuf.Timestamp
+	0,  // 1: smartcore.bos.lightingtest.v1.LightHealth.faults:type_name -> smartcore.bos.lightingtest.v1.LightFault
+	13, // 2: smartcore.bos.lightingtest.v1.LightHealth.last_function_test:type_name -> google.protobuf.Timestamp
+	13, // 3: smartcore.bos.lightingtest.v1.LightHealth.last_duration_test:type_name -> google.protobuf.Timestamp
+	13, // 4: smartcore.bos.lightingtest.v1.LightingEvent.timestamp:type_name -> google.protobuf.Timestamp
+	10, // 5: smartcore.bos.lightingtest.v1.LightingEvent.duration_test_pass:type_name -> smartcore.bos.lightingtest.v1.LightingEvent.DurationTestPass
+	11, // 6: smartcore.bos.lightingtest.v1.LightingEvent.function_test_pass:type_name -> smartcore.bos.lightingtest.v1.LightingEvent.FunctionTestPass
+	12, // 7: smartcore.bos.lightingtest.v1.LightingEvent.status_report:type_name -> smartcore.bos.lightingtest.v1.LightingEvent.StatusReport
+	1,  // 8: smartcore.bos.lightingtest.v1.ListLightHealthResponse.emergency_lights:type_name -> smartcore.bos.lightingtest.v1.LightHealth
+	2,  // 9: smartcore.bos.lightingtest.v1.ListLightEventsResponse.events:type_name -> smartcore.bos.lightingtest.v1.LightingEvent
+	14, // 10: smartcore.bos.lightingtest.v1.LightingEvent.DurationTestPass.achieved_duration:type_name -> google.protobuf.Duration
+	0,  // 11: smartcore.bos.lightingtest.v1.LightingEvent.StatusReport.faults:type_name -> smartcore.bos.lightingtest.v1.LightFault
+	3,  // 12: smartcore.bos.lightingtest.v1.LightingTestApi.GetLightHealth:input_type -> smartcore.bos.lightingtest.v1.GetLightHealthRequest
+	4,  // 13: smartcore.bos.lightingtest.v1.LightingTestApi.ListLightHealth:input_type -> smartcore.bos.lightingtest.v1.ListLightHealthRequest
+	6,  // 14: smartcore.bos.lightingtest.v1.LightingTestApi.ListLightEvents:input_type -> smartcore.bos.lightingtest.v1.ListLightEventsRequest
+	8,  // 15: smartcore.bos.lightingtest.v1.LightingTestApi.GetReportCSV:input_type -> smartcore.bos.lightingtest.v1.GetReportCSVRequest
+	1,  // 16: smartcore.bos.lightingtest.v1.LightingTestApi.GetLightHealth:output_type -> smartcore.bos.lightingtest.v1.LightHealth
+	5,  // 17: smartcore.bos.lightingtest.v1.LightingTestApi.ListLightHealth:output_type -> smartcore.bos.lightingtest.v1.ListLightHealthResponse
+	7,  // 18: smartcore.bos.lightingtest.v1.LightingTestApi.ListLightEvents:output_type -> smartcore.bos.lightingtest.v1.ListLightEventsResponse
+	9,  // 19: smartcore.bos.lightingtest.v1.LightingTestApi.GetReportCSV:output_type -> smartcore.bos.lightingtest.v1.ReportCSV
 	16, // [16:20] is the sub-list for method output_type
 	12, // [12:16] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
@@ -889,12 +889,12 @@ var file_lighting_test_proto_depIdxs = []int32{
 	0,  // [0:12] is the sub-list for field type_name
 }
 
-func init() { file_lighting_test_proto_init() }
-func file_lighting_test_proto_init() {
-	if File_lighting_test_proto != nil {
+func init() { file_smartcore_bos_lightingtest_v1_lighting_test_proto_init() }
+func file_smartcore_bos_lightingtest_v1_lighting_test_proto_init() {
+	if File_smartcore_bos_lightingtest_v1_lighting_test_proto != nil {
 		return
 	}
-	file_lighting_test_proto_msgTypes[1].OneofWrappers = []any{
+	file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes[1].OneofWrappers = []any{
 		(*LightingEvent_DurationTestPass_)(nil),
 		(*LightingEvent_FunctionTestPass_)(nil),
 		(*LightingEvent_StatusReport_)(nil),
@@ -903,18 +903,18 @@ func file_lighting_test_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_lighting_test_proto_rawDesc), len(file_lighting_test_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDesc), len(file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_lighting_test_proto_goTypes,
-		DependencyIndexes: file_lighting_test_proto_depIdxs,
-		EnumInfos:         file_lighting_test_proto_enumTypes,
-		MessageInfos:      file_lighting_test_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_lightingtest_v1_lighting_test_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_lightingtest_v1_lighting_test_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_lightingtest_v1_lighting_test_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_lightingtest_v1_lighting_test_proto_msgTypes,
 	}.Build()
-	File_lighting_test_proto = out.File
-	file_lighting_test_proto_goTypes = nil
-	file_lighting_test_proto_depIdxs = nil
+	File_smartcore_bos_lightingtest_v1_lighting_test_proto = out.File
+	file_smartcore_bos_lightingtest_v1_lighting_test_proto_goTypes = nil
+	file_smartcore_bos_lightingtest_v1_lighting_test_proto_depIdxs = nil
 }

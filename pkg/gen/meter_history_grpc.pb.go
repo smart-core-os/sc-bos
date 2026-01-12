@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: meter_history.proto
+// source: smartcore/bos/meter/v1/meter_history.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MeterHistory_ListMeterReadingHistory_FullMethodName = "/smartcore.bos.MeterHistory/ListMeterReadingHistory"
+	MeterHistory_ListMeterReadingHistory_FullMethodName = "/smartcore.bos.meter.v1.MeterHistory/ListMeterReadingHistory"
 )
 
 // MeterHistoryClient is the client API for MeterHistory service.
@@ -112,7 +112,7 @@ func _MeterHistory_ListMeterReadingHistory_Handler(srv interface{}, ctx context.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MeterHistory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.MeterHistory",
+	ServiceName: "smartcore.bos.meter.v1.MeterHistory",
 	HandlerType: (*MeterHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -121,5 +121,5 @@ var MeterHistory_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "meter_history.proto",
+	Metadata: "smartcore/bos/meter/v1/meter_history.proto",
 }

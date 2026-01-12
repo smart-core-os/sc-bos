@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: alerts.proto
+// source: smartcore/bos/alert/v1/alerts.proto
 
 package gen
 
@@ -63,11 +63,11 @@ func (x Alert_Severity) String() string {
 }
 
 func (Alert_Severity) Descriptor() protoreflect.EnumDescriptor {
-	return file_alerts_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_alert_v1_alerts_proto_enumTypes[0].Descriptor()
 }
 
 func (Alert_Severity) Type() protoreflect.EnumType {
-	return &file_alerts_proto_enumTypes[0]
+	return &file_smartcore_bos_alert_v1_alerts_proto_enumTypes[0]
 }
 
 func (x Alert_Severity) Number() protoreflect.EnumNumber {
@@ -76,7 +76,7 @@ func (x Alert_Severity) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Alert_Severity.Descriptor instead.
 func (Alert_Severity) EnumDescriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{0, 0}
 }
 
 // Alert describes an event in the system that can be acknowledged
@@ -100,7 +100,7 @@ type Alert struct {
 	// Present if the alert has been acknowledged.
 	// Acknowledgement is an indication that somebody is now aware that this alert exists.
 	Acknowledgement *Alert_Acknowledgement `protobuf:"bytes,5,opt,name=acknowledgement,proto3" json:"acknowledgement,omitempty"`
-	Severity        Alert_Severity         `protobuf:"varint,6,opt,name=severity,proto3,enum=smartcore.bos.Alert_Severity" json:"severity,omitempty"`
+	Severity        Alert_Severity         `protobuf:"varint,6,opt,name=severity,proto3,enum=smartcore.bos.alert.v1.Alert_Severity" json:"severity,omitempty"`
 	Floor           string                 `protobuf:"bytes,7,opt,name=floor,proto3" json:"floor,omitempty"`            // the floor the alert relates to, typically the floor the source is located on.
 	Zone            string                 `protobuf:"bytes,8,opt,name=zone,proto3" json:"zone,omitempty"`              // the spacial zone the alert relates to, typically the zone the source is located in.
 	Source          string                 `protobuf:"bytes,9,opt,name=source,proto3" json:"source,omitempty"`          // the originator of the alert
@@ -112,7 +112,7 @@ type Alert struct {
 
 func (x *Alert) Reset() {
 	*x = Alert{}
-	mi := &file_alerts_proto_msgTypes[0]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -124,7 +124,7 @@ func (x *Alert) String() string {
 func (*Alert) ProtoMessage() {}
 
 func (x *Alert) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[0]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -137,7 +137,7 @@ func (x *Alert) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Alert.ProtoReflect.Descriptor instead.
 func (*Alert) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Alert) GetId() string {
@@ -236,7 +236,7 @@ type AlertMetadata struct {
 
 func (x *AlertMetadata) Reset() {
 	*x = AlertMetadata{}
-	mi := &file_alerts_proto_msgTypes[1]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -248,7 +248,7 @@ func (x *AlertMetadata) String() string {
 func (*AlertMetadata) ProtoMessage() {}
 
 func (x *AlertMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[1]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -261,7 +261,7 @@ func (x *AlertMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AlertMetadata.ProtoReflect.Descriptor instead.
 func (*AlertMetadata) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *AlertMetadata) GetTotalCount() uint32 {
@@ -342,7 +342,7 @@ type ListAlertsRequest struct {
 
 func (x *ListAlertsRequest) Reset() {
 	*x = ListAlertsRequest{}
-	mi := &file_alerts_proto_msgTypes[2]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -354,7 +354,7 @@ func (x *ListAlertsRequest) String() string {
 func (*ListAlertsRequest) ProtoMessage() {}
 
 func (x *ListAlertsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[2]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -367,7 +367,7 @@ func (x *ListAlertsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAlertsRequest.ProtoReflect.Descriptor instead.
 func (*ListAlertsRequest) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListAlertsRequest) GetName() string {
@@ -420,7 +420,7 @@ type ListAlertsResponse struct {
 
 func (x *ListAlertsResponse) Reset() {
 	*x = ListAlertsResponse{}
-	mi := &file_alerts_proto_msgTypes[3]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -432,7 +432,7 @@ func (x *ListAlertsResponse) String() string {
 func (*ListAlertsResponse) ProtoMessage() {}
 
 func (x *ListAlertsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[3]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -445,7 +445,7 @@ func (x *ListAlertsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAlertsResponse.ProtoReflect.Descriptor instead.
 func (*ListAlertsResponse) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListAlertsResponse) GetAlerts() []*Alert {
@@ -486,7 +486,7 @@ type PullAlertsRequest struct {
 
 func (x *PullAlertsRequest) Reset() {
 	*x = PullAlertsRequest{}
-	mi := &file_alerts_proto_msgTypes[4]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -498,7 +498,7 @@ func (x *PullAlertsRequest) String() string {
 func (*PullAlertsRequest) ProtoMessage() {}
 
 func (x *PullAlertsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[4]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -511,7 +511,7 @@ func (x *PullAlertsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullAlertsRequest.ProtoReflect.Descriptor instead.
 func (*PullAlertsRequest) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullAlertsRequest) GetName() string {
@@ -545,7 +545,7 @@ type PullAlertsResponse struct {
 
 func (x *PullAlertsResponse) Reset() {
 	*x = PullAlertsResponse{}
-	mi := &file_alerts_proto_msgTypes[5]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -557,7 +557,7 @@ func (x *PullAlertsResponse) String() string {
 func (*PullAlertsResponse) ProtoMessage() {}
 
 func (x *PullAlertsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[5]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -570,7 +570,7 @@ func (x *PullAlertsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullAlertsResponse.ProtoReflect.Descriptor instead.
 func (*PullAlertsResponse) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PullAlertsResponse) GetChanges() []*PullAlertsResponse_Change {
@@ -600,7 +600,7 @@ type AcknowledgeAlertRequest struct {
 
 func (x *AcknowledgeAlertRequest) Reset() {
 	*x = AcknowledgeAlertRequest{}
-	mi := &file_alerts_proto_msgTypes[6]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -612,7 +612,7 @@ func (x *AcknowledgeAlertRequest) String() string {
 func (*AcknowledgeAlertRequest) ProtoMessage() {}
 
 func (x *AcknowledgeAlertRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[6]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -625,7 +625,7 @@ func (x *AcknowledgeAlertRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AcknowledgeAlertRequest.ProtoReflect.Descriptor instead.
 func (*AcknowledgeAlertRequest) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *AcknowledgeAlertRequest) GetName() string {
@@ -674,7 +674,7 @@ type GetAlertMetadataRequest struct {
 
 func (x *GetAlertMetadataRequest) Reset() {
 	*x = GetAlertMetadataRequest{}
-	mi := &file_alerts_proto_msgTypes[7]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -686,7 +686,7 @@ func (x *GetAlertMetadataRequest) String() string {
 func (*GetAlertMetadataRequest) ProtoMessage() {}
 
 func (x *GetAlertMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[7]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -699,7 +699,7 @@ func (x *GetAlertMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAlertMetadataRequest.ProtoReflect.Descriptor instead.
 func (*GetAlertMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetAlertMetadataRequest) GetName() string {
@@ -729,7 +729,7 @@ type PullAlertMetadataRequest struct {
 
 func (x *PullAlertMetadataRequest) Reset() {
 	*x = PullAlertMetadataRequest{}
-	mi := &file_alerts_proto_msgTypes[8]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -741,7 +741,7 @@ func (x *PullAlertMetadataRequest) String() string {
 func (*PullAlertMetadataRequest) ProtoMessage() {}
 
 func (x *PullAlertMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[8]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -754,7 +754,7 @@ func (x *PullAlertMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullAlertMetadataRequest.ProtoReflect.Descriptor instead.
 func (*PullAlertMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{8}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PullAlertMetadataRequest) GetName() string {
@@ -787,7 +787,7 @@ type PullAlertMetadataResponse struct {
 
 func (x *PullAlertMetadataResponse) Reset() {
 	*x = PullAlertMetadataResponse{}
-	mi := &file_alerts_proto_msgTypes[9]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -799,7 +799,7 @@ func (x *PullAlertMetadataResponse) String() string {
 func (*PullAlertMetadataResponse) ProtoMessage() {}
 
 func (x *PullAlertMetadataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[9]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -812,7 +812,7 @@ func (x *PullAlertMetadataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullAlertMetadataResponse.ProtoReflect.Descriptor instead.
 func (*PullAlertMetadataResponse) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{9}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *PullAlertMetadataResponse) GetChanges() []*PullAlertMetadataResponse_Change {
@@ -839,7 +839,7 @@ type CreateAlertRequest struct {
 
 func (x *CreateAlertRequest) Reset() {
 	*x = CreateAlertRequest{}
-	mi := &file_alerts_proto_msgTypes[10]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -851,7 +851,7 @@ func (x *CreateAlertRequest) String() string {
 func (*CreateAlertRequest) ProtoMessage() {}
 
 func (x *CreateAlertRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[10]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -864,7 +864,7 @@ func (x *CreateAlertRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAlertRequest.ProtoReflect.Descriptor instead.
 func (*CreateAlertRequest) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{10}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CreateAlertRequest) GetName() string {
@@ -904,7 +904,7 @@ type UpdateAlertRequest struct {
 
 func (x *UpdateAlertRequest) Reset() {
 	*x = UpdateAlertRequest{}
-	mi := &file_alerts_proto_msgTypes[11]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -916,7 +916,7 @@ func (x *UpdateAlertRequest) String() string {
 func (*UpdateAlertRequest) ProtoMessage() {}
 
 func (x *UpdateAlertRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[11]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -929,7 +929,7 @@ func (x *UpdateAlertRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAlertRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAlertRequest) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{11}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *UpdateAlertRequest) GetName() string {
@@ -969,7 +969,7 @@ type ResolveAlertRequest struct {
 
 func (x *ResolveAlertRequest) Reset() {
 	*x = ResolveAlertRequest{}
-	mi := &file_alerts_proto_msgTypes[12]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -981,7 +981,7 @@ func (x *ResolveAlertRequest) String() string {
 func (*ResolveAlertRequest) ProtoMessage() {}
 
 func (x *ResolveAlertRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[12]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -994,7 +994,7 @@ func (x *ResolveAlertRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveAlertRequest.ProtoReflect.Descriptor instead.
 func (*ResolveAlertRequest) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{12}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ResolveAlertRequest) GetName() string {
@@ -1032,7 +1032,7 @@ type DeleteAlertRequest struct {
 
 func (x *DeleteAlertRequest) Reset() {
 	*x = DeleteAlertRequest{}
-	mi := &file_alerts_proto_msgTypes[13]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1044,7 +1044,7 @@ func (x *DeleteAlertRequest) String() string {
 func (*DeleteAlertRequest) ProtoMessage() {}
 
 func (x *DeleteAlertRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[13]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1057,7 +1057,7 @@ func (x *DeleteAlertRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAlertRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAlertRequest) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{13}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DeleteAlertRequest) GetName() string {
@@ -1089,7 +1089,7 @@ type DeleteAlertResponse struct {
 
 func (x *DeleteAlertResponse) Reset() {
 	*x = DeleteAlertResponse{}
-	mi := &file_alerts_proto_msgTypes[14]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1101,7 +1101,7 @@ func (x *DeleteAlertResponse) String() string {
 func (*DeleteAlertResponse) ProtoMessage() {}
 
 func (x *DeleteAlertResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[14]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1114,7 +1114,7 @@ func (x *DeleteAlertResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAlertResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAlertResponse) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{14}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{14}
 }
 
 type Alert_Acknowledgement struct {
@@ -1128,7 +1128,7 @@ type Alert_Acknowledgement struct {
 
 func (x *Alert_Acknowledgement) Reset() {
 	*x = Alert_Acknowledgement{}
-	mi := &file_alerts_proto_msgTypes[15]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1140,7 +1140,7 @@ func (x *Alert_Acknowledgement) String() string {
 func (*Alert_Acknowledgement) ProtoMessage() {}
 
 func (x *Alert_Acknowledgement) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[15]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1153,7 +1153,7 @@ func (x *Alert_Acknowledgement) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Alert_Acknowledgement.ProtoReflect.Descriptor instead.
 func (*Alert_Acknowledgement) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *Alert_Acknowledgement) GetAcknowledgeTime() *timestamppb.Timestamp {
@@ -1212,7 +1212,7 @@ type Alert_Query struct {
 
 func (x *Alert_Query) Reset() {
 	*x = Alert_Query{}
-	mi := &file_alerts_proto_msgTypes[16]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1224,7 +1224,7 @@ func (x *Alert_Query) String() string {
 func (*Alert_Query) ProtoMessage() {}
 
 func (x *Alert_Query) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[16]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1237,7 +1237,7 @@ func (x *Alert_Query) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Alert_Query.ProtoReflect.Descriptor instead.
 func (*Alert_Query) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{0, 1}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *Alert_Query) GetCreatedNotBefore() *timestamppb.Timestamp {
@@ -1342,7 +1342,7 @@ type Alert_Acknowledgement_Author struct {
 
 func (x *Alert_Acknowledgement_Author) Reset() {
 	*x = Alert_Acknowledgement_Author{}
-	mi := &file_alerts_proto_msgTypes[17]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1354,7 +1354,7 @@ func (x *Alert_Acknowledgement_Author) String() string {
 func (*Alert_Acknowledgement_Author) ProtoMessage() {}
 
 func (x *Alert_Acknowledgement_Author) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[17]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1367,7 +1367,7 @@ func (x *Alert_Acknowledgement_Author) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Alert_Acknowledgement_Author.ProtoReflect.Descriptor instead.
 func (*Alert_Acknowledgement_Author) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{0, 0, 0}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
 func (x *Alert_Acknowledgement_Author) GetId() string {
@@ -1409,7 +1409,7 @@ type PullAlertsResponse_Change struct {
 
 func (x *PullAlertsResponse_Change) Reset() {
 	*x = PullAlertsResponse_Change{}
-	mi := &file_alerts_proto_msgTypes[25]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1421,7 +1421,7 @@ func (x *PullAlertsResponse_Change) String() string {
 func (*PullAlertsResponse_Change) ProtoMessage() {}
 
 func (x *PullAlertsResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[25]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1434,7 +1434,7 @@ func (x *PullAlertsResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullAlertsResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullAlertsResponse_Change) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{5, 0}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{5, 0}
 }
 
 func (x *PullAlertsResponse_Change) GetName() string {
@@ -1486,7 +1486,7 @@ type PullAlertMetadataResponse_Change struct {
 
 func (x *PullAlertMetadataResponse_Change) Reset() {
 	*x = PullAlertMetadataResponse_Change{}
-	mi := &file_alerts_proto_msgTypes[26]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1498,7 +1498,7 @@ func (x *PullAlertMetadataResponse_Change) String() string {
 func (*PullAlertMetadataResponse_Change) ProtoMessage() {}
 
 func (x *PullAlertMetadataResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_alerts_proto_msgTypes[26]
+	mi := &file_smartcore_bos_alert_v1_alerts_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1511,7 +1511,7 @@ func (x *PullAlertMetadataResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullAlertMetadataResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullAlertMetadataResponse_Change) Descriptor() ([]byte, []int) {
-	return file_alerts_proto_rawDescGZIP(), []int{9, 0}
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP(), []int{9, 0}
 }
 
 func (x *PullAlertMetadataResponse_Change) GetName() string {
@@ -1535,19 +1535,19 @@ func (x *PullAlertMetadataResponse_Change) GetChangeTime() *timestamppb.Timestam
 	return nil
 }
 
-var File_alerts_proto protoreflect.FileDescriptor
+var File_smartcore_bos_alert_v1_alerts_proto protoreflect.FileDescriptor
 
-const file_alerts_proto_rawDesc = "" +
+const file_smartcore_bos_alert_v1_alerts_proto_rawDesc = "" +
 	"\n" +
-	"\falerts.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\"\x83\v\n" +
+	"#smartcore/bos/alert/v1/alerts.proto\x12\x16smartcore.bos.alert.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\"\x9e\v\n" +
 	"\x05Alert\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12;\n" +
 	"\vcreate_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12=\n" +
-	"\fresolve_time\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampR\vresolveTime\x12N\n" +
-	"\x0facknowledgement\x18\x05 \x01(\v2$.smartcore.bos.Alert.AcknowledgementR\x0facknowledgement\x129\n" +
-	"\bseverity\x18\x06 \x01(\x0e2\x1d.smartcore.bos.Alert.SeverityR\bseverity\x12\x14\n" +
+	"\fresolve_time\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampR\vresolveTime\x12W\n" +
+	"\x0facknowledgement\x18\x05 \x01(\v2-.smartcore.bos.alert.v1.Alert.AcknowledgementR\x0facknowledgement\x12B\n" +
+	"\bseverity\x18\x06 \x01(\x0e2&.smartcore.bos.alert.v1.Alert.SeverityR\bseverity\x12\x14\n" +
 	"\x05floor\x18\a \x01(\tR\x05floor\x12\x12\n" +
 	"\x04zone\x18\b \x01(\tR\x04zone\x12\x16\n" +
 	"\x06source\x18\t \x01(\tR\x06source\x12\x1e\n" +
@@ -1555,10 +1555,10 @@ const file_alerts_proto_rawDesc = "" +
 	"federation\x18\n" +
 	" \x01(\tR\n" +
 	"federation\x12\x1c\n" +
-	"\tsubsystem\x18\v \x01(\tR\tsubsystem\x1a\xf0\x01\n" +
+	"\tsubsystem\x18\v \x01(\tR\tsubsystem\x1a\xf9\x01\n" +
 	"\x0fAcknowledgement\x12E\n" +
-	"\x10acknowledge_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0facknowledgeTime\x12C\n" +
-	"\x06author\x18\x02 \x01(\v2+.smartcore.bos.Alert.Acknowledgement.AuthorR\x06author\x1aQ\n" +
+	"\x10acknowledge_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0facknowledgeTime\x12L\n" +
+	"\x06author\x18\x02 \x01(\v24.smartcore.bos.alert.v1.Alert.Acknowledgement.AuthorR\x06author\x1aQ\n" +
 	"\x06Author\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x14\n" +
@@ -1588,18 +1588,18 @@ const file_alerts_proto_rawDesc = "" +
 	"\aWARNING\x10\r\x12\n" +
 	"\n" +
 	"\x06SEVERE\x10\x11\x12\x0f\n" +
-	"\vLIFE_SAFETY\x10\x15\"\x93\t\n" +
+	"\vLIFE_SAFETY\x10\x15\"\xd2\t\n" +
 	"\rAlertMetadata\x12\x1f\n" +
 	"\vtotal_count\x18\x01 \x01(\rR\n" +
-	"totalCount\x12P\n" +
-	"\ffloor_counts\x18\x02 \x03(\v2-.smartcore.bos.AlertMetadata.FloorCountsEntryR\vfloorCounts\x12M\n" +
-	"\vzone_counts\x18\x03 \x03(\v2,.smartcore.bos.AlertMetadata.ZoneCountsEntryR\n" +
-	"zoneCounts\x12e\n" +
-	"\x13acknowledged_counts\x18\x05 \x03(\v24.smartcore.bos.AlertMetadata.AcknowledgedCountsEntryR\x12acknowledgedCounts\x12Y\n" +
-	"\x0fseverity_counts\x18\x06 \x03(\v20.smartcore.bos.AlertMetadata.SeverityCountsEntryR\x0eseverityCounts\x12Y\n" +
-	"\x0fresolved_counts\x18\a \x03(\v20.smartcore.bos.AlertMetadata.ResolvedCountsEntryR\x0eresolvedCounts\x12l\n" +
-	"\x16needs_attention_counts\x18\b \x03(\v26.smartcore.bos.AlertMetadata.NeedsAttentionCountsEntryR\x14needsAttentionCounts\x12\\\n" +
-	"\x10subsystem_counts\x18\t \x03(\v21.smartcore.bos.AlertMetadata.SubsystemCountsEntryR\x0fsubsystemCounts\x1a>\n" +
+	"totalCount\x12Y\n" +
+	"\ffloor_counts\x18\x02 \x03(\v26.smartcore.bos.alert.v1.AlertMetadata.FloorCountsEntryR\vfloorCounts\x12V\n" +
+	"\vzone_counts\x18\x03 \x03(\v25.smartcore.bos.alert.v1.AlertMetadata.ZoneCountsEntryR\n" +
+	"zoneCounts\x12n\n" +
+	"\x13acknowledged_counts\x18\x05 \x03(\v2=.smartcore.bos.alert.v1.AlertMetadata.AcknowledgedCountsEntryR\x12acknowledgedCounts\x12b\n" +
+	"\x0fseverity_counts\x18\x06 \x03(\v29.smartcore.bos.alert.v1.AlertMetadata.SeverityCountsEntryR\x0eseverityCounts\x12b\n" +
+	"\x0fresolved_counts\x18\a \x03(\v29.smartcore.bos.alert.v1.AlertMetadata.ResolvedCountsEntryR\x0eresolvedCounts\x12u\n" +
+	"\x16needs_attention_counts\x18\b \x03(\v2?.smartcore.bos.alert.v1.AlertMetadata.NeedsAttentionCountsEntryR\x14needsAttentionCounts\x12e\n" +
+	"\x10subsystem_counts\x18\t \x03(\v2:.smartcore.bos.alert.v1.AlertMetadata.SubsystemCountsEntryR\x0fsubsystemCounts\x1a>\n" +
 	"\x10FloorCountsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\rR\x05value:\x028\x01\x1a=\n" +
@@ -1620,36 +1620,36 @@ const file_alerts_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\rR\x05value:\x028\x01\x1aB\n" +
 	"\x14SubsystemCountsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\rR\x05value:\x028\x01\"\xce\x01\n" +
+	"\x05value\x18\x02 \x01(\rR\x05value:\x028\x01\"\xd7\x01\n" +
 	"\x11ListAlertsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\x120\n" +
-	"\x05query\x18\x06 \x01(\v2\x1a.smartcore.bos.Alert.QueryR\x05query\"\x89\x01\n" +
-	"\x12ListAlertsResponse\x12,\n" +
-	"\x06alerts\x18\x01 \x03(\v2\x14.smartcore.bos.AlertR\x06alerts\x12&\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\x129\n" +
+	"\x05query\x18\x06 \x01(\v2#.smartcore.bos.alert.v1.Alert.QueryR\x05query\"\x92\x01\n" +
+	"\x12ListAlertsResponse\x125\n" +
+	"\x06alerts\x18\x01 \x03(\v2\x1d.smartcore.bos.alert.v1.AlertR\x06alerts\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\x92\x01\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\x9b\x01\n" +
 	"\x11PullAlertsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
-	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x120\n" +
-	"\x05query\x18\x05 \x01(\v2\x1a.smartcore.bos.Alert.QueryR\x05query\"\xcb\x02\n" +
-	"\x12PullAlertsResponse\x12B\n" +
-	"\achanges\x18\x01 \x03(\v2(.smartcore.bos.PullAlertsResponse.ChangeR\achanges\x1a\xf0\x01\n" +
+	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x129\n" +
+	"\x05query\x18\x05 \x01(\v2#.smartcore.bos.alert.v1.Alert.QueryR\x05query\"\xe6\x02\n" +
+	"\x12PullAlertsResponse\x12K\n" +
+	"\achanges\x18\x01 \x03(\v21.smartcore.bos.alert.v1.PullAlertsResponse.ChangeR\achanges\x1a\x82\x02\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x121\n" +
-	"\tnew_value\x18\x03 \x01(\v2\x14.smartcore.bos.AlertR\bnewValue\x121\n" +
-	"\told_value\x18\x04 \x01(\v2\x14.smartcore.bos.AlertR\boldValue\x12;\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12:\n" +
+	"\tnew_value\x18\x03 \x01(\v2\x1d.smartcore.bos.alert.v1.AlertR\bnewValue\x12:\n" +
+	"\told_value\x18\x04 \x01(\v2\x1d.smartcore.bos.alert.v1.AlertR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\"\xd6\x01\n" +
+	"changeTime\"\xdf\x01\n" +
 	"\x17AcknowledgeAlertRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\tR\x02id\x12C\n" +
-	"\x06author\x18\x05 \x01(\v2+.smartcore.bos.Alert.Acknowledgement.AuthorR\x06author\x12-\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12L\n" +
+	"\x06author\x18\x05 \x01(\v24.smartcore.bos.alert.v1.Alert.Acknowledgement.AuthorR\x06author\x12-\n" +
 	"\x12allow_acknowledged\x18\x03 \x01(\bR\x11allowAcknowledged\x12#\n" +
 	"\rallow_missing\x18\x04 \x01(\bR\fallowMissing\"f\n" +
 	"\x17GetAlertMetadataRequest\x12\x12\n" +
@@ -1658,152 +1658,152 @@ const file_alerts_proto_rawDesc = "" +
 	"\x18PullAlertMetadataRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
 	"\fupdates_only\x18\x02 \x01(\bR\vupdatesOnly\x127\n" +
-	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\xfc\x01\n" +
-	"\x19PullAlertMetadataResponse\x12I\n" +
-	"\achanges\x18\x01 \x03(\v2/.smartcore.bos.PullAlertMetadataResponse.ChangeR\achanges\x1a\x93\x01\n" +
+	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x8e\x02\n" +
+	"\x19PullAlertMetadataResponse\x12R\n" +
+	"\achanges\x18\x01 \x03(\v28.smartcore.bos.alert.v1.PullAlertMetadataResponse.ChangeR\achanges\x1a\x9c\x01\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x128\n" +
-	"\bmetadata\x18\x02 \x01(\v2\x1c.smartcore.bos.AlertMetadataR\bmetadata\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12A\n" +
+	"\bmetadata\x18\x02 \x01(\v2%.smartcore.bos.alert.v1.AlertMetadataR\bmetadata\x12;\n" +
 	"\vchange_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\"w\n" +
+	"changeTime\"\x80\x01\n" +
 	"\x12CreateAlertRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12*\n" +
-	"\x05alert\x18\x02 \x01(\v2\x14.smartcore.bos.AlertR\x05alert\x12!\n" +
-	"\fmerge_source\x18\x03 \x01(\bR\vmergeSource\"\x91\x01\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x123\n" +
+	"\x05alert\x18\x02 \x01(\v2\x1d.smartcore.bos.alert.v1.AlertR\x05alert\x12!\n" +
+	"\fmerge_source\x18\x03 \x01(\bR\vmergeSource\"\x9a\x01\n" +
 	"\x12UpdateAlertRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12*\n" +
-	"\x05alert\x18\x02 \x01(\v2\x14.smartcore.bos.AlertR\x05alert\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x123\n" +
+	"\x05alert\x18\x02 \x01(\v2\x1d.smartcore.bos.alert.v1.AlertR\x05alert\x12;\n" +
 	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
-	"updateMask\"z\n" +
+	"updateMask\"\x83\x01\n" +
 	"\x13ResolveAlertRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12*\n" +
-	"\x05alert\x18\x02 \x01(\v2\x14.smartcore.bos.AlertR\x05alert\x12#\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x123\n" +
+	"\x05alert\x18\x02 \x01(\v2\x1d.smartcore.bos.alert.v1.AlertR\x05alert\x12#\n" +
 	"\rallow_missing\x18\x03 \x01(\bR\fallowMissing\"]\n" +
 	"\x12DeleteAlertRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12#\n" +
 	"\rallow_missing\x18\x04 \x01(\bR\fallowMissing\"\x15\n" +
-	"\x13DeleteAlertResponse2\x9c\x04\n" +
-	"\bAlertApi\x12Q\n" +
+	"\x13DeleteAlertResponse2\x88\x05\n" +
+	"\bAlertApi\x12c\n" +
 	"\n" +
-	"ListAlerts\x12 .smartcore.bos.ListAlertsRequest\x1a!.smartcore.bos.ListAlertsResponse\x12S\n" +
+	"ListAlerts\x12).smartcore.bos.alert.v1.ListAlertsRequest\x1a*.smartcore.bos.alert.v1.ListAlertsResponse\x12e\n" +
 	"\n" +
-	"PullAlerts\x12 .smartcore.bos.PullAlertsRequest\x1a!.smartcore.bos.PullAlertsResponse0\x01\x12P\n" +
-	"\x10AcknowledgeAlert\x12&.smartcore.bos.AcknowledgeAlertRequest\x1a\x14.smartcore.bos.Alert\x12R\n" +
-	"\x12UnacknowledgeAlert\x12&.smartcore.bos.AcknowledgeAlertRequest\x1a\x14.smartcore.bos.Alert\x12X\n" +
-	"\x10GetAlertMetadata\x12&.smartcore.bos.GetAlertMetadataRequest\x1a\x1c.smartcore.bos.AlertMetadata\x12h\n" +
-	"\x11PullAlertMetadata\x12'.smartcore.bos.PullAlertMetadataRequest\x1a(.smartcore.bos.PullAlertMetadataResponse0\x012\xbf\x02\n" +
-	"\rAlertAdminApi\x12F\n" +
-	"\vCreateAlert\x12!.smartcore.bos.CreateAlertRequest\x1a\x14.smartcore.bos.Alert\x12F\n" +
-	"\vUpdateAlert\x12!.smartcore.bos.UpdateAlertRequest\x1a\x14.smartcore.bos.Alert\x12H\n" +
-	"\fResolveAlert\x12\".smartcore.bos.ResolveAlertRequest\x1a\x14.smartcore.bos.Alert\x12T\n" +
-	"\vDeleteAlert\x12!.smartcore.bos.DeleteAlertRequest\x1a\".smartcore.bos.DeleteAlertResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"PullAlerts\x12).smartcore.bos.alert.v1.PullAlertsRequest\x1a*.smartcore.bos.alert.v1.PullAlertsResponse0\x01\x12b\n" +
+	"\x10AcknowledgeAlert\x12/.smartcore.bos.alert.v1.AcknowledgeAlertRequest\x1a\x1d.smartcore.bos.alert.v1.Alert\x12d\n" +
+	"\x12UnacknowledgeAlert\x12/.smartcore.bos.alert.v1.AcknowledgeAlertRequest\x1a\x1d.smartcore.bos.alert.v1.Alert\x12j\n" +
+	"\x10GetAlertMetadata\x12/.smartcore.bos.alert.v1.GetAlertMetadataRequest\x1a%.smartcore.bos.alert.v1.AlertMetadata\x12z\n" +
+	"\x11PullAlertMetadata\x120.smartcore.bos.alert.v1.PullAlertMetadataRequest\x1a1.smartcore.bos.alert.v1.PullAlertMetadataResponse0\x012\x87\x03\n" +
+	"\rAlertAdminApi\x12X\n" +
+	"\vCreateAlert\x12*.smartcore.bos.alert.v1.CreateAlertRequest\x1a\x1d.smartcore.bos.alert.v1.Alert\x12X\n" +
+	"\vUpdateAlert\x12*.smartcore.bos.alert.v1.UpdateAlertRequest\x1a\x1d.smartcore.bos.alert.v1.Alert\x12Z\n" +
+	"\fResolveAlert\x12+.smartcore.bos.alert.v1.ResolveAlertRequest\x1a\x1d.smartcore.bos.alert.v1.Alert\x12f\n" +
+	"\vDeleteAlert\x12*.smartcore.bos.alert.v1.DeleteAlertRequest\x1a+.smartcore.bos.alert.v1.DeleteAlertResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_alerts_proto_rawDescOnce sync.Once
-	file_alerts_proto_rawDescData []byte
+	file_smartcore_bos_alert_v1_alerts_proto_rawDescOnce sync.Once
+	file_smartcore_bos_alert_v1_alerts_proto_rawDescData []byte
 )
 
-func file_alerts_proto_rawDescGZIP() []byte {
-	file_alerts_proto_rawDescOnce.Do(func() {
-		file_alerts_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_alerts_proto_rawDesc), len(file_alerts_proto_rawDesc)))
+func file_smartcore_bos_alert_v1_alerts_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_alert_v1_alerts_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_alert_v1_alerts_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_alert_v1_alerts_proto_rawDesc), len(file_smartcore_bos_alert_v1_alerts_proto_rawDesc)))
 	})
-	return file_alerts_proto_rawDescData
+	return file_smartcore_bos_alert_v1_alerts_proto_rawDescData
 }
 
-var file_alerts_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_alerts_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
-var file_alerts_proto_goTypes = []any{
-	(Alert_Severity)(0),                      // 0: smartcore.bos.Alert.Severity
-	(*Alert)(nil),                            // 1: smartcore.bos.Alert
-	(*AlertMetadata)(nil),                    // 2: smartcore.bos.AlertMetadata
-	(*ListAlertsRequest)(nil),                // 3: smartcore.bos.ListAlertsRequest
-	(*ListAlertsResponse)(nil),               // 4: smartcore.bos.ListAlertsResponse
-	(*PullAlertsRequest)(nil),                // 5: smartcore.bos.PullAlertsRequest
-	(*PullAlertsResponse)(nil),               // 6: smartcore.bos.PullAlertsResponse
-	(*AcknowledgeAlertRequest)(nil),          // 7: smartcore.bos.AcknowledgeAlertRequest
-	(*GetAlertMetadataRequest)(nil),          // 8: smartcore.bos.GetAlertMetadataRequest
-	(*PullAlertMetadataRequest)(nil),         // 9: smartcore.bos.PullAlertMetadataRequest
-	(*PullAlertMetadataResponse)(nil),        // 10: smartcore.bos.PullAlertMetadataResponse
-	(*CreateAlertRequest)(nil),               // 11: smartcore.bos.CreateAlertRequest
-	(*UpdateAlertRequest)(nil),               // 12: smartcore.bos.UpdateAlertRequest
-	(*ResolveAlertRequest)(nil),              // 13: smartcore.bos.ResolveAlertRequest
-	(*DeleteAlertRequest)(nil),               // 14: smartcore.bos.DeleteAlertRequest
-	(*DeleteAlertResponse)(nil),              // 15: smartcore.bos.DeleteAlertResponse
-	(*Alert_Acknowledgement)(nil),            // 16: smartcore.bos.Alert.Acknowledgement
-	(*Alert_Query)(nil),                      // 17: smartcore.bos.Alert.Query
-	(*Alert_Acknowledgement_Author)(nil),     // 18: smartcore.bos.Alert.Acknowledgement.Author
-	nil,                                      // 19: smartcore.bos.AlertMetadata.FloorCountsEntry
-	nil,                                      // 20: smartcore.bos.AlertMetadata.ZoneCountsEntry
-	nil,                                      // 21: smartcore.bos.AlertMetadata.AcknowledgedCountsEntry
-	nil,                                      // 22: smartcore.bos.AlertMetadata.SeverityCountsEntry
-	nil,                                      // 23: smartcore.bos.AlertMetadata.ResolvedCountsEntry
-	nil,                                      // 24: smartcore.bos.AlertMetadata.NeedsAttentionCountsEntry
-	nil,                                      // 25: smartcore.bos.AlertMetadata.SubsystemCountsEntry
-	(*PullAlertsResponse_Change)(nil),        // 26: smartcore.bos.PullAlertsResponse.Change
-	(*PullAlertMetadataResponse_Change)(nil), // 27: smartcore.bos.PullAlertMetadataResponse.Change
+var file_smartcore_bos_alert_v1_alerts_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_smartcore_bos_alert_v1_alerts_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_smartcore_bos_alert_v1_alerts_proto_goTypes = []any{
+	(Alert_Severity)(0),                      // 0: smartcore.bos.alert.v1.Alert.Severity
+	(*Alert)(nil),                            // 1: smartcore.bos.alert.v1.Alert
+	(*AlertMetadata)(nil),                    // 2: smartcore.bos.alert.v1.AlertMetadata
+	(*ListAlertsRequest)(nil),                // 3: smartcore.bos.alert.v1.ListAlertsRequest
+	(*ListAlertsResponse)(nil),               // 4: smartcore.bos.alert.v1.ListAlertsResponse
+	(*PullAlertsRequest)(nil),                // 5: smartcore.bos.alert.v1.PullAlertsRequest
+	(*PullAlertsResponse)(nil),               // 6: smartcore.bos.alert.v1.PullAlertsResponse
+	(*AcknowledgeAlertRequest)(nil),          // 7: smartcore.bos.alert.v1.AcknowledgeAlertRequest
+	(*GetAlertMetadataRequest)(nil),          // 8: smartcore.bos.alert.v1.GetAlertMetadataRequest
+	(*PullAlertMetadataRequest)(nil),         // 9: smartcore.bos.alert.v1.PullAlertMetadataRequest
+	(*PullAlertMetadataResponse)(nil),        // 10: smartcore.bos.alert.v1.PullAlertMetadataResponse
+	(*CreateAlertRequest)(nil),               // 11: smartcore.bos.alert.v1.CreateAlertRequest
+	(*UpdateAlertRequest)(nil),               // 12: smartcore.bos.alert.v1.UpdateAlertRequest
+	(*ResolveAlertRequest)(nil),              // 13: smartcore.bos.alert.v1.ResolveAlertRequest
+	(*DeleteAlertRequest)(nil),               // 14: smartcore.bos.alert.v1.DeleteAlertRequest
+	(*DeleteAlertResponse)(nil),              // 15: smartcore.bos.alert.v1.DeleteAlertResponse
+	(*Alert_Acknowledgement)(nil),            // 16: smartcore.bos.alert.v1.Alert.Acknowledgement
+	(*Alert_Query)(nil),                      // 17: smartcore.bos.alert.v1.Alert.Query
+	(*Alert_Acknowledgement_Author)(nil),     // 18: smartcore.bos.alert.v1.Alert.Acknowledgement.Author
+	nil,                                      // 19: smartcore.bos.alert.v1.AlertMetadata.FloorCountsEntry
+	nil,                                      // 20: smartcore.bos.alert.v1.AlertMetadata.ZoneCountsEntry
+	nil,                                      // 21: smartcore.bos.alert.v1.AlertMetadata.AcknowledgedCountsEntry
+	nil,                                      // 22: smartcore.bos.alert.v1.AlertMetadata.SeverityCountsEntry
+	nil,                                      // 23: smartcore.bos.alert.v1.AlertMetadata.ResolvedCountsEntry
+	nil,                                      // 24: smartcore.bos.alert.v1.AlertMetadata.NeedsAttentionCountsEntry
+	nil,                                      // 25: smartcore.bos.alert.v1.AlertMetadata.SubsystemCountsEntry
+	(*PullAlertsResponse_Change)(nil),        // 26: smartcore.bos.alert.v1.PullAlertsResponse.Change
+	(*PullAlertMetadataResponse_Change)(nil), // 27: smartcore.bos.alert.v1.PullAlertMetadataResponse.Change
 	(*timestamppb.Timestamp)(nil),            // 28: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),            // 29: google.protobuf.FieldMask
 	(types.ChangeType)(0),                    // 30: smartcore.types.ChangeType
 }
-var file_alerts_proto_depIdxs = []int32{
-	28, // 0: smartcore.bos.Alert.create_time:type_name -> google.protobuf.Timestamp
-	28, // 1: smartcore.bos.Alert.resolve_time:type_name -> google.protobuf.Timestamp
-	16, // 2: smartcore.bos.Alert.acknowledgement:type_name -> smartcore.bos.Alert.Acknowledgement
-	0,  // 3: smartcore.bos.Alert.severity:type_name -> smartcore.bos.Alert.Severity
-	19, // 4: smartcore.bos.AlertMetadata.floor_counts:type_name -> smartcore.bos.AlertMetadata.FloorCountsEntry
-	20, // 5: smartcore.bos.AlertMetadata.zone_counts:type_name -> smartcore.bos.AlertMetadata.ZoneCountsEntry
-	21, // 6: smartcore.bos.AlertMetadata.acknowledged_counts:type_name -> smartcore.bos.AlertMetadata.AcknowledgedCountsEntry
-	22, // 7: smartcore.bos.AlertMetadata.severity_counts:type_name -> smartcore.bos.AlertMetadata.SeverityCountsEntry
-	23, // 8: smartcore.bos.AlertMetadata.resolved_counts:type_name -> smartcore.bos.AlertMetadata.ResolvedCountsEntry
-	24, // 9: smartcore.bos.AlertMetadata.needs_attention_counts:type_name -> smartcore.bos.AlertMetadata.NeedsAttentionCountsEntry
-	25, // 10: smartcore.bos.AlertMetadata.subsystem_counts:type_name -> smartcore.bos.AlertMetadata.SubsystemCountsEntry
-	29, // 11: smartcore.bos.ListAlertsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	17, // 12: smartcore.bos.ListAlertsRequest.query:type_name -> smartcore.bos.Alert.Query
-	1,  // 13: smartcore.bos.ListAlertsResponse.alerts:type_name -> smartcore.bos.Alert
-	29, // 14: smartcore.bos.PullAlertsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	17, // 15: smartcore.bos.PullAlertsRequest.query:type_name -> smartcore.bos.Alert.Query
-	26, // 16: smartcore.bos.PullAlertsResponse.changes:type_name -> smartcore.bos.PullAlertsResponse.Change
-	18, // 17: smartcore.bos.AcknowledgeAlertRequest.author:type_name -> smartcore.bos.Alert.Acknowledgement.Author
-	29, // 18: smartcore.bos.GetAlertMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	29, // 19: smartcore.bos.PullAlertMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	27, // 20: smartcore.bos.PullAlertMetadataResponse.changes:type_name -> smartcore.bos.PullAlertMetadataResponse.Change
-	1,  // 21: smartcore.bos.CreateAlertRequest.alert:type_name -> smartcore.bos.Alert
-	1,  // 22: smartcore.bos.UpdateAlertRequest.alert:type_name -> smartcore.bos.Alert
-	29, // 23: smartcore.bos.UpdateAlertRequest.update_mask:type_name -> google.protobuf.FieldMask
-	1,  // 24: smartcore.bos.ResolveAlertRequest.alert:type_name -> smartcore.bos.Alert
-	28, // 25: smartcore.bos.Alert.Acknowledgement.acknowledge_time:type_name -> google.protobuf.Timestamp
-	18, // 26: smartcore.bos.Alert.Acknowledgement.author:type_name -> smartcore.bos.Alert.Acknowledgement.Author
-	28, // 27: smartcore.bos.Alert.Query.created_not_before:type_name -> google.protobuf.Timestamp
-	28, // 28: smartcore.bos.Alert.Query.created_not_after:type_name -> google.protobuf.Timestamp
-	28, // 29: smartcore.bos.Alert.Query.resolved_not_before:type_name -> google.protobuf.Timestamp
-	28, // 30: smartcore.bos.Alert.Query.resolved_not_after:type_name -> google.protobuf.Timestamp
-	30, // 31: smartcore.bos.PullAlertsResponse.Change.type:type_name -> smartcore.types.ChangeType
-	1,  // 32: smartcore.bos.PullAlertsResponse.Change.new_value:type_name -> smartcore.bos.Alert
-	1,  // 33: smartcore.bos.PullAlertsResponse.Change.old_value:type_name -> smartcore.bos.Alert
-	28, // 34: smartcore.bos.PullAlertsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	2,  // 35: smartcore.bos.PullAlertMetadataResponse.Change.metadata:type_name -> smartcore.bos.AlertMetadata
-	28, // 36: smartcore.bos.PullAlertMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	3,  // 37: smartcore.bos.AlertApi.ListAlerts:input_type -> smartcore.bos.ListAlertsRequest
-	5,  // 38: smartcore.bos.AlertApi.PullAlerts:input_type -> smartcore.bos.PullAlertsRequest
-	7,  // 39: smartcore.bos.AlertApi.AcknowledgeAlert:input_type -> smartcore.bos.AcknowledgeAlertRequest
-	7,  // 40: smartcore.bos.AlertApi.UnacknowledgeAlert:input_type -> smartcore.bos.AcknowledgeAlertRequest
-	8,  // 41: smartcore.bos.AlertApi.GetAlertMetadata:input_type -> smartcore.bos.GetAlertMetadataRequest
-	9,  // 42: smartcore.bos.AlertApi.PullAlertMetadata:input_type -> smartcore.bos.PullAlertMetadataRequest
-	11, // 43: smartcore.bos.AlertAdminApi.CreateAlert:input_type -> smartcore.bos.CreateAlertRequest
-	12, // 44: smartcore.bos.AlertAdminApi.UpdateAlert:input_type -> smartcore.bos.UpdateAlertRequest
-	13, // 45: smartcore.bos.AlertAdminApi.ResolveAlert:input_type -> smartcore.bos.ResolveAlertRequest
-	14, // 46: smartcore.bos.AlertAdminApi.DeleteAlert:input_type -> smartcore.bos.DeleteAlertRequest
-	4,  // 47: smartcore.bos.AlertApi.ListAlerts:output_type -> smartcore.bos.ListAlertsResponse
-	6,  // 48: smartcore.bos.AlertApi.PullAlerts:output_type -> smartcore.bos.PullAlertsResponse
-	1,  // 49: smartcore.bos.AlertApi.AcknowledgeAlert:output_type -> smartcore.bos.Alert
-	1,  // 50: smartcore.bos.AlertApi.UnacknowledgeAlert:output_type -> smartcore.bos.Alert
-	2,  // 51: smartcore.bos.AlertApi.GetAlertMetadata:output_type -> smartcore.bos.AlertMetadata
-	10, // 52: smartcore.bos.AlertApi.PullAlertMetadata:output_type -> smartcore.bos.PullAlertMetadataResponse
-	1,  // 53: smartcore.bos.AlertAdminApi.CreateAlert:output_type -> smartcore.bos.Alert
-	1,  // 54: smartcore.bos.AlertAdminApi.UpdateAlert:output_type -> smartcore.bos.Alert
-	1,  // 55: smartcore.bos.AlertAdminApi.ResolveAlert:output_type -> smartcore.bos.Alert
-	15, // 56: smartcore.bos.AlertAdminApi.DeleteAlert:output_type -> smartcore.bos.DeleteAlertResponse
+var file_smartcore_bos_alert_v1_alerts_proto_depIdxs = []int32{
+	28, // 0: smartcore.bos.alert.v1.Alert.create_time:type_name -> google.protobuf.Timestamp
+	28, // 1: smartcore.bos.alert.v1.Alert.resolve_time:type_name -> google.protobuf.Timestamp
+	16, // 2: smartcore.bos.alert.v1.Alert.acknowledgement:type_name -> smartcore.bos.alert.v1.Alert.Acknowledgement
+	0,  // 3: smartcore.bos.alert.v1.Alert.severity:type_name -> smartcore.bos.alert.v1.Alert.Severity
+	19, // 4: smartcore.bos.alert.v1.AlertMetadata.floor_counts:type_name -> smartcore.bos.alert.v1.AlertMetadata.FloorCountsEntry
+	20, // 5: smartcore.bos.alert.v1.AlertMetadata.zone_counts:type_name -> smartcore.bos.alert.v1.AlertMetadata.ZoneCountsEntry
+	21, // 6: smartcore.bos.alert.v1.AlertMetadata.acknowledged_counts:type_name -> smartcore.bos.alert.v1.AlertMetadata.AcknowledgedCountsEntry
+	22, // 7: smartcore.bos.alert.v1.AlertMetadata.severity_counts:type_name -> smartcore.bos.alert.v1.AlertMetadata.SeverityCountsEntry
+	23, // 8: smartcore.bos.alert.v1.AlertMetadata.resolved_counts:type_name -> smartcore.bos.alert.v1.AlertMetadata.ResolvedCountsEntry
+	24, // 9: smartcore.bos.alert.v1.AlertMetadata.needs_attention_counts:type_name -> smartcore.bos.alert.v1.AlertMetadata.NeedsAttentionCountsEntry
+	25, // 10: smartcore.bos.alert.v1.AlertMetadata.subsystem_counts:type_name -> smartcore.bos.alert.v1.AlertMetadata.SubsystemCountsEntry
+	29, // 11: smartcore.bos.alert.v1.ListAlertsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	17, // 12: smartcore.bos.alert.v1.ListAlertsRequest.query:type_name -> smartcore.bos.alert.v1.Alert.Query
+	1,  // 13: smartcore.bos.alert.v1.ListAlertsResponse.alerts:type_name -> smartcore.bos.alert.v1.Alert
+	29, // 14: smartcore.bos.alert.v1.PullAlertsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	17, // 15: smartcore.bos.alert.v1.PullAlertsRequest.query:type_name -> smartcore.bos.alert.v1.Alert.Query
+	26, // 16: smartcore.bos.alert.v1.PullAlertsResponse.changes:type_name -> smartcore.bos.alert.v1.PullAlertsResponse.Change
+	18, // 17: smartcore.bos.alert.v1.AcknowledgeAlertRequest.author:type_name -> smartcore.bos.alert.v1.Alert.Acknowledgement.Author
+	29, // 18: smartcore.bos.alert.v1.GetAlertMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	29, // 19: smartcore.bos.alert.v1.PullAlertMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	27, // 20: smartcore.bos.alert.v1.PullAlertMetadataResponse.changes:type_name -> smartcore.bos.alert.v1.PullAlertMetadataResponse.Change
+	1,  // 21: smartcore.bos.alert.v1.CreateAlertRequest.alert:type_name -> smartcore.bos.alert.v1.Alert
+	1,  // 22: smartcore.bos.alert.v1.UpdateAlertRequest.alert:type_name -> smartcore.bos.alert.v1.Alert
+	29, // 23: smartcore.bos.alert.v1.UpdateAlertRequest.update_mask:type_name -> google.protobuf.FieldMask
+	1,  // 24: smartcore.bos.alert.v1.ResolveAlertRequest.alert:type_name -> smartcore.bos.alert.v1.Alert
+	28, // 25: smartcore.bos.alert.v1.Alert.Acknowledgement.acknowledge_time:type_name -> google.protobuf.Timestamp
+	18, // 26: smartcore.bos.alert.v1.Alert.Acknowledgement.author:type_name -> smartcore.bos.alert.v1.Alert.Acknowledgement.Author
+	28, // 27: smartcore.bos.alert.v1.Alert.Query.created_not_before:type_name -> google.protobuf.Timestamp
+	28, // 28: smartcore.bos.alert.v1.Alert.Query.created_not_after:type_name -> google.protobuf.Timestamp
+	28, // 29: smartcore.bos.alert.v1.Alert.Query.resolved_not_before:type_name -> google.protobuf.Timestamp
+	28, // 30: smartcore.bos.alert.v1.Alert.Query.resolved_not_after:type_name -> google.protobuf.Timestamp
+	30, // 31: smartcore.bos.alert.v1.PullAlertsResponse.Change.type:type_name -> smartcore.types.ChangeType
+	1,  // 32: smartcore.bos.alert.v1.PullAlertsResponse.Change.new_value:type_name -> smartcore.bos.alert.v1.Alert
+	1,  // 33: smartcore.bos.alert.v1.PullAlertsResponse.Change.old_value:type_name -> smartcore.bos.alert.v1.Alert
+	28, // 34: smartcore.bos.alert.v1.PullAlertsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	2,  // 35: smartcore.bos.alert.v1.PullAlertMetadataResponse.Change.metadata:type_name -> smartcore.bos.alert.v1.AlertMetadata
+	28, // 36: smartcore.bos.alert.v1.PullAlertMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	3,  // 37: smartcore.bos.alert.v1.AlertApi.ListAlerts:input_type -> smartcore.bos.alert.v1.ListAlertsRequest
+	5,  // 38: smartcore.bos.alert.v1.AlertApi.PullAlerts:input_type -> smartcore.bos.alert.v1.PullAlertsRequest
+	7,  // 39: smartcore.bos.alert.v1.AlertApi.AcknowledgeAlert:input_type -> smartcore.bos.alert.v1.AcknowledgeAlertRequest
+	7,  // 40: smartcore.bos.alert.v1.AlertApi.UnacknowledgeAlert:input_type -> smartcore.bos.alert.v1.AcknowledgeAlertRequest
+	8,  // 41: smartcore.bos.alert.v1.AlertApi.GetAlertMetadata:input_type -> smartcore.bos.alert.v1.GetAlertMetadataRequest
+	9,  // 42: smartcore.bos.alert.v1.AlertApi.PullAlertMetadata:input_type -> smartcore.bos.alert.v1.PullAlertMetadataRequest
+	11, // 43: smartcore.bos.alert.v1.AlertAdminApi.CreateAlert:input_type -> smartcore.bos.alert.v1.CreateAlertRequest
+	12, // 44: smartcore.bos.alert.v1.AlertAdminApi.UpdateAlert:input_type -> smartcore.bos.alert.v1.UpdateAlertRequest
+	13, // 45: smartcore.bos.alert.v1.AlertAdminApi.ResolveAlert:input_type -> smartcore.bos.alert.v1.ResolveAlertRequest
+	14, // 46: smartcore.bos.alert.v1.AlertAdminApi.DeleteAlert:input_type -> smartcore.bos.alert.v1.DeleteAlertRequest
+	4,  // 47: smartcore.bos.alert.v1.AlertApi.ListAlerts:output_type -> smartcore.bos.alert.v1.ListAlertsResponse
+	6,  // 48: smartcore.bos.alert.v1.AlertApi.PullAlerts:output_type -> smartcore.bos.alert.v1.PullAlertsResponse
+	1,  // 49: smartcore.bos.alert.v1.AlertApi.AcknowledgeAlert:output_type -> smartcore.bos.alert.v1.Alert
+	1,  // 50: smartcore.bos.alert.v1.AlertApi.UnacknowledgeAlert:output_type -> smartcore.bos.alert.v1.Alert
+	2,  // 51: smartcore.bos.alert.v1.AlertApi.GetAlertMetadata:output_type -> smartcore.bos.alert.v1.AlertMetadata
+	10, // 52: smartcore.bos.alert.v1.AlertApi.PullAlertMetadata:output_type -> smartcore.bos.alert.v1.PullAlertMetadataResponse
+	1,  // 53: smartcore.bos.alert.v1.AlertAdminApi.CreateAlert:output_type -> smartcore.bos.alert.v1.Alert
+	1,  // 54: smartcore.bos.alert.v1.AlertAdminApi.UpdateAlert:output_type -> smartcore.bos.alert.v1.Alert
+	1,  // 55: smartcore.bos.alert.v1.AlertAdminApi.ResolveAlert:output_type -> smartcore.bos.alert.v1.Alert
+	15, // 56: smartcore.bos.alert.v1.AlertAdminApi.DeleteAlert:output_type -> smartcore.bos.alert.v1.DeleteAlertResponse
 	47, // [47:57] is the sub-list for method output_type
 	37, // [37:47] is the sub-list for method input_type
 	37, // [37:37] is the sub-list for extension type_name
@@ -1811,28 +1811,28 @@ var file_alerts_proto_depIdxs = []int32{
 	0,  // [0:37] is the sub-list for field type_name
 }
 
-func init() { file_alerts_proto_init() }
-func file_alerts_proto_init() {
-	if File_alerts_proto != nil {
+func init() { file_smartcore_bos_alert_v1_alerts_proto_init() }
+func file_smartcore_bos_alert_v1_alerts_proto_init() {
+	if File_smartcore_bos_alert_v1_alerts_proto != nil {
 		return
 	}
-	file_alerts_proto_msgTypes[16].OneofWrappers = []any{}
+	file_smartcore_bos_alert_v1_alerts_proto_msgTypes[16].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_alerts_proto_rawDesc), len(file_alerts_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_alert_v1_alerts_proto_rawDesc), len(file_smartcore_bos_alert_v1_alerts_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_alerts_proto_goTypes,
-		DependencyIndexes: file_alerts_proto_depIdxs,
-		EnumInfos:         file_alerts_proto_enumTypes,
-		MessageInfos:      file_alerts_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_alert_v1_alerts_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_alert_v1_alerts_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_alert_v1_alerts_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_alert_v1_alerts_proto_msgTypes,
 	}.Build()
-	File_alerts_proto = out.File
-	file_alerts_proto_goTypes = nil
-	file_alerts_proto_depIdxs = nil
+	File_smartcore_bos_alert_v1_alerts_proto = out.File
+	file_smartcore_bos_alert_v1_alerts_proto_goTypes = nil
+	file_smartcore_bos_alert_v1_alerts_proto_depIdxs = nil
 }

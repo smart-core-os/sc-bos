@@ -5,12 +5,12 @@
 <script setup>
 import {timestampToDate} from '@/api/convpb.js';
 import ReliabilityTimeText from '@/traits/health/ReliabilityTimeText.vue';
-import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/health_pb';
+import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb';
 import {computed} from 'vue';
 
 const props = defineProps({
   modelValue: {
-    /** @type {import('vue').PropType<import('@smart-core-os/sc-bos-ui-gen/proto/devices_pb').Device.AsObject>} */
+    /** @type {import('vue').PropType<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_pb').Device.AsObject>} */
     type: Object,
     default: null
   },

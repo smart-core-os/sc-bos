@@ -2,10 +2,10 @@ import {fieldMaskFromObject, setProperties} from '@/api/convpb.js';
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setValue, trackAction} from '@/api/resource.js';
 import {periodFromObject} from '@/api/sc/types/period.js';
-import {TransportApiPromiseClient, TransportInfoPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/transport_grpc_web_pb';
-import {TransportHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/transport_history_grpc_web_pb';
-import {DescribeTransportRequest, PullTransportRequest} from '@smart-core-os/sc-bos-ui-gen/proto/transport_pb';
-import {ListTransportHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/transport_history_pb';
+import {TransportApiPromiseClient, TransportInfoPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/transport/v1/transport_grpc_web_pb';
+import {TransportHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/transport/v1/transport_history_grpc_web_pb';
+import {DescribeTransportRequest, PullTransportRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/transport/v1/transport_pb';
+import {ListTransportHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/transport/v1/transport_history_pb';
 
 /**
  * @param {Partial<PullTransportRequest.AsObject>} request

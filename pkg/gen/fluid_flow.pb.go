@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: fluid_flow.proto
+// source: smartcore/bos/fluidflow/v1/fluid_flow.proto
 
 package gen
 
@@ -64,11 +64,11 @@ func (x FluidFlow_Direction) String() string {
 }
 
 func (FluidFlow_Direction) Descriptor() protoreflect.EnumDescriptor {
-	return file_fluid_flow_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_enumTypes[0].Descriptor()
 }
 
 func (FluidFlow_Direction) Type() protoreflect.EnumType {
-	return &file_fluid_flow_proto_enumTypes[0]
+	return &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_enumTypes[0]
 }
 
 func (x FluidFlow_Direction) Number() protoreflect.EnumNumber {
@@ -77,7 +77,7 @@ func (x FluidFlow_Direction) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use FluidFlow_Direction.Descriptor instead.
 func (FluidFlow_Direction) EnumDescriptor() ([]byte, []int) {
-	return file_fluid_flow_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP(), []int{0, 0}
 }
 
 // FluidFlow represents the state and control parameters of a fluid flow device.
@@ -96,14 +96,14 @@ type FluidFlow struct {
 	// Output only
 	DriveFrequency *float32 `protobuf:"fixed32,4,opt,name=drive_frequency,json=driveFrequency,proto3,oneof" json:"drive_frequency,omitempty"`
 	// The flow device operation direction
-	Direction     FluidFlow_Direction `protobuf:"varint,11,opt,name=direction,proto3,enum=smartcore.bos.FluidFlow_Direction" json:"direction,omitempty"`
+	Direction     FluidFlow_Direction `protobuf:"varint,11,opt,name=direction,proto3,enum=smartcore.bos.fluidflow.v1.FluidFlow_Direction" json:"direction,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *FluidFlow) Reset() {
 	*x = FluidFlow{}
-	mi := &file_fluid_flow_proto_msgTypes[0]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -115,7 +115,7 @@ func (x *FluidFlow) String() string {
 func (*FluidFlow) ProtoMessage() {}
 
 func (x *FluidFlow) ProtoReflect() protoreflect.Message {
-	mi := &file_fluid_flow_proto_msgTypes[0]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -128,7 +128,7 @@ func (x *FluidFlow) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FluidFlow.ProtoReflect.Descriptor instead.
 func (*FluidFlow) Descriptor() ([]byte, []int) {
-	return file_fluid_flow_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *FluidFlow) GetTargetFlowRate() float32 {
@@ -176,7 +176,7 @@ type GetFluidFlowRequest struct {
 
 func (x *GetFluidFlowRequest) Reset() {
 	*x = GetFluidFlowRequest{}
-	mi := &file_fluid_flow_proto_msgTypes[1]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -188,7 +188,7 @@ func (x *GetFluidFlowRequest) String() string {
 func (*GetFluidFlowRequest) ProtoMessage() {}
 
 func (x *GetFluidFlowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_fluid_flow_proto_msgTypes[1]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -201,7 +201,7 @@ func (x *GetFluidFlowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFluidFlowRequest.ProtoReflect.Descriptor instead.
 func (*GetFluidFlowRequest) Descriptor() ([]byte, []int) {
-	return file_fluid_flow_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetFluidFlowRequest) GetName() string {
@@ -229,7 +229,7 @@ type PullFluidFlowRequest struct {
 
 func (x *PullFluidFlowRequest) Reset() {
 	*x = PullFluidFlowRequest{}
-	mi := &file_fluid_flow_proto_msgTypes[2]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -241,7 +241,7 @@ func (x *PullFluidFlowRequest) String() string {
 func (*PullFluidFlowRequest) ProtoMessage() {}
 
 func (x *PullFluidFlowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_fluid_flow_proto_msgTypes[2]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -254,7 +254,7 @@ func (x *PullFluidFlowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullFluidFlowRequest.ProtoReflect.Descriptor instead.
 func (*PullFluidFlowRequest) Descriptor() ([]byte, []int) {
-	return file_fluid_flow_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PullFluidFlowRequest) GetName() string {
@@ -287,7 +287,7 @@ type PullFluidFlowResponse struct {
 
 func (x *PullFluidFlowResponse) Reset() {
 	*x = PullFluidFlowResponse{}
-	mi := &file_fluid_flow_proto_msgTypes[3]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -299,7 +299,7 @@ func (x *PullFluidFlowResponse) String() string {
 func (*PullFluidFlowResponse) ProtoMessage() {}
 
 func (x *PullFluidFlowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_fluid_flow_proto_msgTypes[3]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -312,7 +312,7 @@ func (x *PullFluidFlowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullFluidFlowResponse.ProtoReflect.Descriptor instead.
 func (*PullFluidFlowResponse) Descriptor() ([]byte, []int) {
-	return file_fluid_flow_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PullFluidFlowResponse) GetChanges() []*PullFluidFlowResponse_Change {
@@ -333,7 +333,7 @@ type UpdateFluidFlowRequest struct {
 
 func (x *UpdateFluidFlowRequest) Reset() {
 	*x = UpdateFluidFlowRequest{}
-	mi := &file_fluid_flow_proto_msgTypes[4]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -345,7 +345,7 @@ func (x *UpdateFluidFlowRequest) String() string {
 func (*UpdateFluidFlowRequest) ProtoMessage() {}
 
 func (x *UpdateFluidFlowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_fluid_flow_proto_msgTypes[4]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -358,7 +358,7 @@ func (x *UpdateFluidFlowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateFluidFlowRequest.ProtoReflect.Descriptor instead.
 func (*UpdateFluidFlowRequest) Descriptor() ([]byte, []int) {
-	return file_fluid_flow_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UpdateFluidFlowRequest) GetName() string {
@@ -391,7 +391,7 @@ type UpdateFluidFlowResponse struct {
 
 func (x *UpdateFluidFlowResponse) Reset() {
 	*x = UpdateFluidFlowResponse{}
-	mi := &file_fluid_flow_proto_msgTypes[5]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -403,7 +403,7 @@ func (x *UpdateFluidFlowResponse) String() string {
 func (*UpdateFluidFlowResponse) ProtoMessage() {}
 
 func (x *UpdateFluidFlowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_fluid_flow_proto_msgTypes[5]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -416,7 +416,7 @@ func (x *UpdateFluidFlowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateFluidFlowResponse.ProtoReflect.Descriptor instead.
 func (*UpdateFluidFlowResponse) Descriptor() ([]byte, []int) {
-	return file_fluid_flow_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UpdateFluidFlowResponse) GetFlow() *FluidFlow {
@@ -435,7 +435,7 @@ type DescribeFluidFlowRequest struct {
 
 func (x *DescribeFluidFlowRequest) Reset() {
 	*x = DescribeFluidFlowRequest{}
-	mi := &file_fluid_flow_proto_msgTypes[6]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -447,7 +447,7 @@ func (x *DescribeFluidFlowRequest) String() string {
 func (*DescribeFluidFlowRequest) ProtoMessage() {}
 
 func (x *DescribeFluidFlowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_fluid_flow_proto_msgTypes[6]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -460,7 +460,7 @@ func (x *DescribeFluidFlowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DescribeFluidFlowRequest.ProtoReflect.Descriptor instead.
 func (*DescribeFluidFlowRequest) Descriptor() ([]byte, []int) {
-	return file_fluid_flow_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DescribeFluidFlowRequest) GetName() string {
@@ -485,7 +485,7 @@ type FluidFlowSupport struct {
 
 func (x *FluidFlowSupport) Reset() {
 	*x = FluidFlowSupport{}
-	mi := &file_fluid_flow_proto_msgTypes[7]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -497,7 +497,7 @@ func (x *FluidFlowSupport) String() string {
 func (*FluidFlowSupport) ProtoMessage() {}
 
 func (x *FluidFlowSupport) ProtoReflect() protoreflect.Message {
-	mi := &file_fluid_flow_proto_msgTypes[7]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -510,7 +510,7 @@ func (x *FluidFlowSupport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FluidFlowSupport.ProtoReflect.Descriptor instead.
 func (*FluidFlowSupport) Descriptor() ([]byte, []int) {
-	return file_fluid_flow_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *FluidFlowSupport) GetResourceSupport() *types.ResourceSupport {
@@ -545,7 +545,7 @@ type PullFluidFlowResponse_Change struct {
 
 func (x *PullFluidFlowResponse_Change) Reset() {
 	*x = PullFluidFlowResponse_Change{}
-	mi := &file_fluid_flow_proto_msgTypes[8]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -557,7 +557,7 @@ func (x *PullFluidFlowResponse_Change) String() string {
 func (*PullFluidFlowResponse_Change) ProtoMessage() {}
 
 func (x *PullFluidFlowResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_fluid_flow_proto_msgTypes[8]
+	mi := &file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -570,7 +570,7 @@ func (x *PullFluidFlowResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullFluidFlowResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullFluidFlowResponse_Change) Descriptor() ([]byte, []int) {
-	return file_fluid_flow_proto_rawDescGZIP(), []int{3, 0}
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP(), []int{3, 0}
 }
 
 func (x *PullFluidFlowResponse_Change) GetName() string {
@@ -594,17 +594,17 @@ func (x *PullFluidFlowResponse_Change) GetFlow() *FluidFlow {
 	return nil
 }
 
-var File_fluid_flow_proto protoreflect.FileDescriptor
+var File_smartcore_bos_fluidflow_v1_fluid_flow_proto protoreflect.FileDescriptor
 
-const file_fluid_flow_proto_rawDesc = "" +
+const file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDesc = "" +
 	"\n" +
-	"\x10fluid_flow.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xa5\x03\n" +
+	"+smartcore/bos/fluidflow/v1/fluid_flow.proto\x12\x1asmartcore.bos.fluidflow.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xb2\x03\n" +
 	"\tFluidFlow\x12-\n" +
 	"\x10target_flow_rate\x18\x01 \x01(\x02H\x00R\x0etargetFlowRate\x88\x01\x01\x129\n" +
 	"\x16target_drive_frequency\x18\x02 \x01(\x02H\x01R\x14targetDriveFrequency\x88\x01\x01\x12 \n" +
 	"\tflow_rate\x18\x03 \x01(\x02H\x02R\bflowRate\x88\x01\x01\x12,\n" +
-	"\x0fdrive_frequency\x18\x04 \x01(\x02H\x03R\x0edriveFrequency\x88\x01\x01\x12@\n" +
-	"\tdirection\x18\v \x01(\x0e2\".smartcore.bos.FluidFlow.DirectionR\tdirection\"J\n" +
+	"\x0fdrive_frequency\x18\x04 \x01(\x02H\x03R\x0edriveFrequency\x88\x01\x01\x12M\n" +
+	"\tdirection\x18\v \x01(\x0e2/.smartcore.bos.fluidflow.v1.FluidFlow.DirectionR\tdirection\"J\n" +
 	"\tDirection\x12\x19\n" +
 	"\x15DIRECTION_UNSPECIFIED\x10\x00\x12\b\n" +
 	"\x04FLOW\x10\x01\x12\n" +
@@ -622,82 +622,82 @@ const file_fluid_flow_proto_rawDesc = "" +
 	"\x14PullFluidFlowRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xe8\x01\n" +
-	"\x15PullFluidFlowResponse\x12E\n" +
-	"\achanges\x18\x01 \x03(\v2+.smartcore.bos.PullFluidFlowResponse.ChangeR\achanges\x1a\x87\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x82\x02\n" +
+	"\x15PullFluidFlowResponse\x12R\n" +
+	"\achanges\x18\x01 \x03(\v28.smartcore.bos.fluidflow.v1.PullFluidFlowResponse.ChangeR\achanges\x1a\x94\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x12,\n" +
-	"\x04flow\x18\x03 \x01(\v2\x18.smartcore.bos.FluidFlowR\x04flow\"\x97\x01\n" +
+	"changeTime\x129\n" +
+	"\x04flow\x18\x03 \x01(\v2%.smartcore.bos.fluidflow.v1.FluidFlowR\x04flow\"\xa4\x01\n" +
 	"\x16UpdateFluidFlowRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12,\n" +
-	"\x04flow\x18\x02 \x01(\v2\x18.smartcore.bos.FluidFlowR\x04flow\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x129\n" +
+	"\x04flow\x18\x02 \x01(\v2%.smartcore.bos.fluidflow.v1.FluidFlowR\x04flow\x12;\n" +
 	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
-	"updateMask\"G\n" +
-	"\x17UpdateFluidFlowResponse\x12,\n" +
-	"\x04flow\x18\x01 \x01(\v2\x18.smartcore.bos.FluidFlowR\x04flow\".\n" +
+	"updateMask\"T\n" +
+	"\x17UpdateFluidFlowResponse\x129\n" +
+	"\x04flow\x18\x01 \x01(\v2%.smartcore.bos.fluidflow.v1.FluidFlowR\x04flow\".\n" +
 	"\x18DescribeFluidFlowRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"\xb7\x01\n" +
 	"\x10FluidFlowSupport\x12K\n" +
 	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12$\n" +
 	"\x0eflow_rate_unit\x18\x02 \x01(\tR\fflowRateUnit\x120\n" +
-	"\x14drive_frequency_unit\x18\x03 \x01(\tR\x12driveFrequencyUnit2\x94\x02\n" +
-	"\fFluidFlowApi\x12N\n" +
-	"\fGetFluidFlow\x12\".smartcore.bos.GetFluidFlowRequest\x1a\x18.smartcore.bos.FluidFlow\"\x00\x12^\n" +
-	"\rPullFluidFlow\x12#.smartcore.bos.PullFluidFlowRequest\x1a$.smartcore.bos.PullFluidFlowResponse\"\x000\x01\x12T\n" +
-	"\x0fUpdateFluidFlow\x12%.smartcore.bos.UpdateFluidFlowRequest\x1a\x18.smartcore.bos.FluidFlow\"\x002p\n" +
-	"\rFluidFlowInfo\x12_\n" +
-	"\x11DescribeFluidFlow\x12'.smartcore.bos.DescribeFluidFlowRequest\x1a\x1f.smartcore.bos.FluidFlowSupport\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\x14drive_frequency_unit\x18\x03 \x01(\tR\x12driveFrequencyUnit2\xe2\x02\n" +
+	"\fFluidFlowApi\x12h\n" +
+	"\fGetFluidFlow\x12/.smartcore.bos.fluidflow.v1.GetFluidFlowRequest\x1a%.smartcore.bos.fluidflow.v1.FluidFlow\"\x00\x12x\n" +
+	"\rPullFluidFlow\x120.smartcore.bos.fluidflow.v1.PullFluidFlowRequest\x1a1.smartcore.bos.fluidflow.v1.PullFluidFlowResponse\"\x000\x01\x12n\n" +
+	"\x0fUpdateFluidFlow\x122.smartcore.bos.fluidflow.v1.UpdateFluidFlowRequest\x1a%.smartcore.bos.fluidflow.v1.FluidFlow\"\x002\x8a\x01\n" +
+	"\rFluidFlowInfo\x12y\n" +
+	"\x11DescribeFluidFlow\x124.smartcore.bos.fluidflow.v1.DescribeFluidFlowRequest\x1a,.smartcore.bos.fluidflow.v1.FluidFlowSupport\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_fluid_flow_proto_rawDescOnce sync.Once
-	file_fluid_flow_proto_rawDescData []byte
+	file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescOnce sync.Once
+	file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescData []byte
 )
 
-func file_fluid_flow_proto_rawDescGZIP() []byte {
-	file_fluid_flow_proto_rawDescOnce.Do(func() {
-		file_fluid_flow_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_fluid_flow_proto_rawDesc), len(file_fluid_flow_proto_rawDesc)))
+func file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDesc), len(file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDesc)))
 	})
-	return file_fluid_flow_proto_rawDescData
+	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescData
 }
 
-var file_fluid_flow_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_fluid_flow_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
-var file_fluid_flow_proto_goTypes = []any{
-	(FluidFlow_Direction)(0),             // 0: smartcore.bos.FluidFlow.Direction
-	(*FluidFlow)(nil),                    // 1: smartcore.bos.FluidFlow
-	(*GetFluidFlowRequest)(nil),          // 2: smartcore.bos.GetFluidFlowRequest
-	(*PullFluidFlowRequest)(nil),         // 3: smartcore.bos.PullFluidFlowRequest
-	(*PullFluidFlowResponse)(nil),        // 4: smartcore.bos.PullFluidFlowResponse
-	(*UpdateFluidFlowRequest)(nil),       // 5: smartcore.bos.UpdateFluidFlowRequest
-	(*UpdateFluidFlowResponse)(nil),      // 6: smartcore.bos.UpdateFluidFlowResponse
-	(*DescribeFluidFlowRequest)(nil),     // 7: smartcore.bos.DescribeFluidFlowRequest
-	(*FluidFlowSupport)(nil),             // 8: smartcore.bos.FluidFlowSupport
-	(*PullFluidFlowResponse_Change)(nil), // 9: smartcore.bos.PullFluidFlowResponse.Change
+var file_smartcore_bos_fluidflow_v1_fluid_flow_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_smartcore_bos_fluidflow_v1_fluid_flow_proto_goTypes = []any{
+	(FluidFlow_Direction)(0),             // 0: smartcore.bos.fluidflow.v1.FluidFlow.Direction
+	(*FluidFlow)(nil),                    // 1: smartcore.bos.fluidflow.v1.FluidFlow
+	(*GetFluidFlowRequest)(nil),          // 2: smartcore.bos.fluidflow.v1.GetFluidFlowRequest
+	(*PullFluidFlowRequest)(nil),         // 3: smartcore.bos.fluidflow.v1.PullFluidFlowRequest
+	(*PullFluidFlowResponse)(nil),        // 4: smartcore.bos.fluidflow.v1.PullFluidFlowResponse
+	(*UpdateFluidFlowRequest)(nil),       // 5: smartcore.bos.fluidflow.v1.UpdateFluidFlowRequest
+	(*UpdateFluidFlowResponse)(nil),      // 6: smartcore.bos.fluidflow.v1.UpdateFluidFlowResponse
+	(*DescribeFluidFlowRequest)(nil),     // 7: smartcore.bos.fluidflow.v1.DescribeFluidFlowRequest
+	(*FluidFlowSupport)(nil),             // 8: smartcore.bos.fluidflow.v1.FluidFlowSupport
+	(*PullFluidFlowResponse_Change)(nil), // 9: smartcore.bos.fluidflow.v1.PullFluidFlowResponse.Change
 	(*fieldmaskpb.FieldMask)(nil),        // 10: google.protobuf.FieldMask
 	(*types.ResourceSupport)(nil),        // 11: smartcore.types.ResourceSupport
 	(*timestamppb.Timestamp)(nil),        // 12: google.protobuf.Timestamp
 }
-var file_fluid_flow_proto_depIdxs = []int32{
-	0,  // 0: smartcore.bos.FluidFlow.direction:type_name -> smartcore.bos.FluidFlow.Direction
-	10, // 1: smartcore.bos.GetFluidFlowRequest.read_mask:type_name -> google.protobuf.FieldMask
-	10, // 2: smartcore.bos.PullFluidFlowRequest.read_mask:type_name -> google.protobuf.FieldMask
-	9,  // 3: smartcore.bos.PullFluidFlowResponse.changes:type_name -> smartcore.bos.PullFluidFlowResponse.Change
-	1,  // 4: smartcore.bos.UpdateFluidFlowRequest.flow:type_name -> smartcore.bos.FluidFlow
-	10, // 5: smartcore.bos.UpdateFluidFlowRequest.update_mask:type_name -> google.protobuf.FieldMask
-	1,  // 6: smartcore.bos.UpdateFluidFlowResponse.flow:type_name -> smartcore.bos.FluidFlow
-	11, // 7: smartcore.bos.FluidFlowSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	12, // 8: smartcore.bos.PullFluidFlowResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 9: smartcore.bos.PullFluidFlowResponse.Change.flow:type_name -> smartcore.bos.FluidFlow
-	2,  // 10: smartcore.bos.FluidFlowApi.GetFluidFlow:input_type -> smartcore.bos.GetFluidFlowRequest
-	3,  // 11: smartcore.bos.FluidFlowApi.PullFluidFlow:input_type -> smartcore.bos.PullFluidFlowRequest
-	5,  // 12: smartcore.bos.FluidFlowApi.UpdateFluidFlow:input_type -> smartcore.bos.UpdateFluidFlowRequest
-	7,  // 13: smartcore.bos.FluidFlowInfo.DescribeFluidFlow:input_type -> smartcore.bos.DescribeFluidFlowRequest
-	1,  // 14: smartcore.bos.FluidFlowApi.GetFluidFlow:output_type -> smartcore.bos.FluidFlow
-	4,  // 15: smartcore.bos.FluidFlowApi.PullFluidFlow:output_type -> smartcore.bos.PullFluidFlowResponse
-	1,  // 16: smartcore.bos.FluidFlowApi.UpdateFluidFlow:output_type -> smartcore.bos.FluidFlow
-	8,  // 17: smartcore.bos.FluidFlowInfo.DescribeFluidFlow:output_type -> smartcore.bos.FluidFlowSupport
+var file_smartcore_bos_fluidflow_v1_fluid_flow_proto_depIdxs = []int32{
+	0,  // 0: smartcore.bos.fluidflow.v1.FluidFlow.direction:type_name -> smartcore.bos.fluidflow.v1.FluidFlow.Direction
+	10, // 1: smartcore.bos.fluidflow.v1.GetFluidFlowRequest.read_mask:type_name -> google.protobuf.FieldMask
+	10, // 2: smartcore.bos.fluidflow.v1.PullFluidFlowRequest.read_mask:type_name -> google.protobuf.FieldMask
+	9,  // 3: smartcore.bos.fluidflow.v1.PullFluidFlowResponse.changes:type_name -> smartcore.bos.fluidflow.v1.PullFluidFlowResponse.Change
+	1,  // 4: smartcore.bos.fluidflow.v1.UpdateFluidFlowRequest.flow:type_name -> smartcore.bos.fluidflow.v1.FluidFlow
+	10, // 5: smartcore.bos.fluidflow.v1.UpdateFluidFlowRequest.update_mask:type_name -> google.protobuf.FieldMask
+	1,  // 6: smartcore.bos.fluidflow.v1.UpdateFluidFlowResponse.flow:type_name -> smartcore.bos.fluidflow.v1.FluidFlow
+	11, // 7: smartcore.bos.fluidflow.v1.FluidFlowSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	12, // 8: smartcore.bos.fluidflow.v1.PullFluidFlowResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	1,  // 9: smartcore.bos.fluidflow.v1.PullFluidFlowResponse.Change.flow:type_name -> smartcore.bos.fluidflow.v1.FluidFlow
+	2,  // 10: smartcore.bos.fluidflow.v1.FluidFlowApi.GetFluidFlow:input_type -> smartcore.bos.fluidflow.v1.GetFluidFlowRequest
+	3,  // 11: smartcore.bos.fluidflow.v1.FluidFlowApi.PullFluidFlow:input_type -> smartcore.bos.fluidflow.v1.PullFluidFlowRequest
+	5,  // 12: smartcore.bos.fluidflow.v1.FluidFlowApi.UpdateFluidFlow:input_type -> smartcore.bos.fluidflow.v1.UpdateFluidFlowRequest
+	7,  // 13: smartcore.bos.fluidflow.v1.FluidFlowInfo.DescribeFluidFlow:input_type -> smartcore.bos.fluidflow.v1.DescribeFluidFlowRequest
+	1,  // 14: smartcore.bos.fluidflow.v1.FluidFlowApi.GetFluidFlow:output_type -> smartcore.bos.fluidflow.v1.FluidFlow
+	4,  // 15: smartcore.bos.fluidflow.v1.FluidFlowApi.PullFluidFlow:output_type -> smartcore.bos.fluidflow.v1.PullFluidFlowResponse
+	1,  // 16: smartcore.bos.fluidflow.v1.FluidFlowApi.UpdateFluidFlow:output_type -> smartcore.bos.fluidflow.v1.FluidFlow
+	8,  // 17: smartcore.bos.fluidflow.v1.FluidFlowInfo.DescribeFluidFlow:output_type -> smartcore.bos.fluidflow.v1.FluidFlowSupport
 	14, // [14:18] is the sub-list for method output_type
 	10, // [10:14] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name
@@ -705,28 +705,28 @@ var file_fluid_flow_proto_depIdxs = []int32{
 	0,  // [0:10] is the sub-list for field type_name
 }
 
-func init() { file_fluid_flow_proto_init() }
-func file_fluid_flow_proto_init() {
-	if File_fluid_flow_proto != nil {
+func init() { file_smartcore_bos_fluidflow_v1_fluid_flow_proto_init() }
+func file_smartcore_bos_fluidflow_v1_fluid_flow_proto_init() {
+	if File_smartcore_bos_fluidflow_v1_fluid_flow_proto != nil {
 		return
 	}
-	file_fluid_flow_proto_msgTypes[0].OneofWrappers = []any{}
+	file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_fluid_flow_proto_rawDesc), len(file_fluid_flow_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDesc), len(file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_fluid_flow_proto_goTypes,
-		DependencyIndexes: file_fluid_flow_proto_depIdxs,
-		EnumInfos:         file_fluid_flow_proto_enumTypes,
-		MessageInfos:      file_fluid_flow_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_fluidflow_v1_fluid_flow_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_fluidflow_v1_fluid_flow_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_fluidflow_v1_fluid_flow_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_fluidflow_v1_fluid_flow_proto_msgTypes,
 	}.Build()
-	File_fluid_flow_proto = out.File
-	file_fluid_flow_proto_goTypes = nil
-	file_fluid_flow_proto_depIdxs = nil
+	File_smartcore_bos_fluidflow_v1_fluid_flow_proto = out.File
+	file_smartcore_bos_fluidflow_v1_fluid_flow_proto_goTypes = nil
+	file_smartcore_bos_fluidflow_v1_fluid_flow_proto_depIdxs = nil
 }

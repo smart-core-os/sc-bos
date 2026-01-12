@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package smartcore.bos.allocation.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/actor/v1/actor.proto";
+
+// AllocationApi characterizes the availability of a resource that may be allocated to an actor at any instant in time.
+// Examples include meeting rooms, desks, parking spots, or shared equipment such as lockers.
+service AllocationApi {
+  // Get the current allocation for a resource.
+  rpc GetAllocation(GetAllocationRequest) returns (Allocation);
+  // Create or update an allocation for a resource.
+  rpc UpdateAllocation(UpdateAllocationRequest) returns (Allocation);
+  // Subscribe to changes in allocations for a resource.
+  rpc PullAllocation(PullAllocationRequest) returns (stream PullAllocationResponse);
+}
+
+// Allocation represents the allocation of a resource to an actor.
+message Allocation {
+  enum State {
+    // The allocation State is unspecified.
+    STATE_UNSPECIFIED = 0;
+    // The resource is unallocated and available for allocation.
+    UNALLOCATED = 1;
+    // The resource is allocated.
+    ALLOCATED = 2;
+  }
+  // The state of the allocation.
+  State state = 1;
+  // The actor to whom the resource is allocated.
+  optional smartcore.bos.actor.v1.Actor actor = 2;
+  // The id of the group this allocation belongs to.
+  // For instance a locker bank, parking lot, or desk area.
+  optional string group_id = 3;
+
+  // Unallocation total is the total number of unallocation events that have been recognised by the device.
+  optional int32 unallocation_total = 4;
+  // Allocation total is the total number of allocation events that have been recognised by the device.
+  optional int32 allocation_total = 5;
+}
+
+message GetAllocationRequest {
+  // The name of the subsystem device.
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message UpdateAllocationRequest {
+  // The name of the subsystem device.
+  string name = 1;
+  // The allocation to create or update.
+  Allocation allocation = 2;
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message PullAllocationRequest {
+  // The name of the subsystem device.
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullAllocationResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    Allocation allocation = 3;
+  }
+}

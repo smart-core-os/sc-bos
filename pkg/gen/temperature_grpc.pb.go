@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: temperature.proto
+// source: smartcore/bos/temperature/v1/temperature.proto
 
 package gen
 
@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TemperatureApi_GetTemperature_FullMethodName    = "/smartcore.bos.TemperatureApi/GetTemperature"
-	TemperatureApi_PullTemperature_FullMethodName   = "/smartcore.bos.TemperatureApi/PullTemperature"
-	TemperatureApi_UpdateTemperature_FullMethodName = "/smartcore.bos.TemperatureApi/UpdateTemperature"
+	TemperatureApi_GetTemperature_FullMethodName    = "/smartcore.bos.temperature.v1.TemperatureApi/GetTemperature"
+	TemperatureApi_PullTemperature_FullMethodName   = "/smartcore.bos.temperature.v1.TemperatureApi/PullTemperature"
+	TemperatureApi_UpdateTemperature_FullMethodName = "/smartcore.bos.temperature.v1.TemperatureApi/UpdateTemperature"
 )
 
 // TemperatureApiClient is the client API for TemperatureApi service.
@@ -184,7 +184,7 @@ func _TemperatureApi_UpdateTemperature_Handler(srv interface{}, ctx context.Cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TemperatureApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.TemperatureApi",
+	ServiceName: "smartcore.bos.temperature.v1.TemperatureApi",
 	HandlerType: (*TemperatureApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -203,5 +203,5 @@ var TemperatureApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "temperature.proto",
+	Metadata: "smartcore/bos/temperature/v1/temperature.proto",
 }

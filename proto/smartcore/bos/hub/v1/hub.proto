@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package smartcore.bos.hub.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+import "traits/metadata.proto";
+import "types/change.proto";
+
+service HubApi {
+  rpc GetHubNode(GetHubNodeRequest) returns (HubNode);
+  rpc ListHubNodes(ListHubNodesRequest) returns (ListHubNodesResponse);
+  rpc PullHubNodes(PullHubNodesRequest) returns (stream PullHubNodesResponse);
+
+  // Query the hub node for information that can be used to knowledgeably enroll that node with this hub.
+  // This request will return both the node metadata and public certificates presented by the node.
+  rpc InspectHubNode(InspectHubNodeRequest) returns (HubNodeInspection);
+  // Enroll the node with this hub.
+  // Enrollment involves the hub signing the nodes public key and issuing that cert to the node.
+  // A node can only be enrolled with one hub, the first to enroll the node wins.
+  // Use RenewHubNode to refresh the certificate issued to the node.
+  rpc EnrollHubNode(EnrollHubNodeRequest) returns (HubNode);
+  // Re-sign and re-issue a certificate to the node.
+  // Fails if the node isn't already enrolled.
+  rpc RenewHubNode(RenewHubNodeRequest) returns (HubNode);
+  // Test that communications with an enrolled node is working.
+  // This checks communication and the TLS stack, only returning success if the node presents a public certificate signed
+  // by this hub.
+  rpc TestHubNode(TestHubNodeRequest) returns (TestHubNodeResponse);
+
+  // Forget a node that was previously enrolled with this hub.
+  rpc ForgetHubNode(ForgetHubNodeRequest) returns (ForgetHubNodeResponse);
+}
+
+message HubNode {
+  string address = 1;
+  string name = 2;
+  string description = 4;
+}
+
+message HubNodeInspection {
+  // Metadata that the node advertises at its root.
+  smartcore.traits.Metadata metadata = 1;
+  // The public certificates the node presents during HTTPS handshakes.
+  // This will contain PEM encoded x509 certificates.
+  repeated string public_certs = 2;
+}
+
+message GetHubNodeRequest {
+  string address = 1;
+}
+
+message EnrollHubNodeRequest {
+  HubNode node = 1;
+  // If provided, only if the node presents these certificates will the enrollment proceed.
+  // Can be used along with InspectHubNode to ensure the correct node is enrolled.
+  // This should contain PEM encoded x509 certificates as returned by InspectHubNode.
+  repeated string public_certs = 2;
+}
+
+message RenewHubNodeRequest {
+  string address = 1;
+}
+
+message ListHubNodesRequest {
+
+}
+
+message ListHubNodesResponse {
+  repeated HubNode nodes = 1;
+}
+
+message PullHubNodesRequest {
+
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+}
+
+message PullHubNodesResponse {
+  repeated Change changes = 1;
+  message Change {
+    // The type of change (e.g. ADD, UPDATE, etc...)
+    smartcore.types.ChangeType type = 2;
+    // The new value to use for ADD|UPDATE changes
+    HubNode new_value = 3;
+    // The old value to use for UPDATE|REMOVE changes
+    HubNode old_value = 4;
+    // When the change occurred
+    google.protobuf.Timestamp change_time = 5;
+  }
+}
+
+message InspectHubNodeRequest {
+  HubNode node = 1;
+}
+
+message TestHubNodeRequest {
+  string address = 1;
+}
+
+message TestHubNodeResponse {
+}
+
+message ForgetHubNodeRequest {
+  string address = 1;
+  // When true, no error will be returned if the hub is not already enrolled.
+  bool allow_missing = 2;
+}
+
+message ForgetHubNodeResponse {
+}

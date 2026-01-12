@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: access.proto
+// source: smartcore/bos/access/v1/access.proto
 
 package gen
 
@@ -19,13 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AccessApi_GetLastAccessAttempt_FullMethodName = "/smartcore.bos.AccessApi/GetLastAccessAttempt"
-	AccessApi_PullAccessAttempts_FullMethodName   = "/smartcore.bos.AccessApi/PullAccessAttempts"
-	AccessApi_CreateAccessGrant_FullMethodName    = "/smartcore.bos.AccessApi/CreateAccessGrant"
-	AccessApi_UpdateAccessGrant_FullMethodName    = "/smartcore.bos.AccessApi/UpdateAccessGrant"
-	AccessApi_DeleteAccessGrant_FullMethodName    = "/smartcore.bos.AccessApi/DeleteAccessGrant"
-	AccessApi_GetAccessGrant_FullMethodName       = "/smartcore.bos.AccessApi/GetAccessGrant"
-	AccessApi_ListAccessGrants_FullMethodName     = "/smartcore.bos.AccessApi/ListAccessGrants"
+	AccessApi_GetLastAccessAttempt_FullMethodName = "/smartcore.bos.access.v1.AccessApi/GetLastAccessAttempt"
+	AccessApi_PullAccessAttempts_FullMethodName   = "/smartcore.bos.access.v1.AccessApi/PullAccessAttempts"
+	AccessApi_CreateAccessGrant_FullMethodName    = "/smartcore.bos.access.v1.AccessApi/CreateAccessGrant"
+	AccessApi_UpdateAccessGrant_FullMethodName    = "/smartcore.bos.access.v1.AccessApi/UpdateAccessGrant"
+	AccessApi_DeleteAccessGrant_FullMethodName    = "/smartcore.bos.access.v1.AccessApi/DeleteAccessGrant"
+	AccessApi_GetAccessGrant_FullMethodName       = "/smartcore.bos.access.v1.AccessApi/GetAccessGrant"
+	AccessApi_ListAccessGrants_FullMethodName     = "/smartcore.bos.access.v1.AccessApi/ListAccessGrants"
 )
 
 // AccessApiClient is the client API for AccessApi service.
@@ -320,7 +320,7 @@ func _AccessApi_ListAccessGrants_Handler(srv interface{}, ctx context.Context, d
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AccessApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.AccessApi",
+	ServiceName: "smartcore.bos.access.v1.AccessApi",
 	HandlerType: (*AccessApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -355,5 +355,5 @@ var AccessApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "access.proto",
+	Metadata: "smartcore/bos/access/v1/access.proto",
 }

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: mqtt.proto
+// source: smartcore/bos/mqtt/v1/mqtt.proto
 
 package gen
 
@@ -30,7 +30,7 @@ type PullMessagesRequest struct {
 
 func (x *PullMessagesRequest) Reset() {
 	*x = PullMessagesRequest{}
-	mi := &file_mqtt_proto_msgTypes[0]
+	mi := &file_smartcore_bos_mqtt_v1_mqtt_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +42,7 @@ func (x *PullMessagesRequest) String() string {
 func (*PullMessagesRequest) ProtoMessage() {}
 
 func (x *PullMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_mqtt_proto_msgTypes[0]
+	mi := &file_smartcore_bos_mqtt_v1_mqtt_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,7 +55,7 @@ func (x *PullMessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullMessagesRequest.ProtoReflect.Descriptor instead.
 func (*PullMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_mqtt_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_mqtt_v1_mqtt_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *PullMessagesRequest) GetName() string {
@@ -76,7 +76,7 @@ type PullMessagesResponse struct {
 
 func (x *PullMessagesResponse) Reset() {
 	*x = PullMessagesResponse{}
-	mi := &file_mqtt_proto_msgTypes[1]
+	mi := &file_smartcore_bos_mqtt_v1_mqtt_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -88,7 +88,7 @@ func (x *PullMessagesResponse) String() string {
 func (*PullMessagesResponse) ProtoMessage() {}
 
 func (x *PullMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_mqtt_proto_msgTypes[1]
+	mi := &file_smartcore_bos_mqtt_v1_mqtt_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -101,7 +101,7 @@ func (x *PullMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullMessagesResponse.ProtoReflect.Descriptor instead.
 func (*PullMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_mqtt_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_mqtt_v1_mqtt_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *PullMessagesResponse) GetName() string {
@@ -125,41 +125,40 @@ func (x *PullMessagesResponse) GetPayload() string {
 	return ""
 }
 
-var File_mqtt_proto protoreflect.FileDescriptor
+var File_smartcore_bos_mqtt_v1_mqtt_proto protoreflect.FileDescriptor
 
-const file_mqtt_proto_rawDesc = "" +
+const file_smartcore_bos_mqtt_v1_mqtt_proto_rawDesc = "" +
 	"\n" +
-	"\n" +
-	"mqtt.proto\x12\rsmartcore.bos\")\n" +
+	" smartcore/bos/mqtt/v1/mqtt.proto\x12\x15smartcore.bos.mqtt.v1\")\n" +
 	"\x13PullMessagesRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"Z\n" +
 	"\x14PullMessagesResponse\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05topic\x18\x02 \x01(\tR\x05topic\x12\x18\n" +
-	"\apayload\x18\x03 \x01(\tR\apayload2h\n" +
-	"\vMqttService\x12Y\n" +
-	"\fPullMessages\x12\".smartcore.bos.PullMessagesRequest\x1a#.smartcore.bos.PullMessagesResponse0\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\apayload\x18\x03 \x01(\tR\apayload2x\n" +
+	"\vMqttService\x12i\n" +
+	"\fPullMessages\x12*.smartcore.bos.mqtt.v1.PullMessagesRequest\x1a+.smartcore.bos.mqtt.v1.PullMessagesResponse0\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_mqtt_proto_rawDescOnce sync.Once
-	file_mqtt_proto_rawDescData []byte
+	file_smartcore_bos_mqtt_v1_mqtt_proto_rawDescOnce sync.Once
+	file_smartcore_bos_mqtt_v1_mqtt_proto_rawDescData []byte
 )
 
-func file_mqtt_proto_rawDescGZIP() []byte {
-	file_mqtt_proto_rawDescOnce.Do(func() {
-		file_mqtt_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_mqtt_proto_rawDesc), len(file_mqtt_proto_rawDesc)))
+func file_smartcore_bos_mqtt_v1_mqtt_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_mqtt_v1_mqtt_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_mqtt_v1_mqtt_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_mqtt_v1_mqtt_proto_rawDesc), len(file_smartcore_bos_mqtt_v1_mqtt_proto_rawDesc)))
 	})
-	return file_mqtt_proto_rawDescData
+	return file_smartcore_bos_mqtt_v1_mqtt_proto_rawDescData
 }
 
-var file_mqtt_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_mqtt_proto_goTypes = []any{
-	(*PullMessagesRequest)(nil),  // 0: smartcore.bos.PullMessagesRequest
-	(*PullMessagesResponse)(nil), // 1: smartcore.bos.PullMessagesResponse
+var file_smartcore_bos_mqtt_v1_mqtt_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_smartcore_bos_mqtt_v1_mqtt_proto_goTypes = []any{
+	(*PullMessagesRequest)(nil),  // 0: smartcore.bos.mqtt.v1.PullMessagesRequest
+	(*PullMessagesResponse)(nil), // 1: smartcore.bos.mqtt.v1.PullMessagesResponse
 }
-var file_mqtt_proto_depIdxs = []int32{
-	0, // 0: smartcore.bos.MqttService.PullMessages:input_type -> smartcore.bos.PullMessagesRequest
-	1, // 1: smartcore.bos.MqttService.PullMessages:output_type -> smartcore.bos.PullMessagesResponse
+var file_smartcore_bos_mqtt_v1_mqtt_proto_depIdxs = []int32{
+	0, // 0: smartcore.bos.mqtt.v1.MqttService.PullMessages:input_type -> smartcore.bos.mqtt.v1.PullMessagesRequest
+	1, // 1: smartcore.bos.mqtt.v1.MqttService.PullMessages:output_type -> smartcore.bos.mqtt.v1.PullMessagesResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -167,26 +166,26 @@ var file_mqtt_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_mqtt_proto_init() }
-func file_mqtt_proto_init() {
-	if File_mqtt_proto != nil {
+func init() { file_smartcore_bos_mqtt_v1_mqtt_proto_init() }
+func file_smartcore_bos_mqtt_v1_mqtt_proto_init() {
+	if File_smartcore_bos_mqtt_v1_mqtt_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_mqtt_proto_rawDesc), len(file_mqtt_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_mqtt_v1_mqtt_proto_rawDesc), len(file_smartcore_bos_mqtt_v1_mqtt_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_mqtt_proto_goTypes,
-		DependencyIndexes: file_mqtt_proto_depIdxs,
-		MessageInfos:      file_mqtt_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_mqtt_v1_mqtt_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_mqtt_v1_mqtt_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_mqtt_v1_mqtt_proto_msgTypes,
 	}.Build()
-	File_mqtt_proto = out.File
-	file_mqtt_proto_goTypes = nil
-	file_mqtt_proto_depIdxs = nil
+	File_smartcore_bos_mqtt_v1_mqtt_proto = out.File
+	file_smartcore_bos_mqtt_v1_mqtt_proto_goTypes = nil
+	file_smartcore_bos_mqtt_v1_mqtt_proto_depIdxs = nil
 }

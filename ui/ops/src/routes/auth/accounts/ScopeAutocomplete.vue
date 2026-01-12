@@ -39,7 +39,7 @@
 import {useDevicesCollection, usePullDevicesMetadata} from '@/composables/devices.js';
 import ScopeChip from '@/routes/auth/accounts/ScopeChip.vue';
 import {useCohortStore} from '@/stores/cohort.js';
-import {RoleAssignment} from '@smart-core-os/sc-bos-ui-gen/proto/account_pb';
+import {RoleAssignment} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_pb';
 import {omit} from 'lodash';
 import {computed, ref, watch} from 'vue';
 

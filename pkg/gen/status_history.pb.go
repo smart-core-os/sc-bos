@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: status_history.proto
+// source: smartcore/bos/status/v1/status_history.proto
 
 package gen
 
@@ -34,7 +34,7 @@ type StatusLogRecord struct {
 
 func (x *StatusLogRecord) Reset() {
 	*x = StatusLogRecord{}
-	mi := &file_status_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_status_v1_status_history_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +46,7 @@ func (x *StatusLogRecord) String() string {
 func (*StatusLogRecord) ProtoMessage() {}
 
 func (x *StatusLogRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_status_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_status_v1_status_history_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +59,7 @@ func (x *StatusLogRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatusLogRecord.ProtoReflect.Descriptor instead.
 func (*StatusLogRecord) Descriptor() ([]byte, []int) {
-	return file_status_history_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_status_v1_status_history_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *StatusLogRecord) GetCurrentStatus() *StatusLog {
@@ -101,7 +101,7 @@ type ListCurrentStatusHistoryRequest struct {
 
 func (x *ListCurrentStatusHistoryRequest) Reset() {
 	*x = ListCurrentStatusHistoryRequest{}
-	mi := &file_status_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_status_v1_status_history_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -113,7 +113,7 @@ func (x *ListCurrentStatusHistoryRequest) String() string {
 func (*ListCurrentStatusHistoryRequest) ProtoMessage() {}
 
 func (x *ListCurrentStatusHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_status_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_status_v1_status_history_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -126,7 +126,7 @@ func (x *ListCurrentStatusHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCurrentStatusHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListCurrentStatusHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_status_history_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_status_v1_status_history_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListCurrentStatusHistoryRequest) GetName() string {
@@ -186,7 +186,7 @@ type ListCurrentStatusHistoryResponse struct {
 
 func (x *ListCurrentStatusHistoryResponse) Reset() {
 	*x = ListCurrentStatusHistoryResponse{}
-	mi := &file_status_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_status_v1_status_history_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -198,7 +198,7 @@ func (x *ListCurrentStatusHistoryResponse) String() string {
 func (*ListCurrentStatusHistoryResponse) ProtoMessage() {}
 
 func (x *ListCurrentStatusHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_status_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_status_v1_status_history_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -211,7 +211,7 @@ func (x *ListCurrentStatusHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCurrentStatusHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListCurrentStatusHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_status_history_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_status_v1_status_history_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListCurrentStatusHistoryResponse) GetCurrentStatusRecords() []*StatusLogRecord {
@@ -235,13 +235,13 @@ func (x *ListCurrentStatusHistoryResponse) GetTotalSize() int32 {
 	return 0
 }
 
-var File_status_history_proto protoreflect.FileDescriptor
+var File_smartcore_bos_status_v1_status_history_proto protoreflect.FileDescriptor
 
-const file_status_history_proto_rawDesc = "" +
+const file_smartcore_bos_status_v1_status_history_proto_rawDesc = "" +
 	"\n" +
-	"\x14status_history.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17types/time/period.proto\x1a\fstatus.proto\"\x8f\x01\n" +
-	"\x0fStatusLogRecord\x12?\n" +
-	"\x0ecurrent_status\x18\x01 \x01(\v2\x18.smartcore.bos.StatusLogR\rcurrentStatus\x12;\n" +
+	",smartcore/bos/status/v1/status_history.proto\x12\x17smartcore.bos.status.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/status/v1/status.proto\x1a\x17types/time/period.proto\"\x99\x01\n" +
+	"\x0fStatusLogRecord\x12I\n" +
+	"\x0ecurrent_status\x18\x01 \x01(\v2\".smartcore.bos.status.v1.StatusLogR\rcurrentStatus\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"recordTime\"\xfb\x01\n" +
 	"\x1fListCurrentStatusHistoryRequest\x12\x12\n" +
@@ -251,45 +251,45 @@ const file_status_history_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x05 \x01(\tR\tpageToken\x12\x19\n" +
-	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xbf\x01\n" +
-	" ListCurrentStatusHistoryResponse\x12T\n" +
-	"\x16current_status_records\x18\x01 \x03(\v2\x1e.smartcore.bos.StatusLogRecordR\x14currentStatusRecords\x12&\n" +
+	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xc9\x01\n" +
+	" ListCurrentStatusHistoryResponse\x12^\n" +
+	"\x16current_status_records\x18\x01 \x03(\v2(.smartcore.bos.status.v1.StatusLogRecordR\x14currentStatusRecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x8c\x01\n" +
-	"\rStatusHistory\x12{\n" +
-	"\x18ListCurrentStatusHistory\x12..smartcore.bos.ListCurrentStatusHistoryRequest\x1a/.smartcore.bos.ListCurrentStatusHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"total_size\x18\x03 \x01(\x05R\ttotalSize2\xa1\x01\n" +
+	"\rStatusHistory\x12\x8f\x01\n" +
+	"\x18ListCurrentStatusHistory\x128.smartcore.bos.status.v1.ListCurrentStatusHistoryRequest\x1a9.smartcore.bos.status.v1.ListCurrentStatusHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_status_history_proto_rawDescOnce sync.Once
-	file_status_history_proto_rawDescData []byte
+	file_smartcore_bos_status_v1_status_history_proto_rawDescOnce sync.Once
+	file_smartcore_bos_status_v1_status_history_proto_rawDescData []byte
 )
 
-func file_status_history_proto_rawDescGZIP() []byte {
-	file_status_history_proto_rawDescOnce.Do(func() {
-		file_status_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_status_history_proto_rawDesc), len(file_status_history_proto_rawDesc)))
+func file_smartcore_bos_status_v1_status_history_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_status_v1_status_history_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_status_v1_status_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_status_v1_status_history_proto_rawDesc), len(file_smartcore_bos_status_v1_status_history_proto_rawDesc)))
 	})
-	return file_status_history_proto_rawDescData
+	return file_smartcore_bos_status_v1_status_history_proto_rawDescData
 }
 
-var file_status_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_status_history_proto_goTypes = []any{
-	(*StatusLogRecord)(nil),                  // 0: smartcore.bos.StatusLogRecord
-	(*ListCurrentStatusHistoryRequest)(nil),  // 1: smartcore.bos.ListCurrentStatusHistoryRequest
-	(*ListCurrentStatusHistoryResponse)(nil), // 2: smartcore.bos.ListCurrentStatusHistoryResponse
-	(*StatusLog)(nil),                        // 3: smartcore.bos.StatusLog
+var file_smartcore_bos_status_v1_status_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_smartcore_bos_status_v1_status_history_proto_goTypes = []any{
+	(*StatusLogRecord)(nil),                  // 0: smartcore.bos.status.v1.StatusLogRecord
+	(*ListCurrentStatusHistoryRequest)(nil),  // 1: smartcore.bos.status.v1.ListCurrentStatusHistoryRequest
+	(*ListCurrentStatusHistoryResponse)(nil), // 2: smartcore.bos.status.v1.ListCurrentStatusHistoryResponse
+	(*StatusLog)(nil),                        // 3: smartcore.bos.status.v1.StatusLog
 	(*timestamppb.Timestamp)(nil),            // 4: google.protobuf.Timestamp
 	(*time.Period)(nil),                      // 5: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),            // 6: google.protobuf.FieldMask
 }
-var file_status_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.StatusLogRecord.current_status:type_name -> smartcore.bos.StatusLog
-	4, // 1: smartcore.bos.StatusLogRecord.record_time:type_name -> google.protobuf.Timestamp
-	5, // 2: smartcore.bos.ListCurrentStatusHistoryRequest.period:type_name -> smartcore.types.time.Period
-	6, // 3: smartcore.bos.ListCurrentStatusHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
-	0, // 4: smartcore.bos.ListCurrentStatusHistoryResponse.current_status_records:type_name -> smartcore.bos.StatusLogRecord
-	1, // 5: smartcore.bos.StatusHistory.ListCurrentStatusHistory:input_type -> smartcore.bos.ListCurrentStatusHistoryRequest
-	2, // 6: smartcore.bos.StatusHistory.ListCurrentStatusHistory:output_type -> smartcore.bos.ListCurrentStatusHistoryResponse
+var file_smartcore_bos_status_v1_status_history_proto_depIdxs = []int32{
+	3, // 0: smartcore.bos.status.v1.StatusLogRecord.current_status:type_name -> smartcore.bos.status.v1.StatusLog
+	4, // 1: smartcore.bos.status.v1.StatusLogRecord.record_time:type_name -> google.protobuf.Timestamp
+	5, // 2: smartcore.bos.status.v1.ListCurrentStatusHistoryRequest.period:type_name -> smartcore.types.time.Period
+	6, // 3: smartcore.bos.status.v1.ListCurrentStatusHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
+	0, // 4: smartcore.bos.status.v1.ListCurrentStatusHistoryResponse.current_status_records:type_name -> smartcore.bos.status.v1.StatusLogRecord
+	1, // 5: smartcore.bos.status.v1.StatusHistory.ListCurrentStatusHistory:input_type -> smartcore.bos.status.v1.ListCurrentStatusHistoryRequest
+	2, // 6: smartcore.bos.status.v1.StatusHistory.ListCurrentStatusHistory:output_type -> smartcore.bos.status.v1.ListCurrentStatusHistoryResponse
 	6, // [6:7] is the sub-list for method output_type
 	5, // [5:6] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -297,27 +297,27 @@ var file_status_history_proto_depIdxs = []int32{
 	0, // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_status_history_proto_init() }
-func file_status_history_proto_init() {
-	if File_status_history_proto != nil {
+func init() { file_smartcore_bos_status_v1_status_history_proto_init() }
+func file_smartcore_bos_status_v1_status_history_proto_init() {
+	if File_smartcore_bos_status_v1_status_history_proto != nil {
 		return
 	}
-	file_status_proto_init()
+	file_smartcore_bos_status_v1_status_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_status_history_proto_rawDesc), len(file_status_history_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_status_v1_status_history_proto_rawDesc), len(file_smartcore_bos_status_v1_status_history_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_status_history_proto_goTypes,
-		DependencyIndexes: file_status_history_proto_depIdxs,
-		MessageInfos:      file_status_history_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_status_v1_status_history_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_status_v1_status_history_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_status_v1_status_history_proto_msgTypes,
 	}.Build()
-	File_status_history_proto = out.File
-	file_status_history_proto_goTypes = nil
-	file_status_history_proto_depIdxs = nil
+	File_smartcore_bos_status_v1_status_history_proto = out.File
+	file_smartcore_bos_status_v1_status_history_proto_goTypes = nil
+	file_smartcore_bos_status_v1_status_history_proto_depIdxs = nil
 }

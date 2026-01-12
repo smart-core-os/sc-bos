@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: security_event.proto
+// source: smartcore/bos/securityevent/v1/security_event.proto
 
 package gen
 
@@ -64,11 +64,11 @@ func (x SecurityEvent_State) String() string {
 }
 
 func (SecurityEvent_State) Descriptor() protoreflect.EnumDescriptor {
-	return file_security_event_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_securityevent_v1_security_event_proto_enumTypes[0].Descriptor()
 }
 
 func (SecurityEvent_State) Type() protoreflect.EnumType {
-	return &file_security_event_proto_enumTypes[0]
+	return &file_smartcore_bos_securityevent_v1_security_event_proto_enumTypes[0]
 }
 
 func (x SecurityEvent_State) Number() protoreflect.EnumNumber {
@@ -77,7 +77,7 @@ func (x SecurityEvent_State) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SecurityEvent_State.Descriptor instead.
 func (SecurityEvent_State) EnumDescriptor() ([]byte, []int) {
-	return file_security_event_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_securityevent_v1_security_event_proto_rawDescGZIP(), []int{0, 0}
 }
 
 type SecurityEvent_EventType int32
@@ -204,11 +204,11 @@ func (x SecurityEvent_EventType) String() string {
 }
 
 func (SecurityEvent_EventType) Descriptor() protoreflect.EnumDescriptor {
-	return file_security_event_proto_enumTypes[1].Descriptor()
+	return file_smartcore_bos_securityevent_v1_security_event_proto_enumTypes[1].Descriptor()
 }
 
 func (SecurityEvent_EventType) Type() protoreflect.EnumType {
-	return &file_security_event_proto_enumTypes[1]
+	return &file_smartcore_bos_securityevent_v1_security_event_proto_enumTypes[1]
 }
 
 func (x SecurityEvent_EventType) Number() protoreflect.EnumNumber {
@@ -217,7 +217,7 @@ func (x SecurityEvent_EventType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SecurityEvent_EventType.Descriptor instead.
 func (SecurityEvent_EventType) EnumDescriptor() ([]byte, []int) {
-	return file_security_event_proto_rawDescGZIP(), []int{0, 1}
+	return file_smartcore_bos_securityevent_v1_security_event_proto_rawDescGZIP(), []int{0, 1}
 }
 
 // SecurityEvent describes a security event that has occurred.
@@ -239,18 +239,18 @@ type SecurityEvent struct {
 	// Other times, an actor will cause a security event to occur at a source, e.g. a person has entered a door.
 	Actor *Actor `protobuf:"bytes,5,opt,name=actor,proto3" json:"actor,omitempty"`
 	// Optional. The state of the security event, unacknowledged, acknowledged etc.
-	State SecurityEvent_State `protobuf:"varint,6,opt,name=state,proto3,enum=smartcore.bos.SecurityEvent_State" json:"state,omitempty"`
+	State SecurityEvent_State `protobuf:"varint,6,opt,name=state,proto3,enum=smartcore.bos.securityevent.v1.SecurityEvent_State" json:"state,omitempty"`
 	// Optional. The priority of the security event
 	Priority int32 `protobuf:"varint,7,opt,name=priority,proto3" json:"priority,omitempty"`
 	// Optional. The type of the security event
-	EventType     SecurityEvent_EventType `protobuf:"varint,8,opt,name=event_type,json=eventType,proto3,enum=smartcore.bos.SecurityEvent_EventType" json:"event_type,omitempty"`
+	EventType     SecurityEvent_EventType `protobuf:"varint,8,opt,name=event_type,json=eventType,proto3,enum=smartcore.bos.securityevent.v1.SecurityEvent_EventType" json:"event_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SecurityEvent) Reset() {
 	*x = SecurityEvent{}
-	mi := &file_security_event_proto_msgTypes[0]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -262,7 +262,7 @@ func (x *SecurityEvent) String() string {
 func (*SecurityEvent) ProtoMessage() {}
 
 func (x *SecurityEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_security_event_proto_msgTypes[0]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -275,7 +275,7 @@ func (x *SecurityEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SecurityEvent.ProtoReflect.Descriptor instead.
 func (*SecurityEvent) Descriptor() ([]byte, []int) {
-	return file_security_event_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_securityevent_v1_security_event_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SecurityEvent) GetSecurityEventTime() *timestamppb.Timestamp {
@@ -353,7 +353,7 @@ type ListSecurityEventsRequest struct {
 
 func (x *ListSecurityEventsRequest) Reset() {
 	*x = ListSecurityEventsRequest{}
-	mi := &file_security_event_proto_msgTypes[1]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -365,7 +365,7 @@ func (x *ListSecurityEventsRequest) String() string {
 func (*ListSecurityEventsRequest) ProtoMessage() {}
 
 func (x *ListSecurityEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_security_event_proto_msgTypes[1]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -378,7 +378,7 @@ func (x *ListSecurityEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSecurityEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListSecurityEventsRequest) Descriptor() ([]byte, []int) {
-	return file_security_event_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_securityevent_v1_security_event_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListSecurityEventsRequest) GetName() string {
@@ -424,7 +424,7 @@ type ListSecurityEventsResponse struct {
 
 func (x *ListSecurityEventsResponse) Reset() {
 	*x = ListSecurityEventsResponse{}
-	mi := &file_security_event_proto_msgTypes[2]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -436,7 +436,7 @@ func (x *ListSecurityEventsResponse) String() string {
 func (*ListSecurityEventsResponse) ProtoMessage() {}
 
 func (x *ListSecurityEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_security_event_proto_msgTypes[2]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -449,7 +449,7 @@ func (x *ListSecurityEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSecurityEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListSecurityEventsResponse) Descriptor() ([]byte, []int) {
-	return file_security_event_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_securityevent_v1_security_event_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListSecurityEventsResponse) GetSecurityEvents() []*SecurityEvent {
@@ -484,7 +484,7 @@ type PullSecurityEventsRequest struct {
 
 func (x *PullSecurityEventsRequest) Reset() {
 	*x = PullSecurityEventsRequest{}
-	mi := &file_security_event_proto_msgTypes[3]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -496,7 +496,7 @@ func (x *PullSecurityEventsRequest) String() string {
 func (*PullSecurityEventsRequest) ProtoMessage() {}
 
 func (x *PullSecurityEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_security_event_proto_msgTypes[3]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -509,7 +509,7 @@ func (x *PullSecurityEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullSecurityEventsRequest.ProtoReflect.Descriptor instead.
 func (*PullSecurityEventsRequest) Descriptor() ([]byte, []int) {
-	return file_security_event_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_securityevent_v1_security_event_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PullSecurityEventsRequest) GetName() string {
@@ -542,7 +542,7 @@ type PullSecurityEventsResponse struct {
 
 func (x *PullSecurityEventsResponse) Reset() {
 	*x = PullSecurityEventsResponse{}
-	mi := &file_security_event_proto_msgTypes[4]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -554,7 +554,7 @@ func (x *PullSecurityEventsResponse) String() string {
 func (*PullSecurityEventsResponse) ProtoMessage() {}
 
 func (x *PullSecurityEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_security_event_proto_msgTypes[4]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -567,7 +567,7 @@ func (x *PullSecurityEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullSecurityEventsResponse.ProtoReflect.Descriptor instead.
 func (*PullSecurityEventsResponse) Descriptor() ([]byte, []int) {
-	return file_security_event_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_securityevent_v1_security_event_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullSecurityEventsResponse) GetChanges() []*PullSecurityEventsResponse_Change {
@@ -596,7 +596,7 @@ type SecurityEvent_Source struct {
 
 func (x *SecurityEvent_Source) Reset() {
 	*x = SecurityEvent_Source{}
-	mi := &file_security_event_proto_msgTypes[5]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -608,7 +608,7 @@ func (x *SecurityEvent_Source) String() string {
 func (*SecurityEvent_Source) ProtoMessage() {}
 
 func (x *SecurityEvent_Source) ProtoReflect() protoreflect.Message {
-	mi := &file_security_event_proto_msgTypes[5]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -621,7 +621,7 @@ func (x *SecurityEvent_Source) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SecurityEvent_Source.ProtoReflect.Descriptor instead.
 func (*SecurityEvent_Source) Descriptor() ([]byte, []int) {
-	return file_security_event_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_securityevent_v1_security_event_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *SecurityEvent_Source) GetId() string {
@@ -672,7 +672,7 @@ type PullSecurityEventsResponse_Change struct {
 
 func (x *PullSecurityEventsResponse_Change) Reset() {
 	*x = PullSecurityEventsResponse_Change{}
-	mi := &file_security_event_proto_msgTypes[6]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -684,7 +684,7 @@ func (x *PullSecurityEventsResponse_Change) String() string {
 func (*PullSecurityEventsResponse_Change) ProtoMessage() {}
 
 func (x *PullSecurityEventsResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_security_event_proto_msgTypes[6]
+	mi := &file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -697,7 +697,7 @@ func (x *PullSecurityEventsResponse_Change) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use PullSecurityEventsResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullSecurityEventsResponse_Change) Descriptor() ([]byte, []int) {
-	return file_security_event_proto_rawDescGZIP(), []int{4, 0}
+	return file_smartcore_bos_securityevent_v1_security_event_proto_rawDescGZIP(), []int{4, 0}
 }
 
 func (x *PullSecurityEventsResponse_Change) GetName() string {
@@ -735,21 +735,21 @@ func (x *PullSecurityEventsResponse_Change) GetType() types.ChangeType {
 	return types.ChangeType(0)
 }
 
-var File_security_event_proto protoreflect.FileDescriptor
+var File_smartcore_bos_securityevent_v1_security_event_proto protoreflect.FileDescriptor
 
-const file_security_event_proto_rawDesc = "" +
+const file_smartcore_bos_securityevent_v1_security_event_proto_rawDesc = "" +
 	"\n" +
-	"\x14security_event.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\x1a\vactor.proto\"\xed\b\n" +
+	"3smartcore/bos/securityevent/v1/security_event.proto\x12\x1esmartcore.bos.securityevent.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\x1a\x12types/change.proto\"\xa9\t\n" +
 	"\rSecurityEvent\x12J\n" +
 	"\x13security_event_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x11securityEventTime\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\x12;\n" +
-	"\x06source\x18\x04 \x01(\v2#.smartcore.bos.SecurityEvent.SourceR\x06source\x12*\n" +
-	"\x05actor\x18\x05 \x01(\v2\x14.smartcore.bos.ActorR\x05actor\x128\n" +
-	"\x05state\x18\x06 \x01(\x0e2\".smartcore.bos.SecurityEvent.StateR\x05state\x12\x1a\n" +
-	"\bpriority\x18\a \x01(\x05R\bpriority\x12E\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\x12L\n" +
+	"\x06source\x18\x04 \x01(\v24.smartcore.bos.securityevent.v1.SecurityEvent.SourceR\x06source\x123\n" +
+	"\x05actor\x18\x05 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\x05actor\x12I\n" +
+	"\x05state\x18\x06 \x01(\x0e23.smartcore.bos.securityevent.v1.SecurityEvent.StateR\x05state\x12\x1a\n" +
+	"\bpriority\x18\a \x01(\x05R\bpriority\x12V\n" +
 	"\n" +
-	"event_type\x18\b \x01(\x0e2&.smartcore.bos.SecurityEvent.EventTypeR\teventType\x1at\n" +
+	"event_type\x18\b \x01(\x0e27.smartcore.bos.securityevent.v1.SecurityEvent.EventTypeR\teventType\x1at\n" +
 	"\x06Source\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1c\n" +
@@ -797,76 +797,76 @@ const file_security_event_proto_rawDesc = "" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\"\xaa\x01\n" +
-	"\x1aListSecurityEventsResponse\x12E\n" +
-	"\x0fsecurity_events\x18\x01 \x03(\v2\x1c.smartcore.bos.SecurityEventR\x0esecurityEvents\x12&\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"\xbb\x01\n" +
+	"\x1aListSecurityEventsResponse\x12V\n" +
+	"\x0fsecurity_events\x18\x01 \x03(\v2-.smartcore.bos.securityevent.v1.SecurityEventR\x0esecurityEvents\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
 	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\x8b\x01\n" +
 	"\x19PullSecurityEventsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xeb\x02\n" +
-	"\x1aPullSecurityEventsResponse\x12J\n" +
-	"\achanges\x18\x01 \x03(\v20.smartcore.bos.PullSecurityEventsResponse.ChangeR\achanges\x1a\x80\x02\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x9e\x03\n" +
+	"\x1aPullSecurityEventsResponse\x12[\n" +
+	"\achanges\x18\x01 \x03(\v2A.smartcore.bos.securityevent.v1.PullSecurityEventsResponse.ChangeR\achanges\x1a\xa2\x02\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x129\n" +
-	"\tnew_value\x18\x03 \x01(\v2\x1c.smartcore.bos.SecurityEventR\bnewValue\x129\n" +
-	"\told_value\x18\x04 \x01(\v2\x1c.smartcore.bos.SecurityEventR\boldValue\x12/\n" +
-	"\x04type\x18\x05 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type2\xee\x01\n" +
-	"\x10SecurityEventApi\x12k\n" +
-	"\x12ListSecurityEvents\x12(.smartcore.bos.ListSecurityEventsRequest\x1a).smartcore.bos.ListSecurityEventsResponse\"\x00\x12m\n" +
-	"\x12PullSecurityEvents\x12(.smartcore.bos.PullSecurityEventsRequest\x1a).smartcore.bos.PullSecurityEventsResponse\"\x000\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"changeTime\x12J\n" +
+	"\tnew_value\x18\x03 \x01(\v2-.smartcore.bos.securityevent.v1.SecurityEventR\bnewValue\x12J\n" +
+	"\told_value\x18\x04 \x01(\v2-.smartcore.bos.securityevent.v1.SecurityEventR\boldValue\x12/\n" +
+	"\x04type\x18\x05 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type2\xb4\x02\n" +
+	"\x10SecurityEventApi\x12\x8d\x01\n" +
+	"\x12ListSecurityEvents\x129.smartcore.bos.securityevent.v1.ListSecurityEventsRequest\x1a:.smartcore.bos.securityevent.v1.ListSecurityEventsResponse\"\x00\x12\x8f\x01\n" +
+	"\x12PullSecurityEvents\x129.smartcore.bos.securityevent.v1.PullSecurityEventsRequest\x1a:.smartcore.bos.securityevent.v1.PullSecurityEventsResponse\"\x000\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_security_event_proto_rawDescOnce sync.Once
-	file_security_event_proto_rawDescData []byte
+	file_smartcore_bos_securityevent_v1_security_event_proto_rawDescOnce sync.Once
+	file_smartcore_bos_securityevent_v1_security_event_proto_rawDescData []byte
 )
 
-func file_security_event_proto_rawDescGZIP() []byte {
-	file_security_event_proto_rawDescOnce.Do(func() {
-		file_security_event_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_security_event_proto_rawDesc), len(file_security_event_proto_rawDesc)))
+func file_smartcore_bos_securityevent_v1_security_event_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_securityevent_v1_security_event_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_securityevent_v1_security_event_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_securityevent_v1_security_event_proto_rawDesc), len(file_smartcore_bos_securityevent_v1_security_event_proto_rawDesc)))
 	})
-	return file_security_event_proto_rawDescData
+	return file_smartcore_bos_securityevent_v1_security_event_proto_rawDescData
 }
 
-var file_security_event_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_security_event_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_security_event_proto_goTypes = []any{
-	(SecurityEvent_State)(0),                  // 0: smartcore.bos.SecurityEvent.State
-	(SecurityEvent_EventType)(0),              // 1: smartcore.bos.SecurityEvent.EventType
-	(*SecurityEvent)(nil),                     // 2: smartcore.bos.SecurityEvent
-	(*ListSecurityEventsRequest)(nil),         // 3: smartcore.bos.ListSecurityEventsRequest
-	(*ListSecurityEventsResponse)(nil),        // 4: smartcore.bos.ListSecurityEventsResponse
-	(*PullSecurityEventsRequest)(nil),         // 5: smartcore.bos.PullSecurityEventsRequest
-	(*PullSecurityEventsResponse)(nil),        // 6: smartcore.bos.PullSecurityEventsResponse
-	(*SecurityEvent_Source)(nil),              // 7: smartcore.bos.SecurityEvent.Source
-	(*PullSecurityEventsResponse_Change)(nil), // 8: smartcore.bos.PullSecurityEventsResponse.Change
+var file_smartcore_bos_securityevent_v1_security_event_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_smartcore_bos_securityevent_v1_security_event_proto_goTypes = []any{
+	(SecurityEvent_State)(0),                  // 0: smartcore.bos.securityevent.v1.SecurityEvent.State
+	(SecurityEvent_EventType)(0),              // 1: smartcore.bos.securityevent.v1.SecurityEvent.EventType
+	(*SecurityEvent)(nil),                     // 2: smartcore.bos.securityevent.v1.SecurityEvent
+	(*ListSecurityEventsRequest)(nil),         // 3: smartcore.bos.securityevent.v1.ListSecurityEventsRequest
+	(*ListSecurityEventsResponse)(nil),        // 4: smartcore.bos.securityevent.v1.ListSecurityEventsResponse
+	(*PullSecurityEventsRequest)(nil),         // 5: smartcore.bos.securityevent.v1.PullSecurityEventsRequest
+	(*PullSecurityEventsResponse)(nil),        // 6: smartcore.bos.securityevent.v1.PullSecurityEventsResponse
+	(*SecurityEvent_Source)(nil),              // 7: smartcore.bos.securityevent.v1.SecurityEvent.Source
+	(*PullSecurityEventsResponse_Change)(nil), // 8: smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change
 	(*timestamppb.Timestamp)(nil),             // 9: google.protobuf.Timestamp
-	(*Actor)(nil),                             // 10: smartcore.bos.Actor
+	(*Actor)(nil),                             // 10: smartcore.bos.actor.v1.Actor
 	(*fieldmaskpb.FieldMask)(nil),             // 11: google.protobuf.FieldMask
 	(types.ChangeType)(0),                     // 12: smartcore.types.ChangeType
 }
-var file_security_event_proto_depIdxs = []int32{
-	9,  // 0: smartcore.bos.SecurityEvent.security_event_time:type_name -> google.protobuf.Timestamp
-	7,  // 1: smartcore.bos.SecurityEvent.source:type_name -> smartcore.bos.SecurityEvent.Source
-	10, // 2: smartcore.bos.SecurityEvent.actor:type_name -> smartcore.bos.Actor
-	0,  // 3: smartcore.bos.SecurityEvent.state:type_name -> smartcore.bos.SecurityEvent.State
-	1,  // 4: smartcore.bos.SecurityEvent.event_type:type_name -> smartcore.bos.SecurityEvent.EventType
-	11, // 5: smartcore.bos.ListSecurityEventsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	2,  // 6: smartcore.bos.ListSecurityEventsResponse.security_events:type_name -> smartcore.bos.SecurityEvent
-	11, // 7: smartcore.bos.PullSecurityEventsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	8,  // 8: smartcore.bos.PullSecurityEventsResponse.changes:type_name -> smartcore.bos.PullSecurityEventsResponse.Change
-	9,  // 9: smartcore.bos.PullSecurityEventsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	2,  // 10: smartcore.bos.PullSecurityEventsResponse.Change.new_value:type_name -> smartcore.bos.SecurityEvent
-	2,  // 11: smartcore.bos.PullSecurityEventsResponse.Change.old_value:type_name -> smartcore.bos.SecurityEvent
-	12, // 12: smartcore.bos.PullSecurityEventsResponse.Change.type:type_name -> smartcore.types.ChangeType
-	3,  // 13: smartcore.bos.SecurityEventApi.ListSecurityEvents:input_type -> smartcore.bos.ListSecurityEventsRequest
-	5,  // 14: smartcore.bos.SecurityEventApi.PullSecurityEvents:input_type -> smartcore.bos.PullSecurityEventsRequest
-	4,  // 15: smartcore.bos.SecurityEventApi.ListSecurityEvents:output_type -> smartcore.bos.ListSecurityEventsResponse
-	6,  // 16: smartcore.bos.SecurityEventApi.PullSecurityEvents:output_type -> smartcore.bos.PullSecurityEventsResponse
+var file_smartcore_bos_securityevent_v1_security_event_proto_depIdxs = []int32{
+	9,  // 0: smartcore.bos.securityevent.v1.SecurityEvent.security_event_time:type_name -> google.protobuf.Timestamp
+	7,  // 1: smartcore.bos.securityevent.v1.SecurityEvent.source:type_name -> smartcore.bos.securityevent.v1.SecurityEvent.Source
+	10, // 2: smartcore.bos.securityevent.v1.SecurityEvent.actor:type_name -> smartcore.bos.actor.v1.Actor
+	0,  // 3: smartcore.bos.securityevent.v1.SecurityEvent.state:type_name -> smartcore.bos.securityevent.v1.SecurityEvent.State
+	1,  // 4: smartcore.bos.securityevent.v1.SecurityEvent.event_type:type_name -> smartcore.bos.securityevent.v1.SecurityEvent.EventType
+	11, // 5: smartcore.bos.securityevent.v1.ListSecurityEventsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	2,  // 6: smartcore.bos.securityevent.v1.ListSecurityEventsResponse.security_events:type_name -> smartcore.bos.securityevent.v1.SecurityEvent
+	11, // 7: smartcore.bos.securityevent.v1.PullSecurityEventsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	8,  // 8: smartcore.bos.securityevent.v1.PullSecurityEventsResponse.changes:type_name -> smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change
+	9,  // 9: smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	2,  // 10: smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.new_value:type_name -> smartcore.bos.securityevent.v1.SecurityEvent
+	2,  // 11: smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.old_value:type_name -> smartcore.bos.securityevent.v1.SecurityEvent
+	12, // 12: smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.type:type_name -> smartcore.types.ChangeType
+	3,  // 13: smartcore.bos.securityevent.v1.SecurityEventApi.ListSecurityEvents:input_type -> smartcore.bos.securityevent.v1.ListSecurityEventsRequest
+	5,  // 14: smartcore.bos.securityevent.v1.SecurityEventApi.PullSecurityEvents:input_type -> smartcore.bos.securityevent.v1.PullSecurityEventsRequest
+	4,  // 15: smartcore.bos.securityevent.v1.SecurityEventApi.ListSecurityEvents:output_type -> smartcore.bos.securityevent.v1.ListSecurityEventsResponse
+	6,  // 16: smartcore.bos.securityevent.v1.SecurityEventApi.PullSecurityEvents:output_type -> smartcore.bos.securityevent.v1.PullSecurityEventsResponse
 	15, // [15:17] is the sub-list for method output_type
 	13, // [13:15] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
@@ -874,28 +874,28 @@ var file_security_event_proto_depIdxs = []int32{
 	0,  // [0:13] is the sub-list for field type_name
 }
 
-func init() { file_security_event_proto_init() }
-func file_security_event_proto_init() {
-	if File_security_event_proto != nil {
+func init() { file_smartcore_bos_securityevent_v1_security_event_proto_init() }
+func file_smartcore_bos_securityevent_v1_security_event_proto_init() {
+	if File_smartcore_bos_securityevent_v1_security_event_proto != nil {
 		return
 	}
-	file_actor_proto_init()
+	file_smartcore_bos_actor_v1_actor_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_security_event_proto_rawDesc), len(file_security_event_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_securityevent_v1_security_event_proto_rawDesc), len(file_smartcore_bos_securityevent_v1_security_event_proto_rawDesc)),
 			NumEnums:      2,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_security_event_proto_goTypes,
-		DependencyIndexes: file_security_event_proto_depIdxs,
-		EnumInfos:         file_security_event_proto_enumTypes,
-		MessageInfos:      file_security_event_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_securityevent_v1_security_event_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_securityevent_v1_security_event_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_securityevent_v1_security_event_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_securityevent_v1_security_event_proto_msgTypes,
 	}.Build()
-	File_security_event_proto = out.File
-	file_security_event_proto_goTypes = nil
-	file_security_event_proto_depIdxs = nil
+	File_smartcore_bos_securityevent_v1_security_event_proto = out.File
+	file_smartcore_bos_securityevent_v1_security_event_proto_goTypes = nil
+	file_smartcore_bos_securityevent_v1_security_event_proto_depIdxs = nil
 }

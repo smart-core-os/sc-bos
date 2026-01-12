@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: meter.proto
+// source: smartcore/bos/meter/v1/meter.proto
 
 package gen
 
@@ -46,7 +46,7 @@ type MeterReading struct {
 
 func (x *MeterReading) Reset() {
 	*x = MeterReading{}
-	mi := &file_meter_proto_msgTypes[0]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -58,7 +58,7 @@ func (x *MeterReading) String() string {
 func (*MeterReading) ProtoMessage() {}
 
 func (x *MeterReading) ProtoReflect() protoreflect.Message {
-	mi := &file_meter_proto_msgTypes[0]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -71,7 +71,7 @@ func (x *MeterReading) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MeterReading.ProtoReflect.Descriptor instead.
 func (*MeterReading) Descriptor() ([]byte, []int) {
-	return file_meter_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_meter_v1_meter_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *MeterReading) GetUsage() float32 {
@@ -117,7 +117,7 @@ type MeterReadingSupport struct {
 
 func (x *MeterReadingSupport) Reset() {
 	*x = MeterReadingSupport{}
-	mi := &file_meter_proto_msgTypes[1]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -129,7 +129,7 @@ func (x *MeterReadingSupport) String() string {
 func (*MeterReadingSupport) ProtoMessage() {}
 
 func (x *MeterReadingSupport) ProtoReflect() protoreflect.Message {
-	mi := &file_meter_proto_msgTypes[1]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -142,7 +142,7 @@ func (x *MeterReadingSupport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MeterReadingSupport.ProtoReflect.Descriptor instead.
 func (*MeterReadingSupport) Descriptor() ([]byte, []int) {
-	return file_meter_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_meter_v1_meter_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *MeterReadingSupport) GetResourceSupport() *types.ResourceSupport {
@@ -176,7 +176,7 @@ type GetMeterReadingRequest struct {
 
 func (x *GetMeterReadingRequest) Reset() {
 	*x = GetMeterReadingRequest{}
-	mi := &file_meter_proto_msgTypes[2]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -188,7 +188,7 @@ func (x *GetMeterReadingRequest) String() string {
 func (*GetMeterReadingRequest) ProtoMessage() {}
 
 func (x *GetMeterReadingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_meter_proto_msgTypes[2]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -201,7 +201,7 @@ func (x *GetMeterReadingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMeterReadingRequest.ProtoReflect.Descriptor instead.
 func (*GetMeterReadingRequest) Descriptor() ([]byte, []int) {
-	return file_meter_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_meter_v1_meter_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetMeterReadingRequest) GetName() string {
@@ -229,7 +229,7 @@ type PullMeterReadingsRequest struct {
 
 func (x *PullMeterReadingsRequest) Reset() {
 	*x = PullMeterReadingsRequest{}
-	mi := &file_meter_proto_msgTypes[3]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -241,7 +241,7 @@ func (x *PullMeterReadingsRequest) String() string {
 func (*PullMeterReadingsRequest) ProtoMessage() {}
 
 func (x *PullMeterReadingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_meter_proto_msgTypes[3]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -254,7 +254,7 @@ func (x *PullMeterReadingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullMeterReadingsRequest.ProtoReflect.Descriptor instead.
 func (*PullMeterReadingsRequest) Descriptor() ([]byte, []int) {
-	return file_meter_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_meter_v1_meter_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PullMeterReadingsRequest) GetName() string {
@@ -287,7 +287,7 @@ type PullMeterReadingsResponse struct {
 
 func (x *PullMeterReadingsResponse) Reset() {
 	*x = PullMeterReadingsResponse{}
-	mi := &file_meter_proto_msgTypes[4]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -299,7 +299,7 @@ func (x *PullMeterReadingsResponse) String() string {
 func (*PullMeterReadingsResponse) ProtoMessage() {}
 
 func (x *PullMeterReadingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_meter_proto_msgTypes[4]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -312,7 +312,7 @@ func (x *PullMeterReadingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullMeterReadingsResponse.ProtoReflect.Descriptor instead.
 func (*PullMeterReadingsResponse) Descriptor() ([]byte, []int) {
-	return file_meter_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_meter_v1_meter_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullMeterReadingsResponse) GetChanges() []*PullMeterReadingsResponse_Change {
@@ -331,7 +331,7 @@ type DescribeMeterReadingRequest struct {
 
 func (x *DescribeMeterReadingRequest) Reset() {
 	*x = DescribeMeterReadingRequest{}
-	mi := &file_meter_proto_msgTypes[5]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -343,7 +343,7 @@ func (x *DescribeMeterReadingRequest) String() string {
 func (*DescribeMeterReadingRequest) ProtoMessage() {}
 
 func (x *DescribeMeterReadingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_meter_proto_msgTypes[5]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -356,7 +356,7 @@ func (x *DescribeMeterReadingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DescribeMeterReadingRequest.ProtoReflect.Descriptor instead.
 func (*DescribeMeterReadingRequest) Descriptor() ([]byte, []int) {
-	return file_meter_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_meter_v1_meter_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DescribeMeterReadingRequest) GetName() string {
@@ -377,7 +377,7 @@ type PullMeterReadingsResponse_Change struct {
 
 func (x *PullMeterReadingsResponse_Change) Reset() {
 	*x = PullMeterReadingsResponse_Change{}
-	mi := &file_meter_proto_msgTypes[6]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -389,7 +389,7 @@ func (x *PullMeterReadingsResponse_Change) String() string {
 func (*PullMeterReadingsResponse_Change) ProtoMessage() {}
 
 func (x *PullMeterReadingsResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_meter_proto_msgTypes[6]
+	mi := &file_smartcore_bos_meter_v1_meter_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -402,7 +402,7 @@ func (x *PullMeterReadingsResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullMeterReadingsResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullMeterReadingsResponse_Change) Descriptor() ([]byte, []int) {
-	return file_meter_proto_rawDescGZIP(), []int{4, 0}
+	return file_smartcore_bos_meter_v1_meter_proto_rawDescGZIP(), []int{4, 0}
 }
 
 func (x *PullMeterReadingsResponse_Change) GetName() string {
@@ -426,11 +426,11 @@ func (x *PullMeterReadingsResponse_Change) GetMeterReading() *MeterReading {
 	return nil
 }
 
-var File_meter_proto protoreflect.FileDescriptor
+var File_smartcore_bos_meter_v1_meter_proto protoreflect.FileDescriptor
 
-const file_meter_proto_rawDesc = "" +
+const file_smartcore_bos_meter_v1_meter_proto_rawDesc = "" +
 	"\n" +
-	"\vmeter.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xb2\x01\n" +
+	"\"smartcore/bos/meter/v1/meter.proto\x12\x16smartcore.bos.meter.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xb2\x01\n" +
 	"\fMeterReading\x12\x14\n" +
 	"\x05usage\x18\x01 \x01(\x02R\x05usage\x129\n" +
 	"\n" +
@@ -448,62 +448,62 @@ const file_meter_proto_rawDesc = "" +
 	"\x18PullMeterReadingsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x84\x02\n" +
-	"\x19PullMeterReadingsResponse\x12I\n" +
-	"\achanges\x18\x01 \x03(\v2/.smartcore.bos.PullMeterReadingsResponse.ChangeR\achanges\x1a\x9b\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x96\x02\n" +
+	"\x19PullMeterReadingsResponse\x12R\n" +
+	"\achanges\x18\x01 \x03(\v28.smartcore.bos.meter.v1.PullMeterReadingsResponse.ChangeR\achanges\x1a\xa4\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x12@\n" +
-	"\rmeter_reading\x18\x03 \x01(\v2\x1b.smartcore.bos.MeterReadingR\fmeterReading\"1\n" +
+	"changeTime\x12I\n" +
+	"\rmeter_reading\x18\x03 \x01(\v2$.smartcore.bos.meter.v1.MeterReadingR\fmeterReading\"1\n" +
 	"\x1bDescribeMeterReadingRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name2\xcb\x01\n" +
-	"\bMeterApi\x12U\n" +
-	"\x0fGetMeterReading\x12%.smartcore.bos.GetMeterReadingRequest\x1a\x1b.smartcore.bos.MeterReading\x12h\n" +
-	"\x11PullMeterReadings\x12'.smartcore.bos.PullMeterReadingsRequest\x1a(.smartcore.bos.PullMeterReadingsResponse0\x012s\n" +
-	"\tMeterInfo\x12f\n" +
-	"\x14DescribeMeterReading\x12*.smartcore.bos.DescribeMeterReadingRequest\x1a\".smartcore.bos.MeterReadingSupportB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\x04name\x18\x01 \x01(\tR\x04name2\xef\x01\n" +
+	"\bMeterApi\x12g\n" +
+	"\x0fGetMeterReading\x12..smartcore.bos.meter.v1.GetMeterReadingRequest\x1a$.smartcore.bos.meter.v1.MeterReading\x12z\n" +
+	"\x11PullMeterReadings\x120.smartcore.bos.meter.v1.PullMeterReadingsRequest\x1a1.smartcore.bos.meter.v1.PullMeterReadingsResponse0\x012\x85\x01\n" +
+	"\tMeterInfo\x12x\n" +
+	"\x14DescribeMeterReading\x123.smartcore.bos.meter.v1.DescribeMeterReadingRequest\x1a+.smartcore.bos.meter.v1.MeterReadingSupportB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_meter_proto_rawDescOnce sync.Once
-	file_meter_proto_rawDescData []byte
+	file_smartcore_bos_meter_v1_meter_proto_rawDescOnce sync.Once
+	file_smartcore_bos_meter_v1_meter_proto_rawDescData []byte
 )
 
-func file_meter_proto_rawDescGZIP() []byte {
-	file_meter_proto_rawDescOnce.Do(func() {
-		file_meter_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_meter_proto_rawDesc), len(file_meter_proto_rawDesc)))
+func file_smartcore_bos_meter_v1_meter_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_meter_v1_meter_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_meter_v1_meter_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_meter_v1_meter_proto_rawDesc), len(file_smartcore_bos_meter_v1_meter_proto_rawDesc)))
 	})
-	return file_meter_proto_rawDescData
+	return file_smartcore_bos_meter_v1_meter_proto_rawDescData
 }
 
-var file_meter_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_meter_proto_goTypes = []any{
-	(*MeterReading)(nil),                     // 0: smartcore.bos.MeterReading
-	(*MeterReadingSupport)(nil),              // 1: smartcore.bos.MeterReadingSupport
-	(*GetMeterReadingRequest)(nil),           // 2: smartcore.bos.GetMeterReadingRequest
-	(*PullMeterReadingsRequest)(nil),         // 3: smartcore.bos.PullMeterReadingsRequest
-	(*PullMeterReadingsResponse)(nil),        // 4: smartcore.bos.PullMeterReadingsResponse
-	(*DescribeMeterReadingRequest)(nil),      // 5: smartcore.bos.DescribeMeterReadingRequest
-	(*PullMeterReadingsResponse_Change)(nil), // 6: smartcore.bos.PullMeterReadingsResponse.Change
+var file_smartcore_bos_meter_v1_meter_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_smartcore_bos_meter_v1_meter_proto_goTypes = []any{
+	(*MeterReading)(nil),                     // 0: smartcore.bos.meter.v1.MeterReading
+	(*MeterReadingSupport)(nil),              // 1: smartcore.bos.meter.v1.MeterReadingSupport
+	(*GetMeterReadingRequest)(nil),           // 2: smartcore.bos.meter.v1.GetMeterReadingRequest
+	(*PullMeterReadingsRequest)(nil),         // 3: smartcore.bos.meter.v1.PullMeterReadingsRequest
+	(*PullMeterReadingsResponse)(nil),        // 4: smartcore.bos.meter.v1.PullMeterReadingsResponse
+	(*DescribeMeterReadingRequest)(nil),      // 5: smartcore.bos.meter.v1.DescribeMeterReadingRequest
+	(*PullMeterReadingsResponse_Change)(nil), // 6: smartcore.bos.meter.v1.PullMeterReadingsResponse.Change
 	(*timestamppb.Timestamp)(nil),            // 7: google.protobuf.Timestamp
 	(*types.ResourceSupport)(nil),            // 8: smartcore.types.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),            // 9: google.protobuf.FieldMask
 }
-var file_meter_proto_depIdxs = []int32{
-	7,  // 0: smartcore.bos.MeterReading.start_time:type_name -> google.protobuf.Timestamp
-	7,  // 1: smartcore.bos.MeterReading.end_time:type_name -> google.protobuf.Timestamp
-	8,  // 2: smartcore.bos.MeterReadingSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	9,  // 3: smartcore.bos.GetMeterReadingRequest.read_mask:type_name -> google.protobuf.FieldMask
-	9,  // 4: smartcore.bos.PullMeterReadingsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	6,  // 5: smartcore.bos.PullMeterReadingsResponse.changes:type_name -> smartcore.bos.PullMeterReadingsResponse.Change
-	7,  // 6: smartcore.bos.PullMeterReadingsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	0,  // 7: smartcore.bos.PullMeterReadingsResponse.Change.meter_reading:type_name -> smartcore.bos.MeterReading
-	2,  // 8: smartcore.bos.MeterApi.GetMeterReading:input_type -> smartcore.bos.GetMeterReadingRequest
-	3,  // 9: smartcore.bos.MeterApi.PullMeterReadings:input_type -> smartcore.bos.PullMeterReadingsRequest
-	5,  // 10: smartcore.bos.MeterInfo.DescribeMeterReading:input_type -> smartcore.bos.DescribeMeterReadingRequest
-	0,  // 11: smartcore.bos.MeterApi.GetMeterReading:output_type -> smartcore.bos.MeterReading
-	4,  // 12: smartcore.bos.MeterApi.PullMeterReadings:output_type -> smartcore.bos.PullMeterReadingsResponse
-	1,  // 13: smartcore.bos.MeterInfo.DescribeMeterReading:output_type -> smartcore.bos.MeterReadingSupport
+var file_smartcore_bos_meter_v1_meter_proto_depIdxs = []int32{
+	7,  // 0: smartcore.bos.meter.v1.MeterReading.start_time:type_name -> google.protobuf.Timestamp
+	7,  // 1: smartcore.bos.meter.v1.MeterReading.end_time:type_name -> google.protobuf.Timestamp
+	8,  // 2: smartcore.bos.meter.v1.MeterReadingSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	9,  // 3: smartcore.bos.meter.v1.GetMeterReadingRequest.read_mask:type_name -> google.protobuf.FieldMask
+	9,  // 4: smartcore.bos.meter.v1.PullMeterReadingsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	6,  // 5: smartcore.bos.meter.v1.PullMeterReadingsResponse.changes:type_name -> smartcore.bos.meter.v1.PullMeterReadingsResponse.Change
+	7,  // 6: smartcore.bos.meter.v1.PullMeterReadingsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	0,  // 7: smartcore.bos.meter.v1.PullMeterReadingsResponse.Change.meter_reading:type_name -> smartcore.bos.meter.v1.MeterReading
+	2,  // 8: smartcore.bos.meter.v1.MeterApi.GetMeterReading:input_type -> smartcore.bos.meter.v1.GetMeterReadingRequest
+	3,  // 9: smartcore.bos.meter.v1.MeterApi.PullMeterReadings:input_type -> smartcore.bos.meter.v1.PullMeterReadingsRequest
+	5,  // 10: smartcore.bos.meter.v1.MeterInfo.DescribeMeterReading:input_type -> smartcore.bos.meter.v1.DescribeMeterReadingRequest
+	0,  // 11: smartcore.bos.meter.v1.MeterApi.GetMeterReading:output_type -> smartcore.bos.meter.v1.MeterReading
+	4,  // 12: smartcore.bos.meter.v1.MeterApi.PullMeterReadings:output_type -> smartcore.bos.meter.v1.PullMeterReadingsResponse
+	1,  // 13: smartcore.bos.meter.v1.MeterInfo.DescribeMeterReading:output_type -> smartcore.bos.meter.v1.MeterReadingSupport
 	11, // [11:14] is the sub-list for method output_type
 	8,  // [8:11] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
@@ -511,26 +511,26 @@ var file_meter_proto_depIdxs = []int32{
 	0,  // [0:8] is the sub-list for field type_name
 }
 
-func init() { file_meter_proto_init() }
-func file_meter_proto_init() {
-	if File_meter_proto != nil {
+func init() { file_smartcore_bos_meter_v1_meter_proto_init() }
+func file_smartcore_bos_meter_v1_meter_proto_init() {
+	if File_smartcore_bos_meter_v1_meter_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_meter_proto_rawDesc), len(file_meter_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_meter_v1_meter_proto_rawDesc), len(file_smartcore_bos_meter_v1_meter_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_meter_proto_goTypes,
-		DependencyIndexes: file_meter_proto_depIdxs,
-		MessageInfos:      file_meter_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_meter_v1_meter_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_meter_v1_meter_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_meter_v1_meter_proto_msgTypes,
 	}.Build()
-	File_meter_proto = out.File
-	file_meter_proto_goTypes = nil
-	file_meter_proto_depIdxs = nil
+	File_smartcore_bos_meter_v1_meter_proto = out.File
+	file_smartcore_bos_meter_v1_meter_proto_goTypes = nil
+	file_smartcore_bos_meter_v1_meter_proto_depIdxs = nil
 }

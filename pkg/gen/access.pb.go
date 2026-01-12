@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: access.proto
+// source: smartcore/bos/access/v1/access.proto
 
 package gen
 
@@ -83,11 +83,11 @@ func (x AccessAttempt_Grant) String() string {
 }
 
 func (AccessAttempt_Grant) Descriptor() protoreflect.EnumDescriptor {
-	return file_access_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_access_v1_access_proto_enumTypes[0].Descriptor()
 }
 
 func (AccessAttempt_Grant) Type() protoreflect.EnumType {
-	return &file_access_proto_enumTypes[0]
+	return &file_smartcore_bos_access_v1_access_proto_enumTypes[0]
 }
 
 func (x AccessAttempt_Grant) Number() protoreflect.EnumNumber {
@@ -96,13 +96,13 @@ func (x AccessAttempt_Grant) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AccessAttempt_Grant.Descriptor instead.
 func (AccessAttempt_Grant) EnumDescriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{0, 0}
 }
 
 type AccessAttempt struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Was the access attempt granted or denied.
-	Grant AccessAttempt_Grant `protobuf:"varint,1,opt,name=grant,proto3,enum=smartcore.bos.AccessAttempt_Grant" json:"grant,omitempty"`
+	Grant AccessAttempt_Grant `protobuf:"varint,1,opt,name=grant,proto3,enum=smartcore.bos.access.v1.AccessAttempt_Grant" json:"grant,omitempty"`
 	// A reason for either granting or denying the access attempt.
 	// For example "Operator override" or "Unrecognised card".
 	Reason string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
@@ -117,7 +117,7 @@ type AccessAttempt struct {
 
 func (x *AccessAttempt) Reset() {
 	*x = AccessAttempt{}
-	mi := &file_access_proto_msgTypes[0]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -129,7 +129,7 @@ func (x *AccessAttempt) String() string {
 func (*AccessAttempt) ProtoMessage() {}
 
 func (x *AccessAttempt) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[0]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -142,7 +142,7 @@ func (x *AccessAttempt) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AccessAttempt.ProtoReflect.Descriptor instead.
 func (*AccessAttempt) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *AccessAttempt) GetGrant() AccessAttempt_Grant {
@@ -184,7 +184,7 @@ type GetLastAccessAttemptRequest struct {
 
 func (x *GetLastAccessAttemptRequest) Reset() {
 	*x = GetLastAccessAttemptRequest{}
-	mi := &file_access_proto_msgTypes[1]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -196,7 +196,7 @@ func (x *GetLastAccessAttemptRequest) String() string {
 func (*GetLastAccessAttemptRequest) ProtoMessage() {}
 
 func (x *GetLastAccessAttemptRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[1]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -209,7 +209,7 @@ func (x *GetLastAccessAttemptRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLastAccessAttemptRequest.ProtoReflect.Descriptor instead.
 func (*GetLastAccessAttemptRequest) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetLastAccessAttemptRequest) GetName() string {
@@ -238,7 +238,7 @@ type PullAccessAttemptsRequest struct {
 
 func (x *PullAccessAttemptsRequest) Reset() {
 	*x = PullAccessAttemptsRequest{}
-	mi := &file_access_proto_msgTypes[2]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -250,7 +250,7 @@ func (x *PullAccessAttemptsRequest) String() string {
 func (*PullAccessAttemptsRequest) ProtoMessage() {}
 
 func (x *PullAccessAttemptsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[2]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -263,7 +263,7 @@ func (x *PullAccessAttemptsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullAccessAttemptsRequest.ProtoReflect.Descriptor instead.
 func (*PullAccessAttemptsRequest) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PullAccessAttemptsRequest) GetName() string {
@@ -296,7 +296,7 @@ type PullAccessAttemptsResponse struct {
 
 func (x *PullAccessAttemptsResponse) Reset() {
 	*x = PullAccessAttemptsResponse{}
-	mi := &file_access_proto_msgTypes[3]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -308,7 +308,7 @@ func (x *PullAccessAttemptsResponse) String() string {
 func (*PullAccessAttemptsResponse) ProtoMessage() {}
 
 func (x *PullAccessAttemptsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[3]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -321,7 +321,7 @@ func (x *PullAccessAttemptsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullAccessAttemptsResponse.ProtoReflect.Descriptor instead.
 func (*PullAccessAttemptsResponse) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PullAccessAttemptsResponse) GetChanges() []*PullAccessAttemptsResponse_Change {
@@ -388,7 +388,7 @@ type AccessGrant struct {
 
 func (x *AccessGrant) Reset() {
 	*x = AccessGrant{}
-	mi := &file_access_proto_msgTypes[4]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -400,7 +400,7 @@ func (x *AccessGrant) String() string {
 func (*AccessGrant) ProtoMessage() {}
 
 func (x *AccessGrant) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[4]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -413,7 +413,7 @@ func (x *AccessGrant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AccessGrant.ProtoReflect.Descriptor instead.
 func (*AccessGrant) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *AccessGrant) GetId() string {
@@ -539,7 +539,7 @@ type CreateAccessGrantRequest struct {
 
 func (x *CreateAccessGrantRequest) Reset() {
 	*x = CreateAccessGrantRequest{}
-	mi := &file_access_proto_msgTypes[5]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -551,7 +551,7 @@ func (x *CreateAccessGrantRequest) String() string {
 func (*CreateAccessGrantRequest) ProtoMessage() {}
 
 func (x *CreateAccessGrantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[5]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -564,7 +564,7 @@ func (x *CreateAccessGrantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAccessGrantRequest.ProtoReflect.Descriptor instead.
 func (*CreateAccessGrantRequest) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CreateAccessGrantRequest) GetName() string {
@@ -595,7 +595,7 @@ type UpdateAccessGrantRequest struct {
 
 func (x *UpdateAccessGrantRequest) Reset() {
 	*x = UpdateAccessGrantRequest{}
-	mi := &file_access_proto_msgTypes[6]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -607,7 +607,7 @@ func (x *UpdateAccessGrantRequest) String() string {
 func (*UpdateAccessGrantRequest) ProtoMessage() {}
 
 func (x *UpdateAccessGrantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[6]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -620,7 +620,7 @@ func (x *UpdateAccessGrantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAccessGrantRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAccessGrantRequest) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *UpdateAccessGrantRequest) GetName() string {
@@ -649,7 +649,7 @@ type DeleteAccessGrantRequest struct {
 
 func (x *DeleteAccessGrantRequest) Reset() {
 	*x = DeleteAccessGrantRequest{}
-	mi := &file_access_proto_msgTypes[7]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -661,7 +661,7 @@ func (x *DeleteAccessGrantRequest) String() string {
 func (*DeleteAccessGrantRequest) ProtoMessage() {}
 
 func (x *DeleteAccessGrantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[7]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -674,7 +674,7 @@ func (x *DeleteAccessGrantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccessGrantRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAccessGrantRequest) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DeleteAccessGrantRequest) GetName() string {
@@ -699,7 +699,7 @@ type DeleteAccessGrantResponse struct {
 
 func (x *DeleteAccessGrantResponse) Reset() {
 	*x = DeleteAccessGrantResponse{}
-	mi := &file_access_proto_msgTypes[8]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -711,7 +711,7 @@ func (x *DeleteAccessGrantResponse) String() string {
 func (*DeleteAccessGrantResponse) ProtoMessage() {}
 
 func (x *DeleteAccessGrantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[8]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -724,7 +724,7 @@ func (x *DeleteAccessGrantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccessGrantResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAccessGrantResponse) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{8}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{8}
 }
 
 type GetAccessGrantsRequest struct {
@@ -740,7 +740,7 @@ type GetAccessGrantsRequest struct {
 
 func (x *GetAccessGrantsRequest) Reset() {
 	*x = GetAccessGrantsRequest{}
-	mi := &file_access_proto_msgTypes[9]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -752,7 +752,7 @@ func (x *GetAccessGrantsRequest) String() string {
 func (*GetAccessGrantsRequest) ProtoMessage() {}
 
 func (x *GetAccessGrantsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[9]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -765,7 +765,7 @@ func (x *GetAccessGrantsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccessGrantsRequest.ProtoReflect.Descriptor instead.
 func (*GetAccessGrantsRequest) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{9}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetAccessGrantsRequest) GetName() string {
@@ -808,7 +808,7 @@ type ListAccessGrantsRequest struct {
 
 func (x *ListAccessGrantsRequest) Reset() {
 	*x = ListAccessGrantsRequest{}
-	mi := &file_access_proto_msgTypes[10]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -820,7 +820,7 @@ func (x *ListAccessGrantsRequest) String() string {
 func (*ListAccessGrantsRequest) ProtoMessage() {}
 
 func (x *ListAccessGrantsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[10]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -833,7 +833,7 @@ func (x *ListAccessGrantsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccessGrantsRequest.ProtoReflect.Descriptor instead.
 func (*ListAccessGrantsRequest) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{10}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListAccessGrantsRequest) GetName() string {
@@ -879,7 +879,7 @@ type ListAccessGrantsResponse struct {
 
 func (x *ListAccessGrantsResponse) Reset() {
 	*x = ListAccessGrantsResponse{}
-	mi := &file_access_proto_msgTypes[11]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -891,7 +891,7 @@ func (x *ListAccessGrantsResponse) String() string {
 func (*ListAccessGrantsResponse) ProtoMessage() {}
 
 func (x *ListAccessGrantsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[11]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -904,7 +904,7 @@ func (x *ListAccessGrantsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccessGrantsResponse.ProtoReflect.Descriptor instead.
 func (*ListAccessGrantsResponse) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{11}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListAccessGrantsResponse) GetAccessGrants() []*AccessGrant {
@@ -939,7 +939,7 @@ type PullAccessAttemptsResponse_Change struct {
 
 func (x *PullAccessAttemptsResponse_Change) Reset() {
 	*x = PullAccessAttemptsResponse_Change{}
-	mi := &file_access_proto_msgTypes[12]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -951,7 +951,7 @@ func (x *PullAccessAttemptsResponse_Change) String() string {
 func (*PullAccessAttemptsResponse_Change) ProtoMessage() {}
 
 func (x *PullAccessAttemptsResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_access_proto_msgTypes[12]
+	mi := &file_smartcore_bos_access_v1_access_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -964,7 +964,7 @@ func (x *PullAccessAttemptsResponse_Change) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use PullAccessAttemptsResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullAccessAttemptsResponse_Change) Descriptor() ([]byte, []int) {
-	return file_access_proto_rawDescGZIP(), []int{3, 0}
+	return file_smartcore_bos_access_v1_access_proto_rawDescGZIP(), []int{3, 0}
 }
 
 func (x *PullAccessAttemptsResponse_Change) GetName() string {
@@ -988,15 +988,15 @@ func (x *PullAccessAttemptsResponse_Change) GetAccessAttempt() *AccessAttempt {
 	return nil
 }
 
-var File_access_proto protoreflect.FileDescriptor
+var File_smartcore_bos_access_v1_access_proto protoreflect.FileDescriptor
 
-const file_access_proto_rawDesc = "" +
+const file_smartcore_bos_access_v1_access_proto_rawDesc = "" +
 	"\n" +
-	"\faccess.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\vactor.proto\"\xce\x02\n" +
-	"\rAccessAttempt\x128\n" +
-	"\x05grant\x18\x01 \x01(\x0e2\".smartcore.bos.AccessAttempt.GrantR\x05grant\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\x12*\n" +
-	"\x05actor\x18\x03 \x01(\v2\x14.smartcore.bos.ActorR\x05actor\x12J\n" +
+	"$smartcore/bos/access/v1/access.proto\x12\x17smartcore.bos.access.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\"\xe1\x02\n" +
+	"\rAccessAttempt\x12B\n" +
+	"\x05grant\x18\x01 \x01(\x0e2,.smartcore.bos.access.v1.AccessAttempt.GrantR\x05grant\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\x123\n" +
+	"\x05actor\x18\x03 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\x05actor\x12J\n" +
 	"\x13access_attempt_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x11accessAttemptTime\"s\n" +
 	"\x05Grant\x12\x11\n" +
 	"\rGRANT_UNKNOWN\x10\x00\x12\v\n" +
@@ -1016,22 +1016,22 @@ const file_access_proto_rawDesc = "" +
 	"\x19PullAccessAttemptsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x89\x02\n" +
-	"\x1aPullAccessAttemptsResponse\x12J\n" +
-	"\achanges\x18\x01 \x03(\v20.smartcore.bos.PullAccessAttemptsResponse.ChangeR\achanges\x1a\x9e\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x9d\x02\n" +
+	"\x1aPullAccessAttemptsResponse\x12T\n" +
+	"\achanges\x18\x01 \x03(\v2:.smartcore.bos.access.v1.PullAccessAttemptsResponse.ChangeR\achanges\x1a\xa8\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x12C\n" +
-	"\x0eaccess_attempt\x18\x03 \x01(\v2\x1c.smartcore.bos.AccessAttemptR\raccessAttempt\"\x85\x05\n" +
+	"changeTime\x12M\n" +
+	"\x0eaccess_attempt\x18\x03 \x01(\v2&.smartcore.bos.access.v1.AccessAttemptR\raccessAttempt\"\x97\x05\n" +
 	"\vAccessGrant\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x129\n" +
 	"\n" +
 	"start_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x125\n" +
 	"\bend_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aendTime\x12\x1d\n" +
-	"\apurpose\x18\x04 \x01(\tH\x01R\apurpose\x88\x01\x01\x12.\n" +
-	"\agrantee\x18\x05 \x01(\v2\x14.smartcore.bos.ActorR\agrantee\x12.\n" +
-	"\agranter\x18\x06 \x01(\v2\x14.smartcore.bos.ActorR\agranter\x12B\n" +
+	"\apurpose\x18\x04 \x01(\tH\x01R\apurpose\x88\x01\x01\x127\n" +
+	"\agrantee\x18\x05 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\agrantee\x127\n" +
+	"\agranter\x18\x06 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\agranter\x12B\n" +
 	"\fcreated_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x02R\vcreatedTime\x88\x01\x01\x12B\n" +
 	"\fupdated_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampH\x03R\vupdatedTime\x88\x01\x01\x12\"\n" +
 	"\n" +
@@ -1046,13 +1046,13 @@ const file_access_proto_rawDesc = "" +
 	"\r_created_timeB\x0f\n" +
 	"\r_updated_timeB\r\n" +
 	"\v_entry_codeB\x10\n" +
-	"\x0e_skip_check_in\"m\n" +
+	"\x0e_skip_check_in\"w\n" +
 	"\x18CreateAccessGrantRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12=\n" +
-	"\faccess_grant\x18\x02 \x01(\v2\x1a.smartcore.bos.AccessGrantR\vaccessGrant\"m\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12G\n" +
+	"\faccess_grant\x18\x02 \x01(\v2$.smartcore.bos.access.v1.AccessGrantR\vaccessGrant\"w\n" +
 	"\x18UpdateAccessGrantRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12=\n" +
-	"\faccess_grant\x18\x02 \x01(\v2\x1a.smartcore.bos.AccessGrantR\vaccessGrant\"V\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12G\n" +
+	"\faccess_grant\x18\x02 \x01(\v2$.smartcore.bos.access.v1.AccessGrantR\vaccessGrant\"V\n" +
 	"\x18DeleteAccessGrantRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12&\n" +
 	"\x0faccess_grant_id\x18\x02 \x01(\tR\raccessGrantId\"\x1b\n" +
@@ -1066,88 +1066,88 @@ const file_access_proto_rawDesc = "" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\"\xa2\x01\n" +
-	"\x18ListAccessGrantsResponse\x12?\n" +
-	"\raccess_grants\x18\x01 \x03(\v2\x1a.smartcore.bos.AccessGrantR\faccessGrants\x12&\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"\xac\x01\n" +
+	"\x18ListAccessGrantsResponse\x12I\n" +
+	"\raccess_grants\x18\x01 \x03(\v2$.smartcore.bos.access.v1.AccessGrantR\faccessGrants\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize2\xbe\x05\n" +
-	"\tAccessApi\x12b\n" +
-	"\x14GetLastAccessAttempt\x12*.smartcore.bos.GetLastAccessAttemptRequest\x1a\x1c.smartcore.bos.AccessAttempt\"\x00\x12m\n" +
-	"\x12PullAccessAttempts\x12(.smartcore.bos.PullAccessAttemptsRequest\x1a).smartcore.bos.PullAccessAttemptsResponse\"\x000\x01\x12Z\n" +
-	"\x11CreateAccessGrant\x12'.smartcore.bos.CreateAccessGrantRequest\x1a\x1a.smartcore.bos.AccessGrant\"\x00\x12Z\n" +
-	"\x11UpdateAccessGrant\x12'.smartcore.bos.UpdateAccessGrantRequest\x1a\x1a.smartcore.bos.AccessGrant\"\x00\x12h\n" +
-	"\x11DeleteAccessGrant\x12'.smartcore.bos.DeleteAccessGrantRequest\x1a(.smartcore.bos.DeleteAccessGrantResponse\"\x00\x12U\n" +
-	"\x0eGetAccessGrant\x12%.smartcore.bos.GetAccessGrantsRequest\x1a\x1a.smartcore.bos.AccessGrant\"\x00\x12e\n" +
-	"\x10ListAccessGrants\x12&.smartcore.bos.ListAccessGrantsRequest\x1a'.smartcore.bos.ListAccessGrantsResponse\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"total_size\x18\x03 \x01(\x05R\ttotalSize2\xcb\x06\n" +
+	"\tAccessApi\x12v\n" +
+	"\x14GetLastAccessAttempt\x124.smartcore.bos.access.v1.GetLastAccessAttemptRequest\x1a&.smartcore.bos.access.v1.AccessAttempt\"\x00\x12\x81\x01\n" +
+	"\x12PullAccessAttempts\x122.smartcore.bos.access.v1.PullAccessAttemptsRequest\x1a3.smartcore.bos.access.v1.PullAccessAttemptsResponse\"\x000\x01\x12n\n" +
+	"\x11CreateAccessGrant\x121.smartcore.bos.access.v1.CreateAccessGrantRequest\x1a$.smartcore.bos.access.v1.AccessGrant\"\x00\x12n\n" +
+	"\x11UpdateAccessGrant\x121.smartcore.bos.access.v1.UpdateAccessGrantRequest\x1a$.smartcore.bos.access.v1.AccessGrant\"\x00\x12|\n" +
+	"\x11DeleteAccessGrant\x121.smartcore.bos.access.v1.DeleteAccessGrantRequest\x1a2.smartcore.bos.access.v1.DeleteAccessGrantResponse\"\x00\x12i\n" +
+	"\x0eGetAccessGrant\x12/.smartcore.bos.access.v1.GetAccessGrantsRequest\x1a$.smartcore.bos.access.v1.AccessGrant\"\x00\x12y\n" +
+	"\x10ListAccessGrants\x120.smartcore.bos.access.v1.ListAccessGrantsRequest\x1a1.smartcore.bos.access.v1.ListAccessGrantsResponse\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_access_proto_rawDescOnce sync.Once
-	file_access_proto_rawDescData []byte
+	file_smartcore_bos_access_v1_access_proto_rawDescOnce sync.Once
+	file_smartcore_bos_access_v1_access_proto_rawDescData []byte
 )
 
-func file_access_proto_rawDescGZIP() []byte {
-	file_access_proto_rawDescOnce.Do(func() {
-		file_access_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_access_proto_rawDesc), len(file_access_proto_rawDesc)))
+func file_smartcore_bos_access_v1_access_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_access_v1_access_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_access_v1_access_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_access_v1_access_proto_rawDesc), len(file_smartcore_bos_access_v1_access_proto_rawDesc)))
 	})
-	return file_access_proto_rawDescData
+	return file_smartcore_bos_access_v1_access_proto_rawDescData
 }
 
-var file_access_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_access_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
-var file_access_proto_goTypes = []any{
-	(AccessAttempt_Grant)(0),                  // 0: smartcore.bos.AccessAttempt.Grant
-	(*AccessAttempt)(nil),                     // 1: smartcore.bos.AccessAttempt
-	(*GetLastAccessAttemptRequest)(nil),       // 2: smartcore.bos.GetLastAccessAttemptRequest
-	(*PullAccessAttemptsRequest)(nil),         // 3: smartcore.bos.PullAccessAttemptsRequest
-	(*PullAccessAttemptsResponse)(nil),        // 4: smartcore.bos.PullAccessAttemptsResponse
-	(*AccessGrant)(nil),                       // 5: smartcore.bos.AccessGrant
-	(*CreateAccessGrantRequest)(nil),          // 6: smartcore.bos.CreateAccessGrantRequest
-	(*UpdateAccessGrantRequest)(nil),          // 7: smartcore.bos.UpdateAccessGrantRequest
-	(*DeleteAccessGrantRequest)(nil),          // 8: smartcore.bos.DeleteAccessGrantRequest
-	(*DeleteAccessGrantResponse)(nil),         // 9: smartcore.bos.DeleteAccessGrantResponse
-	(*GetAccessGrantsRequest)(nil),            // 10: smartcore.bos.GetAccessGrantsRequest
-	(*ListAccessGrantsRequest)(nil),           // 11: smartcore.bos.ListAccessGrantsRequest
-	(*ListAccessGrantsResponse)(nil),          // 12: smartcore.bos.ListAccessGrantsResponse
-	(*PullAccessAttemptsResponse_Change)(nil), // 13: smartcore.bos.PullAccessAttemptsResponse.Change
-	(*Actor)(nil),                             // 14: smartcore.bos.Actor
+var file_smartcore_bos_access_v1_access_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_smartcore_bos_access_v1_access_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_smartcore_bos_access_v1_access_proto_goTypes = []any{
+	(AccessAttempt_Grant)(0),                  // 0: smartcore.bos.access.v1.AccessAttempt.Grant
+	(*AccessAttempt)(nil),                     // 1: smartcore.bos.access.v1.AccessAttempt
+	(*GetLastAccessAttemptRequest)(nil),       // 2: smartcore.bos.access.v1.GetLastAccessAttemptRequest
+	(*PullAccessAttemptsRequest)(nil),         // 3: smartcore.bos.access.v1.PullAccessAttemptsRequest
+	(*PullAccessAttemptsResponse)(nil),        // 4: smartcore.bos.access.v1.PullAccessAttemptsResponse
+	(*AccessGrant)(nil),                       // 5: smartcore.bos.access.v1.AccessGrant
+	(*CreateAccessGrantRequest)(nil),          // 6: smartcore.bos.access.v1.CreateAccessGrantRequest
+	(*UpdateAccessGrantRequest)(nil),          // 7: smartcore.bos.access.v1.UpdateAccessGrantRequest
+	(*DeleteAccessGrantRequest)(nil),          // 8: smartcore.bos.access.v1.DeleteAccessGrantRequest
+	(*DeleteAccessGrantResponse)(nil),         // 9: smartcore.bos.access.v1.DeleteAccessGrantResponse
+	(*GetAccessGrantsRequest)(nil),            // 10: smartcore.bos.access.v1.GetAccessGrantsRequest
+	(*ListAccessGrantsRequest)(nil),           // 11: smartcore.bos.access.v1.ListAccessGrantsRequest
+	(*ListAccessGrantsResponse)(nil),          // 12: smartcore.bos.access.v1.ListAccessGrantsResponse
+	(*PullAccessAttemptsResponse_Change)(nil), // 13: smartcore.bos.access.v1.PullAccessAttemptsResponse.Change
+	(*Actor)(nil),                             // 14: smartcore.bos.actor.v1.Actor
 	(*timestamppb.Timestamp)(nil),             // 15: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),             // 16: google.protobuf.FieldMask
 }
-var file_access_proto_depIdxs = []int32{
-	0,  // 0: smartcore.bos.AccessAttempt.grant:type_name -> smartcore.bos.AccessAttempt.Grant
-	14, // 1: smartcore.bos.AccessAttempt.actor:type_name -> smartcore.bos.Actor
-	15, // 2: smartcore.bos.AccessAttempt.access_attempt_time:type_name -> google.protobuf.Timestamp
-	16, // 3: smartcore.bos.GetLastAccessAttemptRequest.read_mask:type_name -> google.protobuf.FieldMask
-	16, // 4: smartcore.bos.PullAccessAttemptsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	13, // 5: smartcore.bos.PullAccessAttemptsResponse.changes:type_name -> smartcore.bos.PullAccessAttemptsResponse.Change
-	15, // 6: smartcore.bos.AccessGrant.start_time:type_name -> google.protobuf.Timestamp
-	15, // 7: smartcore.bos.AccessGrant.end_time:type_name -> google.protobuf.Timestamp
-	14, // 8: smartcore.bos.AccessGrant.grantee:type_name -> smartcore.bos.Actor
-	14, // 9: smartcore.bos.AccessGrant.granter:type_name -> smartcore.bos.Actor
-	15, // 10: smartcore.bos.AccessGrant.created_time:type_name -> google.protobuf.Timestamp
-	15, // 11: smartcore.bos.AccessGrant.updated_time:type_name -> google.protobuf.Timestamp
-	5,  // 12: smartcore.bos.CreateAccessGrantRequest.access_grant:type_name -> smartcore.bos.AccessGrant
-	5,  // 13: smartcore.bos.UpdateAccessGrantRequest.access_grant:type_name -> smartcore.bos.AccessGrant
-	16, // 14: smartcore.bos.GetAccessGrantsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	16, // 15: smartcore.bos.ListAccessGrantsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	5,  // 16: smartcore.bos.ListAccessGrantsResponse.access_grants:type_name -> smartcore.bos.AccessGrant
-	15, // 17: smartcore.bos.PullAccessAttemptsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 18: smartcore.bos.PullAccessAttemptsResponse.Change.access_attempt:type_name -> smartcore.bos.AccessAttempt
-	2,  // 19: smartcore.bos.AccessApi.GetLastAccessAttempt:input_type -> smartcore.bos.GetLastAccessAttemptRequest
-	3,  // 20: smartcore.bos.AccessApi.PullAccessAttempts:input_type -> smartcore.bos.PullAccessAttemptsRequest
-	6,  // 21: smartcore.bos.AccessApi.CreateAccessGrant:input_type -> smartcore.bos.CreateAccessGrantRequest
-	7,  // 22: smartcore.bos.AccessApi.UpdateAccessGrant:input_type -> smartcore.bos.UpdateAccessGrantRequest
-	8,  // 23: smartcore.bos.AccessApi.DeleteAccessGrant:input_type -> smartcore.bos.DeleteAccessGrantRequest
-	10, // 24: smartcore.bos.AccessApi.GetAccessGrant:input_type -> smartcore.bos.GetAccessGrantsRequest
-	11, // 25: smartcore.bos.AccessApi.ListAccessGrants:input_type -> smartcore.bos.ListAccessGrantsRequest
-	1,  // 26: smartcore.bos.AccessApi.GetLastAccessAttempt:output_type -> smartcore.bos.AccessAttempt
-	4,  // 27: smartcore.bos.AccessApi.PullAccessAttempts:output_type -> smartcore.bos.PullAccessAttemptsResponse
-	5,  // 28: smartcore.bos.AccessApi.CreateAccessGrant:output_type -> smartcore.bos.AccessGrant
-	5,  // 29: smartcore.bos.AccessApi.UpdateAccessGrant:output_type -> smartcore.bos.AccessGrant
-	9,  // 30: smartcore.bos.AccessApi.DeleteAccessGrant:output_type -> smartcore.bos.DeleteAccessGrantResponse
-	5,  // 31: smartcore.bos.AccessApi.GetAccessGrant:output_type -> smartcore.bos.AccessGrant
-	12, // 32: smartcore.bos.AccessApi.ListAccessGrants:output_type -> smartcore.bos.ListAccessGrantsResponse
+var file_smartcore_bos_access_v1_access_proto_depIdxs = []int32{
+	0,  // 0: smartcore.bos.access.v1.AccessAttempt.grant:type_name -> smartcore.bos.access.v1.AccessAttempt.Grant
+	14, // 1: smartcore.bos.access.v1.AccessAttempt.actor:type_name -> smartcore.bos.actor.v1.Actor
+	15, // 2: smartcore.bos.access.v1.AccessAttempt.access_attempt_time:type_name -> google.protobuf.Timestamp
+	16, // 3: smartcore.bos.access.v1.GetLastAccessAttemptRequest.read_mask:type_name -> google.protobuf.FieldMask
+	16, // 4: smartcore.bos.access.v1.PullAccessAttemptsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	13, // 5: smartcore.bos.access.v1.PullAccessAttemptsResponse.changes:type_name -> smartcore.bos.access.v1.PullAccessAttemptsResponse.Change
+	15, // 6: smartcore.bos.access.v1.AccessGrant.start_time:type_name -> google.protobuf.Timestamp
+	15, // 7: smartcore.bos.access.v1.AccessGrant.end_time:type_name -> google.protobuf.Timestamp
+	14, // 8: smartcore.bos.access.v1.AccessGrant.grantee:type_name -> smartcore.bos.actor.v1.Actor
+	14, // 9: smartcore.bos.access.v1.AccessGrant.granter:type_name -> smartcore.bos.actor.v1.Actor
+	15, // 10: smartcore.bos.access.v1.AccessGrant.created_time:type_name -> google.protobuf.Timestamp
+	15, // 11: smartcore.bos.access.v1.AccessGrant.updated_time:type_name -> google.protobuf.Timestamp
+	5,  // 12: smartcore.bos.access.v1.CreateAccessGrantRequest.access_grant:type_name -> smartcore.bos.access.v1.AccessGrant
+	5,  // 13: smartcore.bos.access.v1.UpdateAccessGrantRequest.access_grant:type_name -> smartcore.bos.access.v1.AccessGrant
+	16, // 14: smartcore.bos.access.v1.GetAccessGrantsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	16, // 15: smartcore.bos.access.v1.ListAccessGrantsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	5,  // 16: smartcore.bos.access.v1.ListAccessGrantsResponse.access_grants:type_name -> smartcore.bos.access.v1.AccessGrant
+	15, // 17: smartcore.bos.access.v1.PullAccessAttemptsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	1,  // 18: smartcore.bos.access.v1.PullAccessAttemptsResponse.Change.access_attempt:type_name -> smartcore.bos.access.v1.AccessAttempt
+	2,  // 19: smartcore.bos.access.v1.AccessApi.GetLastAccessAttempt:input_type -> smartcore.bos.access.v1.GetLastAccessAttemptRequest
+	3,  // 20: smartcore.bos.access.v1.AccessApi.PullAccessAttempts:input_type -> smartcore.bos.access.v1.PullAccessAttemptsRequest
+	6,  // 21: smartcore.bos.access.v1.AccessApi.CreateAccessGrant:input_type -> smartcore.bos.access.v1.CreateAccessGrantRequest
+	7,  // 22: smartcore.bos.access.v1.AccessApi.UpdateAccessGrant:input_type -> smartcore.bos.access.v1.UpdateAccessGrantRequest
+	8,  // 23: smartcore.bos.access.v1.AccessApi.DeleteAccessGrant:input_type -> smartcore.bos.access.v1.DeleteAccessGrantRequest
+	10, // 24: smartcore.bos.access.v1.AccessApi.GetAccessGrant:input_type -> smartcore.bos.access.v1.GetAccessGrantsRequest
+	11, // 25: smartcore.bos.access.v1.AccessApi.ListAccessGrants:input_type -> smartcore.bos.access.v1.ListAccessGrantsRequest
+	1,  // 26: smartcore.bos.access.v1.AccessApi.GetLastAccessAttempt:output_type -> smartcore.bos.access.v1.AccessAttempt
+	4,  // 27: smartcore.bos.access.v1.AccessApi.PullAccessAttempts:output_type -> smartcore.bos.access.v1.PullAccessAttemptsResponse
+	5,  // 28: smartcore.bos.access.v1.AccessApi.CreateAccessGrant:output_type -> smartcore.bos.access.v1.AccessGrant
+	5,  // 29: smartcore.bos.access.v1.AccessApi.UpdateAccessGrant:output_type -> smartcore.bos.access.v1.AccessGrant
+	9,  // 30: smartcore.bos.access.v1.AccessApi.DeleteAccessGrant:output_type -> smartcore.bos.access.v1.DeleteAccessGrantResponse
+	5,  // 31: smartcore.bos.access.v1.AccessApi.GetAccessGrant:output_type -> smartcore.bos.access.v1.AccessGrant
+	12, // 32: smartcore.bos.access.v1.AccessApi.ListAccessGrants:output_type -> smartcore.bos.access.v1.ListAccessGrantsResponse
 	26, // [26:33] is the sub-list for method output_type
 	19, // [19:26] is the sub-list for method input_type
 	19, // [19:19] is the sub-list for extension type_name
@@ -1155,13 +1155,13 @@ var file_access_proto_depIdxs = []int32{
 	0,  // [0:19] is the sub-list for field type_name
 }
 
-func init() { file_access_proto_init() }
-func file_access_proto_init() {
-	if File_access_proto != nil {
+func init() { file_smartcore_bos_access_v1_access_proto_init() }
+func file_smartcore_bos_access_v1_access_proto_init() {
+	if File_smartcore_bos_access_v1_access_proto != nil {
 		return
 	}
-	file_actor_proto_init()
-	file_access_proto_msgTypes[4].OneofWrappers = []any{
+	file_smartcore_bos_actor_v1_actor_proto_init()
+	file_smartcore_bos_access_v1_access_proto_msgTypes[4].OneofWrappers = []any{
 		(*AccessGrant_QrCodeUrl)(nil),
 		(*AccessGrant_QrCodeImage)(nil),
 	}
@@ -1169,18 +1169,18 @@ func file_access_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_access_proto_rawDesc), len(file_access_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_access_v1_access_proto_rawDesc), len(file_smartcore_bos_access_v1_access_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_access_proto_goTypes,
-		DependencyIndexes: file_access_proto_depIdxs,
-		EnumInfos:         file_access_proto_enumTypes,
-		MessageInfos:      file_access_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_access_v1_access_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_access_v1_access_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_access_v1_access_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_access_v1_access_proto_msgTypes,
 	}.Build()
-	File_access_proto = out.File
-	file_access_proto_goTypes = nil
-	file_access_proto_depIdxs = nil
+	File_smartcore_bos_access_v1_access_proto = out.File
+	file_smartcore_bos_access_v1_access_proto_goTypes = nil
+	file_smartcore_bos_access_v1_access_proto_depIdxs = nil
 }

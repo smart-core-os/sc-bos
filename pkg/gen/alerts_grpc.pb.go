@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: alerts.proto
+// source: smartcore/bos/alert/v1/alerts.proto
 
 package gen
 
@@ -19,12 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AlertApi_ListAlerts_FullMethodName         = "/smartcore.bos.AlertApi/ListAlerts"
-	AlertApi_PullAlerts_FullMethodName         = "/smartcore.bos.AlertApi/PullAlerts"
-	AlertApi_AcknowledgeAlert_FullMethodName   = "/smartcore.bos.AlertApi/AcknowledgeAlert"
-	AlertApi_UnacknowledgeAlert_FullMethodName = "/smartcore.bos.AlertApi/UnacknowledgeAlert"
-	AlertApi_GetAlertMetadata_FullMethodName   = "/smartcore.bos.AlertApi/GetAlertMetadata"
-	AlertApi_PullAlertMetadata_FullMethodName  = "/smartcore.bos.AlertApi/PullAlertMetadata"
+	AlertApi_ListAlerts_FullMethodName         = "/smartcore.bos.alert.v1.AlertApi/ListAlerts"
+	AlertApi_PullAlerts_FullMethodName         = "/smartcore.bos.alert.v1.AlertApi/PullAlerts"
+	AlertApi_AcknowledgeAlert_FullMethodName   = "/smartcore.bos.alert.v1.AlertApi/AcknowledgeAlert"
+	AlertApi_UnacknowledgeAlert_FullMethodName = "/smartcore.bos.alert.v1.AlertApi/UnacknowledgeAlert"
+	AlertApi_GetAlertMetadata_FullMethodName   = "/smartcore.bos.alert.v1.AlertApi/GetAlertMetadata"
+	AlertApi_PullAlertMetadata_FullMethodName  = "/smartcore.bos.alert.v1.AlertApi/PullAlertMetadata"
 )
 
 // AlertApiClient is the client API for AlertApi service.
@@ -292,7 +292,7 @@ type AlertApi_PullAlertMetadataServer = grpc.ServerStreamingServer[PullAlertMeta
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AlertApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.AlertApi",
+	ServiceName: "smartcore.bos.alert.v1.AlertApi",
 	HandlerType: (*AlertApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -324,14 +324,14 @@ var AlertApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "alerts.proto",
+	Metadata: "smartcore/bos/alert/v1/alerts.proto",
 }
 
 const (
-	AlertAdminApi_CreateAlert_FullMethodName  = "/smartcore.bos.AlertAdminApi/CreateAlert"
-	AlertAdminApi_UpdateAlert_FullMethodName  = "/smartcore.bos.AlertAdminApi/UpdateAlert"
-	AlertAdminApi_ResolveAlert_FullMethodName = "/smartcore.bos.AlertAdminApi/ResolveAlert"
-	AlertAdminApi_DeleteAlert_FullMethodName  = "/smartcore.bos.AlertAdminApi/DeleteAlert"
+	AlertAdminApi_CreateAlert_FullMethodName  = "/smartcore.bos.alert.v1.AlertAdminApi/CreateAlert"
+	AlertAdminApi_UpdateAlert_FullMethodName  = "/smartcore.bos.alert.v1.AlertAdminApi/UpdateAlert"
+	AlertAdminApi_ResolveAlert_FullMethodName = "/smartcore.bos.alert.v1.AlertAdminApi/ResolveAlert"
+	AlertAdminApi_DeleteAlert_FullMethodName  = "/smartcore.bos.alert.v1.AlertAdminApi/DeleteAlert"
 )
 
 // AlertAdminApiClient is the client API for AlertAdminApi service.
@@ -527,7 +527,7 @@ func _AlertAdminApi_DeleteAlert_Handler(srv interface{}, ctx context.Context, de
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AlertAdminApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.AlertAdminApi",
+	ServiceName: "smartcore.bos.alert.v1.AlertAdminApi",
 	HandlerType: (*AlertAdminApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -548,5 +548,5 @@ var AlertAdminApi_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "alerts.proto",
+	Metadata: "smartcore/bos/alert/v1/alerts.proto",
 }

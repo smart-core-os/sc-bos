@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: hub.proto
+// source: smartcore/bos/hub/v1/hub.proto
 
 package gen
 
@@ -35,7 +35,7 @@ type HubNode struct {
 
 func (x *HubNode) Reset() {
 	*x = HubNode{}
-	mi := &file_hub_proto_msgTypes[0]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +47,7 @@ func (x *HubNode) String() string {
 func (*HubNode) ProtoMessage() {}
 
 func (x *HubNode) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[0]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +60,7 @@ func (x *HubNode) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HubNode.ProtoReflect.Descriptor instead.
 func (*HubNode) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *HubNode) GetAddress() string {
@@ -97,7 +97,7 @@ type HubNodeInspection struct {
 
 func (x *HubNodeInspection) Reset() {
 	*x = HubNodeInspection{}
-	mi := &file_hub_proto_msgTypes[1]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -109,7 +109,7 @@ func (x *HubNodeInspection) String() string {
 func (*HubNodeInspection) ProtoMessage() {}
 
 func (x *HubNodeInspection) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[1]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -122,7 +122,7 @@ func (x *HubNodeInspection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HubNodeInspection.ProtoReflect.Descriptor instead.
 func (*HubNodeInspection) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *HubNodeInspection) GetMetadata() *traits.Metadata {
@@ -148,7 +148,7 @@ type GetHubNodeRequest struct {
 
 func (x *GetHubNodeRequest) Reset() {
 	*x = GetHubNodeRequest{}
-	mi := &file_hub_proto_msgTypes[2]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -160,7 +160,7 @@ func (x *GetHubNodeRequest) String() string {
 func (*GetHubNodeRequest) ProtoMessage() {}
 
 func (x *GetHubNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[2]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -173,7 +173,7 @@ func (x *GetHubNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetHubNodeRequest.ProtoReflect.Descriptor instead.
 func (*GetHubNodeRequest) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetHubNodeRequest) GetAddress() string {
@@ -196,7 +196,7 @@ type EnrollHubNodeRequest struct {
 
 func (x *EnrollHubNodeRequest) Reset() {
 	*x = EnrollHubNodeRequest{}
-	mi := &file_hub_proto_msgTypes[3]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -208,7 +208,7 @@ func (x *EnrollHubNodeRequest) String() string {
 func (*EnrollHubNodeRequest) ProtoMessage() {}
 
 func (x *EnrollHubNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[3]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -221,7 +221,7 @@ func (x *EnrollHubNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnrollHubNodeRequest.ProtoReflect.Descriptor instead.
 func (*EnrollHubNodeRequest) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *EnrollHubNodeRequest) GetNode() *HubNode {
@@ -247,7 +247,7 @@ type RenewHubNodeRequest struct {
 
 func (x *RenewHubNodeRequest) Reset() {
 	*x = RenewHubNodeRequest{}
-	mi := &file_hub_proto_msgTypes[4]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -259,7 +259,7 @@ func (x *RenewHubNodeRequest) String() string {
 func (*RenewHubNodeRequest) ProtoMessage() {}
 
 func (x *RenewHubNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[4]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -272,7 +272,7 @@ func (x *RenewHubNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenewHubNodeRequest.ProtoReflect.Descriptor instead.
 func (*RenewHubNodeRequest) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RenewHubNodeRequest) GetAddress() string {
@@ -290,7 +290,7 @@ type ListHubNodesRequest struct {
 
 func (x *ListHubNodesRequest) Reset() {
 	*x = ListHubNodesRequest{}
-	mi := &file_hub_proto_msgTypes[5]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -302,7 +302,7 @@ func (x *ListHubNodesRequest) String() string {
 func (*ListHubNodesRequest) ProtoMessage() {}
 
 func (x *ListHubNodesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[5]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -315,7 +315,7 @@ func (x *ListHubNodesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHubNodesRequest.ProtoReflect.Descriptor instead.
 func (*ListHubNodesRequest) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{5}
 }
 
 type ListHubNodesResponse struct {
@@ -327,7 +327,7 @@ type ListHubNodesResponse struct {
 
 func (x *ListHubNodesResponse) Reset() {
 	*x = ListHubNodesResponse{}
-	mi := &file_hub_proto_msgTypes[6]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -339,7 +339,7 @@ func (x *ListHubNodesResponse) String() string {
 func (*ListHubNodesResponse) ProtoMessage() {}
 
 func (x *ListHubNodesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[6]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -352,7 +352,7 @@ func (x *ListHubNodesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHubNodesResponse.ProtoReflect.Descriptor instead.
 func (*ListHubNodesResponse) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListHubNodesResponse) GetNodes() []*HubNode {
@@ -373,7 +373,7 @@ type PullHubNodesRequest struct {
 
 func (x *PullHubNodesRequest) Reset() {
 	*x = PullHubNodesRequest{}
-	mi := &file_hub_proto_msgTypes[7]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -385,7 +385,7 @@ func (x *PullHubNodesRequest) String() string {
 func (*PullHubNodesRequest) ProtoMessage() {}
 
 func (x *PullHubNodesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[7]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -398,7 +398,7 @@ func (x *PullHubNodesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullHubNodesRequest.ProtoReflect.Descriptor instead.
 func (*PullHubNodesRequest) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PullHubNodesRequest) GetUpdatesOnly() bool {
@@ -417,7 +417,7 @@ type PullHubNodesResponse struct {
 
 func (x *PullHubNodesResponse) Reset() {
 	*x = PullHubNodesResponse{}
-	mi := &file_hub_proto_msgTypes[8]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -429,7 +429,7 @@ func (x *PullHubNodesResponse) String() string {
 func (*PullHubNodesResponse) ProtoMessage() {}
 
 func (x *PullHubNodesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[8]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -442,7 +442,7 @@ func (x *PullHubNodesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullHubNodesResponse.ProtoReflect.Descriptor instead.
 func (*PullHubNodesResponse) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{8}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PullHubNodesResponse) GetChanges() []*PullHubNodesResponse_Change {
@@ -461,7 +461,7 @@ type InspectHubNodeRequest struct {
 
 func (x *InspectHubNodeRequest) Reset() {
 	*x = InspectHubNodeRequest{}
-	mi := &file_hub_proto_msgTypes[9]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -473,7 +473,7 @@ func (x *InspectHubNodeRequest) String() string {
 func (*InspectHubNodeRequest) ProtoMessage() {}
 
 func (x *InspectHubNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[9]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -486,7 +486,7 @@ func (x *InspectHubNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectHubNodeRequest.ProtoReflect.Descriptor instead.
 func (*InspectHubNodeRequest) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{9}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *InspectHubNodeRequest) GetNode() *HubNode {
@@ -505,7 +505,7 @@ type TestHubNodeRequest struct {
 
 func (x *TestHubNodeRequest) Reset() {
 	*x = TestHubNodeRequest{}
-	mi := &file_hub_proto_msgTypes[10]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -517,7 +517,7 @@ func (x *TestHubNodeRequest) String() string {
 func (*TestHubNodeRequest) ProtoMessage() {}
 
 func (x *TestHubNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[10]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -530,7 +530,7 @@ func (x *TestHubNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestHubNodeRequest.ProtoReflect.Descriptor instead.
 func (*TestHubNodeRequest) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{10}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *TestHubNodeRequest) GetAddress() string {
@@ -548,7 +548,7 @@ type TestHubNodeResponse struct {
 
 func (x *TestHubNodeResponse) Reset() {
 	*x = TestHubNodeResponse{}
-	mi := &file_hub_proto_msgTypes[11]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -560,7 +560,7 @@ func (x *TestHubNodeResponse) String() string {
 func (*TestHubNodeResponse) ProtoMessage() {}
 
 func (x *TestHubNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[11]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -573,7 +573,7 @@ func (x *TestHubNodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestHubNodeResponse.ProtoReflect.Descriptor instead.
 func (*TestHubNodeResponse) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{11}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{11}
 }
 
 type ForgetHubNodeRequest struct {
@@ -587,7 +587,7 @@ type ForgetHubNodeRequest struct {
 
 func (x *ForgetHubNodeRequest) Reset() {
 	*x = ForgetHubNodeRequest{}
-	mi := &file_hub_proto_msgTypes[12]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -599,7 +599,7 @@ func (x *ForgetHubNodeRequest) String() string {
 func (*ForgetHubNodeRequest) ProtoMessage() {}
 
 func (x *ForgetHubNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[12]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -612,7 +612,7 @@ func (x *ForgetHubNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForgetHubNodeRequest.ProtoReflect.Descriptor instead.
 func (*ForgetHubNodeRequest) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{12}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ForgetHubNodeRequest) GetAddress() string {
@@ -637,7 +637,7 @@ type ForgetHubNodeResponse struct {
 
 func (x *ForgetHubNodeResponse) Reset() {
 	*x = ForgetHubNodeResponse{}
-	mi := &file_hub_proto_msgTypes[13]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -649,7 +649,7 @@ func (x *ForgetHubNodeResponse) String() string {
 func (*ForgetHubNodeResponse) ProtoMessage() {}
 
 func (x *ForgetHubNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[13]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -662,7 +662,7 @@ func (x *ForgetHubNodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForgetHubNodeResponse.ProtoReflect.Descriptor instead.
 func (*ForgetHubNodeResponse) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{13}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{13}
 }
 
 type PullHubNodesResponse_Change struct {
@@ -681,7 +681,7 @@ type PullHubNodesResponse_Change struct {
 
 func (x *PullHubNodesResponse_Change) Reset() {
 	*x = PullHubNodesResponse_Change{}
-	mi := &file_hub_proto_msgTypes[14]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -693,7 +693,7 @@ func (x *PullHubNodesResponse_Change) String() string {
 func (*PullHubNodesResponse_Change) ProtoMessage() {}
 
 func (x *PullHubNodesResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_hub_proto_msgTypes[14]
+	mi := &file_smartcore_bos_hub_v1_hub_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -706,7 +706,7 @@ func (x *PullHubNodesResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullHubNodesResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullHubNodesResponse_Change) Descriptor() ([]byte, []int) {
-	return file_hub_proto_rawDescGZIP(), []int{8, 0}
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{8, 0}
 }
 
 func (x *PullHubNodesResponse_Change) GetType() types.ChangeType {
@@ -737,11 +737,11 @@ func (x *PullHubNodesResponse_Change) GetChangeTime() *timestamppb.Timestamp {
 	return nil
 }
 
-var File_hub_proto protoreflect.FileDescriptor
+var File_smartcore_bos_hub_v1_hub_proto protoreflect.FileDescriptor
 
-const file_hub_proto_rawDesc = "" +
+const file_smartcore_bos_hub_v1_hub_proto_rawDesc = "" +
 	"\n" +
-	"\thub.proto\x12\rsmartcore.bos\x1a\x15traits/metadata.proto\x1a\x12types/change.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"Y\n" +
+	"\x1esmartcore/bos/hub/v1/hub.proto\x12\x14smartcore.bos.hub.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15traits/metadata.proto\x1a\x12types/change.proto\"Y\n" +
 	"\aHubNode\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -750,104 +750,104 @@ const file_hub_proto_rawDesc = "" +
 	"\bmetadata\x18\x01 \x01(\v2\x1a.smartcore.traits.MetadataR\bmetadata\x12!\n" +
 	"\fpublic_certs\x18\x02 \x03(\tR\vpublicCerts\"-\n" +
 	"\x11GetHubNodeRequest\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\tR\aaddress\"e\n" +
-	"\x14EnrollHubNodeRequest\x12*\n" +
-	"\x04node\x18\x01 \x01(\v2\x16.smartcore.bos.HubNodeR\x04node\x12!\n" +
+	"\aaddress\x18\x01 \x01(\tR\aaddress\"l\n" +
+	"\x14EnrollHubNodeRequest\x121\n" +
+	"\x04node\x18\x01 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\x04node\x12!\n" +
 	"\fpublic_certs\x18\x02 \x03(\tR\vpublicCerts\"/\n" +
 	"\x13RenewHubNodeRequest\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\"\x15\n" +
-	"\x13ListHubNodesRequest\"D\n" +
-	"\x14ListHubNodesResponse\x12,\n" +
-	"\x05nodes\x18\x01 \x03(\v2\x16.smartcore.bos.HubNodeR\x05nodes\"8\n" +
+	"\x13ListHubNodesRequest\"K\n" +
+	"\x14ListHubNodesResponse\x123\n" +
+	"\x05nodes\x18\x01 \x03(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\x05nodes\"8\n" +
 	"\x13PullHubNodesRequest\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xbf\x02\n" +
-	"\x14PullHubNodesResponse\x12D\n" +
-	"\achanges\x18\x01 \x03(\v2*.smartcore.bos.PullHubNodesResponse.ChangeR\achanges\x1a\xe0\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xd4\x02\n" +
+	"\x14PullHubNodesResponse\x12K\n" +
+	"\achanges\x18\x01 \x03(\v21.smartcore.bos.hub.v1.PullHubNodesResponse.ChangeR\achanges\x1a\xee\x01\n" +
 	"\x06Change\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x123\n" +
-	"\tnew_value\x18\x03 \x01(\v2\x16.smartcore.bos.HubNodeR\bnewValue\x123\n" +
-	"\told_value\x18\x04 \x01(\v2\x16.smartcore.bos.HubNodeR\boldValue\x12;\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12:\n" +
+	"\tnew_value\x18\x03 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\bnewValue\x12:\n" +
+	"\told_value\x18\x04 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\"C\n" +
-	"\x15InspectHubNodeRequest\x12*\n" +
-	"\x04node\x18\x01 \x01(\v2\x16.smartcore.bos.HubNodeR\x04node\".\n" +
+	"changeTime\"J\n" +
+	"\x15InspectHubNodeRequest\x121\n" +
+	"\x04node\x18\x01 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\x04node\".\n" +
 	"\x12TestHubNodeRequest\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\"\x15\n" +
 	"\x13TestHubNodeResponse\"U\n" +
 	"\x14ForgetHubNodeRequest\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\x12#\n" +
 	"\rallow_missing\x18\x02 \x01(\bR\fallowMissing\"\x17\n" +
-	"\x15ForgetHubNodeResponse2\xaa\x05\n" +
-	"\x06HubApi\x12F\n" +
+	"\x15ForgetHubNodeResponse2\x9a\x06\n" +
+	"\x06HubApi\x12T\n" +
 	"\n" +
-	"GetHubNode\x12 .smartcore.bos.GetHubNodeRequest\x1a\x16.smartcore.bos.HubNode\x12W\n" +
-	"\fListHubNodes\x12\".smartcore.bos.ListHubNodesRequest\x1a#.smartcore.bos.ListHubNodesResponse\x12Y\n" +
-	"\fPullHubNodes\x12\".smartcore.bos.PullHubNodesRequest\x1a#.smartcore.bos.PullHubNodesResponse0\x01\x12X\n" +
-	"\x0eInspectHubNode\x12$.smartcore.bos.InspectHubNodeRequest\x1a .smartcore.bos.HubNodeInspection\x12L\n" +
-	"\rEnrollHubNode\x12#.smartcore.bos.EnrollHubNodeRequest\x1a\x16.smartcore.bos.HubNode\x12J\n" +
-	"\fRenewHubNode\x12\".smartcore.bos.RenewHubNodeRequest\x1a\x16.smartcore.bos.HubNode\x12T\n" +
-	"\vTestHubNode\x12!.smartcore.bos.TestHubNodeRequest\x1a\".smartcore.bos.TestHubNodeResponse\x12Z\n" +
-	"\rForgetHubNode\x12#.smartcore.bos.ForgetHubNodeRequest\x1a$.smartcore.bos.ForgetHubNodeResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"GetHubNode\x12'.smartcore.bos.hub.v1.GetHubNodeRequest\x1a\x1d.smartcore.bos.hub.v1.HubNode\x12e\n" +
+	"\fListHubNodes\x12).smartcore.bos.hub.v1.ListHubNodesRequest\x1a*.smartcore.bos.hub.v1.ListHubNodesResponse\x12g\n" +
+	"\fPullHubNodes\x12).smartcore.bos.hub.v1.PullHubNodesRequest\x1a*.smartcore.bos.hub.v1.PullHubNodesResponse0\x01\x12f\n" +
+	"\x0eInspectHubNode\x12+.smartcore.bos.hub.v1.InspectHubNodeRequest\x1a'.smartcore.bos.hub.v1.HubNodeInspection\x12Z\n" +
+	"\rEnrollHubNode\x12*.smartcore.bos.hub.v1.EnrollHubNodeRequest\x1a\x1d.smartcore.bos.hub.v1.HubNode\x12X\n" +
+	"\fRenewHubNode\x12).smartcore.bos.hub.v1.RenewHubNodeRequest\x1a\x1d.smartcore.bos.hub.v1.HubNode\x12b\n" +
+	"\vTestHubNode\x12(.smartcore.bos.hub.v1.TestHubNodeRequest\x1a).smartcore.bos.hub.v1.TestHubNodeResponse\x12h\n" +
+	"\rForgetHubNode\x12*.smartcore.bos.hub.v1.ForgetHubNodeRequest\x1a+.smartcore.bos.hub.v1.ForgetHubNodeResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_hub_proto_rawDescOnce sync.Once
-	file_hub_proto_rawDescData []byte
+	file_smartcore_bos_hub_v1_hub_proto_rawDescOnce sync.Once
+	file_smartcore_bos_hub_v1_hub_proto_rawDescData []byte
 )
 
-func file_hub_proto_rawDescGZIP() []byte {
-	file_hub_proto_rawDescOnce.Do(func() {
-		file_hub_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_hub_proto_rawDesc), len(file_hub_proto_rawDesc)))
+func file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_hub_v1_hub_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_hub_v1_hub_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_hub_v1_hub_proto_rawDesc), len(file_smartcore_bos_hub_v1_hub_proto_rawDesc)))
 	})
-	return file_hub_proto_rawDescData
+	return file_smartcore_bos_hub_v1_hub_proto_rawDescData
 }
 
-var file_hub_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
-var file_hub_proto_goTypes = []any{
-	(*HubNode)(nil),                     // 0: smartcore.bos.HubNode
-	(*HubNodeInspection)(nil),           // 1: smartcore.bos.HubNodeInspection
-	(*GetHubNodeRequest)(nil),           // 2: smartcore.bos.GetHubNodeRequest
-	(*EnrollHubNodeRequest)(nil),        // 3: smartcore.bos.EnrollHubNodeRequest
-	(*RenewHubNodeRequest)(nil),         // 4: smartcore.bos.RenewHubNodeRequest
-	(*ListHubNodesRequest)(nil),         // 5: smartcore.bos.ListHubNodesRequest
-	(*ListHubNodesResponse)(nil),        // 6: smartcore.bos.ListHubNodesResponse
-	(*PullHubNodesRequest)(nil),         // 7: smartcore.bos.PullHubNodesRequest
-	(*PullHubNodesResponse)(nil),        // 8: smartcore.bos.PullHubNodesResponse
-	(*InspectHubNodeRequest)(nil),       // 9: smartcore.bos.InspectHubNodeRequest
-	(*TestHubNodeRequest)(nil),          // 10: smartcore.bos.TestHubNodeRequest
-	(*TestHubNodeResponse)(nil),         // 11: smartcore.bos.TestHubNodeResponse
-	(*ForgetHubNodeRequest)(nil),        // 12: smartcore.bos.ForgetHubNodeRequest
-	(*ForgetHubNodeResponse)(nil),       // 13: smartcore.bos.ForgetHubNodeResponse
-	(*PullHubNodesResponse_Change)(nil), // 14: smartcore.bos.PullHubNodesResponse.Change
+var file_smartcore_bos_hub_v1_hub_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_smartcore_bos_hub_v1_hub_proto_goTypes = []any{
+	(*HubNode)(nil),                     // 0: smartcore.bos.hub.v1.HubNode
+	(*HubNodeInspection)(nil),           // 1: smartcore.bos.hub.v1.HubNodeInspection
+	(*GetHubNodeRequest)(nil),           // 2: smartcore.bos.hub.v1.GetHubNodeRequest
+	(*EnrollHubNodeRequest)(nil),        // 3: smartcore.bos.hub.v1.EnrollHubNodeRequest
+	(*RenewHubNodeRequest)(nil),         // 4: smartcore.bos.hub.v1.RenewHubNodeRequest
+	(*ListHubNodesRequest)(nil),         // 5: smartcore.bos.hub.v1.ListHubNodesRequest
+	(*ListHubNodesResponse)(nil),        // 6: smartcore.bos.hub.v1.ListHubNodesResponse
+	(*PullHubNodesRequest)(nil),         // 7: smartcore.bos.hub.v1.PullHubNodesRequest
+	(*PullHubNodesResponse)(nil),        // 8: smartcore.bos.hub.v1.PullHubNodesResponse
+	(*InspectHubNodeRequest)(nil),       // 9: smartcore.bos.hub.v1.InspectHubNodeRequest
+	(*TestHubNodeRequest)(nil),          // 10: smartcore.bos.hub.v1.TestHubNodeRequest
+	(*TestHubNodeResponse)(nil),         // 11: smartcore.bos.hub.v1.TestHubNodeResponse
+	(*ForgetHubNodeRequest)(nil),        // 12: smartcore.bos.hub.v1.ForgetHubNodeRequest
+	(*ForgetHubNodeResponse)(nil),       // 13: smartcore.bos.hub.v1.ForgetHubNodeResponse
+	(*PullHubNodesResponse_Change)(nil), // 14: smartcore.bos.hub.v1.PullHubNodesResponse.Change
 	(*traits.Metadata)(nil),             // 15: smartcore.traits.Metadata
 	(types.ChangeType)(0),               // 16: smartcore.types.ChangeType
 	(*timestamppb.Timestamp)(nil),       // 17: google.protobuf.Timestamp
 }
-var file_hub_proto_depIdxs = []int32{
-	15, // 0: smartcore.bos.HubNodeInspection.metadata:type_name -> smartcore.traits.Metadata
-	0,  // 1: smartcore.bos.EnrollHubNodeRequest.node:type_name -> smartcore.bos.HubNode
-	0,  // 2: smartcore.bos.ListHubNodesResponse.nodes:type_name -> smartcore.bos.HubNode
-	14, // 3: smartcore.bos.PullHubNodesResponse.changes:type_name -> smartcore.bos.PullHubNodesResponse.Change
-	0,  // 4: smartcore.bos.InspectHubNodeRequest.node:type_name -> smartcore.bos.HubNode
-	16, // 5: smartcore.bos.PullHubNodesResponse.Change.type:type_name -> smartcore.types.ChangeType
-	0,  // 6: smartcore.bos.PullHubNodesResponse.Change.new_value:type_name -> smartcore.bos.HubNode
-	0,  // 7: smartcore.bos.PullHubNodesResponse.Change.old_value:type_name -> smartcore.bos.HubNode
-	17, // 8: smartcore.bos.PullHubNodesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	2,  // 9: smartcore.bos.HubApi.GetHubNode:input_type -> smartcore.bos.GetHubNodeRequest
-	5,  // 10: smartcore.bos.HubApi.ListHubNodes:input_type -> smartcore.bos.ListHubNodesRequest
-	7,  // 11: smartcore.bos.HubApi.PullHubNodes:input_type -> smartcore.bos.PullHubNodesRequest
-	9,  // 12: smartcore.bos.HubApi.InspectHubNode:input_type -> smartcore.bos.InspectHubNodeRequest
-	3,  // 13: smartcore.bos.HubApi.EnrollHubNode:input_type -> smartcore.bos.EnrollHubNodeRequest
-	4,  // 14: smartcore.bos.HubApi.RenewHubNode:input_type -> smartcore.bos.RenewHubNodeRequest
-	10, // 15: smartcore.bos.HubApi.TestHubNode:input_type -> smartcore.bos.TestHubNodeRequest
-	12, // 16: smartcore.bos.HubApi.ForgetHubNode:input_type -> smartcore.bos.ForgetHubNodeRequest
-	0,  // 17: smartcore.bos.HubApi.GetHubNode:output_type -> smartcore.bos.HubNode
-	6,  // 18: smartcore.bos.HubApi.ListHubNodes:output_type -> smartcore.bos.ListHubNodesResponse
-	8,  // 19: smartcore.bos.HubApi.PullHubNodes:output_type -> smartcore.bos.PullHubNodesResponse
-	1,  // 20: smartcore.bos.HubApi.InspectHubNode:output_type -> smartcore.bos.HubNodeInspection
-	0,  // 21: smartcore.bos.HubApi.EnrollHubNode:output_type -> smartcore.bos.HubNode
-	0,  // 22: smartcore.bos.HubApi.RenewHubNode:output_type -> smartcore.bos.HubNode
-	11, // 23: smartcore.bos.HubApi.TestHubNode:output_type -> smartcore.bos.TestHubNodeResponse
-	13, // 24: smartcore.bos.HubApi.ForgetHubNode:output_type -> smartcore.bos.ForgetHubNodeResponse
+var file_smartcore_bos_hub_v1_hub_proto_depIdxs = []int32{
+	15, // 0: smartcore.bos.hub.v1.HubNodeInspection.metadata:type_name -> smartcore.traits.Metadata
+	0,  // 1: smartcore.bos.hub.v1.EnrollHubNodeRequest.node:type_name -> smartcore.bos.hub.v1.HubNode
+	0,  // 2: smartcore.bos.hub.v1.ListHubNodesResponse.nodes:type_name -> smartcore.bos.hub.v1.HubNode
+	14, // 3: smartcore.bos.hub.v1.PullHubNodesResponse.changes:type_name -> smartcore.bos.hub.v1.PullHubNodesResponse.Change
+	0,  // 4: smartcore.bos.hub.v1.InspectHubNodeRequest.node:type_name -> smartcore.bos.hub.v1.HubNode
+	16, // 5: smartcore.bos.hub.v1.PullHubNodesResponse.Change.type:type_name -> smartcore.types.ChangeType
+	0,  // 6: smartcore.bos.hub.v1.PullHubNodesResponse.Change.new_value:type_name -> smartcore.bos.hub.v1.HubNode
+	0,  // 7: smartcore.bos.hub.v1.PullHubNodesResponse.Change.old_value:type_name -> smartcore.bos.hub.v1.HubNode
+	17, // 8: smartcore.bos.hub.v1.PullHubNodesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	2,  // 9: smartcore.bos.hub.v1.HubApi.GetHubNode:input_type -> smartcore.bos.hub.v1.GetHubNodeRequest
+	5,  // 10: smartcore.bos.hub.v1.HubApi.ListHubNodes:input_type -> smartcore.bos.hub.v1.ListHubNodesRequest
+	7,  // 11: smartcore.bos.hub.v1.HubApi.PullHubNodes:input_type -> smartcore.bos.hub.v1.PullHubNodesRequest
+	9,  // 12: smartcore.bos.hub.v1.HubApi.InspectHubNode:input_type -> smartcore.bos.hub.v1.InspectHubNodeRequest
+	3,  // 13: smartcore.bos.hub.v1.HubApi.EnrollHubNode:input_type -> smartcore.bos.hub.v1.EnrollHubNodeRequest
+	4,  // 14: smartcore.bos.hub.v1.HubApi.RenewHubNode:input_type -> smartcore.bos.hub.v1.RenewHubNodeRequest
+	10, // 15: smartcore.bos.hub.v1.HubApi.TestHubNode:input_type -> smartcore.bos.hub.v1.TestHubNodeRequest
+	12, // 16: smartcore.bos.hub.v1.HubApi.ForgetHubNode:input_type -> smartcore.bos.hub.v1.ForgetHubNodeRequest
+	0,  // 17: smartcore.bos.hub.v1.HubApi.GetHubNode:output_type -> smartcore.bos.hub.v1.HubNode
+	6,  // 18: smartcore.bos.hub.v1.HubApi.ListHubNodes:output_type -> smartcore.bos.hub.v1.ListHubNodesResponse
+	8,  // 19: smartcore.bos.hub.v1.HubApi.PullHubNodes:output_type -> smartcore.bos.hub.v1.PullHubNodesResponse
+	1,  // 20: smartcore.bos.hub.v1.HubApi.InspectHubNode:output_type -> smartcore.bos.hub.v1.HubNodeInspection
+	0,  // 21: smartcore.bos.hub.v1.HubApi.EnrollHubNode:output_type -> smartcore.bos.hub.v1.HubNode
+	0,  // 22: smartcore.bos.hub.v1.HubApi.RenewHubNode:output_type -> smartcore.bos.hub.v1.HubNode
+	11, // 23: smartcore.bos.hub.v1.HubApi.TestHubNode:output_type -> smartcore.bos.hub.v1.TestHubNodeResponse
+	13, // 24: smartcore.bos.hub.v1.HubApi.ForgetHubNode:output_type -> smartcore.bos.hub.v1.ForgetHubNodeResponse
 	17, // [17:25] is the sub-list for method output_type
 	9,  // [9:17] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
@@ -855,26 +855,26 @@ var file_hub_proto_depIdxs = []int32{
 	0,  // [0:9] is the sub-list for field type_name
 }
 
-func init() { file_hub_proto_init() }
-func file_hub_proto_init() {
-	if File_hub_proto != nil {
+func init() { file_smartcore_bos_hub_v1_hub_proto_init() }
+func file_smartcore_bos_hub_v1_hub_proto_init() {
+	if File_smartcore_bos_hub_v1_hub_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_hub_proto_rawDesc), len(file_hub_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_hub_v1_hub_proto_rawDesc), len(file_smartcore_bos_hub_v1_hub_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_hub_proto_goTypes,
-		DependencyIndexes: file_hub_proto_depIdxs,
-		MessageInfos:      file_hub_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_hub_v1_hub_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_hub_v1_hub_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_hub_v1_hub_proto_msgTypes,
 	}.Build()
-	File_hub_proto = out.File
-	file_hub_proto_goTypes = nil
-	file_hub_proto_depIdxs = nil
+	File_smartcore_bos_hub_v1_hub_proto = out.File
+	file_smartcore_bos_hub_v1_hub_proto_goTypes = nil
+	file_smartcore_bos_hub_v1_hub_proto_depIdxs = nil
 }

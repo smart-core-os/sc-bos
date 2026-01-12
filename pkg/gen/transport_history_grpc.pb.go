@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: transport_history.proto
+// source: smartcore/bos/transport/v1/transport_history.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TransportHistory_ListTransportHistory_FullMethodName = "/smartcore.bos.TransportHistory/ListTransportHistory"
+	TransportHistory_ListTransportHistory_FullMethodName = "/smartcore.bos.transport.v1.TransportHistory/ListTransportHistory"
 )
 
 // TransportHistoryClient is the client API for TransportHistory service.
@@ -108,7 +108,7 @@ func _TransportHistory_ListTransportHistory_Handler(srv interface{}, ctx context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TransportHistory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.TransportHistory",
+	ServiceName: "smartcore.bos.transport.v1.TransportHistory",
 	HandlerType: (*TransportHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -117,5 +117,5 @@ var TransportHistory_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "transport_history.proto",
+	Metadata: "smartcore/bos/transport/v1/transport_history.proto",
 }

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: electric_history.proto
+// source: smartcore/bos/electric/v1/electric_history.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ElectricHistory_ListElectricDemandHistory_FullMethodName = "/smartcore.bos.ElectricHistory/ListElectricDemandHistory"
+	ElectricHistory_ListElectricDemandHistory_FullMethodName = "/smartcore.bos.electric.v1.ElectricHistory/ListElectricDemandHistory"
 )
 
 // ElectricHistoryClient is the client API for ElectricHistory service.
@@ -112,7 +112,7 @@ func _ElectricHistory_ListElectricDemandHistory_Handler(srv interface{}, ctx con
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ElectricHistory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.ElectricHistory",
+	ServiceName: "smartcore.bos.electric.v1.ElectricHistory",
 	HandlerType: (*ElectricHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -121,5 +121,5 @@ var ElectricHistory_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "electric_history.proto",
+	Metadata: "smartcore/bos/electric/v1/electric_history.proto",
 }

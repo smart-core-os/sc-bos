@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: transport_history.proto
+// source: smartcore/bos/transport/v1/transport_history.proto
 
 package gen
 
@@ -34,7 +34,7 @@ type TransportRecord struct {
 
 func (x *TransportRecord) Reset() {
 	*x = TransportRecord{}
-	mi := &file_transport_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_transport_v1_transport_history_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +46,7 @@ func (x *TransportRecord) String() string {
 func (*TransportRecord) ProtoMessage() {}
 
 func (x *TransportRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_transport_v1_transport_history_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +59,7 @@ func (x *TransportRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransportRecord.ProtoReflect.Descriptor instead.
 func (*TransportRecord) Descriptor() ([]byte, []int) {
-	return file_transport_history_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_transport_v1_transport_history_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *TransportRecord) GetTransport() *Transport {
@@ -100,7 +100,7 @@ type ListTransportHistoryRequest struct {
 
 func (x *ListTransportHistoryRequest) Reset() {
 	*x = ListTransportHistoryRequest{}
-	mi := &file_transport_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_transport_v1_transport_history_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -112,7 +112,7 @@ func (x *ListTransportHistoryRequest) String() string {
 func (*ListTransportHistoryRequest) ProtoMessage() {}
 
 func (x *ListTransportHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_transport_v1_transport_history_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -125,7 +125,7 @@ func (x *ListTransportHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTransportHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListTransportHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_transport_history_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_transport_v1_transport_history_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListTransportHistoryRequest) GetName() string {
@@ -187,7 +187,7 @@ type ListTransportHistoryResponse struct {
 
 func (x *ListTransportHistoryResponse) Reset() {
 	*x = ListTransportHistoryResponse{}
-	mi := &file_transport_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_transport_v1_transport_history_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -199,7 +199,7 @@ func (x *ListTransportHistoryResponse) String() string {
 func (*ListTransportHistoryResponse) ProtoMessage() {}
 
 func (x *ListTransportHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_transport_v1_transport_history_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -212,7 +212,7 @@ func (x *ListTransportHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTransportHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListTransportHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_transport_history_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_transport_v1_transport_history_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListTransportHistoryResponse) GetTransportRecords() []*TransportRecord {
@@ -236,13 +236,13 @@ func (x *ListTransportHistoryResponse) GetTotalSize() int32 {
 	return 0
 }
 
-var File_transport_history_proto protoreflect.FileDescriptor
+var File_smartcore_bos_transport_v1_transport_history_proto protoreflect.FileDescriptor
 
-const file_transport_history_proto_rawDesc = "" +
+const file_smartcore_bos_transport_v1_transport_history_proto_rawDesc = "" +
 	"\n" +
-	"\x17transport_history.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0ftransport.proto\x1a\x17types/time/period.proto\"\x86\x01\n" +
-	"\x0fTransportRecord\x126\n" +
-	"\ttransport\x18\x01 \x01(\v2\x18.smartcore.bos.TransportR\ttransport\x12;\n" +
+	"2smartcore/bos/transport/v1/transport_history.proto\x12\x1asmartcore.bos.transport.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a*smartcore/bos/transport/v1/transport.proto\x1a\x17types/time/period.proto\"\x93\x01\n" +
+	"\x0fTransportRecord\x12C\n" +
+	"\ttransport\x18\x01 \x01(\v2%.smartcore.bos.transport.v1.TransportR\ttransport\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"recordTime\"\xf7\x01\n" +
 	"\x1bListTransportHistoryRequest\x12\x12\n" +
@@ -252,45 +252,45 @@ const file_transport_history_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x05 \x01(\tR\tpageToken\x12\x19\n" +
-	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xb2\x01\n" +
-	"\x1cListTransportHistoryResponse\x12K\n" +
-	"\x11transport_records\x18\x01 \x03(\v2\x1e.smartcore.bos.TransportRecordR\x10transportRecords\x12&\n" +
+	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xbf\x01\n" +
+	"\x1cListTransportHistoryResponse\x12X\n" +
+	"\x11transport_records\x18\x01 \x03(\v2+.smartcore.bos.transport.v1.TransportRecordR\x10transportRecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x83\x01\n" +
-	"\x10TransportHistory\x12o\n" +
-	"\x14ListTransportHistory\x12*.smartcore.bos.ListTransportHistoryRequest\x1a+.smartcore.bos.ListTransportHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x9e\x01\n" +
+	"\x10TransportHistory\x12\x89\x01\n" +
+	"\x14ListTransportHistory\x127.smartcore.bos.transport.v1.ListTransportHistoryRequest\x1a8.smartcore.bos.transport.v1.ListTransportHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_transport_history_proto_rawDescOnce sync.Once
-	file_transport_history_proto_rawDescData []byte
+	file_smartcore_bos_transport_v1_transport_history_proto_rawDescOnce sync.Once
+	file_smartcore_bos_transport_v1_transport_history_proto_rawDescData []byte
 )
 
-func file_transport_history_proto_rawDescGZIP() []byte {
-	file_transport_history_proto_rawDescOnce.Do(func() {
-		file_transport_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_transport_history_proto_rawDesc), len(file_transport_history_proto_rawDesc)))
+func file_smartcore_bos_transport_v1_transport_history_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_transport_v1_transport_history_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_transport_v1_transport_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_transport_v1_transport_history_proto_rawDesc), len(file_smartcore_bos_transport_v1_transport_history_proto_rawDesc)))
 	})
-	return file_transport_history_proto_rawDescData
+	return file_smartcore_bos_transport_v1_transport_history_proto_rawDescData
 }
 
-var file_transport_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_transport_history_proto_goTypes = []any{
-	(*TransportRecord)(nil),              // 0: smartcore.bos.TransportRecord
-	(*ListTransportHistoryRequest)(nil),  // 1: smartcore.bos.ListTransportHistoryRequest
-	(*ListTransportHistoryResponse)(nil), // 2: smartcore.bos.ListTransportHistoryResponse
-	(*Transport)(nil),                    // 3: smartcore.bos.Transport
+var file_smartcore_bos_transport_v1_transport_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_smartcore_bos_transport_v1_transport_history_proto_goTypes = []any{
+	(*TransportRecord)(nil),              // 0: smartcore.bos.transport.v1.TransportRecord
+	(*ListTransportHistoryRequest)(nil),  // 1: smartcore.bos.transport.v1.ListTransportHistoryRequest
+	(*ListTransportHistoryResponse)(nil), // 2: smartcore.bos.transport.v1.ListTransportHistoryResponse
+	(*Transport)(nil),                    // 3: smartcore.bos.transport.v1.Transport
 	(*timestamppb.Timestamp)(nil),        // 4: google.protobuf.Timestamp
 	(*time.Period)(nil),                  // 5: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),        // 6: google.protobuf.FieldMask
 }
-var file_transport_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.TransportRecord.transport:type_name -> smartcore.bos.Transport
-	4, // 1: smartcore.bos.TransportRecord.record_time:type_name -> google.protobuf.Timestamp
-	5, // 2: smartcore.bos.ListTransportHistoryRequest.period:type_name -> smartcore.types.time.Period
-	6, // 3: smartcore.bos.ListTransportHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
-	0, // 4: smartcore.bos.ListTransportHistoryResponse.transport_records:type_name -> smartcore.bos.TransportRecord
-	1, // 5: smartcore.bos.TransportHistory.ListTransportHistory:input_type -> smartcore.bos.ListTransportHistoryRequest
-	2, // 6: smartcore.bos.TransportHistory.ListTransportHistory:output_type -> smartcore.bos.ListTransportHistoryResponse
+var file_smartcore_bos_transport_v1_transport_history_proto_depIdxs = []int32{
+	3, // 0: smartcore.bos.transport.v1.TransportRecord.transport:type_name -> smartcore.bos.transport.v1.Transport
+	4, // 1: smartcore.bos.transport.v1.TransportRecord.record_time:type_name -> google.protobuf.Timestamp
+	5, // 2: smartcore.bos.transport.v1.ListTransportHistoryRequest.period:type_name -> smartcore.types.time.Period
+	6, // 3: smartcore.bos.transport.v1.ListTransportHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
+	0, // 4: smartcore.bos.transport.v1.ListTransportHistoryResponse.transport_records:type_name -> smartcore.bos.transport.v1.TransportRecord
+	1, // 5: smartcore.bos.transport.v1.TransportHistory.ListTransportHistory:input_type -> smartcore.bos.transport.v1.ListTransportHistoryRequest
+	2, // 6: smartcore.bos.transport.v1.TransportHistory.ListTransportHistory:output_type -> smartcore.bos.transport.v1.ListTransportHistoryResponse
 	6, // [6:7] is the sub-list for method output_type
 	5, // [5:6] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -298,27 +298,27 @@ var file_transport_history_proto_depIdxs = []int32{
 	0, // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_transport_history_proto_init() }
-func file_transport_history_proto_init() {
-	if File_transport_history_proto != nil {
+func init() { file_smartcore_bos_transport_v1_transport_history_proto_init() }
+func file_smartcore_bos_transport_v1_transport_history_proto_init() {
+	if File_smartcore_bos_transport_v1_transport_history_proto != nil {
 		return
 	}
-	file_transport_proto_init()
+	file_smartcore_bos_transport_v1_transport_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_transport_history_proto_rawDesc), len(file_transport_history_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_transport_v1_transport_history_proto_rawDesc), len(file_smartcore_bos_transport_v1_transport_history_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_transport_history_proto_goTypes,
-		DependencyIndexes: file_transport_history_proto_depIdxs,
-		MessageInfos:      file_transport_history_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_transport_v1_transport_history_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_transport_v1_transport_history_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_transport_v1_transport_history_proto_msgTypes,
 	}.Build()
-	File_transport_history_proto = out.File
-	file_transport_history_proto_goTypes = nil
-	file_transport_history_proto_depIdxs = nil
+	File_smartcore_bos_transport_v1_transport_history_proto = out.File
+	file_smartcore_bos_transport_v1_transport_history_proto_goTypes = nil
+	file_smartcore_bos_transport_v1_transport_history_proto_depIdxs = nil
 }

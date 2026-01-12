@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: transport.proto
+// source: smartcore/bos/transport/v1/transport.proto
 
 package gen
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TransportApi_GetTransport_FullMethodName  = "/smartcore.bos.TransportApi/GetTransport"
-	TransportApi_PullTransport_FullMethodName = "/smartcore.bos.TransportApi/PullTransport"
+	TransportApi_GetTransport_FullMethodName  = "/smartcore.bos.transport.v1.TransportApi/GetTransport"
+	TransportApi_PullTransport_FullMethodName = "/smartcore.bos.transport.v1.TransportApi/PullTransport"
 )
 
 // TransportApiClient is the client API for TransportApi service.
@@ -150,7 +150,7 @@ type TransportApi_PullTransportServer = grpc.ServerStreamingServer[PullTransport
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TransportApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.TransportApi",
+	ServiceName: "smartcore.bos.transport.v1.TransportApi",
 	HandlerType: (*TransportApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -165,11 +165,11 @@ var TransportApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "transport.proto",
+	Metadata: "smartcore/bos/transport/v1/transport.proto",
 }
 
 const (
-	TransportInfo_DescribeTransport_FullMethodName = "/smartcore.bos.TransportInfo/DescribeTransport"
+	TransportInfo_DescribeTransport_FullMethodName = "/smartcore.bos.transport.v1.TransportInfo/DescribeTransport"
 )
 
 // TransportInfoClient is the client API for TransportInfo service.
@@ -258,7 +258,7 @@ func _TransportInfo_DescribeTransport_Handler(srv interface{}, ctx context.Conte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TransportInfo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.TransportInfo",
+	ServiceName: "smartcore.bos.transport.v1.TransportInfo",
 	HandlerType: (*TransportInfoServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -267,5 +267,5 @@ var TransportInfo_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "transport.proto",
+	Metadata: "smartcore/bos/transport/v1/transport.proto",
 }

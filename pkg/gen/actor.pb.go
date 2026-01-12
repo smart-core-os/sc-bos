@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: actor.proto
+// source: smartcore/bos/actor/v1/actor.proto
 
 package gen
 
@@ -65,7 +65,7 @@ type Actor struct {
 
 func (x *Actor) Reset() {
 	*x = Actor{}
-	mi := &file_actor_proto_msgTypes[0]
+	mi := &file_smartcore_bos_actor_v1_actor_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -77,7 +77,7 @@ func (x *Actor) String() string {
 func (*Actor) ProtoMessage() {}
 
 func (x *Actor) ProtoReflect() protoreflect.Message {
-	mi := &file_actor_proto_msgTypes[0]
+	mi := &file_smartcore_bos_actor_v1_actor_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -90,7 +90,7 @@ func (x *Actor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Actor.ProtoReflect.Descriptor instead.
 func (*Actor) Descriptor() ([]byte, []int) {
-	return file_actor_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_actor_v1_actor_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Actor) GetName() string {
@@ -177,11 +177,11 @@ func (x *Actor) GetMore() map[string]string {
 	return nil
 }
 
-var File_actor_proto protoreflect.FileDescriptor
+var File_smartcore_bos_actor_v1_actor_proto protoreflect.FileDescriptor
 
-const file_actor_proto_rawDesc = "" +
+const file_smartcore_bos_actor_v1_actor_proto_rawDesc = "" +
 	"\n" +
-	"\vactor.proto\x12\rsmartcore.bos\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x11types/image.proto\"\xbd\x04\n" +
+	"\"smartcore/bos/actor/v1/actor.proto\x12\x16smartcore.bos.actor.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x11types/image.proto\"\xcf\x04\n" +
 	"\x05Actor\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05title\x18\n" +
@@ -193,9 +193,9 @@ const file_actor_proto_rawDesc = "" +
 	"\x0flast_grant_time\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\rlastGrantTime\x12&\n" +
 	"\x0flast_grant_zone\x18\x10 \x01(\tR\rlastGrantZone\x121\n" +
 	"\x14vehicle_registration\x18\x11 \x01(\tR\x13vehicleRegistration\x12\x18\n" +
-	"\acompany\x18\x12 \x01(\tR\acompany\x12/\n" +
-	"\x03ids\x18d \x03(\v2\x1d.smartcore.bos.Actor.IdsEntryR\x03ids\x122\n" +
-	"\x04more\x18e \x03(\v2\x1e.smartcore.bos.Actor.MoreEntryR\x04more\x1a6\n" +
+	"\acompany\x18\x12 \x01(\tR\acompany\x128\n" +
+	"\x03ids\x18d \x03(\v2&.smartcore.bos.actor.v1.Actor.IdsEntryR\x03ids\x12;\n" +
+	"\x04more\x18e \x03(\v2'.smartcore.bos.actor.v1.Actor.MoreEntryR\x04more\x1a6\n" +
 	"\bIdsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a7\n" +
@@ -204,30 +204,30 @@ const file_actor_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_actor_proto_rawDescOnce sync.Once
-	file_actor_proto_rawDescData []byte
+	file_smartcore_bos_actor_v1_actor_proto_rawDescOnce sync.Once
+	file_smartcore_bos_actor_v1_actor_proto_rawDescData []byte
 )
 
-func file_actor_proto_rawDescGZIP() []byte {
-	file_actor_proto_rawDescOnce.Do(func() {
-		file_actor_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_actor_proto_rawDesc), len(file_actor_proto_rawDesc)))
+func file_smartcore_bos_actor_v1_actor_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_actor_v1_actor_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_actor_v1_actor_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_actor_v1_actor_proto_rawDesc), len(file_smartcore_bos_actor_v1_actor_proto_rawDesc)))
 	})
-	return file_actor_proto_rawDescData
+	return file_smartcore_bos_actor_v1_actor_proto_rawDescData
 }
 
-var file_actor_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_actor_proto_goTypes = []any{
-	(*Actor)(nil),                 // 0: smartcore.bos.Actor
-	nil,                           // 1: smartcore.bos.Actor.IdsEntry
-	nil,                           // 2: smartcore.bos.Actor.MoreEntry
+var file_smartcore_bos_actor_v1_actor_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_smartcore_bos_actor_v1_actor_proto_goTypes = []any{
+	(*Actor)(nil),                 // 0: smartcore.bos.actor.v1.Actor
+	nil,                           // 1: smartcore.bos.actor.v1.Actor.IdsEntry
+	nil,                           // 2: smartcore.bos.actor.v1.Actor.MoreEntry
 	(*types.Image)(nil),           // 3: smartcore.types.Image
 	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
 }
-var file_actor_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.Actor.picture:type_name -> smartcore.types.Image
-	4, // 1: smartcore.bos.Actor.last_grant_time:type_name -> google.protobuf.Timestamp
-	1, // 2: smartcore.bos.Actor.ids:type_name -> smartcore.bos.Actor.IdsEntry
-	2, // 3: smartcore.bos.Actor.more:type_name -> smartcore.bos.Actor.MoreEntry
+var file_smartcore_bos_actor_v1_actor_proto_depIdxs = []int32{
+	3, // 0: smartcore.bos.actor.v1.Actor.picture:type_name -> smartcore.types.Image
+	4, // 1: smartcore.bos.actor.v1.Actor.last_grant_time:type_name -> google.protobuf.Timestamp
+	1, // 2: smartcore.bos.actor.v1.Actor.ids:type_name -> smartcore.bos.actor.v1.Actor.IdsEntry
+	2, // 3: smartcore.bos.actor.v1.Actor.more:type_name -> smartcore.bos.actor.v1.Actor.MoreEntry
 	4, // [4:4] is the sub-list for method output_type
 	4, // [4:4] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
@@ -235,26 +235,26 @@ var file_actor_proto_depIdxs = []int32{
 	0, // [0:4] is the sub-list for field type_name
 }
 
-func init() { file_actor_proto_init() }
-func file_actor_proto_init() {
-	if File_actor_proto != nil {
+func init() { file_smartcore_bos_actor_v1_actor_proto_init() }
+func file_smartcore_bos_actor_v1_actor_proto_init() {
+	if File_smartcore_bos_actor_v1_actor_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_actor_proto_rawDesc), len(file_actor_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_actor_v1_actor_proto_rawDesc), len(file_smartcore_bos_actor_v1_actor_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_actor_proto_goTypes,
-		DependencyIndexes: file_actor_proto_depIdxs,
-		MessageInfos:      file_actor_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_actor_v1_actor_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_actor_v1_actor_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_actor_v1_actor_proto_msgTypes,
 	}.Build()
-	File_actor_proto = out.File
-	file_actor_proto_goTypes = nil
-	file_actor_proto_depIdxs = nil
+	File_smartcore_bos_actor_v1_actor_proto = out.File
+	file_smartcore_bos_actor_v1_actor_proto_goTypes = nil
+	file_smartcore_bos_actor_v1_actor_proto_depIdxs = nil
 }

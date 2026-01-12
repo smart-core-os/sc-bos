@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: sound_sensor_history.proto
+// source: smartcore/bos/soundsensor/v1/sound_sensor_history.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SoundSensorHistory_ListSoundLevelHistory_FullMethodName = "/smartcore.bos.SoundSensorHistory/ListSoundLevelHistory"
+	SoundSensorHistory_ListSoundLevelHistory_FullMethodName = "/smartcore.bos.soundsensor.v1.SoundSensorHistory/ListSoundLevelHistory"
 )
 
 // SoundSensorHistoryClient is the client API for SoundSensorHistory service.
@@ -108,7 +108,7 @@ func _SoundSensorHistory_ListSoundLevelHistory_Handler(srv interface{}, ctx cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SoundSensorHistory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.SoundSensorHistory",
+	ServiceName: "smartcore.bos.soundsensor.v1.SoundSensorHistory",
 	HandlerType: (*SoundSensorHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -117,5 +117,5 @@ var SoundSensorHistory_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "sound_sensor_history.proto",
+	Metadata: "smartcore/bos/soundsensor/v1/sound_sensor_history.proto",
 }

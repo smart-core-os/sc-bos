@@ -7,11 +7,11 @@ import {isNullOrUndef} from '@/util/types.js';
 import {computed, effectScope, onScopeDispose, reactive, ref, toRefs, toValue, watch} from 'vue';
 
 /**
- * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/meter_pb').MeterReading} MeterReading
- * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/meter_pb').MeterReadingSupport} MeterReadingSupport
- * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/meter_pb').PullMeterReadingsRequest} PullMeterReadingsRequest
- * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/meter_pb').PullMeterReadingsResponse} PullMeterReadingsResponse
- * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/meter_pb').DescribeMeterReadingRequest} DescribeMeterReadingRequest
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').MeterReading} MeterReading
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').MeterReadingSupport} MeterReadingSupport
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').PullMeterReadingsRequest} PullMeterReadingsRequest
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').PullMeterReadingsResponse} PullMeterReadingsResponse
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').DescribeMeterReadingRequest} DescribeMeterReadingRequest
  * @typedef {import('vue').ComputedRef} ComputedRef
  * @typedef {import('vue').Ref} Ref
  * @typedef {import('vue').ToRefs} ToRefs

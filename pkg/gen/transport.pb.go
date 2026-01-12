@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: transport.proto
+// source: smartcore/bos/transport/v1/transport.proto
 
 package gen
 
@@ -103,11 +103,11 @@ func (x Transport_Direction) String() string {
 }
 
 func (Transport_Direction) Descriptor() protoreflect.EnumDescriptor {
-	return file_transport_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_transport_v1_transport_proto_enumTypes[0].Descriptor()
 }
 
 func (Transport_Direction) Type() protoreflect.EnumType {
-	return &file_transport_proto_enumTypes[0]
+	return &file_smartcore_bos_transport_v1_transport_proto_enumTypes[0]
 }
 
 func (x Transport_Direction) Number() protoreflect.EnumNumber {
@@ -116,7 +116,7 @@ func (x Transport_Direction) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Transport_Direction.Descriptor instead.
 func (Transport_Direction) EnumDescriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 0}
 }
 
 type Transport_OperatingMode int32
@@ -226,11 +226,11 @@ func (x Transport_OperatingMode) String() string {
 }
 
 func (Transport_OperatingMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_transport_proto_enumTypes[1].Descriptor()
+	return file_smartcore_bos_transport_v1_transport_proto_enumTypes[1].Descriptor()
 }
 
 func (Transport_OperatingMode) Type() protoreflect.EnumType {
-	return &file_transport_proto_enumTypes[1]
+	return &file_smartcore_bos_transport_v1_transport_proto_enumTypes[1]
 }
 
 func (x Transport_OperatingMode) Number() protoreflect.EnumNumber {
@@ -239,7 +239,7 @@ func (x Transport_OperatingMode) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Transport_OperatingMode.Descriptor instead.
 func (Transport_OperatingMode) EnumDescriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 1}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 1}
 }
 
 type Transport_Active int32
@@ -278,11 +278,11 @@ func (x Transport_Active) String() string {
 }
 
 func (Transport_Active) Descriptor() protoreflect.EnumDescriptor {
-	return file_transport_proto_enumTypes[2].Descriptor()
+	return file_smartcore_bos_transport_v1_transport_proto_enumTypes[2].Descriptor()
 }
 
 func (Transport_Active) Type() protoreflect.EnumType {
-	return &file_transport_proto_enumTypes[2]
+	return &file_smartcore_bos_transport_v1_transport_proto_enumTypes[2]
 }
 
 func (x Transport_Active) Number() protoreflect.EnumNumber {
@@ -291,7 +291,7 @@ func (x Transport_Active) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Transport_Active.Descriptor instead.
 func (Transport_Active) EnumDescriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 2}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 2}
 }
 
 type Transport_Alarm_AlarmState int32
@@ -327,11 +327,11 @@ func (x Transport_Alarm_AlarmState) String() string {
 }
 
 func (Transport_Alarm_AlarmState) Descriptor() protoreflect.EnumDescriptor {
-	return file_transport_proto_enumTypes[3].Descriptor()
+	return file_smartcore_bos_transport_v1_transport_proto_enumTypes[3].Descriptor()
 }
 
 func (Transport_Alarm_AlarmState) Type() protoreflect.EnumType {
-	return &file_transport_proto_enumTypes[3]
+	return &file_smartcore_bos_transport_v1_transport_proto_enumTypes[3]
 }
 
 func (x Transport_Alarm_AlarmState) Number() protoreflect.EnumNumber {
@@ -340,7 +340,7 @@ func (x Transport_Alarm_AlarmState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Transport_Alarm_AlarmState.Descriptor instead.
 func (Transport_Alarm_AlarmState) EnumDescriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 0, 0}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
 type Transport_Fault_FaultType int32
@@ -463,11 +463,11 @@ func (x Transport_Fault_FaultType) String() string {
 }
 
 func (Transport_Fault_FaultType) Descriptor() protoreflect.EnumDescriptor {
-	return file_transport_proto_enumTypes[4].Descriptor()
+	return file_smartcore_bos_transport_v1_transport_proto_enumTypes[4].Descriptor()
 }
 
 func (Transport_Fault_FaultType) Type() protoreflect.EnumType {
-	return &file_transport_proto_enumTypes[4]
+	return &file_smartcore_bos_transport_v1_transport_proto_enumTypes[4]
 }
 
 func (x Transport_Fault_FaultType) Number() protoreflect.EnumNumber {
@@ -476,7 +476,7 @@ func (x Transport_Fault_FaultType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Transport_Fault_FaultType.Descriptor instead.
 func (Transport_Fault_FaultType) EnumDescriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 1, 0}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 1, 0}
 }
 
 type Transport_Door_DoorStatus int32
@@ -526,11 +526,11 @@ func (x Transport_Door_DoorStatus) String() string {
 }
 
 func (Transport_Door_DoorStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_transport_proto_enumTypes[5].Descriptor()
+	return file_smartcore_bos_transport_v1_transport_proto_enumTypes[5].Descriptor()
 }
 
 func (Transport_Door_DoorStatus) Type() protoreflect.EnumType {
-	return &file_transport_proto_enumTypes[5]
+	return &file_smartcore_bos_transport_v1_transport_proto_enumTypes[5]
 }
 
 func (x Transport_Door_DoorStatus) Number() protoreflect.EnumNumber {
@@ -539,7 +539,7 @@ func (x Transport_Door_DoorStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Transport_Door_DoorStatus.Descriptor instead.
 func (Transport_Door_DoorStatus) EnumDescriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 3, 0}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 3, 0}
 }
 
 type Transport_StoppedReason_Reason int32
@@ -581,11 +581,11 @@ func (x Transport_StoppedReason_Reason) String() string {
 }
 
 func (Transport_StoppedReason_Reason) Descriptor() protoreflect.EnumDescriptor {
-	return file_transport_proto_enumTypes[6].Descriptor()
+	return file_smartcore_bos_transport_v1_transport_proto_enumTypes[6].Descriptor()
 }
 
 func (Transport_StoppedReason_Reason) Type() protoreflect.EnumType {
-	return &file_transport_proto_enumTypes[6]
+	return &file_smartcore_bos_transport_v1_transport_proto_enumTypes[6]
 }
 
 func (x Transport_StoppedReason_Reason) Number() protoreflect.EnumNumber {
@@ -594,7 +594,7 @@ func (x Transport_StoppedReason_Reason) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Transport_StoppedReason_Reason.Descriptor instead.
 func (Transport_StoppedReason_Reason) EnumDescriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 5, 0}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 5, 0}
 }
 
 // Transport describes the current state of the transport.
@@ -607,7 +607,7 @@ type Transport struct {
 	NextDestinations []*Transport_Location `protobuf:"bytes,2,rep,name=next_destinations,json=nextDestinations,proto3" json:"next_destinations,omitempty"`
 	// Optional. The primary direction the transport is moving. An escalator technically moves up/down and forwards,
 	// but the primary intention is to transport up/down.
-	MovingDirection Transport_Direction `protobuf:"varint,3,opt,name=moving_direction,json=movingDirection,proto3,enum=smartcore.bos.Transport_Direction" json:"moving_direction,omitempty"`
+	MovingDirection Transport_Direction `protobuf:"varint,3,opt,name=moving_direction,json=movingDirection,proto3,enum=smartcore.bos.transport.v1.Transport_Direction" json:"moving_direction,omitempty"`
 	// Optional. The total amount of load being carried.
 	// The units this is measured in is implementation specific. See TransportSupport
 	// A zero value means there is no load, an omitted value means the load is unknown.
@@ -615,7 +615,7 @@ type Transport struct {
 	// Optional. The status of each the door(s) of the transport.
 	Doors []*Transport_Door `protobuf:"bytes,5,rep,name=doors,proto3" json:"doors,omitempty"`
 	// Optional. The operating mode the transport is in.
-	OperatingMode Transport_OperatingMode `protobuf:"varint,6,opt,name=operating_mode,json=operatingMode,proto3,enum=smartcore.bos.Transport_OperatingMode" json:"operating_mode,omitempty"`
+	OperatingMode Transport_OperatingMode `protobuf:"varint,6,opt,name=operating_mode,json=operatingMode,proto3,enum=smartcore.bos.transport.v1.Transport_OperatingMode" json:"operating_mode,omitempty"`
 	// Optional. A list of active fault signals being reported.
 	Faults []*Transport_Fault `protobuf:"bytes,7,rep,name=faults,proto3" json:"faults,omitempty"`
 	// Optional. The status of the passenger alarm button.
@@ -630,7 +630,7 @@ type Transport struct {
 	SupportedDestinations []*Transport_Location `protobuf:"bytes,10,rep,name=supported_destinations,json=supportedDestinations,proto3" json:"supported_destinations,omitempty"`
 	// Optional. The active state of the transport. Note this is different to mode,
 	// as the transport can be in an active or inactive state in different modes.
-	Active Transport_Active `protobuf:"varint,11,opt,name=active,proto3,enum=smartcore.bos.Transport_Active" json:"active,omitempty"`
+	Active Transport_Active `protobuf:"varint,11,opt,name=active,proto3,enum=smartcore.bos.transport.v1.Transport_Active" json:"active,omitempty"`
 	// Optional. Payloads describes the entities that are currently being transported.
 	Payloads []*Transport_Payload `protobuf:"bytes,12,rep,name=payloads,proto3" json:"payloads,omitempty"`
 	// Optional. The estimated time the transport will take to arrive at it's next destination.
@@ -643,7 +643,7 @@ type Transport struct {
 
 func (x *Transport) Reset() {
 	*x = Transport{}
-	mi := &file_transport_proto_msgTypes[0]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -655,7 +655,7 @@ func (x *Transport) String() string {
 func (*Transport) ProtoMessage() {}
 
 func (x *Transport) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[0]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -668,7 +668,7 @@ func (x *Transport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transport.ProtoReflect.Descriptor instead.
 func (*Transport) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Transport) GetActualPosition() *Transport_Location {
@@ -786,7 +786,7 @@ type TransportSupport struct {
 
 func (x *TransportSupport) Reset() {
 	*x = TransportSupport{}
-	mi := &file_transport_proto_msgTypes[1]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -798,7 +798,7 @@ func (x *TransportSupport) String() string {
 func (*TransportSupport) ProtoMessage() {}
 
 func (x *TransportSupport) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[1]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -811,7 +811,7 @@ func (x *TransportSupport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransportSupport.ProtoReflect.Descriptor instead.
 func (*TransportSupport) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *TransportSupport) GetResourceSupport() *types.ResourceSupport {
@@ -853,7 +853,7 @@ type GetTransportRequest struct {
 
 func (x *GetTransportRequest) Reset() {
 	*x = GetTransportRequest{}
-	mi := &file_transport_proto_msgTypes[2]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -865,7 +865,7 @@ func (x *GetTransportRequest) String() string {
 func (*GetTransportRequest) ProtoMessage() {}
 
 func (x *GetTransportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[2]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -878,7 +878,7 @@ func (x *GetTransportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTransportRequest.ProtoReflect.Descriptor instead.
 func (*GetTransportRequest) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetTransportRequest) GetName() string {
@@ -904,7 +904,7 @@ type DescribeTransportRequest struct {
 
 func (x *DescribeTransportRequest) Reset() {
 	*x = DescribeTransportRequest{}
-	mi := &file_transport_proto_msgTypes[3]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -916,7 +916,7 @@ func (x *DescribeTransportRequest) String() string {
 func (*DescribeTransportRequest) ProtoMessage() {}
 
 func (x *DescribeTransportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[3]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -929,7 +929,7 @@ func (x *DescribeTransportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DescribeTransportRequest.ProtoReflect.Descriptor instead.
 func (*DescribeTransportRequest) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *DescribeTransportRequest) GetName() string {
@@ -950,7 +950,7 @@ type PullTransportRequest struct {
 
 func (x *PullTransportRequest) Reset() {
 	*x = PullTransportRequest{}
-	mi := &file_transport_proto_msgTypes[4]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -962,7 +962,7 @@ func (x *PullTransportRequest) String() string {
 func (*PullTransportRequest) ProtoMessage() {}
 
 func (x *PullTransportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[4]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -975,7 +975,7 @@ func (x *PullTransportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTransportRequest.ProtoReflect.Descriptor instead.
 func (*PullTransportRequest) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullTransportRequest) GetName() string {
@@ -1008,7 +1008,7 @@ type PullTransportResponse struct {
 
 func (x *PullTransportResponse) Reset() {
 	*x = PullTransportResponse{}
-	mi := &file_transport_proto_msgTypes[5]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1020,7 +1020,7 @@ func (x *PullTransportResponse) String() string {
 func (*PullTransportResponse) ProtoMessage() {}
 
 func (x *PullTransportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[5]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1033,7 +1033,7 @@ func (x *PullTransportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTransportResponse.ProtoReflect.Descriptor instead.
 func (*PullTransportResponse) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PullTransportResponse) GetChanges() []*PullTransportResponse_Change {
@@ -1046,7 +1046,7 @@ func (x *PullTransportResponse) GetChanges() []*PullTransportResponse_Change {
 type Transport_Alarm struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The state of the alarm button.
-	State Transport_Alarm_AlarmState `protobuf:"varint,1,opt,name=state,proto3,enum=smartcore.bos.Transport_Alarm_AlarmState" json:"state,omitempty"`
+	State Transport_Alarm_AlarmState `protobuf:"varint,1,opt,name=state,proto3,enum=smartcore.bos.transport.v1.Transport_Alarm_AlarmState" json:"state,omitempty"`
 	// Optional. The time the alarm entered its current state.
 	Time          *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1055,7 +1055,7 @@ type Transport_Alarm struct {
 
 func (x *Transport_Alarm) Reset() {
 	*x = Transport_Alarm{}
-	mi := &file_transport_proto_msgTypes[6]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1067,7 +1067,7 @@ func (x *Transport_Alarm) String() string {
 func (*Transport_Alarm) ProtoMessage() {}
 
 func (x *Transport_Alarm) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[6]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1080,7 +1080,7 @@ func (x *Transport_Alarm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transport_Alarm.ProtoReflect.Descriptor instead.
 func (*Transport_Alarm) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *Transport_Alarm) GetState() Transport_Alarm_AlarmState {
@@ -1100,7 +1100,7 @@ func (x *Transport_Alarm) GetTime() *timestamppb.Timestamp {
 type Transport_Fault struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The type of fault.
-	FaultType Transport_Fault_FaultType `protobuf:"varint,1,opt,name=fault_type,json=faultType,proto3,enum=smartcore.bos.Transport_Fault_FaultType" json:"fault_type,omitempty"`
+	FaultType Transport_Fault_FaultType `protobuf:"varint,1,opt,name=fault_type,json=faultType,proto3,enum=smartcore.bos.transport.v1.Transport_Fault_FaultType" json:"fault_type,omitempty"`
 	// Optional. The time the fault was detected.
 	Time *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=time,proto3" json:"time,omitempty"`
 	// Optional. The description of the fault.
@@ -1111,7 +1111,7 @@ type Transport_Fault struct {
 
 func (x *Transport_Fault) Reset() {
 	*x = Transport_Fault{}
-	mi := &file_transport_proto_msgTypes[7]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1123,7 +1123,7 @@ func (x *Transport_Fault) String() string {
 func (*Transport_Fault) ProtoMessage() {}
 
 func (x *Transport_Fault) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[7]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1136,7 +1136,7 @@ func (x *Transport_Fault) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transport_Fault.ProtoReflect.Descriptor instead.
 func (*Transport_Fault) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 1}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *Transport_Fault) GetFaultType() Transport_Fault_FaultType {
@@ -1180,7 +1180,7 @@ type Transport_Journey struct {
 
 func (x *Transport_Journey) Reset() {
 	*x = Transport_Journey{}
-	mi := &file_transport_proto_msgTypes[8]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1192,7 +1192,7 @@ func (x *Transport_Journey) String() string {
 func (*Transport_Journey) ProtoMessage() {}
 
 func (x *Transport_Journey) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[8]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1205,7 +1205,7 @@ func (x *Transport_Journey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transport_Journey.ProtoReflect.Descriptor instead.
 func (*Transport_Journey) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 2}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 2}
 }
 
 func (x *Transport_Journey) GetStart() *Transport_Location {
@@ -1250,14 +1250,14 @@ type Transport_Door struct {
 	// If the transport has multiple decks, this is the deck the door is on. 0 is the lowest deck.
 	Deck int32 `protobuf:"varint,2,opt,name=deck,proto3" json:"deck,omitempty"`
 	// The status of the door.
-	Status        Transport_Door_DoorStatus `protobuf:"varint,3,opt,name=status,proto3,enum=smartcore.bos.Transport_Door_DoorStatus" json:"status,omitempty"`
+	Status        Transport_Door_DoorStatus `protobuf:"varint,3,opt,name=status,proto3,enum=smartcore.bos.transport.v1.Transport_Door_DoorStatus" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Transport_Door) Reset() {
 	*x = Transport_Door{}
-	mi := &file_transport_proto_msgTypes[9]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1269,7 +1269,7 @@ func (x *Transport_Door) String() string {
 func (*Transport_Door) ProtoMessage() {}
 
 func (x *Transport_Door) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[9]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1282,7 +1282,7 @@ func (x *Transport_Door) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transport_Door.ProtoReflect.Descriptor instead.
 func (*Transport_Door) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 3}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 3}
 }
 
 func (x *Transport_Door) GetTitle() string {
@@ -1323,7 +1323,7 @@ type Transport_Location struct {
 
 func (x *Transport_Location) Reset() {
 	*x = Transport_Location{}
-	mi := &file_transport_proto_msgTypes[10]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1335,7 +1335,7 @@ func (x *Transport_Location) String() string {
 func (*Transport_Location) ProtoMessage() {}
 
 func (x *Transport_Location) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[10]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1348,7 +1348,7 @@ func (x *Transport_Location) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transport_Location.ProtoReflect.Descriptor instead.
 func (*Transport_Location) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 4}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 4}
 }
 
 func (x *Transport_Location) GetId() string {
@@ -1383,7 +1383,7 @@ func (x *Transport_Location) GetFloor() string {
 // Meant to describe abnormal stops not stops as part of normal operation.
 type Transport_StoppedReason struct {
 	state  protoimpl.MessageState         `protogen:"open.v1"`
-	Reason Transport_StoppedReason_Reason `protobuf:"varint,1,opt,name=reason,proto3,enum=smartcore.bos.Transport_StoppedReason_Reason" json:"reason,omitempty"`
+	Reason Transport_StoppedReason_Reason `protobuf:"varint,1,opt,name=reason,proto3,enum=smartcore.bos.transport.v1.Transport_StoppedReason_Reason" json:"reason,omitempty"`
 	// Optional. The time the transport was stopped.
 	Time          *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1392,7 +1392,7 @@ type Transport_StoppedReason struct {
 
 func (x *Transport_StoppedReason) Reset() {
 	*x = Transport_StoppedReason{}
-	mi := &file_transport_proto_msgTypes[11]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1404,7 +1404,7 @@ func (x *Transport_StoppedReason) String() string {
 func (*Transport_StoppedReason) ProtoMessage() {}
 
 func (x *Transport_StoppedReason) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[11]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1417,7 +1417,7 @@ func (x *Transport_StoppedReason) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transport_StoppedReason.ProtoReflect.Descriptor instead.
 func (*Transport_StoppedReason) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 5}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 5}
 }
 
 func (x *Transport_StoppedReason) GetReason() Transport_StoppedReason_Reason {
@@ -1459,7 +1459,7 @@ type Transport_Payload struct {
 
 func (x *Transport_Payload) Reset() {
 	*x = Transport_Payload{}
-	mi := &file_transport_proto_msgTypes[12]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1471,7 +1471,7 @@ func (x *Transport_Payload) String() string {
 func (*Transport_Payload) ProtoMessage() {}
 
 func (x *Transport_Payload) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[12]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1484,7 +1484,7 @@ func (x *Transport_Payload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transport_Payload.ProtoReflect.Descriptor instead.
 func (*Transport_Payload) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{0, 6}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{0, 6}
 }
 
 func (x *Transport_Payload) GetPayloadId() string {
@@ -1533,7 +1533,7 @@ type PullTransportResponse_Change struct {
 
 func (x *PullTransportResponse_Change) Reset() {
 	*x = PullTransportResponse_Change{}
-	mi := &file_transport_proto_msgTypes[14]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1545,7 +1545,7 @@ func (x *PullTransportResponse_Change) String() string {
 func (*PullTransportResponse_Change) ProtoMessage() {}
 
 func (x *PullTransportResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_transport_proto_msgTypes[14]
+	mi := &file_smartcore_bos_transport_v1_transport_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1558,7 +1558,7 @@ func (x *PullTransportResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTransportResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullTransportResponse_Change) Descriptor() ([]byte, []int) {
-	return file_transport_proto_rawDescGZIP(), []int{5, 0}
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{5, 0}
 }
 
 func (x *PullTransportResponse_Change) GetName() string {
@@ -1582,38 +1582,38 @@ func (x *PullTransportResponse_Change) GetTransport() *Transport {
 	return nil
 }
 
-var File_transport_proto protoreflect.FileDescriptor
+var File_smartcore_bos_transport_v1_transport_proto protoreflect.FileDescriptor
 
-const file_transport_proto_rawDesc = "" +
+const file_smartcore_bos_transport_v1_transport_proto_rawDesc = "" +
 	"\n" +
-	"\x0ftransport.proto\x12\rsmartcore.bos\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xf2\x1f\n" +
-	"\tTransport\x12J\n" +
-	"\x0factual_position\x18\x01 \x01(\v2!.smartcore.bos.Transport.LocationR\x0eactualPosition\x12N\n" +
-	"\x11next_destinations\x18\x02 \x03(\v2!.smartcore.bos.Transport.LocationR\x10nextDestinations\x12M\n" +
-	"\x10moving_direction\x18\x03 \x01(\x0e2\".smartcore.bos.Transport.DirectionR\x0fmovingDirection\x12\x17\n" +
-	"\x04load\x18\x04 \x01(\x02H\x00R\x04load\x88\x01\x01\x123\n" +
-	"\x05doors\x18\x05 \x03(\v2\x1d.smartcore.bos.Transport.DoorR\x05doors\x12M\n" +
-	"\x0eoperating_mode\x18\x06 \x01(\x0e2&.smartcore.bos.Transport.OperatingModeR\roperatingMode\x126\n" +
-	"\x06faults\x18\a \x03(\v2\x1e.smartcore.bos.Transport.FaultR\x06faults\x12G\n" +
-	"\x0fpassenger_alarm\x18\b \x01(\v2\x1e.smartcore.bos.Transport.AlarmR\x0epassengerAlarm\x12\x19\n" +
-	"\x05speed\x18\t \x01(\x02H\x01R\x05speed\x88\x01\x01\x12X\n" +
+	"*smartcore/bos/transport/v1/transport.proto\x12\x1asmartcore.bos.transport.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xf6!\n" +
+	"\tTransport\x12W\n" +
+	"\x0factual_position\x18\x01 \x01(\v2..smartcore.bos.transport.v1.Transport.LocationR\x0eactualPosition\x12[\n" +
+	"\x11next_destinations\x18\x02 \x03(\v2..smartcore.bos.transport.v1.Transport.LocationR\x10nextDestinations\x12Z\n" +
+	"\x10moving_direction\x18\x03 \x01(\x0e2/.smartcore.bos.transport.v1.Transport.DirectionR\x0fmovingDirection\x12\x17\n" +
+	"\x04load\x18\x04 \x01(\x02H\x00R\x04load\x88\x01\x01\x12@\n" +
+	"\x05doors\x18\x05 \x03(\v2*.smartcore.bos.transport.v1.Transport.DoorR\x05doors\x12Z\n" +
+	"\x0eoperating_mode\x18\x06 \x01(\x0e23.smartcore.bos.transport.v1.Transport.OperatingModeR\roperatingMode\x12C\n" +
+	"\x06faults\x18\a \x03(\v2+.smartcore.bos.transport.v1.Transport.FaultR\x06faults\x12T\n" +
+	"\x0fpassenger_alarm\x18\b \x01(\v2+.smartcore.bos.transport.v1.Transport.AlarmR\x0epassengerAlarm\x12\x19\n" +
+	"\x05speed\x18\t \x01(\x02H\x01R\x05speed\x88\x01\x01\x12e\n" +
 	"\x16supported_destinations\x18\n" +
-	" \x03(\v2!.smartcore.bos.Transport.LocationR\x15supportedDestinations\x127\n" +
-	"\x06active\x18\v \x01(\x0e2\x1f.smartcore.bos.Transport.ActiveR\x06active\x12<\n" +
-	"\bpayloads\x18\f \x03(\v2 .smartcore.bos.Transport.PayloadR\bpayloads\x12P\n" +
-	"\x17eta_to_next_destination\x18\r \x01(\v2\x19.google.protobuf.DurationR\x14etaToNextDestination\x12M\n" +
-	"\x0estopped_reason\x18\x0e \x01(\v2&.smartcore.bos.Transport.StoppedReasonR\rstoppedReason\x1a\xc3\x01\n" +
-	"\x05Alarm\x12?\n" +
-	"\x05state\x18\x01 \x01(\x0e2).smartcore.bos.Transport.Alarm.AlarmStateR\x05state\x12.\n" +
+	" \x03(\v2..smartcore.bos.transport.v1.Transport.LocationR\x15supportedDestinations\x12D\n" +
+	"\x06active\x18\v \x01(\x0e2,.smartcore.bos.transport.v1.Transport.ActiveR\x06active\x12I\n" +
+	"\bpayloads\x18\f \x03(\v2-.smartcore.bos.transport.v1.Transport.PayloadR\bpayloads\x12P\n" +
+	"\x17eta_to_next_destination\x18\r \x01(\v2\x19.google.protobuf.DurationR\x14etaToNextDestination\x12Z\n" +
+	"\x0estopped_reason\x18\x0e \x01(\v23.smartcore.bos.transport.v1.Transport.StoppedReasonR\rstoppedReason\x1a\xd0\x01\n" +
+	"\x05Alarm\x12L\n" +
+	"\x05state\x18\x01 \x01(\x0e26.smartcore.bos.transport.v1.Transport.Alarm.AlarmStateR\x05state\x12.\n" +
 	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\"I\n" +
 	"\n" +
 	"AlarmState\x12\x1b\n" +
 	"\x17ALARM_STATE_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vUNACTIVATED\x10\x01\x12\r\n" +
-	"\tACTIVATED\x10\x02\x1a\x8a\a\n" +
-	"\x05Fault\x12G\n" +
+	"\tACTIVATED\x10\x02\x1a\x97\a\n" +
+	"\x05Fault\x12T\n" +
 	"\n" +
-	"fault_type\x18\x01 \x01(\x0e2(.smartcore.bos.Transport.Fault.FaultTypeR\tfaultType\x12.\n" +
+	"fault_type\x18\x01 \x01(\x0e25.smartcore.bos.transport.v1.Transport.Fault.FaultTypeR\tfaultType\x12.\n" +
 	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\"\xe5\x05\n" +
 	"\tFaultType\x12\x1a\n" +
@@ -1648,18 +1648,18 @@ const file_transport_proto_rawDesc = "" +
 	"\fOVERCAPACITY\x10\x1a\x12\x12\n" +
 	"\x0eSHUTDOWN_FAULT\x10\x1b\x12\x12\n" +
 	"\x0eHANDRAIL_FAULT\x10\x1c\x12\x0f\n" +
-	"\vSTEPS_FAULT\x10\x1d\x1a\xae\x02\n" +
-	"\aJourney\x127\n" +
-	"\x05start\x18\x01 \x01(\v2!.smartcore.bos.Transport.LocationR\x05start\x12E\n" +
-	"\fdestinations\x18\x02 \x03(\v2!.smartcore.bos.Transport.LocationR\fdestinations\x12\x16\n" +
+	"\vSTEPS_FAULT\x10\x1d\x1a\xc8\x02\n" +
+	"\aJourney\x12D\n" +
+	"\x05start\x18\x01 \x01(\v2..smartcore.bos.transport.v1.Transport.LocationR\x05start\x12R\n" +
+	"\fdestinations\x18\x02 \x03(\v2..smartcore.bos.transport.v1.Transport.LocationR\fdestinations\x12\x16\n" +
 	"\x06reason\x18\x03 \x01(\tR\x06reason\x129\n" +
 	"\n" +
 	"start_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x12P\n" +
-	"\x16estimated_arrival_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x14estimatedArrivalTime\x1a\xf5\x01\n" +
+	"\x16estimated_arrival_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x14estimatedArrivalTime\x1a\x82\x02\n" +
 	"\x04Door\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
-	"\x04deck\x18\x02 \x01(\x05R\x04deck\x12@\n" +
-	"\x06status\x18\x03 \x01(\x0e2(.smartcore.bos.Transport.Door.DoorStatusR\x06status\"\x80\x01\n" +
+	"\x04deck\x18\x02 \x01(\x05R\x04deck\x12M\n" +
+	"\x06status\x18\x03 \x01(\x0e25.smartcore.bos.transport.v1.Transport.Door.DoorStatusR\x06status\"\x80\x01\n" +
 	"\n" +
 	"DoorStatus\x12\x1b\n" +
 	"\x17DOOR_STATUS_UNSPECIFIED\x10\x00\x12\n" +
@@ -1674,22 +1674,22 @@ const file_transport_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x14\n" +
-	"\x05floor\x18\x04 \x01(\tR\x05floor\x1a\xed\x01\n" +
-	"\rStoppedReason\x12E\n" +
-	"\x06reason\x18\x01 \x01(\x0e2-.smartcore.bos.Transport.StoppedReason.ReasonR\x06reason\x12.\n" +
+	"\x05floor\x18\x04 \x01(\tR\x05floor\x1a\xfa\x01\n" +
+	"\rStoppedReason\x12R\n" +
+	"\x06reason\x18\x01 \x01(\x0e2:.smartcore.bos.transport.v1.Transport.StoppedReason.ReasonR\x06reason\x12.\n" +
 	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\"e\n" +
 	"\x06Reason\x12\x16\n" +
 	"\x12REASON_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15EMERGENCY_STOP_SENSOR\x10\x01\x12\x17\n" +
 	"\x13EMERGENCY_STOP_USER\x10\x02\x12\x0f\n" +
-	"\vREMOTE_STOP\x10\x03\x1a\xf6\x02\n" +
+	"\vREMOTE_STOP\x10\x03\x1a\x9d\x03\n" +
 	"\aPayload\x12\x1d\n" +
 	"\n" +
 	"payload_id\x18\x01 \x01(\tR\tpayloadId\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12K\n" +
-	"\x10intended_journey\x18\x03 \x01(\v2 .smartcore.bos.Transport.JourneyR\x0fintendedJourney\x12G\n" +
-	"\x0eactual_journey\x18\x04 \x01(\v2 .smartcore.bos.Transport.JourneyR\ractualJourney\x12T\n" +
-	"\fexternal_ids\x18d \x03(\v21.smartcore.bos.Transport.Payload.ExternalIdsEntryR\vexternalIds\x1a>\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12X\n" +
+	"\x10intended_journey\x18\x03 \x01(\v2-.smartcore.bos.transport.v1.Transport.JourneyR\x0fintendedJourney\x12T\n" +
+	"\x0eactual_journey\x18\x04 \x01(\v2-.smartcore.bos.transport.v1.Transport.JourneyR\ractualJourney\x12a\n" +
+	"\fexternal_ids\x18d \x03(\v2>.smartcore.bos.transport.v1.Transport.Payload.ExternalIdsEntryR\vexternalIds\x1a>\n" +
 	"\x10ExternalIdsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe5\x01\n" +
@@ -1761,101 +1761,101 @@ const file_transport_proto_rawDesc = "" +
 	"\x14PullTransportRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xf2\x01\n" +
-	"\x15PullTransportResponse\x12E\n" +
-	"\achanges\x18\x01 \x03(\v2+.smartcore.bos.PullTransportResponse.ChangeR\achanges\x1a\x91\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x8c\x02\n" +
+	"\x15PullTransportResponse\x12R\n" +
+	"\achanges\x18\x01 \x03(\v28.smartcore.bos.transport.v1.PullTransportResponse.ChangeR\achanges\x1a\x9e\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x126\n" +
-	"\ttransport\x18\x03 \x01(\v2\x18.smartcore.bos.TransportR\ttransport2\xba\x01\n" +
-	"\fTransportApi\x12L\n" +
-	"\fGetTransport\x12\".smartcore.bos.GetTransportRequest\x1a\x18.smartcore.bos.Transport\x12\\\n" +
-	"\rPullTransport\x12#.smartcore.bos.PullTransportRequest\x1a$.smartcore.bos.PullTransportResponse0\x012n\n" +
-	"\rTransportInfo\x12]\n" +
-	"\x11DescribeTransport\x12'.smartcore.bos.DescribeTransportRequest\x1a\x1f.smartcore.bos.TransportSupportB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"changeTime\x12C\n" +
+	"\ttransport\x18\x03 \x01(\v2%.smartcore.bos.transport.v1.TransportR\ttransport2\xee\x01\n" +
+	"\fTransportApi\x12f\n" +
+	"\fGetTransport\x12/.smartcore.bos.transport.v1.GetTransportRequest\x1a%.smartcore.bos.transport.v1.Transport\x12v\n" +
+	"\rPullTransport\x120.smartcore.bos.transport.v1.PullTransportRequest\x1a1.smartcore.bos.transport.v1.PullTransportResponse0\x012\x88\x01\n" +
+	"\rTransportInfo\x12w\n" +
+	"\x11DescribeTransport\x124.smartcore.bos.transport.v1.DescribeTransportRequest\x1a,.smartcore.bos.transport.v1.TransportSupportB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_transport_proto_rawDescOnce sync.Once
-	file_transport_proto_rawDescData []byte
+	file_smartcore_bos_transport_v1_transport_proto_rawDescOnce sync.Once
+	file_smartcore_bos_transport_v1_transport_proto_rawDescData []byte
 )
 
-func file_transport_proto_rawDescGZIP() []byte {
-	file_transport_proto_rawDescOnce.Do(func() {
-		file_transport_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_transport_proto_rawDesc), len(file_transport_proto_rawDesc)))
+func file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_transport_v1_transport_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_transport_v1_transport_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_transport_v1_transport_proto_rawDesc), len(file_smartcore_bos_transport_v1_transport_proto_rawDesc)))
 	})
-	return file_transport_proto_rawDescData
+	return file_smartcore_bos_transport_v1_transport_proto_rawDescData
 }
 
-var file_transport_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_transport_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
-var file_transport_proto_goTypes = []any{
-	(Transport_Direction)(0),             // 0: smartcore.bos.Transport.Direction
-	(Transport_OperatingMode)(0),         // 1: smartcore.bos.Transport.OperatingMode
-	(Transport_Active)(0),                // 2: smartcore.bos.Transport.Active
-	(Transport_Alarm_AlarmState)(0),      // 3: smartcore.bos.Transport.Alarm.AlarmState
-	(Transport_Fault_FaultType)(0),       // 4: smartcore.bos.Transport.Fault.FaultType
-	(Transport_Door_DoorStatus)(0),       // 5: smartcore.bos.Transport.Door.DoorStatus
-	(Transport_StoppedReason_Reason)(0),  // 6: smartcore.bos.Transport.StoppedReason.Reason
-	(*Transport)(nil),                    // 7: smartcore.bos.Transport
-	(*TransportSupport)(nil),             // 8: smartcore.bos.TransportSupport
-	(*GetTransportRequest)(nil),          // 9: smartcore.bos.GetTransportRequest
-	(*DescribeTransportRequest)(nil),     // 10: smartcore.bos.DescribeTransportRequest
-	(*PullTransportRequest)(nil),         // 11: smartcore.bos.PullTransportRequest
-	(*PullTransportResponse)(nil),        // 12: smartcore.bos.PullTransportResponse
-	(*Transport_Alarm)(nil),              // 13: smartcore.bos.Transport.Alarm
-	(*Transport_Fault)(nil),              // 14: smartcore.bos.Transport.Fault
-	(*Transport_Journey)(nil),            // 15: smartcore.bos.Transport.Journey
-	(*Transport_Door)(nil),               // 16: smartcore.bos.Transport.Door
-	(*Transport_Location)(nil),           // 17: smartcore.bos.Transport.Location
-	(*Transport_StoppedReason)(nil),      // 18: smartcore.bos.Transport.StoppedReason
-	(*Transport_Payload)(nil),            // 19: smartcore.bos.Transport.Payload
-	nil,                                  // 20: smartcore.bos.Transport.Payload.ExternalIdsEntry
-	(*PullTransportResponse_Change)(nil), // 21: smartcore.bos.PullTransportResponse.Change
+var file_smartcore_bos_transport_v1_transport_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
+var file_smartcore_bos_transport_v1_transport_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_smartcore_bos_transport_v1_transport_proto_goTypes = []any{
+	(Transport_Direction)(0),             // 0: smartcore.bos.transport.v1.Transport.Direction
+	(Transport_OperatingMode)(0),         // 1: smartcore.bos.transport.v1.Transport.OperatingMode
+	(Transport_Active)(0),                // 2: smartcore.bos.transport.v1.Transport.Active
+	(Transport_Alarm_AlarmState)(0),      // 3: smartcore.bos.transport.v1.Transport.Alarm.AlarmState
+	(Transport_Fault_FaultType)(0),       // 4: smartcore.bos.transport.v1.Transport.Fault.FaultType
+	(Transport_Door_DoorStatus)(0),       // 5: smartcore.bos.transport.v1.Transport.Door.DoorStatus
+	(Transport_StoppedReason_Reason)(0),  // 6: smartcore.bos.transport.v1.Transport.StoppedReason.Reason
+	(*Transport)(nil),                    // 7: smartcore.bos.transport.v1.Transport
+	(*TransportSupport)(nil),             // 8: smartcore.bos.transport.v1.TransportSupport
+	(*GetTransportRequest)(nil),          // 9: smartcore.bos.transport.v1.GetTransportRequest
+	(*DescribeTransportRequest)(nil),     // 10: smartcore.bos.transport.v1.DescribeTransportRequest
+	(*PullTransportRequest)(nil),         // 11: smartcore.bos.transport.v1.PullTransportRequest
+	(*PullTransportResponse)(nil),        // 12: smartcore.bos.transport.v1.PullTransportResponse
+	(*Transport_Alarm)(nil),              // 13: smartcore.bos.transport.v1.Transport.Alarm
+	(*Transport_Fault)(nil),              // 14: smartcore.bos.transport.v1.Transport.Fault
+	(*Transport_Journey)(nil),            // 15: smartcore.bos.transport.v1.Transport.Journey
+	(*Transport_Door)(nil),               // 16: smartcore.bos.transport.v1.Transport.Door
+	(*Transport_Location)(nil),           // 17: smartcore.bos.transport.v1.Transport.Location
+	(*Transport_StoppedReason)(nil),      // 18: smartcore.bos.transport.v1.Transport.StoppedReason
+	(*Transport_Payload)(nil),            // 19: smartcore.bos.transport.v1.Transport.Payload
+	nil,                                  // 20: smartcore.bos.transport.v1.Transport.Payload.ExternalIdsEntry
+	(*PullTransportResponse_Change)(nil), // 21: smartcore.bos.transport.v1.PullTransportResponse.Change
 	(*durationpb.Duration)(nil),          // 22: google.protobuf.Duration
 	(*types.ResourceSupport)(nil),        // 23: smartcore.types.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),        // 24: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),        // 25: google.protobuf.Timestamp
 }
-var file_transport_proto_depIdxs = []int32{
-	17, // 0: smartcore.bos.Transport.actual_position:type_name -> smartcore.bos.Transport.Location
-	17, // 1: smartcore.bos.Transport.next_destinations:type_name -> smartcore.bos.Transport.Location
-	0,  // 2: smartcore.bos.Transport.moving_direction:type_name -> smartcore.bos.Transport.Direction
-	16, // 3: smartcore.bos.Transport.doors:type_name -> smartcore.bos.Transport.Door
-	1,  // 4: smartcore.bos.Transport.operating_mode:type_name -> smartcore.bos.Transport.OperatingMode
-	14, // 5: smartcore.bos.Transport.faults:type_name -> smartcore.bos.Transport.Fault
-	13, // 6: smartcore.bos.Transport.passenger_alarm:type_name -> smartcore.bos.Transport.Alarm
-	17, // 7: smartcore.bos.Transport.supported_destinations:type_name -> smartcore.bos.Transport.Location
-	2,  // 8: smartcore.bos.Transport.active:type_name -> smartcore.bos.Transport.Active
-	19, // 9: smartcore.bos.Transport.payloads:type_name -> smartcore.bos.Transport.Payload
-	22, // 10: smartcore.bos.Transport.eta_to_next_destination:type_name -> google.protobuf.Duration
-	18, // 11: smartcore.bos.Transport.stopped_reason:type_name -> smartcore.bos.Transport.StoppedReason
-	23, // 12: smartcore.bos.TransportSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	24, // 13: smartcore.bos.GetTransportRequest.read_mask:type_name -> google.protobuf.FieldMask
-	24, // 14: smartcore.bos.PullTransportRequest.read_mask:type_name -> google.protobuf.FieldMask
-	21, // 15: smartcore.bos.PullTransportResponse.changes:type_name -> smartcore.bos.PullTransportResponse.Change
-	3,  // 16: smartcore.bos.Transport.Alarm.state:type_name -> smartcore.bos.Transport.Alarm.AlarmState
-	25, // 17: smartcore.bos.Transport.Alarm.time:type_name -> google.protobuf.Timestamp
-	4,  // 18: smartcore.bos.Transport.Fault.fault_type:type_name -> smartcore.bos.Transport.Fault.FaultType
-	25, // 19: smartcore.bos.Transport.Fault.time:type_name -> google.protobuf.Timestamp
-	17, // 20: smartcore.bos.Transport.Journey.start:type_name -> smartcore.bos.Transport.Location
-	17, // 21: smartcore.bos.Transport.Journey.destinations:type_name -> smartcore.bos.Transport.Location
-	25, // 22: smartcore.bos.Transport.Journey.start_time:type_name -> google.protobuf.Timestamp
-	25, // 23: smartcore.bos.Transport.Journey.estimated_arrival_time:type_name -> google.protobuf.Timestamp
-	5,  // 24: smartcore.bos.Transport.Door.status:type_name -> smartcore.bos.Transport.Door.DoorStatus
-	6,  // 25: smartcore.bos.Transport.StoppedReason.reason:type_name -> smartcore.bos.Transport.StoppedReason.Reason
-	25, // 26: smartcore.bos.Transport.StoppedReason.time:type_name -> google.protobuf.Timestamp
-	15, // 27: smartcore.bos.Transport.Payload.intended_journey:type_name -> smartcore.bos.Transport.Journey
-	15, // 28: smartcore.bos.Transport.Payload.actual_journey:type_name -> smartcore.bos.Transport.Journey
-	20, // 29: smartcore.bos.Transport.Payload.external_ids:type_name -> smartcore.bos.Transport.Payload.ExternalIdsEntry
-	25, // 30: smartcore.bos.PullTransportResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	7,  // 31: smartcore.bos.PullTransportResponse.Change.transport:type_name -> smartcore.bos.Transport
-	9,  // 32: smartcore.bos.TransportApi.GetTransport:input_type -> smartcore.bos.GetTransportRequest
-	11, // 33: smartcore.bos.TransportApi.PullTransport:input_type -> smartcore.bos.PullTransportRequest
-	10, // 34: smartcore.bos.TransportInfo.DescribeTransport:input_type -> smartcore.bos.DescribeTransportRequest
-	7,  // 35: smartcore.bos.TransportApi.GetTransport:output_type -> smartcore.bos.Transport
-	12, // 36: smartcore.bos.TransportApi.PullTransport:output_type -> smartcore.bos.PullTransportResponse
-	8,  // 37: smartcore.bos.TransportInfo.DescribeTransport:output_type -> smartcore.bos.TransportSupport
+var file_smartcore_bos_transport_v1_transport_proto_depIdxs = []int32{
+	17, // 0: smartcore.bos.transport.v1.Transport.actual_position:type_name -> smartcore.bos.transport.v1.Transport.Location
+	17, // 1: smartcore.bos.transport.v1.Transport.next_destinations:type_name -> smartcore.bos.transport.v1.Transport.Location
+	0,  // 2: smartcore.bos.transport.v1.Transport.moving_direction:type_name -> smartcore.bos.transport.v1.Transport.Direction
+	16, // 3: smartcore.bos.transport.v1.Transport.doors:type_name -> smartcore.bos.transport.v1.Transport.Door
+	1,  // 4: smartcore.bos.transport.v1.Transport.operating_mode:type_name -> smartcore.bos.transport.v1.Transport.OperatingMode
+	14, // 5: smartcore.bos.transport.v1.Transport.faults:type_name -> smartcore.bos.transport.v1.Transport.Fault
+	13, // 6: smartcore.bos.transport.v1.Transport.passenger_alarm:type_name -> smartcore.bos.transport.v1.Transport.Alarm
+	17, // 7: smartcore.bos.transport.v1.Transport.supported_destinations:type_name -> smartcore.bos.transport.v1.Transport.Location
+	2,  // 8: smartcore.bos.transport.v1.Transport.active:type_name -> smartcore.bos.transport.v1.Transport.Active
+	19, // 9: smartcore.bos.transport.v1.Transport.payloads:type_name -> smartcore.bos.transport.v1.Transport.Payload
+	22, // 10: smartcore.bos.transport.v1.Transport.eta_to_next_destination:type_name -> google.protobuf.Duration
+	18, // 11: smartcore.bos.transport.v1.Transport.stopped_reason:type_name -> smartcore.bos.transport.v1.Transport.StoppedReason
+	23, // 12: smartcore.bos.transport.v1.TransportSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	24, // 13: smartcore.bos.transport.v1.GetTransportRequest.read_mask:type_name -> google.protobuf.FieldMask
+	24, // 14: smartcore.bos.transport.v1.PullTransportRequest.read_mask:type_name -> google.protobuf.FieldMask
+	21, // 15: smartcore.bos.transport.v1.PullTransportResponse.changes:type_name -> smartcore.bos.transport.v1.PullTransportResponse.Change
+	3,  // 16: smartcore.bos.transport.v1.Transport.Alarm.state:type_name -> smartcore.bos.transport.v1.Transport.Alarm.AlarmState
+	25, // 17: smartcore.bos.transport.v1.Transport.Alarm.time:type_name -> google.protobuf.Timestamp
+	4,  // 18: smartcore.bos.transport.v1.Transport.Fault.fault_type:type_name -> smartcore.bos.transport.v1.Transport.Fault.FaultType
+	25, // 19: smartcore.bos.transport.v1.Transport.Fault.time:type_name -> google.protobuf.Timestamp
+	17, // 20: smartcore.bos.transport.v1.Transport.Journey.start:type_name -> smartcore.bos.transport.v1.Transport.Location
+	17, // 21: smartcore.bos.transport.v1.Transport.Journey.destinations:type_name -> smartcore.bos.transport.v1.Transport.Location
+	25, // 22: smartcore.bos.transport.v1.Transport.Journey.start_time:type_name -> google.protobuf.Timestamp
+	25, // 23: smartcore.bos.transport.v1.Transport.Journey.estimated_arrival_time:type_name -> google.protobuf.Timestamp
+	5,  // 24: smartcore.bos.transport.v1.Transport.Door.status:type_name -> smartcore.bos.transport.v1.Transport.Door.DoorStatus
+	6,  // 25: smartcore.bos.transport.v1.Transport.StoppedReason.reason:type_name -> smartcore.bos.transport.v1.Transport.StoppedReason.Reason
+	25, // 26: smartcore.bos.transport.v1.Transport.StoppedReason.time:type_name -> google.protobuf.Timestamp
+	15, // 27: smartcore.bos.transport.v1.Transport.Payload.intended_journey:type_name -> smartcore.bos.transport.v1.Transport.Journey
+	15, // 28: smartcore.bos.transport.v1.Transport.Payload.actual_journey:type_name -> smartcore.bos.transport.v1.Transport.Journey
+	20, // 29: smartcore.bos.transport.v1.Transport.Payload.external_ids:type_name -> smartcore.bos.transport.v1.Transport.Payload.ExternalIdsEntry
+	25, // 30: smartcore.bos.transport.v1.PullTransportResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	7,  // 31: smartcore.bos.transport.v1.PullTransportResponse.Change.transport:type_name -> smartcore.bos.transport.v1.Transport
+	9,  // 32: smartcore.bos.transport.v1.TransportApi.GetTransport:input_type -> smartcore.bos.transport.v1.GetTransportRequest
+	11, // 33: smartcore.bos.transport.v1.TransportApi.PullTransport:input_type -> smartcore.bos.transport.v1.PullTransportRequest
+	10, // 34: smartcore.bos.transport.v1.TransportInfo.DescribeTransport:input_type -> smartcore.bos.transport.v1.DescribeTransportRequest
+	7,  // 35: smartcore.bos.transport.v1.TransportApi.GetTransport:output_type -> smartcore.bos.transport.v1.Transport
+	12, // 36: smartcore.bos.transport.v1.TransportApi.PullTransport:output_type -> smartcore.bos.transport.v1.PullTransportResponse
+	8,  // 37: smartcore.bos.transport.v1.TransportInfo.DescribeTransport:output_type -> smartcore.bos.transport.v1.TransportSupport
 	35, // [35:38] is the sub-list for method output_type
 	32, // [32:35] is the sub-list for method input_type
 	32, // [32:32] is the sub-list for extension type_name
@@ -1863,28 +1863,28 @@ var file_transport_proto_depIdxs = []int32{
 	0,  // [0:32] is the sub-list for field type_name
 }
 
-func init() { file_transport_proto_init() }
-func file_transport_proto_init() {
-	if File_transport_proto != nil {
+func init() { file_smartcore_bos_transport_v1_transport_proto_init() }
+func file_smartcore_bos_transport_v1_transport_proto_init() {
+	if File_smartcore_bos_transport_v1_transport_proto != nil {
 		return
 	}
-	file_transport_proto_msgTypes[0].OneofWrappers = []any{}
+	file_smartcore_bos_transport_v1_transport_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_transport_proto_rawDesc), len(file_transport_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_transport_v1_transport_proto_rawDesc), len(file_smartcore_bos_transport_v1_transport_proto_rawDesc)),
 			NumEnums:      7,
 			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_transport_proto_goTypes,
-		DependencyIndexes: file_transport_proto_depIdxs,
-		EnumInfos:         file_transport_proto_enumTypes,
-		MessageInfos:      file_transport_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_transport_v1_transport_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_transport_v1_transport_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_transport_v1_transport_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_transport_v1_transport_proto_msgTypes,
 	}.Build()
-	File_transport_proto = out.File
-	file_transport_proto_goTypes = nil
-	file_transport_proto_depIdxs = nil
+	File_smartcore_bos_transport_v1_transport_proto = out.File
+	file_smartcore_bos_transport_v1_transport_proto_goTypes = nil
+	file_smartcore_bos_transport_v1_transport_proto_depIdxs = nil
 }

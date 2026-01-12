@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: occupancy_sensor_history.proto
+// source: smartcore/bos/occupancysensor/v1/occupancy_sensor_history.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OccupancySensorHistory_ListOccupancyHistory_FullMethodName = "/smartcore.bos.OccupancySensorHistory/ListOccupancyHistory"
+	OccupancySensorHistory_ListOccupancyHistory_FullMethodName = "/smartcore.bos.occupancysensor.v1.OccupancySensorHistory/ListOccupancyHistory"
 )
 
 // OccupancySensorHistoryClient is the client API for OccupancySensorHistory service.
@@ -113,7 +113,7 @@ func _OccupancySensorHistory_ListOccupancyHistory_Handler(srv interface{}, ctx c
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var OccupancySensorHistory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.OccupancySensorHistory",
+	ServiceName: "smartcore.bos.occupancysensor.v1.OccupancySensorHistory",
 	HandlerType: (*OccupancySensorHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -122,5 +122,5 @@ var OccupancySensorHistory_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "occupancy_sensor_history.proto",
+	Metadata: "smartcore/bos/occupancysensor/v1/occupancy_sensor_history.proto",
 }

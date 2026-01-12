@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: allocation_history.proto
+// source: smartcore/bos/allocation/v1/allocation_history.proto
 
 package gen
 
@@ -34,7 +34,7 @@ type AllocationRecord struct {
 
 func (x *AllocationRecord) Reset() {
 	*x = AllocationRecord{}
-	mi := &file_allocation_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_allocation_v1_allocation_history_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +46,7 @@ func (x *AllocationRecord) String() string {
 func (*AllocationRecord) ProtoMessage() {}
 
 func (x *AllocationRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_allocation_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_allocation_v1_allocation_history_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +59,7 @@ func (x *AllocationRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AllocationRecord.ProtoReflect.Descriptor instead.
 func (*AllocationRecord) Descriptor() ([]byte, []int) {
-	return file_allocation_history_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_allocation_v1_allocation_history_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *AllocationRecord) GetAllocation() *Allocation {
@@ -102,7 +102,7 @@ type ListAllocationHistoryRequest struct {
 
 func (x *ListAllocationHistoryRequest) Reset() {
 	*x = ListAllocationHistoryRequest{}
-	mi := &file_allocation_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_allocation_v1_allocation_history_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -114,7 +114,7 @@ func (x *ListAllocationHistoryRequest) String() string {
 func (*ListAllocationHistoryRequest) ProtoMessage() {}
 
 func (x *ListAllocationHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_allocation_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_allocation_v1_allocation_history_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -127,7 +127,7 @@ func (x *ListAllocationHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAllocationHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListAllocationHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_allocation_history_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_allocation_v1_allocation_history_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListAllocationHistoryRequest) GetName() string {
@@ -188,7 +188,7 @@ type ListAllocationHistoryResponse struct {
 
 func (x *ListAllocationHistoryResponse) Reset() {
 	*x = ListAllocationHistoryResponse{}
-	mi := &file_allocation_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_allocation_v1_allocation_history_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -200,7 +200,7 @@ func (x *ListAllocationHistoryResponse) String() string {
 func (*ListAllocationHistoryResponse) ProtoMessage() {}
 
 func (x *ListAllocationHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_allocation_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_allocation_v1_allocation_history_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -213,7 +213,7 @@ func (x *ListAllocationHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAllocationHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListAllocationHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_allocation_history_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_allocation_v1_allocation_history_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListAllocationHistoryResponse) GetAllocationRecords() []*AllocationRecord {
@@ -237,14 +237,14 @@ func (x *ListAllocationHistoryResponse) GetTotalSize() int32 {
 	return 0
 }
 
-var File_allocation_history_proto protoreflect.FileDescriptor
+var File_smartcore_bos_allocation_v1_allocation_history_proto protoreflect.FileDescriptor
 
-const file_allocation_history_proto_rawDesc = "" +
+const file_smartcore_bos_allocation_v1_allocation_history_proto_rawDesc = "" +
 	"\n" +
-	"\x18allocation_history.proto\x12\rsmartcore.bos\x1a\x10allocation.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17types/time/period.proto\"\x8a\x01\n" +
-	"\x10AllocationRecord\x129\n" +
+	"4smartcore/bos/allocation/v1/allocation_history.proto\x12\x1bsmartcore.bos.allocation.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a,smartcore/bos/allocation/v1/allocation.proto\x1a\x17types/time/period.proto\"\x98\x01\n" +
+	"\x10AllocationRecord\x12G\n" +
 	"\n" +
-	"allocation\x18\x01 \x01(\v2\x19.smartcore.bos.AllocationR\n" +
+	"allocation\x18\x01 \x01(\v2'.smartcore.bos.allocation.v1.AllocationR\n" +
 	"allocation\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"recordTime\"\xf8\x01\n" +
@@ -255,45 +255,45 @@ const file_allocation_history_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x05 \x01(\tR\tpageToken\x12\x19\n" +
-	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xb6\x01\n" +
-	"\x1dListAllocationHistoryResponse\x12N\n" +
-	"\x12allocation_records\x18\x01 \x03(\v2\x1f.smartcore.bos.AllocationRecordR\x11allocationRecords\x12&\n" +
+	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xc4\x01\n" +
+	"\x1dListAllocationHistoryResponse\x12\\\n" +
+	"\x12allocation_records\x18\x01 \x03(\v2-.smartcore.bos.allocation.v1.AllocationRecordR\x11allocationRecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x87\x01\n" +
-	"\x11AllocationHistory\x12r\n" +
-	"\x15ListAllocationHistory\x12+.smartcore.bos.ListAllocationHistoryRequest\x1a,.smartcore.bos.ListAllocationHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"total_size\x18\x03 \x01(\x05R\ttotalSize2\xa4\x01\n" +
+	"\x11AllocationHistory\x12\x8e\x01\n" +
+	"\x15ListAllocationHistory\x129.smartcore.bos.allocation.v1.ListAllocationHistoryRequest\x1a:.smartcore.bos.allocation.v1.ListAllocationHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_allocation_history_proto_rawDescOnce sync.Once
-	file_allocation_history_proto_rawDescData []byte
+	file_smartcore_bos_allocation_v1_allocation_history_proto_rawDescOnce sync.Once
+	file_smartcore_bos_allocation_v1_allocation_history_proto_rawDescData []byte
 )
 
-func file_allocation_history_proto_rawDescGZIP() []byte {
-	file_allocation_history_proto_rawDescOnce.Do(func() {
-		file_allocation_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_allocation_history_proto_rawDesc), len(file_allocation_history_proto_rawDesc)))
+func file_smartcore_bos_allocation_v1_allocation_history_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_allocation_v1_allocation_history_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_allocation_v1_allocation_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_allocation_v1_allocation_history_proto_rawDesc), len(file_smartcore_bos_allocation_v1_allocation_history_proto_rawDesc)))
 	})
-	return file_allocation_history_proto_rawDescData
+	return file_smartcore_bos_allocation_v1_allocation_history_proto_rawDescData
 }
 
-var file_allocation_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_allocation_history_proto_goTypes = []any{
-	(*AllocationRecord)(nil),              // 0: smartcore.bos.AllocationRecord
-	(*ListAllocationHistoryRequest)(nil),  // 1: smartcore.bos.ListAllocationHistoryRequest
-	(*ListAllocationHistoryResponse)(nil), // 2: smartcore.bos.ListAllocationHistoryResponse
-	(*Allocation)(nil),                    // 3: smartcore.bos.Allocation
+var file_smartcore_bos_allocation_v1_allocation_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_smartcore_bos_allocation_v1_allocation_history_proto_goTypes = []any{
+	(*AllocationRecord)(nil),              // 0: smartcore.bos.allocation.v1.AllocationRecord
+	(*ListAllocationHistoryRequest)(nil),  // 1: smartcore.bos.allocation.v1.ListAllocationHistoryRequest
+	(*ListAllocationHistoryResponse)(nil), // 2: smartcore.bos.allocation.v1.ListAllocationHistoryResponse
+	(*Allocation)(nil),                    // 3: smartcore.bos.allocation.v1.Allocation
 	(*timestamppb.Timestamp)(nil),         // 4: google.protobuf.Timestamp
 	(*time.Period)(nil),                   // 5: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),         // 6: google.protobuf.FieldMask
 }
-var file_allocation_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.AllocationRecord.allocation:type_name -> smartcore.bos.Allocation
-	4, // 1: smartcore.bos.AllocationRecord.record_time:type_name -> google.protobuf.Timestamp
-	5, // 2: smartcore.bos.ListAllocationHistoryRequest.period:type_name -> smartcore.types.time.Period
-	6, // 3: smartcore.bos.ListAllocationHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
-	0, // 4: smartcore.bos.ListAllocationHistoryResponse.allocation_records:type_name -> smartcore.bos.AllocationRecord
-	1, // 5: smartcore.bos.AllocationHistory.ListAllocationHistory:input_type -> smartcore.bos.ListAllocationHistoryRequest
-	2, // 6: smartcore.bos.AllocationHistory.ListAllocationHistory:output_type -> smartcore.bos.ListAllocationHistoryResponse
+var file_smartcore_bos_allocation_v1_allocation_history_proto_depIdxs = []int32{
+	3, // 0: smartcore.bos.allocation.v1.AllocationRecord.allocation:type_name -> smartcore.bos.allocation.v1.Allocation
+	4, // 1: smartcore.bos.allocation.v1.AllocationRecord.record_time:type_name -> google.protobuf.Timestamp
+	5, // 2: smartcore.bos.allocation.v1.ListAllocationHistoryRequest.period:type_name -> smartcore.types.time.Period
+	6, // 3: smartcore.bos.allocation.v1.ListAllocationHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
+	0, // 4: smartcore.bos.allocation.v1.ListAllocationHistoryResponse.allocation_records:type_name -> smartcore.bos.allocation.v1.AllocationRecord
+	1, // 5: smartcore.bos.allocation.v1.AllocationHistory.ListAllocationHistory:input_type -> smartcore.bos.allocation.v1.ListAllocationHistoryRequest
+	2, // 6: smartcore.bos.allocation.v1.AllocationHistory.ListAllocationHistory:output_type -> smartcore.bos.allocation.v1.ListAllocationHistoryResponse
 	6, // [6:7] is the sub-list for method output_type
 	5, // [5:6] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -301,27 +301,27 @@ var file_allocation_history_proto_depIdxs = []int32{
 	0, // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_allocation_history_proto_init() }
-func file_allocation_history_proto_init() {
-	if File_allocation_history_proto != nil {
+func init() { file_smartcore_bos_allocation_v1_allocation_history_proto_init() }
+func file_smartcore_bos_allocation_v1_allocation_history_proto_init() {
+	if File_smartcore_bos_allocation_v1_allocation_history_proto != nil {
 		return
 	}
-	file_allocation_proto_init()
+	file_smartcore_bos_allocation_v1_allocation_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_allocation_history_proto_rawDesc), len(file_allocation_history_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_allocation_v1_allocation_history_proto_rawDesc), len(file_smartcore_bos_allocation_v1_allocation_history_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_allocation_history_proto_goTypes,
-		DependencyIndexes: file_allocation_history_proto_depIdxs,
-		MessageInfos:      file_allocation_history_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_allocation_v1_allocation_history_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_allocation_v1_allocation_history_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_allocation_v1_allocation_history_proto_msgTypes,
 	}.Build()
-	File_allocation_history_proto = out.File
-	file_allocation_history_proto_goTypes = nil
-	file_allocation_history_proto_depIdxs = nil
+	File_smartcore_bos_allocation_v1_allocation_history_proto = out.File
+	file_smartcore_bos_allocation_v1_allocation_history_proto_goTypes = nil
+	file_smartcore_bos_allocation_v1_allocation_history_proto_depIdxs = nil
 }

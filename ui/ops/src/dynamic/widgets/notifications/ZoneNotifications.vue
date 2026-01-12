@@ -9,7 +9,7 @@ import {computed} from 'vue';
 
 const props = defineProps({
   forceQuery: {
-    type: Object, /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/alerts_pb.js').Alert.Query.AsObject} */
+    type: Object, /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb.js').Alert.Query.AsObject} */
     default: null
   },
   // legacy, use forceQuery instead. Here because it's driven directly from json config.

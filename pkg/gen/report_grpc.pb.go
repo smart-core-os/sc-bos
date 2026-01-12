@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: report.proto
+// source: smartcore/bos/report/v1/report.proto
 
 package gen
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ReportApi_ListReports_FullMethodName          = "/smartcore.bos.ReportApi/ListReports"
-	ReportApi_GetDownloadReportUrl_FullMethodName = "/smartcore.bos.ReportApi/GetDownloadReportUrl"
+	ReportApi_ListReports_FullMethodName          = "/smartcore.bos.report.v1.ReportApi/ListReports"
+	ReportApi_GetDownloadReportUrl_FullMethodName = "/smartcore.bos.report.v1.ReportApi/GetDownloadReportUrl"
 )
 
 // ReportApiClient is the client API for ReportApi service.
@@ -148,7 +148,7 @@ func _ReportApi_GetDownloadReportUrl_Handler(srv interface{}, ctx context.Contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ReportApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.ReportApi",
+	ServiceName: "smartcore.bos.report.v1.ReportApi",
 	HandlerType: (*ReportApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -161,5 +161,5 @@ var ReportApi_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "report.proto",
+	Metadata: "smartcore/bos/report/v1/report.proto",
 }

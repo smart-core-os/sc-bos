@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: devices.proto
+// source: smartcore/bos/devices/v1/devices.proto
 
 package gen
 
@@ -65,11 +65,11 @@ func (x Device_Query_Condition_Matcher) String() string {
 }
 
 func (Device_Query_Condition_Matcher) Descriptor() protoreflect.EnumDescriptor {
-	return file_devices_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_devices_v1_devices_proto_enumTypes[0].Descriptor()
 }
 
 func (Device_Query_Condition_Matcher) Type() protoreflect.EnumType {
-	return &file_devices_proto_enumTypes[0]
+	return &file_smartcore_bos_devices_v1_devices_proto_enumTypes[0]
 }
 
 func (x Device_Query_Condition_Matcher) Number() protoreflect.EnumNumber {
@@ -78,7 +78,7 @@ func (x Device_Query_Condition_Matcher) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Device_Query_Condition_Matcher.Descriptor instead.
 func (Device_Query_Condition_Matcher) EnumDescriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{0, 0, 0, 0}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{0, 0, 0, 0}
 }
 
 type Device struct {
@@ -98,7 +98,7 @@ type Device struct {
 
 func (x *Device) Reset() {
 	*x = Device{}
-	mi := &file_devices_proto_msgTypes[0]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -110,7 +110,7 @@ func (x *Device) String() string {
 func (*Device) ProtoMessage() {}
 
 func (x *Device) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[0]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -123,7 +123,7 @@ func (x *Device) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Device.ProtoReflect.Descriptor instead.
 func (*Device) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Device) GetName() string {
@@ -161,7 +161,7 @@ type DevicesMetadata struct {
 
 func (x *DevicesMetadata) Reset() {
 	*x = DevicesMetadata{}
-	mi := &file_devices_proto_msgTypes[1]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -173,7 +173,7 @@ func (x *DevicesMetadata) String() string {
 func (*DevicesMetadata) ProtoMessage() {}
 
 func (x *DevicesMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[1]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -186,7 +186,7 @@ func (x *DevicesMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DevicesMetadata.ProtoReflect.Descriptor instead.
 func (*DevicesMetadata) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *DevicesMetadata) GetTotalCount() int32 {
@@ -223,7 +223,7 @@ type ListDevicesRequest struct {
 
 func (x *ListDevicesRequest) Reset() {
 	*x = ListDevicesRequest{}
-	mi := &file_devices_proto_msgTypes[2]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -235,7 +235,7 @@ func (x *ListDevicesRequest) String() string {
 func (*ListDevicesRequest) ProtoMessage() {}
 
 func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[2]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -248,7 +248,7 @@ func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesRequest.ProtoReflect.Descriptor instead.
 func (*ListDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListDevicesRequest) GetReadMask() *fieldmaskpb.FieldMask {
@@ -294,7 +294,7 @@ type ListDevicesResponse struct {
 
 func (x *ListDevicesResponse) Reset() {
 	*x = ListDevicesResponse{}
-	mi := &file_devices_proto_msgTypes[3]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -306,7 +306,7 @@ func (x *ListDevicesResponse) String() string {
 func (*ListDevicesResponse) ProtoMessage() {}
 
 func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[3]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -319,7 +319,7 @@ func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesResponse.ProtoReflect.Descriptor instead.
 func (*ListDevicesResponse) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListDevicesResponse) GetDevices() []*Device {
@@ -358,7 +358,7 @@ type PullDevicesRequest struct {
 
 func (x *PullDevicesRequest) Reset() {
 	*x = PullDevicesRequest{}
-	mi := &file_devices_proto_msgTypes[4]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -370,7 +370,7 @@ func (x *PullDevicesRequest) String() string {
 func (*PullDevicesRequest) ProtoMessage() {}
 
 func (x *PullDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[4]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -383,7 +383,7 @@ func (x *PullDevicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullDevicesRequest.ProtoReflect.Descriptor instead.
 func (*PullDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullDevicesRequest) GetReadMask() *fieldmaskpb.FieldMask {
@@ -417,7 +417,7 @@ type PullDevicesResponse struct {
 
 func (x *PullDevicesResponse) Reset() {
 	*x = PullDevicesResponse{}
-	mi := &file_devices_proto_msgTypes[5]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -429,7 +429,7 @@ func (x *PullDevicesResponse) String() string {
 func (*PullDevicesResponse) ProtoMessage() {}
 
 func (x *PullDevicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[5]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -442,7 +442,7 @@ func (x *PullDevicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullDevicesResponse.ProtoReflect.Descriptor instead.
 func (*PullDevicesResponse) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PullDevicesResponse) GetChanges() []*PullDevicesResponse_Change {
@@ -467,7 +467,7 @@ type GetDevicesMetadataRequest struct {
 
 func (x *GetDevicesMetadataRequest) Reset() {
 	*x = GetDevicesMetadataRequest{}
-	mi := &file_devices_proto_msgTypes[6]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -479,7 +479,7 @@ func (x *GetDevicesMetadataRequest) String() string {
 func (*GetDevicesMetadataRequest) ProtoMessage() {}
 
 func (x *GetDevicesMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[6]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -492,7 +492,7 @@ func (x *GetDevicesMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDevicesMetadataRequest.ProtoReflect.Descriptor instead.
 func (*GetDevicesMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetDevicesMetadataRequest) GetReadMask() *fieldmaskpb.FieldMask {
@@ -534,7 +534,7 @@ type PullDevicesMetadataRequest struct {
 
 func (x *PullDevicesMetadataRequest) Reset() {
 	*x = PullDevicesMetadataRequest{}
-	mi := &file_devices_proto_msgTypes[7]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -546,7 +546,7 @@ func (x *PullDevicesMetadataRequest) String() string {
 func (*PullDevicesMetadataRequest) ProtoMessage() {}
 
 func (x *PullDevicesMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[7]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -559,7 +559,7 @@ func (x *PullDevicesMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullDevicesMetadataRequest.ProtoReflect.Descriptor instead.
 func (*PullDevicesMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PullDevicesMetadataRequest) GetReadMask() *fieldmaskpb.FieldMask {
@@ -599,7 +599,7 @@ type PullDevicesMetadataResponse struct {
 
 func (x *PullDevicesMetadataResponse) Reset() {
 	*x = PullDevicesMetadataResponse{}
-	mi := &file_devices_proto_msgTypes[8]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -611,7 +611,7 @@ func (x *PullDevicesMetadataResponse) String() string {
 func (*PullDevicesMetadataResponse) ProtoMessage() {}
 
 func (x *PullDevicesMetadataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[8]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -624,7 +624,7 @@ func (x *PullDevicesMetadataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullDevicesMetadataResponse.ProtoReflect.Descriptor instead.
 func (*PullDevicesMetadataResponse) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{8}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PullDevicesMetadataResponse) GetChanges() []*PullDevicesMetadataResponse_Change {
@@ -657,7 +657,7 @@ type GetDownloadDevicesUrlRequest struct {
 
 func (x *GetDownloadDevicesUrlRequest) Reset() {
 	*x = GetDownloadDevicesUrlRequest{}
-	mi := &file_devices_proto_msgTypes[9]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -669,7 +669,7 @@ func (x *GetDownloadDevicesUrlRequest) String() string {
 func (*GetDownloadDevicesUrlRequest) ProtoMessage() {}
 
 func (x *GetDownloadDevicesUrlRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[9]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -682,7 +682,7 @@ func (x *GetDownloadDevicesUrlRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDownloadDevicesUrlRequest.ProtoReflect.Descriptor instead.
 func (*GetDownloadDevicesUrlRequest) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{9}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetDownloadDevicesUrlRequest) GetQuery() *Device_Query {
@@ -734,7 +734,7 @@ type DownloadDevicesUrl struct {
 
 func (x *DownloadDevicesUrl) Reset() {
 	*x = DownloadDevicesUrl{}
-	mi := &file_devices_proto_msgTypes[10]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -746,7 +746,7 @@ func (x *DownloadDevicesUrl) String() string {
 func (*DownloadDevicesUrl) ProtoMessage() {}
 
 func (x *DownloadDevicesUrl) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[10]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -759,7 +759,7 @@ func (x *DownloadDevicesUrl) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DownloadDevicesUrl.ProtoReflect.Descriptor instead.
 func (*DownloadDevicesUrl) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{10}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DownloadDevicesUrl) GetUrl() string {
@@ -802,7 +802,7 @@ type Device_Query struct {
 
 func (x *Device_Query) Reset() {
 	*x = Device_Query{}
-	mi := &file_devices_proto_msgTypes[11]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -814,7 +814,7 @@ func (x *Device_Query) String() string {
 func (*Device_Query) ProtoMessage() {}
 
 func (x *Device_Query) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[11]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -827,7 +827,7 @@ func (x *Device_Query) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Device_Query.ProtoReflect.Descriptor instead.
 func (*Device_Query) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *Device_Query) GetConditions() []*Device_Query_Condition {
@@ -873,14 +873,14 @@ type Device_Query_Condition struct {
 	//	*Device_Query_Condition_Matches
 	Value isDevice_Query_Condition_Value `protobuf_oneof:"value"`
 	// Matcher controls how values are matched against this condition.
-	Matcher       Device_Query_Condition_Matcher `protobuf:"varint,100,opt,name=matcher,proto3,enum=smartcore.bos.Device_Query_Condition_Matcher" json:"matcher,omitempty"`
+	Matcher       Device_Query_Condition_Matcher `protobuf:"varint,100,opt,name=matcher,proto3,enum=smartcore.bos.devices.v1.Device_Query_Condition_Matcher" json:"matcher,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Device_Query_Condition) Reset() {
 	*x = Device_Query_Condition{}
-	mi := &file_devices_proto_msgTypes[12]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -892,7 +892,7 @@ func (x *Device_Query_Condition) String() string {
 func (*Device_Query_Condition) ProtoMessage() {}
 
 func (x *Device_Query_Condition) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[12]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -905,7 +905,7 @@ func (x *Device_Query_Condition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Device_Query_Condition.ProtoReflect.Descriptor instead.
 func (*Device_Query_Condition) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{0, 0, 0}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
 func (x *Device_Query_Condition) GetField() string {
@@ -1237,7 +1237,7 @@ type Device_Query_StringList struct {
 
 func (x *Device_Query_StringList) Reset() {
 	*x = Device_Query_StringList{}
-	mi := &file_devices_proto_msgTypes[13]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1249,7 +1249,7 @@ func (x *Device_Query_StringList) String() string {
 func (*Device_Query_StringList) ProtoMessage() {}
 
 func (x *Device_Query_StringList) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[13]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1262,7 +1262,7 @@ func (x *Device_Query_StringList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Device_Query_StringList.ProtoReflect.Descriptor instead.
 func (*Device_Query_StringList) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{0, 0, 1}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{0, 0, 1}
 }
 
 func (x *Device_Query_StringList) GetStrings() []string {
@@ -1282,7 +1282,7 @@ type DevicesMetadata_StringFieldCount struct {
 
 func (x *DevicesMetadata_StringFieldCount) Reset() {
 	*x = DevicesMetadata_StringFieldCount{}
-	mi := &file_devices_proto_msgTypes[14]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1294,7 +1294,7 @@ func (x *DevicesMetadata_StringFieldCount) String() string {
 func (*DevicesMetadata_StringFieldCount) ProtoMessage() {}
 
 func (x *DevicesMetadata_StringFieldCount) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[14]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1307,7 +1307,7 @@ func (x *DevicesMetadata_StringFieldCount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DevicesMetadata_StringFieldCount.ProtoReflect.Descriptor instead.
 func (*DevicesMetadata_StringFieldCount) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{1, 0}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{1, 0}
 }
 
 func (x *DevicesMetadata_StringFieldCount) GetField() string {
@@ -1334,7 +1334,7 @@ type DevicesMetadata_Include struct {
 
 func (x *DevicesMetadata_Include) Reset() {
 	*x = DevicesMetadata_Include{}
-	mi := &file_devices_proto_msgTypes[15]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1346,7 +1346,7 @@ func (x *DevicesMetadata_Include) String() string {
 func (*DevicesMetadata_Include) ProtoMessage() {}
 
 func (x *DevicesMetadata_Include) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[15]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1359,7 +1359,7 @@ func (x *DevicesMetadata_Include) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DevicesMetadata_Include.ProtoReflect.Descriptor instead.
 func (*DevicesMetadata_Include) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{1, 1}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{1, 1}
 }
 
 func (x *DevicesMetadata_Include) GetFields() []string {
@@ -1387,7 +1387,7 @@ type PullDevicesResponse_Change struct {
 
 func (x *PullDevicesResponse_Change) Reset() {
 	*x = PullDevicesResponse_Change{}
-	mi := &file_devices_proto_msgTypes[17]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1399,7 +1399,7 @@ func (x *PullDevicesResponse_Change) String() string {
 func (*PullDevicesResponse_Change) ProtoMessage() {}
 
 func (x *PullDevicesResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[17]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1412,7 +1412,7 @@ func (x *PullDevicesResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullDevicesResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullDevicesResponse_Change) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{5, 0}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{5, 0}
 }
 
 func (x *PullDevicesResponse_Change) GetName() string {
@@ -1464,7 +1464,7 @@ type PullDevicesMetadataResponse_Change struct {
 
 func (x *PullDevicesMetadataResponse_Change) Reset() {
 	*x = PullDevicesMetadataResponse_Change{}
-	mi := &file_devices_proto_msgTypes[18]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1476,7 +1476,7 @@ func (x *PullDevicesMetadataResponse_Change) String() string {
 func (*PullDevicesMetadataResponse_Change) ProtoMessage() {}
 
 func (x *PullDevicesMetadataResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[18]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1489,7 +1489,7 @@ func (x *PullDevicesMetadataResponse_Change) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use PullDevicesMetadataResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullDevicesMetadataResponse_Change) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{8, 0}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{8, 0}
 }
 
 func (x *PullDevicesMetadataResponse_Change) GetName() string {
@@ -1528,7 +1528,7 @@ type GetDownloadDevicesUrlRequest_Table struct {
 
 func (x *GetDownloadDevicesUrlRequest_Table) Reset() {
 	*x = GetDownloadDevicesUrlRequest_Table{}
-	mi := &file_devices_proto_msgTypes[19]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1540,7 +1540,7 @@ func (x *GetDownloadDevicesUrlRequest_Table) String() string {
 func (*GetDownloadDevicesUrlRequest_Table) ProtoMessage() {}
 
 func (x *GetDownloadDevicesUrlRequest_Table) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[19]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1553,7 +1553,7 @@ func (x *GetDownloadDevicesUrlRequest_Table) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use GetDownloadDevicesUrlRequest_Table.ProtoReflect.Descriptor instead.
 func (*GetDownloadDevicesUrlRequest_Table) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{9, 0}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{9, 0}
 }
 
 func (x *GetDownloadDevicesUrlRequest_Table) GetIncludeCols() []*GetDownloadDevicesUrlRequest_Table_Column {
@@ -1582,7 +1582,7 @@ type GetDownloadDevicesUrlRequest_Table_Column struct {
 
 func (x *GetDownloadDevicesUrlRequest_Table_Column) Reset() {
 	*x = GetDownloadDevicesUrlRequest_Table_Column{}
-	mi := &file_devices_proto_msgTypes[20]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1594,7 +1594,7 @@ func (x *GetDownloadDevicesUrlRequest_Table_Column) String() string {
 func (*GetDownloadDevicesUrlRequest_Table_Column) ProtoMessage() {}
 
 func (x *GetDownloadDevicesUrlRequest_Table_Column) ProtoReflect() protoreflect.Message {
-	mi := &file_devices_proto_msgTypes[20]
+	mi := &file_smartcore_bos_devices_v1_devices_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1607,7 +1607,7 @@ func (x *GetDownloadDevicesUrlRequest_Table_Column) ProtoReflect() protoreflect.
 
 // Deprecated: Use GetDownloadDevicesUrlRequest_Table_Column.ProtoReflect.Descriptor instead.
 func (*GetDownloadDevicesUrlRequest_Table_Column) Descriptor() ([]byte, []int) {
-	return file_devices_proto_rawDescGZIP(), []int{9, 0, 0}
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP(), []int{9, 0, 0}
 }
 
 func (x *GetDownloadDevicesUrlRequest_Table_Column) GetName() string {
@@ -1624,40 +1624,40 @@ func (x *GetDownloadDevicesUrlRequest_Table_Column) GetTitle() string {
 	return ""
 }
 
-var File_devices_proto protoreflect.FileDescriptor
+var File_smartcore_bos_devices_v1_devices_proto protoreflect.FileDescriptor
 
-const file_devices_proto_rawDesc = "" +
+const file_smartcore_bos_devices_v1_devices_proto_rawDesc = "" +
 	"\n" +
-	"\rdevices.proto\x12\rsmartcore.bos\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15traits/metadata.proto\x1a\x12types/change.proto\x1a\x17types/time/period.proto\x1a\fhealth.proto\"\xd3\v\n" +
+	"&smartcore/bos/devices/v1/devices.proto\x12\x18smartcore.bos.devices.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/health/v1/health.proto\x1a\x15traits/metadata.proto\x1a\x12types/change.proto\x1a\x17types/time/period.proto\"\xaa\f\n" +
 	"\x06Device\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
-	"\bmetadata\x18\x02 \x01(\v2\x1a.smartcore.traits.MetadataR\bmetadata\x12?\n" +
-	"\rhealth_checks\x18\x03 \x03(\v2\x1a.smartcore.bos.HealthCheckR\fhealthChecks\x1a\xbb\n" +
+	"\bmetadata\x18\x02 \x01(\v2\x1a.smartcore.traits.MetadataR\bmetadata\x12I\n" +
+	"\rhealth_checks\x18\x03 \x03(\v2$.smartcore.bos.health.v1.HealthCheckR\fhealthChecks\x1a\x88\v\n" +
+	"\x05Query\x12P\n" +
 	"\n" +
-	"\x05Query\x12E\n" +
+	"conditions\x18\x01 \x03(\v20.smartcore.bos.devices.v1.Device.Query.ConditionR\n" +
+	"conditions\x1a\x84\n" +
 	"\n" +
-	"conditions\x18\x01 \x03(\v2%.smartcore.bos.Device.Query.ConditionR\n" +
-	"conditions\x1a\xc2\t\n" +
 	"\tCondition\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x12#\n" +
 	"\fstring_equal\x18\x02 \x01(\tH\x00R\vstringEqual\x12,\n" +
 	"\x11string_equal_fold\x18\x03 \x01(\tH\x00R\x0fstringEqualFold\x12)\n" +
 	"\x0fstring_contains\x18\x04 \x01(\tH\x00R\x0estringContains\x122\n" +
-	"\x14string_contains_fold\x18\x05 \x01(\tH\x00R\x12stringContainsFold\x12E\n" +
-	"\tstring_in\x18\x06 \x01(\v2&.smartcore.bos.Device.Query.StringListH\x00R\bstringIn\x12N\n" +
-	"\x0estring_in_fold\x18\a \x01(\v2&.smartcore.bos.Device.Query.StringListH\x00R\fstringInFold\x12E\n" +
+	"\x14string_contains_fold\x18\x05 \x01(\tH\x00R\x12stringContainsFold\x12P\n" +
+	"\tstring_in\x18\x06 \x01(\v21.smartcore.bos.devices.v1.Device.Query.StringListH\x00R\bstringIn\x12Y\n" +
+	"\x0estring_in_fold\x18\a \x01(\v21.smartcore.bos.devices.v1.Device.Query.StringListH\x00R\fstringInFold\x12E\n" +
 	"\x0ftimestamp_equal\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x0etimestampEqual\x12?\n" +
 	"\ftimestamp_gt\x18\x15 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\vtimestampGt\x12A\n" +
 	"\rtimestamp_gte\x18\x16 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\ftimestampGte\x12?\n" +
 	"\ftimestamp_lt\x18\x17 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\vtimestampLt\x12A\n" +
 	"\rtimestamp_lte\x18\x18 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\ftimestampLte\x12)\n" +
 	"\x0fname_descendant\x18\x1e \x01(\tH\x00R\x0enameDescendant\x120\n" +
-	"\x13name_descendant_inc\x18\x1f \x01(\tH\x00R\x11nameDescendantInc\x12V\n" +
-	"\x12name_descendant_in\x18  \x01(\v2&.smartcore.bos.Device.Query.StringListH\x00R\x10nameDescendantIn\x12]\n" +
-	"\x16name_descendant_inc_in\x18! \x01(\v2&.smartcore.bos.Device.Query.StringListH\x00R\x13nameDescendantIncIn\x122\n" +
-	"\apresent\x18( \x01(\v2\x16.google.protobuf.EmptyH\x00R\apresent\x127\n" +
-	"\amatches\x182 \x01(\v2\x1b.smartcore.bos.Device.QueryH\x00R\amatches\x12G\n" +
-	"\amatcher\x18d \x01(\x0e2-.smartcore.bos.Device.Query.Condition.MatcherR\amatcher\"4\n" +
+	"\x13name_descendant_inc\x18\x1f \x01(\tH\x00R\x11nameDescendantInc\x12a\n" +
+	"\x12name_descendant_in\x18  \x01(\v21.smartcore.bos.devices.v1.Device.Query.StringListH\x00R\x10nameDescendantIn\x12h\n" +
+	"\x16name_descendant_inc_in\x18! \x01(\v21.smartcore.bos.devices.v1.Device.Query.StringListH\x00R\x13nameDescendantIncIn\x122\n" +
+	"\apresent\x18( \x01(\v2\x16.google.protobuf.EmptyH\x00R\apresent\x12B\n" +
+	"\amatches\x182 \x01(\v2&.smartcore.bos.devices.v1.Device.QueryH\x00R\amatches\x12R\n" +
+	"\amatcher\x18d \x01(\x0e28.smartcore.bos.devices.v1.Device.Query.Condition.MatcherR\amatcher\"4\n" +
 	"\aMatcher\x12\x17\n" +
 	"\x13MATCHER_UNSPECIFIED\x10\x00\x12\a\n" +
 	"\x03ANY\x10\x01\x12\a\n" +
@@ -1665,69 +1665,69 @@ const file_devices_proto_rawDesc = "" +
 	"\x05value\x1a&\n" +
 	"\n" +
 	"StringList\x12\x18\n" +
-	"\astrings\x18\x01 \x03(\tR\astrings\"\xe4\x02\n" +
+	"\astrings\x18\x01 \x03(\tR\astrings\"\xfa\x02\n" +
 	"\x0fDevicesMetadata\x12\x1f\n" +
 	"\vtotal_count\x18\x01 \x01(\x05R\n" +
-	"totalCount\x12R\n" +
-	"\ffield_counts\x18\x02 \x03(\v2/.smartcore.bos.DevicesMetadata.StringFieldCountR\vfieldCounts\x1a\xb8\x01\n" +
+	"totalCount\x12]\n" +
+	"\ffield_counts\x18\x02 \x03(\v2:.smartcore.bos.devices.v1.DevicesMetadata.StringFieldCountR\vfieldCounts\x1a\xc3\x01\n" +
 	"\x10StringFieldCount\x12\x14\n" +
-	"\x05field\x18\x01 \x01(\tR\x05field\x12S\n" +
-	"\x06counts\x18\x02 \x03(\v2;.smartcore.bos.DevicesMetadata.StringFieldCount.CountsEntryR\x06counts\x1a9\n" +
+	"\x05field\x18\x01 \x01(\tR\x05field\x12^\n" +
+	"\x06counts\x18\x02 \x03(\v2F.smartcore.bos.devices.v1.DevicesMetadata.StringFieldCount.CountsEntryR\x06counts\x1a9\n" +
 	"\vCountsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\rR\x05value:\x028\x01\x1a!\n" +
 	"\aInclude\x12\x16\n" +
-	"\x06fields\x18\x01 \x03(\tR\x06fields\"\xbc\x01\n" +
+	"\x06fields\x18\x01 \x03(\tR\x06fields\"\xc7\x01\n" +
 	"\x12ListDevicesRequest\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\x121\n" +
-	"\x05query\x18\x05 \x01(\v2\x1b.smartcore.bos.Device.QueryR\x05query\"\x8d\x01\n" +
-	"\x13ListDevicesResponse\x12/\n" +
-	"\adevices\x18\x01 \x03(\v2\x15.smartcore.bos.DeviceR\adevices\x12&\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\x12<\n" +
+	"\x05query\x18\x05 \x01(\v2&.smartcore.bos.devices.v1.Device.QueryR\x05query\"\x98\x01\n" +
+	"\x13ListDevicesResponse\x12:\n" +
+	"\adevices\x18\x01 \x03(\v2 .smartcore.bos.devices.v1.DeviceR\adevices\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xa3\x01\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xae\x01\n" +
 	"\x12PullDevicesRequest\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\x121\n" +
-	"\x05query\x18\x04 \x01(\v2\x1b.smartcore.bos.Device.QueryR\x05query\"\xcf\x02\n" +
-	"\x13PullDevicesResponse\x12C\n" +
-	"\achanges\x18\x01 \x03(\v2).smartcore.bos.PullDevicesResponse.ChangeR\achanges\x1a\xf2\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\x12<\n" +
+	"\x05query\x18\x04 \x01(\v2&.smartcore.bos.devices.v1.Device.QueryR\x05query\"\xf0\x02\n" +
+	"\x13PullDevicesResponse\x12N\n" +
+	"\achanges\x18\x01 \x03(\v24.smartcore.bos.devices.v1.PullDevicesResponse.ChangeR\achanges\x1a\x88\x02\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x122\n" +
-	"\tnew_value\x18\x03 \x01(\v2\x15.smartcore.bos.DeviceR\bnewValue\x122\n" +
-	"\told_value\x18\x04 \x01(\v2\x15.smartcore.bos.DeviceR\boldValue\x12;\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12=\n" +
+	"\tnew_value\x18\x03 \x01(\v2 .smartcore.bos.devices.v1.DeviceR\bnewValue\x12=\n" +
+	"\told_value\x18\x04 \x01(\v2 .smartcore.bos.devices.v1.DeviceR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\"\xcb\x01\n" +
+	"changeTime\"\xe1\x01\n" +
 	"\x19GetDevicesMetadataRequest\x127\n" +
-	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12B\n" +
-	"\bincludes\x18\x03 \x01(\v2&.smartcore.bos.DevicesMetadata.IncludeR\bincludes\x121\n" +
-	"\x05query\x18\x04 \x01(\v2\x1b.smartcore.bos.Device.QueryR\x05query\"\xef\x01\n" +
+	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12M\n" +
+	"\bincludes\x18\x03 \x01(\v21.smartcore.bos.devices.v1.DevicesMetadata.IncludeR\bincludes\x12<\n" +
+	"\x05query\x18\x04 \x01(\v2&.smartcore.bos.devices.v1.Device.QueryR\x05query\"\x85\x02\n" +
 	"\x1aPullDevicesMetadataRequest\x127\n" +
-	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12B\n" +
-	"\bincludes\x18\x03 \x01(\v2&.smartcore.bos.DevicesMetadata.IncludeR\bincludes\x12!\n" +
-	"\fupdates_only\x18\x04 \x01(\bR\vupdatesOnly\x121\n" +
-	"\x05query\x18\x05 \x01(\v2\x1b.smartcore.bos.Device.QueryR\x05query\"\x91\x02\n" +
-	"\x1bPullDevicesMetadataResponse\x12K\n" +
-	"\achanges\x18\x01 \x03(\v21.smartcore.bos.PullDevicesMetadataResponse.ChangeR\achanges\x1a\xa4\x01\n" +
+	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12M\n" +
+	"\bincludes\x18\x03 \x01(\v21.smartcore.bos.devices.v1.DevicesMetadata.IncludeR\bincludes\x12!\n" +
+	"\fupdates_only\x18\x04 \x01(\bR\vupdatesOnly\x12<\n" +
+	"\x05query\x18\x05 \x01(\v2&.smartcore.bos.devices.v1.Device.QueryR\x05query\"\xa7\x02\n" +
+	"\x1bPullDevicesMetadataResponse\x12V\n" +
+	"\achanges\x18\x01 \x03(\v2<.smartcore.bos.devices.v1.PullDevicesMetadataResponse.ChangeR\achanges\x1a\xaf\x01\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12I\n" +
-	"\x10devices_metadata\x18\x02 \x01(\v2\x1e.smartcore.bos.DevicesMetadataR\x0fdevicesMetadata\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12T\n" +
+	"\x10devices_metadata\x18\x02 \x01(\v2).smartcore.bos.devices.v1.DevicesMetadataR\x0fdevicesMetadata\x12;\n" +
 	"\vchange_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\"\x85\x04\n" +
-	"\x1cGetDownloadDevicesUrlRequest\x121\n" +
-	"\x05query\x18\x01 \x01(\v2\x1b.smartcore.bos.Device.QueryR\x05query\x12\x1d\n" +
+	"changeTime\"\xb1\x04\n" +
+	"\x1cGetDownloadDevicesUrlRequest\x12<\n" +
+	"\x05query\x18\x01 \x01(\v2&.smartcore.bos.devices.v1.Device.QueryR\x05query\x12\x1d\n" +
 	"\n" +
 	"media_type\x18\x02 \x01(\tR\tmediaType\x126\n" +
-	"\ahistory\x18\x03 \x01(\v2\x1c.smartcore.types.time.PeriodR\ahistory\x12G\n" +
-	"\x05table\x18\x04 \x01(\v21.smartcore.bos.GetDownloadDevicesUrlRequest.TableR\x05table\x12\x1a\n" +
-	"\bfilename\x18\x05 \x01(\tR\bfilename\x1a\xf5\x01\n" +
-	"\x05Table\x12[\n" +
-	"\finclude_cols\x18\x01 \x03(\v28.smartcore.bos.GetDownloadDevicesUrlRequest.Table.ColumnR\vincludeCols\x12[\n" +
-	"\fexclude_cols\x18\x02 \x03(\v28.smartcore.bos.GetDownloadDevicesUrlRequest.Table.ColumnR\vexcludeCols\x1a2\n" +
+	"\ahistory\x18\x03 \x01(\v2\x1c.smartcore.types.time.PeriodR\ahistory\x12R\n" +
+	"\x05table\x18\x04 \x01(\v2<.smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.TableR\x05table\x12\x1a\n" +
+	"\bfilename\x18\x05 \x01(\tR\bfilename\x1a\x8b\x02\n" +
+	"\x05Table\x12f\n" +
+	"\finclude_cols\x18\x01 \x03(\v2C.smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table.ColumnR\vincludeCols\x12f\n" +
+	"\fexclude_cols\x18\x02 \x03(\v2C.smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table.ColumnR\vexcludeCols\x1a2\n" +
 	"\x06Column\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\"\xa9\x01\n" +
@@ -1736,113 +1736,113 @@ const file_devices_proto_rawDesc = "" +
 	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x1d\n" +
 	"\n" +
 	"media_type\x18\x03 \x01(\tR\tmediaType\x12F\n" +
-	"\x11expire_after_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0fexpireAfterTime2\xf3\x03\n" +
+	"\x11expire_after_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0fexpireAfterTime2\xe2\x04\n" +
 	"\n" +
-	"DevicesApi\x12T\n" +
-	"\vListDevices\x12!.smartcore.bos.ListDevicesRequest\x1a\".smartcore.bos.ListDevicesResponse\x12V\n" +
-	"\vPullDevices\x12!.smartcore.bos.PullDevicesRequest\x1a\".smartcore.bos.PullDevicesResponse0\x01\x12^\n" +
-	"\x12GetDevicesMetadata\x12(.smartcore.bos.GetDevicesMetadataRequest\x1a\x1e.smartcore.bos.DevicesMetadata\x12n\n" +
-	"\x13PullDevicesMetadata\x12).smartcore.bos.PullDevicesMetadataRequest\x1a*.smartcore.bos.PullDevicesMetadataResponse0\x01\x12g\n" +
-	"\x15GetDownloadDevicesUrl\x12+.smartcore.bos.GetDownloadDevicesUrlRequest\x1a!.smartcore.bos.DownloadDevicesUrlB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"DevicesApi\x12j\n" +
+	"\vListDevices\x12,.smartcore.bos.devices.v1.ListDevicesRequest\x1a-.smartcore.bos.devices.v1.ListDevicesResponse\x12l\n" +
+	"\vPullDevices\x12,.smartcore.bos.devices.v1.PullDevicesRequest\x1a-.smartcore.bos.devices.v1.PullDevicesResponse0\x01\x12t\n" +
+	"\x12GetDevicesMetadata\x123.smartcore.bos.devices.v1.GetDevicesMetadataRequest\x1a).smartcore.bos.devices.v1.DevicesMetadata\x12\x84\x01\n" +
+	"\x13PullDevicesMetadata\x124.smartcore.bos.devices.v1.PullDevicesMetadataRequest\x1a5.smartcore.bos.devices.v1.PullDevicesMetadataResponse0\x01\x12}\n" +
+	"\x15GetDownloadDevicesUrl\x126.smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest\x1a,.smartcore.bos.devices.v1.DownloadDevicesUrlB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_devices_proto_rawDescOnce sync.Once
-	file_devices_proto_rawDescData []byte
+	file_smartcore_bos_devices_v1_devices_proto_rawDescOnce sync.Once
+	file_smartcore_bos_devices_v1_devices_proto_rawDescData []byte
 )
 
-func file_devices_proto_rawDescGZIP() []byte {
-	file_devices_proto_rawDescOnce.Do(func() {
-		file_devices_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_devices_proto_rawDesc), len(file_devices_proto_rawDesc)))
+func file_smartcore_bos_devices_v1_devices_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_devices_v1_devices_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_devices_v1_devices_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_devices_v1_devices_proto_rawDesc), len(file_smartcore_bos_devices_v1_devices_proto_rawDesc)))
 	})
-	return file_devices_proto_rawDescData
+	return file_smartcore_bos_devices_v1_devices_proto_rawDescData
 }
 
-var file_devices_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_devices_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
-var file_devices_proto_goTypes = []any{
-	(Device_Query_Condition_Matcher)(0),               // 0: smartcore.bos.Device.Query.Condition.Matcher
-	(*Device)(nil),                                    // 1: smartcore.bos.Device
-	(*DevicesMetadata)(nil),                           // 2: smartcore.bos.DevicesMetadata
-	(*ListDevicesRequest)(nil),                        // 3: smartcore.bos.ListDevicesRequest
-	(*ListDevicesResponse)(nil),                       // 4: smartcore.bos.ListDevicesResponse
-	(*PullDevicesRequest)(nil),                        // 5: smartcore.bos.PullDevicesRequest
-	(*PullDevicesResponse)(nil),                       // 6: smartcore.bos.PullDevicesResponse
-	(*GetDevicesMetadataRequest)(nil),                 // 7: smartcore.bos.GetDevicesMetadataRequest
-	(*PullDevicesMetadataRequest)(nil),                // 8: smartcore.bos.PullDevicesMetadataRequest
-	(*PullDevicesMetadataResponse)(nil),               // 9: smartcore.bos.PullDevicesMetadataResponse
-	(*GetDownloadDevicesUrlRequest)(nil),              // 10: smartcore.bos.GetDownloadDevicesUrlRequest
-	(*DownloadDevicesUrl)(nil),                        // 11: smartcore.bos.DownloadDevicesUrl
-	(*Device_Query)(nil),                              // 12: smartcore.bos.Device.Query
-	(*Device_Query_Condition)(nil),                    // 13: smartcore.bos.Device.Query.Condition
-	(*Device_Query_StringList)(nil),                   // 14: smartcore.bos.Device.Query.StringList
-	(*DevicesMetadata_StringFieldCount)(nil),          // 15: smartcore.bos.DevicesMetadata.StringFieldCount
-	(*DevicesMetadata_Include)(nil),                   // 16: smartcore.bos.DevicesMetadata.Include
-	nil,                                               // 17: smartcore.bos.DevicesMetadata.StringFieldCount.CountsEntry
-	(*PullDevicesResponse_Change)(nil),                // 18: smartcore.bos.PullDevicesResponse.Change
-	(*PullDevicesMetadataResponse_Change)(nil),        // 19: smartcore.bos.PullDevicesMetadataResponse.Change
-	(*GetDownloadDevicesUrlRequest_Table)(nil),        // 20: smartcore.bos.GetDownloadDevicesUrlRequest.Table
-	(*GetDownloadDevicesUrlRequest_Table_Column)(nil), // 21: smartcore.bos.GetDownloadDevicesUrlRequest.Table.Column
+var file_smartcore_bos_devices_v1_devices_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_smartcore_bos_devices_v1_devices_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_smartcore_bos_devices_v1_devices_proto_goTypes = []any{
+	(Device_Query_Condition_Matcher)(0),               // 0: smartcore.bos.devices.v1.Device.Query.Condition.Matcher
+	(*Device)(nil),                                    // 1: smartcore.bos.devices.v1.Device
+	(*DevicesMetadata)(nil),                           // 2: smartcore.bos.devices.v1.DevicesMetadata
+	(*ListDevicesRequest)(nil),                        // 3: smartcore.bos.devices.v1.ListDevicesRequest
+	(*ListDevicesResponse)(nil),                       // 4: smartcore.bos.devices.v1.ListDevicesResponse
+	(*PullDevicesRequest)(nil),                        // 5: smartcore.bos.devices.v1.PullDevicesRequest
+	(*PullDevicesResponse)(nil),                       // 6: smartcore.bos.devices.v1.PullDevicesResponse
+	(*GetDevicesMetadataRequest)(nil),                 // 7: smartcore.bos.devices.v1.GetDevicesMetadataRequest
+	(*PullDevicesMetadataRequest)(nil),                // 8: smartcore.bos.devices.v1.PullDevicesMetadataRequest
+	(*PullDevicesMetadataResponse)(nil),               // 9: smartcore.bos.devices.v1.PullDevicesMetadataResponse
+	(*GetDownloadDevicesUrlRequest)(nil),              // 10: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest
+	(*DownloadDevicesUrl)(nil),                        // 11: smartcore.bos.devices.v1.DownloadDevicesUrl
+	(*Device_Query)(nil),                              // 12: smartcore.bos.devices.v1.Device.Query
+	(*Device_Query_Condition)(nil),                    // 13: smartcore.bos.devices.v1.Device.Query.Condition
+	(*Device_Query_StringList)(nil),                   // 14: smartcore.bos.devices.v1.Device.Query.StringList
+	(*DevicesMetadata_StringFieldCount)(nil),          // 15: smartcore.bos.devices.v1.DevicesMetadata.StringFieldCount
+	(*DevicesMetadata_Include)(nil),                   // 16: smartcore.bos.devices.v1.DevicesMetadata.Include
+	nil,                                               // 17: smartcore.bos.devices.v1.DevicesMetadata.StringFieldCount.CountsEntry
+	(*PullDevicesResponse_Change)(nil),                // 18: smartcore.bos.devices.v1.PullDevicesResponse.Change
+	(*PullDevicesMetadataResponse_Change)(nil),        // 19: smartcore.bos.devices.v1.PullDevicesMetadataResponse.Change
+	(*GetDownloadDevicesUrlRequest_Table)(nil),        // 20: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table
+	(*GetDownloadDevicesUrlRequest_Table_Column)(nil), // 21: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table.Column
 	(*traits.Metadata)(nil),                           // 22: smartcore.traits.Metadata
-	(*HealthCheck)(nil),                               // 23: smartcore.bos.HealthCheck
+	(*HealthCheck)(nil),                               // 23: smartcore.bos.health.v1.HealthCheck
 	(*fieldmaskpb.FieldMask)(nil),                     // 24: google.protobuf.FieldMask
 	(*time.Period)(nil),                               // 25: smartcore.types.time.Period
 	(*timestamppb.Timestamp)(nil),                     // 26: google.protobuf.Timestamp
 	(*emptypb.Empty)(nil),                             // 27: google.protobuf.Empty
 	(types.ChangeType)(0),                             // 28: smartcore.types.ChangeType
 }
-var file_devices_proto_depIdxs = []int32{
-	22, // 0: smartcore.bos.Device.metadata:type_name -> smartcore.traits.Metadata
-	23, // 1: smartcore.bos.Device.health_checks:type_name -> smartcore.bos.HealthCheck
-	15, // 2: smartcore.bos.DevicesMetadata.field_counts:type_name -> smartcore.bos.DevicesMetadata.StringFieldCount
-	24, // 3: smartcore.bos.ListDevicesRequest.read_mask:type_name -> google.protobuf.FieldMask
-	12, // 4: smartcore.bos.ListDevicesRequest.query:type_name -> smartcore.bos.Device.Query
-	1,  // 5: smartcore.bos.ListDevicesResponse.devices:type_name -> smartcore.bos.Device
-	24, // 6: smartcore.bos.PullDevicesRequest.read_mask:type_name -> google.protobuf.FieldMask
-	12, // 7: smartcore.bos.PullDevicesRequest.query:type_name -> smartcore.bos.Device.Query
-	18, // 8: smartcore.bos.PullDevicesResponse.changes:type_name -> smartcore.bos.PullDevicesResponse.Change
-	24, // 9: smartcore.bos.GetDevicesMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	16, // 10: smartcore.bos.GetDevicesMetadataRequest.includes:type_name -> smartcore.bos.DevicesMetadata.Include
-	12, // 11: smartcore.bos.GetDevicesMetadataRequest.query:type_name -> smartcore.bos.Device.Query
-	24, // 12: smartcore.bos.PullDevicesMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	16, // 13: smartcore.bos.PullDevicesMetadataRequest.includes:type_name -> smartcore.bos.DevicesMetadata.Include
-	12, // 14: smartcore.bos.PullDevicesMetadataRequest.query:type_name -> smartcore.bos.Device.Query
-	19, // 15: smartcore.bos.PullDevicesMetadataResponse.changes:type_name -> smartcore.bos.PullDevicesMetadataResponse.Change
-	12, // 16: smartcore.bos.GetDownloadDevicesUrlRequest.query:type_name -> smartcore.bos.Device.Query
-	25, // 17: smartcore.bos.GetDownloadDevicesUrlRequest.history:type_name -> smartcore.types.time.Period
-	20, // 18: smartcore.bos.GetDownloadDevicesUrlRequest.table:type_name -> smartcore.bos.GetDownloadDevicesUrlRequest.Table
-	26, // 19: smartcore.bos.DownloadDevicesUrl.expire_after_time:type_name -> google.protobuf.Timestamp
-	13, // 20: smartcore.bos.Device.Query.conditions:type_name -> smartcore.bos.Device.Query.Condition
-	14, // 21: smartcore.bos.Device.Query.Condition.string_in:type_name -> smartcore.bos.Device.Query.StringList
-	14, // 22: smartcore.bos.Device.Query.Condition.string_in_fold:type_name -> smartcore.bos.Device.Query.StringList
-	26, // 23: smartcore.bos.Device.Query.Condition.timestamp_equal:type_name -> google.protobuf.Timestamp
-	26, // 24: smartcore.bos.Device.Query.Condition.timestamp_gt:type_name -> google.protobuf.Timestamp
-	26, // 25: smartcore.bos.Device.Query.Condition.timestamp_gte:type_name -> google.protobuf.Timestamp
-	26, // 26: smartcore.bos.Device.Query.Condition.timestamp_lt:type_name -> google.protobuf.Timestamp
-	26, // 27: smartcore.bos.Device.Query.Condition.timestamp_lte:type_name -> google.protobuf.Timestamp
-	14, // 28: smartcore.bos.Device.Query.Condition.name_descendant_in:type_name -> smartcore.bos.Device.Query.StringList
-	14, // 29: smartcore.bos.Device.Query.Condition.name_descendant_inc_in:type_name -> smartcore.bos.Device.Query.StringList
-	27, // 30: smartcore.bos.Device.Query.Condition.present:type_name -> google.protobuf.Empty
-	12, // 31: smartcore.bos.Device.Query.Condition.matches:type_name -> smartcore.bos.Device.Query
-	0,  // 32: smartcore.bos.Device.Query.Condition.matcher:type_name -> smartcore.bos.Device.Query.Condition.Matcher
-	17, // 33: smartcore.bos.DevicesMetadata.StringFieldCount.counts:type_name -> smartcore.bos.DevicesMetadata.StringFieldCount.CountsEntry
-	28, // 34: smartcore.bos.PullDevicesResponse.Change.type:type_name -> smartcore.types.ChangeType
-	1,  // 35: smartcore.bos.PullDevicesResponse.Change.new_value:type_name -> smartcore.bos.Device
-	1,  // 36: smartcore.bos.PullDevicesResponse.Change.old_value:type_name -> smartcore.bos.Device
-	26, // 37: smartcore.bos.PullDevicesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	2,  // 38: smartcore.bos.PullDevicesMetadataResponse.Change.devices_metadata:type_name -> smartcore.bos.DevicesMetadata
-	26, // 39: smartcore.bos.PullDevicesMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	21, // 40: smartcore.bos.GetDownloadDevicesUrlRequest.Table.include_cols:type_name -> smartcore.bos.GetDownloadDevicesUrlRequest.Table.Column
-	21, // 41: smartcore.bos.GetDownloadDevicesUrlRequest.Table.exclude_cols:type_name -> smartcore.bos.GetDownloadDevicesUrlRequest.Table.Column
-	3,  // 42: smartcore.bos.DevicesApi.ListDevices:input_type -> smartcore.bos.ListDevicesRequest
-	5,  // 43: smartcore.bos.DevicesApi.PullDevices:input_type -> smartcore.bos.PullDevicesRequest
-	7,  // 44: smartcore.bos.DevicesApi.GetDevicesMetadata:input_type -> smartcore.bos.GetDevicesMetadataRequest
-	8,  // 45: smartcore.bos.DevicesApi.PullDevicesMetadata:input_type -> smartcore.bos.PullDevicesMetadataRequest
-	10, // 46: smartcore.bos.DevicesApi.GetDownloadDevicesUrl:input_type -> smartcore.bos.GetDownloadDevicesUrlRequest
-	4,  // 47: smartcore.bos.DevicesApi.ListDevices:output_type -> smartcore.bos.ListDevicesResponse
-	6,  // 48: smartcore.bos.DevicesApi.PullDevices:output_type -> smartcore.bos.PullDevicesResponse
-	2,  // 49: smartcore.bos.DevicesApi.GetDevicesMetadata:output_type -> smartcore.bos.DevicesMetadata
-	9,  // 50: smartcore.bos.DevicesApi.PullDevicesMetadata:output_type -> smartcore.bos.PullDevicesMetadataResponse
-	11, // 51: smartcore.bos.DevicesApi.GetDownloadDevicesUrl:output_type -> smartcore.bos.DownloadDevicesUrl
+var file_smartcore_bos_devices_v1_devices_proto_depIdxs = []int32{
+	22, // 0: smartcore.bos.devices.v1.Device.metadata:type_name -> smartcore.traits.Metadata
+	23, // 1: smartcore.bos.devices.v1.Device.health_checks:type_name -> smartcore.bos.health.v1.HealthCheck
+	15, // 2: smartcore.bos.devices.v1.DevicesMetadata.field_counts:type_name -> smartcore.bos.devices.v1.DevicesMetadata.StringFieldCount
+	24, // 3: smartcore.bos.devices.v1.ListDevicesRequest.read_mask:type_name -> google.protobuf.FieldMask
+	12, // 4: smartcore.bos.devices.v1.ListDevicesRequest.query:type_name -> smartcore.bos.devices.v1.Device.Query
+	1,  // 5: smartcore.bos.devices.v1.ListDevicesResponse.devices:type_name -> smartcore.bos.devices.v1.Device
+	24, // 6: smartcore.bos.devices.v1.PullDevicesRequest.read_mask:type_name -> google.protobuf.FieldMask
+	12, // 7: smartcore.bos.devices.v1.PullDevicesRequest.query:type_name -> smartcore.bos.devices.v1.Device.Query
+	18, // 8: smartcore.bos.devices.v1.PullDevicesResponse.changes:type_name -> smartcore.bos.devices.v1.PullDevicesResponse.Change
+	24, // 9: smartcore.bos.devices.v1.GetDevicesMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	16, // 10: smartcore.bos.devices.v1.GetDevicesMetadataRequest.includes:type_name -> smartcore.bos.devices.v1.DevicesMetadata.Include
+	12, // 11: smartcore.bos.devices.v1.GetDevicesMetadataRequest.query:type_name -> smartcore.bos.devices.v1.Device.Query
+	24, // 12: smartcore.bos.devices.v1.PullDevicesMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	16, // 13: smartcore.bos.devices.v1.PullDevicesMetadataRequest.includes:type_name -> smartcore.bos.devices.v1.DevicesMetadata.Include
+	12, // 14: smartcore.bos.devices.v1.PullDevicesMetadataRequest.query:type_name -> smartcore.bos.devices.v1.Device.Query
+	19, // 15: smartcore.bos.devices.v1.PullDevicesMetadataResponse.changes:type_name -> smartcore.bos.devices.v1.PullDevicesMetadataResponse.Change
+	12, // 16: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.query:type_name -> smartcore.bos.devices.v1.Device.Query
+	25, // 17: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.history:type_name -> smartcore.types.time.Period
+	20, // 18: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.table:type_name -> smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table
+	26, // 19: smartcore.bos.devices.v1.DownloadDevicesUrl.expire_after_time:type_name -> google.protobuf.Timestamp
+	13, // 20: smartcore.bos.devices.v1.Device.Query.conditions:type_name -> smartcore.bos.devices.v1.Device.Query.Condition
+	14, // 21: smartcore.bos.devices.v1.Device.Query.Condition.string_in:type_name -> smartcore.bos.devices.v1.Device.Query.StringList
+	14, // 22: smartcore.bos.devices.v1.Device.Query.Condition.string_in_fold:type_name -> smartcore.bos.devices.v1.Device.Query.StringList
+	26, // 23: smartcore.bos.devices.v1.Device.Query.Condition.timestamp_equal:type_name -> google.protobuf.Timestamp
+	26, // 24: smartcore.bos.devices.v1.Device.Query.Condition.timestamp_gt:type_name -> google.protobuf.Timestamp
+	26, // 25: smartcore.bos.devices.v1.Device.Query.Condition.timestamp_gte:type_name -> google.protobuf.Timestamp
+	26, // 26: smartcore.bos.devices.v1.Device.Query.Condition.timestamp_lt:type_name -> google.protobuf.Timestamp
+	26, // 27: smartcore.bos.devices.v1.Device.Query.Condition.timestamp_lte:type_name -> google.protobuf.Timestamp
+	14, // 28: smartcore.bos.devices.v1.Device.Query.Condition.name_descendant_in:type_name -> smartcore.bos.devices.v1.Device.Query.StringList
+	14, // 29: smartcore.bos.devices.v1.Device.Query.Condition.name_descendant_inc_in:type_name -> smartcore.bos.devices.v1.Device.Query.StringList
+	27, // 30: smartcore.bos.devices.v1.Device.Query.Condition.present:type_name -> google.protobuf.Empty
+	12, // 31: smartcore.bos.devices.v1.Device.Query.Condition.matches:type_name -> smartcore.bos.devices.v1.Device.Query
+	0,  // 32: smartcore.bos.devices.v1.Device.Query.Condition.matcher:type_name -> smartcore.bos.devices.v1.Device.Query.Condition.Matcher
+	17, // 33: smartcore.bos.devices.v1.DevicesMetadata.StringFieldCount.counts:type_name -> smartcore.bos.devices.v1.DevicesMetadata.StringFieldCount.CountsEntry
+	28, // 34: smartcore.bos.devices.v1.PullDevicesResponse.Change.type:type_name -> smartcore.types.ChangeType
+	1,  // 35: smartcore.bos.devices.v1.PullDevicesResponse.Change.new_value:type_name -> smartcore.bos.devices.v1.Device
+	1,  // 36: smartcore.bos.devices.v1.PullDevicesResponse.Change.old_value:type_name -> smartcore.bos.devices.v1.Device
+	26, // 37: smartcore.bos.devices.v1.PullDevicesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	2,  // 38: smartcore.bos.devices.v1.PullDevicesMetadataResponse.Change.devices_metadata:type_name -> smartcore.bos.devices.v1.DevicesMetadata
+	26, // 39: smartcore.bos.devices.v1.PullDevicesMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	21, // 40: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table.include_cols:type_name -> smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table.Column
+	21, // 41: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table.exclude_cols:type_name -> smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table.Column
+	3,  // 42: smartcore.bos.devices.v1.DevicesApi.ListDevices:input_type -> smartcore.bos.devices.v1.ListDevicesRequest
+	5,  // 43: smartcore.bos.devices.v1.DevicesApi.PullDevices:input_type -> smartcore.bos.devices.v1.PullDevicesRequest
+	7,  // 44: smartcore.bos.devices.v1.DevicesApi.GetDevicesMetadata:input_type -> smartcore.bos.devices.v1.GetDevicesMetadataRequest
+	8,  // 45: smartcore.bos.devices.v1.DevicesApi.PullDevicesMetadata:input_type -> smartcore.bos.devices.v1.PullDevicesMetadataRequest
+	10, // 46: smartcore.bos.devices.v1.DevicesApi.GetDownloadDevicesUrl:input_type -> smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest
+	4,  // 47: smartcore.bos.devices.v1.DevicesApi.ListDevices:output_type -> smartcore.bos.devices.v1.ListDevicesResponse
+	6,  // 48: smartcore.bos.devices.v1.DevicesApi.PullDevices:output_type -> smartcore.bos.devices.v1.PullDevicesResponse
+	2,  // 49: smartcore.bos.devices.v1.DevicesApi.GetDevicesMetadata:output_type -> smartcore.bos.devices.v1.DevicesMetadata
+	9,  // 50: smartcore.bos.devices.v1.DevicesApi.PullDevicesMetadata:output_type -> smartcore.bos.devices.v1.PullDevicesMetadataResponse
+	11, // 51: smartcore.bos.devices.v1.DevicesApi.GetDownloadDevicesUrl:output_type -> smartcore.bos.devices.v1.DownloadDevicesUrl
 	47, // [47:52] is the sub-list for method output_type
 	42, // [42:47] is the sub-list for method input_type
 	42, // [42:42] is the sub-list for extension type_name
@@ -1850,13 +1850,13 @@ var file_devices_proto_depIdxs = []int32{
 	0,  // [0:42] is the sub-list for field type_name
 }
 
-func init() { file_devices_proto_init() }
-func file_devices_proto_init() {
-	if File_devices_proto != nil {
+func init() { file_smartcore_bos_devices_v1_devices_proto_init() }
+func file_smartcore_bos_devices_v1_devices_proto_init() {
+	if File_smartcore_bos_devices_v1_devices_proto != nil {
 		return
 	}
-	file_health_proto_init()
-	file_devices_proto_msgTypes[12].OneofWrappers = []any{
+	file_smartcore_bos_health_v1_health_proto_init()
+	file_smartcore_bos_devices_v1_devices_proto_msgTypes[12].OneofWrappers = []any{
 		(*Device_Query_Condition_StringEqual)(nil),
 		(*Device_Query_Condition_StringEqualFold)(nil),
 		(*Device_Query_Condition_StringContains)(nil),
@@ -1879,18 +1879,18 @@ func file_devices_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_devices_proto_rawDesc), len(file_devices_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_devices_v1_devices_proto_rawDesc), len(file_smartcore_bos_devices_v1_devices_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_devices_proto_goTypes,
-		DependencyIndexes: file_devices_proto_depIdxs,
-		EnumInfos:         file_devices_proto_enumTypes,
-		MessageInfos:      file_devices_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_devices_v1_devices_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_devices_v1_devices_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_devices_v1_devices_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_devices_v1_devices_proto_msgTypes,
 	}.Build()
-	File_devices_proto = out.File
-	file_devices_proto_goTypes = nil
-	file_devices_proto_depIdxs = nil
+	File_smartcore_bos_devices_v1_devices_proto = out.File
+	file_smartcore_bos_devices_v1_devices_proto_goTypes = nil
+	file_smartcore_bos_devices_v1_devices_proto_depIdxs = nil
 }

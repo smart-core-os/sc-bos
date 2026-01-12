@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: security_event.proto
+// source: smartcore/bos/securityevent/v1/security_event.proto
 
 package gen
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SecurityEventApi_ListSecurityEvents_FullMethodName = "/smartcore.bos.SecurityEventApi/ListSecurityEvents"
-	SecurityEventApi_PullSecurityEvents_FullMethodName = "/smartcore.bos.SecurityEventApi/PullSecurityEvents"
+	SecurityEventApi_ListSecurityEvents_FullMethodName = "/smartcore.bos.securityevent.v1.SecurityEventApi/ListSecurityEvents"
+	SecurityEventApi_PullSecurityEvents_FullMethodName = "/smartcore.bos.securityevent.v1.SecurityEventApi/PullSecurityEvents"
 )
 
 // SecurityEventApiClient is the client API for SecurityEventApi service.
@@ -150,7 +150,7 @@ type SecurityEventApi_PullSecurityEventsServer = grpc.ServerStreamingServer[Pull
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SecurityEventApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.SecurityEventApi",
+	ServiceName: "smartcore.bos.securityevent.v1.SecurityEventApi",
 	HandlerType: (*SecurityEventApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -165,5 +165,5 @@ var SecurityEventApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "security_event.proto",
+	Metadata: "smartcore/bos/securityevent/v1/security_event.proto",
 }

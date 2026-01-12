@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: waste.proto
+// source: smartcore/bos/waste/v1/waste.proto
 
 package gen
 
@@ -77,11 +77,11 @@ func (x WasteRecord_Type) String() string {
 }
 
 func (WasteRecord_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_waste_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_waste_v1_waste_proto_enumTypes[0].Descriptor()
 }
 
 func (WasteRecord_Type) Type() protoreflect.EnumType {
-	return &file_waste_proto_enumTypes[0]
+	return &file_smartcore_bos_waste_v1_waste_proto_enumTypes[0]
 }
 
 func (x WasteRecord_Type) Number() protoreflect.EnumNumber {
@@ -90,7 +90,7 @@ func (x WasteRecord_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WasteRecord_Type.Descriptor instead.
 func (WasteRecord_Type) EnumDescriptor() ([]byte, []int) {
-	return file_waste_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_waste_v1_waste_proto_rawDescGZIP(), []int{0, 0}
 }
 
 // WasteRecord is a record of a unit of waste produced by the building
@@ -104,7 +104,7 @@ type WasteRecord struct {
 	Weight float32 `protobuf:"fixed32,3,opt,name=weight,proto3" json:"weight,omitempty"`
 	// The system the waste was collected from. Used for presentation not to identify the waste
 	System string           `protobuf:"bytes,4,opt,name=system,proto3" json:"system,omitempty"`
-	Type   WasteRecord_Type `protobuf:"varint,5,opt,name=type,proto3,enum=smartcore.bos.WasteRecord_Type" json:"type,omitempty"`
+	Type   WasteRecord_Type `protobuf:"varint,5,opt,name=type,proto3,enum=smartcore.bos.waste.v1.WasteRecord_Type" json:"type,omitempty"`
 	// Area the waste was collected from, e.g. tenant x, common area. Used for presentation not to identify the waste
 	Area string `protobuf:"bytes,6,opt,name=area,proto3" json:"area,omitempty"`
 	// The date/time the waste was created
@@ -124,7 +124,7 @@ type WasteRecord struct {
 
 func (x *WasteRecord) Reset() {
 	*x = WasteRecord{}
-	mi := &file_waste_proto_msgTypes[0]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -136,7 +136,7 @@ func (x *WasteRecord) String() string {
 func (*WasteRecord) ProtoMessage() {}
 
 func (x *WasteRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_waste_proto_msgTypes[0]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -149,7 +149,7 @@ func (x *WasteRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WasteRecord.ProtoReflect.Descriptor instead.
 func (*WasteRecord) Descriptor() ([]byte, []int) {
-	return file_waste_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_waste_v1_waste_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *WasteRecord) GetId() string {
@@ -244,7 +244,7 @@ type ListWasteRecordsResponse struct {
 
 func (x *ListWasteRecordsResponse) Reset() {
 	*x = ListWasteRecordsResponse{}
-	mi := &file_waste_proto_msgTypes[1]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -256,7 +256,7 @@ func (x *ListWasteRecordsResponse) String() string {
 func (*ListWasteRecordsResponse) ProtoMessage() {}
 
 func (x *ListWasteRecordsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_waste_proto_msgTypes[1]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -269,7 +269,7 @@ func (x *ListWasteRecordsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWasteRecordsResponse.ProtoReflect.Descriptor instead.
 func (*ListWasteRecordsResponse) Descriptor() ([]byte, []int) {
-	return file_waste_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_waste_v1_waste_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListWasteRecordsResponse) GetWasteRecords() []*WasteRecord {
@@ -319,7 +319,7 @@ type ListWasteRecordsRequest struct {
 
 func (x *ListWasteRecordsRequest) Reset() {
 	*x = ListWasteRecordsRequest{}
-	mi := &file_waste_proto_msgTypes[2]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -331,7 +331,7 @@ func (x *ListWasteRecordsRequest) String() string {
 func (*ListWasteRecordsRequest) ProtoMessage() {}
 
 func (x *ListWasteRecordsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_waste_proto_msgTypes[2]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -344,7 +344,7 @@ func (x *ListWasteRecordsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWasteRecordsRequest.ProtoReflect.Descriptor instead.
 func (*ListWasteRecordsRequest) Descriptor() ([]byte, []int) {
-	return file_waste_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_waste_v1_waste_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListWasteRecordsRequest) GetName() string {
@@ -400,7 +400,7 @@ type PullWasteRecordsRequest struct {
 
 func (x *PullWasteRecordsRequest) Reset() {
 	*x = PullWasteRecordsRequest{}
-	mi := &file_waste_proto_msgTypes[3]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -412,7 +412,7 @@ func (x *PullWasteRecordsRequest) String() string {
 func (*PullWasteRecordsRequest) ProtoMessage() {}
 
 func (x *PullWasteRecordsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_waste_proto_msgTypes[3]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -425,7 +425,7 @@ func (x *PullWasteRecordsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullWasteRecordsRequest.ProtoReflect.Descriptor instead.
 func (*PullWasteRecordsRequest) Descriptor() ([]byte, []int) {
-	return file_waste_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_waste_v1_waste_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PullWasteRecordsRequest) GetName() string {
@@ -458,7 +458,7 @@ type PullWasteRecordsResponse struct {
 
 func (x *PullWasteRecordsResponse) Reset() {
 	*x = PullWasteRecordsResponse{}
-	mi := &file_waste_proto_msgTypes[4]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -470,7 +470,7 @@ func (x *PullWasteRecordsResponse) String() string {
 func (*PullWasteRecordsResponse) ProtoMessage() {}
 
 func (x *PullWasteRecordsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_waste_proto_msgTypes[4]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -483,7 +483,7 @@ func (x *PullWasteRecordsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullWasteRecordsResponse.ProtoReflect.Descriptor instead.
 func (*PullWasteRecordsResponse) Descriptor() ([]byte, []int) {
-	return file_waste_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_waste_v1_waste_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullWasteRecordsResponse) GetChanges() []*PullWasteRecordsResponse_Change {
@@ -502,7 +502,7 @@ type DescribeWasteRecordRequest struct {
 
 func (x *DescribeWasteRecordRequest) Reset() {
 	*x = DescribeWasteRecordRequest{}
-	mi := &file_waste_proto_msgTypes[5]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -514,7 +514,7 @@ func (x *DescribeWasteRecordRequest) String() string {
 func (*DescribeWasteRecordRequest) ProtoMessage() {}
 
 func (x *DescribeWasteRecordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_waste_proto_msgTypes[5]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -527,7 +527,7 @@ func (x *DescribeWasteRecordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DescribeWasteRecordRequest.ProtoReflect.Descriptor instead.
 func (*DescribeWasteRecordRequest) Descriptor() ([]byte, []int) {
-	return file_waste_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_waste_v1_waste_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DescribeWasteRecordRequest) GetName() string {
@@ -554,7 +554,7 @@ type WasteRecordSupport struct {
 
 func (x *WasteRecordSupport) Reset() {
 	*x = WasteRecordSupport{}
-	mi := &file_waste_proto_msgTypes[6]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -566,7 +566,7 @@ func (x *WasteRecordSupport) String() string {
 func (*WasteRecordSupport) ProtoMessage() {}
 
 func (x *WasteRecordSupport) ProtoReflect() protoreflect.Message {
-	mi := &file_waste_proto_msgTypes[6]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -579,7 +579,7 @@ func (x *WasteRecordSupport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WasteRecordSupport.ProtoReflect.Descriptor instead.
 func (*WasteRecordSupport) Descriptor() ([]byte, []int) {
-	return file_waste_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_waste_v1_waste_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *WasteRecordSupport) GetResourceSupport() *types.ResourceSupport {
@@ -623,7 +623,7 @@ type PullWasteRecordsResponse_Change struct {
 
 func (x *PullWasteRecordsResponse_Change) Reset() {
 	*x = PullWasteRecordsResponse_Change{}
-	mi := &file_waste_proto_msgTypes[7]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -635,7 +635,7 @@ func (x *PullWasteRecordsResponse_Change) String() string {
 func (*PullWasteRecordsResponse_Change) ProtoMessage() {}
 
 func (x *PullWasteRecordsResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_waste_proto_msgTypes[7]
+	mi := &file_smartcore_bos_waste_v1_waste_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -648,7 +648,7 @@ func (x *PullWasteRecordsResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullWasteRecordsResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullWasteRecordsResponse_Change) Descriptor() ([]byte, []int) {
-	return file_waste_proto_rawDescGZIP(), []int{4, 0}
+	return file_smartcore_bos_waste_v1_waste_proto_rawDescGZIP(), []int{4, 0}
 }
 
 func (x *PullWasteRecordsResponse_Change) GetName() string {
@@ -686,17 +686,17 @@ func (x *PullWasteRecordsResponse_Change) GetType() types.ChangeType {
 	return types.ChangeType(0)
 }
 
-var File_waste_proto protoreflect.FileDescriptor
+var File_smartcore_bos_waste_v1_waste_proto protoreflect.FileDescriptor
 
-const file_waste_proto_rawDesc = "" +
+const file_smartcore_bos_waste_v1_waste_proto_rawDesc = "" +
 	"\n" +
-	"\vwaste.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\x1a\x10types/info.proto\x1a\x17types/time/period.proto\"\xec\x04\n" +
+	"\"smartcore/bos/waste/v1/waste.proto\x12\x16smartcore.bos.waste.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\x1a\x10types/info.proto\x1a\x17types/time/period.proto\"\xf5\x04\n" +
 	"\vWasteRecord\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12H\n" +
 	"\x12record_create_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x10recordCreateTime\x12\x16\n" +
 	"\x06weight\x18\x03 \x01(\x02R\x06weight\x12\x16\n" +
-	"\x06system\x18\x04 \x01(\tR\x06system\x123\n" +
-	"\x04type\x18\x05 \x01(\x0e2\x1f.smartcore.bos.WasteRecord.TypeR\x04type\x12\x12\n" +
+	"\x06system\x18\x04 \x01(\tR\x06system\x12<\n" +
+	"\x04type\x18\x05 \x01(\x0e2(.smartcore.bos.waste.v1.WasteRecord.TypeR\x04type\x12\x12\n" +
 	"\x04area\x18\x06 \x01(\tR\x04area\x12F\n" +
 	"\x11waste_create_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x0fwasteCreateTime\x12\x16\n" +
 	"\x06stream\x18\b \x01(\tR\x06stream\x12 \n" +
@@ -719,9 +719,9 @@ const file_waste_proto_rawDesc = "" +
 	"\n" +
 	"_co2_savedB\r\n" +
 	"\v_land_savedB\x0e\n" +
-	"\f_trees_saved\"\xa1\x01\n" +
-	"\x18ListWasteRecordsResponse\x12>\n" +
-	"\fwasteRecords\x18\x01 \x03(\v2\x1a.smartcore.bos.WasteRecordR\fwasteRecords\x12&\n" +
+	"\f_trees_saved\"\xaa\x01\n" +
+	"\x18ListWasteRecordsResponse\x12G\n" +
+	"\fwasteRecords\x18\x01 \x03(\v2#.smartcore.bos.waste.v1.WasteRecordR\fwasteRecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
 	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xf3\x01\n" +
@@ -736,15 +736,15 @@ const file_waste_proto_rawDesc = "" +
 	"\x17PullWasteRecordsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xe3\x02\n" +
-	"\x18PullWasteRecordsResponse\x12H\n" +
-	"\achanges\x18\x01 \x03(\v2..smartcore.bos.PullWasteRecordsResponse.ChangeR\achanges\x1a\xfc\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xfe\x02\n" +
+	"\x18PullWasteRecordsResponse\x12Q\n" +
+	"\achanges\x18\x01 \x03(\v27.smartcore.bos.waste.v1.PullWasteRecordsResponse.ChangeR\achanges\x1a\x8e\x02\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x127\n" +
-	"\tnew_value\x18\x03 \x01(\v2\x1a.smartcore.bos.WasteRecordR\bnewValue\x127\n" +
-	"\told_value\x18\x04 \x01(\v2\x1a.smartcore.bos.WasteRecordR\boldValue\x12/\n" +
+	"changeTime\x12@\n" +
+	"\tnew_value\x18\x03 \x01(\v2#.smartcore.bos.waste.v1.WasteRecordR\bnewValue\x12@\n" +
+	"\told_value\x18\x04 \x01(\v2#.smartcore.bos.waste.v1.WasteRecordR\boldValue\x12/\n" +
 	"\x04type\x18\x05 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\"0\n" +
 	"\x1aDescribeWasteRecordRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"\xc3\x01\n" +
@@ -752,63 +752,63 @@ const file_waste_proto_rawDesc = "" +
 	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12\x12\n" +
 	"\x04unit\x18\x02 \x01(\tR\x04unit\x12$\n" +
 	"\x0eco2_saved_unit\x18\x03 \x01(\tR\fco2SavedUnit\x12&\n" +
-	"\x0fland_saved_unit\x18\x04 \x01(\tR\rlandSavedUnit2\xd6\x01\n" +
-	"\bWasteApi\x12c\n" +
-	"\x10ListWasteRecords\x12&.smartcore.bos.ListWasteRecordsRequest\x1a'.smartcore.bos.ListWasteRecordsResponse\x12e\n" +
-	"\x10PullWasteRecords\x12&.smartcore.bos.PullWasteRecordsRequest\x1a'.smartcore.bos.PullWasteRecordsResponse0\x012p\n" +
-	"\tWasteInfo\x12c\n" +
-	"\x13DescribeWasteRecord\x12).smartcore.bos.DescribeWasteRecordRequest\x1a!.smartcore.bos.WasteRecordSupportB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\x0fland_saved_unit\x18\x04 \x01(\tR\rlandSavedUnit2\xfa\x01\n" +
+	"\bWasteApi\x12u\n" +
+	"\x10ListWasteRecords\x12/.smartcore.bos.waste.v1.ListWasteRecordsRequest\x1a0.smartcore.bos.waste.v1.ListWasteRecordsResponse\x12w\n" +
+	"\x10PullWasteRecords\x12/.smartcore.bos.waste.v1.PullWasteRecordsRequest\x1a0.smartcore.bos.waste.v1.PullWasteRecordsResponse0\x012\x82\x01\n" +
+	"\tWasteInfo\x12u\n" +
+	"\x13DescribeWasteRecord\x122.smartcore.bos.waste.v1.DescribeWasteRecordRequest\x1a*.smartcore.bos.waste.v1.WasteRecordSupportB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_waste_proto_rawDescOnce sync.Once
-	file_waste_proto_rawDescData []byte
+	file_smartcore_bos_waste_v1_waste_proto_rawDescOnce sync.Once
+	file_smartcore_bos_waste_v1_waste_proto_rawDescData []byte
 )
 
-func file_waste_proto_rawDescGZIP() []byte {
-	file_waste_proto_rawDescOnce.Do(func() {
-		file_waste_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_waste_proto_rawDesc), len(file_waste_proto_rawDesc)))
+func file_smartcore_bos_waste_v1_waste_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_waste_v1_waste_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_waste_v1_waste_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_waste_v1_waste_proto_rawDesc), len(file_smartcore_bos_waste_v1_waste_proto_rawDesc)))
 	})
-	return file_waste_proto_rawDescData
+	return file_smartcore_bos_waste_v1_waste_proto_rawDescData
 }
 
-var file_waste_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_waste_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
-var file_waste_proto_goTypes = []any{
-	(WasteRecord_Type)(0),                   // 0: smartcore.bos.WasteRecord.Type
-	(*WasteRecord)(nil),                     // 1: smartcore.bos.WasteRecord
-	(*ListWasteRecordsResponse)(nil),        // 2: smartcore.bos.ListWasteRecordsResponse
-	(*ListWasteRecordsRequest)(nil),         // 3: smartcore.bos.ListWasteRecordsRequest
-	(*PullWasteRecordsRequest)(nil),         // 4: smartcore.bos.PullWasteRecordsRequest
-	(*PullWasteRecordsResponse)(nil),        // 5: smartcore.bos.PullWasteRecordsResponse
-	(*DescribeWasteRecordRequest)(nil),      // 6: smartcore.bos.DescribeWasteRecordRequest
-	(*WasteRecordSupport)(nil),              // 7: smartcore.bos.WasteRecordSupport
-	(*PullWasteRecordsResponse_Change)(nil), // 8: smartcore.bos.PullWasteRecordsResponse.Change
+var file_smartcore_bos_waste_v1_waste_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_smartcore_bos_waste_v1_waste_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_smartcore_bos_waste_v1_waste_proto_goTypes = []any{
+	(WasteRecord_Type)(0),                   // 0: smartcore.bos.waste.v1.WasteRecord.Type
+	(*WasteRecord)(nil),                     // 1: smartcore.bos.waste.v1.WasteRecord
+	(*ListWasteRecordsResponse)(nil),        // 2: smartcore.bos.waste.v1.ListWasteRecordsResponse
+	(*ListWasteRecordsRequest)(nil),         // 3: smartcore.bos.waste.v1.ListWasteRecordsRequest
+	(*PullWasteRecordsRequest)(nil),         // 4: smartcore.bos.waste.v1.PullWasteRecordsRequest
+	(*PullWasteRecordsResponse)(nil),        // 5: smartcore.bos.waste.v1.PullWasteRecordsResponse
+	(*DescribeWasteRecordRequest)(nil),      // 6: smartcore.bos.waste.v1.DescribeWasteRecordRequest
+	(*WasteRecordSupport)(nil),              // 7: smartcore.bos.waste.v1.WasteRecordSupport
+	(*PullWasteRecordsResponse_Change)(nil), // 8: smartcore.bos.waste.v1.PullWasteRecordsResponse.Change
 	(*timestamppb.Timestamp)(nil),           // 9: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),           // 10: google.protobuf.FieldMask
 	(*time.Period)(nil),                     // 11: smartcore.types.time.Period
 	(*types.ResourceSupport)(nil),           // 12: smartcore.types.ResourceSupport
 	(types.ChangeType)(0),                   // 13: smartcore.types.ChangeType
 }
-var file_waste_proto_depIdxs = []int32{
-	9,  // 0: smartcore.bos.WasteRecord.record_create_time:type_name -> google.protobuf.Timestamp
-	0,  // 1: smartcore.bos.WasteRecord.type:type_name -> smartcore.bos.WasteRecord.Type
-	9,  // 2: smartcore.bos.WasteRecord.waste_create_time:type_name -> google.protobuf.Timestamp
-	1,  // 3: smartcore.bos.ListWasteRecordsResponse.wasteRecords:type_name -> smartcore.bos.WasteRecord
-	10, // 4: smartcore.bos.ListWasteRecordsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	11, // 5: smartcore.bos.ListWasteRecordsRequest.period:type_name -> smartcore.types.time.Period
-	10, // 6: smartcore.bos.PullWasteRecordsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	8,  // 7: smartcore.bos.PullWasteRecordsResponse.changes:type_name -> smartcore.bos.PullWasteRecordsResponse.Change
-	12, // 8: smartcore.bos.WasteRecordSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	9,  // 9: smartcore.bos.PullWasteRecordsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 10: smartcore.bos.PullWasteRecordsResponse.Change.new_value:type_name -> smartcore.bos.WasteRecord
-	1,  // 11: smartcore.bos.PullWasteRecordsResponse.Change.old_value:type_name -> smartcore.bos.WasteRecord
-	13, // 12: smartcore.bos.PullWasteRecordsResponse.Change.type:type_name -> smartcore.types.ChangeType
-	3,  // 13: smartcore.bos.WasteApi.ListWasteRecords:input_type -> smartcore.bos.ListWasteRecordsRequest
-	4,  // 14: smartcore.bos.WasteApi.PullWasteRecords:input_type -> smartcore.bos.PullWasteRecordsRequest
-	6,  // 15: smartcore.bos.WasteInfo.DescribeWasteRecord:input_type -> smartcore.bos.DescribeWasteRecordRequest
-	2,  // 16: smartcore.bos.WasteApi.ListWasteRecords:output_type -> smartcore.bos.ListWasteRecordsResponse
-	5,  // 17: smartcore.bos.WasteApi.PullWasteRecords:output_type -> smartcore.bos.PullWasteRecordsResponse
-	7,  // 18: smartcore.bos.WasteInfo.DescribeWasteRecord:output_type -> smartcore.bos.WasteRecordSupport
+var file_smartcore_bos_waste_v1_waste_proto_depIdxs = []int32{
+	9,  // 0: smartcore.bos.waste.v1.WasteRecord.record_create_time:type_name -> google.protobuf.Timestamp
+	0,  // 1: smartcore.bos.waste.v1.WasteRecord.type:type_name -> smartcore.bos.waste.v1.WasteRecord.Type
+	9,  // 2: smartcore.bos.waste.v1.WasteRecord.waste_create_time:type_name -> google.protobuf.Timestamp
+	1,  // 3: smartcore.bos.waste.v1.ListWasteRecordsResponse.wasteRecords:type_name -> smartcore.bos.waste.v1.WasteRecord
+	10, // 4: smartcore.bos.waste.v1.ListWasteRecordsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	11, // 5: smartcore.bos.waste.v1.ListWasteRecordsRequest.period:type_name -> smartcore.types.time.Period
+	10, // 6: smartcore.bos.waste.v1.PullWasteRecordsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	8,  // 7: smartcore.bos.waste.v1.PullWasteRecordsResponse.changes:type_name -> smartcore.bos.waste.v1.PullWasteRecordsResponse.Change
+	12, // 8: smartcore.bos.waste.v1.WasteRecordSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	9,  // 9: smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	1,  // 10: smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.new_value:type_name -> smartcore.bos.waste.v1.WasteRecord
+	1,  // 11: smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.old_value:type_name -> smartcore.bos.waste.v1.WasteRecord
+	13, // 12: smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.type:type_name -> smartcore.types.ChangeType
+	3,  // 13: smartcore.bos.waste.v1.WasteApi.ListWasteRecords:input_type -> smartcore.bos.waste.v1.ListWasteRecordsRequest
+	4,  // 14: smartcore.bos.waste.v1.WasteApi.PullWasteRecords:input_type -> smartcore.bos.waste.v1.PullWasteRecordsRequest
+	6,  // 15: smartcore.bos.waste.v1.WasteInfo.DescribeWasteRecord:input_type -> smartcore.bos.waste.v1.DescribeWasteRecordRequest
+	2,  // 16: smartcore.bos.waste.v1.WasteApi.ListWasteRecords:output_type -> smartcore.bos.waste.v1.ListWasteRecordsResponse
+	5,  // 17: smartcore.bos.waste.v1.WasteApi.PullWasteRecords:output_type -> smartcore.bos.waste.v1.PullWasteRecordsResponse
+	7,  // 18: smartcore.bos.waste.v1.WasteInfo.DescribeWasteRecord:output_type -> smartcore.bos.waste.v1.WasteRecordSupport
 	16, // [16:19] is the sub-list for method output_type
 	13, // [13:16] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
@@ -816,28 +816,28 @@ var file_waste_proto_depIdxs = []int32{
 	0,  // [0:13] is the sub-list for field type_name
 }
 
-func init() { file_waste_proto_init() }
-func file_waste_proto_init() {
-	if File_waste_proto != nil {
+func init() { file_smartcore_bos_waste_v1_waste_proto_init() }
+func file_smartcore_bos_waste_v1_waste_proto_init() {
+	if File_smartcore_bos_waste_v1_waste_proto != nil {
 		return
 	}
-	file_waste_proto_msgTypes[0].OneofWrappers = []any{}
+	file_smartcore_bos_waste_v1_waste_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_waste_proto_rawDesc), len(file_waste_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_waste_v1_waste_proto_rawDesc), len(file_smartcore_bos_waste_v1_waste_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_waste_proto_goTypes,
-		DependencyIndexes: file_waste_proto_depIdxs,
-		EnumInfos:         file_waste_proto_enumTypes,
-		MessageInfos:      file_waste_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_waste_v1_waste_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_waste_v1_waste_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_waste_v1_waste_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_waste_v1_waste_proto_msgTypes,
 	}.Build()
-	File_waste_proto = out.File
-	file_waste_proto_goTypes = nil
-	file_waste_proto_depIdxs = nil
+	File_smartcore_bos_waste_v1_waste_proto = out.File
+	file_smartcore_bos_waste_v1_waste_proto_goTypes = nil
+	file_smartcore_bos_waste_v1_waste_proto_depIdxs = nil
 }

@@ -2,10 +2,10 @@ import {fieldMaskFromObject, setProperties, timestampToDate} from '@/api/convpb.
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setValue, trackAction} from '@/api/resource.js';
 import {periodFromObject} from '@/api/sc/types/period.js';
-import {AllocationApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_grpc_web_pb';
-import {PullAllocationRequest} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_pb';
-import {ListAllocationHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_history_pb';
-import {AllocationHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_history_grpc_web_pb';
+import {AllocationApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/allocation/v1/allocation_grpc_web_pb';
+import {PullAllocationRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/allocation/v1/allocation_pb';
+import {ListAllocationHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/allocation/v1/allocation_history_pb';
+import {AllocationHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/allocation/v1/allocation_history_grpc_web_pb';
 
 
 /**

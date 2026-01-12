@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: emergency_light.proto
+// source: smartcore/bos/emergencylight/v1/emergency_light.proto
 
 package gen
 
@@ -19,11 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	EmergencyLightApi_StartFunctionTest_FullMethodName  = "/smartcore.bos.EmergencyLightApi/StartFunctionTest"
-	EmergencyLightApi_StartDurationTest_FullMethodName  = "/smartcore.bos.EmergencyLightApi/StartDurationTest"
-	EmergencyLightApi_StopEmergencyTest_FullMethodName  = "/smartcore.bos.EmergencyLightApi/StopEmergencyTest"
-	EmergencyLightApi_GetTestResultSet_FullMethodName   = "/smartcore.bos.EmergencyLightApi/GetTestResultSet"
-	EmergencyLightApi_PullTestResultSets_FullMethodName = "/smartcore.bos.EmergencyLightApi/PullTestResultSets"
+	EmergencyLightApi_StartFunctionTest_FullMethodName  = "/smartcore.bos.emergencylight.v1.EmergencyLightApi/StartFunctionTest"
+	EmergencyLightApi_StartDurationTest_FullMethodName  = "/smartcore.bos.emergencylight.v1.EmergencyLightApi/StartDurationTest"
+	EmergencyLightApi_StopEmergencyTest_FullMethodName  = "/smartcore.bos.emergencylight.v1.EmergencyLightApi/StopEmergencyTest"
+	EmergencyLightApi_GetTestResultSet_FullMethodName   = "/smartcore.bos.emergencylight.v1.EmergencyLightApi/GetTestResultSet"
+	EmergencyLightApi_PullTestResultSets_FullMethodName = "/smartcore.bos.emergencylight.v1.EmergencyLightApi/PullTestResultSets"
 )
 
 // EmergencyLightApiClient is the client API for EmergencyLightApi service.
@@ -262,7 +262,7 @@ type EmergencyLightApi_PullTestResultSetsServer = grpc.ServerStreamingServer[Pul
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var EmergencyLightApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.EmergencyLightApi",
+	ServiceName: "smartcore.bos.emergencylight.v1.EmergencyLightApi",
 	HandlerType: (*EmergencyLightApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -289,5 +289,5 @@ var EmergencyLightApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "emergency_light.proto",
+	Metadata: "smartcore/bos/emergencylight/v1/emergency_light.proto",
 }

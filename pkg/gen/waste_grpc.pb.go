@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: waste.proto
+// source: smartcore/bos/waste/v1/waste.proto
 
 package gen
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WasteApi_ListWasteRecords_FullMethodName = "/smartcore.bos.WasteApi/ListWasteRecords"
-	WasteApi_PullWasteRecords_FullMethodName = "/smartcore.bos.WasteApi/PullWasteRecords"
+	WasteApi_ListWasteRecords_FullMethodName = "/smartcore.bos.waste.v1.WasteApi/ListWasteRecords"
+	WasteApi_PullWasteRecords_FullMethodName = "/smartcore.bos.waste.v1.WasteApi/PullWasteRecords"
 )
 
 // WasteApiClient is the client API for WasteApi service.
@@ -148,7 +148,7 @@ type WasteApi_PullWasteRecordsServer = grpc.ServerStreamingServer[PullWasteRecor
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var WasteApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.WasteApi",
+	ServiceName: "smartcore.bos.waste.v1.WasteApi",
 	HandlerType: (*WasteApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -163,11 +163,11 @@ var WasteApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "waste.proto",
+	Metadata: "smartcore/bos/waste/v1/waste.proto",
 }
 
 const (
-	WasteInfo_DescribeWasteRecord_FullMethodName = "/smartcore.bos.WasteInfo/DescribeWasteRecord"
+	WasteInfo_DescribeWasteRecord_FullMethodName = "/smartcore.bos.waste.v1.WasteInfo/DescribeWasteRecord"
 )
 
 // WasteInfoClient is the client API for WasteInfo service.
@@ -256,7 +256,7 @@ func _WasteInfo_DescribeWasteRecord_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var WasteInfo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.WasteInfo",
+	ServiceName: "smartcore.bos.waste.v1.WasteInfo",
 	HandlerType: (*WasteInfoServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -265,5 +265,5 @@ var WasteInfo_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "waste.proto",
+	Metadata: "smartcore/bos/waste/v1/waste.proto",
 }

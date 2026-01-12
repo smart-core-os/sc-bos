@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: devices.proto
+// source: smartcore/bos/devices/v1/devices.proto
 
 package gen
 
@@ -19,11 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DevicesApi_ListDevices_FullMethodName           = "/smartcore.bos.DevicesApi/ListDevices"
-	DevicesApi_PullDevices_FullMethodName           = "/smartcore.bos.DevicesApi/PullDevices"
-	DevicesApi_GetDevicesMetadata_FullMethodName    = "/smartcore.bos.DevicesApi/GetDevicesMetadata"
-	DevicesApi_PullDevicesMetadata_FullMethodName   = "/smartcore.bos.DevicesApi/PullDevicesMetadata"
-	DevicesApi_GetDownloadDevicesUrl_FullMethodName = "/smartcore.bos.DevicesApi/GetDownloadDevicesUrl"
+	DevicesApi_ListDevices_FullMethodName           = "/smartcore.bos.devices.v1.DevicesApi/ListDevices"
+	DevicesApi_PullDevices_FullMethodName           = "/smartcore.bos.devices.v1.DevicesApi/PullDevices"
+	DevicesApi_GetDevicesMetadata_FullMethodName    = "/smartcore.bos.devices.v1.DevicesApi/GetDevicesMetadata"
+	DevicesApi_PullDevicesMetadata_FullMethodName   = "/smartcore.bos.devices.v1.DevicesApi/PullDevicesMetadata"
+	DevicesApi_GetDownloadDevicesUrl_FullMethodName = "/smartcore.bos.devices.v1.DevicesApi/GetDownloadDevicesUrl"
 )
 
 // DevicesApiClient is the client API for DevicesApi service.
@@ -252,7 +252,7 @@ func _DevicesApi_GetDownloadDevicesUrl_Handler(srv interface{}, ctx context.Cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var DevicesApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.DevicesApi",
+	ServiceName: "smartcore.bos.devices.v1.DevicesApi",
 	HandlerType: (*DevicesApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -280,5 +280,5 @@ var DevicesApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "devices.proto",
+	Metadata: "smartcore/bos/devices/v1/devices.proto",
 }

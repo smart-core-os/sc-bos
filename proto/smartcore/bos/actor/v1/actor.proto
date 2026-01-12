@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package smartcore.bos.actor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+import "types/image.proto";
+
+// An Actor is some entity that attempted to access the resource.
+// It could be an object, like a car, or a person or animal.
+message Actor {
+  // todo: merge with the Occupant in EnterLeaveSensor trait
+
+  // A unique name for this actor as measured by the device.
+  // Name allows correlation between enter and leave events.
+  string name = 1;
+
+  // An official title for this actor.
+  string title = 10;
+  // A recognisable display name for this actor.
+  string display_name = 11;
+  // A picture of the actor.
+  smartcore.types.Image picture = 12;
+  // A url that resolves to more information on this actor.
+  string url = 13;
+  // An email address for the actor.
+  string email = 14;
+  // The time this actor was last granted access.
+  // The grant may have been performed by a different device to this one.
+  google.protobuf.Timestamp last_grant_time = 15;
+  // The access zone the actor was last granted access to.
+  // The zone will be provided by the device and may not map to any Smart Core zone or device.
+  string last_grant_zone = 16;
+  // The license plate or vehicle registration number of the actor's vehicle.
+  // should only contain alphanumeric characters and possibly, spaces.
+  string vehicle_registration = 17;
+  // The company this actor is associated with.
+  string company = 18;
+
+  // IDs holds external actor ids.
+  // For example this might hold an id representing a person in an access control system.
+  // The map key should uniquely represent the domain for the id, for example "my-access-system/user-id", the use of uris is not
+  // required, values should be the id of this consumable in that domain, for example "sma81r6t1c5o3r58e1-3r8u16l1es".
+  map<string, string> ids = 100;
+  // Additional properties associated with the actor.
+  // Typically displayed to a user to help them to distinguish between similar actors.
+  map<string, string> more = 101;
+}

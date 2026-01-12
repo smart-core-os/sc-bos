@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: udmi.proto
+// source: smartcore/bos/udmi/v1/udmi.proto
 
 package gen
 
@@ -19,10 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UdmiService_PullControlTopics_FullMethodName  = "/smartcore.bos.UdmiService/PullControlTopics"
-	UdmiService_OnMessage_FullMethodName          = "/smartcore.bos.UdmiService/OnMessage"
-	UdmiService_PullExportMessages_FullMethodName = "/smartcore.bos.UdmiService/PullExportMessages"
-	UdmiService_GetExportMessage_FullMethodName   = "/smartcore.bos.UdmiService/GetExportMessage"
+	UdmiService_PullControlTopics_FullMethodName  = "/smartcore.bos.udmi.v1.UdmiService/PullControlTopics"
+	UdmiService_OnMessage_FullMethodName          = "/smartcore.bos.udmi.v1.UdmiService/OnMessage"
+	UdmiService_PullExportMessages_FullMethodName = "/smartcore.bos.udmi.v1.UdmiService/PullExportMessages"
+	UdmiService_GetExportMessage_FullMethodName   = "/smartcore.bos.udmi.v1.UdmiService/GetExportMessage"
 )
 
 // UdmiServiceClient is the client API for UdmiService service.
@@ -238,7 +238,7 @@ func _UdmiService_GetExportMessage_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var UdmiService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.UdmiService",
+	ServiceName: "smartcore.bos.udmi.v1.UdmiService",
 	HandlerType: (*UdmiServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -262,5 +262,5 @@ var UdmiService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "udmi.proto",
+	Metadata: "smartcore/bos/udmi/v1/udmi.proto",
 }

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: anpr_camera.proto
+// source: smartcore/bos/anprcamera/v1/anpr_camera.proto
 
 package gen
 
@@ -48,7 +48,7 @@ type AnprEvent struct {
 
 func (x *AnprEvent) Reset() {
 	*x = AnprEvent{}
-	mi := &file_anpr_camera_proto_msgTypes[0]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -60,7 +60,7 @@ func (x *AnprEvent) String() string {
 func (*AnprEvent) ProtoMessage() {}
 
 func (x *AnprEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_anpr_camera_proto_msgTypes[0]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -73,7 +73,7 @@ func (x *AnprEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AnprEvent.ProtoReflect.Descriptor instead.
 func (*AnprEvent) Descriptor() ([]byte, []int) {
-	return file_anpr_camera_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *AnprEvent) GetEventTime() *timestamppb.Timestamp {
@@ -151,7 +151,7 @@ type ListAnprEventsRequest struct {
 
 func (x *ListAnprEventsRequest) Reset() {
 	*x = ListAnprEventsRequest{}
-	mi := &file_anpr_camera_proto_msgTypes[1]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -163,7 +163,7 @@ func (x *ListAnprEventsRequest) String() string {
 func (*ListAnprEventsRequest) ProtoMessage() {}
 
 func (x *ListAnprEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_anpr_camera_proto_msgTypes[1]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -176,7 +176,7 @@ func (x *ListAnprEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAnprEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListAnprEventsRequest) Descriptor() ([]byte, []int) {
-	return file_anpr_camera_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListAnprEventsRequest) GetName() string {
@@ -222,7 +222,7 @@ type ListAnprEventsResponse struct {
 
 func (x *ListAnprEventsResponse) Reset() {
 	*x = ListAnprEventsResponse{}
-	mi := &file_anpr_camera_proto_msgTypes[2]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -234,7 +234,7 @@ func (x *ListAnprEventsResponse) String() string {
 func (*ListAnprEventsResponse) ProtoMessage() {}
 
 func (x *ListAnprEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_anpr_camera_proto_msgTypes[2]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -247,7 +247,7 @@ func (x *ListAnprEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAnprEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListAnprEventsResponse) Descriptor() ([]byte, []int) {
-	return file_anpr_camera_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListAnprEventsResponse) GetAnprEvents() []*AnprEvent {
@@ -283,7 +283,7 @@ type PullAnprEventsRequest struct {
 
 func (x *PullAnprEventsRequest) Reset() {
 	*x = PullAnprEventsRequest{}
-	mi := &file_anpr_camera_proto_msgTypes[3]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -295,7 +295,7 @@ func (x *PullAnprEventsRequest) String() string {
 func (*PullAnprEventsRequest) ProtoMessage() {}
 
 func (x *PullAnprEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_anpr_camera_proto_msgTypes[3]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -308,7 +308,7 @@ func (x *PullAnprEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullAnprEventsRequest.ProtoReflect.Descriptor instead.
 func (*PullAnprEventsRequest) Descriptor() ([]byte, []int) {
-	return file_anpr_camera_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PullAnprEventsRequest) GetName() string {
@@ -341,7 +341,7 @@ type PullAnprEventsResponse struct {
 
 func (x *PullAnprEventsResponse) Reset() {
 	*x = PullAnprEventsResponse{}
-	mi := &file_anpr_camera_proto_msgTypes[4]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -353,7 +353,7 @@ func (x *PullAnprEventsResponse) String() string {
 func (*PullAnprEventsResponse) ProtoMessage() {}
 
 func (x *PullAnprEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_anpr_camera_proto_msgTypes[4]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -366,7 +366,7 @@ func (x *PullAnprEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullAnprEventsResponse.ProtoReflect.Descriptor instead.
 func (*PullAnprEventsResponse) Descriptor() ([]byte, []int) {
-	return file_anpr_camera_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullAnprEventsResponse) GetChanges() []*PullAnprEventsResponse_Change {
@@ -393,7 +393,7 @@ type AnprEvent_VehicleInfo struct {
 
 func (x *AnprEvent_VehicleInfo) Reset() {
 	*x = AnprEvent_VehicleInfo{}
-	mi := &file_anpr_camera_proto_msgTypes[5]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -405,7 +405,7 @@ func (x *AnprEvent_VehicleInfo) String() string {
 func (*AnprEvent_VehicleInfo) ProtoMessage() {}
 
 func (x *AnprEvent_VehicleInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_anpr_camera_proto_msgTypes[5]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -418,7 +418,7 @@ func (x *AnprEvent_VehicleInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AnprEvent_VehicleInfo.ProtoReflect.Descriptor instead.
 func (*AnprEvent_VehicleInfo) Descriptor() ([]byte, []int) {
-	return file_anpr_camera_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *AnprEvent_VehicleInfo) GetVehicleType() string {
@@ -461,7 +461,7 @@ type PullAnprEventsResponse_Change struct {
 
 func (x *PullAnprEventsResponse_Change) Reset() {
 	*x = PullAnprEventsResponse_Change{}
-	mi := &file_anpr_camera_proto_msgTypes[6]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -473,7 +473,7 @@ func (x *PullAnprEventsResponse_Change) String() string {
 func (*PullAnprEventsResponse_Change) ProtoMessage() {}
 
 func (x *PullAnprEventsResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_anpr_camera_proto_msgTypes[6]
+	mi := &file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -486,7 +486,7 @@ func (x *PullAnprEventsResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullAnprEventsResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullAnprEventsResponse_Change) Descriptor() ([]byte, []int) {
-	return file_anpr_camera_proto_rawDescGZIP(), []int{4, 0}
+	return file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescGZIP(), []int{4, 0}
 }
 
 func (x *PullAnprEventsResponse_Change) GetName() string {
@@ -510,11 +510,11 @@ func (x *PullAnprEventsResponse_Change) GetAnprEvent() *AnprEvent {
 	return nil
 }
 
-var File_anpr_camera_proto protoreflect.FileDescriptor
+var File_smartcore_bos_anprcamera_v1_anpr_camera_proto protoreflect.FileDescriptor
 
-const file_anpr_camera_proto_rawDesc = "" +
+const file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDesc = "" +
 	"\n" +
-	"\x11anpr_camera.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc7\x03\n" +
+	"-smartcore/bos/anprcamera/v1/anpr_camera.proto\x12\x1bsmartcore.bos.anprcamera.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd5\x03\n" +
 	"\tAnprEvent\x129\n" +
 	"\n" +
 	"event_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\teventTime\x12-\n" +
@@ -526,8 +526,8 @@ const file_anpr_camera_proto_rawDesc = "" +
 	"confidence\x88\x01\x01\x12\x1d\n" +
 	"\n" +
 	"plate_type\x18\x06 \x01(\tR\tplateType\x12\x12\n" +
-	"\x04year\x18\a \x01(\tR\x04year\x12G\n" +
-	"\fvehicle_info\x18\b \x01(\v2$.smartcore.bos.AnprEvent.VehicleInfoR\vvehicleInfo\x1ar\n" +
+	"\x04year\x18\a \x01(\tR\x04year\x12U\n" +
+	"\fvehicle_info\x18\b \x01(\v22.smartcore.bos.anprcamera.v1.AnprEvent.VehicleInfoR\vvehicleInfo\x1ar\n" +
 	"\vVehicleInfo\x12!\n" +
 	"\fvehicle_type\x18\x01 \x01(\tR\vvehicleType\x12\x16\n" +
 	"\x06colour\x18\x02 \x01(\tR\x06colour\x12\x12\n" +
@@ -539,9 +539,9 @@ const file_anpr_camera_proto_rawDesc = "" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\"\x9a\x01\n" +
-	"\x16ListAnprEventsResponse\x129\n" +
-	"\vanpr_events\x18\x01 \x03(\v2\x18.smartcore.bos.AnprEventR\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"\xa8\x01\n" +
+	"\x16ListAnprEventsResponse\x12G\n" +
+	"\vanpr_events\x18\x01 \x03(\v2&.smartcore.bos.anprcamera.v1.AnprEventR\n" +
 	"anprEvents\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
@@ -549,56 +549,56 @@ const file_anpr_camera_proto_rawDesc = "" +
 	"\x15PullAnprEventsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xf5\x01\n" +
-	"\x16PullAnprEventsResponse\x12F\n" +
-	"\achanges\x18\x01 \x03(\v2,.smartcore.bos.PullAnprEventsResponse.ChangeR\achanges\x1a\x92\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x91\x02\n" +
+	"\x16PullAnprEventsResponse\x12T\n" +
+	"\achanges\x18\x01 \x03(\v2:.smartcore.bos.anprcamera.v1.PullAnprEventsResponse.ChangeR\achanges\x1a\xa0\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x127\n" +
+	"changeTime\x12E\n" +
 	"\n" +
-	"anpr_event\x18\x03 \x01(\v2\x18.smartcore.bos.AnprEventR\tanprEvent2\xd3\x01\n" +
-	"\rAnprCameraApi\x12_\n" +
-	"\x0eListAnprEvents\x12$.smartcore.bos.ListAnprEventsRequest\x1a%.smartcore.bos.ListAnprEventsResponse\"\x00\x12a\n" +
-	"\x0ePullAnprEvents\x12$.smartcore.bos.PullAnprEventsRequest\x1a%.smartcore.bos.PullAnprEventsResponse\"\x000\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"anpr_event\x18\x03 \x01(\v2&.smartcore.bos.anprcamera.v1.AnprEventR\tanprEvent2\x8b\x02\n" +
+	"\rAnprCameraApi\x12{\n" +
+	"\x0eListAnprEvents\x122.smartcore.bos.anprcamera.v1.ListAnprEventsRequest\x1a3.smartcore.bos.anprcamera.v1.ListAnprEventsResponse\"\x00\x12}\n" +
+	"\x0ePullAnprEvents\x122.smartcore.bos.anprcamera.v1.PullAnprEventsRequest\x1a3.smartcore.bos.anprcamera.v1.PullAnprEventsResponse\"\x000\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_anpr_camera_proto_rawDescOnce sync.Once
-	file_anpr_camera_proto_rawDescData []byte
+	file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescOnce sync.Once
+	file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescData []byte
 )
 
-func file_anpr_camera_proto_rawDescGZIP() []byte {
-	file_anpr_camera_proto_rawDescOnce.Do(func() {
-		file_anpr_camera_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_anpr_camera_proto_rawDesc), len(file_anpr_camera_proto_rawDesc)))
+func file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDesc), len(file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDesc)))
 	})
-	return file_anpr_camera_proto_rawDescData
+	return file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDescData
 }
 
-var file_anpr_camera_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_anpr_camera_proto_goTypes = []any{
-	(*AnprEvent)(nil),                     // 0: smartcore.bos.AnprEvent
-	(*ListAnprEventsRequest)(nil),         // 1: smartcore.bos.ListAnprEventsRequest
-	(*ListAnprEventsResponse)(nil),        // 2: smartcore.bos.ListAnprEventsResponse
-	(*PullAnprEventsRequest)(nil),         // 3: smartcore.bos.PullAnprEventsRequest
-	(*PullAnprEventsResponse)(nil),        // 4: smartcore.bos.PullAnprEventsResponse
-	(*AnprEvent_VehicleInfo)(nil),         // 5: smartcore.bos.AnprEvent.VehicleInfo
-	(*PullAnprEventsResponse_Change)(nil), // 6: smartcore.bos.PullAnprEventsResponse.Change
+var file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_smartcore_bos_anprcamera_v1_anpr_camera_proto_goTypes = []any{
+	(*AnprEvent)(nil),                     // 0: smartcore.bos.anprcamera.v1.AnprEvent
+	(*ListAnprEventsRequest)(nil),         // 1: smartcore.bos.anprcamera.v1.ListAnprEventsRequest
+	(*ListAnprEventsResponse)(nil),        // 2: smartcore.bos.anprcamera.v1.ListAnprEventsResponse
+	(*PullAnprEventsRequest)(nil),         // 3: smartcore.bos.anprcamera.v1.PullAnprEventsRequest
+	(*PullAnprEventsResponse)(nil),        // 4: smartcore.bos.anprcamera.v1.PullAnprEventsResponse
+	(*AnprEvent_VehicleInfo)(nil),         // 5: smartcore.bos.anprcamera.v1.AnprEvent.VehicleInfo
+	(*PullAnprEventsResponse_Change)(nil), // 6: smartcore.bos.anprcamera.v1.PullAnprEventsResponse.Change
 	(*timestamppb.Timestamp)(nil),         // 7: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),         // 8: google.protobuf.FieldMask
 }
-var file_anpr_camera_proto_depIdxs = []int32{
-	7,  // 0: smartcore.bos.AnprEvent.event_time:type_name -> google.protobuf.Timestamp
-	5,  // 1: smartcore.bos.AnprEvent.vehicle_info:type_name -> smartcore.bos.AnprEvent.VehicleInfo
-	8,  // 2: smartcore.bos.ListAnprEventsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	0,  // 3: smartcore.bos.ListAnprEventsResponse.anpr_events:type_name -> smartcore.bos.AnprEvent
-	8,  // 4: smartcore.bos.PullAnprEventsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	6,  // 5: smartcore.bos.PullAnprEventsResponse.changes:type_name -> smartcore.bos.PullAnprEventsResponse.Change
-	7,  // 6: smartcore.bos.PullAnprEventsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	0,  // 7: smartcore.bos.PullAnprEventsResponse.Change.anpr_event:type_name -> smartcore.bos.AnprEvent
-	1,  // 8: smartcore.bos.AnprCameraApi.ListAnprEvents:input_type -> smartcore.bos.ListAnprEventsRequest
-	3,  // 9: smartcore.bos.AnprCameraApi.PullAnprEvents:input_type -> smartcore.bos.PullAnprEventsRequest
-	2,  // 10: smartcore.bos.AnprCameraApi.ListAnprEvents:output_type -> smartcore.bos.ListAnprEventsResponse
-	4,  // 11: smartcore.bos.AnprCameraApi.PullAnprEvents:output_type -> smartcore.bos.PullAnprEventsResponse
+var file_smartcore_bos_anprcamera_v1_anpr_camera_proto_depIdxs = []int32{
+	7,  // 0: smartcore.bos.anprcamera.v1.AnprEvent.event_time:type_name -> google.protobuf.Timestamp
+	5,  // 1: smartcore.bos.anprcamera.v1.AnprEvent.vehicle_info:type_name -> smartcore.bos.anprcamera.v1.AnprEvent.VehicleInfo
+	8,  // 2: smartcore.bos.anprcamera.v1.ListAnprEventsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	0,  // 3: smartcore.bos.anprcamera.v1.ListAnprEventsResponse.anpr_events:type_name -> smartcore.bos.anprcamera.v1.AnprEvent
+	8,  // 4: smartcore.bos.anprcamera.v1.PullAnprEventsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	6,  // 5: smartcore.bos.anprcamera.v1.PullAnprEventsResponse.changes:type_name -> smartcore.bos.anprcamera.v1.PullAnprEventsResponse.Change
+	7,  // 6: smartcore.bos.anprcamera.v1.PullAnprEventsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	0,  // 7: smartcore.bos.anprcamera.v1.PullAnprEventsResponse.Change.anpr_event:type_name -> smartcore.bos.anprcamera.v1.AnprEvent
+	1,  // 8: smartcore.bos.anprcamera.v1.AnprCameraApi.ListAnprEvents:input_type -> smartcore.bos.anprcamera.v1.ListAnprEventsRequest
+	3,  // 9: smartcore.bos.anprcamera.v1.AnprCameraApi.PullAnprEvents:input_type -> smartcore.bos.anprcamera.v1.PullAnprEventsRequest
+	2,  // 10: smartcore.bos.anprcamera.v1.AnprCameraApi.ListAnprEvents:output_type -> smartcore.bos.anprcamera.v1.ListAnprEventsResponse
+	4,  // 11: smartcore.bos.anprcamera.v1.AnprCameraApi.PullAnprEvents:output_type -> smartcore.bos.anprcamera.v1.PullAnprEventsResponse
 	10, // [10:12] is the sub-list for method output_type
 	8,  // [8:10] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
@@ -606,27 +606,27 @@ var file_anpr_camera_proto_depIdxs = []int32{
 	0,  // [0:8] is the sub-list for field type_name
 }
 
-func init() { file_anpr_camera_proto_init() }
-func file_anpr_camera_proto_init() {
-	if File_anpr_camera_proto != nil {
+func init() { file_smartcore_bos_anprcamera_v1_anpr_camera_proto_init() }
+func file_smartcore_bos_anprcamera_v1_anpr_camera_proto_init() {
+	if File_smartcore_bos_anprcamera_v1_anpr_camera_proto != nil {
 		return
 	}
-	file_anpr_camera_proto_msgTypes[0].OneofWrappers = []any{}
+	file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_anpr_camera_proto_rawDesc), len(file_anpr_camera_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDesc), len(file_smartcore_bos_anprcamera_v1_anpr_camera_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_anpr_camera_proto_goTypes,
-		DependencyIndexes: file_anpr_camera_proto_depIdxs,
-		MessageInfos:      file_anpr_camera_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_anprcamera_v1_anpr_camera_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_anprcamera_v1_anpr_camera_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_anprcamera_v1_anpr_camera_proto_msgTypes,
 	}.Build()
-	File_anpr_camera_proto = out.File
-	file_anpr_camera_proto_goTypes = nil
-	file_anpr_camera_proto_depIdxs = nil
+	File_smartcore_bos_anprcamera_v1_anpr_camera_proto = out.File
+	file_smartcore_bos_anprcamera_v1_anpr_camera_proto_goTypes = nil
+	file_smartcore_bos_anprcamera_v1_anpr_camera_proto_depIdxs = nil
 }

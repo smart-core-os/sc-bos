@@ -1,7 +1,7 @@
 import {timestampToDate} from '@/api/convpb.js';
 import {listAllocationHistory} from '@/api/sc/traits/allocation.js';
 import {asyncWatch} from '@/util/vue.js';
-import {Allocation} from '@smart-core-os/sc-bos-ui-gen/proto/allocation_pb';
+import {Allocation} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/allocation/v1/allocation_pb';
 import binarySearch from 'binary-search';
 import {computed, reactive, toValue} from 'vue';
 

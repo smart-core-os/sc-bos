@@ -179,7 +179,7 @@ function useImpactTable(conditions, opts) {
 /**
  * Returns the counts map for a specific field from the metadata object.
  *
- * @param {import('@smart-core-os/sc-bos-ui-gen/proto/devices_pb').DevicesMetadata.AsObject | null} m
+ * @param {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_pb').DevicesMetadata.AsObject | null} m
  * @param {string} f
  * @return {Array<[string, number]> | null}
  */

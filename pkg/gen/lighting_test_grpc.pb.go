@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: lighting_test.proto
+// source: smartcore/bos/lightingtest/v1/lighting_test.proto
 
 package gen
 
@@ -19,10 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LightingTestApi_GetLightHealth_FullMethodName  = "/smartcore.bos.LightingTestApi/GetLightHealth"
-	LightingTestApi_ListLightHealth_FullMethodName = "/smartcore.bos.LightingTestApi/ListLightHealth"
-	LightingTestApi_ListLightEvents_FullMethodName = "/smartcore.bos.LightingTestApi/ListLightEvents"
-	LightingTestApi_GetReportCSV_FullMethodName    = "/smartcore.bos.LightingTestApi/GetReportCSV"
+	LightingTestApi_GetLightHealth_FullMethodName  = "/smartcore.bos.lightingtest.v1.LightingTestApi/GetLightHealth"
+	LightingTestApi_ListLightHealth_FullMethodName = "/smartcore.bos.lightingtest.v1.LightingTestApi/ListLightHealth"
+	LightingTestApi_ListLightEvents_FullMethodName = "/smartcore.bos.lightingtest.v1.LightingTestApi/ListLightEvents"
+	LightingTestApi_GetReportCSV_FullMethodName    = "/smartcore.bos.lightingtest.v1.LightingTestApi/GetReportCSV"
 )
 
 // LightingTestApiClient is the client API for LightingTestApi service.
@@ -210,7 +210,7 @@ func _LightingTestApi_GetReportCSV_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var LightingTestApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.LightingTestApi",
+	ServiceName: "smartcore.bos.lightingtest.v1.LightingTestApi",
 	HandlerType: (*LightingTestApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -231,5 +231,5 @@ var LightingTestApi_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "lighting_test.proto",
+	Metadata: "smartcore/bos/lightingtest/v1/lighting_test.proto",
 }

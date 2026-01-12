@@ -2,12 +2,12 @@ import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb.js';
 import {trackAction} from '@/api/resource';
 import {pullResource, setValue} from '@/api/resource.js';
-import {TemperatureApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/temperature_grpc_web_pb';
+import {TemperatureApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/temperature/v1/temperature_grpc_web_pb';
 import {
   PullTemperatureRequest,
   Temperature,
   UpdateTemperatureRequest
-} from '@smart-core-os/sc-bos-ui-gen/proto/temperature_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/temperature/v1/temperature_pb';
 import {Temperature as TemperatureUnit} from '@smart-core-os/sc-api-grpc-web/types/unit_pb';
 
 /**

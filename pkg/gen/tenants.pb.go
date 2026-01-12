@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: tenants.proto
+// source: smartcore/bos/tenant/v1/tenants.proto
 
 package gen
 
@@ -37,7 +37,7 @@ type Tenant struct {
 
 func (x *Tenant) Reset() {
 	*x = Tenant{}
-	mi := &file_tenants_proto_msgTypes[0]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -49,7 +49,7 @@ func (x *Tenant) String() string {
 func (*Tenant) ProtoMessage() {}
 
 func (x *Tenant) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[0]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +62,7 @@ func (x *Tenant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tenant.ProtoReflect.Descriptor instead.
 func (*Tenant) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Tenant) GetId() string {
@@ -126,7 +126,7 @@ type Secret struct {
 
 func (x *Secret) Reset() {
 	*x = Secret{}
-	mi := &file_tenants_proto_msgTypes[1]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -138,7 +138,7 @@ func (x *Secret) String() string {
 func (*Secret) ProtoMessage() {}
 
 func (x *Secret) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[1]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -151,7 +151,7 @@ func (x *Secret) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Secret.ProtoReflect.Descriptor instead.
 func (*Secret) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Secret) GetId() string {
@@ -232,7 +232,7 @@ type ListTenantsRequest struct {
 
 func (x *ListTenantsRequest) Reset() {
 	*x = ListTenantsRequest{}
-	mi := &file_tenants_proto_msgTypes[2]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -244,7 +244,7 @@ func (x *ListTenantsRequest) String() string {
 func (*ListTenantsRequest) ProtoMessage() {}
 
 func (x *ListTenantsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[2]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -257,7 +257,7 @@ func (x *ListTenantsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTenantsRequest.ProtoReflect.Descriptor instead.
 func (*ListTenantsRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{2}
 }
 
 type ListTenantsResponse struct {
@@ -269,7 +269,7 @@ type ListTenantsResponse struct {
 
 func (x *ListTenantsResponse) Reset() {
 	*x = ListTenantsResponse{}
-	mi := &file_tenants_proto_msgTypes[3]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -281,7 +281,7 @@ func (x *ListTenantsResponse) String() string {
 func (*ListTenantsResponse) ProtoMessage() {}
 
 func (x *ListTenantsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[3]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -294,7 +294,7 @@ func (x *ListTenantsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTenantsResponse.ProtoReflect.Descriptor instead.
 func (*ListTenantsResponse) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListTenantsResponse) GetTenants() []*Tenant {
@@ -313,7 +313,7 @@ type PullTenantsRequest struct {
 
 func (x *PullTenantsRequest) Reset() {
 	*x = PullTenantsRequest{}
-	mi := &file_tenants_proto_msgTypes[4]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -325,7 +325,7 @@ func (x *PullTenantsRequest) String() string {
 func (*PullTenantsRequest) ProtoMessage() {}
 
 func (x *PullTenantsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[4]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -338,7 +338,7 @@ func (x *PullTenantsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTenantsRequest.ProtoReflect.Descriptor instead.
 func (*PullTenantsRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullTenantsRequest) GetUpdatesOnly() bool {
@@ -357,7 +357,7 @@ type PullTenantsResponse struct {
 
 func (x *PullTenantsResponse) Reset() {
 	*x = PullTenantsResponse{}
-	mi := &file_tenants_proto_msgTypes[5]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -369,7 +369,7 @@ func (x *PullTenantsResponse) String() string {
 func (*PullTenantsResponse) ProtoMessage() {}
 
 func (x *PullTenantsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[5]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -382,7 +382,7 @@ func (x *PullTenantsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTenantsResponse.ProtoReflect.Descriptor instead.
 func (*PullTenantsResponse) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PullTenantsResponse) GetChanges() []*PullTenantsResponse_Change {
@@ -401,7 +401,7 @@ type CreateTenantRequest struct {
 
 func (x *CreateTenantRequest) Reset() {
 	*x = CreateTenantRequest{}
-	mi := &file_tenants_proto_msgTypes[6]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -413,7 +413,7 @@ func (x *CreateTenantRequest) String() string {
 func (*CreateTenantRequest) ProtoMessage() {}
 
 func (x *CreateTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[6]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -426,7 +426,7 @@ func (x *CreateTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTenantRequest.ProtoReflect.Descriptor instead.
 func (*CreateTenantRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CreateTenantRequest) GetTenant() *Tenant {
@@ -445,7 +445,7 @@ type GetTenantRequest struct {
 
 func (x *GetTenantRequest) Reset() {
 	*x = GetTenantRequest{}
-	mi := &file_tenants_proto_msgTypes[7]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -457,7 +457,7 @@ func (x *GetTenantRequest) String() string {
 func (*GetTenantRequest) ProtoMessage() {}
 
 func (x *GetTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[7]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -470,7 +470,7 @@ func (x *GetTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTenantRequest.ProtoReflect.Descriptor instead.
 func (*GetTenantRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetTenantRequest) GetId() string {
@@ -490,7 +490,7 @@ type UpdateTenantRequest struct {
 
 func (x *UpdateTenantRequest) Reset() {
 	*x = UpdateTenantRequest{}
-	mi := &file_tenants_proto_msgTypes[8]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -502,7 +502,7 @@ func (x *UpdateTenantRequest) String() string {
 func (*UpdateTenantRequest) ProtoMessage() {}
 
 func (x *UpdateTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[8]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -515,7 +515,7 @@ func (x *UpdateTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTenantRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTenantRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{8}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpdateTenantRequest) GetTenant() *Tenant {
@@ -541,7 +541,7 @@ type DeleteTenantRequest struct {
 
 func (x *DeleteTenantRequest) Reset() {
 	*x = DeleteTenantRequest{}
-	mi := &file_tenants_proto_msgTypes[9]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -553,7 +553,7 @@ func (x *DeleteTenantRequest) String() string {
 func (*DeleteTenantRequest) ProtoMessage() {}
 
 func (x *DeleteTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[9]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -566,7 +566,7 @@ func (x *DeleteTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTenantRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTenantRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{9}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteTenantRequest) GetId() string {
@@ -584,7 +584,7 @@ type DeleteTenantResponse struct {
 
 func (x *DeleteTenantResponse) Reset() {
 	*x = DeleteTenantResponse{}
-	mi := &file_tenants_proto_msgTypes[10]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -596,7 +596,7 @@ func (x *DeleteTenantResponse) String() string {
 func (*DeleteTenantResponse) ProtoMessage() {}
 
 func (x *DeleteTenantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[10]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -609,7 +609,7 @@ func (x *DeleteTenantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTenantResponse.ProtoReflect.Descriptor instead.
 func (*DeleteTenantResponse) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{10}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{10}
 }
 
 type PullTenantRequest struct {
@@ -622,7 +622,7 @@ type PullTenantRequest struct {
 
 func (x *PullTenantRequest) Reset() {
 	*x = PullTenantRequest{}
-	mi := &file_tenants_proto_msgTypes[11]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -634,7 +634,7 @@ func (x *PullTenantRequest) String() string {
 func (*PullTenantRequest) ProtoMessage() {}
 
 func (x *PullTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[11]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -647,7 +647,7 @@ func (x *PullTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTenantRequest.ProtoReflect.Descriptor instead.
 func (*PullTenantRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{11}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *PullTenantRequest) GetId() string {
@@ -673,7 +673,7 @@ type PullTenantResponse struct {
 
 func (x *PullTenantResponse) Reset() {
 	*x = PullTenantResponse{}
-	mi := &file_tenants_proto_msgTypes[12]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -685,7 +685,7 @@ func (x *PullTenantResponse) String() string {
 func (*PullTenantResponse) ProtoMessage() {}
 
 func (x *PullTenantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[12]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -698,7 +698,7 @@ func (x *PullTenantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTenantResponse.ProtoReflect.Descriptor instead.
 func (*PullTenantResponse) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{12}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PullTenantResponse) GetChanges() []*PullTenantResponse_Change {
@@ -718,7 +718,7 @@ type AddTenantZonesRequest struct {
 
 func (x *AddTenantZonesRequest) Reset() {
 	*x = AddTenantZonesRequest{}
-	mi := &file_tenants_proto_msgTypes[13]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -730,7 +730,7 @@ func (x *AddTenantZonesRequest) String() string {
 func (*AddTenantZonesRequest) ProtoMessage() {}
 
 func (x *AddTenantZonesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[13]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -743,7 +743,7 @@ func (x *AddTenantZonesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddTenantZonesRequest.ProtoReflect.Descriptor instead.
 func (*AddTenantZonesRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{13}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *AddTenantZonesRequest) GetTenantId() string {
@@ -770,7 +770,7 @@ type RemoveTenantZonesRequest struct {
 
 func (x *RemoveTenantZonesRequest) Reset() {
 	*x = RemoveTenantZonesRequest{}
-	mi := &file_tenants_proto_msgTypes[14]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -782,7 +782,7 @@ func (x *RemoveTenantZonesRequest) String() string {
 func (*RemoveTenantZonesRequest) ProtoMessage() {}
 
 func (x *RemoveTenantZonesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[14]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -795,7 +795,7 @@ func (x *RemoveTenantZonesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveTenantZonesRequest.ProtoReflect.Descriptor instead.
 func (*RemoveTenantZonesRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{14}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *RemoveTenantZonesRequest) GetTenantId() string {
@@ -822,7 +822,7 @@ type ListSecretsRequest struct {
 
 func (x *ListSecretsRequest) Reset() {
 	*x = ListSecretsRequest{}
-	mi := &file_tenants_proto_msgTypes[15]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -834,7 +834,7 @@ func (x *ListSecretsRequest) String() string {
 func (*ListSecretsRequest) ProtoMessage() {}
 
 func (x *ListSecretsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[15]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -847,7 +847,7 @@ func (x *ListSecretsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSecretsRequest.ProtoReflect.Descriptor instead.
 func (*ListSecretsRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{15}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ListSecretsRequest) GetIncludeHash() bool {
@@ -873,7 +873,7 @@ type ListSecretsResponse struct {
 
 func (x *ListSecretsResponse) Reset() {
 	*x = ListSecretsResponse{}
-	mi := &file_tenants_proto_msgTypes[16]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -885,7 +885,7 @@ func (x *ListSecretsResponse) String() string {
 func (*ListSecretsResponse) ProtoMessage() {}
 
 func (x *ListSecretsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[16]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -898,7 +898,7 @@ func (x *ListSecretsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSecretsResponse.ProtoReflect.Descriptor instead.
 func (*ListSecretsResponse) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{16}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ListSecretsResponse) GetSecrets() []*Secret {
@@ -918,7 +918,7 @@ type PullSecretsRequest struct {
 
 func (x *PullSecretsRequest) Reset() {
 	*x = PullSecretsRequest{}
-	mi := &file_tenants_proto_msgTypes[17]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -930,7 +930,7 @@ func (x *PullSecretsRequest) String() string {
 func (*PullSecretsRequest) ProtoMessage() {}
 
 func (x *PullSecretsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[17]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -943,7 +943,7 @@ func (x *PullSecretsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullSecretsRequest.ProtoReflect.Descriptor instead.
 func (*PullSecretsRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{17}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *PullSecretsRequest) GetIncludeHash() bool {
@@ -969,7 +969,7 @@ type PullSecretsResponse struct {
 
 func (x *PullSecretsResponse) Reset() {
 	*x = PullSecretsResponse{}
-	mi := &file_tenants_proto_msgTypes[18]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -981,7 +981,7 @@ func (x *PullSecretsResponse) String() string {
 func (*PullSecretsResponse) ProtoMessage() {}
 
 func (x *PullSecretsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[18]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -994,7 +994,7 @@ func (x *PullSecretsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullSecretsResponse.ProtoReflect.Descriptor instead.
 func (*PullSecretsResponse) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{18}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *PullSecretsResponse) GetChanges() []*PullSecretsResponse_Change {
@@ -1013,7 +1013,7 @@ type CreateSecretRequest struct {
 
 func (x *CreateSecretRequest) Reset() {
 	*x = CreateSecretRequest{}
-	mi := &file_tenants_proto_msgTypes[19]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1025,7 +1025,7 @@ func (x *CreateSecretRequest) String() string {
 func (*CreateSecretRequest) ProtoMessage() {}
 
 func (x *CreateSecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[19]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1038,7 +1038,7 @@ func (x *CreateSecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSecretRequest.ProtoReflect.Descriptor instead.
 func (*CreateSecretRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{19}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *CreateSecretRequest) GetSecret() *Secret {
@@ -1058,7 +1058,7 @@ type VerifySecretRequest struct {
 
 func (x *VerifySecretRequest) Reset() {
 	*x = VerifySecretRequest{}
-	mi := &file_tenants_proto_msgTypes[20]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1070,7 +1070,7 @@ func (x *VerifySecretRequest) String() string {
 func (*VerifySecretRequest) ProtoMessage() {}
 
 func (x *VerifySecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[20]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1083,7 +1083,7 @@ func (x *VerifySecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifySecretRequest.ProtoReflect.Descriptor instead.
 func (*VerifySecretRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{20}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *VerifySecretRequest) GetTenantId() string {
@@ -1110,7 +1110,7 @@ type GetSecretRequest struct {
 
 func (x *GetSecretRequest) Reset() {
 	*x = GetSecretRequest{}
-	mi := &file_tenants_proto_msgTypes[21]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1122,7 +1122,7 @@ func (x *GetSecretRequest) String() string {
 func (*GetSecretRequest) ProtoMessage() {}
 
 func (x *GetSecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[21]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1135,7 +1135,7 @@ func (x *GetSecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSecretRequest.ProtoReflect.Descriptor instead.
 func (*GetSecretRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{21}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GetSecretRequest) GetId() string {
@@ -1161,7 +1161,7 @@ type GetSecretByHashRequest struct {
 
 func (x *GetSecretByHashRequest) Reset() {
 	*x = GetSecretByHashRequest{}
-	mi := &file_tenants_proto_msgTypes[22]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1173,7 +1173,7 @@ func (x *GetSecretByHashRequest) String() string {
 func (*GetSecretByHashRequest) ProtoMessage() {}
 
 func (x *GetSecretByHashRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[22]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1186,7 +1186,7 @@ func (x *GetSecretByHashRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSecretByHashRequest.ProtoReflect.Descriptor instead.
 func (*GetSecretByHashRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{22}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GetSecretByHashRequest) GetSecretHash() []byte {
@@ -1205,7 +1205,7 @@ type UpdateSecretRequest struct {
 
 func (x *UpdateSecretRequest) Reset() {
 	*x = UpdateSecretRequest{}
-	mi := &file_tenants_proto_msgTypes[23]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1217,7 +1217,7 @@ func (x *UpdateSecretRequest) String() string {
 func (*UpdateSecretRequest) ProtoMessage() {}
 
 func (x *UpdateSecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[23]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1230,7 +1230,7 @@ func (x *UpdateSecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSecretRequest.ProtoReflect.Descriptor instead.
 func (*UpdateSecretRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{23}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *UpdateSecretRequest) GetSecret() *Secret {
@@ -1249,7 +1249,7 @@ type DeleteSecretRequest struct {
 
 func (x *DeleteSecretRequest) Reset() {
 	*x = DeleteSecretRequest{}
-	mi := &file_tenants_proto_msgTypes[24]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1261,7 +1261,7 @@ func (x *DeleteSecretRequest) String() string {
 func (*DeleteSecretRequest) ProtoMessage() {}
 
 func (x *DeleteSecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[24]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1274,7 +1274,7 @@ func (x *DeleteSecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSecretRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSecretRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{24}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *DeleteSecretRequest) GetId() string {
@@ -1292,7 +1292,7 @@ type DeleteSecretResponse struct {
 
 func (x *DeleteSecretResponse) Reset() {
 	*x = DeleteSecretResponse{}
-	mi := &file_tenants_proto_msgTypes[25]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1304,7 +1304,7 @@ func (x *DeleteSecretResponse) String() string {
 func (*DeleteSecretResponse) ProtoMessage() {}
 
 func (x *DeleteSecretResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[25]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1317,7 +1317,7 @@ func (x *DeleteSecretResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSecretResponse.ProtoReflect.Descriptor instead.
 func (*DeleteSecretResponse) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{25}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{25}
 }
 
 type PullSecretRequest struct {
@@ -1331,7 +1331,7 @@ type PullSecretRequest struct {
 
 func (x *PullSecretRequest) Reset() {
 	*x = PullSecretRequest{}
-	mi := &file_tenants_proto_msgTypes[26]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1343,7 +1343,7 @@ func (x *PullSecretRequest) String() string {
 func (*PullSecretRequest) ProtoMessage() {}
 
 func (x *PullSecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[26]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1356,7 +1356,7 @@ func (x *PullSecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullSecretRequest.ProtoReflect.Descriptor instead.
 func (*PullSecretRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{26}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *PullSecretRequest) GetId() string {
@@ -1389,7 +1389,7 @@ type PullSecretResponse struct {
 
 func (x *PullSecretResponse) Reset() {
 	*x = PullSecretResponse{}
-	mi := &file_tenants_proto_msgTypes[27]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1401,7 +1401,7 @@ func (x *PullSecretResponse) String() string {
 func (*PullSecretResponse) ProtoMessage() {}
 
 func (x *PullSecretResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[27]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1414,7 +1414,7 @@ func (x *PullSecretResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullSecretResponse.ProtoReflect.Descriptor instead.
 func (*PullSecretResponse) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{27}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *PullSecretResponse) GetChanges() []*PullSecretResponse_Change {
@@ -1433,7 +1433,7 @@ type RegenerateSecretRequest struct {
 
 func (x *RegenerateSecretRequest) Reset() {
 	*x = RegenerateSecretRequest{}
-	mi := &file_tenants_proto_msgTypes[28]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1445,7 +1445,7 @@ func (x *RegenerateSecretRequest) String() string {
 func (*RegenerateSecretRequest) ProtoMessage() {}
 
 func (x *RegenerateSecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[28]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1458,7 +1458,7 @@ func (x *RegenerateSecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegenerateSecretRequest.ProtoReflect.Descriptor instead.
 func (*RegenerateSecretRequest) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{28}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *RegenerateSecretRequest) GetId() string {
@@ -1478,7 +1478,7 @@ type PullTenantsResponse_Change struct {
 
 func (x *PullTenantsResponse_Change) Reset() {
 	*x = PullTenantsResponse_Change{}
-	mi := &file_tenants_proto_msgTypes[29]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1490,7 +1490,7 @@ func (x *PullTenantsResponse_Change) String() string {
 func (*PullTenantsResponse_Change) ProtoMessage() {}
 
 func (x *PullTenantsResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[29]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1503,7 +1503,7 @@ func (x *PullTenantsResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTenantsResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullTenantsResponse_Change) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{5, 0}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{5, 0}
 }
 
 func (x *PullTenantsResponse_Change) GetChangeTime() *timestamppb.Timestamp {
@@ -1530,7 +1530,7 @@ type PullTenantResponse_Change struct {
 
 func (x *PullTenantResponse_Change) Reset() {
 	*x = PullTenantResponse_Change{}
-	mi := &file_tenants_proto_msgTypes[30]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1542,7 +1542,7 @@ func (x *PullTenantResponse_Change) String() string {
 func (*PullTenantResponse_Change) ProtoMessage() {}
 
 func (x *PullTenantResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[30]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1555,7 +1555,7 @@ func (x *PullTenantResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTenantResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullTenantResponse_Change) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{12, 0}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{12, 0}
 }
 
 func (x *PullTenantResponse_Change) GetChangeTime() *timestamppb.Timestamp {
@@ -1582,7 +1582,7 @@ type PullSecretsResponse_Change struct {
 
 func (x *PullSecretsResponse_Change) Reset() {
 	*x = PullSecretsResponse_Change{}
-	mi := &file_tenants_proto_msgTypes[31]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1594,7 +1594,7 @@ func (x *PullSecretsResponse_Change) String() string {
 func (*PullSecretsResponse_Change) ProtoMessage() {}
 
 func (x *PullSecretsResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[31]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1607,7 +1607,7 @@ func (x *PullSecretsResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullSecretsResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullSecretsResponse_Change) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{18, 0}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{18, 0}
 }
 
 func (x *PullSecretsResponse_Change) GetChangeTime() *timestamppb.Timestamp {
@@ -1634,7 +1634,7 @@ type PullSecretResponse_Change struct {
 
 func (x *PullSecretResponse_Change) Reset() {
 	*x = PullSecretResponse_Change{}
-	mi := &file_tenants_proto_msgTypes[32]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1646,7 +1646,7 @@ func (x *PullSecretResponse_Change) String() string {
 func (*PullSecretResponse_Change) ProtoMessage() {}
 
 func (x *PullSecretResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_tenants_proto_msgTypes[32]
+	mi := &file_smartcore_bos_tenant_v1_tenants_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1659,7 +1659,7 @@ func (x *PullSecretResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullSecretResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullSecretResponse_Change) Descriptor() ([]byte, []int) {
-	return file_tenants_proto_rawDescGZIP(), []int{27, 0}
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{27, 0}
 }
 
 func (x *PullSecretResponse_Change) GetChangeTime() *timestamppb.Timestamp {
@@ -1676,11 +1676,11 @@ func (x *PullSecretResponse_Change) GetSecret() *Secret {
 	return nil
 }
 
-var File_tenants_proto protoreflect.FileDescriptor
+var File_smartcore_bos_tenant_v1_tenants_proto protoreflect.FileDescriptor
 
-const file_tenants_proto_rawDesc = "" +
+const file_smartcore_bos_tenant_v1_tenants_proto_rawDesc = "" +
 	"\n" +
-	"\rtenants.proto\x12\x15smartcore.bos.tenants\x1a\x1fgoogle/protobuf/timestamp.proto\x1a google/protobuf/field_mask.proto\"\x9e\x01\n" +
+	"%smartcore/bos/tenant/v1/tenants.proto\x12\x17smartcore.bos.tenant.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9e\x01\n" +
 	"\x06Tenant\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12;\n" +
@@ -1689,10 +1689,10 @@ const file_tenants_proto_rawDesc = "" +
 	"\n" +
 	"zone_names\x18\x04 \x03(\tR\tzoneNames\x12\x12\n" +
 	"\x04etag\x18\n" +
-	" \x01(\tR\x04etag\"\xac\x03\n" +
+	" \x01(\tR\x04etag\"\xae\x03\n" +
 	"\x06Secret\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x125\n" +
-	"\x06tenant\x18\x02 \x01(\v2\x1d.smartcore.bos.tenants.TenantR\x06tenant\x12\x1f\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x127\n" +
+	"\x06tenant\x18\x02 \x01(\v2\x1f.smartcore.bos.tenant.v1.TenantR\x06tenant\x12\x1f\n" +
 	"\vsecret_hash\x18\x03 \x01(\fR\n" +
 	"secretHash\x12\x16\n" +
 	"\x06secret\x18\x04 \x01(\tR\x06secret\x12\x12\n" +
@@ -1705,23 +1705,23 @@ const file_tenants_proto_rawDesc = "" +
 	"\rlast_use_time\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\vlastUseTime\x12\x12\n" +
 	"\x04etag\x18\n" +
 	" \x01(\tR\x04etag\"\x14\n" +
-	"\x12ListTenantsRequest\"N\n" +
-	"\x13ListTenantsResponse\x127\n" +
-	"\atenants\x18\x01 \x03(\v2\x1d.smartcore.bos.tenants.TenantR\atenants\"7\n" +
+	"\x12ListTenantsRequest\"P\n" +
+	"\x13ListTenantsResponse\x129\n" +
+	"\atenants\x18\x01 \x03(\v2\x1f.smartcore.bos.tenant.v1.TenantR\atenants\"7\n" +
 	"\x12PullTenantsRequest\x12!\n" +
-	"\fupdates_only\x18\x01 \x01(\bR\vupdatesOnly\"\xe0\x01\n" +
-	"\x13PullTenantsResponse\x12K\n" +
-	"\achanges\x18\x01 \x03(\v21.smartcore.bos.tenants.PullTenantsResponse.ChangeR\achanges\x1a|\n" +
+	"\fupdates_only\x18\x01 \x01(\bR\vupdatesOnly\"\xe4\x01\n" +
+	"\x13PullTenantsResponse\x12M\n" +
+	"\achanges\x18\x01 \x03(\v23.smartcore.bos.tenant.v1.PullTenantsResponse.ChangeR\achanges\x1a~\n" +
 	"\x06Change\x12;\n" +
 	"\vchange_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x125\n" +
-	"\x06tenant\x18\x02 \x01(\v2\x1d.smartcore.bos.tenants.TenantR\x06tenant\"L\n" +
-	"\x13CreateTenantRequest\x125\n" +
-	"\x06tenant\x18\x01 \x01(\v2\x1d.smartcore.bos.tenants.TenantR\x06tenant\"\"\n" +
+	"changeTime\x127\n" +
+	"\x06tenant\x18\x02 \x01(\v2\x1f.smartcore.bos.tenant.v1.TenantR\x06tenant\"N\n" +
+	"\x13CreateTenantRequest\x127\n" +
+	"\x06tenant\x18\x01 \x01(\v2\x1f.smartcore.bos.tenant.v1.TenantR\x06tenant\"\"\n" +
 	"\x10GetTenantRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x89\x01\n" +
-	"\x13UpdateTenantRequest\x125\n" +
-	"\x06tenant\x18\x01 \x01(\v2\x1d.smartcore.bos.tenants.TenantR\x06tenant\x12;\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x8b\x01\n" +
+	"\x13UpdateTenantRequest\x127\n" +
+	"\x06tenant\x18\x01 \x01(\v2\x1f.smartcore.bos.tenant.v1.TenantR\x06tenant\x12;\n" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\"%\n" +
 	"\x13DeleteTenantRequest\x12\x0e\n" +
@@ -1729,13 +1729,13 @@ const file_tenants_proto_rawDesc = "" +
 	"\x14DeleteTenantResponse\"F\n" +
 	"\x11PullTenantRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
-	"\fupdates_only\x18\x02 \x01(\bR\vupdatesOnly\"\xde\x01\n" +
-	"\x12PullTenantResponse\x12J\n" +
-	"\achanges\x18\x01 \x03(\v20.smartcore.bos.tenants.PullTenantResponse.ChangeR\achanges\x1a|\n" +
+	"\fupdates_only\x18\x02 \x01(\bR\vupdatesOnly\"\xe2\x01\n" +
+	"\x12PullTenantResponse\x12L\n" +
+	"\achanges\x18\x01 \x03(\v22.smartcore.bos.tenant.v1.PullTenantResponse.ChangeR\achanges\x1a~\n" +
 	"\x06Change\x12;\n" +
 	"\vchange_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x125\n" +
-	"\x06tenant\x18\x02 \x01(\v2\x1d.smartcore.bos.tenants.TenantR\x06tenant\"Z\n" +
+	"changeTime\x127\n" +
+	"\x06tenant\x18\x02 \x01(\v2\x1f.smartcore.bos.tenant.v1.TenantR\x06tenant\"Z\n" +
 	"\x15AddTenantZonesRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12$\n" +
 	"\x0eadd_zone_names\x18\x02 \x03(\tR\faddZoneNames\"c\n" +
@@ -1744,20 +1744,20 @@ const file_tenants_proto_rawDesc = "" +
 	"\x11remove_zone_names\x18\x03 \x03(\tR\x0fremoveZoneNames\"O\n" +
 	"\x12ListSecretsRequest\x12!\n" +
 	"\finclude_hash\x18\x01 \x01(\bR\vincludeHash\x12\x16\n" +
-	"\x06filter\x18\x02 \x01(\tR\x06filter\"N\n" +
-	"\x13ListSecretsResponse\x127\n" +
-	"\asecrets\x18\x01 \x03(\v2\x1d.smartcore.bos.tenants.SecretR\asecrets\"Z\n" +
+	"\x06filter\x18\x02 \x01(\tR\x06filter\"P\n" +
+	"\x13ListSecretsResponse\x129\n" +
+	"\asecrets\x18\x01 \x03(\v2\x1f.smartcore.bos.tenant.v1.SecretR\asecrets\"Z\n" +
 	"\x12PullSecretsRequest\x12!\n" +
 	"\finclude_hash\x18\x01 \x01(\bR\vincludeHash\x12!\n" +
-	"\fupdates_only\x18\x02 \x01(\bR\vupdatesOnly\"\xe0\x01\n" +
-	"\x13PullSecretsResponse\x12K\n" +
-	"\achanges\x18\x01 \x03(\v21.smartcore.bos.tenants.PullSecretsResponse.ChangeR\achanges\x1a|\n" +
+	"\fupdates_only\x18\x02 \x01(\bR\vupdatesOnly\"\xe4\x01\n" +
+	"\x13PullSecretsResponse\x12M\n" +
+	"\achanges\x18\x01 \x03(\v23.smartcore.bos.tenant.v1.PullSecretsResponse.ChangeR\achanges\x1a~\n" +
 	"\x06Change\x12;\n" +
 	"\vchange_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x125\n" +
-	"\x06secret\x18\x02 \x01(\v2\x1d.smartcore.bos.tenants.SecretR\x06secret\"L\n" +
-	"\x13CreateSecretRequest\x125\n" +
-	"\x06secret\x18\x01 \x01(\v2\x1d.smartcore.bos.tenants.SecretR\x06secret\"J\n" +
+	"changeTime\x127\n" +
+	"\x06secret\x18\x02 \x01(\v2\x1f.smartcore.bos.tenant.v1.SecretR\x06secret\"N\n" +
+	"\x13CreateSecretRequest\x127\n" +
+	"\x06secret\x18\x01 \x01(\v2\x1f.smartcore.bos.tenant.v1.SecretR\x06secret\"J\n" +
 	"\x13VerifySecretRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x16\n" +
 	"\x06secret\x18\x02 \x01(\tR\x06secret\"E\n" +
@@ -1766,158 +1766,158 @@ const file_tenants_proto_rawDesc = "" +
 	"\finclude_hash\x18\x02 \x01(\bR\vincludeHash\"9\n" +
 	"\x16GetSecretByHashRequest\x12\x1f\n" +
 	"\vsecret_hash\x18\x01 \x01(\fR\n" +
-	"secretHash\"L\n" +
-	"\x13UpdateSecretRequest\x125\n" +
-	"\x06secret\x18\x01 \x01(\v2\x1d.smartcore.bos.tenants.SecretR\x06secret\"%\n" +
+	"secretHash\"N\n" +
+	"\x13UpdateSecretRequest\x127\n" +
+	"\x06secret\x18\x01 \x01(\v2\x1f.smartcore.bos.tenant.v1.SecretR\x06secret\"%\n" +
 	"\x13DeleteSecretRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
 	"\x14DeleteSecretResponse\"i\n" +
 	"\x11PullSecretRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\finclude_hash\x18\x02 \x01(\bR\vincludeHash\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xde\x01\n" +
-	"\x12PullSecretResponse\x12J\n" +
-	"\achanges\x18\x01 \x03(\v20.smartcore.bos.tenants.PullSecretResponse.ChangeR\achanges\x1a|\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xe2\x01\n" +
+	"\x12PullSecretResponse\x12L\n" +
+	"\achanges\x18\x01 \x03(\v22.smartcore.bos.tenant.v1.PullSecretResponse.ChangeR\achanges\x1a~\n" +
 	"\x06Change\x12;\n" +
 	"\vchange_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x125\n" +
-	"\x06secret\x18\x02 \x01(\v2\x1d.smartcore.bos.tenants.SecretR\x06secret\")\n" +
+	"changeTime\x127\n" +
+	"\x06secret\x18\x02 \x01(\v2\x1f.smartcore.bos.tenant.v1.SecretR\x06secret\")\n" +
 	"\x17RegenerateSecretRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id2\xdb\r\n" +
-	"\tTenantApi\x12d\n" +
-	"\vListTenants\x12).smartcore.bos.tenants.ListTenantsRequest\x1a*.smartcore.bos.tenants.ListTenantsResponse\x12f\n" +
-	"\vPullTenants\x12).smartcore.bos.tenants.PullTenantsRequest\x1a*.smartcore.bos.tenants.PullTenantsResponse0\x01\x12Y\n" +
-	"\fCreateTenant\x12*.smartcore.bos.tenants.CreateTenantRequest\x1a\x1d.smartcore.bos.tenants.Tenant\x12S\n" +
-	"\tGetTenant\x12'.smartcore.bos.tenants.GetTenantRequest\x1a\x1d.smartcore.bos.tenants.Tenant\x12Y\n" +
-	"\fUpdateTenant\x12*.smartcore.bos.tenants.UpdateTenantRequest\x1a\x1d.smartcore.bos.tenants.Tenant\x12g\n" +
-	"\fDeleteTenant\x12*.smartcore.bos.tenants.DeleteTenantRequest\x1a+.smartcore.bos.tenants.DeleteTenantResponse\x12c\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id2\xa3\x0e\n" +
+	"\tTenantApi\x12h\n" +
+	"\vListTenants\x12+.smartcore.bos.tenant.v1.ListTenantsRequest\x1a,.smartcore.bos.tenant.v1.ListTenantsResponse\x12j\n" +
+	"\vPullTenants\x12+.smartcore.bos.tenant.v1.PullTenantsRequest\x1a,.smartcore.bos.tenant.v1.PullTenantsResponse0\x01\x12]\n" +
+	"\fCreateTenant\x12,.smartcore.bos.tenant.v1.CreateTenantRequest\x1a\x1f.smartcore.bos.tenant.v1.Tenant\x12W\n" +
+	"\tGetTenant\x12).smartcore.bos.tenant.v1.GetTenantRequest\x1a\x1f.smartcore.bos.tenant.v1.Tenant\x12]\n" +
+	"\fUpdateTenant\x12,.smartcore.bos.tenant.v1.UpdateTenantRequest\x1a\x1f.smartcore.bos.tenant.v1.Tenant\x12k\n" +
+	"\fDeleteTenant\x12,.smartcore.bos.tenant.v1.DeleteTenantRequest\x1a-.smartcore.bos.tenant.v1.DeleteTenantResponse\x12g\n" +
 	"\n" +
-	"PullTenant\x12(.smartcore.bos.tenants.PullTenantRequest\x1a).smartcore.bos.tenants.PullTenantResponse0\x01\x12]\n" +
-	"\x0eAddTenantZones\x12,.smartcore.bos.tenants.AddTenantZonesRequest\x1a\x1d.smartcore.bos.tenants.Tenant\x12c\n" +
-	"\x11RemoveTenantZones\x12/.smartcore.bos.tenants.RemoveTenantZonesRequest\x1a\x1d.smartcore.bos.tenants.Tenant\x12d\n" +
-	"\vListSecrets\x12).smartcore.bos.tenants.ListSecretsRequest\x1a*.smartcore.bos.tenants.ListSecretsResponse\x12f\n" +
-	"\vPullSecrets\x12).smartcore.bos.tenants.PullSecretsRequest\x1a*.smartcore.bos.tenants.PullSecretsResponse0\x01\x12Y\n" +
-	"\fCreateSecret\x12*.smartcore.bos.tenants.CreateSecretRequest\x1a\x1d.smartcore.bos.tenants.Secret\x12Y\n" +
-	"\fVerifySecret\x12*.smartcore.bos.tenants.VerifySecretRequest\x1a\x1d.smartcore.bos.tenants.Secret\x12S\n" +
-	"\tGetSecret\x12'.smartcore.bos.tenants.GetSecretRequest\x1a\x1d.smartcore.bos.tenants.Secret\x12Y\n" +
-	"\fUpdateSecret\x12*.smartcore.bos.tenants.UpdateSecretRequest\x1a\x1d.smartcore.bos.tenants.Secret\x12g\n" +
-	"\fDeleteSecret\x12*.smartcore.bos.tenants.DeleteSecretRequest\x1a+.smartcore.bos.tenants.DeleteSecretResponse\x12c\n" +
+	"PullTenant\x12*.smartcore.bos.tenant.v1.PullTenantRequest\x1a+.smartcore.bos.tenant.v1.PullTenantResponse0\x01\x12a\n" +
+	"\x0eAddTenantZones\x12..smartcore.bos.tenant.v1.AddTenantZonesRequest\x1a\x1f.smartcore.bos.tenant.v1.Tenant\x12g\n" +
+	"\x11RemoveTenantZones\x121.smartcore.bos.tenant.v1.RemoveTenantZonesRequest\x1a\x1f.smartcore.bos.tenant.v1.Tenant\x12h\n" +
+	"\vListSecrets\x12+.smartcore.bos.tenant.v1.ListSecretsRequest\x1a,.smartcore.bos.tenant.v1.ListSecretsResponse\x12j\n" +
+	"\vPullSecrets\x12+.smartcore.bos.tenant.v1.PullSecretsRequest\x1a,.smartcore.bos.tenant.v1.PullSecretsResponse0\x01\x12]\n" +
+	"\fCreateSecret\x12,.smartcore.bos.tenant.v1.CreateSecretRequest\x1a\x1f.smartcore.bos.tenant.v1.Secret\x12]\n" +
+	"\fVerifySecret\x12,.smartcore.bos.tenant.v1.VerifySecretRequest\x1a\x1f.smartcore.bos.tenant.v1.Secret\x12W\n" +
+	"\tGetSecret\x12).smartcore.bos.tenant.v1.GetSecretRequest\x1a\x1f.smartcore.bos.tenant.v1.Secret\x12]\n" +
+	"\fUpdateSecret\x12,.smartcore.bos.tenant.v1.UpdateSecretRequest\x1a\x1f.smartcore.bos.tenant.v1.Secret\x12k\n" +
+	"\fDeleteSecret\x12,.smartcore.bos.tenant.v1.DeleteSecretRequest\x1a-.smartcore.bos.tenant.v1.DeleteSecretResponse\x12g\n" +
 	"\n" +
-	"PullSecret\x12(.smartcore.bos.tenants.PullSecretRequest\x1a).smartcore.bos.tenants.PullSecretResponse0\x01\x12a\n" +
-	"\x10RegenerateSecret\x12..smartcore.bos.tenants.RegenerateSecretRequest\x1a\x1d.smartcore.bos.tenants.SecretB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"PullSecret\x12*.smartcore.bos.tenant.v1.PullSecretRequest\x1a+.smartcore.bos.tenant.v1.PullSecretResponse0\x01\x12e\n" +
+	"\x10RegenerateSecret\x120.smartcore.bos.tenant.v1.RegenerateSecretRequest\x1a\x1f.smartcore.bos.tenant.v1.SecretB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_tenants_proto_rawDescOnce sync.Once
-	file_tenants_proto_rawDescData []byte
+	file_smartcore_bos_tenant_v1_tenants_proto_rawDescOnce sync.Once
+	file_smartcore_bos_tenant_v1_tenants_proto_rawDescData []byte
 )
 
-func file_tenants_proto_rawDescGZIP() []byte {
-	file_tenants_proto_rawDescOnce.Do(func() {
-		file_tenants_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_tenants_proto_rawDesc), len(file_tenants_proto_rawDesc)))
+func file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_tenant_v1_tenants_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_tenant_v1_tenants_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_tenant_v1_tenants_proto_rawDesc), len(file_smartcore_bos_tenant_v1_tenants_proto_rawDesc)))
 	})
-	return file_tenants_proto_rawDescData
+	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescData
 }
 
-var file_tenants_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
-var file_tenants_proto_goTypes = []any{
-	(*Tenant)(nil),                     // 0: smartcore.bos.tenants.Tenant
-	(*Secret)(nil),                     // 1: smartcore.bos.tenants.Secret
-	(*ListTenantsRequest)(nil),         // 2: smartcore.bos.tenants.ListTenantsRequest
-	(*ListTenantsResponse)(nil),        // 3: smartcore.bos.tenants.ListTenantsResponse
-	(*PullTenantsRequest)(nil),         // 4: smartcore.bos.tenants.PullTenantsRequest
-	(*PullTenantsResponse)(nil),        // 5: smartcore.bos.tenants.PullTenantsResponse
-	(*CreateTenantRequest)(nil),        // 6: smartcore.bos.tenants.CreateTenantRequest
-	(*GetTenantRequest)(nil),           // 7: smartcore.bos.tenants.GetTenantRequest
-	(*UpdateTenantRequest)(nil),        // 8: smartcore.bos.tenants.UpdateTenantRequest
-	(*DeleteTenantRequest)(nil),        // 9: smartcore.bos.tenants.DeleteTenantRequest
-	(*DeleteTenantResponse)(nil),       // 10: smartcore.bos.tenants.DeleteTenantResponse
-	(*PullTenantRequest)(nil),          // 11: smartcore.bos.tenants.PullTenantRequest
-	(*PullTenantResponse)(nil),         // 12: smartcore.bos.tenants.PullTenantResponse
-	(*AddTenantZonesRequest)(nil),      // 13: smartcore.bos.tenants.AddTenantZonesRequest
-	(*RemoveTenantZonesRequest)(nil),   // 14: smartcore.bos.tenants.RemoveTenantZonesRequest
-	(*ListSecretsRequest)(nil),         // 15: smartcore.bos.tenants.ListSecretsRequest
-	(*ListSecretsResponse)(nil),        // 16: smartcore.bos.tenants.ListSecretsResponse
-	(*PullSecretsRequest)(nil),         // 17: smartcore.bos.tenants.PullSecretsRequest
-	(*PullSecretsResponse)(nil),        // 18: smartcore.bos.tenants.PullSecretsResponse
-	(*CreateSecretRequest)(nil),        // 19: smartcore.bos.tenants.CreateSecretRequest
-	(*VerifySecretRequest)(nil),        // 20: smartcore.bos.tenants.VerifySecretRequest
-	(*GetSecretRequest)(nil),           // 21: smartcore.bos.tenants.GetSecretRequest
-	(*GetSecretByHashRequest)(nil),     // 22: smartcore.bos.tenants.GetSecretByHashRequest
-	(*UpdateSecretRequest)(nil),        // 23: smartcore.bos.tenants.UpdateSecretRequest
-	(*DeleteSecretRequest)(nil),        // 24: smartcore.bos.tenants.DeleteSecretRequest
-	(*DeleteSecretResponse)(nil),       // 25: smartcore.bos.tenants.DeleteSecretResponse
-	(*PullSecretRequest)(nil),          // 26: smartcore.bos.tenants.PullSecretRequest
-	(*PullSecretResponse)(nil),         // 27: smartcore.bos.tenants.PullSecretResponse
-	(*RegenerateSecretRequest)(nil),    // 28: smartcore.bos.tenants.RegenerateSecretRequest
-	(*PullTenantsResponse_Change)(nil), // 29: smartcore.bos.tenants.PullTenantsResponse.Change
-	(*PullTenantResponse_Change)(nil),  // 30: smartcore.bos.tenants.PullTenantResponse.Change
-	(*PullSecretsResponse_Change)(nil), // 31: smartcore.bos.tenants.PullSecretsResponse.Change
-	(*PullSecretResponse_Change)(nil),  // 32: smartcore.bos.tenants.PullSecretResponse.Change
+var file_smartcore_bos_tenant_v1_tenants_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_smartcore_bos_tenant_v1_tenants_proto_goTypes = []any{
+	(*Tenant)(nil),                     // 0: smartcore.bos.tenant.v1.Tenant
+	(*Secret)(nil),                     // 1: smartcore.bos.tenant.v1.Secret
+	(*ListTenantsRequest)(nil),         // 2: smartcore.bos.tenant.v1.ListTenantsRequest
+	(*ListTenantsResponse)(nil),        // 3: smartcore.bos.tenant.v1.ListTenantsResponse
+	(*PullTenantsRequest)(nil),         // 4: smartcore.bos.tenant.v1.PullTenantsRequest
+	(*PullTenantsResponse)(nil),        // 5: smartcore.bos.tenant.v1.PullTenantsResponse
+	(*CreateTenantRequest)(nil),        // 6: smartcore.bos.tenant.v1.CreateTenantRequest
+	(*GetTenantRequest)(nil),           // 7: smartcore.bos.tenant.v1.GetTenantRequest
+	(*UpdateTenantRequest)(nil),        // 8: smartcore.bos.tenant.v1.UpdateTenantRequest
+	(*DeleteTenantRequest)(nil),        // 9: smartcore.bos.tenant.v1.DeleteTenantRequest
+	(*DeleteTenantResponse)(nil),       // 10: smartcore.bos.tenant.v1.DeleteTenantResponse
+	(*PullTenantRequest)(nil),          // 11: smartcore.bos.tenant.v1.PullTenantRequest
+	(*PullTenantResponse)(nil),         // 12: smartcore.bos.tenant.v1.PullTenantResponse
+	(*AddTenantZonesRequest)(nil),      // 13: smartcore.bos.tenant.v1.AddTenantZonesRequest
+	(*RemoveTenantZonesRequest)(nil),   // 14: smartcore.bos.tenant.v1.RemoveTenantZonesRequest
+	(*ListSecretsRequest)(nil),         // 15: smartcore.bos.tenant.v1.ListSecretsRequest
+	(*ListSecretsResponse)(nil),        // 16: smartcore.bos.tenant.v1.ListSecretsResponse
+	(*PullSecretsRequest)(nil),         // 17: smartcore.bos.tenant.v1.PullSecretsRequest
+	(*PullSecretsResponse)(nil),        // 18: smartcore.bos.tenant.v1.PullSecretsResponse
+	(*CreateSecretRequest)(nil),        // 19: smartcore.bos.tenant.v1.CreateSecretRequest
+	(*VerifySecretRequest)(nil),        // 20: smartcore.bos.tenant.v1.VerifySecretRequest
+	(*GetSecretRequest)(nil),           // 21: smartcore.bos.tenant.v1.GetSecretRequest
+	(*GetSecretByHashRequest)(nil),     // 22: smartcore.bos.tenant.v1.GetSecretByHashRequest
+	(*UpdateSecretRequest)(nil),        // 23: smartcore.bos.tenant.v1.UpdateSecretRequest
+	(*DeleteSecretRequest)(nil),        // 24: smartcore.bos.tenant.v1.DeleteSecretRequest
+	(*DeleteSecretResponse)(nil),       // 25: smartcore.bos.tenant.v1.DeleteSecretResponse
+	(*PullSecretRequest)(nil),          // 26: smartcore.bos.tenant.v1.PullSecretRequest
+	(*PullSecretResponse)(nil),         // 27: smartcore.bos.tenant.v1.PullSecretResponse
+	(*RegenerateSecretRequest)(nil),    // 28: smartcore.bos.tenant.v1.RegenerateSecretRequest
+	(*PullTenantsResponse_Change)(nil), // 29: smartcore.bos.tenant.v1.PullTenantsResponse.Change
+	(*PullTenantResponse_Change)(nil),  // 30: smartcore.bos.tenant.v1.PullTenantResponse.Change
+	(*PullSecretsResponse_Change)(nil), // 31: smartcore.bos.tenant.v1.PullSecretsResponse.Change
+	(*PullSecretResponse_Change)(nil),  // 32: smartcore.bos.tenant.v1.PullSecretResponse.Change
 	(*timestamppb.Timestamp)(nil),      // 33: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),      // 34: google.protobuf.FieldMask
 }
-var file_tenants_proto_depIdxs = []int32{
-	33, // 0: smartcore.bos.tenants.Tenant.create_time:type_name -> google.protobuf.Timestamp
-	0,  // 1: smartcore.bos.tenants.Secret.tenant:type_name -> smartcore.bos.tenants.Tenant
-	33, // 2: smartcore.bos.tenants.Secret.create_time:type_name -> google.protobuf.Timestamp
-	33, // 3: smartcore.bos.tenants.Secret.expire_time:type_name -> google.protobuf.Timestamp
-	33, // 4: smartcore.bos.tenants.Secret.first_use_time:type_name -> google.protobuf.Timestamp
-	33, // 5: smartcore.bos.tenants.Secret.last_use_time:type_name -> google.protobuf.Timestamp
-	0,  // 6: smartcore.bos.tenants.ListTenantsResponse.tenants:type_name -> smartcore.bos.tenants.Tenant
-	29, // 7: smartcore.bos.tenants.PullTenantsResponse.changes:type_name -> smartcore.bos.tenants.PullTenantsResponse.Change
-	0,  // 8: smartcore.bos.tenants.CreateTenantRequest.tenant:type_name -> smartcore.bos.tenants.Tenant
-	0,  // 9: smartcore.bos.tenants.UpdateTenantRequest.tenant:type_name -> smartcore.bos.tenants.Tenant
-	34, // 10: smartcore.bos.tenants.UpdateTenantRequest.update_mask:type_name -> google.protobuf.FieldMask
-	30, // 11: smartcore.bos.tenants.PullTenantResponse.changes:type_name -> smartcore.bos.tenants.PullTenantResponse.Change
-	1,  // 12: smartcore.bos.tenants.ListSecretsResponse.secrets:type_name -> smartcore.bos.tenants.Secret
-	31, // 13: smartcore.bos.tenants.PullSecretsResponse.changes:type_name -> smartcore.bos.tenants.PullSecretsResponse.Change
-	1,  // 14: smartcore.bos.tenants.CreateSecretRequest.secret:type_name -> smartcore.bos.tenants.Secret
-	1,  // 15: smartcore.bos.tenants.UpdateSecretRequest.secret:type_name -> smartcore.bos.tenants.Secret
-	32, // 16: smartcore.bos.tenants.PullSecretResponse.changes:type_name -> smartcore.bos.tenants.PullSecretResponse.Change
-	33, // 17: smartcore.bos.tenants.PullTenantsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	0,  // 18: smartcore.bos.tenants.PullTenantsResponse.Change.tenant:type_name -> smartcore.bos.tenants.Tenant
-	33, // 19: smartcore.bos.tenants.PullTenantResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	0,  // 20: smartcore.bos.tenants.PullTenantResponse.Change.tenant:type_name -> smartcore.bos.tenants.Tenant
-	33, // 21: smartcore.bos.tenants.PullSecretsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 22: smartcore.bos.tenants.PullSecretsResponse.Change.secret:type_name -> smartcore.bos.tenants.Secret
-	33, // 23: smartcore.bos.tenants.PullSecretResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 24: smartcore.bos.tenants.PullSecretResponse.Change.secret:type_name -> smartcore.bos.tenants.Secret
-	2,  // 25: smartcore.bos.tenants.TenantApi.ListTenants:input_type -> smartcore.bos.tenants.ListTenantsRequest
-	4,  // 26: smartcore.bos.tenants.TenantApi.PullTenants:input_type -> smartcore.bos.tenants.PullTenantsRequest
-	6,  // 27: smartcore.bos.tenants.TenantApi.CreateTenant:input_type -> smartcore.bos.tenants.CreateTenantRequest
-	7,  // 28: smartcore.bos.tenants.TenantApi.GetTenant:input_type -> smartcore.bos.tenants.GetTenantRequest
-	8,  // 29: smartcore.bos.tenants.TenantApi.UpdateTenant:input_type -> smartcore.bos.tenants.UpdateTenantRequest
-	9,  // 30: smartcore.bos.tenants.TenantApi.DeleteTenant:input_type -> smartcore.bos.tenants.DeleteTenantRequest
-	11, // 31: smartcore.bos.tenants.TenantApi.PullTenant:input_type -> smartcore.bos.tenants.PullTenantRequest
-	13, // 32: smartcore.bos.tenants.TenantApi.AddTenantZones:input_type -> smartcore.bos.tenants.AddTenantZonesRequest
-	14, // 33: smartcore.bos.tenants.TenantApi.RemoveTenantZones:input_type -> smartcore.bos.tenants.RemoveTenantZonesRequest
-	15, // 34: smartcore.bos.tenants.TenantApi.ListSecrets:input_type -> smartcore.bos.tenants.ListSecretsRequest
-	17, // 35: smartcore.bos.tenants.TenantApi.PullSecrets:input_type -> smartcore.bos.tenants.PullSecretsRequest
-	19, // 36: smartcore.bos.tenants.TenantApi.CreateSecret:input_type -> smartcore.bos.tenants.CreateSecretRequest
-	20, // 37: smartcore.bos.tenants.TenantApi.VerifySecret:input_type -> smartcore.bos.tenants.VerifySecretRequest
-	21, // 38: smartcore.bos.tenants.TenantApi.GetSecret:input_type -> smartcore.bos.tenants.GetSecretRequest
-	23, // 39: smartcore.bos.tenants.TenantApi.UpdateSecret:input_type -> smartcore.bos.tenants.UpdateSecretRequest
-	24, // 40: smartcore.bos.tenants.TenantApi.DeleteSecret:input_type -> smartcore.bos.tenants.DeleteSecretRequest
-	26, // 41: smartcore.bos.tenants.TenantApi.PullSecret:input_type -> smartcore.bos.tenants.PullSecretRequest
-	28, // 42: smartcore.bos.tenants.TenantApi.RegenerateSecret:input_type -> smartcore.bos.tenants.RegenerateSecretRequest
-	3,  // 43: smartcore.bos.tenants.TenantApi.ListTenants:output_type -> smartcore.bos.tenants.ListTenantsResponse
-	5,  // 44: smartcore.bos.tenants.TenantApi.PullTenants:output_type -> smartcore.bos.tenants.PullTenantsResponse
-	0,  // 45: smartcore.bos.tenants.TenantApi.CreateTenant:output_type -> smartcore.bos.tenants.Tenant
-	0,  // 46: smartcore.bos.tenants.TenantApi.GetTenant:output_type -> smartcore.bos.tenants.Tenant
-	0,  // 47: smartcore.bos.tenants.TenantApi.UpdateTenant:output_type -> smartcore.bos.tenants.Tenant
-	10, // 48: smartcore.bos.tenants.TenantApi.DeleteTenant:output_type -> smartcore.bos.tenants.DeleteTenantResponse
-	12, // 49: smartcore.bos.tenants.TenantApi.PullTenant:output_type -> smartcore.bos.tenants.PullTenantResponse
-	0,  // 50: smartcore.bos.tenants.TenantApi.AddTenantZones:output_type -> smartcore.bos.tenants.Tenant
-	0,  // 51: smartcore.bos.tenants.TenantApi.RemoveTenantZones:output_type -> smartcore.bos.tenants.Tenant
-	16, // 52: smartcore.bos.tenants.TenantApi.ListSecrets:output_type -> smartcore.bos.tenants.ListSecretsResponse
-	18, // 53: smartcore.bos.tenants.TenantApi.PullSecrets:output_type -> smartcore.bos.tenants.PullSecretsResponse
-	1,  // 54: smartcore.bos.tenants.TenantApi.CreateSecret:output_type -> smartcore.bos.tenants.Secret
-	1,  // 55: smartcore.bos.tenants.TenantApi.VerifySecret:output_type -> smartcore.bos.tenants.Secret
-	1,  // 56: smartcore.bos.tenants.TenantApi.GetSecret:output_type -> smartcore.bos.tenants.Secret
-	1,  // 57: smartcore.bos.tenants.TenantApi.UpdateSecret:output_type -> smartcore.bos.tenants.Secret
-	25, // 58: smartcore.bos.tenants.TenantApi.DeleteSecret:output_type -> smartcore.bos.tenants.DeleteSecretResponse
-	27, // 59: smartcore.bos.tenants.TenantApi.PullSecret:output_type -> smartcore.bos.tenants.PullSecretResponse
-	1,  // 60: smartcore.bos.tenants.TenantApi.RegenerateSecret:output_type -> smartcore.bos.tenants.Secret
+var file_smartcore_bos_tenant_v1_tenants_proto_depIdxs = []int32{
+	33, // 0: smartcore.bos.tenant.v1.Tenant.create_time:type_name -> google.protobuf.Timestamp
+	0,  // 1: smartcore.bos.tenant.v1.Secret.tenant:type_name -> smartcore.bos.tenant.v1.Tenant
+	33, // 2: smartcore.bos.tenant.v1.Secret.create_time:type_name -> google.protobuf.Timestamp
+	33, // 3: smartcore.bos.tenant.v1.Secret.expire_time:type_name -> google.protobuf.Timestamp
+	33, // 4: smartcore.bos.tenant.v1.Secret.first_use_time:type_name -> google.protobuf.Timestamp
+	33, // 5: smartcore.bos.tenant.v1.Secret.last_use_time:type_name -> google.protobuf.Timestamp
+	0,  // 6: smartcore.bos.tenant.v1.ListTenantsResponse.tenants:type_name -> smartcore.bos.tenant.v1.Tenant
+	29, // 7: smartcore.bos.tenant.v1.PullTenantsResponse.changes:type_name -> smartcore.bos.tenant.v1.PullTenantsResponse.Change
+	0,  // 8: smartcore.bos.tenant.v1.CreateTenantRequest.tenant:type_name -> smartcore.bos.tenant.v1.Tenant
+	0,  // 9: smartcore.bos.tenant.v1.UpdateTenantRequest.tenant:type_name -> smartcore.bos.tenant.v1.Tenant
+	34, // 10: smartcore.bos.tenant.v1.UpdateTenantRequest.update_mask:type_name -> google.protobuf.FieldMask
+	30, // 11: smartcore.bos.tenant.v1.PullTenantResponse.changes:type_name -> smartcore.bos.tenant.v1.PullTenantResponse.Change
+	1,  // 12: smartcore.bos.tenant.v1.ListSecretsResponse.secrets:type_name -> smartcore.bos.tenant.v1.Secret
+	31, // 13: smartcore.bos.tenant.v1.PullSecretsResponse.changes:type_name -> smartcore.bos.tenant.v1.PullSecretsResponse.Change
+	1,  // 14: smartcore.bos.tenant.v1.CreateSecretRequest.secret:type_name -> smartcore.bos.tenant.v1.Secret
+	1,  // 15: smartcore.bos.tenant.v1.UpdateSecretRequest.secret:type_name -> smartcore.bos.tenant.v1.Secret
+	32, // 16: smartcore.bos.tenant.v1.PullSecretResponse.changes:type_name -> smartcore.bos.tenant.v1.PullSecretResponse.Change
+	33, // 17: smartcore.bos.tenant.v1.PullTenantsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	0,  // 18: smartcore.bos.tenant.v1.PullTenantsResponse.Change.tenant:type_name -> smartcore.bos.tenant.v1.Tenant
+	33, // 19: smartcore.bos.tenant.v1.PullTenantResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	0,  // 20: smartcore.bos.tenant.v1.PullTenantResponse.Change.tenant:type_name -> smartcore.bos.tenant.v1.Tenant
+	33, // 21: smartcore.bos.tenant.v1.PullSecretsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	1,  // 22: smartcore.bos.tenant.v1.PullSecretsResponse.Change.secret:type_name -> smartcore.bos.tenant.v1.Secret
+	33, // 23: smartcore.bos.tenant.v1.PullSecretResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	1,  // 24: smartcore.bos.tenant.v1.PullSecretResponse.Change.secret:type_name -> smartcore.bos.tenant.v1.Secret
+	2,  // 25: smartcore.bos.tenant.v1.TenantApi.ListTenants:input_type -> smartcore.bos.tenant.v1.ListTenantsRequest
+	4,  // 26: smartcore.bos.tenant.v1.TenantApi.PullTenants:input_type -> smartcore.bos.tenant.v1.PullTenantsRequest
+	6,  // 27: smartcore.bos.tenant.v1.TenantApi.CreateTenant:input_type -> smartcore.bos.tenant.v1.CreateTenantRequest
+	7,  // 28: smartcore.bos.tenant.v1.TenantApi.GetTenant:input_type -> smartcore.bos.tenant.v1.GetTenantRequest
+	8,  // 29: smartcore.bos.tenant.v1.TenantApi.UpdateTenant:input_type -> smartcore.bos.tenant.v1.UpdateTenantRequest
+	9,  // 30: smartcore.bos.tenant.v1.TenantApi.DeleteTenant:input_type -> smartcore.bos.tenant.v1.DeleteTenantRequest
+	11, // 31: smartcore.bos.tenant.v1.TenantApi.PullTenant:input_type -> smartcore.bos.tenant.v1.PullTenantRequest
+	13, // 32: smartcore.bos.tenant.v1.TenantApi.AddTenantZones:input_type -> smartcore.bos.tenant.v1.AddTenantZonesRequest
+	14, // 33: smartcore.bos.tenant.v1.TenantApi.RemoveTenantZones:input_type -> smartcore.bos.tenant.v1.RemoveTenantZonesRequest
+	15, // 34: smartcore.bos.tenant.v1.TenantApi.ListSecrets:input_type -> smartcore.bos.tenant.v1.ListSecretsRequest
+	17, // 35: smartcore.bos.tenant.v1.TenantApi.PullSecrets:input_type -> smartcore.bos.tenant.v1.PullSecretsRequest
+	19, // 36: smartcore.bos.tenant.v1.TenantApi.CreateSecret:input_type -> smartcore.bos.tenant.v1.CreateSecretRequest
+	20, // 37: smartcore.bos.tenant.v1.TenantApi.VerifySecret:input_type -> smartcore.bos.tenant.v1.VerifySecretRequest
+	21, // 38: smartcore.bos.tenant.v1.TenantApi.GetSecret:input_type -> smartcore.bos.tenant.v1.GetSecretRequest
+	23, // 39: smartcore.bos.tenant.v1.TenantApi.UpdateSecret:input_type -> smartcore.bos.tenant.v1.UpdateSecretRequest
+	24, // 40: smartcore.bos.tenant.v1.TenantApi.DeleteSecret:input_type -> smartcore.bos.tenant.v1.DeleteSecretRequest
+	26, // 41: smartcore.bos.tenant.v1.TenantApi.PullSecret:input_type -> smartcore.bos.tenant.v1.PullSecretRequest
+	28, // 42: smartcore.bos.tenant.v1.TenantApi.RegenerateSecret:input_type -> smartcore.bos.tenant.v1.RegenerateSecretRequest
+	3,  // 43: smartcore.bos.tenant.v1.TenantApi.ListTenants:output_type -> smartcore.bos.tenant.v1.ListTenantsResponse
+	5,  // 44: smartcore.bos.tenant.v1.TenantApi.PullTenants:output_type -> smartcore.bos.tenant.v1.PullTenantsResponse
+	0,  // 45: smartcore.bos.tenant.v1.TenantApi.CreateTenant:output_type -> smartcore.bos.tenant.v1.Tenant
+	0,  // 46: smartcore.bos.tenant.v1.TenantApi.GetTenant:output_type -> smartcore.bos.tenant.v1.Tenant
+	0,  // 47: smartcore.bos.tenant.v1.TenantApi.UpdateTenant:output_type -> smartcore.bos.tenant.v1.Tenant
+	10, // 48: smartcore.bos.tenant.v1.TenantApi.DeleteTenant:output_type -> smartcore.bos.tenant.v1.DeleteTenantResponse
+	12, // 49: smartcore.bos.tenant.v1.TenantApi.PullTenant:output_type -> smartcore.bos.tenant.v1.PullTenantResponse
+	0,  // 50: smartcore.bos.tenant.v1.TenantApi.AddTenantZones:output_type -> smartcore.bos.tenant.v1.Tenant
+	0,  // 51: smartcore.bos.tenant.v1.TenantApi.RemoveTenantZones:output_type -> smartcore.bos.tenant.v1.Tenant
+	16, // 52: smartcore.bos.tenant.v1.TenantApi.ListSecrets:output_type -> smartcore.bos.tenant.v1.ListSecretsResponse
+	18, // 53: smartcore.bos.tenant.v1.TenantApi.PullSecrets:output_type -> smartcore.bos.tenant.v1.PullSecretsResponse
+	1,  // 54: smartcore.bos.tenant.v1.TenantApi.CreateSecret:output_type -> smartcore.bos.tenant.v1.Secret
+	1,  // 55: smartcore.bos.tenant.v1.TenantApi.VerifySecret:output_type -> smartcore.bos.tenant.v1.Secret
+	1,  // 56: smartcore.bos.tenant.v1.TenantApi.GetSecret:output_type -> smartcore.bos.tenant.v1.Secret
+	1,  // 57: smartcore.bos.tenant.v1.TenantApi.UpdateSecret:output_type -> smartcore.bos.tenant.v1.Secret
+	25, // 58: smartcore.bos.tenant.v1.TenantApi.DeleteSecret:output_type -> smartcore.bos.tenant.v1.DeleteSecretResponse
+	27, // 59: smartcore.bos.tenant.v1.TenantApi.PullSecret:output_type -> smartcore.bos.tenant.v1.PullSecretResponse
+	1,  // 60: smartcore.bos.tenant.v1.TenantApi.RegenerateSecret:output_type -> smartcore.bos.tenant.v1.Secret
 	43, // [43:61] is the sub-list for method output_type
 	25, // [25:43] is the sub-list for method input_type
 	25, // [25:25] is the sub-list for extension type_name
@@ -1925,26 +1925,26 @@ var file_tenants_proto_depIdxs = []int32{
 	0,  // [0:25] is the sub-list for field type_name
 }
 
-func init() { file_tenants_proto_init() }
-func file_tenants_proto_init() {
-	if File_tenants_proto != nil {
+func init() { file_smartcore_bos_tenant_v1_tenants_proto_init() }
+func file_smartcore_bos_tenant_v1_tenants_proto_init() {
+	if File_smartcore_bos_tenant_v1_tenants_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_tenants_proto_rawDesc), len(file_tenants_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_tenant_v1_tenants_proto_rawDesc), len(file_smartcore_bos_tenant_v1_tenants_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_tenants_proto_goTypes,
-		DependencyIndexes: file_tenants_proto_depIdxs,
-		MessageInfos:      file_tenants_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_tenant_v1_tenants_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_tenant_v1_tenants_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_tenant_v1_tenants_proto_msgTypes,
 	}.Build()
-	File_tenants_proto = out.File
-	file_tenants_proto_goTypes = nil
-	file_tenants_proto_depIdxs = nil
+	File_smartcore_bos_tenant_v1_tenants_proto = out.File
+	file_smartcore_bos_tenant_v1_tenants_proto_goTypes = nil
+	file_smartcore_bos_tenant_v1_tenants_proto_depIdxs = nil
 }

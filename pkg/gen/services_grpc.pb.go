@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: services.proto
+// source: smartcore/bos/services/v1/services.proto
 
 package gen
 
@@ -19,17 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ServicesApi_GetService_FullMethodName          = "/smartcore.bos.ServicesApi/GetService"
-	ServicesApi_PullService_FullMethodName         = "/smartcore.bos.ServicesApi/PullService"
-	ServicesApi_CreateService_FullMethodName       = "/smartcore.bos.ServicesApi/CreateService"
-	ServicesApi_DeleteService_FullMethodName       = "/smartcore.bos.ServicesApi/DeleteService"
-	ServicesApi_ListServices_FullMethodName        = "/smartcore.bos.ServicesApi/ListServices"
-	ServicesApi_PullServices_FullMethodName        = "/smartcore.bos.ServicesApi/PullServices"
-	ServicesApi_StartService_FullMethodName        = "/smartcore.bos.ServicesApi/StartService"
-	ServicesApi_ConfigureService_FullMethodName    = "/smartcore.bos.ServicesApi/ConfigureService"
-	ServicesApi_StopService_FullMethodName         = "/smartcore.bos.ServicesApi/StopService"
-	ServicesApi_GetServiceMetadata_FullMethodName  = "/smartcore.bos.ServicesApi/GetServiceMetadata"
-	ServicesApi_PullServiceMetadata_FullMethodName = "/smartcore.bos.ServicesApi/PullServiceMetadata"
+	ServicesApi_GetService_FullMethodName          = "/smartcore.bos.services.v1.ServicesApi/GetService"
+	ServicesApi_PullService_FullMethodName         = "/smartcore.bos.services.v1.ServicesApi/PullService"
+	ServicesApi_CreateService_FullMethodName       = "/smartcore.bos.services.v1.ServicesApi/CreateService"
+	ServicesApi_DeleteService_FullMethodName       = "/smartcore.bos.services.v1.ServicesApi/DeleteService"
+	ServicesApi_ListServices_FullMethodName        = "/smartcore.bos.services.v1.ServicesApi/ListServices"
+	ServicesApi_PullServices_FullMethodName        = "/smartcore.bos.services.v1.ServicesApi/PullServices"
+	ServicesApi_StartService_FullMethodName        = "/smartcore.bos.services.v1.ServicesApi/StartService"
+	ServicesApi_ConfigureService_FullMethodName    = "/smartcore.bos.services.v1.ServicesApi/ConfigureService"
+	ServicesApi_StopService_FullMethodName         = "/smartcore.bos.services.v1.ServicesApi/StopService"
+	ServicesApi_GetServiceMetadata_FullMethodName  = "/smartcore.bos.services.v1.ServicesApi/GetServiceMetadata"
+	ServicesApi_PullServiceMetadata_FullMethodName = "/smartcore.bos.services.v1.ServicesApi/PullServiceMetadata"
 )
 
 // ServicesApiClient is the client API for ServicesApi service.
@@ -456,7 +456,7 @@ type ServicesApi_PullServiceMetadataServer = grpc.ServerStreamingServer[PullServ
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ServicesApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.ServicesApi",
+	ServiceName: "smartcore.bos.services.v1.ServicesApi",
 	HandlerType: (*ServicesApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -509,5 +509,5 @@ var ServicesApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "services.proto",
+	Metadata: "smartcore/bos/services/v1/services.proto",
 }

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: allocation_history.proto
+// source: smartcore/bos/allocation/v1/allocation_history.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AllocationHistory_ListAllocationHistory_FullMethodName = "/smartcore.bos.AllocationHistory/ListAllocationHistory"
+	AllocationHistory_ListAllocationHistory_FullMethodName = "/smartcore.bos.allocation.v1.AllocationHistory/ListAllocationHistory"
 )
 
 // AllocationHistoryClient is the client API for AllocationHistory service.
@@ -110,7 +110,7 @@ func _AllocationHistory_ListAllocationHistory_Handler(srv interface{}, ctx conte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AllocationHistory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.AllocationHistory",
+	ServiceName: "smartcore.bos.allocation.v1.AllocationHistory",
 	HandlerType: (*AllocationHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -119,5 +119,5 @@ var AllocationHistory_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "allocation_history.proto",
+	Metadata: "smartcore/bos/allocation/v1/allocation_history.proto",
 }

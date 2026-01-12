@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: enrollment.proto
+// source: smartcore/bos/enrollment/v1/enrollment.proto
 
 package gen
 
@@ -19,11 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	EnrollmentApi_GetEnrollment_FullMethodName    = "/smartcore.bos.EnrollmentApi/GetEnrollment"
-	EnrollmentApi_CreateEnrollment_FullMethodName = "/smartcore.bos.EnrollmentApi/CreateEnrollment"
-	EnrollmentApi_UpdateEnrollment_FullMethodName = "/smartcore.bos.EnrollmentApi/UpdateEnrollment"
-	EnrollmentApi_DeleteEnrollment_FullMethodName = "/smartcore.bos.EnrollmentApi/DeleteEnrollment"
-	EnrollmentApi_TestEnrollment_FullMethodName   = "/smartcore.bos.EnrollmentApi/TestEnrollment"
+	EnrollmentApi_GetEnrollment_FullMethodName    = "/smartcore.bos.enrollment.v1.EnrollmentApi/GetEnrollment"
+	EnrollmentApi_CreateEnrollment_FullMethodName = "/smartcore.bos.enrollment.v1.EnrollmentApi/CreateEnrollment"
+	EnrollmentApi_UpdateEnrollment_FullMethodName = "/smartcore.bos.enrollment.v1.EnrollmentApi/UpdateEnrollment"
+	EnrollmentApi_DeleteEnrollment_FullMethodName = "/smartcore.bos.enrollment.v1.EnrollmentApi/DeleteEnrollment"
+	EnrollmentApi_TestEnrollment_FullMethodName   = "/smartcore.bos.enrollment.v1.EnrollmentApi/TestEnrollment"
 )
 
 // EnrollmentApiClient is the client API for EnrollmentApi service.
@@ -286,7 +286,7 @@ func _EnrollmentApi_TestEnrollment_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var EnrollmentApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.EnrollmentApi",
+	ServiceName: "smartcore.bos.enrollment.v1.EnrollmentApi",
 	HandlerType: (*EnrollmentApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -311,5 +311,5 @@ var EnrollmentApi_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "enrollment.proto",
+	Metadata: "smartcore/bos/enrollment/v1/enrollment.proto",
 }

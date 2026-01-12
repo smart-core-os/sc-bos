@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: dali.proto
+// source: smartcore/bos/driver/dali/v1/dali.proto
 
 package gen
 
@@ -19,16 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DaliApi_AddToGroup_FullMethodName           = "/smartcore.bos.driver.dali.DaliApi/AddToGroup"
-	DaliApi_RemoveFromGroup_FullMethodName      = "/smartcore.bos.driver.dali.DaliApi/RemoveFromGroup"
-	DaliApi_GetGroupMembership_FullMethodName   = "/smartcore.bos.driver.dali.DaliApi/GetGroupMembership"
-	DaliApi_GetControlGearStatus_FullMethodName = "/smartcore.bos.driver.dali.DaliApi/GetControlGearStatus"
-	DaliApi_GetEmergencyStatus_FullMethodName   = "/smartcore.bos.driver.dali.DaliApi/GetEmergencyStatus"
-	DaliApi_Identify_FullMethodName             = "/smartcore.bos.driver.dali.DaliApi/Identify"
-	DaliApi_StartTest_FullMethodName            = "/smartcore.bos.driver.dali.DaliApi/StartTest"
-	DaliApi_StopTest_FullMethodName             = "/smartcore.bos.driver.dali.DaliApi/StopTest"
-	DaliApi_GetTestResult_FullMethodName        = "/smartcore.bos.driver.dali.DaliApi/GetTestResult"
-	DaliApi_DeleteTestResult_FullMethodName     = "/smartcore.bos.driver.dali.DaliApi/DeleteTestResult"
+	DaliApi_AddToGroup_FullMethodName           = "/smartcore.bos.driver.dali.v1.DaliApi/AddToGroup"
+	DaliApi_RemoveFromGroup_FullMethodName      = "/smartcore.bos.driver.dali.v1.DaliApi/RemoveFromGroup"
+	DaliApi_GetGroupMembership_FullMethodName   = "/smartcore.bos.driver.dali.v1.DaliApi/GetGroupMembership"
+	DaliApi_GetControlGearStatus_FullMethodName = "/smartcore.bos.driver.dali.v1.DaliApi/GetControlGearStatus"
+	DaliApi_GetEmergencyStatus_FullMethodName   = "/smartcore.bos.driver.dali.v1.DaliApi/GetEmergencyStatus"
+	DaliApi_Identify_FullMethodName             = "/smartcore.bos.driver.dali.v1.DaliApi/Identify"
+	DaliApi_StartTest_FullMethodName            = "/smartcore.bos.driver.dali.v1.DaliApi/StartTest"
+	DaliApi_StopTest_FullMethodName             = "/smartcore.bos.driver.dali.v1.DaliApi/StopTest"
+	DaliApi_GetTestResult_FullMethodName        = "/smartcore.bos.driver.dali.v1.DaliApi/GetTestResult"
+	DaliApi_DeleteTestResult_FullMethodName     = "/smartcore.bos.driver.dali.v1.DaliApi/DeleteTestResult"
 )
 
 // DaliApiClient is the client API for DaliApi service.
@@ -436,7 +436,7 @@ func _DaliApi_DeleteTestResult_Handler(srv interface{}, ctx context.Context, dec
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var DaliApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.driver.dali.DaliApi",
+	ServiceName: "smartcore.bos.driver.dali.v1.DaliApi",
 	HandlerType: (*DaliApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -481,5 +481,5 @@ var DaliApi_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "dali.proto",
+	Metadata: "smartcore/bos/driver/dali/v1/dali.proto",
 }

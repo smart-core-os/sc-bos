@@ -4,19 +4,19 @@ import {pullHealthChecks} from '@/api/sc/traits/health.js';
 import {format} from '@/util/number.js';
 import {hasOneOf} from '@/util/proto.js';
 import {toQueryObject, watchResource} from '@/util/traits.js';
-import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/health_pb';
+import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb';
 import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
 
 /**
  * Pull all health checks for a device to get measured values and live updates.
  *
- * @param {import('vue').MaybeRefOrGetter<string|import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').PullHealthChecksRequest.AsObject|null>} request
+ * @param {import('vue').MaybeRefOrGetter<string|import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').PullHealthChecksRequest.AsObject|null>} request
  * @param {import('vue').MaybeRefOrGetter<boolean>} paused
- * @return {import('vue').ToRefs<ResourceCollection<import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.AsObject, PullHealthChecksResponse>>}
+ * @return {import('vue').ToRefs<ResourceCollection<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.AsObject, PullHealthChecksResponse>>}
  */
 export function usePullHealthChecks(request, paused = false) {
   const resource = reactive(
-      /** @type {ResourceCollection<import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.AsObject, PullHealthChecksResponse>} */
+      /** @type {ResourceCollection<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.AsObject, PullHealthChecksResponse>} */
       newResourceCollection()
   );
   onScopeDispose(() => closeResource(resource));
@@ -38,8 +38,8 @@ export function usePullHealthChecks(request, paused = false) {
 /**
  * Counts the number of checks in a specific state.
  *
- * @param {Array<import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.AsObject>} checks
- * @param {import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.Check.State} state
+ * @param {Array<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.AsObject>} checks
+ * @param {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.Check.State} state
  * @return {number}
  */
 export function countChecksByNormality(checks, state) {
@@ -52,7 +52,7 @@ export function countChecksByNormality(checks, state) {
 /**
  * Counts the number of normal and abnormal checks.
  *
- * @param {Array<import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.AsObject>} checks
+ * @param {Array<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.AsObject>} checks
  * @return {{normalCount: number, abnormalCount: number, totalCount: number}}
  */
 export function countChecks(checks) {
@@ -70,7 +70,7 @@ export function countChecks(checks) {
 
 /**
  *
- * @param {import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.Value.AsObject} val
+ * @param {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.Value.AsObject} val
  * @param {string|null} [unit]
  * @return {string}
  */

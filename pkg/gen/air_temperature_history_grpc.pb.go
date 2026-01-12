@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: air_temperature_history.proto
+// source: smartcore/bos/airtemperature/v1/air_temperature_history.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AirTemperatureHistory_ListAirTemperatureHistory_FullMethodName = "/smartcore.bos.AirTemperatureHistory/ListAirTemperatureHistory"
+	AirTemperatureHistory_ListAirTemperatureHistory_FullMethodName = "/smartcore.bos.airtemperature.v1.AirTemperatureHistory/ListAirTemperatureHistory"
 )
 
 // AirTemperatureHistoryClient is the client API for AirTemperatureHistory service.
@@ -112,7 +112,7 @@ func _AirTemperatureHistory_ListAirTemperatureHistory_Handler(srv interface{}, c
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AirTemperatureHistory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.AirTemperatureHistory",
+	ServiceName: "smartcore.bos.airtemperature.v1.AirTemperatureHistory",
 	HandlerType: (*AirTemperatureHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -121,5 +121,5 @@ var AirTemperatureHistory_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "air_temperature_history.proto",
+	Metadata: "smartcore/bos/airtemperature/v1/air_temperature_history.proto",
 }

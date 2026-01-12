@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: tenants.proto
+// source: smartcore/bos/tenant/v1/tenants.proto
 
 package gen
 
@@ -19,24 +19,24 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TenantApi_ListTenants_FullMethodName       = "/smartcore.bos.tenants.TenantApi/ListTenants"
-	TenantApi_PullTenants_FullMethodName       = "/smartcore.bos.tenants.TenantApi/PullTenants"
-	TenantApi_CreateTenant_FullMethodName      = "/smartcore.bos.tenants.TenantApi/CreateTenant"
-	TenantApi_GetTenant_FullMethodName         = "/smartcore.bos.tenants.TenantApi/GetTenant"
-	TenantApi_UpdateTenant_FullMethodName      = "/smartcore.bos.tenants.TenantApi/UpdateTenant"
-	TenantApi_DeleteTenant_FullMethodName      = "/smartcore.bos.tenants.TenantApi/DeleteTenant"
-	TenantApi_PullTenant_FullMethodName        = "/smartcore.bos.tenants.TenantApi/PullTenant"
-	TenantApi_AddTenantZones_FullMethodName    = "/smartcore.bos.tenants.TenantApi/AddTenantZones"
-	TenantApi_RemoveTenantZones_FullMethodName = "/smartcore.bos.tenants.TenantApi/RemoveTenantZones"
-	TenantApi_ListSecrets_FullMethodName       = "/smartcore.bos.tenants.TenantApi/ListSecrets"
-	TenantApi_PullSecrets_FullMethodName       = "/smartcore.bos.tenants.TenantApi/PullSecrets"
-	TenantApi_CreateSecret_FullMethodName      = "/smartcore.bos.tenants.TenantApi/CreateSecret"
-	TenantApi_VerifySecret_FullMethodName      = "/smartcore.bos.tenants.TenantApi/VerifySecret"
-	TenantApi_GetSecret_FullMethodName         = "/smartcore.bos.tenants.TenantApi/GetSecret"
-	TenantApi_UpdateSecret_FullMethodName      = "/smartcore.bos.tenants.TenantApi/UpdateSecret"
-	TenantApi_DeleteSecret_FullMethodName      = "/smartcore.bos.tenants.TenantApi/DeleteSecret"
-	TenantApi_PullSecret_FullMethodName        = "/smartcore.bos.tenants.TenantApi/PullSecret"
-	TenantApi_RegenerateSecret_FullMethodName  = "/smartcore.bos.tenants.TenantApi/RegenerateSecret"
+	TenantApi_ListTenants_FullMethodName       = "/smartcore.bos.tenant.v1.TenantApi/ListTenants"
+	TenantApi_PullTenants_FullMethodName       = "/smartcore.bos.tenant.v1.TenantApi/PullTenants"
+	TenantApi_CreateTenant_FullMethodName      = "/smartcore.bos.tenant.v1.TenantApi/CreateTenant"
+	TenantApi_GetTenant_FullMethodName         = "/smartcore.bos.tenant.v1.TenantApi/GetTenant"
+	TenantApi_UpdateTenant_FullMethodName      = "/smartcore.bos.tenant.v1.TenantApi/UpdateTenant"
+	TenantApi_DeleteTenant_FullMethodName      = "/smartcore.bos.tenant.v1.TenantApi/DeleteTenant"
+	TenantApi_PullTenant_FullMethodName        = "/smartcore.bos.tenant.v1.TenantApi/PullTenant"
+	TenantApi_AddTenantZones_FullMethodName    = "/smartcore.bos.tenant.v1.TenantApi/AddTenantZones"
+	TenantApi_RemoveTenantZones_FullMethodName = "/smartcore.bos.tenant.v1.TenantApi/RemoveTenantZones"
+	TenantApi_ListSecrets_FullMethodName       = "/smartcore.bos.tenant.v1.TenantApi/ListSecrets"
+	TenantApi_PullSecrets_FullMethodName       = "/smartcore.bos.tenant.v1.TenantApi/PullSecrets"
+	TenantApi_CreateSecret_FullMethodName      = "/smartcore.bos.tenant.v1.TenantApi/CreateSecret"
+	TenantApi_VerifySecret_FullMethodName      = "/smartcore.bos.tenant.v1.TenantApi/VerifySecret"
+	TenantApi_GetSecret_FullMethodName         = "/smartcore.bos.tenant.v1.TenantApi/GetSecret"
+	TenantApi_UpdateSecret_FullMethodName      = "/smartcore.bos.tenant.v1.TenantApi/UpdateSecret"
+	TenantApi_DeleteSecret_FullMethodName      = "/smartcore.bos.tenant.v1.TenantApi/DeleteSecret"
+	TenantApi_PullSecret_FullMethodName        = "/smartcore.bos.tenant.v1.TenantApi/PullSecret"
+	TenantApi_RegenerateSecret_FullMethodName  = "/smartcore.bos.tenant.v1.TenantApi/RegenerateSecret"
 )
 
 // TenantApiClient is the client API for TenantApi service.
@@ -700,7 +700,7 @@ func _TenantApi_RegenerateSecret_Handler(srv interface{}, ctx context.Context, d
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TenantApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.tenants.TenantApi",
+	ServiceName: "smartcore.bos.tenant.v1.TenantApi",
 	HandlerType: (*TenantApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -782,5 +782,5 @@ var TenantApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "tenants.proto",
+	Metadata: "smartcore/bos/tenant/v1/tenants.proto",
 }

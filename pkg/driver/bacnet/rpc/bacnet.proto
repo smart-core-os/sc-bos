@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package smartcore.bos.driver.bacnet;
+package smartcore.bos.driver.bacnet.v1;
 
 option go_package = "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/rpc";
 

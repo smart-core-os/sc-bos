@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: pressure.proto
+// source: smartcore/bos/pressure/v1/pressure.proto
 
 package gen
 
@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PressureApi_GetPressure_FullMethodName    = "/smartcore.bos.PressureApi/GetPressure"
-	PressureApi_PullPressure_FullMethodName   = "/smartcore.bos.PressureApi/PullPressure"
-	PressureApi_UpdatePressure_FullMethodName = "/smartcore.bos.PressureApi/UpdatePressure"
+	PressureApi_GetPressure_FullMethodName    = "/smartcore.bos.pressure.v1.PressureApi/GetPressure"
+	PressureApi_PullPressure_FullMethodName   = "/smartcore.bos.pressure.v1.PressureApi/PullPressure"
+	PressureApi_UpdatePressure_FullMethodName = "/smartcore.bos.pressure.v1.PressureApi/UpdatePressure"
 )
 
 // PressureApiClient is the client API for PressureApi service.
@@ -186,7 +186,7 @@ func _PressureApi_UpdatePressure_Handler(srv interface{}, ctx context.Context, d
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PressureApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.PressureApi",
+	ServiceName: "smartcore.bos.pressure.v1.PressureApi",
 	HandlerType: (*PressureApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -205,11 +205,11 @@ var PressureApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "pressure.proto",
+	Metadata: "smartcore/bos/pressure/v1/pressure.proto",
 }
 
 const (
-	PressureInfo_DescribePressure_FullMethodName = "/smartcore.bos.PressureInfo/DescribePressure"
+	PressureInfo_DescribePressure_FullMethodName = "/smartcore.bos.pressure.v1.PressureInfo/DescribePressure"
 )
 
 // PressureInfoClient is the client API for PressureInfo service.
@@ -298,7 +298,7 @@ func _PressureInfo_DescribePressure_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PressureInfo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.PressureInfo",
+	ServiceName: "smartcore.bos.pressure.v1.PressureInfo",
 	HandlerType: (*PressureInfoServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -307,5 +307,5 @@ var PressureInfo_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pressure.proto",
+	Metadata: "smartcore/bos/pressure/v1/pressure.proto",
 }

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: sound_sensor.proto
+// source: smartcore/bos/soundsensor/v1/sound_sensor.proto
 
 package gen
 
@@ -36,7 +36,7 @@ type SoundLevel struct {
 
 func (x *SoundLevel) Reset() {
 	*x = SoundLevel{}
-	mi := &file_sound_sensor_proto_msgTypes[0]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +48,7 @@ func (x *SoundLevel) String() string {
 func (*SoundLevel) ProtoMessage() {}
 
 func (x *SoundLevel) ProtoReflect() protoreflect.Message {
-	mi := &file_sound_sensor_proto_msgTypes[0]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +61,7 @@ func (x *SoundLevel) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SoundLevel.ProtoReflect.Descriptor instead.
 func (*SoundLevel) Descriptor() ([]byte, []int) {
-	return file_sound_sensor_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SoundLevel) GetSoundPressureLevel() float32 {
@@ -86,7 +86,7 @@ type SoundLevelSupport struct {
 
 func (x *SoundLevelSupport) Reset() {
 	*x = SoundLevelSupport{}
-	mi := &file_sound_sensor_proto_msgTypes[1]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -98,7 +98,7 @@ func (x *SoundLevelSupport) String() string {
 func (*SoundLevelSupport) ProtoMessage() {}
 
 func (x *SoundLevelSupport) ProtoReflect() protoreflect.Message {
-	mi := &file_sound_sensor_proto_msgTypes[1]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -111,7 +111,7 @@ func (x *SoundLevelSupport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SoundLevelSupport.ProtoReflect.Descriptor instead.
 func (*SoundLevelSupport) Descriptor() ([]byte, []int) {
-	return file_sound_sensor_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *SoundLevelSupport) GetResourceSupport() *types.ResourceSupport {
@@ -138,7 +138,7 @@ type GetSoundLevelRequest struct {
 
 func (x *GetSoundLevelRequest) Reset() {
 	*x = GetSoundLevelRequest{}
-	mi := &file_sound_sensor_proto_msgTypes[2]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -150,7 +150,7 @@ func (x *GetSoundLevelRequest) String() string {
 func (*GetSoundLevelRequest) ProtoMessage() {}
 
 func (x *GetSoundLevelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sound_sensor_proto_msgTypes[2]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -163,7 +163,7 @@ func (x *GetSoundLevelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSoundLevelRequest.ProtoReflect.Descriptor instead.
 func (*GetSoundLevelRequest) Descriptor() ([]byte, []int) {
-	return file_sound_sensor_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetSoundLevelRequest) GetName() string {
@@ -191,7 +191,7 @@ type PullSoundLevelRequest struct {
 
 func (x *PullSoundLevelRequest) Reset() {
 	*x = PullSoundLevelRequest{}
-	mi := &file_sound_sensor_proto_msgTypes[3]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -203,7 +203,7 @@ func (x *PullSoundLevelRequest) String() string {
 func (*PullSoundLevelRequest) ProtoMessage() {}
 
 func (x *PullSoundLevelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sound_sensor_proto_msgTypes[3]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -216,7 +216,7 @@ func (x *PullSoundLevelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullSoundLevelRequest.ProtoReflect.Descriptor instead.
 func (*PullSoundLevelRequest) Descriptor() ([]byte, []int) {
-	return file_sound_sensor_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PullSoundLevelRequest) GetName() string {
@@ -249,7 +249,7 @@ type PullSoundLevelResponse struct {
 
 func (x *PullSoundLevelResponse) Reset() {
 	*x = PullSoundLevelResponse{}
-	mi := &file_sound_sensor_proto_msgTypes[4]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -261,7 +261,7 @@ func (x *PullSoundLevelResponse) String() string {
 func (*PullSoundLevelResponse) ProtoMessage() {}
 
 func (x *PullSoundLevelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sound_sensor_proto_msgTypes[4]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -274,7 +274,7 @@ func (x *PullSoundLevelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullSoundLevelResponse.ProtoReflect.Descriptor instead.
 func (*PullSoundLevelResponse) Descriptor() ([]byte, []int) {
-	return file_sound_sensor_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullSoundLevelResponse) GetChanges() []*PullSoundLevelResponse_Change {
@@ -293,7 +293,7 @@ type DescribeSoundLevelRequest struct {
 
 func (x *DescribeSoundLevelRequest) Reset() {
 	*x = DescribeSoundLevelRequest{}
-	mi := &file_sound_sensor_proto_msgTypes[5]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -305,7 +305,7 @@ func (x *DescribeSoundLevelRequest) String() string {
 func (*DescribeSoundLevelRequest) ProtoMessage() {}
 
 func (x *DescribeSoundLevelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sound_sensor_proto_msgTypes[5]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -318,7 +318,7 @@ func (x *DescribeSoundLevelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DescribeSoundLevelRequest.ProtoReflect.Descriptor instead.
 func (*DescribeSoundLevelRequest) Descriptor() ([]byte, []int) {
-	return file_sound_sensor_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DescribeSoundLevelRequest) GetName() string {
@@ -339,7 +339,7 @@ type PullSoundLevelResponse_Change struct {
 
 func (x *PullSoundLevelResponse_Change) Reset() {
 	*x = PullSoundLevelResponse_Change{}
-	mi := &file_sound_sensor_proto_msgTypes[6]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -351,7 +351,7 @@ func (x *PullSoundLevelResponse_Change) String() string {
 func (*PullSoundLevelResponse_Change) ProtoMessage() {}
 
 func (x *PullSoundLevelResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_sound_sensor_proto_msgTypes[6]
+	mi := &file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -364,7 +364,7 @@ func (x *PullSoundLevelResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullSoundLevelResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullSoundLevelResponse_Change) Descriptor() ([]byte, []int) {
-	return file_sound_sensor_proto_rawDescGZIP(), []int{4, 0}
+	return file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescGZIP(), []int{4, 0}
 }
 
 func (x *PullSoundLevelResponse_Change) GetName() string {
@@ -388,11 +388,11 @@ func (x *PullSoundLevelResponse_Change) GetSoundLevel() *SoundLevel {
 	return nil
 }
 
-var File_sound_sensor_proto protoreflect.FileDescriptor
+var File_smartcore_bos_soundsensor_v1_sound_sensor_proto protoreflect.FileDescriptor
 
-const file_sound_sensor_proto_rawDesc = "" +
+const file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDesc = "" +
 	"\n" +
-	"\x12sound_sensor.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\\\n" +
+	"/smartcore/bos/soundsensor/v1/sound_sensor.proto\x12\x1csmartcore.bos.soundsensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\\\n" +
 	"\n" +
 	"SoundLevel\x125\n" +
 	"\x14sound_pressure_level\x18\x01 \x01(\x02H\x00R\x12soundPressureLevel\x88\x01\x01B\x17\n" +
@@ -406,61 +406,61 @@ const file_sound_sensor_proto_rawDesc = "" +
 	"\x15PullSoundLevelRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xf8\x01\n" +
-	"\x16PullSoundLevelResponse\x12F\n" +
-	"\achanges\x18\x01 \x03(\v2,.smartcore.bos.PullSoundLevelResponse.ChangeR\achanges\x1a\x95\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x96\x02\n" +
+	"\x16PullSoundLevelResponse\x12U\n" +
+	"\achanges\x18\x01 \x03(\v2;.smartcore.bos.soundsensor.v1.PullSoundLevelResponse.ChangeR\achanges\x1a\xa4\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x12:\n" +
-	"\vsound_level\x18\x03 \x01(\v2\x19.smartcore.bos.SoundLevelR\n" +
+	"changeTime\x12I\n" +
+	"\vsound_level\x18\x03 \x01(\v2(.smartcore.bos.soundsensor.v1.SoundLevelR\n" +
 	"soundLevel\"/\n" +
 	"\x19DescribeSoundLevelRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name2\xc6\x01\n" +
-	"\x0eSoundSensorApi\x12Q\n" +
-	"\rGetSoundLevel\x12#.smartcore.bos.GetSoundLevelRequest\x1a\x19.smartcore.bos.SoundLevel\"\x00\x12a\n" +
-	"\x0ePullSoundLevel\x12$.smartcore.bos.PullSoundLevelRequest\x1a%.smartcore.bos.PullSoundLevelResponse\"\x000\x012u\n" +
-	"\x0fSoundSensorInfo\x12b\n" +
-	"\x12DescribeSoundLevel\x12(.smartcore.bos.DescribeSoundLevelRequest\x1a .smartcore.bos.SoundLevelSupport\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\x04name\x18\x01 \x01(\tR\x04name2\x82\x02\n" +
+	"\x0eSoundSensorApi\x12o\n" +
+	"\rGetSoundLevel\x122.smartcore.bos.soundsensor.v1.GetSoundLevelRequest\x1a(.smartcore.bos.soundsensor.v1.SoundLevel\"\x00\x12\x7f\n" +
+	"\x0ePullSoundLevel\x123.smartcore.bos.soundsensor.v1.PullSoundLevelRequest\x1a4.smartcore.bos.soundsensor.v1.PullSoundLevelResponse\"\x000\x012\x94\x01\n" +
+	"\x0fSoundSensorInfo\x12\x80\x01\n" +
+	"\x12DescribeSoundLevel\x127.smartcore.bos.soundsensor.v1.DescribeSoundLevelRequest\x1a/.smartcore.bos.soundsensor.v1.SoundLevelSupport\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_sound_sensor_proto_rawDescOnce sync.Once
-	file_sound_sensor_proto_rawDescData []byte
+	file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescOnce sync.Once
+	file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescData []byte
 )
 
-func file_sound_sensor_proto_rawDescGZIP() []byte {
-	file_sound_sensor_proto_rawDescOnce.Do(func() {
-		file_sound_sensor_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_sound_sensor_proto_rawDesc), len(file_sound_sensor_proto_rawDesc)))
+func file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDesc), len(file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDesc)))
 	})
-	return file_sound_sensor_proto_rawDescData
+	return file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescData
 }
 
-var file_sound_sensor_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_sound_sensor_proto_goTypes = []any{
-	(*SoundLevel)(nil),                    // 0: smartcore.bos.SoundLevel
-	(*SoundLevelSupport)(nil),             // 1: smartcore.bos.SoundLevelSupport
-	(*GetSoundLevelRequest)(nil),          // 2: smartcore.bos.GetSoundLevelRequest
-	(*PullSoundLevelRequest)(nil),         // 3: smartcore.bos.PullSoundLevelRequest
-	(*PullSoundLevelResponse)(nil),        // 4: smartcore.bos.PullSoundLevelResponse
-	(*DescribeSoundLevelRequest)(nil),     // 5: smartcore.bos.DescribeSoundLevelRequest
-	(*PullSoundLevelResponse_Change)(nil), // 6: smartcore.bos.PullSoundLevelResponse.Change
+var file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_smartcore_bos_soundsensor_v1_sound_sensor_proto_goTypes = []any{
+	(*SoundLevel)(nil),                    // 0: smartcore.bos.soundsensor.v1.SoundLevel
+	(*SoundLevelSupport)(nil),             // 1: smartcore.bos.soundsensor.v1.SoundLevelSupport
+	(*GetSoundLevelRequest)(nil),          // 2: smartcore.bos.soundsensor.v1.GetSoundLevelRequest
+	(*PullSoundLevelRequest)(nil),         // 3: smartcore.bos.soundsensor.v1.PullSoundLevelRequest
+	(*PullSoundLevelResponse)(nil),        // 4: smartcore.bos.soundsensor.v1.PullSoundLevelResponse
+	(*DescribeSoundLevelRequest)(nil),     // 5: smartcore.bos.soundsensor.v1.DescribeSoundLevelRequest
+	(*PullSoundLevelResponse_Change)(nil), // 6: smartcore.bos.soundsensor.v1.PullSoundLevelResponse.Change
 	(*types.ResourceSupport)(nil),         // 7: smartcore.types.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),         // 8: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),         // 9: google.protobuf.Timestamp
 }
-var file_sound_sensor_proto_depIdxs = []int32{
-	7, // 0: smartcore.bos.SoundLevelSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	8, // 1: smartcore.bos.GetSoundLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
-	8, // 2: smartcore.bos.PullSoundLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
-	6, // 3: smartcore.bos.PullSoundLevelResponse.changes:type_name -> smartcore.bos.PullSoundLevelResponse.Change
-	9, // 4: smartcore.bos.PullSoundLevelResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	0, // 5: smartcore.bos.PullSoundLevelResponse.Change.sound_level:type_name -> smartcore.bos.SoundLevel
-	2, // 6: smartcore.bos.SoundSensorApi.GetSoundLevel:input_type -> smartcore.bos.GetSoundLevelRequest
-	3, // 7: smartcore.bos.SoundSensorApi.PullSoundLevel:input_type -> smartcore.bos.PullSoundLevelRequest
-	5, // 8: smartcore.bos.SoundSensorInfo.DescribeSoundLevel:input_type -> smartcore.bos.DescribeSoundLevelRequest
-	0, // 9: smartcore.bos.SoundSensorApi.GetSoundLevel:output_type -> smartcore.bos.SoundLevel
-	4, // 10: smartcore.bos.SoundSensorApi.PullSoundLevel:output_type -> smartcore.bos.PullSoundLevelResponse
-	1, // 11: smartcore.bos.SoundSensorInfo.DescribeSoundLevel:output_type -> smartcore.bos.SoundLevelSupport
+var file_smartcore_bos_soundsensor_v1_sound_sensor_proto_depIdxs = []int32{
+	7, // 0: smartcore.bos.soundsensor.v1.SoundLevelSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	8, // 1: smartcore.bos.soundsensor.v1.GetSoundLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
+	8, // 2: smartcore.bos.soundsensor.v1.PullSoundLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
+	6, // 3: smartcore.bos.soundsensor.v1.PullSoundLevelResponse.changes:type_name -> smartcore.bos.soundsensor.v1.PullSoundLevelResponse.Change
+	9, // 4: smartcore.bos.soundsensor.v1.PullSoundLevelResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	0, // 5: smartcore.bos.soundsensor.v1.PullSoundLevelResponse.Change.sound_level:type_name -> smartcore.bos.soundsensor.v1.SoundLevel
+	2, // 6: smartcore.bos.soundsensor.v1.SoundSensorApi.GetSoundLevel:input_type -> smartcore.bos.soundsensor.v1.GetSoundLevelRequest
+	3, // 7: smartcore.bos.soundsensor.v1.SoundSensorApi.PullSoundLevel:input_type -> smartcore.bos.soundsensor.v1.PullSoundLevelRequest
+	5, // 8: smartcore.bos.soundsensor.v1.SoundSensorInfo.DescribeSoundLevel:input_type -> smartcore.bos.soundsensor.v1.DescribeSoundLevelRequest
+	0, // 9: smartcore.bos.soundsensor.v1.SoundSensorApi.GetSoundLevel:output_type -> smartcore.bos.soundsensor.v1.SoundLevel
+	4, // 10: smartcore.bos.soundsensor.v1.SoundSensorApi.PullSoundLevel:output_type -> smartcore.bos.soundsensor.v1.PullSoundLevelResponse
+	1, // 11: smartcore.bos.soundsensor.v1.SoundSensorInfo.DescribeSoundLevel:output_type -> smartcore.bos.soundsensor.v1.SoundLevelSupport
 	9, // [9:12] is the sub-list for method output_type
 	6, // [6:9] is the sub-list for method input_type
 	6, // [6:6] is the sub-list for extension type_name
@@ -468,27 +468,27 @@ var file_sound_sensor_proto_depIdxs = []int32{
 	0, // [0:6] is the sub-list for field type_name
 }
 
-func init() { file_sound_sensor_proto_init() }
-func file_sound_sensor_proto_init() {
-	if File_sound_sensor_proto != nil {
+func init() { file_smartcore_bos_soundsensor_v1_sound_sensor_proto_init() }
+func file_smartcore_bos_soundsensor_v1_sound_sensor_proto_init() {
+	if File_smartcore_bos_soundsensor_v1_sound_sensor_proto != nil {
 		return
 	}
-	file_sound_sensor_proto_msgTypes[0].OneofWrappers = []any{}
+	file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sound_sensor_proto_rawDesc), len(file_sound_sensor_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDesc), len(file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_sound_sensor_proto_goTypes,
-		DependencyIndexes: file_sound_sensor_proto_depIdxs,
-		MessageInfos:      file_sound_sensor_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_soundsensor_v1_sound_sensor_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_soundsensor_v1_sound_sensor_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_soundsensor_v1_sound_sensor_proto_msgTypes,
 	}.Build()
-	File_sound_sensor_proto = out.File
-	file_sound_sensor_proto_goTypes = nil
-	file_sound_sensor_proto_depIdxs = nil
+	File_smartcore_bos_soundsensor_v1_sound_sensor_proto = out.File
+	file_smartcore_bos_soundsensor_v1_sound_sensor_proto_goTypes = nil
+	file_smartcore_bos_soundsensor_v1_sound_sensor_proto_depIdxs = nil
 }

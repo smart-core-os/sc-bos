@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: air_quality_sensor_history.proto
+// source: smartcore/bos/airqualitysensor/v1/air_quality_sensor_history.proto
 
 package gen
 
@@ -35,7 +35,7 @@ type AirQualityRecord struct {
 
 func (x *AirQualityRecord) Reset() {
 	*x = AirQualityRecord{}
-	mi := &file_air_quality_sensor_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +47,7 @@ func (x *AirQualityRecord) String() string {
 func (*AirQualityRecord) ProtoMessage() {}
 
 func (x *AirQualityRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_air_quality_sensor_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +60,7 @@ func (x *AirQualityRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AirQualityRecord.ProtoReflect.Descriptor instead.
 func (*AirQualityRecord) Descriptor() ([]byte, []int) {
-	return file_air_quality_sensor_history_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *AirQualityRecord) GetAirQuality() *traits.AirQuality {
@@ -102,7 +102,7 @@ type ListAirQualityHistoryRequest struct {
 
 func (x *ListAirQualityHistoryRequest) Reset() {
 	*x = ListAirQualityHistoryRequest{}
-	mi := &file_air_quality_sensor_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -114,7 +114,7 @@ func (x *ListAirQualityHistoryRequest) String() string {
 func (*ListAirQualityHistoryRequest) ProtoMessage() {}
 
 func (x *ListAirQualityHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_air_quality_sensor_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -127,7 +127,7 @@ func (x *ListAirQualityHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAirQualityHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListAirQualityHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_air_quality_sensor_history_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListAirQualityHistoryRequest) GetName() string {
@@ -187,7 +187,7 @@ type ListAirQualityHistoryResponse struct {
 
 func (x *ListAirQualityHistoryResponse) Reset() {
 	*x = ListAirQualityHistoryResponse{}
-	mi := &file_air_quality_sensor_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -199,7 +199,7 @@ func (x *ListAirQualityHistoryResponse) String() string {
 func (*ListAirQualityHistoryResponse) ProtoMessage() {}
 
 func (x *ListAirQualityHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_air_quality_sensor_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -212,7 +212,7 @@ func (x *ListAirQualityHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAirQualityHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListAirQualityHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_air_quality_sensor_history_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListAirQualityHistoryResponse) GetAirQualityRecords() []*AirQualityRecord {
@@ -236,11 +236,11 @@ func (x *ListAirQualityHistoryResponse) GetTotalSize() int32 {
 	return 0
 }
 
-var File_air_quality_sensor_history_proto protoreflect.FileDescriptor
+var File_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto protoreflect.FileDescriptor
 
-const file_air_quality_sensor_history_proto_rawDesc = "" +
+const file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDesc = "" +
 	"\n" +
-	" air_quality_sensor_history.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17types/time/period.proto\x1a\x1ftraits/air_quality_sensor.proto\"\x8e\x01\n" +
+	"Bsmartcore/bos/airqualitysensor/v1/air_quality_sensor_history.proto\x12!smartcore.bos.airqualitysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1ftraits/air_quality_sensor.proto\x1a\x17types/time/period.proto\"\x8e\x01\n" +
 	"\x10AirQualityRecord\x12=\n" +
 	"\vair_quality\x18\x01 \x01(\v2\x1c.smartcore.traits.AirQualityR\n" +
 	"airQuality\x12;\n" +
@@ -253,45 +253,45 @@ const file_air_quality_sensor_history_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x05 \x01(\tR\tpageToken\x12\x19\n" +
-	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xb7\x01\n" +
-	"\x1dListAirQualityHistoryResponse\x12O\n" +
-	"\x13air_quality_records\x18\x01 \x03(\v2\x1f.smartcore.bos.AirQualityRecordR\x11airQualityRecords\x12&\n" +
+	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xcb\x01\n" +
+	"\x1dListAirQualityHistoryResponse\x12c\n" +
+	"\x13air_quality_records\x18\x01 \x03(\v23.smartcore.bos.airqualitysensor.v1.AirQualityRecordR\x11airQualityRecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x8d\x01\n" +
-	"\x17AirQualitySensorHistory\x12r\n" +
-	"\x15ListAirQualityHistory\x12+.smartcore.bos.ListAirQualityHistoryRequest\x1a,.smartcore.bos.ListAirQualityHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"total_size\x18\x03 \x01(\x05R\ttotalSize2\xb6\x01\n" +
+	"\x17AirQualitySensorHistory\x12\x9a\x01\n" +
+	"\x15ListAirQualityHistory\x12?.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest\x1a@.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_air_quality_sensor_history_proto_rawDescOnce sync.Once
-	file_air_quality_sensor_history_proto_rawDescData []byte
+	file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDescOnce sync.Once
+	file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDescData []byte
 )
 
-func file_air_quality_sensor_history_proto_rawDescGZIP() []byte {
-	file_air_quality_sensor_history_proto_rawDescOnce.Do(func() {
-		file_air_quality_sensor_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_air_quality_sensor_history_proto_rawDesc), len(file_air_quality_sensor_history_proto_rawDesc)))
+func file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDesc), len(file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDesc)))
 	})
-	return file_air_quality_sensor_history_proto_rawDescData
+	return file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDescData
 }
 
-var file_air_quality_sensor_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_air_quality_sensor_history_proto_goTypes = []any{
-	(*AirQualityRecord)(nil),              // 0: smartcore.bos.AirQualityRecord
-	(*ListAirQualityHistoryRequest)(nil),  // 1: smartcore.bos.ListAirQualityHistoryRequest
-	(*ListAirQualityHistoryResponse)(nil), // 2: smartcore.bos.ListAirQualityHistoryResponse
+var file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_goTypes = []any{
+	(*AirQualityRecord)(nil),              // 0: smartcore.bos.airqualitysensor.v1.AirQualityRecord
+	(*ListAirQualityHistoryRequest)(nil),  // 1: smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest
+	(*ListAirQualityHistoryResponse)(nil), // 2: smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryResponse
 	(*traits.AirQuality)(nil),             // 3: smartcore.traits.AirQuality
 	(*timestamppb.Timestamp)(nil),         // 4: google.protobuf.Timestamp
 	(*time.Period)(nil),                   // 5: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),         // 6: google.protobuf.FieldMask
 }
-var file_air_quality_sensor_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.AirQualityRecord.air_quality:type_name -> smartcore.traits.AirQuality
-	4, // 1: smartcore.bos.AirQualityRecord.record_time:type_name -> google.protobuf.Timestamp
-	5, // 2: smartcore.bos.ListAirQualityHistoryRequest.period:type_name -> smartcore.types.time.Period
-	6, // 3: smartcore.bos.ListAirQualityHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
-	0, // 4: smartcore.bos.ListAirQualityHistoryResponse.air_quality_records:type_name -> smartcore.bos.AirQualityRecord
-	1, // 5: smartcore.bos.AirQualitySensorHistory.ListAirQualityHistory:input_type -> smartcore.bos.ListAirQualityHistoryRequest
-	2, // 6: smartcore.bos.AirQualitySensorHistory.ListAirQualityHistory:output_type -> smartcore.bos.ListAirQualityHistoryResponse
+var file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_depIdxs = []int32{
+	3, // 0: smartcore.bos.airqualitysensor.v1.AirQualityRecord.air_quality:type_name -> smartcore.traits.AirQuality
+	4, // 1: smartcore.bos.airqualitysensor.v1.AirQualityRecord.record_time:type_name -> google.protobuf.Timestamp
+	5, // 2: smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.period:type_name -> smartcore.types.time.Period
+	6, // 3: smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
+	0, // 4: smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryResponse.air_quality_records:type_name -> smartcore.bos.airqualitysensor.v1.AirQualityRecord
+	1, // 5: smartcore.bos.airqualitysensor.v1.AirQualitySensorHistory.ListAirQualityHistory:input_type -> smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest
+	2, // 6: smartcore.bos.airqualitysensor.v1.AirQualitySensorHistory.ListAirQualityHistory:output_type -> smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryResponse
 	6, // [6:7] is the sub-list for method output_type
 	5, // [5:6] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -299,26 +299,26 @@ var file_air_quality_sensor_history_proto_depIdxs = []int32{
 	0, // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_air_quality_sensor_history_proto_init() }
-func file_air_quality_sensor_history_proto_init() {
-	if File_air_quality_sensor_history_proto != nil {
+func init() { file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_init() }
+func file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_init() {
+	if File_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_air_quality_sensor_history_proto_rawDesc), len(file_air_quality_sensor_history_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDesc), len(file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_air_quality_sensor_history_proto_goTypes,
-		DependencyIndexes: file_air_quality_sensor_history_proto_depIdxs,
-		MessageInfos:      file_air_quality_sensor_history_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_msgTypes,
 	}.Build()
-	File_air_quality_sensor_history_proto = out.File
-	file_air_quality_sensor_history_proto_goTypes = nil
-	file_air_quality_sensor_history_proto_depIdxs = nil
+	File_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto = out.File
+	file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_goTypes = nil
+	file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_depIdxs = nil
 }

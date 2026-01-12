@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: pressure.proto
+// source: smartcore/bos/pressure/v1/pressure.proto
 
 package gen
 
@@ -37,7 +37,7 @@ type Pressure struct {
 
 func (x *Pressure) Reset() {
 	*x = Pressure{}
-	mi := &file_pressure_proto_msgTypes[0]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -49,7 +49,7 @@ func (x *Pressure) String() string {
 func (*Pressure) ProtoMessage() {}
 
 func (x *Pressure) ProtoReflect() protoreflect.Message {
-	mi := &file_pressure_proto_msgTypes[0]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +62,7 @@ func (x *Pressure) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Pressure.ProtoReflect.Descriptor instead.
 func (*Pressure) Descriptor() ([]byte, []int) {
-	return file_pressure_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_pressure_v1_pressure_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Pressure) GetTargetPressure() float32 {
@@ -89,7 +89,7 @@ type GetPressureRequest struct {
 
 func (x *GetPressureRequest) Reset() {
 	*x = GetPressureRequest{}
-	mi := &file_pressure_proto_msgTypes[1]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -101,7 +101,7 @@ func (x *GetPressureRequest) String() string {
 func (*GetPressureRequest) ProtoMessage() {}
 
 func (x *GetPressureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pressure_proto_msgTypes[1]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -114,7 +114,7 @@ func (x *GetPressureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPressureRequest.ProtoReflect.Descriptor instead.
 func (*GetPressureRequest) Descriptor() ([]byte, []int) {
-	return file_pressure_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_pressure_v1_pressure_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetPressureRequest) GetName() string {
@@ -142,7 +142,7 @@ type PullPressureRequest struct {
 
 func (x *PullPressureRequest) Reset() {
 	*x = PullPressureRequest{}
-	mi := &file_pressure_proto_msgTypes[2]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -154,7 +154,7 @@ func (x *PullPressureRequest) String() string {
 func (*PullPressureRequest) ProtoMessage() {}
 
 func (x *PullPressureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pressure_proto_msgTypes[2]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -167,7 +167,7 @@ func (x *PullPressureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullPressureRequest.ProtoReflect.Descriptor instead.
 func (*PullPressureRequest) Descriptor() ([]byte, []int) {
-	return file_pressure_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_pressure_v1_pressure_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PullPressureRequest) GetName() string {
@@ -200,7 +200,7 @@ type PullPressureResponse struct {
 
 func (x *PullPressureResponse) Reset() {
 	*x = PullPressureResponse{}
-	mi := &file_pressure_proto_msgTypes[3]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -212,7 +212,7 @@ func (x *PullPressureResponse) String() string {
 func (*PullPressureResponse) ProtoMessage() {}
 
 func (x *PullPressureResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pressure_proto_msgTypes[3]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -225,7 +225,7 @@ func (x *PullPressureResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullPressureResponse.ProtoReflect.Descriptor instead.
 func (*PullPressureResponse) Descriptor() ([]byte, []int) {
-	return file_pressure_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_pressure_v1_pressure_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PullPressureResponse) GetChanges() []*PullPressureResponse_Change {
@@ -248,7 +248,7 @@ type UpdatePressureRequest struct {
 
 func (x *UpdatePressureRequest) Reset() {
 	*x = UpdatePressureRequest{}
-	mi := &file_pressure_proto_msgTypes[4]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -260,7 +260,7 @@ func (x *UpdatePressureRequest) String() string {
 func (*UpdatePressureRequest) ProtoMessage() {}
 
 func (x *UpdatePressureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pressure_proto_msgTypes[4]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -273,7 +273,7 @@ func (x *UpdatePressureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePressureRequest.ProtoReflect.Descriptor instead.
 func (*UpdatePressureRequest) Descriptor() ([]byte, []int) {
-	return file_pressure_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_pressure_v1_pressure_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UpdatePressureRequest) GetName() string {
@@ -313,7 +313,7 @@ type DescribePressureRequest struct {
 
 func (x *DescribePressureRequest) Reset() {
 	*x = DescribePressureRequest{}
-	mi := &file_pressure_proto_msgTypes[5]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -325,7 +325,7 @@ func (x *DescribePressureRequest) String() string {
 func (*DescribePressureRequest) ProtoMessage() {}
 
 func (x *DescribePressureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pressure_proto_msgTypes[5]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -338,7 +338,7 @@ func (x *DescribePressureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DescribePressureRequest.ProtoReflect.Descriptor instead.
 func (*DescribePressureRequest) Descriptor() ([]byte, []int) {
-	return file_pressure_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_pressure_v1_pressure_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DescribePressureRequest) GetName() string {
@@ -361,7 +361,7 @@ type PressureSupport struct {
 
 func (x *PressureSupport) Reset() {
 	*x = PressureSupport{}
-	mi := &file_pressure_proto_msgTypes[6]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -373,7 +373,7 @@ func (x *PressureSupport) String() string {
 func (*PressureSupport) ProtoMessage() {}
 
 func (x *PressureSupport) ProtoReflect() protoreflect.Message {
-	mi := &file_pressure_proto_msgTypes[6]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -386,7 +386,7 @@ func (x *PressureSupport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PressureSupport.ProtoReflect.Descriptor instead.
 func (*PressureSupport) Descriptor() ([]byte, []int) {
-	return file_pressure_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_pressure_v1_pressure_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PressureSupport) GetResourceSupport() *types.ResourceSupport {
@@ -414,7 +414,7 @@ type PullPressureResponse_Change struct {
 
 func (x *PullPressureResponse_Change) Reset() {
 	*x = PullPressureResponse_Change{}
-	mi := &file_pressure_proto_msgTypes[7]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -426,7 +426,7 @@ func (x *PullPressureResponse_Change) String() string {
 func (*PullPressureResponse_Change) ProtoMessage() {}
 
 func (x *PullPressureResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_pressure_proto_msgTypes[7]
+	mi := &file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -439,7 +439,7 @@ func (x *PullPressureResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullPressureResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullPressureResponse_Change) Descriptor() ([]byte, []int) {
-	return file_pressure_proto_rawDescGZIP(), []int{3, 0}
+	return file_smartcore_bos_pressure_v1_pressure_proto_rawDescGZIP(), []int{3, 0}
 }
 
 func (x *PullPressureResponse_Change) GetName() string {
@@ -463,11 +463,11 @@ func (x *PullPressureResponse_Change) GetPressure() *Pressure {
 	return nil
 }
 
-var File_pressure_proto protoreflect.FileDescriptor
+var File_smartcore_bos_pressure_v1_pressure_proto protoreflect.FileDescriptor
 
-const file_pressure_proto_rawDesc = "" +
+const file_smartcore_bos_pressure_v1_pressure_proto_rawDesc = "" +
 	"\n" +
-	"\x0epressure.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"z\n" +
+	"(smartcore/bos/pressure/v1/pressure.proto\x12\x19smartcore.bos.pressure.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"z\n" +
 	"\bPressure\x12,\n" +
 	"\x0ftarget_pressure\x18\x01 \x01(\x02H\x00R\x0etargetPressure\x88\x01\x01\x12\x1f\n" +
 	"\bpressure\x18\x02 \x01(\x02H\x01R\bpressure\x88\x01\x01B\x12\n" +
@@ -479,17 +479,17 @@ const file_pressure_proto_rawDesc = "" +
 	"\x13PullPressureRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xed\x01\n" +
-	"\x14PullPressureResponse\x12D\n" +
-	"\achanges\x18\x01 \x03(\v2*.smartcore.bos.PullPressureResponse.ChangeR\achanges\x1a\x8e\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x85\x02\n" +
+	"\x14PullPressureResponse\x12P\n" +
+	"\achanges\x18\x01 \x03(\v26.smartcore.bos.pressure.v1.PullPressureResponse.ChangeR\achanges\x1a\x9a\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x123\n" +
-	"\bpressure\x18\x03 \x01(\v2\x17.smartcore.bos.PressureR\bpressure\"\xb3\x01\n" +
+	"changeTime\x12?\n" +
+	"\bpressure\x18\x03 \x01(\v2#.smartcore.bos.pressure.v1.PressureR\bpressure\"\xbf\x01\n" +
 	"\x15UpdatePressureRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x123\n" +
-	"\bpressure\x18\x02 \x01(\v2\x17.smartcore.bos.PressureR\bpressure\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12?\n" +
+	"\bpressure\x18\x02 \x01(\v2#.smartcore.bos.pressure.v1.PressureR\bpressure\x12;\n" +
 	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\x12\x14\n" +
 	"\x05delta\x18\x04 \x01(\bR\x05delta\"-\n" +
@@ -497,57 +497,57 @@ const file_pressure_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"\x83\x01\n" +
 	"\x0fPressureSupport\x12K\n" +
 	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12#\n" +
-	"\rpressure_unit\x18\x02 \x01(\tR\fpressureUnit2\x8a\x02\n" +
-	"\vPressureApi\x12K\n" +
-	"\vGetPressure\x12!.smartcore.bos.GetPressureRequest\x1a\x17.smartcore.bos.Pressure\"\x00\x12[\n" +
-	"\fPullPressure\x12\".smartcore.bos.PullPressureRequest\x1a#.smartcore.bos.PullPressureResponse\"\x000\x01\x12Q\n" +
-	"\x0eUpdatePressure\x12$.smartcore.bos.UpdatePressureRequest\x1a\x17.smartcore.bos.Pressure\"\x002l\n" +
-	"\fPressureInfo\x12\\\n" +
-	"\x10DescribePressure\x12&.smartcore.bos.DescribePressureRequest\x1a\x1e.smartcore.bos.PressureSupport\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\rpressure_unit\x18\x02 \x01(\tR\fpressureUnit2\xd2\x02\n" +
+	"\vPressureApi\x12c\n" +
+	"\vGetPressure\x12-.smartcore.bos.pressure.v1.GetPressureRequest\x1a#.smartcore.bos.pressure.v1.Pressure\"\x00\x12s\n" +
+	"\fPullPressure\x12..smartcore.bos.pressure.v1.PullPressureRequest\x1a/.smartcore.bos.pressure.v1.PullPressureResponse\"\x000\x01\x12i\n" +
+	"\x0eUpdatePressure\x120.smartcore.bos.pressure.v1.UpdatePressureRequest\x1a#.smartcore.bos.pressure.v1.Pressure\"\x002\x84\x01\n" +
+	"\fPressureInfo\x12t\n" +
+	"\x10DescribePressure\x122.smartcore.bos.pressure.v1.DescribePressureRequest\x1a*.smartcore.bos.pressure.v1.PressureSupport\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_pressure_proto_rawDescOnce sync.Once
-	file_pressure_proto_rawDescData []byte
+	file_smartcore_bos_pressure_v1_pressure_proto_rawDescOnce sync.Once
+	file_smartcore_bos_pressure_v1_pressure_proto_rawDescData []byte
 )
 
-func file_pressure_proto_rawDescGZIP() []byte {
-	file_pressure_proto_rawDescOnce.Do(func() {
-		file_pressure_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_pressure_proto_rawDesc), len(file_pressure_proto_rawDesc)))
+func file_smartcore_bos_pressure_v1_pressure_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_pressure_v1_pressure_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_pressure_v1_pressure_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_pressure_v1_pressure_proto_rawDesc), len(file_smartcore_bos_pressure_v1_pressure_proto_rawDesc)))
 	})
-	return file_pressure_proto_rawDescData
+	return file_smartcore_bos_pressure_v1_pressure_proto_rawDescData
 }
 
-var file_pressure_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
-var file_pressure_proto_goTypes = []any{
-	(*Pressure)(nil),                    // 0: smartcore.bos.Pressure
-	(*GetPressureRequest)(nil),          // 1: smartcore.bos.GetPressureRequest
-	(*PullPressureRequest)(nil),         // 2: smartcore.bos.PullPressureRequest
-	(*PullPressureResponse)(nil),        // 3: smartcore.bos.PullPressureResponse
-	(*UpdatePressureRequest)(nil),       // 4: smartcore.bos.UpdatePressureRequest
-	(*DescribePressureRequest)(nil),     // 5: smartcore.bos.DescribePressureRequest
-	(*PressureSupport)(nil),             // 6: smartcore.bos.PressureSupport
-	(*PullPressureResponse_Change)(nil), // 7: smartcore.bos.PullPressureResponse.Change
+var file_smartcore_bos_pressure_v1_pressure_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_smartcore_bos_pressure_v1_pressure_proto_goTypes = []any{
+	(*Pressure)(nil),                    // 0: smartcore.bos.pressure.v1.Pressure
+	(*GetPressureRequest)(nil),          // 1: smartcore.bos.pressure.v1.GetPressureRequest
+	(*PullPressureRequest)(nil),         // 2: smartcore.bos.pressure.v1.PullPressureRequest
+	(*PullPressureResponse)(nil),        // 3: smartcore.bos.pressure.v1.PullPressureResponse
+	(*UpdatePressureRequest)(nil),       // 4: smartcore.bos.pressure.v1.UpdatePressureRequest
+	(*DescribePressureRequest)(nil),     // 5: smartcore.bos.pressure.v1.DescribePressureRequest
+	(*PressureSupport)(nil),             // 6: smartcore.bos.pressure.v1.PressureSupport
+	(*PullPressureResponse_Change)(nil), // 7: smartcore.bos.pressure.v1.PullPressureResponse.Change
 	(*fieldmaskpb.FieldMask)(nil),       // 8: google.protobuf.FieldMask
 	(*types.ResourceSupport)(nil),       // 9: smartcore.types.ResourceSupport
 	(*timestamppb.Timestamp)(nil),       // 10: google.protobuf.Timestamp
 }
-var file_pressure_proto_depIdxs = []int32{
-	8,  // 0: smartcore.bos.GetPressureRequest.read_mask:type_name -> google.protobuf.FieldMask
-	8,  // 1: smartcore.bos.PullPressureRequest.read_mask:type_name -> google.protobuf.FieldMask
-	7,  // 2: smartcore.bos.PullPressureResponse.changes:type_name -> smartcore.bos.PullPressureResponse.Change
-	0,  // 3: smartcore.bos.UpdatePressureRequest.pressure:type_name -> smartcore.bos.Pressure
-	8,  // 4: smartcore.bos.UpdatePressureRequest.update_mask:type_name -> google.protobuf.FieldMask
-	9,  // 5: smartcore.bos.PressureSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	10, // 6: smartcore.bos.PullPressureResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	0,  // 7: smartcore.bos.PullPressureResponse.Change.pressure:type_name -> smartcore.bos.Pressure
-	1,  // 8: smartcore.bos.PressureApi.GetPressure:input_type -> smartcore.bos.GetPressureRequest
-	2,  // 9: smartcore.bos.PressureApi.PullPressure:input_type -> smartcore.bos.PullPressureRequest
-	4,  // 10: smartcore.bos.PressureApi.UpdatePressure:input_type -> smartcore.bos.UpdatePressureRequest
-	5,  // 11: smartcore.bos.PressureInfo.DescribePressure:input_type -> smartcore.bos.DescribePressureRequest
-	0,  // 12: smartcore.bos.PressureApi.GetPressure:output_type -> smartcore.bos.Pressure
-	3,  // 13: smartcore.bos.PressureApi.PullPressure:output_type -> smartcore.bos.PullPressureResponse
-	0,  // 14: smartcore.bos.PressureApi.UpdatePressure:output_type -> smartcore.bos.Pressure
-	6,  // 15: smartcore.bos.PressureInfo.DescribePressure:output_type -> smartcore.bos.PressureSupport
+var file_smartcore_bos_pressure_v1_pressure_proto_depIdxs = []int32{
+	8,  // 0: smartcore.bos.pressure.v1.GetPressureRequest.read_mask:type_name -> google.protobuf.FieldMask
+	8,  // 1: smartcore.bos.pressure.v1.PullPressureRequest.read_mask:type_name -> google.protobuf.FieldMask
+	7,  // 2: smartcore.bos.pressure.v1.PullPressureResponse.changes:type_name -> smartcore.bos.pressure.v1.PullPressureResponse.Change
+	0,  // 3: smartcore.bos.pressure.v1.UpdatePressureRequest.pressure:type_name -> smartcore.bos.pressure.v1.Pressure
+	8,  // 4: smartcore.bos.pressure.v1.UpdatePressureRequest.update_mask:type_name -> google.protobuf.FieldMask
+	9,  // 5: smartcore.bos.pressure.v1.PressureSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	10, // 6: smartcore.bos.pressure.v1.PullPressureResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	0,  // 7: smartcore.bos.pressure.v1.PullPressureResponse.Change.pressure:type_name -> smartcore.bos.pressure.v1.Pressure
+	1,  // 8: smartcore.bos.pressure.v1.PressureApi.GetPressure:input_type -> smartcore.bos.pressure.v1.GetPressureRequest
+	2,  // 9: smartcore.bos.pressure.v1.PressureApi.PullPressure:input_type -> smartcore.bos.pressure.v1.PullPressureRequest
+	4,  // 10: smartcore.bos.pressure.v1.PressureApi.UpdatePressure:input_type -> smartcore.bos.pressure.v1.UpdatePressureRequest
+	5,  // 11: smartcore.bos.pressure.v1.PressureInfo.DescribePressure:input_type -> smartcore.bos.pressure.v1.DescribePressureRequest
+	0,  // 12: smartcore.bos.pressure.v1.PressureApi.GetPressure:output_type -> smartcore.bos.pressure.v1.Pressure
+	3,  // 13: smartcore.bos.pressure.v1.PressureApi.PullPressure:output_type -> smartcore.bos.pressure.v1.PullPressureResponse
+	0,  // 14: smartcore.bos.pressure.v1.PressureApi.UpdatePressure:output_type -> smartcore.bos.pressure.v1.Pressure
+	6,  // 15: smartcore.bos.pressure.v1.PressureInfo.DescribePressure:output_type -> smartcore.bos.pressure.v1.PressureSupport
 	12, // [12:16] is the sub-list for method output_type
 	8,  // [8:12] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
@@ -555,27 +555,27 @@ var file_pressure_proto_depIdxs = []int32{
 	0,  // [0:8] is the sub-list for field type_name
 }
 
-func init() { file_pressure_proto_init() }
-func file_pressure_proto_init() {
-	if File_pressure_proto != nil {
+func init() { file_smartcore_bos_pressure_v1_pressure_proto_init() }
+func file_smartcore_bos_pressure_v1_pressure_proto_init() {
+	if File_smartcore_bos_pressure_v1_pressure_proto != nil {
 		return
 	}
-	file_pressure_proto_msgTypes[0].OneofWrappers = []any{}
+	file_smartcore_bos_pressure_v1_pressure_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pressure_proto_rawDesc), len(file_pressure_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_pressure_v1_pressure_proto_rawDesc), len(file_smartcore_bos_pressure_v1_pressure_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_pressure_proto_goTypes,
-		DependencyIndexes: file_pressure_proto_depIdxs,
-		MessageInfos:      file_pressure_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_pressure_v1_pressure_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_pressure_v1_pressure_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_pressure_v1_pressure_proto_msgTypes,
 	}.Build()
-	File_pressure_proto = out.File
-	file_pressure_proto_goTypes = nil
-	file_pressure_proto_depIdxs = nil
+	File_smartcore_bos_pressure_v1_pressure_proto = out.File
+	file_smartcore_bos_pressure_v1_pressure_proto_goTypes = nil
+	file_smartcore_bos_pressure_v1_pressure_proto_depIdxs = nil
 }

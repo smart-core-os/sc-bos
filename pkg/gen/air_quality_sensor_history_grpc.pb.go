@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: air_quality_sensor_history.proto
+// source: smartcore/bos/airqualitysensor/v1/air_quality_sensor_history.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AirQualitySensorHistory_ListAirQualityHistory_FullMethodName = "/smartcore.bos.AirQualitySensorHistory/ListAirQualityHistory"
+	AirQualitySensorHistory_ListAirQualityHistory_FullMethodName = "/smartcore.bos.airqualitysensor.v1.AirQualitySensorHistory/ListAirQualityHistory"
 )
 
 // AirQualitySensorHistoryClient is the client API for AirQualitySensorHistory service.
@@ -113,7 +113,7 @@ func _AirQualitySensorHistory_ListAirQualityHistory_Handler(srv interface{}, ctx
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AirQualitySensorHistory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.AirQualitySensorHistory",
+	ServiceName: "smartcore.bos.airqualitysensor.v1.AirQualitySensorHistory",
 	HandlerType: (*AirQualitySensorHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -122,5 +122,5 @@ var AirQualitySensorHistory_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "air_quality_sensor_history.proto",
+	Metadata: "smartcore/bos/airqualitysensor/v1/air_quality_sensor_history.proto",
 }

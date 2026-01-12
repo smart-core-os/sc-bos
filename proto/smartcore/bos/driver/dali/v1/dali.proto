@@ -1,0 +1,164 @@
+syntax = "proto3";
+
+package smartcore.bos.driver.dali.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+service DaliApi {
+  // Group commands
+  rpc AddToGroup(AddToGroupRequest) returns (AddToGroupResponse);
+  rpc RemoveFromGroup(RemoveFromGroupRequest) returns (RemoveFromGroupResponse);
+  rpc GetGroupMembership(GetGroupMembershipRequest) returns (GetGroupMembershipResponse);
+
+  // Control Gear Commands
+  rpc GetControlGearStatus(GetControlGearStatusRequest) returns (ControlGearStatus);
+
+  // Emergency Light commands
+  rpc GetEmergencyStatus(GetEmergencyStatusRequest) returns (EmergencyStatus);
+  // Start identification for the light; typically this will flash an indicator LED for a few seconds.
+  rpc Identify(IdentifyRequest) returns (IdentifyResponse);
+  // Attempt to start a function or duration test.
+  rpc StartTest(StartTestRequest) returns (StartTestResponse);
+  // Stop any test that is in progress.
+  rpc StopTest(StopTestRequest) returns (StopTestResponse);
+  // Retrieve the results (pass/fail) of the most recent function or duration test to be performed.
+  rpc GetTestResult(GetTestResultRequest) returns (TestResult);
+  // Can be used to clear a test pass from the light's internal memory. Only passes can be deleted in this way -
+  // a failure will stick until it's replaced with a pass.
+  //
+  // Useful to make sure you don't record the same test multiple times.
+  rpc DeleteTestResult(DeleteTestResultRequest) returns (TestResult);
+}
+
+message GetGroupMembershipRequest {
+  string name = 1;
+}
+message GetGroupMembershipResponse {
+  repeated int32 groups = 1;
+}
+
+message AddToGroupRequest {
+  string name = 1;
+  int32 group = 2;
+}
+message AddToGroupResponse {}
+
+message RemoveFromGroupRequest {
+  string name = 1;
+  int32 group = 2;
+}
+message RemoveFromGroupResponse {}
+
+message EmergencyStatus {
+  enum Test {
+    TEST_UNKNOWN = 0;
+    NO_TEST = 1;
+    FUNCTION_TEST = 2;
+    DURATION_TEST = 3;
+  }
+
+  enum Mode {
+    MODE_UNSPECIFIED = 0;
+    REST = 1;
+    NORMAL = 3;
+    EMERGENCY = 4;
+    EXTENDED_EMERGENCY = 5;
+    FUNCTION_TEST_ACTIVE = 6;
+    DURATION_TEST_ACTIVE = 7;
+    HARDWIRED_INHIBIT = 8;
+    HARDWIRED_SWITCH = 9;
+  }
+
+  enum Failure {
+    FAILURE_UNSPECIFIED = 0;
+    CIRCUIT_FAILURE = 1;
+    BATTERY_DURATION_FAILURE = 2;
+    BATTERY_FAILURE = 3;
+    LAMP_FAILURE = 4;
+    FUNCTION_TEST_FAILED = 5;
+    DURATION_TEST_FAILED = 6;
+  }
+
+  repeated Mode active_modes = 1;
+
+  repeated Test pending_tests = 2;
+  repeated Test overdue_tests = 3;
+  repeated Test results_available = 4;
+
+  bool inhibit_active = 5;
+  bool identification_active = 6;
+  float battery_level_percent = 7;
+
+  repeated Failure failures = 8;
+}
+
+message GetEmergencyStatusRequest {
+  string name = 1;
+}
+
+message ControlGearStatus {
+  enum Failure {
+    FAILURE_UNSPECIFIED = 0;
+    LAMP_FAILURE = 1;
+    CONTROL_GEAR_FAILURE = 2;
+  }
+  repeated Failure failures = 1;
+}
+
+message GetControlGearStatusRequest {
+  string name = 1;
+}
+
+message IdentifyRequest {
+  string name = 1;
+}
+message IdentifyResponse {}
+
+message StartTestRequest {
+  string name = 1;
+  EmergencyStatus.Test test = 2;
+}
+message StartTestResponse {}
+
+message StopTestRequest {
+  string name = 1;
+}
+message StopTestResponse {}
+
+message UpdateTestIntervalRequest {
+  string name = 1;
+  EmergencyStatus.Test test = 2;
+  // The target test interval to use. Because test intervals are highly quantised in DALI, this may be rounded.
+  // The actual value used will be returned in UpdateTestIntervalResponse.interval
+  google.protobuf.Duration interval = 3;
+}
+message UpdateTestIntervalResponse {
+  // The test interval set, after rounding has been performed.
+  google.protobuf.Duration interval = 1;
+}
+
+message TestResult {
+  EmergencyStatus.Test test = 1;
+  bool pass = 4;
+  google.protobuf.Duration duration = 5; // only present for duration tests
+  string etag = 6;
+  // the time the test was started (if known)
+  google.protobuf.Timestamp start_time = 7;
+  // the time the test was completed
+  google.protobuf.Timestamp end_time = 8;
+  EmergencyStatus.Failure failure_reason = 9; // if the test failed, this will be set to the reason for failure
+}
+
+message GetTestResultRequest {
+  string name = 1;
+  EmergencyStatus.Test test = 2;
+}
+
+message DeleteTestResultRequest {
+  string name = 1;
+  EmergencyStatus.Test test = 2;    // which kind of test result are we trying to delete?
+  string etag = 3;  // if present, the delete operation will fail unless the provided etag matches the stored etag
+}

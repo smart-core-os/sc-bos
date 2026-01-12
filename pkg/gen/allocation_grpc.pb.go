@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: allocation.proto
+// source: smartcore/bos/allocation/v1/allocation.proto
 
 package gen
 
@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AllocationApi_GetAllocation_FullMethodName    = "/smartcore.bos.AllocationApi/GetAllocation"
-	AllocationApi_UpdateAllocation_FullMethodName = "/smartcore.bos.AllocationApi/UpdateAllocation"
-	AllocationApi_PullAllocation_FullMethodName   = "/smartcore.bos.AllocationApi/PullAllocation"
+	AllocationApi_GetAllocation_FullMethodName    = "/smartcore.bos.allocation.v1.AllocationApi/GetAllocation"
+	AllocationApi_UpdateAllocation_FullMethodName = "/smartcore.bos.allocation.v1.AllocationApi/UpdateAllocation"
+	AllocationApi_PullAllocation_FullMethodName   = "/smartcore.bos.allocation.v1.AllocationApi/PullAllocation"
 )
 
 // AllocationApiClient is the client API for AllocationApi service.
@@ -190,7 +190,7 @@ type AllocationApi_PullAllocationServer = grpc.ServerStreamingServer[PullAllocat
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AllocationApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.AllocationApi",
+	ServiceName: "smartcore.bos.allocation.v1.AllocationApi",
 	HandlerType: (*AllocationApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -209,5 +209,5 @@ var AllocationApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "allocation.proto",
+	Metadata: "smartcore/bos/allocation/v1/allocation.proto",
 }

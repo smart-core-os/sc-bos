@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: sound_sensor.proto
+// source: smartcore/bos/soundsensor/v1/sound_sensor.proto
 
 package gen
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SoundSensorApi_GetSoundLevel_FullMethodName  = "/smartcore.bos.SoundSensorApi/GetSoundLevel"
-	SoundSensorApi_PullSoundLevel_FullMethodName = "/smartcore.bos.SoundSensorApi/PullSoundLevel"
+	SoundSensorApi_GetSoundLevel_FullMethodName  = "/smartcore.bos.soundsensor.v1.SoundSensorApi/GetSoundLevel"
+	SoundSensorApi_PullSoundLevel_FullMethodName = "/smartcore.bos.soundsensor.v1.SoundSensorApi/PullSoundLevel"
 )
 
 // SoundSensorApiClient is the client API for SoundSensorApi service.
@@ -148,7 +148,7 @@ type SoundSensorApi_PullSoundLevelServer = grpc.ServerStreamingServer[PullSoundL
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SoundSensorApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.SoundSensorApi",
+	ServiceName: "smartcore.bos.soundsensor.v1.SoundSensorApi",
 	HandlerType: (*SoundSensorApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -163,11 +163,11 @@ var SoundSensorApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "sound_sensor.proto",
+	Metadata: "smartcore/bos/soundsensor/v1/sound_sensor.proto",
 }
 
 const (
-	SoundSensorInfo_DescribeSoundLevel_FullMethodName = "/smartcore.bos.SoundSensorInfo/DescribeSoundLevel"
+	SoundSensorInfo_DescribeSoundLevel_FullMethodName = "/smartcore.bos.soundsensor.v1.SoundSensorInfo/DescribeSoundLevel"
 )
 
 // SoundSensorInfoClient is the client API for SoundSensorInfo service.
@@ -256,7 +256,7 @@ func _SoundSensorInfo_DescribeSoundLevel_Handler(srv interface{}, ctx context.Co
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SoundSensorInfo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.SoundSensorInfo",
+	ServiceName: "smartcore.bos.soundsensor.v1.SoundSensorInfo",
 	HandlerType: (*SoundSensorInfoServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -265,5 +265,5 @@ var SoundSensorInfo_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "sound_sensor.proto",
+	Metadata: "smartcore/bos/soundsensor/v1/sound_sensor.proto",
 }

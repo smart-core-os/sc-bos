@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: axiomxa.proto
+// source: smartcore/bos/driver/axiomxa/v1/axiomxa.proto
 
 package gen
 
@@ -40,7 +40,7 @@ type SaveQRCredentialRequest struct {
 
 func (x *SaveQRCredentialRequest) Reset() {
 	*x = SaveQRCredentialRequest{}
-	mi := &file_axiomxa_proto_msgTypes[0]
+	mi := &file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -52,7 +52,7 @@ func (x *SaveQRCredentialRequest) String() string {
 func (*SaveQRCredentialRequest) ProtoMessage() {}
 
 func (x *SaveQRCredentialRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_axiomxa_proto_msgTypes[0]
+	mi := &file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -65,7 +65,7 @@ func (x *SaveQRCredentialRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveQRCredentialRequest.ProtoReflect.Descriptor instead.
 func (*SaveQRCredentialRequest) Descriptor() ([]byte, []int) {
-	return file_axiomxa_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SaveQRCredentialRequest) GetName() string {
@@ -118,7 +118,7 @@ type SaveQRCredentialResponse struct {
 
 func (x *SaveQRCredentialResponse) Reset() {
 	*x = SaveQRCredentialResponse{}
-	mi := &file_axiomxa_proto_msgTypes[1]
+	mi := &file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -130,7 +130,7 @@ func (x *SaveQRCredentialResponse) String() string {
 func (*SaveQRCredentialResponse) ProtoMessage() {}
 
 func (x *SaveQRCredentialResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_axiomxa_proto_msgTypes[1]
+	mi := &file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -143,14 +143,14 @@ func (x *SaveQRCredentialResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveQRCredentialResponse.ProtoReflect.Descriptor instead.
 func (*SaveQRCredentialResponse) Descriptor() ([]byte, []int) {
-	return file_axiomxa_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDescGZIP(), []int{1}
 }
 
-var File_axiomxa_proto protoreflect.FileDescriptor
+var File_smartcore_bos_driver_axiomxa_v1_axiomxa_proto protoreflect.FileDescriptor
 
-const file_axiomxa_proto_rawDesc = "" +
+const file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDesc = "" +
 	"\n" +
-	"\raxiomxa.proto\x12\x1csmartcore.bos.driver.axiomxa\x1a\x1fgoogle/protobuf/timestamp.proto\"\x84\x02\n" +
+	"-smartcore/bos/driver/axiomxa/v1/axiomxa.proto\x12\x1fsmartcore.bos.driver.axiomxa.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x84\x02\n" +
 	"\x17SaveQRCredentialRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1f\n" +
 	"\vcard_number\x18\x02 \x01(\x04R\n" +
@@ -162,33 +162,33 @@ const file_axiomxa_proto_rawDesc = "" +
 	"activeTime\x12;\n" +
 	"\vexpire_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"expireTime\"\x1a\n" +
-	"\x18SaveQRCredentialResponse2\x9a\x01\n" +
-	"\x14AxiomXaDriverService\x12\x81\x01\n" +
-	"\x10SaveQRCredential\x125.smartcore.bos.driver.axiomxa.SaveQRCredentialRequest\x1a6.smartcore.bos.driver.axiomxa.SaveQRCredentialResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\x18SaveQRCredentialResponse2\xa0\x01\n" +
+	"\x14AxiomXaDriverService\x12\x87\x01\n" +
+	"\x10SaveQRCredential\x128.smartcore.bos.driver.axiomxa.v1.SaveQRCredentialRequest\x1a9.smartcore.bos.driver.axiomxa.v1.SaveQRCredentialResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_axiomxa_proto_rawDescOnce sync.Once
-	file_axiomxa_proto_rawDescData []byte
+	file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDescOnce sync.Once
+	file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDescData []byte
 )
 
-func file_axiomxa_proto_rawDescGZIP() []byte {
-	file_axiomxa_proto_rawDescOnce.Do(func() {
-		file_axiomxa_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_axiomxa_proto_rawDesc), len(file_axiomxa_proto_rawDesc)))
+func file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDesc), len(file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDesc)))
 	})
-	return file_axiomxa_proto_rawDescData
+	return file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDescData
 }
 
-var file_axiomxa_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_axiomxa_proto_goTypes = []any{
-	(*SaveQRCredentialRequest)(nil),  // 0: smartcore.bos.driver.axiomxa.SaveQRCredentialRequest
-	(*SaveQRCredentialResponse)(nil), // 1: smartcore.bos.driver.axiomxa.SaveQRCredentialResponse
+var file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_goTypes = []any{
+	(*SaveQRCredentialRequest)(nil),  // 0: smartcore.bos.driver.axiomxa.v1.SaveQRCredentialRequest
+	(*SaveQRCredentialResponse)(nil), // 1: smartcore.bos.driver.axiomxa.v1.SaveQRCredentialResponse
 	(*timestamppb.Timestamp)(nil),    // 2: google.protobuf.Timestamp
 }
-var file_axiomxa_proto_depIdxs = []int32{
-	2, // 0: smartcore.bos.driver.axiomxa.SaveQRCredentialRequest.active_time:type_name -> google.protobuf.Timestamp
-	2, // 1: smartcore.bos.driver.axiomxa.SaveQRCredentialRequest.expire_time:type_name -> google.protobuf.Timestamp
-	0, // 2: smartcore.bos.driver.axiomxa.AxiomXaDriverService.SaveQRCredential:input_type -> smartcore.bos.driver.axiomxa.SaveQRCredentialRequest
-	1, // 3: smartcore.bos.driver.axiomxa.AxiomXaDriverService.SaveQRCredential:output_type -> smartcore.bos.driver.axiomxa.SaveQRCredentialResponse
+var file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_depIdxs = []int32{
+	2, // 0: smartcore.bos.driver.axiomxa.v1.SaveQRCredentialRequest.active_time:type_name -> google.protobuf.Timestamp
+	2, // 1: smartcore.bos.driver.axiomxa.v1.SaveQRCredentialRequest.expire_time:type_name -> google.protobuf.Timestamp
+	0, // 2: smartcore.bos.driver.axiomxa.v1.AxiomXaDriverService.SaveQRCredential:input_type -> smartcore.bos.driver.axiomxa.v1.SaveQRCredentialRequest
+	1, // 3: smartcore.bos.driver.axiomxa.v1.AxiomXaDriverService.SaveQRCredential:output_type -> smartcore.bos.driver.axiomxa.v1.SaveQRCredentialResponse
 	3, // [3:4] is the sub-list for method output_type
 	2, // [2:3] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -196,26 +196,26 @@ var file_axiomxa_proto_depIdxs = []int32{
 	0, // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_axiomxa_proto_init() }
-func file_axiomxa_proto_init() {
-	if File_axiomxa_proto != nil {
+func init() { file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_init() }
+func file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_init() {
+	if File_smartcore_bos_driver_axiomxa_v1_axiomxa_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_axiomxa_proto_rawDesc), len(file_axiomxa_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDesc), len(file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_axiomxa_proto_goTypes,
-		DependencyIndexes: file_axiomxa_proto_depIdxs,
-		MessageInfos:      file_axiomxa_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_msgTypes,
 	}.Build()
-	File_axiomxa_proto = out.File
-	file_axiomxa_proto_goTypes = nil
-	file_axiomxa_proto_depIdxs = nil
+	File_smartcore_bos_driver_axiomxa_v1_axiomxa_proto = out.File
+	file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_goTypes = nil
+	file_smartcore_bos_driver_axiomxa_v1_axiomxa_proto_depIdxs = nil
 }

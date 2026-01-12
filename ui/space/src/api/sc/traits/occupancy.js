@@ -3,8 +3,8 @@ import {clientOptions} from '@/api/grpcweb.js';
 import {trackAction} from '@/api/resource';
 import {pullResource, setValue} from '@/api/resource.js';
 import {periodFromObject} from '@/api/sc/types/period';
-import {OccupancySensorHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/occupancy_sensor_history_grpc_web_pb';
-import {ListOccupancyHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/occupancy_sensor_history_pb';
+import {OccupancySensorHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/occupancysensor/v1/occupancy_sensor_history_grpc_web_pb';
+import {ListOccupancyHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/occupancysensor/v1/occupancy_sensor_history_pb';
 import {OccupancySensorApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/occupancy_sensor_grpc_web_pb';
 import {Occupancy, PullOccupancyRequest} from '@smart-core-os/sc-api-grpc-web/traits/occupancy_sensor_pb';
 

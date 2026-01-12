@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: mqtt.proto
+// source: smartcore/bos/mqtt/v1/mqtt.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MqttService_PullMessages_FullMethodName = "/smartcore.bos.MqttService/PullMessages"
+	MqttService_PullMessages_FullMethodName = "/smartcore.bos.mqtt.v1.MqttService/PullMessages"
 )
 
 // MqttServiceClient is the client API for MqttService service.
@@ -110,7 +110,7 @@ type MqttService_PullMessagesServer = grpc.ServerStreamingServer[PullMessagesRes
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MqttService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.MqttService",
+	ServiceName: "smartcore.bos.mqtt.v1.MqttService",
 	HandlerType: (*MqttServiceServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
@@ -120,5 +120,5 @@ var MqttService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "mqtt.proto",
+	Metadata: "smartcore/bos/mqtt/v1/mqtt.proto",
 }

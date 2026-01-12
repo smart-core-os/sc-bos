@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: udmi.proto
+// source: smartcore/bos/udmi/v1/udmi.proto
 
 package gen
 
@@ -30,7 +30,7 @@ type PullControlTopicsRequest struct {
 
 func (x *PullControlTopicsRequest) Reset() {
 	*x = PullControlTopicsRequest{}
-	mi := &file_udmi_proto_msgTypes[0]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +42,7 @@ func (x *PullControlTopicsRequest) String() string {
 func (*PullControlTopicsRequest) ProtoMessage() {}
 
 func (x *PullControlTopicsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_udmi_proto_msgTypes[0]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,7 +55,7 @@ func (x *PullControlTopicsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullControlTopicsRequest.ProtoReflect.Descriptor instead.
 func (*PullControlTopicsRequest) Descriptor() ([]byte, []int) {
-	return file_udmi_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *PullControlTopicsRequest) GetName() string {
@@ -75,7 +75,7 @@ type PullControlTopicsResponse struct {
 
 func (x *PullControlTopicsResponse) Reset() {
 	*x = PullControlTopicsResponse{}
-	mi := &file_udmi_proto_msgTypes[1]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -87,7 +87,7 @@ func (x *PullControlTopicsResponse) String() string {
 func (*PullControlTopicsResponse) ProtoMessage() {}
 
 func (x *PullControlTopicsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_udmi_proto_msgTypes[1]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -100,7 +100,7 @@ func (x *PullControlTopicsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullControlTopicsResponse.ProtoReflect.Descriptor instead.
 func (*PullControlTopicsResponse) Descriptor() ([]byte, []int) {
-	return file_udmi_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *PullControlTopicsResponse) GetName() string {
@@ -127,7 +127,7 @@ type OnMessageRequest struct {
 
 func (x *OnMessageRequest) Reset() {
 	*x = OnMessageRequest{}
-	mi := &file_udmi_proto_msgTypes[2]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -139,7 +139,7 @@ func (x *OnMessageRequest) String() string {
 func (*OnMessageRequest) ProtoMessage() {}
 
 func (x *OnMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_udmi_proto_msgTypes[2]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -152,7 +152,7 @@ func (x *OnMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OnMessageRequest.ProtoReflect.Descriptor instead.
 func (*OnMessageRequest) Descriptor() ([]byte, []int) {
-	return file_udmi_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *OnMessageRequest) GetName() string {
@@ -178,7 +178,7 @@ type OnMessageResponse struct {
 
 func (x *OnMessageResponse) Reset() {
 	*x = OnMessageResponse{}
-	mi := &file_udmi_proto_msgTypes[3]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -190,7 +190,7 @@ func (x *OnMessageResponse) String() string {
 func (*OnMessageResponse) ProtoMessage() {}
 
 func (x *OnMessageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_udmi_proto_msgTypes[3]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -203,7 +203,7 @@ func (x *OnMessageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OnMessageResponse.ProtoReflect.Descriptor instead.
 func (*OnMessageResponse) Descriptor() ([]byte, []int) {
-	return file_udmi_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *OnMessageResponse) GetName() string {
@@ -224,7 +224,7 @@ type PullExportMessagesRequest struct {
 
 func (x *PullExportMessagesRequest) Reset() {
 	*x = PullExportMessagesRequest{}
-	mi := &file_udmi_proto_msgTypes[4]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -236,7 +236,7 @@ func (x *PullExportMessagesRequest) String() string {
 func (*PullExportMessagesRequest) ProtoMessage() {}
 
 func (x *PullExportMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_udmi_proto_msgTypes[4]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -249,7 +249,7 @@ func (x *PullExportMessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullExportMessagesRequest.ProtoReflect.Descriptor instead.
 func (*PullExportMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_udmi_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullExportMessagesRequest) GetName() string {
@@ -276,7 +276,7 @@ type PullExportMessagesResponse struct {
 
 func (x *PullExportMessagesResponse) Reset() {
 	*x = PullExportMessagesResponse{}
-	mi := &file_udmi_proto_msgTypes[5]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -288,7 +288,7 @@ func (x *PullExportMessagesResponse) String() string {
 func (*PullExportMessagesResponse) ProtoMessage() {}
 
 func (x *PullExportMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_udmi_proto_msgTypes[5]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -301,7 +301,7 @@ func (x *PullExportMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullExportMessagesResponse.ProtoReflect.Descriptor instead.
 func (*PullExportMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_udmi_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PullExportMessagesResponse) GetName() string {
@@ -327,7 +327,7 @@ type GetExportMessageRequest struct {
 
 func (x *GetExportMessageRequest) Reset() {
 	*x = GetExportMessageRequest{}
-	mi := &file_udmi_proto_msgTypes[6]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -339,7 +339,7 @@ func (x *GetExportMessageRequest) String() string {
 func (*GetExportMessageRequest) ProtoMessage() {}
 
 func (x *GetExportMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_udmi_proto_msgTypes[6]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -352,7 +352,7 @@ func (x *GetExportMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetExportMessageRequest.ProtoReflect.Descriptor instead.
 func (*GetExportMessageRequest) Descriptor() ([]byte, []int) {
-	return file_udmi_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetExportMessageRequest) GetName() string {
@@ -372,7 +372,7 @@ type MqttMessage struct {
 
 func (x *MqttMessage) Reset() {
 	*x = MqttMessage{}
-	mi := &file_udmi_proto_msgTypes[7]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -384,7 +384,7 @@ func (x *MqttMessage) String() string {
 func (*MqttMessage) ProtoMessage() {}
 
 func (x *MqttMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_udmi_proto_msgTypes[7]
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -397,7 +397,7 @@ func (x *MqttMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MqttMessage.ProtoReflect.Descriptor instead.
 func (*MqttMessage) Descriptor() ([]byte, []int) {
-	return file_udmi_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *MqttMessage) GetTopic() string {
@@ -414,73 +414,72 @@ func (x *MqttMessage) GetPayload() string {
 	return ""
 }
 
-var File_udmi_proto protoreflect.FileDescriptor
+var File_smartcore_bos_udmi_v1_udmi_proto protoreflect.FileDescriptor
 
-const file_udmi_proto_rawDesc = "" +
+const file_smartcore_bos_udmi_v1_udmi_proto_rawDesc = "" +
 	"\n" +
-	"\n" +
-	"udmi.proto\x12\rsmartcore.bos\".\n" +
+	" smartcore/bos/udmi/v1/udmi.proto\x12\x15smartcore.bos.udmi.v1\".\n" +
 	"\x18PullControlTopicsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"G\n" +
 	"\x19PullControlTopicsResponse\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
-	"\x06topics\x18\x02 \x03(\tR\x06topics\"\\\n" +
+	"\x06topics\x18\x02 \x03(\tR\x06topics\"d\n" +
 	"\x10OnMessageRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x124\n" +
-	"\amessage\x18\x02 \x01(\v2\x1a.smartcore.bos.MqttMessageR\amessage\"'\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12<\n" +
+	"\amessage\x18\x02 \x01(\v2\".smartcore.bos.udmi.v1.MqttMessageR\amessage\"'\n" +
 	"\x11OnMessageResponse\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"R\n" +
 	"\x19PullExportMessagesRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
-	"\finclude_last\x18\x02 \x01(\bR\vincludeLast\"f\n" +
+	"\finclude_last\x18\x02 \x01(\bR\vincludeLast\"n\n" +
 	"\x1aPullExportMessagesResponse\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x124\n" +
-	"\amessage\x18\x02 \x01(\v2\x1a.smartcore.bos.MqttMessageR\amessage\"-\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12<\n" +
+	"\amessage\x18\x02 \x01(\v2\".smartcore.bos.udmi.v1.MqttMessageR\amessage\"-\n" +
 	"\x17GetExportMessageRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"=\n" +
 	"\vMqttMessage\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x18\n" +
-	"\apayload\x18\x02 \x01(\tR\apayload2\x8c\x03\n" +
-	"\vUdmiService\x12h\n" +
-	"\x11PullControlTopics\x12'.smartcore.bos.PullControlTopicsRequest\x1a(.smartcore.bos.PullControlTopicsResponse0\x01\x12N\n" +
-	"\tOnMessage\x12\x1f.smartcore.bos.OnMessageRequest\x1a .smartcore.bos.OnMessageResponse\x12k\n" +
-	"\x12PullExportMessages\x12(.smartcore.bos.PullExportMessagesRequest\x1a).smartcore.bos.PullExportMessagesResponse0\x01\x12V\n" +
-	"\x10GetExportMessage\x12&.smartcore.bos.GetExportMessageRequest\x1a\x1a.smartcore.bos.MqttMessageB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\apayload\x18\x02 \x01(\tR\apayload2\xcc\x03\n" +
+	"\vUdmiService\x12x\n" +
+	"\x11PullControlTopics\x12/.smartcore.bos.udmi.v1.PullControlTopicsRequest\x1a0.smartcore.bos.udmi.v1.PullControlTopicsResponse0\x01\x12^\n" +
+	"\tOnMessage\x12'.smartcore.bos.udmi.v1.OnMessageRequest\x1a(.smartcore.bos.udmi.v1.OnMessageResponse\x12{\n" +
+	"\x12PullExportMessages\x120.smartcore.bos.udmi.v1.PullExportMessagesRequest\x1a1.smartcore.bos.udmi.v1.PullExportMessagesResponse0\x01\x12f\n" +
+	"\x10GetExportMessage\x12..smartcore.bos.udmi.v1.GetExportMessageRequest\x1a\".smartcore.bos.udmi.v1.MqttMessageB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_udmi_proto_rawDescOnce sync.Once
-	file_udmi_proto_rawDescData []byte
+	file_smartcore_bos_udmi_v1_udmi_proto_rawDescOnce sync.Once
+	file_smartcore_bos_udmi_v1_udmi_proto_rawDescData []byte
 )
 
-func file_udmi_proto_rawDescGZIP() []byte {
-	file_udmi_proto_rawDescOnce.Do(func() {
-		file_udmi_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_udmi_proto_rawDesc), len(file_udmi_proto_rawDesc)))
+func file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_udmi_v1_udmi_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_udmi_v1_udmi_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_udmi_v1_udmi_proto_rawDesc), len(file_smartcore_bos_udmi_v1_udmi_proto_rawDesc)))
 	})
-	return file_udmi_proto_rawDescData
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescData
 }
 
-var file_udmi_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
-var file_udmi_proto_goTypes = []any{
-	(*PullControlTopicsRequest)(nil),   // 0: smartcore.bos.PullControlTopicsRequest
-	(*PullControlTopicsResponse)(nil),  // 1: smartcore.bos.PullControlTopicsResponse
-	(*OnMessageRequest)(nil),           // 2: smartcore.bos.OnMessageRequest
-	(*OnMessageResponse)(nil),          // 3: smartcore.bos.OnMessageResponse
-	(*PullExportMessagesRequest)(nil),  // 4: smartcore.bos.PullExportMessagesRequest
-	(*PullExportMessagesResponse)(nil), // 5: smartcore.bos.PullExportMessagesResponse
-	(*GetExportMessageRequest)(nil),    // 6: smartcore.bos.GetExportMessageRequest
-	(*MqttMessage)(nil),                // 7: smartcore.bos.MqttMessage
+var file_smartcore_bos_udmi_v1_udmi_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_smartcore_bos_udmi_v1_udmi_proto_goTypes = []any{
+	(*PullControlTopicsRequest)(nil),   // 0: smartcore.bos.udmi.v1.PullControlTopicsRequest
+	(*PullControlTopicsResponse)(nil),  // 1: smartcore.bos.udmi.v1.PullControlTopicsResponse
+	(*OnMessageRequest)(nil),           // 2: smartcore.bos.udmi.v1.OnMessageRequest
+	(*OnMessageResponse)(nil),          // 3: smartcore.bos.udmi.v1.OnMessageResponse
+	(*PullExportMessagesRequest)(nil),  // 4: smartcore.bos.udmi.v1.PullExportMessagesRequest
+	(*PullExportMessagesResponse)(nil), // 5: smartcore.bos.udmi.v1.PullExportMessagesResponse
+	(*GetExportMessageRequest)(nil),    // 6: smartcore.bos.udmi.v1.GetExportMessageRequest
+	(*MqttMessage)(nil),                // 7: smartcore.bos.udmi.v1.MqttMessage
 }
-var file_udmi_proto_depIdxs = []int32{
-	7, // 0: smartcore.bos.OnMessageRequest.message:type_name -> smartcore.bos.MqttMessage
-	7, // 1: smartcore.bos.PullExportMessagesResponse.message:type_name -> smartcore.bos.MqttMessage
-	0, // 2: smartcore.bos.UdmiService.PullControlTopics:input_type -> smartcore.bos.PullControlTopicsRequest
-	2, // 3: smartcore.bos.UdmiService.OnMessage:input_type -> smartcore.bos.OnMessageRequest
-	4, // 4: smartcore.bos.UdmiService.PullExportMessages:input_type -> smartcore.bos.PullExportMessagesRequest
-	6, // 5: smartcore.bos.UdmiService.GetExportMessage:input_type -> smartcore.bos.GetExportMessageRequest
-	1, // 6: smartcore.bos.UdmiService.PullControlTopics:output_type -> smartcore.bos.PullControlTopicsResponse
-	3, // 7: smartcore.bos.UdmiService.OnMessage:output_type -> smartcore.bos.OnMessageResponse
-	5, // 8: smartcore.bos.UdmiService.PullExportMessages:output_type -> smartcore.bos.PullExportMessagesResponse
-	7, // 9: smartcore.bos.UdmiService.GetExportMessage:output_type -> smartcore.bos.MqttMessage
+var file_smartcore_bos_udmi_v1_udmi_proto_depIdxs = []int32{
+	7, // 0: smartcore.bos.udmi.v1.OnMessageRequest.message:type_name -> smartcore.bos.udmi.v1.MqttMessage
+	7, // 1: smartcore.bos.udmi.v1.PullExportMessagesResponse.message:type_name -> smartcore.bos.udmi.v1.MqttMessage
+	0, // 2: smartcore.bos.udmi.v1.UdmiService.PullControlTopics:input_type -> smartcore.bos.udmi.v1.PullControlTopicsRequest
+	2, // 3: smartcore.bos.udmi.v1.UdmiService.OnMessage:input_type -> smartcore.bos.udmi.v1.OnMessageRequest
+	4, // 4: smartcore.bos.udmi.v1.UdmiService.PullExportMessages:input_type -> smartcore.bos.udmi.v1.PullExportMessagesRequest
+	6, // 5: smartcore.bos.udmi.v1.UdmiService.GetExportMessage:input_type -> smartcore.bos.udmi.v1.GetExportMessageRequest
+	1, // 6: smartcore.bos.udmi.v1.UdmiService.PullControlTopics:output_type -> smartcore.bos.udmi.v1.PullControlTopicsResponse
+	3, // 7: smartcore.bos.udmi.v1.UdmiService.OnMessage:output_type -> smartcore.bos.udmi.v1.OnMessageResponse
+	5, // 8: smartcore.bos.udmi.v1.UdmiService.PullExportMessages:output_type -> smartcore.bos.udmi.v1.PullExportMessagesResponse
+	7, // 9: smartcore.bos.udmi.v1.UdmiService.GetExportMessage:output_type -> smartcore.bos.udmi.v1.MqttMessage
 	6, // [6:10] is the sub-list for method output_type
 	2, // [2:6] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -488,26 +487,26 @@ var file_udmi_proto_depIdxs = []int32{
 	0, // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_udmi_proto_init() }
-func file_udmi_proto_init() {
-	if File_udmi_proto != nil {
+func init() { file_smartcore_bos_udmi_v1_udmi_proto_init() }
+func file_smartcore_bos_udmi_v1_udmi_proto_init() {
+	if File_smartcore_bos_udmi_v1_udmi_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_udmi_proto_rawDesc), len(file_udmi_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_udmi_v1_udmi_proto_rawDesc), len(file_smartcore_bos_udmi_v1_udmi_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_udmi_proto_goTypes,
-		DependencyIndexes: file_udmi_proto_depIdxs,
-		MessageInfos:      file_udmi_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_udmi_v1_udmi_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_udmi_v1_udmi_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_udmi_v1_udmi_proto_msgTypes,
 	}.Build()
-	File_udmi_proto = out.File
-	file_udmi_proto_goTypes = nil
-	file_udmi_proto_depIdxs = nil
+	File_smartcore_bos_udmi_v1_udmi_proto = out.File
+	file_smartcore_bos_udmi_v1_udmi_proto_goTypes = nil
+	file_smartcore_bos_udmi_v1_udmi_proto_depIdxs = nil
 }

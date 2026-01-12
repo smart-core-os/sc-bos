@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: status.proto
+// source: smartcore/bos/status/v1/status.proto
 
 package gen
 
@@ -78,11 +78,11 @@ func (x StatusLog_Level) String() string {
 }
 
 func (StatusLog_Level) Descriptor() protoreflect.EnumDescriptor {
-	return file_status_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_status_v1_status_proto_enumTypes[0].Descriptor()
 }
 
 func (StatusLog_Level) Type() protoreflect.EnumType {
-	return &file_status_proto_enumTypes[0]
+	return &file_smartcore_bos_status_v1_status_proto_enumTypes[0]
 }
 
 func (x StatusLog_Level) Number() protoreflect.EnumNumber {
@@ -91,7 +91,7 @@ func (x StatusLog_Level) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use StatusLog_Level.Descriptor instead.
 func (StatusLog_Level) EnumDescriptor() ([]byte, []int) {
-	return file_status_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_status_v1_status_proto_rawDescGZIP(), []int{0, 0}
 }
 
 type StatusLog struct {
@@ -99,7 +99,7 @@ type StatusLog struct {
 	// What is the working status of the device.
 	// This will be the most severe level - the highest ordinal - from any problems the device currently has.
 	// For example if a printer is running low on paper (a NOTICE) and the printer head is jammed (a FAULTY) then the status will be FAULTY.
-	Level StatusLog_Level `protobuf:"varint,1,opt,name=level,proto3,enum=smartcore.bos.StatusLog_Level" json:"level,omitempty"`
+	Level StatusLog_Level `protobuf:"varint,1,opt,name=level,proto3,enum=smartcore.bos.status.v1.StatusLog_Level" json:"level,omitempty"`
 	// I human readable message describing the problem.
 	// For example "printer head jammed" or "temperature out of range".
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
@@ -116,7 +116,7 @@ type StatusLog struct {
 
 func (x *StatusLog) Reset() {
 	*x = StatusLog{}
-	mi := &file_status_proto_msgTypes[0]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -128,7 +128,7 @@ func (x *StatusLog) String() string {
 func (*StatusLog) ProtoMessage() {}
 
 func (x *StatusLog) ProtoReflect() protoreflect.Message {
-	mi := &file_status_proto_msgTypes[0]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -141,7 +141,7 @@ func (x *StatusLog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatusLog.ProtoReflect.Descriptor instead.
 func (*StatusLog) Descriptor() ([]byte, []int) {
-	return file_status_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_status_v1_status_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *StatusLog) GetLevel() StatusLog_Level {
@@ -183,7 +183,7 @@ type GetCurrentStatusRequest struct {
 
 func (x *GetCurrentStatusRequest) Reset() {
 	*x = GetCurrentStatusRequest{}
-	mi := &file_status_proto_msgTypes[1]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -195,7 +195,7 @@ func (x *GetCurrentStatusRequest) String() string {
 func (*GetCurrentStatusRequest) ProtoMessage() {}
 
 func (x *GetCurrentStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_status_proto_msgTypes[1]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -208,7 +208,7 @@ func (x *GetCurrentStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCurrentStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetCurrentStatusRequest) Descriptor() ([]byte, []int) {
-	return file_status_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_status_v1_status_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetCurrentStatusRequest) GetName() string {
@@ -237,7 +237,7 @@ type PullCurrentStatusRequest struct {
 
 func (x *PullCurrentStatusRequest) Reset() {
 	*x = PullCurrentStatusRequest{}
-	mi := &file_status_proto_msgTypes[2]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -249,7 +249,7 @@ func (x *PullCurrentStatusRequest) String() string {
 func (*PullCurrentStatusRequest) ProtoMessage() {}
 
 func (x *PullCurrentStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_status_proto_msgTypes[2]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -262,7 +262,7 @@ func (x *PullCurrentStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullCurrentStatusRequest.ProtoReflect.Descriptor instead.
 func (*PullCurrentStatusRequest) Descriptor() ([]byte, []int) {
-	return file_status_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_status_v1_status_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PullCurrentStatusRequest) GetName() string {
@@ -295,7 +295,7 @@ type PullCurrentStatusResponse struct {
 
 func (x *PullCurrentStatusResponse) Reset() {
 	*x = PullCurrentStatusResponse{}
-	mi := &file_status_proto_msgTypes[3]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -307,7 +307,7 @@ func (x *PullCurrentStatusResponse) String() string {
 func (*PullCurrentStatusResponse) ProtoMessage() {}
 
 func (x *PullCurrentStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_status_proto_msgTypes[3]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -320,7 +320,7 @@ func (x *PullCurrentStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullCurrentStatusResponse.ProtoReflect.Descriptor instead.
 func (*PullCurrentStatusResponse) Descriptor() ([]byte, []int) {
-	return file_status_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_status_v1_status_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PullCurrentStatusResponse) GetChanges() []*PullCurrentStatusResponse_Change {
@@ -332,7 +332,7 @@ func (x *PullCurrentStatusResponse) GetChanges() []*PullCurrentStatusResponse_Ch
 
 type StatusLog_Problem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Level         StatusLog_Level        `protobuf:"varint,1,opt,name=level,proto3,enum=smartcore.bos.StatusLog_Level" json:"level,omitempty"`
+	Level         StatusLog_Level        `protobuf:"varint,1,opt,name=level,proto3,enum=smartcore.bos.status.v1.StatusLog_Level" json:"level,omitempty"`
 	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	RecordTime    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=record_time,json=recordTime,proto3" json:"record_time,omitempty"`
 	Name          string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"` // an identifier for the component of the device that has the problem
@@ -342,7 +342,7 @@ type StatusLog_Problem struct {
 
 func (x *StatusLog_Problem) Reset() {
 	*x = StatusLog_Problem{}
-	mi := &file_status_proto_msgTypes[4]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -354,7 +354,7 @@ func (x *StatusLog_Problem) String() string {
 func (*StatusLog_Problem) ProtoMessage() {}
 
 func (x *StatusLog_Problem) ProtoReflect() protoreflect.Message {
-	mi := &file_status_proto_msgTypes[4]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -367,7 +367,7 @@ func (x *StatusLog_Problem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatusLog_Problem.ProtoReflect.Descriptor instead.
 func (*StatusLog_Problem) Descriptor() ([]byte, []int) {
-	return file_status_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_status_v1_status_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *StatusLog_Problem) GetLevel() StatusLog_Level {
@@ -412,7 +412,7 @@ type PullCurrentStatusResponse_Change struct {
 
 func (x *PullCurrentStatusResponse_Change) Reset() {
 	*x = PullCurrentStatusResponse_Change{}
-	mi := &file_status_proto_msgTypes[5]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -424,7 +424,7 @@ func (x *PullCurrentStatusResponse_Change) String() string {
 func (*PullCurrentStatusResponse_Change) ProtoMessage() {}
 
 func (x *PullCurrentStatusResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_status_proto_msgTypes[5]
+	mi := &file_smartcore_bos_status_v1_status_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -437,7 +437,7 @@ func (x *PullCurrentStatusResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullCurrentStatusResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullCurrentStatusResponse_Change) Descriptor() ([]byte, []int) {
-	return file_status_proto_rawDescGZIP(), []int{3, 0}
+	return file_smartcore_bos_status_v1_status_proto_rawDescGZIP(), []int{3, 0}
 }
 
 func (x *PullCurrentStatusResponse_Change) GetName() string {
@@ -461,19 +461,19 @@ func (x *PullCurrentStatusResponse_Change) GetCurrentStatus() *StatusLog {
 	return nil
 }
 
-var File_status_proto protoreflect.FileDescriptor
+var File_smartcore_bos_status_v1_status_proto protoreflect.FileDescriptor
 
-const file_status_proto_rawDesc = "" +
+const file_smartcore_bos_status_v1_status_proto_rawDesc = "" +
 	"\n" +
-	"\fstatus.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x81\x04\n" +
-	"\tStatusLog\x124\n" +
-	"\x05level\x18\x01 \x01(\x0e2\x1e.smartcore.bos.StatusLog.LevelR\x05level\x12 \n" +
+	"$smartcore/bos/status/v1/status.proto\x12\x17smartcore.bos.status.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9f\x04\n" +
+	"\tStatusLog\x12>\n" +
+	"\x05level\x18\x01 \x01(\x0e2(.smartcore.bos.status.v1.StatusLog.LevelR\x05level\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12;\n" +
 	"\vrecord_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"recordTime\x12<\n" +
-	"\bproblems\x18\x04 \x03(\v2 .smartcore.bos.StatusLog.ProblemR\bproblems\x1a\xb2\x01\n" +
-	"\aProblem\x124\n" +
-	"\x05level\x18\x01 \x01(\x0e2\x1e.smartcore.bos.StatusLog.LevelR\x05level\x12 \n" +
+	"recordTime\x12F\n" +
+	"\bproblems\x18\x04 \x03(\v2*.smartcore.bos.status.v1.StatusLog.ProblemR\bproblems\x1a\xbc\x01\n" +
+	"\aProblem\x12>\n" +
+	"\x05level\x18\x01 \x01(\x0e2(.smartcore.bos.status.v1.StatusLog.LevelR\x05level\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12;\n" +
 	"\vrecord_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"recordTime\x12\x12\n" +
@@ -492,58 +492,58 @@ const file_status_proto_rawDesc = "" +
 	"\x18PullCurrentStatusRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x83\x02\n" +
-	"\x19PullCurrentStatusResponse\x12I\n" +
-	"\achanges\x18\x01 \x03(\v2/.smartcore.bos.PullCurrentStatusResponse.ChangeR\achanges\x1a\x9a\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x97\x02\n" +
+	"\x19PullCurrentStatusResponse\x12S\n" +
+	"\achanges\x18\x01 \x03(\v29.smartcore.bos.status.v1.PullCurrentStatusResponse.ChangeR\achanges\x1a\xa4\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x12?\n" +
-	"\x0ecurrent_status\x18\x03 \x01(\v2\x18.smartcore.bos.StatusLogR\rcurrentStatus2\xcb\x01\n" +
-	"\tStatusApi\x12T\n" +
-	"\x10GetCurrentStatus\x12&.smartcore.bos.GetCurrentStatusRequest\x1a\x18.smartcore.bos.StatusLog\x12h\n" +
-	"\x11PullCurrentStatus\x12'.smartcore.bos.PullCurrentStatusRequest\x1a(.smartcore.bos.PullCurrentStatusResponse0\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"changeTime\x12I\n" +
+	"\x0ecurrent_status\x18\x03 \x01(\v2\".smartcore.bos.status.v1.StatusLogR\rcurrentStatus2\xf3\x01\n" +
+	"\tStatusApi\x12h\n" +
+	"\x10GetCurrentStatus\x120.smartcore.bos.status.v1.GetCurrentStatusRequest\x1a\".smartcore.bos.status.v1.StatusLog\x12|\n" +
+	"\x11PullCurrentStatus\x121.smartcore.bos.status.v1.PullCurrentStatusRequest\x1a2.smartcore.bos.status.v1.PullCurrentStatusResponse0\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_status_proto_rawDescOnce sync.Once
-	file_status_proto_rawDescData []byte
+	file_smartcore_bos_status_v1_status_proto_rawDescOnce sync.Once
+	file_smartcore_bos_status_v1_status_proto_rawDescData []byte
 )
 
-func file_status_proto_rawDescGZIP() []byte {
-	file_status_proto_rawDescOnce.Do(func() {
-		file_status_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_status_proto_rawDesc), len(file_status_proto_rawDesc)))
+func file_smartcore_bos_status_v1_status_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_status_v1_status_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_status_v1_status_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_status_v1_status_proto_rawDesc), len(file_smartcore_bos_status_v1_status_proto_rawDesc)))
 	})
-	return file_status_proto_rawDescData
+	return file_smartcore_bos_status_v1_status_proto_rawDescData
 }
 
-var file_status_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_status_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_status_proto_goTypes = []any{
-	(StatusLog_Level)(0),                     // 0: smartcore.bos.StatusLog.Level
-	(*StatusLog)(nil),                        // 1: smartcore.bos.StatusLog
-	(*GetCurrentStatusRequest)(nil),          // 2: smartcore.bos.GetCurrentStatusRequest
-	(*PullCurrentStatusRequest)(nil),         // 3: smartcore.bos.PullCurrentStatusRequest
-	(*PullCurrentStatusResponse)(nil),        // 4: smartcore.bos.PullCurrentStatusResponse
-	(*StatusLog_Problem)(nil),                // 5: smartcore.bos.StatusLog.Problem
-	(*PullCurrentStatusResponse_Change)(nil), // 6: smartcore.bos.PullCurrentStatusResponse.Change
+var file_smartcore_bos_status_v1_status_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_smartcore_bos_status_v1_status_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_smartcore_bos_status_v1_status_proto_goTypes = []any{
+	(StatusLog_Level)(0),                     // 0: smartcore.bos.status.v1.StatusLog.Level
+	(*StatusLog)(nil),                        // 1: smartcore.bos.status.v1.StatusLog
+	(*GetCurrentStatusRequest)(nil),          // 2: smartcore.bos.status.v1.GetCurrentStatusRequest
+	(*PullCurrentStatusRequest)(nil),         // 3: smartcore.bos.status.v1.PullCurrentStatusRequest
+	(*PullCurrentStatusResponse)(nil),        // 4: smartcore.bos.status.v1.PullCurrentStatusResponse
+	(*StatusLog_Problem)(nil),                // 5: smartcore.bos.status.v1.StatusLog.Problem
+	(*PullCurrentStatusResponse_Change)(nil), // 6: smartcore.bos.status.v1.PullCurrentStatusResponse.Change
 	(*timestamppb.Timestamp)(nil),            // 7: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),            // 8: google.protobuf.FieldMask
 }
-var file_status_proto_depIdxs = []int32{
-	0,  // 0: smartcore.bos.StatusLog.level:type_name -> smartcore.bos.StatusLog.Level
-	7,  // 1: smartcore.bos.StatusLog.record_time:type_name -> google.protobuf.Timestamp
-	5,  // 2: smartcore.bos.StatusLog.problems:type_name -> smartcore.bos.StatusLog.Problem
-	8,  // 3: smartcore.bos.GetCurrentStatusRequest.read_mask:type_name -> google.protobuf.FieldMask
-	8,  // 4: smartcore.bos.PullCurrentStatusRequest.read_mask:type_name -> google.protobuf.FieldMask
-	6,  // 5: smartcore.bos.PullCurrentStatusResponse.changes:type_name -> smartcore.bos.PullCurrentStatusResponse.Change
-	0,  // 6: smartcore.bos.StatusLog.Problem.level:type_name -> smartcore.bos.StatusLog.Level
-	7,  // 7: smartcore.bos.StatusLog.Problem.record_time:type_name -> google.protobuf.Timestamp
-	7,  // 8: smartcore.bos.PullCurrentStatusResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 9: smartcore.bos.PullCurrentStatusResponse.Change.current_status:type_name -> smartcore.bos.StatusLog
-	2,  // 10: smartcore.bos.StatusApi.GetCurrentStatus:input_type -> smartcore.bos.GetCurrentStatusRequest
-	3,  // 11: smartcore.bos.StatusApi.PullCurrentStatus:input_type -> smartcore.bos.PullCurrentStatusRequest
-	1,  // 12: smartcore.bos.StatusApi.GetCurrentStatus:output_type -> smartcore.bos.StatusLog
-	4,  // 13: smartcore.bos.StatusApi.PullCurrentStatus:output_type -> smartcore.bos.PullCurrentStatusResponse
+var file_smartcore_bos_status_v1_status_proto_depIdxs = []int32{
+	0,  // 0: smartcore.bos.status.v1.StatusLog.level:type_name -> smartcore.bos.status.v1.StatusLog.Level
+	7,  // 1: smartcore.bos.status.v1.StatusLog.record_time:type_name -> google.protobuf.Timestamp
+	5,  // 2: smartcore.bos.status.v1.StatusLog.problems:type_name -> smartcore.bos.status.v1.StatusLog.Problem
+	8,  // 3: smartcore.bos.status.v1.GetCurrentStatusRequest.read_mask:type_name -> google.protobuf.FieldMask
+	8,  // 4: smartcore.bos.status.v1.PullCurrentStatusRequest.read_mask:type_name -> google.protobuf.FieldMask
+	6,  // 5: smartcore.bos.status.v1.PullCurrentStatusResponse.changes:type_name -> smartcore.bos.status.v1.PullCurrentStatusResponse.Change
+	0,  // 6: smartcore.bos.status.v1.StatusLog.Problem.level:type_name -> smartcore.bos.status.v1.StatusLog.Level
+	7,  // 7: smartcore.bos.status.v1.StatusLog.Problem.record_time:type_name -> google.protobuf.Timestamp
+	7,  // 8: smartcore.bos.status.v1.PullCurrentStatusResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	1,  // 9: smartcore.bos.status.v1.PullCurrentStatusResponse.Change.current_status:type_name -> smartcore.bos.status.v1.StatusLog
+	2,  // 10: smartcore.bos.status.v1.StatusApi.GetCurrentStatus:input_type -> smartcore.bos.status.v1.GetCurrentStatusRequest
+	3,  // 11: smartcore.bos.status.v1.StatusApi.PullCurrentStatus:input_type -> smartcore.bos.status.v1.PullCurrentStatusRequest
+	1,  // 12: smartcore.bos.status.v1.StatusApi.GetCurrentStatus:output_type -> smartcore.bos.status.v1.StatusLog
+	4,  // 13: smartcore.bos.status.v1.StatusApi.PullCurrentStatus:output_type -> smartcore.bos.status.v1.PullCurrentStatusResponse
 	12, // [12:14] is the sub-list for method output_type
 	10, // [10:12] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name
@@ -551,27 +551,27 @@ var file_status_proto_depIdxs = []int32{
 	0,  // [0:10] is the sub-list for field type_name
 }
 
-func init() { file_status_proto_init() }
-func file_status_proto_init() {
-	if File_status_proto != nil {
+func init() { file_smartcore_bos_status_v1_status_proto_init() }
+func file_smartcore_bos_status_v1_status_proto_init() {
+	if File_smartcore_bos_status_v1_status_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_status_proto_rawDesc), len(file_status_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_status_v1_status_proto_rawDesc), len(file_smartcore_bos_status_v1_status_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_status_proto_goTypes,
-		DependencyIndexes: file_status_proto_depIdxs,
-		EnumInfos:         file_status_proto_enumTypes,
-		MessageInfos:      file_status_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_status_v1_status_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_status_v1_status_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_status_v1_status_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_status_v1_status_proto_msgTypes,
 	}.Build()
-	File_status_proto = out.File
-	file_status_proto_goTypes = nil
-	file_status_proto_depIdxs = nil
+	File_smartcore_bos_status_v1_status_proto = out.File
+	file_smartcore_bos_status_v1_status_proto_goTypes = nil
+	file_smartcore_bos_status_v1_status_proto_depIdxs = nil
 }

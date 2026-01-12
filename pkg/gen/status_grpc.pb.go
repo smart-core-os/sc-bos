@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: status.proto
+// source: smartcore/bos/status/v1/status.proto
 
 package gen
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StatusApi_GetCurrentStatus_FullMethodName  = "/smartcore.bos.StatusApi/GetCurrentStatus"
-	StatusApi_PullCurrentStatus_FullMethodName = "/smartcore.bos.StatusApi/PullCurrentStatus"
+	StatusApi_GetCurrentStatus_FullMethodName  = "/smartcore.bos.status.v1.StatusApi/GetCurrentStatus"
+	StatusApi_PullCurrentStatus_FullMethodName = "/smartcore.bos.status.v1.StatusApi/PullCurrentStatus"
 )
 
 // StatusApiClient is the client API for StatusApi service.
@@ -150,7 +150,7 @@ type StatusApi_PullCurrentStatusServer = grpc.ServerStreamingServer[PullCurrentS
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var StatusApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.StatusApi",
+	ServiceName: "smartcore.bos.status.v1.StatusApi",
 	HandlerType: (*StatusApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -165,5 +165,5 @@ var StatusApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "status.proto",
+	Metadata: "smartcore/bos/status/v1/status.proto",
 }

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: report.proto
+// source: smartcore/bos/report/v1/report.proto
 
 package gen
 
@@ -42,7 +42,7 @@ type ListReportsRequest struct {
 
 func (x *ListReportsRequest) Reset() {
 	*x = ListReportsRequest{}
-	mi := &file_report_proto_msgTypes[0]
+	mi := &file_smartcore_bos_report_v1_report_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -54,7 +54,7 @@ func (x *ListReportsRequest) String() string {
 func (*ListReportsRequest) ProtoMessage() {}
 
 func (x *ListReportsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_report_proto_msgTypes[0]
+	mi := &file_smartcore_bos_report_v1_report_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -67,7 +67,7 @@ func (x *ListReportsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListReportsRequest.ProtoReflect.Descriptor instead.
 func (*ListReportsRequest) Descriptor() ([]byte, []int) {
-	return file_report_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_report_v1_report_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ListReportsRequest) GetName() string {
@@ -115,7 +115,7 @@ type ListReportsResponse struct {
 
 func (x *ListReportsResponse) Reset() {
 	*x = ListReportsResponse{}
-	mi := &file_report_proto_msgTypes[1]
+	mi := &file_smartcore_bos_report_v1_report_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -127,7 +127,7 @@ func (x *ListReportsResponse) String() string {
 func (*ListReportsResponse) ProtoMessage() {}
 
 func (x *ListReportsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_report_proto_msgTypes[1]
+	mi := &file_smartcore_bos_report_v1_report_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -140,7 +140,7 @@ func (x *ListReportsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListReportsResponse.ProtoReflect.Descriptor instead.
 func (*ListReportsResponse) Descriptor() ([]byte, []int) {
-	return file_report_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_report_v1_report_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListReportsResponse) GetReports() []*Report {
@@ -183,7 +183,7 @@ type Report struct {
 
 func (x *Report) Reset() {
 	*x = Report{}
-	mi := &file_report_proto_msgTypes[2]
+	mi := &file_smartcore_bos_report_v1_report_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -195,7 +195,7 @@ func (x *Report) String() string {
 func (*Report) ProtoMessage() {}
 
 func (x *Report) ProtoReflect() protoreflect.Message {
-	mi := &file_report_proto_msgTypes[2]
+	mi := &file_smartcore_bos_report_v1_report_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -208,7 +208,7 @@ func (x *Report) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Report.ProtoReflect.Descriptor instead.
 func (*Report) Descriptor() ([]byte, []int) {
-	return file_report_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_report_v1_report_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Report) GetId() string {
@@ -258,7 +258,7 @@ type GetDownloadReportUrlRequest struct {
 
 func (x *GetDownloadReportUrlRequest) Reset() {
 	*x = GetDownloadReportUrlRequest{}
-	mi := &file_report_proto_msgTypes[3]
+	mi := &file_smartcore_bos_report_v1_report_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -270,7 +270,7 @@ func (x *GetDownloadReportUrlRequest) String() string {
 func (*GetDownloadReportUrlRequest) ProtoMessage() {}
 
 func (x *GetDownloadReportUrlRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_report_proto_msgTypes[3]
+	mi := &file_smartcore_bos_report_v1_report_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -283,7 +283,7 @@ func (x *GetDownloadReportUrlRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDownloadReportUrlRequest.ProtoReflect.Descriptor instead.
 func (*GetDownloadReportUrlRequest) Descriptor() ([]byte, []int) {
-	return file_report_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_report_v1_report_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetDownloadReportUrlRequest) GetName() string {
@@ -314,7 +314,7 @@ type DownloadReportUrl struct {
 
 func (x *DownloadReportUrl) Reset() {
 	*x = DownloadReportUrl{}
-	mi := &file_report_proto_msgTypes[4]
+	mi := &file_smartcore_bos_report_v1_report_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -326,7 +326,7 @@ func (x *DownloadReportUrl) String() string {
 func (*DownloadReportUrl) ProtoMessage() {}
 
 func (x *DownloadReportUrl) ProtoReflect() protoreflect.Message {
-	mi := &file_report_proto_msgTypes[4]
+	mi := &file_smartcore_bos_report_v1_report_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -339,7 +339,7 @@ func (x *DownloadReportUrl) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DownloadReportUrl.ProtoReflect.Descriptor instead.
 func (*DownloadReportUrl) Descriptor() ([]byte, []int) {
-	return file_report_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_report_v1_report_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *DownloadReportUrl) GetUrl() string {
@@ -370,19 +370,19 @@ func (x *DownloadReportUrl) GetExpireAfterTime() *timestamppb.Timestamp {
 	return nil
 }
 
-var File_report_proto protoreflect.FileDescriptor
+var File_smartcore_bos_report_v1_report_proto protoreflect.FileDescriptor
 
-const file_report_proto_rawDesc = "" +
+const file_smartcore_bos_report_v1_report_proto_rawDesc = "" +
 	"\n" +
-	"\freport.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9d\x01\n" +
+	"$smartcore/bos/report/v1/report.proto\x12\x17smartcore.bos.report.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9d\x01\n" +
 	"\x12ListReportsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\"\x8d\x01\n" +
-	"\x13ListReportsResponse\x12/\n" +
-	"\areports\x18\x01 \x03(\v2\x15.smartcore.bos.ReportR\areports\x12&\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"\x97\x01\n" +
+	"\x13ListReportsResponse\x129\n" +
+	"\areports\x18\x01 \x03(\v2\x1f.smartcore.bos.report.v1.ReportR\areports\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
 	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xac\x01\n" +
@@ -402,42 +402,42 @@ const file_report_proto_rawDesc = "" +
 	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x1d\n" +
 	"\n" +
 	"media_type\x18\x03 \x01(\tR\tmediaType\x12F\n" +
-	"\x11expire_after_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0fexpireAfterTime2\xc7\x01\n" +
-	"\tReportApi\x12T\n" +
-	"\vListReports\x12!.smartcore.bos.ListReportsRequest\x1a\".smartcore.bos.ListReportsResponse\x12d\n" +
-	"\x14GetDownloadReportUrl\x12*.smartcore.bos.GetDownloadReportUrlRequest\x1a .smartcore.bos.DownloadReportUrlB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"\x11expire_after_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0fexpireAfterTime2\xef\x01\n" +
+	"\tReportApi\x12h\n" +
+	"\vListReports\x12+.smartcore.bos.report.v1.ListReportsRequest\x1a,.smartcore.bos.report.v1.ListReportsResponse\x12x\n" +
+	"\x14GetDownloadReportUrl\x124.smartcore.bos.report.v1.GetDownloadReportUrlRequest\x1a*.smartcore.bos.report.v1.DownloadReportUrlB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_report_proto_rawDescOnce sync.Once
-	file_report_proto_rawDescData []byte
+	file_smartcore_bos_report_v1_report_proto_rawDescOnce sync.Once
+	file_smartcore_bos_report_v1_report_proto_rawDescData []byte
 )
 
-func file_report_proto_rawDescGZIP() []byte {
-	file_report_proto_rawDescOnce.Do(func() {
-		file_report_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_report_proto_rawDesc), len(file_report_proto_rawDesc)))
+func file_smartcore_bos_report_v1_report_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_report_v1_report_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_report_v1_report_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_report_v1_report_proto_rawDesc), len(file_smartcore_bos_report_v1_report_proto_rawDesc)))
 	})
-	return file_report_proto_rawDescData
+	return file_smartcore_bos_report_v1_report_proto_rawDescData
 }
 
-var file_report_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
-var file_report_proto_goTypes = []any{
-	(*ListReportsRequest)(nil),          // 0: smartcore.bos.ListReportsRequest
-	(*ListReportsResponse)(nil),         // 1: smartcore.bos.ListReportsResponse
-	(*Report)(nil),                      // 2: smartcore.bos.Report
-	(*GetDownloadReportUrlRequest)(nil), // 3: smartcore.bos.GetDownloadReportUrlRequest
-	(*DownloadReportUrl)(nil),           // 4: smartcore.bos.DownloadReportUrl
+var file_smartcore_bos_report_v1_report_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_smartcore_bos_report_v1_report_proto_goTypes = []any{
+	(*ListReportsRequest)(nil),          // 0: smartcore.bos.report.v1.ListReportsRequest
+	(*ListReportsResponse)(nil),         // 1: smartcore.bos.report.v1.ListReportsResponse
+	(*Report)(nil),                      // 2: smartcore.bos.report.v1.Report
+	(*GetDownloadReportUrlRequest)(nil), // 3: smartcore.bos.report.v1.GetDownloadReportUrlRequest
+	(*DownloadReportUrl)(nil),           // 4: smartcore.bos.report.v1.DownloadReportUrl
 	(*fieldmaskpb.FieldMask)(nil),       // 5: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),       // 6: google.protobuf.Timestamp
 }
-var file_report_proto_depIdxs = []int32{
-	5, // 0: smartcore.bos.ListReportsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	2, // 1: smartcore.bos.ListReportsResponse.reports:type_name -> smartcore.bos.Report
-	6, // 2: smartcore.bos.Report.create_time:type_name -> google.protobuf.Timestamp
-	6, // 3: smartcore.bos.DownloadReportUrl.expire_after_time:type_name -> google.protobuf.Timestamp
-	0, // 4: smartcore.bos.ReportApi.ListReports:input_type -> smartcore.bos.ListReportsRequest
-	3, // 5: smartcore.bos.ReportApi.GetDownloadReportUrl:input_type -> smartcore.bos.GetDownloadReportUrlRequest
-	1, // 6: smartcore.bos.ReportApi.ListReports:output_type -> smartcore.bos.ListReportsResponse
-	4, // 7: smartcore.bos.ReportApi.GetDownloadReportUrl:output_type -> smartcore.bos.DownloadReportUrl
+var file_smartcore_bos_report_v1_report_proto_depIdxs = []int32{
+	5, // 0: smartcore.bos.report.v1.ListReportsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	2, // 1: smartcore.bos.report.v1.ListReportsResponse.reports:type_name -> smartcore.bos.report.v1.Report
+	6, // 2: smartcore.bos.report.v1.Report.create_time:type_name -> google.protobuf.Timestamp
+	6, // 3: smartcore.bos.report.v1.DownloadReportUrl.expire_after_time:type_name -> google.protobuf.Timestamp
+	0, // 4: smartcore.bos.report.v1.ReportApi.ListReports:input_type -> smartcore.bos.report.v1.ListReportsRequest
+	3, // 5: smartcore.bos.report.v1.ReportApi.GetDownloadReportUrl:input_type -> smartcore.bos.report.v1.GetDownloadReportUrlRequest
+	1, // 6: smartcore.bos.report.v1.ReportApi.ListReports:output_type -> smartcore.bos.report.v1.ListReportsResponse
+	4, // 7: smartcore.bos.report.v1.ReportApi.GetDownloadReportUrl:output_type -> smartcore.bos.report.v1.DownloadReportUrl
 	6, // [6:8] is the sub-list for method output_type
 	4, // [4:6] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
@@ -445,26 +445,26 @@ var file_report_proto_depIdxs = []int32{
 	0, // [0:4] is the sub-list for field type_name
 }
 
-func init() { file_report_proto_init() }
-func file_report_proto_init() {
-	if File_report_proto != nil {
+func init() { file_smartcore_bos_report_v1_report_proto_init() }
+func file_smartcore_bos_report_v1_report_proto_init() {
+	if File_smartcore_bos_report_v1_report_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_report_proto_rawDesc), len(file_report_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_report_v1_report_proto_rawDesc), len(file_smartcore_bos_report_v1_report_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_report_proto_goTypes,
-		DependencyIndexes: file_report_proto_depIdxs,
-		MessageInfos:      file_report_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_report_v1_report_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_report_v1_report_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_report_v1_report_proto_msgTypes,
 	}.Build()
-	File_report_proto = out.File
-	file_report_proto_goTypes = nil
-	file_report_proto_depIdxs = nil
+	File_smartcore_bos_report_v1_report_proto = out.File
+	file_smartcore_bos_report_v1_report_proto_goTypes = nil
+	file_smartcore_bos_report_v1_report_proto_depIdxs = nil
 }

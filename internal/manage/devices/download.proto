@@ -4,10 +4,10 @@ package smartcore.bos.devices;
 
 option go_package = "github.com/smart-core-os/sc-bos/internal/manage/devices";
 
-import "devices.proto";
+import "smartcore/bos/devices/v1/devices.proto";
 
 // DownloadToken is encoded as part of the download url, it's the mechanism we use to communicate between the gRPC
 // api request GetDownloadDevicesUrl and the http handler that is at the other end of that url.
 message DownloadToken {
-  smartcore.bos.GetDownloadDevicesUrlRequest request = 1;
+  smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest request = 1;
 }

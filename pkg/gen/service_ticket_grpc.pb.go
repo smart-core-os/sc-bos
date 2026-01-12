@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: service_ticket.proto
+// source: smartcore/bos/serviceticket/v1/service_ticket.proto
 
 package gen
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ServiceTicketApi_CreateTicket_FullMethodName = "/smartcore.bos.ServiceTicketApi/CreateTicket"
-	ServiceTicketApi_UpdateTicket_FullMethodName = "/smartcore.bos.ServiceTicketApi/UpdateTicket"
+	ServiceTicketApi_CreateTicket_FullMethodName = "/smartcore.bos.serviceticket.v1.ServiceTicketApi/CreateTicket"
+	ServiceTicketApi_UpdateTicket_FullMethodName = "/smartcore.bos.serviceticket.v1.ServiceTicketApi/UpdateTicket"
 )
 
 // ServiceTicketApiClient is the client API for ServiceTicketApi service.
@@ -148,7 +148,7 @@ func _ServiceTicketApi_UpdateTicket_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ServiceTicketApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.ServiceTicketApi",
+	ServiceName: "smartcore.bos.serviceticket.v1.ServiceTicketApi",
 	HandlerType: (*ServiceTicketApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -161,11 +161,11 @@ var ServiceTicketApi_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "service_ticket.proto",
+	Metadata: "smartcore/bos/serviceticket/v1/service_ticket.proto",
 }
 
 const (
-	ServiceTicketInfo_DescribeTicket_FullMethodName = "/smartcore.bos.ServiceTicketInfo/DescribeTicket"
+	ServiceTicketInfo_DescribeTicket_FullMethodName = "/smartcore.bos.serviceticket.v1.ServiceTicketInfo/DescribeTicket"
 )
 
 // ServiceTicketInfoClient is the client API for ServiceTicketInfo service.
@@ -260,7 +260,7 @@ func _ServiceTicketInfo_DescribeTicket_Handler(srv interface{}, ctx context.Cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ServiceTicketInfo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.ServiceTicketInfo",
+	ServiceName: "smartcore.bos.serviceticket.v1.ServiceTicketInfo",
 	HandlerType: (*ServiceTicketInfoServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -269,5 +269,5 @@ var ServiceTicketInfo_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "service_ticket.proto",
+	Metadata: "smartcore/bos/serviceticket/v1/service_ticket.proto",
 }

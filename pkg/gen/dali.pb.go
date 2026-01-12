@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: dali.proto
+// source: smartcore/bos/driver/dali/v1/dali.proto
 
 package gen
 
@@ -59,11 +59,11 @@ func (x EmergencyStatus_Test) String() string {
 }
 
 func (EmergencyStatus_Test) Descriptor() protoreflect.EnumDescriptor {
-	return file_dali_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_driver_dali_v1_dali_proto_enumTypes[0].Descriptor()
 }
 
 func (EmergencyStatus_Test) Type() protoreflect.EnumType {
-	return &file_dali_proto_enumTypes[0]
+	return &file_smartcore_bos_driver_dali_v1_dali_proto_enumTypes[0]
 }
 
 func (x EmergencyStatus_Test) Number() protoreflect.EnumNumber {
@@ -72,7 +72,7 @@ func (x EmergencyStatus_Test) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EmergencyStatus_Test.Descriptor instead.
 func (EmergencyStatus_Test) EnumDescriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{6, 0}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{6, 0}
 }
 
 type EmergencyStatus_Mode int32
@@ -126,11 +126,11 @@ func (x EmergencyStatus_Mode) String() string {
 }
 
 func (EmergencyStatus_Mode) Descriptor() protoreflect.EnumDescriptor {
-	return file_dali_proto_enumTypes[1].Descriptor()
+	return file_smartcore_bos_driver_dali_v1_dali_proto_enumTypes[1].Descriptor()
 }
 
 func (EmergencyStatus_Mode) Type() protoreflect.EnumType {
-	return &file_dali_proto_enumTypes[1]
+	return &file_smartcore_bos_driver_dali_v1_dali_proto_enumTypes[1]
 }
 
 func (x EmergencyStatus_Mode) Number() protoreflect.EnumNumber {
@@ -139,7 +139,7 @@ func (x EmergencyStatus_Mode) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EmergencyStatus_Mode.Descriptor instead.
 func (EmergencyStatus_Mode) EnumDescriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{6, 1}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{6, 1}
 }
 
 type EmergencyStatus_Failure int32
@@ -187,11 +187,11 @@ func (x EmergencyStatus_Failure) String() string {
 }
 
 func (EmergencyStatus_Failure) Descriptor() protoreflect.EnumDescriptor {
-	return file_dali_proto_enumTypes[2].Descriptor()
+	return file_smartcore_bos_driver_dali_v1_dali_proto_enumTypes[2].Descriptor()
 }
 
 func (EmergencyStatus_Failure) Type() protoreflect.EnumType {
-	return &file_dali_proto_enumTypes[2]
+	return &file_smartcore_bos_driver_dali_v1_dali_proto_enumTypes[2]
 }
 
 func (x EmergencyStatus_Failure) Number() protoreflect.EnumNumber {
@@ -200,7 +200,7 @@ func (x EmergencyStatus_Failure) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EmergencyStatus_Failure.Descriptor instead.
 func (EmergencyStatus_Failure) EnumDescriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{6, 2}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{6, 2}
 }
 
 type ControlGearStatus_Failure int32
@@ -236,11 +236,11 @@ func (x ControlGearStatus_Failure) String() string {
 }
 
 func (ControlGearStatus_Failure) Descriptor() protoreflect.EnumDescriptor {
-	return file_dali_proto_enumTypes[3].Descriptor()
+	return file_smartcore_bos_driver_dali_v1_dali_proto_enumTypes[3].Descriptor()
 }
 
 func (ControlGearStatus_Failure) Type() protoreflect.EnumType {
-	return &file_dali_proto_enumTypes[3]
+	return &file_smartcore_bos_driver_dali_v1_dali_proto_enumTypes[3]
 }
 
 func (x ControlGearStatus_Failure) Number() protoreflect.EnumNumber {
@@ -249,7 +249,7 @@ func (x ControlGearStatus_Failure) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ControlGearStatus_Failure.Descriptor instead.
 func (ControlGearStatus_Failure) EnumDescriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{8, 0}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{8, 0}
 }
 
 type GetGroupMembershipRequest struct {
@@ -261,7 +261,7 @@ type GetGroupMembershipRequest struct {
 
 func (x *GetGroupMembershipRequest) Reset() {
 	*x = GetGroupMembershipRequest{}
-	mi := &file_dali_proto_msgTypes[0]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -273,7 +273,7 @@ func (x *GetGroupMembershipRequest) String() string {
 func (*GetGroupMembershipRequest) ProtoMessage() {}
 
 func (x *GetGroupMembershipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[0]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -286,7 +286,7 @@ func (x *GetGroupMembershipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGroupMembershipRequest.ProtoReflect.Descriptor instead.
 func (*GetGroupMembershipRequest) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GetGroupMembershipRequest) GetName() string {
@@ -305,7 +305,7 @@ type GetGroupMembershipResponse struct {
 
 func (x *GetGroupMembershipResponse) Reset() {
 	*x = GetGroupMembershipResponse{}
-	mi := &file_dali_proto_msgTypes[1]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -317,7 +317,7 @@ func (x *GetGroupMembershipResponse) String() string {
 func (*GetGroupMembershipResponse) ProtoMessage() {}
 
 func (x *GetGroupMembershipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[1]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -330,7 +330,7 @@ func (x *GetGroupMembershipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGroupMembershipResponse.ProtoReflect.Descriptor instead.
 func (*GetGroupMembershipResponse) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetGroupMembershipResponse) GetGroups() []int32 {
@@ -350,7 +350,7 @@ type AddToGroupRequest struct {
 
 func (x *AddToGroupRequest) Reset() {
 	*x = AddToGroupRequest{}
-	mi := &file_dali_proto_msgTypes[2]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -362,7 +362,7 @@ func (x *AddToGroupRequest) String() string {
 func (*AddToGroupRequest) ProtoMessage() {}
 
 func (x *AddToGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[2]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -375,7 +375,7 @@ func (x *AddToGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddToGroupRequest.ProtoReflect.Descriptor instead.
 func (*AddToGroupRequest) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *AddToGroupRequest) GetName() string {
@@ -400,7 +400,7 @@ type AddToGroupResponse struct {
 
 func (x *AddToGroupResponse) Reset() {
 	*x = AddToGroupResponse{}
-	mi := &file_dali_proto_msgTypes[3]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -412,7 +412,7 @@ func (x *AddToGroupResponse) String() string {
 func (*AddToGroupResponse) ProtoMessage() {}
 
 func (x *AddToGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[3]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -425,7 +425,7 @@ func (x *AddToGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddToGroupResponse.ProtoReflect.Descriptor instead.
 func (*AddToGroupResponse) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{3}
 }
 
 type RemoveFromGroupRequest struct {
@@ -438,7 +438,7 @@ type RemoveFromGroupRequest struct {
 
 func (x *RemoveFromGroupRequest) Reset() {
 	*x = RemoveFromGroupRequest{}
-	mi := &file_dali_proto_msgTypes[4]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -450,7 +450,7 @@ func (x *RemoveFromGroupRequest) String() string {
 func (*RemoveFromGroupRequest) ProtoMessage() {}
 
 func (x *RemoveFromGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[4]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -463,7 +463,7 @@ func (x *RemoveFromGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFromGroupRequest.ProtoReflect.Descriptor instead.
 func (*RemoveFromGroupRequest) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RemoveFromGroupRequest) GetName() string {
@@ -488,7 +488,7 @@ type RemoveFromGroupResponse struct {
 
 func (x *RemoveFromGroupResponse) Reset() {
 	*x = RemoveFromGroupResponse{}
-	mi := &file_dali_proto_msgTypes[5]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -500,7 +500,7 @@ func (x *RemoveFromGroupResponse) String() string {
 func (*RemoveFromGroupResponse) ProtoMessage() {}
 
 func (x *RemoveFromGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[5]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -513,26 +513,26 @@ func (x *RemoveFromGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFromGroupResponse.ProtoReflect.Descriptor instead.
 func (*RemoveFromGroupResponse) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{5}
 }
 
 type EmergencyStatus struct {
 	state                protoimpl.MessageState    `protogen:"open.v1"`
-	ActiveModes          []EmergencyStatus_Mode    `protobuf:"varint,1,rep,packed,name=active_modes,json=activeModes,proto3,enum=smartcore.bos.driver.dali.EmergencyStatus_Mode" json:"active_modes,omitempty"`
-	PendingTests         []EmergencyStatus_Test    `protobuf:"varint,2,rep,packed,name=pending_tests,json=pendingTests,proto3,enum=smartcore.bos.driver.dali.EmergencyStatus_Test" json:"pending_tests,omitempty"`
-	OverdueTests         []EmergencyStatus_Test    `protobuf:"varint,3,rep,packed,name=overdue_tests,json=overdueTests,proto3,enum=smartcore.bos.driver.dali.EmergencyStatus_Test" json:"overdue_tests,omitempty"`
-	ResultsAvailable     []EmergencyStatus_Test    `protobuf:"varint,4,rep,packed,name=results_available,json=resultsAvailable,proto3,enum=smartcore.bos.driver.dali.EmergencyStatus_Test" json:"results_available,omitempty"`
+	ActiveModes          []EmergencyStatus_Mode    `protobuf:"varint,1,rep,packed,name=active_modes,json=activeModes,proto3,enum=smartcore.bos.driver.dali.v1.EmergencyStatus_Mode" json:"active_modes,omitempty"`
+	PendingTests         []EmergencyStatus_Test    `protobuf:"varint,2,rep,packed,name=pending_tests,json=pendingTests,proto3,enum=smartcore.bos.driver.dali.v1.EmergencyStatus_Test" json:"pending_tests,omitempty"`
+	OverdueTests         []EmergencyStatus_Test    `protobuf:"varint,3,rep,packed,name=overdue_tests,json=overdueTests,proto3,enum=smartcore.bos.driver.dali.v1.EmergencyStatus_Test" json:"overdue_tests,omitempty"`
+	ResultsAvailable     []EmergencyStatus_Test    `protobuf:"varint,4,rep,packed,name=results_available,json=resultsAvailable,proto3,enum=smartcore.bos.driver.dali.v1.EmergencyStatus_Test" json:"results_available,omitempty"`
 	InhibitActive        bool                      `protobuf:"varint,5,opt,name=inhibit_active,json=inhibitActive,proto3" json:"inhibit_active,omitempty"`
 	IdentificationActive bool                      `protobuf:"varint,6,opt,name=identification_active,json=identificationActive,proto3" json:"identification_active,omitempty"`
 	BatteryLevelPercent  float32                   `protobuf:"fixed32,7,opt,name=battery_level_percent,json=batteryLevelPercent,proto3" json:"battery_level_percent,omitempty"`
-	Failures             []EmergencyStatus_Failure `protobuf:"varint,8,rep,packed,name=failures,proto3,enum=smartcore.bos.driver.dali.EmergencyStatus_Failure" json:"failures,omitempty"`
+	Failures             []EmergencyStatus_Failure `protobuf:"varint,8,rep,packed,name=failures,proto3,enum=smartcore.bos.driver.dali.v1.EmergencyStatus_Failure" json:"failures,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
 
 func (x *EmergencyStatus) Reset() {
 	*x = EmergencyStatus{}
-	mi := &file_dali_proto_msgTypes[6]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -544,7 +544,7 @@ func (x *EmergencyStatus) String() string {
 func (*EmergencyStatus) ProtoMessage() {}
 
 func (x *EmergencyStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[6]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -557,7 +557,7 @@ func (x *EmergencyStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EmergencyStatus.ProtoReflect.Descriptor instead.
 func (*EmergencyStatus) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *EmergencyStatus) GetActiveModes() []EmergencyStatus_Mode {
@@ -625,7 +625,7 @@ type GetEmergencyStatusRequest struct {
 
 func (x *GetEmergencyStatusRequest) Reset() {
 	*x = GetEmergencyStatusRequest{}
-	mi := &file_dali_proto_msgTypes[7]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -637,7 +637,7 @@ func (x *GetEmergencyStatusRequest) String() string {
 func (*GetEmergencyStatusRequest) ProtoMessage() {}
 
 func (x *GetEmergencyStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[7]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -650,7 +650,7 @@ func (x *GetEmergencyStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEmergencyStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetEmergencyStatusRequest) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetEmergencyStatusRequest) GetName() string {
@@ -662,14 +662,14 @@ func (x *GetEmergencyStatusRequest) GetName() string {
 
 type ControlGearStatus struct {
 	state         protoimpl.MessageState      `protogen:"open.v1"`
-	Failures      []ControlGearStatus_Failure `protobuf:"varint,1,rep,packed,name=failures,proto3,enum=smartcore.bos.driver.dali.ControlGearStatus_Failure" json:"failures,omitempty"`
+	Failures      []ControlGearStatus_Failure `protobuf:"varint,1,rep,packed,name=failures,proto3,enum=smartcore.bos.driver.dali.v1.ControlGearStatus_Failure" json:"failures,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ControlGearStatus) Reset() {
 	*x = ControlGearStatus{}
-	mi := &file_dali_proto_msgTypes[8]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -681,7 +681,7 @@ func (x *ControlGearStatus) String() string {
 func (*ControlGearStatus) ProtoMessage() {}
 
 func (x *ControlGearStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[8]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -694,7 +694,7 @@ func (x *ControlGearStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ControlGearStatus.ProtoReflect.Descriptor instead.
 func (*ControlGearStatus) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{8}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ControlGearStatus) GetFailures() []ControlGearStatus_Failure {
@@ -713,7 +713,7 @@ type GetControlGearStatusRequest struct {
 
 func (x *GetControlGearStatusRequest) Reset() {
 	*x = GetControlGearStatusRequest{}
-	mi := &file_dali_proto_msgTypes[9]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -725,7 +725,7 @@ func (x *GetControlGearStatusRequest) String() string {
 func (*GetControlGearStatusRequest) ProtoMessage() {}
 
 func (x *GetControlGearStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[9]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -738,7 +738,7 @@ func (x *GetControlGearStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetControlGearStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetControlGearStatusRequest) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{9}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetControlGearStatusRequest) GetName() string {
@@ -757,7 +757,7 @@ type IdentifyRequest struct {
 
 func (x *IdentifyRequest) Reset() {
 	*x = IdentifyRequest{}
-	mi := &file_dali_proto_msgTypes[10]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -769,7 +769,7 @@ func (x *IdentifyRequest) String() string {
 func (*IdentifyRequest) ProtoMessage() {}
 
 func (x *IdentifyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[10]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -782,7 +782,7 @@ func (x *IdentifyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IdentifyRequest.ProtoReflect.Descriptor instead.
 func (*IdentifyRequest) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{10}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *IdentifyRequest) GetName() string {
@@ -800,7 +800,7 @@ type IdentifyResponse struct {
 
 func (x *IdentifyResponse) Reset() {
 	*x = IdentifyResponse{}
-	mi := &file_dali_proto_msgTypes[11]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -812,7 +812,7 @@ func (x *IdentifyResponse) String() string {
 func (*IdentifyResponse) ProtoMessage() {}
 
 func (x *IdentifyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[11]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -825,20 +825,20 @@ func (x *IdentifyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IdentifyResponse.ProtoReflect.Descriptor instead.
 func (*IdentifyResponse) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{11}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{11}
 }
 
 type StartTestRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Test          EmergencyStatus_Test   `protobuf:"varint,2,opt,name=test,proto3,enum=smartcore.bos.driver.dali.EmergencyStatus_Test" json:"test,omitempty"`
+	Test          EmergencyStatus_Test   `protobuf:"varint,2,opt,name=test,proto3,enum=smartcore.bos.driver.dali.v1.EmergencyStatus_Test" json:"test,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StartTestRequest) Reset() {
 	*x = StartTestRequest{}
-	mi := &file_dali_proto_msgTypes[12]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -850,7 +850,7 @@ func (x *StartTestRequest) String() string {
 func (*StartTestRequest) ProtoMessage() {}
 
 func (x *StartTestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[12]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -863,7 +863,7 @@ func (x *StartTestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartTestRequest.ProtoReflect.Descriptor instead.
 func (*StartTestRequest) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{12}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *StartTestRequest) GetName() string {
@@ -888,7 +888,7 @@ type StartTestResponse struct {
 
 func (x *StartTestResponse) Reset() {
 	*x = StartTestResponse{}
-	mi := &file_dali_proto_msgTypes[13]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -900,7 +900,7 @@ func (x *StartTestResponse) String() string {
 func (*StartTestResponse) ProtoMessage() {}
 
 func (x *StartTestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[13]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -913,7 +913,7 @@ func (x *StartTestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartTestResponse.ProtoReflect.Descriptor instead.
 func (*StartTestResponse) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{13}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{13}
 }
 
 type StopTestRequest struct {
@@ -925,7 +925,7 @@ type StopTestRequest struct {
 
 func (x *StopTestRequest) Reset() {
 	*x = StopTestRequest{}
-	mi := &file_dali_proto_msgTypes[14]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -937,7 +937,7 @@ func (x *StopTestRequest) String() string {
 func (*StopTestRequest) ProtoMessage() {}
 
 func (x *StopTestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[14]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -950,7 +950,7 @@ func (x *StopTestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopTestRequest.ProtoReflect.Descriptor instead.
 func (*StopTestRequest) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{14}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *StopTestRequest) GetName() string {
@@ -968,7 +968,7 @@ type StopTestResponse struct {
 
 func (x *StopTestResponse) Reset() {
 	*x = StopTestResponse{}
-	mi := &file_dali_proto_msgTypes[15]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -980,7 +980,7 @@ func (x *StopTestResponse) String() string {
 func (*StopTestResponse) ProtoMessage() {}
 
 func (x *StopTestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[15]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -993,13 +993,13 @@ func (x *StopTestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopTestResponse.ProtoReflect.Descriptor instead.
 func (*StopTestResponse) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{15}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{15}
 }
 
 type UpdateTestIntervalRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Test  EmergencyStatus_Test   `protobuf:"varint,2,opt,name=test,proto3,enum=smartcore.bos.driver.dali.EmergencyStatus_Test" json:"test,omitempty"`
+	Test  EmergencyStatus_Test   `protobuf:"varint,2,opt,name=test,proto3,enum=smartcore.bos.driver.dali.v1.EmergencyStatus_Test" json:"test,omitempty"`
 	// The target test interval to use. Because test intervals are highly quantised in DALI, this may be rounded.
 	// The actual value used will be returned in UpdateTestIntervalResponse.interval
 	Interval      *durationpb.Duration `protobuf:"bytes,3,opt,name=interval,proto3" json:"interval,omitempty"`
@@ -1009,7 +1009,7 @@ type UpdateTestIntervalRequest struct {
 
 func (x *UpdateTestIntervalRequest) Reset() {
 	*x = UpdateTestIntervalRequest{}
-	mi := &file_dali_proto_msgTypes[16]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1021,7 +1021,7 @@ func (x *UpdateTestIntervalRequest) String() string {
 func (*UpdateTestIntervalRequest) ProtoMessage() {}
 
 func (x *UpdateTestIntervalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[16]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1034,7 +1034,7 @@ func (x *UpdateTestIntervalRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTestIntervalRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTestIntervalRequest) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{16}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *UpdateTestIntervalRequest) GetName() string {
@@ -1068,7 +1068,7 @@ type UpdateTestIntervalResponse struct {
 
 func (x *UpdateTestIntervalResponse) Reset() {
 	*x = UpdateTestIntervalResponse{}
-	mi := &file_dali_proto_msgTypes[17]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1080,7 +1080,7 @@ func (x *UpdateTestIntervalResponse) String() string {
 func (*UpdateTestIntervalResponse) ProtoMessage() {}
 
 func (x *UpdateTestIntervalResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[17]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1093,7 +1093,7 @@ func (x *UpdateTestIntervalResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTestIntervalResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTestIntervalResponse) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{17}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *UpdateTestIntervalResponse) GetInterval() *durationpb.Duration {
@@ -1105,7 +1105,7 @@ func (x *UpdateTestIntervalResponse) GetInterval() *durationpb.Duration {
 
 type TestResult struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
-	Test     EmergencyStatus_Test   `protobuf:"varint,1,opt,name=test,proto3,enum=smartcore.bos.driver.dali.EmergencyStatus_Test" json:"test,omitempty"`
+	Test     EmergencyStatus_Test   `protobuf:"varint,1,opt,name=test,proto3,enum=smartcore.bos.driver.dali.v1.EmergencyStatus_Test" json:"test,omitempty"`
 	Pass     bool                   `protobuf:"varint,4,opt,name=pass,proto3" json:"pass,omitempty"`
 	Duration *durationpb.Duration   `protobuf:"bytes,5,opt,name=duration,proto3" json:"duration,omitempty"` // only present for duration tests
 	Etag     string                 `protobuf:"bytes,6,opt,name=etag,proto3" json:"etag,omitempty"`
@@ -1113,14 +1113,14 @@ type TestResult struct {
 	StartTime *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// the time the test was completed
 	EndTime       *timestamppb.Timestamp  `protobuf:"bytes,8,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
-	FailureReason EmergencyStatus_Failure `protobuf:"varint,9,opt,name=failure_reason,json=failureReason,proto3,enum=smartcore.bos.driver.dali.EmergencyStatus_Failure" json:"failure_reason,omitempty"` // if the test failed, this will be set to the reason for failure
+	FailureReason EmergencyStatus_Failure `protobuf:"varint,9,opt,name=failure_reason,json=failureReason,proto3,enum=smartcore.bos.driver.dali.v1.EmergencyStatus_Failure" json:"failure_reason,omitempty"` // if the test failed, this will be set to the reason for failure
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TestResult) Reset() {
 	*x = TestResult{}
-	mi := &file_dali_proto_msgTypes[18]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1132,7 +1132,7 @@ func (x *TestResult) String() string {
 func (*TestResult) ProtoMessage() {}
 
 func (x *TestResult) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[18]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1145,7 +1145,7 @@ func (x *TestResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestResult.ProtoReflect.Descriptor instead.
 func (*TestResult) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{18}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *TestResult) GetTest() EmergencyStatus_Test {
@@ -1200,14 +1200,14 @@ func (x *TestResult) GetFailureReason() EmergencyStatus_Failure {
 type GetTestResultRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Test          EmergencyStatus_Test   `protobuf:"varint,2,opt,name=test,proto3,enum=smartcore.bos.driver.dali.EmergencyStatus_Test" json:"test,omitempty"`
+	Test          EmergencyStatus_Test   `protobuf:"varint,2,opt,name=test,proto3,enum=smartcore.bos.driver.dali.v1.EmergencyStatus_Test" json:"test,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetTestResultRequest) Reset() {
 	*x = GetTestResultRequest{}
-	mi := &file_dali_proto_msgTypes[19]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1219,7 +1219,7 @@ func (x *GetTestResultRequest) String() string {
 func (*GetTestResultRequest) ProtoMessage() {}
 
 func (x *GetTestResultRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[19]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1232,7 +1232,7 @@ func (x *GetTestResultRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTestResultRequest.ProtoReflect.Descriptor instead.
 func (*GetTestResultRequest) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{19}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetTestResultRequest) GetName() string {
@@ -1252,15 +1252,15 @@ func (x *GetTestResultRequest) GetTest() EmergencyStatus_Test {
 type DeleteTestResultRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Test          EmergencyStatus_Test   `protobuf:"varint,2,opt,name=test,proto3,enum=smartcore.bos.driver.dali.EmergencyStatus_Test" json:"test,omitempty"` // which kind of test result are we trying to delete?
-	Etag          string                 `protobuf:"bytes,3,opt,name=etag,proto3" json:"etag,omitempty"`                                                      // if present, the delete operation will fail unless the provided etag matches the stored etag
+	Test          EmergencyStatus_Test   `protobuf:"varint,2,opt,name=test,proto3,enum=smartcore.bos.driver.dali.v1.EmergencyStatus_Test" json:"test,omitempty"` // which kind of test result are we trying to delete?
+	Etag          string                 `protobuf:"bytes,3,opt,name=etag,proto3" json:"etag,omitempty"`                                                         // if present, the delete operation will fail unless the provided etag matches the stored etag
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DeleteTestResultRequest) Reset() {
 	*x = DeleteTestResultRequest{}
-	mi := &file_dali_proto_msgTypes[20]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1272,7 +1272,7 @@ func (x *DeleteTestResultRequest) String() string {
 func (*DeleteTestResultRequest) ProtoMessage() {}
 
 func (x *DeleteTestResultRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dali_proto_msgTypes[20]
+	mi := &file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1285,7 +1285,7 @@ func (x *DeleteTestResultRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTestResultRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTestResultRequest) Descriptor() ([]byte, []int) {
-	return file_dali_proto_rawDescGZIP(), []int{20}
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *DeleteTestResultRequest) GetName() string {
@@ -1309,12 +1309,11 @@ func (x *DeleteTestResultRequest) GetEtag() string {
 	return ""
 }
 
-var File_dali_proto protoreflect.FileDescriptor
+var File_smartcore_bos_driver_dali_v1_dali_proto protoreflect.FileDescriptor
 
-const file_dali_proto_rawDesc = "" +
+const file_smartcore_bos_driver_dali_v1_dali_proto_rawDesc = "" +
 	"\n" +
-	"\n" +
-	"dali.proto\x12\x19smartcore.bos.driver.dali\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"/\n" +
+	"'smartcore/bos/driver/dali/v1/dali.proto\x12\x1csmartcore.bos.driver.dali.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"/\n" +
 	"\x19GetGroupMembershipRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"4\n" +
 	"\x1aGetGroupMembershipResponse\x12\x16\n" +
@@ -1326,16 +1325,16 @@ const file_dali_proto_rawDesc = "" +
 	"\x16RemoveFromGroupRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05group\x18\x02 \x01(\x05R\x05group\"\x19\n" +
-	"\x17RemoveFromGroupResponse\"\x8c\b\n" +
-	"\x0fEmergencyStatus\x12R\n" +
-	"\factive_modes\x18\x01 \x03(\x0e2/.smartcore.bos.driver.dali.EmergencyStatus.ModeR\vactiveModes\x12T\n" +
-	"\rpending_tests\x18\x02 \x03(\x0e2/.smartcore.bos.driver.dali.EmergencyStatus.TestR\fpendingTests\x12T\n" +
-	"\roverdue_tests\x18\x03 \x03(\x0e2/.smartcore.bos.driver.dali.EmergencyStatus.TestR\foverdueTests\x12\\\n" +
-	"\x11results_available\x18\x04 \x03(\x0e2/.smartcore.bos.driver.dali.EmergencyStatus.TestR\x10resultsAvailable\x12%\n" +
+	"\x17RemoveFromGroupResponse\"\x9b\b\n" +
+	"\x0fEmergencyStatus\x12U\n" +
+	"\factive_modes\x18\x01 \x03(\x0e22.smartcore.bos.driver.dali.v1.EmergencyStatus.ModeR\vactiveModes\x12W\n" +
+	"\rpending_tests\x18\x02 \x03(\x0e22.smartcore.bos.driver.dali.v1.EmergencyStatus.TestR\fpendingTests\x12W\n" +
+	"\roverdue_tests\x18\x03 \x03(\x0e22.smartcore.bos.driver.dali.v1.EmergencyStatus.TestR\foverdueTests\x12_\n" +
+	"\x11results_available\x18\x04 \x03(\x0e22.smartcore.bos.driver.dali.v1.EmergencyStatus.TestR\x10resultsAvailable\x12%\n" +
 	"\x0einhibit_active\x18\x05 \x01(\bR\rinhibitActive\x123\n" +
 	"\x15identification_active\x18\x06 \x01(\bR\x14identificationActive\x122\n" +
-	"\x15battery_level_percent\x18\a \x01(\x02R\x13batteryLevelPercent\x12N\n" +
-	"\bfailures\x18\b \x03(\x0e22.smartcore.bos.driver.dali.EmergencyStatus.FailureR\bfailures\"K\n" +
+	"\x15battery_level_percent\x18\a \x01(\x02R\x13batteryLevelPercent\x12Q\n" +
+	"\bfailures\x18\b \x03(\x0e25.smartcore.bos.driver.dali.v1.EmergencyStatus.FailureR\bfailures\"K\n" +
 	"\x04Test\x12\x10\n" +
 	"\fTEST_UNKNOWN\x10\x00\x12\v\n" +
 	"\aNO_TEST\x10\x01\x12\x11\n" +
@@ -1361,9 +1360,9 @@ const file_dali_proto_rawDesc = "" +
 	"\x14FUNCTION_TEST_FAILED\x10\x05\x12\x18\n" +
 	"\x14DURATION_TEST_FAILED\x10\x06\"/\n" +
 	"\x19GetEmergencyStatusRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"\xb5\x01\n" +
-	"\x11ControlGearStatus\x12P\n" +
-	"\bfailures\x18\x01 \x03(\x0e24.smartcore.bos.driver.dali.ControlGearStatus.FailureR\bfailures\"N\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\xb8\x01\n" +
+	"\x11ControlGearStatus\x12S\n" +
+	"\bfailures\x18\x01 \x03(\x0e27.smartcore.bos.driver.dali.v1.ControlGearStatus.FailureR\bfailures\"N\n" +
 	"\aFailure\x12\x17\n" +
 	"\x13FAILURE_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fLAMP_FAILURE\x10\x01\x12\x18\n" +
@@ -1372,131 +1371,131 @@ const file_dali_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"%\n" +
 	"\x0fIdentifyRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"\x12\n" +
-	"\x10IdentifyResponse\"k\n" +
+	"\x10IdentifyResponse\"n\n" +
 	"\x10StartTestRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12C\n" +
-	"\x04test\x18\x02 \x01(\x0e2/.smartcore.bos.driver.dali.EmergencyStatus.TestR\x04test\"\x13\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12F\n" +
+	"\x04test\x18\x02 \x01(\x0e22.smartcore.bos.driver.dali.v1.EmergencyStatus.TestR\x04test\"\x13\n" +
 	"\x11StartTestResponse\"%\n" +
 	"\x0fStopTestRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"\x12\n" +
-	"\x10StopTestResponse\"\xab\x01\n" +
+	"\x10StopTestResponse\"\xae\x01\n" +
 	"\x19UpdateTestIntervalRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12C\n" +
-	"\x04test\x18\x02 \x01(\x0e2/.smartcore.bos.driver.dali.EmergencyStatus.TestR\x04test\x125\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12F\n" +
+	"\x04test\x18\x02 \x01(\x0e22.smartcore.bos.driver.dali.v1.EmergencyStatus.TestR\x04test\x125\n" +
 	"\binterval\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\binterval\"S\n" +
 	"\x1aUpdateTestIntervalResponse\x125\n" +
-	"\binterval\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\binterval\"\xfd\x02\n" +
+	"\binterval\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\binterval\"\x83\x03\n" +
 	"\n" +
-	"TestResult\x12C\n" +
-	"\x04test\x18\x01 \x01(\x0e2/.smartcore.bos.driver.dali.EmergencyStatus.TestR\x04test\x12\x12\n" +
+	"TestResult\x12F\n" +
+	"\x04test\x18\x01 \x01(\x0e22.smartcore.bos.driver.dali.v1.EmergencyStatus.TestR\x04test\x12\x12\n" +
 	"\x04pass\x18\x04 \x01(\bR\x04pass\x125\n" +
 	"\bduration\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\bduration\x12\x12\n" +
 	"\x04etag\x18\x06 \x01(\tR\x04etag\x129\n" +
 	"\n" +
 	"start_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x125\n" +
-	"\bend_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\aendTime\x12Y\n" +
-	"\x0efailure_reason\x18\t \x01(\x0e22.smartcore.bos.driver.dali.EmergencyStatus.FailureR\rfailureReason\"o\n" +
+	"\bend_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\aendTime\x12\\\n" +
+	"\x0efailure_reason\x18\t \x01(\x0e25.smartcore.bos.driver.dali.v1.EmergencyStatus.FailureR\rfailureReason\"r\n" +
 	"\x14GetTestResultRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12C\n" +
-	"\x04test\x18\x02 \x01(\x0e2/.smartcore.bos.driver.dali.EmergencyStatus.TestR\x04test\"\x86\x01\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12F\n" +
+	"\x04test\x18\x02 \x01(\x0e22.smartcore.bos.driver.dali.v1.EmergencyStatus.TestR\x04test\"\x89\x01\n" +
 	"\x17DeleteTestResultRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12C\n" +
-	"\x04test\x18\x02 \x01(\x0e2/.smartcore.bos.driver.dali.EmergencyStatus.TestR\x04test\x12\x12\n" +
-	"\x04etag\x18\x03 \x01(\tR\x04etag2\xf2\b\n" +
-	"\aDaliApi\x12i\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12F\n" +
+	"\x04test\x18\x02 \x01(\x0e22.smartcore.bos.driver.dali.v1.EmergencyStatus.TestR\x04test\x12\x12\n" +
+	"\x04etag\x18\x03 \x01(\tR\x04etag2\xaf\t\n" +
+	"\aDaliApi\x12o\n" +
 	"\n" +
-	"AddToGroup\x12,.smartcore.bos.driver.dali.AddToGroupRequest\x1a-.smartcore.bos.driver.dali.AddToGroupResponse\x12x\n" +
-	"\x0fRemoveFromGroup\x121.smartcore.bos.driver.dali.RemoveFromGroupRequest\x1a2.smartcore.bos.driver.dali.RemoveFromGroupResponse\x12\x81\x01\n" +
-	"\x12GetGroupMembership\x124.smartcore.bos.driver.dali.GetGroupMembershipRequest\x1a5.smartcore.bos.driver.dali.GetGroupMembershipResponse\x12|\n" +
-	"\x14GetControlGearStatus\x126.smartcore.bos.driver.dali.GetControlGearStatusRequest\x1a,.smartcore.bos.driver.dali.ControlGearStatus\x12v\n" +
-	"\x12GetEmergencyStatus\x124.smartcore.bos.driver.dali.GetEmergencyStatusRequest\x1a*.smartcore.bos.driver.dali.EmergencyStatus\x12c\n" +
-	"\bIdentify\x12*.smartcore.bos.driver.dali.IdentifyRequest\x1a+.smartcore.bos.driver.dali.IdentifyResponse\x12f\n" +
-	"\tStartTest\x12+.smartcore.bos.driver.dali.StartTestRequest\x1a,.smartcore.bos.driver.dali.StartTestResponse\x12c\n" +
-	"\bStopTest\x12*.smartcore.bos.driver.dali.StopTestRequest\x1a+.smartcore.bos.driver.dali.StopTestResponse\x12g\n" +
-	"\rGetTestResult\x12/.smartcore.bos.driver.dali.GetTestResultRequest\x1a%.smartcore.bos.driver.dali.TestResult\x12m\n" +
-	"\x10DeleteTestResult\x122.smartcore.bos.driver.dali.DeleteTestResultRequest\x1a%.smartcore.bos.driver.dali.TestResultB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"AddToGroup\x12/.smartcore.bos.driver.dali.v1.AddToGroupRequest\x1a0.smartcore.bos.driver.dali.v1.AddToGroupResponse\x12~\n" +
+	"\x0fRemoveFromGroup\x124.smartcore.bos.driver.dali.v1.RemoveFromGroupRequest\x1a5.smartcore.bos.driver.dali.v1.RemoveFromGroupResponse\x12\x87\x01\n" +
+	"\x12GetGroupMembership\x127.smartcore.bos.driver.dali.v1.GetGroupMembershipRequest\x1a8.smartcore.bos.driver.dali.v1.GetGroupMembershipResponse\x12\x82\x01\n" +
+	"\x14GetControlGearStatus\x129.smartcore.bos.driver.dali.v1.GetControlGearStatusRequest\x1a/.smartcore.bos.driver.dali.v1.ControlGearStatus\x12|\n" +
+	"\x12GetEmergencyStatus\x127.smartcore.bos.driver.dali.v1.GetEmergencyStatusRequest\x1a-.smartcore.bos.driver.dali.v1.EmergencyStatus\x12i\n" +
+	"\bIdentify\x12-.smartcore.bos.driver.dali.v1.IdentifyRequest\x1a..smartcore.bos.driver.dali.v1.IdentifyResponse\x12l\n" +
+	"\tStartTest\x12..smartcore.bos.driver.dali.v1.StartTestRequest\x1a/.smartcore.bos.driver.dali.v1.StartTestResponse\x12i\n" +
+	"\bStopTest\x12-.smartcore.bos.driver.dali.v1.StopTestRequest\x1a..smartcore.bos.driver.dali.v1.StopTestResponse\x12m\n" +
+	"\rGetTestResult\x122.smartcore.bos.driver.dali.v1.GetTestResultRequest\x1a(.smartcore.bos.driver.dali.v1.TestResult\x12s\n" +
+	"\x10DeleteTestResult\x125.smartcore.bos.driver.dali.v1.DeleteTestResultRequest\x1a(.smartcore.bos.driver.dali.v1.TestResultB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_dali_proto_rawDescOnce sync.Once
-	file_dali_proto_rawDescData []byte
+	file_smartcore_bos_driver_dali_v1_dali_proto_rawDescOnce sync.Once
+	file_smartcore_bos_driver_dali_v1_dali_proto_rawDescData []byte
 )
 
-func file_dali_proto_rawDescGZIP() []byte {
-	file_dali_proto_rawDescOnce.Do(func() {
-		file_dali_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_dali_proto_rawDesc), len(file_dali_proto_rawDesc)))
+func file_smartcore_bos_driver_dali_v1_dali_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_driver_dali_v1_dali_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_driver_dali_v1_dali_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_driver_dali_v1_dali_proto_rawDesc), len(file_smartcore_bos_driver_dali_v1_dali_proto_rawDesc)))
 	})
-	return file_dali_proto_rawDescData
+	return file_smartcore_bos_driver_dali_v1_dali_proto_rawDescData
 }
 
-var file_dali_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_dali_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
-var file_dali_proto_goTypes = []any{
-	(EmergencyStatus_Test)(0),           // 0: smartcore.bos.driver.dali.EmergencyStatus.Test
-	(EmergencyStatus_Mode)(0),           // 1: smartcore.bos.driver.dali.EmergencyStatus.Mode
-	(EmergencyStatus_Failure)(0),        // 2: smartcore.bos.driver.dali.EmergencyStatus.Failure
-	(ControlGearStatus_Failure)(0),      // 3: smartcore.bos.driver.dali.ControlGearStatus.Failure
-	(*GetGroupMembershipRequest)(nil),   // 4: smartcore.bos.driver.dali.GetGroupMembershipRequest
-	(*GetGroupMembershipResponse)(nil),  // 5: smartcore.bos.driver.dali.GetGroupMembershipResponse
-	(*AddToGroupRequest)(nil),           // 6: smartcore.bos.driver.dali.AddToGroupRequest
-	(*AddToGroupResponse)(nil),          // 7: smartcore.bos.driver.dali.AddToGroupResponse
-	(*RemoveFromGroupRequest)(nil),      // 8: smartcore.bos.driver.dali.RemoveFromGroupRequest
-	(*RemoveFromGroupResponse)(nil),     // 9: smartcore.bos.driver.dali.RemoveFromGroupResponse
-	(*EmergencyStatus)(nil),             // 10: smartcore.bos.driver.dali.EmergencyStatus
-	(*GetEmergencyStatusRequest)(nil),   // 11: smartcore.bos.driver.dali.GetEmergencyStatusRequest
-	(*ControlGearStatus)(nil),           // 12: smartcore.bos.driver.dali.ControlGearStatus
-	(*GetControlGearStatusRequest)(nil), // 13: smartcore.bos.driver.dali.GetControlGearStatusRequest
-	(*IdentifyRequest)(nil),             // 14: smartcore.bos.driver.dali.IdentifyRequest
-	(*IdentifyResponse)(nil),            // 15: smartcore.bos.driver.dali.IdentifyResponse
-	(*StartTestRequest)(nil),            // 16: smartcore.bos.driver.dali.StartTestRequest
-	(*StartTestResponse)(nil),           // 17: smartcore.bos.driver.dali.StartTestResponse
-	(*StopTestRequest)(nil),             // 18: smartcore.bos.driver.dali.StopTestRequest
-	(*StopTestResponse)(nil),            // 19: smartcore.bos.driver.dali.StopTestResponse
-	(*UpdateTestIntervalRequest)(nil),   // 20: smartcore.bos.driver.dali.UpdateTestIntervalRequest
-	(*UpdateTestIntervalResponse)(nil),  // 21: smartcore.bos.driver.dali.UpdateTestIntervalResponse
-	(*TestResult)(nil),                  // 22: smartcore.bos.driver.dali.TestResult
-	(*GetTestResultRequest)(nil),        // 23: smartcore.bos.driver.dali.GetTestResultRequest
-	(*DeleteTestResultRequest)(nil),     // 24: smartcore.bos.driver.dali.DeleteTestResultRequest
+var file_smartcore_bos_driver_dali_v1_dali_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_smartcore_bos_driver_dali_v1_dali_proto_goTypes = []any{
+	(EmergencyStatus_Test)(0),           // 0: smartcore.bos.driver.dali.v1.EmergencyStatus.Test
+	(EmergencyStatus_Mode)(0),           // 1: smartcore.bos.driver.dali.v1.EmergencyStatus.Mode
+	(EmergencyStatus_Failure)(0),        // 2: smartcore.bos.driver.dali.v1.EmergencyStatus.Failure
+	(ControlGearStatus_Failure)(0),      // 3: smartcore.bos.driver.dali.v1.ControlGearStatus.Failure
+	(*GetGroupMembershipRequest)(nil),   // 4: smartcore.bos.driver.dali.v1.GetGroupMembershipRequest
+	(*GetGroupMembershipResponse)(nil),  // 5: smartcore.bos.driver.dali.v1.GetGroupMembershipResponse
+	(*AddToGroupRequest)(nil),           // 6: smartcore.bos.driver.dali.v1.AddToGroupRequest
+	(*AddToGroupResponse)(nil),          // 7: smartcore.bos.driver.dali.v1.AddToGroupResponse
+	(*RemoveFromGroupRequest)(nil),      // 8: smartcore.bos.driver.dali.v1.RemoveFromGroupRequest
+	(*RemoveFromGroupResponse)(nil),     // 9: smartcore.bos.driver.dali.v1.RemoveFromGroupResponse
+	(*EmergencyStatus)(nil),             // 10: smartcore.bos.driver.dali.v1.EmergencyStatus
+	(*GetEmergencyStatusRequest)(nil),   // 11: smartcore.bos.driver.dali.v1.GetEmergencyStatusRequest
+	(*ControlGearStatus)(nil),           // 12: smartcore.bos.driver.dali.v1.ControlGearStatus
+	(*GetControlGearStatusRequest)(nil), // 13: smartcore.bos.driver.dali.v1.GetControlGearStatusRequest
+	(*IdentifyRequest)(nil),             // 14: smartcore.bos.driver.dali.v1.IdentifyRequest
+	(*IdentifyResponse)(nil),            // 15: smartcore.bos.driver.dali.v1.IdentifyResponse
+	(*StartTestRequest)(nil),            // 16: smartcore.bos.driver.dali.v1.StartTestRequest
+	(*StartTestResponse)(nil),           // 17: smartcore.bos.driver.dali.v1.StartTestResponse
+	(*StopTestRequest)(nil),             // 18: smartcore.bos.driver.dali.v1.StopTestRequest
+	(*StopTestResponse)(nil),            // 19: smartcore.bos.driver.dali.v1.StopTestResponse
+	(*UpdateTestIntervalRequest)(nil),   // 20: smartcore.bos.driver.dali.v1.UpdateTestIntervalRequest
+	(*UpdateTestIntervalResponse)(nil),  // 21: smartcore.bos.driver.dali.v1.UpdateTestIntervalResponse
+	(*TestResult)(nil),                  // 22: smartcore.bos.driver.dali.v1.TestResult
+	(*GetTestResultRequest)(nil),        // 23: smartcore.bos.driver.dali.v1.GetTestResultRequest
+	(*DeleteTestResultRequest)(nil),     // 24: smartcore.bos.driver.dali.v1.DeleteTestResultRequest
 	(*durationpb.Duration)(nil),         // 25: google.protobuf.Duration
 	(*timestamppb.Timestamp)(nil),       // 26: google.protobuf.Timestamp
 }
-var file_dali_proto_depIdxs = []int32{
-	1,  // 0: smartcore.bos.driver.dali.EmergencyStatus.active_modes:type_name -> smartcore.bos.driver.dali.EmergencyStatus.Mode
-	0,  // 1: smartcore.bos.driver.dali.EmergencyStatus.pending_tests:type_name -> smartcore.bos.driver.dali.EmergencyStatus.Test
-	0,  // 2: smartcore.bos.driver.dali.EmergencyStatus.overdue_tests:type_name -> smartcore.bos.driver.dali.EmergencyStatus.Test
-	0,  // 3: smartcore.bos.driver.dali.EmergencyStatus.results_available:type_name -> smartcore.bos.driver.dali.EmergencyStatus.Test
-	2,  // 4: smartcore.bos.driver.dali.EmergencyStatus.failures:type_name -> smartcore.bos.driver.dali.EmergencyStatus.Failure
-	3,  // 5: smartcore.bos.driver.dali.ControlGearStatus.failures:type_name -> smartcore.bos.driver.dali.ControlGearStatus.Failure
-	0,  // 6: smartcore.bos.driver.dali.StartTestRequest.test:type_name -> smartcore.bos.driver.dali.EmergencyStatus.Test
-	0,  // 7: smartcore.bos.driver.dali.UpdateTestIntervalRequest.test:type_name -> smartcore.bos.driver.dali.EmergencyStatus.Test
-	25, // 8: smartcore.bos.driver.dali.UpdateTestIntervalRequest.interval:type_name -> google.protobuf.Duration
-	25, // 9: smartcore.bos.driver.dali.UpdateTestIntervalResponse.interval:type_name -> google.protobuf.Duration
-	0,  // 10: smartcore.bos.driver.dali.TestResult.test:type_name -> smartcore.bos.driver.dali.EmergencyStatus.Test
-	25, // 11: smartcore.bos.driver.dali.TestResult.duration:type_name -> google.protobuf.Duration
-	26, // 12: smartcore.bos.driver.dali.TestResult.start_time:type_name -> google.protobuf.Timestamp
-	26, // 13: smartcore.bos.driver.dali.TestResult.end_time:type_name -> google.protobuf.Timestamp
-	2,  // 14: smartcore.bos.driver.dali.TestResult.failure_reason:type_name -> smartcore.bos.driver.dali.EmergencyStatus.Failure
-	0,  // 15: smartcore.bos.driver.dali.GetTestResultRequest.test:type_name -> smartcore.bos.driver.dali.EmergencyStatus.Test
-	0,  // 16: smartcore.bos.driver.dali.DeleteTestResultRequest.test:type_name -> smartcore.bos.driver.dali.EmergencyStatus.Test
-	6,  // 17: smartcore.bos.driver.dali.DaliApi.AddToGroup:input_type -> smartcore.bos.driver.dali.AddToGroupRequest
-	8,  // 18: smartcore.bos.driver.dali.DaliApi.RemoveFromGroup:input_type -> smartcore.bos.driver.dali.RemoveFromGroupRequest
-	4,  // 19: smartcore.bos.driver.dali.DaliApi.GetGroupMembership:input_type -> smartcore.bos.driver.dali.GetGroupMembershipRequest
-	13, // 20: smartcore.bos.driver.dali.DaliApi.GetControlGearStatus:input_type -> smartcore.bos.driver.dali.GetControlGearStatusRequest
-	11, // 21: smartcore.bos.driver.dali.DaliApi.GetEmergencyStatus:input_type -> smartcore.bos.driver.dali.GetEmergencyStatusRequest
-	14, // 22: smartcore.bos.driver.dali.DaliApi.Identify:input_type -> smartcore.bos.driver.dali.IdentifyRequest
-	16, // 23: smartcore.bos.driver.dali.DaliApi.StartTest:input_type -> smartcore.bos.driver.dali.StartTestRequest
-	18, // 24: smartcore.bos.driver.dali.DaliApi.StopTest:input_type -> smartcore.bos.driver.dali.StopTestRequest
-	23, // 25: smartcore.bos.driver.dali.DaliApi.GetTestResult:input_type -> smartcore.bos.driver.dali.GetTestResultRequest
-	24, // 26: smartcore.bos.driver.dali.DaliApi.DeleteTestResult:input_type -> smartcore.bos.driver.dali.DeleteTestResultRequest
-	7,  // 27: smartcore.bos.driver.dali.DaliApi.AddToGroup:output_type -> smartcore.bos.driver.dali.AddToGroupResponse
-	9,  // 28: smartcore.bos.driver.dali.DaliApi.RemoveFromGroup:output_type -> smartcore.bos.driver.dali.RemoveFromGroupResponse
-	5,  // 29: smartcore.bos.driver.dali.DaliApi.GetGroupMembership:output_type -> smartcore.bos.driver.dali.GetGroupMembershipResponse
-	12, // 30: smartcore.bos.driver.dali.DaliApi.GetControlGearStatus:output_type -> smartcore.bos.driver.dali.ControlGearStatus
-	10, // 31: smartcore.bos.driver.dali.DaliApi.GetEmergencyStatus:output_type -> smartcore.bos.driver.dali.EmergencyStatus
-	15, // 32: smartcore.bos.driver.dali.DaliApi.Identify:output_type -> smartcore.bos.driver.dali.IdentifyResponse
-	17, // 33: smartcore.bos.driver.dali.DaliApi.StartTest:output_type -> smartcore.bos.driver.dali.StartTestResponse
-	19, // 34: smartcore.bos.driver.dali.DaliApi.StopTest:output_type -> smartcore.bos.driver.dali.StopTestResponse
-	22, // 35: smartcore.bos.driver.dali.DaliApi.GetTestResult:output_type -> smartcore.bos.driver.dali.TestResult
-	22, // 36: smartcore.bos.driver.dali.DaliApi.DeleteTestResult:output_type -> smartcore.bos.driver.dali.TestResult
+var file_smartcore_bos_driver_dali_v1_dali_proto_depIdxs = []int32{
+	1,  // 0: smartcore.bos.driver.dali.v1.EmergencyStatus.active_modes:type_name -> smartcore.bos.driver.dali.v1.EmergencyStatus.Mode
+	0,  // 1: smartcore.bos.driver.dali.v1.EmergencyStatus.pending_tests:type_name -> smartcore.bos.driver.dali.v1.EmergencyStatus.Test
+	0,  // 2: smartcore.bos.driver.dali.v1.EmergencyStatus.overdue_tests:type_name -> smartcore.bos.driver.dali.v1.EmergencyStatus.Test
+	0,  // 3: smartcore.bos.driver.dali.v1.EmergencyStatus.results_available:type_name -> smartcore.bos.driver.dali.v1.EmergencyStatus.Test
+	2,  // 4: smartcore.bos.driver.dali.v1.EmergencyStatus.failures:type_name -> smartcore.bos.driver.dali.v1.EmergencyStatus.Failure
+	3,  // 5: smartcore.bos.driver.dali.v1.ControlGearStatus.failures:type_name -> smartcore.bos.driver.dali.v1.ControlGearStatus.Failure
+	0,  // 6: smartcore.bos.driver.dali.v1.StartTestRequest.test:type_name -> smartcore.bos.driver.dali.v1.EmergencyStatus.Test
+	0,  // 7: smartcore.bos.driver.dali.v1.UpdateTestIntervalRequest.test:type_name -> smartcore.bos.driver.dali.v1.EmergencyStatus.Test
+	25, // 8: smartcore.bos.driver.dali.v1.UpdateTestIntervalRequest.interval:type_name -> google.protobuf.Duration
+	25, // 9: smartcore.bos.driver.dali.v1.UpdateTestIntervalResponse.interval:type_name -> google.protobuf.Duration
+	0,  // 10: smartcore.bos.driver.dali.v1.TestResult.test:type_name -> smartcore.bos.driver.dali.v1.EmergencyStatus.Test
+	25, // 11: smartcore.bos.driver.dali.v1.TestResult.duration:type_name -> google.protobuf.Duration
+	26, // 12: smartcore.bos.driver.dali.v1.TestResult.start_time:type_name -> google.protobuf.Timestamp
+	26, // 13: smartcore.bos.driver.dali.v1.TestResult.end_time:type_name -> google.protobuf.Timestamp
+	2,  // 14: smartcore.bos.driver.dali.v1.TestResult.failure_reason:type_name -> smartcore.bos.driver.dali.v1.EmergencyStatus.Failure
+	0,  // 15: smartcore.bos.driver.dali.v1.GetTestResultRequest.test:type_name -> smartcore.bos.driver.dali.v1.EmergencyStatus.Test
+	0,  // 16: smartcore.bos.driver.dali.v1.DeleteTestResultRequest.test:type_name -> smartcore.bos.driver.dali.v1.EmergencyStatus.Test
+	6,  // 17: smartcore.bos.driver.dali.v1.DaliApi.AddToGroup:input_type -> smartcore.bos.driver.dali.v1.AddToGroupRequest
+	8,  // 18: smartcore.bos.driver.dali.v1.DaliApi.RemoveFromGroup:input_type -> smartcore.bos.driver.dali.v1.RemoveFromGroupRequest
+	4,  // 19: smartcore.bos.driver.dali.v1.DaliApi.GetGroupMembership:input_type -> smartcore.bos.driver.dali.v1.GetGroupMembershipRequest
+	13, // 20: smartcore.bos.driver.dali.v1.DaliApi.GetControlGearStatus:input_type -> smartcore.bos.driver.dali.v1.GetControlGearStatusRequest
+	11, // 21: smartcore.bos.driver.dali.v1.DaliApi.GetEmergencyStatus:input_type -> smartcore.bos.driver.dali.v1.GetEmergencyStatusRequest
+	14, // 22: smartcore.bos.driver.dali.v1.DaliApi.Identify:input_type -> smartcore.bos.driver.dali.v1.IdentifyRequest
+	16, // 23: smartcore.bos.driver.dali.v1.DaliApi.StartTest:input_type -> smartcore.bos.driver.dali.v1.StartTestRequest
+	18, // 24: smartcore.bos.driver.dali.v1.DaliApi.StopTest:input_type -> smartcore.bos.driver.dali.v1.StopTestRequest
+	23, // 25: smartcore.bos.driver.dali.v1.DaliApi.GetTestResult:input_type -> smartcore.bos.driver.dali.v1.GetTestResultRequest
+	24, // 26: smartcore.bos.driver.dali.v1.DaliApi.DeleteTestResult:input_type -> smartcore.bos.driver.dali.v1.DeleteTestResultRequest
+	7,  // 27: smartcore.bos.driver.dali.v1.DaliApi.AddToGroup:output_type -> smartcore.bos.driver.dali.v1.AddToGroupResponse
+	9,  // 28: smartcore.bos.driver.dali.v1.DaliApi.RemoveFromGroup:output_type -> smartcore.bos.driver.dali.v1.RemoveFromGroupResponse
+	5,  // 29: smartcore.bos.driver.dali.v1.DaliApi.GetGroupMembership:output_type -> smartcore.bos.driver.dali.v1.GetGroupMembershipResponse
+	12, // 30: smartcore.bos.driver.dali.v1.DaliApi.GetControlGearStatus:output_type -> smartcore.bos.driver.dali.v1.ControlGearStatus
+	10, // 31: smartcore.bos.driver.dali.v1.DaliApi.GetEmergencyStatus:output_type -> smartcore.bos.driver.dali.v1.EmergencyStatus
+	15, // 32: smartcore.bos.driver.dali.v1.DaliApi.Identify:output_type -> smartcore.bos.driver.dali.v1.IdentifyResponse
+	17, // 33: smartcore.bos.driver.dali.v1.DaliApi.StartTest:output_type -> smartcore.bos.driver.dali.v1.StartTestResponse
+	19, // 34: smartcore.bos.driver.dali.v1.DaliApi.StopTest:output_type -> smartcore.bos.driver.dali.v1.StopTestResponse
+	22, // 35: smartcore.bos.driver.dali.v1.DaliApi.GetTestResult:output_type -> smartcore.bos.driver.dali.v1.TestResult
+	22, // 36: smartcore.bos.driver.dali.v1.DaliApi.DeleteTestResult:output_type -> smartcore.bos.driver.dali.v1.TestResult
 	27, // [27:37] is the sub-list for method output_type
 	17, // [17:27] is the sub-list for method input_type
 	17, // [17:17] is the sub-list for extension type_name
@@ -1504,27 +1503,27 @@ var file_dali_proto_depIdxs = []int32{
 	0,  // [0:17] is the sub-list for field type_name
 }
 
-func init() { file_dali_proto_init() }
-func file_dali_proto_init() {
-	if File_dali_proto != nil {
+func init() { file_smartcore_bos_driver_dali_v1_dali_proto_init() }
+func file_smartcore_bos_driver_dali_v1_dali_proto_init() {
+	if File_smartcore_bos_driver_dali_v1_dali_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_dali_proto_rawDesc), len(file_dali_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_driver_dali_v1_dali_proto_rawDesc), len(file_smartcore_bos_driver_dali_v1_dali_proto_rawDesc)),
 			NumEnums:      4,
 			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_dali_proto_goTypes,
-		DependencyIndexes: file_dali_proto_depIdxs,
-		EnumInfos:         file_dali_proto_enumTypes,
-		MessageInfos:      file_dali_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_driver_dali_v1_dali_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_driver_dali_v1_dali_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_driver_dali_v1_dali_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_driver_dali_v1_dali_proto_msgTypes,
 	}.Build()
-	File_dali_proto = out.File
-	file_dali_proto_goTypes = nil
-	file_dali_proto_depIdxs = nil
+	File_smartcore_bos_driver_dali_v1_dali_proto = out.File
+	file_smartcore_bos_driver_dali_v1_dali_proto_goTypes = nil
+	file_smartcore_bos_driver_dali_v1_dali_proto_depIdxs = nil
 }

@@ -1,7 +1,7 @@
 import {fieldMaskFromObject, setProperties, timestampToDate} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setCollection, setValue, trackAction} from '@/api/resource';
-import {ServicesApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/services_grpc_web_pb';
+import {ServicesApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/services/v1/services_grpc_web_pb';
 import {
   ConfigureServiceRequest,
   GetServiceRequest,
@@ -11,7 +11,7 @@ import {
   PullServicesRequest,
   StartServiceRequest,
   StopServiceRequest
-} from '@smart-core-os/sc-bos-ui-gen/proto/services_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/services/v1/services_pb';
 import {GetMetadataRequest} from '@smart-core-os/sc-api-grpc-web/traits/metadata_pb';
 
 /**

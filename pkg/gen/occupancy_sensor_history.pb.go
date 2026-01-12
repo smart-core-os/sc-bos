@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: occupancy_sensor_history.proto
+// source: smartcore/bos/occupancysensor/v1/occupancy_sensor_history.proto
 
 package gen
 
@@ -35,7 +35,7 @@ type OccupancyRecord struct {
 
 func (x *OccupancyRecord) Reset() {
 	*x = OccupancyRecord{}
-	mi := &file_occupancy_sensor_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +47,7 @@ func (x *OccupancyRecord) String() string {
 func (*OccupancyRecord) ProtoMessage() {}
 
 func (x *OccupancyRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_occupancy_sensor_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +60,7 @@ func (x *OccupancyRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OccupancyRecord.ProtoReflect.Descriptor instead.
 func (*OccupancyRecord) Descriptor() ([]byte, []int) {
-	return file_occupancy_sensor_history_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *OccupancyRecord) GetOccupancy() *traits.Occupancy {
@@ -102,7 +102,7 @@ type ListOccupancyHistoryRequest struct {
 
 func (x *ListOccupancyHistoryRequest) Reset() {
 	*x = ListOccupancyHistoryRequest{}
-	mi := &file_occupancy_sensor_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -114,7 +114,7 @@ func (x *ListOccupancyHistoryRequest) String() string {
 func (*ListOccupancyHistoryRequest) ProtoMessage() {}
 
 func (x *ListOccupancyHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_occupancy_sensor_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -127,7 +127,7 @@ func (x *ListOccupancyHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOccupancyHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListOccupancyHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_occupancy_sensor_history_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListOccupancyHistoryRequest) GetName() string {
@@ -187,7 +187,7 @@ type ListOccupancyHistoryResponse struct {
 
 func (x *ListOccupancyHistoryResponse) Reset() {
 	*x = ListOccupancyHistoryResponse{}
-	mi := &file_occupancy_sensor_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -199,7 +199,7 @@ func (x *ListOccupancyHistoryResponse) String() string {
 func (*ListOccupancyHistoryResponse) ProtoMessage() {}
 
 func (x *ListOccupancyHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_occupancy_sensor_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -212,7 +212,7 @@ func (x *ListOccupancyHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOccupancyHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListOccupancyHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_occupancy_sensor_history_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListOccupancyHistoryResponse) GetOccupancyRecords() []*OccupancyRecord {
@@ -236,11 +236,11 @@ func (x *ListOccupancyHistoryResponse) GetTotalSize() int32 {
 	return 0
 }
 
-var File_occupancy_sensor_history_proto protoreflect.FileDescriptor
+var File_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto protoreflect.FileDescriptor
 
-const file_occupancy_sensor_history_proto_rawDesc = "" +
+const file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDesc = "" +
 	"\n" +
-	"\x1eoccupancy_sensor_history.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17types/time/period.proto\x1a\x1dtraits/occupancy_sensor.proto\"\x89\x01\n" +
+	"?smartcore/bos/occupancysensor/v1/occupancy_sensor_history.proto\x12 smartcore.bos.occupancysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1dtraits/occupancy_sensor.proto\x1a\x17types/time/period.proto\"\x89\x01\n" +
 	"\x0fOccupancyRecord\x129\n" +
 	"\toccupancy\x18\x01 \x01(\v2\x1b.smartcore.traits.OccupancyR\toccupancy\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -252,45 +252,45 @@ const file_occupancy_sensor_history_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x05 \x01(\tR\tpageToken\x12\x19\n" +
-	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xb2\x01\n" +
-	"\x1cListOccupancyHistoryResponse\x12K\n" +
-	"\x11occupancy_records\x18\x01 \x03(\v2\x1e.smartcore.bos.OccupancyRecordR\x10occupancyRecords\x12&\n" +
+	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xc5\x01\n" +
+	"\x1cListOccupancyHistoryResponse\x12^\n" +
+	"\x11occupancy_records\x18\x01 \x03(\v21.smartcore.bos.occupancysensor.v1.OccupancyRecordR\x10occupancyRecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x89\x01\n" +
-	"\x16OccupancySensorHistory\x12o\n" +
-	"\x14ListOccupancyHistory\x12*.smartcore.bos.ListOccupancyHistoryRequest\x1a+.smartcore.bos.ListOccupancyHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"total_size\x18\x03 \x01(\x05R\ttotalSize2\xb0\x01\n" +
+	"\x16OccupancySensorHistory\x12\x95\x01\n" +
+	"\x14ListOccupancyHistory\x12=.smartcore.bos.occupancysensor.v1.ListOccupancyHistoryRequest\x1a>.smartcore.bos.occupancysensor.v1.ListOccupancyHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_occupancy_sensor_history_proto_rawDescOnce sync.Once
-	file_occupancy_sensor_history_proto_rawDescData []byte
+	file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDescOnce sync.Once
+	file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDescData []byte
 )
 
-func file_occupancy_sensor_history_proto_rawDescGZIP() []byte {
-	file_occupancy_sensor_history_proto_rawDescOnce.Do(func() {
-		file_occupancy_sensor_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_occupancy_sensor_history_proto_rawDesc), len(file_occupancy_sensor_history_proto_rawDesc)))
+func file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDesc), len(file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDesc)))
 	})
-	return file_occupancy_sensor_history_proto_rawDescData
+	return file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDescData
 }
 
-var file_occupancy_sensor_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_occupancy_sensor_history_proto_goTypes = []any{
-	(*OccupancyRecord)(nil),              // 0: smartcore.bos.OccupancyRecord
-	(*ListOccupancyHistoryRequest)(nil),  // 1: smartcore.bos.ListOccupancyHistoryRequest
-	(*ListOccupancyHistoryResponse)(nil), // 2: smartcore.bos.ListOccupancyHistoryResponse
+var file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_goTypes = []any{
+	(*OccupancyRecord)(nil),              // 0: smartcore.bos.occupancysensor.v1.OccupancyRecord
+	(*ListOccupancyHistoryRequest)(nil),  // 1: smartcore.bos.occupancysensor.v1.ListOccupancyHistoryRequest
+	(*ListOccupancyHistoryResponse)(nil), // 2: smartcore.bos.occupancysensor.v1.ListOccupancyHistoryResponse
 	(*traits.Occupancy)(nil),             // 3: smartcore.traits.Occupancy
 	(*timestamppb.Timestamp)(nil),        // 4: google.protobuf.Timestamp
 	(*time.Period)(nil),                  // 5: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),        // 6: google.protobuf.FieldMask
 }
-var file_occupancy_sensor_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.OccupancyRecord.occupancy:type_name -> smartcore.traits.Occupancy
-	4, // 1: smartcore.bos.OccupancyRecord.record_time:type_name -> google.protobuf.Timestamp
-	5, // 2: smartcore.bos.ListOccupancyHistoryRequest.period:type_name -> smartcore.types.time.Period
-	6, // 3: smartcore.bos.ListOccupancyHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
-	0, // 4: smartcore.bos.ListOccupancyHistoryResponse.occupancy_records:type_name -> smartcore.bos.OccupancyRecord
-	1, // 5: smartcore.bos.OccupancySensorHistory.ListOccupancyHistory:input_type -> smartcore.bos.ListOccupancyHistoryRequest
-	2, // 6: smartcore.bos.OccupancySensorHistory.ListOccupancyHistory:output_type -> smartcore.bos.ListOccupancyHistoryResponse
+var file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_depIdxs = []int32{
+	3, // 0: smartcore.bos.occupancysensor.v1.OccupancyRecord.occupancy:type_name -> smartcore.traits.Occupancy
+	4, // 1: smartcore.bos.occupancysensor.v1.OccupancyRecord.record_time:type_name -> google.protobuf.Timestamp
+	5, // 2: smartcore.bos.occupancysensor.v1.ListOccupancyHistoryRequest.period:type_name -> smartcore.types.time.Period
+	6, // 3: smartcore.bos.occupancysensor.v1.ListOccupancyHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
+	0, // 4: smartcore.bos.occupancysensor.v1.ListOccupancyHistoryResponse.occupancy_records:type_name -> smartcore.bos.occupancysensor.v1.OccupancyRecord
+	1, // 5: smartcore.bos.occupancysensor.v1.OccupancySensorHistory.ListOccupancyHistory:input_type -> smartcore.bos.occupancysensor.v1.ListOccupancyHistoryRequest
+	2, // 6: smartcore.bos.occupancysensor.v1.OccupancySensorHistory.ListOccupancyHistory:output_type -> smartcore.bos.occupancysensor.v1.ListOccupancyHistoryResponse
 	6, // [6:7] is the sub-list for method output_type
 	5, // [5:6] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -298,26 +298,26 @@ var file_occupancy_sensor_history_proto_depIdxs = []int32{
 	0, // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_occupancy_sensor_history_proto_init() }
-func file_occupancy_sensor_history_proto_init() {
-	if File_occupancy_sensor_history_proto != nil {
+func init() { file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_init() }
+func file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_init() {
+	if File_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_occupancy_sensor_history_proto_rawDesc), len(file_occupancy_sensor_history_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDesc), len(file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_occupancy_sensor_history_proto_goTypes,
-		DependencyIndexes: file_occupancy_sensor_history_proto_depIdxs,
-		MessageInfos:      file_occupancy_sensor_history_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_msgTypes,
 	}.Build()
-	File_occupancy_sensor_history_proto = out.File
-	file_occupancy_sensor_history_proto_goTypes = nil
-	file_occupancy_sensor_history_proto_depIdxs = nil
+	File_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto = out.File
+	file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_goTypes = nil
+	file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_depIdxs = nil
 }

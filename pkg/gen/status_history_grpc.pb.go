@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: status_history.proto
+// source: smartcore/bos/status/v1/status_history.proto
 
 package gen
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StatusHistory_ListCurrentStatusHistory_FullMethodName = "/smartcore.bos.StatusHistory/ListCurrentStatusHistory"
+	StatusHistory_ListCurrentStatusHistory_FullMethodName = "/smartcore.bos.status.v1.StatusHistory/ListCurrentStatusHistory"
 )
 
 // StatusHistoryClient is the client API for StatusHistory service.
@@ -112,7 +112,7 @@ func _StatusHistory_ListCurrentStatusHistory_Handler(srv interface{}, ctx contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var StatusHistory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.StatusHistory",
+	ServiceName: "smartcore.bos.status.v1.StatusHistory",
 	HandlerType: (*StatusHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -121,5 +121,5 @@ var StatusHistory_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "status_history.proto",
+	Metadata: "smartcore/bos/status/v1/status_history.proto",
 }

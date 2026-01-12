@@ -13,7 +13,7 @@ const props = defineProps({
     required: true
   },
   healthChecks: {
-    /** @type {import('vue').PropType<Array<import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.AsObject>>} */
+    /** @type {import('vue').PropType<Array<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.AsObject>>} */
     type: Array,
     default: () => []
   }

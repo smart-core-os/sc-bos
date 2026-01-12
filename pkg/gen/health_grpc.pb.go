@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: health.proto
+// source: smartcore/bos/health/v1/health.proto
 
 package gen
 
@@ -19,10 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	HealthApi_ListHealthChecks_FullMethodName = "/smartcore.bos.HealthApi/ListHealthChecks"
-	HealthApi_PullHealthChecks_FullMethodName = "/smartcore.bos.HealthApi/PullHealthChecks"
-	HealthApi_GetHealthCheck_FullMethodName   = "/smartcore.bos.HealthApi/GetHealthCheck"
-	HealthApi_PullHealthCheck_FullMethodName  = "/smartcore.bos.HealthApi/PullHealthCheck"
+	HealthApi_ListHealthChecks_FullMethodName = "/smartcore.bos.health.v1.HealthApi/ListHealthChecks"
+	HealthApi_PullHealthChecks_FullMethodName = "/smartcore.bos.health.v1.HealthApi/PullHealthChecks"
+	HealthApi_GetHealthCheck_FullMethodName   = "/smartcore.bos.health.v1.HealthApi/GetHealthCheck"
+	HealthApi_PullHealthCheck_FullMethodName  = "/smartcore.bos.health.v1.HealthApi/PullHealthCheck"
 )
 
 // HealthApiClient is the client API for HealthApi service.
@@ -234,7 +234,7 @@ type HealthApi_PullHealthCheckServer = grpc.ServerStreamingServer[PullHealthChec
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var HealthApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.HealthApi",
+	ServiceName: "smartcore.bos.health.v1.HealthApi",
 	HandlerType: (*HealthApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -258,5 +258,5 @@ var HealthApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "health.proto",
+	Metadata: "smartcore/bos/health/v1/health.proto",
 }

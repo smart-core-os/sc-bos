@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: emergency_light.proto
+// source: smartcore/bos/emergencylight/v1/emergency_light.proto
 
 package gen
 
@@ -81,11 +81,11 @@ func (x EmergencyTestResult_Result) String() string {
 }
 
 func (EmergencyTestResult_Result) Descriptor() protoreflect.EnumDescriptor {
-	return file_emergency_light_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_enumTypes[0].Descriptor()
 }
 
 func (EmergencyTestResult_Result) Type() protoreflect.EnumType {
-	return &file_emergency_light_proto_enumTypes[0]
+	return &file_smartcore_bos_emergencylight_v1_emergency_light_proto_enumTypes[0]
 }
 
 func (x EmergencyTestResult_Result) Number() protoreflect.EnumNumber {
@@ -94,7 +94,7 @@ func (x EmergencyTestResult_Result) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EmergencyTestResult_Result.Descriptor instead.
 func (EmergencyTestResult_Result) EnumDescriptor() ([]byte, []int) {
-	return file_emergency_light_proto_rawDescGZIP(), []int{1, 0}
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP(), []int{1, 0}
 }
 
 // TestResultSet contains the results of the most recent tests performed on the emergency light.
@@ -108,7 +108,7 @@ type TestResultSet struct {
 
 func (x *TestResultSet) Reset() {
 	*x = TestResultSet{}
-	mi := &file_emergency_light_proto_msgTypes[0]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -120,7 +120,7 @@ func (x *TestResultSet) String() string {
 func (*TestResultSet) ProtoMessage() {}
 
 func (x *TestResultSet) ProtoReflect() protoreflect.Message {
-	mi := &file_emergency_light_proto_msgTypes[0]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -133,7 +133,7 @@ func (x *TestResultSet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestResultSet.ProtoReflect.Descriptor instead.
 func (*TestResultSet) Descriptor() ([]byte, []int) {
-	return file_emergency_light_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *TestResultSet) GetFunctionTest() *EmergencyTestResult {
@@ -154,7 +154,7 @@ type EmergencyTestResult struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The result of the most recent test. If a test is currently in progress,
 	// result should be set to TEST_RESULT_PENDING or TEST_RESULT_UNSPECIFIED
-	Result EmergencyTestResult_Result `protobuf:"varint,1,opt,name=result,proto3,enum=smartcore.bos.EmergencyTestResult_Result" json:"result,omitempty"`
+	Result EmergencyTestResult_Result `protobuf:"varint,1,opt,name=result,proto3,enum=smartcore.bos.emergencylight.v1.EmergencyTestResult_Result" json:"result,omitempty"`
 	// Optional. The time at which the most recent test was started, if known.
 	// This will be updated whenever a new test is successfully started with StartFunctionTest or StartDurationTest.
 	StartTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
@@ -170,7 +170,7 @@ type EmergencyTestResult struct {
 
 func (x *EmergencyTestResult) Reset() {
 	*x = EmergencyTestResult{}
-	mi := &file_emergency_light_proto_msgTypes[1]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -182,7 +182,7 @@ func (x *EmergencyTestResult) String() string {
 func (*EmergencyTestResult) ProtoMessage() {}
 
 func (x *EmergencyTestResult) ProtoReflect() protoreflect.Message {
-	mi := &file_emergency_light_proto_msgTypes[1]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -195,7 +195,7 @@ func (x *EmergencyTestResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EmergencyTestResult.ProtoReflect.Descriptor instead.
 func (*EmergencyTestResult) Descriptor() ([]byte, []int) {
-	return file_emergency_light_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *EmergencyTestResult) GetResult() EmergencyTestResult_Result {
@@ -235,7 +235,7 @@ type StartEmergencyTestRequest struct {
 
 func (x *StartEmergencyTestRequest) Reset() {
 	*x = StartEmergencyTestRequest{}
-	mi := &file_emergency_light_proto_msgTypes[2]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -247,7 +247,7 @@ func (x *StartEmergencyTestRequest) String() string {
 func (*StartEmergencyTestRequest) ProtoMessage() {}
 
 func (x *StartEmergencyTestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_emergency_light_proto_msgTypes[2]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -260,7 +260,7 @@ func (x *StartEmergencyTestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartEmergencyTestRequest.ProtoReflect.Descriptor instead.
 func (*StartEmergencyTestRequest) Descriptor() ([]byte, []int) {
-	return file_emergency_light_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *StartEmergencyTestRequest) GetName() string {
@@ -282,7 +282,7 @@ type StartEmergencyTestResponse struct {
 
 func (x *StartEmergencyTestResponse) Reset() {
 	*x = StartEmergencyTestResponse{}
-	mi := &file_emergency_light_proto_msgTypes[3]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -294,7 +294,7 @@ func (x *StartEmergencyTestResponse) String() string {
 func (*StartEmergencyTestResponse) ProtoMessage() {}
 
 func (x *StartEmergencyTestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_emergency_light_proto_msgTypes[3]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -307,7 +307,7 @@ func (x *StartEmergencyTestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartEmergencyTestResponse.ProtoReflect.Descriptor instead.
 func (*StartEmergencyTestResponse) Descriptor() ([]byte, []int) {
-	return file_emergency_light_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *StartEmergencyTestResponse) GetStartTime() *timestamppb.Timestamp {
@@ -333,7 +333,7 @@ type StopEmergencyTestsRequest struct {
 
 func (x *StopEmergencyTestsRequest) Reset() {
 	*x = StopEmergencyTestsRequest{}
-	mi := &file_emergency_light_proto_msgTypes[4]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -345,7 +345,7 @@ func (x *StopEmergencyTestsRequest) String() string {
 func (*StopEmergencyTestsRequest) ProtoMessage() {}
 
 func (x *StopEmergencyTestsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_emergency_light_proto_msgTypes[4]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -358,7 +358,7 @@ func (x *StopEmergencyTestsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopEmergencyTestsRequest.ProtoReflect.Descriptor instead.
 func (*StopEmergencyTestsRequest) Descriptor() ([]byte, []int) {
-	return file_emergency_light_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *StopEmergencyTestsRequest) GetName() string {
@@ -376,7 +376,7 @@ type StopEmergencyTestsResponse struct {
 
 func (x *StopEmergencyTestsResponse) Reset() {
 	*x = StopEmergencyTestsResponse{}
-	mi := &file_emergency_light_proto_msgTypes[5]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -388,7 +388,7 @@ func (x *StopEmergencyTestsResponse) String() string {
 func (*StopEmergencyTestsResponse) ProtoMessage() {}
 
 func (x *StopEmergencyTestsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_emergency_light_proto_msgTypes[5]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -401,7 +401,7 @@ func (x *StopEmergencyTestsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopEmergencyTestsResponse.ProtoReflect.Descriptor instead.
 func (*StopEmergencyTestsResponse) Descriptor() ([]byte, []int) {
-	return file_emergency_light_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP(), []int{5}
 }
 
 type GetTestResultSetRequest struct {
@@ -416,7 +416,7 @@ type GetTestResultSetRequest struct {
 
 func (x *GetTestResultSetRequest) Reset() {
 	*x = GetTestResultSetRequest{}
-	mi := &file_emergency_light_proto_msgTypes[6]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -428,7 +428,7 @@ func (x *GetTestResultSetRequest) String() string {
 func (*GetTestResultSetRequest) ProtoMessage() {}
 
 func (x *GetTestResultSetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_emergency_light_proto_msgTypes[6]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -441,7 +441,7 @@ func (x *GetTestResultSetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTestResultSetRequest.ProtoReflect.Descriptor instead.
 func (*GetTestResultSetRequest) Descriptor() ([]byte, []int) {
-	return file_emergency_light_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetTestResultSetRequest) GetName() string {
@@ -476,7 +476,7 @@ type PullTestResultRequest struct {
 
 func (x *PullTestResultRequest) Reset() {
 	*x = PullTestResultRequest{}
-	mi := &file_emergency_light_proto_msgTypes[7]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -488,7 +488,7 @@ func (x *PullTestResultRequest) String() string {
 func (*PullTestResultRequest) ProtoMessage() {}
 
 func (x *PullTestResultRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_emergency_light_proto_msgTypes[7]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -501,7 +501,7 @@ func (x *PullTestResultRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTestResultRequest.ProtoReflect.Descriptor instead.
 func (*PullTestResultRequest) Descriptor() ([]byte, []int) {
-	return file_emergency_light_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PullTestResultRequest) GetName() string {
@@ -534,7 +534,7 @@ type PullTestResultsResponse struct {
 
 func (x *PullTestResultsResponse) Reset() {
 	*x = PullTestResultsResponse{}
-	mi := &file_emergency_light_proto_msgTypes[8]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -546,7 +546,7 @@ func (x *PullTestResultsResponse) String() string {
 func (*PullTestResultsResponse) ProtoMessage() {}
 
 func (x *PullTestResultsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_emergency_light_proto_msgTypes[8]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -559,7 +559,7 @@ func (x *PullTestResultsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTestResultsResponse.ProtoReflect.Descriptor instead.
 func (*PullTestResultsResponse) Descriptor() ([]byte, []int) {
-	return file_emergency_light_proto_rawDescGZIP(), []int{8}
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PullTestResultsResponse) GetChanges() []*PullTestResultsResponse_Change {
@@ -580,7 +580,7 @@ type PullTestResultsResponse_Change struct {
 
 func (x *PullTestResultsResponse_Change) Reset() {
 	*x = PullTestResultsResponse_Change{}
-	mi := &file_emergency_light_proto_msgTypes[9]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -592,7 +592,7 @@ func (x *PullTestResultsResponse_Change) String() string {
 func (*PullTestResultsResponse_Change) ProtoMessage() {}
 
 func (x *PullTestResultsResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_emergency_light_proto_msgTypes[9]
+	mi := &file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -605,7 +605,7 @@ func (x *PullTestResultsResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullTestResultsResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullTestResultsResponse_Change) Descriptor() ([]byte, []int) {
-	return file_emergency_light_proto_rawDescGZIP(), []int{8, 0}
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP(), []int{8, 0}
 }
 
 func (x *PullTestResultsResponse_Change) GetName() string {
@@ -629,16 +629,16 @@ func (x *PullTestResultsResponse_Change) GetTestResult() *TestResultSet {
 	return nil
 }
 
-var File_emergency_light_proto protoreflect.FileDescriptor
+var File_smartcore_bos_emergencylight_v1_emergency_light_proto protoreflect.FileDescriptor
 
-const file_emergency_light_proto_rawDesc = "" +
+const file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDesc = "" +
 	"\n" +
-	"\x15emergency_light.proto\x12\rsmartcore.bos\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa1\x01\n" +
-	"\rTestResultSet\x12G\n" +
-	"\rfunction_test\x18\x01 \x01(\v2\".smartcore.bos.EmergencyTestResultR\ffunctionTest\x12G\n" +
-	"\rduration_test\x18\x02 \x01(\v2\".smartcore.bos.EmergencyTestResultR\fdurationTest\"\xfc\x03\n" +
-	"\x13EmergencyTestResult\x12A\n" +
-	"\x06result\x18\x01 \x01(\x0e2).smartcore.bos.EmergencyTestResult.ResultR\x06result\x129\n" +
+	"5smartcore/bos/emergencylight/v1/emergency_light.proto\x12\x1fsmartcore.bos.emergencylight.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc5\x01\n" +
+	"\rTestResultSet\x12Y\n" +
+	"\rfunction_test\x18\x01 \x01(\v24.smartcore.bos.emergencylight.v1.EmergencyTestResultR\ffunctionTest\x12Y\n" +
+	"\rduration_test\x18\x02 \x01(\v24.smartcore.bos.emergencylight.v1.EmergencyTestResultR\fdurationTest\"\x8e\x04\n" +
+	"\x13EmergencyTestResult\x12S\n" +
+	"\x06result\x18\x01 \x01(\x0e2;.smartcore.bos.emergencylight.v1.EmergencyTestResult.ResultR\x06result\x129\n" +
 	"\n" +
 	"start_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x125\n" +
 	"\bend_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aendTime\x125\n" +
@@ -672,76 +672,76 @@ const file_emergency_light_proto_rawDesc = "" +
 	"\x15PullTestResultRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xfd\x01\n" +
-	"\x17PullTestResultsResponse\x12G\n" +
-	"\achanges\x18\x01 \x03(\v2-.smartcore.bos.PullTestResultsResponse.ChangeR\achanges\x1a\x98\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xa1\x02\n" +
+	"\x17PullTestResultsResponse\x12Y\n" +
+	"\achanges\x18\x01 \x03(\v2?.smartcore.bos.emergencylight.v1.PullTestResultsResponse.ChangeR\achanges\x1a\xaa\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x12=\n" +
-	"\vtest_result\x18\x03 \x01(\v2\x1c.smartcore.bos.TestResultSetR\n" +
-	"testResult2\x91\x04\n" +
-	"\x11EmergencyLightApi\x12h\n" +
-	"\x11StartFunctionTest\x12(.smartcore.bos.StartEmergencyTestRequest\x1a).smartcore.bos.StartEmergencyTestResponse\x12h\n" +
-	"\x11StartDurationTest\x12(.smartcore.bos.StartEmergencyTestRequest\x1a).smartcore.bos.StartEmergencyTestResponse\x12h\n" +
-	"\x11StopEmergencyTest\x12(.smartcore.bos.StopEmergencyTestsRequest\x1a).smartcore.bos.StopEmergencyTestsResponse\x12X\n" +
-	"\x10GetTestResultSet\x12&.smartcore.bos.GetTestResultSetRequest\x1a\x1c.smartcore.bos.TestResultSet\x12d\n" +
-	"\x12PullTestResultSets\x12$.smartcore.bos.PullTestResultRequest\x1a&.smartcore.bos.PullTestResultsResponse0\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"changeTime\x12O\n" +
+	"\vtest_result\x18\x03 \x01(\v2..smartcore.bos.emergencylight.v1.TestResultSetR\n" +
+	"testResult2\xc9\x05\n" +
+	"\x11EmergencyLightApi\x12\x8c\x01\n" +
+	"\x11StartFunctionTest\x12:.smartcore.bos.emergencylight.v1.StartEmergencyTestRequest\x1a;.smartcore.bos.emergencylight.v1.StartEmergencyTestResponse\x12\x8c\x01\n" +
+	"\x11StartDurationTest\x12:.smartcore.bos.emergencylight.v1.StartEmergencyTestRequest\x1a;.smartcore.bos.emergencylight.v1.StartEmergencyTestResponse\x12\x8c\x01\n" +
+	"\x11StopEmergencyTest\x12:.smartcore.bos.emergencylight.v1.StopEmergencyTestsRequest\x1a;.smartcore.bos.emergencylight.v1.StopEmergencyTestsResponse\x12|\n" +
+	"\x10GetTestResultSet\x128.smartcore.bos.emergencylight.v1.GetTestResultSetRequest\x1a..smartcore.bos.emergencylight.v1.TestResultSet\x12\x88\x01\n" +
+	"\x12PullTestResultSets\x126.smartcore.bos.emergencylight.v1.PullTestResultRequest\x1a8.smartcore.bos.emergencylight.v1.PullTestResultsResponse0\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_emergency_light_proto_rawDescOnce sync.Once
-	file_emergency_light_proto_rawDescData []byte
+	file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescOnce sync.Once
+	file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescData []byte
 )
 
-func file_emergency_light_proto_rawDescGZIP() []byte {
-	file_emergency_light_proto_rawDescOnce.Do(func() {
-		file_emergency_light_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_emergency_light_proto_rawDesc), len(file_emergency_light_proto_rawDesc)))
+func file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDesc), len(file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDesc)))
 	})
-	return file_emergency_light_proto_rawDescData
+	return file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDescData
 }
 
-var file_emergency_light_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_emergency_light_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
-var file_emergency_light_proto_goTypes = []any{
-	(EmergencyTestResult_Result)(0),        // 0: smartcore.bos.EmergencyTestResult.Result
-	(*TestResultSet)(nil),                  // 1: smartcore.bos.TestResultSet
-	(*EmergencyTestResult)(nil),            // 2: smartcore.bos.EmergencyTestResult
-	(*StartEmergencyTestRequest)(nil),      // 3: smartcore.bos.StartEmergencyTestRequest
-	(*StartEmergencyTestResponse)(nil),     // 4: smartcore.bos.StartEmergencyTestResponse
-	(*StopEmergencyTestsRequest)(nil),      // 5: smartcore.bos.StopEmergencyTestsRequest
-	(*StopEmergencyTestsResponse)(nil),     // 6: smartcore.bos.StopEmergencyTestsResponse
-	(*GetTestResultSetRequest)(nil),        // 7: smartcore.bos.GetTestResultSetRequest
-	(*PullTestResultRequest)(nil),          // 8: smartcore.bos.PullTestResultRequest
-	(*PullTestResultsResponse)(nil),        // 9: smartcore.bos.PullTestResultsResponse
-	(*PullTestResultsResponse_Change)(nil), // 10: smartcore.bos.PullTestResultsResponse.Change
+var file_smartcore_bos_emergencylight_v1_emergency_light_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_smartcore_bos_emergencylight_v1_emergency_light_proto_goTypes = []any{
+	(EmergencyTestResult_Result)(0),        // 0: smartcore.bos.emergencylight.v1.EmergencyTestResult.Result
+	(*TestResultSet)(nil),                  // 1: smartcore.bos.emergencylight.v1.TestResultSet
+	(*EmergencyTestResult)(nil),            // 2: smartcore.bos.emergencylight.v1.EmergencyTestResult
+	(*StartEmergencyTestRequest)(nil),      // 3: smartcore.bos.emergencylight.v1.StartEmergencyTestRequest
+	(*StartEmergencyTestResponse)(nil),     // 4: smartcore.bos.emergencylight.v1.StartEmergencyTestResponse
+	(*StopEmergencyTestsRequest)(nil),      // 5: smartcore.bos.emergencylight.v1.StopEmergencyTestsRequest
+	(*StopEmergencyTestsResponse)(nil),     // 6: smartcore.bos.emergencylight.v1.StopEmergencyTestsResponse
+	(*GetTestResultSetRequest)(nil),        // 7: smartcore.bos.emergencylight.v1.GetTestResultSetRequest
+	(*PullTestResultRequest)(nil),          // 8: smartcore.bos.emergencylight.v1.PullTestResultRequest
+	(*PullTestResultsResponse)(nil),        // 9: smartcore.bos.emergencylight.v1.PullTestResultsResponse
+	(*PullTestResultsResponse_Change)(nil), // 10: smartcore.bos.emergencylight.v1.PullTestResultsResponse.Change
 	(*timestamppb.Timestamp)(nil),          // 11: google.protobuf.Timestamp
 	(*durationpb.Duration)(nil),            // 12: google.protobuf.Duration
 	(*fieldmaskpb.FieldMask)(nil),          // 13: google.protobuf.FieldMask
 }
-var file_emergency_light_proto_depIdxs = []int32{
-	2,  // 0: smartcore.bos.TestResultSet.function_test:type_name -> smartcore.bos.EmergencyTestResult
-	2,  // 1: smartcore.bos.TestResultSet.duration_test:type_name -> smartcore.bos.EmergencyTestResult
-	0,  // 2: smartcore.bos.EmergencyTestResult.result:type_name -> smartcore.bos.EmergencyTestResult.Result
-	11, // 3: smartcore.bos.EmergencyTestResult.start_time:type_name -> google.protobuf.Timestamp
-	11, // 4: smartcore.bos.EmergencyTestResult.end_time:type_name -> google.protobuf.Timestamp
-	12, // 5: smartcore.bos.EmergencyTestResult.duration:type_name -> google.protobuf.Duration
-	11, // 6: smartcore.bos.StartEmergencyTestResponse.start_time:type_name -> google.protobuf.Timestamp
-	12, // 7: smartcore.bos.StartEmergencyTestResponse.duration:type_name -> google.protobuf.Duration
-	13, // 8: smartcore.bos.GetTestResultSetRequest.read_mask:type_name -> google.protobuf.FieldMask
-	13, // 9: smartcore.bos.PullTestResultRequest.read_mask:type_name -> google.protobuf.FieldMask
-	10, // 10: smartcore.bos.PullTestResultsResponse.changes:type_name -> smartcore.bos.PullTestResultsResponse.Change
-	11, // 11: smartcore.bos.PullTestResultsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 12: smartcore.bos.PullTestResultsResponse.Change.test_result:type_name -> smartcore.bos.TestResultSet
-	3,  // 13: smartcore.bos.EmergencyLightApi.StartFunctionTest:input_type -> smartcore.bos.StartEmergencyTestRequest
-	3,  // 14: smartcore.bos.EmergencyLightApi.StartDurationTest:input_type -> smartcore.bos.StartEmergencyTestRequest
-	5,  // 15: smartcore.bos.EmergencyLightApi.StopEmergencyTest:input_type -> smartcore.bos.StopEmergencyTestsRequest
-	7,  // 16: smartcore.bos.EmergencyLightApi.GetTestResultSet:input_type -> smartcore.bos.GetTestResultSetRequest
-	8,  // 17: smartcore.bos.EmergencyLightApi.PullTestResultSets:input_type -> smartcore.bos.PullTestResultRequest
-	4,  // 18: smartcore.bos.EmergencyLightApi.StartFunctionTest:output_type -> smartcore.bos.StartEmergencyTestResponse
-	4,  // 19: smartcore.bos.EmergencyLightApi.StartDurationTest:output_type -> smartcore.bos.StartEmergencyTestResponse
-	6,  // 20: smartcore.bos.EmergencyLightApi.StopEmergencyTest:output_type -> smartcore.bos.StopEmergencyTestsResponse
-	1,  // 21: smartcore.bos.EmergencyLightApi.GetTestResultSet:output_type -> smartcore.bos.TestResultSet
-	9,  // 22: smartcore.bos.EmergencyLightApi.PullTestResultSets:output_type -> smartcore.bos.PullTestResultsResponse
+var file_smartcore_bos_emergencylight_v1_emergency_light_proto_depIdxs = []int32{
+	2,  // 0: smartcore.bos.emergencylight.v1.TestResultSet.function_test:type_name -> smartcore.bos.emergencylight.v1.EmergencyTestResult
+	2,  // 1: smartcore.bos.emergencylight.v1.TestResultSet.duration_test:type_name -> smartcore.bos.emergencylight.v1.EmergencyTestResult
+	0,  // 2: smartcore.bos.emergencylight.v1.EmergencyTestResult.result:type_name -> smartcore.bos.emergencylight.v1.EmergencyTestResult.Result
+	11, // 3: smartcore.bos.emergencylight.v1.EmergencyTestResult.start_time:type_name -> google.protobuf.Timestamp
+	11, // 4: smartcore.bos.emergencylight.v1.EmergencyTestResult.end_time:type_name -> google.protobuf.Timestamp
+	12, // 5: smartcore.bos.emergencylight.v1.EmergencyTestResult.duration:type_name -> google.protobuf.Duration
+	11, // 6: smartcore.bos.emergencylight.v1.StartEmergencyTestResponse.start_time:type_name -> google.protobuf.Timestamp
+	12, // 7: smartcore.bos.emergencylight.v1.StartEmergencyTestResponse.duration:type_name -> google.protobuf.Duration
+	13, // 8: smartcore.bos.emergencylight.v1.GetTestResultSetRequest.read_mask:type_name -> google.protobuf.FieldMask
+	13, // 9: smartcore.bos.emergencylight.v1.PullTestResultRequest.read_mask:type_name -> google.protobuf.FieldMask
+	10, // 10: smartcore.bos.emergencylight.v1.PullTestResultsResponse.changes:type_name -> smartcore.bos.emergencylight.v1.PullTestResultsResponse.Change
+	11, // 11: smartcore.bos.emergencylight.v1.PullTestResultsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	1,  // 12: smartcore.bos.emergencylight.v1.PullTestResultsResponse.Change.test_result:type_name -> smartcore.bos.emergencylight.v1.TestResultSet
+	3,  // 13: smartcore.bos.emergencylight.v1.EmergencyLightApi.StartFunctionTest:input_type -> smartcore.bos.emergencylight.v1.StartEmergencyTestRequest
+	3,  // 14: smartcore.bos.emergencylight.v1.EmergencyLightApi.StartDurationTest:input_type -> smartcore.bos.emergencylight.v1.StartEmergencyTestRequest
+	5,  // 15: smartcore.bos.emergencylight.v1.EmergencyLightApi.StopEmergencyTest:input_type -> smartcore.bos.emergencylight.v1.StopEmergencyTestsRequest
+	7,  // 16: smartcore.bos.emergencylight.v1.EmergencyLightApi.GetTestResultSet:input_type -> smartcore.bos.emergencylight.v1.GetTestResultSetRequest
+	8,  // 17: smartcore.bos.emergencylight.v1.EmergencyLightApi.PullTestResultSets:input_type -> smartcore.bos.emergencylight.v1.PullTestResultRequest
+	4,  // 18: smartcore.bos.emergencylight.v1.EmergencyLightApi.StartFunctionTest:output_type -> smartcore.bos.emergencylight.v1.StartEmergencyTestResponse
+	4,  // 19: smartcore.bos.emergencylight.v1.EmergencyLightApi.StartDurationTest:output_type -> smartcore.bos.emergencylight.v1.StartEmergencyTestResponse
+	6,  // 20: smartcore.bos.emergencylight.v1.EmergencyLightApi.StopEmergencyTest:output_type -> smartcore.bos.emergencylight.v1.StopEmergencyTestsResponse
+	1,  // 21: smartcore.bos.emergencylight.v1.EmergencyLightApi.GetTestResultSet:output_type -> smartcore.bos.emergencylight.v1.TestResultSet
+	9,  // 22: smartcore.bos.emergencylight.v1.EmergencyLightApi.PullTestResultSets:output_type -> smartcore.bos.emergencylight.v1.PullTestResultsResponse
 	18, // [18:23] is the sub-list for method output_type
 	13, // [13:18] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
@@ -749,27 +749,27 @@ var file_emergency_light_proto_depIdxs = []int32{
 	0,  // [0:13] is the sub-list for field type_name
 }
 
-func init() { file_emergency_light_proto_init() }
-func file_emergency_light_proto_init() {
-	if File_emergency_light_proto != nil {
+func init() { file_smartcore_bos_emergencylight_v1_emergency_light_proto_init() }
+func file_smartcore_bos_emergencylight_v1_emergency_light_proto_init() {
+	if File_smartcore_bos_emergencylight_v1_emergency_light_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_emergency_light_proto_rawDesc), len(file_emergency_light_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDesc), len(file_smartcore_bos_emergencylight_v1_emergency_light_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_emergency_light_proto_goTypes,
-		DependencyIndexes: file_emergency_light_proto_depIdxs,
-		EnumInfos:         file_emergency_light_proto_enumTypes,
-		MessageInfos:      file_emergency_light_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_emergencylight_v1_emergency_light_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_emergencylight_v1_emergency_light_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_emergencylight_v1_emergency_light_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_emergencylight_v1_emergency_light_proto_msgTypes,
 	}.Build()
-	File_emergency_light_proto = out.File
-	file_emergency_light_proto_goTypes = nil
-	file_emergency_light_proto_depIdxs = nil
+	File_smartcore_bos_emergencylight_v1_emergency_light_proto = out.File
+	file_smartcore_bos_emergencylight_v1_emergency_light_proto_goTypes = nil
+	file_smartcore_bos_emergencylight_v1_emergency_light_proto_depIdxs = nil
 }

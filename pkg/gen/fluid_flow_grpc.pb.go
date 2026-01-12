@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: fluid_flow.proto
+// source: smartcore/bos/fluidflow/v1/fluid_flow.proto
 
 package gen
 
@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FluidFlowApi_GetFluidFlow_FullMethodName    = "/smartcore.bos.FluidFlowApi/GetFluidFlow"
-	FluidFlowApi_PullFluidFlow_FullMethodName   = "/smartcore.bos.FluidFlowApi/PullFluidFlow"
-	FluidFlowApi_UpdateFluidFlow_FullMethodName = "/smartcore.bos.FluidFlowApi/UpdateFluidFlow"
+	FluidFlowApi_GetFluidFlow_FullMethodName    = "/smartcore.bos.fluidflow.v1.FluidFlowApi/GetFluidFlow"
+	FluidFlowApi_PullFluidFlow_FullMethodName   = "/smartcore.bos.fluidflow.v1.FluidFlowApi/PullFluidFlow"
+	FluidFlowApi_UpdateFluidFlow_FullMethodName = "/smartcore.bos.fluidflow.v1.FluidFlowApi/UpdateFluidFlow"
 )
 
 // FluidFlowApiClient is the client API for FluidFlowApi service.
@@ -188,7 +188,7 @@ func _FluidFlowApi_UpdateFluidFlow_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var FluidFlowApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.FluidFlowApi",
+	ServiceName: "smartcore.bos.fluidflow.v1.FluidFlowApi",
 	HandlerType: (*FluidFlowApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -207,11 +207,11 @@ var FluidFlowApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "fluid_flow.proto",
+	Metadata: "smartcore/bos/fluidflow/v1/fluid_flow.proto",
 }
 
 const (
-	FluidFlowInfo_DescribeFluidFlow_FullMethodName = "/smartcore.bos.FluidFlowInfo/DescribeFluidFlow"
+	FluidFlowInfo_DescribeFluidFlow_FullMethodName = "/smartcore.bos.fluidflow.v1.FluidFlowInfo/DescribeFluidFlow"
 )
 
 // FluidFlowInfoClient is the client API for FluidFlowInfo service.
@@ -300,7 +300,7 @@ func _FluidFlowInfo_DescribeFluidFlow_Handler(srv interface{}, ctx context.Conte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var FluidFlowInfo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.FluidFlowInfo",
+	ServiceName: "smartcore.bos.fluidflow.v1.FluidFlowInfo",
 	HandlerType: (*FluidFlowInfoServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -309,5 +309,5 @@ var FluidFlowInfo_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "fluid_flow.proto",
+	Metadata: "smartcore/bos/fluidflow/v1/fluid_flow.proto",
 }

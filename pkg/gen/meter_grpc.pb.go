@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: meter.proto
+// source: smartcore/bos/meter/v1/meter.proto
 
 package gen
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MeterApi_GetMeterReading_FullMethodName   = "/smartcore.bos.MeterApi/GetMeterReading"
-	MeterApi_PullMeterReadings_FullMethodName = "/smartcore.bos.MeterApi/PullMeterReadings"
+	MeterApi_GetMeterReading_FullMethodName   = "/smartcore.bos.meter.v1.MeterApi/GetMeterReading"
+	MeterApi_PullMeterReadings_FullMethodName = "/smartcore.bos.meter.v1.MeterApi/PullMeterReadings"
 )
 
 // MeterApiClient is the client API for MeterApi service.
@@ -152,7 +152,7 @@ type MeterApi_PullMeterReadingsServer = grpc.ServerStreamingServer[PullMeterRead
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MeterApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.MeterApi",
+	ServiceName: "smartcore.bos.meter.v1.MeterApi",
 	HandlerType: (*MeterApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -167,11 +167,11 @@ var MeterApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "meter.proto",
+	Metadata: "smartcore/bos/meter/v1/meter.proto",
 }
 
 const (
-	MeterInfo_DescribeMeterReading_FullMethodName = "/smartcore.bos.MeterInfo/DescribeMeterReading"
+	MeterInfo_DescribeMeterReading_FullMethodName = "/smartcore.bos.meter.v1.MeterInfo/DescribeMeterReading"
 )
 
 // MeterInfoClient is the client API for MeterInfo service.
@@ -260,7 +260,7 @@ func _MeterInfo_DescribeMeterReading_Handler(srv interface{}, ctx context.Contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MeterInfo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.MeterInfo",
+	ServiceName: "smartcore.bos.meter.v1.MeterInfo",
 	HandlerType: (*MeterInfoServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -269,5 +269,5 @@ var MeterInfo_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "meter.proto",
+	Metadata: "smartcore/bos/meter/v1/meter.proto",
 }

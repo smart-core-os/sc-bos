@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: electric_history.proto
+// source: smartcore/bos/electric/v1/electric_history.proto
 
 package gen
 
@@ -35,7 +35,7 @@ type ElectricDemandRecord struct {
 
 func (x *ElectricDemandRecord) Reset() {
 	*x = ElectricDemandRecord{}
-	mi := &file_electric_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_electric_v1_electric_history_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +47,7 @@ func (x *ElectricDemandRecord) String() string {
 func (*ElectricDemandRecord) ProtoMessage() {}
 
 func (x *ElectricDemandRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_electric_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_electric_v1_electric_history_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +60,7 @@ func (x *ElectricDemandRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ElectricDemandRecord.ProtoReflect.Descriptor instead.
 func (*ElectricDemandRecord) Descriptor() ([]byte, []int) {
-	return file_electric_history_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_electric_v1_electric_history_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ElectricDemandRecord) GetElectricDemand() *traits.ElectricDemand {
@@ -102,7 +102,7 @@ type ListElectricDemandHistoryRequest struct {
 
 func (x *ListElectricDemandHistoryRequest) Reset() {
 	*x = ListElectricDemandHistoryRequest{}
-	mi := &file_electric_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_electric_v1_electric_history_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -114,7 +114,7 @@ func (x *ListElectricDemandHistoryRequest) String() string {
 func (*ListElectricDemandHistoryRequest) ProtoMessage() {}
 
 func (x *ListElectricDemandHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_electric_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_electric_v1_electric_history_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -127,7 +127,7 @@ func (x *ListElectricDemandHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListElectricDemandHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListElectricDemandHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_electric_history_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_electric_v1_electric_history_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListElectricDemandHistoryRequest) GetName() string {
@@ -187,7 +187,7 @@ type ListElectricDemandHistoryResponse struct {
 
 func (x *ListElectricDemandHistoryResponse) Reset() {
 	*x = ListElectricDemandHistoryResponse{}
-	mi := &file_electric_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_electric_v1_electric_history_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -199,7 +199,7 @@ func (x *ListElectricDemandHistoryResponse) String() string {
 func (*ListElectricDemandHistoryResponse) ProtoMessage() {}
 
 func (x *ListElectricDemandHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_electric_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_electric_v1_electric_history_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -212,7 +212,7 @@ func (x *ListElectricDemandHistoryResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use ListElectricDemandHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListElectricDemandHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_electric_history_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_electric_v1_electric_history_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListElectricDemandHistoryResponse) GetElectricDemandRecords() []*ElectricDemandRecord {
@@ -236,11 +236,11 @@ func (x *ListElectricDemandHistoryResponse) GetTotalSize() int32 {
 	return 0
 }
 
-var File_electric_history_proto protoreflect.FileDescriptor
+var File_smartcore_bos_electric_v1_electric_history_proto protoreflect.FileDescriptor
 
-const file_electric_history_proto_rawDesc = "" +
+const file_smartcore_bos_electric_v1_electric_history_proto_rawDesc = "" +
 	"\n" +
-	"\x16electric_history.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17types/time/period.proto\x1a\x15traits/electric.proto\"\x9e\x01\n" +
+	"0smartcore/bos/electric/v1/electric_history.proto\x12\x19smartcore.bos.electric.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15traits/electric.proto\x1a\x17types/time/period.proto\"\x9e\x01\n" +
 	"\x14ElectricDemandRecord\x12I\n" +
 	"\x0felectric_demand\x18\x01 \x01(\v2 .smartcore.traits.ElectricDemandR\x0eelectricDemand\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -252,45 +252,45 @@ const file_electric_history_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x05 \x01(\tR\tpageToken\x12\x19\n" +
-	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xc7\x01\n" +
-	"!ListElectricDemandHistoryResponse\x12[\n" +
-	"\x17electric_demand_records\x18\x01 \x03(\v2#.smartcore.bos.ElectricDemandRecordR\x15electricDemandRecords\x12&\n" +
+	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xd3\x01\n" +
+	"!ListElectricDemandHistoryResponse\x12g\n" +
+	"\x17electric_demand_records\x18\x01 \x03(\v2/.smartcore.bos.electric.v1.ElectricDemandRecordR\x15electricDemandRecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x91\x01\n" +
-	"\x0fElectricHistory\x12~\n" +
-	"\x19ListElectricDemandHistory\x12/.smartcore.bos.ListElectricDemandHistoryRequest\x1a0.smartcore.bos.ListElectricDemandHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"total_size\x18\x03 \x01(\x05R\ttotalSize2\xaa\x01\n" +
+	"\x0fElectricHistory\x12\x96\x01\n" +
+	"\x19ListElectricDemandHistory\x12;.smartcore.bos.electric.v1.ListElectricDemandHistoryRequest\x1a<.smartcore.bos.electric.v1.ListElectricDemandHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_electric_history_proto_rawDescOnce sync.Once
-	file_electric_history_proto_rawDescData []byte
+	file_smartcore_bos_electric_v1_electric_history_proto_rawDescOnce sync.Once
+	file_smartcore_bos_electric_v1_electric_history_proto_rawDescData []byte
 )
 
-func file_electric_history_proto_rawDescGZIP() []byte {
-	file_electric_history_proto_rawDescOnce.Do(func() {
-		file_electric_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_electric_history_proto_rawDesc), len(file_electric_history_proto_rawDesc)))
+func file_smartcore_bos_electric_v1_electric_history_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_electric_v1_electric_history_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_electric_v1_electric_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_electric_v1_electric_history_proto_rawDesc), len(file_smartcore_bos_electric_v1_electric_history_proto_rawDesc)))
 	})
-	return file_electric_history_proto_rawDescData
+	return file_smartcore_bos_electric_v1_electric_history_proto_rawDescData
 }
 
-var file_electric_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_electric_history_proto_goTypes = []any{
-	(*ElectricDemandRecord)(nil),              // 0: smartcore.bos.ElectricDemandRecord
-	(*ListElectricDemandHistoryRequest)(nil),  // 1: smartcore.bos.ListElectricDemandHistoryRequest
-	(*ListElectricDemandHistoryResponse)(nil), // 2: smartcore.bos.ListElectricDemandHistoryResponse
+var file_smartcore_bos_electric_v1_electric_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_smartcore_bos_electric_v1_electric_history_proto_goTypes = []any{
+	(*ElectricDemandRecord)(nil),              // 0: smartcore.bos.electric.v1.ElectricDemandRecord
+	(*ListElectricDemandHistoryRequest)(nil),  // 1: smartcore.bos.electric.v1.ListElectricDemandHistoryRequest
+	(*ListElectricDemandHistoryResponse)(nil), // 2: smartcore.bos.electric.v1.ListElectricDemandHistoryResponse
 	(*traits.ElectricDemand)(nil),             // 3: smartcore.traits.ElectricDemand
 	(*timestamppb.Timestamp)(nil),             // 4: google.protobuf.Timestamp
 	(*time.Period)(nil),                       // 5: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),             // 6: google.protobuf.FieldMask
 }
-var file_electric_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.ElectricDemandRecord.electric_demand:type_name -> smartcore.traits.ElectricDemand
-	4, // 1: smartcore.bos.ElectricDemandRecord.record_time:type_name -> google.protobuf.Timestamp
-	5, // 2: smartcore.bos.ListElectricDemandHistoryRequest.period:type_name -> smartcore.types.time.Period
-	6, // 3: smartcore.bos.ListElectricDemandHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
-	0, // 4: smartcore.bos.ListElectricDemandHistoryResponse.electric_demand_records:type_name -> smartcore.bos.ElectricDemandRecord
-	1, // 5: smartcore.bos.ElectricHistory.ListElectricDemandHistory:input_type -> smartcore.bos.ListElectricDemandHistoryRequest
-	2, // 6: smartcore.bos.ElectricHistory.ListElectricDemandHistory:output_type -> smartcore.bos.ListElectricDemandHistoryResponse
+var file_smartcore_bos_electric_v1_electric_history_proto_depIdxs = []int32{
+	3, // 0: smartcore.bos.electric.v1.ElectricDemandRecord.electric_demand:type_name -> smartcore.traits.ElectricDemand
+	4, // 1: smartcore.bos.electric.v1.ElectricDemandRecord.record_time:type_name -> google.protobuf.Timestamp
+	5, // 2: smartcore.bos.electric.v1.ListElectricDemandHistoryRequest.period:type_name -> smartcore.types.time.Period
+	6, // 3: smartcore.bos.electric.v1.ListElectricDemandHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
+	0, // 4: smartcore.bos.electric.v1.ListElectricDemandHistoryResponse.electric_demand_records:type_name -> smartcore.bos.electric.v1.ElectricDemandRecord
+	1, // 5: smartcore.bos.electric.v1.ElectricHistory.ListElectricDemandHistory:input_type -> smartcore.bos.electric.v1.ListElectricDemandHistoryRequest
+	2, // 6: smartcore.bos.electric.v1.ElectricHistory.ListElectricDemandHistory:output_type -> smartcore.bos.electric.v1.ListElectricDemandHistoryResponse
 	6, // [6:7] is the sub-list for method output_type
 	5, // [5:6] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -298,26 +298,26 @@ var file_electric_history_proto_depIdxs = []int32{
 	0, // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_electric_history_proto_init() }
-func file_electric_history_proto_init() {
-	if File_electric_history_proto != nil {
+func init() { file_smartcore_bos_electric_v1_electric_history_proto_init() }
+func file_smartcore_bos_electric_v1_electric_history_proto_init() {
+	if File_smartcore_bos_electric_v1_electric_history_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_electric_history_proto_rawDesc), len(file_electric_history_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_electric_v1_electric_history_proto_rawDesc), len(file_smartcore_bos_electric_v1_electric_history_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_electric_history_proto_goTypes,
-		DependencyIndexes: file_electric_history_proto_depIdxs,
-		MessageInfos:      file_electric_history_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_electric_v1_electric_history_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_electric_v1_electric_history_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_electric_v1_electric_history_proto_msgTypes,
 	}.Build()
-	File_electric_history_proto = out.File
-	file_electric_history_proto_goTypes = nil
-	file_electric_history_proto_depIdxs = nil
+	File_smartcore_bos_electric_v1_electric_history_proto = out.File
+	file_smartcore_bos_electric_v1_electric_history_proto_goTypes = nil
+	file_smartcore_bos_electric_v1_electric_history_proto_depIdxs = nil
 }

@@ -6,16 +6,16 @@ import {computed, onScopeDispose, reactive, ref, toRefs, toValue} from 'vue';
 
 /**
  * @typedef {
- *   import('@smart-core-os/sc-bos-ui-gen/proto/temperature_pb').PullTemperatureRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/temperature/v1/temperature_pb').PullTemperatureRequest
  * } PullTemperatureRequest
  * @typedef {
- *   import('@smart-core-os/sc-bos-ui-gen/proto/temperature_pb').PullTemperatureResponse
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/temperature/v1/temperature_pb').PullTemperatureResponse
  * } PullTemperatureResponse
  * @typedef {
- *   import('@smart-core-os/sc-bos-ui-gen/proto/temperature_pb').UpdateTemperatureRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/temperature/v1/temperature_pb').UpdateTemperatureRequest
  * } UpdateTemperatureRequest
  * @typedef {
- *  import('@smart-core-os/sc-bos-ui-gen/proto/temperature_pb').Temperature
+ *  import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/temperature/v1/temperature_pb').Temperature
  * } Temperature
  * @typedef {import('vue').Ref} Ref
  * @typedef {import('vue').UnwrapNestedRefs} UnwrapNestedRefs

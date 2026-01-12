@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: service_ticket.proto
+// source: smartcore/bos/serviceticket/v1/service_ticket.proto
 
 package gen
 
@@ -47,7 +47,7 @@ type Ticket struct {
 
 func (x *Ticket) Reset() {
 	*x = Ticket{}
-	mi := &file_service_ticket_proto_msgTypes[0]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -59,7 +59,7 @@ func (x *Ticket) String() string {
 func (*Ticket) ProtoMessage() {}
 
 func (x *Ticket) ProtoReflect() protoreflect.Message {
-	mi := &file_service_ticket_proto_msgTypes[0]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -72,7 +72,7 @@ func (x *Ticket) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Ticket.ProtoReflect.Descriptor instead.
 func (*Ticket) Descriptor() ([]byte, []int) {
-	return file_service_ticket_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Ticket) GetId() string {
@@ -135,7 +135,7 @@ type CreateTicketRequest struct {
 
 func (x *CreateTicketRequest) Reset() {
 	*x = CreateTicketRequest{}
-	mi := &file_service_ticket_proto_msgTypes[1]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -147,7 +147,7 @@ func (x *CreateTicketRequest) String() string {
 func (*CreateTicketRequest) ProtoMessage() {}
 
 func (x *CreateTicketRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_ticket_proto_msgTypes[1]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +160,7 @@ func (x *CreateTicketRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTicketRequest.ProtoReflect.Descriptor instead.
 func (*CreateTicketRequest) Descriptor() ([]byte, []int) {
-	return file_service_ticket_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CreateTicketRequest) GetName() string {
@@ -188,7 +188,7 @@ type UpdateTicketRequest struct {
 
 func (x *UpdateTicketRequest) Reset() {
 	*x = UpdateTicketRequest{}
-	mi := &file_service_ticket_proto_msgTypes[2]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -200,7 +200,7 @@ func (x *UpdateTicketRequest) String() string {
 func (*UpdateTicketRequest) ProtoMessage() {}
 
 func (x *UpdateTicketRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_ticket_proto_msgTypes[2]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -213,7 +213,7 @@ func (x *UpdateTicketRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTicketRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTicketRequest) Descriptor() ([]byte, []int) {
-	return file_service_ticket_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *UpdateTicketRequest) GetName() string {
@@ -239,7 +239,7 @@ type DescribeTicketRequest struct {
 
 func (x *DescribeTicketRequest) Reset() {
 	*x = DescribeTicketRequest{}
-	mi := &file_service_ticket_proto_msgTypes[3]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -251,7 +251,7 @@ func (x *DescribeTicketRequest) String() string {
 func (*DescribeTicketRequest) ProtoMessage() {}
 
 func (x *DescribeTicketRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_ticket_proto_msgTypes[3]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -264,7 +264,7 @@ func (x *DescribeTicketRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DescribeTicketRequest.ProtoReflect.Descriptor instead.
 func (*DescribeTicketRequest) Descriptor() ([]byte, []int) {
-	return file_service_ticket_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *DescribeTicketRequest) GetName() string {
@@ -288,7 +288,7 @@ type TicketSupport struct {
 
 func (x *TicketSupport) Reset() {
 	*x = TicketSupport{}
-	mi := &file_service_ticket_proto_msgTypes[4]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -300,7 +300,7 @@ func (x *TicketSupport) String() string {
 func (*TicketSupport) ProtoMessage() {}
 
 func (x *TicketSupport) ProtoReflect() protoreflect.Message {
-	mi := &file_service_ticket_proto_msgTypes[4]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -313,7 +313,7 @@ func (x *TicketSupport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TicketSupport.ProtoReflect.Descriptor instead.
 func (*TicketSupport) Descriptor() ([]byte, []int) {
-	return file_service_ticket_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *TicketSupport) GetResourceSupport() *types.ResourceSupport {
@@ -351,7 +351,7 @@ type Ticket_Classification struct {
 
 func (x *Ticket_Classification) Reset() {
 	*x = Ticket_Classification{}
-	mi := &file_service_ticket_proto_msgTypes[5]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -363,7 +363,7 @@ func (x *Ticket_Classification) String() string {
 func (*Ticket_Classification) ProtoMessage() {}
 
 func (x *Ticket_Classification) ProtoReflect() protoreflect.Message {
-	mi := &file_service_ticket_proto_msgTypes[5]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -376,7 +376,7 @@ func (x *Ticket_Classification) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Ticket_Classification.ProtoReflect.Descriptor instead.
 func (*Ticket_Classification) Descriptor() ([]byte, []int) {
-	return file_service_ticket_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *Ticket_Classification) GetId() string {
@@ -414,7 +414,7 @@ type Ticket_Severity struct {
 
 func (x *Ticket_Severity) Reset() {
 	*x = Ticket_Severity{}
-	mi := &file_service_ticket_proto_msgTypes[6]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -426,7 +426,7 @@ func (x *Ticket_Severity) String() string {
 func (*Ticket_Severity) ProtoMessage() {}
 
 func (x *Ticket_Severity) ProtoReflect() protoreflect.Message {
-	mi := &file_service_ticket_proto_msgTypes[6]
+	mi := &file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -439,7 +439,7 @@ func (x *Ticket_Severity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Ticket_Severity.ProtoReflect.Descriptor instead.
 func (*Ticket_Severity) Descriptor() ([]byte, []int) {
-	return file_service_ticket_proto_rawDescGZIP(), []int{0, 1}
+	return file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *Ticket_Severity) GetId() string {
@@ -463,18 +463,18 @@ func (x *Ticket_Severity) GetDescription() string {
 	return ""
 }
 
-var File_service_ticket_proto protoreflect.FileDescriptor
+var File_smartcore_bos_serviceticket_v1_service_ticket_proto protoreflect.FileDescriptor
 
-const file_service_ticket_proto_rawDesc = "" +
+const file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDesc = "" +
 	"\n" +
-	"\x14service_ticket.proto\x12\rsmartcore.bos\x1a\x10types/info.proto\"\xd4\x03\n" +
+	"3smartcore/bos/serviceticket/v1/service_ticket.proto\x12\x1esmartcore.bos.serviceticket.v1\x1a\x10types/info.proto\"\xf6\x03\n" +
 	"\x06Ticket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\asummary\x18\x02 \x01(\tR\asummary\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12#\n" +
-	"\rreporter_name\x18\x04 \x01(\tR\freporterName\x12L\n" +
-	"\x0eclassification\x18\x05 \x01(\v2$.smartcore.bos.Ticket.ClassificationR\x0eclassification\x12:\n" +
-	"\bseverity\x18\x06 \x01(\v2\x1e.smartcore.bos.Ticket.SeverityR\bseverity\x12!\n" +
+	"\rreporter_name\x18\x04 \x01(\tR\freporterName\x12]\n" +
+	"\x0eclassification\x18\x05 \x01(\v25.smartcore.bos.serviceticket.v1.Ticket.ClassificationR\x0eclassification\x12K\n" +
+	"\bseverity\x18\x06 \x01(\v2/.smartcore.bos.serviceticket.v1.Ticket.SeverityR\bseverity\x12!\n" +
 	"\fexternal_url\x18\a \x01(\tR\vexternalUrl\x1aX\n" +
 	"\x0eClassification\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
@@ -483,64 +483,64 @@ const file_service_ticket_proto_rawDesc = "" +
 	"\bSeverity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\"X\n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\"i\n" +
 	"\x13CreateTicketRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12-\n" +
-	"\x06ticket\x18\x02 \x01(\v2\x15.smartcore.bos.TicketR\x06ticket\"X\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12>\n" +
+	"\x06ticket\x18\x02 \x01(\v2&.smartcore.bos.serviceticket.v1.TicketR\x06ticket\"i\n" +
 	"\x13UpdateTicketRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12-\n" +
-	"\x06ticket\x18\x02 \x01(\v2\x15.smartcore.bos.TicketR\x06ticket\"+\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12>\n" +
+	"\x06ticket\x18\x02 \x01(\v2&.smartcore.bos.serviceticket.v1.TicketR\x06ticket\"+\n" +
 	"\x15DescribeTicketRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"\xec\x01\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\x8e\x02\n" +
 	"\rTicketSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12N\n" +
-	"\x0fclassifications\x18\x02 \x03(\v2$.smartcore.bos.Ticket.ClassificationR\x0fclassifications\x12>\n" +
+	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12_\n" +
+	"\x0fclassifications\x18\x02 \x03(\v25.smartcore.bos.serviceticket.v1.Ticket.ClassificationR\x0fclassifications\x12O\n" +
 	"\n" +
-	"severities\x18\x03 \x03(\v2\x1e.smartcore.bos.Ticket.SeverityR\n" +
-	"severities2\xac\x01\n" +
-	"\x10ServiceTicketApi\x12K\n" +
-	"\fCreateTicket\x12\".smartcore.bos.CreateTicketRequest\x1a\x15.smartcore.bos.Ticket\"\x00\x12K\n" +
-	"\fUpdateTicket\x12\".smartcore.bos.UpdateTicketRequest\x1a\x15.smartcore.bos.Ticket\"\x002k\n" +
-	"\x11ServiceTicketInfo\x12V\n" +
-	"\x0eDescribeTicket\x12$.smartcore.bos.DescribeTicketRequest\x1a\x1c.smartcore.bos.TicketSupport\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"severities\x18\x03 \x03(\v2/.smartcore.bos.serviceticket.v1.Ticket.SeverityR\n" +
+	"severities2\xf0\x01\n" +
+	"\x10ServiceTicketApi\x12m\n" +
+	"\fCreateTicket\x123.smartcore.bos.serviceticket.v1.CreateTicketRequest\x1a&.smartcore.bos.serviceticket.v1.Ticket\"\x00\x12m\n" +
+	"\fUpdateTicket\x123.smartcore.bos.serviceticket.v1.UpdateTicketRequest\x1a&.smartcore.bos.serviceticket.v1.Ticket\"\x002\x8d\x01\n" +
+	"\x11ServiceTicketInfo\x12x\n" +
+	"\x0eDescribeTicket\x125.smartcore.bos.serviceticket.v1.DescribeTicketRequest\x1a-.smartcore.bos.serviceticket.v1.TicketSupport\"\x00B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_service_ticket_proto_rawDescOnce sync.Once
-	file_service_ticket_proto_rawDescData []byte
+	file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescOnce sync.Once
+	file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescData []byte
 )
 
-func file_service_ticket_proto_rawDescGZIP() []byte {
-	file_service_ticket_proto_rawDescOnce.Do(func() {
-		file_service_ticket_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_service_ticket_proto_rawDesc), len(file_service_ticket_proto_rawDesc)))
+func file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDesc), len(file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDesc)))
 	})
-	return file_service_ticket_proto_rawDescData
+	return file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescData
 }
 
-var file_service_ticket_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_service_ticket_proto_goTypes = []any{
-	(*Ticket)(nil),                // 0: smartcore.bos.Ticket
-	(*CreateTicketRequest)(nil),   // 1: smartcore.bos.CreateTicketRequest
-	(*UpdateTicketRequest)(nil),   // 2: smartcore.bos.UpdateTicketRequest
-	(*DescribeTicketRequest)(nil), // 3: smartcore.bos.DescribeTicketRequest
-	(*TicketSupport)(nil),         // 4: smartcore.bos.TicketSupport
-	(*Ticket_Classification)(nil), // 5: smartcore.bos.Ticket.Classification
-	(*Ticket_Severity)(nil),       // 6: smartcore.bos.Ticket.Severity
+var file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_smartcore_bos_serviceticket_v1_service_ticket_proto_goTypes = []any{
+	(*Ticket)(nil),                // 0: smartcore.bos.serviceticket.v1.Ticket
+	(*CreateTicketRequest)(nil),   // 1: smartcore.bos.serviceticket.v1.CreateTicketRequest
+	(*UpdateTicketRequest)(nil),   // 2: smartcore.bos.serviceticket.v1.UpdateTicketRequest
+	(*DescribeTicketRequest)(nil), // 3: smartcore.bos.serviceticket.v1.DescribeTicketRequest
+	(*TicketSupport)(nil),         // 4: smartcore.bos.serviceticket.v1.TicketSupport
+	(*Ticket_Classification)(nil), // 5: smartcore.bos.serviceticket.v1.Ticket.Classification
+	(*Ticket_Severity)(nil),       // 6: smartcore.bos.serviceticket.v1.Ticket.Severity
 	(*types.ResourceSupport)(nil), // 7: smartcore.types.ResourceSupport
 }
-var file_service_ticket_proto_depIdxs = []int32{
-	5,  // 0: smartcore.bos.Ticket.classification:type_name -> smartcore.bos.Ticket.Classification
-	6,  // 1: smartcore.bos.Ticket.severity:type_name -> smartcore.bos.Ticket.Severity
-	0,  // 2: smartcore.bos.CreateTicketRequest.ticket:type_name -> smartcore.bos.Ticket
-	0,  // 3: smartcore.bos.UpdateTicketRequest.ticket:type_name -> smartcore.bos.Ticket
-	7,  // 4: smartcore.bos.TicketSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	5,  // 5: smartcore.bos.TicketSupport.classifications:type_name -> smartcore.bos.Ticket.Classification
-	6,  // 6: smartcore.bos.TicketSupport.severities:type_name -> smartcore.bos.Ticket.Severity
-	1,  // 7: smartcore.bos.ServiceTicketApi.CreateTicket:input_type -> smartcore.bos.CreateTicketRequest
-	2,  // 8: smartcore.bos.ServiceTicketApi.UpdateTicket:input_type -> smartcore.bos.UpdateTicketRequest
-	3,  // 9: smartcore.bos.ServiceTicketInfo.DescribeTicket:input_type -> smartcore.bos.DescribeTicketRequest
-	0,  // 10: smartcore.bos.ServiceTicketApi.CreateTicket:output_type -> smartcore.bos.Ticket
-	0,  // 11: smartcore.bos.ServiceTicketApi.UpdateTicket:output_type -> smartcore.bos.Ticket
-	4,  // 12: smartcore.bos.ServiceTicketInfo.DescribeTicket:output_type -> smartcore.bos.TicketSupport
+var file_smartcore_bos_serviceticket_v1_service_ticket_proto_depIdxs = []int32{
+	5,  // 0: smartcore.bos.serviceticket.v1.Ticket.classification:type_name -> smartcore.bos.serviceticket.v1.Ticket.Classification
+	6,  // 1: smartcore.bos.serviceticket.v1.Ticket.severity:type_name -> smartcore.bos.serviceticket.v1.Ticket.Severity
+	0,  // 2: smartcore.bos.serviceticket.v1.CreateTicketRequest.ticket:type_name -> smartcore.bos.serviceticket.v1.Ticket
+	0,  // 3: smartcore.bos.serviceticket.v1.UpdateTicketRequest.ticket:type_name -> smartcore.bos.serviceticket.v1.Ticket
+	7,  // 4: smartcore.bos.serviceticket.v1.TicketSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	5,  // 5: smartcore.bos.serviceticket.v1.TicketSupport.classifications:type_name -> smartcore.bos.serviceticket.v1.Ticket.Classification
+	6,  // 6: smartcore.bos.serviceticket.v1.TicketSupport.severities:type_name -> smartcore.bos.serviceticket.v1.Ticket.Severity
+	1,  // 7: smartcore.bos.serviceticket.v1.ServiceTicketApi.CreateTicket:input_type -> smartcore.bos.serviceticket.v1.CreateTicketRequest
+	2,  // 8: smartcore.bos.serviceticket.v1.ServiceTicketApi.UpdateTicket:input_type -> smartcore.bos.serviceticket.v1.UpdateTicketRequest
+	3,  // 9: smartcore.bos.serviceticket.v1.ServiceTicketInfo.DescribeTicket:input_type -> smartcore.bos.serviceticket.v1.DescribeTicketRequest
+	0,  // 10: smartcore.bos.serviceticket.v1.ServiceTicketApi.CreateTicket:output_type -> smartcore.bos.serviceticket.v1.Ticket
+	0,  // 11: smartcore.bos.serviceticket.v1.ServiceTicketApi.UpdateTicket:output_type -> smartcore.bos.serviceticket.v1.Ticket
+	4,  // 12: smartcore.bos.serviceticket.v1.ServiceTicketInfo.DescribeTicket:output_type -> smartcore.bos.serviceticket.v1.TicketSupport
 	10, // [10:13] is the sub-list for method output_type
 	7,  // [7:10] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
@@ -548,26 +548,26 @@ var file_service_ticket_proto_depIdxs = []int32{
 	0,  // [0:7] is the sub-list for field type_name
 }
 
-func init() { file_service_ticket_proto_init() }
-func file_service_ticket_proto_init() {
-	if File_service_ticket_proto != nil {
+func init() { file_smartcore_bos_serviceticket_v1_service_ticket_proto_init() }
+func file_smartcore_bos_serviceticket_v1_service_ticket_proto_init() {
+	if File_smartcore_bos_serviceticket_v1_service_ticket_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_ticket_proto_rawDesc), len(file_service_ticket_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDesc), len(file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_service_ticket_proto_goTypes,
-		DependencyIndexes: file_service_ticket_proto_depIdxs,
-		MessageInfos:      file_service_ticket_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_serviceticket_v1_service_ticket_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_serviceticket_v1_service_ticket_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes,
 	}.Build()
-	File_service_ticket_proto = out.File
-	file_service_ticket_proto_goTypes = nil
-	file_service_ticket_proto_depIdxs = nil
+	File_smartcore_bos_serviceticket_v1_service_ticket_proto = out.File
+	file_smartcore_bos_serviceticket_v1_service_ticket_proto_goTypes = nil
+	file_smartcore_bos_serviceticket_v1_service_ticket_proto_depIdxs = nil
 }

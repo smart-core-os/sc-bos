@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: health_history.proto
+// source: smartcore/bos/health/v1/health_history.proto
 
 package gen
 
@@ -65,11 +65,11 @@ func (x HealthCheckRecord_RecordType) String() string {
 }
 
 func (HealthCheckRecord_RecordType) Descriptor() protoreflect.EnumDescriptor {
-	return file_health_history_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_health_v1_health_history_proto_enumTypes[0].Descriptor()
 }
 
 func (HealthCheckRecord_RecordType) Type() protoreflect.EnumType {
-	return &file_health_history_proto_enumTypes[0]
+	return &file_smartcore_bos_health_v1_health_history_proto_enumTypes[0]
 }
 
 func (x HealthCheckRecord_RecordType) Number() protoreflect.EnumNumber {
@@ -78,7 +78,7 @@ func (x HealthCheckRecord_RecordType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HealthCheckRecord_RecordType.Descriptor instead.
 func (HealthCheckRecord_RecordType) EnumDescriptor() ([]byte, []int) {
-	return file_health_history_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_health_v1_health_history_proto_rawDescGZIP(), []int{0, 0}
 }
 
 // HealthCheckRecord represents a historical record of a health check for a device.
@@ -86,14 +86,14 @@ type HealthCheckRecord struct {
 	state         protoimpl.MessageState       `protogen:"open.v1"`
 	HealthCheck   *HealthCheck                 `protobuf:"bytes,1,opt,name=health_check,json=healthCheck,proto3" json:"health_check,omitempty"`
 	RecordTime    *timestamppb.Timestamp       `protobuf:"bytes,2,opt,name=record_time,json=recordTime,proto3" json:"record_time,omitempty"`
-	RecordType    HealthCheckRecord_RecordType `protobuf:"varint,3,opt,name=record_type,json=recordType,proto3,enum=smartcore.bos.HealthCheckRecord_RecordType" json:"record_type,omitempty"`
+	RecordType    HealthCheckRecord_RecordType `protobuf:"varint,3,opt,name=record_type,json=recordType,proto3,enum=smartcore.bos.health.v1.HealthCheckRecord_RecordType" json:"record_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *HealthCheckRecord) Reset() {
 	*x = HealthCheckRecord{}
-	mi := &file_health_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_health_v1_health_history_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -105,7 +105,7 @@ func (x *HealthCheckRecord) String() string {
 func (*HealthCheckRecord) ProtoMessage() {}
 
 func (x *HealthCheckRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_health_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_health_v1_health_history_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -118,7 +118,7 @@ func (x *HealthCheckRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckRecord.ProtoReflect.Descriptor instead.
 func (*HealthCheckRecord) Descriptor() ([]byte, []int) {
-	return file_health_history_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_health_v1_health_history_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *HealthCheckRecord) GetHealthCheck() *HealthCheck {
@@ -172,7 +172,7 @@ type ListHealthCheckHistoryRequest struct {
 
 func (x *ListHealthCheckHistoryRequest) Reset() {
 	*x = ListHealthCheckHistoryRequest{}
-	mi := &file_health_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_health_v1_health_history_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -184,7 +184,7 @@ func (x *ListHealthCheckHistoryRequest) String() string {
 func (*ListHealthCheckHistoryRequest) ProtoMessage() {}
 
 func (x *ListHealthCheckHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_health_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_health_v1_health_history_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -197,7 +197,7 @@ func (x *ListHealthCheckHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHealthCheckHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListHealthCheckHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_health_history_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_health_v1_health_history_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListHealthCheckHistoryRequest) GetName() string {
@@ -264,7 +264,7 @@ type ListHealthCheckHistoryResponse struct {
 
 func (x *ListHealthCheckHistoryResponse) Reset() {
 	*x = ListHealthCheckHistoryResponse{}
-	mi := &file_health_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_health_v1_health_history_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -276,7 +276,7 @@ func (x *ListHealthCheckHistoryResponse) String() string {
 func (*ListHealthCheckHistoryResponse) ProtoMessage() {}
 
 func (x *ListHealthCheckHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_health_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_health_v1_health_history_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -289,7 +289,7 @@ func (x *ListHealthCheckHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHealthCheckHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListHealthCheckHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_health_history_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_health_v1_health_history_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListHealthCheckHistoryResponse) GetHealthCheckRecords() []*HealthCheckRecord {
@@ -313,16 +313,16 @@ func (x *ListHealthCheckHistoryResponse) GetTotalSize() int32 {
 	return 0
 }
 
-var File_health_history_proto protoreflect.FileDescriptor
+var File_smartcore_bos_health_v1_health_history_proto protoreflect.FileDescriptor
 
-const file_health_history_proto_rawDesc = "" +
+const file_smartcore_bos_health_v1_health_history_proto_rawDesc = "" +
 	"\n" +
-	"\x14health_history.proto\x12\rsmartcore.bos\x1a\fhealth.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17types/time/period.proto\"\xad\x02\n" +
-	"\x11HealthCheckRecord\x12=\n" +
-	"\fhealth_check\x18\x01 \x01(\v2\x1a.smartcore.bos.HealthCheckR\vhealthCheck\x12;\n" +
+	",smartcore/bos/health/v1/health_history.proto\x12\x17smartcore.bos.health.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/health/v1/health.proto\x1a\x17types/time/period.proto\"\xc1\x02\n" +
+	"\x11HealthCheckRecord\x12G\n" +
+	"\fhealth_check\x18\x01 \x01(\v2$.smartcore.bos.health.v1.HealthCheckR\vhealthCheck\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"recordTime\x12L\n" +
-	"\vrecord_type\x18\x03 \x01(\x0e2+.smartcore.bos.HealthCheckRecord.RecordTypeR\n" +
+	"recordTime\x12V\n" +
+	"\vrecord_type\x18\x03 \x01(\x0e25.smartcore.bos.health.v1.HealthCheckRecord.RecordTypeR\n" +
 	"recordType\"N\n" +
 	"\n" +
 	"RecordType\x12\x1b\n" +
@@ -338,48 +338,48 @@ const file_health_history_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x05 \x01(\tR\tpageToken\x12\x19\n" +
-	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xbb\x01\n" +
-	"\x1eListHealthCheckHistoryResponse\x12R\n" +
-	"\x14health_check_records\x18\x01 \x03(\v2 .smartcore.bos.HealthCheckRecordR\x12healthCheckRecords\x12&\n" +
+	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xc5\x01\n" +
+	"\x1eListHealthCheckHistoryResponse\x12\\\n" +
+	"\x14health_check_records\x18\x01 \x03(\v2*.smartcore.bos.health.v1.HealthCheckRecordR\x12healthCheckRecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x86\x01\n" +
-	"\rHealthHistory\x12u\n" +
-	"\x16ListHealthCheckHistory\x12,.smartcore.bos.ListHealthCheckHistoryRequest\x1a-.smartcore.bos.ListHealthCheckHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x9b\x01\n" +
+	"\rHealthHistory\x12\x89\x01\n" +
+	"\x16ListHealthCheckHistory\x126.smartcore.bos.health.v1.ListHealthCheckHistoryRequest\x1a7.smartcore.bos.health.v1.ListHealthCheckHistoryResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_health_history_proto_rawDescOnce sync.Once
-	file_health_history_proto_rawDescData []byte
+	file_smartcore_bos_health_v1_health_history_proto_rawDescOnce sync.Once
+	file_smartcore_bos_health_v1_health_history_proto_rawDescData []byte
 )
 
-func file_health_history_proto_rawDescGZIP() []byte {
-	file_health_history_proto_rawDescOnce.Do(func() {
-		file_health_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_health_history_proto_rawDesc), len(file_health_history_proto_rawDesc)))
+func file_smartcore_bos_health_v1_health_history_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_health_v1_health_history_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_health_v1_health_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_health_v1_health_history_proto_rawDesc), len(file_smartcore_bos_health_v1_health_history_proto_rawDesc)))
 	})
-	return file_health_history_proto_rawDescData
+	return file_smartcore_bos_health_v1_health_history_proto_rawDescData
 }
 
-var file_health_history_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_health_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_health_history_proto_goTypes = []any{
-	(HealthCheckRecord_RecordType)(0),      // 0: smartcore.bos.HealthCheckRecord.RecordType
-	(*HealthCheckRecord)(nil),              // 1: smartcore.bos.HealthCheckRecord
-	(*ListHealthCheckHistoryRequest)(nil),  // 2: smartcore.bos.ListHealthCheckHistoryRequest
-	(*ListHealthCheckHistoryResponse)(nil), // 3: smartcore.bos.ListHealthCheckHistoryResponse
-	(*HealthCheck)(nil),                    // 4: smartcore.bos.HealthCheck
+var file_smartcore_bos_health_v1_health_history_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_smartcore_bos_health_v1_health_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_smartcore_bos_health_v1_health_history_proto_goTypes = []any{
+	(HealthCheckRecord_RecordType)(0),      // 0: smartcore.bos.health.v1.HealthCheckRecord.RecordType
+	(*HealthCheckRecord)(nil),              // 1: smartcore.bos.health.v1.HealthCheckRecord
+	(*ListHealthCheckHistoryRequest)(nil),  // 2: smartcore.bos.health.v1.ListHealthCheckHistoryRequest
+	(*ListHealthCheckHistoryResponse)(nil), // 3: smartcore.bos.health.v1.ListHealthCheckHistoryResponse
+	(*HealthCheck)(nil),                    // 4: smartcore.bos.health.v1.HealthCheck
 	(*timestamppb.Timestamp)(nil),          // 5: google.protobuf.Timestamp
 	(*time.Period)(nil),                    // 6: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),          // 7: google.protobuf.FieldMask
 }
-var file_health_history_proto_depIdxs = []int32{
-	4, // 0: smartcore.bos.HealthCheckRecord.health_check:type_name -> smartcore.bos.HealthCheck
-	5, // 1: smartcore.bos.HealthCheckRecord.record_time:type_name -> google.protobuf.Timestamp
-	0, // 2: smartcore.bos.HealthCheckRecord.record_type:type_name -> smartcore.bos.HealthCheckRecord.RecordType
-	6, // 3: smartcore.bos.ListHealthCheckHistoryRequest.period:type_name -> smartcore.types.time.Period
-	7, // 4: smartcore.bos.ListHealthCheckHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
-	1, // 5: smartcore.bos.ListHealthCheckHistoryResponse.health_check_records:type_name -> smartcore.bos.HealthCheckRecord
-	2, // 6: smartcore.bos.HealthHistory.ListHealthCheckHistory:input_type -> smartcore.bos.ListHealthCheckHistoryRequest
-	3, // 7: smartcore.bos.HealthHistory.ListHealthCheckHistory:output_type -> smartcore.bos.ListHealthCheckHistoryResponse
+var file_smartcore_bos_health_v1_health_history_proto_depIdxs = []int32{
+	4, // 0: smartcore.bos.health.v1.HealthCheckRecord.health_check:type_name -> smartcore.bos.health.v1.HealthCheck
+	5, // 1: smartcore.bos.health.v1.HealthCheckRecord.record_time:type_name -> google.protobuf.Timestamp
+	0, // 2: smartcore.bos.health.v1.HealthCheckRecord.record_type:type_name -> smartcore.bos.health.v1.HealthCheckRecord.RecordType
+	6, // 3: smartcore.bos.health.v1.ListHealthCheckHistoryRequest.period:type_name -> smartcore.types.time.Period
+	7, // 4: smartcore.bos.health.v1.ListHealthCheckHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
+	1, // 5: smartcore.bos.health.v1.ListHealthCheckHistoryResponse.health_check_records:type_name -> smartcore.bos.health.v1.HealthCheckRecord
+	2, // 6: smartcore.bos.health.v1.HealthHistory.ListHealthCheckHistory:input_type -> smartcore.bos.health.v1.ListHealthCheckHistoryRequest
+	3, // 7: smartcore.bos.health.v1.HealthHistory.ListHealthCheckHistory:output_type -> smartcore.bos.health.v1.ListHealthCheckHistoryResponse
 	7, // [7:8] is the sub-list for method output_type
 	6, // [6:7] is the sub-list for method input_type
 	6, // [6:6] is the sub-list for extension type_name
@@ -387,28 +387,28 @@ var file_health_history_proto_depIdxs = []int32{
 	0, // [0:6] is the sub-list for field type_name
 }
 
-func init() { file_health_history_proto_init() }
-func file_health_history_proto_init() {
-	if File_health_history_proto != nil {
+func init() { file_smartcore_bos_health_v1_health_history_proto_init() }
+func file_smartcore_bos_health_v1_health_history_proto_init() {
+	if File_smartcore_bos_health_v1_health_history_proto != nil {
 		return
 	}
-	file_health_proto_init()
+	file_smartcore_bos_health_v1_health_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_health_history_proto_rawDesc), len(file_health_history_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_health_v1_health_history_proto_rawDesc), len(file_smartcore_bos_health_v1_health_history_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_health_history_proto_goTypes,
-		DependencyIndexes: file_health_history_proto_depIdxs,
-		EnumInfos:         file_health_history_proto_enumTypes,
-		MessageInfos:      file_health_history_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_health_v1_health_history_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_health_v1_health_history_proto_depIdxs,
+		EnumInfos:         file_smartcore_bos_health_v1_health_history_proto_enumTypes,
+		MessageInfos:      file_smartcore_bos_health_v1_health_history_proto_msgTypes,
 	}.Build()
-	File_health_history_proto = out.File
-	file_health_history_proto_goTypes = nil
-	file_health_history_proto_depIdxs = nil
+	File_smartcore_bos_health_v1_health_history_proto = out.File
+	file_smartcore_bos_health_v1_health_history_proto_goTypes = nil
+	file_smartcore_bos_health_v1_health_history_proto_depIdxs = nil
 }

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: services.proto
+// source: smartcore/bos/services/v1/services.proto
 
 package gen
 
@@ -75,7 +75,7 @@ type Service struct {
 
 func (x *Service) Reset() {
 	*x = Service{}
-	mi := &file_services_proto_msgTypes[0]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -87,7 +87,7 @@ func (x *Service) String() string {
 func (*Service) ProtoMessage() {}
 
 func (x *Service) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[0]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -100,7 +100,7 @@ func (x *Service) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Service.ProtoReflect.Descriptor instead.
 func (*Service) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Service) GetId() string {
@@ -215,7 +215,7 @@ type ServiceMetadata struct {
 
 func (x *ServiceMetadata) Reset() {
 	*x = ServiceMetadata{}
-	mi := &file_services_proto_msgTypes[1]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -227,7 +227,7 @@ func (x *ServiceMetadata) String() string {
 func (*ServiceMetadata) ProtoMessage() {}
 
 func (x *ServiceMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[1]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -240,7 +240,7 @@ func (x *ServiceMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceMetadata.ProtoReflect.Descriptor instead.
 func (*ServiceMetadata) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ServiceMetadata) GetTotalCount() uint32 {
@@ -284,7 +284,7 @@ type GetServiceRequest struct {
 
 func (x *GetServiceRequest) Reset() {
 	*x = GetServiceRequest{}
-	mi := &file_services_proto_msgTypes[2]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -296,7 +296,7 @@ func (x *GetServiceRequest) String() string {
 func (*GetServiceRequest) ProtoMessage() {}
 
 func (x *GetServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[2]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -309,7 +309,7 @@ func (x *GetServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServiceRequest.ProtoReflect.Descriptor instead.
 func (*GetServiceRequest) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetServiceRequest) GetName() string {
@@ -347,7 +347,7 @@ type PullServiceRequest struct {
 
 func (x *PullServiceRequest) Reset() {
 	*x = PullServiceRequest{}
-	mi := &file_services_proto_msgTypes[3]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -359,7 +359,7 @@ func (x *PullServiceRequest) String() string {
 func (*PullServiceRequest) ProtoMessage() {}
 
 func (x *PullServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[3]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -372,7 +372,7 @@ func (x *PullServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullServiceRequest.ProtoReflect.Descriptor instead.
 func (*PullServiceRequest) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PullServiceRequest) GetName() string {
@@ -412,7 +412,7 @@ type PullServiceResponse struct {
 
 func (x *PullServiceResponse) Reset() {
 	*x = PullServiceResponse{}
-	mi := &file_services_proto_msgTypes[4]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -424,7 +424,7 @@ func (x *PullServiceResponse) String() string {
 func (*PullServiceResponse) ProtoMessage() {}
 
 func (x *PullServiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[4]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -437,7 +437,7 @@ func (x *PullServiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullServiceResponse.ProtoReflect.Descriptor instead.
 func (*PullServiceResponse) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullServiceResponse) GetChanges() []*PullServiceResponse_Change {
@@ -463,7 +463,7 @@ type CreateServiceRequest struct {
 
 func (x *CreateServiceRequest) Reset() {
 	*x = CreateServiceRequest{}
-	mi := &file_services_proto_msgTypes[5]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -475,7 +475,7 @@ func (x *CreateServiceRequest) String() string {
 func (*CreateServiceRequest) ProtoMessage() {}
 
 func (x *CreateServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[5]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -488,7 +488,7 @@ func (x *CreateServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateServiceRequest.ProtoReflect.Descriptor instead.
 func (*CreateServiceRequest) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CreateServiceRequest) GetName() string {
@@ -519,7 +519,7 @@ type DeleteServiceRequest struct {
 
 func (x *DeleteServiceRequest) Reset() {
 	*x = DeleteServiceRequest{}
-	mi := &file_services_proto_msgTypes[6]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -531,7 +531,7 @@ func (x *DeleteServiceRequest) String() string {
 func (*DeleteServiceRequest) ProtoMessage() {}
 
 func (x *DeleteServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[6]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -544,7 +544,7 @@ func (x *DeleteServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteServiceRequest.ProtoReflect.Descriptor instead.
 func (*DeleteServiceRequest) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DeleteServiceRequest) GetName() string {
@@ -588,7 +588,7 @@ type ListServicesRequest struct {
 
 func (x *ListServicesRequest) Reset() {
 	*x = ListServicesRequest{}
-	mi := &file_services_proto_msgTypes[7]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -600,7 +600,7 @@ func (x *ListServicesRequest) String() string {
 func (*ListServicesRequest) ProtoMessage() {}
 
 func (x *ListServicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[7]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -613,7 +613,7 @@ func (x *ListServicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListServicesRequest.ProtoReflect.Descriptor instead.
 func (*ListServicesRequest) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListServicesRequest) GetName() string {
@@ -659,7 +659,7 @@ type ListServicesResponse struct {
 
 func (x *ListServicesResponse) Reset() {
 	*x = ListServicesResponse{}
-	mi := &file_services_proto_msgTypes[8]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -671,7 +671,7 @@ func (x *ListServicesResponse) String() string {
 func (*ListServicesResponse) ProtoMessage() {}
 
 func (x *ListServicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[8]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -684,7 +684,7 @@ func (x *ListServicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListServicesResponse.ProtoReflect.Descriptor instead.
 func (*ListServicesResponse) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{8}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListServicesResponse) GetServices() []*Service {
@@ -722,7 +722,7 @@ type PullServicesRequest struct {
 
 func (x *PullServicesRequest) Reset() {
 	*x = PullServicesRequest{}
-	mi := &file_services_proto_msgTypes[9]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -734,7 +734,7 @@ func (x *PullServicesRequest) String() string {
 func (*PullServicesRequest) ProtoMessage() {}
 
 func (x *PullServicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[9]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -747,7 +747,7 @@ func (x *PullServicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullServicesRequest.ProtoReflect.Descriptor instead.
 func (*PullServicesRequest) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{9}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *PullServicesRequest) GetName() string {
@@ -781,7 +781,7 @@ type PullServicesResponse struct {
 
 func (x *PullServicesResponse) Reset() {
 	*x = PullServicesResponse{}
-	mi := &file_services_proto_msgTypes[10]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -793,7 +793,7 @@ func (x *PullServicesResponse) String() string {
 func (*PullServicesResponse) ProtoMessage() {}
 
 func (x *PullServicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[10]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -806,7 +806,7 @@ func (x *PullServicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullServicesResponse.ProtoReflect.Descriptor instead.
 func (*PullServicesResponse) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{10}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *PullServicesResponse) GetChanges() []*PullServicesResponse_Change {
@@ -830,7 +830,7 @@ type StartServiceRequest struct {
 
 func (x *StartServiceRequest) Reset() {
 	*x = StartServiceRequest{}
-	mi := &file_services_proto_msgTypes[11]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -842,7 +842,7 @@ func (x *StartServiceRequest) String() string {
 func (*StartServiceRequest) ProtoMessage() {}
 
 func (x *StartServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[11]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -855,7 +855,7 @@ func (x *StartServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartServiceRequest.ProtoReflect.Descriptor instead.
 func (*StartServiceRequest) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{11}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *StartServiceRequest) GetName() string {
@@ -893,7 +893,7 @@ type ConfigureServiceRequest struct {
 
 func (x *ConfigureServiceRequest) Reset() {
 	*x = ConfigureServiceRequest{}
-	mi := &file_services_proto_msgTypes[12]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -905,7 +905,7 @@ func (x *ConfigureServiceRequest) String() string {
 func (*ConfigureServiceRequest) ProtoMessage() {}
 
 func (x *ConfigureServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[12]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -918,7 +918,7 @@ func (x *ConfigureServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigureServiceRequest.ProtoReflect.Descriptor instead.
 func (*ConfigureServiceRequest) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{12}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ConfigureServiceRequest) GetName() string {
@@ -956,7 +956,7 @@ type StopServiceRequest struct {
 
 func (x *StopServiceRequest) Reset() {
 	*x = StopServiceRequest{}
-	mi := &file_services_proto_msgTypes[13]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -968,7 +968,7 @@ func (x *StopServiceRequest) String() string {
 func (*StopServiceRequest) ProtoMessage() {}
 
 func (x *StopServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[13]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -981,7 +981,7 @@ func (x *StopServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopServiceRequest.ProtoReflect.Descriptor instead.
 func (*StopServiceRequest) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{13}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *StopServiceRequest) GetName() string {
@@ -1016,7 +1016,7 @@ type GetServiceMetadataRequest struct {
 
 func (x *GetServiceMetadataRequest) Reset() {
 	*x = GetServiceMetadataRequest{}
-	mi := &file_services_proto_msgTypes[14]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1028,7 +1028,7 @@ func (x *GetServiceMetadataRequest) String() string {
 func (*GetServiceMetadataRequest) ProtoMessage() {}
 
 func (x *GetServiceMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[14]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1041,7 +1041,7 @@ func (x *GetServiceMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServiceMetadataRequest.ProtoReflect.Descriptor instead.
 func (*GetServiceMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{14}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetServiceMetadataRequest) GetName() string {
@@ -1071,7 +1071,7 @@ type PullServiceMetadataRequest struct {
 
 func (x *PullServiceMetadataRequest) Reset() {
 	*x = PullServiceMetadataRequest{}
-	mi := &file_services_proto_msgTypes[15]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1083,7 +1083,7 @@ func (x *PullServiceMetadataRequest) String() string {
 func (*PullServiceMetadataRequest) ProtoMessage() {}
 
 func (x *PullServiceMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[15]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1096,7 +1096,7 @@ func (x *PullServiceMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullServiceMetadataRequest.ProtoReflect.Descriptor instead.
 func (*PullServiceMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{15}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *PullServiceMetadataRequest) GetName() string {
@@ -1129,7 +1129,7 @@ type PullServiceMetadataResponse struct {
 
 func (x *PullServiceMetadataResponse) Reset() {
 	*x = PullServiceMetadataResponse{}
-	mi := &file_services_proto_msgTypes[16]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1141,7 +1141,7 @@ func (x *PullServiceMetadataResponse) String() string {
 func (*PullServiceMetadataResponse) ProtoMessage() {}
 
 func (x *PullServiceMetadataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[16]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1154,7 +1154,7 @@ func (x *PullServiceMetadataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullServiceMetadataResponse.ProtoReflect.Descriptor instead.
 func (*PullServiceMetadataResponse) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{16}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *PullServiceMetadataResponse) GetChanges() []*PullServiceMetadataResponse_Change {
@@ -1176,7 +1176,7 @@ type PullServiceResponse_Change struct {
 
 func (x *PullServiceResponse_Change) Reset() {
 	*x = PullServiceResponse_Change{}
-	mi := &file_services_proto_msgTypes[18]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1188,7 +1188,7 @@ func (x *PullServiceResponse_Change) String() string {
 func (*PullServiceResponse_Change) ProtoMessage() {}
 
 func (x *PullServiceResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[18]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1201,7 +1201,7 @@ func (x *PullServiceResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullServiceResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullServiceResponse_Change) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{4, 0}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{4, 0}
 }
 
 func (x *PullServiceResponse_Change) GetName() string {
@@ -1243,7 +1243,7 @@ type PullServicesResponse_Change struct {
 
 func (x *PullServicesResponse_Change) Reset() {
 	*x = PullServicesResponse_Change{}
-	mi := &file_services_proto_msgTypes[19]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1255,7 +1255,7 @@ func (x *PullServicesResponse_Change) String() string {
 func (*PullServicesResponse_Change) ProtoMessage() {}
 
 func (x *PullServicesResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[19]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1268,7 +1268,7 @@ func (x *PullServicesResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullServicesResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullServicesResponse_Change) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{10, 0}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{10, 0}
 }
 
 func (x *PullServicesResponse_Change) GetName() string {
@@ -1320,7 +1320,7 @@ type PullServiceMetadataResponse_Change struct {
 
 func (x *PullServiceMetadataResponse_Change) Reset() {
 	*x = PullServiceMetadataResponse_Change{}
-	mi := &file_services_proto_msgTypes[20]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1332,7 +1332,7 @@ func (x *PullServiceMetadataResponse_Change) String() string {
 func (*PullServiceMetadataResponse_Change) ProtoMessage() {}
 
 func (x *PullServiceMetadataResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_services_proto_msgTypes[20]
+	mi := &file_smartcore_bos_services_v1_services_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1345,7 +1345,7 @@ func (x *PullServiceMetadataResponse_Change) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use PullServiceMetadataResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullServiceMetadataResponse_Change) Descriptor() ([]byte, []int) {
-	return file_services_proto_rawDescGZIP(), []int{16, 0}
+	return file_smartcore_bos_services_v1_services_proto_rawDescGZIP(), []int{16, 0}
 }
 
 func (x *PullServiceMetadataResponse_Change) GetName() string {
@@ -1369,11 +1369,11 @@ func (x *PullServiceMetadataResponse_Change) GetChangeTime() *timestamppb.Timest
 	return nil
 }
 
-var File_services_proto protoreflect.FileDescriptor
+var File_smartcore_bos_services_v1_services_proto protoreflect.FileDescriptor
 
-const file_services_proto_rawDesc = "" +
+const file_smartcore_bos_services_v1_services_proto_rawDesc = "" +
 	"\n" +
-	"\x0eservices.proto\x12\rsmartcore.bos\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\"\xc1\x05\n" +
+	"(smartcore/bos/services/v1/services.proto\x12\x19smartcore.bos.services.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\"\xc1\x05\n" +
 	"\aService\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x16\n" +
@@ -1390,11 +1390,11 @@ const file_services_proto_rawDesc = "" +
 	"config_raw\x18\v \x01(\tR\tconfigRaw\x12D\n" +
 	"\x10last_config_time\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\x0elastConfigTime\x12'\n" +
 	"\x0ffailed_attempts\x18\r \x01(\x05R\x0efailedAttempts\x12F\n" +
-	"\x11next_attempt_time\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\x0fnextAttemptTime\"\x9c\x02\n" +
+	"\x11next_attempt_time\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\x0fnextAttemptTime\"\xa8\x02\n" +
 	"\x0fServiceMetadata\x12\x1f\n" +
 	"\vtotal_count\x18\x01 \x01(\rR\n" +
-	"totalCount\x12O\n" +
-	"\vtype_counts\x18\x02 \x03(\v2..smartcore.bos.ServiceMetadata.TypeCountsEntryR\n" +
+	"totalCount\x12[\n" +
+	"\vtype_counts\x18\x02 \x03(\v2:.smartcore.bos.services.v1.ServiceMetadata.TypeCountsEntryR\n" +
 	"typeCounts\x12,\n" +
 	"\x12total_active_count\x18\x03 \x01(\rR\x10totalActiveCount\x12*\n" +
 	"\x11total_error_count\x18\x04 \x01(\rR\x0ftotalErrorCount\x1a=\n" +
@@ -1409,17 +1409,17 @@ const file_services_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12!\n" +
 	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\x127\n" +
-	"\tread_mask\x18\x04 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\xe8\x01\n" +
-	"\x13PullServiceResponse\x12C\n" +
-	"\achanges\x18\x01 \x03(\v2).smartcore.bos.PullServiceResponse.ChangeR\achanges\x1a\x8b\x01\n" +
+	"\tread_mask\x18\x04 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x80\x02\n" +
+	"\x13PullServiceResponse\x12O\n" +
+	"\achanges\x18\x01 \x03(\v25.smartcore.bos.services.v1.PullServiceResponse.ChangeR\achanges\x1a\x97\x01\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x120\n" +
-	"\aservice\x18\x02 \x01(\v2\x16.smartcore.bos.ServiceR\aservice\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12<\n" +
+	"\aservice\x18\x02 \x01(\v2\".smartcore.bos.services.v1.ServiceR\aservice\x12;\n" +
 	"\vchange_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\"\\\n" +
+	"changeTime\"h\n" +
 	"\x14CreateServiceRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x120\n" +
-	"\aservice\x18\x02 \x01(\v2\x16.smartcore.bos.ServiceR\aservice\"_\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12<\n" +
+	"\aservice\x18\x02 \x01(\v2\".smartcore.bos.services.v1.ServiceR\aservice\"_\n" +
 	"\x14DeleteServiceRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12#\n" +
@@ -1429,23 +1429,23 @@ const file_services_proto_rawDesc = "" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\"\x91\x01\n" +
-	"\x14ListServicesResponse\x122\n" +
-	"\bservices\x18\x01 \x03(\v2\x16.smartcore.bos.ServiceR\bservices\x12&\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"\x9d\x01\n" +
+	"\x14ListServicesResponse\x12>\n" +
+	"\bservices\x18\x01 \x03(\v2\".smartcore.bos.services.v1.ServiceR\bservices\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
 	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\x85\x01\n" +
 	"\x13PullServicesRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xd3\x02\n" +
-	"\x14PullServicesResponse\x12D\n" +
-	"\achanges\x18\x01 \x03(\v2*.smartcore.bos.PullServicesResponse.ChangeR\achanges\x1a\xf4\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xf7\x02\n" +
+	"\x14PullServicesResponse\x12P\n" +
+	"\achanges\x18\x01 \x03(\v26.smartcore.bos.services.v1.PullServicesResponse.ChangeR\achanges\x1a\x8c\x02\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x123\n" +
-	"\tnew_value\x18\x03 \x01(\v2\x16.smartcore.bos.ServiceR\bnewValue\x123\n" +
-	"\told_value\x18\x04 \x01(\v2\x16.smartcore.bos.ServiceR\boldValue\x12;\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12?\n" +
+	"\tnew_value\x18\x03 \x01(\v2\".smartcore.bos.services.v1.ServiceR\bnewValue\x12?\n" +
+	"\told_value\x18\x04 \x01(\v2\".smartcore.bos.services.v1.ServiceR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"changeTime\"\\\n" +
 	"\x13StartServiceRequest\x12\x12\n" +
@@ -1467,117 +1467,117 @@ const file_services_proto_rawDesc = "" +
 	"\x1aPullServiceMetadataRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
 	"\fupdates_only\x18\x02 \x01(\bR\vupdatesOnly\x127\n" +
-	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x82\x02\n" +
-	"\x1bPullServiceMetadataResponse\x12K\n" +
-	"\achanges\x18\x01 \x03(\v21.smartcore.bos.PullServiceMetadataResponse.ChangeR\achanges\x1a\x95\x01\n" +
+	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x9a\x02\n" +
+	"\x1bPullServiceMetadataResponse\x12W\n" +
+	"\achanges\x18\x01 \x03(\v2=.smartcore.bos.services.v1.PullServiceMetadataResponse.ChangeR\achanges\x1a\xa1\x01\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12:\n" +
-	"\bmetadata\x18\x02 \x01(\v2\x1e.smartcore.bos.ServiceMetadataR\bmetadata\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12F\n" +
+	"\bmetadata\x18\x02 \x01(\v2*.smartcore.bos.services.v1.ServiceMetadataR\bmetadata\x12;\n" +
 	"\vchange_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime2\xb7\a\n" +
-	"\vServicesApi\x12F\n" +
+	"changeTime2\xc0\t\n" +
+	"\vServicesApi\x12^\n" +
 	"\n" +
-	"GetService\x12 .smartcore.bos.GetServiceRequest\x1a\x16.smartcore.bos.Service\x12V\n" +
-	"\vPullService\x12!.smartcore.bos.PullServiceRequest\x1a\".smartcore.bos.PullServiceResponse0\x01\x12L\n" +
-	"\rCreateService\x12#.smartcore.bos.CreateServiceRequest\x1a\x16.smartcore.bos.Service\x12L\n" +
-	"\rDeleteService\x12#.smartcore.bos.DeleteServiceRequest\x1a\x16.smartcore.bos.Service\x12W\n" +
-	"\fListServices\x12\".smartcore.bos.ListServicesRequest\x1a#.smartcore.bos.ListServicesResponse\x12Y\n" +
-	"\fPullServices\x12\".smartcore.bos.PullServicesRequest\x1a#.smartcore.bos.PullServicesResponse0\x01\x12J\n" +
-	"\fStartService\x12\".smartcore.bos.StartServiceRequest\x1a\x16.smartcore.bos.Service\x12R\n" +
-	"\x10ConfigureService\x12&.smartcore.bos.ConfigureServiceRequest\x1a\x16.smartcore.bos.Service\x12H\n" +
-	"\vStopService\x12!.smartcore.bos.StopServiceRequest\x1a\x16.smartcore.bos.Service\x12^\n" +
-	"\x12GetServiceMetadata\x12(.smartcore.bos.GetServiceMetadataRequest\x1a\x1e.smartcore.bos.ServiceMetadata\x12n\n" +
-	"\x13PullServiceMetadata\x12).smartcore.bos.PullServiceMetadataRequest\x1a*.smartcore.bos.PullServiceMetadataResponse0\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"GetService\x12,.smartcore.bos.services.v1.GetServiceRequest\x1a\".smartcore.bos.services.v1.Service\x12n\n" +
+	"\vPullService\x12-.smartcore.bos.services.v1.PullServiceRequest\x1a..smartcore.bos.services.v1.PullServiceResponse0\x01\x12d\n" +
+	"\rCreateService\x12/.smartcore.bos.services.v1.CreateServiceRequest\x1a\".smartcore.bos.services.v1.Service\x12d\n" +
+	"\rDeleteService\x12/.smartcore.bos.services.v1.DeleteServiceRequest\x1a\".smartcore.bos.services.v1.Service\x12o\n" +
+	"\fListServices\x12..smartcore.bos.services.v1.ListServicesRequest\x1a/.smartcore.bos.services.v1.ListServicesResponse\x12q\n" +
+	"\fPullServices\x12..smartcore.bos.services.v1.PullServicesRequest\x1a/.smartcore.bos.services.v1.PullServicesResponse0\x01\x12b\n" +
+	"\fStartService\x12..smartcore.bos.services.v1.StartServiceRequest\x1a\".smartcore.bos.services.v1.Service\x12j\n" +
+	"\x10ConfigureService\x122.smartcore.bos.services.v1.ConfigureServiceRequest\x1a\".smartcore.bos.services.v1.Service\x12`\n" +
+	"\vStopService\x12-.smartcore.bos.services.v1.StopServiceRequest\x1a\".smartcore.bos.services.v1.Service\x12v\n" +
+	"\x12GetServiceMetadata\x124.smartcore.bos.services.v1.GetServiceMetadataRequest\x1a*.smartcore.bos.services.v1.ServiceMetadata\x12\x86\x01\n" +
+	"\x13PullServiceMetadata\x125.smartcore.bos.services.v1.PullServiceMetadataRequest\x1a6.smartcore.bos.services.v1.PullServiceMetadataResponse0\x01B)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_services_proto_rawDescOnce sync.Once
-	file_services_proto_rawDescData []byte
+	file_smartcore_bos_services_v1_services_proto_rawDescOnce sync.Once
+	file_smartcore_bos_services_v1_services_proto_rawDescData []byte
 )
 
-func file_services_proto_rawDescGZIP() []byte {
-	file_services_proto_rawDescOnce.Do(func() {
-		file_services_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_services_proto_rawDesc), len(file_services_proto_rawDesc)))
+func file_smartcore_bos_services_v1_services_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_services_v1_services_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_services_v1_services_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_services_v1_services_proto_rawDesc), len(file_smartcore_bos_services_v1_services_proto_rawDesc)))
 	})
-	return file_services_proto_rawDescData
+	return file_smartcore_bos_services_v1_services_proto_rawDescData
 }
 
-var file_services_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
-var file_services_proto_goTypes = []any{
-	(*Service)(nil),                            // 0: smartcore.bos.Service
-	(*ServiceMetadata)(nil),                    // 1: smartcore.bos.ServiceMetadata
-	(*GetServiceRequest)(nil),                  // 2: smartcore.bos.GetServiceRequest
-	(*PullServiceRequest)(nil),                 // 3: smartcore.bos.PullServiceRequest
-	(*PullServiceResponse)(nil),                // 4: smartcore.bos.PullServiceResponse
-	(*CreateServiceRequest)(nil),               // 5: smartcore.bos.CreateServiceRequest
-	(*DeleteServiceRequest)(nil),               // 6: smartcore.bos.DeleteServiceRequest
-	(*ListServicesRequest)(nil),                // 7: smartcore.bos.ListServicesRequest
-	(*ListServicesResponse)(nil),               // 8: smartcore.bos.ListServicesResponse
-	(*PullServicesRequest)(nil),                // 9: smartcore.bos.PullServicesRequest
-	(*PullServicesResponse)(nil),               // 10: smartcore.bos.PullServicesResponse
-	(*StartServiceRequest)(nil),                // 11: smartcore.bos.StartServiceRequest
-	(*ConfigureServiceRequest)(nil),            // 12: smartcore.bos.ConfigureServiceRequest
-	(*StopServiceRequest)(nil),                 // 13: smartcore.bos.StopServiceRequest
-	(*GetServiceMetadataRequest)(nil),          // 14: smartcore.bos.GetServiceMetadataRequest
-	(*PullServiceMetadataRequest)(nil),         // 15: smartcore.bos.PullServiceMetadataRequest
-	(*PullServiceMetadataResponse)(nil),        // 16: smartcore.bos.PullServiceMetadataResponse
-	nil,                                        // 17: smartcore.bos.ServiceMetadata.TypeCountsEntry
-	(*PullServiceResponse_Change)(nil),         // 18: smartcore.bos.PullServiceResponse.Change
-	(*PullServicesResponse_Change)(nil),        // 19: smartcore.bos.PullServicesResponse.Change
-	(*PullServiceMetadataResponse_Change)(nil), // 20: smartcore.bos.PullServiceMetadataResponse.Change
+var file_smartcore_bos_services_v1_services_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_smartcore_bos_services_v1_services_proto_goTypes = []any{
+	(*Service)(nil),                            // 0: smartcore.bos.services.v1.Service
+	(*ServiceMetadata)(nil),                    // 1: smartcore.bos.services.v1.ServiceMetadata
+	(*GetServiceRequest)(nil),                  // 2: smartcore.bos.services.v1.GetServiceRequest
+	(*PullServiceRequest)(nil),                 // 3: smartcore.bos.services.v1.PullServiceRequest
+	(*PullServiceResponse)(nil),                // 4: smartcore.bos.services.v1.PullServiceResponse
+	(*CreateServiceRequest)(nil),               // 5: smartcore.bos.services.v1.CreateServiceRequest
+	(*DeleteServiceRequest)(nil),               // 6: smartcore.bos.services.v1.DeleteServiceRequest
+	(*ListServicesRequest)(nil),                // 7: smartcore.bos.services.v1.ListServicesRequest
+	(*ListServicesResponse)(nil),               // 8: smartcore.bos.services.v1.ListServicesResponse
+	(*PullServicesRequest)(nil),                // 9: smartcore.bos.services.v1.PullServicesRequest
+	(*PullServicesResponse)(nil),               // 10: smartcore.bos.services.v1.PullServicesResponse
+	(*StartServiceRequest)(nil),                // 11: smartcore.bos.services.v1.StartServiceRequest
+	(*ConfigureServiceRequest)(nil),            // 12: smartcore.bos.services.v1.ConfigureServiceRequest
+	(*StopServiceRequest)(nil),                 // 13: smartcore.bos.services.v1.StopServiceRequest
+	(*GetServiceMetadataRequest)(nil),          // 14: smartcore.bos.services.v1.GetServiceMetadataRequest
+	(*PullServiceMetadataRequest)(nil),         // 15: smartcore.bos.services.v1.PullServiceMetadataRequest
+	(*PullServiceMetadataResponse)(nil),        // 16: smartcore.bos.services.v1.PullServiceMetadataResponse
+	nil,                                        // 17: smartcore.bos.services.v1.ServiceMetadata.TypeCountsEntry
+	(*PullServiceResponse_Change)(nil),         // 18: smartcore.bos.services.v1.PullServiceResponse.Change
+	(*PullServicesResponse_Change)(nil),        // 19: smartcore.bos.services.v1.PullServicesResponse.Change
+	(*PullServiceMetadataResponse_Change)(nil), // 20: smartcore.bos.services.v1.PullServiceMetadataResponse.Change
 	(*timestamppb.Timestamp)(nil),              // 21: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),              // 22: google.protobuf.FieldMask
 	(types.ChangeType)(0),                      // 23: smartcore.types.ChangeType
 }
-var file_services_proto_depIdxs = []int32{
-	21, // 0: smartcore.bos.Service.last_inactive_time:type_name -> google.protobuf.Timestamp
-	21, // 1: smartcore.bos.Service.last_active_time:type_name -> google.protobuf.Timestamp
-	21, // 2: smartcore.bos.Service.last_loading_start_time:type_name -> google.protobuf.Timestamp
-	21, // 3: smartcore.bos.Service.last_loading_end_time:type_name -> google.protobuf.Timestamp
-	21, // 4: smartcore.bos.Service.last_error_time:type_name -> google.protobuf.Timestamp
-	21, // 5: smartcore.bos.Service.last_config_time:type_name -> google.protobuf.Timestamp
-	21, // 6: smartcore.bos.Service.next_attempt_time:type_name -> google.protobuf.Timestamp
-	17, // 7: smartcore.bos.ServiceMetadata.type_counts:type_name -> smartcore.bos.ServiceMetadata.TypeCountsEntry
-	22, // 8: smartcore.bos.GetServiceRequest.read_mask:type_name -> google.protobuf.FieldMask
-	22, // 9: smartcore.bos.PullServiceRequest.read_mask:type_name -> google.protobuf.FieldMask
-	18, // 10: smartcore.bos.PullServiceResponse.changes:type_name -> smartcore.bos.PullServiceResponse.Change
-	0,  // 11: smartcore.bos.CreateServiceRequest.service:type_name -> smartcore.bos.Service
-	22, // 12: smartcore.bos.ListServicesRequest.read_mask:type_name -> google.protobuf.FieldMask
-	0,  // 13: smartcore.bos.ListServicesResponse.services:type_name -> smartcore.bos.Service
-	22, // 14: smartcore.bos.PullServicesRequest.read_mask:type_name -> google.protobuf.FieldMask
-	19, // 15: smartcore.bos.PullServicesResponse.changes:type_name -> smartcore.bos.PullServicesResponse.Change
-	22, // 16: smartcore.bos.GetServiceMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	22, // 17: smartcore.bos.PullServiceMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	20, // 18: smartcore.bos.PullServiceMetadataResponse.changes:type_name -> smartcore.bos.PullServiceMetadataResponse.Change
-	0,  // 19: smartcore.bos.PullServiceResponse.Change.service:type_name -> smartcore.bos.Service
-	21, // 20: smartcore.bos.PullServiceResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	23, // 21: smartcore.bos.PullServicesResponse.Change.type:type_name -> smartcore.types.ChangeType
-	0,  // 22: smartcore.bos.PullServicesResponse.Change.new_value:type_name -> smartcore.bos.Service
-	0,  // 23: smartcore.bos.PullServicesResponse.Change.old_value:type_name -> smartcore.bos.Service
-	21, // 24: smartcore.bos.PullServicesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 25: smartcore.bos.PullServiceMetadataResponse.Change.metadata:type_name -> smartcore.bos.ServiceMetadata
-	21, // 26: smartcore.bos.PullServiceMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	2,  // 27: smartcore.bos.ServicesApi.GetService:input_type -> smartcore.bos.GetServiceRequest
-	3,  // 28: smartcore.bos.ServicesApi.PullService:input_type -> smartcore.bos.PullServiceRequest
-	5,  // 29: smartcore.bos.ServicesApi.CreateService:input_type -> smartcore.bos.CreateServiceRequest
-	6,  // 30: smartcore.bos.ServicesApi.DeleteService:input_type -> smartcore.bos.DeleteServiceRequest
-	7,  // 31: smartcore.bos.ServicesApi.ListServices:input_type -> smartcore.bos.ListServicesRequest
-	9,  // 32: smartcore.bos.ServicesApi.PullServices:input_type -> smartcore.bos.PullServicesRequest
-	11, // 33: smartcore.bos.ServicesApi.StartService:input_type -> smartcore.bos.StartServiceRequest
-	12, // 34: smartcore.bos.ServicesApi.ConfigureService:input_type -> smartcore.bos.ConfigureServiceRequest
-	13, // 35: smartcore.bos.ServicesApi.StopService:input_type -> smartcore.bos.StopServiceRequest
-	14, // 36: smartcore.bos.ServicesApi.GetServiceMetadata:input_type -> smartcore.bos.GetServiceMetadataRequest
-	15, // 37: smartcore.bos.ServicesApi.PullServiceMetadata:input_type -> smartcore.bos.PullServiceMetadataRequest
-	0,  // 38: smartcore.bos.ServicesApi.GetService:output_type -> smartcore.bos.Service
-	4,  // 39: smartcore.bos.ServicesApi.PullService:output_type -> smartcore.bos.PullServiceResponse
-	0,  // 40: smartcore.bos.ServicesApi.CreateService:output_type -> smartcore.bos.Service
-	0,  // 41: smartcore.bos.ServicesApi.DeleteService:output_type -> smartcore.bos.Service
-	8,  // 42: smartcore.bos.ServicesApi.ListServices:output_type -> smartcore.bos.ListServicesResponse
-	10, // 43: smartcore.bos.ServicesApi.PullServices:output_type -> smartcore.bos.PullServicesResponse
-	0,  // 44: smartcore.bos.ServicesApi.StartService:output_type -> smartcore.bos.Service
-	0,  // 45: smartcore.bos.ServicesApi.ConfigureService:output_type -> smartcore.bos.Service
-	0,  // 46: smartcore.bos.ServicesApi.StopService:output_type -> smartcore.bos.Service
-	1,  // 47: smartcore.bos.ServicesApi.GetServiceMetadata:output_type -> smartcore.bos.ServiceMetadata
-	16, // 48: smartcore.bos.ServicesApi.PullServiceMetadata:output_type -> smartcore.bos.PullServiceMetadataResponse
+var file_smartcore_bos_services_v1_services_proto_depIdxs = []int32{
+	21, // 0: smartcore.bos.services.v1.Service.last_inactive_time:type_name -> google.protobuf.Timestamp
+	21, // 1: smartcore.bos.services.v1.Service.last_active_time:type_name -> google.protobuf.Timestamp
+	21, // 2: smartcore.bos.services.v1.Service.last_loading_start_time:type_name -> google.protobuf.Timestamp
+	21, // 3: smartcore.bos.services.v1.Service.last_loading_end_time:type_name -> google.protobuf.Timestamp
+	21, // 4: smartcore.bos.services.v1.Service.last_error_time:type_name -> google.protobuf.Timestamp
+	21, // 5: smartcore.bos.services.v1.Service.last_config_time:type_name -> google.protobuf.Timestamp
+	21, // 6: smartcore.bos.services.v1.Service.next_attempt_time:type_name -> google.protobuf.Timestamp
+	17, // 7: smartcore.bos.services.v1.ServiceMetadata.type_counts:type_name -> smartcore.bos.services.v1.ServiceMetadata.TypeCountsEntry
+	22, // 8: smartcore.bos.services.v1.GetServiceRequest.read_mask:type_name -> google.protobuf.FieldMask
+	22, // 9: smartcore.bos.services.v1.PullServiceRequest.read_mask:type_name -> google.protobuf.FieldMask
+	18, // 10: smartcore.bos.services.v1.PullServiceResponse.changes:type_name -> smartcore.bos.services.v1.PullServiceResponse.Change
+	0,  // 11: smartcore.bos.services.v1.CreateServiceRequest.service:type_name -> smartcore.bos.services.v1.Service
+	22, // 12: smartcore.bos.services.v1.ListServicesRequest.read_mask:type_name -> google.protobuf.FieldMask
+	0,  // 13: smartcore.bos.services.v1.ListServicesResponse.services:type_name -> smartcore.bos.services.v1.Service
+	22, // 14: smartcore.bos.services.v1.PullServicesRequest.read_mask:type_name -> google.protobuf.FieldMask
+	19, // 15: smartcore.bos.services.v1.PullServicesResponse.changes:type_name -> smartcore.bos.services.v1.PullServicesResponse.Change
+	22, // 16: smartcore.bos.services.v1.GetServiceMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	22, // 17: smartcore.bos.services.v1.PullServiceMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	20, // 18: smartcore.bos.services.v1.PullServiceMetadataResponse.changes:type_name -> smartcore.bos.services.v1.PullServiceMetadataResponse.Change
+	0,  // 19: smartcore.bos.services.v1.PullServiceResponse.Change.service:type_name -> smartcore.bos.services.v1.Service
+	21, // 20: smartcore.bos.services.v1.PullServiceResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	23, // 21: smartcore.bos.services.v1.PullServicesResponse.Change.type:type_name -> smartcore.types.ChangeType
+	0,  // 22: smartcore.bos.services.v1.PullServicesResponse.Change.new_value:type_name -> smartcore.bos.services.v1.Service
+	0,  // 23: smartcore.bos.services.v1.PullServicesResponse.Change.old_value:type_name -> smartcore.bos.services.v1.Service
+	21, // 24: smartcore.bos.services.v1.PullServicesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	1,  // 25: smartcore.bos.services.v1.PullServiceMetadataResponse.Change.metadata:type_name -> smartcore.bos.services.v1.ServiceMetadata
+	21, // 26: smartcore.bos.services.v1.PullServiceMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	2,  // 27: smartcore.bos.services.v1.ServicesApi.GetService:input_type -> smartcore.bos.services.v1.GetServiceRequest
+	3,  // 28: smartcore.bos.services.v1.ServicesApi.PullService:input_type -> smartcore.bos.services.v1.PullServiceRequest
+	5,  // 29: smartcore.bos.services.v1.ServicesApi.CreateService:input_type -> smartcore.bos.services.v1.CreateServiceRequest
+	6,  // 30: smartcore.bos.services.v1.ServicesApi.DeleteService:input_type -> smartcore.bos.services.v1.DeleteServiceRequest
+	7,  // 31: smartcore.bos.services.v1.ServicesApi.ListServices:input_type -> smartcore.bos.services.v1.ListServicesRequest
+	9,  // 32: smartcore.bos.services.v1.ServicesApi.PullServices:input_type -> smartcore.bos.services.v1.PullServicesRequest
+	11, // 33: smartcore.bos.services.v1.ServicesApi.StartService:input_type -> smartcore.bos.services.v1.StartServiceRequest
+	12, // 34: smartcore.bos.services.v1.ServicesApi.ConfigureService:input_type -> smartcore.bos.services.v1.ConfigureServiceRequest
+	13, // 35: smartcore.bos.services.v1.ServicesApi.StopService:input_type -> smartcore.bos.services.v1.StopServiceRequest
+	14, // 36: smartcore.bos.services.v1.ServicesApi.GetServiceMetadata:input_type -> smartcore.bos.services.v1.GetServiceMetadataRequest
+	15, // 37: smartcore.bos.services.v1.ServicesApi.PullServiceMetadata:input_type -> smartcore.bos.services.v1.PullServiceMetadataRequest
+	0,  // 38: smartcore.bos.services.v1.ServicesApi.GetService:output_type -> smartcore.bos.services.v1.Service
+	4,  // 39: smartcore.bos.services.v1.ServicesApi.PullService:output_type -> smartcore.bos.services.v1.PullServiceResponse
+	0,  // 40: smartcore.bos.services.v1.ServicesApi.CreateService:output_type -> smartcore.bos.services.v1.Service
+	0,  // 41: smartcore.bos.services.v1.ServicesApi.DeleteService:output_type -> smartcore.bos.services.v1.Service
+	8,  // 42: smartcore.bos.services.v1.ServicesApi.ListServices:output_type -> smartcore.bos.services.v1.ListServicesResponse
+	10, // 43: smartcore.bos.services.v1.ServicesApi.PullServices:output_type -> smartcore.bos.services.v1.PullServicesResponse
+	0,  // 44: smartcore.bos.services.v1.ServicesApi.StartService:output_type -> smartcore.bos.services.v1.Service
+	0,  // 45: smartcore.bos.services.v1.ServicesApi.ConfigureService:output_type -> smartcore.bos.services.v1.Service
+	0,  // 46: smartcore.bos.services.v1.ServicesApi.StopService:output_type -> smartcore.bos.services.v1.Service
+	1,  // 47: smartcore.bos.services.v1.ServicesApi.GetServiceMetadata:output_type -> smartcore.bos.services.v1.ServiceMetadata
+	16, // 48: smartcore.bos.services.v1.ServicesApi.PullServiceMetadata:output_type -> smartcore.bos.services.v1.PullServiceMetadataResponse
 	38, // [38:49] is the sub-list for method output_type
 	27, // [27:38] is the sub-list for method input_type
 	27, // [27:27] is the sub-list for extension type_name
@@ -1585,26 +1585,26 @@ var file_services_proto_depIdxs = []int32{
 	0,  // [0:27] is the sub-list for field type_name
 }
 
-func init() { file_services_proto_init() }
-func file_services_proto_init() {
-	if File_services_proto != nil {
+func init() { file_smartcore_bos_services_v1_services_proto_init() }
+func file_smartcore_bos_services_v1_services_proto_init() {
+	if File_smartcore_bos_services_v1_services_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_services_proto_rawDesc), len(file_services_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_services_v1_services_proto_rawDesc), len(file_smartcore_bos_services_v1_services_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_services_proto_goTypes,
-		DependencyIndexes: file_services_proto_depIdxs,
-		MessageInfos:      file_services_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_services_v1_services_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_services_v1_services_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_services_v1_services_proto_msgTypes,
 	}.Build()
-	File_services_proto = out.File
-	file_services_proto_goTypes = nil
-	file_services_proto_depIdxs = nil
+	File_smartcore_bos_services_v1_services_proto = out.File
+	file_smartcore_bos_services_v1_services_proto_goTypes = nil
+	file_smartcore_bos_services_v1_services_proto_depIdxs = nil
 }

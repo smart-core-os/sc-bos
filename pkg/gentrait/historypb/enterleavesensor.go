@@ -13,7 +13,7 @@ import (
 )
 
 type EnterLeaveSensorServer struct {
-	gen.UnimplementedEnterLeaveHistoryServer
+	gen.UnimplementedEnterLeaveSensorHistoryServer
 	store history.Store // payloads of *traits.EnterLeaveEvent
 }
 
@@ -22,7 +22,7 @@ func NewEnterLeaveSensorServer(store history.Store) *EnterLeaveSensorServer {
 }
 
 func (e *EnterLeaveSensorServer) Register(server *grpc.Server) {
-	gen.RegisterEnterLeaveHistoryServer(server, e)
+	gen.RegisterEnterLeaveSensorHistoryServer(server, e)
 }
 
 func (e *EnterLeaveSensorServer) Unwrap() any {

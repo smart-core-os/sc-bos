@@ -207,7 +207,7 @@ function useDemandBetween(name, edges, select, aggregate) {
    * Updates segments with the data found in records.
    * Modified segments will be compacted.
    *
-   * @param {import('@smart-core-os/sc-bos-ui-gen/proto/electric_history_pb').ElectricDemandRecord.AsObject[]} records - in descending order
+   * @param {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/electric/v1/electric_history_pb').ElectricDemandRecord.AsObject[]} records - in descending order
    * @param {Date[]} edges - in ascending order
    */
   const processPage = (records, edges) => {

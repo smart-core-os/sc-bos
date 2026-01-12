@@ -3,8 +3,8 @@ import {clientOptions} from '@/api/grpcweb.js';
 import {trackAction} from '@/api/resource';
 import {pullResource, setValue} from '@/api/resource.js';
 import {periodFromObject} from '@/api/sc/types/period';
-import {AirTemperatureHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/air_temperature_history_grpc_web_pb';
-import {ListAirTemperatureHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/air_temperature_history_pb';
+import {AirTemperatureHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airtemperature/v1/air_temperature_history_grpc_web_pb';
+import {ListAirTemperatureHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airtemperature/v1/air_temperature_history_pb';
 import {AirTemperatureApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/air_temperature_grpc_web_pb';
 import {
   AirTemperature,

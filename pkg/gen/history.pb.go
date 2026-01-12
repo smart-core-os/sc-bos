@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.32.1
-// source: history.proto
+// source: smartcore/bos/history/v1/history.proto
 
 package gen
 
@@ -36,7 +36,7 @@ type HistoryRecord struct {
 
 func (x *HistoryRecord) Reset() {
 	*x = HistoryRecord{}
-	mi := &file_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_history_v1_history_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +48,7 @@ func (x *HistoryRecord) String() string {
 func (*HistoryRecord) ProtoMessage() {}
 
 func (x *HistoryRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_history_proto_msgTypes[0]
+	mi := &file_smartcore_bos_history_v1_history_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +61,7 @@ func (x *HistoryRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HistoryRecord.ProtoReflect.Descriptor instead.
 func (*HistoryRecord) Descriptor() ([]byte, []int) {
-	return file_history_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_history_v1_history_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *HistoryRecord) GetId() string {
@@ -104,7 +104,7 @@ type CreateHistoryRecordRequest struct {
 
 func (x *CreateHistoryRecordRequest) Reset() {
 	*x = CreateHistoryRecordRequest{}
-	mi := &file_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_history_v1_history_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -116,7 +116,7 @@ func (x *CreateHistoryRecordRequest) String() string {
 func (*CreateHistoryRecordRequest) ProtoMessage() {}
 
 func (x *CreateHistoryRecordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_history_proto_msgTypes[1]
+	mi := &file_smartcore_bos_history_v1_history_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -129,7 +129,7 @@ func (x *CreateHistoryRecordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateHistoryRecordRequest.ProtoReflect.Descriptor instead.
 func (*CreateHistoryRecordRequest) Descriptor() ([]byte, []int) {
-	return file_history_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_history_v1_history_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CreateHistoryRecordRequest) GetName() string {
@@ -169,7 +169,7 @@ type ListHistoryRecordsRequest struct {
 
 func (x *ListHistoryRecordsRequest) Reset() {
 	*x = ListHistoryRecordsRequest{}
-	mi := &file_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_history_v1_history_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -181,7 +181,7 @@ func (x *ListHistoryRecordsRequest) String() string {
 func (*ListHistoryRecordsRequest) ProtoMessage() {}
 
 func (x *ListHistoryRecordsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_history_proto_msgTypes[2]
+	mi := &file_smartcore_bos_history_v1_history_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -194,7 +194,7 @@ func (x *ListHistoryRecordsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHistoryRecordsRequest.ProtoReflect.Descriptor instead.
 func (*ListHistoryRecordsRequest) Descriptor() ([]byte, []int) {
-	return file_history_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_history_v1_history_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListHistoryRecordsRequest) GetName() string {
@@ -247,7 +247,7 @@ type ListHistoryRecordsResponse struct {
 
 func (x *ListHistoryRecordsResponse) Reset() {
 	*x = ListHistoryRecordsResponse{}
-	mi := &file_history_proto_msgTypes[3]
+	mi := &file_smartcore_bos_history_v1_history_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -259,7 +259,7 @@ func (x *ListHistoryRecordsResponse) String() string {
 func (*ListHistoryRecordsResponse) ProtoMessage() {}
 
 func (x *ListHistoryRecordsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_history_proto_msgTypes[3]
+	mi := &file_smartcore_bos_history_v1_history_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -272,7 +272,7 @@ func (x *ListHistoryRecordsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHistoryRecordsResponse.ProtoReflect.Descriptor instead.
 func (*ListHistoryRecordsResponse) Descriptor() ([]byte, []int) {
-	return file_history_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_history_v1_history_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListHistoryRecordsResponse) GetRecords() []*HistoryRecord {
@@ -312,7 +312,7 @@ type HistoryRecord_Query struct {
 
 func (x *HistoryRecord_Query) Reset() {
 	*x = HistoryRecord_Query{}
-	mi := &file_history_proto_msgTypes[4]
+	mi := &file_smartcore_bos_history_v1_history_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -324,7 +324,7 @@ func (x *HistoryRecord_Query) String() string {
 func (*HistoryRecord_Query) ProtoMessage() {}
 
 func (x *HistoryRecord_Query) ProtoReflect() protoreflect.Message {
-	mi := &file_history_proto_msgTypes[4]
+	mi := &file_smartcore_bos_history_v1_history_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -337,7 +337,7 @@ func (x *HistoryRecord_Query) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HistoryRecord_Query.ProtoReflect.Descriptor instead.
 func (*HistoryRecord_Query) Descriptor() ([]byte, []int) {
-	return file_history_proto_rawDescGZIP(), []int{0, 0}
+	return file_smartcore_bos_history_v1_history_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *HistoryRecord_Query) GetSource() isHistoryRecord_Query_Source {
@@ -380,75 +380,75 @@ type HistoryRecord_Query_SourceEqual struct {
 
 func (*HistoryRecord_Query_SourceEqual) isHistoryRecord_Query_Source() {}
 
-var File_history_proto protoreflect.FileDescriptor
+var File_smartcore_bos_history_v1_history_proto protoreflect.FileDescriptor
 
-const file_history_proto_rawDesc = "" +
+const file_smartcore_bos_history_v1_history_proto_rawDesc = "" +
 	"\n" +
-	"\rhistory.proto\x12\rsmartcore.bos\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc1\x02\n" +
+	"&smartcore/bos/history/v1/history.proto\x12\x18smartcore.bos.history.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd7\x02\n" +
 	"\rHistoryRecord\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12;\n" +
 	"\vcreate_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12\x18\n" +
-	"\apayload\x18\x04 \x01(\fR\apayload\x1a\xb0\x01\n" +
+	"\apayload\x18\x04 \x01(\fR\apayload\x1a\xc6\x01\n" +
 	"\x05Query\x12#\n" +
-	"\fsource_equal\x18\x01 \x01(\tH\x00R\vsourceEqual\x12=\n" +
+	"\fsource_equal\x18\x01 \x01(\tH\x00R\vsourceEqual\x12H\n" +
 	"\vfrom_record\x18\n" +
-	" \x01(\v2\x1c.smartcore.bos.HistoryRecordR\n" +
-	"fromRecord\x129\n" +
-	"\tto_record\x18\v \x01(\v2\x1c.smartcore.bos.HistoryRecordR\btoRecordB\b\n" +
-	"\x06source\"f\n" +
+	" \x01(\v2'.smartcore.bos.history.v1.HistoryRecordR\n" +
+	"fromRecord\x12D\n" +
+	"\tto_record\x18\v \x01(\v2'.smartcore.bos.history.v1.HistoryRecordR\btoRecordB\b\n" +
+	"\x06source\"q\n" +
 	"\x1aCreateHistoryRecordRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x124\n" +
-	"\x06record\x18\x02 \x01(\v2\x1c.smartcore.bos.HistoryRecordR\x06record\"\xc0\x01\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12?\n" +
+	"\x06record\x18\x02 \x01(\v2'.smartcore.bos.history.v1.HistoryRecordR\x06record\"\xcb\x01\n" +
 	"\x19ListHistoryRecordsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x03 \x01(\tR\tpageToken\x12\x19\n" +
-	"\border_by\x18\x05 \x01(\tR\aorderBy\x128\n" +
-	"\x05query\x18\x04 \x01(\v2\".smartcore.bos.HistoryRecord.QueryR\x05query\"\x9b\x01\n" +
-	"\x1aListHistoryRecordsResponse\x126\n" +
-	"\arecords\x18\x01 \x03(\v2\x1c.smartcore.bos.HistoryRecordR\arecords\x12&\n" +
+	"\border_by\x18\x05 \x01(\tR\aorderBy\x12C\n" +
+	"\x05query\x18\x04 \x01(\v2-.smartcore.bos.history.v1.HistoryRecord.QueryR\x05query\"\xa6\x01\n" +
+	"\x1aListHistoryRecordsResponse\x12A\n" +
+	"\arecords\x18\x01 \x03(\v2'.smartcore.bos.history.v1.HistoryRecordR\arecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize2\xdc\x01\n" +
-	"\x0fHistoryAdminApi\x12^\n" +
-	"\x13CreateHistoryRecord\x12).smartcore.bos.CreateHistoryRecordRequest\x1a\x1c.smartcore.bos.HistoryRecord\x12i\n" +
-	"\x12ListHistoryRecords\x12(.smartcore.bos.ListHistoryRecordsRequest\x1a).smartcore.bos.ListHistoryRecordsResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
+	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x88\x02\n" +
+	"\x0fHistoryAdminApi\x12t\n" +
+	"\x13CreateHistoryRecord\x124.smartcore.bos.history.v1.CreateHistoryRecordRequest\x1a'.smartcore.bos.history.v1.HistoryRecord\x12\x7f\n" +
+	"\x12ListHistoryRecords\x123.smartcore.bos.history.v1.ListHistoryRecordsRequest\x1a4.smartcore.bos.history.v1.ListHistoryRecordsResponseB)Z'github.com/smart-core-os/sc-bos/pkg/genb\x06proto3"
 
 var (
-	file_history_proto_rawDescOnce sync.Once
-	file_history_proto_rawDescData []byte
+	file_smartcore_bos_history_v1_history_proto_rawDescOnce sync.Once
+	file_smartcore_bos_history_v1_history_proto_rawDescData []byte
 )
 
-func file_history_proto_rawDescGZIP() []byte {
-	file_history_proto_rawDescOnce.Do(func() {
-		file_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_history_proto_rawDesc), len(file_history_proto_rawDesc)))
+func file_smartcore_bos_history_v1_history_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_history_v1_history_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_history_v1_history_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_history_v1_history_proto_rawDesc), len(file_smartcore_bos_history_v1_history_proto_rawDesc)))
 	})
-	return file_history_proto_rawDescData
+	return file_smartcore_bos_history_v1_history_proto_rawDescData
 }
 
-var file_history_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
-var file_history_proto_goTypes = []any{
-	(*HistoryRecord)(nil),              // 0: smartcore.bos.HistoryRecord
-	(*CreateHistoryRecordRequest)(nil), // 1: smartcore.bos.CreateHistoryRecordRequest
-	(*ListHistoryRecordsRequest)(nil),  // 2: smartcore.bos.ListHistoryRecordsRequest
-	(*ListHistoryRecordsResponse)(nil), // 3: smartcore.bos.ListHistoryRecordsResponse
-	(*HistoryRecord_Query)(nil),        // 4: smartcore.bos.HistoryRecord.Query
+var file_smartcore_bos_history_v1_history_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_smartcore_bos_history_v1_history_proto_goTypes = []any{
+	(*HistoryRecord)(nil),              // 0: smartcore.bos.history.v1.HistoryRecord
+	(*CreateHistoryRecordRequest)(nil), // 1: smartcore.bos.history.v1.CreateHistoryRecordRequest
+	(*ListHistoryRecordsRequest)(nil),  // 2: smartcore.bos.history.v1.ListHistoryRecordsRequest
+	(*ListHistoryRecordsResponse)(nil), // 3: smartcore.bos.history.v1.ListHistoryRecordsResponse
+	(*HistoryRecord_Query)(nil),        // 4: smartcore.bos.history.v1.HistoryRecord.Query
 	(*timestamppb.Timestamp)(nil),      // 5: google.protobuf.Timestamp
 }
-var file_history_proto_depIdxs = []int32{
-	5, // 0: smartcore.bos.HistoryRecord.create_time:type_name -> google.protobuf.Timestamp
-	0, // 1: smartcore.bos.CreateHistoryRecordRequest.record:type_name -> smartcore.bos.HistoryRecord
-	4, // 2: smartcore.bos.ListHistoryRecordsRequest.query:type_name -> smartcore.bos.HistoryRecord.Query
-	0, // 3: smartcore.bos.ListHistoryRecordsResponse.records:type_name -> smartcore.bos.HistoryRecord
-	0, // 4: smartcore.bos.HistoryRecord.Query.from_record:type_name -> smartcore.bos.HistoryRecord
-	0, // 5: smartcore.bos.HistoryRecord.Query.to_record:type_name -> smartcore.bos.HistoryRecord
-	1, // 6: smartcore.bos.HistoryAdminApi.CreateHistoryRecord:input_type -> smartcore.bos.CreateHistoryRecordRequest
-	2, // 7: smartcore.bos.HistoryAdminApi.ListHistoryRecords:input_type -> smartcore.bos.ListHistoryRecordsRequest
-	0, // 8: smartcore.bos.HistoryAdminApi.CreateHistoryRecord:output_type -> smartcore.bos.HistoryRecord
-	3, // 9: smartcore.bos.HistoryAdminApi.ListHistoryRecords:output_type -> smartcore.bos.ListHistoryRecordsResponse
+var file_smartcore_bos_history_v1_history_proto_depIdxs = []int32{
+	5, // 0: smartcore.bos.history.v1.HistoryRecord.create_time:type_name -> google.protobuf.Timestamp
+	0, // 1: smartcore.bos.history.v1.CreateHistoryRecordRequest.record:type_name -> smartcore.bos.history.v1.HistoryRecord
+	4, // 2: smartcore.bos.history.v1.ListHistoryRecordsRequest.query:type_name -> smartcore.bos.history.v1.HistoryRecord.Query
+	0, // 3: smartcore.bos.history.v1.ListHistoryRecordsResponse.records:type_name -> smartcore.bos.history.v1.HistoryRecord
+	0, // 4: smartcore.bos.history.v1.HistoryRecord.Query.from_record:type_name -> smartcore.bos.history.v1.HistoryRecord
+	0, // 5: smartcore.bos.history.v1.HistoryRecord.Query.to_record:type_name -> smartcore.bos.history.v1.HistoryRecord
+	1, // 6: smartcore.bos.history.v1.HistoryAdminApi.CreateHistoryRecord:input_type -> smartcore.bos.history.v1.CreateHistoryRecordRequest
+	2, // 7: smartcore.bos.history.v1.HistoryAdminApi.ListHistoryRecords:input_type -> smartcore.bos.history.v1.ListHistoryRecordsRequest
+	0, // 8: smartcore.bos.history.v1.HistoryAdminApi.CreateHistoryRecord:output_type -> smartcore.bos.history.v1.HistoryRecord
+	3, // 9: smartcore.bos.history.v1.HistoryAdminApi.ListHistoryRecords:output_type -> smartcore.bos.history.v1.ListHistoryRecordsResponse
 	8, // [8:10] is the sub-list for method output_type
 	6, // [6:8] is the sub-list for method input_type
 	6, // [6:6] is the sub-list for extension type_name
@@ -456,29 +456,29 @@ var file_history_proto_depIdxs = []int32{
 	0, // [0:6] is the sub-list for field type_name
 }
 
-func init() { file_history_proto_init() }
-func file_history_proto_init() {
-	if File_history_proto != nil {
+func init() { file_smartcore_bos_history_v1_history_proto_init() }
+func file_smartcore_bos_history_v1_history_proto_init() {
+	if File_smartcore_bos_history_v1_history_proto != nil {
 		return
 	}
-	file_history_proto_msgTypes[4].OneofWrappers = []any{
+	file_smartcore_bos_history_v1_history_proto_msgTypes[4].OneofWrappers = []any{
 		(*HistoryRecord_Query_SourceEqual)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_history_proto_rawDesc), len(file_history_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_history_v1_history_proto_rawDesc), len(file_smartcore_bos_history_v1_history_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_history_proto_goTypes,
-		DependencyIndexes: file_history_proto_depIdxs,
-		MessageInfos:      file_history_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_history_v1_history_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_history_v1_history_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_history_v1_history_proto_msgTypes,
 	}.Build()
-	File_history_proto = out.File
-	file_history_proto_goTypes = nil
-	file_history_proto_depIdxs = nil
+	File_smartcore_bos_history_v1_history_proto = out.File
+	file_smartcore_bos_history_v1_history_proto_goTypes = nil
+	file_smartcore_bos_history_v1_history_proto_depIdxs = nil
 }
