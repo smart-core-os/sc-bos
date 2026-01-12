@@ -1,0 +1,27 @@
+Test aliased imports from gentrait packages.
+expected_changes: 1
+
+-- input/pkg/driver/test/driver.go --
+package test
+
+import (
+	mymeter "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb"
+)
+
+type Driver struct {
+	meterInfo *mymeter.InfoServer
+	waste *wastepb.WasteLevel
+}
+-- output/pkg/driver/test/driver.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
+)
+
+type Driver struct {
+	meterInfo *meterpb.InfoServer
+	waste     *wastepb.WasteLevel
+}
