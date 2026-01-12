@@ -1,0 +1,55 @@
+Test moving a trait package that already has 'pb' suffix (wastepb) from pkg/gentrait to pkg/proto.
+expected_changes: 4
+
+-- input/pkg/gentrait/wastepb/model.go --
+package wastepb
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
+)
+
+// NewModel creates a new Model server.
+func NewModel() *wastepb.WasteLevel {
+	return &wastepb.WasteLevel{}
+}
+-- input/pkg/gentrait/wastepb/consts/consts.go --
+package consts
+
+const MaxCapacity = 100
+-- input/pkg/gentrait/alert/model.go --
+package alert
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+)
+
+// NewModel creates a new Model server.
+func NewModel() *alertpb.Level {
+	return &alertpb.Level{}
+}
+-- input/pkg/gentrait/alert/consts/consts.go --
+package consts
+
+const MaxCapacity = 100
+-- output/pkg/proto/wastepb/model.go --
+package wastepb
+
+// NewModel creates a new Model server.
+func NewModel() *WasteLevel {
+	return &WasteLevel{}
+}
+-- output/pkg/proto/wastepb/consts/consts.go --
+package consts
+
+const MaxCapacity = 100
+-- output/pkg/proto/alertpb/model.go --
+package alertpb
+
+// NewModel creates a new Model server.
+func NewModel() *Level {
+	return &Level{}
+}
+-- output/pkg/proto/alertpb/consts/consts.go --
+package consts
+
+const MaxCapacity = 100

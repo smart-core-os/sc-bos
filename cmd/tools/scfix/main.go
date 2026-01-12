@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/fixer"
+	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/gentrait"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/goprotoimports"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/historyimports"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/nodeclient"
@@ -37,6 +38,8 @@ var allFixes = []fix{
 	{Fix: protov1js.Fix, Enabled: true},
 	{Fix: protogopkg.Fix, Enabled: false},
 	{Fix: goprotoimports.Fix, Enabled: true},
+	{Fix: gentrait.FixMove, Enabled: false},
+	{Fix: gentrait.FixRefs, Enabled: false},
 }
 
 // stringSliceFlag allows flags to be specified multiple times or as comma-separated values.

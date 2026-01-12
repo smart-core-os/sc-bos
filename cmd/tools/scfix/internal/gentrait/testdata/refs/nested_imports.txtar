@@ -1,0 +1,27 @@
+Test nested imports with subdirectories.
+expected_changes: 1
+
+-- input/pkg/driver/test/driver.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb/utils"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb/standard/common"
+)
+
+type Driver struct {
+	util *utils.Helper
+	common *common.CommonHealth
+}
+-- output/pkg/driver/test/driver.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb/standard/common"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb/utils"
+)
+
+type Driver struct {
+	util   *utils.Helper
+	common *common.CommonHealth
+}

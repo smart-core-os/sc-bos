@@ -1,0 +1,53 @@
+Test that imports from pkg/gentrait are updated to pkg/proto in files outside pkg/gentrait.
+expected_changes: 2
+
+-- input/pkg/driver/mydriver/driver.go --
+package mydriver
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+type Driver struct {
+	meterInfo *meter.InfoServer
+	wasteSensor *wastepb.WasteLevel
+	meterReading *meterpb.MeterReading
+}
+-- input/pkg/auto/myauto/automation.go --
+package myauto
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/alert"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+)
+
+type Automation struct {
+	alertServer *alert.Server
+	level *alertpb.Level
+}
+-- output/pkg/driver/mydriver/driver.go --
+package mydriver
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
+)
+
+type Driver struct {
+	meterInfo    *meterpb.InfoServer
+	wasteSensor  *wastepb.WasteLevel
+	meterReading *meterpb.MeterReading
+}
+-- output/pkg/auto/myauto/automation.go --
+package myauto
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+)
+
+type Automation struct {
+	alertServer *alertpb.Server
+	level       *alertpb.Level
+}
