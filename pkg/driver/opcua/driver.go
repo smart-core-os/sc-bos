@@ -49,6 +49,7 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
 		service.WithParser(config.ParseConfig),
+		service.WithOnStop[config.Root](d.onStop),
 		service.WithRetry[config.Root](
 			service.RetryWithLogger(func(logContext service.RetryContext) {
 				logContext.LogTo("applyConfig", logger)
@@ -74,15 +75,7 @@ type Driver struct {
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	a := d.announcer.Replace(ctx)
 
-	if d.systemCheck != nil {
-		d.systemCheck.Dispose()
-	}
-
-	for _, c := range d.checks {
-		if c != nil {
-			c.Dispose()
-		}
-	}
+	d.dispose()
 
 	systemCheck, err := d.health.NewFaultCheck(cfg.Name, getSystemHealthCheck(cfg.SystemHealth.OccupantImpact.ToProto(), cfg.SystemHealth.EquipmentImpact.ToProto()))
 	if err != nil {
@@ -174,11 +167,6 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		if err = opcClient.Close(closeCtx); err != nil {
 			d.logger.Warn("failed to close opcua client", zap.Error(err))
 		}
-
-		systemCheck.Dispose()
-		for _, c := range d.checks {
-			c.Dispose()
-		}
 	}()
 	return nil
 }
@@ -212,4 +200,20 @@ func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, faultChe
 	}
 	faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
 	return opcClient, nil
+}
+
+func (d *Driver) onStop() {
+	d.dispose()
+}
+
+func (d *Driver) dispose() {
+	if d.systemCheck != nil {
+		d.systemCheck.Dispose()
+	}
+
+	for _, c := range d.checks {
+		if c != nil {
+			c.Dispose()
+		}
+	}
 }
