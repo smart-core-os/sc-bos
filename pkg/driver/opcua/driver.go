@@ -66,16 +66,31 @@ type Driver struct {
 	announcer *node.ReplaceAnnouncer
 	health    *healthpb.Checks
 	logger    *zap.Logger
+
+	systemCheck *healthpb.FaultCheck
+	checks      []*healthpb.FaultCheck
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	a := d.announcer.Replace(ctx)
+
+	if d.systemCheck != nil {
+		d.systemCheck.Dispose()
+	}
+
+	for _, c := range d.checks {
+		if c != nil {
+			c.Dispose()
+		}
+	}
 
 	systemCheck, err := d.health.NewFaultCheck(cfg.Name, getSystemHealthCheck(cfg.SystemHealth.OccupantImpact.ToProto(), cfg.SystemHealth.EquipmentImpact.ToProto()))
 	if err != nil {
 		d.logger.Warn("NewClient error", zap.Error(err))
 		return err
 	}
+
+	d.systemCheck = systemCheck
 
 	opcClient, err := d.connectOpcClient(ctx, cfg, systemCheck)
 	if err != nil {
@@ -89,7 +104,6 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		a.Announce(cfg.Name, node.HasMetadata(cfg.Meta))
 	}
 
-	var checks []*healthpb.FaultCheck
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, dev := range cfg.Devices {
 		allFeatures := []node.Feature{node.HasMetadata(dev.Meta)}
@@ -99,7 +113,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			d.logger.Error("failed to create device fault check", zap.String("device", dev.Name), zap.Error(err))
 			return err
 		}
-		checks = append(checks, faultCheck)
+		d.checks = append(d.checks, faultCheck)
 
 		opcDev := newDevice(&dev, d.logger, client, faultCheck)
 
@@ -162,7 +176,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 
 		systemCheck.Dispose()
-		for _, c := range checks {
+		for _, c := range d.checks {
 			c.Dispose()
 		}
 	}()
