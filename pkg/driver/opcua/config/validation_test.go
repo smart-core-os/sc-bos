@@ -1,6 +1,7 @@
 package config
 
 import (
+	"math"
 	"strings"
 	"testing"
 )
@@ -422,5 +423,180 @@ func TestValidateDeviceTraits(t *testing.T) {
 				t.Errorf("validateDeviceTraits() error = %v, should contain %v", err.Error(), tt.errMsg)
 			}
 		})
+	}
+}
+
+func TestHealthConfig_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  HealthConfig
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid config with all fields",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						DisplayName: "Temperature Check",
+						Description: "Monitors temperature",
+						ErrorCode:   "TEMP_ERROR",
+						ValueSource: ValueSource{
+							NodeId: "ns=2;s=Temp",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing id",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						DisplayName: "Temperature Check",
+						Description: "Monitors temperature",
+						ErrorCode:   "TEMP_ERROR",
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "id is required",
+		},
+		{
+			name: "missing displayName",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						Description: "Monitors temperature",
+						ErrorCode:   "TEMP_ERROR",
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "displayName is required",
+		},
+		{
+			name: "missing description",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						DisplayName: "Temperature Check",
+						ErrorCode:   "TEMP_ERROR",
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "description is required",
+		},
+		{
+			name: "missing errorCode",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						DisplayName: "Temperature Check",
+						Description: "Monitors temperature",
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "errorCode is required",
+		},
+		{
+			name: "applies default bounds",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						DisplayName: "Temperature Check",
+						Description: "Monitors temperature",
+						ErrorCode:   "TEMP_ERROR",
+						ValueSource: ValueSource{
+							NodeId: "ns=2;s=Temp",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.config.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthConfig.Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && err != nil && tt.errMsg != "" {
+				if err.Error() != tt.errMsg && len(err.Error()) > 0 && len(tt.errMsg) > 0 {
+					// Check if error message contains expected substring
+					contains := false
+					for i := 0; i <= len(err.Error())-len(tt.errMsg); i++ {
+						if err.Error()[i:i+len(tt.errMsg)] == tt.errMsg {
+							contains = true
+							break
+						}
+					}
+					if !contains {
+						t.Errorf("HealthConfig.Validate() error = %v, expected to contain %v", err, tt.errMsg)
+					}
+				}
+			}
+
+			// Check that bounds are set to infinity when not specified
+			if !tt.wantErr && err == nil {
+				for i, check := range tt.config.Checks {
+					if check.OkLowerBound == nil {
+						t.Errorf("check[%d]: OkLowerBound should not be nil after Validate()", i)
+					} else if !math.IsInf(*check.OkLowerBound, -1) {
+						t.Errorf("check[%d]: OkLowerBound = %v, expected -Inf", i, *check.OkLowerBound)
+					}
+
+					if check.OkUpperBound == nil {
+						t.Errorf("check[%d]: OkUpperBound should not be nil after Validate()", i)
+					} else if !math.IsInf(*check.OkUpperBound, 1) {
+						t.Errorf("check[%d]: OkUpperBound = %v, expected +Inf", i, *check.OkUpperBound)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestHealthConfig_Validate_PreservesExistingBounds(t *testing.T) {
+	lower := 10.0
+	upper := 20.0
+	config := HealthConfig{
+		Checks: []HealthCheck{
+			{
+				Id:           "temp-check",
+				DisplayName:  "Temperature Check",
+				Description:  "Monitors temperature",
+				ErrorCode:    "TEMP_ERROR",
+				OkLowerBound: &lower,
+				OkUpperBound: &upper,
+				ValueSource: ValueSource{
+					NodeId: "ns=2;s=Temp",
+				},
+			},
+		},
+	}
+
+	err := config.Validate()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Check that existing bounds are preserved
+	if config.Checks[0].OkLowerBound == nil || *config.Checks[0].OkLowerBound != 10.0 {
+		t.Errorf("OkLowerBound should be preserved as 10.0, got %v", config.Checks[0].OkLowerBound)
+	}
+	if config.Checks[0].OkUpperBound == nil || *config.Checks[0].OkUpperBound != 20.0 {
+		t.Errorf("OkUpperBound should be preserved as 20.0, got %v", config.Checks[0].OkUpperBound)
 	}
 }

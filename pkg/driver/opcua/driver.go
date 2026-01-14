@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gopcua/opcua"
+	"github.com/gopcua/opcua/ua"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
@@ -37,6 +38,10 @@ const DriverName = "opcua"
 var Factory driver.Factory = factory{}
 
 type factory struct{}
+
+type EventHandler interface {
+	handleEvent(ctx context.Context, node *ua.NodeID, value any)
+}
 
 func (f factory) New(services driver.Services) service.Lifecycle {
 	logger := services.Logger.Named(DriverName)
@@ -93,9 +98,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	client := NewClient(opcClient, d.logger, cfg.Conn.SubscriptionInterval.Duration, cfg.Conn.ClientId)
 
-	if cfg.Meta != nil {
-		a.Announce(cfg.Name, node.HasMetadata(cfg.Meta))
-	}
+	a.Announce(cfg.Name, node.HasMetadata(cfg.Meta))
 
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, dev := range cfg.Devices {
@@ -113,37 +116,58 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		for _, t := range dev.Traits {
 			switch t.Kind {
 			case meter.TraitName:
-				opcDev.meter, err = newMeter(dev.Name, t, d.logger)
+				m, err := newMeter(dev.Name, t, d.logger)
 				if err != nil {
 					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", meter.TraitName), zap.Error(err))
 					return err
 				}
-				allFeatures = append(allFeatures, node.HasTrait(meter.TraitName, node.WithClients(meterpb.WrapApi(opcDev.meter), meterpb.WrapInfo(opcDev.meter))))
+				opcDev.eventHandlers = append(opcDev.eventHandlers, m)
+				allFeatures = append(allFeatures, node.HasTrait(meter.TraitName, node.WithClients(meterpb.WrapApi(m), meterpb.WrapInfo(m))))
 
 			case transport.TraitName:
-				opcDev.transport, err = newTransport(dev.Name, t, d.logger)
+				tr, err := newTransport(dev.Name, t, d.logger)
 				if err != nil {
 					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", transport.TraitName), zap.Error(err))
 					return err
 				}
-				allFeatures = append(allFeatures, node.HasTrait(transport.TraitName, node.WithClients(transportpb.WrapApi(opcDev.transport), transportpb.WrapInfo(opcDev.transport))))
+				opcDev.eventHandlers = append(opcDev.eventHandlers, tr)
+				allFeatures = append(allFeatures, node.HasTrait(transport.TraitName, node.WithClients(transportpb.WrapApi(tr), transportpb.WrapInfo(tr))))
 
 			case udmipb.TraitName:
-				opcDev.udmi, err = newUdmi(dev.Name, t, d.logger)
+				u, err := newUdmi(dev.Name, t, d.logger)
 				if err != nil {
 					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", udmipb.TraitName), zap.Error(err))
 					return err
 				}
-				allFeatures = append(allFeatures, node.HasTrait(udmipb.TraitName, node.WithClients(gen_udmipb.WrapService(opcDev.udmi))))
+				opcDev.eventHandlers = append(opcDev.eventHandlers, u)
+				allFeatures = append(allFeatures, node.HasTrait(udmipb.TraitName, node.WithClients(gen_udmipb.WrapService(u))))
 
 			case trait.Electric:
-				opcDev.electric, err = newElectric(dev.Name, t, d.logger)
+				e, err := newElectric(dev.Name, t, d.logger)
 				if err != nil {
 					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", trait.Electric), zap.Error(err))
 					return err
 				}
-				allFeatures = append(allFeatures, node.HasTrait(trait.Electric, node.WithClients(electricpb.WrapApi(opcDev.electric))))
+				opcDev.eventHandlers = append(opcDev.eventHandlers, e)
+				allFeatures = append(allFeatures, node.HasTrait(trait.Electric, node.WithClients(electricpb.WrapApi(e))))
 
+			case healthpb.TraitName:
+				h, err := newHealth(t, d.logger)
+				if err != nil {
+					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", healthpb.TraitName), zap.Error(err))
+					return err
+				}
+				opcDev.eventHandlers = append(opcDev.eventHandlers, h)
+				for _, check := range h.cfg.Checks {
+					c := getDeviceErrorCheck(check)
+					fc, err := d.health.NewFaultCheck(dev.Name, c)
+					if err != nil {
+						d.logger.Error("failed to create health fault check", zap.String("device", dev.Name), zap.String("check", check.Id), zap.Error(err))
+						return err
+					}
+					h.errorChecks[check.Id] = fc
+					d.checks = append(d.checks, fc)
+				}
 			default:
 				d.logger.Error("unknown trait", zap.String("trait", t.Name))
 			}

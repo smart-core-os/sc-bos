@@ -51,6 +51,16 @@ func Float32Value(data any) (float32, error) {
 	return 0, fmt.Errorf("unsupported conversion %T -> float32 for val %v", data, data)
 }
 
+func Float64Value(data any) (float64, error) {
+	switch v := data.(type) {
+	case float64:
+		return v, nil
+	default:
+		val, err := Float32Value(data)
+		return float64(val), err
+	}
+}
+
 // ToString converts a value to its string representation
 func ToString(data any) (string, error) {
 	switch v := data.(type) {
