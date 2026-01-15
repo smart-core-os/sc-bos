@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -25,6 +25,7 @@ type OccupancyEventController struct {
 
 	logger *zap.Logger
 
+	mu               sync.Mutex
 	totalPeopleCount int32
 
 	notifyPull chan struct{}
@@ -66,29 +67,45 @@ func (o *OccupancyEventController) refresh(ctx context.Context) error {
 
 	reqUrl := fmt.Sprintf("%s?after=%s&fields=source&top=1000", o.client.getUrl("events"), o.lastRefreshCycle.Format(time.RFC3339))
 
-	bytes, err := o.client.doRequest(ctx, reqUrl)
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
 
-	if err != nil {
-		o.logger.Error("failed to fetch events", zap.Error(err))
-		return err
-	}
+		bytes, err := o.client.doRequest(ctx, reqUrl)
 
-	resp := &EventUpdateResponse{}
+		if err != nil {
+			o.logger.Error("failed to fetch events", zap.Error(err))
+			return err
+		}
 
-	err = json.Unmarshal(bytes, resp)
-	if err != nil {
-		o.logger.Error("failed to unmarshal events", zap.Error(err))
-		return err
-	}
+		resp := &EventUpdateResponse{}
 
-	for _, ev := range resp.Events {
-		if strings.Contains(strings.ToLower(ev.Source.Name), "speedgate") {
-			if strings.Contains(strings.ToLower(ev.Source.Name), "- out") {
-				atomic.AddInt32(&o.totalPeopleCount, -1)
+		err = json.Unmarshal(bytes, resp)
+		if err != nil {
+			o.logger.Error("failed to unmarshal events", zap.Error(err))
+			return err
+		}
+
+		for _, ev := range resp.Events {
+			if strings.Contains(strings.ToLower(ev.Source.Name), "speedgate") {
+				o.mu.Lock()
+				if strings.Contains(strings.ToLower(ev.Source.Name), "- out") {
+					o.totalPeopleCount--
+				}
+				if strings.Contains(strings.ToLower(ev.Source.Name), "- in") {
+					o.totalPeopleCount++
+				}
+				o.mu.Unlock()
 			}
-			if strings.Contains(strings.ToLower(ev.Source.Name), "- in") {
-				atomic.AddInt32(&o.totalPeopleCount, 1)
-			}
+		}
+
+		if resp.Next.Href == "" {
+			break
+		} else {
+			reqUrl = resp.Next.Href
 		}
 	}
 
@@ -118,7 +135,10 @@ type EventUpdateSource struct {
 }
 
 func (o *OccupancyEventController) loadOccupancyCount() (int32, traits.Occupancy_State, float64) {
-	occ := atomic.LoadInt32(&o.totalPeopleCount)
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	occ := o.totalPeopleCount
 	state := traits.Occupancy_OCCUPIED
 	if occ <= 0 {
 		occ = 0
@@ -126,7 +146,7 @@ func (o *OccupancyEventController) loadOccupancyCount() (int32, traits.Occupancy
 		// this is a hack to get around the building being occupied by people when the controller boots up
 		// as people keep leaving, the count will converge to 0
 		// then as people start entering the count increases until they leave
-		atomic.StoreInt32(&o.totalPeopleCount, 0)
+		o.totalPeopleCount = 0
 	}
 
 	confidence := 1.

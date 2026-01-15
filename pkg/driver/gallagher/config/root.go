@@ -2,6 +2,8 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/smart-core-os/sc-api/go/traits"
@@ -42,6 +44,7 @@ type Root struct {
 type HTTP struct {
 	BaseURL    string `json:"baseUrl,omitempty"`
 	ApiKeyFile string `json:"apiKeyFile,omitempty"`
+	ApiKey     string `json:"-"`
 }
 
 func ParseConfig(data []byte) (Root, error) {
@@ -53,6 +56,20 @@ func ParseConfig(data []byte) (Root, error) {
 	if err != nil {
 		return Root{}, err
 	}
+
+	if cfg.HTTP == nil {
+		return Root{}, fmt.Errorf("gallagher HTTP config is not set")
+	}
+
+	if cfg.HTTP.BaseURL == "" {
+		return Root{}, fmt.Errorf("gallagher baseURL is not set")
+	}
+
+	bytes, err := os.ReadFile(cfg.HTTP.ApiKeyFile)
+	if err != nil {
+		return Root{}, fmt.Errorf("error reading api key file: %w", err)
+	}
+	cfg.HTTP.ApiKey = string(bytes)
 
 	if cfg.RefreshCardholders == nil {
 		cfg.RefreshCardholders = jsontypes.MustParseSchedule("* * * * *")

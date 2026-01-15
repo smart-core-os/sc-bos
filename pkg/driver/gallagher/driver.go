@@ -2,8 +2,6 @@ package gallagher
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"path"
 	"time"
 
@@ -62,21 +60,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 	d.ticker = time.NewTicker(cfg.UdmiExportInterval.Duration)
 
-	if cfg.HTTP == nil {
-		d.logger.Error("http config is not set")
-		return fmt.Errorf("gallagher HTTP config is not set")
-	}
-
-	if cfg.HTTP.BaseURL == "" {
-		d.logger.Error("baseURL is not set")
-		return fmt.Errorf("gallagher baseURL is not set")
-	}
-
-	bytes, err := os.ReadFile(cfg.HTTP.ApiKeyFile)
-	if err != nil {
-		return fmt.Errorf("error reading api key file: %w", err)
-	}
-	client, err := newHttpClient(cfg.HTTP.BaseURL, string(bytes), cfg.CaPath, cfg.ClientCertPath, cfg.ClientKeyPath)
+	client, err := newHttpClient(cfg.HTTP.BaseURL, cfg.HTTP.ApiKey, cfg.CaPath, cfg.ClientCertPath, cfg.ClientKeyPath)
 
 	if err != nil {
 		d.logger.Error("failed to create client", zap.Error(err))
