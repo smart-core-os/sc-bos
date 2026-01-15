@@ -29,6 +29,11 @@ export class Ticket extends jspb.Message {
   getExternalUrl(): string;
   setExternalUrl(value: string): Ticket;
 
+  getLocation(): Ticket.Location | undefined;
+  setLocation(value?: Ticket.Location): Ticket;
+  hasLocation(): boolean;
+  clearLocation(): Ticket;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Ticket.AsObject;
   static toObject(includeInstance: boolean, msg: Ticket): Ticket.AsObject;
@@ -46,6 +51,7 @@ export namespace Ticket {
     classification?: Ticket.Classification.AsObject;
     severity?: Ticket.Severity.AsObject;
     externalUrl: string;
+    location?: Ticket.Location.AsObject;
   };
 
   export class Classification extends jspb.Message {
@@ -94,6 +100,33 @@ export namespace Ticket {
   }
 
   export namespace Severity {
+    export type AsObject = {
+      id: string;
+      title: string;
+      description: string;
+    };
+  }
+
+
+  export class Location extends jspb.Message {
+    getId(): string;
+    setId(value: string): Location;
+
+    getTitle(): string;
+    setTitle(value: string): Location;
+
+    getDescription(): string;
+    setDescription(value: string): Location;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): Location.AsObject;
+    static toObject(includeInstance: boolean, msg: Location): Location.AsObject;
+    static serializeBinaryToWriter(message: Location, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): Location;
+    static deserializeBinaryFromReader(message: Location, reader: jspb.BinaryReader): Location;
+  }
+
+  export namespace Location {
     export type AsObject = {
       id: string;
       title: string;
@@ -185,6 +218,11 @@ export class TicketSupport extends jspb.Message {
   clearSeveritiesList(): TicketSupport;
   addSeverities(value?: Ticket.Severity, index?: number): Ticket.Severity;
 
+  getLocationsList(): Array<Ticket.Location>;
+  setLocationsList(value: Array<Ticket.Location>): TicketSupport;
+  clearLocationsList(): TicketSupport;
+  addLocations(value?: Ticket.Location, index?: number): Ticket.Location;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): TicketSupport.AsObject;
   static toObject(includeInstance: boolean, msg: TicketSupport): TicketSupport.AsObject;
@@ -198,6 +236,7 @@ export namespace TicketSupport {
     resourceSupport?: types_info_pb.ResourceSupport.AsObject;
     classificationsList: Array<Ticket.Classification.AsObject>;
     severitiesList: Array<Ticket.Severity.AsObject>;
+    locationsList: Array<Ticket.Location.AsObject>;
   };
 }
 

@@ -58,6 +58,19 @@ message Ticket {
   Severity severity = 6;
   // Optional. A url that points to more information on this ticket
   string external_url = 7;
+
+  message Location {
+    // The ID of the location. This is unique within the context of the implementing system.
+    string id = 1;
+    // The title of the location.
+    string title = 2;
+    // Optional. A more detailed description can be displayed to a user to help them decide the correct location.
+    string description = 3;
+  }
+
+  // Where is the issue located. e.g. "Building A", "Floor 2", "Room 201".
+  // Values supported by the implementing system are discovered via the ServiceTicketInfo service.
+  Location location = 8;
 }
 
 // CreateTicketRequest is the request to create a ticket in the external system.
@@ -83,5 +96,7 @@ message TicketSupport {
   repeated Ticket.Classification classifications = 2;
   // The severities supported by the implementing system.
   repeated Ticket.Severity severities = 3;
+  // The locations supported by the implementing system.
+  repeated Ticket.Location locations = 4;
 }
 
