@@ -28,6 +28,13 @@ export class Ticket extends jspb.Message {
 
   getExternalUrl(): string;
   setExternalUrl(value: string): Ticket;
+  hasExternalUrl(): boolean;
+  clearExternalUrl(): Ticket;
+
+  getLocation(): Ticket.Location | undefined;
+  setLocation(value?: Ticket.Location): Ticket;
+  hasLocation(): boolean;
+  clearLocation(): Ticket;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Ticket.AsObject;
@@ -45,7 +52,8 @@ export namespace Ticket {
     reporterName: string;
     classification?: Ticket.Classification.AsObject;
     severity?: Ticket.Severity.AsObject;
-    externalUrl: string;
+    externalUrl?: string;
+    location?: Ticket.Location.AsObject;
   };
 
   export class Classification extends jspb.Message {
@@ -57,6 +65,8 @@ export namespace Ticket {
 
     getDescription(): string;
     setDescription(value: string): Classification;
+    hasDescription(): boolean;
+    clearDescription(): Classification;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Classification.AsObject;
@@ -70,8 +80,13 @@ export namespace Ticket {
     export type AsObject = {
       id: string;
       title: string;
-      description: string;
+      description?: string;
     };
+
+    export enum DescriptionCase {
+      _DESCRIPTION_NOT_SET = 0,
+      DESCRIPTION = 3,
+    }
   }
 
 
@@ -84,6 +99,8 @@ export namespace Ticket {
 
     getDescription(): string;
     setDescription(value: string): Severity;
+    hasDescription(): boolean;
+    clearDescription(): Severity;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Severity.AsObject;
@@ -97,10 +114,54 @@ export namespace Ticket {
     export type AsObject = {
       id: string;
       title: string;
-      description: string;
+      description?: string;
     };
+
+    export enum DescriptionCase {
+      _DESCRIPTION_NOT_SET = 0,
+      DESCRIPTION = 3,
+    }
   }
 
+
+  export class Location extends jspb.Message {
+    getId(): string;
+    setId(value: string): Location;
+
+    getTitle(): string;
+    setTitle(value: string): Location;
+
+    getDescription(): string;
+    setDescription(value: string): Location;
+    hasDescription(): boolean;
+    clearDescription(): Location;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): Location.AsObject;
+    static toObject(includeInstance: boolean, msg: Location): Location.AsObject;
+    static serializeBinaryToWriter(message: Location, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): Location;
+    static deserializeBinaryFromReader(message: Location, reader: jspb.BinaryReader): Location;
+  }
+
+  export namespace Location {
+    export type AsObject = {
+      id: string;
+      title: string;
+      description?: string;
+    };
+
+    export enum DescriptionCase {
+      _DESCRIPTION_NOT_SET = 0,
+      DESCRIPTION = 3,
+    }
+  }
+
+
+  export enum ExternalUrlCase {
+    _EXTERNAL_URL_NOT_SET = 0,
+    EXTERNAL_URL = 7,
+  }
 }
 
 export class CreateTicketRequest extends jspb.Message {
@@ -185,6 +246,11 @@ export class TicketSupport extends jspb.Message {
   clearSeveritiesList(): TicketSupport;
   addSeverities(value?: Ticket.Severity, index?: number): Ticket.Severity;
 
+  getLocationsList(): Array<Ticket.Location>;
+  setLocationsList(value: Array<Ticket.Location>): TicketSupport;
+  clearLocationsList(): TicketSupport;
+  addLocations(value?: Ticket.Location, index?: number): Ticket.Location;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): TicketSupport.AsObject;
   static toObject(includeInstance: boolean, msg: TicketSupport): TicketSupport.AsObject;
@@ -198,6 +264,7 @@ export namespace TicketSupport {
     resourceSupport?: types_info_pb.ResourceSupport.AsObject;
     classificationsList: Array<Ticket.Classification.AsObject>;
     severitiesList: Array<Ticket.Severity.AsObject>;
+    locationsList: Array<Ticket.Location.AsObject>;
   };
 }
 
