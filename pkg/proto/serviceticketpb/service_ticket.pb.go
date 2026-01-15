@@ -39,8 +39,8 @@ type Ticket struct {
 	// How severe is the issue. e.g. "Critical", "High", "Medium", "Low".
 	// Values supported by the implementing system are discovered via the ServiceTicketInfo service.
 	Severity *Ticket_Severity `protobuf:"bytes,6,opt,name=severity,proto3" json:"severity,omitempty"`
-	// Optional. A url that points to more information on this ticket
-	ExternalUrl string `protobuf:"bytes,7,opt,name=external_url,json=externalUrl,proto3" json:"external_url,omitempty"`
+	// A url that points to more information on this ticket
+	ExternalUrl *string `protobuf:"bytes,7,opt,name=external_url,json=externalUrl,proto3,oneof" json:"external_url,omitempty"`
 	// Where is the issue located. e.g. "Building A", "Floor 2", "Room 201".
 	// Values supported by the implementing system are discovered via the ServiceTicketInfo service.
 	Location      *Ticket_Location `protobuf:"bytes,8,opt,name=location,proto3" json:"location,omitempty"`
@@ -121,8 +121,8 @@ func (x *Ticket) GetSeverity() *Ticket_Severity {
 }
 
 func (x *Ticket) GetExternalUrl() string {
-	if x != nil {
-		return x.ExternalUrl
+	if x != nil && x.ExternalUrl != nil {
+		return *x.ExternalUrl
 	}
 	return ""
 }
@@ -362,8 +362,8 @@ type Ticket_Classification struct {
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// The title of the classification.
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	// Optional. A more detailed description can be displayed to a user to help them decide the correct classification.
-	Description   string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	// A more detailed description can be displayed to a user to help them decide the correct classification.
+	Description   *string `protobuf:"bytes,3,opt,name=description,proto3,oneof" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -413,8 +413,8 @@ func (x *Ticket_Classification) GetTitle() string {
 }
 
 func (x *Ticket_Classification) GetDescription() string {
-	if x != nil {
-		return x.Description
+	if x != nil && x.Description != nil {
+		return *x.Description
 	}
 	return ""
 }
@@ -425,8 +425,8 @@ type Ticket_Severity struct {
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// The title of the severity.
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	// Optional. A more detailed description can be displayed to a user to help them decide the correct severity.
-	Description   string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	// A more detailed description can be displayed to a user to help them decide the correct severity.
+	Description   *string `protobuf:"bytes,3,opt,name=description,proto3,oneof" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -476,8 +476,8 @@ func (x *Ticket_Severity) GetTitle() string {
 }
 
 func (x *Ticket_Severity) GetDescription() string {
-	if x != nil {
-		return x.Description
+	if x != nil && x.Description != nil {
+		return *x.Description
 	}
 	return ""
 }
@@ -488,8 +488,8 @@ type Ticket_Location struct {
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// The title of the location.
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	// Optional. A more detailed description can be displayed to a user to help them decide the correct location.
-	Description   string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	// A more detailed description can be displayed to a user to help them decide the correct location.
+	Description   *string `protobuf:"bytes,3,opt,name=description,proto3,oneof" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -539,8 +539,8 @@ func (x *Ticket_Location) GetTitle() string {
 }
 
 func (x *Ticket_Location) GetDescription() string {
-	if x != nil {
-		return x.Description
+	if x != nil && x.Description != nil {
+		return *x.Description
 	}
 	return ""
 }
@@ -549,28 +549,32 @@ var File_smartcore_bos_serviceticket_v1_service_ticket_proto protoreflect.FileDe
 
 const file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDesc = "" +
 	"\n" +
-	"3smartcore/bos/serviceticket/v1/service_ticket.proto\x12\x1esmartcore.bos.serviceticket.v1\x1a\x10types/info.proto\"\x97\x05\n" +
+	"3smartcore/bos/serviceticket/v1/service_ticket.proto\x12\x1esmartcore.bos.serviceticket.v1\x1a\x10types/info.proto\"\xec\x05\n" +
 	"\x06Ticket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\asummary\x18\x02 \x01(\tR\asummary\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12#\n" +
 	"\rreporter_name\x18\x04 \x01(\tR\freporterName\x12]\n" +
 	"\x0eclassification\x18\x05 \x01(\v25.smartcore.bos.serviceticket.v1.Ticket.ClassificationR\x0eclassification\x12K\n" +
-	"\bseverity\x18\x06 \x01(\v2/.smartcore.bos.serviceticket.v1.Ticket.SeverityR\bseverity\x12!\n" +
-	"\fexternal_url\x18\a \x01(\tR\vexternalUrl\x12K\n" +
-	"\blocation\x18\b \x01(\v2/.smartcore.bos.serviceticket.v1.Ticket.LocationR\blocation\x1aX\n" +
+	"\bseverity\x18\x06 \x01(\v2/.smartcore.bos.serviceticket.v1.Ticket.SeverityR\bseverity\x12&\n" +
+	"\fexternal_url\x18\a \x01(\tH\x00R\vexternalUrl\x88\x01\x01\x12K\n" +
+	"\blocation\x18\b \x01(\v2/.smartcore.bos.serviceticket.v1.Ticket.LocationR\blocation\x1am\n" +
 	"\x0eClassification\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x1aR\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12%\n" +
+	"\vdescription\x18\x03 \x01(\tH\x00R\vdescription\x88\x01\x01B\x0e\n" +
+	"\f_description\x1ag\n" +
 	"\bSeverity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x1aR\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12%\n" +
+	"\vdescription\x18\x03 \x01(\tH\x00R\vdescription\x88\x01\x01B\x0e\n" +
+	"\f_description\x1ag\n" +
 	"\bLocation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\"i\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12%\n" +
+	"\vdescription\x18\x03 \x01(\tH\x00R\vdescription\x88\x01\x01B\x0e\n" +
+	"\f_descriptionB\x0f\n" +
+	"\r_external_url\"i\n" +
 	"\x13CreateTicketRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12>\n" +
 	"\x06ticket\x18\x02 \x01(\v2&.smartcore.bos.serviceticket.v1.TicketR\x06ticket\"i\n" +
@@ -644,6 +648,10 @@ func file_smartcore_bos_serviceticket_v1_service_ticket_proto_init() {
 	if File_smartcore_bos_serviceticket_v1_service_ticket_proto != nil {
 		return
 	}
+	file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[0].OneofWrappers = []any{}
+	file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[5].OneofWrappers = []any{}
+	file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[6].OneofWrappers = []any{}
+	file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes[7].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

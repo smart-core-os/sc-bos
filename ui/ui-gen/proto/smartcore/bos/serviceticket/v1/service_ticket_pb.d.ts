@@ -28,6 +28,8 @@ export class Ticket extends jspb.Message {
 
   getExternalUrl(): string;
   setExternalUrl(value: string): Ticket;
+  hasExternalUrl(): boolean;
+  clearExternalUrl(): Ticket;
 
   getLocation(): Ticket.Location | undefined;
   setLocation(value?: Ticket.Location): Ticket;
@@ -50,7 +52,7 @@ export namespace Ticket {
     reporterName: string;
     classification?: Ticket.Classification.AsObject;
     severity?: Ticket.Severity.AsObject;
-    externalUrl: string;
+    externalUrl?: string;
     location?: Ticket.Location.AsObject;
   };
 
@@ -63,6 +65,8 @@ export namespace Ticket {
 
     getDescription(): string;
     setDescription(value: string): Classification;
+    hasDescription(): boolean;
+    clearDescription(): Classification;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Classification.AsObject;
@@ -76,8 +80,13 @@ export namespace Ticket {
     export type AsObject = {
       id: string;
       title: string;
-      description: string;
+      description?: string;
     };
+
+    export enum DescriptionCase {
+      _DESCRIPTION_NOT_SET = 0,
+      DESCRIPTION = 3,
+    }
   }
 
 
@@ -90,6 +99,8 @@ export namespace Ticket {
 
     getDescription(): string;
     setDescription(value: string): Severity;
+    hasDescription(): boolean;
+    clearDescription(): Severity;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Severity.AsObject;
@@ -103,8 +114,13 @@ export namespace Ticket {
     export type AsObject = {
       id: string;
       title: string;
-      description: string;
+      description?: string;
     };
+
+    export enum DescriptionCase {
+      _DESCRIPTION_NOT_SET = 0,
+      DESCRIPTION = 3,
+    }
   }
 
 
@@ -117,6 +133,8 @@ export namespace Ticket {
 
     getDescription(): string;
     setDescription(value: string): Location;
+    hasDescription(): boolean;
+    clearDescription(): Location;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Location.AsObject;
@@ -130,10 +148,20 @@ export namespace Ticket {
     export type AsObject = {
       id: string;
       title: string;
-      description: string;
+      description?: string;
     };
+
+    export enum DescriptionCase {
+      _DESCRIPTION_NOT_SET = 0,
+      DESCRIPTION = 3,
+    }
   }
 
+
+  export enum ExternalUrlCase {
+    _EXTERNAL_URL_NOT_SET = 0,
+    EXTERNAL_URL = 7,
+  }
 }
 
 export class CreateTicketRequest extends jspb.Message {

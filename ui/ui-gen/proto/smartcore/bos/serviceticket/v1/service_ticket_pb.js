@@ -231,7 +231,7 @@ description: jspb.Message.getFieldWithDefault(msg, 3, ""),
 reporterName: jspb.Message.getFieldWithDefault(msg, 4, ""),
 classification: (f = msg.getClassification()) && proto.smartcore.bos.serviceticket.v1.Ticket.Classification.toObject(includeInstance, f),
 severity: (f = msg.getSeverity()) && proto.smartcore.bos.serviceticket.v1.Ticket.Severity.toObject(includeInstance, f),
-externalUrl: jspb.Message.getFieldWithDefault(msg, 7, ""),
+externalUrl: (f = jspb.Message.getField(msg, 7)) == null ? undefined : f,
 location: (f = msg.getLocation()) && proto.smartcore.bos.serviceticket.v1.Ticket.Location.toObject(includeInstance, f)
   };
 
@@ -377,8 +377,8 @@ proto.smartcore.bos.serviceticket.v1.Ticket.serializeBinaryToWriter = function(m
       proto.smartcore.bos.serviceticket.v1.Ticket.Severity.serializeBinaryToWriter
     );
   }
-  f = message.getExternalUrl();
-  if (f.length > 0) {
+  f = /** @type {string} */ (jspb.Message.getField(message, 7));
+  if (f != null) {
     writer.writeString(
       7,
       f
@@ -429,7 +429,7 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Classification.toObject = function(i
   var f, obj = {
 id: jspb.Message.getFieldWithDefault(msg, 1, ""),
 title: jspb.Message.getFieldWithDefault(msg, 2, ""),
-description: jspb.Message.getFieldWithDefault(msg, 3, "")
+description: (f = jspb.Message.getField(msg, 3)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -521,8 +521,8 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Classification.serializeBinaryToWrit
       f
     );
   }
-  f = message.getDescription();
-  if (f.length > 0) {
+  f = /** @type {string} */ (jspb.Message.getField(message, 3));
+  if (f != null) {
     writer.writeString(
       3,
       f
@@ -581,7 +581,25 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Classification.prototype.getDescript
  * @return {!proto.smartcore.bos.serviceticket.v1.Ticket.Classification} returns this
  */
 proto.smartcore.bos.serviceticket.v1.Ticket.Classification.prototype.setDescription = function(value) {
-  return jspb.Message.setProto3StringField(this, 3, value);
+  return jspb.Message.setField(this, 3, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.serviceticket.v1.Ticket.Classification} returns this
+ */
+proto.smartcore.bos.serviceticket.v1.Ticket.Classification.prototype.clearDescription = function() {
+  return jspb.Message.setField(this, 3, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.serviceticket.v1.Ticket.Classification.prototype.hasDescription = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
@@ -619,7 +637,7 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Severity.toObject = function(include
   var f, obj = {
 id: jspb.Message.getFieldWithDefault(msg, 1, ""),
 title: jspb.Message.getFieldWithDefault(msg, 2, ""),
-description: jspb.Message.getFieldWithDefault(msg, 3, "")
+description: (f = jspb.Message.getField(msg, 3)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -711,8 +729,8 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Severity.serializeBinaryToWriter = f
       f
     );
   }
-  f = message.getDescription();
-  if (f.length > 0) {
+  f = /** @type {string} */ (jspb.Message.getField(message, 3));
+  if (f != null) {
     writer.writeString(
       3,
       f
@@ -771,7 +789,25 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Severity.prototype.getDescription = 
  * @return {!proto.smartcore.bos.serviceticket.v1.Ticket.Severity} returns this
  */
 proto.smartcore.bos.serviceticket.v1.Ticket.Severity.prototype.setDescription = function(value) {
-  return jspb.Message.setProto3StringField(this, 3, value);
+  return jspb.Message.setField(this, 3, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.serviceticket.v1.Ticket.Severity} returns this
+ */
+proto.smartcore.bos.serviceticket.v1.Ticket.Severity.prototype.clearDescription = function() {
+  return jspb.Message.setField(this, 3, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.serviceticket.v1.Ticket.Severity.prototype.hasDescription = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
@@ -809,7 +845,7 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Location.toObject = function(include
   var f, obj = {
 id: jspb.Message.getFieldWithDefault(msg, 1, ""),
 title: jspb.Message.getFieldWithDefault(msg, 2, ""),
-description: jspb.Message.getFieldWithDefault(msg, 3, "")
+description: (f = jspb.Message.getField(msg, 3)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -901,8 +937,8 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Location.serializeBinaryToWriter = f
       f
     );
   }
-  f = message.getDescription();
-  if (f.length > 0) {
+  f = /** @type {string} */ (jspb.Message.getField(message, 3));
+  if (f != null) {
     writer.writeString(
       3,
       f
@@ -961,7 +997,25 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Location.prototype.getDescription = 
  * @return {!proto.smartcore.bos.serviceticket.v1.Ticket.Location} returns this
  */
 proto.smartcore.bos.serviceticket.v1.Ticket.Location.prototype.setDescription = function(value) {
-  return jspb.Message.setProto3StringField(this, 3, value);
+  return jspb.Message.setField(this, 3, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.serviceticket.v1.Ticket.Location} returns this
+ */
+proto.smartcore.bos.serviceticket.v1.Ticket.Location.prototype.clearDescription = function() {
+  return jspb.Message.setField(this, 3, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.serviceticket.v1.Ticket.Location.prototype.hasDescription = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
@@ -1125,7 +1179,25 @@ proto.smartcore.bos.serviceticket.v1.Ticket.prototype.getExternalUrl = function(
  * @return {!proto.smartcore.bos.serviceticket.v1.Ticket} returns this
  */
 proto.smartcore.bos.serviceticket.v1.Ticket.prototype.setExternalUrl = function(value) {
-  return jspb.Message.setProto3StringField(this, 7, value);
+  return jspb.Message.setField(this, 7, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.serviceticket.v1.Ticket} returns this
+ */
+proto.smartcore.bos.serviceticket.v1.Ticket.prototype.clearExternalUrl = function() {
+  return jspb.Message.setField(this, 7, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.serviceticket.v1.Ticket.prototype.hasExternalUrl = function() {
+  return jspb.Message.getField(this, 7) != null;
 };
 
 
