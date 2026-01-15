@@ -3,8 +3,6 @@ package pestsense
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"strconv"
 
 	"go.uber.org/zap"
 
@@ -21,35 +19,43 @@ type Response struct {
 	Action                     string `json:"action"`
 }
 
-func handleResponse(body []byte, devices map[string]*PestSensor, logger *zap.Logger) {
-	fmt.Printf("Received message: %s\n", body)
+func handleResponse(body []byte, devices map[string]*pestSensor, logger *zap.Logger) {
+
 	response := Response{}
 
 	err := json.Unmarshal(body, &response)
 
 	if err != nil {
-		logger.Error("Error unmarshalling")
+		logger.Error("failed to unmarshal MQTT response", zap.Error(err), zap.ByteString("payload", body))
 		return
 	}
 
-	logger.Debug("ID: " + response.DeviceNumber)
+	logger.Debug("processing device", zap.String("deviceId", response.DeviceNumber))
 	occupied, err := getOccupied(response.PacketType)
 	if err != nil {
-		logger.Warn("Unexpected packet type")
+		logger.Warn("unexpected packet type", zap.Int("packetType", response.PacketType))
 		return
 	}
-	logger.Debug("Occupied: " + strconv.FormatBool(occupied))
+	logger.Debug("device occupancy state", zap.Bool("occupied", occupied))
 
 	device, exists := devices[response.DeviceNumber]
 
 	if exists {
 		if occupied {
-			logger.Debug("Setting occupied for device " + response.DeviceNumber)
-			device.Occupancy.Set(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			logger.Debug("setting device state", zap.String("deviceId", response.DeviceNumber), zap.Bool("occupied", true))
+			_, err = device.occupancy.Set(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			if err != nil {
+				logger.Error("failed to set occupancy state", zap.String("deviceId", response.DeviceNumber), zap.Error(err))
+			}
 		} else {
-			logger.Debug("Setting unoccupied for device " + response.DeviceNumber)
-			device.Occupancy.Set(&traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			logger.Debug("setting device state", zap.String("deviceId", response.DeviceNumber), zap.Bool("occupied", false))
+			_, err = device.occupancy.Set(&traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			if err != nil {
+				logger.Error("failed to set occupancy state", zap.String("deviceId", response.DeviceNumber), zap.Error(err))
+			}
 		}
+	} else {
+		logger.Warn("received data for unknown device", zap.String("deviceNumber", response.DeviceNumber))
 	}
 }
 

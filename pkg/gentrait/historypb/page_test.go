@@ -12,8 +12,8 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	timepb "github.com/smart-core-os/sc-api/go/types/time"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 )
 
 func Test_pageReader_listRecords(t *testing.T) {
@@ -47,9 +47,9 @@ func Test_pageReader_listRecords(t *testing.T) {
 	if nextToken == "" {
 		t.Fatalf("nextPage want something, got nothing")
 	}
-	wantPage := make([]*gen.OccupancyRecord, 5)
+	wantPage := make([]*occupancysensorpb.OccupancyRecord, 5)
 	for i, t := range []int64{0, 10, 20, 30, 40} {
-		wantPage[i] = &gen.OccupancyRecord{
+		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
 			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}
@@ -69,7 +69,7 @@ func Test_pageReader_listRecords(t *testing.T) {
 		t.Fatalf("nextPage want empty, got %v", nextToken)
 	}
 	for i, t := range []int64{50, 60, 70, 80, 90} {
-		wantPage[i] = &gen.OccupancyRecord{
+		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
 			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}
@@ -110,9 +110,9 @@ func Test_pageReader_listRecords_reverse(t *testing.T) {
 	if nextToken == "" {
 		t.Fatalf("nextPage want something, got nothing")
 	}
-	wantPage := make([]*gen.OccupancyRecord, 5)
+	wantPage := make([]*occupancysensorpb.OccupancyRecord, 5)
 	for i, t := range []int64{90, 80, 70, 60, 50} {
-		wantPage[i] = &gen.OccupancyRecord{
+		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
 			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}
@@ -132,7 +132,7 @@ func Test_pageReader_listRecords_reverse(t *testing.T) {
 		t.Fatalf("nextPage want empty, got %v", nextToken)
 	}
 	for i, t := range []int64{40, 30, 20, 10, 0} {
-		wantPage[i] = &gen.OccupancyRecord{
+		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
 			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}
@@ -176,9 +176,9 @@ func Test_pageReader_listRecords_period(t *testing.T) {
 	if nextToken != "" {
 		t.Fatalf("nextPage want nothing, got %s", nextToken)
 	}
-	wantPage := make([]*gen.OccupancyRecord, 4)
+	wantPage := make([]*occupancysensorpb.OccupancyRecord, 4)
 	for i, t := range []int64{30, 40, 50, 60} {
-		wantPage[i] = &gen.OccupancyRecord{
+		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
 			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}
@@ -222,9 +222,9 @@ func Test_pageReader_listRecords_period_reverse(t *testing.T) {
 	if nextToken != "" {
 		t.Fatalf("nextPage want nothing, got %s", nextToken)
 	}
-	wantPage := make([]*gen.OccupancyRecord, 4)
+	wantPage := make([]*occupancysensorpb.OccupancyRecord, 4)
 	for i, t := range []int64{60, 50, 40, 30} {
-		wantPage[i] = &gen.OccupancyRecord{
+		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
 			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}

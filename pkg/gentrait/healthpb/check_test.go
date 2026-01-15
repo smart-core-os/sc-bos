@@ -10,112 +10,112 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 func TestReliabilityFromErr(t *testing.T) {
 	tests := map[string]struct {
 		err       error
-		wantState gen.HealthCheck_Reliability_State
+		wantState healthpb.HealthCheck_Reliability_State
 		wantError bool // whether LastError should be set
-		wantCode  *gen.HealthCheck_Error_Code
+		wantCode  *healthpb.HealthCheck_Error_Code
 	}{
 		"nil error": {
 			err:       nil,
-			wantState: gen.HealthCheck_Reliability_RELIABLE,
+			wantState: healthpb.HealthCheck_Reliability_RELIABLE,
 			wantError: false,
 		},
 		"context.Canceled": {
 			err:       context.Canceled,
-			wantState: gen.HealthCheck_Reliability_RELIABLE,
+			wantState: healthpb.HealthCheck_Reliability_RELIABLE,
 			wantError: false,
 		},
 		"wrapped context.Canceled": {
 			err:       errors.Join(context.Canceled, errors.New("wrapped")),
-			wantState: gen.HealthCheck_Reliability_RELIABLE,
+			wantState: healthpb.HealthCheck_Reliability_RELIABLE,
 			wantError: false,
 		},
 		"context.DeadlineExceeded": {
 			err:       context.DeadlineExceeded,
-			wantState: gen.HealthCheck_Reliability_NO_RESPONSE,
+			wantState: healthpb.HealthCheck_Reliability_NO_RESPONSE,
 			wantError: false,
 		},
 		"wrapped context.DeadlineExceeded": {
 			err:       errors.Join(context.DeadlineExceeded, errors.New("timeout")),
-			wantState: gen.HealthCheck_Reliability_NO_RESPONSE,
+			wantState: healthpb.HealthCheck_Reliability_NO_RESPONSE,
 			wantError: false,
 		},
 		"gRPC NotFound": {
 			err:       status.Error(codes.NotFound, "not found"),
-			wantState: gen.HealthCheck_Reliability_NOT_FOUND,
+			wantState: healthpb.HealthCheck_Reliability_NOT_FOUND,
 			wantError: true,
-			wantCode: &gen.HealthCheck_Error_Code{
+			wantCode: &healthpb.HealthCheck_Error_Code{
 				System: "gRPC",
 				Code:   "NotFound",
 			},
 		},
 		"gRPC PermissionDenied": {
 			err:       status.Error(codes.PermissionDenied, "permission denied"),
-			wantState: gen.HealthCheck_Reliability_PERMISSION_DENIED,
+			wantState: healthpb.HealthCheck_Reliability_PERMISSION_DENIED,
 			wantError: true,
-			wantCode: &gen.HealthCheck_Error_Code{
+			wantCode: &healthpb.HealthCheck_Error_Code{
 				System: "gRPC",
 				Code:   "PermissionDenied",
 			},
 		},
 		"gRPC Unauthenticated": {
 			err:       status.Error(codes.Unauthenticated, "unauthenticated"),
-			wantState: gen.HealthCheck_Reliability_PERMISSION_DENIED,
+			wantState: healthpb.HealthCheck_Reliability_PERMISSION_DENIED,
 			wantError: true,
-			wantCode: &gen.HealthCheck_Error_Code{
+			wantCode: &healthpb.HealthCheck_Error_Code{
 				System: "gRPC",
 				Code:   "Unauthenticated",
 			},
 		},
 		"gRPC DeadlineExceeded": {
 			err:       status.Error(codes.DeadlineExceeded, "deadline exceeded"),
-			wantState: gen.HealthCheck_Reliability_NO_RESPONSE,
+			wantState: healthpb.HealthCheck_Reliability_NO_RESPONSE,
 			wantError: true,
-			wantCode: &gen.HealthCheck_Error_Code{
+			wantCode: &healthpb.HealthCheck_Error_Code{
 				System: "gRPC",
 				Code:   "DeadlineExceeded",
 			},
 		},
 		"gRPC Unavailable": {
 			err:       status.Error(codes.Unavailable, "unavailable"),
-			wantState: gen.HealthCheck_Reliability_BAD_RESPONSE,
+			wantState: healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 			wantError: true,
-			wantCode: &gen.HealthCheck_Error_Code{
+			wantCode: &healthpb.HealthCheck_Error_Code{
 				System: "gRPC",
 				Code:   "Unavailable",
 			},
 		},
 		"gRPC Internal": {
 			err:       status.Error(codes.Internal, "internal error"),
-			wantState: gen.HealthCheck_Reliability_BAD_RESPONSE,
+			wantState: healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 			wantError: true,
-			wantCode: &gen.HealthCheck_Error_Code{
+			wantCode: &healthpb.HealthCheck_Error_Code{
 				System: "gRPC",
 				Code:   "Internal",
 			},
 		},
 		"gRPC Unknown": {
 			err:       status.Error(codes.Unknown, "unknown error"),
-			wantState: gen.HealthCheck_Reliability_BAD_RESPONSE,
+			wantState: healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 			wantError: true,
-			wantCode: &gen.HealthCheck_Error_Code{
+			wantCode: &healthpb.HealthCheck_Error_Code{
 				System: "gRPC",
 				Code:   "Unknown",
 			},
 		},
 		"generic error": {
 			err:       errors.New("something went wrong"),
-			wantState: gen.HealthCheck_Reliability_BAD_RESPONSE,
+			wantState: healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 			wantError: true,
 		},
 		"custom error": {
 			err:       &customError{msg: "custom failure"},
-			wantState: gen.HealthCheck_Reliability_BAD_RESPONSE,
+			wantState: healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 			wantError: true,
 		},
 	}

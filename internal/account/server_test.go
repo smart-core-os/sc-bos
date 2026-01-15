@@ -20,62 +20,62 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
 func TestServer_CreateAccount(t *testing.T) {
 	type testCase struct {
-		others []*gen.Account // other accounts that should be created before the test account
-		req    *gen.CreateAccountRequest
-		expect *gen.Account
+		others []*accountpb.Account // other accounts that should be created before the test account
+		req    *accountpb.CreateAccountRequest
+		expect *accountpb.Account
 		code   codes.Code
 	}
 
 	cases := map[string]testCase{
 		"user_account_no_password": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 						Username: "user1",
 					}},
 				},
 			},
-			expect: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expect: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+				Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 					Username: "user1",
 				}},
 			},
 		},
 		"user_account_with_password": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 2",
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 						Username: "user2",
 					}},
 				},
 				Password: "user2Password",
 			},
-			expect: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expect: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 2",
-				Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+				Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 					Username:    "user2",
 					HasPassword: true,
 				}},
 			},
 		},
 		"user_account_short_password": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 3",
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 						Username: "user3",
 					}},
 				},
@@ -84,11 +84,11 @@ func TestServer_CreateAccount(t *testing.T) {
 			code: codes.InvalidArgument,
 		},
 		"user_account_long_password": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 4",
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 						Username: "user4",
 					}},
 				},
@@ -97,11 +97,11 @@ func TestServer_CreateAccount(t *testing.T) {
 			code: codes.InvalidArgument,
 		},
 		"user_account_short_password_whitespace": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 5",
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 						Username: "user5",
 					}},
 				},
@@ -110,22 +110,22 @@ func TestServer_CreateAccount(t *testing.T) {
 			code: codes.InvalidArgument,
 		},
 		"service_account": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_SERVICE_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					DisplayName: "Service",
 				},
 			},
-			expect: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expect: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 		},
 		"service_account_password": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_SERVICE_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					DisplayName: "Service",
 				},
 				Password: "servicePassword",
@@ -133,18 +133,18 @@ func TestServer_CreateAccount(t *testing.T) {
 			code: codes.InvalidArgument,
 		},
 		"missing_account_type": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
 					DisplayName: "Missing Kind",
 				},
 			},
 			code: codes.InvalidArgument,
 		},
 		"missing_display_name": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type: gen.Account_USER_ACCOUNT,
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type: accountpb.Account_USER_ACCOUNT,
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 						Username: "foo",
 					}},
 				},
@@ -152,60 +152,60 @@ func TestServer_CreateAccount(t *testing.T) {
 			code: codes.InvalidArgument,
 		},
 		"display_name_long": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_SERVICE_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					DisplayName: strings.Repeat("a", maxDisplayNameLength),
 				},
 			},
-			expect: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expect: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: strings.Repeat("a", maxDisplayNameLength),
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 		},
 		"display_name_too_long": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_SERVICE_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					DisplayName: strings.Repeat("a", maxDisplayNameLength+1),
 				},
 			},
 			code: codes.InvalidArgument,
 		},
 		"missing_username_for_user_account": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "Missing Username",
 				},
 			},
 			code: codes.InvalidArgument,
 		},
 		"username_long": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 						Username: strings.Repeat("a", maxUsernameLength),
 					}},
 				},
 			},
-			expect: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expect: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+				Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 					Username: strings.Repeat("a", maxUsernameLength),
 				}},
 			},
 		},
 		"username_too_long": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 						Username: strings.Repeat("a", maxUsernameLength+1),
 					}},
 				},
@@ -213,39 +213,39 @@ func TestServer_CreateAccount(t *testing.T) {
 			code: codes.InvalidArgument,
 		},
 		"description_short": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_SERVICE_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					DisplayName: "Service",
 					Description: "a description",
 				},
 			},
-			expect: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expect: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 				Description: "a description",
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 		},
 		"description_long": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_SERVICE_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					DisplayName: "Service",
 					Description: strings.Repeat("a", maxDescriptionLength),
 				},
 			},
-			expect: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expect: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 				Description: strings.Repeat("a", maxDescriptionLength),
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 		},
 		"description_too_long": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_SERVICE_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					DisplayName: "Service",
 					Description: strings.Repeat("a", maxDescriptionLength+1),
 				},
@@ -253,11 +253,11 @@ func TestServer_CreateAccount(t *testing.T) {
 			code: codes.InvalidArgument,
 		},
 		"user_details_supplied_for_service_account": {
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_SERVICE_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					DisplayName: "Service Account",
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 						Username: "service",
 					}},
 				},
@@ -265,20 +265,20 @@ func TestServer_CreateAccount(t *testing.T) {
 			code: codes.InvalidArgument,
 		},
 		"username_conflict": {
-			others: []*gen.Account{
+			others: []*accountpb.Account{
 				{
-					Type:        gen.Account_USER_ACCOUNT,
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 						Username: "user1",
 					}},
 				},
 			},
-			req: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			req: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1A",
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 						Username: "user1",
 					}},
 				},
@@ -286,7 +286,7 @@ func TestServer_CreateAccount(t *testing.T) {
 			code: codes.AlreadyExists,
 		},
 		"nil": {
-			req: &gen.CreateAccountRequest{
+			req: &accountpb.CreateAccountRequest{
 				Account: nil,
 			},
 			code: codes.InvalidArgument,
@@ -300,7 +300,7 @@ func TestServer_CreateAccount(t *testing.T) {
 			server := NewServer(store, logger)
 
 			for _, other := range tc.others {
-				_, err := server.CreateAccount(context.Background(), &gen.CreateAccountRequest{Account: other})
+				_, err := server.CreateAccount(context.Background(), &accountpb.CreateAccountRequest{Account: other})
 				if err != nil {
 					t.Fatalf("failed to create other account: %v", err)
 				}
@@ -313,8 +313,8 @@ func TestServer_CreateAccount(t *testing.T) {
 			}
 			diff := cmp.Diff(tc.expect, res,
 				protocmp.Transform(),
-				protocmp.IgnoreFields(&gen.Account{}, "id", "create_time"),
-				protocmp.IgnoreFields(&gen.ServiceAccount{}, "client_id", "client_secret"),
+				protocmp.IgnoreFields(&accountpb.Account{}, "id", "create_time"),
+				protocmp.IgnoreFields(&accountpb.ServiceAccount{}, "client_id", "client_secret"),
 			)
 			if diff != "" {
 				t.Errorf("unexpected provided account value (-want +got):\n%s", diff)
@@ -323,9 +323,9 @@ func TestServer_CreateAccount(t *testing.T) {
 			// also retrieve using GetAccount and check it matches
 			if res != nil {
 				id := res.Id
-				var expect *gen.Account
+				var expect *accountpb.Account
 				if tc.expect != nil {
-					expect = proto.Clone(tc.expect).(*gen.Account)
+					expect = proto.Clone(tc.expect).(*accountpb.Account)
 					expect.Id = id
 					expect.CreateTime = res.CreateTime
 					service := expect.GetServiceDetails()
@@ -333,19 +333,19 @@ func TestServer_CreateAccount(t *testing.T) {
 						service.ClientId = id
 					}
 				}
-				account, err := server.GetAccount(context.Background(), &gen.GetAccountRequest{Id: id})
+				account, err := server.GetAccount(context.Background(), &accountpb.GetAccountRequest{Id: id})
 				checkNilIfErrored(t, account, err)
 				if err != nil {
 					t.Fatalf("failed to get account %q: %v", id, err)
 				}
-				if res.Type == gen.Account_SERVICE_ACCOUNT {
+				if res.Type == accountpb.Account_SERVICE_ACCOUNT {
 					if res.GetServiceDetails().GetClientSecret() == "" {
 						t.Errorf("service account created without client secret")
 					}
 				}
 				diff = cmp.Diff(expect, account,
 					protocmp.Transform(),
-					protocmp.IgnoreFields(&gen.ServiceAccount{}, "client_secret"),
+					protocmp.IgnoreFields(&accountpb.ServiceAccount{}, "client_secret"),
 				)
 				if diff != "" {
 					t.Errorf("unexpected retrieved account value (-want +got):\n%s", diff)
@@ -362,21 +362,21 @@ func TestServer_ListAccounts(t *testing.T) {
 	store := NewMemoryStore(logger)
 	server := NewServer(store, logger)
 
-	createAccount := func(ty gen.Account_Type, username, displayName string) (*gen.Account, string) {
+	createAccount := func(ty accountpb.Account_Type, username, displayName string) (*accountpb.Account, string) {
 		t.Helper()
-		account := &gen.Account{
+		account := &accountpb.Account{
 			Type:        ty,
 			DisplayName: displayName,
 		}
 		switch ty {
-		case gen.Account_USER_ACCOUNT:
-			account.Details = &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: username}}
-		case gen.Account_SERVICE_ACCOUNT:
-			account.Details = &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}}
+		case accountpb.Account_USER_ACCOUNT:
+			account.Details = &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: username}}
+		case accountpb.Account_SERVICE_ACCOUNT:
+			account.Details = &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}}
 		default:
 			t.Fatalf("wrong type %v", ty)
 		}
-		res, err := server.CreateAccount(ctx, &gen.CreateAccountRequest{
+		res, err := server.CreateAccount(ctx, &accountpb.CreateAccountRequest{
 			Account: account,
 		})
 		checkNilIfErrored(t, res, err)
@@ -391,29 +391,29 @@ func TestServer_ListAccounts(t *testing.T) {
 	}
 
 	// we assume that accounts are returned in creation order
-	var expected []*gen.Account
+	var expected []*accountpb.Account
 	const numAccounts = 200
 	for i := range numAccounts {
 		username := fmt.Sprintf("account-%03d", i)
 		displayName := fmt.Sprintf("Account %d", i)
 
-		var account *gen.Account
+		var account *accountpb.Account
 		if i%2 == 0 {
 			// make it a user account
-			account, _ = createAccount(gen.Account_USER_ACCOUNT, username, displayName)
+			account, _ = createAccount(accountpb.Account_USER_ACCOUNT, username, displayName)
 		} else {
 			// make it a service account
-			account, _ = createAccount(gen.Account_SERVICE_ACCOUNT, "", displayName)
+			account, _ = createAccount(accountpb.Account_SERVICE_ACCOUNT, "", displayName)
 		}
 		expected = append(expected, account)
 	}
 
 	const pageSize = 42
 	var nextPageToken string
-	var got [][]*gen.Account
+	var got [][]*accountpb.Account
 	for {
 		t.Logf("fetching page with token %q", nextPageToken)
-		res, err := server.ListAccounts(ctx, &gen.ListAccountsRequest{
+		res, err := server.ListAccounts(ctx, &accountpb.ListAccountsRequest{
 			PageToken: nextPageToken,
 			PageSize:  pageSize,
 		})
@@ -445,334 +445,334 @@ func TestServer_ListAccounts(t *testing.T) {
 func TestServer_UpdateAccount(t *testing.T) {
 	ctx := context.Background()
 	type testCase struct {
-		others   []*gen.Account // other accounts that should be created before the test account
-		initial  *gen.Account   // initial account to create
-		update   *gen.UpdateAccountRequest
-		expected *gen.Account
+		others   []*accountpb.Account // other accounts that should be created before the test account
+		initial  *accountpb.Account   // initial account to create
+		update   *accountpb.UpdateAccountRequest
+		expected *accountpb.Account
 		code     codes.Code
 	}
 	cases := map[string]testCase{
 		"empty update": {
-			initial: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{},
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
 		},
 		"kind_change_prohibited": {
-			initial: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
-					Type: gen.Account_SERVICE_ACCOUNT,
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
+					Type: accountpb.Account_SERVICE_ACCOUNT,
 				},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
 			code: codes.InvalidArgument,
 		},
 		"same_kind_allowed": {
-			initial: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
-					Type: gen.Account_USER_ACCOUNT,
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
+					Type: accountpb.Account_USER_ACCOUNT,
 				},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
 		},
 		"update_display_name": {
-			initial: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
 					DisplayName: "Service MODIFIED",
 				},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service MODIFIED",
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 		},
 		"update_username": {
-			initial: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1-modified"}},
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1-modified"}},
 				},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1-modified"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1-modified"}},
 			},
 		},
 		"update_username_service_account": {
-			initial: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "username"}},
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "username"}},
 				},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 			code: codes.FailedPrecondition,
 		},
 		"update_display_name_empty": {
-			initial: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
 					DisplayName: "",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"display_name"}},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 			code: codes.InvalidArgument,
 		},
 		"update_username_empty_user": {
-			initial: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: ""}},
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: ""}},
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"user_details.username"}},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
 			code: codes.InvalidArgument,
 		},
 		"update_username_empty_service": {
-			initial: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: ""}},
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: ""}},
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"user_details.username"}},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 		},
 		"update_description_implicit": {
-			initial: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
 					Description: "Description",
 				},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 				Description: "Description",
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 		},
 		"update_description_explicit": {
-			initial: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 				Description: "Before",
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
 					Description: "After",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"description"}},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 				Description: "After",
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 		},
 		"update_description_empty": {
-			initial: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 				Description: "Before",
 			},
-			update: &gen.UpdateAccountRequest{
-				Account:    &gen.Account{},
+			update: &accountpb.UpdateAccountRequest{
+				Account:    &accountpb.Account{},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"description"}},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 		},
 		"invalid_update_mask": {
-			initial: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
-			update: &gen.UpdateAccountRequest{
-				Account:    &gen.Account{},
+			update: &accountpb.UpdateAccountRequest{
+				Account:    &accountpb.Account{},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"foo"}},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
 			code: codes.InvalidArgument,
 		},
 		"wildcard_update_mask": {
-			initial: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				Description: "Description",
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1 MODIFIED",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1-modified"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1-modified"}},
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1 MODIFIED",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1-modified"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1-modified"}},
 			},
 		},
 		"wildcard_update_mask_zero": {
-			initial: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1 MODIFIED",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: ""}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: ""}},
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "User 1", // not changed, because updates are all-or-nothing
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 			},
 			code: codes.InvalidArgument, // because username is required, and we have tried to clear it
 		},
 		"wildcard_update_mask_service": {
-			initial: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service",
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_SERVICE_ACCOUNT,
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_SERVICE_ACCOUNT,
 					DisplayName: "Service MODIFIED",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: "Service MODIFIED",
-				Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+				Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 			},
 		},
 		"username_conflict": {
-			others: []*gen.Account{
+			others: []*accountpb.Account{
 				{
-					Type:        gen.Account_USER_ACCOUNT,
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "Foo",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "foo"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "foo"}},
 				},
 			},
-			initial: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			initial: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "Bar",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "bar"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "bar"}},
 			},
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "foo"}},
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "foo"}},
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"user_details.username"}},
 			},
-			expected: &gen.Account{
-				Type:        gen.Account_USER_ACCOUNT,
+			expected: &accountpb.Account{
+				Type:        accountpb.Account_USER_ACCOUNT,
 				DisplayName: "Bar",
-				Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "bar"}},
+				Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "bar"}},
 			},
 			code: codes.AlreadyExists,
 		},
 		"not_exist": {
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
 					Id:      "123",
-					Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "bar"}},
+					Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "bar"}},
 				},
 			},
 			code: codes.NotFound,
 		},
 		"invalid_id": {
-			update: &gen.UpdateAccountRequest{
-				Account: &gen.Account{
+			update: &accountpb.UpdateAccountRequest{
+				Account: &accountpb.Account{
 					Id:          "invalid",
 					DisplayName: "Barbar",
 				},
@@ -780,7 +780,7 @@ func TestServer_UpdateAccount(t *testing.T) {
 			code: codes.NotFound,
 		},
 		"nil": {
-			update: &gen.UpdateAccountRequest{
+			update: &accountpb.UpdateAccountRequest{
 				Account: nil,
 			},
 			code: codes.InvalidArgument,
@@ -794,20 +794,20 @@ func TestServer_UpdateAccount(t *testing.T) {
 			server := NewServer(store, logger)
 
 			for _, other := range tc.others {
-				_, err := server.CreateAccount(ctx, &gen.CreateAccountRequest{Account: other})
+				_, err := server.CreateAccount(ctx, &accountpb.CreateAccountRequest{Account: other})
 				if err != nil {
 					t.Fatalf("failed to create other account: %v", err)
 				}
 			}
 
 			var (
-				account  *gen.Account
-				expected *gen.Account
+				account  *accountpb.Account
+				expected *accountpb.Account
 			)
-			update := proto.Clone(tc.update).(*gen.UpdateAccountRequest)
+			update := proto.Clone(tc.update).(*accountpb.UpdateAccountRequest)
 			if tc.initial != nil {
 				var err error
-				account, err = server.CreateAccount(ctx, &gen.CreateAccountRequest{Account: tc.initial})
+				account, err = server.CreateAccount(ctx, &accountpb.CreateAccountRequest{Account: tc.initial})
 				checkNilIfErrored(t, account, err)
 				if err != nil {
 					t.Fatalf("failed to create account: %v", err)
@@ -817,7 +817,7 @@ func TestServer_UpdateAccount(t *testing.T) {
 			}
 			id := update.GetAccount().GetId()
 			if tc.expected != nil {
-				expected = proto.Clone(tc.expected).(*gen.Account)
+				expected = proto.Clone(tc.expected).(*accountpb.Account)
 				expected.Id = id
 				expected.CreateTime = account.CreateTime
 				if service := expected.GetServiceDetails(); service != nil {
@@ -839,7 +839,7 @@ func TestServer_UpdateAccount(t *testing.T) {
 
 			if tc.expected != nil {
 				// fetch again to check that the update was persisted
-				account, err = server.GetAccount(ctx, &gen.GetAccountRequest{Id: id})
+				account, err = server.GetAccount(ctx, &accountpb.GetAccountRequest{Id: id})
 				checkNilIfErrored(t, account, err)
 				if err != nil {
 					t.Fatalf("failed to get account: %v", err)
@@ -874,11 +874,11 @@ var invalidUsernames = []string{
 }
 
 func TestServer_CreateAccount_Usernames(t *testing.T) {
-	template := &gen.CreateAccountRequest{
-		Account: &gen.Account{
-			Type:        gen.Account_USER_ACCOUNT,
+	template := &accountpb.CreateAccountRequest{
+		Account: &accountpb.Account{
+			Type:        accountpb.Account_USER_ACCOUNT,
 			DisplayName: "User",
-			Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{}},
+			Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{}},
 		},
 	}
 
@@ -887,7 +887,7 @@ func TestServer_CreateAccount_Usernames(t *testing.T) {
 	store := NewMemoryStore(logger)
 	server := NewServer(store, logger)
 	for _, username := range validUsernames {
-		req := proto.Clone(template).(*gen.CreateAccountRequest)
+		req := proto.Clone(template).(*accountpb.CreateAccountRequest)
 		req.Account.GetUserDetails().Username = username
 		_, err := server.CreateAccount(ctx, req)
 		if err != nil {
@@ -895,7 +895,7 @@ func TestServer_CreateAccount_Usernames(t *testing.T) {
 		}
 	}
 	for _, username := range invalidUsernames {
-		req := proto.Clone(template).(*gen.CreateAccountRequest)
+		req := proto.Clone(template).(*accountpb.CreateAccountRequest)
 		req.Account.GetUserDetails().Username = username
 		_, err := server.CreateAccount(ctx, req)
 		if !errors.Is(err, ErrInvalidUsername) {
@@ -910,26 +910,26 @@ func TestServer_UpdateAccount_Usernames(t *testing.T) {
 	store := NewMemoryStore(logger)
 	server := NewServer(store, logger)
 
-	account, err := server.CreateAccount(ctx, &gen.CreateAccountRequest{
-		Account: &gen.Account{
-			Type:        gen.Account_USER_ACCOUNT,
+	account, err := server.CreateAccount(ctx, &accountpb.CreateAccountRequest{
+		Account: &accountpb.Account{
+			Type:        accountpb.Account_USER_ACCOUNT,
 			DisplayName: "User",
-			Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user"}},
+			Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user"}},
 		},
 	})
 	if err != nil {
 		t.Fatalf("failed to set up test account: %v", err)
 	}
 
-	template := &gen.UpdateAccountRequest{
-		Account: &gen.Account{
+	template := &accountpb.UpdateAccountRequest{
+		Account: &accountpb.Account{
 			Id:      account.Id,
-			Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{}},
+			Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{}},
 		},
 		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"user_details.username"}},
 	}
 	for _, username := range validUsernames {
-		req := proto.Clone(template).(*gen.UpdateAccountRequest)
+		req := proto.Clone(template).(*accountpb.UpdateAccountRequest)
 		req.Account.GetUserDetails().Username = username
 		_, err := server.UpdateAccount(ctx, req)
 		if err != nil {
@@ -937,7 +937,7 @@ func TestServer_UpdateAccount_Usernames(t *testing.T) {
 		}
 	}
 	for _, username := range invalidUsernames {
-		req := proto.Clone(template).(*gen.UpdateAccountRequest)
+		req := proto.Clone(template).(*accountpb.UpdateAccountRequest)
 		req.Account.GetUserDetails().Username = username
 		_, err := server.UpdateAccount(ctx, req)
 		if !errors.Is(err, ErrInvalidUsername) {
@@ -952,18 +952,18 @@ func TestServer_DeleteAccount(t *testing.T) {
 	store := NewMemoryStore(logger)
 	server := NewServer(store, logger)
 
-	createAccount := func(ty gen.Account_Type, username, displayName, password string) *gen.Account {
+	createAccount := func(ty accountpb.Account_Type, username, displayName, password string) *accountpb.Account {
 		t.Helper()
-		account := &gen.Account{
+		account := &accountpb.Account{
 			Type:        ty,
 			DisplayName: displayName,
 		}
-		if ty == gen.Account_USER_ACCOUNT {
-			account.Details = &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+		if ty == accountpb.Account_USER_ACCOUNT {
+			account.Details = &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 				Username: username,
 			}}
 		}
-		res, err := server.CreateAccount(ctx, &gen.CreateAccountRequest{
+		res, err := server.CreateAccount(ctx, &accountpb.CreateAccountRequest{
 			Account:  account,
 			Password: password,
 		})
@@ -973,15 +973,15 @@ func TestServer_DeleteAccount(t *testing.T) {
 		}
 		return res
 	}
-	user := createAccount(gen.Account_USER_ACCOUNT, "user1", "User 1", "user1Password")
-	service := createAccount(gen.Account_SERVICE_ACCOUNT, "", "Service", "")
+	user := createAccount(accountpb.Account_USER_ACCOUNT, "user1", "User 1", "user1Password")
+	service := createAccount(accountpb.Account_SERVICE_ACCOUNT, "", "Service", "")
 
 	// assign a role to the accounts
 	// to check that role assignments
 	//   - do not prevent deletion of the account
 	//   - are deleted when the account is deleted
-	role, err := server.CreateRole(ctx, &gen.CreateRoleRequest{
-		Role: &gen.Role{
+	role, err := server.CreateRole(ctx, &accountpb.CreateRoleRequest{
+		Role: &accountpb.Role{
 			DisplayName:   "Foo Role",
 			PermissionIds: []string{"foo"},
 		},
@@ -989,8 +989,8 @@ func TestServer_DeleteAccount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create role: %v", err)
 	}
-	ra1, err := server.CreateRoleAssignment(ctx, &gen.CreateRoleAssignmentRequest{
-		RoleAssignment: &gen.RoleAssignment{
+	ra1, err := server.CreateRoleAssignment(ctx, &accountpb.CreateRoleAssignmentRequest{
+		RoleAssignment: &accountpb.RoleAssignment{
 			AccountId: user.Id,
 			RoleId:    role.Id,
 		},
@@ -998,49 +998,49 @@ func TestServer_DeleteAccount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create role assignment: %v", err)
 	}
-	ra2, err := server.CreateRoleAssignment(ctx, &gen.CreateRoleAssignmentRequest{
-		RoleAssignment: &gen.RoleAssignment{
+	ra2, err := server.CreateRoleAssignment(ctx, &accountpb.CreateRoleAssignmentRequest{
+		RoleAssignment: &accountpb.RoleAssignment{
 			AccountId: service.Id,
 			RoleId:    role.Id,
 		},
 	})
 
 	// delete the accounts
-	_, err = server.DeleteAccount(ctx, &gen.DeleteAccountRequest{Id: user.Id})
+	_, err = server.DeleteAccount(ctx, &accountpb.DeleteAccountRequest{Id: user.Id})
 	if err != nil {
 		t.Errorf("failed to delete user account: %v", err)
 	}
-	_, err = server.DeleteAccount(ctx, &gen.DeleteAccountRequest{Id: service.Id})
+	_, err = server.DeleteAccount(ctx, &accountpb.DeleteAccountRequest{Id: service.Id})
 	if err != nil {
 		t.Errorf("failed to delete service account: %v", err)
 	}
 	// deleting an account again should fail
-	_, err = server.DeleteAccount(ctx, &gen.DeleteAccountRequest{Id: user.Id})
+	_, err = server.DeleteAccount(ctx, &accountpb.DeleteAccountRequest{Id: user.Id})
 	if status.Code(err) != codes.NotFound {
 		t.Errorf("expected NotFound error when deleting user account twice, got %v", err)
 	}
 	// deleting an account again with allow_missing should succeed
-	_, err = server.DeleteAccount(ctx, &gen.DeleteAccountRequest{Id: user.Id, AllowMissing: true})
+	_, err = server.DeleteAccount(ctx, &accountpb.DeleteAccountRequest{Id: user.Id, AllowMissing: true})
 	if err != nil {
 		t.Errorf("failed to delete user account with allow_missing: %v", err)
 	}
 
 	// check that the accounts are actually gone
-	_, err = server.GetAccount(ctx, &gen.GetAccountRequest{Id: user.Id})
+	_, err = server.GetAccount(ctx, &accountpb.GetAccountRequest{Id: user.Id})
 	if status.Code(err) != codes.NotFound {
 		t.Errorf("expected NotFound error for user account, got %v", err)
 	}
-	_, err = server.GetAccount(ctx, &gen.GetAccountRequest{Id: service.Id})
+	_, err = server.GetAccount(ctx, &accountpb.GetAccountRequest{Id: service.Id})
 	if status.Code(err) != codes.NotFound {
 		t.Errorf("expected NotFound error for service account, got %v", err)
 	}
 
 	// check that the role assignments are gone
-	_, err = server.GetRoleAssignment(ctx, &gen.GetRoleAssignmentRequest{Id: ra1.Id})
+	_, err = server.GetRoleAssignment(ctx, &accountpb.GetRoleAssignmentRequest{Id: ra1.Id})
 	if status.Code(err) != codes.NotFound {
 		t.Errorf("expected NotFound error for role assignment, got %v", err)
 	}
-	_, err = server.GetRoleAssignment(ctx, &gen.GetRoleAssignmentRequest{Id: ra2.Id})
+	_, err = server.GetRoleAssignment(ctx, &accountpb.GetRoleAssignmentRequest{Id: ra2.Id})
 	if status.Code(err) != codes.NotFound {
 		t.Errorf("expected NotFound error for role assignment, got %v", err)
 	}
@@ -1053,21 +1053,21 @@ func TestServer_Account_Username(t *testing.T) {
 	store := NewMemoryStore(logger)
 	server := NewServer(store, logger)
 
-	_, err := server.CreateAccount(ctx, &gen.CreateAccountRequest{
-		Account: &gen.Account{
-			Type:        gen.Account_USER_ACCOUNT,
+	_, err := server.CreateAccount(ctx, &accountpb.CreateAccountRequest{
+		Account: &accountpb.Account{
+			Type:        accountpb.Account_USER_ACCOUNT,
 			DisplayName: "User 1",
-			Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+			Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 		},
 	})
 	if err != nil {
 		t.Fatalf("failed to create account1: %v", err)
 	}
-	user2, err := server.CreateAccount(ctx, &gen.CreateAccountRequest{
-		Account: &gen.Account{
-			Type:        gen.Account_USER_ACCOUNT,
+	user2, err := server.CreateAccount(ctx, &accountpb.CreateAccountRequest{
+		Account: &accountpb.Account{
+			Type:        accountpb.Account_USER_ACCOUNT,
 			DisplayName: "User 2",
-			Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user2"}},
+			Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user2"}},
 		},
 	})
 	if err != nil {
@@ -1075,11 +1075,11 @@ func TestServer_Account_Username(t *testing.T) {
 	}
 
 	// try to create account that collides with user1
-	_, err = server.CreateAccount(ctx, &gen.CreateAccountRequest{
-		Account: &gen.Account{
-			Type:        gen.Account_USER_ACCOUNT,
+	_, err = server.CreateAccount(ctx, &accountpb.CreateAccountRequest{
+		Account: &accountpb.Account{
+			Type:        accountpb.Account_USER_ACCOUNT,
 			DisplayName: "User 1A",
-			Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+			Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 		},
 	})
 	if status.Code(err) != codes.AlreadyExists {
@@ -1087,10 +1087,10 @@ func TestServer_Account_Username(t *testing.T) {
 	}
 
 	// try to change user2 to user1
-	_, err = server.UpdateAccount(ctx, &gen.UpdateAccountRequest{
-		Account: &gen.Account{
+	_, err = server.UpdateAccount(ctx, &accountpb.UpdateAccountRequest{
+		Account: &accountpb.Account{
 			Id:      user2.Id,
-			Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+			Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 		},
 	})
 	if status.Code(err) != codes.AlreadyExists {
@@ -1102,8 +1102,8 @@ func TestServer_UpdateAccountPassword(t *testing.T) {
 	ctx := context.Background()
 
 	type testCase struct {
-		create           *gen.CreateAccountRequest
-		update           *gen.UpdateAccountPasswordRequest
+		create           *accountpb.CreateAccountRequest
+		update           *accountpb.UpdateAccountPasswordRequest
 		validPassword    string   // password to check after update
 		invalidPasswords []string // passwords to check for invalidity
 		code             codes.Code
@@ -1111,43 +1111,43 @@ func TestServer_UpdateAccountPassword(t *testing.T) {
 
 	cases := map[string]testCase{
 		"add_password": {
-			create: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			create: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				},
 			},
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				NewPassword: "user1Password",
 			},
 			validPassword: "user1Password",
 		},
 		"change_password": {
-			create: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			create: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				},
 				Password: "thepassword1",
 			},
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				NewPassword: "thepassword2",
 			},
 			validPassword:    "thepassword2",
 			invalidPasswords: []string{"thepassword1"},
 		},
 		"change_password_valid_old_password": {
-			create: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			create: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				},
 				Password: "thepassword1",
 			},
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				OldPassword: "thepassword1",
 				NewPassword: "thepassword2",
 			},
@@ -1155,15 +1155,15 @@ func TestServer_UpdateAccountPassword(t *testing.T) {
 			invalidPasswords: []string{"thepassword1"},
 		},
 		"change_password_invalid_old_password": {
-			create: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			create: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				},
 				Password: "thepassword1",
 			},
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				OldPassword: "wrongPassword",
 				NewPassword: "thepassword2",
 			},
@@ -1172,14 +1172,14 @@ func TestServer_UpdateAccountPassword(t *testing.T) {
 			code:             codes.FailedPrecondition,
 		},
 		"add_password_old_password_supplied": {
-			create: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			create: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				},
 			},
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				OldPassword: "thepassword1",
 				NewPassword: "thepassword2",
 			},
@@ -1187,99 +1187,99 @@ func TestServer_UpdateAccountPassword(t *testing.T) {
 			code:             codes.FailedPrecondition,
 		},
 		"account_id_not_found": {
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				Id:          "12345",
 				NewPassword: "thepassword",
 			},
 			code: codes.NotFound,
 		},
 		"account_id_invalid": {
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				Id:          "invalid",
 				NewPassword: "thepassword",
 			},
 			code: codes.NotFound,
 		},
 		"account_id_empty": {
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				Id:          "",
 				NewPassword: "thepassword",
 			},
 			code: codes.InvalidArgument,
 		},
 		"add_password_empty": {
-			create: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			create: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				},
 			},
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				NewPassword: "",
 			},
 			code: codes.InvalidArgument,
 		},
 		"add_password_too_short": {
-			create: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			create: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				},
 			},
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				NewPassword: "123456789",
 			},
 			code: codes.InvalidArgument,
 		},
 		"add_password_long": {
-			create: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			create: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				},
 			},
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				NewPassword: strings.Repeat("a", maxPasswordLength),
 			},
 		},
 		"add_password_too_long": {
-			create: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			create: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				},
 			},
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				NewPassword: strings.Repeat("a", maxPasswordLength+1),
 			},
 			code: codes.InvalidArgument,
 		},
 		"password_ignores_leading_whitespace": {
-			create: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			create: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				},
 			},
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				NewPassword: "  thepassword",
 			},
 			validPassword: "thepassword",
 		},
 		"password_ignores_trailing_whitespace": {
-			create: &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			create: &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User 1",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user1"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user1"}},
 				},
 			},
-			update: &gen.UpdateAccountPasswordRequest{
+			update: &accountpb.UpdateAccountPasswordRequest{
 				NewPassword: "thepassword  ",
 			},
 			validPassword: "thepassword",
@@ -1292,7 +1292,7 @@ func TestServer_UpdateAccountPassword(t *testing.T) {
 			store := NewMemoryStore(logger)
 			server := NewServer(store, logger)
 
-			var account *gen.Account
+			var account *accountpb.Account
 			var err error
 			if tc.create != nil {
 				account, err = server.CreateAccount(ctx, tc.create)
@@ -1301,7 +1301,7 @@ func TestServer_UpdateAccountPassword(t *testing.T) {
 				}
 			}
 
-			req := proto.Clone(tc.update).(*gen.UpdateAccountPasswordRequest)
+			req := proto.Clone(tc.update).(*accountpb.UpdateAccountPasswordRequest)
 			if account != nil {
 				req.Id = account.Id
 			}
@@ -1349,9 +1349,9 @@ func TestServer_RotateAccountClientSecret(t *testing.T) {
 	future := time.Now().Add(time.Hour)
 
 	// create a service account
-	account, err := server.CreateAccount(ctx, &gen.CreateAccountRequest{
-		Account: &gen.Account{
-			Type:        gen.Account_SERVICE_ACCOUNT,
+	account, err := server.CreateAccount(ctx, &accountpb.CreateAccountRequest{
+		Account: &accountpb.Account{
+			Type:        accountpb.Account_SERVICE_ACCOUNT,
 			DisplayName: "Service",
 		},
 	})
@@ -1389,7 +1389,7 @@ func TestServer_RotateAccountClientSecret(t *testing.T) {
 	check(secret1, true)
 
 	// rotate the secret, keeping the old one valid for a while
-	res, err := server.RotateAccountClientSecret(ctx, &gen.RotateAccountClientSecretRequest{
+	res, err := server.RotateAccountClientSecret(ctx, &accountpb.RotateAccountClientSecretRequest{
 		Id:                       account.Id,
 		PreviousSecretExpireTime: timestamppb.New(future),
 	})
@@ -1401,7 +1401,7 @@ func TestServer_RotateAccountClientSecret(t *testing.T) {
 	check(secret2, true)
 
 	// rotate again, this time supplying a time that is already expired
-	res, err = server.RotateAccountClientSecret(ctx, &gen.RotateAccountClientSecretRequest{
+	res, err = server.RotateAccountClientSecret(ctx, &accountpb.RotateAccountClientSecretRequest{
 		Id:                       account.Id,
 		PreviousSecretExpireTime: timestamppb.New(past),
 	})
@@ -1414,7 +1414,7 @@ func TestServer_RotateAccountClientSecret(t *testing.T) {
 	check(secret3, true)
 
 	// rotate again, with no expiry time
-	res, err = server.RotateAccountClientSecret(ctx, &gen.RotateAccountClientSecretRequest{
+	res, err = server.RotateAccountClientSecret(ctx, &accountpb.RotateAccountClientSecretRequest{
 		Id: account.Id,
 	})
 	if err != nil {
@@ -1436,7 +1436,7 @@ func TestServer_Role(t *testing.T) {
 	server := NewServer(store, logger)
 
 	// collect the system-created roles
-	res, err := server.ListRoles(ctx, &gen.ListRolesRequest{
+	res, err := server.ListRoles(ctx, &accountpb.ListRolesRequest{
 		PageSize: 10, // shouldn't be more than this
 	})
 	checkNilIfErrored(t, res, err)
@@ -1457,8 +1457,8 @@ func TestServer_Role(t *testing.T) {
 	for i := range numRoles {
 		displayName := fmt.Sprintf("Role %d", i)
 		numPermissions := i % numPermissions // test roles with different numbers of permissions
-		role, err := server.CreateRole(ctx, &gen.CreateRoleRequest{
-			Role: &gen.Role{
+		role, err := server.CreateRole(ctx, &accountpb.CreateRoleRequest{
+			Role: &accountpb.Role{
 				DisplayName: displayName,
 				// supply the permissions shuffled to check they are returned in order instead
 				PermissionIds: shuffledPermissions(numPermissions),
@@ -1468,7 +1468,7 @@ func TestServer_Role(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to create role %q: %v", displayName, err)
 		}
-		expect := &gen.Role{
+		expect := &accountpb.Role{
 			Id:            role.Id,
 			DisplayName:   displayName,
 			PermissionIds: orderedPermissions(numPermissions),
@@ -1482,12 +1482,12 @@ func TestServer_Role(t *testing.T) {
 		roles = append(roles, role)
 	}
 
-	checkAll := func(expect []*gen.Role) {
-		var pages [][]*gen.Role
+	checkAll := func(expect []*accountpb.Role) {
+		var pages [][]*accountpb.Role
 		const pageSize = 42
 		var nextPageToken string
 		for {
-			res, err := server.ListRoles(ctx, &gen.ListRolesRequest{
+			res, err := server.ListRoles(ctx, &accountpb.ListRolesRequest{
 				PageToken: nextPageToken,
 				PageSize:  pageSize,
 			})
@@ -1520,7 +1520,7 @@ func TestServer_Role(t *testing.T) {
 	role := roles[len(roles)-1]                                           // pick the last role created, as this will definitely not be a protected system role
 	role.PermissionIds = append(role.PermissionIds, "000-new-permission") // should go at the beginning
 	role.DisplayName += " MODIFIED"
-	updated, err := server.UpdateRole(ctx, &gen.UpdateRoleRequest{
+	updated, err := server.UpdateRole(ctx, &accountpb.UpdateRoleRequest{
 		Role: role,
 	})
 	slices.Sort(role.PermissionIds)
@@ -1533,7 +1533,7 @@ func TestServer_Role(t *testing.T) {
 		t.Errorf("unexpected updated role value (-want +got):\n%s", diff)
 	}
 	// test that update is persisted
-	updated, err = server.GetRole(ctx, &gen.GetRoleRequest{Id: role.Id})
+	updated, err = server.GetRole(ctx, &accountpb.GetRoleRequest{Id: role.Id})
 	checkNilIfErrored(t, updated, err)
 	if err != nil {
 		t.Fatalf("failed to get updated role: %v", err)
@@ -1545,17 +1545,17 @@ func TestServer_Role(t *testing.T) {
 
 	// test that a role can't be deleted if it is assigned
 	t.Log("DeleteRole:")
-	account, err := server.CreateAccount(ctx, &gen.CreateAccountRequest{
-		Account: &gen.Account{
-			Type:        gen.Account_SERVICE_ACCOUNT,
+	account, err := server.CreateAccount(ctx, &accountpb.CreateAccountRequest{
+		Account: &accountpb.Account{
+			Type:        accountpb.Account_SERVICE_ACCOUNT,
 			DisplayName: "foo account",
 		},
 	})
 	if err != nil {
 		t.Fatalf("failed to create account: %v", err)
 	}
-	assignment, err := server.CreateRoleAssignment(ctx, &gen.CreateRoleAssignmentRequest{
-		RoleAssignment: &gen.RoleAssignment{
+	assignment, err := server.CreateRoleAssignment(ctx, &accountpb.CreateRoleAssignmentRequest{
+		RoleAssignment: &accountpb.RoleAssignment{
 			AccountId: account.Id,
 			RoleId:    role.Id,
 		},
@@ -1563,35 +1563,35 @@ func TestServer_Role(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create role assignment: %v", err)
 	}
-	_, err = server.DeleteRole(ctx, &gen.DeleteRoleRequest{Id: role.Id})
+	_, err = server.DeleteRole(ctx, &accountpb.DeleteRoleRequest{Id: role.Id})
 	if status.Code(err) != codes.FailedPrecondition {
 		t.Errorf("expected FailedPrecondition error when deleting role with assignments, got %v", err)
 	}
 
 	// delete the assignment and try again
-	_, err = server.DeleteRoleAssignment(ctx, &gen.DeleteRoleAssignmentRequest{Id: assignment.Id})
+	_, err = server.DeleteRoleAssignment(ctx, &accountpb.DeleteRoleAssignmentRequest{Id: assignment.Id})
 	if err != nil {
 		t.Fatalf("failed to delete role assignment: %v", err)
 	}
 
 	// test that roles can be deleted
-	_, err = server.DeleteRole(ctx, &gen.DeleteRoleRequest{Id: role.Id})
+	_, err = server.DeleteRole(ctx, &accountpb.DeleteRoleRequest{Id: role.Id})
 	if err != nil {
 		t.Fatalf("failed to delete role: %v", err)
 	}
 
 	// check that the role is actually gone
-	_, err = server.GetRole(ctx, &gen.GetRoleRequest{Id: role.Id})
+	_, err = server.GetRole(ctx, &accountpb.GetRoleRequest{Id: role.Id})
 	if status.Code(err) != codes.NotFound {
 		t.Errorf("expected NotFound error for role, got %v", err)
 	}
 	// deleting it again should fail
-	_, err = server.DeleteRole(ctx, &gen.DeleteRoleRequest{Id: role.Id})
+	_, err = server.DeleteRole(ctx, &accountpb.DeleteRoleRequest{Id: role.Id})
 	if status.Code(err) != codes.NotFound {
 		t.Errorf("expected NotFound error for role, got %v", err)
 	}
 	// deleting with allow_missing should succeed
-	_, err = server.DeleteRole(ctx, &gen.DeleteRoleRequest{Id: role.Id, AllowMissing: true})
+	_, err = server.DeleteRole(ctx, &accountpb.DeleteRoleRequest{Id: role.Id, AllowMissing: true})
 	if err != nil {
 		t.Errorf("failed to delete role with allow_missing: %v", err)
 	}
@@ -1601,65 +1601,65 @@ func TestServer_CreateRole(t *testing.T) {
 	ctx := context.Background()
 
 	type testCase struct {
-		existing []*gen.Role
-		role     *gen.Role
+		existing []*accountpb.Role
+		role     *accountpb.Role
 		err      error
 	}
 
 	cases := map[string]testCase{
 		"missing_display_name": {
-			role: &gen.Role{},
+			role: &accountpb.Role{},
 			err:  ErrInvalidDisplayName,
 		},
 		"display_name_too_long": {
-			role: &gen.Role{DisplayName: strings.Repeat("a", maxDisplayNameLength+1)},
+			role: &accountpb.Role{DisplayName: strings.Repeat("a", maxDisplayNameLength+1)},
 			err:  ErrInvalidDisplayName,
 		},
 		"long_display_name": {
-			role: &gen.Role{DisplayName: strings.Repeat("a", maxDisplayNameLength)},
+			role: &accountpb.Role{DisplayName: strings.Repeat("a", maxDisplayNameLength)},
 		},
 		"short_display_name": {
-			role: &gen.Role{DisplayName: "Role"},
+			role: &accountpb.Role{DisplayName: "Role"},
 		},
 		"short_description": {
-			role: &gen.Role{
+			role: &accountpb.Role{
 				DisplayName: "Role",
 				Description: "Role Description",
 			},
 		},
 		"description_too_long": {
-			role: &gen.Role{
+			role: &accountpb.Role{
 				DisplayName: "Role",
 				Description: strings.Repeat("a", maxDescriptionLength+1),
 			},
 			err: ErrInvalidDescription,
 		},
 		"long_description": {
-			role: &gen.Role{
+			role: &accountpb.Role{
 				DisplayName: "Role",
 				Description: strings.Repeat("a", maxDescriptionLength),
 			},
 		},
 		"single_permission": {
-			role: &gen.Role{
+			role: &accountpb.Role{
 				DisplayName:   "Role",
 				PermissionIds: []string{"foo"},
 			},
 		},
 		"multiple_permissions_ordered": {
-			role: &gen.Role{
+			role: &accountpb.Role{
 				DisplayName:   "Role",
 				PermissionIds: []string{"bar", "baz", "foo"},
 			},
 		},
 		"multiple_permissions_unordered": {
-			role: &gen.Role{
+			role: &accountpb.Role{
 				DisplayName:   "Role",
 				PermissionIds: []string{"foo", "bar", "baz"},
 			},
 		},
 		"duplicate_permissions": {
-			role: &gen.Role{
+			role: &accountpb.Role{
 				DisplayName:   "Role",
 				PermissionIds: []string{"foo", "bar", "foo"},
 			},
@@ -1669,10 +1669,10 @@ func TestServer_CreateRole(t *testing.T) {
 			err:  ErrResourceMissing,
 		},
 		"display_name_conflict": {
-			existing: []*gen.Role{
+			existing: []*accountpb.Role{
 				{DisplayName: "Role 1"},
 			},
-			role: &gen.Role{DisplayName: "Role 1"},
+			role: &accountpb.Role{DisplayName: "Role 1"},
 			err:  ErrRoleDisplayNameExists,
 		},
 	}
@@ -1684,19 +1684,19 @@ func TestServer_CreateRole(t *testing.T) {
 			server := NewServer(store, logger)
 
 			for _, existing := range tc.existing {
-				_, err := server.CreateRole(ctx, &gen.CreateRoleRequest{Role: existing})
+				_, err := server.CreateRole(ctx, &accountpb.CreateRoleRequest{Role: existing})
 				if err != nil {
 					t.Fatalf("failed to create existing role: %v", err)
 				}
 			}
 
-			created, err := server.CreateRole(ctx, &gen.CreateRoleRequest{Role: tc.role})
+			created, err := server.CreateRole(ctx, &accountpb.CreateRoleRequest{Role: tc.role})
 			if !errors.Is(err, tc.err) {
 				t.Errorf("expected error %v, got %v", tc.err, err)
 			}
 
 			if created != nil {
-				expect := proto.Clone(tc.role).(*gen.Role)
+				expect := proto.Clone(tc.role).(*accountpb.Role)
 				expect.Id = created.Id
 				// normalise the permission IDs
 				slices.Sort(expect.PermissionIds)
@@ -1707,7 +1707,7 @@ func TestServer_CreateRole(t *testing.T) {
 					t.Errorf("unexpected created role value (-want +got):\n%s", diff)
 				}
 
-				fetched, err := server.GetRole(ctx, &gen.GetRoleRequest{Id: created.Id})
+				fetched, err := server.GetRole(ctx, &accountpb.GetRoleRequest{Id: created.Id})
 				if err != nil {
 					t.Errorf("failed to fetch created role: %v", err)
 				}
@@ -1725,200 +1725,200 @@ func TestServer_UpdateRole(t *testing.T) {
 	ctx := context.Background()
 
 	type testCase struct {
-		initial  *gen.Role
-		others   []*gen.Role // other roles to create before the update
-		update   *gen.UpdateRoleRequest
-		expected *gen.Role
+		initial  *accountpb.Role
+		others   []*accountpb.Role // other roles to create before the update
+		update   *accountpb.UpdateRoleRequest
+		expected *accountpb.Role
 		code     codes.Code
 	}
 	cases := map[string]testCase{
 		"empty update": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName:   "Role 1",
 				PermissionIds: []string{"foo", "bar"},
 			},
-			update: &gen.UpdateRoleRequest{
-				Role: &gen.Role{},
+			update: &accountpb.UpdateRoleRequest{
+				Role: &accountpb.Role{},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName:   "Role 1",
 				PermissionIds: []string{"bar", "foo"},
 			},
 		},
 		"update_display_name_implicit": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName:   "Role 1",
 				PermissionIds: []string{"foo", "bar"},
 			},
-			update: &gen.UpdateRoleRequest{
-				Role: &gen.Role{
+			update: &accountpb.UpdateRoleRequest{
+				Role: &accountpb.Role{
 					DisplayName: "Role 1 MODIFIED",
 				},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName:   "Role 1 MODIFIED",
 				PermissionIds: []string{"bar", "foo"},
 			},
 		},
 		"update_display_name_explicit": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName:   "Role 1",
 				PermissionIds: []string{"foo", "bar"},
 			},
-			update: &gen.UpdateRoleRequest{
-				Role: &gen.Role{
+			update: &accountpb.UpdateRoleRequest{
+				Role: &accountpb.Role{
 					DisplayName:   "Role 1 MODIFIED",
 					PermissionIds: []string{"foo2", "bar2"},
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"display_name"}},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName:   "Role 1 MODIFIED",
 				PermissionIds: []string{"bar", "foo"},
 			},
 		},
 		"update_display_name_clear": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName: "Role 1",
 			},
-			update: &gen.UpdateRoleRequest{
-				Role:       &gen.Role{},
+			update: &accountpb.UpdateRoleRequest{
+				Role:       &accountpb.Role{},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"display_name"}},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName: "Role 1",
 			},
 			code: codes.InvalidArgument,
 		},
 		"update_display_name_too_long": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName: "Role 1",
 			},
-			update: &gen.UpdateRoleRequest{
-				Role: &gen.Role{
+			update: &accountpb.UpdateRoleRequest{
+				Role: &accountpb.Role{
 					DisplayName: strings.Repeat("a", maxDisplayNameLength+1),
 				},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName: "Role 1",
 			},
 			code: codes.InvalidArgument,
 		},
 		"update_permissions_implicit": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName:   "Role 1",
 				PermissionIds: []string{"foo", "bar"},
 			},
-			update: &gen.UpdateRoleRequest{
-				Role: &gen.Role{
+			update: &accountpb.UpdateRoleRequest{
+				Role: &accountpb.Role{
 					PermissionIds: []string{"foo2", "bar2"},
 				},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName:   "Role 1",
 				PermissionIds: []string{"bar2", "foo2"},
 			},
 		},
 		"update_permissions_explicit": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName:   "Role 1",
 				PermissionIds: []string{"foo", "bar"},
 			},
-			update: &gen.UpdateRoleRequest{
-				Role: &gen.Role{
+			update: &accountpb.UpdateRoleRequest{
+				Role: &accountpb.Role{
 					DisplayName:   "Role 1 MODIFIED",
 					PermissionIds: []string{"foo2", "bar2"},
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"permission_ids"}},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName:   "Role 1",
 				PermissionIds: []string{"bar2", "foo2"},
 			},
 		},
 		"update_permissions_empty": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName:   "Role 1",
 				PermissionIds: []string{"foo", "bar"},
 			},
-			update: &gen.UpdateRoleRequest{
-				Role: &gen.Role{
+			update: &accountpb.UpdateRoleRequest{
+				Role: &accountpb.Role{
 					PermissionIds: nil,
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"permission_ids"}},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName:   "Role 1",
 				PermissionIds: nil,
 			},
 		},
 		"update_description_implicit": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName: "Role 1",
 			},
-			update: &gen.UpdateRoleRequest{
-				Role: &gen.Role{
+			update: &accountpb.UpdateRoleRequest{
+				Role: &accountpb.Role{
 					Description: "A role for testing",
 				},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName: "Role 1",
 				Description: "A role for testing",
 			},
 		},
 		"update_description_explicit": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName: "Role 1",
 			},
-			update: &gen.UpdateRoleRequest{
-				Role: &gen.Role{
+			update: &accountpb.UpdateRoleRequest{
+				Role: &accountpb.Role{
 					Description: "A role for testing",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"description"}},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName: "Role 1",
 				Description: "A role for testing",
 			},
 		},
 		"update_description_clear": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName: "Role 1",
 				Description: "A role for testing",
 			},
-			update: &gen.UpdateRoleRequest{
-				Role:       &gen.Role{},
+			update: &accountpb.UpdateRoleRequest{
+				Role:       &accountpb.Role{},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"description"}},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName: "Role 1",
 			},
 		},
 		"update_description_invalid": {
-			initial: &gen.Role{
+			initial: &accountpb.Role{
 				DisplayName: "Role 1",
 			},
-			update: &gen.UpdateRoleRequest{
-				Role: &gen.Role{Description: strings.Repeat("a", maxDescriptionLength+1)},
+			update: &accountpb.UpdateRoleRequest{
+				Role: &accountpb.Role{Description: strings.Repeat("a", maxDescriptionLength+1)},
 			},
-			expected: &gen.Role{
+			expected: &accountpb.Role{
 				DisplayName: "Role 1",
 			},
 			code: codes.InvalidArgument,
 		},
 		"nil": {
-			initial:  &gen.Role{DisplayName: "Role 1"},
-			update:   &gen.UpdateRoleRequest{Role: nil},
-			expected: &gen.Role{DisplayName: "Role 1"},
+			initial:  &accountpb.Role{DisplayName: "Role 1"},
+			update:   &accountpb.UpdateRoleRequest{Role: nil},
+			expected: &accountpb.Role{DisplayName: "Role 1"},
 			code:     codes.InvalidArgument,
 		},
 		"display_name_conflict": {
-			initial: &gen.Role{DisplayName: "Role 1"},
-			others:  []*gen.Role{{DisplayName: "Role 2"}},
-			update: &gen.UpdateRoleRequest{
-				Role: &gen.Role{DisplayName: "Role 2"},
+			initial: &accountpb.Role{DisplayName: "Role 1"},
+			others:  []*accountpb.Role{{DisplayName: "Role 2"}},
+			update: &accountpb.UpdateRoleRequest{
+				Role: &accountpb.Role{DisplayName: "Role 2"},
 			},
-			expected: &gen.Role{DisplayName: "Role 1"},
+			expected: &accountpb.Role{DisplayName: "Role 1"},
 			code:     codes.AlreadyExists,
 		},
 	}
@@ -1929,7 +1929,7 @@ func TestServer_UpdateRole(t *testing.T) {
 			store := NewMemoryStore(logger)
 			server := NewServer(store, logger)
 
-			role, err := server.CreateRole(ctx, &gen.CreateRoleRequest{
+			role, err := server.CreateRole(ctx, &accountpb.CreateRoleRequest{
 				Role: tc.initial,
 			})
 			checkNilIfErrored(t, role, err)
@@ -1938,7 +1938,7 @@ func TestServer_UpdateRole(t *testing.T) {
 			}
 
 			for _, other := range tc.others {
-				_, err := server.CreateRole(ctx, &gen.CreateRoleRequest{
+				_, err := server.CreateRole(ctx, &accountpb.CreateRoleRequest{
 					Role: other,
 				})
 				if err != nil {
@@ -1948,11 +1948,11 @@ func TestServer_UpdateRole(t *testing.T) {
 
 			// inject ID, which is now known, into update and expected
 			id := role.Id
-			update := proto.Clone(tc.update).(*gen.UpdateRoleRequest)
+			update := proto.Clone(tc.update).(*accountpb.UpdateRoleRequest)
 			if update.Role != nil {
 				update.Role.Id = id
 			}
-			expected := proto.Clone(tc.expected).(*gen.Role)
+			expected := proto.Clone(tc.expected).(*accountpb.Role)
 			expected.Id = id
 
 			updated, err := server.UpdateRole(ctx, update)
@@ -1969,7 +1969,7 @@ func TestServer_UpdateRole(t *testing.T) {
 			}
 
 			// fetch again to check that the update was persisted
-			role, err = server.GetRole(ctx, &gen.GetRoleRequest{Id: id})
+			role, err = server.GetRole(ctx, &accountpb.GetRoleRequest{Id: id})
 			checkNilIfErrored(t, role, err)
 			if err != nil {
 				t.Fatalf("failed to get role: %v", err)
@@ -1989,9 +1989,9 @@ func TestRole_Protected(t *testing.T) {
 	store := NewMemoryStore(logger)
 	server := NewServer(store, logger)
 
-	findLegacyRole := func(legacyRole string) *gen.Role {
+	findLegacyRole := func(legacyRole string) *accountpb.Role {
 		t.Helper()
-		res, err := server.ListRoles(ctx, &gen.ListRolesRequest{
+		res, err := server.ListRoles(ctx, &accountpb.ListRolesRequest{
 			PageSize: 100,
 		})
 		checkNilIfErrored(t, res, err)
@@ -2010,8 +2010,8 @@ func TestRole_Protected(t *testing.T) {
 		t.Fatal("no admin role found")
 	}
 
-	res, err := server.UpdateRole(ctx, &gen.UpdateRoleRequest{
-		Role: &gen.Role{
+	res, err := server.UpdateRole(ctx, &accountpb.UpdateRoleRequest{
+		Role: &accountpb.Role{
 			Id:            adminRole.Id,
 			DisplayName:   "foo",
 			Description:   "bar",
@@ -2025,7 +2025,7 @@ func TestRole_Protected(t *testing.T) {
 		t.Errorf("expected nil response when updating role with no ID, got %v", res)
 	}
 
-	_, err = server.DeleteRole(ctx, &gen.DeleteRoleRequest{Id: adminRole.Id})
+	_, err = server.DeleteRole(ctx, &accountpb.DeleteRoleRequest{Id: adminRole.Id})
 	if status.Code(err) != codes.FailedPrecondition {
 		t.Errorf("expected FailedPrecondition error when deleting protected role, got %v", err)
 	}
@@ -2071,11 +2071,11 @@ func TestServer_RoleAssignments(t *testing.T) {
 	store := NewMemoryStore(logger)
 	server := NewServer(store, logger)
 
-	createAccount := func(displayName string) *gen.Account {
+	createAccount := func(displayName string) *accountpb.Account {
 		t.Helper()
-		res, err := server.CreateAccount(ctx, &gen.CreateAccountRequest{
-			Account: &gen.Account{
-				Type:        gen.Account_SERVICE_ACCOUNT,
+		res, err := server.CreateAccount(ctx, &accountpb.CreateAccountRequest{
+			Account: &accountpb.Account{
+				Type:        accountpb.Account_SERVICE_ACCOUNT,
 				DisplayName: displayName,
 			},
 		})
@@ -2085,10 +2085,10 @@ func TestServer_RoleAssignments(t *testing.T) {
 		}
 		return res
 	}
-	createRole := func(displayName string, permissions ...string) *gen.Role {
+	createRole := func(displayName string, permissions ...string) *accountpb.Role {
 		t.Helper()
-		res, err := server.CreateRole(ctx, &gen.CreateRoleRequest{
-			Role: &gen.Role{
+		res, err := server.CreateRole(ctx, &accountpb.CreateRoleRequest{
+			Role: &accountpb.Role{
 				DisplayName:   displayName,
 				PermissionIds: permissions,
 			},
@@ -2100,8 +2100,8 @@ func TestServer_RoleAssignments(t *testing.T) {
 		return res
 	}
 
-	var accounts []*gen.Account
-	var roles []*gen.Role
+	var accounts []*accountpb.Account
+	var roles []*accountpb.Role
 	const numAccounts = 50
 	const numRoles = 50
 
@@ -2113,7 +2113,7 @@ func TestServer_RoleAssignments(t *testing.T) {
 	}
 
 	// create role assignments randomly
-	var assignments []*gen.RoleAssignment
+	var assignments []*accountpb.RoleAssignment
 	for _, account := range accounts {
 		for _, role := range roles {
 			// don't assign all roles to all accounts, just some
@@ -2121,8 +2121,8 @@ func TestServer_RoleAssignments(t *testing.T) {
 				continue
 			}
 
-			assignment, err := server.CreateRoleAssignment(ctx, &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			assignment, err := server.CreateRoleAssignment(ctx, &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: account.Id,
 					RoleId:    role.Id,
 				},
@@ -2139,7 +2139,7 @@ func TestServer_RoleAssignments(t *testing.T) {
 	type filter struct {
 		name   string
 		filter string
-		expect []*gen.RoleAssignment
+		expect []*accountpb.RoleAssignment
 	}
 	var filters []filter
 	// no filter
@@ -2151,7 +2151,7 @@ func TestServer_RoleAssignments(t *testing.T) {
 	{
 		// filter by account
 		account := accounts[rand.IntN(len(accounts))]
-		var expect []*gen.RoleAssignment
+		var expect []*accountpb.RoleAssignment
 		for _, a := range assignments {
 			if a.AccountId == account.Id {
 				expect = append(expect, a)
@@ -2166,7 +2166,7 @@ func TestServer_RoleAssignments(t *testing.T) {
 	{
 		// filter by role
 		role := roles[rand.IntN(len(roles))]
-		var expect []*gen.RoleAssignment
+		var expect []*accountpb.RoleAssignment
 		for _, a := range assignments {
 			if a.RoleId == role.Id {
 				expect = append(expect, a)
@@ -2181,11 +2181,11 @@ func TestServer_RoleAssignments(t *testing.T) {
 
 	for _, f := range filters {
 		t.Run(f.name, func(t *testing.T) {
-			var got [][]*gen.RoleAssignment
+			var got [][]*accountpb.RoleAssignment
 			const pageSize = 15
 			var nextPageToken string
 			for {
-				res, err := server.ListRoleAssignments(ctx, &gen.ListRoleAssignmentsRequest{
+				res, err := server.ListRoleAssignments(ctx, &accountpb.ListRoleAssignmentsRequest{
 					Filter:    f.filter,
 					PageToken: nextPageToken,
 					PageSize:  pageSize,
@@ -2216,24 +2216,24 @@ func TestServer_RoleAssignments(t *testing.T) {
 	}
 
 	// delete a role assignment, check it's gone
-	_, err := server.DeleteRoleAssignment(ctx, &gen.DeleteRoleAssignmentRequest{
+	_, err := server.DeleteRoleAssignment(ctx, &accountpb.DeleteRoleAssignmentRequest{
 		Id: assignments[0].Id,
 	})
 	if err != nil {
 		t.Fatalf("failed to delete role assignment: %v", err)
 	}
 	// check that the role assignment is actually gone
-	_, err = server.GetRoleAssignment(ctx, &gen.GetRoleAssignmentRequest{Id: assignments[0].Id})
+	_, err = server.GetRoleAssignment(ctx, &accountpb.GetRoleAssignmentRequest{Id: assignments[0].Id})
 	if status.Code(err) != codes.NotFound {
 		t.Errorf("expected NotFound error for get role assignment, got %v", err)
 	}
 	// deleting it again should fail
-	_, err = server.DeleteRoleAssignment(ctx, &gen.DeleteRoleAssignmentRequest{Id: assignments[0].Id})
+	_, err = server.DeleteRoleAssignment(ctx, &accountpb.DeleteRoleAssignmentRequest{Id: assignments[0].Id})
 	if status.Code(err) != codes.NotFound {
 		t.Errorf("expected NotFound error for delete role assignment, got %v", err)
 	}
 	// deleting with allow_missing should succeed
-	_, err = server.DeleteRoleAssignment(ctx, &gen.DeleteRoleAssignmentRequest{Id: assignments[0].Id, AllowMissing: true})
+	_, err = server.DeleteRoleAssignment(ctx, &accountpb.DeleteRoleAssignmentRequest{Id: assignments[0].Id, AllowMissing: true})
 	if err != nil {
 		t.Errorf("failed to delete role assignment with allow_missing: %v", err)
 	}
@@ -2243,8 +2243,8 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 	ctx := context.Background()
 
 	type testCase struct {
-		existing []*gen.RoleAssignment
-		req      *gen.CreateRoleAssignmentRequest
+		existing []*accountpb.RoleAssignment
+		req      *accountpb.CreateRoleAssignmentRequest
 		code     codes.Code
 	}
 
@@ -2256,8 +2256,8 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 
 	cases := map[string]testCase{
 		"role_does_not_exist": {
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: accountPlaceholder,
 					RoleId:    "999",
 				},
@@ -2265,8 +2265,8 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.NotFound,
 		},
 		"account_does_not_exist": {
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: "999",
 					RoleId:    rolePlaceholder,
 				},
@@ -2274,8 +2274,8 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.NotFound,
 		},
 		"role_id_invalid": {
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: accountPlaceholder,
 					RoleId:    "invalid",
 				},
@@ -2283,8 +2283,8 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.NotFound,
 		},
 		"account_id_invalid": {
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: "invalid",
 					RoleId:    rolePlaceholder,
 				},
@@ -2292,12 +2292,12 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.NotFound,
 		},
 		"scope_provided": {
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
-					Scope: &gen.RoleAssignment_Scope{
-						ResourceType: gen.RoleAssignment_NAMED_RESOURCE,
+					Scope: &accountpb.RoleAssignment_Scope{
+						ResourceType: accountpb.RoleAssignment_NAMED_RESOURCE,
 						Resource:     "named-resource",
 					},
 				},
@@ -2305,8 +2305,8 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.OK,
 		},
 		"scope_not_provided": {
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
 				},
@@ -2314,11 +2314,11 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.OK,
 		},
 		"scope_invalid_resource_type": {
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
-					Scope: &gen.RoleAssignment_Scope{
+					Scope: &accountpb.RoleAssignment_Scope{
 						ResourceType: 500,
 						Resource:     "invalid resource type",
 					},
@@ -2327,12 +2327,12 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.InvalidArgument,
 		},
 		"scope_empty_resource_string": {
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
-					Scope: &gen.RoleAssignment_Scope{
-						ResourceType: gen.RoleAssignment_NAMED_RESOURCE,
+					Scope: &accountpb.RoleAssignment_Scope{
+						ResourceType: accountpb.RoleAssignment_NAMED_RESOURCE,
 						Resource:     "",
 					},
 				},
@@ -2340,18 +2340,18 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.InvalidArgument,
 		},
 		"scoped_and_unscoped": {
-			existing: []*gen.RoleAssignment{
+			existing: []*accountpb.RoleAssignment{
 				{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
 				},
 			},
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
-					Scope: &gen.RoleAssignment_Scope{
-						ResourceType: gen.RoleAssignment_NODE,
+					Scope: &accountpb.RoleAssignment_Scope{
+						ResourceType: accountpb.RoleAssignment_NODE,
 						Resource:     "node1",
 					},
 				},
@@ -2359,22 +2359,22 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.OK,
 		},
 		"different_scope_types": {
-			existing: []*gen.RoleAssignment{
+			existing: []*accountpb.RoleAssignment{
 				{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
-					Scope: &gen.RoleAssignment_Scope{
-						ResourceType: gen.RoleAssignment_NAMED_RESOURCE,
+					Scope: &accountpb.RoleAssignment_Scope{
+						ResourceType: accountpb.RoleAssignment_NAMED_RESOURCE,
 						Resource:     "name1",
 					},
 				},
 			},
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
-					Scope: &gen.RoleAssignment_Scope{
-						ResourceType: gen.RoleAssignment_NODE,
+					Scope: &accountpb.RoleAssignment_Scope{
+						ResourceType: accountpb.RoleAssignment_NODE,
 						Resource:     "node1",
 					},
 				},
@@ -2382,22 +2382,22 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.OK,
 		},
 		"different_scope_resources": {
-			existing: []*gen.RoleAssignment{
+			existing: []*accountpb.RoleAssignment{
 				{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
-					Scope: &gen.RoleAssignment_Scope{
-						ResourceType: gen.RoleAssignment_NODE,
+					Scope: &accountpb.RoleAssignment_Scope{
+						ResourceType: accountpb.RoleAssignment_NODE,
 						Resource:     "node1",
 					},
 				},
 			},
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
-					Scope: &gen.RoleAssignment_Scope{
-						ResourceType: gen.RoleAssignment_NODE,
+					Scope: &accountpb.RoleAssignment_Scope{
+						ResourceType: accountpb.RoleAssignment_NODE,
 						Resource:     "node2",
 					},
 				},
@@ -2405,14 +2405,14 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.OK,
 		},
 		"conflict_unscoped": {
-			existing: []*gen.RoleAssignment{
+			existing: []*accountpb.RoleAssignment{
 				{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
 				},
 			},
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
 				},
@@ -2420,22 +2420,22 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.AlreadyExists,
 		},
 		"conflict_scoped": {
-			existing: []*gen.RoleAssignment{
+			existing: []*accountpb.RoleAssignment{
 				{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
-					Scope: &gen.RoleAssignment_Scope{
-						ResourceType: gen.RoleAssignment_NAMED_RESOURCE,
+					Scope: &accountpb.RoleAssignment_Scope{
+						ResourceType: accountpb.RoleAssignment_NAMED_RESOURCE,
 						Resource:     "resource1",
 					},
 				},
 			},
-			req: &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			req: &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: accountPlaceholder,
 					RoleId:    rolePlaceholder,
-					Scope: &gen.RoleAssignment_Scope{
-						ResourceType: gen.RoleAssignment_NAMED_RESOURCE,
+					Scope: &accountpb.RoleAssignment_Scope{
+						ResourceType: accountpb.RoleAssignment_NAMED_RESOURCE,
 						Resource:     "resource1",
 					},
 				},
@@ -2443,7 +2443,7 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			code: codes.AlreadyExists,
 		},
 		"nil": {
-			req:  &gen.CreateRoleAssignmentRequest{},
+			req:  &accountpb.CreateRoleAssignmentRequest{},
 			code: codes.InvalidArgument,
 		},
 	}
@@ -2455,18 +2455,18 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			server := NewServer(store, logger)
 
 			// Create a valid account and role for positive test cases
-			account, err := server.CreateAccount(ctx, &gen.CreateAccountRequest{
-				Account: &gen.Account{
-					Type:        gen.Account_USER_ACCOUNT,
+			account, err := server.CreateAccount(ctx, &accountpb.CreateAccountRequest{
+				Account: &accountpb.Account{
+					Type:        accountpb.Account_USER_ACCOUNT,
 					DisplayName: "User",
-					Details:     &gen.Account_UserDetails{UserDetails: &gen.UserAccount{Username: "user"}},
+					Details:     &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{Username: "user"}},
 				},
 			})
 			if err != nil {
 				t.Fatalf("failed to create account: %v", err)
 			}
-			role, err := server.CreateRole(ctx, &gen.CreateRoleRequest{
-				Role: &gen.Role{
+			role, err := server.CreateRole(ctx, &accountpb.CreateRoleRequest{
+				Role: &accountpb.Role{
 					DisplayName:   "Role",
 					PermissionIds: []string{"foo"},
 				},
@@ -2475,12 +2475,12 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 				t.Fatalf("failed to create role: %v", err)
 			}
 
-			substitute := func(ra *gen.RoleAssignment) *gen.RoleAssignment {
+			substitute := func(ra *accountpb.RoleAssignment) *accountpb.RoleAssignment {
 				if ra == nil {
 					return nil
 				}
 				// Inject valid IDs into the request if needed
-				cloned := proto.Clone(ra).(*gen.RoleAssignment)
+				cloned := proto.Clone(ra).(*accountpb.RoleAssignment)
 				if cloned.RoleId == rolePlaceholder {
 					cloned.RoleId = role.Id
 				}
@@ -2494,7 +2494,7 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			for _, existing := range tc.existing {
 				existing = substitute(existing)
 
-				_, err = server.CreateRoleAssignment(ctx, &gen.CreateRoleAssignmentRequest{
+				_, err = server.CreateRoleAssignment(ctx, &accountpb.CreateRoleAssignmentRequest{
 					RoleAssignment: existing,
 				})
 				if err != nil {
@@ -2502,7 +2502,7 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 				}
 			}
 
-			req := proto.Clone(tc.req).(*gen.CreateRoleAssignmentRequest)
+			req := proto.Clone(tc.req).(*accountpb.CreateRoleAssignmentRequest)
 			req.RoleAssignment = substitute(req.RoleAssignment)
 
 			created, err := server.CreateRoleAssignment(ctx, req)
@@ -2511,7 +2511,7 @@ func TestServer_CreateRoleAssignment(t *testing.T) {
 			}
 
 			if created != nil {
-				expected := proto.Clone(req.RoleAssignment).(*gen.RoleAssignment)
+				expected := proto.Clone(req.RoleAssignment).(*accountpb.RoleAssignment)
 				expected.Id = created.Id
 
 				diff := cmp.Diff(expected, created, protocmp.Transform())
@@ -2531,8 +2531,8 @@ func TestServer_CreateRoleAssignment_ScopeWithLegacyRole(t *testing.T) {
 	server := NewServer(store, logger)
 
 	// find the admin role, which is a legacy role
-	var adminRole *gen.Role
-	res, err := server.ListRoles(ctx, &gen.ListRolesRequest{
+	var adminRole *accountpb.Role
+	res, err := server.ListRoles(ctx, &accountpb.ListRolesRequest{
 		PageSize: 100,
 	})
 	if err != nil {
@@ -2549,11 +2549,11 @@ func TestServer_CreateRoleAssignment_ScopeWithLegacyRole(t *testing.T) {
 	}
 
 	// create a user account
-	account, err := server.CreateAccount(ctx, &gen.CreateAccountRequest{
-		Account: &gen.Account{
-			Type:        gen.Account_USER_ACCOUNT,
+	account, err := server.CreateAccount(ctx, &accountpb.CreateAccountRequest{
+		Account: &accountpb.Account{
+			Type:        accountpb.Account_USER_ACCOUNT,
 			DisplayName: "Test Account",
-			Details: &gen.Account_UserDetails{UserDetails: &gen.UserAccount{
+			Details: &accountpb.Account_UserDetails{UserDetails: &accountpb.UserAccount{
 				Username: "test",
 			}},
 		},
@@ -2563,12 +2563,12 @@ func TestServer_CreateRoleAssignment_ScopeWithLegacyRole(t *testing.T) {
 	}
 
 	// try to create a role assignment with a scope - should fail
-	_, err = server.CreateRoleAssignment(ctx, &gen.CreateRoleAssignmentRequest{
-		RoleAssignment: &gen.RoleAssignment{
+	_, err = server.CreateRoleAssignment(ctx, &accountpb.CreateRoleAssignmentRequest{
+		RoleAssignment: &accountpb.RoleAssignment{
 			AccountId: account.Id,
 			RoleId:    adminRole.Id,
-			Scope: &gen.RoleAssignment_Scope{
-				ResourceType: gen.RoleAssignment_ZONE,
+			Scope: &accountpb.RoleAssignment_Scope{
+				ResourceType: accountpb.RoleAssignment_ZONE,
 				Resource:     "foo",
 			},
 		},
@@ -2578,8 +2578,8 @@ func TestServer_CreateRoleAssignment_ScopeWithLegacyRole(t *testing.T) {
 	}
 
 	// try to create a role assignment without a scope - should succeed
-	_, err = server.CreateRoleAssignment(ctx, &gen.CreateRoleAssignmentRequest{
-		RoleAssignment: &gen.RoleAssignment{
+	_, err = server.CreateRoleAssignment(ctx, &accountpb.CreateRoleAssignmentRequest{
+		RoleAssignment: &accountpb.RoleAssignment{
 			AccountId: account.Id,
 			RoleId:    adminRole.Id,
 		},

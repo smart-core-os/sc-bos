@@ -40,6 +40,10 @@
       <v-divider class="mt-4 mb-1"/>
       <meter-card v-bind="resource" :info="info?.response" :name="deviceId"/>
     </with-meter>
+    <with-temperature v-if="traits['smartcore.bos.Temperature']" :name="deviceId" v-slot="{resource}">
+      <v-divider class="mt-4 mb-1"/>
+      <temperature-card v-bind="resource"/>
+    </with-temperature>
     <with-transport v-if="traits['smartcore.bos.Transport']" :name="deviceId">
       <template #transport="{resource, info}">
         <v-divider class="mt-4 mb-1"/>
@@ -83,6 +87,8 @@ import OnOffCard from '@/traits/onOff/OnOffCard.vue';
 import WithOnOff from '@/traits/onOff/WithOnOff.vue';
 import StatusLogCard from '@/traits/status/StatusLogCard.vue';
 import WithStatus from '@/traits/status/WithStatus.vue';
+import TemperatureCard from '@/traits/temperature/TemperatureCard.vue';
+import WithTemperature from '@/traits/temperature/WithTemperature.vue';
 import TransportCard from '@/traits/transport/TransportCard.vue';
 import TransportHistoryCard from '@/traits/transport/TransportHistoryCard.vue';
 import WithTransport from '@/traits/transport/WithTransport.vue';

@@ -4,7 +4,7 @@ import useFilterCtx from '@/components/filter/filterCtx.js';
 import useCollection from '@/composables/collection.js';
 import {useExperiment} from '@/composables/experiments.js';
 import {watchResource} from '@/util/traits.js';
-import {Device} from '@smart-core-os/sc-bos-ui-gen/proto/devices_pb';
+import {Device} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_pb';
 import {computed, reactive, toRefs, toValue} from 'vue';
 
 /**

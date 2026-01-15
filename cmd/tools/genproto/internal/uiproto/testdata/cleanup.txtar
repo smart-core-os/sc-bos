@@ -1,0 +1,50 @@
+This test verifies that cleanGeneratedFiles removes all _pb.* files (including nested) and cleans up empty directories.
+
+-- input/test_pb.js --
+// Generated protobuf file - should be removed
+
+-- input/test_pb.d.ts --
+// Generated protobuf types - should be removed
+
+-- input/test_grpc_web_pb.js --
+// Generated gRPC web file - should be removed
+
+-- input/test_grpc_web_pb.d.ts --
+// Generated gRPC web types - should be removed
+
+-- input/other.js --
+// Not a generated file - should be kept
+
+-- input/other.d.ts --
+// Not a generated file - should be kept
+
+-- input/root_pb.js --
+// Generated protobuf file at root - should be removed
+
+-- input/services/api_pb.js --
+// Generated protobuf file in services - should be removed
+
+-- input/services/api_grpc_web_pb.js --
+// Generated gRPC web file in services - should be removed
+
+-- input/deep/nested/controller_pb.d.ts --
+// Generated protobuf types deep nested - should be removed
+
+-- input/deep/nested/controller_grpc_web_pb.d.ts --
+// Generated gRPC web types deep nested - should be removed
+
+-- input/deep/nested/other.js --
+// Not a generated file - should be kept
+
+-- input/empty/nested/file_pb.js --
+// Generated file in deeply nested dir - should be removed
+
+-- output/other.js --
+// Not a generated file - should be kept
+
+-- output/other.d.ts --
+// Not a generated file - should be kept
+
+-- output/deep/nested/other.js --
+// Not a generated file - should be kept
+

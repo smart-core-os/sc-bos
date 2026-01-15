@@ -15,7 +15,7 @@ import (
 	timepb "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/occupancyemail/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
@@ -42,7 +42,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	logger := a.Logger
 	logger = logger.With(zap.String("snmp.host", cfg.Destination.Host), zap.Int("snmp.port", cfg.Destination.Port))
 
-	ohClient := gen.NewOccupancySensorHistoryClient(a.Node.ClientConn())
+	ohClient := occupancysensorpb.NewOccupancySensorHistoryClient(a.Node.ClientConn())
 	sendTime := cfg.Destination.SendTime
 	now := cfg.Now
 	if now == nil {
@@ -73,7 +73,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 			days := make(map[time.Time]OccupancyStats) // the time.Time key should be at 00:00 for the day
 
 			rangeStart := t.Add(-7 * 24 * time.Hour)
-			ohReq := &gen.ListOccupancyHistoryRequest{
+			ohReq := &occupancysensorpb.ListOccupancyHistoryRequest{
 				Name: cfg.Source.Name,
 				Period: &timepb.Period{
 					StartTime: timestamppb.New(rangeStart),
@@ -81,7 +81,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 				},
 			}
 			for {
-				ohResp, err := retryT(ctx, func(ctx context.Context) (*gen.ListOccupancyHistoryResponse, error) {
+				ohResp, err := retryT(ctx, func(ctx context.Context) (*occupancysensorpb.ListOccupancyHistoryResponse, error) {
 					return ohClient.ListOccupancyHistory(ctx, ohReq)
 				})
 				if err != nil {

@@ -18,8 +18,8 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
@@ -51,35 +51,35 @@ func NewServerFromPool(ctx context.Context, pool *pgxpool.Pool) (*Server, error)
 
 	return &Server{
 		pool: pool,
-		bus:  &minibus.Bus[*gen.PullAlertsResponse_Change]{},
-		Severity: []gen.Alert_Severity{
-			gen.Alert_INFO,
-			gen.Alert_WARNING,
-			gen.Alert_SEVERE,
-			gen.Alert_LIFE_SAFETY,
+		bus:  &minibus.Bus[*alertpb.PullAlertsResponse_Change]{},
+		Severity: []alertpb.Alert_Severity{
+			alertpb.Alert_INFO,
+			alertpb.Alert_WARNING,
+			alertpb.Alert_SEVERE,
+			alertpb.Alert_LIFE_SAFETY,
 		},
 	}, nil
 }
 
 type Server struct {
-	gen.UnimplementedAlertApiServer
-	gen.UnimplementedAlertAdminApiServer
+	alertpb.UnimplementedAlertApiServer
+	alertpb.UnimplementedAlertAdminApiServer
 
 	// Floors, if set, is used to pre-populate AlertMetadata with zero values for cases when no alerts appear on a floor.
 	Floors []string
 	// Zones, if set, is used to pre-populate AlertMetadata with zero values for cases when no alerts appear in a zone.
 	Zones []string
 	// Severity, if set, is used to pre-populate AlertMetadata with zero values for cases when no alerts have a severity.
-	Severity []gen.Alert_Severity
+	Severity []alertpb.Alert_Severity
 	// Subsystems, if set, is used to pre-populate AlertMetadata with zero values for cases when no alerts appear in a subsystem.
 	Subsystems []string
 
 	pool *pgxpool.Pool
-	bus  *minibus.Bus[*gen.PullAlertsResponse_Change]
+	bus  *minibus.Bus[*alertpb.PullAlertsResponse_Change]
 
 	// to support alert metadata
 	mdMu   sync.Mutex      // guards the following md fields
-	md     *resource.Value // of *gen.AlertMetadata, used to track changes
+	md     *resource.Value // of *alertpb.AlertMetadata, used to track changes
 	mdC    chan struct{}   // nil if needs init, blocked if init-ing, closed if done
 	mdErr  error           // non-nil if mdC is done and completed with error
 	mdStop func()          // closes any go routines that are listening for changes
@@ -95,13 +95,13 @@ func (s *Server) Close() error {
 	return nil
 }
 
-func (s *Server) CreateAlert(ctx context.Context, request *gen.CreateAlertRequest) (*gen.Alert, error) {
+func (s *Server) CreateAlert(ctx context.Context, request *alertpb.CreateAlertRequest) (*alertpb.Alert, error) {
 	alert := request.Alert
 	if alert.Description == "" {
 		return nil, status.Error(codes.InvalidArgument, "description empty")
 	}
 	if alert.Severity == 0 {
-		alert.Severity = gen.Alert_WARNING
+		alert.Severity = alertpb.Alert_WARNING
 	}
 
 	if request.MergeSource {
@@ -113,7 +113,7 @@ func (s *Server) CreateAlert(ctx context.Context, request *gen.CreateAlertReques
 	return s.createNewAlert(ctx, request.Name, alert)
 }
 
-func (s *Server) createNewAlert(ctx context.Context, name string, alert *gen.Alert) (*gen.Alert, error) {
+func (s *Server) createNewAlert(ctx context.Context, name string, alert *alertpb.Alert) (*alertpb.Alert, error) {
 	alert, err := insertAlert(ctx, s.pool, alert)
 	if err != nil {
 		return nil, dbErrToStatus(err)
@@ -124,8 +124,8 @@ func (s *Server) createNewAlert(ctx context.Context, name string, alert *gen.Ale
 	return alert, nil
 }
 
-func (s *Server) mergeSourceAlert(ctx context.Context, name string, alert *gen.Alert) (*gen.Alert, error) {
-	var oldAlert, newAlert *gen.Alert
+func (s *Server) mergeSourceAlert(ctx context.Context, name string, alert *alertpb.Alert) (*alertpb.Alert, error) {
+	var oldAlert, newAlert *alertpb.Alert
 	err := s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		args := []any{
 			alert.Source,
@@ -138,7 +138,7 @@ func (s *Server) mergeSourceAlert(ctx context.Context, name string, alert *gen.A
 		// note: we don't WHERE resolve_time is NULL because we _want_ to see if the last alert was resolved or not
 		sql += ` ORDER BY create_time DESC LIMIT 1 FOR UPDATE`
 
-		oldAlert = &gen.Alert{}
+		oldAlert = &alertpb.Alert{}
 		row := tx.QueryRow(ctx, sql, args...)
 		err := scanAlert(row, oldAlert)
 		switch {
@@ -178,7 +178,7 @@ func (s *Server) mergeSourceAlert(ctx context.Context, name string, alert *gen.A
 			if err := updateAlert(ctx, tx, oldAlert.Id, fields, values); err != nil {
 				return err
 			}
-			newAlert = &gen.Alert{Id: oldAlert.Id}
+			newAlert = &alertpb.Alert{Id: oldAlert.Id}
 			return readAlertById(ctx, tx, oldAlert.Id, newAlert)
 		} else {
 			newAlert = oldAlert // no change made
@@ -198,7 +198,7 @@ func (s *Server) mergeSourceAlert(ctx context.Context, name string, alert *gen.A
 	return newAlert, nil
 }
 
-func (s *Server) UpdateAlert(ctx context.Context, request *gen.UpdateAlertRequest) (*gen.Alert, error) {
+func (s *Server) UpdateAlert(ctx context.Context, request *alertpb.UpdateAlertRequest) (*alertpb.Alert, error) {
 	alert := request.Alert
 	if alert.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id empty")
@@ -239,8 +239,8 @@ func (s *Server) UpdateAlert(ctx context.Context, request *gen.UpdateAlertReques
 		return nil, status.Error(codes.InvalidArgument, "no fields to update")
 	}
 
-	original := &gen.Alert{}
-	updated := &gen.Alert{}
+	original := &alertpb.Alert{}
+	updated := &alertpb.Alert{}
 
 	err := s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		// record the original value which will be used for event notifications
@@ -263,13 +263,13 @@ func (s *Server) UpdateAlert(ctx context.Context, request *gen.UpdateAlertReques
 	return updated, nil
 }
 
-func (s *Server) ResolveAlert(ctx context.Context, request *gen.ResolveAlertRequest) (*gen.Alert, error) {
+func (s *Server) ResolveAlert(ctx context.Context, request *alertpb.ResolveAlertRequest) (*alertpb.Alert, error) {
 	alert := request.Alert
 
-	original := &gen.Alert{}
-	updated := &gen.Alert{}
+	original := &alertpb.Alert{}
+	updated := &alertpb.Alert{}
 
-	respond := func(err error) (*gen.Alert, error) {
+	respond := func(err error) (*alertpb.Alert, error) {
 		switch {
 		case status.Code(err) == codes.NotFound:
 			if !request.AllowMissing {
@@ -345,11 +345,11 @@ func (s *Server) ResolveAlert(ctx context.Context, request *gen.ResolveAlertRequ
 	return nil, status.Error(codes.InvalidArgument, "id and source missing")
 }
 
-func (s *Server) DeleteAlert(ctx context.Context, request *gen.DeleteAlertRequest) (*gen.DeleteAlertResponse, error) {
+func (s *Server) DeleteAlert(ctx context.Context, request *alertpb.DeleteAlertRequest) (*alertpb.DeleteAlertResponse, error) {
 	if request.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id empty")
 	}
-	existing := &gen.Alert{}
+	existing := &alertpb.Alert{}
 	err := s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		// We do extra work to get the old value so we can include it in bus events.
 		// Without this any filtered PullAlerts call wouldn't be able to correctly include the event in responses.
@@ -373,7 +373,7 @@ func (s *Server) DeleteAlert(ctx context.Context, request *gen.DeleteAlertReques
 	if err != nil {
 		err := dbErrToStatus(err)
 		if status.Code(err) == codes.NotFound && request.AllowMissing {
-			return &gen.DeleteAlertResponse{}, nil
+			return &alertpb.DeleteAlertResponse{}, nil
 		}
 		return nil, err
 	}
@@ -381,10 +381,10 @@ func (s *Server) DeleteAlert(ctx context.Context, request *gen.DeleteAlertReques
 	// notify
 	go s.notifyRemove(request.Name, existing)
 
-	return &gen.DeleteAlertResponse{}, nil
+	return &alertpb.DeleteAlertResponse{}, nil
 }
 
-func (s *Server) ListAlerts(ctx context.Context, request *gen.ListAlertsRequest) (*gen.ListAlertsResponse, error) {
+func (s *Server) ListAlerts(ctx context.Context, request *alertpb.ListAlertsRequest) (*alertpb.ListAlertsResponse, error) {
 	var args []any
 	var argIdx int
 	var where []string // combined with AND
@@ -486,9 +486,9 @@ func (s *Server) ListAlerts(ctx context.Context, request *gen.ListAlertsRequest)
 	}
 	defer rows.Close()
 
-	var alerts []*gen.Alert
+	var alerts []*alertpb.Alert
 	for rows.Next() {
-		alert := &gen.Alert{}
+		alert := &alertpb.Alert{}
 		err := scanAlert(rows, alert)
 		if err != nil {
 			return nil, dbErrToStatus(err)
@@ -496,7 +496,7 @@ func (s *Server) ListAlerts(ctx context.Context, request *gen.ListAlertsRequest)
 		alerts = append(alerts, alert)
 	}
 
-	res := &gen.ListAlertsResponse{}
+	res := &alertpb.ListAlertsResponse{}
 	if len(alerts) <= pageSize {
 		// no more pages, remember we selected pageSize+1 rows so we could be sure.
 		res.Alerts = alerts
@@ -524,7 +524,7 @@ func (s *Server) ListAlerts(ctx context.Context, request *gen.ListAlertsRequest)
 	return res, nil
 }
 
-func (s *Server) PullAlerts(request *gen.PullAlertsRequest, server gen.AlertApi_PullAlertsServer) error {
+func (s *Server) PullAlerts(request *alertpb.PullAlertsRequest, server alertpb.AlertApi_PullAlertsServer) error {
 	filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 	for change := range s.bus.Listen(server.Context()) {
 		change := convertChangeForQuery(request.Query, change)
@@ -532,12 +532,12 @@ func (s *Server) PullAlerts(request *gen.PullAlertsRequest, server gen.AlertApi_
 			continue
 		}
 		if change.OldValue != nil {
-			change.OldValue = filter.FilterClone(change.OldValue).(*gen.Alert)
+			change.OldValue = filter.FilterClone(change.OldValue).(*alertpb.Alert)
 		}
 		if change.NewValue != nil {
-			change.NewValue = filter.FilterClone(change.NewValue).(*gen.Alert)
+			change.NewValue = filter.FilterClone(change.NewValue).(*alertpb.Alert)
 		}
-		err := server.Send(&gen.PullAlertsResponse{Changes: []*gen.PullAlertsResponse_Change{change}})
+		err := server.Send(&alertpb.PullAlertsResponse{Changes: []*alertpb.PullAlertsResponse_Change{change}})
 		if err != nil {
 			return err
 		}
@@ -545,13 +545,13 @@ func (s *Server) PullAlerts(request *gen.PullAlertsRequest, server gen.AlertApi_
 	return server.Context().Err()
 }
 
-func (s *Server) AcknowledgeAlert(ctx context.Context, request *gen.AcknowledgeAlertRequest) (*gen.Alert, error) {
+func (s *Server) AcknowledgeAlert(ctx context.Context, request *alertpb.AcknowledgeAlertRequest) (*alertpb.Alert, error) {
 	if request.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id empty")
 	}
 
-	existing := &gen.Alert{}
-	updated := &gen.Alert{}
+	existing := &alertpb.Alert{}
+	updated := &alertpb.Alert{}
 	err := s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		err := readAlertById(ctx, tx, request.Id, existing)
 		if err != nil {
@@ -591,7 +591,7 @@ func (s *Server) AcknowledgeAlert(ctx context.Context, request *gen.AcknowledgeA
 	if err != nil {
 		err := dbErrToStatus(err)
 		if status.Code(err) == codes.NotFound && request.AllowMissing {
-			return &gen.Alert{}, nil
+			return &alertpb.Alert{}, nil
 		}
 		return nil, err
 	}
@@ -604,13 +604,13 @@ func (s *Server) AcknowledgeAlert(ctx context.Context, request *gen.AcknowledgeA
 	return updated, nil
 }
 
-func (s *Server) UnacknowledgeAlert(ctx context.Context, request *gen.AcknowledgeAlertRequest) (*gen.Alert, error) {
+func (s *Server) UnacknowledgeAlert(ctx context.Context, request *alertpb.AcknowledgeAlertRequest) (*alertpb.Alert, error) {
 	if request.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id empty")
 	}
 
-	existing := &gen.Alert{}
-	updated := &gen.Alert{}
+	existing := &alertpb.Alert{}
+	updated := &alertpb.Alert{}
 	err := s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		err := readAlertById(ctx, tx, request.Id, existing)
 		if err != nil {
@@ -636,7 +636,7 @@ func (s *Server) UnacknowledgeAlert(ctx context.Context, request *gen.Acknowledg
 	if err != nil {
 		err := dbErrToStatus(err)
 		if status.Code(err) == codes.NotFound && request.AllowMissing {
-			return &gen.Alert{}, nil
+			return &alertpb.Alert{}, nil
 		}
 		return nil, err
 	}
@@ -687,12 +687,12 @@ func fieldMaskIncludesPath(m *fieldmaskpb.FieldMask, p string) bool {
 	return len(i.Paths) > 0
 }
 
-func convertChangeForQuery(q *gen.Alert_Query, change *gen.PullAlertsResponse_Change) *gen.PullAlertsResponse_Change {
+func convertChangeForQuery(q *alertpb.Alert_Query, change *alertpb.PullAlertsResponse_Change) *alertpb.PullAlertsResponse_Change {
 	if q == nil {
 		return change
 	}
 
-	res := proto.Clone(change).(*gen.PullAlertsResponse_Change)
+	res := proto.Clone(change).(*alertpb.PullAlertsResponse_Change)
 	if change.OldValue != nil && !alertMatchesQuery(q, change.OldValue) {
 		res.OldValue = nil
 	}
@@ -717,7 +717,7 @@ func convertChangeForQuery(q *gen.Alert_Query, change *gen.PullAlertsResponse_Ch
 	return res
 }
 
-func alertMatchesQuery(q *gen.Alert_Query, a *gen.Alert) bool {
+func alertMatchesQuery(q *alertpb.Alert_Query, a *alertpb.Alert) bool {
 	if q == nil {
 		return true
 	}

@@ -1,0 +1,124 @@
+Test that proto files outside the proto root directory are updated in place,
+not moved to new locations. This includes files with and without service declarations.
+Files without services in non-root directories are skipped (message-only helpers).
+Files without services still get their imports and type references updated.
+expected_changes: 3
+
+-- input/proto/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service MeterApi {
+  rpc GetMeter(GetMeterRequest) returns (Meter);
+}
+
+message Meter {
+  string id = 1;
+}
+
+message GetMeterRequest {
+  string name = 1;
+}
+-- input/pkg/driver/custom/custom.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.custom;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/driver/custom";
+
+import "meter.proto";
+import "page_token.proto";
+
+service CustomDriverService {
+  rpc DoSomething(DoSomethingRequest) returns (DoSomethingResponse);
+}
+
+message DoSomethingRequest {
+  string name = 1;
+  // Reference to meter from proto root
+  Meter meter = 2;
+}
+
+message DoSomethingResponse {
+  string result = 1;
+  // Reference to page_token from internal
+  smartcore.bos.account.PageToken token = 2;
+}
+-- input/internal/account/page_token.proto --
+syntax = "proto3";
+
+package smartcore.bos.account;
+
+option go_package = "github.com/smart-core-os/sc-bos/internal/account";
+
+import "meter.proto";
+
+message PageToken {
+  int64 last_id = 1;
+  int32 total_size = 2;
+  string filter = 3;
+  // Reference to moved proto type
+  Meter sample = 4;
+}
+-- output/proto/smartcore/bos/meter/v1/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service MeterApi {
+  rpc GetMeter(GetMeterRequest) returns (Meter);
+}
+
+message Meter {
+  string id = 1;
+}
+
+message GetMeterRequest {
+  string name = 1;
+}
+-- output/pkg/driver/custom/custom.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.custom.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/driver/custom";
+
+import "page_token.proto";
+import "smartcore/bos/meter/v1/meter.proto";
+
+service CustomDriverService {
+  rpc DoSomething(DoSomethingRequest) returns (DoSomethingResponse);
+}
+
+message DoSomethingRequest {
+  string name = 1;
+  // Reference to meter from proto root
+  smartcore.bos.meter.v1.Meter meter = 2;
+}
+
+message DoSomethingResponse {
+  string result = 1;
+  // Reference to page_token from internal
+  smartcore.bos.account.PageToken token = 2;
+}
+-- output/internal/account/page_token.proto --
+syntax = "proto3";
+
+package smartcore.bos.account;
+
+option go_package = "github.com/smart-core-os/sc-bos/internal/account";
+
+import "smartcore/bos/meter/v1/meter.proto";
+
+message PageToken {
+  int64 last_id = 1;
+  int32 total_size = 2;
+  string filter = 3;
+  // Reference to moved proto type
+  smartcore.bos.meter.v1.Meter sample = 4;
+}

@@ -1,4 +1,4 @@
-// Command client-devicesmetadata provides a CLI tool for interacting with the [gen.DevicesApiClient].
+// Command client-devicesmetadata provides a CLI tool for interacting with the [devicespb.DevicesApiClient].
 package main
 
 import (
@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/client"
 )
 
@@ -40,12 +40,12 @@ func run() error {
 	log.Printf("dialled")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	client := gen.NewDevicesApiClient(conn)
+	client := devicespb.NewDevicesApiClient(conn)
 
-	includes := &gen.DevicesMetadata_Include{Fields: []string{"metadata.membership.subsystem"}}
+	includes := &devicespb.DevicesMetadata_Include{Fields: []string{"metadata.membership.subsystem"}}
 	get := func(c context.Context) error {
 		log.Printf("GetDevicesMetadata")
-		res, err := client.GetDevicesMetadata(ctx, &gen.GetDevicesMetadataRequest{Includes: includes})
+		res, err := client.GetDevicesMetadata(ctx, &devicespb.GetDevicesMetadataRequest{Includes: includes})
 		if err != nil {
 			return err
 		}
@@ -55,7 +55,7 @@ func run() error {
 
 	pull := func(c context.Context) error {
 		log.Printf("PullDevicesMetadata")
-		stream, err := client.PullDevicesMetadata(ctx, &gen.PullDevicesMetadataRequest{Includes: includes})
+		stream, err := client.PullDevicesMetadata(ctx, &devicespb.PullDevicesMetadataRequest{Includes: includes})
 		if err != nil {
 			return err
 		}

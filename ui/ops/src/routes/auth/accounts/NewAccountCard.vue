@@ -72,7 +72,7 @@
 <script setup>
 import {createAccount} from '@/api/ui/account.js';
 import {useLocalProp} from '@/util/vue.js';
-import {Account} from '@smart-core-os/sc-bos-ui-gen/proto/account_pb';
+import {Account} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_pb';
 import {computed, ref, watch} from 'vue';
 
 const props = defineProps({

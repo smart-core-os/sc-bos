@@ -14,7 +14,7 @@
 
 <script setup>
 import NewAccountCard from '@/routes/auth/accounts/NewAccountCard.vue';
-import {Account} from '@smart-core-os/sc-bos-ui-gen/proto/account_pb';
+import {Account} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_pb';
 import {computed, ref, watch} from 'vue';
 
 const props = defineProps({

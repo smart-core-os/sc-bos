@@ -7,19 +7,19 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 )
 
 func TestMetadataCollection_repeated(t *testing.T) {
 	c := newMetadataCollector("metadata.nics.assignment")
-	c.add(&gen.Device{
+	c.add(&devicespb.Device{
 		Metadata: &traits.Metadata{
 			Nics: []*traits.Metadata_NIC{
 				{Assignment: traits.Metadata_NIC_DHCP},
 			},
 		},
 	})
-	c.add(&gen.Device{
+	c.add(&devicespb.Device{
 		Metadata: &traits.Metadata{
 			Nics: []*traits.Metadata_NIC{
 				{Assignment: traits.Metadata_NIC_STATIC},
@@ -27,7 +27,7 @@ func TestMetadataCollection_repeated(t *testing.T) {
 		},
 	})
 
-	d := &gen.Device{
+	d := &devicespb.Device{
 		Metadata: &traits.Metadata{
 			Nics: []*traits.Metadata_NIC{
 				{Assignment: traits.Metadata_NIC_DHCP},
@@ -39,9 +39,9 @@ func TestMetadataCollection_repeated(t *testing.T) {
 	}
 
 	got := c.add(d)
-	want := &gen.DevicesMetadata{
+	want := &devicespb.DevicesMetadata{
 		TotalCount: 3,
-		FieldCounts: []*gen.DevicesMetadata_StringFieldCount{
+		FieldCounts: []*devicespb.DevicesMetadata_StringFieldCount{
 			{
 				Field: "metadata.nics.assignment",
 				Counts: map[string]uint32{
@@ -56,9 +56,9 @@ func TestMetadataCollection_repeated(t *testing.T) {
 	}
 
 	got = c.remove(d)
-	want = &gen.DevicesMetadata{
+	want = &devicespb.DevicesMetadata{
 		TotalCount: 2,
-		FieldCounts: []*gen.DevicesMetadata_StringFieldCount{
+		FieldCounts: []*devicespb.DevicesMetadata_StringFieldCount{
 			{
 				Field: "metadata.nics.assignment",
 				Counts: map[string]uint32{

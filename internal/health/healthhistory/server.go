@@ -8,13 +8,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/internal/health/healthdb"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
-// Server is a [gen.HealthHistoryServer] that reads health check history from a database.
+// Server is a [healthpb.HealthHistoryServer] that reads health check history from a database.
 type Server struct {
-	gen.UnimplementedHealthHistoryServer
+	healthpb.UnimplementedHealthHistoryServer
 	db ServerStore
 }
 
@@ -28,7 +28,7 @@ func NewServer(db ServerStore) *Server {
 	return &Server{db: db}
 }
 
-func (s *Server) ListHealthCheckHistory(ctx context.Context, req *gen.ListHealthCheckHistoryRequest) (*gen.ListHealthCheckHistoryResponse, error) {
+func (s *Server) ListHealthCheckHistory(ctx context.Context, req *healthpb.ListHealthCheckHistoryRequest) (*healthpb.ListHealthCheckHistoryResponse, error) {
 	id := parseCheckID(req)
 	from, to := parseListBounds(req)
 	orderBy := parseOrderBy(req.GetOrderBy())
@@ -62,7 +62,7 @@ func (s *Server) ListHealthCheckHistory(ctx context.Context, req *gen.ListHealth
 	}
 
 	hasMorePages := n == len(buf)
-	res := &gen.ListHealthCheckHistoryResponse{
+	res := &healthpb.ListHealthCheckHistoryResponse{
 		TotalSize: totalSize,
 	}
 	if hasMorePages {
@@ -73,7 +73,7 @@ func (s *Server) ListHealthCheckHistory(ctx context.Context, req *gen.ListHealth
 		res.NextPageToken = token
 		n-- // don't include the extra record in the results
 	}
-	res.HealthCheckRecords = make([]*gen.HealthCheckRecord, n)
+	res.HealthCheckRecords = make([]*healthpb.HealthCheckRecord, n)
 	for i := range n {
 		hcr, err := decodeRecord(buf[i])
 		if err != nil {
@@ -84,11 +84,11 @@ func (s *Server) ListHealthCheckHistory(ctx context.Context, req *gen.ListHealth
 	return res, nil
 }
 
-func parseCheckID(req *gen.ListHealthCheckHistoryRequest) healthdb.CheckID {
+func parseCheckID(req *healthpb.ListHealthCheckHistoryRequest) healthdb.CheckID {
 	return healthdb.CheckID{Name: req.GetName(), ID: req.GetId()}
 }
 
-func parseListBounds(req *gen.ListHealthCheckHistoryRequest) (from, to healthdb.RecordID) {
+func parseListBounds(req *healthpb.ListHealthCheckHistoryRequest) (from, to healthdb.RecordID) {
 	if ts := req.GetPeriod().GetStartTime(); ts != nil {
 		from = healthdb.MakeRecordID(ts.AsTime(), 0)
 	}
@@ -111,10 +111,10 @@ func parseOrderBy(s string) historypb.OrderBy {
 	}
 }
 
-func decodeRecord(r healthdb.Record) (*gen.HealthCheckRecord, error) {
-	dst := &gen.HealthCheckRecord{
+func decodeRecord(r healthdb.Record) (*healthpb.HealthCheckRecord, error) {
+	dst := &healthpb.HealthCheckRecord{
 		RecordTime: timestamppb.New(r.ID.Timestamp()),
-		HealthCheck: &gen.HealthCheck{
+		HealthCheck: &healthpb.HealthCheck{
 			Id: r.CheckID,
 		},
 	}

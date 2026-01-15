@@ -19,7 +19,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/util/pass"
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/tenantpb"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
 )
 
@@ -64,15 +64,15 @@ var (
 )
 
 type Server struct {
-	gen.UnimplementedTenantApiServer
+	tenantpb.UnimplementedTenantApiServer
 	pool   *pgxpool.Pool
 	logger *zap.Logger
 }
 
-func (s *Server) ListTenants(ctx context.Context, request *gen.ListTenantsRequest) (*gen.ListTenantsResponse, error) {
+func (s *Server) ListTenants(ctx context.Context, request *tenantpb.ListTenantsRequest) (*tenantpb.ListTenantsResponse, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
-	var tenants []*gen.Tenant
+	var tenants []*tenantpb.Tenant
 	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
 		tenants, err = ListTenants(ctx, tx)
 		return
@@ -82,17 +82,17 @@ func (s *Server) ListTenants(ctx context.Context, request *gen.ListTenantsReques
 		return nil, errDatabase
 	}
 
-	return &gen.ListTenantsResponse{Tenants: tenants}, nil
+	return &tenantpb.ListTenantsResponse{Tenants: tenants}, nil
 }
 
-func (s *Server) PullTenants(request *gen.PullTenantsRequest, server gen.TenantApi_PullTenantsServer) error {
+func (s *Server) PullTenants(request *tenantpb.PullTenantsRequest, server tenantpb.TenantApi_PullTenantsServer) error {
 	return status.Error(codes.Unimplemented, "unimplemented")
 }
 
-func (s *Server) CreateTenant(ctx context.Context, request *gen.CreateTenantRequest) (*gen.Tenant, error) {
+func (s *Server) CreateTenant(ctx context.Context, request *tenantpb.CreateTenantRequest) (*tenantpb.Tenant, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
-	var newTenant *gen.Tenant
+	var newTenant *tenantpb.Tenant
 	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
 		newTenant, err = CreateTenant(ctx, tx, request.Tenant.Title)
 		if err != nil {
@@ -113,7 +113,7 @@ func (s *Server) CreateTenant(ctx context.Context, request *gen.CreateTenantRequ
 	return newTenant, nil
 }
 
-func (s *Server) GetTenant(ctx context.Context, request *gen.GetTenantRequest) (*gen.Tenant, error) {
+func (s *Server) GetTenant(ctx context.Context, request *tenantpb.GetTenantRequest) (*tenantpb.Tenant, error) {
 	if request.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing tenant id")
 	}
@@ -122,7 +122,7 @@ func (s *Server) GetTenant(ctx context.Context, request *gen.GetTenantRequest) (
 	}
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
-	var tenant *gen.Tenant
+	var tenant *tenantpb.Tenant
 	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
 		var err error
 		tenant, err = GetTenant(ctx, tx, request.GetId())
@@ -137,7 +137,7 @@ func (s *Server) GetTenant(ctx context.Context, request *gen.GetTenantRequest) (
 	return tenant, nil
 }
 
-func (s *Server) UpdateTenant(ctx context.Context, request *gen.UpdateTenantRequest) (*gen.Tenant, error) {
+func (s *Server) UpdateTenant(ctx context.Context, request *tenantpb.UpdateTenantRequest) (*tenantpb.Tenant, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger).With(zap.String("tenant", request.GetTenant().GetId()))
 	tenant := request.Tenant
 	updater := masks.NewFieldUpdater(
@@ -182,7 +182,7 @@ func (s *Server) UpdateTenant(ctx context.Context, request *gen.UpdateTenantRequ
 	return tenant, nil
 }
 
-func (s *Server) DeleteTenant(ctx context.Context, request *gen.DeleteTenantRequest) (*gen.DeleteTenantResponse, error) {
+func (s *Server) DeleteTenant(ctx context.Context, request *tenantpb.DeleteTenantRequest) (*tenantpb.DeleteTenantResponse, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger).With(zap.String("id", request.Id))
 
 	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
@@ -195,14 +195,14 @@ func (s *Server) DeleteTenant(ctx context.Context, request *gen.DeleteTenantRequ
 		return nil, errDatabase
 	}
 
-	return &gen.DeleteTenantResponse{}, nil
+	return &tenantpb.DeleteTenantResponse{}, nil
 }
 
-func (s *Server) PullTenant(request *gen.PullTenantRequest, server gen.TenantApi_PullTenantServer) error {
+func (s *Server) PullTenant(request *tenantpb.PullTenantRequest, server tenantpb.TenantApi_PullTenantServer) error {
 	return status.Error(codes.Unimplemented, "unimplemented")
 }
 
-func (s *Server) AddTenantZones(ctx context.Context, request *gen.AddTenantZonesRequest) (*gen.Tenant, error) {
+func (s *Server) AddTenantZones(ctx context.Context, request *tenantpb.AddTenantZonesRequest) (*tenantpb.Tenant, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
 	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
@@ -215,13 +215,13 @@ func (s *Server) AddTenantZones(ctx context.Context, request *gen.AddTenantZones
 		return nil, errDatabase
 	}
 
-	return s.GetTenant(ctx, &gen.GetTenantRequest{Id: request.TenantId})
+	return s.GetTenant(ctx, &tenantpb.GetTenantRequest{Id: request.TenantId})
 }
 
-func (s *Server) RemoveTenantZones(ctx context.Context, request *gen.RemoveTenantZonesRequest) (*gen.Tenant, error) {
+func (s *Server) RemoveTenantZones(ctx context.Context, request *tenantpb.RemoveTenantZonesRequest) (*tenantpb.Tenant, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
-	var tenant *gen.Tenant
+	var tenant *tenantpb.Tenant
 	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
 		err = RemoveTenantZones(ctx, tx, request.TenantId, request.RemoveZoneNames)
 		if err != nil {
@@ -241,7 +241,7 @@ func (s *Server) RemoveTenantZones(ctx context.Context, request *gen.RemoveTenan
 	return tenant, nil
 }
 
-func (s *Server) ListSecrets(ctx context.Context, request *gen.ListSecretsRequest) (*gen.ListSecretsResponse, error) {
+func (s *Server) ListSecrets(ctx context.Context, request *tenantpb.ListSecretsRequest) (*tenantpb.ListSecretsResponse, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger).With(
 		zap.Namespace("request"),
 		zap.String("filter", request.GetFilter()),
@@ -257,7 +257,7 @@ func (s *Server) ListSecrets(ctx context.Context, request *gen.ListSecretsReques
 		tenantID = groups[1]
 	}
 
-	var secrets []*gen.Secret
+	var secrets []*tenantpb.Secret
 	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
 		secrets, err = ListTenantSecrets(ctx, tx, tenantID)
 		return
@@ -273,14 +273,14 @@ func (s *Server) ListSecrets(ctx context.Context, request *gen.ListSecretsReques
 		}
 	}
 
-	return &gen.ListSecretsResponse{Secrets: secrets}, nil
+	return &tenantpb.ListSecretsResponse{Secrets: secrets}, nil
 }
 
-func (s *Server) PullSecrets(request *gen.PullSecretsRequest, server gen.TenantApi_PullSecretsServer) error {
+func (s *Server) PullSecrets(request *tenantpb.PullSecretsRequest, server tenantpb.TenantApi_PullSecretsServer) error {
 	return status.Error(codes.Unimplemented, "unimplemented")
 }
 
-func (s *Server) CreateSecret(ctx context.Context, request *gen.CreateSecretRequest) (*gen.Secret, error) {
+func (s *Server) CreateSecret(ctx context.Context, request *tenantpb.CreateSecretRequest) (*tenantpb.Secret, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 	secret := request.Secret
 
@@ -308,7 +308,7 @@ func (s *Server) CreateSecret(ctx context.Context, request *gen.CreateSecretRequ
 	return secret, nil
 }
 
-func (s *Server) VerifySecret(ctx context.Context, request *gen.VerifySecretRequest) (*gen.Secret, error) {
+func (s *Server) VerifySecret(ctx context.Context, request *tenantpb.VerifySecretRequest) (*tenantpb.Secret, error) {
 	if request.TenantId == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing tenant_id")
 	}
@@ -316,7 +316,7 @@ func (s *Server) VerifySecret(ctx context.Context, request *gen.VerifySecretRequ
 		return nil, errTenantNotFound
 	}
 
-	var secrets []*gen.Secret
+	var secrets []*tenantpb.Secret
 	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
 		secrets, err = ListTenantSecrets(ctx, tx, request.TenantId)
 		return
@@ -334,10 +334,10 @@ func (s *Server) VerifySecret(ctx context.Context, request *gen.VerifySecretRequ
 	return nil, status.Error(codes.Unauthenticated, "unknown pass")
 }
 
-func (s *Server) GetSecret(ctx context.Context, request *gen.GetSecretRequest) (*gen.Secret, error) {
+func (s *Server) GetSecret(ctx context.Context, request *tenantpb.GetSecretRequest) (*tenantpb.Secret, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger).With(zap.String("secret_id", request.GetId()))
 
-	var secret *gen.Secret
+	var secret *tenantpb.Secret
 	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
 		secret, err = GetTenantSecret(ctx, tx, request.Id)
 		return
@@ -352,11 +352,11 @@ func (s *Server) GetSecret(ctx context.Context, request *gen.GetSecretRequest) (
 	return secret, nil
 }
 
-func (s *Server) UpdateSecret(ctx context.Context, request *gen.UpdateSecretRequest) (*gen.Secret, error) {
+func (s *Server) UpdateSecret(ctx context.Context, request *tenantpb.UpdateSecretRequest) (*tenantpb.Secret, error) {
 	return nil, status.Error(codes.Unimplemented, "unimplemented")
 }
 
-func (s *Server) DeleteSecret(ctx context.Context, request *gen.DeleteSecretRequest) (*gen.DeleteSecretResponse, error) {
+func (s *Server) DeleteSecret(ctx context.Context, request *tenantpb.DeleteSecretRequest) (*tenantpb.DeleteSecretResponse, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
 		return DeleteTenantSecret(ctx, tx, request.Id)
@@ -367,14 +367,14 @@ func (s *Server) DeleteSecret(ctx context.Context, request *gen.DeleteSecretRequ
 		logger.Error("db transaction failed", zap.Error(err))
 		return nil, status.Error(codes.Internal, "database transaction failed")
 	}
-	return &gen.DeleteSecretResponse{}, nil
+	return &tenantpb.DeleteSecretResponse{}, nil
 }
 
-func (s *Server) PullSecret(request *gen.PullSecretRequest, server gen.TenantApi_PullSecretServer) error {
+func (s *Server) PullSecret(request *tenantpb.PullSecretRequest, server tenantpb.TenantApi_PullSecretServer) error {
 	return status.Error(codes.Unimplemented, "unimplemented")
 }
 
-func (s *Server) RegenerateSecret(ctx context.Context, request *gen.RegenerateSecretRequest) (*gen.Secret, error) {
+func (s *Server) RegenerateSecret(ctx context.Context, request *tenantpb.RegenerateSecretRequest) (*tenantpb.Secret, error) {
 	return nil, status.Error(codes.Unimplemented, "unimplemented")
 }
 

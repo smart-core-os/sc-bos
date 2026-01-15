@@ -7,8 +7,8 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/health/healthdb"
 	"github.com/smart-core-os/sc-bos/internal/health/healthhistory"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-golang/pkg/wrap"
 )
 
@@ -34,19 +34,19 @@ func ExampleRegistry_history() {
 	server := healthhistory.NewServer(records)     // servers expose history over gRPC
 
 	// add an existing record to the db
-	_ = recorder.Record(ctx, "device1", &gen.HealthCheck{
+	_ = recorder.Record(ctx, "device1", &gen_healthpb.HealthCheck{
 		Id:              healthpb.AbsID("example", "paper-level"),
 		DisplayName:     "Paper level",
 		Description:     "Check the level of the paper in the printer",
-		EquipmentImpact: gen.HealthCheck_FUNCTION,
-		Normality:       gen.HealthCheck_ABNORMAL,
+		EquipmentImpact: gen_healthpb.HealthCheck_FUNCTION,
+		Normality:       gen_healthpb.HealthCheck_ABNORMAL,
 	})
 
 	registry := healthpb.NewRegistry(
-		healthpb.WithOnCheckCreate(func(name string, c *gen.HealthCheck) *gen.HealthCheck {
+		healthpb.WithOnCheckCreate(func(name string, c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck {
 			return seeder.Seed(ctx, name, c)
 		}),
-		healthpb.WithOnCheckUpdate(func(name string, c *gen.HealthCheck) {
+		healthpb.WithOnCheckUpdate(func(name string, c *gen_healthpb.HealthCheck) {
 			err := recorder.Record(ctx, name, c)
 			if err != nil {
 				panic(err)
@@ -56,7 +56,7 @@ func ExampleRegistry_history() {
 
 	// create the check for device1 owned by "example"
 	exampleChecks := registry.ForOwner("example")
-	dev1Check, err := exampleChecks.NewFaultCheck("device1", &gen.HealthCheck{
+	dev1Check, err := exampleChecks.NewFaultCheck("device1", &gen_healthpb.HealthCheck{
 		Id:          "paper-level",
 		DisplayName: "Paper level",
 	})
@@ -69,8 +69,8 @@ func ExampleRegistry_history() {
 	dev1Check.ClearFaults() // all good now
 
 	// use the history api to get the check results
-	client := gen.NewHealthHistoryClient(wrap.ServerToClient(gen.HealthHistory_ServiceDesc, server))
-	histResp, err := client.ListHealthCheckHistory(ctx, &gen.ListHealthCheckHistoryRequest{
+	client := gen_healthpb.NewHealthHistoryClient(wrap.ServerToClient(gen_healthpb.HealthHistory_ServiceDesc, server))
+	histResp, err := client.ListHealthCheckHistory(ctx, &gen_healthpb.ListHealthCheckHistoryRequest{
 		Name: "device1",
 		Id:   healthpb.AbsID("example", "paper-level"),
 	})

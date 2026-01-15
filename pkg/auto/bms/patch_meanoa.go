@@ -13,7 +13,7 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
 	timepb "github.com/smart-core-os/sc-api/go/types/time"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
@@ -24,7 +24,7 @@ import (
 type MeanOATempPatches struct {
 	name          string
 	apiClient     traits.AirTemperatureApiClient
-	historyClient gen.AirTemperatureHistoryClient
+	historyClient airtemperaturepb.AirTemperatureHistoryClient
 	logger        *zap.Logger
 }
 
@@ -74,7 +74,7 @@ func (m *MeanOATempPatches) readHistoricalMean(ctx context.Context, runningMean 
 	var dayTemp dailyTemp
 	endOfCurrentDay := startOfRange.Add(24 * time.Hour)
 
-	req := &gen.ListAirTemperatureHistoryRequest{
+	req := &airtemperaturepb.ListAirTemperatureHistoryRequest{
 		Name: m.name,
 		Period: &timepb.Period{
 			StartTime: timestamppb.New(startOfRange),
@@ -82,7 +82,7 @@ func (m *MeanOATempPatches) readHistoricalMean(ctx context.Context, runningMean 
 		},
 	}
 	for {
-		res, err := retryForeverT(ctx, func(ctx context.Context) (*gen.ListAirTemperatureHistoryResponse, error) {
+		res, err := retryForeverT(ctx, func(ctx context.Context) (*airtemperaturepb.ListAirTemperatureHistoryResponse, error) {
 			res, err := m.historyClient.ListAirTemperatureHistory(ctx, req)
 			if c := status.Code(err); c == codes.NotFound || c == codes.Unimplemented {
 				return nil, nil

@@ -10,12 +10,12 @@ import {timestampToDate} from '@/api/convpb.js';
 import RelativeTime from '@/components/RelativeTime.vue';
 import ReliabilityIcon from '@/traits/health/ReliabilityIcon.vue';
 import ReliabilityText from '@/traits/health/ReliabilityText.vue';
-import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/health_pb';
+import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb';
 import {computed} from 'vue';
 
 const props = defineProps({
   modelValue: {
-    /** @type {import('vue').PropType<import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.AsObject>} */
+    /** @type {import('vue').PropType<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.AsObject>} */
     type: Object,
     default: null
   },

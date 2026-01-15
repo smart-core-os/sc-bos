@@ -1,0 +1,43 @@
+This test verifies handling of package name collisions when both gen and trait packages are used.
+expected_changes: 2
+
+-- input/pkg/test/collision.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+)
+
+func ProcessDevices(ctx context.Context) {
+	// Using gen.Device from pkg/gen
+	device := &gen.Device{Name: "device1"}
+
+	// Also using something from gentrait/devicespb
+	collection := devicespb.NewCollection()
+
+	_ = device
+	_ = collection
+}
+-- output/pkg/test/collision.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+)
+
+func ProcessDevices(ctx context.Context) {
+	// Using gen_devicespb.Device from pkg/gen
+	device := &gen_devicespb.Device{Name: "device1"}
+
+	// Also using something from gentrait/devicespb
+	collection := devicespb.NewCollection()
+
+	_ = device
+	_ = collection
+}

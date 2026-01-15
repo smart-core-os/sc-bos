@@ -49,7 +49,8 @@ type Root struct {
 	SendPacketTimeout *jsontypes.Duration `json:"sendPacketTimeout,omitempty,omitzero"`
 	// Port is the TCP port used to connect to Helvarnet devices, defaults to ":50000"
 	Port *string `json:"port,omitempty"`
-	// RetrySleepDuration is the duration to wait before retrying a failed operation, defaults 500 microseconds
+	// RetrySleepDuration is the duration to wait before retrying a failed operation, defaults 500 microseconds.
+	// It is unlikely that this value needs to be changed, if it is, it is recommended to keep it low.
 	RetrySleepDuration *jsontypes.Duration `json:"retrySleepDuration,omitempty,omitzero"`
 }
 

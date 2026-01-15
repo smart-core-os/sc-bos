@@ -178,7 +178,7 @@ import {useCohortStore} from '@/stores/cohort.js';
 import {useSidebarStore} from '@/stores/sidebar';
 import {isNullOrUndef} from '@/util/types.js';
 import {useLocalProp} from '@/util/vue.js';
-import {Alert} from '@smart-core-os/sc-bos-ui-gen/proto/alerts_pb';
+import {Alert} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb';
 import {computed, onUnmounted, reactive, ref} from 'vue';
 import {VCard} from 'vuetify/components';
 
@@ -188,7 +188,7 @@ const props = defineProps({
     default: false
   },
   forceQuery: {
-    type: Object, /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/alerts_pb').Alert.Query.AsObject} */
+    type: Object, /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb').Alert.Query.AsObject} */
     default: null
   },
   title: {
@@ -353,10 +353,10 @@ const filterOpts = computed(() => {
 const filterCtx = useFilterCtx(filterOpts);
 
 const nonFilterableQueryFields = computed(() => {
-  return /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/alerts_pb').Alert.Query.AsObject} */ props.forceQuery ?? {};
+  return /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb').Alert.Query.AsObject} */ props.forceQuery ?? {};
 });
 const queryFields = computed(() => {
-  const res = /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/alerts_pb').Alert.Query.AsObject} */ {};
+  const res = /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb').Alert.Query.AsObject} */ {};
   for (const choice of filterCtx.sortedChoices.value) {
     if (isNullOrUndef(choice?.value)) continue;
     switch (choice.filter) {
@@ -430,7 +430,7 @@ const doDownloadCSV = () => {
 /**
  *  Calculate the total number of items in the query
  *
- * @param {import('@smart-core-os/sc-bos-ui-gen/proto/alerts_pb').Alert.Query.AsObject} query
+ * @param {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb').Alert.Query.AsObject} query
  * @return {number|undefined}
  */
 function calculateQueryMetadataCount(query) {

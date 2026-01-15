@@ -9,12 +9,12 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
 
 type mockPullServer struct {
 	ctx     context.Context
-	changes chan *gen.PullMeterReadingsResponse
+	changes chan *meterpb.PullMeterReadingsResponse
 	mtx     sync.Mutex
 }
 
@@ -45,7 +45,7 @@ func (m *mockPullServer) Context() context.Context {
 	return m.ctx
 }
 
-func (m *mockPullServer) Send(resp *gen.PullMeterReadingsResponse) error {
+func (m *mockPullServer) Send(resp *meterpb.PullMeterReadingsResponse) error {
 	m.changes <- resp
 	return nil
 }
@@ -75,21 +75,21 @@ type event struct {
 	err   error
 }
 type meterModelInterceptor struct {
-	gen.UnimplementedMeterApiServer
-	gen.UnimplementedMeterInfoServer
+	meterpb.UnimplementedMeterApiServer
+	meterpb.UnimplementedMeterInfoServer
 	events map[string][]event
 
 	mtx          sync.Mutex
 	meterToIndex map[string]int
 }
 
-func (m *meterModelInterceptor) DescribeMeterReading(_ context.Context, _ *gen.DescribeMeterReadingRequest) (*gen.MeterReadingSupport, error) {
-	return &gen.MeterReadingSupport{
+func (m *meterModelInterceptor) DescribeMeterReading(_ context.Context, _ *meterpb.DescribeMeterReadingRequest) (*meterpb.MeterReadingSupport, error) {
+	return &meterpb.MeterReadingSupport{
 		UsageUnit: "kWh",
 	}, nil
 }
 
-func (m *meterModelInterceptor) GetMeterReading(_ context.Context, r *gen.GetMeterReadingRequest) (*gen.MeterReading, error) {
+func (m *meterModelInterceptor) GetMeterReading(_ context.Context, r *meterpb.GetMeterReadingRequest) (*meterpb.MeterReading, error) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -117,20 +117,20 @@ func (m *meterModelInterceptor) GetMeterReading(_ context.Context, r *gen.GetMet
 		return nil, ev.err
 	}
 
-	return &gen.MeterReading{
+	return &meterpb.MeterReading{
 		Usage: ev.usage,
 	}, nil
 }
 
-func (m *meterModelInterceptor) PullMeterReadings(r *gen.PullMeterReadingsRequest, s gen.MeterApi_PullMeterReadingsServer) error {
+func (m *meterModelInterceptor) PullMeterReadings(r *meterpb.PullMeterReadingsRequest, s meterpb.MeterApi_PullMeterReadingsServer) error {
 	for {
-		res, err := m.GetMeterReading(s.Context(), &gen.GetMeterReadingRequest{Name: r.Name})
+		res, err := m.GetMeterReading(s.Context(), &meterpb.GetMeterReadingRequest{Name: r.Name})
 		if err != nil {
 			return err
 		}
 
-		if err = s.Send(&gen.PullMeterReadingsResponse{
-			Changes: []*gen.PullMeterReadingsResponse_Change{
+		if err = s.Send(&meterpb.PullMeterReadingsResponse{
+			Changes: []*meterpb.PullMeterReadingsResponse_Change{
 				{
 					Name:         r.Name,
 					MeterReading: res,

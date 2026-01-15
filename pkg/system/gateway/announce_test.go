@@ -16,9 +16,11 @@ import (
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
@@ -65,7 +67,7 @@ func TestSystem_announceCohort(t *testing.T) {
 		th.runAnnounceCohort()
 		th.assertSimpleDevices() // no devices yet
 
-		gw1.Systems.Set(remoteSystems{msgRecvd: true, gateway: &gen.Service{Active: true}})
+		gw1.Systems.Set(remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}})
 		synctest.Wait()
 		th.assertSimpleDevices() // still no devices because it's a gateway
 	})
@@ -85,7 +87,7 @@ func TestSystem_announceCohort(t *testing.T) {
 		th.runAnnounceCohort()
 		th.assertSimpleDevices("gw1/d1", "gw1", "gw1/drivers") // we have devices
 
-		gw1.Systems.Set(remoteSystems{msgRecvd: true, gateway: &gen.Service{Active: true}})
+		gw1.Systems.Set(remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}})
 		synctest.Wait()
 		th.assertSimpleDevices("gw1", "gw1/drivers") // devices are removed
 	})
@@ -156,11 +158,11 @@ func TestSystem_announceCohort(t *testing.T) {
 			Membership: &traits.Metadata_Membership{Subsystem: "test devices"},
 		}})
 
-		wantOldDevice := &gen.Device{
+		wantOldDevice := &gen_devicespb.Device{
 			Name:     "ac1/d1",
 			Metadata: md("ac1/d1", ts(trait.Metadata)...),
 		}
-		wantNewDevice := &gen.Device{
+		wantNewDevice := &gen_devicespb.Device{
 			Name: "ac1/d1",
 			Metadata: &traits.Metadata{
 				Name:       "ac1/d1",
@@ -254,7 +256,7 @@ func newAnnounceTest(name string, t *testing.T, f func(t *announceTester)) {
 
 // assertDeviceUpdate asserts that device updates are received that transition a device from wantOld to wantNew.
 // Any sequence of updates that connect together to join the two states are accepted.
-func assertDeviceUpdate(t *testing.T, stream <-chan devicespb.DevicesChange, wantOld, wantNew *gen.Device, now time.Time) {
+func assertDeviceUpdate(t *testing.T, stream <-chan devicespb.DevicesChange, wantOld, wantNew *gen_devicespb.Device, now time.Time) {
 	t.Helper()
 	// all updates look a bit like this, with different old/new values
 	want := devicespb.DevicesChange{
@@ -293,7 +295,7 @@ func newFakeClientConn() *grpc.ClientConn {
 	return &grpc.ClientConn{} // can do nothing with this
 }
 
-func rd(name string, checks ...*gen.HealthCheck) remoteDesc {
+func rd(name string, checks ...*healthpb.HealthCheck) remoteDesc {
 	return remoteDesc{
 		name:   name,
 		md:     md(name),
@@ -309,12 +311,12 @@ func rds(names ...string) []remoteDesc {
 	return rds
 }
 
-func hcs(descs ...string) []*gen.HealthCheck {
-	var hcs []*gen.HealthCheck
+func hcs(descs ...string) []*healthpb.HealthCheck {
+	var hcs []*healthpb.HealthCheck
 	for _, d := range descs {
 		hcs = append(hcs, makeHealthCheck(d))
 	}
-	slices.SortFunc(hcs, func(a, b *gen.HealthCheck) int {
+	slices.SortFunc(hcs, func(a, b *healthpb.HealthCheck) int {
 		return strings.Compare(a.Id, b.Id)
 	})
 	return hcs
@@ -377,7 +379,7 @@ func (t *announceTester) addNode(addr string, devices ...string) *remoteNode {
 }
 
 func (t *announceTester) addGateway(addr string, devices ...string) *remoteNode {
-	rn := t.newRemoteNode(addr, rd(addr), remoteSystems{msgRecvd: true, gateway: &gen.Service{Active: true}}, rds(devices...)...)
+	rn := t.newRemoteNode(addr, rd(addr), remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}}, rds(devices...)...)
 	t.c.Nodes.Set(rn)
 	return rn
 }
@@ -401,32 +403,32 @@ func (t *announceTester) newRemoteNode(addr string, self remoteDesc, systems rem
 
 func (t *announceTester) assertSimpleDevices(wantNames ...string) {
 	t.Helper()
-	var wantDevices []*gen.Device
+	var wantDevices []*gen_devicespb.Device
 	for _, name := range wantNames {
 		wantDevices = append(wantDevices, newSimpleDevice(name))
 	}
 	t.assertDevices(wantDevices...)
 }
 
-func newSimpleDevice(name string, checks ...*gen.HealthCheck) *gen.Device {
-	return &gen.Device{
+func newSimpleDevice(name string, checks ...*healthpb.HealthCheck) *gen_devicespb.Device {
+	return &gen_devicespb.Device{
 		Name:         name,
 		Metadata:     md(name, ts(trait.Metadata)...),
 		HealthChecks: checks,
 	}
 }
 
-func (t *announceTester) assertDevices(want ...*gen.Device) {
+func (t *announceTester) assertDevices(want ...*gen_devicespb.Device) {
 	t.Helper()
 	slices.SortFunc(want, cmpDevices)
 	// add in the self node t the right place keeping want sorted by name
-	selfDevice := &gen.Device{Name: "self", Metadata: &traits.Metadata{Name: "self", Traits: ts(trait.Metadata, trait.Parent)}}
+	selfDevice := &gen_devicespb.Device{Name: "self", Metadata: &traits.Metadata{Name: "self", Traits: ts(trait.Metadata, trait.Parent)}}
 	if i, ok := slices.BinarySearchFunc(want, selfDevice, cmpDevices); !ok {
 		want = slices.Insert(want, i, selfDevice)
 	}
 	// health checks in devices should be ordered by id
 	for _, device := range want {
-		slices.SortFunc(device.HealthChecks, func(a, b *gen.HealthCheck) int {
+		slices.SortFunc(device.HealthChecks, func(a, b *healthpb.HealthCheck) int {
 			return strings.Compare(a.Id, b.Id)
 		})
 	}
@@ -437,6 +439,6 @@ func (t *announceTester) assertDevices(want ...*gen.Device) {
 	}
 }
 
-func cmpDevices(a, b *gen.Device) int {
+func cmpDevices(a, b *gen_devicespb.Device) int {
 	return strings.Compare(a.Name, b.Name)
 }

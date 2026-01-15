@@ -1,5 +1,4 @@
-// Command client_waste provides a CLI tool for interacting with the [gen.WasteApiClient].
-
+// Command client-waste provides a CLI tool for interacting with the [wastepb.WasteApiClient].
 package main
 
 import (

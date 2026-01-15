@@ -57,12 +57,15 @@ func New(name string, opts ...Option) *Node {
 	if cfg.Store == nil {
 		cfg.Store = devicespb.NewCollection(resource.WithIDInterceptor(mapID))
 	}
+	if cfg.Router == nil {
+		cfg.Router = router.New(router.WithKeyInterceptor(func(key string) (mappedKey string, err error) {
+			return mapID(key), nil
+		}))
+	}
 
 	node := &Node{
-		name: name,
-		router: router.New(router.WithKeyInterceptor(func(key string) (mappedKey string, err error) {
-			return mapID(key), nil
-		})),
+		name:    name,
+		router:  cfg.Router,
 		devices: cfg.Store,
 		mlLists: make(map[string]*metadataList),
 		Logger:  zap.NewNop(),

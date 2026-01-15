@@ -1,0 +1,83 @@
+Basic JS/TS import updates for versioned proto files.
+expected_changes: 5
+
+-- input/ui/ops/package.json --
+{
+  "name": "ops-ui",
+  "dependencies": {
+    "@smart-core-os/sc-bos-ui-gen": "^1.0.0"
+  }
+}
+-- input/ui/ops/src/test.js --
+import {Alert} from '@smart-core-os/sc-bos-ui-gen/proto/alerts_pb';
+import {MeterReading} from '@smart-core-os/sc-bos-ui-gen/proto/meter_pb.js';
+
+/**
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/alerts_pb').Alert.Query} AlertQuery
+ */
+
+export function processAlert(alert) {
+  return alert;
+}
+-- input/ui/space/package.json --
+{
+  "name": "space-ui",
+  "dependencies": {
+    "@smart-core-os/sc-bos-ui-gen": "^1.0.0"
+  }
+}
+-- input/ui/space/src/meter.vue --
+<script>
+import {MeterReadingSupport} from '@smart-core-os/sc-bos-ui-gen/proto/meter_pb';
+
+/** @type {import('@smart-core-os/sc-bos-ui-gen/proto/meter_pb').MeterReading} */
+const reading = null;
+</script>
+-- input/ui/node_modules/@smart-core-os/sc-bos-ui-gen/package.json --
+{
+  "name": "@smart-core-os/sc-bos-ui-gen"
+}
+-- input/ui/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alerts/v1/alerts_pb.js --
+// Generated protobuf file
+-- input/ui/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb.js --
+// Generated protobuf file
+-- output/ui/ops/package.json --
+{
+  "name": "ops-ui",
+  "dependencies": {
+    "@smart-core-os/sc-bos-ui-gen": "^1.0.0"
+  }
+}
+-- output/ui/ops/src/test.js --
+import {Alert} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alerts/v1/alerts_pb';
+import {MeterReading} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb.js';
+
+/**
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alerts/v1/alerts_pb').Alert.Query} AlertQuery
+ */
+
+export function processAlert(alert) {
+  return alert;
+}
+-- output/ui/space/package.json --
+{
+  "name": "space-ui",
+  "dependencies": {
+    "@smart-core-os/sc-bos-ui-gen": "^1.0.0"
+  }
+}
+-- output/ui/space/src/meter.vue --
+<script>
+import {MeterReadingSupport} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb';
+
+/** @type {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').MeterReading} */
+const reading = null;
+</script>
+-- output/ui/node_modules/@smart-core-os/sc-bos-ui-gen/package.json --
+{
+  "name": "@smart-core-os/sc-bos-ui-gen"
+}
+-- output/ui/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alerts/v1/alerts_pb.js --
+// Generated protobuf file
+-- output/ui/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb.js --
+// Generated protobuf file

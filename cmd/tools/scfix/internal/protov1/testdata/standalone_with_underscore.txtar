@@ -1,0 +1,85 @@
+Test that files with underscores but no base file are treated as standalone traits.
+This verifies lighting_test.proto goes to lightingtest/v1/, not lighting/v1/.
+Even though lighting.proto exists, lighting_test is not a suffix of lighting.
+expected_changes: 2
+
+-- input/proto/lighting.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service LightingApi {
+  rpc GetLighting(GetLightingRequest) returns (Lighting);
+}
+
+message Lighting {
+  string id = 1;
+  bool is_on = 2;
+}
+
+message GetLightingRequest {
+  string name = 1;
+}
+-- input/proto/lighting_test.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+
+service LightingTestApi {
+  rpc GetLightHealth(GetLightHealthRequest) returns (LightHealth);
+}
+
+message LightHealth {
+  string id = 1;
+  bool is_healthy = 2;
+}
+
+message GetLightHealthRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/lighting/v1/lighting.proto --
+syntax = "proto3";
+
+package smartcore.bos.lighting.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service LightingApi {
+  rpc GetLighting(GetLightingRequest) returns (Lighting);
+}
+
+message Lighting {
+  string id = 1;
+  bool is_on = 2;
+}
+
+message GetLightingRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/lightingtest/v1/lighting_test.proto --
+syntax = "proto3";
+
+package smartcore.bos.lightingtest.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+
+service LightingTestApi {
+  rpc GetLightHealth(GetLightHealthRequest) returns (LightHealth);
+}
+
+message LightHealth {
+  string id = 1;
+  bool is_healthy = 2;
+}
+
+message GetLightHealthRequest {
+  string name = 1;
+}

@@ -1,7 +1,7 @@
 import {clientOptions} from '@/api/grpcweb';
 import {trackAction} from '@/api/resource';
-import {EnrollmentApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/enrollment_grpc_web_pb';
-import {GetEnrollmentRequest, TestEnrollmentRequest} from '@smart-core-os/sc-bos-ui-gen/proto/enrollment_pb';
+import {EnrollmentApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/enrollment/v1/enrollment_grpc_web_pb';
+import {GetEnrollmentRequest, TestEnrollmentRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/enrollment/v1/enrollment_pb';
 
 /**
  *

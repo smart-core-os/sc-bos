@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/internal/health/healthdb"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 // A Recorder records health check updates into a database.
@@ -24,7 +24,7 @@ func NewRecorder(db RecorderStore) *Recorder {
 	return &Recorder{db: db}
 }
 
-func (r *Recorder) Record(ctx context.Context, name string, check *gen.HealthCheck) error {
+func (r *Recorder) Record(ctx context.Context, name string, check *healthpb.HealthCheck) error {
 	main, aux, err := splitPayloads(check)
 	if err != nil {
 		return err
@@ -40,7 +40,7 @@ func (r *Recorder) Record(ctx context.Context, name string, check *gen.HealthChe
 	return err
 }
 
-func splitPayloads(c *gen.HealthCheck) (main, aux []byte, _ error) {
+func splitPayloads(c *healthpb.HealthCheck) (main, aux []byte, _ error) {
 	m, a := splitCheck(c)
 	main, err := proto.Marshal(m)
 	if err != nil {
@@ -56,15 +56,15 @@ func splitPayloads(c *gen.HealthCheck) (main, aux []byte, _ error) {
 // splitCheck divides the properties of c into main and aux messages.
 // The main message contains frequently changing data, aux everything else.
 // The passed c may be modified by this call.
-func splitCheck(c *gen.HealthCheck) (main, aux *gen.HealthCheck) {
+func splitCheck(c *healthpb.HealthCheck) (main, aux *healthpb.HealthCheck) {
 	// without benchmarks and real world stats, we assume most data is fairly static
 	aux = c
-	main = &gen.HealthCheck{}
+	main = &healthpb.HealthCheck{}
 
 	// copy frequently changing fields from aux to main
 	if v := c.GetBounds().GetCurrentValue(); v != nil {
-		main.Check = &gen.HealthCheck_Bounds_{Bounds: &gen.HealthCheck_Bounds{CurrentValue: v}}
-		aux = proto.Clone(aux).(*gen.HealthCheck)
+		main.Check = &healthpb.HealthCheck_Bounds_{Bounds: &healthpb.HealthCheck_Bounds{CurrentValue: v}}
+		aux = proto.Clone(aux).(*healthpb.HealthCheck)
 		aux.GetBounds().CurrentValue = nil
 	}
 	return main, aux
@@ -72,8 +72,8 @@ func splitCheck(c *gen.HealthCheck) (main, aux *gen.HealthCheck) {
 
 // RecordOnUpdate returns a function that records health check updates with a timeout.
 // The returned function signature matches the OnUpdate callback for the [*healthpb.Registry].
-func (r *Recorder) RecordOnUpdate(timeout time.Duration, onErr func(error)) func(string, *gen.HealthCheck) {
-	return func(s string, check *gen.HealthCheck) {
+func (r *Recorder) RecordOnUpdate(timeout time.Duration, onErr func(error)) func(string, *healthpb.HealthCheck) {
+	return func(s string, check *healthpb.HealthCheck) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 		err := r.Record(ctx, s, check)

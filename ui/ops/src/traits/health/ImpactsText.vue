@@ -20,12 +20,12 @@
 import ComplianceImpactsList from '@/traits/health/ComplianceImpactsList.vue';
 import EquipmentImpactText from '@/traits/health/EquipmentImpactText.vue';
 import OccupantImpactText from '@/traits/health/OccupantImpactText.vue';
-import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/health_pb';
+import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb';
 import {computed} from 'vue';
 
 const props = defineProps({
   modelValue: {
-    /** @type {import('vue').PropType<import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.AsObject>} */
+    /** @type {import('vue').PropType<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.AsObject>} */
     type: Object,
     default: null
   }

@@ -18,12 +18,13 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
 )
 
 type Server struct {
-	gen.UnimplementedEnrollmentApiServer
+	enrollmentpb.UnimplementedEnrollmentApiServer
 	logger *zap.Logger
 	dir    string
 	keyPEM []byte
@@ -35,14 +36,14 @@ type Server struct {
 	enrollmentChanged minibus.Bus[Enrollment]
 }
 
-func (es *Server) GetEnrollment(_ context.Context, _ *gen.GetEnrollmentRequest) (*gen.Enrollment, error) {
+func (es *Server) GetEnrollment(_ context.Context, _ *enrollmentpb.GetEnrollmentRequest) (*enrollmentpb.Enrollment, error) {
 	es.m.Lock()
 	defer es.m.Unlock()
 
 	select {
 	case <-es.done:
 		e := es.enrollment
-		eProto := &gen.Enrollment{
+		eProto := &enrollmentpb.Enrollment{
 			TargetName:     e.RootDeviceName,
 			TargetAddress:  e.LocalAddress,
 			ManagerName:    e.ManagerName,
@@ -84,7 +85,7 @@ func LoadOrCreateServer(dir string, keyPEM []byte, logger *zap.Logger) (*Server,
 	return es, nil
 }
 
-func (es *Server) CreateEnrollment(ctx context.Context, request *gen.CreateEnrollmentRequest) (*gen.Enrollment, error) {
+func (es *Server) CreateEnrollment(ctx context.Context, request *enrollmentpb.CreateEnrollmentRequest) (*enrollmentpb.Enrollment, error) {
 	logger := rpcutil.ServerLogger(ctx, es.logger)
 
 	// only allow one enrollment at a time
@@ -134,7 +135,7 @@ func (es *Server) CreateEnrollment(ctx context.Context, request *gen.CreateEnrol
 	return request.GetEnrollment(), nil
 }
 
-func (es *Server) UpdateEnrollment(ctx context.Context, request *gen.UpdateEnrollmentRequest) (*gen.Enrollment, error) {
+func (es *Server) UpdateEnrollment(ctx context.Context, request *enrollmentpb.UpdateEnrollmentRequest) (*enrollmentpb.Enrollment, error) {
 	logger := rpcutil.ServerLogger(ctx, es.logger)
 
 	es.m.Lock()
@@ -200,7 +201,7 @@ func (es *Server) UpdateEnrollment(ctx context.Context, request *gen.UpdateEnrol
 	return request.GetEnrollment(), nil
 }
 
-func (es *Server) DeleteEnrollment(ctx context.Context, request *gen.DeleteEnrollmentRequest) (*gen.Enrollment, error) {
+func (es *Server) DeleteEnrollment(ctx context.Context, request *enrollmentpb.DeleteEnrollmentRequest) (*enrollmentpb.Enrollment, error) {
 	// delete only if we are enrolled already
 	es.m.Lock()
 	defer es.m.Unlock()
@@ -239,14 +240,14 @@ func (es *Server) DeleteEnrollment(ctx context.Context, request *gen.DeleteEnrol
 
 	es.logger.Info("The controller is no longer enrolled with a hub", zap.String("hubAddress", en.ManagerAddress))
 
-	return &gen.Enrollment{
+	return &enrollmentpb.Enrollment{
 		TargetName:     en.RootDeviceName,
 		ManagerName:    en.ManagerName,
 		ManagerAddress: en.ManagerAddress,
 	}, nil
 }
 
-func (es *Server) TestEnrollment(ctx context.Context, _ *gen.TestEnrollmentRequest) (*gen.TestEnrollmentResponse, error) {
+func (es *Server) TestEnrollment(ctx context.Context, _ *enrollmentpb.TestEnrollmentRequest) (*enrollmentpb.TestEnrollmentResponse, error) {
 	e, ok := es.Enrollment()
 	if !ok {
 		return nil, status.Error(codes.NotFound, "not enrolled")
@@ -259,9 +260,9 @@ func (es *Server) TestEnrollment(ctx context.Context, _ *gen.TestEnrollmentReque
 	if err != nil {
 		return nil, err
 	}
-	client := gen.NewHubApiClient(conn)
-	_, err = client.TestHubNode(ctx, &gen.TestHubNodeRequest{Address: e.LocalAddress})
-	res := &gen.TestEnrollmentResponse{}
+	client := hubpb.NewHubApiClient(conn)
+	_, err = client.TestHubNode(ctx, &hubpb.TestHubNodeRequest{Address: e.LocalAddress})
+	res := &enrollmentpb.TestEnrollmentResponse{}
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			res.Code = int32(s.Code())
@@ -346,10 +347,10 @@ func (es *Server) RequestRenew(ctx context.Context) error {
 		return err
 	}
 	defer conn.Close()
-	client := gen.NewHubApiClient(conn)
+	client := hubpb.NewHubApiClient(conn)
 	// warning, do not hold es.m lock when invoking this method or we'll get a deadlock that includes a network hop
 	// which would be really hard to debug!
-	_, err = client.RenewHubNode(ctx, &gen.RenewHubNodeRequest{Address: localAddress})
+	_, err = client.RenewHubNode(ctx, &hubpb.RenewHubNodeRequest{Address: localAddress})
 	return err
 }
 

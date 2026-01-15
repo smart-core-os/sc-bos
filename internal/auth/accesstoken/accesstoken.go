@@ -13,7 +13,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/auth/permission"
 	jose_utils "github.com/smart-core-os/sc-bos/internal/util/jose"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
 var ErrUnsupportedTokenVersion = errors.New("unsupported token version")
@@ -29,21 +29,21 @@ type claims struct {
 
 // like token.PermissionAssignment but with a more compact JSON representation
 type permissionAssignment struct {
-	Permission   permission.ID                   `json:"p"`
-	ResourceType gen.RoleAssignment_ResourceType `json:"rt,omitempty"` // will serialise as an integer
-	Resource     string                          `json:"r,omitempty"`
+	Permission   permission.ID                         `json:"p"`
+	ResourceType accountpb.RoleAssignment_ResourceType `json:"rt,omitempty"` // will serialise as an integer
+	Resource     string                                `json:"r,omitempty"`
 }
 
 func permissionAssignmentFromToken(pa token.PermissionAssignment) permissionAssignment {
 	return permissionAssignment{
 		Permission:   pa.Permission,
-		ResourceType: gen.RoleAssignment_ResourceType(pa.ResourceType),
+		ResourceType: accountpb.RoleAssignment_ResourceType(pa.ResourceType),
 		Resource:     pa.Resource,
 	}
 }
 
 func (pa permissionAssignment) Scoped() bool {
-	return pa.ResourceType != gen.RoleAssignment_RESOURCE_TYPE_UNSPECIFIED
+	return pa.ResourceType != accountpb.RoleAssignment_RESOURCE_TYPE_UNSPECIFIED
 }
 
 func (pa permissionAssignment) ToTokenPermissionAssignment() token.PermissionAssignment {

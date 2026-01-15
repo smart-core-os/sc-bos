@@ -7,29 +7,29 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 func TestSameValueType(t *testing.T) {
 	tests := []struct {
 		name string
-		vals []*gen.HealthCheck_Value
+		vals []*healthpb.HealthCheck_Value
 		want bool
 	}{
 		{"empty", nil, true},
-		{"one", []*gen.HealthCheck_Value{IntValue(1)}, true},
-		{"many", []*gen.HealthCheck_Value{IntValue(1), IntValue(2), IntValue(3)}, true},
-		{"int", []*gen.HealthCheck_Value{IntValue(1), IntValue(2), IntValue(3)}, true},
-		{"uint", []*gen.HealthCheck_Value{UintValue(1), UintValue(2), UintValue(3)}, true},
-		{"float", []*gen.HealthCheck_Value{FloatValue(1.5), FloatValue(2.5), FloatValue(3.5)}, true},
-		{"bool", []*gen.HealthCheck_Value{BoolValue(true), BoolValue(false), BoolValue(true)}, true},
-		{"string", []*gen.HealthCheck_Value{StringValue("a"), StringValue("b"), StringValue("c")}, true},
-		{"timestamp", []*gen.HealthCheck_Value{TimestampValue(time.Now()), TimestampValue(time.Now()), TimestampValue(time.Now())}, true},
-		{"duration", []*gen.HealthCheck_Value{DurationValue(1 * time.Second), DurationValue(2 * time.Second), DurationValue(3 * time.Second)}, true},
+		{"one", []*healthpb.HealthCheck_Value{IntValue(1)}, true},
+		{"many", []*healthpb.HealthCheck_Value{IntValue(1), IntValue(2), IntValue(3)}, true},
+		{"int", []*healthpb.HealthCheck_Value{IntValue(1), IntValue(2), IntValue(3)}, true},
+		{"uint", []*healthpb.HealthCheck_Value{UintValue(1), UintValue(2), UintValue(3)}, true},
+		{"float", []*healthpb.HealthCheck_Value{FloatValue(1.5), FloatValue(2.5), FloatValue(3.5)}, true},
+		{"bool", []*healthpb.HealthCheck_Value{BoolValue(true), BoolValue(false), BoolValue(true)}, true},
+		{"string", []*healthpb.HealthCheck_Value{StringValue("a"), StringValue("b"), StringValue("c")}, true},
+		{"timestamp", []*healthpb.HealthCheck_Value{TimestampValue(time.Now()), TimestampValue(time.Now()), TimestampValue(time.Now())}, true},
+		{"duration", []*healthpb.HealthCheck_Value{DurationValue(1 * time.Second), DurationValue(2 * time.Second), DurationValue(3 * time.Second)}, true},
 		// mixed types
-		{"i,f,i", []*gen.HealthCheck_Value{IntValue(1), FloatValue(2.5), IntValue(3)}, false},
-		{"t,d", []*gen.HealthCheck_Value{TimestampValue(time.Now()), DurationValue(2 * time.Second)}, false},
-		{"s,s,i", []*gen.HealthCheck_Value{StringValue("a"), StringValue("b"), IntValue(3)}, false},
+		{"i,f,i", []*healthpb.HealthCheck_Value{IntValue(1), FloatValue(2.5), IntValue(3)}, false},
+		{"t,d", []*healthpb.HealthCheck_Value{TimestampValue(time.Now()), DurationValue(2 * time.Second)}, false},
+		{"s,s,i", []*healthpb.HealthCheck_Value{StringValue("a"), StringValue("b"), IntValue(3)}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -52,8 +52,8 @@ func TestAddValues(t *testing.T) {
 
 	tests := []struct {
 		name string
-		v, d *gen.HealthCheck_Value
-		want *gen.HealthCheck_Value
+		v, d *healthpb.HealthCheck_Value
+		want *healthpb.HealthCheck_Value
 	}{
 		{"1+2", IntValue(1), IntValue(2), IntValue(3)},
 		{"1-2", IntValue(1), IntValue(-2), IntValue(-1)},

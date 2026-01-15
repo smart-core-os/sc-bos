@@ -1,8 +1,8 @@
 import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setValue, trackAction} from '@/api/resource';
-import {AccessApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/access_grpc_web_pb';
-import {AccessAttempt, GetLastAccessAttemptRequest, PullAccessAttemptsRequest} from '@smart-core-os/sc-bos-ui-gen/proto/access_pb';
+import {AccessApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/access/v1/access_grpc_web_pb';
+import {AccessAttempt, GetLastAccessAttemptRequest, PullAccessAttemptsRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/access/v1/access_pb';
 
 /**
  * @param {Partial<PullAccessAttemptsRequest.AsObject>} request

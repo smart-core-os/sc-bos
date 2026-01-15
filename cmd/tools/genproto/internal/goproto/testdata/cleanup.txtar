@@ -1,0 +1,44 @@
+This test verifies that cleanGeneratedFiles removes all .pb.go files (including nested) and cleans up empty directories.
+
+-- input/test.pb.go --
+// Generated protobuf file - should be removed
+
+-- input/test_grpc.pb.go --
+// Generated gRPC file - should be removed
+
+-- input/test_router.pb.go --
+// Generated router file - should be removed
+
+-- input/test_wrap.pb.go --
+// Generated wrapper file - should be removed
+
+-- input/other.go --
+// Not a generated file - should be kept
+
+-- input/root.pb.go --
+// Generated protobuf file at root - should be removed
+
+-- input/services/api.pb.go --
+// Generated protobuf file in services - should be removed
+
+-- input/services/api_grpc.pb.go --
+// Generated gRPC file in services - should be removed
+
+-- input/deep/nested/controller.pb.go --
+// Generated protobuf file deep nested - should be removed
+
+-- input/deep/nested/controller_router.pb.go --
+// Generated router file deep nested - should be removed
+
+-- input/deep/nested/other.go --
+// Not a generated file - should be kept
+
+-- input/empty/nested/file.pb.go --
+// Generated file in deeply nested dir - should be removed
+
+-- output/other.go --
+// Not a generated file - should be kept
+
+-- output/deep/nested/other.go --
+// Not a generated file - should be kept
+

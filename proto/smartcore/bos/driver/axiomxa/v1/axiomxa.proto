@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package smartcore.bos.driver.axiomxa.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/driver/axiomxapb";
+
+import "google/protobuf/timestamp.proto";
+
+service AxiomXaDriverService {
+  rpc SaveQRCredential(SaveQRCredentialRequest) returns (SaveQRCredentialResponse);
+}
+
+message SaveQRCredentialRequest {
+  // The name of the driver instance
+  string name = 1;
+  // The number that is encoded into the card
+  uint64 card_number = 2;
+  // The name of the card holder
+  string first_name = 3;
+  string last_name = 4;
+
+  // Times when the card is active between.
+  google.protobuf.Timestamp active_time = 5;
+  google.protobuf.Timestamp expire_time = 6;
+}
+
+message SaveQRCredentialResponse {}

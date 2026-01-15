@@ -7,5 +7,5 @@ import (
 )
 
 func TestWrapAllTraits(t *testing.T) {
-	fixtest.Run(t, "testdata/wrap_all_traits.txtar", run)
+	fixtest.RunDir(t, "testdata", run)
 }

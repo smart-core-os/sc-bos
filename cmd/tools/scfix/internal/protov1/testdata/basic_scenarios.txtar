@@ -1,0 +1,63 @@
+Basic proto file scenarios: simple migration and already-migrated files.
+expected_changes: 1
+
+-- input/proto/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}
+-- input/proto/smartcore/bos/already/v1/already.proto --
+syntax = "proto3";
+
+package smartcore.bos.already.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+message AlreadyMigrated {
+  string id = 1;
+}
+-- output/proto/smartcore/bos/meter/v1/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/already/v1/already.proto --
+syntax = "proto3";
+
+package smartcore.bos.already.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+message AlreadyMigrated {
+  string id = 1;
+}

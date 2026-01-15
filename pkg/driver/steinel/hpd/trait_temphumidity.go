@@ -23,7 +23,7 @@ type TemperatureSensor struct {
 
 var _ sensor = (*TemperatureSensor)(nil)
 
-func NewTemperatureSensor(client *Client, logger *zap.Logger) *TemperatureSensor {
+func newTemperatureSensor(client *Client, logger *zap.Logger) *TemperatureSensor {
 	return &TemperatureSensor{
 		client:           client,
 		logger:           logger,

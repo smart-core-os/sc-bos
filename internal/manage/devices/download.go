@@ -28,7 +28,7 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	timepb "github.com/smart-core-os/sc-api/go/types/time"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
@@ -39,7 +39,7 @@ type tokenClaims struct {
 	Body string `json:"b"`
 }
 
-func (s *Server) GetDownloadDevicesUrl(_ context.Context, request *gen.GetDownloadDevicesUrlRequest) (*gen.DownloadDevicesUrl, error) {
+func (s *Server) GetDownloadDevicesUrl(_ context.Context, request *devicespb.GetDownloadDevicesUrlRequest) (*devicespb.DownloadDevicesUrl, error) {
 	// validate
 	switch request.MediaType {
 	case "":
@@ -65,7 +65,7 @@ func (s *Server) GetDownloadDevicesUrl(_ context.Context, request *gen.GetDownlo
 	if err := s.writeDownloadToken(&u, tokenStr); err != nil {
 		return nil, err
 	}
-	return &gen.DownloadDevicesUrl{
+	return &devicespb.DownloadDevicesUrl{
 		Filename:        request.Filename,
 		Url:             u.String(),
 		MediaType:       request.MediaType,
@@ -197,7 +197,7 @@ func (c *csvWriter) HasAny(headers ...string) bool {
 	return false
 }
 
-func (s *Server) writeLiveData(ctx context.Context, out writer, devices []*gen.Device, traitInfo map[string]traitInfo) {
+func (s *Server) writeLiveData(ctx context.Context, out writer, devices []*devicespb.Device, traitInfo map[string]traitInfo) {
 	for _, d := range devices {
 		row := make(map[string]string)
 		captureMDValues(d, row)
@@ -223,12 +223,12 @@ func (s *Server) writeLiveData(ctx context.Context, out writer, devices []*gen.D
 }
 
 type source struct {
-	device *gen.Device
+	device *devicespb.Device
 	cursor *historyCursor
 	skip   bool
 }
 
-func (s *Server) writeHistoricalData(ctx context.Context, out writer, devices []*gen.Device, traitInfo map[string]traitInfo, period *timepb.Period) {
+func (s *Server) writeHistoricalData(ctx context.Context, out writer, devices []*devicespb.Device, traitInfo map[string]traitInfo, period *timepb.Period) {
 	// we might want to allow the user to specify the order in the future
 	const (
 		// pageSize = 100
@@ -414,13 +414,13 @@ func (s *Server) parseAndValidateDownloadToken(tokenStr string) (*DownloadToken,
 	return token, nil
 }
 
-func (s *Server) listDevicesAndHeaders(token *DownloadToken, traitInfo map[string]traitInfo) (devices []*gen.Device, headers []string, err error) {
+func (s *Server) listDevicesAndHeaders(token *DownloadToken, traitInfo map[string]traitInfo) (devices []*devicespb.Device, headers []string, err error) {
 	devices = s.m.ListDevices(
 		resource.WithInclude(func(id string, item proto.Message) bool {
 			if item == nil {
 				return false
 			}
-			device := item.(*gen.Device)
+			device := item.(*devicespb.Device)
 			md := device.Metadata
 			if len(md.GetTraits()) == 0 {
 				return false
@@ -478,7 +478,7 @@ func (s *Server) listDevicesAndHeaders(token *DownloadToken, traitInfo map[strin
 	return devices, headers, nil
 }
 
-func collectMetadataHeaders(dst map[string]struct{}, deviceList []*gen.Device) error {
+func collectMetadataHeaders(dst map[string]struct{}, deviceList []*devicespb.Device) error {
 	// collect headers for all populated metadata fields
 	for _, d := range deviceList {
 		err := protorange.Range(d.ProtoReflect(), func(values protopath.Values) error {
@@ -527,7 +527,7 @@ func collectMetadataHeaders(dst map[string]struct{}, deviceList []*gen.Device) e
 	return nil
 }
 
-func collectTraitHeaders(dst map[string]struct{}, deviceList []*gen.Device, traitInfo map[string]traitInfo) {
+func collectTraitHeaders(dst map[string]struct{}, deviceList []*devicespb.Device, traitInfo map[string]traitInfo) {
 	// capture trait headers
 	traitNameSet := make(map[string]struct{})
 	for _, d := range deviceList {
@@ -550,7 +550,7 @@ func collectTraitHeaders(dst map[string]struct{}, deviceList []*gen.Device, trai
 	}
 }
 
-func captureMDValues(device *gen.Device, row map[string]string) {
+func captureMDValues(device *devicespb.Device, row map[string]string) {
 	_ = protorange.Range(device.ProtoReflect(), func(values protopath.Values) error {
 		p := values.Path
 		leafStep := p.Index(-1)

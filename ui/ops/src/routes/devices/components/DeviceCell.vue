@@ -35,6 +35,22 @@
         :paused="props.paused">
       <air-temperature-cell v-bind="resource"/>
     </with-air-temperature>
+    <with-temperature
+        v-if="hasCell('Temperature')"
+        v-slot="{ resource }"
+        :name="props.item.name"
+        :paused="props.paused">
+      <temperature-cell v-bind="resource"/>
+    </with-temperature>
+
+    <with-transport
+        v-if="hasCell('Transport')"
+        :name="props.item.name"
+        :paused="props.paused">
+      <template #transport="{ resource }">
+        <transport-cell v-bind="resource"/>
+      </template>
+    </with-transport>
 
     <light-cell v-if="hasCell('Light')" :name="props.item.name" :paused="props.paused"/>
 
@@ -111,6 +127,10 @@ import OpenCloseCell from '@/traits/openClose/OpenCloseCell.vue';
 import WithOpenClose from '@/traits/openClose/WithOpenClose.vue';
 import StatusLogCell from '@/traits/status/StatusLogCell.vue';
 import WithStatus from '@/traits/status/WithStatus.vue';
+import TemperatureCell from '@/traits/temperature/TemperatureCell.vue';
+import WithTemperature from '@/traits/temperature/WithTemperature.vue';
+import TransportCell from '@/traits/transport/TransportCell.vue';
+import WithTransport from '@/traits/transport/WithTransport.vue';
 import {hasTrait} from '@/util/devices';
 import {computed} from 'vue';
 
@@ -153,6 +173,12 @@ const visibleCells = computed(() => {
   }
   if (hasTrait(props.item, 'smartcore.traits.OpenClose')) {
     cells['OpenClose'] = true;
+  }
+  if (hasTrait(props.item, 'smartcore.bos.Temperature')) {
+    cells['Temperature'] = true;
+  }
+  if (hasTrait(props.item, 'smartcore.bos.Transport')) {
+    cells['Transport'] = true;
   }
   if (hasTrait(props.item, 'smartcore.bos.Status')) {
     cells['StatusLog'] = true;

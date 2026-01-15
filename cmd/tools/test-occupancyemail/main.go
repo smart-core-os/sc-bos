@@ -17,10 +17,10 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/occupancyemail"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
@@ -65,7 +65,7 @@ func main() {
 		}
 	}
 	device := historypb.NewOccupancySensorServer(store)
-	client := gen.WrapOccupancySensorHistory(device)
+	client := occupancysensorpb.WrapHistory(device)
 	root.Announce("test", node.HasTrait(trait.OccupancySensor, node.WithClients(client)))
 
 	serv := auto.Services{

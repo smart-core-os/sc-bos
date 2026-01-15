@@ -246,6 +246,13 @@
           "appearance": {"title": "Kaolin Sound Sensor"},
           "membership": {"subsystem": "sensors"},
           "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/CHW-L00-01",
+          "traits": [{"name":  "smartcore.bos.Temperature"}],
+          "appearance": {"title": "Main Chilled Water"},
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Basement"}
         }
       ]
     },
@@ -253,6 +260,12 @@
       "name": "van/uk/brum/ugs/eg-ac-01/driver/ground",
       "type": "mock",
       "devices": [
+        {
+          "name": "van/uk/brum/ugs/devices/LOK-L00-01",
+          "traits": [{"name": "smartcore.bos.Allocation"}],
+          "membership": {"subsystem": "lockers"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
         {
           "name": "van/uk/brum/ugs/devices/LTF-L00-01",
           "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
@@ -536,7 +549,7 @@
         {
           "name": "van/uk/brum/ugs/devices/ACR-L00-01",
           "traits": [
-            {"name": "smartcore.bos.Access"}, {"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}
+            {"name": "smartcore.bos.Access"}, {"name": "smartcore.traits.EnterLeaveSensor"}, {"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}
           ],
           "appearance": {"title": "Main Door"},
           "membership": {"subsystem": "acs"},
@@ -1487,6 +1500,12 @@
       "storage": {"type": "postgres"}
     },
     {
+      "name": "van/uk/brum/ugs/automation/allocation-history/LOK-L00-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/LOK-L00-01", "trait": "smartcore.bos.Allocation"},
+      "storage": {"type": "postgres"}
+    },
+    {
       "name": "van/uk/brum/ugs/automation/electric-history/building",
       "type": "history",
       "source": {"name": "van/uk/brum/ugs/zones/building", "trait": "smartcore.traits.Electric"},
@@ -1522,6 +1541,7 @@
       "source": {"name": "van/uk/brum/ugs/zones/areas/lab", "trait": "smartcore.traits.Electric"},
       "storage": {"type": "postgres"}
     },
+
     {
       "name": "van/uk/brum/ugs/automation/electric-history/comms-room",
       "type": "history",

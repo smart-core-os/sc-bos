@@ -13,10 +13,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
@@ -68,15 +68,15 @@ func newMeter(client *gobacnet.Client, devices known.Context, statuses *statuspb
 }
 
 func (t *meterTrait) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(meter.TraitName, node.WithClients(gen.WrapMeterApi(t), gen.WrapMeterInfo(&meter.InfoServer{
-		MeterReading: &gen.MeterReadingSupport{
+	return a.Announce(t.config.Name, node.HasTrait(meter.TraitName, node.WithClients(meterpb.WrapApi(t), meterpb.WrapInfo(&meter.InfoServer{
+		MeterReading: &meterpb.MeterReadingSupport{
 			ResourceSupport: &types.ResourceSupport{Readable: true, Observable: true},
 			UsageUnit:       t.config.Unit,
 		},
 	}))))
 }
 
-func (t *meterTrait) GetMeterReading(ctx context.Context, request *gen.GetMeterReadingRequest) (*gen.MeterReading, error) {
+func (t *meterTrait) GetMeterReading(ctx context.Context, request *meterpb.GetMeterReadingRequest) (*meterpb.MeterReading, error) {
 	_, err := t.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (t *meterTrait) GetMeterReading(ctx context.Context, request *gen.GetMeterR
 	return t.ModelServer.GetMeterReading(ctx, request)
 }
 
-func (t *meterTrait) PullMeterReadings(request *gen.PullMeterReadingsRequest, server gen.MeterApi_PullMeterReadingsServer) error {
+func (t *meterTrait) PullMeterReadings(request *meterpb.PullMeterReadingsRequest, server meterpb.MeterApi_PullMeterReadingsServer) error {
 	err := t.pollTask.Attach(server.Context())
 	if err != nil {
 		return err
@@ -109,7 +109,7 @@ func (t *meterTrait) startPoll(init context.Context) (stop task.StopFn, err erro
 	})
 }
 
-func (t *meterTrait) pollPeer(ctx context.Context) (*gen.MeterReading, error) {
+func (t *meterTrait) pollPeer(ctx context.Context) (*meterpb.MeterReading, error) {
 	responses := comm.ReadProperties(ctx, t.client, t.known, *t.config.Usage)
 	var errs []error
 	usage, err := comm.Float32Value(responses[0])
@@ -120,7 +120,7 @@ func (t *meterTrait) pollPeer(ctx context.Context) (*gen.MeterReading, error) {
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}
-	data := &gen.MeterReading{
+	data := &meterpb.MeterReading{
 		Usage: usage,
 	}
 	return t.model.UpdateMeterReading(data)

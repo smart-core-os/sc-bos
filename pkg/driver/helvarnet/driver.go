@@ -11,11 +11,13 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_emergencylightpb "github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
@@ -82,10 +84,12 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		lightingGroup := newLightingGroup(d.clients[l.IpAddress], d.logger, l, *l.GroupNumber)
 		// try to get the last scene on a restart of the area controller
-		lightingGroup.getLastScene()
-		err := lightingGroup.getSceneNames()
+		if err := lightingGroup.getLastScene(ctx); err != nil {
+			d.logger.Error("getLastScene error", zap.Error(err))
+		}
+		err := lightingGroup.getSceneNames(ctx)
 		if err != nil {
-			d.logger.Error("getSceneNames error", zap.String("error", err.Error()))
+			d.logger.Error("getSceneNames error", zap.Error(err))
 		}
 		rootAnnouncer.Announce(l.Name,
 			node.HasTrait(trait.Light,
@@ -116,7 +120,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasTrait(trait.Light,
 				node.WithClients(lightpb.WrapApi(lum))),
 			node.HasTrait(udmipb.TraitName,
-				node.WithClients(gen.WrapUdmiService(lum))),
+				node.WithClients(gen_udmipb.WrapService(lum))),
 			node.HasMetadata(l.Meta))
 		grp.Go(func() error {
 			return lum.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck)
@@ -136,7 +140,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasTrait(trait.OccupancySensor,
 				node.WithClients(occupancysensorpb.WrapApi(p))),
 			node.HasTrait(udmipb.TraitName,
-				node.WithClients(gen.WrapUdmiService(p))),
+				node.WithClients(gen_udmipb.WrapService(p))),
 			node.HasMetadata(pir.Meta))
 		grp.Go(func() error {
 			return p.runUpdateState(ctx, cfg.RefreshOccupancy.Duration)
@@ -168,9 +172,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasTrait(trait.Light,
 				node.WithClients(lightpb.WrapApi(emergencyLight))),
 			node.HasTrait(emergencylightpb.TraitName,
-				node.WithClients(gen.WrapEmergencyLightApi(emergencyLight))),
+				node.WithClients(gen_emergencylightpb.WrapApi(emergencyLight))),
 			node.HasTrait(udmipb.TraitName,
-				node.WithClients(gen.WrapUdmiService(emergencyLight))),
+				node.WithClients(gen_udmipb.WrapService(emergencyLight))),
 			node.HasMetadata(em.Meta))
 		grp.Go(func() error {
 			return emergencyLight.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck)
@@ -188,7 +192,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			fc.Dispose()
 		}
 		if err != nil {
-			d.logger.Error("run error", zap.String("error", err.Error()))
+			d.logger.Error("run error", zap.Error(err))
 		}
 	}()
 	return nil
@@ -196,12 +200,12 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 // this health check monitors the device to check if it is online, communicating properly and if it is reporting a fault itself
 // via the status register in the device.
-func getDeviceHealthCheck() *gen.HealthCheck {
-	return &gen.HealthCheck{
+func getDeviceHealthCheck() *gen_healthpb.HealthCheck {
+	return &gen_healthpb.HealthCheck{
 		Id:              "deviceStatusCheck",
 		DisplayName:     "Device Status Check",
 		Description:     "Checks the status from the device itself and also if communication is healthy",
-		OccupantImpact:  gen.HealthCheck_COMFORT,
-		EquipmentImpact: gen.HealthCheck_FUNCTION,
+		OccupantImpact:  gen_healthpb.HealthCheck_COMFORT,
+		EquipmentImpact: gen_healthpb.HealthCheck_FUNCTION,
 	}
 }

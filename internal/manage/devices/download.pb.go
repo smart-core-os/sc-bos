@@ -7,12 +7,14 @@
 package devices
 
 import (
-	gen "github.com/smart-core-os/sc-bos/pkg/gen"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 )
 
 const (
@@ -25,8 +27,8 @@ const (
 // DownloadToken is encoded as part of the download url, it's the mechanism we use to communicate between the gRPC
 // api request GetDownloadDevicesUrl and the http handler that is at the other end of that url.
 type DownloadToken struct {
-	state         protoimpl.MessageState            `protogen:"open.v1"`
-	Request       *gen.GetDownloadDevicesUrlRequest `protobuf:"bytes,1,opt,name=request,proto3" json:"request,omitempty"`
+	state         protoimpl.MessageState                  `protogen:"open.v1"`
+	Request       *devicespb.GetDownloadDevicesUrlRequest `protobuf:"bytes,1,opt,name=request,proto3" json:"request,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -61,7 +63,7 @@ func (*DownloadToken) Descriptor() ([]byte, []int) {
 	return file_download_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *DownloadToken) GetRequest() *gen.GetDownloadDevicesUrlRequest {
+func (x *DownloadToken) GetRequest() *devicespb.GetDownloadDevicesUrlRequest {
 	if x != nil {
 		return x.Request
 	}
@@ -90,8 +92,8 @@ func file_download_proto_rawDescGZIP() []byte {
 
 var file_download_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_download_proto_goTypes = []any{
-	(*DownloadToken)(nil),                    // 0: smartcore.bos.devices.DownloadToken
-	(*gen.GetDownloadDevicesUrlRequest)(nil), // 1: smartcore.bos.GetDownloadDevicesUrlRequest
+	(*DownloadToken)(nil),                          // 0: smartcore.bos.devices.DownloadToken
+	(*devicespb.GetDownloadDevicesUrlRequest)(nil), // 1: smartcore.bos.GetDownloadDevicesUrlRequest
 }
 var file_download_proto_depIdxs = []int32{
 	1, // 0: smartcore.bos.devices.DownloadToken.request:type_name -> smartcore.bos.GetDownloadDevicesUrlRequest

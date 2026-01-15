@@ -1,4 +1,4 @@
-// Command client-meter provides a CLI tool for interacting with the [gen.MeterApiClient].
+// Command client-airqualitysensor provides a CLI tool for interacting with the [traits.NewAirQualitySensorApiClient].
 package main
 
 import (

@@ -7,11 +7,12 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/statusalerts/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
-func analyseStatusLogs(ctx context.Context, source config.Source, c <-chan *gen.StatusLog, name string, client gen.AlertAdminApiClient, logger *zap.Logger) error {
-	var failedLog *gen.StatusLog
+func analyseStatusLogs(ctx context.Context, source config.Source, c <-chan *statuspb.StatusLog, name string, client alertpb.AlertAdminApiClient, logger *zap.Logger) error {
+	var failedLog *statuspb.StatusLog
 	var failedCount int
 
 	retryTimer := newStoppedTimer()
@@ -22,9 +23,9 @@ func analyseStatusLogs(ctx context.Context, source config.Source, c <-chan *gen.
 
 	debounceTimer := newStoppedTimer()
 	debounceDelay := source.DebounceOrDefault()
-	var debouncedLog *gen.StatusLog
+	var debouncedLog *statuspb.StatusLog
 
-	recordResult := func(msg *gen.StatusLog, err error) {
+	recordResult := func(msg *statuspb.StatusLog, err error) {
 		switch {
 		case err == nil && failedLog == nil: // last attempt worked, this attempt worked too
 		case err == nil && failedLog != nil:
@@ -67,7 +68,7 @@ func analyseStatusLogs(ctx context.Context, source config.Source, c <-chan *gen.
 	}
 
 	for {
-		var msg *gen.StatusLog
+		var msg *statuspb.StatusLog
 		select {
 		case <-retryTimer.C:
 			msg = failedLog
@@ -95,17 +96,17 @@ func analyseStatusLogs(ctx context.Context, source config.Source, c <-chan *gen.
 		}
 
 		switch {
-		case msg.Level == gen.StatusLog_NOMINAL:
-			_, err := client.ResolveAlert(ctx, &gen.ResolveAlertRequest{
+		case msg.Level == statuspb.StatusLog_NOMINAL:
+			_, err := client.ResolveAlert(ctx, &alertpb.ResolveAlertRequest{
 				Name:         name,
-				Alert:        &gen.Alert{Source: source.Name},
+				Alert:        &alertpb.Alert{Source: source.Name},
 				AllowMissing: true,
 			})
 			recordResult(msg, err)
 		default:
-			_, err := client.CreateAlert(ctx, &gen.CreateAlertRequest{
+			_, err := client.CreateAlert(ctx, &alertpb.CreateAlertRequest{
 				Name: name,
-				Alert: &gen.Alert{
+				Alert: &alertpb.Alert{
 					Description: logToDescription(msg),
 					Severity:    levelToSeverity(msg.Level),
 					Floor:       source.Floor,
@@ -128,21 +129,21 @@ func newStoppedTimer() *time.Timer {
 	return t
 }
 
-func levelToSeverity(level gen.StatusLog_Level) gen.Alert_Severity {
+func levelToSeverity(level statuspb.StatusLog_Level) alertpb.Alert_Severity {
 	switch level {
-	case gen.StatusLog_NOMINAL:
-		return gen.Alert_SEVERITY_UNSPECIFIED
-	case gen.StatusLog_NOTICE:
-		return gen.Alert_INFO
-	case gen.StatusLog_REDUCED_FUNCTION:
-		return gen.Alert_WARNING
-	case gen.StatusLog_NON_FUNCTIONAL, gen.StatusLog_OFFLINE:
-		return gen.Alert_SEVERE
+	case statuspb.StatusLog_NOMINAL:
+		return alertpb.Alert_SEVERITY_UNSPECIFIED
+	case statuspb.StatusLog_NOTICE:
+		return alertpb.Alert_INFO
+	case statuspb.StatusLog_REDUCED_FUNCTION:
+		return alertpb.Alert_WARNING
+	case statuspb.StatusLog_NON_FUNCTIONAL, statuspb.StatusLog_OFFLINE:
+		return alertpb.Alert_SEVERE
 	default:
-		return gen.Alert_WARNING
+		return alertpb.Alert_WARNING
 	}
 }
 
-func logToDescription(log *gen.StatusLog) string {
+func logToDescription(log *statuspb.StatusLog) string {
 	return log.Description
 }

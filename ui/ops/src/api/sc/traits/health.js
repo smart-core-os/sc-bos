@@ -2,18 +2,18 @@ import {fieldMaskFromObject, setProperties, timestampToDate} from '@/api/convpb'
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setCollection, setValue, trackAction} from '@/api/resource';
 import {periodFromObject} from '@/api/sc/types/period';
-import {HealthApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/health_grpc_web_pb';
-import {HealthHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/health_history_grpc_web_pb';
+import {HealthApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_grpc_web_pb';
+import {HealthHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_history_grpc_web_pb';
 import {
   GetHealthCheckRequest,
   HealthCheck,
   ListHealthChecksRequest,
   PullHealthChecksRequest,
   PullHealthCheckRequest,
-} from '@smart-core-os/sc-bos-ui-gen/proto/health_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb';
 import {
   ListHealthCheckHistoryRequest,
-} from '@smart-core-os/sc-bos-ui-gen/proto/health_history_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_history_pb';
 
 /**
  * @param {Partial<ListHealthChecksRequest.AsObject>} request

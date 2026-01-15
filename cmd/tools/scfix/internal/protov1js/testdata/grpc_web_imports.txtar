@@ -1,0 +1,71 @@
+Test grpc_web_pb imports and various file types.
+expected_changes: 3
+
+-- input/project/package.json --
+{
+  "name": "external-app",
+  "dependencies": {
+    "@smart-core-os/sc-bos-ui-gen": "^1.0.0"
+  }
+}
+-- input/project/src/api.ts --
+import {AccountApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/account_grpc_web_pb';
+import {StatusLog} from '@smart-core-os/sc-bos-ui-gen/proto/status_pb';
+
+export class Api {
+  constructor() {
+    this.client = new AccountApiPromiseClient('http://localhost:8080');
+  }
+}
+-- input/project/src/types.d.ts --
+import type {Alert} from '@smart-core-os/sc-bos-ui-gen/proto/alerts_pb';
+
+export interface AlertHandler {
+  handle(alert: Alert): void;
+}
+-- input/project/node_modules/@smart-core-os/sc-bos-ui-gen/package.json --
+{
+  "name": "@smart-core-os/sc-bos-ui-gen"
+}
+-- input/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_pb.js --
+// Generated protobuf file
+-- input/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_grpc_web_pb.js --
+// Generated gRPC-Web client
+-- input/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/status/v1/status_pb.js --
+// Generated protobuf file
+-- input/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alerts/v1/alerts_pb.js --
+// Generated protobuf file
+-- output/project/package.json --
+{
+  "name": "external-app",
+  "dependencies": {
+    "@smart-core-os/sc-bos-ui-gen": "^1.0.0"
+  }
+}
+-- output/project/src/api.ts --
+import {AccountApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_grpc_web_pb';
+import {StatusLog} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/status/v1/status_pb';
+
+export class Api {
+  constructor() {
+    this.client = new AccountApiPromiseClient('http://localhost:8080');
+  }
+}
+-- output/project/src/types.d.ts --
+import type {Alert} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alerts/v1/alerts_pb';
+
+export interface AlertHandler {
+  handle(alert: Alert): void;
+}
+-- output/project/node_modules/@smart-core-os/sc-bos-ui-gen/package.json --
+{
+  "name": "@smart-core-os/sc-bos-ui-gen"
+}
+-- output/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_pb.js --
+// Generated protobuf file
+-- output/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_grpc_web_pb.js --
+// Generated gRPC-Web client
+-- output/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/status/v1/status_pb.js --
+// Generated protobuf file
+-- output/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alerts/v1/alerts_pb.js --
+// Generated protobuf file

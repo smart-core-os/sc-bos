@@ -9,12 +9,12 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 // checkBase provides common functionality for health checks of different types.
 type checkBase struct {
-	check *gen.HealthCheck // nil when disposed
+	check *healthpb.HealthCheck // nil when disposed
 	lifecycle
 }
 
@@ -22,17 +22,17 @@ type checkBase struct {
 // This type is split out to localise documentation.
 type lifecycle struct {
 	// When set, onCommit is called after storing a new HealthCheck during write.
-	onCommit func(c *gen.HealthCheck)
+	onCommit func(c *healthpb.HealthCheck)
 	// When set, onDispose is called when Dispose is called for the first time.
-	onDispose func(c *gen.HealthCheck)
+	onDispose func(c *healthpb.HealthCheck)
 }
 
 // write commits changes made by f as an atomic update.
-func (cb *checkBase) write(f func(dst *gen.HealthCheck)) {
+func (cb *checkBase) write(f func(dst *healthpb.HealthCheck)) {
 	if cb.check == nil {
 		return // disposed
 	}
-	dst := proto.Clone(cb.check).(*gen.HealthCheck)
+	dst := proto.Clone(cb.check).(*healthpb.HealthCheck)
 	f(dst)
 	if proto.Equal(cb.check, dst) {
 		return
@@ -44,17 +44,17 @@ func (cb *checkBase) write(f func(dst *gen.HealthCheck)) {
 	}
 }
 
-func makeReliable(dst *gen.HealthCheck) {
+func makeReliable(dst *healthpb.HealthCheck) {
 	r := dst.GetReliability()
 	if r == nil {
-		r = &gen.HealthCheck_Reliability{}
+		r = &healthpb.HealthCheck_Reliability{}
 		dst.Reliability = r
 	}
 	oldState := r.GetState()
-	r.State = gen.HealthCheck_Reliability_RELIABLE
+	r.State = healthpb.HealthCheck_Reliability_RELIABLE
 	r.Cause = nil
 	r.Effects = nil
-	if oldState != gen.HealthCheck_Reliability_RELIABLE {
+	if oldState != healthpb.HealthCheck_Reliability_RELIABLE {
 		r.ReliableTime = timestamppb.Now()
 	}
 }
@@ -69,8 +69,8 @@ func makeReliable(dst *gen.HealthCheck) {
 //   - ComplianceImpacts
 //
 // Other fields are not updated by this method.
-func (cb *checkBase) UpdateMetadata(_ context.Context, c *gen.HealthCheck) {
-	cb.write(func(dst *gen.HealthCheck) {
+func (cb *checkBase) UpdateMetadata(_ context.Context, c *healthpb.HealthCheck) {
+	cb.write(func(dst *healthpb.HealthCheck) {
 		dst.DisplayName = c.DisplayName
 		dst.Description = c.Description
 		dst.OccupantImpact = c.OccupantImpact
@@ -84,14 +84,14 @@ func (cb *checkBase) UpdateMetadata(_ context.Context, c *gen.HealthCheck) {
 // Panics if nr is nil or has an invalid state.
 // Reliability timestamps are updated automatically.
 // See also [ReliabilityFromErr].
-func (cb *checkBase) UpdateReliability(_ context.Context, nr *gen.HealthCheck_Reliability) {
+func (cb *checkBase) UpdateReliability(_ context.Context, nr *healthpb.HealthCheck_Reliability) {
 	if nr == nil {
 		panic("cannot update reliability to nil")
 	}
-	if s := nr.GetState(); s == gen.HealthCheck_Reliability_STATE_UNSPECIFIED {
+	if s := nr.GetState(); s == healthpb.HealthCheck_Reliability_STATE_UNSPECIFIED {
 		panic("cannot update reliability to unspecified state")
 	}
-	if s := nr.GetState(); s == gen.HealthCheck_Reliability_RELIABLE {
+	if s := nr.GetState(); s == healthpb.HealthCheck_Reliability_RELIABLE {
 		if nr.Cause != nil {
 			panic("reliable checks cannot have a cause")
 		}
@@ -100,10 +100,10 @@ func (cb *checkBase) UpdateReliability(_ context.Context, nr *gen.HealthCheck_Re
 		}
 	}
 
-	cb.write(func(dst *gen.HealthCheck) {
+	cb.write(func(dst *healthpb.HealthCheck) {
 		rel := dst.GetReliability()
 		if rel == nil {
-			rel = &gen.HealthCheck_Reliability{}
+			rel = &healthpb.HealthCheck_Reliability{}
 			dst.Reliability = rel
 		}
 
@@ -115,7 +115,7 @@ func (cb *checkBase) UpdateReliability(_ context.Context, nr *gen.HealthCheck_Re
 		if v := nr.GetLastError(); v != nil {
 			rel.LastError = v
 		}
-		wasReliable, isReliable := oldState == gen.HealthCheck_Reliability_RELIABLE, rel.GetState() == gen.HealthCheck_Reliability_RELIABLE
+		wasReliable, isReliable := oldState == healthpb.HealthCheck_Reliability_RELIABLE, rel.GetState() == healthpb.HealthCheck_Reliability_RELIABLE
 		switch {
 		case wasReliable == isReliable:
 		case wasReliable: // && !isReliable
@@ -143,59 +143,59 @@ func (cb *checkBase) Dispose() {
 // If err is [context.DeadlineExceeded], a NO_RESPONSE state is returned.
 // gRPC errors are mapped to specific states where possible.
 // Other errors are mapped to BAD_RESPONSE.
-func ReliabilityFromErr(err error) *gen.HealthCheck_Reliability {
+func ReliabilityFromErr(err error) *healthpb.HealthCheck_Reliability {
 	if err == nil || errors.Is(err, context.Canceled) {
-		return &gen.HealthCheck_Reliability{
-			State: gen.HealthCheck_Reliability_RELIABLE,
+		return &healthpb.HealthCheck_Reliability{
+			State: healthpb.HealthCheck_Reliability_RELIABLE,
 		}
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
-		return &gen.HealthCheck_Reliability{
-			State: gen.HealthCheck_Reliability_NO_RESPONSE,
+		return &healthpb.HealthCheck_Reliability{
+			State: healthpb.HealthCheck_Reliability_NO_RESPONSE,
 		}
 	}
 	if s := grpcErrorToReliabilityState(err); s != 0 {
 		e := ErrorToProto(err)
-		e.Code = &gen.HealthCheck_Error_Code{Code: status.Code(err).String(), System: "gRPC"}
-		return &gen.HealthCheck_Reliability{
+		e.Code = &healthpb.HealthCheck_Error_Code{Code: status.Code(err).String(), System: "gRPC"}
+		return &healthpb.HealthCheck_Reliability{
 			State:     s,
 			LastError: e,
 		}
 	}
-	return &gen.HealthCheck_Reliability{
-		State:     gen.HealthCheck_Reliability_BAD_RESPONSE,
+	return &healthpb.HealthCheck_Reliability{
+		State:     healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 		LastError: ErrorToProto(err),
 	}
 }
 
 // grpcErrorToReliabilityState maps gRPC error codes to HealthCheck_Reliability_State values.
-func grpcErrorToReliabilityState(err error) gen.HealthCheck_Reliability_State {
+func grpcErrorToReliabilityState(err error) healthpb.HealthCheck_Reliability_State {
 	s, ok := status.FromError(err)
 	if !ok {
 		return 0
 	}
 	switch s.Code() {
 	case codes.NotFound:
-		return gen.HealthCheck_Reliability_NOT_FOUND
+		return healthpb.HealthCheck_Reliability_NOT_FOUND
 	case codes.PermissionDenied, codes.Unauthenticated:
-		return gen.HealthCheck_Reliability_PERMISSION_DENIED
+		return healthpb.HealthCheck_Reliability_PERMISSION_DENIED
 	case codes.DeadlineExceeded:
-		return gen.HealthCheck_Reliability_NO_RESPONSE
+		return healthpb.HealthCheck_Reliability_NO_RESPONSE
 	}
-	return gen.HealthCheck_Reliability_BAD_RESPONSE
+	return healthpb.HealthCheck_Reliability_BAD_RESPONSE
 }
 
 // ErrorToProto converts a Go error to a HealthCheck_Error proto.
 // If err is nil, nil is returned.
-func ErrorToProto(err error) *gen.HealthCheck_Error {
+func ErrorToProto(err error) *healthpb.HealthCheck_Error {
 	if err == nil {
 		return nil
 	}
-	return &gen.HealthCheck_Error{SummaryText: err.Error()}
+	return &healthpb.HealthCheck_Error{SummaryText: err.Error()}
 }
 
-func updateStateTimes(c *gen.HealthCheck, oldState, newState gen.HealthCheck_Normality) {
-	wasNormal, isNormal := oldState == gen.HealthCheck_NORMAL, newState == gen.HealthCheck_NORMAL
+func updateStateTimes(c *healthpb.HealthCheck, oldState, newState healthpb.HealthCheck_Normality) {
+	wasNormal, isNormal := oldState == healthpb.HealthCheck_NORMAL, newState == healthpb.HealthCheck_NORMAL
 	switch {
 	case wasNormal == isNormal:
 		// state change has no side effects

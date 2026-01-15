@@ -9,11 +9,11 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
 )
 
 // Inspect connects to a remote node returning its public certs and metadata.
-func Inspect(ctx context.Context, address string) (*gen.HubNodeInspection, error) {
+func Inspect(ctx context.Context, address string) (*hubpb.HubNodeInspection, error) {
 	tlsConfig := &tls.Config{
 		// We're actively trying to connect to the remote and fetch their cert
 		InsecureSkipVerify: true,
@@ -29,7 +29,7 @@ func Inspect(ctx context.Context, address string) (*gen.HubNodeInspection, error
 		return nil, err
 	}
 
-	out := &gen.HubNodeInspection{}
+	out := &hubpb.HubNodeInspection{}
 	// do the API call first, to force the connection to be established (or fail)
 	client := traits.NewMetadataApiClient(conn)
 	md, err := client.GetMetadata(ctx, &traits.GetMetadataRequest{})

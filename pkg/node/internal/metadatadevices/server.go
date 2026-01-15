@@ -7,8 +7,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
@@ -21,7 +21,7 @@ type Server struct {
 
 // Collection contains devices keyed by their name.
 type Collection interface {
-	GetDevice(name string, opts ...resource.ReadOption) (*gen.Device, error)
+	GetDevice(name string, opts ...resource.ReadOption) (*gen_devicespb.Device, error)
 	PullDevice(ctx context.Context, name string, opts ...resource.ReadOption) <-chan devicespb.DeviceChange
 }
 

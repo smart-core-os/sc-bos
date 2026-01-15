@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
 const (
@@ -44,11 +44,11 @@ func validateDescription(description string) bool {
 	return len(description) >= minDescriptionLength && len(description) <= maxDescriptionLength
 }
 
-func validateResourceType(rt gen.RoleAssignment_ResourceType) bool {
-	if rt == gen.RoleAssignment_RESOURCE_TYPE_UNSPECIFIED {
+func validateResourceType(rt accountpb.RoleAssignment_ResourceType) bool {
+	if rt == accountpb.RoleAssignment_RESOURCE_TYPE_UNSPECIFIED {
 		return false
 	}
-	_, ok := gen.RoleAssignment_ResourceType_name[int32(rt)]
+	_, ok := accountpb.RoleAssignment_ResourceType_name[int32(rt)]
 	return ok
 }
 

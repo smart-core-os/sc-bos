@@ -1,0 +1,62 @@
+Yarn workspace with shared node_modules in parent directory.
+Tests that node_modules resolution walks up correctly when local node_modules lacks ui-gen.
+expected_changes: 1
+
+-- input/workspace/package.json --
+{
+  "name": "workspace-root",
+  "private": true,
+  "workspaces": ["packages/*"]
+}
+-- input/workspace/packages/app/package.json --
+{
+  "name": "@workspace/app",
+  "dependencies": {
+    "@smart-core-os/sc-bos-ui-gen": "^1.0.0"
+  }
+}
+-- input/workspace/packages/app/node_modules/some-other-package/package.json --
+{
+  "name": "some-other-package",
+  "version": "1.0.0"
+}
+-- input/workspace/packages/app/src/index.js --
+import {EmergencyStatus} from '@smart-core-os/sc-bos-ui-gen/proto/dali_pb';
+
+console.log(EmergencyStatus);
+-- input/workspace/node_modules/@smart-core-os/sc-bos-ui-gen/package.json --
+{
+  "name": "@smart-core-os/sc-bos-ui-gen",
+  "version": "1.0.0"
+}
+-- input/workspace/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/driver/dali/v1/dali_pb.js --
+// Generated protobuf file
+-- output/workspace/package.json --
+{
+  "name": "workspace-root",
+  "private": true,
+  "workspaces": ["packages/*"]
+}
+-- output/workspace/packages/app/package.json --
+{
+  "name": "@workspace/app",
+  "dependencies": {
+    "@smart-core-os/sc-bos-ui-gen": "^1.0.0"
+  }
+}
+-- output/workspace/packages/app/node_modules/some-other-package/package.json --
+{
+  "name": "some-other-package",
+  "version": "1.0.0"
+}
+-- output/workspace/packages/app/src/index.js --
+import {EmergencyStatus} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/driver/dali/v1/dali_pb';
+
+console.log(EmergencyStatus);
+-- output/workspace/node_modules/@smart-core-os/sc-bos-ui-gen/package.json --
+{
+  "name": "@smart-core-os/sc-bos-ui-gen",
+  "version": "1.0.0"
+}
+-- output/workspace/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/driver/dali/v1/dali_pb.js --
+// Generated protobuf file

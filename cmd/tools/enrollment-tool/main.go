@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
 	"github.com/smart-core-os/sc-bos/pkg/system/hub/remote"
 )
 
@@ -51,7 +51,7 @@ func run() error {
 	}
 	authority := pki.FSSource(flagCert, flagKey, flagCA)
 
-	en := &gen.Enrollment{
+	en := &enrollmentpb.Enrollment{
 		TargetName:     flagName,
 		TargetAddress:  flagAddr,
 		ManagerName:    flagManagerName,

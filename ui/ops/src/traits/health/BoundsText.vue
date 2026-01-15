@@ -9,12 +9,12 @@
 <script setup>
 import {valueToString} from '@/traits/health/health.js';
 import {hasOneOf} from '@/util/proto.js';
-import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/health_pb';
+import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb';
 import {computed} from 'vue';
 
 const props = defineProps({
   modelValue: {
-    /** @type {import('vue').PropType<import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.AsObject>} */
+    /** @type {import('vue').PropType<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.AsObject>} */
     type: Object,
     default: null
   }
@@ -22,7 +22,7 @@ const props = defineProps({
 
 const isNormal = computed(() => props.modelValue?.normality === HealthCheck.Normality.NORMAL);
 const boundsOneOf = computed(() => {
-  /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.Bounds.AsObject} */
+  /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.Bounds.AsObject} */
   const b = props.modelValue?.bounds;
   const options = ['normalValue', 'abnormalValue', 'normalValues', 'abnormalValues', 'normalRange', 'abnormalRange'];
   for (const opt of options) {
@@ -81,7 +81,7 @@ const cmpStr = computed(() => {
   return '';
 });
 const rhsStr = computed(() => {
-  /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/health_pb').HealthCheck.Bounds.AsObject} */
+  /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.Bounds.AsObject} */
   const b = props.modelValue?.bounds;
   switch (boundsOneOf.value) {
     case 'normalValue':

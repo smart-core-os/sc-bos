@@ -20,11 +20,11 @@ type Response struct {
 	Data interface{} `json:"data,omitempty"`
 }
 
-func (r Response) getCode() string {
+func (r Response) GetCode() string {
 	return r.Code
 }
 
-func (r Response) getMsg() string {
+func (r Response) GetMsg() string {
 	return r.Msg
 }
 

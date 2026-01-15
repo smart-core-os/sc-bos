@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package smartcore.bos.fluidflow.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/info.proto";
+
+// FluidFlow trait is applicable to devices that control the flow of a fluid (liquid or gas)
+// by opening or closing a passageway. This includes devices such as water valves,
+// gas valves, and other similar control mechanisms used in various industrial and
+// commercial applications.
+service FluidFlowApi {
+  rpc GetFluidFlow(GetFluidFlowRequest) returns (FluidFlow) {}
+  rpc PullFluidFlow(PullFluidFlowRequest) returns (stream PullFluidFlowResponse) {}
+  rpc UpdateFluidFlow(UpdateFluidFlowRequest) returns (FluidFlow) {}
+}
+
+service FluidFlowInfo {
+  rpc DescribeFluidFlow(DescribeFluidFlowRequest) returns (FluidFlowSupport) {}
+}
+
+
+// FluidFlow represents the state and control parameters of a fluid flow device.
+message FluidFlow {
+  // The target flow rate set at the device e.g. L/s
+  optional float target_flow_rate = 1;
+  // If the flow is powered by a pump or similar device, this field indicates
+  // the frequency at which the drive operates to achieve the desired flow rate.
+  // This is particularly relevant for variable frequency drives (VFDs) used in pumps to control the speed and flow rate.
+  optional float target_drive_frequency = 2;
+  // The measured flow rate e.g. L/s
+  // Output only
+  optional float flow_rate = 3;
+  // The measured drive frequency e.g. Hz
+  // Output only
+  optional float drive_frequency = 4;
+
+  // Direction describes the control of fluid flow. It is either flowing the fluid, returning the fluid passed or is blocking the flow.
+  enum Direction {
+    DIRECTION_UNSPECIFIED = 0;
+    // The device is set to allow fluid to flow through it.
+    FLOW = 1;
+    // The device is set to return the fluid that is passing through it.
+    RETURN = 2;
+    // The device is set to block the flow of fluid.
+    BLOCKING = 3;
+  }
+
+  // The flow device operation direction
+  Direction direction = 11;
+}
+
+message GetFluidFlowRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullFluidFlowRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullFluidFlowResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    FluidFlow flow = 3;
+  }
+}
+
+message UpdateFluidFlowRequest {
+  string name = 1;
+  FluidFlow flow = 2;
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message UpdateFluidFlowResponse {
+  FluidFlow flow = 1;
+}
+
+message DescribeFluidFlowRequest {
+  string name = 1;
+}
+
+// FluidFlowSupport describes the capabilities of devices implementing this trait
+message FluidFlowSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.types.ResourceSupport resource_support = 1;
+  // The unit associated with the flow rate target and measured values
+  string flow_rate_unit = 2;
+  // The unit associated with the drive frequency target and measured values
+  string drive_frequency_unit = 3;
+}

@@ -4,8 +4,8 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 const (
@@ -67,8 +67,8 @@ func getStatusListFromFlag(flag int64) []State {
 	return statusList
 }
 
-func statusToHealthCode(status int64) *gen.HealthCheck_Error_Code {
-	return &gen.HealthCheck_Error_Code{
+func statusToHealthCode(status int64) *gen_healthpb.HealthCheck_Error_Code {
+	return &gen_healthpb.HealthCheck_Error_Code{
 		Code:   strconv.Itoa(int(status)),
 		System: SystemName,
 	}
@@ -78,18 +78,18 @@ func updateDeviceFaults(ctx context.Context, status int64, fc *healthpb.FaultChe
 
 	// Handle negative status codes for special conditions, mainly comms issues
 	if status < 0 {
-		rel := &gen.HealthCheck_Reliability{}
+		rel := &gen_healthpb.HealthCheck_Reliability{}
 		switch status {
 		case DeviceOfflineCode:
-			rel.State = gen.HealthCheck_Reliability_NO_RESPONSE
-			rel.LastError = &gen.HealthCheck_Error{
+			rel.State = gen_healthpb.HealthCheck_Reliability_NO_RESPONSE
+			rel.LastError = &gen_healthpb.HealthCheck_Error{
 				SummaryText: "Device Offline",
 				DetailsText: "No communication received from device since the last Smart Core restart",
 				Code:        statusToHealthCode(DeviceOfflineCode),
 			}
 		case BadResponseCode:
-			rel.State = gen.HealthCheck_Reliability_BAD_RESPONSE
-			rel.LastError = &gen.HealthCheck_Error{
+			rel.State = gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE
+			rel.LastError = &gen_healthpb.HealthCheck_Error{
 				SummaryText: "Bad Response",
 				DetailsText: "The device has sent an invalid response to a command",
 				Code:        statusToHealthCode(BadResponseCode),
@@ -97,8 +97,8 @@ func updateDeviceFaults(ctx context.Context, status int64, fc *healthpb.FaultChe
 		default:
 			// this should really never happen, but if it does, then it is a problem with the driver
 			// and it should be flagged
-			rel.State = gen.HealthCheck_Reliability_UNRELIABLE
-			rel.LastError = &gen.HealthCheck_Error{
+			rel.State = gen_healthpb.HealthCheck_Reliability_UNRELIABLE
+			rel.LastError = &gen_healthpb.HealthCheck_Error{
 				SummaryText: "Internal Driver Error",
 				DetailsText: "The device has an unrecognised internal status code",
 				Code:        statusToHealthCode(UnrecognisedErrorCode),
@@ -121,7 +121,7 @@ func updateDeviceFaults(ctx context.Context, status int64, fc *healthpb.FaultChe
 func setDeviceFaults(statuses []State, fc *healthpb.FaultCheck) {
 	// Add or update all current faults from the device
 	for _, s := range statuses {
-		fc.AddOrUpdateFault(&gen.HealthCheck_Error{
+		fc.AddOrUpdateFault(&gen_healthpb.HealthCheck_Error{
 			SummaryText: s.State,
 			DetailsText: s.Description,
 			Code:        statusToHealthCode(s.FlagValue),
@@ -138,7 +138,7 @@ func setDeviceFaults(statuses []State, fc *healthpb.FaultCheck) {
 			}
 		}
 		if !found {
-			fc.RemoveFault(&gen.HealthCheck_Error{
+			fc.RemoveFault(&gen_healthpb.HealthCheck_Error{
 				Code: statusToHealthCode(ds.FlagValue),
 			})
 		}

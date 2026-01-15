@@ -1,6 +1,9 @@
 <template>
-  <div>
+  <div class="chart__container">
     <bar :data="chartData" :options="chartOptions" :plugins="[themeColorPlugin]"/>
+    <div v-if="showNoData" class="no-data-overlay">
+      <no-data-graphic class="no-data-graphic"/>
+    </div>
   </div>
 </template>
 
@@ -12,9 +15,10 @@ import {useMaxPeopleCount} from '@/dynamic/widgets/occupancy/occupancy.js';
 import {useLocalProp} from '@/util/vue.js';
 import {BarElement, Chart as ChartJS, Legend, LinearScale, TimeScale, Title, Tooltip} from 'chart.js'
 import {startOfDay, startOfYear} from 'date-fns';
-import {computed, toRef} from 'vue';
+import {computed, ref, toRef, watch} from 'vue';
 import {Bar} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
+import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
 
 ChartJS.register(Title, Tooltip, BarElement, LinearScale, TimeScale, Legend);
 
@@ -41,7 +45,7 @@ const _start = useLocalProp(toRef(props, 'start'));
 const _end = useLocalProp(toRef(props, 'end'));
 const _offset = useLocalProp(toRef(props, 'offset'));
 
-const {edges, pastEdges, tickUnit} = useDateScale(_start, _end, _offset);
+const {edges, pastEdges, tickUnit, startDate, endDate} = useDateScale(_start, _end, _offset);
 
 const totalOccupancyCounts = useMaxPeopleCount(toRef(props, 'totalOccupancyName'), pastEdges);
 
@@ -130,8 +134,35 @@ const chartData = computed(() => {
     ]
   };
 });
+
+const hasData = computed(() => {
+  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val));
+});
+
+// Track if initial data load is complete to avoid showing no-data graphic during fetch
+const hasLoadedData = ref(false);
+
+// Reset loading state when date range changes
+watch([startDate, endDate], () => {
+  hasLoadedData.value = false;
+});
+
+watch(chartData, (data) => {
+  // Check if we have any non-null data points (even if they're zero)
+  const hasAnyData = data.datasets.some(ds => ds.data.some(val => val != null));
+  if (hasAnyData && !hasLoadedData.value) {
+    hasLoadedData.value = true;
+  }
+}, {immediate: true});
+
+const showNoData = computed(() => !hasData.value && hasLoadedData.value);
 </script>
 
-<style scoped>
-
+<style scoped lang="scss">
+.chart__container {
+  min-height: 100%;
+  /* The chart seems to have a padding no mater what we do, this gets rid of it */
+  margin: -6px;
+  position: relative;
+}
 </style>

@@ -13,8 +13,8 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -184,8 +184,8 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, no
 				Timeout:  cfg.Sources.Energy.Timeout,
 			},
 			Meters:     cfg.Sources.Energy.Meters,
-			client:     gen.NewMeterHistoryClient(node.ClientConn()),
-			infoClient: gen.NewMeterInfoClient(node.ClientConn()),
+			client:     meterpb.NewMeterHistoryClient(node.ClientConn()),
+			infoClient: meterpb.NewMeterInfoClient(node.ClientConn()),
 		}
 
 		energy.PreviousExecution = energy.getPreviousExecution()
@@ -225,8 +225,8 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, no
 				Timeout:  cfg.Sources.Water.Timeout,
 			},
 			Meters:     cfg.Sources.Water.Meters,
-			client:     gen.NewMeterHistoryClient(node.ClientConn()),
-			infoClient: gen.NewMeterInfoClient(node.ClientConn()),
+			client:     meterpb.NewMeterHistoryClient(node.ClientConn()),
+			infoClient: meterpb.NewMeterInfoClient(node.ClientConn()),
 		}
 
 		water.PreviousExecution = water.getPreviousExecution()

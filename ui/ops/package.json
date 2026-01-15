@@ -13,7 +13,7 @@
   "dependencies": {
     "@smart-core-os/sc-api-grpc-web": "^1.0.0-beta.60",
     "@smart-core-os/sc-bos-panzoom-package": "1.0.1-vanti.0",
-    "@smart-core-os/sc-bos-ui-gen": "1.0.0-beta.22",
+    "@smart-core-os/sc-bos-ui-gen": "1.0.0-beta.25",
     "binary-search": "^1.3.6",
     "change-case": "^5.4.4",
     "chart.js": "^4.4.2",

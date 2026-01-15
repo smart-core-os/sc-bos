@@ -8,15 +8,15 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
 type Node struct {
 	Conn *grpc.ClientConn
-	*gen.HubNode
+	*hubpb.HubNode
 }
 
 type Child struct {
@@ -34,14 +34,14 @@ type Change[T any] struct {
 // Node.Conn is nil, you should connect using information in Node.HubNode if desired.
 func PullNodes(ctx context.Context, conn *grpc.ClientConn) <-chan Change[Node] {
 	out := make(chan Change[Node])
-	client := gen.NewHubApiClient(conn)
-	changes := make(chan *gen.PullHubNodesResponse_Change)
+	client := hubpb.NewHubApiClient(conn)
+	changes := make(chan *hubpb.PullHubNodesResponse_Change)
 	go func() {
 		defer close(changes)
 
 		// this only returns on ctx cancel or if conn returns Unimplemented for the apis we need.
 		// Both cases we're happy to silently stop this routine
-		_ = pull.Changes[*gen.PullHubNodesResponse_Change](ctx, &NodeFetcher{HubApiClient: client}, changes)
+		_ = pull.Changes[*hubpb.PullHubNodesResponse_Change](ctx, &NodeFetcher{HubApiClient: client}, changes)
 	}()
 	go func() {
 		defer close(out)
@@ -183,12 +183,12 @@ func (a *activeNode) update(n *Node) {
 }
 
 type NodeFetcher struct {
-	gen.HubApiClient
-	known map[string]*gen.HubNode // in case of polling, this tracks seen nodes so we correctly send changes
+	hubpb.HubApiClient
+	known map[string]*hubpb.HubNode // in case of polling, this tracks seen nodes so we correctly send changes
 }
 
-func (c *NodeFetcher) Pull(ctx context.Context, changes chan<- *gen.PullHubNodesResponse_Change) error {
-	stream, err := c.PullHubNodes(ctx, &gen.PullHubNodesRequest{})
+func (c *NodeFetcher) Pull(ctx context.Context, changes chan<- *hubpb.PullHubNodesResponse_Change) error {
+	stream, err := c.PullHubNodes(ctx, &hubpb.PullHubNodesRequest{})
 	if err != nil {
 		return err
 	}
@@ -205,13 +205,13 @@ func (c *NodeFetcher) Pull(ctx context.Context, changes chan<- *gen.PullHubNodes
 	}
 }
 
-func (c *NodeFetcher) Poll(ctx context.Context, changes chan<- *gen.PullHubNodesResponse_Change) error {
-	nodes, err := c.ListHubNodes(ctx, &gen.ListHubNodesRequest{})
+func (c *NodeFetcher) Poll(ctx context.Context, changes chan<- *hubpb.PullHubNodesResponse_Change) error {
+	nodes, err := c.ListHubNodes(ctx, &hubpb.ListHubNodesRequest{})
 	if err != nil {
 		return err
 	}
 	if c.known == nil {
-		c.known = make(map[string]*gen.HubNode)
+		c.known = make(map[string]*hubpb.HubNode)
 	}
 	unseen := make(map[string]struct{}, len(c.known))
 	for s := range c.known {
@@ -220,7 +220,7 @@ func (c *NodeFetcher) Poll(ctx context.Context, changes chan<- *gen.PullHubNodes
 
 	for _, node := range nodes.Nodes {
 		// we do extra work here to try and send out more accurate changes to make callers lives easier
-		change := &gen.PullHubNodesResponse_Change{
+		change := &hubpb.PullHubNodesResponse_Change{
 			Type:     types.ChangeType_ADD,
 			NewValue: node,
 		}
@@ -242,7 +242,7 @@ func (c *NodeFetcher) Poll(ctx context.Context, changes chan<- *gen.PullHubNodes
 	for name := range unseen {
 		node := c.known[name]
 		delete(c.known, name)
-		change := &gen.PullHubNodesResponse_Change{
+		change := &hubpb.PullHubNodesResponse_Change{
 			Type:     types.ChangeType_REMOVE,
 			OldValue: node,
 		}

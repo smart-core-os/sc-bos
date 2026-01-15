@@ -17,11 +17,11 @@ import (
 	"golang.org/x/time/rate"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/statusemail/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
 type change struct {
-	log    *gen.StatusLog
+	log    *statuspb.StatusLog
 	source config.Source
 }
 
@@ -52,7 +52,7 @@ func sendEmailOnChange(dst config.Destination, c <-chan change, logger *zap.Logg
 			// undefined levels are handled in the select below
 			s := s
 
-			if s.Read.Level > gen.StatusLog_NOTICE {
+			if s.Read.Level > statuspb.StatusLog_NOTICE {
 				vars.BadLogs = append(vars.BadLogs, &s)
 			}
 			switch {
@@ -135,7 +135,7 @@ func sendEmailOnChange(dst config.Destination, c <-chan change, logger *zap.Logg
 			if !ok {
 				return
 			}
-			if m.log.Level == gen.StatusLog_LEVEL_UNDEFINED {
+			if m.log.Level == statuspb.StatusLog_LEVEL_UNDEFINED {
 				continue // ignore undefined levels in an attempt to avoid noise
 			}
 			old := seen[m.source.Name]

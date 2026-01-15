@@ -7,7 +7,8 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/rx"
 	"github.com/smart-core-os/sc-bos/pkg/util/slices"
 )
@@ -61,11 +62,11 @@ func newRemoteNode(addr string, conn *grpc.ClientConn) *remoteNode {
 type remoteDesc struct {
 	name   string           // the announced name, this is the routing key
 	md     *traits.Metadata // used to support the DevicesApi locally
-	health []*gen.HealthCheck
+	health []*healthpb.HealthCheck
 }
 
 // remoteSystems describes relevant systems a remote node has.
 type remoteSystems struct {
-	msgRecvd bool         // true if we've heard from the remote node
-	gateway  *gen.Service // a description of the gateway system
+	msgRecvd bool                // true if we've heard from the remote node
+	gateway  *servicespb.Service // a description of the gateway system
 }

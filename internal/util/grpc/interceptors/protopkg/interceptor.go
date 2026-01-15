@@ -9,7 +9,22 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Interceptor translates gRPC method paths using the configured translation function.
+// Interceptor provides mechanisms for forward and backward compatibility between unversioned and versioned (v1) gRPC APIs.
+// The UnaryInterceptor and StreamInterceptor methods adjust interceptor and unknown service handling for middleware and dynamic services.
+// The ServiceRegistrar and UnknownServiceHandler methods allow directly registered services to also be translated.
+//
+// Example usage
+//
+//	compatInterceptor := protopkg.NewNewToOldInterceptor()
+//	grpcServer := grpc.NewServer(
+//	    grpc.ChainUnaryInterceptor(compatInterceptor.UnaryInterceptor()),
+//	    grpc.ChainStreamInterceptor(compatInterceptor.StreamInterceptor()),
+//	    // other interceptors and options...
+//	    grpc.UnknownServiceHandler(compatInterceptor.UnknownServiceHandler(yourUnknownServiceHandler)),
+//	)
+//	grpcRegistrar := compatInterceptor.ServiceRegistrar(grpcServer)
+//	yourpackage.RegisterYourServiceServer(grpcRegistrar, yourServiceImpl)
+//	// go grpcServer.Serve(...)
 type Interceptor struct {
 	translateFn func(string) string
 }

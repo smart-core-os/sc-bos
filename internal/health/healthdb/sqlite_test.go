@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 func TestDB_records(t *testing.T) {
@@ -427,9 +427,9 @@ func TestDB_largeDB(t *testing.T) {
 		return b
 	}
 
-	errMain := pbMarshal(&gen.HealthCheck{})
-	valMain := pbMarshal(&gen.HealthCheck{
-		Check: &gen.HealthCheck_Bounds_{Bounds: &gen.HealthCheck_Bounds{CurrentValue: &gen.HealthCheck_Value{Value: &gen.HealthCheck_Value_FloatValue{FloatValue: 24.76}}}},
+	errMain := pbMarshal(&healthpb.HealthCheck{})
+	valMain := pbMarshal(&healthpb.HealthCheck{
+		Check: &healthpb.HealthCheck_Bounds_{Bounds: &healthpb.HealthCheck_Bounds{CurrentValue: &healthpb.HealthCheck_Value{Value: &healthpb.HealthCheck_Value_FloatValue{FloatValue: 24.76}}}},
 	})
 	main := func(i int) []byte {
 		if i%errMainRatio == 0 {
@@ -499,7 +499,7 @@ func TestDB_largeDB(t *testing.T) {
 	// no splitting, no removal of ids, etc
 	sampleProto := auxCheck()
 	sampleProto.Id = "smartcore.bos.autos.traitcheck:toner"
-	sampleProto.GetBounds().CurrentValue = &gen.HealthCheck_Value{Value: &gen.HealthCheck_Value_FloatValue{FloatValue: 24.76}}
+	sampleProto.GetBounds().CurrentValue = &healthpb.HealthCheck_Value{Value: &healthpb.HealthCheck_Value_FloatValue{FloatValue: 24.76}}
 	sampleProtoBytes := pbMarshal(sampleProto)
 	samplePayloadSize := len(sampleProtoBytes) + // the proto payload
 		len("van/uk/brum/ugs/devices/LTF-L01-001") + // the device name
@@ -546,18 +546,18 @@ func TestDB_largeDB(t *testing.T) {
 	t.Logf("  Desc read in %v (%v runs, %v total)", readTotal/readRuns, readRuns, readTotal)
 }
 
-func auxCheck() *gen.HealthCheck {
-	return &gen.HealthCheck{
+func auxCheck() *healthpb.HealthCheck {
+	return &healthpb.HealthCheck{
 		DisplayName:    "A Bounds Check",
 		Description:    "A description for a bounds check",
-		OccupantImpact: gen.HealthCheck_COMFORT,
-		Reliability:    &gen.HealthCheck_Reliability{State: gen.HealthCheck_Reliability_RELIABLE},
-		Normality:      gen.HealthCheck_NORMAL,
-		Check: &gen.HealthCheck_Bounds_{Bounds: &gen.HealthCheck_Bounds{
-			Expected: &gen.HealthCheck_Bounds_NormalRange{NormalRange: &gen.HealthCheck_ValueRange{
-				Low:      &gen.HealthCheck_Value{Value: &gen.HealthCheck_Value_FloatValue{FloatValue: 24.76}},
-				High:     &gen.HealthCheck_Value{Value: &gen.HealthCheck_Value_FloatValue{FloatValue: 25.24}},
-				Deadband: &gen.HealthCheck_Value{Value: &gen.HealthCheck_Value_FloatValue{FloatValue: 0.5}},
+		OccupantImpact: healthpb.HealthCheck_COMFORT,
+		Reliability:    &healthpb.HealthCheck_Reliability{State: healthpb.HealthCheck_Reliability_RELIABLE},
+		Normality:      healthpb.HealthCheck_NORMAL,
+		Check: &healthpb.HealthCheck_Bounds_{Bounds: &healthpb.HealthCheck_Bounds{
+			Expected: &healthpb.HealthCheck_Bounds_NormalRange{NormalRange: &healthpb.HealthCheck_ValueRange{
+				Low:      &healthpb.HealthCheck_Value{Value: &healthpb.HealthCheck_Value_FloatValue{FloatValue: 24.76}},
+				High:     &healthpb.HealthCheck_Value{Value: &healthpb.HealthCheck_Value_FloatValue{FloatValue: 25.24}},
+				Deadband: &healthpb.HealthCheck_Value{Value: &healthpb.HealthCheck_Value_FloatValue{FloatValue: 0.5}},
 			}},
 			DisplayUnit: "°C",
 		}},

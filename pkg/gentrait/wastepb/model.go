@@ -10,20 +10,20 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
-var wasteTypes = [9]gen.WasteRecord_Type{
-	gen.WasteRecord_TYPE_UNSPECIFIED,
-	gen.WasteRecord_MIXED_RECYCLING,
-	gen.WasteRecord_GENERAL_WASTE,
-	gen.WasteRecord_ELECTRONICS,
-	gen.WasteRecord_CHEMICAL,
-	gen.WasteRecord_FOOD,
-	gen.WasteRecord_PAPER,
-	gen.WasteRecord_GLASS,
-	gen.WasteRecord_PLASTIC,
+var wasteTypes = [9]wastepb.WasteRecord_Type{
+	wastepb.WasteRecord_TYPE_UNSPECIFIED,
+	wastepb.WasteRecord_MIXED_RECYCLING,
+	wastepb.WasteRecord_GENERAL_WASTE,
+	wastepb.WasteRecord_ELECTRONICS,
+	wastepb.WasteRecord_CHEMICAL,
+	wastepb.WasteRecord_FOOD,
+	wastepb.WasteRecord_PAPER,
+	wastepb.WasteRecord_GLASS,
+	wastepb.WasteRecord_PLASTIC,
 }
 
 var areas = [3]string{"Area 1", "Area 2", "Area 3"}
@@ -32,14 +32,14 @@ var streams = [3]string{"Stream 1", "Stream 2", "Stream 3"}
 
 type Model struct {
 	mu              sync.Mutex // guards allWasteRecords and genId
-	allWasteRecords []*gen.WasteRecord
+	allWasteRecords []*wastepb.WasteRecord
 	genId           int
 
-	lastWasteRecord *resource.Value // of *gen.WasteRecord
+	lastWasteRecord *resource.Value // of *wastepb.WasteRecord
 }
 
 func NewModel(opts ...resource.Option) *Model {
-	defaultOpts := []resource.Option{resource.WithInitialValue(&gen.WasteRecord{})}
+	defaultOpts := []resource.Option{resource.WithInitialValue(&wastepb.WasteRecord{})}
 	opts = append(defaultOpts, opts...)
 
 	m := &Model{
@@ -56,7 +56,7 @@ func NewModel(opts ...resource.Option) *Model {
 }
 
 // AddWasteRecord manually adds a waste record to the model
-func (m *Model) AddWasteRecord(wr *gen.WasteRecord, opts ...resource.WriteOption) (*gen.WasteRecord, error) {
+func (m *Model) AddWasteRecord(wr *wastepb.WasteRecord, opts ...resource.WriteOption) (*wastepb.WasteRecord, error) {
 	v, err := m.lastWasteRecord.Set(wr, opts...)
 	if err != nil {
 		return nil, err
@@ -65,13 +65,13 @@ func (m *Model) AddWasteRecord(wr *gen.WasteRecord, opts ...resource.WriteOption
 	defer m.mu.Unlock()
 	m.allWasteRecords = append(m.allWasteRecords, wr)
 	m.genId++
-	return v.(*gen.WasteRecord), nil
+	return v.(*wastepb.WasteRecord), nil
 }
 
 // GenerateWasteRecord generates a new waste record with the given timestamp and adds it to the model
-func (m *Model) GenerateWasteRecord(ts *timestamppb.Timestamp) (*gen.WasteRecord, error) {
+func (m *Model) GenerateWasteRecord(ts *timestamppb.Timestamp) (*wastepb.WasteRecord, error) {
 
-	wr := &gen.WasteRecord{
+	wr := &wastepb.WasteRecord{
 		WasteCreateTime:  ts,
 		RecordCreateTime: ts,
 		Id:               strconv.Itoa(m.genId),
@@ -102,10 +102,10 @@ func (m *Model) GetWasteRecordCount() int {
 	return len(m.allWasteRecords)
 }
 
-func (m *Model) ListWasteRecords(start, count int) []*gen.WasteRecord {
+func (m *Model) ListWasteRecords(start, count int) []*wastepb.WasteRecord {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	var wasteRecords []*gen.WasteRecord
+	var wasteRecords []*wastepb.WasteRecord
 	// reverse to retrieve the latest wasteRecords first
 	for i := start - 1; i >= 0; i-- {
 		wasteRecords = append(wasteRecords, m.allWasteRecords[i])
@@ -116,7 +116,7 @@ func (m *Model) ListWasteRecords(start, count int) []*gen.WasteRecord {
 	return wasteRecords
 }
 
-func (m *Model) pullWasteRecordsWrapper(request *gen.PullWasteRecordsRequest, server gen.WasteApi_PullWasteRecordsServer) error {
+func (m *Model) pullWasteRecordsWrapper(request *wastepb.PullWasteRecordsRequest, server wastepb.WasteApi_PullWasteRecordsServer) error {
 	if !request.UpdatesOnly {
 		m.mu.Lock()
 		i := len(m.allWasteRecords) - 50
@@ -124,13 +124,13 @@ func (m *Model) pullWasteRecordsWrapper(request *gen.PullWasteRecordsRequest, se
 			i = 0
 		}
 		for ; i < len(m.allWasteRecords)-1; i++ {
-			change := &gen.PullWasteRecordsResponse_Change{
+			change := &wastepb.PullWasteRecordsResponse_Change{
 				Name:       request.Name,
 				NewValue:   m.allWasteRecords[i],
 				ChangeTime: m.allWasteRecords[i].WasteCreateTime,
 				Type:       types.ChangeType_ADD,
 			}
-			if err := server.Send(&gen.PullWasteRecordsResponse{Changes: []*gen.PullWasteRecordsResponse_Change{change}}); err != nil {
+			if err := server.Send(&wastepb.PullWasteRecordsResponse{Changes: []*wastepb.PullWasteRecordsResponse_Change{change}}); err != nil {
 				m.mu.Unlock()
 				return err
 			}
@@ -138,7 +138,7 @@ func (m *Model) pullWasteRecordsWrapper(request *gen.PullWasteRecordsRequest, se
 		m.mu.Unlock()
 	}
 	for change := range m.PullWasteRecords(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		msg := &gen.PullWasteRecordsResponse{}
+		msg := &wastepb.PullWasteRecordsResponse{}
 		msg.Changes = append(msg.Changes, change)
 		if err := server.Send(msg); err != nil {
 			return err
@@ -147,14 +147,14 @@ func (m *Model) pullWasteRecordsWrapper(request *gen.PullWasteRecordsRequest, se
 	return nil
 }
 
-func (m *Model) PullWasteRecords(ctx context.Context, opts ...resource.ReadOption) <-chan *gen.PullWasteRecordsResponse_Change {
-	send := make(chan *gen.PullWasteRecordsResponse_Change)
+func (m *Model) PullWasteRecords(ctx context.Context, opts ...resource.ReadOption) <-chan *wastepb.PullWasteRecordsResponse_Change {
+	send := make(chan *wastepb.PullWasteRecordsResponse_Change)
 	recv := m.lastWasteRecord.Pull(ctx, opts...)
 	go func() {
 		defer close(send)
 		for change := range recv {
-			wr := change.Value.(*gen.WasteRecord)
-			change := &gen.PullWasteRecordsResponse_Change{
+			wr := change.Value.(*wastepb.WasteRecord)
+			change := &wastepb.PullWasteRecordsResponse_Change{
 				Name:       "Waste Record",
 				NewValue:   wr, // the mock driver only generates new waste records and does not delete them
 				ChangeTime: wr.WasteCreateTime,

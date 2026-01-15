@@ -15,7 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/auth/accesstoken"
 	"github.com/smart-core-os/sc-bos/internal/auth/permission"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 	"github.com/smart-core-os/sc-bos/pkg/system/authn/config"
 )
 
@@ -164,7 +164,7 @@ func importIdentities(ctx context.Context, accounts *account.Store, ids []config
 			// create a new user account
 			created, err := tx.CreateAccount(ctx, queries.CreateAccountParams{
 				DisplayName: id.Title,
-				Type:        gen.Account_USER_ACCOUNT.String(),
+				Type:        accountpb.Account_USER_ACCOUNT.String(),
 			})
 			if err != nil {
 				return fmt.Errorf("failed to import user account %q: %w", id.ID, err)

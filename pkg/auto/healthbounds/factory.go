@@ -20,8 +20,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/healthbounds/config"
 	"github.com/smart-core-os/sc-bos/pkg/auto/healthbounds/internal/anytrait"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
@@ -48,7 +49,7 @@ type impl struct {
 }
 
 func (a *impl) applyConfig(ctx context.Context, cfg config.Root) error {
-	devicesMask, err := fieldmaskpb.New(&gen.Device{}, "name")
+	devicesMask, err := fieldmaskpb.New(&devicespb.Device{}, "name")
 	if err != nil {
 		return err
 	}
@@ -63,9 +64,9 @@ func (a *impl) applyConfig(ctx context.Context, cfg config.Root) error {
 		}()
 		// the task is configured to retry forever (until ctx is done) so the error is ignored.
 		_ = task.Run(ctx, func(ctx context.Context) (task.Next, error) {
-			stream, err := devicesApi.PullDevices(ctx, &gen.PullDevicesRequest{
+			stream, err := devicesApi.PullDevices(ctx, &devicespb.PullDevicesRequest{
 				ReadMask: devicesMask,
-				Query:    &gen.Device_Query{Conditions: cfg.DevicesPb()},
+				Query:    &devicespb.Device_Query{Conditions: cfg.DevicesPb()},
 			})
 			if err != nil {
 				return task.Normal, err
@@ -108,7 +109,7 @@ func (a *impl) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func (a *impl) newCheck(ctx context.Context, device *gen.Device, checkCfg *gen.HealthCheck, source config.Source) (func(), error) {
+func (a *impl) newCheck(ctx context.Context, device *devicespb.Device, checkCfg *gen_healthpb.HealthCheck, source config.Source) (func(), error) {
 	// find the trait resource we are checking
 	t, err := anytrait.FindByName(source.Trait)
 	if err != nil {
@@ -147,7 +148,7 @@ func (a *impl) newCheck(ctx context.Context, device *gen.Device, checkCfg *gen.H
 	}
 
 	// make the check instance
-	checkCfg = proto.Clone(checkCfg).(*gen.HealthCheck) // clone because NewBoundsCheck modifies the config
+	checkCfg = proto.Clone(checkCfg).(*gen_healthpb.HealthCheck) // clone because NewBoundsCheck modifies the config
 	check, err := a.Health.NewBoundsCheck(device.GetName(), checkCfg)
 	if err != nil {
 		return nil, fmt.Errorf("create check: %w", err)
@@ -176,6 +177,19 @@ func (a *impl) newCheck(ctx context.Context, device *gen.Device, checkCfg *gen.H
 				check.UpdateReliability(ctx, healthpb.ReliabilityFromErr(err))
 				continue
 			}
+
+			// protopath2.PathValues returns a value for each step in rpath, even when traversing
+			// through nil/unset message fields. This means it can return "success" with a zero/default
+			// value when the actual field path doesn't exist in the message. We need to explicitly
+			// check that all message fields along the path are actually set to distinguish between
+			// "field is set to zero value" vs "field is not set at all (nil pointer)".
+			if !pathFieldsAreSet(values) {
+				logger.Debug("value path has unset fields (nil message)")
+				err := fmt.Errorf("field %s.%s[%q] from %q is not set (nil message field)", source.Trait, r.Name(), source.Value, device.GetName())
+				check.UpdateReliability(ctx, healthpb.ReliabilityFromErr(err))
+				continue
+			}
+
 			healthVal, err := healthValueFromReflectValue(values)
 			if err != nil {
 				logger.Debug("health value conversion failed", zap.Any("path", values), zap.Error(err))
@@ -225,7 +239,34 @@ func resourceFetcher(conn grpc.ClientConnInterface, req anytrait.ReadRequest, r 
 	)
 }
 
-func healthValueFromReflectValue(path protopath.Values) (*gen.HealthCheck_Value, error) {
+// pathFieldsAreSet checks if all message fields along the path are actually set (not nil/default).
+// This distinguishes between "field is set to zero value" and "field is not set at all".
+func pathFieldsAreSet(path protopath.Values) bool {
+	for i := 1; i < len(path.Path); i++ {
+		step := path.Path[i]
+
+		switch step.Kind() {
+		case protopath.FieldAccessStep:
+			fd := step.FieldDescriptor()
+			parentMsg := path.Index(i - 1).Value.Message()
+
+			if fd.HasPresence() {
+				if !parentMsg.Has(fd) {
+					return false
+				}
+			}
+
+		case protopath.ListIndexStep, protopath.MapIndexStep, protopath.AnyExpandStep:
+			continue
+		default:
+			return false
+		}
+	}
+
+	return true
+}
+
+func healthValueFromReflectValue(path protopath.Values) (*gen_healthpb.HealthCheck_Value, error) {
 	lastStep := path.Index(-1)
 	switch goValue := lastStep.Value.Interface().(type) {
 	case nil:
@@ -247,9 +288,9 @@ func healthValueFromReflectValue(path protopath.Values) (*gen.HealthCheck_Value,
 	case string:
 		return healthpb.StringValue(goValue), nil
 	case *timestamppb.Timestamp:
-		return &gen.HealthCheck_Value{Value: &gen.HealthCheck_Value_TimestampValue{TimestampValue: goValue}}, nil
+		return &gen_healthpb.HealthCheck_Value{Value: &gen_healthpb.HealthCheck_Value_TimestampValue{TimestampValue: goValue}}, nil
 	case *durationpb.Duration:
-		return &gen.HealthCheck_Value{Value: &gen.HealthCheck_Value_DurationValue{DurationValue: goValue}}, nil
+		return &gen_healthpb.HealthCheck_Value{Value: &gen_healthpb.HealthCheck_Value_DurationValue{DurationValue: goValue}}, nil
 	case protoreflect.EnumNumber:
 		// use the enum name instead of its number where we can
 		fd := lastFieldDescriptor(path)

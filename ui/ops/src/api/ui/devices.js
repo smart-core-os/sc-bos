@@ -3,7 +3,7 @@ import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setCollection, setValue} from '@/api/resource';
 import {trackAction} from '@/api/resource.js';
 import {periodFromObject} from '@/api/sc/types/period.js';
-import {DevicesApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/devices_grpc_web_pb';
+import {DevicesApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_grpc_web_pb';
 import {
   Device,
   DevicesMetadata,
@@ -12,7 +12,7 @@ import {
   ListDevicesRequest,
   PullDevicesMetadataRequest,
   PullDevicesRequest
-} from '@smart-core-os/sc-bos-ui-gen/proto/devices_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_pb';
 import {Empty} from 'google-protobuf/google/protobuf/empty_pb.js';
 
 /**

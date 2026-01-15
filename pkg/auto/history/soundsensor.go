@@ -7,17 +7,17 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
 )
 
 func (a *automation) collectSoundSensorChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
-	client := gen.NewSoundSensorApiClient(a.clients.ClientConn())
+	client := soundsensorpb.NewSoundSensorApiClient(a.clients.ClientConn())
 
-	last := newDeduper[*gen.SoundLevel](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
+	last := newDeduper[*soundsensorpb.SoundLevel](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
-		stream, err := client.PullSoundLevel(ctx, &gen.PullSoundLevelRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
+		stream, err := client.PullSoundLevel(ctx, &soundsensorpb.PullSoundLevelRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}
@@ -45,7 +45,7 @@ func (a *automation) collectSoundSensorChanges(ctx context.Context, source confi
 		}
 	}
 	pollFn := func(ctx context.Context, changes chan<- []byte) error {
-		resp, err := client.GetSoundLevel(ctx, &gen.GetSoundLevelRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
+		resp, err := client.GetSoundLevel(ctx, &soundsensorpb.GetSoundLevelRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}

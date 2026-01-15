@@ -64,6 +64,42 @@ client := airqualitysensorpb.WrapApi(server)
 client := traits.NewAirQualitySensorApiClient(wrap.ServerToClient(traits.AirQualitySensorApi_ServiceDesc, server))
 ```
 
+### protov1
+
+Migrates proto files from unversioned to v1 versioned packages.
+
+```protobuf
+// Before: proto/meter.proto
+package smartcore.bos;
+import "health.proto";
+
+service MeterApi { ... }
+
+// After: proto/smartcore/bos/meter/v1/meter.proto
+package smartcore.bos.meter.v1;
+import "smartcore/bos/health/v1/health.proto";
+
+service MeterApi { ... }
+```
+
+Related files (e.g., `meter_history.proto` that imports `meter.proto`) are automatically grouped together in the same trait directory.
+
+### protov1js
+
+Updates JavaScript/TypeScript imports to reflect proto file moves made by the `protov1` fixer.
+
+```js
+// Before
+import {Alert} from '@smart-core-os/sc-bos-ui-gen/proto/alerts_pb';
+/** @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/meter_pb').MeterReading} MeterReading */
+
+// After
+import {Alert} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb';
+/** @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').MeterReading} MeterReading */
+```
+
+Handles ES6 imports, require(), dynamic imports, and JSDoc type annotations. Processes `.js`, `.ts`, `.vue`, and related files in `ui/ops/` and `ui/space/`.
+
 ### historyimports
 
 Updates JavaScript/TypeScript imports for history aspects extracted to separate proto files.

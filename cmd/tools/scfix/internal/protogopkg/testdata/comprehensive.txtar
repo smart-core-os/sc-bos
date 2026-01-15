@@ -1,0 +1,145 @@
+This test verifies all package types: simple, nested, multi-word packages.
+expected_changes: 4
+
+-- input/proto/smartcore/bos/meter/v1/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}
+-- input/proto/smartcore/bos/driver/bacnet/v1/bacnet.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.bacnet.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service BacnetDriverService {
+  rpc ReadProperty(ReadPropertyRequest) returns (ReadPropertyResponse);
+}
+
+message ReadPropertyRequest {
+  string name = 1;
+}
+
+message ReadPropertyResponse {
+  string value = 1;
+}
+-- input/proto/smartcore/bos/airqualitysensor/v1/air_quality.proto --
+syntax = "proto3";
+
+package smartcore.bos.airqualitysensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service AirQualitySensorApi {
+  rpc GetAirQuality(GetAirQualityRequest) returns (AirQuality);
+}
+
+message GetAirQualityRequest {
+  string name = 1;
+}
+
+message AirQuality {
+  float pm25 = 1;
+}
+-- input/proto/smartcore/bos/driver/dali/v1/dali.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.dali.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service DaliApi {
+  rpc AddToGroup(AddToGroupRequest) returns (AddToGroupResponse);
+}
+
+message AddToGroupRequest {
+  string name = 1;
+}
+
+message AddToGroupResponse {
+}
+-- output/proto/smartcore/bos/meter/v1/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/meterpb";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/driver/bacnet/v1/bacnet.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.bacnet.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/driver/bacnetpb";
+
+service BacnetDriverService {
+  rpc ReadProperty(ReadPropertyRequest) returns (ReadPropertyResponse);
+}
+
+message ReadPropertyRequest {
+  string name = 1;
+}
+
+message ReadPropertyResponse {
+  string value = 1;
+}
+-- output/proto/smartcore/bos/airqualitysensor/v1/air_quality.proto --
+syntax = "proto3";
+
+package smartcore.bos.airqualitysensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb";
+
+service AirQualitySensorApi {
+  rpc GetAirQuality(GetAirQualityRequest) returns (AirQuality);
+}
+
+message GetAirQualityRequest {
+  string name = 1;
+}
+
+message AirQuality {
+  float pm25 = 1;
+}
+-- output/proto/smartcore/bos/driver/dali/v1/dali.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.dali.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/driver/dalipb";
+
+service DaliApi {
+  rpc AddToGroup(AddToGroupRequest) returns (AddToGroupResponse);
+}
+
+message AddToGroupRequest {
+  string name = 1;
+}
+
+message AddToGroupResponse {
+}

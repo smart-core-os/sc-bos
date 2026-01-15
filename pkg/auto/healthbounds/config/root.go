@@ -13,8 +13,9 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/protobuf/protopath2"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb/standard"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
@@ -25,11 +26,11 @@ type Root struct {
 	Source  Source       `json:"source"`
 }
 
-func (r *Root) DevicesPb() []*gen.Device_Query_Condition {
+func (r *Root) DevicesPb() []*devicespb.Device_Query_Condition {
 	if r == nil {
 		return nil
 	}
-	conds := make([]*gen.Device_Query_Condition, len(r.Devices))
+	conds := make([]*devicespb.Device_Query_Condition, len(r.Devices))
 	for i, c := range r.Devices {
 		conds[i] = c.pb
 	}
@@ -37,11 +38,11 @@ func (r *Root) DevicesPb() []*gen.Device_Query_Condition {
 }
 
 type Condition struct {
-	pb *gen.Device_Query_Condition
+	pb *devicespb.Device_Query_Condition
 }
 
 func (c *Condition) UnmarshalJSON(bytes []byte) error {
-	cond := &gen.Device_Query_Condition{}
+	cond := &devicespb.Device_Query_Condition{}
 	err := protojson.Unmarshal(bytes, cond)
 	if err != nil {
 		return fmt.Errorf("condition: %w", err)
@@ -54,7 +55,7 @@ func (c *Condition) MarshalJSON() ([]byte, error) {
 	return protojson.Marshal(c.pb)
 }
 
-func (r *Root) CheckPb() *gen.HealthCheck {
+func (r *Root) CheckPb() *healthpb.HealthCheck {
 	if r == nil || r.Check == nil {
 		return nil
 	}
@@ -62,11 +63,11 @@ func (r *Root) CheckPb() *gen.HealthCheck {
 }
 
 type HealthCheck struct {
-	pb *gen.HealthCheck
+	pb *healthpb.HealthCheck
 }
 
 func (h *HealthCheck) UnmarshalJSON(bytes []byte) error {
-	hc := &gen.HealthCheck{}
+	hc := &healthpb.HealthCheck{}
 	err := protojson.Unmarshal(bytes, hc)
 	if err != nil {
 		return fmt.Errorf("health check: %w", err)
@@ -144,7 +145,7 @@ func Hydrate(cfg *Root) error {
 		for i, impact := range check.GetComplianceImpacts() {
 			// fill in more details for standards that we know about
 			if s := standard.FindByDisplayName(impact.GetStandard().GetDisplayName()); s != nil {
-				s2 := new(gen.HealthCheck_ComplianceImpact_Standard)
+				s2 := new(healthpb.HealthCheck_ComplianceImpact_Standard)
 				proto.Merge(s2, s)                    // copy known standard
 				proto.Merge(s2, impact.GetStandard()) // overwrite with any fields already set in config
 				check.ComplianceImpacts[i].Standard = s2

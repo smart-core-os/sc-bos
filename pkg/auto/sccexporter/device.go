@@ -9,8 +9,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
@@ -37,10 +37,10 @@ func newDevice(name string, logger *zap.Logger, metaData *traits.Metadata) *devi
 	return d
 }
 
-func (d *device) getMeterData(ctx context.Context, meterClient gen.MeterApiClient) (map[string]json.RawMessage, error) {
+func (d *device) getMeterData(ctx context.Context, meterClient gen_meterpb.MeterApiClient) (map[string]json.RawMessage, error) {
 	result := make(map[string]json.RawMessage)
 
-	reading, err := meterClient.GetMeterReading(ctx, &gen.GetMeterReadingRequest{
+	reading, err := meterClient.GetMeterReading(ctx, &gen_meterpb.GetMeterReadingRequest{
 		Name: d.name,
 	})
 	if err != nil {
@@ -58,7 +58,7 @@ func (d *device) getMeterData(ctx context.Context, meterClient gen.MeterApiClien
 	result["meterReading"] = readingBytes
 
 	// Add meter reading info if available
-	info, ok := d.info[meterpb.TraitName].(*gen.MeterReadingSupport)
+	info, ok := d.info[meterpb.TraitName].(*gen_meterpb.MeterReadingSupport)
 	if ok && info != nil {
 		infoBytes, err := protojson.Marshal(info)
 		if err != nil {

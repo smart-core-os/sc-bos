@@ -18,14 +18,16 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
 // scanRemoteHub calls scanRemoteNode for the hub and all enrolled nodes placing the results in a cohort.
 // This blocks until ctx is done.
 func (s *System) scanRemoteHub(ctx context.Context, c *cohort, hubConn *grpc.ClientConn) {
-	hubClient := gen.NewHubApiClient(hubConn)
+	hubClient := hubpb.NewHubApiClient(hubConn)
 	hubAddr := hubConn.Target()
 	if strings.HasPrefix(hubAddr, "dialchan:") || strings.HasPrefix(hubAddr, "passthrough:") {
 		hubAddr = s.hub.Target()
@@ -43,7 +45,7 @@ func (s *System) scanRemoteHub(ctx context.Context, c *cohort, hubConn *grpc.Cli
 
 // scanLocalHub calls scanRemoteNode for all enrolled nodes placing the results in a cohort.
 // This blocks until ctx is done.
-func (s *System) scanLocalHub(ctx context.Context, c *cohort, hubClient gen.HubApiClient) {
+func (s *System) scanLocalHub(ctx context.Context, c *cohort, hubClient hubpb.HubApiClient) {
 	s.retry(ctx, "pull enrolled nodes", func(ctx context.Context) (task.Next, error) {
 		return s.pullEnrolledNodes(ctx, hubClient, c)
 	}, zap.String("node", "local"))
@@ -100,8 +102,8 @@ func (s *System) pullSelf(ctx context.Context, node *remoteNode) (task.Next, err
 
 // pullSystems populates node.Systems using the ServicesApi of node.
 func (s *System) pullSystems(ctx context.Context, node *remoteNode) (task.Next, error) {
-	client := gen.NewServicesApiClient(node.conn)
-	stream, err := client.PullServices(ctx, &gen.PullServicesRequest{Name: "systems"})
+	client := servicespb.NewServicesApiClient(node.conn)
+	stream, err := client.PullServices(ctx, &servicespb.PullServicesRequest{Name: "systems"})
 	if err != nil {
 		return neverSucceeded, err
 	}
@@ -143,8 +145,8 @@ func (s *System) pullSystems(ctx context.Context, node *remoteNode) (task.Next, 
 // pullDevices uses node's DevicesApi to collect the list of devices and metadata about them.
 // pullDevices blocks while the DevicesApi stream is active.
 func (s *System) pullDevices(ctx context.Context, node *remoteNode) (task.Next, error) {
-	client := gen.NewDevicesApiClient(node.conn)
-	stream, err := client.PullDevices(ctx, &gen.PullDevicesRequest{})
+	client := devicespb.NewDevicesApiClient(node.conn)
+	stream, err := client.PullDevices(ctx, &devicespb.PullDevicesRequest{})
 	if err != nil {
 		return neverSucceeded, err
 	}
@@ -170,8 +172,8 @@ func (s *System) pullDevices(ctx context.Context, node *remoteNode) (task.Next, 
 }
 
 // pullEnrolledNodes calls scanRemoteNode for all enrolled nodes in the hub.
-func (s *System) pullEnrolledNodes(ctx context.Context, hubClient gen.HubApiClient, cohort *cohort) (task.Next, error) {
-	stream, err := hubClient.PullHubNodes(ctx, &gen.PullHubNodesRequest{})
+func (s *System) pullEnrolledNodes(ctx context.Context, hubClient hubpb.HubApiClient, cohort *cohort) (task.Next, error) {
+	stream, err := hubClient.PullHubNodes(ctx, &hubpb.PullHubNodesRequest{})
 	if err != nil {
 		return neverSucceeded, err
 	}

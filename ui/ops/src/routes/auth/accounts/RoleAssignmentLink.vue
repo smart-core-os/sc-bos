@@ -20,7 +20,7 @@
 
 <script setup>
 import {ResourceTypeById} from '@/api/ui/account.js';
-import {RoleAssignment} from '@smart-core-os/sc-bos-ui-gen/proto/account_pb';
+import {RoleAssignment} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_pb';
 import {computed} from 'vue';
 
 const props = defineProps({

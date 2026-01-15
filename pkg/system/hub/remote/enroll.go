@@ -16,7 +16,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
 )
 
 // Enroll sets up the PKI for a remote Smart Core node.
@@ -25,8 +25,8 @@ import (
 // and invokes CreateEnrollment on the target with this information.
 // The Certificate and RootCAs will be computed from the authority and will be ignored if provided in enrollment.
 // If any remoteRoots are provided, the remote server will be checked using these as trust roots, otherwise any remote certificate will be allowed.
-func Enroll(ctx context.Context, enrollment *gen.Enrollment, authority pki.Source, remoteRoots ...string) (*gen.Enrollment, error) {
-	enrollment = proto.Clone(enrollment).(*gen.Enrollment)
+func Enroll(ctx context.Context, enrollment *enrollmentpb.Enrollment, authority pki.Source, remoteRoots ...string) (*enrollmentpb.Enrollment, error) {
+	enrollment = proto.Clone(enrollment).(*enrollmentpb.Enrollment)
 
 	// when in enrollment mode, the target node will be using a self-signed cert we won't be able to
 	// automatically verify.
@@ -56,9 +56,9 @@ func Enroll(ctx context.Context, enrollment *gen.Enrollment, authority pki.Sourc
 		return nil, err
 	}
 
-	client := gen.NewEnrollmentApiClient(conn)
+	client := enrollmentpb.NewEnrollmentApiClient(conn)
 	// any api call will do to force the connection to be established (or fail)
-	_, err = client.GetEnrollment(ctx, &gen.GetEnrollmentRequest{})
+	_, err = client.GetEnrollment(ctx, &enrollmentpb.GetEnrollmentRequest{})
 	if err != nil && status.Code(err) != codes.NotFound {
 		// NotFound is expected if the remote node is not enrolled yet, ignore that error
 		return nil, err
@@ -88,7 +88,7 @@ func Enroll(ctx context.Context, enrollment *gen.Enrollment, authority pki.Sourc
 		return nil, err
 	}
 
-	_, err = client.CreateEnrollment(ctx, &gen.CreateEnrollmentRequest{
+	_, err = client.CreateEnrollment(ctx, &enrollmentpb.CreateEnrollmentRequest{
 		Enrollment: enrollment,
 	})
 	if err != nil {
@@ -108,7 +108,7 @@ var (
 // Forget assumes that if the remote node trusts us then they also trust us to delete the enrollment.
 // If certificate validation fails, we try again but this time check the remote enrollment against the passed one so
 // we aren't deleting random enrollments.
-func Forget(ctx context.Context, enrollment *gen.Enrollment, tlsConfig *tls.Config) error {
+func Forget(ctx context.Context, enrollment *enrollmentpb.Enrollment, tlsConfig *tls.Config) error {
 	// We try a few things to get the remote node to forget about us.
 	// 1. using tlsconfig, ask it to forget about us
 	//    - if that fails with something like "not enrolled" (or succeeds) then we return
@@ -127,8 +127,8 @@ func Forget(ctx context.Context, enrollment *gen.Enrollment, tlsConfig *tls.Conf
 	}
 	defer conn.Close()
 
-	client := gen.NewEnrollmentApiClient(conn)
-	_, err = client.DeleteEnrollment(ctx, &gen.DeleteEnrollmentRequest{})
+	client := enrollmentpb.NewEnrollmentApiClient(conn)
+	_, err = client.DeleteEnrollment(ctx, &enrollmentpb.DeleteEnrollmentRequest{})
 	switch {
 	case err == nil: // success
 		return nil
@@ -153,8 +153,8 @@ func Forget(ctx context.Context, enrollment *gen.Enrollment, tlsConfig *tls.Conf
 		return err
 	}
 	defer conn.Close()
-	client = gen.NewEnrollmentApiClient(conn)
-	remoteEnrollment, err := client.GetEnrollment(ctx, &gen.GetEnrollmentRequest{})
+	client = enrollmentpb.NewEnrollmentApiClient(conn)
+	remoteEnrollment, err := client.GetEnrollment(ctx, &enrollmentpb.GetEnrollmentRequest{})
 	switch {
 	case err == nil: // success
 	case status.Code(err) == codes.NotFound: // not enrolled
@@ -167,7 +167,7 @@ func Forget(ctx context.Context, enrollment *gen.Enrollment, tlsConfig *tls.Conf
 		return fmt.Errorf("%w: enrolled with %s", ErrNotEnrolledWithUs, remoteEnrollment.ManagerAddress)
 	}
 
-	_, err = client.DeleteEnrollment(ctx, &gen.DeleteEnrollmentRequest{})
+	_, err = client.DeleteEnrollment(ctx, &enrollmentpb.DeleteEnrollmentRequest{})
 	if err != nil {
 		switch {
 		case err == nil: // success
@@ -186,8 +186,8 @@ func Forget(ctx context.Context, enrollment *gen.Enrollment, tlsConfig *tls.Conf
 // This connects to the remote node specified by enrollment.TargetAddress using tlsConfig,
 // signs the servers public certificate using authority,
 // and calls EnrollmentApi.UpdateEnrollment on the remote node.
-func Renew(ctx context.Context, enrollment *gen.Enrollment, authority pki.Source, tlsConfig *tls.Config) (*gen.Enrollment, error) {
-	enrollment = proto.Clone(enrollment).(*gen.Enrollment)
+func Renew(ctx context.Context, enrollment *enrollmentpb.Enrollment, authority pki.Source, tlsConfig *tls.Config) (*enrollmentpb.Enrollment, error) {
+	enrollment = proto.Clone(enrollment).(*enrollmentpb.Enrollment)
 
 	// the certInterceptor captures and saves the certificate presented by the server when the connection is opened
 	creds := &certInterceptor{TransportCredentials: credentials.NewTLS(tlsConfig)}
@@ -198,9 +198,9 @@ func Renew(ctx context.Context, enrollment *gen.Enrollment, authority pki.Source
 		return nil, err
 	}
 
-	client := gen.NewEnrollmentApiClient(conn)
+	client := enrollmentpb.NewEnrollmentApiClient(conn)
 	// any api call will do to force the connection to be established (or fail)
-	_, err = client.GetEnrollment(ctx, &gen.GetEnrollmentRequest{})
+	_, err = client.GetEnrollment(ctx, &enrollmentpb.GetEnrollmentRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ func Renew(ctx context.Context, enrollment *gen.Enrollment, authority pki.Source
 		return nil, err
 	}
 
-	_, err = client.UpdateEnrollment(ctx, &gen.UpdateEnrollmentRequest{
+	_, err = client.UpdateEnrollment(ctx, &enrollmentpb.UpdateEnrollmentRequest{
 		Enrollment: enrollment,
 	})
 	if err != nil {
@@ -236,7 +236,7 @@ func Renew(ctx context.Context, enrollment *gen.Enrollment, authority pki.Source
 	return enrollment, nil
 }
 
-func newTargetCertificate(certs []*x509.Certificate, enrollment *gen.Enrollment) *x509.Certificate {
+func newTargetCertificate(certs []*x509.Certificate, enrollment *enrollmentpb.Enrollment) *x509.Certificate {
 	cert := certs[0]
 	cn := enrollment.TargetName
 	if cn == "" {

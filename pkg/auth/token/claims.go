@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/smart-core-os/sc-bos/internal/auth/permission"
-	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
 type Claims struct {
@@ -21,10 +21,10 @@ type PermissionAssignment struct {
 	Resource     string        `json:"resource"`      // The resource this permission is scoped to - its meaning depends on the resource type
 }
 
-type ResourceType gen.RoleAssignment_ResourceType
+type ResourceType accountpb.RoleAssignment_ResourceType
 
 func ParseResourceType(s string) (ResourceType, bool) {
-	rt, ok := gen.RoleAssignment_ResourceType_value[s]
+	rt, ok := accountpb.RoleAssignment_ResourceType_value[s]
 	if !ok {
 		return 0, false
 	}
@@ -33,7 +33,7 @@ func ParseResourceType(s string) (ResourceType, bool) {
 
 //goland:noinspection GoMixedReceiverTypes
 func (rt ResourceType) MarshalJSON() ([]byte, error) {
-	rtp := gen.RoleAssignment_ResourceType(rt)
+	rtp := accountpb.RoleAssignment_ResourceType(rt)
 	desc := rtp.Descriptor().Values().ByNumber(rtp.Number())
 	if desc == nil {
 		return json.Marshal(int32(rtp.Number()))
@@ -70,5 +70,5 @@ func (rt *ResourceType) UnmarshalJSON(b []byte) error {
 
 //goland:noinspection GoMixedReceiverTypes
 func (rt ResourceType) String() string {
-	return gen.RoleAssignment_ResourceType(rt).String()
+	return accountpb.RoleAssignment_ResourceType(rt).String()
 }
