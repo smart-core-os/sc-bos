@@ -148,9 +148,9 @@ func TestHealthCheck_SingleValue(t *testing.T) {
 				"kind": "smartcore.trait.Health",
 				"checks": [{
 					"id": "temp-check",
-					"displayName": "Temperature Check",
-					"description": "Monitor temperature",
-					"summary": "Temperature deviation detected",
+					"displayName": "Temperature Sensor Fault",
+					"description": "Detects temperature sensor faults",
+					"summary": "Temperature sensor fault detected",
 					"errorCode": "` + tt.errorCode + `",
 					"nodeId": "ns=2;s=Temperature",
 					"normalValue": ` + strconv.FormatFloat(tt.normalValue, 'f', -1, 64) + `
@@ -187,9 +187,9 @@ func TestHealthCheck_FaultLifecycle(t *testing.T) {
 		"kind": "smartcore.trait.Health",
 		"checks": [{
 			"id": "temp-check",
-			"displayName": "Temperature Check",
-			"description": "Monitor temperature",
-			"summary": "Temperature is not at normal value",
+			"displayName": "Temperature Sensor Fault",
+			"description": "Detects temperature sensor faults",
+			"summary": "Temperature sensor error",
 			"errorCode": "TEMP_ABNORMAL",
 			"nodeId": "ns=2;s=Temperature",
 			"normalValue": 20.0
@@ -225,18 +225,18 @@ func TestHealthCheck_MultipleChecks(t *testing.T) {
 		"checks": [
 			{
 				"id": "temp-check",
-				"displayName": "Temperature Check",
-				"description": "Monitor temperature",
-				"summary": "Temperature is abnormal",
+				"displayName": "Temperature Sensor Fault",
+				"description": "Detects temperature sensor faults",
+				"summary": "Temperature sensor fault detected",
 				"errorCode": "TEMP_ABNORMAL",
 				"nodeId": "ns=2;s=Temperature",
 				"normalValue": 20.0
 			},
 			{
 				"id": "pressure-check",
-				"displayName": "Pressure Check",
-				"description": "Monitor pressure",
-				"summary": "Pressure is abnormal",
+				"displayName": "Pressure Sensor Fault",
+				"description": "Detects pressure sensor faults",
+				"summary": "Pressure sensor fault detected",
 				"errorCode": "PRESSURE_ABNORMAL",
 				"nodeId": "ns=2;s=Pressure",
 				"normalValue": 150.0
@@ -279,18 +279,18 @@ func TestHealthCheck_MultipleChecksOnSameNode(t *testing.T) {
 		"checks": [
 			{
 				"id": "temp-warning",
-				"displayName": "Temperature Warning",
-				"description": "Temperature warning threshold",
-				"summary": "Temperature warning threshold exceeded",
+				"displayName": "Temperature Sensor Warning",
+				"description": "Detects minor temperature sensor faults",
+				"summary": "Temperature sensor warning",
 				"errorCode": "TEMP_WARNING",
 				"nodeId": "ns=2;s=Temperature",
 				"normalValue": 20.0
 			},
 			{
 				"id": "temp-critical",
-				"displayName": "Temperature Critical",
-				"description": "Temperature critical threshold",
-				"summary": "Temperature critical threshold exceeded",
+				"displayName": "Temperature Sensor Critical Fault",
+				"description": "Detects critical temperature sensor faults",
+				"summary": "Temperature sensor critical fault",
 				"errorCode": "TEMP_CRITICAL",
 				"nodeId": "ns=2;s=Temperature",
 				"normalValue": 25.0
@@ -330,9 +330,9 @@ func TestHealthCheck_ToleranceHandling(t *testing.T) {
 		"kind": "smartcore.trait.Health",
 		"checks": [{
 			"id": "temp-check",
-			"displayName": "Temperature Check",
-			"description": "Monitor temperature",
-			"summary": "Temperature tolerance test",
+			"displayName": "Temperature Sensor Fault",
+			"description": "Detects temperature sensor faults with tolerance",
+			"summary": "Temperature sensor fault detected",
 			"errorCode": "TEMP_ABNORMAL",
 			"nodeId": "ns=2;s=Temperature",
 			"normalValue": 20.0
@@ -357,9 +357,9 @@ func TestHealthCheck_FaultUpdate(t *testing.T) {
 		"kind": "smartcore.trait.Health",
 		"checks": [{
 			"id": "temp-check",
-			"displayName": "Temperature Check",
-			"description": "Monitor temperature",
-			"summary": "Temperature fault detected",
+			"displayName": "Temperature Sensor Fault",
+			"description": "Detects temperature sensor faults",
+			"summary": "Temperature sensor fault detected",
 			"errorCode": "TEMP_ABNORMAL",
 			"nodeId": "ns=2;s=Temperature",
 			"normalValue": 20.0
@@ -412,9 +412,9 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 				"kind": "smartcore.trait.Health",
 				"checks": [{
 					"id": "test",
-					"displayName": "Test",
-					"description": "Test check",
-					"summary": "Test error summary",
+					"displayName": "Device Fault Detection",
+					"description": "Detects device faults and errors",
+					"summary": "Device fault detected",
 					"errorCode": "TEST_ERROR",
 					"nodeId": "ns=2;s=Test",
 					"normalValue": 100.0
@@ -427,9 +427,9 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 			configJSON: `{
 				"kind": "smartcore.trait.Health",
 				"checks": [{
-					"displayName": "Test",
-					"description": "Test check",
-					"summary": "Test error summary",
+					"displayName": "Device Fault Detection",
+					"description": "Detects device faults and errors",
+					"summary": "Device fault detected",
 					"errorCode": "TEST_ERROR",
 					"nodeId": "ns=2;s=Test",
 					"normalValue": 100.0
@@ -444,8 +444,8 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 				"kind": "smartcore.trait.Health",
 				"checks": [{
 					"id": "test",
-					"description": "Test check",
-					"summary": "Test error summary",
+					"description": "Detects device faults and errors",
+					"summary": "Device fault detected",
 					"errorCode": "TEST_ERROR",
 					"nodeId": "ns=2;s=Test",
 					"normalValue": 100.0
@@ -460,9 +460,9 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 				"kind": "smartcore.trait.Health",
 				"checks": [{
 					"id": "test",
-					"displayName": "Test",
-					"description": "Test check",
-					"summary": "Test error summary",
+					"displayName": "Device Fault Detection",
+					"description": "Detects device faults and errors",
+					"summary": "Device fault detected",
 					"errorCode": "TEST_ERROR",
 					"normalValue": 100.0
 				}]
@@ -476,9 +476,9 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 				"kind": "smartcore.trait.Health",
 				"checks": [{
 					"id": "test",
-					"displayName": "Test",
-					"description": "Test check",
-					"summary": "Test error summary",
+					"displayName": "Device Fault Detection",
+					"description": "Detects device faults and errors",
+					"summary": "Device fault detected",
 					"errorCode": "TEST_ERROR",
 					"nodeId": "ns=2;s=Test"
 				}]
@@ -492,8 +492,8 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 				"kind": "smartcore.trait.Health",
 				"checks": [{
 					"id": "test",
-					"displayName": "Test",
-					"description": "Test check",
+					"displayName": "Device Fault Detection",
+					"description": "Detects device faults and errors",
 					"errorCode": "TEST_ERROR",
 					"nodeId": "ns=2;s=Test",
 					"normalValue": 100.0
