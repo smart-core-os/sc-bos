@@ -60,7 +60,10 @@ type SecurityEventController struct {
 	// security events is a circular buffer, it always points to the oldest security event
 	lastEventTime  time.Time  // *securityeventpb.SecurityEvent
 	securityEvents *ring.Ring // *securityeventpb.SecurityEvent
-	updates        minibus.Bus[*securityeventpb.PullSecurityEventsResponse_Change]
+	// eventsList maintains events in a slice for efficient pagination (newest first)
+	eventsList []*securityeventpb.SecurityEvent
+	maxEvents  int
+	updates    minibus.Bus[*securityeventpb.PullSecurityEventsResponse_Change]
 }
 
 func newSecurityEventController(client *client, logger *zap.Logger, n int) *SecurityEventController {
@@ -69,6 +72,8 @@ func newSecurityEventController(client *client, logger *zap.Logger, n int) *Secu
 		logger:         logger,
 		lastEventTime:  time.Now().Add(-24 * time.Hour),
 		securityEvents: ring.New(n),
+		eventsList:     make([]*securityeventpb.SecurityEvent, 0, n),
+		maxEvents:      n,
 	}
 }
 
@@ -142,28 +147,44 @@ func (sc *SecurityEventController) refreshAlarms(ctx context.Context) error {
 	}
 
 	for _, alarm := range alarms {
-		// we only want to add new alarms
-		if alarm.Time.After(sc.lastEventTime) {
-			event := &securityeventpb.SecurityEvent{
-				SecurityEventTime: timestamppb.New(alarm.Time),
-				Description:       alarm.Message,
-				Id:                alarm.Id,
-				Priority:          int32(alarm.Priority),
-				Source: &securityeventpb.SecurityEvent_Source{
-					Id:        alarm.Source.Id,
-					Name:      alarm.Source.Name,
-					Subsystem: "acs",
-				},
-			}
+		// Create event object outside the lock
+		event := &securityeventpb.SecurityEvent{
+			SecurityEventTime: timestamppb.New(alarm.Time),
+			Description:       alarm.Message,
+			Id:                alarm.Id,
+			Priority:          int32(alarm.Priority),
+			Source: &securityeventpb.SecurityEvent_Source{
+				Id:        alarm.Source.Id,
+				Name:      alarm.Source.Name,
+				Subsystem: "acs",
+			},
+		}
+
+		// Atomically check and update within single critical section
+		sc.mu.Lock()
+		shouldAdd := alarm.Time.After(sc.lastEventTime)
+		if shouldAdd {
 			sc.securityEvents.Value = event
 			sc.securityEvents = sc.securityEvents.Next()
+			sc.lastEventTime = alarm.Time
+
+			// Add to front of list (newest first) for efficient pagination
+			sc.eventsList = append([]*securityeventpb.SecurityEvent{event}, sc.eventsList...)
+			// Trim to maxEvents if exceeded
+			if len(sc.eventsList) > sc.maxEvents {
+				sc.eventsList = sc.eventsList[:sc.maxEvents]
+			}
+		}
+		sc.mu.Unlock()
+
+		// Send to channel outside the lock to avoid blocking while holding mutex
+		if shouldAdd {
 			sc.updates.Send(ctx, &securityeventpb.PullSecurityEventsResponse_Change{
 				ChangeTime: timestamppb.Now(),
 				OldValue:   nil,
 				NewValue:   event,
 			})
-			// the events in alarms are always oldest first, so this is fine
-			sc.lastEventTime = alarm.Time
+
 			sc.logger.Info("adding new security event", zap.Time("time", alarm.Time), zap.String("message", alarm.Message))
 		}
 	}
@@ -188,9 +209,7 @@ func (sc *SecurityEventController) run(ctx context.Context, schedule *jsontypes.
 			t = next
 		}
 
-		sc.mu.Lock()
 		err := sc.refreshAlarms(ctx)
-		sc.mu.Unlock()
 		if err != nil {
 			sc.logger.Error("failed to refresh alarms, will try again on next run...", zap.Error(err))
 		}
@@ -199,47 +218,56 @@ func (sc *SecurityEventController) run(ctx context.Context, schedule *jsontypes.
 
 func (sc *SecurityEventController) ListSecurityEvents(_ context.Context, req *securityeventpb.ListSecurityEventsRequest) (*securityeventpb.ListSecurityEventsResponse, error) {
 
-	nextPageToken := ""
-	start := sc.securityEvents.Len() - 1
+	// Validate page size first (before acquiring lock)
+	if req.PageSize <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid page size")
+	}
 
+	pageSize := int(req.PageSize)
+	if pageSize > 1000 {
+		pageSize = 1000
+	}
+
+	// Parse page token (offset into the list)
+	offset := 0
 	if req.PageToken != "" {
-		s, err := strconv.ParseInt(req.PageToken, 10, 64)
+		parsed, err := strconv.ParseInt(req.PageToken, 10, 64)
 		if err != nil {
-			return nil, err
+			return nil, status.Error(codes.InvalidArgument, "invalid page token")
 		}
-		start = int(s)
-		if start < 0 || start >= sc.securityEvents.Len() {
+		offset = int(parsed)
+		if offset < 0 {
 			return nil, status.Error(codes.InvalidArgument, "invalid page token")
 		}
 	}
 
-	if req.PageSize <= 0 {
-		return nil, status.Error(codes.InvalidArgument, "invalid page size")
-	} else if req.PageSize > int32(sc.securityEvents.Len()) {
-		req.PageSize = int32(sc.securityEvents.Len())
-	}
-
-	if req.PageSize > 1000 {
-		req.PageSize = 1000
-	}
-
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
-	var response securityeventpb.ListSecurityEventsResponse
-	// get the most recent ones first as that is what the UI expects
-	for i := start; i >= 0; i-- {
-		se := sc.securityEvents.Move(i)
-		if se.Value != nil {
-			response.SecurityEvents = append(response.SecurityEvents, se.Value.(*securityeventpb.SecurityEvent))
-		}
-		if len(response.SecurityEvents) >= int(req.PageSize) {
-			nextPageToken = strconv.FormatInt(int64(i-1), 10)
-			break
-		}
+
+	totalEvents := len(sc.eventsList)
+
+	// Validate offset
+	if offset > totalEvents {
+		return nil, status.Error(codes.InvalidArgument, "invalid page token")
 	}
 
-	response.NextPageToken = nextPageToken
-	response.TotalSize = int32(sc.securityEvents.Len())
+	// Calculate end position
+	end := offset + pageSize
+	if end > totalEvents {
+		end = totalEvents
+	}
+
+	// Efficiently slice the events (O(1) access)
+	var response securityeventpb.ListSecurityEventsResponse
+	response.SecurityEvents = make([]*securityeventpb.SecurityEvent, end-offset)
+	copy(response.SecurityEvents, sc.eventsList[offset:end])
+	response.TotalSize = int32(totalEvents)
+
+	// Set next page token if there are more events
+	if end < totalEvents {
+		response.NextPageToken = strconv.FormatInt(int64(end), 10)
+	}
+
 	return &response, nil
 }
 

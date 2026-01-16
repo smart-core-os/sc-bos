@@ -34,7 +34,7 @@ func newHttpClient(baseURL string, apiKey string, caPath string, certPath string
 	return &client{
 		baseURL: baseURL,
 		httpClient: &http.Client{
-			Timeout: time.Second * 10,
+			Timeout: time.Second * 30,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
 					RootCAs:      caCertPool,

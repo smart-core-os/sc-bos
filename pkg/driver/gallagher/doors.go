@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"path"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -43,6 +44,7 @@ type Door struct {
 type DoorController struct {
 	client      *client
 	topicPrefix string
+	mu          sync.Mutex
 	doors       map[string]*Door
 	logger      *zap.Logger
 }
@@ -114,6 +116,9 @@ func (dc *DoorController) refreshDoors(ctx context.Context, announcer node.Annou
 	if err != nil {
 		return err
 	}
+
+	dc.mu.Lock()
+	defer dc.mu.Unlock()
 
 	// look for new doors, add & announce them
 	for id, d := range doors {
