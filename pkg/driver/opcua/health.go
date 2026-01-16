@@ -119,9 +119,9 @@ func newHealth(c config.RawTrait, logger *zap.Logger) (*Health, error) {
 	}, nil
 }
 
-func raisePointError(point string, code string, fc *healthpb.FaultCheck) {
+func raisePointError(point string, code string, summary string, fc *healthpb.FaultCheck) {
 	fc.AddOrUpdateFault(&gen_healthpb.HealthCheck_Error{
-		SummaryText: "An error has been detected on point: " + point,
+		SummaryText: summary,
 		DetailsText: "An error has been detected on point: " + point,
 		Code:        statusToHealthCode(code),
 	})
@@ -153,7 +153,7 @@ func (h *Health) handleEvent(_ context.Context, node *ua.NodeID, value any) {
 	for _, hc := range checks {
 		if !floatEqual(numValue, *hc.NormalValue) {
 			if check, ok := h.errorChecks[hc.Id]; ok {
-				raisePointError(hc.Name, hc.ErrorCode, check)
+				raisePointError(hc.Name, hc.ErrorCode, hc.Summary, check)
 			} else {
 				h.logger.Warn("no fault check found for ID", zap.String("healthCheckId", hc.Id))
 			}

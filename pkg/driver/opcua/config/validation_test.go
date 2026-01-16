@@ -441,6 +441,7 @@ func TestHealthConfig_Validate(t *testing.T) {
 						Id:          "temp-check",
 						DisplayName: "Temperature Check",
 						Description: "Monitors temperature",
+						Summary:     "Temperature error detected",
 						ErrorCode:   "TEMP_ERROR",
 						NormalValue: &normalValue,
 						ValueSource: ValueSource{
@@ -458,6 +459,7 @@ func TestHealthConfig_Validate(t *testing.T) {
 					{
 						DisplayName: "Temperature Check",
 						Description: "Monitors temperature",
+						Summary:     "Temperature error detected",
 						ErrorCode:   "TEMP_ERROR",
 						NormalValue: &normalValue,
 					},
@@ -473,6 +475,7 @@ func TestHealthConfig_Validate(t *testing.T) {
 					{
 						Id:          "temp-check",
 						Description: "Monitors temperature",
+						Summary:     "Temperature error detected",
 						ErrorCode:   "TEMP_ERROR",
 						NormalValue: &normalValue,
 					},
@@ -488,6 +491,7 @@ func TestHealthConfig_Validate(t *testing.T) {
 					{
 						Id:          "temp-check",
 						DisplayName: "Temperature Check",
+						Summary:     "Temperature error detected",
 						ErrorCode:   "TEMP_ERROR",
 						NormalValue: &normalValue,
 					},
@@ -504,12 +508,32 @@ func TestHealthConfig_Validate(t *testing.T) {
 						Id:          "temp-check",
 						DisplayName: "Temperature Check",
 						Description: "Monitors temperature",
+						Summary:     "Temperature error detected",
 						NormalValue: &normalValue,
 					},
 				},
 			},
 			wantErr: true,
 			errMsg:  "errorCode is required",
+		},
+		{
+			name: "missing summary",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						DisplayName: "Temperature Check",
+						Description: "Monitors temperature",
+						ErrorCode:   "TEMP_ERROR",
+						NormalValue: &normalValue,
+						ValueSource: ValueSource{
+							NodeId: "ns=2;s=Temp",
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "summary is required",
 		},
 		{
 			name: "missing normalValue",
@@ -519,6 +543,7 @@ func TestHealthConfig_Validate(t *testing.T) {
 						Id:          "temp-check",
 						DisplayName: "Temperature Check",
 						Description: "Monitors temperature",
+						Summary:     "Temperature error detected",
 						ErrorCode:   "TEMP_ERROR",
 						ValueSource: ValueSource{
 							NodeId: "ns=2;s=Temp",
@@ -565,6 +590,7 @@ func TestHealthConfig_Validate_PreservesNormalValue(t *testing.T) {
 				Id:          "temp-check",
 				DisplayName: "Temperature Check",
 				Description: "Monitors temperature",
+				Summary:     "Temperature error detected",
 				ErrorCode:   "TEMP_ERROR",
 				NormalValue: &normalValue,
 				ValueSource: ValueSource{

@@ -150,6 +150,7 @@ func TestHealthCheck_SingleValue(t *testing.T) {
 					"id": "temp-check",
 					"displayName": "Temperature Check",
 					"description": "Monitor temperature",
+					"summary": "Temperature deviation detected",
 					"errorCode": "` + tt.errorCode + `",
 					"nodeId": "ns=2;s=Temperature",
 					"normalValue": ` + strconv.FormatFloat(tt.normalValue, 'f', -1, 64) + `
@@ -188,6 +189,7 @@ func TestHealthCheck_FaultLifecycle(t *testing.T) {
 			"id": "temp-check",
 			"displayName": "Temperature Check",
 			"description": "Monitor temperature",
+			"summary": "Temperature is not at normal value",
 			"errorCode": "TEMP_ABNORMAL",
 			"nodeId": "ns=2;s=Temperature",
 			"normalValue": 20.0
@@ -225,6 +227,7 @@ func TestHealthCheck_MultipleChecks(t *testing.T) {
 				"id": "temp-check",
 				"displayName": "Temperature Check",
 				"description": "Monitor temperature",
+				"summary": "Temperature is abnormal",
 				"errorCode": "TEMP_ABNORMAL",
 				"nodeId": "ns=2;s=Temperature",
 				"normalValue": 20.0
@@ -233,6 +236,7 @@ func TestHealthCheck_MultipleChecks(t *testing.T) {
 				"id": "pressure-check",
 				"displayName": "Pressure Check",
 				"description": "Monitor pressure",
+				"summary": "Pressure is abnormal",
 				"errorCode": "PRESSURE_ABNORMAL",
 				"nodeId": "ns=2;s=Pressure",
 				"normalValue": 150.0
@@ -277,6 +281,7 @@ func TestHealthCheck_MultipleChecksOnSameNode(t *testing.T) {
 				"id": "temp-warning",
 				"displayName": "Temperature Warning",
 				"description": "Temperature warning threshold",
+				"summary": "Temperature warning threshold exceeded",
 				"errorCode": "TEMP_WARNING",
 				"nodeId": "ns=2;s=Temperature",
 				"normalValue": 20.0
@@ -285,6 +290,7 @@ func TestHealthCheck_MultipleChecksOnSameNode(t *testing.T) {
 				"id": "temp-critical",
 				"displayName": "Temperature Critical",
 				"description": "Temperature critical threshold",
+				"summary": "Temperature critical threshold exceeded",
 				"errorCode": "TEMP_CRITICAL",
 				"nodeId": "ns=2;s=Temperature",
 				"normalValue": 25.0
@@ -326,6 +332,7 @@ func TestHealthCheck_ToleranceHandling(t *testing.T) {
 			"id": "temp-check",
 			"displayName": "Temperature Check",
 			"description": "Monitor temperature",
+			"summary": "Temperature tolerance test",
 			"errorCode": "TEMP_ABNORMAL",
 			"nodeId": "ns=2;s=Temperature",
 			"normalValue": 20.0
@@ -352,6 +359,7 @@ func TestHealthCheck_FaultUpdate(t *testing.T) {
 			"id": "temp-check",
 			"displayName": "Temperature Check",
 			"description": "Monitor temperature",
+			"summary": "Temperature fault detected",
 			"errorCode": "TEMP_ABNORMAL",
 			"nodeId": "ns=2;s=Temperature",
 			"normalValue": 20.0
@@ -406,6 +414,7 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 					"id": "test",
 					"displayName": "Test",
 					"description": "Test check",
+					"summary": "Test error summary",
 					"errorCode": "TEST_ERROR",
 					"nodeId": "ns=2;s=Test",
 					"normalValue": 100.0
@@ -420,6 +429,7 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 				"checks": [{
 					"displayName": "Test",
 					"description": "Test check",
+					"summary": "Test error summary",
 					"errorCode": "TEST_ERROR",
 					"nodeId": "ns=2;s=Test",
 					"normalValue": 100.0
@@ -435,6 +445,7 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 				"checks": [{
 					"id": "test",
 					"description": "Test check",
+					"summary": "Test error summary",
 					"errorCode": "TEST_ERROR",
 					"nodeId": "ns=2;s=Test",
 					"normalValue": 100.0
@@ -451,6 +462,7 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 					"id": "test",
 					"displayName": "Test",
 					"description": "Test check",
+					"summary": "Test error summary",
 					"errorCode": "TEST_ERROR",
 					"normalValue": 100.0
 				}]
@@ -466,12 +478,29 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 					"id": "test",
 					"displayName": "Test",
 					"description": "Test check",
+					"summary": "Test error summary",
 					"errorCode": "TEST_ERROR",
 					"nodeId": "ns=2;s=Test"
 				}]
 			}`,
 			expectError: true,
 			errorMsg:    "normalValue is required",
+		},
+		{
+			name: "missing summary",
+			configJSON: `{
+				"kind": "smartcore.trait.Health",
+				"checks": [{
+					"id": "test",
+					"displayName": "Test",
+					"description": "Test check",
+					"errorCode": "TEST_ERROR",
+					"nodeId": "ns=2;s=Test",
+					"normalValue": 100.0
+				}]
+			}`,
+			expectError: true,
+			errorMsg:    "summary is required",
 		},
 	}
 

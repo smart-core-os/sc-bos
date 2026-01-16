@@ -414,6 +414,7 @@ type HealthCheck struct {
 	DisplayName string `json:"displayName,omitempty"`
 	Description string `json:"description,omitempty"`
 	ErrorCode   string `json:"errorCode,omitempty"`
+	Summary     string `json:"summary,omitempty"`
 
 	NormalValue *float64 `json:"normalValue,omitempty"`
 }
@@ -443,6 +444,9 @@ func (c *HealthConfig) Validate() error {
 		}
 		if check.ErrorCode == "" {
 			return fmt.Errorf("health check[%d] '%s': errorCode is required", i, check.Id)
+		}
+		if check.Summary == "" {
+			return fmt.Errorf("health check[%d] '%s': summary is required", i, check.Id)
 		}
 
 		if check.NormalValue == nil {
