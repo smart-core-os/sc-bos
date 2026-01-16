@@ -4,6 +4,7 @@
     <v-card class="px-4 py-4" color="rgba(255,255,255,0.3)" :loading="zoneMetadataLoading">
       <v-infinite-scroll
           class="overflow-auto"
+          mode="manual"
           :height="352"
           @load="fetch">
         <template v-if="!noZones">
