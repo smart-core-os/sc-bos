@@ -21,10 +21,7 @@ type device struct {
 	logger *zap.Logger
 	client *Client
 
-	electric  *Electric
-	meter     *Meter
-	transport *Transport
-	udmi      *Udmi
+	eventHandlers []EventHandler
 
 	faultCheck *healthpb.FaultCheck
 }
@@ -114,18 +111,8 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 // handleTraitEvent dispatches an OPC UA value change to all configured trait handlers.
 // Each trait handler is responsible for checking if the node ID matches its configuration.
 func (d *device) handleTraitEvent(ctx context.Context, node *ua.NodeID, value any) {
-
-	if d.electric != nil {
-		d.electric.handleElectricEvent(node, value)
-	}
-	if d.meter != nil {
-		d.meter.handleMeterEvent(node, value)
-	}
-	if d.transport != nil {
-		d.transport.handleTransportEvent(node, value)
-	}
-	if d.udmi != nil {
-		d.udmi.sendUdmiMessage(ctx, node, value)
+	for _, handler := range d.eventHandlers {
+		handler.handleEvent(ctx, node, value)
 	}
 }
 

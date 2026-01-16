@@ -125,7 +125,7 @@ func TestElectric_handleElectricEvent(t *testing.T) {
 			}
 
 			nodeId, _ := ua.ParseNodeID(tt.nodeId)
-			electric.handleElectricEvent(nodeId, tt.value)
+			electric.handleEvent(t.Context(), nodeId, tt.value)
 
 			demand, _ := electric.GetDemand(t.Context(), &traits.GetDemandRequest{})
 
@@ -168,7 +168,7 @@ func TestElectric_handleElectricEvent_NoDemand(t *testing.T) {
 
 	nodeId, _ := ua.ParseNodeID("ns=2;s=Power")
 	// Should not panic, just log warning and return
-	electric.handleElectricEvent(nodeId, float32(100.0))
+	electric.handleEvent(t.Context(), nodeId, float32(100.0))
 }
 
 func TestElectric_newElectric_InvalidConfig(t *testing.T) {

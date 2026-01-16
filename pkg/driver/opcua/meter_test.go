@@ -116,7 +116,7 @@ func TestMeter_handleMeterEvent(t *testing.T) {
 			}
 
 			nodeId, _ := ua.ParseNodeID(tt.nodeId)
-			meter.handleMeterEvent(nodeId, tt.value)
+			meter.handleEvent(t.Context(), nodeId, tt.value)
 
 			reading, _ := meter.GetMeterReading(t.Context(), &meterpb.GetMeterReadingRequest{})
 			if reading.Usage != tt.wantUsage {

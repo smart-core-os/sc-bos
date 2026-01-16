@@ -70,7 +70,7 @@ func (m *Meter) DescribeMeterReading(context.Context, *meterpb.DescribeMeterRead
 	}, nil
 }
 
-func (m *Meter) handleMeterEvent(node *ua.NodeID, value any) {
+func (m *Meter) handleEvent(_ context.Context, node *ua.NodeID, value any) {
 
 	if m.meterConfig.Usage != nil && nodeIdsAreEqual(m.meterConfig.Usage.NodeId, node) {
 		v, err := conv.Float32Value(value)

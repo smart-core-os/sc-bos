@@ -75,7 +75,7 @@ func (t *Transport) PullTransport(_ *transportpb.PullTransportRequest, server tr
 	return nil
 }
 
-func (t *Transport) handleTransportEvent(node *ua.NodeID, value any) {
+func (t *Transport) handleEvent(_ context.Context, node *ua.NodeID, value any) {
 	old := t.transport.Get().(*transportpb.Transport)
 	if t.cfg.ActualPosition != nil && nodeIdsAreEqual(t.cfg.ActualPosition.NodeId, node) {
 		floor, err := conv.ToString(value)

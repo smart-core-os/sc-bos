@@ -55,7 +55,7 @@ func newUdmi(n string, c config.RawTrait, l *zap.Logger) (*Udmi, error) {
 	return u, nil
 }
 
-func (u *Udmi) sendUdmiMessage(ctx context.Context, node *ua.NodeID, value any) {
+func (u *Udmi) handleEvent(ctx context.Context, node *ua.NodeID, value any) {
 
 	if p, ok := u.monitoredPoints[node.String()]; ok {
 

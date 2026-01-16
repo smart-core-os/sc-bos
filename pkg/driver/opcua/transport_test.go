@@ -134,7 +134,7 @@ func TestTransport_handleTransportEvent(t *testing.T) {
 			}
 
 			nodeId, _ := ua.ParseNodeID(tt.nodeId)
-			transport.handleTransportEvent(nodeId, tt.value)
+			transport.handleEvent(t.Context(), nodeId, tt.value)
 
 			state, _ := transport.GetTransport(t.Context(), &transportpb.GetTransportRequest{})
 
@@ -207,7 +207,7 @@ func TestTransport_handleTransportEvent_Doors(t *testing.T) {
 
 	// Update door status
 	nodeId, _ := ua.ParseNodeID("ns=2;s=DoorStatus")
-	transport.handleTransportEvent(nodeId, int32(1))
+	transport.handleEvent(t.Context(), nodeId, int32(1))
 
 	state, _ = transport.GetTransport(t.Context(), &transportpb.GetTransportRequest{})
 	if state.Doors[0].Status != transportpb.Transport_Door_OPEN {
