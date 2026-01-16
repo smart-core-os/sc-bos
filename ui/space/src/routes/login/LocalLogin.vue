@@ -10,7 +10,7 @@
           placeholder="Username"
           :rules="[rules.required]"
           variant="outlined"
-          v-model="username"
+          v-model.lazy="username"
           type="text"
           required/>
       <v-text-field
@@ -18,7 +18,7 @@
           placeholder="Password"
           :rules="[rules.required]"
           variant="outlined"
-          v-model="password"
+          v-model.lazy="password"
           type="password"
           required/>
       <v-card-actions class="mx-2">
