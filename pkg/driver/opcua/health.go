@@ -22,6 +22,9 @@ const (
 	DeviceConfigError = "DeviceConfig"
 
 	SystemName = "OPCUA"
+
+	// floatTolerance is tolerance to account for floating-point precision issues
+	floatTolerance = 1e-9
 )
 
 func getSystemHealthCheck(occupant gen_healthpb.HealthCheck_OccupantImpact, equipment gen_healthpb.HealthCheck_EquipmentImpact) *gen_healthpb.HealthCheck {
@@ -124,6 +127,15 @@ func raisePointError(point string, code string, fc *healthpb.FaultCheck) {
 	})
 }
 
+// floatEqual compares two float64 values for equality. Has tolerance in case of floating-point issues.
+func floatEqual(a, b float64) bool {
+	diff := a - b
+	if diff < 0 {
+		diff = -diff
+	}
+	return diff < floatTolerance
+}
+
 func (h *Health) handleEvent(_ context.Context, node *ua.NodeID, value any) {
 	checks, ok := h.nodeChecks[node.String()]
 	if !ok {
@@ -139,7 +151,7 @@ func (h *Health) handleEvent(_ context.Context, node *ua.NodeID, value any) {
 	}
 
 	for _, hc := range checks {
-		if numValue < *hc.OkLowerBound || numValue > *hc.OkUpperBound {
+		if !floatEqual(numValue, *hc.NormalValue) {
 			if check, ok := h.errorChecks[hc.Id]; ok {
 				raisePointError(hc.Name, hc.ErrorCode, check)
 			} else {

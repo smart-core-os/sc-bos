@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"strconv"
 
 	"github.com/smart-core-os/sc-api/go/traits"
@@ -416,10 +415,7 @@ type HealthCheck struct {
 	Description string `json:"description,omitempty"`
 	ErrorCode   string `json:"errorCode,omitempty"`
 
-	// If lower or upper bound is not defined, is defaults to -inf and +inf respectively.
-	// You want to set at least 1 of these values, else a fault error will never be raised.
-	OkLowerBound *float64 `json:"okLowerBound,omitempty"` // if the point is equal to or greater than this value, it is ok.
-	OkUpperBound *float64 `json:"okUpperBound,omitempty"` // if the point is equal to or less than this value, it is ok.
+	NormalValue *float64 `json:"normalValue,omitempty"`
 }
 
 // HealthConfig is configured by a Device that wants to monitor arbitrary points for health issues.
@@ -449,13 +445,8 @@ func (c *HealthConfig) Validate() error {
 			return fmt.Errorf("health check[%d] '%s': errorCode is required", i, check.Id)
 		}
 
-		if check.OkLowerBound == nil {
-			negInf := math.Inf(-1)
-			check.OkLowerBound = &negInf
-		}
-		if check.OkUpperBound == nil {
-			posInf := math.Inf(1)
-			check.OkUpperBound = &posInf
+		if check.NormalValue == nil {
+			return fmt.Errorf("health check[%d] '%s': normalValue is required", i, check.Id)
 		}
 
 		if err := check.ValueSource.Validate(fmt.Sprintf("health check[%d] '%s'", i, check.Id)); err != nil {

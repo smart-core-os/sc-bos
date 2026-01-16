@@ -2,6 +2,7 @@ package opcua
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -92,58 +93,50 @@ func TestHealthCheck_SingleValue(t *testing.T) {
 	tests := []struct {
 		name          string
 		value         float32
+		normalValue   float64
 		errorCode     string
 		expectFault   bool
 		expectNormal  gen_healthpb.HealthCheck_Normality
 		validateFault bool
 	}{
 		{
-			name:         "value within bounds",
+			name:         "value equals normal",
 			value:        20.0,
-			errorCode:    "TEMP_OUT_OF_RANGE",
+			normalValue:  20.0,
+			errorCode:    "TEMP_ABNORMAL",
 			expectFault:  false,
 			expectNormal: gen_healthpb.HealthCheck_NORMAL,
 		},
 		{
-			name:          "value above upper bound",
-			value:         35.0,
+			name:          "value above normal",
+			value:         25.0,
+			normalValue:   20.0,
 			errorCode:     "TEMP_HIGH",
 			expectFault:   true,
 			expectNormal:  gen_healthpb.HealthCheck_ABNORMAL,
 			validateFault: true,
 		},
 		{
-			name:         "value below lower bound",
-			value:        5.0,
+			name:         "value below normal",
+			value:        15.0,
+			normalValue:  20.0,
 			errorCode:    "TEMP_LOW",
 			expectFault:  true,
 			expectNormal: gen_healthpb.HealthCheck_ABNORMAL,
 		},
 		{
-			name:         "value at lower bound",
-			value:        10.0,
-			errorCode:    "TEMP_OUT_OF_RANGE",
+			name:         "value very close to normal (within tolerance)",
+			value:        20.0000001,
+			normalValue:  20.0,
+			errorCode:    "TEMP_ABNORMAL",
 			expectFault:  false,
 			expectNormal: gen_healthpb.HealthCheck_NORMAL,
 		},
 		{
-			name:         "value at upper bound",
+			name:         "value different from normal",
 			value:        30.0,
-			errorCode:    "TEMP_OUT_OF_RANGE",
-			expectFault:  false,
-			expectNormal: gen_healthpb.HealthCheck_NORMAL,
-		},
-		{
-			name:         "just below lower bound",
-			value:        9.999,
-			errorCode:    "TEMP_OUT_OF_RANGE",
-			expectFault:  true,
-			expectNormal: gen_healthpb.HealthCheck_ABNORMAL,
-		},
-		{
-			name:         "just above upper bound",
-			value:        30.001,
-			errorCode:    "TEMP_OUT_OF_RANGE",
+			normalValue:  20.0,
+			errorCode:    "TEMP_ABNORMAL",
 			expectFault:  true,
 			expectNormal: gen_healthpb.HealthCheck_ABNORMAL,
 		},
@@ -159,8 +152,7 @@ func TestHealthCheck_SingleValue(t *testing.T) {
 					"description": "Monitor temperature",
 					"errorCode": "` + tt.errorCode + `",
 					"nodeId": "ns=2;s=Temperature",
-					"okLowerBound": 10.0,
-					"okUpperBound": 30.0
+					"normalValue": ` + strconv.FormatFloat(tt.normalValue, 'f', -1, 64) + `
 				}]
 			}`
 
@@ -196,27 +188,30 @@ func TestHealthCheck_FaultLifecycle(t *testing.T) {
 			"id": "temp-check",
 			"displayName": "Temperature Check",
 			"description": "Monitor temperature",
-			"errorCode": "TEMP_OUT_OF_RANGE",
+			"errorCode": "TEMP_ABNORMAL",
 			"nodeId": "ns=2;s=Temperature",
-			"okLowerBound": 10.0,
-			"okUpperBound": 30.0
+			"normalValue": 20.0
 		}]
 	}`
 
 	h := setupHealthTestHarness(t, configJSON)
 
+	// Value different from normal - should raise fault
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(35.0))
 	h.assertFaultCount(t, "temp-check", 1)
 	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_ABNORMAL)
 
+	// Value equals normal - should clear fault
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.0))
 	h.assertFaultCount(t, "temp-check", 0)
 	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_NORMAL)
 
+	// Value different from normal again - should raise fault
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(5.0))
 	h.assertFaultCount(t, "temp-check", 1)
 	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_ABNORMAL)
 
+	// Value equals normal again - should clear fault
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.0))
 	h.assertFaultCount(t, "temp-check", 0)
 	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_NORMAL)
@@ -230,25 +225,24 @@ func TestHealthCheck_MultipleChecks(t *testing.T) {
 				"id": "temp-check",
 				"displayName": "Temperature Check",
 				"description": "Monitor temperature",
-				"errorCode": "TEMP_OUT_OF_RANGE",
+				"errorCode": "TEMP_ABNORMAL",
 				"nodeId": "ns=2;s=Temperature",
-				"okLowerBound": 10.0,
-				"okUpperBound": 30.0
+				"normalValue": 20.0
 			},
 			{
 				"id": "pressure-check",
 				"displayName": "Pressure Check",
 				"description": "Monitor pressure",
-				"errorCode": "PRESSURE_OUT_OF_RANGE",
+				"errorCode": "PRESSURE_ABNORMAL",
 				"nodeId": "ns=2;s=Pressure",
-				"okLowerBound": 100.0,
-				"okUpperBound": 200.0
+				"normalValue": 150.0
 			}
 		]
 	}`
 
 	h := setupHealthTestHarness(t, configJSON)
 
+	// Temperature abnormal, pressure normal
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(35.0))
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Pressure"), float32(150.0))
 
@@ -257,6 +251,7 @@ func TestHealthCheck_MultipleChecks(t *testing.T) {
 	h.assertFaultCount(t, "pressure-check", 0)
 	h.assertNormality(t, "pressure-check", gen_healthpb.HealthCheck_NORMAL)
 
+	// Both abnormal
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Pressure"), float32(250.0))
 
 	h.assertFaultCount(t, "temp-check", 1)
@@ -264,6 +259,7 @@ func TestHealthCheck_MultipleChecks(t *testing.T) {
 	h.assertFaultCount(t, "pressure-check", 1)
 	h.assertNormality(t, "pressure-check", gen_healthpb.HealthCheck_ABNORMAL)
 
+	// Both normal
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.0))
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Pressure"), float32(150.0))
 
@@ -283,8 +279,7 @@ func TestHealthCheck_MultipleChecksOnSameNode(t *testing.T) {
 				"description": "Temperature warning threshold",
 				"errorCode": "TEMP_WARNING",
 				"nodeId": "ns=2;s=Temperature",
-				"okLowerBound": 15.0,
-				"okUpperBound": 25.0
+				"normalValue": 20.0
 			},
 			{
 				"id": "temp-critical",
@@ -292,21 +287,22 @@ func TestHealthCheck_MultipleChecksOnSameNode(t *testing.T) {
 				"description": "Temperature critical threshold",
 				"errorCode": "TEMP_CRITICAL",
 				"nodeId": "ns=2;s=Temperature",
-				"okLowerBound": 10.0,
-				"okUpperBound": 30.0
+				"normalValue": 25.0
 			}
 		]
 	}`
 
 	h := setupHealthTestHarness(t, configJSON)
 
-	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(27.0))
+	// Value = 20.0: matches temp-warning normal, doesn't match temp-critical normal
+	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.0))
 
-	h.assertFaultCount(t, "temp-warning", 1)
-	h.assertNormality(t, "temp-warning", gen_healthpb.HealthCheck_ABNORMAL)
-	h.assertFaultCount(t, "temp-critical", 0)
-	h.assertNormality(t, "temp-critical", gen_healthpb.HealthCheck_NORMAL)
+	h.assertFaultCount(t, "temp-warning", 0)
+	h.assertNormality(t, "temp-warning", gen_healthpb.HealthCheck_NORMAL)
+	h.assertFaultCount(t, "temp-critical", 1)
+	h.assertNormality(t, "temp-critical", gen_healthpb.HealthCheck_ABNORMAL)
 
+	// Value = 35.0: doesn't match either normal value
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(35.0))
 
 	h.assertFaultCount(t, "temp-warning", 1)
@@ -314,34 +310,37 @@ func TestHealthCheck_MultipleChecksOnSameNode(t *testing.T) {
 	h.assertFaultCount(t, "temp-critical", 1)
 	h.assertNormality(t, "temp-critical", gen_healthpb.HealthCheck_ABNORMAL)
 
-	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.0))
+	// Value = 25.0: doesn't match temp-warning normal, matches temp-critical normal
+	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(25.0))
 
-	h.assertFaultCount(t, "temp-warning", 0)
-	h.assertNormality(t, "temp-warning", gen_healthpb.HealthCheck_NORMAL)
+	h.assertFaultCount(t, "temp-warning", 1)
+	h.assertNormality(t, "temp-warning", gen_healthpb.HealthCheck_ABNORMAL)
 	h.assertFaultCount(t, "temp-critical", 0)
 	h.assertNormality(t, "temp-critical", gen_healthpb.HealthCheck_NORMAL)
 }
 
-func TestHealthCheck_InfinityBounds(t *testing.T) {
+func TestHealthCheck_ToleranceHandling(t *testing.T) {
 	configJSON := `{
 		"kind": "smartcore.trait.Health",
 		"checks": [{
 			"id": "temp-check",
 			"displayName": "Temperature Check",
 			"description": "Monitor temperature",
-			"errorCode": "TEMP_HIGH",
+			"errorCode": "TEMP_ABNORMAL",
 			"nodeId": "ns=2;s=Temperature",
-			"okUpperBound": 30.0
+			"normalValue": 20.0
 		}]
 	}`
 
 	h := setupHealthTestHarness(t, configJSON)
 
-	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(-1000.0))
+	// Value within float tolerance - should be treated as normal
+	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.0000001))
 	h.assertFaultCount(t, "temp-check", 0)
 	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_NORMAL)
 
-	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(100.0))
+	// Value outside tolerance - should raise fault
+	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.1))
 	h.assertFaultCount(t, "temp-check", 1)
 	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_ABNORMAL)
 }
@@ -353,15 +352,15 @@ func TestHealthCheck_FaultUpdate(t *testing.T) {
 			"id": "temp-check",
 			"displayName": "Temperature Check",
 			"description": "Monitor temperature",
-			"errorCode": "TEMP_OUT_OF_RANGE",
+			"errorCode": "TEMP_ABNORMAL",
 			"nodeId": "ns=2;s=Temperature",
-			"okLowerBound": 10.0,
-			"okUpperBound": 30.0
+			"normalValue": 20.0
 		}]
 	}`
 
 	h := setupHealthTestHarness(t, configJSON)
 
+	// First abnormal value
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(35.0))
 	h.assertFaultCount(t, "temp-check", 1)
 
@@ -375,6 +374,7 @@ func TestHealthCheck_FaultUpdate(t *testing.T) {
 		}
 	}
 
+	// Another abnormal value - fault should persist with same code
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(40.0))
 	h.assertFaultCount(t, "temp-check", 1)
 
@@ -407,7 +407,8 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 					"displayName": "Test",
 					"description": "Test check",
 					"errorCode": "TEST_ERROR",
-					"nodeId": "ns=2;s=Test"
+					"nodeId": "ns=2;s=Test",
+					"normalValue": 100.0
 				}]
 			}`,
 			expectError: false,
@@ -420,7 +421,8 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 					"displayName": "Test",
 					"description": "Test check",
 					"errorCode": "TEST_ERROR",
-					"nodeId": "ns=2;s=Test"
+					"nodeId": "ns=2;s=Test",
+					"normalValue": 100.0
 				}]
 			}`,
 			expectError: true,
@@ -434,7 +436,8 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 					"id": "test",
 					"description": "Test check",
 					"errorCode": "TEST_ERROR",
-					"nodeId": "ns=2;s=Test"
+					"nodeId": "ns=2;s=Test",
+					"normalValue": 100.0
 				}]
 			}`,
 			expectError: true,
@@ -448,11 +451,27 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 					"id": "test",
 					"displayName": "Test",
 					"description": "Test check",
-					"errorCode": "TEST_ERROR"
+					"errorCode": "TEST_ERROR",
+					"normalValue": 100.0
 				}]
 			}`,
 			expectError: true,
 			errorMsg:    "nodeId is required",
+		},
+		{
+			name: "missing normalValue",
+			configJSON: `{
+				"kind": "smartcore.trait.Health",
+				"checks": [{
+					"id": "test",
+					"displayName": "Test",
+					"description": "Test check",
+					"errorCode": "TEST_ERROR",
+					"nodeId": "ns=2;s=Test"
+				}]
+			}`,
+			expectError: true,
+			errorMsg:    "normalValue is required",
 		},
 	}
 

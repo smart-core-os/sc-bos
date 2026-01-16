@@ -1,7 +1,6 @@
 package config
 
 import (
-	"math"
 	"strings"
 	"testing"
 )
@@ -427,6 +426,7 @@ func TestValidateDeviceTraits(t *testing.T) {
 }
 
 func TestHealthConfig_Validate(t *testing.T) {
+	normalValue := 100.0
 	tests := []struct {
 		name    string
 		config  HealthConfig
@@ -442,6 +442,7 @@ func TestHealthConfig_Validate(t *testing.T) {
 						DisplayName: "Temperature Check",
 						Description: "Monitors temperature",
 						ErrorCode:   "TEMP_ERROR",
+						NormalValue: &normalValue,
 						ValueSource: ValueSource{
 							NodeId: "ns=2;s=Temp",
 						},
@@ -458,6 +459,7 @@ func TestHealthConfig_Validate(t *testing.T) {
 						DisplayName: "Temperature Check",
 						Description: "Monitors temperature",
 						ErrorCode:   "TEMP_ERROR",
+						NormalValue: &normalValue,
 					},
 				},
 			},
@@ -472,6 +474,7 @@ func TestHealthConfig_Validate(t *testing.T) {
 						Id:          "temp-check",
 						Description: "Monitors temperature",
 						ErrorCode:   "TEMP_ERROR",
+						NormalValue: &normalValue,
 					},
 				},
 			},
@@ -486,6 +489,7 @@ func TestHealthConfig_Validate(t *testing.T) {
 						Id:          "temp-check",
 						DisplayName: "Temperature Check",
 						ErrorCode:   "TEMP_ERROR",
+						NormalValue: &normalValue,
 					},
 				},
 			},
@@ -500,6 +504,7 @@ func TestHealthConfig_Validate(t *testing.T) {
 						Id:          "temp-check",
 						DisplayName: "Temperature Check",
 						Description: "Monitors temperature",
+						NormalValue: &normalValue,
 					},
 				},
 			},
@@ -507,7 +512,7 @@ func TestHealthConfig_Validate(t *testing.T) {
 			errMsg:  "errorCode is required",
 		},
 		{
-			name: "applies default bounds",
+			name: "missing normalValue",
 			config: HealthConfig{
 				Checks: []HealthCheck{
 					{
@@ -521,7 +526,8 @@ func TestHealthConfig_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr: true,
+			errMsg:  "normalValue is required",
 		},
 	}
 
@@ -547,39 +553,20 @@ func TestHealthConfig_Validate(t *testing.T) {
 					}
 				}
 			}
-
-			// Check that bounds are set to infinity when not specified
-			if !tt.wantErr && err == nil {
-				for i, check := range tt.config.Checks {
-					if check.OkLowerBound == nil {
-						t.Errorf("check[%d]: OkLowerBound should not be nil after Validate()", i)
-					} else if !math.IsInf(*check.OkLowerBound, -1) {
-						t.Errorf("check[%d]: OkLowerBound = %v, expected -Inf", i, *check.OkLowerBound)
-					}
-
-					if check.OkUpperBound == nil {
-						t.Errorf("check[%d]: OkUpperBound should not be nil after Validate()", i)
-					} else if !math.IsInf(*check.OkUpperBound, 1) {
-						t.Errorf("check[%d]: OkUpperBound = %v, expected +Inf", i, *check.OkUpperBound)
-					}
-				}
-			}
 		})
 	}
 }
 
-func TestHealthConfig_Validate_PreservesExistingBounds(t *testing.T) {
-	lower := 10.0
-	upper := 20.0
+func TestHealthConfig_Validate_PreservesNormalValue(t *testing.T) {
+	normalValue := 42.5
 	config := HealthConfig{
 		Checks: []HealthCheck{
 			{
-				Id:           "temp-check",
-				DisplayName:  "Temperature Check",
-				Description:  "Monitors temperature",
-				ErrorCode:    "TEMP_ERROR",
-				OkLowerBound: &lower,
-				OkUpperBound: &upper,
+				Id:          "temp-check",
+				DisplayName: "Temperature Check",
+				Description: "Monitors temperature",
+				ErrorCode:   "TEMP_ERROR",
+				NormalValue: &normalValue,
 				ValueSource: ValueSource{
 					NodeId: "ns=2;s=Temp",
 				},
@@ -592,11 +579,10 @@ func TestHealthConfig_Validate_PreservesExistingBounds(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Check that existing bounds are preserved
-	if config.Checks[0].OkLowerBound == nil || *config.Checks[0].OkLowerBound != 10.0 {
-		t.Errorf("OkLowerBound should be preserved as 10.0, got %v", config.Checks[0].OkLowerBound)
-	}
-	if config.Checks[0].OkUpperBound == nil || *config.Checks[0].OkUpperBound != 20.0 {
-		t.Errorf("OkUpperBound should be preserved as 20.0, got %v", config.Checks[0].OkUpperBound)
+	// Check that normalValue is preserved
+	if config.Checks[0].NormalValue == nil {
+		t.Errorf("NormalValue should not be nil after Validate()")
+	} else if *config.Checks[0].NormalValue != 42.5 {
+		t.Errorf("NormalValue should be preserved as 42.5, got %v", *config.Checks[0].NormalValue)
 	}
 }
