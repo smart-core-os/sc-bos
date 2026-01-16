@@ -48,6 +48,14 @@ func (o *OccupantImpact) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (o OccupantImpact) MarshalJSON() ([]byte, error) {
+	name := healthpb.HealthCheck_OccupantImpact_name[int32(o)]
+	if name == "" {
+		return nil, fmt.Errorf("invalid OccupantImpact value: %d", o)
+	}
+	return json.Marshal(name)
+}
+
 func (o OccupantImpact) ToProto() healthpb.HealthCheck_OccupantImpact {
 	return healthpb.HealthCheck_OccupantImpact(o)
 }
@@ -69,6 +77,14 @@ func (e *EquipmentImpact) UnmarshalJSON(data []byte) error {
 
 	*e = EquipmentImpact(val)
 	return nil
+}
+
+func (e EquipmentImpact) MarshalJSON() ([]byte, error) {
+	name := healthpb.HealthCheck_EquipmentImpact_name[int32(e)]
+	if name == "" {
+		return nil, fmt.Errorf("invalid EquipmentImpact value: %d", e)
+	}
+	return json.Marshal(name)
 }
 
 func (e EquipmentImpact) ToProto() healthpb.HealthCheck_EquipmentImpact {
