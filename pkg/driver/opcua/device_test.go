@@ -97,28 +97,28 @@ func TestDevice_handleTraitEvent(t *testing.T) {
 	}
 	meter, err := newMeter("test/device", meterCfg, logger)
 	require.NoError(t, err)
-	dev.meter = meter
+	dev.eventHandlers = append(dev.eventHandlers, meter)
 
 	electricCfg := config.RawTrait{
 		Raw: []byte(`{"kind":"smartcore.traits.Electric","demand":{"realPower":{"nodeId":"ns=2;s=Power"}}}`),
 	}
 	electric, err := newElectric("test/device", electricCfg, logger)
 	require.NoError(t, err)
-	dev.electric = electric
+	dev.eventHandlers = append(dev.eventHandlers, electric)
 
 	transportCfg := config.RawTrait{
 		Raw: []byte(`{"kind":"smartcore.bos.Transport","actualPosition":{"nodeId":"ns=2;s=Position"}}`),
 	}
 	transport, err := newTransport("test/device", transportCfg, logger)
 	require.NoError(t, err)
-	dev.transport = transport
+	dev.eventHandlers = append(dev.eventHandlers, transport)
 
 	udmiCfg := config.RawTrait{
 		Raw: []byte(`{"kind":"smartcore.bos.UDMI","topicPrefix":"test/device","points":{"temp":{"nodeId":"ns=2;s=Temp","name":"Temperature"}}}`),
 	}
 	udmi, err := newUdmi("test/device", udmiCfg, logger)
 	require.NoError(t, err)
-	dev.udmi = udmi
+	dev.eventHandlers = append(dev.eventHandlers, udmi)
 
 	ctx := t.Context()
 
@@ -213,7 +213,7 @@ func TestDevice_handleEvent(t *testing.T) {
 				var err error
 				meter, err = newMeter("test/device", meterCfg, logger)
 				require.NoError(t, err)
-				dev.meter = meter
+				dev.eventHandlers = append(dev.eventHandlers, meter)
 			}
 
 			ctx := t.Context()

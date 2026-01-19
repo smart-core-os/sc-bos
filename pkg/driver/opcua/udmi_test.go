@@ -106,7 +106,7 @@ func TestUdmi_sendUdmiMessage(t *testing.T) {
 			nodeId, _ := ua.ParseNodeID(tt.nodeId)
 
 			// Send message
-			udmi.sendUdmiMessage(ctx, nodeId, tt.value)
+			udmi.handleEvent(t.Context(), nodeId, tt.value)
 
 			// Check if message was recorded in pointEvents
 			msg, err := udmi.GetExportMessage(ctx, &udmipb.GetExportMessageRequest{})

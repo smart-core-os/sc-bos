@@ -424,3 +424,191 @@ func TestValidateDeviceTraits(t *testing.T) {
 		})
 	}
 }
+
+func TestHealthConfig_Validate(t *testing.T) {
+	normalValue := 100.0
+	tests := []struct {
+		name    string
+		config  HealthConfig
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid config with all fields",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						DisplayName: "Temperature Check",
+						Description: "Monitors temperature",
+						Summary:     "Temperature error detected",
+						ErrorCode:   "TEMP_ERROR",
+						NormalValue: &normalValue,
+						ValueSource: ValueSource{
+							NodeId: "ns=2;s=Temp",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing id",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						DisplayName: "Temperature Check",
+						Description: "Monitors temperature",
+						Summary:     "Temperature error detected",
+						ErrorCode:   "TEMP_ERROR",
+						NormalValue: &normalValue,
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "id is required",
+		},
+		{
+			name: "missing displayName",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						Description: "Monitors temperature",
+						Summary:     "Temperature error detected",
+						ErrorCode:   "TEMP_ERROR",
+						NormalValue: &normalValue,
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "displayName is required",
+		},
+		{
+			name: "missing description",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						DisplayName: "Temperature Check",
+						Summary:     "Temperature error detected",
+						ErrorCode:   "TEMP_ERROR",
+						NormalValue: &normalValue,
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "description is required",
+		},
+		{
+			name: "missing errorCode",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						DisplayName: "Temperature Check",
+						Description: "Monitors temperature",
+						Summary:     "Temperature error detected",
+						NormalValue: &normalValue,
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "errorCode is required",
+		},
+		{
+			name: "missing summary",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						DisplayName: "Temperature Check",
+						Description: "Monitors temperature",
+						ErrorCode:   "TEMP_ERROR",
+						NormalValue: &normalValue,
+						ValueSource: ValueSource{
+							NodeId: "ns=2;s=Temp",
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "summary is required",
+		},
+		{
+			name: "missing normalValue",
+			config: HealthConfig{
+				Checks: []HealthCheck{
+					{
+						Id:          "temp-check",
+						DisplayName: "Temperature Check",
+						Description: "Monitors temperature",
+						Summary:     "Temperature error detected",
+						ErrorCode:   "TEMP_ERROR",
+						ValueSource: ValueSource{
+							NodeId: "ns=2;s=Temp",
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "normalValue is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.config.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthConfig.Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && err != nil && tt.errMsg != "" {
+				if err.Error() != tt.errMsg && len(err.Error()) > 0 && len(tt.errMsg) > 0 {
+					// Check if error message contains expected substring
+					contains := false
+					for i := 0; i <= len(err.Error())-len(tt.errMsg); i++ {
+						if err.Error()[i:i+len(tt.errMsg)] == tt.errMsg {
+							contains = true
+							break
+						}
+					}
+					if !contains {
+						t.Errorf("HealthConfig.Validate() error = %v, expected to contain %v", err, tt.errMsg)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestHealthConfig_Validate_PreservesNormalValue(t *testing.T) {
+	normalValue := 42.5
+	config := HealthConfig{
+		Checks: []HealthCheck{
+			{
+				Id:          "temp-check",
+				DisplayName: "Temperature Check",
+				Description: "Monitors temperature",
+				Summary:     "Temperature error detected",
+				ErrorCode:   "TEMP_ERROR",
+				NormalValue: &normalValue,
+				ValueSource: ValueSource{
+					NodeId: "ns=2;s=Temp",
+				},
+			},
+		},
+	}
+
+	err := config.Validate()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Check that normalValue is preserved
+	if config.Checks[0].NormalValue == nil {
+		t.Errorf("NormalValue should not be nil after Validate()")
+	} else if *config.Checks[0].NormalValue != 42.5 {
+		t.Errorf("NormalValue should be preserved as 42.5, got %v", *config.Checks[0].NormalValue)
+	}
+}

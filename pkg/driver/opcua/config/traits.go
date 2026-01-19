@@ -405,3 +405,57 @@ func (c *ElectricPhaseConfig) valueSources(prefix string) []valueSourceField {
 		{prefix + " reactivePower", c.ReactivePower},
 	}
 }
+
+type HealthCheck struct {
+	Health
+	ValueSource
+
+	Id          string `json:"id,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
+	Description string `json:"description,omitempty"`
+	ErrorCode   string `json:"errorCode,omitempty"`
+	Summary     string `json:"summary,omitempty"`
+
+	NormalValue *float64 `json:"normalValue,omitempty"`
+}
+
+// HealthConfig is configured by a Device that wants to monitor arbitrary points for health issues.
+type HealthConfig struct {
+	Trait
+
+	Checks []HealthCheck `json:"checks"`
+}
+
+// Validate ensures all required fields are set and applies default bounds.
+// If OkLowerBound is nil, it is set to -Inf.
+// If OkUpperBound is nil, it is set to +Inf.
+func (c *HealthConfig) Validate() error {
+	for i := range c.Checks {
+		check := &c.Checks[i]
+
+		if check.Id == "" {
+			return fmt.Errorf("health check[%d]: id is required", i)
+		}
+		if check.DisplayName == "" {
+			return fmt.Errorf("health check[%d] '%s': displayName is required", i, check.Id)
+		}
+		if check.Description == "" {
+			return fmt.Errorf("health check[%d] '%s': description is required", i, check.Id)
+		}
+		if check.ErrorCode == "" {
+			return fmt.Errorf("health check[%d] '%s': errorCode is required", i, check.Id)
+		}
+		if check.Summary == "" {
+			return fmt.Errorf("health check[%d] '%s': summary is required", i, check.Id)
+		}
+
+		if check.NormalValue == nil {
+			return fmt.Errorf("health check[%d] '%s': normalValue is required", i, check.Id)
+		}
+
+		if err := check.ValueSource.Validate(fmt.Sprintf("health check[%d] '%s'", i, check.Id)); err != nil {
+			return err
+		}
+	}
+	return nil
+}

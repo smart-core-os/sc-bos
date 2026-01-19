@@ -88,7 +88,7 @@ func (e *Electric) updatePowerField(value any, source *config.ValueSource, field
 	}))
 }
 
-func (e *Electric) handleElectricEvent(node *ua.NodeID, value any) {
+func (e *Electric) handleEvent(_ context.Context, node *ua.NodeID, value any) {
 	if e.cfg.Demand == nil {
 		e.logger.Warn("Electric trait configured without demand", zap.String("device", e.scName))
 		return
