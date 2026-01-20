@@ -39,7 +39,7 @@ func (m *ModelServer) UpdateAllocation(ctx context.Context, request *allocationp
 	return request.Allocation, nil
 }
 
-func (m *ModelServer) PullAllocations(request *allocationpb.PullAllocationRequest, server allocationpb.AllocationApi_PullAllocationServer) error {
+func (m *ModelServer) PullAllocation(request *allocationpb.PullAllocationRequest, server allocationpb.AllocationApi_PullAllocationServer) error {
 	for change := range m.Model.PullAllocation(server.Context(), resource.WithReadMask(request.ReadMask)) {
 		msg := &allocationpb.PullAllocationResponse{Changes: []*allocationpb.PullAllocationResponse_Change{{
 			Name:       request.Name,

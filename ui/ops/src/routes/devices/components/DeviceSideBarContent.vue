@@ -60,6 +60,10 @@
     <mode-card :name="deviceId" v-if="traits['smartcore.traits.Mode']"/>
     <v-divider v-if="traits['smartcore.bos.UDMI']" class="mt-4 mb-1"/>
     <udmi-card :name="deviceId" v-if="traits['smartcore.bos.UDMI']"/>
+    <with-allocation v-if="traits['smartcore.bos.Allocation']" :name="deviceId" v-slot="{resource}">
+      <v-divider class="mt-4 mb-1"/>
+      <allocation-card v-bind="resource" :name="deviceId"/>
+    </with-allocation>
   </span>
 </template>
 
@@ -69,6 +73,8 @@ import AirQualityCard from '@/traits/airQuality/AirQualityCard.vue';
 import WithAirQuality from '@/traits/airQuality/WithAirQuality.vue';
 import AirTemperatureCard from '@/traits/airTemperature/AirTemperatureCard.vue';
 import WithAirTemperature from '@/traits/airTemperature/WithAirTemperature.vue';
+import AllocationCard from '@/traits/allocation/AllocationCard.vue';
+import WithAllocation from '@/traits/allocation/WithAllocation.vue';
 import ElectricDemandCard from '@/traits/electricDemand/ElectricDemandCard.vue';
 import WithElectricDemand from '@/traits/electricDemand/WithElectricDemand.vue';
 import EmergencyLight from '@/traits/emergency/EmergencyLight.vue';
