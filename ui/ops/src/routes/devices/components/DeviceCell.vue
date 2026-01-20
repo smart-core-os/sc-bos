@@ -100,6 +100,10 @@
     </with-status>
 
     <health-checks-cell v-if="healthExperiment" :model-value="props.item?.healthChecksList ?? []"/>
+
+    <with-allocation v-if="hasCell('Allocation')" v-slot="{ resource }" :name="props.item.name" :paused="props.paused">
+      <allocation-cell v-bind="resource"/>
+    </with-allocation>
   </span>
 </template>
 
@@ -109,6 +113,8 @@ import AccessAttemptCell from '@/traits/access/AccessAttemptCell.vue';
 import WithAccess from '@/traits/access/WithAccess.vue';
 import AirTemperatureCell from '@/traits/airTemperature/AirTemperatureCell.vue';
 import WithAirTemperature from '@/traits/airTemperature/WithAirTemperature.vue';
+import AllocationCell from '@/traits/allocation/AllocationCell.vue';
+import WithAllocation from '@/traits/allocation/WithAllocation.vue';
 import ElectricDemandCell from '@/traits/electricDemand/ElectricDemandCell.vue';
 import WithElectricDemand from '@/traits/electricDemand/WithElectricDemand.vue';
 import EmergencyCell from '@/traits/emergency/EmergencyCell.vue';
@@ -188,6 +194,9 @@ const visibleCells = computed(() => {
   }
   if (hasTrait(props.item, 'smartcore.bos.Access')) {
     cells['AccessAttempt'] = true;
+  }
+  if (hasTrait(props.item, 'smartcore.bos.Allocation')) {
+    cells['Allocation'] = true;
   }
   return cells;
 });
