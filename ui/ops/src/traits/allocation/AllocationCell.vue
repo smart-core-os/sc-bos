@@ -32,8 +32,8 @@ const {
   unallocationTotal
 } = useAllocation(() => props.value);
 
-const at = computed(() => allocationTotal.value || '');
-const ut = computed(() => unallocationTotal.value || '');
+const at = computed(() => allocationTotal.value ?? null);
+const ut = computed(() => unallocationTotal.value ?? null);
 </script>
 
 <style scoped>

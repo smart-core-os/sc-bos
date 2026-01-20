@@ -15,11 +15,11 @@ import {computed} from 'vue';
 const props = defineProps({
   allocationTotal: {
     type: Number,
-    default: 0
+    default: null
   },
   unallocationTotal: {
     type: Number,
-    default: 0
+    default: null
   },
   size: {
     type: [Number, String],
@@ -39,16 +39,16 @@ const props = defineProps({
   }
 });
 
-const hasAllocationTotal = computed(() => typeof props.allocationTotal === 'number');
-const hasUnallocationTotal = computed(() => typeof props.unallocationTotal === 'number');
+const hasAllocationTotal = computed(() => props.allocationTotal !== null);
+const hasUnallocationTotal = computed(() => props.unallocationTotal !== null);
 
-const totalAllocation = computed(() => props.allocationTotal + props.unallocationTotal);
+const totalAllocation = computed(() => (props.allocationTotal ?? 0) + (props.unallocationTotal ?? 0));
 
 const movementIcon = computed(() => {
-  if (props.allocationTotal === 0 && props.unallocationTotal === 0) {
+  if (props.allocationTotal === null && props.unallocationTotal === null) {
     return 'mdi-help-circle-outline';
   }
-  if (props.allocationTotal > 0) {
+  if ((props.allocationTotal ?? 0) > 0) {
     return 'mdi-check-circle';
   }
   return 'mdi-circle-outline';
@@ -56,7 +56,7 @@ const movementIcon = computed(() => {
 
 const movementColor = computed(() => {
   const total = totalAllocation.value;
-  if (total === 0) {
+  if (total === 0 || props.allocationTotal === null || props.unallocationTotal === null) {
     return 'neutral-lighten-2';
   }
 
