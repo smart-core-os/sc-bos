@@ -70,5 +70,5 @@ export function useAllocation(value) {
     allocationTotal,
     unallocationTotal,
     table
- }
+ };
 }
