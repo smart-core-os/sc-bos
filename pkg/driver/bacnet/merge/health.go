@@ -418,7 +418,7 @@ func (h *Health) pollPeer(ctx context.Context) error {
 	}
 	updateTraitFaultCheck(h.faultCheck, h.config.Name, gen_healthpb.TraitName, errs)
 	if len(errs) > 0 {
-		return fmt.Errorf("Health poll errors: %w", multierr.Combine(errs...))
+		return fmt.Errorf("health poll errors: %w", multierr.Combine(errs...))
 	}
 	return nil
 }
