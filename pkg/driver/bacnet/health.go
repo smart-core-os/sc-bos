@@ -1,0 +1,74 @@
+package bacnet
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-golang/pkg/trait"
+)
+
+const (
+	DriverConfigError = "DriverConfig"
+	DeviceUnreachable = "DeviceUnreachable"
+
+	SystemName = "BACnet"
+)
+
+func createSystemHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, equipment healthpb.HealthCheck_EquipmentImpact) *healthpb.HealthCheck {
+	return &healthpb.HealthCheck{
+		Id:              "systemStatusCheck",
+		DisplayName:     "System Status Check",
+		Description:     "Checks the bacnet controller is reachable and the configured nodes are responding correctly",
+		OccupantImpact:  occupant,
+		EquipmentImpact: equipment,
+	}
+}
+
+func createDeviceHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, equipment healthpb.HealthCheck_EquipmentImpact) *healthpb.HealthCheck {
+	return &healthpb.HealthCheck{
+		Id:              "deviceStatusCheck",
+		DisplayName:     "Device Status Check",
+		Description:     "Checks the device is reachable and responding correctly",
+		OccupantImpact:  occupant,
+		EquipmentImpact: equipment,
+	}
+}
+
+func createTraitHealthCheck(t trait.Name, occupant healthpb.HealthCheck_OccupantImpact, equipment healthpb.HealthCheck_EquipmentImpact) *healthpb.HealthCheck {
+	return &healthpb.HealthCheck{
+		Id:              "traitStatusCheck",
+		DisplayName:     fmt.Sprintf("%s Trait Status Check", t.String()),
+		Description:     fmt.Sprintf("Checks the %s trait is working correctly", t.String()),
+		OccupantImpact:  occupant,
+		EquipmentImpact: equipment,
+	}
+}
+
+func updateRequestErrorStatus(deviceHealth *gen_healthpb.FaultCheck, name, request string, err error) {
+	problemName := fmt.Sprintf("%s.%s", name, "requested")
+	if errors.Is(err, context.DeadlineExceeded) {
+		deviceHealth.AddOrUpdateFault(&healthpb.HealthCheck_Error{
+			SummaryText: "Cannot reach device",
+			DetailsText: fmt.Sprintf("%s %s: %v", problemName, request, err),
+			Code:        statusToHealthCode(DeviceUnreachable),
+		})
+		return
+	}
+	if err != nil {
+		deviceHealth.AddOrUpdateFault(&healthpb.HealthCheck_Error{
+			SummaryText: "Device communication error",
+			DetailsText: fmt.Sprintf("%s %s: %v", problemName, request, err),
+			Code:        statusToHealthCode(DeviceUnreachable),
+		})
+	}
+}
+
+func statusToHealthCode(code string) *healthpb.HealthCheck_Error_Code {
+	return &healthpb.HealthCheck_Error_Code{
+		Code:   code,
+		System: SystemName,
+	}
+}

@@ -13,18 +13,19 @@ import (
 	bactypes "github.com/smart-core-os/gobacnet/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/rpc"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 )
 
 // Device adapts a bacnet Device into a Smart Core traits and other apis.
-func Device(name string, client *gobacnet.Client, device bactypes.Device, known known.Context, statuses *statuspb.Map) node.SelfAnnouncer {
+func Device(name string, client *gobacnet.Client, device bactypes.Device, known known.Context, deviceHealth *gen_healthpb.FaultCheck, errFn errFn) node.SelfAnnouncer {
 	return &DeviceBacnetService{
-		name:     name,
-		client:   client,
-		device:   device,
-		known:    known,
-		statuses: statuses,
+		name:         name,
+		client:       client,
+		device:       device,
+		known:        known,
+		deviceHealth: deviceHealth,
+		errFn:        errFn,
 	}
 }
 
@@ -35,11 +36,13 @@ func Device(name string, client *gobacnet.Client, device bactypes.Device, known 
 type DeviceBacnetService struct {
 	rpc.UnimplementedBacnetDriverServiceServer
 
-	name     string
-	client   *gobacnet.Client
-	device   bactypes.Device
-	known    known.Context
-	statuses *statuspb.Map
+	name   string
+	client *gobacnet.Client
+	device bactypes.Device
+	known  known.Context
+
+	deviceHealth *gen_healthpb.FaultCheck
+	errFn        errFn
 }
 
 func (d *DeviceBacnetService) AnnounceSelf(a node.Announcer) node.Undo {
@@ -159,7 +162,7 @@ func (d *DeviceBacnetService) ListObjects(_ context.Context, _ *rpc.ListObjectsR
 }
 
 func (d *DeviceBacnetService) handleErrorStatus(request string, err error) {
-	updateRequestErrorStatus(d.statuses, d.name, request, err)
+	d.errFn(d.deviceHealth, d.name, request, err)
 }
 
 func (d *DeviceBacnetService) propertyFromProtoForRead(reference *rpc.PropertyReference) bactypes.Property {

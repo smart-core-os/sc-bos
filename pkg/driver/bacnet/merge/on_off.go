@@ -14,8 +14,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -40,10 +39,10 @@ func readOnOffConfig(raw []byte) (cfg onOffCfg, err error) {
 }
 
 type onOff struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *onoffpb.Model
 	*onoffpb.ModelServer
@@ -51,7 +50,7 @@ type onOff struct {
 	pollTask *task.Intermittent
 }
 
-func newOnOff(client *gobacnet.Client, known known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*onOff, error) {
+func newOnOff(client *gobacnet.Client, known known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*onOff, error) {
 	cfg, err := readOnOffConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -61,14 +60,13 @@ func newOnOff(client *gobacnet.Client, known known.Context, statuses *statuspb.M
 	o := &onOff{
 		client:      client,
 		known:       known,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: onoffpb.NewModelServer(model),
 		config:      cfg,
 	}
 	o.pollTask = task.NewIntermittent(o.startPoll)
-	initTraitStatus(statuses, cfg.Name, "OnOffs")
 	return o, nil
 }
 
@@ -152,7 +150,7 @@ func (o *onOff) pollPeer(ctx context.Context) (*traits.OnOff, error) {
 			errs = append(errs, err)
 		}
 	}
-	status.UpdatePollErrorStatus(o.statuses, o.config.Name, "OnOffs", requestNames, errs)
+	updateTraitFaultCheck(o.faultCheck, o.config.Name, trait.OnOff, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

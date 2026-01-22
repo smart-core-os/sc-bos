@@ -14,13 +14,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	gen_accesspb "github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
 type accessConfig struct {
@@ -38,10 +38,10 @@ func readAccessConfig(raw []byte) (cfg accessConfig, err error) {
 }
 
 type access struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *accesspb.Model
 	*accesspb.ModelServer
@@ -49,7 +49,7 @@ type access struct {
 	pollTask *task.Intermittent
 }
 
-func newAccess(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*access, error) {
+func newAccess(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*access, error) {
 	cfg, err := readAccessConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -58,14 +58,13 @@ func newAccess(client *gobacnet.Client, devices known.Context, statuses *statusp
 	a := &access{
 		client:      client,
 		known:       devices,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: accesspb.NewModelServer(model),
 		cfg:         cfg,
 	}
 	a.pollTask = task.NewIntermittent(a.startPoll)
-	initTraitStatus(statuses, cfg.Name, "Access")
 	return a, nil
 }
 
@@ -121,7 +120,7 @@ func (a *access) pollPeer(ctx context.Context) (*gen_accesspb.AccessAttempt, err
 		}
 	}
 
-	status.UpdatePollErrorStatus(a.statuses, a.cfg.Name, "Access", requestNames, errs)
+	updateTraitFaultCheck(a.faultCheck, a.cfg.Name, trait.Access, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

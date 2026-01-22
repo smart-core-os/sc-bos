@@ -12,8 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	gen_temperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
@@ -35,10 +34,10 @@ func readTemperatureConfig(raw []byte) (cfg temperatureConfig, err error) {
 }
 
 type temperature struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *temperaturepb.Model
 	*temperaturepb.ModelServer
@@ -46,7 +45,7 @@ type temperature struct {
 	pollTask *task.Intermittent
 }
 
-func newTemperature(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*temperature, error) {
+func newTemperature(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*temperature, error) {
 	cfg, err := readTemperatureConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -58,14 +57,13 @@ func newTemperature(client *gobacnet.Client, devices known.Context, statuses *st
 	t := &temperature{
 		client:      client,
 		known:       devices,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: temperaturepb.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
-	initTraitStatus(statuses, cfg.Name, "Temperature")
 	return t, nil
 }
 
@@ -150,7 +148,7 @@ func (t *temperature) pollPeer(ctx context.Context) (*gen_temperaturepb.Temperat
 			errs = append(errs, err)
 		}
 	}
-	status.UpdatePollErrorStatus(t.statuses, t.config.Name, "Temperature", requestNames, errs)
+	updateTraitFaultCheck(t.faultCheck, t.config.Name, temperaturepb.TraitName, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

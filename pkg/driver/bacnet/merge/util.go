@@ -9,9 +9,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
+
+const floatTolerance = 1e-9
 
 func ptr[T any](v T, err error) (*T, error) {
 	return &v, err
@@ -33,10 +33,11 @@ var (
 	ErrTraitNotSupported = errors.New("trait not supported")
 )
 
-func initTraitStatus(statuses *statuspb.Map, name, trait string) {
-	statuses.UpdateProblem(name, &gen_statuspb.StatusLog_Problem{
-		Name:        name + ":" + trait,
-		Level:       gen_statuspb.StatusLog_NOMINAL,
-		Description: "Waiting for first interaction",
-	})
+// floatEqual compares two float64 values for equality. Has tolerance in case of floating-point issues.
+func floatEqual(a, b float64) bool {
+	diff := a - b
+	if diff < 0 {
+		diff = -diff
+	}
+	return diff < floatTolerance
 }

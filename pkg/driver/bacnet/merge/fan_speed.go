@@ -12,8 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -32,10 +31,10 @@ func readFanSpeedConfig(raw []byte) (cfg fanSpeedConfig, err error) {
 }
 
 type fanSpeed struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *fanspeedpb.Model
 	*fanspeedpb.ModelServer
@@ -43,7 +42,7 @@ type fanSpeed struct {
 	pollTask *task.Intermittent
 }
 
-func newFanSpeed(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*fanSpeed, error) {
+func newFanSpeed(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*fanSpeed, error) {
 	cfg, err := readFanSpeedConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -59,14 +58,13 @@ func newFanSpeed(client *gobacnet.Client, devices known.Context, statuses *statu
 	t := &fanSpeed{
 		client:      client,
 		known:       devices,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: fanspeedpb.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
-	initTraitStatus(statuses, cfg.Name, "FanSpeed")
 	return t, nil
 }
 
@@ -128,7 +126,7 @@ func (t *fanSpeed) speedToPreset(speed float32) string {
 // pollPeer fetches data from the peer device and saves the data locally.
 func (t *fanSpeed) pollPeer(ctx context.Context) (*traits.FanSpeed, error) {
 	speed, err := readPropertyFloat32(ctx, t.client, t.known, *t.config.Speed)
-	status.UpdatePollErrorStatus(t.statuses, t.config.Name, "FanSpeed", []string{"speed"}, []error{err})
+	updateTraitFaultCheck(t.faultCheck, t.config.Name, trait.FanSpeed, []error{err})
 	if err != nil {
 		return nil, comm.ErrReadProperty{Prop: "speed", Cause: err}
 	}

@@ -36,6 +36,9 @@ type Trait struct {
 	// When reading multiple properties, split the properties into chunks of this size and execute in parallel.
 	// 0 means do not chunk.
 	ChunkSize int `json:"chunkSize,omitempty"`
+	// Each trait can have its own health check configuration.
+	// If not configured, occupant and equipment impact will default to UNSPECIFIED.
+	Health Health `json:"health"`
 }
 
 func (t *Trait) PollPeriodDuration() time.Duration {

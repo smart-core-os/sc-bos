@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/gobacnet"
@@ -23,10 +22,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/ctxerr"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/merge"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
@@ -55,12 +53,18 @@ type Driver struct {
 
 	mu      sync.RWMutex
 	devices *known.Map
+
+	health      *gen_healthpb.Checks
+	systemCheck *gen_healthpb.FaultCheck
+	checks      []*gen_healthpb.FaultCheck
+	healthTasks []task.StopFn
 }
 
 func NewDriver(services driver.Services) *Driver {
 	d := &Driver{
 		announcer: node.NewReplaceAnnouncer(services.Node),
 		devices:   known.NewMap(),
+		health:    services.Health,
 		logger:    services.Logger.Named("bacnet"),
 	}
 	d.Service = service.New(service.MonoApply(d.applyConfig),
@@ -78,13 +82,19 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	// we start fresh each time config is updated
 	d.Clear()
 
-	errs := d.initClient(cfg)
-	if errs != nil {
-		return errs
+	systemCheck, err := d.health.NewFaultCheck(cfg.Name, createSystemHealthCheck(cfg.SystemHealth.OccupantImpact.ToProto(), cfg.SystemHealth.EquipmentImpact.ToProto()))
+	if err != nil {
+		return err
+	}
+
+	d.systemCheck = systemCheck
+
+	err = d.initClient(ctx, cfg, systemCheck)
+	if err != nil {
+		return err
 	}
 
 	devices := known.SyncContext(d.mu.RLocker(), d.devices)
-	statuses := statuspb.NewMap(rootAnnouncer)
 
 	// setup all our devices and objects...
 	for _, device := range cfg.Devices {
@@ -102,11 +112,13 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			rootAnnouncer.Announce(device.Name, node.HasMetadata(device.Metadata))
 		}
 
-		statuses.UpdateProblem(scDeviceName, &gen_statuspb.StatusLog_Problem{
-			Name:        scDeviceName + ":setup",
-			Level:       gen_statuspb.StatusLog_NON_FUNCTIONAL,
-			Description: "device has not yet been configured",
-		})
+		faultCheck, err := d.health.NewFaultCheck(scDeviceName, createDeviceHealthCheck(device.Health.OccupantImpact.ToProto(), device.Health.EquipmentImpact.ToProto()))
+		if err != nil {
+			logger.Error("failed to create device fault check", zap.String("device", device.Name), zap.Error(err))
+			return err
+		}
+
+		d.checks = append(d.checks, faultCheck)
 
 		go func() {
 			// This is more complicated than I think it should be.
@@ -135,7 +147,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 				announcer := cfgAnnouncer.Replace(announceCtx)
 
 				// It's ok for configureDevices to receive the task context here as ctx is only used for queries
-				err := d.configureDevice(ctx, announcer, cfg, device, devices, statuses, logger)
+				err := d.configureDevice(ctx, announcer, cfg, device, devices, faultCheck, logger)
 
 				if err != nil {
 					if errors.Is(err, context.Canceled) {
@@ -166,53 +178,105 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	// Combine objects together into traits...
 	for _, trait := range cfg.Traits {
 		logger := d.logger.With(zap.Stringer("trait", trait.Kind), zap.String("name", trait.Name))
-		impl, err := merge.IntoTrait(d.client, devices, statuses, trait, logger)
+		faultCheck, err := d.health.NewFaultCheck(trait.Name, createTraitHealthCheck(trait.Kind, trait.Health.OccupantImpact.ToProto(), trait.Health.EquipmentImpact.ToProto()))
+		if err != nil {
+			logger.Error("failed to create trait fault check", zap.String("trait", trait.Name), zap.Error(err))
+			return err
+		}
+
+		// special case health trait as it needs custom handling
+		// as it doesn't announce to the node.Announcer in the same way as other traits
+		if trait.Kind == gen_healthpb.TraitName {
+			h, err := merge.NewHealth(d.client, devices, d.health, faultCheck, trait, logger)
+
+			if err != nil {
+				logger.Error("failed to create a new health impl", zap.Error(err))
+				faultCheck.Dispose()
+				return err
+			}
+
+			for _, check := range h.DeviceChecks {
+				d.checks = append(d.checks, check)
+			}
+
+			stop, err := h.StartPoll(ctx)
+
+			if err != nil {
+				logger.Error("failed to start health polling", zap.Error(err))
+				faultCheck.Dispose()
+				return err
+			}
+
+			d.healthTasks = append(d.healthTasks, stop)
+			continue
+		}
+
+		impl, err := merge.IntoTrait(d.client, devices, faultCheck, trait, logger)
 		if errors.Is(err, merge.ErrTraitNotSupported) {
 			logger.Error("Cannot combine into trait, not supported")
+			faultCheck.Dispose()
 			continue
 		}
 		if err != nil {
 			logger.Error("Cannot combine into trait", zap.Error(err))
+			faultCheck.Dispose()
 			continue
 		}
+
 		announcer := rootAnnouncer
 		if trait.Metadata != nil {
 			announcer = node.AnnounceFeatures(announcer, node.HasMetadata(trait.Metadata))
 		}
 		impl.AnnounceSelf(announcer)
+
+		d.checks = append(d.checks, faultCheck)
 	}
 
-	return errs
+	return nil
 }
 
-func (d *Driver) initClient(cfg config.Root) error {
+func (d *Driver) initClient(ctx context.Context, cfg config.Root, faultCheck *gen_healthpb.FaultCheck) error {
+	rel := &healthpb.HealthCheck_Reliability{}
 	client, err := gobacnet.NewClient(cfg.LocalInterface, int(cfg.LocalPort),
 		gobacnet.WithMaxConcurrentTransactions(cfg.MaxConcurrentTransactions), gobacnet.WithLogLevel(logrus.InfoLevel))
 	if err != nil {
+		rel.State = healthpb.HealthCheck_Reliability_UNRELIABLE
+		rel.LastError = &healthpb.HealthCheck_Error{
+			SummaryText: "Internal Driver Error",
+			DetailsText: fmt.Sprintf("Failed to create BACnet client: %v", err),
+			Code:        statusToHealthCode(DriverConfigError),
+		}
+		faultCheck.UpdateReliability(ctx, rel)
 		return err
 	}
 	d.client = client
 	if address, err := client.LocalUDPAddress(); err == nil {
 		d.logger.Debug("bacnet client configured", zap.Stringer("local", address),
 			zap.String("localInterface", cfg.LocalInterface), zap.Uint16("localPort", cfg.LocalPort))
+	} else {
+		rel.State = healthpb.HealthCheck_Reliability_UNRELIABLE
+		rel.LastError = &healthpb.HealthCheck_Error{
+			SummaryText: "Internal Driver Error",
+			DetailsText: "Failed to get local UDP address",
+			Code:        statusToHealthCode(DriverConfigError),
+		}
+		faultCheck.UpdateReliability(ctx, rel)
 	}
 	return err
 }
 
-func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announcer, cfg config.Root, device config.Device, devices known.Context, statuses *statuspb.Map, logger *zap.Logger) error {
+func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announcer, cfg config.Root, device config.Device, devices known.Context, deviceHealth *gen_healthpb.FaultCheck, logger *zap.Logger) error {
 	deviceName := adapt.DeviceName(device)
 	scDeviceName := cfg.DeviceNamePrefix + deviceName
 
 	bacDevice, err := d.findDevice(ctx, device)
 	if err != nil {
-		_, msg := status.SummariseRequestErrors("net handshake:",
-			[]string{"MaxApduLengthAccepted", "SegmentationSupported", "VendorIdentifier"},
-			multierr.Errors(err))
-		statuses.UpdateProblem(scDeviceName, &gen_statuspb.StatusLog_Problem{
-			Name:        scDeviceName + ":setup",
-			Level:       gen_statuspb.StatusLog_OFFLINE,
-			Description: msg,
+		deviceHealth.AddOrUpdateFault(&healthpb.HealthCheck_Error{
+			SummaryText: "Cannot find device",
+			DetailsText: fmt.Sprintf("net handshake: %v", ctxerr.Cause(ctx, err).Error()),
+			Code:        statusToHealthCode(DeviceUnreachable),
 		})
+
 		return fmt.Errorf("device comm handshake: %w", ctxerr.Cause(ctx, err))
 	}
 
@@ -222,13 +286,7 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 		rootAnnouncer = node.AnnounceFeatures(rootAnnouncer, node.HasMetadata(device.Metadata))
 	}
 
-	// assume we're online unless we get an error
-	statuses.UpdateProblem(scDeviceName, &gen_statuspb.StatusLog_Problem{
-		Name:        scDeviceName + ":setup",
-		Level:       gen_statuspb.StatusLog_NOMINAL,
-		Description: "handshake successful",
-	})
-	adapt.Device(scDeviceName, d.client, bacDevice, devices, statuses).AnnounceSelf(rootAnnouncer)
+	adapt.Device(scDeviceName, d.client, bacDevice, devices, deviceHealth, updateRequestErrorStatus).AnnounceSelf(rootAnnouncer)
 
 	// aka "[bacnet/devices/]{deviceName}/[obj/]"
 	prefix := fmt.Sprintf("%s/%s", scDeviceName, cfg.ObjectNamePrefix)
@@ -257,7 +315,7 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 		// no error, we added the device before we entered the loop so it should exist
 		_ = d.storeObject(bacDevice, co, bo)
 
-		impl, err := adapt.Object(prefix, d.client, bacDevice, co, statuses)
+		impl, err := adapt.Object(prefix, d.client, bacDevice, co, deviceHealth, updateRequestErrorStatus)
 		if errors.Is(err, adapt.ErrNoDefault) {
 			// logger.Debug("No default adaptation trait for object")
 			continue
@@ -294,6 +352,9 @@ func (d *Driver) storeDevice(deviceName string, bacDevice bactypes.Device, defau
 }
 
 func (d *Driver) Clear() {
+	// dispose system check before stopping devices and client
+	d.dispose()
+
 	d.mu.Lock()
 	d.devices.Clear()
 	d.mu.Unlock()
@@ -304,5 +365,23 @@ func (d *Driver) Clear() {
 		}
 		d.client.Close()
 		d.client = nil
+	}
+}
+
+func (d *Driver) dispose() {
+	if d.systemCheck != nil {
+		d.systemCheck.Dispose()
+	}
+
+	for _, stop := range d.healthTasks {
+		if stop != nil {
+			stop()
+		}
+	}
+
+	for _, check := range d.checks {
+		if check != nil {
+			check.Dispose()
+		}
 	}
 }
