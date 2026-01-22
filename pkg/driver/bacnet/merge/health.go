@@ -205,12 +205,12 @@ func (h *Health) pollPeer(ctx context.Context) error {
 		readValues = append(readValues, *source)
 		requestNames = append(requestNames, pointName)
 		resProcessors = append(resProcessors, func(response any) error {
-			measured, err := comm.Float64Value(response)
+			measured, err := comm.BoolValue(response)
 			if err != nil {
 				return comm.ErrReadProperty{Prop: pointName, Cause: err}
 			}
 
-			if !floatEqual(measured, normalValue) {
+			if measured {
 				if check, ok := h.DeviceChecks[id]; ok {
 					raisePointAlarm(pointName, errorCode, "Alarm Detected", check)
 				} else {
