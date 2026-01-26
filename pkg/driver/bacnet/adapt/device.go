@@ -60,7 +60,7 @@ func (d *DeviceBacnetService) ReadProperty(ctx context.Context, request *rpc.Rea
 			Properties: []bactypes.Property{d.propertyFromProtoForRead(request.PropertyReference)},
 		},
 	})
-	d.handleErrorStatus("readProperty", err)
+	d.handleErrorStatus(ctx, "readProperty", err)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (d *DeviceBacnetService) ReadPropertyMultiple(ctx context.Context, request 
 		bacReq.Objects = append(bacReq.Objects, obj)
 	}
 	readProperties, err := d.client.ReadMultiProperty(ctx, d.device, bacReq)
-	d.handleErrorStatus("readPropertyMultiple", err)
+	d.handleErrorStatus(ctx, "readPropertyMultiple", err)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func (d *DeviceBacnetService) WriteProperty(ctx context.Context, request *rpc.Wr
 		},
 	}
 	err = d.client.WriteProperty(ctx, d.device, data, uint(request.WriteValue.Priority))
-	d.handleErrorStatus("writeProperty", err)
+	d.handleErrorStatus(ctx, "writeProperty", err)
 	return &rpc.WritePropertyResponse{}, err
 }
 
@@ -161,8 +161,8 @@ func (d *DeviceBacnetService) ListObjects(_ context.Context, _ *rpc.ListObjectsR
 	return response, nil
 }
 
-func (d *DeviceBacnetService) handleErrorStatus(request string, err error) {
-	d.errFn(d.deviceHealth, d.name, request, err)
+func (d *DeviceBacnetService) handleErrorStatus(ctx context.Context, request string, err error) {
+	d.errFn(ctx, d.deviceHealth, d.name, request, err)
 }
 
 func (d *DeviceBacnetService) propertyFromProtoForRead(reference *rpc.PropertyReference) bactypes.Property {

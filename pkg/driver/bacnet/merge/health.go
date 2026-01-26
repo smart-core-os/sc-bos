@@ -21,16 +21,37 @@ type healthConfig struct {
 	config.Trait
 	// Checks is a map keyed by the BMS alarm name to CheckConfig.
 	// It is a map instead of a slice to ensure unique BMS point names.
-	Checks map[string]CheckConfig `json:"checks,omitempty"`
+	Checks map[string]*CheckConfig `json:"checks,omitempty"`
 }
 
 type CheckConfig struct {
 	config.HealthCheck
 	Source *config.ValueSource `json:"source,omitempty"`
+	// If true, and measured value is true, the alarm is active.
+	// If false, and measured value is false, the alarm is active.
+	ActiveHigh *bool `json:"activeHigh,omitempty"`
 }
+
+const defaultActiveHigh = true
 
 func readHealthConfig(raw []byte) (cfg healthConfig, err error) {
 	err = json.Unmarshal(raw, &cfg)
+
+	for name, check := range cfg.Checks {
+		if check.Id == "" {
+			return cfg, fmt.Errorf("health check %q is missing required field 'id'", name)
+		}
+		if check.ErrorCode == "" {
+			return cfg, fmt.Errorf("health check %q is missing required field 'errorCode'", name)
+		}
+		if check.Source == nil {
+			return cfg, fmt.Errorf("health check %q is missing required field 'source'", name)
+		}
+		if check.ActiveHigh == nil {
+			check.ActiveHigh = new(bool)
+			*check.ActiveHigh = defaultActiveHigh
+		}
+	}
 	return
 }
 
@@ -75,8 +96,8 @@ func NewHealth(client *gobacnet.Client, known known.Context, checks *gen_healthp
 func (h *Health) initializeChecks() error {
 	// build checks map
 	for bmsPointName, cc := range h.config.Checks {
-		if cc.Id == "" || h.DeviceChecks[cc.Id] != nil {
-			h.logger.Warn("skipping Health check with missing or duplicate ID", zap.String("name", bmsPointName), zap.String("checkDisplayName", cc.DisplayName))
+		if h.DeviceChecks[cc.Id] != nil {
+			h.logger.Warn("skipping Health check with duplicate ID", zap.String("name", bmsPointName), zap.String("checkDisplayName", cc.DisplayName))
 			continue
 		}
 
@@ -109,7 +130,7 @@ func (h *Health) pollPeer(ctx context.Context) error {
 	var readValues []config.ValueSource
 	var requestNames []string
 
-	readProcessor := func(source *config.ValueSource, id, pointName, errorCode string) {
+	readProcessor := func(source *config.ValueSource, activeHigh bool, id, pointName, errorCode string) {
 		readValues = append(readValues, *source)
 		requestNames = append(requestNames, pointName)
 		resProcessors = append(resProcessors, func(response any) error {
@@ -118,7 +139,7 @@ func (h *Health) pollPeer(ctx context.Context) error {
 				return comm.ErrReadProperty{Prop: pointName, Cause: err}
 			}
 
-			if measured {
+			if measured == activeHigh {
 				if check, ok := h.DeviceChecks[id]; ok {
 					raisePointAlarm(pointName, errorCode, "Alarm Detected", check)
 				} else {
@@ -134,9 +155,7 @@ func (h *Health) pollPeer(ctx context.Context) error {
 	}
 
 	for _, checkCfg := range h.config.Checks {
-		if checkCfg.Source != nil {
-			readProcessor(checkCfg.Source, checkCfg.Id, checkCfg.DisplayName, checkCfg.ErrorCode)
-		}
+		readProcessor(checkCfg.Source, *checkCfg.ActiveHigh, checkCfg.Id, checkCfg.DisplayName, checkCfg.ErrorCode)
 	}
 
 	responses := comm.ReadProperties(ctx, h.client, h.known, readValues...)

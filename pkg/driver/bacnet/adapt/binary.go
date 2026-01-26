@@ -64,7 +64,7 @@ func (b *binaryOnOff) GetOnOff(ctx context.Context, request *traits.GetOnOffRequ
 		},
 	})
 
-	b.errFn(b.deviceHealth, b.name(), "getOnOff", err)
+	b.errFn(ctx, b.deviceHealth, b.name(), "getOnOff", err)
 	if err != nil {
 		return nil, err
 	}

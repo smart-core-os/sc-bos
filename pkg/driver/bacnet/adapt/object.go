@@ -1,6 +1,7 @@
 package adapt
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/smart-core-os/gobacnet"
@@ -12,7 +13,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 )
 
-type errFn func(health *gen_healthpb.FaultCheck, name, request string, err error)
+type errFn func(ctx context.Context, health *gen_healthpb.FaultCheck, name, request string, err error)
 
 // Object adapts a bacnet object into one or more smart core named traits.
 func Object(prefix string, client *gobacnet.Client, device bactypes.Device, object config.Object, deviceHealth *gen_healthpb.FaultCheck, errFn errFn) (node.SelfAnnouncer, error) {
