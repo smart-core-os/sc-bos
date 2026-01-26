@@ -193,7 +193,7 @@ func (t *transport) pollPeer(ctx context.Context) (*gen_transportpb.Transport, e
 		}
 	}
 
-	updateTraitFaultCheck(t.faultCheck, t.config.Name, transportpb.TraitName, errs)
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, transportpb.TraitName, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

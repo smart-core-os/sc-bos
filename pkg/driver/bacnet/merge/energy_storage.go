@@ -135,7 +135,7 @@ func (e *energyStorage) pollPeer(ctx context.Context) (*traits.EnergyLevel, erro
 		}
 	}
 
-	updateTraitFaultCheck(e.faultCheck, e.config.Name, trait.EnergyStorage, errs)
+	updateTraitFaultCheck(ctx, e.faultCheck, e.config.Name, trait.EnergyStorage, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

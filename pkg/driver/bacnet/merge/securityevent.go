@@ -181,7 +181,7 @@ func (s *securityEventImpl) pollPeer(ctx context.Context) error {
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(s.faultCheck, s.config.Name, gen_securityevent.TraitName, errs)
+	updateTraitFaultCheck(ctx, s.faultCheck, s.config.Name, gen_securityevent.TraitName, errs)
 	if len(errs) > 0 {
 		return errors.Join(errs...)
 	}

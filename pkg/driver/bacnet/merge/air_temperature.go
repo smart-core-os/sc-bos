@@ -258,7 +258,7 @@ func (t *airTemperature) pollPeer(ctx context.Context) (*traits.AirTemperature, 
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(t.faultCheck, t.config.Name, trait.AirTemperature, errs)
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.AirTemperature, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

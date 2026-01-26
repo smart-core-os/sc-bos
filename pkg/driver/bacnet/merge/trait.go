@@ -1,6 +1,7 @@
 package merge
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -23,6 +24,8 @@ import (
 
 const (
 	BacNetCommsError = "BACnet Communication Error"
+
+	SystemName = "BACnet"
 )
 
 func IntoTrait(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, traitConfig config.RawTrait, logger *zap.Logger) (node.SelfAnnouncer, error) {
@@ -64,7 +67,7 @@ func IntoTrait(client *gobacnet.Client, devices known.Context, faultCheck *gen_h
 	return nil, ErrTraitNotSupported
 }
 
-func updateTraitFaultCheck(faultCheck *gen_healthpb.FaultCheck, name string, trait trait.Name, errs []error) {
+func updateTraitFaultCheck(ctx context.Context, faultCheck *gen_healthpb.FaultCheck, name string, trait trait.Name, errs []error) {
 	if faultCheck == nil {
 		return
 	}
@@ -77,13 +80,17 @@ func updateTraitFaultCheck(faultCheck *gen_healthpb.FaultCheck, name string, tra
 	var descriptions []string
 	for _, err := range errs {
 		descriptions = append(descriptions, err.Error())
+
 	}
-	faultCheck.AddOrUpdateFault(&healthpb.HealthCheck_Error{
-		SummaryText: fmt.Sprintf("%s[%s] has %d errors", name, trait.String(), len(errs)),
-		DetailsText: fmt.Sprintf("Trait %s errors: %s", trait, strings.Join(descriptions, "; ")),
-		Code: &healthpb.HealthCheck_Error_Code{
-			Code:   BacNetCommsError,
-			System: "BACnet",
+	faultCheck.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
+		State: healthpb.HealthCheck_Reliability_UNRELIABLE,
+		LastError: &healthpb.HealthCheck_Error{
+			SummaryText: fmt.Sprintf("%s[%s] has %d errors", name, trait.String(), len(errs)),
+			DetailsText: fmt.Sprintf("Trait %s errors: %s", trait, strings.Join(descriptions, "; ")),
+			Code: &healthpb.HealthCheck_Error_Code{
+				Code:   BacNetCommsError,
+				System: SystemName,
+			},
 		},
 	})
 }
@@ -94,7 +101,7 @@ func raisePointAlarm(point string, code string, summary string, fc *gen_healthpb
 		DetailsText: "An alarm has been detected on point: " + point,
 		Code: &healthpb.HealthCheck_Error_Code{
 			Code:   code,
-			System: "BACnet",
+			System: SystemName,
 		},
 	})
 }

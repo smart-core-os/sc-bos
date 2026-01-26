@@ -187,7 +187,7 @@ func (l *light) pollPeer(ctx context.Context) (*traits.Brightness, error) {
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(l.faultCheck, l.config.Name, trait.Light, errs)
+	updateTraitFaultCheck(ctx, l.faultCheck, l.config.Name, trait.Light, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

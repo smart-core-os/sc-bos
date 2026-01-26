@@ -5,8 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
-
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/merge"
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -15,8 +14,6 @@ import (
 const (
 	DriverConfigError = "DriverConfig"
 	DeviceUnreachable = "DeviceUnreachable"
-
-	SystemName = "BACnet"
 )
 
 func createSystemHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, equipment healthpb.HealthCheck_EquipmentImpact) *healthpb.HealthCheck {
@@ -53,8 +50,7 @@ func updateRequestErrorStatus(ctx context.Context, deviceHealth *gen_healthpb.Fa
 	problemName := fmt.Sprintf("%s.%s", name, "requested")
 	if errors.Is(err, context.DeadlineExceeded) {
 		deviceHealth.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
-			State:          healthpb.HealthCheck_Reliability_CONN_TRANSIENT_FAILURE,
-			UnreliableTime: timestamppb.Now(),
+			State: healthpb.HealthCheck_Reliability_CONN_TRANSIENT_FAILURE,
 			LastError: &healthpb.HealthCheck_Error{
 				SummaryText: "Device request timed out",
 				DetailsText: fmt.Sprintf("%s %s: %v", problemName, request, err),
@@ -65,8 +61,7 @@ func updateRequestErrorStatus(ctx context.Context, deviceHealth *gen_healthpb.Fa
 	}
 	if err != nil {
 		deviceHealth.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
-			State:          healthpb.HealthCheck_Reliability_BAD_RESPONSE,
-			UnreliableTime: timestamppb.Now(),
+			State: healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 			LastError: &healthpb.HealthCheck_Error{
 				SummaryText: "Device request error",
 				DetailsText: fmt.Sprintf("%s %s: %v", problemName, request, err),
@@ -84,6 +79,6 @@ func updateRequestErrorStatus(ctx context.Context, deviceHealth *gen_healthpb.Fa
 func statusToHealthCode(code string) *healthpb.HealthCheck_Error_Code {
 	return &healthpb.HealthCheck_Error_Code{
 		Code:   code,
-		System: SystemName,
+		System: merge.SystemName,
 	}
 }

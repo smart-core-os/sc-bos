@@ -271,10 +271,18 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 
 	bacDevice, err := d.findDevice(ctx, device)
 	if err != nil {
-		deviceHealth.AddOrUpdateFault(&healthpb.HealthCheck_Error{
+		healthErr := &healthpb.HealthCheck_Error{
 			SummaryText: "Cannot find device",
 			DetailsText: fmt.Sprintf("net handshake: %v", ctxerr.Cause(ctx, err).Error()),
 			Code:        statusToHealthCode(DeviceUnreachable),
+		}
+		deviceHealth.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
+			State:     healthpb.HealthCheck_Reliability_UNRELIABLE,
+			LastError: healthErr,
+			Cause: &healthpb.HealthCheck_Reliability_Cause{
+				Error:       healthErr,
+				DisplayName: "deviceConfiguration",
+			},
 		})
 
 		return fmt.Errorf("device comm handshake: %w", ctxerr.Cause(ctx, err))

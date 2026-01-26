@@ -120,7 +120,7 @@ func (a *access) pollPeer(ctx context.Context) (*gen_accesspb.AccessAttempt, err
 		}
 	}
 
-	updateTraitFaultCheck(a.faultCheck, a.cfg.Name, trait.Access, errs)
+	updateTraitFaultCheck(ctx, a.faultCheck, a.cfg.Name, trait.Access, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

@@ -212,7 +212,7 @@ responses:
 		}
 		dst.Values[cfg.name] = value
 	}
-	updateTraitFaultCheck(t.faultCheck, t.config.Name, trait.Mode, errs)
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.Mode, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

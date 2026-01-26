@@ -192,7 +192,7 @@ func (t *emergencyImpl) pollPeer(ctx context.Context) (*traits.Emergency, error)
 		}
 	}
 
-	updateTraitFaultCheck(t.faultCheck, t.config.Name, trait.Emergency, errs)
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.Emergency, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

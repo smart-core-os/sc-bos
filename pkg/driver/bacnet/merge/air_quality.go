@@ -182,7 +182,7 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*traits.AirQuality, e
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(aq.faultCheck, aq.config.Name, trait.AirQualitySensor, errs)
+	updateTraitFaultCheck(ctx, aq.faultCheck, aq.config.Name, trait.AirQualitySensor, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

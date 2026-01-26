@@ -150,7 +150,7 @@ func (o *onOff) pollPeer(ctx context.Context) (*traits.OnOff, error) {
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(o.faultCheck, o.config.Name, trait.OnOff, errs)
+	updateTraitFaultCheck(ctx, o.faultCheck, o.config.Name, trait.OnOff, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

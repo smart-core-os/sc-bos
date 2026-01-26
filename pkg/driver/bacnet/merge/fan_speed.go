@@ -126,7 +126,7 @@ func (t *fanSpeed) speedToPreset(speed float32) string {
 // pollPeer fetches data from the peer device and saves the data locally.
 func (t *fanSpeed) pollPeer(ctx context.Context) (*traits.FanSpeed, error) {
 	speed, err := readPropertyFloat32(ctx, t.client, t.known, *t.config.Speed)
-	updateTraitFaultCheck(t.faultCheck, t.config.Name, trait.FanSpeed, []error{err})
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.FanSpeed, []error{err})
 	if err != nil {
 		return nil, comm.ErrReadProperty{Prop: "speed", Cause: err}
 	}

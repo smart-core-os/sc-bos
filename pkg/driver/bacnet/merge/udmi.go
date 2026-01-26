@@ -193,7 +193,7 @@ func (f *udmiMerge) pollPeer(ctx context.Context) error {
 		}
 	}
 
-	updateTraitFaultCheck(f.faultCheck, f.config.Name, udmipb.TraitName, errs)
+	updateTraitFaultCheck(ctx, f.faultCheck, f.config.Name, udmipb.TraitName, errs)
 	if len(errs) == len(f.config.Points) {
 		err := multierr.Combine(errs...)
 		return err

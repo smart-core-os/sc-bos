@@ -234,7 +234,7 @@ func (t *electricTrait) pollPeer(ctx context.Context) (*traits.ElectricDemand, e
 	if dst.ReactivePower == nil && reactive != 0 {
 		dst.ReactivePower = &reactive
 	}
-	updateTraitFaultCheck(t.faultCheck, t.config.Name, trait.Electric, errs)
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.Electric, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

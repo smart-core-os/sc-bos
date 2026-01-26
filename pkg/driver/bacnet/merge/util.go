@@ -32,12 +32,3 @@ func readPropertyFloat32(ctx context.Context, client *gobacnet.Client, known kno
 var (
 	ErrTraitNotSupported = errors.New("trait not supported")
 )
-
-// floatEqual compares two float64 values for equality. Has tolerance in case of floating-point issues.
-func floatEqual(a, b float64) bool {
-	diff := a - b
-	if diff < 0 {
-		diff = -diff
-	}
-	return diff < floatTolerance
-}
