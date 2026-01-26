@@ -63,7 +63,12 @@ func updateRequestErrorStatus(deviceHealth *gen_healthpb.FaultCheck, name, reque
 			DetailsText: fmt.Sprintf("%s %s: %v", problemName, request, err),
 			Code:        statusToHealthCode(DeviceUnreachable),
 		})
+		return
 	}
+
+	deviceHealth.RemoveFault(&healthpb.HealthCheck_Error{
+		Code: statusToHealthCode(DeviceUnreachable),
+	})
 }
 
 func statusToHealthCode(code string) *healthpb.HealthCheck_Error_Code {
