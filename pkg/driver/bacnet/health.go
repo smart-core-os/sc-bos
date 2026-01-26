@@ -41,7 +41,7 @@ func createDeviceHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, equip
 
 func createTraitHealthCheck(t trait.Name, occupant healthpb.HealthCheck_OccupantImpact, equipment healthpb.HealthCheck_EquipmentImpact) *healthpb.HealthCheck {
 	return &healthpb.HealthCheck{
-		Id:              "traitStatusCheck",
+		Id:              fmt.Sprintf("%s traitStatusCheck", t.String()),
 		DisplayName:     fmt.Sprintf("%s Trait Status Check", t.String()),
 		Description:     fmt.Sprintf("Checks %s is working correctly", t.String()),
 		OccupantImpact:  occupant,
