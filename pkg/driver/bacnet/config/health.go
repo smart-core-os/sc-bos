@@ -20,8 +20,6 @@ type HealthCheck struct {
 	Description string `json:"description"`
 	ErrorCode   string `json:"errorCode"`
 	Summary     string `json:"summary"`
-
-	NormalValue *float64 `json:"normalValue,omitempty"`
 }
 
 // OccupantImpact wraps healthpb.HealthCheck_OccupantImpact to support JSON unmarshaling from strings.
