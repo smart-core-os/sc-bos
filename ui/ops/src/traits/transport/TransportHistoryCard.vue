@@ -27,7 +27,8 @@
 
 <script setup>
 import equal from 'fast-deep-equal/es6';
-import {onUnmounted, ref, watch} from 'vue';
+import {chunk} from 'lodash';
+import {nextTick, onUnmounted, ref, watch} from 'vue';
 
 const props = defineProps({
   history: {
@@ -36,7 +37,7 @@ const props = defineProps({
   }
 });
 
-
+const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 const table = ref({day: 0, week: 0, month: 0});
 
 const reset = () => {
@@ -56,32 +57,62 @@ const clean = (obj, ignoreFields) => {
 
 const ignoreFields = ['passengerAlarm', 'doorsList', 'load'];
 
+let isProcessing = false;
+let shouldCancel = false;
 
-watch(props.history, (arr) => {
-  arr.sort((a, b) => a.recordTime.seconds - b.recordTime.seconds);
+watch(props.history, async (arr) => {
+  if (isProcessing) {
+    shouldCancel = true;
+    while (isProcessing) {
+      await nextTick();
+    }
+  }
+
+  isProcessing = true;
+  shouldCancel = false;
+  // copy first to not mutate the history ref and sort by recordTime to compare previous entry
+  const sortedArr = [...arr].sort((a, b) => b.recordTime.seconds - a.recordTime.seconds);
+  const batched = chunk(sortedArr, 20);
 
   let prev = null;
   const now = new Date();
   reset();
-  arr.forEach((item) => {
-    if (equal(clean(item.transport, ignoreFields), clean(prev?.transport || {}, ignoreFields))) {
+  for (let batch of batched) {
+    if (shouldCancel) {
+      isProcessing = false;
+      break;
+    }
+
+    for (let item of batch) {
+      if (shouldCancel) {
+        isProcessing = false;
+        break;
+      }
+      if (equal(clean(item.transport, ignoreFields), clean(prev?.transport || {}, ignoreFields))) {
+        prev = item;
+        continue;
+      }
       prev = item;
-      return;
+      const date = new Date(item.recordTime.seconds * 1000);
+      const diffTime = Math.abs(now - date);
+      const diffDays = Math.ceil(diffTime / DAY_MILLISECONDS);
+      if (diffDays <= 1) {
+        table.value.day += 1;
+      }
+      if (diffDays <= 7) {
+        table.value.week += 1;
+      }
+      if (diffDays <= 30) {
+        table.value.month += 1;
+      }
+      if (diffDays > 30) {
+        break; // no need to continue further
+      }
     }
-    prev = item;
-    const date = new Date(item.recordTime.seconds * 1000);
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays <= 1) {
-      table.value.day += 1;
-    }
-    if (diffDays <= 7) {
-      table.value.week += 1;
-    }
-    if (diffDays <= 30) {
-      table.value.month += 1;
-    }
-  });
+
+    await nextTick();
+  }
+  isProcessing = false;
 }, {immediate: true, deep: true});
 </script>
 
