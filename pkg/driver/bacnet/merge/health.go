@@ -97,11 +97,11 @@ func (h *Health) initializeChecks() error {
 	// build checks map
 	for bmsPointName, cc := range h.config.Checks {
 		if h.DeviceChecks[cc.Id] != nil {
-			h.logger.Warn("skipping Health check with duplicate ID", zap.String("name", bmsPointName), zap.String("checkDisplayName", cc.DisplayName))
+			h.logger.Warn("skipping Health check with duplicate ID", zap.String("name", bmsPointName), zap.String("display name", cc.DisplayName))
 			continue
 		}
 
-		check, err := h.checks.NewFaultCheck(fmt.Sprintf("%s.%s", h.config.Name, cc.DisplayName), &healthpb.HealthCheck{
+		check, err := h.checks.NewFaultCheck(bmsPointName, &healthpb.HealthCheck{
 			Id:              cc.Id,
 			DisplayName:     cc.DisplayName,
 			Description:     cc.Description,
