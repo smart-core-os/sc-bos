@@ -42,6 +42,10 @@ type Root struct {
 
 	Devices []Device   `json:"devices,omitempty"`
 	Traits  []RawTrait `json:"traits,omitempty"`
+
+	// SystemHealth represents the system-level health check configuration. If not configured,
+	// occupant and equipment impact will default to UNSPECIFIED.
+	SystemHealth Health `json:"systemHealth,omitempty"`
 }
 
 // ReadFile reads from the named file a config Root.
@@ -95,6 +99,10 @@ type Device struct {
 	DiscoverObjects      *bool    `json:"discoverObjects,omitempty"`
 	Objects              []Object `json:"objects,omitempty"`
 	DefaultWritePriority uint     `json:"defaultWritePriority,omitempty"`
+
+	// Health contains settings for a BACnet device health check
+	// If not configured, the occupant and equipment impact will default to UNSPECIFIED
+	Health Health `json:"health"`
 }
 
 type Comm struct {

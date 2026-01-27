@@ -12,8 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
@@ -40,10 +39,10 @@ func readAirQualitySensorConfig(raw []byte) (cfg airQualityConfig, err error) {
 }
 
 type airQualitySensor struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *airqualitysensorpb.Model
 	*airqualitysensorpb.ModelServer
@@ -51,7 +50,7 @@ type airQualitySensor struct {
 	pollTask *task.Intermittent
 }
 
-func newAirQualitySensor(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*airQualitySensor, error) {
+func newAirQualitySensor(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airQualitySensor, error) {
 	cfg, err := readAirQualitySensorConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -62,14 +61,13 @@ func newAirQualitySensor(client *gobacnet.Client, devices known.Context, statuse
 	t := &airQualitySensor{
 		client:      client,
 		known:       devices,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: airqualitysensorpb.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
-	initTraitStatus(statuses, cfg.Name, "AirQualitySensor")
 	return t, nil
 }
 
@@ -184,7 +182,7 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*traits.AirQuality, e
 			errs = append(errs, err)
 		}
 	}
-	status.UpdatePollErrorStatus(aq.statuses, aq.config.Name, "AirQualitySensor", requestNames, errs)
+	updateTraitFaultCheck(ctx, aq.faultCheck, aq.config.Name, trait.AirQualitySensor, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

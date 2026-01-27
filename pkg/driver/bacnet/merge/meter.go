@@ -12,14 +12,14 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
 type meterConfig struct {
@@ -34,10 +34,10 @@ func readMeterConfig(raw []byte) (cfg meterConfig, err error) {
 }
 
 type meterTrait struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *meter.Model
 	*meter.ModelServer
@@ -45,7 +45,7 @@ type meterTrait struct {
 	pollTask *task.Intermittent
 }
 
-func newMeter(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*meterTrait, error) {
+func newMeter(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*meterTrait, error) {
 	cfg, err := readMeterConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -56,14 +56,13 @@ func newMeter(client *gobacnet.Client, devices known.Context, statuses *statuspb
 	t := &meterTrait{
 		client:      client,
 		known:       devices,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: meter.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
-	initTraitStatus(statuses, cfg.Name, "Meter")
 	return t, nil
 }
 
@@ -116,7 +115,7 @@ func (t *meterTrait) pollPeer(ctx context.Context) (*meterpb.MeterReading, error
 	if err != nil {
 		errs = append(errs, comm.ErrReadProperty{Prop: "usage", Cause: err})
 	}
-	status.UpdatePollErrorStatus(t.statuses, t.config.Name, "Meter", []string{"usage"}, errs)
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.Meter, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

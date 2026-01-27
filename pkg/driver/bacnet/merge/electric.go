@@ -14,8 +14,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -49,10 +48,10 @@ func readElectricConfig(raw []byte) (cfg electricConfig, err error) {
 }
 
 type electricTrait struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *electricpb.Model
 	*electricpb.ModelServer
@@ -60,7 +59,7 @@ type electricTrait struct {
 	pollTask *task.Intermittent
 }
 
-func newElectric(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*electricTrait, error) {
+func newElectric(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*electricTrait, error) {
 	cfg, err := readElectricConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -70,14 +69,13 @@ func newElectric(client *gobacnet.Client, devices known.Context, statuses *statu
 	t := &electricTrait{
 		client:      client,
 		known:       devices,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: electricpb.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
-	initTraitStatus(statuses, cfg.Name, "Emergency")
 	return t, nil
 }
 
@@ -236,8 +234,7 @@ func (t *electricTrait) pollPeer(ctx context.Context) (*traits.ElectricDemand, e
 	if dst.ReactivePower == nil && reactive != 0 {
 		dst.ReactivePower = &reactive
 	}
-
-	status.UpdatePollErrorStatus(t.statuses, t.config.Name, "Electric", requestNames, errs)
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.Electric, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

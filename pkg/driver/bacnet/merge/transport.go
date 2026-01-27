@@ -16,8 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	transportpb "github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	gen_transportpb "github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
@@ -65,10 +64,10 @@ type transport struct {
 	gen_transportpb.UnimplementedTransportApiServer
 	gen_transportpb.UnimplementedTransportInfoServer
 
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *transportpb.Model
 	*transportpb.ModelServer
@@ -78,7 +77,7 @@ type transport struct {
 	units atomic.Value
 }
 
-func newTransport(client *gobacnet.Client, known known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*transport, error) {
+func newTransport(client *gobacnet.Client, known known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*transport, error) {
 	cfg, err := readTransportConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -89,7 +88,7 @@ func newTransport(client *gobacnet.Client, known known.Context, statuses *status
 	t := &transport{
 		client:      client,
 		known:       known,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: transportpb.NewModelServer(model),
@@ -97,8 +96,6 @@ func newTransport(client *gobacnet.Client, known known.Context, statuses *status
 	}
 
 	t.pollTask = task.NewIntermittent(t.startPoll)
-
-	initTraitStatus(statuses, cfg.Name, "Transport")
 
 	return t, nil
 }
@@ -196,7 +193,7 @@ func (t *transport) pollPeer(ctx context.Context) (*gen_transportpb.Transport, e
 		}
 	}
 
-	status.UpdatePollErrorStatus(t.statuses, t.config.Name, "Transport", requestNames, errs)
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, transportpb.TraitName, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

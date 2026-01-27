@@ -16,8 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	status2 "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -43,10 +42,10 @@ func readUdmiMergeConfig(raw []byte) (cfg UdmiMergeConfig, err error) {
 // control is implemented via OnMessage, only points present in the config are controllable.
 type udmiMerge struct {
 	gen_udmipb.UnimplementedUdmiServiceServer
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	config UdmiMergeConfig
 	bus    minibus.Bus[*gen_udmipb.PullExportMessagesResponse]
@@ -57,20 +56,19 @@ type udmiMerge struct {
 	points     udmi.PointsEvent
 }
 
-func newUdmiMerge(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*udmiMerge, error) {
+func newUdmiMerge(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*udmiMerge, error) {
 	cfg, err := readUdmiMergeConfig(config.Raw)
 	if err != nil {
 		return nil, err
 	}
 	f := &udmiMerge{
-		client:   client,
-		known:    devices,
-		statuses: statuses,
-		config:   cfg,
-		logger:   logger,
+		client:     client,
+		known:      devices,
+		faultCheck: faultCheck,
+		config:     cfg,
+		logger:     logger,
 	}
 	f.pollTask = task.NewIntermittent(f.startPoll)
-	initTraitStatus(statuses, cfg.Name, "UDMI")
 	return f, nil
 }
 
@@ -195,7 +193,7 @@ func (f *udmiMerge) pollPeer(ctx context.Context) error {
 		}
 	}
 
-	status2.UpdatePollErrorStatus(f.statuses, f.config.Name, "UDMI", keys, errs)
+	updateTraitFaultCheck(ctx, f.faultCheck, f.config.Name, udmipb.TraitName, errs)
 	if len(errs) == len(f.config.Points) {
 		err := multierr.Combine(errs...)
 		return err

@@ -16,8 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
@@ -57,10 +56,10 @@ func readLightConfig(raw []byte) (cfg lightCfg, err error) {
 }
 
 type light struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *lightpb.Model
 	*lightpb.ModelServer
@@ -68,7 +67,7 @@ type light struct {
 	pollTask *task.Intermittent
 }
 
-func newLight(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*light, error) {
+func newLight(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*light, error) {
 	cfg, err := readLightConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -79,7 +78,7 @@ func newLight(client *gobacnet.Client, devices known.Context, statuses *statuspb
 	l := &light{
 		client:      client,
 		known:       devices,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: lightpb.NewModelServer(model),
@@ -87,8 +86,6 @@ func newLight(client *gobacnet.Client, devices known.Context, statuses *statuspb
 	}
 
 	l.pollTask = task.NewIntermittent(l.startPoll)
-
-	initTraitStatus(statuses, cfg.Name, "Light")
 
 	return l, nil
 }
@@ -190,8 +187,7 @@ func (l *light) pollPeer(ctx context.Context) (*traits.Brightness, error) {
 			errs = append(errs, err)
 		}
 	}
-
-	status.UpdatePollErrorStatus(l.statuses, l.config.Name, "Light", requestNames, errs)
+	updateTraitFaultCheck(ctx, l.faultCheck, l.config.Name, trait.Light, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

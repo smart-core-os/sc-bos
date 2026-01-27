@@ -15,9 +15,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_securityevent "github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
@@ -88,10 +88,10 @@ func readSecurityEventConfig(raw []byte) (cfg securityEventConfig, err error) {
 }
 
 type securityEventImpl struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *securityevent.Model
 	*securityevent.ModelServer
@@ -100,7 +100,7 @@ type securityEventImpl struct {
 	pollTask *task.Intermittent
 }
 
-func newSecurityEvent(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*securityEventImpl, error) {
+func newSecurityEvent(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*securityEventImpl, error) {
 	cfg, err := readSecurityEventConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func newSecurityEvent(client *gobacnet.Client, devices known.Context, statuses *
 	t := &securityEventImpl{
 		client:      client,
 		known:       devices,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: securityevent.NewModelServer(model),
@@ -125,7 +125,6 @@ func newSecurityEvent(client *gobacnet.Client, devices known.Context, statuses *
 		events:      events,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
-	initTraitStatus(statuses, cfg.Name, "SecurityEvent")
 	return t, nil
 }
 
@@ -182,7 +181,7 @@ func (s *securityEventImpl) pollPeer(ctx context.Context) error {
 			errs = append(errs, err)
 		}
 	}
-	status.UpdatePollErrorStatus(s.statuses, s.config.Name, "SecurityEvent", requestNames, errs)
+	updateTraitFaultCheck(ctx, s.faultCheck, s.config.Name, gen_securityevent.TraitName, errs)
 	if len(errs) > 0 {
 		return errors.Join(errs...)
 	}

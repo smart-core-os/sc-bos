@@ -14,8 +14,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/status"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -59,10 +58,10 @@ func readEmergencyConfig(raw []byte) (cfg emergencyConfig, err error) {
 }
 
 type emergencyImpl struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *emergencypb.MemoryDevice
 	traits.EmergencyApiServer
@@ -70,7 +69,7 @@ type emergencyImpl struct {
 	pollTask *task.Intermittent
 }
 
-func newEmergency(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*emergencyImpl, error) {
+func newEmergency(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*emergencyImpl, error) {
 	cfg, err := readEmergencyConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -79,14 +78,13 @@ func newEmergency(client *gobacnet.Client, devices known.Context, statuses *stat
 	t := &emergencyImpl{
 		client:             client,
 		known:              devices,
-		statuses:           statuses,
+		faultCheck:         faultCheck,
 		logger:             logger,
 		model:              model,
 		EmergencyApiServer: model,
 		config:             cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
-	initTraitStatus(statuses, cfg.Name, "Emergency")
 	return t, nil
 }
 
@@ -193,7 +191,8 @@ func (t *emergencyImpl) pollPeer(ctx context.Context) (*traits.Emergency, error)
 			errs = append(errs, err)
 		}
 	}
-	status.UpdatePollErrorStatus(t.statuses, t.config.Name, "Emergency", requestNames, errs)
+
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.Emergency, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}
