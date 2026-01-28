@@ -1,5 +1,5 @@
 CREATE TABLE sites (
-    id              TEXT PRIMARY KEY, -- UUID
+    id              INTEGER PRIMARY KEY,
     name            TEXT NOT NULL,
     create_time     DATETIME NOT NULL,
 
@@ -7,9 +7,9 @@ CREATE TABLE sites (
 );
 
 CREATE TABLE nodes (
-    id              TEXT PRIMARY KEY, -- UUID
+    id              INTEGER PRIMARY KEY,
     hostname        TEXT NOT NULL,
-    site_id         TEXT NOT NULL,
+    site_id         INTEGER NOT NULL,
     create_time     DATETIME NOT NULL,
 
     FOREIGN KEY (site_id) REFERENCES sites (id) ON DELETE CASCADE,
@@ -19,8 +19,8 @@ CREATE TABLE nodes (
 CREATE INDEX nodes_site_id ON nodes (site_id);
 
 CREATE TABLE config_versions (
-    id              TEXT PRIMARY KEY, -- UUID
-    node_id         TEXT NOT NULL,
+    id              INTEGER PRIMARY KEY,
+    node_id         INTEGER NOT NULL,
     version_number  INTEGER NOT NULL,
     payload         BLOB NOT NULL,
     create_time     DATETIME NOT NULL,
@@ -33,8 +33,8 @@ CREATE UNIQUE INDEX config_versions_node_version ON config_versions (node_id, ve
 CREATE INDEX config_versions_node_id ON config_versions (node_id);
 
 CREATE TABLE deployments (
-    id                  TEXT PRIMARY KEY, -- UUID
-    config_version_id   TEXT NOT NULL,
+    id                  INTEGER PRIMARY KEY,
+    config_version_id   INTEGER NOT NULL,
     status              TEXT NOT NULL,
     start_time          DATETIME NOT NULL,
     finished_time       DATETIME,

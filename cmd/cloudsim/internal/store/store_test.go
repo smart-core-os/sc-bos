@@ -18,12 +18,9 @@ func TestStore_Sites(t *testing.T) {
 	}()
 
 	// Test creating a site
-	var siteID string
+	var siteID int64
 	err := store.Write(ctx, func(tx *Tx) error {
-		site, err := tx.CreateSite(ctx, queries.CreateSiteParams{
-			ID:   "site-uuid-1",
-			Name: "Test Site",
-		})
+		site, err := tx.CreateSite(ctx, "Test Site")
 		if err != nil {
 			return err
 		}
@@ -77,12 +74,9 @@ func TestStore_Nodes(t *testing.T) {
 	}()
 
 	// Create a site first
-	var siteID string
+	var siteID int64
 	err := store.Write(ctx, func(tx *Tx) error {
-		site, err := tx.CreateSite(ctx, queries.CreateSiteParams{
-			ID:   "site-uuid-1",
-			Name: "Test Site",
-		})
+		site, err := tx.CreateSite(ctx, "Test Site")
 		if err != nil {
 			return err
 		}
@@ -94,10 +88,9 @@ func TestStore_Nodes(t *testing.T) {
 	}
 
 	// Test creating a node
-	var nodeID string
+	var nodeID int64
 	err = store.Write(ctx, func(tx *Tx) error {
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			ID:       "node-uuid-1",
 			Hostname: "test-node.example.com",
 			SiteID:   siteID,
 		})
@@ -121,7 +114,7 @@ func TestStore_Nodes(t *testing.T) {
 			t.Errorf("expected hostname 'test-node.example.com', got '%s'", node.Hostname)
 		}
 		if node.SiteID != siteID {
-			t.Errorf("expected site ID '%s', got '%s'", siteID, node.SiteID)
+			t.Errorf("expected site ID %d, got %d", siteID, node.SiteID)
 		}
 		return nil
 	})
@@ -154,18 +147,14 @@ func TestStore_ConfigVersions(t *testing.T) {
 	}()
 
 	// Setup: create site and node
-	var nodeID string
+	var nodeID int64
 	err := store.Write(ctx, func(tx *Tx) error {
-		site, err := tx.CreateSite(ctx, queries.CreateSiteParams{
-			ID:   "site-uuid-1",
-			Name: "Test Site",
-		})
+		site, err := tx.CreateSite(ctx, "Test Site")
 		if err != nil {
 			return err
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			ID:       "node-uuid-1",
 			Hostname: "test-node.example.com",
 			SiteID:   site.ID,
 		})
@@ -180,10 +169,9 @@ func TestStore_ConfigVersions(t *testing.T) {
 	}
 
 	// Test creating a config version
-	var configVersionID string
+	var configVersionID int64
 	err = store.Write(ctx, func(tx *Tx) error {
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			ID:            "config-uuid-1",
 			NodeID:        nodeID,
 			VersionNumber: 1,
 			Payload:       []byte(`{"test": "config"}`),
@@ -256,18 +244,14 @@ func TestStore_Deployments(t *testing.T) {
 	}()
 
 	// Setup: create site, node, and config version
-	var configVersionID string
+	var configVersionID int64
 	err := store.Write(ctx, func(tx *Tx) error {
-		site, err := tx.CreateSite(ctx, queries.CreateSiteParams{
-			ID:   "site-uuid-1",
-			Name: "Test Site",
-		})
+		site, err := tx.CreateSite(ctx, "Test Site")
 		if err != nil {
 			return err
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			ID:       "node-uuid-1",
 			Hostname: "test-node.example.com",
 			SiteID:   site.ID,
 		})
@@ -276,7 +260,6 @@ func TestStore_Deployments(t *testing.T) {
 		}
 
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			ID:            "config-uuid-1",
 			NodeID:        node.ID,
 			VersionNumber: 1,
 			Payload:       []byte(`{"test": "config"}`),
@@ -292,10 +275,9 @@ func TestStore_Deployments(t *testing.T) {
 	}
 
 	// Test creating a deployment
-	var deploymentID string
+	var deploymentID int64
 	err = store.Write(ctx, func(tx *Tx) error {
 		deployment, err := tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
-			ID:              "deployment-uuid-1",
 			ConfigVersionID: configVersionID,
 			Status:          "PENDING",
 		})
@@ -377,19 +359,15 @@ func TestStore_CascadeDeletes(t *testing.T) {
 	}()
 
 	// Setup: create a full chain
-	var siteID, nodeID, configVersionID, deploymentID string
+	var siteID, nodeID, configVersionID, deploymentID int64
 	err := store.Write(ctx, func(tx *Tx) error {
-		site, err := tx.CreateSite(ctx, queries.CreateSiteParams{
-			ID:   "site-uuid-1",
-			Name: "Test Site",
-		})
+		site, err := tx.CreateSite(ctx, "Test Site")
 		if err != nil {
 			return err
 		}
 		siteID = site.ID
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			ID:       "node-uuid-1",
 			Hostname: "test-node.example.com",
 			SiteID:   site.ID,
 		})
@@ -399,7 +377,6 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		nodeID = node.ID
 
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			ID:            "config-uuid-1",
 			NodeID:        node.ID,
 			VersionNumber: 1,
 			Payload:       []byte(`{"test": "config"}`),
@@ -410,7 +387,6 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		configVersionID = config.ID
 
 		deployment, err := tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
-			ID:              "deployment-uuid-1",
 			ConfigVersionID: config.ID,
 			Status:          "PENDING",
 		})

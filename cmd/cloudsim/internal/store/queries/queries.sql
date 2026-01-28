@@ -1,8 +1,8 @@
 -- Sites
 
 -- name: CreateSite :one
-INSERT INTO sites (id, name, create_time)
-VALUES (:id, :name, datetime('now', 'subsec'))
+INSERT INTO sites (name, create_time)
+VALUES (:name, datetime('now', 'subsec'))
 RETURNING *;
 
 -- name: GetSite :one
@@ -38,8 +38,8 @@ WHERE id = :id;
 -- Nodes
 
 -- name: CreateNode :one
-INSERT INTO nodes (id, hostname, site_id, create_time)
-VALUES (:id, :hostname, :site_id, datetime('now', 'subsec'))
+INSERT INTO nodes (hostname, site_id, create_time)
+VALUES (:hostname, :site_id, datetime('now', 'subsec'))
 RETURNING *;
 
 -- name: GetNode :one
@@ -86,8 +86,8 @@ WHERE id = :id;
 -- Config Versions
 
 -- name: CreateConfigVersion :one
-INSERT INTO config_versions (id, node_id, version_number, payload, create_time)
-VALUES (:id, :node_id, :version_number, :payload, datetime('now', 'subsec'))
+INSERT INTO config_versions (node_id, version_number, payload, create_time)
+VALUES (:node_id, :version_number, :payload, datetime('now', 'subsec'))
 RETURNING *;
 
 -- name: GetConfigVersion :one
@@ -135,8 +135,8 @@ WHERE id = :id;
 -- Deployments
 
 -- name: CreateDeployment :one
-INSERT INTO deployments (id, config_version_id, status, start_time, finished_time)
-VALUES (:id, :config_version_id, :status, datetime('now', 'subsec'), NULL)
+INSERT INTO deployments (config_version_id, status, start_time, finished_time)
+VALUES (:config_version_id, :status, datetime('now', 'subsec'), NULL)
 RETURNING *;
 
 -- name: GetDeployment :one

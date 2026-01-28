@@ -10,30 +10,30 @@ import (
 )
 
 type ConfigVersion struct {
-	ID            string
-	NodeID        string
+	ID            int64
+	NodeID        int64
 	VersionNumber int64
 	Payload       []byte
 	CreateTime    time.Time
 }
 
 type Deployment struct {
-	ID              string
-	ConfigVersionID string
+	ID              int64
+	ConfigVersionID int64
 	Status          string
 	StartTime       time.Time
 	FinishedTime    sql.NullTime
 }
 
 type Node struct {
-	ID         string
+	ID         int64
 	Hostname   string
-	SiteID     string
+	SiteID     int64
 	CreateTime time.Time
 }
 
 type Site struct {
-	ID         string
+	ID         int64
 	Name       string
 	CreateTime time.Time
 }
