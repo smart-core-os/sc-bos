@@ -1,0 +1,162 @@
+# Cloudsim Store Package
+
+This package provides a SQLite-based data storage layer for the cloudsim application, following the patterns established in `internal/account`.
+
+## Entities
+
+### Sites
+- **ID**: UUID (primary key)
+- **Name**: String
+- **Create Time**: Timestamp
+
+A site represents a physical location and can be associated with zero or more nodes.
+
+### Nodes
+- **ID**: UUID (primary key)
+- **Hostname**: String
+- **Site ID**: UUID (foreign key to sites)
+- **Create Time**: Timestamp
+
+A node represents a BOS controller and is associated with exactly one site.
+
+### Config Versions
+- **ID**: UUID (primary key)
+- **Node ID**: UUID (foreign key to nodes)
+- **Version Number**: Integer (unique per node)
+- **Payload**: Arbitrary bytes (configuration data)
+- **Create Time**: Timestamp
+
+A config version stores a versioned configuration for a node. The version number is unique within its associated node and can be associated with zero or more deployments.
+
+### Deployments
+- **ID**: UUID (primary key)
+- **Config Version ID**: UUID (foreign key to config_versions)
+- **Status**: Enum (PENDING, IN_PROGRESS, COMPLETED, FAILED)
+- **Start Time**: Timestamp
+- **Finished Time**: Nullable timestamp (NULL for PENDING/IN_PROGRESS)
+
+A deployment tracks the deployment status of a config version to a node. The finished time is automatically set when the status is updated to COMPLETED or FAILED.
+
+## Architecture
+
+### Files Structure
+
+```
+store/
+├── migrations/
+│   └── 0001_initial_schema.sql    # Database schema
+├── queries/
+│   ├── queries.sql                # SQL queries (handwritten)
+│   ├── queries.sql.go            # Generated Go code (by sqlc)
+│   ├── models.go                 # Generated models (by sqlc)
+│   └── db.go                     # Generated DB interface (by sqlc)
+├── migrations.go                  # Embedded migrations
+├── sqlc.yaml                      # sqlc configuration
+├── store.go                       # Store implementation
+├── store_test.go                  # Comprehensive tests
+└── README.md                      # This file
+```
+
+### Key Features
+
+1. **Transaction Support**: Read and Write transactions using the Store's `Read()` and `Write()` methods
+2. **Cascade Deletes**: Deleting a site cascades to nodes, config versions, and deployments
+3. **Version Uniqueness**: Config version numbers are unique per node
+4. **Status Constraints**: Deployment status is validated at the database level
+5. **Automatic Timestamps**: Create times and finished times are managed automatically
+
+### Code Generation
+
+This package uses [sqlc](https://sqlc.dev/) to generate type-safe Go code from SQL queries:
+
+```bash
+cd cmd/cloudsim/internal/store
+sqlc generate
+```
+
+Run this command after modifying `queries/queries.sql` or `migrations/*.sql`.
+
+## Usage
+
+### Opening a Store
+
+```go
+// Persistent storage
+store, err := OpenStore(ctx, "/path/to/db.sqlite", logger)
+if err != nil {
+    return err
+}
+defer store.Close()
+
+// In-memory storage (for testing)
+store := NewMemoryStore(logger)
+defer store.Close()
+```
+
+### Reading Data
+
+```go
+err := store.Read(ctx, func(tx *Tx) error {
+    site, err := tx.GetSite(ctx, siteID)
+    if err != nil {
+        return err
+    }
+    // Use site...
+    return nil
+})
+```
+
+### Writing Data
+
+```go
+err := store.Write(ctx, func(tx *Tx) error {
+    site, err := tx.CreateSite(ctx, queries.CreateSiteParams{
+        ID:   "site-uuid",
+        Name: "My Site",
+    })
+    if err != nil {
+        return err
+    }
+    // Use site...
+    return nil
+})
+```
+
+### Available Queries
+
+See `queries/queries.sql` for all available queries. Key operations include:
+
+**Sites**: Create, Get, GetByName, List, Count, Update, Delete  
+**Nodes**: Create, Get, GetByHostname, List, ListBySite, Count, CountBySite, Update, Delete  
+**Config Versions**: Create, Get, GetByNodeAndVersion, List, ListByNode, GetLatestByNode, Count, CountByNode, Delete  
+**Deployments**: Create, Get, List, ListByConfigVersion, ListByStatus, Count, CountByStatus, UpdateStatus, Delete
+
+## Testing
+
+Run tests with:
+
+```bash
+cd cmd/cloudsim/internal/store
+go test -v
+```
+
+The test suite includes:
+- Basic CRUD operations for all entities
+- Relationship validation (e.g., nodes belong to sites)
+- Cascade delete verification
+- Status transition logic (deployment finished_time)
+- Listing and counting operations
+
+## Database Schema
+
+The database uses SQLite with the following constraints:
+
+- Timestamps use RFC3339 format with subsecond precision
+- UUIDs are stored as TEXT
+- Foreign keys are enforced with CASCADE DELETE where appropriate
+- Unique constraints on (node_id, version_number) for config versions
+- CHECK constraints for status values and timestamp formats
+
+## Application ID
+
+The SQLite database uses application ID `0x5C0502` to identify it as a cloudsim store.
