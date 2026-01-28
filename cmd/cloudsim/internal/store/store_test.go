@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"context"
 	"testing"
 
@@ -91,7 +92,7 @@ func TestStore_Nodes(t *testing.T) {
 	var nodeID int64
 	err = store.Write(ctx, func(tx *Tx) error {
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "test-node.example.com",
+			Hostname: "TEST-AC-01",
 			SiteID:   siteID,
 		})
 		if err != nil {
@@ -110,8 +111,8 @@ func TestStore_Nodes(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if node.Hostname != "test-node.example.com" {
-			t.Errorf("expected hostname 'test-node.example.com', got '%s'", node.Hostname)
+		if node.Hostname != "TEST-AC-01" {
+			t.Errorf("expected hostname 'TEST-AC-01', got '%s'", node.Hostname)
 		}
 		if node.SiteID != siteID {
 			t.Errorf("expected site ID %d, got %d", siteID, node.SiteID)
@@ -155,7 +156,7 @@ func TestStore_ConfigVersions(t *testing.T) {
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "test-node.example.com",
+			Hostname: "TEST-AC-01",
 			SiteID:   site.ID,
 		})
 		if err != nil {
@@ -174,7 +175,7 @@ func TestStore_ConfigVersions(t *testing.T) {
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
 			NodeID:        nodeID,
 			VersionNumber: "v1",
-			Payload:       []byte(`{"test": "config"}`),
+			Payload:       []byte{0xDE, 0xAD, 0xBE, 0xEF},
 		})
 		if err != nil {
 			return err
@@ -195,8 +196,9 @@ func TestStore_ConfigVersions(t *testing.T) {
 		if config.VersionNumber != "v1" {
 			t.Errorf("expected version number v1, got %s", config.VersionNumber)
 		}
-		if string(config.Payload) != `{"test": "config"}` {
-			t.Errorf("expected payload '{\"test\": \"config\"}', got '%s'", string(config.Payload))
+		expectedPayload := []byte{0xDE, 0xAD, 0xBE, 0xEF}
+		if !bytes.Equal(config.Payload, expectedPayload) {
+			t.Errorf("payload mismatch: expected %#v, got %#v", expectedPayload, config.Payload)
 		}
 		return nil
 	})
@@ -252,7 +254,7 @@ func TestStore_Deployments(t *testing.T) {
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "test-node.example.com",
+			Hostname: "TEST-AC-01",
 			SiteID:   site.ID,
 		})
 		if err != nil {
@@ -262,7 +264,7 @@ func TestStore_Deployments(t *testing.T) {
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
 			NodeID:        node.ID,
 			VersionNumber: "v1",
-			Payload:       []byte(`{"test": "config"}`),
+			Payload:       []byte{0xCA, 0xFE, 0xBA, 0xBE},
 		})
 		if err != nil {
 			return err
@@ -368,7 +370,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		siteID = site.ID
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "test-node.example.com",
+			Hostname: "TEST-AC-01",
 			SiteID:   site.ID,
 		})
 		if err != nil {
@@ -379,7 +381,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
 			NodeID:        node.ID,
 			VersionNumber: "v1",
-			Payload:       []byte(`{"test": "config"}`),
+			Payload:       []byte{0xFE, 0xED, 0xFA, 0xCE},
 		})
 		if err != nil {
 			return err
@@ -460,7 +462,7 @@ func TestStore_ConfigVersionUniqueness(t *testing.T) {
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "test-node.example.com",
+			Hostname: "TEST-AC-01",
 			SiteID:   site.ID,
 		})
 		if err != nil {
@@ -478,7 +480,7 @@ func TestStore_ConfigVersionUniqueness(t *testing.T) {
 		_, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
 			NodeID:        nodeID,
 			VersionNumber: "v1.0.0",
-			Payload:       []byte(`{"test": "config1"}`),
+			Payload:       []byte{0xDE, 0xAD, 0xBE, 0xEF},
 		})
 		return err
 	})
@@ -491,7 +493,7 @@ func TestStore_ConfigVersionUniqueness(t *testing.T) {
 		_, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
 			NodeID:        nodeID,
 			VersionNumber: "v1.0.0",
-			Payload:       []byte(`{"test": "config2"}`),
+			Payload:       []byte{0xCA, 0xFE, 0xBA, 0xBE},
 		})
 		return err
 	})
@@ -504,7 +506,7 @@ func TestStore_ConfigVersionUniqueness(t *testing.T) {
 		_, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
 			NodeID:        nodeID,
 			VersionNumber: "v2.0.0",
-			Payload:       []byte(`{"test": "config3"}`),
+			Payload:       []byte{0xFE, 0xED, 0xFA, 0xCE},
 		})
 		return err
 	})
@@ -512,7 +514,7 @@ func TestStore_ConfigVersionUniqueness(t *testing.T) {
 		t.Fatalf("failed to create config version with different version_number: %v", err)
 	}
 
-	// Verify we have 2 config versions
+	// Verify we have 2 config versions with correct payloads
 	err = store.Read(ctx, func(tx *Tx) error {
 		configs, err := tx.ListConfigVersionsByNode(ctx, nodeID)
 		if err != nil {
@@ -520,6 +522,24 @@ func TestStore_ConfigVersionUniqueness(t *testing.T) {
 		}
 		if len(configs) != 2 {
 			t.Errorf("expected 2 config versions, got %d", len(configs))
+		}
+
+		// Check payloads are stored correctly (ordered by version_number DESC)
+		if len(configs) == 2 {
+			// First should be v2.0.0 with FEEDFACE
+			if configs[0].VersionNumber == "v2.0.0" {
+				expected := []byte{0xFE, 0xED, 0xFA, 0xCE}
+				if !bytes.Equal(configs[0].Payload, expected) {
+					t.Errorf("v2.0.0 payload mismatch: expected %#v, got %#v", expected, configs[0].Payload)
+				}
+			}
+			// Second should be v1.0.0 with DEADBEEF
+			if configs[1].VersionNumber == "v1.0.0" {
+				expected := []byte{0xDE, 0xAD, 0xBE, 0xEF}
+				if !bytes.Equal(configs[1].Payload, expected) {
+					t.Errorf("v1.0.0 payload mismatch: expected %#v, got %#v", expected, configs[1].Payload)
+				}
+			}
 		}
 		return nil
 	})
