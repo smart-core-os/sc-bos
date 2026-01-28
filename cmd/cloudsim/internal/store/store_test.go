@@ -2,7 +2,6 @@ package store
 
 import (
 	"bytes"
-	"context"
 	"testing"
 
 	"go.uber.org/zap"
@@ -11,7 +10,7 @@ import (
 )
 
 func TestStore_Sites(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	logger := zap.NewNop()
 	store := NewMemoryStore(logger)
 	defer func() {
@@ -67,7 +66,7 @@ func TestStore_Sites(t *testing.T) {
 }
 
 func TestStore_Nodes(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	logger := zap.NewNop()
 	store := NewMemoryStore(logger)
 	defer func() {
@@ -140,7 +139,7 @@ func TestStore_Nodes(t *testing.T) {
 }
 
 func TestStore_ConfigVersions(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	logger := zap.NewNop()
 	store := NewMemoryStore(logger)
 	defer func() {
@@ -238,7 +237,7 @@ func TestStore_ConfigVersions(t *testing.T) {
 }
 
 func TestStore_Deployments(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	logger := zap.NewNop()
 	store := NewMemoryStore(logger)
 	defer func() {
@@ -353,7 +352,7 @@ func TestStore_Deployments(t *testing.T) {
 }
 
 func TestStore_CascadeDeletes(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	logger := zap.NewNop()
 	store := NewMemoryStore(logger)
 	defer func() {
@@ -446,7 +445,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 }
 
 func TestStore_ConfigVersionUniqueness(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	logger := zap.NewNop()
 	store := NewMemoryStore(logger)
 	defer func() {
