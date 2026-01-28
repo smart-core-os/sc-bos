@@ -105,7 +105,7 @@ RETURNING id, node_id, version_number, payload, create_time
 
 type CreateConfigVersionParams struct {
 	NodeID        int64
-	VersionNumber int64
+	VersionNumber string
 	Payload       []byte
 }
 
@@ -268,7 +268,7 @@ WHERE node_id = ?1 AND version_number = ?2
 
 type GetConfigVersionByNodeAndVersionParams struct {
 	NodeID        int64
-	VersionNumber int64
+	VersionNumber string
 }
 
 func (q *Queries) GetConfigVersionByNodeAndVersion(ctx context.Context, arg GetConfigVersionByNodeAndVersionParams) (ConfigVersion, error) {

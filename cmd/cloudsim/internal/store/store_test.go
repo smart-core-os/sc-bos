@@ -173,7 +173,7 @@ func TestStore_ConfigVersions(t *testing.T) {
 	err = store.Write(ctx, func(tx *Tx) error {
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
 			NodeID:        nodeID,
-			VersionNumber: 1,
+			VersionNumber: "v1",
 			Payload:       []byte(`{"test": "config"}`),
 		})
 		if err != nil {
@@ -192,8 +192,8 @@ func TestStore_ConfigVersions(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if config.VersionNumber != 1 {
-			t.Errorf("expected version number 1, got %d", config.VersionNumber)
+		if config.VersionNumber != "v1" {
+			t.Errorf("expected version number v1, got %s", config.VersionNumber)
 		}
 		if string(config.Payload) != `{"test": "config"}` {
 			t.Errorf("expected payload '{\"test\": \"config\"}', got '%s'", string(config.Payload))
@@ -225,8 +225,8 @@ func TestStore_ConfigVersions(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if config.VersionNumber != 1 {
-			t.Errorf("expected version number 1, got %d", config.VersionNumber)
+		if config.VersionNumber != "v1" {
+			t.Errorf("expected version number v1, got %s", config.VersionNumber)
 		}
 		return nil
 	})
@@ -261,7 +261,7 @@ func TestStore_Deployments(t *testing.T) {
 
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
 			NodeID:        node.ID,
-			VersionNumber: 1,
+			VersionNumber: "v1",
 			Payload:       []byte(`{"test": "config"}`),
 		})
 		if err != nil {
@@ -378,7 +378,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
 			NodeID:        node.ID,
-			VersionNumber: 1,
+			VersionNumber: "v1",
 			Payload:       []byte(`{"test": "config"}`),
 		})
 		if err != nil {
@@ -440,5 +440,90 @@ func TestStore_CascadeDeletes(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("failed to verify cascade deletes: %v", err)
+	}
+}
+
+func TestStore_ConfigVersionUniqueness(t *testing.T) {
+	ctx := context.Background()
+	logger := zap.NewNop()
+	store := NewMemoryStore(logger)
+	defer func() {
+		_ = store.Close()
+	}()
+
+	// Setup: create site and node
+	var nodeID int64
+	err := store.Write(ctx, func(tx *Tx) error {
+		site, err := tx.CreateSite(ctx, "Test Site")
+		if err != nil {
+			return err
+		}
+
+		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Hostname: "test-node.example.com",
+			SiteID:   site.ID,
+		})
+		if err != nil {
+			return err
+		}
+		nodeID = node.ID
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("failed to setup: %v", err)
+	}
+
+	// Create first config version
+	err = store.Write(ctx, func(tx *Tx) error {
+		_, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
+			NodeID:        nodeID,
+			VersionNumber: "v1.0.0",
+			Payload:       []byte(`{"test": "config1"}`),
+		})
+		return err
+	})
+	if err != nil {
+		t.Fatalf("failed to create first config version: %v", err)
+	}
+
+	// Try to create second config version with same version_number - should fail
+	err = store.Write(ctx, func(tx *Tx) error {
+		_, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
+			NodeID:        nodeID,
+			VersionNumber: "v1.0.0",
+			Payload:       []byte(`{"test": "config2"}`),
+		})
+		return err
+	})
+	if err == nil {
+		t.Fatal("expected error when creating duplicate version_number, got nil")
+	}
+
+	// Create config version with different version_number - should succeed
+	err = store.Write(ctx, func(tx *Tx) error {
+		_, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
+			NodeID:        nodeID,
+			VersionNumber: "v2.0.0",
+			Payload:       []byte(`{"test": "config3"}`),
+		})
+		return err
+	})
+	if err != nil {
+		t.Fatalf("failed to create config version with different version_number: %v", err)
+	}
+
+	// Verify we have 2 config versions
+	err = store.Read(ctx, func(tx *Tx) error {
+		configs, err := tx.ListConfigVersionsByNode(ctx, nodeID)
+		if err != nil {
+			return err
+		}
+		if len(configs) != 2 {
+			t.Errorf("expected 2 config versions, got %d", len(configs))
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("failed to list config versions: %v", err)
 	}
 }

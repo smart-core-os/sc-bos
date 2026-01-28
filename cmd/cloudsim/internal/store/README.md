@@ -22,11 +22,11 @@ A node represents a BOS controller and is associated with exactly one site.
 ### Config Versions
 - **ID**: Integer (auto-generated primary key)
 - **Node ID**: Integer (foreign key to nodes)
-- **Version Number**: Integer (unique per node)
+- **Version Number**: Arbitrary text (unique per node)
 - **Payload**: Arbitrary bytes (configuration data)
 - **Create Time**: Timestamp
 
-A config version stores a versioned configuration for a node. The version number is unique within its associated node and can be associated with zero or more deployments.
+A config version stores a versioned configuration for a node. The version number is arbitrary text (e.g., "v1.0.0", "2024-01-15", "prod-config") and is unique within its associated node. Each config version can be associated with zero or more deployments.
 
 ### Deployments
 - **ID**: Integer (auto-generated primary key)

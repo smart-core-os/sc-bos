@@ -12,7 +12,7 @@ import (
 type ConfigVersion struct {
 	ID            int64
 	NodeID        int64
-	VersionNumber int64
+	VersionNumber string
 	Payload       []byte
 	CreateTime    time.Time
 }

@@ -21,7 +21,7 @@ CREATE INDEX nodes_site_id ON nodes (site_id);
 CREATE TABLE config_versions (
     id              INTEGER PRIMARY KEY,
     node_id         INTEGER NOT NULL,
-    version_number  INTEGER NOT NULL,
+    version_number  TEXT NOT NULL,
     payload         BLOB NOT NULL,
     create_time     DATETIME NOT NULL,
 
