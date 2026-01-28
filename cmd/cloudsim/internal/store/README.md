@@ -168,3 +168,7 @@ The database uses SQLite with the following constraints:
 ## Application ID
 
 The SQLite database uses application ID `0x5C0502` to identify it as a cloudsim store.
+
+
+## TODO
+- Order by ID, no `LIMIT OFFSET` pagination, use page token instead
