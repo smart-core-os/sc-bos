@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/sqlite"
 )
 
 func TestStore_Sites(t *testing.T) {
@@ -49,8 +51,8 @@ func TestStore_Sites(t *testing.T) {
 	// Test listing sites
 	err = store.Read(ctx, func(tx *Tx) error {
 		sites, err := tx.ListSites(ctx, queries.ListSitesParams{
-			Limit:  10,
-			Offset: 0,
+			AfterID: 0,
+			Limit:   10,
 		})
 		if err != nil {
 			return err
@@ -124,7 +126,11 @@ func TestStore_Nodes(t *testing.T) {
 
 	// Test listing nodes by site
 	err = store.Read(ctx, func(tx *Tx) error {
-		nodes, err := tx.ListNodesBySite(ctx, siteID)
+		nodes, err := tx.ListNodesBySite(ctx, queries.ListNodesBySiteParams{
+			SiteID:  siteID,
+			AfterID: 0,
+			Limit:   10,
+		})
 		if err != nil {
 			return err
 		}
@@ -207,7 +213,11 @@ func TestStore_ConfigVersions(t *testing.T) {
 
 	// Test listing config versions by node
 	err = store.Read(ctx, func(tx *Tx) error {
-		configs, err := tx.ListConfigVersionsByNode(ctx, nodeID)
+		configs, err := tx.ListConfigVersionsByNode(ctx, queries.ListConfigVersionsByNodeParams{
+			NodeID:  nodeID,
+			AfterID: 0,
+			Limit:   10,
+		})
 		if err != nil {
 			return err
 		}
@@ -324,7 +334,11 @@ func TestStore_Deployments(t *testing.T) {
 			return err
 		}
 
-		deployments, err := tx.ListDeploymentsByNode(ctx, config.NodeID)
+		deployments, err := tx.ListDeploymentsByNode(ctx, queries.ListDeploymentsByNodeParams{
+			NodeID:  config.NodeID,
+			AfterID: 0,
+			Limit:   10,
+		})
 		if err != nil {
 			return err
 		}
@@ -486,8 +500,8 @@ func TestStore_ConfigVersionUniqueness(t *testing.T) {
 		})
 		return err
 	})
-	if err == nil {
-		t.Fatal("expected error when creating duplicate version_number, got nil")
+	if !sqlite.IsUniqueConstraintError(err) {
+		t.Fatalf("expected error when creating duplicate version_number, got %v", err)
 	}
 
 	// Create config version with different version_number - should succeed
@@ -505,7 +519,11 @@ func TestStore_ConfigVersionUniqueness(t *testing.T) {
 
 	// Verify we have 2 config versions with correct payloads
 	err = store.Read(ctx, func(tx *Tx) error {
-		configs, err := tx.ListConfigVersionsByNode(ctx, nodeID)
+		configs, err := tx.ListConfigVersionsByNode(ctx, queries.ListConfigVersionsByNodeParams{
+			NodeID:  nodeID,
+			AfterID: 0,
+			Limit:   10,
+		})
 		if err != nil {
 			return err
 		}
@@ -513,26 +531,21 @@ func TestStore_ConfigVersionUniqueness(t *testing.T) {
 			t.Errorf("expected 2 config versions, got %d", len(configs))
 		}
 
-		// Check payloads are stored correctly (ordered by version_number DESC)
-		if len(configs) == 2 {
-			// First should be v2.0.0 with FEEDFACE
-			if configs[0].VersionNumber == "v2.0.0" {
-				expected := []byte{0xFE, 0xED, 0xFA, 0xCE}
-				if !bytes.Equal(configs[0].Payload, expected) {
-					t.Errorf("v2.0.0 payload mismatch: expected %#v, got %#v", expected, configs[0].Payload)
-				}
-			}
-			// Second should be v1.0.0 with DEADBEEF
-			if configs[1].VersionNumber == "v1.0.0" {
-				expected := []byte{0xDE, 0xAD, 0xBE, 0xEF}
-				if !bytes.Equal(configs[1].Payload, expected) {
-					t.Errorf("v1.0.0 payload mismatch: expected %#v, got %#v", expected, configs[1].Payload)
-				}
-			}
+		// Check payloads are stored correctly (ordered by id ASC, so first created comes first)
+		expect := []queries.ConfigVersion{
+			{NodeID: nodeID, VersionNumber: "v1.0.0", Payload: []byte{0xDE, 0xAD, 0xBE, 0xEF}},
+			{NodeID: nodeID, VersionNumber: "v2.0.0", Payload: []byte{0xFE, 0xED, 0xFA, 0xCE}},
+		}
+		if diff := cmp.Diff(expect, configs, cmp.Comparer(configVersionsDataEqual)); diff != "" {
+			t.Errorf("config versions data mismatch (-want +got):\n%s", diff)
 		}
 		return nil
 	})
 	if err != nil {
 		t.Fatalf("failed to list config versions: %v", err)
 	}
+}
+
+func configVersionsDataEqual(a, b queries.ConfigVersion) bool {
+	return a.NodeID == b.NodeID && a.VersionNumber == b.VersionNumber && bytes.Equal(a.Payload, b.Payload)
 }

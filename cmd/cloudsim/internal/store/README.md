@@ -64,6 +64,7 @@ store/
 3. **Version Uniqueness**: Config version numbers are unique per node
 4. **Status Constraints**: Deployment status is validated at the database level
 5. **Automatic Timestamps**: Create times and finished times are managed automatically
+6. **Page Token Pagination**: All list queries use page token pagination (ordered by ID) instead of offset-based pagination
 
 ### Code Generation
 
@@ -134,10 +135,12 @@ err := store.Write(ctx, func(tx *Tx) error {
 
 See `queries/queries.sql` for all available queries. Key operations include:
 
-**Sites**: Create, Get, GetByName, List, Count, Update, Delete  
-**Nodes**: Create, Get, GetByHostname, List, ListBySite, Count, CountBySite, Update, Delete  
-**Config Versions**: Create, Get, GetByNodeAndVersion, List, ListByNode, GetLatestByNode, Count, CountByNode, Delete  
-**Deployments**: Create, Get, List, ListByConfigVersion, ListByStatus, Count, CountByStatus, UpdateStatus, Delete
+**Sites**: Create, Get, List (paginated), Count, Update, Delete  
+**Nodes**: Create, Get, List (paginated), ListBySite (paginated), Count, CountBySite, Update, Delete  
+**Config Versions**: Create, Get, List (paginated), ListByNode (paginated), Delete  
+**Deployments**: Create, Get, List (paginated), ListByConfigVersion (paginated), ListByNode (paginated), Count, UpdateStatus, Delete
+
+All List queries use page token pagination with `after_id` parameter and return results ordered by `id` in ascending order.
 
 ## Testing
 
@@ -169,6 +172,3 @@ The database uses SQLite with the following constraints:
 
 The SQLite database uses application ID `0x5C0502` to identify it as a cloudsim store.
 
-
-## TODO
-- Order by ID, no `LIMIT OFFSET` pagination, use page token instead

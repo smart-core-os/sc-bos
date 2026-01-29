@@ -10,12 +10,12 @@ SELECT *
 FROM sites
 WHERE id = :id;
 
-
 -- name: ListSites :many
 SELECT *
 FROM sites
-ORDER BY create_time DESC
-LIMIT :limit OFFSET :offset;
+WHERE id > :after_id
+ORDER BY id
+LIMIT :limit;
 
 -- name: CountSites :one
 SELECT COUNT(*) AS count
@@ -43,18 +43,19 @@ SELECT *
 FROM nodes
 WHERE id = :id;
 
-
 -- name: ListNodes :many
 SELECT *
 FROM nodes
-ORDER BY create_time DESC
-LIMIT :limit OFFSET :offset;
+WHERE id > :after_id
+ORDER BY id
+LIMIT :limit;
 
 -- name: ListNodesBySite :many
 SELECT *
 FROM nodes
-WHERE site_id = :site_id
-ORDER BY create_time DESC;
+WHERE site_id = :site_id AND id > :after_id
+ORDER BY id
+LIMIT :limit;
 
 -- name: CountNodes :one
 SELECT COUNT(*) AS count
@@ -91,15 +92,16 @@ WHERE id = :id;
 -- name: ListConfigVersions :many
 SELECT *
 FROM config_versions
-ORDER BY create_time DESC
-LIMIT :limit OFFSET :offset;
+WHERE id > :after_id
+ORDER BY id
+LIMIT :limit;
 
 -- name: ListConfigVersionsByNode :many
 SELECT *
 FROM config_versions
-WHERE node_id = :node_id
-ORDER BY version_number DESC;
-
+WHERE node_id = :node_id AND id > :after_id
+ORDER BY id
+LIMIT :limit;
 
 -- name: DeleteConfigVersion :execrows
 DELETE FROM config_versions
@@ -120,26 +122,28 @@ WHERE id = :id;
 -- name: ListDeployments :many
 SELECT *
 FROM deployments
-ORDER BY start_time DESC
-LIMIT :limit OFFSET :offset;
+WHERE id > :after_id
+ORDER BY id
+LIMIT :limit;
 
 -- name: ListDeploymentsByConfigVersion :many
 SELECT *
 FROM deployments
-WHERE config_version_id = :config_version_id
-ORDER BY start_time DESC;
+WHERE config_version_id = :config_version_id AND id > :after_id
+ORDER BY id
+LIMIT :limit;
 
 -- name: ListDeploymentsByNode :many
 SELECT d.*
 FROM deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
-WHERE cv.node_id = :node_id
-ORDER BY d.start_time DESC;
+WHERE cv.node_id = :node_id AND d.id > :after_id
+ORDER BY d.id
+LIMIT :limit;
 
 -- name: CountDeployments :one
 SELECT COUNT(*) AS count
 FROM deployments;
-
 
 -- name: UpdateDeploymentStatus :one
 UPDATE deployments

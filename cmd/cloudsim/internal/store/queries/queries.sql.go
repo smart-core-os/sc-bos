@@ -275,17 +275,18 @@ func (q *Queries) GetSite(ctx context.Context, id int64) (Site, error) {
 const listConfigVersions = `-- name: ListConfigVersions :many
 SELECT id, node_id, version_number, payload, create_time
 FROM config_versions
-ORDER BY create_time DESC
-LIMIT ?2 OFFSET ?1
+WHERE id > ?1
+ORDER BY id
+LIMIT ?2
 `
 
 type ListConfigVersionsParams struct {
-	Offset int64
-	Limit  int64
+	AfterID int64
+	Limit   int64
 }
 
 func (q *Queries) ListConfigVersions(ctx context.Context, arg ListConfigVersionsParams) ([]ConfigVersion, error) {
-	rows, err := q.db.QueryContext(ctx, listConfigVersions, arg.Offset, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, listConfigVersions, arg.AfterID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -316,12 +317,19 @@ func (q *Queries) ListConfigVersions(ctx context.Context, arg ListConfigVersions
 const listConfigVersionsByNode = `-- name: ListConfigVersionsByNode :many
 SELECT id, node_id, version_number, payload, create_time
 FROM config_versions
-WHERE node_id = ?1
-ORDER BY version_number DESC
+WHERE node_id = ?1 AND id > ?2
+ORDER BY id
+LIMIT ?3
 `
 
-func (q *Queries) ListConfigVersionsByNode(ctx context.Context, nodeID int64) ([]ConfigVersion, error) {
-	rows, err := q.db.QueryContext(ctx, listConfigVersionsByNode, nodeID)
+type ListConfigVersionsByNodeParams struct {
+	NodeID  int64
+	AfterID int64
+	Limit   int64
+}
+
+func (q *Queries) ListConfigVersionsByNode(ctx context.Context, arg ListConfigVersionsByNodeParams) ([]ConfigVersion, error) {
+	rows, err := q.db.QueryContext(ctx, listConfigVersionsByNode, arg.NodeID, arg.AfterID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -352,17 +360,18 @@ func (q *Queries) ListConfigVersionsByNode(ctx context.Context, nodeID int64) ([
 const listDeployments = `-- name: ListDeployments :many
 SELECT id, config_version_id, status, start_time, finished_time
 FROM deployments
-ORDER BY start_time DESC
-LIMIT ?2 OFFSET ?1
+WHERE id > ?1
+ORDER BY id
+LIMIT ?2
 `
 
 type ListDeploymentsParams struct {
-	Offset int64
-	Limit  int64
+	AfterID int64
+	Limit   int64
 }
 
 func (q *Queries) ListDeployments(ctx context.Context, arg ListDeploymentsParams) ([]Deployment, error) {
-	rows, err := q.db.QueryContext(ctx, listDeployments, arg.Offset, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, listDeployments, arg.AfterID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -393,12 +402,19 @@ func (q *Queries) ListDeployments(ctx context.Context, arg ListDeploymentsParams
 const listDeploymentsByConfigVersion = `-- name: ListDeploymentsByConfigVersion :many
 SELECT id, config_version_id, status, start_time, finished_time
 FROM deployments
-WHERE config_version_id = ?1
-ORDER BY start_time DESC
+WHERE config_version_id = ?1 AND id > ?2
+ORDER BY id
+LIMIT ?3
 `
 
-func (q *Queries) ListDeploymentsByConfigVersion(ctx context.Context, configVersionID int64) ([]Deployment, error) {
-	rows, err := q.db.QueryContext(ctx, listDeploymentsByConfigVersion, configVersionID)
+type ListDeploymentsByConfigVersionParams struct {
+	ConfigVersionID int64
+	AfterID         int64
+	Limit           int64
+}
+
+func (q *Queries) ListDeploymentsByConfigVersion(ctx context.Context, arg ListDeploymentsByConfigVersionParams) ([]Deployment, error) {
+	rows, err := q.db.QueryContext(ctx, listDeploymentsByConfigVersion, arg.ConfigVersionID, arg.AfterID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -430,12 +446,19 @@ const listDeploymentsByNode = `-- name: ListDeploymentsByNode :many
 SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time
 FROM deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
-WHERE cv.node_id = ?1
-ORDER BY d.start_time DESC
+WHERE cv.node_id = ?1 AND d.id > ?2
+ORDER BY d.id
+LIMIT ?3
 `
 
-func (q *Queries) ListDeploymentsByNode(ctx context.Context, nodeID int64) ([]Deployment, error) {
-	rows, err := q.db.QueryContext(ctx, listDeploymentsByNode, nodeID)
+type ListDeploymentsByNodeParams struct {
+	NodeID  int64
+	AfterID int64
+	Limit   int64
+}
+
+func (q *Queries) ListDeploymentsByNode(ctx context.Context, arg ListDeploymentsByNodeParams) ([]Deployment, error) {
+	rows, err := q.db.QueryContext(ctx, listDeploymentsByNode, arg.NodeID, arg.AfterID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -466,17 +489,18 @@ func (q *Queries) ListDeploymentsByNode(ctx context.Context, nodeID int64) ([]De
 const listNodes = `-- name: ListNodes :many
 SELECT id, hostname, site_id, create_time
 FROM nodes
-ORDER BY create_time DESC
-LIMIT ?2 OFFSET ?1
+WHERE id > ?1
+ORDER BY id
+LIMIT ?2
 `
 
 type ListNodesParams struct {
-	Offset int64
-	Limit  int64
+	AfterID int64
+	Limit   int64
 }
 
 func (q *Queries) ListNodes(ctx context.Context, arg ListNodesParams) ([]Node, error) {
-	rows, err := q.db.QueryContext(ctx, listNodes, arg.Offset, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, listNodes, arg.AfterID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -506,12 +530,19 @@ func (q *Queries) ListNodes(ctx context.Context, arg ListNodesParams) ([]Node, e
 const listNodesBySite = `-- name: ListNodesBySite :many
 SELECT id, hostname, site_id, create_time
 FROM nodes
-WHERE site_id = ?1
-ORDER BY create_time DESC
+WHERE site_id = ?1 AND id > ?2
+ORDER BY id
+LIMIT ?3
 `
 
-func (q *Queries) ListNodesBySite(ctx context.Context, siteID int64) ([]Node, error) {
-	rows, err := q.db.QueryContext(ctx, listNodesBySite, siteID)
+type ListNodesBySiteParams struct {
+	SiteID  int64
+	AfterID int64
+	Limit   int64
+}
+
+func (q *Queries) ListNodesBySite(ctx context.Context, arg ListNodesBySiteParams) ([]Node, error) {
+	rows, err := q.db.QueryContext(ctx, listNodesBySite, arg.SiteID, arg.AfterID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -541,17 +572,18 @@ func (q *Queries) ListNodesBySite(ctx context.Context, siteID int64) ([]Node, er
 const listSites = `-- name: ListSites :many
 SELECT id, name, create_time
 FROM sites
-ORDER BY create_time DESC
-LIMIT ?2 OFFSET ?1
+WHERE id > ?1
+ORDER BY id
+LIMIT ?2
 `
 
 type ListSitesParams struct {
-	Offset int64
-	Limit  int64
+	AfterID int64
+	Limit   int64
 }
 
 func (q *Queries) ListSites(ctx context.Context, arg ListSitesParams) ([]Site, error) {
-	rows, err := q.db.QueryContext(ctx, listSites, arg.Offset, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, listSites, arg.AfterID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
