@@ -9,31 +9,6 @@ import (
 	"context"
 )
 
-const countConfigVersions = `-- name: CountConfigVersions :one
-SELECT COUNT(*) AS count
-FROM config_versions
-`
-
-func (q *Queries) CountConfigVersions(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countConfigVersions)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const countConfigVersionsByNode = `-- name: CountConfigVersionsByNode :one
-SELECT COUNT(*) AS count
-FROM config_versions
-WHERE node_id = ?1
-`
-
-func (q *Queries) CountConfigVersionsByNode(ctx context.Context, nodeID int64) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countConfigVersionsByNode, nodeID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const countDeployments = `-- name: CountDeployments :one
 SELECT COUNT(*) AS count
 FROM deployments
@@ -41,19 +16,6 @@ FROM deployments
 
 func (q *Queries) CountDeployments(ctx context.Context) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countDeployments)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const countDeploymentsByStatus = `-- name: CountDeploymentsByStatus :one
-SELECT COUNT(*) AS count
-FROM deployments
-WHERE status = ?1
-`
-
-func (q *Queries) CountDeploymentsByStatus(ctx context.Context, status string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countDeploymentsByStatus, status)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -260,30 +222,6 @@ func (q *Queries) GetConfigVersion(ctx context.Context, id int64) (ConfigVersion
 	return i, err
 }
 
-const getConfigVersionByNodeAndVersion = `-- name: GetConfigVersionByNodeAndVersion :one
-SELECT id, node_id, version_number, payload, create_time
-FROM config_versions
-WHERE node_id = ?1 AND version_number = ?2
-`
-
-type GetConfigVersionByNodeAndVersionParams struct {
-	NodeID        int64
-	VersionNumber string
-}
-
-func (q *Queries) GetConfigVersionByNodeAndVersion(ctx context.Context, arg GetConfigVersionByNodeAndVersionParams) (ConfigVersion, error) {
-	row := q.db.QueryRowContext(ctx, getConfigVersionByNodeAndVersion, arg.NodeID, arg.VersionNumber)
-	var i ConfigVersion
-	err := row.Scan(
-		&i.ID,
-		&i.NodeID,
-		&i.VersionNumber,
-		&i.Payload,
-		&i.CreateTime,
-	)
-	return i, err
-}
-
 const getDeployment = `-- name: GetDeployment :one
 SELECT id, config_version_id, status, start_time, finished_time
 FROM deployments
@@ -299,27 +237,6 @@ func (q *Queries) GetDeployment(ctx context.Context, id int64) (Deployment, erro
 		&i.Status,
 		&i.StartTime,
 		&i.FinishedTime,
-	)
-	return i, err
-}
-
-const getLatestConfigVersionByNode = `-- name: GetLatestConfigVersionByNode :one
-SELECT id, node_id, version_number, payload, create_time
-FROM config_versions
-WHERE node_id = ?1
-ORDER BY version_number DESC
-LIMIT 1
-`
-
-func (q *Queries) GetLatestConfigVersionByNode(ctx context.Context, nodeID int64) (ConfigVersion, error) {
-	row := q.db.QueryRowContext(ctx, getLatestConfigVersionByNode, nodeID)
-	var i ConfigVersion
-	err := row.Scan(
-		&i.ID,
-		&i.NodeID,
-		&i.VersionNumber,
-		&i.Payload,
-		&i.CreateTime,
 	)
 	return i, err
 }
@@ -342,24 +259,6 @@ func (q *Queries) GetNode(ctx context.Context, id int64) (Node, error) {
 	return i, err
 }
 
-const getNodeByHostname = `-- name: GetNodeByHostname :one
-SELECT id, hostname, site_id, create_time
-FROM nodes
-WHERE hostname = ?1
-`
-
-func (q *Queries) GetNodeByHostname(ctx context.Context, hostname string) (Node, error) {
-	row := q.db.QueryRowContext(ctx, getNodeByHostname, hostname)
-	var i Node
-	err := row.Scan(
-		&i.ID,
-		&i.Hostname,
-		&i.SiteID,
-		&i.CreateTime,
-	)
-	return i, err
-}
-
 const getSite = `-- name: GetSite :one
 SELECT id, name, create_time
 FROM sites
@@ -368,19 +267,6 @@ WHERE id = ?1
 
 func (q *Queries) GetSite(ctx context.Context, id int64) (Site, error) {
 	row := q.db.QueryRowContext(ctx, getSite, id)
-	var i Site
-	err := row.Scan(&i.ID, &i.Name, &i.CreateTime)
-	return i, err
-}
-
-const getSiteByName = `-- name: GetSiteByName :one
-SELECT id, name, create_time
-FROM sites
-WHERE name = ?1
-`
-
-func (q *Queries) GetSiteByName(ctx context.Context, name string) (Site, error) {
-	row := q.db.QueryRowContext(ctx, getSiteByName, name)
 	var i Site
 	err := row.Scan(&i.ID, &i.Name, &i.CreateTime)
 	return i, err
@@ -540,22 +426,16 @@ func (q *Queries) ListDeploymentsByConfigVersion(ctx context.Context, configVers
 	return items, nil
 }
 
-const listDeploymentsByStatus = `-- name: ListDeploymentsByStatus :many
-SELECT id, config_version_id, status, start_time, finished_time
-FROM deployments
-WHERE status = ?1
-ORDER BY start_time DESC
-LIMIT ?3 OFFSET ?2
+const listDeploymentsByNode = `-- name: ListDeploymentsByNode :many
+SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time
+FROM deployments d
+JOIN config_versions cv ON d.config_version_id = cv.id
+WHERE cv.node_id = ?1
+ORDER BY d.start_time DESC
 `
 
-type ListDeploymentsByStatusParams struct {
-	Status string
-	Offset int64
-	Limit  int64
-}
-
-func (q *Queries) ListDeploymentsByStatus(ctx context.Context, arg ListDeploymentsByStatusParams) ([]Deployment, error) {
-	rows, err := q.db.QueryContext(ctx, listDeploymentsByStatus, arg.Status, arg.Offset, arg.Limit)
+func (q *Queries) ListDeploymentsByNode(ctx context.Context, nodeID int64) ([]Deployment, error) {
+	rows, err := q.db.QueryContext(ctx, listDeploymentsByNode, nodeID)
 	if err != nil {
 		return nil, err
 	}

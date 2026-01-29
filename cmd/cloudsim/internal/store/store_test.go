@@ -219,21 +219,6 @@ func TestStore_ConfigVersions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to list config versions: %v", err)
 	}
-
-	// Test getting latest config version
-	err = store.Read(ctx, func(tx *Tx) error {
-		config, err := tx.GetLatestConfigVersionByNode(ctx, nodeID)
-		if err != nil {
-			return err
-		}
-		if config.VersionNumber != "v1" {
-			t.Errorf("expected version number v1, got %s", config.VersionNumber)
-		}
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("failed to get latest config version: %v", err)
-	}
 }
 
 func TestStore_Deployments(t *testing.T) {
@@ -331,23 +316,28 @@ func TestStore_Deployments(t *testing.T) {
 		t.Fatalf("failed to update deployment status: %v", err)
 	}
 
-	// Test listing deployments by status
+	// Test listing deployments by node
 	err = store.Read(ctx, func(tx *Tx) error {
-		deployments, err := tx.ListDeploymentsByStatus(ctx, queries.ListDeploymentsByStatusParams{
-			Status: "COMPLETED",
-			Limit:  10,
-			Offset: 0,
-		})
+		// Get the node ID from the config version
+		config, err := tx.GetConfigVersion(ctx, configVersionID)
+		if err != nil {
+			return err
+		}
+
+		deployments, err := tx.ListDeploymentsByNode(ctx, config.NodeID)
 		if err != nil {
 			return err
 		}
 		if len(deployments) != 1 {
 			t.Errorf("expected 1 deployment, got %d", len(deployments))
 		}
+		if len(deployments) > 0 && deployments[0].Status != "COMPLETED" {
+			t.Errorf("expected status 'COMPLETED', got '%s'", deployments[0].Status)
+		}
 		return nil
 	})
 	if err != nil {
-		t.Fatalf("failed to list deployments by status: %v", err)
+		t.Fatalf("failed to list deployments by node: %v", err)
 	}
 }
 

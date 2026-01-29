@@ -10,10 +10,6 @@ SELECT *
 FROM sites
 WHERE id = :id;
 
--- name: GetSiteByName :one
-SELECT *
-FROM sites
-WHERE name = :name;
 
 -- name: ListSites :many
 SELECT *
@@ -47,10 +43,6 @@ SELECT *
 FROM nodes
 WHERE id = :id;
 
--- name: GetNodeByHostname :one
-SELECT *
-FROM nodes
-WHERE hostname = :hostname;
 
 -- name: ListNodes :many
 SELECT *
@@ -95,10 +87,6 @@ SELECT *
 FROM config_versions
 WHERE id = :id;
 
--- name: GetConfigVersionByNodeAndVersion :one
-SELECT *
-FROM config_versions
-WHERE node_id = :node_id AND version_number = :version_number;
 
 -- name: ListConfigVersions :many
 SELECT *
@@ -112,21 +100,6 @@ FROM config_versions
 WHERE node_id = :node_id
 ORDER BY version_number DESC;
 
--- name: GetLatestConfigVersionByNode :one
-SELECT *
-FROM config_versions
-WHERE node_id = :node_id
-ORDER BY version_number DESC
-LIMIT 1;
-
--- name: CountConfigVersions :one
-SELECT COUNT(*) AS count
-FROM config_versions;
-
--- name: CountConfigVersionsByNode :one
-SELECT COUNT(*) AS count
-FROM config_versions
-WHERE node_id = :node_id;
 
 -- name: DeleteConfigVersion :execrows
 DELETE FROM config_versions
@@ -156,21 +129,17 @@ FROM deployments
 WHERE config_version_id = :config_version_id
 ORDER BY start_time DESC;
 
--- name: ListDeploymentsByStatus :many
-SELECT *
-FROM deployments
-WHERE status = :status
-ORDER BY start_time DESC
-LIMIT :limit OFFSET :offset;
+-- name: ListDeploymentsByNode :many
+SELECT d.*
+FROM deployments d
+JOIN config_versions cv ON d.config_version_id = cv.id
+WHERE cv.node_id = :node_id
+ORDER BY d.start_time DESC;
 
 -- name: CountDeployments :one
 SELECT COUNT(*) AS count
 FROM deployments;
 
--- name: CountDeploymentsByStatus :one
-SELECT COUNT(*) AS count
-FROM deployments
-WHERE status = :status;
 
 -- name: UpdateDeploymentStatus :one
 UPDATE deployments
