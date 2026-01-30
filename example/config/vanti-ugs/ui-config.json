@@ -1121,7 +1121,7 @@
                   "id": "MeterDensity",
                   "component": "builtin:meter/MeterDensityCard",
                   "props": {
-                    "title": "Building Energy Density",
+                    "title": "Building Power Density",
                     "name": "van/uk/brum/ugs/zones/building",
                     "occupancy": "van/uk/brum/ugs/zones/building",
                     "period": "day",

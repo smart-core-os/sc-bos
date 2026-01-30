@@ -27,7 +27,7 @@ import {computed, onMounted, onUnmounted, ref, toRef, watch} from 'vue';
 const props = defineProps({
   title: {
     type: String,
-    default: 'Meter Density'
+    default: 'Power Density'
   },
   name: {
     type: String, // name of the meter device
@@ -45,11 +45,11 @@ const props = defineProps({
     default: null
   },
   thresholds: {
-    type: Array, // {density: number, str: string} ordered by density (kW per day) in ascending order
+    type: Array, // {density: number, str: string, icon: string} ordered by density (kW per day) in ascending order
     default: () => [
       {density: 0.3, str: 'Excellent', icon: 'mdi-leaf'},
       {density: 0.7, str: 'Acceptable', icon: 'mdi-check-circle-outline'},
-      {density: 1.5, str: 'Needs Attention', icon: 'mdi-alert-circle-outline'},
+      {density: 1.5, str: 'Poor', icon: 'mdi-alert-circle-outline'},
       {density: Infinity, str: 'Inefficient', icon: 'mdi-fire-alert'},
     ]
   },
