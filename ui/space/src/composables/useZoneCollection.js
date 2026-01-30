@@ -41,11 +41,12 @@ export default function() {
   /**
    *
    * @param {Partial<ListServicesRequest.AsObject>} baseRequest
+   * @return {number} the number of zones fetched. Anything other than null means there may be more to fetch
    */
   async function listNextZones(baseRequest) {
     if (cursor.value.nameIndex >= allNamesToCheck.value.length) {
       // We have already checked all names
-      return;
+      return null;
     }
 
     const name = allNamesToCheck.value[cursor.value.nameIndex];
@@ -60,7 +61,7 @@ export default function() {
     try {
       const res = await listServices(req);
       if (v0 !== namesVersion.value) {
-        return; // ignore this response
+        return 0; // ignore this response
       }
 
       // setup the next page to be loaded
@@ -75,9 +76,11 @@ export default function() {
         zoneCollection.response.servicesList.push(...res.servicesList);
         zoneCollection.response.totalSize += res.totalSize;
       }
+
+      return res.servicesList?.length || 0;
     } catch (e) {
       if (v0 !== namesVersion.value) {
-        return; // ignore this response
+        return 0; // ignore this response
       }
       zoneCollection.error = e;
     } finally {
@@ -85,6 +88,12 @@ export default function() {
         zoneCollection.loading = false;
       }
     }
+    // if we get this far, we need to try another name if one is available
+    cursor.value.nameIndex++;
+    if (cursor.value.nameIndex >= allNamesToCheck.value.length) {
+      return null;
+    }
+    return 0;
   }
 
   const getNextZones = (pageSize) => {
@@ -94,9 +103,8 @@ export default function() {
     const baseRequest = {
       pageSize: pageSize
     };
-    return listNextZones(baseRequest).catch(() => {
-      // handled by tracker
-    });
+    // errors are handled by tracker
+    return listNextZones(baseRequest);
   };
 
   watch(allNamesToCheck, () => {
@@ -107,7 +115,9 @@ export default function() {
     if (!loadPage || names.length === 0) {
       return;
     }
-    getNextZones(100);
+    getNextZones(100).catch(() => {
+      // handled by tracker
+    });
   }, {deep: true, immediate: true});
 
 
