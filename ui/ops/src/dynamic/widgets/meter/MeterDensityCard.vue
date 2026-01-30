@@ -3,19 +3,25 @@
     <v-toolbar class="chart-header" color="transparent" v-if="props.title !== ''">
       <v-toolbar-title class="text-h4">{{ props.title }}</v-toolbar-title>
     </v-toolbar>
-    <div class="display text-h2 align-self-center">
+    <div class="display bold text-h5 align-self-center">
       <div class="value">{{ densityDisplayStr }}</div>
       <div class="unit">{{ _unit }}</div>
+    </div>
+    <div class="display bold pa-8 text-h5 align-self-center">
+      <div class="value">{{ densityThreshold.str }}</div>
+      <div class="icon"><v-icon>{{ densityThreshold.icon }}</v-icon></div>
     </div>
   </v-card>
 </template>
 <script setup>
+import {useDateScale} from '@/components/charts/date.js';
 import {usePeriod} from '@/composables/time.js';
+import {useMaxPeopleCount} from '@/dynamic/widgets/occupancy/occupancy.js';
 import {useMeterReadingAt} from '@/traits/meter/meter.js';
-import {usePullOccupancy} from '@/traits/occupancy/occupancy.js';
 import {format} from '@/util/number.js';
 import {isNull} from '@/util/types.js';
-import {computed, onMounted, onUnmounted, reactive, ref, toRef, watch} from 'vue';
+import {useLocalProp} from '@/util/vue.js';
+import {computed, onMounted, onUnmounted, ref, toRef, watch} from 'vue';
 
 
 const props = defineProps({
@@ -38,6 +44,15 @@ const props = defineProps({
     ],
     default: null
   },
+  thresholds: {
+    type: Array, // {density: number, str: string} ordered by density (kW per day) in ascending order
+    default: () => [
+      {density: 0.3, str: 'Excellent', icon: 'mdi-leaf'},
+      {density: 0.7, str: 'Acceptable', icon: 'mdi-check-circle-outline'},
+      {density: 1.5, str: 'Needs Attention', icon: 'mdi-alert-circle-outline'},
+      {density: Infinity, str: 'Inefficient', icon: 'mdi-fire-alert'},
+    ]
+  },
   period: {
     type: [String],
     default: 'day' // 'minute', 'hour', 'day', 'month', 'year'
@@ -53,10 +68,32 @@ const props = defineProps({
 });
 
 const _unit = computed(() => `${props.meterUnit} per person`);
-const _occupancy = reactive(usePullOccupancy(props.occupancy));
+
+// Average occupancy over the period
+const _occupancy = computed(() => {
+  const _offset = useLocalProp(toRef(props, 'offset'));
+  const {start, end} = usePeriod(toRef(props, 'period'), toRef(props, 'period'), _offset);
+  const {pastEdges} = useDateScale(start, end, _offset);
+
+  const maxPeopleCounts = useMaxPeopleCount(toRef(props, 'occupancy'), pastEdges);
+
+  return maxPeopleCounts.value.reduce((acc, el) => {
+    acc += el.y;
+    return acc;
+  }, 0) / (maxPeopleCounts.value.length || 1);
+});
 const density = ref(0);
 const densityDisplayStr = computed(() => {
   return format(density.value);
+});
+
+const densityThreshold = computed(() => {
+  for (const threshold of props.thresholds) {
+    if (density.value <= threshold.density) {
+      return threshold;
+    }
+  }
+  return {str: '', icon: 'mdi-check-circle-outline'};
 });
 
 
@@ -76,12 +113,12 @@ const computeDensity = () => {
 
     const net = netConsumed && netGenerated ? netConsumed - netGenerated : netConsumed;
 
-    if (!net || isNaN(net)) return;
+    if (net === null || net === undefined || isNaN(net)) return;
 
-    const lookback = end.value.getTime() - start.value.getTime();
+    const lookback = end.value - start.value;
     // lookback is in ms, so scale back down to hours
     const hours = lookback / 1000 / 60 / 60;
-    density.value = net / hours / (_occupancy.value.peopleCount === 0 ? 1 : _occupancy.value.peopleCount);
+    density.value = net / hours / (_occupancy.value === 0 ? 1 : _occupancy.value);
   });
 };
 
@@ -100,7 +137,6 @@ onUnmounted(() => {
 
 <style scoped>
 .display {
-  font-weight: lighter;
   text-align: center;
 }
 
