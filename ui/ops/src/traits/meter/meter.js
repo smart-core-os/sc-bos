@@ -142,9 +142,11 @@ export function useMeterReading(value, support = null) {
  */
 export function useMeterReadingAt(name, t, interpolate = false) {
   const usageAtT = ref(/** @type {null|number} */ null);
+  const producedAtT = ref(/** @type {null|number} */ null);
   const readingAtT = computed(() => {
     if (usageAtT.value === null) return null;
-    return /** @type {MeterReading.AsObject} */ {usage: usageAtT.value};
+    if (producedAtT.value === null) return /** @type {MeterReading.AsObject} */ {usage: usageAtT.value};
+    return /** @type {MeterReading.AsObject} */ {usage: usageAtT.value, produced: producedAtT.value};
   });
 
   const fetching = ref(/** @type {null | {t: Date, cancel: () => void}} */ null);
@@ -184,9 +186,10 @@ export function useMeterReadingAt(name, t, interpolate = false) {
           getReadingOnOrAfter(name, t)
         ]);
       }
-      
+
       if (cancelled()) return;
-      usageAtT.value = interpolateUsage(before, after, t);
+      usageAtT.value = interpolateReading(before, after, t);
+      producedAtT.value = interpolateReading(before, after, t, 'produced');
     } catch (e) {
       if (!cancelled()) {
         console.warn('Failed to get meter', name, 'reading at', t, e.message ?? e);
@@ -280,24 +283,25 @@ async function getReadingOnOrAfter(name, t) {
 
 
 /**
- * Returns the estimated meter usage at `at` between the two known readings.
+ * Returns the estimated meter reading using field, at `at`, between the two known readings.
  *
  * @param {MeterReadingRecord.AsObject | undefined} a
  * @param {MeterReadingRecord.AsObject | undefined} b
  * @param {Date} at
+ * @param {string} field
  * @return {number | null}
  */
-function interpolateUsage(a, b, at) {
+function interpolateReading(a, b, at, field = 'usage') {
   if (a && b) {
     // meters only decrease if they are reset, if they are reset use the later reading
-    if (a.meterReading.usage > b.meterReading.usage) return b.meterReading.usage;
+    if (a.meterReading[field] > b.meterReading[field]) return b.meterReading[field];
     const dt = (at.getTime() - timestampToDate(a.recordTime)) /
         (timestampToDate(b.recordTime) - timestampToDate(a.recordTime));
-    return (dt * (b.meterReading.usage - a.meterReading.usage)) + a.meterReading.usage;
+    return (dt * (b.meterReading[field] - a.meterReading[field])) + a.meterReading[field];
   } else if (a) {
-    return a.meterReading.usage;
+    return a.meterReading[field];
   } else if (b) {
-    return b.meterReading.usage
+    return b.meterReading[field];
   } else {
     return null;
   }
