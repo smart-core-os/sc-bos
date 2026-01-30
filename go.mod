@@ -30,7 +30,7 @@ require (
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 	github.com/smart-core-os/gobacnet v0.0.0-20251215143300-eec746ea1612
 	github.com/smart-core-os/sc-api/go v1.0.0-beta.57
-	github.com/smart-core-os/sc-golang v0.0.0-20251215140252-6a1608bb57fc
+	github.com/smart-core-os/sc-golang v0.0.0-20260130090423-c04e84554314
 	github.com/stretchr/testify v1.11.1
 	github.com/timshannon/bolthold v0.0.0-20210913165410-232392fc8a6a
 	go.etcd.io/bbolt v1.4.3
