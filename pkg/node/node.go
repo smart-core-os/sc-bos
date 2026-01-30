@@ -10,14 +10,14 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
+	"github.com/smart-core-os/sc-bos/internal/router"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/node/alltraits"
+	"github.com/smart-core-os/sc-bos/pkg/node/internal/metadatadevices"
+	"github.com/smart-core-os/sc-bos/pkg/node/internal/parentdevices"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/internal/node/nodeopts"
-	"github.com/vanti-dev/sc-bos/internal/router"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/devicespb"
-	"github.com/vanti-dev/sc-bos/pkg/node/alltraits"
-	"github.com/vanti-dev/sc-bos/pkg/node/internal/metadatadevices"
-	"github.com/vanti-dev/sc-bos/pkg/node/internal/parentdevices"
 )
 
 // Node represents a smart core node.
@@ -57,12 +57,15 @@ func New(name string, opts ...Option) *Node {
 	if cfg.Store == nil {
 		cfg.Store = devicespb.NewCollection(resource.WithIDInterceptor(mapID))
 	}
+	if cfg.Router == nil {
+		cfg.Router = router.New(router.WithKeyInterceptor(func(key string) (mappedKey string, err error) {
+			return mapID(key), nil
+		}))
+	}
 
 	node := &Node{
-		name: name,
-		router: router.New(router.WithKeyInterceptor(func(key string) (mappedKey string, err error) {
-			return mapID(key), nil
-		})),
+		name:    name,
+		router:  cfg.Router,
 		devices: cfg.Store,
 		mlLists: make(map[string]*metadataList),
 		Logger:  zap.NewNop(),

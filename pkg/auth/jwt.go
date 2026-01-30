@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/vanti-dev/sc-bos/pkg/util/slices"
+	"github.com/smart-core-os/sc-bos/pkg/util/slices"
 )
 
 type JWTScopes []string

@@ -8,23 +8,24 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/vanti-dev/gobacnet"
-	"github.com/vanti-dev/gobacnet/property"
-	bactypes "github.com/vanti-dev/gobacnet/types"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/known"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/rpc"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
+	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/gobacnet/property"
+	bactypes "github.com/smart-core-os/gobacnet/types"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/rpc"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/node"
 )
 
 // Device adapts a bacnet Device into a Smart Core traits and other apis.
-func Device(name string, client *gobacnet.Client, device bactypes.Device, known known.Context, statuses *statuspb.Map) node.SelfAnnouncer {
+func Device(name string, client *gobacnet.Client, device bactypes.Device, known known.Context, deviceHealth *gen_healthpb.FaultCheck, errFn errFn) node.SelfAnnouncer {
 	return &DeviceBacnetService{
-		name:     name,
-		client:   client,
-		device:   device,
-		known:    known,
-		statuses: statuses,
+		name:         name,
+		client:       client,
+		device:       device,
+		known:        known,
+		deviceHealth: deviceHealth,
+		errFn:        errFn,
 	}
 }
 
@@ -35,11 +36,13 @@ func Device(name string, client *gobacnet.Client, device bactypes.Device, known 
 type DeviceBacnetService struct {
 	rpc.UnimplementedBacnetDriverServiceServer
 
-	name     string
-	client   *gobacnet.Client
-	device   bactypes.Device
-	known    known.Context
-	statuses *statuspb.Map
+	name   string
+	client *gobacnet.Client
+	device bactypes.Device
+	known  known.Context
+
+	deviceHealth *gen_healthpb.FaultCheck
+	errFn        errFn
 }
 
 func (d *DeviceBacnetService) AnnounceSelf(a node.Announcer) node.Undo {
@@ -57,7 +60,7 @@ func (d *DeviceBacnetService) ReadProperty(ctx context.Context, request *rpc.Rea
 			Properties: []bactypes.Property{d.propertyFromProtoForRead(request.PropertyReference)},
 		},
 	})
-	d.handleErrorStatus("readProperty", err)
+	d.handleErrorStatus(ctx, "readProperty", err)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +98,7 @@ func (d *DeviceBacnetService) ReadPropertyMultiple(ctx context.Context, request 
 		bacReq.Objects = append(bacReq.Objects, obj)
 	}
 	readProperties, err := d.client.ReadMultiProperty(ctx, d.device, bacReq)
-	d.handleErrorStatus("readPropertyMultiple", err)
+	d.handleErrorStatus(ctx, "readPropertyMultiple", err)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +139,7 @@ func (d *DeviceBacnetService) WriteProperty(ctx context.Context, request *rpc.Wr
 		},
 	}
 	err = d.client.WriteProperty(ctx, d.device, data, uint(request.WriteValue.Priority))
-	d.handleErrorStatus("writeProperty", err)
+	d.handleErrorStatus(ctx, "writeProperty", err)
 	return &rpc.WritePropertyResponse{}, err
 }
 
@@ -158,8 +161,8 @@ func (d *DeviceBacnetService) ListObjects(_ context.Context, _ *rpc.ListObjectsR
 	return response, nil
 }
 
-func (d *DeviceBacnetService) handleErrorStatus(request string, err error) {
-	updateRequestErrorStatus(d.statuses, d.name, request, err)
+func (d *DeviceBacnetService) handleErrorStatus(ctx context.Context, request string, err error) {
+	d.errFn(ctx, d.deviceHealth, d.name, request, err)
 }
 
 func (d *DeviceBacnetService) propertyFromProtoForRead(reference *rpc.PropertyReference) bactypes.Property {

@@ -8,16 +8,17 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/vanti-dev/sc-bos/pkg/app/stores"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/app/stores"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 type Services struct {
 	Logger          *zap.Logger
 	Node            *node.Node // for advertising devices
-	Devices         gen.DevicesApiClient
+	Devices         devicespb.DevicesApiClient
 	Database        *bolthold.Store
 	Stores          *stores.Stores
 	GRPCServices    grpc.ServiceRegistrar // for registering non-routed services
@@ -25,6 +26,7 @@ type Services struct {
 	ClientTLSConfig *tls.Config
 	Now             func() time.Time
 	Config          service.ConfigUpdater
+	Health          *healthpb.Checks
 }
 
 // Factory constructs new automation instances.

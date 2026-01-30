@@ -1,8 +1,8 @@
 package allzones
 
 import (
-	"github.com/vanti-dev/sc-bos/pkg/zone"
-	"github.com/vanti-dev/sc-bos/pkg/zone/area"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/pkg/zone/area"
 )
 
 // Factories returns a new map containing all known zone factories.

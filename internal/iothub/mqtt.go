@@ -8,7 +8,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
-	"github.com/vanti-dev/sc-bos/internal/iothub/auth"
+	"github.com/smart-core-os/sc-bos/internal/iothub/auth"
 )
 
 func MQTTClientOptions(hostName, deviceID, moduleID string, signer auth.Signer) (*mqtt.ClientOptions, error) {

@@ -5,9 +5,9 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait/modepb"
 	"github.com/smart-core-os/sc-golang/pkg/wrap"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
 )
 
 // mockMode returns a mock Mode device and automation.

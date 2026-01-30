@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 
-	"github.com/vanti-dev/gobacnet/types/objecttype"
+	"github.com/smart-core-os/gobacnet/types/objecttype"
 )
 
 func TestObjectRef_UnmarshalJSON(t *testing.T) {

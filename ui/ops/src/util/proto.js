@@ -13,3 +13,15 @@ export function convertProtoMap(arr) {
   }
   return dst;
 }
+
+/**
+ * Returns whether the property p is the populated proto oneof field of o.
+ *
+ * @param {T} o
+ * @param {keyof T} p
+ * @return {boolean}
+ * @template T
+ */
+export function hasOneOf(o, p) {
+  return o && typeof o[p] !== 'undefined';
+}

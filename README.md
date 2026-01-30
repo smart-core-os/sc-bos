@@ -111,12 +111,12 @@ import (
 	"context"
 	"os"
 
-	"github.com/vanti-dev/sc-bos/pkg/app"
-	"github.com/vanti-dev/sc-bos/pkg/app/sysconf"
-	"github.com/vanti-dev/sc-bos/pkg/auto/allautos"
-	"github.com/vanti-dev/sc-bos/pkg/driver/alldrivers"
-	"github.com/vanti-dev/sc-bos/pkg/system/allsystems"
-	"github.com/vanti-dev/sc-bos/pkg/zone/allzones"
+	"github.com/smart-core-os/sc-bos/pkg/app"
+	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
+	"github.com/smart-core-os/sc-bos/pkg/auto/allautos"
+	"github.com/smart-core-os/sc-bos/pkg/driver/alldrivers"
+	"github.com/smart-core-os/sc-bos/pkg/system/allsystems"
+	"github.com/smart-core-os/sc-bos/pkg/zone/allzones"
 )
 
 func main() {

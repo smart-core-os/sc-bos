@@ -2,7 +2,9 @@ import {closeResource, newResourceValue} from '@/api/resource.js';
 import {listDevices, pullDevices, pullDevicesMetadata} from '@/api/ui/devices.js';
 import useFilterCtx from '@/components/filter/filterCtx.js';
 import useCollection from '@/composables/collection.js';
+import {useExperiment} from '@/composables/experiments.js';
 import {watchResource} from '@/util/traits.js';
+import {Device} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_pb';
 import {computed, reactive, toRefs, toValue} from 'vue';
 
 /**
@@ -205,6 +207,8 @@ export function useDeviceFloorList() {
  * }}
  */
 export function useDeviceFilters(forcedFilters) {
+  const healthExperiment = useExperiment('health');
+
   const {value: md} = usePullDevicesMetadata([
     'metadata.location.floor',
     'metadata.location.zone',
@@ -260,6 +264,27 @@ export function useDeviceFilters(forcedFilters) {
       }
     }
 
+    if (healthExperiment.value) {
+      if (!Object.hasOwn(forced, 'health_checks.normality')) {
+        filters.push({
+          key: 'health_checks.normality',
+          icon: 'mdi-heart-pulse',
+          title: 'Health Status',
+          type: 'boolean',
+          valueToString(value) {
+            switch (value) {
+              case true:
+                return 'Healthy';
+              case false:
+                return 'Unhealthy';
+              default:
+                return 'All';
+            }
+          }
+        })
+      }
+    }
+
     return {filters, defaults};
   });
 
@@ -277,6 +302,18 @@ export function useDeviceFilters(forcedFilters) {
       case 'subsystem':
       case 'metadata.membership.subsystem':
         return {field: 'metadata.membership.subsystem', stringEqualFold: value === NO_SUBSYSTEM ? '' : value};
+      case 'health_checks.normality': {
+        const cond = {field: 'health_checks.normality'};
+        if (value) {
+          // all checks should be normal to be classed as healthy
+          cond.matcher = Device.Query.Condition.Matcher.ALL;
+          cond.stringEqual = 'NORMAL';
+        } else {
+          // any check should be abnormal to be classed as unhealthy
+          cond.stringIn = {stringsList: ['ABNORMAL', 'HIGH', 'LOW']}
+        }
+        return cond;
+      }
       default:
         return {field: field, stringEqualFold: value};
     }

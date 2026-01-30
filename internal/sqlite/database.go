@@ -16,6 +16,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -359,7 +360,13 @@ func buildFileURI(path string, writer bool, pragmas []pragma) string {
 		RawQuery: query.Encode(),
 	}
 
-	return uri.String()
+	uriString := uri.String()
+
+	if runtime.GOOS == "windows" {
+		uriString = strings.Replace(uriString, "file://", "file:", 1)
+	}
+
+	return uriString
 }
 
 func buildMemoryURI(name string, writer bool, pragmas []pragma) string {

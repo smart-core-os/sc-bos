@@ -11,8 +11,8 @@
     "lint:nofix": "eslint ."
   },
   "dependencies": {
-    "@smart-core-os/sc-api-grpc-web": "^1.0.0-beta.57",
-    "@vanti-dev/sc-bos-ui-gen": "^1.0.0-beta.21",
+    "@smart-core-os/sc-api-grpc-web": "^1.0.0-beta.60",
+    "@smart-core-os/sc-bos-ui-gen": "^1.0.0-beta.25",
     "date-fns": "^2.29.2",
     "debounce": "^1.2.1",
     "fast-deep-equal": "^3.1.3",

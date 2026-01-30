@@ -3,18 +3,20 @@ package sysconf
 
 import (
 	"os"
+	"time"
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/app/http"
-	"github.com/vanti-dev/sc-bos/pkg/app/stores"
-	"github.com/vanti-dev/sc-bos/pkg/auth/policy"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/block"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/system"
-	"github.com/vanti-dev/sc-bos/pkg/util/netutil"
-	"github.com/vanti-dev/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/pkg/app/http"
+	"github.com/smart-core-os/sc-bos/pkg/app/stores"
+	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
 // Load loads into dst any user supplied config from json files and CLI arguments. CLI arguments take precedence.
@@ -72,7 +74,11 @@ type Config struct {
 	CertConfig    *Certs                     `json:"certs,omitempty"`
 	Cors          http.CorsConfig            `json:"cors,omitempty"`
 
+	Devices *Devices `json:"devices,omitempty"`
+
 	DisablePprof bool `json:"disablePprof"` // don't register net/http/pprof handlers
+
+	Health *Health `json:"health,omitempty"`
 
 	Systems map[string]system.RawConfig `json:"systems,omitempty"`
 
@@ -85,6 +91,14 @@ type Config struct {
 	AutoFactories   map[string]auto.Factory   `json:"-"` // keyed by automation type
 	SystemFactories map[string]system.Factory `json:"-"` // keyed by system type
 	ZoneFactories   map[string]zone.Factory   `json:"-"` // keyed by zone type
+}
+
+// Devices configures the devices API server for functionality such as handling Download URLs.
+type Devices struct {
+	// DownloadHMACKeyFile is a path to a file that contains the HMAC key used to sign and verify download requests.
+	// This key can be shared securely between nodes in a SmartCore cohort to allow re-use of cryptographic signatures.
+	// If not specified, the app.Controller will use a HMAC key that is randomly generated on each startup.
+	DownloadHMACKeyFile string `json:"downloadHMACKeyFile,omitempty"`
 }
 
 // DriverConfigBlocks returns a map of driver type to a block list that describes the config for that driver.
@@ -152,8 +166,24 @@ const (
 	PolicyCheck PolicyMode = "check" // Check requests against the policy if the request has a token or client cert.
 )
 
+// Health configures the health check system.
+type Health struct {
+	TTL HealthTTL `json:"ttl,omitempty"` // how long to keep health check results
+}
+
+// HealthDBPath is the location of the SQLite database file used to store health check results.
+// Relative paths are relative to DataDir.
+const HealthDBPath = "health/checks.sqlite3"
+
+type HealthTTL struct {
+	MinCount *int                `json:"minCount,omitempty"` // defaults to 1, setting to 0 can disable seeding
+	MaxCount *int                `json:"maxCount,omitempty"` // defaults to no max count
+	MaxAge   *jsontypes.Duration `json:"maxAge,omitempty"`   // defaults to 1 week
+}
+
 func Default() Config {
 	logConf := zap.NewDevelopmentConfig()
+	one := 1
 	config := Config{
 		ConfigDirs:  []string{".conf"},
 		ConfigFiles: []string{"system.conf.json", "system.json"},
@@ -171,6 +201,13 @@ func Default() Config {
 			CorsOrigins: []string{"*"},
 		},
 		StaticHosting: []http.StaticHostingConfig{},
+
+		Health: &Health{
+			TTL: HealthTTL{
+				MinCount: &one,
+				MaxAge:   &jsontypes.Duration{Duration: 7 * 24 * time.Hour},
+			},
+		},
 
 		CertConfig: &Certs{
 			KeyFile:      "grpc.key.pem",

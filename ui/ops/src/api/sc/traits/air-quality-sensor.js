@@ -2,8 +2,8 @@ import {fieldMaskFromObject, setProperties, timestampToDate} from '@/api/convpb'
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setValue, trackAction} from '@/api/resource.js';
 import {periodFromObject} from '@/api/sc/types/period';
-import {AirQualitySensorHistoryPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/history_grpc_web_pb';
-import {ListAirQualityHistoryRequest} from '@vanti-dev/sc-bos-ui-gen/proto/history_pb';
+import {AirQualitySensorHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airqualitysensor/v1/air_quality_sensor_history_grpc_web_pb';
+import {ListAirQualityHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airqualitysensor/v1/air_quality_sensor_history_pb';
 import {AirQualitySensorApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/air_quality_sensor_grpc_web_pb';
 import {PullAirQualityRequest} from '@smart-core-os/sc-api-grpc-web/traits/air_quality_sensor_pb';
 

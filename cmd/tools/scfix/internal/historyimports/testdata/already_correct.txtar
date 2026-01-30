@@ -1,0 +1,24 @@
+This test verifies that files already using correct trait-specific history imports are not modified.
+The tool should recognize these are already correct and skip processing.
+expected_changes: 0
+
+-- input/ui/ops/test.js --
+import {ElectricHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/electric_history_grpc_web_pb';
+import {ListElectricDemandHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/electric_history_pb';
+
+/**
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/electric_history_pb').ElectricDemandRecord.AsObject} ElectricDemandRecord
+ */
+export function test() {
+  // implementation
+}
+-- output/ui/ops/test.js --
+import {ElectricHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/electric_history_grpc_web_pb';
+import {ListElectricDemandHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/electric_history_pb';
+
+/**
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/electric_history_pb').ElectricDemandRecord.AsObject} ElectricDemandRecord
+ */
+export function test() {
+  // implementation
+}

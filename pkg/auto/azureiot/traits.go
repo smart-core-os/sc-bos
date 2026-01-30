@@ -13,11 +13,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/chans"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/meter"
-	"github.com/vanti-dev/sc-bos/pkg/util/chans"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
 )
 
 // pullDevice calls pullTraits for each SCDeviceConfig.
@@ -228,34 +228,34 @@ func (a *Auto) pullBrightness(ctx context.Context, dst chan<- proto.Message, dev
 	return doPull(ctx, dst, pullFunc, pollFunc, reduce, delay)
 }
 
-// pullMeterReadings publishes device's meter readings changes (as *gen.PullMeterReadingsResponse) to dst,
+// pullMeterReadings publishes device's meter readings changes (as *meterpb.PullMeterReadingsResponse) to dst,
 // returning when ctx is done or a non-recoverable error occurs.
 func (a *Auto) pullMeterReadings(ctx context.Context, dst chan<- proto.Message, device SCDeviceConfig) error {
-	client, err := grpcClient(a, gen.NewMeterApiClient, device)
+	client, err := grpcClient(a, meterpb.NewMeterApiClient, device)
 	if err != nil {
 		return err
 	}
 
-	pullFunc := func(ctx context.Context, stream chan<- *gen.PullMeterReadingsResponse_Change) error {
-		ss, err := client.PullMeterReadings(ctx, &gen.PullMeterReadingsRequest{Name: device.Name})
+	pullFunc := func(ctx context.Context, stream chan<- *meterpb.PullMeterReadingsResponse_Change) error {
+		ss, err := client.PullMeterReadings(ctx, &meterpb.PullMeterReadingsRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return pullStreamChanges[*gen.PullMeterReadingsResponse](ctx, stream, ss)
+		return pullStreamChanges[*meterpb.PullMeterReadingsResponse](ctx, stream, ss)
 	}
-	pollFunc := func(ctx context.Context, stream chan<- *gen.PullMeterReadingsResponse_Change) error {
-		msg, err := client.GetMeterReading(ctx, &gen.GetMeterReadingRequest{Name: device.Name})
+	pollFunc := func(ctx context.Context, stream chan<- *meterpb.PullMeterReadingsResponse_Change) error {
+		msg, err := client.GetMeterReading(ctx, &meterpb.GetMeterReadingRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return chans.SendContext(ctx, stream, &gen.PullMeterReadingsResponse_Change{
+		return chans.SendContext(ctx, stream, &meterpb.PullMeterReadingsResponse_Change{
 			Name:         device.Name,
 			ChangeTime:   timestamppb.Now(),
 			MeterReading: msg,
 		})
 	}
-	reduce := func(cs []*gen.PullMeterReadingsResponse_Change) proto.Message {
-		return &gen.PullMeterReadingsResponse{Changes: cs}
+	reduce := func(cs []*meterpb.PullMeterReadingsResponse_Change) proto.Message {
+		return &meterpb.PullMeterReadingsResponse{Changes: cs}
 	}
 	delay := device.PollInterval.Or(DefaultPollInterval)
 

@@ -12,18 +12,19 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 
+	"github.com/smart-core-os/sc-bos/pkg/app/appconf"
+	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
+	"github.com/smart-core-os/sc-bos/pkg/driver/alldrivers"
+	mockcfg "github.com/smart-core-os/sc-bos/pkg/driver/mock/config"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
+	airqualitycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality/config"
+	occupancycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/pkg/app/appconf"
-	"github.com/vanti-dev/sc-bos/pkg/app/sysconf"
-	"github.com/vanti-dev/sc-bos/pkg/driver/alldrivers"
-	mockcfg "github.com/vanti-dev/sc-bos/pkg/driver/mock/config"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/soundsensorpb"
-	"github.com/vanti-dev/sc-bos/pkg/history/pgxstore"
-	airqualitycfg "github.com/vanti-dev/sc-bos/pkg/zone/feature/airquality/config"
-	occupancycfg "github.com/vanti-dev/sc-bos/pkg/zone/feature/occupancy/config"
 
-	"github.com/vanti-dev/sc-bos/pkg/zone/allzones"
-	meterscfg "github.com/vanti-dev/sc-bos/pkg/zone/feature/meter/config"
+	"github.com/smart-core-os/sc-bos/pkg/zone/allzones"
+	meterscfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config"
 )
 
 var (
@@ -88,7 +89,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		for _, d := range sd.airQuality {
-			err = SeedAirTemperature(ctx, db, d, lookBack)
+			err = SeedAirQuality(ctx, db, d, lookBack)
 			if err != nil {
 				panic(err)
 			}
@@ -141,6 +142,18 @@ func main() {
 				panic(err)
 			}
 			fmt.Printf("seeded occupancy device %s\n", d)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for _, d := range sd.allocation {
+			err = SeedAllocation(ctx, db, d, lookBack)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("seeded allocation device %s\n", d)
 		}
 	}()
 
@@ -214,6 +227,7 @@ type seedDevices struct {
 	airTemperature []string
 	soundSensor    []string
 	occupancy      []string
+	allocation     []string
 }
 
 func (sd *seedDevices) normalise() {
@@ -253,6 +267,8 @@ func parseDeviceConfig(sd *seedDevices, appConf *appconf.Config) error {
 					sd.airTemperature = append(sd.airTemperature, device.Name)
 				case soundsensorpb.TraitName:
 					sd.soundSensor = append(sd.soundSensor, device.Name)
+				case allocationpb.TraitName:
+					sd.allocation = append(sd.allocation, device.Name)
 				}
 			}
 		}

@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 
-	"github.com/vanti-dev/sc-bos/pkg/history"
+	"github.com/smart-core-os/sc-bos/pkg/history"
 )
 
 func TestDatabase_Insert(t *testing.T) {

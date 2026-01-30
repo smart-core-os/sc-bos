@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package smartcore.bos.soundsensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/info.proto";
+
+// Trait for devices that measure sound/noise levels.
+service SoundSensorApi {
+  rpc GetSoundLevel(GetSoundLevelRequest) returns (SoundLevel) {}
+  rpc PullSoundLevel(PullSoundLevelRequest) returns (stream PullSoundLevelResponse) {}
+}
+
+service SoundSensorInfo {
+  rpc DescribeSoundLevel(DescribeSoundLevelRequest) returns (SoundLevelSupport) {}
+}
+
+// SoundLevel represents a sound/noise level.
+message SoundLevel {
+  //  Optional. The measured sound/noise level, usually in dBA or dB, use Info service to check the unit.
+  //  Omitted means unknown sound/noise level.
+  optional float sound_pressure_level = 1;
+}
+
+message SoundLevelSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.types.ResourceSupport resource_support = 1;
+  // The unit associated with the sound_pressure_level value.
+  // Known units:
+  //   - dBA - decibels SPL, A-weighted
+  //   - dB - decibels SPL, unweighted
+  string sound_level_unit = 2;
+}
+
+message GetSoundLevelRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullSoundLevelRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullSoundLevelResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    SoundLevel sound_level = 3;
+  }
+}
+
+message DescribeSoundLevelRequest {
+  string name = 1;
+}
+
+

@@ -10,9 +10,9 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
 )
 
 func AirTemperatureAuto(model *airtemperaturepb.Model) *service.Service[string] {

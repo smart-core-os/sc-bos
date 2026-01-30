@@ -21,7 +21,7 @@ fi
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 GIT_VERSION=$(git describe --tags --always)
-BASE_IMAGE="localhost/vanti-dev-sc-bos:demo-ugs-base"
+BASE_IMAGE="localhost/smart-core-os-sc-bos:demo-ugs-base"
 PLATFORMS="linux/amd64,linux/arm64"
 
 cd $REPO_ROOT
@@ -60,5 +60,5 @@ $containerCmd build \
 
 TAG_VERSION=$(basename $GIT_VERSION)
 echo "Push the images to the container registry using:"
-echo "$containerCmd manifest push --all demo-ugs-sc-bos docker://ghcr.io/vanti-dev/sc-bos/demo-ugs-sc-bos:$TAG_VERSION"
-echo "$containerCmd manifest push --all demo-ugs-seed-db docker://ghcr.io/vanti-dev/sc-bos/demo-ugs-seed-db:$TAG_VERSION"
+echo "$containerCmd manifest push --all demo-ugs-sc-bos docker://ghcr.io/smart-core-os/sc-bos/demo-ugs-sc-bos:$TAG_VERSION"
+echo "$containerCmd manifest push --all demo-ugs-seed-db docker://ghcr.io/smart-core-os/sc-bos/demo-ugs-seed-db:$TAG_VERSION"

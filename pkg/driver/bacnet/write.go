@@ -11,13 +11,14 @@ import (
 
 	"go.uber.org/multierr"
 
+	"github.com/smart-core-os/sc-bos/pkg/app/appconf"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	historyconfig "github.com/smart-core-os/sc-bos/pkg/auto/history/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/pkg/app/appconf"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	historyconfig "github.com/vanti-dev/sc-bos/pkg/auto/history/config"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/config"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
 )
 
 // ConfigForFloor is basically just a wrapper around the root config with support for automations and traits
@@ -104,6 +105,12 @@ func writeToDir(dir string, floor string, scPrefix string, bacnetCfg *ConfigForF
 		Name: path.Join(scPrefix, fmt.Sprintf("floor-%s", floor), "drivers", subsystem),
 		Type: DriverName,
 	}
+
+	driverCfg.SystemHealth = config.Health{
+		OccupantImpact:  config.OccupantImpact(healthpb.HealthCheck_NO_OCCUPANT_IMPACT),
+		EquipmentImpact: config.EquipmentImpact(healthpb.HealthCheck_NO_EQUIPMENT_IMPACT),
+	}
+
 	driverCfg.Devices = bacnetCfg.Devices
 
 	for _, t := range bacnetCfg.Traits {

@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 )
 
 // selectAlertSQL selects fields in the order expected by scanAlert.
@@ -21,7 +21,7 @@ type QueryRower interface {
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }
 
-func insertAlert(ctx context.Context, q QueryRower, alert *gen.Alert) (*gen.Alert, error) {
+func insertAlert(ctx context.Context, q QueryRower, alert *alertpb.Alert) (*alertpb.Alert, error) {
 	var createTime time.Time
 	err := q.QueryRow(ctx,
 		`INSERT INTO alerts (description, severity, floor, zone, subsystem, source, federation) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, create_time`,
@@ -60,7 +60,7 @@ func updateAlert(ctx context.Context, ex Execer, id string, fields []string, val
 	return nil
 }
 
-func readAlertById(ctx context.Context, tx QueryRower, id string, dst *gen.Alert) error {
+func readAlertById(ctx context.Context, tx QueryRower, id string, dst *alertpb.Alert) error {
 	row := tx.QueryRow(ctx,
 		selectAlertSQL+` WHERE id=$1`,
 		id,
@@ -68,7 +68,7 @@ func readAlertById(ctx context.Context, tx QueryRower, id string, dst *gen.Alert
 	return scanAlert(row, dst)
 }
 
-func scanAlert(scanner pgx.Row, dst *gen.Alert) error {
+func scanAlert(scanner pgx.Row, dst *alertpb.Alert) error {
 	var createTime, resolveTime, ackTime *time.Time
 	var floor, zone, subsystem, source, federation *string
 	var ackAuthorId, ackAuthorName, ackAuthorEmail *string
@@ -98,13 +98,13 @@ func scanAlert(scanner pgx.Row, dst *gen.Alert) error {
 		dst.ResolveTime = timestamppb.New(*resolveTime)
 	}
 	if ackTime != nil {
-		dst.Acknowledgement = &gen.Alert_Acknowledgement{
+		dst.Acknowledgement = &alertpb.Alert_Acknowledgement{
 			AcknowledgeTime: timestamppb.New(*ackTime),
 		}
 
 		// ack author details, we assume there is an author only if the author has any information
 		var hasAuthor bool
-		author := &gen.Alert_Acknowledgement_Author{}
+		author := &alertpb.Alert_Acknowledgement_Author{}
 		if ackAuthorId != nil {
 			hasAuthor = true
 			author.Id = *ackAuthorId

@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	bactypes "github.com/vanti-dev/gobacnet/types"
+	bactypes "github.com/smart-core-os/gobacnet/types"
 )
 
 //go:embed testdata

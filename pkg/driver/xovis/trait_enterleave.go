@@ -10,28 +10,30 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
-	"github.com/vanti-dev/sc-bos/pkg/task"
 )
 
 type enterLeaveServer struct {
 	traits.UnimplementedEnterLeaveSensorApiServer
-	client      *Client
+	client      *client
 	logicID     int
 	multiSensor bool
 	bus         *minibus.Bus[PushData]
 
-	pollInit sync.Once
-	poll     *task.Intermittent
-	polls    *minibus.Bus[LiveLogicResponse]
+	faultCheck *healthpb.FaultCheck
+	pollInit   sync.Once
+	poll       *task.Intermittent
+	polls      *minibus.Bus[LiveLogicResponse]
 
 	EnterLeaveTotal *resource.Value
 }
 
 func (e *enterLeaveServer) GetEnterLeaveEvent(ctx context.Context, request *traits.GetEnterLeaveEventRequest) (*traits.EnterLeaveEvent, error) {
-	res, err := GetLiveLogic(e.client, e.multiSensor, e.logicID)
+	res, err := getLiveLogic(ctx, e.client, e.multiSensor, e.logicID, e.faultCheck)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
@@ -57,12 +59,12 @@ func (e *enterLeaveServer) GetEnterLeaveEvent(ctx context.Context, request *trai
 }
 
 func (e *enterLeaveServer) ResetEnterLeaveTotals(ctx context.Context, request *traits.ResetEnterLeaveTotalsRequest) (*traits.ResetEnterLeaveTotalsResponse, error) {
-	return nil, ResetLiveLogic(e.client, e.multiSensor, e.logicID)
+	return nil, resetLiveLogic(ctx, e.client, e.multiSensor, e.logicID, e.faultCheck)
 }
 
 func (e *enterLeaveServer) PullEnterLeaveEvents(request *traits.PullEnterLeaveEventsRequest, server traits.EnterLeaveSensorApi_PullEnterLeaveEventsServer) error {
 	// get the initial value of the logics so we can compare later
-	res, err := GetLiveLogic(e.client, e.multiSensor, e.logicID)
+	res, err := getLiveLogic(server.Context(), e.client, e.multiSensor, e.logicID, e.faultCheck)
 	if err != nil {
 		return status.Error(codes.Unavailable, err.Error())
 	}
@@ -223,7 +225,7 @@ func (e *enterLeaveServer) doPollInit() {
 	e.pollInit.Do(func() {
 		e.polls = &minibus.Bus[LiveLogicResponse]{}
 		e.poll = task.Poll(func(ctx context.Context) {
-			res, err := GetLiveLogic(e.client, e.multiSensor, e.logicID)
+			res, err := getLiveLogic(ctx, e.client, e.multiSensor, e.logicID, e.faultCheck)
 			if err != nil {
 				// todo: log error
 				return

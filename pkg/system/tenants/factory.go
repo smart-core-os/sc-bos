@@ -8,14 +8,14 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/internal/util/pgxutil"
-	"github.com/vanti-dev/sc-bos/pkg/app/stores"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/system"
-	"github.com/vanti-dev/sc-bos/pkg/system/tenants/config"
-	"github.com/vanti-dev/sc-bos/pkg/system/tenants/pgxtenants"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
+	"github.com/smart-core-os/sc-bos/pkg/app/stores"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/tenantpb"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	"github.com/smart-core-os/sc-bos/pkg/system/tenants/config"
+	"github.com/smart-core-os/sc-bos/pkg/system/tenants/pgxtenants"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 var Factory = factory{}
@@ -71,7 +71,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 			return err
 		}
 
-		srv, err = node.RegistryConnService(gen.TenantApi_ServiceDesc, conn)
+		srv, err = node.RegistryConnService(tenantpb.TenantApi_ServiceDesc, conn)
 		if err != nil {
 			return fmt.Errorf("can't create proxied TenantApi service: %w", err)
 		}
@@ -92,7 +92,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 			return fmt.Errorf("init: %w", err)
 		}
 
-		srv, err = node.RegistryService(gen.TenantApi_ServiceDesc, server)
+		srv, err = node.RegistryService(tenantpb.TenantApi_ServiceDesc, server)
 		if err != nil {
 			return fmt.Errorf("can't create local TenantApi service: %w", err)
 		}

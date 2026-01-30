@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 
-	"github.com/vanti-dev/sc-bos/internal/util/pki"
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
 )
 
 func TestServeHTTPS(t *testing.T) {

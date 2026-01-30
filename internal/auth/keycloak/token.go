@@ -8,11 +8,11 @@ import (
 
 	"github.com/go-jose/go-jose/v4/jwt"
 
-	jose_utils "github.com/vanti-dev/sc-bos/internal/util/jose"
-	"github.com/vanti-dev/sc-bos/pkg/auth"
-	"github.com/vanti-dev/sc-bos/pkg/auth/jwks"
-	"github.com/vanti-dev/sc-bos/pkg/auth/oidc"
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
+	jose_utils "github.com/smart-core-os/sc-bos/internal/util/jose"
+	"github.com/smart-core-os/sc-bos/pkg/auth"
+	"github.com/smart-core-os/sc-bos/pkg/auth/jwks"
+	"github.com/smart-core-os/sc-bos/pkg/auth/oidc"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
 )
 
 // accessTokenPayload describes the claims present in a token issued by a Keycloak Authorization Server.

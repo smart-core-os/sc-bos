@@ -10,11 +10,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/util/page"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/devicespb"
-	"github.com/vanti-dev/sc-bos/pkg/util/page"
 )
 
 // Server implements the ParentApi where children are devices in a devicespb.Collection.
@@ -26,7 +26,7 @@ type Server struct {
 
 // Collection contains a list of devices.
 type Collection interface {
-	ListDevices(opts ...resource.ReadOption) []*gen.Device
+	ListDevices(opts ...resource.ReadOption) []*gen_devicespb.Device
 	PullDevices(ctx context.Context, opts ...resource.ReadOption) <-chan devicespb.DevicesChange
 }
 
@@ -41,7 +41,7 @@ func (s *Server) ListChildren(_ context.Context, request *traits.ListChildrenReq
 	if err := s.validateRequest(request); err != nil {
 		return nil, err
 	}
-	devices, totalSize, nextPageToken, err := page.List(request, (*gen.Device).GetName, func() []*gen.Device {
+	devices, totalSize, nextPageToken, err := page.List(request, (*gen_devicespb.Device).GetName, func() []*gen_devicespb.Device {
 		return s.devices.ListDevices(resource.WithInclude(s.deviceIncludeFunc))
 	})
 	if err != nil {
@@ -90,7 +90,7 @@ func (s *Server) deviceIncludeFunc(id string, item proto.Message) bool {
 	if id == s.parentName {
 		return false
 	}
-	deviceItem, ok := item.(*gen.Device)
+	deviceItem, ok := item.(*gen_devicespb.Device)
 	if !ok {
 		return false
 	}
@@ -105,7 +105,7 @@ func (s *Server) deviceIncludeFunc(id string, item proto.Message) bool {
 	return true
 }
 
-func deviceToChild(d *gen.Device) *traits.Child {
+func deviceToChild(d *gen_devicespb.Device) *traits.Child {
 	c := &traits.Child{Name: d.Name}
 	for _, t := range d.GetMetadata().GetTraits() {
 		c.Traits = append(c.Traits, &traits.Trait{Name: t.Name})

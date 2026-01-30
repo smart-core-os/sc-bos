@@ -5,12 +5,12 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/serviceticketpb"
 )
 
 type ModelServer struct {
-	gen.UnimplementedServiceTicketApiServer
-	gen.UnimplementedServiceTicketInfoServer
+	serviceticketpb.UnimplementedServiceTicketApiServer
+	serviceticketpb.UnimplementedServiceTicketInfoServer
 	model *Model
 }
 
@@ -19,21 +19,21 @@ func NewModelServer(model *Model) *ModelServer {
 }
 
 func (m *ModelServer) Register(server *grpc.Server) {
-	gen.RegisterServiceTicketApiServer(server, m)
+	serviceticketpb.RegisterServiceTicketApiServer(server, m)
 }
 
 func (m *ModelServer) Unwrap() any {
 	return m.model
 }
 
-func (m *ModelServer) CreateTicket(_ context.Context, req *gen.CreateTicketRequest) (*gen.Ticket, error) {
+func (m *ModelServer) CreateTicket(_ context.Context, req *serviceticketpb.CreateTicketRequest) (*serviceticketpb.Ticket, error) {
 	return m.model.addTicket(req.Ticket), nil
 }
 
-func (m *ModelServer) UpdateTicket(_ context.Context, req *gen.UpdateTicketRequest) (*gen.Ticket, error) {
+func (m *ModelServer) UpdateTicket(_ context.Context, req *serviceticketpb.UpdateTicketRequest) (*serviceticketpb.Ticket, error) {
 	return m.model.updateTicket(req.Ticket)
 }
 
-func (m *ModelServer) DescribeTicket(context.Context, *gen.DescribeTicketRequest) (*gen.TicketSupport, error) {
+func (m *ModelServer) DescribeTicket(context.Context, *serviceticketpb.DescribeTicketRequest) (*serviceticketpb.TicketSupport, error) {
 	return m.model.support, nil
 }

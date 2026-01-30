@@ -7,8 +7,8 @@ import (
 	"golang.org/x/exp/rand"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
 )
 
 func AirQualitySensorAuto(model *airqualitysensorpb.Model) *service.Service[string] {

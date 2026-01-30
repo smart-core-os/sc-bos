@@ -5,7 +5,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 )
 
 func Test_pointsToPointSet_sanitisesNaNAndInf(t *testing.T) {

@@ -3,12 +3,11 @@ package main
 import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
 	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
-
-	"github.com/vanti-dev/sc-bos/pkg/node"
 )
 
 func announceOccupancy(root node.Announcer, name string, val int32) error {

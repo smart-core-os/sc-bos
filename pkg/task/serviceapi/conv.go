@@ -6,16 +6,16 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
-func recordToProto(r *service.Record) *gen.Service {
+func recordToProto(r *service.Record) *servicespb.Service {
 	return stateToProto(r.Id, r.Kind, r.Service.State())
 }
 
-func stateToProto(id, kind string, state service.State) *gen.Service {
-	return &gen.Service{
+func stateToProto(id, kind string, state service.State) *servicespb.Service {
+	return &servicespb.Service{
 		Id:   id,
 		Type: kind,
 
@@ -38,7 +38,7 @@ func stateToProto(id, kind string, state service.State) *gen.Service {
 	}
 }
 
-func protoToState(s *gen.Service) (id, kind string, state service.State) {
+func protoToState(s *servicespb.Service) (id, kind string, state service.State) {
 	id = s.Id
 	kind = s.Type
 	state = service.State{
@@ -56,8 +56,8 @@ func protoToState(s *gen.Service) (id, kind string, state service.State) {
 	return
 }
 
-func stateToPullServiceResponse(name, id, kind string, state service.State) *gen.PullServiceResponse {
-	return &gen.PullServiceResponse{Changes: []*gen.PullServiceResponse_Change{
+func stateToPullServiceResponse(name, id, kind string, state service.State) *servicespb.PullServiceResponse {
+	return &servicespb.PullServiceResponse{Changes: []*servicespb.PullServiceResponse_Change{
 		{
 			Name:       name,
 			ChangeTime: timestamppb.Now(),

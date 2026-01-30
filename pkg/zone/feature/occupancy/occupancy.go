@@ -2,16 +2,17 @@ package occupancy
 
 import (
 	"context"
+	"sync"
 
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-	"github.com/vanti-dev/sc-bos/pkg/zone"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/occupancy/config"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -22,7 +23,7 @@ var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
 		clients:   services.Node,
 		logger:    services.Logger,
 	}
-	f.Service = service.New(service.MonoApply(f.applyConfig))
+	f.Service = service.New(service.MonoApply(f.applyConfig), service.WithParser(config.ParseConfig))
 	return f
 })
 
@@ -53,6 +54,21 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 				names:  cfg.EnterLeaveOccupancySensors,
 				logger: logger,
 			}
+
+			if cfg.EnterLeaveOccupancySensorSLA != nil {
+				names := make(map[string]struct{})
+
+				for _, name := range cfg.EnterLeaveOccupancySensorSLA.CantFail {
+					names[name] = struct{}{}
+				}
+
+				elServer.sla = &sla{
+					cantFail:                       names,
+					percentageOfAcceptableFailures: cfg.EnterLeaveOccupancySensorSLA.PercentageOfAcceptableFailures,
+					errs:                           &sync.Map{},
+				}
+			}
+
 			group.clients = append(group.clients, occupancysensorpb.WrapApi(elServer))
 		}
 

@@ -4,7 +4,7 @@
     <working_directory value="$PROJECT_DIR$" />
     <parameters value="--listen-grpc localhost:50302 --listen-https localhost:50312 --policy-mode off --sysconf pkg/system/gateway/internal/test/testdata/ac2/system.conf.json --appconf pkg/system/gateway/internal/test/testdata/ac2/app.conf.json --data .data/proxy/ac2" />
     <kind value="PACKAGE" />
-    <package value="github.com/vanti-dev/sc-bos/pkg/system/gateway/internal/test/ac/cmd" />
+    <package value="github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/test/ac/cmd" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/pkg/system/proxy/internal/test/ac/cmd/cmd.go" />
     <method v="2" />

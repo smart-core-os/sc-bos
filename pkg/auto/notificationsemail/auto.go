@@ -14,11 +14,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/auto/notificationsemail/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/task"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/notificationsemail/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 const AutoName = "notificationsemail"
@@ -55,10 +55,10 @@ func prevMonth(t time.Time, n time.Month) time.Month {
 
 // getAlertsInLastMonth gets the alerts that have happened in the previous month (not the last 30 days)
 // this automation is intended to be run on the 1st of the month
-func (a *autoImpl) getAlertsInLastMonth(ctx context.Context, alertClient gen.AlertApiClient, name string, t time.Time) []*gen.Alert {
-	var lastMonth []*gen.Alert
+func (a *autoImpl) getAlertsInLastMonth(ctx context.Context, alertClient alertpb.AlertApiClient, name string, t time.Time) []*alertpb.Alert {
+	var lastMonth []*alertpb.Alert
 
-	listAlerts := gen.ListAlertsRequest{
+	listAlerts := alertpb.ListAlertsRequest{
 		Name: name,
 	}
 
@@ -73,7 +73,7 @@ func (a *autoImpl) getAlertsInLastMonth(ctx context.Context, alertClient gen.Ale
 	// this is not great, if there are a lot of alerts then this could take a while
 	// the alerts/notification system is going to be overhauled, so until that is done we can just do this
 	for res.NextPageToken != "" {
-		listAlerts = gen.ListAlertsRequest{
+		listAlerts = alertpb.ListAlertsRequest{
 			Name:      name,
 			PageToken: res.NextPageToken,
 		}
@@ -100,15 +100,15 @@ func (a *autoImpl) getAlertsInLastMonth(ctx context.Context, alertClient gen.Ale
 // createNotificationsFile creates a CSV file which lists notifications
 //
 //goland:noinspection GoUnhandledErrorResult
-func (a *autoImpl) createNotificationsFile(alerts *[]*gen.Alert) []byte {
+func (a *autoImpl) createNotificationsFile(alerts *[]*alertpb.Alert) []byte {
 	buf := bytes.NewBuffer(nil)
 	fmt.Fprintf(buf, "Notifications\n")
 
 	// group by floors->zone so we have a map[map][Alert]
-	byZone := make(map[string]map[string][]*gen.Alert)
+	byZone := make(map[string]map[string][]*alertpb.Alert)
 	for _, a := range *alerts {
 		if _, ok := byZone[a.Floor]; !ok {
-			byZone[a.Floor] = make(map[string][]*gen.Alert)
+			byZone[a.Floor] = make(map[string][]*alertpb.Alert)
 		}
 
 		byZone[a.Floor][a.Zone] = append(byZone[a.Floor][a.Zone], a)
@@ -164,7 +164,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	logger := a.Logger
 	logger = logger.With(zap.String("snmp.addr", cfg.Destination.Addr()))
 
-	alertClient := gen.NewAlertApiClient(a.Node.ClientConn())
+	alertClient := alertpb.NewAlertApiClient(a.Node.ClientConn())
 
 	sendTime := cfg.Destination.SendTime
 	now := cfg.Now

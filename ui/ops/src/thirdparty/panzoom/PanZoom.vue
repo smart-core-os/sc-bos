@@ -11,7 +11,7 @@
 
 <script>
 // Locally installed panzoom-package (see the ui folder - panzoom-package)
-import panzoom from '@vanti-dev/sc-bos-panzoom-package';
+import panzoom from '@smart-core-os/sc-bos-panzoom-package';
 
 // names of events we support
 const names = ['start', 'change', 'zoom', 'end', 'pan', 'reset'];

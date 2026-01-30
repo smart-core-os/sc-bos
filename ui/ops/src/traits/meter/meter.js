@@ -7,11 +7,11 @@ import {isNullOrUndef} from '@/util/types.js';
 import {computed, effectScope, onScopeDispose, reactive, ref, toRefs, toValue, watch} from 'vue';
 
 /**
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/meter_pb').MeterReading} MeterReading
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/meter_pb').MeterReadingSupport} MeterReadingSupport
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/meter_pb').PullMeterReadingsRequest} PullMeterReadingsRequest
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/meter_pb').PullMeterReadingsResponse} PullMeterReadingsResponse
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/meter_pb').DescribeMeterReadingRequest} DescribeMeterReadingRequest
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').MeterReading} MeterReading
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').MeterReadingSupport} MeterReadingSupport
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').PullMeterReadingsRequest} PullMeterReadingsRequest
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').PullMeterReadingsResponse} PullMeterReadingsResponse
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').DescribeMeterReadingRequest} DescribeMeterReadingRequest
  * @typedef {import('vue').ComputedRef} ComputedRef
  * @typedef {import('vue').Ref} Ref
  * @typedef {import('vue').ToRefs} ToRefs
@@ -192,7 +192,7 @@ export function useMeterReadingAt(name, t, interpolate = false) {
       producedAtT.value = interpolateReading(before, after, t, 'produced');
     } catch (e) {
       if (!cancelled()) {
-        console.warn('Failed to get meter reading at', t, e.message ?? e);
+        console.warn('Failed to get meter', name, 'reading at', t, e.message ?? e);
       }
     } finally {
       if (!cancelled()) {

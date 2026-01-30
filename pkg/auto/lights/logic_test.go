@@ -13,10 +13,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-
-	"github.com/vanti-dev/sc-bos/pkg/auto/lights/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 func Test_processState(t *testing.T) {
@@ -189,10 +188,10 @@ func Test_processState(t *testing.T) {
 		readState.Config.Lights = []string{"light01"}
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 
-		readState.Buttons["toggleButton01"] = &gen.ButtonState{
-			State:             gen.ButtonState_UNPRESSED,
+		readState.Buttons["toggleButton01"] = &buttonpb.ButtonState{
+			State:             buttonpb.ButtonState_UNPRESSED,
 			StateChangeTime:   timestamppb.New(now),
-			MostRecentGesture: &gen.ButtonState_Gesture{Kind: gen.ButtonState_Gesture_CLICK},
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
 		writeState.Brightness["light01"] = Value[*traits.Brightness]{
@@ -229,10 +228,10 @@ func Test_processState(t *testing.T) {
 		readState.Config.Lights = []string{"light01", "light02"}
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 
-		readState.Buttons["toggleButton01"] = &gen.ButtonState{
-			State:             gen.ButtonState_UNPRESSED,
+		readState.Buttons["toggleButton01"] = &buttonpb.ButtonState{
+			State:             buttonpb.ButtonState_UNPRESSED,
 			StateChangeTime:   timestamppb.New(now),
-			MostRecentGesture: &gen.ButtonState_Gesture{Kind: gen.ButtonState_Gesture_CLICK},
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
 		writeState.Brightness["light01"] = Value[*traits.Brightness]{
@@ -275,10 +274,10 @@ func Test_processState(t *testing.T) {
 		readState.Config.Lights = []string{"light01"}
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 
-		readState.Buttons["toggleButton01"] = &gen.ButtonState{
-			State:             gen.ButtonState_UNPRESSED,
+		readState.Buttons["toggleButton01"] = &buttonpb.ButtonState{
+			State:             buttonpb.ButtonState_UNPRESSED,
 			StateChangeTime:   timestamppb.New(now),
-			MostRecentGesture: &gen.ButtonState_Gesture{Kind: gen.ButtonState_Gesture_CLICK},
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
 		writeState.Brightness["light01"] = Value[*traits.Brightness]{
@@ -314,10 +313,10 @@ func Test_processState(t *testing.T) {
 		readState.Config.ToggleButtons = []string{"toggleButton01"}
 		readState.Config.Lights = []string{"light01"}
 
-		readState.Buttons["toggleButton01"] = &gen.ButtonState{
-			State:             gen.ButtonState_PRESSED,
+		readState.Buttons["toggleButton01"] = &buttonpb.ButtonState{
+			State:             buttonpb.ButtonState_PRESSED,
 			StateChangeTime:   timestamppb.New(now),
-			MostRecentGesture: &gen.ButtonState_Gesture{Kind: gen.ButtonState_Gesture_CLICK},
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
 		writeState.Brightness["light01"] = Value[*traits.Brightness]{
@@ -346,10 +345,10 @@ func Test_processState(t *testing.T) {
 		readState.Config.ToggleButtons = []string{"toggleButton01"}
 		readState.Config.Lights = []string{"light01"}
 
-		readState.Buttons["toggleButton01"] = &gen.ButtonState{
-			State:             gen.ButtonState_UNPRESSED,
+		readState.Buttons["toggleButton01"] = &buttonpb.ButtonState{
+			State:             buttonpb.ButtonState_UNPRESSED,
 			StateChangeTime:   timestamppb.New(now),
-			MostRecentGesture: &gen.ButtonState_Gesture{Kind: gen.ButtonState_Gesture_CLICK},
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
 		writeState.Brightness["light01"] = Value[*traits.Brightness]{
@@ -378,10 +377,10 @@ func Test_processState(t *testing.T) {
 		readState.Config.ToggleButtons = []string{"toggleButton01"}
 		readState.Config.Lights = []string{"light01"}
 
-		readState.Buttons["toggleButton01"] = &gen.ButtonState{
-			State:             gen.ButtonState_UNPRESSED,
+		readState.Buttons["toggleButton01"] = &buttonpb.ButtonState{
+			State:             buttonpb.ButtonState_UNPRESSED,
 			StateChangeTime:   timestamppb.New(now.Add(-time.Minute)),
-			MostRecentGesture: &gen.ButtonState_Gesture{Kind: gen.ButtonState_Gesture_CLICK},
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
 		writeState.Brightness["light01"] = Value[*traits.Brightness]{
@@ -411,10 +410,10 @@ func Test_processState(t *testing.T) {
 		readState.Config.Lights = []string{"light01"}
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 
-		readState.Buttons["onButton01"] = &gen.ButtonState{
-			State:             gen.ButtonState_UNPRESSED,
+		readState.Buttons["onButton01"] = &buttonpb.ButtonState{
+			State:             buttonpb.ButtonState_UNPRESSED,
 			StateChangeTime:   timestamppb.New(now),
-			MostRecentGesture: &gen.ButtonState_Gesture{Kind: gen.ButtonState_Gesture_CLICK},
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
 		writeState.Brightness["light01"] = Value[*traits.Brightness]{
@@ -451,10 +450,10 @@ func Test_processState(t *testing.T) {
 		readState.Config.Lights = []string{"light01"}
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 
-		readState.Buttons["onButton01"] = &gen.ButtonState{
-			State:             gen.ButtonState_UNPRESSED,
+		readState.Buttons["onButton01"] = &buttonpb.ButtonState{
+			State:             buttonpb.ButtonState_UNPRESSED,
 			StateChangeTime:   timestamppb.New(now.Add(-time.Minute)),
-			MostRecentGesture: &gen.ButtonState_Gesture{Kind: gen.ButtonState_Gesture_CLICK},
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
 		writeState.Brightness["light01"] = Value[*traits.Brightness]{
@@ -491,10 +490,10 @@ func Test_processState(t *testing.T) {
 		readState.Config.Lights = []string{"light01"}
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 
-		readState.Buttons["onButton01"] = &gen.ButtonState{
-			State:             gen.ButtonState_UNPRESSED,
+		readState.Buttons["onButton01"] = &buttonpb.ButtonState{
+			State:             buttonpb.ButtonState_UNPRESSED,
 			StateChangeTime:   timestamppb.New(now),
-			MostRecentGesture: &gen.ButtonState_Gesture{Kind: gen.ButtonState_Gesture_CLICK},
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
 		writeState.Brightness["light01"] = Value[*traits.Brightness]{
@@ -529,10 +528,10 @@ func Test_processState(t *testing.T) {
 		readState.Config.Lights = []string{"light01"}
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 
-		readState.Buttons["offButton01"] = &gen.ButtonState{
-			State:             gen.ButtonState_UNPRESSED,
+		readState.Buttons["offButton01"] = &buttonpb.ButtonState{
+			State:             buttonpb.ButtonState_UNPRESSED,
 			StateChangeTime:   timestamppb.New(now),
-			MostRecentGesture: &gen.ButtonState_Gesture{Kind: gen.ButtonState_Gesture_CLICK},
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
 		writeState.Brightness["light01"] = Value[*traits.Brightness]{
@@ -563,10 +562,10 @@ func Test_processState(t *testing.T) {
 		readState.Config.Lights = []string{"light01"}
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 
-		readState.Buttons["offButton01"] = &gen.ButtonState{
-			State:             gen.ButtonState_UNPRESSED,
+		readState.Buttons["offButton01"] = &buttonpb.ButtonState{
+			State:             buttonpb.ButtonState_UNPRESSED,
 			StateChangeTime:   timestamppb.New(now),
-			MostRecentGesture: &gen.ButtonState_Gesture{Kind: gen.ButtonState_Gesture_CLICK},
+			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
 		writeState.Brightness["light01"] = Value[*traits.Brightness]{
@@ -830,13 +829,13 @@ func Test_processState(t *testing.T) {
 		}
 		readState.Config.ToggleButtons = []string{"button01"}
 		readState.Config.Lights = []string{"light01"}
-		readState.Buttons = map[string]*gen.ButtonState{
+		readState.Buttons = map[string]*buttonpb.ButtonState{
 			"button01": {
-				State:           gen.ButtonState_UNPRESSED,
+				State:           buttonpb.ButtonState_UNPRESSED,
 				StateChangeTime: timestamppb.New(now),
-				MostRecentGesture: &gen.ButtonState_Gesture{
+				MostRecentGesture: &buttonpb.ButtonState_Gesture{
 					Id:        "foo",
-					Kind:      gen.ButtonState_Gesture_CLICK,
+					Kind:      buttonpb.ButtonState_Gesture_CLICK,
 					StartTime: timestamppb.New(now),
 					EndTime:   timestamppb.New(now),
 				},
@@ -903,13 +902,13 @@ func Test_processState(t *testing.T) {
 		}
 		readState.Config.ToggleButtons = []string{"button01"}
 		readState.Config.Lights = []string{"light01"}
-		readState.Buttons = map[string]*gen.ButtonState{
+		readState.Buttons = map[string]*buttonpb.ButtonState{
 			"button01": {
-				State:           gen.ButtonState_UNPRESSED,
+				State:           buttonpb.ButtonState_UNPRESSED,
 				StateChangeTime: timestamppb.New(now),
-				MostRecentGesture: &gen.ButtonState_Gesture{
+				MostRecentGesture: &buttonpb.ButtonState_Gesture{
 					Id:        "foo",
-					Kind:      gen.ButtonState_Gesture_CLICK,
+					Kind:      buttonpb.ButtonState_Gesture_CLICK,
 					StartTime: timestamppb.New(now),
 					EndTime:   timestamppb.New(now),
 				},

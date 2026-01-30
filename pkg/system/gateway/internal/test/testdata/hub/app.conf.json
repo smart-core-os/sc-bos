@@ -3,5 +3,15 @@
     {"type": "mock", "name": "hub/mock", "devices": [
       {"name": "hub/dev1", "traits": [{"name": "smartcore.traits.OnOff"}]}
     ]}
+  ],
+  "automation": [
+    {
+      "name": "hub/dev1/health", "type": "healthbounds",
+      "devices": [{"field": "name", "stringIn": {"strings": ["hub/dev1"]}}],
+      "source": {"trait": "smartcore.traits.OnOff", "value": "state"},
+      "check": {
+        "bounds": {"normalValue": {"stringValue": "ON"}}
+      }
+    }
   ]
 }

@@ -12,14 +12,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/auto/exporthttp/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/config"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 var (
-	// strict:compile
 	_ Job = (*OccupancyJob)(nil)
 	_ Job = (*TemperatureJob)(nil)
 	_ Job = (*EnergyJob)(nil)
@@ -36,9 +35,9 @@ const boltKeyTemplate = "%s_%s_%s"
 
 const defaultTimeout = time.Second * 5
 
-// Job represents an exporthttp automation task that executes Do to send a POST request
+// Job represents an exporthttp automation task that executes Do using a sender function
 type Job interface {
-	GetName() string
+	GetLogger() *zap.Logger
 
 	GetNextExecution() <-chan time.Time
 	SetPreviousExecution(t time.Time)
@@ -48,50 +47,30 @@ type Job interface {
 
 type sender func(ctx context.Context, url string, body []byte) error
 
-// Mulpx for multiple Job easy chan fan-in
-type Mulpx struct {
-	C     chan Job
-	group *errgroup.Group
-}
-
-func (m *Mulpx) WaitForDone() {
-	// no errors are returned from any of the group.Go() calls
-	_ = m.group.Wait()
-	close(m.C)
-}
-
-// Multiplex receives multiple jobs and fans all the jobs into a single chan
-func Multiplex(ctx context.Context, jobs ...Job) *Mulpx {
-	group, ctx := errgroup.WithContext(ctx)
-
-	out := &Mulpx{
-		C:     make(chan Job, len(jobs)),
-		group: group,
-	}
+// ExecuteAll receives multiple jobs and executes all of them in an errgroup concurrently
+func ExecuteAll(ctx context.Context, sender sender, jobs ...Job) error {
+	group := &errgroup.Group{}
 
 	for _, job := range jobs {
 		j := job
 
-		out.group.Go(func() error {
-			// Since cron schedules often occur at a minimum of every minute,
-			// we add a throttle to avoid a hot loop if jobs take a while to execute.
-			throttle := time.NewTicker(time.Minute)
-			defer throttle.Stop()
-
+		group.Go(func() error {
 			for {
 				select {
 				case <-j.GetNextExecution():
-					out.C <- j
+					if err := j.Do(ctx, sender); err != nil {
+						j.GetLogger().Warn("failed to run", zap.Error(err))
+						continue
+					}
+					j.SetPreviousExecution(time.Now())
 				case <-ctx.Done():
 					return ctx.Err()
 				}
-
-				<-throttle.C // throttle to avoid a hot loop if jobs take a while to execute
 			}
 		})
 	}
 
-	return out
+	return group.Wait()
 }
 
 func shouldExecuteImmediately(schedule *jsontypes.Schedule, now, previous time.Time) bool {
@@ -108,7 +87,6 @@ func shouldExecuteImmediately(schedule *jsontypes.Schedule, now, previous time.T
 	return now.Sub(previous) >= interval // now is at least one interval after the previous execution
 }
 
-// BaseJob shared fields
 type BaseJob struct {
 	Url               string
 	Schedule          *jsontypes.Schedule
@@ -122,8 +100,8 @@ type BaseJob struct {
 	Logger            *zap.Logger
 }
 
-func (b *BaseJob) GetName() string {
-	return b.Name
+func (b *BaseJob) GetLogger() *zap.Logger {
+	return b.Logger
 }
 
 func (b *BaseJob) GetNextExecution() <-chan time.Time {
@@ -149,7 +127,7 @@ func (b *BaseJob) SetPreviousExecution(t time.Time) {
 	}
 }
 
-func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, logger *zap.Logger, node *node.Node) []Job {
+func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, node *node.Node, logger *zap.Logger) []Job {
 	var jobs []Job
 
 	if cfg.Sources.Occupancy != nil && len(cfg.Sources.Occupancy.Sensors) > 0 {
@@ -162,7 +140,7 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, lo
 				AutoName: autoName,
 				Name:     "occupancy",
 				ScName:   scName,
-				Logger:   logger,
+				Logger:   logger.With(zap.String("job", "occupancy")),
 				Timeout:  cfg.Sources.Occupancy.Timeout,
 			},
 			Sensors: cfg.Sources.Occupancy.Sensors,
@@ -182,7 +160,7 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, lo
 				AutoName: autoName,
 				ScName:   scName,
 				Name:     "temperature",
-				Logger:   logger,
+				Logger:   logger.With(zap.String("job", "temperature")),
 				Timeout:  cfg.Sources.Temperature.Timeout,
 			},
 			Sensors: cfg.Sources.Temperature.Sensors,
@@ -202,12 +180,12 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, lo
 				AutoName: autoName,
 				ScName:   scName,
 				Name:     "energy",
-				Logger:   logger,
+				Logger:   logger.With(zap.String("job", "energy")),
 				Timeout:  cfg.Sources.Energy.Timeout,
 			},
 			Meters:     cfg.Sources.Energy.Meters,
-			client:     gen.NewMeterHistoryClient(node.ClientConn()),
-			infoClient: gen.NewMeterInfoClient(node.ClientConn()),
+			client:     meterpb.NewMeterHistoryClient(node.ClientConn()),
+			infoClient: meterpb.NewMeterInfoClient(node.ClientConn()),
 		}
 
 		energy.PreviousExecution = energy.getPreviousExecution()
@@ -223,7 +201,7 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, lo
 				AutoName: autoName,
 				ScName:   scName,
 				Name:     "air_quality",
-				Logger:   logger,
+				Logger:   logger.With(zap.String("job", "air_quality")),
 				Timeout:  cfg.Sources.AirQuality.Timeout,
 			},
 			Sensors: cfg.Sources.AirQuality.Sensors,
@@ -243,12 +221,12 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, lo
 				AutoName: autoName,
 				ScName:   scName,
 				Name:     "water",
-				Logger:   logger,
+				Logger:   logger.With(zap.String("job", "water")),
 				Timeout:  cfg.Sources.Water.Timeout,
 			},
 			Meters:     cfg.Sources.Water.Meters,
-			client:     gen.NewMeterHistoryClient(node.ClientConn()),
-			infoClient: gen.NewMeterInfoClient(node.ClientConn()),
+			client:     meterpb.NewMeterHistoryClient(node.ClientConn()),
+			infoClient: meterpb.NewMeterInfoClient(node.ClientConn()),
 		}
 
 		water.PreviousExecution = water.getPreviousExecution()

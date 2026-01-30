@@ -9,9 +9,8 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-
-	"github.com/vanti-dev/sc-bos/pkg/auto/lights/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
 )
 
 // deviceName is a smart core name for a device.
@@ -27,7 +26,7 @@ type ReadState struct {
 	Occupancy     map[deviceName]*traits.Occupancy
 	// used for daylight dimming
 	AmbientBrightness map[deviceName]*traits.AmbientBrightness
-	Buttons           map[deviceName]*gen.ButtonState
+	Buttons           map[deviceName]*buttonpb.ButtonState
 	// used for selecting the run modes, aka "modes" config property
 	Modes *traits.ModeValues
 }
@@ -37,7 +36,7 @@ func NewReadState(t time.Time) *ReadState {
 		AutoStartTime:     t,
 		Occupancy:         make(map[deviceName]*traits.Occupancy),
 		AmbientBrightness: make(map[deviceName]*traits.AmbientBrightness),
-		Buttons:           make(map[deviceName]*gen.ButtonState),
+		Buttons:           make(map[deviceName]*buttonpb.ButtonState),
 	}
 }
 
@@ -81,7 +80,7 @@ func (s *ReadState) ChangesSince(other *ReadState) []string {
 		}
 		return ""
 	})...)
-	changes = append(changes, mapChanges("buttons", other.Buttons, s.Buttons, func(a, b *gen.ButtonState) string {
+	changes = append(changes, mapChanges("buttons", other.Buttons, s.Buttons, func(a, b *buttonpb.ButtonState) string {
 		var changes []string
 		if a.State != b.State {
 			changes = append(changes, fmt.Sprintf("%s->%s", a.State, b.State))

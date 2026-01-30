@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
 func main() {

@@ -1,12 +1,12 @@
 package statusemail
 
 import (
-	"github.com/vanti-dev/sc-bos/pkg/auto/statusemail/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/auto/statusemail/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
 type Status struct {
-	Sent, Read *gen.StatusLog
+	Sent, Read *statuspb.StatusLog
 	Source     config.Source
 }
 

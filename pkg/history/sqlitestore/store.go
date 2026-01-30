@@ -20,8 +20,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/internal/sqlite"
-	"github.com/vanti-dev/sc-bos/pkg/history"
+	"github.com/smart-core-os/sc-bos/internal/sqlite"
+	"github.com/smart-core-os/sc-bos/pkg/history"
 )
 
 const appID = 0x5C0502

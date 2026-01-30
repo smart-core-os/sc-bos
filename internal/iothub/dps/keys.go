@@ -4,7 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 
-	"github.com/vanti-dev/sc-bos/internal/iothub/auth"
+	"github.com/smart-core-os/sc-bos/internal/iothub/auth"
 )
 
 // DeriveDeviceKey will derive an SAS Key for a device to use with Group Enrollment.

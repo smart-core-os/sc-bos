@@ -1,0 +1,111 @@
+Test updating Go code with EnterLeaveHistory service renames
+expected_changes: 2
+
+-- input/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor_history.proto --
+syntax = "proto3";
+
+package smartcore.bos.enterleavesensor.v1;
+
+service EnterLeaveSensorHistory {
+  rpc ListEnterLeaveSensorHistory(ListEnterLeaveHistoryRequest) returns (ListEnterLeaveHistoryResponse);
+}
+
+message ListEnterLeaveHistoryRequest {
+  string name = 1;
+}
+
+message ListEnterLeaveHistoryResponse {
+  repeated EnterLeaveEvent events = 1;
+}
+
+message EnterLeaveEvent {
+  int64 timestamp = 1;
+  int32 direction = 2;
+}
+-- input/pkg/gentrait/historypb/enterleavesensor.go --
+package historypb
+
+import (
+	"context"
+
+	"google.golang.org/grpc"
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+)
+
+type EnterLeaveSensorServer struct {
+	gen.UnimplementedEnterLeaveHistoryServer
+	store interface{}
+}
+
+func (e *EnterLeaveSensorServer) Register(server *grpc.Server) {
+	gen.RegisterEnterLeaveHistoryServer(server, e)
+}
+
+func (e *EnterLeaveSensorServer) ListEnterLeaveSensorHistory(ctx context.Context, request *gen.ListEnterLeaveHistoryRequest) (*gen.ListEnterLeaveHistoryResponse, error) {
+	return &gen.ListEnterLeaveHistoryResponse{}, nil
+}
+-- input/pkg/auto/history/factory.go --
+package history
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
+)
+
+func createEnterLeaveHistory(store interface{}) interface{} {
+	return gen.WrapEnterLeaveHistory(historypb.NewEnterLeaveSensorServer(store))
+}
+-- output/pkg/gentrait/historypb/enterleavesensor.go --
+package historypb
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"google.golang.org/grpc"
+)
+
+type EnterLeaveSensorServer struct {
+	gen.UnimplementedEnterLeaveSensorHistoryServer
+	store interface{}
+}
+
+func (e *EnterLeaveSensorServer) Register(server *grpc.Server) {
+	gen.RegisterEnterLeaveSensorHistoryServer(server, e)
+}
+
+func (e *EnterLeaveSensorServer) ListEnterLeaveSensorHistory(ctx context.Context, request *gen.ListEnterLeaveHistoryRequest) (*gen.ListEnterLeaveHistoryResponse, error) {
+	return &gen.ListEnterLeaveHistoryResponse{}, nil
+}
+-- output/pkg/auto/history/factory.go --
+package history
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
+)
+
+func createEnterLeaveHistory(store interface{}) interface{} {
+	return gen.WrapEnterLeaveSensorHistory(historypb.NewEnterLeaveSensorServer(store))
+}
+-- output/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor_history.proto --
+syntax = "proto3";
+
+package smartcore.bos.enterleavesensor.v1;
+
+service EnterLeaveSensorHistory {
+  rpc ListEnterLeaveSensorHistory(ListEnterLeaveHistoryRequest) returns (ListEnterLeaveHistoryResponse);
+}
+
+message ListEnterLeaveHistoryRequest {
+  string name = 1;
+}
+
+message ListEnterLeaveHistoryResponse {
+  repeated EnterLeaveEvent events = 1;
+}
+
+message EnterLeaveEvent {
+  int64 timestamp = 1;
+  int32 direction = 2;
+}

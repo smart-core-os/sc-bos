@@ -11,27 +11,27 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/run"
 )
 
 type Group struct {
-	gen.UnimplementedAccessApiServer
+	accesspb.UnimplementedAccessApiServer
 
-	client gen.AccessApiClient
+	client accesspb.AccessApiClient
 	names  []string
 
 	logger *zap.Logger
 }
 
-func (g *Group) GetLastAccessAttempt(ctx context.Context, request *gen.GetLastAccessAttemptRequest) (*gen.AccessAttempt, error) {
-	fns := make([]func() (*gen.AccessAttempt, error), len(g.names))
+func (g *Group) GetLastAccessAttempt(ctx context.Context, request *accesspb.GetLastAccessAttemptRequest) (*accesspb.AccessAttempt, error) {
+	fns := make([]func() (*accesspb.AccessAttempt, error), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*gen.GetLastAccessAttemptRequest)
+		request := proto.Clone(request).(*accesspb.GetLastAccessAttemptRequest)
 		request.Name = name
-		fns[i] = func() (*gen.AccessAttempt, error) {
+		fns[i] = func() (*accesspb.AccessAttempt, error) {
 			return g.client.GetLastAccessAttempt(ctx, request)
 		}
 	}
@@ -48,7 +48,7 @@ func (g *Group) GetLastAccessAttempt(ctx context.Context, request *gen.GetLastAc
 		}
 	}
 	// the last access attempt is the on that happened most recently
-	var last *gen.AccessAttempt
+	var last *accesspb.AccessAttempt
 	for _, res := range allRes {
 		if last == nil {
 			last = res
@@ -59,14 +59,14 @@ func (g *Group) GetLastAccessAttempt(ctx context.Context, request *gen.GetLastAc
 	return last, nil
 }
 
-func (g *Group) PullAccessAttempts(request *gen.PullAccessAttemptsRequest, server gen.AccessApi_PullAccessAttemptsServer) error {
+func (g *Group) PullAccessAttempts(request *accesspb.PullAccessAttemptsRequest, server accesspb.AccessApi_PullAccessAttemptsServer) error {
 	if len(g.names) == 0 {
 		return status.Errorf(codes.FailedPrecondition, "zone has no access implementor names")
 	}
 
 	type c struct {
 		name string
-		val  *gen.AccessAttempt
+		val  *accesspb.AccessAttempt
 	}
 	changes := make(chan c)
 	defer close(changes)
@@ -74,7 +74,7 @@ func (g *Group) PullAccessAttempts(request *gen.PullAccessAttemptsRequest, serve
 	group, ctx := errgroup.WithContext(server.Context())
 
 	for _, name := range g.names {
-		request := proto.Clone(request).(*gen.PullAccessAttemptsRequest)
+		request := proto.Clone(request).(*accesspb.PullAccessAttemptsRequest)
 		request.Name = name
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(
@@ -94,7 +94,7 @@ func (g *Group) PullAccessAttempts(request *gen.PullAccessAttemptsRequest, serve
 					}
 				},
 				func(ctx context.Context, changes chan<- c) error {
-					res, err := g.client.GetLastAccessAttempt(ctx, &gen.GetLastAccessAttemptRequest{Name: name, ReadMask: request.ReadMask})
+					res, err := g.client.GetLastAccessAttempt(ctx, &accesspb.GetLastAccessAttemptRequest{Name: name, ReadMask: request.ReadMask})
 					if err != nil {
 						return err
 					}
@@ -111,9 +111,9 @@ func (g *Group) PullAccessAttempts(request *gen.PullAccessAttemptsRequest, serve
 		for i, name := range g.names {
 			indexes[name] = i
 		}
-		values := make([]*gen.AccessAttempt, len(g.names))
+		values := make([]*accesspb.AccessAttempt, len(g.names))
 
-		var last []*gen.AccessAttempt
+		var last []*accesspb.AccessAttempt
 		filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 
 		for {
@@ -135,16 +135,16 @@ func (g *Group) PullAccessAttempts(request *gen.PullAccessAttemptsRequest, serve
 				}
 
 				last = values
-				var accessAttemptChanges []*gen.PullAccessAttemptsResponse_Change
+				var accessAttemptChanges []*accesspb.PullAccessAttemptsResponse_Change
 				for _, accessAttempt := range values {
-					accessAttemptChanges = append(accessAttemptChanges, &gen.PullAccessAttemptsResponse_Change{
+					accessAttemptChanges = append(accessAttemptChanges, &accesspb.PullAccessAttemptsResponse_Change{
 						Name:          change.name,
 						AccessAttempt: accessAttempt,
 						ChangeTime:    timestamppb.Now(),
 					})
 				}
 
-				err := server.Send(&gen.PullAccessAttemptsResponse{Changes: accessAttemptChanges})
+				err := server.Send(&accesspb.PullAccessAttemptsResponse{Changes: accessAttemptChanges})
 				if err != nil {
 					return err
 				}
@@ -154,7 +154,7 @@ func (g *Group) PullAccessAttempts(request *gen.PullAccessAttemptsRequest, serve
 	return group.Wait()
 }
 
-func equal(as, bs []*gen.AccessAttempt) bool {
+func equal(as, bs []*accesspb.AccessAttempt) bool {
 
 	if len(as) != len(bs) {
 		return false

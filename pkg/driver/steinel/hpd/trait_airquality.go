@@ -6,16 +6,16 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 type AirQualitySensor struct {
 	traits.UnimplementedAirQualitySensorApiServer
-	gen.UnimplementedMqttServiceServer
-	gen.UnimplementedUdmiServiceServer
+	mqttpb.UnimplementedMqttServiceServer
+	udmipb.UnimplementedUdmiServiceServer
 
 	logger *zap.Logger
 
@@ -26,7 +26,7 @@ type AirQualitySensor struct {
 
 var _ sensor = (*AirQualitySensor)(nil)
 
-func NewAirQualitySensor(client *Client, logger *zap.Logger) *AirQualitySensor {
+func newAirQualitySensor(client *Client, logger *zap.Logger) *AirQualitySensor {
 	return &AirQualitySensor{
 		client:          client,
 		logger:          logger,

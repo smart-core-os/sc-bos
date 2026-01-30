@@ -10,7 +10,7 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/vanti-dev/sc-bos/pkg/auto/bms/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/bms/config"
 )
 
 func processReadState(ctx context.Context, readState *ReadState, writeState *WriteState, actions Actions) (time.Duration, error) {

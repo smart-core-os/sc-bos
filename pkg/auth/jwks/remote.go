@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-jose/go-jose/v4"
 
-	"github.com/vanti-dev/sc-bos/internal/util/fetch"
+	"github.com/smart-core-os/sc-bos/internal/util/fetch"
 )
 
 const minimumUpdateInterval = time.Minute

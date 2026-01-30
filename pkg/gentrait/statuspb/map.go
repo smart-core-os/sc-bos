@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
-	"github.com/vanti-dev/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
 // Map tracks the status of multiple named status Model.
@@ -37,7 +37,7 @@ func NewMap(announcer node.Announcer) *Map {
 	}
 }
 
-func (m *Map) UpdateProblem(name string, problem *gen.StatusLog_Problem) {
+func (m *Map) UpdateProblem(name string, problem *statuspb.StatusLog_Problem) {
 	m.getOrCreateModel(name).UpdateProblem(problem)
 }
 
@@ -76,7 +76,7 @@ func (m *Map) getOrCreateModel(name string) model {
 			ModelServer: NewModelServer(nm),
 			m:           m,
 		}
-		client := gen.WrapStatusApi(srv)
+		client := statuspb.WrapApi(srv)
 		mod = model{
 			Model:      nm,
 			unannounce: m.announcer.Announce(name, node.HasTrait(TraitName, node.WithClients(client))),
@@ -99,7 +99,7 @@ type watchEventServer struct {
 	m *Map
 }
 
-func (s *watchEventServer) PullCurrentStatus(request *gen.PullCurrentStatusRequest, server gen.StatusApi_PullCurrentStatusServer) error {
+func (s *watchEventServer) PullCurrentStatus(request *statuspb.PullCurrentStatusRequest, server statuspb.StatusApi_PullCurrentStatusServer) error {
 	go s.m.watchEvents.Send(server.Context(), WatchEvent{
 		Name: request.Name,
 		Ctx:  server.Context(),

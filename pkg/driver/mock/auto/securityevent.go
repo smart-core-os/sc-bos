@@ -6,8 +6,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/securityevent"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 func SecurityEventAuto(model *securityevent.Model) *service.Service[string] {

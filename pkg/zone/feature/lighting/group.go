@@ -13,11 +13,11 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/merge"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/merge"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/run"
 )
 
 // Group implements traits.LightApiServer backed by a group of lights.

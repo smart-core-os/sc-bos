@@ -44,16 +44,25 @@ export const useUiConfigStore = defineStore('uiConfig', () => {
    * @param {T?} def
    * @return {T}
    */
-  const getOrDefault = (path, def) => {
+  const configGetOrDefault = (path, def) => getOrDefault(path, def, config.value, _defaultConfig?.config);
+  /**
+   * Gets the value of path from either uiConfig experiments or defaultConfig, depending on presence.
+   *
+   * @template T
+   * @param {string} path
+   * @param {T?} def
+   * @return {T}
+   */
+  const experimentsGetOrDefault = (path, def) => getOrDefault(path, def, _config.value?.experiments, _defaultConfig?.experiments)
+
+  const getOrDefault = (path, def, a, b) => {
     const parts = path.split('.');
-    let a = config.value;
-    let b = _defaultConfig?.config;
     for (let i = 0; i < parts.length; i++) {
       a = a?.[parts[i]];
       b = b?.[parts[i]];
     }
     return a ?? b ?? toValue(def);
-  };
+  }
 
   return {
     configUrl,
@@ -61,7 +70,9 @@ export const useUiConfigStore = defineStore('uiConfig', () => {
     config,
     configPromise,
     defaultConfig: _defaultConfig,
-    getOrDefault,
+    getOrDefault: configGetOrDefault, // alias for configGetOrDefault
+    configGetOrDefault,
+    experimentsGetOrDefault,
     ...useSiteMap(_config),
     ...useTheme(_config),
     auth: useAuth(_config)

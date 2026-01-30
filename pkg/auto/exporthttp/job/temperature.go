@@ -10,10 +10,10 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/auto/exporthttp/types"
+	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/types"
 )
 
-// TemperatureJob gets average air temperature at current point in time
+// TemperatureJob gets average air temperature in Celsius at current point in time
 type TemperatureJob struct {
 	BaseJob
 	client  traits.AirTemperatureApiClient

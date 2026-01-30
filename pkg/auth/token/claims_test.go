@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
 func TestResourceType_MarshalJSON(t *testing.T) {
@@ -14,8 +14,8 @@ func TestResourceType_MarshalJSON(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"zero", ResourceType(gen.RoleAssignment_RESOURCE_TYPE_UNSPECIFIED), `"RESOURCE_TYPE_UNSPECIFIED"`, false},
-		{"value", ResourceType(gen.RoleAssignment_NAMED_RESOURCE), `"NAMED_RESOURCE"`, false},
+		{"zero", ResourceType(accountpb.RoleAssignment_RESOURCE_TYPE_UNSPECIFIED), `"RESOURCE_TYPE_UNSPECIFIED"`, false},
+		{"value", ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE), `"NAMED_RESOURCE"`, false},
 		{"unknown", ResourceType(999), `999`, false},
 	}
 	for _, tt := range tests {
@@ -40,9 +40,9 @@ func TestResourceType_UnmarshalJSON(t *testing.T) {
 		wantErr bool
 	}{
 		{"empty", "", ResourceType(0), true},
-		{"string known", `"NAMED_RESOURCE"`, ResourceType(gen.RoleAssignment_NAMED_RESOURCE), false},
+		{"string known", `"NAMED_RESOURCE"`, ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE), false},
 		{"string invalid", `"INVALID"`, ResourceType(0), true},
-		{"int known", `1`, ResourceType(gen.RoleAssignment_NAMED_RESOURCE), false},
+		{"int known", `1`, ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE), false},
 		{"int unknown", `999`, ResourceType(999), false},
 	}
 	for _, tt := range tests {

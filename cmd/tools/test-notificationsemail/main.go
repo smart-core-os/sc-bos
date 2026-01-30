@@ -7,29 +7,29 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/auto/notificationsemail"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/alert"
-	"github.com/vanti-dev/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/notificationsemail"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/alert"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 )
 
 var sampleNow = time.Date(2024, 01, 19, 0, 0, 0, 0, time.Local)
 
 func addDummyAlerts(m *alert.Model, t *time.Time) {
 
-	sevs := []gen.Alert_Severity{
-		gen.Alert_SEVERITY_UNSPECIFIED,
-		gen.Alert_INFO,
-		gen.Alert_WARNING,
-		gen.Alert_SEVERE,
-		gen.Alert_LIFE_SAFETY,
+	sevs := []alertpb.Alert_Severity{
+		alertpb.Alert_SEVERITY_UNSPECIFIED,
+		alertpb.Alert_INFO,
+		alertpb.Alert_WARNING,
+		alertpb.Alert_SEVERE,
+		alertpb.Alert_LIFE_SAFETY,
 	}
 
 	zones := []string{"East", "West"}
 
 	for i := range 100 {
-		m.AddAlert(&gen.Alert{
+		m.AddAlert(&alertpb.Alert{
 			Id:          fmt.Sprintf("alert Id : %d", i),
 			Severity:    sevs[i%5],
 			Description: fmt.Sprintf("test: %ds", i),
@@ -41,7 +41,7 @@ func addDummyAlerts(m *alert.Model, t *time.Time) {
 		})
 	}
 
-	m.AddAlert(&gen.Alert{
+	m.AddAlert(&alertpb.Alert{
 		Id:          fmt.Sprintf("alert Id : %d", 555),
 		Severity:    sevs[0],
 		Description: fmt.Sprintf("test: %ds", 555),
@@ -66,7 +66,7 @@ func main() {
 		2024, 01, 01, 00, 00, 00, 651387237, time.UTC)
 	addDummyAlerts(m, &testTime)
 	server := alert.NewModelServer(m)
-	root.Announce(root.Name(), node.HasServer(gen.RegisterAlertApiServer, gen.AlertApiServer(server)))
+	root.Announce(root.Name(), node.HasServer(alertpb.RegisterAlertApiServer, alertpb.AlertApiServer(server)))
 
 	now, _ := time.Parse(time.DateTime, "2023-11-15 11:36:00")
 	now = now.Round(time.Second) // get rid of millis, etc

@@ -10,22 +10,22 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
 )
 
 var subSystems = [2]string{"access control", "cctv"}
 
 type Model struct {
 	mu                sync.Mutex // guards allSecurityEvents and genId
-	allSecurityEvents *ring.Ring // *gen.SecurityEvent
+	allSecurityEvents *ring.Ring // *securityeventpb.SecurityEvent
 	genId             int
 
-	lastSecurityEvent *resource.Value // of *gen.SecurityEvent
+	lastSecurityEvent *resource.Value // of *securityeventpb.SecurityEvent
 }
 
 func NewModel(opts ...resource.Option) *Model {
-	defaultOpts := []resource.Option{resource.WithInitialValue(&gen.SecurityEvent{})}
+	defaultOpts := []resource.Option{resource.WithInitialValue(&securityeventpb.SecurityEvent{})}
 	opts = append(defaultOpts, opts...)
 
 	m := &Model{
@@ -44,7 +44,7 @@ func NewModel(opts ...resource.Option) *Model {
 }
 
 // AddSecurityEvent manually add a security event to the model
-func (m *Model) AddSecurityEvent(se *gen.SecurityEvent, opts ...resource.WriteOption) (*gen.SecurityEvent, error) {
+func (m *Model) AddSecurityEvent(se *securityeventpb.SecurityEvent, opts ...resource.WriteOption) (*securityeventpb.SecurityEvent, error) {
 	v, err := m.lastSecurityEvent.Set(se, opts...)
 	if err != nil {
 		return nil, err
@@ -53,20 +53,20 @@ func (m *Model) AddSecurityEvent(se *gen.SecurityEvent, opts ...resource.WriteOp
 	defer m.mu.Unlock()
 	m.allSecurityEvents.Value = se
 	m.allSecurityEvents = m.allSecurityEvents.Next()
-	return v.(*gen.SecurityEvent), nil
+	return v.(*securityeventpb.SecurityEvent), nil
 }
 
 // GenerateSecurityEvent generates a security event and adds it to the model
-func (m *Model) GenerateSecurityEvent(time *timestamppb.Timestamp) (*gen.SecurityEvent, error) {
+func (m *Model) GenerateSecurityEvent(time *timestamppb.Timestamp) (*securityeventpb.SecurityEvent, error) {
 	m.mu.Lock()
-	se := &gen.SecurityEvent{
+	se := &securityeventpb.SecurityEvent{
 		SecurityEventTime: time,
 		Description:       "Generated security event",
 		Id:                strconv.Itoa(m.genId),
-		Source: &gen.SecurityEvent_Source{
+		Source: &securityeventpb.SecurityEvent_Source{
 			Subsystem: subSystems[m.genId%2],
 		},
-		EventType: gen.SecurityEvent_EventType(m.genId % 22),
+		EventType: securityeventpb.SecurityEvent_EventType(m.genId % 22),
 	}
 	m.genId++
 	m.mu.Unlock()
@@ -79,14 +79,14 @@ func (m *Model) GetSecurityEventCount() int {
 	return m.allSecurityEvents.Len()
 }
 
-func (m *Model) ListSecurityEvents(start, count int) []*gen.SecurityEvent {
+func (m *Model) ListSecurityEvents(start, count int) []*securityeventpb.SecurityEvent {
 
-	var events []*gen.SecurityEvent
+	var events []*securityeventpb.SecurityEvent
 	// reverse to retrieve the latest events first
 
 	for i := start - 1; i >= 0; i-- {
 		e := m.allSecurityEvents.Move(i)
-		events = append(events, e.Value.(*gen.SecurityEvent))
+		events = append(events, e.Value.(*securityeventpb.SecurityEvent))
 		if len(events) >= count {
 			break
 		}
@@ -94,7 +94,7 @@ func (m *Model) ListSecurityEvents(start, count int) []*gen.SecurityEvent {
 	return events
 }
 
-func (m *Model) pullSecurityEventsWrapper(request *gen.PullSecurityEventsRequest, server gen.SecurityEventApi_PullSecurityEventsServer) error {
+func (m *Model) pullSecurityEventsWrapper(request *securityeventpb.PullSecurityEventsRequest, server securityeventpb.SecurityEventApi_PullSecurityEventsServer) error {
 	if !request.UpdatesOnly {
 		m.mu.Lock()
 		i := m.allSecurityEvents.Len() - 50
@@ -103,14 +103,14 @@ func (m *Model) pullSecurityEventsWrapper(request *gen.PullSecurityEventsRequest
 		}
 		for ; i < m.allSecurityEvents.Len()-1; i++ {
 			e := m.allSecurityEvents.Move(i)
-			event := e.Value.(*gen.SecurityEvent)
-			change := &gen.PullSecurityEventsResponse_Change{
+			event := e.Value.(*securityeventpb.SecurityEvent)
+			change := &securityeventpb.PullSecurityEventsResponse_Change{
 				Name:       request.Name,
 				NewValue:   event,
 				ChangeTime: event.SecurityEventTime,
 				Type:       types.ChangeType_ADD,
 			}
-			if err := server.Send(&gen.PullSecurityEventsResponse{Changes: []*gen.PullSecurityEventsResponse_Change{change}}); err != nil {
+			if err := server.Send(&securityeventpb.PullSecurityEventsResponse{Changes: []*securityeventpb.PullSecurityEventsResponse_Change{change}}); err != nil {
 				m.mu.Unlock()
 				return err
 			}
@@ -118,7 +118,7 @@ func (m *Model) pullSecurityEventsWrapper(request *gen.PullSecurityEventsRequest
 		m.mu.Unlock()
 	}
 	for change := range m.PullSecurityEvents(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		msg := &gen.PullSecurityEventsResponse{}
+		msg := &securityeventpb.PullSecurityEventsResponse{}
 		msg.Changes = append(msg.Changes, change)
 		if err := server.Send(msg); err != nil {
 			return err
@@ -127,14 +127,14 @@ func (m *Model) pullSecurityEventsWrapper(request *gen.PullSecurityEventsRequest
 	return nil
 }
 
-func (m *Model) PullSecurityEvents(ctx context.Context, opts ...resource.ReadOption) <-chan *gen.PullSecurityEventsResponse_Change {
-	send := make(chan *gen.PullSecurityEventsResponse_Change)
+func (m *Model) PullSecurityEvents(ctx context.Context, opts ...resource.ReadOption) <-chan *securityeventpb.PullSecurityEventsResponse_Change {
+	send := make(chan *securityeventpb.PullSecurityEventsResponse_Change)
 	recv := m.lastSecurityEvent.Pull(ctx, opts...)
 	go func() {
 		defer close(send)
 		for change := range recv {
-			value := change.Value.(*gen.SecurityEvent)
-			send <- &gen.PullSecurityEventsResponse_Change{
+			value := change.Value.(*securityeventpb.SecurityEvent)
+			send <- &securityeventpb.PullSecurityEventsResponse_Change{
 				OldValue:   nil,
 				NewValue:   value, // the mock driver only generates new security events and does not delete them
 				ChangeTime: value.SecurityEventTime,

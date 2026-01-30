@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"iter"
+	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -11,13 +12,16 @@ import (
 	"go.uber.org/zap"
 	reflectionpb "google.golang.org/grpc/reflection/grpc_reflection_v1"
 	reflectionv1alphapb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/system/gateway/internal/rx"
-	"github.com/vanti-dev/sc-bos/pkg/util/chans"
-	scslices "github.com/vanti-dev/sc-bos/pkg/util/slices"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/rx"
+	"github.com/smart-core-os/sc-bos/pkg/util/chans"
+	scslices "github.com/smart-core-os/sc-bos/pkg/util/slices"
 )
 
 // announceCohort announces information about the cohort as if it were present on this system.
@@ -126,7 +130,8 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 	// All nodes have some devices that get proxied, but gateway nodes only proxy a subset of them.
 	var deviceChanges <-chan rx.Change[remoteDesc]
 	var stopDevicesSub context.CancelFunc
-	var undoDevices tasks
+	// So we can undo the API proxy and metadata announcement separately.
+	var undoDevices, undoMD, removeChecks tasks
 	shouldProxyDevice := func(c remoteDesc) bool {
 		if isGateway() {
 			// only special names get proxied for gateway nodes
@@ -141,7 +146,7 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 		devicesCtx, stopDevicesSub = context.WithCancel(ctx)
 		var devices *scslices.Sorted[remoteDesc]
 		devices, deviceChanges = a.node.Devices.Sub(devicesCtx)
-		undoDevices = a.announceNames(filter2(devices.All, func(_ int, v remoteDesc) bool {
+		undoDevices, undoMD, removeChecks = a.announceNames(filter2(devices.All, func(_ int, v remoteDesc) bool {
 			return shouldProxyDevice(v)
 		}))
 	}
@@ -150,8 +155,12 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 			stopDevicesSub()
 		}
 		undoDevices.callAll()
+		undoMD.callAll()
+		removeChecks.callAll()
 		deviceChanges = nil
 		undoDevices = nil
+		undoMD = nil
+		removeChecks = nil
 	}
 	renewDevicesSub := func() {
 		closeDevicesSub()
@@ -224,14 +233,29 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 			if !ok {
 				continue // we stopped watching
 			}
-			if c.Type != rx.Add {
-				undoDevices.remove(c.Old.name)
-			}
-			if c.Type != rx.Remove {
+			switch c.Type {
+			case rx.Add:
 				if !shouldProxyDevice(c.New) {
 					continue
 				}
-				undoDevices[c.New.name] = a.announceName(c.New)
+				undoDevices[c.New.name] = a.announceProxy(c.New)
+				undoMD[c.New.name] = a.announceMetadata(c.New)
+				removeChecks[c.New.name] = a.announceHealthChecks(c.Old, c.New)
+			case rx.Remove:
+				undoDevices.remove(c.Old.name)
+				undoMD.remove(c.Old.name)
+				removeChecks.remove(c.Old.name)
+			case rx.Update:
+				if !shouldProxyDevice(c.New) {
+					undoMD.remove(c.Old.name)
+					removeChecks.remove(c.Old.name)
+					continue
+				}
+				if !proto.Equal(c.Old.md, c.New.md) {
+					undoMD.remove(c.Old.name)
+					undoMD[c.New.name] = a.announceMetadata(c.New)
+				}
+				removeChecks[c.New.name] = a.announceHealthChecks(c.Old, c.New)
 			}
 		}
 	}
@@ -239,28 +263,99 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 
 // announceName allows this node to answer requests aimed at the given remoteDesc.
 // This includes named RPCs (like trait requests) and DeviceApi / ParentApi requests that would include this name in their responses.
-func (a *announcer) announceName(d remoteDesc) node.Undo {
-	if d.name == "" {
+// The func returns undo functions for both the API proxy and metadata announcement.
+func (a *announcer) announceName(d remoteDesc) (device, md, checks node.Undo) {
+	return a.announceProxy(d), a.announceMetadata(d), a.announceHealthChecks(remoteDesc{}, d)
+}
+
+// announceProxy updates this node to proxy requests for the given remoteDesc.
+func (a *announcer) announceProxy(d remoteDesc) node.Undo {
+	if !shouldAnnounceName(d.name) {
 		return node.NilUndo
 	}
-	// If the name is one of the ignored names, we don't announce it.
-	if isFixedServiceName(d.name) {
+	return a.Announce(d.name, node.HasProxy(a.node.conn))
+}
+
+// announceMetadata updates this node to announce metadata for the given remoteDesc.
+func (a *announcer) announceMetadata(d remoteDesc) node.Undo {
+	if !shouldAnnounceName(d.name) {
+		return node.NilUndo
+	}
+	return a.Announce(d.name, node.HasMetadata(d.md))
+}
+
+// announceHealthChecks updates this node to announce health checks for the given remoteDesc.
+// Any checks that are in before but not in after are removed.
+// The returned Undo will remove any added checks and is equivalent to calling announceHealthChecks(after, remoteDesc{}).
+func (a *announcer) announceHealthChecks(before, after remoteDesc) node.Undo {
+	// remove checks that are no longer present
+	if len(before.health) > 0 {
+		toRemove := make(map[string]struct{})
+		for _, health := range before.health {
+			toRemove[health.Id] = struct{}{}
+		}
+		for _, health := range after.health {
+			delete(toRemove, health.Id)
+		}
+		err := a.checks.RemoveHealthChecks(before.name, slices.Collect(maps.Keys(toRemove))...)
+		if err != nil {
+			a.logger.Warn("failed to unannounce health checks for remote name",
+				zap.String("name", before.name),
+				zap.Strings("removedCheckIds", slices.Sorted(maps.Keys(toRemove))),
+				zap.Error(err),
+			)
+		}
+	}
+
+	if len(after.health) == 0 {
 		return node.NilUndo
 	}
 
-	return a.Announce(d.name,
-		node.HasMetadata(d.md),
-		node.HasProxy(a.node.conn),
-	)
+	addedIds := make([]string, 0, len(after.health))
+	for _, c := range after.health {
+		addedIds = append(addedIds, c.Id)
+	}
+	err := a.checks.MergeHealthChecks(after.name, after.health...) // will replace checks that already exist
+	if err != nil {
+		a.logger.Warn("failed to announce health checks for remote name",
+			zap.String("name", after.name),
+			zap.Strings("addedCheckIds", addedIds),
+			zap.Error(err),
+		)
+	}
+	return func() {
+		err := a.checks.RemoveHealthChecks(after.name, addedIds...)
+		if err != nil {
+			a.logger.Warn("failed to unannounce health checks for remote name",
+				zap.String("name", after.name),
+				zap.Strings("removedCheckIds", addedIds),
+				zap.Error(err),
+			)
+		}
+	}
+}
+
+// shouldAnnounceName returns true if we should announce the given name.
+func shouldAnnounceName(name string) bool {
+	if name == "" {
+		return false
+	}
+	// If the name is one of the ignored names, we don't announce it.
+	if isFixedServiceName(name) {
+		return false
+	}
+	return true
 }
 
 // announceNames calls announceName for each remoteDesc in seq, collecting the results into tasks keyed by remoteDesc.name.
-func (a *announcer) announceNames(seq iter.Seq2[int, remoteDesc]) tasks {
-	dst := tasks{}
+func (a *announcer) announceNames(seq iter.Seq2[int, remoteDesc]) (devices, mds, checks tasks) {
+	devices = tasks{}
+	mds = tasks{}
+	checks = tasks{}
 	for _, d := range seq {
-		dst[d.name] = a.announceName(d)
+		devices[d.name], mds[d.name], checks[d.name] = a.announceName(d)
 	}
-	return dst
+	return devices, mds, checks
 }
 
 // announceRemoteService updates this node to respond to requests for the given remoteService.
@@ -347,9 +442,9 @@ func (a *announcer) ignoreRemoteService(rs protoreflect.ServiceDescriptor) bool 
 	switch name {
 	// services that are handled explicitly via other mechanisms
 	case
-		gen.DevicesApi_ServiceDesc.ServiceName,                // handled by the node outside the gateway service
-		gen.EnrollmentApi_ServiceDesc.ServiceName,             // handled by the app controller during boot
-		gen.ServicesApi_ServiceDesc.ServiceName,               // see announceServiceApi
+		devicespb.DevicesApi_ServiceDesc.ServiceName,          // handled by the node outside the gateway service
+		enrollmentpb.EnrollmentApi_ServiceDesc.ServiceName,    // handled by the app controller during boot
+		servicespb.ServicesApi_ServiceDesc.ServiceName,        // see announceServiceApi
 		reflectionpb.ServerReflection_ServiceDesc.ServiceName, // see setup/closeReflection in announceRemoteNode
 		reflectionv1alphapb.ServerReflection_ServiceDesc.ServiceName:
 		return true
@@ -446,11 +541,13 @@ func filter2[K, V any](seq iter.Seq2[K, V], f func(K, V) bool) iter.Seq2[K, V] {
 	}
 }
 
+const waitTimeout = 5 * time.Second
+
 // waitForFunc returns when a value received from c satisfies the function f, or a timeout has expired.
 // Each value received will be assigned to v, which is a pointer to the current value.
 func waitForFunc[T any](ctx context.Context, v *T, c <-chan T, f func(T) bool) {
 	if !f(*v) {
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, waitTimeout)
 		defer cancel()
 		_, _ = chans.RecvContextFunc(ctx, c, func(new T) error {
 			*v = new

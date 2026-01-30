@@ -4,7 +4,7 @@
     <working_directory value="$PROJECT_DIR$" />
     <parameters value="--listen-grpc localhost:50101 --listen-https localhost:50111 --policy-mode off --sysconf pkg/system/gateway/internal/test/testdata/hub/system.conf.json --appconf pkg/system/gateway/internal/test/testdata/hub/app.conf.json --data .data/proxy/hub" />
     <kind value="FILE" />
-    <package value="github.com/vanti-dev/sc-bos" />
+    <package value="github.com/smart-core-os/sc-bos" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/pkg/system/gateway/internal/test/hub/cmd/cmd.go" />
     <method v="2" />

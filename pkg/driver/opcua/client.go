@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Client wraps an OPC UA client connection and manages subscriptions to variable nodes.
 type Client struct {
 	client       *opcua.Client
 	logger       *zap.Logger
@@ -18,6 +19,8 @@ type Client struct {
 	clientHandle uint32
 }
 
+// NewClient creates a new Client wrapper around an OPC UA client connection.
+// The interval specifies the subscription sampling rate, and handle is used to identify monitored items.
 func NewClient(client *opcua.Client, logger *zap.Logger, interval time.Duration, handle uint32) *Client {
 	return &Client{
 		client:       client,
@@ -27,6 +30,9 @@ func NewClient(client *opcua.Client, logger *zap.Logger, interval time.Duration,
 	}
 }
 
+// Subscribe creates an OPC UA subscription for the specified node ID and returns a channel of value changes.
+// The subscription monitors the node's value attribute and sends notifications when it changes.
+// Returns an error if subscription creation or monitoring setup fails.
 func (c *Client) Subscribe(ctx context.Context, nodeId *ua.NodeID) (<-chan *opcua.PublishNotificationData, error) {
 	notifyCh := make(chan *opcua.PublishNotificationData)
 	sub, err := c.client.Subscribe(ctx, &opcua.SubscriptionParameters{

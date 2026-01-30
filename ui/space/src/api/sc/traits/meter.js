@@ -2,10 +2,10 @@ import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setValue, trackAction} from '@/api/resource.js';
 import {periodFromObject} from '@/api/sc/types/period';
-import {MeterHistoryPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/history_grpc_web_pb';
-import {ListMeterReadingHistoryRequest} from '@vanti-dev/sc-bos-ui-gen/proto/history_pb';
-import {MeterApiPromiseClient, MeterInfoPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/meter_grpc_web_pb';
-import {DescribeMeterReadingRequest, PullMeterReadingsRequest} from '@vanti-dev/sc-bos-ui-gen/proto/meter_pb';
+import {MeterHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_history_grpc_web_pb';
+import {ListMeterReadingHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_history_pb';
+import {MeterApiPromiseClient, MeterInfoPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_grpc_web_pb';
+import {DescribeMeterReadingRequest, PullMeterReadingsRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb';
 
 /**
  * @param {Partial<PullMeterReadingsRequest.AsObject>} request

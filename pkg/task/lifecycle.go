@@ -7,7 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/util/state"
+	"github.com/smart-core-os/sc-bos/pkg/util/state"
 )
 
 // Starter describes types that can be started.

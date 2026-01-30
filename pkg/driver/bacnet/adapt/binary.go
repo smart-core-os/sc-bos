@@ -6,30 +6,32 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/gobacnet/property"
+	bactypes "github.com/smart-core-os/gobacnet/types"
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
-	"github.com/vanti-dev/gobacnet"
-	"github.com/vanti-dev/gobacnet/property"
-	bactypes "github.com/vanti-dev/gobacnet/types"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/config"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
 )
 
 // BinaryObject adapts a binary bacnet object as smart core traits.
-func BinaryObject(prefix string, client *gobacnet.Client, device bactypes.Device, object config.Object, statuses *statuspb.Map) (node.SelfAnnouncer, error) {
+func BinaryObject(prefix string, client *gobacnet.Client, device bactypes.Device, object config.Object, deviceHealth *gen_healthpb.FaultCheck, errFn errFn) (node.SelfAnnouncer, error) {
 	switch object.Trait {
 	case "":
 		return nil, ErrNoDefault
 	case trait.OnOff:
 		model := onoffpb.NewModel()
 		return &binaryOnOff{
-			prefix:   prefix,
-			client:   client,
-			device:   device,
-			object:   object,
-			statuses: statuses,
+			prefix: prefix,
+			client: client,
+			device: device,
+			object: object,
+
+			deviceHealth: deviceHealth,
+			errFn:        errFn,
 
 			model:       model,
 			ModelServer: onoffpb.NewModelServer(model),
@@ -40,11 +42,13 @@ func BinaryObject(prefix string, client *gobacnet.Client, device bactypes.Device
 }
 
 type binaryOnOff struct {
-	prefix   string
-	client   *gobacnet.Client
-	device   bactypes.Device
-	object   config.Object
-	statuses *statuspb.Map
+	prefix string
+	client *gobacnet.Client
+	device bactypes.Device
+	object config.Object
+
+	deviceHealth *gen_healthpb.FaultCheck
+	errFn        errFn
 
 	model *onoffpb.Model
 	*onoffpb.ModelServer
@@ -60,7 +64,7 @@ func (b *binaryOnOff) GetOnOff(ctx context.Context, request *traits.GetOnOffRequ
 		},
 	})
 
-	updateRequestErrorStatus(b.statuses, b.name(), "getOnOff", err)
+	b.errFn(ctx, b.deviceHealth, b.name(), "getOnOff", err)
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/vanti-dev/sc-bos/internal/util/fetch"
+	"github.com/smart-core-os/sc-bos/internal/util/fetch"
 )
 
 // Config represents an OpenID Connect configuration document.

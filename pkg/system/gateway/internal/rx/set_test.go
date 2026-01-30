@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/vanti-dev/sc-bos/pkg/util/chans"
-	scslices "github.com/vanti-dev/sc-bos/pkg/util/slices"
+	"github.com/smart-core-os/sc-bos/pkg/util/chans"
+	scslices "github.com/smart-core-os/sc-bos/pkg/util/slices"
 )
 
 func TestSet_Sub(t *testing.T) {

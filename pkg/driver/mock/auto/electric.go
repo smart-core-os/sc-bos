@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/driver/mock/scale"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait/electricpb"
-	"github.com/vanti-dev/sc-bos/pkg/driver/mock/scale"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
 )
 
 func Electric(model *electricpb.Model) service.Lifecycle {

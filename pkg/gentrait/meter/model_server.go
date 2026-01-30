@@ -6,12 +6,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
 )
 
 type ModelServer struct {
-	gen.UnimplementedMeterApiServer
+	meterpb.UnimplementedMeterApiServer
 	model *Model
 }
 
@@ -20,20 +20,20 @@ func NewModelServer(model *Model) *ModelServer {
 }
 
 func (m *ModelServer) Register(server *grpc.Server) {
-	gen.RegisterMeterApiServer(server, m)
+	meterpb.RegisterMeterApiServer(server, m)
 }
 
 func (m *ModelServer) Unwrap() any {
 	return m.model
 }
 
-func (m *ModelServer) GetMeterReading(_ context.Context, request *gen.GetMeterReadingRequest) (*gen.MeterReading, error) {
+func (m *ModelServer) GetMeterReading(_ context.Context, request *meterpb.GetMeterReadingRequest) (*meterpb.MeterReading, error) {
 	return m.model.GetMeterReading(resource.WithReadMask(request.ReadMask))
 }
 
-func (m *ModelServer) PullMeterReadings(request *gen.PullMeterReadingsRequest, server gen.MeterApi_PullMeterReadingsServer) error {
+func (m *ModelServer) PullMeterReadings(request *meterpb.PullMeterReadingsRequest, server meterpb.MeterApi_PullMeterReadingsServer) error {
 	for change := range m.model.PullMeterReadings(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		msg := &gen.PullMeterReadingsResponse{Changes: []*gen.PullMeterReadingsResponse_Change{{
+		msg := &meterpb.PullMeterReadingsResponse{Changes: []*meterpb.PullMeterReadingsResponse_Change{{
 			Name:         request.Name,
 			ChangeTime:   timestamppb.New(change.ChangeTime),
 			MeterReading: change.Value,

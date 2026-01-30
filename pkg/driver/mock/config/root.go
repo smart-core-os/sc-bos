@@ -2,9 +2,9 @@ package config
 
 import (
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/block"
-	"github.com/vanti-dev/sc-bos/pkg/block/mdblock"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/block/mdblock"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
 )
 
 type Root struct {

@@ -11,8 +11,8 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
-	"github.com/vanti-dev/sc-bos/pkg/util/chans"
 )
 
 func TestGroup_PullBrightness(t *testing.T) {

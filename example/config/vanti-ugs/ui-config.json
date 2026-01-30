@@ -58,6 +58,13 @@
                 "source": "van/uk/brum/ugs/zones/building",
                 "metric": "ambientTemperature"
               }
+            },
+            {
+              "component": "builtin:usage/AllocationHistoryCard",
+              "props": {
+                "source": ["van/uk/brum/ugs/devices/LOK-L00-01"],
+                "title": "Locker Usage"
+              }
             }
           ],
           "after": [
@@ -1117,6 +1124,23 @@
                   }
                 }
               ]
+            },
+            {
+              "title": "Health",
+              "icon": "mdi-heart-pulse",
+              "path": "health",
+              "layout": "builtin:LayoutMainSide",
+              "mainWidgetMinHeight": 0,
+              "main": [
+                {
+                  "id": "ImpactBreakdown",
+                  "component": "builtin:health/HealthImpactBreakdownsCard"
+                },
+                {
+                  "id": "CheckTable",
+                  "component": "builtin:health/HealthCheckTable"
+                }
+              ]
             }
           ]
         }
@@ -1142,5 +1166,8 @@
         }
       }
     }
+  },
+  "experiments": {
+    "health": true
   }
 }

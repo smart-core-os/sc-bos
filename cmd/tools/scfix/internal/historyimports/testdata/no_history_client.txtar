@@ -1,0 +1,17 @@
+This test verifies that files with no HistoryClient are rejected.
+expected_changes: 0
+
+-- input/ui/ops/test.js --
+// Invalid: No HistoryClient to determine trait - should abort
+import {ListAirQualityHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/history_pb';
+
+export function test() {
+  // implementation
+}
+-- output/ui/ops/test.js --
+// Invalid: No HistoryClient to determine trait - should abort
+import {ListAirQualityHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/history_pb';
+
+export function test() {
+  // implementation
+}

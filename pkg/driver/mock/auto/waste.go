@@ -6,8 +6,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-golang/pkg/trait/wastepb"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 func WasteRecordsAuto(model *wastepb.Model) *service.Service[string] {

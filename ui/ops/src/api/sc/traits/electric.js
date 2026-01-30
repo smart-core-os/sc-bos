@@ -2,8 +2,8 @@ import {fieldMaskFromObject, setProperties, timestampToDate} from '@/api/convpb'
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setValue, trackAction} from '@/api/resource';
 import {periodFromObject} from '@/api/sc/types/period';
-import {ElectricHistoryPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/history_grpc_web_pb';
-import {ListElectricDemandHistoryRequest} from '@vanti-dev/sc-bos-ui-gen/proto/history_pb';
+import {ElectricHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/electric/v1/electric_history_grpc_web_pb';
+import {ListElectricDemandHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/electric/v1/electric_history_pb';
 import {ElectricApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/electric_grpc_web_pb';
 import {GetDemandRequest, PullDemandRequest} from '@smart-core-os/sc-api-grpc-web/traits/electric_pb';
 

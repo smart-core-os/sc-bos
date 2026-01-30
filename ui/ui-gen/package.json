@@ -1,19 +1,16 @@
 {
-  "name": "@vanti-dev/sc-bos-ui-gen",
-  "version": "1.0.0-beta.21",
+  "name": "@smart-core-os/sc-bos-ui-gen",
+  "version": "1.0.0-beta.25",
   "type": "commonjs",
   "scripts": {
-    "gen": "node gen.mjs"
+    "gen": "go run ../../cmd/tools/genproto -only uiproto"
   },
   "dependencies": {
-    "@smart-core-os/sc-api-grpc-web": "^1.0.0-beta.57",
-    "google-protobuf": "^3.21.2",
-    "grpc-web": "^1.4.2"
+    "@smart-core-os/sc-api-grpc-web": "^1.0.0-beta.60",
+    "google-protobuf": "^4.0.1",
+    "grpc-web": "^2.0.2"
   },
-  "devDependencies": {
-    "replace-in-file": "^8.3.0"
-  },
-  "repository": "https://github.com/vanti-dev/sc-bos",
+  "repository": "https://github.com/smart-core-os/sc-bos",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   }

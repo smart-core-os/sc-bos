@@ -9,49 +9,45 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/vanti-dev/sc-bos/pkg/driver/opcua/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 )
 
-type Device struct {
+// device represents an OPC UA device that subscribes to variable nodes and updates trait implementations.
+// It manages subscriptions for a single logical device and routes OPC UA events to the appropriate trait handlers.
+// The type is intentionally unexported as it's an internal implementation detail of the driver.
+type device struct {
 	conf   *config.Device
 	logger *zap.Logger
 	client *Client
 
-	electric  *Electric
-	meter     *Meter
-	transport *Transport
-	udmi      *Udmi
+	eventHandlers []EventHandler
+
+	faultCheck *healthpb.FaultCheck
 }
 
-func NewDevice(device *config.Device, logger *zap.Logger, client *Client) *Device {
-
-	return &Device{
-		conf:   device,
-		logger: logger,
-		client: client,
+// newDevice creates a new device instance for the given configuration.
+// Trait implementations (Electric, Meter, Transport, udmi) must be assigned separately before calling run.
+func newDevice(conf *config.Device, logger *zap.Logger, client *Client, check *healthpb.FaultCheck) *device {
+	return &device{
+		client:     client,
+		conf:       conf,
+		faultCheck: check,
+		logger:     logger,
 	}
 }
 
-func (d *Device) run(ctx context.Context) error {
-	grp, ctx := errgroup.WithContext(ctx)
-
-	grp.Go(func() error {
-		return d.subscribe(ctx)
-	})
-
-	return grp.Wait()
-}
-
-func (d *Device) subscribe(ctx context.Context) error {
-
+// subscribe creates OPC UA subscriptions for all configured variables and spawns goroutines to handle events.
+// If a subscription fails, it logs the error and continues with remaining variables.
+// The method blocks until the context is cancelled or all subscriptions fail.
+func (d *device) subscribe(ctx context.Context) error {
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, point := range d.conf.Variables {
 		pointName := point.ParsedNodeId
 		c, err := d.client.Subscribe(ctx, pointName)
 		if err != nil {
 			d.logger.Error("failed to subscribe to point", zap.Stringer("point", pointName), zap.Error(err))
-			// if the client is connected but can't subscribe, it is bad config
-			// just log the error and move on
+			raiseConfigFault("Failed to subscribe to point "+pointName.String(), d.faultCheck)
 			continue
 		}
 		grp.Go(func() error {
@@ -71,7 +67,10 @@ func (d *Device) subscribe(ctx context.Context) error {
 	return grp.Wait()
 }
 
-func (d *Device) handleEvent(ctx context.Context, event *opcua.PublishNotificationData, node *ua.NodeID) {
+// handleEvent processes OPC UA subscription events and routes them to trait handlers.
+// It handles both DataChangeNotification (variable value changes) and EventNotificationList (OPC UA events).
+// Values with non-OK status codes are logged as warnings and not passed to trait handlers.
+func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificationData, node *ua.NodeID) {
 	switch x := event.Value.(type) {
 	case *ua.DataChangeNotification:
 		for _, item := range x.MonitoredItems {
@@ -81,9 +80,11 @@ func (d *Device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 			}
 
 			if errors.Is(item.Value.Status, ua.StatusOK) {
+				d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
 				value := item.Value.Value.Value()
 				d.handleTraitEvent(ctx, node, value)
 			} else {
+				setPointReadNotOk(ctx, node.String(), item.Value.Status, d.faultCheck)
 				d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", item.Value.Status.Error()))
 			}
 		}
@@ -93,8 +94,10 @@ func (d *Device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 			for _, field := range item.EventFields {
 				if errors.Is(field.StatusCode(), ua.StatusOK) {
 					value := field.Value()
+					d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
 					d.handleTraitEvent(ctx, node, value)
 				} else {
+					setPointReadNotOk(ctx, node.String(), field.StatusCode(), d.faultCheck)
 					d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", field.StatusCode().Error()))
 				}
 			}
@@ -105,22 +108,16 @@ func (d *Device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 	}
 }
 
-func (d *Device) handleTraitEvent(ctx context.Context, node *ua.NodeID, value any) {
-
-	if d.electric != nil {
-		d.electric.handleElectricEvent(node, value)
-	}
-	if d.meter != nil {
-		d.meter.handleMeterEvent(node, value)
-	}
-	if d.transport != nil {
-		d.transport.handleTransportEvent(node, value)
-	}
-	if d.udmi != nil {
-		d.udmi.sendUdmiMessage(ctx, node, value)
+// handleTraitEvent dispatches an OPC UA value change to all configured trait handlers.
+// Each trait handler is responsible for checking if the node ID matches its configuration.
+func (d *device) handleTraitEvent(ctx context.Context, node *ua.NodeID, value any) {
+	for _, handler := range d.eventHandlers {
+		handler.handleEvent(ctx, node, value)
 	}
 }
 
-func NodeIdsAreEqual(nodeId string, n *ua.NodeID) bool {
+// nodeIdsAreEqual compares a string node ID with a ua.NodeID for equality.
+// Returns true if n is non-nil and its string representation matches nodeId.
+func nodeIdsAreEqual(nodeId string, n *ua.NodeID) bool {
 	return n != nil && nodeId == n.String()
 }

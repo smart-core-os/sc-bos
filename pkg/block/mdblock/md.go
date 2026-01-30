@@ -2,7 +2,7 @@ package mdblock
 
 import (
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/block"
 )
 
 // Categories contains a block for each top level metadata category: location, membership, etc.

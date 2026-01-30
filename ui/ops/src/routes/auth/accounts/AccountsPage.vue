@@ -89,7 +89,7 @@ import NewAccountBtn from '@/routes/auth/accounts/NewAccountBtn.vue';
 import RoleAssignmentLink from '@/routes/auth/accounts/RoleAssignmentLink.vue';
 import {useGetRoles} from '@/routes/auth/roles/roles.js';
 import {useSidebarStore} from '@/stores/sidebar.js';
-import {RoleAssignment} from '@vanti-dev/sc-bos-ui-gen/proto/account_pb';
+import {RoleAssignment} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_pb';
 import {omit} from 'lodash';
 import {computed, ref, toValue, watch} from 'vue';
 import {useRouter} from 'vue-router';

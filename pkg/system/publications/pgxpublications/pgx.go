@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/internal/util/rpcutil"
+	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
 )
 
 //go:embed schema.sql

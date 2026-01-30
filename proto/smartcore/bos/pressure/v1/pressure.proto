@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package smartcore.bos.pressure.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/pressurepb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/info.proto";
+
+
+// Pressure trait is applicable to devices that measure or control pressure in a system.
+// This includes devices such as pressure sensors, pressure regulators, and other
+// similar control mechanisms used in various industrial and commercial applications.
+service PressureApi {
+  rpc GetPressure(GetPressureRequest) returns (Pressure) {}
+  rpc PullPressure(PullPressureRequest) returns (stream PullPressureResponse) {}
+  rpc UpdatePressure(UpdatePressureRequest) returns (Pressure) {}
+}
+
+service PressureInfo {
+  rpc DescribePressure(DescribePressureRequest) returns (PressureSupport) {}
+}
+
+message Pressure {
+  // The target pressure set at the device e.g. bar
+  optional float target_pressure = 1;
+  // The pressure measured at the device e.g. bar
+  // Output only.
+  optional float pressure = 2;
+}
+
+message GetPressureRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullPressureRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullPressureResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    Pressure pressure = 3;
+  }
+}
+
+message UpdatePressureRequest {
+  string name = 1;
+  Pressure pressure = 2;
+  google.protobuf.FieldMask update_mask = 3;
+  // When true, pressure is a change to the devices current value.
+  bool delta = 4;
+}
+
+
+message DescribePressureRequest {
+  string name = 1;
+}
+
+
+// MeterReadingSupport describes the capabilities of devices implementing this trait
+message PressureSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.types.ResourceSupport resource_support = 1;
+  // The unit associated with the target pressure and measured values
+  string pressure_unit = 2;
+}

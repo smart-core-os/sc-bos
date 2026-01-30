@@ -12,7 +12,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto/meteremail/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/meteremail/config"
 )
 
 // sendEmail creates the MIME/multipart email with attachment and then sends it over SMTP to the recipient in  dst

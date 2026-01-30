@@ -10,15 +10,14 @@ package exporthttp
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/auto/exporthttp/config"
-	exportHttp "github.com/vanti-dev/sc-bos/pkg/auto/exporthttp/http"
-	"github.com/vanti-dev/sc-bos/pkg/auto/exporthttp/job"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/config"
+	exportHttp "github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/http"
+	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/job"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 const AutoName = "exporthttp"
@@ -42,7 +41,7 @@ func (f factory) New(services auto.Services) service.Lifecycle {
 func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	logger := a.Logger.Named(cfg.Name)
 
-	jobs := job.FromConfig(cfg, a.Database, AutoName, cfg.Name, logger, a.Node)
+	jobs := job.FromConfig(cfg, a.Database, AutoName, cfg.Name, a.Node, logger)
 
 	if len(jobs) < 1 {
 		return nil
@@ -58,26 +57,12 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	go func() {
-		mulpx := job.Multiplex(ctx, jobs...)
-
-		// tear down
-		defer mulpx.WaitForDone()
-
-		// run
-		for {
-			select {
-			case jb := <-mulpx.C:
-				go func() {
-					if err := jb.Do(ctx, client.Post); err != nil {
-						logger.Warn(fmt.Sprintf("failed to run %s", jb.GetName()), zap.Error(err))
-						return
-					}
-					jb.SetPreviousExecution(time.Now())
-				}()
-			case <-ctx.Done():
-				return
-			}
+		if err := job.ExecuteAll(ctx, client.Post, jobs...); err != nil {
+			logger.Error("exporthttp automation execution failed", zap.Error(err))
+			return
 		}
+
+		logger.Info("exporthttp automation execution stopped")
 	}()
 
 	return nil

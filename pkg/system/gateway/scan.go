@@ -5,10 +5,10 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	reflectionpb "google.golang.org/grpc/reflection/grpc_reflection_v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
@@ -17,17 +17,19 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
 // scanRemoteHub calls scanRemoteNode for the hub and all enrolled nodes placing the results in a cohort.
 // This blocks until ctx is done.
 func (s *System) scanRemoteHub(ctx context.Context, c *cohort, hubConn *grpc.ClientConn) {
-	hubClient := gen.NewHubApiClient(hubConn)
+	hubClient := hubpb.NewHubApiClient(hubConn)
 	hubAddr := hubConn.Target()
-	if hubAddr == "dialchan:ignored" {
+	if strings.HasPrefix(hubAddr, "dialchan:") || strings.HasPrefix(hubAddr, "passthrough:") {
 		hubAddr = s.hub.Target()
 	}
 	hubNode := newRemoteNode(hubAddr, hubConn)
@@ -43,7 +45,7 @@ func (s *System) scanRemoteHub(ctx context.Context, c *cohort, hubConn *grpc.Cli
 
 // scanLocalHub calls scanRemoteNode for all enrolled nodes placing the results in a cohort.
 // This blocks until ctx is done.
-func (s *System) scanLocalHub(ctx context.Context, c *cohort, hubClient gen.HubApiClient) {
+func (s *System) scanLocalHub(ctx context.Context, c *cohort, hubClient hubpb.HubApiClient) {
 	s.retry(ctx, "pull enrolled nodes", func(ctx context.Context) (task.Next, error) {
 		return s.pullEnrolledNodes(ctx, hubClient, c)
 	}, zap.String("node", "local"))
@@ -92,14 +94,16 @@ func (s *System) pullSelf(ctx context.Context, node *remoteNode) (task.Next, err
 		}
 		c := cs.Changes[len(cs.Changes)-1]
 		md := c.Metadata
+		// note: we don't fetch health checks for the self node,
+		// this will be handled by the devices query
 		node.Self.Set(remoteDesc{name: md.Name, md: md})
 	}
 }
 
 // pullSystems populates node.Systems using the ServicesApi of node.
 func (s *System) pullSystems(ctx context.Context, node *remoteNode) (task.Next, error) {
-	client := gen.NewServicesApiClient(node.conn)
-	stream, err := client.PullServices(ctx, &gen.PullServicesRequest{Name: "systems"})
+	client := servicespb.NewServicesApiClient(node.conn)
+	stream, err := client.PullServices(ctx, &servicespb.PullServicesRequest{Name: "systems"})
 	if err != nil {
 		return neverSucceeded, err
 	}
@@ -141,8 +145,8 @@ func (s *System) pullSystems(ctx context.Context, node *remoteNode) (task.Next, 
 // pullDevices uses node's DevicesApi to collect the list of devices and metadata about them.
 // pullDevices blocks while the DevicesApi stream is active.
 func (s *System) pullDevices(ctx context.Context, node *remoteNode) (task.Next, error) {
-	client := gen.NewDevicesApiClient(node.conn)
-	stream, err := client.PullDevices(ctx, &gen.PullDevicesRequest{})
+	client := devicespb.NewDevicesApiClient(node.conn)
+	stream, err := client.PullDevices(ctx, &devicespb.PullDevicesRequest{})
 	if err != nil {
 		return neverSucceeded, err
 	}
@@ -157,22 +161,19 @@ func (s *System) pullDevices(ctx context.Context, node *remoteNode) (task.Next, 
 		}
 
 		for _, c := range msg.Changes {
-			// for anything that isn't an add stop the existing task for the device
-			if c.OldValue != nil {
-				node.Devices.Remove(remoteDesc{name: c.OldValue.Name})
-			}
 			if c.NewValue == nil {
-				continue // was a deletion
+				node.Devices.Remove(remoteDesc{name: c.OldValue.Name})
+				continue // device deleted
 			}
-
-			node.Devices.Set(remoteDesc{name: c.NewValue.Name, md: c.NewValue.Metadata})
+			// Set covers both add and update cases
+			node.Devices.Set(remoteDesc{name: c.NewValue.Name, md: c.NewValue.Metadata, health: c.NewValue.HealthChecks})
 		}
 	}
 }
 
 // pullEnrolledNodes calls scanRemoteNode for all enrolled nodes in the hub.
-func (s *System) pullEnrolledNodes(ctx context.Context, hubClient gen.HubApiClient, cohort *cohort) (task.Next, error) {
-	stream, err := hubClient.PullHubNodes(ctx, &gen.PullHubNodesRequest{})
+func (s *System) pullEnrolledNodes(ctx context.Context, hubClient hubpb.HubApiClient, cohort *cohort) (task.Next, error) {
+	stream, err := hubClient.PullHubNodes(ctx, &hubpb.PullHubNodesRequest{})
 	if err != nil {
 		return neverSucceeded, err
 	}
@@ -219,7 +220,7 @@ func (s *System) pullEnrolledNodes(ctx context.Context, hubClient gen.HubApiClie
 			nodeCtx, stop := context.WithCancel(ctx)
 			stops = append(stops, stop)
 
-			conn, err := grpc.NewClient(node.Address, grpc.WithTransportCredentials(credentials.NewTLS(s.tlsConfig)))
+			conn, err := s.newClient(node.Address)
 			if err != nil {
 				// An error here means there's something wrong with the params we passed to grpc.NewClient.
 				// It's unlikely that retrying will help, so skip this node and log an error.

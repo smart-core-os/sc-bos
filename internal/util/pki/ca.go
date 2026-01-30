@@ -13,7 +13,7 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	"github.com/vanti-dev/sc-bos/pkg/util/netutil"
+	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
 )
 
 // CreateCertificateChain creates a new x509.Certificate using id and pub signed by the leaf and private key of authority.

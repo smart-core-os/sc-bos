@@ -9,8 +9,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
 )
 
 func Test_PullExportMessages(t *testing.T) {
@@ -20,7 +20,7 @@ func Test_PullExportMessages(t *testing.T) {
 	e := resource.NewValue(resource.WithInitialValue(&traits.EnterLeaveEvent{EnterTotal: &enter, LeaveTotal: &leave}), resource.WithNoDuplicates())
 	o := resource.NewValue(resource.WithInitialValue(&traits.Occupancy{PeopleCount: 0, State: traits.Occupancy_OCCUPIED}), resource.WithNoDuplicates())
 
-	req := &gen.PullExportMessagesRequest{
+	req := &udmipb.PullExportMessagesRequest{
 		Name: "test",
 	}
 
@@ -29,15 +29,15 @@ func Test_PullExportMessages(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		createClient func() gen.UdmiServiceClient
+		createClient func() udmipb.UdmiServiceClient
 		set          func()
 		want         EventPoints
 	}{
 		{
 			name: "occupancy",
-			createClient: func() gen.UdmiServiceClient {
-				server := NewUdmiServiceServer(nil, e, o, "prefix")
-				return gen.WrapUdmiService(server)
+			createClient: func() udmipb.UdmiServiceClient {
+				server := newUdmiServiceServer(nil, e, o, "prefix")
+				return udmipb.WrapService(server)
 			},
 			set: func() {
 				o.Set(&traits.Occupancy{
@@ -53,9 +53,9 @@ func Test_PullExportMessages(t *testing.T) {
 		},
 		{
 			name: "enterleave",
-			createClient: func() gen.UdmiServiceClient {
-				server := NewUdmiServiceServer(nil, e, o, "prefix")
-				return gen.WrapUdmiService(server)
+			createClient: func() udmipb.UdmiServiceClient {
+				server := newUdmiServiceServer(nil, e, o, "prefix")
+				return udmipb.WrapService(server)
 			},
 			set: func() {
 				e.Set(&traits.EnterLeaveEvent{
@@ -71,9 +71,9 @@ func Test_PullExportMessages(t *testing.T) {
 		},
 		{
 			name: "enterleave_occupancy_nil",
-			createClient: func() gen.UdmiServiceClient {
-				server := NewUdmiServiceServer(nil, e, nil, "prefix")
-				return gen.WrapUdmiService(server)
+			createClient: func() udmipb.UdmiServiceClient {
+				server := newUdmiServiceServer(nil, e, nil, "prefix")
+				return udmipb.WrapService(server)
 			},
 			set: func() {
 				e.Set(&traits.EnterLeaveEvent{
@@ -89,9 +89,9 @@ func Test_PullExportMessages(t *testing.T) {
 		},
 		{
 			name: "occupancy_enterleave_nil",
-			createClient: func() gen.UdmiServiceClient {
-				server := NewUdmiServiceServer(nil, nil, o, "prefix")
-				return gen.WrapUdmiService(server)
+			createClient: func() udmipb.UdmiServiceClient {
+				server := newUdmiServiceServer(nil, nil, o, "prefix")
+				return udmipb.WrapService(server)
 			},
 			set: func() {
 				o.Set(&traits.Occupancy{

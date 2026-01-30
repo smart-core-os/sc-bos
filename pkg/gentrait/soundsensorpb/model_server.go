@@ -6,12 +6,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
 )
 
 type ModelServer struct {
-	gen.UnimplementedSoundSensorApiServer
+	soundsensorpb.UnimplementedSoundSensorApiServer
 	model *Model
 }
 
@@ -20,20 +20,20 @@ func NewModelServer(model *Model) *ModelServer {
 }
 
 func (m *ModelServer) Register(server *grpc.Server) {
-	gen.RegisterSoundSensorApiServer(server, m)
+	soundsensorpb.RegisterSoundSensorApiServer(server, m)
 }
 
 func (m *ModelServer) Unwrap() any {
 	return m.model
 }
 
-func (m *ModelServer) GetSoundLevel(_ context.Context, request *gen.GetSoundLevelRequest) (*gen.SoundLevel, error) {
+func (m *ModelServer) GetSoundLevel(_ context.Context, request *soundsensorpb.GetSoundLevelRequest) (*soundsensorpb.SoundLevel, error) {
 	return m.model.GetSoundLevel(resource.WithReadMask(request.ReadMask))
 }
 
-func (m *ModelServer) PullSoundLevel(request *gen.PullSoundLevelRequest, server grpc.ServerStreamingServer[gen.PullSoundLevelResponse]) error {
+func (m *ModelServer) PullSoundLevel(request *soundsensorpb.PullSoundLevelRequest, server grpc.ServerStreamingServer[soundsensorpb.PullSoundLevelResponse]) error {
 	for change := range m.model.PullSoundLevel(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		msg := &gen.PullSoundLevelResponse{Changes: []*gen.PullSoundLevelResponse_Change{{
+		msg := &soundsensorpb.PullSoundLevelResponse{Changes: []*soundsensorpb.PullSoundLevelResponse_Change{{
 			Name:       request.Name,
 			ChangeTime: timestamppb.New(change.ChangeTime),
 			SoundLevel: change.Value,

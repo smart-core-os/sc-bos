@@ -1,0 +1,35 @@
+This test verifies handling of types from subdirectories like pkg/proto/driver/dalipb.
+expected_changes: 2
+
+-- input/pkg/test/dali.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+)
+
+func ProcessDali(ctx context.Context) {
+	req := &gen.AddToGroupRequest{Group: 1}
+	resp := &gen.AddToGroupResponse{}
+
+	_ = req
+	_ = resp
+}
+-- output/pkg/test/dali.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/driver/dalipb"
+)
+
+func ProcessDali(ctx context.Context) {
+	req := &dalipb.AddToGroupRequest{Group: 1}
+	resp := &dalipb.AddToGroupResponse{}
+
+	_ = req
+	_ = resp
+}

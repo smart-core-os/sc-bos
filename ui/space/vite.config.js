@@ -16,7 +16,7 @@ const optimizeDepsInclude = [
 // Typically that includes local proto files that are referenced via either `file:../` dependencies in package.json
 // or via yarn/npm linking the generated sources into this project (or both).
 // This snippet will find all *_pb.js files and ensure that they will be handled correctly by vite.
-for (const dep of ['@vanti-dev/sc-bos-ui-gen', '@smart-core-os/sc-api-grpc-web']) {
+for (const dep of ['@smart-core-os/sc-bos-ui-gen', '@smart-core-os/sc-api-grpc-web']) {
   // find proto files in projects
   const protoDirRoot = dirname(_require.resolve(dep + '/package.json'));
   const globPattern = posix.join(protoDirRoot, '!(node_modules)/**/*_pb.js');

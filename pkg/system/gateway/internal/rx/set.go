@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
-	"github.com/vanti-dev/sc-bos/pkg/util/slices"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/util/slices"
 )
 
 // Set is a reactive set.
@@ -135,6 +135,8 @@ type Change[T any] struct {
 	Old  T // non-zero during update and remove
 	New  T // non-zero during add and update
 }
+
+//go:generate go tool stringer -type=ChangeType
 
 type ChangeType int
 

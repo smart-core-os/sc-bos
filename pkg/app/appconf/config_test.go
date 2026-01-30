@@ -12,7 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/tools/txtar"
 
-	"github.com/vanti-dev/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
 )
 
 func ExampleConfig() {

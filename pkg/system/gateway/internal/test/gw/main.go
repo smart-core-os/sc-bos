@@ -4,12 +4,12 @@ import (
 	"context"
 	"log"
 
-	"github.com/vanti-dev/sc-bos/pkg/app"
-	"github.com/vanti-dev/sc-bos/pkg/app/sysconf"
-	"github.com/vanti-dev/sc-bos/pkg/system"
-	"github.com/vanti-dev/sc-bos/pkg/system/gateway"
-	"github.com/vanti-dev/sc-bos/pkg/system/hub"
-	"github.com/vanti-dev/sc-bos/pkg/system/tenants"
+	"github.com/smart-core-os/sc-bos/pkg/app"
+	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	"github.com/smart-core-os/sc-bos/pkg/system/gateway"
+	"github.com/smart-core-os/sc-bos/pkg/system/hub"
+	"github.com/smart-core-os/sc-bos/pkg/system/tenants"
 )
 
 func Main() {

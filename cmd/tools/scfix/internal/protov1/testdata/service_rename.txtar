@@ -1,0 +1,88 @@
+# Test renaming services when V0ToV1 returns a different service name
+# Covers special cases like:
+# - smartcore.bos.tenants.TenantApi -> smartcore.bos.tenant.v1.TenantApi
+# - smartcore.bos.EnterLeaveHistory -> smartcore.bos.enterleavesensor.v1.EnterLeaveSensorHistory
+expected_changes: 2
+
+-- input/proto/tenant.proto --
+syntax = "proto3";
+
+package smartcore.bos.tenants;
+
+message Tenant {
+  string id = 1;
+  string name = 2;
+}
+
+service TenantApi {
+  rpc GetTenant(GetTenantRequest) returns (Tenant);
+}
+
+message GetTenantRequest {
+  string name = 1;
+}
+-- input/proto/enter_leave.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+import "google/protobuf/timestamp.proto";
+
+message EnterLeaveEvent {
+  google.protobuf.Timestamp enter_time = 1;
+  google.protobuf.Timestamp leave_time = 2;
+  int32 direction = 3;
+}
+
+service EnterLeaveHistory {
+  rpc ListEnterLeaveHistory(ListEnterLeaveHistoryRequest) returns (ListEnterLeaveHistoryResponse);
+}
+
+message ListEnterLeaveHistoryRequest {
+  string name = 1;
+}
+
+message ListEnterLeaveHistoryResponse {
+  repeated EnterLeaveEvent events = 1;
+}
+-- output/proto/smartcore/bos/tenant/v1/tenant.proto --
+syntax = "proto3";
+
+package smartcore.bos.tenant.v1;
+
+message Tenant {
+  string id = 1;
+  string name = 2;
+}
+
+service TenantApi {
+  rpc GetTenant(GetTenantRequest) returns (Tenant);
+}
+
+message GetTenantRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/enterleavesensor/v1/enter_leave.proto --
+syntax = "proto3";
+
+package smartcore.bos.enterleavesensor.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message EnterLeaveEvent {
+  google.protobuf.Timestamp enter_time = 1;
+  google.protobuf.Timestamp leave_time = 2;
+  int32 direction = 3;
+}
+
+service EnterLeaveSensorHistory {
+  rpc ListEnterLeaveHistory(ListEnterLeaveHistoryRequest) returns (ListEnterLeaveHistoryResponse);
+}
+
+message ListEnterLeaveHistoryRequest {
+  string name = 1;
+}
+
+message ListEnterLeaveHistoryResponse {
+  repeated EnterLeaveEvent events = 1;
+}

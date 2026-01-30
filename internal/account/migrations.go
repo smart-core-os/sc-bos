@@ -3,7 +3,7 @@ package account
 import (
 	"embed"
 
-	"github.com/vanti-dev/sc-bos/internal/sqlite"
+	"github.com/smart-core-os/sc-bos/internal/sqlite"
 )
 
 // Migrations contains the SQL migrations for the queries schema.

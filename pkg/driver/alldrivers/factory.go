@@ -1,20 +1,20 @@
 package alldrivers
 
 import (
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/driver/airthings"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet"
-	"github.com/vanti-dev/sc-bos/pkg/driver/gallagher"
-	"github.com/vanti-dev/sc-bos/pkg/driver/helvarnet"
-	"github.com/vanti-dev/sc-bos/pkg/driver/hikcentral"
-	"github.com/vanti-dev/sc-bos/pkg/driver/mock"
-	"github.com/vanti-dev/sc-bos/pkg/driver/opcua"
-	"github.com/vanti-dev/sc-bos/pkg/driver/pestsense"
-	"github.com/vanti-dev/sc-bos/pkg/driver/proxy"
-	seWiserKnx "github.com/vanti-dev/sc-bos/pkg/driver/se/wiser-knx"
-	shellyTrv "github.com/vanti-dev/sc-bos/pkg/driver/shelly/trv"
-	steinelHpd "github.com/vanti-dev/sc-bos/pkg/driver/steinel/hpd"
-	"github.com/vanti-dev/sc-bos/pkg/driver/xovis"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher"
+	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral"
+	"github.com/smart-core-os/sc-bos/pkg/driver/mock"
+	"github.com/smart-core-os/sc-bos/pkg/driver/opcua"
+	"github.com/smart-core-os/sc-bos/pkg/driver/pestsense"
+	"github.com/smart-core-os/sc-bos/pkg/driver/proxy"
+	seWiserKnx "github.com/smart-core-os/sc-bos/pkg/driver/se/wiser-knx"
+	shellyTrv "github.com/smart-core-os/sc-bos/pkg/driver/shelly/trv"
+	steinelHpd "github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd"
+	"github.com/smart-core-os/sc-bos/pkg/driver/xovis"
 )
 
 // Factories returns a new map containing all known driver factories.

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -18,47 +19,61 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/auto/udmi"
-	"github.com/vanti-dev/sc-bos/pkg/driver/helvarnet/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
 )
+
+type TestResults struct {
+	FunctionResult   int32
+	FunctionTestTime *time.Time
+	DurationResult   int32
+	DurationTestTime *time.Time
+}
 
 // Light represents a single light device within the HelvarNet system.
 type Light struct {
-	gen.UnimplementedStatusApiServer
 	traits.UnimplementedLightApiServer
-	gen.UnimplementedEmergencyLightApiServer
-	gen.UnimplementedUdmiServiceServer
+	emergencylightpb.UnimplementedEmergencyLightApiServer
+	udmipb.UnimplementedUdmiServiceServer
 
 	brightness      *resource.Value // *traits.Brightness
 	client          *tcpClient
 	conf            *config.Device
 	logger          *zap.Logger
-	helvarnetStatus uint32          // The status flags field from the device, unique to Helvarnet protocol. See config.DeviceStatuses
-	status          *resource.Value // *gen.StatusLog
-	udmiBus         minibus.Bus[*gen.PullExportMessagesResponse]
+	helvarnetStatus int64 // The status flags field from the device, unique to Helvarnet protocol. See deviceStatuses
+	udmiBus         minibus.Bus[*udmipb.PullExportMessagesResponse]
 
-	testResultSet *resource.Value // *gen.TestResultSet
+	// stores device test results, key is device name, value is TestResults
+	database      *bolthold.Store
+	testResultSet *resource.Value // *emergencylightpb.TestResultSet
+	isEm          bool
 }
 
-func newLight(client *tcpClient, l *zap.Logger, conf *config.Device) *Light {
+func newLight(client *tcpClient, l *zap.Logger, conf *config.Device, db *bolthold.Store, em bool) *Light {
 	return &Light{
-		brightness:    resource.NewValue(resource.WithInitialValue(&traits.Brightness{}), resource.WithNoDuplicates()),
-		client:        client,
-		conf:          conf,
-		logger:        l,
-		status:        resource.NewValue(resource.WithInitialValue(&gen.StatusLog{}), resource.WithNoDuplicates()),
-		testResultSet: resource.NewValue(resource.WithInitialValue(&gen.TestResultSet{}), resource.WithNoDuplicates()),
+		brightness: resource.NewValue(resource.WithInitialValue(&traits.Brightness{}), resource.WithNoDuplicates()),
+		client:     client,
+		conf:       conf,
+		database:   db,
+		isEm:       em,
+		logger:     l,
+		testResultSet: resource.NewValue(resource.WithInitialValue(&emergencylightpb.TestResultSet{
+			DurationTest: &emergencylightpb.EmergencyTestResult{},
+			FunctionTest: &emergencylightpb.EmergencyTestResult{},
+		}), resource.WithNoDuplicates()),
 	}
 }
 
 // setScene sets the lighting scene for the device
-func (l *Light) setScene(block string, scene string, constant string) error {
+func (l *Light) setScene(ctx context.Context, block string, scene string, constant string) error {
 	command := recallDeviceScene(l.conf.Address, block, scene, constant)
 
-	_, err := l.client.sendAndReceive(command, "")
+	_, err := l.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -66,10 +81,10 @@ func (l *Light) setScene(block string, scene string, constant string) error {
 }
 
 // setLevel sets the light level for this device
-func (l *Light) setLevel(level int) error {
+func (l *Light) setLevel(ctx context.Context, level int) error {
 	command := changeDeviceLevel(l.conf.Address, level)
 
-	_, err := l.client.sendAndReceive(command, "")
+	_, err := l.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -77,11 +92,11 @@ func (l *Light) setLevel(level int) error {
 }
 
 // refreshBrightness queries the device's load and updates the brightness value
-func (l *Light) refreshBrightness() error {
+func (l *Light) refreshBrightness(ctx context.Context) error {
 	command := queryLoadLevel(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return err
 	}
@@ -104,46 +119,32 @@ func (l *Light) refreshBrightness() error {
 }
 
 // refreshDeviceStatus queries the device and updates the status value
-func (l *Light) refreshDeviceStatus() error {
+func (l *Light) refreshDeviceStatus(ctx context.Context) (int64, error) {
 	command := queryDeviceState(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
-		return err
+		return DeviceOfflineCode, err
 	}
 
 	split := strings.Split(r, "=")
 	if len(split) < 2 {
-		return fmt.Errorf("invalid response in refreshDeviceStatus: %s", r)
+		return BadResponseCode, fmt.Errorf("invalid response in refreshDeviceStatus: %s", r)
 	}
 
 	s := strings.TrimSuffix(split[1], "#")
 	statusInt, err := strconv.Atoi(s)
 	if err != nil {
-		return err
+		return BadResponseCode, err
 	}
 
-	l.helvarnetStatus = uint32(statusInt)
-	log := &gen.StatusLog{
-		RecordTime: timestamppb.Now(),
-	}
-	for _, ds := range config.DeviceStatuses {
-		if (ds.FlagValue & l.helvarnetStatus) > 0 {
-			log.Problems = append(log.Problems, &gen.StatusLog_Problem{
-				Level:       ds.Level,
-				Name:        ds.State,
-				Description: ds.Description,
-			})
-		}
-	}
-	_, _ = l.status.Set(log)
-	return nil
+	return int64(statusInt), nil
 }
 
 // UpdateBrightness update the brightness level or preset (scene) of the device
 // if the request has a present included, this takes precedence and the level percent is ignored
-func (l *Light) UpdateBrightness(_ context.Context, req *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
+func (l *Light) UpdateBrightness(ctx context.Context, req *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
 	if req.Brightness == nil {
 		return nil, status.Error(codes.InvalidArgument, "no brightness in request")
 	}
@@ -163,7 +164,7 @@ func (l *Light) UpdateBrightness(_ context.Context, req *traits.UpdateBrightness
 		if len(sceneSplit) == 3 {
 			constant = sceneSplit[2]
 		}
-		err := l.setScene(block, scene, constant)
+		err := l.setScene(ctx, block, scene, constant)
 		if err != nil {
 			return nil, status.Error(codes.DeadlineExceeded, "failed to set scene")
 		}
@@ -174,7 +175,7 @@ func (l *Light) UpdateBrightness(_ context.Context, req *traits.UpdateBrightness
 		})
 	} else {
 		level := req.Brightness.LevelPercent
-		err := l.setLevel(int(level))
+		err := l.setLevel(ctx, int(level))
 		if err != nil {
 			return nil, status.Error(codes.DeadlineExceeded, "failed to set scene")
 		}
@@ -186,8 +187,8 @@ func (l *Light) UpdateBrightness(_ context.Context, req *traits.UpdateBrightness
 	return nil, nil
 }
 
-func (l *Light) GetBrightness(_ context.Context, _ *traits.GetBrightnessRequest) (*traits.Brightness, error) {
-	err := l.refreshBrightness()
+func (l *Light) GetBrightness(ctx context.Context, _ *traits.GetBrightnessRequest) (*traits.Brightness, error) {
+	err := l.refreshBrightness(ctx)
 	if err != nil {
 		return nil, status.Error(codes.DeadlineExceeded, "failed to get brightness")
 	}
@@ -213,30 +214,7 @@ func (l *Light) PullBrightness(_ *traits.PullBrightnessRequest, server traits.Li
 	return nil
 }
 
-func (l *Light) GetCurrentStatus(context.Context, *gen.GetCurrentStatusRequest) (*gen.StatusLog, error) {
-	value := l.status.Get()
-	s := value.(*gen.StatusLog)
-	return s, nil
-}
-
-func (l *Light) PullCurrentStatus(_ *gen.PullCurrentStatusRequest, server gen.StatusApi_PullCurrentStatusServer) error {
-	for value := range l.status.Pull(server.Context()) {
-		statusLog := value.Value.(*gen.StatusLog)
-		err := server.Send(&gen.PullCurrentStatusResponse{Changes: []*gen.PullCurrentStatusResponse_Change{
-			{
-				Name:          l.conf.Name,
-				ChangeTime:    timestamppb.New(value.ChangeTime),
-				CurrentStatus: statusLog,
-			},
-		}})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (l *Light) udmiPointsetFromData() (*gen.MqttMessage, error) {
+func (l *Light) udmiPointsetFromData() (*udmipb.MqttMessage, error) {
 	points := make(udmi.PointsEvent)
 	brightness := l.brightness.Get().(*traits.Brightness)
 	points["BrightnessLvl%"] = udmi.PointValue{PresentValue: brightness.LevelPercent}
@@ -245,14 +223,19 @@ func (l *Light) udmiPointsetFromData() (*gen.MqttMessage, error) {
 		points["Preset"] = udmi.PointValue{PresentValue: brightness.Preset.Title}
 	}
 
-	statuses := config.GetStatusListFromFlag(l.helvarnetStatus)
-	points["Status"] = udmi.PointValue{PresentValue: strings.Join(statuses, ", ")}
+	statuses := getStatusListFromFlag(l.helvarnetStatus)
+
+	statusStrings := make([]string, len(statuses))
+	for i, s := range statuses {
+		statusStrings[i] = s.State + ": " + s.Description
+	}
+	points["Status"] = udmi.PointValue{PresentValue: strings.Join(statusStrings, "; ")}
 
 	b, err := json.Marshal(points)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal udmi points: %w", err)
 	}
-	return &gen.MqttMessage{
+	return &udmipb.MqttMessage{
 		Topic:   l.conf.TopicPrefix + "/event/pointset/points",
 		Payload: string(b),
 	}, nil
@@ -265,27 +248,53 @@ func (l *Light) sendUdmiMessage(ctx context.Context) {
 		return
 	}
 
-	l.udmiBus.Send(ctx, &gen.PullExportMessagesResponse{
+	l.udmiBus.Send(ctx, &udmipb.PullExportMessagesResponse{
 		Name:    l.conf.Name,
 		Message: m,
 	})
 }
 
 func (l *Light) refreshData(ctx context.Context) {
-	err := l.refreshDeviceStatus()
-	if err != nil {
-		l.logger.Error("failed to refresh device status, will try again on next run...", zap.Error(err))
-	}
-	err = l.refreshBrightness()
+
+	err := l.refreshBrightness(ctx)
 	if err != nil {
 		l.logger.Error("failed to refresh brightness, will try again on next run...", zap.Error(err))
+	}
+
+	// if this light is an emergency light, get the test results
+	if l.isEm {
+		currentResults := l.testResultSet.Get().(*emergencylightpb.TestResultSet)
+		newResults := &emergencylightpb.TestResultSet{}
+		fRes, err := getTestResult(ctx, l.getFunctionTestResult, l.getFunctionTestCompletionTime)
+		if err == nil {
+			// update the stored test result set with the new result
+			newResults.FunctionTest = fRes
+		} else {
+			l.logger.Error("Failed to get function test result", zap.String("name", l.conf.Name), zap.Error(err))
+		}
+
+		dRes, err := getTestResult(ctx, l.getDurationTestResult, l.getDurationTestCompletionTime)
+		if err == nil {
+			newResults.DurationTest = dRes
+		} else {
+			l.logger.Error("Failed to get duration test result", zap.String("name", l.conf.Name), zap.Error(err))
+		}
+
+		_, _ = l.testResultSet.Set(newResults)
+		if !testResultSetEqual(currentResults, newResults) {
+			err = l.saveTestResults()
+			if err != nil {
+				l.logger.Error("Failed to save test results", zap.String("name", l.conf.Name), zap.Error(err))
+			}
+		}
 	}
 
 	l.sendUdmiMessage(ctx)
 }
 
-// runHealthCheck runs queries on a schedule to check the health of the device.
-func (l *Light) runHealthCheck(ctx context.Context, t time.Duration) error {
+// queryDevice runs queries on a schedule to check the statuses of the device.
+func (l *Light) queryDevice(ctx context.Context, t time.Duration, fc *healthpb.FaultCheck) error {
+
 	ticker := time.NewTicker(t)
 	defer ticker.Stop()
 	l.refreshData(ctx)
@@ -295,16 +304,23 @@ func (l *Light) runHealthCheck(ctx context.Context, t time.Duration) error {
 			return nil
 		case <-ticker.C:
 			l.refreshData(ctx)
+
+			s, err := l.refreshDeviceStatus(ctx)
+			if err != nil {
+				l.logger.Error("failed to refresh device status, will try again on next run...", zap.Error(err))
+			}
+			l.helvarnetStatus = s
+			updateDeviceFaults(ctx, l.helvarnetStatus, fc)
 		}
 	}
 }
 
 // runFunctionTest requests a function test from the device. Does not expect a response.
 // To get the result of the function test, you need to call queryEmergencyFunctionTestState
-func (l *Light) runFunctionTest() error {
+func (l *Light) runFunctionTest(ctx context.Context) error {
 	command := deviceEmergencyFunctionTest(l.conf.Address)
 
-	_, err := l.client.sendAndReceive(command, "")
+	_, err := l.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -313,10 +329,10 @@ func (l *Light) runFunctionTest() error {
 
 // runDurationTest requests a duration test from the device. Does not expect a response.
 // To get the result of the duration test, you need to call queryEmergencyDurationTestState
-func (l *Light) runDurationTest() error {
+func (l *Light) runDurationTest(ctx context.Context) error {
 	command := deviceEmergencyDurationTest(l.conf.Address)
 
-	_, err := l.client.sendAndReceive(command, "")
+	_, err := l.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -324,10 +340,10 @@ func (l *Light) runDurationTest() error {
 }
 
 // stopTest stops any running emergency test on the device.
-func (l *Light) stopTest() error {
+func (l *Light) stopTest(ctx context.Context) error {
 	command := deviceStopEmergencyTests(l.conf.Address)
 
-	_, err := l.client.sendAndReceive(command, "")
+	_, err := l.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -400,12 +416,12 @@ func parseGetResultResponse(r string) (*EmergencyState, error) {
 
 // getFunctionTestResult queries the device for the result of the last function test.
 // The result is a valid EmergencyState value as defined by the protocol, else an error is returned.
-func (l *Light) getFunctionTestResult() (*EmergencyState, error) {
+func (l *Light) getFunctionTestResult(ctx context.Context) (*EmergencyState, error) {
 
 	command := queryEmergencyFunctionTestState(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return nil, err
 	}
@@ -415,12 +431,12 @@ func (l *Light) getFunctionTestResult() (*EmergencyState, error) {
 
 // getDurationTestResult queries the device for the result of the last duration test.
 // The result is a valid EmergencyState value as defined by the protocol, else an error is returned.
-func (l *Light) getDurationTestResult() (*EmergencyState, error) {
+func (l *Light) getDurationTestResult(ctx context.Context) (*EmergencyState, error) {
 
 	command := queryEmergencyDurationTestState(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return nil, err
 	}
@@ -453,12 +469,12 @@ func parseGetCompletionTimeResponse(r string) (*time.Time, error) {
 }
 
 // getFunctionTestCompletionTime queries the device for the finish time of the last function test.
-func (l *Light) getFunctionTestCompletionTime() (*time.Time, error) {
+func (l *Light) getFunctionTestCompletionTime(ctx context.Context) (*time.Time, error) {
 
 	command := queryEmergencyFunctionTestTime(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return nil, err
 	}
@@ -467,12 +483,12 @@ func (l *Light) getFunctionTestCompletionTime() (*time.Time, error) {
 }
 
 // getDurationTestCompletionTime queries the device for the finish time of the last duration test.
-func (l *Light) getDurationTestCompletionTime() (*time.Time, error) {
+func (l *Light) getDurationTestCompletionTime(ctx context.Context) (*time.Time, error) {
 
 	command := queryEmergencyDurationTestTime(l.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := l.client.sendAndReceive(command, want)
+	r, err := l.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return nil, err
 	}
@@ -480,32 +496,32 @@ func (l *Light) getDurationTestCompletionTime() (*time.Time, error) {
 	return parseGetCompletionTimeResponse(r)
 }
 
-func (l *Light) StartFunctionTest(context.Context, *gen.StartEmergencyTestRequest) (*gen.StartEmergencyTestResponse, error) {
+func (l *Light) StartFunctionTest(ctx context.Context, _ *emergencylightpb.StartEmergencyTestRequest) (*emergencylightpb.StartEmergencyTestResponse, error) {
 	l.logger.Info("Starting function test for light", zap.String("name", l.conf.Name))
-	err := l.runFunctionTest()
+	err := l.runFunctionTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to start function test", zap.String("name", l.conf.Name), zap.Error(err))
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to start function test"))
 	}
-	_, _ = l.testResultSet.Set(&gen.TestResultSet{
-		FunctionTest: &gen.EmergencyTestResult{
+	_, _ = l.testResultSet.Set(&emergencylightpb.TestResultSet{
+		FunctionTest: &emergencylightpb.EmergencyTestResult{
 			StartTime: timestamppb.Now(),
 		},
 	}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{Paths: []string{"function_test.start_time"}}))
-	return &gen.StartEmergencyTestResponse{
+	return &emergencylightpb.StartEmergencyTestResponse{
 		StartTime: timestamppb.Now(),
 	}, nil
 }
 
-func (l *Light) StartDurationTest(context.Context, *gen.StartEmergencyTestRequest) (*gen.StartEmergencyTestResponse, error) {
+func (l *Light) StartDurationTest(ctx context.Context, _ *emergencylightpb.StartEmergencyTestRequest) (*emergencylightpb.StartEmergencyTestResponse, error) {
 	l.logger.Info("Starting duration test for light", zap.String("name", l.conf.Name))
-	err := l.runDurationTest()
+	err := l.runDurationTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to start duration test", zap.String("name", l.conf.Name), zap.Error(err))
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to start duration test"))
 	}
-	_, _ = l.testResultSet.Set(&gen.TestResultSet{
-		DurationTest: &gen.EmergencyTestResult{
+	_, _ = l.testResultSet.Set(&emergencylightpb.TestResultSet{
+		DurationTest: &emergencylightpb.EmergencyTestResult{
 			StartTime: timestamppb.Now(),
 		},
 	}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{Paths: []string{"duration_test.start_time"}}))
@@ -513,68 +529,42 @@ func (l *Light) StartDurationTest(context.Context, *gen.StartEmergencyTestReques
 	if l.conf.DurationTestLength != nil {
 		duration = durationpb.New(l.conf.DurationTestLength.Duration)
 	}
-	return &gen.StartEmergencyTestResponse{
+	return &emergencylightpb.StartEmergencyTestResponse{
 		StartTime: timestamppb.Now(),
 		Duration:  duration,
 	}, nil
 }
 
-func (l *Light) StopEmergencyTest(context.Context, *gen.StopEmergencyTestsRequest) (*gen.StopEmergencyTestsResponse, error) {
+func (l *Light) StopEmergencyTest(ctx context.Context, _ *emergencylightpb.StopEmergencyTestsRequest) (*emergencylightpb.StopEmergencyTestsResponse, error) {
 	l.logger.Info("Stopping test for light", zap.String("name", l.conf.Name))
-	err := l.stopTest()
+	err := l.stopTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to stop test", zap.String("name", l.conf.Name), zap.Error(err))
 		return nil, status.Error(codes.Internal, "failed to stop test")
 	}
 	// when we stop tests clear any current data
-	_, _ = l.testResultSet.Set(&gen.TestResultSet{})
-	return &gen.StopEmergencyTestsResponse{}, nil
+	_, _ = l.testResultSet.Set(&emergencylightpb.TestResultSet{})
+	return &emergencylightpb.StopEmergencyTestsResponse{}, nil
 }
 
-func (l *Light) GetTestResultSet(_ context.Context, req *gen.GetTestResultSetRequest) (*gen.TestResultSet, error) {
+func (l *Light) GetTestResultSet(_ context.Context, req *emergencylightpb.GetTestResultSetRequest) (*emergencylightpb.TestResultSet, error) {
 
-	result := &gen.TestResultSet{}
+	result := &emergencylightpb.TestResultSet{}
 
 	if req.ReadMask == nil || slices.Contains(req.ReadMask.Paths, "function_test") {
-		result.FunctionTest = l.testResultSet.Get().(*gen.TestResultSet).FunctionTest
-		if req.QueryDevice {
-			fRes, err := getTestResult(l.getFunctionTestResult, l.getFunctionTestCompletionTime)
-			if err != nil {
-				l.logger.Error("Failed to get function test result", zap.String("name", l.conf.Name), zap.Error(err))
-				return nil, err
-			}
-			result.FunctionTest = fRes
-			// update the stored test result set with the new result
-			_, _ = l.testResultSet.Set(result, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
-				Paths: []string{"function_test"},
-			}))
-		}
+		result.FunctionTest = l.testResultSet.Get().(*emergencylightpb.TestResultSet).FunctionTest
 	}
 	if req.ReadMask == nil || slices.Contains(req.ReadMask.Paths, "duration_test") {
-		result.DurationTest = l.testResultSet.Get().(*gen.TestResultSet).DurationTest
-		if req.QueryDevice {
-			dRes, err := getTestResult(l.getDurationTestResult, l.getDurationTestCompletionTime)
-			if err != nil {
-				l.logger.Error("Failed to get duration test result", zap.String("name", l.conf.Name), zap.Error(err))
-				return nil, err
-			}
-			result.DurationTest = dRes
-
-			r, err := l.testResultSet.Set(result, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
-				Paths: []string{"duration_test"},
-			}))
-			if err == nil {
-				result = r.(*gen.TestResultSet)
-			}
-		}
+		result.DurationTest = l.testResultSet.Get().(*emergencylightpb.TestResultSet).DurationTest
 	}
+
 	return result, nil
 }
 
-func (l *Light) PullTestResultSets(request *gen.PullTestResultRequest, server grpc.ServerStreamingServer[gen.PullTestResultsResponse]) error {
+func (l *Light) PullTestResultSets(request *emergencylightpb.PullTestResultRequest, server grpc.ServerStreamingServer[emergencylightpb.PullTestResultsResponse]) error {
 	for value := range l.testResultSet.Pull(server.Context(), resource.WithReadMask(request.GetReadMask()), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		resultSet := value.Value.(*gen.TestResultSet)
-		err := server.Send(&gen.PullTestResultsResponse{Changes: []*gen.PullTestResultsResponse_Change{
+		resultSet := value.Value.(*emergencylightpb.TestResultSet)
+		err := server.Send(&emergencylightpb.PullTestResultsResponse{Changes: []*emergencylightpb.PullTestResultsResponse_Change{
 			{
 				Name:       l.conf.Name,
 				ChangeTime: timestamppb.New(value.ChangeTime),
@@ -588,47 +578,50 @@ func (l *Light) PullTestResultSets(request *gen.PullTestResultRequest, server gr
 	return nil
 }
 
-func getTestResult(getResult func() (*EmergencyState, error), getTime func() (*time.Time, error)) (*gen.EmergencyTestResult, error) {
+func getTestResult(ctx context.Context, getResult func(ctx context.Context) (*EmergencyState, error), getTime func(ctx context.Context) (*time.Time, error)) (*emergencylightpb.EmergencyTestResult, error) {
 
-	eState, err := getResult()
+	eState, err := getResult(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to getResult test result")
 	}
-	result := &gen.EmergencyTestResult{}
+	result := &emergencylightpb.EmergencyTestResult{}
 	result.Result = helvarResultToTrait(eState)
 	if hasTestCompleted(eState) {
-		t, _ := getTime()
+		t, _ := getTime(ctx)
 		if t != nil {
 			result.EndTime = timestamppb.New(*t)
+		} else {
+			// treat this as an error, if there is no time the device as been reset and we cannot trust the result anyway
+			return nil, status.Error(codes.Internal, "failed to get test completion time")
 		}
 	}
 	return result, nil
 }
 
-func helvarResultToTrait(e *EmergencyState) gen.EmergencyTestResult_Result {
+func helvarResultToTrait(e *EmergencyState) emergencylightpb.EmergencyTestResult_Result {
 	if e == nil {
-		return gen.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
+		return emergencylightpb.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
 	}
 	switch *e {
 	case Pass:
-		return gen.EmergencyTestResult_TEST_PASSED
+		return emergencylightpb.EmergencyTestResult_TEST_PASSED
 	case LampFailure:
-		return gen.EmergencyTestResult_LAMP_FAILURE
+		return emergencylightpb.EmergencyTestResult_LAMP_FAILURE
 	case BatteryFailure:
-		return gen.EmergencyTestResult_BATTERY_FAILURE
+		return emergencylightpb.EmergencyTestResult_BATTERY_FAILURE
 	case Faulty:
-		return gen.EmergencyTestResult_LIGHT_FAULTY
+		return emergencylightpb.EmergencyTestResult_LIGHT_FAULTY
 	case Failure:
-		return gen.EmergencyTestResult_TEST_FAILED
+		return emergencylightpb.EmergencyTestResult_TEST_FAILED
 	case TestPending:
-		return gen.EmergencyTestResult_TEST_RESULT_PENDING
+		return emergencylightpb.EmergencyTestResult_TEST_RESULT_PENDING
 	case Unknown:
-		return gen.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
+		return emergencylightpb.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
 	}
-	return gen.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
+	return emergencylightpb.EmergencyTestResult_TEST_RESULT_UNSPECIFIED
 }
 
-func (l *Light) GetExportMessage(context.Context, *gen.GetExportMessageRequest) (*gen.MqttMessage, error) {
+func (l *Light) GetExportMessage(context.Context, *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
 	m, err := l.udmiPointsetFromData()
 	if err != nil {
 		l.logger.Error("failed to create udmi pointset message", zap.Error(err))
@@ -637,7 +630,7 @@ func (l *Light) GetExportMessage(context.Context, *gen.GetExportMessageRequest) 
 	return m, nil
 }
 
-func (l *Light) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen.UdmiService_PullExportMessagesServer) error {
+func (l *Light) PullExportMessages(_ *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
 	for msg := range l.udmiBus.Listen(server.Context()) {
 		err := server.Send(msg)
 		if err != nil {
@@ -647,10 +640,89 @@ func (l *Light) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen.
 	return nil
 }
 
-func (l *Light) PullControlTopics(*gen.PullControlTopicsRequest, grpc.ServerStreamingServer[gen.PullControlTopicsResponse]) error {
+func (l *Light) PullControlTopics(*udmipb.PullControlTopicsRequest, grpc.ServerStreamingServer[udmipb.PullControlTopicsResponse]) error {
 	return status.Error(codes.Unimplemented, "PullControlTopics is not implemented for Light")
 }
 
-func (l *Light) OnMessage(context.Context, *gen.OnMessageRequest) (*gen.OnMessageResponse, error) {
+func (l *Light) OnMessage(context.Context, *udmipb.OnMessageRequest) (*udmipb.OnMessageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "OnMessage is not implemented for Light")
+}
+
+func (l *Light) loadTestResults() error {
+
+	var testResult TestResults
+	if err := l.database.Get(l.conf.Name, &testResult); err != nil {
+		return fmt.Errorf("failed to load test results for key %s: %w", l.conf.Name, err)
+	}
+	result := &emergencylightpb.TestResultSet{
+		FunctionTest: &emergencylightpb.EmergencyTestResult{
+			Result: emergencylightpb.EmergencyTestResult_Result(testResult.FunctionResult),
+		},
+		DurationTest: &emergencylightpb.EmergencyTestResult{
+			Result: emergencylightpb.EmergencyTestResult_Result(testResult.DurationResult),
+		},
+	}
+	if testResult.FunctionTestTime != nil {
+		result.FunctionTest.EndTime = timestamppb.New(*testResult.FunctionTestTime)
+	}
+	if testResult.DurationTestTime != nil {
+		result.DurationTest.EndTime = timestamppb.New(*testResult.DurationTestTime)
+	}
+	_, _ = l.testResultSet.Set(result)
+	return nil
+}
+
+// updateFromProto updates the TestResults struct from a TestResultSet proto message.
+func (tr *TestResults) updateFromProto(proto *emergencylightpb.TestResultSet) {
+	if proto.FunctionTest != nil {
+		tr.FunctionResult = int32(proto.FunctionTest.Result)
+		if proto.FunctionTest.EndTime != nil {
+			t := proto.FunctionTest.EndTime.AsTime()
+			tr.FunctionTestTime = &t
+		}
+	}
+	if proto.DurationTest != nil {
+		tr.DurationResult = int32(proto.DurationTest.Result)
+		if proto.DurationTest.EndTime != nil {
+			t := proto.DurationTest.EndTime.AsTime()
+			tr.DurationTestTime = &t
+		}
+	}
+}
+
+func (l *Light) saveTestResults() error {
+
+	value := l.testResultSet.Get().(*emergencylightpb.TestResultSet)
+	var testResult TestResults
+	testResult.updateFromProto(value)
+	if err := l.database.Upsert(l.conf.Name, &testResult); err != nil {
+		return err
+	}
+	return nil
+}
+
+// testResultSetEqual compares two TestResultSet objects for equality.
+// both the Duration and Function tests for each TestResultSet must be equal for the sets to be considered equal.
+func testResultSetEqual(a, b *emergencylightpb.TestResultSet) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+
+	return areTestResultsEqual(a.DurationTest, b.DurationTest) &&
+		areTestResultsEqual(a.FunctionTest, b.FunctionTest)
+}
+
+// areTestResultsEqual compares two EmergencyTestResult objects for equality.
+func areTestResultsEqual(a, b *emergencylightpb.EmergencyTestResult) bool {
+	if (a == nil) != (b == nil) {
+		return false
+	}
+	if a != nil {
+		if a.Result != b.Result ||
+			!a.StartTime.AsTime().Equal(b.StartTime.AsTime()) ||
+			!a.EndTime.AsTime().Equal(b.EndTime.AsTime()) {
+			return false
+		}
+	}
+	return true
 }

@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package smartcore.bos.anprcamera.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/anprcamerapb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+
+// AnprCameraApi describes the capability to retrieve detection events from ANPR cameras.
+service AnprCameraApi {
+  rpc ListAnprEvents(ListAnprEventsRequest) returns (ListAnprEventsResponse) {}
+  rpc PullAnprEvents(PullAnprEventsRequest) returns (stream PullAnprEventsResponse) {}
+}
+
+// AnprEvent describes a registration plate detection event from an ANPR camera.
+// Includes registration plate information but also vehicle information if the camera supports it.
+message AnprEvent {
+  // The time the detection events occurred.
+  google.protobuf.Timestamp event_time = 1;
+  // The registration plate detected.
+  string registration_plate = 2;
+  // Country of the detected registration plate.
+  string country = 3;
+  // Optional. The area of the detected registration plate. i.e. for UAE this could be Abu Dhabi, Dubai, etc.
+  string area = 4;
+  // Optional. The confidence level of the detection as a percentage. If omitted, means unknown confidence level.
+  optional float confidence = 5;
+  // Optional. The type of plate, e.g. standard, personalised, etc.
+  string plate_type = 6;
+  // Optional. The year of the vehicle.
+  string year = 7;
+
+  // Optional. Information about the vehicle itself.
+  message VehicleInfo {
+    // Optional. The type of vehicle, e.g. car, truck, etc.
+    string vehicle_type = 1;
+    // Optional. The colour of the vehicle.
+    string colour = 2;
+    // Optional. The make of the vehicle.
+    string make = 3;
+    // Optional. The model of the vehicle.
+    string model = 4;
+  }
+
+  VehicleInfo vehicle_info = 8;
+}
+
+message ListAnprEventsRequest {
+  // The name of the device to get the last event for.
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  // The maximum number of AnprEvents to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 3;
+  // A page token, received from a previous `ListAnprEventsResponse` call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 4;
+}
+
+message ListAnprEventsResponse {
+  repeated AnprEvent anpr_events = 1;
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+  // If non-zero this is the total number of AnprEvents after filtering is applied.
+  // This may be an estimate.
+  int32 total_size = 3;
+}
+
+message PullAnprEventsRequest {
+  // The name of the device to pull events for.
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullAnprEventsResponse {
+  repeated Change changes = 1;
+  // The detection event.
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    AnprEvent anpr_event = 3;
+  }
+}

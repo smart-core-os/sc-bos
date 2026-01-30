@@ -1,6 +1,10 @@
 <template>
   <span>
     <metadata-card/>
+    <with-health-checks v-if="healthExperiment && traits['smartcore.bos.Health']" :name="deviceId" v-slot="{resource}">
+      <v-divider class="mt-4 mb-1"/>
+      <health-checks-card v-bind="resource"/>
+    </with-health-checks>
     <with-status v-if="traits['smartcore.bos.Status']" :name="deviceId" v-slot="{resource}">
       <v-divider class="mt-4 mb-1"/>
       <status-log-card v-bind="resource"/>
@@ -36,6 +40,10 @@
       <v-divider class="mt-4 mb-1"/>
       <meter-card v-bind="resource" :info="info?.response" :name="deviceId"/>
     </with-meter>
+    <with-temperature v-if="traits['smartcore.bos.Temperature']" :name="deviceId" v-slot="{resource}">
+      <v-divider class="mt-4 mb-1"/>
+      <temperature-card v-bind="resource"/>
+    </with-temperature>
     <with-transport v-if="traits['smartcore.bos.Transport']" :name="deviceId">
       <template #transport="{resource, info}">
         <v-divider class="mt-4 mb-1"/>
@@ -52,19 +60,28 @@
     <mode-card :name="deviceId" v-if="traits['smartcore.traits.Mode']"/>
     <v-divider v-if="traits['smartcore.bos.UDMI']" class="mt-4 mb-1"/>
     <udmi-card :name="deviceId" v-if="traits['smartcore.bos.UDMI']"/>
+    <with-allocation v-if="traits['smartcore.bos.Allocation']" :name="deviceId" v-slot="{resource}">
+      <v-divider class="mt-4 mb-1"/>
+      <allocation-card v-bind="resource" :name="deviceId"/>
+    </with-allocation>
   </span>
 </template>
 
 <script setup>
+import {useExperiment} from '@/composables/experiments.js';
 import AirQualityCard from '@/traits/airQuality/AirQualityCard.vue';
 import WithAirQuality from '@/traits/airQuality/WithAirQuality.vue';
 import AirTemperatureCard from '@/traits/airTemperature/AirTemperatureCard.vue';
 import WithAirTemperature from '@/traits/airTemperature/WithAirTemperature.vue';
+import AllocationCard from '@/traits/allocation/AllocationCard.vue';
+import WithAllocation from '@/traits/allocation/WithAllocation.vue';
 import ElectricDemandCard from '@/traits/electricDemand/ElectricDemandCard.vue';
 import WithElectricDemand from '@/traits/electricDemand/WithElectricDemand.vue';
 import EmergencyLight from '@/traits/emergency/EmergencyLight.vue';
 import EnergyStorageCard from '@/traits/energyStorage/EnergyStorageCard.vue';
 import WithEnergyStorage from '@/traits/energyStorage/WithEnergyStorage.vue';
+import HealthChecksCard from '@/traits/health/HealthChecksCard.vue';
+import WithHealthChecks from '@/traits/health/WithHealthChecks.vue';
 import LightCard from '@/traits/light/LightCard.vue';
 import MetadataCard from '@/traits/metadata/MetadataCard.vue';
 import MeterCard from '@/traits/meter/MeterCard.vue';
@@ -76,6 +93,8 @@ import OnOffCard from '@/traits/onOff/OnOffCard.vue';
 import WithOnOff from '@/traits/onOff/WithOnOff.vue';
 import StatusLogCard from '@/traits/status/StatusLogCard.vue';
 import WithStatus from '@/traits/status/WithStatus.vue';
+import TemperatureCard from '@/traits/temperature/TemperatureCard.vue';
+import WithTemperature from '@/traits/temperature/WithTemperature.vue';
 import TransportCard from '@/traits/transport/TransportCard.vue';
 import TransportHistoryCard from '@/traits/transport/TransportHistoryCard.vue';
 import WithTransport from '@/traits/transport/WithTransport.vue';
@@ -92,4 +111,6 @@ defineProps({
     }
   }
 });
+
+const healthExperiment = useExperiment('health');
 </script>

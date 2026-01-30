@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.devices;
 
-option go_package = "github.com/vanti-dev/sc-bos/internal/manage/devices/testdata/testproto/querypb";
+option go_package = "github.com/smart-core-os/sc-bos/internal/manage/devices/testdata/testproto/querypb";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
@@ -14,6 +14,8 @@ enum ResultEnum {
   RESULT_ENUM_C = 3;
 }
 
+// Result is a proto message that include singular and repeated fields for a lot of types.
+// It models a very complex and flexible search result.
 message Result {
   // single and repeated scalar values
   double double_val = 1;

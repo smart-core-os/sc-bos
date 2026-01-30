@@ -4,7 +4,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto/meteremail/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/meteremail/config"
 )
 
 const MeterTypeWater = 1

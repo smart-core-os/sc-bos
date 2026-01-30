@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
 )
 
 // Val is a reactive value.

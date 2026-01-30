@@ -5,7 +5,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto/udmi/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/udmi/config"
 )
 
 // newMqttClient returns a new MQTT client from the given config

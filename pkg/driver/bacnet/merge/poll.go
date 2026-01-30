@@ -7,8 +7,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/comm"
-	"github.com/vanti-dev/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
 func startPoll(init context.Context, name string, pollDelay, pollTimeout time.Duration, logger *zap.Logger, pollPeer func(ctx context.Context) error) (task.StopFn, error) {

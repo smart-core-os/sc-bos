@@ -10,9 +10,9 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/driver/mock/scale"
+	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/pkg/driver/mock/scale"
-	"github.com/vanti-dev/sc-bos/pkg/history/pgxstore"
 )
 
 func SeedElectric(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {

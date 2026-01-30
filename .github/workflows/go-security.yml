@@ -7,14 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     name: Run govulncheck
     env:
-      GOPRIVATE: github.com/smart-core-os/*,github.com/vanti-dev/*
+      GOPRIVATE: github.com/smart-core-os/*
     steps:
       - name: Private repo auth
         run: |
           git config --global url."https://${{ secrets.GO_MOD_TOKEN }}:x-oauth-basic@github.com/smart-core-os".insteadOf "https://github.com/smart-core-os"
-          git config --global url."https://${{ secrets.GO_MOD_TOKEN }}:x-oauth-basic@github.com/vanti-dev".insteadOf "https://github.com/vanti-dev"
       - id: govulncheck
         uses: golang/govulncheck-action@v1
         with:
-          go-version-input: 1.24
+          go-version-input: 1.25
           go-package: ./...

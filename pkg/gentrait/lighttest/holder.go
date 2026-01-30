@@ -8,23 +8,23 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightingtestpb"
 )
 
 var errNotEnabled = status.Error(codes.FailedPrecondition, "lighttest - not enabled")
 
 type Holder struct {
-	gen.UnimplementedLightingTestApiServer
+	lightingtestpb.UnimplementedLightingTestApiServer
 
-	client gen.LightingTestApiClient
+	client lightingtestpb.LightingTestApiClient
 	mu     sync.Mutex
 }
 
 func (h *Holder) Register(server *grpc.Server) {
-	gen.RegisterLightingTestApiServer(server, h)
+	lightingtestpb.RegisterLightingTestApiServer(server, h)
 }
 
-func (h *Holder) Fill(client gen.LightingTestApiClient) {
+func (h *Holder) Fill(client lightingtestpb.LightingTestApiClient) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.client = client
@@ -36,7 +36,7 @@ func (h *Holder) Empty() {
 	h.client = nil
 }
 
-func (h *Holder) GetLightHealth(ctx context.Context, request *gen.GetLightHealthRequest) (*gen.LightHealth, error) {
+func (h *Holder) GetLightHealth(ctx context.Context, request *lightingtestpb.GetLightHealthRequest) (*lightingtestpb.LightHealth, error) {
 	c, err := h.getClient()
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (h *Holder) GetLightHealth(ctx context.Context, request *gen.GetLightHealth
 	return c.GetLightHealth(ctx, request)
 }
 
-func (h *Holder) ListLightHealth(ctx context.Context, request *gen.ListLightHealthRequest) (*gen.ListLightHealthResponse, error) {
+func (h *Holder) ListLightHealth(ctx context.Context, request *lightingtestpb.ListLightHealthRequest) (*lightingtestpb.ListLightHealthResponse, error) {
 	c, err := h.getClient()
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (h *Holder) ListLightHealth(ctx context.Context, request *gen.ListLightHeal
 	return c.ListLightHealth(ctx, request)
 }
 
-func (h *Holder) ListLightEvents(ctx context.Context, request *gen.ListLightEventsRequest) (*gen.ListLightEventsResponse, error) {
+func (h *Holder) ListLightEvents(ctx context.Context, request *lightingtestpb.ListLightEventsRequest) (*lightingtestpb.ListLightEventsResponse, error) {
 	c, err := h.getClient()
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (h *Holder) ListLightEvents(ctx context.Context, request *gen.ListLightEven
 	return c.ListLightEvents(ctx, request)
 }
 
-func (h *Holder) GetReportCSV(ctx context.Context, request *gen.GetReportCSVRequest) (*gen.ReportCSV, error) {
+func (h *Holder) GetReportCSV(ctx context.Context, request *lightingtestpb.GetReportCSVRequest) (*lightingtestpb.ReportCSV, error) {
 	c, err := h.getClient()
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (h *Holder) GetReportCSV(ctx context.Context, request *gen.GetReportCSVRequ
 	return c.GetReportCSV(ctx, request)
 }
 
-func (h *Holder) getClient() (gen.LightingTestApiClient, error) {
+func (h *Holder) getClient() (lightingtestpb.LightingTestApiClient, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if h.client == nil {

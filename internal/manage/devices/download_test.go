@@ -18,11 +18,12 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/meter"
-	"github.com/vanti-dev/sc-bos/pkg/node"
 )
 
 func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
@@ -30,13 +31,13 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 	n := node.New("test")
 
 	meterDevice := meter.NewModel()
-	_, _ = meterDevice.UpdateMeterReading(&gen.MeterReading{Usage: 200})
+	_, _ = meterDevice.UpdateMeterReading(&meterpb.MeterReading{Usage: 200})
 	n.Announce("d1",
 		node.HasTrait(
 			meter.TraitName,
 			node.WithClients(
-				gen.WrapMeterApi(meter.NewModelServer(meterDevice)),
-				gen.WrapMeterInfo(&meter.InfoServer{MeterReading: &gen.MeterReadingSupport{
+				meterpb.WrapApi(meter.NewModelServer(meterDevice)),
+				meterpb.WrapInfo(&meter.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
 					UsageUnit: "tests per second",
 				}}),
 			),
@@ -67,9 +68,9 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 		}),
 	)
 
-	devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &gen.GetDownloadDevicesUrlRequest{
-		Query: &gen.Device_Query{Conditions: []*gen.Device_Query_Condition{
-			{Field: "metadata.location.floor", Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "01"}},
+	devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{
+		Query: &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
+			{Field: "metadata.location.floor", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "01"}},
 		}},
 	})
 	if err != nil {
@@ -103,7 +104,7 @@ func TestServer_DownloadDevicesHTTPHandler_validation(t *testing.T) {
 			WithNow(func() time.Time { return now }),
 		)
 
-		devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &gen.GetDownloadDevicesUrlRequest{})
+		devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -149,7 +150,7 @@ func TestServer_DownloadDevicesHTTPHandler_validation(t *testing.T) {
 
 	t.Run("change of key", func(t *testing.T) {
 		s := NewServer(node.New("test"))
-		devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &gen.GetDownloadDevicesUrlRequest{})
+		devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{})
 		if err != nil {
 			t.Fatal(err)
 		}

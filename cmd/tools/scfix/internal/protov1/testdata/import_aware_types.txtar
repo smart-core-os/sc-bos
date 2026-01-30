@@ -1,0 +1,69 @@
+Test that types are only qualified if they're actually imported.
+Unimported types (like nested enums) should not be qualified even if a
+type with the same name exists in another file.
+expected_changes: 1
+
+-- input/proto/dali.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.dali;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service DaliApi {
+  rpc GetStatus(GetStatusRequest) returns (Status);
+}
+
+message Status {
+  enum Test {
+    TEST_UNKNOWN = 0;
+    FUNCTION_TEST = 2;
+  }
+  repeated Test pending_tests = 1;
+}
+
+message GetStatusRequest {
+  string name = 1;
+}
+-- input/internal/testutil/test.proto --
+syntax = "proto3";
+
+package testutil;
+
+option go_package = "github.com/smart-core-os/sc-bos/internal/testutil";
+
+message Test {
+  string id = 1;
+}
+-- output/proto/smartcore/bos/driver/dali/v1/dali.proto --
+syntax = "proto3";
+
+package smartcore.bos.driver.dali.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service DaliApi {
+  rpc GetStatus(GetStatusRequest) returns (Status);
+}
+
+message Status {
+  enum Test {
+    TEST_UNKNOWN = 0;
+    FUNCTION_TEST = 2;
+  }
+  repeated Test pending_tests = 1;
+}
+
+message GetStatusRequest {
+  string name = 1;
+}
+-- output/internal/testutil/test.proto --
+syntax = "proto3";
+
+package testutil;
+
+option go_package = "github.com/smart-core-os/sc-bos/internal/testutil";
+
+message Test {
+  string id = 1;
+}

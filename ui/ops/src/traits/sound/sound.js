@@ -1,10 +1,10 @@
 
 /**
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/sound_sensor_pb').SoundLevel} SoundLevel
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/sound_sensor_pb').SoundLevelSupport} SoundLevelSupport
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/sound_sensor_pb').PullSoundLevelRequest} PullSoundLevelRequest
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/sound_sensor_pb').PullSoundLevelResponse} PullSoundLevelResponse
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/sound_sensor_pb').DescribeSoundLevelRequest} DescribeSoundLevelRequest
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_pb').SoundLevel} SoundLevel
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_pb').SoundLevelSupport} SoundLevelSupport
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_pb').PullSoundLevelRequest} PullSoundLevelRequest
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_pb').PullSoundLevelResponse} PullSoundLevelResponse
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_pb').DescribeSoundLevelRequest} DescribeSoundLevelRequest
  * @typedef {import('vue').ComputedRef} ComputedRef
  * @typedef {import('vue').Ref} Ref
  * @typedef {import('vue').ToRefs} ToRefs

@@ -2,21 +2,24 @@ package hpd
 
 import (
 	"context"
-	"fmt"
 
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/udmipb"
-
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd/config"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-golang/pkg/trait/brightnesssensorpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/driver/steinel/hpd/config"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
 )
 
 const DriverName = "steinel-hpd"
@@ -28,21 +31,28 @@ type factory struct{}
 func (f factory) New(services driver.Services) service.Lifecycle {
 	d := &Driver{
 		announcer: node.NewReplaceAnnouncer(services.Node),
+		health:    services.Health,
 	}
-	d.Service = service.New(service.MonoApply(d.applyConfig))
+	d.Service = service.New(
+		service.MonoApply(d.applyConfig),
+		service.WithParser[config.Root](config.ParseConfig),
+	)
 	d.logger = services.Logger.Named(DriverName)
 	return d
 }
 
 type Driver struct {
 	*service.Service[config.Root]
-	logger    *zap.Logger
 	announcer *node.ReplaceAnnouncer
+	health    *healthpb.Checks
+	logger    *zap.Logger
 
 	client *Client
 
 	airQualitySensor *AirQualitySensor
+	brightnessSensor *brightnessSensor
 	occupancy        *Occupancy
+	soundSensor      *soundSensor
 	temperature      *TemperatureSensor
 
 	udmiServiceServer *UdmiServiceServer
@@ -50,35 +60,49 @@ type Driver struct {
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer := d.announcer.Replace(ctx)
-	if cfg.Metadata != nil {
-		announcer.Announce(cfg.Name, node.HasMetadata(cfg.Metadata))
-	}
+	grp, ctx := errgroup.WithContext(ctx)
 
-	p, err := cfg.LoadPassword()
+	d.client = newInsecureClient(cfg.IpAddress, cfg.Password)
+
+	d.airQualitySensor = newAirQualitySensor(d.client, d.logger.Named("AirQualityValue").With(zap.String("ipAddress", cfg.IpAddress)))
+	d.brightnessSensor = newBrightnessSensor(d.client, d.logger.Named("Brightness").With(zap.String("ipAddress", cfg.IpAddress)))
+	d.occupancy = newOccupancySensor(d.client, d.logger.Named("Occupancy").With(zap.String("ipAddress", cfg.IpAddress)))
+	d.soundSensor = newSoundSensor(d.client, d.logger.Named("soundSensor").With(zap.String("ipAddress", cfg.IpAddress)))
+	d.temperature = newTemperatureSensor(d.client, d.logger.Named("Temperature").With(zap.String("ipAddress", cfg.IpAddress)))
+	d.udmiServiceServer = newUdmiServiceServer(d.logger.Named("UdmiServiceServer"), d.airQualitySensor.AirQualityValue, d.occupancy.OccupancyValue, d.temperature.TemperatureValue, cfg.UDMITopicPrefix)
+
+	announcer.Announce(cfg.Name,
+		node.HasMetadata(cfg.Metadata),
+		node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(d.airQualitySensor))),
+		node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(d.temperature))),
+		node.HasTrait(trait.BrightnessSensor, node.WithClients(brightnesssensorpb.WrapApi(d.brightnessSensor))),
+		node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(d.occupancy))),
+		node.HasTrait(soundsensorpb.TraitName, node.WithClients(gen_soundsensorpb.WrapApi(d.soundSensor))),
+		node.HasTrait(udmipb.TraitName, node.WithClients(gen_udmipb.WrapService(d.udmiServiceServer))),
+	)
+
+	faultCheck, err := d.health.NewFaultCheck(cfg.Name, commsHealthCheck)
 	if err != nil {
+		d.logger.Error("failed to create health check", zap.String("device", cfg.Name), zap.Error(err))
 		return err
 	}
 
-	if cfg.IpAddress == "" {
-		return fmt.Errorf("ipAddress is required")
-	}
-	d.client = NewInsecureClient(cfg.IpAddress, p)
+	poller := newPoller(d.client, cfg.PollInterval.Duration, d.logger.Named("SteinelPoller").With(zap.String("ipAddress", cfg.IpAddress)), faultCheck, d.airQualitySensor, d.occupancy, d.temperature)
 
-	d.airQualitySensor = NewAirQualitySensor(d.client, d.logger.Named("AirQualityValue").With(zap.String("ipAddress", cfg.IpAddress)))
-	announcer.Announce(cfg.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(d.airQualitySensor))))
+	grp.Go(func() error {
+		poller.startPoll(ctx)
+		return nil
+	})
 
-	d.occupancy = NewOccupancySensor(d.client, d.logger.Named("Occupancy").With(zap.String("ipAddress", cfg.IpAddress)))
-	announcer.Announce(cfg.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(d.occupancy))))
-
-	d.temperature = NewTemperatureSensor(d.client, d.logger.Named("Temperature").With(zap.String("ipAddress", cfg.IpAddress)))
-	announcer.Announce(cfg.Name, node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(d.temperature))))
-
-	d.udmiServiceServer = NewUdmiServiceServer(d.logger.Named("UdmiServiceServer"), d.airQualitySensor.AirQualityValue, d.occupancy.OccupancyValue, d.temperature.TemperatureValue, cfg.UDMITopicPrefix)
-	announcer.Announce(cfg.Name, node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(d.udmiServiceServer))))
-
-	poller := NewPoller(d.client, 0, d.logger.Named("SteinelPoller").With(zap.String("ipAddress", cfg.IpAddress)), d.airQualitySensor, d.occupancy, d.temperature)
-
-	go poller.startPoll(ctx)
+	go func() {
+		_ = grp.Wait() // won't error in current implementation
+		faultCheck.Dispose()
+		d.client.Client.CloseIdleConnections()
+	}()
 
 	return nil
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }

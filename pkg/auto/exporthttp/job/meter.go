@@ -9,24 +9,17 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	sctime "github.com/smart-core-os/sc-api/go/types/time"
-
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
 
-type listMeterReadingFn func(ctx context.Context, in *gen.ListMeterReadingHistoryRequest, opts ...grpc.CallOption) (*gen.ListMeterReadingHistoryResponse, error)
+type listMeterReadingFn func(ctx context.Context, in *meterpb.ListMeterReadingHistoryRequest, opts ...grpc.CallOption) (*meterpb.ListMeterReadingHistoryResponse, error)
 
-func getRecordsByTime(ctx context.Context, logger *zap.Logger, historyFn listMeterReadingFn, meter string, now time.Time, filterTime time.Duration) (earliest, latest *gen.MeterReadingRecord, err error) {
-	var resp *gen.ListMeterReadingHistoryResponse
+func getRecordsByTime(ctx context.Context, logger *zap.Logger, historyFn listMeterReadingFn, meter string, now time.Time, filterTime time.Duration) (earliest, latest *meterpb.MeterReadingRecord, err error) {
+	var resp *meterpb.ListMeterReadingHistoryResponse
 
 	start := now.Add(-filterTime)
 
-	resp, err = historyFn(ctx, &gen.ListMeterReadingHistoryRequest{
-		Name: meter,
-		Period: &sctime.Period{
-			StartTime: timestamppb.New(start),
-		},
-		PageSize: 1,
-	})
+	resp, err = getLastReadingBefore(ctx, meter, start, historyFn)
 
 	if err != nil {
 		return nil, nil, err
@@ -39,14 +32,7 @@ func getRecordsByTime(ctx context.Context, logger *zap.Logger, historyFn listMet
 
 	earliest = resp.GetMeterReadingRecords()[0]
 
-	resp, err = historyFn(ctx, &gen.ListMeterReadingHistoryRequest{
-		Name: meter,
-		Period: &sctime.Period{
-			EndTime: timestamppb.New(now),
-		},
-		PageSize: 1,
-		OrderBy:  "record_time DESC",
-	})
+	resp, err = getLastReadingBefore(ctx, meter, now, historyFn)
 
 	if err != nil {
 		return nil, nil, err
@@ -62,6 +48,17 @@ func getRecordsByTime(ctx context.Context, logger *zap.Logger, historyFn listMet
 	return earliest, latest, nil
 }
 
-func processMeterRecords(multiplier float32, earliest, latest *gen.MeterReadingRecord) float32 {
+func processMeterRecords(multiplier float32, earliest, latest *meterpb.MeterReadingRecord) float32 {
 	return multiplier * (latest.GetMeterReading().GetUsage() - earliest.GetMeterReading().GetUsage())
+}
+
+func getLastReadingBefore(ctx context.Context, meter string, t time.Time, historyFn listMeterReadingFn) (*meterpb.ListMeterReadingHistoryResponse, error) {
+	return historyFn(ctx, &meterpb.ListMeterReadingHistoryRequest{
+		Name: meter,
+		Period: &sctime.Period{
+			EndTime: timestamppb.New(t),
+		},
+		PageSize: 1,
+		OrderBy:  "record_time DESC",
+	})
 }

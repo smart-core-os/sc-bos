@@ -11,63 +11,64 @@ import (
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
-
-	"github.com/vanti-dev/sc-bos/pkg/driver/hikcentral/api"
-	"github.com/vanti-dev/sc-bos/pkg/driver/hikcentral/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api"
+	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 )
 
 type Camera struct {
 	traits.UnimplementedPtzApiServer
-	gen.UnimplementedMqttServiceServer
-	gen.UnimplementedUdmiServiceServer
-	gen.UnimplementedStatusApiServer
+	mqttpb.UnimplementedMqttServiceServer
+	udmipb.UnimplementedUdmiServiceServer
 
-	client *api.Client
+	client *client
 	logger *zap.Logger
 	Now    func() time.Time
 
 	conf *config.Camera
 
-	lock  sync.Mutex
-	state *CameraState
-	bus   minibus.Bus[*CameraState]
+	lock       sync.Mutex
+	state      *CameraState
+	bus        minibus.Bus[*CameraState]
+	faultCheck *healthpb.FaultCheck
 }
 
-func NewCamera(client *api.Client, logger *zap.Logger, conf *config.Camera) *Camera {
+func NewCamera(client *client, logger *zap.Logger, conf *config.Camera, fc *healthpb.FaultCheck) *Camera {
 	return &Camera{
-		client: client,
-		logger: logger,
-		conf:   conf,
-		state:  &CameraState{},
+		client:     client,
+		conf:       conf,
+		faultCheck: fc,
+		logger:     logger,
+		state:      &CameraState{},
 	}
 }
 
-func (c *Camera) UpdatePtz(_ context.Context, request *traits.UpdatePtzRequest) (*traits.Ptz, error) {
+func (c *Camera) UpdatePtz(ctx context.Context, request *traits.UpdatePtzRequest) (*traits.Ptz, error) {
 	if request.State == nil {
 		return nil, status.Error(codes.InvalidArgument, "no PTZ state in request")
 	}
 
 	if request.State.Preset != "" {
 		i, err := strconv.Atoi(request.State.Preset)
-		if err != nil {
+		if err != nil || i < 1 || i > 256 {
 			return nil, status.Error(codes.InvalidArgument, "invalid preset, [1,256]")
 		}
-		_, err = c.client.CameraPtzControl(&api.PtzRequest{
+		_, err = c.client.cameraPtzControl(ctx, &api.PtzRequest{
 			CameraIndexCode: c.conf.IndexCode,
 			Action:          1, // stop
 			Command:         "GOTO_PRESET",
 			PresetIndex:     i,
-		})
+		}, c.faultCheck)
 		if err != nil {
-			c.logger.Warn("error going to preset", zap.Int("preset", i), zap.String("error", err.Error()))
+			c.logger.Warn("error going to preset", zap.Int("preset", i), zap.Error(err))
 			return nil, status.Errorf(codes.Unknown, "error going to preset: %s", err.Error())
 		}
 		return nil, nil
@@ -89,13 +90,13 @@ func (c *Camera) UpdatePtz(_ context.Context, request *traits.UpdatePtzRequest) 
 			return nil, status.Error(codes.InvalidArgument, "invalid speed, [20,60]")
 		}
 		cmd := api.MovementToCommand(mov)
-		_, err := c.client.CameraPtzControl(&api.PtzRequest{
+		_, err := c.client.cameraPtzControl(ctx, &api.PtzRequest{
 			CameraIndexCode: c.conf.IndexCode,
 			Action:          1, // stop
 			Command:         cmd,
-		})
+		}, c.faultCheck)
 		if err != nil {
-			c.logger.Warn("error controlling PTZ", zap.String("command", cmd), zap.String("error", err.Error()))
+			c.logger.Warn("error controlling PTZ", zap.String("command", cmd), zap.Error(err))
 			return nil, status.Errorf(codes.Unknown, "error controlling PTZ: %s", err.Error())
 		}
 
@@ -105,42 +106,44 @@ func (c *Camera) UpdatePtz(_ context.Context, request *traits.UpdatePtzRequest) 
 	return nil, nil
 }
 
-func (c *Camera) Stop(_ context.Context, _ *traits.StopPtzRequest) (*traits.Ptz, error) {
-	wg := sync.WaitGroup{}
+func (c *Camera) Stop(ctx context.Context, _ *traits.StopPtzRequest) (*traits.Ptz, error) {
+	wg, ctx := errgroup.WithContext(ctx)
 
 	// we don't know which command(s) are running, so stop them all!
 
+	mu := sync.Mutex{}
 	var multiErr error
 	for _, command := range api.Commands {
 		command := command // save for goroutine usage
-		wg.Add(1)
-		go func() {
-			_, err := c.client.CameraPtzControl(&api.PtzRequest{
+		wg.Go(func() error {
+			_, err := c.client.cameraPtzControl(ctx, &api.PtzRequest{
 				CameraIndexCode: c.conf.IndexCode,
 				Action:          1, // stop
 				Command:         command,
-			})
+			}, c.faultCheck)
 			if err != nil {
-				c.logger.Warn("error stopping PTZ", zap.String("command", command), zap.String("error", err.Error()))
-				err = multierr.Combine(multiErr, err)
+				c.logger.Warn("error stopping PTZ", zap.String("command", command), zap.Error(err))
+				mu.Lock()
+				multiErr = multierr.Combine(multiErr, err)
+				mu.Unlock()
 			}
-			wg.Done()
-		}()
+			return nil
+		})
 	}
-	wg.Wait()
+	_ = wg.Wait()
 	return nil, multiErr
 }
 
-func (c *Camera) PullMessages(_ *gen.PullMessagesRequest, server gen.MqttService_PullMessagesServer) error {
+func (c *Camera) PullMessages(_ *mqttpb.PullMessagesRequest, server mqttpb.MqttService_PullMessagesServer) error {
 	changes := c.bus.Listen(server.Context())
 
 	for change := range changes {
 		asJson, err := json.Marshal(change)
 		if err != nil {
-			c.logger.Warn("unable to marshal message as JSON", zap.String("error", err.Error()), zap.Any("change", change))
+			c.logger.Warn("unable to marshal message as JSON", zap.Error(err), zap.Any("change", change))
 			continue
 		}
-		msg := &gen.PullMessagesResponse{
+		msg := &mqttpb.PullMessagesResponse{
 			Name:    c.conf.Name,
 			Topic:   c.conf.Topic,
 			Payload: string(asJson),
@@ -153,51 +156,32 @@ func (c *Camera) PullMessages(_ *gen.PullMessagesRequest, server gen.MqttService
 	return server.Context().Err()
 }
 
-func (c *Camera) PullControlTopics(request *gen.PullControlTopicsRequest, server gen.UdmiService_PullControlTopicsServer) error {
+func (c *Camera) PullControlTopics(request *udmipb.PullControlTopicsRequest, server udmipb.UdmiService_PullControlTopicsServer) error {
 	return c.UnimplementedUdmiServiceServer.PullControlTopics(request, server)
 }
 
-func (c *Camera) OnMessage(ctx context.Context, request *gen.OnMessageRequest) (*gen.OnMessageResponse, error) {
+func (c *Camera) OnMessage(ctx context.Context, request *udmipb.OnMessageRequest) (*udmipb.OnMessageResponse, error) {
 	return c.UnimplementedUdmiServiceServer.OnMessage(ctx, request)
 }
 
-func (c *Camera) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen.UdmiService_PullExportMessagesServer) error {
+func (c *Camera) PullExportMessages(_ *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
 	changes := c.bus.Listen(server.Context())
 
 	for change := range changes {
 		asJson, err := marshalUDMIPayload(change)
 		if err != nil {
-			c.logger.Warn("unable to marshal message as JSON", zap.String("error", err.Error()), zap.Any("change", change))
+			c.logger.Warn("unable to marshal message as JSON", zap.Error(err), zap.Any("change", change))
 			continue
 		}
-		msg := &gen.PullExportMessagesResponse{
+		msg := &udmipb.PullExportMessagesResponse{
 			Name: c.conf.Name,
-			Message: &gen.MqttMessage{
+			Message: &udmipb.MqttMessage{
 				Topic:   c.conf.Topic + "/event/pointset/points",
 				Payload: string(asJson),
 			},
 		}
 		err = server.Send(msg)
 		if err != nil {
-			return err
-		}
-	}
-	return server.Context().Err()
-}
-
-func (c *Camera) GetCurrentStatus(_ context.Context, _ *gen.GetCurrentStatusRequest) (*gen.StatusLog, error) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	return stateToStatusLog(c.state), nil
-}
-
-func (c *Camera) PullCurrentStatus(request *gen.PullCurrentStatusRequest, server gen.StatusApi_PullCurrentStatusServer) error {
-	for state := range c.bus.Listen(server.Context()) {
-		sl := stateToStatusLog(state)
-		msg := &gen.PullCurrentStatusResponse{Changes: []*gen.PullCurrentStatusResponse_Change{
-			{Name: request.Name, CurrentStatus: sl},
-		}}
-		if err := server.Send(msg); err != nil {
 			return err
 		}
 	}
@@ -239,27 +223,6 @@ func marshalUDMIPayload(msg any) ([]byte, error) {
 	return bs, err
 }
 
-func stateToStatusLog(state *CameraState) *gen.StatusLog {
-	problems := statuspb.ProblemMerger{}
-	if !state.CamState {
-		problems.AddProblem(&gen.StatusLog_Problem{
-			Name:        "state",
-			Level:       gen.StatusLog_NON_FUNCTIONAL,
-			Description: "Camera is inactive",
-			RecordTime:  timestamppb.New(state.CamStateTime),
-		})
-	}
-	if state.CamFlt {
-		problems.AddProblem(&gen.StatusLog_Problem{
-			Name:        "event",
-			Level:       gen.StatusLog_NOTICE,
-			Description: "Camera recently reported a fault",
-			RecordTime:  timestamppb.New(state.CamFltTime),
-		})
-	}
-	return problems.Build()
-}
-
 func (c *Camera) getEvents(ctx context.Context) {
 	now := c.now()
 	start := now.Truncate(time.Hour)
@@ -270,12 +233,12 @@ func (c *Camera) getEvents(ctx context.Context) {
 	pageNum := 1
 	pageSize := 100
 	for {
-		res, err := c.client.ListEvents(&api.EventsRequest{
+		res, err := c.client.listEvents(ctx, &api.EventsRequest{
 			EventTypes: strings.Join([]string{
 				api.VideoLossAlarm,
 				api.VideoTamperingAlarm,
 				api.CameraRecordingExceptionAlarm,
-				api.CameraRecordingRecoveredAlarm,
+				api.CameraRecordingRecovered,
 			}, ","),
 			SrcType:    "camera",
 			SrcIndexes: c.conf.IndexCode,
@@ -285,36 +248,12 @@ func (c *Camera) getEvents(ctx context.Context) {
 				PageNo:   pageNum,
 				PageSize: pageSize,
 			},
-		})
+		}, c.faultCheck)
 		if err != nil {
-			logger.Warn("response error", zap.String("error", err.Error()))
+			logger.Warn("response error", zap.Error(err))
+			break
 		} else {
-			var videoLoss, videoTamper, recordingException, recordingRecovered bool
-			var events []api.EventRecord
-			for _, record := range res.List {
-				if record.StopTime != "" {
-					continue // this alarm is done
-				}
-				if record.LinkCameraIndexCode != c.conf.IndexCode {
-					continue // not for this camera
-				}
-				switch record.EventType {
-				case api.VideoLossAlarm:
-					videoLoss = true
-					events = append(events, record)
-				case api.VideoTamperingAlarm:
-					videoTamper = true
-					events = append(events, record)
-				case api.CameraRecordingExceptionAlarm:
-					recordingException = true
-					events = append(events, record)
-				case api.CameraRecordingRecoveredAlarm:
-					recordingRecovered = true
-					events = append(events, record)
-				}
-			}
-			fault := videoLoss || videoTamper || (recordingException && !recordingRecovered)
-			c.updateFault(ctx, fault)
+			c.processEventRecords(ctx, res.List)
 			if len(res.List) < pageSize {
 				// no more pages, exit
 				break
@@ -324,8 +263,46 @@ func (c *Camera) getEvents(ctx context.Context) {
 		}
 	}
 }
+
+type allFaults map[string]bool
+
+func (f allFaults) hasFault() bool {
+	return f[api.VideoLossAlarm] || f[api.VideoTamperingAlarm] || f[api.CameraRecordingExceptionAlarm]
+}
+
+func (c *Camera) processEventRecords(ctx context.Context, records []api.EventRecord) {
+	faults := make(allFaults)
+	clearRecordingException := false
+	for _, record := range records {
+		if record.StopTime != "" {
+			continue // this alarm is done
+		}
+		if record.LinkCameraIndexCode != c.conf.IndexCode {
+			continue // not for this camera
+		}
+		switch record.EventType {
+		case api.VideoLossAlarm:
+			faults[api.VideoLossAlarm] = true
+		case api.VideoTamperingAlarm:
+			faults[api.VideoTamperingAlarm] = true
+		case api.CameraRecordingExceptionAlarm:
+			faults[api.CameraRecordingExceptionAlarm] = true
+		case api.CameraRecordingRecovered:
+			// if we detect a recording-recovered alarm,
+			// we want to clear the recording exception fault
+			clearRecordingException = true
+		}
+	}
+	if clearRecordingException {
+		faults[api.CameraRecordingExceptionAlarm] = false
+	}
+	updateDeviceFaults(faults, c.faultCheck)
+	fault := faults.hasFault()
+	c.updateFault(ctx, fault)
+}
+
 func (c *Camera) getOcc(ctx context.Context) {
-	now := time.Now()
+	now := c.now()
 	start := now.Truncate(time.Hour)
 	end := start.Add(time.Hour)
 	logger := c.logger.With(
@@ -335,7 +312,7 @@ func (c *Camera) getOcc(ctx context.Context) {
 	pageNum := 1
 	pageSize := 100
 	for {
-		res, err := c.client.GetCameraPeopleStats(&api.StatsRequest{
+		res, err := c.client.getCameraPeopleStats(ctx, &api.StatsRequest{
 			CameraIndexCodes: c.conf.IndexCode,
 			StatisticsType:   api.StatisticsTypeByHour,
 			StartTime:        formatTime(start),
@@ -344,9 +321,10 @@ func (c *Camera) getOcc(ctx context.Context) {
 				PageNo:   pageNum,
 				PageSize: pageSize,
 			},
-		})
+		}, c.faultCheck)
 		if err != nil {
-			logger.Warn("response error", zap.String("error", err.Error()))
+			logger.Warn("response error", zap.Error(err))
+			break
 		} else {
 			if len(res.List) == 0 {
 				logger.Warn("no people count data in response", zap.Any("res", res))
@@ -355,6 +333,9 @@ func (c *Camera) getOcc(ctx context.Context) {
 			} else {
 				i := res.List[0]
 				count := i.EnterNum - i.ExitNum
+				if count < 0 {
+					count = 0
+				}
 				c.updateCount(ctx, strconv.Itoa(count))
 			}
 			if len(res.List) < pageSize {
@@ -369,13 +350,13 @@ func (c *Camera) getOcc(ctx context.Context) {
 
 func (c *Camera) getStream(ctx context.Context) {
 	logger := c.logger.With(zap.String("method", "getStream"))
-	res, err := c.client.GetCameraPreviewUrl(&api.CameraPreviewRequest{CameraRequest: api.CameraRequest{CameraIndexCode: c.conf.IndexCode}})
+	res, err := c.client.getCameraPreviewUrl(ctx, &api.CameraPreviewRequest{CameraRequest: api.CameraRequest{CameraIndexCode: c.conf.IndexCode}}, c.faultCheck)
 	if err != nil {
-		logger.Warn("response error", zap.String("error", err.Error()))
+		logger.Warn("response error", zap.Error(err))
 	} else {
 		bytes, err := json.Marshal(res)
 		if err != nil {
-			logger.Warn("error serialising stream info", zap.String("error", err.Error()))
+			logger.Warn("error serialising stream info", zap.Error(err))
 		} else {
 			c.updateVideo(ctx, string(bytes))
 		}
@@ -384,9 +365,9 @@ func (c *Camera) getStream(ctx context.Context) {
 
 func (c *Camera) getInfo(ctx context.Context) {
 	logger := c.logger.With(zap.String("method", "getInfo"))
-	res, err := c.client.GetCameraInfo(&api.CameraRequest{CameraIndexCode: c.conf.IndexCode})
+	res, err := c.client.getCameraInfo(ctx, &api.CameraRequest{CameraIndexCode: c.conf.IndexCode}, c.faultCheck)
 	if err != nil {
-		logger.Warn("response error", zap.String("error", err.Error()))
+		logger.Warn("response error", zap.Error(err))
 	} else {
 		active := res.Status == api.CameraStatusOnline
 		c.updateActive(ctx, active)
@@ -394,40 +375,54 @@ func (c *Camera) getInfo(ctx context.Context) {
 }
 
 func (c *Camera) updateCount(ctx context.Context, count string) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	c.state.CamOcc = count
-	c.bus.Send(ctx, c.state)
+	c.updateAndNotify(ctx, func() {
+		c.state.CamOcc = count
+	})
 }
 
 func (c *Camera) updateVideo(ctx context.Context, video string) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	c.state.CamVideo = video
-	c.bus.Send(ctx, c.state)
+	c.updateAndNotify(ctx, func() {
+		c.state.CamVideo = video
+	})
 }
 
 func (c *Camera) updateFault(ctx context.Context, fault bool) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	c.state.CamFlt = fault
-	c.state.CamFltTime = c.now()
-	c.bus.Send(ctx, c.state)
+	c.updateAndNotify(ctx, func() {
+		c.state.CamFlt = fault
+		c.state.CamFltTime = c.now()
+	})
 }
 
 func (c *Camera) updateActive(ctx context.Context, active bool) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	c.state.CamState = active
-	c.state.CamStateTime = c.now()
-	c.bus.Send(ctx, c.state)
+	c.updateAndNotify(ctx, func() {
+		c.state.CamState = active
+		c.state.CamStateTime = c.now()
+	})
 }
 
 func (c *Camera) updateState(ctx context.Context, new *CameraState) {
+	c.updateAndNotify(ctx, func() {
+		c.state = new
+	})
+}
+
+// updateAndNotify safely updates the camera state and notifies listeners.
+// The updateFn is called while holding the lock, then a copy is made and sent to the bus.
+func (c *Camera) updateAndNotify(ctx context.Context, updateFn func()) {
 	c.lock.Lock()
-	defer c.lock.Unlock()
-	c.state = new
-	c.bus.Send(ctx, c.state)
+	updateFn()
+	stateCopy := c.copyState()
+	c.lock.Unlock()
+	c.bus.Send(ctx, stateCopy)
+}
+
+func (c *Camera) copyState() *CameraState {
+	stateCopy := *c.state
+	if c.state.CamAim != nil {
+		ptzCopy := *c.state.CamAim
+		stateCopy.CamAim = &ptzCopy
+	}
+	return &stateCopy
 }
 
 func (c *Camera) now() time.Time {

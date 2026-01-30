@@ -1,0 +1,93 @@
+Test that related files (via imports) go to the same trait directory.
+This covers both single-word (meter_history -> meter) and multi-word traits (sound_sensor_history -> sound_sensor).
+Files with suffixes like _history that import the base file are grouped together.
+expected_changes: 2
+
+-- input/proto/sound_sensor.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service SoundSensorApi {
+  rpc GetSound(GetSoundRequest) returns (SoundLevel);
+}
+
+message SoundLevel {
+  float decibels = 1;
+}
+
+message GetSoundRequest {
+  string name = 1;
+}
+-- input/proto/sound_sensor_history.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+import "sound_sensor.proto";
+
+service SoundSensorHistory {
+  rpc ListSoundHistory(ListSoundHistoryRequest) returns (ListSoundHistoryResponse);
+}
+
+message SoundRecord {
+  SoundLevel level = 1;
+  google.protobuf.Timestamp record_time = 2;
+}
+
+message ListSoundHistoryRequest {
+  string name = 1;
+}
+
+message ListSoundHistoryResponse {
+  repeated SoundRecord records = 1;
+}
+-- output/proto/smartcore/bos/soundsensor/v1/sound_sensor.proto --
+syntax = "proto3";
+
+package smartcore.bos.soundsensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service SoundSensorApi {
+  rpc GetSound(GetSoundRequest) returns (SoundLevel);
+}
+
+message SoundLevel {
+  float decibels = 1;
+}
+
+message GetSoundRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/soundsensor/v1/sound_sensor_history.proto --
+syntax = "proto3";
+
+package smartcore.bos.soundsensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/soundsensor/v1/sound_sensor.proto";
+
+service SoundSensorHistory {
+  rpc ListSoundHistory(ListSoundHistoryRequest) returns (ListSoundHistoryResponse);
+}
+
+message SoundRecord {
+  SoundLevel level = 1;
+  google.protobuf.Timestamp record_time = 2;
+}
+
+message ListSoundHistoryRequest {
+  string name = 1;
+}
+
+message ListSoundHistoryResponse {
+  repeated SoundRecord records = 1;
+}

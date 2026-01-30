@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package smartcore.bos.mqtt.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/mqttpb";
+
+service MqttService {
+  rpc PullMessages(PullMessagesRequest) returns (stream PullMessagesResponse);
+}
+
+message PullMessagesRequest {
+  string name = 1;
+}
+
+message PullMessagesResponse {
+  string name = 1;
+  string topic = 2;
+  string payload = 3; // JSON payload
+}

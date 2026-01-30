@@ -15,9 +15,9 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/internal/util/pgxutil"
-	"github.com/vanti-dev/sc-bos/pkg/system/publications/config"
-	"github.com/vanti-dev/sc-bos/pkg/system/publications/pgxpublications"
+	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
+	"github.com/smart-core-os/sc-bos/pkg/system/publications/config"
+	"github.com/smart-core-os/sc-bos/pkg/system/publications/pgxpublications"
 )
 
 func main() {

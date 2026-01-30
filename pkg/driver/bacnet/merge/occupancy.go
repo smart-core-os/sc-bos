@@ -7,17 +7,16 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
+	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
-	"github.com/vanti-dev/gobacnet"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/comm"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/config"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/known"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/status"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task"
 )
 
 type occupancyCfg struct {
@@ -35,10 +34,10 @@ var _ traits.OccupancySensorApiServer = (*occupancy)(nil)
 type occupancy struct {
 	traits.UnimplementedOccupancySensorApiServer
 
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *gen_healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *occupancysensorpb.Model
 	*occupancysensorpb.ModelServer
@@ -46,7 +45,7 @@ type occupancy struct {
 	pollTask *task.Intermittent
 }
 
-func newOccupancy(client *gobacnet.Client, known known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
+func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
 	cfg, err := readOccupancyConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -57,7 +56,7 @@ func newOccupancy(client *gobacnet.Client, known known.Context, statuses *status
 	o := &occupancy{
 		client:      client,
 		known:       known,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: occupancysensorpb.NewModelServer(model),
@@ -65,8 +64,6 @@ func newOccupancy(client *gobacnet.Client, known known.Context, statuses *status
 	}
 
 	o.pollTask = task.NewIntermittent(o.startPoll)
-
-	initTraitStatus(statuses, cfg.Name, "OccupancySensor")
 
 	return o, nil
 }
@@ -129,7 +126,7 @@ func (o *occupancy) pollPeer(ctx context.Context) (*traits.Occupancy, error) {
 		}
 	}
 
-	status.UpdatePollErrorStatus(o.statuses, o.config.Name, "Occupancy", requestNames, errs)
+	updateTraitFaultCheck(ctx, o.faultCheck, o.config.Name, trait.OccupancySensor, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

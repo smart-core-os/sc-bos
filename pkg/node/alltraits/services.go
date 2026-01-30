@@ -1,35 +1,62 @@
 package alltraits
 
 import (
+	"slices"
+
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/anprcamera"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/button"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/dalipb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylightpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/report"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/serviceticketpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb"
+	gen_accesspb "github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	gen_allocationpb "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/anprcamerapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	gen_dalipb "github.com/smart-core-os/sc-bos/pkg/proto/driver/dalipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
+	gen_emergencylightpb "github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	gen_mqttpb "github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/reportpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
+	gen_serviceticketpb "github.com/smart-core-os/sc-bos/pkg/proto/serviceticketpb"
+	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	gen_temperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
+	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	gen_wastepb "github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/accesspb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/anprcamera"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/button"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/dalipb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/emergencylightpb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/meter"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/mqttpb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/report"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/securityevent"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/serviceticketpb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/soundsensorpb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/transport"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/udmipb"
 )
 
 var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
-	trait.AirQualitySensor: {traits.AirQualitySensorApi_ServiceDesc, traits.AirQualitySensorInfo_ServiceDesc, gen.AirQualitySensorHistory_ServiceDesc},
-	trait.AirTemperature:   {traits.AirTemperatureApi_ServiceDesc, traits.AirTemperatureInfo_ServiceDesc, gen.AirTemperatureHistory_ServiceDesc},
+	trait.AirQualitySensor: {traits.AirQualitySensorApi_ServiceDesc, traits.AirQualitySensorInfo_ServiceDesc, airqualitysensorpb.AirQualitySensorHistory_ServiceDesc},
+	trait.AirTemperature:   {traits.AirTemperatureApi_ServiceDesc, traits.AirTemperatureInfo_ServiceDesc, airtemperaturepb.AirTemperatureHistory_ServiceDesc},
 	trait.Booking:          {traits.BookingApi_ServiceDesc, traits.BookingInfo_ServiceDesc},
 	trait.BrightnessSensor: {traits.BrightnessSensorApi_ServiceDesc, traits.BrightnessSensorInfo_ServiceDesc},
 	trait.Channel:          {traits.ChannelApi_ServiceDesc, traits.ChannelInfo_ServiceDesc},
 	trait.Color:            {traits.ColorApi_ServiceDesc, traits.ColorInfo_ServiceDesc},
 	trait.Count:            {traits.CountApi_ServiceDesc, traits.CountInfo_ServiceDesc},
-	trait.Electric:         {traits.ElectricApi_ServiceDesc, traits.ElectricInfo_ServiceDesc, gen.ElectricHistory_ServiceDesc},
+	trait.Electric:         {traits.ElectricApi_ServiceDesc, traits.ElectricInfo_ServiceDesc, electricpb.ElectricHistory_ServiceDesc},
 	trait.Emergency:        {traits.EmergencyApi_ServiceDesc, traits.EmergencyInfo_ServiceDesc},
 	trait.EnergyStorage:    {traits.EnergyStorageApi_ServiceDesc, traits.EnergyStorageInfo_ServiceDesc},
 	trait.EnterLeaveSensor: {traits.EnterLeaveSensorApi_ServiceDesc, traits.EnterLeaveSensorInfo_ServiceDesc},
@@ -43,7 +70,7 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	trait.Microphone:       {traits.MicrophoneApi_ServiceDesc, traits.MicrophoneInfo_ServiceDesc},
 	trait.Mode:             {traits.ModeApi_ServiceDesc, traits.ModeInfo_ServiceDesc},
 	trait.MotionSensor:     {traits.MotionSensorApi_ServiceDesc},
-	trait.OccupancySensor:  {traits.OccupancySensorApi_ServiceDesc, traits.OccupancySensorInfo_ServiceDesc, gen.OccupancySensorHistory_ServiceDesc},
+	trait.OccupancySensor:  {traits.OccupancySensorApi_ServiceDesc, traits.OccupancySensorInfo_ServiceDesc, occupancysensorpb.OccupancySensorHistory_ServiceDesc},
 	trait.OnOff:            {traits.OnOffApi_ServiceDesc, traits.OnOffInfo_ServiceDesc},
 	trait.OpenClose:        {traits.OpenCloseApi_ServiceDesc, traits.OpenCloseInfo_ServiceDesc},
 	trait.Parent:           {traits.ParentApi_ServiceDesc, traits.ParentInfo_ServiceDesc},
@@ -51,23 +78,35 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	trait.Ptz:              {traits.PtzApi_ServiceDesc, traits.PtzInfo_ServiceDesc},
 	trait.Speaker:          {traits.SpeakerApi_ServiceDesc, traits.SpeakerInfo_ServiceDesc},
 	trait.Vending:          {traits.VendingApi_ServiceDesc, traits.VendingInfo_ServiceDesc},
-	trait.Waste:            {traits.WasteApi_ServiceDesc, traits.WasteInfo_ServiceDesc},
 
 	// sc-bos private traits
-	accesspb.TraitName:         {gen.AccessApi_ServiceDesc},
-	anprcamera.TraitName:       {gen.AnprCameraApi_ServiceDesc},
-	button.TraitName:           {gen.ButtonApi_ServiceDesc},
-	dalipb.TraitName:           {gen.DaliApi_ServiceDesc},
-	emergencylightpb.TraitName: {gen.DaliApi_ServiceDesc, gen.EmergencyLightApi_ServiceDesc},
-	meter.TraitName:            {gen.MeterApi_ServiceDesc, gen.MeterInfo_ServiceDesc, gen.MeterHistory_ServiceDesc},
-	mqttpb.TraitName:           {gen.MqttService_ServiceDesc},
-	report.TraitName:           {gen.ReportApi_ServiceDesc},
-	securityevent.TraitName:    {gen.SecurityEventApi_ServiceDesc},
-	serviceticketpb.TraitName:  {gen.ServiceTicketApi_ServiceDesc, gen.ServiceTicketInfo_ServiceDesc},
-	soundsensorpb.TraitName:    {gen.SoundSensorApi_ServiceDesc, gen.SoundSensorInfo_ServiceDesc},
-	statusTraitName:            {gen.StatusApi_ServiceDesc, gen.StatusHistory_ServiceDesc},
-	transport.TraitName:        {gen.TransportApi_ServiceDesc, gen.TransportInfo_ServiceDesc},
-	udmipb.TraitName:           {gen.UdmiService_ServiceDesc},
+	allocationpb.TraitName:     {gen_allocationpb.AllocationApi_ServiceDesc, gen_allocationpb.AllocationHistory_ServiceDesc},
+	accesspb.TraitName:         {gen_accesspb.AccessApi_ServiceDesc},
+	anprcamera.TraitName:       {anprcamerapb.AnprCameraApi_ServiceDesc},
+	button.TraitName:           {buttonpb.ButtonApi_ServiceDesc},
+	dalipb.TraitName:           {gen_dalipb.DaliApi_ServiceDesc},
+	emergencylightpb.TraitName: {gen_dalipb.DaliApi_ServiceDesc, gen_emergencylightpb.EmergencyLightApi_ServiceDesc},
+	healthpb.TraitName:         {gen_healthpb.HealthApi_ServiceDesc, gen_healthpb.HealthHistory_ServiceDesc},
+	meter.TraitName:            {meterpb.MeterApi_ServiceDesc, meterpb.MeterInfo_ServiceDesc, meterpb.MeterHistory_ServiceDesc},
+	mqttpb.TraitName:           {gen_mqttpb.MqttService_ServiceDesc},
+	report.TraitName:           {reportpb.ReportApi_ServiceDesc},
+	securityevent.TraitName:    {securityeventpb.SecurityEventApi_ServiceDesc},
+	serviceticketpb.TraitName:  {gen_serviceticketpb.ServiceTicketApi_ServiceDesc, gen_serviceticketpb.ServiceTicketInfo_ServiceDesc},
+	soundsensorpb.TraitName:    {gen_soundsensorpb.SoundSensorApi_ServiceDesc, gen_soundsensorpb.SoundSensorInfo_ServiceDesc},
+	statusTraitName:            {statuspb.StatusApi_ServiceDesc, statuspb.StatusHistory_ServiceDesc},
+	temperaturepb.TraitName:    {gen_temperaturepb.TemperatureApi_ServiceDesc},
+	transport.TraitName:        {transportpb.TransportApi_ServiceDesc, transportpb.TransportInfo_ServiceDesc, transportpb.TransportHistory_ServiceDesc},
+	udmipb.TraitName:           {gen_udmipb.UdmiService_ServiceDesc},
+	wastepb.TraitName:          {gen_wastepb.WasteApi_ServiceDesc, gen_wastepb.WasteInfo_ServiceDesc},
+}
+
+func Names() []trait.Name {
+	names := make([]trait.Name, 0, len(serviceRegistry))
+	for name := range serviceRegistry {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	return names
 }
 
 // ServiceDesc returns the gRPC service descriptors for all services associated with the given trait.

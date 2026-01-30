@@ -11,9 +11,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/auto/lights/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 // Patcher represents a single patch that adjusts ReadState.
@@ -58,7 +58,7 @@ func (b *BrightnessAutomation) setupReadSources(ctx context.Context, configChang
 			new: func(name deviceName, logger *zap.Logger) subscriber {
 				return &ButtonPatches{
 					name:   name,
-					client: gen.NewButtonApiClient(conn),
+					client: buttonpb.NewButtonApiClient(conn),
 					logger: logger,
 				}
 			},
@@ -70,7 +70,7 @@ func (b *BrightnessAutomation) setupReadSources(ctx context.Context, configChang
 			new: func(name deviceName, logger *zap.Logger) subscriber {
 				return &ButtonPatches{
 					name:   name,
-					client: gen.NewButtonApiClient(conn),
+					client: buttonpb.NewButtonApiClient(conn),
 					logger: logger,
 				}
 			},
@@ -82,7 +82,7 @@ func (b *BrightnessAutomation) setupReadSources(ctx context.Context, configChang
 			new: func(name deviceName, logger *zap.Logger) subscriber {
 				return &ButtonPatches{
 					name:   name,
-					client: gen.NewButtonApiClient(conn),
+					client: buttonpb.NewButtonApiClient(conn),
 					logger: logger,
 				}
 			},

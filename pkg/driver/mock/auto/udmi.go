@@ -8,12 +8,12 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/exp/rand"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto/udmi"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 )
 
 type UdmiServer struct {
-	gen.UnimplementedUdmiServiceServer
+	udmipb.UnimplementedUdmiServiceServer
 	log        *zap.Logger
 	deviceName string
 }
@@ -25,11 +25,11 @@ func NewUdmiServer(log *zap.Logger, deviceName string) *UdmiServer {
 	}
 }
 
-func (u *UdmiServer) GetExportMessage(ctx context.Context, request *gen.GetExportMessageRequest) (*gen.MqttMessage, error) {
+func (u *UdmiServer) GetExportMessage(ctx context.Context, request *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
 	return u.randMqttMessage()
 }
 
-func (u *UdmiServer) PullExportMessages(request *gen.PullExportMessagesRequest, messagesServer gen.UdmiService_PullExportMessagesServer) error {
+func (u *UdmiServer) PullExportMessages(request *udmipb.PullExportMessagesRequest, messagesServer udmipb.UdmiService_PullExportMessagesServer) error {
 
 	if request.IncludeLast {
 		msg, err := u.randMqttMessage()
@@ -59,11 +59,11 @@ func (u *UdmiServer) PullExportMessages(request *gen.PullExportMessagesRequest, 
 	}
 }
 
-func (u *UdmiServer) sendMqttMessage(stream gen.UdmiService_PullExportMessagesServer, msg *gen.MqttMessage) error {
-	return stream.Send(&gen.PullExportMessagesResponse{Name: u.deviceName, Message: msg})
+func (u *UdmiServer) sendMqttMessage(stream udmipb.UdmiService_PullExportMessagesServer, msg *udmipb.MqttMessage) error {
+	return stream.Send(&udmipb.PullExportMessagesResponse{Name: u.deviceName, Message: msg})
 }
 
-func (u *UdmiServer) randMqttMessage() (*gen.MqttMessage, error) {
+func (u *UdmiServer) randMqttMessage() (*udmipb.MqttMessage, error) {
 	points := &udmi.PointsEvent{
 		"ClgDmnd":          udmi.PointValue{PresentValue: 0},
 		"ClgOrrideCmd":     udmi.PointValue{PresentValue: 0},
@@ -99,8 +99,8 @@ func (u *UdmiServer) randMqttMessage() (*gen.MqttMessage, error) {
 	return u.mqttMessage(body), nil
 }
 
-func (u *UdmiServer) mqttMessage(body []byte) *gen.MqttMessage {
-	return &gen.MqttMessage{
+func (u *UdmiServer) mqttMessage(body []byte) *udmipb.MqttMessage {
+	return &udmipb.MqttMessage{
 		Topic:   "test/mock/" + u.deviceName + "/event/pointset/points",
 		Payload: string(body),
 	}

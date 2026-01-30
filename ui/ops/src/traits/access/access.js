@@ -1,13 +1,13 @@
 import {closeResource, newResourceValue} from '@/api/resource';
 import {pullAccessAttempts} from '@/api/sc/traits/access';
 import {toQueryObject, watchResource} from '@/util/traits';
-import {AccessAttempt} from '@vanti-dev/sc-bos-ui-gen/proto/access_pb';
+import {AccessAttempt} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/access/v1/access_pb';
 import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
 
 /**
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/access_pb').PullAccessAttemptsRequest} PullAccessAttemptsRequest
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/access_pb').PullAccessAttemptsResponse} PullAccessAttemptsResponse
- * @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/access_pb').AccessAttempt} AccessAttempt
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/access/v1/access_pb').PullAccessAttemptsRequest} PullAccessAttemptsRequest
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/access/v1/access_pb').PullAccessAttemptsResponse} PullAccessAttemptsResponse
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/access/v1/access_pb').AccessAttempt} AccessAttempt
  * @typedef {import('vue').UnwrapNestedRefs} UnwrapNestedRefs
  * @typedef {import('vue').ToRefs} ToRefs
  * @typedef {import('vue').ComputedRef} ComputedRef

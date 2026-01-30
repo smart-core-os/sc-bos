@@ -14,13 +14,13 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/util/resources"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/util/resources"
 )
 
 type Server struct {
-	gen.UnimplementedDevicesApiServer
+	devicespb.UnimplementedDevicesApiServer
 
 	// ChildPageSize overrides the default page size used when querying the parent trait for children
 	ChildPageSize int32
@@ -31,16 +31,16 @@ type Server struct {
 	downloadUrlBase      url.URL // defaults to /dl/devices
 	downloadTokenWriter  DownloadTokenWriter
 	downloadTokenReader  DownloadTokenReader
-	downloadKey          func() ([]byte, error)
-	downloadExpiry       time.Duration // defaults to 1 hour
-	downloadExpiryLeeway time.Duration // defaults to 1 minute
-	downloadPageTimeout  time.Duration // defaults to 10 seconds, applies to get and history cursor calls
+	downloadKey          func() ([]byte, error) // initialise using WithHMACKeyGen if keys need to persist between nodes across the SmartCore cohort
+	downloadExpiry       time.Duration          // defaults to 1 hour
+	downloadExpiryLeeway time.Duration          // defaults to 1 minute
+	downloadPageTimeout  time.Duration          // defaults to 10 seconds, applies to get and history cursor calls
 }
 
 // Collection contains a list of devices.
 type Collection interface {
-	ListDevices(opts ...resource.ReadOption) []*gen.Device
-	PullDevices(ctx context.Context, opts ...resource.ReadOption) <-chan resources.CollectionChange[*gen.Device]
+	ListDevices(opts ...resource.ReadOption) []*devicespb.Device
+	PullDevices(ctx context.Context, opts ...resource.ReadOption) <-chan resources.CollectionChange[*devicespb.Device]
 }
 
 // Model defines where this server gets its data from, and how it connects to other nodes.
@@ -56,7 +56,7 @@ func NewServer(m Model, opts ...Option) *Server {
 		downloadUrlBase:      url.URL{Path: "/dl/devices"},
 		downloadExpiry:       time.Hour,
 		downloadExpiryLeeway: time.Minute,
-		downloadKey:          newHMACKeyGen(64), // todo: replace with something that works between nodes
+		downloadKey:          newHMACKeyGen(64),
 		downloadPageTimeout:  10 * time.Second,
 	}
 	for _, opt := range opts {
@@ -65,11 +65,11 @@ func NewServer(m Model, opts ...Option) *Server {
 	return s
 }
 
-func (s *Server) Register(server *grpc.Server) {
-	gen.RegisterDevicesApiServer(server, s)
+func (s *Server) Register(server grpc.ServiceRegistrar) {
+	devicespb.RegisterDevicesApiServer(server, s)
 }
 
-func (s *Server) ListDevices(_ context.Context, request *gen.ListDevicesRequest) (*gen.ListDevicesResponse, error) {
+func (s *Server) ListDevices(_ context.Context, request *devicespb.ListDevicesRequest) (*devicespb.ListDevicesResponse, error) {
 	if err := validateQuery(request.GetQuery()); err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (s *Server) ListDevices(_ context.Context, request *gen.ListDevicesRequest)
 		pageToken.LastName = ""
 	}
 
-	var devices []*gen.Device
+	var devices []*devicespb.Device
 	for _, device := range allDevices[nextIndex:] {
 		if len(devices) == pageSize {
 			// we found another device but we don't want to include it in the response,
@@ -118,7 +118,7 @@ func (s *Server) ListDevices(_ context.Context, request *gen.ListDevicesRequest)
 		devices = append(devices, device)
 	}
 
-	res := &gen.ListDevicesResponse{
+	res := &devicespb.ListDevicesResponse{
 		Devices:   devices,
 		TotalSize: int32(len(allDevices)),
 	}
@@ -132,7 +132,7 @@ func (s *Server) ListDevices(_ context.Context, request *gen.ListDevicesRequest)
 	return res, nil
 }
 
-func (s *Server) PullDevices(request *gen.PullDevicesRequest, server gen.DevicesApi_PullDevicesServer) error {
+func (s *Server) PullDevices(request *devicespb.PullDevicesRequest, server devicespb.DevicesApi_PullDevicesServer) error {
 	if err := validateQuery(request.GetQuery()); err != nil {
 		return err
 	}
@@ -143,14 +143,14 @@ func (s *Server) PullDevices(request *gen.PullDevicesRequest, server gen.Devices
 		withDevicesMatchingsQuery(request.Query),
 	)
 	for change := range changes {
-		resChange := &gen.PullDevicesResponse_Change{
+		resChange := &devicespb.PullDevicesResponse_Change{
 			Name:       change.Id,
 			ChangeTime: timestamppb.New(change.ChangeTime),
 			Type:       change.ChangeType,
 			OldValue:   change.OldValue,
 			NewValue:   change.NewValue,
 		}
-		res := &gen.PullDevicesResponse{Changes: []*gen.PullDevicesResponse_Change{resChange}}
+		res := &devicespb.PullDevicesResponse{Changes: []*devicespb.PullDevicesResponse_Change{resChange}}
 		if err := server.Send(res); err != nil {
 			return err
 		}
@@ -158,9 +158,9 @@ func (s *Server) PullDevices(request *gen.PullDevicesRequest, server gen.Devices
 	return nil
 }
 
-func (s *Server) GetDevicesMetadata(_ context.Context, request *gen.GetDevicesMetadataRequest) (*gen.DevicesMetadata, error) {
+func (s *Server) GetDevicesMetadata(_ context.Context, request *devicespb.GetDevicesMetadataRequest) (*devicespb.DevicesMetadata, error) {
 	devices := s.m.ListDevices(withDevicesMatchingsQuery(request.GetQuery()))
-	var res *gen.DevicesMetadata
+	var res *devicespb.DevicesMetadata
 	col := newMetadataCollector(request.GetIncludes().GetFields()...)
 	for _, device := range devices {
 		res = col.add(device)
@@ -168,18 +168,18 @@ func (s *Server) GetDevicesMetadata(_ context.Context, request *gen.GetDevicesMe
 	return res, nil
 }
 
-func (s *Server) PullDevicesMetadata(request *gen.PullDevicesMetadataRequest, server gen.DevicesApi_PullDevicesMetadataServer) error {
-	var md *gen.DevicesMetadata
-	send := func(msg *gen.DevicesMetadata, t time.Time) error {
+func (s *Server) PullDevicesMetadata(request *devicespb.PullDevicesMetadataRequest, server devicespb.DevicesApi_PullDevicesMetadataServer) error {
+	var md *devicespb.DevicesMetadata
+	send := func(msg *devicespb.DevicesMetadata, t time.Time) error {
 		if proto.Equal(md, msg) {
 			return nil
 		}
-		md = proto.Clone(msg).(*gen.DevicesMetadata)
-		change := &gen.PullDevicesMetadataResponse_Change{
+		md = proto.Clone(msg).(*devicespb.DevicesMetadata)
+		change := &devicespb.PullDevicesMetadataResponse_Change{
 			ChangeTime:      timestamppb.New(t),
 			DevicesMetadata: msg,
 		}
-		return server.Send(&gen.PullDevicesMetadataResponse{Changes: []*gen.PullDevicesMetadataResponse_Change{
+		return server.Send(&devicespb.PullDevicesMetadataResponse{Changes: []*devicespb.PullDevicesMetadataResponse_Change{
 			change,
 		}})
 	}
@@ -191,7 +191,7 @@ func (s *Server) PullDevicesMetadata(request *gen.PullDevicesMetadataRequest, se
 	// Note we recalculate the metadata for the initial value and for updates separately. We can't guarantee data
 	// consistency between the Get and Pull calls, at least this way the data should be accurate.
 	if !request.UpdatesOnly {
-		md, err := s.GetDevicesMetadata(server.Context(), &gen.GetDevicesMetadataRequest{
+		md, err := s.GetDevicesMetadata(server.Context(), &devicespb.GetDevicesMetadataRequest{
 			Includes: request.Includes,
 			Query:    request.Query,
 		})
@@ -207,7 +207,7 @@ func (s *Server) PullDevicesMetadata(request *gen.PullDevicesMetadataRequest, se
 	col := newMetadataCollector(request.GetIncludes().GetFields()...)
 	seeding := true
 	for change := range changes {
-		var md *gen.DevicesMetadata
+		var md *devicespb.DevicesMetadata
 		if change.OldValue != nil {
 			md = col.remove(change.OldValue)
 		}
@@ -230,7 +230,7 @@ func (s *Server) PullDevicesMetadata(request *gen.PullDevicesMetadataRequest, se
 	return nil
 }
 
-func validateQuery(q *gen.Device_Query) error {
+func validateQuery(q *devicespb.Device_Query) error {
 	if q == nil {
 		return nil
 	}
@@ -249,12 +249,12 @@ func validateQuery(q *gen.Device_Query) error {
 	return nil
 }
 
-func withDevicesMatchingsQuery(query *gen.Device_Query) resource.ReadOption {
+func withDevicesMatchingsQuery(query *devicespb.Device_Query) resource.ReadOption {
 	return resource.WithInclude(func(id string, item proto.Message) bool {
 		if item == nil {
 			return false
 		}
-		device := item.(*gen.Device)
+		device := item.(*devicespb.Device)
 		return deviceMatchesQuery(query, device)
 	})
 }

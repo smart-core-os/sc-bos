@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -23,25 +24,33 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
+	"github.com/smart-core-os/sc-bos/internal/account"
+	"github.com/smart-core-os/sc-bos/internal/manage/devices"
+	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
+	"github.com/smart-core-os/sc-bos/internal/router"
+	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors"
+	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors/protopkg"
+	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
+	"github.com/smart-core-os/sc-bos/internal/util/pki/expire"
+	"github.com/smart-core-os/sc-bos/pkg/app/appconf"
+	"github.com/smart-core-os/sc-bos/pkg/app/files"
+	http2 "github.com/smart-core-os/sc-bos/pkg/app/http"
+	"github.com/smart-core-os/sc-bos/pkg/app/stores"
+	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
+	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/manage/enrollment"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
+	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
+	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/wrap"
-	"github.com/vanti-dev/sc-bos/internal/account"
-	"github.com/vanti-dev/sc-bos/internal/manage/devices"
-	"github.com/vanti-dev/sc-bos/internal/util/grpc/interceptors"
-	"github.com/vanti-dev/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/vanti-dev/sc-bos/internal/util/pki"
-	"github.com/vanti-dev/sc-bos/internal/util/pki/expire"
-	"github.com/vanti-dev/sc-bos/pkg/app/appconf"
-	"github.com/vanti-dev/sc-bos/pkg/app/files"
-	http2 "github.com/vanti-dev/sc-bos/pkg/app/http"
-	"github.com/vanti-dev/sc-bos/pkg/app/stores"
-	"github.com/vanti-dev/sc-bos/pkg/app/sysconf"
-	"github.com/vanti-dev/sc-bos/pkg/auth/policy"
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/manage/enrollment"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task"
-	"github.com/vanti-dev/sc-bos/pkg/util/netutil"
 )
 
 // Bootstrap will obtain a Controller in a ready-to-run state.
@@ -89,7 +98,26 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	if cName == "" {
 		cName = config.Name
 	}
-	rootNode := node.New(cName)
+
+	// idOrNodeName returns the given oldID if non-empty, otherwise returns the node name.
+	idOrNodeName := func(oldID string) (newID string) {
+		if oldID == "" {
+			return cName
+		}
+		return oldID
+	}
+	// external store for devices so we can attach multiple resources to it,
+	// like metadata and health checks.
+	deviceStore := devicespb.NewCollection(
+		resource.WithIDInterceptor(idOrNodeName),
+		resource.WithNoDuplicates(),
+	)
+	// dynamic router for API clients, allows non-Announced services to also be served via rootNode.ClientConn()
+	nodeRouter := router.New(router.WithKeyInterceptor(func(key string) (mappedKey string, err error) {
+		return idOrNodeName(key), nil
+	}))
+
+	rootNode := node.New(cName, nodeopts.WithStore(deviceStore), nodeopts.WithRouter(nodeRouter))
 	rootNode.Logger = logger.Named("node")
 
 	var accountStore *account.Store
@@ -100,7 +128,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			return nil, fmt.Errorf("load accounts: %w", err)
 		}
 		rootNode.Announce(rootNode.Name(),
-			node.HasServer[gen.AccountApiServer](gen.RegisterAccountApiServer, account.NewServer(accountStore, accountLogger.Named("server"))),
+			node.HasServer[accountpb.AccountApiServer](accountpb.RegisterAccountApiServer, account.NewServer(accountStore, accountLogger.Named("server"))),
 		)
 	}
 
@@ -221,6 +249,16 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsGRPCClientConfig)))
 
 	var grpcOpts []grpc.ServerOption
+
+	// Enable backwards compatibility while we transition to versioned gRPC APIs.
+	// This allows old clients to communicate with new servers as part of a rolling upgrade.
+	// Must be done before the interceptors.CorrectStreamInfo call so the /service/method is correct.
+	migrationInterceptor := protopkg.NewOldToNewInterceptor()
+	grpcOpts = append(grpcOpts,
+		grpc.ChainUnaryInterceptor(migrationInterceptor.UnaryInterceptor()),
+		grpc.ChainStreamInterceptor(migrationInterceptor.StreamInterceptor()),
+	)
+
 	grpcOpts = append(grpcOpts,
 		grpc.Creds(credentials.NewTLS(tlsGRPCServerConfig)),
 		grpc.ChainStreamInterceptor(interceptors.CorrectStreamInfo(rootNode)),
@@ -254,9 +292,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	grpcServer := grpc.NewServer(grpcOpts...)
 
 	reflectionServer := reflectionapi.NewServer(grpcServer, rootNode)
-	reflectionServer.Register(grpcServer)
+	reflectionServer.Register(nodeRouter)
 
-	gen.RegisterEnrollmentApiServer(grpcServer, enrollServer)
+	enrollmentpb.RegisterEnrollmentApiServer(nodeRouter, enrollServer)
 
 	// DevicesApi
 	var devicesApiOpts []devices.Option
@@ -270,8 +308,27 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	} else {
 		logger.Error("failed to determine external http endpoint - download URLs unavailable", zap.Error(err))
 	}
+
+	if config.Devices != nil && config.Devices.DownloadHMACKeyFile != "" {
+		hmacKey, err := os.ReadFile(config.Devices.DownloadHMACKeyFile)
+		if err != nil {
+			logger.Warn("failed to read download HMAC key file, using random HMAC key generator", zap.Error(err))
+		} else {
+			hmacKey = bytes.TrimSpace(hmacKey)
+			devicesApiOpts = append(devicesApiOpts, devices.WithHMACKeyGen(func() ([]byte, error) {
+				return hmacKey, nil
+			}))
+		}
+	}
+
 	devicesApi := devices.NewServer(rootNode, devicesApiOpts...)
-	devicesApi.Register(grpcServer)
+	devicesApi.Register(nodeRouter)
+
+	// HealthApi, HealthHistoryApi, and adding health checks to the DevicesApi
+	checkRegistry, closeHealthStore, err := setupHealthRegistry(ctx, config, deviceStore, rootNode, logger.Named("health"))
+	if err != nil {
+		return nil, err
+	}
 
 	grpcWebServer := grpcweb.WrapServer(grpcServer,
 		grpcweb.WithOriginFunc(func(origin string) bool {
@@ -337,7 +394,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		Enrollment:       enrollServer,
 		Logger:           logger,
 		Node:             rootNode,
-		Devices:          gen.NewDevicesApiClient(wrap.ServerToClient(gen.DevicesApi_ServiceDesc, devicesApi)),
+		Devices:          gen_devicespb.NewDevicesApiClient(wrap.ServerToClient(gen_devicespb.DevicesApi_ServiceDesc, devicesApi)),
+		CheckRegistry:    checkRegistry,
+		DeviceStore:      deviceStore,
 		Tasks:            &task.Group{},
 		Database:         db,
 		Stores:           store,
@@ -354,6 +413,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	}
 	c.Defer(manager.Close)
 	c.Defer(store.Close)
+	c.Defer(closeHealthStore)
 	return c, nil
 }
 
@@ -411,13 +471,15 @@ type Controller struct {
 	// services for drivers/automations
 	Logger          *zap.Logger
 	Node            *node.Node
-	Devices         gen.DevicesApiClient
+	Devices         gen_devicespb.DevicesApiClient
+	DeviceStore     *devicespb.Collection // for low level control of devices
 	Tasks           *task.Group
 	Database        *bolthold.Store
 	TokenValidators *token.ValidatorSet
 	GRPCCerts       *pki.SourceSet
 	Stores          *stores.Stores
 	Accounts        *account.Store
+	CheckRegistry   *healthpb.Registry
 
 	ReflectionServer *reflectionapi.Server
 

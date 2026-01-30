@@ -10,8 +10,8 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
 )
 
 func Test_PullExportMessages(t *testing.T) {
@@ -23,10 +23,10 @@ func Test_PullExportMessages(t *testing.T) {
 	o := resource.NewValue(resource.WithInitialValue(&traits.Occupancy{PeopleCount: 0, State: traits.Occupancy_OCCUPIED}), resource.WithNoDuplicates())
 	temp := resource.NewValue(resource.WithInitialValue(&traits.AirTemperature{AmbientTemperature: &types.Temperature{ValueCelsius: 0}, AmbientHumidity: &humidity}), resource.WithNoDuplicates())
 
-	server := NewUdmiServiceServer(nil, aq, o, temp, "prefix")
-	client := gen.WrapUdmiService(server)
+	server := newUdmiServiceServer(nil, aq, o, temp, "prefix")
+	client := udmipb.WrapService(server)
 
-	req := &gen.PullExportMessagesRequest{
+	req := &udmipb.PullExportMessagesRequest{
 		Name: "test",
 	}
 

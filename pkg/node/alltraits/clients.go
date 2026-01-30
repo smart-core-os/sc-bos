@@ -4,7 +4,22 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/driver/dalipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/historypb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/tenantpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
 )
 
 func NewClient(ptr any, conn grpc.ClientConnInterface) (ok bool) {
@@ -69,22 +84,22 @@ func NewClient(ptr any, conn grpc.ClientConnInterface) (ok bool) {
 		*ptr = traits.NewSpeakerApiClient(conn)
 	case *traits.VendingApiClient:
 		*ptr = traits.NewVendingApiClient(conn)
-	case *traits.WasteApiClient:
-		*ptr = traits.NewWasteApiClient(conn)
-	case *gen.AlertApiClient:
-		*ptr = gen.NewAlertApiClient(conn)
-	case *gen.ButtonApiClient:
-		*ptr = gen.NewButtonApiClient(conn)
-	case *gen.DaliApiClient:
-		*ptr = gen.NewDaliApiClient(conn)
-	case *gen.MeterApiClient:
-		*ptr = gen.NewMeterApiClient(conn)
-	case *gen.MqttServiceClient:
-		*ptr = gen.NewMqttServiceClient(conn)
-	case *gen.StatusApiClient:
-		*ptr = gen.NewStatusApiClient(conn)
-	case *gen.UdmiServiceClient:
-		*ptr = gen.NewUdmiServiceClient(conn)
+	case *alertpb.AlertApiClient:
+		*ptr = alertpb.NewAlertApiClient(conn)
+	case *buttonpb.ButtonApiClient:
+		*ptr = buttonpb.NewButtonApiClient(conn)
+	case *dalipb.DaliApiClient:
+		*ptr = dalipb.NewDaliApiClient(conn)
+	case *meterpb.MeterApiClient:
+		*ptr = meterpb.NewMeterApiClient(conn)
+	case *mqttpb.MqttServiceClient:
+		*ptr = mqttpb.NewMqttServiceClient(conn)
+	case *statuspb.StatusApiClient:
+		*ptr = statuspb.NewStatusApiClient(conn)
+	case *udmipb.UdmiServiceClient:
+		*ptr = udmipb.NewUdmiServiceClient(conn)
+	case *wastepb.WasteApiClient:
+		*ptr = wastepb.NewWasteApiClient(conn)
 
 	case *traits.AirQualitySensorInfoClient:
 		*ptr = traits.NewAirQualitySensorInfoClient(conn)
@@ -140,30 +155,32 @@ func NewClient(ptr any, conn grpc.ClientConnInterface) (ok bool) {
 		*ptr = traits.NewSpeakerInfoClient(conn)
 	case *traits.VendingInfoClient:
 		*ptr = traits.NewVendingInfoClient(conn)
-	case *traits.WasteInfoClient:
-		*ptr = traits.NewWasteInfoClient(conn)
-	case *gen.MeterInfoClient:
-		*ptr = gen.NewMeterInfoClient(conn)
+	case *meterpb.MeterInfoClient:
+		*ptr = meterpb.NewMeterInfoClient(conn)
+	case *wastepb.WasteInfoClient:
+		*ptr = wastepb.NewWasteInfoClient(conn)
 
-	case *gen.AirTemperatureHistoryClient:
-		*ptr = gen.NewAirTemperatureHistoryClient(conn)
-	case *gen.ElectricHistoryClient:
-		*ptr = gen.NewElectricHistoryClient(conn)
-	case *gen.OccupancySensorHistoryClient:
-		*ptr = gen.NewOccupancySensorHistoryClient(conn)
-	case *gen.AirQualitySensorHistoryClient:
-		*ptr = gen.NewAirQualitySensorHistoryClient(conn)
-	case *gen.MeterHistoryClient:
-		*ptr = gen.NewMeterHistoryClient(conn)
-	case *gen.StatusHistoryClient:
-		*ptr = gen.NewStatusHistoryClient(conn)
+	case *allocationpb.AllocationHistoryClient:
+		*ptr = allocationpb.NewAllocationHistoryClient(conn)
+	case *airtemperaturepb.AirTemperatureHistoryClient:
+		*ptr = airtemperaturepb.NewAirTemperatureHistoryClient(conn)
+	case *electricpb.ElectricHistoryClient:
+		*ptr = electricpb.NewElectricHistoryClient(conn)
+	case *occupancysensorpb.OccupancySensorHistoryClient:
+		*ptr = occupancysensorpb.NewOccupancySensorHistoryClient(conn)
+	case *airqualitysensorpb.AirQualitySensorHistoryClient:
+		*ptr = airqualitysensorpb.NewAirQualitySensorHistoryClient(conn)
+	case *meterpb.MeterHistoryClient:
+		*ptr = meterpb.NewMeterHistoryClient(conn)
+	case *statuspb.StatusHistoryClient:
+		*ptr = statuspb.NewStatusHistoryClient(conn)
 
-	case *gen.HistoryAdminApiClient:
-		*ptr = gen.NewHistoryAdminApiClient(conn)
-	case *gen.HubApiClient:
-		*ptr = gen.NewHubApiClient(conn)
-	case *gen.TenantApiClient:
-		*ptr = gen.NewTenantApiClient(conn)
+	case *historypb.HistoryAdminApiClient:
+		*ptr = historypb.NewHistoryAdminApiClient(conn)
+	case *hubpb.HubApiClient:
+		*ptr = hubpb.NewHubApiClient(conn)
+	case *tenantpb.TenantApiClient:
+		*ptr = tenantpb.NewTenantApiClient(conn)
 
 	default:
 		return false

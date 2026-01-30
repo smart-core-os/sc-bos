@@ -2,10 +2,10 @@ import {fieldMaskFromObject, setProperties, timestampToDate} from '@/api/convpb.
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setValue, trackAction} from '@/api/resource.js';
 import {periodFromObject} from '@/api/sc/types/period';
-import {SoundSensorHistoryPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/history_grpc_web_pb';
-import {ListSoundLevelHistoryRequest} from '@vanti-dev/sc-bos-ui-gen/proto/history_pb';
-import {SoundSensorApiPromiseClient, SoundSensorInfoPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/sound_sensor_grpc_web_pb';
-import {DescribeSoundLevelRequest, PullSoundLevelRequest} from '@vanti-dev/sc-bos-ui-gen/proto/sound_sensor_pb';
+import {SoundSensorHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_history_grpc_web_pb';
+import {ListSoundLevelHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_history_pb';
+import {SoundSensorApiPromiseClient, SoundSensorInfoPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_grpc_web_pb';
+import {DescribeSoundLevelRequest, PullSoundLevelRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_pb';
 
 /**
  * @param {Partial<PullSoundLevelRequest.AsObject>} request

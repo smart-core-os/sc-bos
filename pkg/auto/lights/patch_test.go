@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
 )
 
 func TestBrightnessAutomation_processConfig(t *testing.T) {

@@ -3,7 +3,7 @@ package config
 import (
 	"time"
 
-	"github.com/vanti-dev/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
 )
 
 type Root struct {

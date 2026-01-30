@@ -9,9 +9,9 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/meter"
-	"github.com/vanti-dev/sc-bos/pkg/history/pgxstore"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
 
 func SeedMeter(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
@@ -29,7 +29,7 @@ func SeedMeter(ctx context.Context, db *pgxpool.Pool, name string, lookBack time
 
 	for current.Before(now) {
 		incremental = incremental + rand.Float32()*1_000
-		payload, err := proto.Marshal(&gen.MeterReading{
+		payload, err := proto.Marshal(&meterpb.MeterReading{
 			Usage: incremental,
 		})
 

@@ -8,9 +8,9 @@
     "preview": "vite preview --port 5050"
   },
   "dependencies": {
-    "@smart-core-os/sc-api-grpc-web": "^1.0.0-beta.56",
-    "google-protobuf": "^3.21.2",
-    "grpc-web": "^1.5.0",
+    "@smart-core-os/sc-api-grpc-web": "^1.0.0-beta.60",
+    "google-protobuf": "^4.0.1",
+    "grpc-web": "^2.0.2",
     "keycloak-js": "^25.0.2",
     "vue": "^3.5.13"
   },

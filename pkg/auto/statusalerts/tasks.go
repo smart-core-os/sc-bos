@@ -8,15 +8,16 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto/statusalerts/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/auto/statusalerts/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
-func tasksForSource(source config.Source, dest string, statusClient gen.StatusApiClient, alertAdminClient gen.AlertAdminApiClient, logger *zap.Logger) []task.Task {
+func tasksForSource(source config.Source, dest string, statusClient statuspb.StatusApiClient, alertAdminClient alertpb.AlertAdminApiClient, logger *zap.Logger) []task.Task {
 	return []task.Task{
 		func(ctx context.Context) (task.Next, error) {
-			messages := make(chan *gen.StatusLog)
+			messages := make(chan *statuspb.StatusLog)
 			group, ctx := errgroup.WithContext(ctx)
 			// fetch data
 			group.Go(func() error {

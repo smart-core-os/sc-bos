@@ -1,0 +1,257 @@
+syntax = "proto3";
+
+package smartcore.bos.services.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/servicespb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/change.proto";
+
+service ServicesApi {
+  rpc GetService(GetServiceRequest) returns (Service);
+  rpc PullService(PullServiceRequest) returns (stream PullServiceResponse);
+
+  rpc CreateService(CreateServiceRequest) returns (Service);
+  rpc DeleteService(DeleteServiceRequest) returns (Service);
+
+  rpc ListServices(ListServicesRequest) returns (ListServicesResponse);
+  rpc PullServices(PullServicesRequest) returns (stream PullServicesResponse);
+
+  rpc StartService(StartServiceRequest) returns (Service);
+  rpc ConfigureService(ConfigureServiceRequest) returns (Service);
+  rpc StopService(StopServiceRequest) returns (Service);
+
+  // Get service metadata: how many service are there, what types exist, etc.
+  rpc GetServiceMetadata(GetServiceMetadataRequest) returns (ServiceMetadata);
+  rpc PullServiceMetadata(PullServiceMetadataRequest) returns (stream PullServiceMetadataResponse);
+}
+
+message Service {
+  // The unique id for this service.
+  // If the service collection only supports one instance of each type, like configured services, then the id is
+  // equal to the service type.
+  string id = 1;
+  // The type of service.
+  // Required, written on create.
+  // For example for driver services this might be "bacnet".
+  string type = 2;
+
+  // Whether the service is active or inactive, i.e. running or stopped.
+  // Writable only during create, use StartService or StopService to update.
+  bool active = 3;
+  // The time the service was last inactive
+  // Output only.
+  google.protobuf.Timestamp last_inactive_time = 4;
+  // The time the service was last active
+  // Output only.
+  google.protobuf.Timestamp last_active_time = 5;
+
+  // Whether the service is currently applying changes from a recent config update.
+  // Output only.
+  bool loading = 6;
+  // The time the service last started loading
+  // Output only.
+  google.protobuf.Timestamp last_loading_start_time = 7;
+  // The time the service last completed loading
+  // Output only.
+  google.protobuf.Timestamp last_loading_end_time = 8;
+
+  // Any error that occurred while loading.
+  // Output only.
+  string error = 9;
+  // The time the service last recorded an error
+  // Output only.
+  google.protobuf.Timestamp last_error_time = 10;
+
+  // Encoded config data for the service, typically a JSON string, but check the docs for each type of service to be sure.
+  // Writable only during create, use ConfigureService to update.
+  string config_raw = 11;
+  // The time the service last accepted configuration
+  // Output only.
+  google.protobuf.Timestamp last_config_time = 12;
+
+  // A count of how many times the service has failed to start.
+  // Reset on stop or config update.
+  int32 failed_attempts = 13;
+  // If the service is failing and retries are enabled, contains the time the next attempt will be made.
+  google.protobuf.Timestamp next_attempt_time = 14;
+}
+
+message ServiceMetadata {
+  uint32 total_count = 1;
+
+  // These counts have a key that matches the value in Service,
+  // and a value equal to the total number of services that have that value.
+  // For example {"bacnet": 12, "dali": 33} means 12 services exist with type "bacnet" and 33 exist with type "dali".
+  //
+  // A client can use the keys to discover the list of available values.
+  //
+  // The server may include keys that have a zero value.
+
+  map<string, uint32> type_counts = 2;
+  // The total number of active services, services whose active property is true.
+  uint32 total_active_count = 3;
+  // The total number of services who are inactive due to error.
+  uint32 total_error_count = 4;
+}
+
+message GetServiceRequest {
+  // The name of the device managing the service.
+  string name = 1;
+  // The id of the service to get.
+  string id = 2;
+  google.protobuf.FieldMask read_mask = 3;
+}
+message PullServiceRequest {
+  // The name of the device managing the service.
+  string name = 1;
+  // The id of the service to get
+  string id = 2;
+  bool updates_only = 3;
+  google.protobuf.FieldMask read_mask = 4;
+}
+message PullServiceResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    // The name of the device managing the service.
+    string name = 1;
+    Service service = 2;
+    google.protobuf.Timestamp change_time = 3;
+  }
+}
+
+message CreateServiceRequest {
+  // The name of the device managing the service
+  string name = 1;
+  // The details for the service.
+  // Type is required, id, active, and config_raw are optional, other fields are not allowed.
+  // Some devices do not allow for more than one service of the same type to be created.
+  //
+  // Creating a service that has the same name as an existing service will result in an error.
+  Service service = 2;
+}
+
+message DeleteServiceRequest {
+  // The name of the device managing the service
+  string name = 1;
+  // The id of the service to delete.
+  string id = 2;
+  // If true do not report an error if a service with the given id does not exist.
+  bool allow_missing = 3;
+}
+
+message ListServicesRequest {
+  // The name of the device managing the service
+  string name = 1;
+
+  // Fields to fetch relative to the Service type
+  google.protobuf.FieldMask read_mask = 2;
+
+  // The maximum number of modes to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 3;
+  // A page token, received from a previous `ListServicesResponse` call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 4;
+
+  // todo: string filter = 5;
+}
+message ListServicesResponse {
+  repeated Service services = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+  // If non-zero this is the total number of services after filtering is applied.
+  // This may be an estimate.
+  int32 total_size = 3;
+}
+message PullServicesRequest {
+  // Name of the device that manages the services
+  string name = 1;
+  // Fields to fetch relative to the Service type
+  google.protobuf.FieldMask read_mask = 2;
+  // When true, don't send the initial data. Only send a response when changes have happened.
+  bool updates_only = 3;
+
+  // todo: string filter = 4;
+}
+message PullServicesResponse {
+  // The list of changes which have occurred
+  repeated Change changes = 1;
+
+  message Change {
+    // The name of the device that emitted this change
+    string name = 1;
+    // The type of change (e.g. ADD, UPDATE, etc...)
+    smartcore.types.ChangeType type = 2;
+    // The new value to use for ADD|UPDATE changes
+    Service new_value = 3;
+    // The old value to use for UPDATE|REMOVE changes
+    Service old_value = 4;
+    // When the change occurred
+    google.protobuf.Timestamp change_time = 5;
+  }
+}
+
+message StartServiceRequest {
+  // The name of the device managing the service
+  string name = 1;
+  // The id of the service.
+  string id = 2;
+
+  // Unless true, starting a service that is already ACTIVE will return a PreconditionFailed error.
+  bool allow_active = 3;
+}
+
+message ConfigureServiceRequest {
+  // The name of the device managing the service
+  string name = 1;
+  // The id of the service.
+  string id = 2;
+
+  // Raw configuration data, typically encoded JSON as defined by the service implementation.
+  string config_raw = 3;
+}
+
+message StopServiceRequest {
+  // The name of the device managing the service
+  string name = 1;
+  // The id of the service.
+  string id = 2;
+
+  // Unless true, starting a service that is already INACTIVE or ERROR will return a PreconditionFailed error.
+  bool allow_inactive = 3;
+}
+
+
+message GetServiceMetadataRequest {
+  // Name of the device managing the services
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullServiceMetadataRequest {
+  // Name of the device managing the services
+  string name = 1;
+  // If true, only changes to the count are returned, otherwise the current total will be returned immediately.
+  bool updates_only = 2;
+  google.protobuf.FieldMask read_mask = 3;
+}
+
+message PullServiceMetadataResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    // The name of the device that emitted this change
+    string name = 1;
+    // Information about the services in aggregate.
+    ServiceMetadata metadata = 2;
+    // When the change occurred
+    google.protobuf.Timestamp change_time = 3;
+  }
+}

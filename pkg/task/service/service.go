@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
 )
 
 var (

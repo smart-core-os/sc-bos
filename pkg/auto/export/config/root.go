@@ -6,8 +6,8 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
 )
 
 type Root struct {

@@ -1,7 +1,20 @@
 {
   "drivers": [
-    {"type": "mock", "name": "ac1/mock", "devices": [
-      {"name": "ac1/dev1", "traits": [{"name": "smartcore.traits.OnOff"}]}
-    ]}
+    {
+      "type": "mock", "name": "ac1/mock",
+      "devices": [
+        {"name": "ac1/dev1", "traits": [{"name": "smartcore.traits.OnOff"}]}
+      ]
+    }
+  ],
+  "automation": [
+    {
+      "name": "ac1/dev1/health", "type": "healthbounds",
+      "devices": [{"field": "name", "stringIn": {"strings": ["ac1/dev1"]}}],
+      "source": {"trait": "smartcore.traits.OnOff", "value": "state"},
+      "check": {
+        "bounds": {"normalValue": {"stringValue": "ON"}}
+      }
+    }
   ]
 }

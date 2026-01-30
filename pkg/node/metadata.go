@@ -8,10 +8,10 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/trait/metadatapb"
-	"github.com/vanti-dev/sc-bos/internal/node/nodeopts"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
 )
 
 // mergeAllMetadata uses the metadatapb.Merge algorithm to merge multiple metadata objects into one.
@@ -108,9 +108,9 @@ func (ml *metadataList) updateCollection(c nodeopts.Store, opts ...resource.Writ
 	}
 	md := ml.merge()
 	opts = append(opts, resource.WithUpdatePaths("name", "metadata"), resource.InterceptAfter(func(old, new proto.Message) {
-		newDevice := new.(*gen.Device)
+		newDevice := new.(*devicespb.Device)
 		newDevice.Metadata = md
 	}))
-	_, err := c.Update(&gen.Device{Name: name}, opts...)
+	_, err := c.Update(&devicespb.Device{Name: name}, opts...)
 	return err
 }

@@ -2,6 +2,7 @@ package occupancy
 
 import (
 	"context"
+	"sync"
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -12,17 +13,27 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/util/math2"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
-	"github.com/vanti-dev/sc-bos/pkg/util/math2"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/run"
 )
+
+type sla struct {
+	// cantFail is the set of names that can't fail
+	cantFail map[string]struct{}
+	// percentageOfAcceptableFailures see config.EnterLeaveOccupancySensorSLA for definition
+	percentageOfAcceptableFailures float64
+	// errs is keyed by name, value is the error
+	errs *sync.Map
+}
 
 type enterLeave struct {
 	traits.UnimplementedOccupancySensorApiServer
 	client traits.EnterLeaveSensorApiClient
 	names  []string
+	sla    *sla
 
 	model *occupancysensorpb.Model
 
@@ -34,17 +45,24 @@ func (e *enterLeave) GetOccupancy(ctx context.Context, request *traits.GetOccupa
 	for _, name := range e.names {
 		name := name
 		fns = append(fns, run.TagError(name, func() (*traits.EnterLeaveEvent, error) {
-			return e.client.GetEnterLeaveEvent(ctx, &traits.GetEnterLeaveEventRequest{Name: name})
+			res, err := e.client.GetEnterLeaveEvent(ctx, &traits.GetEnterLeaveEventRequest{Name: name})
+			if err != nil {
+				e.storeErr(name, err)
+				return nil, err
+			}
+			e.removeErr(name)
+			return res, nil
 		}))
 	}
 	all, errs := run.Collect(ctx, run.DefaultConcurrency, fns...)
-	if len(errs) == len(e.names) {
-		return nil, multierr.Combine(errs...)
-	}
+
 	if len(errs) > 0 {
 		if e.logger != nil {
-			e.logger.Warn("some enter leave occupancy sensors failed to get", zap.Errors("errors", multierr.Errors(multierr.Combine(errs...))))
+			e.logger.Warn("some enter leave occupancy sensors failed to get", zap.Errors("errors", errs))
 		}
+	}
+	if e.groupErrored() {
+		return nil, e.mergeErrors()
 	}
 	return e.update(all)
 }
@@ -68,15 +86,28 @@ func (e *enterLeave) PullOccupancy(request *traits.PullOccupancyRequest, server 
 				func(ctx context.Context, changes chan<- c) error {
 					stream, err := e.client.PullEnterLeaveEvents(ctx, &traits.PullEnterLeaveEventsRequest{Name: name})
 					if err != nil {
+						if e.logger != nil {
+							e.logger.Error("failed to pull enter leave events", zap.String("name", name), zap.Error(err))
+						}
+						e.storeErr(name, err)
+
+						if e.groupErrored() {
+							return e.mergeErrors()
+						}
 						return err
 					}
+					e.removeErr(name)
+
 					for {
 						res, err := stream.Recv()
 						if err != nil {
+							e.storeErr(name, err)
 							return err
 						}
+						e.removeErr(name)
+
 						for _, change := range res.Changes {
-							changes <- c{name: request.Name, val: change.EnterLeaveEvent}
+							changes <- c{name: name, val: change.EnterLeaveEvent}
 						}
 					}
 				},
@@ -85,7 +116,7 @@ func (e *enterLeave) PullOccupancy(request *traits.PullOccupancyRequest, server 
 					if err != nil {
 						return err
 					}
-					changes <- c{name: request.Name, val: res}
+					changes <- c{name: name, val: res}
 					return nil
 				}),
 				changes,
@@ -129,6 +160,61 @@ func (e *enterLeave) PullOccupancy(request *traits.PullOccupancyRequest, server 
 	})
 
 	return group.Wait()
+}
+
+func (e *enterLeave) storeErr(name string, err error) {
+	if e.sla != nil {
+		e.sla.errs.Store(name, err)
+	}
+}
+
+func (e *enterLeave) removeErr(name string) {
+	if e.sla != nil {
+		e.sla.errs.Delete(name)
+	}
+}
+
+func (e *enterLeave) mergeErrors() error {
+	if e.sla == nil {
+		return nil
+	}
+
+	var combined error
+	e.sla.errs.Range(func(k, v interface{}) bool {
+		if e, ok := v.(error); ok && e != nil {
+			combined = multierr.Append(combined, e)
+		}
+		return true
+	})
+	return combined
+}
+
+// groupErrored returns true if the number of errors exceeds the SLA's percentageOfAcceptableFailures
+// or if any of the errors are from sensors that can't fail
+func (e *enterLeave) groupErrored() bool {
+	if e.sla == nil {
+		return false
+	}
+
+	failed := false
+	totalErrors := 0
+	e.sla.errs.Range(func(k, v interface{}) bool {
+		if _, found := e.sla.cantFail[k.(string)]; found {
+			failed = true
+			return false // fail on first non-permitted error
+		}
+
+		if e, ok := v.(error); ok && e != nil {
+			totalErrors++
+		}
+
+		return true
+	})
+	if failed {
+		return true
+	}
+
+	return float64(100*totalErrors/len(e.names)) > e.sla.percentageOfAcceptableFailures
 }
 
 func (e *enterLeave) update(all []*traits.EnterLeaveEvent) (*traits.Occupancy, error) {

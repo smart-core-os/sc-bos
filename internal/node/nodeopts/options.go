@@ -4,9 +4,10 @@ package nodeopts
 import (
 	"context"
 
+	"github.com/smart-core-os/sc-bos/internal/router"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/devicespb"
 )
 
 type Option interface {
@@ -26,6 +27,13 @@ func WithStore(store Store) Option {
 	})
 }
 
+// WithRouter sets the Router used by the Node to route gRPC clients.
+func WithRouter(r *router.Router) Option {
+	return optionFunc(func(o *Struct) {
+		o.Router = r
+	})
+}
+
 // Join combines multiple options into a single struct.
 func Join(opts ...Option) Struct {
 	var o Struct
@@ -37,7 +45,8 @@ func Join(opts ...Option) Struct {
 
 // Struct contains all options for a Node as a struct for easy access.
 type Struct struct {
-	Store Store
+	Store  Store
+	Router *router.Router
 }
 
 func (s Struct) apply(o *Struct) {
@@ -48,10 +57,10 @@ func (s Struct) apply(o *Struct) {
 
 // Store describes how a node stores its announced devices.
 type Store interface {
-	GetDevice(name string, opts ...resource.ReadOption) (*gen.Device, error)
+	GetDevice(name string, opts ...resource.ReadOption) (*gen_devicespb.Device, error)
 	PullDevice(ctx context.Context, name string, opts ...resource.ReadOption) <-chan devicespb.DeviceChange
-	ListDevices(opts ...resource.ReadOption) []*gen.Device
+	ListDevices(opts ...resource.ReadOption) []*gen_devicespb.Device
 	PullDevices(ctx context.Context, opts ...resource.ReadOption) <-chan devicespb.DevicesChange
-	Update(d *gen.Device, opts ...resource.WriteOption) (*gen.Device, error)
-	Delete(name string, opts ...resource.WriteOption) (*gen.Device, error)
+	Update(d *gen_devicespb.Device, opts ...resource.WriteOption) (*gen_devicespb.Device, error)
+	Delete(name string, opts ...resource.WriteOption) (*gen_devicespb.Device, error)
 }

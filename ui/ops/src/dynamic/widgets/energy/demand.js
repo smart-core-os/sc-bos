@@ -161,7 +161,7 @@ export function useDemands(names, edges, metric) {
  *
  * @param {import('vue').MaybeRefOrGetter<string>} name
  * @param {import('vue').MaybeRefOrGetter<Date[]>} edges
- * @param {import('vue').MaybeRefOrGetter<function(import('@smart-core-os/sc-api-grpc-web/traits/electric_pb').ElectricDemand.AsObject):(number|null)>} select
+ * @param {import('vue').MaybeRefOrGetter<null|function(import('@smart-core-os/sc-api-grpc-web/traits/electric_pb').ElectricDemand.AsObject):(number|null)>} select
  * @param {function(number[]):number} aggregate
  * @return {import('vue').ComputedRef<(number|null)[]>}
  */
@@ -207,7 +207,7 @@ function useDemandBetween(name, edges, select, aggregate) {
    * Updates segments with the data found in records.
    * Modified segments will be compacted.
    *
-   * @param {import('@vanti-dev/sc-bos-ui-gen/proto/history_pb').ElectricDemandRecord.AsObject[]} records - in descending order
+   * @param {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/electric/v1/electric_history_pb').ElectricDemandRecord.AsObject[]} records - in descending order
    * @param {Date[]} edges - in ascending order
    */
   const processPage = (records, edges) => {
@@ -228,7 +228,7 @@ function useDemandBetween(name, edges, select, aggregate) {
       // record is between edges[edgeIndex] and edges[edgeIndex+1]
       const segmentKey = edgeTime;
       const segment = segments[segmentKey] ??= {entries: []};
-      const value = _select(record.electricDemand);
+      const value = _select?.(record.electricDemand);
       if (value !== null && value !== undefined) {
         segment.entries.push(value);
       }
@@ -248,12 +248,17 @@ function useDemandBetween(name, edges, select, aggregate) {
   useAction(baseQuery, async (req) => {
     const _edges = toValue(edges);
     const pageReq = {...req, pageToken: ''};
-    do {
-      const res = await listElectricDemandHistory(pageReq)
-      processPage(res.electricDemandRecordsList, _edges);
-      pageReq.pageToken = res.nextPageToken;
-    } while (pageReq.pageToken !== '' && !abort.value);
-    abort.value = false;
+    try {
+      do {
+        const res = await listElectricDemandHistory(pageReq)
+        processPage(res.electricDemandRecordsList, _edges);
+        pageReq.pageToken = res.nextPageToken;
+      } while (pageReq.pageToken !== '' && !abort.value);
+    } catch (e) {
+      console.error('failed to list electric demand history for', req.name, ':', e.message ?? e);
+    } finally {
+      abort.value = false;
+    }
   })
 
   return computed(() => {

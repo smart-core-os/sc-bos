@@ -8,10 +8,10 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/auto/exporthttp/types"
+	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/types"
 )
 
-// OccupancyJob gets occupancy at current point in time
+// OccupancyJob gets the occupancy at the current point in time
 type OccupancyJob struct {
 	BaseJob
 	client  traits.OccupancySensorApiClient

@@ -3,23 +3,24 @@ package hikcentral
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"net/http"
 	"time"
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/ptzpb"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/udmipb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
 
-	"github.com/vanti-dev/sc-bos/pkg/driver/hikcentral/api"
-	"github.com/vanti-dev/sc-bos/pkg/driver/hikcentral/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
 )
 
 const DriverName = "hikcentral"
@@ -30,9 +31,11 @@ type factory struct{}
 
 func (f factory) New(services driver.Services) service.Lifecycle {
 	d := &Driver{
-		announcer: services.Node,
+		announcer: node.NewReplaceAnnouncer(services.Node),
+		health:    services.Health,
+		logger:    services.Logger.Named(DriverName),
 	}
-	d.logger = services.Logger.Named(DriverName)
+
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
 		service.WithParser(config.ReadBytes),
@@ -46,17 +49,19 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 
 type Driver struct {
 	*service.Service[config.Root]
+
+	announcer *node.ReplaceAnnouncer
+	health    *healthpb.Checks
 	logger    *zap.Logger
-	announcer node.Announcer
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
-	// AnnounceContext only makes sense if using MonoApply, which we are in New
-	announcer, undo := node.AnnounceScope(d.announcer)
+
+	rootAnnouncer := d.announcer.Replace(ctx)
 	logger := d.logger.With(zap.String("host", cfg.API.Address))
 
-	client := api.NewClient(cfg.API)
-	client.HTTPClient.Transport = &http.Transport{
+	client := newClient(cfg.API)
+	client.httpClient.Transport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
@@ -66,14 +71,18 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	var cameras []*Camera
 	for _, camera := range cfg.Cameras {
 		logger := logger.With(zap.String("device", camera.Name))
-		cam := NewCamera(client, logger, camera)
-		announcer.Announce(camera.Name,
+
+		faultCheck, err := d.health.NewFaultCheck(camera.Name, deviceHealthCheck)
+		if err != nil {
+			return err
+		}
+
+		cam := NewCamera(client, logger, camera, faultCheck)
+		rootAnnouncer.Announce(camera.Name,
 			node.HasMetadata(camera.Metadata),
-			node.HasMetadata(camera.Metadata),
-			node.HasClient(gen.WrapMqttService(cam)),
-			node.HasTrait(statuspb.TraitName, node.WithClients(gen.WrapStatusApi(cam))),
+			node.HasClient(mqttpb.WrapService(cam)),
 			node.HasTrait(trait.Ptz, node.WithClients(ptzpb.WrapApi(cam))),
-			node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(cam))),
+			node.HasTrait(udmipb.TraitName, node.WithClients(gen_udmipb.WrapService(cam))),
 		)
 		cameras = append(cameras, cam)
 	}
@@ -82,8 +91,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	go func() {
 		err := grp.Wait()
-		logger.Error("run error", zap.String("error", err.Error()))
-		undo()
+		if err != nil && !errors.Is(err, context.Canceled) {
+			logger.Error("unexpected error in polling goroutines", zap.Error(err))
+		}
+		client.httpClient.CloseIdleConnections()
 	}()
 	return nil
 }

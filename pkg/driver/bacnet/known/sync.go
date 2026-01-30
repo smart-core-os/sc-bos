@@ -3,7 +3,7 @@ package known
 import (
 	"sync"
 
-	bactypes "github.com/vanti-dev/gobacnet/types"
+	bactypes "github.com/smart-core-os/gobacnet/types"
 )
 
 // SyncContext returns a Context that is safe for concurrent use.

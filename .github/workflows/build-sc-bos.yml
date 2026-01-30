@@ -9,7 +9,7 @@ jobs:
   build-sc-bos:
     runs-on: ubuntu-latest
     env:
-      GOPRIVATE: github.com/smart-core-os/*,github.com/vanti-dev/*
+      GOPRIVATE: github.com/smart-core-os/*
 
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +23,6 @@ jobs:
       - name: Private repo auth
         run: |
           git config --global url."https://${{ secrets.GO_MOD_TOKEN }}:x-oauth-basic@github.com/smart-core-os".insteadOf "https://github.com/smart-core-os"
-          git config --global url."https://${{ secrets.GO_MOD_TOKEN }}:x-oauth-basic@github.com/vanti-dev".insteadOf "https://github.com/vanti-dev"
 
       - name: Install Dependencies
         run: go mod download
@@ -32,28 +31,28 @@ jobs:
         run: go test -v ./...
 
       - name: Build for Linux amd64 (use with Docker)
-        run: go build -o .build/linux-amd64/sc-bos github.com/vanti-dev/sc-bos/cmd/bos
+        run: go build -o .build/linux-amd64/sc-bos github.com/smart-core-os/sc-bos/cmd/bos
         env:
           GOOS: linux
           GOARCH: amd64
           CGO_ENABLED: 0
 
       - name: Build for Linux arm64 (use with Docker)
-        run: go build -o .build/linux-arm64/sc-bos github.com/vanti-dev/sc-bos/cmd/bos
+        run: go build -o .build/linux-arm64/sc-bos github.com/smart-core-os/sc-bos/cmd/bos
         env:
           GOOS: linux
           GOARCH: arm64
           CGO_ENABLED: 0
 
       - name: Build for Beckhoff
-        run: go build -o .build/freebsd-amd64/sc-bos github.com/vanti-dev/sc-bos/cmd/bos
+        run: go build -o .build/freebsd-amd64/sc-bos github.com/smart-core-os/sc-bos/cmd/bos
         env:
           GOOS: freebsd
           GOARCH: amd64
           CGO_ENABLED: 0
 
       - name: Build for Windows
-        run: go build -o .build/win-amd64/sc-bos github.com/vanti-dev/sc-bos/cmd/bos
+        run: go build -o .build/win-amd64/sc-bos github.com/smart-core-os/sc-bos/cmd/bos
         env:
           GOOS: windows
           GOARCH: amd64
@@ -76,7 +75,7 @@ jobs:
   build-ops-ui:
     runs-on: ubuntu-latest
     env:
-      GOPRIVATE: github.com/smart-core-os/*,github.com/vanti-dev/*
+      GOPRIVATE: github.com/smart-core-os/*
 
     steps:
       - name: Checkout

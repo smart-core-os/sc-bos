@@ -15,9 +15,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 type AlarmPayload struct {
@@ -52,15 +52,15 @@ type Alarm struct {
 }
 
 type SecurityEventController struct {
-	gen.UnimplementedSecurityEventApiServer
+	securityeventpb.UnimplementedSecurityEventApiServer
 
 	client *Client
 	logger *zap.Logger
 	mu     sync.Mutex
 	// security events is a circular buffer, it always points to the oldest security event
-	lastEventTime  time.Time  // *gen.SecurityEvent
-	securityEvents *ring.Ring // *gen.SecurityEvent
-	updates        minibus.Bus[*gen.PullSecurityEventsResponse_Change]
+	lastEventTime  time.Time  // *securityeventpb.SecurityEvent
+	securityEvents *ring.Ring // *securityeventpb.SecurityEvent
+	updates        minibus.Bus[*securityeventpb.PullSecurityEventsResponse_Change]
 }
 
 func newSecurityEventController(client *Client, logger *zap.Logger, n int) *SecurityEventController {
@@ -144,12 +144,12 @@ func (sc *SecurityEventController) refreshAlarms(ctx context.Context) error {
 	for _, alarm := range alarms {
 		// we only want to add new alarms
 		if alarm.Time.After(sc.lastEventTime) {
-			event := &gen.SecurityEvent{
+			event := &securityeventpb.SecurityEvent{
 				SecurityEventTime: timestamppb.New(alarm.Time),
 				Description:       alarm.Message,
 				Id:                alarm.Id,
 				Priority:          int32(alarm.Priority),
-				Source: &gen.SecurityEvent_Source{
+				Source: &securityeventpb.SecurityEvent_Source{
 					Id:        alarm.Source.Id,
 					Name:      alarm.Source.Name,
 					Subsystem: "acs",
@@ -157,7 +157,7 @@ func (sc *SecurityEventController) refreshAlarms(ctx context.Context) error {
 			}
 			sc.securityEvents.Value = event
 			sc.securityEvents = sc.securityEvents.Next()
-			sc.updates.Send(ctx, &gen.PullSecurityEventsResponse_Change{
+			sc.updates.Send(ctx, &securityeventpb.PullSecurityEventsResponse_Change{
 				ChangeTime: timestamppb.Now(),
 				OldValue:   nil,
 				NewValue:   event,
@@ -197,7 +197,7 @@ func (sc *SecurityEventController) run(ctx context.Context, schedule *jsontypes.
 	}
 }
 
-func (sc *SecurityEventController) ListSecurityEvents(_ context.Context, req *gen.ListSecurityEventsRequest) (*gen.ListSecurityEventsResponse, error) {
+func (sc *SecurityEventController) ListSecurityEvents(_ context.Context, req *securityeventpb.ListSecurityEventsRequest) (*securityeventpb.ListSecurityEventsResponse, error) {
 
 	nextPageToken := ""
 	start := sc.securityEvents.Len() - 1
@@ -225,12 +225,12 @@ func (sc *SecurityEventController) ListSecurityEvents(_ context.Context, req *ge
 
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
-	var response gen.ListSecurityEventsResponse
+	var response securityeventpb.ListSecurityEventsResponse
 	// get the most recent ones first as that is what the UI expects
 	for i := start; i >= 0; i-- {
 		se := sc.securityEvents.Move(i)
 		if se.Value != nil {
-			response.SecurityEvents = append(response.SecurityEvents, se.Value.(*gen.SecurityEvent))
+			response.SecurityEvents = append(response.SecurityEvents, se.Value.(*securityeventpb.SecurityEvent))
 		}
 		if len(response.SecurityEvents) >= int(req.PageSize) {
 			nextPageToken = strconv.FormatInt(int64(i-1), 10)
@@ -243,9 +243,9 @@ func (sc *SecurityEventController) ListSecurityEvents(_ context.Context, req *ge
 	return &response, nil
 }
 
-func (sc *SecurityEventController) PullSecurityEvents(_ *gen.PullSecurityEventsRequest, server grpc.ServerStreamingServer[gen.PullSecurityEventsResponse]) error {
+func (sc *SecurityEventController) PullSecurityEvents(_ *securityeventpb.PullSecurityEventsRequest, server grpc.ServerStreamingServer[securityeventpb.PullSecurityEventsResponse]) error {
 	for msg := range sc.updates.Listen(server.Context()) {
-		var response gen.PullSecurityEventsResponse
+		var response securityeventpb.PullSecurityEventsResponse
 		response.Changes = append(response.Changes, msg)
 		err := server.Send(&response)
 		if err != nil {

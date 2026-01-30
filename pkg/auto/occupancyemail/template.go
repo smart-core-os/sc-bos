@@ -3,7 +3,7 @@ package occupancyemail
 import (
 	"time"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto/occupancyemail/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/occupancyemail/config"
 )
 
 type Attrs struct {

@@ -10,9 +10,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/internal/util/times"
-	"github.com/vanti-dev/sc-bos/pkg/auto/runstate"
-	"github.com/vanti-dev/sc-bos/pkg/util/state"
+	"github.com/smart-core-os/sc-bos/internal/util/times"
+	"github.com/smart-core-os/sc-bos/pkg/auto/runstate"
+	"github.com/smart-core-os/sc-bos/pkg/util/state"
 )
 
 type TurnOffScreensOutsideWorkingHours struct {

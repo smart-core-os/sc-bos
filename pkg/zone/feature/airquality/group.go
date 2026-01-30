@@ -12,11 +12,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/merge"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/merge"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/run"
 )
 
 type Group struct {
@@ -205,6 +205,42 @@ func mergeAirQuality(all []*traits.AirQuality) (*traits.AirQuality, error) {
 			return *e.Score, true
 		}); ok {
 			out.Score = &val
+		}
+		// PM1
+		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+			if e == nil || e.ParticulateMatter_1 == nil {
+				return 0, false
+			}
+			return *e.ParticulateMatter_1, true
+		}); ok {
+			out.ParticulateMatter_1 = &val
+		}
+		// PM10
+		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+			if e == nil || e.ParticulateMatter_10 == nil {
+				return 0, false
+			}
+			return *e.ParticulateMatter_10, true
+		}); ok {
+			out.ParticulateMatter_10 = &val
+		}
+		// PM25
+		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+			if e == nil || e.ParticulateMatter_25 == nil {
+				return 0, false
+			}
+			return *e.ParticulateMatter_25, true
+		}); ok {
+			out.ParticulateMatter_25 = &val
+		}
+		// AirChangePerHour
+		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+			if e == nil || e.AirChangePerHour == nil {
+				return 0, false
+			}
+			return *e.AirChangePerHour, true
+		}); ok {
+			out.AirChangePerHour = &val
 		}
 		return out, nil
 	}

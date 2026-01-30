@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/mode/config"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/mode/config"
 )
 
 func TestGroup_mergeModeValues(t *testing.T) {

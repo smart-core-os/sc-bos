@@ -7,8 +7,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/vanti-dev/sc-bos/pkg/auto/history/config"
 )
 
 func (a *automation) collectAirTemperatureChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {

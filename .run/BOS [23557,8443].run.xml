@@ -4,7 +4,7 @@
     <working_directory value="$PROJECT_DIR$" />
     <parameters value="--policy-mode off --data .data/auth --appconf example/config/app.conf.json --sysconf example/config/system.json" />
     <kind value="PACKAGE" />
-    <package value="github.com/vanti-dev/sc-bos/cmd/bos" />
+    <package value="github.com/smart-core-os/sc-bos/cmd/bos" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$" />
     <method v="2" />

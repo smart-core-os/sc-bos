@@ -3,17 +3,17 @@ package transport
 import (
 	"context"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/resources"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/util/resources"
 )
 
 type Model struct {
-	transport *resource.Value // of *gen.Transport
+	transport *resource.Value // of *transportpb.Transport
 }
 
 func NewModel(opts ...resource.Option) *Model {
-	defaultOpts := []resource.Option{resource.WithInitialValue(&gen.Transport{})}
+	defaultOpts := []resource.Option{resource.WithInitialValue(&transportpb.Transport{})}
 	opts = append(defaultOpts, opts...)
 
 	return &Model{
@@ -21,20 +21,20 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) GetTransport(opts ...resource.ReadOption) (*gen.Transport, error) {
-	return m.transport.Get(opts...).(*gen.Transport), nil
+func (m *Model) GetTransport(opts ...resource.ReadOption) (*transportpb.Transport, error) {
+	return m.transport.Get(opts...).(*transportpb.Transport), nil
 }
 
-func (m *Model) UpdateTransport(transport *gen.Transport, opts ...resource.WriteOption) (*gen.Transport, error) {
+func (m *Model) UpdateTransport(transport *transportpb.Transport, opts ...resource.WriteOption) (*transportpb.Transport, error) {
 	res, err := m.transport.Set(transport, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*gen.Transport), nil
+	return res.(*transportpb.Transport), nil
 }
 
 func (m *Model) PullTransport(ctx context.Context, opts ...resource.ReadOption) <-chan PullTransportChange {
-	return resources.PullValue[*gen.Transport](ctx, m.transport.Pull(ctx, opts...))
+	return resources.PullValue[*transportpb.Transport](ctx, m.transport.Pull(ctx, opts...))
 }
 
-type PullTransportChange = resources.ValueChange[*gen.Transport]
+type PullTransportChange = resources.ValueChange[*transportpb.Transport]

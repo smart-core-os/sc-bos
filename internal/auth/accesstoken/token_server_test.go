@@ -11,7 +11,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
 )
 
 func TestTokenServer(t *testing.T) {

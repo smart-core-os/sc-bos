@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package smartcore.bos.driver.bacnet;
+package smartcore.bos.driver.bacnet.v1;
 
-option go_package = "github.com/vanti-dev/sc-bos/pkg/driver/bacnet/rpc";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/rpc";
 
 // Exposes low level bacnet services for configured devices.
 // The driver will be configured with a mapping from Smart Core names to bacnet devices, these names are used by these

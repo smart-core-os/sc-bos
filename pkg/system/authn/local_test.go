@@ -11,12 +11,12 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/internal/account"
-	"github.com/vanti-dev/sc-bos/internal/auth/accesstoken"
-	"github.com/vanti-dev/sc-bos/internal/auth/permission"
-	"github.com/vanti-dev/sc-bos/internal/util/pass"
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/internal/account"
+	"github.com/smart-core-os/sc-bos/internal/auth/accesstoken"
+	"github.com/smart-core-os/sc-bos/internal/auth/permission"
+	"github.com/smart-core-os/sc-bos/internal/util/pass"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
 func TestLocalUserVerifier_Verify(t *testing.T) {
@@ -48,8 +48,8 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 	}
 
 	// Create custom roles with specific permissions
-	readOnlyRole, err := accountServer.CreateRole(ctx, &gen.CreateRoleRequest{
-		Role: &gen.Role{
+	readOnlyRole, err := accountServer.CreateRole(ctx, &accountpb.CreateRoleRequest{
+		Role: &accountpb.Role{
 			DisplayName:   "Read Only Access",
 			Description:   "Role with read-only permissions",
 			PermissionIds: []string{string(permission.TraitRead)},
@@ -59,8 +59,8 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 		t.Fatalf("failed to create read-only role: %v", err)
 	}
 
-	writeRole, err := accountServer.CreateRole(ctx, &gen.CreateRoleRequest{
-		Role: &gen.Role{
+	writeRole, err := accountServer.CreateRole(ctx, &accountpb.CreateRoleRequest{
+		Role: &accountpb.Role{
 			DisplayName:   "Write Only Access",
 			Description:   "Role with write-only permissions",
 			PermissionIds: []string{string(permission.TraitWrite)},
@@ -70,8 +70,8 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 		t.Fatalf("failed to create write-only role: %v", err)
 	}
 
-	bothRole, err := accountServer.CreateRole(ctx, &gen.CreateRoleRequest{
-		Role: &gen.Role{
+	bothRole, err := accountServer.CreateRole(ctx, &accountpb.CreateRoleRequest{
+		Role: &accountpb.Role{
 			DisplayName:   "Full Access",
 			Description:   "Role with full access permissions",
 			PermissionIds: []string{string(permission.TraitRead), string(permission.TraitWrite)},
@@ -85,7 +85,7 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 	type roleAssignment struct {
 		roleID   string
 		resource string
-		resType  gen.RoleAssignment_ResourceType
+		resType  accountpb.RoleAssignment_ResourceType
 	}
 	type testUser struct {
 		username string
@@ -174,17 +174,17 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 				{
 					roleID:   readOnlyRole.Id,
 					resource: "lights",
-					resType:  gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
+					resType:  accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
 				},
 				{
 					roleID:   writeRole.Id,
 					resource: "hvac",
-					resType:  gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
+					resType:  accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
 				},
 				{
 					roleID:   bothRole.Id,
 					resource: "doors",
-					resType:  gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
+					resType:  accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
 				},
 			},
 		},
@@ -197,7 +197,7 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 				{
 					roleID:   writeRole.Id,
 					resource: "displays",
-					resType:  gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
+					resType:  accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
 				},
 			},
 		},
@@ -210,19 +210,19 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 				{
 					roleID:   writeRole.Id,
 					resource: "foo",
-					resType:  gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
+					resType:  accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
 				},
 			},
 		},
 	}
 
 	for _, user := range testUsers {
-		created, err := accountServer.CreateAccount(ctx, &gen.CreateAccountRequest{
-			Account: &gen.Account{
+		created, err := accountServer.CreateAccount(ctx, &accountpb.CreateAccountRequest{
+			Account: &accountpb.Account{
 				DisplayName: user.title,
-				Type:        gen.Account_USER_ACCOUNT,
-				Details: &gen.Account_UserDetails{
-					UserDetails: &gen.UserAccount{
+				Type:        accountpb.Account_USER_ACCOUNT,
+				Details: &accountpb.Account_UserDetails{
+					UserDetails: &accountpb.UserAccount{
 						Username: user.username,
 					},
 				},
@@ -240,8 +240,8 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 			}
 
 			// Create role assignment request
-			assignmentReq := &gen.CreateRoleAssignmentRequest{
-				RoleAssignment: &gen.RoleAssignment{
+			assignmentReq := &accountpb.CreateRoleAssignmentRequest{
+				RoleAssignment: &accountpb.RoleAssignment{
 					AccountId: created.Id,
 					RoleId:    role.roleID,
 				},
@@ -249,7 +249,7 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 
 			// Add scope if provided
 			if role.resource != "" {
-				assignmentReq.RoleAssignment.Scope = &gen.RoleAssignment_Scope{
+				assignmentReq.RoleAssignment.Scope = &accountpb.RoleAssignment_Scope{
 					ResourceType: role.resType,
 					Resource:     role.resource,
 				}
@@ -368,25 +368,25 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 					{
 						Permission:   permission.TraitRead,
 						Scoped:       true,
-						ResourceType: token.ResourceType(gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+						ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
 						Resource:     "doors",
 					},
 					{
 						Permission:   permission.TraitRead,
 						Scoped:       true,
-						ResourceType: token.ResourceType(gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+						ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
 						Resource:     "lights",
 					},
 					{
 						Permission:   permission.TraitWrite,
 						Scoped:       true,
-						ResourceType: token.ResourceType(gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+						ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
 						Resource:     "doors",
 					},
 					{
 						Permission:   permission.TraitWrite,
 						Scoped:       true,
-						ResourceType: token.ResourceType(gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+						ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
 						Resource:     "hvac",
 					},
 				},
@@ -405,7 +405,7 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 					{
 						Permission:   permission.TraitWrite,
 						Scoped:       true,
-						ResourceType: token.ResourceType(gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+						ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
 						Resource:     "displays",
 					},
 				},
@@ -421,7 +421,7 @@ func TestLocalUserVerifier_Verify(t *testing.T) {
 					{
 						Permission:   permission.TraitWrite,
 						Scoped:       true,
-						ResourceType: token.ResourceType(gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+						ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
 						Resource:     "foo",
 					},
 				},
@@ -476,8 +476,8 @@ func TestLocalServiceVerifier_Verify(t *testing.T) {
 	})
 
 	// role to test permissions propagation
-	roleWithPermissions, err := accountServer.CreateRole(ctx, &gen.CreateRoleRequest{
-		Role: &gen.Role{
+	roleWithPermissions, err := accountServer.CreateRole(ctx, &accountpb.CreateRoleRequest{
+		Role: &accountpb.Role{
 			DisplayName:   "Test Role",
 			PermissionIds: []string{string(permission.TraitRead), string(permission.TraitWrite)},
 		},
@@ -486,11 +486,11 @@ func TestLocalServiceVerifier_Verify(t *testing.T) {
 		t.Fatalf("failed to create role with permissions: %v", err)
 	}
 
-	serviceAccount, err := accountServer.CreateAccount(ctx, &gen.CreateAccountRequest{
-		Account: &gen.Account{
-			Type:        gen.Account_SERVICE_ACCOUNT,
+	serviceAccount, err := accountServer.CreateAccount(ctx, &accountpb.CreateAccountRequest{
+		Account: &accountpb.Account{
+			Type:        accountpb.Account_SERVICE_ACCOUNT,
 			DisplayName: "Test Service Account",
-			Details:     &gen.Account_ServiceDetails{ServiceDetails: &gen.ServiceAccount{}},
+			Details:     &accountpb.Account_ServiceDetails{ServiceDetails: &accountpb.ServiceAccount{}},
 		},
 	})
 	if err != nil {
@@ -498,12 +498,12 @@ func TestLocalServiceVerifier_Verify(t *testing.T) {
 	}
 
 	// assign both roles to the service account
-	_, err = accountServer.CreateRoleAssignment(ctx, &gen.CreateRoleAssignmentRequest{
-		RoleAssignment: &gen.RoleAssignment{
+	_, err = accountServer.CreateRoleAssignment(ctx, &accountpb.CreateRoleAssignmentRequest{
+		RoleAssignment: &accountpb.RoleAssignment{
 			AccountId: serviceAccount.Id,
 			RoleId:    roleWithPermissions.Id,
-			Scope: &gen.RoleAssignment_Scope{
-				ResourceType: gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
+			Scope: &accountpb.RoleAssignment_Scope{
+				ResourceType: accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX,
 				Resource:     "foo",
 			},
 		},
@@ -511,8 +511,8 @@ func TestLocalServiceVerifier_Verify(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to assign role %s to service account: %v", adminRoleID, err)
 	}
-	_, err = accountServer.CreateRoleAssignment(ctx, &gen.CreateRoleAssignmentRequest{
-		RoleAssignment: &gen.RoleAssignment{
+	_, err = accountServer.CreateRoleAssignment(ctx, &accountpb.CreateRoleAssignmentRequest{
+		RoleAssignment: &accountpb.RoleAssignment{
 			AccountId: serviceAccount.Id,
 			RoleId:    adminRoleID,
 		},
@@ -538,13 +538,13 @@ func TestLocalServiceVerifier_Verify(t *testing.T) {
 					{
 						Permission:   permission.TraitRead,
 						Scoped:       true,
-						ResourceType: token.ResourceType(gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+						ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
 						Resource:     "foo",
 					},
 					{
 						Permission:   permission.TraitWrite,
 						Scoped:       true,
-						ResourceType: token.ResourceType(gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+						ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
 						Resource:     "foo",
 					},
 				},

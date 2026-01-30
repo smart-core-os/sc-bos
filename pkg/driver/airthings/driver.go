@@ -15,16 +15,18 @@ import (
 	"net/http"
 	"sync"
 
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/vanti-dev/sc-bos/pkg/block"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/driver/airthings/api"
-	"github.com/vanti-dev/sc-bos/pkg/driver/airthings/local"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/api"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 const DriverName = "airthings"
@@ -34,33 +36,35 @@ var Factory driver.Factory = factory{}
 type factory struct{}
 
 func (f factory) New(services driver.Services) service.Lifecycle {
-	services.Logger = services.Logger.Named(DriverName)
+
 	d := &Driver{
 		Services:  services,
 		announcer: node.NewReplaceAnnouncer(services.Node),
+		logger:    services.Logger.Named(DriverName),
 	}
 	d.Service = service.New(service.MonoApply(d.applyConfig))
 	return d
 }
 
 func (_ factory) ConfigBlocks() []block.Block {
-	return Blocks
+	return config.Blocks
 }
 
 type Driver struct {
-	*service.Service[Config]
+	*service.Service[config.Root]
 	driver.Services
 	announcer *node.ReplaceAnnouncer
 
-	cfg    Config
+	cfg    config.Root
 	client *http.Client
 
 	listLocationsOnce sync.Once
 	locationsErr      error
 	locations         api.GetLocationsResponse
+	logger            *zap.Logger
 }
 
-func (d *Driver) applyConfig(ctx context.Context, cfg Config) error {
+func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer := d.announcer.Replace(ctx)
 	d.listLocationsOnce = sync.Once{}
 	d.cfg = cfg
@@ -84,16 +88,22 @@ func (d *Driver) applyConfig(ctx context.Context, cfg Config) error {
 		for _, device := range location.Devices {
 			n := device.Name
 			announcer.Announce(n, node.HasMetadata(device.Metadata))
-			status.UpdateProblem(n, &gen.StatusLog_Problem{
-				Level:       gen.StatusLog_NOMINAL,
+			status.UpdateProblem(n, &gen_statuspb.StatusLog_Problem{
+				Level:       gen_statuspb.StatusLog_NOMINAL,
 				Description: "Device configured successfully",
 				Name:        n + ":setup",
 			})
-			err = d.announceDevice(ctx, announcer, device, ll, status)
+			err = d.announceDevice(ctx, announcer, device, ll)
 			if err != nil {
 				return err // failure of configuration, not runtime
 			}
 		}
 	}
+	go func() {
+		err := grp.Wait()
+		if err != nil {
+			d.logger.Error("driver stopped unexpectedly", zap.Error(err))
+		}
+	}()
 	return nil
 }

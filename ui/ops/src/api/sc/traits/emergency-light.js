@@ -1,8 +1,8 @@
 import {setProperties} from '@/api/convpb.js';
 import {clientOptions} from '@/api/grpcweb.js';
 import {trackAction} from '@/api/resource.js';
-import {EmergencyLightApiPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/emergency_light_grpc_web_pb';
-import {GetTestResultSetRequest, StartEmergencyTestRequest} from '@vanti-dev/sc-bos-ui-gen/proto/emergency_light_pb';
+import {EmergencyLightApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/emergencylight/v1/emergency_light_grpc_web_pb';
+import {GetTestResultSetRequest, StartEmergencyTestRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/emergencylight/v1/emergency_light_pb';
 
 /**
  * @param {string} endpoint

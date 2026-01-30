@@ -1,14 +1,14 @@
 package allsystems
 
 import (
-	"github.com/vanti-dev/sc-bos/pkg/system"
-	"github.com/vanti-dev/sc-bos/pkg/system/alerts"
-	"github.com/vanti-dev/sc-bos/pkg/system/authn"
-	"github.com/vanti-dev/sc-bos/pkg/system/gateway"
-	"github.com/vanti-dev/sc-bos/pkg/system/history"
-	"github.com/vanti-dev/sc-bos/pkg/system/hub"
-	"github.com/vanti-dev/sc-bos/pkg/system/publications"
-	"github.com/vanti-dev/sc-bos/pkg/system/tenants"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	"github.com/smart-core-os/sc-bos/pkg/system/alerts"
+	"github.com/smart-core-os/sc-bos/pkg/system/authn"
+	"github.com/smart-core-os/sc-bos/pkg/system/gateway"
+	"github.com/smart-core-os/sc-bos/pkg/system/history"
+	"github.com/smart-core-os/sc-bos/pkg/system/hub"
+	"github.com/smart-core-os/sc-bos/pkg/system/publications"
+	"github.com/smart-core-os/sc-bos/pkg/system/tenants"
 )
 
 // Factories returns a new map containing all known system factories.

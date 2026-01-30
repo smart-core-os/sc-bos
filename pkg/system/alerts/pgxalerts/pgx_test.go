@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 )
 
 func Test_fieldMaskIncludesPath(t *testing.T) {
@@ -47,68 +47,68 @@ func Test_fieldMaskIncludesPath(t *testing.T) {
 func Test_convertChangeForQuery(t *testing.T) {
 	tests := []struct {
 		name   string
-		q      *gen.Alert_Query
-		change *gen.PullAlertsResponse_Change
-		want   *gen.PullAlertsResponse_Change
+		q      *alertpb.Alert_Query
+		change *alertpb.PullAlertsResponse_Change
+		want   *alertpb.PullAlertsResponse_Change
 	}{
 		{
 			"nil query",
 			nil,
-			&gen.PullAlertsResponse_Change{Type: types.ChangeType_ADD, NewValue: &gen.Alert{Id: "01", Description: "Add alert"}},
-			&gen.PullAlertsResponse_Change{Type: types.ChangeType_ADD, NewValue: &gen.Alert{Id: "01", Description: "Add alert"}},
+			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_ADD, NewValue: &alertpb.Alert{Id: "01", Description: "Add alert"}},
+			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_ADD, NewValue: &alertpb.Alert{Id: "01", Description: "Add alert"}},
 		},
 		{
 			"convert to add",
-			&gen.Alert_Query{Floor: "1"},
-			&gen.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
-				OldValue: &gen.Alert{Id: "01", Floor: "2"},
-				NewValue: &gen.Alert{Id: "01", Floor: "1"},
+			&alertpb.Alert_Query{Floor: "1"},
+			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
+				OldValue: &alertpb.Alert{Id: "01", Floor: "2"},
+				NewValue: &alertpb.Alert{Id: "01", Floor: "1"},
 			},
-			&gen.PullAlertsResponse_Change{Type: types.ChangeType_ADD, NewValue: &gen.Alert{Id: "01", Floor: "1"}},
+			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_ADD, NewValue: &alertpb.Alert{Id: "01", Floor: "1"}},
 		},
 		{
 			"convert to remove",
-			&gen.Alert_Query{Floor: "1"},
-			&gen.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
-				OldValue: &gen.Alert{Id: "01", Floor: "1"},
-				NewValue: &gen.Alert{Id: "01", Floor: "2"},
+			&alertpb.Alert_Query{Floor: "1"},
+			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
+				OldValue: &alertpb.Alert{Id: "01", Floor: "1"},
+				NewValue: &alertpb.Alert{Id: "01", Floor: "2"},
 			},
-			&gen.PullAlertsResponse_Change{Type: types.ChangeType_REMOVE, OldValue: &gen.Alert{Id: "01", Floor: "1"}},
+			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_REMOVE, OldValue: &alertpb.Alert{Id: "01", Floor: "1"}},
 		},
 		{
 			"update still applies",
-			&gen.Alert_Query{Floor: "1"},
-			&gen.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
-				OldValue: &gen.Alert{Id: "01", Floor: "1", Zone: "Z1"},
-				NewValue: &gen.Alert{Id: "01", Floor: "1", Zone: "Z2"},
+			&alertpb.Alert_Query{Floor: "1"},
+			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
+				OldValue: &alertpb.Alert{Id: "01", Floor: "1", Zone: "Z1"},
+				NewValue: &alertpb.Alert{Id: "01", Floor: "1", Zone: "Z2"},
 			},
-			&gen.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
-				OldValue: &gen.Alert{Id: "01", Floor: "1", Zone: "Z1"},
-				NewValue: &gen.Alert{Id: "01", Floor: "1", Zone: "Z2"},
+			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
+				OldValue: &alertpb.Alert{Id: "01", Floor: "1", Zone: "Z1"},
+				NewValue: &alertpb.Alert{Id: "01", Floor: "1", Zone: "Z2"},
 			},
 		},
 		{
 			"add doesn't match",
-			&gen.Alert_Query{Floor: "1"},
-			&gen.PullAlertsResponse_Change{Type: types.ChangeType_ADD,
-				NewValue: &gen.Alert{Id: "01", Floor: "2"},
+			&alertpb.Alert_Query{Floor: "1"},
+			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_ADD,
+				NewValue: &alertpb.Alert{Id: "01", Floor: "2"},
 			},
 			nil,
 		},
 		{
 			"delete doesn't match",
-			&gen.Alert_Query{Floor: "1"},
-			&gen.PullAlertsResponse_Change{Type: types.ChangeType_REMOVE,
-				OldValue: &gen.Alert{Id: "01", Floor: "2"},
+			&alertpb.Alert_Query{Floor: "1"},
+			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_REMOVE,
+				OldValue: &alertpb.Alert{Id: "01", Floor: "2"},
 			},
 			nil,
 		},
 		{
 			"update doesn't match",
-			&gen.Alert_Query{Floor: "1"},
-			&gen.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
-				OldValue: &gen.Alert{Id: "01", Floor: "2"},
-				NewValue: &gen.Alert{Id: "01", Floor: "3"},
+			&alertpb.Alert_Query{Floor: "1"},
+			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
+				OldValue: &alertpb.Alert{Id: "01", Floor: "2"},
+				NewValue: &alertpb.Alert{Id: "01", Floor: "3"},
 			},
 			nil,
 		},
@@ -128,40 +128,40 @@ func Test_alertMatchesQuery(t *testing.T) {
 	noAck := false
 	tests := []struct {
 		name string
-		q    *gen.Alert_Query
-		a    *gen.Alert
+		q    *alertpb.Alert_Query
+		a    *alertpb.Alert
 		want bool
 	}{
-		{"nil query", nil, &gen.Alert{Id: "any"}, true},
-		{"empty query", &gen.Alert_Query{}, &gen.Alert{Id: "any"}, true},
-		{"floor yes", &gen.Alert_Query{Floor: "1"}, &gen.Alert{Floor: "1"}, true},
-		{"floor no", &gen.Alert_Query{Floor: "1"}, &gen.Alert{Floor: "2"}, false},
-		{"floor absent", &gen.Alert_Query{Floor: "1"}, &gen.Alert{}, false},
-		{"zone yes", &gen.Alert_Query{Zone: "1"}, &gen.Alert{Zone: "1"}, true},
-		{"zone no", &gen.Alert_Query{Zone: "1"}, &gen.Alert{Zone: "2"}, false},
-		{"zone absent", &gen.Alert_Query{Zone: "1"}, &gen.Alert{}, false},
-		{"source yes", &gen.Alert_Query{Source: "1"}, &gen.Alert{Source: "1"}, true},
-		{"source no", &gen.Alert_Query{Source: "1"}, &gen.Alert{Source: "2"}, false},
-		{"source absent", &gen.Alert_Query{Source: "1"}, &gen.Alert{}, false},
-		{"acknowledged yes", &gen.Alert_Query{Acknowledged: &ack}, &gen.Alert{Acknowledgement: &gen.Alert_Acknowledgement{}}, true},
-		{"acknowledged no", &gen.Alert_Query{Acknowledged: &ack}, &gen.Alert{}, false},
-		{"not acknowledged yes", &gen.Alert_Query{Acknowledged: &noAck}, &gen.Alert{}, true},
-		{"not acknowledged no", &gen.Alert_Query{Acknowledged: &noAck}, &gen.Alert{Acknowledgement: &gen.Alert_Acknowledgement{}}, false},
-		{"create_time before", &gen.Alert_Query{CreatedNotBefore: timestamppb.New(time.Unix(100, 1))}, &gen.Alert{CreateTime: timestamppb.New(time.Unix(100, 0))}, false},
-		{"create_time start", &gen.Alert_Query{CreatedNotBefore: timestamppb.New(time.Unix(100, 0))}, &gen.Alert{CreateTime: timestamppb.New(time.Unix(100, 0))}, true},
-		{"create_time after", &gen.Alert_Query{CreatedNotBefore: timestamppb.New(time.Unix(100, 0))}, &gen.Alert{CreateTime: timestamppb.New(time.Unix(100, 1))}, true},
-		{"create_time early", &gen.Alert_Query{CreatedNotAfter: timestamppb.New(time.Unix(100, 1))}, &gen.Alert{CreateTime: timestamppb.New(time.Unix(100, 0))}, true},
-		{"create_time end", &gen.Alert_Query{CreatedNotAfter: timestamppb.New(time.Unix(100, 0))}, &gen.Alert{CreateTime: timestamppb.New(time.Unix(100, 0))}, true},
-		{"create_time late", &gen.Alert_Query{CreatedNotAfter: timestamppb.New(time.Unix(100, 0))}, &gen.Alert{CreateTime: timestamppb.New(time.Unix(100, 1))}, false},
-		{"create_time within", &gen.Alert_Query{
+		{"nil query", nil, &alertpb.Alert{Id: "any"}, true},
+		{"empty query", &alertpb.Alert_Query{}, &alertpb.Alert{Id: "any"}, true},
+		{"floor yes", &alertpb.Alert_Query{Floor: "1"}, &alertpb.Alert{Floor: "1"}, true},
+		{"floor no", &alertpb.Alert_Query{Floor: "1"}, &alertpb.Alert{Floor: "2"}, false},
+		{"floor absent", &alertpb.Alert_Query{Floor: "1"}, &alertpb.Alert{}, false},
+		{"zone yes", &alertpb.Alert_Query{Zone: "1"}, &alertpb.Alert{Zone: "1"}, true},
+		{"zone no", &alertpb.Alert_Query{Zone: "1"}, &alertpb.Alert{Zone: "2"}, false},
+		{"zone absent", &alertpb.Alert_Query{Zone: "1"}, &alertpb.Alert{}, false},
+		{"source yes", &alertpb.Alert_Query{Source: "1"}, &alertpb.Alert{Source: "1"}, true},
+		{"source no", &alertpb.Alert_Query{Source: "1"}, &alertpb.Alert{Source: "2"}, false},
+		{"source absent", &alertpb.Alert_Query{Source: "1"}, &alertpb.Alert{}, false},
+		{"acknowledged yes", &alertpb.Alert_Query{Acknowledged: &ack}, &alertpb.Alert{Acknowledgement: &alertpb.Alert_Acknowledgement{}}, true},
+		{"acknowledged no", &alertpb.Alert_Query{Acknowledged: &ack}, &alertpb.Alert{}, false},
+		{"not acknowledged yes", &alertpb.Alert_Query{Acknowledged: &noAck}, &alertpb.Alert{}, true},
+		{"not acknowledged no", &alertpb.Alert_Query{Acknowledged: &noAck}, &alertpb.Alert{Acknowledgement: &alertpb.Alert_Acknowledgement{}}, false},
+		{"create_time before", &alertpb.Alert_Query{CreatedNotBefore: timestamppb.New(time.Unix(100, 1))}, &alertpb.Alert{CreateTime: timestamppb.New(time.Unix(100, 0))}, false},
+		{"create_time start", &alertpb.Alert_Query{CreatedNotBefore: timestamppb.New(time.Unix(100, 0))}, &alertpb.Alert{CreateTime: timestamppb.New(time.Unix(100, 0))}, true},
+		{"create_time after", &alertpb.Alert_Query{CreatedNotBefore: timestamppb.New(time.Unix(100, 0))}, &alertpb.Alert{CreateTime: timestamppb.New(time.Unix(100, 1))}, true},
+		{"create_time early", &alertpb.Alert_Query{CreatedNotAfter: timestamppb.New(time.Unix(100, 1))}, &alertpb.Alert{CreateTime: timestamppb.New(time.Unix(100, 0))}, true},
+		{"create_time end", &alertpb.Alert_Query{CreatedNotAfter: timestamppb.New(time.Unix(100, 0))}, &alertpb.Alert{CreateTime: timestamppb.New(time.Unix(100, 0))}, true},
+		{"create_time late", &alertpb.Alert_Query{CreatedNotAfter: timestamppb.New(time.Unix(100, 0))}, &alertpb.Alert{CreateTime: timestamppb.New(time.Unix(100, 1))}, false},
+		{"create_time within", &alertpb.Alert_Query{
 			CreatedNotBefore: timestamppb.New(time.Unix(100, 0)),
 			CreatedNotAfter:  timestamppb.New(time.Unix(200, 0)),
-		}, &gen.Alert{CreateTime: timestamppb.New(time.Unix(150, 0))}, true},
-		{"severity low", &gen.Alert_Query{SeverityNotBelow: 2, SeverityNotAbove: 5}, &gen.Alert{Severity: gen.Alert_Severity(1)}, false},
-		{"severity bottom", &gen.Alert_Query{SeverityNotBelow: 2, SeverityNotAbove: 5}, &gen.Alert{Severity: gen.Alert_Severity(2)}, true},
-		{"severity within", &gen.Alert_Query{SeverityNotBelow: 2, SeverityNotAbove: 5}, &gen.Alert{Severity: gen.Alert_Severity(4)}, true},
-		{"severity top", &gen.Alert_Query{SeverityNotBelow: 2, SeverityNotAbove: 5}, &gen.Alert{Severity: gen.Alert_Severity(5)}, true},
-		{"severity high", &gen.Alert_Query{SeverityNotBelow: 2, SeverityNotAbove: 5}, &gen.Alert{Severity: gen.Alert_Severity(6)}, false},
+		}, &alertpb.Alert{CreateTime: timestamppb.New(time.Unix(150, 0))}, true},
+		{"severity low", &alertpb.Alert_Query{SeverityNotBelow: 2, SeverityNotAbove: 5}, &alertpb.Alert{Severity: alertpb.Alert_Severity(1)}, false},
+		{"severity bottom", &alertpb.Alert_Query{SeverityNotBelow: 2, SeverityNotAbove: 5}, &alertpb.Alert{Severity: alertpb.Alert_Severity(2)}, true},
+		{"severity within", &alertpb.Alert_Query{SeverityNotBelow: 2, SeverityNotAbove: 5}, &alertpb.Alert{Severity: alertpb.Alert_Severity(4)}, true},
+		{"severity top", &alertpb.Alert_Query{SeverityNotBelow: 2, SeverityNotAbove: 5}, &alertpb.Alert{Severity: alertpb.Alert_Severity(5)}, true},
+		{"severity high", &alertpb.Alert_Query{SeverityNotBelow: 2, SeverityNotAbove: 5}, &alertpb.Alert{Severity: alertpb.Alert_Severity(6)}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

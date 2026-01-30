@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vanti-dev/sc-bos/pkg/driver/proxy/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/proxy/config"
 )
 
 func newOAuth2Credentials(cfg config.OAuth2, client *http.Client) (*oauth2Credentials, error) {
@@ -47,7 +47,7 @@ type oauth2Credentials struct {
 	expires  time.Time
 }
 
-func (o *oauth2Credentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+func (o *oauth2Credentials) GetRequestMetadata(ctx context.Context, _ ...string) (map[string]string, error) {
 	token, valid := o.getCurrentToken()
 	if valid {
 		return requestMetadata(token), nil

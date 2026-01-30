@@ -3,7 +3,7 @@ package auto
 import (
 	"encoding/json"
 
-	"github.com/vanti-dev/sc-bos/internal/util/jsonutil"
+	"github.com/smart-core-os/sc-bos/internal/util/jsonutil"
 )
 
 type Config struct {

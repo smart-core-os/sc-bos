@@ -7,16 +7,25 @@ import (
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/wrap"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/system"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-	"github.com/vanti-dev/sc-bos/pkg/task/serviceapi"
-	"github.com/vanti-dev/sc-bos/pkg/zone"
 )
 
 func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, error) {
@@ -25,12 +34,14 @@ func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, err
 		Node:            c.Node,
 		ClientTLSConfig: c.ClientTLSConfig,
 		HTTPMux:         c.Mux,
+		Database:        c.Database,
 	}
 
 	m := service.NewMap(func(id, kind string) (service.Lifecycle, error) {
 		driverServices := ctxServices
 		driverServices.Config = &serviceConfigStore{store: c.ControllerConfig.Drivers(), id: id}
 		driverServices.Logger = loggerWithServiceInfo(driverServices.Logger, id, kind)
+		driverServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
 
 		f, ok := c.SystemConfig.DriverFactories[kind]
 		if !ok {
@@ -63,6 +74,7 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 		autoServices := ctxServices
 		autoServices.Config = &serviceConfigStore{store: c.ControllerConfig.Automations(), id: id}
 		autoServices.Logger = loggerWithServiceInfo(autoServices.Logger, id, kind)
+		autoServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
 
 		f, ok := c.SystemConfig.AutoFactories[kind]
 		if !ok {
@@ -89,6 +101,7 @@ func (c *Controller) startSystems() (*service.Map, error) {
 		DataDir:          c.SystemConfig.DataDir,
 		Logger:           c.Logger.Named("system"),
 		Node:             c.Node,
+		HealthChecks:     devicesToHealthCheckCollection(c.DeviceStore),
 		GRPCEndpoint:     grpcEndpoint,
 		Database:         c.Database,
 		Stores:           c.Stores,
@@ -130,6 +143,7 @@ func (c *Controller) startZones(configs []zone.RawConfig) (*service.Map, error) 
 		zoneServices := ctxServices
 		zoneServices.Config = &serviceConfigStore{store: c.ControllerConfig.Zones(), id: id}
 		zoneServices.Logger = loggerWithServiceInfo(zoneServices.Logger, id, kind)
+		zoneServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
 
 		f, ok := c.SystemConfig.ZoneFactories[kind]
 		if !ok {
@@ -195,8 +209,40 @@ func loggerWithServiceInfo(logger *zap.Logger, id, kind string) *zap.Logger {
 	return logger.With(zap.String("service.id", id), zap.String("service.kind", kind))
 }
 
+func healthChecksForService(r *healthpb.Registry, id, kind string) *healthpb.Checks {
+	owner := fmt.Sprintf("%s:%s", kind, id)
+	return r.ForOwner(owner)
+}
+
+func devicesToHealthCheckCollection(d *devicespb.Collection) system.HealthCheckCollection {
+	return (*devicesHealthCheckCollection)(d)
+}
+
+type devicesHealthCheckCollection devicespb.Collection
+
+func (d *devicesHealthCheckCollection) MergeHealthChecks(name string, checks ...*gen_healthpb.HealthCheck) error {
+	_, err := (*devicespb.Collection)(d).Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+		dstDev := dst.(*gen_devicespb.Device)
+		dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, checks...)
+	}), resource.WithCreateIfAbsent())
+	return err
+}
+
+func (d *devicesHealthCheckCollection) RemoveHealthChecks(name string, ids ...string) error {
+	_, err := (*devicespb.Collection)(d).Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
+		dstDev := dst.(*gen_devicespb.Device)
+		for _, id := range ids {
+			dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
+		}
+	}))
+	if code := status.Code(err); code == codes.NotFound {
+		err = nil
+	}
+	return err
+}
+
 func announceServices[M ~map[string]T, T any](c *Controller, name string, services *service.Map, factories M, store serviceapi.Store) node.Undo {
-	client := gen.WrapServicesApi(serviceapi.NewApi(services,
+	client := servicespb.WrapApi(serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 		serviceapi.WithStore(store),
@@ -206,7 +252,7 @@ func announceServices[M ~map[string]T, T any](c *Controller, name string, servic
 
 func announceAutoServices[M ~map[string]T, T any](c *Controller, services *service.Map, factories M) node.Undo {
 	// special because the config name isn't the name we announce as
-	client := gen.WrapServicesApi(serviceapi.NewApi(services,
+	client := servicespb.WrapApi(serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 		serviceapi.WithStore(c.ControllerConfig.Automations()),
@@ -217,7 +263,7 @@ func announceAutoServices[M ~map[string]T, T any](c *Controller, services *servi
 func announceSystemServices[M ~map[string]T, T any](c *Controller, services *service.Map, factories M) node.Undo {
 	// special because we don't support writing this config, yet
 	// todo: support writing system config
-	client := gen.WrapServicesApi(serviceapi.NewApi(services,
+	client := servicespb.WrapApi(serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 	))

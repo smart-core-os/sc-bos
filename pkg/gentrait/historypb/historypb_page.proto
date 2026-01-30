@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.gentrait.historypb;
 
-option go_package = "github.com/vanti-dev/sc-bos/pkg/gentrait/historypb";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gentrait/historypb";
 
 message PageToken {
   string record_id = 1;

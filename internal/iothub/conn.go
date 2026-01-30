@@ -7,8 +7,8 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
-	"github.com/vanti-dev/sc-bos/internal/iothub/auth"
-	"github.com/vanti-dev/sc-bos/internal/util/mqttutil"
+	"github.com/smart-core-os/sc-bos/internal/iothub/auth"
+	"github.com/smart-core-os/sc-bos/internal/util/mqttutil"
 )
 
 // Conn represents a connection to IoT Hub.

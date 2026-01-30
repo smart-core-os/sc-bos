@@ -9,18 +9,18 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	typespb "github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/api"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
+	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
 	"github.com/smart-core-os/sc-golang/pkg/trait/energystoragepb"
-	"github.com/vanti-dev/sc-bos/pkg/driver/airthings/api"
-	"github.com/vanti-dev/sc-bos/pkg/driver/airthings/local"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
 )
 
 // announceDevice sets up and announces the traits supported by the device.
-func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev Device, loc *local.Location, stat *statuspb.Map) error {
+func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev config.Device, loc *local.Location) error {
 	for _, tn := range dev.Traits {
 		// todo: case trait.BrightnessSensor: once it has a model, backed by "light" data
 		// todo: read the RSSI prop and link it with status
@@ -47,9 +47,8 @@ func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev Devic
 	return nil
 }
 
-func (d *Driver) pullSampleAirQuality(ctx context.Context, dev Device, loc *local.Location, model *airqualitysensorpb.Model) {
-	initial, stream, stop := loc.PullLatestSamples(dev.ID)
-	defer stop()
+func (d *Driver) pullSampleAirQuality(ctx context.Context, dev config.Device, loc *local.Location, model *airqualitysensorpb.Model) {
+	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
 	_, _ = model.UpdateAirQuality(sampleToAirQuality(initial))
 	for {
 		select {
@@ -106,9 +105,8 @@ func sampleToAirQuality(in api.DeviceSampleResponseEnriched) *traits.AirQuality 
 	return dst
 }
 
-func (d *Driver) pullSampleAirTemperature(ctx context.Context, dev Device, loc *local.Location, model *airtemperaturepb.Model) {
-	initial, stream, stop := loc.PullLatestSamples(dev.ID)
-	defer stop()
+func (d *Driver) pullSampleAirTemperature(ctx context.Context, dev config.Device, loc *local.Location, model *airtemperaturepb.Model) {
+	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
 	_, _ = model.UpdateAirTemperature(sampleToAirTemperature(initial))
 	for {
 		select {
@@ -140,9 +138,8 @@ func sampleToAirTemperature(in api.DeviceSampleResponseEnriched) *traits.AirTemp
 	return dst
 }
 
-func (d *Driver) pullSampleEnergyLevel(ctx context.Context, dev Device, loc *local.Location, model *energystoragepb.Model) {
-	initial, stream, stop := loc.PullLatestSamples(dev.ID)
-	defer stop()
+func (d *Driver) pullSampleEnergyLevel(ctx context.Context, dev config.Device, loc *local.Location, model *energystoragepb.Model) {
+	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
 	_, _ = model.UpdateEnergyLevel(sampleToEnergyLevel(initial))
 	for {
 		select {

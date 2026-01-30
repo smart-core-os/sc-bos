@@ -1,0 +1,31 @@
+This test verifies no changes when file doesn't import pkg/gen.
+expected_changes: 0
+
+-- input/pkg/test/nochange.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+func GetMeter(ctx context.Context) (*meterpb.MeterReading, error) {
+	return &meterpb.MeterReading{
+		Usage: 100.5,
+	}, nil
+}
+-- output/pkg/test/nochange.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+func GetMeter(ctx context.Context) (*meterpb.MeterReading, error) {
+	return &meterpb.MeterReading{
+		Usage: 100.5,
+	}, nil
+}

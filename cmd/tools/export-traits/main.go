@@ -17,10 +17,11 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/client"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/meter"
-	"github.com/vanti-dev/sc-bos/pkg/util/client"
 )
 
 var clientConfig client.Config
@@ -52,17 +53,17 @@ func init() {
 	flag.StringVar(&outFile, "out", "", "output file")
 }
 
-var getter = map[trait.Name]func(context.Context, grpc.ClientConnInterface, *gen.Device, *report) error{
-	meter.TraitName: func(ctx context.Context, conn grpc.ClientConnInterface, device *gen.Device, r *report) error {
-		apiClient := gen.NewMeterApiClient(conn)
-		res, err := apiClient.GetMeterReading(ctx, &gen.GetMeterReadingRequest{Name: device.Name})
+var getter = map[trait.Name]func(context.Context, grpc.ClientConnInterface, *devicespb.Device, *report) error{
+	meter.TraitName: func(ctx context.Context, conn grpc.ClientConnInterface, device *devicespb.Device, r *report) error {
+		apiClient := meterpb.NewMeterApiClient(conn)
+		res, err := apiClient.GetMeterReading(ctx, &meterpb.GetMeterReadingRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
 		r.addPoint(device.Name, "meter.usage", res.Usage)
 		return nil
 	},
-	trait.Electric: func(ctx context.Context, conn grpc.ClientConnInterface, device *gen.Device, r *report) error {
+	trait.Electric: func(ctx context.Context, conn grpc.ClientConnInterface, device *devicespb.Device, r *report) error {
 		apiClient := traits.NewElectricApiClient(conn)
 		res, err := apiClient.GetDemand(ctx, &traits.GetDemandRequest{Name: device.Name})
 		if err != nil {
@@ -101,7 +102,7 @@ func main() {
 	results := &report{}
 
 	const concurrency = 100
-	jobs := make(chan *gen.Device, concurrency)
+	jobs := make(chan *devicespb.Device, concurrency)
 	var jobsComplete sync.WaitGroup
 	jobsComplete.Add(concurrency)
 	for range concurrency {
@@ -133,7 +134,7 @@ func main() {
 	}
 }
 
-func worker(ctx context.Context, conn grpc.ClientConnInterface, jobs <-chan *gen.Device, results *report) {
+func worker(ctx context.Context, conn grpc.ClientConnInterface, jobs <-chan *devicespb.Device, results *report) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -156,7 +157,7 @@ func worker(ctx context.Context, conn grpc.ClientConnInterface, jobs <-chan *gen
 	}
 }
 
-func deviceHasTrait(device *gen.Device, traitName string) bool {
+func deviceHasTrait(device *devicespb.Device, traitName string) bool {
 	for _, tm := range device.GetMetadata().GetTraits() {
 		if tm.Name == traitName {
 			return true
@@ -165,20 +166,20 @@ func deviceHasTrait(device *gen.Device, traitName string) bool {
 	return false
 }
 
-func listDevices(ctx context.Context, conn *grpc.ClientConn) ([]*gen.Device, error) {
-	apiClient := gen.NewDevicesApiClient(conn)
-	req := &gen.ListDevicesRequest{
+func listDevices(ctx context.Context, conn *grpc.ClientConn) ([]*devicespb.Device, error) {
+	apiClient := devicespb.NewDevicesApiClient(conn)
+	req := &devicespb.ListDevicesRequest{
 		PageSize: 1000,
-		Query:    &gen.Device_Query{},
+		Query:    &devicespb.Device_Query{},
 	}
 	for _, subsystem := range subsystems {
-		req.Query.Conditions = append(req.Query.Conditions, &gen.Device_Query_Condition{
+		req.Query.Conditions = append(req.Query.Conditions, &devicespb.Device_Query_Condition{
 			Field: "metadata.membership.subsystem",
-			Value: &gen.Device_Query_Condition_StringEqualFold{StringEqualFold: subsystem},
+			Value: &devicespb.Device_Query_Condition_StringEqualFold{StringEqualFold: subsystem},
 		})
 	}
 
-	var allDevices []*gen.Device
+	var allDevices []*devicespb.Device
 	for {
 		res, err := apiClient.ListDevices(ctx, req)
 		if err != nil {

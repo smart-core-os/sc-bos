@@ -1,6 +1,7 @@
 package helvarnet
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strings"
@@ -10,9 +11,9 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/driver/helvarnet/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
 )
 
 type tcpClient struct {
@@ -21,7 +22,7 @@ type tcpClient struct {
 	conn   net.Conn
 	logger *zap.Logger
 	mu     sync.Mutex
-	status *resource.Value // *gen.StatusLog
+	status *resource.Value // *statuspb.StatusLog
 }
 
 func newTcpClient(addr *net.TCPAddr, l *zap.Logger, cfg *config.Root) *tcpClient {
@@ -31,7 +32,7 @@ func newTcpClient(addr *net.TCPAddr, l *zap.Logger, cfg *config.Root) *tcpClient
 		conn:   nil,
 		logger: l,
 		mu:     sync.Mutex{},
-		status: resource.NewValue(resource.WithInitialValue(&gen.StatusLog{}), resource.WithNoDuplicates()),
+		status: resource.NewValue(resource.WithInitialValue(&statuspb.StatusLog{}), resource.WithNoDuplicates()),
 	}
 }
 
@@ -59,11 +60,16 @@ func (c *tcpClient) close() {
 // make 3 attempts to try to send pkt and receive response. want is the prefix of the response we are expecting.
 // if no response is expected, want should be an empty string.
 // if the response is not what we expect, we return an error
-func (c *tcpClient) sendAndReceive(pkt string, want string) (string, error) {
+func (c *tcpClient) sendAndReceive(ctx context.Context, pkt string, want string) (string, error) {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for tries := 3; tries > 0; tries-- {
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		default:
+		}
 		var err error
 		err = c.sendPacket(pkt)
 		if err != nil {
@@ -91,8 +97,8 @@ func (c *tcpClient) sendAndReceive(pkt string, want string) (string, error) {
 				c.close()
 				continue
 			}
-			_, _ = c.status.Set(&gen.StatusLog{
-				Level:       gen.StatusLog_NOMINAL,
+			_, _ = c.status.Set(&statuspb.StatusLog{
+				Level:       statuspb.StatusLog_NOMINAL,
 				RecordTime:  timestamppb.New(time.Now()),
 				Description: "Communication with lighting server successful",
 			})
@@ -100,8 +106,8 @@ func (c *tcpClient) sendAndReceive(pkt string, want string) (string, error) {
 		}
 		time.Sleep(c.cfg.RetrySleepDuration.Duration)
 	}
-	_, _ = c.status.Set(&gen.StatusLog{
-		Level:       gen.StatusLog_NON_FUNCTIONAL,
+	_, _ = c.status.Set(&statuspb.StatusLog{
+		Level:       statuspb.StatusLog_NON_FUNCTIONAL,
 		RecordTime:  timestamppb.New(time.Now()),
 		Description: "Can't connect to the lighting server",
 	})

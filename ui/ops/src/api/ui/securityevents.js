@@ -4,10 +4,10 @@ import {
 } from '@/api/convpb.js';
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setCollection, trackAction} from '@/api/resource';
-import {SecurityEventApiPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/security_event_grpc_web_pb';
+import {SecurityEventApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/securityevent/v1/security_event_grpc_web_pb';
 import {
   ListSecurityEventsRequest, PullSecurityEventsRequest
-} from '@vanti-dev/sc-bos-ui-gen/proto/security_event_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/securityevent/v1/security_event_pb';
 
 /**
  * @param {Partial<ListSecurityEventsRequest.AsObject>} request

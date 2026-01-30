@@ -10,10 +10,10 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto/export/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/task"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/auto/export/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
 func NewMqtt(services Services) task.Starter {
@@ -31,7 +31,7 @@ type mqtt struct {
 func (m *mqtt) applyConfig(ctx context.Context, cfg config.MqttServiceSource) error {
 	clients := m.services.Node
 
-	client := gen.NewMqttServiceClient(clients.ClientConn())
+	client := mqttpb.NewMqttServiceClient(clients.ClientConn())
 
 	sent := allowDuplicates()
 	if cfg.Duplicates.TrackDuplicates() {
@@ -46,10 +46,10 @@ func (m *mqtt) applyConfig(ctx context.Context, cfg config.MqttServiceSource) er
 			client: client,
 			name:   name,
 		}
-		changes := make(chan *gen.PullMessagesResponse)
+		changes := make(chan *mqttpb.PullMessagesResponse)
 		grp.Go(func() error {
 			defer close(changes)
-			err := pull.Changes[*gen.PullMessagesResponse](ctx, puller, changes, pull.WithLogger(m.Logger.Named(name)))
+			err := pull.Changes[*mqttpb.PullMessagesResponse](ctx, puller, changes, pull.WithLogger(m.Logger.Named(name)))
 			if status.Code(err) == codes.Unimplemented {
 				m.Logger.Debug("read not supported")
 				return nil
@@ -92,12 +92,12 @@ func (m *mqtt) applyConfig(ctx context.Context, cfg config.MqttServiceSource) er
 }
 
 type mqttMessagePuller struct {
-	client gen.MqttServiceClient
+	client mqttpb.MqttServiceClient
 	name   string
 }
 
-func (m *mqttMessagePuller) Pull(ctx context.Context, changes chan<- *gen.PullMessagesResponse) error {
-	stream, err := m.client.PullMessages(ctx, &gen.PullMessagesRequest{Name: m.name})
+func (m *mqttMessagePuller) Pull(ctx context.Context, changes chan<- *mqttpb.PullMessagesResponse) error {
+	stream, err := m.client.PullMessages(ctx, &mqttpb.PullMessagesRequest{Name: m.name})
 	if err != nil {
 		return err
 	}
@@ -115,6 +115,6 @@ func (m *mqttMessagePuller) Pull(ctx context.Context, changes chan<- *gen.PullMe
 	}
 }
 
-func (m *mqttMessagePuller) Poll(ctx context.Context, changes chan<- *gen.PullMessagesResponse) error {
+func (m *mqttMessagePuller) Poll(ctx context.Context, changes chan<- *mqttpb.PullMessagesResponse) error {
 	return status.Error(codes.Unimplemented, "not supported")
 }

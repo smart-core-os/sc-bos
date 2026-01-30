@@ -7,26 +7,26 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/resources"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/util/resources"
 )
 
 type Model struct {
-	testResultSet *resource.Value // of *gen.TestResultSet
+	testResultSet *resource.Value // of *emergencylightpb.TestResultSet
 }
 
 func NewModel(opts ...resource.Option) *Model {
-	defaultOpts := []resource.Option{resource.WithInitialValue(&gen.TestResultSet{})}
+	defaultOpts := []resource.Option{resource.WithInitialValue(&emergencylightpb.TestResultSet{})}
 	opts = append(defaultOpts, opts...)
 	return &Model{
 		testResultSet: resource.NewValue(opts...),
 	}
 }
 
-func (m *Model) SetLastDurationTest(result gen.EmergencyTestResult_Result) {
-	_, _ = m.testResultSet.Set(&gen.TestResultSet{
-		DurationTest: &gen.EmergencyTestResult{
+func (m *Model) SetLastDurationTest(result emergencylightpb.EmergencyTestResult_Result) {
+	_, _ = m.testResultSet.Set(&emergencylightpb.TestResultSet{
+		DurationTest: &emergencylightpb.EmergencyTestResult{
 			EndTime: timestamppb.Now(),
 			Result:  result,
 		}}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
@@ -34,9 +34,9 @@ func (m *Model) SetLastDurationTest(result gen.EmergencyTestResult_Result) {
 	}))
 }
 
-func (m *Model) SetLastFunctionalTest(result gen.EmergencyTestResult_Result) {
-	_, _ = m.testResultSet.Set(&gen.TestResultSet{
-		FunctionTest: &gen.EmergencyTestResult{
+func (m *Model) SetLastFunctionalTest(result emergencylightpb.EmergencyTestResult_Result) {
+	_, _ = m.testResultSet.Set(&emergencylightpb.TestResultSet{
+		FunctionTest: &emergencylightpb.EmergencyTestResult{
 			EndTime: timestamppb.Now(),
 			Result:  result,
 		}}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
@@ -44,12 +44,12 @@ func (m *Model) SetLastFunctionalTest(result gen.EmergencyTestResult_Result) {
 	}))
 }
 
-func (m *Model) GetTestResultSet() *gen.TestResultSet {
-	return m.testResultSet.Get().(*gen.TestResultSet)
+func (m *Model) GetTestResultSet() *emergencylightpb.TestResultSet {
+	return m.testResultSet.Get().(*emergencylightpb.TestResultSet)
 }
 
 func (m *Model) RunDurationTest() {
-	result := &gen.EmergencyTestResult{
+	result := &emergencylightpb.EmergencyTestResult{
 		EndTime: timestamppb.Now(),
 		Result:  getRandomEmergencyLightResult(),
 	}
@@ -57,20 +57,20 @@ func (m *Model) RunDurationTest() {
 }
 
 func (m *Model) RunFunctionTest() {
-	result := &gen.EmergencyTestResult{
+	result := &emergencylightpb.EmergencyTestResult{
 		EndTime: timestamppb.Now(),
 		Result:  getRandomEmergencyLightResult(),
 	}
 	m.SetLastFunctionalTest(result.Result)
 }
 
-func getRandomEmergencyLightResult() gen.EmergencyTestResult_Result {
+func getRandomEmergencyLightResult() emergencylightpb.EmergencyTestResult_Result {
 	n := rand.Intn(11)
-	return gen.EmergencyTestResult_Result(n)
+	return emergencylightpb.EmergencyTestResult_Result(n)
 }
 
 func (m *Model) PullTestResults(ctx context.Context, opts ...resource.ReadOption) <-chan PullTestResultSetChange {
-	return resources.PullValue[*gen.TestResultSet](ctx, m.testResultSet.Pull(ctx, opts...))
+	return resources.PullValue[*emergencylightpb.TestResultSet](ctx, m.testResultSet.Pull(ctx, opts...))
 }
 
-type PullTestResultSetChange = resources.ValueChange[*gen.TestResultSet]
+type PullTestResultSetChange = resources.ValueChange[*emergencylightpb.TestResultSet]

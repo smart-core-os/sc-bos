@@ -6,12 +6,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
 )
 
 type ModelServer struct {
-	gen.UnimplementedTransportApiServer
+	transportpb.UnimplementedTransportApiServer
 	model *Model
 }
 
@@ -20,20 +20,20 @@ func NewModelServer(model *Model) *ModelServer {
 }
 
 func (m *ModelServer) Register(server *grpc.Server) {
-	gen.RegisterTransportApiServer(server, m)
+	transportpb.RegisterTransportApiServer(server, m)
 }
 
 func (m *ModelServer) Unwrap() any {
 	return m.model
 }
 
-func (m *ModelServer) GetTransport(_ context.Context, request *gen.GetTransportRequest) (*gen.Transport, error) {
+func (m *ModelServer) GetTransport(_ context.Context, request *transportpb.GetTransportRequest) (*transportpb.Transport, error) {
 	return m.model.GetTransport(resource.WithReadMask(request.ReadMask))
 }
 
-func (m *ModelServer) PullTransport(request *gen.PullTransportRequest, server grpc.ServerStreamingServer[gen.PullTransportResponse]) error {
+func (m *ModelServer) PullTransport(request *transportpb.PullTransportRequest, server grpc.ServerStreamingServer[transportpb.PullTransportResponse]) error {
 	for change := range m.model.PullTransport(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		msg := &gen.PullTransportResponse{Changes: []*gen.PullTransportResponse_Change{{
+		msg := &transportpb.PullTransportResponse{Changes: []*transportpb.PullTransportResponse_Change{{
 			Name:       request.Name,
 			ChangeTime: timestamppb.New(change.ChangeTime),
 			Transport:  change.Value,

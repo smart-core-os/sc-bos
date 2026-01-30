@@ -1,0 +1,44 @@
+-- proto.mod --
+module github.com/example/proto
+-- messages.proto --
+syntax = "proto3";
+
+package example;
+
+option go_package = "github.com/example/gen";
+
+message Device {
+  string id = 1;
+  string model = 2;
+}
+
+message Config {
+  string key = 1;
+  string value = 2;
+}
+-- services/routed.proto --
+syntax = "proto3";
+
+package example.services;
+
+option go_package = "github.com/example/gen/services";
+
+service DeviceApi {
+  rpc GetDevice(GetDeviceRequest) returns (Device);
+  rpc UpdateDevice(UpdateDeviceRequest) returns (Device);
+}
+
+message GetDeviceRequest {
+  string name = 1;
+}
+
+message UpdateDeviceRequest {
+  string name = 1;
+  Device device = 2;
+}
+
+message Device {
+  string id = 1;
+  string model = 2;
+}
+

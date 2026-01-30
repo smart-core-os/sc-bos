@@ -1,7 +1,7 @@
 # Smart Core BACnet/IP driver
 
 This package implements integration between BACnet/IP and Smart Core. The driver uses a
-Vanti [fork of gobacnet](https://github.com/vanti-dev/gobacnet/tree/write) maintained on the `write` branch.
+Vanti [fork of gobacnet](https://github.com/smart-core-os/gobacnet/tree/write) maintained on the `write` branch.
 
 The driver interprets [config](config/root.go) and sets up connections to BACnet devices and associates BACnet objects
 with Smart Core traits and properties.
