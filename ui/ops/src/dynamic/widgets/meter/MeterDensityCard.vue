@@ -9,7 +9,9 @@
     </div>
     <div class="display bold pa-8 text-h5 align-self-center">
       <div class="value">{{ densityThreshold.str }}</div>
-      <div class="icon"><v-icon>{{ densityThreshold.icon }}</v-icon></div>
+      <div class="icon">
+        <v-icon>{{ densityThreshold.icon }}</v-icon>
+      </div>
     </div>
   </v-card>
 </template>
@@ -61,7 +63,7 @@ const props = defineProps({
     type: [Number, String],
     default: 0 // Used via Math.abs, {period: 'day', offset: 1} means yesterday, and so on
   },
-  refresh: {
+  refresh: { // refresh period in ms
     type: Number,
     default: 60000,
   }
@@ -70,18 +72,25 @@ const props = defineProps({
 const _unit = computed(() => `${props.meterUnit} per person`);
 
 // Average occupancy over the period
-const _occupancy = computed(() => {
-  const _offset = useLocalProp(toRef(props, 'offset'));
+const _occupancy = ref(0);
+
+const computeOccupancy = () => {
+  const _offset = computed(() => -Math.abs(parseInt(props.offset)));
   const {start, end} = usePeriod(toRef(props, 'period'), toRef(props, 'period'), _offset);
-  const {pastEdges} = useDateScale(start, end, _offset);
+  const {pastEdges} = useDateScale(start, end, useLocalProp(toRef(props, 'offset')));
 
   const maxPeopleCounts = useMaxPeopleCount(toRef(props, 'occupancy'), pastEdges);
 
-  return maxPeopleCounts.value.reduce((acc, el) => {
-    acc += el.y;
-    return acc;
-  }, 0) / (maxPeopleCounts.value.length || 1);
-});
+  return watch(maxPeopleCounts, (counts) => {
+    let length = counts?.length ?? 1;
+
+    _occupancy.value = counts.reduce((acc, el) => {
+      acc += el.y;
+      return acc;
+    }, 0) / length;
+  }, {deep: true});
+};
+
 const density = ref(0);
 const densityDisplayStr = computed(() => {
   return format(density.value);
@@ -105,7 +114,7 @@ const computeDensity = () => {
   const after = useMeterReadingAt(() => props.name, end, true);
   const before = useMeterReadingAt(() => props.name, start, true);
 
-  watch([before, after], () => {
+  return watch([before, after], () => {
     if (isNull(before?.value) || isNull(after?.value)) return;
 
     const netConsumed = after.value.usage - before.value.usage;
@@ -123,16 +132,28 @@ const computeDensity = () => {
 };
 
 let interval;
+let stopOccupancyWatch;
+let stopDensityWatch;
+
 onMounted(() => {
-  computeDensity();
+  stopOccupancyWatch = computeOccupancy();
+  stopDensityWatch = computeDensity();
   interval = setInterval(() => {
-    computeDensity();
+    // Stop previous watches before creating new ones
+    if (stopOccupancyWatch) stopOccupancyWatch();
+    if (stopDensityWatch) stopDensityWatch();
+
+    stopOccupancyWatch = computeOccupancy();
+    stopDensityWatch = computeDensity();
   }, props.refresh);
 });
 
 onUnmounted(() => {
-  clearInterval(interval);
+  if (interval) clearInterval(interval);
+  if (stopOccupancyWatch) stopOccupancyWatch();
+  if (stopDensityWatch) stopDensityWatch();
 });
+
 </script>
 
 <style scoped>
