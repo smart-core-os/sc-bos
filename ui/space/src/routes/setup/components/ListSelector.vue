@@ -2,28 +2,30 @@
   <div>
     <h1 class="text-h1 py-12 mt-n12">Panel Setup</h1>
     <v-card class="px-4 py-4" color="rgba(255,255,255,0.3)" :loading="zoneMetadataLoading">
-      <v-infinite-scroll
-          class="overflow-auto"
-          :height="352"
-          @load="fetch">
-        <template v-if="!noZones">
+      <template v-if="!noZones">
+        <v-infinite-scroll
+            class="overflow-auto"
+            :height="352"
+            mode="manual"
+            @load="fetch">
           <template v-for="item in zoneList" :key="item.id">
             <div class="rounded-xl bg-primary px-4 py-2 my-1" @click="submit(item)">{{ item.title }}</div>
           </template>
-        </template>
-        <template v-else>
-          <v-card-title class="justify-center">No zone available</v-card-title>
-        </template>
-        <template #empty>
-          <hr class="w-75">
-        </template>
-      </v-infinite-scroll>
+          <template #empty>
+            <div class="text-center py-2 text-caption">No more zones</div>
+          </template>
+        </v-infinite-scroll>
+      </template>
+      <template v-else>
+        <v-card-title class="justify-center">No zone available</v-card-title>
+      </template>
     </v-card>
     <v-btn v-if="!disableAuthentication" block class="mt-12" variant="text" @click="accountStore.logout">
       Logout
     </v-btn>
   </div>
 </template>
+
 
 <script setup>
 import useMetadata from '@/composables/useMetadata';
@@ -32,13 +34,13 @@ import {useAccountStore} from '@/stores/account';
 import {useConfigStore} from '@/stores/config';
 import {useUiConfigStore} from '@/stores/ui-config';
 import {storeToRefs} from 'pinia';
-import {computed, watch} from 'vue';
+import {computed, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
 
 const emits = defineEmits(['shouldAutoLogout']);
 
 const router = useRouter();
-const {zoneCollection, getNextZones} = useZoneCollection();
+const {zoneCollection, getNextZones, hubNodesValue, enrollmentValue} = useZoneCollection();
 const accountStore = useAccountStore();
 const {zones, isInitialized} = storeToRefs(accountStore);
 const uiConfig = useUiConfigStore();
@@ -67,20 +69,30 @@ const zoneList = computed(() => {
   }));
 });
 
-const noZones = computed(() => {
-  return zoneList.value.length === 0;
-});
+const noZones = ref(false);
 
 
 const fetch = async ({done}) => {
-  if (!isInitialized.value) return; // don't do anything until we know about account zones
-  if (zones.value.length > 0) return; // don't load zones from server if we have account zones to use
+  if (!isInitialized.value) {
+    // don't do anything until we know about account zones
+    done('ok');
+    return;
+  }
+  // keep fetching until hub nodes and enrollment are loaded
+  if (hubNodesValue.loading || enrollmentValue.loading) {
+    done('ok');
+    return;
+  }
+  if (zones.value.length > 0) {
+    // don't load zones from server if we have account zones to use
+    done('empty');
+    return;
+  }
 
-  const prev = zoneList.value.length;
+  const fetched = await getNextZones(10);
 
-  await getNextZones(10);
-
-  if (prev !== 0 && zoneList.value.length === prev) {
+  if (fetched === null) {
+    noZones.value = zoneCollection.response.serviceList.length === 0;
     done('empty'); // disable further fetch calls
     return;
   }

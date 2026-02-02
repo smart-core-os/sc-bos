@@ -1011,7 +1011,13 @@
                   "component": "builtin:occupancy/PeopleCountCard",
                   "props": {
                     "source": "van/uk/brum/ugs/zones/building",
-                    "maxOccupancy": 1250
+                    "maxOccupancy": 1250,
+                    "thresholds": [
+                      {"percentage": 10, "str": "Quiet"},
+                      {"percentage": 50, "str": "Moderate"},
+                      {"percentage": 70, "str": "Busy"},
+                      {"percentage": 90, "str": "Full"}
+                    ]
                   }
                 },
                 {
@@ -1111,7 +1117,19 @@
                   }
                 },
                 {
-                  "loc": {"x": 7, "y": 9, "w": 6, "h": 4},
+                  "loc": {"x": 7, "y": 9, "w": 2, "h": 4},
+                  "id": "MeterDensity",
+                  "component": "builtin:meter/MeterDensityCard",
+                  "props": {
+                    "title": "Building Power Density",
+                    "name": "van/uk/brum/ugs/zones/building",
+                    "occupancy": "van/uk/brum/ugs/zones/building",
+                    "period": "day",
+                    "refresh": 60000
+                  }
+                },
+                {
+                  "loc": {"x": 9, "y": 9, "w": 4, "h": 4},
                   "id": "Notifications",
                   "component": "builtin:notifications/ZoneNotifications",
                   "props": {
