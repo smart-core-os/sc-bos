@@ -908,6 +908,45 @@
               "layout": "builtin:page/AirQuality"
             },
             {
+              "title": "Tower Air Quality",
+              "icon": "mdi-office-building",
+              "path": "tower-iaq",
+              "layout": "builtin:LayoutMainSide",
+              "mainWidgetMinHeight": 0,
+              "main": [
+                {
+                  "component": "builtin:environmental/AirQualityDashboard",
+                  "props": {
+                    "title": "Tower Air Quality Overview",
+                    "towers": [
+                      {
+                        "name": "North Tower",
+                        "floors": [
+                          { "label": "L6", "sensorName": "van/uk/brum/ugs/devices/IAQ-NT-L06" },
+                          { "label": "L5", "sensorName": "van/uk/brum/ugs/devices/IAQ-NT-L05" },
+                          { "label": "L4", "sensorName": "van/uk/brum/ugs/devices/IAQ-NT-L04" },
+                          { "label": "L3", "sensorName": "van/uk/brum/ugs/devices/IAQ-NT-L03" },
+                          { "label": "L2", "sensorName": "van/uk/brum/ugs/devices/IAQ-NT-L02" },
+                          { "label": "L1", "sensorName": "van/uk/brum/ugs/devices/IAQ-NT-L01" }
+                        ]
+                      },
+                      {
+                        "name": "South Tower",
+                        "floors": [
+                          { "label": "L6", "sensorName": "van/uk/brum/ugs/devices/IAQ-ST-L06" },
+                          { "label": "L5", "sensorName": "van/uk/brum/ugs/devices/IAQ-ST-L05" },
+                          { "label": "L4", "sensorName": "van/uk/brum/ugs/devices/IAQ-ST-L04" },
+                          { "label": "L3", "sensorName": "van/uk/brum/ugs/devices/IAQ-ST-L03" },
+                          { "label": "L2", "sensorName": "van/uk/brum/ugs/devices/IAQ-ST-L02" },
+                          { "label": "L1", "sensorName": "van/uk/brum/ugs/devices/IAQ-ST-L01" }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
               "title": "Emergency Lighting",
               "icon": "mdi-alarm-light-outline",
               "path": "elt",

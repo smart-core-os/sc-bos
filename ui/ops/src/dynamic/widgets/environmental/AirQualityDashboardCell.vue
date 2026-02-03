@@ -1,23 +1,27 @@
 <template>
-  <v-chip
-      :color="scoreColor"
-      :variant="loading ? 'outlined' : 'flat'"
-      size="small"
-      class="font-weight-medium">
+  <div class="d-flex flex-wrap ga-1 justify-center">
     <template v-if="loading">
-      <v-progress-circular indeterminate size="12" width="2" class="mr-1"/>
+      <v-progress-circular indeterminate size="16" width="2"/>
     </template>
-    <template v-else-if="score">
-      {{ Math.round(score.value) }}%
+    <template v-else-if="hasMetrics">
+      <v-chip
+          v-for="metric in displayMetrics"
+          :key="metric.key"
+          :color="metric.color"
+          variant="flat"
+          size="x-small"
+          class="font-weight-medium">
+        <span class="text-caption">{{ metric.label }}: {{ metric.displayValue }}</span>
+      </v-chip>
     </template>
     <template v-else>
-      -
+      <span class="text-disabled">-</span>
     </template>
-  </v-chip>
+  </div>
 </template>
 
 <script setup>
-import {statusToColor, useAirQuality, usePullAirQuality} from '@/traits/airQuality/airQuality.js';
+import {metrics, statusToColor, useAirQuality, usePullAirQuality} from '@/traits/airQuality/airQuality.js';
 import {computed} from 'vue';
 
 const props = defineProps({
@@ -28,10 +32,40 @@ const props = defineProps({
 });
 
 const {value: airQuality, loading} = usePullAirQuality(() => props.sensorName);
-const {score} = useAirQuality(airQuality);
+const {presentMetrics} = useAirQuality(airQuality);
 
-const scoreColor = computed(() => {
-  if (!score.value) return undefined;
-  return statusToColor(score.value.status);
+const metricKeys = ['carbonDioxideLevel', 'volatileOrganicCompounds', 'particulateMatter25', 'particulateMatter10'];
+const metricLabels = {
+  carbonDioxideLevel: 'CO₂',
+  volatileOrganicCompounds: 'VOC',
+  particulateMatter25: 'PM2.5',
+  particulateMatter10: 'PM10'
+};
+
+const hasMetrics = computed(() => {
+  return metricKeys.some(key => presentMetrics.value[key]);
 });
+
+const displayMetrics = computed(() => {
+  const result = [];
+  for (const key of metricKeys) {
+    const metric = presentMetrics.value[key];
+    if (!metric) continue;
+    const metricInfo = metrics[key];
+    result.push({
+      key,
+      label: metricLabels[key],
+      value: metric.value,
+      displayValue: formatValue(metric.value, metricInfo.unit),
+      color: statusToColor(metric.status)
+    });
+  }
+  return result;
+});
+
+function formatValue(value, unit) {
+  if (value === null || value === undefined) return '-';
+  const formatted = value < 10 ? value.toFixed(2) : Math.round(value);
+  return `${formatted}${unit}`;
+}
 </script>

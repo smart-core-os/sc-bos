@@ -949,6 +949,96 @@
         "membership": {"subsystem": "fleet"}
       }
     ]
+    },
+    {
+      "name": "van/uk/brum/ugs/eg-bc-01/driver/tower-iaq",
+      "type": "mock",
+      "devices": [
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-NT-L01",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "North Tower L1 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 1", "zone": "North Tower"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-NT-L02",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "North Tower L2 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 2", "zone": "North Tower"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-NT-L03",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "North Tower L3 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 3", "zone": "North Tower"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-NT-L04",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "North Tower L4 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 4", "zone": "North Tower"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-NT-L05",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "North Tower L5 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 5", "zone": "North Tower"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-NT-L06",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "North Tower L6 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 6", "zone": "North Tower"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-ST-L01",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "South Tower L1 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 1", "zone": "South Tower"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-ST-L02",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "South Tower L2 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 2", "zone": "South Tower"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-ST-L03",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "South Tower L3 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 3", "zone": "South Tower"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-ST-L04",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "South Tower L4 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 4", "zone": "South Tower"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-ST-L05",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "South Tower L5 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 5", "zone": "South Tower"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-ST-L06",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "South Tower L6 IAQ"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Level 6", "zone": "South Tower"}
+        }
+      ]
     }
   ],
   "zones": [
