@@ -15,7 +15,7 @@
       </v-chip>
     </template>
     <template v-else>
-      <span class="text-disabled">-</span>
+      <span class="text-disabled text-caption">No data</span>
     </template>
   </div>
 </template>

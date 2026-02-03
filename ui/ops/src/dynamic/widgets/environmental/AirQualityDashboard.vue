@@ -4,35 +4,34 @@
       <v-toolbar-title class="text-h4">{{ props.title }}</v-toolbar-title>
     </v-toolbar>
     <v-card-text class="pt-0">
-      <v-table density="comfortable" class="bg-transparent">
-        <thead>
-          <tr>
-            <th class="text-left">Floor</th>
-            <th v-for="tower in props.towers" :key="tower.name" class="text-center">
-              {{ tower.name }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(floor, floorIndex) in floorLabels" :key="floorIndex">
-            <td class="text-left">{{ floor }}</td>
-            <td v-for="tower in props.towers" :key="tower.name" class="text-center pa-1">
-              <air-quality-cell
-                  v-if="getSensorName(tower, floorIndex)"
-                  :sensor-name="getSensorName(tower, floorIndex)"/>
-              <span v-else class="text-disabled">-</span>
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
+      <div class="d-flex flex-column ga-6">
+        <div v-for="tower in props.towers" :key="tower.name">
+          <h3 class="text-h6 mb-3">{{ tower.name }}</h3>
+          <air-quality-tower-average
+              :tower-name="tower.name"
+              :sensor-names="tower.floors.map(f => f.sensorName)"
+              class="mb-4"/>
+          <div class="floor-grid">
+            <v-card
+                v-for="floor in tower.floors"
+                :key="floor.label"
+                variant="outlined"
+                class="floor-card pa-3">
+              <div class="text-subtitle-2 font-weight-bold mb-2">{{ floor.label }}</div>
+              <air-quality-cell :sensor-name="floor.sensorName"/>
+            </v-card>
+          </div>
+        </div>
+      </div>
     </v-card-text>
   </v-card>
 </template>
 
 <script setup>
-import {computed, defineAsyncComponent} from 'vue';
+import {defineAsyncComponent} from 'vue';
 
 const AirQualityCell = defineAsyncComponent(() => import('./AirQualityDashboardCell.vue'));
+const AirQualityTowerAverage = defineAsyncComponent(() => import('./AirQualityTowerAverage.vue'));
 
 const props = defineProps({
   title: {
@@ -54,28 +53,16 @@ const props = defineProps({
     }
   }
 });
-
-// Compute a unified list of floor labels across all towers
-const floorLabels = computed(() => {
-  const labels = new Set();
-  for (const tower of props.towers) {
-    for (const floor of tower.floors) {
-      labels.add(floor.label);
-    }
-  }
-  return Array.from(labels);
-});
-
-// Get the sensor name for a given tower and floor index
-const getSensorName = (tower, floorIndex) => {
-  const floorLabel = floorLabels.value[floorIndex];
-  const floor = tower.floors.find(f => f.label === floorLabel);
-  return floor?.sensorName;
-};
 </script>
 
 <style scoped>
-.v-table {
-  --v-table-header-height: 40px;
+.floor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.floor-card {
+  min-height: 80px;
 }
 </style>
