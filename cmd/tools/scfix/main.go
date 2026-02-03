@@ -11,6 +11,7 @@ import (
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/fixer"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/goprotoimports"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/historyimports"
+	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/nodeclient"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/optclients"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protogopkg"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1"
@@ -27,6 +28,7 @@ type fix struct {
 
 // allFixes contains all available fixes and their default enabled state.
 var allFixes = []fix{
+	{Fix: nodeclient.Fix, Enabled: true},
 	{Fix: optclients.Fix, Enabled: true},
 	{Fix: historyimports.Fix, Enabled: true},
 	{Fix: wrap.Fix, Enabled: false},
