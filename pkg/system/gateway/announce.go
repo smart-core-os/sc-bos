@@ -100,7 +100,15 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 		// we are intentionally ignoring the loading state of the gateway system,
 		// under the assumption that whether the remote gateway system has loaded or not it's
 		// still intending to be a gateway eventually.
-		return systems.gateway.GetActive()
+		result := systems.gateway.GetActive()
+		a.logger.Debug("[GATEWAY-SVC-DEBUG] isGateway check",
+			zap.String("remoteAddr", a.node.addr),
+			zap.String("selfName", self.name),
+			zap.Bool("isGateway", result),
+			zap.Bool("gatewayActive", systems.gateway.GetActive()),
+			zap.Bool("msgRecvd", systems.msgRecvd),
+		)
+		return result
 	}
 	wasGateway := isGateway()
 
@@ -136,8 +144,24 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 		if isGateway() {
 			// only special names get proxied for gateway nodes
 			suffix := strings.TrimPrefix(c.name, self.name+"/")
-			return c.name == self.name || isFixedServiceName(suffix)
+			result := c.name == self.name || isFixedServiceName(suffix)
+			a.logger.Debug("[GATEWAY-SVC-DEBUG] shouldProxyDevice (gateway mode)",
+				zap.String("remoteAddr", a.node.addr),
+				zap.String("selfName", self.name),
+				zap.String("deviceName", c.name),
+				zap.String("suffix", suffix),
+				zap.Bool("isFixedServiceName", isFixedServiceName(suffix)),
+				zap.Bool("nameEqualsSelf", c.name == self.name),
+				zap.Bool("willProxy", result),
+			)
+			return result
 		} else {
+			a.logger.Debug("[GATEWAY-SVC-DEBUG] shouldProxyDevice (non-gateway mode)",
+				zap.String("remoteAddr", a.node.addr),
+				zap.String("selfName", self.name),
+				zap.String("deviceName", c.name),
+				zap.Bool("willProxy", true),
+			)
 			return true
 		}
 	}
@@ -197,13 +221,29 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 	waitForFunc(ctx, &self, selfChanges, func(d remoteDesc) bool {
 		return d.name != ""
 	})
+	a.logger.Debug("[GATEWAY-SVC-DEBUG] after waitForFunc(self)",
+		zap.String("remoteAddr", a.node.addr),
+		zap.String("selfName", self.name),
+		zap.Bool("selfNameEmpty", self.name == ""),
+	)
 	// Announcing a node that hasn't, but will eventually, be classified as a gateway is expensive.
 	// Delay our announcement a little bit to allow us to do an initial classification of the node,
 	// at least until we have a response from the remote node.
 	waitForFunc(ctx, &systems, systemChanges, func(s remoteSystems) bool {
 		return s.msgRecvd
 	})
+	a.logger.Debug("[GATEWAY-SVC-DEBUG] after waitForFunc(systems)",
+		zap.String("remoteAddr", a.node.addr),
+		zap.String("selfName", self.name),
+		zap.Bool("msgRecvd", systems.msgRecvd),
+		zap.Bool("gatewayActive", systems.gateway.GetActive()),
+	)
 
+	a.logger.Info("[GATEWAY-SVC-DEBUG] starting device announcement",
+		zap.String("remoteAddr", a.node.addr),
+		zap.String("selfName", self.name),
+		zap.Bool("isGateway", isGateway()),
+	)
 	switchGatewayMode(isGateway())
 
 	for {
@@ -235,18 +275,42 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 			}
 			switch c.Type {
 			case rx.Add:
+				a.logger.Debug("[GATEWAY-SVC-DEBUG] device ADD received",
+					zap.String("remoteAddr", a.node.addr),
+					zap.String("deviceName", c.New.name),
+					zap.String("selfName", self.name),
+					zap.Bool("isGateway", isGateway()),
+				)
 				if !shouldProxyDevice(c.New) {
+					a.logger.Debug("[GATEWAY-SVC-DEBUG] device ADD skipped (shouldProxyDevice=false)",
+						zap.String("remoteAddr", a.node.addr),
+						zap.String("deviceName", c.New.name),
+					)
 					continue
 				}
 				undoDevices[c.New.name] = a.announceProxy(c.New)
 				undoMD[c.New.name] = a.announceMetadata(c.New)
 				removeChecks[c.New.name] = a.announceHealthChecks(c.Old, c.New)
 			case rx.Remove:
+				a.logger.Debug("[GATEWAY-SVC-DEBUG] device REMOVE received",
+					zap.String("remoteAddr", a.node.addr),
+					zap.String("deviceName", c.Old.name),
+				)
 				undoDevices.remove(c.Old.name)
 				undoMD.remove(c.Old.name)
 				removeChecks.remove(c.Old.name)
 			case rx.Update:
+				a.logger.Debug("[GATEWAY-SVC-DEBUG] device UPDATE received",
+					zap.String("remoteAddr", a.node.addr),
+					zap.String("deviceName", c.New.name),
+					zap.String("selfName", self.name),
+					zap.Bool("isGateway", isGateway()),
+				)
 				if !shouldProxyDevice(c.New) {
+					a.logger.Debug("[GATEWAY-SVC-DEBUG] device UPDATE - removing proxy (shouldProxyDevice=false)",
+						zap.String("remoteAddr", a.node.addr),
+						zap.String("deviceName", c.New.name),
+					)
 					undoMD.remove(c.Old.name)
 					removeChecks.remove(c.Old.name)
 					continue
@@ -271,8 +335,17 @@ func (a *announcer) announceName(d remoteDesc) (device, md, checks node.Undo) {
 // announceProxy updates this node to proxy requests for the given remoteDesc.
 func (a *announcer) announceProxy(d remoteDesc) node.Undo {
 	if !shouldAnnounceName(d.name) {
+		a.logger.Debug("[GATEWAY-SVC-DEBUG] announceProxy skipped (shouldAnnounceName=false)",
+			zap.String("remoteAddr", a.node.addr),
+			zap.String("deviceName", d.name),
+			zap.Bool("isFixedServiceName", isFixedServiceName(d.name)),
+		)
 		return node.NilUndo
 	}
+	a.logger.Debug("[GATEWAY-SVC-DEBUG] announceProxy adding proxy route",
+		zap.String("remoteAddr", a.node.addr),
+		zap.String("deviceName", d.name),
+	)
 	return a.Announce(d.name, node.HasProxy(a.node.conn))
 }
 
@@ -352,15 +425,26 @@ func (a *announcer) announceNames(seq iter.Seq2[int, remoteDesc]) (devices, mds,
 	devices = tasks{}
 	mds = tasks{}
 	checks = tasks{}
+	var announcedNames []string
 	for _, d := range seq {
 		devices[d.name], mds[d.name], checks[d.name] = a.announceName(d)
+		announcedNames = append(announcedNames, d.name)
 	}
+	a.logger.Info("[GATEWAY-SVC-DEBUG] announceNames: initial batch complete",
+		zap.String("remoteAddr", a.node.addr),
+		zap.Int("count", len(announcedNames)),
+		zap.Strings("names", announcedNames),
+	)
 	return devices, mds, checks
 }
 
 // announceRemoteService updates this node to respond to requests for the given remoteService.
 func (a *announcer) announceRemoteService(rs protoreflect.ServiceDescriptor) node.Undo {
 	if a.ignoreRemoteService(rs) {
+		a.logger.Debug("[GATEWAY-SVC-DEBUG] announceRemoteService: ignoring service",
+			zap.String("remoteAddr", a.node.addr),
+			zap.String("service", string(rs.FullName())),
+		)
 		return node.NilUndo
 	}
 	name := string(rs.FullName())

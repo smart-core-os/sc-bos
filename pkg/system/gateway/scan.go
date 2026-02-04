@@ -96,6 +96,10 @@ func (s *System) pullSelf(ctx context.Context, node *remoteNode) (task.Next, err
 		md := c.Metadata
 		// note: we don't fetch health checks for the self node,
 		// this will be handled by the devices query
+		s.logger.Debug("[GATEWAY-SVC-DEBUG] pullSelf: received self metadata",
+			zap.String("remoteAddr", node.addr),
+			zap.String("selfName", md.Name),
+		)
 		node.Self.Set(remoteDesc{name: md.Name, md: md})
 	}
 }
@@ -132,11 +136,22 @@ func (s *System) pullSystems(ctx context.Context, node *remoteNode) (task.Next, 
 			switch id {
 			case Name:
 				systems.gateway = c.GetNewValue()
+				s.logger.Debug("[GATEWAY-SVC-DEBUG] pullSystems: gateway system detected",
+					zap.String("remoteAddr", node.addr),
+					zap.Bool("gatewayActive", systems.gateway.GetActive()),
+					zap.String("gatewayId", systems.gateway.GetId()),
+				)
 			}
 		}
 
 		// while we aren't using proto.Equal here, that's fine as the pointers would have changed if we got an update
 		if oldSystems != systems {
+			s.logger.Debug("[GATEWAY-SVC-DEBUG] pullSystems: systems updated",
+				zap.String("remoteAddr", node.addr),
+				zap.Bool("msgRecvd", systems.msgRecvd),
+				zap.Bool("hasGateway", systems.gateway != nil),
+				zap.Bool("gatewayActive", systems.gateway.GetActive()),
+			)
 			node.Systems.Set(systems)
 		}
 	}
@@ -162,10 +177,18 @@ func (s *System) pullDevices(ctx context.Context, node *remoteNode) (task.Next, 
 
 		for _, c := range msg.Changes {
 			if c.NewValue == nil {
+				s.logger.Debug("[GATEWAY-SVC-DEBUG] pullDevices: device removed",
+					zap.String("remoteAddr", node.addr),
+					zap.String("deviceName", c.OldValue.Name),
+				)
 				node.Devices.Remove(remoteDesc{name: c.OldValue.Name})
 				continue // device deleted
 			}
 			// Set covers both add and update cases
+			s.logger.Debug("[GATEWAY-SVC-DEBUG] pullDevices: device discovered",
+				zap.String("remoteAddr", node.addr),
+				zap.String("deviceName", c.NewValue.Name),
+			)
 			node.Devices.Set(remoteDesc{name: c.NewValue.Name, md: c.NewValue.Metadata, health: c.NewValue.HealthChecks})
 		}
 	}

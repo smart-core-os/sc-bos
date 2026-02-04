@@ -127,8 +127,9 @@ func (n *Node) announceLocked(name string, features ...Feature) Undo {
 	if a.proxyTo != nil {
 		undoProxy, err := registerProxyRoute(n.router, name, a.proxyTo)
 		if err != nil {
-			log.Errorf("cannot register proxy for %q: %v", name, err)
+			log.Errorf("[GATEWAY-SVC-DEBUG] cannot register proxy for %q: %v", name, err)
 		} else {
+			log.Debugf("[GATEWAY-SVC-DEBUG] registered proxy route for %q", name)
 			undo = append(undo, undoProxy)
 		}
 	}
