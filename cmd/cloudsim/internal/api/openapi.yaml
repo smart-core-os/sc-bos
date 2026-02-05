@@ -1,0 +1,606 @@
+openapi: 3.0.3
+info:
+  title: Cloudsim Management API
+  description: REST API for managing cloudsim entities (Sites, Nodes, ConfigVersions, Deployments)
+  version: 1.0.0
+
+servers:
+  - url: /api/v1/management
+
+paths:
+  /sites:
+    get:
+      summary: List sites
+      operationId: listSites
+      tags: [Sites]
+      parameters:
+        - $ref: '#/components/parameters/pageToken'
+        - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          description: List of sites
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    post:
+      summary: Create site
+      operationId: createSite
+      tags: [Sites]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSiteRequest'
+      responses:
+        '201':
+          description: Site created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /sites/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      summary: Get site
+      operationId: getSite
+      tags: [Sites]
+      responses:
+        '200':
+          description: Site details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update site
+      operationId: updateSite
+      tags: [Sites]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSiteRequest'
+      responses:
+        '200':
+          description: Site updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete site
+      operationId: deleteSite
+      tags: [Sites]
+      responses:
+        '204':
+          description: Site deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /nodes:
+    get:
+      summary: List nodes
+      operationId: listNodes
+      tags: [Nodes]
+      parameters:
+        - $ref: '#/components/parameters/pageToken'
+        - $ref: '#/components/parameters/pageSize'
+        - name: siteId
+          in: query
+          description: Filter by site ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    post:
+      summary: Create node
+      operationId: createNode
+      tags: [Nodes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNodeRequest'
+      responses:
+        '201':
+          description: Node created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /nodes/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      summary: Get node
+      operationId: getNode
+      tags: [Nodes]
+      responses:
+        '200':
+          description: Node details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update node
+      operationId: updateNode
+      tags: [Nodes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNodeRequest'
+      responses:
+        '200':
+          description: Node updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete node
+      operationId: deleteNode
+      tags: [Nodes]
+      responses:
+        '204':
+          description: Node deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /config-versions:
+    get:
+      summary: List config versions
+      operationId: listConfigVersions
+      tags: [ConfigVersions]
+      parameters:
+        - $ref: '#/components/parameters/pageToken'
+        - $ref: '#/components/parameters/pageSize'
+        - name: nodeId
+          in: query
+          description: Filter by node ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of config versions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigVersionList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    post:
+      summary: Create config version
+      operationId: createConfigVersion
+      tags: [ConfigVersions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConfigVersionRequest'
+      responses:
+        '201':
+          description: Config version created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigVersion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /config-versions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      summary: Get config version
+      operationId: getConfigVersion
+      tags: [ConfigVersions]
+      responses:
+        '200':
+          description: Config version details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigVersion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete config version
+      operationId: deleteConfigVersion
+      tags: [ConfigVersions]
+      responses:
+        '204':
+          description: Config version deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /deployments:
+    get:
+      summary: List deployments
+      operationId: listDeployments
+      tags: [Deployments]
+      parameters:
+        - $ref: '#/components/parameters/pageToken'
+        - $ref: '#/components/parameters/pageSize'
+        - name: nodeId
+          in: query
+          description: Filter by node ID (via config version)
+          schema:
+            type: integer
+            format: int64
+        - name: configVersionId
+          in: query
+          description: Filter by config version ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of deployments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeploymentList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    post:
+      summary: Create deployment
+      operationId: createDeployment
+      tags: [Deployments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeploymentRequest'
+      responses:
+        '201':
+          description: Deployment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deployment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /deployments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      summary: Get deployment
+      operationId: getDeployment
+      tags: [Deployments]
+      responses:
+        '200':
+          description: Deployment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deployment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update deployment status
+      operationId: updateDeploymentStatus
+      tags: [Deployments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDeploymentStatusRequest'
+      responses:
+        '200':
+          description: Deployment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deployment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete deployment
+      operationId: deleteDeployment
+      tags: [Deployments]
+      responses:
+        '204':
+          description: Deployment deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token for pagination (base36-encoded ID)
+      schema:
+        type: string
+    pageSize:
+      name: pageSize
+      in: query
+      description: Number of items per page (default 50, max 1000)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 50
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          example: invalid_request
+        message:
+          type: string
+          example: invalid request
+
+    Site:
+      type: object
+      required: [id, name, createTime]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+
+    SiteList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Site'
+        nextPageToken:
+          type: string
+
+    CreateSiteRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    UpdateSiteRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    Node:
+      type: object
+      required: [id, hostname, siteId, createTime]
+      properties:
+        id:
+          type: integer
+          format: int64
+        hostname:
+          type: string
+        siteId:
+          type: integer
+          format: int64
+        createTime:
+          type: string
+          format: date-time
+
+    NodeList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Node'
+        nextPageToken:
+          type: string
+
+    CreateNodeRequest:
+      type: object
+      required: [hostname, siteId]
+      properties:
+        hostname:
+          type: string
+        siteId:
+          type: integer
+          format: int64
+
+    UpdateNodeRequest:
+      type: object
+      required: [hostname, siteId]
+      properties:
+        hostname:
+          type: string
+        siteId:
+          type: integer
+          format: int64
+
+    ConfigVersion:
+      type: object
+      required: [id, nodeId, versionNumber, payload, createTime]
+      properties:
+        id:
+          type: integer
+          format: int64
+        nodeId:
+          type: integer
+          format: int64
+        versionNumber:
+          type: string
+        payload:
+          type: string
+          format: byte
+          description: Base64-encoded binary payload
+        createTime:
+          type: string
+          format: date-time
+
+    ConfigVersionList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigVersion'
+        nextPageToken:
+          type: string
+
+    CreateConfigVersionRequest:
+      type: object
+      required: [nodeId, versionNumber, payload]
+      properties:
+        nodeId:
+          type: integer
+          format: int64
+        versionNumber:
+          type: string
+        payload:
+          type: string
+          format: byte
+          description: Base64-encoded binary payload
+
+    Deployment:
+      type: object
+      required: [id, configVersionId, status, startTime]
+      properties:
+        id:
+          type: integer
+          format: int64
+        configVersionId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED]
+        startTime:
+          type: string
+          format: date-time
+        finishedTime:
+          type: string
+          format: date-time
+          nullable: true
+
+    DeploymentList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Deployment'
+        nextPageToken:
+          type: string
+
+    CreateDeploymentRequest:
+      type: object
+      required: [configVersionId, status]
+      properties:
+        configVersionId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED]
+
+    UpdateDeploymentStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED]
+
+tags:
+  - name: Sites
+    description: Physical location management
+  - name: Nodes
+    description: BOS controller management
+  - name: ConfigVersions
+    description: Versioned configuration management
+  - name: Deployments
+    description: Configuration deployment tracking
