@@ -44,11 +44,12 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	announceGroup := func(name string, lights []string, logger *zap.Logger) error {
 		group := &Group{
-			client:   traits.NewLightApiClient(conn),
-			info:     traits.NewLightInfoClient(conn),
-			names:    lights,
-			readOnly: cfg.ReadOnlyLights,
-			logger:   logger,
+			client:            traits.NewLightApiClient(conn),
+			info:              traits.NewLightInfoClient(conn),
+			names:             lights,
+			readOnly:          cfg.ReadOnlyLights,
+			logger:            logger,
+			concurrentUpdates: cfg.ConcurrentUpdates,
 		}
 		f.devices.Add(lights...)
 		announce.Announce(name, node.HasTrait(trait.Light, node.WithClients(lightpb.WrapApi(group), lightpb.WrapInfo(group))))

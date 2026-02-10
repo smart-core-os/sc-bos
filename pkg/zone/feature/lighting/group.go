@@ -29,7 +29,8 @@ type Group struct {
 	names    []string
 	readOnly bool
 
-	logger *zap.Logger
+	logger            *zap.Logger
+	concurrentUpdates *int
 }
 
 func (g *Group) UpdateBrightness(ctx context.Context, request *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
@@ -44,7 +45,11 @@ func (g *Group) UpdateBrightness(ctx context.Context, request *traits.UpdateBrig
 			return g.client.UpdateBrightness(ctx, request)
 		}
 	}
-	allRes, allErrs := run.Collect(ctx, run.DefaultConcurrency, fns...)
+	c := run.DefaultConcurrency
+	if g.concurrentUpdates != nil {
+		c = *g.concurrentUpdates
+	}
+	allRes, allErrs := run.Collect(ctx, c, fns...)
 
 	err := multierr.Combine(allErrs...)
 	if len(multierr.Errors(err)) == len(g.names) {
