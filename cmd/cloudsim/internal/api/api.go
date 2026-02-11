@@ -46,6 +46,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/management/config-versions", s.listConfigVersions)
 	mux.HandleFunc("POST /api/v1/management/config-versions", s.createConfigVersion)
 	mux.HandleFunc("GET /api/v1/management/config-versions/{id}", s.getConfigVersion)
+	mux.HandleFunc("GET /api/v1/management/config-versions/{id}/payload", s.getConfigVersionPayload)
 	mux.HandleFunc("DELETE /api/v1/management/config-versions/{id}", s.deleteConfigVersion)
 
 	// Deployments

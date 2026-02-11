@@ -3,7 +3,9 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.uber.org/zap"
@@ -17,11 +19,31 @@ type ConfigVersion struct {
 	ID          int64     `json:"id"`
 	NodeID      int64     `json:"nodeId"`
 	Description string    `json:"description"`
-	Payload     []byte    `json:"payload"`
+	PayloadURL  string    `json:"payloadUrl"`
 	CreateTime  time.Time `json:"createTime"`
 }
 
-func toConfigVersion(cv queries.ConfigVersion) ConfigVersion {
+// payloadUrl constructs a fully qualified URL to download a config version's payload.
+// Hostname and scheme are inferred based on the request r.
+func payloadUrl(r *http.Request, id int64) string {
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	// Check X-Forwarded-Proto header for connections behind reverse proxies
+	if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" {
+		scheme = proto
+	}
+	return (&url.URL{
+		Scheme: scheme,
+		// for a production server, you would want to validate the Host header against a list of known hostnames
+		// to prevent DNS rebinding
+		Host: r.Host,
+		Path: fmt.Sprintf("/api/v1/management/config-versions/%d/payload", id),
+	}).String()
+}
+
+func toConfigVersion(r *http.Request, cv queries.ConfigVersion) ConfigVersion {
 	description := ""
 	if cv.Description.Valid {
 		description = cv.Description.String
@@ -30,15 +52,15 @@ func toConfigVersion(cv queries.ConfigVersion) ConfigVersion {
 		ID:          cv.ID,
 		NodeID:      cv.NodeID,
 		Description: description,
-		Payload:     cv.Payload,
+		PayloadURL:  payloadUrl(r, cv.ID),
 		CreateTime:  cv.CreateTime,
 	}
 }
 
-func toConfigVersions(cvs []queries.ConfigVersion) []ConfigVersion {
+func toConfigVersions(r *http.Request, cvs []queries.ConfigVersion) []ConfigVersion {
 	out := make([]ConfigVersion, len(cvs))
 	for i, cv := range cvs {
-		out[i] = toConfigVersion(cv)
+		out[i] = toConfigVersion(r, cv)
 	}
 	return out
 }
@@ -97,7 +119,7 @@ func (s *Server) listConfigVersions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, ListResponse[ConfigVersion]{
-		Items:         toConfigVersions(items),
+		Items:         toConfigVersions(r, items),
 		NextPageToken: nextToken,
 	})
 }
@@ -132,7 +154,7 @@ func (s *Server) createConfigVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toConfigVersion(item))
+	writeJSON(w, http.StatusCreated, toConfigVersion(r, item))
 }
 
 func (s *Server) getConfigVersion(w http.ResponseWriter, r *http.Request) {
@@ -157,7 +179,7 @@ func (s *Server) getConfigVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toConfigVersion(item))
+	writeJSON(w, http.StatusOK, toConfigVersion(r, item))
 }
 
 func (s *Server) deleteConfigVersion(w http.ResponseWriter, r *http.Request) {
@@ -189,4 +211,35 @@ func (s *Server) deleteConfigVersion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) getConfigVersionPayload(w http.ResponseWriter, r *http.Request) {
+	logger := s.loggerFor(r)
+
+	id, err := parseID(r.PathValue("id"))
+	if err != nil {
+		writeError(w, errInvalidRequest)
+		logger.Error("invalid id", zap.Error(err))
+		return
+	}
+
+	var payload []byte
+	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
+		config, err := tx.GetConfigVersion(r.Context(), id)
+		if err != nil {
+			return err
+		}
+		payload = config.Payload
+		return nil
+	})
+	if err != nil {
+		writeError(w, translateDBError(err))
+		logger.Error("failed to get config version payload", zap.Error(err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"config-version-%d.bin\"", id))
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(payload)
 }

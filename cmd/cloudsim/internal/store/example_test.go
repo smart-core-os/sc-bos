@@ -69,6 +69,8 @@ func Example_basic() {
 			description = config.Description.String
 		}
 		fmt.Printf("Created config version: %s (ID: %d)\n", description, config.ID)
+		// Note: In the REST API, payloads are accessed via URL (e.g., /api/v1/management/config-versions/1/payload)
+		// rather than being returned inline in the JSON response.
 		return nil
 	})
 	if err != nil {
