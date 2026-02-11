@@ -1,17 +1,16 @@
 package store
 
 import (
-	"bytes"
 	"database/sql"
 	"errors"
 	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store/queries"
-	"github.com/smart-core-os/sc-bos/internal/sqlite"
 )
 
 func TestStore_Sites(t *testing.T) {
@@ -115,11 +114,13 @@ func TestStore_Nodes(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if node.Hostname != "TEST-AC-01" {
-			t.Errorf("expected hostname 'TEST-AC-01', got '%s'", node.Hostname)
+		want := queries.Node{
+			ID:       nodeID,
+			Hostname: "TEST-AC-01",
+			SiteID:   siteID,
 		}
-		if node.SiteID != siteID {
-			t.Errorf("expected site ID %d, got %d", siteID, node.SiteID)
+		if diff := cmp.Diff(want, node, cmpopts.IgnoreFields(queries.Node{}, "CreateTime")); diff != "" {
+			t.Errorf("node mismatch (-want +got):\n%s", diff)
 		}
 		return nil
 	})
@@ -181,9 +182,9 @@ func TestStore_ConfigVersions(t *testing.T) {
 	var configVersionID int64
 	err = store.Write(ctx, func(tx *Tx) error {
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			NodeID:        nodeID,
-			VersionNumber: "v1",
-			Payload:       []byte{0xDE, 0xAD, 0xBE, 0xEF},
+			NodeID:      nodeID,
+			Description: sql.NullString{String: "v1", Valid: true},
+			Payload:     []byte{0xDE, 0xAD, 0xBE, 0xEF},
 		})
 		if err != nil {
 			return err
@@ -201,12 +202,14 @@ func TestStore_ConfigVersions(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if config.VersionNumber != "v1" {
-			t.Errorf("expected version number v1, got %s", config.VersionNumber)
+		want := queries.ConfigVersion{
+			ID:          configVersionID,
+			NodeID:      nodeID,
+			Description: sql.NullString{String: "v1", Valid: true},
+			Payload:     []byte{0xDE, 0xAD, 0xBE, 0xEF},
 		}
-		expectedPayload := []byte{0xDE, 0xAD, 0xBE, 0xEF}
-		if !bytes.Equal(config.Payload, expectedPayload) {
-			t.Errorf("payload mismatch: expected %#v, got %#v", expectedPayload, config.Payload)
+		if diff := cmp.Diff(want, config, cmpopts.IgnoreFields(queries.ConfigVersion{}, "CreateTime")); diff != "" {
+			t.Errorf("config version mismatch (-want +got):\n%s", diff)
 		}
 		return nil
 	})
@@ -259,9 +262,9 @@ func TestStore_Deployments(t *testing.T) {
 		}
 
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			NodeID:        node.ID,
-			VersionNumber: "v1",
-			Payload:       []byte{0xCA, 0xFE, 0xBA, 0xBE},
+			NodeID:      node.ID,
+			Description: sql.NullString{String: "v1", Valid: true},
+			Payload:     []byte{0xCA, 0xFE, 0xBA, 0xBE},
 		})
 		if err != nil {
 			return err
@@ -296,11 +299,14 @@ func TestStore_Deployments(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if deployment.Status != "PENDING" {
-			t.Errorf("expected status 'PENDING', got '%s'", deployment.Status)
+		want := queries.Deployment{
+			ID:              deploymentID,
+			ConfigVersionID: configVersionID,
+			Status:          "PENDING",
+			FinishedTime:    sql.NullTime{Valid: false},
 		}
-		if deployment.FinishedTime.Valid {
-			t.Error("expected finished_time to be NULL for PENDING deployment")
+		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries.Deployment{}, "StartTime")); diff != "" {
+			t.Errorf("deployment mismatch (-want +got):\n%s", diff)
 		}
 		return nil
 	})
@@ -317,8 +323,13 @@ func TestStore_Deployments(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if deployment.Status != "COMPLETED" {
-			t.Errorf("expected status 'COMPLETED', got '%s'", deployment.Status)
+		want := queries.Deployment{
+			ID:              deploymentID,
+			ConfigVersionID: configVersionID,
+			Status:          "COMPLETED",
+		}
+		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries.Deployment{}, "StartTime", "FinishedTime")); diff != "" {
+			t.Errorf("deployment mismatch (-want +got):\n%s", diff)
 		}
 		if !deployment.FinishedTime.Valid {
 			t.Error("expected finished_time to be set for COMPLETED deployment")
@@ -348,8 +359,15 @@ func TestStore_Deployments(t *testing.T) {
 		if len(deployments) != 1 {
 			t.Errorf("expected 1 deployment, got %d", len(deployments))
 		}
-		if len(deployments) > 0 && deployments[0].Status != "COMPLETED" {
-			t.Errorf("expected status 'COMPLETED', got '%s'", deployments[0].Status)
+		if len(deployments) > 0 {
+			want := queries.Deployment{
+				ID:              deploymentID,
+				ConfigVersionID: configVersionID,
+				Status:          "COMPLETED",
+			}
+			if diff := cmp.Diff(want, deployments[0], cmpopts.IgnoreFields(queries.Deployment{}, "StartTime", "FinishedTime")); diff != "" {
+				t.Errorf("deployment in list mismatch (-want +got):\n%s", diff)
+			}
 		}
 		return nil
 	})
@@ -385,9 +403,9 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		nodeID = node.ID
 
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			NodeID:        node.ID,
-			VersionNumber: "v1",
-			Payload:       []byte{0xFE, 0xED, 0xFA, 0xCE},
+			NodeID:      node.ID,
+			Description: sql.NullString{String: "v1", Valid: true},
+			Payload:     []byte{0xFE, 0xED, 0xFA, 0xCE},
 		})
 		if err != nil {
 			return err
@@ -449,108 +467,6 @@ func TestStore_CascadeDeletes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to verify cascade deletes: %v", err)
 	}
-}
-
-func TestStore_ConfigVersionUniqueness(t *testing.T) {
-	ctx := t.Context()
-	logger := zap.NewNop()
-	store := NewMemoryStore(logger)
-	defer func() {
-		_ = store.Close()
-	}()
-
-	// Setup: create site and node
-	var nodeID int64
-	err := store.Write(ctx, func(tx *Tx) error {
-		site, err := tx.CreateSite(ctx, "Test Site")
-		if err != nil {
-			return err
-		}
-
-		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "TEST-AC-01",
-			SiteID:   site.ID,
-		})
-		if err != nil {
-			return err
-		}
-		nodeID = node.ID
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("failed to setup: %v", err)
-	}
-
-	// Create first config version
-	err = store.Write(ctx, func(tx *Tx) error {
-		_, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			NodeID:        nodeID,
-			VersionNumber: "v1.0.0",
-			Payload:       []byte{0xDE, 0xAD, 0xBE, 0xEF},
-		})
-		return err
-	})
-	if err != nil {
-		t.Fatalf("failed to create first config version: %v", err)
-	}
-
-	// Try to create second config version with same version_number - should fail
-	err = store.Write(ctx, func(tx *Tx) error {
-		_, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			NodeID:        nodeID,
-			VersionNumber: "v1.0.0",
-			Payload:       []byte{0xCA, 0xFE, 0xBA, 0xBE},
-		})
-		return err
-	})
-	if !sqlite.IsUniqueConstraintError(err) {
-		t.Fatalf("expected error when creating duplicate version_number, got %v", err)
-	}
-
-	// Create config version with different version_number - should succeed
-	err = store.Write(ctx, func(tx *Tx) error {
-		_, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			NodeID:        nodeID,
-			VersionNumber: "v2.0.0",
-			Payload:       []byte{0xFE, 0xED, 0xFA, 0xCE},
-		})
-		return err
-	})
-	if err != nil {
-		t.Fatalf("failed to create config version with different version_number: %v", err)
-	}
-
-	// Verify we have 2 config versions with correct payloads
-	err = store.Read(ctx, func(tx *Tx) error {
-		configs, err := tx.ListConfigVersionsByNode(ctx, queries.ListConfigVersionsByNodeParams{
-			NodeID:  nodeID,
-			AfterID: 0,
-			Limit:   10,
-		})
-		if err != nil {
-			return err
-		}
-		if len(configs) != 2 {
-			t.Errorf("expected 2 config versions, got %d", len(configs))
-		}
-
-		// Check payloads are stored correctly (ordered by id ASC, so first created comes first)
-		expect := []queries.ConfigVersion{
-			{NodeID: nodeID, VersionNumber: "v1.0.0", Payload: []byte{0xDE, 0xAD, 0xBE, 0xEF}},
-			{NodeID: nodeID, VersionNumber: "v2.0.0", Payload: []byte{0xFE, 0xED, 0xFA, 0xCE}},
-		}
-		if diff := cmp.Diff(expect, configs, cmp.Comparer(configVersionsDataEqual)); diff != "" {
-			t.Errorf("config versions data mismatch (-want +got):\n%s", diff)
-		}
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("failed to list config versions: %v", err)
-	}
-}
-
-func configVersionsDataEqual(a, b queries.ConfigVersion) bool {
-	return a.NodeID == b.NodeID && a.VersionNumber == b.VersionNumber && bytes.Equal(a.Payload, b.Payload)
 }
 
 func TestOpenStore(t *testing.T) {
@@ -700,18 +616,18 @@ func TestStore_CountOperations(t *testing.T) {
 
 		// Create config versions for nodes
 		_, err = tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			NodeID:        node1ID,
-			VersionNumber: "v1",
-			Payload:       []byte{0x01},
+			NodeID:      node1ID,
+			Description: sql.NullString{String: "v1", Valid: true},
+			Payload:     []byte{0x01},
 		})
 		if err != nil {
 			return err
 		}
 
 		cv2, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			NodeID:        node2ID,
-			VersionNumber: "v1",
-			Payload:       []byte{0x02},
+			NodeID:      node2ID,
+			Description: sql.NullString{String: "v1", Valid: true},
+			Payload:     []byte{0x02},
 		})
 		if err != nil {
 			return err
