@@ -501,7 +501,7 @@ components:
 
     ConfigVersion:
       type: object
-      required: [id, nodeId, versionNumber, payload, createTime]
+      required: [id, nodeId, payload, createTime]
       properties:
         id:
           type: integer
@@ -509,7 +509,7 @@ components:
         nodeId:
           type: integer
           format: int64
-        versionNumber:
+        description:
           type: string
         payload:
           type: string
@@ -532,12 +532,12 @@ components:
 
     CreateConfigVersionRequest:
       type: object
-      required: [nodeId, versionNumber, payload]
+      required: [nodeId, payload]
       properties:
         nodeId:
           type: integer
           format: int64
-        versionNumber:
+        description:
           type: string
         payload:
           type: string

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -13,20 +14,24 @@ import (
 
 // ConfigVersion is the JSON representation of a config version.
 type ConfigVersion struct {
-	ID            int64     `json:"id"`
-	NodeID        int64     `json:"nodeId"`
-	VersionNumber string    `json:"versionNumber"`
-	Payload       []byte    `json:"payload"`
-	CreateTime    time.Time `json:"createTime"`
+	ID          int64     `json:"id"`
+	NodeID      int64     `json:"nodeId"`
+	Description string    `json:"description"`
+	Payload     []byte    `json:"payload"`
+	CreateTime  time.Time `json:"createTime"`
 }
 
 func toConfigVersion(cv queries.ConfigVersion) ConfigVersion {
+	description := ""
+	if cv.Description.Valid {
+		description = cv.Description.String
+	}
 	return ConfigVersion{
-		ID:            cv.ID,
-		NodeID:        cv.NodeID,
-		VersionNumber: cv.VersionNumber,
-		Payload:       cv.Payload,
-		CreateTime:    cv.CreateTime,
+		ID:          cv.ID,
+		NodeID:      cv.NodeID,
+		Description: description,
+		Payload:     cv.Payload,
+		CreateTime:  cv.CreateTime,
 	}
 }
 
@@ -39,9 +44,9 @@ func toConfigVersions(cvs []queries.ConfigVersion) []ConfigVersion {
 }
 
 type createConfigVersionRequest struct {
-	NodeID        int64  `json:"nodeId"`
-	VersionNumber string `json:"versionNumber"`
-	Payload       []byte `json:"payload"`
+	NodeID      int64  `json:"nodeId"`
+	Description string `json:"description"`
+	Payload     []byte `json:"payload"`
 }
 
 func (s *Server) listConfigVersions(w http.ResponseWriter, r *http.Request) {
@@ -110,10 +115,14 @@ func (s *Server) createConfigVersion(w http.ResponseWriter, r *http.Request) {
 	var item queries.ConfigVersion
 	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
+		description := sql.NullString{Valid: false}
+		if req.Description != "" {
+			description = sql.NullString{String: req.Description, Valid: true}
+		}
 		item, err = tx.CreateConfigVersion(r.Context(), queries.CreateConfigVersionParams{
-			NodeID:        req.NodeID,
-			VersionNumber: req.VersionNumber,
-			Payload:       req.Payload,
+			NodeID:      req.NodeID,
+			Description: description,
+			Payload:     req.Payload,
 		})
 		return err
 	})

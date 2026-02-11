@@ -79,8 +79,8 @@ WHERE id = :id;
 -- Config Versions
 
 -- name: CreateConfigVersion :one
-INSERT INTO config_versions (node_id, version_number, payload, create_time)
-VALUES (:node_id, :version_number, :payload, datetime('now', 'subsec'))
+INSERT INTO config_versions (node_id, description, payload, create_time)
+VALUES (:node_id, :description, :payload, datetime('now', 'subsec'))
 RETURNING *;
 
 -- name: GetConfigVersion :one

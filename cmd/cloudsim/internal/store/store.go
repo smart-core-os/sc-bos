@@ -3,7 +3,7 @@
 // # Entities and Relationships
 //
 // Sites represent physical locations. Nodes are BOS controllers associated with a site.
-// ConfigVersions store versioned binary configurations (version number is unique per node), associated with a node.
+// ConfigVersions store versioned binary configurations, associated with a node.
 // Deployments track the status of deploying a config version (PENDING, IN_PROGRESS, COMPLETED, FAILED).
 //
 // Deleting a site cascades to all associated nodes, config versions, and deployments.

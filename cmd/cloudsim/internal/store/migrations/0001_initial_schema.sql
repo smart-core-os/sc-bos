@@ -21,7 +21,7 @@ CREATE INDEX nodes_site_id ON nodes (site_id);
 CREATE TABLE config_versions (
     id              INTEGER PRIMARY KEY,
     node_id         INTEGER NOT NULL,
-    version_number  TEXT NOT NULL,
+    description     TEXT,
     payload         BLOB NOT NULL,
     create_time     DATETIME NOT NULL,
 
@@ -29,7 +29,6 @@ CREATE TABLE config_versions (
     CONSTRAINT create_time_format CHECK ( create_time IS datetime(create_time, 'subsec') )
 );
 
-CREATE UNIQUE INDEX config_versions_node_version ON config_versions (node_id, version_number);
 CREATE INDEX config_versions_node_id ON config_versions (node_id);
 
 CREATE TABLE deployments (

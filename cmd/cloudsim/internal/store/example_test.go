@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 
@@ -56,14 +57,18 @@ func Example_basic() {
 	// Create a config version
 	err = s.Write(ctx, func(tx *store.Tx) error {
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			NodeID:        nodeID,
-			VersionNumber: "v1.0.0",
-			Payload:       []byte{0xDE, 0xAD, 0xBE, 0xEF}, // Binary config data
+			NodeID:      nodeID,
+			Description: sql.NullString{String: "v1.0.0", Valid: true},
+			Payload:     []byte{0xDE, 0xAD, 0xBE, 0xEF}, // Binary config data
 		})
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Created config version: %s (ID: %d)\n", config.VersionNumber, config.ID)
+		description := ""
+		if config.Description.Valid {
+			description = config.Description.String
+		}
+		fmt.Printf("Created config version: %s (ID: %d)\n", description, config.ID)
 		return nil
 	})
 	if err != nil {
@@ -188,9 +193,9 @@ func Example_deployments() {
 		}
 
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			NodeID:        node.ID,
-			VersionNumber: "v1.0.0",
-			Payload:       []byte{0xCA, 0xFE, 0xBA, 0xBE},
+			NodeID:      node.ID,
+			Description: sql.NullString{String: "v1.0.0", Valid: true},
+			Payload:     []byte{0xCA, 0xFE, 0xBA, 0xBE},
 		})
 		if err != nil {
 			return err
@@ -272,9 +277,9 @@ func Example_cascadeDeletes() {
 		nodeID = node.ID
 
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
-			NodeID:        node.ID,
-			VersionNumber: "v1.0.0",
-			Payload:       []byte{0xDE, 0xAD},
+			NodeID:      node.ID,
+			Description: sql.NullString{String: "v1.0.0", Valid: true},
+			Payload:     []byte{0xDE, 0xAD},
 		})
 		if err != nil {
 			return err

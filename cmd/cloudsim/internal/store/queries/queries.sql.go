@@ -7,6 +7,7 @@ package queries
 
 import (
 	"context"
+	"database/sql"
 )
 
 const countDeployments = `-- name: CountDeployments :one
@@ -60,25 +61,25 @@ func (q *Queries) CountSites(ctx context.Context) (int64, error) {
 
 const createConfigVersion = `-- name: CreateConfigVersion :one
 
-INSERT INTO config_versions (node_id, version_number, payload, create_time)
+INSERT INTO config_versions (node_id, description, payload, create_time)
 VALUES (?1, ?2, ?3, datetime('now', 'subsec'))
-RETURNING id, node_id, version_number, payload, create_time
+RETURNING id, node_id, description, payload, create_time
 `
 
 type CreateConfigVersionParams struct {
-	NodeID        int64
-	VersionNumber string
-	Payload       []byte
+	NodeID      int64
+	Description sql.NullString
+	Payload     []byte
 }
 
 // Config Versions
 func (q *Queries) CreateConfigVersion(ctx context.Context, arg CreateConfigVersionParams) (ConfigVersion, error) {
-	row := q.db.QueryRowContext(ctx, createConfigVersion, arg.NodeID, arg.VersionNumber, arg.Payload)
+	row := q.db.QueryRowContext(ctx, createConfigVersion, arg.NodeID, arg.Description, arg.Payload)
 	var i ConfigVersion
 	err := row.Scan(
 		&i.ID,
 		&i.NodeID,
-		&i.VersionNumber,
+		&i.Description,
 		&i.Payload,
 		&i.CreateTime,
 	)
@@ -204,7 +205,7 @@ func (q *Queries) DeleteSite(ctx context.Context, id int64) (int64, error) {
 }
 
 const getConfigVersion = `-- name: GetConfigVersion :one
-SELECT id, node_id, version_number, payload, create_time
+SELECT id, node_id, description, payload, create_time
 FROM config_versions
 WHERE id = ?1
 `
@@ -215,7 +216,7 @@ func (q *Queries) GetConfigVersion(ctx context.Context, id int64) (ConfigVersion
 	err := row.Scan(
 		&i.ID,
 		&i.NodeID,
-		&i.VersionNumber,
+		&i.Description,
 		&i.Payload,
 		&i.CreateTime,
 	)
@@ -273,7 +274,7 @@ func (q *Queries) GetSite(ctx context.Context, id int64) (Site, error) {
 }
 
 const listConfigVersions = `-- name: ListConfigVersions :many
-SELECT id, node_id, version_number, payload, create_time
+SELECT id, node_id, description, payload, create_time
 FROM config_versions
 WHERE id > ?1
 ORDER BY id
@@ -297,7 +298,7 @@ func (q *Queries) ListConfigVersions(ctx context.Context, arg ListConfigVersions
 		if err := rows.Scan(
 			&i.ID,
 			&i.NodeID,
-			&i.VersionNumber,
+			&i.Description,
 			&i.Payload,
 			&i.CreateTime,
 		); err != nil {
@@ -315,7 +316,7 @@ func (q *Queries) ListConfigVersions(ctx context.Context, arg ListConfigVersions
 }
 
 const listConfigVersionsByNode = `-- name: ListConfigVersionsByNode :many
-SELECT id, node_id, version_number, payload, create_time
+SELECT id, node_id, description, payload, create_time
 FROM config_versions
 WHERE node_id = ?1 AND id > ?2
 ORDER BY id
@@ -340,7 +341,7 @@ func (q *Queries) ListConfigVersionsByNode(ctx context.Context, arg ListConfigVe
 		if err := rows.Scan(
 			&i.ID,
 			&i.NodeID,
-			&i.VersionNumber,
+			&i.Description,
 			&i.Payload,
 			&i.CreateTime,
 		); err != nil {

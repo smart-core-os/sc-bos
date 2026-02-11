@@ -366,13 +366,13 @@ func TestConfigVersions(t *testing.T) {
 
 	t.Run("create", func(t *testing.T) {
 		resp := doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-			"nodeId":        node.ID,
-			"versionNumber": "v1.0.0",
-			"payload":       payload,
+			"nodeId":      node.ID,
+			"description": "v1.0.0",
+			"payload":     payload,
 		}, &cv)
 		assertStatus(t, resp, http.StatusCreated)
 
-		want := ConfigVersion{NodeID: node.ID, VersionNumber: "v1.0.0", Payload: payload}
+		want := ConfigVersion{NodeID: node.ID, Description: "v1.0.0", Payload: payload}
 		if diff := cmp.Diff(want, cv, cmpopts.IgnoreFields(ConfigVersion{}, "ID", "CreateTime")); diff != "" {
 			t.Errorf("response mismatch (-want +got):\n%s", diff)
 		}
@@ -390,9 +390,9 @@ func TestConfigVersions(t *testing.T) {
 
 	t.Run("create with invalid nodeId", func(t *testing.T) {
 		testForeignKeyError(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-			"nodeId":        99999,
-			"versionNumber": "v1.0.0",
-			"payload":       []byte("data"),
+			"nodeId":      99999,
+			"description": "v1.0.0",
+			"payload":     []byte("data"),
 		})
 	})
 
@@ -401,7 +401,7 @@ func TestConfigVersions(t *testing.T) {
 		resp := doRequest(t, client, "GET", configVersionURL(ts.URL, cv.ID), nil, &getCV)
 		assertStatus(t, resp, http.StatusOK)
 
-		want := ConfigVersion{ID: cv.ID, NodeID: node.ID, VersionNumber: "v1.0.0", Payload: payload}
+		want := ConfigVersion{ID: cv.ID, NodeID: node.ID, Description: "v1.0.0", Payload: payload}
 		if diff := cmp.Diff(want, getCV, cmpopts.IgnoreFields(ConfigVersion{}, "CreateTime")); diff != "" {
 			t.Errorf("response mismatch (-want +got):\n%s", diff)
 		}
@@ -417,9 +417,9 @@ func TestConfigVersions(t *testing.T) {
 	t.Run("list with filter", func(t *testing.T) {
 		// Create another config version
 		resp := doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-			"nodeId":        node.ID,
-			"versionNumber": "v2.0.0",
-			"payload":       payload,
+			"nodeId":      node.ID,
+			"description": "v2.0.0",
+			"payload":     payload,
 		}, nil)
 		assertStatus(t, resp, http.StatusCreated)
 
@@ -483,9 +483,9 @@ func TestConfigVersions_Pagination(t *testing.T) {
 		func(i int) int64 {
 			var cv ConfigVersion
 			resp := doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-				"nodeId":        node.ID,
-				"versionNumber": fmt.Sprintf("v%d.0.0", i),
-				"payload":       []byte(fmt.Sprintf("config-%d", i)),
+				"nodeId":      node.ID,
+				"description": fmt.Sprintf("v%d.0.0", i),
+				"payload":     []byte(fmt.Sprintf("config-%d", i)),
 			}, &cv)
 			assertStatus(t, resp, http.StatusCreated)
 			return cv.ID
@@ -528,9 +528,9 @@ func TestDeployments(t *testing.T) {
 
 	var cv ConfigVersion
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":        node.ID,
-		"versionNumber": "v1.0.0",
-		"payload":       []byte("config"),
+		"nodeId":      node.ID,
+		"description": "v1.0.0",
+		"payload":     []byte("config"),
 	}, &cv)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -711,9 +711,9 @@ func TestDeployments_Pagination(t *testing.T) {
 
 	var cv ConfigVersion
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":        node.ID,
-		"versionNumber": "v1.0.0",
-		"payload":       []byte("config"),
+		"nodeId":      node.ID,
+		"description": "v1.0.0",
+		"payload":     []byte("config"),
 	}, &cv)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -765,9 +765,9 @@ func TestCascadeDelete(t *testing.T) {
 
 	var cv ConfigVersion
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":        node.ID,
-		"versionNumber": "v1.0.0",
-		"payload":       []byte("data"),
+		"nodeId":      node.ID,
+		"description": "v1.0.0",
+		"payload":     []byte("data"),
 	}, &cv)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -837,9 +837,9 @@ func TestEdgeCases(t *testing.T) {
 
 	t.Run("foreign key config version with invalid node", func(t *testing.T) {
 		testForeignKeyError(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-			"nodeId":        99999,
-			"versionNumber": "v1.0.0",
-			"payload":       []byte("data"),
+			"nodeId":      99999,
+			"description": "v1.0.0",
+			"payload":     []byte("data"),
 		})
 	})
 
@@ -876,16 +876,16 @@ func TestFilters_EdgeCases(t *testing.T) {
 
 	var cv1, cv2 ConfigVersion
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":        node1.ID,
-		"versionNumber": "v1",
-		"payload":       []byte("data1"),
+		"nodeId":      node1.ID,
+		"description": "v1",
+		"payload":     []byte("data1"),
 	}, &cv1)
 	assertStatus(t, resp, http.StatusCreated)
 
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":        node2.ID,
-		"versionNumber": "v1",
-		"payload":       []byte("data2"),
+		"nodeId":      node2.ID,
+		"description": "v1",
+		"payload":     []byte("data2"),
 	}, &cv2)
 	assertStatus(t, resp, http.StatusCreated)
 
