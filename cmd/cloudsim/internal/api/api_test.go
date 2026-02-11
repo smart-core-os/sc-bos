@@ -111,6 +111,11 @@ func TestSites(t *testing.T) {
 		testInvalidJSON(t, client, "PUT", siteURL(ts.URL, site.ID))
 	})
 
+	t.Run("update with empty name", func(t *testing.T) {
+		resp := doRequest(t, client, "PUT", siteURL(ts.URL, site.ID), map[string]string{"name": ""}, nil)
+		assertStatus(t, resp, http.StatusBadRequest)
+	})
+
 	t.Run("delete invalid id", func(t *testing.T) {
 		testInvalidID(t, client, "DELETE", listSitesURL(ts.URL)+"/%s")
 	})
@@ -203,6 +208,14 @@ func TestNodes(t *testing.T) {
 		})
 	})
 
+	t.Run("create with empty hostname", func(t *testing.T) {
+		resp := doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
+			"hostname": "",
+			"siteId":   site.ID,
+		}, nil)
+		assertStatus(t, resp, http.StatusBadRequest)
+	})
+
 	t.Run("get", func(t *testing.T) {
 		var gotNode Node
 		resp := doRequest(t, client, "GET", nodeURL(ts.URL, node.ID), nil, &gotNode)
@@ -253,6 +266,14 @@ func TestNodes(t *testing.T) {
 			"hostname": "x",
 			"siteId":   99999,
 		})
+	})
+
+	t.Run("update with empty hostname", func(t *testing.T) {
+		resp := doRequest(t, client, "PUT", nodeURL(ts.URL, node.ID), map[string]any{
+			"hostname": "",
+			"siteId":   site.ID,
+		}, nil)
+		assertStatus(t, resp, http.StatusBadRequest)
 	})
 
 	t.Run("list with filter", func(t *testing.T) {
@@ -403,6 +424,15 @@ func TestConfigVersions(t *testing.T) {
 			"description": "v1.0.0",
 			"payload":     []byte("data"),
 		})
+	})
+
+	t.Run("create with empty payload", func(t *testing.T) {
+		resp := doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
+			"nodeId":      node.ID,
+			"description": "v1.0.0",
+			"payload":     []byte{},
+		}, nil)
+		assertStatus(t, resp, http.StatusBadRequest)
 	})
 
 	t.Run("get", func(t *testing.T) {

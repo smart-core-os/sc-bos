@@ -109,6 +109,12 @@ func (s *Server) createNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Hostname == "" {
+		writeError(w, errInvalidRequest)
+		logger.Error("missing required field", zap.String("field", "hostname"))
+		return
+	}
+
 	var item queries.Node
 	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
@@ -166,6 +172,12 @@ func (s *Server) updateNode(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, errInvalidRequest)
 		logger.Error("invalid json", zap.Error(err))
+		return
+	}
+
+	if req.Hostname == "" {
+		writeError(w, errInvalidRequest)
+		logger.Error("missing required field", zap.String("field", "hostname"))
 		return
 	}
 

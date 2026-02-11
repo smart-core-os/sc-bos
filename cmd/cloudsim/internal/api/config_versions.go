@@ -134,6 +134,12 @@ func (s *Server) createConfigVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(req.Payload) == 0 {
+		writeError(w, errInvalidRequest)
+		logger.Error("missing required field", zap.String("field", "payload"))
+		return
+	}
+
 	var item queries.ConfigVersion
 	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
