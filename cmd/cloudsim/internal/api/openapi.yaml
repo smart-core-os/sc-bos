@@ -263,6 +263,26 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /config-versions/{id}/payload:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      summary: Download config version payload
+      operationId: getConfigVersionPayload
+      tags: [ConfigVersions]
+      responses:
+        '200':
+          description: Config payload binary data
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /deployments:
     get:
       summary: List deployments
@@ -501,7 +521,7 @@ components:
 
     ConfigVersion:
       type: object
-      required: [id, nodeId, payload, createTime]
+      required: [id, nodeId, payloadUrl, createTime]
       properties:
         id:
           type: integer
@@ -511,10 +531,11 @@ components:
           format: int64
         description:
           type: string
-        payload:
+        payloadUrl:
           type: string
-          format: byte
-          description: Base64-encoded binary payload
+          format: uri
+          description: Fully qualified URL to download the raw config payload
+          example: https://api.example.com/api/v1/management/config-versions/1/payload
         createTime:
           type: string
           format: date-time

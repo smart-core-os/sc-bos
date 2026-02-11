@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -372,7 +373,11 @@ func TestConfigVersions(t *testing.T) {
 		}, &cv)
 		assertStatus(t, resp, http.StatusCreated)
 
-		want := ConfigVersion{NodeID: node.ID, Description: "v1.0.0", Payload: payload}
+		want := ConfigVersion{
+			NodeID:      node.ID,
+			Description: "v1.0.0",
+			PayloadURL:  configVersionPayloadURL(ts.URL, cv.ID),
+		}
 		if diff := cmp.Diff(want, cv, cmpopts.IgnoreFields(ConfigVersion{}, "ID", "CreateTime")); diff != "" {
 			t.Errorf("response mismatch (-want +got):\n%s", diff)
 		}
@@ -381,6 +386,10 @@ func TestConfigVersions(t *testing.T) {
 		}
 		if cv.CreateTime.IsZero() {
 			t.Error("expected non-zero CreateTime")
+		}
+		// Verify the payloadUrl starts with the test server's base URL
+		if !strings.HasPrefix(cv.PayloadURL, ts.URL) {
+			t.Errorf("expected PayloadURL to start with %s, got %s", ts.URL, cv.PayloadURL)
 		}
 	})
 
@@ -401,13 +410,62 @@ func TestConfigVersions(t *testing.T) {
 		resp := doRequest(t, client, "GET", configVersionURL(ts.URL, cv.ID), nil, &getCV)
 		assertStatus(t, resp, http.StatusOK)
 
-		want := ConfigVersion{ID: cv.ID, NodeID: node.ID, Description: "v1.0.0", Payload: payload}
+		want := ConfigVersion{
+			ID:          cv.ID,
+			NodeID:      node.ID,
+			Description: "v1.0.0",
+			PayloadURL:  configVersionPayloadURL(ts.URL, cv.ID),
+		}
 		if diff := cmp.Diff(want, getCV, cmpopts.IgnoreFields(ConfigVersion{}, "CreateTime")); diff != "" {
 			t.Errorf("response mismatch (-want +got):\n%s", diff)
 		}
 		if getCV.CreateTime.IsZero() {
 			t.Error("expected non-zero CreateTime")
 		}
+	})
+
+	t.Run("get payload via URL", func(t *testing.T) {
+		// Fetch the payload using the fully qualified URL from the config version
+		req, err := http.NewRequest("GET", cv.PayloadURL, nil)
+		if err != nil {
+			t.Fatalf("failed to create request: %v", err)
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("request failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		assertStatus(t, resp, http.StatusOK)
+
+		// Check content type
+		if ct := resp.Header.Get("Content-Type"); ct != "application/octet-stream" {
+			t.Errorf("expected Content-Type application/octet-stream, got %s", ct)
+		}
+
+		// Check content disposition
+		if cd := resp.Header.Get("Content-Disposition"); cd == "" {
+			t.Error("expected Content-Disposition header")
+		}
+
+		// Read and verify payload content
+		var buf bytes.Buffer
+		if _, err := buf.ReadFrom(resp.Body); err != nil {
+			t.Fatalf("failed to read response body: %v", err)
+		}
+
+		if !bytes.Equal(buf.Bytes(), payload) {
+			t.Errorf("payload mismatch: expected %v, got %v", payload, buf.Bytes())
+		}
+	})
+
+	t.Run("get payload - not found", func(t *testing.T) {
+		resp := doRequest(t, client, "GET", configVersionPayloadURL(ts.URL, 99999), nil, nil)
+		assertStatus(t, resp, http.StatusNotFound)
+	})
+
+	t.Run("get payload - invalid id", func(t *testing.T) {
+		testInvalidID(t, client, "GET", listConfigVersionsURL(ts.URL)+"/%s/payload")
 	})
 
 	t.Run("get invalid id", func(t *testing.T) {
@@ -1256,6 +1314,9 @@ func configVersionURL(base string, id int64) string {
 func listDeploymentsURL(base string) string { return base + "/api/v1/management/deployments" }
 func deploymentURL(base string, id int64) string {
 	return fmt.Sprintf("%s/api/v1/management/deployments/%d", base, id)
+}
+func configVersionPayloadURL(base string, id int64) string {
+	return fmt.Sprintf("%s/api/v1/management/config-versions/%d/payload", base, id)
 }
 
 // Edge case testing utilities
