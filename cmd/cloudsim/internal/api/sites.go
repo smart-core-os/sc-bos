@@ -152,6 +152,12 @@ func (s *Server) updateSite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Name == "" {
+		writeError(w, errInvalidRequest)
+		logger.Error("missing required field", zap.String("field", "name"))
+		return
+	}
+
 	var item queries.Site
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
