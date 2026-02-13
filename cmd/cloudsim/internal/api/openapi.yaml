@@ -395,7 +395,7 @@ components:
     pageToken:
       name: pageToken
       in: query
-      description: Page token for pagination (base36-encoded ID)
+      description: Page token for pagination (opaque string)
       schema:
         type: string
     pageSize:
