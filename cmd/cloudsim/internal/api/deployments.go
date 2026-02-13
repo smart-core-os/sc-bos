@@ -86,6 +86,13 @@ func (s *Server) listDeployments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// intersection queries not supported
+	if nodeID != 0 && configVersionID != 0 {
+		writeError(w, errInvalidRequest)
+		logger.Error("cannot filter by both nodeId and configVersionId")
+		return
+	}
+
 	var items []queries.Deployment
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
