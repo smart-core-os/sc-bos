@@ -599,14 +599,16 @@ components:
 
     CreateDeploymentRequest:
       type: object
-      required: [configVersionId, status]
+      required: [configVersionId]
       properties:
         configVersionId:
           type: integer
           format: int64
         status:
           type: string
-          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED]
+          enum: [PENDING]
+          default: PENDING
+          description: Deployment status. Must be PENDING if provided. Defaults to PENDING if omitted.
 
     UpdateDeploymentStatusRequest:
       type: object

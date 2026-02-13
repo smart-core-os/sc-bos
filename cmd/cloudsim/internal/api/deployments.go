@@ -11,6 +11,13 @@ import (
 	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store/queries"
 )
 
+const (
+	statusPending    = "PENDING"
+	statusInProgress = "IN_PROGRESS"
+	statusCompleted  = "COMPLETED"
+	statusFailed     = "FAILED"
+)
+
 // Deployment is the JSON representation of a deployment.
 type Deployment struct {
 	ID              int64      `json:"id"`
@@ -43,7 +50,7 @@ func toDeployments(deployments []queries.Deployment) []Deployment {
 
 type createDeploymentRequest struct {
 	ConfigVersionID int64  `json:"configVersionId"`
-	Status          string `json:"status"`
+	Status          string `json:"status,omitempty"`
 }
 
 type updateDeploymentStatusRequest struct {
@@ -145,10 +152,16 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !isValidStatus(req.Status) {
+	// Apply default status if not provided or empty
+	status := req.Status
+	switch status {
+	case "":
+		status = statusPending
+	case statusPending:
+		// valid, do nothing
+	default:
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid status", zap.String("status", req.Status))
-		return
+		logger.Error("invalid status for creation", zap.String("status", status))
 	}
 
 	var item queries.Deployment
@@ -156,7 +169,7 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 		var err error
 		item, err = tx.CreateDeployment(r.Context(), queries.CreateDeploymentParams{
 			ConfigVersionID: req.ConfigVersionID,
-			Status:          req.Status,
+			Status:          status,
 		})
 		return err
 	})

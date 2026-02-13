@@ -598,40 +598,73 @@ func TestConfigVersions_Pagination(t *testing.T) {
 }
 
 func TestDeployments(t *testing.T) {
-	ts := newTestServer(t)
-	defer ts.Close()
-	client := ts.Client()
+	type env struct {
+		testServer    *httptest.Server
+		client        *http.Client
+		site          Site
+		node          Node
+		configVersion ConfigVersion
+		deployment    Deployment
+	}
 
-	// Setup: create site, node, config version
-	var site Site
-	resp := doRequest(t, client, "POST", listSitesURL(ts.URL), map[string]string{"name": "Test Site"}, &site)
-	assertStatus(t, resp, http.StatusCreated)
+	setupEnv := func(t *testing.T) env {
+		t.Helper()
 
-	var node Node
-	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
-		"hostname": "node-01",
-		"siteId":   site.ID,
-	}, &node)
-	assertStatus(t, resp, http.StatusCreated)
+		ts := newTestServer(t)
+		t.Cleanup(func() { ts.Close() })
+		client := ts.Client()
 
-	var cv ConfigVersion
-	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":      node.ID,
-		"description": "v1.0.0",
-		"payload":     []byte("config"),
-	}, &cv)
-	assertStatus(t, resp, http.StatusCreated)
+		// Create site
+		var site Site
+		resp := doRequest(t, client, "POST", listSitesURL(ts.URL), map[string]string{"name": "Test Site"}, &site)
+		assertStatus(t, resp, http.StatusCreated)
 
-	var deployment Deployment
+		// Create node
+		var node Node
+		resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
+			"hostname": "test-node",
+			"siteId":   site.ID,
+		}, &node)
+		assertStatus(t, resp, http.StatusCreated)
 
-	t.Run("create", func(t *testing.T) {
-		resp := doRequest(t, client, "POST", listDeploymentsURL(ts.URL), map[string]any{
+		// Create config version
+		var cv ConfigVersion
+		resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
+			"nodeId":      node.ID,
+			"description": "v1.0.0",
+			"payload":     []byte("config"),
+		}, &cv)
+		assertStatus(t, resp, http.StatusCreated)
+
+		// Create a sample deployment
+		var deployment Deployment
+		resp = doRequest(t, client, "POST", listDeploymentsURL(ts.URL), map[string]any{
 			"configVersionId": cv.ID,
 			"status":          "PENDING",
 		}, &deployment)
 		assertStatus(t, resp, http.StatusCreated)
 
-		want := Deployment{ConfigVersionID: cv.ID, Status: "PENDING", FinishedTime: nil}
+		return env{
+			testServer:    ts,
+			client:        client,
+			site:          site,
+			node:          node,
+			configVersion: cv,
+			deployment:    deployment,
+		}
+	}
+
+	t.Run("create", func(t *testing.T) {
+		e := setupEnv(t)
+
+		var deployment Deployment
+		resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+			"configVersionId": e.configVersion.ID,
+			"status":          "PENDING",
+		}, &deployment)
+		assertStatus(t, resp, http.StatusCreated)
+
+		want := Deployment{ConfigVersionID: e.configVersion.ID, Status: "PENDING", FinishedTime: nil}
 		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(Deployment{}, "ID", "StartTime")); diff != "" {
 			t.Errorf("response mismatch (-want +got):\n%s", diff)
 		}
@@ -644,38 +677,123 @@ func TestDeployments(t *testing.T) {
 	})
 
 	t.Run("create invalid json", func(t *testing.T) {
-		testInvalidJSON(t, client, "POST", listDeploymentsURL(ts.URL))
+		e := setupEnv(t)
+		testInvalidJSON(t, e.client, "POST", listDeploymentsURL(e.testServer.URL))
 	})
 
 	t.Run("create with invalid configVersionId", func(t *testing.T) {
-		testForeignKeyError(t, client, "POST", listDeploymentsURL(ts.URL), map[string]any{
+		e := setupEnv(t)
+		testForeignKeyError(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
 			"configVersionId": 99999,
 			"status":          "PENDING",
 		})
 	})
 
-	t.Run("create with invalid status", func(t *testing.T) {
-		resp := doRequest(t, client, "POST", listDeploymentsURL(ts.URL), map[string]any{
-			"configVersionId": cv.ID,
-			"status":          "INVALID",
-		}, nil)
-		assertStatus(t, resp, http.StatusBadRequest)
-	})
+	t.Run("create with various status values", func(t *testing.T) {
+		// OK to reuse environment between cases, because we don't count or list anything
+		e := setupEnv(t)
 
-	t.Run("create with empty status", func(t *testing.T) {
-		resp := doRequest(t, client, "POST", listDeploymentsURL(ts.URL), map[string]any{
-			"configVersionId": cv.ID,
-			"status":          "",
-		}, nil)
-		assertStatus(t, resp, http.StatusBadRequest)
+		testCases := []struct {
+			name       string
+			reqBody    map[string]any
+			expectCode int
+			expect     Deployment // only checked if expectCode is 201
+		}{
+			{
+				name: "absent status defaults to PENDING",
+				reqBody: map[string]any{
+					"configVersionId": e.configVersion.ID,
+				},
+				expectCode: http.StatusCreated,
+				expect: Deployment{
+					ConfigVersionID: e.configVersion.ID,
+					Status:          "PENDING",
+					FinishedTime:    nil,
+				},
+			},
+			{
+				name: "empty status defaults to PENDING",
+				reqBody: map[string]any{
+					"configVersionId": e.configVersion.ID,
+					"status":          "",
+				},
+				expectCode: http.StatusCreated,
+				expect: Deployment{
+					ConfigVersionID: e.configVersion.ID,
+					Status:          "PENDING",
+					FinishedTime:    nil,
+				},
+			},
+			{
+				name: "explicit PENDING allowed",
+				reqBody: map[string]any{
+					"configVersionId": e.configVersion.ID,
+					"status":          "PENDING",
+				},
+				expectCode: http.StatusCreated,
+				expect: Deployment{
+					ConfigVersionID: e.configVersion.ID,
+					Status:          "PENDING",
+					FinishedTime:    nil,
+				},
+			},
+			{
+				name: "IN_PROGRESS rejected",
+				reqBody: map[string]any{
+					"configVersionId": e.configVersion.ID,
+					"status":          "IN_PROGRESS",
+				},
+				expectCode: http.StatusBadRequest,
+			},
+			{
+				name: "COMPLETED rejected",
+				reqBody: map[string]any{
+					"configVersionId": e.configVersion.ID,
+					"status":          "COMPLETED",
+				},
+				expectCode: http.StatusBadRequest,
+			},
+			{
+				name: "FAILED rejected",
+				reqBody: map[string]any{
+					"configVersionId": e.configVersion.ID,
+					"status":          "FAILED",
+				},
+				expectCode: http.StatusBadRequest,
+			},
+			{
+				name: "invalid status rejected",
+				reqBody: map[string]any{
+					"configVersionId": e.configVersion.ID,
+					"status":          "INVALID",
+				},
+				expectCode: http.StatusBadRequest,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				var d Deployment
+				resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), tc.reqBody, &d)
+				assertStatus(t, resp, tc.expectCode)
+
+				if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+					if diff := cmp.Diff(tc.expect, d, cmpopts.IgnoreFields(Deployment{}, "ID", "StartTime")); diff != "" {
+						t.Errorf("response mismatch (-want +got):\n%s", diff)
+					}
+				}
+			})
+		}
 	})
 
 	t.Run("get", func(t *testing.T) {
+		e := setupEnv(t)
+
 		var d Deployment
-		resp := doRequest(t, client, "GET", deploymentURL(ts.URL, deployment.ID), nil, &d)
+		resp := doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, e.deployment.ID), nil, &d)
 		assertStatus(t, resp, http.StatusOK)
 
-		want := Deployment{ID: deployment.ID, ConfigVersionID: cv.ID, Status: "PENDING"}
+		want := Deployment{ID: e.deployment.ID, ConfigVersionID: e.configVersion.ID, Status: "PENDING"}
 		if diff := cmp.Diff(want, d, cmpopts.IgnoreFields(Deployment{}, "StartTime", "FinishedTime")); diff != "" {
 			t.Errorf("response mismatch (-want +got):\n%s", diff)
 		}
@@ -685,17 +803,20 @@ func TestDeployments(t *testing.T) {
 	})
 
 	t.Run("get invalid id", func(t *testing.T) {
-		testInvalidID(t, client, "GET", listDeploymentsURL(ts.URL)+"/%s")
+		e := setupEnv(t)
+		testInvalidID(t, e.client, "GET", listDeploymentsURL(e.testServer.URL)+"/%s")
 	})
 
 	t.Run("update status to completed", func(t *testing.T) {
+		e := setupEnv(t)
+
 		var d Deployment
-		resp := doRequest(t, client, "PATCH", deploymentURL(ts.URL, deployment.ID), map[string]string{
+		resp := doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, e.deployment.ID), map[string]string{
 			"status": "COMPLETED",
 		}, &d)
 		assertStatus(t, resp, http.StatusOK)
 
-		want := Deployment{ID: deployment.ID, ConfigVersionID: cv.ID, StartTime: deployment.StartTime, Status: "COMPLETED"}
+		want := Deployment{ID: e.deployment.ID, ConfigVersionID: e.configVersion.ID, StartTime: e.deployment.StartTime, Status: "COMPLETED"}
 		if diff := cmp.Diff(want, d, cmpopts.IgnoreFields(Deployment{}, "StartTime", "FinishedTime")); diff != "" {
 			t.Errorf("response mismatch (-want +got):\n%s", diff)
 		}
@@ -705,37 +826,45 @@ func TestDeployments(t *testing.T) {
 	})
 
 	t.Run("update status invalid id", func(t *testing.T) {
-		testInvalidID(t, client, "PATCH", listDeploymentsURL(ts.URL)+"/%s")
+		e := setupEnv(t)
+		testInvalidID(t, e.client, "PATCH", listDeploymentsURL(e.testServer.URL)+"/%s")
 	})
 
 	t.Run("update status not found", func(t *testing.T) {
-		testNotFound(t, client, "PATCH", listDeploymentsURL(ts.URL)+"/%d", map[string]string{
+		e := setupEnv(t)
+		testNotFound(t, e.client, "PATCH", listDeploymentsURL(e.testServer.URL)+"/%d", map[string]string{
 			"status": "COMPLETED",
 		})
 	})
 
 	t.Run("update status invalid json", func(t *testing.T) {
-		testInvalidJSON(t, client, "PATCH", deploymentURL(ts.URL, deployment.ID))
+		e := setupEnv(t)
+
+		testInvalidJSON(t, e.client, "PATCH", deploymentURL(e.testServer.URL, e.deployment.ID))
 	})
 
 	t.Run("update with invalid status", func(t *testing.T) {
-		resp := doRequest(t, client, "PATCH", deploymentURL(ts.URL, deployment.ID), map[string]string{
+		e := setupEnv(t)
+
+		resp := doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, e.deployment.ID), map[string]string{
 			"status": "INVALID_STATUS",
 		}, nil)
 		assertStatus(t, resp, http.StatusBadRequest)
 	})
 
 	t.Run("list with filters", func(t *testing.T) {
-		// Create another deployment
-		resp := doRequest(t, client, "POST", listDeploymentsURL(ts.URL), map[string]any{
-			"configVersionId": cv.ID,
+		e := setupEnv(t)
+
+		// Create one additional deployment (e already has one)
+		resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+			"configVersionId": e.configVersion.ID,
 			"status":          "PENDING",
 		}, nil)
 		assertStatus(t, resp, http.StatusCreated)
 
-		// List all
+		// List all - expect exactly 2 deployments
 		var all ListResponse[Deployment]
-		resp = doRequest(t, client, "GET", listDeploymentsURL(ts.URL), nil, &all)
+		resp = doRequest(t, e.client, "GET", listDeploymentsURL(e.testServer.URL), nil, &all)
 		assertStatus(t, resp, http.StatusOK)
 		if len(all.Items) != 2 {
 			t.Errorf("expected 2 deployments, got %d", len(all.Items))
@@ -743,7 +872,7 @@ func TestDeployments(t *testing.T) {
 
 		// Filter by configVersionId
 		var byCv ListResponse[Deployment]
-		resp = doRequest(t, client, "GET", fmt.Sprintf("%s?configVersionId=%d", listDeploymentsURL(ts.URL), cv.ID), nil, &byCv)
+		resp = doRequest(t, e.client, "GET", fmt.Sprintf("%s?configVersionId=%d", listDeploymentsURL(e.testServer.URL), e.configVersion.ID), nil, &byCv)
 		assertStatus(t, resp, http.StatusOK)
 		if len(byCv.Items) != 2 {
 			t.Errorf("expected 2 deployments by configVersionId, got %d", len(byCv.Items))
@@ -751,7 +880,7 @@ func TestDeployments(t *testing.T) {
 
 		// Filter by nodeId
 		var byNode ListResponse[Deployment]
-		resp = doRequest(t, client, "GET", fmt.Sprintf("%s?nodeId=%d", listDeploymentsURL(ts.URL), node.ID), nil, &byNode)
+		resp = doRequest(t, e.client, "GET", fmt.Sprintf("%s?nodeId=%d", listDeploymentsURL(e.testServer.URL), e.node.ID), nil, &byNode)
 		assertStatus(t, resp, http.StatusOK)
 		if len(byNode.Items) != 2 {
 			t.Errorf("expected 2 deployments by nodeId, got %d", len(byNode.Items))
@@ -759,23 +888,28 @@ func TestDeployments(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		resp := doRequest(t, client, "GET", listDeploymentsURL(ts.URL)+"/99999", nil, nil)
+		e := setupEnv(t)
+		resp := doRequest(t, e.client, "GET", listDeploymentsURL(e.testServer.URL)+"/99999", nil, nil)
 		assertStatus(t, resp, http.StatusNotFound)
 	})
 
 	t.Run("delete invalid id", func(t *testing.T) {
-		testInvalidID(t, client, "DELETE", listDeploymentsURL(ts.URL)+"/%s")
+		e := setupEnv(t)
+		testInvalidID(t, e.client, "DELETE", listDeploymentsURL(e.testServer.URL)+"/%s")
 	})
 
 	t.Run("delete not found", func(t *testing.T) {
-		testNotFound(t, client, "DELETE", listDeploymentsURL(ts.URL)+"/%d", nil)
+		e := setupEnv(t)
+		testNotFound(t, e.client, "DELETE", listDeploymentsURL(e.testServer.URL)+"/%d", nil)
 	})
 
 	t.Run("delete", func(t *testing.T) {
-		resp := doRequest(t, client, "DELETE", deploymentURL(ts.URL, deployment.ID), nil, nil)
+		e := setupEnv(t)
+
+		resp := doRequest(t, e.client, "DELETE", deploymentURL(e.testServer.URL, e.deployment.ID), nil, nil)
 		assertStatus(t, resp, http.StatusNoContent)
 
-		resp = doRequest(t, client, "GET", deploymentURL(ts.URL, deployment.ID), nil, nil)
+		resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, e.deployment.ID), nil, nil)
 		assertStatus(t, resp, http.StatusNotFound)
 	})
 }
@@ -987,7 +1121,7 @@ func TestFilters_EdgeCases(t *testing.T) {
 		"configVersionId": cv2.ID,
 		"status":          "COMPLETED",
 	}, nil)
-	assertStatus(t, resp, http.StatusCreated)
+	assertStatus(t, resp, http.StatusBadRequest)
 
 	t.Run("nodes filter with invalid siteId", func(t *testing.T) {
 		resp := doRequest(t, client, "GET", listNodesURL(ts.URL)+"?siteId=invalid", nil, nil)
