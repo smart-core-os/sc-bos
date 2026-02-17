@@ -190,6 +190,46 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /nodes/{nodeId}/check-ins:
+    parameters:
+      - $ref: '#/components/parameters/nodeId'
+    get:
+      summary: List node check-ins
+      operationId: listNodeCheckIns
+      tags: [NodeCheckIns]
+      parameters:
+        - $ref: '#/components/parameters/pageToken'
+        - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          description: List of check-ins for the node
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeCheckInList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /nodes/{nodeId}/check-ins/{id}:
+    parameters:
+      - $ref: '#/components/parameters/nodeId'
+      - $ref: '#/components/parameters/id'
+    get:
+      summary: Get node check-in
+      operationId: getNodeCheckIn
+      tags: [NodeCheckIns]
+      responses:
+        '200':
+          description: Check-in details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeCheckIn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /config-versions:
     get:
       summary: List config versions
@@ -392,6 +432,13 @@ components:
       schema:
         type: integer
         format: int64
+    nodeId:
+      name: nodeId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     pageToken:
       name: pageToken
       in: query
@@ -519,6 +566,31 @@ components:
           type: integer
           format: int64
 
+    NodeCheckIn:
+      type: object
+      required: [id, nodeId, checkInTime]
+      properties:
+        id:
+          type: integer
+          format: int64
+        nodeId:
+          type: integer
+          format: int64
+        checkInTime:
+          type: string
+          format: date-time
+
+    NodeCheckInList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodeCheckIn'
+        nextPageToken:
+          type: string
+
     ConfigVersion:
       type: object
       required: [id, nodeId, payloadUrl, createTime]
@@ -623,6 +695,8 @@ tags:
     description: Physical location management
   - name: Nodes
     description: BOS controller management
+  - name: NodeCheckIns
+    description: Node check-in tracking
   - name: ConfigVersions
     description: Versioned configuration management
   - name: Deployments

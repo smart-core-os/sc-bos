@@ -137,6 +137,21 @@ func (q *Queries) CreateNode(ctx context.Context, arg CreateNodeParams) (Node, e
 	return i, err
 }
 
+const createNodeCheckIn = `-- name: CreateNodeCheckIn :one
+
+INSERT INTO node_check_ins (node_id, check_in_time)
+VALUES (?1, datetime('now', 'subsec'))
+RETURNING id, node_id, check_in_time
+`
+
+// Node Check-Ins
+func (q *Queries) CreateNodeCheckIn(ctx context.Context, nodeID int64) (NodeCheckIn, error) {
+	row := q.db.QueryRowContext(ctx, createNodeCheckIn, nodeID)
+	var i NodeCheckIn
+	err := row.Scan(&i.ID, &i.NodeID, &i.CheckInTime)
+	return i, err
+}
+
 const createSite = `-- name: CreateSite :one
 
 INSERT INTO sites (name, create_time)
@@ -185,6 +200,19 @@ WHERE id = ?1
 
 func (q *Queries) DeleteNode(ctx context.Context, id int64) (int64, error) {
 	result, err := q.db.ExecContext(ctx, deleteNode, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const deleteNodeCheckIn = `-- name: DeleteNodeCheckIn :execrows
+DELETE FROM node_check_ins
+WHERE id = ?1
+`
+
+func (q *Queries) DeleteNodeCheckIn(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteNodeCheckIn, id)
 	if err != nil {
 		return 0, err
 	}
@@ -257,6 +285,19 @@ func (q *Queries) GetNode(ctx context.Context, id int64) (Node, error) {
 		&i.SiteID,
 		&i.CreateTime,
 	)
+	return i, err
+}
+
+const getNodeCheckIn = `-- name: GetNodeCheckIn :one
+SELECT id, node_id, check_in_time
+FROM node_check_ins
+WHERE id = ?1
+`
+
+func (q *Queries) GetNodeCheckIn(ctx context.Context, id int64) (NodeCheckIn, error) {
+	row := q.db.QueryRowContext(ctx, getNodeCheckIn, id)
+	var i NodeCheckIn
+	err := row.Scan(&i.ID, &i.NodeID, &i.CheckInTime)
 	return i, err
 }
 
@@ -474,6 +515,43 @@ func (q *Queries) ListDeploymentsByNode(ctx context.Context, arg ListDeployments
 			&i.StartTime,
 			&i.FinishedTime,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listNodeCheckInsByNode = `-- name: ListNodeCheckInsByNode :many
+SELECT id, node_id, check_in_time
+FROM node_check_ins
+WHERE node_id = ?1 AND id > ?2
+ORDER BY id
+LIMIT ?3
+`
+
+type ListNodeCheckInsByNodeParams struct {
+	NodeID  int64
+	AfterID int64
+	Limit   int64
+}
+
+func (q *Queries) ListNodeCheckInsByNode(ctx context.Context, arg ListNodeCheckInsByNodeParams) ([]NodeCheckIn, error) {
+	rows, err := q.db.QueryContext(ctx, listNodeCheckInsByNode, arg.NodeID, arg.AfterID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []NodeCheckIn
+	for rows.Next() {
+		var i NodeCheckIn
+		if err := rows.Scan(&i.ID, &i.NodeID, &i.CheckInTime); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

@@ -32,6 +32,12 @@ type Node struct {
 	CreateTime time.Time
 }
 
+type NodeCheckIn struct {
+	ID          int64
+	NodeID      int64
+	CheckInTime time.Time
+}
+
 type Site struct {
 	ID         int64
 	Name       string

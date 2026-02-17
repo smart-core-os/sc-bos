@@ -376,6 +376,92 @@ func TestStore_Deployments(t *testing.T) {
 	}
 }
 
+func TestStore_NodeCheckIns(t *testing.T) {
+	ctx := t.Context()
+	logger := zap.NewNop()
+	store := NewMemoryStore(logger)
+	defer func() {
+		_ = store.Close()
+	}()
+
+	// Setup: create site and node
+	var nodeID int64
+	err := store.Write(ctx, func(tx *Tx) error {
+		site, err := tx.CreateSite(ctx, "Test Site")
+		if err != nil {
+			return err
+		}
+
+		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Hostname: "TEST-AC-01",
+			SiteID:   site.ID,
+		})
+		if err != nil {
+			return err
+		}
+		nodeID = node.ID
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("failed to setup: %v", err)
+	}
+
+	// Test creating a check-in
+	var checkInID int64
+	err = store.Write(ctx, func(tx *Tx) error {
+		checkIn, err := tx.CreateNodeCheckIn(ctx, nodeID)
+		if err != nil {
+			return err
+		}
+		checkInID = checkIn.ID
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("failed to create check-in: %v", err)
+	}
+
+	// Test getting a check-in
+	err = store.Read(ctx, func(tx *Tx) error {
+		checkIn, err := tx.GetNodeCheckIn(ctx, checkInID)
+		if err != nil {
+			return err
+		}
+		want := queries.NodeCheckIn{
+			ID:     checkInID,
+			NodeID: nodeID,
+		}
+		if diff := cmp.Diff(want, checkIn, cmpopts.IgnoreFields(queries.NodeCheckIn{}, "CheckInTime")); diff != "" {
+			t.Errorf("check-in mismatch (-want +got):\n%s", diff)
+		}
+		if checkIn.CheckInTime.IsZero() {
+			t.Error("expected non-zero CheckInTime")
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("failed to get check-in: %v", err)
+	}
+
+	// Test listing check-ins by node
+	err = store.Read(ctx, func(tx *Tx) error {
+		checkIns, err := tx.ListNodeCheckInsByNode(ctx, queries.ListNodeCheckInsByNodeParams{
+			NodeID:  nodeID,
+			AfterID: 0,
+			Limit:   10,
+		})
+		if err != nil {
+			return err
+		}
+		if len(checkIns) != 1 {
+			t.Errorf("expected 1 check-in, got %d", len(checkIns))
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("failed to list check-ins: %v", err)
+	}
+}
+
 func TestStore_CascadeDeletes(t *testing.T) {
 	ctx := t.Context()
 	logger := zap.NewNop()
@@ -385,7 +471,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 	}()
 
 	// Setup: create a full chain
-	var siteID, nodeID, configVersionID, deploymentID int64
+	var siteID, nodeID, checkInID, configVersionID, deploymentID int64
 	err := store.Write(ctx, func(tx *Tx) error {
 		site, err := tx.CreateSite(ctx, "Test Site")
 		if err != nil {
@@ -401,6 +487,12 @@ func TestStore_CascadeDeletes(t *testing.T) {
 			return err
 		}
 		nodeID = node.ID
+
+		checkIn, err := tx.CreateNodeCheckIn(ctx, node.ID)
+		if err != nil {
+			return err
+		}
+		checkInID = checkIn.ID
 
 		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
 			NodeID:      node.ID,
@@ -448,6 +540,12 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		_, err := tx.GetNode(ctx, nodeID)
 		if err == nil {
 			t.Error("expected node to be deleted, but it still exists")
+		}
+
+		// Check check-in is deleted
+		_, err = tx.GetNodeCheckIn(ctx, checkInID)
+		if err == nil {
+			t.Error("expected check-in to be deleted, but it still exists")
 		}
 
 		// Check config version is deleted

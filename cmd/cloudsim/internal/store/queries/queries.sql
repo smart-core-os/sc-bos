@@ -76,6 +76,29 @@ RETURNING *;
 DELETE FROM nodes
 WHERE id = :id;
 
+-- Node Check-Ins
+
+-- name: CreateNodeCheckIn :one
+INSERT INTO node_check_ins (node_id, check_in_time)
+VALUES (:node_id, datetime('now', 'subsec'))
+RETURNING *;
+
+-- name: GetNodeCheckIn :one
+SELECT *
+FROM node_check_ins
+WHERE id = :id;
+
+-- name: ListNodeCheckInsByNode :many
+SELECT *
+FROM node_check_ins
+WHERE node_id = :node_id AND id > :after_id
+ORDER BY id
+LIMIT :limit;
+
+-- name: DeleteNodeCheckIn :execrows
+DELETE FROM node_check_ins
+WHERE id = :id;
+
 -- Config Versions
 
 -- name: CreateConfigVersion :one
