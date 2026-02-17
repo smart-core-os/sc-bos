@@ -77,7 +77,7 @@ func (s *Server) listConfigVersions(w http.ResponseWriter, r *http.Request) {
 	afterID, limit, err := parsePagination(r)
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid pagination", zap.Error(err))
+		logger.Info("invalid pagination", zap.Error(err))
 		return
 	}
 
@@ -85,7 +85,7 @@ func (s *Server) listConfigVersions(w http.ResponseWriter, r *http.Request) {
 	nodeID, err := parseID(r.URL.Query().Get("nodeId"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid nodeId filter", zap.Error(err))
+		logger.Info("invalid nodeId filter", zap.Error(err))
 		return
 	}
 
@@ -130,13 +130,13 @@ func (s *Server) createConfigVersion(w http.ResponseWriter, r *http.Request) {
 	var req createConfigVersionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid json", zap.Error(err))
+		logger.Info("invalid json", zap.Error(err))
 		return
 	}
 
 	if len(req.Payload) == 0 {
 		writeError(w, errInvalidRequest)
-		logger.Error("missing required field", zap.String("field", "payload"))
+		logger.Info("missing required field", zap.String("field", "payload"))
 		return
 	}
 
@@ -155,8 +155,13 @@ func (s *Server) createConfigVersion(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to create config version", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to create config version", zap.Error(err))
+		} else {
+			logger.Debug("bad request to create config version", zap.Error(err))
+		}
 		return
 	}
 
@@ -169,7 +174,7 @@ func (s *Server) getConfigVersion(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r.PathValue("id"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid id", zap.Error(err))
+		logger.Info("invalid id", zap.Error(err))
 		return
 	}
 
@@ -180,8 +185,13 @@ func (s *Server) getConfigVersion(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to get config version", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to get config version", zap.Error(err))
+		} else {
+			logger.Debug("bad request to get config version", zap.Error(err))
+		}
 		return
 	}
 
@@ -194,7 +204,7 @@ func (s *Server) deleteConfigVersion(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r.PathValue("id"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid id", zap.Error(err))
+		logger.Info("invalid id", zap.Error(err))
 		return
 	}
 
@@ -205,14 +215,19 @@ func (s *Server) deleteConfigVersion(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to delete config version", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to delete config version", zap.Error(err))
+		} else {
+			logger.Debug("bad request to delete config version", zap.Error(err))
+		}
 		return
 	}
 
 	if affected == 0 {
 		writeError(w, errNotFound)
-		logger.Error("config version not found", zap.Int64("id", id))
+		logger.Debug("config version not found", zap.Int64("id", id))
 		return
 	}
 
@@ -225,7 +240,7 @@ func (s *Server) getConfigVersionPayload(w http.ResponseWriter, r *http.Request)
 	id, err := parseID(r.PathValue("id"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid id", zap.Error(err))
+		logger.Info("invalid id", zap.Error(err))
 		return
 	}
 
@@ -239,8 +254,13 @@ func (s *Server) getConfigVersionPayload(w http.ResponseWriter, r *http.Request)
 		return nil
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to get config version payload", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to get config version payload", zap.Error(err))
+		} else {
+			logger.Debug("bad request to get config version payload", zap.Error(err))
+		}
 		return
 	}
 

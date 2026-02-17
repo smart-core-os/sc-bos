@@ -25,6 +25,10 @@ func (e apiError) Error() string {
 	return e.message
 }
 
+func (e apiError) internal() bool {
+	return e.code >= 500
+}
+
 var (
 	errInvalidRequest   = apiError{http.StatusBadRequest, "invalid_request", "invalid request"}
 	errNotFound         = apiError{http.StatusNotFound, "not_found", "resource not found"}
@@ -35,16 +39,16 @@ var (
 
 // translateDBError translates database errors to predefined API errors.
 func translateDBError(err error) apiError {
-	if errors.Is(err, sql.ErrNoRows) {
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
 		return errNotFound
-	}
-	if sqlite.IsForeignKeyError(err) {
+	case sqlite.IsForeignKeyError(err):
 		return errForeignKey
-	}
-	if sqlite.IsUniqueConstraintError(err) {
+	case sqlite.IsUniqueConstraintError(err):
 		return errUniqueConstraint
+	default:
+		return errInternal
 	}
-	return errInternal
 }
 
 // writeError writes an error response based on the error type.

@@ -74,7 +74,7 @@ func (s *Server) listDeployments(w http.ResponseWriter, r *http.Request) {
 	afterID, limit, err := parsePagination(r)
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid pagination", zap.Error(err))
+		logger.Info("invalid pagination", zap.Error(err))
 		return
 	}
 
@@ -82,21 +82,21 @@ func (s *Server) listDeployments(w http.ResponseWriter, r *http.Request) {
 	nodeID, err := parseID(r.URL.Query().Get("nodeId"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid nodeId filter", zap.Error(err))
+		logger.Info("invalid nodeId filter", zap.Error(err))
 		return
 	}
 
 	configVersionID, err := parseID(r.URL.Query().Get("configVersionId"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid configVersionId filter", zap.Error(err))
+		logger.Info("invalid configVersionId filter", zap.Error(err))
 		return
 	}
 
 	// intersection queries not supported
 	if nodeID != 0 && configVersionID != 0 {
 		writeError(w, errInvalidRequest)
-		logger.Error("cannot filter by both nodeId and configVersionId")
+		logger.Info("cannot filter by both nodeId and configVersionId")
 		return
 	}
 
@@ -148,7 +148,7 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 	var req createDeploymentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid json", zap.Error(err))
+		logger.Info("invalid json", zap.Error(err))
 		return
 	}
 
@@ -161,7 +161,7 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 		// valid, do nothing
 	default:
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid status for creation", zap.String("status", status))
+		logger.Info("invalid status for creation", zap.String("status", status))
 	}
 
 	var item queries.Deployment
@@ -174,8 +174,13 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to create deployment", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to create deployment", zap.Error(err))
+		} else {
+			logger.Debug("bad request to create deployment", zap.Error(err))
+		}
 		return
 	}
 
@@ -188,7 +193,7 @@ func (s *Server) getDeployment(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r.PathValue("id"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid id", zap.Error(err))
+		logger.Info("invalid id", zap.Error(err))
 		return
 	}
 
@@ -199,8 +204,13 @@ func (s *Server) getDeployment(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to get deployment", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to get deployment", zap.Error(err))
+		} else {
+			logger.Debug("bad request to get deployment", zap.Error(err))
+		}
 		return
 	}
 
@@ -213,20 +223,20 @@ func (s *Server) updateDeploymentStatus(w http.ResponseWriter, r *http.Request) 
 	id, err := parseID(r.PathValue("id"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid id", zap.Error(err))
+		logger.Info("invalid id", zap.Error(err))
 		return
 	}
 
 	var req updateDeploymentStatusRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid json", zap.Error(err))
+		logger.Info("invalid json", zap.Error(err))
 		return
 	}
 
 	if !isValidStatus(req.Status) {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid status", zap.String("status", req.Status))
+		logger.Info("invalid status", zap.String("status", req.Status))
 		return
 	}
 
@@ -240,8 +250,13 @@ func (s *Server) updateDeploymentStatus(w http.ResponseWriter, r *http.Request) 
 		return err
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to update deployment status", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to update deployment status", zap.Error(err))
+		} else {
+			logger.Debug("bad request to update deployment status", zap.Error(err))
+		}
 		return
 	}
 
@@ -254,7 +269,7 @@ func (s *Server) deleteDeployment(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r.PathValue("id"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid id", zap.Error(err))
+		logger.Info("invalid id", zap.Error(err))
 		return
 	}
 
@@ -265,14 +280,19 @@ func (s *Server) deleteDeployment(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to delete deployment", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to delete deployment", zap.Error(err))
+		} else {
+			logger.Debug("bad request to delete deployment", zap.Error(err))
+		}
 		return
 	}
 
 	if affected == 0 {
 		writeError(w, errNotFound)
-		logger.Error("deployment not found", zap.Int64("id", id))
+		logger.Debug("deployment not found", zap.Int64("id", id))
 		return
 	}
 
