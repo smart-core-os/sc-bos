@@ -251,6 +251,12 @@ func testPagination(t *testing.T,
 
 func newTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
+	ts, _ := newTestServerWithStore(t)
+	return ts
+}
+
+func newTestServerWithStore(t *testing.T) (*httptest.Server, *store.Store) {
+	t.Helper()
 	logger := zap.NewNop()
 	s := store.NewMemoryStore(logger)
 	t.Cleanup(func() { _ = s.Close() })
@@ -258,8 +264,10 @@ func newTestServer(t *testing.T) *httptest.Server {
 	apiServer := NewServer(s, logger)
 	mux := http.NewServeMux()
 	apiServer.RegisterRoutes(mux)
+	testServer := httptest.NewServer(mux)
+	t.Cleanup(testServer.Close)
 
-	return httptest.NewServer(mux)
+	return testServer, s
 }
 
 func doRequest(t *testing.T, client *http.Client, method, url string, req, res any) *http.Response {
@@ -322,6 +330,12 @@ func configVersionURL(base string, id int64) string {
 func listDeploymentsURL(base string) string { return base + "/api/v1/management/deployments" }
 func deploymentURL(base string, id int64) string {
 	return fmt.Sprintf("%s/api/v1/management/deployments/%d", base, id)
+}
+func listNodeCheckInsURL(base string, nodeID int64) string {
+	return fmt.Sprintf("%s/api/v1/management/nodes/%d/check-ins", base, nodeID)
+}
+func nodeCheckInURL(base string, nodeID int64, id int64) string {
+	return fmt.Sprintf("%s/api/v1/management/nodes/%d/check-ins/%d", base, nodeID, id)
 }
 func configVersionPayloadURL(base string, id int64) string {
 	return fmt.Sprintf("%s/api/v1/management/config-versions/%d/payload", base, id)

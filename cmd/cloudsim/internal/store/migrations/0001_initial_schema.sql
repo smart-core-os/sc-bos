@@ -18,6 +18,19 @@ CREATE TABLE nodes (
 
 CREATE INDEX nodes_site_id ON nodes (site_id);
 
+CREATE TABLE node_check_ins (
+    id              INTEGER PRIMARY KEY,
+    node_id         INTEGER NOT NULL,
+    check_in_time   DATETIME NOT NULL,
+
+    -- can add additional fields to reflect node status at the time of check in
+
+    FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE,
+    CONSTRAINT check_in_time_format CHECK ( check_in_time IS datetime(check_in_time, 'subsec') )
+);
+
+CREATE INDEX node_check_ins_node_id ON node_check_ins (node_id);
+
 CREATE TABLE config_versions (
     id              INTEGER PRIMARY KEY,
     node_id         INTEGER NOT NULL,
