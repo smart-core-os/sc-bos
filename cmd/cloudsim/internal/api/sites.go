@@ -48,7 +48,7 @@ func (s *Server) listSites(w http.ResponseWriter, r *http.Request) {
 	afterID, limit, err := parsePagination(r)
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid pagination", zap.Error(err))
+		logger.Info("invalid pagination", zap.Error(err))
 		return
 	}
 
@@ -85,13 +85,13 @@ func (s *Server) createSite(w http.ResponseWriter, r *http.Request) {
 	var req createSiteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid json", zap.Error(err))
+		logger.Info("invalid json", zap.Error(err))
 		return
 	}
 
 	if req.Name == "" {
 		writeError(w, errInvalidRequest)
-		logger.Error("missing required field", zap.String("field", "name"))
+		logger.Info("missing required field", zap.String("field", "name"))
 		return
 	}
 
@@ -102,8 +102,13 @@ func (s *Server) createSite(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to create site", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to create site", zap.Error(err))
+		} else {
+			logger.Debug("bad request to create site", zap.Error(err))
+		}
 		return
 	}
 
@@ -116,7 +121,7 @@ func (s *Server) getSite(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r.PathValue("id"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid id", zap.Error(err))
+		logger.Info("invalid id", zap.Error(err))
 		return
 	}
 
@@ -127,8 +132,13 @@ func (s *Server) getSite(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to get site", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to get site", zap.Error(err))
+		} else {
+			logger.Debug("bad request to get site", zap.Error(err))
+		}
 		return
 	}
 
@@ -141,20 +151,20 @@ func (s *Server) updateSite(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r.PathValue("id"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid id", zap.Error(err))
+		logger.Info("invalid id", zap.Error(err))
 		return
 	}
 
 	var req updateSiteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid json", zap.Error(err))
+		logger.Info("invalid json", zap.Error(err))
 		return
 	}
 
 	if req.Name == "" {
 		writeError(w, errInvalidRequest)
-		logger.Error("missing required field", zap.String("field", "name"))
+		logger.Info("missing required field", zap.String("field", "name"))
 		return
 	}
 
@@ -168,8 +178,13 @@ func (s *Server) updateSite(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to update site", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to update site", zap.Error(err))
+		} else {
+			logger.Debug("bad request to update site", zap.Error(err))
+		}
 		return
 	}
 
@@ -182,7 +197,7 @@ func (s *Server) deleteSite(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r.PathValue("id"))
 	if err != nil {
 		writeError(w, errInvalidRequest)
-		logger.Error("invalid id", zap.Error(err))
+		logger.Info("invalid id", zap.Error(err))
 		return
 	}
 
@@ -193,14 +208,19 @@ func (s *Server) deleteSite(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, translateDBError(err))
-		logger.Error("failed to delete site", zap.Error(err))
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to delete site", zap.Error(err))
+		} else {
+			logger.Debug("bad request to delete site", zap.Error(err))
+		}
 		return
 	}
 
 	if affected == 0 {
 		writeError(w, errNotFound)
-		logger.Error("site not found", zap.Int64("id", id))
+		logger.Debug("site not found", zap.Int64("id", id))
 		return
 	}
 
