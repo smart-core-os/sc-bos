@@ -10,6 +10,7 @@ CREATE TABLE nodes (
     id              INTEGER PRIMARY KEY,
     hostname        TEXT NOT NULL,
     site_id         INTEGER NOT NULL,
+    secret_hash     BLOB NOT NULL,
     create_time     DATETIME NOT NULL,
 
     FOREIGN KEY (site_id) REFERENCES sites (id) ON DELETE CASCADE,
@@ -17,6 +18,7 @@ CREATE TABLE nodes (
 );
 
 CREATE INDEX nodes_site_id ON nodes (site_id);
+CREATE UNIQUE INDEX nodes_secret_hash ON nodes (secret_hash);
 
 CREATE TABLE node_check_ins (
     id              INTEGER PRIMARY KEY,

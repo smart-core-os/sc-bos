@@ -114,24 +114,26 @@ func (q *Queries) CreateDeployment(ctx context.Context, arg CreateDeploymentPara
 
 const createNode = `-- name: CreateNode :one
 
-INSERT INTO nodes (hostname, site_id, create_time)
-VALUES (?1, ?2, datetime('now', 'subsec'))
-RETURNING id, hostname, site_id, create_time
+INSERT INTO nodes (hostname, site_id, secret_hash, create_time)
+VALUES (?1, ?2, ?3, datetime('now', 'subsec'))
+RETURNING id, hostname, site_id, secret_hash, create_time
 `
 
 type CreateNodeParams struct {
-	Hostname string
-	SiteID   int64
+	Hostname   string
+	SiteID     int64
+	SecretHash []byte
 }
 
 // Nodes
 func (q *Queries) CreateNode(ctx context.Context, arg CreateNodeParams) (Node, error) {
-	row := q.db.QueryRowContext(ctx, createNode, arg.Hostname, arg.SiteID)
+	row := q.db.QueryRowContext(ctx, createNode, arg.Hostname, arg.SiteID, arg.SecretHash)
 	var i Node
 	err := row.Scan(
 		&i.ID,
 		&i.Hostname,
 		&i.SiteID,
+		&i.SecretHash,
 		&i.CreateTime,
 	)
 	return i, err
@@ -271,7 +273,7 @@ func (q *Queries) GetDeployment(ctx context.Context, id int64) (Deployment, erro
 }
 
 const getNode = `-- name: GetNode :one
-SELECT id, hostname, site_id, create_time
+SELECT id, hostname, site_id, secret_hash, create_time
 FROM nodes
 WHERE id = ?1
 `
@@ -283,6 +285,7 @@ func (q *Queries) GetNode(ctx context.Context, id int64) (Node, error) {
 		&i.ID,
 		&i.Hostname,
 		&i.SiteID,
+		&i.SecretHash,
 		&i.CreateTime,
 	)
 	return i, err
@@ -566,7 +569,7 @@ func (q *Queries) ListNodeCheckInsByNode(ctx context.Context, arg ListNodeCheckI
 }
 
 const listNodes = `-- name: ListNodes :many
-SELECT id, hostname, site_id, create_time
+SELECT id, hostname, site_id, secret_hash, create_time
 FROM nodes
 WHERE id > ?1
 ORDER BY id
@@ -591,6 +594,7 @@ func (q *Queries) ListNodes(ctx context.Context, arg ListNodesParams) ([]Node, e
 			&i.ID,
 			&i.Hostname,
 			&i.SiteID,
+			&i.SecretHash,
 			&i.CreateTime,
 		); err != nil {
 			return nil, err
@@ -607,7 +611,7 @@ func (q *Queries) ListNodes(ctx context.Context, arg ListNodesParams) ([]Node, e
 }
 
 const listNodesBySite = `-- name: ListNodesBySite :many
-SELECT id, hostname, site_id, create_time
+SELECT id, hostname, site_id, secret_hash, create_time
 FROM nodes
 WHERE site_id = ?1 AND id > ?2
 ORDER BY id
@@ -633,6 +637,7 @@ func (q *Queries) ListNodesBySite(ctx context.Context, arg ListNodesBySiteParams
 			&i.ID,
 			&i.Hostname,
 			&i.SiteID,
+			&i.SecretHash,
 			&i.CreateTime,
 		); err != nil {
 			return nil, err
@@ -717,7 +722,7 @@ const updateNode = `-- name: UpdateNode :one
 UPDATE nodes
 SET hostname = ?1, site_id = ?2
 WHERE id = ?3
-RETURNING id, hostname, site_id, create_time
+RETURNING id, hostname, site_id, secret_hash, create_time
 `
 
 type UpdateNodeParams struct {
@@ -733,9 +738,24 @@ func (q *Queries) UpdateNode(ctx context.Context, arg UpdateNodeParams) (Node, e
 		&i.ID,
 		&i.Hostname,
 		&i.SiteID,
+		&i.SecretHash,
 		&i.CreateTime,
 	)
 	return i, err
+}
+
+const updateNodeSecretHash = `-- name: UpdateNodeSecretHash :exec
+UPDATE nodes SET secret_hash = ?1 WHERE id = ?2
+`
+
+type UpdateNodeSecretHashParams struct {
+	SecretHash []byte
+	ID         int64
+}
+
+func (q *Queries) UpdateNodeSecretHash(ctx context.Context, arg UpdateNodeSecretHashParams) error {
+	_, err := q.db.ExecContext(ctx, updateNodeSecretHash, arg.SecretHash, arg.ID)
+	return err
 }
 
 const updateSite = `-- name: UpdateSite :one

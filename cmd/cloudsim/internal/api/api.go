@@ -41,6 +41,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/management/nodes/{id}", s.getNode)
 	mux.HandleFunc("PUT /api/v1/management/nodes/{id}", s.updateNode)
 	mux.HandleFunc("DELETE /api/v1/management/nodes/{id}", s.deleteNode)
+	mux.HandleFunc("POST /api/v1/management/nodes/{id}/rotate-secret", s.rotateNodeSecret)
 
 	// Node Check-Ins
 	mux.HandleFunc("GET /api/v1/management/nodes/{nodeId}/check-ins", s.listNodeCheckIns)

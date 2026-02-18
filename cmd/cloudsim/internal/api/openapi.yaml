@@ -131,11 +131,11 @@ paths:
               $ref: '#/components/schemas/CreateNodeRequest'
       responses:
         '201':
-          description: Node created
+          description: Node created. The response includes the initial Node secret.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Node'
+                $ref: '#/components/schemas/CreateNodeResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
 
@@ -185,6 +185,28 @@ paths:
       responses:
         '204':
           description: Node deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /nodes/{id}/rotate-secret:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    post:
+      summary: Rotate node secret
+      operationId: rotateNodeSecret
+      tags: [Nodes]
+      description: >-
+        Generates a new secret for the node. The previous secret is invalidated.
+        The new secret cannot be retrieved later.
+      responses:
+        '200':
+          description: The updated Node, including the new secret.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateNodeResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -565,6 +587,23 @@ components:
         siteId:
           type: integer
           format: int64
+
+    CreateNodeResponse:
+      description: >-
+        Response from creating a node or rotating its secret.
+        Contains the node fields plus an authentication secret.
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          required: [secret]
+          properties:
+            secret:
+              type: string
+              format: byte
+              description: >-
+                Secret (32 bytes, base64-encoded). Secrets are only returned
+                from the API call that generates them. The client must store
+                the secret as it cannot be retrieved later.
 
     NodeCheckIn:
       type: object

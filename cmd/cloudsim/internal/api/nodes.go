@@ -1,6 +1,8 @@
 package api
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -34,6 +36,13 @@ func toNodes(nodes []queries.Node) []Node {
 		out[i] = toNode(n)
 	}
 	return out
+}
+
+// CreateNodeResponse is returned from create and rotate-secret endpoints.
+// It includes the one-time secret that is not stored or returned again.
+type CreateNodeResponse struct {
+	Node
+	Secret []byte `json:"secret"`
 }
 
 type createNodeRequest struct {
@@ -99,6 +108,15 @@ func (s *Server) listNodes(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func generateSecret() (secret, hash []byte, err error) {
+	secret = make([]byte, 32)
+	if _, err = rand.Read(secret); err != nil {
+		return nil, nil, err
+	}
+	h := sha256.Sum256(secret)
+	return secret, h[:], nil
+}
+
 func (s *Server) createNode(w http.ResponseWriter, r *http.Request) {
 	logger := s.loggerFor(r)
 
@@ -115,12 +133,20 @@ func (s *Server) createNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	secret, hash, err := generateSecret()
+	if err != nil {
+		writeError(w, errInternal)
+		logger.Error("failed to generate secret", zap.Error(err))
+		return
+	}
+
 	var item queries.Node
-	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
+	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
 		item, err = tx.CreateNode(r.Context(), queries.CreateNodeParams{
-			Hostname: req.Hostname,
-			SiteID:   req.SiteID,
+			Hostname:   req.Hostname,
+			SiteID:     req.SiteID,
+			SecretHash: hash,
 		})
 		return err
 	})
@@ -135,7 +161,10 @@ func (s *Server) createNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toNode(item))
+	writeJSON(w, http.StatusCreated, CreateNodeResponse{
+		Node:   toNode(item),
+		Secret: secret,
+	})
 }
 
 func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
@@ -249,4 +278,50 @@ func (s *Server) deleteNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) rotateNodeSecret(w http.ResponseWriter, r *http.Request) {
+	logger := s.loggerFor(r)
+
+	id, err := parseID(r.PathValue("id"))
+	if err != nil || id == 0 {
+		writeError(w, errInvalidRequest)
+		logger.Info("invalid id", zap.Error(err))
+		return
+	}
+
+	secret, hash, err := generateSecret()
+	if err != nil {
+		writeError(w, errInternal)
+		logger.Error("failed to generate secret", zap.Error(err))
+		return
+	}
+
+	var item queries.Node
+	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
+		var err error
+		item, err = tx.GetNode(r.Context(), id)
+		if err != nil {
+			return err
+		}
+		return tx.UpdateNodeSecretHash(r.Context(), queries.UpdateNodeSecretHashParams{
+			ID:         id,
+			SecretHash: hash,
+		})
+	})
+	if err != nil {
+		resErr := translateDBError(err)
+		writeError(w, resErr)
+		if resErr.internal() {
+			logger.Error("failed to rotate node secret", zap.Error(err))
+		} else {
+			logger.Debug("bad request to rotate node secret", zap.Error(err))
+		}
+		return
+	}
+
+	writeJSON(w, http.StatusOK, CreateNodeResponse{
+		Node:   toNode(item),
+		Secret: secret,
+	})
 }

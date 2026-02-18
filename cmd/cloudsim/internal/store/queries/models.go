@@ -29,6 +29,7 @@ type Node struct {
 	ID         int64
 	Hostname   string
 	SiteID     int64
+	SecretHash []byte
 	CreateTime time.Time
 }
 

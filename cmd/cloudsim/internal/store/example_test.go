@@ -2,6 +2,8 @@ package store_test
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
 	"fmt"
 	"log"
@@ -36,12 +38,21 @@ func Example_basic() {
 		log.Fatal(err)
 	}
 
+	// generate a secret for the new node
+	secret := make([]byte, 32)
+	_, err = rand.Read(secret)
+	if err != nil {
+		log.Fatal(err)
+	}
+	hash := sha256.Sum256(secret)
+
 	// Create a node
 	var nodeID int64
 	err = s.Write(ctx, func(tx *store.Tx) error {
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "LONDON-AC-01",
-			SiteID:   siteID,
+			Hostname:   "LONDON-AC-01",
+			SiteID:     siteID,
+			SecretHash: hash[:],
 		})
 		if err != nil {
 			return err
@@ -187,8 +198,9 @@ func Example_deployments() {
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "TEST-AC-01",
-			SiteID:   site.ID,
+			Hostname:   "TEST-AC-01",
+			SiteID:     site.ID,
+			SecretHash: []byte("test-hash"),
 		})
 		if err != nil {
 			return err
@@ -270,8 +282,9 @@ func Example_cascadeDeletes() {
 		siteID = site.ID
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "TEST-AC-01",
-			SiteID:   site.ID,
+			Hostname:   "TEST-AC-01",
+			SiteID:     site.ID,
+			SecretHash: []byte("test-hash"),
 		})
 		if err != nil {
 			return err
