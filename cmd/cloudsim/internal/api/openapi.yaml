@@ -6,8 +6,29 @@ info:
 
 servers:
   - url: /api/v1/management
+  - url: /api/v1
 
 paths:
+  /check-in:
+    post:
+      summary: Node check-in
+      operationId: checkIn
+      tags: [CheckIn]
+      description: >-
+        Authenticates a node using its bearer secret, records a check-in,
+        and returns the newest active deployment (if any).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Check-in recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckInResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /sites:
     get:
       summary: List sites
@@ -484,6 +505,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Invalid or missing authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
       content:
@@ -729,7 +756,36 @@ components:
           type: string
           enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED]
 
+    CheckInResponse:
+      type: object
+      required: [checkIn]
+      properties:
+        checkIn:
+          $ref: '#/components/schemas/NodeCheckIn'
+        latestConfig:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/LatestConfig'
+
+    LatestConfig:
+      description: The newest active deployment and its associated config version, returned as part of a check-in response.
+      type: object
+      required: [deployment, configVersion]
+      properties:
+        deployment:
+          $ref: '#/components/schemas/Deployment'
+        configVersion:
+          $ref: '#/components/schemas/ConfigVersion'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Base64-encoded node secret
+
 tags:
+  - name: CheckIn
+    description: Node check-in endpoint (authenticated by bearer secret)
   - name: Sites
     description: Physical location management
   - name: Nodes

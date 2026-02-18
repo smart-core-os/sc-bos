@@ -184,3 +184,14 @@ RETURNING *;
 -- name: DeleteDeployment :execrows
 DELETE FROM deployments
 WHERE id = :id;
+
+-- name: GetNodeBySecretHash :one
+SELECT * FROM nodes WHERE secret_hash = :secret_hash;
+
+-- name: GetActiveDeploymentByNode :one
+SELECT d.*
+FROM deployments d
+JOIN config_versions cv ON d.config_version_id = cv.id
+WHERE cv.node_id = :node_id AND d.status IN ('PENDING', 'IN_PROGRESS')
+ORDER BY d.id DESC
+LIMIT 1;

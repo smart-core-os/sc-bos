@@ -60,6 +60,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/management/deployments/{id}", s.getDeployment)
 	mux.HandleFunc("PATCH /api/v1/management/deployments/{id}", s.updateDeploymentStatus)
 	mux.HandleFunc("DELETE /api/v1/management/deployments/{id}", s.deleteDeployment)
+
+	// Check-In
+	mux.HandleFunc("POST /api/v1/check-in", s.checkIn)
 }
 
 func (s *Server) loggerFor(r *http.Request) *zap.Logger {

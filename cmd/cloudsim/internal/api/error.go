@@ -34,6 +34,7 @@ var (
 	errNotFound         = apiError{http.StatusNotFound, "not_found", "resource not found"}
 	errForeignKey       = apiError{http.StatusBadRequest, "invalid_reference", "referenced resource does not exist"}
 	errUniqueConstraint = apiError{http.StatusConflict, "conflict", "resource already exists"}
+	errUnauthorized     = apiError{http.StatusUnauthorized, "unauthorized", "invalid or missing authentication"}
 	errInternal         = apiError{http.StatusInternalServerError, "internal_error", "internal server error"}
 )
 
