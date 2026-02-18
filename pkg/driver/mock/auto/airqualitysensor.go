@@ -35,11 +35,14 @@ func AirQualitySensorAuto(model *airqualitysensorpb.Model) *service.Service[stri
 }
 
 func GetAirQualityState() *traits.AirQuality {
-	co2 := rand.Float32() * 1000
-	voc := rand.Float32()
-	ap := rand.Float32() * 1200
-	ir := float32(rand.Int31n(100))
-	score := float32(rand.Int31n(100))
+	co2 := 400 + rand.Float32()*200
+	voc := rand.Float32() * 0.3
+	ap := 1000 + rand.Float32()*26.5
+	ir := rand.Float32() * 30
+	score := 80 + rand.Float32()*20
+	pm1 := rand.Float32() * 15
+	pm25 := rand.Float32() * 12
+	pm10 := rand.Float32() * 54
 	return &traits.AirQuality{
 		CarbonDioxideLevel:       &co2,
 		VolatileOrganicCompounds: &voc,
@@ -47,5 +50,8 @@ func GetAirQualityState() *traits.AirQuality {
 		Comfort:                  0,
 		InfectionRisk:            &ir,
 		Score:                    &score,
+		ParticulateMatter_1:      &pm1,
+		ParticulateMatter_25:     &pm25,
+		ParticulateMatter_10:     &pm10,
 	}
 }
