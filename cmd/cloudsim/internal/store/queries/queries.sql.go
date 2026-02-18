@@ -234,6 +234,28 @@ func (q *Queries) DeleteSite(ctx context.Context, id int64) (int64, error) {
 	return result.RowsAffected()
 }
 
+const getActiveDeploymentByNode = `-- name: GetActiveDeploymentByNode :one
+SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time
+FROM deployments d
+JOIN config_versions cv ON d.config_version_id = cv.id
+WHERE cv.node_id = ?1 AND d.status IN ('PENDING', 'IN_PROGRESS')
+ORDER BY d.id DESC
+LIMIT 1
+`
+
+func (q *Queries) GetActiveDeploymentByNode(ctx context.Context, nodeID int64) (Deployment, error) {
+	row := q.db.QueryRowContext(ctx, getActiveDeploymentByNode, nodeID)
+	var i Deployment
+	err := row.Scan(
+		&i.ID,
+		&i.ConfigVersionID,
+		&i.Status,
+		&i.StartTime,
+		&i.FinishedTime,
+	)
+	return i, err
+}
+
 const getConfigVersion = `-- name: GetConfigVersion :one
 SELECT id, node_id, description, payload, create_time
 FROM config_versions
@@ -280,6 +302,23 @@ WHERE id = ?1
 
 func (q *Queries) GetNode(ctx context.Context, id int64) (Node, error) {
 	row := q.db.QueryRowContext(ctx, getNode, id)
+	var i Node
+	err := row.Scan(
+		&i.ID,
+		&i.Hostname,
+		&i.SiteID,
+		&i.SecretHash,
+		&i.CreateTime,
+	)
+	return i, err
+}
+
+const getNodeBySecretHash = `-- name: GetNodeBySecretHash :one
+SELECT id, hostname, site_id, secret_hash, create_time FROM nodes WHERE secret_hash = ?1
+`
+
+func (q *Queries) GetNodeBySecretHash(ctx context.Context, secretHash []byte) (Node, error) {
+	row := q.db.QueryRowContext(ctx, getNodeBySecretHash, secretHash)
 	var i Node
 	err := row.Scan(
 		&i.ID,
