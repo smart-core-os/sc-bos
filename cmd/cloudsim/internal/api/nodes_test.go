@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -97,13 +98,13 @@ func TestNodes_Create(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			e := tc.setupEnv(t)
-			var got Node
+			var got CreateNodeResponse
 			resp := doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), tc.reqBody(e), &got)
 			assertStatus(t, resp, tc.expectCode)
 
 			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 				want := tc.expect(e)
-				if diff := cmp.Diff(want, got, cmpopts.IgnoreFields(Node{}, "ID", "CreateTime")); diff != "" {
+				if diff := cmp.Diff(want, got.Node, cmpopts.IgnoreFields(Node{}, "ID", "CreateTime")); diff != "" {
 					t.Errorf("response mismatch (-want +got):\n%s", diff)
 				}
 				if got.ID == 0 {
@@ -115,6 +116,30 @@ func TestNodes_Create(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("returns secret", func(t *testing.T) {
+		e := setupNodesEnv(t)
+		var got CreateNodeResponse
+		resp := doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
+			"hostname": "secret-node",
+			"siteId":   e.site.ID,
+		}, &got)
+		assertStatus(t, resp, http.StatusCreated)
+		if len(got.Secret) != 32 {
+			t.Errorf("expected 32-byte secret, got %d bytes", len(got.Secret))
+		}
+
+		// A second create should return a different secret
+		var got2 CreateNodeResponse
+		resp = doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
+			"hostname": "secret-node-2",
+			"siteId":   e.site.ID,
+		}, &got2)
+		assertStatus(t, resp, http.StatusCreated)
+		if bytes.Equal(got.Secret, got2.Secret) {
+			t.Error("expected different secrets for different nodes")
+		}
+	})
 
 	t.Run("invalid json", func(t *testing.T) {
 		e := setupNodesEnv(t)
@@ -144,6 +169,16 @@ func TestNodes_Get(t *testing.T) {
 		e := setupNodesEnv(t)
 		resp := doRequest(t, e.client, "GET", listNodesURL(e.testServer.URL)+"/99999", nil, nil)
 		assertStatus(t, resp, http.StatusNotFound)
+	})
+
+	t.Run("does not return secret", func(t *testing.T) {
+		e := setupNodesEnv(t)
+		var raw map[string]any
+		resp := doRequest(t, e.client, "GET", nodeURL(e.testServer.URL, e.node.ID), nil, &raw)
+		assertStatus(t, resp, http.StatusOK)
+		if _, ok := raw["secret"]; ok {
+			t.Error("GET node response should not contain secret")
+		}
 	})
 }
 
@@ -327,6 +362,19 @@ func TestNodes_List(t *testing.T) {
 			t.Errorf("expected 1 node on second page, got %d", len(page2.Items))
 		}
 	})
+
+	t.Run("does not return secret", func(t *testing.T) {
+		e := setupNodesEnv(t)
+		var res ListResponse[map[string]any]
+		resp := doRequest(t, e.client, "GET", listNodesURL(e.testServer.URL), nil, &res)
+		assertStatus(t, resp, http.StatusOK)
+
+		for i, item := range res.Items {
+			if _, ok := item["secret"]; ok {
+				t.Errorf("item %d in list response should not contain secret", i)
+			}
+		}
+	})
 }
 
 func TestNodes_Delete(t *testing.T) {
@@ -349,6 +397,54 @@ func TestNodes_Delete(t *testing.T) {
 		e := setupNodesEnv(t)
 		testNotFound(t, e.client, "DELETE", listNodesURL(e.testServer.URL)+"/%d", nil)
 	})
+}
+
+func TestNodes_RotateSecret(t *testing.T) {
+	t.Run("rotate secret", func(t *testing.T) {
+		e := setupNodesEnv(t)
+
+		// Get original secret from create
+		var created CreateNodeResponse
+		resp := doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
+			"hostname": "rotate-node",
+			"siteId":   e.site.ID,
+		}, &created)
+		assertStatus(t, resp, http.StatusCreated)
+
+		// Rotate secret
+		var rotated CreateNodeResponse
+		resp = doRequest(t, e.client, "POST", rotateNodeSecretURL(e.testServer.URL, created.ID), nil, &rotated)
+		assertStatus(t, resp, http.StatusOK)
+
+		if len(rotated.Secret) != 32 {
+			t.Errorf("expected 32-byte secret, got %d bytes", len(rotated.Secret))
+		}
+		if bytes.Equal(created.Secret, rotated.Secret) {
+			t.Error("rotated secret should differ from original")
+		}
+		if rotated.ID != created.ID {
+			t.Errorf("expected node ID %d, got %d", created.ID, rotated.ID)
+		}
+		if rotated.Hostname != created.Hostname {
+			t.Errorf("expected hostname %q, got %q", created.Hostname, rotated.Hostname)
+		}
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		e := setupNodesEnv(t)
+		resp := doRequest(t, e.client, "POST", rotateNodeSecretURL(e.testServer.URL, 99999), nil, nil)
+		assertStatus(t, resp, http.StatusNotFound)
+	})
+
+	t.Run("invalid id", func(t *testing.T) {
+		e := setupNodesEnv(t)
+		resp := doRequest(t, e.client, "POST", e.testServer.URL+"/api/v1/management/nodes/invalid/rotate-secret", nil, nil)
+		assertStatus(t, resp, http.StatusBadRequest)
+	})
+}
+
+func rotateNodeSecretURL(base string, id int64) string {
+	return fmt.Sprintf("%s/api/v1/management/nodes/%d/rotate-secret", base, id)
 }
 
 func TestNodes_Pagination(t *testing.T) {

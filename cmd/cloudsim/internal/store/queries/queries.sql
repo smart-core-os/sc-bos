@@ -34,8 +34,8 @@ WHERE id = :id;
 -- Nodes
 
 -- name: CreateNode :one
-INSERT INTO nodes (hostname, site_id, create_time)
-VALUES (:hostname, :site_id, datetime('now', 'subsec'))
+INSERT INTO nodes (hostname, site_id, secret_hash, create_time)
+VALUES (:hostname, :site_id, :secret_hash, datetime('now', 'subsec'))
 RETURNING *;
 
 -- name: GetNode :one
@@ -71,6 +71,9 @@ UPDATE nodes
 SET hostname = :hostname, site_id = :site_id
 WHERE id = :id
 RETURNING *;
+
+-- name: UpdateNodeSecretHash :exec
+UPDATE nodes SET secret_hash = :secret_hash WHERE id = :id;
 
 -- name: DeleteNode :execrows
 DELETE FROM nodes

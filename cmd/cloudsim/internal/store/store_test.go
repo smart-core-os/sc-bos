@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"path/filepath"
 	"testing"
@@ -92,11 +93,13 @@ func TestStore_Nodes(t *testing.T) {
 	}
 
 	// Test creating a node
+	hash := sampleHash()
 	var nodeID int64
 	err = store.Write(ctx, func(tx *Tx) error {
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "TEST-AC-01",
-			SiteID:   siteID,
+			Hostname:   "TEST-AC-01",
+			SiteID:     siteID,
+			SecretHash: hash,
 		})
 		if err != nil {
 			return err
@@ -115,9 +118,10 @@ func TestStore_Nodes(t *testing.T) {
 			return err
 		}
 		want := queries.Node{
-			ID:       nodeID,
-			Hostname: "TEST-AC-01",
-			SiteID:   siteID,
+			ID:         nodeID,
+			Hostname:   "TEST-AC-01",
+			SiteID:     siteID,
+			SecretHash: hash,
 		}
 		if diff := cmp.Diff(want, node, cmpopts.IgnoreFields(queries.Node{}, "CreateTime")); diff != "" {
 			t.Errorf("node mismatch (-want +got):\n%s", diff)
@@ -158,6 +162,7 @@ func TestStore_ConfigVersions(t *testing.T) {
 
 	// Setup: create site and node
 	var nodeID int64
+	hash := sampleHash()
 	err := store.Write(ctx, func(tx *Tx) error {
 		site, err := tx.CreateSite(ctx, "Test Site")
 		if err != nil {
@@ -165,8 +170,9 @@ func TestStore_ConfigVersions(t *testing.T) {
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "TEST-AC-01",
-			SiteID:   site.ID,
+			Hostname:   "TEST-AC-01",
+			SiteID:     site.ID,
+			SecretHash: hash,
 		})
 		if err != nil {
 			return err
@@ -254,8 +260,9 @@ func TestStore_Deployments(t *testing.T) {
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "TEST-AC-01",
-			SiteID:   site.ID,
+			Hostname:   "TEST-AC-01",
+			SiteID:     site.ID,
+			SecretHash: sampleHash(),
 		})
 		if err != nil {
 			return err
@@ -393,8 +400,9 @@ func TestStore_NodeCheckIns(t *testing.T) {
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "TEST-AC-01",
-			SiteID:   site.ID,
+			Hostname:   "TEST-AC-01",
+			SiteID:     site.ID,
+			SecretHash: sampleHash(),
 		})
 		if err != nil {
 			return err
@@ -480,8 +488,9 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		siteID = site.ID
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "TEST-AC-01",
-			SiteID:   site.ID,
+			Hostname:   "TEST-AC-01",
+			SiteID:     site.ID,
+			SecretHash: sampleHash(),
 		})
 		if err != nil {
 			return err
@@ -686,9 +695,11 @@ func TestStore_CountOperations(t *testing.T) {
 		}
 		site2ID = site2.ID
 
+		hash := sampleHash()
 		node1, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "NODE-01",
-			SiteID:   site1ID,
+			Hostname:   "NODE-01",
+			SiteID:     site1ID,
+			SecretHash: hash,
 		})
 		if err != nil {
 			return err
@@ -696,8 +707,9 @@ func TestStore_CountOperations(t *testing.T) {
 		node1ID = node1.ID
 
 		node2, err := tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "NODE-02",
-			SiteID:   site1ID,
+			Hostname:   "NODE-02",
+			SiteID:     site1ID,
+			SecretHash: hash,
 		})
 		if err != nil {
 			return err
@@ -705,8 +717,9 @@ func TestStore_CountOperations(t *testing.T) {
 		node2ID = node2.ID
 
 		_, err = tx.CreateNode(ctx, queries.CreateNodeParams{
-			Hostname: "NODE-03",
-			SiteID:   site2ID,
+			Hostname:   "NODE-03",
+			SiteID:     site2ID,
+			SecretHash: hash,
 		})
 		if err != nil {
 			return err
@@ -872,4 +885,12 @@ func TestStore_UpdateNonExistent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to test update non-existent deployment: %v", err)
 	}
+}
+
+func sampleHash() []byte {
+	hash, err := hex.DecodeString("c3f3b1c9ba78a20bdbd4260044c737b4dcfbfcb0f2cd86acfe17ca36a788ee7c")
+	if err != nil {
+		panic("unreachable: failed to decode hash")
+	}
+	return hash
 }
