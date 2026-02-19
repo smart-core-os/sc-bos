@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -68,7 +69,7 @@ func setupCheckInEnv(t *testing.T) checkInEnv {
 // doCheckIn performs a check-in request with the given bearer secret and optional request body.
 func doCheckIn(t *testing.T, client *http.Client, url string, secret []byte, reqBody any, res any) *http.Response {
 	t.Helper()
-	var body *bytes.Buffer
+	var body io.Reader
 	if reqBody != nil {
 		b, err := json.Marshal(reqBody)
 		if err != nil {
@@ -420,4 +421,108 @@ func TestCheckIn_FailedDeploymentNotFound(t *testing.T) {
 	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
 		CheckInRequest{FailedDeployment: &CheckInFailedDeployment{ID: 99999}}, nil)
 	assertStatus(t, resp, http.StatusBadRequest)
+}
+
+func TestCheckIn_InstallingAdvancesPendingToInProgress(t *testing.T) {
+	e := setupCheckInEnv(t)
+
+	// Create PENDING deployment
+	var dep Deployment
+	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+		"configVersionId": e.configVersion.ID,
+	}, &dep)
+	assertStatus(t, resp, http.StatusCreated)
+
+	// Check in with installingDeployment
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+		CheckInRequest{InstallingDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
+	assertStatus(t, resp, http.StatusOK)
+
+	// Verify deployment is now IN_PROGRESS
+	var updated Deployment
+	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
+	assertStatus(t, resp, http.StatusOK)
+	if updated.Status != "IN_PROGRESS" {
+		t.Errorf("expected deployment status IN_PROGRESS, got %s", updated.Status)
+	}
+}
+
+func TestCheckIn_InstallingDoesNotAdvanceNonPending(t *testing.T) {
+	e := setupCheckInEnv(t)
+
+	// Create deployment and advance to FAILED
+	var dep Deployment
+	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+		"configVersionId": e.configVersion.ID,
+	}, &dep)
+	assertStatus(t, resp, http.StatusCreated)
+	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
+		"status": "FAILED",
+	}, &dep)
+	assertStatus(t, resp, http.StatusOK)
+
+	// Check in with installingDeployment
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+		CheckInRequest{InstallingDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
+	assertStatus(t, resp, http.StatusOK)
+
+	// Verify deployment status is still COMPLETED (no transition)
+	var updated Deployment
+	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
+	assertStatus(t, resp, http.StatusOK)
+	if updated.Status != "FAILED" {
+		t.Errorf("expected deployment status FAILED, got %s", updated.Status)
+	}
+}
+
+func TestCheckIn_CurrentAdvancesInProgressToCompleted(t *testing.T) {
+	e := setupCheckInEnv(t)
+
+	// Create deployment and advance to IN_PROGRESS
+	var dep Deployment
+	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+		"configVersionId": e.configVersion.ID,
+	}, &dep)
+	assertStatus(t, resp, http.StatusCreated)
+	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
+		"status": "IN_PROGRESS",
+	}, &dep)
+	assertStatus(t, resp, http.StatusOK)
+
+	// Check in with currentDeployment
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+		CheckInRequest{CurrentDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
+	assertStatus(t, resp, http.StatusOK)
+
+	// Verify deployment is now COMPLETED
+	var updated Deployment
+	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
+	assertStatus(t, resp, http.StatusOK)
+	if updated.Status != "COMPLETED" {
+		t.Errorf("expected deployment status COMPLETED, got %s", updated.Status)
+	}
+}
+
+func TestCheckIn_CurrentDoesNotAdvanceNonInProgress(t *testing.T) {
+	e := setupCheckInEnv(t)
+
+	// Create PENDING deployment (do not advance)
+	var dep Deployment
+	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+		"configVersionId": e.configVersion.ID,
+	}, &dep)
+	assertStatus(t, resp, http.StatusCreated)
+
+	// Check in with currentDeployment
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+		CheckInRequest{CurrentDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
+	assertStatus(t, resp, http.StatusOK)
+
+	// Verify deployment status is still PENDING (no transition)
+	var updated Deployment
+	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
+	assertStatus(t, resp, http.StatusOK)
+	if updated.Status != "PENDING" {
+		t.Errorf("expected deployment status PENDING, got %s", updated.Status)
+	}
 }

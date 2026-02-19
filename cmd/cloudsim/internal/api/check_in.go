@@ -97,6 +97,52 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
+		if req.InstallingDeployment != nil {
+			// auto-update deployment status to IN_PROGRESS when node reports it's installing, if it was PENDING before
+			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.InstallingDeployment.ID)
+			if errors.Is(err, sql.ErrNoRows) {
+				return errInvalidRequest
+			}
+			if err != nil {
+				return err
+			}
+			if row.NodeID != node.ID {
+				return errInvalidRequest
+			}
+			if row.Status == statusPending {
+				_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+					ID:     req.InstallingDeployment.ID,
+					Status: statusInProgress,
+				})
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		if req.CurrentDeployment != nil {
+			// auto-update deployment status to COMPLETED if node reports its current version
+			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.CurrentDeployment.ID)
+			if errors.Is(err, sql.ErrNoRows) {
+				return errInvalidRequest
+			}
+			if err != nil {
+				return err
+			}
+			if row.NodeID != node.ID {
+				return errInvalidRequest
+			}
+			if row.Status == statusInProgress {
+				_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+					ID:     req.CurrentDeployment.ID,
+					Status: statusCompleted,
+				})
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 		if req.FailedDeployment != nil {
 			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.FailedDeployment.ID)
 			if errors.Is(err, sql.ErrNoRows) {
