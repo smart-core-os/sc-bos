@@ -414,6 +414,8 @@ paths:
                 $ref: '#/components/schemas/Deployment'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /deployments/{id}:
     parameters:
@@ -513,6 +515,12 @@ components:
             $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Request conflicts with current state
       content:
         application/json:
           schema:
@@ -715,7 +723,7 @@ components:
           format: int64
         status:
           type: string
-          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED]
+          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
         startTime:
           type: string
           format: date-time
@@ -754,7 +762,7 @@ components:
       properties:
         status:
           type: string
-          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED]
+          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
 
     CheckInResponse:
       type: object

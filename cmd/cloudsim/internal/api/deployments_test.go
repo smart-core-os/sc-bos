@@ -162,6 +162,14 @@ func TestDeployments_Create(t *testing.T) {
 			expectCode: http.StatusBadRequest,
 		},
 		{
+			name: "CANCELLED rejected on creation",
+			reqBody: map[string]any{
+				"configVersionId": e.configVersion.ID,
+				"status":          "CANCELLED",
+			},
+			expectCode: http.StatusBadRequest,
+		},
+		{
 			name: "invalid configVersionId rejected",
 			reqBody: map[string]any{
 				"configVersionId": 99999,
@@ -197,6 +205,52 @@ func TestDeployments_Create(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("creating cancels existing PENDING", func(t *testing.T) {
+		e := setupDeploymentsEnv(t)
+		// e.deployment is the existing PENDING deployment created in setup
+
+		// Create a new deployment for the same node — should auto-cancel the existing one
+		var newDep Deployment
+		resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+			"configVersionId": e.configVersion.ID,
+			"status":          "PENDING",
+		}, &newDep)
+		assertStatus(t, resp, http.StatusCreated)
+
+		// The new deployment should be PENDING
+		if newDep.Status != "PENDING" {
+			t.Errorf("expected new deployment status PENDING, got %s", newDep.Status)
+		}
+
+		// The old deployment should now be CANCELLED
+		var old Deployment
+		resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, e.deployment.ID), nil, &old)
+		assertStatus(t, resp, http.StatusOK)
+		if old.Status != "CANCELLED" {
+			t.Errorf("expected old deployment status CANCELLED, got %s", old.Status)
+		}
+		if old.FinishedTime == nil || old.FinishedTime.IsZero() {
+			t.Error("expected finishedTime to be set on cancelled deployment")
+		}
+	})
+
+	t.Run("refused when IN_PROGRESS exists", func(t *testing.T) {
+		e := setupDeploymentsEnv(t)
+
+		// Advance the existing PENDING deployment to IN_PROGRESS
+		resp := doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, e.deployment.ID), map[string]any{
+			"status": "IN_PROGRESS",
+		}, nil)
+		assertStatus(t, resp, http.StatusOK)
+
+		// Attempt to create another deployment — should get 409
+		resp = doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+			"configVersionId": e.configVersion.ID,
+			"status":          "PENDING",
+		}, nil)
+		assertStatus(t, resp, http.StatusConflict)
+	})
 
 	t.Run("invalid json", func(t *testing.T) {
 		e := setupDeploymentsEnv(t)
@@ -269,6 +323,16 @@ func TestDeployments_Update(t *testing.T) {
 			},
 		},
 		{
+			name: "update to CANCELLED",
+			reqBody: map[string]any{
+				"status": "CANCELLED",
+			},
+			expect: Deployment{
+				Status: "CANCELLED",
+				// FinishedTime will be set by server, verified separately
+			},
+		},
+		{
 			name: "protected field ID ignored",
 			reqBody: map[string]any{
 				"id":     99999,
@@ -335,7 +399,7 @@ func TestDeployments_Update(t *testing.T) {
 			}
 
 			// Verify finishedTime behavior based on status
-			if tc.expect.Status == "COMPLETED" || tc.expect.Status == "FAILED" {
+			if tc.expect.Status == "COMPLETED" || tc.expect.Status == "FAILED" || tc.expect.Status == "CANCELLED" {
 				if d.FinishedTime == nil || d.FinishedTime.IsZero() {
 					t.Errorf("expected finishedTime to be set for %s, got %v", tc.expect.Status, d.FinishedTime)
 				}

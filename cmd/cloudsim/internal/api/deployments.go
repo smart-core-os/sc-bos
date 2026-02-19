@@ -1,7 +1,9 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -16,6 +18,7 @@ const (
 	statusInProgress = "IN_PROGRESS"
 	statusCompleted  = "COMPLETED"
 	statusFailed     = "FAILED"
+	statusCancelled  = "CANCELLED"
 )
 
 // Deployment is the JSON representation of a deployment.
@@ -62,6 +65,7 @@ var validStatuses = map[string]bool{
 	"IN_PROGRESS": true,
 	"COMPLETED":   true,
 	"FAILED":      true,
+	"CANCELLED":   true,
 }
 
 func isValidStatus(status string) bool {
@@ -165,8 +169,32 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var item queries.Deployment
+	var conflicted bool
 	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
-		var err error
+		cv, err := tx.GetConfigVersion(r.Context(), req.ConfigVersionID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return errInvalidRequest
+			}
+			return err
+		}
+
+		active, err := tx.GetActiveDeploymentByNode(r.Context(), cv.NodeID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+		if err == nil {
+			if active.Status == statusInProgress {
+				conflicted = true
+				return errDeploymentInProgress
+			}
+			// active is PENDING — cancel it
+			_, err = tx.CancelPendingDeploymentsByNode(r.Context(), cv.NodeID)
+			if err != nil {
+				return err
+			}
+		}
+
 		item, err = tx.CreateDeployment(r.Context(), queries.CreateDeploymentParams{
 			ConfigVersionID: req.ConfigVersionID,
 			Status:          status,
@@ -174,6 +202,16 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
+		if conflicted {
+			writeError(w, errDeploymentInProgress)
+			logger.Info("deployment in progress", zap.Int64("configVersionId", req.ConfigVersionID))
+			return
+		}
+		if errors.Is(err, errInvalidRequest) {
+			writeError(w, errInvalidRequest)
+			logger.Info("invalid configVersionId", zap.Int64("configVersionId", req.ConfigVersionID))
+			return
+		}
 		resErr := translateDBError(err)
 		writeError(w, resErr)
 		if resErr.internal() {
