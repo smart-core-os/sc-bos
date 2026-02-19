@@ -23,6 +23,7 @@ type Deployment struct {
 	Status          string
 	StartTime       time.Time
 	FinishedTime    sql.NullTime
+	Reason          sql.NullString
 }
 
 type Node struct {
@@ -34,9 +35,11 @@ type Node struct {
 }
 
 type NodeCheckIn struct {
-	ID          int64
-	NodeID      int64
-	CheckInTime time.Time
+	ID                     int64
+	NodeID                 int64
+	CheckInTime            time.Time
+	CurrentDeploymentID    sql.NullInt64
+	InstallingDeploymentID sql.NullInt64
 }
 
 type Site struct {

@@ -418,7 +418,7 @@ func TestStore_NodeCheckIns(t *testing.T) {
 	// Test creating a check-in
 	var checkInID int64
 	err = store.Write(ctx, func(tx *Tx) error {
-		checkIn, err := tx.CreateNodeCheckIn(ctx, nodeID)
+		checkIn, err := tx.CreateNodeCheckIn(ctx, queries.CreateNodeCheckInParams{NodeID: nodeID})
 		if err != nil {
 			return err
 		}
@@ -498,7 +498,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		}
 		nodeID = node.ID
 
-		checkIn, err := tx.CreateNodeCheckIn(ctx, node.ID)
+		checkIn, err := tx.CreateNodeCheckIn(ctx, queries.CreateNodeCheckInParams{NodeID: node.ID})
 		if err != nil {
 			return err
 		}

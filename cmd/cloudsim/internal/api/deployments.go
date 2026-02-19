@@ -28,6 +28,7 @@ type Deployment struct {
 	Status          string     `json:"status"`
 	StartTime       time.Time  `json:"startTime"`
 	FinishedTime    *time.Time `json:"finishedTime,omitempty"`
+	Reason          string     `json:"reason,omitempty"`
 }
 
 func toDeployment(d queries.Deployment) Deployment {
@@ -39,6 +40,9 @@ func toDeployment(d queries.Deployment) Deployment {
 	}
 	if d.FinishedTime.Valid {
 		out.FinishedTime = &d.FinishedTime.Time
+	}
+	if d.Reason.Valid {
+		out.Reason = d.Reason.String
 	}
 	return out
 }
@@ -58,6 +62,7 @@ type createDeploymentRequest struct {
 
 type updateDeploymentStatusRequest struct {
 	Status string `json:"status"`
+	Reason string `json:"reason,omitempty"`
 }
 
 var validStatuses = map[string]bool{
@@ -284,6 +289,7 @@ func (s *Server) updateDeploymentStatus(w http.ResponseWriter, r *http.Request) 
 		item, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
 			ID:     id,
 			Status: req.Status,
+			Reason: nullString(req.Reason),
 		})
 		return err
 	})

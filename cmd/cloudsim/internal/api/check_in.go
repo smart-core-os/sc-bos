@@ -4,7 +4,9 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -23,6 +25,24 @@ type CheckInResponse struct {
 type LatestConfig struct {
 	Deployment    Deployment    `json:"deployment"`
 	ConfigVersion ConfigVersion `json:"configVersion"`
+}
+
+// CheckInRequest is the optional request body for the check-in endpoint.
+type CheckInRequest struct {
+	CurrentDeployment    *CheckInDeploymentRef    `json:"currentDeployment,omitempty"`
+	InstallingDeployment *CheckInDeploymentRef    `json:"installingDeployment,omitempty"`
+	FailedDeployment     *CheckInFailedDeployment `json:"failedDeployment,omitempty"`
+}
+
+// CheckInDeploymentRef references a deployment by ID.
+type CheckInDeploymentRef struct {
+	ID int64 `json:"id"`
+}
+
+// CheckInFailedDeployment reports a deployment that failed, triggering a FAILED status update.
+type CheckInFailedDeployment struct {
+	ID     int64  `json:"id"`
+	Reason string `json:"reason,omitempty"`
 }
 
 // parseBearerSecret extracts a bearer token from the Authorization header,
@@ -58,6 +78,13 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var req CheckInRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && !errors.Is(err, io.EOF) {
+		writeError(w, errInvalidRequest)
+		logger.Info("invalid json", zap.Error(err))
+		return
+	}
+
 	var (
 		checkIn       queries.NodeCheckIn
 		deployment    queries.Deployment
@@ -70,7 +97,40 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		checkIn, err = tx.CreateNodeCheckIn(r.Context(), node.ID)
+		if req.FailedDeployment != nil {
+			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.FailedDeployment.ID)
+			if errors.Is(err, sql.ErrNoRows) {
+				return errInvalidRequest
+			}
+			if err != nil {
+				return err
+			}
+			if row.NodeID != node.ID {
+				return errInvalidRequest
+			}
+			_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+				ID:     req.FailedDeployment.ID,
+				Status: statusFailed,
+				Reason: nullString(req.FailedDeployment.Reason),
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		var currentID *int64
+		if req.CurrentDeployment != nil {
+			currentID = &req.CurrentDeployment.ID
+		}
+		var installingID *int64
+		if req.InstallingDeployment != nil {
+			installingID = &req.InstallingDeployment.ID
+		}
+		checkIn, err = tx.CreateNodeCheckIn(r.Context(), queries.CreateNodeCheckInParams{
+			NodeID:                 node.ID,
+			CurrentDeploymentID:    nullInt64(currentID),
+			InstallingDeploymentID: nullInt64(installingID),
+		})
 		if err != nil {
 			return err
 		}
@@ -92,6 +152,11 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			// Node not found by secret hash — return 401 to avoid revealing existence
 			writeError(w, errUnauthorized)
 			logger.Debug("check-in with unknown secret hash")
+			return
+		}
+		if errors.Is(err, errInvalidRequest) {
+			writeError(w, errInvalidRequest)
+			logger.Info("invalid check-in request")
 			return
 		}
 		writeError(w, errInternal)

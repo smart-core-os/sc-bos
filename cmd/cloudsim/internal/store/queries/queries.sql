@@ -82,8 +82,8 @@ WHERE id = :id;
 -- Node Check-Ins
 
 -- name: CreateNodeCheckIn :one
-INSERT INTO node_check_ins (node_id, check_in_time)
-VALUES (:node_id, datetime('now', 'subsec'))
+INSERT INTO node_check_ins (node_id, check_in_time, current_deployment_id, installing_deployment_id)
+VALUES (:node_id, datetime('now', 'subsec'), :current_deployment_id, :installing_deployment_id)
 RETURNING *;
 
 -- name: GetNodeCheckIn :one
@@ -145,6 +145,12 @@ SELECT *
 FROM deployments
 WHERE id = :id;
 
+-- name: GetDeploymentWithConfigVersion :one
+SELECT d.*, cv.*
+FROM deployments d
+JOIN config_versions cv ON d.config_version_id = cv.id
+WHERE d.id = :id;
+
 -- name: ListDeployments :many
 SELECT *
 FROM deployments
@@ -174,6 +180,7 @@ FROM deployments;
 -- name: UpdateDeploymentStatus :one
 UPDATE deployments
 SET status = :status,
+    reason = :reason,
     finished_time = CASE
         WHEN :status = 'COMPLETED' OR :status = 'FAILED' OR :status = 'CANCELLED' THEN datetime('now', 'subsec')
         ELSE finished_time

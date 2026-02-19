@@ -19,6 +19,12 @@ paths:
         and returns the newest active deployment (if any).
       security:
         - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckInRequest'
       responses:
         '200':
           description: Check-in recorded successfully
@@ -26,6 +32,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CheckInResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -653,6 +661,14 @@ components:
         checkInTime:
           type: string
           format: date-time
+        currentDeploymentId:
+          type: integer
+          format: int64
+          nullable: true
+        installingDeploymentId:
+          type: integer
+          format: int64
+          nullable: true
 
     NodeCheckInList:
       type: object
@@ -731,6 +747,10 @@ components:
           type: string
           format: date-time
           nullable: true
+        reason:
+          type: string
+          nullable: true
+          description: Optional reason for failure or cancellation
 
     DeploymentList:
       type: object
@@ -763,6 +783,47 @@ components:
         status:
           type: string
           enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+        reason:
+          type: string
+          description: Optional reason, typically used for FAILED or CANCELLED status
+
+    CheckInRequest:
+      type: object
+      properties:
+        currentDeployment:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CheckInDeploymentRef'
+          description: The deployment currently running on this node
+        installingDeployment:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CheckInDeploymentRef'
+          description: The deployment currently being installed on this node
+        failedDeployment:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CheckInFailedDeployment'
+          description: A deployment that just failed; triggers status update to FAILED
+
+    CheckInDeploymentRef:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: integer
+          format: int64
+
+    CheckInFailedDeployment:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: integer
+          format: int64
+        reason:
+          type: string
+          description: Reason the deployment failed
 
     CheckInResponse:
       type: object

@@ -8,6 +8,7 @@ package queries
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const cancelPendingDeploymentsByNode = `-- name: CancelPendingDeploymentsByNode :execrows
@@ -107,7 +108,7 @@ const createDeployment = `-- name: CreateDeployment :one
 
 INSERT INTO deployments (config_version_id, status, start_time, finished_time)
 VALUES (?1, ?2, datetime('now', 'subsec'), NULL)
-RETURNING id, config_version_id, status, start_time, finished_time
+RETURNING id, config_version_id, status, start_time, finished_time, reason
 `
 
 type CreateDeploymentParams struct {
@@ -125,6 +126,7 @@ func (q *Queries) CreateDeployment(ctx context.Context, arg CreateDeploymentPara
 		&i.Status,
 		&i.StartTime,
 		&i.FinishedTime,
+		&i.Reason,
 	)
 	return i, err
 }
@@ -158,16 +160,28 @@ func (q *Queries) CreateNode(ctx context.Context, arg CreateNodeParams) (Node, e
 
 const createNodeCheckIn = `-- name: CreateNodeCheckIn :one
 
-INSERT INTO node_check_ins (node_id, check_in_time)
-VALUES (?1, datetime('now', 'subsec'))
-RETURNING id, node_id, check_in_time
+INSERT INTO node_check_ins (node_id, check_in_time, current_deployment_id, installing_deployment_id)
+VALUES (?1, datetime('now', 'subsec'), ?2, ?3)
+RETURNING id, node_id, check_in_time, current_deployment_id, installing_deployment_id
 `
 
+type CreateNodeCheckInParams struct {
+	NodeID                 int64
+	CurrentDeploymentID    sql.NullInt64
+	InstallingDeploymentID sql.NullInt64
+}
+
 // Node Check-Ins
-func (q *Queries) CreateNodeCheckIn(ctx context.Context, nodeID int64) (NodeCheckIn, error) {
-	row := q.db.QueryRowContext(ctx, createNodeCheckIn, nodeID)
+func (q *Queries) CreateNodeCheckIn(ctx context.Context, arg CreateNodeCheckInParams) (NodeCheckIn, error) {
+	row := q.db.QueryRowContext(ctx, createNodeCheckIn, arg.NodeID, arg.CurrentDeploymentID, arg.InstallingDeploymentID)
 	var i NodeCheckIn
-	err := row.Scan(&i.ID, &i.NodeID, &i.CheckInTime)
+	err := row.Scan(
+		&i.ID,
+		&i.NodeID,
+		&i.CheckInTime,
+		&i.CurrentDeploymentID,
+		&i.InstallingDeploymentID,
+	)
 	return i, err
 }
 
@@ -252,7 +266,7 @@ func (q *Queries) DeleteSite(ctx context.Context, id int64) (int64, error) {
 }
 
 const getActiveDeploymentByNode = `-- name: GetActiveDeploymentByNode :one
-SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time
+SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time, d.reason
 FROM deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
 WHERE cv.node_id = ?1 AND d.status IN ('PENDING', 'IN_PROGRESS')
@@ -269,6 +283,7 @@ func (q *Queries) GetActiveDeploymentByNode(ctx context.Context, nodeID int64) (
 		&i.Status,
 		&i.StartTime,
 		&i.FinishedTime,
+		&i.Reason,
 	)
 	return i, err
 }
@@ -293,7 +308,7 @@ func (q *Queries) GetConfigVersion(ctx context.Context, id int64) (ConfigVersion
 }
 
 const getDeployment = `-- name: GetDeployment :one
-SELECT id, config_version_id, status, start_time, finished_time
+SELECT id, config_version_id, status, start_time, finished_time, reason
 FROM deployments
 WHERE id = ?1
 `
@@ -307,6 +322,47 @@ func (q *Queries) GetDeployment(ctx context.Context, id int64) (Deployment, erro
 		&i.Status,
 		&i.StartTime,
 		&i.FinishedTime,
+		&i.Reason,
+	)
+	return i, err
+}
+
+const getDeploymentWithConfigVersion = `-- name: GetDeploymentWithConfigVersion :one
+SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time, d.reason, cv.id, cv.node_id, cv.description, cv.payload, cv.create_time
+FROM deployments d
+JOIN config_versions cv ON d.config_version_id = cv.id
+WHERE d.id = ?1
+`
+
+type GetDeploymentWithConfigVersionRow struct {
+	ID              int64
+	ConfigVersionID int64
+	Status          string
+	StartTime       time.Time
+	FinishedTime    sql.NullTime
+	Reason          sql.NullString
+	ID_2            int64
+	NodeID          int64
+	Description     sql.NullString
+	Payload         []byte
+	CreateTime      time.Time
+}
+
+func (q *Queries) GetDeploymentWithConfigVersion(ctx context.Context, id int64) (GetDeploymentWithConfigVersionRow, error) {
+	row := q.db.QueryRowContext(ctx, getDeploymentWithConfigVersion, id)
+	var i GetDeploymentWithConfigVersionRow
+	err := row.Scan(
+		&i.ID,
+		&i.ConfigVersionID,
+		&i.Status,
+		&i.StartTime,
+		&i.FinishedTime,
+		&i.Reason,
+		&i.ID_2,
+		&i.NodeID,
+		&i.Description,
+		&i.Payload,
+		&i.CreateTime,
 	)
 	return i, err
 }
@@ -348,7 +404,7 @@ func (q *Queries) GetNodeBySecretHash(ctx context.Context, secretHash []byte) (N
 }
 
 const getNodeCheckIn = `-- name: GetNodeCheckIn :one
-SELECT id, node_id, check_in_time
+SELECT id, node_id, check_in_time, current_deployment_id, installing_deployment_id
 FROM node_check_ins
 WHERE id = ?1
 `
@@ -356,7 +412,13 @@ WHERE id = ?1
 func (q *Queries) GetNodeCheckIn(ctx context.Context, id int64) (NodeCheckIn, error) {
 	row := q.db.QueryRowContext(ctx, getNodeCheckIn, id)
 	var i NodeCheckIn
-	err := row.Scan(&i.ID, &i.NodeID, &i.CheckInTime)
+	err := row.Scan(
+		&i.ID,
+		&i.NodeID,
+		&i.CheckInTime,
+		&i.CurrentDeploymentID,
+		&i.InstallingDeploymentID,
+	)
 	return i, err
 }
 
@@ -459,7 +521,7 @@ func (q *Queries) ListConfigVersionsByNode(ctx context.Context, arg ListConfigVe
 }
 
 const listDeployments = `-- name: ListDeployments :many
-SELECT id, config_version_id, status, start_time, finished_time
+SELECT id, config_version_id, status, start_time, finished_time, reason
 FROM deployments
 WHERE id > ?1
 ORDER BY id
@@ -486,6 +548,7 @@ func (q *Queries) ListDeployments(ctx context.Context, arg ListDeploymentsParams
 			&i.Status,
 			&i.StartTime,
 			&i.FinishedTime,
+			&i.Reason,
 		); err != nil {
 			return nil, err
 		}
@@ -501,7 +564,7 @@ func (q *Queries) ListDeployments(ctx context.Context, arg ListDeploymentsParams
 }
 
 const listDeploymentsByConfigVersion = `-- name: ListDeploymentsByConfigVersion :many
-SELECT id, config_version_id, status, start_time, finished_time
+SELECT id, config_version_id, status, start_time, finished_time, reason
 FROM deployments
 WHERE config_version_id = ?1 AND id > ?2
 ORDER BY id
@@ -529,6 +592,7 @@ func (q *Queries) ListDeploymentsByConfigVersion(ctx context.Context, arg ListDe
 			&i.Status,
 			&i.StartTime,
 			&i.FinishedTime,
+			&i.Reason,
 		); err != nil {
 			return nil, err
 		}
@@ -544,7 +608,7 @@ func (q *Queries) ListDeploymentsByConfigVersion(ctx context.Context, arg ListDe
 }
 
 const listDeploymentsByNode = `-- name: ListDeploymentsByNode :many
-SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time
+SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time, d.reason
 FROM deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
 WHERE cv.node_id = ?1 AND d.id > ?2
@@ -573,6 +637,7 @@ func (q *Queries) ListDeploymentsByNode(ctx context.Context, arg ListDeployments
 			&i.Status,
 			&i.StartTime,
 			&i.FinishedTime,
+			&i.Reason,
 		); err != nil {
 			return nil, err
 		}
@@ -588,7 +653,7 @@ func (q *Queries) ListDeploymentsByNode(ctx context.Context, arg ListDeployments
 }
 
 const listNodeCheckInsByNode = `-- name: ListNodeCheckInsByNode :many
-SELECT id, node_id, check_in_time
+SELECT id, node_id, check_in_time, current_deployment_id, installing_deployment_id
 FROM node_check_ins
 WHERE node_id = ?1 AND id > ?2
 ORDER BY id
@@ -610,7 +675,13 @@ func (q *Queries) ListNodeCheckInsByNode(ctx context.Context, arg ListNodeCheckI
 	var items []NodeCheckIn
 	for rows.Next() {
 		var i NodeCheckIn
-		if err := rows.Scan(&i.ID, &i.NodeID, &i.CheckInTime); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.NodeID,
+			&i.CheckInTime,
+			&i.CurrentDeploymentID,
+			&i.InstallingDeploymentID,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -748,21 +819,23 @@ func (q *Queries) ListSites(ctx context.Context, arg ListSitesParams) ([]Site, e
 const updateDeploymentStatus = `-- name: UpdateDeploymentStatus :one
 UPDATE deployments
 SET status = ?1,
+    reason = ?2,
     finished_time = CASE
         WHEN ?1 = 'COMPLETED' OR ?1 = 'FAILED' OR ?1 = 'CANCELLED' THEN datetime('now', 'subsec')
         ELSE finished_time
     END
-WHERE id = ?2
-RETURNING id, config_version_id, status, start_time, finished_time
+WHERE id = ?3
+RETURNING id, config_version_id, status, start_time, finished_time, reason
 `
 
 type UpdateDeploymentStatusParams struct {
 	Status string
+	Reason sql.NullString
 	ID     int64
 }
 
 func (q *Queries) UpdateDeploymentStatus(ctx context.Context, arg UpdateDeploymentStatusParams) (Deployment, error) {
-	row := q.db.QueryRowContext(ctx, updateDeploymentStatus, arg.Status, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateDeploymentStatus, arg.Status, arg.Reason, arg.ID)
 	var i Deployment
 	err := row.Scan(
 		&i.ID,
@@ -770,6 +843,7 @@ func (q *Queries) UpdateDeploymentStatus(ctx context.Context, arg UpdateDeployme
 		&i.Status,
 		&i.StartTime,
 		&i.FinishedTime,
+		&i.Reason,
 	)
 	return i, err
 }
