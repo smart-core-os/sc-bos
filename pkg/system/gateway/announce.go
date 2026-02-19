@@ -137,9 +137,8 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 			// only special names get proxied for gateway nodes
 			suffix := strings.TrimPrefix(c.name, self.name+"/")
 			return c.name == self.name || isFixedServiceName(suffix)
-		} else {
-			return true
 		}
+		return true
 	}
 	setupDevicesSub := func() {
 		var devicesCtx context.Context
@@ -444,7 +443,7 @@ func (a *announcer) ignoreRemoteService(rs protoreflect.ServiceDescriptor) bool 
 	case
 		devicespb.DevicesApi_ServiceDesc.ServiceName,          // handled by the node outside the gateway service
 		enrollmentpb.EnrollmentApi_ServiceDesc.ServiceName,    // handled by the app controller during boot
-		servicespb.ServicesApi_ServiceDesc.ServiceName,        // see announceServiceApi
+		servicespb.ServicesApi_ServiceDesc.ServiceName,        // proxied via HasProxy routes by device announcements
 		reflectionpb.ServerReflection_ServiceDesc.ServiceName, // see setup/closeReflection in announceRemoteNode
 		reflectionv1alphapb.ServerReflection_ServiceDesc.ServiceName:
 		return true

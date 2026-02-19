@@ -199,6 +199,24 @@ func (r *Router) AddRoute(service, key string, target grpc.ClientConnInterface) 
 	return nil
 }
 
+// SetRoute registers or replaces a target connection for the specified route.
+// Unlike AddRoute, SetRoute does not return ErrRouteExists; it replaces any existing route.
+// Returns ErrUnknownService if a service is specified but not registered.
+func (r *Router) SetRoute(service, key string, target grpc.ClientConnInterface) error {
+	r.m.Lock()
+	defer r.m.Unlock()
+
+	if service != "" {
+		if _, exists := r.services[service]; !exists {
+			return ErrUnknownService
+		}
+	}
+
+	id := routeID{Service: service, Key: key}
+	r.routes[id] = target
+	return nil
+}
+
 // DeleteRoute removes a route.
 // The service and key parameters are interpreted the same way as in AddRoute.
 //
@@ -213,6 +231,21 @@ func (r *Router) DeleteRoute(service, key string) (exists bool) {
 		delete(r.routes, id)
 	}
 	return exists
+}
+
+// DeleteRouteIfConn removes a route only if its current target connection is the given conn.
+// This allows callers to avoid deleting a route that has been replaced by another announcer.
+// Returns true if the route existed with the expected conn and was removed.
+func (r *Router) DeleteRouteIfConn(service, key string, conn grpc.ClientConnInterface) (deleted bool) {
+	r.m.Lock()
+	defer r.m.Unlock()
+
+	id := routeID{Service: service, Key: key}
+	if existing, exists := r.routes[id]; exists && existing == conn {
+		delete(r.routes, id)
+		return true
+	}
+	return false
 }
 
 func (r *Router) ResolveMethod(fullName string) (Method, error) {
