@@ -175,7 +175,7 @@ FROM deployments;
 UPDATE deployments
 SET status = :status,
     finished_time = CASE
-        WHEN :status = 'COMPLETED' OR :status = 'FAILED' THEN datetime('now', 'subsec')
+        WHEN :status = 'COMPLETED' OR :status = 'FAILED' OR :status = 'CANCELLED' THEN datetime('now', 'subsec')
         ELSE finished_time
     END
 WHERE id = :id
@@ -184,6 +184,14 @@ RETURNING *;
 -- name: DeleteDeployment :execrows
 DELETE FROM deployments
 WHERE id = :id;
+
+-- name: CancelPendingDeploymentsByNode :execrows
+UPDATE deployments
+SET status = 'CANCELLED',
+    finished_time = datetime('now', 'subsec')
+WHERE config_version_id IN (
+    SELECT id FROM config_versions WHERE node_id = :node_id
+) AND status = 'PENDING';
 
 -- name: GetNodeBySecretHash :one
 SELECT * FROM nodes WHERE secret_hash = :secret_hash;

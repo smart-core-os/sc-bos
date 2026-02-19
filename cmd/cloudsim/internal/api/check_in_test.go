@@ -183,7 +183,7 @@ func TestCheckIn_InProgressDeployment(t *testing.T) {
 func TestCheckIn_ReturnsNewestActive(t *testing.T) {
 	e := setupCheckInEnv(t)
 
-	// Create two active deployments
+	// Create dep1, then dep2 — creating dep2 auto-cancels dep1, leaving only dep2 active
 	var dep1 Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": e.configVersion.ID,

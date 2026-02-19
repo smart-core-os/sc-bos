@@ -10,6 +10,23 @@ import (
 	"database/sql"
 )
 
+const cancelPendingDeploymentsByNode = `-- name: CancelPendingDeploymentsByNode :execrows
+UPDATE deployments
+SET status = 'CANCELLED',
+    finished_time = datetime('now', 'subsec')
+WHERE config_version_id IN (
+    SELECT id FROM config_versions WHERE node_id = ?1
+) AND status = 'PENDING'
+`
+
+func (q *Queries) CancelPendingDeploymentsByNode(ctx context.Context, nodeID int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, cancelPendingDeploymentsByNode, nodeID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const countDeployments = `-- name: CountDeployments :one
 SELECT COUNT(*) AS count
 FROM deployments
@@ -732,7 +749,7 @@ const updateDeploymentStatus = `-- name: UpdateDeploymentStatus :one
 UPDATE deployments
 SET status = ?1,
     finished_time = CASE
-        WHEN ?1 = 'COMPLETED' OR ?1 = 'FAILED' THEN datetime('now', 'subsec')
+        WHEN ?1 = 'COMPLETED' OR ?1 = 'FAILED' OR ?1 = 'CANCELLED' THEN datetime('now', 'subsec')
         ELSE finished_time
     END
 WHERE id = ?2
