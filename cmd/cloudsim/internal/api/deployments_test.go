@@ -372,6 +372,17 @@ func TestDeployments_Update(t *testing.T) {
 				Status: "IN_PROGRESS",
 			},
 		},
+		{
+			name: "update to FAILED with reason",
+			reqBody: map[string]any{
+				"status": "FAILED",
+				"reason": "timeout",
+			},
+			expect: Deployment{
+				Status: "FAILED",
+				Reason: "timeout",
+			},
+		},
 	}
 
 	for _, tc := range testCases {

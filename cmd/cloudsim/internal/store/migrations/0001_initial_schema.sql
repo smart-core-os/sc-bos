@@ -20,19 +20,6 @@ CREATE TABLE nodes (
 CREATE INDEX nodes_site_id ON nodes (site_id);
 CREATE UNIQUE INDEX nodes_secret_hash ON nodes (secret_hash);
 
-CREATE TABLE node_check_ins (
-    id              INTEGER PRIMARY KEY,
-    node_id         INTEGER NOT NULL,
-    check_in_time   DATETIME NOT NULL,
-
-    -- can add additional fields to reflect node status at the time of check in
-
-    FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE,
-    CONSTRAINT check_in_time_format CHECK ( check_in_time IS datetime(check_in_time, 'subsec') )
-);
-
-CREATE INDEX node_check_ins_node_id ON node_check_ins (node_id);
-
 CREATE TABLE config_versions (
     id              INTEGER PRIMARY KEY,
     node_id         INTEGER NOT NULL,
@@ -52,6 +39,7 @@ CREATE TABLE deployments (
     status              TEXT NOT NULL,
     start_time          DATETIME NOT NULL,
     finished_time       DATETIME,
+    reason              TEXT, -- optional field to capture reason for failure or cancellation
 
     FOREIGN KEY (config_version_id) REFERENCES config_versions (id) ON DELETE CASCADE,
     CONSTRAINT status_valid CHECK ( status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED') ),
@@ -61,3 +49,19 @@ CREATE TABLE deployments (
 
 CREATE INDEX deployments_config_version_id ON deployments (config_version_id);
 CREATE INDEX deployments_status ON deployments (status);
+
+CREATE TABLE node_check_ins (
+    id                          INTEGER PRIMARY KEY,
+    node_id                     INTEGER NOT NULL,
+    check_in_time               DATETIME NOT NULL,
+    current_deployment_id       INTEGER,  -- can be null if node not running a deployment
+    installing_deployment_id    INTEGER, -- set when node is installing a new deployment, cleared when done
+
+    -- can add additional fields to reflect node status at the time of check in
+
+    FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE,
+    CONSTRAINT check_in_time_format CHECK ( check_in_time IS datetime(check_in_time, 'subsec') )
+);
+
+CREATE INDEX node_check_ins_node_id ON node_check_ins (node_id);
+

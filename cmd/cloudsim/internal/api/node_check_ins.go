@@ -12,17 +12,26 @@ import (
 
 // NodeCheckIn is the JSON representation of a node check-in.
 type NodeCheckIn struct {
-	ID          int64     `json:"id"`
-	NodeID      int64     `json:"nodeId"`
-	CheckInTime time.Time `json:"checkInTime"`
+	ID                     int64     `json:"id"`
+	NodeID                 int64     `json:"nodeId"`
+	CheckInTime            time.Time `json:"checkInTime"`
+	CurrentDeploymentID    *int64    `json:"currentDeploymentId,omitempty"`
+	InstallingDeploymentID *int64    `json:"installingDeploymentId,omitempty"`
 }
 
 func toNodeCheckIn(c queries.NodeCheckIn) NodeCheckIn {
-	return NodeCheckIn{
+	out := NodeCheckIn{
 		ID:          c.ID,
 		NodeID:      c.NodeID,
 		CheckInTime: c.CheckInTime,
 	}
+	if c.CurrentDeploymentID.Valid {
+		out.CurrentDeploymentID = &c.CurrentDeploymentID.Int64
+	}
+	if c.InstallingDeploymentID.Valid {
+		out.InstallingDeploymentID = &c.InstallingDeploymentID.Int64
+	}
+	return out
 }
 
 func toNodeCheckIns(checkIns []queries.NodeCheckIn) []NodeCheckIn {

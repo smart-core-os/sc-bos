@@ -47,7 +47,7 @@ func setupNodeCheckInsEnv(t *testing.T) nodeCheckInsEnv {
 	var checkIn queries.NodeCheckIn
 	err := s.Write(t.Context(), func(tx *store.Tx) error {
 		var err error
-		checkIn, err = tx.CreateNodeCheckIn(t.Context(), node.ID)
+		checkIn, err = tx.CreateNodeCheckIn(t.Context(), queries.CreateNodeCheckInParams{NodeID: node.ID})
 		return err
 	})
 	if err != nil {
@@ -156,7 +156,7 @@ func TestNodeCheckIns_List(t *testing.T) {
 		// Create more check-ins via store
 		err := e.store.Write(t.Context(), func(tx *store.Tx) error {
 			for i := 0; i < 3; i++ {
-				if _, err := tx.CreateNodeCheckIn(t.Context(), e.node.ID); err != nil {
+				if _, err := tx.CreateNodeCheckIn(t.Context(), queries.CreateNodeCheckInParams{NodeID: e.node.ID}); err != nil {
 					return err
 				}
 			}
@@ -206,7 +206,7 @@ func TestNodeCheckIns_Pagination(t *testing.T) {
 			var checkIn queries.NodeCheckIn
 			err := s.Write(t.Context(), func(tx *store.Tx) error {
 				var err error
-				checkIn, err = tx.CreateNodeCheckIn(t.Context(), node.ID)
+				checkIn, err = tx.CreateNodeCheckIn(t.Context(), queries.CreateNodeCheckInParams{NodeID: node.ID})
 				return err
 			})
 			if err != nil {
