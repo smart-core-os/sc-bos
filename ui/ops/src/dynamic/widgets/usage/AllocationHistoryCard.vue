@@ -94,9 +94,20 @@ const {startDate, endDate} = useDateScale(_start, _end, _offset);
 
 // Get legend items from the chart component
 const legendItems = computed(() => chartRef.value?.legendItems || []);
+
+const nameMapping = computed(() => chartRef.value?.nameMapping || {});
 // Get visible device names for CSV export
 const visibleDeviceNames = () => {
-  return _source.value;
+  const names = legendItems.value
+      .filter(item => !item.hidden)
+      .map(item => nameMapping.value[item.text])
+      .filter(name => name !== undefined);
+
+  if (names.length === 0) {
+    // if all items are hidden, include all devices in the download
+    return [...new Set(_source.value)];
+  }
+  return [...new Set(names)];
 };
 
 const onDownloadClick = async () => {

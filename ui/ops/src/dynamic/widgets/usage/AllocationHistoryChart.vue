@@ -48,7 +48,9 @@ const _end = useLocalProp(toRef(props, 'end'));
 const _offset = useLocalProp(toRef(props, 'offset'));
 
 const {edges, pastEdges, tickUnit} = useDateScale(_start, _end, _offset);
-const totalUsageCounts = useUsageCount(toRef(props, 'source'), pastEdges);
+const usageCount = useUsageCount(toRef(props, 'source'), pastEdges);
+const totalUsageCounts = computed(() => usageCount?.value.results);
+const nameMapping = computed(() => usageCount?.value.nameMapping);
 
 const {themeColorPlugin} = useThemeColorPlugin();
 
@@ -147,6 +149,7 @@ const chartData = computed(() => {
     datasets.push({
       label: groupId,
       data: data,
+      [datasetSourceName]: groupId,
     });
   }
 
@@ -163,6 +166,7 @@ const {legendItems, vueLegendPlugin} = useVueLegendPlugin();
 defineExpose({
   legendItems,
   datasetNames,
+  nameMapping,
 });
 </script>
 
