@@ -54,8 +54,6 @@
         <transport-history-card :history="history"/>
       </template>
     </with-transport>
-    <v-divider v-if="traits['smartcore.bsp.EmergencyLight']" class="mt-4 mb-1"/>
-    <emergency-light :name="deviceId" v-if="traits['smartcore.bsp.EmergencyLight']"/>
     <v-divider v-if="traits['smartcore.traits.Mode']" class="mt-4 mb-1"/>
     <mode-card :name="deviceId" v-if="traits['smartcore.traits.Mode']"/>
     <v-divider v-if="traits['smartcore.bos.UDMI']" class="mt-4 mb-1"/>
