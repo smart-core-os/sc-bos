@@ -112,6 +112,16 @@ func TestSystem_announceCohort(t *testing.T) {
 		th.runAnnounceCohort()
 		th.assertSimpleDevices("ac1/drivers", "ac1/automations", "ac1/zones", "ac1/systems")
 	})
+	newAnnounceTest("zone device proxied for non-gateway node", t, func(th *announceTester) {
+		th.addNode("ac1", "ac1/zones", "ac1/zone1")
+		th.runAnnounceCohort()
+		th.assertSimpleDevices("ac1/zones", "ac1/zone1")
+	})
+	newAnnounceTest("zone device not proxied for gateway node", t, func(th *announceTester) {
+		th.addGateway("gw1", "gw1", "gw1/zones", "gw1/zone1")
+		th.runAnnounceCohort()
+		th.assertSimpleDevices("gw1", "gw1/zones") // "gw1/zone1" not proxied
+	})
 	newAnnounceTest("node added", t, func(th *announceTester) {
 		th.addNode("ac1", "ac1/d1")
 		th.runAnnounceCohort()

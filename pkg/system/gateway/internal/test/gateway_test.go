@@ -321,6 +321,21 @@ func testGW(t *testing.T, ctx context.Context, addr string) {
 		testStableDeviceList(t, ctx, conn)
 	})
 
+	zoneDevices := []string{
+		"ac1/zone1",
+		"ac2/zone1",
+	}
+	t.Run("zone devices online", func(t *testing.T) {
+		for _, name := range zoneDevices {
+			waitForDevice(t, ctx, conn, name)
+		}
+	})
+	t.Run("zone services list zones", func(t *testing.T) {
+		client := servicespb.NewServicesApiClient(conn)
+		testZoneServicesApi(t, ctx, addr, "ac1/zones", "ac1/zone1", client)
+		testZoneServicesApi(t, ctx, addr, "ac2/zones", "ac2/zone1", client)
+	})
+
 	testHubApis(t, ctx, conn)
 }
 
@@ -433,6 +448,20 @@ func testServicesApi(t *testing.T, ctx context.Context, addr, name string, clien
 	if err != nil {
 		t.Fatalf("[%s] list services %s: %v", addr, name, err)
 	}
+}
+
+func testZoneServicesApi(t *testing.T, ctx context.Context, addr, name, wantZone string, client servicespb.ServicesApiClient) {
+	t.Helper()
+	res, err := client.ListServices(ctx, &servicespb.ListServicesRequest{Name: name})
+	if err != nil {
+		t.Fatalf("[%s] list services %s: %v", addr, name, err)
+	}
+	for _, svc := range res.Services {
+		if svc.Id == wantZone {
+			return
+		}
+	}
+	t.Fatalf("[%s] list services %s: zone %q not found in response (got %d services)", addr, name, wantZone, len(res.Services))
 }
 
 func testHealthApi(t *testing.T, ctx context.Context, addr, name string, client healthpb.HealthApiClient) {

@@ -13,5 +13,8 @@
         "bounds": {"normalValue": {"stringValue": "ON"}}
       }
     }
+  ],
+  "zones": [
+    {"type": "area", "name": "ac2/zone1"}
   ]
 }

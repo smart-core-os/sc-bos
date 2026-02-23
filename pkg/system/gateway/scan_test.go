@@ -152,6 +152,86 @@ func TestSystem_scanRemoteHub(t *testing.T) {
 	})
 }
 
+func TestSystem_zoneServicesWhenHubAlsoGateway(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		gw1 := newMockRemoteNode(t, "gw1")
+		hub := newMockRemoteNode(t, "hub")
+		ac1 := newMockRemoteNode(t, "ac1")
+		ac1.announceZone("ac1/zone1")
+
+		devs := devicespb.NewCollection()
+		gw1Sys := &System{
+			logger:     zaptest.NewLogger(t).With(zap.String("server", "gw1")),
+			self:       gw1.node,
+			reflection: gw1.reflect,
+			checks:     devicesToHealthCheckCollection(devs),
+			announcer:  gw1.node,
+		}
+
+		gw1Cohort := newCohort()
+
+		hubRemote := newRemoteNode("hub", hub.conn)
+		hubRemote.isHub = true
+		hubRemote.Self.Set(remoteDesc{name: "hub"})
+		hubRemote.Systems.Set(remoteSystems{msgRecvd: true})
+		for _, name := range []string{
+			"hub", "hub/zones",
+			"hub/automations", "hub/drivers", "hub/systems",
+			"automations", "drivers", "systems", "zones",
+			"ac1", "ac1/zones", "ac1/zone1",
+			"ac1/automations", "ac1/drivers", "ac1/systems",
+		} {
+			hubRemote.Devices.Set(remoteDesc{name: name})
+		}
+
+		ac1Remote := newRemoteNode("ac1", ac1.conn)
+		ac1Remote.Self.Set(remoteDesc{name: "ac1"})
+		ac1Remote.Systems.Set(remoteSystems{msgRecvd: true})
+
+		gw1Cohort.Nodes.Set(hubRemote)
+		gw1Cohort.Nodes.Set(ac1Remote)
+
+		go gw1Sys.announceCohort(t.Context(), gw1Cohort)
+		synctest.Wait()
+
+		for _, name := range []string{
+			"ac1", "ac1/zones", "ac1/zone1",
+			"ac1/automations", "ac1/drivers", "ac1/systems",
+			"automations", "drivers", "systems", "zones",
+		} {
+			ac1Remote.Devices.Set(remoteDesc{name: name})
+		}
+		synctest.Wait()
+
+		hubRemote.Systems.Set(remoteSystems{
+			msgRecvd: true,
+			gateway:  &servicespb.Service{Active: true},
+		})
+		synctest.Wait()
+
+		svcClient := servicespb.NewServicesApiClient(gw1.conn)
+
+		res, err := svcClient.ListServices(t.Context(), &servicespb.ListServicesRequest{Name: "ac1/zones"})
+		if err != nil {
+			t.Fatalf("ListServices(name=ac1/zones) via gateway after hub gateway switch: %v", err)
+		}
+		var zoneFound bool
+		for _, svc := range res.Services {
+			if svc.Id == "ac1/zone1" {
+				zoneFound = true
+				break
+			}
+		}
+		if !zoneFound {
+			ids := make([]string, len(res.Services))
+			for i, svc := range res.Services {
+				ids[i] = svc.Id
+			}
+			t.Fatalf("zone ac1/zone1 not found in ListServices(name=ac1/zones) via gateway; got %v", ids)
+		}
+	})
+}
+
 func newMockCohort(t *testing.T) (_ *mockCohort, hub *mockRemoteNode) {
 	t.Helper()
 	hub = newMockRemoteNode(t, "hub")
@@ -376,6 +456,28 @@ func (n *mockRemoteNode) announceDeviceTraits(name string, tns ...trait.Name) {
 //   - '-' it is abnormal
 //   - '>' it is high
 //   - '<' it is low
+//
+// announceZone adds a zone to this node, mirroring what pkg/zone/area/area.go does in production.
+// The zone appears in the zones service map (so ListServices(name: "<node>/zones") includes it)
+// and is announced as a device with its own ServicesApi.
+func (n *mockRemoteNode) announceZone(name string) {
+	n.t.Helper()
+	// Register in the zones service map so it shows up in ListServices(name: "<node>/zones").
+	id, _, err := n.zones.Create(name, "area", service.State{
+		Active: true,
+		Config: []byte("{}"),
+	})
+	if err != nil {
+		n.t.Fatalf("failed to create zone %q in service map: %v", name, err)
+	}
+	n.t.Cleanup(func() {
+		_, _ = n.zones.Delete(id)
+	})
+	zoneServices := service.NewMap(n.newService, service.IdIsRequired)
+	client := servicespb.WrapApi(serviceapi.NewApi(zoneServices))
+	n.node.Announce(name, node.HasClient(client))
+}
+
 func (n *mockRemoteNode) announceDeviceHealth(name string, checks ...string) {
 	n.t.Helper()
 	if len(checks) == 0 {
