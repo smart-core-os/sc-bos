@@ -12,7 +12,10 @@ import {computed, reactive, toValue} from 'vue';
  *
  * @param {import('vue').MaybeRefOrGetter<string[]>} names
  * @param {import('vue').MaybeRefOrGetter<Date[]>} edges
- * @return {import('vue').ComputedRef<{x: Date, groups: Record<string, {x: Date, y: number, last: number}>}[]>}
+ * @return {import('vue').ComputedRef<{
+ *  results: {x: Date, groups: Record<string, {x: Date, y: number, last: number}>}[],
+ *  nameMapping: Record<string, string>
+ * }>}
  */
 export function useUsageCount(names, edges) {
   // As there's no way to MAX aggregate results by groupId from the history api we have to do it ourselves.
@@ -20,6 +23,10 @@ export function useUsageCount(names, edges) {
   const countsByEdge = reactive(
       /** @type {{number: Record<string, {x: Date, y: number, last: number}>}} */
       {} // keyed by the leading edges .getTime()
+  );
+  const nameMapping = reactive(
+      /** @type {Record<string, string>} */
+      {} // keyed by groupId, value is the most recent name for that groupId according to the data we've fetched so far
   );
   asyncWatch([() => toValue(names), () => toValue(edges)], async ([names, edges], [oldNames, oldEdges]) => {
     if (names !== oldNames || edges !== oldEdges) {
@@ -51,7 +58,7 @@ export function useUsageCount(names, edges) {
         }
       }
       let countBefore = i > 0 ? countsByEdge[edges[i - 1]?.getTime()]?.last ?? null : null;
-      const records = await readUsageCountSeries(names, toFetch, countBefore);
+      const {results: records, nameMapping: nameMap} = await readUsageCountSeries(names, toFetch, countBefore);
       if (Object.keys(records).length === 0) {
         countsByEdge[edges[i].getTime()] = {};
         continue;
@@ -66,16 +73,24 @@ export function useUsageCount(names, edges) {
           countsByEdge[record.x.getTime()][dataset] = record.y;
         }
       }
+
+      // Overwrite name mapping with the most recent data, in case there are any changes to the group Ids for device names.
+      for (const name in nameMap) {
+        nameMapping[name] = nameMap[name];
+      }
     }
   }, {immediate: true});
 
   return computed(() => {
-    return Object.entries(countsByEdge)
-        .map(([timestamp, groupData]) => ({
-          x: new Date(Number(timestamp)),
-          groups: groupData
-        }))
-        .sort((a, b) => a.x.getTime() - b.x.getTime());
+    return {
+      results: Object.entries(countsByEdge)
+          .map(([timestamp, groupData]) => ({
+            x: new Date(Number(timestamp)),
+            groups: groupData
+          }))
+          .sort((a, b) => a.x.getTime() - b.x.getTime()),
+      nameMapping: nameMapping
+    };
   });
 }
 
@@ -88,7 +103,10 @@ export function useUsageCount(names, edges) {
  * @param {string[]} names
  * @param {Date[]} edges
  * @param {number | null} [countBefore] - the usage count before the first edge, if not null
- * @return {Promise<{string: {x: Date, y: number, last: number}[]}>} - of size edges.length - 1
+ * @return {{
+ *  results: Promise<{string: {x: Date, y: number, last: number}[]}>,
+ *  nameMapping: Record<string, string>
+ * }}
  */
 async function readUsageCountSeries(names, edges, countBefore) {
   const findEdges = (edges, at) => {
@@ -112,7 +130,9 @@ async function readUsageCountSeries(names, edges, countBefore) {
   }
 
   /** @type {({x: Date, y: number, total: number, sum: number, last: number}[])} */
-  const dstArr = Array(edges.length - 1).fill(null);
+  const results = Array(edges.length - 1).fill(null);
+  /** @type {Record<string, string>} */
+  const nameMapping = {};
   /** @type {{string: {x: Date, y: number, last: number}[]}} */
   const dst = {};
   let copySrc;
@@ -151,7 +171,7 @@ async function readUsageCountSeries(names, edges, countBefore) {
         }
 
         if (!d) {
-          d = [...dstArr]
+          d = [...results]
         }
 
         if (d[beforeIdx]) {
@@ -172,6 +192,8 @@ async function readUsageCountSeries(names, edges, countBefore) {
 
         calcY(d, beforeIdx);
         dst[record.allocation.groupId] = d;
+
+        nameMapping[record.allocation.groupId] = name;
       }
 
       req.pageToken = resp.nextPageToken;
@@ -227,5 +249,5 @@ async function readUsageCountSeries(names, edges, countBefore) {
     dst[dataset] = d;
   }
 
-  return dst;
+  return {results: dst, nameMapping: nameMapping};
 }
