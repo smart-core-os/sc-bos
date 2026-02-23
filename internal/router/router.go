@@ -236,7 +236,7 @@ func (r *Router) DeleteRoute(service, key string) (exists bool) {
 // DeleteRouteIfConn removes a route only if its current target connection is the given conn.
 // This allows callers to avoid deleting a route that has been replaced by another announcer.
 // Returns true if the route existed with the expected conn and was removed.
-func (r *Router) DeleteRouteIfConn(service, key string, conn grpc.ClientConnInterface) (deleted bool) {
+func (r *Router) DeleteRouteIfConn(service, key string, conn grpc.ClientConnInterface) bool {
 	r.m.Lock()
 	defer r.m.Unlock()
 
