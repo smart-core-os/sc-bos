@@ -62,6 +62,10 @@ const props = defineProps({
     type: [Number, String],
     default: 0, // when start/End is 'month', 'day', etc. offset that value into the past, like 'last month'
   },
+  downloadEnterLeave: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 const _start = useLocalProp(toRef(props, 'start'));
@@ -70,17 +74,35 @@ const _offset = useLocalProp(toRef(props, 'offset'));
 const {startDate, endDate} = useDateScale(_start, _end, _offset);
 
 const onDownloadClick = async () => {
+  if (!props.downloadEnterLeave) {
+    await triggerDownload(
+        props.title?.toLowerCase()?.replace(' ', '-') ?? 'people-count',
+        {conditionsList: [{field: 'name', stringEqual: props.totalOccupancyName}]},
+        {startTime: startDate.value, endTime: endDate.value},
+        {
+          includeColsList: [
+            {name: 'timestamp', title: 'Reading Time'},
+            {name: 'md.name', title: 'Device Name'},
+            // see devices/download_data.go for list of available fields
+            {name: 'occupancy.state', title: 'State'},
+            {name: 'occupancy.peoplecount', title: 'People Count'},
+          ]
+        }
+    )
+    return;
+  }
+
   await triggerDownload(
-      props.title?.toLowerCase()?.replace(' ', '-') ?? 'people-count',
+      props.title?.toLowerCase()?.replace(' ', '-') ?? 'people-count-enter-leave',
       {conditionsList: [{field: 'name', stringEqual: props.totalOccupancyName}]},
       {startTime: startDate.value, endTime: endDate.value},
       {
         includeColsList: [
-          {name: 'timestamp', title: 'Reading Time'},
+          {name: 'timestamp', title: 'Event Time'},
           {name: 'md.name', title: 'Device Name'},
           // see devices/download_data.go for list of available fields
-          {name: 'occupancy.state', title: 'State'},
-          {name: 'occupancy.peoplecount', title: 'People Count'},
+          {name: 'enterleave.entertotal', title: 'Enter Total'},
+          {name: 'enterleave.leavetotal', title: 'Leave Total'},
         ]
       }
   )
