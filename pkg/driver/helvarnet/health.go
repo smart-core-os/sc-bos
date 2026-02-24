@@ -75,6 +75,9 @@ func statusToHealthCode(status int64) *gen_healthpb.HealthCheck_Error_Code {
 }
 
 func updateDeviceFaults(ctx context.Context, status int64, fc *healthpb.FaultCheck) {
+	if fc == nil {
+		return
+	}
 
 	// Handle negative status codes for special conditions, mainly comms issues
 	if status < 0 {

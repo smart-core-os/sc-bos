@@ -67,7 +67,23 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	rootAnnouncer := d.announcer.Replace(ctx)
 	grp, ctx := errgroup.WithContext(ctx)
 	d.clients = make(map[string]*tcpClient)
-	var faultChecks []*healthpb.FaultCheck
+	var faultChecks map[string]*healthpb.FaultCheck
+
+	createFaultCheck := func(name string) *healthpb.FaultCheck {
+		faultCheck, ok := faultChecks[name]
+
+		if !ok {
+			var err error
+			faultCheck, err = d.health.NewFaultCheck(name, getDeviceHealthCheck())
+			if err != nil {
+				d.logger.Error("failed to create health check", zap.String("device", name), zap.Error(err))
+			} else {
+				faultChecks[name] = faultCheck
+			}
+		}
+
+		return faultCheck
+	}
 
 	for _, l := range cfg.LightingGroups {
 		if _, ok := d.clients[l.IpAddress]; !ok {
@@ -109,12 +125,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		lum := newLight(d.clients[l.IpAddress], d.logger, l, d.database, false)
 
-		faultCheck, err := d.health.NewFaultCheck(l.Name, getDeviceHealthCheck())
-		if err != nil {
-			d.logger.Error("failed to create health check", zap.String("device", l.Name), zap.Error(err))
-			return err
-		}
-		faultChecks = append(faultChecks, faultCheck)
+		faultCheck := createFaultCheck(l.Name)
 
 		rootAnnouncer.Announce(l.Name,
 			node.HasTrait(trait.Light,
@@ -125,6 +136,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		grp.Go(func() error {
 			return lum.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck)
 		})
+
 	}
 
 	for _, pir := range cfg.Pirs {
@@ -161,12 +173,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			d.logger.Error("loadTestResults error", zap.Error(err))
 		}
 
-		faultCheck, err := d.health.NewFaultCheck(em.Name, getDeviceHealthCheck())
-		if err != nil {
-			d.logger.Error("failed to create health check", zap.String("device", em.Name), zap.Error(err))
-			return err
-		}
-		faultChecks = append(faultChecks, faultCheck)
+		faultCheck := createFaultCheck(em.Name)
 
 		rootAnnouncer.Announce(em.Name,
 			node.HasTrait(trait.Light,
