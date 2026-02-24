@@ -82,8 +82,8 @@ WHERE id = :id;
 -- Node Check-Ins
 
 -- name: CreateNodeCheckIn :one
-INSERT INTO node_check_ins (node_id, check_in_time, current_deployment_id, installing_deployment_id)
-VALUES (:node_id, datetime('now', 'subsec'), :current_deployment_id, :installing_deployment_id)
+INSERT INTO node_check_ins (node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts)
+VALUES (:node_id, datetime('now', 'subsec'), :current_deployment_id, :installing_deployment_id, :installing_deployment_error, :installing_deployment_attempts)
 RETURNING *;
 
 -- name: GetNodeCheckIn :one

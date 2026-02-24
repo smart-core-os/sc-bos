@@ -29,9 +29,16 @@ type LatestConfig struct {
 
 // CheckInRequest is the optional request body for the check-in endpoint.
 type CheckInRequest struct {
-	CurrentDeployment    *CheckInDeploymentRef    `json:"currentDeployment,omitempty"`
-	InstallingDeployment *CheckInDeploymentRef    `json:"installingDeployment,omitempty"`
-	FailedDeployment     *CheckInFailedDeployment `json:"failedDeployment,omitempty"`
+	CurrentDeployment    *CheckInDeploymentRef        `json:"currentDeployment,omitempty"`
+	InstallingDeployment *CheckInInstallingDeployment `json:"installingDeployment,omitempty"`
+	FailedDeployment     *CheckInFailedDeployment     `json:"failedDeployment,omitempty"`
+}
+
+// CheckInInstallingDeployment references a deployment being installed, optionally with error and attempt info.
+type CheckInInstallingDeployment struct {
+	ID       int64  `json:"id"`
+	Error    string `json:"error,omitempty"`
+	Attempts int    `json:"attempts,omitempty"`
 }
 
 // CheckInDeploymentRef references a deployment by ID.
@@ -172,10 +179,18 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 		if req.InstallingDeployment != nil {
 			installingID = &req.InstallingDeployment.ID
 		}
+		var installingError string
+		var installingAttempts int
+		if req.InstallingDeployment != nil {
+			installingError = req.InstallingDeployment.Error
+			installingAttempts = req.InstallingDeployment.Attempts
+		}
 		checkIn, err = tx.CreateNodeCheckIn(r.Context(), queries.CreateNodeCheckInParams{
-			NodeID:                 node.ID,
-			CurrentDeploymentID:    nullInt64(currentID),
-			InstallingDeploymentID: nullInt64(installingID),
+			NodeID:                       node.ID,
+			CurrentDeploymentID:          nullInt64(currentID),
+			InstallingDeploymentID:       nullInt64(installingID),
+			InstallingDeploymentError:    nullString(installingError),
+			InstallingDeploymentAttempts: nullInt64FromInt(installingAttempts),
 		})
 		if err != nil {
 			return err

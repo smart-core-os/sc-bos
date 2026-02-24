@@ -51,11 +51,13 @@ CREATE INDEX deployments_config_version_id ON deployments (config_version_id);
 CREATE INDEX deployments_status ON deployments (status);
 
 CREATE TABLE node_check_ins (
-    id                          INTEGER PRIMARY KEY,
-    node_id                     INTEGER NOT NULL,
-    check_in_time               DATETIME NOT NULL,
-    current_deployment_id       INTEGER,  -- can be null if node not running a deployment
-    installing_deployment_id    INTEGER, -- set when node is installing a new deployment, cleared when done
+    id                              INTEGER PRIMARY KEY,
+    node_id                         INTEGER NOT NULL,
+    check_in_time                   DATETIME NOT NULL,
+    current_deployment_id           INTEGER,  -- can be null if node not running a deployment
+    installing_deployment_id        INTEGER, -- set when node is installing a new deployment, cleared when done
+    installing_deployment_error     TEXT,
+    installing_deployment_attempts  INTEGER,
 
     -- can add additional fields to reflect node status at the time of check in
 

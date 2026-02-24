@@ -12,11 +12,13 @@ import (
 
 // NodeCheckIn is the JSON representation of a node check-in.
 type NodeCheckIn struct {
-	ID                     int64     `json:"id"`
-	NodeID                 int64     `json:"nodeId"`
-	CheckInTime            time.Time `json:"checkInTime"`
-	CurrentDeploymentID    *int64    `json:"currentDeploymentId,omitempty"`
-	InstallingDeploymentID *int64    `json:"installingDeploymentId,omitempty"`
+	ID                           int64     `json:"id"`
+	NodeID                       int64     `json:"nodeId"`
+	CheckInTime                  time.Time `json:"checkInTime"`
+	CurrentDeploymentID          *int64    `json:"currentDeploymentId,omitempty"`
+	InstallingDeploymentID       *int64    `json:"installingDeploymentId,omitempty"`
+	InstallingDeploymentError    string    `json:"installingDeploymentError,omitempty"`
+	InstallingDeploymentAttempts *int64    `json:"installingDeploymentAttempts,omitempty"`
 }
 
 func toNodeCheckIn(c queries.NodeCheckIn) NodeCheckIn {
@@ -30,6 +32,12 @@ func toNodeCheckIn(c queries.NodeCheckIn) NodeCheckIn {
 	}
 	if c.InstallingDeploymentID.Valid {
 		out.InstallingDeploymentID = &c.InstallingDeploymentID.Int64
+	}
+	if c.InstallingDeploymentError.Valid {
+		out.InstallingDeploymentError = c.InstallingDeploymentError.String
+	}
+	if c.InstallingDeploymentAttempts.Valid {
+		out.InstallingDeploymentAttempts = &c.InstallingDeploymentAttempts.Int64
 	}
 	return out
 }

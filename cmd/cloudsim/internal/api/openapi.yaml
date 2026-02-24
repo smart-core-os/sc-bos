@@ -669,6 +669,12 @@ components:
           type: integer
           format: int64
           nullable: true
+        installingDeploymentError:
+          type: string
+          nullable: true
+        installingDeploymentAttempts:
+          type: integer
+          nullable: true
 
     NodeCheckInList:
       type: object
@@ -798,7 +804,7 @@ components:
         installingDeployment:
           nullable: true
           allOf:
-            - $ref: '#/components/schemas/CheckInDeploymentRef'
+            - $ref: '#/components/schemas/CheckInInstallingDeployment'
           description: The deployment currently being installed on this node
         failedDeployment:
           nullable: true
@@ -813,6 +819,20 @@ components:
         id:
           type: integer
           format: int64
+
+    CheckInInstallingDeployment:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: integer
+          format: int64
+        error:
+          type: string
+          description: Optional error message if installation encountered a non-fatal issue
+        attempts:
+          type: integer
+          description: Number of installation attempts for this deployment
 
     CheckInFailedDeployment:
       type: object

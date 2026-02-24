@@ -9,6 +9,14 @@ func nullInt64(v *int64) sql.NullInt64 {
 	return sql.NullInt64{Int64: *v, Valid: true}
 }
 
+// nullInt64FromInt converts 0 to SQL NULL; non-zero values are stored as-is.
+func nullInt64FromInt(v int) sql.NullInt64 {
+	if v == 0 {
+		return sql.NullInt64{}
+	}
+	return sql.NullInt64{Int64: int64(v), Valid: true}
+}
+
 // nullString converts an empty string to SQL NULL; non-empty strings are stored as-is.
 func nullString(v string) sql.NullString {
 	if v == "" {

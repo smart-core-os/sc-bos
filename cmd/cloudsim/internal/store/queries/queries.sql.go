@@ -160,20 +160,22 @@ func (q *Queries) CreateNode(ctx context.Context, arg CreateNodeParams) (Node, e
 
 const createNodeCheckIn = `-- name: CreateNodeCheckIn :one
 
-INSERT INTO node_check_ins (node_id, check_in_time, current_deployment_id, installing_deployment_id)
-VALUES (?1, datetime('now', 'subsec'), ?2, ?3)
-RETURNING id, node_id, check_in_time, current_deployment_id, installing_deployment_id
+INSERT INTO node_check_ins (node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts)
+VALUES (?1, datetime('now', 'subsec'), ?2, ?3, ?4, ?5)
+RETURNING id, node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts
 `
 
 type CreateNodeCheckInParams struct {
-	NodeID                 int64
-	CurrentDeploymentID    sql.NullInt64
-	InstallingDeploymentID sql.NullInt64
+	NodeID                       int64
+	CurrentDeploymentID          sql.NullInt64
+	InstallingDeploymentID       sql.NullInt64
+	InstallingDeploymentError    sql.NullString
+	InstallingDeploymentAttempts sql.NullInt64
 }
 
 // Node Check-Ins
 func (q *Queries) CreateNodeCheckIn(ctx context.Context, arg CreateNodeCheckInParams) (NodeCheckIn, error) {
-	row := q.db.QueryRowContext(ctx, createNodeCheckIn, arg.NodeID, arg.CurrentDeploymentID, arg.InstallingDeploymentID)
+	row := q.db.QueryRowContext(ctx, createNodeCheckIn, arg.NodeID, arg.CurrentDeploymentID, arg.InstallingDeploymentID, arg.InstallingDeploymentError, arg.InstallingDeploymentAttempts)
 	var i NodeCheckIn
 	err := row.Scan(
 		&i.ID,
@@ -181,6 +183,8 @@ func (q *Queries) CreateNodeCheckIn(ctx context.Context, arg CreateNodeCheckInPa
 		&i.CheckInTime,
 		&i.CurrentDeploymentID,
 		&i.InstallingDeploymentID,
+		&i.InstallingDeploymentError,
+		&i.InstallingDeploymentAttempts,
 	)
 	return i, err
 }
@@ -404,7 +408,7 @@ func (q *Queries) GetNodeBySecretHash(ctx context.Context, secretHash []byte) (N
 }
 
 const getNodeCheckIn = `-- name: GetNodeCheckIn :one
-SELECT id, node_id, check_in_time, current_deployment_id, installing_deployment_id
+SELECT id, node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts
 FROM node_check_ins
 WHERE id = ?1
 `
@@ -418,6 +422,8 @@ func (q *Queries) GetNodeCheckIn(ctx context.Context, id int64) (NodeCheckIn, er
 		&i.CheckInTime,
 		&i.CurrentDeploymentID,
 		&i.InstallingDeploymentID,
+		&i.InstallingDeploymentError,
+		&i.InstallingDeploymentAttempts,
 	)
 	return i, err
 }
@@ -653,7 +659,7 @@ func (q *Queries) ListDeploymentsByNode(ctx context.Context, arg ListDeployments
 }
 
 const listNodeCheckInsByNode = `-- name: ListNodeCheckInsByNode :many
-SELECT id, node_id, check_in_time, current_deployment_id, installing_deployment_id
+SELECT id, node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts
 FROM node_check_ins
 WHERE node_id = ?1 AND id > ?2
 ORDER BY id
@@ -681,6 +687,8 @@ func (q *Queries) ListNodeCheckInsByNode(ctx context.Context, arg ListNodeCheckI
 			&i.CheckInTime,
 			&i.CurrentDeploymentID,
 			&i.InstallingDeploymentID,
+			&i.InstallingDeploymentError,
+			&i.InstallingDeploymentAttempts,
 		); err != nil {
 			return nil, err
 		}

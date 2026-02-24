@@ -35,11 +35,13 @@ type Node struct {
 }
 
 type NodeCheckIn struct {
-	ID                     int64
-	NodeID                 int64
-	CheckInTime            time.Time
-	CurrentDeploymentID    sql.NullInt64
-	InstallingDeploymentID sql.NullInt64
+	ID                           int64
+	NodeID                       int64
+	CheckInTime                  time.Time
+	CurrentDeploymentID          sql.NullInt64
+	InstallingDeploymentID       sql.NullInt64
+	InstallingDeploymentError    sql.NullString
+	InstallingDeploymentAttempts sql.NullInt64
 }
 
 type Site struct {

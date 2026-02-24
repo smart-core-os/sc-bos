@@ -339,7 +339,7 @@ func TestCheckIn_WithInstallingDeployment(t *testing.T) {
 	// Check in with installingDeployment
 	var got CheckInResponse
 	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
-		CheckInRequest{InstallingDeployment: &CheckInDeploymentRef{ID: dep.ID}}, &got)
+		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	if got.CheckIn.InstallingDeploymentID == nil || *got.CheckIn.InstallingDeploymentID != dep.ID {
@@ -435,7 +435,7 @@ func TestCheckIn_InstallingAdvancesPendingToInProgress(t *testing.T) {
 
 	// Check in with installingDeployment
 	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
-		CheckInRequest{InstallingDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
+		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Verify deployment is now IN_PROGRESS
@@ -463,7 +463,7 @@ func TestCheckIn_InstallingDoesNotAdvanceNonPending(t *testing.T) {
 
 	// Check in with installingDeployment
 	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
-		CheckInRequest{InstallingDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
+		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Verify deployment status is still COMPLETED (no transition)
@@ -524,5 +524,47 @@ func TestCheckIn_CurrentDoesNotAdvanceNonInProgress(t *testing.T) {
 	assertStatus(t, resp, http.StatusOK)
 	if updated.Status != "PENDING" {
 		t.Errorf("expected deployment status PENDING, got %s", updated.Status)
+	}
+}
+
+func TestCheckIn_InstallingWithErrorAndAttempts(t *testing.T) {
+	e := setupCheckInEnv(t)
+
+	// Create a PENDING deployment
+	var dep Deployment
+	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+		"configVersionId": e.configVersion.ID,
+	}, &dep)
+	assertStatus(t, resp, http.StatusCreated)
+
+	// Check in with installingDeployment including error and attempts
+	var got CheckInResponse
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{
+			ID:       dep.ID,
+			Error:    "transient: timeout",
+			Attempts: 3,
+		}}, &got)
+	assertStatus(t, resp, http.StatusOK)
+
+	attempts := int64(3)
+	wantCheckIn := NodeCheckIn{
+		NodeID:                       e.node.ID,
+		InstallingDeploymentID:       &dep.ID,
+		InstallingDeploymentError:    "transient: timeout",
+		InstallingDeploymentAttempts: &attempts,
+	}
+	if diff := cmp.Diff(wantCheckIn, got.CheckIn, cmpopts.IgnoreFields(NodeCheckIn{}, "ID", "CheckInTime")); diff != "" {
+		t.Errorf("check-in mismatch (-want +got):\n%s", diff)
+	}
+
+	// Verify the stored check-in has the fields set via management GET
+	var stored NodeCheckIn
+	resp = doRequest(t, e.client, "GET",
+		fmt.Sprintf("%s/%d", listNodeCheckInsURL(e.testServer.URL, e.node.ID), got.CheckIn.ID),
+		nil, &stored)
+	assertStatus(t, resp, http.StatusOK)
+	if diff := cmp.Diff(wantCheckIn, stored, cmpopts.IgnoreFields(NodeCheckIn{}, "ID", "CheckInTime")); diff != "" {
+		t.Errorf("stored check-in mismatch (-want +got):\n%s", diff)
 	}
 }
