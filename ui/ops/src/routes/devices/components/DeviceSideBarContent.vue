@@ -75,7 +75,6 @@ import AllocationCard from '@/traits/allocation/AllocationCard.vue';
 import WithAllocation from '@/traits/allocation/WithAllocation.vue';
 import ElectricDemandCard from '@/traits/electricDemand/ElectricDemandCard.vue';
 import WithElectricDemand from '@/traits/electricDemand/WithElectricDemand.vue';
-import EmergencyLight from '@/traits/emergency/EmergencyLight.vue';
 import EnergyStorageCard from '@/traits/energyStorage/EnergyStorageCard.vue';
 import WithEnergyStorage from '@/traits/energyStorage/WithEnergyStorage.vue';
 import HealthChecksCard from '@/traits/health/HealthChecksCard.vue';

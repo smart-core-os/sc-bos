@@ -108,9 +108,11 @@ const optLayerList = computed(() => {
   });
 });
 const optVisibleLayers = ref(/** @type {string[]} */ []);
-watch(optLayerList, (l) => {
+watch(() => props.layers, () => {
   // todo: remember which layers are selected when this changes
-  optVisibleLayers.value = l.map(v => v.value);
+  optVisibleLayers.value = props.layers
+      .filter((layer) => !layer.hidden)
+      .map((layer) => layer.title);
 }, {immediate: true});
 
 const toggleSettings = () => {
