@@ -108,7 +108,7 @@ const optLayerList = computed(() => {
   });
 });
 const optVisibleLayers = ref(/** @type {string[]} */ []);
-watch(optLayerList, () => {
+watch(() => props.layers, () => {
   // todo: remember which layers are selected when this changes
   optVisibleLayers.value = props.layers
       .filter((layer) => !layer.hidden)
