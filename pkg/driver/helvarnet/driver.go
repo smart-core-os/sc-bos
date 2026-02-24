@@ -67,7 +67,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	rootAnnouncer := d.announcer.Replace(ctx)
 	grp, ctx := errgroup.WithContext(ctx)
 	d.clients = make(map[string]*tcpClient)
-	var faultChecks map[string]*healthpb.FaultCheck
+	faultChecks := make(map[string]*healthpb.FaultCheck)
 
 	createFaultCheck := func(name string) *healthpb.FaultCheck {
 		faultCheck, ok := faultChecks[name]
