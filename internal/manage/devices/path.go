@@ -15,6 +15,14 @@ type pathSegment struct {
 	IsIndex bool
 }
 
+var (
+	emptyPathErr    = errors.New("empty path")
+	leadingDotErr   = errors.New("leading '.'")
+	parsingPathErr  = errors.New("unable to parse path")
+	parsingNameErr  = errors.New("unable to parse path name")
+	parsingIndexErr = errors.New("unable to parse path index")
+)
+
 // parsePath returns a pathSegment for each part of the path:
 //
 //   - a property or map dereference, indicated by a Name and IsIndex=false segment
@@ -25,7 +33,7 @@ type pathSegment struct {
 //	[{Name:"foo"},{Name:"bar"},{Index:1,IsIndex:true},{Index:2,IsIndex:true},{Name:"baz"}]
 func parsePath(path string) ([]pathSegment, error) {
 	if len(path) == 0 {
-		return nil, errors.New("empty path")
+		return nil, emptyPathErr
 	}
 	reader := newPathReader(path)
 	var segments []pathSegment
@@ -35,7 +43,7 @@ func parsePath(path string) ([]pathSegment, error) {
 	if name != "" {
 		segments = append(segments, pathSegment{Name: name})
 	} else if r == '.' {
-		return segments, errors.New("leading '.'")
+		return segments, leadingDotErr
 	}
 
 	for i, r := range reader.Runes() {
@@ -54,7 +62,7 @@ func parsePath(path string) ([]pathSegment, error) {
 			}
 			segments = append(segments, seg)
 		default:
-			return segments, fmt.Errorf("unexpected character %q at %d", r, i)
+			return segments, fmt.Errorf("unexpected character %q at %d: %w", r, i, parsingPathErr)
 		}
 	}
 	return segments, nil
@@ -67,7 +75,7 @@ func parsePathName(buf *pathReader) (pathSegment, error) {
 	c := buf.cursor
 	seg.Name, _, _ = buf.Until("[.")
 	if seg.Name == "" {
-		return seg, fmt.Errorf("expecting name at %d", c)
+		return seg, fmt.Errorf("expecting name at %d: %w", c, parsingNameErr)
 	}
 	return seg, nil
 }
@@ -81,11 +89,11 @@ func parsePathIndex(buf *pathReader) (pathSegment, error) {
 	c := buf.cursor
 	indexStr, _, err := buf.Until("]")
 	if err != nil {
-		return seg, fmt.Errorf("expecting closing ] after %d", c)
+		return seg, fmt.Errorf("expecting closing ] after %d: %w", c, parsingIndexErr)
 	}
 	index, err := strconv.Atoi(indexStr)
 	if err != nil {
-		return seg, fmt.Errorf("expecting integer at %d", c)
+		return seg, fmt.Errorf("expecting integer at %d: %w", c, parsingIndexErr)
 	}
 	_, _ = buf.Pop() // ], can ignore err as buf.Until already checked for it
 	seg.Index = index
