@@ -551,8 +551,8 @@ func electricDemandToRow(d *traits.ElectricDemand) map[string]string {
 
 func enterLeaveEventToRow(d *traits.EnterLeaveEvent) map[string]string {
 	vals := make(map[string]string)
-	vals["enterleave.entertotal"] = fmt.Sprintf("%d", d.EnterTotal)
-	vals["enterleave.leavetotal"] = fmt.Sprintf("%d", d.LeaveTotal)
+	vals["enterleave.entertotal"] = fmt.Sprintf("%d", d.GetEnterTotal())
+	vals["enterleave.leavetotal"] = fmt.Sprintf("%d", d.GetLeaveTotal())
 	return vals
 }
 
