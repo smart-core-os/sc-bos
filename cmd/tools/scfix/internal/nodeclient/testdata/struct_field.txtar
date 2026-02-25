@@ -1,0 +1,42 @@
+expected_changes: 1
+
+Test client replacement with struct field instead of local variable.
+
+-- input/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+type MyStruct struct {
+	client traits.OnOffApiClient
+}
+
+func example(n *node.Node) (*MyStruct, error) {
+	var s MyStruct
+	err := n.Client(&s.client)
+	if err != nil {
+		return nil, err
+	}
+	return &s, nil
+}
+-- output/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+type MyStruct struct {
+	client traits.OnOffApiClient
+}
+
+func example(n *node.Node) (*MyStruct, error) {
+	var s MyStruct
+	s.client = traits.NewOnOffApiClient(n.ClientConn())
+
+	return &s, nil
+}
