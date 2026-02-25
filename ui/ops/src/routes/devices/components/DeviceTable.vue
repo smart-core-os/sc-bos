@@ -29,6 +29,8 @@
         :show-select="showSelect"
         item-value="name"
         :class="tableClasses"
+        :fixed-header="props.fixedHeader"
+        :style="tableStyles"
         @click:row="showDevice">
       <template #item.metadata.membership.subsystem="{ item }">
         <subsystem-icon size="20px" :subsystem="item.metadata?.membership?.subsystem" no-default/>
@@ -87,6 +89,14 @@ const props = defineProps({
   forceQuery: {
     type: Object, // keys are condition properties, values are stringEqualFold values
     default: () => ({})
+  },
+  fixedHeader: {
+    type: Boolean,
+    default: true
+  },
+  height: {
+    type: [String, Number],
+    default: undefined
   }
 });
 const emit = defineEmits(['update:selectedDevices']);
@@ -134,6 +144,16 @@ const tableClasses = computed(() => {
   if (props.showSelect) c.push('selectable');
   if (props.rowSelect) c.push('rowSelectable');
   return c.join(' ');
+});
+
+const tableStyles = computed(() => {
+  if (!props.fixedHeader) {
+    return {};
+  }
+  if (props.height) {
+    return {height: typeof props.height === 'number' ? `${props.height}px` : props.height};
+  }
+  return {height: '80vh'};
 });
 
 const selectedDevicesComp = computed({

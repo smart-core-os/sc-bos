@@ -11,6 +11,8 @@
           v-bind="tableAttrs"
           disable-sort
           :items-length="queryTotalCount"
+          :fixed-header="props.fixedHeader"
+          :style="tableStyles"
           class="pt-4">
         <template #item.createTime="{ item }">
           {{ timestampToDate(item.wasteCreateTime).toLocaleString() }}
@@ -69,6 +71,14 @@ const props = defineProps({
   landSavedUnit: {
     type: String,
     default: 'km²'
+  },
+  fixedHeader: {
+    type: Boolean,
+    default: true
+  },
+  height: {
+    type: [String, Number],
+    default: undefined
   }
 })
 
@@ -106,6 +116,16 @@ const allHeaders = [
   {title: 'Land Saved', value: 'landSaved', width: '10em', align: 'end'},
   {title: 'Trees Saved', value: 'treesSaved', width: '10em', align: 'end'},
 ];
+
+const tableStyles = computed(() => {
+  if (!props.fixedHeader) {
+    return {};
+  }
+  if (props.height) {
+    return {height: typeof props.height === 'number' ? `${props.height}px` : props.height};
+  }
+  return {height: '80vh'};
+});
 
 const getDisposalMethod = (disposalMethod) => {
   switch (disposalMethod) {
