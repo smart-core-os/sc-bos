@@ -1,0 +1,4 @@
+@use 'vuetify/settings' with (
+// despite its name, this controls how indented list group items are relative to their parent
+$list-item-prepend-size: 4px,
+);

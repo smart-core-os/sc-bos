@@ -1,0 +1,31 @@
+$island-card: rgb(247, 244, 241);
+$island-bk: rgb(247, 244, 241);
+$island-text: $island-bk;
+$text-dark: #04030a;
+
+@mixin card {
+  box-sizing: border-box;
+  background: $island-card;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: calc(400px - 1em);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3rem;
+  flex-direction: column;
+  padding: 2rem;
+  margin: 0 0.5em;
+
+  &:deep(.svg) {
+    width: 100%;
+    height: auto;
+  }
+
+  &:deep(h2) {
+    margin: 0;
+    padding: 0;
+    min-width: 100%;
+    text-align: center;
+  }
+}
