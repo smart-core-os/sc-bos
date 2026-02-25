@@ -18,6 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	gen_allocationpb "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
@@ -260,6 +261,31 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 					return nil, err
 				}
 				return enterLeaveEventToRow(data), nil
+			},
+			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
+				c := enterleavesensorpb.NewEnterLeaveSensorHistoryClient(s.m.ClientConn())
+				return &historyCursor{
+					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
+						page, err := c.ListEnterLeaveSensorHistory(ctx, &enterleavesensorpb.ListEnterLeaveHistoryRequest{
+							Name:      name,
+							PageToken: token,
+							PageSize:  pageSize,
+							Period:    period,
+						})
+						if err != nil {
+							return nil, "", err
+						}
+
+						records := make([]historyRecord, 0, len(page.EnterLeaveRecords))
+						for _, record := range page.EnterLeaveRecords {
+							records = append(records, historyRecord{
+								at:   record.GetRecordTime().AsTime(),
+								vals: enterLeaveEventToRow(record.GetEnterLeaveEvent()),
+							})
+						}
+						return records, page.NextPageToken, nil
+					},
+				}
 			},
 		},
 		string(trait.FanSpeed): {
