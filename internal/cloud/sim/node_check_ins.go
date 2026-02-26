@@ -1,4 +1,4 @@
-package api
+package sim
 
 import (
 	"net/http"
@@ -6,8 +6,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store"
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
+	queries2 "github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 // NodeCheckIn is the JSON representation of a node check-in.
@@ -21,7 +21,7 @@ type NodeCheckIn struct {
 	InstallingDeploymentAttempts *int64    `json:"installingDeploymentAttempts,omitempty"`
 }
 
-func toNodeCheckIn(c queries.NodeCheckIn) NodeCheckIn {
+func toNodeCheckIn(c queries2.NodeCheckIn) NodeCheckIn {
 	out := NodeCheckIn{
 		ID:          c.ID,
 		NodeID:      c.NodeID,
@@ -42,7 +42,7 @@ func toNodeCheckIn(c queries.NodeCheckIn) NodeCheckIn {
 	return out
 }
 
-func toNodeCheckIns(checkIns []queries.NodeCheckIn) []NodeCheckIn {
+func toNodeCheckIns(checkIns []queries2.NodeCheckIn) []NodeCheckIn {
 	out := make([]NodeCheckIn, len(checkIns))
 	for i, c := range checkIns {
 		out[i] = toNodeCheckIn(c)
@@ -67,10 +67,10 @@ func (s *Server) listNodeCheckIns(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var items []queries.NodeCheckIn
+	var items []queries2.NodeCheckIn
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
-		items, err = tx.ListNodeCheckInsByNode(r.Context(), queries.ListNodeCheckInsByNodeParams{
+		items, err = tx.ListNodeCheckInsByNode(r.Context(), queries2.ListNodeCheckInsByNodeParams{
 			NodeID:  nodeID,
 			AfterID: afterID,
 			Limit:   limit + 1,
@@ -112,7 +112,7 @@ func (s *Server) getNodeCheckIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries.NodeCheckIn
+	var item queries2.NodeCheckIn
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		item, err = tx.GetNodeCheckIn(r.Context(), id)

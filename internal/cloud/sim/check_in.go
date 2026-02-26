@@ -1,4 +1,4 @@
-package api
+package sim
 
 import (
 	"crypto/sha256"
@@ -12,8 +12,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store"
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
+	queries2 "github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 // CheckInResponse is returned from the check-in endpoint.
@@ -93,9 +93,9 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		checkIn       queries.NodeCheckIn
-		deployment    queries.Deployment
-		configVersion queries.ConfigVersion
+		checkIn       queries2.NodeCheckIn
+		deployment    queries2.Deployment
+		configVersion queries2.ConfigVersion
 		hasDeploy     bool
 	)
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
@@ -117,7 +117,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 				return errInvalidRequest
 			}
 			if row.Status == statusPending {
-				_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+				_, err = tx.UpdateDeploymentStatus(r.Context(), queries2.UpdateDeploymentStatusParams{
 					ID:     req.InstallingDeployment.ID,
 					Status: statusInProgress,
 				})
@@ -140,7 +140,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 				return errInvalidRequest
 			}
 			if row.Status == statusInProgress {
-				_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+				_, err = tx.UpdateDeploymentStatus(r.Context(), queries2.UpdateDeploymentStatusParams{
 					ID:     req.CurrentDeployment.ID,
 					Status: statusCompleted,
 				})
@@ -161,7 +161,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			if row.NodeID != node.ID {
 				return errInvalidRequest
 			}
-			_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+			_, err = tx.UpdateDeploymentStatus(r.Context(), queries2.UpdateDeploymentStatusParams{
 				ID:     req.FailedDeployment.ID,
 				Status: statusFailed,
 				Reason: nullString(req.FailedDeployment.Reason),
@@ -185,7 +185,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			installingError = req.InstallingDeployment.Error
 			installingAttempts = req.InstallingDeployment.Attempts
 		}
-		checkIn, err = tx.CreateNodeCheckIn(r.Context(), queries.CreateNodeCheckInParams{
+		checkIn, err = tx.CreateNodeCheckIn(r.Context(), queries2.CreateNodeCheckInParams{
 			NodeID:                       node.ID,
 			CurrentDeploymentID:          nullInt64(currentID),
 			InstallingDeploymentID:       nullInt64(installingID),

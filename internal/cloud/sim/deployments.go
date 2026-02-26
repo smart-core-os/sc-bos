@@ -1,4 +1,4 @@
-package api
+package sim
 
 import (
 	"database/sql"
@@ -9,8 +9,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store"
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
+	queries2 "github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 const (
@@ -31,7 +31,7 @@ type Deployment struct {
 	Reason          string     `json:"reason,omitempty"`
 }
 
-func toDeployment(d queries.Deployment) Deployment {
+func toDeployment(d queries2.Deployment) Deployment {
 	out := Deployment{
 		ID:              d.ID,
 		ConfigVersionID: d.ConfigVersionID,
@@ -47,7 +47,7 @@ func toDeployment(d queries.Deployment) Deployment {
 	return out
 }
 
-func toDeployments(deployments []queries.Deployment) []Deployment {
+func toDeployments(deployments []queries2.Deployment) []Deployment {
 	out := make([]Deployment, len(deployments))
 	for i, d := range deployments {
 		out[i] = toDeployment(d)
@@ -109,24 +109,24 @@ func (s *Server) listDeployments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var items []queries.Deployment
+	var items []queries2.Deployment
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		switch {
 		case nodeID != 0:
-			items, err = tx.ListDeploymentsByNode(r.Context(), queries.ListDeploymentsByNodeParams{
+			items, err = tx.ListDeploymentsByNode(r.Context(), queries2.ListDeploymentsByNodeParams{
 				NodeID:  nodeID,
 				AfterID: afterID,
 				Limit:   limit + 1,
 			})
 		case configVersionID != 0:
-			items, err = tx.ListDeploymentsByConfigVersion(r.Context(), queries.ListDeploymentsByConfigVersionParams{
+			items, err = tx.ListDeploymentsByConfigVersion(r.Context(), queries2.ListDeploymentsByConfigVersionParams{
 				ConfigVersionID: configVersionID,
 				AfterID:         afterID,
 				Limit:           limit + 1,
 			})
 		default:
-			items, err = tx.ListDeployments(r.Context(), queries.ListDeploymentsParams{
+			items, err = tx.ListDeployments(r.Context(), queries2.ListDeploymentsParams{
 				AfterID: afterID,
 				Limit:   limit + 1,
 			})
@@ -173,7 +173,7 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 		logger.Info("invalid status for creation", zap.String("status", status))
 	}
 
-	var item queries.Deployment
+	var item queries2.Deployment
 	var conflicted bool
 	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
 		cv, err := tx.GetConfigVersion(r.Context(), req.ConfigVersionID)
@@ -200,7 +200,7 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		item, err = tx.CreateDeployment(r.Context(), queries.CreateDeploymentParams{
+		item, err = tx.CreateDeployment(r.Context(), queries2.CreateDeploymentParams{
 			ConfigVersionID: req.ConfigVersionID,
 			Status:          status,
 		})
@@ -240,7 +240,7 @@ func (s *Server) getDeployment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries.Deployment
+	var item queries2.Deployment
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		item, err = tx.GetDeployment(r.Context(), id)
@@ -283,10 +283,10 @@ func (s *Server) updateDeploymentStatus(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var item queries.Deployment
+	var item queries2.Deployment
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
-		item, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+		item, err = tx.UpdateDeploymentStatus(r.Context(), queries2.UpdateDeploymentStatusParams{
 			ID:     id,
 			Status: req.Status,
 			Reason: nullString(req.Reason),
