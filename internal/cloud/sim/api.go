@@ -1,5 +1,7 @@
-// Package api provides HTTP JSON REST API handlers for cloudsim database entities.
-package api
+// Package sim provides HTTP JSON REST API handlers that simulate the operation of the Cloud Config Service.
+//
+// The normal way of invoking this simulator is through the cmd/cloudsim program.
+package sim
 
 import (
 	"encoding/json"
@@ -9,7 +11,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
 )
 
 // Server handles HTTP API requests for cloudsim management.

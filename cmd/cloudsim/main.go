@@ -13,8 +13,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/api"
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
 )
 
 var (
@@ -59,7 +59,7 @@ func run(ctx context.Context, logger *zap.Logger) (err error) {
 	logger.Info("server listening", zap.String("address", lis.Addr().String()))
 
 	mux := http.NewServeMux()
-	apiServer := api.NewServer(dataStore, logger)
+	apiServer := sim.NewServer(dataStore, logger)
 	apiServer.RegisterRoutes(mux)
 
 	return serveContext(ctx, lis, mux, logger)

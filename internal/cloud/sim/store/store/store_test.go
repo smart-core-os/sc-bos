@@ -12,7 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store/queries"
+	queries2 "github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 func TestStore_Sites(t *testing.T) {
@@ -54,7 +54,7 @@ func TestStore_Sites(t *testing.T) {
 
 	// Test listing sites
 	err = store.Read(ctx, func(tx *Tx) error {
-		sites, err := tx.ListSites(ctx, queries.ListSitesParams{
+		sites, err := tx.ListSites(ctx, queries2.ListSitesParams{
 			AfterID: 0,
 			Limit:   10,
 		})
@@ -97,7 +97,7 @@ func TestStore_Nodes(t *testing.T) {
 	hash := sampleHash(0)
 	var nodeID int64
 	err = store.Write(ctx, func(tx *Tx) error {
-		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+		node, err := tx.CreateNode(ctx, queries2.CreateNodeParams{
 			Hostname:   "TEST-AC-01",
 			SiteID:     siteID,
 			SecretHash: hash,
@@ -118,13 +118,13 @@ func TestStore_Nodes(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		want := queries.Node{
+		want := queries2.Node{
 			ID:         nodeID,
 			Hostname:   "TEST-AC-01",
 			SiteID:     siteID,
 			SecretHash: hash,
 		}
-		if diff := cmp.Diff(want, node, cmpopts.IgnoreFields(queries.Node{}, "CreateTime")); diff != "" {
+		if diff := cmp.Diff(want, node, cmpopts.IgnoreFields(queries2.Node{}, "CreateTime")); diff != "" {
 			t.Errorf("node mismatch (-want +got):\n%s", diff)
 		}
 		return nil
@@ -135,7 +135,7 @@ func TestStore_Nodes(t *testing.T) {
 
 	// Test listing nodes by site
 	err = store.Read(ctx, func(tx *Tx) error {
-		nodes, err := tx.ListNodesBySite(ctx, queries.ListNodesBySiteParams{
+		nodes, err := tx.ListNodesBySite(ctx, queries2.ListNodesBySiteParams{
 			SiteID:  siteID,
 			AfterID: 0,
 			Limit:   10,
@@ -170,7 +170,7 @@ func TestStore_ConfigVersions(t *testing.T) {
 			return err
 		}
 
-		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+		node, err := tx.CreateNode(ctx, queries2.CreateNodeParams{
 			Hostname:   "TEST-AC-01",
 			SiteID:     site.ID,
 			SecretHash: hash,
@@ -188,7 +188,7 @@ func TestStore_ConfigVersions(t *testing.T) {
 	// Test creating a config version
 	var configVersionID int64
 	err = store.Write(ctx, func(tx *Tx) error {
-		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
+		config, err := tx.CreateConfigVersion(ctx, queries2.CreateConfigVersionParams{
 			NodeID:      nodeID,
 			Description: sql.NullString{String: "v1", Valid: true},
 			Payload:     []byte{0xDE, 0xAD, 0xBE, 0xEF},
@@ -209,13 +209,13 @@ func TestStore_ConfigVersions(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		want := queries.ConfigVersion{
+		want := queries2.ConfigVersion{
 			ID:          configVersionID,
 			NodeID:      nodeID,
 			Description: sql.NullString{String: "v1", Valid: true},
 			Payload:     []byte{0xDE, 0xAD, 0xBE, 0xEF},
 		}
-		if diff := cmp.Diff(want, config, cmpopts.IgnoreFields(queries.ConfigVersion{}, "CreateTime")); diff != "" {
+		if diff := cmp.Diff(want, config, cmpopts.IgnoreFields(queries2.ConfigVersion{}, "CreateTime")); diff != "" {
 			t.Errorf("config version mismatch (-want +got):\n%s", diff)
 		}
 		return nil
@@ -226,7 +226,7 @@ func TestStore_ConfigVersions(t *testing.T) {
 
 	// Test listing config versions by node
 	err = store.Read(ctx, func(tx *Tx) error {
-		configs, err := tx.ListConfigVersionsByNode(ctx, queries.ListConfigVersionsByNodeParams{
+		configs, err := tx.ListConfigVersionsByNode(ctx, queries2.ListConfigVersionsByNodeParams{
 			NodeID:  nodeID,
 			AfterID: 0,
 			Limit:   10,
@@ -260,7 +260,7 @@ func TestStore_Deployments(t *testing.T) {
 			return err
 		}
 
-		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+		node, err := tx.CreateNode(ctx, queries2.CreateNodeParams{
 			Hostname:   "TEST-AC-01",
 			SiteID:     site.ID,
 			SecretHash: sampleHash(0),
@@ -269,7 +269,7 @@ func TestStore_Deployments(t *testing.T) {
 			return err
 		}
 
-		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
+		config, err := tx.CreateConfigVersion(ctx, queries2.CreateConfigVersionParams{
 			NodeID:      node.ID,
 			Description: sql.NullString{String: "v1", Valid: true},
 			Payload:     []byte{0xCA, 0xFE, 0xBA, 0xBE},
@@ -287,7 +287,7 @@ func TestStore_Deployments(t *testing.T) {
 	// Test creating a deployment
 	var deploymentID int64
 	err = store.Write(ctx, func(tx *Tx) error {
-		deployment, err := tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
+		deployment, err := tx.CreateDeployment(ctx, queries2.CreateDeploymentParams{
 			ConfigVersionID: configVersionID,
 			Status:          "PENDING",
 		})
@@ -307,13 +307,13 @@ func TestStore_Deployments(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		want := queries.Deployment{
+		want := queries2.Deployment{
 			ID:              deploymentID,
 			ConfigVersionID: configVersionID,
 			Status:          "PENDING",
 			FinishedTime:    sql.NullTime{Valid: false},
 		}
-		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries.Deployment{}, "StartTime")); diff != "" {
+		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries2.Deployment{}, "StartTime")); diff != "" {
 			t.Errorf("deployment mismatch (-want +got):\n%s", diff)
 		}
 		return nil
@@ -324,19 +324,19 @@ func TestStore_Deployments(t *testing.T) {
 
 	// Test updating deployment status to completed
 	err = store.Write(ctx, func(tx *Tx) error {
-		deployment, err := tx.UpdateDeploymentStatus(ctx, queries.UpdateDeploymentStatusParams{
+		deployment, err := tx.UpdateDeploymentStatus(ctx, queries2.UpdateDeploymentStatusParams{
 			ID:     deploymentID,
 			Status: "COMPLETED",
 		})
 		if err != nil {
 			return err
 		}
-		want := queries.Deployment{
+		want := queries2.Deployment{
 			ID:              deploymentID,
 			ConfigVersionID: configVersionID,
 			Status:          "COMPLETED",
 		}
-		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries.Deployment{}, "StartTime", "FinishedTime")); diff != "" {
+		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries2.Deployment{}, "StartTime", "FinishedTime")); diff != "" {
 			t.Errorf("deployment mismatch (-want +got):\n%s", diff)
 		}
 		if !deployment.FinishedTime.Valid {
@@ -356,7 +356,7 @@ func TestStore_Deployments(t *testing.T) {
 			return err
 		}
 
-		deployments, err := tx.ListDeploymentsByNode(ctx, queries.ListDeploymentsByNodeParams{
+		deployments, err := tx.ListDeploymentsByNode(ctx, queries2.ListDeploymentsByNodeParams{
 			NodeID:  config.NodeID,
 			AfterID: 0,
 			Limit:   10,
@@ -368,12 +368,12 @@ func TestStore_Deployments(t *testing.T) {
 			t.Errorf("expected 1 deployment, got %d", len(deployments))
 		}
 		if len(deployments) > 0 {
-			want := queries.Deployment{
+			want := queries2.Deployment{
 				ID:              deploymentID,
 				ConfigVersionID: configVersionID,
 				Status:          "COMPLETED",
 			}
-			if diff := cmp.Diff(want, deployments[0], cmpopts.IgnoreFields(queries.Deployment{}, "StartTime", "FinishedTime")); diff != "" {
+			if diff := cmp.Diff(want, deployments[0], cmpopts.IgnoreFields(queries2.Deployment{}, "StartTime", "FinishedTime")); diff != "" {
 				t.Errorf("deployment in list mismatch (-want +got):\n%s", diff)
 			}
 		}
@@ -400,7 +400,7 @@ func TestStore_NodeCheckIns(t *testing.T) {
 			return err
 		}
 
-		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+		node, err := tx.CreateNode(ctx, queries2.CreateNodeParams{
 			Hostname:   "TEST-AC-01",
 			SiteID:     site.ID,
 			SecretHash: sampleHash(0),
@@ -418,7 +418,7 @@ func TestStore_NodeCheckIns(t *testing.T) {
 	// Test creating a check-in
 	var checkInID int64
 	err = store.Write(ctx, func(tx *Tx) error {
-		checkIn, err := tx.CreateNodeCheckIn(ctx, queries.CreateNodeCheckInParams{NodeID: nodeID})
+		checkIn, err := tx.CreateNodeCheckIn(ctx, queries2.CreateNodeCheckInParams{NodeID: nodeID})
 		if err != nil {
 			return err
 		}
@@ -435,11 +435,11 @@ func TestStore_NodeCheckIns(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		want := queries.NodeCheckIn{
+		want := queries2.NodeCheckIn{
 			ID:     checkInID,
 			NodeID: nodeID,
 		}
-		if diff := cmp.Diff(want, checkIn, cmpopts.IgnoreFields(queries.NodeCheckIn{}, "CheckInTime")); diff != "" {
+		if diff := cmp.Diff(want, checkIn, cmpopts.IgnoreFields(queries2.NodeCheckIn{}, "CheckInTime")); diff != "" {
 			t.Errorf("check-in mismatch (-want +got):\n%s", diff)
 		}
 		if checkIn.CheckInTime.IsZero() {
@@ -453,7 +453,7 @@ func TestStore_NodeCheckIns(t *testing.T) {
 
 	// Test listing check-ins by node
 	err = store.Read(ctx, func(tx *Tx) error {
-		checkIns, err := tx.ListNodeCheckInsByNode(ctx, queries.ListNodeCheckInsByNodeParams{
+		checkIns, err := tx.ListNodeCheckInsByNode(ctx, queries2.ListNodeCheckInsByNodeParams{
 			NodeID:  nodeID,
 			AfterID: 0,
 			Limit:   10,
@@ -488,7 +488,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		}
 		siteID = site.ID
 
-		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+		node, err := tx.CreateNode(ctx, queries2.CreateNodeParams{
 			Hostname:   "TEST-AC-01",
 			SiteID:     site.ID,
 			SecretHash: sampleHash(0),
@@ -498,13 +498,13 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		}
 		nodeID = node.ID
 
-		checkIn, err := tx.CreateNodeCheckIn(ctx, queries.CreateNodeCheckInParams{NodeID: node.ID})
+		checkIn, err := tx.CreateNodeCheckIn(ctx, queries2.CreateNodeCheckInParams{NodeID: node.ID})
 		if err != nil {
 			return err
 		}
 		checkInID = checkIn.ID
 
-		config, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
+		config, err := tx.CreateConfigVersion(ctx, queries2.CreateConfigVersionParams{
 			NodeID:      node.ID,
 			Description: sql.NullString{String: "v1", Valid: true},
 			Payload:     []byte{0xFE, 0xED, 0xFA, 0xCE},
@@ -514,7 +514,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		}
 		configVersionID = config.ID
 
-		deployment, err := tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
+		deployment, err := tx.CreateDeployment(ctx, queries2.CreateDeploymentParams{
 			ConfigVersionID: config.ID,
 			Status:          "PENDING",
 		})
@@ -633,7 +633,7 @@ func TestOpenStore(t *testing.T) {
 	// Verify migrations are applied correctly by checking schema version
 	err = store2.Read(ctx, func(tx *Tx) error {
 		// List all sites to ensure schema is working
-		sites, err := tx.ListSites(ctx, queries.ListSitesParams{
+		sites, err := tx.ListSites(ctx, queries2.ListSitesParams{
 			AfterID: 0,
 			Limit:   10,
 		})
@@ -696,7 +696,7 @@ func TestStore_CountOperations(t *testing.T) {
 		}
 		site2ID = site2.ID
 
-		node1, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+		node1, err := tx.CreateNode(ctx, queries2.CreateNodeParams{
 			Hostname:   "NODE-01",
 			SiteID:     site1ID,
 			SecretHash: sampleHash(1),
@@ -706,7 +706,7 @@ func TestStore_CountOperations(t *testing.T) {
 		}
 		node1ID = node1.ID
 
-		node2, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+		node2, err := tx.CreateNode(ctx, queries2.CreateNodeParams{
 			Hostname:   "NODE-02",
 			SiteID:     site1ID,
 			SecretHash: sampleHash(2),
@@ -716,7 +716,7 @@ func TestStore_CountOperations(t *testing.T) {
 		}
 		node2ID = node2.ID
 
-		_, err = tx.CreateNode(ctx, queries.CreateNodeParams{
+		_, err = tx.CreateNode(ctx, queries2.CreateNodeParams{
 			Hostname:   "NODE-03",
 			SiteID:     site2ID,
 			SecretHash: sampleHash(3),
@@ -726,7 +726,7 @@ func TestStore_CountOperations(t *testing.T) {
 		}
 
 		// Create config versions for nodes
-		_, err = tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
+		_, err = tx.CreateConfigVersion(ctx, queries2.CreateConfigVersionParams{
 			NodeID:      node1ID,
 			Description: sql.NullString{String: "v1", Valid: true},
 			Payload:     []byte{0x01},
@@ -735,7 +735,7 @@ func TestStore_CountOperations(t *testing.T) {
 			return err
 		}
 
-		cv2, err := tx.CreateConfigVersion(ctx, queries.CreateConfigVersionParams{
+		cv2, err := tx.CreateConfigVersion(ctx, queries2.CreateConfigVersionParams{
 			NodeID:      node2ID,
 			Description: sql.NullString{String: "v1", Valid: true},
 			Payload:     []byte{0x02},
@@ -745,7 +745,7 @@ func TestStore_CountOperations(t *testing.T) {
 		}
 
 		// Create a deployment
-		_, err = tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
+		_, err = tx.CreateDeployment(ctx, queries2.CreateDeploymentParams{
 			ConfigVersionID: cv2.ID,
 			Status:          "PENDING",
 		})
@@ -842,7 +842,7 @@ func TestStore_UpdateNonExistent(t *testing.T) {
 
 	// Test updating non-existent site
 	err = store.Write(ctx, func(tx *Tx) error {
-		_, err := tx.UpdateSite(ctx, queries.UpdateSiteParams{
+		_, err := tx.UpdateSite(ctx, queries2.UpdateSiteParams{
 			ID:   99999,
 			Name: "Updated Name",
 		})
@@ -857,7 +857,7 @@ func TestStore_UpdateNonExistent(t *testing.T) {
 
 	// Test updating non-existent node
 	err = store.Write(ctx, func(tx *Tx) error {
-		_, err := tx.UpdateNode(ctx, queries.UpdateNodeParams{
+		_, err := tx.UpdateNode(ctx, queries2.UpdateNodeParams{
 			ID:       99999,
 			Hostname: "Updated Hostname",
 			SiteID:   siteID,
@@ -873,7 +873,7 @@ func TestStore_UpdateNonExistent(t *testing.T) {
 
 	// Test updating non-existent deployment status
 	err = store.Write(ctx, func(tx *Tx) error {
-		_, err := tx.UpdateDeploymentStatus(ctx, queries.UpdateDeploymentStatusParams{
+		_, err := tx.UpdateDeploymentStatus(ctx, queries2.UpdateDeploymentStatusParams{
 			ID:     99999,
 			Status: "COMPLETED",
 		})
