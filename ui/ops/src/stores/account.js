@@ -397,7 +397,7 @@ export const useAccountStore = defineStore('accountStore', () => {
      * @return {boolean}
      */
     isOnlyProvider(provider) {
-      return availableAuthProviders.value.length === 1 && this.hasProvider(provider);
+      return availableAuthProviders.value.length === 1 && hasProvider(provider);
     }
   };
 });
