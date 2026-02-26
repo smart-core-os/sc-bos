@@ -237,11 +237,11 @@ export default function useDeviceFlow(config) {
       // this interval checks for the user to complete the authentication periodically
       const poll = setInterval(async () => {
         try {
-          const tokenResponse = await postCheckDeviceToken(code);
-          await writeToStorage(tokenResponse);
-          tokenResponse.value = tokenResponse;
+          const newTokenResponse = await postCheckDeviceToken(code);
+          await writeToStorage(newTokenResponse);
+          tokenResponse.value = newTokenResponse;
           cancel(); // success, stop any timeouts
-          resolve(tokenResponseToAuthDetails(tokenResponse));
+          resolve(tokenResponseToAuthDetails(newTokenResponse));
         } catch (e) {
           lastError = e; // don't stop, only report the error if all attempts fail
         }
