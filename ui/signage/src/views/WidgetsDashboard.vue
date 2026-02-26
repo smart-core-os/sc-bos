@@ -77,7 +77,7 @@ const props = defineProps({
   #BuildingOccupancy,
   #AirQuality,
   #EnergyUsage,
-  #TemperatureSystems
+  #TemperatureSystems,
   #Logo {
     grid-area: Water;
     display: flex;

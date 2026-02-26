@@ -50,7 +50,6 @@ const login = async () => {
   // check if username and password are entered
   if (username.value && password.value) {
     const values = {username: username.value, password: password.value};
-    console.log(values);
     // Forwards the login request to the account store with the values from the form
     await accountStore.loginWithLocalAuth(values);
   } else {
