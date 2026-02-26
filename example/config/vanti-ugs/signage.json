@@ -1,0 +1,22 @@
+{
+  "config": {
+    "props": {
+      "airQuality": {
+        "name": "van/uk/brum/ugs/zones/building"
+      },
+      "occupancy": {
+        "name": "van/uk/brum/ugs/zones/building"
+      },
+      "water": {
+        "name": "van/uk/brum/ugs/zones/building"
+      },
+      "energy": {
+        "name": "van/uk/brum/ugs/zones/building",
+        "generated": "van/uk/brum/ugs/zones/building/generated"
+      },
+      "temperature": {
+        "name": "van/uk/brum/ugs/zones/building"
+      }
+    }
+  }
+}
