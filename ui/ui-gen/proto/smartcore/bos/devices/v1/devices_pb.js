@@ -750,7 +750,7 @@ proto.smartcore.bos.devices.v1.Device.Query.serializeBinaryToWriter = function(m
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_ = [[2,3,4,5,6,7,20,21,22,23,24,30,31,32,33,40,50]];
+proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_ = [[2,3,4,5,6,7,8,9,20,21,22,23,24,30,31,32,33,40,50]];
 
 /**
  * @enum {number}
@@ -763,6 +763,8 @@ proto.smartcore.bos.devices.v1.Device.Query.Condition.ValueCase = {
   STRING_CONTAINS_FOLD: 5,
   STRING_IN: 6,
   STRING_IN_FOLD: 7,
+  STRING_NOT_EQUAL: 8,
+  STRING_NOT_EQUAL_FOLD: 9,
   TIMESTAMP_EQUAL: 20,
   TIMESTAMP_GT: 21,
   TIMESTAMP_GTE: 22,
@@ -821,6 +823,8 @@ stringContains: (f = jspb.Message.getField(msg, 4)) == null ? undefined : f,
 stringContainsFold: (f = jspb.Message.getField(msg, 5)) == null ? undefined : f,
 stringIn: (f = msg.getStringIn()) && proto.smartcore.bos.devices.v1.Device.Query.StringList.toObject(includeInstance, f),
 stringInFold: (f = msg.getStringInFold()) && proto.smartcore.bos.devices.v1.Device.Query.StringList.toObject(includeInstance, f),
+stringNotEqual: (f = jspb.Message.getField(msg, 8)) == null ? undefined : f,
+stringNotEqualFold: (f = jspb.Message.getField(msg, 9)) == null ? undefined : f,
 timestampEqual: (f = msg.getTimestampEqual()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
 timestampGt: (f = msg.getTimestampGt()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
 timestampGte: (f = msg.getTimestampGte()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
@@ -898,6 +902,14 @@ proto.smartcore.bos.devices.v1.Device.Query.Condition.deserializeBinaryFromReade
       var value = new proto.smartcore.bos.devices.v1.Device.Query.StringList;
       reader.readMessage(value,proto.smartcore.bos.devices.v1.Device.Query.StringList.deserializeBinaryFromReader);
       msg.setStringInFold(value);
+      break;
+    case 8:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setStringNotEqual(value);
+      break;
+    case 9:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setStringNotEqualFold(value);
       break;
     case 20:
       var value = new google_protobuf_timestamp_pb.Timestamp;
@@ -1034,6 +1046,20 @@ proto.smartcore.bos.devices.v1.Device.Query.Condition.serializeBinaryToWriter = 
       7,
       f,
       proto.smartcore.bos.devices.v1.Device.Query.StringList.serializeBinaryToWriter
+    );
+  }
+  f = /** @type {string} */ (jspb.Message.getField(message, 8));
+  if (f != null) {
+    writer.writeString(
+      8,
+      f
+    );
+  }
+  f = /** @type {string} */ (jspb.Message.getField(message, 9));
+  if (f != null) {
+    writer.writeString(
+      9,
+      f
     );
   }
   f = message.getTimestampEqual();
@@ -1374,6 +1400,78 @@ proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.clearStringInFol
  */
 proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.hasStringInFold = function() {
   return jspb.Message.getField(this, 7) != null;
+};
+
+
+/**
+ * optional string string_not_equal = 8;
+ * @return {string}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.getStringNotEqual = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.setStringNotEqual = function(value) {
+  return jspb.Message.setOneofField(this, 8, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.clearStringNotEqual = function() {
+  return jspb.Message.setOneofField(this, 8, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.hasStringNotEqual = function() {
+  return jspb.Message.getField(this, 8) != null;
+};
+
+
+/**
+ * optional string string_not_equal_fold = 9;
+ * @return {string}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.getStringNotEqualFold = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.setStringNotEqualFold = function(value) {
+  return jspb.Message.setOneofField(this, 9, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.clearStringNotEqualFold = function() {
+  return jspb.Message.setOneofField(this, 9, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.hasStringNotEqualFold = function() {
+  return jspb.Message.getField(this, 9) != null;
 };
 
 
