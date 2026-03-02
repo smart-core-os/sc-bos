@@ -16,13 +16,13 @@ import (
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-golang/pkg/trait/brightnesssensorpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait/energystoragepb"
 )
 
 // announceDevice sets up and announces the traits supported by the device.
 func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev config.Device, loc *local.Location) error {
 	for _, tn := range dev.Traits {
-		// todo: case trait.BrightnessSensor: once it has a model, backed by "light" data
 		// todo: read the RSSI prop and link it with status
 		switch trait.Name(tn) {
 		case trait.AirQualitySensor:
@@ -35,6 +35,11 @@ func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev confi
 			client := airtemperaturepb.WrapApi(roAirTemperatureServer{airtemperaturepb.NewModelServer(model)})
 			a.Announce(dev.Name, node.HasTrait(trait.AirTemperature, node.WithClients(client)))
 			go d.pullSampleAirTemperature(ctx, dev, loc, model)
+		case trait.BrightnessSensor:
+			model := brightnesssensorpb.NewModel()
+			client := brightnesssensorpb.WrapApi(brightnesssensorpb.NewModelServer(model))
+			a.Announce(dev.Name, node.HasTrait(trait.BrightnessSensor, node.WithClients(client)))
+			go d.pullSampleBrightness(ctx, dev, loc, model)
 		case trait.EnergyStorage:
 			model := energystoragepb.NewModel()
 			client := energystoragepb.WrapApi(roEnergyStorageServer{energystoragepb.NewModelServer(model)})
@@ -157,6 +162,30 @@ func sampleToEnergyLevel(in api.DeviceSampleResponseEnriched) *traits.EnergyLeve
 	if v, ok := data.GetBatteryOk(); ok {
 		dst.Quantity = &traits.EnergyLevel_Quantity{
 			Percentage: *v,
+		}
+	}
+	return dst
+}
+
+func (d *Driver) pullSampleBrightness(ctx context.Context, dev config.Device, loc *local.Location, model *brightnesssensorpb.Model) {
+	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
+	_, _ = model.UpdateAmbientBrightness(sampleToAmbientBrightness(initial))
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case sample := <-stream:
+			_, _ = model.UpdateAmbientBrightness(sampleToAmbientBrightness(sample))
+		}
+	}
+}
+
+func sampleToAmbientBrightness(in api.DeviceSampleResponseEnriched) *traits.AmbientBrightness {
+	dst := &traits.AmbientBrightness{}
+	data := in.GetData()
+	if v, ok := data.GetLightOk(); ok {
+		if v.Float32 != nil {
+			dst.BrightnessLux = *v.Float32
 		}
 	}
 	return dst
