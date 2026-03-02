@@ -152,6 +152,10 @@ type Mode struct {
 	// Levels to use when the lights are on or off. If present overrides daylight dimming.
 	OnLevelPercent  *float32 `json:"onLevelPercent,omitempty"`
 	OffLevelPercent *float32 `json:"offLevelPercent,omitempty"`
+	// ForceOnLevelPercentWhenActivated if true, when a mode becomes active, this will set the light to OnLevelPercent even if than the duration since last occupied state is greater than UnoccupiedOffDelay.
+	// This is useful for making sure the light goes to the correct level when a mode becomes active, even if it was already off from a different mode.
+	// An example usage is to switch on lights to a certain level in the morning when the mode switches to "morning", even if the building is currently still unoccupied.
+	ForceOnLevelPercentWhenActivated bool `json:"forceOnLevelPercentWhenActivated,omitempty"`
 }
 
 type ModeOption struct {

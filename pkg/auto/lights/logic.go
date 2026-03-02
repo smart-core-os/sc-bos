@@ -115,6 +115,12 @@ func decideAction(now time.Time, readState *ReadState, writeState *WriteState) (
 
 	if sinceUnoccupied >= unoccupiedDelayBeforeDarkness {
 		// we've been unoccupied for long enough, turn things off now
+		// unless the mode just changed and ForceOnLevelPercentWhenActivated is set, in which case turn on
+		if modeChanged && mode.ForceOnLevelPercentWhenActivated {
+			writeState.AddReason("mode changed, forcing on level")
+			switchOn = true
+			return
+		}
 		writeState.AddReasonf("unoccupied for %v", formatDuration(sinceUnoccupied))
 		switchOff = true
 		return

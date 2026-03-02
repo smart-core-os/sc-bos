@@ -872,6 +872,96 @@ func Test_processState(t *testing.T) {
 		})
 		actions.assertNoMoreCalls()
 	})
+	t.Run("force on level when mode activated while lights off past timeout", func(t *testing.T) {
+		startTime := time.Unix(0, 0).In(time.UTC)
+		now := startTime.Add(time.Minute)
+		readState := NewReadState(startTime)
+		readState.Config.Now = func() time.Time { return now }
+		readState.Config.OccupancySensors = []string{"pir01"}
+		readState.Config.Lights = []string{"light01"}
+		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
+		readState.Config.Modes = []config.ModeOption{
+			{
+				Name: "nightMode",
+				Mode: config.Mode{
+					UnoccupiedOffDelay:              jsontypes.Duration{Duration: 10 * time.Minute},
+					OnLevelPercent:                  asPtr[float32](75),
+					ForceOnLevelPercentWhenActivated: true,
+				},
+			},
+		}
+		// unoccupied for 20 minutes, well past the 10-minute timeout
+		readState.Occupancy["pir01"] = &traits.Occupancy{
+			State:           traits.Occupancy_UNOCCUPIED,
+			StateChangeTime: timestamppb.New(startTime.Add(-20 * time.Minute)),
+		}
+		// writeState already has a brightness assert from the previous (default) mode
+		writeState := NewWriteState(startTime)
+		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+			At: startTime,
+			V:  &traits.Brightness{LevelPercent: 0},
+		}
+		writeState.ActiveMode = ModeDefault
+
+		// activate nightMode
+		readState.Modes = &traits.ModeValues{
+			Values: map[string]string{ModeValueKey: "nightMode"},
+		}
+
+		actions := newTestActions(t)
+		ttl, err := processState(context.Background(), readState, writeState, actions)
+		assertNoErrAndTtl(t, ttl, err, 0)
+		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+			Name:       "light01",
+			Brightness: &traits.Brightness{LevelPercent: 75},
+		})
+		actions.assertNoMoreCalls()
+	})
+
+	t.Run("no force on level when mode activated without flag", func(t *testing.T) {
+		startTime := time.Unix(0, 0).In(time.UTC)
+		now := startTime.Add(time.Minute)
+		readState := NewReadState(startTime)
+		readState.Config.Now = func() time.Time { return now }
+		readState.Config.OccupancySensors = []string{"pir01"}
+		readState.Config.Lights = []string{"light01"}
+		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
+		readState.Config.Modes = []config.ModeOption{
+			{
+				Name: "nightMode",
+				Mode: config.Mode{
+					UnoccupiedOffDelay: jsontypes.Duration{Duration: 10 * time.Minute},
+					OnLevelPercent:     asPtr[float32](75),
+					// ForceOnLevelPercentWhenActivated intentionally not set
+				},
+			},
+		}
+		readState.Occupancy["pir01"] = &traits.Occupancy{
+			State:           traits.Occupancy_UNOCCUPIED,
+			StateChangeTime: timestamppb.New(startTime.Add(-20 * time.Minute)),
+		}
+		writeState := NewWriteState(startTime)
+		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+			At: startTime,
+			V:  &traits.Brightness{LevelPercent: 0},
+		}
+		writeState.ActiveMode = ModeDefault
+
+		readState.Modes = &traits.ModeValues{
+			Values: map[string]string{ModeValueKey: "nightMode"},
+		}
+
+		actions := newTestActions(t)
+		ttl, err := processState(context.Background(), readState, writeState, actions)
+		assertNoErrAndTtl(t, ttl, err, 0)
+		// lights should remain off (switchOff at level 0)
+		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+			Name:       "light01",
+			Brightness: &traits.Brightness{LevelPercent: 0},
+		})
+		actions.assertNoMoreCalls()
+	})
+
 	t.Run("do nothing when mode disables auto", func(t *testing.T) {
 		startTime := time.Unix(0, 0).In(time.UTC)
 		readState := NewReadState(now)
