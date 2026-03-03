@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"path"
 
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -50,12 +49,13 @@ func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, err
 		return f.New(driverServices), nil
 	}, service.IdIsRequired)
 
-	var allErrs error
+	logger := c.Logger.Named("driver")
 	for _, cfg := range configs {
-		_, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw})
-		allErrs = multierr.Append(allErrs, err)
+		if _, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw}); err != nil {
+			loggerWithServiceInfo(logger, cfg.Name, cfg.Type).Warn("Failed to create service", zap.Error(err))
+		}
 	}
-	return m, allErrs
+	return m, nil
 }
 
 func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, error) {
@@ -83,12 +83,13 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 		return f.New(autoServices), nil
 	}, service.IdIsRequired)
 
-	var allErrs error
+	logger := c.Logger.Named("auto")
 	for _, cfg := range configs {
-		_, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw})
-		allErrs = multierr.Append(allErrs, err)
+		if _, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw}); err != nil {
+			loggerWithServiceInfo(logger, cfg.Name, cfg.Type).Warn("Failed to create service", zap.Error(err))
+		}
 	}
-	return m, allErrs
+	return m, nil
 }
 
 func (c *Controller) startSystems() (*service.Map, error) {
@@ -122,12 +123,13 @@ func (c *Controller) startSystems() (*service.Map, error) {
 		return f.New(ctxServices), nil
 	}, service.IdIsKind)
 
-	var allErrs error
+	logger := c.Logger.Named("system")
 	for kind, cfg := range c.SystemConfig.Systems {
-		_, _, err := m.Create("", kind, service.State{Active: !cfg.Disabled, Config: cfg.Raw})
-		allErrs = multierr.Append(allErrs, err)
+		if _, _, err := m.Create("", kind, service.State{Active: !cfg.Disabled, Config: cfg.Raw}); err != nil {
+			loggerWithServiceInfo(logger, kind, kind).Warn("Failed to create service", zap.Error(err))
+		}
 	}
-	return m, allErrs
+	return m, nil
 }
 
 func (c *Controller) startZones(configs []zone.RawConfig) (*service.Map, error) {
@@ -152,12 +154,13 @@ func (c *Controller) startZones(configs []zone.RawConfig) (*service.Map, error) 
 		return f.New(zoneServices), nil
 	}, service.IdIsRequired)
 
-	var allErrs error
+	logger := c.Logger.Named("zone")
 	for _, cfg := range configs {
-		_, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw})
-		allErrs = multierr.Append(allErrs, err)
+		if _, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw}); err != nil {
+			loggerWithServiceInfo(logger, cfg.Name, cfg.Type).Warn("Failed to create service", zap.Error(err))
+		}
 	}
-	return m, allErrs
+	return m, nil
 }
 
 func logServiceMapChanges(ctx context.Context, logger *zap.Logger, m *service.Map) {
@@ -179,11 +182,15 @@ func logServiceRecordChange(logger *zap.Logger, oldVal, newVal *service.StateRec
 		logger = loggerWithServiceInfo(logger, oldVal.Id, oldVal.Kind)
 	}
 	switch {
-	case oldVal == nil && newVal != nil: // do nothing
+	case oldVal == nil && newVal != nil: // created or initial snapshot
+		if newVal.State.Err != nil {
+			logger.Warn("Failed to configure service", zap.Error(newVal.State.Err))
+		} else {
+			logger.Debug("Created", zap.Bool("active", newVal.State.Active), zap.Bool("loading", newVal.State.Loading))
+		}
 	case newVal == nil: // removed
 		logger.Debug("Removed")
-	case oldVal == nil: // created
-		logger.Debug("Created", zap.Bool("active", newVal.State.Active), zap.Bool("loading", newVal.State.Loading), zap.Error(newVal.State.Err))
+	case oldVal == nil: // created (with no new value — should not normally happen)
 	case !newVal.State.Active && newVal.State.Err != nil && oldVal.State.Err == nil: // error
 		logger.Warn("Failed to load", zap.Error(newVal.State.Err))
 	case oldVal.State.Active && !newVal.State.Active: // stopped

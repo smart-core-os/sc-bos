@@ -85,11 +85,15 @@ func TestLifecycle(t *testing.T) {
 		tt := newLifecycleTester(t)
 		wantErr := errors.New("expected parse err")
 		tt.setupParseErr(wantErr)
-		_, gotErr := tt.sub.Configure([]byte("hello"))
-		tt.assertErr(wantErr, gotErr)
-		tt.assertCurrentState(State{
+		gotState, gotErr := tt.sub.Configure([]byte("hello"))
+		tt.assertNoErr(gotErr)
+		wantState := State{
 			LastInactiveTime: tt.now,
-		})
+			Err:              wantErr,
+			LastErrTime:      tt.now,
+		}
+		tt.assertCurrentState(wantState)
+		tt.testState(wantState, gotState)
 	})
 
 	t.Run("configure,start", func(t *testing.T) {
