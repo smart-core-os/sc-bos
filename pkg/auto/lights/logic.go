@@ -118,6 +118,7 @@ func decideAction(now time.Time, readState *ReadState, writeState *WriteState) (
 		// unless the mode just changed and ForceOnLevelPercentWhenActivated is set, in which case turn on
 		if modeChanged && mode.ForceOnLevelPercentWhenActivated {
 			writeState.AddReason("mode changed, forcing on level")
+			writeState.LastButtonOnTime = now // resets sinceUnoccupied so lights stay on for full unoccupiedOffDelay duration
 			switchOn = true
 			return
 		}
