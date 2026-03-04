@@ -58,7 +58,7 @@ watch(endIsLive, (endIsLive) => {
   const scope = effectScope();
   endCalcScope = () => scope.stop();
   scope.run(() => {
-    if (endIsLive.value) {
+    if (endIsLive) {
       const {value: meterReading} = usePullMeterReading(() => props.name);
       readingAtEnd.value = meterReading;
       const {value: generatedReading} = usePullMeterReading(() => props.generated);

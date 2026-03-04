@@ -7,7 +7,7 @@
     <BuildingOccupancy :name="props.occupancy.name"
                        :max-value="props.occupancy.maxValue"
                        id="BuildingOccupancy"/>
-    <EnergyUsage :name="props.energy.name"
+    <EnergyUsage :name="props.energy.name" :generated="props.energy.generated"
                  id="EnergyUsage"/>
     <TemperatureSystems :name="props.temperature.name"
                         id="TemperatureSystems"/>
