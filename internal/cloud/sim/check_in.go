@@ -67,7 +67,7 @@ func parseBearerSecret(r *http.Request) ([]byte, error) {
 	if token == "" {
 		return nil, errors.New("empty bearer token")
 	}
-	secret, err := base64.URLEncoding.DecodeString(token)
+	secret, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
 		return nil, errors.New("invalid base64 in bearer token")
 	}
