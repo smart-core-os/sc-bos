@@ -79,7 +79,7 @@ export function useDescribeMeterReading(query) {
  * @return {string}
  */
 export function usageToString(usage, unit = '') {
-  return format(usage, unit)
+  return format(usage, unit);
 }
 
 /**
