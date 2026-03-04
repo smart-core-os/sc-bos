@@ -51,7 +51,7 @@ const endIsLive = computed(() => _offset.value === 0);
 let endCalcScope = null;
 const readingAtEnd = reactive({value: null});
 const generatedAtEnd = reactive({value: null});
-watch(() => endIsLive, (endIsLive) => {
+watch(endIsLive, (endIsLive) => {
   if (endCalcScope) {
     endCalcScope();
   }

@@ -104,7 +104,7 @@ const props = defineProps({
 
 footer {
   font-family: sans-serif;
-  font-weight: 6s00;
+  font-weight: 600;
   font-size: 14px;
   text-align: center;
   color: #000;
