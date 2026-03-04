@@ -155,6 +155,11 @@ func (l *Service[C]) Start() (State, error) {
 	if state.Active {
 		return state, ErrAlreadyStarted
 	}
+	// Refuse to start if a config parse error was absorbed into state and no working config exists.
+	// This can happen when Configure is called with unparseable data before any successful config is applied.
+	if state.Err != nil && l.config == nil {
+		return state, state.Err
+	}
 
 	state.Active = true
 	state.Loading = false

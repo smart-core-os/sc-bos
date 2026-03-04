@@ -96,6 +96,27 @@ func TestLifecycle(t *testing.T) {
 		tt.testState(wantState, gotState)
 	})
 
+	t.Run("configure,error,start", func(t *testing.T) {
+		// When Configure absorbs a parse error (no prior working config), Start must not
+		// succeed: the service should remain inactive and return the original parse error.
+		tt := newLifecycleTester(t)
+		wantErr := errors.New("expected parse err")
+		tt.setupParseErr(wantErr)
+		_, _ = tt.sub.Configure([]byte("hello")) // absorbs error; returns nil
+
+		gotState, gotErr := tt.sub.Start()
+		tt.assertErr(wantErr, gotErr)
+		if gotState.Active {
+			tt.Fatalf("service must not be active after start with absorbed parse error")
+		}
+		tt.assertCurrentState(State{
+			LastInactiveTime: tt.now,
+			Err:              wantErr,
+			LastErrTime:      tt.now,
+		})
+		tt.assertNoApply()
+	})
+
 	t.Run("configure,start", func(t *testing.T) {
 		tt := newLifecycleTester(t)
 		wantState := State{}

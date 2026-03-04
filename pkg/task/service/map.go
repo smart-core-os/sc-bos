@@ -129,8 +129,20 @@ type Record struct {
 // will be aborted and that error will be returned.
 func (m *Map) Create(id, kind string, state State) (string, State, error) {
 	r, cID, err := m.createRecord(id, kind)
-	if err != nil {
+	if r == nil {
+		// Failed before a record could be created (immutable map or bad id).
 		return "", State{}, err
+	}
+
+	if err != nil {
+		// Factory failed — service is in the map as an erroredLifecycle so it remains visible via ServicesApi.
+		go m.bus.Send(context.Background(), &Change{
+			ChangeTime: m.now(),
+			ChangeType: types.ChangeType_ADD,
+			NewValue:   r,
+			cID:        cID,
+		})
+		return r.Id, r.Service.State(), err
 	}
 
 	outState := r.Service.State()
@@ -377,9 +389,9 @@ func (m *Map) createRecord(id, kind string) (*Record, uint64, error) {
 		}
 	}
 
-	s, err := m.create(id, kind)
-	if err != nil {
-		return nil, 0, err
+	s, createErr := m.create(id, kind)
+	if createErr != nil {
+		s = newErroredLifecycle(createErr)
 	}
 
 	r := &Record{
@@ -389,7 +401,7 @@ func (m *Map) createRecord(id, kind string) (*Record, uint64, error) {
 	}
 	m.known[id] = r
 	m.lastCID++
-	return r, m.lastCID, nil
+	return r, m.lastCID, createErr
 }
 
 func (m *Map) deleteRecord(id string) (*Record, uint64, error) {
