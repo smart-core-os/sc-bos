@@ -59,6 +59,13 @@ export default function() {
    */
   const initializeLocal = async () => {
     existingLocalAuth.value = await readFromStorage();
+    if (!existingLocalAuth.value) {
+      const username = import.meta.env.VITE_DASHBOARD_USERNAME;
+      const password = import.meta.env.VITE_DASHBOARD_PASSWORD;
+      if (username && password) {
+        existingLocalAuth.value = await loginLocal(username, password).catch(() => console.warn('local login rejected'));
+      }
+    }
     return existingLocalAuth.value;
   };
 
