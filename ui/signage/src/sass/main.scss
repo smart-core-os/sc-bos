@@ -1,0 +1,144 @@
+$body-font-family: 'Poppins', sans-serif !default;
+$mono-font-family: 'Consolas', monospace !default;
+@use 'vuetify' with (
+$body-font-family: $body-font-family,
+$font-size-root: 14px,
+$line-height-root: 1.5,
+
+$border-radius-root: 5px,
+
+// todo: see below
+//$material-dark: (
+//    'table': (
+//        'hover': var(--v-neutral-lighten2),
+//        'active': var(--v-neutral-lighten1),
+//    ),
+//),
+
+$font-weights: (
+    'semibold': 600
+),
+
+$typography: (
+    'h1': (
+        'size': 2.571rem,
+        'weight': 700,
+        'line-height': 1.3em,
+        'letter-spacing': -0.03em
+    ),
+    'h2': (
+        'size': 2rem,
+        'weight': 700,
+        'line-height': 1.3em,
+        'letter-spacing': -0.02em
+    ),
+    'h3': (
+        'size': 1.714rem,
+        'weight': 700,
+        'line-height': 1.3em,
+        'letter-spacing': -0.015em
+    ),
+    'h4': (
+        'size': 1.428rem,
+        'weight': 700,
+        'line-height': 1.3em,
+        'letter-spacing': -0.01em
+    ),
+    'body-large': (
+        'size': 1.142rem,
+        'weight': 400,
+        'line-height': 1.6rem,
+        'letter-spacing': -0.01em,
+        'font-family': $body-font-family,
+        'text-transform': false
+    ),
+    'body-small': (
+        'size': .857rem,
+        'weight': 400,
+        'line-height': 1.4rem,
+        'letter-spacing': .025em,
+        'font-family': $body-font-family,
+        'text-transform': false
+    ),
+    'body-code': (
+        'size': .857rem,
+        'weight': 400,
+        'line-height': 1.4rem,
+        'letter-spacing': .025em,
+        'font-family': $mono-font-family,
+        'text-transform': false
+    ),
+    'title': (
+        'size': 1rem,
+        'weight': 500,
+        'line-height': 1.5rem,
+        'letter-spacing': 0em,
+        'font-family': $body-font-family,
+        'text-transform': false
+    ),
+    'title-bold': (
+        'size': 1rem,
+        'weight': 700,
+        'line-height': 1.5rem,
+        'letter-spacing': 0em,
+        'font-family': $body-font-family,
+        'text-transform': false
+    ),
+    'title-caps-large': (
+        'size': 1rem,
+        'weight': 700,
+        'line-height': 1.5rem,
+        'letter-spacing': 0.15em,
+        'font-family': $body-font-family,
+        'text-transform': uppercase
+    ),
+    'title-caps': (
+        'size': 0.857rem,
+        'weight': 700,
+        'line-height': 1.5rem,
+        'letter-spacing': 0.115em,
+        'font-family': $body-font-family,
+        'text-transform': uppercase
+    ),
+    'title-caps-small': (
+        'size': 0.714rem,
+        'weight': 700,
+        'line-height': 1.5rem,
+        'letter-spacing': 0.115em,
+        'font-family': $body-font-family,
+        'text-transform': uppercase
+    ),
+    'title-small': (
+        'size': .857rem,
+        'weight': 500,
+        'line-height': 1.5rem,
+        'letter-spacing': 0em,
+        'font-family': $body-font-family,
+        'text-transform': false
+    ),
+    'caption': (
+        'size': .857rem,
+        'weight': 500,
+        'line-height': 1.5rem,
+        'letter-spacing': 0em,
+        'font-family': $body-font-family,
+        'text-transform': false
+    ),
+    'subtitle-1': (
+        'size': 1rem,
+        'weight': 600,
+        'line-height': 1.5rem,
+        'letter-spacing': 0em,
+        'font-family': $body-font-family,
+        'text-transform': false
+    ),
+    'subtitle-2': (
+        'size': 1rem,
+        'weight': 500,
+        'line-height': 1.5rem,
+        'letter-spacing': 0em,
+        'font-family': $body-font-family,
+        'text-transform': false
+    ),
+)
+);

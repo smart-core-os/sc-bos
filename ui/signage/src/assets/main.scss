@@ -1,0 +1,17 @@
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#app {
+  background-color: $island-bk;
+  font-family: sans-serif;
+  display: flex;
+  padding: 1em 0;
+  font-weight: normal;
+  width: 400px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3rem;
+}
