@@ -91,6 +91,16 @@ export namespace Device {
       hasStringInFold(): boolean;
       clearStringInFold(): Condition;
 
+      getStringNotEqual(): string;
+      setStringNotEqual(value: string): Condition;
+      hasStringNotEqual(): boolean;
+      clearStringNotEqual(): Condition;
+
+      getStringNotEqualFold(): string;
+      setStringNotEqualFold(value: string): Condition;
+      hasStringNotEqualFold(): boolean;
+      clearStringNotEqualFold(): Condition;
+
       getTimestampEqual(): google_protobuf_timestamp_pb.Timestamp | undefined;
       setTimestampEqual(value?: google_protobuf_timestamp_pb.Timestamp): Condition;
       hasTimestampEqual(): boolean;
@@ -168,6 +178,8 @@ export namespace Device {
         stringContainsFold?: string;
         stringIn?: Device.Query.StringList.AsObject;
         stringInFold?: Device.Query.StringList.AsObject;
+        stringNotEqual?: string;
+        stringNotEqualFold?: string;
         timestampEqual?: google_protobuf_timestamp_pb.Timestamp.AsObject;
         timestampGt?: google_protobuf_timestamp_pb.Timestamp.AsObject;
         timestampGte?: google_protobuf_timestamp_pb.Timestamp.AsObject;
@@ -196,6 +208,8 @@ export namespace Device {
         STRING_CONTAINS_FOLD = 5,
         STRING_IN = 6,
         STRING_IN_FOLD = 7,
+        STRING_NOT_EQUAL = 8,
+        STRING_NOT_EQUAL_FOLD = 9,
         TIMESTAMP_EQUAL = 20,
         TIMESTAMP_GT = 21,
         TIMESTAMP_GTE = 22,

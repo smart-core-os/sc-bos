@@ -395,6 +395,16 @@ func Test_conditionToCmpFunc(t *testing.T) {
 				negative: []string{"", "bar", "fOoO", "-fOo", "10"},
 			},
 			{
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_StringNotEqual{StringNotEqual: "foo"}},
+				positive: []string{"", "bar", "FOO", "foO", "fooo", "-foo", "10"},
+				negative: []string{"foo"},
+			},
+			{
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_StringNotEqualFold{StringNotEqualFold: "fOo"}},
+				positive: []string{"", "bar", "fOoO", "-fOo", "10"},
+				negative: []string{"fOo", "FOO", "foo"},
+			},
+			{
 				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_StringContains{StringContains: "apple"}},
 				positive: []string{"apple pie", "apple", "pineapple", "apple123"},
 				negative: []string{"", "pple", "appl", "Apple"},

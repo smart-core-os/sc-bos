@@ -74,6 +74,14 @@ message Device {
         // The server may have limits on the number of strings that can be compared.
         StringList string_in_fold = 7;
 
+        // The condition matches if the value is not equal to this string.
+        // String conversion will be applied to non-string values before comparison.
+        string string_not_equal = 8;
+        // The condition matches if the value is not equal to this string using a simple unicode case folding comparison.
+        // String conversion will be applied to non-string values before comparison.
+        // See the go package strings.EqualFold.
+        string string_not_equal_fold = 9;
+
         // The condition matches if the value is equal to this timestamp.
         google.protobuf.Timestamp timestamp_equal = 20;
         // The condition matches if the value is greater than this timestamp.

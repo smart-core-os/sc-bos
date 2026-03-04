@@ -130,6 +130,14 @@ func conditionToCmpFunc(cond *devicespb.Device_Query_Condition) func(value) bool
 		return strCmp(func(v string) bool {
 			return strings.EqualFold(v, c.StringEqualFold)
 		})
+	case *devicespb.Device_Query_Condition_StringNotEqual:
+		return strCmp(func(v string) bool {
+			return v != c.StringNotEqual
+		})
+	case *devicespb.Device_Query_Condition_StringNotEqualFold:
+		return strCmp(func(v string) bool {
+			return !strings.EqualFold(v, c.StringNotEqualFold)
+		})
 	case *devicespb.Device_Query_Condition_StringContains:
 		return strCmp(func(v string) bool {
 			return strings.Contains(v, c.StringContains)
