@@ -391,7 +391,9 @@ func (m *Map) createRecord(id, kind string) (*Record, uint64, error) {
 
 	s, createErr := m.create(id, kind)
 	if createErr != nil {
-		s = newErroredLifecycle(createErr)
+		s = newRetryLifecycle(createErr, func() (Lifecycle, error) {
+			return m.create(id, kind)
+		})
 	}
 
 	r := &Record{

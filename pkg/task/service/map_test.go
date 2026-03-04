@@ -77,6 +77,47 @@ func TestMap_Create_FactoryError_ImmutableMap(t *testing.T) {
 	}
 }
 
+// TestMap_FactoryError_ConfigureRetries verifies that calling Configure on a factory-errored service
+// retries the factory. If the factory now succeeds, the service transitions out of the error state
+// and becomes configurable/startable.
+func TestMap_FactoryError_ConfigureRetries(t *testing.T) {
+	// Start with a factory that always fails.
+	m := NewMap(factoryWithError, IdIsKind)
+	_, _, err := m.Create("svc1", "badkind", State{})
+	if !errors.Is(err, errUnsupportedKind) {
+		t.Fatalf("expected errUnsupportedKind on create, got %v", err)
+	}
+
+	r := m.Get("svc1")
+	if r == nil {
+		t.Fatal("expected service in map")
+	}
+	if r.Service.State().Err == nil {
+		t.Fatal("expected error state before configure")
+	}
+
+	// Swap the factory to one that succeeds — the retry closure reads m.create at call time.
+	m.create = factoryOK
+
+	// Configure should now succeed: factory retried, inner service created and configured.
+	state, err := r.Service.Configure([]byte(`{}`))
+	if err != nil {
+		t.Fatalf("expected configure to succeed after factory fixed, got %v", err)
+	}
+	if state.Err != nil {
+		t.Errorf("expected no error in state after successful configure, got %v", state.Err)
+	}
+
+	// Subsequent Start should also succeed via the inner lifecycle.
+	state, err = r.Service.Start()
+	if err != nil {
+		t.Fatalf("expected start to succeed after configure, got %v", err)
+	}
+	if !state.Active {
+		t.Error("expected service to be active after start")
+	}
+}
+
 // TestMap_Create_OK_FactoryError_DoesNotRemove verifies that a successful service creation is not
 // affected when a subsequent creation with a bad kind fails.
 func TestMap_Create_OK_FactoryError_DoesNotRemove(t *testing.T) {
