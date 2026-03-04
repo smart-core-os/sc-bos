@@ -292,7 +292,7 @@ export const useAccountStore = defineStore('accountStore', () => {
     const redirect = loadFromBrowserStorage('session', 'redirect', '')[0];
     if (redirect !== '') {
       window.sessionStorage.removeItem('redirect');
-      if (router.currentRoute.path !== redirect) {
+      if (router.currentRoute.value.path !== redirect) {
         await router.push(redirect);
       }
 

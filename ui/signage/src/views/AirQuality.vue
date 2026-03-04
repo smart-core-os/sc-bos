@@ -30,7 +30,7 @@ const props = defineProps({
 
 const paused = ref(false);
 
-const {value: airQuality} = usePullAirQuality(() => props.name);
+const {value: airQuality} = usePullAirQuality(() => props.name, () => paused);
 const {presentMetrics} = useAirQuality(airQuality);
 const co2level = ref(400);
 
