@@ -87,6 +87,8 @@ type Config struct {
 
 	Experimental *Experimental `json:"experimental,omitempty"`
 
+	Cloud *Cloud `json:"cloud,omitempty"`
+
 	DriverFactories map[string]driver.Factory `json:"-"` // keyed by driver name
 	AutoFactories   map[string]auto.Factory   `json:"-"` // keyed by automation type
 	SystemFactories map[string]system.Factory `json:"-"` // keyed by system type
@@ -275,6 +277,11 @@ func (c *Certs) FillDefaults() *Certs {
 	or(&c.HTTPCertFile, "https.cert.pem")
 
 	return c
+}
+
+type Cloud struct {
+	Endpoint  string `json:"endpoint,omitempty"`
+	TokenFile string `json:"tokenFile,omitempty"`
 }
 
 // BlockSource is an interface that can be implemented by a factory to provide a list of blocks that describe the config
