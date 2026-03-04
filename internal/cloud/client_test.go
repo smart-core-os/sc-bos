@@ -70,7 +70,7 @@ func setupClientEnv(t *testing.T) *clientEnv {
 	}
 
 	// Base64-encode raw secret — matches how the sim server decodes Bearer tokens
-	encodedSecret := base64.URLEncoding.EncodeToString(created.Secret)
+	encodedSecret := base64.StdEncoding.EncodeToString(created.Secret)
 
 	// Create temp store dir
 	storePath := t.TempDir()
