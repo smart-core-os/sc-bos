@@ -55,7 +55,7 @@ const optionalFields = [
   {name: 'iaq.pm1', title: 'PM 1 micron (ug/m3)'},
   {name: 'iaq.pm25', title: 'PM 2.5 micron (ug/m3)'},
   {name: 'iaq.pm10', title: 'PM 10 micron (ug/m3)'},
-  {name: 'iaq.airchange', title: 'Air Changes per Hour'},
+  {name: 'iaq.airchange', title: 'Air Change per Hour'},
 ];
 
 const dateRange = ref([]);
