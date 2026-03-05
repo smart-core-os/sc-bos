@@ -123,7 +123,7 @@ const startAuto = () => {
 
 onMounted(() => {
   waterfills = waterTankSVG.value.querySelectorAll('.waterfill');
-
+  setValue(props.waterUnit);
   // Start demo
   startAuto();
 });
