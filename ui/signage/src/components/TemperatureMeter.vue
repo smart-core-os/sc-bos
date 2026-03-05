@@ -217,7 +217,7 @@ const props = defineProps({
   },
   totalRange: {
     type: Number,
-    default: 3
+    default: 3,
   },
   runDemo: {
     type: Boolean,
@@ -302,7 +302,7 @@ const setValue = async (temp, setPoint, cancelled) => {
     if (wasHeating === false) removePipClasses();
 
     for (let i = 0; i < pipsReverse.length; i++) {
-      if (i < pipVal || i === 0) {
+      if (i < pipVal) {
         pipsReverse[i].classList.add('onFlame');
       } else {
         pipsReverse[i].classList.remove('onFlame');
@@ -323,7 +323,7 @@ const setValue = async (temp, setPoint, cancelled) => {
     fanSpeed(pipVal);
 
     for (let i = 0; i < pips.length; i++) {
-      if (i < pipVal || i === 0) {
+      if (i < pipVal) {
         pips[i].classList.add('onIce');
       } else {
         pips[i].classList.remove('onIce');
@@ -348,18 +348,26 @@ onMounted(() => {
   pips = temperatureMeterSVG.value.querySelectorAll('.pips');
   pipsReverse = [...pips].reverse();
 
+  setValue(props.temperature, props.targetTemperature);
   // Start demo
   startAuto();
 });
 
-watch(() => props, (p, _, onCleanup) => {
+watch(() => props.temperature, (newVal, _, onCleanup) => {
   let cancelled = false;
-  onCleanup(() => {
-    cancelled = true;
-  });
-  setValue(p.temperature, p.targetTemperature, cancelled);
-  currentEnergy.value = p.energy;
-}, {deep: true});
+  onCleanup(() => { cancelled = true; });
+  setValue(newVal, props.targetTemperature, cancelled);
+});
+
+watch(() => props.targetTemperature, (newVal, _, onCleanup) => {
+  let cancelled = false;
+  onCleanup(() => { cancelled = true; });
+  setValue(props.temperature, newVal, cancelled);
+});
+
+watch(() => props.energy, (newVal) => {
+  currentEnergy.value = newVal;
+});
 </script>
 
 <style lang="scss" scoped>

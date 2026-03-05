@@ -157,6 +157,7 @@ const setValue = async (value) => {
 onMounted(() => {
   petals = airQualitySVG.value.querySelectorAll('.petal');
   randomPetals = shuffleArray(petals);
+  setValue(props.airQuality);
   startAuto();
 });
 

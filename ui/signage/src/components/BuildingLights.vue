@@ -52,7 +52,7 @@ const setValue = async (value) => {
 
   if (activeCount > 0) {
     for (let i = 0; i < randomWindows.length; i++) {
-      randomWindows[i].classList.toggle('on', (i < activeCount || i === 0));
+      randomWindows[i].classList.toggle('on', i < activeCount);
       await sleep(50);
     }
   }

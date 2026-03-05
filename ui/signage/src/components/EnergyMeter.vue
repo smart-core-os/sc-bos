@@ -389,13 +389,13 @@ const setValue = async (generated, demanded, cancelled) => {
 
   for (let i = 0; i < demandPips.length; i++) {
     // Demand pips
-    if (i < demandPipVal || i === 0) {
+    if (i < demandPipVal || (i === 0 && demanded > 0)) {
       demandPips[i].classList.add('onPylon');
     } else {
       demandPips[i].classList.remove('onPylon');
     }
     // Generation pips
-    if (i < generatePipVal || i === 0) {
+    if (i < generatePipVal || (i === 0 && generated > 0)) {
       generatePips[i].classList.add('onTurbine');
     } else {
       generatePips[i].classList.remove('onTurbine');
@@ -416,9 +416,9 @@ onMounted(() => {
   generatePips = [...generateObj.querySelectorAll('.pip')].reverse();
   demandPips = [...demandObj.querySelectorAll('.pip')].reverse();
 
+  setValue(props.generated, props.demand, false);
   // Start demo
   startAuto();
-  // setValue(props.generated, props.demand, false);
 });
 
 watch(() => props.generated, (newGenVal, _, onCleanup) => {
