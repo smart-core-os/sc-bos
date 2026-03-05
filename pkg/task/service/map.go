@@ -125,8 +125,8 @@ type Record struct {
 // Create creates and adds a new record to m returning the new ID and the records service State.
 // The kind argument is required, but id is optional. If absent the IdFunc will be used to mint a new ID.
 // Only State.Active and State.Config are optionally used in the passed state to either Start or Configure the created
-// Lifecycle. If either are present and the corresponding Lifecycle call returns an error, then creating the new record
-// will be aborted and that error will be returned.
+// Lifecycle. If Start or Configure return an error, creating the new record will be aborted and that error returned.
+// If the factory fails, the record is still added to the map in an errored state and remains visible via ServicesApi.
 func (m *Map) Create(id, kind string, state State) (string, State, error) {
 	r, cID, err := m.createRecord(id, kind)
 	if r == nil {
@@ -135,7 +135,6 @@ func (m *Map) Create(id, kind string, state State) (string, State, error) {
 	}
 
 	if err != nil {
-		// Factory failed — service is in the map as an erroredLifecycle so it remains visible via ServicesApi.
 		go m.bus.Send(context.Background(), &Change{
 			ChangeTime: m.now(),
 			ChangeType: types.ChangeType_ADD,
