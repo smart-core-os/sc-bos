@@ -1,4 +1,4 @@
-package api
+package sim
 
 import (
 	"encoding/json"
@@ -7,8 +7,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store"
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
+	queries2 "github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 // Site is the JSON representation of a site.
@@ -18,7 +18,7 @@ type Site struct {
 	CreateTime time.Time `json:"createTime"`
 }
 
-func toSite(s queries.Site) Site {
+func toSite(s queries2.Site) Site {
 	return Site{
 		ID:         s.ID,
 		Name:       s.Name,
@@ -26,7 +26,7 @@ func toSite(s queries.Site) Site {
 	}
 }
 
-func toSites(sites []queries.Site) []Site {
+func toSites(sites []queries2.Site) []Site {
 	out := make([]Site, len(sites))
 	for i, s := range sites {
 		out[i] = toSite(s)
@@ -52,10 +52,10 @@ func (s *Server) listSites(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var items []queries.Site
+	var items []queries2.Site
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
-		items, err = tx.ListSites(r.Context(), queries.ListSitesParams{
+		items, err = tx.ListSites(r.Context(), queries2.ListSitesParams{
 			AfterID: afterID,
 			Limit:   limit + 1, // fetch one extra to check for next page
 		})
@@ -95,7 +95,7 @@ func (s *Server) createSite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries.Site
+	var item queries2.Site
 	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
 		item, err = tx.CreateSite(r.Context(), req.Name)
@@ -125,7 +125,7 @@ func (s *Server) getSite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries.Site
+	var item queries2.Site
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		item, err = tx.GetSite(r.Context(), id)
@@ -168,10 +168,10 @@ func (s *Server) updateSite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries.Site
+	var item queries2.Site
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
-		item, err = tx.UpdateSite(r.Context(), queries.UpdateSiteParams{
+		item, err = tx.UpdateSite(r.Context(), queries2.UpdateSiteParams{
 			ID:   id,
 			Name: req.Name,
 		})

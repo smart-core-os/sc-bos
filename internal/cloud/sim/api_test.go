@@ -1,4 +1,4 @@
-package api
+package sim
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
 )
 
 // TestCascadeDelete verifies that deleting a site cascades to nodes, config versions, and deployments

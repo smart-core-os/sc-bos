@@ -10,8 +10,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store"
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 // Example_basic demonstrates basic CRUD operations with the store.

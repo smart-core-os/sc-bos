@@ -23,7 +23,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/cmd/cloudsim/internal/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 	"github.com/smart-core-os/sc-bos/internal/sqlite"
 )
 
