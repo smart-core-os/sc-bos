@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 	"golang.org/x/exp/rand"
+	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
@@ -17,6 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	gen_airqualitysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	gen_electricpb "github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
@@ -325,4 +327,107 @@ func randString(n int) string {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 	return string(b)
+}
+
+func Test_automation_applyConfigDevices(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	logger := zap.NewNop()
+	occ1 := occupancysensorpb.NewModel()
+	occ2 := occupancysensorpb.NewModel()
+
+	announcer := node.New("test")
+	announcer.Logger = logger
+
+	announcer.Announce("occ1",
+		node.HasTrait(trait.OccupancySensor),
+		node.HasServer(
+			traits.RegisterOccupancySensorApiServer,
+			traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ1)),
+		),
+	)
+	announcer.Announce("occ2",
+		node.HasTrait(trait.OccupancySensor),
+		node.HasServer(
+			traits.RegisterOccupancySensorApiServer,
+			traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ2)),
+		),
+	)
+
+	a := &automation{
+		clients:   announcer,
+		announcer: node.NewReplaceAnnouncer(announcer),
+		logger:    logger,
+		devices: &staticDevicesClient{
+			devices: []*devicespb.Device{{Name: "occ1"}, {Name: "occ2"}},
+		},
+	}
+
+	cfg := config.Root{
+		Source: &config.Source{
+			Trait:           trait.OccupancySensor,
+			PollingSchedule: jsontypes.MustParseExtendedSchedule("*/5 * * * * *"),
+		},
+		Storage: &config.Storage{
+			Type: "memory",
+			TTL:  &config.TTL{MaxAge: jsontypes.Duration{Duration: time.Minute * 3}, MaxCount: 10},
+		},
+	}
+
+	if err := a.applyConfigDevices(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+
+	for range 10 {
+		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := occ2.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
+			t.Fatal(err)
+		}
+		time.Sleep(time.Second)
+	}
+
+	cli := gen_occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
+
+	hist1, err := cli.ListOccupancyHistory(ctx, &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hist1.GetTotalSize() == 0 {
+		t.Fatal("expected occ1 to have history records")
+	}
+
+	hist2, err := cli.ListOccupancyHistory(ctx, &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ2", PageSize: 100})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hist2.GetTotalSize() == 0 {
+		t.Fatal("expected occ2 to have history records")
+	}
+}
+
+type staticDevicesClient struct {
+	devices []*devicespb.Device
+}
+
+func (s *staticDevicesClient) ListDevices(_ context.Context, _ *devicespb.ListDevicesRequest, _ ...grpc.CallOption) (*devicespb.ListDevicesResponse, error) {
+	return &devicespb.ListDevicesResponse{Devices: s.devices}, nil
+}
+
+func (s *staticDevicesClient) PullDevices(_ context.Context, _ *devicespb.PullDevicesRequest, _ ...grpc.CallOption) (grpc.ServerStreamingClient[devicespb.PullDevicesResponse], error) {
+	panic("not implemented")
+}
+
+func (s *staticDevicesClient) GetDevicesMetadata(_ context.Context, _ *devicespb.GetDevicesMetadataRequest, _ ...grpc.CallOption) (*devicespb.DevicesMetadata, error) {
+	panic("not implemented")
+}
+
+func (s *staticDevicesClient) PullDevicesMetadata(_ context.Context, _ *devicespb.PullDevicesMetadataRequest, _ ...grpc.CallOption) (grpc.ServerStreamingClient[devicespb.PullDevicesMetadataResponse], error) {
+	panic("not implemented")
+}
+
+func (s *staticDevicesClient) GetDownloadDevicesUrl(_ context.Context, _ *devicespb.GetDownloadDevicesUrlRequest, _ ...grpc.CallOption) (*devicespb.DownloadDevicesUrl, error) {
+	panic("not implemented")
 }
