@@ -21,29 +21,34 @@ import (
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
+type TraitHistory struct {
+	TraitName       trait.Name
+	PollingSchedule *jsontypes.Schedule
+}
+
 // ConfigForFloor is basically just a wrapper around the root config with support for automations and traits
 type ConfigForFloor struct {
 	config.Root
 	Devices      []config.Device
 	Automations  []map[string]any // map looks like config that embeds auto.Config
 	Traits       []map[string]any // map looks like config that embeds config.Trait
-	AddHistories []trait.Name
+	AddHistories []TraitHistory
 }
 
-func (bc *ConfigForFloor) addHistoryForTraits(traits []map[string]any, pollingSchedule *jsontypes.Schedule) []map[string]any {
+func (bc *ConfigForFloor) addHistoryForTraits(traits []map[string]any) []map[string]any {
 	var allConfigs []map[string]any
 	for _, t := range traits {
 		if kind, ok := t["kind"]; ok {
-			for _, traitWithHistory := range bc.AddHistories {
-				if kind == traitWithHistory {
+			for _, th := range bc.AddHistories {
+				if kind == th.TraitName {
 					name := t["name"].(string)
 					c := make(map[string]any)
 					c["name"] = strings.Replace(name, "devices", "history", 1)
 					c["type"] = "history"
 					c["source"] = &historyconfig.Source{
 						Name:            name,
-						Trait:           traitWithHistory,
-						PollingSchedule: pollingSchedule,
+						Trait:           th.TraitName,
+						PollingSchedule: th.PollingSchedule,
 					}
 					c["storage"] = &historyconfig.Storage{
 						Type: "hub",
@@ -63,16 +68,15 @@ func (bc *ConfigForFloor) addHistoryForTraits(traits []map[string]any, pollingSc
 // configRoot is the root directory for the config, defaults to "config" if empty
 // scPrefix is the prefix for the driver's Name. The bacnet driver name will become <sc-prefix>/floor-xx/drivers/<subsystem>
 // subsystem is the name of the subsystem, e.g. "bms", "fire-alarm", etc. which gets used as the file prefix for the output files
-// pollingSchedule is a cron schedule for polling the history traits. If nil, no polling will be added and the history auto will default to pulling records on change.
 func WriteBacnetConfig(configPerFloor map[string]*ConfigForFloor, dirForFloor map[string]string, configRoot string,
-	scPrefix string, subsystem string, pollingSchedule *jsontypes.Schedule) error {
+	scPrefix string, subsystem string) error {
 	if configRoot == "" {
 		configRoot = "config"
 	}
 	for floor, cfg := range configPerFloor {
 
 		if len(cfg.AddHistories) > 0 {
-			autos := cfg.addHistoryForTraits(cfg.Traits, pollingSchedule)
+			autos := cfg.addHistoryForTraits(cfg.Traits)
 			cfg.Automations = append(cfg.Automations, autos...)
 		}
 
