@@ -550,12 +550,16 @@ func TestConfigValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := newTestHarness(t)
 
-			_, err := h.auto.Configure([]byte(tt.config))
-			if tt.wantError && err == nil {
+			gotState, err := h.auto.Configure([]byte(tt.config))
+			gotErr := err
+			if gotErr == nil {
+				gotErr = gotState.Err
+			}
+			if tt.wantError && gotErr == nil {
 				t.Error("Expected error but got nil")
 			}
-			if !tt.wantError && err != nil {
-				t.Errorf("Expected no error but got: %v", err)
+			if !tt.wantError && gotErr != nil {
+				t.Errorf("Expected no error but got: %v", gotErr)
 			}
 		})
 	}

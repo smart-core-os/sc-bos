@@ -2,23 +2,31 @@
   <v-card flat tile>
     <v-card-subtitle class="text-subtitle-2 text-title-caps-large text-neutral-lighten-3 py-4">Config</v-card-subtitle>
     <v-card-text class="px-4 pt-0 json-form">
-      <div class="text-caption pb-1 text-neutral-lighten-6">Export</div>
-      <v-textarea
-          v-model="config"
-          auto-grow
-          class="text-body-code"
-          :disabled="blockSystemEdit"
-          :error-messages="jsonError"
-          variant="outlined"
-          hide-details="auto"
-          readonly/>
-      <v-btn
-          tile
-          variant="text"
-          icon="mdi-content-copy"
-          class="copy-btn"
-          :disabled="blockSystemEdit"
-          @click="copyConfig"/>
+      <v-alert
+          v-if="serviceError && !hasConfig"
+          type="error"
+          variant="tonal"
+          class="mb-3 text-body-small"
+          :text="serviceError"/>
+      <template v-else>
+        <div class="text-caption pb-1 text-neutral-lighten-6">Export</div>
+        <v-textarea
+            v-model="config"
+            auto-grow
+            class="text-body-code"
+            :disabled="blockSystemEdit"
+            :error-messages="jsonError"
+            variant="outlined"
+            hide-details="auto"
+            readonly/>
+        <v-btn
+            tile
+            variant="text"
+            icon="mdi-content-copy"
+            class="copy-btn"
+            :disabled="blockSystemEdit"
+            @click="copyConfig"/>
+      </template>
       <v-snackbar v-model="copyConfirm" timeout="2000" color="success" max-width="250" min-width="200">
         <span class="text-body-large align-baseline"><v-icon start>mdi-check-circle</v-icon>Config copied</span>
       </v-snackbar>
@@ -36,6 +44,9 @@ const {blockSystemEdit} = useAuthSetup();
 const sidebar = useSidebarStore();
 
 const jsonError = ref('');
+
+const serviceError = computed(() => sidebar.data?.service?.error ?? '');
+const hasConfig = computed(() => Boolean(sidebar.data?.service?.configRaw));
 
 const config = computed({
   get() {

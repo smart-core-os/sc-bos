@@ -155,6 +155,11 @@ func (l *Service[C]) Start() (State, error) {
 	if state.Active {
 		return state, ErrAlreadyStarted
 	}
+	// Refuse to start if a config parse error was absorbed into state and no working config exists.
+	// This can happen when Configure is called with unparseable data before any successful config is applied.
+	if state.Err != nil && l.config == nil {
+		return state, state.Err
+	}
 
 	state.Active = true
 	state.Loading = false
@@ -173,16 +178,33 @@ func (l *Service[C]) Start() (State, error) {
 
 // Configure updates the config associated with this service.
 // If the service is active then the config will be loaded as part of this call without blocking.
-// If ParseFunc returns an error parsing data, that error will be returned and no state transition will be applied.
+// If ParseFunc returns an error parsing data:
+//   - If the service already has a working config, the error is returned and no state transition is applied.
+//   - If the service has no prior working config, the error is absorbed into state and nil is returned,
+//     keeping the service in the map so its error is visible via ServicesApi.
 func (l *Service[C]) Configure(data []byte) (State, error) {
 	// parse outside of holding the lock
-	config, err := l.parse(data)
-	if err != nil {
-		return State{}, err
-	}
+	config, parseErr := l.parse(data)
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
+
+	if parseErr != nil {
+		if l.config != nil {
+			// existing working config; keep running, report error to caller
+			return l.state, parseErr
+		}
+		// no working config yet; absorb the error into state so the service stays in the map
+		state := l.state
+		state.Err = parseErr
+		state.LastErrTime = l.now()
+		if state.Active {
+			state.Active = false
+			state.LastInactiveTime = l.now()
+			l.stopLocked()
+		}
+		return l.saveLocked(state)
+	}
 
 	state := l.state
 	if state.Loading {
