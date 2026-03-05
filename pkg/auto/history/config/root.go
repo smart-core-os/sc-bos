@@ -15,8 +15,10 @@ import (
 
 type Root struct {
 	auto.Config
-	Source  *Source      `json:"source,omitempty"`
-	Storage *Storage     `json:"storage,omitempty"`
+	Source  *Source  `json:"source,omitempty"`
+	Storage *Storage `json:"storage,omitempty"`
+	// Devices is a list of conditions to filter which devices to record history for. Takes precedence over Source.Name.
+	// If empty, Source.Name will be used as the history source.
 	Devices []*Condition `json:"devices,omitempty"`
 }
 

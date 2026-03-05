@@ -87,105 +87,12 @@ type automation struct {
 
 func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 	a.logger.Debug("applying config", zap.Any("storageType", cfg.Storage.Type), zap.Any("trait", cfg.Source.Trait))
-	// work out where we're storing the history
-	var store history.Store
-	switch cfg.Storage.Type {
-	case "postgres":
-		var pool *pgxpool.Pool
-		var err error
-		if cfg.Storage.ConnectConfig.IsZero() {
-			// use admin pool (for now) as we know it will support create table operations
-			// todo: update store to support r, w, admin pools
-			_, _, pool, err = a.stores.Postgres()
-		} else {
-			pool, err = pgxutil.Connect(ctx, cfg.Storage.ConnectConfig)
-		}
-		if err != nil {
-			return err
-		}
-		opts := []pgxstore.Option{
-			pgxstore.WithLogger(a.logger),
-		}
-		if ttl := cfg.Storage.TTL; ttl != nil {
-			if ttl.MaxAge.Duration > 0 {
-				opts = append(opts, pgxstore.WithMaxAge(ttl.MaxAge.Duration))
-			}
-			if ttl.MaxCount > 0 {
-				opts = append(opts, pgxstore.WithMaxCount(ttl.MaxCount))
-			}
-		}
-		store, err = pgxstore.SetupStoreFromPool(ctx, cfg.Source.SourceName(), pool, opts...)
-		if err != nil {
-			return err
-		}
-	case "memory":
-		var opts []memstore.Option
-		if ttl := cfg.Storage.TTL; ttl != nil {
-			if ttl.MaxAge.Duration > 0 {
-				opts = append(opts, memstore.WithMaxAge(ttl.MaxAge.Duration))
-			}
-			if ttl.MaxCount > 0 {
-				opts = append(opts, memstore.WithMaxCount(ttl.MaxCount))
-			}
-		}
-		store = memstore.New(opts...)
-	case "api":
-		if cfg.Storage.TTL != nil {
-			a.logger.Warn("storage.ttl ignored when storage.type is \"api\"")
-		}
-		name := cfg.Storage.Name
-		if name == "" {
-			return errors.New("storage.name missing, must exist when storage.type is \"api\"")
-		}
-		client := gen_historypb.NewHistoryAdminApiClient(a.clients.ClientConn())
-		store = apistore.New(client, name, cfg.Source.SourceName())
-	case "hub":
-		if cfg.Storage.TTL != nil {
-			a.logger.Warn("storage.ttl ignored when storage.type is \"hub\"")
-		}
-		conn, err := a.cohortManager.Connect(ctx)
-		if err != nil {
-			return err
-		}
-		client := gen_historypb.NewHistoryAdminApiClient(conn)
-		store = apistore.New(client, a.cohortManagerName, cfg.Source.SourceName())
-	case "bolt":
-		var err error
-		opts := []boltstore.Option{
-			boltstore.WithLogger(a.logger),
-		}
-		if ttl := cfg.Storage.TTL; ttl != nil {
-			if ttl.MaxAge.Duration > 0 {
-				opts = append(opts, boltstore.WithMaxAge(ttl.MaxAge.Duration))
-			}
-			if ttl.MaxCount > 0 {
-				opts = append(opts, boltstore.WithMaxCount(ttl.MaxCount))
-			}
-		}
-		store, err = boltstore.NewFromDb(ctx, a.db, cfg.Source.SourceName(), opts...)
-		if err != nil {
-			return err
-		}
-	case "sqlite":
-		db, err := a.stores.SqliteHistory(ctx)
-		if err != nil {
-			return err
-		}
-		var opts []sqlitestore.WriteOption
-		if ttl := cfg.Storage.TTL; ttl != nil {
-			if ttl.MaxAge.Duration > 0 {
-				opts = append(opts, sqlitestore.WithMaxAge(ttl.MaxAge.Duration))
-			}
-			if ttl.MaxCount > 0 {
-				opts = append(opts, sqlitestore.WithMaxCount(ttl.MaxCount))
-			}
-		}
-		store = db.OpenStore(cfg.Source.SourceName(), opts...)
-	default:
-		return fmt.Errorf("unsupported storage type %s", cfg.Storage.Type)
+
+	store, err := a.createStore(ctx, *cfg.Source, cfg.Storage)
+	if err != nil {
+		return err
 	}
 
-	// work out where we're getting the records from
 	serverClient, collect, err := a.createCollector(store, cfg.Source.Trait)
 	if err != nil {
 		return err
