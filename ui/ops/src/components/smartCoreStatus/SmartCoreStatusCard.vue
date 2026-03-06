@@ -59,6 +59,21 @@
             </template>
           </v-defaults-provider>
         </v-card-text>
+        <template v-if="keycloakHealth.isConfigured">
+          <v-divider/>
+          <v-card-text class="d-flex align-center">
+            <v-defaults-provider :defaults="{
+              VProgressCircular: {size: 22, indeterminate: true}
+            }">
+              <v-progress-circular v-if="keycloakHealth.pending"/>
+              <status-alert
+                  v-else
+                  v-bind="keycloakStatusAttrs"/>
+            </v-defaults-provider>
+            <span class="ml-2">Keycloak</span>
+            <span class="ml-2 text-caption text-medium-emphasis">{{ keycloakHealth.url }}</span>
+          </v-card-text>
+        </template>
       </v-card>
     </v-menu>
   </v-btn>
@@ -69,6 +84,7 @@ import {DAY, HOUR, MINUTE, SECOND, useNow} from '@/components/now';
 import StatusAlert from '@/components/StatusAlert.vue';
 import useAuthSetup from '@/composables/useAuthSetup';
 import {EnrollmentStatus, NodeRole, useCohortHealthStore, useCohortStore} from '@/stores/cohort.js';
+import {useKeycloakHealthStore} from '@/stores/keycloakHealth.js';
 import {formatTimeAgo} from '@/util/date';
 import {formatErrorMessage, isNetworkError} from '@/util/error';
 import {computed, ref} from 'vue';
@@ -77,6 +93,7 @@ const {hasNoAccess, isLoggedIn} = useAuthSetup();
 
 const cohort = useCohortStore();
 const cohortHealth = useCohortHealthStore();
+const keycloakHealth = useKeycloakHealthStore();
 
 // The chain is the list of things we show to the user, that they might be interested in the status of.
 // Each link in the chain typically talks to the items later in the chain: the ui talks to the server, which talks to the hub, etc.
@@ -199,14 +216,33 @@ const chipAttrs = (link) => {
   return attrs;
 };
 
-// code relating to the button on the toolbar and what color it should be.
-const issueCount = computed(() => chain.value.reduce((acc, l) => {
-  if (l.children) {
-    return acc + l.children.reduce((acc, c) => acc + (c.health.error ? 1 : 0), 0);
-  } else {
-    return acc + (l.health.error ? 1 : 0);
+const keycloakStatusAttrs = computed(() => {
+  if (keycloakHealth.error) {
+    return {
+      color: 'error',
+      icon: 'mdi-close',
+      resource: {error: keycloakHealth.error}
+    };
   }
-}, 0));
+  return {
+    color: 'success',
+    icon: 'mdi-check',
+    resource: {error: {code: 0, message: `Keycloak is reachable at ${keycloakHealth.url}`}}
+  };
+});
+
+// code relating to the button on the toolbar and what color it should be.
+const issueCount = computed(() => {
+  const chainIssues = chain.value.reduce((acc, l) => {
+    if (l.children) {
+      return acc + l.children.reduce((acc, c) => acc + (c.health.error ? 1 : 0), 0);
+    } else {
+      return acc + (l.health.error ? 1 : 0);
+    }
+  }, 0);
+  const keycloakIssues = (keycloakHealth.isConfigured && keycloakHealth.error) ? 1 : 0;
+  return chainIssues + keycloakIssues;
+});
 const overallStatus = computed(() => {
   const res = {
     color: 'success-lighten-2',
@@ -222,7 +258,7 @@ const overallStatus = computed(() => {
   } else if (issueCount.value > 1) {
     res.color = 'warning';
     res.text = `${issueCount.value} issues`;
-  } else if (cohort.loading || cohortHealth.isPolling) {
+  } else if (cohort.loading || cohortHealth.isPolling || (keycloakHealth.isConfigured && keycloakHealth.pending)) {
     res.color = 'info';
     res.text = 'Checking';
   }
@@ -248,6 +284,7 @@ const checkHealthNow = () => {
   rotateCheckIcon.value = true;
   cohort.pollNow();
   cohortHealth.pollNow();
+  keycloakHealth.pollNow();
   setTimeout(() => {
     rotateCheckIcon.value = false;
   }, 1000);
