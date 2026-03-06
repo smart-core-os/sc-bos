@@ -1,0 +1,25 @@
+{
+  "name": "@smart-core-os/sc-api-grpc-web",
+  "version": "1.0.0-beta.60",
+  "description": "grpc-web client library",
+  "license": "MIT",
+  "dependencies": {
+    "google-protobuf": "^4.0.1",
+    "grpc-web": "^2.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smart-core-os/sc-api",
+    "directory": "grpc-web"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json",
+    "./info/*": "./info/*",
+    "./traits/*": "./traits/*",
+    "./types/*": "./types/*"
+  }
+}

@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "ModeProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/info.proto";
+
+
+// Trait for devices that present one or more distinct modes.
+// For example a washing machine might have a "temperature" mode with available values ["delicate", "auto", "whites"].
+service ModeApi {
+  // GetModeValues returns the current state for all modes for a device.
+  rpc GetModeValues(GetModeValuesRequest) returns (ModeValues);
+  // UpdateModeValues sets the current mode for the device.
+  // Multiple modes may be set at the same time.
+  // The device may error if setting a mode that is not supported, in any case the returned ModeValues contains the
+  // state after the update.
+  // Relative updates to the mode may either cap or wrap the mode value if adjusting the value relatively would either
+  // underflow or overflow the available modes.
+  rpc UpdateModeValues(UpdateModeValuesRequest) returns (ModeValues);
+  // PullModeValues returns a stream of updates to the modes set on the device.
+  rpc PullModeValues(PullModeValuesRequest) returns (stream PullModeValuesResponse);
+}
+
+// Describes the capabilities of a specific named device with respect to this trait.
+service ModeInfo {
+  // Get information about how a named device implements Modes features
+  rpc DescribeModes (DescribeModesRequest) returns (ModesSupport);
+}
+
+// ModeValues describes the current value for each available mode on a device.
+message ModeValues {
+  // Values, keyed by the mode name, reports the current mode value name active on the device.
+  // For example {"temperature": "cool"}
+  map<string, string> values = 1;
+}
+
+// ModeValuesRelative describes how a mode should change relative to its current value.
+// For example {"temperature": -1} might adjust the "temperature" mode from "warm" to "cool".
+message ModeValuesRelative {
+  map<string, int32> values = 1;
+
+  // Note: The properties of this type are guaranteed to be a subset of the properties of ModeValues,
+  // specifically the subset of properties that need a different structure/type to support relative adjustment.
+  // Using the same property names means any FieldMask continues to work for both this Relative type and the core
+  // resource type.
+}
+
+// Modes describes the modes available on a device.
+message Modes {
+  // Value describes a specific setting for a mode.
+  message Value {
+    // Name is used to refer to this value in ModeValues.
+    string name = 1;
+
+    // room left for title, language options, etc
+  }
+  // Mode describes a controllable aspect of the device.
+  // For example "spin_speed" or "divisible_state".
+  message Mode {
+    // Name is use to refer to this mode in ModeValues or ModeAdjustments.
+    string name = 1;
+    // Values is the list of available values this mode supports.
+    repeated Value values = 2;
+    // If true, the values this mode support can be considered ordered.
+    // For example ["fast", "normal", "slow"] are ordered, ["joined", "split"] are not.
+    bool ordered = 3;
+  }
+
+  // Modes holds the list of supported modes for a device.
+  repeated Mode modes = 1;
+}
+
+message ModesSupport {
+  // How a named device supports read/write/pull apis for mode values
+  smartcore.types.ResourceSupport mode_values_support = 1;
+  // AvailableModes holds the list of modes the device supports.
+  Modes available_modes = 2;
+}
+
+message GetModeValuesRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the ModeValues type
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message UpdateModeValuesRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // The new mode values.
+  ModeValues mode_values = 2;
+  // Relative changes to the current mode values.
+  // If a mode name is specified in both mode_values and relative, and the adjustment in relative is non-zero, relative adjustments win.
+  ModeValuesRelative relative = 3;
+  // Fields to update relative to the ModeValues and ModeAdjustments type.
+  google.protobuf.FieldMask update_mask = 4;
+}
+
+message PullModeValuesRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the ModeValues type
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+}
+
+message PullModeValuesResponse {
+  // Changes since the last message.
+  repeated Change changes = 1;
+
+  message Change {
+    // Name of the device that issued the change.
+    string name = 1;
+    // When the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // The new value for each mode.
+    ModeValues mode_values = 3;
+  }
+}
+
+message DescribeModesRequest {
+  // The name of the device
+  string name = 1;
+}

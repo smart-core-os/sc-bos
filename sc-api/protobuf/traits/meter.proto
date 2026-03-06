@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "MeterProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/info.proto";
+
+// MeterApi represents a metering device, like an electric meter.
+// The device records total usage since some fixed point in time, this trait provides access to that usage value.
+// For example an electric meter records total energy usage since it was installed/reset in kWh as an ever increasing number.
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+  rpc PullMeterReadings(PullMeterReadingsRequest) returns (stream PullMeterReadingsResponse);
+}
+
+service MeterInfo {
+  rpc DescribeMeterReading(DescribeMeterReadingRequest) returns (MeterReadingSupport);
+}
+
+message MeterReading {
+  // Usage records the current value of the meter.
+  // The unit is unspecified, use device documentation or MeterInfo to discover it.
+  // This value is a total recorded between the start and end times.
+  float usage = 1;
+  // Optional. The start period usage is recorded relative to. Typically the installation date, but not required to be.
+  // The start time can be reset and updated by the device if it is serviced or updated.
+  google.protobuf.Timestamp start_time = 2;
+  // Optional. The end of the period usage is recorded relative to, i.e. the time the reading was taken.
+  // This time might not be now if the device has a low resolution for taking readings.
+  google.protobuf.Timestamp end_time = 3;
+}
+
+// MeterReadingSupport describes the capabilities of devices implementing this trait
+message MeterReadingSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.types.ResourceSupport resource_support = 1;
+  // The unit associated with the usage value
+  string unit = 2;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullMeterReadingsRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullMeterReadingsResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    MeterReading meter_reading = 3;
+  }
+}
+
+message DescribeMeterReadingRequest {
+  string name = 1;
+}

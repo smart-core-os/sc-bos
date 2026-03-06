@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package smartcore.types;
+
+option csharp_namespace = "Smartcore.Types";
+option go_package = "github.com/smart-core-os/sc-api/go/types";
+option java_multiple_files = true;
+option java_outer_classname = "ChangeProto";
+option java_package = "dev.smartcore.types";
+
+// Type of change
+enum ChangeType {
+  // Nothing has changed but existing items have been requested. The new_value property should be set
+  CHANGE_TYPE_UNSPECIFIED = 0;
+  // An item has been added. The new_value property of the change should be set
+  ADD = 1;
+  // An item has been updated. The new_value and old_value properties of the change should be set
+  UPDATE = 2;
+  // A item has been removed. The old_value property of the change should be set
+  REMOVE = 3;
+  // All existing items should be replaced by this set of items.
+  REPLACE = 4;
+}

@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package smartcore.types;
+
+option csharp_namespace = "Smartcore.Types";
+option go_package = "github.com/smart-core-os/sc-api/go/types";
+option java_multiple_files = true;
+option java_outer_classname = "UnitProto";
+option java_package = "dev.smartcore.types";
+
+import "google/protobuf/timestamp.proto";
+import "types/tween.proto";
+
+// Possible temperature units for physical bodies.
+enum TemperatureUnit {
+  TEMPERATURE_UNIT_UNSPECIFIED = 0;
+  CELSIUS = 1;
+  FAHRENHEIT = 2;
+  KELVIN = 3;
+}
+
+// A temperature value
+message Temperature {
+  // The value in celsius, always! Use device attributes if the device 'thinks' in a different unit but always
+  // communicate in celsius.
+  double value_celsius = 1;
+}
+
+// Represents an audio signal level for either input or output devices. Typically if fine grained control of either
+// gain or muted is required then a FieldMask should describe this.
+message AudioLevel {
+  // The current gain, typically as a percentage unless documented in the AudioLevel usage.
+  float gain = 1;
+  // How the gain changes or should change over time. On write only duration should be set.
+  smartcore.types.Tween gain_tween = 2;
+  // Read-only, the target value for the gain during a transition
+  float target_gain = 3;
+  // If the audio level muted.
+  bool muted = 4;
+}
+
+// A change to the audio level
+message AudioLevelChange {
+  // The name of the device that is the source of the change
+  string name = 1;
+  // When the change was applied
+  google.protobuf.Timestamp change_time = 2;
+  // The new state for the change
+  AudioLevel level = 3;
+}
+
+// What is the level of mute support that the speaker provides
+enum MuteSupport {
+  MUTE_SUPPORT_UNSPECIFIED = 0;
+  // The speaker natively supports mute
+  MUTE_NATIVE = 1;
+  // Muting is emulated, typically by setting the gain to 0
+  MUTE_EMULATED = 2;
+}

@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package smartcore.types;
+
+option csharp_namespace = "Smartcore.Types";
+option go_package = "github.com/smart-core-os/sc-api/go/types";
+option java_multiple_files = true;
+option java_outer_classname = "InfoProto";
+option java_package = "dev.smartcore.types";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
+
+// ResourceSupport describes how a trait resource supports read/write/subscribe apis.
+//
+// For sensor traits any write oriented properties should be and will be ignored.
+message ResourceSupport {
+  // Whether the device supports querying, i.e. get apis
+  bool readable = 1;
+  // Whether the device supports writable actions, i.e. update or action apis
+  bool writable = 2;
+  // Whether the device supports subscriptions, i.e. pull apis
+  bool observable = 3;
+
+  // Which fields can be written to.
+  // Relative to the resource type, not the message (FooRequest) type.
+  // If this field is absent, the list of updatable fields is unknown, assume all.
+  // Check the response to your Update request for the values that were updated.
+  // An attempt to explicitly (via update_mask) write to a non-writable field will error.
+  google.protobuf.FieldMask writable_fields = 4;
+
+  // How Pull is implemented by the server
+  PullSupport pull_support = 5;
+  // If Pull is emulated, how often updates can be expected.
+  // This is not strict, updates may be less or more frequent.
+  google.protobuf.Duration pull_poll = 6;
+}
+
+// PullSupport describes how Pull methods are implemented by the server
+enum PullSupport {
+  // How subscriptions are implemented is not known.
+  PULL_SUPPORT_UNSPECIFIED = 0;
+  // Subscribing is supported natively by the underlying system.
+  PULL_SUPPORT_NATIVE = 1;
+  // Subscribing is supported in the driver, rather than natively.
+  // Usually the driver will poll the system for data.
+  PULL_SUPPORT_EMULATED = 2;
+
+  // NOT_SUPPORTED is described by the observable property
+}
