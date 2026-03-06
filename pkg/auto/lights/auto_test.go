@@ -12,10 +12,10 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/occupancysensorpb"
 )

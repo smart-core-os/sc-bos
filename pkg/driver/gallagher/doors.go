@@ -8,10 +8,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type DoorList struct {

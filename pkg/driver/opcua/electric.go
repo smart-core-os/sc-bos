@@ -9,9 +9,9 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/conv"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 

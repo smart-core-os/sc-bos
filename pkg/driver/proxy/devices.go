@@ -6,9 +6,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // deviceFetcher implements pull.Fetcher to pull or poll devices from a client

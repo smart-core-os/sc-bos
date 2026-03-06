@@ -116,8 +116,8 @@ const file_types_time_unit_proto_rawDesc = "" +
 	"\n" +
 	"UNIT_HOURS\x10\t\x12\x10\n" +
 	"\fUNIT_MINUTES\x10\n" +
-	"Bm\n" +
-	"\x18dev.smartcore.types.timeB\tUnitProtoP\x01Z-github.com/smart-core-os/sc-api/go/types/time\xaa\x02\x14Smartcore.Types.Timeb\x06proto3"
+	"Bt\n" +
+	"\x18dev.smartcore.types.timeB\tUnitProtoP\x01Z4github.com/smart-core-os/sc-bos/sc-api/go/types/time\xaa\x02\x14Smartcore.Types.Timeb\x06proto3"
 
 var (
 	file_types_time_unit_proto_rawDescOnce sync.Once

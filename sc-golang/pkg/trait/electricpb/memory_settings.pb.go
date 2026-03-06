@@ -7,7 +7,7 @@
 package electricpb
 
 import (
-	traits "github.com/smart-core-os/sc-api/go/traits"
+	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"

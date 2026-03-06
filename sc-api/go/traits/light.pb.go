@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -641,9 +641,9 @@ const file_traits_light_proto_rawDesc = "" +
 	"\rGetBrightness\x12&.smartcore.traits.GetBrightnessRequest\x1a\x1c.smartcore.traits.Brightness\x12e\n" +
 	"\x0ePullBrightness\x12'.smartcore.traits.PullBrightnessRequest\x1a(.smartcore.traits.PullBrightnessResponse0\x012s\n" +
 	"\tLightInfo\x12f\n" +
-	"\x12DescribeBrightness\x12+.smartcore.traits.DescribeBrightnessRequest\x1a#.smartcore.traits.BrightnessSupportBu\n" +
+	"\x12DescribeBrightness\x12+.smartcore.traits.DescribeBrightnessRequest\x1a#.smartcore.traits.BrightnessSupportB|\n" +
 	"\x14dev.smartcore.traitsB\n" +
-	"LightProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"LightProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_light_proto_rawDescOnce sync.Once

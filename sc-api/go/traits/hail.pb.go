@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -1269,8 +1269,8 @@ const file_traits_hail_proto_rawDesc = "" +
 	"\tListHails\x12\".smartcore.traits.ListHailsRequest\x1a#.smartcore.traits.ListHailsResponse\x12V\n" +
 	"\tPullHails\x12\".smartcore.traits.PullHailsRequest\x1a#.smartcore.traits.PullHailsResponse0\x012`\n" +
 	"\bHailInfo\x12T\n" +
-	"\fDescribeHail\x12%.smartcore.traits.DescribeHailRequest\x1a\x1d.smartcore.traits.HailSupportBt\n" +
-	"\x14dev.smartcore.traitsB\tHailProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\fDescribeHail\x12%.smartcore.traits.DescribeHailRequest\x1a\x1d.smartcore.traits.HailSupportB{\n" +
+	"\x14dev.smartcore.traitsB\tHailProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_hail_proto_rawDescOnce sync.Once

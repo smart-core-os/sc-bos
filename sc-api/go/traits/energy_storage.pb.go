@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -1071,8 +1071,8 @@ const file_traits_energy_storage_proto_rawDesc = "" +
 	"\x0fPullEnergyLevel\x12(.smartcore.traits.PullEnergyLevelRequest\x1a).smartcore.traits.PullEnergyLevelResponse0\x01\x12K\n" +
 	"\x06Charge\x12\x1f.smartcore.traits.ChargeRequest\x1a .smartcore.traits.ChargeResponse2~\n" +
 	"\x11EnergyStorageInfo\x12i\n" +
-	"\x13DescribeEnergyLevel\x12,.smartcore.traits.DescribeEnergyLevelRequest\x1a$.smartcore.traits.EnergyLevelSupportB}\n" +
-	"\x14dev.smartcore.traitsB\x12EnergyStorageProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x13DescribeEnergyLevel\x12,.smartcore.traits.DescribeEnergyLevelRequest\x1a$.smartcore.traits.EnergyLevelSupportB\x84\x01\n" +
+	"\x14dev.smartcore.traitsB\x12EnergyStorageProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_energy_storage_proto_rawDescOnce sync.Once

@@ -72,6 +72,7 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 		if strings.Contains(path, "/sc-golang/pkg/trait/") ||
 			strings.Contains(path, "/sc-bos/pkg/gentrait/") ||
 			path == "github.com/smart-core-os/sc-api/go/traits" ||
+			path == "github.com/smart-core-os/sc-bos/sc-api/go/traits" ||
 			path == "github.com/smart-core-os/sc-bos/pkg/gen" {
 			packageInfo[pkgName] = &packageWrapInfo{
 				importPath: path,

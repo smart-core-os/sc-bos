@@ -3,7 +3,7 @@
 package enterleavesensorpb
 
 import (
-	traits "github.com/smart-core-os/sc-api/go/traits"
+	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	wrap "github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )

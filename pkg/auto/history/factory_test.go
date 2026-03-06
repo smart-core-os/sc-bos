@@ -9,8 +9,6 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/exp/rand"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
@@ -22,6 +20,8 @@ import (
 	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airtemperaturepb"

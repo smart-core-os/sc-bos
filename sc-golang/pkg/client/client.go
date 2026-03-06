@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/smart-core-os/sc-api/go/info"
+	"github.com/smart-core-os/sc-bos/sc-api/go/info"
 )
 
 type Client struct {

@@ -5,7 +5,7 @@ package motionsensorpb
 import (
 	"google.golang.org/grpc"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 

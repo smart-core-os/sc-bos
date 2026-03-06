@@ -8,8 +8,8 @@ import (
 
 	"github.com/smart-core-os/gobacnet/property"
 	bactypes "github.com/smart-core-os/gobacnet/types"
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 

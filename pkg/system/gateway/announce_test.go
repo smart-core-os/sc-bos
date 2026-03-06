@@ -12,8 +12,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
@@ -21,6 +19,8 @@ import (
 	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )

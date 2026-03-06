@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -498,8 +498,8 @@ const file_traits_motion_sensor_proto_rawDesc = "" +
 	"\x12GetMotionDetection\x12+.smartcore.traits.GetMotionDetectionRequest\x1a!.smartcore.traits.MotionDetection\x12w\n" +
 	"\x14PullMotionDetections\x12,.smartcore.traits.PullMotionDetectionRequest\x1a-.smartcore.traits.PullMotionDetectionResponse\"\x000\x012\x8f\x01\n" +
 	"\x16MotionSensorSensorInfo\x12u\n" +
-	"\x17DescribeMotionDetection\x120.smartcore.traits.DescribeMotionDetectionRequest\x1a(.smartcore.traits.MotionDetectionSupportB|\n" +
-	"\x14dev.smartcore.traitsB\x11MotionSensorProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x17DescribeMotionDetection\x120.smartcore.traits.DescribeMotionDetectionRequest\x1a(.smartcore.traits.MotionDetectionSupportB\x83\x01\n" +
+	"\x14dev.smartcore.traitsB\x11MotionSensorProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_motion_sensor_proto_rawDescOnce sync.Once

@@ -14,13 +14,13 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/occupancyemail"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 

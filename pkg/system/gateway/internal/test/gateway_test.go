@@ -25,14 +25,14 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/test/shared"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 

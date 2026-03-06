@@ -14,7 +14,6 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/xovis/config"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
@@ -23,6 +22,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/enterleavesensorpb"

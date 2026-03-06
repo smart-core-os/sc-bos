@@ -23,7 +23,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
@@ -41,6 +40,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"

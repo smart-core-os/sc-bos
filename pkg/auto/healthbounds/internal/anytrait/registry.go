@@ -10,7 +10,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylightpb"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
@@ -19,6 +18,7 @@ import (
 	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	gen_temperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 

@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/cmp"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"

@@ -10,7 +10,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
@@ -20,6 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
 	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 

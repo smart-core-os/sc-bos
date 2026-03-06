@@ -6,7 +6,7 @@ import (
 	"go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // NewBoltStorage create a Storage using a Bolt database as the backend.

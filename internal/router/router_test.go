@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/onoffpb"

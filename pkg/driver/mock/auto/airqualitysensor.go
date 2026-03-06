@@ -6,8 +6,8 @@ import (
 
 	"golang.org/x/exp/rand"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airqualitysensorpb"
 )
 

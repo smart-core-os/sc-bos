@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // MaxMagnitude returns the largest segment magnitude of all non-zero length segments.

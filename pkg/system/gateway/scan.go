@@ -16,12 +16,12 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // scanRemoteHub calls scanRemoteNode for the hub and all enrolled nodes placing the results in a cohort.

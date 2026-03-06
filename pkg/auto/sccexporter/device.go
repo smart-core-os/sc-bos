@@ -8,9 +8,9 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 

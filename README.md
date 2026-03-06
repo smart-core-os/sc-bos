@@ -29,7 +29,7 @@ Each controller has all the features of SC BOS, though some might be turned on o
 the installation and the capabilities of the hardware running sc bos.
 
 Controllers serve a comprehensive set of APIs, some [defined in this repo](proto), and some from
-the [Smart Core API](https://github.com/smart-core-os/sc-api) repository.
+the [Smart Core API](https://github.com/smart-core-os/sc-bos/sc-api) repository.
 For more detailed SC API documentation see [the API docs](https://smart-core-os.github.com/api/).
 Controllers also serve web applications like the [Ops UI](ui/ops) and [Space UI](ui/space) which provide user interfaces
 into the data and control of the building.

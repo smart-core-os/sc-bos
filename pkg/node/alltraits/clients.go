@@ -3,7 +3,6 @@ package alltraits
 import (
 	"google.golang.org/grpc"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
@@ -20,6 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/tenantpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func NewClient(ptr any, conn grpc.ClientConnInterface) (ok bool) {

@@ -4,12 +4,12 @@ This is the (generated) source of the Go packages for working with Smart Core AP
 ## Using
 To install the packages on your system, you should use:
 ```shell script
-$ go get -u github.com/smart-core-os/sc-api/go
+$ go get -u github.com/smart-core-os/sc-bos/sc-api/go
 ```
 
 In your Go files you can then use
 ```go
-import "github.com/smart-core-os/sc-api/go/"
+import "github.com/smart-core-os/sc-bos/sc-api/go/"
 ```
 
 ## Updating

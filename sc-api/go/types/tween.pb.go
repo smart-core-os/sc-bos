@@ -169,9 +169,9 @@ const file_types_tween_proto_rawDesc = "" +
 	"\n" +
 	"\x06NATIVE\x10\x02\x12\f\n" +
 	"\bEMULATED\x10\x03\x12\t\n" +
-	"\x05FIXED\x10\x04B_\n" +
+	"\x05FIXED\x10\x04Bf\n" +
 	"\x13dev.smartcore.typesB\n" +
-	"TweenProtoP\x01Z(github.com/smart-core-os/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
+	"TweenProtoP\x01Z/github.com/smart-core-os/sc-bos/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
 
 var (
 	file_types_tween_proto_rawDescOnce sync.Once

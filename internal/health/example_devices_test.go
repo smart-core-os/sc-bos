@@ -7,12 +7,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"

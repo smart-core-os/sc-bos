@@ -10,8 +10,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/protobuf/protopath2"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
@@ -21,6 +19,8 @@ import (
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"

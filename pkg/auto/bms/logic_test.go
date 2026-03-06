@@ -12,9 +12,9 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/bms/config"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func TestProcessReadState(t *testing.T) {

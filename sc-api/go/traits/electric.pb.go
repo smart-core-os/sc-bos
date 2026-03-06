@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -1336,8 +1336,8 @@ const file_traits_electric_proto_rawDesc = "" +
 	"\x0ePullActiveMode\x12'.smartcore.traits.PullActiveModeRequest\x1a(.smartcore.traits.PullActiveModeResponse0\x01\x12T\n" +
 	"\tListModes\x12\".smartcore.traits.ListModesRequest\x1a#.smartcore.traits.ListModesResponse\x12V\n" +
 	"\tPullModes\x12\".smartcore.traits.PullModesRequest\x1a#.smartcore.traits.PullModesResponse0\x012\x0e\n" +
-	"\fElectricInfoBx\n" +
-	"\x14dev.smartcore.traitsB\rElectricProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\fElectricInfoB\x7f\n" +
+	"\x14dev.smartcore.traitsB\rElectricProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_electric_proto_rawDescOnce sync.Once

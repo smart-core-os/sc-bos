@@ -17,15 +17,15 @@
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/smart-core-os/sc-api/issues</url>
+        <url>https://github.com/smart-core-os/sc-bos/sc-api/issues</url>
     </issueManagement>
 
     <inceptionYear>2019</inceptionYear>
 
     <scm>
-        <connection>scm:git:https://github.com/smart-core-os/sc-api.git</connection>
-        <developerConnection>scm:git:https://github.com/smart-core-os/sc-api.git</developerConnection>
-        <url>https://github.com/smart-core-os/sc-api</url>
+        <connection>scm:git:https://github.com/smart-core-os/sc-bos/sc-api.git</connection>
+        <developerConnection>scm:git:https://github.com/smart-core-os/sc-bos/sc-api.git</developerConnection>
+        <url>https://github.com/smart-core-os/sc-bos/sc-api</url>
     </scm>
 
     <properties>

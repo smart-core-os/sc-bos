@@ -7,10 +7,10 @@
 package devicespb
 
 import (
-	traits "github.com/smart-core-os/sc-api/go/traits"
-	types "github.com/smart-core-os/sc-api/go/types"
-	time "github.com/smart-core-os/sc-api/go/types/time"
 	healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	time "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"

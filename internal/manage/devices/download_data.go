@@ -6,8 +6,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	timepb "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
@@ -23,6 +21,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	timepb "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 

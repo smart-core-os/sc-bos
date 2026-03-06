@@ -6,8 +6,8 @@ import (
 	"github.com/gopcua/opcua/ua"
 	"go.uber.org/zap/zaptest"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func TestElectric_GetDemand(t *testing.T) {

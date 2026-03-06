@@ -5,7 +5,6 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/anprcamera"
@@ -45,6 +44,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	gen_wastepb "github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 

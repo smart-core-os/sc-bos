@@ -13,7 +13,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
@@ -21,6 +20,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 

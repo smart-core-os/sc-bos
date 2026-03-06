@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 

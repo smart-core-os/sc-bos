@@ -7,7 +7,7 @@
 package healthpb
 
 import (
-	time "github.com/smart-core-os/sc-api/go/types/time"
+	time "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"

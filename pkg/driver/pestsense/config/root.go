@@ -6,8 +6,8 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Default values for config fields

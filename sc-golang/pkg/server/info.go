@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/smart-core-os/sc-api/go/info"
+	"github.com/smart-core-os/sc-bos/sc-api/go/info"
 	"go.uber.org/zap"
 )
 

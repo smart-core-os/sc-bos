@@ -1,7 +1,7 @@
 package time
 
 import (
-	"github.com/smart-core-os/sc-api/go/types/time"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

@@ -5,8 +5,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // BrightnessSensorPatches contributes patches for changing the state based on brightness sensor readings.

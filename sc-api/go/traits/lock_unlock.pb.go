@@ -473,8 +473,8 @@ const file_traits_lock_unlock_proto_rawDesc = "" +
 	"\rGetLockUnlock\x12&.smartcore.traits.GetLockUnlockRequest\x1a\x1c.smartcore.traits.LockUnlock\x12[\n" +
 	"\x10UpdateLockUnlock\x12).smartcore.traits.UpdateLockUnlockRequest\x1a\x1c.smartcore.traits.LockUnlock\x12e\n" +
 	"\x0ePullLockUnlock\x12'.smartcore.traits.PullLockUnlockRequest\x1a(.smartcore.traits.PullLockUnlockResponse0\x012\x10\n" +
-	"\x0eLockUnlockInfoBz\n" +
-	"\x14dev.smartcore.traitsB\x0fLockUnlockProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x0eLockUnlockInfoB\x81\x01\n" +
+	"\x14dev.smartcore.traitsB\x0fLockUnlockProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_lock_unlock_proto_rawDescOnce sync.Once

@@ -4,8 +4,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/modepb"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )

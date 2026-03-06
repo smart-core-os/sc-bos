@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -688,8 +688,8 @@ const file_traits_air_quality_sensor_proto_rawDesc = "" +
 	"\rGetAirQuality\x12&.smartcore.traits.GetAirQualityRequest\x1a\x1c.smartcore.traits.AirQuality\x12e\n" +
 	"\x0ePullAirQuality\x12'.smartcore.traits.PullAirQualityRequest\x1a(.smartcore.traits.PullAirQualityResponse0\x012~\n" +
 	"\x14AirQualitySensorInfo\x12f\n" +
-	"\x12DescribeAirQuality\x12+.smartcore.traits.DescribeAirQualityRequest\x1a#.smartcore.traits.AirQualitySupportB\x80\x01\n" +
-	"\x14dev.smartcore.traitsB\x15AirQualitySensorProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x12DescribeAirQuality\x12+.smartcore.traits.DescribeAirQualityRequest\x1a#.smartcore.traits.AirQualitySupportB\x87\x01\n" +
+	"\x14dev.smartcore.traitsB\x15AirQualitySensorProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_air_quality_sensor_proto_rawDescOnce sync.Once

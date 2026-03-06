@@ -5,7 +5,7 @@ package electricpb
 import (
 	context "context"
 	fmt "fmt"
-	traits "github.com/smart-core-os/sc-api/go/traits"
+	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	router "github.com/smart-core-os/sc-bos/sc-golang/pkg/router"
 	grpc "google.golang.org/grpc"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"

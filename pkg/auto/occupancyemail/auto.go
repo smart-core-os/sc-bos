@@ -12,12 +12,12 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	timepb "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/occupancyemail/config"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	timepb "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 )
 
 const AutoName = "occupancyemail"

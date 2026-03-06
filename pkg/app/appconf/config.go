@@ -10,12 +10,12 @@ import (
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/app/files"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/util/slices"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // replaceable for testing

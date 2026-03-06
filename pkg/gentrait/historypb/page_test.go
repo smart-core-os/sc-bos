@@ -10,10 +10,10 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	timepb "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	timepb "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 )
 
 func Test_pageReader_listRecords(t *testing.T) {

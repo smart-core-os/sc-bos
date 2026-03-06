@@ -5,7 +5,7 @@ import (
 	"net"
 	"net/url"
 
-	"github.com/smart-core-os/sc-api/go/info"
+	"github.com/smart-core-os/sc-bos/sc-api/go/info"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"

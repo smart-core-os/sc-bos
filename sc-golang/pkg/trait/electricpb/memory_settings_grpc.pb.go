@@ -8,7 +8,7 @@ package electricpb
 
 import (
 	context "context"
-	traits "github.com/smart-core-os/sc-api/go/traits"
+	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"

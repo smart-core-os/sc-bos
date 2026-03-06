@@ -1,16 +1,16 @@
 package time
 
 import (
-	"github.com/smart-core-os/sc-api/go/types/time"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // PeriodsConnected returns true if there exists a (possibly empty) Period that is enclosed by both p1 and p2
 //
 // For example
-//  * `[2, 4)` and `[5, 7)` are not connected
-//  * `[2, 4)` and `[3, 5)` are connected, because both enclose `[3, 4)`
-//  * `[2, 4)` and `[4, 6)` are connected, because both enclose the empty period `[4, 4)`
+//   - `[2, 4)` and `[5, 7)` are not connected
+//   - `[2, 4)` and `[3, 5)` are connected, because both enclose `[3, 4)`
+//   - `[2, 4)` and `[4, 6)` are connected, because both enclose the empty period `[4, 4)`
 func PeriodsConnected(p1, p2 *time.Period) bool {
 	if p1 == nil || p2 == nil {
 		return false
@@ -26,9 +26,9 @@ func PeriodsConnected(p1, p2 *time.Period) bool {
 // PeriodsIntersect returns true if there exists a non-empty Period that is enclosed by both p1 and p2
 //
 // For example
-//  * `[2, 4)` and `[5, 7)` do not intersect
-//  * `[2, 4)` and `[3, 5)` intersect, because both enclose `[3, 4)` which is non-empty
-//  * `[2, 4)` and `[4, 6)` do not intersect, because both enclose the empty period `[4, 4)`
+//   - `[2, 4)` and `[5, 7)` do not intersect
+//   - `[2, 4)` and `[3, 5)` intersect, because both enclose `[3, 4)` which is non-empty
+//   - `[2, 4)` and `[4, 6)` do not intersect, because both enclose the empty period `[4, 4)`
 func PeriodsIntersect(p1, p2 *time.Period) bool {
 	if p1 == nil || p2 == nil {
 		return false

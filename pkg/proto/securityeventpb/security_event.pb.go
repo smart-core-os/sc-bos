@@ -7,8 +7,8 @@
 package securityeventpb
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
 	actorpb "github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"

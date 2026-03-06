@@ -9,12 +9,12 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/statusemail"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func main() {

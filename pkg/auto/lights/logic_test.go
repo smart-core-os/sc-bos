@@ -12,10 +12,10 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func Test_processState(t *testing.T) {
@@ -884,8 +884,8 @@ func Test_processState(t *testing.T) {
 			{
 				Name: "nightMode",
 				Mode: config.Mode{
-					UnoccupiedOffDelay:              jsontypes.Duration{Duration: 10 * time.Minute},
-					OnLevelPercent:                  asPtr[float32](75),
+					UnoccupiedOffDelay:               jsontypes.Duration{Duration: 10 * time.Minute},
+					OnLevelPercent:                   asPtr[float32](75),
 					ForceOnLevelPercentWhenActivated: true,
 				},
 			},

@@ -6,8 +6,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // processState executes actions based on both read and write states.

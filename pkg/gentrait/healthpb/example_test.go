@@ -6,10 +6,10 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb/standard"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 var (

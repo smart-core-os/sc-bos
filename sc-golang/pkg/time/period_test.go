@@ -3,7 +3,7 @@ package time
 import (
 	"testing"
 
-	"github.com/smart-core-os/sc-api/go/types/time"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 )
 
 func TestPeriodsConnected(t *testing.T) {

@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -586,8 +586,8 @@ const file_traits_access_proto_rawDesc = "" +
 	"\x0eaccess_attempt\x18\x03 \x01(\v2\x1f.smartcore.traits.AccessAttemptR\raccessAttempt2\xea\x01\n" +
 	"\tAccessApi\x12h\n" +
 	"\x14GetLastAccessAttempt\x12-.smartcore.traits.GetLastAccessAttemptRequest\x1a\x1f.smartcore.traits.AccessAttempt\"\x00\x12s\n" +
-	"\x12PullAccessAttempts\x12+.smartcore.traits.PullAccessAttemptsRequest\x1a,.smartcore.traits.PullAccessAttemptsResponse\"\x000\x01Bv\n" +
-	"\x14dev.smartcore.traitsB\vAccessProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x12PullAccessAttempts\x12+.smartcore.traits.PullAccessAttemptsRequest\x1a,.smartcore.traits.PullAccessAttemptsResponse\"\x000\x01B}\n" +
+	"\x14dev.smartcore.traitsB\vAccessProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_access_proto_rawDescOnce sync.Once

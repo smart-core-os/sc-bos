@@ -95,8 +95,8 @@ const file_types_change_proto_rawDesc = "" +
 	"\x06UPDATE\x10\x02\x12\n" +
 	"\n" +
 	"\x06REMOVE\x10\x03\x12\v\n" +
-	"\aREPLACE\x10\x04B`\n" +
-	"\x13dev.smartcore.typesB\vChangeProtoP\x01Z(github.com/smart-core-os/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
+	"\aREPLACE\x10\x04Bg\n" +
+	"\x13dev.smartcore.typesB\vChangeProtoP\x01Z/github.com/smart-core-os/sc-bos/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
 
 var (
 	file_types_change_proto_rawDescOnce sync.Once

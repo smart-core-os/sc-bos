@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -583,8 +583,8 @@ const file_traits_emergency_proto_rawDesc = "" +
 	"\x0fUpdateEmergency\x12(.smartcore.traits.UpdateEmergencyRequest\x1a\x1b.smartcore.traits.Emergency\x12b\n" +
 	"\rPullEmergency\x12&.smartcore.traits.PullEmergencyRequest\x1a'.smartcore.traits.PullEmergencyResponse0\x012t\n" +
 	"\rEmergencyInfo\x12c\n" +
-	"\x11DescribeEmergency\x12*.smartcore.traits.DescribeEmergencyRequest\x1a\".smartcore.traits.EmergencySupportBy\n" +
-	"\x14dev.smartcore.traitsB\x0eEmergencyProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x11DescribeEmergency\x12*.smartcore.traits.DescribeEmergencyRequest\x1a\".smartcore.traits.EmergencySupportB\x80\x01\n" +
+	"\x14dev.smartcore.traitsB\x0eEmergencyProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_emergency_proto_rawDescOnce sync.Once

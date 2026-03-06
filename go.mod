@@ -30,7 +30,6 @@ require (
 	github.com/rs/cors v1.8.3
 	github.com/sirupsen/logrus v1.9.4
 	github.com/smart-core-os/gobacnet v0.0.0-20251215143300-eec746ea1612
-	github.com/smart-core-os/sc-api/go v1.0.0-beta.57
 	github.com/stretchr/testify v1.11.1
 	github.com/tanema/gween v0.0.0-20200427131925-c89ae23cc63c
 	github.com/timshannon/bolthold v0.0.0-20210913165410-232392fc8a6a
@@ -134,5 +133,3 @@ tool (
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc
 	google.golang.org/protobuf/cmd/protoc-gen-go
 )
-
-replace github.com/smart-core-os/sc-api/go => ./sc-api/go

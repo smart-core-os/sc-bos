@@ -121,8 +121,8 @@ const file_types_page_token_proto_rawDesc = "" +
 	"lastOffset\x12.\n" +
 	"\x12last_resource_name\x18\x02 \x01(\tH\x00R\x10lastResourceNameB\f\n" +
 	"\n" +
-	"page_startBc\n" +
-	"\x13dev.smartcore.typesB\x0ePageTokenProtoP\x01Z(github.com/smart-core-os/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
+	"page_startBj\n" +
+	"\x13dev.smartcore.typesB\x0ePageTokenProtoP\x01Z/github.com/smart-core-os/sc-bos/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
 
 var (
 	file_types_page_token_proto_rawDescOnce sync.Once

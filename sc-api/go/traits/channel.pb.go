@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -617,8 +617,8 @@ const file_traits_channel_proto_rawDesc = "" +
 	"\rReturnChannel\x12&.smartcore.traits.ReturnChannelRequest\x1a\x19.smartcore.traits.Channel\x12n\n" +
 	"\x11PullChosenChannel\x12*.smartcore.traits.PullChosenChannelRequest\x1a+.smartcore.traits.PullChosenChannelResponse0\x012~\n" +
 	"\vChannelInfo\x12o\n" +
-	"\x15DescribeChosenChannel\x12..smartcore.traits.DescribeChosenChannelRequest\x1a&.smartcore.traits.ChosenChannelSupportBw\n" +
-	"\x14dev.smartcore.traitsB\fChannelProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x15DescribeChosenChannel\x12..smartcore.traits.DescribeChosenChannelRequest\x1a&.smartcore.traits.ChosenChannelSupportB~\n" +
+	"\x14dev.smartcore.traitsB\fChannelProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_channel_proto_rawDescOnce sync.Once

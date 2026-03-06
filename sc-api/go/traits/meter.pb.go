@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -439,9 +439,9 @@ const file_traits_meter_proto_rawDesc = "" +
 	"\x0fGetMeterReading\x12(.smartcore.traits.GetMeterReadingRequest\x1a\x1e.smartcore.traits.MeterReading\x12n\n" +
 	"\x11PullMeterReadings\x12*.smartcore.traits.PullMeterReadingsRequest\x1a+.smartcore.traits.PullMeterReadingsResponse0\x012y\n" +
 	"\tMeterInfo\x12l\n" +
-	"\x14DescribeMeterReading\x12-.smartcore.traits.DescribeMeterReadingRequest\x1a%.smartcore.traits.MeterReadingSupportBu\n" +
+	"\x14DescribeMeterReading\x12-.smartcore.traits.DescribeMeterReadingRequest\x1a%.smartcore.traits.MeterReadingSupportB|\n" +
 	"\x14dev.smartcore.traitsB\n" +
-	"MeterProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"MeterProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_meter_proto_rawDescOnce sync.Once

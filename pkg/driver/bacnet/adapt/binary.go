@@ -9,10 +9,10 @@ import (
 	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/gobacnet/property"
 	bactypes "github.com/smart-core-os/gobacnet/types"
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/onoffpb"
 )
