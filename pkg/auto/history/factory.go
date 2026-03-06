@@ -18,6 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
@@ -36,6 +37,7 @@ import (
 	gen_historypb "github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	gen_resourceusepb "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
@@ -212,6 +214,9 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 	case transport.TraitName:
 		serverClient = transportpb.WrapHistory(historypb.NewTransportServer(store))
 		collect = a.collectTransportChanges
+	case resourceusepb.TraitName:
+		serverClient = gen_resourceusepb.WrapHistory(historypb.NewResourceUseServer(store))
+		collect = a.collectResourceUseChanges
 	case soundsensorpb.TraitName:
 		serverClient = gen_soundsensorpb.WrapHistory(historypb.NewSoundSensorServer(store))
 		collect = a.collectSoundSensorChanges

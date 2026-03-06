@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package smartcore.bos.resourceuse.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// ResourceUseApi provides access to host-level resource utilisation stats.
+service ResourceUseApi {
+  rpc GetResourceUse(GetResourceUseRequest) returns (ResourceUse);
+  rpc PullResourceUse(PullResourceUseRequest) returns (stream PullResourceUseResponse);
+}
+
+message ResourceUse {
+  CpuUse cpu = 1;
+  MemoryUse memory = 2;
+  repeated DiskUse disks = 3;
+  NetworkUse network = 4;
+}
+
+message CpuUse {
+  // Overall CPU utilisation as a percentage (0-100).
+  optional float percent_utilised = 1;
+  // Per-core CPU utilisation percentages (0-100 each).
+  repeated float core_percent = 2;
+}
+
+message MemoryUse {
+  optional uint64 used_bytes = 1;
+  optional uint64 total_bytes = 2;
+  optional float percent_used = 3;
+}
+
+message DiskUse {
+  string mount_point = 1;
+  optional uint64 used_bytes = 2;
+  optional uint64 free_bytes = 3;
+  optional uint64 total_bytes = 4;
+  optional float percent_used = 5;
+}
+
+message NetworkUse {
+  optional uint64 connections_established = 1;
+}
+
+message GetResourceUseRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullResourceUseRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullResourceUseResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    ResourceUse resource_use = 3;
+  }
+}
