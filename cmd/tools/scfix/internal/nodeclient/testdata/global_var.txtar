@@ -1,0 +1,36 @@
+expected_changes: 1
+
+Test storing client in a package-level variable.
+
+-- input/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+var globalClient traits.OnOffApiClient
+
+func example(n *node.Node) error {
+	err := n.Client(&globalClient)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+-- output/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+var globalClient traits.OnOffApiClient
+
+func example(n *node.Node) error {
+	globalClient = traits.NewOnOffApiClient(n.ClientConn())
+
+	return nil
+}
