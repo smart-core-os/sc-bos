@@ -53,7 +53,6 @@ func (s *System) pollLoop(ctx context.Context, model *resourceusepb.Model, inter
 func (s *System) collect(ctx context.Context, model *resourceusepb.Model) {
 	v := &gen.ResourceUse{}
 
-	// CPU
 	if perCore, err := cpu.PercentWithContext(ctx, 0, true); err == nil {
 		overall := average(perCore)
 		core32 := make([]float32, len(perCore))
@@ -68,7 +67,6 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model) {
 		s.logger.Warn("cpu percent", zap.Error(err))
 	}
 
-	// Memory
 	if vmStat, err := mem.VirtualMemoryWithContext(ctx); err == nil {
 		if vmStat != nil {
 			v.Memory = &gen.MemoryUse{
@@ -81,7 +79,6 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model) {
 		s.logger.Warn("memory", zap.Error(err))
 	}
 
-	// Disks
 	if parts, err := disk.PartitionsWithContext(ctx, false); err == nil {
 		for _, p := range parts {
 			usage, err := disk.UsageWithContext(ctx, p.Mountpoint)
