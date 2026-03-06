@@ -9,7 +9,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/health/healthhistory"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 // ExampleRegistry_history shows how to connect a [Registry] to a history recorder and server.

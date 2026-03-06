@@ -17,8 +17,8 @@ import (
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/onoffpb"
 )
 
 type onOffCfg struct {

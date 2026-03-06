@@ -21,9 +21,9 @@ import (
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 // TestTracksDeviceValues verifies that the automation extracts values

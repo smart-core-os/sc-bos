@@ -17,8 +17,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/mode/config"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/cmp"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
 )
 
 // MixedValue is used as ModeValues.Value when underlying devices disagree on the actual value for a mode.

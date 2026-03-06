@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait/electricpb/segmentpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/electricpb/segmentpb"
 )
 
 // ActiveAt finds the modes active segment at time t.

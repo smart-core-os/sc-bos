@@ -13,7 +13,7 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/types"
 
-	"github.com/smart-core-os/sc-golang/internal/minibus"
+	"github.com/smart-core-os/sc-bos/sc-golang/internal/minibus"
 )
 
 type Collection struct {

@@ -18,8 +18,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 // setupHealthRegistry returns a healthpb.Registry that is integrated with the deviceStore and announced on the rootNode.

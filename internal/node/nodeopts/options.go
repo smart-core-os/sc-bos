@@ -7,7 +7,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/router"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
 	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 type Option interface {

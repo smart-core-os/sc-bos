@@ -11,7 +11,7 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 var subSystems = [2]string{"access control", "cctv"}

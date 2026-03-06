@@ -10,8 +10,8 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 // Announcer defines the Announce method.

@@ -45,7 +45,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	gen_wastepb "github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 
 var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{

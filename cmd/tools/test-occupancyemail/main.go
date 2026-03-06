@@ -21,7 +21,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 
 func main() {

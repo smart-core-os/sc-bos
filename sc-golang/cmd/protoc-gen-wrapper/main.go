@@ -62,7 +62,7 @@ func generateFile(plugin *protogen.Plugin, file *protogen.File) error {
 	for _, service := range file.Services {
 		name := trimPrefixIgnoreCase(service.GoName, strings.TrimSuffix(pkg, "pb"))
 		filename := fmt.Sprintf("pkg/trait/%s/%s_wrap.pb.go", pkg, strings.ToLower(name))
-		importPath := protogen.GoImportPath(fmt.Sprintf("github.com/smart-core-os/sc-golang/pkg/trait/%s", pkg))
+		importPath := protogen.GoImportPath(fmt.Sprintf("github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/%s", pkg))
 		if *usePaths {
 			qual := strings.ToLower(name)
 			// avoid filenames like some/path/metadata_metadataapi_wrap.pb.go,
@@ -115,7 +115,7 @@ func newServiceModel(g *protogen.GeneratedFile, service *protogen.Service, file 
 
 		WrapServerToClient: g.QualifiedGoIdent(protogen.GoIdent{
 			GoName:       "ServerToClient",
-			GoImportPath: "github.com/smart-core-os/sc-golang/pkg/wrap",
+			GoImportPath: "github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap",
 		}),
 		GRPCClientConnInterface: g.QualifiedGoIdent(protogen.GoIdent{
 			GoName:       "ClientConnInterface",

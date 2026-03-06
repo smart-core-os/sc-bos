@@ -19,7 +19,7 @@ import (
 	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	gen_temperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 
 var ErrNotFound = errors.New("not found")

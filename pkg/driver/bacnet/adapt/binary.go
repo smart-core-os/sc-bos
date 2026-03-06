@@ -13,8 +13,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/onoffpb"
 )
 
 // BinaryObject adapts a binary bacnet object as smart core traits.

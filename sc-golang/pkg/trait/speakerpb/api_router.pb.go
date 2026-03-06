@@ -7,7 +7,7 @@ import (
 	fmt "fmt"
 	traits "github.com/smart-core-os/sc-api/go/traits"
 	types "github.com/smart-core-os/sc-api/go/types"
-	router "github.com/smart-core-os/sc-golang/pkg/router"
+	router "github.com/smart-core-os/sc-bos/sc-golang/pkg/router"
 	grpc "google.golang.org/grpc"
 	io "io"
 )

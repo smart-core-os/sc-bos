@@ -10,8 +10,8 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types/time"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	timepb "github.com/smart-core-os/sc-golang/pkg/time"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
+	timepb "github.com/smart-core-os/sc-bos/sc-golang/pkg/time"
 )
 
 type ModelServer struct {

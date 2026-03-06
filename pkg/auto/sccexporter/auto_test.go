@@ -19,13 +19,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/metadatapb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/metadatapb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 func TestMetadata(t *testing.T) {

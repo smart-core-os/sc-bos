@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 type ModelServer struct {

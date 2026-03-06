@@ -9,9 +9,9 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 
 const TraitName trait.Name = "smartcore.bos.Health"

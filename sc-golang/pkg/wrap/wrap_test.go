@@ -20,7 +20,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/smart-core-os/sc-golang/internal/testproto"
+	"github.com/smart-core-os/sc-bos/sc-golang/internal/testproto"
 )
 
 func TestWrapper_Unary(t *testing.T) {

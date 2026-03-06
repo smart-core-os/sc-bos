@@ -23,7 +23,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 
 // getTraitInfo returns the data we support exporting via the DevicesApi download endpoint.

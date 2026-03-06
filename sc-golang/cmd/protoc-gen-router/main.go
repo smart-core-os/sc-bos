@@ -62,7 +62,7 @@ func generateFile(plugin *protogen.Plugin, file *protogen.File) error {
 	for _, service := range file.Services {
 		name := trimPrefixIgnoreCase(service.GoName, strings.TrimSuffix(pkg, "pb"))
 		filename := fmt.Sprintf("pkg/trait/%s/%s_router.pb.go", pkg, strings.ToLower(name))
-		importPath := protogen.GoImportPath(fmt.Sprintf("github.com/smart-core-os/sc-golang/pkg/trait/%s", pkg))
+		importPath := protogen.GoImportPath(fmt.Sprintf("github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/%s", pkg))
 		if *usePaths {
 			qual := strings.ToLower(name)
 			// avoid filenames like some/path/metadata_metadataapi_router.pb.go,
@@ -91,7 +91,7 @@ func generateFile(plugin *protogen.Plugin, file *protogen.File) error {
 func newServiceModel(g *protogen.GeneratedFile, service *protogen.Service, file *protogen.File, pkg, routerName string) ServiceModel {
 	// imports required by all
 	g.QualifiedGoIdent(protogen.GoIdent{GoImportPath: "google.golang.org/grpc"})
-	g.QualifiedGoIdent(protogen.GoIdent{GoImportPath: "github.com/smart-core-os/sc-golang/pkg/router"})
+	g.QualifiedGoIdent(protogen.GoIdent{GoImportPath: "github.com/smart-core-os/sc-bos/sc-golang/pkg/router"})
 	g.QualifiedGoIdent(protogen.GoIdent{GoImportPath: "fmt"})
 
 	model := ServiceModel{

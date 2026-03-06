@@ -18,9 +18,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 func newTestRegistry(devs *devicespb.Collection) *healthpb.Registry {

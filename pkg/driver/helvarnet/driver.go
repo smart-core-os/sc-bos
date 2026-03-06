@@ -19,9 +19,9 @@ import (
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/lightpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 const (

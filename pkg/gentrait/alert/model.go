@@ -2,7 +2,7 @@ package alert
 
 import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 type Model struct {

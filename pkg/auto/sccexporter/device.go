@@ -11,7 +11,7 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 
 // DataFetcher is a function that fetches device data for a specific trait

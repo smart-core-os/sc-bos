@@ -21,7 +21,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 
 const AutoName = "sccexporter"

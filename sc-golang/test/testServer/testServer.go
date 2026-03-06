@@ -10,8 +10,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/smart-core-os/sc-golang/pkg/server"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/server"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 
 func main() {

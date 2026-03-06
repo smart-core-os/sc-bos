@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/internal/th"
+	"github.com/smart-core-os/sc-bos/sc-golang/internal/th"
 )
 
 // todo: test one, some, all failures for get, update, pull

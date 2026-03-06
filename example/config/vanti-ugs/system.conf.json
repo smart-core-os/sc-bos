@@ -31,5 +31,9 @@
   },
   "experimental": {
     "accounts": true
+  },
+  "cloud": {
+    "tokenFile": ".data/secrets/ac-1-cloud",
+    "endpoint": "http://localhost:8080/"
   }
 }
