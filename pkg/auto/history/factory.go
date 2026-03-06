@@ -18,7 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceutilisationpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
@@ -38,7 +38,7 @@ import (
 	gen_historypb "github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	gen_resourceutilisationpb "github.com/smart-core-os/sc-bos/pkg/proto/resourceutilisationpb"
+	gen_resourceusepb "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
@@ -130,44 +130,7 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 
 // routeConfig dispatches to applyConfigDevices when cfg.Devices is set, otherwise falls back to applyConfig.
 func (a *automation) routeConfig(ctx context.Context, cfg config.Root) error {
-	if len(cfg.Devices) > 0 {
-		return a.applyConfigDevices(ctx, cfg)
-	}
 	return a.applyConfig(ctx, cfg)
-}
-
-func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) error {
-	if cfg.Source == nil || cfg.Source.Trait == "" {
-		return errors.New("source.trait is required when source.name is not set")
-	}
-
-	store, err := a.createStore(ctx, *cfg.Source, cfg.Storage)
-	if err != nil {
-		return err
-	}
-
-	announce := a.announcer.Replace(ctx)
-
-	var pageToken string
-	for {
-		res, err := a.devices.ListDevices(ctx, &devicespb.ListDevicesRequest{
-			Query:     &devicespb.Device_Query{Conditions: cfg.DevicesPb()},
-			PageToken: pageToken,
-		})
-		if err != nil {
-			return err
-		}
-		for _, device := range res.GetDevices() {
-			if err := a.startDeviceRecording(ctx, announce, device.GetName(), store, cfg); err != nil {
-				a.logger.Error("failed to start recording", zap.String("device", device.GetName()), zap.Error(err))
-			}
-		}
-		pageToken = res.GetNextPageToken()
-		if pageToken == "" {
-			break
-		}
-	}
-	return nil
 }
 
 func (a *automation) startDeviceRecording(ctx context.Context, announce node.Announcer, deviceName string, store history.Store, cfg config.Root) error {
@@ -306,8 +269,8 @@ func (a *automation) createCollector(store history.Store, traitName trait.Name) 
 		return gen_statuspb.WrapHistory(historypb.NewStatusServer(store)), a.collectCurrentStatusChanges, nil
 	case transport.TraitName:
 		return transportpb.WrapHistory(historypb.NewTransportServer(store)), a.collectTransportChanges, nil
-	case resourceutilisationpb.TraitName:
-		return gen_resourceutilisationpb.WrapHistory(historypb.NewResourceUtilisationServer(store)), a.collectResourceUtilisationChanges, nil
+	case resourceusepb.TraitName:
+		return gen_resourceusepb.WrapHistory(historypb.NewResourceUseServer(store)), a.collectResourceUseChanges, nil
 	case soundsensorpb.TraitName:
 		return gen_soundsensorpb.WrapHistory(historypb.NewSoundSensorServer(store)), a.collectSoundSensorChanges, nil
 	default:

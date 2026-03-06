@@ -51,7 +51,7 @@
           <status-alert :resource="response.streamError"/>
         </v-list-item>
       </v-list>
-      <with-resource-utilisation :name="node.name" :paused="false" v-slot="{ resource: ruResource }">
+      <with-resource-use :name="node.name" :paused="false" v-slot="{ resource: ruResource }">
         <template v-if="!ruResource.streamError && ruResource.value">
           <v-list-item class="pa-0" style="min-height: 20px">
             <span v-if="ruResource.value.cpu?.percentUtilised != null">
@@ -60,9 +60,9 @@
             <span v-if="ruResource.value.memory?.percentUsed != null" class="ml-2">
               Mem: {{ ruResource.value.memory.percentUsed.toFixed(1) }}%
             </span>
-            <span v-if="ruResource.value.network?.connectionsEstablished != null" class="ml-2">
-              SC-BOS connections: {{ ruResource.value.network.connectionsEstablished }}
-            </span>
+          </v-list-item>
+          <v-list-item v-if="ruResource.value.network?.connectionsEstablished != null" class="pa-0" style="min-height: 20px">
+            <span>SC-BOS connections: {{ ruResource.value.network.connectionsEstablished }}</span>
           </v-list-item>
           <template v-if="ruResource.value.disksList?.length">
             <v-list-item class="pa-0 mt-1" style="min-height: 20px">
@@ -80,7 +80,7 @@
             </v-list-item>
           </template>
         </template>
-      </with-resource-utilisation>
+      </with-resource-use>
       <div class="chips">
         <v-chip
             v-if="node.isServer"
@@ -101,7 +101,7 @@
 import StatusAlert from '@/components/StatusAlert.vue';
 import {usePullServiceMetadata} from '@/composables/services.js';
 import {NodeRole} from '@/stores/cohort.js';
-import WithResourceUtilisation from '@/traits/resourceUtilisation/WithResourceUtilisation.vue';
+import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
 import {reactive} from 'vue';
 
 const props = defineProps({
