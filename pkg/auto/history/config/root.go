@@ -17,20 +17,6 @@ type Root struct {
 	auto.Config
 	Source  *Source  `json:"source,omitempty"`
 	Storage *Storage `json:"storage,omitempty"`
-	// Devices is a list of conditions to filter which devices to record history for. Takes precedence over Source.Name.
-	// If empty, Source.Name will be used as the history source.
-	Devices []*Condition `json:"devices,omitempty"`
-}
-
-func (r *Root) DevicesPb() []*devicespb.Device_Query_Condition {
-	if r == nil {
-		return nil
-	}
-	conds := make([]*devicespb.Device_Query_Condition, len(r.Devices))
-	for i, c := range r.Devices {
-		conds[i] = c.pb
-	}
-	return conds
 }
 
 type Condition struct {
@@ -60,6 +46,20 @@ type Source struct {
 	// Polling is useful when it is not critical to collect every change to a device,
 	// and excessive storage of historical records is a concern.
 	PollingSchedule *jsontypes.Schedule `json:"pollingSchedule,omitempty"`
+	// Devices is a list of conditions to filter which devices to record history for. Takes precedence over Name.
+	// If empty, Name will be used as the history source.
+	Devices []*Condition `json:"devices,omitempty"`
+}
+
+func (s *Source) DevicesPb() []*devicespb.Device_Query_Condition {
+	if s == nil {
+		return nil
+	}
+	conds := make([]*devicespb.Device_Query_Condition, len(s.Devices))
+	for i, c := range s.Devices {
+		conds[i] = c.pb
+	}
+	return conds
 }
 
 func (s Source) SourceName() string {

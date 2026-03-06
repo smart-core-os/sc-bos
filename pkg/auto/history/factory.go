@@ -11,6 +11,8 @@ import (
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 
+	"github.com/smart-core-os/sc-api/go/types"
+
 	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
@@ -126,9 +128,9 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-// routeConfig dispatches to applyConfigDevices when cfg.Devices is set, otherwise falls back to applyConfig.
+// routeConfig dispatches to applyConfigDevices when cfg.Source.Devices is set, otherwise falls back to applyConfig.
 func (a *automation) routeConfig(ctx context.Context, cfg config.Root) error {
-	if len(cfg.Devices) > 0 {
+	if cfg.Source != nil && len(cfg.Source.Devices) > 0 {
 		return a.applyConfigDevices(ctx, cfg)
 	}
 	return a.applyConfig(ctx, cfg)
@@ -136,7 +138,7 @@ func (a *automation) routeConfig(ctx context.Context, cfg config.Root) error {
 
 func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) error {
 	if cfg.Source == nil || cfg.Source.Trait == "" {
-		return errors.New("source.trait is required when source.name is not set")
+		return errors.New("source.trait is required when source.devices is set")
 	}
 
 	store, err := a.createStore(ctx, *cfg.Source, cfg.Storage)
@@ -146,35 +148,64 @@ func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) er
 
 	announce := a.announcer.Replace(ctx)
 
-	var pageToken string
+	type activeRecorder struct {
+		cancel context.CancelFunc
+		undo   node.Undo
+	}
+	active := map[string]activeRecorder{}
+
+	defer func() {
+		for _, rec := range active {
+			rec.cancel()
+			rec.undo()
+		}
+	}()
+
+	stream, err := a.devices.PullDevices(ctx, &devicespb.PullDevicesRequest{
+		Query: &devicespb.Device_Query{Conditions: cfg.Source.DevicesPb()},
+	})
+	if err != nil {
+		return err
+	}
+
 	for {
-		res, err := a.devices.ListDevices(ctx, &devicespb.ListDevicesRequest{
-			Query:     &devicespb.Device_Query{Conditions: cfg.DevicesPb()},
-			PageToken: pageToken,
-		})
+		resp, err := stream.Recv()
 		if err != nil {
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return nil
+			}
 			return err
 		}
-		for _, device := range res.GetDevices() {
-			if err := a.startDeviceRecording(ctx, announce, device.GetName(), store, cfg); err != nil {
-				a.logger.Error("failed to start recording", zap.String("device", device.GetName()), zap.Error(err))
+		for _, change := range resp.GetChanges() {
+			name := change.GetName()
+			switch change.GetType() {
+			case types.ChangeType_ADD:
+				deviceCtx, cancel := context.WithCancel(ctx)
+				undo, err := a.startDeviceRecording(deviceCtx, announce, name, store, cfg)
+				if err != nil {
+					a.logger.Error("failed to start recording", zap.String("device", name), zap.Error(err))
+					cancel()
+					continue
+				}
+				active[name] = activeRecorder{cancel: cancel, undo: undo}
+			case types.ChangeType_REMOVE:
+				if rec, ok := active[name]; ok {
+					rec.cancel()
+					rec.undo()
+					delete(active, name)
+				}
 			}
 		}
-		pageToken = res.GetNextPageToken()
-		if pageToken == "" {
-			break
-		}
 	}
-	return nil
 }
 
-func (a *automation) startDeviceRecording(ctx context.Context, announce node.Announcer, deviceName string, store history.Store, cfg config.Root) error {
+func (a *automation) startDeviceRecording(ctx context.Context, announce node.Announcer, deviceName string, store history.Store, cfg config.Root) (node.Undo, error) {
 	src := *cfg.Source
 	src.Name = deviceName
 
 	serverClient, collect, err := a.createCollector(store, cfg.Source.Trait)
 	if err != nil {
-		return err
+		return node.NilUndo, err
 	}
 
 	payloads := make(chan []byte)
@@ -193,10 +224,10 @@ func (a *automation) startDeviceRecording(ctx context.Context, announce node.Ann
 		}
 	}()
 
-	announce.Announce(deviceName, node.HasClient(serverClient), node.HasTrait(cfg.Source.Trait))
+	undo := announce.Announce(deviceName, node.HasClient(serverClient), node.HasTrait(cfg.Source.Trait))
 	go collect(ctx, src, payloads)
 
-	return nil
+	return undo, nil
 }
 
 func (a *automation) createStore(ctx context.Context, src config.Source, storage *config.Storage) (history.Store, error) {
