@@ -4,7 +4,6 @@ package smartcore.bos.resourceutilisation.v1;
 
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/resourceutilisationpb";
 
-import "google/protobuf/duration.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -19,7 +18,6 @@ message ResourceUtilisation {
   MemoryUtilisation memory = 2;
   repeated DiskUtilisation disks = 3;
   NetworkUtilisation network = 4;
-  google.protobuf.Duration uptime = 5;
 }
 
 message CpuUtilisation {

@@ -2,15 +2,14 @@ package resourceutilisation
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
-	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/mem"
 	gopsnet "github.com/shirou/gopsutil/v3/net"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceutilisationpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -101,8 +100,8 @@ func (s *System) collect(ctx context.Context, model *resourceutilisationpb.Model
 		s.logger.Warn("disk partitions", zap.Error(err))
 	}
 
-	// Network connections
-	if conns, err := gopsnet.ConnectionsWithContext(ctx, "tcp"); err == nil {
+	// Network connections (this process only)
+	if conns, err := gopsnet.ConnectionsPidWithContext(ctx, "tcp", int32(os.Getpid())); err == nil {
 		var established uint64
 		for _, c := range conns {
 			if c.Status == "ESTABLISHED" {
@@ -114,13 +113,6 @@ func (s *System) collect(ctx context.Context, model *resourceutilisationpb.Model
 		}
 	} else {
 		s.logger.Warn("network connections", zap.Error(err))
-	}
-
-	// Uptime
-	if uptimeSecs, err := host.UptimeWithContext(ctx); err == nil {
-		v.Uptime = durationpb.New(time.Duration(uptimeSecs) * time.Second)
-	} else {
-		s.logger.Warn("uptime", zap.Error(err))
 	}
 
 	if _, err := model.SetResourceUtilisation(v); err != nil {

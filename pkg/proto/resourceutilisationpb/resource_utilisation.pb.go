@@ -9,7 +9,6 @@ package resourceutilisationpb
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
@@ -30,7 +29,6 @@ type ResourceUtilisation struct {
 	Memory        *MemoryUtilisation     `protobuf:"bytes,2,opt,name=memory,proto3" json:"memory,omitempty"`
 	Disks         []*DiskUtilisation     `protobuf:"bytes,3,rep,name=disks,proto3" json:"disks,omitempty"`
 	Network       *NetworkUtilisation    `protobuf:"bytes,4,opt,name=network,proto3" json:"network,omitempty"`
-	Uptime        *durationpb.Duration   `protobuf:"bytes,5,opt,name=uptime,proto3" json:"uptime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -89,13 +87,6 @@ func (x *ResourceUtilisation) GetDisks() []*DiskUtilisation {
 func (x *ResourceUtilisation) GetNetwork() *NetworkUtilisation {
 	if x != nil {
 		return x.Network
-	}
-	return nil
-}
-
-func (x *ResourceUtilisation) GetUptime() *durationpb.Duration {
-	if x != nil {
-		return x.Uptime
 	}
 	return nil
 }
@@ -554,13 +545,12 @@ var File_smartcore_bos_resourceutilisation_v1_resource_utilisation_proto protore
 
 const file_smartcore_bos_resourceutilisation_v1_resource_utilisation_proto_rawDesc = "" +
 	"\n" +
-	"?smartcore/bos/resourceutilisation/v1/resource_utilisation.proto\x12$smartcore.bos.resourceutilisation.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x82\x03\n" +
+	"?smartcore/bos/resourceutilisation/v1/resource_utilisation.proto\x12$smartcore.bos.resourceutilisation.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xcf\x02\n" +
 	"\x13ResourceUtilisation\x12F\n" +
 	"\x03cpu\x18\x01 \x01(\v24.smartcore.bos.resourceutilisation.v1.CpuUtilisationR\x03cpu\x12O\n" +
 	"\x06memory\x18\x02 \x01(\v27.smartcore.bos.resourceutilisation.v1.MemoryUtilisationR\x06memory\x12K\n" +
 	"\x05disks\x18\x03 \x03(\v25.smartcore.bos.resourceutilisation.v1.DiskUtilisationR\x05disks\x12R\n" +
-	"\anetwork\x18\x04 \x01(\v28.smartcore.bos.resourceutilisation.v1.NetworkUtilisationR\anetwork\x121\n" +
-	"\x06uptime\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\x06uptime\"x\n" +
+	"\anetwork\x18\x04 \x01(\v28.smartcore.bos.resourceutilisation.v1.NetworkUtilisationR\anetwork\"x\n" +
 	"\x0eCpuUtilisation\x12.\n" +
 	"\x10percent_utilised\x18\x01 \x01(\x02H\x00R\x0fpercentUtilised\x88\x01\x01\x12!\n" +
 	"\fcore_percent\x18\x02 \x03(\x02R\vcorePercentB\x13\n" +
@@ -632,30 +622,28 @@ var file_smartcore_bos_resourceutilisation_v1_resource_utilisation_proto_goTypes
 	(*PullResourceUtilisationRequest)(nil),         // 6: smartcore.bos.resourceutilisation.v1.PullResourceUtilisationRequest
 	(*PullResourceUtilisationResponse)(nil),        // 7: smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse
 	(*PullResourceUtilisationResponse_Change)(nil), // 8: smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse.Change
-	(*durationpb.Duration)(nil),                    // 9: google.protobuf.Duration
-	(*fieldmaskpb.FieldMask)(nil),                  // 10: google.protobuf.FieldMask
-	(*timestamppb.Timestamp)(nil),                  // 11: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),                  // 9: google.protobuf.FieldMask
+	(*timestamppb.Timestamp)(nil),                  // 10: google.protobuf.Timestamp
 }
 var file_smartcore_bos_resourceutilisation_v1_resource_utilisation_proto_depIdxs = []int32{
 	1,  // 0: smartcore.bos.resourceutilisation.v1.ResourceUtilisation.cpu:type_name -> smartcore.bos.resourceutilisation.v1.CpuUtilisation
 	2,  // 1: smartcore.bos.resourceutilisation.v1.ResourceUtilisation.memory:type_name -> smartcore.bos.resourceutilisation.v1.MemoryUtilisation
 	3,  // 2: smartcore.bos.resourceutilisation.v1.ResourceUtilisation.disks:type_name -> smartcore.bos.resourceutilisation.v1.DiskUtilisation
 	4,  // 3: smartcore.bos.resourceutilisation.v1.ResourceUtilisation.network:type_name -> smartcore.bos.resourceutilisation.v1.NetworkUtilisation
-	9,  // 4: smartcore.bos.resourceutilisation.v1.ResourceUtilisation.uptime:type_name -> google.protobuf.Duration
-	10, // 5: smartcore.bos.resourceutilisation.v1.GetResourceUtilisationRequest.read_mask:type_name -> google.protobuf.FieldMask
-	10, // 6: smartcore.bos.resourceutilisation.v1.PullResourceUtilisationRequest.read_mask:type_name -> google.protobuf.FieldMask
-	8,  // 7: smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse.changes:type_name -> smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse.Change
-	11, // 8: smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	0,  // 9: smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse.Change.resource_utilisation:type_name -> smartcore.bos.resourceutilisation.v1.ResourceUtilisation
-	5,  // 10: smartcore.bos.resourceutilisation.v1.ResourceUtilisationApi.GetResourceUtilisation:input_type -> smartcore.bos.resourceutilisation.v1.GetResourceUtilisationRequest
-	6,  // 11: smartcore.bos.resourceutilisation.v1.ResourceUtilisationApi.PullResourceUtilisation:input_type -> smartcore.bos.resourceutilisation.v1.PullResourceUtilisationRequest
-	0,  // 12: smartcore.bos.resourceutilisation.v1.ResourceUtilisationApi.GetResourceUtilisation:output_type -> smartcore.bos.resourceutilisation.v1.ResourceUtilisation
-	7,  // 13: smartcore.bos.resourceutilisation.v1.ResourceUtilisationApi.PullResourceUtilisation:output_type -> smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse
-	12, // [12:14] is the sub-list for method output_type
-	10, // [10:12] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	9,  // 4: smartcore.bos.resourceutilisation.v1.GetResourceUtilisationRequest.read_mask:type_name -> google.protobuf.FieldMask
+	9,  // 5: smartcore.bos.resourceutilisation.v1.PullResourceUtilisationRequest.read_mask:type_name -> google.protobuf.FieldMask
+	8,  // 6: smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse.changes:type_name -> smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse.Change
+	10, // 7: smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	0,  // 8: smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse.Change.resource_utilisation:type_name -> smartcore.bos.resourceutilisation.v1.ResourceUtilisation
+	5,  // 9: smartcore.bos.resourceutilisation.v1.ResourceUtilisationApi.GetResourceUtilisation:input_type -> smartcore.bos.resourceutilisation.v1.GetResourceUtilisationRequest
+	6,  // 10: smartcore.bos.resourceutilisation.v1.ResourceUtilisationApi.PullResourceUtilisation:input_type -> smartcore.bos.resourceutilisation.v1.PullResourceUtilisationRequest
+	0,  // 11: smartcore.bos.resourceutilisation.v1.ResourceUtilisationApi.GetResourceUtilisation:output_type -> smartcore.bos.resourceutilisation.v1.ResourceUtilisation
+	7,  // 12: smartcore.bos.resourceutilisation.v1.ResourceUtilisationApi.PullResourceUtilisation:output_type -> smartcore.bos.resourceutilisation.v1.PullResourceUtilisationResponse
+	11, // [11:13] is the sub-list for method output_type
+	9,  // [9:11] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_resourceutilisation_v1_resource_utilisation_proto_init() }
