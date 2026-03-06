@@ -21,7 +21,7 @@ const props = defineProps({
   },
   totalRange: {
     type: Number,
-    default: 1000
+    default: 200
   },
   period: {
     type: [String],
