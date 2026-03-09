@@ -1,4 +1,4 @@
-package statuspb
+package statusmap
 
 import (
 	"context"
@@ -25,7 +25,7 @@ type WatchEvent struct {
 }
 
 type model struct {
-	*Model
+	*statuspb.Model
 	unannounce node.Undo
 }
 
@@ -71,15 +71,15 @@ func (m *Map) getOrCreateModel(name string) model {
 	m.mu.Lock()
 	mod, ok := m.known[name]
 	if !ok {
-		nm := NewModel()
+		nm := statuspb.NewModel()
 		srv := &watchEventServer{
-			ModelServer: NewModelServer(nm),
+			ModelServer: statuspb.NewModelServer(nm),
 			m:           m,
 		}
 		client := statuspb.WrapApi(srv)
 		mod = model{
 			Model:      nm,
-			unannounce: m.announcer.Announce(name, node.HasTrait(TraitName, node.WithClients(client))),
+			unannounce: m.announcer.Announce(name, node.HasTrait(statuspb.TraitName, node.WithClients(client))),
 		}
 		m.known[name] = mod
 	}
@@ -95,7 +95,7 @@ func (m *Map) getModel(name string) (model, bool) {
 }
 
 type watchEventServer struct {
-	*ModelServer
+	*statuspb.ModelServer
 	m *Map
 }
 
