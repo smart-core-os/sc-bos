@@ -1,4 +1,4 @@
-package standard
+package healthpb
 
 import (
 	"sync"
@@ -6,19 +6,19 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
-type index struct {
+type stdIndex struct {
 	all           []*healthpb.HealthCheck_ComplianceImpact_Standard
 	byDisplayName map[string]*healthpb.HealthCheck_ComplianceImpact_Standard
 }
 
-func (idx *index) add(s *healthpb.HealthCheck_ComplianceImpact_Standard) {
+func (idx *stdIndex) add(s *healthpb.HealthCheck_ComplianceImpact_Standard) {
 	idx.all = append(idx.all, s)
 	if v := s.GetDisplayName(); v != "" && idx.byDisplayName != nil {
 		idx.byDisplayName[v] = s
 	}
 }
 
-func (idx *index) FindByDisplayName(name string) *healthpb.HealthCheck_ComplianceImpact_Standard {
+func (idx *stdIndex) FindByDisplayName(name string) *healthpb.HealthCheck_ComplianceImpact_Standard {
 	if idx.byDisplayName == nil {
 		idx.byDisplayName = make(map[string]*healthpb.HealthCheck_ComplianceImpact_Standard, len(idx.all))
 		for _, s := range idx.all {
@@ -32,12 +32,12 @@ func (idx *index) FindByDisplayName(name string) *healthpb.HealthCheck_Complianc
 
 var (
 	globalMy  sync.Mutex
-	standards = new(index)
+	standards = new(stdIndex)
 )
 
-// FindByDisplayName looks up a standard by its display name.
+// FindStandardByDisplayName looks up a standard by its display name.
 // If not found, returns nil.
-func FindByDisplayName(name string) *healthpb.HealthCheck_ComplianceImpact_Standard {
+func FindStandardByDisplayName(name string) *healthpb.HealthCheck_ComplianceImpact_Standard {
 	if name == "" {
 		return nil
 	}
@@ -46,10 +46,10 @@ func FindByDisplayName(name string) *healthpb.HealthCheck_ComplianceImpact_Stand
 	return standards.FindByDisplayName(name)
 }
 
-// Register registers a standard.
+// RegisterStandard registers a standard.
 // If a standard with the same display name already exists, it is overwritten.
 // Returns s.
-func Register(s *healthpb.HealthCheck_ComplianceImpact_Standard) *healthpb.HealthCheck_ComplianceImpact_Standard {
+func RegisterStandard(s *healthpb.HealthCheck_ComplianceImpact_Standard) *healthpb.HealthCheck_ComplianceImpact_Standard {
 	globalMy.Lock()
 	defer globalMy.Unlock()
 	standards.add(s)
