@@ -97,24 +97,29 @@ export default function() {
           return details;
         }
       } else {
-        existingLocalAuth.value = null;
         const payload = await res.json();
         return Promise.reject(payload);
       }
     } catch {
-      existingLocalAuth.value = null;
       return Promise.reject(new Error('Failed to sign in, please try again.'));
     }
   };
 
   /**
-   * Logout using the store reset function, then store the cleared store in local storage
+   * LogoutLocal will log in silently to prevent signage players from needing any interaction to maintain a valid token.
    *
-   * @return {Promise<void>}
+   * @return {Promise<AuthenticationDetails>}
    */
   const logoutLocal = async () => {
     existingLocalAuth.value = null;
     await clearStorage();
+    const username = import.meta.env.VITE_DASHBOARD_USERNAME;
+    const password = import.meta.env.VITE_DASHBOARD_PASSWORD;
+    if (username && password) {
+      return await loginLocal(username, password).catch(() => console.warn('local login rejected'));
+    }
+    console.warn('no credentials provided for local login, unable to maintain authentication');
+    return null;
   };
 
   /**
@@ -145,6 +150,7 @@ export default function() {
 
   return {
     existingLocalAuth,
+    hasCredentials: !!(import.meta.env.VITE_DASHBOARD_USERNAME && import.meta.env.VITE_DASHBOARD_PASSWORD),
     init: initializeLocal,
     login: loginLocal,
     logout: logoutLocal,
