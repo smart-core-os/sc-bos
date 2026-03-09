@@ -18,6 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/rebootpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
@@ -36,6 +37,7 @@ import (
 	gen_historypb "github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	gen_rebootpb "github.com/smart-core-os/sc-bos/pkg/proto/rebootpb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
@@ -215,6 +217,9 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 	case soundsensorpb.TraitName:
 		serverClient = gen_soundsensorpb.WrapHistory(historypb.NewSoundSensorServer(store))
 		collect = a.collectSoundSensorChanges
+	case rebootpb.TraitName:
+		serverClient = gen_rebootpb.WrapHistory(historypb.NewRebootServer(store))
+		collect = a.collectRebootEventChanges
 	default:
 		return fmt.Errorf("unsupported trait %s", cfg.Source.Trait)
 	}

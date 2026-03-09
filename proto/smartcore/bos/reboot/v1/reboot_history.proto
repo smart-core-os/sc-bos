@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package smartcore.bos.reboot.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/rebootpb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/actor/v1/actor.proto";
+import "types/time/period.proto";
+
+// RebootHistory provides access to historical reboot records.
+service RebootHistory {
+  rpc ListRebootEvents(ListRebootEventsRequest) returns (ListRebootEventsResponse);
+}
+
+// RebootEvent is a record of a single reboot.
+message RebootEvent {
+  // The time the reboot was initiated.
+  google.protobuf.Timestamp reboot_time = 1;
+  // The reason for the reboot, if provided.
+  string reason = 2;
+  // The actor who triggered the reboot, if known.
+  smartcore.bos.actor.v1.Actor actor = 3;
+}
+
+message ListRebootEventsRequest {
+  string name = 1;
+  // The time period to query.
+  smartcore.types.time.Period period = 2;
+  // Fields to include in the response.
+  google.protobuf.FieldMask read_mask = 3;
+  // The maximum number of records to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 4;
+  // A page token, received from a previous ListRebootEventsResponse call.
+  string page_token = 5;
+  // Specify the order of the returned records.
+  // The default is `reboot_time asc` - aka oldest record first.
+  // The format is `field_name [asc|desc]`.
+  string order_by = 6;
+}
+
+message ListRebootEventsResponse {
+  repeated RebootEvent reboot_events = 1;
+  // A token which can be sent as page_token to retrieve the next page.
+  string next_page_token = 2;
+  // If non-zero this is the total number of records matched by the query.
+  int32 total_size = 3;
+}
