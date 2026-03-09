@@ -7,13 +7,12 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"go.uber.org/zap"
 )
 
 //go:embed powered-by-dark.png
@@ -29,7 +28,7 @@ type Config struct {
 	From        string   `json:"from"`
 	Recipients  []string `json:"recipients"`
 	// LogoPath is an optional path to a PNG logo file to embed in report emails.
-	// If empty, the default Vanti logo is used.
+	// If empty, the default logo is used.
 	LogoPath string `json:"logoPath,omitempty"`
 	// APIURL is the Postmark API endpoint. Defaults to "https://api.postmarkapp.com/email" if empty.
 	APIURL string `json:"apiUrl,omitempty"`
@@ -70,20 +69,19 @@ const LogoHTML = `<img src="cid:smartcore-logo.png" alt="Smart Core" style="heig
 
 // SendReportEmail emails one or more xlsx files as attachments to all configured recipients.
 // The htmlBody may reference the logo via <img src="cid:smartcore-logo.png">.
-// Errors are logged but do not interrupt the caller.
-func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subject, htmlBody string, logger *zap.Logger) {
+// All errors are accumulated and returned as a joined error.
+func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subject, htmlBody string) error {
 	if cfg == nil || len(cfg.Recipients) == 0 {
-		return
+		return nil
 	}
 
 	logoPNG := defaultLogoPNG
 	if cfg.LogoPath != "" {
 		data, err := os.ReadFile(cfg.LogoPath)
 		if err != nil {
-			logger.Error("postmark: failed to read logo file, using default", zap.String("logoPath", cfg.LogoPath), zap.Error(err))
-		} else {
-			logoPNG = data
+			return fmt.Errorf("postmark: failed to read logo file: %w", err)
 		}
+		logoPNG = data
 	}
 
 	attachments := []attachment{
@@ -95,10 +93,12 @@ func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subje
 		},
 	}
 
+	var errs []error
+
 	for _, filePath := range filePaths {
 		data, err := os.ReadFile(filePath)
 		if err != nil {
-			logger.Error("postmark: failed to read report file", zap.String("file", filePath), zap.Error(err))
+			errs = append(errs, fmt.Errorf("postmark: failed to read report file %s: %w", filePath, err))
 			continue
 		}
 		attachments = append(attachments, attachment{
@@ -106,6 +106,11 @@ func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subje
 			Content:     base64.StdEncoding.EncodeToString(data),
 			ContentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 		})
+	}
+
+	apiURL := cfg.APIURL
+	if apiURL == "" {
+		apiURL = "https://api.postmarkapp.com/email"
 	}
 
 	for _, recipient := range cfg.Recipients {
@@ -120,17 +125,13 @@ func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subje
 
 		body, err := json.Marshal(payload)
 		if err != nil {
-			logger.Error("postmark: failed to marshal payload", zap.String("recipient", recipient), zap.Error(err))
+			errs = append(errs, fmt.Errorf("postmark: failed to marshal payload for %s: %w", recipient, err))
 			continue
 		}
 
-		apiURL := cfg.APIURL
-		if apiURL == "" {
-			apiURL = "https://api.postmarkapp.com/email"
-		}
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(body))
 		if err != nil {
-			logger.Error("postmark: failed to create request", zap.String("recipient", recipient), zap.Error(err))
+			errs = append(errs, fmt.Errorf("postmark: failed to create request for %s: %w", recipient, err))
 			continue
 		}
 		req.Header.Set("Accept", "application/json")
@@ -139,15 +140,15 @@ func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subje
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			logger.Error("postmark: failed to send email", zap.String("recipient", recipient), zap.Error(err))
+			errs = append(errs, fmt.Errorf("postmark: failed to send email to %s: %w", recipient, err))
 			continue
 		}
 		resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			logger.Error("postmark: non-200 response", zap.String("recipient", recipient), zap.Int("status", resp.StatusCode))
-		} else {
-			logger.Info("postmark: report email sent", zap.String("recipient", recipient), zap.Int("attachments", len(filePaths)))
+			errs = append(errs, fmt.Errorf("postmark: non-200 response for %s: status %d", recipient, resp.StatusCode))
 		}
 	}
+
+	return errors.Join(errs...)
 }
