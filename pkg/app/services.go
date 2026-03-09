@@ -114,6 +114,10 @@ func (c *Controller) startSystems() (*service.Map, error) {
 		PrivateKey:       c.PrivateKey,
 		CohortManager:    c.ManagerConn,
 		ClientTLSConfig:  c.ClientTLSConfig,
+		LogLevel:         c.LogLevel,
+	}
+	if c.LogCapture != nil {
+		ctxServices.AddLogCore = c.LogCapture.Add
 	}
 	m := service.NewMap(func(_, kind string) (service.Lifecycle, error) {
 		f, ok := c.SystemConfig.SystemFactories[kind]

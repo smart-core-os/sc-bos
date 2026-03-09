@@ -7,6 +7,7 @@ import (
 
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/smart-core-os/sc-bos/internal/account"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
@@ -42,6 +43,16 @@ type Services struct {
 	GRPCCerts       *pki.SourceSet
 	PrivateKey      pki.PrivateKey // the key managed by the controller
 	ClientTLSConfig *tls.Config    // for connecting to other smartcore nodes
+
+	// AddLogCore, if non-nil, allows a system to register an additional zapcore.Core
+	// that will receive every log entry emitted by the controller's root logger.
+	// Returns a cancel function that deregisters the core.
+	// Provided by the controller when using pkg/app/logcapture.
+	AddLogCore func(core zapcore.Core) func()
+
+	// LogLevel is the zap.AtomicLevel controlling the controller's root logger.
+	// Systems can read and update the live log level via this handle.
+	LogLevel *zap.AtomicLevel
 }
 
 type Factory interface {

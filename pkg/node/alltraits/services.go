@@ -13,6 +13,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/dalipb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	genlogpb "github.com/smart-core-os/sc-bos/pkg/gentrait/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/mqttpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/report"
@@ -25,6 +26,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb"
 	gen_accesspb "github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	gen_allocationpb "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/anprcamerapb"
@@ -81,6 +83,7 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 
 	// sc-bos private traits
 	allocationpb.TraitName:     {gen_allocationpb.AllocationApi_ServiceDesc, gen_allocationpb.AllocationHistory_ServiceDesc},
+	genlogpb.TraitName:         {logpb.LogApi_ServiceDesc},
 	accesspb.TraitName:         {gen_accesspb.AccessApi_ServiceDesc},
 	anprcamera.TraitName:       {anprcamerapb.AnprCameraApi_ServiceDesc},
 	button.TraitName:           {buttonpb.ButtonApi_ServiceDesc},

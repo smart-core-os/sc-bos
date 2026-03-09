@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package smartcore.bos.log.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/logpb";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+// LogApi exposes log streaming, log level management, log file metadata,
+// and efficient log file download for a controller.
+service LogApi {
+  // Stream log messages as they are emitted (tail -f -n <count> behaviour).
+  // The server sends up to initial_count recent messages first, then streams
+  // new messages in real-time.
+  rpc PullLogMessages(PullLogMessagesRequest) returns (stream PullLogMessagesResponse);
+
+  // Get the current log level.
+  rpc GetLogLevel(GetLogLevelRequest) returns (LogLevel);
+  // Stream changes to the log level.
+  rpc PullLogLevel(PullLogLevelRequest) returns (stream PullLogLevelResponse);
+  // Update the log level.
+  rpc UpdateLogLevel(UpdateLogLevelRequest) returns (LogLevel);
+
+  // Metadata about on-disk log storage (total size, file count, etc.)
+  rpc GetLogMetadata(GetLogMetadataRequest) returns (LogMetadata);
+  // Stream changes to log metadata.
+  rpc PullLogMetadata(PullLogMetadataRequest) returns (stream PullLogMetadataResponse);
+
+  // Returns one or more HTTP URLs for direct file download (no gRPC serialisation).
+  // Each URL points to a single log file (active or rotated).
+  rpc GetDownloadLogUrl(GetDownloadLogUrlRequest) returns (GetDownloadLogUrlResponse);
+}
+
+// LogMessage represents a single log entry.
+message LogMessage {
+  google.protobuf.Timestamp timestamp = 1;
+  LogLevel.Level level = 2;
+  // Logger name (e.g. "node", "bacnet").
+  string logger = 3;
+  string message = 4;
+  // Structured fields as key/value string pairs.
+  map<string, string> fields = 5;
+}
+
+// LogLevel represents the minimum log level that will be emitted.
+message LogLevel {
+  enum Level {
+    LEVEL_UNSPECIFIED = 0;
+    DEBUG = 1;
+    INFO = 2;
+    WARN = 3;
+    ERROR = 4;
+    DPANIC = 5;
+    PANIC = 6;
+    FATAL = 7;
+  }
+
+  Level level = 1;
+}
+
+// LogMetadata contains metadata about on-disk log storage.
+message LogMetadata {
+  // Total bytes used by all log files (active and rotated).
+  int64 total_size_bytes = 1;
+  // Number of log files (active + rotated).
+  int32 file_count = 2;
+}
+
+message PullLogMessagesRequest {
+  string name = 1;
+  // Number of buffered messages to replay before streaming live.
+  // Analogous to tail -n <count>. Default: 200. Max: 1000.
+  int32 initial_count = 2;
+  // If true, skip the initial replay and stream from now onwards only.
+  bool updates_only = 3;
+  // Minimum level to receive. Absent/LEVEL_UNSPECIFIED = all levels.
+  LogLevel.Level min_level = 4;
+  // Optional: filter by logger name prefix.
+  // Reserved for future use; server may return UNIMPLEMENTED if used.
+  string logger_filter = 5;
+}
+
+message PullLogMessagesResponse {
+  repeated LogMessage messages = 1;
+}
+
+message GetLogLevelRequest {
+  string name = 1;
+}
+
+message PullLogLevelRequest {
+  string name = 1;
+  bool updates_only = 2;
+}
+
+message PullLogLevelResponse {
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    LogLevel log_level = 3;
+  }
+  repeated Change changes = 1;
+}
+
+message UpdateLogLevelRequest {
+  string name = 1;
+  LogLevel log_level = 2;
+}
+
+message GetLogMetadataRequest {
+  string name = 1;
+}
+
+message PullLogMetadataRequest {
+  string name = 1;
+  bool updates_only = 2;
+}
+
+message PullLogMetadataResponse {
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    LogMetadata log_metadata = 3;
+  }
+  repeated Change changes = 1;
+}
+
+message GetDownloadLogUrlRequest {
+  string name = 1;
+  // When true, return URLs for all rotated files as well as the active one.
+  bool include_rotated = 2;
+  // Optional TTL for the returned URL. Default: 15 minutes.
+  google.protobuf.Duration url_ttl = 3;
+}
+
+message GetDownloadLogUrlResponse {
+  repeated LogFile files = 1;
+
+  message LogFile {
+    // HTTP URL for direct download.
+    string url = 1;
+    // Suggested save-as filename.
+    string filename = 2;
+    int64 size_bytes = 3;
+    // MIME type: "text/plain", "application/gzip", etc.
+    // Reflects the actual on-disk format; callers should not assume plain text.
+    string content_type = 4;
+  }
+}
