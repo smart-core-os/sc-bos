@@ -23,7 +23,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/api"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -75,7 +74,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 	d.client = ccConfig.Client(ctx)
 
-	status := statuspb.NewMap(announcer)
+	status := newStatusMap(announcer)
 
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, location := range cfg.Locations {
