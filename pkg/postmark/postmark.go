@@ -31,6 +31,8 @@ type Config struct {
 	// LogoPath is an optional path to a PNG logo file to embed in report emails.
 	// If empty, the default Vanti logo is used.
 	LogoPath string `json:"logoPath,omitempty"`
+	// APIURL is the Postmark API endpoint. Defaults to "https://api.postmarkapp.com/email" if empty.
+	APIURL string `json:"apiUrl,omitempty"`
 }
 
 // ReadToken reads the server token from ServerTokenPath and stores it in ServerToken.
@@ -62,12 +64,12 @@ type attachment struct {
 	ContentID   string `json:"ContentID,omitempty"`
 }
 
-// LogoHTML is the HTML snippet to embed the Vanti logo in an email body.
+// LogoHTML is the HTML snippet to embed the Smart Core logo in an email body.
 // Place it wherever the logo should appear.
-const LogoHTML = `<img src="cid:vanti-logo.png" alt="Vanti" style="height:60px;">`
+const LogoHTML = `<img src="cid:smartcore-logo.png" alt="Smart Core" style="height:60px;">`
 
 // SendReportEmail emails one or more xlsx files as attachments to all configured recipients.
-// The htmlBody may reference the logo via <img src="cid:vanti-logo.png">.
+// The htmlBody may reference the logo via <img src="cid:smartcore-logo.png">.
 // Errors are logged but do not interrupt the caller.
 func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subject, htmlBody string, logger *zap.Logger) {
 	if cfg == nil || len(cfg.Recipients) == 0 {
@@ -86,10 +88,10 @@ func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subje
 
 	attachments := []attachment{
 		{
-			Name:        "vanti-logo.png",
+			Name:        "smartcore-logo.png",
 			Content:     base64.StdEncoding.EncodeToString(logoPNG),
 			ContentType: "image/png",
-			ContentID:   "cid:vanti-logo.png",
+			ContentID:   "cid:smartcore-logo.png",
 		},
 	}
 
@@ -122,7 +124,11 @@ func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subje
 			continue
 		}
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://api.postmarkapp.com/email", bytes.NewReader(body))
+		apiURL := cfg.APIURL
+		if apiURL == "" {
+			apiURL = "https://api.postmarkapp.com/email"
+		}
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(body))
 		if err != nil {
 			logger.Error("postmark: failed to create request", zap.String("recipient", recipient), zap.Error(err))
 			continue
