@@ -119,10 +119,27 @@ export default function() {
 
   /**
    * Refresh the local authentication details.
+   * If the stored token has expired, attempts a silent re-login using env var credentials.
    *
    * @return {Promise<AuthenticationDetails>}
    */
   const refreshToken = async () => {
+    let needsLogin;
+
+    try {
+      needsLogin = !existingLocalAuth.value ||
+        jwtDecode(existingLocalAuth.value.token).exp * 1000 < Date.now();
+    } catch (e) {
+      console.warn('Failed to decode token, will attempt to re-login', e);
+      needsLogin = true;
+    }
+    if (needsLogin) {
+      const username = import.meta.env.VITE_DASHBOARD_USERNAME;
+      const password = import.meta.env.VITE_DASHBOARD_PASSWORD;
+      if (username && password) {
+        return loginLocal(username, password).catch(() => existingLocalAuth.value);
+      }
+    }
     return existingLocalAuth.value;
   };
 
