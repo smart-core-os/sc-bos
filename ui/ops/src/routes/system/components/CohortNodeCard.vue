@@ -22,6 +22,12 @@
                 View Certificate
               </v-list-item-title>
             </v-list-item>
+            <v-list-item link @click="onDownloadLogs(node.name)">
+              <v-list-item-title>Download Logs</v-list-item-title>
+            </v-list-item>
+            <v-list-item link @click="onViewLiveLogs(node.name)">
+              <v-list-item-title>View Live Logs</v-list-item-title>
+            </v-list-item>
             <v-list-item v-if="node.role !== NodeRole.HUB && !node.isServer"
                          link
                          @click="onForgetNode(node.grpcAddress)">
@@ -65,13 +71,17 @@
       </div>
     </v-card-text>
   </v-card>
+  <log-stream-dialog v-model="showLogStream" :name="logStreamNode"/>
 </template>
 
 <script setup>
 import StatusAlert from '@/components/StatusAlert.vue';
+import {getDownloadLogUrl} from '@/api/ui/log.js';
+import {triggerDownloadFromUrl} from '@/components/download/download.js';
 import {usePullServiceMetadata} from '@/composables/services.js';
 import {NodeRole} from '@/stores/cohort.js';
-import {reactive} from 'vue';
+import LogStreamDialog from '@/routes/system/components/LogStreamDialog.vue';
+import {reactive, ref} from 'vue';
 
 const props = defineProps({
   node: {
@@ -92,6 +102,23 @@ const onShowCertificates = (address) => {
 };
 const onForgetNode = (address) => {
   emit('click:forget-node', address);
+};
+const showLogStream = ref(false);
+const logStreamNode = ref('');
+const onViewLiveLogs = (name) => {
+  logStreamNode.value = name;
+  showLogStream.value = true;
+};
+
+const onDownloadLogs = async (name) => {
+  try {
+    const response = await getDownloadLogUrl({name, includeRotated: true});
+    for (const file of response.filesList) {
+      triggerDownloadFromUrl(file.url, file.filename);
+    }
+  } catch (e) {
+    console.warn('Failed to download logs for', name, e);
+  }
 };
 </script>
 

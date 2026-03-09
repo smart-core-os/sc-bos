@@ -14,8 +14,14 @@
       "passwordFile": "./.data/secrets/postgres-password"
     }
   },
+  "logger": {
+    "outputPaths": ["stderr", ".data/sc-bos.log"]
+  },
   "systems": {
     "alerts": {"storage": {"type": "postgres"}},
+    "log": {
+      "logFilePath": ".data/sc-bos*.log"
+    },
     "authn": {
       "user": {
         "localAccounts": true,
