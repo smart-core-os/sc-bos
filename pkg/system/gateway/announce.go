@@ -189,6 +189,10 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 		}
 	}
 
+	shouldRenewDevicesSub := func(newSelf remoteDesc) bool {
+		return isGateway() && self.name == "" && newSelf.name != self.name
+	}
+
 	// todo: remove both these waits once we have something that can tell us the origin node of a device.
 
 	// When the remote node is a gateway, the devices we proxy are dependent on the remote node's name.
@@ -210,7 +214,14 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 		case <-ctx.Done():
 			// a done ctx should clean up all the subscriptions and announced names
 			return
-		case self = <-selfChanges:
+		case newSelf := <-selfChanges:
+			shouldRenew := shouldRenewDevicesSub(newSelf)
+			self = newSelf // update self before renewDevicesSub so shouldProxyDevice uses the correct name
+			if shouldRenew {
+				// self.name is used by shouldProxyDevice to filter devices for gateway nodes.
+				// Re-evaluate the device subscription now that the name is known.
+				renewDevicesSub()
+			}
 		case c, ok := <-serviceChanges:
 			if !ok {
 				continue // we stopped watching
