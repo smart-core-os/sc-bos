@@ -13,7 +13,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/protobuf/protopath2"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb/standard"
+	healthpb2 "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -144,7 +144,7 @@ func Hydrate(cfg *Root) error {
 	if check := cfg.CheckPb(); check != nil {
 		for i, impact := range check.GetComplianceImpacts() {
 			// fill in more details for standards that we know about
-			if s := standard.FindByDisplayName(impact.GetStandard().GetDisplayName()); s != nil {
+			if s := healthpb2.FindStandardByDisplayName(impact.GetStandard().GetDisplayName()); s != nil {
 				s2 := new(healthpb.HealthCheck_ComplianceImpact_Standard)
 				proto.Merge(s2, s)                    // copy known standard
 				proto.Merge(s2, impact.GetStandard()) // overwrite with any fields already set in config

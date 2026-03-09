@@ -7,7 +7,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb/standard"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
@@ -70,7 +69,7 @@ func ExampleFaultCheck() {
 		OccupantImpact:  healthpb.HealthCheck_LIFE,
 		EquipmentImpact: healthpb.HealthCheck_NO_EQUIPMENT_IMPACT,
 		ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
-			{Standard: standard.BS5266_1_2016, Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
+			{Standard: BS5266_1_2016, Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
 		},
 	})
 	defer funcTest.Dispose()
@@ -81,7 +80,7 @@ func ExampleFaultCheck() {
 		OccupantImpact:  healthpb.HealthCheck_LIFE,
 		EquipmentImpact: healthpb.HealthCheck_NO_EQUIPMENT_IMPACT,
 		ComplianceImpacts: []*healthpb.HealthCheck_ComplianceImpact{
-			{Standard: standard.BS5266_1_2016, Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
+			{Standard: BS5266_1_2016, Contribution: healthpb.HealthCheck_ComplianceImpact_FAIL},
 		},
 	})
 	defer durTest.Dispose()
