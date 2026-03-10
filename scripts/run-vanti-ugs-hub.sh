@@ -51,7 +51,7 @@ prefix_log "EG-01" "$BLUE" \
 prefix_log "AC" "$RED" \
   .bin/bos --policy-mode=check \
     --appconf example/config/vanti-ugs/app.conf.json \
-    --sysconf example/config/vanti-ugs/system.hub.json \
+    --sysconf example/config/vanti-ugs/system.ac01.json \
     --data .data/vanti-ugs-hub
 
 prefix_log "UI" "$YELLOW" \
