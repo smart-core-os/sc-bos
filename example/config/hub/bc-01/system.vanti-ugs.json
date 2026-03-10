@@ -1,0 +1,19 @@
+{
+  "name": "BC-01",
+  "grpcAddr": "localhost",
+  "listenGrpc": ":23101",
+  "listenHTTPS": ":8101",
+  "cors": {
+    "debugMode": true,
+    "corsOrigins": ["*"]
+  },
+  "systems": {
+    "hub": {
+      "storage": {"type": "bolt"},
+      "nodes": [
+        {"address": "localhost:23201", "name": "EG-01"},
+        {"address": "localhost:23301", "name": "van/uk/brum/ugs/eg-ac-01"}
+      ]
+    }
+  }
+}
