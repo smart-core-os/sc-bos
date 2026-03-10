@@ -55,7 +55,7 @@ prefix_log "AC" "$RED" \
     --data .data/vanti-ugs-hub
 
 prefix_log "UI" "$YELLOW" \
-  yarn --cwd "$ROOT_DIR/ui/ops" run dev --mode=dean
+  yarn --cwd "$ROOT_DIR/ui/ops" run dev --mode=vanti-ugs-cohort
 
 echo "All processes started. Press Ctrl+C to stop."
 wait
