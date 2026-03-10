@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package smartcore.go.trait.electric;
+
+option go_package = "github.com/smart-core-os/sc-golang/pkg/trait/electricpb";
+
+import "traits/electric.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/empty.proto";
+
+// MemorySettingsApi allows a client to adjust the internal state of an in-memory electric device.
+// Use for configuring testing.
+service MemorySettingsApi {
+  rpc UpdateDemand(UpdateDemandRequest) returns (smartcore.traits.ElectricDemand);
+
+  // Create a new mode in the device.
+  // Do not specify the id, this will be provided by the server.
+  // This will not validate that exactly one normal mode exists,
+  // the ClearActiveMode method will choose the first normal mode found.
+  rpc CreateMode(CreateModeRequest) returns (smartcore.traits.ElectricMode);
+  rpc UpdateMode(UpdateModeRequest) returns (smartcore.traits.ElectricMode);
+  // Delete an existing mode.
+  // Returns NOT_FOUND if the mode, identified by id, is not found. See allow_missing.
+  rpc DeleteMode(DeleteModeRequest) returns (google.protobuf.Empty);
+}
+
+message UpdateDemandRequest {
+  // The name of the device.
+  string name = 1;
+  // Updated properties of the device.
+  smartcore.traits.ElectricDemand demand = 2;
+  // Fields that should be updated.
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message CreateModeRequest {
+  // The name of the device.
+  string name = 1;
+  // The mode to create. ID will be created on the server.
+  smartcore.traits.ElectricMode mode = 2;
+}
+
+message UpdateModeRequest {
+  // The name of the device.
+  string name = 1;
+  // The mode to create.
+  // The ID should match an existing mode or NOT_FOUND will be returned.
+  smartcore.traits.ElectricMode mode = 2;
+  // The fields to update.
+  // If absent all fields will be updated.
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message DeleteModeRequest {
+  // The name of the device.
+  string name = 1;
+  // The ID of the mode to delete.
+  string id = 2;
+  // If set to true and the mode is not found the request will succeed but no action will be taken on the server.
+  bool allow_missing = 3;
+}
