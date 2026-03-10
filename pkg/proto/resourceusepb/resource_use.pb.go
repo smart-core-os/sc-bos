@@ -93,9 +93,9 @@ func (x *ResourceUse) GetNetwork() *NetworkUse {
 
 type CpuUse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Overall CPU utilisation as a percentage (0-100).
-	PercentUtilised *float32 `protobuf:"fixed32,1,opt,name=percent_utilised,json=percentUtilised,proto3,oneof" json:"percent_utilised,omitempty"`
-	// Per-core CPU utilisation percentages (0-100 each).
+	// Overall CPU utilization as a percentage (0-100).
+	Utilization *float32 `protobuf:"fixed32,1,opt,name=utilization,proto3,oneof" json:"utilization,omitempty"`
+	// Per-core CPU utilization percentages (0-100 each).
 	CorePercent   []float32 `protobuf:"fixed32,2,rep,packed,name=core_percent,json=corePercent,proto3" json:"core_percent,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -131,9 +131,9 @@ func (*CpuUse) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_resourceuse_v1_resource_use_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *CpuUse) GetPercentUtilised() float32 {
-	if x != nil && x.PercentUtilised != nil {
-		return *x.PercentUtilised
+func (x *CpuUse) GetUtilization() float32 {
+	if x != nil && x.Utilization != nil {
+		return *x.Utilization
 	}
 	return 0
 }
@@ -147,9 +147,9 @@ func (x *CpuUse) GetCorePercent() []float32 {
 
 type MemoryUse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UsedBytes     *uint64                `protobuf:"varint,1,opt,name=used_bytes,json=usedBytes,proto3,oneof" json:"used_bytes,omitempty"`
-	TotalBytes    *uint64                `protobuf:"varint,2,opt,name=total_bytes,json=totalBytes,proto3,oneof" json:"total_bytes,omitempty"`
-	PercentUsed   *float32               `protobuf:"fixed32,3,opt,name=percent_used,json=percentUsed,proto3,oneof" json:"percent_used,omitempty"`
+	Usage         *uint64                `protobuf:"varint,1,opt,name=usage,proto3,oneof" json:"usage,omitempty"`
+	Limit         *uint64                `protobuf:"varint,2,opt,name=limit,proto3,oneof" json:"limit,omitempty"`
+	Utilization   *float32               `protobuf:"fixed32,3,opt,name=utilization,proto3,oneof" json:"utilization,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -184,23 +184,23 @@ func (*MemoryUse) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_resourceuse_v1_resource_use_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *MemoryUse) GetUsedBytes() uint64 {
-	if x != nil && x.UsedBytes != nil {
-		return *x.UsedBytes
+func (x *MemoryUse) GetUsage() uint64 {
+	if x != nil && x.Usage != nil {
+		return *x.Usage
 	}
 	return 0
 }
 
-func (x *MemoryUse) GetTotalBytes() uint64 {
-	if x != nil && x.TotalBytes != nil {
-		return *x.TotalBytes
+func (x *MemoryUse) GetLimit() uint64 {
+	if x != nil && x.Limit != nil {
+		return *x.Limit
 	}
 	return 0
 }
 
-func (x *MemoryUse) GetPercentUsed() float32 {
-	if x != nil && x.PercentUsed != nil {
-		return *x.PercentUsed
+func (x *MemoryUse) GetUtilization() float32 {
+	if x != nil && x.Utilization != nil {
+		return *x.Utilization
 	}
 	return 0
 }
@@ -208,10 +208,10 @@ func (x *MemoryUse) GetPercentUsed() float32 {
 type DiskUse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MountPoint    string                 `protobuf:"bytes,1,opt,name=mount_point,json=mountPoint,proto3" json:"mount_point,omitempty"`
-	UsedBytes     *uint64                `protobuf:"varint,2,opt,name=used_bytes,json=usedBytes,proto3,oneof" json:"used_bytes,omitempty"`
+	Usage         *uint64                `protobuf:"varint,2,opt,name=usage,proto3,oneof" json:"usage,omitempty"`
 	FreeBytes     *uint64                `protobuf:"varint,3,opt,name=free_bytes,json=freeBytes,proto3,oneof" json:"free_bytes,omitempty"`
-	TotalBytes    *uint64                `protobuf:"varint,4,opt,name=total_bytes,json=totalBytes,proto3,oneof" json:"total_bytes,omitempty"`
-	PercentUsed   *float32               `protobuf:"fixed32,5,opt,name=percent_used,json=percentUsed,proto3,oneof" json:"percent_used,omitempty"`
+	Limit         *uint64                `protobuf:"varint,4,opt,name=limit,proto3,oneof" json:"limit,omitempty"`
+	Utilization   *float32               `protobuf:"fixed32,5,opt,name=utilization,proto3,oneof" json:"utilization,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -253,9 +253,9 @@ func (x *DiskUse) GetMountPoint() string {
 	return ""
 }
 
-func (x *DiskUse) GetUsedBytes() uint64 {
-	if x != nil && x.UsedBytes != nil {
-		return *x.UsedBytes
+func (x *DiskUse) GetUsage() uint64 {
+	if x != nil && x.Usage != nil {
+		return *x.Usage
 	}
 	return 0
 }
@@ -267,25 +267,26 @@ func (x *DiskUse) GetFreeBytes() uint64 {
 	return 0
 }
 
-func (x *DiskUse) GetTotalBytes() uint64 {
-	if x != nil && x.TotalBytes != nil {
-		return *x.TotalBytes
+func (x *DiskUse) GetLimit() uint64 {
+	if x != nil && x.Limit != nil {
+		return *x.Limit
 	}
 	return 0
 }
 
-func (x *DiskUse) GetPercentUsed() float32 {
-	if x != nil && x.PercentUsed != nil {
-		return *x.PercentUsed
+func (x *DiskUse) GetUtilization() float32 {
+	if x != nil && x.Utilization != nil {
+		return *x.Utilization
 	}
 	return 0
 }
 
 type NetworkUse struct {
-	state                  protoimpl.MessageState `protogen:"open.v1"`
-	ConnectionsEstablished *uint64                `protobuf:"varint,1,opt,name=connections_established,json=connectionsEstablished,proto3,oneof" json:"connections_established,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// connection_count is the number of established TCP connections for the current process.
+	ConnectionCount *uint64 `protobuf:"varint,1,opt,name=connection_count,json=connectionCount,proto3,oneof" json:"connection_count,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *NetworkUse) Reset() {
@@ -318,9 +319,9 @@ func (*NetworkUse) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_resourceuse_v1_resource_use_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *NetworkUse) GetConnectionsEstablished() uint64 {
-	if x != nil && x.ConnectionsEstablished != nil {
-		return *x.ConnectionsEstablished
+func (x *NetworkUse) GetConnectionCount() uint64 {
+	if x != nil && x.ConnectionCount != nil {
+		return *x.ConnectionCount
 	}
 	return 0
 }
@@ -550,38 +551,34 @@ const file_smartcore_bos_resourceuse_v1_resource_use_proto_rawDesc = "" +
 	"\x03cpu\x18\x01 \x01(\v2$.smartcore.bos.resourceuse.v1.CpuUseR\x03cpu\x12?\n" +
 	"\x06memory\x18\x02 \x01(\v2'.smartcore.bos.resourceuse.v1.MemoryUseR\x06memory\x12;\n" +
 	"\x05disks\x18\x03 \x03(\v2%.smartcore.bos.resourceuse.v1.DiskUseR\x05disks\x12B\n" +
-	"\anetwork\x18\x04 \x01(\v2(.smartcore.bos.resourceuse.v1.NetworkUseR\anetwork\"p\n" +
-	"\x06CpuUse\x12.\n" +
-	"\x10percent_utilised\x18\x01 \x01(\x02H\x00R\x0fpercentUtilised\x88\x01\x01\x12!\n" +
-	"\fcore_percent\x18\x02 \x03(\x02R\vcorePercentB\x13\n" +
-	"\x11_percent_utilised\"\xad\x01\n" +
-	"\tMemoryUse\x12\"\n" +
-	"\n" +
-	"used_bytes\x18\x01 \x01(\x04H\x00R\tusedBytes\x88\x01\x01\x12$\n" +
-	"\vtotal_bytes\x18\x02 \x01(\x04H\x01R\n" +
-	"totalBytes\x88\x01\x01\x12&\n" +
-	"\fpercent_used\x18\x03 \x01(\x02H\x02R\vpercentUsed\x88\x01\x01B\r\n" +
-	"\v_used_bytesB\x0e\n" +
-	"\f_total_bytesB\x0f\n" +
-	"\r_percent_used\"\xff\x01\n" +
+	"\anetwork\x18\x04 \x01(\v2(.smartcore.bos.resourceuse.v1.NetworkUseR\anetwork\"b\n" +
+	"\x06CpuUse\x12%\n" +
+	"\vutilization\x18\x01 \x01(\x02H\x00R\vutilization\x88\x01\x01\x12!\n" +
+	"\fcore_percent\x18\x02 \x03(\x02R\vcorePercentB\x0e\n" +
+	"\f_utilization\"\x8c\x01\n" +
+	"\tMemoryUse\x12\x19\n" +
+	"\x05usage\x18\x01 \x01(\x04H\x00R\x05usage\x88\x01\x01\x12\x19\n" +
+	"\x05limit\x18\x02 \x01(\x04H\x01R\x05limit\x88\x01\x01\x12%\n" +
+	"\vutilization\x18\x03 \x01(\x02H\x02R\vutilization\x88\x01\x01B\b\n" +
+	"\x06_usageB\b\n" +
+	"\x06_limitB\x0e\n" +
+	"\f_utilization\"\xde\x01\n" +
 	"\aDiskUse\x12\x1f\n" +
 	"\vmount_point\x18\x01 \x01(\tR\n" +
-	"mountPoint\x12\"\n" +
+	"mountPoint\x12\x19\n" +
+	"\x05usage\x18\x02 \x01(\x04H\x00R\x05usage\x88\x01\x01\x12\"\n" +
 	"\n" +
-	"used_bytes\x18\x02 \x01(\x04H\x00R\tusedBytes\x88\x01\x01\x12\"\n" +
+	"free_bytes\x18\x03 \x01(\x04H\x01R\tfreeBytes\x88\x01\x01\x12\x19\n" +
+	"\x05limit\x18\x04 \x01(\x04H\x02R\x05limit\x88\x01\x01\x12%\n" +
+	"\vutilization\x18\x05 \x01(\x02H\x03R\vutilization\x88\x01\x01B\b\n" +
+	"\x06_usageB\r\n" +
+	"\v_free_bytesB\b\n" +
+	"\x06_limitB\x0e\n" +
+	"\f_utilization\"Q\n" +
 	"\n" +
-	"free_bytes\x18\x03 \x01(\x04H\x01R\tfreeBytes\x88\x01\x01\x12$\n" +
-	"\vtotal_bytes\x18\x04 \x01(\x04H\x02R\n" +
-	"totalBytes\x88\x01\x01\x12&\n" +
-	"\fpercent_used\x18\x05 \x01(\x02H\x03R\vpercentUsed\x88\x01\x01B\r\n" +
-	"\v_used_bytesB\r\n" +
-	"\v_free_bytesB\x0e\n" +
-	"\f_total_bytesB\x0f\n" +
-	"\r_percent_used\"f\n" +
-	"\n" +
-	"NetworkUse\x12<\n" +
-	"\x17connections_established\x18\x01 \x01(\x04H\x00R\x16connectionsEstablished\x88\x01\x01B\x1a\n" +
-	"\x18_connections_established\"d\n" +
+	"NetworkUse\x12.\n" +
+	"\x10connection_count\x18\x01 \x01(\x04H\x00R\x0fconnectionCount\x88\x01\x01B\x13\n" +
+	"\x11_connection_count\"d\n" +
 	"\x15GetResourceUseRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x88\x01\n" +

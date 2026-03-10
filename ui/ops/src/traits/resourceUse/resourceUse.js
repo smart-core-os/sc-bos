@@ -33,8 +33,8 @@ export function usePullResourceUse(query, paused = false) {
 export function useResourceUse(value) {
   const _v = computed(() => toValue(value));
 
-  const cpuPercent = computed(() => _v.value?.cpu?.percentUtilised ?? null);
-  const memPercent = computed(() => _v.value?.memory?.percentUsed ?? null);
+  const cpuPercent = computed(() => _v.value?.cpu?.utilization ?? null);
+  const memPercent = computed(() => _v.value?.memory?.utilization ?? null);
 
   return {cpuPercent, memPercent};
 }

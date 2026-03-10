@@ -27,7 +27,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// ResourceUseApi provides access to host-level resource utilisation stats.
+// ResourceUseApi provides access to host-level resource utilization stats.
 type ResourceUseApiClient interface {
 	GetResourceUse(ctx context.Context, in *GetResourceUseRequest, opts ...grpc.CallOption) (*ResourceUse, error)
 	PullResourceUse(ctx context.Context, in *PullResourceUseRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PullResourceUseResponse], error)
@@ -74,7 +74,7 @@ type ResourceUseApi_PullResourceUseClient = grpc.ServerStreamingClient[PullResou
 // All implementations must embed UnimplementedResourceUseApiServer
 // for forward compatibility.
 //
-// ResourceUseApi provides access to host-level resource utilisation stats.
+// ResourceUseApi provides access to host-level resource utilization stats.
 type ResourceUseApiServer interface {
 	GetResourceUse(context.Context, *GetResourceUseRequest) (*ResourceUse, error)
 	PullResourceUse(*PullResourceUseRequest, grpc.ServerStreamingServer[PullResourceUseResponse]) error

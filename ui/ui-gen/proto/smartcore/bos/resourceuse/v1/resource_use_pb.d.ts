@@ -43,10 +43,10 @@ export namespace ResourceUse {
 }
 
 export class CpuUse extends jspb.Message {
-  getPercentUtilised(): number;
-  setPercentUtilised(value: number): CpuUse;
-  hasPercentUtilised(): boolean;
-  clearPercentUtilised(): CpuUse;
+  getUtilization(): number;
+  setUtilization(value: number): CpuUse;
+  hasUtilization(): boolean;
+  clearUtilization(): CpuUse;
 
   getCorePercentList(): Array<number>;
   setCorePercentList(value: Array<number>): CpuUse;
@@ -63,31 +63,31 @@ export class CpuUse extends jspb.Message {
 
 export namespace CpuUse {
   export type AsObject = {
-    percentUtilised?: number;
+    utilization?: number;
     corePercentList: Array<number>;
   };
 
-  export enum PercentUtilisedCase {
-    _PERCENT_UTILISED_NOT_SET = 0,
-    PERCENT_UTILISED = 1,
+  export enum UtilizationCase {
+    _UTILIZATION_NOT_SET = 0,
+    UTILIZATION = 1,
   }
 }
 
 export class MemoryUse extends jspb.Message {
-  getUsedBytes(): number;
-  setUsedBytes(value: number): MemoryUse;
-  hasUsedBytes(): boolean;
-  clearUsedBytes(): MemoryUse;
+  getUsage(): number;
+  setUsage(value: number): MemoryUse;
+  hasUsage(): boolean;
+  clearUsage(): MemoryUse;
 
-  getTotalBytes(): number;
-  setTotalBytes(value: number): MemoryUse;
-  hasTotalBytes(): boolean;
-  clearTotalBytes(): MemoryUse;
+  getLimit(): number;
+  setLimit(value: number): MemoryUse;
+  hasLimit(): boolean;
+  clearLimit(): MemoryUse;
 
-  getPercentUsed(): number;
-  setPercentUsed(value: number): MemoryUse;
-  hasPercentUsed(): boolean;
-  clearPercentUsed(): MemoryUse;
+  getUtilization(): number;
+  setUtilization(value: number): MemoryUse;
+  hasUtilization(): boolean;
+  clearUtilization(): MemoryUse;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MemoryUse.AsObject;
@@ -99,24 +99,24 @@ export class MemoryUse extends jspb.Message {
 
 export namespace MemoryUse {
   export type AsObject = {
-    usedBytes?: number;
-    totalBytes?: number;
-    percentUsed?: number;
+    usage?: number;
+    limit?: number;
+    utilization?: number;
   };
 
-  export enum UsedBytesCase {
-    _USED_BYTES_NOT_SET = 0,
-    USED_BYTES = 1,
+  export enum UsageCase {
+    _USAGE_NOT_SET = 0,
+    USAGE = 1,
   }
 
-  export enum TotalBytesCase {
-    _TOTAL_BYTES_NOT_SET = 0,
-    TOTAL_BYTES = 2,
+  export enum LimitCase {
+    _LIMIT_NOT_SET = 0,
+    LIMIT = 2,
   }
 
-  export enum PercentUsedCase {
-    _PERCENT_USED_NOT_SET = 0,
-    PERCENT_USED = 3,
+  export enum UtilizationCase {
+    _UTILIZATION_NOT_SET = 0,
+    UTILIZATION = 3,
   }
 }
 
@@ -124,25 +124,25 @@ export class DiskUse extends jspb.Message {
   getMountPoint(): string;
   setMountPoint(value: string): DiskUse;
 
-  getUsedBytes(): number;
-  setUsedBytes(value: number): DiskUse;
-  hasUsedBytes(): boolean;
-  clearUsedBytes(): DiskUse;
+  getUsage(): number;
+  setUsage(value: number): DiskUse;
+  hasUsage(): boolean;
+  clearUsage(): DiskUse;
 
   getFreeBytes(): number;
   setFreeBytes(value: number): DiskUse;
   hasFreeBytes(): boolean;
   clearFreeBytes(): DiskUse;
 
-  getTotalBytes(): number;
-  setTotalBytes(value: number): DiskUse;
-  hasTotalBytes(): boolean;
-  clearTotalBytes(): DiskUse;
+  getLimit(): number;
+  setLimit(value: number): DiskUse;
+  hasLimit(): boolean;
+  clearLimit(): DiskUse;
 
-  getPercentUsed(): number;
-  setPercentUsed(value: number): DiskUse;
-  hasPercentUsed(): boolean;
-  clearPercentUsed(): DiskUse;
+  getUtilization(): number;
+  setUtilization(value: number): DiskUse;
+  hasUtilization(): boolean;
+  clearUtilization(): DiskUse;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DiskUse.AsObject;
@@ -155,15 +155,15 @@ export class DiskUse extends jspb.Message {
 export namespace DiskUse {
   export type AsObject = {
     mountPoint: string;
-    usedBytes?: number;
+    usage?: number;
     freeBytes?: number;
-    totalBytes?: number;
-    percentUsed?: number;
+    limit?: number;
+    utilization?: number;
   };
 
-  export enum UsedBytesCase {
-    _USED_BYTES_NOT_SET = 0,
-    USED_BYTES = 2,
+  export enum UsageCase {
+    _USAGE_NOT_SET = 0,
+    USAGE = 2,
   }
 
   export enum FreeBytesCase {
@@ -171,22 +171,22 @@ export namespace DiskUse {
     FREE_BYTES = 3,
   }
 
-  export enum TotalBytesCase {
-    _TOTAL_BYTES_NOT_SET = 0,
-    TOTAL_BYTES = 4,
+  export enum LimitCase {
+    _LIMIT_NOT_SET = 0,
+    LIMIT = 4,
   }
 
-  export enum PercentUsedCase {
-    _PERCENT_USED_NOT_SET = 0,
-    PERCENT_USED = 5,
+  export enum UtilizationCase {
+    _UTILIZATION_NOT_SET = 0,
+    UTILIZATION = 5,
   }
 }
 
 export class NetworkUse extends jspb.Message {
-  getConnectionsEstablished(): number;
-  setConnectionsEstablished(value: number): NetworkUse;
-  hasConnectionsEstablished(): boolean;
-  clearConnectionsEstablished(): NetworkUse;
+  getConnectionCount(): number;
+  setConnectionCount(value: number): NetworkUse;
+  hasConnectionCount(): boolean;
+  clearConnectionCount(): NetworkUse;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): NetworkUse.AsObject;
@@ -198,12 +198,12 @@ export class NetworkUse extends jspb.Message {
 
 export namespace NetworkUse {
   export type AsObject = {
-    connectionsEstablished?: number;
+    connectionCount?: number;
   };
 
-  export enum ConnectionsEstablishedCase {
-    _CONNECTIONS_ESTABLISHED_NOT_SET = 0,
-    CONNECTIONS_ESTABLISHED = 1,
+  export enum ConnectionCountCase {
+    _CONNECTION_COUNT_NOT_SET = 0,
+    CONNECTION_COUNT = 1,
   }
 }
 

@@ -54,15 +54,15 @@
       <with-resource-use :name="node.name" :paused="false" v-slot="{ resource: ruResource }">
         <template v-if="!ruResource.streamError && ruResource.value">
           <v-list-item class="pa-0" style="min-height: 20px">
-            <span v-if="ruResource.value.cpu?.percentUtilised != null">
-              CPU: {{ ruResource.value.cpu.percentUtilised.toFixed(1) }}%
+            <span v-if="ruResource.value.cpu?.utilization != null">
+              CPU: {{ ruResource.value.cpu.utilization.toFixed(1) }}%
             </span>
-            <span v-if="ruResource.value.memory?.percentUsed != null" class="ml-2">
-              Mem: {{ ruResource.value.memory.percentUsed.toFixed(1) }}%
+            <span v-if="ruResource.value.memory?.utilization != null" class="ml-2">
+              Mem: {{ ruResource.value.memory.utilization.toFixed(1) }}%
             </span>
           </v-list-item>
-          <v-list-item v-if="ruResource.value.network?.connectionsEstablished != null" class="pa-0" style="min-height: 20px">
-            <span>SC-BOS connections: {{ ruResource.value.network.connectionsEstablished }}</span>
+          <v-list-item v-if="ruResource.value.network?.connectionCount != null" class="pa-0" style="min-height: 20px">
+            <span>SC-BOS connections: {{ ruResource.value.network.connectionCount }}</span>
           </v-list-item>
           <template v-if="ruResource.value.disksList?.length">
             <v-list-item class="pa-0 mt-1" style="min-height: 20px">
@@ -74,8 +74,8 @@
                 class="pa-0"
                 style="min-height: 20px">
               <span>{{ disk.mountPoint }}</span>
-              <span v-if="disk.percentUsed != null" class="ml-2">
-                {{ disk.percentUsed.toFixed(1) }}% used
+              <span v-if="disk.utilization != null" class="ml-2">
+                {{ disk.utilization.toFixed(1) }}% used
               </span>
             </v-list-item>
           </template>

@@ -60,8 +60,8 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model) {
 			core32[i] = float32(p)
 		}
 		v.Cpu = &gen.CpuUse{
-			PercentUtilised: ptr(float32(overall)),
-			CorePercent:     core32,
+			Utilization: ptr(float32(overall)),
+			CorePercent: core32,
 		}
 	} else {
 		s.logger.Warn("cpu percent", zap.Error(err))
@@ -70,9 +70,9 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model) {
 	if vmStat, err := mem.VirtualMemoryWithContext(ctx); err == nil {
 		if vmStat != nil {
 			v.Memory = &gen.MemoryUse{
-				UsedBytes:   ptr(vmStat.Used),
-				TotalBytes:  ptr(vmStat.Total),
-				PercentUsed: ptr(float32(vmStat.UsedPercent)),
+				Usage:       ptr(vmStat.Used),
+				Limit:       ptr(vmStat.Total),
+				Utilization: ptr(float32(vmStat.UsedPercent)),
 			}
 		}
 	} else {
@@ -87,10 +87,10 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model) {
 			}
 			v.Disks = append(v.Disks, &gen.DiskUse{
 				MountPoint:  p.Mountpoint,
-				UsedBytes:   ptr(usage.Used),
+				Usage:       ptr(usage.Used),
 				FreeBytes:   ptr(usage.Free),
-				TotalBytes:  ptr(usage.Total),
-				PercentUsed: ptr(float32(usage.UsedPercent)),
+				Limit:       ptr(usage.Total),
+				Utilization: ptr(float32(usage.UsedPercent)),
 			})
 		}
 	} else {
@@ -106,7 +106,7 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model) {
 			}
 		}
 		v.Network = &gen.NetworkUse{
-			ConnectionsEstablished: ptr(established),
+			ConnectionCount: ptr(established),
 		}
 	} else {
 		s.logger.Warn("network connections", zap.Error(err))

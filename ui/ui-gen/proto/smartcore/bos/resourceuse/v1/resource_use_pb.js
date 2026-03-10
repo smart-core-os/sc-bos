@@ -569,7 +569,7 @@ proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.toObject = function(opt_incl
  */
 proto.smartcore.bos.resourceuse.v1.CpuUse.toObject = function(includeInstance, msg) {
   var f, obj = {
-percentUtilised: (f = jspb.Message.getOptionalFloatingPointField(msg, 1)) == null ? undefined : f,
+utilization: (f = jspb.Message.getOptionalFloatingPointField(msg, 1)) == null ? undefined : f,
 corePercentList: (f = jspb.Message.getRepeatedFloatingPointField(msg, 2)) == null ? undefined : f
   };
 
@@ -609,7 +609,7 @@ proto.smartcore.bos.resourceuse.v1.CpuUse.deserializeBinaryFromReader = function
     switch (field) {
     case 1:
       var value = /** @type {number} */ (reader.readFloat());
-      msg.setPercentUtilised(value);
+      msg.setUtilization(value);
       break;
     case 2:
       reader.readPackableFloatInto(msg.getCorePercentList());
@@ -661,10 +661,10 @@ proto.smartcore.bos.resourceuse.v1.CpuUse.serializeBinaryToWriter = function(mes
 
 
 /**
- * optional float percent_utilised = 1;
+ * optional float utilization = 1;
  * @return {number}
  */
-proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.getPercentUtilised = function() {
+proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.getUtilization = function() {
   return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 1, 0.0));
 };
 
@@ -673,7 +673,7 @@ proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.getPercentUtilised = functio
  * @param {number} value
  * @return {!proto.smartcore.bos.resourceuse.v1.CpuUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.setPercentUtilised = function(value) {
+proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.setUtilization = function(value) {
   return jspb.Message.setField(this, 1, value);
 };
 
@@ -682,7 +682,7 @@ proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.setPercentUtilised = functio
  * Clears the field making it undefined.
  * @return {!proto.smartcore.bos.resourceuse.v1.CpuUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.clearPercentUtilised = function() {
+proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.clearUtilization = function() {
   return jspb.Message.setField(this, 1, undefined);
 };
 
@@ -691,7 +691,7 @@ proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.clearPercentUtilised = funct
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.hasPercentUtilised = function() {
+proto.smartcore.bos.resourceuse.v1.CpuUse.prototype.hasUtilization = function() {
   return jspb.Message.getField(this, 1) != null;
 };
 
@@ -765,9 +765,9 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.toObject = function(opt_i
  */
 proto.smartcore.bos.resourceuse.v1.MemoryUse.toObject = function(includeInstance, msg) {
   var f, obj = {
-usedBytes: (f = jspb.Message.getField(msg, 1)) == null ? undefined : f,
-totalBytes: (f = jspb.Message.getField(msg, 2)) == null ? undefined : f,
-percentUsed: (f = jspb.Message.getOptionalFloatingPointField(msg, 3)) == null ? undefined : f
+usage: (f = jspb.Message.getField(msg, 1)) == null ? undefined : f,
+limit: (f = jspb.Message.getField(msg, 2)) == null ? undefined : f,
+utilization: (f = jspb.Message.getOptionalFloatingPointField(msg, 3)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -806,15 +806,15 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.deserializeBinaryFromReader = funct
     switch (field) {
     case 1:
       var value = /** @type {number} */ (reader.readUint64());
-      msg.setUsedBytes(value);
+      msg.setUsage(value);
       break;
     case 2:
       var value = /** @type {number} */ (reader.readUint64());
-      msg.setTotalBytes(value);
+      msg.setLimit(value);
       break;
     case 3:
       var value = /** @type {number} */ (reader.readFloat());
-      msg.setPercentUsed(value);
+      msg.setUtilization(value);
       break;
     default:
       reader.skipField();
@@ -870,10 +870,10 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.serializeBinaryToWriter = function(
 
 
 /**
- * optional uint64 used_bytes = 1;
+ * optional uint64 usage = 1;
  * @return {number}
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.getUsedBytes = function() {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.getUsage = function() {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
 };
 
@@ -882,7 +882,7 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.getUsedBytes = function()
  * @param {number} value
  * @return {!proto.smartcore.bos.resourceuse.v1.MemoryUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.setUsedBytes = function(value) {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.setUsage = function(value) {
   return jspb.Message.setField(this, 1, value);
 };
 
@@ -891,7 +891,7 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.setUsedBytes = function(v
  * Clears the field making it undefined.
  * @return {!proto.smartcore.bos.resourceuse.v1.MemoryUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.clearUsedBytes = function() {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.clearUsage = function() {
   return jspb.Message.setField(this, 1, undefined);
 };
 
@@ -900,16 +900,16 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.clearUsedBytes = function
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.hasUsedBytes = function() {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.hasUsage = function() {
   return jspb.Message.getField(this, 1) != null;
 };
 
 
 /**
- * optional uint64 total_bytes = 2;
+ * optional uint64 limit = 2;
  * @return {number}
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.getTotalBytes = function() {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.getLimit = function() {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
 };
 
@@ -918,7 +918,7 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.getTotalBytes = function(
  * @param {number} value
  * @return {!proto.smartcore.bos.resourceuse.v1.MemoryUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.setTotalBytes = function(value) {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.setLimit = function(value) {
   return jspb.Message.setField(this, 2, value);
 };
 
@@ -927,7 +927,7 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.setTotalBytes = function(
  * Clears the field making it undefined.
  * @return {!proto.smartcore.bos.resourceuse.v1.MemoryUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.clearTotalBytes = function() {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.clearLimit = function() {
   return jspb.Message.setField(this, 2, undefined);
 };
 
@@ -936,16 +936,16 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.clearTotalBytes = functio
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.hasTotalBytes = function() {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.hasLimit = function() {
   return jspb.Message.getField(this, 2) != null;
 };
 
 
 /**
- * optional float percent_used = 3;
+ * optional float utilization = 3;
  * @return {number}
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.getPercentUsed = function() {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.getUtilization = function() {
   return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 3, 0.0));
 };
 
@@ -954,7 +954,7 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.getPercentUsed = function
  * @param {number} value
  * @return {!proto.smartcore.bos.resourceuse.v1.MemoryUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.setPercentUsed = function(value) {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.setUtilization = function(value) {
   return jspb.Message.setField(this, 3, value);
 };
 
@@ -963,7 +963,7 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.setPercentUsed = function
  * Clears the field making it undefined.
  * @return {!proto.smartcore.bos.resourceuse.v1.MemoryUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.clearPercentUsed = function() {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.clearUtilization = function() {
   return jspb.Message.setField(this, 3, undefined);
 };
 
@@ -972,7 +972,7 @@ proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.clearPercentUsed = functi
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.hasPercentUsed = function() {
+proto.smartcore.bos.resourceuse.v1.MemoryUse.prototype.hasUtilization = function() {
   return jspb.Message.getField(this, 3) != null;
 };
 
@@ -1010,10 +1010,10 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.toObject = function(opt_inc
 proto.smartcore.bos.resourceuse.v1.DiskUse.toObject = function(includeInstance, msg) {
   var f, obj = {
 mountPoint: jspb.Message.getFieldWithDefault(msg, 1, ""),
-usedBytes: (f = jspb.Message.getField(msg, 2)) == null ? undefined : f,
+usage: (f = jspb.Message.getField(msg, 2)) == null ? undefined : f,
 freeBytes: (f = jspb.Message.getField(msg, 3)) == null ? undefined : f,
-totalBytes: (f = jspb.Message.getField(msg, 4)) == null ? undefined : f,
-percentUsed: (f = jspb.Message.getOptionalFloatingPointField(msg, 5)) == null ? undefined : f
+limit: (f = jspb.Message.getField(msg, 4)) == null ? undefined : f,
+utilization: (f = jspb.Message.getOptionalFloatingPointField(msg, 5)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -1056,7 +1056,7 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.deserializeBinaryFromReader = functio
       break;
     case 2:
       var value = /** @type {number} */ (reader.readUint64());
-      msg.setUsedBytes(value);
+      msg.setUsage(value);
       break;
     case 3:
       var value = /** @type {number} */ (reader.readUint64());
@@ -1064,11 +1064,11 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.deserializeBinaryFromReader = functio
       break;
     case 4:
       var value = /** @type {number} */ (reader.readUint64());
-      msg.setTotalBytes(value);
+      msg.setLimit(value);
       break;
     case 5:
       var value = /** @type {number} */ (reader.readFloat());
-      msg.setPercentUsed(value);
+      msg.setUtilization(value);
       break;
     default:
       reader.skipField();
@@ -1156,10 +1156,10 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.setMountPoint = function(va
 
 
 /**
- * optional uint64 used_bytes = 2;
+ * optional uint64 usage = 2;
  * @return {number}
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.getUsedBytes = function() {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.getUsage = function() {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
 };
 
@@ -1168,7 +1168,7 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.getUsedBytes = function() {
  * @param {number} value
  * @return {!proto.smartcore.bos.resourceuse.v1.DiskUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.setUsedBytes = function(value) {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.setUsage = function(value) {
   return jspb.Message.setField(this, 2, value);
 };
 
@@ -1177,7 +1177,7 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.setUsedBytes = function(val
  * Clears the field making it undefined.
  * @return {!proto.smartcore.bos.resourceuse.v1.DiskUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.clearUsedBytes = function() {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.clearUsage = function() {
   return jspb.Message.setField(this, 2, undefined);
 };
 
@@ -1186,7 +1186,7 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.clearUsedBytes = function()
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.hasUsedBytes = function() {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.hasUsage = function() {
   return jspb.Message.getField(this, 2) != null;
 };
 
@@ -1228,10 +1228,10 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.hasFreeBytes = function() {
 
 
 /**
- * optional uint64 total_bytes = 4;
+ * optional uint64 limit = 4;
  * @return {number}
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.getTotalBytes = function() {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.getLimit = function() {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
 };
 
@@ -1240,7 +1240,7 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.getTotalBytes = function() 
  * @param {number} value
  * @return {!proto.smartcore.bos.resourceuse.v1.DiskUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.setTotalBytes = function(value) {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.setLimit = function(value) {
   return jspb.Message.setField(this, 4, value);
 };
 
@@ -1249,7 +1249,7 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.setTotalBytes = function(va
  * Clears the field making it undefined.
  * @return {!proto.smartcore.bos.resourceuse.v1.DiskUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.clearTotalBytes = function() {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.clearLimit = function() {
   return jspb.Message.setField(this, 4, undefined);
 };
 
@@ -1258,16 +1258,16 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.clearTotalBytes = function(
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.hasTotalBytes = function() {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.hasLimit = function() {
   return jspb.Message.getField(this, 4) != null;
 };
 
 
 /**
- * optional float percent_used = 5;
+ * optional float utilization = 5;
  * @return {number}
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.getPercentUsed = function() {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.getUtilization = function() {
   return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 5, 0.0));
 };
 
@@ -1276,7 +1276,7 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.getPercentUsed = function()
  * @param {number} value
  * @return {!proto.smartcore.bos.resourceuse.v1.DiskUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.setPercentUsed = function(value) {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.setUtilization = function(value) {
   return jspb.Message.setField(this, 5, value);
 };
 
@@ -1285,7 +1285,7 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.setPercentUsed = function(v
  * Clears the field making it undefined.
  * @return {!proto.smartcore.bos.resourceuse.v1.DiskUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.clearPercentUsed = function() {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.clearUtilization = function() {
   return jspb.Message.setField(this, 5, undefined);
 };
 
@@ -1294,7 +1294,7 @@ proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.clearPercentUsed = function
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.hasPercentUsed = function() {
+proto.smartcore.bos.resourceuse.v1.DiskUse.prototype.hasUtilization = function() {
   return jspb.Message.getField(this, 5) != null;
 };
 
@@ -1331,7 +1331,7 @@ proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.toObject = function(opt_
  */
 proto.smartcore.bos.resourceuse.v1.NetworkUse.toObject = function(includeInstance, msg) {
   var f, obj = {
-connectionsEstablished: (f = jspb.Message.getField(msg, 1)) == null ? undefined : f
+connectionCount: (f = jspb.Message.getField(msg, 1)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -1370,7 +1370,7 @@ proto.smartcore.bos.resourceuse.v1.NetworkUse.deserializeBinaryFromReader = func
     switch (field) {
     case 1:
       var value = /** @type {number} */ (reader.readUint64());
-      msg.setConnectionsEstablished(value);
+      msg.setConnectionCount(value);
       break;
     default:
       reader.skipField();
@@ -1412,10 +1412,10 @@ proto.smartcore.bos.resourceuse.v1.NetworkUse.serializeBinaryToWriter = function
 
 
 /**
- * optional uint64 connections_established = 1;
+ * optional uint64 connection_count = 1;
  * @return {number}
  */
-proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.getConnectionsEstablished = function() {
+proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.getConnectionCount = function() {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
 };
 
@@ -1424,7 +1424,7 @@ proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.getConnectionsEstablishe
  * @param {number} value
  * @return {!proto.smartcore.bos.resourceuse.v1.NetworkUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.setConnectionsEstablished = function(value) {
+proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.setConnectionCount = function(value) {
   return jspb.Message.setField(this, 1, value);
 };
 
@@ -1433,7 +1433,7 @@ proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.setConnectionsEstablishe
  * Clears the field making it undefined.
  * @return {!proto.smartcore.bos.resourceuse.v1.NetworkUse} returns this
  */
-proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.clearConnectionsEstablished = function() {
+proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.clearConnectionCount = function() {
   return jspb.Message.setField(this, 1, undefined);
 };
 
@@ -1442,7 +1442,7 @@ proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.clearConnectionsEstablis
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.hasConnectionsEstablished = function() {
+proto.smartcore.bos.resourceuse.v1.NetworkUse.prototype.hasConnectionCount = function() {
   return jspb.Message.getField(this, 1) != null;
 };
 
