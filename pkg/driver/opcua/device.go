@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 // device represents an OPC UA device that subscribes to variable nodes and updates trait implementations.

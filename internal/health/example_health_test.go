@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 func ExampleRegistry_healthApi() {
@@ -22,15 +21,15 @@ func ExampleRegistry_healthApi() {
 	announced := make(map[string]device)
 
 	registry := healthpb.NewRegistry(
-		healthpb.WithOnCheckCreate(func(name string, c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck {
+		healthpb.WithOnCheckCreate(func(name string, c *healthpb.HealthCheck) *healthpb.HealthCheck {
 			mu.Lock()
 			defer mu.Unlock()
 			m := healthpb.NewModel()
-			undo := n.Announce(name, node.HasTrait(healthpb.TraitName, node.WithClients(gen_healthpb.WrapApi(healthpb.NewModelServer(m)))))
+			undo := n.Announce(name, node.HasTrait(healthpb.TraitName, node.WithClients(healthpb.WrapApi(healthpb.NewModelServer(m)))))
 			announced[name] = device{undo: undo, m: m}
 			return nil
 		}),
-		healthpb.WithOnCheckUpdate(func(name string, c *gen_healthpb.HealthCheck) {
+		healthpb.WithOnCheckUpdate(func(name string, c *healthpb.HealthCheck) {
 			mu.Lock()
 			defer mu.Unlock()
 			a := announced[name]
@@ -66,17 +65,17 @@ func ExampleRegistry_healthApi() {
 	// set up checks for the example
 	exampleChecks := registry.ForOwner("example")
 	// create a health check for device1
-	errCheck, err := exampleChecks.NewFaultCheck("device1", &gen_healthpb.HealthCheck{})
+	errCheck, err := exampleChecks.NewFaultCheck("device1", &healthpb.HealthCheck{})
 	if err != nil {
 		panic(err)
 	}
 	defer errCheck.Dispose()
 	// report on the health of the device
-	errCheck.SetFault(&gen_healthpb.HealthCheck_Error{SummaryText: "needs filter change"})
+	errCheck.SetFault(&healthpb.HealthCheck_Error{SummaryText: "needs filter change"})
 
 	// later, use the HealthApi to query the health
-	client := gen_healthpb.NewHealthApiClient(n.ClientConn())
-	resp, err := client.ListHealthChecks(context.TODO(), &gen_healthpb.ListHealthChecksRequest{Name: "device1"})
+	client := healthpb.NewHealthApiClient(n.ClientConn())
+	resp, err := client.ListHealthChecks(context.TODO(), &healthpb.ListHealthChecksRequest{Name: "device1"})
 	if err != nil {
 		panic(err)
 	}

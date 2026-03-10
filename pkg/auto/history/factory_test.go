@@ -12,15 +12,13 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
-	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	gen_airqualitysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	gen_electricpb "github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
-	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
@@ -82,16 +80,16 @@ func Test_automation_applyConfig(t *testing.T) {
 	announcer.Announce("meter",
 		node.HasTrait(meterpb.TraitName),
 		node.HasServer(
-			gen_meterpb.RegisterMeterApiServer,
-			gen_meterpb.MeterApiServer(meterpb.NewModelServer(meter)),
+			meterpb.RegisterMeterApiServer,
+			meterpb.MeterApiServer(meterpb.NewModelServer(meter)),
 		),
 	)
 
 	announcer.Announce("status",
 		node.HasTrait(statuspb.TraitName),
 		node.HasServer(
-			gen_statuspb.RegisterStatusApiServer,
-			gen_statuspb.StatusApiServer(statuspb.NewModelServer(status)),
+			statuspb.RegisterStatusApiServer,
+			statuspb.StatusApiServer(statuspb.NewModelServer(status)),
 		),
 	)
 
@@ -148,14 +146,14 @@ func Test_automation_applyConfig(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if _, err := meter.UpdateMeterReading(&gen_meterpb.MeterReading{
+		if _, err := meter.UpdateMeterReading(&meterpb.MeterReading{
 			Usage:    rand.Float32(),
 			Produced: rand.Float32(),
 		}); err != nil {
 			t.Fatal(err)
 		}
 
-		if _, err := status.UpdateProblem(&gen_statuspb.StatusLog_Problem{
+		if _, err := status.UpdateProblem(&statuspb.StatusLog_Problem{
 			Name: randString(16),
 		}); err != nil {
 			t.Fatal(err)
@@ -168,8 +166,8 @@ func Test_automation_applyConfig(t *testing.T) {
 	occupancyCli := gen_occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
 	airTempCli := gen_airtemperaturepb.NewAirTemperatureHistoryClient(announcer.ClientConn())
 	electricCli := gen_electricpb.NewElectricHistoryClient(announcer.ClientConn())
-	meterCli := gen_meterpb.NewMeterHistoryClient(announcer.ClientConn())
-	statusCli := gen_statuspb.NewStatusHistoryClient(announcer.ClientConn())
+	meterCli := meterpb.NewMeterHistoryClient(announcer.ClientConn())
+	statusCli := statuspb.NewStatusHistoryClient(announcer.ClientConn())
 
 	aqHist, err := aqCli.ListAirQualityHistory(ctx, &gen_airqualitysensorpb.ListAirQualityHistoryRequest{Name: "airquality", PageSize: 10})
 	if err != nil {
@@ -207,7 +205,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		t.Fatal(diff, "electric")
 	}
 
-	meterHist, err := meterCli.ListMeterReadingHistory(ctx, &gen_meterpb.ListMeterReadingHistoryRequest{Name: "meter", PageSize: 10})
+	meterHist, err := meterCli.ListMeterReadingHistory(ctx, &meterpb.ListMeterReadingHistoryRequest{Name: "meter", PageSize: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -216,7 +214,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		t.Fatal(diff, "meter")
 	}
 
-	statusHist, err := statusCli.ListCurrentStatusHistory(ctx, &gen_statuspb.ListCurrentStatusHistoryRequest{Name: "status", PageSize: 10})
+	statusHist, err := statusCli.ListCurrentStatusHistory(ctx, &statuspb.ListCurrentStatusHistoryRequest{Name: "status", PageSize: 10})
 	if err != nil {
 		t.Fatal(err)
 	}

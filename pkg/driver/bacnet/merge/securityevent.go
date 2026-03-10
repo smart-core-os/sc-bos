@@ -15,11 +15,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
-	gen_securityevent "github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 )
@@ -90,22 +88,22 @@ func readSecurityEventConfig(raw []byte) (cfg securityEventConfig, err error) {
 type securityEventImpl struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *securityevent.Model
-	*securityevent.ModelServer
+	model *securityeventpb.Model
+	*securityeventpb.ModelServer
 	config   securityEventConfig
 	events   []*securityEvent
 	pollTask *task.Intermittent
 }
 
-func newSecurityEvent(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*securityEventImpl, error) {
+func newSecurityEvent(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*securityEventImpl, error) {
 	cfg, err := readSecurityEventConfig(config.Raw)
 	if err != nil {
 		return nil, err
 	}
-	model := securityevent.NewModel()
+	model := securityeventpb.NewModel()
 	var events []*securityEvent
 	for _, se := range cfg.SecurityEventSources {
 		e := &securityEvent{
@@ -120,7 +118,7 @@ func newSecurityEvent(client *gobacnet.Client, devices known.Context, faultCheck
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: securityevent.NewModelServer(model),
+		ModelServer: securityeventpb.NewModelServer(model),
 		config:      cfg,
 		events:      events,
 	}
@@ -135,7 +133,7 @@ func (s *securityEventImpl) startPoll(init context.Context) (stop task.StopFn, e
 }
 
 func (s *securityEventImpl) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(s.config.Name, node.HasTrait(securityevent.TraitName, node.WithClients(securityeventpb.WrapApi(s))))
+	return a.Announce(s.config.Name, node.HasTrait(securityeventpb.TraitName, node.WithClients(securityeventpb.WrapApi(s))))
 }
 
 func (s *securityEventImpl) ListSecurityEvents(ctx context.Context, request *securityeventpb.ListSecurityEventsRequest) (*securityeventpb.ListSecurityEventsResponse, error) {
@@ -181,7 +179,7 @@ func (s *securityEventImpl) pollPeer(ctx context.Context) error {
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(ctx, s.faultCheck, s.config.Name, gen_securityevent.TraitName, errs)
+	updateTraitFaultCheck(ctx, s.faultCheck, s.config.Name, securityeventpb.TraitName, errs)
 	if len(errs) > 0 {
 		return errors.Join(errs...)
 	}

@@ -12,35 +12,21 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/auto"
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/button"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylightpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/fluidflowpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/pressurepb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/temperaturepb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_accesspb "github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
-	gen_allocationpb "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
-	gen_emergencylightpb "github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
-	gen_fluidflowpb "github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	gen_pressurepb "github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
-	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
-	gen_temperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
-	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
-	gen_wastepb "github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
@@ -180,7 +166,7 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 		return []wrap.ServiceUnwrapper{airtemperaturepb.WrapApi(airtemperaturepb.NewModelServer(model))}, auto.AirTemperatureAuto(model)
 	case allocationpb.TraitName:
 		model := allocationpb.NewModel()
-		return []wrap.ServiceUnwrapper{gen_allocationpb.WrapApi(allocationpb.NewModelServer(model))}, auto.AllocationAuto(model)
+		return []wrap.ServiceUnwrapper{allocationpb.WrapApi(allocationpb.NewModelServer(model))}, auto.AllocationAuto(model)
 	case trait.Booking:
 		return []wrap.ServiceUnwrapper{bookingpb.WrapApi(bookingpb.NewModelServer(bookingpb.NewModel()))}, nil
 	case trait.BrightnessSensor:
@@ -279,18 +265,18 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 
 	case accesspb.TraitName:
 		model := accesspb.NewModel()
-		return []wrap.ServiceUnwrapper{gen_accesspb.WrapApi(accesspb.NewModelServer(model))}, auto.Access(model)
-	case button.TraitName:
-		return []wrap.ServiceUnwrapper{buttonpb.WrapApi(button.NewModelServer(button.NewModel(buttonpb.ButtonState_UNPRESSED)))}, nil
+		return []wrap.ServiceUnwrapper{accesspb.WrapApi(accesspb.NewModelServer(model))}, auto.Access(model)
+	case buttonpb.TraitName:
+		return []wrap.ServiceUnwrapper{buttonpb.WrapApi(buttonpb.NewModelServer(buttonpb.NewModel(buttonpb.ButtonState_UNPRESSED)))}, nil
 	case emergencylightpb.TraitName:
 		model := emergencylightpb.NewModel()
-		model.SetLastDurationTest(gen_emergencylightpb.EmergencyTestResult_TEST_PASSED)
-		model.SetLastFunctionalTest(gen_emergencylightpb.EmergencyTestResult_TEST_PASSED)
-		return []wrap.ServiceUnwrapper{gen_emergencylightpb.WrapApi(emergencylightpb.NewModelServer(model))}, nil
+		model.SetLastDurationTest(emergencylightpb.EmergencyTestResult_TEST_PASSED)
+		model.SetLastFunctionalTest(emergencylightpb.EmergencyTestResult_TEST_PASSED)
+		return []wrap.ServiceUnwrapper{emergencylightpb.WrapApi(emergencylightpb.NewModelServer(model))}, nil
 	case fluidflowpb.TraitName:
 		model := fluidflowpb.NewModel()
-		return []wrap.ServiceUnwrapper{gen_fluidflowpb.WrapApi(fluidflowpb.NewModelServer(model))}, auto.FluidFlow(model)
-	case meter.TraitName:
+		return []wrap.ServiceUnwrapper{fluidflowpb.WrapApi(fluidflowpb.NewModelServer(model))}, auto.FluidFlow(model)
+	case meterpb.TraitName:
 		var (
 			unit string
 			ok   bool
@@ -299,8 +285,8 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 			unit = "kWh"
 		}
 
-		model := meter.NewModel()
-		info := &meter.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
+		model := meterpb.NewModel()
+		info := &meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
 			ResourceSupport: &types.ResourceSupport{
 				Readable:   true,
 				Writable:   true,
@@ -308,26 +294,26 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 			},
 			UsageUnit: unit,
 		}}
-		return []wrap.ServiceUnwrapper{meterpb.WrapApi(meter.NewModelServer(model)), meterpb.WrapInfo(info)}, auto.MeterAuto(model)
+		return []wrap.ServiceUnwrapper{meterpb.WrapApi(meterpb.NewModelServer(model)), meterpb.WrapInfo(info)}, auto.MeterAuto(model)
 	case pressurepb.TraitName:
 		model := pressurepb.NewModel()
-		return []wrap.ServiceUnwrapper{gen_pressurepb.WrapApi(pressurepb.NewModelServer(model))}, auto.Pressure(model)
-	case securityevent.TraitName:
-		model := securityevent.NewModel()
-		return []wrap.ServiceUnwrapper{securityeventpb.WrapApi(securityevent.NewModelServer(model))}, auto.SecurityEventAuto(model)
+		return []wrap.ServiceUnwrapper{pressurepb.WrapApi(pressurepb.NewModelServer(model))}, auto.Pressure(model)
+	case securityeventpb.TraitName:
+		model := securityeventpb.NewModel()
+		return []wrap.ServiceUnwrapper{securityeventpb.WrapApi(securityeventpb.NewModelServer(model))}, auto.SecurityEventAuto(model)
 	case soundsensorpb.TraitName:
 		model := soundsensorpb.NewModel()
-		return []wrap.ServiceUnwrapper{gen_soundsensorpb.WrapApi(soundsensorpb.NewModelServer(model))}, auto.SoundSensorAuto(model)
+		return []wrap.ServiceUnwrapper{soundsensorpb.WrapApi(soundsensorpb.NewModelServer(model))}, auto.SoundSensorAuto(model)
 	case statuspb.TraitName:
 		model := statuspb.NewModel()
 		// set an initial value or Pull methods can hang
-		_, _ = model.UpdateProblem(&gen_statuspb.StatusLog_Problem{Name: deviceName, Level: gen_statuspb.StatusLog_NOMINAL})
-		return []wrap.ServiceUnwrapper{gen_statuspb.WrapApi(statuspb.NewModelServer(model))}, auto.Status(model, deviceName)
+		_, _ = model.UpdateProblem(&statuspb.StatusLog_Problem{Name: deviceName, Level: statuspb.StatusLog_NOMINAL})
+		return []wrap.ServiceUnwrapper{statuspb.WrapApi(statuspb.NewModelServer(model))}, auto.Status(model, deviceName)
 	case temperaturepb.TraitName:
 		model := temperaturepb.NewModel()
-		return []wrap.ServiceUnwrapper{gen_temperaturepb.WrapApi(temperaturepb.NewModelServer(model))}, auto.TemperatureAuto(model)
-	case transport.TraitName:
-		model := transport.NewModel()
+		return []wrap.ServiceUnwrapper{temperaturepb.WrapApi(temperaturepb.NewModelServer(model))}, auto.TemperatureAuto(model)
+	case transportpb.TraitName:
+		model := transportpb.NewModel()
 		maxFloor := 10
 		if m, ok := traitMd.GetMore()["numFloors"]; ok {
 			mi, err := strconv.Atoi(m)
@@ -337,12 +323,12 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 				return nil, nil
 			}
 		}
-		return []wrap.ServiceUnwrapper{transportpb.WrapApi(transport.NewModelServer(model))}, auto.TransportAuto(model, maxFloor)
+		return []wrap.ServiceUnwrapper{transportpb.WrapApi(transportpb.NewModelServer(model))}, auto.TransportAuto(model, maxFloor)
 	case udmipb.TraitName:
-		return []wrap.ServiceUnwrapper{gen_udmipb.WrapService(auto.NewUdmiServer(logger, deviceName))}, nil
+		return []wrap.ServiceUnwrapper{udmipb.WrapService(auto.NewUdmiServer(logger, deviceName))}, nil
 	case wastepb.TraitName:
 		model := wastepb.NewModel()
-		return []wrap.ServiceUnwrapper{gen_wastepb.WrapApi(wastepb.NewModelServer(model))}, auto.WasteRecordsAuto(model)
+		return []wrap.ServiceUnwrapper{wastepb.WrapApi(wastepb.NewModelServer(model))}, auto.WasteRecordsAuto(model)
 	}
 
 	return nil, nil

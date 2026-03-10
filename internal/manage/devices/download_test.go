@@ -18,7 +18,6 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
@@ -30,14 +29,14 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 	now := time.Unix(0, 0)
 	n := node.New("test")
 
-	meterDevice := meter.NewModel()
+	meterDevice := meterpb.NewModel()
 	_, _ = meterDevice.UpdateMeterReading(&meterpb.MeterReading{Usage: 200})
 	n.Announce("d1",
 		node.HasTrait(
-			meter.TraitName,
+			meterpb.TraitName,
 			node.WithClients(
-				meterpb.WrapApi(meter.NewModelServer(meterDevice)),
-				meterpb.WrapInfo(&meter.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
+				meterpb.WrapApi(meterpb.NewModelServer(meterDevice)),
+				meterpb.WrapInfo(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
 					UsageUnit: "tests per second",
 				}}),
 			),

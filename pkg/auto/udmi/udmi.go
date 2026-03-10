@@ -11,9 +11,8 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
@@ -48,7 +47,7 @@ type udmiAuto struct {
 }
 
 func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
-	udmiClient := gen_udmipb.NewUdmiServiceClient(e.services.Node.ClientConn())
+	udmiClient := udmipb.NewUdmiServiceClient(e.services.Node.ClientConn())
 
 	client, err := newMqttClient(cfg)
 	if err != nil {

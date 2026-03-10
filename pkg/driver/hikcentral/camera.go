@@ -18,8 +18,8 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api"
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 )

@@ -7,7 +7,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -60,7 +59,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 			historyBackupConf: cfg.HistoryBackup,
 		}
 		f.devices.Add(devices...)
-		announce.Announce(name, node.HasTrait(meter.TraitName, node.WithClients(meterpb.WrapApi(group), meterpb.WrapInfo(group))))
+		announce.Announce(name, node.HasTrait(meterpb.TraitName, node.WithClients(meterpb.WrapApi(group), meterpb.WrapInfo(group))))
 	}
 
 	announceGroup(cfg.Name, cfg.Meters)

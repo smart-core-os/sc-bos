@@ -12,8 +12,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
@@ -36,7 +36,7 @@ type occupancy struct {
 
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *occupancysensorpb.Model
@@ -45,7 +45,7 @@ type occupancy struct {
 	pollTask *task.Intermittent
 }
 
-func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
+func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
 	cfg, err := readOccupancyConfig(config.Raw)
 	if err != nil {
 		return nil, err

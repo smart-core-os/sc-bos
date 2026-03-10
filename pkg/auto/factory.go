@@ -9,9 +9,9 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 

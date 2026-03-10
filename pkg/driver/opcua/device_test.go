@@ -15,10 +15,8 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/wrap"
@@ -242,8 +240,8 @@ func newSimpleFaultCheck(t *testing.T) *healthpb.FaultCheck {
 	devs := devicespb.NewCollection()
 	reg := newTestRegistry(devs)
 	healthChecks := reg.ForOwner("test")
-	_, _ = devs.Update(&gen_devicespb.Device{Name: "test-device"}, resource.WithCreateIfAbsent())
-	check := getDeviceHealthCheck(gen_healthpb.HealthCheck_OCCUPANT_IMPACT_UNSPECIFIED, gen_healthpb.HealthCheck_EQUIPMENT_IMPACT_UNSPECIFIED)
+	_, _ = devs.Update(&devicespb.Device{Name: "test-device"}, resource.WithCreateIfAbsent())
+	check := getDeviceHealthCheck(healthpb.HealthCheck_OCCUPANT_IMPACT_UNSPECIFIED, healthpb.HealthCheck_EQUIPMENT_IMPACT_UNSPECIFIED)
 	fc, err := healthChecks.NewFaultCheck("test-device", check)
 	require.NoError(t, err)
 	t.Cleanup(fc.Dispose)
@@ -252,22 +250,22 @@ func newSimpleFaultCheck(t *testing.T) *healthpb.FaultCheck {
 
 func newTestRegistry(devs *devicespb.Collection) *healthpb.Registry {
 	return healthpb.NewRegistry(
-		healthpb.WithOnCheckCreate(func(name string, c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck {
-			_, _ = devs.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+		healthpb.WithOnCheckCreate(func(name string, c *healthpb.HealthCheck) *healthpb.HealthCheck {
+			_, _ = devs.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, c)
 			}), resource.WithCreateIfAbsent(), resource.WithExpectAbsent())
 			return nil
 		}),
-		healthpb.WithOnCheckUpdate(func(name string, c *gen_healthpb.HealthCheck) {
-			_, _ = devs.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+		healthpb.WithOnCheckUpdate(func(name string, c *healthpb.HealthCheck) {
+			_, _ = devs.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, c)
 			}))
 		}),
 		healthpb.WithOnCheckDelete(func(name, id string) {
-			_, _ = devs.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+			_, _ = devs.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
 			}), resource.WithAllowMissing(true))
 		}),
@@ -276,7 +274,7 @@ func newTestRegistry(devs *devicespb.Collection) *healthpb.Registry {
 
 type testHarness struct {
 	devs   *devicespb.Collection
-	client gen_devicespb.DevicesApiClient
+	client devicespb.DevicesApiClient
 	fc     *healthpb.FaultCheck
 	ctx    context.Context
 }
@@ -288,29 +286,29 @@ func setupTestHarness(t *testing.T) *testHarness {
 	reg := newTestRegistry(devs)
 	healthChecks := reg.ForOwner("example")
 
-	_, _ = devs.Update(&gen_devicespb.Device{Name: deviceName}, resource.WithCreateIfAbsent())
+	_, _ = devs.Update(&devicespb.Device{Name: deviceName}, resource.WithCreateIfAbsent())
 
-	check := getDeviceHealthCheck(gen_healthpb.HealthCheck_OCCUPANT_IMPACT_UNSPECIFIED, gen_healthpb.HealthCheck_EQUIPMENT_IMPACT_UNSPECIFIED)
+	check := getDeviceHealthCheck(healthpb.HealthCheck_OCCUPANT_IMPACT_UNSPECIFIED, healthpb.HealthCheck_EQUIPMENT_IMPACT_UNSPECIFIED)
 	fc, err := healthChecks.NewFaultCheck(deviceName, check)
 	require.NoError(t, err)
 	t.Cleanup(fc.Dispose)
 
 	return &testHarness{
 		devs:   devs,
-		client: gen_devicespb.NewDevicesApiClient(wrap.ServerToClient(gen_devicespb.DevicesApi_ServiceDesc, server)),
+		client: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, server)),
 		fc:     fc,
 		ctx:    context.Background(),
 	}
 }
 
-func (h *testHarness) getHealthChecks(t *testing.T) []*gen_healthpb.HealthCheck {
-	deviceList, err := h.client.ListDevices(context.TODO(), &gen_devicespb.ListDevicesRequest{})
+func (h *testHarness) getHealthChecks(t *testing.T) []*healthpb.HealthCheck {
+	deviceList, err := h.client.ListDevices(context.TODO(), &devicespb.ListDevicesRequest{})
 	require.NoError(t, err)
 	require.Len(t, deviceList.Devices, 1)
 	return deviceList.Devices[0].GetHealthChecks()
 }
 
-func (h *testHarness) assertFaults(t *testing.T, expectedCount int, normality gen_healthpb.HealthCheck_Normality) {
+func (h *testHarness) assertFaults(t *testing.T, expectedCount int, normality healthpb.HealthCheck_Normality) {
 	checks := h.getHealthChecks(t)
 	require.Len(t, checks, 1)
 	require.Equal(t, normality, checks[0].Normality)
@@ -324,7 +322,7 @@ func TestOpcuaConfigFault(t *testing.T) {
 
 	checks := h.getHealthChecks(t)
 	require.Len(t, checks, 1)
-	require.Equal(t, gen_healthpb.HealthCheck_ABNORMAL, checks[0].Normality)
+	require.Equal(t, healthpb.HealthCheck_ABNORMAL, checks[0].Normality)
 
 	faults := checks[0].GetFaults().GetCurrentFaults()
 	require.Len(t, faults, 1)
@@ -342,7 +340,7 @@ func TestOpcuaPointFaults(t *testing.T) {
 	require.Len(t, checks, 1)
 	rel := checks[0].GetReliability()
 	require.NotNil(t, rel)
-	require.Equal(t, gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE, rel.State)
+	require.Equal(t, healthpb.HealthCheck_Reliability_BAD_RESPONSE, rel.State)
 	require.NotNil(t, rel.LastError)
 	require.Contains(t, rel.LastError.SummaryText, "non OK status")
 	require.Contains(t, rel.LastError.DetailsText, nodeId1)
@@ -350,7 +348,7 @@ func TestOpcuaPointFaults(t *testing.T) {
 	setPointReadNotOk(h.ctx, nodeId2, ua.StatusBadTimeout, h.fc)
 	checks = h.getHealthChecks(t)
 	rel = checks[0].GetReliability()
-	require.Equal(t, gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE, rel.State)
+	require.Equal(t, healthpb.HealthCheck_Reliability_BAD_RESPONSE, rel.State)
 	require.Contains(t, rel.LastError.DetailsText, nodeId2)
 }
 
@@ -359,7 +357,7 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 		name  string
 		steps []struct {
 			action             func(*testHarness)
-			reliabilityState   gen_healthpb.HealthCheck_Reliability_State
+			reliabilityState   healthpb.HealthCheck_Reliability_State
 			expectNodeInDetail string
 			description        string
 		}
@@ -368,7 +366,7 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 			name: "raise multiple point faults then clear last",
 			steps: []struct {
 				action             func(*testHarness)
-				reliabilityState   gen_healthpb.HealthCheck_Reliability_State
+				reliabilityState   healthpb.HealthCheck_Reliability_State
 				expectNodeInDetail string
 				description        string
 			}{
@@ -376,7 +374,7 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 					action: func(h *testHarness) {
 						setPointReadNotOk(h.ctx, "ns=2;s=Tag1", ua.StatusBadNodeIDUnknown, h.fc)
 					},
-					reliabilityState:   gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+					reliabilityState:   healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 					expectNodeInDetail: "ns=2;s=Tag1",
 					description:        "first point fault raised",
 				},
@@ -384,7 +382,7 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 					action: func(h *testHarness) {
 						setPointReadNotOk(h.ctx, "ns=2;s=Tag2", ua.StatusBadTimeout, h.fc)
 					},
-					reliabilityState:   gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+					reliabilityState:   healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 					expectNodeInDetail: "ns=2;s=Tag2",
 					description:        "second point fault overwrites first in reliability",
 				},
@@ -392,7 +390,7 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 					action: func(h *testHarness) {
 						setPointReadNotOk(h.ctx, "ns=2;s=Tag3", ua.StatusBadCommunicationError, h.fc)
 					},
-					reliabilityState:   gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+					reliabilityState:   healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 					expectNodeInDetail: "ns=2;s=Tag3",
 					description:        "third point fault overwrites second in reliability",
 				},
@@ -402,7 +400,7 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 			name: "mix config and point faults",
 			steps: []struct {
 				action             func(*testHarness)
-				reliabilityState   gen_healthpb.HealthCheck_Reliability_State
+				reliabilityState   healthpb.HealthCheck_Reliability_State
 				expectNodeInDetail string
 				description        string
 			}{
@@ -410,14 +408,14 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 					action: func(h *testHarness) {
 						raiseConfigFault("Invalid subscription", h.fc)
 					},
-					reliabilityState: gen_healthpb.HealthCheck_Reliability_RELIABLE,
+					reliabilityState: healthpb.HealthCheck_Reliability_RELIABLE,
 					description:      "config fault raised (uses AddOrUpdateFault, sets reliability to RELIABLE)",
 				},
 				{
 					action: func(h *testHarness) {
 						setPointReadNotOk(h.ctx, "ns=2;s=Tag1", ua.StatusBadNodeIDUnknown, h.fc)
 					},
-					reliabilityState:   gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+					reliabilityState:   healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 					expectNodeInDetail: "ns=2;s=Tag1",
 					description:        "point fault updates reliability to BAD_RESPONSE",
 				},
@@ -427,7 +425,7 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 			name: "update same fault",
 			steps: []struct {
 				action             func(*testHarness)
-				reliabilityState   gen_healthpb.HealthCheck_Reliability_State
+				reliabilityState   healthpb.HealthCheck_Reliability_State
 				expectNodeInDetail string
 				description        string
 			}{
@@ -435,7 +433,7 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 					action: func(h *testHarness) {
 						setPointReadNotOk(h.ctx, "ns=2;s=Tag1", ua.StatusBadNodeIDUnknown, h.fc)
 					},
-					reliabilityState:   gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+					reliabilityState:   healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 					expectNodeInDetail: "ns=2;s=Tag1",
 					description:        "initial fault",
 				},
@@ -443,7 +441,7 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 					action: func(h *testHarness) {
 						setPointReadNotOk(h.ctx, "ns=2;s=Tag1", ua.StatusBadTimeout, h.fc)
 					},
-					reliabilityState:   gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+					reliabilityState:   healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 					expectNodeInDetail: "ns=2;s=Tag1",
 					description:        "same node fault updated with different error",
 				},
@@ -502,7 +500,7 @@ func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
 	checks := h.getHealthChecks(t)
 	rel := checks[0].GetReliability()
 	require.NotNil(t, rel)
-	require.Equal(t, gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE, rel.State)
+	require.Equal(t, healthpb.HealthCheck_Reliability_BAD_RESPONSE, rel.State)
 	require.NotNil(t, rel.LastError)
 
 	require.Equal(t, SystemName, rel.LastError.Code.System)
@@ -511,7 +509,7 @@ func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
 
 	dev.handleEvent(ctx, makeEvent(ua.StatusOK), nodeId)
 	checks = h.getHealthChecks(t)
-	require.Equal(t, gen_healthpb.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().GetState())
+	require.Equal(t, healthpb.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().GetState())
 
 	faults := checks[0].GetFaults().GetCurrentFaults()
 	require.Len(t, faults, 0)

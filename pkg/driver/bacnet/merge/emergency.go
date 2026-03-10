@@ -14,8 +14,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/emergencypb"
@@ -60,7 +60,7 @@ func readEmergencyConfig(raw []byte) (cfg emergencyConfig, err error) {
 type emergencyImpl struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *emergencypb.MemoryDevice
@@ -69,7 +69,7 @@ type emergencyImpl struct {
 	pollTask *task.Intermittent
 }
 
-func newEmergency(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*emergencyImpl, error) {
+func newEmergency(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*emergencyImpl, error) {
 	cfg, err := readEmergencyConfig(config.Raw)
 	if err != nil {
 		return nil, err

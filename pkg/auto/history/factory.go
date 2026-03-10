@@ -15,12 +15,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/history/apistore"
 	"github.com/smart-core-os/sc-bos/pkg/history/boltstore"
@@ -30,14 +24,14 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	gen_allocationpb "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
-	gen_historypb "github.com/smart-core-os/sc-bos/pkg/proto/historypb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -132,7 +126,7 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 		if name == "" {
 			return errors.New("storage.name missing, must exist when storage.type is \"api\"")
 		}
-		client := gen_historypb.NewHistoryAdminApiClient(a.clients.ClientConn())
+		client := historypb.NewHistoryAdminApiClient(a.clients.ClientConn())
 		store = apistore.New(client, name, cfg.Source.SourceName())
 	case "hub":
 		if cfg.Storage.TTL != nil {
@@ -142,7 +136,7 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 		if err != nil {
 			return err
 		}
-		client := gen_historypb.NewHistoryAdminApiClient(conn)
+		client := historypb.NewHistoryAdminApiClient(conn)
 		store = apistore.New(client, a.cohortManagerName, cfg.Source.SourceName())
 	case "bolt":
 		var err error
@@ -186,7 +180,7 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 	var collect collector
 	switch cfg.Source.Trait {
 	case allocationpb.TraitName:
-		serverClient = gen_allocationpb.WrapHistory(historypb.NewAllocationServer(store))
+		serverClient = allocationpb.WrapHistory(historypb.NewAllocationServer(store))
 		collect = a.collectAllocationChanges
 	case trait.AirQualitySensor:
 		serverClient = airqualitysensorpb.WrapHistory(historypb.NewAirQualitySensorServer(store))
@@ -200,20 +194,20 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 	case trait.EnterLeaveSensor:
 		serverClient = enterleavesensorpb.WrapHistory(historypb.NewEnterLeaveSensorServer(store))
 		collect = a.collectEnterLeaveEventChanges
-	case meter.TraitName:
+	case meterpb.TraitName:
 		serverClient = meterpb.WrapHistory(historypb.NewMeterServer(store))
 		collect = a.collectMeterReadingChanges
 	case trait.OccupancySensor:
 		serverClient = occupancysensorpb.WrapHistory(historypb.NewOccupancySensorServer(store))
 		collect = a.collectOccupancyChanges
 	case statuspb.TraitName:
-		serverClient = gen_statuspb.WrapHistory(historypb.NewStatusServer(store))
+		serverClient = statuspb.WrapHistory(historypb.NewStatusServer(store))
 		collect = a.collectCurrentStatusChanges
-	case transport.TraitName:
+	case transportpb.TraitName:
 		serverClient = transportpb.WrapHistory(historypb.NewTransportServer(store))
 		collect = a.collectTransportChanges
 	case soundsensorpb.TraitName:
-		serverClient = gen_soundsensorpb.WrapHistory(historypb.NewSoundSensorServer(store))
+		serverClient = soundsensorpb.WrapHistory(historypb.NewSoundSensorServer(store))
 		collect = a.collectSoundSensorChanges
 	default:
 		return fmt.Errorf("unsupported trait %s", cfg.Source.Trait)

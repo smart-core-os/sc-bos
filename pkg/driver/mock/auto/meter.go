@@ -7,12 +7,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/scale"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
-func MeterAuto(model *meter.Model) *service.Service[string] {
+func MeterAuto(model *meterpb.Model) *service.Service[string] {
 	slc := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		go func() {
 			timer := time.NewTimer(durationBetween(30*time.Second, 2*time.Minute))

@@ -6,9 +6,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"go.uber.org/zap"
-
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 )
 
 type sensor interface {

@@ -15,10 +15,9 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/protobuf/protopath2"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -120,25 +119,25 @@ func TestUpdatesNormality(t *testing.T) {
 		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 20.0},
 		})
-		h.assertHealthCheckNormality("room-1", gen_healthpb.HealthCheck_NORMAL)
+		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_NORMAL)
 
 		// Low value (below 15)
 		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 10.0},
 		})
-		h.assertHealthCheckNormality("room-1", gen_healthpb.HealthCheck_LOW)
+		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_LOW)
 
 		// High value (above 25)
 		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 30.0},
 		})
-		h.assertHealthCheckNormality("room-1", gen_healthpb.HealthCheck_HIGH)
+		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_HIGH)
 
 		// Back to normal
 		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 22.0},
 		})
-		h.assertHealthCheckNormality("room-1", gen_healthpb.HealthCheck_NORMAL)
+		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_NORMAL)
 	})
 }
 
@@ -157,23 +156,23 @@ func TestHealthCheckProperties(t *testing.T) {
 			AmbientTemperature: &types.Temperature{ValueCelsius: 20.0},
 		})
 
-		want := &gen_healthpb.HealthCheck{
+		want := &healthpb.HealthCheck{
 			Id:          "healthbounds",
 			DisplayName: "Ambient Temperature",
-			Check: &gen_healthpb.HealthCheck_Bounds_{
-				Bounds: &gen_healthpb.HealthCheck_Bounds{
-					CurrentValue: &gen_healthpb.HealthCheck_Value{
-						Value: &gen_healthpb.HealthCheck_Value_FloatValue{FloatValue: 20.0},
+			Check: &healthpb.HealthCheck_Bounds_{
+				Bounds: &healthpb.HealthCheck_Bounds{
+					CurrentValue: &healthpb.HealthCheck_Value{
+						Value: &healthpb.HealthCheck_Value_FloatValue{FloatValue: 20.0},
 					},
-					Expected: &gen_healthpb.HealthCheck_Bounds_NormalRange{
-						NormalRange: &gen_healthpb.HealthCheck_ValueRange{
-							Low:  &gen_healthpb.HealthCheck_Value{Value: &gen_healthpb.HealthCheck_Value_FloatValue{FloatValue: 15.0}},
-							High: &gen_healthpb.HealthCheck_Value{Value: &gen_healthpb.HealthCheck_Value_FloatValue{FloatValue: 25.0}},
+					Expected: &healthpb.HealthCheck_Bounds_NormalRange{
+						NormalRange: &healthpb.HealthCheck_ValueRange{
+							Low:  &healthpb.HealthCheck_Value{Value: &healthpb.HealthCheck_Value_FloatValue{FloatValue: 15.0}},
+							High: &healthpb.HealthCheck_Value{Value: &healthpb.HealthCheck_Value_FloatValue{FloatValue: 25.0}},
 						},
 					},
 				},
 			},
-			Normality: gen_healthpb.HealthCheck_NORMAL,
+			Normality: healthpb.HealthCheck_NORMAL,
 		}
 
 		h.assertHealthCheck("room-1", want)
@@ -197,8 +196,8 @@ func TestHandlesNilAmbientTemperature(t *testing.T) {
 
 		synctest.Wait()
 		h.assertHealthCheckExists("room-1")
-		h.assertHealthCheckNormality("room-1", gen_healthpb.HealthCheck_NORMALITY_UNSPECIFIED)
-		h.assertHealthCheckReliability("room-1", gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE)
+		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_NORMALITY_UNSPECIFIED)
+		h.assertHealthCheckReliability("room-1", healthpb.HealthCheck_Reliability_BAD_RESPONSE)
 	})
 }
 
@@ -228,7 +227,7 @@ func newTestHarness(t *testing.T) *testHarness {
 			defer h.mu.Unlock()
 			h.models[name] = healthpb.NewModel()
 		}),
-		healthpb.WithOnCheckCreate(func(name string, c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck {
+		healthpb.WithOnCheckCreate(func(name string, c *healthpb.HealthCheck) *healthpb.HealthCheck {
 			h.mu.Lock()
 			defer h.mu.Unlock()
 			if model, ok := h.models[name]; ok {
@@ -236,7 +235,7 @@ func newTestHarness(t *testing.T) *testHarness {
 			}
 			return c
 		}),
-		healthpb.WithOnCheckUpdate(func(name string, c *gen_healthpb.HealthCheck) {
+		healthpb.WithOnCheckUpdate(func(name string, c *healthpb.HealthCheck) {
 			h.mu.Lock()
 			defer h.mu.Unlock()
 			if model, ok := h.models[name]; ok {
@@ -393,7 +392,7 @@ func (h *testHarness) assertHealthCheckValue(deviceName string, expected float64
 	}
 }
 
-func (h *testHarness) assertHealthCheckNormality(deviceName string, expected gen_healthpb.HealthCheck_Normality) {
+func (h *testHarness) assertHealthCheckNormality(deviceName string, expected healthpb.HealthCheck_Normality) {
 	h.t.Helper()
 	synctest.Wait()
 
@@ -414,7 +413,7 @@ func (h *testHarness) assertHealthCheckNormality(deviceName string, expected gen
 	}
 }
 
-func (h *testHarness) assertHealthCheckReliability(deviceName string, expected gen_healthpb.HealthCheck_Reliability_State) {
+func (h *testHarness) assertHealthCheckReliability(deviceName string, expected healthpb.HealthCheck_Reliability_State) {
 	h.t.Helper()
 	synctest.Wait()
 
@@ -435,7 +434,7 @@ func (h *testHarness) assertHealthCheckReliability(deviceName string, expected g
 	}
 }
 
-func (h *testHarness) assertHealthCheck(deviceName string, expected *gen_healthpb.HealthCheck) {
+func (h *testHarness) assertHealthCheck(deviceName string, expected *healthpb.HealthCheck) {
 	h.t.Helper()
 	synctest.Wait()
 
@@ -450,7 +449,7 @@ func (h *testHarness) assertHealthCheck(deviceName string, expected *gen_healthp
 	if err != nil {
 		h.t.Fatalf("Health check for device %q not found: %v", deviceName, err)
 	}
-	if diff := cmp.Diff(expected, check, protocmp.Transform(), protocmp.IgnoreFields(&gen_healthpb.HealthCheck{}, "create_time", "normal_time", "abnormal_time", "reliability")); diff != "" {
+	if diff := cmp.Diff(expected, check, protocmp.Transform(), protocmp.IgnoreFields(&healthpb.HealthCheck{}, "create_time", "normal_time", "abnormal_time", "reliability")); diff != "" {
 		h.t.Errorf("Health check mismatch (-want +got):\n%s", diff)
 	}
 }
