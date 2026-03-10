@@ -6,13 +6,14 @@
 
 <script setup>
 import EnergyComp from '@/components/EnergyMeter.vue';
-import {usePeriod} from '@/composables/time.js';
+import {useInterval} from '@/composables/time.js';
 import {
   useMeterReadingAt,
   usePullMeterReading
 } from '@/traits/meter/meter.js';
 import {isNullOrUndef} from '@/util/types.js';
-import {computed, effectScope, onUnmounted, reactive, ref, toRef, watch} from 'vue';
+import {sub} from 'date-fns';
+import {computed, effectScope, reactive, watch} from 'vue';
 
 const props = defineProps({
   name: {
@@ -44,36 +45,28 @@ const props = defineProps({
 });
 
 const _offset = computed(() => -Math.abs(parseInt(props.offset)));
-const {start, end} = usePeriod(toRef(props, 'period'), toRef(props, 'period'), _offset);
+
+// Tick drives the rolling window — start and end update each interval
+const tick = useInterval(() => props.refreshInterval);
+const end = computed(() => { tick.value; return sub(new Date(), {[`${props.period}s`]: -_offset.value}); });
+const start = computed(() => sub(end.value, {[`${props.period}s`]: 1}));
 
 // const {response: meterReadingInfo} = useDescribeMeterReading(() => props.name);
 
-// Periodic refresh tick — increments on the configured interval to re-trigger the scope
-const tick = ref(0);
-let refreshHandle = null;
-const scheduleRefresh = (interval) => {
-  if (refreshHandle) clearInterval(refreshHandle);
-  if (interval > 0) refreshHandle = setInterval(() => { tick.value++; }, interval);
-};
-scheduleRefresh(props.refreshInterval);
-watch(() => props.refreshInterval, scheduleRefresh);
-onUnmounted(() => { if (refreshHandle) clearInterval(refreshHandle); });
+const readingAtStart = useMeterReadingAt(() => props.name, start);
+const generatedAtStart = useMeterReadingAt(() => props.generated, start);
 
 const endIsLive = computed(() => _offset.value === 0);
 let endCalcScope = null;
-const readingAtStart = reactive({value: null});
-const generatedAtStart = reactive({value: null});
 const readingAtEnd = reactive({value: null});
 const generatedAtEnd = reactive({value: null});
-watch([endIsLive, start, end, tick], ([endIsLive]) => {
+watch(endIsLive, (endIsLive) => {
   if (endCalcScope) {
     endCalcScope();
   }
   const scope = effectScope();
   endCalcScope = () => scope.stop();
   scope.run(() => {
-    readingAtStart.value = useMeterReadingAt(() => props.name, start);
-    generatedAtStart.value = useMeterReadingAt(() => props.generated, start);
     if (endIsLive) {
       const {value: meterReading} = usePullMeterReading(() => props.name);
       readingAtEnd.value = meterReading;
@@ -84,7 +77,7 @@ watch([endIsLive, start, end, tick], ([endIsLive]) => {
       generatedAtEnd.value = useMeterReadingAt(() => props.generated, end);
     }
   });
-}, {deep: true, immediate: true});
+}, {immediate: true});
 
 const usageDiff = computed(() => {
   const start = readingAtStart.value;
