@@ -193,7 +193,6 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	if err == nil {
 		hubClient := hubpb.NewHubApiClient(hubConn)
 		for _, n := range cfg.Nodes {
-			n := n
 			go func() {
 				for {
 					_, err := hubClient.EnrollHubNode(ctx, &hubpb.EnrollHubNodeRequest{
