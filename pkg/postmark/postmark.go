@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 //go:embed powered-by-dark.png
@@ -43,7 +42,7 @@ func (c *Config) ReadToken() error {
 	if err != nil {
 		return fmt.Errorf("postmark: failed to read server token from %s: %w", c.ServerTokenPath, err)
 	}
-	c.ServerToken = strings.TrimSpace(string(b))
+	c.ServerToken = string(bytes.TrimSpace(b))
 	return nil
 }
 
