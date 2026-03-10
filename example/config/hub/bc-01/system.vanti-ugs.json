@@ -12,7 +12,7 @@
       "storage": {"type": "bolt"},
       "nodes": [
         {"address": "localhost:23201", "name": "EG-01"},
-        {"address": "localhost:23301", "name": "van/uk/brum/ugs/eg-ac-01"}
+        {"address": "localhost:23301", "name": "van/uk/brum/ugs/ac-01"}
       ]
     }
   }

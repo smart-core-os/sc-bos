@@ -1,5 +1,5 @@
 {
-  "name": "van/uk/brum/ugs/eg-ac-01",
+  "name": "van/uk/brum/ugs/ac-01",
   "listenGrpc": ":23301",
   "listenHttps": ":8301",
   "cors": {
