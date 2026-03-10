@@ -41,18 +41,18 @@ echo "Starting BC-01, EG-01, and vanti-ugs AC..."
 prefix_log "BC-01" "$GREEN" \
   .bin/bos --policy-mode=off \
     --sysconf example/config/hub/bc-01/system.vanti-ugs.json \
-    --data .data/hub/bc-01
+    --data .data/vanti-ugs-hub/bc-01
 
 prefix_log "EG-01" "$BLUE" \
   .bin/bos --policy-mode=check \
     --sysconf example/config/hub/eg-01/system.json \
-    --data .data/hub/eg-01
+    --data .data/vanti-ugs-hub/eg-01
 
 prefix_log "AC" "$RED" \
   .bin/bos --policy-mode=check \
     --appconf example/config/vanti-ugs/app.conf.json \
     --sysconf example/config/vanti-ugs/system.ac01.json \
-    --data .data/vanti-ugs-hub
+    --data .data/vanti-ugs-hub/ac-01
 
 prefix_log "UI" "$YELLOW" \
   yarn --cwd "$ROOT_DIR/ui/ops" run dev --mode=vanti-ugs-cohort
