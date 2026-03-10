@@ -38,9 +38,16 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let windows = [];
 let randomWindows = [];
+
+// Shared cancellation — any new setValue call cancels the previous one
+let cancelCurrent = () => {};
+
 // Update the lights based on value
 const setValue = async (value) => {
   clearInterval(autoInterval);
+  cancelCurrent();
+  let cancelled = false;
+  cancelCurrent = () => { cancelled = true; };
 
   currentOccupants.value = value;
   currentMaxValue.value =
@@ -52,7 +59,8 @@ const setValue = async (value) => {
 
   if (activeCount > 0) {
     for (let i = 0; i < randomWindows.length; i++) {
-      randomWindows[i].classList.toggle('on', (i < activeCount || i === 0));
+      if (cancelled) return;
+      randomWindows[i].classList.toggle('on', i < activeCount);
       await sleep(50);
     }
   }

@@ -217,7 +217,7 @@ const props = defineProps({
   },
   totalRange: {
     type: Number,
-    default: 3
+    default: 3,
   },
   runDemo: {
     type: Boolean,
@@ -251,16 +251,15 @@ let ice;
 let flame;
 let pips;
 let pipsReverse;
-let wasHeating;
+let wasHeating = false;
 
 // Demo: generate random values
-const autoValues = () =>
+const autoValues = () => {
   setValue(
     Math.floor(Math.random() * (currentTotalRange.value * 2) + 1 - currentTotalRange.value),
     Math.floor(Math.random() * (currentTotalRange.value * 2) + 1 - currentTotalRange.value)
   );
-
-wasHeating = false;
+};
 
 // Sleep helper for async delays
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -286,11 +285,21 @@ const startAuto = () => {
   }
 };
 
+// Shared cancellation — any new setValue call cancels the previous one
+let cancelCurrent = () => {};
+
 // Update display and animations based on value
-const setValue = async (temp, setPoint, cancelled) => {
+const setValue = async (temp, setPoint) => {
   clearInterval(autoInterval);
+  cancelCurrent();
+  let cancelled = false;
+  cancelCurrent = () => { cancelled = true; };
 
   const isHeating = temp < setPoint;
+
+  // Only clear pips when switching modes — avoids a blank flash on same-mode updates
+  if (isHeating !== wasHeating) removePipClasses();
+  wasHeating = isHeating;
 
   let pipVal = (Math.abs(temp - setPoint) / (currentTotalRange.value) * pips.length);
 
@@ -299,44 +308,37 @@ const setValue = async (temp, setPoint, cancelled) => {
     flame.classList.remove('hide');
     ice.classList.add('hide');
 
-    if (wasHeating === false) removePipClasses();
-
     for (let i = 0; i < pipsReverse.length; i++) {
-      if (i < pipVal || i === 0) {
+      if (cancelled) return;
+      if (i < pipVal) {
         pipsReverse[i].classList.add('onFlame');
       } else {
         pipsReverse[i].classList.remove('onFlame');
       }
-      if (cancelled) return;
       await sleep(50);
     }
     if (cancelled) return;
-    await sleep(50);
 
   } else {
     // Using energy for cooling
     flame.classList.add('hide');
     ice.classList.remove('hide');
 
-    if (wasHeating === true) removePipClasses();
-
     fanSpeed(pipVal);
 
     for (let i = 0; i < pips.length; i++) {
-      if (i < pipVal || i === 0) {
+      if (cancelled) return;
+      if (i < pipVal) {
         pips[i].classList.add('onIce');
       } else {
         pips[i].classList.remove('onIce');
       }
-      if (cancelled) return;
       await sleep(50);
     }
     if (cancelled) return;
-    await sleep(50);
 
   }
 
-  wasHeating = isHeating;
   startAuto();
 };
 
@@ -348,18 +350,22 @@ onMounted(() => {
   pips = temperatureMeterSVG.value.querySelectorAll('.pips');
   pipsReverse = [...pips].reverse();
 
+  setValue(props.temperature, props.targetTemperature);
   // Start demo
   startAuto();
 });
 
-watch(() => props, (p, _, onCleanup) => {
-  let cancelled = false;
-  onCleanup(() => {
-    cancelled = true;
-  });
-  setValue(p.temperature, p.targetTemperature, cancelled);
-  currentEnergy.value = p.energy;
-}, {deep: true});
+watch(() => props.temperature, (newVal) => {
+  setValue(newVal, props.targetTemperature);
+});
+
+watch(() => props.targetTemperature, (newVal) => {
+  setValue(props.temperature, newVal);
+});
+
+watch(() => props.energy, (newVal) => {
+  currentEnergy.value = newVal;
+});
 </script>
 
 <style lang="scss" scoped>

@@ -1,0 +1,12 @@
+{
+  "name": "van/uk/brum/ugs/ac-01",
+  "listenGrpc": ":23301",
+  "listenHttps": ":8301",
+  "cors": {
+    "debugMode": true,
+    "corsOrigins": ["*"]
+  },
+  "systems": {
+    "alerts": {"storage": {"type": "hub"}}
+  }
+}

@@ -24,7 +24,7 @@ const props = defineProps({
   },
   totalRange: {
     type: Number,
-    default: 25
+    default: 3
   }
 });
 
