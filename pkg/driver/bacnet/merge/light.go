@@ -16,8 +16,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/cmp"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
@@ -58,7 +58,7 @@ func readLightConfig(raw []byte) (cfg lightCfg, err error) {
 type light struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *lightpb.Model
@@ -67,7 +67,7 @@ type light struct {
 	pollTask *task.Intermittent
 }
 
-func newLight(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*light, error) {
+func newLight(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*light, error) {
 	cfg, err := readLightConfig(config.Raw)
 	if err != nil {
 		return nil, err

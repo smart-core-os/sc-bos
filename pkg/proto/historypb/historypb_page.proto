@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package smartcore.bos.proto.historypb.internal;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/historypb";
+
+message PageToken {
+  string record_id = 1;
+  int32 total_size = 2;
+}

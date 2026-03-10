@@ -12,7 +12,6 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -95,7 +94,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	})
 
 	sc := newSecurityEventController(client, d.logger, cfg.NumSecurityEvents)
-	announcer.Announce(cfg.ScNamePrefix, node.HasTrait(securityevent.TraitName, node.WithClients(securityeventpb.WrapApi(sc))))
+	announcer.Announce(cfg.ScNamePrefix, node.HasTrait(securityeventpb.TraitName, node.WithClients(securityeventpb.WrapApi(sc))))
 	grp.Go(func() error {
 		return sc.run(ctx, cfg.RefreshAlarms)
 	})

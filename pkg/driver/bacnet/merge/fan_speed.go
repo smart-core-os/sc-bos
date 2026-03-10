@@ -12,8 +12,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/fanspeedpb"
@@ -33,7 +33,7 @@ func readFanSpeedConfig(raw []byte) (cfg fanSpeedConfig, err error) {
 type fanSpeed struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *fanspeedpb.Model
@@ -42,7 +42,7 @@ type fanSpeed struct {
 	pollTask *task.Intermittent
 }
 
-func newFanSpeed(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*fanSpeed, error) {
+func newFanSpeed(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*fanSpeed, error) {
 	cfg, err := readFanSpeedConfig(config.Raw)
 	if err != nil {
 		return nil, err

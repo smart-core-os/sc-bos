@@ -11,7 +11,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api"
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 const resourcePrefix = "/artemis/api/resource/v1"

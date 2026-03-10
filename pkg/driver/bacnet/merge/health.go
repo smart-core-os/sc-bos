@@ -12,7 +12,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 )
@@ -58,17 +57,17 @@ func readHealthConfig(raw []byte) (cfg healthConfig, err error) {
 type Health struct {
 	client     *gobacnet.Client
 	known      known.Context
-	checks     *gen_healthpb.Checks
-	faultCheck *gen_healthpb.FaultCheck
+	checks     *healthpb.Checks
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	// map of config.HealthCheck.ID to HealthCheck
-	DeviceChecks map[string]*gen_healthpb.FaultCheck
+	DeviceChecks map[string]*healthpb.FaultCheck
 	config       healthConfig
 	PollTask     *task.Intermittent
 }
 
-func NewHealth(client *gobacnet.Client, known known.Context, checks *gen_healthpb.Checks, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*Health, error) {
+func NewHealth(client *gobacnet.Client, known known.Context, checks *healthpb.Checks, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*Health, error) {
 	cfg, err := readHealthConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -82,7 +81,7 @@ func NewHealth(client *gobacnet.Client, known known.Context, checks *gen_healthp
 		logger:     logger,
 
 		config:       cfg,
-		DeviceChecks: make(map[string]*gen_healthpb.FaultCheck),
+		DeviceChecks: make(map[string]*healthpb.FaultCheck),
 	}
 
 	if err := h.initializeChecks(); err != nil {
@@ -166,7 +165,7 @@ func (h *Health) pollPeer(ctx context.Context) error {
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(ctx, h.faultCheck, h.config.Name, gen_healthpb.TraitName, errs)
+	updateTraitFaultCheck(ctx, h.faultCheck, h.config.Name, healthpb.TraitName, errs)
 	if len(errs) > 0 {
 		return fmt.Errorf("health poll errors: %w", multierr.Combine(errs...))
 	}

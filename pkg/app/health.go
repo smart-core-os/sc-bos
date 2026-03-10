@@ -13,11 +13,9 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/health/healthhistory"
 	"github.com/smart-core-os/sc-bos/pkg/app/files"
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
@@ -70,12 +68,12 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 			m := healthpb.NewModel()
 			undo := rootNode.Announce(name,
 				node.HasTrait(healthpb.TraitName),
-				node.HasServer[gen_healthpb.HealthApiServer](gen_healthpb.RegisterHealthApiServer, healthpb.NewModelServer(m)),
-				node.HasServer[gen_healthpb.HealthHistoryServer](gen_healthpb.RegisterHealthHistoryServer, healthHistoryServer),
+				node.HasServer[healthpb.HealthApiServer](healthpb.RegisterHealthApiServer, healthpb.NewModelServer(m)),
+				node.HasServer[healthpb.HealthHistoryServer](healthpb.RegisterHealthHistoryServer, healthHistoryServer),
 			)
 			announcedChecks[name] = checkedDevice{undo: undo, m: m}
 		}),
-		healthpb.WithOnCheckCreate(func(name string, c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck {
+		healthpb.WithOnCheckCreate(func(name string, c *healthpb.HealthCheck) *healthpb.HealthCheck {
 			// seed from history if we can
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
@@ -98,8 +96,8 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 			}
 
 			// update the devices api
-			_, err = deviceStore.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+			_, err = deviceStore.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, removeMeasuredValues(c))
 			}))
 			if err != nil {
@@ -107,7 +105,7 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 			}
 			return c
 		}),
-		healthpb.WithOnCheckUpdate(func(name string, c *gen_healthpb.HealthCheck) {
+		healthpb.WithOnCheckUpdate(func(name string, c *healthpb.HealthCheck) {
 			// save the update to history
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
@@ -130,8 +128,8 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 			}
 
 			// update the devices api
-			_, err = deviceStore.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+			_, err = deviceStore.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, removeMeasuredValues(c))
 			}))
 			if err != nil {
@@ -151,8 +149,8 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 				logger.Error("delete health check", zap.String("name", name), zap.String("checkId", id), zap.Error(err))
 			}
 
-			_, err = deviceStore.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(_ *masks.FieldUpdater, dst, _ proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+			_, err = deviceStore.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(_ *masks.FieldUpdater, dst, _ proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
 			}))
 			if err != nil {
@@ -178,7 +176,7 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 }
 
 // removeMeasuredValues returns a (possible) copy of c with any measured values removed.
-func removeMeasuredValues(c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck {
+func removeMeasuredValues(c *healthpb.HealthCheck) *healthpb.HealthCheck {
 	// We do the removal here, instead of in the DevicesApi server,
 	// because here is the write point for those devices.
 	// Doing the removal on write means we don't have to worry about
@@ -188,10 +186,10 @@ func removeMeasuredValues(c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck
 		return nil
 	}
 	// clone clones its argument once only, returning an uncloned value on subsequent calls.
-	var clone func(*gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck
-	clone = func(c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck {
-		cc := proto.Clone(c).(*gen_healthpb.HealthCheck)
-		clone = func(c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck { return c }
+	var clone func(*healthpb.HealthCheck) *healthpb.HealthCheck
+	clone = func(c *healthpb.HealthCheck) *healthpb.HealthCheck {
+		cc := proto.Clone(c).(*healthpb.HealthCheck)
+		clone = func(c *healthpb.HealthCheck) *healthpb.HealthCheck { return c }
 		return cc
 	}
 

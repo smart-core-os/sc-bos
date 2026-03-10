@@ -16,9 +16,8 @@ import (
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
@@ -225,11 +224,11 @@ func TestSystem_announceCohort(t *testing.T) {
 					Membership: &traits.Metadata_Membership{Subsystem: "test devices"},
 				}})
 
-				wantOldDevice := &gen_devicespb.Device{
+				wantOldDevice := &devicespb.Device{
 					Name:     "ac1/d1",
 					Metadata: md("ac1/d1", ts(trait.Metadata)...),
 				}
-				wantNewDevice := &gen_devicespb.Device{
+				wantNewDevice := &devicespb.Device{
 					Name: "ac1/d1",
 					Metadata: &traits.Metadata{
 						Name:       "ac1/d1",
@@ -358,7 +357,7 @@ func TestSystem_announceCohort(t *testing.T) {
 
 // assertDeviceUpdate asserts that device updates are received that transition a device from wantOld to wantNew.
 // Any sequence of updates that connect together to join the two states are accepted.
-func assertDeviceUpdate(t *testing.T, stream <-chan devicespb.DevicesChange, wantOld, wantNew *gen_devicespb.Device, now time.Time) {
+func assertDeviceUpdate(t *testing.T, stream <-chan devicespb.DevicesChange, wantOld, wantNew *devicespb.Device, now time.Time) {
 	t.Helper()
 	// all updates look a bit like this, with different old/new values
 	want := devicespb.DevicesChange{
@@ -505,26 +504,26 @@ func (t *announceTester) newRemoteNode(addr string, self remoteDesc, systems rem
 
 func (t *announceTester) assertSimpleDevices(wantNames ...string) {
 	t.Helper()
-	var wantDevices []*gen_devicespb.Device
+	var wantDevices []*devicespb.Device
 	for _, name := range wantNames {
 		wantDevices = append(wantDevices, newSimpleDevice(name))
 	}
 	t.assertDevices(wantDevices...)
 }
 
-func newSimpleDevice(name string, checks ...*healthpb.HealthCheck) *gen_devicespb.Device {
-	return &gen_devicespb.Device{
+func newSimpleDevice(name string, checks ...*healthpb.HealthCheck) *devicespb.Device {
+	return &devicespb.Device{
 		Name:         name,
 		Metadata:     md(name, ts(trait.Metadata)...),
 		HealthChecks: checks,
 	}
 }
 
-func (t *announceTester) assertDevices(want ...*gen_devicespb.Device) {
+func (t *announceTester) assertDevices(want ...*devicespb.Device) {
 	t.Helper()
 	slices.SortFunc(want, cmpDevices)
 	// add in the self node t the right place keeping want sorted by name
-	selfDevice := &gen_devicespb.Device{Name: "self", Metadata: &traits.Metadata{Name: "self", Traits: ts(trait.Metadata, trait.Parent)}}
+	selfDevice := &devicespb.Device{Name: "self", Metadata: &traits.Metadata{Name: "self", Traits: ts(trait.Metadata, trait.Parent)}}
 	if i, ok := slices.BinarySearchFunc(want, selfDevice, cmpDevices); !ok {
 		want = slices.Insert(want, i, selfDevice)
 	}
@@ -541,6 +540,6 @@ func (t *announceTester) assertDevices(want ...*gen_devicespb.Device) {
 	}
 }
 
-func cmpDevices(a, b *gen_devicespb.Device) int {
+func cmpDevices(a, b *devicespb.Device) int {
 	return strings.Compare(a.Name, b.Name)
 }

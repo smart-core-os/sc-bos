@@ -10,15 +10,14 @@ import (
 	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/temperaturepb"
-	transportpb "github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
@@ -28,7 +27,7 @@ const (
 	SystemName = "BACnet"
 )
 
-func IntoTrait(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, traitConfig config.RawTrait, logger *zap.Logger) (node.SelfAnnouncer, error) {
+func IntoTrait(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, traitConfig config.RawTrait, logger *zap.Logger) (node.SelfAnnouncer, error) {
 	// todo: implement some traits that pull data from different bacnet devices.
 	switch traitConfig.Kind {
 	case trait.AirQualitySensor:
@@ -45,7 +44,7 @@ func IntoTrait(client *gobacnet.Client, devices known.Context, faultCheck *gen_h
 		return newFanSpeed(client, devices, faultCheck, traitConfig, logger)
 	case trait.Light:
 		return newLight(client, devices, faultCheck, traitConfig, logger)
-	case meter.TraitName:
+	case meterpb.TraitName:
 		return newMeter(client, devices, faultCheck, traitConfig, logger)
 	case trait.Mode:
 		return newMode(client, devices, faultCheck, traitConfig, logger)
@@ -55,7 +54,7 @@ func IntoTrait(client *gobacnet.Client, devices known.Context, faultCheck *gen_h
 		return newOnOff(client, devices, faultCheck, traitConfig, logger)
 	case accesspb.TraitName:
 		return newAccess(client, devices, faultCheck, traitConfig, logger)
-	case securityevent.TraitName:
+	case securityeventpb.TraitName:
 		return newSecurityEvent(client, devices, faultCheck, traitConfig, logger)
 	case temperaturepb.TraitName:
 		return newTemperature(client, devices, faultCheck, traitConfig, logger)
@@ -67,7 +66,7 @@ func IntoTrait(client *gobacnet.Client, devices known.Context, faultCheck *gen_h
 	return nil, ErrTraitNotSupported
 }
 
-func updateTraitFaultCheck(ctx context.Context, faultCheck *gen_healthpb.FaultCheck, name string, trait trait.Name, errs []error) {
+func updateTraitFaultCheck(ctx context.Context, faultCheck *healthpb.FaultCheck, name string, trait trait.Name, errs []error) {
 	if faultCheck == nil {
 		return
 	}
@@ -95,7 +94,7 @@ func updateTraitFaultCheck(ctx context.Context, faultCheck *gen_healthpb.FaultCh
 	})
 }
 
-func raisePointAlarm(point string, code string, summary string, fc *gen_healthpb.FaultCheck) {
+func raisePointAlarm(point string, code string, summary string, fc *healthpb.FaultCheck) {
 	fc.AddOrUpdateFault(&healthpb.HealthCheck_Error{
 		SummaryText: summary,
 		DetailsText: "An alarm has been detected on point: " + point,
@@ -106,7 +105,7 @@ func raisePointAlarm(point string, code string, summary string, fc *gen_healthpb
 	})
 }
 
-func removePointAlarm(code string, fc *gen_healthpb.FaultCheck) {
+func removePointAlarm(code string, fc *healthpb.FaultCheck) {
 	fc.RemoveFault(&healthpb.HealthCheck_Error{
 		Code: &healthpb.HealthCheck_Error_Code{
 			Code: code,

@@ -11,9 +11,8 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/statusemail/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
@@ -41,7 +40,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	logger := a.Logger
 	logger = logger.With(zap.String("snmp.host", cfg.Destination.Host), zap.Int("snmp.port", cfg.Destination.Port))
 
-	statusClient := gen_statuspb.NewStatusApiClient(a.Node.ClientConn())
+	statusClient := statuspb.NewStatusApiClient(a.Node.ClientConn())
 
 	if cfg.DelayStart != nil {
 		time.Sleep(cfg.DelayStart.Duration)

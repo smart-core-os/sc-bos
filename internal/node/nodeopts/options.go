@@ -5,8 +5,7 @@ import (
 	"context"
 
 	"github.com/smart-core-os/sc-bos/internal/router"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
-	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
@@ -57,10 +56,10 @@ func (s Struct) apply(o *Struct) {
 
 // Store describes how a node stores its announced devices.
 type Store interface {
-	GetDevice(name string, opts ...resource.ReadOption) (*gen_devicespb.Device, error)
+	GetDevice(name string, opts ...resource.ReadOption) (*devicespb.Device, error)
 	PullDevice(ctx context.Context, name string, opts ...resource.ReadOption) <-chan devicespb.DeviceChange
-	ListDevices(opts ...resource.ReadOption) []*gen_devicespb.Device
+	ListDevices(opts ...resource.ReadOption) []*devicespb.Device
 	PullDevices(ctx context.Context, opts ...resource.ReadOption) <-chan devicespb.DevicesChange
-	Update(d *gen_devicespb.Device, opts ...resource.WriteOption) (*gen_devicespb.Device, error)
-	Delete(name string, opts ...resource.WriteOption) (*gen_devicespb.Device, error)
+	Update(d *devicespb.Device, opts ...resource.WriteOption) (*devicespb.Device, error)
+	Delete(name string, opts ...resource.WriteOption) (*devicespb.Device, error)
 }
