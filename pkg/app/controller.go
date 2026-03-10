@@ -20,6 +20,7 @@ import (
 	"github.com/timshannon/bolthold"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -275,10 +276,19 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		return next
 	}
 	if pol := configPolicy(config); pol != nil {
-		interceptor := policy.NewInterceptor(pol,
+		opts := []policy.InterceptorOption{
 			policy.WithLogger(logger.Named("policy")),
 			policy.WithTokenVerifier(tokenValidator),
-		)
+		}
+		if al := config.AuditLog; al != nil && al.Filename != "" {
+			auditLogger, err := newAuditLogger(al.Filename)
+			if err != nil {
+				logger.Error("failed to open audit log file", zap.String("file", al.Filename), zap.Error(err))
+			} else {
+				opts = append(opts, policy.WithAuditLogger(auditLogger))
+			}
+		}
+		interceptor := policy.NewInterceptor(pol, opts...)
 		grpcOpts = append(grpcOpts,
 			grpc.ChainUnaryInterceptor(interceptor.GRPCUnaryInterceptor()),
 			grpc.ChainStreamInterceptor(interceptor.GRPCStreamingInterceptor()),
@@ -561,6 +571,16 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 
 	err = multierr.Append(err, group.Wait())
 	return
+}
+
+func newAuditLogger(filename string) (*zap.Logger, error) {
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o640)
+	if err != nil {
+		return nil, err
+	}
+	enc := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+	core := zapcore.NewCore(enc, zapcore.AddSync(f), zapcore.InfoLevel)
+	return zap.New(core), nil
 }
 
 const (

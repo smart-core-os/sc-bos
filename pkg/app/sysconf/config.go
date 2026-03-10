@@ -85,6 +85,8 @@ type Config struct {
 	Policy     policy.Policy `json:"-"` // Override the policy used for RPC calls. Defaults to policy.Default
 	PolicyMode PolicyMode    `json:"-"` // How to apply the policy. Unsafe and can disable security checks. Defaults to PolicyOn.
 
+	AuditLog *AuditLogConfig `json:"auditLog,omitempty"`
+
 	Experimental *Experimental `json:"experimental,omitempty"`
 
 	DriverFactories map[string]driver.Factory `json:"-"` // keyed by driver name
@@ -223,6 +225,13 @@ func Default() Config {
 	config.Logger.DisableStacktrace = true // because it's annoying
 
 	return config
+}
+
+// AuditLogConfig configures the audit log, which records all write operations for access auditing.
+type AuditLogConfig struct {
+	// Filename is the path to the audit log file. Required to enable audit logging.
+	// The file is appended to if it already exists.
+	Filename string `json:"filename,omitempty"`
 }
 
 // Experimental configures feature flags for experimental features.
