@@ -201,6 +201,8 @@ func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) er
 					rec.undo()
 					delete(active, name)
 				}
+			default:
+				// ignore updates, they should not affect history recording
 			}
 		}
 	}
