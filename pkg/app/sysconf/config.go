@@ -260,6 +260,9 @@ func (c *Config) Normalize() {
 	}
 
 	c.CertConfig = c.CertConfig.FillDefaults()
+	if c.Cloud != nil {
+		c.Cloud = c.Cloud.FillDefaults()
+	}
 }
 
 func (c *Certs) FillDefaults() *Certs {
@@ -280,8 +283,16 @@ func (c *Certs) FillDefaults() *Certs {
 }
 
 type Cloud struct {
-	Endpoint  string `json:"endpoint,omitempty"`
-	TokenFile string `json:"tokenFile,omitempty"`
+	Endpoint     string              `json:"endpoint,omitempty"`
+	TokenFile    string              `json:"tokenFile,omitempty"`
+	PollInterval *jsontypes.Duration `json:"pollInterval,omitempty"`
+}
+
+func (c *Cloud) FillDefaults() *Cloud {
+	if c.PollInterval == nil || c.PollInterval.Duration <= 0 {
+		c.PollInterval = &jsontypes.Duration{Duration: 5 * time.Minute}
+	}
+	return c
 }
 
 // BlockSource is an interface that can be implemented by a factory to provide a list of blocks that describe the config

@@ -134,7 +134,7 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 			close(changes)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Poll() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("PollOnce() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
@@ -164,13 +164,13 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 			}
 
 			if !stringSlicesEqual(gotAdds, tt.wantAdds) {
-				t.Errorf("Poll() adds = %v, want %v", gotAdds, tt.wantAdds)
+				t.Errorf("PollOnce() adds = %v, want %v", gotAdds, tt.wantAdds)
 			}
 			if !stringSlicesEqual(gotUpdts, tt.wantUpdts) {
-				t.Errorf("Poll() updates = %v, want %v", gotUpdts, tt.wantUpdts)
+				t.Errorf("PollOnce() updates = %v, want %v", gotUpdts, tt.wantUpdts)
 			}
 			if !stringSlicesEqual(gotRems, tt.wantRems) {
-				t.Errorf("Poll() removes = %v, want %v", gotRems, tt.wantRems)
+				t.Errorf("PollOnce() removes = %v, want %v", gotRems, tt.wantRems)
 			}
 		})
 	}
@@ -191,7 +191,7 @@ func TestDeviceFetcher_Poll_Error(t *testing.T) {
 
 	err := fetcher.Poll(ctx, changes)
 	if err == nil {
-		t.Error("Poll() expected error, got nil")
+		t.Error("PollOnce() expected error, got nil")
 	}
 }
 

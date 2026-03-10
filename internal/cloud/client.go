@@ -169,11 +169,11 @@ func (c *DeploymentClient) extractedConfigByMark(name string) (fs.FS, error) {
 	return extractedRoot.FS(), nil
 }
 
-// Poll performs a check-in with the server and updates the local state of the client accordingly.
+// PollOnce performs a check-in with the server and updates the local state of the client accordingly.
 // If there is a pending deployment, we report to the server that it's in progress, the config version package will
 // be downloaded and extracted, and marked as the installing config returned by InstallingConfig.
 // In this case, needReboot will be true, indicating that the node should restart to apply the new config.
-func (c *DeploymentClient) Poll(ctx context.Context) (needReboot bool, err error) {
+func (c *DeploymentClient) PollOnce(ctx context.Context) (needReboot bool, err error) {
 	// ID = 0 is a placeholder for "no such mark"
 	activeDeploymentID, err := c.deploymentIDByMark(markActive)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -239,6 +239,31 @@ func (c *DeploymentClient) Poll(ctx context.Context) (needReboot bool, err error
 
 	c.logger.Info("new deployment ready to install on next boot", zap.Int64("deploymentId", latest.Deployment.ID), zap.Int64("configVersionId", latest.ConfigVersion.ID))
 	return true, nil
+}
+
+// AutoPoll will continuously poll the server for new deployments and apply them as they come in, until the context is
+// cancelled, or we determine that the controller needs to reboot.
+// Will poll every interval. Panics if interval <= 0.
+func (c *DeploymentClient) AutoPoll(ctx context.Context, interval time.Duration) (needsReboot bool) {
+	if interval <= 0 {
+		panic("invalid interval")
+	}
+	t := time.NewTicker(interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return false
+		case <-t.C:
+			needReboot, err := c.PollOnce(ctx)
+			if err != nil {
+				c.logger.Error("failed to poll deployment server", zap.Error(err))
+			} else if needReboot {
+				c.logger.Info("reboot required to apply new deployment")
+				return true
+			}
+		}
+	}
 }
 
 func (c *DeploymentClient) mark(name string, deploymentID int64) error {

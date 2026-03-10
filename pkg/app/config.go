@@ -46,12 +46,6 @@ func loadLocalAppConfig(sysConfig sysconf.Config, logger *zap.Logger) (ConfigSto
 }
 
 func loadCloudAppConfig(ctx context.Context, sysConfig sysconf.Config, client *cloud.DeploymentClient, logger *zap.Logger) (ConfigStore, error) {
-	// don't need to reboot if needReboot return is true, because we are just booting now
-	_, err := client.Poll(ctx)
-	if err != nil {
-		logger.Error("failed to poll deployment client - stale config may be loaded", zap.Error(err))
-	}
-
 	// first, try loading the installing config, if there is one
 	// if that doesn't exist or didn't work, proceed to the active config
 	installingConfig, loaded := loadCloudInstallingConfig(ctx, client, logger)

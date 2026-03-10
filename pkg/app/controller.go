@@ -406,6 +406,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		SystemConfig:     config,
 		ControllerConfig: confStore,
 		Enrollment:       enrollServer,
+		Deployments:      deploymentClient,
 		Logger:           logger,
 		Node:             rootNode,
 		Devices:          gen_devicespb.NewDevicesApiClient(wrap.ServerToClient(gen_devicespb.DevicesApi_ServiceDesc, devicesApi)),
@@ -481,6 +482,7 @@ type Controller struct {
 	SystemConfig     sysconf.Config
 	ControllerConfig ConfigStore
 	Enrollment       *enrollment.Server
+	Deployments      *cloud.DeploymentClient
 
 	// services for drivers/automations
 	Logger          *zap.Logger
@@ -531,6 +533,12 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	if c.Enrollment != nil {
 		group.Go(func() error {
 			return c.Enrollment.AutoRenew(ctx)
+		})
+	}
+	if c.Deployments != nil {
+		group.Go(func() error {
+			_ = c.Deployments.AutoPoll(ctx, c.SystemConfig.Cloud.PollInterval.Duration)
+			return nil
 		})
 	}
 	if c.SystemConfig.ListenGRPC != "" {

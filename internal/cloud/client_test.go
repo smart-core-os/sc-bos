@@ -345,9 +345,9 @@ func TestPoll(t *testing.T) {
 	t.Run("no deployment available", func(t *testing.T) {
 		env := setupClientEnv(t)
 
-		needReboot, err := env.client.Poll(ctx)
+		needReboot, err := env.client.PollOnce(ctx)
 		if err != nil {
-			t.Fatalf("Poll: %v", err)
+			t.Fatalf("PollOnce: %v", err)
 		}
 		if needReboot {
 			t.Error("expected needReboot=false when no deployment available")
@@ -361,9 +361,9 @@ func TestPoll(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		needReboot, err := env.client.Poll(ctx)
+		needReboot, err := env.client.PollOnce(ctx)
 		if err != nil {
-			t.Fatalf("Poll: %v", err)
+			t.Fatalf("PollOnce: %v", err)
 		}
 		if !needReboot {
 			t.Fatal("expected needReboot=true after new deployment")
@@ -390,8 +390,8 @@ func TestPoll(t *testing.T) {
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
 		// First poll: installs deployment
-		if _, err := env.client.Poll(ctx); err != nil {
-			t.Fatalf("first Poll: %v", err)
+		if _, err := env.client.PollOnce(ctx); err != nil {
+			t.Fatalf("first PollOnce: %v", err)
 		}
 
 		// CommitInstall to mark it active
@@ -400,9 +400,9 @@ func TestPoll(t *testing.T) {
 		}
 
 		// Second poll: no new deployment (completed one is gone from active list)
-		needReboot, err := env.client.Poll(ctx)
+		needReboot, err := env.client.PollOnce(ctx)
 		if err != nil {
-			t.Fatalf("second Poll: %v", err)
+			t.Fatalf("second PollOnce: %v", err)
 		}
 		if needReboot {
 			t.Error("expected needReboot=false when already on latest deployment")
@@ -417,18 +417,18 @@ func TestPoll(t *testing.T) {
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
 		// First poll marks installing
-		needReboot, err := env.client.Poll(ctx)
+		needReboot, err := env.client.PollOnce(ctx)
 		if err != nil {
-			t.Fatalf("first Poll: %v", err)
+			t.Fatalf("first PollOnce: %v", err)
 		}
 		if !needReboot {
-			t.Fatal("expected needReboot=true on first Poll")
+			t.Fatal("expected needReboot=true on first PollOnce")
 		}
 
 		// Second poll without commit — already installing, should return needReboot=true
-		needReboot, err = env.client.Poll(ctx)
+		needReboot, err = env.client.PollOnce(ctx)
 		if err != nil {
-			t.Fatalf("second Poll: %v", err)
+			t.Fatalf("second PollOnce: %v", err)
 		}
 		if !needReboot {
 			t.Error("expected needReboot=true when already installing")
@@ -441,7 +441,7 @@ func TestPoll(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, []byte("not a tarball"))
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		needReboot, err := env.client.Poll(ctx)
+		needReboot, err := env.client.PollOnce(ctx)
 		if err == nil {
 			t.Error("expected error for invalid tarball payload, got nil")
 		}
@@ -465,7 +465,7 @@ func TestPoll(t *testing.T) {
 			t.Fatalf("create bad client: %v", err)
 		}
 
-		_, err = badClient.Poll(ctx)
+		_, err = badClient.PollOnce(ctx)
 		if err == nil {
 			t.Error("expected error with wrong secret, got nil")
 		}
@@ -482,8 +482,8 @@ func TestCommit(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.client.Poll(ctx); err != nil {
-			t.Fatalf("Poll: %v", err)
+		if _, err := env.client.PollOnce(ctx); err != nil {
+			t.Fatalf("PollOnce: %v", err)
 		}
 
 		if err := env.client.CommitInstall(ctx); err != nil {
@@ -518,8 +518,8 @@ func TestCommit(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.client.Poll(ctx); err != nil {
-			t.Fatalf("Poll: %v", err)
+		if _, err := env.client.PollOnce(ctx); err != nil {
+			t.Fatalf("PollOnce: %v", err)
 		}
 
 		// CommitInstall with no prior active — should not error
@@ -536,8 +536,8 @@ func TestCommit(t *testing.T) {
 		cvID1 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload1)
 		depID1 := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID1)
 
-		if _, err := env.client.Poll(ctx); err != nil {
-			t.Fatalf("Poll v1: %v", err)
+		if _, err := env.client.PollOnce(ctx); err != nil {
+			t.Fatalf("PollOnce v1: %v", err)
 		}
 		if err := env.client.CommitInstall(ctx); err != nil {
 			t.Fatalf("CommitInstall v1: %v", err)
@@ -553,8 +553,8 @@ func TestCommit(t *testing.T) {
 		cvID2 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload2)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID2)
 
-		if _, err := env.client.Poll(ctx); err != nil {
-			t.Fatalf("Poll v2: %v", err)
+		if _, err := env.client.PollOnce(ctx); err != nil {
+			t.Fatalf("PollOnce v2: %v", err)
 		}
 		if err := env.client.CommitInstall(ctx); err != nil {
 			t.Fatalf("CommitInstall v2: %v", err)
@@ -578,8 +578,8 @@ func TestRollback(t *testing.T) {
 		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
 		// starts installing
-		if _, err := env.client.Poll(ctx); err != nil {
-			t.Fatalf("Poll: %v", err)
+		if _, err := env.client.PollOnce(ctx); err != nil {
+			t.Fatalf("PollOnce: %v", err)
 		}
 
 		if err := env.client.FailInstall(ctx, "test reason"); err != nil {
@@ -609,20 +609,20 @@ func TestRollback(t *testing.T) {
 		cvID1 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload1)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID1)
 
-		if _, err := env.client.Poll(ctx); err != nil {
-			t.Fatalf("Poll v1: %v", err)
+		if _, err := env.client.PollOnce(ctx); err != nil {
+			t.Fatalf("PollOnce v1: %v", err)
 		}
 		if err := env.client.CommitInstall(ctx); err != nil {
 			t.Fatalf("CommitInstall v1: %v", err)
 		}
 
-		// Poll v2
+		// PollOnce v2
 		payload2 := txtarToTarGZ(t, "v2.txtar")
 		cvID2 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload2)
 		depID2 := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID2)
 
-		if _, err := env.client.Poll(ctx); err != nil {
-			t.Fatalf("Poll v2: %v", err)
+		if _, err := env.client.PollOnce(ctx); err != nil {
+			t.Fatalf("PollOnce v2: %v", err)
 		}
 
 		// FailInstall v2
@@ -654,8 +654,8 @@ func TestRollback(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.client.Poll(ctx); err != nil {
-			t.Fatalf("Poll: %v", err)
+		if _, err := env.client.PollOnce(ctx); err != nil {
+			t.Fatalf("PollOnce: %v", err)
 		}
 
 		// FailInstall with no prior active deployment — should not error
@@ -687,8 +687,8 @@ func TestInstallingConfig(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.client.Poll(ctx); err != nil {
-			t.Fatalf("Poll: %v", err)
+		if _, err := env.client.PollOnce(ctx); err != nil {
+			t.Fatalf("PollOnce: %v", err)
 		}
 
 		fsys, err := env.client.InstallingConfig()
@@ -726,8 +726,8 @@ func TestActiveConfig(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.client.Poll(ctx); err != nil {
-			t.Fatalf("Poll: %v", err)
+		if _, err := env.client.PollOnce(ctx); err != nil {
+			t.Fatalf("PollOnce: %v", err)
 		}
 		if err := env.client.CommitInstall(ctx); err != nil {
 			t.Fatalf("CommitInstall: %v", err)
