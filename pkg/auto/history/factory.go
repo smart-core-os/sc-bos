@@ -144,11 +144,6 @@ func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) er
 		return errors.New("source.trait is required when source.devices is set")
 	}
 
-	store, err := a.createStore(ctx, *cfg.Source, cfg.Storage)
-	if err != nil {
-		return err
-	}
-
 	announce := a.announcer.Replace(ctx)
 
 	type activeRecorder struct {
@@ -188,7 +183,7 @@ func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) er
 					rec.undo()
 				}
 				deviceCtx, cancel := context.WithCancel(ctx)
-				undo, err := a.startDeviceRecording(deviceCtx, announce, name, store, cfg)
+				undo, err := a.startDeviceRecording(deviceCtx, announce, name, cfg)
 				if err != nil {
 					a.logger.Error("failed to start recording", zap.String("device", name), zap.Error(err))
 					cancel()
@@ -208,9 +203,14 @@ func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) er
 	}
 }
 
-func (a *automation) startDeviceRecording(ctx context.Context, announce node.Announcer, deviceName string, store history.Store, cfg config.Root) (node.Undo, error) {
+func (a *automation) startDeviceRecording(ctx context.Context, announce node.Announcer, deviceName string, cfg config.Root) (node.Undo, error) {
 	src := *cfg.Source
 	src.Name = deviceName
+
+	store, err := a.createStore(ctx, src, cfg.Storage)
+	if err != nil {
+		return node.NilUndo, err
+	}
 
 	serverClient, collect, err := a.createCollector(store, cfg.Source.Trait)
 	if err != nil {
