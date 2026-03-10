@@ -10,7 +10,7 @@ import WaterComp from '@/components/WaterTank.vue';
 import {usePeriod} from '@/composables/time.js';
 import {useMeterReadingAt, usePullMeterReading} from '@/traits/meter/meter.js';
 import {isNullOrUndef} from '@/util/types.js';
-import {computed, effectScope, reactive, ref, toRef, watch} from 'vue';
+import {computed, effectScope, onUnmounted, reactive, ref, toRef, watch} from 'vue';
 
 
 const props = defineProps({
@@ -31,6 +31,10 @@ const props = defineProps({
     type: [Number, String],
     default: 0 // Used via Math.abs, {period: 'day', offset: 1} means yesterday, and so on
   },
+  refreshInterval: {
+    type: Number,
+    default: 60 * 1000 // 1 minute in ms; set to 0 to disable
+  }
 });
 
 const _offset = computed(() => -Math.abs(parseInt(props.offset)));
@@ -38,19 +42,29 @@ const {start, end} = usePeriod(toRef(props, 'period'), toRef(props, 'period'), _
 
 // const {response: meterReadingInfo} = useDescribeMeterReading(() => props.name);
 
-// calculate the reading at the start date, which we assume is in the past.
-const readingAtStart = useMeterReadingAt(() => props.name, start);
+// Periodic refresh tick — increments on the configured interval to re-trigger the scope
+const tick = ref(0);
+let refreshHandle = null;
+const scheduleRefresh = (interval) => {
+  if (refreshHandle) clearInterval(refreshHandle);
+  if (interval > 0) refreshHandle = setInterval(() => { tick.value++; }, interval);
+};
+scheduleRefresh(props.refreshInterval);
+watch(() => props.refreshInterval, scheduleRefresh);
+onUnmounted(() => { if (refreshHandle) clearInterval(refreshHandle); });
 
 const endIsLive = computed(() => _offset.value === 0);
 let endCalcScope = null;
+const readingAtStart = reactive({value: null});
 const readingAtEnd = reactive({value: null});
-watch(endIsLive, (endIsLive) => {
+watch([endIsLive, start, end, tick], ([endIsLive]) => {
   if (endCalcScope) {
     endCalcScope();
   }
   const scope = effectScope();
   endCalcScope = () => scope.stop();
   scope.run(() => {
+    readingAtStart.value = useMeterReadingAt(() => props.name, start);
     if (endIsLive) {
       const {value: meterReading} = usePullMeterReading(() => props.name);
       readingAtEnd.value = meterReading;
