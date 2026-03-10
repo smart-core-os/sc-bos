@@ -402,10 +402,78 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 	})
 }
 
+func Test_automation_applyConfigDevices_remove(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		logger := zap.NewNop()
+		occ1 := occupancysensorpb.NewModel()
+
+		announcer := node.New("test")
+		announcer.Logger = logger
+		announcer.Announce("occ1",
+			node.HasTrait(trait.OccupancySensor),
+			node.HasServer(
+				traits.RegisterOccupancySensorApiServer,
+				traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ1)),
+			),
+		)
+
+		devicesCh := make(chan *devicespb.PullDevicesResponse, 1)
+		a := &automation{
+			clients:   announcer,
+			announcer: node.NewReplaceAnnouncer(announcer),
+			logger:    logger,
+			devices: &streamingDevicesClient{
+				devices: []*devicespb.Device{{Name: "occ1"}},
+				ch:      devicesCh,
+			},
+		}
+
+		cfg := config.Root{
+			Source:  &config.Source{Trait: trait.OccupancySensor},
+			Storage: &config.Storage{Type: "memory"},
+		}
+
+		go a.applyConfigDevices(t.Context(), cfg)
+		synctest.Wait()
+
+		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
+			t.Fatal(err)
+		}
+		synctest.Wait()
+
+		cli := gen_occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
+		hist, err := cli.ListOccupancyHistory(t.Context(), &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
+		if err != nil {
+			t.Fatal(err)
+		}
+		countBeforeRemove := hist.GetTotalSize()
+		if countBeforeRemove == 0 {
+			t.Fatal("expected occ1 to have history records before remove")
+		}
+
+		devicesCh <- &devicespb.PullDevicesResponse{Changes: []*devicespb.PullDevicesResponse_Change{
+			{Type: types.ChangeType_REMOVE, Name: "occ1"},
+		}}
+		synctest.Wait()
+
+		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
+			t.Fatal(err)
+		}
+		synctest.Wait()
+
+		_, err = cli.ListOccupancyHistory(t.Context(), &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
+		if status.Code(err) != codes.NotFound {
+			t.Fatalf("expected NotFound after remove, got %v", err)
+		}
+	})
+}
+
 // streamingDevicesClient implements devicespb.DevicesApiClient for tests.
 // PullDevices immediately sends the configured devices as ADD events, then blocks until the context is cancelled.
+// If ch is set, it is used as the stream channel and the caller controls what is sent after the initial events.
 type streamingDevicesClient struct {
 	devices []*devicespb.Device
+	ch      chan *devicespb.PullDevicesResponse // optional; if nil, a local buffered channel is used
 }
 
 func (s *streamingDevicesClient) ListDevices(_ context.Context, _ *devicespb.ListDevicesRequest, _ ...grpc.CallOption) (*devicespb.ListDevicesResponse, error) {
@@ -413,7 +481,10 @@ func (s *streamingDevicesClient) ListDevices(_ context.Context, _ *devicespb.Lis
 }
 
 func (s *streamingDevicesClient) PullDevices(ctx context.Context, _ *devicespb.PullDevicesRequest, _ ...grpc.CallOption) (grpc.ServerStreamingClient[devicespb.PullDevicesResponse], error) {
-	ch := make(chan *devicespb.PullDevicesResponse, 1)
+	ch := s.ch
+	if ch == nil {
+		ch = make(chan *devicespb.PullDevicesResponse, 1)
+	}
 	if len(s.devices) > 0 {
 		changes := make([]*devicespb.PullDevicesResponse_Change, len(s.devices))
 		for i, d := range s.devices {
