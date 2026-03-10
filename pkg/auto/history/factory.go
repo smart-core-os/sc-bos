@@ -131,6 +131,9 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 // routeConfig dispatches to applyConfigDevices when cfg.Source.Devices is set, otherwise falls back to applyConfig.
 func (a *automation) routeConfig(ctx context.Context, cfg config.Root) error {
 	if cfg.Source != nil && len(cfg.Source.Devices) > 0 {
+		if a.devices == nil {
+			return errors.New("source.devices requires a DevicesApi service to be configured")
+		}
 		return a.applyConfigDevices(ctx, cfg)
 	}
 	return a.applyConfig(ctx, cfg)
