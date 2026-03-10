@@ -183,6 +183,10 @@ func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) er
 			name := change.GetName()
 			switch change.GetType() {
 			case types.ChangeType_ADD:
+				if rec, ok := active[name]; ok {
+					rec.cancel()
+					rec.undo()
+				}
 				deviceCtx, cancel := context.WithCancel(ctx)
 				undo, err := a.startDeviceRecording(deviceCtx, announce, name, store, cfg)
 				if err != nil {
