@@ -22,15 +22,16 @@ export const useKeycloakHealthStore = defineStore('keycloakHealth', () => {
 
     pending.value = true;
     try {
-      const url = `${cfg.url}realms/${cfg.realm}/.well-known/openid-configuration`;
+      const base = cfg.url.endsWith('/') ? cfg.url : cfg.url + '/';
+      const url = `${base}realms/${cfg.realm}/.well-known/openid-configuration`;
       const res = await fetch(url);
       if (!res.ok) {
-        error.value = {code: res.status, message: `Unable to reach Keycloak at ${cfg.url}`};
+        error.value = {code: res.status, message: `Unable to reach auth provider at ${cfg.url}`};
       } else {
         error.value = null;
       }
     } catch {
-      error.value = {code: 0, message: `Unable to reach Keycloak at ${cfg.url}`};
+      error.value = {code: 0, message: `Unable to reach auth provider at ${cfg.url}`};
     } finally {
       pending.value = false;
     }
@@ -51,12 +52,26 @@ export const useKeycloakHealthStore = defineStore('keycloakHealth', () => {
   const url = computed(() => keycloakConfig.value?.url ?? '');
   const realm = computed(() => keycloakConfig.value?.realm ?? '');
 
+  const chipColor = computed(() => {
+    if (!isConfigured.value) return 'neutral-lighten-1';
+    if (error.value) return 'error';
+    return 'neutral-lighten-1';
+  });
+
+  const tooltipText = computed(() => {
+    if (pending.value) return 'Checking auth provider...';
+    if (error.value) return error.value.message;
+    return `Auth provider reachable at ${url.value}`;
+  });
+
   return {
     isConfigured,
     pending,
     error,
     url,
     realm,
+    chipColor,
+    tooltipText,
     pollNow,
     lastPoll,
     nextPoll,

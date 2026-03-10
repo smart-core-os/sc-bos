@@ -47,7 +47,16 @@
             VDivider: {class: 'mx-2', style: 'width: 10px; max-width: 10px;'},
             VProgressCircular: {size: 22, indeterminate: true}
           }">
-            <v-chip color="neutral-lighten-1">UI</v-chip>
+            <v-tooltip
+                v-if="keycloakHealth.isConfigured"
+                location="bottom"
+                :content-props="{'class': keycloakHealth.error ? 'bg-error' : ''}">
+              <template #activator="{ props: tp }">
+                <v-chip v-bind="tp" :color="keycloakHealth.chipColor">UI</v-chip>
+              </template>
+              <span>{{ keycloakHealth.tooltipText }}</span>
+            </v-tooltip>
+            <v-chip v-else color="neutral-lighten-1">UI</v-chip>
             <template v-for="link in chain" :key="link.node.name">
               <v-divider/>
               <v-progress-circular v-if="link.health.pending"/>
@@ -59,21 +68,6 @@
             </template>
           </v-defaults-provider>
         </v-card-text>
-        <template v-if="keycloakHealth.isConfigured">
-          <v-divider/>
-          <v-card-text class="d-flex align-center">
-            <v-defaults-provider :defaults="{
-              VProgressCircular: {size: 22, indeterminate: true}
-            }">
-              <v-progress-circular v-if="keycloakHealth.pending"/>
-              <status-alert
-                  v-else
-                  v-bind="keycloakStatusAttrs"/>
-            </v-defaults-provider>
-            <span class="ml-2">Keycloak</span>
-            <span class="ml-2 text-caption text-medium-emphasis">{{ keycloakHealth.url }}</span>
-          </v-card-text>
-        </template>
       </v-card>
     </v-menu>
   </v-btn>
@@ -215,21 +209,6 @@ const chipAttrs = (link) => {
   }
   return attrs;
 };
-
-const keycloakStatusAttrs = computed(() => {
-  if (keycloakHealth.error) {
-    return {
-      color: 'error',
-      icon: 'mdi-close',
-      resource: {error: keycloakHealth.error}
-    };
-  }
-  return {
-    color: 'success',
-    icon: 'mdi-check',
-    resource: {error: {code: 0, message: `Keycloak is reachable at ${keycloakHealth.url}`}}
-  };
-});
 
 // code relating to the button on the toolbar and what color it should be.
 const issueCount = computed(() => {

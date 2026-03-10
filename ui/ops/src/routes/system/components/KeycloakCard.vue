@@ -16,7 +16,7 @@
           <status-alert
               v-else
               v-bind="statusAttrs"/>
-          <span class="ml-1">Keycloak</span>
+          <span class="ml-1">SSO</span>
         </v-list-item>
       </v-list>
       <div class="chips">
@@ -44,7 +44,7 @@ const statusAttrs = computed(() => {
   return {
     color: 'success',
     icon: 'mdi-check',
-    resource: {error: {code: 0, message: `Keycloak is reachable at ${keycloakHealth.url}`}}
+    resource: {error: {code: 0, message: `SSO is reachable at ${keycloakHealth.url}`}}
   };
 });
 </script>
