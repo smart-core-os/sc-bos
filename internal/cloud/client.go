@@ -259,7 +259,6 @@ func (c *DeploymentClient) AutoPoll(ctx context.Context, interval time.Duration)
 			if err != nil {
 				c.logger.Error("failed to poll deployment server", zap.Error(err))
 			} else if needReboot {
-				c.logger.Info("reboot required to apply new deployment")
 				return true
 			}
 		}

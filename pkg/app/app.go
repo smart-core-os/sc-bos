@@ -21,8 +21,16 @@ func RunUntilInterrupt(run func(ctx context.Context) error) (status int) {
 	switch len(errs) {
 	case 0:
 	case 1:
-		_, _ = fmt.Fprintf(os.Stderr, "fatal error: %s\n", errs[0].Error())
+		err := errs[0]
 		status = 1
+		if ec, ok := err.(ExitCoder); ok {
+			status = ec.ExitCode()
+		}
+		if status == 0 {
+			_, _ = fmt.Fprintf(os.Stderr, "stopping: %s\n", err.Error())
+		} else {
+			_, _ = fmt.Fprintf(os.Stderr, "fatal error: %s\n", err.Error())
+		}
 	default:
 		_, _ = fmt.Fprintln(os.Stderr, "fatal errors:")
 		for _, err := range errs {
@@ -31,4 +39,8 @@ func RunUntilInterrupt(run func(ctx context.Context) error) (status int) {
 		status = 1
 	}
 	return
+}
+
+type ExitCoder interface {
+	ExitCode() int
 }

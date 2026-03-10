@@ -537,7 +537,11 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	}
 	if c.Deployments != nil {
 		group.Go(func() error {
-			_ = c.Deployments.AutoPoll(ctx, c.SystemConfig.Cloud.PollInterval.Duration)
+			needRestart := c.Deployments.AutoPoll(ctx, c.SystemConfig.Cloud.PollInterval.Duration)
+			if needRestart {
+				c.Logger.Info("triggering automatic restart to apply new deployment")
+				return restartNowError{}
+			}
 			return nil
 		})
 	}
@@ -590,3 +594,14 @@ const (
 	cloudDirName  = "cloud"
 	accountsFile  = "accounts.sqlite3"
 )
+
+// a sentinel error type - does not indicate an actual error, but a request to restart the controller immediately
+type restartNowError struct{}
+
+func (e restartNowError) Error() string {
+	return "automatic restart triggered"
+}
+
+func (e restartNowError) ExitCode() int {
+	return 0
+}
