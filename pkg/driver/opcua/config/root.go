@@ -11,10 +11,10 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	transportpb "github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )

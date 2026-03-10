@@ -16,10 +16,9 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
-	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
@@ -37,8 +36,8 @@ type AutoImpl struct {
 	airQualityClient     traits.AirQualitySensorApiClient
 	airTemperatureClient traits.AirTemperatureApiClient
 	metadataClient       traits.MetadataApiClient
-	meterClient          gen_meterpb.MeterApiClient
-	meterInfoClient      gen_meterpb.MeterInfoClient
+	meterClient          meterpb.MeterApiClient
+	meterInfoClient      meterpb.MeterInfoClient
 	occupancyClient      traits.OccupancySensorApiClient
 }
 
@@ -55,8 +54,8 @@ func (a *AutoImpl) initialiseClients(n *node.Node) {
 	a.airQualityClient = traits.NewAirQualitySensorApiClient(n.ClientConn())
 	a.airTemperatureClient = traits.NewAirTemperatureApiClient(n.ClientConn())
 	a.metadataClient = traits.NewMetadataApiClient(n.ClientConn())
-	a.meterClient = gen_meterpb.NewMeterApiClient(n.ClientConn())
-	a.meterInfoClient = gen_meterpb.NewMeterInfoClient(n.ClientConn())
+	a.meterClient = meterpb.NewMeterApiClient(n.ClientConn())
+	a.meterInfoClient = meterpb.NewMeterInfoClient(n.ClientConn())
 	a.occupancyClient = traits.NewOccupancySensorApiClient(n.ClientConn())
 }
 
@@ -276,7 +275,7 @@ func (a *AutoImpl) getMeterInfo(ctx context.Context, traitName trait.Name, devic
 			continue
 		}
 
-		support, err := a.meterInfoClient.DescribeMeterReading(ctx, &gen_meterpb.DescribeMeterReadingRequest{
+		support, err := a.meterInfoClient.DescribeMeterReading(ctx, &meterpb.DescribeMeterReadingRequest{
 			Name: deviceName,
 		})
 		if err != nil {

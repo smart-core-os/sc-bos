@@ -16,10 +16,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	transportpb "github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_transportpb "github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
@@ -61,12 +60,12 @@ func readTransportConfig(raw []byte) (cfg transportCfg, err error) {
 }
 
 type transport struct {
-	gen_transportpb.UnimplementedTransportApiServer
-	gen_transportpb.UnimplementedTransportInfoServer
+	transportpb.UnimplementedTransportApiServer
+	transportpb.UnimplementedTransportInfoServer
 
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *transportpb.Model
@@ -77,7 +76,7 @@ type transport struct {
 	units atomic.Value
 }
 
-func newTransport(client *gobacnet.Client, known known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*transport, error) {
+func newTransport(client *gobacnet.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*transport, error) {
 	cfg, err := readTransportConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -101,7 +100,7 @@ func newTransport(client *gobacnet.Client, known known.Context, faultCheck *gen_
 }
 
 func (t *transport) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(transportpb.TraitName, node.WithClients(gen_transportpb.WrapApi(t), gen_transportpb.WrapInfo(t))))
+	return a.Announce(t.config.Name, node.HasTrait(transportpb.TraitName, node.WithClients(transportpb.WrapApi(t), transportpb.WrapInfo(t))))
 }
 
 func (t *transport) startPoll(init context.Context) (stop task.StopFn, err error) {
@@ -111,10 +110,10 @@ func (t *transport) startPoll(init context.Context) (stop task.StopFn, err error
 	})
 }
 
-func (t *transport) pollPeer(ctx context.Context) (*gen_transportpb.Transport, error) {
-	data := &gen_transportpb.Transport{}
+func (t *transport) pollPeer(ctx context.Context) (*transportpb.Transport, error) {
+	data := &transportpb.Transport{}
 
-	var resProcessors []func(response any, data *gen_transportpb.Transport, cfg *transportCfg) error
+	var resProcessors []func(response any, data *transportpb.Transport, cfg *transportCfg) error
 	var readValues []config.ValueSource
 	var requestNames []string
 
@@ -201,7 +200,7 @@ func (t *transport) pollPeer(ctx context.Context) (*gen_transportpb.Transport, e
 	return t.model.UpdateTransport(data)
 }
 
-func (t *transport) processCarLoadUnits(response any, _ *gen_transportpb.Transport, _ *transportCfg) error {
+func (t *transport) processCarLoadUnits(response any, _ *transportpb.Transport, _ *transportCfg) error {
 	value, err := comm.IntValue(response)
 	if err != nil {
 		return comm.ErrReadProperty{Prop: "loadUnits", Cause: err}
@@ -212,14 +211,14 @@ func (t *transport) processCarLoadUnits(response any, _ *gen_transportpb.Transpo
 	return nil
 }
 
-func (t *transport) processAssignedLandingCalls(response any, data *gen_transportpb.Transport, _ *transportCfg) error {
+func (t *transport) processAssignedLandingCalls(response any, data *transportpb.Transport, _ *transportCfg) error {
 	value, ok := response.([]comm.LandingCall)
 	if !ok {
 		return comm.ErrReadProperty{Prop: "assignedLandingCalls", Cause: fmt.Errorf("converting to AssignedLandingCalls")}
 	}
 
 	for _, v := range value {
-		data.NextDestinations = append(data.NextDestinations, &gen_transportpb.Transport_Location{
+		data.NextDestinations = append(data.NextDestinations, &transportpb.Transport_Location{
 			Id:    fmt.Sprintf("%d", v.Floor),
 			Title: fmt.Sprintf("Floor %d", v.Floor),
 		})
@@ -227,7 +226,7 @@ func (t *transport) processAssignedLandingCalls(response any, data *gen_transpor
 	return nil
 }
 
-func (t *transport) processMakingCarCall(response any, data *gen_transportpb.Transport, _ *transportCfg) error {
+func (t *transport) processMakingCarCall(response any, data *transportpb.Transport, _ *transportCfg) error {
 	if response == nil {
 		return nil
 	}
@@ -244,12 +243,12 @@ func (t *transport) processMakingCarCall(response any, data *gen_transportpb.Tra
 	}
 
 	for _, v := range value {
-		data.NextDestinations = append(data.NextDestinations, &gen_transportpb.Transport_Location{Id: fmt.Sprintf("%d", v), Title: fmt.Sprintf("Floor %d", v)})
+		data.NextDestinations = append(data.NextDestinations, &transportpb.Transport_Location{Id: fmt.Sprintf("%d", v), Title: fmt.Sprintf("Floor %d", v)})
 	}
 	return nil
 }
 
-func (t *transport) processCarPosition(response any, data *gen_transportpb.Transport, cfg *transportCfg) error {
+func (t *transport) processCarPosition(response any, data *transportpb.Transport, cfg *transportCfg) error {
 	value, err := comm.IntValue(response)
 
 	if err != nil {
@@ -273,15 +272,15 @@ func (t *transport) processCarPosition(response any, data *gen_transportpb.Trans
 	}
 
 	if value == 0 {
-		data.ActualPosition = &gen_transportpb.Transport_Location{Id: "0", Title: "Ground Floor"}
+		data.ActualPosition = &transportpb.Transport_Location{Id: "0", Title: "Ground Floor"}
 		return nil
 	}
 
-	data.ActualPosition = &gen_transportpb.Transport_Location{Id: fmt.Sprintf("%d", value), Title: fmt.Sprintf("Floor %d", value)}
+	data.ActualPosition = &transportpb.Transport_Location{Id: fmt.Sprintf("%d", value), Title: fmt.Sprintf("Floor %d", value)}
 	return nil
 }
 
-func (t *transport) processCarAssignedDirection(response any, data *gen_transportpb.Transport, _ *transportCfg) error {
+func (t *transport) processCarAssignedDirection(response any, data *transportpb.Transport, _ *transportCfg) error {
 	value, ok := response.(comm.LiftCarDirection)
 	if !ok {
 		return comm.ErrReadProperty{Prop: "carAssignedDirection", Cause: fmt.Errorf("converting to CarAssignedDirection")}
@@ -291,17 +290,17 @@ func (t *transport) processCarAssignedDirection(response any, data *gen_transpor
 	case comm.DirectionUpAndDown:
 		fallthrough
 	case comm.DirectionUp:
-		data.MovingDirection = gen_transportpb.Transport_UP
+		data.MovingDirection = transportpb.Transport_UP
 	case comm.DirectionDown:
-		data.MovingDirection = gen_transportpb.Transport_DOWN
+		data.MovingDirection = transportpb.Transport_DOWN
 	default:
-		data.MovingDirection = gen_transportpb.Transport_NO_DIRECTION
+		data.MovingDirection = transportpb.Transport_NO_DIRECTION
 	}
 
 	return nil
 }
 
-func (t *transport) processCarDoorStatus(response any, data *gen_transportpb.Transport, _ *transportCfg) error {
+func (t *transport) processCarDoorStatus(response any, data *transportpb.Transport, _ *transportCfg) error {
 	value, err := comm.IntValue(response)
 	if err != nil {
 		return comm.ErrReadProperty{Prop: "carDoorStatus", Cause: err}
@@ -309,25 +308,25 @@ func (t *transport) processCarDoorStatus(response any, data *gen_transportpb.Tra
 
 	switch comm.DoorStatus(value) {
 	case comm.DoorClosed:
-		data.Doors = append(data.Doors, &gen_transportpb.Transport_Door{Status: gen_transportpb.Transport_Door_CLOSED})
+		data.Doors = append(data.Doors, &transportpb.Transport_Door{Status: transportpb.Transport_Door_CLOSED})
 	case comm.DoorClosing:
-		data.Doors = append(data.Doors, &gen_transportpb.Transport_Door{Status: gen_transportpb.Transport_Door_CLOSING})
+		data.Doors = append(data.Doors, &transportpb.Transport_Door{Status: transportpb.Transport_Door_CLOSING})
 	case comm.DoorOpened:
-		data.Doors = append(data.Doors, &gen_transportpb.Transport_Door{Status: gen_transportpb.Transport_Door_OPEN})
+		data.Doors = append(data.Doors, &transportpb.Transport_Door{Status: transportpb.Transport_Door_OPEN})
 	case comm.DoorOpening:
-		data.Doors = append(data.Doors, &gen_transportpb.Transport_Door{Status: gen_transportpb.Transport_Door_OPENING})
+		data.Doors = append(data.Doors, &transportpb.Transport_Door{Status: transportpb.Transport_Door_OPENING})
 	case comm.DoorSafetyLocked:
-		data.Doors = append(data.Doors, &gen_transportpb.Transport_Door{Status: gen_transportpb.Transport_Door_SAFETY_LOCKED})
+		data.Doors = append(data.Doors, &transportpb.Transport_Door{Status: transportpb.Transport_Door_SAFETY_LOCKED})
 	case comm.DoorLimitedOpened:
-		data.Doors = append(data.Doors, &gen_transportpb.Transport_Door{Status: gen_transportpb.Transport_Door_LIMITED_OPENED})
+		data.Doors = append(data.Doors, &transportpb.Transport_Door{Status: transportpb.Transport_Door_LIMITED_OPENED})
 	default:
-		data.Doors = append(data.Doors, &gen_transportpb.Transport_Door{Status: gen_transportpb.Transport_Door_DOOR_STATUS_UNSPECIFIED})
+		data.Doors = append(data.Doors, &transportpb.Transport_Door{Status: transportpb.Transport_Door_DOOR_STATUS_UNSPECIFIED})
 	}
 
 	return nil
 }
 
-func (t *transport) processCarMode(response any, data *gen_transportpb.Transport, _ *transportCfg) error {
+func (t *transport) processCarMode(response any, data *transportpb.Transport, _ *transportCfg) error {
 	value, err := comm.IntValue(response)
 
 	if err != nil {
@@ -336,37 +335,37 @@ func (t *transport) processCarMode(response any, data *gen_transportpb.Transport
 
 	switch comm.LiftCarMode(value) {
 	case comm.LiftCarModeNormal:
-		data.OperatingMode = gen_transportpb.Transport_NORMAL
+		data.OperatingMode = transportpb.Transport_NORMAL
 	case comm.LiftCarModeVIP:
-		data.OperatingMode = gen_transportpb.Transport_VIP_CONTROL
+		data.OperatingMode = transportpb.Transport_VIP_CONTROL
 	case comm.LiftCarModeInspection:
-		data.OperatingMode = gen_transportpb.Transport_SERVICE_CONTROL
+		data.OperatingMode = transportpb.Transport_SERVICE_CONTROL
 	case comm.LiftCarModeFirefighterControl:
-		data.OperatingMode = gen_transportpb.Transport_FIRE_OPERATION
+		data.OperatingMode = transportpb.Transport_FIRE_OPERATION
 	case comm.LiftCarModeEmergencyPower:
-		data.OperatingMode = gen_transportpb.Transport_EMERGENCY_POWER
+		data.OperatingMode = transportpb.Transport_EMERGENCY_POWER
 	case comm.LiftCarModeEarthquakeOp:
-		data.OperatingMode = gen_transportpb.Transport_EARTHQUAKE_OPERATION
+		data.OperatingMode = transportpb.Transport_EARTHQUAKE_OPERATION
 	case comm.LiftCarModeOccupantEvac:
-		data.OperatingMode = gen_transportpb.Transport_OCCUPANT_EVACUATION
+		data.OperatingMode = transportpb.Transport_OCCUPANT_EVACUATION
 	case comm.LiftCarModeHoming:
-		data.OperatingMode = gen_transportpb.Transport_HOMING
+		data.OperatingMode = transportpb.Transport_HOMING
 	case comm.LiftCarModeParking:
-		data.OperatingMode = gen_transportpb.Transport_PARKING
+		data.OperatingMode = transportpb.Transport_PARKING
 	case comm.LiftCarModeAttendantControl:
-		data.OperatingMode = gen_transportpb.Transport_ATTENDANT_CONTROL
+		data.OperatingMode = transportpb.Transport_ATTENDANT_CONTROL
 	case comm.LiftCarModeCabinetRecall:
-		data.OperatingMode = gen_transportpb.Transport_CABINET_RECALL
+		data.OperatingMode = transportpb.Transport_CABINET_RECALL
 	case comm.LiftCarModeOutOfService:
-		data.OperatingMode = gen_transportpb.Transport_OUT_OF_SERVICE
+		data.OperatingMode = transportpb.Transport_OUT_OF_SERVICE
 	default:
-		data.OperatingMode = gen_transportpb.Transport_OPERATING_MODE_UNSPECIFIED
+		data.OperatingMode = transportpb.Transport_OPERATING_MODE_UNSPECIFIED
 	}
 
 	return nil
 }
 
-func (t *transport) processCarLoad(response any, data *gen_transportpb.Transport, _ *transportCfg) error {
+func (t *transport) processCarLoad(response any, data *transportpb.Transport, _ *transportCfg) error {
 	value, err := comm.Float32Value(response)
 	if err != nil {
 		return comm.ErrReadProperty{Prop: "carLoad", Cause: err}
@@ -376,17 +375,17 @@ func (t *transport) processCarLoad(response any, data *gen_transportpb.Transport
 	return nil
 }
 
-func (t *transport) processNextStoppingFloor(response any, data *gen_transportpb.Transport, _ *transportCfg) error {
+func (t *transport) processNextStoppingFloor(response any, data *transportpb.Transport, _ *transportCfg) error {
 	value, err := comm.IntValue(response)
 	if err != nil {
 		return comm.ErrReadProperty{Prop: "nextStoppingFloor", Cause: err}
 	}
 
-	data.Payloads = []*gen_transportpb.Transport_Payload{
+	data.Payloads = []*transportpb.Transport_Payload{
 		{
 			PayloadId: fmt.Sprintf("%d", value),
-			IntendedJourney: &gen_transportpb.Transport_Journey{
-				Destinations: []*gen_transportpb.Transport_Location{
+			IntendedJourney: &transportpb.Transport_Journey{
+				Destinations: []*transportpb.Transport_Location{
 					{
 						Title: fmt.Sprintf("Floor %d", value),
 					},
@@ -397,7 +396,7 @@ func (t *transport) processNextStoppingFloor(response any, data *gen_transportpb
 	return nil
 }
 
-func (t *transport) processFaultSignals(response any, data *gen_transportpb.Transport, _ *transportCfg) error {
+func (t *transport) processFaultSignals(response any, data *transportpb.Transport, _ *transportCfg) error {
 	res, ok := response.([]interface{})
 
 	if !ok {
@@ -416,63 +415,63 @@ func (t *transport) processFaultSignals(response any, data *gen_transportpb.Tran
 	for _, v := range value {
 		switch v {
 		case comm.LiftFaultControllerFault:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_CONTROLLER_FAULT})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_CONTROLLER_FAULT})
 		case comm.LiftFaultDriveAndMotorFault:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_DRIVE_AND_MOTOR_FAULT})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_DRIVE_AND_MOTOR_FAULT})
 		case comm.LiftFaultGovernorAndSafetyGearFault:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_GOVERNOR_AND_SAFETY_GEAR_FAULT})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_GOVERNOR_AND_SAFETY_GEAR_FAULT})
 		case comm.LiftFaultLiftShaftDeviceFault:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_LIFT_SHAFT_DEVICE_FAULT})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_LIFT_SHAFT_DEVICE_FAULT})
 		case comm.LiftFaultPowerSupplyFault:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_POWER_SUPPLY_FAULT})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_POWER_SUPPLY_FAULT})
 		case comm.LiftFaultSafetyInterlockFault:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_SAFETY_DEVICE_FAULT})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_SAFETY_DEVICE_FAULT})
 		case comm.LiftFaultDoorClosingFault:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_DOOR_NOT_CLOSING})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_DOOR_NOT_CLOSING})
 		case comm.LiftFaultDoorOpeningFault:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_DOOR_NOT_OPENING})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_DOOR_NOT_OPENING})
 		case comm.LiftFaultCarStoppedOutsideLanding:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_CAR_STOPPED_OUTSIDE_LANDING_ZONE})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_CAR_STOPPED_OUTSIDE_LANDING_ZONE})
 		case comm.LiftFaultCallButtonStuck:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_CALL_BUTTON_STUCK})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_CALL_BUTTON_STUCK})
 		case comm.LiftFaultStartFailure:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_FAIL_TO_START})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_FAIL_TO_START})
 		case comm.LiftFaultControllerSupplyFault:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_CONTROLLER_SUPPLY_FAULT})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_CONTROLLER_SUPPLY_FAULT})
 		case comm.LiftFaultSelfTestFailure:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_SELF_TEST_FAILURE})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_SELF_TEST_FAILURE})
 		case comm.LiftFaultRuntimeLimitExceeded:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_RUNTIME_LIMIT_EXCEEDED})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_RUNTIME_LIMIT_EXCEEDED})
 		case comm.LiftFaultPositionLost:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_POSITION_LOST})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_POSITION_LOST})
 		case comm.LiftFaultDriveTempExceeded:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_DRIVE_AND_MOTOR_FAULT})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_DRIVE_AND_MOTOR_FAULT})
 		case comm.LiftFaultLoadMeasurementFault:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_LOAD_MEASUREMENT_FAULT})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_LOAD_MEASUREMENT_FAULT})
 		default:
-			data.Faults = append(data.Faults, &gen_transportpb.Transport_Fault{FaultType: gen_transportpb.Transport_Fault_FAULT_TYPE_UNSPECIFIED})
+			data.Faults = append(data.Faults, &transportpb.Transport_Fault{FaultType: transportpb.Transport_Fault_FAULT_TYPE_UNSPECIFIED})
 		}
 	}
 
 	return nil
 }
 
-func (t *transport) processPassengerAlarm(response any, data *gen_transportpb.Transport, _ *transportCfg) error {
+func (t *transport) processPassengerAlarm(response any, data *transportpb.Transport, _ *transportCfg) error {
 	value, err := comm.BoolValue(response)
 	if err != nil {
 		return comm.ErrReadProperty{Prop: "passengerAlarm", Cause: err}
 	}
 
 	if value {
-		data.PassengerAlarm = &gen_transportpb.Transport_Alarm{State: gen_transportpb.Transport_Alarm_ACTIVATED, Time: timestamppb.Now()}
+		data.PassengerAlarm = &transportpb.Transport_Alarm{State: transportpb.Transport_Alarm_ACTIVATED, Time: timestamppb.Now()}
 	} else {
-		data.PassengerAlarm = &gen_transportpb.Transport_Alarm{State: gen_transportpb.Transport_Alarm_UNACTIVATED, Time: timestamppb.Now()}
+		data.PassengerAlarm = &transportpb.Transport_Alarm{State: transportpb.Transport_Alarm_UNACTIVATED, Time: timestamppb.Now()}
 	}
 
 	return nil
 }
 
-func (t *transport) DescribeTransport(ctx context.Context, _ *gen_transportpb.DescribeTransportRequest) (*gen_transportpb.TransportSupport, error) {
+func (t *transport) DescribeTransport(ctx context.Context, _ *transportpb.DescribeTransportRequest) (*transportpb.TransportSupport, error) {
 	err := t.pollTask.Attach(ctx)
 
 	if err != nil {
@@ -483,12 +482,12 @@ func (t *transport) DescribeTransport(ctx context.Context, _ *gen_transportpb.De
 	if unit == "" {
 		unit = "unspecified"
 	}
-	return &gen_transportpb.TransportSupport{
+	return &transportpb.TransportSupport{
 		LoadUnit: unit,
 	}, nil
 }
 
-func (t *transport) GetTransport(ctx context.Context, request *gen_transportpb.GetTransportRequest) (*gen_transportpb.Transport, error) {
+func (t *transport) GetTransport(ctx context.Context, request *transportpb.GetTransportRequest) (*transportpb.Transport, error) {
 	err := t.pollTask.Attach(ctx)
 	if err != nil {
 		return nil, grpcStatus.New(codes.Internal, err.Error()).Err()
@@ -496,7 +495,7 @@ func (t *transport) GetTransport(ctx context.Context, request *gen_transportpb.G
 	return t.ModelServer.GetTransport(ctx, request)
 }
 
-func (t *transport) PullTransport(request *gen_transportpb.PullTransportRequest, server gen_transportpb.TransportApi_PullTransportServer) error {
+func (t *transport) PullTransport(request *transportpb.PullTransportRequest, server transportpb.TransportApi_PullTransportServer) error {
 	err := t.pollTask.Attach(server.Context())
 	if err != nil {
 		return grpcStatus.New(codes.Internal, err.Error()).Err()

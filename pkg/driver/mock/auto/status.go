@@ -6,25 +6,24 @@ import (
 
 	"golang.org/x/exp/rand"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 func Status(model *statuspb.Model, name string) service.Lifecycle {
-	levels := []gen_statuspb.StatusLog_Level{
-		gen_statuspb.StatusLog_NOMINAL,
-		gen_statuspb.StatusLog_NOTICE,
-		gen_statuspb.StatusLog_REDUCED_FUNCTION,
-		gen_statuspb.StatusLog_NON_FUNCTIONAL,
-		gen_statuspb.StatusLog_OFFLINE,
+	levels := []statuspb.StatusLog_Level{
+		statuspb.StatusLog_NOMINAL,
+		statuspb.StatusLog_NOTICE,
+		statuspb.StatusLog_REDUCED_FUNCTION,
+		statuspb.StatusLog_NON_FUNCTIONAL,
+		statuspb.StatusLog_OFFLINE,
 	}
-	descriptions := map[gen_statuspb.StatusLog_Level][]string{
-		gen_statuspb.StatusLog_NOMINAL:          {"Connection Successful", "No issues detected", "All systems operational"},
-		gen_statuspb.StatusLog_NOTICE:           {"Device is being slow", "Check your configuration"},
-		gen_statuspb.StatusLog_REDUCED_FUNCTION: {"Device is not responding", "Timeout error"},
-		gen_statuspb.StatusLog_NON_FUNCTIONAL:   {"Device is not connected", "No data available"},
-		gen_statuspb.StatusLog_OFFLINE:          {"Device is offline", "Unable to connect"},
+	descriptions := map[statuspb.StatusLog_Level][]string{
+		statuspb.StatusLog_NOMINAL:          {"Connection Successful", "No issues detected", "All systems operational"},
+		statuspb.StatusLog_NOTICE:           {"Device is being slow", "Check your configuration"},
+		statuspb.StatusLog_REDUCED_FUNCTION: {"Device is not responding", "Timeout error"},
+		statuspb.StatusLog_NON_FUNCTIONAL:   {"Device is not connected", "No data available"},
+		statuspb.StatusLog_OFFLINE:          {"Device is offline", "Unable to connect"},
 	}
 	names := []string{name, name + ":Connection", name + ":Faults"}
 	slc := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
@@ -34,9 +33,9 @@ func Status(model *statuspb.Model, name string) service.Lifecycle {
 				level := oneOf(levels...)
 				// 90% chance that the problem is nominal, to make things more likely to be working.
 				if rand.Float32() < 0.9 {
-					level = gen_statuspb.StatusLog_NOMINAL
+					level = statuspb.StatusLog_NOMINAL
 				}
-				problem := &gen_statuspb.StatusLog_Problem{
+				problem := &statuspb.StatusLog_Problem{
 					Name:        oneOf(names...),
 					Level:       level,
 					Description: oneOf(descriptions[level]...),

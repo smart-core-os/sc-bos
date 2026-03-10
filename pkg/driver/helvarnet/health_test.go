@@ -12,10 +12,8 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/wrap"
@@ -24,22 +22,22 @@ import (
 func newTestRegistry(devs *devicespb.Collection) *healthpb.Registry {
 
 	return healthpb.NewRegistry(
-		healthpb.WithOnCheckCreate(func(name string, c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck {
-			_, _ = devs.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+		healthpb.WithOnCheckCreate(func(name string, c *healthpb.HealthCheck) *healthpb.HealthCheck {
+			_, _ = devs.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, c)
 			}), resource.WithCreateIfAbsent(), resource.WithExpectAbsent())
 			return nil
 		}),
-		healthpb.WithOnCheckUpdate(func(name string, c *gen_healthpb.HealthCheck) {
-			_, _ = devs.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+		healthpb.WithOnCheckUpdate(func(name string, c *healthpb.HealthCheck) {
+			_, _ = devs.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, c)
 			}))
 		}),
 		healthpb.WithOnCheckDelete(func(name, id string) {
-			_, _ = devs.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+			_, _ = devs.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
 			}), resource.WithAllowMissing(true))
 		}),
@@ -48,7 +46,7 @@ func newTestRegistry(devs *devicespb.Collection) *healthpb.Registry {
 
 type testHarness struct {
 	devs   *devicespb.Collection
-	client gen_devicespb.DevicesApiClient
+	client devicespb.DevicesApiClient
 	fc     *healthpb.FaultCheck
 	ctx    context.Context
 }
@@ -60,7 +58,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 	reg := newTestRegistry(devs)
 	healthChecks := reg.ForOwner("example")
 
-	_, _ = devs.Update(&gen_devicespb.Device{Name: deviceName}, resource.WithCreateIfAbsent())
+	_, _ = devs.Update(&devicespb.Device{Name: deviceName}, resource.WithCreateIfAbsent())
 
 	check := getDeviceHealthCheck()
 	fc, err := healthChecks.NewFaultCheck(deviceName, check)
@@ -69,7 +67,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 
 	return &testHarness{
 		devs:   devs,
-		client: gen_devicespb.NewDevicesApiClient(wrap.ServerToClient(gen_devicespb.DevicesApi_ServiceDesc, server)),
+		client: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, server)),
 		fc:     fc,
 		ctx:    context.Background(),
 	}
@@ -79,14 +77,14 @@ func (h *testHarness) updateStatus(status int64) {
 	updateDeviceFaults(h.ctx, status, h.fc)
 }
 
-func (h *testHarness) getHealthChecks(t *testing.T) []*gen_healthpb.HealthCheck {
-	deviceList, err := h.client.ListDevices(context.TODO(), &gen_devicespb.ListDevicesRequest{})
+func (h *testHarness) getHealthChecks(t *testing.T) []*healthpb.HealthCheck {
+	deviceList, err := h.client.ListDevices(context.TODO(), &devicespb.ListDevicesRequest{})
 	require.NoError(t, err)
 	require.Len(t, deviceList.Devices, 1)
 	return deviceList.Devices[0].GetHealthChecks()
 }
 
-func (h *testHarness) assertFaults(t *testing.T, expectedCount int, normality gen_healthpb.HealthCheck_Normality) {
+func (h *testHarness) assertFaults(t *testing.T, expectedCount int, normality healthpb.HealthCheck_Normality) {
 	checks := h.getHealthChecks(t)
 	require.Len(t, checks, 1)
 	require.Equal(t, normality, checks[0].Normality)
@@ -148,7 +146,7 @@ func TestFaultLifecycle(t *testing.T) {
 		steps []struct {
 			status       int64
 			faultCount   int
-			normality    gen_healthpb.HealthCheck_Normality
+			normality    healthpb.HealthCheck_Normality
 			expectedCode string // only for single fault cases
 		}
 	}{
@@ -157,18 +155,18 @@ func TestFaultLifecycle(t *testing.T) {
 			steps: []struct {
 				status       int64
 				faultCount   int
-				normality    gen_healthpb.HealthCheck_Normality
+				normality    healthpb.HealthCheck_Normality
 				expectedCode string
 			}{
 				{
 					status:     0x00000001 | 0x00000002 | 0x00000004, // Disabled | LampFailure | Missing
 					faultCount: 3,
-					normality:  gen_healthpb.HealthCheck_ABNORMAL,
+					normality:  healthpb.HealthCheck_ABNORMAL,
 				},
 				{
 					status:     0,
 					faultCount: 0,
-					normality:  gen_healthpb.HealthCheck_NORMAL,
+					normality:  healthpb.HealthCheck_NORMAL,
 				},
 			},
 		},
@@ -177,24 +175,24 @@ func TestFaultLifecycle(t *testing.T) {
 			steps: []struct {
 				status       int64
 				faultCount   int
-				normality    gen_healthpb.HealthCheck_Normality
+				normality    healthpb.HealthCheck_Normality
 				expectedCode string
 			}{
 				{
 					status:     0x00000001 | 0x00000002 | 0x00000004,
 					faultCount: 3,
-					normality:  gen_healthpb.HealthCheck_ABNORMAL,
+					normality:  healthpb.HealthCheck_ABNORMAL,
 				},
 				{
 					status:       0x00000001, // Keep only Disabled
 					faultCount:   1,
-					normality:    gen_healthpb.HealthCheck_ABNORMAL,
+					normality:    healthpb.HealthCheck_ABNORMAL,
 					expectedCode: strconv.Itoa(0x00000001),
 				},
 				{
 					status:     0,
 					faultCount: 0,
-					normality:  gen_healthpb.HealthCheck_NORMAL,
+					normality:  healthpb.HealthCheck_NORMAL,
 				},
 			},
 		},
@@ -272,7 +270,7 @@ func TestSpecialErrorCodes(t *testing.T) {
 		status              int64
 		expectedSummary     string
 		expectedDetails     string
-		expectedReliability gen_healthpb.HealthCheck_Reliability_State
+		expectedReliability healthpb.HealthCheck_Reliability_State
 		expectedCode        string
 	}{
 		{
@@ -280,7 +278,7 @@ func TestSpecialErrorCodes(t *testing.T) {
 			status:              DeviceOfflineCode,
 			expectedSummary:     "Device Offline",
 			expectedDetails:     "No communication received from device since the last Smart Core restart",
-			expectedReliability: gen_healthpb.HealthCheck_Reliability_NO_RESPONSE,
+			expectedReliability: healthpb.HealthCheck_Reliability_NO_RESPONSE,
 			expectedCode:        strconv.Itoa(DeviceOfflineCode),
 		},
 		{
@@ -288,7 +286,7 @@ func TestSpecialErrorCodes(t *testing.T) {
 			status:              BadResponseCode,
 			expectedSummary:     "Bad Response",
 			expectedDetails:     "The device has sent an invalid response to a command",
-			expectedReliability: gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+			expectedReliability: healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 			expectedCode:        strconv.Itoa(BadResponseCode),
 		},
 		{
@@ -296,7 +294,7 @@ func TestSpecialErrorCodes(t *testing.T) {
 			status:              -99,
 			expectedSummary:     "Internal Driver Error",
 			expectedDetails:     "The device has an unrecognised internal status code",
-			expectedReliability: gen_healthpb.HealthCheck_Reliability_UNRELIABLE,
+			expectedReliability: healthpb.HealthCheck_Reliability_UNRELIABLE,
 			expectedCode:        strconv.Itoa(UnrecognisedErrorCode),
 		},
 	}

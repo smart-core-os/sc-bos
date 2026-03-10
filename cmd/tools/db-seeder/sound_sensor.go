@@ -9,9 +9,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
-	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 )
 
 func SeedSoundSensor(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
@@ -39,7 +38,7 @@ func SeedSoundSensor(ctx context.Context, db *pgxpool.Pool, name string, lookBac
 			soundLevel = 60
 		}
 
-		payload, err := proto.Marshal(&gen_soundsensorpb.SoundLevel{
+		payload, err := proto.Marshal(&soundsensorpb.SoundLevel{
 			SoundPressureLevel: &soundLevel,
 		})
 

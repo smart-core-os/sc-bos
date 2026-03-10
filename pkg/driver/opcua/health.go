@@ -11,8 +11,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/conv"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 const (
@@ -27,8 +26,8 @@ const (
 	floatTolerance = 1e-9
 )
 
-func getSystemHealthCheck(occupant gen_healthpb.HealthCheck_OccupantImpact, equipment gen_healthpb.HealthCheck_EquipmentImpact) *gen_healthpb.HealthCheck {
-	return &gen_healthpb.HealthCheck{
+func getSystemHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, equipment healthpb.HealthCheck_EquipmentImpact) *healthpb.HealthCheck {
+	return &healthpb.HealthCheck{
 		Id:              "systemStatusCheck",
 		DisplayName:     "System Status Check",
 		Description:     "Checks the opc ua server is reachable and the configured nodes are responding correctly",
@@ -37,8 +36,8 @@ func getSystemHealthCheck(occupant gen_healthpb.HealthCheck_OccupantImpact, equi
 	}
 }
 
-func getDeviceHealthCheck(occupant gen_healthpb.HealthCheck_OccupantImpact, equipment gen_healthpb.HealthCheck_EquipmentImpact) *gen_healthpb.HealthCheck {
-	return &gen_healthpb.HealthCheck{
+func getDeviceHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, equipment healthpb.HealthCheck_EquipmentImpact) *healthpb.HealthCheck {
+	return &healthpb.HealthCheck{
 		Id:              "deviceStatusCheck",
 		DisplayName:     "Device Status Check",
 		Description:     "Checks the device is reachable and responding correctly",
@@ -47,25 +46,25 @@ func getDeviceHealthCheck(occupant gen_healthpb.HealthCheck_OccupantImpact, equi
 	}
 }
 
-func getDeviceErrorCheck(c config.HealthCheck) *gen_healthpb.HealthCheck {
-	return &gen_healthpb.HealthCheck{
+func getDeviceErrorCheck(c config.HealthCheck) *healthpb.HealthCheck {
+	return &healthpb.HealthCheck{
 		Id:              c.Id,
 		DisplayName:     c.DisplayName,
 		Description:     c.Description,
-		OccupantImpact:  gen_healthpb.HealthCheck_OccupantImpact(c.OccupantImpact),
-		EquipmentImpact: gen_healthpb.HealthCheck_EquipmentImpact(c.EquipmentImpact),
+		OccupantImpact:  healthpb.HealthCheck_OccupantImpact(c.OccupantImpact),
+		EquipmentImpact: healthpb.HealthCheck_EquipmentImpact(c.EquipmentImpact),
 	}
 }
 
-func statusToHealthCode(code string) *gen_healthpb.HealthCheck_Error_Code {
-	return &gen_healthpb.HealthCheck_Error_Code{
+func statusToHealthCode(code string) *healthpb.HealthCheck_Error_Code {
+	return &healthpb.HealthCheck_Error_Code{
 		Code:   code,
 		System: SystemName,
 	}
 }
 
 func raiseConfigFault(details string, fc *healthpb.FaultCheck) {
-	fc.AddOrUpdateFault(&gen_healthpb.HealthCheck_Error{
+	fc.AddOrUpdateFault(&healthpb.HealthCheck_Error{
 		SummaryText: "An issue has been detected with the device's configuration",
 		DetailsText: details,
 		Code:        statusToHealthCode(DeviceConfigError),
@@ -73,9 +72,9 @@ func raiseConfigFault(details string, fc *healthpb.FaultCheck) {
 }
 
 func setPointReadNotOk(ctx context.Context, nodeId string, status ua.StatusCode, fc *healthpb.FaultCheck) {
-	fc.UpdateReliability(ctx, &gen_healthpb.HealthCheck_Reliability{
-		State: gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE,
-		LastError: &gen_healthpb.HealthCheck_Error{
+	fc.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
+		State: healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+		LastError: &healthpb.HealthCheck_Error{
 			SummaryText: fmt.Sprintf("Attempt to read device point returned non OK status: %s", status.Error()),
 			DetailsText: fmt.Sprintf("NodeID: %s, Status: %s", nodeId, status.Error()),
 			Code:        statusToHealthCode(strconv.Itoa(int(status))),
@@ -120,7 +119,7 @@ func newHealth(c config.RawTrait, logger *zap.Logger) (*Health, error) {
 }
 
 func raisePointError(point string, code string, summary string, fc *healthpb.FaultCheck) {
-	fc.AddOrUpdateFault(&gen_healthpb.HealthCheck_Error{
+	fc.AddOrUpdateFault(&healthpb.HealthCheck_Error{
 		SummaryText: summary,
 		DetailsText: "An error has been detected on point: " + point,
 		Code:        statusToHealthCode(code),
@@ -159,7 +158,7 @@ func (h *Health) handleEvent(_ context.Context, node *ua.NodeID, value any) {
 			}
 		} else {
 			if check, ok := h.errorChecks[hc.Id]; ok {
-				check.RemoveFault(&gen_healthpb.HealthCheck_Error{
+				check.RemoveFault(&healthpb.HealthCheck_Error{
 					Code: statusToHealthCode(hc.ErrorCode),
 				})
 			}

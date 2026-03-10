@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
@@ -18,7 +17,7 @@ func SeedMeter(ctx context.Context, db *pgxpool.Pool, name string, lookBack time
 	now := time.Now()
 	current := now.Add(-lookBack)
 
-	source := fmt.Sprintf("%s[%s]", name, meter.TraitName)
+	source := fmt.Sprintf("%s[%s]", name, meterpb.TraitName)
 
 	incremental := rand.Float32() * 1_000
 

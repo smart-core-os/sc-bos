@@ -12,9 +12,8 @@ import (
 	gopsnet "github.com/shirou/gopsutil/v3/net"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 )
 
 func shouldHideDisk(p disk.PartitionStat, hiddenFsTypes map[string]struct{}, hiddenMountPrefixes []string) bool {
@@ -38,7 +37,7 @@ func (s *System) applyConfig(ctx context.Context, cfg Root) error {
 	announcer := node.NewReplaceAnnouncer(s.node)
 	announce := announcer.Replace(ctx)
 	announce.Announce(s.name,
-		node.HasTrait(resourceusepb.TraitName, node.WithClients(gen.WrapApi(modelServer))),
+		node.HasTrait(resourceusepb.TraitName, node.WithClients(resourceusepb.WrapApi(modelServer))),
 	)
 
 	hiddenFsTypes := cfg.effectiveHiddenFsTypes()
@@ -66,7 +65,7 @@ func (s *System) pollLoop(ctx context.Context, model *resourceusepb.Model, inter
 }
 
 func (s *System) collect(ctx context.Context, model *resourceusepb.Model, hiddenFsTypes map[string]struct{}, hiddenMountPrefixes []string) {
-	v := &gen.ResourceUse{}
+	v := &resourceusepb.ResourceUse{}
 
 	// Note: With interval 0, on the very first invocation there's no prior sample, so the initial value may be inaccurate
 	if perCore, err := cpu.PercentWithContext(ctx, 0, true); err == nil {
@@ -75,7 +74,7 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model, hidden
 		for i, p := range perCore {
 			core32[i] = float32(p)
 		}
-		v.Cpu = &gen.CpuUse{
+		v.Cpu = &resourceusepb.CpuUse{
 			Utilization: ptr(float32(overall)),
 			CorePercent: core32,
 		}
@@ -85,7 +84,7 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model, hidden
 
 	if vmStat, err := mem.VirtualMemoryWithContext(ctx); err == nil {
 		if vmStat != nil {
-			v.Memory = &gen.MemoryUse{
+			v.Memory = &resourceusepb.MemoryUse{
 				Usage:       ptr(vmStat.Used),
 				Limit:       ptr(vmStat.Total),
 				Utilization: ptr(float32(vmStat.UsedPercent)),
@@ -104,7 +103,7 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model, hidden
 			if err != nil {
 				continue
 			}
-			v.Disks = append(v.Disks, &gen.DiskUse{
+			v.Disks = append(v.Disks, &resourceusepb.DiskUse{
 				MountPoint:  p.Mountpoint,
 				Usage:       ptr(usage.Used),
 				FreeBytes:   ptr(usage.Free),
@@ -124,7 +123,7 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model, hidden
 				established++
 			}
 		}
-		v.Network = &gen.NetworkUse{
+		v.Network = &resourceusepb.NetworkUse{
 			ConnectionCount: ptr(established),
 		}
 	} else {

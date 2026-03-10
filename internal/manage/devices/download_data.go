@@ -8,21 +8,16 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	timepb "github.com/smart-core-os/sc-api/go/types/time"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
-	gen_accesspb "github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	gen_allocationpb "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
@@ -38,8 +33,8 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(accesspb.TraitName): {
 			headers: []string{"access.grant", "access.reason", "access.actor.name", "access.actor.title", "access.actor.displayname", "access.actor.email"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := gen_accesspb.NewAccessApiClient(s.m.ClientConn())
-				data, err := c.GetLastAccessAttempt(ctx, &gen_accesspb.GetLastAccessAttemptRequest{Name: name})
+				c := accesspb.NewAccessApiClient(s.m.ClientConn())
+				data, err := c.GetLastAccessAttempt(ctx, &accesspb.GetLastAccessAttemptRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
@@ -49,18 +44,18 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(allocationpb.TraitName): {
 			headers: []string{"allocation.state", "allocation.actor.title", "allocation.groupId", "allocation.allocationTotal", "allocation.unallocationTotal"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := gen_allocationpb.NewAllocationApiClient(s.m.ClientConn())
-				data, err := c.GetAllocation(ctx, &gen_allocationpb.GetAllocationRequest{Name: name})
+				c := allocationpb.NewAllocationApiClient(s.m.ClientConn())
+				data, err := c.GetAllocation(ctx, &allocationpb.GetAllocationRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
 				return allocationToRow(data), nil
 			},
 			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
-				c := gen_allocationpb.NewAllocationHistoryClient(s.m.ClientConn())
+				c := allocationpb.NewAllocationHistoryClient(s.m.ClientConn())
 				return &historyCursor{
 					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
-						page, err := c.ListAllocationHistory(ctx, &gen_allocationpb.ListAllocationHistoryRequest{
+						page, err := c.ListAllocationHistory(ctx, &allocationpb.ListAllocationHistoryRequest{
 							Name:      name,
 							PageToken: token,
 							PageSize:  pageSize,
@@ -82,7 +77,7 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 				}
 			},
 		},
-		string(meter.TraitName): {
+		string(meterpb.TraitName): {
 			headers: []string{"meter.usage", "meter.unit"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
 				c := meterpb.NewMeterApiClient(s.m.ClientConn())
@@ -136,8 +131,8 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(statuspb.TraitName): {
 			headers: []string{"status.level", "status.description", "status.recordtime"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := gen_statuspb.NewStatusApiClient(s.m.ClientConn())
-				data, err := c.GetCurrentStatus(ctx, &gen_statuspb.GetCurrentStatusRequest{Name: name})
+				c := statuspb.NewStatusApiClient(s.m.ClientConn())
+				data, err := c.GetCurrentStatus(ctx, &statuspb.GetCurrentStatusRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
@@ -360,18 +355,18 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(soundsensorpb.TraitName): {
 			headers: []string{"sound.soundpressurelevel"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := gen_soundsensorpb.NewSoundSensorApiClient(s.m.ClientConn())
-				data, err := c.GetSoundLevel(ctx, &gen_soundsensorpb.GetSoundLevelRequest{Name: name})
+				c := soundsensorpb.NewSoundSensorApiClient(s.m.ClientConn())
+				data, err := c.GetSoundLevel(ctx, &soundsensorpb.GetSoundLevelRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
 				return soundLevelToRow(data), nil
 			},
 			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
-				c := gen_soundsensorpb.NewSoundSensorHistoryClient(s.m.ClientConn())
+				c := soundsensorpb.NewSoundSensorHistoryClient(s.m.ClientConn())
 				return &historyCursor{
 					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
-						page, err := c.ListSoundLevelHistory(ctx, &gen_soundsensorpb.ListSoundLevelHistoryRequest{
+						page, err := c.ListSoundLevelHistory(ctx, &soundsensorpb.ListSoundLevelHistoryRequest{
 							Name:      name,
 							PageToken: token,
 							PageSize:  pageSize,
@@ -432,7 +427,7 @@ type historyRecord struct {
 	use  func()
 }
 
-func allocationToRow(d *gen_allocationpb.Allocation) map[string]string {
+func allocationToRow(d *allocationpb.Allocation) map[string]string {
 	vals := make(map[string]string)
 	vals["allocation.state"] = d.GetState().String()
 	if actor := d.GetActor(); actor != nil {
@@ -444,7 +439,7 @@ func allocationToRow(d *gen_allocationpb.Allocation) map[string]string {
 	return vals
 }
 
-func accessAttemptToRow(d *gen_accesspb.AccessAttempt) map[string]string {
+func accessAttemptToRow(d *accesspb.AccessAttempt) map[string]string {
 	vals := make(map[string]string)
 	vals["access.grant"] = d.GetGrant().String()
 	vals["access.reason"] = d.GetReason()
@@ -464,7 +459,7 @@ func meterReadingToRow(d *meterpb.MeterReading, unit string) map[string]string {
 	}
 }
 
-func statusLogToRow(d *gen_statuspb.StatusLog) map[string]string {
+func statusLogToRow(d *statuspb.StatusLog) map[string]string {
 	vals := make(map[string]string)
 	vals["status.level"] = d.GetLevel().String()
 	vals["status.description"] = d.GetDescription()
@@ -592,7 +587,7 @@ func openClosePositionsToRow(d *traits.OpenClosePositions) map[string]string {
 	return vals
 }
 
-func soundLevelToRow(d *gen_soundsensorpb.SoundLevel) map[string]string {
+func soundLevelToRow(d *soundsensorpb.SoundLevel) map[string]string {
 	return map[string]string{
 		"sound.soundpressurelevel": fmt.Sprintf("%.1f", d.GetSoundPressureLevel()),
 	}

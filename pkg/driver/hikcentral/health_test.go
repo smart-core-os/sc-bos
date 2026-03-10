@@ -14,10 +14,8 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/wrap"
@@ -26,22 +24,22 @@ import (
 func newTestRegistry(devs *devicespb.Collection) *healthpb.Registry {
 
 	return healthpb.NewRegistry(
-		healthpb.WithOnCheckCreate(func(name string, c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck {
-			_, _ = devs.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+		healthpb.WithOnCheckCreate(func(name string, c *healthpb.HealthCheck) *healthpb.HealthCheck {
+			_, _ = devs.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, c)
 			}), resource.WithCreateIfAbsent(), resource.WithExpectAbsent())
 			return nil
 		}),
-		healthpb.WithOnCheckUpdate(func(name string, c *gen_healthpb.HealthCheck) {
-			_, _ = devs.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+		healthpb.WithOnCheckUpdate(func(name string, c *healthpb.HealthCheck) {
+			_, _ = devs.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, c)
 			}))
 		}),
 		healthpb.WithOnCheckDelete(func(name, id string) {
-			_, _ = devs.Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-				dstDev := dst.(*gen_devicespb.Device)
+			_, _ = devs.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
 			}), resource.WithAllowMissing(true))
 		}),
@@ -50,7 +48,7 @@ func newTestRegistry(devs *devicespb.Collection) *healthpb.Registry {
 
 type testHarness struct {
 	devs   *devicespb.Collection
-	client gen_devicespb.DevicesApiClient
+	client devicespb.DevicesApiClient
 	fc     *healthpb.FaultCheck
 	ctx    context.Context
 }
@@ -62,7 +60,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 	reg := newTestRegistry(devs)
 	healthChecks := reg.ForOwner("example")
 
-	_, _ = devs.Update(&gen_devicespb.Device{Name: deviceName}, resource.WithCreateIfAbsent())
+	_, _ = devs.Update(&devicespb.Device{Name: deviceName}, resource.WithCreateIfAbsent())
 
 	fc, err := healthChecks.NewFaultCheck(deviceName, deviceHealthCheck)
 	require.NoError(t, err)
@@ -70,7 +68,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 
 	return &testHarness{
 		devs:   devs,
-		client: gen_devicespb.NewDevicesApiClient(wrap.ServerToClient(gen_devicespb.DevicesApi_ServiceDesc, server)),
+		client: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, server)),
 		fc:     fc,
 		ctx:    context.Background(),
 	}
@@ -84,14 +82,14 @@ func (h *testHarness) updateReliability(err error) {
 	updateReliability(h.ctx, err, h.fc)
 }
 
-func (h *testHarness) getHealthChecks(t *testing.T) []*gen_healthpb.HealthCheck {
-	deviceList, err := h.client.ListDevices(context.TODO(), &gen_devicespb.ListDevicesRequest{})
+func (h *testHarness) getHealthChecks(t *testing.T) []*healthpb.HealthCheck {
+	deviceList, err := h.client.ListDevices(context.TODO(), &devicespb.ListDevicesRequest{})
 	require.NoError(t, err)
 	require.Len(t, deviceList.Devices, 1)
 	return deviceList.Devices[0].GetHealthChecks()
 }
 
-func (h *testHarness) assertFaults(t *testing.T, expectedCount int, normality gen_healthpb.HealthCheck_Normality) {
+func (h *testHarness) assertFaults(t *testing.T, expectedCount int, normality healthpb.HealthCheck_Normality) {
 	checks := h.getHealthChecks(t)
 	require.Len(t, checks, 1)
 	require.Equal(t, normality, checks[0].Normality)
@@ -212,7 +210,7 @@ func TestFaultLifecycle(t *testing.T) {
 		steps []struct {
 			faults       allFaults
 			faultCount   int
-			normality    gen_healthpb.HealthCheck_Normality
+			normality    healthpb.HealthCheck_Normality
 			expectedCode string // only for single fault cases
 		}
 	}{
@@ -221,7 +219,7 @@ func TestFaultLifecycle(t *testing.T) {
 			steps: []struct {
 				faults       allFaults
 				faultCount   int
-				normality    gen_healthpb.HealthCheck_Normality
+				normality    healthpb.HealthCheck_Normality
 				expectedCode string
 			}{
 				{
@@ -230,12 +228,12 @@ func TestFaultLifecycle(t *testing.T) {
 						api.VideoTamperingAlarm: true,
 					},
 					faultCount: 2,
-					normality:  gen_healthpb.HealthCheck_ABNORMAL,
+					normality:  healthpb.HealthCheck_ABNORMAL,
 				},
 				{
 					faults:     allFaults{},
 					faultCount: 0,
-					normality:  gen_healthpb.HealthCheck_NORMAL,
+					normality:  healthpb.HealthCheck_NORMAL,
 				},
 			},
 		},
@@ -244,7 +242,7 @@ func TestFaultLifecycle(t *testing.T) {
 			steps: []struct {
 				faults       allFaults
 				faultCount   int
-				normality    gen_healthpb.HealthCheck_Normality
+				normality    healthpb.HealthCheck_Normality
 				expectedCode string
 			}{
 				{
@@ -254,20 +252,20 @@ func TestFaultLifecycle(t *testing.T) {
 						api.CameraRecordingExceptionAlarm: true,
 					},
 					faultCount: 3,
-					normality:  gen_healthpb.HealthCheck_ABNORMAL,
+					normality:  healthpb.HealthCheck_ABNORMAL,
 				},
 				{
 					faults: allFaults{
 						api.VideoLossAlarm: true, // Keep only VideoLossAlarm
 					},
 					faultCount:   1,
-					normality:    gen_healthpb.HealthCheck_ABNORMAL,
+					normality:    healthpb.HealthCheck_ABNORMAL,
 					expectedCode: api.VideoLossAlarm,
 				},
 				{
 					faults:     allFaults{},
 					faultCount: 0,
-					normality:  gen_healthpb.HealthCheck_NORMAL,
+					normality:  healthpb.HealthCheck_NORMAL,
 				},
 			},
 		},
@@ -276,7 +274,7 @@ func TestFaultLifecycle(t *testing.T) {
 			steps: []struct {
 				faults       allFaults
 				faultCount   int
-				normality    gen_healthpb.HealthCheck_Normality
+				normality    healthpb.HealthCheck_Normality
 				expectedCode string
 			}{
 				{
@@ -284,7 +282,7 @@ func TestFaultLifecycle(t *testing.T) {
 						api.VideoLossAlarm: true,
 					},
 					faultCount:   1,
-					normality:    gen_healthpb.HealthCheck_ABNORMAL,
+					normality:    healthpb.HealthCheck_ABNORMAL,
 					expectedCode: api.VideoLossAlarm,
 				},
 				{
@@ -292,13 +290,13 @@ func TestFaultLifecycle(t *testing.T) {
 						api.VideoTamperingAlarm: true,
 					},
 					faultCount:   1,
-					normality:    gen_healthpb.HealthCheck_ABNORMAL,
+					normality:    healthpb.HealthCheck_ABNORMAL,
 					expectedCode: api.VideoTamperingAlarm,
 				},
 				{
 					faults:     allFaults{},
 					faultCount: 0,
-					normality:  gen_healthpb.HealthCheck_NORMAL,
+					normality:  healthpb.HealthCheck_NORMAL,
 				},
 			},
 		},
@@ -556,7 +554,7 @@ func TestUpdateReliability(t *testing.T) {
 	tests := []struct {
 		name               string
 		err                error
-		expectedState      gen_healthpb.HealthCheck_Reliability_State
+		expectedState      healthpb.HealthCheck_Reliability_State
 		expectedErrorCode  string
 		expectedSummary    string
 		expectErrorPresent bool
@@ -564,13 +562,13 @@ func TestUpdateReliability(t *testing.T) {
 		{
 			name:               "no error - reliable",
 			err:                nil,
-			expectedState:      gen_healthpb.HealthCheck_Reliability_RELIABLE,
+			expectedState:      healthpb.HealthCheck_Reliability_RELIABLE,
 			expectErrorPresent: false,
 		},
 		{
 			name:               "generic error - no response",
 			err:                errors.New("connection timeout"),
-			expectedState:      gen_healthpb.HealthCheck_Reliability_NO_RESPONSE,
+			expectedState:      healthpb.HealthCheck_Reliability_NO_RESPONSE,
 			expectedErrorCode:  Offline,
 			expectedSummary:    "Device Offline",
 			expectErrorPresent: true,
@@ -578,7 +576,7 @@ func TestUpdateReliability(t *testing.T) {
 		{
 			name:               "context deadline exceeded - no response",
 			err:                context.DeadlineExceeded,
-			expectedState:      gen_healthpb.HealthCheck_Reliability_NO_RESPONSE,
+			expectedState:      healthpb.HealthCheck_Reliability_NO_RESPONSE,
 			expectedErrorCode:  Offline,
 			expectedSummary:    "Device Offline",
 			expectErrorPresent: true,
@@ -586,7 +584,7 @@ func TestUpdateReliability(t *testing.T) {
 		{
 			name:               "json unmarshal type error - bad response",
 			err:                &json.UnmarshalTypeError{Value: "string", Type: nil},
-			expectedState:      gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+			expectedState:      healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 			expectedErrorCode:  BadResponse,
 			expectedSummary:    "Bad Response",
 			expectErrorPresent: true,
@@ -640,27 +638,27 @@ func TestReliabilityTransitions(t *testing.T) {
 	h.updateReliability(nil)
 	checks := h.getHealthChecks(t)
 	require.Len(t, checks, 1)
-	require.Equal(t, gen_healthpb.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().State)
+	require.Equal(t, healthpb.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().State)
 
 	// Transition to no response
 	h.updateReliability(errors.New("network error"))
 	checks = h.getHealthChecks(t)
 	require.Len(t, checks, 1)
-	require.Equal(t, gen_healthpb.HealthCheck_Reliability_NO_RESPONSE, checks[0].GetReliability().State)
+	require.Equal(t, healthpb.HealthCheck_Reliability_NO_RESPONSE, checks[0].GetReliability().State)
 	require.NotNil(t, checks[0].GetReliability().LastError)
 
 	// Transition to bad response
 	h.updateReliability(&json.UnmarshalTypeError{Value: "test"})
 	checks = h.getHealthChecks(t)
 	require.Len(t, checks, 1)
-	require.Equal(t, gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE, checks[0].GetReliability().State)
+	require.Equal(t, healthpb.HealthCheck_Reliability_BAD_RESPONSE, checks[0].GetReliability().State)
 	require.Equal(t, BadResponse, checks[0].GetReliability().LastError.Code.Code)
 
 	// Recover to reliable
 	h.updateReliability(nil)
 	checks = h.getHealthChecks(t)
 	require.Len(t, checks, 1)
-	require.Equal(t, gen_healthpb.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().State)
+	require.Equal(t, healthpb.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().State)
 	// Note: LastError is preserved to show what the last error was, even when state is now RELIABLE
 	require.NotNil(t, checks[0].GetReliability().LastError)
 }
@@ -681,14 +679,14 @@ func TestReliabilityWithFaults(t *testing.T) {
 	require.Len(t, checks, 1)
 
 	// Should have reliable state
-	require.Equal(t, gen_healthpb.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().State)
+	require.Equal(t, healthpb.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().State)
 
 	// Should have faults
 	faults := checks[0].GetFaults().GetCurrentFaults()
 	require.Len(t, faults, 2)
 
 	// Should be abnormal due to faults
-	require.Equal(t, gen_healthpb.HealthCheck_ABNORMAL, checks[0].Normality)
+	require.Equal(t, healthpb.HealthCheck_ABNORMAL, checks[0].Normality)
 
 	// Now set unreliable state
 	h.updateReliability(errors.New("connection lost"))
@@ -697,14 +695,14 @@ func TestReliabilityWithFaults(t *testing.T) {
 	require.Len(t, checks, 1)
 
 	// Should have no response state
-	require.Equal(t, gen_healthpb.HealthCheck_Reliability_NO_RESPONSE, checks[0].GetReliability().State)
+	require.Equal(t, healthpb.HealthCheck_Reliability_NO_RESPONSE, checks[0].GetReliability().State)
 
 	// Faults should still be present
 	faults = checks[0].GetFaults().GetCurrentFaults()
 	require.Len(t, faults, 2)
 
 	// Should still be abnormal
-	require.Equal(t, gen_healthpb.HealthCheck_ABNORMAL, checks[0].Normality)
+	require.Equal(t, healthpb.HealthCheck_ABNORMAL, checks[0].Normality)
 }
 
 type devicesServerModel struct {

@@ -41,13 +41,12 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/manage/enrollment"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
-	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
@@ -422,7 +421,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		LogCapture:       capture,
 		LogLevel:         &logLevel,
 		Node:             rootNode,
-		Devices:          gen_devicespb.NewDevicesApiClient(wrap.ServerToClient(gen_devicespb.DevicesApi_ServiceDesc, devicesApi)),
+		Devices:          devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
 		CheckRegistry:    checkRegistry,
 		DeviceStore:      deviceStore,
 		Tasks:            &task.Group{},
@@ -505,7 +504,7 @@ type Controller struct {
 	LogCapture      *logcapture.Core  // dynamic tee for log capture (nil if not built via Bootstrap)
 	LogLevel        *zap.AtomicLevel  // controls the root logger's minimum level
 	Node            *node.Node
-	Devices         gen_devicespb.DevicesApiClient
+	Devices         devicespb.DevicesApiClient
 	DeviceStore     *devicespb.Collection // for low level control of devices
 	Tasks           *task.Group
 	Database        *bolthold.Store

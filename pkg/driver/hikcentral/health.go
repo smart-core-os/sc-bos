@@ -6,8 +6,7 @@ import (
 	"errors"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 const (
@@ -20,23 +19,23 @@ const (
 var (
 	// This health check monitors the device to check if it is online and communicating properly.
 	// Also checks whether the device is self-reporting any faults/alarms.
-	deviceHealthCheck = &gen_healthpb.HealthCheck{
+	deviceHealthCheck = &healthpb.HealthCheck{
 		Id:          "deviceCheck",
 		DisplayName: "Device Check",
 		Description: "Checks if the device is online, communicating properly and if there are any device alarms",
 		// not sure about the impact, if the CCTV is not functioning, it is safety/security
-		OccupantImpact:  gen_healthpb.HealthCheck_HEALTH,
-		EquipmentImpact: gen_healthpb.HealthCheck_FUNCTION,
+		OccupantImpact:  healthpb.HealthCheck_HEALTH,
+		EquipmentImpact: healthpb.HealthCheck_FUNCTION,
 	}
 )
 
-func noResponseReliability() *gen_healthpb.HealthCheck_Reliability {
-	return &gen_healthpb.HealthCheck_Reliability{
-		State: gen_healthpb.HealthCheck_Reliability_NO_RESPONSE,
-		LastError: &gen_healthpb.HealthCheck_Error{
+func noResponseReliability() *healthpb.HealthCheck_Reliability {
+	return &healthpb.HealthCheck_Reliability{
+		State: healthpb.HealthCheck_Reliability_NO_RESPONSE,
+		LastError: &healthpb.HealthCheck_Error{
 			SummaryText: "Device Offline",
 			DetailsText: "No communication received from device since the last Smart Core restart",
-			Code: &gen_healthpb.HealthCheck_Error_Code{
+			Code: &healthpb.HealthCheck_Error_Code{
 				Code:   Offline,
 				System: SystemName,
 			},
@@ -44,13 +43,13 @@ func noResponseReliability() *gen_healthpb.HealthCheck_Reliability {
 	}
 }
 
-func badResponseReliability() *gen_healthpb.HealthCheck_Reliability {
-	return &gen_healthpb.HealthCheck_Reliability{
-		State: gen_healthpb.HealthCheck_Reliability_BAD_RESPONSE,
-		LastError: &gen_healthpb.HealthCheck_Error{
+func badResponseReliability() *healthpb.HealthCheck_Reliability {
+	return &healthpb.HealthCheck_Reliability{
+		State: healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+		LastError: &healthpb.HealthCheck_Error{
 			SummaryText: "Bad Response",
 			DetailsText: "The device has sent an unexpected response to a request",
-			Code: &gen_healthpb.HealthCheck_Error_Code{
+			Code: &healthpb.HealthCheck_Error_Code{
 				Code:   BadResponse,
 				System: SystemName,
 			},
@@ -59,7 +58,7 @@ func badResponseReliability() *gen_healthpb.HealthCheck_Reliability {
 }
 
 func updateReliability(ctx context.Context, err error, fc *healthpb.FaultCheck) {
-	var rel *gen_healthpb.HealthCheck_Reliability
+	var rel *healthpb.HealthCheck_Reliability
 
 	if err != nil {
 		rel = noResponseReliability()
@@ -70,8 +69,8 @@ func updateReliability(ctx context.Context, err error, fc *healthpb.FaultCheck) 
 		}
 	} else {
 		// When reliable, create a new object with nil LastError
-		rel = &gen_healthpb.HealthCheck_Reliability{
-			State: gen_healthpb.HealthCheck_Reliability_RELIABLE,
+		rel = &healthpb.HealthCheck_Reliability{
+			State: healthpb.HealthCheck_Reliability_RELIABLE,
 		}
 	}
 
@@ -82,7 +81,7 @@ func updateDeviceFaults(faults allFaults, fc *healthpb.FaultCheck) {
 
 	for alarmType, active := range faults {
 		if active && alarmType != api.CameraRecordingRecovered {
-			fc.AddOrUpdateFault(&gen_healthpb.HealthCheck_Error{
+			fc.AddOrUpdateFault(&healthpb.HealthCheck_Error{
 				SummaryText: getFaultSummary(alarmType),
 				DetailsText: getFaultDetails(alarmType),
 				Code:        statusToHealthCode(alarmType),
@@ -93,7 +92,7 @@ func updateDeviceFaults(faults allFaults, fc *healthpb.FaultCheck) {
 	// Remove any faults in Smart Core that are no longer present
 	for _, faultType := range api.AlarmTypes {
 		if !faults[faultType] {
-			fc.RemoveFault(&gen_healthpb.HealthCheck_Error{
+			fc.RemoveFault(&healthpb.HealthCheck_Error{
 				Code: statusToHealthCode(faultType),
 			})
 		}
@@ -126,8 +125,8 @@ func getFaultDetails(alarmType string) string {
 	}
 }
 
-func statusToHealthCode(status string) *gen_healthpb.HealthCheck_Error_Code {
-	return &gen_healthpb.HealthCheck_Error_Code{
+func statusToHealthCode(status string) *healthpb.HealthCheck_Error_Code {
+	return &healthpb.HealthCheck_Error_Code{
 		Code:   status,
 		System: SystemName,
 	}

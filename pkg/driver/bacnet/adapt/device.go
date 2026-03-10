@@ -13,12 +13,12 @@ import (
 	bactypes "github.com/smart-core-os/gobacnet/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/rpc"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 // Device adapts a bacnet Device into a Smart Core traits and other apis.
-func Device(name string, client *gobacnet.Client, device bactypes.Device, known known.Context, deviceHealth *gen_healthpb.FaultCheck, errFn errFn) node.SelfAnnouncer {
+func Device(name string, client *gobacnet.Client, device bactypes.Device, known known.Context, deviceHealth *healthpb.FaultCheck, errFn errFn) node.SelfAnnouncer {
 	return &DeviceBacnetService{
 		name:         name,
 		client:       client,
@@ -41,7 +41,7 @@ type DeviceBacnetService struct {
 	device bactypes.Device
 	known  known.Context
 
-	deviceHealth *gen_healthpb.FaultCheck
+	deviceHealth *healthpb.FaultCheck
 	errFn        errFn
 }
 

@@ -14,10 +14,9 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 func Test_setupHealthRegistry(t *testing.T) {
@@ -25,11 +24,11 @@ func Test_setupHealthRegistry(t *testing.T) {
 		h := newHealthTestHarness(t)
 		h.createFaultCheck("dev1", "a test check")
 
-		wantCheck := &gen_healthpb.HealthCheck{
+		wantCheck := &healthpb.HealthCheck{
 			Id:          healthpb.AbsID("test-owner", ""),
 			DisplayName: "a test check",
 			CreateTime:  timestamppb.Now(),
-			Check:       &gen_healthpb.HealthCheck_Faults_{Faults: &gen_healthpb.HealthCheck_Faults{}},
+			Check:       &healthpb.HealthCheck_Faults_{Faults: &healthpb.HealthCheck_Faults{}},
 		}
 
 		h.assertCheckInHealthApi(t, "dev1", wantCheck)
@@ -40,12 +39,12 @@ func Test_setupHealthRegistry(t *testing.T) {
 		h := newHealthTestHarness(t)
 		check := h.createFaultCheck("dev1", "updatable check")
 
-		check.SetFault(&gen_healthpb.HealthCheck_Error{SummaryText: "test error"})
-		h.assertCheckNormality(t, "dev1", gen_healthpb.HealthCheck_ABNORMAL)
+		check.SetFault(&healthpb.HealthCheck_Error{SummaryText: "test error"})
+		h.assertCheckNormality(t, "dev1", healthpb.HealthCheck_ABNORMAL)
 		h.assertCheckHasFault(t, "dev1", "test error")
 
 		check.ClearFaults()
-		h.assertCheckNormality(t, "dev1", gen_healthpb.HealthCheck_NORMAL)
+		h.assertCheckNormality(t, "dev1", healthpb.HealthCheck_NORMAL)
 		h.assertCheckHasNoFaults(t, "dev1")
 	})
 
@@ -67,7 +66,7 @@ func Test_setupHealthRegistry(t *testing.T) {
 		h := newHealthTestHarness(t)
 
 		check1 := h.createFaultCheck(deviceName, "seeded check")
-		check1.SetFault(&gen_healthpb.HealthCheck_Error{
+		check1.SetFault(&healthpb.HealthCheck_Error{
 			SummaryText: faultSummary,
 			DetailsText: faultDetails,
 		})
@@ -116,8 +115,8 @@ func Test_setupHealthRegistry(t *testing.T) {
 func Test_removeMeasuredValues(t *testing.T) {
 	tests := []struct {
 		name         string
-		input        *gen_healthpb.HealthCheck
-		wantVal      *gen_healthpb.HealthCheck
+		input        *healthpb.HealthCheck
+		wantVal      *healthpb.HealthCheck
 		wantNoChange bool
 	}{
 		{
@@ -127,12 +126,12 @@ func Test_removeMeasuredValues(t *testing.T) {
 		},
 		{
 			name: "fault check unchanged",
-			input: &gen_healthpb.HealthCheck{
+			input: &healthpb.HealthCheck{
 				Id:          "test-id",
 				DisplayName: "test check",
-				Check: &gen_healthpb.HealthCheck_Faults_{
-					Faults: &gen_healthpb.HealthCheck_Faults{
-						CurrentFaults: []*gen_healthpb.HealthCheck_Error{
+				Check: &healthpb.HealthCheck_Faults_{
+					Faults: &healthpb.HealthCheck_Faults{
+						CurrentFaults: []*healthpb.HealthCheck_Error{
 							{SummaryText: "test error"},
 						},
 					},
@@ -142,12 +141,12 @@ func Test_removeMeasuredValues(t *testing.T) {
 		},
 		{
 			name: "bounds check without current_value unchanged",
-			input: &gen_healthpb.HealthCheck{
+			input: &healthpb.HealthCheck{
 				Id:          "test-id",
 				DisplayName: "test check",
-				Check: &gen_healthpb.HealthCheck_Bounds_{
-					Bounds: &gen_healthpb.HealthCheck_Bounds{
-						Expected: &gen_healthpb.HealthCheck_Bounds_NormalValue{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
+						Expected: &healthpb.HealthCheck_Bounds_NormalValue{
 							NormalValue: healthpb.FloatValue(20.0),
 						},
 						DisplayUnit: "°C",
@@ -158,14 +157,14 @@ func Test_removeMeasuredValues(t *testing.T) {
 		},
 		{
 			name: "bounds check with current_value removed",
-			input: &gen_healthpb.HealthCheck{
+			input: &healthpb.HealthCheck{
 				Id:          "temp-check",
 				DisplayName: "Room Temperature",
-				Check: &gen_healthpb.HealthCheck_Bounds_{
-					Bounds: &gen_healthpb.HealthCheck_Bounds{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
 						CurrentValue: healthpb.FloatValue(21.5),
-						Expected: &gen_healthpb.HealthCheck_Bounds_NormalRange{
-							NormalRange: &gen_healthpb.HealthCheck_ValueRange{
+						Expected: &healthpb.HealthCheck_Bounds_NormalRange{
+							NormalRange: &healthpb.HealthCheck_ValueRange{
 								Low:  healthpb.FloatValue(18.0),
 								High: healthpb.FloatValue(24.0),
 							},
@@ -174,13 +173,13 @@ func Test_removeMeasuredValues(t *testing.T) {
 					},
 				},
 			},
-			wantVal: &gen_healthpb.HealthCheck{
+			wantVal: &healthpb.HealthCheck{
 				Id:          "temp-check",
 				DisplayName: "Room Temperature",
-				Check: &gen_healthpb.HealthCheck_Bounds_{
-					Bounds: &gen_healthpb.HealthCheck_Bounds{
-						Expected: &gen_healthpb.HealthCheck_Bounds_NormalRange{
-							NormalRange: &gen_healthpb.HealthCheck_ValueRange{
+				Check: &healthpb.HealthCheck_Bounds_{
+					Bounds: &healthpb.HealthCheck_Bounds{
+						Expected: &healthpb.HealthCheck_Bounds_NormalRange{
+							NormalRange: &healthpb.HealthCheck_ValueRange{
 								Low:  healthpb.FloatValue(18.0),
 								High: healthpb.FloatValue(24.0),
 							},
@@ -218,7 +217,7 @@ type healthTestHarness struct {
 	t               *testing.T
 	registry        *healthpb.Registry
 	devices         *devicespb.Collection
-	healthApiClient gen_healthpb.HealthApiClient
+	healthApiClient healthpb.HealthApiClient
 	owner           string
 }
 
@@ -230,7 +229,7 @@ func newHealthTestHarness(t *testing.T) *healthTestHarness {
 	}
 	devices := devicespb.NewCollection()
 	announcer := node.New("test-node", nodeopts.WithStore(devices))
-	healthApiClient := gen_healthpb.NewHealthApiClient(announcer.ClientConn())
+	healthApiClient := healthpb.NewHealthApiClient(announcer.ClientConn())
 
 	r, dispose, err := setupHealthRegistry(ctx, cfg, devices, announcer, zaptest.NewLogger(t))
 	if err != nil {
@@ -258,7 +257,7 @@ func newHealthTestHarness(t *testing.T) *healthTestHarness {
 }
 
 func (h *healthTestHarness) createFaultCheck(deviceName, displayName string) *healthpb.FaultCheck {
-	check, err := h.registry.ForOwner(h.owner).NewFaultCheck(deviceName, &gen_healthpb.HealthCheck{
+	check, err := h.registry.ForOwner(h.owner).NewFaultCheck(deviceName, &healthpb.HealthCheck{
 		DisplayName: displayName,
 	})
 	if err != nil {
@@ -268,12 +267,12 @@ func (h *healthTestHarness) createFaultCheck(deviceName, displayName string) *he
 }
 
 func (h *healthTestHarness) createBoundsCheck(deviceName, displayName string, currentValue float64) *healthpb.BoundsCheck {
-	check, err := h.registry.ForOwner(h.owner).NewBoundsCheck(deviceName, &gen_healthpb.HealthCheck{
+	check, err := h.registry.ForOwner(h.owner).NewBoundsCheck(deviceName, &healthpb.HealthCheck{
 		DisplayName: displayName,
-		Check: &gen_healthpb.HealthCheck_Bounds_{
-			Bounds: &gen_healthpb.HealthCheck_Bounds{
-				Expected: &gen_healthpb.HealthCheck_Bounds_NormalRange{
-					NormalRange: &gen_healthpb.HealthCheck_ValueRange{
+		Check: &healthpb.HealthCheck_Bounds_{
+			Bounds: &healthpb.HealthCheck_Bounds{
+				Expected: &healthpb.HealthCheck_Bounds_NormalRange{
+					NormalRange: &healthpb.HealthCheck_ValueRange{
 						Low:  healthpb.FloatValue(0.0),
 						High: healthpb.FloatValue(100.0),
 					},
@@ -289,9 +288,9 @@ func (h *healthTestHarness) createBoundsCheck(deviceName, displayName string, cu
 	return check
 }
 
-func (h *healthTestHarness) getOnlyCheck(t *testing.T, deviceName string) *gen_healthpb.HealthCheck {
+func (h *healthTestHarness) getOnlyCheck(t *testing.T, deviceName string) *healthpb.HealthCheck {
 	t.Helper()
-	apiChecks, err := h.healthApiClient.ListHealthChecks(h.ctx, &gen_healthpb.ListHealthChecksRequest{Name: deviceName})
+	apiChecks, err := h.healthApiClient.ListHealthChecks(h.ctx, &healthpb.ListHealthChecksRequest{Name: deviceName})
 	if err != nil {
 		t.Fatalf("ListHealthChecks() error = %v", err)
 	}
@@ -301,16 +300,16 @@ func (h *healthTestHarness) getOnlyCheck(t *testing.T, deviceName string) *gen_h
 	return apiChecks.HealthChecks[0]
 }
 
-func (h *healthTestHarness) assertCheckInHealthApi(t *testing.T, deviceName string, want *gen_healthpb.HealthCheck) {
+func (h *healthTestHarness) assertCheckInHealthApi(t *testing.T, deviceName string, want *healthpb.HealthCheck) {
 	t.Helper()
-	apiChecks, err := h.healthApiClient.ListHealthChecks(h.ctx, &gen_healthpb.ListHealthChecksRequest{Name: deviceName})
+	apiChecks, err := h.healthApiClient.ListHealthChecks(h.ctx, &healthpb.ListHealthChecksRequest{Name: deviceName})
 	if err != nil {
 		t.Fatalf("ListHealthChecks() error = %v", err)
 	}
 	assertHealthChecks(t, apiChecks.HealthChecks, want)
 }
 
-func (h *healthTestHarness) assertCheckInDevicesApi(t *testing.T, deviceName string, want *gen_healthpb.HealthCheck) {
+func (h *healthTestHarness) assertCheckInDevicesApi(t *testing.T, deviceName string, want *healthpb.HealthCheck) {
 	t.Helper()
 	dev, err := h.devices.GetDevice(deviceName)
 	if err != nil {
@@ -324,7 +323,7 @@ func (h *healthTestHarness) assertCheckInDevicesApi(t *testing.T, deviceName str
 	assertHealthChecks(t, dev.HealthChecks, wantWithoutMeasured)
 }
 
-func (h *healthTestHarness) assertCheckNormality(t *testing.T, deviceName string, want gen_healthpb.HealthCheck_Normality) {
+func (h *healthTestHarness) assertCheckNormality(t *testing.T, deviceName string, want healthpb.HealthCheck_Normality) {
 	t.Helper()
 	gotCheck := h.getOnlyCheck(t, deviceName)
 	if gotCheck.Normality != want {
@@ -381,7 +380,7 @@ func (h *healthTestHarness) assertCheckHasNoFaults(t *testing.T, deviceName stri
 
 func (h *healthTestHarness) assertCheckExists(t *testing.T, deviceName string) {
 	t.Helper()
-	_, err := h.healthApiClient.ListHealthChecks(h.ctx, &gen_healthpb.ListHealthChecksRequest{Name: deviceName})
+	_, err := h.healthApiClient.ListHealthChecks(h.ctx, &healthpb.ListHealthChecksRequest{Name: deviceName})
 	if err != nil {
 		t.Fatalf("expected check to exist, but got error: %v", err)
 	}
@@ -389,7 +388,7 @@ func (h *healthTestHarness) assertCheckExists(t *testing.T, deviceName string) {
 
 func (h *healthTestHarness) assertCheckDeleted(t *testing.T, deviceName string) {
 	t.Helper()
-	apiChecks, err := h.healthApiClient.ListHealthChecks(h.ctx, &gen_healthpb.ListHealthChecksRequest{Name: deviceName})
+	apiChecks, err := h.healthApiClient.ListHealthChecks(h.ctx, &healthpb.ListHealthChecksRequest{Name: deviceName})
 	if err != nil {
 		if status.Code(err) != codes.NotFound {
 			t.Fatalf("unexpected error from ListHealthChecks() = %v", err)
@@ -451,9 +450,9 @@ func (h *healthTestHarness) assertDeviceCheckHasNoCurrentValue(t *testing.T, dev
 	}
 }
 
-func assertHealthChecks(t *testing.T, got []*gen_healthpb.HealthCheck, want ...*gen_healthpb.HealthCheck) {
+func assertHealthChecks(t *testing.T, got []*healthpb.HealthCheck, want ...*healthpb.HealthCheck) {
 	t.Helper()
-	if diff := cmp.Diff(want, got, protocmp.Transform(), protocmp.IgnoreFields(&gen_healthpb.HealthCheck{}, "create_time")); diff != "" {
+	if diff := cmp.Diff(want, got, protocmp.Transform(), protocmp.IgnoreFields(&healthpb.HealthCheck{}, "create_time")); diff != "" {
 		t.Errorf("health checks mismatch (-want +got):\n%s", diff)
 	}
 }

@@ -12,11 +12,11 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -86,7 +86,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasMetadata(camera.Metadata),
 			node.HasClient(mqttpb.WrapService(cam)),
 			node.HasTrait(trait.Ptz, node.WithClients(ptzpb.WrapApi(cam))),
-			node.HasTrait(udmipb.TraitName, node.WithClients(gen_udmipb.WrapService(cam))),
+			node.HasTrait(gen_udmipb.TraitName, node.WithClients(udmipb.WrapService(cam))),
 		)
 		cameras = append(cameras, cam)
 	}

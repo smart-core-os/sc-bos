@@ -15,10 +15,9 @@ import (
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
-	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
 	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
@@ -319,7 +318,7 @@ func TestGetMeterDeviceAndData(t *testing.T) {
 	startTime := time.Now().Add(-time.Hour)
 	endTime := time.Now()
 
-	meterReading := &gen_meterpb.MeterReading{
+	meterReading := &meterpb.MeterReading{
 		Usage:     123.45,
 		StartTime: timestamppb.New(startTime),
 		EndTime:   timestamppb.New(endTime),
@@ -329,7 +328,7 @@ func TestGetMeterDeviceAndData(t *testing.T) {
 	devicesApi := devices.NewServer(root)
 	meterModel := meterpb.NewModel(resource.WithInitialValue(meterReading))
 	modelServer := meterpb.NewModelServer(meterModel)
-	meterClient := node.WithClients(gen_meterpb.WrapApi(modelServer))
+	meterClient := node.WithClients(meterpb.WrapApi(modelServer))
 	root.Announce("foo",
 		node.HasTrait(meterpb.TraitName, meterClient),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
@@ -361,7 +360,7 @@ func TestGetMeterDeviceAndData(t *testing.T) {
 	// Verify the structure contains meterReading resource
 	require.Contains(t, traitData, "meterReading")
 
-	reading := gen_meterpb.MeterReading{}
+	reading := meterpb.MeterReading{}
 	err = protojson.Unmarshal(traitData["meterReading"], &reading)
 	require.NoError(t, err)
 
@@ -380,14 +379,14 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	startTime := time.Now().Add(-time.Hour)
 	endTime := time.Now()
 
-	meterReading := &gen_meterpb.MeterReading{
+	meterReading := &meterpb.MeterReading{
 		Usage:     123.45,
 		StartTime: timestamppb.New(startTime),
 		EndTime:   timestamppb.New(endTime),
 		Produced:  67.89,
 	}
 
-	meterInfo := &gen_meterpb.MeterReadingSupport{
+	meterInfo := &meterpb.MeterReadingSupport{
 		UsageUnit:    "kWh",
 		ProducedUnit: "kWh",
 	}
@@ -397,8 +396,8 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	modelServer := meterpb.NewModelServer(meterModel)
 	infoServer := &meterpb.InfoServer{MeterReading: meterInfo}
 	meterClient := node.WithClients(
-		gen_meterpb.WrapApi(modelServer),
-		gen_meterpb.WrapInfo(infoServer),
+		meterpb.WrapApi(modelServer),
+		meterpb.WrapInfo(infoServer),
 	)
 	root.Announce("foo",
 		node.HasTrait(meterpb.TraitName, meterClient),
@@ -426,7 +425,7 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	sccexporter.getMeterInfo(context.Background(), meterpb.TraitName, allDevices)
 
 	require.NotNil(t, dev.info[meterpb.TraitName])
-	support, ok := dev.info[meterpb.TraitName].(*gen_meterpb.MeterReadingSupport)
+	support, ok := dev.info[meterpb.TraitName].(*meterpb.MeterReadingSupport)
 	require.True(t, ok)
 	require.Equal(t, "kWh", support.UsageUnit)
 	require.Equal(t, "kWh", support.ProducedUnit)
@@ -441,14 +440,14 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	require.Contains(t, traitData, "meterReadingInfo")
 
 	// Verify meter reading data
-	var reading gen_meterpb.MeterReading
+	var reading meterpb.MeterReading
 	err = protojson.Unmarshal(traitData["meterReading"], &reading)
 	require.NoError(t, err)
 	require.Equal(t, meterReading.Usage, reading.Usage)
 	require.Equal(t, meterReading.Produced, reading.Produced)
 
 	// Verify meter reading info
-	var info gen_meterpb.MeterReadingSupport
+	var info meterpb.MeterReadingSupport
 	err = protojson.Unmarshal(traitData["meterReadingInfo"], &info)
 	require.NoError(t, err)
 	require.Equal(t, "kWh", info.UsageUnit)

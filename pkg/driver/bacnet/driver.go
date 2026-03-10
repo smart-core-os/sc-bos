@@ -22,7 +22,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/ctxerr"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/merge"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
@@ -54,9 +53,9 @@ type Driver struct {
 	mu      sync.RWMutex
 	devices *known.Map
 
-	health      *gen_healthpb.Checks
-	systemCheck *gen_healthpb.FaultCheck
-	checks      []*gen_healthpb.FaultCheck
+	health      *healthpb.Checks
+	systemCheck *healthpb.FaultCheck
+	checks      []*healthpb.FaultCheck
 	healthTasks []task.StopFn
 }
 
@@ -113,7 +112,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 
 		faultCheck, err := d.health.NewFaultCheck(scDeviceName, createDeviceHealthCheck(device.Health.OccupantImpact.ToProto(), device.Health.EquipmentImpact.ToProto()))
-		if errors.Is(err, gen_healthpb.ErrAlreadyExists) {
+		if errors.Is(err, healthpb.ErrAlreadyExists) {
 			logger.Warn("device health check already registered, health will not be tracked", zap.String("device", device.Name))
 			faultCheck = nil
 		} else if err != nil {
@@ -184,7 +183,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	for _, trait := range cfg.Traits {
 		logger := d.logger.With(zap.Stringer("trait", trait.Kind), zap.String("name", trait.Name))
 		faultCheck, err := d.health.NewFaultCheck(trait.Name, createTraitHealthCheck(trait.Kind, trait.Health.OccupantImpact.ToProto(), trait.Health.EquipmentImpact.ToProto()))
-		if errors.Is(err, gen_healthpb.ErrAlreadyExists) {
+		if errors.Is(err, healthpb.ErrAlreadyExists) {
 			logger.Warn("trait health check already registered, health will not be tracked", zap.Stringer("trait", trait.Kind), zap.String("name", trait.Name))
 			faultCheck = nil
 		} else if err != nil {
@@ -194,7 +193,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		// special case health trait as it needs custom handling
 		// as it doesn't announce to the node.Announcer in the same way as other traits
-		if trait.Kind == gen_healthpb.TraitName {
+		if trait.Kind == healthpb.TraitName {
 			h, err := merge.NewHealth(d.client, devices, d.health, faultCheck, trait, logger)
 
 			if err != nil {
@@ -251,7 +250,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func (d *Driver) initClient(ctx context.Context, cfg config.Root, faultCheck *gen_healthpb.FaultCheck) error {
+func (d *Driver) initClient(ctx context.Context, cfg config.Root, faultCheck *healthpb.FaultCheck) error {
 	rel := &healthpb.HealthCheck_Reliability{}
 	client, err := gobacnet.NewClient(cfg.LocalInterface, int(cfg.LocalPort),
 		gobacnet.WithMaxConcurrentTransactions(cfg.MaxConcurrentTransactions), gobacnet.WithLogLevel(logrus.InfoLevel))
@@ -281,7 +280,7 @@ func (d *Driver) initClient(ctx context.Context, cfg config.Root, faultCheck *ge
 	return err
 }
 
-func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announcer, cfg config.Root, device config.Device, devices known.Context, deviceHealth *gen_healthpb.FaultCheck, logger *zap.Logger) error {
+func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announcer, cfg config.Root, device config.Device, devices known.Context, deviceHealth *healthpb.FaultCheck, logger *zap.Logger) error {
 	deviceName := adapt.DeviceName(device)
 	scDeviceName := cfg.DeviceNamePrefix + deviceName
 
