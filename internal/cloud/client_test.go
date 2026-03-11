@@ -8,6 +8,7 @@ import (
 	"embed"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -704,6 +705,56 @@ func TestInstallingConfig(t *testing.T) {
 		assertFileContent(t, fsys, "config.json", `{"key":"value"}`)
 		assertFileContent(t, fsys, "sub/nested.txt", "nested content")
 	})
+}
+
+func TestDownloadPayload_InsecureURLBlocked(t *testing.T) {
+	// When the client's endpoint is HTTPS, HTTP download URLs must be rejected
+	// before any network request is made.
+	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	// ts.URL is "https://...", so the client is configured with HTTPS.
+	client := NewHTTPClient(ts.URL, "secret", WithHTTPClient(ts.Client()))
+
+	tests := []struct {
+		name        string
+		downloadURL string
+		wantErr     bool
+	}{
+		{
+			name:        "http download URL blocked when endpoint is https",
+			downloadURL: "http://example.com/payload.tar.gz",
+			wantErr:     true,
+		},
+		{
+			name:        "https download URL allowed when endpoint is https",
+			downloadURL: ts.URL + "/payload.tar.gz",
+			wantErr:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rc, err := client.DownloadPayload(context.Background(), tt.downloadURL)
+			if rc != nil {
+				_ = rc.Close()
+			}
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected error for insecure download URL, got nil")
+				}
+				if !errors.Is(err, errInsecureDownloadURL) {
+					t.Errorf("expected %v, got: %v", errInsecureDownloadURL, err)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("unexpected error for secure download URL: %v", err)
+				}
+			}
+		})
+	}
 }
 
 func TestActiveConfig(t *testing.T) {

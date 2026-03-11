@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 // Client abstracts the check-in API.
@@ -92,7 +93,15 @@ func (c *HTTPClient) CheckIn(ctx context.Context, req CheckInRequest) (CheckInRe
 
 // DownloadPayload fetches the payload at the given URL.
 // Caller must close the returned ReadCloser.
+//
+// If the client's endpoint is using HTTPS, then the provided URL must also use HTTPS.
 func (c *HTTPClient) DownloadPayload(ctx context.Context, url string) (io.ReadCloser, error) {
+	if strings.HasPrefix(c.baseURL, "https:") {
+		if !strings.HasPrefix(url, "https:") {
+			return nil, errInsecureDownloadURL
+		}
+	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
@@ -112,3 +121,5 @@ func (c *HTTPClient) DownloadPayload(ctx context.Context, url string) (io.ReadCl
 }
 
 const maxCheckInBodySize = 1024 * 1024 // 1 MiB
+
+var errInsecureDownloadURL = errors.New("insecure payload URL - must use https for downloads when configured with secure API server")
