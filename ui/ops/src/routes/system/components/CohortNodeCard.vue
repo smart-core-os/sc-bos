@@ -61,6 +61,36 @@
           <span>Last actor: {{ rebootState.lastRebootActor }}</span>
         </v-list-item>
       </v-list>
+      <with-resource-use :name="node.name" :paused="false" v-slot="{ resource: ruResource }">
+        <template v-if="!ruResource.streamError && ruResource.value">
+          <v-list-item class="pa-0" style="min-height: 20px">
+            <span v-if="ruResource.value.cpu?.utilization != null">
+              CPU: {{ ruResource.value.cpu.utilization.toFixed(1) }}%
+            </span>
+            <span v-if="ruResource.value.memory?.utilization != null" class="ml-2">
+              Mem: {{ ruResource.value.memory.utilization.toFixed(1) }}%
+            </span>
+          </v-list-item>
+          <v-list-item v-if="ruResource.value.network?.connectionCount != null" class="pa-0" style="min-height: 20px">
+            <span>SC-BOS connections: {{ ruResource.value.network.connectionCount }}</span>
+          </v-list-item>
+          <template v-if="ruResource.value.disksList?.length">
+            <v-list-item class="pa-0 mt-1" style="min-height: 20px">
+              <span class="text-caption text-medium-emphasis">Disks</span>
+            </v-list-item>
+            <v-list-item
+                v-for="disk in ruResource.value.disksList"
+                :key="disk.mountPoint"
+                class="pa-0"
+                style="min-height: 20px">
+              <span>{{ disk.mountPoint }}</span>
+              <span v-if="disk.utilization != null" class="ml-2">
+                {{ disk.utilization.toFixed(1) }}% used
+              </span>
+            </v-list-item>
+          </template>
+        </template>
+      </with-resource-use>
       <div class="chips">
         <v-chip
             v-if="node.isServer"
@@ -107,6 +137,7 @@ import {closeResource, newResourceValue} from '@/api/resource.js';
 import useAuthSetup from '@/composables/useAuthSetup.js';
 import {usePullServiceMetadata} from '@/composables/services.js';
 import {NodeRole} from '@/stores/cohort.js';
+import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
 import {watchResource} from '@/util/traits.js';
 import {computed, onScopeDispose, reactive, ref} from 'vue';
 
@@ -184,6 +215,7 @@ const onShowCertificates = (address) => {
 const onForgetNode = (address) => {
   emit('click:forget-node', address);
 };
+
 </script>
 
 <style scoped>

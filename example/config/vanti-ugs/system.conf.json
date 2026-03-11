@@ -28,7 +28,8 @@
       }
     },
     "tenants": {"storage": {"type": "postgres"}},
-    "reboot": {}
+    "reboot": {},
+    "resourceUse": {}
   },
   "experimental": {
     "accounts": true

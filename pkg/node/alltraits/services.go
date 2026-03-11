@@ -17,6 +17,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/mqttpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/rebootpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/report"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/serviceticketpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
@@ -39,6 +40,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	gen_rebootpb "github.com/smart-core-os/sc-bos/pkg/proto/rebootpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/reportpb"
+	gen_resourceusepb "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	gen_serviceticketpb "github.com/smart-core-os/sc-bos/pkg/proto/serviceticketpb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
@@ -93,6 +95,7 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	mqttpb.TraitName:           {gen_mqttpb.MqttService_ServiceDesc},
 	rebootpb.TraitName:         {gen_rebootpb.RebootApi_ServiceDesc, gen_rebootpb.RebootHistory_ServiceDesc},
 	report.TraitName:           {reportpb.ReportApi_ServiceDesc},
+	resourceusepb.TraitName:    {gen_resourceusepb.ResourceUseApi_ServiceDesc, gen_resourceusepb.ResourceUseHistory_ServiceDesc},
 	securityevent.TraitName:    {securityeventpb.SecurityEventApi_ServiceDesc},
 	serviceticketpb.TraitName:  {gen_serviceticketpb.ServiceTicketApi_ServiceDesc, gen_serviceticketpb.ServiceTicketInfo_ServiceDesc},
 	soundsensorpb.TraitName:    {gen_soundsensorpb.SoundSensorApi_ServiceDesc, gen_soundsensorpb.SoundSensorInfo_ServiceDesc},
