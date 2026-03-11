@@ -27,10 +27,13 @@ func WithLogger(logger *zap.Logger) UpdaterOption {
 }
 
 // DeploymentUpdater manages deployment state on disk and coordinates with the cloud check-in API.
+//
+// Methods are safe to call concurrently.
 type DeploymentUpdater struct {
 	dir    *os.Root
 	client Client
 	logger *zap.Logger
+	lockCh chan struct{}
 }
 
 // NewDeploymentUpdater creates a new DeploymentUpdater.
@@ -39,6 +42,7 @@ func NewDeploymentUpdater(storeDir *os.Root, client Client, opts ...UpdaterOptio
 	u := &DeploymentUpdater{
 		dir:    storeDir,
 		client: client,
+		lockCh: make(chan struct{}, 1),
 	}
 	for _, opt := range opts {
 		opt(u)
@@ -57,6 +61,11 @@ func (c *DeploymentUpdater) InstallingConfig() (fs.FS, error) {
 }
 
 func (c *DeploymentUpdater) CommitInstall(ctx context.Context) error {
+	if !c.lock(ctx) {
+		return ctx.Err()
+	}
+	defer c.unlock()
+
 	installingID, err := c.deploymentIDByMark(markInstalling)
 	if err != nil {
 		return fmt.Errorf("get installing deployment id: %w", err)
@@ -99,6 +108,11 @@ func (c *DeploymentUpdater) CommitInstall(ctx context.Context) error {
 }
 
 func (c *DeploymentUpdater) FailInstall(ctx context.Context, message string) error {
+	if !c.lock(ctx) {
+		return ctx.Err()
+	}
+	defer c.unlock()
+
 	installingID, err := c.deploymentIDByMark(markInstalling)
 	if err != nil {
 		return fmt.Errorf("get installing deployment id: %w", err)
@@ -158,6 +172,11 @@ func (c *DeploymentUpdater) extractedConfigByMark(name string) (fs.FS, error) {
 // be downloaded and extracted, and marked as the installing config returned by InstallingConfig.
 // In this case, needReboot will be true, indicating that the node should restart to apply the new config.
 func (c *DeploymentUpdater) PollOnce(ctx context.Context) (needReboot bool, err error) {
+	if !c.lock(ctx) {
+		return false, ctx.Err()
+	}
+	defer c.unlock()
+
 	// ID = 0 is a placeholder for "no such mark"
 	activeDeploymentID, err := c.deploymentIDByMark(markActive)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -346,6 +365,24 @@ func (c *DeploymentUpdater) deploymentIDByMark(name string) (int64, error) {
 		return 0, fmt.Errorf("parse deployment id from link target: %w", err)
 	}
 	return id, nil
+}
+
+func (c *DeploymentUpdater) lock(ctx context.Context) (ok bool) {
+	select {
+	case c.lockCh <- struct{}{}:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
+// only call when holding the lock
+func (c *DeploymentUpdater) unlock() {
+	select {
+	case <-c.lockCh:
+	default:
+		panic("unlock called without lock held")
+	}
 }
 
 func extractTarGZ(src io.Reader, dst *os.Root) error {
