@@ -28,7 +28,7 @@
               Forget Node
             </v-list-item-title>
           </v-list-item>
-          <v-list-item v-if="canReboot || true" link @click="showRebootDialog = true">
+          <v-list-item v-if="canReboot" link @click="showRebootDialog = true">
             <v-list-item-title class="text-warning">Reboot Node</v-list-item-title>
           </v-list-item>
         </v-list>
