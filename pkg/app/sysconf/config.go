@@ -289,11 +289,18 @@ type Cloud struct {
 	// Preserve old or incomplete downloads instead of deleting them on startup or when they expire.
 	// This is useful for debugging and should be used with caution in production since it can lead to unbounded disk usage.
 	PreserveDownloads bool `json:"preserveDownloads,omitempty"`
+	// Maximum size of the decompressed config package that can be downloaded from the server, in MiB.
+	// Defaults to DefaultMaxDeploymentSizeMiB if absent or 0, which should be sufficient for typical use cases.
+	// If negative, no limit is applied.
+	MaxDeploymentSizeMiB int `json:"maxDeploymentSizeMiB,omitempty"`
 }
 
 func (c *Cloud) FillDefaults() *Cloud {
 	if c.PollInterval == nil || c.PollInterval.Duration <= 0 {
 		c.PollInterval = &jsontypes.Duration{Duration: 5 * time.Minute}
+	}
+	if c.MaxDeploymentSizeMiB == 0 {
+		c.MaxDeploymentSizeMiB = DefaultMaxDeploymentSizeMiB
 	}
 	return c
 }
@@ -309,3 +316,5 @@ type BlockSource interface {
 type BlockSource2 interface {
 	ConfigBlocks(cfg *Config) []block.Block
 }
+
+const DefaultMaxDeploymentSizeMiB = 500

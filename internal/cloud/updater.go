@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -32,6 +33,16 @@ func WithPreserveDownloads(preserveDownloads bool) UpdaterOption {
 	}
 }
 
+// WithMaxDeploymentSize sets the maximum allowed size of a decompressed deployment config, in bytes. If a deployment
+// exceeds this size, it will be rejected and not installed. This is to prevent the updater from filling up disk space
+// with huge deployments, which is probably a sign of a bad deployment package.
+// If maxSize <= 0, then there is no limit, which is the default behaviour.
+func WithMaxDeploymentSize(maxSize int64) UpdaterOption {
+	return func(u *DeploymentUpdater) {
+		u.maxDeploymentSize = maxSize
+	}
+}
+
 // DeploymentUpdater manages deployment state on disk and coordinates with the cloud check-in API.
 //
 // Methods are safe to call concurrently.
@@ -40,6 +51,7 @@ type DeploymentUpdater struct {
 	client            Client
 	logger            *zap.Logger
 	preserveDownloads bool
+	maxDeploymentSize int64 // max size, in bytes, of a decompressed deployment config to permit
 	lockCh            chan struct{}
 }
 
@@ -361,7 +373,7 @@ func (c *DeploymentUpdater) downloadConfigVersion(ctx context.Context, deploymen
 	if err != nil {
 		return fmt.Errorf("open extraction directory: %w", err)
 	}
-	err = extractTarGZ(body, extractRoot)
+	err = extractTarGZ(body, extractRoot, c.maxDeploymentSize)
 	_ = extractRoot.Close()
 	if err != nil {
 		var cleanupErr error
@@ -456,7 +468,12 @@ func (r *rootFS) Close() error {
 	return r.root.Close()
 }
 
-func extractTarGZ(src io.Reader, dst *os.Root) error {
+// maxSize, if positive, limits the size of the decompressed tarball. Decompression will stop early with an error
+// if more than maxSize bytes are decompressed.
+//
+// We apply the limit to the decompressed data rather than the compressed date to catch ZIP bombs, where a small
+// file decompresses to a huge size.
+func extractTarGZ(src io.Reader, dst *os.Root, maxSize int64) error {
 	srcUncompressed, err := gzip.NewReader(src)
 	if err != nil {
 		return fmt.Errorf("gzip: %w", err)
@@ -465,10 +482,17 @@ func extractTarGZ(src io.Reader, dst *os.Root) error {
 		_ = srcUncompressed.Close()
 	}()
 
-	tarReader := tar.NewReader(srcUncompressed)
+	var srcLimited io.Reader = srcUncompressed
+	if maxSize > 0 {
+		srcLimited = limitReader(srcUncompressed, maxSize)
+	}
+
+	tarReader := tar.NewReader(srcLimited)
 	for {
 		header, err := tarReader.Next()
-		if errors.Is(err, io.EOF) {
+		if errors.Is(err, errLimitReached) {
+			return sizeLimitError(maxSize)
+		} else if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -483,7 +507,9 @@ func extractTarGZ(src io.Reader, dst *os.Root) error {
 			}
 		case tar.TypeReg:
 			err = copyFile(dst, header.Name, tarReader, false)
-			if err != nil {
+			if errors.Is(err, errLimitReached) {
+				return sizeLimitError(maxSize)
+			} else if err != nil {
 				return fmt.Errorf("copy file: %w", err)
 			}
 
@@ -514,6 +540,46 @@ func copyFile(root *os.Root, path string, src io.Reader, mkdir bool) error {
 		return fmt.Errorf("copy file contents: %w", err)
 	}
 	return nil
+}
+
+// like io.LimitReader but returns a more specific error message when the limit is reached, so we can distinguish
+// it from an io.EOF from the source reader
+type limitedReader struct {
+	R io.Reader
+	N int64
+}
+
+func (l *limitedReader) Read(p []byte) (n int, err error) {
+	if l.N <= 0 {
+		return 0, errLimitReached
+	}
+	// never read more than the N limit, even if the caller passed in a larger buffer
+	if int64(len(p)) > l.N {
+		p = p[:l.N]
+	}
+	n, err = l.R.Read(p)
+	l.N -= int64(n)
+	return n, err
+}
+
+func limitReader(src io.Reader, n int64) io.Reader {
+	return &limitedReader{R: src, N: n}
+}
+
+var errLimitReached = errors.New("read limit reached")
+
+func humaniseBytes(n int64) string {
+	units := []string{"B", "KiB", "MiB", "GiB", "TiB"}
+	size := float64(n)
+	for len(units) > 1 && math.Abs(size) >= 1024 {
+		size /= 1024
+		units = units[1:]
+	}
+	return fmt.Sprintf("%.3g %s", size, units[0])
+}
+
+func sizeLimitError(maxSize int64) error {
+	return fmt.Errorf("deployment package exceeds size limit of %s", humaniseBytes(maxSize))
 }
 
 const (

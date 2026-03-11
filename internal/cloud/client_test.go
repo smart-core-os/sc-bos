@@ -281,7 +281,7 @@ func TestExtractTarGZ(t *testing.T) {
 		}
 		defer root.Close()
 
-		if err := extractTarGZ(bytes.NewReader(data), root); err != nil {
+		if err := extractTarGZ(bytes.NewReader(data), root, -1); err != nil {
 			t.Fatalf("extractTarGZ: %v", err)
 		}
 
@@ -299,7 +299,7 @@ func TestExtractTarGZ(t *testing.T) {
 		}
 		defer root.Close()
 
-		if err := extractTarGZ(bytes.NewReader(data), root); err != nil {
+		if err := extractTarGZ(bytes.NewReader(data), root, -1); err != nil {
 			t.Errorf("expected no error for empty archive, got: %v", err)
 		}
 	})
@@ -311,7 +311,7 @@ func TestExtractTarGZ(t *testing.T) {
 		}
 		defer root.Close()
 
-		err = extractTarGZ(bytes.NewReader([]byte("not gzip")), root)
+		err = extractTarGZ(bytes.NewReader([]byte("not gzip")), root, -1)
 		if err == nil {
 			t.Error("expected error for invalid gzip, got nil")
 		}
@@ -326,7 +326,7 @@ func TestExtractTarGZ(t *testing.T) {
 		}
 		defer root.Close()
 
-		err = extractTarGZ(bytes.NewReader(data), root)
+		err = extractTarGZ(bytes.NewReader(data), root, -1)
 		if err == nil {
 			t.Fatal("expected error for symlink entry, got nil")
 		}
@@ -346,11 +346,45 @@ func TestExtractTarGZ(t *testing.T) {
 		}
 		defer root.Close()
 
-		err = extractTarGZ(bytes.NewReader(data), root)
+		err = extractTarGZ(bytes.NewReader(data), root, -1)
 		if err == nil {
 			t.Error("expected error for truncated tar, got nil")
 		}
 	})
+
+	// oversized files of various magnitudes
+	type oversizeTest struct {
+		name string
+		text string
+		size int64
+	}
+	oversizeTests := []oversizeTest{
+		{"oversized file bytes", "123 B", 123},
+		{"oversized file kibibytes", "100 KiB", 100 * 1024},
+		{"oversized file mebibytes", "15 MiB", 15 * 1024 * 1024},
+	}
+	for _, ot := range oversizeTests {
+		t.Run(ot.name, func(t *testing.T) {
+			// create a tar.gz with a single file of the specified size
+			// with the tar headers included, this will exceed the size limit
+			data := genLargeFileTarGZ(t, ot.size)
+
+			root, err := os.OpenRoot(t.TempDir())
+			if err != nil {
+				t.Fatalf("open root: %v", err)
+			}
+			defer root.Close()
+
+			err = extractTarGZ(bytes.NewReader(data), root, ot.size)
+			t.Log(err)
+			if err == nil {
+				t.Fatalf("expected error for oversized file of size %d, got nil", ot.size)
+			}
+			if !strings.Contains(err.Error(), ot.text) {
+				t.Errorf("expected error to contain %q, got: %v", ot.text, err)
+			}
+		})
+	}
 }
 
 func TestPoll(t *testing.T) {
@@ -853,4 +887,32 @@ func TestActiveConfig(t *testing.T) {
 
 		assertFileContent(t, fsys, "config.json", `{"version":1}`)
 	})
+}
+
+func genLargeFileTarGZ(t *testing.T, size int64) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	gzWriter := gzip.NewWriter(&buf)
+	tarWriter := tar.NewWriter(gzWriter)
+
+	header := &tar.Header{
+		Name:     "file.bin",
+		Mode:     0644,
+		Typeflag: tar.TypeReg,
+		Size:     size,
+	}
+	contents := bytes.Repeat([]byte{0xDE, 0xAD, 0xBE, 0xEF}, int((size+3)/4))[:size] // repeat pattern to fill size
+	if err := tarWriter.WriteHeader(header); err != nil {
+		t.Fatalf("write tar header: %v", err)
+	}
+	if _, err := tarWriter.Write(contents); err != nil {
+		t.Fatalf("write tar content: %v", err)
+	}
+	if err := tarWriter.Close(); err != nil {
+		t.Fatalf("close tar writer: %v", err)
+	}
+	if err := gzWriter.Close(); err != nil {
+		t.Fatalf("close gzip writer: %v", err)
+	}
+	return buf.Bytes()
 }

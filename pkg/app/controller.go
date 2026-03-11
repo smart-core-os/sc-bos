@@ -68,9 +68,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 
 	// init the deployment client if configured to connect to a deployment server
 	var (
-		deploymentClient *cloud.DeploymentUpdater
-		cloudDataRoot    *os.Root
-		confStore        ConfigStore
+		deploymentUpdater *cloud.DeploymentUpdater
+		cloudDataRoot     *os.Root
+		confStore         ConfigStore
 	)
 	if config.Cloud != nil {
 		cloudSecret, err := loadCloudSecret(config.Cloud.TokenFile)
@@ -89,12 +89,16 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			return nil, fmt.Errorf("failed to open cloud data directory: %w", err)
 		}
 		httpClient := cloud.NewHTTPClient(config.Cloud.Endpoint, cloudSecret)
-		deploymentClient = cloud.NewDeploymentUpdater(cloudDataRoot, httpClient,
+		duOptions := []cloud.UpdaterOption{
 			cloud.WithLogger(logger.Named("cloud")),
 			cloud.WithPreserveDownloads(config.Cloud.PreserveDownloads),
-		)
+		}
+		if config.Cloud.MaxDeploymentSizeMiB != 0 {
+			duOptions = append(duOptions, cloud.WithMaxDeploymentSize(int64(config.Cloud.MaxDeploymentSizeMiB)*1024*1024))
+		}
+		deploymentUpdater = cloud.NewDeploymentUpdater(cloudDataRoot, httpClient, duOptions...)
 
-		confStore, err = loadCloudAppConfig(ctx, config, deploymentClient, logger)
+		confStore, err = loadCloudAppConfig(ctx, config, deploymentUpdater, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load config from cloud: %w", err)
 		}
@@ -408,7 +412,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		SystemConfig:     config,
 		ControllerConfig: confStore,
 		Enrollment:       enrollServer,
-		Deployments:      deploymentClient,
+		Deployments:      deploymentUpdater,
 		Logger:           logger,
 		Node:             rootNode,
 		Devices:          gen_devicespb.NewDevicesApiClient(wrap.ServerToClient(gen_devicespb.DevicesApi_ServiceDesc, devicesApi)),
