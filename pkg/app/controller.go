@@ -68,7 +68,8 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 
 	// init the deployment client if configured to connect to a deployment server
 	var (
-		deploymentClient *cloud.DeploymentClient
+		deploymentClient *cloud.DeploymentUpdater
+		cloudDataRoot    *os.Root
 		confStore        ConfigStore
 	)
 	if config.Cloud != nil {
@@ -83,14 +84,12 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			return nil, fmt.Errorf("failed to create cloud data directory: %w", err)
 		}
 
-		cloudDataRoot, err := os.OpenRoot(cloudDataDir)
+		cloudDataRoot, err = os.OpenRoot(cloudDataDir)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open cloud data directory: %w", err)
 		}
-		deploymentClient, err = cloud.OpenDeploymentClient(cloudDataRoot, config.Cloud.Endpoint, cloudSecret, cloud.WithLogger(logger.Named("cloud")))
-		if err != nil {
-			return nil, fmt.Errorf("failed to create cloud deployment client: %w", err)
-		}
+		httpClient := cloud.NewHTTPClient(config.Cloud.Endpoint, cloudSecret)
+		deploymentClient = cloud.NewDeploymentUpdater(cloudDataRoot, httpClient, cloud.WithLogger(logger.Named("cloud")))
 
 		confStore, err = loadCloudAppConfig(ctx, config, deploymentClient, logger)
 		if err != nil {
@@ -429,6 +428,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	c.Defer(manager.Close)
 	c.Defer(store.Close)
 	c.Defer(closeHealthStore)
+	if cloudDataRoot != nil {
+		c.Defer(cloudDataRoot.Close)
+	}
 	return c, nil
 }
 
@@ -482,7 +484,7 @@ type Controller struct {
 	SystemConfig     sysconf.Config
 	ControllerConfig ConfigStore
 	Enrollment       *enrollment.Server
-	Deployments      *cloud.DeploymentClient
+	Deployments      *cloud.DeploymentUpdater
 
 	// services for drivers/automations
 	Logger          *zap.Logger

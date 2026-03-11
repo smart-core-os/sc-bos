@@ -45,7 +45,7 @@ func loadLocalAppConfig(sysConfig sysconf.Config, logger *zap.Logger) (ConfigSto
 	return confStore, nil
 }
 
-func loadCloudAppConfig(ctx context.Context, sysConfig sysconf.Config, client *cloud.DeploymentClient, logger *zap.Logger) (ConfigStore, error) {
+func loadCloudAppConfig(ctx context.Context, sysConfig sysconf.Config, client *cloud.DeploymentUpdater, logger *zap.Logger) (ConfigStore, error) {
 	// first, try loading the installing config, if there is one
 	// if that doesn't exist or didn't work, proceed to the active config
 	installingConfig, loaded := loadCloudInstallingConfig(ctx, client, logger)
@@ -81,7 +81,7 @@ func loadCloudAppConfig(ctx context.Context, sysConfig sysconf.Config, client *c
 	return &immutableConfigStore{active: activeConfig}, nil
 }
 
-func loadCloudInstallingConfig(ctx context.Context, client *cloud.DeploymentClient, logger *zap.Logger) (conf appconf.Config, loaded bool) {
+func loadCloudInstallingConfig(ctx context.Context, client *cloud.DeploymentUpdater, logger *zap.Logger) (conf appconf.Config, loaded bool) {
 	fail := func(msg string) {
 		err := client.FailInstall(ctx, msg)
 		if err != nil {
