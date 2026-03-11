@@ -373,9 +373,15 @@ const startAuto = () => {
   }
 };
 
+// Shared cancellation — any new setValue call cancels the previous one
+let cancelCurrent = () => {};
+
 // Update display and animations based on value
-const setValue = async (generated, demanded, cancelled) => {
+const setValue = async (generated, demanded) => {
   clearInterval(autoInterval);
+  cancelCurrent();
+  let cancelled = false;
+  cancelCurrent = () => { cancelled = true; };
 
   currentDemand.value = demanded;
   currentGenerated.value = generated;
@@ -388,19 +394,19 @@ const setValue = async (generated, demanded, cancelled) => {
   turbineSpeed(Math.abs(generatePipVal));
 
   for (let i = 0; i < demandPips.length; i++) {
+    if (cancelled) return;
     // Demand pips
-    if (i < demandPipVal || i === 0) {
+    if (i < demandPipVal || (i === 0 && demanded > 0)) {
       demandPips[i].classList.add('onPylon');
     } else {
       demandPips[i].classList.remove('onPylon');
     }
     // Generation pips
-    if (i < generatePipVal || i === 0) {
+    if (i < generatePipVal || (i === 0 && generated > 0)) {
       generatePips[i].classList.add('onTurbine');
     } else {
       generatePips[i].classList.remove('onTurbine');
     }
-    if (cancelled) return;
     await sleep(50);
   }
 
@@ -416,25 +422,17 @@ onMounted(() => {
   generatePips = [...generateObj.querySelectorAll('.pip')].reverse();
   demandPips = [...demandObj.querySelectorAll('.pip')].reverse();
 
+  setValue(props.generated, props.demand);
   // Start demo
   startAuto();
-  // setValue(props.generated, props.demand, false);
 });
 
-watch(() => props.generated, (newGenVal, _, onCleanup) => {
-  let cancelled = false;
-  onCleanup(() => {
-    cancelled = true;
-  });
-  setValue(newGenVal, props.demand, cancelled);
+watch(() => props.generated, (newGenVal) => {
+  setValue(newGenVal, props.demand);
 });
 
-watch(() => props.demand, (newDemandVal, _, onCleanup) => {
-  let cancelled = false;
-  onCleanup(() => {
-    cancelled = true;
-  });
-  setValue(props.generated, newDemandVal, cancelled);
+watch(() => props.demand, (newDemandVal) => {
+  setValue(props.generated, newDemandVal);
 });
 </script>
 

@@ -136,9 +136,15 @@ const startAuto = () => {
 // Sleep helper for async delays
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Shared cancellation — any new setValue call cancels the previous one
+let cancelCurrent = () => {};
+
 // Update the lights based on value
 const setValue = async (value) => {
   clearInterval(autoInterval);
+  cancelCurrent();
+  let cancelled = false;
+  cancelCurrent = () => { cancelled = true; };
 
   currentQuality.value = value;
   currentMaxValue.value =
@@ -149,6 +155,7 @@ const setValue = async (value) => {
   const activeCount = Math.floor((value - currentMinValue.value) / range * petals.length);
 
   for (let i = 0; i < petals.length; i++) {
+    if (cancelled) return;
     randomPetals[i].classList.toggle('on', i < activeCount);
     await sleep(50); // staggered animation
   }
@@ -157,6 +164,7 @@ const setValue = async (value) => {
 onMounted(() => {
   petals = airQualitySVG.value.querySelectorAll('.petal');
   randomPetals = shuffleArray(petals);
+  setValue(props.airQuality);
   startAuto();
 });
 

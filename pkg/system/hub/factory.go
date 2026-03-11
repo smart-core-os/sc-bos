@@ -17,6 +17,8 @@ import (
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
@@ -187,6 +189,30 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 	undo, err := s.node.AnnounceService(srv)
 	s.undos = append(s.undos, undo)
+
+	if err == nil {
+		hubClient := hubpb.NewHubApiClient(hubConn)
+		for _, n := range cfg.Nodes {
+			go func() {
+				for {
+					_, err := hubClient.EnrollHubNode(ctx, &hubpb.EnrollHubNodeRequest{
+						Node: &hubpb.HubNode{Address: n.Address, Name: n.Name},
+					})
+					if err == nil || status.Code(err) == codes.AlreadyExists {
+						s.logger.Info("hub node enrolled", zap.String("address", n.Address))
+						return
+					}
+					s.logger.Debug("waiting to enroll hub node",
+						zap.String("address", n.Address), zap.Error(err))
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(2 * time.Second):
+					}
+				}
+			}()
+		}
+	}
 
 	return err
 }

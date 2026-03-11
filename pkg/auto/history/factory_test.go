@@ -3,11 +3,16 @@ package history
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 	"golang.org/x/exp/rand"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
@@ -17,6 +22,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	gen_airqualitysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	gen_electricpb "github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
@@ -326,3 +332,205 @@ func randString(n int) string {
 	}
 	return string(b)
 }
+
+func Test_automation_applyConfigDevices(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		logger := zap.NewNop()
+		occ1 := occupancysensorpb.NewModel()
+		occ2 := occupancysensorpb.NewModel()
+
+		announcer := node.New("test")
+		announcer.Logger = logger
+
+		announcer.Announce("occ1",
+			node.HasTrait(trait.OccupancySensor),
+			node.HasServer(
+				traits.RegisterOccupancySensorApiServer,
+				traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ1)),
+			),
+		)
+		announcer.Announce("occ2",
+			node.HasTrait(trait.OccupancySensor),
+			node.HasServer(
+				traits.RegisterOccupancySensorApiServer,
+				traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ2)),
+			),
+		)
+
+		a := &automation{
+			clients:   announcer,
+			announcer: node.NewReplaceAnnouncer(announcer),
+			logger:    logger,
+			devices: &streamingDevicesClient{
+				devices: []*devicespb.Device{{Name: "occ1"}, {Name: "occ2"}},
+			},
+		}
+
+		cfg := config.Root{
+			Source:  &config.Source{Trait: trait.OccupancySensor},
+			Storage: &config.Storage{Type: "memory"},
+		}
+
+		go a.applyConfigDevices(t.Context(), cfg)
+		synctest.Wait()
+
+		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := occ2.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
+			t.Fatal(err)
+		}
+		synctest.Wait()
+
+		cli := gen_occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
+
+		hist1, err := cli.ListOccupancyHistory(t.Context(), &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hist1.GetTotalSize() == 0 {
+			t.Fatal("expected occ1 to have history records")
+		}
+
+		hist2, err := cli.ListOccupancyHistory(t.Context(), &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ2", PageSize: 100})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hist2.GetTotalSize() == 0 {
+			t.Fatal("expected occ2 to have history records")
+		}
+	})
+}
+
+func Test_automation_applyConfigDevices_remove(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		logger := zap.NewNop()
+		occ1 := occupancysensorpb.NewModel()
+
+		announcer := node.New("test")
+		announcer.Logger = logger
+		announcer.Announce("occ1",
+			node.HasTrait(trait.OccupancySensor),
+			node.HasServer(
+				traits.RegisterOccupancySensorApiServer,
+				traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ1)),
+			),
+		)
+
+		devicesCh := make(chan *devicespb.PullDevicesResponse, 1)
+		a := &automation{
+			clients:   announcer,
+			announcer: node.NewReplaceAnnouncer(announcer),
+			logger:    logger,
+			devices: &streamingDevicesClient{
+				devices: []*devicespb.Device{{Name: "occ1"}},
+				ch:      devicesCh,
+			},
+		}
+
+		cfg := config.Root{
+			Source:  &config.Source{Trait: trait.OccupancySensor},
+			Storage: &config.Storage{Type: "memory"},
+		}
+
+		go a.applyConfigDevices(t.Context(), cfg)
+		synctest.Wait()
+
+		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
+			t.Fatal(err)
+		}
+		synctest.Wait()
+
+		cli := gen_occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
+		hist, err := cli.ListOccupancyHistory(t.Context(), &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
+		if err != nil {
+			t.Fatal(err)
+		}
+		countBeforeRemove := hist.GetTotalSize()
+		if countBeforeRemove == 0 {
+			t.Fatal("expected occ1 to have history records before remove")
+		}
+
+		devicesCh <- &devicespb.PullDevicesResponse{Changes: []*devicespb.PullDevicesResponse_Change{
+			{Type: types.ChangeType_REMOVE, Name: "occ1"},
+		}}
+		synctest.Wait()
+
+		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
+			t.Fatal(err)
+		}
+		synctest.Wait()
+
+		_, err = cli.ListOccupancyHistory(t.Context(), &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
+		if status.Code(err) != codes.NotFound {
+			t.Fatalf("expected NotFound after remove, got %v", err)
+		}
+	})
+}
+
+// streamingDevicesClient implements devicespb.DevicesApiClient for tests.
+// PullDevices immediately sends the configured devices as ADD events, then blocks until the context is cancelled.
+// If ch is set, it is used as the stream channel and the caller controls what is sent after the initial events.
+type streamingDevicesClient struct {
+	devices []*devicespb.Device
+	ch      chan *devicespb.PullDevicesResponse // optional; if nil, a local buffered channel is used
+}
+
+func (s *streamingDevicesClient) ListDevices(_ context.Context, _ *devicespb.ListDevicesRequest, _ ...grpc.CallOption) (*devicespb.ListDevicesResponse, error) {
+	panic("not implemented")
+}
+
+func (s *streamingDevicesClient) PullDevices(ctx context.Context, _ *devicespb.PullDevicesRequest, _ ...grpc.CallOption) (grpc.ServerStreamingClient[devicespb.PullDevicesResponse], error) {
+	ch := s.ch
+	if ch == nil {
+		ch = make(chan *devicespb.PullDevicesResponse, 1)
+	}
+	if len(s.devices) > 0 {
+		changes := make([]*devicespb.PullDevicesResponse_Change, len(s.devices))
+		for i, d := range s.devices {
+			changes[i] = &devicespb.PullDevicesResponse_Change{
+				Type:     types.ChangeType_ADD,
+				NewValue: d,
+				Name:     d.Name,
+			}
+		}
+		ch <- &devicespb.PullDevicesResponse{Changes: changes}
+	}
+	return &pullDevicesStream{ctx: ctx, ch: ch}, nil
+}
+
+func (s *streamingDevicesClient) GetDevicesMetadata(_ context.Context, _ *devicespb.GetDevicesMetadataRequest, _ ...grpc.CallOption) (*devicespb.DevicesMetadata, error) {
+	panic("not implemented")
+}
+
+func (s *streamingDevicesClient) PullDevicesMetadata(_ context.Context, _ *devicespb.PullDevicesMetadataRequest, _ ...grpc.CallOption) (grpc.ServerStreamingClient[devicespb.PullDevicesMetadataResponse], error) {
+	panic("not implemented")
+}
+
+func (s *streamingDevicesClient) GetDownloadDevicesUrl(_ context.Context, _ *devicespb.GetDownloadDevicesUrlRequest, _ ...grpc.CallOption) (*devicespb.DownloadDevicesUrl, error) {
+	panic("not implemented")
+}
+
+type pullDevicesStream struct {
+	ctx context.Context
+	ch  chan *devicespb.PullDevicesResponse
+}
+
+func (s *pullDevicesStream) Recv() (*devicespb.PullDevicesResponse, error) {
+	select {
+	case <-s.ctx.Done():
+		return nil, s.ctx.Err()
+	case resp, ok := <-s.ch:
+		if !ok {
+			return nil, status.Error(codes.Canceled, "stream closed")
+		}
+		return resp, nil
+	}
+}
+
+func (s *pullDevicesStream) Header() (metadata.MD, error) { return nil, nil }
+func (s *pullDevicesStream) Trailer() metadata.MD         { return nil }
+func (s *pullDevicesStream) CloseSend() error             { return nil }
+func (s *pullDevicesStream) Context() context.Context     { return s.ctx }
+func (s *pullDevicesStream) SendMsg(_ any) error          { return nil }
+func (s *pullDevicesStream) RecvMsg(_ any) error          { return nil }
