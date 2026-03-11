@@ -85,13 +85,15 @@ func (c *DeploymentUpdater) CommitInstall(ctx context.Context) error {
 	}
 	// if there is no active deployment, then oldActiveID = 0
 
-	err = c.mark(markActive, installingID)
-	if err != nil {
-		return fmt.Errorf("mark active deployment: %w", err)
-	}
+	// clean installing mark before adding active mark to prevent edge case where both point to the same deployment
+	// if we stop in between
 	err = c.clearMark(markInstalling)
 	if err != nil {
 		return fmt.Errorf("clear installing mark: %w", err)
+	}
+	err = c.mark(markActive, installingID)
+	if err != nil {
+		return fmt.Errorf("mark active deployment: %w", err)
 	}
 	c.logger.Info("marked deployment as active", zap.Int64("deploymentId", installingID))
 
@@ -100,7 +102,9 @@ func (c *DeploymentUpdater) CommitInstall(ctx context.Context) error {
 		CurrentDeployment: &CheckInDeploymentRef{ID: installingID},
 	})
 	if err != nil {
-		return fmt.Errorf("check-in after commit: %w", err)
+		// it's not vital we report this right here, as it's already committed locally so will be reported at the
+		// next check-in anyway.
+		c.logger.Warn("failed to report successful install to server", zap.Int64("deploymentId", installingID), zap.Error(err))
 	}
 
 	if oldActiveID != 0 && !c.preserveDownloads {
@@ -209,6 +213,17 @@ func (c *DeploymentUpdater) PollOnce(ctx context.Context) (needReboot bool, err 
 	installingDeploymentID, err := c.deploymentIDByMark(markInstalling)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return false, fmt.Errorf("get installing deployment id: %w", err)
+	}
+
+	// catch store corruption where both active and installing marks point to the same deployment
+	// in that case we can ignore the installing mark because it's already installed, but we should correct it
+	if activeDeploymentID != 0 && activeDeploymentID == installingDeploymentID {
+		c.logger.Warn("corrupted store - active and installing deployment are the same", zap.Int64("deploymentId", activeDeploymentID))
+		err = c.clearMark(markInstalling)
+		if err != nil {
+			return false, fmt.Errorf("clear installing mark: %w", err)
+		}
+		installingDeploymentID = 0
 	}
 
 	req := CheckInRequest{}

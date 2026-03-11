@@ -473,6 +473,44 @@ func TestPoll(t *testing.T) {
 		}
 	})
 
+	t.Run("corrupted store - active and installing point to same deployment", func(t *testing.T) {
+		env := setupClientEnv(t)
+
+		// Deploy and commit a deployment to establish an active mark.
+		payload := txtarToTarGZ(t, "single.txtar")
+		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
+		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
+
+		if _, err := env.updater.PollOnce(ctx); err != nil {
+			t.Fatalf("PollOnce: %v", err)
+		}
+		if err := env.updater.CommitInstall(ctx); err != nil {
+			t.Fatalf("CommitInstall: %v", err)
+		}
+
+		// Simulate corruption: manually create an installing symlink pointing to the same
+		// deployment that is already active. This can happen if the process is interrupted
+		// between clearing the installing mark and setting the active mark in CommitInstall.
+		installingLink := filepath.Join(env.storePath, "deployments", "installing")
+		if err := os.Symlink(fmt.Sprintf("%d", depID), installingLink); err != nil {
+			t.Fatalf("create corrupted installing symlink: %v", err)
+		}
+
+		// PollOnce should detect and recover from the corruption.
+		needReboot, err := env.updater.PollOnce(ctx)
+		if err != nil {
+			t.Fatalf("PollOnce with corrupted store: %v", err)
+		}
+		if needReboot {
+			t.Error("expected needReboot=false when active and installing point to same deployment")
+		}
+
+		// The installing symlink must be cleared as part of recovery.
+		if symlinkExists(env.storePath, "deployments/installing") {
+			t.Error("expected installing symlink to be removed after corruption recovery")
+		}
+	})
+
 	t.Run("server auth error", func(t *testing.T) {
 		env := setupClientEnv(t)
 
