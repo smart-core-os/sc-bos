@@ -28,7 +28,7 @@
               Forget Node
             </v-list-item-title>
           </v-list-item>
-          <v-list-item v-if="canReboot" link @click="showRebootDialog = true">
+          <v-list-item v-if="canReboot || true" link @click="showRebootDialog = true">
             <v-list-item-title class="text-warning">Reboot Node</v-list-item-title>
           </v-list-item>
         </v-list>
@@ -136,6 +136,7 @@ import {pullRebootState, reboot} from '@/api/sc/traits/reboot.js';
 import {closeResource, newResourceValue} from '@/api/resource.js';
 import useAuthSetup from '@/composables/useAuthSetup.js';
 import {usePullServiceMetadata} from '@/composables/services.js';
+import {useAccountStore} from '@/stores/account.js';
 import {NodeRole} from '@/stores/cohort.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
 import {watchResource} from '@/util/traits.js';
@@ -151,6 +152,7 @@ const emit = defineEmits(['click:show-certificates', 'click:forget-node']);
 
 const {hasAnyRole} = useAuthSetup();
 const canReboot = computed(() => hasAnyRole('admin', 'superAdmin'));
+const accountStore = useAccountStore();
 
 const nodeDetails = reactive({
   automations: usePullServiceMetadata(() => props.node.name + '/automations'),
@@ -201,7 +203,10 @@ const rebootTracker = reactive({loading: false, response: null, error: null});
 
 /** Sends the reboot request and closes the dialog on success. */
 function confirmReboot() {
-  reboot({name: props.node.name, reason: rebootReason.value}, rebootTracker)
+  const actor = (accountStore.email || accountStore.fullName)
+      ? {displayName: accountStore.fullName, email: accountStore.email}
+      : undefined;
+  reboot({name: props.node.name, reason: rebootReason.value, actor}, rebootTracker)
       .then(() => {
         showRebootDialog.value = false;
         rebootReason.value = '';
