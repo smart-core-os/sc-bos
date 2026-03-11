@@ -20,6 +20,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
@@ -39,6 +40,7 @@ import (
 	gen_historypb "github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	gen_resourceusepb "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
@@ -340,12 +342,14 @@ func (a *automation) createCollector(store history.Store, traitName trait.Name) 
 		return meterpb.WrapHistory(historypb.NewMeterServer(store)), a.collectMeterReadingChanges, nil
 	case trait.OccupancySensor:
 		return occupancysensorpb.WrapHistory(historypb.NewOccupancySensorServer(store)), a.collectOccupancyChanges, nil
+	case resourceusepb.TraitName:
+		return gen_resourceusepb.WrapHistory(historypb.NewResourceUseServer(store)), a.collectResourceUseChanges, nil
+	case soundsensorpb.TraitName:
+		return gen_soundsensorpb.WrapHistory(historypb.NewSoundSensorServer(store)), a.collectSoundSensorChanges, nil
 	case statuspb.TraitName:
 		return gen_statuspb.WrapHistory(historypb.NewStatusServer(store)), a.collectCurrentStatusChanges, nil
 	case transport.TraitName:
 		return transportpb.WrapHistory(historypb.NewTransportServer(store)), a.collectTransportChanges, nil
-	case soundsensorpb.TraitName:
-		return gen_soundsensorpb.WrapHistory(historypb.NewSoundSensorServer(store)), a.collectSoundSensorChanges, nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported trait %s", traitName)
 	}
