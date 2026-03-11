@@ -53,6 +53,7 @@ func (s *System) pollLoop(ctx context.Context, model *resourceusepb.Model, inter
 func (s *System) collect(ctx context.Context, model *resourceusepb.Model) {
 	v := &gen.ResourceUse{}
 
+	// Note: With interval 0, on the very first invocation there's no prior sample, so the initial value may be inaccurate
 	if perCore, err := cpu.PercentWithContext(ctx, 0, true); err == nil {
 		overall := average(perCore)
 		core32 := make([]float32, len(perCore))
