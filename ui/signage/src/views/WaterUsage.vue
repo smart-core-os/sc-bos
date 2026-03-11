@@ -7,10 +7,11 @@
 
 <script setup>
 import WaterComp from '@/components/WaterTank.vue';
-import {usePeriod} from '@/composables/time.js';
+import {useInterval} from '@/composables/time.js';
 import {useMeterReadingAt, usePullMeterReading} from '@/traits/meter/meter.js';
 import {isNullOrUndef} from '@/util/types.js';
-import {computed, effectScope, reactive, ref, toRef, watch} from 'vue';
+import {sub} from 'date-fns';
+import {computed, effectScope, reactive, ref, watch} from 'vue';
 
 
 const props = defineProps({
@@ -31,14 +32,21 @@ const props = defineProps({
     type: [Number, String],
     default: 0 // Used via Math.abs, {period: 'day', offset: 1} means yesterday, and so on
   },
+  refreshInterval: {
+    type: Number,
+    default: 60 * 1000 // 1 minute in ms; set to 0 to disable
+  }
 });
 
 const _offset = computed(() => -Math.abs(parseInt(props.offset)));
-const {start, end} = usePeriod(toRef(props, 'period'), toRef(props, 'period'), _offset);
+
+// Tick drives the rolling window — start and end update each interval
+const tick = useInterval(() => props.refreshInterval);
+const end = computed(() => { tick.value; return sub(new Date(), {[`${props.period}s`]: -_offset.value}); });
+const start = computed(() => sub(end.value, {[`${props.period}s`]: 1}));
 
 // const {response: meterReadingInfo} = useDescribeMeterReading(() => props.name);
 
-// calculate the reading at the start date, which we assume is in the past.
 const readingAtStart = useMeterReadingAt(() => props.name, start);
 
 const endIsLive = computed(() => _offset.value === 0);
