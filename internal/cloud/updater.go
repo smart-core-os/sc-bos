@@ -53,10 +53,12 @@ func NewDeploymentUpdater(storeDir *os.Root, client Client, opts ...UpdaterOptio
 	return u
 }
 
-// InstallingConfig returns an fs.FS containing the config files for the currently installing deployment, which has
+// InstallingConfig returns an FS containing the config files for the currently installing deployment, which has
 // not yet been committed. Once the deployment has been applied, call either CommitInstall or FailInstall.
-// Returns a nil fs.FS with no error if there is no deployment currently being installed.
-func (c *DeploymentUpdater) InstallingConfig() (fs.FS, error) {
+// Returns a nil FS with no error if there is no deployment currently being installed.
+//
+// Returned FS must be closed after use to prevent a resource leak.
+func (c *DeploymentUpdater) InstallingConfig() (FS, error) {
 	return c.extractedConfigByMark(markInstalling)
 }
 
@@ -145,14 +147,16 @@ func (c *DeploymentUpdater) FailInstall(ctx context.Context, message string) err
 	return nil
 }
 
-// ActiveConfig returns an fs.FS containing the config files for the currently active deployment.
+// ActiveConfig returns an FS containing the config files for the currently active deployment.
 // Unlike InstallingConfig, this has already been committed, so should be considered safe.
-// Returns a nil fs.FS with no error if there is no active deployment.
-func (c *DeploymentUpdater) ActiveConfig() (fs.FS, error) {
+// Returns a nil FS with no error if there is no active deployment.
+//
+// Returned FS must be closed after use to prevent a resource leak.
+func (c *DeploymentUpdater) ActiveConfig() (FS, error) {
 	return c.extractedConfigByMark(markActive)
 }
 
-func (c *DeploymentUpdater) extractedConfigByMark(name string) (fs.FS, error) {
+func (c *DeploymentUpdater) extractedConfigByMark(name string) (FS, error) {
 	root, err := c.deploymentRootByMark(name)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
@@ -164,7 +168,7 @@ func (c *DeploymentUpdater) extractedConfigByMark(name string) (fs.FS, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open extracted config version directory: %w", err)
 	}
-	return extractedRoot.FS(), nil
+	return &rootFS{FS: extractedRoot.FS(), root: extractedRoot}, nil
 }
 
 // PollOnce performs a check-in with the server and updates the local state of the updater accordingly.
@@ -295,6 +299,9 @@ func (c *DeploymentUpdater) downloadConfigVersion(ctx context.Context, deploymen
 	if err != nil {
 		return fmt.Errorf("open deployment storage: %w", err)
 	}
+	defer func() {
+		_ = dstDir.Close()
+	}()
 
 	body, err := c.client.DownloadPayload(ctx, configVersion.PayloadURL)
 	if err != nil {
@@ -383,6 +390,20 @@ func (c *DeploymentUpdater) unlock() {
 	default:
 		panic("unlock called without lock held")
 	}
+}
+
+type FS interface {
+	fs.FS
+	Close() error
+}
+
+type rootFS struct {
+	fs.FS
+	root *os.Root
+}
+
+func (r *rootFS) Close() error {
+	return r.root.Close()
 }
 
 func extractTarGZ(src io.Reader, dst *os.Root) error {

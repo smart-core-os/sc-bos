@@ -70,6 +70,9 @@ func loadCloudAppConfig(ctx context.Context, sysConfig sysconf.Config, client *c
 		logger.Warn("in cloud config mode, but no active config available - using local config instead")
 		return loadLocalAppConfig(sysConfig, logger)
 	}
+	defer func() {
+		_ = activeConfigFS.Close()
+	}()
 
 	activeConfig, err := loadConfigPackage(activeConfigFS)
 	if err != nil {
@@ -98,6 +101,9 @@ func loadCloudInstallingConfig(ctx context.Context, client *cloud.DeploymentUpda
 		// not really an error, just no installing config to load, so return with loaded = false to indicate that
 		return appconf.Config{}, false
 	}
+	defer func() {
+		_ = installingFS.Close()
+	}()
 
 	conf, err = loadConfigPackage(installingFS)
 	if err != nil {

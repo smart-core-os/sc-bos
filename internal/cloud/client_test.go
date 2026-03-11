@@ -673,6 +673,9 @@ func TestInstallingConfig(t *testing.T) {
 		}
 		if fsys != nil {
 			t.Error("expected nil fs.FS when no installing config")
+			defer func() {
+				_ = fsys.Close()
+			}()
 		}
 	})
 
@@ -694,6 +697,9 @@ func TestInstallingConfig(t *testing.T) {
 		if fsys == nil {
 			t.Fatal("expected non-nil fs.FS after installing deployment")
 		}
+		defer func() {
+			_ = fsys.Close()
+		}()
 
 		assertFileContent(t, fsys, "config.json", `{"key":"value"}`)
 		assertFileContent(t, fsys, "sub/nested.txt", "nested content")
