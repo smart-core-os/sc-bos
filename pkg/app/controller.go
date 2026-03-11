@@ -89,7 +89,10 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			return nil, fmt.Errorf("failed to open cloud data directory: %w", err)
 		}
 		httpClient := cloud.NewHTTPClient(config.Cloud.Endpoint, cloudSecret)
-		deploymentClient = cloud.NewDeploymentUpdater(cloudDataRoot, httpClient, cloud.WithLogger(logger.Named("cloud")))
+		deploymentClient = cloud.NewDeploymentUpdater(cloudDataRoot, httpClient,
+			cloud.WithLogger(logger.Named("cloud")),
+			cloud.WithPreserveDownloads(config.Cloud.PreserveDownloads),
+		)
 
 		confStore, err = loadCloudAppConfig(ctx, config, deploymentClient, logger)
 		if err != nil {

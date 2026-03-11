@@ -286,6 +286,9 @@ type Cloud struct {
 	Endpoint     string              `json:"endpoint,omitempty"`
 	TokenFile    string              `json:"tokenFile,omitempty"`
 	PollInterval *jsontypes.Duration `json:"pollInterval,omitempty"`
+	// Preserve old or incomplete downloads instead of deleting them on startup or when they expire.
+	// This is useful for debugging and should be used with caution in production since it can lead to unbounded disk usage.
+	PreserveDownloads bool `json:"preserveDownloads,omitempty"`
 }
 
 func (c *Cloud) FillDefaults() *Cloud {

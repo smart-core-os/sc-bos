@@ -255,6 +255,21 @@ func symlinkExists(dir, relPath string) bool {
 	return err == nil
 }
 
+func countDirectories(t *testing.T, dir string) int {
+	t.Helper()
+	count := 0
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("read dir %q: %v", dir, err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			count++
+		}
+	}
+	return count
+}
+
 // TestExtractTarGZ is a unit test for the private extractTarGZ function.
 func TestExtractTarGZ(t *testing.T) {
 	t.Run("files and directories", func(t *testing.T) {
@@ -451,6 +466,10 @@ func TestPoll(t *testing.T) {
 		// No installing symlink should exist
 		if symlinkExists(env.storePath, "deployments/installing") {
 			t.Error("expected installing symlink to not exist after failed extraction")
+		}
+		// No deployment directories should be left
+		if numDirs := countDirectories(t, filepath.Join(env.storePath, "deployments")); numDirs != 0 {
+			t.Errorf("expected 0 deployment directories after failed extraction, found %d", numDirs)
 		}
 	})
 

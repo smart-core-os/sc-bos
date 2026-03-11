@@ -26,14 +26,21 @@ func WithLogger(logger *zap.Logger) UpdaterOption {
 	}
 }
 
+func WithPreserveDownloads(preserveDownloads bool) UpdaterOption {
+	return func(u *DeploymentUpdater) {
+		u.preserveDownloads = preserveDownloads
+	}
+}
+
 // DeploymentUpdater manages deployment state on disk and coordinates with the cloud check-in API.
 //
 // Methods are safe to call concurrently.
 type DeploymentUpdater struct {
-	dir    *os.Root
-	client Client
-	logger *zap.Logger
-	lockCh chan struct{}
+	dir               *os.Root
+	client            Client
+	logger            *zap.Logger
+	preserveDownloads bool
+	lockCh            chan struct{}
 }
 
 // NewDeploymentUpdater creates a new DeploymentUpdater.
@@ -96,7 +103,7 @@ func (c *DeploymentUpdater) CommitInstall(ctx context.Context) error {
 		return fmt.Errorf("check-in after commit: %w", err)
 	}
 
-	if oldActiveID != 0 {
+	if oldActiveID != 0 && !c.preserveDownloads {
 		// clean up old deployment storage after successful commit of new deployment
 		oldDir := c.deploymentDirPath(oldActiveID)
 		c.logger.Debug("cleaning up old deployment storage", zap.Int64("deploymentId", oldActiveID), zap.String("path", oldDir))
@@ -141,7 +148,17 @@ func (c *DeploymentUpdater) FailInstall(ctx context.Context, message string) err
 	}
 	_, err = c.client.CheckIn(ctx, req)
 	if err != nil {
-		return fmt.Errorf("check-in after rollback: %w", err)
+		c.logger.Warn("failed to report install failure to server", zap.Int64("deploymentId", installingID), zap.Error(err))
+	}
+
+	if installingID != 0 && !c.preserveDownloads {
+		// clean up failed deployment storage
+		dir := c.deploymentDirPath(installingID)
+		c.logger.Debug("cleaning up failed deployment storage", zap.Int64("deploymentId", installingID), zap.String("path", dir))
+		err = c.dir.RemoveAll(dir)
+		if err != nil {
+			return fmt.Errorf("remove failed deployment storage: %w", err)
+		}
 	}
 
 	return nil
@@ -163,6 +180,9 @@ func (c *DeploymentUpdater) extractedConfigByMark(name string) (FS, error) {
 	} else if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = root.Close()
+	}()
 
 	extractedRoot, err := root.OpenRoot(dirConfigVersion)
 	if err != nil {
@@ -299,8 +319,15 @@ func (c *DeploymentUpdater) downloadConfigVersion(ctx context.Context, deploymen
 	if err != nil {
 		return fmt.Errorf("open deployment storage: %w", err)
 	}
+	var deleteDstDir bool // remove empty directory
 	defer func() {
 		_ = dstDir.Close()
+		if deleteDstDir {
+			dir := c.deploymentDirPath(deployment.ID)
+			if err := c.dir.Remove(dir); err != nil {
+				c.logger.Warn("failed to delete empty directory")
+			}
+		}
 	}()
 
 	body, err := c.client.DownloadPayload(ctx, configVersion.PayloadURL)
@@ -320,19 +347,27 @@ func (c *DeploymentUpdater) downloadConfigVersion(ctx context.Context, deploymen
 		return fmt.Errorf("open extraction directory: %w", err)
 	}
 	err = extractTarGZ(body, extractRoot)
+	_ = extractRoot.Close()
 	if err != nil {
-		// If the extract failed, we don't want to leave a partially extracted package around, as it may interfere
-		// with a future successful attempt.
-		// It's still useful to leave the remains around to assist with debugging, but we should move it out of the way.
-		moveTo := fmt.Sprintf("failed-download-%d", time.Now().UnixMilli())
-		c.logger.Error("failed to download and extract config version package",
-			zap.Int64("deploymentId", deployment.ID),
-			zap.Int64("configVersionId", configVersion.ID),
-			zap.Error(err),
-			zap.String("moveFailedExtractTo", moveTo),
-		)
-		moveErr := dstDir.Rename(extractedName, moveTo)
-		return errors.Join(fmt.Errorf("extract config version package: %w", err), moveErr)
+		var cleanupErr error
+		if c.preserveDownloads {
+			// If the extract failed, we don't want to leave a partially extracted package in place, as it may interfere
+			// with a future successful attempt.
+			// It's still useful to leave the remains around to assist with debugging, but we should move it out of the way.
+			moveTo := fmt.Sprintf("failed-download-%d", time.Now().UnixMilli())
+			c.logger.Error("failed to download and extract config version package",
+				zap.Int64("deploymentId", deployment.ID),
+				zap.Int64("configVersionId", configVersion.ID),
+				zap.Error(err),
+				zap.String("moveFailedExtractTo", moveTo),
+			)
+			cleanupErr = dstDir.Rename(extractedName, moveTo)
+		} else {
+			// delete the extracted directory
+			cleanupErr = dstDir.RemoveAll(extractedName)
+			deleteDstDir = true // dstDir will be empty at this point, remove it to limit filesystem clutter
+		}
+		return errors.Join(fmt.Errorf("extract config version package: %w", err), cleanupErr)
 	}
 
 	return nil
