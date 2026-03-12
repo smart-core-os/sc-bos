@@ -62,6 +62,9 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		ttl := time.Duration(cfg.URLTTLSecondsOrDefault()) * time.Second
 		downloadPath := cfg.DownloadPath()
 		urlBase := cfg.HTTPDownloadURLBase
+		if urlBase == "" && s.services.HTTPEndpoint != "" {
+			urlBase = "https://" + s.services.HTTPEndpoint
+		}
 
 		srv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
 			return getDownloadLogURL(req, cfg.LogFilePath, urlBase, downloadPath, key, ttl)

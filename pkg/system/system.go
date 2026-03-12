@@ -24,6 +24,7 @@ type Services struct {
 	DataDir         string
 	Logger          *zap.Logger
 	GRPCEndpoint    string     // host:port of this controllers grpc api
+	HTTPEndpoint    string     // host:port of this controller's HTTPS API (e.g. "localhost:8301")
 	Node            *node.Node // for advertising devices
 	HealthChecks    HealthCheckCollection
 	CohortManager   node.Remote

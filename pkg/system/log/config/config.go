@@ -15,7 +15,8 @@ type Root struct {
 	// HTTPDownloadURLBase is the scheme+host prefix used when constructing
 	// download URLs returned by GetDownloadLogUrl. For example:
 	// "https://controller.example.com".
-	// If empty the controller's external HTTP endpoint is used.
+	// If empty, the controller's HTTPEndpoint (from system services) is used as the base,
+	// producing an absolute URL. Set this to override the auto-detected address.
 	HTTPDownloadURLBase string `json:"httpDownloadUrlBase,omitempty"`
 
 	// URLTTLSeconds is the default lifetime of a signed download URL in seconds.

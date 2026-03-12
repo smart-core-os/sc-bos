@@ -21,6 +21,7 @@
       </v-card-text>
       <v-card-actions>
         <v-btn @click="messages = []">Clear</v-btn>
+        <v-btn prepend-icon="mdi-download" @click="downloadLogs">Download</v-btn>
         <v-spacer/>
         <v-chip v-if="streamError" color="error" size="small">{{ streamError.message }}</v-chip>
       </v-card-actions>
@@ -30,7 +31,8 @@
 
 <script setup>
 import {grpcWebEndpoint} from '@/api/config.js';
-import {pullLogMessages} from '@/api/ui/log.js';
+import {getDownloadLogUrl, pullLogMessages} from '@/api/ui/log.js';
+import {triggerDownloadFromUrl} from '@/components/download/download.js';
 import {nextTick, onUnmounted, ref, watch} from 'vue';
 
 const props = defineProps({
@@ -116,6 +118,13 @@ watch(messages, () => {
     }
   });
 }, {deep: false});
+
+async function downloadLogs() {
+  const res = await getDownloadLogUrl({name: props.name, includeRotated: true});
+  for (const file of res.filesList ?? []) {
+    triggerDownloadFromUrl(file.url, file.filename);
+  }
+}
 
 onUnmounted(() => cancelStream());
 </script>
