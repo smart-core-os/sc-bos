@@ -17,11 +17,11 @@ type Config struct {
 }
 
 // FetchConfig retrieves OIDC Config from the given issuer URL prefix using the `.well-known/openid-configuration` suffix.
-func FetchConfig(ctx context.Context, issuer string) (Config, error) {
+func FetchConfig(ctx context.Context, issuer string, options ...fetch.Option) (Config, error) {
 	url := fmt.Sprintf("%s/.well-known/openid-configuration", issuer)
 
 	var config Config
-	err := fetch.JSON(ctx, url, &config)
+	err := fetch.JSON(ctx, url, &config, options...)
 	if err != nil {
 		return Config{}, err
 	}
