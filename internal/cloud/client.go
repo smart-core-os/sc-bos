@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -106,6 +107,11 @@ func (c *HTTPClient) DownloadPayload(ctx context.Context, url string) (io.ReadCl
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
+	// only include the Authorization header if the download URL is on the same domain as the API server, as the
+	// credentials are only intended for that server
+	if c.isOnAPIDomain(url) {
+		req.Header.Set("Authorization", "Bearer "+c.secret)
+	}
 
 	httpResp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -118,6 +124,19 @@ func (c *HTTPClient) DownloadPayload(ctx context.Context, url string) (io.ReadCl
 	}
 
 	return httpResp.Body, nil
+}
+
+func (c *HTTPClient) isOnAPIDomain(urlStr string) bool {
+	// compare scheme + host (ignore path) of the client's baseURL and the provided URL
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return false
+	}
+	baseURL, err := url.Parse(c.baseURL)
+	if err != nil {
+		return false
+	}
+	return u.Scheme == baseURL.Scheme && u.Host == baseURL.Host
 }
 
 const maxCheckInBodySize = 1024 * 1024 // 1 MiB

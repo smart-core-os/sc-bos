@@ -848,6 +848,56 @@ func TestDownloadPayload_InsecureURLBlocked(t *testing.T) {
 	}
 }
 
+func TestDownloadPayload_Authorization(t *testing.T) {
+	// Test that DownloadPayload includes the correct Authorization header only when it's on the same host as the client's endpoint.
+	var (
+		ts1Called, ts2Called bool
+		ts1Auth, ts2Auth     string
+	)
+	reset := func() {
+		ts1Called, ts2Called = false, false
+		ts1Auth, ts2Auth = "", ""
+	}
+	ts1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ts1Called = true
+		ts1Auth = r.Header.Get("Authorization")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts1.Close()
+	ts2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ts2Called = true
+		ts2Auth = r.Header.Get("Authorization")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts2.Close()
+
+	client := NewHTTPClient(ts1.URL, "secret")
+
+	// Download from ts1 (same host) should include Authorization header
+	if _, err := client.DownloadPayload(context.Background(), ts1.URL+"/payload.tar.gz"); err != nil {
+		t.Fatalf("DownloadPayload 1: %v", err)
+	}
+	if !ts1Called || ts2Called {
+		t.Error("ts1 should have been called, ts2 should not have been called")
+	}
+	if expect := "Bearer secret"; ts1Auth != expect {
+		t.Errorf("ts1 auth header should be %q, got %q", expect, ts1Auth)
+	}
+
+	reset()
+
+	// Download from ts2 (different host) should not include Authorization header
+	if _, err := client.DownloadPayload(context.Background(), ts2.URL+"/payload.tar.gz"); err != nil {
+		t.Fatalf("DownloadPayload 2: %v", err)
+	}
+	if !ts2Called || ts1Called {
+		t.Error("ts2 should have been called, ts1 should not have been called")
+	}
+	if expect := ""; ts2Auth != expect {
+		t.Errorf("ts2 auth header should be %q, got %q", expect, ts2Auth)
+	}
+}
+
 func TestActiveConfig(t *testing.T) {
 	ctx := context.Background()
 
