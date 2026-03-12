@@ -33,7 +33,8 @@
         "localAccounts": true
       }
     },
-    "tenants": {"storage": {"type": "postgres"}}
+    "tenants": {"storage": {"type": "postgres"}},
+    "resourceUse": {}
   },
   "experimental": {
     "accounts": true

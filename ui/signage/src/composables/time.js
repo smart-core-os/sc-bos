@@ -324,3 +324,31 @@ export function useIsFutureDate(date) {
     return now.value.getTime() < _date.value.getTime();
   });
 }
+
+/**
+ * Returns a ref that increments each time the given interval elapses.
+ * The interval is reactive — if it changes, the next tick will use the new value.
+ * Automatically starts on mount and cleans up on unmount.
+ *
+ * @example
+ * const tick = useInterval(5000); // increments every 5 seconds
+ * watch(tick, () => refetch());
+ *
+ * @param {import('vue').MaybeRefOrGetter<number>} interval - interval duration in milliseconds
+ * @return {import('vue').Ref<number>}
+ */
+export function useInterval(interval) {
+  const tick = ref(0);
+  let handle = 0;
+  const update = () => {
+    tick.value++;
+    handle = setTimeout(update, toValue(interval));
+  };
+  onMounted(() => {
+    update();
+  });
+  onUnmounted(() => {
+    clearTimeout(handle);
+  });
+  return tick;
+}

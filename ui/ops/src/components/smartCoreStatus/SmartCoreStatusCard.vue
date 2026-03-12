@@ -47,7 +47,16 @@
             VDivider: {class: 'mx-2', style: 'width: 10px; max-width: 10px;'},
             VProgressCircular: {size: 22, indeterminate: true}
           }">
-            <v-chip color="neutral-lighten-1">UI</v-chip>
+            <v-tooltip
+                v-if="keycloakHealth.isConfigured"
+                location="bottom"
+                :content-props="{'class': keycloakHealth.error ? 'bg-error' : ''}">
+              <template #activator="{ props: tp }">
+                <v-chip v-bind="tp" :color="keycloakHealth.chipColor">UI</v-chip>
+              </template>
+              <span>{{ keycloakHealth.tooltipText }}</span>
+            </v-tooltip>
+            <v-chip v-else color="neutral-lighten-1">UI</v-chip>
             <template v-for="link in chain" :key="link.node.name">
               <v-divider/>
               <v-progress-circular v-if="link.health.pending"/>
@@ -69,6 +78,7 @@ import {DAY, HOUR, MINUTE, SECOND, useNow} from '@/components/now';
 import StatusAlert from '@/components/StatusAlert.vue';
 import useAuthSetup from '@/composables/useAuthSetup';
 import {EnrollmentStatus, NodeRole, useCohortHealthStore, useCohortStore} from '@/stores/cohort.js';
+import {useKeycloakHealthStore} from '@/stores/keycloakHealth.js';
 import {formatTimeAgo} from '@/util/date';
 import {formatErrorMessage, isNetworkError} from '@/util/error';
 import {computed, ref} from 'vue';
@@ -77,6 +87,7 @@ const {hasNoAccess, isLoggedIn} = useAuthSetup();
 
 const cohort = useCohortStore();
 const cohortHealth = useCohortHealthStore();
+const keycloakHealth = useKeycloakHealthStore();
 
 // The chain is the list of things we show to the user, that they might be interested in the status of.
 // Each link in the chain typically talks to the items later in the chain: the ui talks to the server, which talks to the hub, etc.
@@ -200,13 +211,17 @@ const chipAttrs = (link) => {
 };
 
 // code relating to the button on the toolbar and what color it should be.
-const issueCount = computed(() => chain.value.reduce((acc, l) => {
-  if (l.children) {
-    return acc + l.children.reduce((acc, c) => acc + (c.health.error ? 1 : 0), 0);
-  } else {
-    return acc + (l.health.error ? 1 : 0);
-  }
-}, 0));
+const issueCount = computed(() => {
+  const chainIssues = chain.value.reduce((acc, l) => {
+    if (l.children) {
+      return acc + l.children.reduce((acc, c) => acc + (c.health.error ? 1 : 0), 0);
+    } else {
+      return acc + (l.health.error ? 1 : 0);
+    }
+  }, 0);
+  const keycloakIssues = (keycloakHealth.isConfigured && keycloakHealth.error) ? 1 : 0;
+  return chainIssues + keycloakIssues;
+});
 const overallStatus = computed(() => {
   const res = {
     color: 'success-lighten-2',
@@ -222,7 +237,7 @@ const overallStatus = computed(() => {
   } else if (issueCount.value > 1) {
     res.color = 'warning';
     res.text = `${issueCount.value} issues`;
-  } else if (cohort.loading || cohortHealth.isPolling) {
+  } else if (cohort.loading || cohortHealth.isPolling || (keycloakHealth.isConfigured && keycloakHealth.pending)) {
     res.color = 'info';
     res.text = 'Checking';
   }
@@ -248,6 +263,7 @@ const checkHealthNow = () => {
   rotateCheckIcon.value = true;
   cohort.pollNow();
   cohortHealth.pollNow();
+  keycloakHealth.pollNow();
   setTimeout(() => {
     rotateCheckIcon.value = false;
   }, 1000);

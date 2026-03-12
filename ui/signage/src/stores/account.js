@@ -41,6 +41,10 @@ export const useAccountStore = defineStore('accountStore', () => {
     initRejected = reject;
   });
 
+  // Holds an in-progress silent re-auth retry promise so concurrent UNAUTHENTICATED
+  // errors don't each start their own retry loop.
+  let reAuthRetry = null;
+
   // Set up the storage for the login: authProvider, claims, login status and token
   const authenticationDetails = ref(
       /** @type {AuthenticationDetails & {authProvider: string}} */
@@ -315,7 +319,25 @@ export const useAccountStore = defineStore('accountStore', () => {
     if (provider === 'keyCloakAuth') {
       await keyCloak.logout();
     } else if (provider === 'localAuth') {
-      await localAuth.logout();
+      if (localAuth.hasCredentials) {
+        // Kiosk/signage: silently re-authenticate instead of showing the login page.
+        // If re-auth fails (server down), keep retrying until the server is back.
+        if (reAuthRetry) return reAuthRetry;
+        reAuthRetry = (async () => {
+          while (true) {
+            const details = await localAuth.logout();
+            if (details) {
+              authenticationDetails.value = {...details, authProvider: 'localAuth'};
+              reAuthRetry = null;
+              return;
+            }
+            // Server unavailable - wait 5s before retrying
+            await new Promise(r => setTimeout(r, 5000));
+          }
+        })();
+        return reAuthRetry;
+      }
+      // No env var credentials - fall through to show login page
     } else if (provider === 'deviceFlow') {
       await deviceFlow.logout();
     }

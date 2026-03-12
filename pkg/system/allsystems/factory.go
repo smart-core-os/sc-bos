@@ -9,6 +9,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/system/hub"
 	syslog "github.com/smart-core-os/sc-bos/pkg/system/log"
 	"github.com/smart-core-os/sc-bos/pkg/system/publications"
+	"github.com/smart-core-os/sc-bos/pkg/system/resourceuse"
 	"github.com/smart-core-os/sc-bos/pkg/system/tenants"
 )
 
@@ -24,6 +25,7 @@ func Factories() map[string]system.Factory {
 		gateway.LegacyName: gatewayFactory,
 		"log":              syslog.Factory,
 		"publications":     publications.Factory,
+		"resourceUse":      resourceuse.Factory,
 		"tenants":          tenants.Factory,
 	}
 }
