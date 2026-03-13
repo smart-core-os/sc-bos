@@ -3,10 +3,12 @@
 package axiomxapb
 
 import (
-	context "context"
-	fmt "fmt"
-	router "github.com/smart-core-os/sc-bos/sc-golang/pkg/router"
-	grpc "google.golang.org/grpc"
+	"context"
+	"fmt"
+
+	"google.golang.org/grpc"
+
+	"github.com/smart-core-os/sc-bos/pkg/router"
 )
 
 // DriverServiceRouter is a AxiomXaDriverServiceServer that allows routing named requests to specific AxiomXaDriverServiceClient

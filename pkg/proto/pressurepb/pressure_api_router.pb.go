@@ -3,11 +3,13 @@
 package pressurepb
 
 import (
-	context "context"
-	fmt "fmt"
-	router "github.com/smart-core-os/sc-bos/sc-golang/pkg/router"
-	grpc "google.golang.org/grpc"
-	io "io"
+	"context"
+	"fmt"
+	"io"
+
+	"google.golang.org/grpc"
+
+	"github.com/smart-core-os/sc-bos/pkg/router"
 )
 
 // ApiRouter is a PressureApiServer that allows routing named requests to specific PressureApiClient
