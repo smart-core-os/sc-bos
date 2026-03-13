@@ -68,7 +68,7 @@ export default [
         },
         meta: {
           authentication: {
-            rolesRequired: []
+            rolesRequired: ['admin', 'superAdmin']
           }
         }
       }

@@ -17,7 +17,7 @@
       <v-select
           v-model="selectedLevel"
           :items="levelOptions"
-          :disabled="!selectedNode"
+          :disabled="!selectedNode || blockSystemEdit"
           density="compact"
           hide-details
           item-title="label"
@@ -31,7 +31,7 @@
         {{ metadata.fileCount }} {{ metadata.fileCount === 1 ? 'file' : 'files' }} · {{ formatBytes(metadata.totalSizeBytes) }}
       </span>
       <v-btn
-          :disabled="!selectedNode"
+          :disabled="!selectedNode || blockSystemEdit"
           class="mr-2"
           prepend-icon="mdi-download"
           size="small"
@@ -40,7 +40,7 @@
         Download Current
       </v-btn>
       <v-btn
-          :disabled="!selectedNode"
+          :disabled="!selectedNode || blockSystemEdit"
           prepend-icon="mdi-download-multiple"
           size="small"
           variant="tonal"
@@ -81,6 +81,7 @@ import {grpcWebEndpoint} from '@/api/config.js';
 import {getDownloadLogUrl, getLogLevel, pullLogLevel, pullLogMessages, pullLogMetadata, updateLogLevel} from '@/api/ui/log.js';
 import {getService} from '@/api/ui/services.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
+import useAuthSetup from '@/composables/useAuthSetup.js';
 import {useCohortStore} from '@/stores/cohort.js';
 import {storeToRefs} from 'pinia';
 import {computed, nextTick, onUnmounted, ref, watch} from 'vue';
@@ -88,6 +89,7 @@ import {useRoute, useRouter} from 'vue-router';
 
 const route = useRoute();
 const router = useRouter();
+const {blockSystemEdit} = useAuthSetup();
 
 const {cohortNodes} = storeToRefs(useCohortStore());
 

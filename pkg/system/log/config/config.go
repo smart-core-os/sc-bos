@@ -46,3 +46,17 @@ func (r Root) URLTTLSecondsOrDefault() int {
 	}
 	return 900
 }
+
+const maxBufCap = 10000
+
+// BufCapOrDefault returns BufCap clamped to [1, maxBufCap].
+// If BufCap is <= 0 the default (1000) is used.
+func (r Root) BufCapOrDefault() int {
+	if r.BufCap <= 0 {
+		return 1000
+	}
+	if r.BufCap > maxBufCap {
+		return maxBufCap
+	}
+	return r.BufCap
+}

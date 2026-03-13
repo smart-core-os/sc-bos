@@ -32,7 +32,7 @@ import (
 func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer := s.announcer.Replace(ctx)
 
-	model := genlogpb.NewModel(cfg.BufCap)
+	model := genlogpb.NewModel(cfg.BufCapOrDefault())
 
 	// Install log capture: hook every zap entry into the model's ring buffer.
 	if s.services.AddLogCore != nil {
@@ -395,14 +395,22 @@ func buildDownloadURL(urlBase, downloadPath, tokenStr string) (string, error) {
 }
 
 // serveLogDownload is the HTTP handler for log file downloads.
-// It validates the signed JWT in the "dlt" query parameter and streams
-// the corresponding file directly via io.Copy — no read→serialise→write cycle.
+// It validates the signed JWT in the "dlt" (download token) query parameter and
+// streams the corresponding file directly via io.Copy — no read→serialise→write cycle.
+//
+// The "dlt" parameter is a base64url-encoded HS256-signed JWT containing either
+// a single file path (downloadClaims.FilePath) or a list of paths to zip
+// (downloadClaims.ZipFiles). Tokens are short-lived and signed with a per-config
+// HMAC key; see signDownloadToken / parseDownloadToken.
 //
 // Concurrency note: active log file downloads use a sequential read handle;
 // concurrent writes from the logger are safe because io.Copy reads sequentially
 // and log rotation produces a new file (the active file is never truncated while
 // the old one is being served).
 func serveLogDownload(w http.ResponseWriter, r *http.Request, key []byte) {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Cache-Control", "no-store")
+
 	tokenB64 := r.URL.Query().Get("dlt")
 	if tokenB64 == "" {
 		http.Error(w, "missing download token", http.StatusUnauthorized)
