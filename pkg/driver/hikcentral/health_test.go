@@ -16,9 +16,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 func newTestRegistry(devs *devicespb.Collection) *healthpb.Registry {

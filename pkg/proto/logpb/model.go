@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 const defaultBufCap = 1000

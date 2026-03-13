@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 // Model provides the data structure for representing an EnterLeaveSensor trait.
