@@ -8,8 +8,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 func TestModelServer(t *testing.T) {

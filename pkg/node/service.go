@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 
 	"github.com/smart-core-os/sc-bos/internal/router"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 type Service struct {

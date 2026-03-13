@@ -22,7 +22,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // TestTracksDeviceValues verifies that the automation extracts values

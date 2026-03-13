@@ -16,8 +16,8 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 // tests overall type behavior: registering services, adding routes, and routing requests with correct priority.
