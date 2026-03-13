@@ -16,8 +16,8 @@ import (
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/page"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
 )
 
 // Api implements a servicespb.ServicesApiServer backed by service.Map.
