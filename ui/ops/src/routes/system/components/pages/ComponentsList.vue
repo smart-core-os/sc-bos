@@ -20,6 +20,7 @@
     </v-row>
 
     <div class="d-flex flex-wrap ml-n2">
+      <keycloak-card v-if="keycloakHealth.isConfigured"/>
       <cohort-node-card
           v-for="node in cohortNodes"
           :key="node.address"
@@ -39,13 +40,16 @@
 <script setup>
 import CohortNodeCard from '@/routes/system/components/CohortNodeCard.vue';
 import EnrollHubNodeModal from '@/routes/system/components/EnrollHubNodeModal.vue';
+import KeycloakCard from '@/routes/system/components/KeycloakCard.vue';
 import {useCohortStore} from '@/stores/cohort.js';
+import {useKeycloakHealthStore} from '@/stores/keycloakHealth.js';
 import {storeToRefs} from 'pinia';
 import {ref, watch} from 'vue';
 
 const showModal = ref(false);
 
 const {cohortNodes} = storeToRefs(useCohortStore());
+const keycloakHealth = useKeycloakHealthStore();
 
 const nodeQuery = ref({
   address: null,

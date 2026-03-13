@@ -8,7 +8,7 @@
         "name": "van/uk/brum/ugs/zones/building"
       },
       "water": {
-        "name": "van/uk/brum/ugs/zones/building"
+        "name": "van/uk/brum/ugs/zones/building/water"
       },
       "energy": {
         "name": "van/uk/brum/ugs/zones/building",

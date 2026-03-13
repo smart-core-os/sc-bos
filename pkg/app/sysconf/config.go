@@ -89,6 +89,8 @@ type Config struct {
 
 	Experimental *Experimental `json:"experimental,omitempty"`
 
+	Cloud *Cloud `json:"cloud,omitempty"`
+
 	DriverFactories map[string]driver.Factory `json:"-"` // keyed by driver name
 	AutoFactories   map[string]auto.Factory   `json:"-"` // keyed by automation type
 	SystemFactories map[string]system.Factory `json:"-"` // keyed by system type
@@ -267,6 +269,9 @@ func (c *Config) Normalize() {
 	}
 
 	c.CertConfig = c.CertConfig.FillDefaults()
+	if c.Cloud != nil {
+		c.Cloud = c.Cloud.FillDefaults()
+	}
 }
 
 func (c *Certs) FillDefaults() *Certs {
@@ -286,6 +291,29 @@ func (c *Certs) FillDefaults() *Certs {
 	return c
 }
 
+type Cloud struct {
+	Endpoint     string              `json:"endpoint,omitempty"`
+	TokenFile    string              `json:"tokenFile,omitempty"`
+	PollInterval *jsontypes.Duration `json:"pollInterval,omitempty"`
+	// Preserve old or incomplete downloads instead of deleting them on startup or when they expire.
+	// This is useful for debugging and should be used with caution in production since it can lead to unbounded disk usage.
+	PreserveDownloads bool `json:"preserveDownloads,omitempty"`
+	// Maximum size of the decompressed config package that can be downloaded from the server, in MiB.
+	// Defaults to DefaultMaxDeploymentSizeMiB if absent or 0, which should be sufficient for typical use cases.
+	// If negative, no limit is applied.
+	MaxDeploymentSizeMiB int `json:"maxDeploymentSizeMiB,omitempty"`
+}
+
+func (c *Cloud) FillDefaults() *Cloud {
+	if c.PollInterval == nil || c.PollInterval.Duration <= 0 {
+		c.PollInterval = &jsontypes.Duration{Duration: 5 * time.Minute}
+	}
+	if c.MaxDeploymentSizeMiB == 0 {
+		c.MaxDeploymentSizeMiB = DefaultMaxDeploymentSizeMiB
+	}
+	return c
+}
+
 // BlockSource is an interface that can be implemented by a factory to provide a list of blocks that describe the config
 // for that driver/automation/zone type.
 // This is used to produce granular diffs for config changes.
@@ -297,3 +325,5 @@ type BlockSource interface {
 type BlockSource2 interface {
 	ConfigBlocks(cfg *Config) []block.Block
 }
+
+const DefaultMaxDeploymentSizeMiB = 500

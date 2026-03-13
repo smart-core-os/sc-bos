@@ -31,6 +31,13 @@ type Root struct {
 	Roots string `json:"roots,omitempty"` // Roots pem or path to roots.pem shared as the trust root with enrolled nodes. Defaults to hub.roots.pem if present else cert is used.
 
 	Storage *Storage `json:"storage,omitempty"`
+
+	Nodes []NodeConfig `json:"nodes,omitempty"` // Nodes to auto-enroll on startup.
+}
+
+type NodeConfig struct {
+	Address string `json:"address"`
+	Name    string `json:"name,omitempty"`
 }
 
 type StorageType string
