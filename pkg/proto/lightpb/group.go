@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/group"
+	"github.com/smart-core-os/sc-bos/pkg/group"
 )
 
 // Group combines multiple named devices into a single named device.
