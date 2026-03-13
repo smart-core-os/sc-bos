@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 

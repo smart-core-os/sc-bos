@@ -8,7 +8,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 func (a *automation) collectAllocationChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
