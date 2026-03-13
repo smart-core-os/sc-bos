@@ -5,39 +5,35 @@
         style="word-break: break-all">
       {{ node.name }}
       <v-spacer/>
-      <template v-if="node.role !== NodeRole.INDEPENDENT">
-        <v-menu min-width="175px">
-          <template #activator="{ props: _props }">
-            <v-btn
-                icon="mdi-dots-vertical"
-                variant="text"
-                size="small"
-                v-bind="_props">
-              <v-icon size="24"/>
-            </v-btn>
-          </template>
-          <v-list class="py-0">
-            <v-list-item link @click="onShowCertificates(node.grpcAddress)">
-              <v-list-item-title>
-                View Certificate
-              </v-list-item-title>
-            </v-list-item>
-            <v-list-item link @click="onDownloadLogs(node.name)">
-              <v-list-item-title>Download Logs</v-list-item-title>
-            </v-list-item>
-            <v-list-item link @click="onViewLiveLogs(node.name)">
-              <v-list-item-title>View Live Logs</v-list-item-title>
-            </v-list-item>
-            <v-list-item v-if="node.role !== NodeRole.HUB && !node.isServer"
-                         link
-                         @click="onForgetNode(node.grpcAddress)">
-              <v-list-item-title class="text-error">
-                Forget Node
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-      </template>
+      <v-menu min-width="175px">
+        <template #activator="{ props: _props }">
+          <v-btn
+              icon="mdi-dots-vertical"
+              variant="text"
+              size="small"
+              v-bind="_props"/>
+        </template>
+        <v-list class="py-0">
+          <v-list-item link @click="onShowCertificates(node.grpcAddress)">
+            <v-list-item-title>
+              View Certificate
+            </v-list-item-title>
+          </v-list-item>
+          <v-list-item v-if="hasLogService" link @click="onDownloadLogs(node.name)">
+            <v-list-item-title>Download Logs</v-list-item-title>
+          </v-list-item>
+          <v-list-item v-if="hasLogService" link @click="onViewLiveLogs(node.name)">
+            <v-list-item-title>View Live Logs</v-list-item-title>
+          </v-list-item>
+          <v-list-item v-if="node.role !== NodeRole.HUB && !node.isServer"
+                       link
+                       @click="onForgetNode(node.grpcAddress)">
+            <v-list-item-title class="text-error">
+              Forget Node
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
     </v-card-title>
     <v-card-subtitle v-if="node.description !== ''">{{ node.description }}</v-card-subtitle>
 
@@ -101,19 +97,17 @@
       </div>
     </v-card-text>
   </v-card>
-  <log-stream-dialog v-model="showLogStream" :name="logStreamNode"/>
 </template>
 
 <script setup>
 import StatusAlert from '@/components/StatusAlert.vue';
 import {getDownloadLogUrl} from '@/api/ui/log.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
-import {usePullServiceMetadata} from '@/composables/services.js';
+import {usePullService, usePullServiceMetadata} from '@/composables/services.js';
 import {NodeRole} from '@/stores/cohort.js';
-import LogStreamDialog from '@/routes/system/components/LogStreamDialog.vue';
-import {reactive, ref} from 'vue';
+import {computed, reactive} from 'vue';
+import {useRouter} from 'vue-router';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
-import {reactive} from 'vue';
 
 const props = defineProps({
   node: {
@@ -122,6 +116,11 @@ const props = defineProps({
   }
 });
 const emit = defineEmits(['click:show-certificates', 'click:forget-node']);
+
+const router = useRouter();
+
+const {value: logServiceValue} = usePullService(() => ({name: props.node.name + '/systems', id: 'log'}));
+const hasLogService = computed(() => !!logServiceValue.value);
 
 const nodeDetails = reactive({
   automations: usePullServiceMetadata(() => props.node.name + '/automations'),
@@ -135,11 +134,8 @@ const onShowCertificates = (address) => {
 const onForgetNode = (address) => {
   emit('click:forget-node', address);
 };
-const showLogStream = ref(false);
-const logStreamNode = ref('');
 const onViewLiveLogs = (name) => {
-  logStreamNode.value = name;
-  showLogStream.value = true;
+  router.push({path: '/system/logs', query: {node: name}});
 };
 
 const onDownloadLogs = async (name) => {

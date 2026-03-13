@@ -23,6 +23,11 @@ type Root struct {
 	// Defaults to 900 (15 minutes).
 	URLTTLSeconds int `json:"urlTtlSeconds,omitempty"`
 
+	// LogDir is an optional directory path. When set, GetDownloadLogUrl with
+	// include_rotated=true returns all regular files in this directory.
+	// Also used for metadata (file count, total size) in preference to LogFilePath.
+	LogDir string `json:"logDir,omitempty"`
+
 	// BufCap is the ring-buffer capacity for in-memory log message retention.
 	// Defaults to 1000. Maximum is 10000.
 	BufCap int `json:"bufCap,omitempty"`

@@ -20,7 +20,8 @@
   "systems": {
     "alerts": {"storage": {"type": "postgres"}},
     "log": {
-      "logFilePath": ".data/sc-bos*.log"
+      "logFilePath": ".data/sc-bos*.log",
+      "logDir": ".data/"
     },
     "authn": {
       "user": {

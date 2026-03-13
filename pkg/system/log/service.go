@@ -1,6 +1,7 @@
 package log
 
 import (
+	"archive/zip"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -50,6 +51,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		// when UpdateLogLevel is called, also change the real zap level
 		model.OnUpdateLogLevel = func(lvl *logpb.LogLevel) {
 			al.SetLevel(logpbLevelToZap(lvl.Level))
+			s.logger.Info("log level changed", zap.String("level", lvl.Level.String()))
 		}
 	}
 
@@ -67,7 +69,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 
 		srv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
-			return getDownloadLogURL(req, cfg.LogFilePath, urlBase, downloadPath, key, ttl)
+			return getDownloadLogURL(req, cfg.LogFilePath, cfg.LogDir, urlBase, downloadPath, key, ttl)
 		}
 
 		s.services.HTTPMux.HandleFunc(downloadPath, func(w http.ResponseWriter, r *http.Request) {
@@ -80,13 +82,13 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		go func() {
 			ticker := time.NewTicker(30 * time.Second)
 			defer ticker.Stop()
-			refreshMetadata(model, cfg.LogFilePath, s.logger)
+			refreshMetadata(model, cfg.LogFilePath, cfg.LogDir, s.logger)
 			for {
 				select {
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
-					refreshMetadata(model, cfg.LogFilePath, s.logger)
+					refreshMetadata(model, cfg.LogFilePath, cfg.LogDir, s.logger)
 				}
 			}
 		}()
@@ -103,22 +105,28 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 // --------------------------------------------------------------------------
 
 // captureCore is a zapcore.Core that captures every log entry into the model.
-// It does NOT inherit fields from With() calls; only per-Write fields are captured.
-// Concurrent-write log rotation is safe because io.Copy reads sequentially.
+// withFields accumulates fields added via With() so they appear on every Write.
 type captureCore struct {
-	model *genlogpb.Model
+	model      *genlogpb.Model
+	withFields []zapcore.Field
 }
 
 func (c *captureCore) Enabled(_ zapcore.Level) bool { return true }
 
-func (c *captureCore) With(_ []zapcore.Field) zapcore.Core { return c }
+func (c *captureCore) With(fields []zapcore.Field) zapcore.Core {
+	merged := make([]zapcore.Field, len(c.withFields)+len(fields))
+	copy(merged, c.withFields)
+	copy(merged[len(c.withFields):], fields)
+	return &captureCore{model: c.model, withFields: merged}
+}
 
 func (c *captureCore) Check(entry zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
 	return ce.AddCore(entry, c)
 }
 
 func (c *captureCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
-	c.model.AppendMessage(entryToLogMessage(entry, fields))
+	all := append(c.withFields, fields...)
+	c.model.AppendMessage(entryToLogMessage(entry, all))
 	return nil
 }
 
@@ -193,23 +201,46 @@ func setModelLevel(m *genlogpb.Model, l zapcore.Level) error {
 // Log file metadata
 // --------------------------------------------------------------------------
 
-func refreshMetadata(model *genlogpb.Model, glob string, logger *zap.Logger) {
-	files, err := filepath.Glob(glob)
-	if err != nil {
-		logger.Warn("failed to glob log files", zap.String("glob", glob), zap.Error(err))
-		return
-	}
+func refreshMetadata(model *genlogpb.Model, glob, logDir string, logger *zap.Logger) {
 	var totalSize int64
-	for _, f := range files {
-		info, err := os.Stat(f)
+	var fileCount int
+
+	if logDir != "" {
+		entries, err := os.ReadDir(logDir)
 		if err != nil {
-			continue
+			logger.Warn("failed to read log dir", zap.String("dir", logDir), zap.Error(err))
+			return
 		}
-		totalSize += info.Size()
+		for _, e := range entries {
+			if !e.Type().IsRegular() {
+				continue
+			}
+			info, err := e.Info()
+			if err != nil {
+				continue
+			}
+			totalSize += info.Size()
+			fileCount++
+		}
+	} else {
+		files, err := filepath.Glob(glob)
+		if err != nil {
+			logger.Warn("failed to glob log files", zap.String("glob", glob), zap.Error(err))
+			return
+		}
+		for _, f := range files {
+			info, err := os.Stat(f)
+			if err != nil {
+				continue
+			}
+			totalSize += info.Size()
+			fileCount++
+		}
 	}
+
 	_, _ = model.UpdateLogMetadata(&logpb.LogMetadata{
 		TotalSizeBytes: totalSize,
-		FileCount:      int32(len(files)),
+		FileCount:      int32(fileCount),
 	})
 }
 
@@ -218,8 +249,10 @@ func refreshMetadata(model *genlogpb.Model, glob string, logger *zap.Logger) {
 // --------------------------------------------------------------------------
 
 type downloadClaims struct {
-	// FilePath is the absolute path to the log file to download.
-	FilePath string `json:"fp"`
+	// FilePath is the absolute path to a single log file to download.
+	FilePath string `json:"fp,omitempty"`
+	// ZipFiles is a list of absolute paths to include in a zip archive download.
+	ZipFiles []string `json:"zf,omitempty"`
 }
 
 type downloadJWTClaims struct {
@@ -239,30 +272,35 @@ func newHMACKey() []byte {
 
 func getDownloadLogURL(
 	req *logpb.GetDownloadLogUrlRequest,
-	glob, urlBase, downloadPath string,
+	glob, logDir, urlBase, downloadPath string,
 	key []byte,
 	ttl time.Duration,
 ) (*logpb.GetDownloadLogUrlResponse, error) {
-	files, err := filepath.Glob(glob)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "glob log files: %v", err)
-	}
-	if len(files) == 0 {
-		return &logpb.GetDownloadLogUrlResponse{}, nil
-	}
-
-	// Without include_rotated, only return the most recently modified file.
-	if !req.IncludeRotated && len(files) > 1 {
-		files = files[len(files)-1:]
-	}
-
-	var logFiles []*logpb.GetDownloadLogUrlResponse_LogFile
-	for _, fp := range files {
-		info, err := os.Stat(fp)
-		if err != nil {
-			continue
+	if req.IncludeRotated {
+		// Collect all files and return a single zip download URL.
+		var files []string
+		if logDir != "" {
+			entries, err := os.ReadDir(logDir)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "read log dir: %v", err)
+			}
+			for _, e := range entries {
+				if !e.Type().IsRegular() {
+					continue
+				}
+				files = append(files, filepath.Join(logDir, e.Name()))
+			}
+		} else {
+			var err error
+			files, err = filepath.Glob(glob)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "glob log files: %v", err)
+			}
 		}
-		tokenStr, err := signDownloadToken(fp, key, time.Now().Add(ttl))
+		if len(files) == 0 {
+			return &logpb.GetDownloadLogUrlResponse{}, nil
+		}
+		tokenStr, err := signDownloadToken(downloadClaims{ZipFiles: files}, key, time.Now().Add(ttl))
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "sign token: %v", err)
 		}
@@ -270,17 +308,43 @@ func getDownloadLogURL(
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "build url: %v", err)
 		}
-		logFiles = append(logFiles, &logpb.GetDownloadLogUrlResponse_LogFile{
+		return &logpb.GetDownloadLogUrlResponse{Files: []*logpb.GetDownloadLogUrlResponse_LogFile{{
 			Url:         u,
-			Filename:    filepath.Base(fp),
-			SizeBytes:   info.Size(),
-			ContentType: detectContentType(fp),
-		})
+			Filename:    "logs.zip",
+			ContentType: "application/zip",
+		}}}, nil
 	}
-	return &logpb.GetDownloadLogUrlResponse{Files: logFiles}, nil
+
+	// include_rotated=false: single most recent file.
+	files, err := filepath.Glob(glob)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "glob log files: %v", err)
+	}
+	if len(files) == 0 {
+		return &logpb.GetDownloadLogUrlResponse{}, nil
+	}
+	fp := files[len(files)-1]
+	info, err := os.Stat(fp)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "stat log file: %v", err)
+	}
+	tokenStr, err := signDownloadToken(downloadClaims{FilePath: fp}, key, time.Now().Add(ttl))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "sign token: %v", err)
+	}
+	u, err := buildDownloadURL(urlBase, downloadPath, tokenStr)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "build url: %v", err)
+	}
+	return &logpb.GetDownloadLogUrlResponse{Files: []*logpb.GetDownloadLogUrlResponse_LogFile{{
+		Url:         u,
+		Filename:    filepath.Base(fp),
+		SizeBytes:   info.Size(),
+		ContentType: detectContentType(fp),
+	}}}, nil
 }
 
-func signDownloadToken(filePath string, key []byte, expiry time.Time) (string, error) {
+func signDownloadToken(body downloadClaims, key []byte, expiry time.Time) (string, error) {
 	signer, err := jose.NewSigner(
 		jose.SigningKey{Algorithm: jose.HS256, Key: key},
 		(&jose.SignerOptions{}).WithType("JWT"),
@@ -290,7 +354,7 @@ func signDownloadToken(filePath string, key []byte, expiry time.Time) (string, e
 	}
 	claims := downloadJWTClaims{
 		Claims: josejwt.Claims{Expiry: josejwt.NewNumericDate(expiry)},
-		Body:   downloadClaims{FilePath: filePath},
+		Body:   body,
 	}
 	return josejwt.Signed(signer).Claims(claims).Serialize()
 }
@@ -355,7 +419,12 @@ func serveLogDownload(w http.ResponseWriter, r *http.Request, key []byte) {
 		return
 	}
 
-	// Validate the path is under a safe location (prevent path traversal).
+	if len(claims.ZipFiles) > 0 {
+		serveZipDownload(w, claims.ZipFiles)
+		return
+	}
+
+	// Single file download.
 	fp := filepath.Clean(claims.FilePath)
 	f, err := os.Open(fp)
 	if err != nil {
@@ -374,6 +443,42 @@ func serveLogDownload(w http.ResponseWriter, r *http.Request, key []byte) {
 	w.Header().Set("Content-Disposition", `attachment; filename="`+filepath.Base(fp)+`"`)
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", info.Size()))
 	_, _ = io.Copy(w, f)
+}
+
+// serveZipDownload streams a zip archive containing the listed files.
+func serveZipDownload(w http.ResponseWriter, files []string) {
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", `attachment; filename="logs.zip"`)
+
+	zw := zip.NewWriter(w)
+	defer zw.Close()
+
+	for _, fp := range files {
+		fp = filepath.Clean(fp)
+		f, err := os.Open(fp)
+		if err != nil {
+			continue
+		}
+		info, err := f.Stat()
+		if err != nil || info.IsDir() {
+			f.Close()
+			continue
+		}
+		fh, err := zip.FileInfoHeader(info)
+		if err != nil {
+			f.Close()
+			continue
+		}
+		fh.Name = filepath.Base(fp)
+		fh.Method = zip.Deflate
+		fw, err := zw.CreateHeader(fh)
+		if err != nil {
+			f.Close()
+			continue
+		}
+		_, _ = io.Copy(fw, f)
+		f.Close()
+	}
 }
 
 func detectContentType(fp string) string {
