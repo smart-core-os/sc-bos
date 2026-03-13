@@ -101,12 +101,24 @@ const search = ref('');
 const {filterCtx, filterConditions} = useHealthCheckFilters();
 const hasFilters = computed(() => filterCtx.filters.value.length > 0);
 
+// Only allow one expanded row at a time
+const expandedRow = ref(null);
+const expanded = computed({
+  get() {
+    return expandedRow.value ? [expandedRow.value] : [];
+  },
+  set(value) {
+    expandedRow.value = value.length > 0 ? value[value.length - 1] : null;
+  }
+});
+
 const wantCount = ref(20);
 const _useDevicesOpts = computed(() => {
   return {
     search: search.value,
     conditions: [...props.conditions, ...filterConditions.value],
-    wantCount: wantCount.value
+    wantCount: wantCount.value,
+    paused: expandedRow.value !== null,
   }
 });
 const devices = useDevices(_useDevicesOpts);
@@ -118,17 +130,6 @@ const headers = computed(() => {
     {title: 'Connection', key: 'reliability'},
     {title: 'Issue Count', key: 'totalCount', align: 'end'}
   ]
-})
-
-// Only allow one expanded row at a time
-const expandedRow = ref(null);
-const expanded = computed({
-  get() {
-    return expandedRow.value ? [expandedRow.value] : [];
-  },
-  set(value) {
-    expandedRow.value = value.length > 0 ? value[value.length - 1] : null;
-  }
 });
 </script>
 
