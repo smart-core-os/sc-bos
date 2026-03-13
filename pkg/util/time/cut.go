@@ -1,8 +1,9 @@
 package time
 
 import (
-	"github.com/smart-core-os/sc-api/go/types/time"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/smart-core-os/sc-api/go/types/time"
 )
 
 // cut is an internal interface we use for dividing up a timeline. It has 4 variants belowAll, below, above, and
