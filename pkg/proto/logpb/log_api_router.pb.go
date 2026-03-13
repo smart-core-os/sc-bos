@@ -5,7 +5,7 @@ package logpb
 import (
 	context "context"
 	fmt "fmt"
-	router "github.com/smart-core-os/sc-bos/sc-golang/pkg/router"
+	router "github.com/smart-core-os/sc-bos/pkg/router"
 	grpc "google.golang.org/grpc"
 	io "io"
 )
