@@ -1,26 +1,28 @@
 <template>
-  <div>
-    <v-row class="ml-0 pl-0 my-0">
+  <div style="position: relative;">
+    <div class="d-flex align-start mb-2">
       <h3 class="text-h3 pt-2 pb-6">Components</h3>
       <v-spacer/>
-      <v-tooltip location="left">
-        <template #activator="{ props }">
-          <v-btn
-              class="mr-4"
-              color="primary"
-              icon="mdi-plus"
-              size="small"
-              v-bind="props"
-              @click="showModal = true">
-            <v-icon size="24"/>
-          </v-btn>
-        </template>
-        Enroll Node
-      </v-tooltip>
-    </v-row>
+      <div class="d-flex align-start" style="gap: 8px">
+        <v-tooltip location="bottom">
+          <template #activator="{ props }">
+            <v-btn
+                class="mt-2"
+                color="primary"
+                icon="mdi-plus"
+                size="small"
+                v-bind="props"
+                @click="showModal = true">
+              <v-icon size="24"/>
+            </v-btn>
+          </template>
+          Enroll Node
+        </v-tooltip>
+        <keycloak-card v-if="keycloakHealth.isConfigured" class="flex-shrink-0"/>
+      </div>
+    </div>
 
     <div class="d-flex flex-wrap ml-n2">
-      <keycloak-card v-if="keycloakHealth.isConfigured"/>
       <cohort-node-card
           v-for="node in cohortNodes"
           :key="node.address"
