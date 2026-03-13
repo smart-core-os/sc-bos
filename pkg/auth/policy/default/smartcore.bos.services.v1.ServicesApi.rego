@@ -1,4 +1,4 @@
-package smartcore.bos.ServicesApi
+package smartcore.bos.services.v1.ServicesApi
 
 import data.scutil.token.token_has_role
 import data.scutil.rpc.verb_match
