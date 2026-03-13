@@ -141,16 +141,28 @@ const filteredMessages = computed(() => {
   );
 });
 
+/**
+ * @param {Array<[string, *]>} fieldsMap
+ * @return {string}
+ */
 function formatFields(fieldsMap) {
   if (!fieldsMap?.length) return '';
   return '\t' + JSON.stringify(Object.fromEntries(fieldsMap));
 }
 
+/**
+ * @param {{seconds: number}|null} timestamp
+ * @return {string}
+ */
 function formatTime(timestamp) {
   if (!timestamp) return '--:--:--';
   return new Date(timestamp.seconds * 1000).toLocaleTimeString();
 }
 
+/**
+ * @param {number|null} bytes
+ * @return {string}
+ */
 function formatBytes(bytes) {
   if (bytes == null) return '';
   if (bytes < 1024) return bytes + ' B';
@@ -158,6 +170,10 @@ function formatBytes(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
+/**
+ * @param {string} name
+ * @return {Promise<void>}
+ */
 async function startStreams(name) {
   cancelStreams();
   messages.value = [];
@@ -208,6 +224,9 @@ async function startStreams(name) {
   }
 }
 
+/**
+ * Cancels all active gRPC streams.
+ */
 function cancelStreams() {
   stream?.cancel();
   stream = null;
@@ -235,10 +254,17 @@ watch(messages, () => {
   });
 }, {deep: false});
 
+/**
+ * @param {string|null} name
+ */
 function onNodeChange(name) {
   router.replace({query: name ? {node: name} : {}});
 }
 
+/**
+ * @param {number} level
+ * @return {Promise<void>}
+ */
 async function onLevelChange(level) {
   if (!selectedNode.value) return;
   try {
@@ -249,6 +275,9 @@ async function onLevelChange(level) {
   }
 }
 
+/**
+ * @return {Promise<void>}
+ */
 async function downloadCurrent() {
   if (!selectedNode.value) return;
   try {
@@ -261,6 +290,9 @@ async function downloadCurrent() {
   }
 }
 
+/**
+ * @return {Promise<void>}
+ */
 async function downloadAll() {
   if (!selectedNode.value) return;
   try {
