@@ -1,0 +1,33 @@
+Tests a file with both sc-golang imports and other imports. Only sc-golang paths are rewritten.
+expected_changes: 1
+
+-- input/example.go --
+package example
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-golang/pkg/router"
+	"google.golang.org/grpc"
+)
+
+func New(ctx context.Context, conn *grpc.ClientConn) *resource.Value {
+	_ = router.Router{}
+	return nil
+}
+-- output/example.go --
+package example
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/router"
+	"google.golang.org/grpc"
+)
+
+func New(ctx context.Context, conn *grpc.ClientConn) *resource.Value {
+	_ = router.Router{}
+	return nil
+}

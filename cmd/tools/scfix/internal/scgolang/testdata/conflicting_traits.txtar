@@ -1,0 +1,35 @@
+Tests conflicting trait packages that move to pkg/trait/ instead of pkg/proto/.
+expected_changes: 1
+
+-- input/example.go --
+package example
+
+import (
+	"github.com/smart-core-os/sc-golang/pkg/trait/accesspb"
+	"github.com/smart-core-os/sc-golang/pkg/trait/electricpb"
+	"github.com/smart-core-os/sc-golang/pkg/trait/meterpb"
+	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
+)
+
+var (
+	_ = accesspb.Access{}
+	_ = electricpb.Electric{}
+	_ = meterpb.Meter{}
+	_ = occupancysensorpb.OccupancySensor{}
+)
+-- output/example.go --
+package example
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/trait/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
+)
+
+var (
+	_ = accesspb.Access{}
+	_ = electricpb.Electric{}
+	_ = meterpb.Meter{}
+	_ = occupancysensorpb.OccupancySensor{}
+)
