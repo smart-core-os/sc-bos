@@ -9,8 +9,8 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 func TemperatureAuto(model *temperaturepb.Model) *service.Service[string] {

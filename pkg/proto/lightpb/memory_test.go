@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/internal/th"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"

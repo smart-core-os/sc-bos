@@ -13,9 +13,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 const AutoName = "statusalerts"

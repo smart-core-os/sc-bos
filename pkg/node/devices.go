@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 func (n *Node) GetDevice(name string, opts ...resource.ReadOption) (*devicespb.Device, error) {

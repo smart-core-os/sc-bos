@@ -8,8 +8,8 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 func SoundSensorAuto(model *soundsensorpb.Model) *service.Service[string] {
