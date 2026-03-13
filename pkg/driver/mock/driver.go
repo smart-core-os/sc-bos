@@ -45,8 +45,8 @@ import (
 	enterleavesensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/enterleavesensorpb"
 	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 const DriverName = "mock"

@@ -39,7 +39,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 var Factory = auto.FactoryFunc(NewAutomation)

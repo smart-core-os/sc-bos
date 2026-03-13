@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/historypb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func TestSlice_Len_panicOnFail(t *testing.T) {

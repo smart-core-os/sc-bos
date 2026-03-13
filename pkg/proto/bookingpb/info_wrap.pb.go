@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // WrapInfo	adapts a traits.BookingInfoServer	and presents it as a traits.BookingInfoClient

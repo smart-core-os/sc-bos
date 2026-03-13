@@ -17,9 +17,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 func TestDevice_newDevice(t *testing.T) {
