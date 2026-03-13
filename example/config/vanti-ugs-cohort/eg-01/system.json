@@ -21,6 +21,7 @@
       },
       "system": {"cohortAccounts": true}
     },
+    "resourceUse": {},
     "hub": {"storage": {"type": "proxy"}},
     "gateway": {},
     "tenants": {"storage": {"type": "proxy"}}

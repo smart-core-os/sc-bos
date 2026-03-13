@@ -11,6 +11,14 @@ BLUE='\033[0;34m'
 YELLOW='\033[0;33m'
 RESET='\033[0m'
 
+CLEAN=false
+for arg in "$@"; do
+  case "$arg" in
+    --clean) CLEAN=true ;;
+    *) echo "Unknown argument: $arg"; exit 1 ;;
+  esac
+done
+
 pids=()
 
 cleanup() {
@@ -33,23 +41,36 @@ prefix_log() {
   pids+=($!)
 }
 
+if [ "$CLEAN" = true ]; then
+  echo "Cleaning data dirs and database..."
+  rm -rf .data/vanti-ugs-hub/bc-01 .data/vanti-ugs-hub/eg-01 .data/vanti-ugs-hub/ac-01
+  PGPASSWORD=$(cat .data/secrets/postgres-password) psql -h localhost -U postgres -c 'DROP DATABASE IF EXISTS "vanti-ugs-cohort"'
+  echo "Clean complete."
+fi
+
 echo "Building .bin/bos..."
 go build -o .bin/bos ./cmd/bos
+
+echo "Ensuring vanti-ugs-cohort database exists..."
+PGPASSWORD=$(cat .data/secrets/postgres-password) psql -h localhost -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'vanti-ugs-cohort'" | grep -q 1 || \
+  PGPASSWORD=$(cat .data/secrets/postgres-password) psql -h localhost -U postgres -c 'CREATE DATABASE "vanti-ugs-cohort"'
 
 echo "Starting BC-01, EG-01, and vanti-ugs AC..."
 
 prefix_log "BC-01" "$GREEN" \
-  .bin/bos --policy-mode=off \
+  .bin/bos --policy-mode=check \
+    --appconf example/config/vanti-ugs-cohort/bc-01/app.conf.json \
     --sysconf example/config/vanti-ugs-cohort/bc-01/system.json \
     --data .data/vanti-ugs-hub/bc-01
 
 prefix_log "EG-01" "$BLUE" \
-  .bin/bos --policy-mode=off \
+  .bin/bos --policy-mode=check \
+    --appconf example/config/vanti-ugs-cohort/eg-01/app.conf.json \
     --sysconf example/config/vanti-ugs-cohort/eg-01/system.json \
     --data .data/vanti-ugs-hub/eg-01
 
 prefix_log "AC" "$RED" \
-  .bin/bos --policy-mode=off \
+  .bin/bos --policy-mode=check \
     --appconf example/config/vanti-ugs-cohort/ac-01/app.conf.json \
     --sysconf example/config/vanti-ugs-cohort/ac-01/system.json \
     --data .data/vanti-ugs-hub/ac-01

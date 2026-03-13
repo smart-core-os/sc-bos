@@ -37,7 +37,7 @@ test_operator_UpdateBrightness {
   data.smartcore.allow with input as user_request("smartcore.traits.LightApi", "UpdateBrightness", {}, ["operator"])
 }
 test_operator_StartService {
-  data.smartcore.bos.ServicesApi.allow with input as user_request("smartcore.bos.services.v1.ServicesApi", "StartService", {}, ["operator"])
+  data.smartcore.bos.services.v1.ServicesApi.allow with input as user_request("smartcore.bos.services.v1.ServicesApi", "StartService", {}, ["operator"])
 }
 test_operator_ConfigureService {
   not data.smartcore.bos.services.v1.ServicesApi.allow with input as user_request("smartcore.bos.services.v1.ServicesApi", "ConfigureService", {}, ["operator"])
@@ -58,9 +58,9 @@ test_operator_ConfigureService_zones {
   data.smartcore.bos.services.v1.ServicesApi.allow with input as input
 }
 test_operator_DaliApi {
-  data.smartcore.bos.driver.dali.DaliApi.allow with input as user_request("smartcore.bos.driver.dali.DaliApi", "StartTest", {}, ["operator"])
-  data.smartcore.bos.driver.dali.DaliApi.allow with input as user_request("smartcore.bos.driver.dali.DaliApi", "StopTest", {}, ["operator"])
-  not data.smartcore.bos.driver.dali.DaliApi.allow with input as user_request("smartcore.bos.driver.dali.DaliApi", "DeleteTestResult", {}, ["operator"])
+  data.smartcore.bos.driver.dali.v1.DaliApi.allow with input as user_request("smartcore.bos.driver.dali.v1.DaliApi", "StartTest", {}, ["operator"])
+  data.smartcore.bos.driver.dali.v1.DaliApi.allow with input as user_request("smartcore.bos.driver.dali.v1.DaliApi", "StopTest", {}, ["operator"])
+  not data.smartcore.bos.driver.dali.v1.DaliApi.allow with input as user_request("smartcore.bos.driver.dali.v1.DaliApi", "DeleteTestResult", {}, ["operator"])
 }
 
 tenant_request(service, method, request, zones) := input {
