@@ -8,8 +8,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
