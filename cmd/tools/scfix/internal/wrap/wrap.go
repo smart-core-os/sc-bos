@@ -149,7 +149,7 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 
 	if !ctx.DryRun {
 		if needsWrapImport {
-			ensureImport(node, "github.com/smart-core-os/sc-golang/pkg/wrap")
+			ensureImport(node, "github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap")
 		}
 		if needsTraitsImport {
 			ensureImport(node, "github.com/smart-core-os/sc-api/go/traits")

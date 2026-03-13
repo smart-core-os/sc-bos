@@ -6,8 +6,8 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait/modepb"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/modepb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 // mockMode returns a mock Mode device and automation.

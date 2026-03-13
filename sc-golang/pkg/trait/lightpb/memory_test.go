@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smart-core-os/sc-golang/internal/th"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/internal/th"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"

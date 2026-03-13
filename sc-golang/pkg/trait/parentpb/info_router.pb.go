@@ -5,7 +5,7 @@ package parentpb
 import (
 	fmt "fmt"
 	traits "github.com/smart-core-os/sc-api/go/traits"
-	router "github.com/smart-core-os/sc-golang/pkg/router"
+	router "github.com/smart-core-os/sc-bos/sc-golang/pkg/router"
 	grpc "google.golang.org/grpc"
 )
 

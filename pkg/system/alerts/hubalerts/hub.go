@@ -11,7 +11,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 	"github.com/smart-core-os/sc-bos/pkg/system/alerts/alertmd"
 	"github.com/smart-core-os/sc-bos/pkg/util/once"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 // Server backs off to a remove server, modifying requests to filter by federation parameter.
