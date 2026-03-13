@@ -18,8 +18,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node/alltraits"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 )
 
 const DriverName = "proxy"

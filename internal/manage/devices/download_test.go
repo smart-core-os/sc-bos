@@ -21,8 +21,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 )
 
 func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
@@ -44,7 +44,7 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 		node.HasMetadata(&traits.Metadata{Location: &traits.Metadata_Location{Floor: "01"}}),
 	)
 
-	airTempDevice := airtemperaturepb.NewModel()
+	airTempDevice := airtemperaturepb2.NewModel()
 	_, _ = airTempDevice.UpdateAirTemperature(&traits.AirTemperature{
 		TemperatureGoal:    &traits.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &types.Temperature{ValueCelsius: 23.5}},
 		AmbientTemperature: &types.Temperature{ValueCelsius: 19.2},
@@ -54,7 +54,7 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 		node.HasTrait(
 			trait.AirTemperature,
 			node.WithClients(
-				airtemperaturepb.WrapApi(airtemperaturepb.NewModelServer(airTempDevice)),
+				airtemperaturepb2.WrapApi(airtemperaturepb2.NewModelServer(airTempDevice)),
 			),
 		),
 		node.HasMetadata(&traits.Metadata{Location: &traits.Metadata_Location{Floor: "02"}}),

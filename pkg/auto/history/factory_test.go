@@ -19,12 +19,12 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
+	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
+	electricpb2 "github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
+	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/electricpb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 func Test_automation_applyConfig(t *testing.T) {
@@ -34,10 +34,10 @@ func Test_automation_applyConfig(t *testing.T) {
 	t.Cleanup(cancel)
 
 	logger := zap.NewNop()
-	occupancy := occupancysensorpb.NewModel()
-	airQuality := airqualitysensorpb.NewModel()
-	airTemperature := airtemperaturepb.NewModel()
-	electric := electricpb.NewModel()
+	occupancy := occupancysensorpb2.NewModel()
+	airQuality := airqualitysensorpb2.NewModel()
+	airTemperature := airtemperaturepb2.NewModel()
+	electric := electricpb2.NewModel()
 	meter := meterpb.NewModel()
 	status := statuspb.NewModel()
 
@@ -49,7 +49,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.OccupancySensor),
 		node.HasServer(
 			traits.RegisterOccupancySensorApiServer,
-			traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occupancy)),
+			traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occupancy)),
 		),
 	)
 
@@ -57,7 +57,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.AirQualitySensor),
 		node.HasServer(
 			traits.RegisterAirQualitySensorApiServer,
-			traits.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(airQuality)),
+			traits.AirQualitySensorApiServer(airqualitysensorpb2.NewModelServer(airQuality)),
 		),
 	)
 
@@ -65,7 +65,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.AirTemperature),
 		node.HasServer(
 			traits.RegisterAirTemperatureApiServer,
-			traits.AirTemperatureApiServer(airtemperaturepb.NewModelServer(airTemperature)),
+			traits.AirTemperatureApiServer(airtemperaturepb2.NewModelServer(airTemperature)),
 		),
 	)
 
@@ -73,7 +73,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.Electric),
 		node.HasServer(
 			traits.RegisterElectricApiServer,
-			traits.ElectricApiServer(electricpb.NewModelServer(electric)),
+			traits.ElectricApiServer(electricpb2.NewModelServer(electric)),
 		),
 	)
 

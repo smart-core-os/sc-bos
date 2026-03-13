@@ -13,10 +13,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	fanspeedpb2 "github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/fanspeedpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 type fanSpeedConfig struct {
@@ -36,8 +36,8 @@ type fanSpeed struct {
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *fanspeedpb.Model
-	*fanspeedpb.ModelServer
+	model *fanspeedpb2.Model
+	*fanspeedpb2.ModelServer
 	config   fanSpeedConfig
 	pollTask *task.Intermittent
 }
@@ -47,21 +47,21 @@ func newFanSpeed(client *gobacnet.Client, devices known.Context, faultCheck *hea
 	if err != nil {
 		return nil, err
 	}
-	var presets []fanspeedpb.Preset
+	var presets []fanspeedpb2.Preset
 	for preset, speed := range cfg.Presets {
-		presets = append(presets, fanspeedpb.Preset{
+		presets = append(presets, fanspeedpb2.Preset{
 			Name:       preset,
 			Percentage: speed,
 		})
 	}
-	model := fanspeedpb.NewModel(fanspeedpb.WithPresets(presets...))
+	model := fanspeedpb2.NewModel(fanspeedpb2.WithPresets(presets...))
 	t := &fanSpeed{
 		client:      client,
 		known:       devices,
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: fanspeedpb.NewModelServer(model),
+		ModelServer: fanspeedpb2.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
@@ -76,7 +76,7 @@ func (t *fanSpeed) startPoll(init context.Context) (stop task.StopFn, err error)
 }
 
 func (t *fanSpeed) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(trait.FanSpeed, node.WithClients(fanspeedpb.WrapApi(t))))
+	return a.Announce(t.config.Name, node.HasTrait(trait.FanSpeed, node.WithClients(fanspeedpb2.WrapApi(t))))
 }
 
 func (t *fanSpeed) GetFanSpeed(ctx context.Context, request *traits.GetFanSpeedRequest) (*traits.FanSpeed, error) {

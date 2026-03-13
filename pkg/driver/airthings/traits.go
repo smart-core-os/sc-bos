@@ -13,11 +13,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/brightnesssensorpb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
+	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 )
 
 // announceDevice sets up and announces the traits supported by the device.
@@ -26,13 +26,13 @@ func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev confi
 		// todo: read the RSSI prop and link it with status
 		switch trait.Name(tn) {
 		case trait.AirQualitySensor:
-			model := airqualitysensorpb.NewModel()
-			client := airqualitysensorpb.WrapApi(airqualitysensorpb.NewModelServer(model))
+			model := airqualitysensorpb2.NewModel()
+			client := airqualitysensorpb2.WrapApi(airqualitysensorpb2.NewModelServer(model))
 			a.Announce(dev.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(client)))
 			go d.pullSampleAirQuality(ctx, dev, loc, model)
 		case trait.AirTemperature:
-			model := airtemperaturepb.NewModel()
-			client := airtemperaturepb.WrapApi(roAirTemperatureServer{airtemperaturepb.NewModelServer(model)})
+			model := airtemperaturepb2.NewModel()
+			client := airtemperaturepb2.WrapApi(roAirTemperatureServer{airtemperaturepb2.NewModelServer(model)})
 			a.Announce(dev.Name, node.HasTrait(trait.AirTemperature, node.WithClients(client)))
 			go d.pullSampleAirTemperature(ctx, dev, loc, model)
 		case trait.BrightnessSensor:
@@ -52,7 +52,7 @@ func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev confi
 	return nil
 }
 
-func (d *Driver) pullSampleAirQuality(ctx context.Context, dev config.Device, loc *local.Location, model *airqualitysensorpb.Model) {
+func (d *Driver) pullSampleAirQuality(ctx context.Context, dev config.Device, loc *local.Location, model *airqualitysensorpb2.Model) {
 	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
 	_, _ = model.UpdateAirQuality(sampleToAirQuality(initial))
 	for {
@@ -110,7 +110,7 @@ func sampleToAirQuality(in api.DeviceSampleResponseEnriched) *traits.AirQuality 
 	return dst
 }
 
-func (d *Driver) pullSampleAirTemperature(ctx context.Context, dev config.Device, loc *local.Location, model *airtemperaturepb.Model) {
+func (d *Driver) pullSampleAirTemperature(ctx context.Context, dev config.Device, loc *local.Location, model *airtemperaturepb2.Model) {
 	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
 	_, _ = model.UpdateAirTemperature(sampleToAirTemperature(initial))
 	for {

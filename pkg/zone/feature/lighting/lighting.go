@@ -10,11 +10,11 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/lighting/config"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/lightpb"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -51,7 +51,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 			logger:   logger,
 		}
 		f.devices.Add(lights...)
-		announce.Announce(name, node.HasTrait(trait.Light, node.WithClients(lightpb.WrapApi(group), lightpb.WrapInfo(group))))
+		announce.Announce(name, node.HasTrait(trait.Light, node.WithClients(lightpb2.WrapApi(group), lightpb2.WrapInfo(group))))
 		return nil
 	}
 

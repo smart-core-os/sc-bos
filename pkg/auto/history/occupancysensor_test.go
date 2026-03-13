@@ -13,18 +13,18 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 func Test_automation_collectOccupancyChanges(t *testing.T) {
-	model := occupancysensorpb.NewModel()
+	model := occupancysensorpb2.NewModel()
 	// n is used as the clienter and announcer in the automation
 	n := node.New("test")
 	n.Announce("device",
 		node.HasTrait(trait.OccupancySensor),
-		node.HasServer(traits.RegisterOccupancySensorApiServer, traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(model))),
+		node.HasServer(traits.RegisterOccupancySensorApiServer, traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(model))),
 	)
 
 	collector := &automation{

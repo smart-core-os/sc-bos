@@ -11,13 +11,13 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
+	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/lightpb"
 )
 
 func TestGroup_PullBrightness(t *testing.T) {
-	r := lightpb.NewApiRouter()
-	client := lightpb.WrapApi(r)
+	r := lightpb2.NewApiRouter()
+	client := lightpb2.WrapApi(r)
 	group := &Group{
 		client: client,
 		names: []string{
@@ -28,7 +28,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 	}
 
 	for _, name := range group.names {
-		r.Add(name, lightpb.WrapApi(lightpb.NewMemoryDevice()))
+		r.Add(name, lightpb2.WrapApi(lightpb2.NewMemoryDevice()))
 	}
 
 	type response struct {
@@ -40,7 +40,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 	defer pullCancel()
 	go func() {
 		defer close(responses)
-		groupClient := lightpb.WrapApi(group)
+		groupClient := lightpb2.WrapApi(group)
 		stream, err := groupClient.PullBrightness(pullCtx, &traits.PullBrightnessRequest{
 			Name: "anything will do", // we're using a direct client call, not routed
 		})
@@ -122,8 +122,8 @@ func TestGroup_PullBrightness(t *testing.T) {
 }
 
 func TestGroup_DescribeBrightness(t *testing.T) {
-	info := lightpb.NewInfoRouter()
-	infoClient := lightpb.WrapInfo(info)
+	info := lightpb2.NewInfoRouter()
+	infoClient := lightpb2.WrapInfo(info)
 	group := &Group{
 		info: infoClient,
 		names: []string{
@@ -133,11 +133,11 @@ func TestGroup_DescribeBrightness(t *testing.T) {
 	}
 
 	for _, name := range group.names {
-		modelServer := lightpb.NewModelServer(lightpb.NewModel(
-			lightpb.WithPreset(10, &traits.LightPreset{Name: "dim", Title: "Low Light"}),
-			lightpb.WithPreset(90, &traits.LightPreset{Name: "blind", Title: "High Light"}),
+		modelServer := lightpb2.NewModelServer(lightpb2.NewModel(
+			lightpb2.WithPreset(10, &traits.LightPreset{Name: "dim", Title: "Low Light"}),
+			lightpb2.WithPreset(90, &traits.LightPreset{Name: "blind", Title: "High Light"}),
 		))
-		info.Add(name, lightpb.WrapInfo(modelServer))
+		info.Add(name, lightpb2.WrapInfo(modelServer))
 	}
 
 	support, err := group.DescribeBrightness(context.Background(), &traits.DescribeBrightnessRequest{})
