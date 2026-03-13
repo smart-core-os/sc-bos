@@ -9,7 +9,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/sc-golang/internal/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
 )
 
 // Value represents a simple state field in an object. Think Temperature or Volume or Occupancy. Use a Value to
@@ -21,7 +21,7 @@ type Value struct {
 	value      proto.Message
 	changeTime time.Time
 
-	bus minibus.Bus
+	bus minibus.Bus[*ValueChange]
 }
 
 func NewValue(opts ...Option) *Value {
@@ -113,7 +113,7 @@ func (r *Value) Pull(ctx context.Context, opts ...ReadOption) <-chan *ValueChang
 
 		last := currentValue
 		for event := range on {
-			change := event.(*ValueChange).filter(filter)
+			change := event.filter(filter)
 			if r.equivalence != nil && r.equivalence.Compare(last, change.Value) {
 				continue
 			}
@@ -128,7 +128,7 @@ func (r *Value) Pull(ctx context.Context, opts ...ReadOption) <-chan *ValueChang
 	return typedEvents
 }
 
-func (r *Value) onUpdate(ctx context.Context, config *ReadRequest) (<-chan any, proto.Message, time.Time) {
+func (r *Value) onUpdate(ctx context.Context, config *ReadRequest) (<-chan *ValueChange, proto.Message, time.Time) {
 	var (
 		value      proto.Message
 		changeTime time.Time
