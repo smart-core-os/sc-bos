@@ -4,7 +4,7 @@ package bookingpb
 
 import (
 	traits "github.com/smart-core-os/sc-api/go/traits"
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 

@@ -15,8 +15,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/system/publications/config"
 	"github.com/smart-core-os/sc-bos/pkg/system/publications/pgxpublications"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/publicationpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/publicationpb"
 )
 
 var Factory factory

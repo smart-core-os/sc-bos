@@ -3,7 +3,7 @@ package hailpb
 import (
 	"time"
 
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 // DefaultModelOptions holds the default options for the model.

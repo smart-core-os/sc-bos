@@ -12,6 +12,7 @@ require (
 	github.com/google/renameio/v2 v2.0.0
 	github.com/gopcua/opcua v0.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/jackc/pgconn v1.14.3
@@ -30,8 +31,8 @@ require (
 	github.com/sirupsen/logrus v1.9.4
 	github.com/smart-core-os/gobacnet v0.0.0-20251215143300-eec746ea1612
 	github.com/smart-core-os/sc-api/go v1.0.0-beta.57
-	github.com/smart-core-os/sc-golang v0.0.0-20260302093310-3fd18504faed
 	github.com/stretchr/testify v1.11.1
+	github.com/tanema/gween v0.0.0-20200427131925-c89ae23cc63c
 	github.com/timshannon/bolthold v0.0.0-20210913165410-232392fc8a6a
 	go.etcd.io/bbolt v1.4.3
 	go.uber.org/multierr v1.9.0
@@ -100,7 +101,6 @@ require (
 	github.com/smart-core-os/protomod v0.0.0-20240905140020-cf3f34d700b0 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/tanema/gween v0.0.0-20200427131925-c89ae23cc63c // indirect
 	github.com/tchap/go-patricia/v2 v2.3.3 // indirect
 	github.com/tetratelabs/wazero v1.10.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
@@ -136,11 +136,9 @@ require (
 
 tool (
 	github.com/smart-core-os/protomod
-	github.com/smart-core-os/sc-golang/cmd/protoc-gen-router
-	github.com/smart-core-os/sc-golang/cmd/protoc-gen-wrapper
+	github.com/smart-core-os/sc-bos/sc-golang/cmd/protoc-gen-router
+	github.com/smart-core-os/sc-bos/sc-golang/cmd/protoc-gen-wrapper
 	golang.org/x/tools/cmd/stringer
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc
 	google.golang.org/protobuf/cmd/protoc-gen-go
 )
-
-replace github.com/smart-core-os/sc-golang => ./sc-golang
