@@ -10,9 +10,9 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/driver/settings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 const DriverName = "settings"

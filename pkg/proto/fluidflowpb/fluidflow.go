@@ -1,7 +1,7 @@
 package fluidflowpb
 
 import (
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 const TraitName trait.Name = "smartcore.bos.FluidFlow"

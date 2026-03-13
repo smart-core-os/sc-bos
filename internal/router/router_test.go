@@ -14,9 +14,9 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
+	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/occupancysensorpb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/onoffpb"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
@@ -29,14 +29,14 @@ func TestRouter(t *testing.T) {
 
 	fooModel := onoffpb.NewModel(resource.WithInitialValue(&traits.OnOff{State: traits.OnOff_OFF}))
 	defaultModel := onoffpb.NewModel(resource.WithInitialValue(&traits.OnOff{State: traits.OnOff_ON}))
-	occupancyModel := occupancysensorpb.NewModel(resource.WithInitialValue(&traits.Occupancy{State: traits.Occupancy_OCCUPIED}))
+	occupancyModel := occupancysensorpb2.NewModel(resource.WithInitialValue(&traits.Occupancy{State: traits.Occupancy_OCCUPIED}))
 
 	// register a specific route for "foo"
 	check(t, r.AddRoute("", "foo",
 		wrap.ServerToClient(traits.OnOffApi_ServiceDesc, onoffpb.NewModelServer(fooModel))))
 	// register a specific route for "foo" for the occupancy service - this should have higher priority
 	check(t, r.AddRoute(traits.OccupancySensorApi_ServiceDesc.ServiceName, "foo",
-		wrap.ServerToClient(traits.OccupancySensorApi_ServiceDesc, occupancysensorpb.NewModelServer(occupancyModel))))
+		wrap.ServerToClient(traits.OccupancySensorApi_ServiceDesc, occupancysensorpb2.NewModelServer(occupancyModel))))
 	// add a catch-all for all OnOffApi requests that are not to "foo"
 	check(t, r.AddRoute(traits.OnOffApi_ServiceDesc.ServiceName, "",
 		wrap.ServerToClient(traits.OnOffApi_ServiceDesc, onoffpb.NewModelServer(defaultModel))))
