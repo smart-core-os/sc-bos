@@ -9,7 +9,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 func (a *automation) collectTransportChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {

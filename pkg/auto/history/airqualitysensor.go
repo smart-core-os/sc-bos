@@ -8,7 +8,7 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 func (a *automation) collectAirQualityChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
