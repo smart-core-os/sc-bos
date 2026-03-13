@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // WrapApi	adapts a traits.EnterLeaveSensorApiServer	and presents it as a traits.EnterLeaveSensorApiClient

@@ -10,8 +10,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/auto"
 	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 // mockOpenClose returns a mock OpenClose device and automation.
