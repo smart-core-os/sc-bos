@@ -13,7 +13,7 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/types"
 
-	"github.com/smart-core-os/sc-bos/sc-golang/internal/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
 )
 
 type Collection struct {
@@ -22,7 +22,7 @@ type Collection struct {
 	mu   sync.RWMutex // protects byId and rng from concurrent access
 	byId map[string]*item
 	// "change" events contain a *CollectionChange instance
-	bus minibus.Bus
+	bus minibus.Bus[*CollectionChange]
 }
 
 func NewCollection(options ...Option) *Collection {
@@ -253,8 +253,7 @@ func (c *Collection) Pull(ctx context.Context, opts ...ReadOption) <-chan *Colle
 			}
 		}
 
-		for event := range emit {
-			change := event.(*CollectionChange)
+		for change := range emit {
 			change, ok := change.include(readConfig.Include)
 			if !ok {
 				continue
@@ -309,7 +308,7 @@ func (c *Collection) PullID(ctx context.Context, id string, opts ...ReadOption) 
 	return send
 }
 
-func (c *Collection) onUpdate(ctx context.Context, config *ReadRequest) (<-chan any, []idItem) {
+func (c *Collection) onUpdate(ctx context.Context, config *ReadRequest) (<-chan *CollectionChange, []idItem) {
 	var res []idItem
 	if !config.UpdatesOnly {
 		c.mu.RLock()

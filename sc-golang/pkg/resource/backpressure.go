@@ -9,14 +9,14 @@ import (
 // mergeCollectionExcess acts on a chan of *CollectionChange combining changes with the same key to maintain the
 // semantics without needing to emit every events.
 // This will use memory proportional to one change for each id that has not been emitted yet.
-func mergeCollectionExcess(in <-chan any) <-chan any {
-	out := make(chan any)
+func mergeCollectionExcess(in <-chan *CollectionChange) <-chan *CollectionChange {
+	out := make(chan *CollectionChange)
 	go func() {
 		defer close(out)
 
 		messages := make(map[string]CollectionChange)
 		var queue list.List // of string, Front is which id to send next
-		event := func() any {
+		event := func() *CollectionChange {
 			if queue.Len() == 0 {
 				return nil
 			}
@@ -32,7 +32,7 @@ func mergeCollectionExcess(in <-chan any) <-chan any {
 					if !ok {
 						return
 					}
-					newMessage := *(newAny.(*CollectionChange))
+					newMessage := *newAny
 					oldMessage, hasOld := messages[newMessage.Id]
 					id := newMessage.Id
 					if hasOld {
@@ -62,7 +62,7 @@ func mergeCollectionExcess(in <-chan any) <-chan any {
 				if !ok {
 					return
 				}
-				newMessage := *(newAny.(*CollectionChange))
+				newMessage := *newAny
 				messages[newMessage.Id] = newMessage
 				queue.PushBack(newMessage.Id)
 			}

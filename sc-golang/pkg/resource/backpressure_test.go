@@ -26,7 +26,7 @@ func Test_mergeCollectionExcess(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			in := make(chan any)
+			in := make(chan *CollectionChange)
 			out := mergeCollectionExcess(in)
 			<-sendTo(in, tt.in)
 			got := drain(out, len(tt.want))
@@ -47,7 +47,7 @@ func Test_mergeCollectionExcess(t *testing.T) {
 	}
 	for _, tt := range multiMergeTests {
 		t.Run(tt.name, func(t *testing.T) {
-			in := make(chan any)
+			in := make(chan *CollectionChange)
 			out := mergeCollectionExcess(in)
 			for i := range tt.in {
 				<-sendTo(in, tt.in[i])
@@ -99,7 +99,7 @@ func parseAllCaseChanges(ss ...string) []CollectionChange {
 	return out
 }
 
-func sendTo(out chan<- any, vals []string) (sent <-chan struct{}) {
+func sendTo(out chan<- *CollectionChange, vals []string) (sent <-chan struct{}) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
@@ -111,10 +111,10 @@ func sendTo(out chan<- any, vals []string) (sent <-chan struct{}) {
 	return done
 }
 
-func drain(ch <-chan any, n int) []CollectionChange {
+func drain(ch <-chan *CollectionChange, n int) []CollectionChange {
 	out := make([]CollectionChange, n)
 	for i := 0; i < n; i++ {
-		out[i] = *(<-ch).(*CollectionChange)
+		out[i] = *(<-ch)
 	}
 	return out
 }
