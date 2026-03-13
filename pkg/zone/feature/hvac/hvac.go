@@ -9,10 +9,10 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/hvac/config"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airtemperaturepb"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {

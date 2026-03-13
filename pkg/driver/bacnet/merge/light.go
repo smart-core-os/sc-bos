@@ -18,11 +18,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/cmp"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/lightpb"
 )
 
 var (
@@ -61,8 +61,8 @@ type light struct {
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *lightpb.Model
-	*lightpb.ModelServer
+	model *lightpb2.Model
+	*lightpb2.ModelServer
 	config   lightCfg
 	pollTask *task.Intermittent
 }
@@ -73,7 +73,7 @@ func newLight(client *gobacnet.Client, devices known.Context, faultCheck *health
 		return nil, err
 	}
 
-	model := lightpb.NewModel(resource.WithMessageEquivalence(cmp.Equal(cmp.FloatValueApprox(0, 1.0)))) // report brightness intensity changes of 1.0% or more
+	model := lightpb2.NewModel(resource.WithMessageEquivalence(cmp.Equal(cmp.FloatValueApprox(0, 1.0)))) // report brightness intensity changes of 1.0% or more
 
 	l := &light{
 		client:      client,
@@ -81,7 +81,7 @@ func newLight(client *gobacnet.Client, devices known.Context, faultCheck *health
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: lightpb.NewModelServer(model),
+		ModelServer: lightpb2.NewModelServer(model),
 		config:      cfg,
 	}
 
@@ -91,7 +91,7 @@ func newLight(client *gobacnet.Client, devices known.Context, faultCheck *health
 }
 
 func (l *light) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(l.config.Name, node.HasTrait(trait.Light, node.WithClients(lightpb.WrapApi(l), lightpb.WrapInfo(l))))
+	return a.Announce(l.config.Name, node.HasTrait(trait.Light, node.WithClients(lightpb2.WrapApi(l), lightpb2.WrapInfo(l))))
 }
 
 func (l *light) UpdateBrightness(ctx context.Context, request *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {

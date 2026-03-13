@@ -7,7 +7,7 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/enterleavesensorpb"
 )
 
 func EnterLeaveAuto(model *enterleavesensorpb.Model) *service.Service[string] {

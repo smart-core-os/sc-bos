@@ -8,8 +8,8 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/scale"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 func OccupancySensorAuto(model *occupancysensorpb.Model) *service.Service[string] {

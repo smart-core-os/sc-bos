@@ -19,12 +19,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
-	airqualitycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality/config"
-	occupancycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
-
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/zone/allzones"
+	airqualitycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality/config"
 	meterscfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config"
+	occupancycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
 )
 
 var (

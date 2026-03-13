@@ -14,10 +14,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 )
 
 func TestSampleToAirQuality(t *testing.T) {
