@@ -12,9 +12,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/cmp"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
 )
 
