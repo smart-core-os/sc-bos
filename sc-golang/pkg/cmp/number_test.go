@@ -3,8 +3,9 @@ package cmp
 import (
 	"testing"
 
-	"github.com/smart-core-os/sc-bos/sc-golang/internal/testproto"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/smart-core-os/sc-bos/internal/testproto"
 )
 
 func TestFloatValueApprox(t *testing.T) {

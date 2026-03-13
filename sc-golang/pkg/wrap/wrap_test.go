@@ -20,18 +20,18 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/smart-core-os/sc-bos/sc-golang/internal/testproto"
+	testproto2 "github.com/smart-core-os/sc-bos/internal/testproto"
 )
 
 func TestWrapper_Unary(t *testing.T) {
 	srv := &testServer{}
-	conn := ServerToClient(testproto.TestApi_ServiceDesc, srv)
-	client := testproto.NewTestApiClient(conn)
+	conn := ServerToClient(testproto2.TestApi_ServiceDesc, srv)
+	client := testproto2.NewTestApiClient(conn)
 	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("a", "avalue", "b", "bvalue"))
 
 	t.Run("success", func(t *testing.T) {
 		var header metadata.MD
-		resp, err := client.Unary(ctx, &testproto.UnaryRequest{Msg: "hello"}, grpc.Header(&header))
+		resp, err := client.Unary(ctx, &testproto2.UnaryRequest{Msg: "hello"}, grpc.Header(&header))
 		if err != nil {
 			t.Fatalf("client.Unary(_, _) = _, %v; want _, nil", err)
 		}
@@ -45,7 +45,7 @@ func TestWrapper_Unary(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
-		_, err := client.Unary(ctx, &testproto.UnaryRequest{SimulateError: "foobar"})
+		_, err := client.Unary(ctx, &testproto2.UnaryRequest{SimulateError: "foobar"})
 		statusErr, ok := status.FromError(err)
 		if !ok {
 			t.Fatalf("client.Unary(...) did not return a status error - got %v", err)
@@ -63,10 +63,10 @@ func TestWrapper_Unary(t *testing.T) {
 // calls as streams
 func TestWrapper_UnaryAsStream(t *testing.T) {
 	src := &testServer{}
-	conn := ServerToClient(testproto.TestApi_ServiceDesc, src)
+	conn := ServerToClient(testproto2.TestApi_ServiceDesc, src)
 	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("a", "avalue", "b", "bvalue"))
 
-	method := fmt.Sprintf("/%s/Unary", testproto.TestApi_ServiceDesc.ServiceName)
+	method := fmt.Sprintf("/%s/Unary", testproto2.TestApi_ServiceDesc.ServiceName)
 	stream, err := conn.NewStream(ctx, &grpc.StreamDesc{
 		StreamName:    "Unary",
 		ClientStreams: false,
@@ -77,7 +77,7 @@ func TestWrapper_UnaryAsStream(t *testing.T) {
 	}
 
 	// send request
-	err = stream.SendMsg(&testproto.UnaryRequest{Msg: "hello"})
+	err = stream.SendMsg(&testproto2.UnaryRequest{Msg: "hello"})
 	if err != nil {
 		t.Fatalf("stream.SendMsg(_) = %v; want nil", err)
 	}
@@ -86,12 +86,12 @@ func TestWrapper_UnaryAsStream(t *testing.T) {
 		t.Fatalf("stream.CloseSend() = %v; want nil", err)
 	}
 	// receive response
-	res := &testproto.UnaryResponse{}
+	res := &testproto2.UnaryResponse{}
 	err = stream.RecvMsg(res)
 	if err != nil {
 		t.Fatalf("stream.RecvMsg(_) = %v; want nil", err)
 	}
-	expect := &testproto.UnaryResponse{Msg: "hello"}
+	expect := &testproto2.UnaryResponse{Msg: "hello"}
 	if diff := cmp.Diff(expect, res, protocmp.Transform()); diff != "" {
 		t.Errorf("stream.RecvMsg(_) mismatch (-want +got):\n%s", diff)
 	}
@@ -114,8 +114,8 @@ func TestWrapper_UnaryAsStream(t *testing.T) {
 // tests that the wrapper passes server-streaming calls through correctly, including metadata
 func TestWrapper_ServerStream(t *testing.T) {
 	srv := &testServer{}
-	conn := ServerToClient(testproto.TestApi_ServiceDesc, srv)
-	client := testproto.NewTestApiClient(conn)
+	conn := ServerToClient(testproto2.TestApi_ServiceDesc, srv)
+	client := testproto2.NewTestApiClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -123,7 +123,7 @@ func TestWrapper_ServerStream(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// we expect the server to resend this metadata back to us
 		ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("a", "avalue", "b", "bvalue"))
-		stream, err := client.ServerStream(ctx, &testproto.ServerStreamRequest{NumRes: 3})
+		stream, err := client.ServerStream(ctx, &testproto2.ServerStreamRequest{NumRes: 3})
 		if err != nil {
 			t.Fatalf("client.ServerStream(_, _) = _, %v; want _, nil", err)
 		}
@@ -155,7 +155,7 @@ func TestWrapper_ServerStream(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
-		stream, err := client.ServerStream(ctx, &testproto.ServerStreamRequest{SimulateError: "foobar"})
+		stream, err := client.ServerStream(ctx, &testproto2.ServerStreamRequest{SimulateError: "foobar"})
 		if err != nil {
 			t.Fatalf("client.ServerStream(_, _) = _, %v; want _, nil", err)
 		}
@@ -175,8 +175,8 @@ func TestWrapper_ServerStream(t *testing.T) {
 
 func TestWrapper_ClientStream(t *testing.T) {
 	srv := &testServer{}
-	conn := ServerToClient(testproto.TestApi_ServiceDesc, srv)
-	client := testproto.NewTestApiClient(conn)
+	conn := ServerToClient(testproto2.TestApi_ServiceDesc, srv)
+	client := testproto2.NewTestApiClient(conn)
 
 	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("hello", "world"))
 	t.Run("success", func(t *testing.T) {
@@ -185,7 +185,7 @@ func TestWrapper_ClientStream(t *testing.T) {
 			t.Fatalf("client.ClientStream(_) = _, %v; want _, nil", err)
 		}
 		for _, msg := range []string{"a", "b", "c"} {
-			err = stream.Send(&testproto.ClientStreamRequest{Msg: msg})
+			err = stream.Send(&testproto2.ClientStreamRequest{Msg: msg})
 			if err != nil {
 				t.Fatalf("stream.Send(%q) = %v; want nil", msg, err)
 			}
@@ -212,7 +212,7 @@ func TestWrapper_ClientStream(t *testing.T) {
 		if err != nil {
 			t.Fatalf("client.ClientStream(_) = _, %v; want _, nil", err)
 		}
-		err = stream.Send(&testproto.ClientStreamRequest{SimulateError: "foobar"})
+		err = stream.Send(&testproto2.ClientStreamRequest{SimulateError: "foobar"})
 		if err != nil {
 			t.Fatalf("stream.Send(_) = %v; want nil", err)
 		}
@@ -232,8 +232,8 @@ func TestWrapper_ClientStream(t *testing.T) {
 
 func TestWrapper_BidiStream(t *testing.T) {
 	srv := &testServer{}
-	conn := ServerToClient(testproto.TestApi_ServiceDesc, srv)
-	client := testproto.NewTestApiClient(conn)
+	conn := ServerToClient(testproto2.TestApi_ServiceDesc, srv)
+	client := testproto2.NewTestApiClient(conn)
 
 	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("hello", "world"))
 
@@ -247,7 +247,7 @@ func TestWrapper_BidiStream(t *testing.T) {
 		// after the first message, we can check the metadata
 		var metadataVerified bool
 		for _, msg := range []string{"a", "b", "c"} {
-			err = stream.Send(&testproto.BidiStreamRequest{Msg: msg})
+			err = stream.Send(&testproto2.BidiStreamRequest{Msg: msg})
 			if err != nil {
 				t.Fatalf("stream.Send(%q) = %v; want nil", msg, err)
 			}
@@ -299,7 +299,7 @@ func TestWrapper_BidiStream(t *testing.T) {
 			t.Fatalf("client.BidiStream(_) = _, %v; want _, nil", err)
 		}
 
-		err = stream.Send(&testproto.BidiStreamRequest{SimulateError: "foobar"})
+		err = stream.Send(&testproto2.BidiStreamRequest{SimulateError: "foobar"})
 		if err != nil {
 			t.Fatalf("stream.Send(_) = %v; want nil", err)
 		}
@@ -318,10 +318,10 @@ func TestWrapper_BidiStream(t *testing.T) {
 }
 
 type testServer struct {
-	testproto.UnimplementedTestApiServer
+	testproto2.UnimplementedTestApiServer
 }
 
-func (s *testServer) Unary(ctx context.Context, req *testproto.UnaryRequest) (*testproto.UnaryResponse, error) {
+func (s *testServer) Unary(ctx context.Context, req *testproto2.UnaryRequest) (*testproto2.UnaryResponse, error) {
 	if err := copyMDUnary(ctx); err != nil {
 		return nil, err
 	}
@@ -331,12 +331,12 @@ func (s *testServer) Unary(ctx context.Context, req *testproto.UnaryRequest) (*t
 	}
 
 	// echo request to response
-	return &testproto.UnaryResponse{
+	return &testproto2.UnaryResponse{
 		Msg: req.Msg,
 	}, nil
 }
 
-func (s *testServer) ServerStream(req *testproto.ServerStreamRequest, srv testproto.TestApi_ServerStreamServer) error {
+func (s *testServer) ServerStream(req *testproto2.ServerStreamRequest, srv testproto2.TestApi_ServerStreamServer) error {
 	if err := copyMDStream(srv.Context(), srv); err != nil {
 		return err
 	}
@@ -347,7 +347,7 @@ func (s *testServer) ServerStream(req *testproto.ServerStreamRequest, srv testpr
 
 	// client requests a certain number of responses, we send them, counting up
 	for i := int32(0); i < req.NumRes; i++ {
-		err := srv.Send(&testproto.ServerStreamResponse{
+		err := srv.Send(&testproto2.ServerStreamResponse{
 			Counter: i,
 		})
 		if err != nil {
@@ -358,7 +358,7 @@ func (s *testServer) ServerStream(req *testproto.ServerStreamRequest, srv testpr
 	return nil
 }
 
-func (s *testServer) ClientStream(srv testproto.TestApi_ClientStreamServer) error {
+func (s *testServer) ClientStream(srv testproto2.TestApi_ClientStreamServer) error {
 	if err := copyMDStream(srv.Context(), srv); err != nil {
 		return err
 	}
@@ -379,7 +379,7 @@ func (s *testServer) ClientStream(srv testproto.TestApi_ClientStreamServer) erro
 		msg.WriteString(req.Msg)
 	}
 
-	err := srv.SendAndClose(&testproto.ClientStreamResponse{
+	err := srv.SendAndClose(&testproto2.ClientStreamResponse{
 		Msg: msg.String(),
 	})
 	if err != nil {
@@ -388,7 +388,7 @@ func (s *testServer) ClientStream(srv testproto.TestApi_ClientStreamServer) erro
 	return err
 }
 
-func (s *testServer) BidiStream(srv testproto.TestApi_BidiStreamServer) error {
+func (s *testServer) BidiStream(srv testproto2.TestApi_BidiStreamServer) error {
 	if err := copyMDStream(srv.Context(), srv); err != nil {
 		return err
 	}
@@ -405,7 +405,7 @@ func (s *testServer) BidiStream(srv testproto.TestApi_BidiStreamServer) error {
 		if req.SimulateError != "" {
 			return status.Error(codes.Aborted, req.SimulateError)
 		}
-		err = srv.Send(&testproto.BidiStreamResponse{
+		err = srv.Send(&testproto2.BidiStreamResponse{
 			Msg: req.Msg,
 		})
 		if err != nil {
