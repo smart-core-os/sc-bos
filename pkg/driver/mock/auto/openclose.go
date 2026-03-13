@@ -7,9 +7,9 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 func OpenClose(model *openclosepb.Model) service.Lifecycle {

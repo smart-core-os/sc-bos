@@ -29,8 +29,8 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	timepb "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 //go:generate go tool protomod protoc -- -I . -I ../../../proto --go_out=paths=source_relative:. download.proto

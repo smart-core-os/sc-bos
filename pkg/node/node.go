@@ -16,8 +16,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node/internal/metadatadevices"
 	"github.com/smart-core-os/sc-bos/pkg/node/internal/parentdevices"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 // Node represents a smart core node.

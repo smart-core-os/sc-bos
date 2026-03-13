@@ -8,8 +8,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/system/alerts/alertmd"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 
 func (s *Server) GetAlertMetadata(ctx context.Context, request *alertpb.GetAlertMetadataRequest) (*alertpb.AlertMetadata, error) {
