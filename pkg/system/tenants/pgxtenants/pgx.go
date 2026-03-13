@@ -20,7 +20,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/pass"
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
 	"github.com/smart-core-os/sc-bos/pkg/proto/tenantpb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 )
 
 //go:embed schema.sql

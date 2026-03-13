@@ -19,7 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 )
 
 type modeConfig struct {

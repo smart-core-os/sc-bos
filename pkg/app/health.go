@@ -16,7 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
 )
 

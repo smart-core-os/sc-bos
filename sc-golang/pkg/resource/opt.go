@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
-	"github.com/smart-core-os/sc-bos/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 )
 
 // Option configures a resource value or collection.
