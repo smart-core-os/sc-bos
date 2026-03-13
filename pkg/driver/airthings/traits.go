@@ -13,11 +13,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/brightnesssensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/energystoragepb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/brightnesssensorpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/energystoragepb"
 )
 
 // announceDevice sets up and announces the traits supported by the device.

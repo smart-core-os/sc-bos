@@ -13,11 +13,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/brightnesssensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/brightnesssensorpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 const DriverName = "steinel-hpd"

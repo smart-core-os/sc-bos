@@ -9,7 +9,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-golang/internal/minibus"
+	"github.com/smart-core-os/sc-bos/sc-golang/internal/minibus"
 )
 
 // Value represents a simple state field in an object. Think Temperature or Volume or Occupancy. Use a Value to

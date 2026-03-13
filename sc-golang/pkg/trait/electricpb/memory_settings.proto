@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package smartcore.go.trait.electric;
 
-option go_package = "github.com/smart-core-os/sc-golang/pkg/trait/electricpb";
+option go_package = "github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/electricpb";
 
 import "traits/electric.proto";
 import "google/protobuf/field_mask.proto";

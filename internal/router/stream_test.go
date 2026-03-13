@@ -19,8 +19,8 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/onoffpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/wrap"
 )
 
 func TestStreamHandler(t *testing.T) {

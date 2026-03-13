@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	segmentpb2 "github.com/smart-core-os/sc-golang/pkg/trait/electricpb/segmentpb"
+	segmentpb2 "github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/electricpb/segmentpb"
 )
 
 // Cut cuts the given mode around the time t.

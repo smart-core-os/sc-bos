@@ -16,8 +16,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/math2"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 type sla struct {

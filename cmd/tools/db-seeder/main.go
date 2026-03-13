@@ -21,7 +21,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	airqualitycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality/config"
 	occupancycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
 
 	"github.com/smart-core-os/sc-bos/pkg/zone/allzones"
 	meterscfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config"

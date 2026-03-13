@@ -16,7 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/internal/testproto"
+	"github.com/smart-core-os/sc-bos/sc-golang/internal/testproto"
 )
 
 func Test_clientSend(t *testing.T) {

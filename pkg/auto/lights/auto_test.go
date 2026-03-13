@@ -16,8 +16,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 var errFailedBrightnessUpdate = errors.New("failed to update brightness this time")

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/smart-core-os/sc-golang/internal/testproto"
+	"github.com/smart-core-os/sc-bos/sc-golang/internal/testproto"
 )
 
 // Given the following gRPC service definition:
