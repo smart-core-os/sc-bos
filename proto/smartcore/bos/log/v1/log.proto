@@ -110,6 +110,7 @@ message PullLogLevelResponse {
 message UpdateLogLevelRequest {
   string name = 1;
   LogLevel log_level = 2;
+  google.protobuf.FieldMask update_mask = 3;
 }
 
 message GetLogMetadataRequest {

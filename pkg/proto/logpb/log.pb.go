@@ -561,6 +561,7 @@ type UpdateLogLevelRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	LogLevel      *LogLevel              `protobuf:"bytes,2,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
+	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,3,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -605,6 +606,13 @@ func (x *UpdateLogLevelRequest) GetName() string {
 func (x *UpdateLogLevelRequest) GetLogLevel() *LogLevel {
 	if x != nil {
 		return x.LogLevel
+	}
+	return nil
+}
+
+func (x *UpdateLogLevelRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
+	if x != nil {
+		return x.UpdateMask
 	}
 	return nil
 }
@@ -1116,10 +1124,12 @@ const file_smartcore_bos_log_v1_log_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"changeTime\x12;\n" +
-	"\tlog_level\x18\x03 \x01(\v2\x1e.smartcore.bos.log.v1.LogLevelR\blogLevel\"h\n" +
+	"\tlog_level\x18\x03 \x01(\v2\x1e.smartcore.bos.log.v1.LogLevelR\blogLevel\"\xa5\x01\n" +
 	"\x15UpdateLogLevelRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
-	"\tlog_level\x18\x02 \x01(\v2\x1e.smartcore.bos.log.v1.LogLevelR\blogLevel\"d\n" +
+	"\tlog_level\x18\x02 \x01(\v2\x1e.smartcore.bos.log.v1.LogLevelR\blogLevel\x12;\n" +
+	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
+	"updateMask\"d\n" +
 	"\x15GetLogMetadataRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x88\x01\n" +
@@ -1205,34 +1215,35 @@ var file_smartcore_bos_log_v1_log_proto_depIdxs = []int32{
 	20, // 8: smartcore.bos.log.v1.PullLogLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
 	16, // 9: smartcore.bos.log.v1.PullLogLevelResponse.changes:type_name -> smartcore.bos.log.v1.PullLogLevelResponse.Change
 	2,  // 10: smartcore.bos.log.v1.UpdateLogLevelRequest.log_level:type_name -> smartcore.bos.log.v1.LogLevel
-	20, // 11: smartcore.bos.log.v1.GetLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	20, // 12: smartcore.bos.log.v1.PullLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	17, // 13: smartcore.bos.log.v1.PullLogMetadataResponse.changes:type_name -> smartcore.bos.log.v1.PullLogMetadataResponse.Change
-	21, // 14: smartcore.bos.log.v1.GetDownloadLogUrlRequest.url_ttl:type_name -> google.protobuf.Duration
-	18, // 15: smartcore.bos.log.v1.GetDownloadLogUrlResponse.files:type_name -> smartcore.bos.log.v1.GetDownloadLogUrlResponse.LogFile
-	19, // 16: smartcore.bos.log.v1.PullLogLevelResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	2,  // 17: smartcore.bos.log.v1.PullLogLevelResponse.Change.log_level:type_name -> smartcore.bos.log.v1.LogLevel
-	19, // 18: smartcore.bos.log.v1.PullLogMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	3,  // 19: smartcore.bos.log.v1.PullLogMetadataResponse.Change.log_metadata:type_name -> smartcore.bos.log.v1.LogMetadata
-	4,  // 20: smartcore.bos.log.v1.LogApi.PullLogMessages:input_type -> smartcore.bos.log.v1.PullLogMessagesRequest
-	6,  // 21: smartcore.bos.log.v1.LogApi.GetLogLevel:input_type -> smartcore.bos.log.v1.GetLogLevelRequest
-	7,  // 22: smartcore.bos.log.v1.LogApi.PullLogLevel:input_type -> smartcore.bos.log.v1.PullLogLevelRequest
-	9,  // 23: smartcore.bos.log.v1.LogApi.UpdateLogLevel:input_type -> smartcore.bos.log.v1.UpdateLogLevelRequest
-	10, // 24: smartcore.bos.log.v1.LogApi.GetLogMetadata:input_type -> smartcore.bos.log.v1.GetLogMetadataRequest
-	11, // 25: smartcore.bos.log.v1.LogApi.PullLogMetadata:input_type -> smartcore.bos.log.v1.PullLogMetadataRequest
-	13, // 26: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:input_type -> smartcore.bos.log.v1.GetDownloadLogUrlRequest
-	5,  // 27: smartcore.bos.log.v1.LogApi.PullLogMessages:output_type -> smartcore.bos.log.v1.PullLogMessagesResponse
-	2,  // 28: smartcore.bos.log.v1.LogApi.GetLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
-	8,  // 29: smartcore.bos.log.v1.LogApi.PullLogLevel:output_type -> smartcore.bos.log.v1.PullLogLevelResponse
-	2,  // 30: smartcore.bos.log.v1.LogApi.UpdateLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
-	3,  // 31: smartcore.bos.log.v1.LogApi.GetLogMetadata:output_type -> smartcore.bos.log.v1.LogMetadata
-	12, // 32: smartcore.bos.log.v1.LogApi.PullLogMetadata:output_type -> smartcore.bos.log.v1.PullLogMetadataResponse
-	14, // 33: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:output_type -> smartcore.bos.log.v1.GetDownloadLogUrlResponse
-	27, // [27:34] is the sub-list for method output_type
-	20, // [20:27] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	20, // 11: smartcore.bos.log.v1.UpdateLogLevelRequest.update_mask:type_name -> google.protobuf.FieldMask
+	20, // 12: smartcore.bos.log.v1.GetLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	20, // 13: smartcore.bos.log.v1.PullLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	17, // 14: smartcore.bos.log.v1.PullLogMetadataResponse.changes:type_name -> smartcore.bos.log.v1.PullLogMetadataResponse.Change
+	21, // 15: smartcore.bos.log.v1.GetDownloadLogUrlRequest.url_ttl:type_name -> google.protobuf.Duration
+	18, // 16: smartcore.bos.log.v1.GetDownloadLogUrlResponse.files:type_name -> smartcore.bos.log.v1.GetDownloadLogUrlResponse.LogFile
+	19, // 17: smartcore.bos.log.v1.PullLogLevelResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	2,  // 18: smartcore.bos.log.v1.PullLogLevelResponse.Change.log_level:type_name -> smartcore.bos.log.v1.LogLevel
+	19, // 19: smartcore.bos.log.v1.PullLogMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	3,  // 20: smartcore.bos.log.v1.PullLogMetadataResponse.Change.log_metadata:type_name -> smartcore.bos.log.v1.LogMetadata
+	4,  // 21: smartcore.bos.log.v1.LogApi.PullLogMessages:input_type -> smartcore.bos.log.v1.PullLogMessagesRequest
+	6,  // 22: smartcore.bos.log.v1.LogApi.GetLogLevel:input_type -> smartcore.bos.log.v1.GetLogLevelRequest
+	7,  // 23: smartcore.bos.log.v1.LogApi.PullLogLevel:input_type -> smartcore.bos.log.v1.PullLogLevelRequest
+	9,  // 24: smartcore.bos.log.v1.LogApi.UpdateLogLevel:input_type -> smartcore.bos.log.v1.UpdateLogLevelRequest
+	10, // 25: smartcore.bos.log.v1.LogApi.GetLogMetadata:input_type -> smartcore.bos.log.v1.GetLogMetadataRequest
+	11, // 26: smartcore.bos.log.v1.LogApi.PullLogMetadata:input_type -> smartcore.bos.log.v1.PullLogMetadataRequest
+	13, // 27: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:input_type -> smartcore.bos.log.v1.GetDownloadLogUrlRequest
+	5,  // 28: smartcore.bos.log.v1.LogApi.PullLogMessages:output_type -> smartcore.bos.log.v1.PullLogMessagesResponse
+	2,  // 29: smartcore.bos.log.v1.LogApi.GetLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
+	8,  // 30: smartcore.bos.log.v1.LogApi.PullLogLevel:output_type -> smartcore.bos.log.v1.PullLogLevelResponse
+	2,  // 31: smartcore.bos.log.v1.LogApi.UpdateLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
+	3,  // 32: smartcore.bos.log.v1.LogApi.GetLogMetadata:output_type -> smartcore.bos.log.v1.LogMetadata
+	12, // 33: smartcore.bos.log.v1.LogApi.PullLogMetadata:output_type -> smartcore.bos.log.v1.PullLogMetadataResponse
+	14, // 34: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:output_type -> smartcore.bos.log.v1.GetDownloadLogUrlResponse
+	28, // [28:35] is the sub-list for method output_type
+	21, // [21:28] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_log_v1_log_proto_init() }
