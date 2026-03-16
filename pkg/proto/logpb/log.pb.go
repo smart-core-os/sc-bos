@@ -81,6 +81,69 @@ func (Level) EnumDescriptor() ([]byte, []int) {
 	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{0}
 }
 
+// SourceLocation identifies the source code position that emitted a log entry.
+type SourceLocation struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Source file path, typically relative to the module root.
+	File string `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+	Line int32  `protobuf:"varint,2,opt,name=line,proto3" json:"line,omitempty"`
+	// Fully-qualified function or method name.
+	Function      string `protobuf:"bytes,3,opt,name=function,proto3" json:"function,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SourceLocation) Reset() {
+	*x = SourceLocation{}
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SourceLocation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SourceLocation) ProtoMessage() {}
+
+func (x *SourceLocation) ProtoReflect() protoreflect.Message {
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SourceLocation.ProtoReflect.Descriptor instead.
+func (*SourceLocation) Descriptor() ([]byte, []int) {
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SourceLocation) GetFile() string {
+	if x != nil {
+		return x.File
+	}
+	return ""
+}
+
+func (x *SourceLocation) GetLine() int32 {
+	if x != nil {
+		return x.Line
+	}
+	return 0
+}
+
+func (x *SourceLocation) GetFunction() string {
+	if x != nil {
+		return x.Function
+	}
+	return ""
+}
+
 // LogMessage represents a single log entry.
 type LogMessage struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
@@ -90,14 +153,18 @@ type LogMessage struct {
 	Logger  string `protobuf:"bytes,3,opt,name=logger,proto3" json:"logger,omitempty"`
 	Message string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
 	// Structured fields as key/value string pairs.
-	Fields        map[string]string `protobuf:"bytes,5,rep,name=fields,proto3" json:"fields,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Fields map[string]string `protobuf:"bytes,5,rep,name=fields,proto3" json:"fields,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Source code location that emitted this entry. Omitted when unavailable.
+	SourceLocation *SourceLocation `protobuf:"bytes,6,opt,name=source_location,json=sourceLocation,proto3" json:"source_location,omitempty"`
+	// Stack trace at the point of logging. Omitted when unavailable.
+	StackTrace    string `protobuf:"bytes,7,opt,name=stack_trace,json=stackTrace,proto3" json:"stack_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LogMessage) Reset() {
 	*x = LogMessage{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[0]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -109,7 +176,7 @@ func (x *LogMessage) String() string {
 func (*LogMessage) ProtoMessage() {}
 
 func (x *LogMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[0]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -122,7 +189,7 @@ func (x *LogMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogMessage.ProtoReflect.Descriptor instead.
 func (*LogMessage) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *LogMessage) GetTimestamp() *timestamppb.Timestamp {
@@ -160,6 +227,20 @@ func (x *LogMessage) GetFields() map[string]string {
 	return nil
 }
 
+func (x *LogMessage) GetSourceLocation() *SourceLocation {
+	if x != nil {
+		return x.SourceLocation
+	}
+	return nil
+}
+
+func (x *LogMessage) GetStackTrace() string {
+	if x != nil {
+		return x.StackTrace
+	}
+	return ""
+}
+
 // LogLevel represents the current minimum log level that will be emitted.
 type LogLevel struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -170,7 +251,7 @@ type LogLevel struct {
 
 func (x *LogLevel) Reset() {
 	*x = LogLevel{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[1]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -182,7 +263,7 @@ func (x *LogLevel) String() string {
 func (*LogLevel) ProtoMessage() {}
 
 func (x *LogLevel) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[1]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -195,7 +276,7 @@ func (x *LogLevel) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogLevel.ProtoReflect.Descriptor instead.
 func (*LogLevel) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *LogLevel) GetLevel() Level {
@@ -218,7 +299,7 @@ type LogMetadata struct {
 
 func (x *LogMetadata) Reset() {
 	*x = LogMetadata{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[2]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -230,7 +311,7 @@ func (x *LogMetadata) String() string {
 func (*LogMetadata) ProtoMessage() {}
 
 func (x *LogMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[2]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -243,7 +324,7 @@ func (x *LogMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogMetadata.ProtoReflect.Descriptor instead.
 func (*LogMetadata) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *LogMetadata) GetTotalSizeBytes() int64 {
@@ -280,7 +361,7 @@ type PullLogMessagesRequest struct {
 
 func (x *PullLogMessagesRequest) Reset() {
 	*x = PullLogMessagesRequest{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[3]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -292,7 +373,7 @@ func (x *PullLogMessagesRequest) String() string {
 func (*PullLogMessagesRequest) ProtoMessage() {}
 
 func (x *PullLogMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[3]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -305,7 +386,7 @@ func (x *PullLogMessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullLogMessagesRequest.ProtoReflect.Descriptor instead.
 func (*PullLogMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PullLogMessagesRequest) GetName() string {
@@ -359,7 +440,7 @@ type PullLogMessagesResponse struct {
 
 func (x *PullLogMessagesResponse) Reset() {
 	*x = PullLogMessagesResponse{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[4]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -371,7 +452,7 @@ func (x *PullLogMessagesResponse) String() string {
 func (*PullLogMessagesResponse) ProtoMessage() {}
 
 func (x *PullLogMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[4]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -384,7 +465,7 @@ func (x *PullLogMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullLogMessagesResponse.ProtoReflect.Descriptor instead.
 func (*PullLogMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PullLogMessagesResponse) GetChanges() []*PullLogMessagesResponse_Change {
@@ -404,7 +485,7 @@ type GetLogLevelRequest struct {
 
 func (x *GetLogLevelRequest) Reset() {
 	*x = GetLogLevelRequest{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[5]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -416,7 +497,7 @@ func (x *GetLogLevelRequest) String() string {
 func (*GetLogLevelRequest) ProtoMessage() {}
 
 func (x *GetLogLevelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[5]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -429,7 +510,7 @@ func (x *GetLogLevelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLogLevelRequest.ProtoReflect.Descriptor instead.
 func (*GetLogLevelRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetLogLevelRequest) GetName() string {
@@ -457,7 +538,7 @@ type PullLogLevelRequest struct {
 
 func (x *PullLogLevelRequest) Reset() {
 	*x = PullLogLevelRequest{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[6]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -469,7 +550,7 @@ func (x *PullLogLevelRequest) String() string {
 func (*PullLogLevelRequest) ProtoMessage() {}
 
 func (x *PullLogLevelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[6]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -482,7 +563,7 @@ func (x *PullLogLevelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullLogLevelRequest.ProtoReflect.Descriptor instead.
 func (*PullLogLevelRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PullLogLevelRequest) GetName() string {
@@ -515,7 +596,7 @@ type PullLogLevelResponse struct {
 
 func (x *PullLogLevelResponse) Reset() {
 	*x = PullLogLevelResponse{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[7]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -527,7 +608,7 @@ func (x *PullLogLevelResponse) String() string {
 func (*PullLogLevelResponse) ProtoMessage() {}
 
 func (x *PullLogLevelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[7]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -540,7 +621,7 @@ func (x *PullLogLevelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullLogLevelResponse.ProtoReflect.Descriptor instead.
 func (*PullLogLevelResponse) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{7}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PullLogLevelResponse) GetChanges() []*PullLogLevelResponse_Change {
@@ -561,7 +642,7 @@ type UpdateLogLevelRequest struct {
 
 func (x *UpdateLogLevelRequest) Reset() {
 	*x = UpdateLogLevelRequest{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[8]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -573,7 +654,7 @@ func (x *UpdateLogLevelRequest) String() string {
 func (*UpdateLogLevelRequest) ProtoMessage() {}
 
 func (x *UpdateLogLevelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[8]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -586,7 +667,7 @@ func (x *UpdateLogLevelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateLogLevelRequest.ProtoReflect.Descriptor instead.
 func (*UpdateLogLevelRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{8}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UpdateLogLevelRequest) GetName() string {
@@ -620,7 +701,7 @@ type GetLogMetadataRequest struct {
 
 func (x *GetLogMetadataRequest) Reset() {
 	*x = GetLogMetadataRequest{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[9]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -632,7 +713,7 @@ func (x *GetLogMetadataRequest) String() string {
 func (*GetLogMetadataRequest) ProtoMessage() {}
 
 func (x *GetLogMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[9]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -645,7 +726,7 @@ func (x *GetLogMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLogMetadataRequest.ProtoReflect.Descriptor instead.
 func (*GetLogMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{9}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetLogMetadataRequest) GetName() string {
@@ -673,7 +754,7 @@ type PullLogMetadataRequest struct {
 
 func (x *PullLogMetadataRequest) Reset() {
 	*x = PullLogMetadataRequest{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[10]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -685,7 +766,7 @@ func (x *PullLogMetadataRequest) String() string {
 func (*PullLogMetadataRequest) ProtoMessage() {}
 
 func (x *PullLogMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[10]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -698,7 +779,7 @@ func (x *PullLogMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullLogMetadataRequest.ProtoReflect.Descriptor instead.
 func (*PullLogMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{10}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *PullLogMetadataRequest) GetName() string {
@@ -731,7 +812,7 @@ type PullLogMetadataResponse struct {
 
 func (x *PullLogMetadataResponse) Reset() {
 	*x = PullLogMetadataResponse{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[11]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -743,7 +824,7 @@ func (x *PullLogMetadataResponse) String() string {
 func (*PullLogMetadataResponse) ProtoMessage() {}
 
 func (x *PullLogMetadataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[11]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -756,7 +837,7 @@ func (x *PullLogMetadataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullLogMetadataResponse.ProtoReflect.Descriptor instead.
 func (*PullLogMetadataResponse) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{11}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PullLogMetadataResponse) GetChanges() []*PullLogMetadataResponse_Change {
@@ -779,7 +860,7 @@ type GetDownloadLogUrlRequest struct {
 
 func (x *GetDownloadLogUrlRequest) Reset() {
 	*x = GetDownloadLogUrlRequest{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[12]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -791,7 +872,7 @@ func (x *GetDownloadLogUrlRequest) String() string {
 func (*GetDownloadLogUrlRequest) ProtoMessage() {}
 
 func (x *GetDownloadLogUrlRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[12]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -804,7 +885,7 @@ func (x *GetDownloadLogUrlRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDownloadLogUrlRequest.ProtoReflect.Descriptor instead.
 func (*GetDownloadLogUrlRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{12}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetDownloadLogUrlRequest) GetName() string {
@@ -837,7 +918,7 @@ type GetDownloadLogUrlResponse struct {
 
 func (x *GetDownloadLogUrlResponse) Reset() {
 	*x = GetDownloadLogUrlResponse{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[13]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -849,7 +930,7 @@ func (x *GetDownloadLogUrlResponse) String() string {
 func (*GetDownloadLogUrlResponse) ProtoMessage() {}
 
 func (x *GetDownloadLogUrlResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[13]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -862,7 +943,7 @@ func (x *GetDownloadLogUrlResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDownloadLogUrlResponse.ProtoReflect.Descriptor instead.
 func (*GetDownloadLogUrlResponse) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{13}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetDownloadLogUrlResponse) GetFiles() []*GetDownloadLogUrlResponse_LogFile {
@@ -883,7 +964,7 @@ type PullLogMessagesResponse_Change struct {
 
 func (x *PullLogMessagesResponse_Change) Reset() {
 	*x = PullLogMessagesResponse_Change{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[15]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -895,7 +976,7 @@ func (x *PullLogMessagesResponse_Change) String() string {
 func (*PullLogMessagesResponse_Change) ProtoMessage() {}
 
 func (x *PullLogMessagesResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[15]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -908,7 +989,7 @@ func (x *PullLogMessagesResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullLogMessagesResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullLogMessagesResponse_Change) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{4, 0}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{5, 0}
 }
 
 func (x *PullLogMessagesResponse_Change) GetName() string {
@@ -943,7 +1024,7 @@ type PullLogLevelResponse_Change struct {
 
 func (x *PullLogLevelResponse_Change) Reset() {
 	*x = PullLogLevelResponse_Change{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[16]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -955,7 +1036,7 @@ func (x *PullLogLevelResponse_Change) String() string {
 func (*PullLogLevelResponse_Change) ProtoMessage() {}
 
 func (x *PullLogLevelResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[16]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -968,7 +1049,7 @@ func (x *PullLogLevelResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullLogLevelResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullLogLevelResponse_Change) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{7, 0}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{8, 0}
 }
 
 func (x *PullLogLevelResponse_Change) GetName() string {
@@ -1003,7 +1084,7 @@ type PullLogMetadataResponse_Change struct {
 
 func (x *PullLogMetadataResponse_Change) Reset() {
 	*x = PullLogMetadataResponse_Change{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[17]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1015,7 +1096,7 @@ func (x *PullLogMetadataResponse_Change) String() string {
 func (*PullLogMetadataResponse_Change) ProtoMessage() {}
 
 func (x *PullLogMetadataResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[17]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1028,7 +1109,7 @@ func (x *PullLogMetadataResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullLogMetadataResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullLogMetadataResponse_Change) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{11, 0}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{12, 0}
 }
 
 func (x *PullLogMetadataResponse_Change) GetName() string {
@@ -1068,7 +1149,7 @@ type GetDownloadLogUrlResponse_LogFile struct {
 
 func (x *GetDownloadLogUrlResponse_LogFile) Reset() {
 	*x = GetDownloadLogUrlResponse_LogFile{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[18]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1080,7 +1161,7 @@ func (x *GetDownloadLogUrlResponse_LogFile) String() string {
 func (*GetDownloadLogUrlResponse_LogFile) ProtoMessage() {}
 
 func (x *GetDownloadLogUrlResponse_LogFile) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[18]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1093,7 +1174,7 @@ func (x *GetDownloadLogUrlResponse_LogFile) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use GetDownloadLogUrlResponse_LogFile.ProtoReflect.Descriptor instead.
 func (*GetDownloadLogUrlResponse_LogFile) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{13, 0}
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{14, 0}
 }
 
 func (x *GetDownloadLogUrlResponse_LogFile) GetUrl() string {
@@ -1128,14 +1209,21 @@ var File_smartcore_bos_log_v1_log_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_log_v1_log_proto_rawDesc = "" +
 	"\n" +
-	"\x1esmartcore/bos/log/v1/log.proto\x12\x14smartcore.bos.log.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xac\x02\n" +
+	"\x1esmartcore/bos/log/v1/log.proto\x12\x14smartcore.bos.log.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"T\n" +
+	"\x0eSourceLocation\x12\x12\n" +
+	"\x04file\x18\x01 \x01(\tR\x04file\x12\x12\n" +
+	"\x04line\x18\x02 \x01(\x05R\x04line\x12\x1a\n" +
+	"\bfunction\x18\x03 \x01(\tR\bfunction\"\x9c\x03\n" +
 	"\n" +
 	"LogMessage\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x121\n" +
 	"\x05level\x18\x02 \x01(\x0e2\x1b.smartcore.bos.log.v1.LevelR\x05level\x12\x16\n" +
 	"\x06logger\x18\x03 \x01(\tR\x06logger\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12D\n" +
-	"\x06fields\x18\x05 \x03(\v2,.smartcore.bos.log.v1.LogMessage.FieldsEntryR\x06fields\x1a9\n" +
+	"\x06fields\x18\x05 \x03(\v2,.smartcore.bos.log.v1.LogMessage.FieldsEntryR\x06fields\x12M\n" +
+	"\x0fsource_location\x18\x06 \x01(\v2$.smartcore.bos.log.v1.SourceLocationR\x0esourceLocation\x12\x1f\n" +
+	"\vstack_trace\x18\a \x01(\tR\n" +
+	"stackTrace\x1a9\n" +
 	"\vFieldsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"=\n" +
@@ -1234,75 +1322,77 @@ func file_smartcore_bos_log_v1_log_proto_rawDescGZIP() []byte {
 }
 
 var file_smartcore_bos_log_v1_log_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_smartcore_bos_log_v1_log_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_smartcore_bos_log_v1_log_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_smartcore_bos_log_v1_log_proto_goTypes = []any{
 	(Level)(0),                                // 0: smartcore.bos.log.v1.Level
-	(*LogMessage)(nil),                        // 1: smartcore.bos.log.v1.LogMessage
-	(*LogLevel)(nil),                          // 2: smartcore.bos.log.v1.LogLevel
-	(*LogMetadata)(nil),                       // 3: smartcore.bos.log.v1.LogMetadata
-	(*PullLogMessagesRequest)(nil),            // 4: smartcore.bos.log.v1.PullLogMessagesRequest
-	(*PullLogMessagesResponse)(nil),           // 5: smartcore.bos.log.v1.PullLogMessagesResponse
-	(*GetLogLevelRequest)(nil),                // 6: smartcore.bos.log.v1.GetLogLevelRequest
-	(*PullLogLevelRequest)(nil),               // 7: smartcore.bos.log.v1.PullLogLevelRequest
-	(*PullLogLevelResponse)(nil),              // 8: smartcore.bos.log.v1.PullLogLevelResponse
-	(*UpdateLogLevelRequest)(nil),             // 9: smartcore.bos.log.v1.UpdateLogLevelRequest
-	(*GetLogMetadataRequest)(nil),             // 10: smartcore.bos.log.v1.GetLogMetadataRequest
-	(*PullLogMetadataRequest)(nil),            // 11: smartcore.bos.log.v1.PullLogMetadataRequest
-	(*PullLogMetadataResponse)(nil),           // 12: smartcore.bos.log.v1.PullLogMetadataResponse
-	(*GetDownloadLogUrlRequest)(nil),          // 13: smartcore.bos.log.v1.GetDownloadLogUrlRequest
-	(*GetDownloadLogUrlResponse)(nil),         // 14: smartcore.bos.log.v1.GetDownloadLogUrlResponse
-	nil,                                       // 15: smartcore.bos.log.v1.LogMessage.FieldsEntry
-	(*PullLogMessagesResponse_Change)(nil),    // 16: smartcore.bos.log.v1.PullLogMessagesResponse.Change
-	(*PullLogLevelResponse_Change)(nil),       // 17: smartcore.bos.log.v1.PullLogLevelResponse.Change
-	(*PullLogMetadataResponse_Change)(nil),    // 18: smartcore.bos.log.v1.PullLogMetadataResponse.Change
-	(*GetDownloadLogUrlResponse_LogFile)(nil), // 19: smartcore.bos.log.v1.GetDownloadLogUrlResponse.LogFile
-	(*timestamppb.Timestamp)(nil),             // 20: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),             // 21: google.protobuf.FieldMask
-	(*durationpb.Duration)(nil),               // 22: google.protobuf.Duration
+	(*SourceLocation)(nil),                    // 1: smartcore.bos.log.v1.SourceLocation
+	(*LogMessage)(nil),                        // 2: smartcore.bos.log.v1.LogMessage
+	(*LogLevel)(nil),                          // 3: smartcore.bos.log.v1.LogLevel
+	(*LogMetadata)(nil),                       // 4: smartcore.bos.log.v1.LogMetadata
+	(*PullLogMessagesRequest)(nil),            // 5: smartcore.bos.log.v1.PullLogMessagesRequest
+	(*PullLogMessagesResponse)(nil),           // 6: smartcore.bos.log.v1.PullLogMessagesResponse
+	(*GetLogLevelRequest)(nil),                // 7: smartcore.bos.log.v1.GetLogLevelRequest
+	(*PullLogLevelRequest)(nil),               // 8: smartcore.bos.log.v1.PullLogLevelRequest
+	(*PullLogLevelResponse)(nil),              // 9: smartcore.bos.log.v1.PullLogLevelResponse
+	(*UpdateLogLevelRequest)(nil),             // 10: smartcore.bos.log.v1.UpdateLogLevelRequest
+	(*GetLogMetadataRequest)(nil),             // 11: smartcore.bos.log.v1.GetLogMetadataRequest
+	(*PullLogMetadataRequest)(nil),            // 12: smartcore.bos.log.v1.PullLogMetadataRequest
+	(*PullLogMetadataResponse)(nil),           // 13: smartcore.bos.log.v1.PullLogMetadataResponse
+	(*GetDownloadLogUrlRequest)(nil),          // 14: smartcore.bos.log.v1.GetDownloadLogUrlRequest
+	(*GetDownloadLogUrlResponse)(nil),         // 15: smartcore.bos.log.v1.GetDownloadLogUrlResponse
+	nil,                                       // 16: smartcore.bos.log.v1.LogMessage.FieldsEntry
+	(*PullLogMessagesResponse_Change)(nil),    // 17: smartcore.bos.log.v1.PullLogMessagesResponse.Change
+	(*PullLogLevelResponse_Change)(nil),       // 18: smartcore.bos.log.v1.PullLogLevelResponse.Change
+	(*PullLogMetadataResponse_Change)(nil),    // 19: smartcore.bos.log.v1.PullLogMetadataResponse.Change
+	(*GetDownloadLogUrlResponse_LogFile)(nil), // 20: smartcore.bos.log.v1.GetDownloadLogUrlResponse.LogFile
+	(*timestamppb.Timestamp)(nil),             // 21: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),             // 22: google.protobuf.FieldMask
+	(*durationpb.Duration)(nil),               // 23: google.protobuf.Duration
 }
 var file_smartcore_bos_log_v1_log_proto_depIdxs = []int32{
-	20, // 0: smartcore.bos.log.v1.LogMessage.timestamp:type_name -> google.protobuf.Timestamp
+	21, // 0: smartcore.bos.log.v1.LogMessage.timestamp:type_name -> google.protobuf.Timestamp
 	0,  // 1: smartcore.bos.log.v1.LogMessage.level:type_name -> smartcore.bos.log.v1.Level
-	15, // 2: smartcore.bos.log.v1.LogMessage.fields:type_name -> smartcore.bos.log.v1.LogMessage.FieldsEntry
-	0,  // 3: smartcore.bos.log.v1.LogLevel.level:type_name -> smartcore.bos.log.v1.Level
-	0,  // 4: smartcore.bos.log.v1.PullLogMessagesRequest.min_level:type_name -> smartcore.bos.log.v1.Level
-	21, // 5: smartcore.bos.log.v1.PullLogMessagesRequest.read_mask:type_name -> google.protobuf.FieldMask
-	16, // 6: smartcore.bos.log.v1.PullLogMessagesResponse.changes:type_name -> smartcore.bos.log.v1.PullLogMessagesResponse.Change
-	21, // 7: smartcore.bos.log.v1.GetLogLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
-	21, // 8: smartcore.bos.log.v1.PullLogLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
-	17, // 9: smartcore.bos.log.v1.PullLogLevelResponse.changes:type_name -> smartcore.bos.log.v1.PullLogLevelResponse.Change
-	0,  // 10: smartcore.bos.log.v1.UpdateLogLevelRequest.level:type_name -> smartcore.bos.log.v1.Level
-	21, // 11: smartcore.bos.log.v1.UpdateLogLevelRequest.update_mask:type_name -> google.protobuf.FieldMask
-	21, // 12: smartcore.bos.log.v1.GetLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	21, // 13: smartcore.bos.log.v1.PullLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	18, // 14: smartcore.bos.log.v1.PullLogMetadataResponse.changes:type_name -> smartcore.bos.log.v1.PullLogMetadataResponse.Change
-	22, // 15: smartcore.bos.log.v1.GetDownloadLogUrlRequest.url_ttl:type_name -> google.protobuf.Duration
-	19, // 16: smartcore.bos.log.v1.GetDownloadLogUrlResponse.files:type_name -> smartcore.bos.log.v1.GetDownloadLogUrlResponse.LogFile
-	20, // 17: smartcore.bos.log.v1.PullLogMessagesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 18: smartcore.bos.log.v1.PullLogMessagesResponse.Change.messages:type_name -> smartcore.bos.log.v1.LogMessage
-	20, // 19: smartcore.bos.log.v1.PullLogLevelResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	0,  // 20: smartcore.bos.log.v1.PullLogLevelResponse.Change.level:type_name -> smartcore.bos.log.v1.Level
-	20, // 21: smartcore.bos.log.v1.PullLogMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	3,  // 22: smartcore.bos.log.v1.PullLogMetadataResponse.Change.log_metadata:type_name -> smartcore.bos.log.v1.LogMetadata
-	4,  // 23: smartcore.bos.log.v1.LogApi.PullLogMessages:input_type -> smartcore.bos.log.v1.PullLogMessagesRequest
-	6,  // 24: smartcore.bos.log.v1.LogApi.GetLogLevel:input_type -> smartcore.bos.log.v1.GetLogLevelRequest
-	7,  // 25: smartcore.bos.log.v1.LogApi.PullLogLevel:input_type -> smartcore.bos.log.v1.PullLogLevelRequest
-	9,  // 26: smartcore.bos.log.v1.LogApi.UpdateLogLevel:input_type -> smartcore.bos.log.v1.UpdateLogLevelRequest
-	10, // 27: smartcore.bos.log.v1.LogApi.GetLogMetadata:input_type -> smartcore.bos.log.v1.GetLogMetadataRequest
-	11, // 28: smartcore.bos.log.v1.LogApi.PullLogMetadata:input_type -> smartcore.bos.log.v1.PullLogMetadataRequest
-	13, // 29: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:input_type -> smartcore.bos.log.v1.GetDownloadLogUrlRequest
-	5,  // 30: smartcore.bos.log.v1.LogApi.PullLogMessages:output_type -> smartcore.bos.log.v1.PullLogMessagesResponse
-	2,  // 31: smartcore.bos.log.v1.LogApi.GetLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
-	8,  // 32: smartcore.bos.log.v1.LogApi.PullLogLevel:output_type -> smartcore.bos.log.v1.PullLogLevelResponse
-	2,  // 33: smartcore.bos.log.v1.LogApi.UpdateLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
-	3,  // 34: smartcore.bos.log.v1.LogApi.GetLogMetadata:output_type -> smartcore.bos.log.v1.LogMetadata
-	12, // 35: smartcore.bos.log.v1.LogApi.PullLogMetadata:output_type -> smartcore.bos.log.v1.PullLogMetadataResponse
-	14, // 36: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:output_type -> smartcore.bos.log.v1.GetDownloadLogUrlResponse
-	30, // [30:37] is the sub-list for method output_type
-	23, // [23:30] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	16, // 2: smartcore.bos.log.v1.LogMessage.fields:type_name -> smartcore.bos.log.v1.LogMessage.FieldsEntry
+	1,  // 3: smartcore.bos.log.v1.LogMessage.source_location:type_name -> smartcore.bos.log.v1.SourceLocation
+	0,  // 4: smartcore.bos.log.v1.LogLevel.level:type_name -> smartcore.bos.log.v1.Level
+	0,  // 5: smartcore.bos.log.v1.PullLogMessagesRequest.min_level:type_name -> smartcore.bos.log.v1.Level
+	22, // 6: smartcore.bos.log.v1.PullLogMessagesRequest.read_mask:type_name -> google.protobuf.FieldMask
+	17, // 7: smartcore.bos.log.v1.PullLogMessagesResponse.changes:type_name -> smartcore.bos.log.v1.PullLogMessagesResponse.Change
+	22, // 8: smartcore.bos.log.v1.GetLogLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
+	22, // 9: smartcore.bos.log.v1.PullLogLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
+	18, // 10: smartcore.bos.log.v1.PullLogLevelResponse.changes:type_name -> smartcore.bos.log.v1.PullLogLevelResponse.Change
+	0,  // 11: smartcore.bos.log.v1.UpdateLogLevelRequest.level:type_name -> smartcore.bos.log.v1.Level
+	22, // 12: smartcore.bos.log.v1.UpdateLogLevelRequest.update_mask:type_name -> google.protobuf.FieldMask
+	22, // 13: smartcore.bos.log.v1.GetLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	22, // 14: smartcore.bos.log.v1.PullLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	19, // 15: smartcore.bos.log.v1.PullLogMetadataResponse.changes:type_name -> smartcore.bos.log.v1.PullLogMetadataResponse.Change
+	23, // 16: smartcore.bos.log.v1.GetDownloadLogUrlRequest.url_ttl:type_name -> google.protobuf.Duration
+	20, // 17: smartcore.bos.log.v1.GetDownloadLogUrlResponse.files:type_name -> smartcore.bos.log.v1.GetDownloadLogUrlResponse.LogFile
+	21, // 18: smartcore.bos.log.v1.PullLogMessagesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	2,  // 19: smartcore.bos.log.v1.PullLogMessagesResponse.Change.messages:type_name -> smartcore.bos.log.v1.LogMessage
+	21, // 20: smartcore.bos.log.v1.PullLogLevelResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	0,  // 21: smartcore.bos.log.v1.PullLogLevelResponse.Change.level:type_name -> smartcore.bos.log.v1.Level
+	21, // 22: smartcore.bos.log.v1.PullLogMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	4,  // 23: smartcore.bos.log.v1.PullLogMetadataResponse.Change.log_metadata:type_name -> smartcore.bos.log.v1.LogMetadata
+	5,  // 24: smartcore.bos.log.v1.LogApi.PullLogMessages:input_type -> smartcore.bos.log.v1.PullLogMessagesRequest
+	7,  // 25: smartcore.bos.log.v1.LogApi.GetLogLevel:input_type -> smartcore.bos.log.v1.GetLogLevelRequest
+	8,  // 26: smartcore.bos.log.v1.LogApi.PullLogLevel:input_type -> smartcore.bos.log.v1.PullLogLevelRequest
+	10, // 27: smartcore.bos.log.v1.LogApi.UpdateLogLevel:input_type -> smartcore.bos.log.v1.UpdateLogLevelRequest
+	11, // 28: smartcore.bos.log.v1.LogApi.GetLogMetadata:input_type -> smartcore.bos.log.v1.GetLogMetadataRequest
+	12, // 29: smartcore.bos.log.v1.LogApi.PullLogMetadata:input_type -> smartcore.bos.log.v1.PullLogMetadataRequest
+	14, // 30: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:input_type -> smartcore.bos.log.v1.GetDownloadLogUrlRequest
+	6,  // 31: smartcore.bos.log.v1.LogApi.PullLogMessages:output_type -> smartcore.bos.log.v1.PullLogMessagesResponse
+	3,  // 32: smartcore.bos.log.v1.LogApi.GetLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
+	9,  // 33: smartcore.bos.log.v1.LogApi.PullLogLevel:output_type -> smartcore.bos.log.v1.PullLogLevelResponse
+	3,  // 34: smartcore.bos.log.v1.LogApi.UpdateLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
+	4,  // 35: smartcore.bos.log.v1.LogApi.GetLogMetadata:output_type -> smartcore.bos.log.v1.LogMetadata
+	13, // 36: smartcore.bos.log.v1.LogApi.PullLogMetadata:output_type -> smartcore.bos.log.v1.PullLogMetadataResponse
+	15, // 37: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:output_type -> smartcore.bos.log.v1.GetDownloadLogUrlResponse
+	31, // [31:38] is the sub-list for method output_type
+	24, // [24:31] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_log_v1_log_proto_init() }
@@ -1316,7 +1406,7 @@ func file_smartcore_bos_log_v1_log_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_log_v1_log_proto_rawDesc), len(file_smartcore_bos_log_v1_log_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   19,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -139,6 +139,16 @@ func entryToLogMessage(entry zapcore.Entry, fields []zapcore.Field) *logpb.LogMe
 		Logger:    entry.LoggerName,
 		Message:   entry.Message,
 	}
+	if entry.Caller.Defined {
+		msg.SourceLocation = &logpb.SourceLocation{
+			File:     entry.Caller.File,
+			Line:     int32(entry.Caller.Line),
+			Function: entry.Caller.Function,
+		}
+	}
+	if entry.Stack != "" {
+		msg.StackTrace = entry.Stack
+	}
 	if len(fields) > 0 {
 		msg.Fields = make(map[string]string, len(fields))
 		enc := zapcore.NewMapObjectEncoder()

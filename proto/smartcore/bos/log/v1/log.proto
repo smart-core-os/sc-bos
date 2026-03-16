@@ -43,6 +43,15 @@ enum Level {
   LEVEL_ERROR = 4;
 }
 
+// SourceLocation identifies the source code position that emitted a log entry.
+message SourceLocation {
+  // Source file path, typically relative to the module root.
+  string file = 1;
+  int32 line = 2;
+  // Fully-qualified function or method name.
+  string function = 3;
+}
+
 // LogMessage represents a single log entry.
 message LogMessage {
   google.protobuf.Timestamp timestamp = 1;
@@ -52,6 +61,10 @@ message LogMessage {
   string message = 4;
   // Structured fields as key/value string pairs.
   map<string, string> fields = 5;
+  // Source code location that emitted this entry. Omitted when unavailable.
+  SourceLocation source_location = 6;
+  // Stack trace at the point of logging. Omitted when unavailable.
+  string stack_trace = 7;
 }
 
 // LogLevel represents the current minimum log level that will be emitted.
