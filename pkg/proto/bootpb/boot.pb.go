@@ -309,7 +309,8 @@ func (x *RebootRequest) GetActor() *actorpb.Actor {
 
 type RebootResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The time the reboot was initiated.
+	// The time at which the reboot was accepted. The actual reboot will occur after this response
+	// is delivered to the caller.
 	RebootTime    *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=reboot_time,json=rebootTime,proto3" json:"reboot_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

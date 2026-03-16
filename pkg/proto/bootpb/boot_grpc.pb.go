@@ -34,7 +34,10 @@ type BootApiClient interface {
 	GetBootState(ctx context.Context, in *GetBootStateRequest, opts ...grpc.CallOption) (*BootState, error)
 	// PullBootState streams changes to the boot state.
 	PullBootState(ctx context.Context, in *PullBootStateRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PullBootStateResponse], error)
-	// Reboot triggers a reboot of the device or process.
+	// Reboot schedules a reboot of the device or process.
+	// A successful response confirms the reboot has been accepted; the actual reboot occurs
+	// shortly after the response is delivered. Callers should expect to lose connectivity
+	// to the target immediately after receiving the response.
 	Reboot(ctx context.Context, in *RebootRequest, opts ...grpc.CallOption) (*RebootResponse, error)
 }
 
@@ -95,7 +98,10 @@ type BootApiServer interface {
 	GetBootState(context.Context, *GetBootStateRequest) (*BootState, error)
 	// PullBootState streams changes to the boot state.
 	PullBootState(*PullBootStateRequest, grpc.ServerStreamingServer[PullBootStateResponse]) error
-	// Reboot triggers a reboot of the device or process.
+	// Reboot schedules a reboot of the device or process.
+	// A successful response confirms the reboot has been accepted; the actual reboot occurs
+	// shortly after the response is delivered. Callers should expect to lose connectivity
+	// to the target immediately after receiving the response.
 	Reboot(context.Context, *RebootRequest) (*RebootResponse, error)
 	mustEmbedUnimplementedBootApiServer()
 }

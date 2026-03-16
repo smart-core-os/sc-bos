@@ -14,7 +14,10 @@ service BootApi {
   rpc GetBootState(GetBootStateRequest) returns (BootState);
   // PullBootState streams changes to the boot state.
   rpc PullBootState(PullBootStateRequest) returns (stream PullBootStateResponse);
-  // Reboot triggers a reboot of the device or process.
+  // Reboot schedules a reboot of the device or process.
+  // A successful response confirms the reboot has been accepted; the actual reboot occurs
+  // shortly after the response is delivered. Callers should expect to lose connectivity
+  // to the target immediately after receiving the response.
   rpc Reboot(RebootRequest) returns (RebootResponse);
 }
 
@@ -59,6 +62,7 @@ message RebootRequest {
 }
 
 message RebootResponse {
-  // The time the reboot was initiated.
+  // The time at which the reboot was accepted. The actual reboot will occur after this response
+  // is delivered to the caller.
   google.protobuf.Timestamp reboot_time = 1;
 }

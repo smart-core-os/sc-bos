@@ -49,11 +49,12 @@ func (s *ModelServer) PullBootState(req *bootproto.PullBootStateRequest, server 
 }
 
 func (s *ModelServer) Reboot(ctx context.Context, req *bootproto.RebootRequest) (*bootproto.RebootResponse, error) {
-	now := timestamppb.Now()
 	if s.OnReboot != nil {
 		if err := s.OnReboot(ctx, req); err != nil {
 			return nil, err
 		}
 	}
-	return &bootproto.RebootResponse{RebootTime: now}, nil
+	// Capture the timestamp after the reboot is accepted, before the response is sent.
+	// The actual reboot will occur after the caller receives this response.
+	return &bootproto.RebootResponse{RebootTime: timestamppb.Now()}, nil
 }
