@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/rs/cors"
 	"github.com/timshannon/bolthold"
@@ -295,18 +296,29 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	httpAuth := func(next http.Handler) http.Handler {
 		return next
 	}
-	if pol := configPolicy(config); pol != nil {
+	pol := configPolicy(config)
+	var auditLogger *zap.Logger
+	if al := config.AuditLog; al != nil && al.Filename != "" {
+		var err error
+		auditLogger, err = newAuditLogger(al)
+		if err != nil {
+			logger.Error("failed to open audit log file", zap.String("file", al.Filename), zap.Error(err))
+		}
+	}
+	if pol != nil || auditLogger != nil {
+		if pol == nil {
+			// Policy is disabled but audit logging is configured; use an allow-all policy so the
+			// interceptor still runs and can record write operations.
+			pol = policy.Func(func(_ context.Context, _ string, _ policy.Attributes) (rego.ResultSet, error) {
+				return rego.ResultSet{{Expressions: []*rego.ExpressionValue{{Value: true, Text: "allow"}}}}, nil
+			})
+		}
 		opts := []policy.InterceptorOption{
 			policy.WithLogger(logger.Named("policy")),
 			policy.WithTokenVerifier(tokenValidator),
 		}
-		if al := config.AuditLog; al != nil && al.Filename != "" {
-			auditLogger, err := newAuditLogger(al.Filename)
-			if err != nil {
-				logger.Error("failed to open audit log file", zap.String("file", al.Filename), zap.Error(err))
-			} else {
-				opts = append(opts, policy.WithAuditLogger(auditLogger))
-			}
+		if auditLogger != nil {
+			opts = append(opts, policy.WithAuditLogger(auditLogger))
 		}
 		interceptor := policy.NewInterceptor(pol, opts...)
 		grpcOpts = append(grpcOpts,
@@ -608,13 +620,22 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	return
 }
 
-func newAuditLogger(filename string) (*zap.Logger, error) {
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o640)
-	if err != nil {
-		return nil, err
+func newAuditLogger(cfg *sysconf.AuditLogConfig) (*zap.Logger, error) {
+	maxSize := cfg.MaxSizeMB
+	if maxSize == 0 {
+		maxSize = 100
 	}
-	enc := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
-	core := zapcore.NewCore(enc, zapcore.AddSync(f), zapcore.InfoLevel)
+	w := &lumberjack.Logger{
+		Filename:   cfg.Filename,
+		MaxSize:    maxSize,
+		MaxAge:     cfg.MaxAgeDays,
+		MaxBackups: cfg.MaxBackups,
+		Compress:   cfg.Compress,
+	}
+	encoderCfg := zap.NewProductionEncoderConfig()
+	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+	enc := zapcore.NewJSONEncoder(encoderCfg)
+	core := zapcore.NewCore(enc, zapcore.AddSync(w), zapcore.InfoLevel)
 	return zap.New(core), nil
 }
 

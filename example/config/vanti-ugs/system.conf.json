@@ -30,6 +30,13 @@
     "tenants": {"storage": {"type": "postgres"}},
     "resourceUse": {}
   },
+  "auditLog": {
+    "filename": ".data/vanti-ugs/audit.log",
+    "maxSizeMB": 50,
+    "maxAgeDays": 90,
+    "maxBackups": 10,
+    "compress": true
+  },
   "experimental": {
     "accounts": true
   }
