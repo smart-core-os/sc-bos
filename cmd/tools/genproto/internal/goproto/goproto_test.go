@@ -103,20 +103,20 @@ func TestGenerator_String(t *testing.T) {
 
 func TestGroupByGeneratorSet(t *testing.T) {
 	tests := []struct {
-		name           string
-		fileGenerators map[string]Generator
-		wantGroups     map[Generator]int // map of generator to expected file count
+		name       string
+		fileInfos  map[string]ProtoFileInfo
+		wantGroups map[Generator]int // map of generator to expected file count
 	}{
 		{
-			name:           "empty input",
-			fileGenerators: map[string]Generator{},
-			wantGroups:     map[Generator]int{},
+			name:       "empty input",
+			fileInfos:  map[string]ProtoFileInfo{},
+			wantGroups: map[Generator]int{},
 		},
 		{
 			name: "single group",
-			fileGenerators: map[string]Generator{
-				"file1.proto": GenRouter | GenWrapper,
-				"file2.proto": GenRouter | GenWrapper,
+			fileInfos: map[string]ProtoFileInfo{
+				"file1.proto": {Gen: GenRouter | GenWrapper},
+				"file2.proto": {Gen: GenRouter | GenWrapper},
 			},
 			wantGroups: map[Generator]int{
 				GenRouter | GenWrapper: 2,
@@ -124,11 +124,11 @@ func TestGroupByGeneratorSet(t *testing.T) {
 		},
 		{
 			name: "multiple groups",
-			fileGenerators: map[string]Generator{
-				"file1.proto": GenRouter | GenWrapper,
-				"file2.proto": GenWrapper,
-				"file3.proto": 0,
-				"file4.proto": GenRouter | GenWrapper,
+			fileInfos: map[string]ProtoFileInfo{
+				"file1.proto": {Gen: GenRouter | GenWrapper},
+				"file2.proto": {Gen: GenWrapper},
+				"file3.proto": {Gen: 0},
+				"file4.proto": {Gen: GenRouter | GenWrapper},
 			},
 			wantGroups: map[Generator]int{
 				GenRouter | GenWrapper: 2,
@@ -140,7 +140,7 @@ func TestGroupByGeneratorSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := groupByGeneratorSet(tt.fileGenerators)
+			got := groupByGeneratorSet(tt.fileInfos)
 
 			// Check bucket count
 			if len(got) != len(tt.wantGroups) {
