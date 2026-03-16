@@ -131,8 +131,8 @@ require (
 
 tool (
 	github.com/smart-core-os/protomod
-	github.com/smart-core-os/sc-bos/sc-golang/cmd/protoc-gen-router
-	github.com/smart-core-os/sc-bos/sc-golang/cmd/protoc-gen-wrapper
+	github.com/smart-core-os/sc-bos/cmd/tools/protoc-gen-router
+	github.com/smart-core-os/sc-bos/cmd/tools/protoc-gen-wrapper
 	golang.org/x/tools/cmd/stringer
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc
 	google.golang.org/protobuf/cmd/protoc-gen-go
