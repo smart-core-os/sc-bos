@@ -58,45 +58,12 @@
                          @click="onForgetNode(node.grpcAddress)">
               <v-list-item-title class="text-error">Forget Node</v-list-item-title>
             </v-list-item>
+            <v-list-item v-if="canReboot" link @click="showRebootDialog = true">
+              <v-list-item-title class="text-warning">Reboot Node</v-list-item-title>
+            </v-list-item>
           </v-list>
         </v-menu>
       </div>
-  <v-card width="300px" class="ma-2">
-    <v-card-title
-        class="text-body-large font-weight-bold d-flex align-center text-wrap"
-        style="word-break: break-all">
-      {{ node.name }}
-      <v-spacer/>
-      <v-menu min-width="175px">
-        <template #activator="{ props: _props }">
-          <v-btn
-              icon="mdi-dots-vertical"
-              variant="text"
-              size="small"
-              v-bind="_props">
-            <v-icon size="24"/>
-          </v-btn>
-        </template>
-        <v-list class="py-0">
-          <v-list-item link @click="onShowCertificates(node.grpcAddress)">
-            <v-list-item-title>
-              View Certificate
-            </v-list-item-title>
-          </v-list-item>
-          <v-list-item v-if="node.role !== NodeRole.HUB && !node.isServer"
-                       link
-                       @click="onForgetNode(node.grpcAddress)">
-            <v-list-item-title class="text-error">
-              Forget Node
-            </v-list-item-title>
-          </v-list-item>
-          <v-list-item v-if="canReboot" link @click="showRebootDialog = true">
-            <v-list-item-title class="text-warning">Reboot Node</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
-    </v-card-title>
-    <v-card-subtitle v-if="node.description !== ''">{{ node.description }}</v-card-subtitle>
 
       <v-divider class="mt-2 mb-3"/>
 
@@ -105,21 +72,6 @@
         <div
             v-for="(response, service) in nodeDetails"
             :key="service"
-            :class="[{'text-red': response.streamError}, 'pa-0 ma-0']"
-            style="min-height: 20px">
-          <span class="mr-1 text-capitalize">{{ service }}: {{ response.value?.totalActiveCount }}</span>
-          <status-alert :resource="response.streamError"/>
-        </v-list-item>
-        <v-list-item v-if="rebootState" class="pa-0" style="min-height: 20px">
-          <span>Uptime: {{ uptime ?? '—' }}</span>
-        </v-list-item>
-        <v-list-item v-if="rebootState?.lastRebootReason" class="pa-0" style="min-height: 20px">
-          <span class="text-truncate">Last Reboot Reason: {{ rebootState.lastRebootReason }}</span>
-        </v-list-item>
-        <v-list-item v-if="rebootState?.lastRebootActor?.displayName" class="pa-0" style="min-height: 20px">
-          <span>Last Reboot Actor: {{ rebootState.lastRebootActor.displayName }}</span>
-        </v-list-item>
-      </v-list>
             class="stat-box"
             :class="{'stat-box--error': response.streamError}">
           <div class="stat-value">
@@ -268,6 +220,31 @@
         </template>
       </with-resource-use>
 
+      <!-- Boot info -->
+      <template v-if="bootState">
+        <v-divider class="mt-2 mb-3"/>
+        <div class="resource-use">
+          <div class="resource-section-label">Last boot</div>
+          <div v-if="uptime" class="resource-row">
+            <span class="resource-label">Uptime</span>
+            <span class="resource-value" style="width: auto">{{ uptime }}</span>
+          </div>
+          <div v-if="bootState.lastRebootReason" class="resource-row">
+            <span class="resource-label">Reason</span>
+            <span class="resource-value text-truncate" style="width: auto" :title="bootState.lastRebootReason">
+              {{ bootState.lastRebootReason }}
+            </span>
+          </div>
+          <div v-if="bootState.lastRebootActor?.displayName" class="resource-row">
+            <span class="resource-label">Actor</span>
+            <span class="resource-value text-truncate" style="width: auto"
+                  :title="bootState.lastRebootActor.displayName">
+              {{ bootState.lastRebootActor.displayName }}
+            </span>
+          </div>
+        </div>
+      </template>
+
     </v-card-text>
   </v-card>
 
@@ -296,7 +273,6 @@
 </template>
 
 <script setup>
-import StatusAlert from '@/components/StatusAlert.vue';
 import {pullBootState, reboot} from '@/api/sc/traits/boot.js';
 import {closeResource, newResourceValue} from '@/api/resource.js';
 import useAuthSetup from '@/composables/useAuthSetup.js';
@@ -304,7 +280,6 @@ import {usePullServiceMetadata} from '@/composables/services.js';
 import {useAccountStore} from '@/stores/account.js';
 import {NodeRole} from '@/stores/cohort.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
-import {computed, reactive} from 'vue';
 import {watchResource} from '@/util/traits.js';
 import {computed, onScopeDispose, reactive, ref} from 'vue';
 
@@ -352,29 +327,41 @@ const onForgetNode = (address) => emit('click:forget-node', address);
 
 const diskShortLabel = (mountPoint) => {
   return mountPoint.split('/').filter(Boolean).pop() || mountPoint;
-// Reboot state stream
-const rebootResource = reactive(newResourceValue());
-onScopeDispose(() => closeResource(rebootResource));
+};
+
+const worstDisk = (disks) => {
+  return disks.reduce((worst, disk) => {
+    if (worst == null) return disk;
+    if ((disk.utilization ?? -1) > (worst.utilization ?? -1)) return disk;
+    return worst;
+  }, null) ?? disks[0];
+};
+
+const utilizationColor = (value) => {
+  if (value >= 80) return 'error';
+  if (value >= 60) return 'warning';
+  return 'success';
+};
+
+// Boot state stream
+const bootResource = reactive(newResourceValue());
+onScopeDispose(() => closeResource(bootResource));
 watchResource(
     () => ({name: props.node.name}),
     () => false,
     (req) => {
-      pullBootState(req, rebootResource);
-      return () => closeResource(rebootResource);
+      pullBootState(req, bootResource);
+      return () => closeResource(bootResource);
     }
 );
+const bootState = computed(() => bootResource.value);
 
-const rebootState = computed(() => rebootResource.value);
-
-// Live uptime counter
 const now = ref(Date.now());
-const uptimeInterval = setInterval(() => {
-  now.value = Date.now();
-}, 1000);
+const uptimeInterval = setInterval(() => { now.value = Date.now(); }, 1000);
 onScopeDispose(() => clearInterval(uptimeInterval));
 
 const uptime = computed(() => {
-  const bt = rebootState.value?.bootTime;
+  const bt = bootState.value?.bootTime;
   if (!bt) return null;
   const bootMs = (bt.seconds * 1000) + Math.floor(bt.nanos / 1e6);
   const diff = Math.floor((now.value - bootMs) / 1000);
@@ -405,24 +392,6 @@ function confirmReboot() {
       })
       .catch(() => { /* error shown in dialog via rebootTracker.error */ });
 }
-
-const onShowCertificates = (address) => {
-  emit('click:show-certificates', address);
-};
-
-const worstDisk = (disks) => {
-  return disks.reduce((worst, disk) => {
-    if (worst == null) return disk;
-    if ((disk.utilization ?? -1) > (worst.utilization ?? -1)) return disk;
-    return worst;
-  }, null) ?? disks[0];
-};
-
-const utilizationColor = (value) => {
-  if (value >= 80) return 'error';
-  if (value >= 60) return 'warning';
-  return 'success';
-};
 </script>
 
 <style scoped>
