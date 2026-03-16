@@ -62,7 +62,7 @@ message RebootRequest {
 }
 
 message RebootResponse {
-  // The time at which the reboot was accepted. The actual reboot will occur after this response
-  // is delivered to the caller.
+  // The time the reboot is expected to occur.
+  // This may be in the future if the system requires a grace period.
   google.protobuf.Timestamp reboot_time = 1;
 }
