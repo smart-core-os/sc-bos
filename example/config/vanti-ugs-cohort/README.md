@@ -18,3 +18,8 @@ To run the example, follow these steps:
 
 This will start all 3 components (area controller, hub and edge gateway) in the correct order.
 The script will also start a yarn dev server with the mode set to 'vanti-ugs-cohort' which will load the UI config from this example and connect to the running components.
+
+### Fresh start
+If you want to start fresh, you can run the script with `--clean` to remove the existing data before starting the components:
+`./run-vanti-ugs-cohort.sh --clean`
+This assumes you have the utility `psql` installed in the command line.

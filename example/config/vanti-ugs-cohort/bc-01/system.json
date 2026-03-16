@@ -11,7 +11,7 @@
     "hub": {
       "storage": {
         "type": "postgres",
-        "uri": "postgres://postgres@localhost:5432/vanti-ugs-cohort",
+        "uri": "postgres://postgres@localhost:5432/smart_core",
         "passwordFile": "./.data/secrets/postgres-password"
       },
       "nodes": [

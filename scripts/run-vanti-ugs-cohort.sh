@@ -44,16 +44,13 @@ prefix_log() {
 if [ "$CLEAN" = true ]; then
   echo "Cleaning data dirs and database..."
   rm -rf .data/vanti-ugs-hub/bc-01 .data/vanti-ugs-hub/eg-01 .data/vanti-ugs-hub/ac-01
-  PGPASSWORD=$(cat .data/secrets/postgres-password) psql -h localhost -U postgres -c 'DROP DATABASE IF EXISTS "vanti-ugs-cohort"'
+  PGPASSWORD=$(cat .data/secrets/postgres-password) psql -h localhost -U postgres -c 'DROP DATABASE IF EXISTS "smart_core"'
+  PGPASSWORD=$(cat .data/secrets/postgres-password) psql -h localhost -U postgres -c 'CREATE DATABASE "smart_core"'
   echo "Clean complete."
 fi
 
 echo "Building .bin/bos..."
 go build -o .bin/bos ./cmd/bos
-
-echo "Ensuring vanti-ugs-cohort database exists..."
-PGPASSWORD=$(cat .data/secrets/postgres-password) psql -h localhost -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'vanti-ugs-cohort'" | grep -q 1 || \
-  PGPASSWORD=$(cat .data/secrets/postgres-password) psql -h localhost -U postgres -c 'CREATE DATABASE "vanti-ugs-cohort"'
 
 echo "Starting BC-01, EG-01, and vanti-ugs AC..."
 
