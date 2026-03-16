@@ -7,7 +7,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/history"
-	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 )
 
@@ -33,14 +32,11 @@ var bootPager = NewPageReader(func(r history.Record) (*bootpb.BootEvent, error) 
 	if err := proto.Unmarshal(r.Payload, v); err != nil {
 		return nil, err
 	}
-	event := &bootpb.BootEvent{
+	return &bootpb.BootEvent{
 		RebootTime: v.BootTime,
 		Reason:     v.LastRebootReason,
-	}
-	if v.LastRebootActor != "" {
-		event.Actor = &actorpb.Actor{DisplayName: v.LastRebootActor}
-	}
-	return event, nil
+		Actor:      v.LastRebootActor,
+	}, nil
 })
 
 func (s *BootServer) ListBootEvents(ctx context.Context, req *bootpb.ListBootEventsRequest) (*bootpb.ListBootEventsResponse, error) {

@@ -30,8 +30,8 @@ type BootState struct {
 	BootTime *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=boot_time,json=bootTime,proto3" json:"boot_time,omitempty"`
 	// The reason for the last reboot, if known.
 	LastRebootReason string `protobuf:"bytes,2,opt,name=last_reboot_reason,json=lastRebootReason,proto3" json:"last_reboot_reason,omitempty"`
-	// The display name of the actor who triggered the last reboot, if known.
-	LastRebootActor string `protobuf:"bytes,3,opt,name=last_reboot_actor,json=lastRebootActor,proto3" json:"last_reboot_actor,omitempty"`
+	// The actor who triggered the last reboot, if known.
+	LastRebootActor *actorpb.Actor `protobuf:"bytes,3,opt,name=last_reboot_actor,json=lastRebootActor,proto3" json:"last_reboot_actor,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -80,11 +80,11 @@ func (x *BootState) GetLastRebootReason() string {
 	return ""
 }
 
-func (x *BootState) GetLastRebootActor() string {
+func (x *BootState) GetLastRebootActor() *actorpb.Actor {
 	if x != nil {
 		return x.LastRebootActor
 	}
-	return ""
+	return nil
 }
 
 type GetBootStateRequest struct {
@@ -416,11 +416,11 @@ var File_smartcore_bos_boot_v1_boot_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_boot_v1_boot_proto_rawDesc = "" +
 	"\n" +
-	" smartcore/bos/boot/v1/boot.proto\x12\x15smartcore.bos.boot.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\"\x9e\x01\n" +
+	" smartcore/bos/boot/v1/boot.proto\x12\x15smartcore.bos.boot.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\"\xbd\x01\n" +
 	"\tBootState\x127\n" +
 	"\tboot_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\bbootTime\x12,\n" +
-	"\x12last_reboot_reason\x18\x02 \x01(\tR\x10lastRebootReason\x12*\n" +
-	"\x11last_reboot_actor\x18\x03 \x01(\tR\x0flastRebootActor\"b\n" +
+	"\x12last_reboot_reason\x18\x02 \x01(\tR\x10lastRebootReason\x12I\n" +
+	"\x11last_reboot_actor\x18\x03 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\x0flastRebootActor\"b\n" +
 	"\x13GetBootStateRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x86\x01\n" +
@@ -470,29 +470,30 @@ var file_smartcore_bos_boot_v1_boot_proto_goTypes = []any{
 	(*RebootResponse)(nil),               // 5: smartcore.bos.boot.v1.RebootResponse
 	(*PullBootStateResponse_Change)(nil), // 6: smartcore.bos.boot.v1.PullBootStateResponse.Change
 	(*timestamppb.Timestamp)(nil),        // 7: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),        // 8: google.protobuf.FieldMask
-	(*actorpb.Actor)(nil),                // 9: smartcore.bos.actor.v1.Actor
+	(*actorpb.Actor)(nil),                // 8: smartcore.bos.actor.v1.Actor
+	(*fieldmaskpb.FieldMask)(nil),        // 9: google.protobuf.FieldMask
 }
 var file_smartcore_bos_boot_v1_boot_proto_depIdxs = []int32{
 	7,  // 0: smartcore.bos.boot.v1.BootState.boot_time:type_name -> google.protobuf.Timestamp
-	8,  // 1: smartcore.bos.boot.v1.GetBootStateRequest.read_mask:type_name -> google.protobuf.FieldMask
-	8,  // 2: smartcore.bos.boot.v1.PullBootStateRequest.read_mask:type_name -> google.protobuf.FieldMask
-	6,  // 3: smartcore.bos.boot.v1.PullBootStateResponse.changes:type_name -> smartcore.bos.boot.v1.PullBootStateResponse.Change
-	9,  // 4: smartcore.bos.boot.v1.RebootRequest.actor:type_name -> smartcore.bos.actor.v1.Actor
-	7,  // 5: smartcore.bos.boot.v1.RebootResponse.reboot_time:type_name -> google.protobuf.Timestamp
-	7,  // 6: smartcore.bos.boot.v1.PullBootStateResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	0,  // 7: smartcore.bos.boot.v1.PullBootStateResponse.Change.boot_state:type_name -> smartcore.bos.boot.v1.BootState
-	1,  // 8: smartcore.bos.boot.v1.BootApi.GetBootState:input_type -> smartcore.bos.boot.v1.GetBootStateRequest
-	2,  // 9: smartcore.bos.boot.v1.BootApi.PullBootState:input_type -> smartcore.bos.boot.v1.PullBootStateRequest
-	4,  // 10: smartcore.bos.boot.v1.BootApi.Reboot:input_type -> smartcore.bos.boot.v1.RebootRequest
-	0,  // 11: smartcore.bos.boot.v1.BootApi.GetBootState:output_type -> smartcore.bos.boot.v1.BootState
-	3,  // 12: smartcore.bos.boot.v1.BootApi.PullBootState:output_type -> smartcore.bos.boot.v1.PullBootStateResponse
-	5,  // 13: smartcore.bos.boot.v1.BootApi.Reboot:output_type -> smartcore.bos.boot.v1.RebootResponse
-	11, // [11:14] is the sub-list for method output_type
-	8,  // [8:11] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	8,  // 1: smartcore.bos.boot.v1.BootState.last_reboot_actor:type_name -> smartcore.bos.actor.v1.Actor
+	9,  // 2: smartcore.bos.boot.v1.GetBootStateRequest.read_mask:type_name -> google.protobuf.FieldMask
+	9,  // 3: smartcore.bos.boot.v1.PullBootStateRequest.read_mask:type_name -> google.protobuf.FieldMask
+	6,  // 4: smartcore.bos.boot.v1.PullBootStateResponse.changes:type_name -> smartcore.bos.boot.v1.PullBootStateResponse.Change
+	8,  // 5: smartcore.bos.boot.v1.RebootRequest.actor:type_name -> smartcore.bos.actor.v1.Actor
+	7,  // 6: smartcore.bos.boot.v1.RebootResponse.reboot_time:type_name -> google.protobuf.Timestamp
+	7,  // 7: smartcore.bos.boot.v1.PullBootStateResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	0,  // 8: smartcore.bos.boot.v1.PullBootStateResponse.Change.boot_state:type_name -> smartcore.bos.boot.v1.BootState
+	1,  // 9: smartcore.bos.boot.v1.BootApi.GetBootState:input_type -> smartcore.bos.boot.v1.GetBootStateRequest
+	2,  // 10: smartcore.bos.boot.v1.BootApi.PullBootState:input_type -> smartcore.bos.boot.v1.PullBootStateRequest
+	4,  // 11: smartcore.bos.boot.v1.BootApi.Reboot:input_type -> smartcore.bos.boot.v1.RebootRequest
+	0,  // 12: smartcore.bos.boot.v1.BootApi.GetBootState:output_type -> smartcore.bos.boot.v1.BootState
+	3,  // 13: smartcore.bos.boot.v1.BootApi.PullBootState:output_type -> smartcore.bos.boot.v1.PullBootStateResponse
+	5,  // 14: smartcore.bos.boot.v1.BootApi.Reboot:output_type -> smartcore.bos.boot.v1.RebootResponse
+	12, // [12:15] is the sub-list for method output_type
+	9,  // [9:12] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_boot_v1_boot_proto_init() }

@@ -18,6 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
 	proto "github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -72,14 +73,17 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 	announcer := s.announcer.Replace(ctx)
 
 	// Load persisted state from before the last restart.
-	var lastReason, lastActor string
+	var lastReason string
+	var lastActor *actorpb.Actor
 	if st, err := s.readStateFile(); err == nil {
 		if !st.CleanExit {
 			// File exists but clean-exit flag was never set — previous run crashed.
 			lastReason = "unexpected process exit"
 		} else {
 			lastReason = st.Reason
-			lastActor = st.Actor
+			if st.Actor != "" {
+				lastActor = &actorpb.Actor{DisplayName: st.Actor}
+			}
 		}
 	}
 

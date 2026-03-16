@@ -57,8 +57,8 @@
         <v-list-item v-if="rebootState?.lastRebootReason" class="pa-0" style="min-height: 20px">
           <span class="text-truncate">Last Reboot Reason: {{ rebootState.lastRebootReason }}</span>
         </v-list-item>
-        <v-list-item v-if="rebootState?.lastRebootActor" class="pa-0" style="min-height: 20px">
-          <span>Last actor: {{ rebootState.lastRebootActor }}</span>
+        <v-list-item v-if="rebootState?.lastRebootActor?.displayName" class="pa-0" style="min-height: 20px">
+          <span>Last actor: {{ rebootState.lastRebootActor.displayName }}</span>
         </v-list-item>
       </v-list>
       <with-resource-use :name="node.name" :paused="false" v-slot="{ resource: ruResource }">

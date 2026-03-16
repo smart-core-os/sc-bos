@@ -14,8 +14,10 @@ export class BootState extends jspb.Message {
   getLastRebootReason(): string;
   setLastRebootReason(value: string): BootState;
 
-  getLastRebootActor(): string;
-  setLastRebootActor(value: string): BootState;
+  getLastRebootActor(): smartcore_bos_actor_v1_actor_pb.Actor | undefined;
+  setLastRebootActor(value?: smartcore_bos_actor_v1_actor_pb.Actor): BootState;
+  hasLastRebootActor(): boolean;
+  clearLastRebootActor(): BootState;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): BootState.AsObject;
@@ -29,7 +31,7 @@ export namespace BootState {
   export type AsObject = {
     bootTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
     lastRebootReason: string;
-    lastRebootActor: string;
+    lastRebootActor?: smartcore_bos_actor_v1_actor_pb.Actor.AsObject;
   };
 }
 

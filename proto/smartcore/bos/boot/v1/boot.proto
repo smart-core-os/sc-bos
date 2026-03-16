@@ -23,8 +23,8 @@ message BootState {
   google.protobuf.Timestamp boot_time = 1;
   // The reason for the last reboot, if known.
   string last_reboot_reason = 2;
-  // The display name of the actor who triggered the last reboot, if known.
-  string last_reboot_actor = 3;
+  // The actor who triggered the last reboot, if known.
+  smartcore.bos.actor.v1.Actor last_reboot_actor = 3;
 }
 
 message GetBootStateRequest {

@@ -209,7 +209,7 @@ proto.smartcore.bos.boot.v1.BootState.toObject = function(includeInstance, msg) 
   var f, obj = {
 bootTime: (f = msg.getBootTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
 lastRebootReason: jspb.Message.getFieldWithDefault(msg, 2, ""),
-lastRebootActor: jspb.Message.getFieldWithDefault(msg, 3, "")
+lastRebootActor: (f = msg.getLastRebootActor()) && smartcore_bos_actor_v1_actor_pb.Actor.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -256,7 +256,8 @@ proto.smartcore.bos.boot.v1.BootState.deserializeBinaryFromReader = function(msg
       msg.setLastRebootReason(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = new smartcore_bos_actor_v1_actor_pb.Actor;
+      reader.readMessage(value,smartcore_bos_actor_v1_actor_pb.Actor.deserializeBinaryFromReader);
       msg.setLastRebootActor(value);
       break;
     default:
@@ -304,10 +305,11 @@ proto.smartcore.bos.boot.v1.BootState.serializeBinaryToWriter = function(message
     );
   }
   f = message.getLastRebootActor();
-  if (f.length > 0) {
-    writer.writeString(
+  if (f != null) {
+    writer.writeMessage(
       3,
-      f
+      f,
+      smartcore_bos_actor_v1_actor_pb.Actor.serializeBinaryToWriter
     );
   }
 };
@@ -369,20 +371,39 @@ proto.smartcore.bos.boot.v1.BootState.prototype.setLastRebootReason = function(v
 
 
 /**
- * optional string last_reboot_actor = 3;
- * @return {string}
+ * optional smartcore.bos.actor.v1.Actor last_reboot_actor = 3;
+ * @return {?proto.smartcore.bos.actor.v1.Actor}
  */
 proto.smartcore.bos.boot.v1.BootState.prototype.getLastRebootActor = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+  return /** @type{?proto.smartcore.bos.actor.v1.Actor} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_actor_v1_actor_pb.Actor, 3));
 };
 
 
 /**
- * @param {string} value
+ * @param {?proto.smartcore.bos.actor.v1.Actor|undefined} value
+ * @return {!proto.smartcore.bos.boot.v1.BootState} returns this
+*/
+proto.smartcore.bos.boot.v1.BootState.prototype.setLastRebootActor = function(value) {
+  return jspb.Message.setWrapperField(this, 3, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
  * @return {!proto.smartcore.bos.boot.v1.BootState} returns this
  */
-proto.smartcore.bos.boot.v1.BootState.prototype.setLastRebootActor = function(value) {
-  return jspb.Message.setProto3StringField(this, 3, value);
+proto.smartcore.bos.boot.v1.BootState.prototype.clearLastRebootActor = function() {
+  return this.setLastRebootActor(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.boot.v1.BootState.prototype.hasLastRebootActor = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
