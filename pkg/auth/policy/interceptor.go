@@ -186,7 +186,8 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 			zap.Strings("queries", queries),
 		)
 	}
-	if i.auditLogger != nil && isWriteMethod(method) {
+	// Only audit once per RPC, not for every message on an open client/bidirectional stream.
+	if i.auditLogger != nil && isWriteMethod(method) && !stream.Open {
 		outcome := "allowed"
 		if err != nil {
 			outcome = "denied"
@@ -331,14 +332,15 @@ func httpPeerCert(r *http.Request) *x509.Certificate {
 	return r.TLS.VerifiedChains[0][0]
 }
 
-// isWriteMethod reports whether the gRPC method name represents a write (mutating) operation.
+// isWriteMethod reports whether the gRPC method name represents a mutating operation.
+// It returns true for any method that does not begin with a known read-only prefix.
 func isWriteMethod(method string) bool {
-	for _, prefix := range []string{"Create", "Update", "Delete", "Set", "Batch"} {
+	for _, prefix := range []string{"Get", "Pull", "Describe"} {
 		if strings.HasPrefix(method, prefix) {
-			return true
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 func isHTTPWriteMethod(method string) bool {

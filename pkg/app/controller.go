@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/pprof"
 	"net/url"
@@ -15,7 +16,6 @@ import (
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/rs/cors"
 	"github.com/timshannon/bolthold"
@@ -25,6 +25,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/smart-core-os/sc-bos/internal/account"
 	"github.com/smart-core-os/sc-bos/internal/cloud"
@@ -298,9 +299,10 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	}
 	pol := configPolicy(config)
 	var auditLogger *zap.Logger
+	var auditCloser io.Closer // non-nil when auditLogger was successfully created
 	if al := config.AuditLog; al != nil && al.Filename != "" {
 		var err error
-		auditLogger, err = newAuditLogger(al)
+		auditLogger, auditCloser, err = newAuditLogger(al)
 		if err != nil {
 			logger.Error("failed to open audit log file", zap.String("file", al.Filename), zap.Error(err))
 		}
@@ -459,6 +461,12 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	c.Defer(closeHealthStore)
 	if cloudDataRoot != nil {
 		c.Defer(cloudDataRoot.Close)
+	}
+	if auditCloser != nil {
+		c.Defer(func() error {
+			_ = auditLogger.Sync()
+			return auditCloser.Close()
+		})
 	}
 	return c, nil
 }
@@ -620,7 +628,17 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	return
 }
 
-func newAuditLogger(cfg *sysconf.AuditLogConfig) (*zap.Logger, error) {
+func newAuditLogger(cfg *sysconf.AuditLogConfig) (*zap.Logger, io.Closer, error) {
+	// Open the file eagerly so configuration errors surface at startup rather than on first write.
+	if err := os.MkdirAll(filepath.Dir(cfg.Filename), 0o755); err != nil {
+		return nil, nil, fmt.Errorf("create audit log directory: %w", err)
+	}
+	f, err := os.OpenFile(cfg.Filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o640)
+	if err != nil {
+		return nil, nil, fmt.Errorf("open audit log: %w", err)
+	}
+	f.Close()
+
 	maxSize := cfg.MaxSizeMB
 	if maxSize == 0 {
 		maxSize = 100
@@ -636,7 +654,7 @@ func newAuditLogger(cfg *sysconf.AuditLogConfig) (*zap.Logger, error) {
 	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
 	enc := zapcore.NewJSONEncoder(encoderCfg)
 	core := zapcore.NewCore(enc, zapcore.AddSync(w), zapcore.InfoLevel)
-	return zap.New(core), nil
+	return zap.New(core), w, nil
 }
 
 const (
