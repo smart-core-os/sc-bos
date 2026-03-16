@@ -6,12 +6,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/smart-core-os/sc-bos/internal/account"
+	"github.com/smart-core-os/sc-bos/internal/cloud"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/router"
@@ -33,7 +34,6 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/internal/util/pki/expire"
-	"github.com/smart-core-os/sc-bos/pkg/app/appconf"
 	"github.com/smart-core-os/sc-bos/pkg/app/files"
 	http2 "github.com/smart-core-os/sc-bos/pkg/app/http"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
@@ -66,28 +66,48 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		return nil, err
 	}
 
-	// load the external config file if possible
-	// TODO: pull config from manager publication
-	var externalConf appconf.Config
-	filesLoaded, err := appconf.LoadIncludes("", &externalConf, config.AppConfig)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			// warn that file(s) couldn't be found, but continue with default config
-			logger.Warn("failed to load some config", zap.Strings("paths", config.AppConfig), zap.Error(err), zap.Strings("filesLoaded", filesLoaded))
-		} else {
-			return nil, err
+	// init the deployment client if configured to connect to a deployment server
+	var (
+		deploymentUpdater *cloud.DeploymentUpdater
+		cloudDataRoot     *os.Root
+		confStore         ConfigStore
+	)
+	if config.Cloud != nil {
+		cloudSecret, err := loadCloudSecret(config.Cloud.TokenFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load cloud secret: %w", err)
+		}
+
+		cloudDataDir := filepath.Join(config.DataDir, cloudDirName)
+		err = os.MkdirAll(cloudDataDir, 0750)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create cloud data directory: %w", err)
+		}
+
+		cloudDataRoot, err = os.OpenRoot(cloudDataDir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open cloud data directory: %w", err)
+		}
+		httpClient := cloud.NewHTTPClient(config.Cloud.Endpoint, cloudSecret)
+		duOptions := []cloud.UpdaterOption{
+			cloud.WithLogger(logger.Named("cloud")),
+			cloud.WithPreserveDownloads(config.Cloud.PreserveDownloads),
+		}
+		if config.Cloud.MaxDeploymentSizeMiB != 0 {
+			duOptions = append(duOptions, cloud.WithMaxDeploymentSize(int64(config.Cloud.MaxDeploymentSizeMiB)*1024*1024))
+		}
+		deploymentUpdater = cloud.NewDeploymentUpdater(cloudDataRoot, httpClient, duOptions...)
+
+		confStore, err = loadCloudAppConfig(ctx, config, deploymentUpdater, logger)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load config from cloud: %w", err)
 		}
 	} else {
-		// successfully loaded the config
-		logger.Debug("loaded external config", zap.Strings("paths", config.AppConfig), zap.Strings("includes", externalConf.Includes), zap.Strings("filesLoaded", filesLoaded))
-	}
-	confStore, err := appconf.LoadStore(externalConf, appconf.Schema{
-		Drivers:     config.DriverConfigBlocks(),
-		Automations: config.AutoConfigBlocks(),
-		Zones:       config.ZoneConfigBlocks(),
-	}, files.Path(config.DataDir, configDirName), logger)
-	if err != nil {
-		return nil, err
+		// load the external config file if possible
+		confStore, err = loadLocalAppConfig(config, logger)
+		if err != nil {
+			return nil, err
+		}
 	}
 	initialConfig := confStore.Active()
 
@@ -392,6 +412,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		SystemConfig:     config,
 		ControllerConfig: confStore,
 		Enrollment:       enrollServer,
+		Deployments:      deploymentUpdater,
 		Logger:           logger,
 		Node:             rootNode,
 		Devices:          gen_devicespb.NewDevicesApiClient(wrap.ServerToClient(gen_devicespb.DevicesApi_ServiceDesc, devicesApi)),
@@ -414,6 +435,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	c.Defer(manager.Close)
 	c.Defer(store.Close)
 	c.Defer(closeHealthStore)
+	if cloudDataRoot != nil {
+		c.Defer(cloudDataRoot.Close)
+	}
 	return c, nil
 }
 
@@ -465,8 +489,9 @@ func configPolicy(config sysconf.Config) policy.Policy {
 
 type Controller struct {
 	SystemConfig     sysconf.Config
-	ControllerConfig *appconf.Store
+	ControllerConfig ConfigStore
 	Enrollment       *enrollment.Server
+	Deployments      *cloud.DeploymentUpdater
 
 	// services for drivers/automations
 	Logger          *zap.Logger
@@ -519,6 +544,16 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 			return c.Enrollment.AutoRenew(ctx)
 		})
 	}
+	if c.Deployments != nil {
+		group.Go(func() error {
+			needRestart := c.Deployments.AutoPoll(ctx, c.SystemConfig.Cloud.PollInterval.Duration)
+			if needRestart {
+				c.Logger.Info("triggering automatic restart to apply new deployment")
+				return restartNowError{}
+			}
+			return nil
+		})
+	}
 	if c.SystemConfig.ListenGRPC != "" {
 		group.Go(func() error {
 			return ServeGRPC(ctx, c.GRPC, c.SystemConfig.ListenGRPC, 15*time.Second, c.Logger.Named("server.grpc"))
@@ -565,5 +600,17 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 
 const (
 	configDirName = "config"
+	cloudDirName  = "cloud"
 	accountsFile  = "accounts.sqlite3"
 )
+
+// a sentinel error type - does not indicate an actual error, but a request to restart the controller immediately
+type restartNowError struct{}
+
+func (e restartNowError) Error() string {
+	return "automatic restart triggered"
+}
+
+func (e restartNowError) ExitCode() int {
+	return 0
+}

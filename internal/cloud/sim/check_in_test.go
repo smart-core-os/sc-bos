@@ -1,4 +1,4 @@
-package api
+package sim
 
 import (
 	"bytes"
@@ -82,7 +82,7 @@ func doCheckIn(t *testing.T, client *http.Client, url string, secret []byte, req
 		t.Fatalf("failed to create request: %v", err)
 	}
 	if secret != nil {
-		token := base64.URLEncoding.EncodeToString(secret)
+		token := base64.StdEncoding.EncodeToString(secret)
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	if body != nil {

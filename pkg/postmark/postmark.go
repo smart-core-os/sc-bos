@@ -14,8 +14,19 @@ import (
 	"path/filepath"
 )
 
-//go:embed powered-by-dark.png
-var defaultLogoPNG []byte
+// Recipient is an email recipient with an optional display name.
+type Recipient struct {
+	Name  string `json:"name,omitempty"`
+	Email string `json:"email"`
+}
+
+// String returns the RFC 5322 formatted address, e.g. "Alice <alice@example.com>" or "alice@example.com".
+func (r Recipient) String() string {
+	if r.Name == "" {
+		return r.Email
+	}
+	return fmt.Sprintf("%s <%s>", r.Name, r.Email)
+}
 
 // Config holds the Postmark configuration. ServerTokenPath is read from the
 // JSON config; ServerToken is populated at parse time by calling ReadToken.
@@ -23,12 +34,9 @@ type Config struct {
 	// ServerTokenPath is a path to a file containing the Postmark server token.
 	ServerTokenPath string `json:"serverTokenPath,omitempty"`
 	// ServerToken is populated at parse time by reading ServerTokenPath. Not serialised.
-	ServerToken string   `json:"-"`
-	From        string   `json:"from"`
-	Recipients  []string `json:"recipients"`
-	// LogoPath is an optional path to a PNG logo file to embed in report emails.
-	// If empty, the default logo is used.
-	LogoPath string `json:"logoPath,omitempty"`
+	ServerToken string      `json:"-"`
+	From        string      `json:"from"`
+	Recipients  []Recipient `json:"recipients"`
 	// APIURL is the Postmark API endpoint. Defaults to "https://api.postmarkapp.com/email" if empty.
 	APIURL string `json:"apiUrl,omitempty"`
 }
@@ -74,23 +82,7 @@ func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subje
 		return nil
 	}
 
-	logoPNG := defaultLogoPNG
-	if cfg.LogoPath != "" {
-		data, err := os.ReadFile(cfg.LogoPath)
-		if err != nil {
-			return fmt.Errorf("postmark: failed to read logo file: %w", err)
-		}
-		logoPNG = data
-	}
-
-	attachments := []attachment{
-		{
-			Name:        "smartcore-logo.png",
-			Content:     base64.StdEncoding.EncodeToString(logoPNG),
-			ContentType: "image/png",
-			ContentID:   "cid:smartcore-logo.png",
-		},
-	}
+	attachments := []attachment{}
 
 	var errs []error
 
@@ -113,9 +105,10 @@ func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subje
 	}
 
 	for _, recipient := range cfg.Recipients {
+		to := recipient.String()
 		payload := emailPayload{
 			From:          cfg.From,
-			To:            recipient,
+			To:            to,
 			Subject:       subject,
 			HtmlBody:      htmlBody,
 			MessageStream: "outbound",
@@ -124,13 +117,13 @@ func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subje
 
 		body, err := json.Marshal(payload)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("postmark: failed to marshal payload for %s: %w", recipient, err))
+			errs = append(errs, fmt.Errorf("postmark: failed to marshal payload for %s: %w", to, err))
 			continue
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(body))
 		if err != nil {
-			errs = append(errs, fmt.Errorf("postmark: failed to create request for %s: %w", recipient, err))
+			errs = append(errs, fmt.Errorf("postmark: failed to create request for %s: %w", to, err))
 			continue
 		}
 		req.Header.Set("Accept", "application/json")
@@ -139,13 +132,13 @@ func SendReportEmail(ctx context.Context, cfg *Config, filePaths []string, subje
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("postmark: failed to send email to %s: %w", recipient, err))
+			errs = append(errs, fmt.Errorf("postmark: failed to send email to %s: %w", to, err))
 			continue
 		}
 		resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			errs = append(errs, fmt.Errorf("postmark: non-200 response for %s: status %d", recipient, resp.StatusCode))
+			errs = append(errs, fmt.Errorf("postmark: non-200 response for %s: status %d", to, resp.StatusCode))
 		}
 	}
 
