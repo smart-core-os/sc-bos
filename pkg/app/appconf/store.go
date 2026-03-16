@@ -18,6 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/block"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
@@ -50,15 +51,15 @@ func (s *Store) Active() Config {
 	return s.active.clone()
 }
 
-func (s *Store) Drivers() *DriverStore {
+func (s *Store) Drivers() serviceapi.Store {
 	return &DriverStore{store: s}
 }
 
-func (s *Store) Automations() *AutomationStore {
+func (s *Store) Automations() serviceapi.Store {
 	return &AutomationStore{store: s}
 }
 
-func (s *Store) Zones() *ZoneStore {
+func (s *Store) Zones() serviceapi.Store {
 	return &ZoneStore{store: s}
 }
 

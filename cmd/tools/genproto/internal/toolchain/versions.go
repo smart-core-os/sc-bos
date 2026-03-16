@@ -15,7 +15,7 @@ import (
 //  3. Update the corresponding constant below with the new version number
 //  4. Run the code generator to update generated files with new version headers
 const (
-	ExpectedProtoc           = "32.1"
+	ExpectedProtoc           = "34.0"
 	ExpectedProtocGenJS      = "4.0.1"
 	ExpectedProtocGenGRPCWeb = "2.0.2"
 )

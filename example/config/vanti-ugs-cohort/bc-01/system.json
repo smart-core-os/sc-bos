@@ -1,0 +1,24 @@
+{
+  "name": "BC-01",
+  "grpcAddr": "localhost",
+  "listenGrpc": ":23101",
+  "listenHTTPS": ":8101",
+  "cors": {
+    "debugMode": true,
+    "corsOrigins": ["*"]
+  },
+  "systems": {
+    "hub": {
+      "storage": {
+        "type": "postgres",
+        "uri": "postgres://postgres@localhost:5432/smart_core",
+        "passwordFile": "./.data/secrets/postgres-password"
+      },
+      "nodes": [
+        {"address": "localhost:23201", "name": "EG-01"},
+        {"address": "localhost:23301", "name": "van/uk/brum/ugs/ac-01"}
+      ]
+    },
+    "resourceUse": {}
+  }
+}

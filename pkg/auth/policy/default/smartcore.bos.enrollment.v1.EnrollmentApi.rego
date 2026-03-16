@@ -1,4 +1,4 @@
-package smartcore.bos.EnrollmentApi
+package smartcore.bos.enrollment.v1.EnrollmentApi
 
 import data.scutil.token.token_has_role
 import data.scutil.rpc.read_request

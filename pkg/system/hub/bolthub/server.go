@@ -105,6 +105,10 @@ func (s *Server) EnrollHubNode(ctx context.Context, req *hubpb.EnrollHubNodeRequ
 	if err != nil {
 		s.logger.Error("failed to enroll area controller", zap.Error(err),
 			zap.String("target_address", nodeReg.Address))
+
+		if status.Code(err) == codes.AlreadyExists {
+			return nil, status.Error(codes.AlreadyExists, "already enrolled")
+		}
 		return nil, status.Error(codes.Unknown, "enrollment failed")
 	}
 
