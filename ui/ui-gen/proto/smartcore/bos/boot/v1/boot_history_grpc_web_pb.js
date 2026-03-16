@@ -88,61 +88,61 @@ proto.smartcore.bos.boot.v1.BootHistoryPromiseClient =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
- *   !proto.smartcore.bos.boot.v1.ListBootEventsRequest,
- *   !proto.smartcore.bos.boot.v1.ListBootEventsResponse>}
+ *   !proto.smartcore.bos.boot.v1.ListBootRecordsRequest,
+ *   !proto.smartcore.bos.boot.v1.ListBootRecordsResponse>}
  */
-const methodDescriptor_BootHistory_ListBootEvents = new grpc.web.MethodDescriptor(
-  '/smartcore.bos.boot.v1.BootHistory/ListBootEvents',
+const methodDescriptor_BootHistory_ListBootRecords = new grpc.web.MethodDescriptor(
+  '/smartcore.bos.boot.v1.BootHistory/ListBootRecords',
   grpc.web.MethodType.UNARY,
-  proto.smartcore.bos.boot.v1.ListBootEventsRequest,
-  proto.smartcore.bos.boot.v1.ListBootEventsResponse,
+  proto.smartcore.bos.boot.v1.ListBootRecordsRequest,
+  proto.smartcore.bos.boot.v1.ListBootRecordsResponse,
   /**
-   * @param {!proto.smartcore.bos.boot.v1.ListBootEventsRequest} request
+   * @param {!proto.smartcore.bos.boot.v1.ListBootRecordsRequest} request
    * @return {!Uint8Array}
    */
   function(request) {
     return request.serializeBinary();
   },
-  proto.smartcore.bos.boot.v1.ListBootEventsResponse.deserializeBinary
+  proto.smartcore.bos.boot.v1.ListBootRecordsResponse.deserializeBinary
 );
 
 
 /**
- * @param {!proto.smartcore.bos.boot.v1.ListBootEventsRequest} request The
+ * @param {!proto.smartcore.bos.boot.v1.ListBootRecordsRequest} request The
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.boot.v1.ListBootEventsResponse)}
+ * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.boot.v1.ListBootRecordsResponse)}
  *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.boot.v1.ListBootEventsResponse>|undefined}
+ * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.boot.v1.ListBootRecordsResponse>|undefined}
  *     The XHR Node Readable Stream
  */
-proto.smartcore.bos.boot.v1.BootHistoryClient.prototype.listBootEvents =
+proto.smartcore.bos.boot.v1.BootHistoryClient.prototype.listBootRecords =
     function(request, metadata, callback) {
   return this.client_.rpcCall(this.hostname_ +
-      '/smartcore.bos.boot.v1.BootHistory/ListBootEvents',
+      '/smartcore.bos.boot.v1.BootHistory/ListBootRecords',
       request,
       metadata || {},
-      methodDescriptor_BootHistory_ListBootEvents,
+      methodDescriptor_BootHistory_ListBootRecords,
       callback);
 };
 
 
 /**
- * @param {!proto.smartcore.bos.boot.v1.ListBootEventsRequest} request The
+ * @param {!proto.smartcore.bos.boot.v1.ListBootRecordsRequest} request The
  *     request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
- * @return {!Promise<!proto.smartcore.bos.boot.v1.ListBootEventsResponse>}
+ * @return {!Promise<!proto.smartcore.bos.boot.v1.ListBootRecordsResponse>}
  *     Promise that resolves to the response
  */
-proto.smartcore.bos.boot.v1.BootHistoryPromiseClient.prototype.listBootEvents =
+proto.smartcore.bos.boot.v1.BootHistoryPromiseClient.prototype.listBootRecords =
     function(request, metadata) {
   return this.client_.unaryCall(this.hostname_ +
-      '/smartcore.bos.boot.v1.BootHistory/ListBootEvents',
+      '/smartcore.bos.boot.v1.BootHistory/ListBootRecords',
       request,
       metadata || {},
-      methodDescriptor_BootHistory_ListBootEvents);
+      methodDescriptor_BootHistory_ListBootRecords);
 };
 
 

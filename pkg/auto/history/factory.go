@@ -345,7 +345,7 @@ func (a *automation) createCollector(store history.Store, traitName trait.Name) 
 	case trait.OccupancySensor:
 		return occupancysensorpb.WrapHistory(historypb.NewOccupancySensorServer(store)), a.collectOccupancyChanges, nil
 	case bootpb.TraitName:
-		return gen_bootpb.WrapHistory(historypb.NewBootServer(store)), a.collectBootEventChanges, nil
+		return gen_bootpb.WrapHistory(historypb.NewBootServer(store)), a.collectBootRecordChanges, nil
 	case resourceusepb.TraitName:
 		return gen_resourceusepb.WrapHistory(historypb.NewResourceUseServer(store)), a.collectResourceUseChanges, nil
 	case soundsensorpb.TraitName:

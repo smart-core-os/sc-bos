@@ -77,11 +77,11 @@ func (r *HistoryRouter) GetBootHistoryClient(name string) (BootHistoryClient, er
 	return res.(BootHistoryClient), nil
 }
 
-func (r *HistoryRouter) ListBootEvents(ctx context.Context, request *ListBootEventsRequest) (*ListBootEventsResponse, error) {
+func (r *HistoryRouter) ListBootRecords(ctx context.Context, request *ListBootRecordsRequest) (*ListBootRecordsResponse, error) {
 	child, err := r.GetBootHistoryClient(request.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	return child.ListBootEvents(ctx, request)
+	return child.ListBootRecords(ctx, request)
 }

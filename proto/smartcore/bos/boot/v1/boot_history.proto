@@ -11,11 +11,11 @@ import "types/time/period.proto";
 
 // BootHistory provides access to historical reboot records.
 service BootHistory {
-  rpc ListBootEvents(ListBootEventsRequest) returns (ListBootEventsResponse);
+  rpc ListBootRecords(ListBootRecordsRequest) returns (ListBootRecordsResponse);
 }
 
-// BootEvent is a record of a single reboot.
-message BootEvent {
+// BootRecord is a record of a single reboot.
+message BootRecord {
   // The time the reboot was initiated.
   google.protobuf.Timestamp reboot_time = 1;
   // The reason for the reboot, if provided.
@@ -24,7 +24,7 @@ message BootEvent {
   smartcore.bos.actor.v1.Actor actor = 3;
 }
 
-message ListBootEventsRequest {
+message ListBootRecordsRequest {
   string name = 1;
   // The time period to query.
   smartcore.types.time.Period period = 2;
@@ -35,7 +35,7 @@ message ListBootEventsRequest {
   // If unspecified, at most 50 items will be returned.
   // The maximum value is 1000; values above 1000 will be coerced to 1000.
   int32 page_size = 4;
-  // A page token, received from a previous ListBootEventsResponse call.
+  // A page token, received from a previous ListBootRecordsResponse call.
   string page_token = 5;
   // Specify the order of the returned records.
   // The default is `reboot_time asc` - aka oldest record first.
@@ -43,8 +43,8 @@ message ListBootEventsRequest {
   string order_by = 6;
 }
 
-message ListBootEventsResponse {
-  repeated BootEvent boot_events = 1;
+message ListBootRecordsResponse {
+  repeated BootRecord boot_records = 1;
   // A token which can be sent as page_token to retrieve the next page.
   string next_page_token = 2;
   // If non-zero this is the total number of records matched by the query.

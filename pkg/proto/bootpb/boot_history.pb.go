@@ -25,8 +25,8 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// BootEvent is a record of a single reboot.
-type BootEvent struct {
+// BootRecord is a record of a single reboot.
+type BootRecord struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The time the reboot was initiated.
 	RebootTime *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=reboot_time,json=rebootTime,proto3" json:"reboot_time,omitempty"`
@@ -38,20 +38,20 @@ type BootEvent struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *BootEvent) Reset() {
-	*x = BootEvent{}
+func (x *BootRecord) Reset() {
+	*x = BootRecord{}
 	mi := &file_smartcore_bos_boot_v1_boot_history_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *BootEvent) String() string {
+func (x *BootRecord) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*BootEvent) ProtoMessage() {}
+func (*BootRecord) ProtoMessage() {}
 
-func (x *BootEvent) ProtoReflect() protoreflect.Message {
+func (x *BootRecord) ProtoReflect() protoreflect.Message {
 	mi := &file_smartcore_bos_boot_v1_boot_history_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -63,33 +63,33 @@ func (x *BootEvent) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use BootEvent.ProtoReflect.Descriptor instead.
-func (*BootEvent) Descriptor() ([]byte, []int) {
+// Deprecated: Use BootRecord.ProtoReflect.Descriptor instead.
+func (*BootRecord) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_boot_v1_boot_history_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *BootEvent) GetRebootTime() *timestamppb.Timestamp {
+func (x *BootRecord) GetRebootTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.RebootTime
 	}
 	return nil
 }
 
-func (x *BootEvent) GetReason() string {
+func (x *BootRecord) GetReason() string {
 	if x != nil {
 		return x.Reason
 	}
 	return ""
 }
 
-func (x *BootEvent) GetActor() *actorpb.Actor {
+func (x *BootRecord) GetActor() *actorpb.Actor {
 	if x != nil {
 		return x.Actor
 	}
 	return nil
 }
 
-type ListBootEventsRequest struct {
+type ListBootRecordsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The time period to query.
@@ -101,7 +101,7 @@ type ListBootEventsRequest struct {
 	// If unspecified, at most 50 items will be returned.
 	// The maximum value is 1000; values above 1000 will be coerced to 1000.
 	PageSize int32 `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// A page token, received from a previous ListBootEventsResponse call.
+	// A page token, received from a previous ListBootRecordsResponse call.
 	PageToken string `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Specify the order of the returned records.
 	// The default is `reboot_time asc` - aka oldest record first.
@@ -111,20 +111,20 @@ type ListBootEventsRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListBootEventsRequest) Reset() {
-	*x = ListBootEventsRequest{}
+func (x *ListBootRecordsRequest) Reset() {
+	*x = ListBootRecordsRequest{}
 	mi := &file_smartcore_bos_boot_v1_boot_history_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListBootEventsRequest) String() string {
+func (x *ListBootRecordsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListBootEventsRequest) ProtoMessage() {}
+func (*ListBootRecordsRequest) ProtoMessage() {}
 
-func (x *ListBootEventsRequest) ProtoReflect() protoreflect.Message {
+func (x *ListBootRecordsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_smartcore_bos_boot_v1_boot_history_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -136,56 +136,56 @@ func (x *ListBootEventsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListBootEventsRequest.ProtoReflect.Descriptor instead.
-func (*ListBootEventsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListBootRecordsRequest.ProtoReflect.Descriptor instead.
+func (*ListBootRecordsRequest) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_boot_v1_boot_history_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ListBootEventsRequest) GetName() string {
+func (x *ListBootRecordsRequest) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *ListBootEventsRequest) GetPeriod() *time.Period {
+func (x *ListBootRecordsRequest) GetPeriod() *time.Period {
 	if x != nil {
 		return x.Period
 	}
 	return nil
 }
 
-func (x *ListBootEventsRequest) GetReadMask() *fieldmaskpb.FieldMask {
+func (x *ListBootRecordsRequest) GetReadMask() *fieldmaskpb.FieldMask {
 	if x != nil {
 		return x.ReadMask
 	}
 	return nil
 }
 
-func (x *ListBootEventsRequest) GetPageSize() int32 {
+func (x *ListBootRecordsRequest) GetPageSize() int32 {
 	if x != nil {
 		return x.PageSize
 	}
 	return 0
 }
 
-func (x *ListBootEventsRequest) GetPageToken() string {
+func (x *ListBootRecordsRequest) GetPageToken() string {
 	if x != nil {
 		return x.PageToken
 	}
 	return ""
 }
 
-func (x *ListBootEventsRequest) GetOrderBy() string {
+func (x *ListBootRecordsRequest) GetOrderBy() string {
 	if x != nil {
 		return x.OrderBy
 	}
 	return ""
 }
 
-type ListBootEventsResponse struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	BootEvents []*BootEvent           `protobuf:"bytes,1,rep,name=boot_events,json=bootEvents,proto3" json:"boot_events,omitempty"`
+type ListBootRecordsResponse struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	BootRecords []*BootRecord          `protobuf:"bytes,1,rep,name=boot_records,json=bootRecords,proto3" json:"boot_records,omitempty"`
 	// A token which can be sent as page_token to retrieve the next page.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	// If non-zero this is the total number of records matched by the query.
@@ -194,20 +194,20 @@ type ListBootEventsResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListBootEventsResponse) Reset() {
-	*x = ListBootEventsResponse{}
+func (x *ListBootRecordsResponse) Reset() {
+	*x = ListBootRecordsResponse{}
 	mi := &file_smartcore_bos_boot_v1_boot_history_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListBootEventsResponse) String() string {
+func (x *ListBootRecordsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListBootEventsResponse) ProtoMessage() {}
+func (*ListBootRecordsResponse) ProtoMessage() {}
 
-func (x *ListBootEventsResponse) ProtoReflect() protoreflect.Message {
+func (x *ListBootRecordsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_smartcore_bos_boot_v1_boot_history_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -219,26 +219,26 @@ func (x *ListBootEventsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListBootEventsResponse.ProtoReflect.Descriptor instead.
-func (*ListBootEventsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListBootRecordsResponse.ProtoReflect.Descriptor instead.
+func (*ListBootRecordsResponse) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_boot_v1_boot_history_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ListBootEventsResponse) GetBootEvents() []*BootEvent {
+func (x *ListBootRecordsResponse) GetBootRecords() []*BootRecord {
 	if x != nil {
-		return x.BootEvents
+		return x.BootRecords
 	}
 	return nil
 }
 
-func (x *ListBootEventsResponse) GetNextPageToken() string {
+func (x *ListBootRecordsResponse) GetNextPageToken() string {
 	if x != nil {
 		return x.NextPageToken
 	}
 	return ""
 }
 
-func (x *ListBootEventsResponse) GetTotalSize() int32 {
+func (x *ListBootRecordsResponse) GetTotalSize() int32 {
 	if x != nil {
 		return x.TotalSize
 	}
@@ -249,28 +249,28 @@ var File_smartcore_bos_boot_v1_boot_history_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_boot_v1_boot_history_proto_rawDesc = "" +
 	"\n" +
-	"(smartcore/bos/boot/v1/boot_history.proto\x12\x15smartcore.bos.boot.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\x1a\x17types/time/period.proto\"\x95\x01\n" +
-	"\tBootEvent\x12;\n" +
+	"(smartcore/bos/boot/v1/boot_history.proto\x12\x15smartcore.bos.boot.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\x1a\x17types/time/period.proto\"\x96\x01\n" +
+	"\n" +
+	"BootRecord\x12;\n" +
 	"\vreboot_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"rebootTime\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\x123\n" +
-	"\x05actor\x18\x03 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\x05actor\"\xf1\x01\n" +
-	"\x15ListBootEventsRequest\x12\x12\n" +
+	"\x05actor\x18\x03 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\x05actor\"\xf2\x01\n" +
+	"\x16ListBootRecordsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x124\n" +
 	"\x06period\x18\x02 \x01(\v2\x1c.smartcore.types.time.PeriodR\x06period\x127\n" +
 	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x05 \x01(\tR\tpageToken\x12\x19\n" +
-	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xa2\x01\n" +
-	"\x16ListBootEventsResponse\x12A\n" +
-	"\vboot_events\x18\x01 \x03(\v2 .smartcore.bos.boot.v1.BootEventR\n" +
-	"bootEvents\x12&\n" +
+	"\border_by\x18\x06 \x01(\tR\aorderBy\"\xa6\x01\n" +
+	"\x17ListBootRecordsResponse\x12D\n" +
+	"\fboot_records\x18\x01 \x03(\v2!.smartcore.bos.boot.v1.BootRecordR\vbootRecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize2|\n" +
-	"\vBootHistory\x12m\n" +
-	"\x0eListBootEvents\x12,.smartcore.bos.boot.v1.ListBootEventsRequest\x1a-.smartcore.bos.boot.v1.ListBootEventsResponseB2Z0github.com/smart-core-os/sc-bos/pkg/proto/bootpbb\x06proto3"
+	"total_size\x18\x03 \x01(\x05R\ttotalSize2\x7f\n" +
+	"\vBootHistory\x12p\n" +
+	"\x0fListBootRecords\x12-.smartcore.bos.boot.v1.ListBootRecordsRequest\x1a..smartcore.bos.boot.v1.ListBootRecordsResponseB2Z0github.com/smart-core-os/sc-bos/pkg/proto/bootpbb\x06proto3"
 
 var (
 	file_smartcore_bos_boot_v1_boot_history_proto_rawDescOnce sync.Once
@@ -286,22 +286,22 @@ func file_smartcore_bos_boot_v1_boot_history_proto_rawDescGZIP() []byte {
 
 var file_smartcore_bos_boot_v1_boot_history_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_smartcore_bos_boot_v1_boot_history_proto_goTypes = []any{
-	(*BootEvent)(nil),              // 0: smartcore.bos.boot.v1.BootEvent
-	(*ListBootEventsRequest)(nil),  // 1: smartcore.bos.boot.v1.ListBootEventsRequest
-	(*ListBootEventsResponse)(nil), // 2: smartcore.bos.boot.v1.ListBootEventsResponse
-	(*timestamppb.Timestamp)(nil),  // 3: google.protobuf.Timestamp
-	(*actorpb.Actor)(nil),          // 4: smartcore.bos.actor.v1.Actor
-	(*time.Period)(nil),            // 5: smartcore.types.time.Period
-	(*fieldmaskpb.FieldMask)(nil),  // 6: google.protobuf.FieldMask
+	(*BootRecord)(nil),              // 0: smartcore.bos.boot.v1.BootRecord
+	(*ListBootRecordsRequest)(nil),  // 1: smartcore.bos.boot.v1.ListBootRecordsRequest
+	(*ListBootRecordsResponse)(nil), // 2: smartcore.bos.boot.v1.ListBootRecordsResponse
+	(*timestamppb.Timestamp)(nil),   // 3: google.protobuf.Timestamp
+	(*actorpb.Actor)(nil),           // 4: smartcore.bos.actor.v1.Actor
+	(*time.Period)(nil),             // 5: smartcore.types.time.Period
+	(*fieldmaskpb.FieldMask)(nil),   // 6: google.protobuf.FieldMask
 }
 var file_smartcore_bos_boot_v1_boot_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.boot.v1.BootEvent.reboot_time:type_name -> google.protobuf.Timestamp
-	4, // 1: smartcore.bos.boot.v1.BootEvent.actor:type_name -> smartcore.bos.actor.v1.Actor
-	5, // 2: smartcore.bos.boot.v1.ListBootEventsRequest.period:type_name -> smartcore.types.time.Period
-	6, // 3: smartcore.bos.boot.v1.ListBootEventsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	0, // 4: smartcore.bos.boot.v1.ListBootEventsResponse.boot_events:type_name -> smartcore.bos.boot.v1.BootEvent
-	1, // 5: smartcore.bos.boot.v1.BootHistory.ListBootEvents:input_type -> smartcore.bos.boot.v1.ListBootEventsRequest
-	2, // 6: smartcore.bos.boot.v1.BootHistory.ListBootEvents:output_type -> smartcore.bos.boot.v1.ListBootEventsResponse
+	3, // 0: smartcore.bos.boot.v1.BootRecord.reboot_time:type_name -> google.protobuf.Timestamp
+	4, // 1: smartcore.bos.boot.v1.BootRecord.actor:type_name -> smartcore.bos.actor.v1.Actor
+	5, // 2: smartcore.bos.boot.v1.ListBootRecordsRequest.period:type_name -> smartcore.types.time.Period
+	6, // 3: smartcore.bos.boot.v1.ListBootRecordsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	0, // 4: smartcore.bos.boot.v1.ListBootRecordsResponse.boot_records:type_name -> smartcore.bos.boot.v1.BootRecord
+	1, // 5: smartcore.bos.boot.v1.BootHistory.ListBootRecords:input_type -> smartcore.bos.boot.v1.ListBootRecordsRequest
+	2, // 6: smartcore.bos.boot.v1.BootHistory.ListBootRecords:output_type -> smartcore.bos.boot.v1.ListBootRecordsResponse
 	6, // [6:7] is the sub-list for method output_type
 	5, // [5:6] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name

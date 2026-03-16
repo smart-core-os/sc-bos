@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BootHistory_ListBootEvents_FullMethodName = "/smartcore.bos.boot.v1.BootHistory/ListBootEvents"
+	BootHistory_ListBootRecords_FullMethodName = "/smartcore.bos.boot.v1.BootHistory/ListBootRecords"
 )
 
 // BootHistoryClient is the client API for BootHistory service.
@@ -28,7 +28,7 @@ const (
 //
 // BootHistory provides access to historical reboot records.
 type BootHistoryClient interface {
-	ListBootEvents(ctx context.Context, in *ListBootEventsRequest, opts ...grpc.CallOption) (*ListBootEventsResponse, error)
+	ListBootRecords(ctx context.Context, in *ListBootRecordsRequest, opts ...grpc.CallOption) (*ListBootRecordsResponse, error)
 }
 
 type bootHistoryClient struct {
@@ -39,10 +39,10 @@ func NewBootHistoryClient(cc grpc.ClientConnInterface) BootHistoryClient {
 	return &bootHistoryClient{cc}
 }
 
-func (c *bootHistoryClient) ListBootEvents(ctx context.Context, in *ListBootEventsRequest, opts ...grpc.CallOption) (*ListBootEventsResponse, error) {
+func (c *bootHistoryClient) ListBootRecords(ctx context.Context, in *ListBootRecordsRequest, opts ...grpc.CallOption) (*ListBootRecordsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListBootEventsResponse)
-	err := c.cc.Invoke(ctx, BootHistory_ListBootEvents_FullMethodName, in, out, cOpts...)
+	out := new(ListBootRecordsResponse)
+	err := c.cc.Invoke(ctx, BootHistory_ListBootRecords_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *bootHistoryClient) ListBootEvents(ctx context.Context, in *ListBootEven
 //
 // BootHistory provides access to historical reboot records.
 type BootHistoryServer interface {
-	ListBootEvents(context.Context, *ListBootEventsRequest) (*ListBootEventsResponse, error)
+	ListBootRecords(context.Context, *ListBootRecordsRequest) (*ListBootRecordsResponse, error)
 	mustEmbedUnimplementedBootHistoryServer()
 }
 
@@ -66,8 +66,8 @@ type BootHistoryServer interface {
 // pointer dereference when methods are called.
 type UnimplementedBootHistoryServer struct{}
 
-func (UnimplementedBootHistoryServer) ListBootEvents(context.Context, *ListBootEventsRequest) (*ListBootEventsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListBootEvents not implemented")
+func (UnimplementedBootHistoryServer) ListBootRecords(context.Context, *ListBootRecordsRequest) (*ListBootRecordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListBootRecords not implemented")
 }
 func (UnimplementedBootHistoryServer) mustEmbedUnimplementedBootHistoryServer() {}
 func (UnimplementedBootHistoryServer) testEmbeddedByValue()                     {}
@@ -90,20 +90,20 @@ func RegisterBootHistoryServer(s grpc.ServiceRegistrar, srv BootHistoryServer) {
 	s.RegisterService(&BootHistory_ServiceDesc, srv)
 }
 
-func _BootHistory_ListBootEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListBootEventsRequest)
+func _BootHistory_ListBootRecords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBootRecordsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BootHistoryServer).ListBootEvents(ctx, in)
+		return srv.(BootHistoryServer).ListBootRecords(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BootHistory_ListBootEvents_FullMethodName,
+		FullMethod: BootHistory_ListBootRecords_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BootHistoryServer).ListBootEvents(ctx, req.(*ListBootEventsRequest))
+		return srv.(BootHistoryServer).ListBootRecords(ctx, req.(*ListBootRecordsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -116,8 +116,8 @@ var BootHistory_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*BootHistoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ListBootEvents",
-			Handler:    _BootHistory_ListBootEvents_Handler,
+			MethodName: "ListBootRecords",
+			Handler:    _BootHistory_ListBootRecords_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

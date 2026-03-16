@@ -55,7 +55,7 @@ type System struct {
 	dataDir   string
 
 	mu      sync.Mutex
-	history []*proto.BootEvent
+	history []*proto.BootRecord
 }
 
 func NewSystem(services system.Services) *System {
@@ -126,7 +126,7 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 // onReboot is called by the ModelServer when a Reboot RPC is received.
 // It records the event then schedules a clean process exit.
 func (s *System) onReboot(_ context.Context, req *proto.RebootRequest) error {
-	event := &proto.BootEvent{
+	event := &proto.BootRecord{
 		RebootTime: timestamppb.Now(),
 		Reason:     req.Reason,
 		Actor:      req.Actor,

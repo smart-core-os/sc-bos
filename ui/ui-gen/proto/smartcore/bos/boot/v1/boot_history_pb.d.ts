@@ -6,29 +6,29 @@ import * as smartcore_bos_actor_v1_actor_pb from '../../../../smartcore/bos/acto
 import * as types_time_period_pb from '@smart-core-os/sc-api-grpc-web/types/time/period_pb'; // proto import: "types/time/period.proto"
 
 
-export class BootEvent extends jspb.Message {
+export class BootRecord extends jspb.Message {
   getRebootTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
-  setRebootTime(value?: google_protobuf_timestamp_pb.Timestamp): BootEvent;
+  setRebootTime(value?: google_protobuf_timestamp_pb.Timestamp): BootRecord;
   hasRebootTime(): boolean;
-  clearRebootTime(): BootEvent;
+  clearRebootTime(): BootRecord;
 
   getReason(): string;
-  setReason(value: string): BootEvent;
+  setReason(value: string): BootRecord;
 
   getActor(): smartcore_bos_actor_v1_actor_pb.Actor | undefined;
-  setActor(value?: smartcore_bos_actor_v1_actor_pb.Actor): BootEvent;
+  setActor(value?: smartcore_bos_actor_v1_actor_pb.Actor): BootRecord;
   hasActor(): boolean;
-  clearActor(): BootEvent;
+  clearActor(): BootRecord;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): BootEvent.AsObject;
-  static toObject(includeInstance: boolean, msg: BootEvent): BootEvent.AsObject;
-  static serializeBinaryToWriter(message: BootEvent, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): BootEvent;
-  static deserializeBinaryFromReader(message: BootEvent, reader: jspb.BinaryReader): BootEvent;
+  toObject(includeInstance?: boolean): BootRecord.AsObject;
+  static toObject(includeInstance: boolean, msg: BootRecord): BootRecord.AsObject;
+  static serializeBinaryToWriter(message: BootRecord, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): BootRecord;
+  static deserializeBinaryFromReader(message: BootRecord, reader: jspb.BinaryReader): BootRecord;
 }
 
-export namespace BootEvent {
+export namespace BootRecord {
   export type AsObject = {
     rebootTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
     reason: string;
@@ -36,38 +36,38 @@ export namespace BootEvent {
   };
 }
 
-export class ListBootEventsRequest extends jspb.Message {
+export class ListBootRecordsRequest extends jspb.Message {
   getName(): string;
-  setName(value: string): ListBootEventsRequest;
+  setName(value: string): ListBootRecordsRequest;
 
   getPeriod(): types_time_period_pb.Period | undefined;
-  setPeriod(value?: types_time_period_pb.Period): ListBootEventsRequest;
+  setPeriod(value?: types_time_period_pb.Period): ListBootRecordsRequest;
   hasPeriod(): boolean;
-  clearPeriod(): ListBootEventsRequest;
+  clearPeriod(): ListBootRecordsRequest;
 
   getReadMask(): google_protobuf_field_mask_pb.FieldMask | undefined;
-  setReadMask(value?: google_protobuf_field_mask_pb.FieldMask): ListBootEventsRequest;
+  setReadMask(value?: google_protobuf_field_mask_pb.FieldMask): ListBootRecordsRequest;
   hasReadMask(): boolean;
-  clearReadMask(): ListBootEventsRequest;
+  clearReadMask(): ListBootRecordsRequest;
 
   getPageSize(): number;
-  setPageSize(value: number): ListBootEventsRequest;
+  setPageSize(value: number): ListBootRecordsRequest;
 
   getPageToken(): string;
-  setPageToken(value: string): ListBootEventsRequest;
+  setPageToken(value: string): ListBootRecordsRequest;
 
   getOrderBy(): string;
-  setOrderBy(value: string): ListBootEventsRequest;
+  setOrderBy(value: string): ListBootRecordsRequest;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ListBootEventsRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: ListBootEventsRequest): ListBootEventsRequest.AsObject;
-  static serializeBinaryToWriter(message: ListBootEventsRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ListBootEventsRequest;
-  static deserializeBinaryFromReader(message: ListBootEventsRequest, reader: jspb.BinaryReader): ListBootEventsRequest;
+  toObject(includeInstance?: boolean): ListBootRecordsRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ListBootRecordsRequest): ListBootRecordsRequest.AsObject;
+  static serializeBinaryToWriter(message: ListBootRecordsRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListBootRecordsRequest;
+  static deserializeBinaryFromReader(message: ListBootRecordsRequest, reader: jspb.BinaryReader): ListBootRecordsRequest;
 }
 
-export namespace ListBootEventsRequest {
+export namespace ListBootRecordsRequest {
   export type AsObject = {
     name: string;
     period?: types_time_period_pb.Period.AsObject;
@@ -78,29 +78,29 @@ export namespace ListBootEventsRequest {
   };
 }
 
-export class ListBootEventsResponse extends jspb.Message {
-  getBootEventsList(): Array<BootEvent>;
-  setBootEventsList(value: Array<BootEvent>): ListBootEventsResponse;
-  clearBootEventsList(): ListBootEventsResponse;
-  addBootEvents(value?: BootEvent, index?: number): BootEvent;
+export class ListBootRecordsResponse extends jspb.Message {
+  getBootRecordsList(): Array<BootRecord>;
+  setBootRecordsList(value: Array<BootRecord>): ListBootRecordsResponse;
+  clearBootRecordsList(): ListBootRecordsResponse;
+  addBootRecords(value?: BootRecord, index?: number): BootRecord;
 
   getNextPageToken(): string;
-  setNextPageToken(value: string): ListBootEventsResponse;
+  setNextPageToken(value: string): ListBootRecordsResponse;
 
   getTotalSize(): number;
-  setTotalSize(value: number): ListBootEventsResponse;
+  setTotalSize(value: number): ListBootRecordsResponse;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ListBootEventsResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: ListBootEventsResponse): ListBootEventsResponse.AsObject;
-  static serializeBinaryToWriter(message: ListBootEventsResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ListBootEventsResponse;
-  static deserializeBinaryFromReader(message: ListBootEventsResponse, reader: jspb.BinaryReader): ListBootEventsResponse;
+  toObject(includeInstance?: boolean): ListBootRecordsResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ListBootRecordsResponse): ListBootRecordsResponse.AsObject;
+  static serializeBinaryToWriter(message: ListBootRecordsResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListBootRecordsResponse;
+  static deserializeBinaryFromReader(message: ListBootRecordsResponse, reader: jspb.BinaryReader): ListBootRecordsResponse;
 }
 
-export namespace ListBootEventsResponse {
+export namespace ListBootRecordsResponse {
   export type AsObject = {
-    bootEventsList: Array<BootEvent.AsObject>;
+    bootRecordsList: Array<BootRecord.AsObject>;
     nextPageToken: string;
     totalSize: number;
   };

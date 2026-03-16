@@ -8,12 +8,12 @@ export class BootHistoryClient {
                credentials?: null | { [index: string]: string; },
                options?: null | { [index: string]: any; });
 
-  listBootEvents(
-    request: smartcore_bos_boot_v1_boot_history_pb.ListBootEventsRequest,
+  listBootRecords(
+    request: smartcore_bos_boot_v1_boot_history_pb.ListBootRecordsRequest,
     metadata: grpcWeb.Metadata | undefined,
     callback: (err: grpcWeb.RpcError,
-               response: smartcore_bos_boot_v1_boot_history_pb.ListBootEventsResponse) => void
-  ): grpcWeb.ClientReadableStream<smartcore_bos_boot_v1_boot_history_pb.ListBootEventsResponse>;
+               response: smartcore_bos_boot_v1_boot_history_pb.ListBootRecordsResponse) => void
+  ): grpcWeb.ClientReadableStream<smartcore_bos_boot_v1_boot_history_pb.ListBootRecordsResponse>;
 
 }
 
@@ -22,10 +22,10 @@ export class BootHistoryPromiseClient {
                credentials?: null | { [index: string]: string; },
                options?: null | { [index: string]: any; });
 
-  listBootEvents(
-    request: smartcore_bos_boot_v1_boot_history_pb.ListBootEventsRequest,
+  listBootRecords(
+    request: smartcore_bos_boot_v1_boot_history_pb.ListBootRecordsRequest,
     metadata?: grpcWeb.Metadata
-  ): Promise<smartcore_bos_boot_v1_boot_history_pb.ListBootEventsResponse>;
+  ): Promise<smartcore_bos_boot_v1_boot_history_pb.ListBootRecordsResponse>;
 
 }
 

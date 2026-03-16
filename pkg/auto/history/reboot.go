@@ -10,7 +10,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 )
 
-func (a *automation) collectBootEventChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+func (a *automation) collectBootRecordChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
 	client := bootpb.NewBootApiClient(a.clients.ClientConn())
 
 	// Deduplicate on boot_time: a new boot_time means a new boot event.
