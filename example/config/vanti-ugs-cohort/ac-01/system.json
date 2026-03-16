@@ -1,0 +1,45 @@
+{
+  "name": "van/uk/brum/ugs/ac-01",
+  "grpcAddr": "localhost",
+  "listenGrpc": ":23301",
+  "listenHTTPS": ":8443",
+  "cors": {
+    "debugMode": true,
+    "corsOrigins": ["*"]
+  },
+  "staticHosting": [
+    {"path": "/__/vanti-ugs/", "filePath": "./example/config/vanti-ugs"}
+  ],
+  "stores": {
+    "postgres": {
+      "uri": "postgres://postgres@localhost:5432/smart_core",
+      "passwordFile": "./.data/secrets/postgres-password"
+    }
+  },
+  "logger": {
+    "outputPaths": ["stderr", ".data/sc-bos.log"]
+  },
+  "systems": {
+    "alerts": {"storage": {"type": "postgres"}},
+    "log": {
+      "logFilePath": ".data/sc-bos*.log",
+      "logDir": ".data/"
+    },
+    "authn": {
+      "user": {
+        "localAccounts": true,
+        "importFileAccounts": true,
+        "fileAccounts": true
+      },
+      "system": {
+        "tenantAccounts": true,
+        "localAccounts": true
+      }
+    },
+    "tenants": {"storage": {"type": "postgres"}},
+    "resourceUse": {}
+  },
+  "experimental": {
+    "accounts": true
+  }
+}

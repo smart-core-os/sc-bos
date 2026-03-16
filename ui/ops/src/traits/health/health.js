@@ -127,8 +127,8 @@ export function valueToString(val, unit = null) {
  * @return {{
  *   filterOpts: import('vue').Ref<import('@/components/filter/filterCtx').Options>,
  *   filterCtx: import('@/components/filter/filterCtx').FilterCtx,
- *   forcedConditions: import('vue').ComputedRef<import('@smart-core-os/sc-bos-ui-gen/proto/devices_pb').Device.Query.Condition.AsObject[]>,
- *   filterConditions: import('vue').ComputedRef<import('@smart-core-os/sc-bos-ui-gen/proto/devices_pb').Device.Query.Condition.AsObject[]>,
+ *   forcedConditions: import('vue').ComputedRef<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_pb').Device.Query.Condition.AsObject[]>,
+ *   filterConditions: import('vue').ComputedRef<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_pb').Device.Query.Condition.AsObject[]>,
  * }}
  */
 export function useHealthCheckFilters(forcedFilters) {
