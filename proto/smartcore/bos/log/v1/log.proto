@@ -5,6 +5,7 @@ package smartcore.bos.log.v1;
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/logpb";
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
 // LogApi exposes log streaming, log level management, log file metadata,
@@ -79,6 +80,7 @@ message PullLogMessagesRequest {
   // Optional: filter by logger name prefix.
   // Reserved for future use; server may return UNIMPLEMENTED if used.
   string logger_filter = 5;
+  google.protobuf.FieldMask read_mask = 6;
 }
 
 message PullLogMessagesResponse {
@@ -87,11 +89,13 @@ message PullLogMessagesResponse {
 
 message GetLogLevelRequest {
   string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
 }
 
 message PullLogLevelRequest {
   string name = 1;
   bool updates_only = 2;
+  google.protobuf.FieldMask read_mask = 3;
 }
 
 message PullLogLevelResponse {
@@ -110,11 +114,13 @@ message UpdateLogLevelRequest {
 
 message GetLogMetadataRequest {
   string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
 }
 
 message PullLogMetadataRequest {
   string name = 1;
   bool updates_only = 2;
+  google.protobuf.FieldMask read_mask = 3;
 }
 
 message PullLogMetadataResponse {
