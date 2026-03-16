@@ -24,22 +24,23 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type LogLevel_Level int32
+// Level is the log severity level.
+type Level int32
 
 const (
-	LogLevel_LEVEL_UNSPECIFIED LogLevel_Level = 0
-	LogLevel_DEBUG             LogLevel_Level = 1
-	LogLevel_INFO              LogLevel_Level = 2
-	LogLevel_WARN              LogLevel_Level = 3
-	LogLevel_ERROR             LogLevel_Level = 4
-	LogLevel_DPANIC            LogLevel_Level = 5
-	LogLevel_PANIC             LogLevel_Level = 6
-	LogLevel_FATAL             LogLevel_Level = 7
+	Level_LEVEL_UNSPECIFIED Level = 0
+	Level_DEBUG             Level = 1
+	Level_INFO              Level = 2
+	Level_WARN              Level = 3
+	Level_ERROR             Level = 4
+	Level_DPANIC            Level = 5
+	Level_PANIC             Level = 6
+	Level_FATAL             Level = 7
 )
 
-// Enum value maps for LogLevel_Level.
+// Enum value maps for Level.
 var (
-	LogLevel_Level_name = map[int32]string{
+	Level_name = map[int32]string{
 		0: "LEVEL_UNSPECIFIED",
 		1: "DEBUG",
 		2: "INFO",
@@ -49,7 +50,7 @@ var (
 		6: "PANIC",
 		7: "FATAL",
 	}
-	LogLevel_Level_value = map[string]int32{
+	Level_value = map[string]int32{
 		"LEVEL_UNSPECIFIED": 0,
 		"DEBUG":             1,
 		"INFO":              2,
@@ -61,38 +62,38 @@ var (
 	}
 )
 
-func (x LogLevel_Level) Enum() *LogLevel_Level {
-	p := new(LogLevel_Level)
+func (x Level) Enum() *Level {
+	p := new(Level)
 	*p = x
 	return p
 }
 
-func (x LogLevel_Level) String() string {
+func (x Level) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (LogLevel_Level) Descriptor() protoreflect.EnumDescriptor {
+func (Level) Descriptor() protoreflect.EnumDescriptor {
 	return file_smartcore_bos_log_v1_log_proto_enumTypes[0].Descriptor()
 }
 
-func (LogLevel_Level) Type() protoreflect.EnumType {
+func (Level) Type() protoreflect.EnumType {
 	return &file_smartcore_bos_log_v1_log_proto_enumTypes[0]
 }
 
-func (x LogLevel_Level) Number() protoreflect.EnumNumber {
+func (x Level) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use LogLevel_Level.Descriptor instead.
-func (LogLevel_Level) EnumDescriptor() ([]byte, []int) {
-	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{1, 0}
+// Deprecated: Use Level.Descriptor instead.
+func (Level) EnumDescriptor() ([]byte, []int) {
+	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{0}
 }
 
 // LogMessage represents a single log entry.
 type LogMessage struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	Timestamp *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Level     LogLevel_Level         `protobuf:"varint,2,opt,name=level,proto3,enum=smartcore.bos.log.v1.LogLevel_Level" json:"level,omitempty"`
+	Level     Level                  `protobuf:"varint,2,opt,name=level,proto3,enum=smartcore.bos.log.v1.Level" json:"level,omitempty"`
 	// Logger name (e.g. "node", "bacnet").
 	Logger  string `protobuf:"bytes,3,opt,name=logger,proto3" json:"logger,omitempty"`
 	Message string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
@@ -139,11 +140,11 @@ func (x *LogMessage) GetTimestamp() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *LogMessage) GetLevel() LogLevel_Level {
+func (x *LogMessage) GetLevel() Level {
 	if x != nil {
 		return x.Level
 	}
-	return LogLevel_LEVEL_UNSPECIFIED
+	return Level_LEVEL_UNSPECIFIED
 }
 
 func (x *LogMessage) GetLogger() string {
@@ -167,10 +168,10 @@ func (x *LogMessage) GetFields() map[string]string {
 	return nil
 }
 
-// LogLevel represents the minimum log level that will be emitted.
+// LogLevel represents the current minimum log level that will be emitted.
 type LogLevel struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Level         LogLevel_Level         `protobuf:"varint,1,opt,name=level,proto3,enum=smartcore.bos.log.v1.LogLevel_Level" json:"level,omitempty"`
+	Level         Level                  `protobuf:"varint,1,opt,name=level,proto3,enum=smartcore.bos.log.v1.Level" json:"level,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -205,11 +206,11 @@ func (*LogLevel) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_log_v1_log_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *LogLevel) GetLevel() LogLevel_Level {
+func (x *LogLevel) GetLevel() Level {
 	if x != nil {
 		return x.Level
 	}
-	return LogLevel_LEVEL_UNSPECIFIED
+	return Level_LEVEL_UNSPECIFIED
 }
 
 // LogMetadata contains metadata about on-disk log storage.
@@ -276,7 +277,7 @@ type PullLogMessagesRequest struct {
 	// If true, skip the initial replay and stream from now onwards only.
 	UpdatesOnly bool `protobuf:"varint,3,opt,name=updates_only,json=updatesOnly,proto3" json:"updates_only,omitempty"`
 	// Minimum level to receive. Absent/LEVEL_UNSPECIFIED = all levels.
-	MinLevel LogLevel_Level `protobuf:"varint,4,opt,name=min_level,json=minLevel,proto3,enum=smartcore.bos.log.v1.LogLevel_Level" json:"min_level,omitempty"`
+	MinLevel Level `protobuf:"varint,4,opt,name=min_level,json=minLevel,proto3,enum=smartcore.bos.log.v1.Level" json:"min_level,omitempty"`
 	// Optional: filter by logger name prefix.
 	// Reserved for future use; server may return UNIMPLEMENTED if used.
 	LoggerFilter  string                 `protobuf:"bytes,5,opt,name=logger_filter,json=loggerFilter,proto3" json:"logger_filter,omitempty"`
@@ -336,11 +337,11 @@ func (x *PullLogMessagesRequest) GetUpdatesOnly() bool {
 	return false
 }
 
-func (x *PullLogMessagesRequest) GetMinLevel() LogLevel_Level {
+func (x *PullLogMessagesRequest) GetMinLevel() Level {
 	if x != nil {
 		return x.MinLevel
 	}
-	return LogLevel_LEVEL_UNSPECIFIED
+	return Level_LEVEL_UNSPECIFIED
 }
 
 func (x *PullLogMessagesRequest) GetLoggerFilter() string {
@@ -560,7 +561,7 @@ func (x *PullLogLevelResponse) GetChanges() []*PullLogLevelResponse_Change {
 type UpdateLogLevelRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	LogLevel      *LogLevel              `protobuf:"bytes,2,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
+	Level         Level                  `protobuf:"varint,2,opt,name=level,proto3,enum=smartcore.bos.log.v1.Level" json:"level,omitempty"`
 	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,3,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -603,11 +604,11 @@ func (x *UpdateLogLevelRequest) GetName() string {
 	return ""
 }
 
-func (x *UpdateLogLevelRequest) GetLogLevel() *LogLevel {
+func (x *UpdateLogLevelRequest) GetLevel() Level {
 	if x != nil {
-		return x.LogLevel
+		return x.Level
 	}
-	return nil
+	return Level_LEVEL_UNSPECIFIED
 }
 
 func (x *UpdateLogLevelRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
@@ -943,7 +944,7 @@ type PullLogLevelResponse_Change struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	ChangeTime    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=change_time,json=changeTime,proto3" json:"change_time,omitempty"`
-	LogLevel      *LogLevel              `protobuf:"bytes,3,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
+	Level         Level                  `protobuf:"varint,3,opt,name=level,proto3,enum=smartcore.bos.log.v1.Level" json:"level,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -992,11 +993,11 @@ func (x *PullLogLevelResponse_Change) GetChangeTime() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *PullLogLevelResponse_Change) GetLogLevel() *LogLevel {
+func (x *PullLogLevelResponse_Change) GetLevel() Level {
 	if x != nil {
-		return x.LogLevel
+		return x.Level
 	}
-	return nil
+	return Level_LEVEL_UNSPECIFIED
 }
 
 type PullLogMetadataResponse_Change struct {
@@ -1135,38 +1136,28 @@ var File_smartcore_bos_log_v1_log_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_log_v1_log_proto_rawDesc = "" +
 	"\n" +
-	"\x1esmartcore/bos/log/v1/log.proto\x12\x14smartcore.bos.log.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb5\x02\n" +
+	"\x1esmartcore/bos/log/v1/log.proto\x12\x14smartcore.bos.log.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xac\x02\n" +
 	"\n" +
 	"LogMessage\x128\n" +
-	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12:\n" +
-	"\x05level\x18\x02 \x01(\x0e2$.smartcore.bos.log.v1.LogLevel.LevelR\x05level\x12\x16\n" +
+	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x121\n" +
+	"\x05level\x18\x02 \x01(\x0e2\x1b.smartcore.bos.log.v1.LevelR\x05level\x12\x16\n" +
 	"\x06logger\x18\x03 \x01(\tR\x06logger\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12D\n" +
 	"\x06fields\x18\x05 \x03(\v2,.smartcore.bos.log.v1.LogMessage.FieldsEntryR\x06fields\x1a9\n" +
 	"\vFieldsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb2\x01\n" +
-	"\bLogLevel\x12:\n" +
-	"\x05level\x18\x01 \x01(\x0e2$.smartcore.bos.log.v1.LogLevel.LevelR\x05level\"j\n" +
-	"\x05Level\x12\x15\n" +
-	"\x11LEVEL_UNSPECIFIED\x10\x00\x12\t\n" +
-	"\x05DEBUG\x10\x01\x12\b\n" +
-	"\x04INFO\x10\x02\x12\b\n" +
-	"\x04WARN\x10\x03\x12\t\n" +
-	"\x05ERROR\x10\x04\x12\n" +
-	"\n" +
-	"\x06DPANIC\x10\x05\x12\t\n" +
-	"\x05PANIC\x10\x06\x12\t\n" +
-	"\x05FATAL\x10\a\"V\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"=\n" +
+	"\bLogLevel\x121\n" +
+	"\x05level\x18\x01 \x01(\x0e2\x1b.smartcore.bos.log.v1.LevelR\x05level\"V\n" +
 	"\vLogMetadata\x12(\n" +
 	"\x10total_size_bytes\x18\x01 \x01(\x03R\x0etotalSizeBytes\x12\x1d\n" +
 	"\n" +
-	"file_count\x18\x02 \x01(\x05R\tfileCount\"\x95\x02\n" +
+	"file_count\x18\x02 \x01(\x05R\tfileCount\"\x8c\x02\n" +
 	"\x16PullLogMessagesRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12#\n" +
 	"\rinitial_count\x18\x02 \x01(\x05R\finitialCount\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\x12A\n" +
-	"\tmin_level\x18\x04 \x01(\x0e2$.smartcore.bos.log.v1.LogLevel.LevelR\bminLevel\x12#\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\x128\n" +
+	"\tmin_level\x18\x04 \x01(\x0e2\x1b.smartcore.bos.log.v1.LevelR\bminLevel\x12#\n" +
 	"\rlogger_filter\x18\x05 \x01(\tR\floggerFilter\x127\n" +
 	"\tread_mask\x18\x06 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x83\x02\n" +
 	"\x17PullLogMessagesResponse\x12N\n" +
@@ -1182,17 +1173,17 @@ const file_smartcore_bos_log_v1_log_proto_rawDesc = "" +
 	"\x13PullLogLevelRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
 	"\fupdates_only\x18\x02 \x01(\bR\vupdatesOnly\x127\n" +
-	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\xfc\x01\n" +
+	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\xf2\x01\n" +
 	"\x14PullLogLevelResponse\x12K\n" +
-	"\achanges\x18\x01 \x03(\v21.smartcore.bos.log.v1.PullLogLevelResponse.ChangeR\achanges\x1a\x96\x01\n" +
+	"\achanges\x18\x01 \x03(\v21.smartcore.bos.log.v1.PullLogLevelResponse.ChangeR\achanges\x1a\x8c\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x12;\n" +
-	"\tlog_level\x18\x03 \x01(\v2\x1e.smartcore.bos.log.v1.LogLevelR\blogLevel\"\xa5\x01\n" +
+	"changeTime\x121\n" +
+	"\x05level\x18\x03 \x01(\x0e2\x1b.smartcore.bos.log.v1.LevelR\x05level\"\x9b\x01\n" +
 	"\x15UpdateLogLevelRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
-	"\tlog_level\x18\x02 \x01(\v2\x1e.smartcore.bos.log.v1.LogLevelR\blogLevel\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x121\n" +
+	"\x05level\x18\x02 \x01(\x0e2\x1b.smartcore.bos.log.v1.LevelR\x05level\x12;\n" +
 	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\"d\n" +
 	"\x15GetLogMetadataRequest\x12\x12\n" +
@@ -1220,7 +1211,17 @@ const file_smartcore_bos_log_v1_log_proto_rawDesc = "" +
 	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x1d\n" +
 	"\n" +
 	"size_bytes\x18\x03 \x01(\x03R\tsizeBytes\x12!\n" +
-	"\fcontent_type\x18\x04 \x01(\tR\vcontentType2\xe5\x05\n" +
+	"\fcontent_type\x18\x04 \x01(\tR\vcontentType*j\n" +
+	"\x05Level\x12\x15\n" +
+	"\x11LEVEL_UNSPECIFIED\x10\x00\x12\t\n" +
+	"\x05DEBUG\x10\x01\x12\b\n" +
+	"\x04INFO\x10\x02\x12\b\n" +
+	"\x04WARN\x10\x03\x12\t\n" +
+	"\x05ERROR\x10\x04\x12\n" +
+	"\n" +
+	"\x06DPANIC\x10\x05\x12\t\n" +
+	"\x05PANIC\x10\x06\x12\t\n" +
+	"\x05FATAL\x10\a2\xe5\x05\n" +
 	"\x06LogApi\x12p\n" +
 	"\x0fPullLogMessages\x12,.smartcore.bos.log.v1.PullLogMessagesRequest\x1a-.smartcore.bos.log.v1.PullLogMessagesResponse0\x01\x12W\n" +
 	"\vGetLogLevel\x12(.smartcore.bos.log.v1.GetLogLevelRequest\x1a\x1e.smartcore.bos.log.v1.LogLevel\x12g\n" +
@@ -1245,7 +1246,7 @@ func file_smartcore_bos_log_v1_log_proto_rawDescGZIP() []byte {
 var file_smartcore_bos_log_v1_log_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_smartcore_bos_log_v1_log_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_smartcore_bos_log_v1_log_proto_goTypes = []any{
-	(LogLevel_Level)(0),                       // 0: smartcore.bos.log.v1.LogLevel.Level
+	(Level)(0),                                // 0: smartcore.bos.log.v1.Level
 	(*LogMessage)(nil),                        // 1: smartcore.bos.log.v1.LogMessage
 	(*LogLevel)(nil),                          // 2: smartcore.bos.log.v1.LogLevel
 	(*LogMetadata)(nil),                       // 3: smartcore.bos.log.v1.LogMetadata
@@ -1271,16 +1272,16 @@ var file_smartcore_bos_log_v1_log_proto_goTypes = []any{
 }
 var file_smartcore_bos_log_v1_log_proto_depIdxs = []int32{
 	20, // 0: smartcore.bos.log.v1.LogMessage.timestamp:type_name -> google.protobuf.Timestamp
-	0,  // 1: smartcore.bos.log.v1.LogMessage.level:type_name -> smartcore.bos.log.v1.LogLevel.Level
+	0,  // 1: smartcore.bos.log.v1.LogMessage.level:type_name -> smartcore.bos.log.v1.Level
 	15, // 2: smartcore.bos.log.v1.LogMessage.fields:type_name -> smartcore.bos.log.v1.LogMessage.FieldsEntry
-	0,  // 3: smartcore.bos.log.v1.LogLevel.level:type_name -> smartcore.bos.log.v1.LogLevel.Level
-	0,  // 4: smartcore.bos.log.v1.PullLogMessagesRequest.min_level:type_name -> smartcore.bos.log.v1.LogLevel.Level
+	0,  // 3: smartcore.bos.log.v1.LogLevel.level:type_name -> smartcore.bos.log.v1.Level
+	0,  // 4: smartcore.bos.log.v1.PullLogMessagesRequest.min_level:type_name -> smartcore.bos.log.v1.Level
 	21, // 5: smartcore.bos.log.v1.PullLogMessagesRequest.read_mask:type_name -> google.protobuf.FieldMask
 	16, // 6: smartcore.bos.log.v1.PullLogMessagesResponse.changes:type_name -> smartcore.bos.log.v1.PullLogMessagesResponse.Change
 	21, // 7: smartcore.bos.log.v1.GetLogLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
 	21, // 8: smartcore.bos.log.v1.PullLogLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
 	17, // 9: smartcore.bos.log.v1.PullLogLevelResponse.changes:type_name -> smartcore.bos.log.v1.PullLogLevelResponse.Change
-	2,  // 10: smartcore.bos.log.v1.UpdateLogLevelRequest.log_level:type_name -> smartcore.bos.log.v1.LogLevel
+	0,  // 10: smartcore.bos.log.v1.UpdateLogLevelRequest.level:type_name -> smartcore.bos.log.v1.Level
 	21, // 11: smartcore.bos.log.v1.UpdateLogLevelRequest.update_mask:type_name -> google.protobuf.FieldMask
 	21, // 12: smartcore.bos.log.v1.GetLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
 	21, // 13: smartcore.bos.log.v1.PullLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
@@ -1290,7 +1291,7 @@ var file_smartcore_bos_log_v1_log_proto_depIdxs = []int32{
 	20, // 17: smartcore.bos.log.v1.PullLogMessagesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
 	1,  // 18: smartcore.bos.log.v1.PullLogMessagesResponse.Change.messages:type_name -> smartcore.bos.log.v1.LogMessage
 	20, // 19: smartcore.bos.log.v1.PullLogLevelResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	2,  // 20: smartcore.bos.log.v1.PullLogLevelResponse.Change.log_level:type_name -> smartcore.bos.log.v1.LogLevel
+	0,  // 20: smartcore.bos.log.v1.PullLogLevelResponse.Change.level:type_name -> smartcore.bos.log.v1.Level
 	20, // 21: smartcore.bos.log.v1.PullLogMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
 	3,  // 22: smartcore.bos.log.v1.PullLogMetadataResponse.Change.log_metadata:type_name -> smartcore.bos.log.v1.LogMetadata
 	4,  // 23: smartcore.bos.log.v1.LogApi.PullLogMessages:input_type -> smartcore.bos.log.v1.PullLogMessagesRequest

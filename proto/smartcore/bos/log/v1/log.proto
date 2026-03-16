@@ -33,10 +33,22 @@ service LogApi {
   rpc GetDownloadLogUrl(GetDownloadLogUrlRequest) returns (GetDownloadLogUrlResponse);
 }
 
+// Level is the log severity level.
+enum Level {
+  LEVEL_UNSPECIFIED = 0;
+  DEBUG = 1;
+  INFO = 2;
+  WARN = 3;
+  ERROR = 4;
+  DPANIC = 5;
+  PANIC = 6;
+  FATAL = 7;
+}
+
 // LogMessage represents a single log entry.
 message LogMessage {
   google.protobuf.Timestamp timestamp = 1;
-  LogLevel.Level level = 2;
+  Level level = 2;
   // Logger name (e.g. "node", "bacnet").
   string logger = 3;
   string message = 4;
@@ -44,19 +56,8 @@ message LogMessage {
   map<string, string> fields = 5;
 }
 
-// LogLevel represents the minimum log level that will be emitted.
+// LogLevel represents the current minimum log level that will be emitted.
 message LogLevel {
-  enum Level {
-    LEVEL_UNSPECIFIED = 0;
-    DEBUG = 1;
-    INFO = 2;
-    WARN = 3;
-    ERROR = 4;
-    DPANIC = 5;
-    PANIC = 6;
-    FATAL = 7;
-  }
-
   Level level = 1;
 }
 
@@ -76,7 +77,7 @@ message PullLogMessagesRequest {
   // If true, skip the initial replay and stream from now onwards only.
   bool updates_only = 3;
   // Minimum level to receive. Absent/LEVEL_UNSPECIFIED = all levels.
-  LogLevel.Level min_level = 4;
+  Level min_level = 4;
   // Optional: filter by logger name prefix.
   // Reserved for future use; server may return UNIMPLEMENTED if used.
   string logger_filter = 5;
@@ -107,14 +108,14 @@ message PullLogLevelResponse {
   message Change {
     string name = 1;
     google.protobuf.Timestamp change_time = 2;
-    LogLevel log_level = 3;
+    Level level = 3;
   }
   repeated Change changes = 1;
 }
 
 message UpdateLogLevelRequest {
   string name = 1;
-  LogLevel log_level = 2;
+  Level level = 2;
   google.protobuf.FieldMask update_mask = 3;
 }
 

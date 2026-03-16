@@ -4,7 +4,6 @@ import {LogApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/
 import {
   GetDownloadLogUrlRequest,
   GetLogLevelRequest,
-  LogLevel,
   PullLogLevelRequest,
   PullLogMessagesRequest,
   PullLogMetadataRequest,
@@ -28,7 +27,7 @@ export function pullLogMessages(endpoint, request, onMessages, onError) {
   if (request?.initialCount) req.setInitialCount(request.initialCount);
   if (request?.updatesOnly) req.setUpdatesOnly(request.updatesOnly);
   const stream = api.pullLogMessages(req);
-  stream.on('data', msg => {
+  stream.on('data', (msg) => {
     for (const change of msg.getChangesList()) {
       onMessages(change.getMessagesList().map(m => m.toObject()));
     }
@@ -63,11 +62,9 @@ export function pullLogLevel(endpoint, request, onLevel, onError) {
   const req = new PullLogLevelRequest();
   if (request?.name) req.setName(request.name);
   const stream = api.pullLogLevel(req);
-  stream.on('data', msg => {
+  stream.on('data', (msg) => {
     for (const change of msg.getChangesList()) {
-      if (change.hasLogLevel()) {
-        onLevel(change.getLogLevel().toObject());
-      }
+      onLevel(change.getLevel());
     }
   });
   if (onError) stream.on('error', onError);
@@ -85,9 +82,7 @@ export function updateLogLevel(request, tracker) {
     const req = new UpdateLogLevelRequest();
     if (request?.name) req.setName(request.name);
     if (request?.level != null) {
-      const ll = new LogLevel();
-      ll.setLevel(request.level);
-      req.setLogLevel(ll);
+      req.setLevel(request.level);
     }
     return api.updateLogLevel(req);
   });

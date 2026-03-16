@@ -95,8 +95,8 @@ func (s *ModelServer) PullLogMessages(request *logpb.PullLogMessagesRequest, ser
 	}
 }
 
-func filterMessages(msgs []*logpb.LogMessage, minLevel logpb.LogLevel_Level) []*logpb.LogMessage {
-	if minLevel == logpb.LogLevel_LEVEL_UNSPECIFIED {
+func filterMessages(msgs []*logpb.LogMessage, minLevel logpb.Level) []*logpb.LogMessage {
+	if minLevel == logpb.Level_LEVEL_UNSPECIFIED {
 		return msgs
 	}
 	out := msgs[:0:0] // reuse underlying array header but don't share
@@ -122,7 +122,7 @@ func (s *ModelServer) PullLogLevel(request *logpb.PullLogLevelRequest, server lo
 			Changes: []*logpb.PullLogLevelResponse_Change{{
 				Name:       request.Name,
 				ChangeTime: timestamppb.New(change.ChangeTime),
-				LogLevel:   change.Value,
+				Level:      change.Value.Level,
 			}},
 		})
 		if err != nil {
@@ -134,7 +134,7 @@ func (s *ModelServer) PullLogLevel(request *logpb.PullLogLevelRequest, server lo
 
 // UpdateLogLevel sets the log level.
 func (s *ModelServer) UpdateLogLevel(_ context.Context, request *logpb.UpdateLogLevelRequest) (*logpb.LogLevel, error) {
-	return s.model.UpdateLogLevel(request.LogLevel)
+	return s.model.UpdateLogLevel(&logpb.LogLevel{Level: request.Level})
 }
 
 // GetLogMetadata returns the current log file metadata.

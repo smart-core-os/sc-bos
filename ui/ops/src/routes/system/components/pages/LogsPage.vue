@@ -204,7 +204,7 @@ async function startStreams(name) {
   levelStream = pullLogLevel(
       endpoint,
       {name},
-      (lvl) => { selectedLevel.value = lvl.level; },
+      (lvl) => { selectedLevel.value = lvl; },
       (err) => { levelError.value = err.message; }
   );
 
