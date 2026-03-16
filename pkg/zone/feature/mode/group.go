@@ -114,7 +114,7 @@ func (g *Group) UpdateModeValues(ctx context.Context, request *traits.UpdateMode
 			defer wg.Done()
 			var updateMask *fieldmaskpb.FieldMask
 			// todo: this currently doesn't work because fieldbaskpb.FieldMask.IsValid fails with map keys!
-			//  if/when it does or we write our own validation logic in sc-golang we can't use field masks :(
+			//  if/when it does or we write our own validation logic in sc-bos we can't use field masks :(
 			// updateMask = &fieldmaskpb.FieldMask{}
 			// for k := range result.val.Values {
 			// 	updateMask.Paths = append(updateMask.Paths, fmt.Sprintf("values.%s", k))
