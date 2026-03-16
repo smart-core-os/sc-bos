@@ -24,41 +24,33 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Level is the log severity level.
+// Level is the log severity level, aligned with Go slog / OpenTelemetry severity.
+// Implementation layers must map library-specific levels (e.g. zap DPanic/Panic/Fatal) → LEVEL_ERROR.
 type Level int32
 
 const (
 	Level_LEVEL_UNSPECIFIED Level = 0
-	Level_DEBUG             Level = 1
-	Level_INFO              Level = 2
-	Level_WARN              Level = 3
-	Level_ERROR             Level = 4
-	Level_DPANIC            Level = 5
-	Level_PANIC             Level = 6
-	Level_FATAL             Level = 7
+	Level_LEVEL_DEBUG       Level = 1
+	Level_LEVEL_INFO        Level = 2
+	Level_LEVEL_WARN        Level = 3
+	Level_LEVEL_ERROR       Level = 4
 )
 
 // Enum value maps for Level.
 var (
 	Level_name = map[int32]string{
 		0: "LEVEL_UNSPECIFIED",
-		1: "DEBUG",
-		2: "INFO",
-		3: "WARN",
-		4: "ERROR",
-		5: "DPANIC",
-		6: "PANIC",
-		7: "FATAL",
+		1: "LEVEL_DEBUG",
+		2: "LEVEL_INFO",
+		3: "LEVEL_WARN",
+		4: "LEVEL_ERROR",
 	}
 	Level_value = map[string]int32{
 		"LEVEL_UNSPECIFIED": 0,
-		"DEBUG":             1,
-		"INFO":              2,
-		"WARN":              3,
-		"ERROR":             4,
-		"DPANIC":            5,
-		"PANIC":             6,
-		"FATAL":             7,
+		"LEVEL_DEBUG":       1,
+		"LEVEL_INFO":        2,
+		"LEVEL_WARN":        3,
+		"LEVEL_ERROR":       4,
 	}
 )
 
@@ -1211,17 +1203,15 @@ const file_smartcore_bos_log_v1_log_proto_rawDesc = "" +
 	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x1d\n" +
 	"\n" +
 	"size_bytes\x18\x03 \x01(\x03R\tsizeBytes\x12!\n" +
-	"\fcontent_type\x18\x04 \x01(\tR\vcontentType*j\n" +
+	"\fcontent_type\x18\x04 \x01(\tR\vcontentType*`\n" +
 	"\x05Level\x12\x15\n" +
-	"\x11LEVEL_UNSPECIFIED\x10\x00\x12\t\n" +
-	"\x05DEBUG\x10\x01\x12\b\n" +
-	"\x04INFO\x10\x02\x12\b\n" +
-	"\x04WARN\x10\x03\x12\t\n" +
-	"\x05ERROR\x10\x04\x12\n" +
+	"\x11LEVEL_UNSPECIFIED\x10\x00\x12\x0f\n" +
+	"\vLEVEL_DEBUG\x10\x01\x12\x0e\n" +
 	"\n" +
-	"\x06DPANIC\x10\x05\x12\t\n" +
-	"\x05PANIC\x10\x06\x12\t\n" +
-	"\x05FATAL\x10\a2\xe5\x05\n" +
+	"LEVEL_INFO\x10\x02\x12\x0e\n" +
+	"\n" +
+	"LEVEL_WARN\x10\x03\x12\x0f\n" +
+	"\vLEVEL_ERROR\x10\x042\xe5\x05\n" +
 	"\x06LogApi\x12p\n" +
 	"\x0fPullLogMessages\x12,.smartcore.bos.log.v1.PullLogMessagesRequest\x1a-.smartcore.bos.log.v1.PullLogMessagesResponse0\x01\x12W\n" +
 	"\vGetLogLevel\x12(.smartcore.bos.log.v1.GetLogLevelRequest\x1a\x1e.smartcore.bos.log.v1.LogLevel\x12g\n" +

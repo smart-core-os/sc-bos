@@ -153,40 +153,26 @@ func entryToLogMessage(entry zapcore.Entry, fields []zapcore.Field) *logpb.LogMe
 }
 
 func zapLevelToLogpb(l zapcore.Level) logpb.Level {
-	switch l {
-	case zapcore.DebugLevel:
-		return logpb.Level_DEBUG
-	case zapcore.InfoLevel:
-		return logpb.Level_INFO
-	case zapcore.WarnLevel:
-		return logpb.Level_WARN
-	case zapcore.ErrorLevel:
-		return logpb.Level_ERROR
-	case zapcore.DPanicLevel:
-		return logpb.Level_DPANIC
-	case zapcore.PanicLevel:
-		return logpb.Level_PANIC
-	case zapcore.FatalLevel:
-		return logpb.Level_FATAL
-	default:
-		return logpb.Level_LEVEL_UNSPECIFIED
+	switch {
+	case l <= zapcore.DebugLevel:
+		return logpb.Level_LEVEL_DEBUG
+	case l <= zapcore.InfoLevel:
+		return logpb.Level_LEVEL_INFO
+	case l <= zapcore.WarnLevel:
+		return logpb.Level_LEVEL_WARN
+	default: // ErrorLevel, DPanicLevel, PanicLevel, FatalLevel → ERROR
+		return logpb.Level_LEVEL_ERROR
 	}
 }
 
 func logpbLevelToZap(l logpb.Level) zapcore.Level {
 	switch l {
-	case logpb.Level_DEBUG:
+	case logpb.Level_LEVEL_DEBUG:
 		return zapcore.DebugLevel
-	case logpb.Level_WARN:
+	case logpb.Level_LEVEL_WARN:
 		return zapcore.WarnLevel
-	case logpb.Level_ERROR:
+	case logpb.Level_LEVEL_ERROR:
 		return zapcore.ErrorLevel
-	case logpb.Level_DPANIC:
-		return zapcore.DPanicLevel
-	case logpb.Level_PANIC:
-		return zapcore.PanicLevel
-	case logpb.Level_FATAL:
-		return zapcore.FatalLevel
 	default:
 		return zapcore.InfoLevel
 	}

@@ -130,8 +130,8 @@ const levelOptions = [
   {label: 'ERROR', value: 4}
 ];
 
-const levelColor = {1: 'grey', 2: 'blue', 3: 'amber', 4: 'red', 5: 'red', 6: 'red', 7: 'red'};
-const levelName = {1: 'DBG', 2: 'INF', 3: 'WRN', 4: 'ERR', 5: 'DPK', 6: 'PNC', 7: 'FTL'};
+const levelColor = {1: 'grey', 2: 'blue', 3: 'amber', 4: 'red'};
+const levelName = {1: 'DBG', 2: 'INF', 3: 'WRN', 4: 'ERR'};
 
 const filteredMessages = computed(() => {
   if (!search.value) return messages.value;

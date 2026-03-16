@@ -33,16 +33,14 @@ service LogApi {
   rpc GetDownloadLogUrl(GetDownloadLogUrlRequest) returns (GetDownloadLogUrlResponse);
 }
 
-// Level is the log severity level.
+// Level is the log severity level, aligned with Go slog / OpenTelemetry severity.
+// Implementation layers must map library-specific levels (e.g. zap DPanic/Panic/Fatal) → LEVEL_ERROR.
 enum Level {
   LEVEL_UNSPECIFIED = 0;
-  DEBUG = 1;
-  INFO = 2;
-  WARN = 3;
-  ERROR = 4;
-  DPANIC = 5;
-  PANIC = 6;
-  FATAL = 7;
+  LEVEL_DEBUG = 1;
+  LEVEL_INFO = 2;
+  LEVEL_WARN = 3;
+  LEVEL_ERROR = 4;
 }
 
 // LogMessage represents a single log entry.

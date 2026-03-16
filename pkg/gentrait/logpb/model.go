@@ -42,7 +42,7 @@ func NewModel(bufCap int) *Model {
 	return &Model{
 		buf: make([]*logpb.LogMessage, bufCap),
 		level: resource.NewValue(resource.WithInitialValue(&logpb.LogLevel{
-			Level: logpb.Level_INFO,
+			Level: logpb.Level_LEVEL_INFO,
 		})),
 		metadata: resource.NewValue(resource.WithInitialValue(&logpb.LogMetadata{})),
 	}
