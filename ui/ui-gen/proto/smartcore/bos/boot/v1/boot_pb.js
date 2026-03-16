@@ -15,8 +15,6 @@ var jspb = require('google-protobuf');
 var goog = jspb;
 var global = globalThis;
 
-var google_protobuf_duration_pb = require('google-protobuf/google/protobuf/duration_pb.js');
-goog.object.extend(proto, google_protobuf_duration_pb);
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
@@ -211,8 +209,7 @@ proto.smartcore.bos.boot.v1.BootState.toObject = function(includeInstance, msg) 
   var f, obj = {
 bootTime: (f = msg.getBootTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
 lastRebootReason: jspb.Message.getFieldWithDefault(msg, 2, ""),
-lastRebootActor: jspb.Message.getFieldWithDefault(msg, 3, ""),
-uptime: (f = msg.getUptime()) && google_protobuf_duration_pb.Duration.toObject(includeInstance, f)
+lastRebootActor: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -261,11 +258,6 @@ proto.smartcore.bos.boot.v1.BootState.deserializeBinaryFromReader = function(msg
     case 3:
       var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setLastRebootActor(value);
-      break;
-    case 4:
-      var value = new google_protobuf_duration_pb.Duration;
-      reader.readMessage(value,google_protobuf_duration_pb.Duration.deserializeBinaryFromReader);
-      msg.setUptime(value);
       break;
     default:
       reader.skipField();
@@ -316,14 +308,6 @@ proto.smartcore.bos.boot.v1.BootState.serializeBinaryToWriter = function(message
     writer.writeString(
       3,
       f
-    );
-  }
-  f = message.getUptime();
-  if (f != null) {
-    writer.writeMessage(
-      4,
-      f,
-      google_protobuf_duration_pb.Duration.serializeBinaryToWriter
     );
   }
 };
@@ -399,43 +383,6 @@ proto.smartcore.bos.boot.v1.BootState.prototype.getLastRebootActor = function() 
  */
 proto.smartcore.bos.boot.v1.BootState.prototype.setLastRebootActor = function(value) {
   return jspb.Message.setProto3StringField(this, 3, value);
-};
-
-
-/**
- * optional google.protobuf.Duration uptime = 4;
- * @return {?proto.google.protobuf.Duration}
- */
-proto.smartcore.bos.boot.v1.BootState.prototype.getUptime = function() {
-  return /** @type{?proto.google.protobuf.Duration} */ (
-    jspb.Message.getWrapperField(this, google_protobuf_duration_pb.Duration, 4));
-};
-
-
-/**
- * @param {?proto.google.protobuf.Duration|undefined} value
- * @return {!proto.smartcore.bos.boot.v1.BootState} returns this
-*/
-proto.smartcore.bos.boot.v1.BootState.prototype.setUptime = function(value) {
-  return jspb.Message.setWrapperField(this, 4, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.smartcore.bos.boot.v1.BootState} returns this
- */
-proto.smartcore.bos.boot.v1.BootState.prototype.clearUptime = function() {
-  return this.setUptime(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.smartcore.bos.boot.v1.BootState.prototype.hasUptime = function() {
-  return jspb.Message.getField(this, 4) != null;
 };
 
 

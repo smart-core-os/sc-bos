@@ -4,12 +4,11 @@ package smartcore.bos.boot.v1;
 
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/bootpb";
 
-import "google/protobuf/duration.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/actor/v1/actor.proto";
 
-// BootApi provides the ability to reboot a device or process and query its uptime.
+// BootApi provides the ability to reboot a device or process and query its boot state.
 service BootApi {
   // GetBootState returns the current boot state including boot time.
   rpc GetBootState(GetBootStateRequest) returns (BootState);
@@ -26,9 +25,6 @@ message BootState {
   string last_reboot_reason = 2;
   // The display name of the actor who triggered the last reboot, if known.
   string last_reboot_actor = 3;
-  // Computed: how long the device or process has been running (now - boot_time).
-  // Not stored in the model; populated fresh on each GetBootState call.
-  google.protobuf.Duration uptime = 4;
 }
 
 message GetBootStateRequest {

@@ -2,11 +2,8 @@ package bootpb
 
 import (
 	"context"
-	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	bootproto "github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
@@ -26,16 +23,7 @@ func NewModelServer(model *Model) *ModelServer {
 }
 
 func (s *ModelServer) GetBootState(ctx context.Context, req *bootproto.GetBootStateRequest) (*bootproto.BootState, error) {
-	state := s.model.GetBootState(resource.WithReadMask(req.ReadMask))
-	// Compute uptime fresh on each call; don't store it in the model.
-	if state != nil && state.BootTime != nil {
-		uptime := time.Since(state.BootTime.AsTime())
-		// Clone so we don't mutate the stored value.
-		out := proto.Clone(state).(*bootproto.BootState)
-		out.Uptime = durationpb.New(uptime)
-		return out, nil
-	}
-	return state, nil
+	return s.model.GetBootState(resource.WithReadMask(req.ReadMask)), nil
 }
 
 func (s *ModelServer) PullBootState(req *bootproto.PullBootStateRequest, server grpc.ServerStreamingServer[bootproto.PullBootStateResponse]) error {

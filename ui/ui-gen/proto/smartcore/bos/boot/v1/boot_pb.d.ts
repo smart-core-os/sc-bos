@@ -1,6 +1,5 @@
 import * as jspb from 'google-protobuf'
 
-import * as google_protobuf_duration_pb from 'google-protobuf/google/protobuf/duration_pb'; // proto import: "google/protobuf/duration.proto"
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
 import * as smartcore_bos_actor_v1_actor_pb from '../../../../smartcore/bos/actor/v1/actor_pb'; // proto import: "smartcore/bos/actor/v1/actor.proto"
@@ -18,11 +17,6 @@ export class BootState extends jspb.Message {
   getLastRebootActor(): string;
   setLastRebootActor(value: string): BootState;
 
-  getUptime(): google_protobuf_duration_pb.Duration | undefined;
-  setUptime(value?: google_protobuf_duration_pb.Duration): BootState;
-  hasUptime(): boolean;
-  clearUptime(): BootState;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): BootState.AsObject;
   static toObject(includeInstance: boolean, msg: BootState): BootState.AsObject;
@@ -36,7 +30,6 @@ export namespace BootState {
     bootTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
     lastRebootReason: string;
     lastRebootActor: string;
-    uptime?: google_protobuf_duration_pb.Duration.AsObject;
   };
 }
 

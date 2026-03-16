@@ -28,7 +28,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// BootApi provides the ability to reboot a device or process and query its uptime.
+// BootApi provides the ability to reboot a device or process and query its boot state.
 type BootApiClient interface {
 	// GetBootState returns the current boot state including boot time.
 	GetBootState(ctx context.Context, in *GetBootStateRequest, opts ...grpc.CallOption) (*BootState, error)
@@ -89,7 +89,7 @@ func (c *bootApiClient) Reboot(ctx context.Context, in *RebootRequest, opts ...g
 // All implementations must embed UnimplementedBootApiServer
 // for forward compatibility.
 //
-// BootApi provides the ability to reboot a device or process and query its uptime.
+// BootApi provides the ability to reboot a device or process and query its boot state.
 type BootApiServer interface {
 	// GetBootState returns the current boot state including boot time.
 	GetBootState(context.Context, *GetBootStateRequest) (*BootState, error)
