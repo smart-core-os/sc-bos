@@ -20,8 +20,9 @@ var serviceTmplStr string
 var serviceTmpl *template.Template
 
 var (
-	flags    flag.FlagSet
-	usePaths = flags.Bool("usePaths", false, "use paths option instead of hard-coded pkg/trait/{trait} output")
+	flags     flag.FlagSet
+	usePaths  = flags.Bool("usePaths", false, "use paths option instead of hard-coded pkg/trait/{trait} output")
+	outputPkg = flags.String("outputPkg", "", "full Go import path for the generated file's package, e.g. github.com/smart-core-os/sc-bos/pkg/proto/lightpb")
 )
 
 func main() {
@@ -62,8 +63,14 @@ func generateFile(plugin *protogen.Plugin, file *protogen.File) error {
 	for _, service := range file.Services {
 		name := trimPrefixIgnoreCase(service.GoName, strings.TrimSuffix(pkg, "pb"))
 		filename := fmt.Sprintf("pkg/trait/%s/%s_router.pb.go", pkg, strings.ToLower(name))
-		importPath := protogen.GoImportPath(fmt.Sprintf("github.com/smart-core-os/sc-bos/sc-golang/pkg/trait/%s", pkg))
-		if *usePaths {
+		importPath := protogen.GoImportPath(fmt.Sprintf("github.com/smart-core-os/sc-bos/pkg/trait/%s", pkg))
+		const modulePath = "github.com/smart-core-os/sc-bos/"
+		if *outputPkg != "" {
+			relDir := strings.TrimPrefix(*outputPkg, modulePath)
+			pkg = filepath.Base(relDir)
+			filename = fmt.Sprintf("%s/%s_router.pb.go", relDir, strings.ToLower(name))
+			importPath = protogen.GoImportPath(*outputPkg)
+		} else if *usePaths {
 			qual := strings.ToLower(name)
 			// avoid filenames like some/path/metadata_metadataapi_router.pb.go,
 			// which would come from {prefix=some/path/metadata}{servicename=metadataapi}_router.pb.go.
@@ -91,7 +98,7 @@ func generateFile(plugin *protogen.Plugin, file *protogen.File) error {
 func newServiceModel(g *protogen.GeneratedFile, service *protogen.Service, file *protogen.File, pkg, routerName string) ServiceModel {
 	// imports required by all
 	g.QualifiedGoIdent(protogen.GoIdent{GoImportPath: "google.golang.org/grpc"})
-	g.QualifiedGoIdent(protogen.GoIdent{GoImportPath: "github.com/smart-core-os/sc-bos/sc-golang/pkg/router"})
+	g.QualifiedGoIdent(protogen.GoIdent{GoImportPath: "github.com/smart-core-os/sc-bos/pkg/router"})
 	g.QualifiedGoIdent(protogen.GoIdent{GoImportPath: "fmt"})
 
 	model := ServiceModel{
