@@ -6,32 +6,32 @@ import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/t
 import * as smartcore_bos_actor_v1_actor_pb from '../../../../smartcore/bos/actor/v1/actor_pb'; // proto import: "smartcore/bos/actor/v1/actor.proto"
 
 
-export class RebootState extends jspb.Message {
+export class BootState extends jspb.Message {
   getBootTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
-  setBootTime(value?: google_protobuf_timestamp_pb.Timestamp): RebootState;
+  setBootTime(value?: google_protobuf_timestamp_pb.Timestamp): BootState;
   hasBootTime(): boolean;
-  clearBootTime(): RebootState;
+  clearBootTime(): BootState;
 
   getLastRebootReason(): string;
-  setLastRebootReason(value: string): RebootState;
+  setLastRebootReason(value: string): BootState;
 
   getLastRebootActor(): string;
-  setLastRebootActor(value: string): RebootState;
+  setLastRebootActor(value: string): BootState;
 
   getUptime(): google_protobuf_duration_pb.Duration | undefined;
-  setUptime(value?: google_protobuf_duration_pb.Duration): RebootState;
+  setUptime(value?: google_protobuf_duration_pb.Duration): BootState;
   hasUptime(): boolean;
-  clearUptime(): RebootState;
+  clearUptime(): BootState;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): RebootState.AsObject;
-  static toObject(includeInstance: boolean, msg: RebootState): RebootState.AsObject;
-  static serializeBinaryToWriter(message: RebootState, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): RebootState;
-  static deserializeBinaryFromReader(message: RebootState, reader: jspb.BinaryReader): RebootState;
+  toObject(includeInstance?: boolean): BootState.AsObject;
+  static toObject(includeInstance: boolean, msg: BootState): BootState.AsObject;
+  static serializeBinaryToWriter(message: BootState, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): BootState;
+  static deserializeBinaryFromReader(message: BootState, reader: jspb.BinaryReader): BootState;
 }
 
-export namespace RebootState {
+export namespace BootState {
   export type AsObject = {
     bootTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
     lastRebootReason: string;
@@ -40,51 +40,51 @@ export namespace RebootState {
   };
 }
 
-export class GetRebootStateRequest extends jspb.Message {
+export class GetBootStateRequest extends jspb.Message {
   getName(): string;
-  setName(value: string): GetRebootStateRequest;
+  setName(value: string): GetBootStateRequest;
 
   getReadMask(): google_protobuf_field_mask_pb.FieldMask | undefined;
-  setReadMask(value?: google_protobuf_field_mask_pb.FieldMask): GetRebootStateRequest;
+  setReadMask(value?: google_protobuf_field_mask_pb.FieldMask): GetBootStateRequest;
   hasReadMask(): boolean;
-  clearReadMask(): GetRebootStateRequest;
+  clearReadMask(): GetBootStateRequest;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): GetRebootStateRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: GetRebootStateRequest): GetRebootStateRequest.AsObject;
-  static serializeBinaryToWriter(message: GetRebootStateRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): GetRebootStateRequest;
-  static deserializeBinaryFromReader(message: GetRebootStateRequest, reader: jspb.BinaryReader): GetRebootStateRequest;
+  toObject(includeInstance?: boolean): GetBootStateRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetBootStateRequest): GetBootStateRequest.AsObject;
+  static serializeBinaryToWriter(message: GetBootStateRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetBootStateRequest;
+  static deserializeBinaryFromReader(message: GetBootStateRequest, reader: jspb.BinaryReader): GetBootStateRequest;
 }
 
-export namespace GetRebootStateRequest {
+export namespace GetBootStateRequest {
   export type AsObject = {
     name: string;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
   };
 }
 
-export class PullRebootStateRequest extends jspb.Message {
+export class PullBootStateRequest extends jspb.Message {
   getName(): string;
-  setName(value: string): PullRebootStateRequest;
+  setName(value: string): PullBootStateRequest;
 
   getReadMask(): google_protobuf_field_mask_pb.FieldMask | undefined;
-  setReadMask(value?: google_protobuf_field_mask_pb.FieldMask): PullRebootStateRequest;
+  setReadMask(value?: google_protobuf_field_mask_pb.FieldMask): PullBootStateRequest;
   hasReadMask(): boolean;
-  clearReadMask(): PullRebootStateRequest;
+  clearReadMask(): PullBootStateRequest;
 
   getUpdatesOnly(): boolean;
-  setUpdatesOnly(value: boolean): PullRebootStateRequest;
+  setUpdatesOnly(value: boolean): PullBootStateRequest;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): PullRebootStateRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: PullRebootStateRequest): PullRebootStateRequest.AsObject;
-  static serializeBinaryToWriter(message: PullRebootStateRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): PullRebootStateRequest;
-  static deserializeBinaryFromReader(message: PullRebootStateRequest, reader: jspb.BinaryReader): PullRebootStateRequest;
+  toObject(includeInstance?: boolean): PullBootStateRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: PullBootStateRequest): PullBootStateRequest.AsObject;
+  static serializeBinaryToWriter(message: PullBootStateRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PullBootStateRequest;
+  static deserializeBinaryFromReader(message: PullBootStateRequest, reader: jspb.BinaryReader): PullBootStateRequest;
 }
 
-export namespace PullRebootStateRequest {
+export namespace PullBootStateRequest {
   export type AsObject = {
     name: string;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
@@ -92,23 +92,23 @@ export namespace PullRebootStateRequest {
   };
 }
 
-export class PullRebootStateResponse extends jspb.Message {
-  getChangesList(): Array<PullRebootStateResponse.Change>;
-  setChangesList(value: Array<PullRebootStateResponse.Change>): PullRebootStateResponse;
-  clearChangesList(): PullRebootStateResponse;
-  addChanges(value?: PullRebootStateResponse.Change, index?: number): PullRebootStateResponse.Change;
+export class PullBootStateResponse extends jspb.Message {
+  getChangesList(): Array<PullBootStateResponse.Change>;
+  setChangesList(value: Array<PullBootStateResponse.Change>): PullBootStateResponse;
+  clearChangesList(): PullBootStateResponse;
+  addChanges(value?: PullBootStateResponse.Change, index?: number): PullBootStateResponse.Change;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): PullRebootStateResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: PullRebootStateResponse): PullRebootStateResponse.AsObject;
-  static serializeBinaryToWriter(message: PullRebootStateResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): PullRebootStateResponse;
-  static deserializeBinaryFromReader(message: PullRebootStateResponse, reader: jspb.BinaryReader): PullRebootStateResponse;
+  toObject(includeInstance?: boolean): PullBootStateResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: PullBootStateResponse): PullBootStateResponse.AsObject;
+  static serializeBinaryToWriter(message: PullBootStateResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PullBootStateResponse;
+  static deserializeBinaryFromReader(message: PullBootStateResponse, reader: jspb.BinaryReader): PullBootStateResponse;
 }
 
-export namespace PullRebootStateResponse {
+export namespace PullBootStateResponse {
   export type AsObject = {
-    changesList: Array<PullRebootStateResponse.Change.AsObject>;
+    changesList: Array<PullBootStateResponse.Change.AsObject>;
   };
 
   export class Change extends jspb.Message {
@@ -120,10 +120,10 @@ export namespace PullRebootStateResponse {
     hasChangeTime(): boolean;
     clearChangeTime(): Change;
 
-    getRebootState(): RebootState | undefined;
-    setRebootState(value?: RebootState): Change;
-    hasRebootState(): boolean;
-    clearRebootState(): Change;
+    getBootState(): BootState | undefined;
+    setBootState(value?: BootState): Change;
+    hasBootState(): boolean;
+    clearBootState(): Change;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Change.AsObject;
@@ -137,7 +137,7 @@ export namespace PullRebootStateResponse {
     export type AsObject = {
       name: string;
       changeTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
-      rebootState?: RebootState.AsObject;
+      bootState?: BootState.AsObject;
     };
   }
 

@@ -2,21 +2,21 @@ import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setValue, trackAction} from '@/api/resource.js';
 import {Actor} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/actor/v1/actor_pb';
-import {RebootApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/reboot/v1/reboot_grpc_web_pb';
-import {PullRebootStateRequest, RebootRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/reboot/v1/reboot_pb';
+import {BootApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/boot/v1/boot_grpc_web_pb';
+import {PullBootStateRequest, RebootRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/boot/v1/boot_pb';
 
 /**
- * @param {Partial<PullRebootStateRequest.AsObject>} request
- * @param {ResourceValue<RebootState.AsObject, PullRebootStateResponse>} resource
+ * @param {Partial<PullBootStateRequest.AsObject>} request
+ * @param {ResourceValue<BootState.AsObject, PullBootStateResponse>} resource
  */
-export function pullRebootState(request, resource) {
-  pullResource('Reboot.pullRebootState', resource, endpoint => {
+export function pullBootState(request, resource) {
+  pullResource('Boot.pullBootState', resource, endpoint => {
     const api = apiClient(endpoint);
-    const stream = api.pullRebootState(pullRebootStateRequestFromObject(request));
+    const stream = api.pullBootState(pullBootStateRequestFromObject(request));
     stream.on('data', msg => {
       const changes = msg.getChangesList();
       for (const change of changes) {
-        setValue(resource, change.getRebootState().toObject());
+        setValue(resource, change.getBootState().toObject());
       }
     });
     return stream;
@@ -29,7 +29,7 @@ export function pullRebootState(request, resource) {
  * @return {Promise<RebootResponse.AsObject>}
  */
 export function reboot(request, tracker) {
-  return trackAction('Reboot.reboot', tracker ?? {}, endpoint => {
+  return trackAction('Boot.reboot', tracker ?? {}, endpoint => {
     const api = apiClient(endpoint);
     return api.reboot(rebootRequestFromObject(request));
   });
@@ -37,19 +37,19 @@ export function reboot(request, tracker) {
 
 /**
  * @param {string} endpoint
- * @return {RebootApiPromiseClient}
+ * @return {BootApiPromiseClient}
  */
 function apiClient(endpoint) {
-  return new RebootApiPromiseClient(endpoint, null, clientOptions());
+  return new BootApiPromiseClient(endpoint, null, clientOptions());
 }
 
 /**
- * @param {Partial<PullRebootStateRequest.AsObject>} obj
- * @return {PullRebootStateRequest|undefined}
+ * @param {Partial<PullBootStateRequest.AsObject>} obj
+ * @return {PullBootStateRequest|undefined}
  */
-function pullRebootStateRequestFromObject(obj) {
+function pullBootStateRequestFromObject(obj) {
   if (!obj) return undefined;
-  const dst = new PullRebootStateRequest();
+  const dst = new PullBootStateRequest();
   setProperties(dst, obj, 'name', 'updatesOnly');
   dst.setReadMask(fieldMaskFromObject(obj.readMask));
   return dst;

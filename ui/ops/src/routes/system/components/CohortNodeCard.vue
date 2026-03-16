@@ -132,7 +132,7 @@
 
 <script setup>
 import StatusAlert from '@/components/StatusAlert.vue';
-import {pullRebootState, reboot} from '@/api/sc/traits/reboot.js';
+import {pullBootState, reboot} from '@/api/sc/traits/boot.js';
 import {closeResource, newResourceValue} from '@/api/resource.js';
 import useAuthSetup from '@/composables/useAuthSetup.js';
 import {usePullServiceMetadata} from '@/composables/services.js';
@@ -167,7 +167,7 @@ watchResource(
     () => ({name: props.node.name}),
     () => false,
     (req) => {
-      pullRebootState(req, rebootResource);
+      pullBootState(req, rebootResource);
       return () => closeResource(rebootResource);
     }
 );

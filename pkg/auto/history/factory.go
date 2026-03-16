@@ -20,7 +20,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/rebootpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/bootpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
@@ -41,7 +41,7 @@ import (
 	gen_historypb "github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	gen_rebootpb "github.com/smart-core-os/sc-bos/pkg/proto/rebootpb"
+	gen_bootpb "github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 	gen_resourceusepb "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
@@ -344,8 +344,8 @@ func (a *automation) createCollector(store history.Store, traitName trait.Name) 
 		return meterpb.WrapHistory(historypb.NewMeterServer(store)), a.collectMeterReadingChanges, nil
 	case trait.OccupancySensor:
 		return occupancysensorpb.WrapHistory(historypb.NewOccupancySensorServer(store)), a.collectOccupancyChanges, nil
-	case rebootpb.TraitName:
-		return gen_rebootpb.WrapHistory(historypb.NewRebootServer(store)), a.collectRebootEventChanges, nil
+	case bootpb.TraitName:
+		return gen_bootpb.WrapHistory(historypb.NewBootServer(store)), a.collectBootEventChanges, nil
 	case resourceusepb.TraitName:
 		return gen_resourceusepb.WrapHistory(historypb.NewResourceUseServer(store)), a.collectResourceUseChanges, nil
 	case soundsensorpb.TraitName:

@@ -1,7 +1,7 @@
-// Package reboot implements the Reboot trait for the sc-bos process itself.
+// Package boot implements the Boot trait for the sc-bos process itself.
 // When enabled, it records the process boot time and handles reboot requests by
 // calling os.Exit(0), relying on the process supervisor (e.g. systemd) to restart it.
-package reboot
+package boot
 
 import (
 	"context"
@@ -14,11 +14,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/bootpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/rebootpb"
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	proto "github.com/smart-core-os/sc-bos/pkg/proto/rebootpb"
+	proto "github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
@@ -44,7 +44,7 @@ type rebootState struct {
 	CleanExit bool   `json:"cleanExit,omitempty"`
 }
 
-// System implements the Reboot trait for this sc-bos process.
+// System implements the Boot trait for this sc-bos process.
 type System struct {
 	*service.Service[config]
 
@@ -54,14 +54,14 @@ type System struct {
 	dataDir   string
 
 	mu      sync.Mutex
-	history []*proto.RebootEvent
+	history []*proto.BootEvent
 }
 
 func NewSystem(services system.Services) *System {
 	s := &System{
 		nodeName:  services.Node.Name(),
 		announcer: node.NewReplaceAnnouncer(services.Node),
-		logger:    services.Logger.Named("reboot"),
+		logger:    services.Logger.Named("boot"),
 		dataDir:   services.DataDir,
 	}
 	s.Service = service.New(service.MonoApply(s.applyConfig))
@@ -94,23 +94,23 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 		_ = s.writeStateFile(rebootState{CleanExit: true})
 	}()
 
-	model := rebootpb.NewModel(&proto.RebootState{
+	model := bootpb.NewModel(&proto.BootState{
 		BootTime:         timestamppb.New(bootTime),
 		LastRebootReason: lastReason,
 		LastRebootActor:  lastActor,
 	})
 
-	server := rebootpb.NewModelServer(model)
+	server := bootpb.NewModelServer(model)
 	server.OnReboot = s.onReboot
 
 	// In-memory store for history within the current session.
-	// If the operator configures a `history` auto with trait=smartcore.bos.Reboot,
+	// If the operator configures a `history` auto with trait=smartcore.bos.Boot,
 	// that provides persistent cross-restart history backed by a durable store.
 	store := memstore.New()
-	histServer := historypb.NewRebootServer(store)
+	histServer := historypb.NewBootServer(store)
 
 	announcer.Announce(s.nodeName,
-		node.HasTrait(rebootpb.TraitName, node.WithClients(
+		node.HasTrait(bootpb.TraitName, node.WithClients(
 			proto.WrapApi(server),
 			proto.WrapHistory(histServer),
 		)),
@@ -122,7 +122,7 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 // onReboot is called by the ModelServer when a Reboot RPC is received.
 // It records the event then schedules a clean process exit.
 func (s *System) onReboot(_ context.Context, req *proto.RebootRequest) error {
-	event := &proto.RebootEvent{
+	event := &proto.BootEvent{
 		RebootTime: timestamppb.Now(),
 		Reason:     req.Reason,
 		Actor:      req.Actor,

@@ -7,20 +7,20 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
-	"github.com/smart-core-os/sc-bos/pkg/proto/rebootpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 )
 
-func (a *automation) collectRebootEventChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
-	client := rebootpb.NewRebootApiClient(a.clients.ClientConn())
+func (a *automation) collectBootEventChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+	client := bootpb.NewBootApiClient(a.clients.ClientConn())
 
 	// Deduplicate on boot_time: a new boot_time means a new boot event.
 	// We use proto equality (cmp.Equal with no options) so that any change
-	// to the RebootState triggers a record, but reconnects to the same boot
+	// to the BootState triggers a record, but reconnects to the same boot
 	// session are ignored.
-	last := newDeduper[*rebootpb.RebootState](nil)
+	last := newDeduper[*bootpb.BootState](nil)
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
-		stream, err := client.PullRebootState(ctx, &rebootpb.PullRebootStateRequest{Name: source.Name, UpdatesOnly: false})
+		stream, err := client.PullBootState(ctx, &bootpb.PullBootStateRequest{Name: source.Name, UpdatesOnly: false})
 		if err != nil {
 			return err
 		}
@@ -30,10 +30,10 @@ func (a *automation) collectRebootEventChanges(ctx context.Context, source confi
 				return err
 			}
 			for _, change := range msg.Changes {
-				if !last.Changed(change.GetRebootState()) {
+				if !last.Changed(change.GetBootState()) {
 					continue
 				}
-				payload, err := proto.Marshal(change.GetRebootState())
+				payload, err := proto.Marshal(change.GetBootState())
 				if err != nil {
 					return err
 				}
@@ -47,7 +47,7 @@ func (a *automation) collectRebootEventChanges(ctx context.Context, source confi
 	}
 
 	pollFn := func(ctx context.Context, changes chan<- []byte) error {
-		resp, err := client.GetRebootState(ctx, &rebootpb.GetRebootStateRequest{Name: source.Name})
+		resp, err := client.GetBootState(ctx, &bootpb.GetBootStateRequest{Name: source.Name})
 		if err != nil {
 			return err
 		}

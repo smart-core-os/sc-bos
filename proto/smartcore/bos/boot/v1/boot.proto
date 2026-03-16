@@ -1,25 +1,25 @@
 syntax = "proto3";
 
-package smartcore.bos.reboot.v1;
+package smartcore.bos.boot.v1;
 
-option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/rebootpb";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/bootpb";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/actor/v1/actor.proto";
 
-// RebootApi provides the ability to reboot a device or process and query its uptime.
-service RebootApi {
-  // GetRebootState returns the current reboot state including boot time.
-  rpc GetRebootState(GetRebootStateRequest) returns (RebootState);
-  // PullRebootState streams changes to the reboot state.
-  rpc PullRebootState(PullRebootStateRequest) returns (stream PullRebootStateResponse);
+// BootApi provides the ability to reboot a device or process and query its uptime.
+service BootApi {
+  // GetBootState returns the current boot state including boot time.
+  rpc GetBootState(GetBootStateRequest) returns (BootState);
+  // PullBootState streams changes to the boot state.
+  rpc PullBootState(PullBootStateRequest) returns (stream PullBootStateResponse);
   // Reboot triggers a reboot of the device or process.
   rpc Reboot(RebootRequest) returns (RebootResponse);
 }
 
-message RebootState {
+message BootState {
   // When the device or process last started.
   google.protobuf.Timestamp boot_time = 1;
   // The reason for the last reboot, if known.
@@ -27,28 +27,28 @@ message RebootState {
   // The display name of the actor who triggered the last reboot, if known.
   string last_reboot_actor = 3;
   // Computed: how long the device or process has been running (now - boot_time).
-  // Not stored in the model; populated fresh on each GetRebootState call.
+  // Not stored in the model; populated fresh on each GetBootState call.
   google.protobuf.Duration uptime = 4;
 }
 
-message GetRebootStateRequest {
+message GetBootStateRequest {
   string name = 1;
   google.protobuf.FieldMask read_mask = 2;
 }
 
-message PullRebootStateRequest {
+message PullBootStateRequest {
   string name = 1;
   google.protobuf.FieldMask read_mask = 2;
-  // By default, PullRebootState sends the initial RebootState when the stream opens, followed by changes.
-  // Setting updates_only true will disable this behaviour, sending only when the RebootState changes.
+  // By default, PullBootState sends the initial BootState when the stream opens, followed by changes.
+  // Setting updates_only true will disable this behaviour, sending only when the BootState changes.
   bool updates_only = 3;
 }
 
-message PullRebootStateResponse {
+message PullBootStateResponse {
   message Change {
     string name = 1;
     google.protobuf.Timestamp change_time = 2;
-    RebootState reboot_state = 3;
+    BootState boot_state = 3;
   }
 
   repeated Change changes = 1;

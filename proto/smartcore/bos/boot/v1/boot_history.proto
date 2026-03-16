@@ -1,21 +1,21 @@
 syntax = "proto3";
 
-package smartcore.bos.reboot.v1;
+package smartcore.bos.boot.v1;
 
-option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/rebootpb";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/bootpb";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/actor/v1/actor.proto";
 import "types/time/period.proto";
 
-// RebootHistory provides access to historical reboot records.
-service RebootHistory {
-  rpc ListRebootEvents(ListRebootEventsRequest) returns (ListRebootEventsResponse);
+// BootHistory provides access to historical reboot records.
+service BootHistory {
+  rpc ListBootEvents(ListBootEventsRequest) returns (ListBootEventsResponse);
 }
 
-// RebootEvent is a record of a single reboot.
-message RebootEvent {
+// BootEvent is a record of a single reboot.
+message BootEvent {
   // The time the reboot was initiated.
   google.protobuf.Timestamp reboot_time = 1;
   // The reason for the reboot, if provided.
@@ -24,7 +24,7 @@ message RebootEvent {
   smartcore.bos.actor.v1.Actor actor = 3;
 }
 
-message ListRebootEventsRequest {
+message ListBootEventsRequest {
   string name = 1;
   // The time period to query.
   smartcore.types.time.Period period = 2;
@@ -35,7 +35,7 @@ message ListRebootEventsRequest {
   // If unspecified, at most 50 items will be returned.
   // The maximum value is 1000; values above 1000 will be coerced to 1000.
   int32 page_size = 4;
-  // A page token, received from a previous ListRebootEventsResponse call.
+  // A page token, received from a previous ListBootEventsResponse call.
   string page_token = 5;
   // Specify the order of the returned records.
   // The default is `reboot_time asc` - aka oldest record first.
@@ -43,8 +43,8 @@ message ListRebootEventsRequest {
   string order_by = 6;
 }
 
-message ListRebootEventsResponse {
-  repeated RebootEvent reboot_events = 1;
+message ListBootEventsResponse {
+  repeated BootEvent boot_events = 1;
   // A token which can be sent as page_token to retrieve the next page.
   string next_page_token = 2;
   // If non-zero this is the total number of records matched by the query.
