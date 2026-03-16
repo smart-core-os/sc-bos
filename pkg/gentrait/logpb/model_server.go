@@ -57,7 +57,13 @@ func (s *ModelServer) PullLogMessages(request *logpb.PullLogMessagesRequest, ser
 	if len(initial) > 0 {
 		filtered := filterMessages(initial, request.MinLevel)
 		if len(filtered) > 0 {
-			if err := server.Send(&logpb.PullLogMessagesResponse{Messages: filtered}); err != nil {
+			if err := server.Send(&logpb.PullLogMessagesResponse{
+				Changes: []*logpb.PullLogMessagesResponse_Change{{
+					Name:       request.Name,
+					ChangeTime: timestamppb.Now(),
+					Messages:   filtered,
+				}},
+			}); err != nil {
 				return err
 			}
 		}
@@ -76,7 +82,13 @@ func (s *ModelServer) PullLogMessages(request *logpb.PullLogMessagesRequest, ser
 			if len(filtered) == 0 {
 				continue
 			}
-			if err := server.Send(&logpb.PullLogMessagesResponse{Messages: filtered}); err != nil {
+			if err := server.Send(&logpb.PullLogMessagesResponse{
+				Changes: []*logpb.PullLogMessagesResponse_Change{{
+					Name:       request.Name,
+					ChangeTime: timestamppb.Now(),
+					Messages:   filtered,
+				}},
+			}); err != nil {
 				return err
 			}
 		}

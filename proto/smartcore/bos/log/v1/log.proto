@@ -84,7 +84,12 @@ message PullLogMessagesRequest {
 }
 
 message PullLogMessagesResponse {
-  repeated LogMessage messages = 1;
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    repeated LogMessage messages = 3;
+  }
+  repeated Change changes = 1;
 }
 
 message GetLogLevelRequest {

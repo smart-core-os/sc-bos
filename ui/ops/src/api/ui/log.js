@@ -28,7 +28,11 @@ export function pullLogMessages(endpoint, request, onMessages, onError) {
   if (request?.initialCount) req.setInitialCount(request.initialCount);
   if (request?.updatesOnly) req.setUpdatesOnly(request.updatesOnly);
   const stream = api.pullLogMessages(req);
-  stream.on('data', msg => onMessages(msg.getMessagesList().map(m => m.toObject())));
+  stream.on('data', msg => {
+    for (const change of msg.getChangesList()) {
+      onMessages(change.getMessagesList().map(m => m.toObject()));
+    }
+  });
   if (onError) stream.on('error', onError);
   return stream;
 }
