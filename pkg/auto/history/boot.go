@@ -20,7 +20,7 @@ func (a *automation) collectBootRecordChanges(ctx context.Context, source config
 	last := newDeduper[*bootpb.BootState](nil)
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
-		stream, err := client.PullBootState(ctx, &bootpb.PullBootStateRequest{Name: source.Name, UpdatesOnly: false})
+		stream, err := client.PullBootState(ctx, &bootpb.PullBootStateRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}
@@ -47,7 +47,7 @@ func (a *automation) collectBootRecordChanges(ctx context.Context, source config
 	}
 
 	pollFn := func(ctx context.Context, changes chan<- []byte) error {
-		resp, err := client.GetBootState(ctx, &bootpb.GetBootStateRequest{Name: source.Name})
+		resp, err := client.GetBootState(ctx, &bootpb.GetBootStateRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}
