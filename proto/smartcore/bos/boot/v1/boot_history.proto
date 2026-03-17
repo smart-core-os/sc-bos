@@ -22,6 +22,8 @@ message BootRecord {
   string reason = 2;
   // The actor who triggered the reboot, if known.
   smartcore.bos.actor.v1.Actor actor = 3;
+  // The time this record was stored in the history store.
+  google.protobuf.Timestamp record_time = 4;
 }
 
 message ListBootRecordsRequest {

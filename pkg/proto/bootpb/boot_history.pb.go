@@ -33,7 +33,9 @@ type BootRecord struct {
 	// The reason for the reboot, if provided.
 	Reason string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
 	// The actor who triggered the reboot, if known.
-	Actor         *actorpb.Actor `protobuf:"bytes,3,opt,name=actor,proto3" json:"actor,omitempty"`
+	Actor *actorpb.Actor `protobuf:"bytes,3,opt,name=actor,proto3" json:"actor,omitempty"`
+	// The time this record was stored in the history store.
+	RecordTime    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=record_time,json=recordTime,proto3" json:"record_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -85,6 +87,13 @@ func (x *BootRecord) GetReason() string {
 func (x *BootRecord) GetActor() *actorpb.Actor {
 	if x != nil {
 		return x.Actor
+	}
+	return nil
+}
+
+func (x *BootRecord) GetRecordTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RecordTime
 	}
 	return nil
 }
@@ -249,13 +258,15 @@ var File_smartcore_bos_boot_v1_boot_history_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_boot_v1_boot_history_proto_rawDesc = "" +
 	"\n" +
-	"(smartcore/bos/boot/v1/boot_history.proto\x12\x15smartcore.bos.boot.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\x1a\x17types/time/period.proto\"\x96\x01\n" +
+	"(smartcore/bos/boot/v1/boot_history.proto\x12\x15smartcore.bos.boot.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\x1a\x17types/time/period.proto\"\xd3\x01\n" +
 	"\n" +
 	"BootRecord\x12;\n" +
 	"\vreboot_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"rebootTime\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\x123\n" +
-	"\x05actor\x18\x03 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\x05actor\"\xf2\x01\n" +
+	"\x05actor\x18\x03 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\x05actor\x12;\n" +
+	"\vrecord_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"recordTime\"\xf2\x01\n" +
 	"\x16ListBootRecordsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x124\n" +
 	"\x06period\x18\x02 \x01(\v2\x1c.smartcore.types.time.PeriodR\x06period\x127\n" +
@@ -297,16 +308,17 @@ var file_smartcore_bos_boot_v1_boot_history_proto_goTypes = []any{
 var file_smartcore_bos_boot_v1_boot_history_proto_depIdxs = []int32{
 	3, // 0: smartcore.bos.boot.v1.BootRecord.reboot_time:type_name -> google.protobuf.Timestamp
 	4, // 1: smartcore.bos.boot.v1.BootRecord.actor:type_name -> smartcore.bos.actor.v1.Actor
-	5, // 2: smartcore.bos.boot.v1.ListBootRecordsRequest.period:type_name -> smartcore.types.time.Period
-	6, // 3: smartcore.bos.boot.v1.ListBootRecordsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	0, // 4: smartcore.bos.boot.v1.ListBootRecordsResponse.boot_records:type_name -> smartcore.bos.boot.v1.BootRecord
-	1, // 5: smartcore.bos.boot.v1.BootHistory.ListBootRecords:input_type -> smartcore.bos.boot.v1.ListBootRecordsRequest
-	2, // 6: smartcore.bos.boot.v1.BootHistory.ListBootRecords:output_type -> smartcore.bos.boot.v1.ListBootRecordsResponse
-	6, // [6:7] is the sub-list for method output_type
-	5, // [5:6] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	3, // 2: smartcore.bos.boot.v1.BootRecord.record_time:type_name -> google.protobuf.Timestamp
+	5, // 3: smartcore.bos.boot.v1.ListBootRecordsRequest.period:type_name -> smartcore.types.time.Period
+	6, // 4: smartcore.bos.boot.v1.ListBootRecordsRequest.read_mask:type_name -> google.protobuf.FieldMask
+	0, // 5: smartcore.bos.boot.v1.ListBootRecordsResponse.boot_records:type_name -> smartcore.bos.boot.v1.BootRecord
+	1, // 6: smartcore.bos.boot.v1.BootHistory.ListBootRecords:input_type -> smartcore.bos.boot.v1.ListBootRecordsRequest
+	2, // 7: smartcore.bos.boot.v1.BootHistory.ListBootRecords:output_type -> smartcore.bos.boot.v1.ListBootRecordsResponse
+	7, // [7:8] is the sub-list for method output_type
+	6, // [6:7] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_boot_v1_boot_history_proto_init() }

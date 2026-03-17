@@ -5,6 +5,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
@@ -33,6 +34,7 @@ var bootPager = NewPageReader(func(r history.Record) (*bootpb.BootRecord, error)
 		return nil, err
 	}
 	return &bootpb.BootRecord{
+		RecordTime: timestamppb.New(r.CreateTime),
 		RebootTime: v.BootTime,
 		Reason:     v.LastRebootReason,
 		Actor:      v.LastRebootActor,
