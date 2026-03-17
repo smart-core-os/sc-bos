@@ -28,7 +28,15 @@ func Connect(ctx context.Context, sysConf ConnectConfig) (*pgxpool.Pool, error) 
 		poolConfig.ConnConfig.Password = strings.TrimSpace(string(passwordFile))
 	}
 
-	return pgxpool.NewWithConfig(ctx, poolConfig)
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
+	if err != nil {
+		return nil, err
+	}
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
+		return nil, err
+	}
+	return pool, nil
 }
 
 func (cc ConnectConfig) IsZero() bool {
