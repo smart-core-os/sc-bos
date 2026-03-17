@@ -22,6 +22,14 @@ func NewModelServer(model *Model) *ModelServer {
 	return &ModelServer{model: model}
 }
 
+func (s *ModelServer) Register(server *grpc.Server) {
+	bootproto.RegisterBootApiServer(server, s)
+}
+
+func (s *ModelServer) Unwrap() any {
+	return s.model
+}
+
 func (s *ModelServer) GetBootState(ctx context.Context, req *bootproto.GetBootStateRequest) (*bootproto.BootState, error) {
 	return s.model.GetBootState(resource.WithReadMask(req.ReadMask))
 }
