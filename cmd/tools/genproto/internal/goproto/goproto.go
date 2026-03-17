@@ -51,10 +51,11 @@ func (g Generator) String() string {
 
 func run(ctx *generator.Context) error {
 	protoDir := filepath.Join(ctx.RootDir, "proto")
+	protoIncludeDirs := []string{protoDir, filepath.Join(ctx.RootDir, "sc-api", "protobuf")}
 
 	// Discover proto files and their required generators.
 	// This must happen before cleaning so we know which dirs are bos-owned.
-	fileInfos, err := analyzeProtoFiles(protoDir)
+	fileInfos, err := analyzeProtoFiles(protoDir, protoIncludeDirs)
 	if err != nil {
 		return fmt.Errorf("analyzing proto files: %w", err)
 	}
@@ -68,7 +69,7 @@ func run(ctx *generator.Context) error {
 	ctx.Verbose("Found %d proto files in %d generator groups", len(fileInfos), len(groups))
 
 	for gen, files := range groups {
-		if err := generateProtos(ctx, protoDir, gen, files); err != nil {
+		if err := generateProtos(ctx, protoIncludeDirs, gen, files); err != nil {
 			return err
 		}
 	}
@@ -265,7 +266,7 @@ func removeEmptyDirs(ctx *generator.Context, dir string) error {
 }
 
 // generateProtos generates code for a set of proto files with the same generator requirements.
-func generateProtos(ctx *generator.Context, protoDir string, gen Generator, files []string) error {
+func generateProtos(ctx *generator.Context, protoIncludeDirs []string, gen Generator, files []string) error {
 	if len(files) == 0 {
 		return nil
 	}
@@ -284,7 +285,10 @@ func generateProtos(ctx *generator.Context, protoDir string, gen Generator, file
 	}
 	ctx.Verbose("  protoc-gen-go-grpc path: %q", grpcPluginPath)
 
-	args := []string{"protoc", "--", "-I", protoDir}
+	var args []string
+	for _, dir := range protoIncludeDirs {
+		args = append(args, "-I", dir)
+	}
 	args = append(args,
 		"--plugin=protoc-gen-go="+goPluginPath,
 		"--go_opt=module="+modulePrefix,
@@ -324,9 +328,9 @@ func generateProtos(ctx *generator.Context, protoDir string, gen Generator, file
 	args = append(args, files...)
 
 	if ctx.DryRun {
-		ctx.Info("[DRY RUN] Would run: protomod %s", strings.Join(args, " "))
+		ctx.Info("[DRY RUN] Would run: protoc %s", strings.Join(args, " "))
 		return nil
 	}
 
-	return toolchain.RunProtomod(protoDir, args...)
+	return toolchain.RunProtoc(ctx.RootDir, args...)
 }

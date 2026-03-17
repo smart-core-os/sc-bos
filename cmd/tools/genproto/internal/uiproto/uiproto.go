@@ -20,6 +20,7 @@ var Step = generator.Step{
 
 func run(ctx *generator.Context) error {
 	protoDir := filepath.Join(ctx.RootDir, "proto")
+	protoIncludeDirs := []string{protoDir, filepath.Join(ctx.RootDir, "sc-api", "protobuf")}
 	uiGenDir := filepath.Join(ctx.RootDir, "ui", "ui-gen")
 	outDir := filepath.Join(uiGenDir, "proto")
 
@@ -43,7 +44,7 @@ func run(ctx *generator.Context) error {
 	ctx.Verbose("Found %d proto files", len(protoFiles))
 
 	// Generate protobuf code
-	if err := generateProtos(ctx, protoDir, outDir, protoFiles); err != nil {
+	if err := generateProtos(ctx, protoIncludeDirs, outDir, protoFiles); err != nil {
 		return err
 	}
 
@@ -134,14 +135,17 @@ func cleanGeneratedFiles(ctx *generator.Context, outDir string) error {
 }
 
 // generateProtos generates JavaScript and TypeScript code from proto files.
-func generateProtos(ctx *generator.Context, protoDir, outDir string, files []string) error {
+func generateProtos(ctx *generator.Context, protoIncludeDirs []string, outDir string, files []string) error {
 	if len(files) == 0 {
 		return nil
 	}
 
 	ctx.Verbose("Generating JS/TS code for %d files", len(files))
 
-	args := []string{"protoc", "--", "-I", protoDir}
+	var args []string
+	for _, dir := range protoIncludeDirs {
+		args = append(args, "-I", dir)
+	}
 	args = append(args,
 		"--js_out=import_style=commonjs:"+outDir,
 		"--grpc-web_out=import_style=commonjs+dts,mode=grpcwebtext:"+outDir,
@@ -149,11 +153,11 @@ func generateProtos(ctx *generator.Context, protoDir, outDir string, files []str
 	args = append(args, files...)
 
 	if ctx.DryRun {
-		ctx.Info("[DRY RUN] Would run: protomod %s", strings.Join(args, " "))
+		ctx.Info("[DRY RUN] Would run: protoc %s", strings.Join(args, " "))
 		return nil
 	}
 
-	return toolchain.RunProtomod(protoDir, args...)
+	return toolchain.RunProtoc(ctx.RootDir, args...)
 }
 
 // fixGeneratedFiles applies import path fixes to generated JavaScript and TypeScript files.
