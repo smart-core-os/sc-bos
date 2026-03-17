@@ -13,10 +13,13 @@ type Model struct {
 	bootState *resource.Value // of *proto.BootState
 }
 
-// NewModel creates a Model with the given initial state.
-func NewModel(initialState *proto.BootState) *Model {
+// NewModel creates a Model with an optional set of resource.Option.
+// By default the BootState is initialised to an empty value.
+func NewModel(opts ...resource.Option) *Model {
+	defaultOpts := []resource.Option{resource.WithInitialValue(&proto.BootState{})}
+	opts = append(defaultOpts, opts...)
 	return &Model{
-		bootState: resource.NewValue(resource.WithInitialValue(initialState)),
+		bootState: resource.NewValue(opts...),
 	}
 }
 

@@ -22,6 +22,7 @@ import (
 	proto "github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 // bootTime is captured at package init to record the process start time as accurately as possible.
@@ -98,11 +99,11 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 		_ = s.writeStateFile(rebootState{CleanExit: true})
 	}()
 
-	model := bootpb.NewModel(&proto.BootState{
+	model := bootpb.NewModel(resource.WithInitialValue(&proto.BootState{
 		BootTime:         timestamppb.New(bootTime),
 		LastRebootReason: lastReason,
 		LastRebootActor:  lastActor,
-	})
+	}))
 
 	server := bootpb.NewModelServer(model)
 	server.OnReboot = s.onReboot
