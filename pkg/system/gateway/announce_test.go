@@ -8,8 +8,13 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest"
+	"go.uber.org/zap/zaptest/observer"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-api/go/traits"
@@ -344,6 +349,79 @@ func TestSystem_announceCohort(t *testing.T) {
 				th.assertSimpleDevices("gw1", "gw1/drivers", "gw1/automations", "gw1/systems")
 			},
 		},
+		{
+			// Regression test: reflectNode polls every 10s and calls node.Services.Replace
+			// with fresh service descriptor objects. rx.Set.Replace emits an Update event for
+			// every item already in the set — even when the value is logically unchanged — because
+			// it can't distinguish a same-valued replacement from a real update. The Update handler
+			// in announceRemoteNode un-announces and re-announces the service on every poll, causing
+			// log spam and briefly removing routes.
+			name: "service not re-announced when Replace is called with unchanged descriptors",
+			run: func(t *testing.T, th *announceTester) {
+				desc := findServiceDesc(t, "smartcore.traits.OnOffApi")
+				ac1 := th.addNode("ac1", "ac1/d1")
+				ac1.Services.Set(desc)
+
+				// Instrument the logger with an observer so we can count announcements.
+				obsCore, logs := observer.New(zapcore.DebugLevel)
+				th.sys.logger = zap.New(zapcore.NewTee(th.sys.logger.Core(), obsCore))
+
+				th.runAnnounceCohort()
+
+				initialCount := logs.FilterMessage("routable service announced").Len()
+				if initialCount != 1 {
+					t.Fatalf("expected 1 initial announcement, got %d", initialCount)
+				}
+
+				// Simulate what reflectNode does on every poll: replace with the same descriptors.
+				// This should NOT trigger a re-announcement.
+				ac1.Services.Replace([]protoreflect.ServiceDescriptor{desc})
+				synctest.Wait()
+
+				afterCount := logs.FilterMessage("routable service announced").Len()
+				if afterCount != initialCount {
+					t.Errorf("Services.Replace with unchanged descriptors caused %d spurious re-announcement(s)", afterCount-initialCount)
+				}
+			},
+		},
+		{
+			name: "multiple gateway nodes with hub and delayed self.name",
+			run: func(t *testing.T, th *announceTester) {
+				gw1 := th.newRemoteNode("gw1",
+					remoteDesc{}, // name not yet known
+					remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}},
+					rds("gw1", "gw1/drivers", "gw1/automations", "gw1/systems")...)
+				gw2 := th.newRemoteNode("gw2",
+					remoteDesc{}, // name not yet known
+					remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}},
+					rds("gw2", "gw2/drivers", "gw2/automations", "gw2/systems")...)
+
+				th.addHub("hub", "hub", "hub/d1", "hub/drivers", "hub/automations", "hub/systems")
+				for _, gw := range []*remoteNode{gw1, gw2} {
+					for _, name := range []string{"hub", "hub/drivers", "hub/automations", "hub/systems"} {
+						gw.Devices.Set(rd(name))
+					}
+				}
+
+				th.c.Nodes.Set(gw1)
+				th.c.Nodes.Set(gw2)
+				th.runAnnounceCohort()
+
+				time.Sleep(waitTimeout) // force waitForFunc to time out with name still empty
+				synctest.Wait()         // switchGatewayMode(true) has now run for both with self.name == ""
+				th.assertSimpleDevices("hub", "hub/d1", "hub/drivers", "hub/automations", "hub/systems")
+
+				gw1.Self.Set(rd("gw1"))
+				gw2.Self.Set(rd("gw2"))
+				synctest.Wait() // renewDevicesSub re-evaluates with the now-known names
+
+				th.assertSimpleDevices(
+					"hub", "hub/d1", "hub/drivers", "hub/automations", "hub/systems",
+					"gw1", "gw1/drivers", "gw1/automations", "gw1/systems",
+					"gw2", "gw2/drivers", "gw2/automations", "gw2/systems",
+				)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -543,4 +621,19 @@ func (t *announceTester) assertDevices(want ...*gen_devicespb.Device) {
 
 func cmpDevices(a, b *gen_devicespb.Device) int {
 	return strings.Compare(a.Name, b.Name)
+}
+
+// findServiceDesc looks up a protoreflect.ServiceDescriptor by full name from the global registry.
+// The relevant proto package must already be imported (and thus init()-registered) for this to succeed.
+func findServiceDesc(t *testing.T, fullName string) protoreflect.ServiceDescriptor {
+	t.Helper()
+	d, err := protoregistry.GlobalFiles.FindDescriptorByName(protoreflect.FullName(fullName))
+	if err != nil {
+		t.Fatalf("service %q not found in proto registry: %v", fullName, err)
+	}
+	sd, ok := d.(protoreflect.ServiceDescriptor)
+	if !ok {
+		t.Fatalf("%q resolved to %T, want protoreflect.ServiceDescriptor", fullName, d)
+	}
+	return sd
 }
