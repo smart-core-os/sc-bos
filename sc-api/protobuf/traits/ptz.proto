@@ -1,0 +1,181 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "PtzProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/info.proto";
+import "types/tween.proto";
+
+// Allows interaction with a pan-tilt-zoom device, typically a camera.
+service PtzApi {
+  // Set the target state for the device
+  rpc GetPtz (GetPtzRequest) returns (Ptz);
+
+  // Set the target state for the device
+  rpc UpdatePtz (UpdatePtzRequest) returns (Ptz);
+
+  // Stop the device if it is extending or retracting, returns the current known state after stopping.
+  rpc Stop (StopPtzRequest) returns (Ptz);
+
+  // Create a preset for the ptz position. If no preset ptz position is specified then use the current position
+  rpc CreatePreset (CreatePtzPresetRequest) returns (PtzPreset);
+
+  // Get notified of changes to the OnOffState of a device
+  rpc PullPtz (PullPtzRequest) returns (stream PullPtzResponse);
+}
+
+// Describes the capabilities of a specific named device with respect to this trait.
+service PtzInfo {
+  // Get information about how a named device implements Ptz features
+  rpc DescribePtz (DescribePtzRequest) returns (PtzSupport);
+}
+
+// The current or intended state for the device
+message Ptz {
+  // The current position of the PTZ device (if known)
+  PtzPosition position = 1;
+  // The current motion of the PTZ device (if known)
+  PtzMovement movement = 2;
+  // The current preset selected for the device (if known)
+  string preset = 3;
+  // The speed the preset should be applied. 0 for 'use device default'
+  int32 preset_speed = 4;
+}
+
+// Defines a value for the pan, tilt, and zoom of the device. This vector can represent a movement in a particular
+// direction or a final position to aim for. If used for movement then the values should be positive or negative to
+// represent the direction of movement. For absolute values the bounds attribute of the device are used as a guide.
+//
+// All values are relative to the focus of the vector in the real world. For example for a camera, to move right means
+// that the image captured by the camera show more on the right and less on the left of the image.
+message PtzVector {
+  // left/right direction for movement or position. Positive values mean right, negative mean left when moving
+  float pan = 1;
+  // up/down direction for movement or position. Positive values mean up, negative mean down when moving
+  float tilt = 2;
+  // in/out direction for movement or zoom level. Positive values mean in, negative mean out when moving
+  float zoom = 3;
+}
+
+// todo: potentially support other coordinate systems to allow for wider pans when tilt is low for example
+
+// The minimum and maximum values each of the PTZ vector axes can take.
+message PtzBounds {
+  PtzVector min = 1;
+  PtzVector max = 2;
+}
+
+// A description of the movement for the PTZ device
+message PtzMovement {
+  // Which direction are we moving. Only the sign of the dimensions of the vector are used to denote direction of
+  // movement
+  PtzVector direction = 1;
+  // The speed at which the PTZ device should move. If not specified the device may ramp speed on its own
+  int32 speed = 2;
+  // How the speed changes or should change over time. On write only duration should be set.
+  smartcore.types.Tween speed_tween = 3;
+  // Read-only, the target speed value after a transition
+  int32 target_speed = 4;
+}
+
+// A description of the current position of the PTZ device.
+message PtzPosition {
+  // The current position.
+  PtzVector position = 1;
+  // How the position changes or should change over time. On write only duration should be set.
+  smartcore.types.Tween tween = 2;
+  // The target position that will be reached after the tween duration.
+  PtzVector target_position = 3;
+}
+
+// Describes a preset that may be configured on the device
+message PtzPreset {
+  // Required. The name of the preset, to be used for recall.
+  string name = 1;
+  // Official human readable name for the preset
+  string title = 2;
+  string description = 3;
+  // Optional position of the preset
+  PtzVector position = 4;
+  // Can this preset be stored via the api
+  bool writable = 5;
+}
+
+// PtzSupport describes the capabilities of devices implementing this trait
+message PtzSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.types.ResourceSupport resource_support = 1;
+  // Can we ask the device to move to a specific position
+  bool supports_position = 2;
+  // Can we move the device without a target position in mind
+  bool supports_movement = 3;
+  // A list of presets that the device has configured. If the list is empty and supports_custom_presets is false then
+  // the device doesn't support presets
+  repeated PtzPreset presets = 4;
+  // If true, custom preset names can be used to store ptz positions. If false only writable presets can be updated.
+  bool supports_custom_presets = 5;
+}
+
+message GetPtzRequest {
+  // The name of the device to request state from
+  string name = 1;
+  // which fields do we want to fetch
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message UpdatePtzRequest {
+  // the name of the device to update the state of
+  string name = 1;
+  // The new state
+  Ptz state = 2;
+  // The fields we are intending to update relative to the Ptz
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message StopPtzRequest {
+  // the name of the device to stop
+  string name = 1;
+}
+
+message CreatePtzPresetRequest {
+  // the name of the device to update the state of
+  string name = 1;
+  // Details for the preset
+  PtzPreset preset = 2;
+}
+
+message PullPtzRequest {
+  // The device we want to subscribe to
+  string name = 1;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+}
+
+message PullPtzResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    // name for the device that issued the change
+    string name = 1;
+    // when the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // The updated state, should be merged with any known state
+    Ptz ptz = 3;
+  }
+}
+
+message DescribePtzRequest {
+  // The name of the device
+  string name = 1;
+}

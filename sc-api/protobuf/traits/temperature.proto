@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "TemperatureProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/unit.proto";
+
+// Trait for devices that have or measure temperature like an oven or shower,
+// distinct from the AirTemperature trait (HVAC, thermostats).
+service TemperatureApi {
+  rpc GetTemperature(GetTemperatureRequest) returns (Temperature) {}
+  rpc PullTemperature(PullTemperatureRequest) returns (stream PullTemperatureResponse) {}
+  rpc UpdateTemperature(UpdateTemperatureRequest) returns (Temperature) {}
+}
+
+// Temperature represents a target and measured temperature.
+message Temperature {
+  // Read/write, the target temperature.
+  smartcore.types.Temperature set_point = 1;
+  // Output only, the measured temperature.
+  smartcore.types.Temperature measured = 2;
+}
+
+message GetTemperatureRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullTemperatureRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullTemperatureResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    Temperature temperature = 3;
+  }
+}
+
+message UpdateTemperatureRequest {
+  string name = 1;
+  Temperature temperature = 2;
+  google.protobuf.FieldMask update_mask = 3;
+  // When true, temperature is a change to the devices current value.
+  bool delta = 4;
+}

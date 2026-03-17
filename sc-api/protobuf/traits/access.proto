@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "AccessProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/image.proto";
+
+// AccessApi describes the capability to manage access to a resource.
+// This could be a access card reader next to a door, or a barrier at a car park.
+service AccessApi {
+  rpc GetLastAccessAttempt(GetLastAccessAttemptRequest) returns (AccessAttempt) {}
+  rpc PullAccessAttempts(PullAccessAttemptsRequest) returns (stream PullAccessAttemptsResponse) {}
+}
+
+// AccessAttempt describes an access attempt made at an access point.
+// At a minimum it should define the status of the access attempt, and the time it was made.
+// It may also include the actor attempting access, and the reason for the access attempt being granted or denied.
+message AccessAttempt {
+  enum Grant {
+    // The status of the access attempt is unknown.
+    GRANT_UNKNOWN = 0;
+    // The access attempt was granted.
+    GRANTED = 1;
+    // The access attempt was denied.
+    DENIED = 2;
+    // Access is pending a decision.
+    PENDING = 3;
+    // Access was aborted before being granted or denied.
+    // Typically only used following PENDING.
+    ABORTED = 4;
+    // Access was not granted, happened anyway.
+    // For example if someone forced the door open.
+    FORCED = 5;
+    // Access was granted, but failed for other reasons.
+    // For example if the door is stuck
+    FAILED = 6;
+    // Access was granted, but to the actor before this one.
+    // Happens when someone follows another person through a door.
+    TAILGATE = 7;
+  }
+  // Was the access attempt granted or denied.
+  Grant grant = 1;
+  // A reason for either granting or denying the access attempt.
+  // For example "Operator override" or "Unrecognised card".
+  string reason = 2;
+
+  // An Actor is some entity that attempted to access the resource.
+  // It could be an object, like a car, or a person or animal.
+  message Actor {
+    // todo: merge with the Occupant in EnterLeaveSensor trait
+
+    // A unique name for this actor as measured by the device.
+    // Name allows correlation between enter and leave events.
+    string name = 1;
+
+    // An official title for this actor.
+    string title = 10;
+    // A recognisable display name for this actor.
+    string display_name = 11;
+    // A picture of the actor.
+    smartcore.types.Image picture = 12;
+    // A url that resolves to more information on this actor.
+    string url = 13;
+    // An email address for the actor.
+    string email = 14;
+    // The time this actor was last granted access.
+    // The grant may have been performed by a different device to this one.
+    google.protobuf.Timestamp last_grant_time = 15;
+    // The access zone the actor was last granted access to.
+    // The zone will be provided by the device and may not map to any Smart Core zone or device.
+    string last_grant_zone = 16;
+
+    // IDs holds external actor ids.
+    // For example this might hold an id representing a person in an access control system.
+    // The map key should uniquely represent the domain for the id, for example "my-access-system/user-id", the use of uris is not
+    // required, values should be the id of this consumable in that domain, for example "sma81r6t1c5o3r58e1-3r8u16l1es".
+    map<string, string> ids = 100;
+    // Additional properties associated with the actor.
+    // Typically displayed to a user to help them to distinguish between similar actors.
+    map<string, string> more = 101;
+  }
+  // Actor describes the entity attempting to gain access.
+  // Optional.
+  Actor actor = 3;
+
+  // The time the access attempt was made
+  google.protobuf.Timestamp access_attempt_time = 4;
+}
+
+message GetLastAccessAttemptRequest {
+  // The name of the device to get the last access attempt for.
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullAccessAttemptsRequest {
+  // The name of the device to pull access attempts for.
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullAccessAttemptsResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    AccessAttempt access_attempt = 3;
+  }
+}

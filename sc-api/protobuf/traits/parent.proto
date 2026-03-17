@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "ParentProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/change.proto";
+
+// ParentApi describes the capabilities of a device to have child devices.
+service ParentApi {
+  // ListChildren returns children associated with the named parent device.
+  rpc ListChildren(ListChildrenRequest) returns (ListChildrenResponse);
+  // PullChildren subscribes to changes in the children associated with the named parent device.
+  rpc PullChildren(PullChildrenRequest) returns (stream PullChildrenResponse);
+}
+
+service ParentInfo {
+  // todo: define ParentInfo
+}
+
+// Child is a member of a parent.
+message Child {
+  // Name is the Smart Core name for this child device.
+  string name = 1;
+  // Traits lists the traits this child implements.
+  repeated Trait traits = 2;
+
+  // Parent is the name of this child's direct parent.
+  // If absent this is the name of the device in the children request.
+  string parent = 3;
+}
+
+message Trait {
+  // The qualified name of the trait.
+  // For example smartcore.traits.Parent
+  string name = 1;
+}
+
+
+message ListChildrenRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the ElectricMode type
+  google.protobuf.FieldMask read_mask = 2;
+
+  // The maximum number of children to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 3;
+  // A page token, received from a previous `ListChildrenResponse` call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 4;
+
+  // todo: int32 depth = 5; // Ask children about their children up to this many descendants
+}
+
+message ListChildrenResponse {
+  repeated Child children = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+  // If non-zero this is the total number of draw notifications.
+  // This may be an estimate.
+  int32 total_size = 3;
+}
+
+message PullChildrenRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the ElectricMode type
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+
+  // todo: int32 depth = 3; // Ask children about their children up to this many descendants
+}
+
+message PullChildrenResponse {
+  // The list of changes which have occurred
+  repeated Change changes = 1;
+
+  message Change {
+    // The name of the device that emitted this change
+    string name = 1;
+    // The type of change (e.g. ADD, UPDATE, etc...)
+    smartcore.types.ChangeType type = 2;
+    // The new value to use for ADD|UPDATE changes
+    Child new_value = 3;
+    // The old value to use for UPDATE|REMOVE changes
+    Child old_value = 4;
+    // When the change occurred
+    google.protobuf.Timestamp change_time = 5;
+  }}

@@ -1,0 +1,195 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "EnergyStorageProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/info.proto";
+
+// Trait for devices that can store energy or charge another device.
+// Typically applied devices with batteries or chargers of those devices.
+service EnergyStorageApi {
+  // GetEnergyLevel retrieves the current charge level and potential charge level for the device.
+  rpc GetEnergyLevel(GetEnergyLevelRequest) returns (EnergyLevel);
+  // PullEnergyLevel subscribes to changes in energy level.
+  rpc PullEnergyLevel(PullEnergyLevelRequest) returns (stream PullEnergyLevelResponse);
+
+  // Charge starts or stops the device charging.
+  // If the device is not plugged in then this will return a FAILED_PRECONDITION error.
+  // Devices may start or stop charging on their own.
+  rpc Charge(ChargeRequest) returns (ChargeResponse);
+}
+
+// Describes the capabilities of a specific named device with respect to this trait.
+service EnergyStorageInfo {
+  // Get information about how a named device implements EnergyLevel features
+  rpc DescribeEnergyLevel (DescribeEnergyLevelRequest) returns (EnergyLevelSupport);
+}
+
+// EnergyLevelSupport describes the capabilities of devices implementing this trait.
+message EnergyLevelSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.types.ResourceSupport resource_support = 1;
+  // A true value indicates that the device can be recharged.
+  // A rechargeable device should report charging and until_full where appropriate.
+  bool rechargeable = 2;
+
+  enum ChargeControl {
+    CHARGE_CONTROL_UNSPECIFIED = 0;
+    // Charge status cannot change.
+    // Typically this is because the device is not rechargeable.
+    NONE = 1;
+    // The device may change the charge status, calling Charge will not affect it and will return an error.
+    DEVICE = 2;
+    // Calling Charge can change the charge status. The device will not change it on its own.
+    EXTERNAL = 3;
+    // Both the device and calling Charge can change the charge status.
+    ALL = 4;
+  }
+  // A description of how the charge status of the device can be changed.
+  ChargeControl charge_control = 3;
+}
+
+// EnergyLevel describes properties related to the current and potential charge levels of the device.
+message EnergyLevel {
+  // Transfer describes how energy is being transferred, either into or out of the device.
+  // See discharge and charge for information on the direction of the transfer.
+  message Transfer {
+    // Start time describes when this transfer started
+    google.protobuf.Timestamp start_time = 1;
+    // How long until the transfer is complete.
+    // Measured relative to the current time according to the devices clock.
+    google.protobuf.Duration time = 2;
+    // How many more kilometers need to be travelled before the transfer is complete.
+    // For example when discharging, this might represent kilometers until the battery is empty.
+    float distance_km = 3;
+
+    // Speed defines descriptive relative energy transfer speeds for a device.
+    // Larger enum values will always be faster than smaller enum values.
+    //
+    // Comparing two devices speeds is not defined, one device that is FAST and another that is SLOW does not
+    // guarantee that either device will transfer energy quicker than the other.
+    enum Speed {
+      SPEED_UNSPECIFIED = 0;
+      EXTRA_SLOW = 1;
+      SLOW = 2;
+      NORMAL = 3;
+      FAST = 4;
+      EXTRA_FAST = 5;
+    }
+    // Speed describes relative transfer speed for the device.
+    Speed speed = 4;
+
+    // The planned end values for the transfer.
+    // There is no guarantee that the transfer will reach these values, but they are useful for informational and
+    // planning purposes.
+    Quantity target = 5;
+  }
+  // Steady describes a non-changing energy level.
+  message Steady {
+    google.protobuf.Timestamp start_time = 1;
+  }
+
+  // Flow describes the direction of the flow of energy from the devices point of view.
+  // If all fields are absent then we don't know how energy is flowing.
+  oneof flow {
+    // Discharge denotes that the device is currently decreasing its energy level.
+    // An empty transfer object is valid and says: this device is discharging.
+    Transfer discharge = 2;
+    // Charge denotes that the device is currently increasing its energy level.
+    // An empty transfer object is valid and says: this device is charging.
+    Transfer charge = 3;
+    // Idle denotes that the device is neither increasing or decreasing its energy level.
+    Steady idle = 4;
+  }
+
+  // Quantity describes an absolute energy level using different units.
+  message Quantity {
+    float percentage = 1; // [0, 100]
+    float energy_kwh = 2;
+
+    // Threshold defines preset descriptive quantities for the energy level of the device.
+    // Numeric values will be preferred if provided.
+    enum Threshold {
+      THRESHOLD_UNSPECIFIED = 0;
+      CRITICALLY_LOW = 1;
+      EMPTY = 2;
+      LOW = 3;
+      MEDIUM = 4;
+      HIGH = 5;
+      FULL = 7;
+      CRITICALLY_HIGH = 8;
+    }
+
+    // descriptive defines preset descriptive quantities for the energy level of the device.
+    // Numeric values should be preferred if provided.
+    Threshold descriptive = 3;
+
+    // A measure of how far the device can travel with its current energy level.
+    float distance_km = 4;
+
+    // Battery voltage.
+    // The relationship between voltage and energy level / percentage charge is device-specific.
+    optional float voltage = 5;
+  }
+  // Quantity describes an absolute energy level using different units.
+  Quantity quantity = 5;
+
+  // Is the device plugged in.
+  bool plugged_in = 6;
+}
+
+
+message GetEnergyLevelRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the EnergyLevel type
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullEnergyLevelRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the EnergyLevel type
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+}
+
+message PullEnergyLevelResponse {
+  // Changes since the last message
+  repeated Change changes = 1;
+
+  message Change {
+    // name for the device that issued the change
+    string name = 1;
+    // when the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // The new value for the energy level
+    EnergyLevel energy_level = 3;
+  }
+}
+
+message ChargeRequest {
+  // Name of the device
+  string name = 1;
+  // True to begin charging, false to stop.
+  bool charge = 2;
+}
+
+message ChargeResponse {
+}
+
+message DescribeEnergyLevelRequest {
+  // The name of the device
+  string name = 1;
+}

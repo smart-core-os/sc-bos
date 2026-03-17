@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "LockUnlockProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// LockUnlockApi describes devices that can be locked and unlocked, and/or report a locked state.
+// The concept is encoded in the LockUnlock.position, a device may be locked, unlocked, or transitioning into one of
+// these positions.
+service LockUnlockApi {
+  // Get the current lock position for the device.
+  rpc GetLockUnlock(GetLockUnlockRequest) returns (LockUnlock);
+  // Update the lock position of the device.
+  rpc UpdateLockUnlock(UpdateLockUnlockRequest) returns (LockUnlock);
+  // Subscribe to changes in the lock position for the device.
+  rpc PullLockUnlock(PullLockUnlockRequest) returns (stream PullLockUnlockResponse);
+}
+
+service LockUnlockInfo {
+  // todo: define LockUnlockInfo
+}
+
+// LockUnlock models the possible states of a lockable device.
+message LockUnlock {
+  // Position defines the possible lock positions.
+  // Note that only LOCKED and UNLOCKED can be used during a write.
+  enum Position {
+    // The lock position is unspecified.
+    POSITION_UNSPECIFIED = 0;
+    // The device is locked.
+    LOCKED = 1;
+    // The device is unlocked.
+    UNLOCKED = 2;
+    // The device is in the process of locking.
+    // Optional. Output only.
+    LOCKING = 3;
+    // The device is in the process of unlocking.
+    // Optional. Output only.
+    UNLOCKING = 4;
+  }
+  // Position reports whether the device is locked or unlocked, or transitioning.
+  Position position = 1;
+  // Jammed reports whether the lock has jammed and is unable to reach it's position.
+  // Output only.
+  bool jammed = 2;
+}
+
+message GetLockUnlockRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the LockUnlock type
+  google.protobuf.FieldMask read_mask = 2;
+}
+message UpdateLockUnlockRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // The new value
+  LockUnlock lock_unlock = 2;
+  // Fields to fetch relative to the LockUnlock type
+  google.protobuf.FieldMask update_mask = 3;
+
+}
+message PullLockUnlockRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the LockUnlock type
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+}
+message PullLockUnlockResponse {
+  // Changes since the last message.
+  repeated Change changes = 1;
+
+  message Change {
+    // Name of the device that issued the change.
+    string name = 1;
+    // When the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // The new value for the lock.
+    LockUnlock lock_unlock = 3;
+  }
+}
