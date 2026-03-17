@@ -422,6 +422,51 @@ func TestSystem_announceCohort(t *testing.T) {
 				)
 			},
 		},
+		{
+			// Regression test for route-clobbering: when gw1's systems info arrives quickly
+			// (msgRecvd=true) but without an active gateway service, gw1 is immediately treated
+			// as a non-gateway and proxies all its devices — including hub re-exports and
+			// downstream ac1 devices.  Those routes overwrite hub's routes.  When gw1 later
+			// confirms it is a gateway, its non-gateway proxy is undone.  The undo must
+			// *restore* hub's routes (via RestoreRouteIfConn) rather than deleting them.
+			// At the announce layer this is visible as:
+			//   - "ac1/d1" appears while gw1 is non-gateway, then disappears after gateway mode.
+			//   - Hub devices persist throughout because hub announces them independently.
+			name: "gateway with delayed gateway status",
+			run: func(t *testing.T, th *announceTester) {
+				// gw1 re-exports hub devices and has a downstream ac1/d1 device.
+				gw1 := th.newRemoteNode("gw1",
+					rd("gw1"),
+					remoteSystems{msgRecvd: true}, // systems received, gateway status not yet known
+					append(
+						rds("gw1", "gw1/drivers", "gw1/automations", "gw1/systems"),
+						rds("hub", "hub/d1", "hub/drivers", "hub/automations", "ac1/d1")...,
+					)...)
+
+				th.addHub("hub", "hub", "hub/d1", "hub/drivers", "hub/automations")
+				th.c.Nodes.Set(gw1)
+				th.runAnnounceCohort()
+
+				// systems.msgRecvd=true → the systems wait resolves immediately →
+				// isGateway()=false → switchGatewayMode(false) → all gw1 devices proxied.
+				th.assertSimpleDevices(
+					"gw1", "gw1/drivers", "gw1/automations", "gw1/systems",
+					"hub", "hub/d1", "hub/drivers", "hub/automations",
+					"ac1/d1",
+				)
+
+				// Gateway status arrives.
+				gw1.Systems.Set(remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}})
+				synctest.Wait()
+				// gw1 switches to gateway mode:
+				//   - ac1/d1 is no longer proxied (not a fixed-service device under gw1)
+				//   - hub devices remain because hub announced them independently
+				th.assertSimpleDevices(
+					"gw1", "gw1/drivers", "gw1/automations", "gw1/systems",
+					"hub", "hub/d1", "hub/drivers", "hub/automations",
+				)
+			},
+		},
 	}
 
 	for _, tt := range tests {
