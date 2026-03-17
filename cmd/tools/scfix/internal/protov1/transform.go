@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	fieldRe = regexp.MustCompile(`(?m)^(\s*(?:(?:repeated|optional)\s+)?)([\w.]+)(\s+\w+\s*=\s*\d+;)`)
+	fieldRe     = regexp.MustCompile(`(?m)^(\s*(?:(?:repeated|optional)\s+)?)([\w.]+)(\s+\w+\s*=\s*\d+;)`)
+	goPackageRe = regexp.MustCompile(`(?m)^option\s+go_package\s*=\s*"[^"]*"\s*;`)
 )
 
 // buildImportedTypesForFile returns a mapping from type->package for all files in allFiles imported by content.
@@ -17,15 +18,22 @@ func buildImportedTypesForFile(content []byte, allFiles []protoFile) map[string]
 	importedTypes := make(map[string]string)
 	imports := extractImports(content)
 
-	// Build a quick lookup map: old import path -> protoFile
-	fileMap := make(map[string]*protoFile)
+	// Build lookup maps: old import path -> protoFile, and basename -> protoFile.
+	// The basename fallback handles sc-api trait files whose getOldImportPath() returns a
+	// relative path from the proto root that won't match "traits/foo.proto" import strings.
+	fileMapByPath := make(map[string]*protoFile)
+	fileMapByBase := make(map[string]*protoFile)
 	for i := range allFiles {
-		importPath := allFiles[i].getOldImportPath()
-		fileMap[importPath] = &allFiles[i]
+		fileMapByPath[allFiles[i].getOldImportPath()] = &allFiles[i]
+		fileMapByBase[filepath.Base(allFiles[i].oldPath)] = &allFiles[i]
 	}
 
 	for _, importPath := range imports {
-		if file, exists := fileMap[importPath]; exists {
+		file, ok := fileMapByPath[importPath]
+		if !ok {
+			file, ok = fileMapByBase[filepath.Base(importPath)]
+		}
+		if ok {
 			// Add all types from this imported file - they all share the same package
 			for _, typeName := range file.types {
 				importedTypes[typeName] = file.newPackage
@@ -50,9 +58,17 @@ func processProtoFile(file *protoFile, allFiles []protoFile) error {
 	content = updateServiceDeclarations(content, file.serviceRenames)
 	content = updateImportPaths(content, allFiles)
 	content = updateTypeReferences(content, file.newPackage, importedTypes)
+	if file.newGoPackage != "" {
+		content = updateGoPackageOption(content, file.newGoPackage)
+	}
 
 	file.newContent = []byte(content)
 	return nil
+}
+
+// updateGoPackageOption replaces the go_package option value with newGoPackage.
+func updateGoPackageOption(content, newGoPackage string) string {
+	return goPackageRe.ReplaceAllString(content, fmt.Sprintf(`option go_package = "%s";`, newGoPackage))
 }
 
 // updatePackageDeclaration updates the package declaration from oldPkg to newPkg.
@@ -123,7 +139,7 @@ func updateImportPaths(content string, allFiles []protoFile) string {
 			filename := filepath.Base(importPath)
 
 			if newPath, exists := fileMap[filename]; exists {
-				if !strings.Contains(importPath, "/") {
+				if importPath != newPath {
 					line = matches[1] + `"` + newPath + `";`
 				}
 			}
@@ -171,8 +187,13 @@ func updateTypeReferences(content string, currentPackage string, typeToPackage m
 		packagePart, unqualifiedType, isQualified := cutLast(typeName, ".")
 
 		if isQualified {
-			if strings.HasPrefix(packagePart, "smartcore.bos") && !strings.Contains(packagePart, ".v") {
+			needsUpdate := (strings.HasPrefix(packagePart, "smartcore.bos") && !strings.Contains(packagePart, ".v")) ||
+				packagePart == "smartcore.traits"
+			if needsUpdate {
 				if typePackage, exists := typeToPackage[unqualifiedType]; exists {
+					if typePackage == currentPackage {
+						return prefix + unqualifiedType + suffix
+					}
 					return prefix + typePackage + "." + unqualifiedType + suffix
 				}
 			}

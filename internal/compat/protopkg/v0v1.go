@@ -145,6 +145,27 @@ var (
 			specialCaseV1ToV0[sc.v1] = sc.v0
 		}
 	})
+
+	// traitSpecialCases handles sc-api smartcore.traits service renames.
+	// These cover typos or other cases where the service name should change during migration.
+	traitSpecialCases = []struct{ v0, v1 string }{
+		// MotionSensorSensorInfo has a doubled "Sensor" word — corrected to MotionSensorInfo.
+		{"smartcore.traits.MotionSensorSensorInfo", "smartcore.bos.motionsensor.v1.MotionSensorInfo"},
+	}
+	traitSpecialCaseToV1      map[string]string
+	buildTraitSpecialCaseToV1 = sync.OnceFunc(func() {
+		traitSpecialCaseToV1 = make(map[string]string)
+		for _, sc := range traitSpecialCases {
+			traitSpecialCaseToV1[sc.v0] = sc.v1
+		}
+	})
+	traitSpecialCaseToTraits      map[string]string
+	buildTraitSpecialCaseToTraits = sync.OnceFunc(func() {
+		traitSpecialCaseToTraits = make(map[string]string)
+		for _, sc := range traitSpecialCases {
+			traitSpecialCaseToTraits[sc.v1] = sc.v0
+		}
+	})
 )
 
 func v0ToV1SpecialCase(fqn string) (string, bool) {
@@ -157,4 +178,44 @@ func v1ToV0SpecialCase(fqn string) (string, bool) {
 	buildSpecialCaseV1ToV0()
 	v0, ok := specialCaseV1ToV0[fqn]
 	return v0, ok
+}
+
+// TraitsToV1 converts a fully-qualified service name from smartcore.traits to
+// smartcore.bos.{resource}.v1.  Returns fqn unchanged for non-traits packages.
+// e.g. "smartcore.traits.MeterApi" -> "smartcore.bos.meter.v1.MeterApi"
+func TraitsToV1(fqn string) string {
+	buildTraitSpecialCaseToV1()
+	if v1, ok := traitSpecialCaseToV1[fqn]; ok {
+		return v1
+	}
+	pkg, service := splitPackageService(fqn)
+	if pkg != "smartcore.traits" {
+		return fqn
+	}
+	resource := extractResource(service)
+	return "smartcore.bos." + resource + ".v1." + service
+}
+
+// V1ToTraits is the inverse of TraitsToV1: smartcore.bos.{resource}.v1.Svc -> smartcore.traits.Svc.
+// Used by genrenames to detect service renames during the traits->v1 migration.
+// Returns fqn unchanged for packages that don't match the expected pattern.
+func V1ToTraits(fqn string) string {
+	buildTraitSpecialCaseToTraits()
+	if v0, ok := traitSpecialCaseToTraits[fqn]; ok {
+		return v0
+	}
+	pkg, service := splitPackageService(fqn)
+	if !isBOSPackage(pkg) {
+		return fqn
+	}
+	if !strings.HasSuffix(pkg, ".v1") {
+		return fqn
+	}
+	v0Pkg := strings.TrimSuffix(pkg, ".v1")
+	rest := strings.TrimPrefix(v0Pkg, "smartcore.bos.")
+	// Nested packages (e.g. driver.dali) are not traits.
+	if isNestedPackage(rest) {
+		return fqn
+	}
+	return "smartcore.traits." + service
 }
