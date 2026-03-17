@@ -34,7 +34,7 @@ service TestService {
 	}
 
 	// Parse the proto file
-	fd, err := Parse(tmpDir, protoFile)
+	fd, err := Parse(tmpDir, protoFile, nil)
 	if err != nil {
 		t.Fatalf("Parse() failed: %v", err)
 	}
@@ -80,7 +80,7 @@ func TestParse_NonExistentFile(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Try to parse a file that doesn't exist
-	_, err := Parse(tmpDir, "nonexistent.proto")
+	_, err := Parse(tmpDir, "nonexistent.proto", nil)
 	if err == nil {
 		t.Fatal("Parse() should fail for nonexistent file")
 	}
@@ -100,7 +100,7 @@ func TestParse_InvalidProto(t *testing.T) {
 	}
 
 	// Try to parse the invalid file
-	_, err := Parse(tmpDir, protoFile)
+	_, err := Parse(tmpDir, protoFile, nil)
 	if err == nil {
 		t.Fatal("Parse() should fail for invalid proto file")
 	}
@@ -141,7 +141,7 @@ message ImportingMessage {
 	}
 
 	// Parse the importing file (should handle imports)
-	fd, err := Parse(tmpDir, importingFile)
+	fd, err := Parse(tmpDir, importingFile, nil)
 	if err != nil {
 		t.Fatalf("Parse() failed with imports: %v", err)
 	}

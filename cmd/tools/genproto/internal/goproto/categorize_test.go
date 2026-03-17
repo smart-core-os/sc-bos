@@ -258,7 +258,7 @@ func TestDetermineGenerators(t *testing.T) {
 			}
 
 			// Test determineGenerators
-			got, err := determineGenerators(tmpDir, relPath)
+			got, err := determineGenerators(tmpDir, relPath, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("determineGenerators() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -315,7 +315,7 @@ func TestAnalyzeProtoFiles(t *testing.T) {
 			extractAllFiles(t, archive, tmpDir)
 
 			// Test analyzeProtoFiles
-			got, err := analyzeProtoFiles(tmpDir)
+			got, err := analyzeProtoFiles(tmpDir, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("analyzeProtoFiles() error = %v, wantErr %v", err, tt.wantErr)
 				return

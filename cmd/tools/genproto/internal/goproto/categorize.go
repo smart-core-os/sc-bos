@@ -21,7 +21,8 @@ type ProtoFileInfo struct {
 // analyzeProtoFiles returns the required generators and output dirs for each proto file in protoDir.
 // The keys of the returned map are relative paths from protoDir for each proto file.
 // analyzeProtoFiles recursively walks protoDir to find all .proto files.
-func analyzeProtoFiles(protoDir string) (map[string]ProtoFileInfo, error) {
+// includeDirs are additional -I include paths passed to protoc when parsing files.
+func analyzeProtoFiles(protoDir string, includeDirs []string) (map[string]ProtoFileInfo, error) {
 	fileInfos := make(map[string]ProtoFileInfo)
 
 	err := filepath.Walk(protoDir, func(path string, info os.FileInfo, err error) error {
@@ -38,7 +39,7 @@ func analyzeProtoFiles(protoDir string) (map[string]ProtoFileInfo, error) {
 			return fmt.Errorf("getting relative path: %w", err)
 		}
 
-		fileInfo, err := determineProtoFileInfo(protoDir, relPath)
+		fileInfo, err := determineProtoFileInfo(protoDir, relPath, includeDirs)
 		if err != nil {
 			return fmt.Errorf("analyzing %s: %w", relPath, err)
 		}
@@ -55,8 +56,8 @@ func analyzeProtoFiles(protoDir string) (map[string]ProtoFileInfo, error) {
 }
 
 // determineProtoFileInfo analyzes a proto file to determine its generator flags and output directory.
-func determineProtoFileInfo(protoDir, relPath string) (ProtoFileInfo, error) {
-	fileDesc, err := protofile.Parse(protoDir, relPath)
+func determineProtoFileInfo(protoDir, relPath string, includeDirs []string) (ProtoFileInfo, error) {
+	fileDesc, err := protofile.Parse(protoDir, relPath, includeDirs)
 	if err != nil {
 		return ProtoFileInfo{}, fmt.Errorf("parsing proto file: %w", err)
 	}
@@ -68,8 +69,8 @@ func determineProtoFileInfo(protoDir, relPath string) (ProtoFileInfo, error) {
 }
 
 // determineGenerators analyzes a proto file to determine which generators it needs.
-func determineGenerators(protoDir, relPath string) (Generator, error) {
-	fileDesc, err := protofile.Parse(protoDir, relPath)
+func determineGenerators(protoDir, relPath string, includeDirs []string) (Generator, error) {
+	fileDesc, err := protofile.Parse(protoDir, relPath, includeDirs)
 	if err != nil {
 		return 0, fmt.Errorf("parsing proto file: %w", err)
 	}
