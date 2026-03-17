@@ -8,6 +8,7 @@ cd "$ROOT_DIR"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
 YELLOW='\033[0;33m'
 RESET='\033[0m'
 
@@ -43,9 +44,13 @@ prefix_log() {
 
 if [ "$CLEAN" = true ]; then
   echo "Cleaning data dirs and database..."
-  rm -rf .data/vanti-ugs-hub/bc-01 .data/vanti-ugs-hub/eg-01 .data/vanti-ugs-hub/ac-01
-  PGPASSWORD=$(cat .data/secrets/postgres-password) psql -h localhost -U postgres -c 'DROP DATABASE IF EXISTS "smart_core"'
-  PGPASSWORD=$(cat .data/secrets/postgres-password) psql -h localhost -U postgres -c 'CREATE DATABASE "smart_core"'
+  rm -rf .data/vanti-ugs-cohort/bc-01 .data/vanti-ugs-cohort/eg-01 .data/vanti-ugs-cohort/eg-02 .data/vanti-ugs-cohort/ac-01
+  docker-compose down -v
+  docker-compose up -d
+  echo "Waiting for Postgres to be ready..."
+  until PGPASSWORD=$(cat .data/secrets/postgres-password) psql -h localhost -U postgres -c '\q' 2>/dev/null; do
+    sleep 1
+  done
   echo "Clean complete."
 fi
 
@@ -58,19 +63,25 @@ prefix_log "BC-01" "$GREEN" \
   .bin/bos --policy-mode=check \
     --appconf example/config/vanti-ugs-cohort/bc-01/app.conf.json \
     --sysconf example/config/vanti-ugs-cohort/bc-01/system.json \
-    --data .data/vanti-ugs-hub/bc-01
+    --data .data/vanti-ugs-cohort/bc-01
 
 prefix_log "EG-01" "$BLUE" \
   .bin/bos --policy-mode=check \
     --appconf example/config/vanti-ugs-cohort/eg-01/app.conf.json \
     --sysconf example/config/vanti-ugs-cohort/eg-01/system.json \
-    --data .data/vanti-ugs-hub/eg-01
+    --data .data/vanti-ugs-cohort/eg-01
+
+prefix_log "EG-02" "$PURPLE" \
+  .bin/bos --policy-mode=check \
+    --appconf example/config/vanti-ugs-cohort/eg-02/app.conf.json \
+    --sysconf example/config/vanti-ugs-cohort/eg-02/system.json \
+    --data .data/vanti-ugs-cohort/eg-02
 
 prefix_log "AC" "$RED" \
   .bin/bos --policy-mode=check \
     --appconf example/config/vanti-ugs-cohort/ac-01/app.conf.json \
     --sysconf example/config/vanti-ugs-cohort/ac-01/system.json \
-    --data .data/vanti-ugs-hub/ac-01
+    --data .data/vanti-ugs-cohort/ac-01
 
 prefix_log "UI" "$YELLOW" \
   yarn --cwd "$ROOT_DIR/ui/ops" run dev --mode=vanti-ugs-cohort
