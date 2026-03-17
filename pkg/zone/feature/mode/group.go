@@ -14,11 +14,11 @@ import (
 
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/mode/config"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
 )
 
 // MixedValue is used as ModeValues.Value when underlying devices disagree on the actual value for a mode.
@@ -114,7 +114,7 @@ func (g *Group) UpdateModeValues(ctx context.Context, request *traits.UpdateMode
 			defer wg.Done()
 			var updateMask *fieldmaskpb.FieldMask
 			// todo: this currently doesn't work because fieldbaskpb.FieldMask.IsValid fails with map keys!
-			//  if/when it does or we write our own validation logic in sc-golang we can't use field masks :(
+			//  if/when it does or we write our own validation logic in sc-bos we can't use field masks :(
 			// updateMask = &fieldmaskpb.FieldMask{}
 			// for k := range result.val.Values {
 			// 	updateMask.Paths = append(updateMask.Paths, fmt.Sprintf("values.%s", k))

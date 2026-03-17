@@ -9,13 +9,16 @@ import (
 	"strings"
 
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/fixer"
+	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/gentrait"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/goprotoimports"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/historyimports"
+	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/nodeclient"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/optclients"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protogopkg"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1go"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1js"
+	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/scgolang"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/regoimports"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/wrap"
 )
@@ -28,6 +31,7 @@ type fix struct {
 
 // allFixes contains all available fixes and their default enabled state.
 var allFixes = []fix{
+	{Fix: nodeclient.Fix, Enabled: true},
 	{Fix: optclients.Fix, Enabled: true},
 	{Fix: historyimports.Fix, Enabled: true},
 	{Fix: wrap.Fix, Enabled: false},
@@ -36,6 +40,9 @@ var allFixes = []fix{
 	{Fix: protov1js.Fix, Enabled: true},
 	{Fix: protogopkg.Fix, Enabled: false},
 	{Fix: goprotoimports.Fix, Enabled: true},
+	{Fix: gentrait.FixMove, Enabled: false},
+	{Fix: gentrait.FixRefs, Enabled: false},
+	{Fix: scgolang.Fix, Enabled: false},
 	{Fix: regoimports.Fix, Enabled: true},
 }
 

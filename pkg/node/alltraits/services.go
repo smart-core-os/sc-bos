@@ -6,48 +6,30 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/anprcamera"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/button"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/dalipb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylightpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/mqttpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/report"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceusepb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/serviceticketpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/temperaturepb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb"
-	gen_accesspb "github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	gen_allocationpb "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/anprcamerapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
-	gen_dalipb "github.com/smart-core-os/sc-bos/pkg/proto/driver/dalipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/driver/dalipb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
-	gen_emergencylightpb "github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	gen_mqttpb "github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/reportpb"
-	gen_resourceusepb "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
-	gen_serviceticketpb "github.com/smart-core-os/sc-bos/pkg/proto/serviceticketpb"
-	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/serviceticketpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
-	gen_temperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
-	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
-	gen_wastepb "github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
@@ -82,25 +64,25 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	trait.Vending:          {traits.VendingApi_ServiceDesc, traits.VendingInfo_ServiceDesc},
 
 	// sc-bos private traits
-	allocationpb.TraitName:     {gen_allocationpb.AllocationApi_ServiceDesc, gen_allocationpb.AllocationHistory_ServiceDesc},
-	accesspb.TraitName:         {gen_accesspb.AccessApi_ServiceDesc},
-	anprcamera.TraitName:       {anprcamerapb.AnprCameraApi_ServiceDesc},
-	button.TraitName:           {buttonpb.ButtonApi_ServiceDesc},
-	dalipb.TraitName:           {gen_dalipb.DaliApi_ServiceDesc},
-	emergencylightpb.TraitName: {gen_dalipb.DaliApi_ServiceDesc, gen_emergencylightpb.EmergencyLightApi_ServiceDesc},
-	healthpb.TraitName:         {gen_healthpb.HealthApi_ServiceDesc, gen_healthpb.HealthHistory_ServiceDesc},
-	meter.TraitName:            {meterpb.MeterApi_ServiceDesc, meterpb.MeterInfo_ServiceDesc, meterpb.MeterHistory_ServiceDesc},
-	mqttpb.TraitName:           {gen_mqttpb.MqttService_ServiceDesc},
-	report.TraitName:           {reportpb.ReportApi_ServiceDesc},
-	resourceusepb.TraitName:    {gen_resourceusepb.ResourceUseApi_ServiceDesc, gen_resourceusepb.ResourceUseHistory_ServiceDesc},
-	securityevent.TraitName:    {securityeventpb.SecurityEventApi_ServiceDesc},
-	serviceticketpb.TraitName:  {gen_serviceticketpb.ServiceTicketApi_ServiceDesc, gen_serviceticketpb.ServiceTicketInfo_ServiceDesc},
-	soundsensorpb.TraitName:    {gen_soundsensorpb.SoundSensorApi_ServiceDesc, gen_soundsensorpb.SoundSensorInfo_ServiceDesc},
+	allocationpb.TraitName:     {allocationpb.AllocationApi_ServiceDesc, allocationpb.AllocationHistory_ServiceDesc},
+	accesspb.TraitName:         {accesspb.AccessApi_ServiceDesc},
+	anprcamerapb.TraitName:     {anprcamerapb.AnprCameraApi_ServiceDesc},
+	buttonpb.TraitName:         {buttonpb.ButtonApi_ServiceDesc},
+	dalipb.TraitName:           {dalipb.DaliApi_ServiceDesc},
+	emergencylightpb.TraitName: {dalipb.DaliApi_ServiceDesc, emergencylightpb.EmergencyLightApi_ServiceDesc},
+	healthpb.TraitName:         {healthpb.HealthApi_ServiceDesc, healthpb.HealthHistory_ServiceDesc},
+	meterpb.TraitName:          {meterpb.MeterApi_ServiceDesc, meterpb.MeterInfo_ServiceDesc, meterpb.MeterHistory_ServiceDesc},
+	mqttpb.TraitName:           {mqttpb.MqttService_ServiceDesc},
+	reportpb.TraitName:         {reportpb.ReportApi_ServiceDesc},
+	resourceusepb.TraitName:    {resourceusepb.ResourceUseApi_ServiceDesc, resourceusepb.ResourceUseHistory_ServiceDesc},
+	securityeventpb.TraitName:  {securityeventpb.SecurityEventApi_ServiceDesc},
+	serviceticketpb.TraitName:  {serviceticketpb.ServiceTicketApi_ServiceDesc, serviceticketpb.ServiceTicketInfo_ServiceDesc},
+	soundsensorpb.TraitName:    {soundsensorpb.SoundSensorApi_ServiceDesc, soundsensorpb.SoundSensorInfo_ServiceDesc},
 	statusTraitName:            {statuspb.StatusApi_ServiceDesc, statuspb.StatusHistory_ServiceDesc},
-	temperaturepb.TraitName:    {gen_temperaturepb.TemperatureApi_ServiceDesc},
-	transport.TraitName:        {transportpb.TransportApi_ServiceDesc, transportpb.TransportInfo_ServiceDesc, transportpb.TransportHistory_ServiceDesc},
-	udmipb.TraitName:           {gen_udmipb.UdmiService_ServiceDesc},
-	wastepb.TraitName:          {gen_wastepb.WasteApi_ServiceDesc, gen_wastepb.WasteInfo_ServiceDesc},
+	temperaturepb.TraitName:    {temperaturepb.TemperatureApi_ServiceDesc},
+	transportpb.TraitName:      {transportpb.TransportApi_ServiceDesc, transportpb.TransportInfo_ServiceDesc, transportpb.TransportHistory_ServiceDesc},
+	udmipb.TraitName:           {udmipb.UdmiService_ServiceDesc},
+	wastepb.TraitName:          {wastepb.WasteApi_ServiceDesc, wastepb.WasteInfo_ServiceDesc},
 }
 
 func Names() []trait.Name {

@@ -5,15 +5,14 @@ import (
 	"math/rand/v2"
 	"time"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
-	gen_allocationpb "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
 )
 
 func AllocationAuto(model *allocationpb.Model) service.Lifecycle {
-	states := maps.Values(gen_allocationpb.Allocation_State_value)
+	states := maps.Values(allocationpb.Allocation_State_value)
 
 	states = states[1:] // remove the UNKNOWN state
 
@@ -38,16 +37,16 @@ func AllocationAuto(model *allocationpb.Model) service.Lifecycle {
 			unallocationTotal := int32(0)
 
 			for {
-				allocation := gen_allocationpb.Allocation_State(states[rand.IntN(len(states))])
+				allocation := allocationpb.Allocation_State(states[rand.IntN(len(states))])
 
 				switch allocation {
-				case gen_allocationpb.Allocation_ALLOCATED:
+				case allocationpb.Allocation_ALLOCATED:
 					allocationTotal++
-				case gen_allocationpb.Allocation_UNALLOCATED:
+				case allocationpb.Allocation_UNALLOCATED:
 					unallocationTotal++
 				}
 
-				state := &gen_allocationpb.Allocation{
+				state := &allocationpb.Allocation{
 					State:             allocation,
 					Actor:             actors[rand.IntN(len(actors))],
 					GroupId:           &groupIds[rand.IntN(len(groupIds))],

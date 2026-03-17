@@ -27,25 +27,22 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/rx"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func TestSystem_scanRemoteHub(t *testing.T) {
@@ -57,9 +54,9 @@ func TestSystem_scanRemoteHub(t *testing.T) {
 		ac2 := env.newNode("ac2")
 
 		// create some devices on non-gateway nodes
-		ac1.announceDeviceTraits("ac1/dev1", meter.TraitName, trait.OnOff)
+		ac1.announceDeviceTraits("ac1/dev1", meterpb.TraitName, trait.OnOff)
 		ac1.announceDeviceTraits("ac1/dev2", trait.OnOff)
-		ac2.announceDeviceTraits("ac2/dev1", meter.TraitName)
+		ac2.announceDeviceTraits("ac2/dev1", meterpb.TraitName)
 		hub.announceDeviceTraits("hub/dev1", trait.OnOff)
 		ac1.announceDeviceHealth("ac1/dev1", "-working", ">overheat")
 		ac2.announceDeviceHealth("ac2/dev1", "+working")
@@ -86,12 +83,12 @@ func TestSystem_scanRemoteHub(t *testing.T) {
 		gw2Node.assertDevices()
 		ac1Node := gw1CohortTester.node("ac1")
 		ac1Node.assertDevices("ac1/dev1", "ac1/dev2")
-		ac1Node.assertDeviceTraits("ac1/dev1", meter.TraitName, trait.OnOff)
+		ac1Node.assertDeviceTraits("ac1/dev1", meterpb.TraitName, trait.OnOff)
 		ac1Node.assertDeviceHealth("ac1/dev1", "-working", ">overheat")
 		ac1Node.assertDeviceTraits("ac1/dev2", trait.OnOff)
 		ac2Node := gw1CohortTester.node("ac2")
 		ac2Node.assertDevices("ac2/dev1")
-		ac2Node.assertDeviceTraits("ac2/dev1", meter.TraitName)
+		ac2Node.assertDeviceTraits("ac2/dev1", meterpb.TraitName)
 		ac2Node.assertDeviceHealth("ac2/dev1", "+working")
 
 		// test node modifications
@@ -106,7 +103,7 @@ func TestSystem_scanRemoteHub(t *testing.T) {
 
 		// test device modifications
 		_, ac1DeviceChanges := ac1Node.node.Devices.Sub(t.Context())
-		ac1.announceDeviceTraits("ac1/dev2", meter.TraitName) // a new trait for an existing device
+		ac1.announceDeviceTraits("ac1/dev2", meterpb.TraitName) // a new trait for an existing device
 		synctest.Wait()
 		assertChanVal(t, ac1DeviceChanges, func(c rx.Change[remoteDesc]) {
 			if c.Type != rx.Update {
@@ -125,7 +122,7 @@ func TestSystem_scanRemoteHub(t *testing.T) {
 			wantNewMd := &traits.Metadata{
 				Name: "ac1/dev2",
 				Traits: []*traits.TraitMetadata{
-					{Name: string(meter.TraitName)},
+					{Name: string(meterpb.TraitName)},
 					{Name: string(trait.Metadata)},
 					{Name: string(trait.OnOff)},
 				},
@@ -288,7 +285,7 @@ func newMockRemoteNode(t *testing.T, name string) *mockRemoteNode {
 	reflectionServer := reflectionapi.NewServer(server, n)
 	reflectionServer.Register(server)
 
-	gen_devicespb.RegisterDevicesApiServer(server, devices.NewServer(n))
+	devicespb.RegisterDevicesApiServer(server, devices.NewServer(n))
 
 	rn := &mockRemoteNode{
 		t:        t,
@@ -437,8 +434,8 @@ func (n *mockRemoteNode) announceDeviceTraits(name string, tns ...trait.Name) {
 	for _, tn := range tns {
 		var client wrap.ServiceUnwrapper
 		switch tn {
-		case meter.TraitName:
-			client = meterpb.WrapApi(meter.NewModelServer(meter.NewModel()))
+		case meterpb.TraitName:
+			client = meterpb.WrapApi(meterpb.NewModelServer(meterpb.NewModel()))
 		case trait.OnOff:
 			client = onoffpb.WrapApi(onoffpb.NewModelServer(onoffpb.NewModel()))
 		default:
@@ -483,7 +480,7 @@ func (n *mockRemoteNode) announceDeviceHealth(name string, checks ...string) {
 	if len(checks) == 0 {
 		n.t.Fatalf("no health checks provided for device %q", name)
 	}
-	var hc []*gen_healthpb.HealthCheck
+	var hc []*healthpb.HealthCheck
 	for _, desc := range checks {
 		hc = append(hc, makeHealthCheck(desc))
 	}
@@ -493,25 +490,25 @@ func (n *mockRemoteNode) announceDeviceHealth(name string, checks ...string) {
 	}
 }
 
-func makeHealthCheck(desc string) *gen_healthpb.HealthCheck {
-	normality := gen_healthpb.HealthCheck_NORMAL
+func makeHealthCheck(desc string) *healthpb.HealthCheck {
+	normality := healthpb.HealthCheck_NORMAL
 	if len(desc) > 0 {
 		switch desc[0] {
 		case '+': // normal
 			desc = strings.TrimSpace(desc[1:])
 		case '-': // abnormal
-			normality = gen_healthpb.HealthCheck_ABNORMAL
+			normality = healthpb.HealthCheck_ABNORMAL
 			desc = strings.TrimSpace(desc[1:])
 		case '>': // high
-			normality = gen_healthpb.HealthCheck_HIGH
+			normality = healthpb.HealthCheck_HIGH
 			desc = strings.TrimSpace(desc[1:])
 		case '<': // low
-			normality = gen_healthpb.HealthCheck_LOW
+			normality = healthpb.HealthCheck_LOW
 			desc = strings.TrimSpace(desc[1:])
 		}
 	}
 	// simple check, just needs to have enough info to identify it
-	return &gen_healthpb.HealthCheck{
+	return &healthpb.HealthCheck{
 		Id:          desc,
 		Normality:   normality,
 		DisplayName: desc,
@@ -670,11 +667,11 @@ func (ctn *cohortTesterNode) assertDeviceHealth(name string, wantChecks ...strin
 
 func assertDeviceHealth(t *testing.T, got remoteDesc, wantChecks ...string) {
 	t.Helper()
-	want := make([]*gen_healthpb.HealthCheck, 0, len(wantChecks))
+	want := make([]*healthpb.HealthCheck, 0, len(wantChecks))
 	for _, desc := range wantChecks {
 		want = append(want, makeHealthCheck(desc))
 	}
-	if diff := cmp.Diff(want, got.health, protocmp.Transform(), cmpopts.SortSlices(func(a, b *gen_healthpb.HealthCheck) int {
+	if diff := cmp.Diff(want, got.health, protocmp.Transform(), cmpopts.SortSlices(func(a, b *healthpb.HealthCheck) int {
 		return strings.Compare(a.Id, b.Id)
 	})); diff != "" {
 		t.Fatalf("unexpected health checks for device %q(-want +got):\n%s", got.name, diff)
@@ -727,17 +724,17 @@ func devicesToHealthCheckCollection(d *devicespb.Collection) system.HealthCheckC
 
 type devicesHealthCheckCollection devicespb.Collection
 
-func (d *devicesHealthCheckCollection) MergeHealthChecks(name string, checks ...*gen_healthpb.HealthCheck) error {
-	_, err := (*devicespb.Collection)(d).Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-		dstDev := dst.(*gen_devicespb.Device)
+func (d *devicesHealthCheckCollection) MergeHealthChecks(name string, checks ...*healthpb.HealthCheck) error {
+	_, err := (*devicespb.Collection)(d).Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+		dstDev := dst.(*devicespb.Device)
 		dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, checks...)
 	}), resource.WithCreateIfAbsent())
 	return err
 }
 
 func (d *devicesHealthCheckCollection) RemoveHealthChecks(name string, ids ...string) error {
-	_, err := (*devicespb.Collection)(d).Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
-		dstDev := dst.(*gen_devicespb.Device)
+	_, err := (*devicespb.Collection)(d).Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
+		dstDev := dst.(*devicespb.Device)
 		for _, id := range ids {
 			dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
 		}

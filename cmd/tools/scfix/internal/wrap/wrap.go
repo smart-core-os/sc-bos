@@ -69,8 +69,8 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 			pkgName = parts[len(parts)-1]
 		}
 
-		if strings.Contains(path, "/sc-golang/pkg/trait/") ||
-			strings.Contains(path, "/sc-bos/pkg/gentrait/") ||
+		if strings.Contains(path, "/sc-bos/pkg/trait/") ||
+			strings.Contains(path, "/sc-bos/pkg/proto/") ||
 			path == "github.com/smart-core-os/sc-api/go/traits" ||
 			path == "github.com/smart-core-os/sc-bos/pkg/gen" {
 			packageInfo[pkgName] = &packageWrapInfo{
@@ -149,7 +149,7 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 
 	if !ctx.DryRun {
 		if needsWrapImport {
-			ensureImport(node, "github.com/smart-core-os/sc-golang/pkg/wrap")
+			ensureImport(node, "github.com/smart-core-os/sc-bos/pkg/wrap")
 		}
 		if needsTraitsImport {
 			ensureImport(node, "github.com/smart-core-os/sc-api/go/traits")
@@ -238,13 +238,11 @@ func getTraitPackageWrapInfo(pkgInfo *packageWrapInfo, funcName string) *wrapRes
 	var targetPkg string
 	var needsTraitsImport bool
 
-	if strings.Contains(pkgInfo.importPath, "/sc-golang/pkg/trait/") {
+	if strings.Contains(pkgInfo.importPath, "/sc-bos/pkg/trait/") ||
+		strings.Contains(pkgInfo.importPath, "/sc-bos/pkg/proto/") {
 		targetPkg = "traits"
 		needsTraitsImport = true
 	} else if pkgInfo.importPath == "github.com/smart-core-os/sc-api/go/traits" {
-		targetPkg = pkgInfo.pkgName
-		needsTraitsImport = false
-	} else if strings.Contains(pkgInfo.importPath, "/sc-bos/pkg/gentrait/") {
 		targetPkg = pkgInfo.pkgName
 		needsTraitsImport = false
 	} else {
@@ -287,8 +285,8 @@ type traitInfo struct {
 }
 
 func getTraitInfoFromPackage(importPath, pkgName string) *traitInfo {
-	if !strings.Contains(importPath, "/sc-golang/pkg/trait/") &&
-		!strings.Contains(importPath, "/sc-bos/pkg/gentrait/") &&
+	if !strings.Contains(importPath, "/sc-bos/pkg/trait/") &&
+		!strings.Contains(importPath, "/sc-bos/pkg/proto/") &&
 		importPath != "github.com/smart-core-os/sc-api/go/traits" {
 		return nil
 	}

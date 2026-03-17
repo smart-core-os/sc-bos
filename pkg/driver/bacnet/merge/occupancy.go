@@ -12,11 +12,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 )
 
 type occupancyCfg struct {
@@ -36,22 +36,22 @@ type occupancy struct {
 
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *occupancysensorpb.Model
-	*occupancysensorpb.ModelServer
+	model *occupancysensorpb2.Model
+	*occupancysensorpb2.ModelServer
 	config   occupancyCfg
 	pollTask *task.Intermittent
 }
 
-func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
+func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
 	cfg, err := readOccupancyConfig(config.Raw)
 	if err != nil {
 		return nil, err
 	}
 
-	model := occupancysensorpb.NewModel()
+	model := occupancysensorpb2.NewModel()
 
 	o := &occupancy{
 		client:      client,
@@ -59,7 +59,7 @@ func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *gen_
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: occupancysensorpb.NewModelServer(model),
+		ModelServer: occupancysensorpb2.NewModelServer(model),
 		config:      cfg,
 	}
 
@@ -69,7 +69,7 @@ func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *gen_
 }
 
 func (o *occupancy) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(o.config.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(o))))
+	return a.Announce(o.config.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(o))))
 }
 
 func (o *occupancy) GetOccupancy(ctx context.Context, request *traits.GetOccupancyRequest) (*traits.Occupancy, error) {

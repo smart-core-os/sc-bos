@@ -8,10 +8,9 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/temperaturepb"
-	gen_temperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 func TemperatureAuto(model *temperaturepb.Model) *service.Service[string] {
@@ -20,7 +19,7 @@ func TemperatureAuto(model *temperaturepb.Model) *service.Service[string] {
 		go func() {
 
 			initialTemp := 12 + rand.Float64()*3
-			state := &gen_temperaturepb.Temperature{
+			state := &temperaturepb.Temperature{
 				Measured: &types.Temperature{
 					ValueCelsius: initialTemp,
 				},

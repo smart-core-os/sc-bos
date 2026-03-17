@@ -4,8 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/pressurepb"
-	gen_pressurepb "github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
@@ -14,7 +13,7 @@ func Pressure(model *pressurepb.Model) service.Lifecycle {
 		go func() {
 			timer := time.NewTimer(durationBetween(30*time.Second, 2*time.Minute))
 			for {
-				state := &gen_pressurepb.Pressure{
+				state := &pressurepb.Pressure{
 					Pressure:       ptr(float32Between(0, 100)),
 					TargetPressure: ptr(float32Between(0, 100)),
 				}

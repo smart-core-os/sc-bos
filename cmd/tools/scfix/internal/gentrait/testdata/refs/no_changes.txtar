@@ -1,0 +1,33 @@
+Test that files with no gentrait imports are unchanged.
+expected_changes: 0
+
+-- input/pkg/driver/test/driver.go --
+package test
+
+import (
+	"context"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+type Driver struct {
+	meter *meterpb.MeterReading
+}
+
+func (d *Driver) GetMeter(ctx context.Context) *meterpb.MeterReading {
+	return d.meter
+}
+-- output/pkg/driver/test/driver.go --
+package test
+
+import (
+	"context"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+type Driver struct {
+	meter *meterpb.MeterReading
+}
+
+func (d *Driver) GetMeter(ctx context.Context) *meterpb.MeterReading {
+	return d.meter
+}

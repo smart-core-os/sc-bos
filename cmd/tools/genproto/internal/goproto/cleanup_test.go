@@ -9,7 +9,7 @@ import (
 	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/generator"
 )
 
-func TestCleanGeneratedFiles(t *testing.T) {
+func TestCleanAllPbGo(t *testing.T) {
 	archive := loadTxtar(t, "cleanup.txtar")
 	tmpDir := t.TempDir()
 
@@ -35,8 +35,8 @@ func TestCleanGeneratedFiles(t *testing.T) {
 		},
 	}
 
-	if err := cleanGeneratedFiles(ctx, tmpDir); err != nil {
-		t.Fatalf("cleanGeneratedFiles failed: %v", err)
+	if err := cleanAllPbGo(ctx, tmpDir); err != nil {
+		t.Fatalf("cleanAllPbGo failed: %v", err)
 	}
 
 	// Build expected output files map
@@ -80,7 +80,7 @@ func TestCleanGeneratedFiles(t *testing.T) {
 	}
 }
 
-func TestCleanGeneratedFiles_NonExistentDir(t *testing.T) {
+func TestCleanAllPbGo_NonExistentDir(t *testing.T) {
 	tmpDir := t.TempDir()
 	nonExistent := filepath.Join(tmpDir, "does-not-exist")
 
@@ -93,7 +93,7 @@ func TestCleanGeneratedFiles_NonExistentDir(t *testing.T) {
 	}
 
 	// Should not error when directory doesn't exist
-	if err := cleanGeneratedFiles(ctx, nonExistent); err != nil {
-		t.Errorf("cleanGeneratedFiles should not error on non-existent directory: %v", err)
+	if err := cleanAllPbGo(ctx, nonExistent); err != nil {
+		t.Errorf("cleanAllPbGo should not error on non-existent directory: %v", err)
 	}
 }

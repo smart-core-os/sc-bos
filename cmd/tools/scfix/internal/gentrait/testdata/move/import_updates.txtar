@@ -1,0 +1,71 @@
+Test that imports from pkg/gentrait are updated to pkg/proto.
+expected_changes: 3
+
+-- input/pkg/gentrait/meter/docs.go --
+// Package meter provides functionality for meter readings.
+package meter
+-- input/pkg/gentrait/meter/wrapper.go --
+package meter
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+// Wrapper wraps meter and waste functionality.
+type Wrapper struct {
+	meter *meterpb.MeterReading
+	waste *wastepb.WasteLevel
+}
+
+func NewWrapper() *Wrapper {
+	return &Wrapper{
+		meter: &meterpb.MeterReading{},
+		waste: &wastepb.WasteLevel{},
+	}
+}
+-- input/pkg/gentrait/alert/server.go --
+package alert
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+)
+
+type Server struct {
+	alertpb.UnimplementedAlertApiServer
+	meterInfo *meter.InfoServer
+}
+-- output/pkg/proto/meterpb/docs.go --
+// Package meterpb provides functionality for meter readings.
+package meterpb
+-- output/pkg/proto/meterpb/wrapper.go --
+package meterpb
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
+)
+
+// Wrapper wraps meter and waste functionality.
+type Wrapper struct {
+	meter *MeterReading
+	waste *wastepb.WasteLevel
+}
+
+func NewWrapper() *Wrapper {
+	return &Wrapper{
+		meter: &MeterReading{},
+		waste: &wastepb.WasteLevel{},
+	}
+}
+-- output/pkg/proto/alertpb/server.go --
+package alertpb
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+type Server struct {
+	UnimplementedAlertApiServer
+	meterInfo *meter.InfoServer
+}

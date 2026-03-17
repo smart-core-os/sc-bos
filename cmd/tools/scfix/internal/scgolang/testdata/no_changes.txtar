@@ -1,0 +1,25 @@
+Tests that a file with no sc-golang imports is left unchanged.
+expected_changes: 0
+
+-- input/example.go --
+package example
+
+import (
+	"context"
+	"fmt"
+)
+
+func Greet(ctx context.Context, name string) string {
+	return fmt.Sprintf("Hello, %s!", name)
+}
+-- output/example.go --
+package example
+
+import (
+	"context"
+	"fmt"
+)
+
+func Greet(ctx context.Context, name string) string {
+	return fmt.Sprintf("Hello, %s!", name)
+}

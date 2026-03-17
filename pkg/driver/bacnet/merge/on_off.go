@@ -14,11 +14,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 type onOffCfg struct {
@@ -41,7 +41,7 @@ func readOnOffConfig(raw []byte) (cfg onOffCfg, err error) {
 type onOff struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *onoffpb.Model
@@ -50,7 +50,7 @@ type onOff struct {
 	pollTask *task.Intermittent
 }
 
-func newOnOff(client *gobacnet.Client, known known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*onOff, error) {
+func newOnOff(client *gobacnet.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*onOff, error) {
 	cfg, err := readOnOffConfig(config.Raw)
 	if err != nil {
 		return nil, err

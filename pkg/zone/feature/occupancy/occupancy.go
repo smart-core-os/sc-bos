@@ -9,10 +9,10 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -49,7 +49,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		if len(cfg.EnterLeaveOccupancySensors) > 0 {
 			elServer := &enterLeave{
-				model:  occupancysensorpb.NewModel(),
+				model:  occupancysensorpb2.NewModel(),
 				client: traits.NewEnterLeaveSensorApiClient(conn),
 				names:  cfg.EnterLeaveOccupancySensors,
 				logger: logger,
@@ -69,12 +69,12 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 				}
 			}
 
-			group.clients = append(group.clients, occupancysensorpb.WrapApi(elServer))
+			group.clients = append(group.clients, occupancysensorpb2.WrapApi(elServer))
 		}
 
 		f.devices.Add(cfg.OccupancySensors...)
 		f.devices.Add(cfg.EnterLeaveOccupancySensors...)
-		announce.Announce(cfg.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(group))))
+		announce.Announce(cfg.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(group))))
 	}
 
 	return nil

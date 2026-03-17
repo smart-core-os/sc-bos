@@ -12,7 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/conv"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 // Transport implements the Smart Core Transport trait for OPC UA devices.

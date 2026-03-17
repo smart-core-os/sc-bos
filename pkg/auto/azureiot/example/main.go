@@ -14,16 +14,16 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/azureiot"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
 )
 
 func main() {
 	root := node.New("example-azureiot")
 
-	model := airqualitysensorpb.NewModel(airqualitysensorpb.WithInitialAirQuality(iaq()))
+	model := airqualitysensorpb2.NewModel(airqualitysensorpb2.WithInitialAirQuality(iaq()))
 	root.Announce("IAQ-001", node.HasTrait(trait.AirQualitySensor, node.WithClients(
-		airqualitysensorpb.WrapApi(airqualitysensorpb.NewModelServer(model)))))
+		airqualitysensorpb2.WrapApi(airqualitysensorpb2.NewModelServer(model)))))
 
 	l, _ := zap.NewDevelopment()
 	services := auto.Services{

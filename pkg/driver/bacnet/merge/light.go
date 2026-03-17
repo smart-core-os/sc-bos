@@ -16,13 +16,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 var (
@@ -58,22 +58,22 @@ func readLightConfig(raw []byte) (cfg lightCfg, err error) {
 type light struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *lightpb.Model
-	*lightpb.ModelServer
+	model *lightpb2.Model
+	*lightpb2.ModelServer
 	config   lightCfg
 	pollTask *task.Intermittent
 }
 
-func newLight(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*light, error) {
+func newLight(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*light, error) {
 	cfg, err := readLightConfig(config.Raw)
 	if err != nil {
 		return nil, err
 	}
 
-	model := lightpb.NewModel(resource.WithMessageEquivalence(cmp.Equal(cmp.FloatValueApprox(0, 1.0)))) // report brightness intensity changes of 1.0% or more
+	model := lightpb2.NewModel(resource.WithMessageEquivalence(cmp.Equal(cmp.FloatValueApprox(0, 1.0)))) // report brightness intensity changes of 1.0% or more
 
 	l := &light{
 		client:      client,
@@ -81,7 +81,7 @@ func newLight(client *gobacnet.Client, devices known.Context, faultCheck *gen_he
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: lightpb.NewModelServer(model),
+		ModelServer: lightpb2.NewModelServer(model),
 		config:      cfg,
 	}
 
@@ -91,7 +91,7 @@ func newLight(client *gobacnet.Client, devices known.Context, faultCheck *gen_he
 }
 
 func (l *light) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(l.config.Name, node.HasTrait(trait.Light, node.WithClients(lightpb.WrapApi(l), lightpb.WrapInfo(l))))
+	return a.Announce(l.config.Name, node.HasTrait(trait.Light, node.WithClients(lightpb2.WrapApi(l), lightpb2.WrapInfo(l))))
 }
 
 func (l *light) UpdateBrightness(ctx context.Context, request *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {

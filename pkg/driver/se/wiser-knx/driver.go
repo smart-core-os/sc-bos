@@ -11,10 +11,10 @@ import (
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 const DriverName = "se-wiser-knx"
@@ -33,7 +33,7 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 		service.WithParser(ParseConfig),
 	)
 	d.logger = services.Logger.Named(DriverName)
-	d.lightsByAddress = make(map[string]*lightpb.Model)
+	d.lightsByAddress = make(map[string]*lightpb2.Model)
 	d.modesByAddress = make(map[string]*modepb.Model)
 	return d
 }
@@ -46,7 +46,7 @@ type Driver struct {
 
 	cfg             Config
 	client          *Client
-	lightsByAddress map[string]*lightpb.Model
+	lightsByAddress map[string]*lightpb2.Model
 	modesByAddress  map[string]*modepb.Model
 }
 
@@ -80,9 +80,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg Config) error {
 		for t, addr := range dev.Addresses {
 			switch t {
 			case "light":
-				l := lightpb.NewModel()
-				c := lightpb.WrapApi(lightServer{
-					LightApiServer: lightpb.NewModelServer(l),
+				l := lightpb2.NewModel()
+				c := lightpb2.WrapApi(lightServer{
+					LightApiServer: lightpb2.NewModelServer(l),
 					client:         d.client,
 					device:         &_dev,
 					logger:         d.logger.With(zap.String("name", dev.Name)),

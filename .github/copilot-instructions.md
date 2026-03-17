@@ -8,7 +8,7 @@
 - **Backend:** Go 1.25.x, gRPC, Protocol Buffers
 - **Frontend:** Vue.js 3, Vite 6, Vuetify 3, Node.js 22.x, Yarn 1.22.x
 - **Infrastructure:** PostgreSQL 14, Keycloak 21 (OAuth2/OIDC), Docker/Podman
-- **Key Dependencies:** `github.com/smart-core-os/sc-api` (Smart Core API), `github.com/smart-core-os/sc-golang`
+- **Key Dependencies:** `github.com/smart-core-os/sc-api` (Smart Core API)
 
 ## Agent Behavior Guidelines
 

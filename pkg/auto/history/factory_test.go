@@ -17,22 +17,20 @@ import (
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
-	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_airqualitysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	gen_electricpb "github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
-	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
+	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
+	electricpb2 "github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
+	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/electricpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 func Test_automation_applyConfig(t *testing.T) {
@@ -42,10 +40,10 @@ func Test_automation_applyConfig(t *testing.T) {
 	t.Cleanup(cancel)
 
 	logger := zap.NewNop()
-	occupancy := occupancysensorpb.NewModel()
-	airQuality := airqualitysensorpb.NewModel()
-	airTemperature := airtemperaturepb.NewModel()
-	electric := electricpb.NewModel()
+	occupancy := occupancysensorpb2.NewModel()
+	airQuality := airqualitysensorpb2.NewModel()
+	airTemperature := airtemperaturepb2.NewModel()
+	electric := electricpb2.NewModel()
 	meter := meterpb.NewModel()
 	status := statuspb.NewModel()
 
@@ -57,7 +55,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.OccupancySensor),
 		node.HasServer(
 			traits.RegisterOccupancySensorApiServer,
-			traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occupancy)),
+			traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occupancy)),
 		),
 	)
 
@@ -65,7 +63,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.AirQualitySensor),
 		node.HasServer(
 			traits.RegisterAirQualitySensorApiServer,
-			traits.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(airQuality)),
+			traits.AirQualitySensorApiServer(airqualitysensorpb2.NewModelServer(airQuality)),
 		),
 	)
 
@@ -73,7 +71,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.AirTemperature),
 		node.HasServer(
 			traits.RegisterAirTemperatureApiServer,
-			traits.AirTemperatureApiServer(airtemperaturepb.NewModelServer(airTemperature)),
+			traits.AirTemperatureApiServer(airtemperaturepb2.NewModelServer(airTemperature)),
 		),
 	)
 
@@ -81,23 +79,23 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.Electric),
 		node.HasServer(
 			traits.RegisterElectricApiServer,
-			traits.ElectricApiServer(electricpb.NewModelServer(electric)),
+			traits.ElectricApiServer(electricpb2.NewModelServer(electric)),
 		),
 	)
 
 	announcer.Announce("meter",
 		node.HasTrait(meterpb.TraitName),
 		node.HasServer(
-			gen_meterpb.RegisterMeterApiServer,
-			gen_meterpb.MeterApiServer(meterpb.NewModelServer(meter)),
+			meterpb.RegisterMeterApiServer,
+			meterpb.MeterApiServer(meterpb.NewModelServer(meter)),
 		),
 	)
 
 	announcer.Announce("status",
 		node.HasTrait(statuspb.TraitName),
 		node.HasServer(
-			gen_statuspb.RegisterStatusApiServer,
-			gen_statuspb.StatusApiServer(statuspb.NewModelServer(status)),
+			statuspb.RegisterStatusApiServer,
+			statuspb.StatusApiServer(statuspb.NewModelServer(status)),
 		),
 	)
 
@@ -154,14 +152,14 @@ func Test_automation_applyConfig(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if _, err := meter.UpdateMeterReading(&gen_meterpb.MeterReading{
+		if _, err := meter.UpdateMeterReading(&meterpb.MeterReading{
 			Usage:    rand.Float32(),
 			Produced: rand.Float32(),
 		}); err != nil {
 			t.Fatal(err)
 		}
 
-		if _, err := status.UpdateProblem(&gen_statuspb.StatusLog_Problem{
+		if _, err := status.UpdateProblem(&statuspb.StatusLog_Problem{
 			Name: randString(16),
 		}); err != nil {
 			t.Fatal(err)
@@ -170,14 +168,14 @@ func Test_automation_applyConfig(t *testing.T) {
 		time.Sleep(time.Second)
 	}
 
-	aqCli := gen_airqualitysensorpb.NewAirQualitySensorHistoryClient(announcer.ClientConn())
-	occupancyCli := gen_occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
+	aqCli := airqualitysensorpb.NewAirQualitySensorHistoryClient(announcer.ClientConn())
+	occupancyCli := occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
 	airTempCli := gen_airtemperaturepb.NewAirTemperatureHistoryClient(announcer.ClientConn())
 	electricCli := gen_electricpb.NewElectricHistoryClient(announcer.ClientConn())
-	meterCli := gen_meterpb.NewMeterHistoryClient(announcer.ClientConn())
-	statusCli := gen_statuspb.NewStatusHistoryClient(announcer.ClientConn())
+	meterCli := meterpb.NewMeterHistoryClient(announcer.ClientConn())
+	statusCli := statuspb.NewStatusHistoryClient(announcer.ClientConn())
 
-	aqHist, err := aqCli.ListAirQualityHistory(ctx, &gen_airqualitysensorpb.ListAirQualityHistoryRequest{Name: "airquality", PageSize: 10})
+	aqHist, err := aqCli.ListAirQualityHistory(ctx, &airqualitysensorpb.ListAirQualityHistoryRequest{Name: "airquality", PageSize: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,7 +184,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		t.Fatal(diff, "airquality")
 	}
 
-	occHist, err := occupancyCli.ListOccupancyHistory(ctx, &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occupancy", PageSize: 10})
+	occHist, err := occupancyCli.ListOccupancyHistory(ctx, &occupancysensorpb.ListOccupancyHistoryRequest{Name: "occupancy", PageSize: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -213,7 +211,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		t.Fatal(diff, "electric")
 	}
 
-	meterHist, err := meterCli.ListMeterReadingHistory(ctx, &gen_meterpb.ListMeterReadingHistoryRequest{Name: "meter", PageSize: 10})
+	meterHist, err := meterCli.ListMeterReadingHistory(ctx, &meterpb.ListMeterReadingHistoryRequest{Name: "meter", PageSize: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +220,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		t.Fatal(diff, "meter")
 	}
 
-	statusHist, err := statusCli.ListCurrentStatusHistory(ctx, &gen_statuspb.ListCurrentStatusHistoryRequest{Name: "status", PageSize: 10})
+	statusHist, err := statusCli.ListCurrentStatusHistory(ctx, &statuspb.ListCurrentStatusHistoryRequest{Name: "status", PageSize: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -336,8 +334,8 @@ func randString(n int) string {
 func Test_automation_applyConfigDevices(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		logger := zap.NewNop()
-		occ1 := occupancysensorpb.NewModel()
-		occ2 := occupancysensorpb.NewModel()
+		occ1 := occupancysensorpb2.NewModel()
+		occ2 := occupancysensorpb2.NewModel()
 
 		announcer := node.New("test")
 		announcer.Logger = logger
@@ -346,14 +344,14 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
 				traits.RegisterOccupancySensorApiServer,
-				traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ1)),
+				traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ1)),
 			),
 		)
 		announcer.Announce("occ2",
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
 				traits.RegisterOccupancySensorApiServer,
-				traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ2)),
+				traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ2)),
 			),
 		)
 
@@ -382,9 +380,9 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 		}
 		synctest.Wait()
 
-		cli := gen_occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
+		cli := occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
 
-		hist1, err := cli.ListOccupancyHistory(t.Context(), &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
+		hist1, err := cli.ListOccupancyHistory(t.Context(), &occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -392,7 +390,7 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 			t.Fatal("expected occ1 to have history records")
 		}
 
-		hist2, err := cli.ListOccupancyHistory(t.Context(), &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ2", PageSize: 100})
+		hist2, err := cli.ListOccupancyHistory(t.Context(), &occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ2", PageSize: 100})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -405,7 +403,7 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 func Test_automation_applyConfigDevices_remove(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		logger := zap.NewNop()
-		occ1 := occupancysensorpb.NewModel()
+		occ1 := occupancysensorpb2.NewModel()
 
 		announcer := node.New("test")
 		announcer.Logger = logger
@@ -413,7 +411,7 @@ func Test_automation_applyConfigDevices_remove(t *testing.T) {
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
 				traits.RegisterOccupancySensorApiServer,
-				traits.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ1)),
+				traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ1)),
 			),
 		)
 
@@ -441,8 +439,8 @@ func Test_automation_applyConfigDevices_remove(t *testing.T) {
 		}
 		synctest.Wait()
 
-		cli := gen_occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
-		hist, err := cli.ListOccupancyHistory(t.Context(), &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
+		cli := occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
+		hist, err := cli.ListOccupancyHistory(t.Context(), &occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -461,7 +459,7 @@ func Test_automation_applyConfigDevices_remove(t *testing.T) {
 		}
 		synctest.Wait()
 
-		_, err = cli.ListOccupancyHistory(t.Context(), &gen_occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
+		_, err = cli.ListOccupancyHistory(t.Context(), &occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
 		if status.Code(err) != codes.NotFound {
 			t.Fatalf("expected NotFound after remove, got %v", err)
 		}

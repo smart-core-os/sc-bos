@@ -12,13 +12,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 type airQualityConfig struct {
@@ -41,21 +41,21 @@ func readAirQualitySensorConfig(raw []byte) (cfg airQualityConfig, err error) {
 type airQualitySensor struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *airqualitysensorpb.Model
-	*airqualitysensorpb.ModelServer
+	model *airqualitysensorpb2.Model
+	*airqualitysensorpb2.ModelServer
 	config   airQualityConfig
 	pollTask *task.Intermittent
 }
 
-func newAirQualitySensor(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airQualitySensor, error) {
+func newAirQualitySensor(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airQualitySensor, error) {
 	cfg, err := readAirQualitySensorConfig(config.Raw)
 	if err != nil {
 		return nil, err
 	}
-	model := airqualitysensorpb.NewModel(resource.WithMessageEquivalence(cmp.Equal(
+	model := airqualitysensorpb2.NewModel(resource.WithMessageEquivalence(cmp.Equal(
 		cmp.FloatValueApprox(0, 10), // report co2 changes of 10ppm or more
 	)))
 	t := &airQualitySensor{
@@ -64,7 +64,7 @@ func newAirQualitySensor(client *gobacnet.Client, devices known.Context, faultCh
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: airqualitysensorpb.NewModelServer(model),
+		ModelServer: airqualitysensorpb2.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
@@ -79,7 +79,7 @@ func (aq *airQualitySensor) startPoll(init context.Context) (stop task.StopFn, e
 }
 
 func (aq *airQualitySensor) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(aq.config.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(aq))))
+	return a.Announce(aq.config.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb2.WrapApi(aq))))
 }
 
 func (aq *airQualitySensor) GetAirQuality(ctx context.Context, request *traits.GetAirQualityRequest) (*traits.AirQuality, error) {

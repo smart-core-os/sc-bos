@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 )
 
 func TestInterceptor_GRPC(t *testing.T) {

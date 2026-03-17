@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 type TraitData map[string]json.RawMessage

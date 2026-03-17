@@ -9,9 +9,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 // DataFetcher is a function that fetches device data for a specific trait
@@ -37,10 +36,10 @@ func newDevice(name string, logger *zap.Logger, metaData *traits.Metadata) *devi
 	return d
 }
 
-func (d *device) getMeterData(ctx context.Context, meterClient gen_meterpb.MeterApiClient) (map[string]json.RawMessage, error) {
+func (d *device) getMeterData(ctx context.Context, meterClient meterpb.MeterApiClient) (map[string]json.RawMessage, error) {
 	result := make(map[string]json.RawMessage)
 
-	reading, err := meterClient.GetMeterReading(ctx, &gen_meterpb.GetMeterReadingRequest{
+	reading, err := meterClient.GetMeterReading(ctx, &meterpb.GetMeterReadingRequest{
 		Name: d.name,
 	})
 	if err != nil {
@@ -58,7 +57,7 @@ func (d *device) getMeterData(ctx context.Context, meterClient gen_meterpb.Meter
 	result["meterReading"] = readingBytes
 
 	// Add meter reading info if available
-	info, ok := d.info[meterpb.TraitName].(*gen_meterpb.MeterReadingSupport)
+	info, ok := d.info[meterpb.TraitName].(*meterpb.MeterReadingSupport)
 	if ok && info != nil {
 		infoBytes, err := protojson.Marshal(info)
 		if err != nil {

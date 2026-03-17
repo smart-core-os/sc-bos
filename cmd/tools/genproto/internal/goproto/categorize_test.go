@@ -327,13 +327,13 @@ func TestAnalyzeProtoFiles(t *testing.T) {
 			}
 
 			for file, wantGen := range tt.want {
-				gotGen, ok := got[file]
+				info, ok := got[file]
 				if !ok {
 					t.Errorf("analyzeProtoFiles() missing file %s", file)
 					continue
 				}
-				if gotGen != wantGen {
-					t.Errorf("analyzeProtoFiles()[%s] = %v (%s), want %v (%s)", file, gotGen, gotGen, wantGen, wantGen)
+				if info.Gen != wantGen {
+					t.Errorf("analyzeProtoFiles()[%s].Gen = %v (%s), want %v (%s)", file, info.Gen, info.Gen, wantGen, wantGen)
 				}
 			}
 		})

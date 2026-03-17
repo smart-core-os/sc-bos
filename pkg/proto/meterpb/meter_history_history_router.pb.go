@@ -3,10 +3,12 @@
 package meterpb
 
 import (
-	context "context"
-	fmt "fmt"
-	router "github.com/smart-core-os/sc-golang/pkg/router"
-	grpc "google.golang.org/grpc"
+	"context"
+	"fmt"
+
+	"google.golang.org/grpc"
+
+	"github.com/smart-core-os/sc-bos/pkg/router"
 )
 
 // HistoryRouter is a MeterHistoryServer that allows routing named requests to specific MeterHistoryClient

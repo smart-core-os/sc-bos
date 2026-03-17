@@ -11,16 +11,14 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
-	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
-	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
-	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/ptzpb"
-
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/ptzpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 const DriverName = "hikcentral"
@@ -82,7 +80,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasMetadata(camera.Metadata),
 			node.HasClient(mqttpb.WrapService(cam)),
 			node.HasTrait(trait.Ptz, node.WithClients(ptzpb.WrapApi(cam))),
-			node.HasTrait(udmipb.TraitName, node.WithClients(gen_udmipb.WrapService(cam))),
+			node.HasTrait(udmipb.TraitName, node.WithClients(udmipb.WrapService(cam))),
 		)
 		cameras = append(cameras, cam)
 	}

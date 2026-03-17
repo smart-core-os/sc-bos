@@ -17,11 +17,10 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/client"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
 var clientConfig client.Config
@@ -54,7 +53,7 @@ func init() {
 }
 
 var getter = map[trait.Name]func(context.Context, grpc.ClientConnInterface, *devicespb.Device, *report) error{
-	meter.TraitName: func(ctx context.Context, conn grpc.ClientConnInterface, device *devicespb.Device, r *report) error {
+	meterpb.TraitName: func(ctx context.Context, conn grpc.ClientConnInterface, device *devicespb.Device, r *report) error {
 		apiClient := meterpb.NewMeterApiClient(conn)
 		res, err := apiClient.GetMeterReading(ctx, &meterpb.GetMeterReadingRequest{Name: device.Name})
 		if err != nil {

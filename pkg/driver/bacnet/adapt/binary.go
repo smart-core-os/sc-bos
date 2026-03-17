@@ -11,14 +11,14 @@ import (
 	bactypes "github.com/smart-core-os/gobacnet/types"
 	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 // BinaryObject adapts a binary bacnet object as smart core traits.
-func BinaryObject(prefix string, client *gobacnet.Client, device bactypes.Device, object config.Object, deviceHealth *gen_healthpb.FaultCheck, errFn errFn) (node.SelfAnnouncer, error) {
+func BinaryObject(prefix string, client *gobacnet.Client, device bactypes.Device, object config.Object, deviceHealth *healthpb.FaultCheck, errFn errFn) (node.SelfAnnouncer, error) {
 	switch object.Trait {
 	case "":
 		return nil, ErrNoDefault
@@ -47,7 +47,7 @@ type binaryOnOff struct {
 	device bactypes.Device
 	object config.Object
 
-	deviceHealth *gen_healthpb.FaultCheck
+	deviceHealth *healthpb.FaultCheck
 	errFn        errFn
 
 	model *onoffpb.Model

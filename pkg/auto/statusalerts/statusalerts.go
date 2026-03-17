@@ -10,13 +10,12 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/statusalerts/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 const AutoName = "statusalerts"
@@ -46,7 +45,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	logger = logger.With(zap.String("destination", destName))
 
 	alertAdminClient := alertpb.NewAlertAdminApiClient(a.Node.ClientConn())
-	statusClient := gen_statuspb.NewStatusApiClient(a.Node.ClientConn())
+	statusClient := statuspb.NewStatusApiClient(a.Node.ClientConn())
 
 	if cfg.DelayStart != nil {
 		time.Sleep(cfg.DelayStart.Duration)

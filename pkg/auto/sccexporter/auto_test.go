@@ -15,17 +15,16 @@ import (
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
-	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/metadatapb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	metadatapb2 "github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
+	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
+	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func TestMetadata(t *testing.T) {
@@ -54,9 +53,9 @@ func TestMetadata(t *testing.T) {
 		},
 	}
 
-	metaModel := metadatapb.NewModel(resource.WithInitialValue(metadata))
-	modelServer := metadatapb.NewModelServer(metaModel)
-	metaClient := node.WithClients(metadatapb.WrapApi(modelServer))
+	metaModel := metadatapb2.NewModel(resource.WithInitialValue(metadata))
+	modelServer := metadatapb2.NewModelServer(metaModel)
+	metaClient := node.WithClients(metadatapb2.WrapApi(modelServer))
 	root.Announce("foo", node.HasTrait(trait.Metadata, metaClient))
 
 	sccexporter.initialiseClients(root)
@@ -319,7 +318,7 @@ func TestGetMeterDeviceAndData(t *testing.T) {
 	startTime := time.Now().Add(-time.Hour)
 	endTime := time.Now()
 
-	meterReading := &gen_meterpb.MeterReading{
+	meterReading := &meterpb.MeterReading{
 		Usage:     123.45,
 		StartTime: timestamppb.New(startTime),
 		EndTime:   timestamppb.New(endTime),
@@ -329,7 +328,7 @@ func TestGetMeterDeviceAndData(t *testing.T) {
 	devicesApi := devices.NewServer(root)
 	meterModel := meterpb.NewModel(resource.WithInitialValue(meterReading))
 	modelServer := meterpb.NewModelServer(meterModel)
-	meterClient := node.WithClients(gen_meterpb.WrapApi(modelServer))
+	meterClient := node.WithClients(meterpb.WrapApi(modelServer))
 	root.Announce("foo",
 		node.HasTrait(meterpb.TraitName, meterClient),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
@@ -361,7 +360,7 @@ func TestGetMeterDeviceAndData(t *testing.T) {
 	// Verify the structure contains meterReading resource
 	require.Contains(t, traitData, "meterReading")
 
-	reading := gen_meterpb.MeterReading{}
+	reading := meterpb.MeterReading{}
 	err = protojson.Unmarshal(traitData["meterReading"], &reading)
 	require.NoError(t, err)
 
@@ -380,14 +379,14 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	startTime := time.Now().Add(-time.Hour)
 	endTime := time.Now()
 
-	meterReading := &gen_meterpb.MeterReading{
+	meterReading := &meterpb.MeterReading{
 		Usage:     123.45,
 		StartTime: timestamppb.New(startTime),
 		EndTime:   timestamppb.New(endTime),
 		Produced:  67.89,
 	}
 
-	meterInfo := &gen_meterpb.MeterReadingSupport{
+	meterInfo := &meterpb.MeterReadingSupport{
 		UsageUnit:    "kWh",
 		ProducedUnit: "kWh",
 	}
@@ -397,8 +396,8 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	modelServer := meterpb.NewModelServer(meterModel)
 	infoServer := &meterpb.InfoServer{MeterReading: meterInfo}
 	meterClient := node.WithClients(
-		gen_meterpb.WrapApi(modelServer),
-		gen_meterpb.WrapInfo(infoServer),
+		meterpb.WrapApi(modelServer),
+		meterpb.WrapInfo(infoServer),
 	)
 	root.Announce("foo",
 		node.HasTrait(meterpb.TraitName, meterClient),
@@ -426,7 +425,7 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	sccexporter.getMeterInfo(context.Background(), meterpb.TraitName, allDevices)
 
 	require.NotNil(t, dev.info[meterpb.TraitName])
-	support, ok := dev.info[meterpb.TraitName].(*gen_meterpb.MeterReadingSupport)
+	support, ok := dev.info[meterpb.TraitName].(*meterpb.MeterReadingSupport)
 	require.True(t, ok)
 	require.Equal(t, "kWh", support.UsageUnit)
 	require.Equal(t, "kWh", support.ProducedUnit)
@@ -441,14 +440,14 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	require.Contains(t, traitData, "meterReadingInfo")
 
 	// Verify meter reading data
-	var reading gen_meterpb.MeterReading
+	var reading meterpb.MeterReading
 	err = protojson.Unmarshal(traitData["meterReading"], &reading)
 	require.NoError(t, err)
 	require.Equal(t, meterReading.Usage, reading.Usage)
 	require.Equal(t, meterReading.Produced, reading.Produced)
 
 	// Verify meter reading info
-	var info gen_meterpb.MeterReadingSupport
+	var info meterpb.MeterReadingSupport
 	err = protojson.Unmarshal(traitData["meterReadingInfo"], &info)
 	require.NoError(t, err)
 	require.Equal(t, "kWh", info.UsageUnit)
@@ -470,11 +469,11 @@ func TestGetAirQualityDeviceAndData(t *testing.T) {
 	}
 
 	devicesApi := devices.NewServer(root)
-	airQualityModel := airqualitysensorpb.NewModel()
+	airQualityModel := airqualitysensorpb2.NewModel()
 	_, err = airQualityModel.UpdateAirQuality(airQuality)
 	require.NoError(t, err)
-	modelServer := airqualitysensorpb.NewModelServer(airQualityModel)
-	airQualityClient := node.WithClients(airqualitysensorpb.WrapApi(modelServer))
+	modelServer := airqualitysensorpb2.NewModelServer(airQualityModel)
+	airQualityClient := node.WithClients(airqualitysensorpb2.WrapApi(modelServer))
 	root.Announce("foo",
 		node.HasTrait(trait.AirQualitySensor, airQualityClient),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
@@ -527,11 +526,11 @@ func TestGetAirTemperatureDeviceAndData(t *testing.T) {
 	}
 
 	devicesApi := devices.NewServer(root)
-	airTemperatureModel := airtemperaturepb.NewModel()
+	airTemperatureModel := airtemperaturepb2.NewModel()
 	_, err = airTemperatureModel.UpdateAirTemperature(airTemperature)
 	require.NoError(t, err)
-	modelServer := airtemperaturepb.NewModelServer(airTemperatureModel)
-	airTemperatureClient := node.WithClients(airtemperaturepb.WrapApi(modelServer))
+	modelServer := airtemperaturepb2.NewModelServer(airTemperatureModel)
+	airTemperatureClient := node.WithClients(airtemperaturepb2.WrapApi(modelServer))
 	root.Announce("foo",
 		node.HasTrait(trait.AirTemperature, airTemperatureClient),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
@@ -585,11 +584,11 @@ func TestGetOccupancyDeviceAndData(t *testing.T) {
 	}
 
 	devicesApi := devices.NewServer(root)
-	occupancyModel := occupancysensorpb.NewModel()
+	occupancyModel := occupancysensorpb2.NewModel()
 	_, err = occupancyModel.SetOccupancy(occupancy)
 	require.NoError(t, err)
-	modelServer := occupancysensorpb.NewModelServer(occupancyModel)
-	occupancyClient := node.WithClients(occupancysensorpb.WrapApi(modelServer))
+	modelServer := occupancysensorpb2.NewModelServer(occupancyModel)
+	occupancyClient := node.WithClients(occupancysensorpb2.WrapApi(modelServer))
 	root.Announce("foo",
 		node.HasTrait(trait.OccupancySensor, occupancyClient),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),

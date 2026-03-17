@@ -13,13 +13,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 type modeDataPoints struct {
@@ -80,21 +80,21 @@ func readAirTemperatureConfig(raw []byte) (cfg airTemperatureConfig, err error) 
 type airTemperature struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *airtemperaturepb.Model
-	*airtemperaturepb.ModelServer
+	model *airtemperaturepb2.Model
+	*airtemperaturepb2.ModelServer
 	config   airTemperatureConfig
 	pollTask *task.Intermittent
 }
 
-func newAirTemperature(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airTemperature, error) {
+func newAirTemperature(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airTemperature, error) {
 	cfg, err := readAirTemperatureConfig(config.Raw)
 	if err != nil {
 		return nil, err
 	}
-	model := airtemperaturepb.NewModel(resource.WithMessageEquivalence(cmp.Equal(
+	model := airtemperaturepb2.NewModel(resource.WithMessageEquivalence(cmp.Equal(
 		cmp.FloatValueApprox(0, 0.1), // report temperature changes of 0.1C or more
 	)))
 	t := &airTemperature{
@@ -103,7 +103,7 @@ func newAirTemperature(client *gobacnet.Client, devices known.Context, faultChec
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: airtemperaturepb.NewModelServer(model),
+		ModelServer: airtemperaturepb2.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
@@ -118,7 +118,7 @@ func (t *airTemperature) startPoll(init context.Context) (stop task.StopFn, err 
 }
 
 func (t *airTemperature) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(t))))
+	return a.Announce(t.config.Name, node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb2.WrapApi(t))))
 }
 
 func (t *airTemperature) GetAirTemperature(ctx context.Context, request *traits.GetAirTemperatureRequest) (*traits.AirTemperature, error) {

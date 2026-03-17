@@ -1,0 +1,51 @@
+Test moving files in nested subdirectories within a trait package.
+expected_changes: 3
+
+-- input/pkg/gentrait/healthpb/model.go --
+// Package healthpb provides health monitoring utilities.
+package healthpb
+
+import "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb/utils"
+
+type Model struct{}
+var _ = utils.DefaultStatus
+-- input/pkg/gentrait/healthpb/more/more.go --
+// Package more is within healthpb and depends on both healthpb and its generated counterpart.
+package more
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+)
+
+var _ = gen_healthpb.Health_HEALTHY
+var _ = healthpb.Model{}
+-- input/pkg/gentrait/healthpb/utils/utils.go --
+// Package utils is within healthpb and is depended on by that package.
+package utils
+
+const DefaultStatus = "OK"
+-- output/pkg/proto/healthpb/model.go --
+// Package healthpb provides health monitoring utilities.
+package healthpb
+
+import "github.com/smart-core-os/sc-bos/pkg/proto/healthpb/utils"
+
+type Model struct{}
+
+var _ = utils.DefaultStatus
+-- output/pkg/proto/healthpb/more/more.go --
+// Package more is within healthpb and depends on both healthpb and its generated counterpart.
+package more
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+)
+
+var _ = healthpb.Health_HEALTHY
+var _ = healthpb.Model{}
+-- output/pkg/proto/healthpb/utils/utils.go --
+// Package utils is within healthpb and is depended on by that package.
+package utils
+
+const DefaultStatus = "OK"

@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 // Root describes the configuration available to the proxy driver.

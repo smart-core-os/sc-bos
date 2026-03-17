@@ -14,11 +14,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	electricpb2 "github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
 )
 
 type electricConfig struct {
@@ -50,21 +50,21 @@ func readElectricConfig(raw []byte) (cfg electricConfig, err error) {
 type electricTrait struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *electricpb.Model
-	*electricpb.ModelServer
+	model *electricpb2.Model
+	*electricpb2.ModelServer
 	config   electricConfig
 	pollTask *task.Intermittent
 }
 
-func newElectric(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*electricTrait, error) {
+func newElectric(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*electricTrait, error) {
 	cfg, err := readElectricConfig(config.Raw)
 	if err != nil {
 		return nil, err
 	}
-	model := electricpb.NewModel()
+	model := electricpb2.NewModel()
 	_, _ = model.UpdateDemand(&traits.ElectricDemand{}) // reset defaults
 	t := &electricTrait{
 		client:      client,
@@ -72,7 +72,7 @@ func newElectric(client *gobacnet.Client, devices known.Context, faultCheck *gen
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: electricpb.NewModelServer(model),
+		ModelServer: electricpb2.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
@@ -80,7 +80,7 @@ func newElectric(client *gobacnet.Client, devices known.Context, faultCheck *gen
 }
 
 func (t *electricTrait) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(trait.Electric, node.WithClients(electricpb.WrapApi(t))))
+	return a.Announce(t.config.Name, node.HasTrait(trait.Electric, node.WithClients(electricpb2.WrapApi(t))))
 }
 
 func (t *electricTrait) GetDemand(ctx context.Context, request *traits.GetDemandRequest) (*traits.ElectricDemand, error) {

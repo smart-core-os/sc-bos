@@ -1,0 +1,164 @@
+syntax = "proto3";
+package sc.go.test;
+
+option go_package = "github.com/smart-core-os/sc-bos/internal/testproto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+message TestAllTypes {
+  message NestedMessage {
+    int32 a = 1;
+    TestAllTypes corecursive = 2;
+  }
+
+  enum NestedEnum {
+    FOO = 0;
+    BAR = 1;
+    BAZ = 2;
+    NEG = -1;  // Intentionally negative.
+  }
+
+  int32         default_int32 = 1;
+  int64         default_int64 = 2;
+  uint32        default_uint32 = 3;
+  uint64        default_uint64 = 4;
+  sint32        default_sint32 = 5;
+  sint64        default_sint64 = 6;
+  fixed32       default_fixed32 = 7;
+  fixed64       default_fixed64 = 8;
+  sfixed32      default_sfixed32 = 9;
+  sfixed64      default_sfixed64 = 10;
+  float         default_float = 11;
+  double        default_double = 12;
+  bool          default_bool = 13;
+  string        default_string = 14;
+  bytes         default_bytes = 15;
+
+  oneof oneof_default {
+    int32 oneof_default_int32 = 16;
+    NestedMessage oneof_default_nested_message = 17;
+  }
+
+  NestedMessage  default_nested_message = 18;
+  ForeignMessage default_foreign_message = 19;
+  WellKnown      default_well_known = 20;
+  NestedEnum     default_nested_enum = 21;
+  ForeignEnum    default_foreign_enum = 22;
+
+  repeated int32         repeated_int32 = 31;
+  repeated int64         repeated_int64 = 32;
+  repeated uint32        repeated_uint32 = 33;
+  repeated uint64        repeated_uint64 = 34;
+  repeated sint32        repeated_sint32 = 35;
+  repeated sint64        repeated_sint64 = 36;
+  repeated fixed32       repeated_fixed32 = 37;
+  repeated fixed64       repeated_fixed64 = 38;
+  repeated sfixed32      repeated_sfixed32 = 39;
+  repeated sfixed64      repeated_sfixed64 = 40;
+  repeated float         repeated_float = 41;
+  repeated double        repeated_double = 42;
+  repeated bool          repeated_bool = 43;
+  repeated string        repeated_string = 44;
+  repeated bytes         repeated_bytes = 45;
+  repeated NestedMessage  repeated_nested_message = 48;
+  repeated ForeignMessage repeated_foreign_message = 49;
+  repeated WellKnown      repeated_well_known = 50;
+  repeated NestedEnum     repeated_nested_enum = 51;
+  repeated ForeignEnum    repeated_foreign_enum = 52;
+
+  map <   int32, int32>         map_int32_int32 = 56;
+  map <   int64, int64>         map_int64_int64 = 57;
+  map <  uint32, uint32>        map_uint32_uint32 = 58;
+  map <  uint64, uint64>        map_uint64_uint64 = 59;
+  map <  sint32, sint32>        map_sint32_sint32 = 60;
+  map <  sint64, sint64>        map_sint64_sint64 = 61;
+  map < fixed32, fixed32>       map_fixed32_fixed32 = 62;
+  map < fixed64, fixed64>       map_fixed64_fixed64 = 63;
+  map <sfixed32, sfixed32>      map_sfixed32_sfixed32 = 64;
+  map <sfixed64, sfixed64>      map_sfixed64_sfixed64 = 65;
+  map <   int32, float>         map_int32_float = 66;
+  map <   int32, double>        map_int32_double = 67;
+  map <    bool, bool>          map_bool_bool = 68;
+  map <  string, string>        map_string_string = 69;
+  map <  string, bytes>         map_string_bytes = 70;
+  map <  string, NestedMessage> map_string_nested_message = 71;
+  map <  string, WellKnown>     map_string_well_known = 72;
+
+
+  optional int32         optional_int32 = 80;
+  optional int64         optional_int64 = 81;
+  optional uint32        optional_uint32 = 82;
+  optional uint64        optional_uint64 = 83;
+  optional sint32        optional_sint32 = 84;
+  optional sint64        optional_sint64 = 85;
+  optional fixed32       optional_fixed32 = 86;
+  optional fixed64       optional_fixed64 = 87;
+  optional sfixed32      optional_sfixed32 = 88;
+  optional sfixed64      optional_sfixed64 = 89;
+  optional float         optional_float = 90;
+  optional double        optional_double = 91;
+  optional bool          optional_bool = 92;
+  optional string        optional_string = 93;
+  optional bytes         optional_bytes = 94;
+}
+
+message ForeignMessage {
+  int32 c = 1;
+  int32 d = 2;
+}
+
+enum ForeignEnum {
+  FOREIGN_UNKNOWN = 0;
+  FOREIGN_FOO = 4;
+  FOREIGN_BAR = 5;
+  FOREIGN_BAZ = 6;
+}
+
+message WellKnown {
+  google.protobuf.Timestamp default_timestamp = 1;
+  google.protobuf.Duration default_duration = 2;
+}
+
+service TestApi {
+  rpc Unary(UnaryRequest) returns (UnaryResponse);
+  rpc ServerStream(ServerStreamRequest) returns (stream ServerStreamResponse);
+  rpc ClientStream(stream ClientStreamRequest) returns (ClientStreamResponse);
+  rpc BidiStream(stream BidiStreamRequest) returns (stream BidiStreamResponse);
+}
+
+message UnaryRequest {
+  string msg = 1;
+  string simulate_error = 2;
+}
+
+message UnaryResponse {
+  string msg = 1;
+}
+
+message ServerStreamRequest {
+  int32 num_res = 1;
+  string simulate_error = 2;
+}
+
+message ServerStreamResponse {
+  int32 counter = 1;
+}
+
+message ClientStreamRequest {
+  string msg = 1;
+  string simulate_error = 2;
+}
+
+message ClientStreamResponse {
+  string msg = 1;
+}
+
+message BidiStreamRequest {
+  string msg = 1;
+  string simulate_error = 2;
+}
+
+message BidiStreamResponse {
+  string msg = 1;
+}

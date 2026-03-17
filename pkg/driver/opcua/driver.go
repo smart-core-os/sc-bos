@@ -17,20 +17,15 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
-	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/electricpb"
-
-	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
 )
 
 const DriverName = "opcua"
@@ -115,23 +110,23 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		for _, t := range dev.Traits {
 			switch t.Kind {
-			case meter.TraitName:
+			case meterpb.TraitName:
 				m, err := newMeter(dev.Name, t, d.logger)
 				if err != nil {
-					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", meter.TraitName), zap.Error(err))
+					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", meterpb.TraitName), zap.Error(err))
 					return err
 				}
 				opcDev.eventHandlers = append(opcDev.eventHandlers, m)
-				allFeatures = append(allFeatures, node.HasTrait(meter.TraitName, node.WithClients(meterpb.WrapApi(m), meterpb.WrapInfo(m))))
+				allFeatures = append(allFeatures, node.HasTrait(meterpb.TraitName, node.WithClients(meterpb.WrapApi(m), meterpb.WrapInfo(m))))
 
-			case transport.TraitName:
+			case transportpb.TraitName:
 				tr, err := newTransport(dev.Name, t, d.logger)
 				if err != nil {
-					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", transport.TraitName), zap.Error(err))
+					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", transportpb.TraitName), zap.Error(err))
 					return err
 				}
 				opcDev.eventHandlers = append(opcDev.eventHandlers, tr)
-				allFeatures = append(allFeatures, node.HasTrait(transport.TraitName, node.WithClients(transportpb.WrapApi(tr), transportpb.WrapInfo(tr))))
+				allFeatures = append(allFeatures, node.HasTrait(transportpb.TraitName, node.WithClients(transportpb.WrapApi(tr), transportpb.WrapInfo(tr))))
 
 			case udmipb.TraitName:
 				u, err := newUdmi(dev.Name, t, d.logger)
@@ -140,7 +135,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 					return err
 				}
 				opcDev.eventHandlers = append(opcDev.eventHandlers, u)
-				allFeatures = append(allFeatures, node.HasTrait(udmipb.TraitName, node.WithClients(gen_udmipb.WrapService(u))))
+				allFeatures = append(allFeatures, node.HasTrait(udmipb.TraitName, node.WithClients(udmipb.WrapService(u))))
 
 			case trait.Electric:
 				e, err := newElectric(dev.Name, t, d.logger)
@@ -196,11 +191,11 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 }
 
 func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, faultCheck *healthpb.FaultCheck) (*opcua.Client, error) {
-	rel := &gen_healthpb.HealthCheck_Reliability{}
+	rel := &healthpb.HealthCheck_Reliability{}
 	opcClient, err := opcua.NewClient(cfg.Conn.Endpoint)
 	if err != nil {
-		rel.State = gen_healthpb.HealthCheck_Reliability_UNRELIABLE
-		rel.LastError = &gen_healthpb.HealthCheck_Error{
+		rel.State = healthpb.HealthCheck_Reliability_UNRELIABLE
+		rel.LastError = &healthpb.HealthCheck_Error{
 			SummaryText: "Internal Driver Error",
 			DetailsText: "Failed to create new OPC UA client",
 			Code:        statusToHealthCode(DriverConfigError),
@@ -212,8 +207,8 @@ func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, faultChe
 
 	err = opcClient.Connect(ctx)
 	if err != nil {
-		rel.State = gen_healthpb.HealthCheck_Reliability_NO_RESPONSE
-		rel.LastError = &gen_healthpb.HealthCheck_Error{
+		rel.State = healthpb.HealthCheck_Reliability_NO_RESPONSE
+		rel.LastError = &healthpb.HealthCheck_Error{
 			SummaryText: "Server Unreachable",
 			DetailsText: "The opcua server is unreachable",
 			Code:        statusToHealthCode(ServerUnreachable),

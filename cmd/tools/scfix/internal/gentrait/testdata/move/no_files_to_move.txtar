@@ -1,0 +1,23 @@
+Test that fixer correctly handles case with no files to move (only .pb.go files present).
+expected_changes: 0
+
+-- input/pkg/gentrait/meter/meter.pb.go --
+package meter
+
+// This is a generated file - should not be moved
+type MeterReading struct{}
+-- input/pkg/gentrait/wastepb/waste.pb.go --
+package wastepb
+
+// This is a generated file - should not be moved
+type WasteLevel struct{}
+-- output/pkg/gentrait/meter/meter.pb.go --
+package meter
+
+// This is a generated file - should not be moved
+type MeterReading struct{}
+-- output/pkg/gentrait/wastepb/waste.pb.go --
+package wastepb
+
+// This is a generated file - should not be moved
+type WasteLevel struct{}

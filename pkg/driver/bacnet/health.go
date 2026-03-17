@@ -6,9 +6,8 @@ import (
 	"fmt"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/merge"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 const (
@@ -46,7 +45,7 @@ func createTraitHealthCheck(t trait.Name, occupant healthpb.HealthCheck_Occupant
 	}
 }
 
-func updateRequestErrorStatus(ctx context.Context, deviceHealth *gen_healthpb.FaultCheck, name, request string, err error) {
+func updateRequestErrorStatus(ctx context.Context, deviceHealth *healthpb.FaultCheck, name, request string, err error) {
 	problemName := fmt.Sprintf("%s.%s", name, "requested")
 	if errors.Is(err, context.DeadlineExceeded) {
 		deviceHealth.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
