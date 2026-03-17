@@ -288,8 +288,10 @@ export namespace PullLogLevelResponse {
     hasChangeTime(): boolean;
     clearChangeTime(): Change;
 
-    getLevel(): Level;
-    setLevel(value: Level): Change;
+    getLogLevel(): LogLevel | undefined;
+    setLogLevel(value?: LogLevel): Change;
+    hasLogLevel(): boolean;
+    clearLogLevel(): Change;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Change.AsObject;
@@ -303,7 +305,7 @@ export namespace PullLogLevelResponse {
     export type AsObject = {
       name: string;
       changeTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
-      level: Level;
+      logLevel?: LogLevel.AsObject;
     };
   }
 
@@ -313,8 +315,10 @@ export class UpdateLogLevelRequest extends jspb.Message {
   getName(): string;
   setName(value: string): UpdateLogLevelRequest;
 
-  getLevel(): Level;
-  setLevel(value: Level): UpdateLogLevelRequest;
+  getLogLevel(): LogLevel | undefined;
+  setLogLevel(value?: LogLevel): UpdateLogLevelRequest;
+  hasLogLevel(): boolean;
+  clearLogLevel(): UpdateLogLevelRequest;
 
   getUpdateMask(): google_protobuf_field_mask_pb.FieldMask | undefined;
   setUpdateMask(value?: google_protobuf_field_mask_pb.FieldMask): UpdateLogLevelRequest;
@@ -332,7 +336,7 @@ export class UpdateLogLevelRequest extends jspb.Message {
 export namespace UpdateLogLevelRequest {
   export type AsObject = {
     name: string;
-    level: Level;
+    logLevel?: LogLevel.AsObject;
     updateMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
   };
 }

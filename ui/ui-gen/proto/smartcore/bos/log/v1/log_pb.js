@@ -2531,7 +2531,7 @@ proto.smartcore.bos.log.v1.PullLogLevelResponse.Change.toObject = function(inclu
   var f, obj = {
 name: jspb.Message.getFieldWithDefault(msg, 1, ""),
 changeTime: (f = msg.getChangeTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-level: jspb.Message.getFieldWithDefault(msg, 3, 0)
+logLevel: (f = msg.getLogLevel()) && proto.smartcore.bos.log.v1.LogLevel.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -2578,8 +2578,9 @@ proto.smartcore.bos.log.v1.PullLogLevelResponse.Change.deserializeBinaryFromRead
       msg.setChangeTime(value);
       break;
     case 3:
-      var value = /** @type {!proto.smartcore.bos.log.v1.Level} */ (reader.readEnum());
-      msg.setLevel(value);
+      var value = new proto.smartcore.bos.log.v1.LogLevel;
+      reader.readMessage(value,proto.smartcore.bos.log.v1.LogLevel.deserializeBinaryFromReader);
+      msg.setLogLevel(value);
       break;
     default:
       reader.skipField();
@@ -2625,11 +2626,12 @@ proto.smartcore.bos.log.v1.PullLogLevelResponse.Change.serializeBinaryToWriter =
       google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
     );
   }
-  f = message.getLevel();
-  if (f !== 0.0) {
-    writer.writeEnum(
+  f = message.getLogLevel();
+  if (f != null) {
+    writer.writeMessage(
       3,
-      f
+      f,
+      proto.smartcore.bos.log.v1.LogLevel.serializeBinaryToWriter
     );
   }
 };
@@ -2691,20 +2693,39 @@ proto.smartcore.bos.log.v1.PullLogLevelResponse.Change.prototype.hasChangeTime =
 
 
 /**
- * optional Level level = 3;
- * @return {!proto.smartcore.bos.log.v1.Level}
+ * optional LogLevel log_level = 3;
+ * @return {?proto.smartcore.bos.log.v1.LogLevel}
  */
-proto.smartcore.bos.log.v1.PullLogLevelResponse.Change.prototype.getLevel = function() {
-  return /** @type {!proto.smartcore.bos.log.v1.Level} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+proto.smartcore.bos.log.v1.PullLogLevelResponse.Change.prototype.getLogLevel = function() {
+  return /** @type{?proto.smartcore.bos.log.v1.LogLevel} */ (
+    jspb.Message.getWrapperField(this, proto.smartcore.bos.log.v1.LogLevel, 3));
 };
 
 
 /**
- * @param {!proto.smartcore.bos.log.v1.Level} value
+ * @param {?proto.smartcore.bos.log.v1.LogLevel|undefined} value
+ * @return {!proto.smartcore.bos.log.v1.PullLogLevelResponse.Change} returns this
+*/
+proto.smartcore.bos.log.v1.PullLogLevelResponse.Change.prototype.setLogLevel = function(value) {
+  return jspb.Message.setWrapperField(this, 3, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
  * @return {!proto.smartcore.bos.log.v1.PullLogLevelResponse.Change} returns this
  */
-proto.smartcore.bos.log.v1.PullLogLevelResponse.Change.prototype.setLevel = function(value) {
-  return jspb.Message.setProto3EnumField(this, 3, value);
+proto.smartcore.bos.log.v1.PullLogLevelResponse.Change.prototype.clearLogLevel = function() {
+  return this.setLogLevel(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.log.v1.PullLogLevelResponse.Change.prototype.hasLogLevel = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
@@ -2779,7 +2800,7 @@ proto.smartcore.bos.log.v1.UpdateLogLevelRequest.prototype.toObject = function(o
 proto.smartcore.bos.log.v1.UpdateLogLevelRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
 name: jspb.Message.getFieldWithDefault(msg, 1, ""),
-level: jspb.Message.getFieldWithDefault(msg, 2, 0),
+logLevel: (f = msg.getLogLevel()) && proto.smartcore.bos.log.v1.LogLevel.toObject(includeInstance, f),
 updateMask: (f = msg.getUpdateMask()) && google_protobuf_field_mask_pb.FieldMask.toObject(includeInstance, f)
   };
 
@@ -2822,8 +2843,9 @@ proto.smartcore.bos.log.v1.UpdateLogLevelRequest.deserializeBinaryFromReader = f
       msg.setName(value);
       break;
     case 2:
-      var value = /** @type {!proto.smartcore.bos.log.v1.Level} */ (reader.readEnum());
-      msg.setLevel(value);
+      var value = new proto.smartcore.bos.log.v1.LogLevel;
+      reader.readMessage(value,proto.smartcore.bos.log.v1.LogLevel.deserializeBinaryFromReader);
+      msg.setLogLevel(value);
       break;
     case 3:
       var value = new google_protobuf_field_mask_pb.FieldMask;
@@ -2866,11 +2888,12 @@ proto.smartcore.bos.log.v1.UpdateLogLevelRequest.serializeBinaryToWriter = funct
       f
     );
   }
-  f = message.getLevel();
-  if (f !== 0.0) {
-    writer.writeEnum(
+  f = message.getLogLevel();
+  if (f != null) {
+    writer.writeMessage(
       2,
-      f
+      f,
+      proto.smartcore.bos.log.v1.LogLevel.serializeBinaryToWriter
     );
   }
   f = message.getUpdateMask();
@@ -2903,20 +2926,39 @@ proto.smartcore.bos.log.v1.UpdateLogLevelRequest.prototype.setName = function(va
 
 
 /**
- * optional Level level = 2;
- * @return {!proto.smartcore.bos.log.v1.Level}
+ * optional LogLevel log_level = 2;
+ * @return {?proto.smartcore.bos.log.v1.LogLevel}
  */
-proto.smartcore.bos.log.v1.UpdateLogLevelRequest.prototype.getLevel = function() {
-  return /** @type {!proto.smartcore.bos.log.v1.Level} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+proto.smartcore.bos.log.v1.UpdateLogLevelRequest.prototype.getLogLevel = function() {
+  return /** @type{?proto.smartcore.bos.log.v1.LogLevel} */ (
+    jspb.Message.getWrapperField(this, proto.smartcore.bos.log.v1.LogLevel, 2));
 };
 
 
 /**
- * @param {!proto.smartcore.bos.log.v1.Level} value
+ * @param {?proto.smartcore.bos.log.v1.LogLevel|undefined} value
+ * @return {!proto.smartcore.bos.log.v1.UpdateLogLevelRequest} returns this
+*/
+proto.smartcore.bos.log.v1.UpdateLogLevelRequest.prototype.setLogLevel = function(value) {
+  return jspb.Message.setWrapperField(this, 2, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
  * @return {!proto.smartcore.bos.log.v1.UpdateLogLevelRequest} returns this
  */
-proto.smartcore.bos.log.v1.UpdateLogLevelRequest.prototype.setLevel = function(value) {
-  return jspb.Message.setProto3EnumField(this, 2, value);
+proto.smartcore.bos.log.v1.UpdateLogLevelRequest.prototype.clearLogLevel = function() {
+  return this.setLogLevel(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.log.v1.UpdateLogLevelRequest.prototype.hasLogLevel = function() {
+  return jspb.Message.getField(this, 2) != null;
 };
 
 

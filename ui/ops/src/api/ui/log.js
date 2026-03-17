@@ -4,6 +4,7 @@ import {LogApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/
 import {
   GetDownloadLogUrlRequest,
   GetLogLevelRequest,
+  LogLevel,
   PullLogLevelRequest,
   PullLogMessagesRequest,
   PullLogMetadataRequest,
@@ -64,7 +65,7 @@ export function pullLogLevel(endpoint, request, onLevel, onError) {
   const stream = api.pullLogLevel(req);
   stream.on('data', (msg) => {
     for (const change of msg.getChangesList()) {
-      onLevel(change.getLevel());
+      onLevel(change.getLogLevel()?.getLevel() ?? 0);
     }
   });
   if (onError) stream.on('error', onError);
@@ -82,7 +83,9 @@ export function updateLogLevel(request, tracker) {
     const req = new UpdateLogLevelRequest();
     if (request?.name) req.setName(request.name);
     if (request?.level != null) {
-      req.setLevel(request.level);
+      const ll = new LogLevel();
+      ll.setLevel(request.level);
+      req.setLogLevel(ll);
     }
     return api.updateLogLevel(req);
   });

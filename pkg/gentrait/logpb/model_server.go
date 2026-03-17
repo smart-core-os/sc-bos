@@ -122,7 +122,7 @@ func (s *ModelServer) PullLogLevel(request *logpb.PullLogLevelRequest, server lo
 			Changes: []*logpb.PullLogLevelResponse_Change{{
 				Name:       request.Name,
 				ChangeTime: timestamppb.New(change.ChangeTime),
-				Level:      change.Value.Level,
+				LogLevel:   change.Value,
 			}},
 		})
 		if err != nil {
@@ -134,7 +134,7 @@ func (s *ModelServer) PullLogLevel(request *logpb.PullLogLevelRequest, server lo
 
 // UpdateLogLevel sets the log level.
 func (s *ModelServer) UpdateLogLevel(_ context.Context, request *logpb.UpdateLogLevelRequest) (*logpb.LogLevel, error) {
-	return s.model.UpdateLogLevel(&logpb.LogLevel{Level: request.Level})
+	return s.model.UpdateLogLevel(request.LogLevel)
 }
 
 // GetLogMetadata returns the current log file metadata.

@@ -119,14 +119,14 @@ message PullLogLevelResponse {
   message Change {
     string name = 1;
     google.protobuf.Timestamp change_time = 2;
-    Level level = 3;
+    LogLevel log_level = 3;
   }
   repeated Change changes = 1;
 }
 
 message UpdateLogLevelRequest {
   string name = 1;
-  Level level = 2;
+  LogLevel log_level = 2;
   google.protobuf.FieldMask update_mask = 3;
 }
 
