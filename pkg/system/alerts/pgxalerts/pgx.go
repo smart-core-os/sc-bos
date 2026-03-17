@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -28,14 +28,14 @@ import (
 var schemaSql string
 
 func SetupDB(ctx context.Context, pool *pgxpool.Pool) error {
-	return pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	return pgx.BeginTxFunc(ctx, pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, schemaSql)
 		return err
 	})
 }
 
 func NewServer(ctx context.Context, connStr string) (*Server, error) {
-	pool, err := pgxpool.Connect(ctx, connStr)
+	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		return nil, fmt.Errorf("connect %w", err)
 	}
@@ -126,7 +126,7 @@ func (s *Server) createNewAlert(ctx context.Context, name string, alert *alertpb
 
 func (s *Server) mergeSourceAlert(ctx context.Context, name string, alert *alertpb.Alert) (*alertpb.Alert, error) {
 	var oldAlert, newAlert *alertpb.Alert
-	err := s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	err := pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		args := []any{
 			alert.Source,
 		}
@@ -242,7 +242,7 @@ func (s *Server) UpdateAlert(ctx context.Context, request *alertpb.UpdateAlertRe
 	original := &alertpb.Alert{}
 	updated := &alertpb.Alert{}
 
-	err := s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	err := pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		// record the original value which will be used for event notifications
 		if err := readAlertById(ctx, tx, alert.Id, original); err != nil {
 			return err
@@ -308,7 +308,7 @@ func (s *Server) ResolveAlert(ctx context.Context, request *alertpb.ResolveAlert
 
 	switch {
 	case alert.Id != "":
-		return respond(s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+		return respond(pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 			// record the original value which will be used for event notifications
 			if err := readAlertById(ctx, tx, alert.Id, original); err != nil {
 				return err
@@ -321,7 +321,7 @@ func (s *Server) ResolveAlert(ctx context.Context, request *alertpb.ResolveAlert
 			return setResolveTime(ctx, tx, alert.Id)
 		}))
 	case alert.Source != "":
-		return respond(s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+		return respond(pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 			args := []any{alert.Source}
 			querySql := selectAlertSQL + ` WHERE source=$1`
 			if alert.Federation != "" {
@@ -350,7 +350,7 @@ func (s *Server) DeleteAlert(ctx context.Context, request *alertpb.DeleteAlertRe
 		return nil, status.Error(codes.InvalidArgument, "id empty")
 	}
 	existing := &alertpb.Alert{}
-	err := s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	err := pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		// We do extra work to get the old value so we can include it in bus events.
 		// Without this any filtered PullAlerts call wouldn't be able to correctly include the event in responses.
 		err := readAlertById(ctx, tx, request.Id, existing)
@@ -552,7 +552,7 @@ func (s *Server) AcknowledgeAlert(ctx context.Context, request *alertpb.Acknowle
 
 	existing := &alertpb.Alert{}
 	updated := &alertpb.Alert{}
-	err := s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	err := pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		err := readAlertById(ctx, tx, request.Id, existing)
 		if err != nil {
 			return err
@@ -611,7 +611,7 @@ func (s *Server) UnacknowledgeAlert(ctx context.Context, request *alertpb.Acknow
 
 	existing := &alertpb.Alert{}
 	updated := &alertpb.Alert{}
-	err := s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	err := pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		err := readAlertById(ctx, tx, request.Id, existing)
 		if err != nil {
 			return err

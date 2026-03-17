@@ -10,8 +10,8 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,14 +27,14 @@ import (
 var schemaSql string
 
 func SetupDB(ctx context.Context, pool *pgxpool.Pool) error {
-	return pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	return pgx.BeginTxFunc(ctx, pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, schemaSql)
 		return err
 	})
 }
 
 func NewServer(ctx context.Context, connStr string) (*Server, error) {
-	pool, err := pgxpool.Connect(ctx, connStr)
+	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		return nil, fmt.Errorf("connect %w", err)
 	}
@@ -73,7 +73,7 @@ func (s *Server) ListTenants(ctx context.Context, request *tenantpb.ListTenantsR
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
 	var tenants []*tenantpb.Tenant
-	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
 		tenants, err = ListTenants(ctx, tx)
 		return
 	})
@@ -93,7 +93,7 @@ func (s *Server) CreateTenant(ctx context.Context, request *tenantpb.CreateTenan
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
 	var newTenant *tenantpb.Tenant
-	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
 		newTenant, err = CreateTenant(ctx, tx, request.Tenant.Title)
 		if err != nil {
 			return
@@ -123,7 +123,7 @@ func (s *Server) GetTenant(ctx context.Context, request *tenantpb.GetTenantReque
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
 	var tenant *tenantpb.Tenant
-	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		var err error
 		tenant, err = GetTenant(ctx, tx, request.GetId())
 		return err
@@ -153,7 +153,7 @@ func (s *Server) UpdateTenant(ctx context.Context, request *tenantpb.UpdateTenan
 		return nil, err
 	}
 
-	err = s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err = pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
 		if rpcutil.MaskContains(request.UpdateMask, "title") {
 			err = UpdateTenantTitle(ctx, tx, tenant.Id, tenant.Title)
 			if err != nil {
@@ -185,7 +185,7 @@ func (s *Server) UpdateTenant(ctx context.Context, request *tenantpb.UpdateTenan
 func (s *Server) DeleteTenant(ctx context.Context, request *tenantpb.DeleteTenantRequest) (*tenantpb.DeleteTenantResponse, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger).With(zap.String("id", request.Id))
 
-	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		return DeleteTenant(ctx, tx, request.Id)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -205,7 +205,7 @@ func (s *Server) PullTenant(request *tenantpb.PullTenantRequest, server tenantpb
 func (s *Server) AddTenantZones(ctx context.Context, request *tenantpb.AddTenantZonesRequest) (*tenantpb.Tenant, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
-	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		return AddTenantZones(ctx, tx, request.TenantId, request.AddZoneNames)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -222,7 +222,7 @@ func (s *Server) RemoveTenantZones(ctx context.Context, request *tenantpb.Remove
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
 	var tenant *tenantpb.Tenant
-	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
 		err = RemoveTenantZones(ctx, tx, request.TenantId, request.RemoveZoneNames)
 		if err != nil {
 			return err
@@ -258,7 +258,7 @@ func (s *Server) ListSecrets(ctx context.Context, request *tenantpb.ListSecretsR
 	}
 
 	var secrets []*tenantpb.Secret
-	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
 		secrets, err = ListTenantSecrets(ctx, tx, tenantID)
 		return
 	})
@@ -295,7 +295,7 @@ func (s *Server) CreateSecret(ctx context.Context, request *tenantpb.CreateSecre
 		return nil, status.Errorf(codes.Internal, "secret hashing failed: %s", err.Error())
 	}
 
-	err = s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err = pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
 		secret, err = CreateTenantSecret(ctx, tx, secret)
 		return
 	})
@@ -317,7 +317,7 @@ func (s *Server) VerifySecret(ctx context.Context, request *tenantpb.VerifySecre
 	}
 
 	var secrets []*tenantpb.Secret
-	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
 		secrets, err = ListTenantSecrets(ctx, tx, request.TenantId)
 		return
 	})
@@ -338,7 +338,7 @@ func (s *Server) GetSecret(ctx context.Context, request *tenantpb.GetSecretReque
 	logger := rpcutil.ServerLogger(ctx, s.logger).With(zap.String("secret_id", request.GetId()))
 
 	var secret *tenantpb.Secret
-	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
 		secret, err = GetTenantSecret(ctx, tx, request.Id)
 		return
 	})
@@ -358,7 +358,7 @@ func (s *Server) UpdateSecret(ctx context.Context, request *tenantpb.UpdateSecre
 
 func (s *Server) DeleteSecret(ctx context.Context, request *tenantpb.DeleteSecretRequest) (*tenantpb.DeleteSecretResponse, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger)
-	err := s.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		return DeleteTenantSecret(ctx, tx, request.Id)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {

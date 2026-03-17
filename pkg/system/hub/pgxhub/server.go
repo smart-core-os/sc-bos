@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -30,14 +30,14 @@ import (
 var schemaSql string
 
 func SetupDB(ctx context.Context, pool *pgxpool.Pool) error {
-	return pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	return pgx.BeginTxFunc(ctx, pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, schemaSql)
 		return err
 	})
 }
 
 func NewServer(ctx context.Context, connStr string) (*Server, error) {
-	pool, err := pgxpool.Connect(ctx, connStr)
+	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		return nil, fmt.Errorf("connect %w", err)
 	}
@@ -76,7 +76,7 @@ type Server struct {
 func (n *Server) GetHubNode(ctx context.Context, request *hubpb.GetHubNodeRequest) (*hubpb.HubNode, error) {
 	logger := rpcutil.ServerLogger(ctx, n.logger)
 	var dbEnrollment Enrollment
-	err := n.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) (err error) {
 		dbEnrollment, err = SelectEnrollment(ctx, tx, request.GetAddress())
 		return
 	})
@@ -105,7 +105,7 @@ func (n *Server) EnrollHubNode(ctx context.Context, request *hubpb.EnrollHubNode
 	}
 
 	// check if the node is already enrolled
-	err := n.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
 		_, err := SelectEnrollment(ctx, tx, nodeReg.Address)
 		return err
 	})
@@ -125,7 +125,7 @@ func (n *Server) EnrollHubNode(ctx context.Context, request *hubpb.EnrollHubNode
 		return nil, status.Error(codes.Unknown, "enrollment failed")
 	}
 
-	err = n.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
 		return InsertEnrollment(ctx, tx, Enrollment{
 			Name:        en.TargetName,
 			Description: nodeReg.Description,
@@ -166,7 +166,7 @@ func (n *Server) deleteHubNode(ctx context.Context, reg *hubpb.HubNode) error {
 func (n *Server) ListHubNodes(ctx context.Context, request *hubpb.ListHubNodesRequest) (*hubpb.ListHubNodesResponse, error) {
 	logger := rpcutil.ServerLogger(ctx, n.logger)
 	var dbEnrollments []Enrollment
-	err := n.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) (err error) {
 		dbEnrollments, err = SelectEnrollments(ctx, tx)
 		return
 	})
@@ -246,7 +246,7 @@ func (n *Server) RenewHubNode(ctx context.Context, request *hubpb.RenewHubNodeRe
 		return nil, status.Error(codes.Unknown, "enrollment failed")
 	}
 
-	err = n.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
 		return UpdateEnrollment(ctx, tx, Enrollment{
 			Name:        en.TargetName,
 			Description: reg.Description,
@@ -325,7 +325,7 @@ func (n *Server) ForgetHubNode(ctx context.Context, request *hubpb.ForgetHubNode
 		return nil, err
 	}
 
-	err = n.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
 		return DeleteEnrollment(ctx, tx, reg.Address)
 	})
 	if err != nil {

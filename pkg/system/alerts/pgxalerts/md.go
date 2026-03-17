@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
@@ -77,7 +77,7 @@ func (s *Server) initAlertMetadata(ctx context.Context) error {
 
 		// Collect initial stats from the DB
 		md := alertmd.New()
-		err := s.pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+		err := pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 			// totals
 			err := tx.QueryRow(ctx, `SELECT COUNT(*) FROM alerts`).Scan(&md.TotalCount)
 			if err != nil {
