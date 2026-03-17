@@ -24,7 +24,7 @@ func Factories() map[string]system.Factory {
 		gateway.Name:       gatewayFactory,
 		gateway.LegacyName: gatewayFactory,
 		"publications":     publications.Factory,
-		"reboot":           boot.Factory,
+		"boot":             boot.Factory,
 		"resourceUse":      resourceuse.Factory,
 		"tenants":          tenants.Factory,
 	}
