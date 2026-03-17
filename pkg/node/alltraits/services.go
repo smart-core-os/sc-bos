@@ -18,6 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/report"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/storagepb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/serviceticketpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/temperaturepb"
@@ -40,6 +41,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/reportpb"
 	gen_resourceusepb "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
+	gen_storagepb "github.com/smart-core-os/sc-bos/pkg/proto/storagepb"
 	gen_serviceticketpb "github.com/smart-core-os/sc-bos/pkg/proto/serviceticketpb"
 	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
@@ -94,6 +96,7 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	report.TraitName:           {reportpb.ReportApi_ServiceDesc},
 	resourceusepb.TraitName:    {gen_resourceusepb.ResourceUseApi_ServiceDesc, gen_resourceusepb.ResourceUseHistory_ServiceDesc},
 	securityevent.TraitName:    {securityeventpb.SecurityEventApi_ServiceDesc},
+	storagepb.TraitName:        {gen_storagepb.StorageApi_ServiceDesc, gen_storagepb.StorageAdminApi_ServiceDesc, gen_storagepb.StorageInfo_ServiceDesc},
 	serviceticketpb.TraitName:  {gen_serviceticketpb.ServiceTicketApi_ServiceDesc, gen_serviceticketpb.ServiceTicketInfo_ServiceDesc},
 	soundsensorpb.TraitName:    {gen_soundsensorpb.SoundSensorApi_ServiceDesc, gen_soundsensorpb.SoundSensorInfo_ServiceDesc},
 	statusTraitName:            {statuspb.StatusApi_ServiceDesc, statuspb.StatusHistory_ServiceDesc},
