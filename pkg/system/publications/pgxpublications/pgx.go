@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,14 +22,14 @@ import (
 var schemaSql string
 
 func SetupDB(ctx context.Context, pool *pgxpool.Pool) error {
-	return pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	return pgx.BeginTxFunc(ctx, pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, schemaSql)
 		return err
 	})
 }
 
 func NewServer(ctx context.Context, connStr string) (*Server, error) {
-	pool, err := pgxpool.Connect(ctx, connStr)
+	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		return nil, fmt.Errorf("connect %w", err)
 	}
@@ -72,7 +72,7 @@ func (p *Server) CreatePublication(ctx context.Context, request *traits.CreatePu
 	mediaType := input.GetMediaType()
 
 	var output *traits.Publication
-	err := p.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
 		// Register the publication
 		err := CreatePublication(ctx, tx, pubID, audience)
 		if err != nil {
@@ -120,7 +120,7 @@ func (p *Server) GetPublication(ctx context.Context, request *traits.GetPublicat
 	version := request.GetVersion()
 
 	var output *traits.Publication
-	err := p.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
 		var err error
 		output, err = GetPublication(ctx, tx, id, version)
 		return err
@@ -141,7 +141,7 @@ func (p *Server) UpdatePublication(ctx context.Context, request *traits.UpdatePu
 	}
 	var updated *traits.Publication
 
-	err := p.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
 		var err error
 		if request.GetVersion() != "" {
 			err = checkLatestVersion(ctx, tx, request.GetPublication().GetId(), request.GetVersion())
@@ -169,7 +169,7 @@ func (p *Server) UpdatePublication(ctx context.Context, request *traits.UpdatePu
 func (p *Server) DeletePublication(ctx context.Context, request *traits.DeletePublicationRequest) (*traits.Publication, error) {
 	var pub *traits.Publication
 
-	err := p.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
 		var err error
 		// if a version is specified, check that it's the latest version
 		// this helps clients to avoid racing each other
@@ -215,7 +215,7 @@ func (p *Server) ListPublications(ctx context.Context, request *traits.ListPubli
 		publications []*traits.Publication
 		nextToken    string
 	)
-	err := p.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
 		var err error
 		publications, nextToken, err = GetPublicationsPaginated(ctx, tx, request.GetPageToken(), limit)
 		return err
@@ -250,7 +250,7 @@ func (p *Server) AcknowledgePublication(ctx context.Context, request *traits.Ack
 	}
 
 	var updated *traits.Publication
-	err := p.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
 		err := CreatePublicationAcknowledgement(ctx, tx, request.GetId(), request.GetVersion(), time.Now(), accepted,
 			request.GetReceiptRejectedReason(), request.GetAllowAcknowledged())
 		if err != nil {

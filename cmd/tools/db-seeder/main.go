@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/appconf"
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
@@ -70,7 +70,7 @@ func main() {
 	conf.MaxConns = 4
 	conf.MinConns = 1
 
-	db, err := pgxpool.ConnectConfig(ctx, conf)
+	db, err := pgxpool.NewWithConfig(ctx, conf)
 	if err != nil {
 		panic(err)
 	}
