@@ -6,12 +6,12 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/trait/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/enterleave/config"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type enterLeave struct {

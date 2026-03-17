@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -533,9 +533,9 @@ const file_traits_on_off_proto_rawDesc = "" +
 	"\vUpdateOnOff\x12$.smartcore.traits.UpdateOnOffRequest\x1a\x17.smartcore.traits.OnOff\x12V\n" +
 	"\tPullOnOff\x12\".smartcore.traits.PullOnOffRequest\x1a#.smartcore.traits.PullOnOffResponse0\x012d\n" +
 	"\tOnOffInfo\x12W\n" +
-	"\rDescribeOnOff\x12&.smartcore.traits.DescribeOnOffRequest\x1a\x1e.smartcore.traits.OnOffSupportBu\n" +
+	"\rDescribeOnOff\x12&.smartcore.traits.DescribeOnOffRequest\x1a\x1e.smartcore.traits.OnOffSupportB|\n" +
 	"\x14dev.smartcore.traitsB\n" +
-	"OnOffProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"OnOffProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_on_off_proto_rawDescOnce sync.Once

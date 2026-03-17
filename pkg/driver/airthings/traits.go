@@ -7,8 +7,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	typespb "github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/api"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
@@ -18,6 +16,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
 	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	typespb "github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // announceDevice sets up and announces the traits supported by the device.

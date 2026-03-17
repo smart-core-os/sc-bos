@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -744,8 +744,8 @@ const file_traits_extend_retract_proto_rawDesc = "" +
 	"\x15CreateExtensionPreset\x12..smartcore.traits.CreateExtensionPresetRequest\x1a!.smartcore.traits.ExtensionPreset\x12e\n" +
 	"\x0ePullExtensions\x12'.smartcore.traits.PullExtensionsRequest\x1a(.smartcore.traits.PullExtensionsResponse0\x012x\n" +
 	"\x11ExtendRetractInfo\x12c\n" +
-	"\x11DescribeExtension\x12*.smartcore.traits.DescribeExtensionRequest\x1a\".smartcore.traits.ExtensionSupportB}\n" +
-	"\x14dev.smartcore.traitsB\x12ExtendRetractProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x11DescribeExtension\x12*.smartcore.traits.DescribeExtensionRequest\x1a\".smartcore.traits.ExtensionSupportB\x84\x01\n" +
+	"\x14dev.smartcore.traitsB\x12ExtendRetractProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_extend_retract_proto_rawDescOnce sync.Once

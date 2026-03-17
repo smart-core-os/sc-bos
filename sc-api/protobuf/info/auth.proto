@@ -3,7 +3,7 @@ syntax = "proto3";
 package smartcore.info;
 
 option csharp_namespace = "Smartcore.Info";
-option go_package = "github.com/smart-core-os/sc-api/go/info";
+option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/info";
 option java_multiple_files = true;
 option java_outer_classname = "AuthProto";
 option java_package = "dev.smartcore.info";

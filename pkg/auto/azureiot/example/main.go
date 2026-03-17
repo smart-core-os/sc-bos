@@ -10,12 +10,12 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/exp/rand"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/azureiot"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func main() {

@@ -7,10 +7,10 @@ import (
 	"golang.org/x/exp/rand"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func TemperatureAuto(model *temperaturepb.Model) *service.Service[string] {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModes define the available modes of a Model if none are provided.

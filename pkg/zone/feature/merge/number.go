@@ -3,7 +3,7 @@ package merge
 import (
 	"golang.org/x/exp/constraints"
 
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type Number interface {

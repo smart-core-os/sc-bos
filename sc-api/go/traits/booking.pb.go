@@ -7,8 +7,8 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
-	time "github.com/smart-core-os/sc-api/go/types/time"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	time "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -1029,8 +1029,8 @@ const file_traits_booking_proto_rawDesc = "" +
 	"\rUpdateBooking\x12&.smartcore.traits.UpdateBookingRequest\x1a'.smartcore.traits.UpdateBookingResponse\x12_\n" +
 	"\fPullBookings\x12%.smartcore.traits.ListBookingsRequest\x1a&.smartcore.traits.PullBookingsResponse0\x012l\n" +
 	"\vBookingInfo\x12]\n" +
-	"\x0fDescribeBooking\x12(.smartcore.traits.DescribeBookingRequest\x1a .smartcore.traits.BookingSupportBw\n" +
-	"\x14dev.smartcore.traitsB\fBookingProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x0fDescribeBooking\x12(.smartcore.traits.DescribeBookingRequest\x1a .smartcore.traits.BookingSupportB~\n" +
+	"\x14dev.smartcore.traitsB\fBookingProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_booking_proto_rawDescOnce sync.Once

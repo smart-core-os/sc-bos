@@ -3,7 +3,7 @@ package settings
 import (
 	"context"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type infoServer struct {

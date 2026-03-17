@@ -6,9 +6,9 @@ import (
 
 	"golang.org/x/exp/rand"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func FanSpeed(model *fanspeedpb.Model, presets ...fanspeedpb.Preset) service.Lifecycle {

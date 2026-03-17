@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -704,9 +704,9 @@ const file_traits_waste_proto_rawDesc = "" +
 	"\x10ListWasteRecords\x12).smartcore.traits.ListWasteRecordsRequest\x1a*.smartcore.traits.ListWasteRecordsResponse\x12k\n" +
 	"\x10PullWasteRecords\x12).smartcore.traits.PullWasteRecordsRequest\x1a*.smartcore.traits.PullWasteRecordsResponse0\x012v\n" +
 	"\tWasteInfo\x12i\n" +
-	"\x13DescribeWasteRecord\x12,.smartcore.traits.DescribeWasteRecordRequest\x1a$.smartcore.traits.WasteRecordSupportBu\n" +
+	"\x13DescribeWasteRecord\x12,.smartcore.traits.DescribeWasteRecordRequest\x1a$.smartcore.traits.WasteRecordSupportB|\n" +
 	"\x14dev.smartcore.traitsB\n" +
-	"WasteProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"WasteProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_waste_proto_rawDescOnce sync.Once

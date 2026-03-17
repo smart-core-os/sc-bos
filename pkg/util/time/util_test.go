@@ -3,7 +3,7 @@ package time
 import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/types/time"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 )
 
 func ts(s int64) *timestamppb.Timestamp {

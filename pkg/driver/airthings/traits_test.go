@@ -8,8 +8,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	typespb "github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/api"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
@@ -18,6 +16,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	typespb "github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func TestSampleToAirQuality(t *testing.T) {

@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -729,8 +729,8 @@ const file_traits_mode_proto_rawDesc = "" +
 	"\x10UpdateModeValues\x12).smartcore.traits.UpdateModeValuesRequest\x1a\x1c.smartcore.traits.ModeValues\x12e\n" +
 	"\x0ePullModeValues\x12'.smartcore.traits.PullModeValuesRequest\x1a(.smartcore.traits.PullModeValuesResponse0\x012c\n" +
 	"\bModeInfo\x12W\n" +
-	"\rDescribeModes\x12&.smartcore.traits.DescribeModesRequest\x1a\x1e.smartcore.traits.ModesSupportBt\n" +
-	"\x14dev.smartcore.traitsB\tModeProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\rDescribeModes\x12&.smartcore.traits.DescribeModesRequest\x1a\x1e.smartcore.traits.ModesSupportB{\n" +
+	"\x14dev.smartcore.traitsB\tModeProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_mode_proto_rawDescOnce sync.Once

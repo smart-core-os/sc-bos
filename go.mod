@@ -12,7 +12,6 @@ require (
 	github.com/google/renameio/v2 v2.0.0
 	github.com/gopcua/opcua v0.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/jackc/pgconn v1.14.3
@@ -28,9 +27,9 @@ require (
 	github.com/qri-io/jsonpointer v0.1.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/cors v1.8.3
+	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/sirupsen/logrus v1.9.4
 	github.com/smart-core-os/gobacnet v0.0.0-20251215143300-eec746ea1612
-	github.com/smart-core-os/sc-api/go v1.0.0-beta.57
 	github.com/stretchr/testify v1.11.1
 	github.com/tanema/gween v0.0.0-20200427131925-c89ae23cc63c
 	github.com/timshannon/bolthold v0.0.0-20210913165410-232392fc8a6a
@@ -96,7 +95,6 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 // indirect
 	github.com/rs/zerolog v1.25.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
-	github.com/shirou/gopsutil/v3 v3.24.5 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/smart-core-os/protomod v0.0.0-20240905140020-cf3f34d700b0 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect

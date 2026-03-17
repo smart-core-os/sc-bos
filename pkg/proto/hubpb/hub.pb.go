@@ -7,8 +7,8 @@
 package hubpb
 
 import (
-	traits "github.com/smart-core-os/sc-api/go/traits"
-	types "github.com/smart-core-os/sc-api/go/types"
+	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"

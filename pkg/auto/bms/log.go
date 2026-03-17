@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func logWrites(logger *zap.Logger, rs *ReadState, ws *WriteState, counts *ActionCounts, ttl time.Duration, err error) {

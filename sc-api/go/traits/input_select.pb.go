@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -713,8 +713,8 @@ const file_traits_input_select_proto_rawDesc = "" +
 	"\bGetInput\x12!.smartcore.traits.GetInputRequest\x1a\x17.smartcore.traits.Input\x12V\n" +
 	"\tPullInput\x12\".smartcore.traits.PullInputRequest\x1a#.smartcore.traits.PullInputResponse0\x012j\n" +
 	"\x0fInputSelectInfo\x12W\n" +
-	"\rDescribeInput\x12&.smartcore.traits.DescribeInputRequest\x1a\x1e.smartcore.traits.InputSupportB{\n" +
-	"\x14dev.smartcore.traitsB\x10InputSelectProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\rDescribeInput\x12&.smartcore.traits.DescribeInputRequest\x1a\x1e.smartcore.traits.InputSupportB\x82\x01\n" +
+	"\x14dev.smartcore.traitsB\x10InputSelectProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_input_select_proto_rawDescOnce sync.Once

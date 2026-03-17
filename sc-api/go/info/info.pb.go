@@ -7,7 +7,7 @@
 package info
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -586,8 +586,8 @@ const file_info_info_proto_rawDesc = "" +
 	"\bclientCa\x18\x04 \x01(\fR\bclientCa2\xb8\x01\n" +
 	"\x04Info\x12V\n" +
 	"\vListDevices\x12\".smartcore.info.ListDevicesRequest\x1a#.smartcore.info.ListDevicesResponse\x12X\n" +
-	"\vPullDevices\x12\".smartcore.info.PullDevicesRequest\x1a#.smartcore.info.PullDevicesResponse0\x01Bl\n" +
-	"\x12dev.smartcore.infoB\tInfoProtoP\x01Z'github.com/smart-core-os/sc-api/go/info\xaa\x02\x0eSmartcore.Info\xca\x02\x0eSmartcore\\Infob\x06proto3"
+	"\vPullDevices\x12\".smartcore.info.PullDevicesRequest\x1a#.smartcore.info.PullDevicesResponse0\x01Bs\n" +
+	"\x12dev.smartcore.infoB\tInfoProtoP\x01Z.github.com/smart-core-os/sc-bos/sc-api/go/info\xaa\x02\x0eSmartcore.Info\xca\x02\x0eSmartcore\\Infob\x06proto3"
 
 var (
 	file_info_info_proto_rawDescOnce sync.Once

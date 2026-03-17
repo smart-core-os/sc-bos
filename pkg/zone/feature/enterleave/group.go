@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
@@ -19,6 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/enterleave/config"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Group struct {

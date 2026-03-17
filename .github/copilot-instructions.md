@@ -8,7 +8,6 @@
 - **Backend:** Go 1.25.x, gRPC, Protocol Buffers
 - **Frontend:** Vue.js 3, Vite 6, Vuetify 3, Node.js 22.x, Yarn 1.22.x
 - **Infrastructure:** PostgreSQL 14, Keycloak 21 (OAuth2/OIDC), Docker/Podman
-- **Key Dependencies:** `github.com/smart-core-os/sc-api` (Smart Core API)
 
 ## Agent Behavior Guidelines
 
@@ -146,7 +145,7 @@ docker-compose.yml           # Dev services (Postgres, Keycloak)
 
 ### Smart Core Terminology
 
-**Traits** - Standard gRPC service interfaces that define device capabilities (e.g., `OnOff`, `BrightnessSensor`, `OccupancySensor`). Defined in both `github.com/smart-core-os/sc-api` and locally in `proto/`. Trait requests always have an associated `name` field identifying the target device.
+**Traits** - Standard gRPC service interfaces that define device capabilities (e.g., `OnOff`, `BrightnessSensor`, `OccupancySensor`). Defined in `proto/` and `sc-api/protobuf`. Trait requests always have an associated `name` field identifying the target device.
 
 **Resources** - The data exposed by a trait. For example, `OccupancySensor` is the trait, and `Occupancy` is the resource it exposes. Resources represent the actual state or data being managed.
 
@@ -167,7 +166,7 @@ docker-compose.yml           # Dev services (Postgres, Keycloak)
 - **Zones** (`pkg/zone/*`) - Logical groupings of devices
 - **Systems** (`pkg/system/*`) - System-level services
 
-**APIs** - gRPC services defined in `proto/` + imported from `github.com/smart-core-os/sc-api`
+**APIs** - gRPC services defined in `proto/` + imported from `github.com/smart-core-os/sc-bos/sc-api`
 
 **Config Loading** - JSON configs in `example/config/` support includes via glob patterns. Drivers/automation/zones merge by name (first-come, first-served).
 

@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -791,8 +791,8 @@ const file_traits_air_temperature_proto_rawDesc = "" +
 	"\x14UpdateAirTemperature\x12-.smartcore.traits.UpdateAirTemperatureRequest\x1a .smartcore.traits.AirTemperature\x12q\n" +
 	"\x12PullAirTemperature\x12+.smartcore.traits.PullAirTemperatureRequest\x1a,.smartcore.traits.PullAirTemperatureResponse0\x012\x88\x01\n" +
 	"\x12AirTemperatureInfo\x12r\n" +
-	"\x16DescribeAirTemperature\x12/.smartcore.traits.DescribeAirTemperatureRequest\x1a'.smartcore.traits.AirTemperatureSupportB~\n" +
-	"\x14dev.smartcore.traitsB\x13AirTemperatureProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x16DescribeAirTemperature\x12/.smartcore.traits.DescribeAirTemperatureRequest\x1a'.smartcore.traits.AirTemperatureSupportB\x85\x01\n" +
+	"\x14dev.smartcore.traitsB\x13AirTemperatureProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_air_temperature_proto_rawDescOnce sync.Once

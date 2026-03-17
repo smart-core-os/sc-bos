@@ -192,8 +192,8 @@ const file_types_info_proto_rawDesc = "" +
 	"\vPullSupport\x12\x1c\n" +
 	"\x18PULL_SUPPORT_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13PULL_SUPPORT_NATIVE\x10\x01\x12\x19\n" +
-	"\x15PULL_SUPPORT_EMULATED\x10\x02B^\n" +
-	"\x13dev.smartcore.typesB\tInfoProtoP\x01Z(github.com/smart-core-os/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
+	"\x15PULL_SUPPORT_EMULATED\x10\x02Be\n" +
+	"\x13dev.smartcore.typesB\tInfoProtoP\x01Z/github.com/smart-core-os/sc-bos/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
 
 var (
 	file_types_info_proto_rawDescOnce sync.Once

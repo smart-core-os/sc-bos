@@ -12,10 +12,10 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 var (

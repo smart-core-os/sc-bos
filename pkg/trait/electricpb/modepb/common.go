@@ -3,7 +3,7 @@ package modepb
 import (
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // tOrST returns t if m.StartTime is nil, or m.StartTime.AsTime() otherwise.

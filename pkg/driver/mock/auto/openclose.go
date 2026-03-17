@@ -5,11 +5,11 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func OpenClose(model *openclosepb.Model) service.Lifecycle {

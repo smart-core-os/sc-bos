@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -544,8 +544,8 @@ const file_traits_occupancy_sensor_proto_rawDesc = "" +
 	"\fGetOccupancy\x12%.smartcore.traits.GetOccupancyRequest\x1a\x1b.smartcore.traits.Occupancy\x12b\n" +
 	"\rPullOccupancy\x12&.smartcore.traits.PullOccupancyRequest\x1a'.smartcore.traits.PullOccupancyResponse0\x012z\n" +
 	"\x13OccupancySensorInfo\x12c\n" +
-	"\x11DescribeOccupancy\x12*.smartcore.traits.DescribeOccupancyRequest\x1a\".smartcore.traits.OccupancySupportB\x7f\n" +
-	"\x14dev.smartcore.traitsB\x14OccupancySensorProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x11DescribeOccupancy\x12*.smartcore.traits.DescribeOccupancyRequest\x1a\".smartcore.traits.OccupancySupportB\x86\x01\n" +
+	"\x14dev.smartcore.traitsB\x14OccupancySensorProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_occupancy_sensor_proto_rawDescOnce sync.Once
