@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -504,8 +504,8 @@ const file_traits_parent_proto_rawDesc = "" +
 	"\fListChildren\x12%.smartcore.traits.ListChildrenRequest\x1a&.smartcore.traits.ListChildrenResponse\x12_\n" +
 	"\fPullChildren\x12%.smartcore.traits.PullChildrenRequest\x1a&.smartcore.traits.PullChildrenResponse0\x012\f\n" +
 	"\n" +
-	"ParentInfoBv\n" +
-	"\x14dev.smartcore.traitsB\vParentProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"ParentInfoB}\n" +
+	"\x14dev.smartcore.traitsB\vParentProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_parent_proto_rawDescOnce sync.Once

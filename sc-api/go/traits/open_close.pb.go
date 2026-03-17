@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -904,8 +904,8 @@ const file_traits_open_close_proto_rawDesc = "" +
 	"\x04Stop\x12&.smartcore.traits.StopOpenCloseRequest\x1a$.smartcore.traits.OpenClosePositions\x12t\n" +
 	"\rPullPositions\x12/.smartcore.traits.PullOpenClosePositionsRequest\x1a0.smartcore.traits.PullOpenClosePositionsResponse0\x012t\n" +
 	"\rOpenCloseInfo\x12c\n" +
-	"\x11DescribePositions\x12*.smartcore.traits.DescribePositionsRequest\x1a\".smartcore.traits.PositionsSupportBy\n" +
-	"\x14dev.smartcore.traitsB\x0eOpenCloseProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x11DescribePositions\x12*.smartcore.traits.DescribePositionsRequest\x1a\".smartcore.traits.PositionsSupportB\x80\x01\n" +
+	"\x14dev.smartcore.traitsB\x0eOpenCloseProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_open_close_proto_rawDescOnce sync.Once

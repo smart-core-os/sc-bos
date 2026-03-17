@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -1677,8 +1677,8 @@ const file_traits_vending_proto_rawDesc = "" +
 	"\rPullInventory\x12&.smartcore.traits.PullInventoryRequest\x1a'.smartcore.traits.PullInventoryResponse0\x01\x12Q\n" +
 	"\bDispense\x12!.smartcore.traits.DispenseRequest\x1a\".smartcore.traits.Consumable.Stock\x12Y\n" +
 	"\fStopDispense\x12%.smartcore.traits.StopDispenseRequest\x1a\".smartcore.traits.Consumable.Stock2\r\n" +
-	"\vVendingInfoBw\n" +
-	"\x14dev.smartcore.traitsB\fVendingProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\vVendingInfoB~\n" +
+	"\x14dev.smartcore.traitsB\fVendingProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_vending_proto_rawDescOnce sync.Once

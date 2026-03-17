@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -1236,8 +1236,8 @@ const file_traits_publication_proto_rawDesc = "" +
 	"\x0fPullPublication\x12(.smartcore.traits.PullPublicationRequest\x1a).smartcore.traits.PullPublicationResponse0\x01\x12i\n" +
 	"\x10ListPublications\x12).smartcore.traits.ListPublicationsRequest\x1a*.smartcore.traits.ListPublicationsResponse\x12k\n" +
 	"\x10PullPublications\x12).smartcore.traits.PullPublicationsRequest\x1a*.smartcore.traits.PullPublicationsResponse0\x01\x12h\n" +
-	"\x16AcknowledgePublication\x12/.smartcore.traits.AcknowledgePublicationRequest\x1a\x1d.smartcore.traits.PublicationB{\n" +
-	"\x14dev.smartcore.traitsB\x10PublicationProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x16AcknowledgePublication\x12/.smartcore.traits.AcknowledgePublicationRequest\x1a\x1d.smartcore.traits.PublicationB\x82\x01\n" +
+	"\x14dev.smartcore.traitsB\x10PublicationProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_publication_proto_rawDescOnce sync.Once

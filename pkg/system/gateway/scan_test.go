@@ -23,7 +23,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
@@ -43,6 +42,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func TestSystem_scanRemoteHub(t *testing.T) {

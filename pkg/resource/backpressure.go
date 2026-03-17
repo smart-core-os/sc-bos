@@ -3,7 +3,7 @@ package resource
 import (
 	"container/list"
 
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // mergeCollectionExcess acts on a chan of *CollectionChange combining changes with the same key to maintain the

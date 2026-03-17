@@ -6,12 +6,12 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/system/alerts/alertmd"
 	"github.com/smart-core-os/sc-bos/pkg/util/once"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // Server backs off to a remove server, modifying requests to filter by federation parameter.

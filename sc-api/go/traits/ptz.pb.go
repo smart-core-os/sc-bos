@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -1026,8 +1026,8 @@ const file_traits_ptz_proto_rawDesc = "" +
 	"\fCreatePreset\x12(.smartcore.traits.CreatePtzPresetRequest\x1a\x1b.smartcore.traits.PtzPreset\x12P\n" +
 	"\aPullPtz\x12 .smartcore.traits.PullPtzRequest\x1a!.smartcore.traits.PullPtzResponse0\x012\\\n" +
 	"\aPtzInfo\x12Q\n" +
-	"\vDescribePtz\x12$.smartcore.traits.DescribePtzRequest\x1a\x1c.smartcore.traits.PtzSupportBs\n" +
-	"\x14dev.smartcore.traitsB\bPtzProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\vDescribePtz\x12$.smartcore.traits.DescribePtzRequest\x1a\x1c.smartcore.traits.PtzSupportBz\n" +
+	"\x14dev.smartcore.traitsB\bPtzProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_ptz_proto_rawDescOnce sync.Once

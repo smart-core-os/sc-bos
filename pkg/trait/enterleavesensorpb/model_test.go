@@ -3,7 +3,7 @@ package enterleavesensorpb
 import (
 	"testing"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func TestModel_ResetTotals(t *testing.T) {

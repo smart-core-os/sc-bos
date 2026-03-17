@@ -1368,8 +1368,8 @@ const file_traits_metadata_proto_rawDesc = "" +
 	"\vMetadataApi\x12O\n" +
 	"\vGetMetadata\x12$.smartcore.traits.GetMetadataRequest\x1a\x1a.smartcore.traits.Metadata\x12_\n" +
 	"\fPullMetadata\x12%.smartcore.traits.PullMetadataRequest\x1a&.smartcore.traits.PullMetadataResponse0\x012\x0e\n" +
-	"\fMetadataInfoBx\n" +
-	"\x14dev.smartcore.traitsB\rMetadataProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\fMetadataInfoB\x7f\n" +
+	"\x14dev.smartcore.traitsB\rMetadataProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_metadata_proto_rawDescOnce sync.Once

@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -745,9 +745,9 @@ const file_traits_color_proto_rawDesc = "" +
 	"\vUpdateColor\x12$.smartcore.traits.UpdateColorRequest\x1a\x17.smartcore.traits.Color\x12V\n" +
 	"\tPullColor\x12\".smartcore.traits.PullColorRequest\x1a#.smartcore.traits.PullColorResponse0\x012d\n" +
 	"\tColorInfo\x12W\n" +
-	"\rDescribeColor\x12&.smartcore.traits.DescribeColorRequest\x1a\x1e.smartcore.traits.ColorSupportBu\n" +
+	"\rDescribeColor\x12&.smartcore.traits.DescribeColorRequest\x1a\x1e.smartcore.traits.ColorSupportB|\n" +
 	"\x14dev.smartcore.traitsB\n" +
-	"ColorProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"ColorProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_color_proto_rawDescOnce sync.Once

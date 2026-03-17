@@ -607,9 +607,9 @@ const file_traits_press_proto_rawDesc = "" +
 	"\bPressApi\x12[\n" +
 	"\x0fGetPressedState\x12(.smartcore.traits.GetPressedStateRequest\x1a\x1e.smartcore.traits.PressedState\x12k\n" +
 	"\x10PullPressedState\x12).smartcore.traits.PullPressedStateRequest\x1a*.smartcore.traits.PullPressedStateResponse0\x01\x12a\n" +
-	"\x12UpdatePressedState\x12+.smartcore.traits.UpdatePressedStateRequest\x1a\x1e.smartcore.traits.PressedStateBu\n" +
+	"\x12UpdatePressedState\x12+.smartcore.traits.UpdatePressedStateRequest\x1a\x1e.smartcore.traits.PressedStateB|\n" +
 	"\x14dev.smartcore.traitsB\n" +
-	"PressProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"PressProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_press_proto_rawDescOnce sync.Once

@@ -3,7 +3,7 @@ syntax = "proto3";
 package smartcore.traits;
 
 option csharp_namespace = "Smartcore.Traits";
-option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/traits";
 option java_multiple_files = true;
 option java_outer_classname = "PtzProto";
 option java_package = "dev.smartcore.traits";

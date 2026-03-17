@@ -1,5 +1,5 @@
 # Smart Core API packaged for npm
-This is the npm packaged version of the Smart Core API definitions (https://github.com/smart-core-os/sc-api). If you're
+This is the npm packaged version of the Smart Core API definitions (https://github.com/smart-core-os/sc-bos/sc-api). If you're
 working with Smart Core using node, you probably want the `@smart-core-os/server` or `@smart-core-os/client` packages.
 
 This package is just a copy of the core `.proto` files, with a `package.json` attached for publishing.

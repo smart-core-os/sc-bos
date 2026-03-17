@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -401,8 +401,8 @@ const file_traits_microphone_proto_rawDesc = "" +
 	"UpdateGain\x12-.smartcore.traits.UpdateMicrophoneGainRequest\x1a\x1b.smartcore.types.AudioLevel\x12g\n" +
 	"\bPullGain\x12+.smartcore.traits.PullMicrophoneGainRequest\x1a,.smartcore.traits.PullMicrophoneGainResponse0\x012f\n" +
 	"\x0eMicrophoneInfo\x12T\n" +
-	"\fDescribeGain\x12%.smartcore.traits.DescribeGainRequest\x1a\x1d.smartcore.traits.GainSupportBz\n" +
-	"\x14dev.smartcore.traitsB\x0fMicrophoneProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\fDescribeGain\x12%.smartcore.traits.DescribeGainRequest\x1a\x1d.smartcore.traits.GainSupportB\x81\x01\n" +
+	"\x14dev.smartcore.traitsB\x0fMicrophoneProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_microphone_proto_rawDescOnce sync.Once

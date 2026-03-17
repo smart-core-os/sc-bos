@@ -7,7 +7,7 @@
 package info
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -639,8 +639,8 @@ const file_info_auth_proto_rawDesc = "" +
 	"AddAccount\x12!.smartcore.info.AddAccountRequest\x1a\".smartcore.info.AddAccountResponse\x12\\\n" +
 	"\rRemoveAccount\x12$.smartcore.info.RemoveAccountRequest\x1a%.smartcore.info.RemoveAccountResponse\x12}\n" +
 	"\x18UpdateAccountPermissions\x12/.smartcore.info.UpdateAccountPermissionsRequest\x1a0.smartcore.info.UpdateAccountPermissionsResponse\x12\\\n" +
-	"\rGenerateToken\x12$.smartcore.info.GenerateTokenRequest\x1a%.smartcore.info.GenerateTokenResponseBl\n" +
-	"\x12dev.smartcore.infoB\tAuthProtoP\x01Z'github.com/smart-core-os/sc-api/go/info\xaa\x02\x0eSmartcore.Info\xca\x02\x0eSmartcore\\Infob\x06proto3"
+	"\rGenerateToken\x12$.smartcore.info.GenerateTokenRequest\x1a%.smartcore.info.GenerateTokenResponseBs\n" +
+	"\x12dev.smartcore.infoB\tAuthProtoP\x01Z.github.com/smart-core-os/sc-bos/sc-api/go/info\xaa\x02\x0eSmartcore.Info\xca\x02\x0eSmartcore\\Infob\x06proto3"
 
 var (
 	file_info_auth_proto_rawDescOnce sync.Once

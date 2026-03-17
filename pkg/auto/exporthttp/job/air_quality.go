@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/types"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // AirQualityJob gets average Co2 level at current point in time

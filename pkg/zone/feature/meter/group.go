@@ -13,7 +13,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
@@ -22,6 +21,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/merge"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type Group struct {

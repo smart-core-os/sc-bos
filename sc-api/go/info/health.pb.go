@@ -7,7 +7,7 @@
 package info
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -433,8 +433,8 @@ const file_info_health_proto_rawDesc = "" +
 	"\x06health\x18\x03 \x01(\v2\x1b.smartcore.info.HealthStateR\x06health2\xcb\x01\n" +
 	"\x06Health\x12V\n" +
 	"\x0eGetHealthState\x12%.smartcore.info.GetHealthStateRequest\x1a\x1b.smartcore.info.HealthState\"\x00\x12i\n" +
-	"\x10PullHealthStates\x12'.smartcore.info.PullHealthStatesRequest\x1a(.smartcore.info.PullHealthStatesResponse\"\x000\x01Bn\n" +
-	"\x12dev.smartcore.infoB\vHealthProtoP\x01Z'github.com/smart-core-os/sc-api/go/info\xaa\x02\x0eSmartcore.Info\xca\x02\x0eSmartcore\\Infob\x06proto3"
+	"\x10PullHealthStates\x12'.smartcore.info.PullHealthStatesRequest\x1a(.smartcore.info.PullHealthStatesResponse\"\x000\x01Bu\n" +
+	"\x12dev.smartcore.infoB\vHealthProtoP\x01Z.github.com/smart-core-os/sc-bos/sc-api/go/info\xaa\x02\x0eSmartcore.Info\xca\x02\x0eSmartcore\\Infob\x06proto3"
 
 var (
 	file_info_health_proto_rawDescOnce sync.Once

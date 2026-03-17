@@ -9,10 +9,10 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/util/times"
 	"github.com/smart-core-os/sc-bos/pkg/auto/runstate"
 	"github.com/smart-core-os/sc-bos/pkg/util/state"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type TurnOffScreensOutsideWorkingHours struct {

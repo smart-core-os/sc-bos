@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -600,9 +600,9 @@ const file_traits_count_proto_rawDesc = "" +
 	"\n" +
 	"PullCounts\x12#.smartcore.traits.PullCountsRequest\x1a$.smartcore.traits.PullCountsResponse0\x012d\n" +
 	"\tCountInfo\x12W\n" +
-	"\rDescribeCount\x12&.smartcore.traits.DescribeCountRequest\x1a\x1e.smartcore.traits.CountSupportBu\n" +
+	"\rDescribeCount\x12&.smartcore.traits.DescribeCountRequest\x1a\x1e.smartcore.traits.CountSupportB|\n" +
 	"\x14dev.smartcore.traitsB\n" +
-	"CountProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"CountProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_count_proto_rawDescOnce sync.Once

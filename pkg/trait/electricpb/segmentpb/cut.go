@@ -3,7 +3,7 @@ package segmentpb
 import (
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 

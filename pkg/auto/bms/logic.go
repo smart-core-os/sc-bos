@@ -8,9 +8,9 @@ import (
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/auto/bms/config"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func processReadState(ctx context.Context, readState *ReadState, writeState *WriteState, actions Actions) (time.Duration, error) {

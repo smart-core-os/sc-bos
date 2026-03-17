@@ -7,7 +7,7 @@
 package traits
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -645,8 +645,8 @@ const file_traits_fan_speed_proto_rawDesc = "" +
 	"\fPullFanSpeed\x12%.smartcore.traits.PullFanSpeedRequest\x1a&.smartcore.traits.PullFanSpeedResponse0\x01\x12i\n" +
 	"\x18ReverseFanSpeedDirection\x121.smartcore.traits.ReverseFanSpeedDirectionRequest\x1a\x1a.smartcore.traits.FanSpeed2p\n" +
 	"\fFanSpeedInfo\x12`\n" +
-	"\x10DescribeFanSpeed\x12).smartcore.traits.DescribeFanSpeedRequest\x1a!.smartcore.traits.FanSpeedSupportBx\n" +
-	"\x14dev.smartcore.traitsB\rFanSpeedProtoP\x01Z)github.com/smart-core-os/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x10DescribeFanSpeed\x12).smartcore.traits.DescribeFanSpeedRequest\x1a!.smartcore.traits.FanSpeedSupportB\x7f\n" +
+	"\x14dev.smartcore.traitsB\rFanSpeedProtoP\x01Z0github.com/smart-core-os/sc-bos/sc-api/go/traits\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
 
 var (
 	file_traits_fan_speed_proto_rawDescOnce sync.Once

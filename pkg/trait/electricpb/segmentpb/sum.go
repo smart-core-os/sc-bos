@@ -6,7 +6,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Sum combines the segment lists given by segmentSlices together into a single segment list.

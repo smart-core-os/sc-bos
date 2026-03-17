@@ -8,9 +8,9 @@ import (
 	"slices"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // deviceName is a smart core name for a device.

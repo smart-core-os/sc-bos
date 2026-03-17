@@ -6,8 +6,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/trait/electricpb/segmentpb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Shift adjusts the given mode until it's start time is offset by d.

@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 	"github.com/tanema/gween"
 	"github.com/tanema/gween/ease"
 	"google.golang.org/grpc/codes"

@@ -152,8 +152,8 @@ const file_types_connection_proto_rawDesc = "" +
 	"CommStatus\x12\x1b\n" +
 	"\x17COMM_STATUS_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fCOMM_SUCCESS\x10\x01\x12\x10\n" +
-	"\fCOMM_FAILURE\x10\x02Bd\n" +
-	"\x13dev.smartcore.typesB\x0fConnectionProtoP\x01Z(github.com/smart-core-os/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
+	"\fCOMM_FAILURE\x10\x02Bk\n" +
+	"\x13dev.smartcore.typesB\x0fConnectionProtoP\x01Z/github.com/smart-core-os/sc-bos/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
 
 var (
 	file_types_connection_proto_rawDescOnce sync.Once

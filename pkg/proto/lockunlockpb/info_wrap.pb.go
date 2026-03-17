@@ -5,8 +5,8 @@ package lockunlockpb
 import (
 	"google.golang.org/grpc"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // WrapInfo	adapts a traits.LockUnlockInfoServer	and presents it as a traits.LockUnlockInfoClient

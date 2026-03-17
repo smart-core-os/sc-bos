@@ -5,8 +5,8 @@ package airtemperaturepb
 import (
 	"google.golang.org/grpc"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // WrapApi	adapts a traits.AirTemperatureApiServer	and presents it as a traits.AirTemperatureApiClient

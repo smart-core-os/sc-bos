@@ -3,7 +3,7 @@ package unitpb
 import (
 	"fmt"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Convert converts from one consumable unit to another, if possible.

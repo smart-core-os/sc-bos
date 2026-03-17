@@ -12,13 +12,13 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/mode/config"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // MixedValue is used as ModeValues.Value when underlying devices disagree on the actual value for a mode.

@@ -85,8 +85,8 @@ const file_types_time_period_proto_rawDesc = "" +
 	"\x06Period\x129\n" +
 	"\n" +
 	"start_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x125\n" +
-	"\bend_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\aendTimeBo\n" +
-	"\x18dev.smartcore.types.timeB\vPeriodProtoP\x01Z-github.com/smart-core-os/sc-api/go/types/time\xaa\x02\x14Smartcore.Types.Timeb\x06proto3"
+	"\bend_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\aendTimeBv\n" +
+	"\x18dev.smartcore.types.timeB\vPeriodProtoP\x01Z4github.com/smart-core-os/sc-bos/sc-api/go/types/time\xaa\x02\x14Smartcore.Types.Timeb\x06proto3"
 
 var (
 	file_types_time_period_proto_rawDescOnce sync.Once

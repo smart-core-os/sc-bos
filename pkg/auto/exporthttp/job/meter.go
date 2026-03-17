@@ -8,8 +8,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	sctime "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	sctime "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 )
 
 type listMeterReadingFn func(ctx context.Context, in *meterpb.ListMeterReadingHistoryRequest, opts ...grpc.CallOption) (*meterpb.ListMeterReadingHistoryResponse, error)

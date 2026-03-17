@@ -342,8 +342,8 @@ const file_types_unit_proto_rawDesc = "" +
 	"\vMuteSupport\x12\x1c\n" +
 	"\x18MUTE_SUPPORT_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vMUTE_NATIVE\x10\x01\x12\x11\n" +
-	"\rMUTE_EMULATED\x10\x02B^\n" +
-	"\x13dev.smartcore.typesB\tUnitProtoP\x01Z(github.com/smart-core-os/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
+	"\rMUTE_EMULATED\x10\x02Be\n" +
+	"\x13dev.smartcore.typesB\tUnitProtoP\x01Z/github.com/smart-core-os/sc-bos/sc-api/go/types\xaa\x02\x0fSmartcore.Typesb\x06proto3"
 
 var (
 	file_types_unit_proto_rawDescOnce sync.Once

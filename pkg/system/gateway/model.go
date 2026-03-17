@@ -6,11 +6,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/rx"
 	"github.com/smart-core-os/sc-bos/pkg/util/slices"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // cohort describes the hub and enrolled Nodes.

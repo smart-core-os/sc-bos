@@ -5,11 +5,11 @@ import (
 	"math"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/scale"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func OccupancySensorAuto(model *occupancysensorpb.Model) *service.Service[string] {
