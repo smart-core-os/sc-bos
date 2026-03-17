@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -41,9 +43,9 @@ type config struct{}
 
 // rebootState is the on-disk format for persisting the last reboot reason/actor across restarts.
 type rebootState struct {
-	Reason    string `json:"reason,omitempty"`
-	Actor     string `json:"actor,omitempty"`
-	CleanExit bool   `json:"cleanExit,omitempty"`
+	Reason    string          `json:"reason,omitempty"`
+	Actor     json.RawMessage `json:"actor,omitempty"`
+	CleanExit bool            `json:"cleanExit,omitempty"`
 }
 
 // System implements the Boot trait for this sc-bos process.
@@ -79,8 +81,12 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 			lastReason = "unexpected process exit"
 		} else {
 			lastReason = st.Reason
-			if st.Actor != "" {
-				lastActor = &actorpb.Actor{DisplayName: st.Actor}
+			if len(st.Actor) > 0 {
+				lastActor = &actorpb.Actor{}
+				if err := protojson.Unmarshal(st.Actor, lastActor); err != nil {
+					s.logger.Warn("failed to unmarshal persisted actor", zap.Error(err))
+					lastActor = nil
+				}
 			}
 		}
 	}
@@ -124,16 +130,24 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 // onReboot is called by the ModelServer when a Reboot RPC is received.
 // It records the event then schedules a clean process exit.
 func (s *System) onReboot(_ context.Context, req *proto.RebootRequest) error {
-	actorName := req.GetActor().GetDisplayName()
+	st := rebootState{Reason: req.Reason, CleanExit: true}
+	if req.Actor != nil {
+		actorJSON, err := protojson.Marshal(req.Actor)
+		if err != nil {
+			s.logger.Warn("failed to marshal reboot actor", zap.Error(err))
+		} else {
+			st.Actor = actorJSON
+		}
+	}
 
 	// Persist reason and actor so they survive the restart.
-	if err := s.writeStateFile(rebootState{Reason: req.Reason, Actor: actorName, CleanExit: true}); err != nil {
+	if err := s.writeStateFile(st); err != nil {
 		s.logger.Warn("failed to persist reboot state", zap.Error(err))
 	}
 
 	s.logger.Info("reboot requested",
 		zap.String("reason", req.Reason),
-		zap.String("actor", actorName),
+		zap.String("actor", req.GetActor().GetDisplayName()),
 	)
 
 	go func() {
