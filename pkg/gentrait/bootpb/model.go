@@ -23,8 +23,8 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) GetBootState(opts ...resource.ReadOption) *proto.BootState {
-	return m.bootState.Get(opts...).(*proto.BootState)
+func (m *Model) GetBootState(opts ...resource.ReadOption) (*proto.BootState, error) {
+	return m.bootState.Get(opts...).(*proto.BootState), nil
 }
 
 func (m *Model) UpdateBootState(value *proto.BootState, opts ...resource.WriteOption) (*proto.BootState, error) {
