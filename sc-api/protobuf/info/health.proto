@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package smartcore.info;
+
+option csharp_namespace = "Smartcore.Info";
+option go_package = "github.com/smart-core-os/sc-api/go/info";
+option java_multiple_files = true;
+option java_outer_classname = "HealthProto";
+option java_package = "dev.smartcore.info";
+option php_namespace = "Smartcore\\Info";
+
+import "google/protobuf/timestamp.proto";
+import "types/connection.proto";
+
+// Describe the health of a device.
+service Health {
+  rpc GetHealthState (GetHealthStateRequest) returns (HealthState) {
+  }
+
+  rpc PullHealthStates (PullHealthStatesRequest) returns (stream PullHealthStatesResponse) {
+  }
+}
+
+message HealthState {
+  // Health of the connection to the physical device
+  ConnectionHealth connection = 1;
+  // Health of communication with the device
+  CommHealth comm = 2;
+}
+
+// Describes the health of a connection
+message ConnectionHealth {
+  // are we currently connected
+  smartcore.types.Connectivity status = 1;
+  // When was the last time a successful connection was established
+  google.protobuf.Timestamp connect_time = 2;
+  // When was the last time a connection was closed/ended
+  google.protobuf.Timestamp disconnect_time = 3;
+}
+
+// Describes the health of communication.
+message CommHealth {
+  smartcore.types.CommStatus status = 1;
+  // The most recent time the status changed to COMM_FAILURE
+  google.protobuf.Timestamp failure_time = 2;
+  // The most recent time the status changed to COMM_SUCCESS
+  google.protobuf.Timestamp success_time = 3;
+}
+
+message GetHealthStateRequest {
+  // Name of the device to query the health state for
+  string name = 1;
+}
+
+message PullHealthStatesRequest {
+  // Name of the device to subscribe to the health state for
+  string name = 1;
+}
+
+message PullHealthStatesResponse {
+  repeated HealthStateChange changes = 1;
+}
+
+message HealthStateChange {
+  // The name of the device that is the source of the change
+  string name = 1;
+  // When the change was applied
+  google.protobuf.Timestamp change_time = 2;
+  // The new state for the change
+  HealthState health = 3;
+}

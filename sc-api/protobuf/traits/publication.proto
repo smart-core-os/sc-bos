@@ -1,0 +1,270 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "PublicationProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/change.proto";
+
+// The PublicationApi describes the capabilities of a device to manage and publish content.
+// This could be used by a central device to publish configuration updates for other devices to receive.
+// The primary resource of this trait is a collection of Publications.
+// Publication comprises of some binary data and metadata surrounding the versioning and publication of that data.
+service PublicationApi {
+  // Create a new publication.
+  // The returned Publication will include an id unique for this new publication within the named device.
+  // Note that if you want to create a new version for an existing publication, use UpdatePublication.
+  rpc CreatePublication(CreatePublicationRequest) returns (Publication);
+  // Get the contents and metadata for a publication identified by id.
+  // If version is not provided, this returns the newest version.
+  rpc GetPublication(GetPublicationRequest) returns (Publication);
+  // Update a publication by id.
+  // The updated Publication will have a new version, publish time, and reset receipt properties.
+  // If the request has a version then the device will compare it with its known version and fail to update if
+  // they differ enabling multiple concurrent uses of this API.
+  rpc UpdatePublication(UpdatePublicationRequest) returns (Publication);
+  // Delete a publication by id.
+  // If the request has a version then the device will compare it with its known version and fail to delete if
+  // they differ enabling multiple concurrent uses of this API.
+  rpc DeletePublication(DeletePublicationRequest) returns (Publication);
+  // Subscribe to changes for a single publication.
+  // The stream is closed if the publication is deleted.
+  rpc PullPublication(PullPublicationRequest) returns (stream PullPublicationResponse);
+
+  // List all publications available on the device.
+  // The version returned for each publication will be the latest.
+  rpc ListPublications(ListPublicationsRequest) returns (ListPublicationsResponse);
+  // Subscribe to changes in publications on the device.
+  rpc PullPublications(PullPublicationsRequest) returns (stream PullPublicationsResponse);
+
+  // Acknowledge the receipt of a publication.
+  // This API should only be called when the audience for a publication has received that publication.
+  // Typically the audience will call this method itself after a get or pull publication method returns a new version.
+  rpc AcknowledgePublication(AcknowledgePublicationRequest) returns (Publication);
+
+  // todo: methods for listing publication history, reverting to a previous version, etc
+}
+
+// todo: service PublicationInfo
+
+// Publication describes some data that can be published.
+// While the content of the data is undefined, the metadata about data is described.
+// A publication can be intended for a specific audience, either a device or some other concept.
+// The audience for a publication is able to acknowledge that publication, indicating they have received it.
+message Publication {
+  // An identifier for this publication.
+  // Will be unique within the context of the device managing the publications.
+  // The ID does not change between publication versions.
+  string id = 1;
+  // An opaque string used to distinguish between versions of the same publication.
+  // Output only.
+  string version = 2;
+  // The body of this publication.
+  // Can be any sequence of bytes from plain text, to binary content, to a serialised proto message.
+  // It can also be empty.
+  bytes body = 3;
+  // todo: decide on a limit for the size of data, or document that it doesn't need one
+
+  // Audience describes who a publication is targeting.
+  // A publication audience is typically used when one device is responsible for managing the state of another device,
+  // for example holding configuration data. In this case DeviceA creates device configuration for DeviceB, DeviceB is
+  // the audience for that configuration publication.
+  // When a publication has an audience, it is useful to know when that third-party has received the publication, this
+  // is modelled as a receipt.
+  message Audience {
+    // The name of the device that is the audience for the publication.
+    string name = 1;
+    // Receipt defines the possible acceptance states for downstream audiences of this publication.
+    enum Receipt {
+      RECEIPT_UNSPECIFIED = 0;
+      NO_SIGNAL = 1;
+      ACCEPTED = 2;
+      REJECTED = 3;
+    }
+    // An indication of whether the audience has received this publication.
+    Receipt receipt = 2;
+    // A reason for a rejection of the publication by the audience.
+    string receipt_rejected_reason = 3;
+    // A timestamp indicating when the audience acknowledged the publication.
+    // Output only.
+    // Populated using the servers time when AcknowledgePublication is called by the audience.
+    google.protobuf.Timestamp receipt_time = 4;
+  }
+
+  // An indication of who the publication is targeting.
+  // Optional.
+  // For example, if the publication represents configuration for a device, the audience would represent that device.
+  Audience audience = 4;
+
+  // The time this version of the publication was published.
+  // Output only.
+  google.protobuf.Timestamp publish_time = 5;
+
+  // An indication of format of the data in body.
+  // Optional.
+  // The use of a [Media Type](https://www.iana.org/assignments/media-types) is recommended, but any value recognised by
+  // both the server and client is acceptable.
+  string media_type = 6;
+}
+
+message CreatePublicationRequest {
+  // The name of the device
+  string name = 1;
+  // The publication data to seed
+  Publication publication = 2;
+}
+
+message GetPublicationRequest {
+  // The name of the device
+  string name = 1;
+  // The id of the publication to retrieve
+  string id = 2;
+  // Fields to fetch relative to the Publication type
+  google.protobuf.FieldMask read_mask = 3;
+  // The version to retrieve.
+  // Optional, if absent the latest version will be retrieved.
+  string version = 4;
+}
+
+message UpdatePublicationRequest {
+  // The name of the device
+  string name = 1;
+  // The publication to update.
+  Publication publication = 2;
+  // Fields to update relative to the Publication type
+  google.protobuf.FieldMask update_mask = 3;
+  // If present, the update will fail if the version on the server does not match this version.
+  // Populate with the latest known version on the client to avoid concurrent updates overriding each other
+  // transparently.
+  string version = 4;
+}
+
+message DeletePublicationRequest {
+  // The name of the device
+  string name = 1;
+  // The publication id.
+  string id = 2;
+  // If present, the delete will fail if the version on the server does not match this version.
+  // Populate with the latest known version on the client to avoid concurrent updates overriding each other
+  // transparently.
+  string version = 3;
+  // If set to true, and no publication with the given id exists, the request will succeed but no action will
+  // be taken.
+  bool allow_missing = 4;
+}
+
+message PullPublicationRequest {
+  // The name of the device
+  string name = 1;
+  // The id of the publication to retrieve
+  string id = 2;
+  // Fields to fetch relative to the Publication type
+  google.protobuf.FieldMask read_mask = 3;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 4;
+}
+
+message PullPublicationResponse {
+  // Changes since the last message.
+  repeated Change changes = 1;
+
+  message Change {
+    // Name of the device that issued the change.
+    string name = 1;
+    // When the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // The new value for the publication.
+    Publication publication = 3;
+  }
+}
+
+message ListPublicationsRequest {
+  // The name of the device
+  string name = 1;
+  // Fields to fetch relative to the Publication type
+  google.protobuf.FieldMask read_mask = 2;
+
+  // The maximum number of items to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 3;
+  // A page token, received from a previous `ListPublicationsResponse` call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 4;
+  // todo: enable filtering
+  // Filter allows for customisation of the items returned by this request.
+  // See https://google.aip.dev/160 for details.
+  // Individual devices should document if and how filter is supported by that device.
+  // string filter = 5;
+}
+message ListPublicationsResponse {
+  repeated Publication publications = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+  // If non-zero this is the total number of consumables.
+  // This may be an estimate.
+  int32 total_size = 3;
+}
+
+message PullPublicationsRequest {
+  // The name of the device
+  string name = 1;
+  // Fields to fetch relative to the Publication type
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+  // todo: enable filtering
+  // Filter allows for customisation of the items returned by this request.
+  // See https://google.aip.dev/160 for details.
+  // Individual devices should document if and how filter is supported by that device.
+  // string filter = 4;
+}
+message PullPublicationsResponse {
+  // The list of changes which have occurred
+  repeated Change changes = 1;
+
+  message Change {
+    // The name of the device that emitted this change
+    string name = 1;
+    // The type of change (e.g. ADD, UPDATE, etc...)
+    smartcore.types.ChangeType type = 2;
+    // The new value to use for ADD|UPDATE changes
+    Publication new_value = 3;
+    // The old value to use for UPDATE|REMOVE changes
+    Publication old_value = 4;
+    // When the change occurred
+    google.protobuf.Timestamp change_time = 5;
+  }
+}
+
+message AcknowledgePublicationRequest {
+  // The name of the device
+  string name = 1;
+  // The ID of the publication to acknowledge.
+  // Required.
+  string id = 2;
+  // The version of the publication to acknowledge.
+  // Required.
+  string version = 3;
+  // One of ACCEPTED or REJECTED.
+  // Optional, ACCEPTED is used if not present
+  Publication.Audience.Receipt receipt = 4;
+  // If receipt is REJECTED, supply a reason that may be shown to an operator to help troubleshoot issues.
+  string receipt_rejected_reason = 5;
+
+  // If true, acknowledging a publication more than once will not result in an error response status and the publication
+  // will not change.
+  bool allow_acknowledged = 6;
+}

@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package smartcore.types;
+
+option csharp_namespace = "Smartcore.Types";
+option go_package = "github.com/smart-core-os/sc-api/go/types";
+option java_multiple_files = true;
+option java_outer_classname = "ConnectionProto";
+option java_package = "dev.smartcore.types";
+
+// Defines the connection state between two entities. This could be a TCP network connection or a HDMI connection.
+// In cases where a connection is possible but the state of the connection can never be determined directly use
+// NOT_APPLICABLE, for example a simple io connection has no concept of 'alive'.
+//
+// The state of DISCONNECTED is not automatically an indication if issues in a system. A device may decide to disconnect
+// to save resources.
+enum Connectivity {
+  // The connection state has not been provided.
+  CONNECTIVITY_UNSPECIFIED = 0;
+  // The concept of a connection makes no sense for this device
+  NOT_APPLICABLE = 1;
+  // There is no active connection
+  DISCONNECTED = 2;
+  // There is an open connection to the device
+  CONNECTED = 3;
+}
+
+// Describes the state of communication between two entities. the CommStatus typically represents the application layer
+// rather than any transport layer. For example TCP messages may be sent and ACKs received for them but if the
+// application protocol response are never received then the CommStatus should not be COMM_SUCCESS.
+enum CommStatus {
+  // the status of the line is unknown or unknowable
+  COMM_STATUS_UNSPECIFIED = 0;
+  // The last time we attempted communication across it was successful.
+  COMM_SUCCESS = 1;
+  // Communication with the device is failing
+  COMM_FAILURE = 2;
+}

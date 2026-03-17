@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "EnterLeaveSensorProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/image.proto";
+
+// EnterLeaveSensor applies to devices that can track objects entering or leaving.
+// It could apply to footfall counters, turn styles, or car park entry barriers.
+service EnterLeaveSensorApi {
+  // Subscribe to new enter or leave events.
+  rpc PullEnterLeaveEvents(PullEnterLeaveEventsRequest) returns (stream PullEnterLeaveEventsResponse);
+  // Get information about the enter leave state.
+  // The response will not contain a direction or occupant, but may include totals.
+  rpc GetEnterLeaveEvent(GetEnterLeaveEventRequest) returns (EnterLeaveEvent);
+  // Reset the enter and leave totals.
+  rpc ResetEnterLeaveTotals(ResetEnterLeaveTotalsRequest) returns (ResetEnterLeaveTotalsResponse);
+}
+
+service EnterLeaveSensorInfo {
+  // todo: define EnterLeaveSensorInfo
+}
+
+// EnterLeaveEvent describes an enter or leave event, and optionally the entity that entered or left.
+message EnterLeaveEvent {
+  // Possible directions.
+  enum Direction {
+    DIRECTION_UNSPECIFIED = 0;
+    // Something entered.
+    ENTER = 1;
+    // Something left.
+    LEAVE = 2;
+  }
+  // Direction describes in which direction movement was detected.
+  Direction direction = 1;
+
+  // An Occupant is some entity that triggers the enter or leave event.
+  // It could be an object, like a car, or a person or animal.
+  message Occupant {
+    // A unique name for this occupant as measured by the device.
+    // Name allows correlation between enter and leave events.
+    string name = 1;
+
+    // An official title for this occupant.
+    string title = 10;
+    // A recognisable display name for this occupant.
+    string display_name = 11;
+    // A picture of the occupant.
+    smartcore.types.Image picture = 12;
+    // A url that resolves to more information on this occupant.
+    string url = 13;
+    // An email address for the occupant.
+    string email = 14;
+
+    // IDs holds external occupant ids.
+    // For example this might hold an id representing a person in an access control system.
+    // The map key should uniquely represent the domain for the id, for example "my-access-system/user-id", the use of uris is not
+    // required, values should be the id of this consumable in that domain, for example "sma81r6t1c5o3r58e1-3r8u16l1es".
+    map<string, string> ids = 100;
+    // Additional properties associated with the occupant.
+    // Typically displayed to a user to help them to distinguish between similar occupants.
+    map<string, string> more = 101;
+  }
+  // Occupant describes the entity either entering or leaving.
+  // Optional.
+  Occupant occupant = 2;
+
+  // Enter total, if present, indicates how many ENTER events have been recognised by the device.
+  optional int32 enter_total = 3;
+  // Leave total, if present, indicates how many LEAVE events have been recognised by the device.
+  optional int32 leave_total = 4;
+}
+
+message PullEnterLeaveEventsRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the EnterLeaveEvent type
+  google.protobuf.FieldMask read_mask = 2;
+  // If true, only updates to the state will be returned.
+  // The first event sent when false will be equivalent to GetEnterLeaveEvent, direction will be unspecified.
+  bool updates_only = 3;
+
+  // todo: enable filtering
+  // Filter allows for customisation of the items returned by this request.
+  // See https://google.aip.dev/160 for details.
+  // Individual devices should document if and how filter is supported by that device.
+  // string filter = 4;
+}
+message PullEnterLeaveEventsResponse {
+  // The list of changes
+  repeated Change changes = 1;
+
+  // A change, i.e. a new event, has been recorded.
+  message Change {
+    // name for the device that issued the change
+    string name = 1;
+    // when the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // The new value for the state
+    EnterLeaveEvent enter_leave_event = 3;
+  }
+}
+
+message GetEnterLeaveEventRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the EnterLeaveEvent type
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message ResetEnterLeaveTotalsRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+}
+
+message ResetEnterLeaveTotalsResponse {}

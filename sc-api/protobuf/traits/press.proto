@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "PressProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// The state and events from an input that can be pressed, e.g. a momentary push-button input.
+// This trait facilitates reactions to basic user input.
+// Both the basic pressed state (pressed or not) as well as higher-level input events like "double click" are supported.
+service PressApi {
+  // Gets the current state of the input.
+  // Contain the most recent gesture, so clients using polling can still detect and respond to gestures.
+  // However, to reduce latency, PullPressedState is recommended for this use case.
+  rpc GetPressedState(GetPressedStateRequest) returns (PressedState);
+  // Fetches changes to the pressed state and gestures, and optionally the initial state.
+  rpc PullPressedState(PullPressedStateRequest) returns (stream PullPressedStateResponse);
+
+  // Updates the input state according to the write mask.
+  // Real (physical) inputs are not expected to implement this method - it is intended for virtual or mock inputs
+  rpc UpdatePressedState(UpdatePressedStateRequest) returns (PressedState);
+}
+
+message PressedState {
+  // Instantaneous pressed state.
+  enum Press {
+    PRESS_UNSPECIFIED = 0;
+    // The input is not pressed.
+    UNPRESSED = 1;
+    // The input is being pressed.
+    PRESSED = 2;
+  }
+
+  // A representation of user intent, deduced from a pattern of presses.
+  // The way that the device converts presses into gestures is implementation-defined.
+  // There may be a delay between the presses and the registration of a gesture.
+  message Gesture {
+    enum Kind {
+      KIND_UNSPECIFIED = 0;
+      // One or more short press-and-release actions.
+      // Presses in short succession may be fused into double-clicks, triple-clicks etc. - in this case, the number
+      // of fused clicks is stored in the count field.
+      // When clicks are fused in this way, the gesture will not appear at all until the final click has finished -
+      // it's not possible for a single gesture to be first reported as a single click, and then modified to a double click.
+      CLICK = 1;
+      // The input is kept in the pressed state for an extended period.
+      // The input may support repeat events, in which case the count will increment for each repeat event, keeping id
+      // the same because it's part of the same gesture.
+      // For HOLD gestures, the end_time is not set until the input has been released, allowing the client to determine
+      // when the gesture has ended.
+      HOLD = 2;
+    }
+
+    // Opaque identifier changes each time a new gesture begins.
+    // The gesture will remain in the PressedState even when the client has already seen it; the client can use the id
+    // to detect when a new gesture has begun.
+    string id = 1;
+    Kind kind = 2;
+    // A counter for sub-events that occur within a single gesture. See the Kind for details of meaning.
+    int32 count = 3;
+    // The time when the gesture was first recognised.
+    google.protobuf.Timestamp start_time = 4;
+    // The time when the gesture was recognised as completed. For HOLD gestures, this remains unset until the input
+    // is released.
+    google.protobuf.Timestamp end_time = 5;
+  }
+
+  Press state = 1;
+  // The time that state changed to its present value.
+  google.protobuf.Timestamp state_change_time = 2;
+
+  // The gesture that is currently in progress, or finished most recently.
+  // May be absent, if there is no gesture recorded for this input.
+  Gesture most_recent_gesture = 3;
+}
+
+message GetPressedStateRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullPressedStateRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  // By default, PullPressedState sends the initial PressedState when the stream opens, followed by changes.
+  // Setting updates_only true will disable this behaviour, sending only when the PressedState changes.
+  bool updates_only = 3;
+}
+message PullPressedStateResponse {
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    PressedState pressed_state = 3;
+  }
+
+  repeated Change changes = 1;
+}
+
+message UpdatePressedStateRequest {
+  string name = 1;
+  google.protobuf.FieldMask update_mask = 2;
+  PressedState pressed_state = 3;
+}

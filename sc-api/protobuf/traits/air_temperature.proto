@@ -1,0 +1,156 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "AirTemperatureProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/info.proto";
+import "types/unit.proto";
+
+// Device trait allowing query and control of the air temperature for a space. Like a thermostat and associated HVAC
+// system.
+service AirTemperatureApi {
+  // Get the current state of the device
+  rpc GetAirTemperature (GetAirTemperatureRequest) returns (AirTemperature);
+
+  // Update the target state for the device. the returned state may not be complete but will indicate at least the
+  // current values for any set fields as part of the request.
+  rpc UpdateAirTemperature (UpdateAirTemperatureRequest) returns (AirTemperature);
+
+  // Request notification of change to the device state. The messages in the response stream may not be complete
+  // but will indicate the changes as they occur. They should be merged with the full state as fetched by the
+  // GetAirTemperature method.
+  rpc PullAirTemperature (PullAirTemperatureRequest) returns (stream PullAirTemperatureResponse);
+}
+
+// Describes the capabilities of a specific named device with respect to this trait.
+service AirTemperatureInfo {
+  // Get information about how a named device implements AirTemperature features
+  rpc DescribeAirTemperature (DescribeAirTemperatureRequest) returns (AirTemperatureSupport);
+}
+
+// All the properties of the device
+message AirTemperature {
+  // The current mode for the device
+  Mode mode = 1;
+  oneof temperature_goal {
+    // A target temperature for the device
+    smartcore.types.Temperature temperature_set_point = 2;
+    // Write-only. Set the target temperature to a value relative to the current value.
+    smartcore.types.Temperature temperature_set_point_delta = 3;
+    // A target range for the device. Only supported when in HEAT_COOL mode
+    TemperatureRange temperature_range = 4;
+  }
+  // Optional, read-only. The ambient temperature as read by the device
+  smartcore.types.Temperature ambient_temperature = 5;
+  // Optional, read-only. The ambient relative humidity percentage, as read by the device
+  optional float ambient_humidity = 6;
+  // Optional, read-only. The dew-point as read by the device
+  smartcore.types.Temperature dew_point = 7;
+
+
+  // Supported modes for a device. Some of these values are used as descriptive attributes, some are used for control
+  enum Mode {
+    // The mode is unknown during a query. If used during a write then no change will be made, if part of a
+    // read then the mode is unknown. This makes no sense as part of an attribute.
+    MODE_UNSPECIFIED = 0;
+    // Write-only. If the device is OFF restore it to it's previous state
+    ON = 1;
+    // Attr, read, write. The device supports, is, or should be disabled
+    OFF = 2;
+    // Attr, read, write. The device supports, is, or should be heating
+    HEAT = 3;
+    // Attr, read, write. The device supports, is, or should be cooling
+    COOL = 4;
+    // Attr, read, write. The device supports, is, or should be maintaining heating/cooling to target a specific set
+    // point (and/or min + max)
+    HEAT_COOL = 5;
+    // Attr. The device supports automatic control of set points and/or schedules based on some other means (AI for
+    // example)
+    AUTO = 6;
+    // Attr, read, write. The device supports, is, or should be able to use only the fan without heating/cooling elements.
+    FAN_ONLY = 7;
+    // Attr, read, write. The device supports, is, or should be in an energy saving "eco" mode
+    ECO = 8;
+    // Attr, read, write. The device supports, is, or should be in an air purifying mode
+    PURIFIER = 9;
+    // Attr, read, write. The device supports, is, or should be in an air drying mode
+    DRY = 10;
+    // Attr, read, write. The device supports, is, or should be in locked mode (i.e. not user-editable)
+    LOCKED = 11;
+  }
+}
+
+// A setting for devices that target a temperature between a range.
+message TemperatureRange {
+  // Required. The low threshold for the range
+  smartcore.types.Temperature low = 1;
+  // Required. The high threshold for the range
+  smartcore.types.Temperature high = 2;
+  // Optional. An ideal value for cases where a device supports three set points
+  smartcore.types.Temperature ideal = 3;
+}
+
+// AirTemperatureSupport describes the capabilities of devices implementing this trait
+message AirTemperatureSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.types.ResourceSupport resource_support = 1;
+  // How the device thinks, all communications will be in celsius but the device's native unit is this.
+  smartcore.types.TemperatureUnit native_unit = 2;
+  // The list of modes a device supports.
+  repeated AirTemperature.Mode supported_modes = 3;
+  // The minimum difference between the low and high temperatures when set using a range. 0 means unset, default to 2.
+  double min_range_celsius = 4;
+}
+
+// Request message for fetching device state
+message GetAirTemperatureRequest {
+  string name = 1;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+// Request message for updating the device state
+message UpdateAirTemperatureRequest {
+  string name = 1;
+  AirTemperature state = 2;
+  // The fields relative to state we intend to update
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+// Request message for subscribing to changes in the devices state
+message PullAirTemperatureRequest {
+  string name = 1;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+}
+
+// Response message enclosing device state changes
+message PullAirTemperatureResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    // name for the device that issued the change
+    string name = 1;
+    // when the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // The new value for the device state. Only changed fields will be set, should be merged with GetState full
+    // response as required.
+    AirTemperature air_temperature = 3;
+  }
+}
+
+message DescribeAirTemperatureRequest {
+  // The name of the device
+  string name = 1;
+}

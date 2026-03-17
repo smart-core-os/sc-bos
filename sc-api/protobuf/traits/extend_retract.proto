@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package smartcore.traits;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-api/go/traits";
+option java_multiple_files = true;
+option java_outer_classname = "ExtendRetractProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/info.proto";
+import "types/tween.proto";
+
+// Applicable to devices that can be extended or retracted. Like a tv mount or adjustable desk
+service ExtendRetractApi {
+  // Set the target state for the device
+  rpc GetExtension (GetExtensionRequest) returns (Extension);
+
+  // Set the target state for the device
+  rpc UpdateExtension (UpdateExtensionRequest) returns (Extension);
+
+  // Stop the device if it is extending or retracting, returns the current known state after stopping.
+  rpc Stop (ExtendRetractStopRequest) returns (Extension);
+
+  // Create a preset for the extension. If no preset extension value is specified then use the current position
+  rpc CreateExtensionPreset (CreateExtensionPresetRequest) returns (ExtensionPreset);
+
+  // Get notified of changes to the OnOffState of a device
+  rpc PullExtensions (PullExtensionsRequest) returns (stream PullExtensionsResponse);
+}
+
+// Describes the capabilities of a specific named device with respect to this trait.
+service ExtendRetractInfo {
+  // Get information about how a named device implements Extension features
+  rpc DescribeExtension (DescribeExtensionRequest) returns (ExtensionSupport);
+}
+
+// How extended the device is.
+message Extension {
+  // 0 to 100, representing the extension percentage of the device
+  float extend_percent = 1;
+  // A named preset for recall to extend the device to a specific point
+  string extend_preset = 2;
+
+  // How the extension changes or should change over time. On write only duration should be set.
+  smartcore.types.Tween extend_tween = 3;
+  // if tweening between values, this is our end goal
+  float target_extend_percent = 4;
+  // if tweening between values, this is our end goal
+  string target_extend_preset = 5;
+}
+
+// Describes a preset that may be configured on the device
+message ExtensionPreset {
+  // Required. The name of the preset, to be used for recall.
+  string name = 1;
+  // Optional 0 to 100, extension percentage that the preset would extend the device by.
+  optional float extend_percent = 2;
+  // Can this preset be stored via the api
+  bool writable = 3;
+}
+
+// ExtensionSupport describes the capabilities of devices implementing this trait
+message ExtensionSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.types.ResourceSupport resource_support = 1;
+  // List of presets that this device supports. If empty then the device does not support presets
+  repeated ExtensionPreset presets = 2;
+  // 0 to 100, how precise is the control of the extension. A value of 0 (or 100) means only 0 or 100 extend_percent
+  // are valid.
+  float step = 3;
+  // Does the device support tweening between the current value and a target value
+  smartcore.types.TweenSupport tween_support = 4;
+  // If true, custom preset names can be used to store extension values. If false only writable presets can be updated.
+  bool supports_custom_presets = 5;
+}
+
+// request to fetch the current extension for the device
+message GetExtensionRequest {
+  // the name of the device to fetch the information for
+  string name = 1;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message UpdateExtensionRequest {
+  string name = 1;
+  Extension extension = 2;
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+// Request for the stop api
+message ExtendRetractStopRequest {
+  // the name of the device to stop
+  string name = 1;
+}
+
+// A request to store the current position under a preset name
+message CreateExtensionPresetRequest {
+  // The name of the device
+  string name = 1;
+  // The preset to store the position under
+  ExtensionPreset preset = 2;
+}
+
+// A request to monitor the state of a device
+message PullExtensionsRequest {
+  // name of the device to subscribe to
+  string name = 1;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+}
+// Response to a Pull request for extension changes
+message PullExtensionsResponse {
+  // Changes that have occurred since the last event
+  repeated Change changes = 1;
+
+  // A change to the state
+  message Change {
+    // name for the device that issued the change
+    string name = 1;
+    // when the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // the new state for the device
+    Extension extension = 3;
+  }
+}
+
+message DescribeExtensionRequest {
+  // The name of the device
+  string name = 1;
+}

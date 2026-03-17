@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package smartcore.types.time;
+
+option csharp_namespace = "Smartcore.Types.Time";
+option go_package = "github.com/smart-core-os/sc-api/go/types/time";
+option java_multiple_files = true;
+option java_outer_classname = "PeriodProto";
+option java_package = "dev.smartcore.types.time";
+
+import "google/protobuf/timestamp.proto";
+
+// Represents a time period from start_time to end_time
+// where start_time is inclusive, and end_time is exclusive
+// e.g. [start_time, end_time)
+message Period {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+}
