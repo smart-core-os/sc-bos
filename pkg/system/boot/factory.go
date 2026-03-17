@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -24,6 +23,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
+
 
 // bootTime is captured at package init to record the process start time as accurately as possible.
 var bootTime = time.Now()
@@ -54,9 +54,6 @@ type System struct {
 	announcer *node.ReplaceAnnouncer
 	logger    *zap.Logger
 	dataDir   string
-
-	mu      sync.Mutex
-	history []*proto.BootRecord
 }
 
 func NewSystem(services system.Services) *System {
@@ -127,16 +124,6 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 // onReboot is called by the ModelServer when a Reboot RPC is received.
 // It records the event then schedules a clean process exit.
 func (s *System) onReboot(_ context.Context, req *proto.RebootRequest) error {
-	event := &proto.BootRecord{
-		RebootTime: timestamppb.Now(),
-		Reason:     req.Reason,
-		Actor:      req.Actor,
-	}
-
-	s.mu.Lock()
-	s.history = append(s.history, event)
-	s.mu.Unlock()
-
 	actorName := req.GetActor().GetDisplayName()
 
 	// Persist reason and actor so they survive the restart.
