@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/history"
@@ -21,14 +21,14 @@ import (
 var schemaSql string
 
 func SetupDB(ctx context.Context, pool *pgxpool.Pool) error {
-	return pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	return pgx.BeginTxFunc(ctx, pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, schemaSql)
 		return err
 	})
 }
 
 func New(ctx context.Context, source, connStr string, opts ...Option) (*Store, error) {
-	pool, err := pgxpool.Connect(ctx, connStr)
+	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		return nil, fmt.Errorf("connect %w", err)
 	}
