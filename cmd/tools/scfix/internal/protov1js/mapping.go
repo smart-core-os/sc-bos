@@ -14,6 +14,8 @@ var versionedJSPathPattern = regexp.MustCompile(`^(.+/v\d+/.+)_pb\.js$`)
 // buildJSImportMapping returns a mapping from old flat import paths to new versioned paths.
 // For example: "alerts_pb" -> "smartcore/bos/alerts/v1/alerts_pb".
 // Only versioned _pb.js files (matching /v\d+/) are included.
+// A second pass adds mappings for trait-prefixed imports, e.g.:
+// "traits/enter_leave_sensor_pb" -> "smartcore/bos/enterleavesensor/v1/enter_leave_sensor_pb".
 func buildJSImportMapping(fsys fs.FS) (map[string]string, error) {
 	mapping := make(map[string]string)
 
@@ -33,6 +35,44 @@ func buildJSImportMapping(fsys fs.FS) (map[string]string, error) {
 		newImport := strings.TrimSuffix(relPath, ".js")
 		oldImport := path.Base(newImport)
 
+		if oldImport != newImport {
+			mapping[oldImport] = newImport
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Second pass: add mappings for trait-prefixed paths (e.g. "traits/enter_leave_sensor_pb").
+	// These appear in node_modules under a "traits/" subdirectory and need remapping to the
+	// versioned path already recorded in the first pass.
+	err = fs.WalkDir(fsys, ".", func(relPath string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() || !strings.HasSuffix(relPath, "_pb.js") {
+			return nil
+		}
+
+		// Only process non-versioned files with a path prefix (the traits/ subdirectory).
+		if versionedJSPathPattern.MatchString(relPath) {
+			return nil
+		}
+		if !strings.Contains(relPath, "/") {
+			return nil
+		}
+
+		basename := path.Base(strings.TrimSuffix(relPath, ".js")) // e.g. "enter_leave_sensor_pb"
+		newImport, exists := mapping[basename]
+		if !exists {
+			return nil
+		}
+
+		oldImport := strings.TrimSuffix(relPath, ".js") // e.g. "traits/enter_leave_sensor_pb"
 		if oldImport != newImport {
 			mapping[oldImport] = newImport
 		}

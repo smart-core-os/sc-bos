@@ -69,146 +69,50 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 		return 0, err
 	}
 
-	// Check if file imports pkg/gen from sc-bos
-	// Note: The gen package is always from sc-bos, regardless of which repo we're running against
-	hasGenImport := false
 	bosImportPath := func(paths ...string) string {
 		return "github.com/smart-core-os/sc-bos/" + path.Join(paths...)
 	}
-	genImportPath := bosImportPath("pkg/gen")
+
+	// Both pkg/gen and sc-api/go/traits map to the same pkg/proto/*pb destinations,
+	// so both use the same inferTraitPackage lookup once typeToTraitMap is populated.
+	sourcePackages := []struct {
+		alias      string
+		importPath string
+	}{
+		{"gen", bosImportPath("pkg/gen")},
+		{"traits", bosImportPath("sc-api/go/traits")},
+	}
+
+	presentPackages := make(map[string]bool)
 	for _, imp := range node.Imports {
-		if strings.Trim(imp.Path.Value, `"`) == genImportPath {
-			hasGenImport = true
-			break
-		}
-	}
-
-	if !hasGenImport {
-		return 0, nil
-	}
-
-	// Analyze the file to determine which types from pkg/gen are used
-	usedTypes := findUsedGenTypes(node)
-	if len(usedTypes) == 0 {
-		return 0, nil
-	}
-
-	// Determine which trait packages are needed and build type->package mapping
-	typeToPackageName := make(map[string]string) // maps old symbol to new package name (for code references)
-	typeToImportPath := make(map[string]string)  // maps old symbol to import path
-	typeToNewSymbol := make(map[string]string)   // maps old symbol to new symbol name
-	var unknownTypes []string
-	for typeName := range usedTypes {
-		importPath, pkgName, newSymbol, ok := inferTraitPackage(typeName)
-		if ok {
-			typeToPackageName[typeName] = pkgName
-			typeToImportPath[typeName] = importPath
-			typeToNewSymbol[typeName] = newSymbol
-		} else {
-			unknownTypes = append(unknownTypes, typeName)
-		}
-	}
-
-	// Warn about types we can't transform
-	if len(unknownTypes) > 0 {
-		ctx.Info("! Warning: Cannot determine trait package for types in %s: %v", filepath.Base(filename), unknownTypes)
-	}
-
-	if len(typeToPackageName) == 0 {
-		// If we can't determine any packages, leave file unchanged
-		return 0, nil
-	}
-
-	// Collect unique packages needed (by package name for collision detection)
-	neededPackages := make(map[string]string) // package name -> import path
-	for typeName := range usedTypes {
-		if pkgName, ok := typeToPackageName[typeName]; ok {
-			importPath := typeToImportPath[typeName]
-			neededPackages[pkgName] = importPath
-		}
-	}
-
-	// Check for existing imports to detect collisions
-	existingImports := findExistingTraitImports(node)
-
-	// Determine if we need to use an alias for gen -> trait package references
-	// This typically happens when a file imports both pkg/gen and pkg/genproto.
-	// For example meterpb.Model and gen.MeterReading both would use "meterpb" package name.
-	packageToAlias := make(map[string]string)
-	for pkgName, importPath := range neededPackages {
-		expectedFullPath := bosImportPath("pkg/proto", importPath)
-		if existingPath, exists := existingImports[pkgName]; exists {
-			// Package name is already in use
-			if existingPath != expectedFullPath {
-				// It's imported from a different path - need an alias to avoid collision
-				// Use "gen_{pkgName}" format to avoid conflicts
-				packageToAlias[pkgName] = "gen_" + pkgName
-			}
-			// else: it's the exact same import, no alias needed, we'll skip adding it
-		}
-	}
-
-	modified := false
-	changes := 0
-
-	// Update all gen.Type references to pkgName.NewType (or gen_pkgName.NewType if aliased)
-	ast.Inspect(node, func(n ast.Node) bool {
-		selExpr, ok := n.(*ast.SelectorExpr)
-		if !ok {
-			return true
-		}
-
-		ident, ok := selExpr.X.(*ast.Ident)
-		if !ok || ident.Name != "gen" {
-			return true
-		}
-
-		// Look up which package and new symbol this type should use
-		typeName := selExpr.Sel.Name
-		if pkgName, ok := typeToPackageName[typeName]; ok {
-			newSymbol := typeToNewSymbol[typeName]
-
-			// Update the package identifier
-			if alias, hasAlias := packageToAlias[pkgName]; hasAlias {
-				ident.Name = alias
-			} else {
-				ident.Name = pkgName
-			}
-
-			// Update the selector to use the new symbol name
-			selExpr.Sel.Name = newSymbol
-
-			modified = true
-			changes++
-		}
-
-		return true
-	})
-
-	if !modified {
-		return 0, nil
-	}
-
-	// Update comments that reference gen.Type
-	for _, commentGroup := range node.Comments {
-		for _, comment := range commentGroup.List {
-			updated := updateCommentGenReferences(comment.Text, typeToPackageName, typeToNewSymbol, packageToAlias)
-			if updated != comment.Text {
-				comment.Text = updated
-				changes++
+		p := strings.Trim(imp.Path.Value, `"`)
+		for _, src := range sourcePackages {
+			if p == src.importPath {
+				presentPackages[src.importPath] = true
 			}
 		}
 	}
 
-	// Update imports: remove gen, add trait packages
-	astutil.DeleteImport(fset, node, genImportPath)
-	for pkgName, importPath := range neededPackages {
-		fullImportPath := bosImportPath("pkg/proto", importPath)
-		if alias, hasAlias := packageToAlias[pkgName]; hasAlias {
-			astutil.AddNamedImport(fset, node, alias, fullImportPath)
-		} else {
-			astutil.AddImport(fset, node, fullImportPath)
+	if len(presentPackages) == 0 {
+		return 0, nil
+	}
+
+	totalChanges := 0
+
+	for _, src := range sourcePackages {
+		if !presentPackages[src.importPath] {
+			continue
 		}
+		c, err := migratePackageRefs(ctx, fset, node, filename, src.alias, src.importPath,
+			bosImportPath)
+		if err != nil {
+			return totalChanges, err
+		}
+		totalChanges += c
+	}
+
+	if totalChanges == 0 {
+		return 0, nil
 	}
 
 	if !ctx.DryRun {
@@ -230,7 +134,195 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 		}
 	}
 
-	ctx.Verbose("  Modified %s (%d changes)", filepath.Base(filename), changes)
+	ctx.Verbose("  Modified %s (%d changes)", filepath.Base(filename), totalChanges)
+	return totalChanges, nil
+}
+
+// migratePackageRefs rewrites selector expressions of the form `pkgAlias.TypeName`
+// to the new per-trait packages via inferTraitPackage.
+// oldImportPath is removed; new per-trait imports are added.
+// Types whose destination package equals the file's own package are rewritten to
+// bare identifiers (no qualifier) and no self-import is added.
+func migratePackageRefs(
+	ctx *fixer.Context,
+	fset *token.FileSet,
+	node *ast.File,
+	filename string,
+	pkgAlias string,
+	oldImportPath string,
+	bosImportPath func(...string) string,
+) (int, error) {
+	// Find all types used via this package alias.
+	usedTypes := findUsedTypesByAlias(node, pkgAlias)
+	if len(usedTypes) == 0 {
+		return 0, nil
+	}
+
+	typeToPackageName := make(map[string]string)
+	typeToImportPath := make(map[string]string)
+	typeToNewSymbol := make(map[string]string)
+	var unknownTypes []string
+	for typeName := range usedTypes {
+		ip, pkg, sym, ok := inferTraitPackage(typeName)
+		if ok {
+			typeToPackageName[typeName] = pkg
+			typeToImportPath[typeName] = ip
+			typeToNewSymbol[typeName] = sym
+		} else {
+			unknownTypes = append(unknownTypes, typeName)
+		}
+	}
+
+	if len(unknownTypes) > 0 {
+		ctx.Info("! Warning: Cannot determine trait package for types in %s: %v", filepath.Base(filename), unknownTypes)
+	}
+
+	if len(typeToPackageName) == 0 {
+		return 0, nil
+	}
+
+	// Determine the file's own import path to detect self-imports.
+	ownImportPath, err := fileImportPath(ctx.RootDir, filename)
+	if err != nil {
+		// If we can't determine the own path, fall back to no self-import detection.
+		ownImportPath = ""
+	}
+
+	// Classify types: self-types live in the same package as the file being processed.
+	isSelfType := make(map[string]bool)
+	for typeName, ip := range typeToImportPath {
+		if ownImportPath != "" && bosImportPath("pkg/proto", ip) == ownImportPath {
+			isSelfType[typeName] = true
+		}
+	}
+
+	neededPackages := make(map[string]string) // pkg name -> import path
+	for typeName := range usedTypes {
+		if isSelfType[typeName] {
+			continue // self-types need no import
+		}
+		if pkgName, ok := typeToPackageName[typeName]; ok {
+			neededPackages[pkgName] = typeToImportPath[typeName]
+		}
+	}
+
+	existingImports := findExistingTraitImports(node)
+	packageToAlias := make(map[string]string)
+	for pkgName, ip := range neededPackages {
+		expectedFullPath := bosImportPath("pkg/proto", ip)
+		if existingPath, exists := existingImports[pkgName]; exists {
+			if existingPath != expectedFullPath {
+				packageToAlias[pkgName] = "gen_" + pkgName
+			}
+		}
+	}
+
+	modified := false
+	changes := 0
+
+	astutil.Apply(node, func(cursor *astutil.Cursor) bool {
+		selExpr, ok := cursor.Node().(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		ident, ok := selExpr.X.(*ast.Ident)
+		if !ok || ident.Name != pkgAlias {
+			return true
+		}
+
+		typeName := selExpr.Sel.Name
+		if isSelfType[typeName] {
+			// Replace pkgAlias.TypeName with just TypeName (bare identifier).
+			newSymbol := typeToNewSymbol[typeName]
+			selExpr.Sel.Name = newSymbol
+			cursor.Replace(selExpr.Sel)
+			modified = true
+			changes++
+		} else if pkgName, ok := typeToPackageName[typeName]; ok {
+			newSymbol := typeToNewSymbol[typeName]
+			if alias, hasAlias := packageToAlias[pkgName]; hasAlias {
+				ident.Name = alias
+			} else {
+				ident.Name = pkgName
+			}
+			selExpr.Sel.Name = newSymbol
+			modified = true
+			changes++
+		}
+		return true
+	}, nil)
+
+	if !modified {
+		return 0, nil
+	}
+
+	// Update comments that reference pkgAlias.Type
+	for _, commentGroup := range node.Comments {
+		for _, comment := range commentGroup.List {
+			updated := updateCommentGenReferences(comment.Text, typeToPackageName, typeToNewSymbol, packageToAlias)
+			if updated != comment.Text {
+				comment.Text = updated
+				changes++
+			}
+		}
+	}
+
+	// Update imports: remove old, add new per-trait imports.
+	astutil.DeleteImport(fset, node, oldImportPath)
+	for pkgName, ip := range neededPackages {
+		fullImportPath := bosImportPath("pkg/proto", ip)
+		if alias, hasAlias := packageToAlias[pkgName]; hasAlias {
+			astutil.AddNamedImport(fset, node, alias, fullImportPath)
+		} else {
+			astutil.AddImport(fset, node, fullImportPath)
+		}
+	}
 
 	return changes, nil
+}
+
+// findUsedTypesByAlias finds all type names used via a specific package alias
+// (e.g., "gen" or "traits") in selector expressions.
+func findUsedTypesByAlias(node *ast.File, pkgAlias string) map[string]bool {
+	types := make(map[string]bool)
+	ast.Inspect(node, func(n ast.Node) bool {
+		selExpr, ok := n.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		ident, ok := selExpr.X.(*ast.Ident)
+		if !ok || ident.Name != pkgAlias {
+			return true
+		}
+		types[selExpr.Sel.Name] = true
+		return true
+	})
+	return types
+}
+
+// fileImportPath returns the Go import path for the directory containing filename,
+// computed by reading the module name from go.mod in rootDir.
+func fileImportPath(rootDir, filename string) (string, error) {
+	goModBytes, err := os.ReadFile(filepath.Join(rootDir, "go.mod"))
+	if err != nil {
+		return "", fmt.Errorf("reading go.mod: %w", err)
+	}
+	var moduleName string
+	for _, line := range strings.Split(string(goModBytes), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			moduleName = strings.TrimPrefix(line, "module ")
+			moduleName = strings.TrimSpace(moduleName)
+			break
+		}
+	}
+	if moduleName == "" {
+		return "", fmt.Errorf("module directive not found in go.mod")
+	}
+	fileDir := filepath.Dir(filename)
+	relDir, err := filepath.Rel(rootDir, fileDir)
+	if err != nil {
+		return "", fmt.Errorf("computing relative path: %w", err)
+	}
+	return moduleName + "/" + filepath.ToSlash(relDir), nil
 }
