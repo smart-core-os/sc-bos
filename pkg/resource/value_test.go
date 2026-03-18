@@ -8,7 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 )
 
 func TestValue_Pull(t *testing.T) {
@@ -18,7 +18,7 @@ func TestValue_Pull(t *testing.T) {
 			return now
 		})
 
-		v := NewValue(WithInitialValue(&traits.OnOff{State: traits.OnOff_ON}), WithClock(clock))
+		v := NewValue(WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_ON}), WithClock(clock))
 
 		ctx, stop := context.WithCancel(context.Background())
 		t.Cleanup(stop)
@@ -28,7 +28,7 @@ func TestValue_Pull(t *testing.T) {
 		seed := waitForChan(t, changes, time.Second)
 		want := &ValueChange{
 			ChangeTime:    now,
-			Value:         &traits.OnOff{State: traits.OnOff_ON},
+			Value:         &onoffpb.OnOff{State: onoffpb.OnOff_ON},
 			SeedValue:     true,
 			LastSeedValue: true,
 		}
@@ -37,11 +37,11 @@ func TestValue_Pull(t *testing.T) {
 		}
 
 		// second value should be an update
-		v.Set(&traits.OnOff{State: traits.OnOff_OFF})
+		v.Set(&onoffpb.OnOff{State: onoffpb.OnOff_OFF})
 		next := waitForChan(t, changes, time.Second)
 		want = &ValueChange{
 			ChangeTime:    now,
-			Value:         &traits.OnOff{State: traits.OnOff_OFF},
+			Value:         &onoffpb.OnOff{State: onoffpb.OnOff_OFF},
 			SeedValue:     false,
 			LastSeedValue: false,
 		}
@@ -56,7 +56,7 @@ func TestValue_Pull(t *testing.T) {
 			return now
 		})
 
-		v := NewValue(WithInitialValue(&traits.OnOff{State: traits.OnOff_ON}), WithClock(clock))
+		v := NewValue(WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_ON}), WithClock(clock))
 
 		ctx, stop := context.WithCancel(context.Background())
 		t.Cleanup(stop)
@@ -66,11 +66,11 @@ func TestValue_Pull(t *testing.T) {
 		noEmitWithin(t, changes, 50*time.Millisecond)
 
 		// first value should be an update
-		v.Set(&traits.OnOff{State: traits.OnOff_OFF})
+		v.Set(&onoffpb.OnOff{State: onoffpb.OnOff_OFF})
 		change := waitForChan(t, changes, time.Second)
 		want := &ValueChange{
 			ChangeTime:    now,
-			Value:         &traits.OnOff{State: traits.OnOff_OFF},
+			Value:         &onoffpb.OnOff{State: onoffpb.OnOff_OFF},
 			SeedValue:     false,
 			LastSeedValue: false,
 		}
@@ -82,17 +82,17 @@ func TestValue_Pull(t *testing.T) {
 	t.Run("doesnt panic with no initial value", func(t *testing.T) {
 		val := NewValue()
 
-		res, err := val.Set(&traits.OnOff{State: traits.OnOff_OFF})
+		res, err := val.Set(&onoffpb.OnOff{State: onoffpb.OnOff_OFF})
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if diff := cmp.Diff(&traits.OnOff{State: traits.OnOff_OFF}, res, protocmp.Transform()); diff != "" {
+		if diff := cmp.Diff(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}, res, protocmp.Transform()); diff != "" {
 			t.Fatalf("Set response (-want,+got)\n%s", diff)
 		}
 
-		if diff := cmp.Diff(&traits.OnOff{State: traits.OnOff_OFF}, val.Get(), protocmp.Transform()); diff != "" {
+		if diff := cmp.Diff(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}, val.Get(), protocmp.Transform()); diff != "" {
 			t.Fatalf("Get response (-want,+got)\n%s", diff)
 		}
 	})

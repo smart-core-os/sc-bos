@@ -3,13 +3,11 @@
 package servicespb
 
 import (
-	"context"
-	"fmt"
-	"io"
-
-	"google.golang.org/grpc"
-
-	"github.com/smart-core-os/sc-bos/pkg/router"
+	context "context"
+	fmt "fmt"
+	router "github.com/smart-core-os/sc-bos/pkg/router"
+	grpc "google.golang.org/grpc"
+	io "io"
 )
 
 // ApiRouter is a ServicesApiServer that allows routing named requests to specific ServicesApiClient

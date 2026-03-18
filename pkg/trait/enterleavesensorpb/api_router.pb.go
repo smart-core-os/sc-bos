@@ -9,19 +9,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // ApiRouter is a traits.EnterLeaveSensorApiServer that allows routing named requests to specific traits.EnterLeaveSensorApiClient
 type ApiRouter struct {
-	traits.UnimplementedEnterLeaveSensorApiServer
+	enterleavesensorpb.UnimplementedEnterLeaveSensorApiServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.EnterLeaveSensorApiServer = (*ApiRouter)(nil)
+var _ enterleavesensorpb.EnterLeaveSensorApiServer = (*ApiRouter)(nil)
 
 func NewApiRouter(opts ...router.Option) *ApiRouter {
 	return &ApiRouter{
@@ -31,14 +31,14 @@ func NewApiRouter(opts ...router.Option) *ApiRouter {
 
 // WithEnterLeaveSensorApiClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithEnterLeaveSensorApiClientFactory(f func(name string) (traits.EnterLeaveSensorApiClient, error)) router.Option {
+func WithEnterLeaveSensorApiClientFactory(f func(name string) (enterleavesensorpb.EnterLeaveSensorApiClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *ApiRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterEnterLeaveSensorApiServer(server, r)
+	enterleavesensorpb.RegisterEnterLeaveSensorApiServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.EnterLeaveSensorApiClient.
@@ -50,27 +50,27 @@ func (r *ApiRouter) Add(name string, client any) any {
 }
 
 func (r *ApiRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.EnterLeaveSensorApiClient)
+	_, ok := client.(enterleavesensorpb.EnterLeaveSensorApiClient)
 	return ok
 }
 
-func (r *ApiRouter) AddEnterLeaveSensorApiClient(name string, client traits.EnterLeaveSensorApiClient) traits.EnterLeaveSensorApiClient {
+func (r *ApiRouter) AddEnterLeaveSensorApiClient(name string, client enterleavesensorpb.EnterLeaveSensorApiClient) enterleavesensorpb.EnterLeaveSensorApiClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.EnterLeaveSensorApiClient)
+	return res.(enterleavesensorpb.EnterLeaveSensorApiClient)
 }
 
-func (r *ApiRouter) RemoveEnterLeaveSensorApiClient(name string) traits.EnterLeaveSensorApiClient {
+func (r *ApiRouter) RemoveEnterLeaveSensorApiClient(name string) enterleavesensorpb.EnterLeaveSensorApiClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.EnterLeaveSensorApiClient)
+	return res.(enterleavesensorpb.EnterLeaveSensorApiClient)
 }
 
-func (r *ApiRouter) GetEnterLeaveSensorApiClient(name string) (traits.EnterLeaveSensorApiClient, error) {
+func (r *ApiRouter) GetEnterLeaveSensorApiClient(name string) (enterleavesensorpb.EnterLeaveSensorApiClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -78,10 +78,10 @@ func (r *ApiRouter) GetEnterLeaveSensorApiClient(name string) (traits.EnterLeave
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.EnterLeaveSensorApiClient), nil
+	return res.(enterleavesensorpb.EnterLeaveSensorApiClient), nil
 }
 
-func (r *ApiRouter) PullEnterLeaveEvents(request *traits.PullEnterLeaveEventsRequest, server traits.EnterLeaveSensorApi_PullEnterLeaveEventsServer) error {
+func (r *ApiRouter) PullEnterLeaveEvents(request *enterleavesensorpb.PullEnterLeaveEventsRequest, server enterleavesensorpb.EnterLeaveSensorApi_PullEnterLeaveEventsServer) error {
 	child, err := r.GetEnterLeaveSensorApiClient(request.Name)
 	if err != nil {
 		return err
@@ -111,7 +111,7 @@ func (r *ApiRouter) PullEnterLeaveEvents(request *traits.PullEnterLeaveEventsReq
 		// Impl note: we could improve throughput here by issuing the Recv and Send in different goroutines, but we're doing
 		// it synchronously until we have a need to change the behaviour
 
-		var msg *traits.PullEnterLeaveEventsResponse
+		var msg *enterleavesensorpb.PullEnterLeaveEventsResponse
 		msg, err = stream.Recv()
 		if err != nil {
 			break

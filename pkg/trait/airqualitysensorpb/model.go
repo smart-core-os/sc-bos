@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Model struct {
@@ -19,16 +19,16 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) UpdateAirQuality(airQuality *traits.AirQuality, opts ...resource.WriteOption) (*traits.AirQuality, error) {
+func (m *Model) UpdateAirQuality(airQuality *airqualitysensorpb.AirQuality, opts ...resource.WriteOption) (*airqualitysensorpb.AirQuality, error) {
 	res, err := m.airQuality.Set(airQuality, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*traits.AirQuality), nil
+	return res.(*airqualitysensorpb.AirQuality), nil
 }
 
-func (m *Model) GetAirQuality(opts ...resource.ReadOption) (*traits.AirQuality, error) {
-	return m.airQuality.Get(opts...).(*traits.AirQuality), nil
+func (m *Model) GetAirQuality(opts ...resource.ReadOption) (*airqualitysensorpb.AirQuality, error) {
+	return m.airQuality.Get(opts...).(*airqualitysensorpb.AirQuality), nil
 }
 
 func (m *Model) PullAirQuality(ctx context.Context, opts ...resource.ReadOption) <-chan PullAirQualityChange {
@@ -38,7 +38,7 @@ func (m *Model) PullAirQuality(ctx context.Context, opts ...resource.ReadOption)
 	go func() {
 		defer close(send)
 		for change := range recv {
-			value := change.Value.(*traits.AirQuality)
+			value := change.Value.(*airqualitysensorpb.AirQuality)
 			send <- PullAirQualityChange{
 				Value:      value,
 				ChangeTime: change.ChangeTime,
@@ -50,6 +50,6 @@ func (m *Model) PullAirQuality(ctx context.Context, opts ...resource.ReadOption)
 }
 
 type PullAirQualityChange struct {
-	Value      *traits.AirQuality
+	Value      *airqualitysensorpb.AirQuality
 	ChangeTime time.Time
 }

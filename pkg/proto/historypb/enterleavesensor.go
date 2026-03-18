@@ -9,7 +9,6 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type EnterLeaveSensorServer struct {
@@ -30,7 +29,7 @@ func (e *EnterLeaveSensorServer) Unwrap() any {
 }
 
 var enterLeaveEventPager = NewPageReader(func(r history.Record) (*enterleavesensorpb.EnterLeaveEventRecord, error) {
-	v := &traits.EnterLeaveEvent{}
+	v := &enterleavesensorpb.EnterLeaveEvent{}
 	err := proto.Unmarshal(r.Payload, v)
 	if err != nil {
 		return nil, err

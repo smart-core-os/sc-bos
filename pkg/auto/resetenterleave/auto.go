@@ -13,10 +13,10 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/resetenterleave/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 const AutoName = "resetenterleave"
@@ -44,7 +44,7 @@ func (a *Auto) applyConfig(ctx context.Context, cfg config.Root) error {
 		return nil
 	}
 
-	elClient := traits.NewEnterLeaveSensorApiClient(a.services.Node.ClientConn())
+	elClient := enterleavesensorpb.NewEnterLeaveSensorApiClient(a.services.Node.ClientConn())
 
 	sched := cfg.Schedule
 	if sched == nil {
@@ -79,10 +79,10 @@ func (a *Auto) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func resetTotals(ctx context.Context, client traits.EnterLeaveSensorApiClient, name string, logger *zap.Logger) {
+func resetTotals(ctx context.Context, client enterleavesensorpb.EnterLeaveSensorApiClient, name string, logger *zap.Logger) {
 	logger = logger.With(zap.String("name", name))
 	err := task.Run(ctx, func(ctx context.Context) (task.Next, error) {
-		_, err := client.ResetEnterLeaveTotals(ctx, &traits.ResetEnterLeaveTotalsRequest{
+		_, err := client.ResetEnterLeaveTotals(ctx, &enterleavesensorpb.ResetEnterLeaveTotalsRequest{
 			Name: name,
 		})
 		if status.Code(err) == codes.Unimplemented {

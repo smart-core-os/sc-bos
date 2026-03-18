@@ -6,11 +6,10 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type ModelServer struct {
-	traits.UnimplementedMetadataApiServer
+	UnimplementedMetadataApiServer
 
 	model *Model
 }
@@ -25,16 +24,16 @@ func (s *ModelServer) Unwrap() any {
 }
 
 func (s *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterMetadataApiServer(server, s)
+	RegisterMetadataApiServer(server, s)
 }
 
-func (s *ModelServer) GetMetadata(_ context.Context, request *traits.GetMetadataRequest) (*traits.Metadata, error) {
+func (s *ModelServer) GetMetadata(_ context.Context, request *GetMetadataRequest) (*Metadata, error) {
 	return s.model.GetMetadata(resource.WithReadMask(request.ReadMask))
 }
 
-func (s *ModelServer) PullMetadata(request *traits.PullMetadataRequest, server traits.MetadataApi_PullMetadataServer) error {
+func (s *ModelServer) PullMetadata(request *PullMetadataRequest, server MetadataApi_PullMetadataServer) error {
 	for change := range s.model.PullMetadata(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullMetadataResponse{Changes: []*traits.PullMetadataResponse_Change{
+		err := server.Send(&PullMetadataResponse{Changes: []*PullMetadataResponse_Change{
 			{Name: request.Name, ChangeTime: change.ChangeTime, Metadata: change.Metadata},
 		}})
 		if err != nil {

@@ -4,11 +4,10 @@ import (
 	"context"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type CollectionServer struct {
-	traits.UnimplementedMetadataApiServer
+	UnimplementedMetadataApiServer
 	model *Collection
 }
 
@@ -21,13 +20,13 @@ func (s *CollectionServer) Unwrap() any {
 	return s.model
 }
 
-func (s *CollectionServer) GetMetadata(_ context.Context, request *traits.GetMetadataRequest) (*traits.Metadata, error) {
+func (s *CollectionServer) GetMetadata(_ context.Context, request *GetMetadataRequest) (*Metadata, error) {
 	return s.model.GetMetadata(request.Name)
 }
 
-func (s *CollectionServer) PullMetadata(request *traits.PullMetadataRequest, server traits.MetadataApi_PullMetadataServer) error {
+func (s *CollectionServer) PullMetadata(request *PullMetadataRequest, server MetadataApi_PullMetadataServer) error {
 	for change := range s.model.PullMetadata(server.Context(), request.Name, resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullMetadataResponse{Changes: []*traits.PullMetadataResponse_Change{
+		err := server.Send(&PullMetadataResponse{Changes: []*PullMetadataResponse_Change{
 			{Name: request.Name, ChangeTime: change.ChangeTime, Metadata: change.Metadata},
 		}})
 		if err != nil {

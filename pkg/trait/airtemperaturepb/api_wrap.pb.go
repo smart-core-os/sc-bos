@@ -5,32 +5,32 @@ package airtemperaturepb
 import (
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // WrapApi	adapts a traits.AirTemperatureApiServer	and presents it as a traits.AirTemperatureApiClient
-func WrapApi(server traits.AirTemperatureApiServer) *ApiWrapper {
-	conn := wrap.ServerToClient(traits.AirTemperatureApi_ServiceDesc, server)
-	client := traits.NewAirTemperatureApiClient(conn)
+func WrapApi(server airtemperaturepb.AirTemperatureApiServer) *ApiWrapper {
+	conn := wrap.ServerToClient(airtemperaturepb.AirTemperatureApi_ServiceDesc, server)
+	client := airtemperaturepb.NewAirTemperatureApiClient(conn)
 	return &ApiWrapper{
 		AirTemperatureApiClient: client,
 		server:                  server,
 		conn:                    conn,
-		desc:                    traits.AirTemperatureApi_ServiceDesc,
+		desc:                    airtemperaturepb.AirTemperatureApi_ServiceDesc,
 	}
 }
 
 type ApiWrapper struct {
-	traits.AirTemperatureApiClient
+	airtemperaturepb.AirTemperatureApiClient
 
-	server traits.AirTemperatureApiServer
+	server airtemperaturepb.AirTemperatureApiServer
 	conn   grpc.ClientConnInterface
 	desc   grpc.ServiceDesc
 }
 
 // UnwrapServer returns the underlying server instance.
-func (w *ApiWrapper) UnwrapServer() traits.AirTemperatureApiServer {
+func (w *ApiWrapper) UnwrapServer() airtemperaturepb.AirTemperatureApiServer {
 	return w.server
 }
 

@@ -3,19 +3,20 @@ package segmentpb
 import (
 	"time"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 // Cut divides a segment in two along d.
 // Cutting an infinite segment results in the same infinite segment for both before and after.
 // If d is negative, `nil, segment` is returned.
-func Cut(d time.Duration, segment *traits.ElectricMode_Segment) (before, after *traits.ElectricMode_Segment, outside bool) {
+func Cut(d time.Duration, segment *electricpb.ElectricMode_Segment) (before, after *electricpb.ElectricMode_Segment, outside bool) {
 	if d <= 0 {
 		return nil, segment, d < 0
 	}
 	if segment.GetLength() == nil {
-		return &traits.ElectricMode_Segment{
+		return &electricpb.ElectricMode_Segment{
 			Magnitude: segment.GetMagnitude(),
 			Length:    durationpb.New(d),
 		}, segment, false
@@ -26,11 +27,11 @@ func Cut(d time.Duration, segment *traits.ElectricMode_Segment) (before, after *
 		return segment, nil, true
 	}
 
-	before = &traits.ElectricMode_Segment{
+	before = &electricpb.ElectricMode_Segment{
 		Magnitude: segment.GetMagnitude(),
 		Length:    durationpb.New(d),
 	}
-	after = &traits.ElectricMode_Segment{
+	after = &electricpb.ElectricMode_Segment{
 		Magnitude: segment.GetMagnitude(),
 		Length:    durationpb.New(l - d),
 	}
@@ -38,9 +39,9 @@ func Cut(d time.Duration, segment *traits.ElectricMode_Segment) (before, after *
 	// handle shapes
 	if segment.GetShape() != nil {
 		switch shape := segment.GetShape().(type) {
-		case *traits.ElectricMode_Segment_Fixed:
-			before.Shape = &traits.ElectricMode_Segment_Fixed{Fixed: shape.Fixed}
-			after.Shape = &traits.ElectricMode_Segment_Fixed{Fixed: shape.Fixed}
+		case *electricpb.ElectricMode_Segment_Fixed:
+			before.Shape = &electricpb.ElectricMode_Segment_Fixed{Fixed: shape.Fixed}
+			after.Shape = &electricpb.ElectricMode_Segment_Fixed{Fixed: shape.Fixed}
 		}
 	}
 

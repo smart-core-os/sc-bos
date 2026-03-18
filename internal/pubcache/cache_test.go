@@ -11,7 +11,6 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func TestCache_Pull(t *testing.T) {
@@ -19,7 +18,7 @@ func TestCache_Pull(t *testing.T) {
 	defer cancel()
 
 	id := "foo"
-	initial := &traits.Publication{
+	initial := &publicationpb.Publication{
 		Id:          id,
 		Version:     "1",
 		Body:        []byte(`{"hello": "world"}`),
@@ -43,7 +42,7 @@ func TestCache_Pull(t *testing.T) {
 	}
 
 	// change the publication in the model
-	updated := &traits.Publication{
+	updated := &publicationpb.Publication{
 		Id:          id,
 		Version:     "2",
 		Body:        []byte(`{"foo":"bar"}`),

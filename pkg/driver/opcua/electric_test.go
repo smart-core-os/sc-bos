@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 func TestElectric_GetDemand(t *testing.T) {
@@ -21,7 +21,7 @@ func TestElectric_GetDemand(t *testing.T) {
 		t.Fatalf("newElectric() error = %v", err)
 	}
 
-	demand, err := electric.GetDemand(t.Context(), &traits.GetDemandRequest{})
+	demand, err := electric.GetDemand(t.Context(), &electricpb.GetDemandRequest{})
 	if err != nil {
 		t.Errorf("GetDemand() error = %v", err)
 	}
@@ -127,7 +127,7 @@ func TestElectric_handleElectricEvent(t *testing.T) {
 			nodeId, _ := ua.ParseNodeID(tt.nodeId)
 			electric.handleEvent(t.Context(), nodeId, tt.value)
 
-			demand, _ := electric.GetDemand(t.Context(), &traits.GetDemandRequest{})
+			demand, _ := electric.GetDemand(t.Context(), &electricpb.GetDemandRequest{})
 
 			var actualValue float32
 			switch tt.checkField {

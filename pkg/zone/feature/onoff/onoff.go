@@ -11,7 +11,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/onoff/config"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -38,7 +37,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 	announce := f.announcer.Replace(ctx)
 	logger := f.logger
 
-	client := traits.NewOnOffApiClient(f.clients.ClientConn())
+	client := onoffpb.NewOnOffApiClient(f.clients.ClientConn())
 	announceGroup := func(name string, devices []string) {
 		if len(devices) == 0 {
 			return

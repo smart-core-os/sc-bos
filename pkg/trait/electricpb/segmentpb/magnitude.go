@@ -5,12 +5,12 @@ import (
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 // MaxMagnitude returns the largest segment magnitude of all non-zero length segments.
 // If segments is empty or contains only zero-length segments, returns 0.
-func MaxMagnitude(segments ...*traits.ElectricMode_Segment) (max float32) {
+func MaxMagnitude(segments ...*electricpb.ElectricMode_Segment) (max float32) {
 	i := Max(segments...)
 	if i < len(segments) {
 		return segments[i].Magnitude
@@ -20,7 +20,7 @@ func MaxMagnitude(segments ...*traits.ElectricMode_Segment) (max float32) {
 
 // Max returns the index of the segment with the largest magnitude of all non-zero length segments.
 // If segments is empty, or contains only zero length segments, len(segments) is returned.
-func Max(segments ...*traits.ElectricMode_Segment) (index int) {
+func Max(segments ...*electricpb.ElectricMode_Segment) (index int) {
 	var found bool
 	var max float32
 	for i, segment := range segments {
@@ -44,13 +44,13 @@ func Max(segments ...*traits.ElectricMode_Segment) (index int) {
 
 // MaxAfter returns the index of the segment with the largest magnitude of all non-zero length segments after d time.
 // If segments is empty, or contains only zero length segments, len(segments) is returned.
-func MaxAfter(d time.Duration, segments ...*traits.ElectricMode_Segment) (index int) {
+func MaxAfter(d time.Duration, segments ...*electricpb.ElectricMode_Segment) (index int) {
 	_, i := ActiveAt(d, segments...)
 	return Max(segments[i:]...) + i
 }
 
 // SumMagnitude sums the magnitude of all the given segments.
-func SumMagnitude(segments ...*traits.ElectricMode_Segment) (sum float32) {
+func SumMagnitude(segments ...*electricpb.ElectricMode_Segment) (sum float32) {
 	for _, segment := range segments {
 		sum += segment.Magnitude
 	}
@@ -59,7 +59,7 @@ func SumMagnitude(segments ...*traits.ElectricMode_Segment) (sum float32) {
 
 // MagnitudeAt returns the magnitude of the segment active at d.
 // If there is no segment at d, ok will be false.
-func MagnitudeAt(d time.Duration, segments ...*traits.ElectricMode_Segment) (level float32, ok bool) {
+func MagnitudeAt(d time.Duration, segments ...*electricpb.ElectricMode_Segment) (level float32, ok bool) {
 	if d < 0 {
 		return 0, false
 	}

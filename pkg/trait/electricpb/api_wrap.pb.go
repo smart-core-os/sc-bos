@@ -5,32 +5,32 @@ package electricpb
 import (
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // WrapApi	adapts a traits.ElectricApiServer	and presents it as a traits.ElectricApiClient
-func WrapApi(server traits.ElectricApiServer) *ApiWrapper {
-	conn := wrap.ServerToClient(traits.ElectricApi_ServiceDesc, server)
-	client := traits.NewElectricApiClient(conn)
+func WrapApi(server electricpb.ElectricApiServer) *ApiWrapper {
+	conn := wrap.ServerToClient(electricpb.ElectricApi_ServiceDesc, server)
+	client := electricpb.NewElectricApiClient(conn)
 	return &ApiWrapper{
 		ElectricApiClient: client,
 		server:            server,
 		conn:              conn,
-		desc:              traits.ElectricApi_ServiceDesc,
+		desc:              electricpb.ElectricApi_ServiceDesc,
 	}
 }
 
 type ApiWrapper struct {
-	traits.ElectricApiClient
+	electricpb.ElectricApiClient
 
-	server traits.ElectricApiServer
+	server electricpb.ElectricApiServer
 	conn   grpc.ClientConnInterface
 	desc   grpc.ServiceDesc
 }
 
 // UnwrapServer returns the underlying server instance.
-func (w *ApiWrapper) UnwrapServer() traits.ElectricApiServer {
+func (w *ApiWrapper) UnwrapServer() electricpb.ElectricApiServer {
 	return w.server
 }
 

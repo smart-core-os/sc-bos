@@ -4,20 +4,20 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/time/clock"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
 var DefaultModelOptions = []resource.Option{
-	WithInitialDemand(&traits.ElectricDemand{
+	WithInitialDemand(&electricpb.ElectricDemand{
 		Current: 0,
 		Voltage: &defaultInitialVoltage,
 		Rating:  13,
 	}),
-	WithInitialActiveMode(&traits.ElectricMode{}),
+	WithInitialActiveMode(&electricpb.ElectricMode{}),
 	WithDemandOption(resource.WithMessageEquivalence(cmp.Equal(cmp.FloatValueApprox(0, 0.01)))),
 	WithActiveModeOption(resource.WithNoDuplicates()),
 	WithModeOption(resource.WithNoDuplicates()),
@@ -54,12 +54,12 @@ func WithModeOption(opts ...resource.Option) resource.Option {
 }
 
 // WithInitialDemand returns an option that configures the model to initialise with the given demand.
-func WithInitialDemand(demand *traits.ElectricDemand) resource.Option {
+func WithInitialDemand(demand *electricpb.ElectricDemand) resource.Option {
 	return WithDemandOption(resource.WithInitialValue(demand))
 }
 
 // WithInitialActiveMode returns an option that configures the model to initialise with the given active mode.
-func WithInitialActiveMode(activeMode *traits.ElectricMode) resource.Option {
+func WithInitialActiveMode(activeMode *electricpb.ElectricMode) resource.Option {
 	return WithActiveModeOption(resource.WithInitialValue(activeMode))
 }
 
@@ -67,7 +67,7 @@ func WithInitialActiveMode(activeMode *traits.ElectricMode) resource.Option {
 // Can be used multiple times with modes being additive.
 // Creating a model with duplicate mode ids will panic.
 // Calling this function with an empty mode id property will panic.
-func WithInitialMode(mode ...*traits.ElectricMode) resource.Option {
+func WithInitialMode(mode ...*electricpb.ElectricMode) resource.Option {
 	opts := make([]resource.Option, len(mode))
 	for i, m := range mode {
 		if m.Id == "" {

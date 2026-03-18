@@ -11,8 +11,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/block"
 	"github.com/smart-core-os/sc-bos/pkg/block/mdblock"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 const (
@@ -45,9 +45,9 @@ type Location struct {
 }
 
 type Device struct {
-	ID       string           `json:"id,omitempty"`       // AirThings segment ID
-	Name     string           `json:"name,omitempty"`     // Smart Core name
-	Metadata *traits.Metadata `json:"metadata,omitempty"` // Announced metadata for this SC device
+	ID       string               `json:"id,omitempty"`       // AirThings segment ID
+	Name     string               `json:"name,omitempty"`     // Smart Core name
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"` // Announced metadata for this SC device
 	// Traits lists the trait names to announce for this device.
 	// Status is always announced.
 	// See traits.go for supported trait names.

@@ -1,13 +1,13 @@
 package airtemperaturepb
 
 import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
 var DefaultModelOptions = []resource.Option{
-	WithInitialAirTemperature(&traits.AirTemperature{}),
+	WithInitialAirTemperature(&airtemperaturepb.AirTemperature{}),
 }
 
 // ModelOption defined the base type for all options that apply to this traits model.
@@ -24,7 +24,7 @@ func WithAirTemperatureOption(opts ...resource.Option) resource.Option {
 }
 
 // WithInitialAirTemperature returns an option that configures the model to initialise with the given air temperature.
-func WithInitialAirTemperature(airTemperature *traits.AirTemperature) resource.Option {
+func WithInitialAirTemperature(airTemperature *airtemperaturepb.AirTemperature) resource.Option {
 	return WithAirTemperatureOption(resource.WithInitialValue(airTemperature))
 }
 

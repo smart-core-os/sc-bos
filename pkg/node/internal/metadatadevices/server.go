@@ -7,14 +7,14 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Server implements the MetadataApi backed by a devicespb.Collection.
 type Server struct {
-	traits.UnimplementedMetadataApiServer
+	metadatapb.UnimplementedMetadataApiServer
 	devices Collection
 }
 
@@ -30,20 +30,20 @@ func NewServer(devices Collection) *Server {
 	}
 }
 
-func (s Server) GetMetadata(_ context.Context, request *traits.GetMetadataRequest) (*traits.Metadata, error) {
+func (s Server) GetMetadata(_ context.Context, request *metadatapb.GetMetadataRequest) (*metadatapb.Metadata, error) {
 	device, err := s.devices.GetDevice(request.Name)
 	if err != nil {
 		return nil, err
 	}
 	filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
-	return filter.FilterClone(device.Metadata).(*traits.Metadata), nil
+	return filter.FilterClone(device.Metadata).(*metadatapb.Metadata), nil
 }
 
-func (s Server) PullMetadata(request *traits.PullMetadataRequest, g grpc.ServerStreamingServer[traits.PullMetadataResponse]) error {
+func (s Server) PullMetadata(request *metadatapb.PullMetadataRequest, g grpc.ServerStreamingServer[metadatapb.PullMetadataResponse]) error {
 	filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 	for change := range s.devices.PullDevice(g.Context(), request.Name, resource.WithUpdatesOnly(request.UpdatesOnly)) {
 		mdChange := deviceChangeToProto(request.Name, change, filter)
-		err := g.Send(&traits.PullMetadataResponse{Changes: []*traits.PullMetadataResponse_Change{mdChange}})
+		err := g.Send(&metadatapb.PullMetadataResponse{Changes: []*metadatapb.PullMetadataResponse_Change{mdChange}})
 		if err != nil {
 			return err
 		}
@@ -51,15 +51,15 @@ func (s Server) PullMetadata(request *traits.PullMetadataRequest, g grpc.ServerS
 	return nil
 }
 
-func deviceChangeToProto(name string, c devicespb.DeviceChange, filter *masks.ResponseFilter) *traits.PullMetadataResponse_Change {
-	res := &traits.PullMetadataResponse_Change{
+func deviceChangeToProto(name string, c devicespb.DeviceChange, filter *masks.ResponseFilter) *metadatapb.PullMetadataResponse_Change {
+	res := &metadatapb.PullMetadataResponse_Change{
 		Name:       name,
 		ChangeTime: timestamppb.New(c.ChangeTime),
 	}
 	if c.Value.GetMetadata() == nil {
-		res.Metadata = &traits.Metadata{}
+		res.Metadata = &metadatapb.Metadata{}
 	} else {
-		res.Metadata = filter.FilterClone(c.Value.GetMetadata()).(*traits.Metadata)
+		res.Metadata = filter.FilterClone(c.Value.GetMetadata()).(*metadatapb.Metadata)
 	}
 	return res
 }

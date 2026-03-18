@@ -8,7 +8,7 @@ package devicespb
 
 import (
 	healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	metadatapb "github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	time "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -85,7 +85,7 @@ func (Device_Query_Condition_Matcher) EnumDescriptor() ([]byte, []int) {
 type Device struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Name     string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Metadata *traits.Metadata       `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata   `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	// A list of health checks associated with the device.
 	//
 	// Measured values, like bounds.current_value, will be omitted.
@@ -134,7 +134,7 @@ func (x *Device) GetName() string {
 	return ""
 }
 
-func (x *Device) GetMetadata() *traits.Metadata {
+func (x *Device) GetMetadata() *metadatapb.Metadata {
 	if x != nil {
 		return x.Metadata
 	}
@@ -1666,10 +1666,10 @@ var File_smartcore_bos_devices_v1_devices_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_devices_v1_devices_proto_rawDesc = "" +
 	"\n" +
-	"&smartcore/bos/devices/v1/devices.proto\x12\x18smartcore.bos.devices.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/health/v1/health.proto\x1a\x15traits/metadata.proto\x1a\x12types/change.proto\x1a\x17types/time/period.proto\"\x8b\r\n" +
+	"&smartcore/bos/devices/v1/devices.proto\x12\x18smartcore.bos.devices.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/health/v1/health.proto\x1a(smartcore/bos/metadata/v1/metadata.proto\x1a\x12types/change.proto\x1a\x17types/time/period.proto\"\x94\r\n" +
 	"\x06Device\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
-	"\bmetadata\x18\x02 \x01(\v2\x1a.smartcore.traits.MetadataR\bmetadata\x12I\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12?\n" +
+	"\bmetadata\x18\x02 \x01(\v2#.smartcore.bos.metadata.v1.MetadataR\bmetadata\x12I\n" +
 	"\rhealth_checks\x18\x03 \x03(\v2$.smartcore.bos.health.v1.HealthCheckR\fhealthChecks\x1a\xe9\v\n" +
 	"\x05Query\x12P\n" +
 	"\n" +
@@ -1822,7 +1822,7 @@ var file_smartcore_bos_devices_v1_devices_proto_goTypes = []any{
 	(*PullDevicesMetadataResponse_Change)(nil),        // 19: smartcore.bos.devices.v1.PullDevicesMetadataResponse.Change
 	(*GetDownloadDevicesUrlRequest_Table)(nil),        // 20: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table
 	(*GetDownloadDevicesUrlRequest_Table_Column)(nil), // 21: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table.Column
-	(*traits.Metadata)(nil),                           // 22: smartcore.traits.Metadata
+	(*metadatapb.Metadata)(nil),                       // 22: smartcore.bos.metadata.v1.Metadata
 	(*healthpb.HealthCheck)(nil),                      // 23: smartcore.bos.health.v1.HealthCheck
 	(*fieldmaskpb.FieldMask)(nil),                     // 24: google.protobuf.FieldMask
 	(*time.Period)(nil),                               // 25: smartcore.types.time.Period
@@ -1831,7 +1831,7 @@ var file_smartcore_bos_devices_v1_devices_proto_goTypes = []any{
 	(types.ChangeType)(0),                             // 28: smartcore.types.ChangeType
 }
 var file_smartcore_bos_devices_v1_devices_proto_depIdxs = []int32{
-	22, // 0: smartcore.bos.devices.v1.Device.metadata:type_name -> smartcore.traits.Metadata
+	22, // 0: smartcore.bos.devices.v1.Device.metadata:type_name -> smartcore.bos.metadata.v1.Metadata
 	23, // 1: smartcore.bos.devices.v1.Device.health_checks:type_name -> smartcore.bos.health.v1.HealthCheck
 	15, // 2: smartcore.bos.devices.v1.DevicesMetadata.field_counts:type_name -> smartcore.bos.devices.v1.DevicesMetadata.StringFieldCount
 	24, // 3: smartcore.bos.devices.v1.ListDevicesRequest.read_mask:type_name -> google.protobuf.FieldMask

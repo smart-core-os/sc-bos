@@ -8,8 +8,8 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/parentpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/client"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 var clientConfig client.Config
@@ -41,11 +41,11 @@ func run() error {
 	log.Printf("dialled")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	em := traits.NewParentApiClient(conn)
+	em := parentpb.NewParentApiClient(conn)
 
 	get := func(c context.Context, name string) error {
 		log.Printf("ListChildren %s", name)
-		res, err := em.ListChildren(ctx, &traits.ListChildrenRequest{Name: name})
+		res, err := em.ListChildren(ctx, &parentpb.ListChildrenRequest{Name: name})
 		if err != nil {
 			return err
 		}
@@ -57,7 +57,7 @@ func run() error {
 
 	pull := func(c context.Context, name string) error {
 		log.Printf("PullChildren %s", name)
-		stream, err := em.PullChildren(ctx, &traits.PullChildrenRequest{Name: name})
+		stream, err := em.PullChildren(ctx, &parentpb.PullChildrenRequest{Name: name})
 		if err != nil {
 			return err
 		}

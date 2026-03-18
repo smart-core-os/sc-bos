@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -36,13 +36,13 @@ const (
 // MemorySettingsApi allows a client to adjust the internal state of an in-memory electric device.
 // Use for configuring testing.
 type MemorySettingsApiClient interface {
-	UpdateDemand(ctx context.Context, in *UpdateDemandRequest, opts ...grpc.CallOption) (*traits.ElectricDemand, error)
+	UpdateDemand(ctx context.Context, in *UpdateDemandRequest, opts ...grpc.CallOption) (*electricpb.ElectricDemand, error)
 	// Create a new mode in the device.
 	// Do not specify the id, this will be provided by the server.
 	// This will not validate that exactly one normal mode exists,
 	// the ClearActiveMode method will choose the first normal mode found.
-	CreateMode(ctx context.Context, in *CreateModeRequest, opts ...grpc.CallOption) (*traits.ElectricMode, error)
-	UpdateMode(ctx context.Context, in *UpdateModeRequest, opts ...grpc.CallOption) (*traits.ElectricMode, error)
+	CreateMode(ctx context.Context, in *CreateModeRequest, opts ...grpc.CallOption) (*electricpb.ElectricMode, error)
+	UpdateMode(ctx context.Context, in *UpdateModeRequest, opts ...grpc.CallOption) (*electricpb.ElectricMode, error)
 	// Delete an existing mode.
 	// Returns NOT_FOUND if the mode, identified by id, is not found. See allow_missing.
 	DeleteMode(ctx context.Context, in *DeleteModeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -56,9 +56,9 @@ func NewMemorySettingsApiClient(cc grpc.ClientConnInterface) MemorySettingsApiCl
 	return &memorySettingsApiClient{cc}
 }
 
-func (c *memorySettingsApiClient) UpdateDemand(ctx context.Context, in *UpdateDemandRequest, opts ...grpc.CallOption) (*traits.ElectricDemand, error) {
+func (c *memorySettingsApiClient) UpdateDemand(ctx context.Context, in *UpdateDemandRequest, opts ...grpc.CallOption) (*electricpb.ElectricDemand, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(traits.ElectricDemand)
+	out := new(electricpb.ElectricDemand)
 	err := c.cc.Invoke(ctx, MemorySettingsApi_UpdateDemand_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -66,9 +66,9 @@ func (c *memorySettingsApiClient) UpdateDemand(ctx context.Context, in *UpdateDe
 	return out, nil
 }
 
-func (c *memorySettingsApiClient) CreateMode(ctx context.Context, in *CreateModeRequest, opts ...grpc.CallOption) (*traits.ElectricMode, error) {
+func (c *memorySettingsApiClient) CreateMode(ctx context.Context, in *CreateModeRequest, opts ...grpc.CallOption) (*electricpb.ElectricMode, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(traits.ElectricMode)
+	out := new(electricpb.ElectricMode)
 	err := c.cc.Invoke(ctx, MemorySettingsApi_CreateMode_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -76,9 +76,9 @@ func (c *memorySettingsApiClient) CreateMode(ctx context.Context, in *CreateMode
 	return out, nil
 }
 
-func (c *memorySettingsApiClient) UpdateMode(ctx context.Context, in *UpdateModeRequest, opts ...grpc.CallOption) (*traits.ElectricMode, error) {
+func (c *memorySettingsApiClient) UpdateMode(ctx context.Context, in *UpdateModeRequest, opts ...grpc.CallOption) (*electricpb.ElectricMode, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(traits.ElectricMode)
+	out := new(electricpb.ElectricMode)
 	err := c.cc.Invoke(ctx, MemorySettingsApi_UpdateMode_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -103,13 +103,13 @@ func (c *memorySettingsApiClient) DeleteMode(ctx context.Context, in *DeleteMode
 // MemorySettingsApi allows a client to adjust the internal state of an in-memory electric device.
 // Use for configuring testing.
 type MemorySettingsApiServer interface {
-	UpdateDemand(context.Context, *UpdateDemandRequest) (*traits.ElectricDemand, error)
+	UpdateDemand(context.Context, *UpdateDemandRequest) (*electricpb.ElectricDemand, error)
 	// Create a new mode in the device.
 	// Do not specify the id, this will be provided by the server.
 	// This will not validate that exactly one normal mode exists,
 	// the ClearActiveMode method will choose the first normal mode found.
-	CreateMode(context.Context, *CreateModeRequest) (*traits.ElectricMode, error)
-	UpdateMode(context.Context, *UpdateModeRequest) (*traits.ElectricMode, error)
+	CreateMode(context.Context, *CreateModeRequest) (*electricpb.ElectricMode, error)
+	UpdateMode(context.Context, *UpdateModeRequest) (*electricpb.ElectricMode, error)
 	// Delete an existing mode.
 	// Returns NOT_FOUND if the mode, identified by id, is not found. See allow_missing.
 	DeleteMode(context.Context, *DeleteModeRequest) (*emptypb.Empty, error)
@@ -123,13 +123,13 @@ type MemorySettingsApiServer interface {
 // pointer dereference when methods are called.
 type UnimplementedMemorySettingsApiServer struct{}
 
-func (UnimplementedMemorySettingsApiServer) UpdateDemand(context.Context, *UpdateDemandRequest) (*traits.ElectricDemand, error) {
+func (UnimplementedMemorySettingsApiServer) UpdateDemand(context.Context, *UpdateDemandRequest) (*electricpb.ElectricDemand, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateDemand not implemented")
 }
-func (UnimplementedMemorySettingsApiServer) CreateMode(context.Context, *CreateModeRequest) (*traits.ElectricMode, error) {
+func (UnimplementedMemorySettingsApiServer) CreateMode(context.Context, *CreateModeRequest) (*electricpb.ElectricMode, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateMode not implemented")
 }
-func (UnimplementedMemorySettingsApiServer) UpdateMode(context.Context, *UpdateModeRequest) (*traits.ElectricMode, error) {
+func (UnimplementedMemorySettingsApiServer) UpdateMode(context.Context, *UpdateModeRequest) (*electricpb.ElectricMode, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateMode not implemented")
 }
 func (UnimplementedMemorySettingsApiServer) DeleteMode(context.Context, *DeleteModeRequest) (*emptypb.Empty, error) {

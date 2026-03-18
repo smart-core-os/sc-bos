@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/oauth"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 )
 
 var (
@@ -70,16 +70,16 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: can't connect: %s\n", err.Error())
 		os.Exit(1)
 	}
-	client := traits.NewLightApiClient(conn)
+	client := lightpb.NewLightApiClient(conn)
 
-	res, err := client.GetBrightness(ctx, &traits.GetBrightnessRequest{Name: name})
+	res, err := client.GetBrightness(ctx, &lightpb.GetBrightnessRequest{Name: name})
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: call GetBrightness error: %s\n", err.Error())
 	} else {
 		fmt.Printf("Get response: %v\n", res)
 	}
 
-	res, err = client.UpdateBrightness(ctx, &traits.UpdateBrightnessRequest{Name: name, Brightness: &traits.Brightness{LevelPercent: 75}})
+	res, err = client.UpdateBrightness(ctx, &lightpb.UpdateBrightnessRequest{Name: name, Brightness: &lightpb.Brightness{LevelPercent: 75}})
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "ERROR: call UpdateBrightness error: %s\n", err.Error())
 	} else {

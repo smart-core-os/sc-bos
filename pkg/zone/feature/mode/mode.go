@@ -11,7 +11,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/mode/config"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -43,7 +42,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	f.devices.Add(cfg.AllDeviceNames()...)
 	group := &Group{
-		client: traits.NewModeApiClient(f.clients.ClientConn()),
+		client: modepb.NewModeApiClient(f.clients.ClientConn()),
 		cfg:    cfg,
 		logger: logger,
 	}

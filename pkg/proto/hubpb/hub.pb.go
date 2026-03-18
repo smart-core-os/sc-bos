@@ -7,7 +7,7 @@
 package hubpb
 
 import (
-	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	metadatapb "github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -87,7 +87,7 @@ func (x *HubNode) GetDescription() string {
 type HubNodeInspection struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Metadata that the node advertises at its root.
-	Metadata *traits.Metadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	// The public certificates the node presents during HTTPS handshakes.
 	// This will contain PEM encoded x509 certificates.
 	PublicCerts   []string `protobuf:"bytes,2,rep,name=public_certs,json=publicCerts,proto3" json:"public_certs,omitempty"`
@@ -125,7 +125,7 @@ func (*HubNodeInspection) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *HubNodeInspection) GetMetadata() *traits.Metadata {
+func (x *HubNodeInspection) GetMetadata() *metadatapb.Metadata {
 	if x != nil {
 		return x.Metadata
 	}
@@ -741,13 +741,13 @@ var File_smartcore_bos_hub_v1_hub_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_hub_v1_hub_proto_rawDesc = "" +
 	"\n" +
-	"\x1esmartcore/bos/hub/v1/hub.proto\x12\x14smartcore.bos.hub.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15traits/metadata.proto\x1a\x12types/change.proto\"Y\n" +
+	"\x1esmartcore/bos/hub/v1/hub.proto\x12\x14smartcore.bos.hub.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a(smartcore/bos/metadata/v1/metadata.proto\x1a\x12types/change.proto\"Y\n" +
 	"\aHubNode\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x04 \x01(\tR\vdescription\"n\n" +
-	"\x11HubNodeInspection\x126\n" +
-	"\bmetadata\x18\x01 \x01(\v2\x1a.smartcore.traits.MetadataR\bmetadata\x12!\n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\"w\n" +
+	"\x11HubNodeInspection\x12?\n" +
+	"\bmetadata\x18\x01 \x01(\v2#.smartcore.bos.metadata.v1.MetadataR\bmetadata\x12!\n" +
 	"\fpublic_certs\x18\x02 \x03(\tR\vpublicCerts\"-\n" +
 	"\x11GetHubNodeRequest\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\"l\n" +
@@ -818,12 +818,12 @@ var file_smartcore_bos_hub_v1_hub_proto_goTypes = []any{
 	(*ForgetHubNodeRequest)(nil),        // 12: smartcore.bos.hub.v1.ForgetHubNodeRequest
 	(*ForgetHubNodeResponse)(nil),       // 13: smartcore.bos.hub.v1.ForgetHubNodeResponse
 	(*PullHubNodesResponse_Change)(nil), // 14: smartcore.bos.hub.v1.PullHubNodesResponse.Change
-	(*traits.Metadata)(nil),             // 15: smartcore.traits.Metadata
+	(*metadatapb.Metadata)(nil),         // 15: smartcore.bos.metadata.v1.Metadata
 	(types.ChangeType)(0),               // 16: smartcore.types.ChangeType
 	(*timestamppb.Timestamp)(nil),       // 17: google.protobuf.Timestamp
 }
 var file_smartcore_bos_hub_v1_hub_proto_depIdxs = []int32{
-	15, // 0: smartcore.bos.hub.v1.HubNodeInspection.metadata:type_name -> smartcore.traits.Metadata
+	15, // 0: smartcore.bos.hub.v1.HubNodeInspection.metadata:type_name -> smartcore.bos.metadata.v1.Metadata
 	0,  // 1: smartcore.bos.hub.v1.EnrollHubNodeRequest.node:type_name -> smartcore.bos.hub.v1.HubNode
 	0,  // 2: smartcore.bos.hub.v1.ListHubNodesResponse.nodes:type_name -> smartcore.bos.hub.v1.HubNode
 	14, // 3: smartcore.bos.hub.v1.PullHubNodesResponse.changes:type_name -> smartcore.bos.hub.v1.PullHubNodesResponse.Change

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func DefaultConfig() Config {
@@ -55,5 +55,5 @@ type Device struct {
 	// - "override": an optional bool object that disables the Wiser's automation when true - exposed using the Mode trait.
 	Addresses map[string]string `json:"addresses,omitempty"`
 	// The metadata associated with the device.
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 }

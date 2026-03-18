@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 const (
@@ -33,7 +33,7 @@ type UpdateDemandRequest struct {
 	// The name of the device.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Updated properties of the device.
-	Demand *traits.ElectricDemand `protobuf:"bytes,2,opt,name=demand,proto3" json:"demand,omitempty"`
+	Demand *electricpb.ElectricDemand `protobuf:"bytes,2,opt,name=demand,proto3" json:"demand,omitempty"`
 	// Fields that should be updated.
 	UpdateMask *fieldmaskpb.FieldMask `protobuf:"bytes,3,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
 }
@@ -77,7 +77,7 @@ func (x *UpdateDemandRequest) GetName() string {
 	return ""
 }
 
-func (x *UpdateDemandRequest) GetDemand() *traits.ElectricDemand {
+func (x *UpdateDemandRequest) GetDemand() *electricpb.ElectricDemand {
 	if x != nil {
 		return x.Demand
 	}
@@ -99,7 +99,7 @@ type CreateModeRequest struct {
 	// The name of the device.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The mode to create. ID will be created on the server.
-	Mode *traits.ElectricMode `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
+	Mode *electricpb.ElectricMode `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
 }
 
 func (x *CreateModeRequest) Reset() {
@@ -141,7 +141,7 @@ func (x *CreateModeRequest) GetName() string {
 	return ""
 }
 
-func (x *CreateModeRequest) GetMode() *traits.ElectricMode {
+func (x *CreateModeRequest) GetMode() *electricpb.ElectricMode {
 	if x != nil {
 		return x.Mode
 	}
@@ -157,7 +157,7 @@ type UpdateModeRequest struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The mode to create.
 	// The ID should match an existing mode or NOT_FOUND will be returned.
-	Mode *traits.ElectricMode `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
+	Mode *electricpb.ElectricMode `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
 	// The fields to update.
 	// If absent all fields will be updated.
 	UpdateMask *fieldmaskpb.FieldMask `protobuf:"bytes,3,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
@@ -202,7 +202,7 @@ func (x *UpdateModeRequest) GetName() string {
 	return ""
 }
 
-func (x *UpdateModeRequest) GetMode() *traits.ElectricMode {
+func (x *UpdateModeRequest) GetMode() *electricpb.ElectricMode {
 	if x != nil {
 		return x.Mode
 	}
@@ -372,14 +372,14 @@ func file_pkg_trait_electricpb_memory_settings_proto_rawDescGZIP() []byte {
 
 var file_pkg_trait_electricpb_memory_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_pkg_trait_electricpb_memory_settings_proto_goTypes = []any{
-	(*UpdateDemandRequest)(nil),   // 0: smartcore.go.trait.electric.UpdateDemandRequest
-	(*CreateModeRequest)(nil),     // 1: smartcore.go.trait.electric.CreateModeRequest
-	(*UpdateModeRequest)(nil),     // 2: smartcore.go.trait.electric.UpdateModeRequest
-	(*DeleteModeRequest)(nil),     // 3: smartcore.go.trait.electric.DeleteModeRequest
-	(*traits.ElectricDemand)(nil), // 4: smartcore.traits.ElectricDemand
-	(*fieldmaskpb.FieldMask)(nil), // 5: google.protobuf.FieldMask
-	(*traits.ElectricMode)(nil),   // 6: smartcore.traits.ElectricMode
-	(*emptypb.Empty)(nil),         // 7: google.protobuf.Empty
+	(*UpdateDemandRequest)(nil),       // 0: smartcore.go.trait.electric.UpdateDemandRequest
+	(*CreateModeRequest)(nil),         // 1: smartcore.go.trait.electric.CreateModeRequest
+	(*UpdateModeRequest)(nil),         // 2: smartcore.go.trait.electric.UpdateModeRequest
+	(*DeleteModeRequest)(nil),         // 3: smartcore.go.trait.electric.DeleteModeRequest
+	(*electricpb.ElectricDemand)(nil), // 4: smartcore.traits.ElectricDemand
+	(*fieldmaskpb.FieldMask)(nil),     // 5: google.protobuf.FieldMask
+	(*electricpb.ElectricMode)(nil),   // 6: smartcore.traits.ElectricMode
+	(*emptypb.Empty)(nil),             // 7: google.protobuf.Empty
 }
 var file_pkg_trait_electricpb_memory_settings_proto_depIdxs = []int32{
 	4, // 0: smartcore.go.trait.electric.UpdateDemandRequest.demand:type_name -> smartcore.traits.ElectricDemand

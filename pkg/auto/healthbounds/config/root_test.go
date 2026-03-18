@@ -11,11 +11,11 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-bos/internal/protobuf/protopath2"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 func TestValue_Parse(t *testing.T) {
-	md := (&traits.Metadata{}).ProtoReflect().Descriptor()
+	md := (&metadatapb.Metadata{}).ProtoReflect().Descriptor()
 	mustParsePath := func(md protoreflect.MessageDescriptor, s string) protopath.Path {
 		p, err := protopath2.ParsePath(md, s)
 		if err != nil {

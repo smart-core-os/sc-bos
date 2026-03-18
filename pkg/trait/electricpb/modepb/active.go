@@ -3,8 +3,8 @@ package modepb
 import (
 	"time"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait/electricpb/segmentpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // ActiveAt finds the modes active segment at time t.
@@ -13,7 +13,7 @@ import (
 // If t is before mode starts, index will be 0 and elapsed will be negative, indicating how far before mode.StartTime t is.
 // If t is after all segments, the total length of the segments is returned as elapsed, and len(mode.Segments) as index.
 // If mode.StartTime is nil, t will be used as the start time, i.e. (0, 0) will be returned.
-func ActiveAt(t time.Time, mode *traits.ElectricMode) (elapsed time.Duration, index int) {
+func ActiveAt(t time.Time, mode *electricpb.ElectricMode) (elapsed time.Duration, index int) {
 	st := tOrST(t, mode)
 	d := t.Sub(st)
 	return segmentpb.ActiveAt(d, mode.GetSegments()...)

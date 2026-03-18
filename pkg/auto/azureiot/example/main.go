@@ -13,9 +13,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/azureiot"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func main() {
@@ -71,8 +71,8 @@ func main() {
 	}
 }
 
-func iaq() *traits.AirQuality {
-	return &traits.AirQuality{
+func iaq() *airqualitysensorpb.AirQuality {
+	return &airqualitysensorpb.AirQuality{
 		CarbonDioxideLevel:       randFP(400, 1000),
 		VolatileOrganicCompounds: randFP(0.1, 0.23),
 		AirPressure:              randFP(950, 1100),

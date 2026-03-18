@@ -16,7 +16,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 )
 
 // type names we know exist as part of the OnOff trait apis
@@ -34,10 +34,10 @@ func TestServer(t *testing.T) {
 	t.Cleanup(stop)
 
 	apiClient := nodeClient(t, func(s grpc.ServiceRegistrar) {
-		traits.RegisterOnOffApiServer(s, &traits.UnimplementedOnOffApiServer{})
+		onoffpb.RegisterOnOffApiServer(s, &onoffpb.UnimplementedOnOffApiServer{})
 	})
 	infoClient := nodeClient(t, func(s grpc.ServiceRegistrar) {
-		traits.RegisterOnOffInfoServer(s, &traits.UnimplementedOnOffInfoServer{})
+		onoffpb.RegisterOnOffInfoServer(s, &onoffpb.UnimplementedOnOffInfoServer{})
 	})
 
 	gwClient, rs := gwServer(t)

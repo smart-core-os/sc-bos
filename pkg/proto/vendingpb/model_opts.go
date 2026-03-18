@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
@@ -27,7 +26,7 @@ func WithInventoryOption(opts ...resource.Option) resource.Option {
 // Can be used multiple times with stock being additive.
 // Creating a model with duplicate stock consumable names will panic.
 // Calling this function with an empty stock consumable property will panic.
-func WithInitialStock(inventory ...*traits.Consumable_Stock) resource.Option {
+func WithInitialStock(inventory ...*Consumable_Stock) resource.Option {
 	opts := make([]resource.Option, len(inventory))
 	for i, stock := range inventory {
 		if stock.Consumable == "" {
@@ -49,7 +48,7 @@ func WithConsumablesOption(opts ...resource.Option) resource.Option {
 // Can be used multiple times with consumables being additive.
 // Creating a model with duplicate consumable names will panic.
 // Calling this function with an empty consumable name property will panic.
-func WithInitialConsumable(consumables ...*traits.Consumable) resource.Option {
+func WithInitialConsumable(consumables ...*Consumable) resource.Option {
 	opts := make([]resource.Option, len(consumables))
 	for i, consumable := range consumables {
 		if consumable.Name == "" {

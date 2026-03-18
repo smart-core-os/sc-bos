@@ -11,8 +11,8 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/scale"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func SeedElectric(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
@@ -48,7 +48,7 @@ func SeedElectric(ctx context.Context, db *pgxpool.Pool, name string, profile *O
 		realPower := apparentPower * powerFactor
 		reactivePower := apparentPower * (1 - powerFactor)
 
-		payload, err := proto.Marshal(&traits.ElectricDemand{
+		payload, err := proto.Marshal(&electricpb.ElectricDemand{
 			Current:       currentVal,
 			Voltage:       &voltage,
 			PowerFactor:   &powerFactor,

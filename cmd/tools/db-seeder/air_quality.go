@@ -10,8 +10,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func SeedAirQuality(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
@@ -57,9 +57,9 @@ func SeedAirQuality(ctx context.Context, db *pgxpool.Pool, name string, profile 
 		vocScore := vocLevel / (aq.VOCBaseline + aq.VOCPeakAbove) * 50
 		score := float32(clampFloat64(100-co2Score-vocScore, 0, 100))
 
-		comfort := traits.AirQuality_COMFORTABLE
+		comfort := airqualitysensorpb.AirQuality_COMFORTABLE
 		if score < aq.ComfortScoreThreshold {
-			comfort = traits.AirQuality_UNCOMFORTABLE
+			comfort = airqualitysensorpb.AirQuality_UNCOMFORTABLE
 		}
 
 		// Particulates: low in a well-filtered office, slight increase with activity.
@@ -70,7 +70,7 @@ func SeedAirQuality(ctx context.Context, db *pgxpool.Pool, name string, profile 
 		co2 := float32(co2Level)
 		voc := float32(vocLevel)
 
-		payload, err := proto.Marshal(&traits.AirQuality{
+		payload, err := proto.Marshal(&airqualitysensorpb.AirQuality{
 			CarbonDioxideLevel:       &co2,
 			VolatileOrganicCompounds: &voc,
 			AirPressure:              &airPressure,

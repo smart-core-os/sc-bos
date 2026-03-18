@@ -14,14 +14,15 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/protobuf/protopath2"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -36,7 +37,7 @@ func TestTracksDeviceValues(t *testing.T) {
 		h.addAirTempDevice("room-1", airTempModel)
 		h.waitForHealthCheck("room-1")
 
-		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
+		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 21.5},
 		})
 
@@ -92,10 +93,10 @@ func TestCreatesHealthCheckPerDevice(t *testing.T) {
 		h.waitForHealthCheck("room-1")
 		h.waitForHealthCheck("room-2")
 
-		_, _ = airTempModel1.UpdateAirTemperature(&traits.AirTemperature{
+		_, _ = airTempModel1.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 20.0},
 		})
-		_, _ = airTempModel2.UpdateAirTemperature(&traits.AirTemperature{
+		_, _ = airTempModel2.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 22.0},
 		})
 
@@ -116,25 +117,25 @@ func TestUpdatesNormality(t *testing.T) {
 		h.waitForHealthCheck("room-1")
 
 		// Normal value (within 15-25 range)
-		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
+		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 20.0},
 		})
 		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_NORMAL)
 
 		// Low value (below 15)
-		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
+		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 10.0},
 		})
 		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_LOW)
 
 		// High value (above 25)
-		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
+		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 30.0},
 		})
 		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_HIGH)
 
 		// Back to normal
-		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
+		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 22.0},
 		})
 		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_NORMAL)
@@ -152,7 +153,7 @@ func TestHealthCheckProperties(t *testing.T) {
 		h.addAirTempDevice("room-1", airTempModel)
 		h.waitForHealthCheck("room-1")
 
-		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
+		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: 20.0},
 		})
 
@@ -190,7 +191,7 @@ func TestHandlesNilAmbientTemperature(t *testing.T) {
 		h.addAirTempDevice("room-1", airTempModel)
 		h.waitForHealthCheck("room-1")
 
-		_, _ = airTempModel.UpdateAirTemperature(&traits.AirTemperature{
+		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: nil,
 		})
 
@@ -573,7 +574,7 @@ func TestPathFieldsAreSet(t *testing.T) {
 	}{
 		{
 			name: "scalar field set to zero value",
-			message: &traits.AirTemperature{
+			message: &airtemperaturepb.AirTemperature{
 				AmbientTemperature: &types.Temperature{
 					ValueCelsius: 0,
 				},
@@ -583,7 +584,7 @@ func TestPathFieldsAreSet(t *testing.T) {
 		},
 		{
 			name: "scalar field set to non-zero value",
-			message: &traits.AirTemperature{
+			message: &airtemperaturepb.AirTemperature{
 				AmbientTemperature: &types.Temperature{
 					ValueCelsius: 25.5,
 				},
@@ -593,7 +594,7 @@ func TestPathFieldsAreSet(t *testing.T) {
 		},
 		{
 			name: "message field is nil",
-			message: &traits.AirTemperature{
+			message: &airtemperaturepb.AirTemperature{
 				AmbientTemperature: nil,
 			},
 			path: "ambientTemperature.valueCelsius",
@@ -601,7 +602,7 @@ func TestPathFieldsAreSet(t *testing.T) {
 		},
 		{
 			name: "accessing message field that is set",
-			message: &traits.AirTemperature{
+			message: &airtemperaturepb.AirTemperature{
 				AmbientTemperature: &types.Temperature{
 					ValueCelsius: 20,
 				},
@@ -611,7 +612,7 @@ func TestPathFieldsAreSet(t *testing.T) {
 		},
 		{
 			name: "accessing message field that is nil",
-			message: &traits.AirTemperature{
+			message: &airtemperaturepb.AirTemperature{
 				AmbientTemperature: nil,
 			},
 			path: "ambientTemperature",
@@ -619,7 +620,7 @@ func TestPathFieldsAreSet(t *testing.T) {
 		},
 		{
 			name: "deeply nested with all fields set",
-			message: &traits.AirTemperature{
+			message: &airtemperaturepb.AirTemperature{
 				AmbientTemperature: &types.Temperature{
 					ValueCelsius: 22,
 				},
@@ -632,8 +633,8 @@ func TestPathFieldsAreSet(t *testing.T) {
 		},
 		{
 			name: "empty string scalar is valid",
-			message: &traits.Brightness{
-				Preset: &traits.LightPreset{
+			message: &lightpb.Brightness{
+				Preset: &lightpb.LightPreset{
 					Name: "",
 				},
 			},

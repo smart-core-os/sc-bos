@@ -19,7 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/manage/devices/testdata/testproto/querypb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 func Test_getMessageString(t *testing.T) {
@@ -30,31 +30,31 @@ func Test_getMessageString(t *testing.T) {
 		want []string
 	}{
 		{"nil msg", "foo.bar", nil, nil},
-		{"root string", "name", &traits.Metadata{Name: "foo"}, []string{"foo"}},
-		{"root string absent", "name", &traits.Metadata{}, []string{}},
-		{"root map", "more.val", &traits.Metadata{More: map[string]string{"val": "foo"}}, []string{"foo"}},
-		{"root map nil", "more.val", &traits.Metadata{}, []string{}},
-		{"root map absent", "more.val", &traits.Metadata{More: map[string]string{}}, []string{}},
-		{"nested string", "id.bacnet", &traits.Metadata{Id: &traits.Metadata_ID{Bacnet: "1234"}}, []string{"1234"}},
-		{"nested string absent prop", "id.bacnet", &traits.Metadata{Id: &traits.Metadata_ID{}}, []string{}},
-		{"nested string absent message", "id.bacnet", &traits.Metadata{}, []string{}},
-		{"nested map", "id.more.foo", &traits.Metadata{Id: &traits.Metadata_ID{More: map[string]string{"foo": "1234"}}}, []string{"1234"}},
-		{"trailing .", "id.", &traits.Metadata{Id: &traits.Metadata_ID{More: map[string]string{"foo": "1234"}}}, []string{}},
-		{"leading .", ".id", &traits.Metadata{Id: &traits.Metadata_ID{More: map[string]string{"foo": "1234"}}}, []string{}},
-		{"property of scalar", "name.foo", &traits.Metadata{Name: "1234"}, []string{}},
-		{"match all (one) in array", "traits.name", &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "foo"}}}, []string{"foo"}},
-		{"match all in array", "traits.name", &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "foo"}, {Name: "bar"}}}, []string{"foo", "bar"}},
-		{"match in array with Index", "traits[0].name", &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "foo"}, {Name: "bar"}}}, []string{"foo"}},
-		{"match in array with Index", "traits[1].name", &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "foo"}, {Name: "bar"}}}, []string{"bar"}},
-		{"match in array doesn't exist", "traits[1].name", &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "foo"}}}, []string{}},
-		{"match in array negative", "traits[-1].name", &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "bar"}, {Name: "foo"}}}, []string{"foo"}},
-		{"match nested in array", "traits.more.units", &traits.Metadata{Traits: []*traits.TraitMetadata{{More: map[string]string{"units": "dogs"}}, {More: map[string]string{"units": "cats"}}}}, []string{"dogs", "cats"}},
-		{"match all in array with primitive", "dns", &traits.Metadata_NIC{Dns: []string{"foo", "bar"}}, []string{"foo", "bar"}},
-		{"match in array with primitive[0]", "dns[0]", &traits.Metadata_NIC{Dns: []string{"foo", "bar"}}, []string{"foo"}},
-		{"match in array with primitive[1]", "dns[1]", &traits.Metadata_NIC{Dns: []string{"foo", "bar"}}, []string{"bar"}},
-		{"match in array with primitive[-1]", "dns[-1]", &traits.Metadata_NIC{Dns: []string{"foo", "bar"}}, []string{"bar"}},
-		{"match in array with primitive[-2]", "dns[-2]", &traits.Metadata_NIC{Dns: []string{"foo", "bar"}}, []string{"foo"}},
-		{"match nested in array with wrong Index", "traits[0].more.units", &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "bar"}, {Name: "foo", More: map[string]string{"units": "cats"}}}}, []string{}},
+		{"root string", "name", &metadatapb.Metadata{Name: "foo"}, []string{"foo"}},
+		{"root string absent", "name", &metadatapb.Metadata{}, []string{}},
+		{"root map", "more.val", &metadatapb.Metadata{More: map[string]string{"val": "foo"}}, []string{"foo"}},
+		{"root map nil", "more.val", &metadatapb.Metadata{}, []string{}},
+		{"root map absent", "more.val", &metadatapb.Metadata{More: map[string]string{}}, []string{}},
+		{"nested string", "id.bacnet", &metadatapb.Metadata{Id: &metadatapb.Metadata_ID{Bacnet: "1234"}}, []string{"1234"}},
+		{"nested string absent prop", "id.bacnet", &metadatapb.Metadata{Id: &metadatapb.Metadata_ID{}}, []string{}},
+		{"nested string absent message", "id.bacnet", &metadatapb.Metadata{}, []string{}},
+		{"nested map", "id.more.foo", &metadatapb.Metadata{Id: &metadatapb.Metadata_ID{More: map[string]string{"foo": "1234"}}}, []string{"1234"}},
+		{"trailing .", "id.", &metadatapb.Metadata{Id: &metadatapb.Metadata_ID{More: map[string]string{"foo": "1234"}}}, []string{}},
+		{"leading .", ".id", &metadatapb.Metadata{Id: &metadatapb.Metadata_ID{More: map[string]string{"foo": "1234"}}}, []string{}},
+		{"property of scalar", "name.foo", &metadatapb.Metadata{Name: "1234"}, []string{}},
+		{"match all (one) in array", "traits.name", &metadatapb.Metadata{Traits: []*metadatapb.TraitMetadata{{Name: "foo"}}}, []string{"foo"}},
+		{"match all in array", "traits.name", &metadatapb.Metadata{Traits: []*metadatapb.TraitMetadata{{Name: "foo"}, {Name: "bar"}}}, []string{"foo", "bar"}},
+		{"match in array with Index", "traits[0].name", &metadatapb.Metadata{Traits: []*metadatapb.TraitMetadata{{Name: "foo"}, {Name: "bar"}}}, []string{"foo"}},
+		{"match in array with Index", "traits[1].name", &metadatapb.Metadata{Traits: []*metadatapb.TraitMetadata{{Name: "foo"}, {Name: "bar"}}}, []string{"bar"}},
+		{"match in array doesn't exist", "traits[1].name", &metadatapb.Metadata{Traits: []*metadatapb.TraitMetadata{{Name: "foo"}}}, []string{}},
+		{"match in array negative", "traits[-1].name", &metadatapb.Metadata{Traits: []*metadatapb.TraitMetadata{{Name: "bar"}, {Name: "foo"}}}, []string{"foo"}},
+		{"match nested in array", "traits.more.units", &metadatapb.Metadata{Traits: []*metadatapb.TraitMetadata{{More: map[string]string{"units": "dogs"}}, {More: map[string]string{"units": "cats"}}}}, []string{"dogs", "cats"}},
+		{"match all in array with primitive", "dns", &metadatapb.Metadata_NIC{Dns: []string{"foo", "bar"}}, []string{"foo", "bar"}},
+		{"match in array with primitive[0]", "dns[0]", &metadatapb.Metadata_NIC{Dns: []string{"foo", "bar"}}, []string{"foo"}},
+		{"match in array with primitive[1]", "dns[1]", &metadatapb.Metadata_NIC{Dns: []string{"foo", "bar"}}, []string{"bar"}},
+		{"match in array with primitive[-1]", "dns[-1]", &metadatapb.Metadata_NIC{Dns: []string{"foo", "bar"}}, []string{"bar"}},
+		{"match in array with primitive[-2]", "dns[-2]", &metadatapb.Metadata_NIC{Dns: []string{"foo", "bar"}}, []string{"foo"}},
+		{"match nested in array with wrong Index", "traits[0].more.units", &metadatapb.Metadata{Traits: []*metadatapb.TraitMetadata{{Name: "bar"}, {Name: "foo", More: map[string]string{"units": "cats"}}}}, []string{}},
 	}
 	cmpStr := func(a, b string) bool { return a < b }
 	for _, tt := range tests {
@@ -70,8 +70,8 @@ func Test_getMessageString(t *testing.T) {
 func Example_isMessageValueStringFunc() {
 	msg := &devicespb.Device{
 		Name: "MyDevice",
-		Metadata: &traits.Metadata{
-			Membership: &traits.Metadata_Membership{
+		Metadata: &metadatapb.Metadata{
+			Membership: &metadatapb.Metadata_Membership{
 				Subsystem: "Lighting",
 			},
 		},
@@ -767,7 +767,7 @@ func Example_healthyDevices() {
 	// all checks for this device are normal
 	device01 := &devicespb.Device{
 		Name: "Device01",
-		Metadata: &traits.Metadata{Location: &traits.Metadata_Location{
+		Metadata: &metadatapb.Metadata{Location: &metadatapb.Metadata_Location{
 			Floor: "Ground Floor",
 		}},
 		HealthChecks: []*healthpb.HealthCheck{
@@ -778,7 +778,7 @@ func Example_healthyDevices() {
 	// some checks for this device are normal, some are abnormal
 	device02 := &devicespb.Device{
 		Name: "Device02",
-		Metadata: &traits.Metadata{Location: &traits.Metadata_Location{
+		Metadata: &metadatapb.Metadata{Location: &metadatapb.Metadata_Location{
 			Floor: "Floor 1",
 		}},
 		HealthChecks: []*healthpb.HealthCheck{
@@ -789,7 +789,7 @@ func Example_healthyDevices() {
 	// all checks for this device are abnormal
 	device03 := &devicespb.Device{
 		Name: "Device03",
-		Metadata: &traits.Metadata{Location: &traits.Metadata_Location{
+		Metadata: &metadatapb.Metadata{Location: &metadatapb.Metadata_Location{
 			Floor: "Floor 2",
 		}},
 		HealthChecks: []*healthpb.HealthCheck{

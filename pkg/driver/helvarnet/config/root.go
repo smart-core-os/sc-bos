@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Default values for config fields
@@ -64,13 +64,13 @@ type Root struct {
 // DurationTestLength is the length of the duration test for emergency lights, if known.
 // TopicPrefix is the topic prefix to use for the UDMI automation, without the trailing '/'. If empty, the device name will be used.
 type Device struct {
-	Name               string              `json:"name,omitempty"`
-	Address            string              `json:"address,omitempty"`
-	GroupNumber        *int                `json:"groupNumber,omitempty"`
-	IpAddress          string              `json:"ipAddress,omitempty"`
-	Meta               *traits.Metadata    `json:"meta,omitempty"`
-	DurationTestLength *jsontypes.Duration `json:"durationTestLength,omitempty,omitzero"`
-	TopicPrefix        string              `json:"topicPrefix,omitempty"`
+	Name               string               `json:"name,omitempty"`
+	Address            string               `json:"address,omitempty"`
+	GroupNumber        *int                 `json:"groupNumber,omitempty"`
+	IpAddress          string               `json:"ipAddress,omitempty"`
+	Meta               *metadatapb.Metadata `json:"meta,omitempty"`
+	DurationTestLength *jsontypes.Duration  `json:"durationTestLength,omitempty,omitzero"`
+	TopicPrefix        string               `json:"topicPrefix,omitempty"`
 }
 
 // Scene represents a HelvarNet lighting scene, which is a combination of a block (address), scene, and title.

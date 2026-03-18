@@ -9,7 +9,9 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/bms/config"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -137,9 +139,9 @@ func analyseOccupancy(now time.Time, state *ReadState) (occupied, total, noRespo
 		total++
 		if o, ok := state.Occupancy[sensor]; ok {
 			switch o.V.State {
-			case traits.Occupancy_OCCUPIED:
+			case occupancysensorpb.Occupancy_OCCUPIED:
 				occupied++
-			case traits.Occupancy_UNOCCUPIED, traits.Occupancy_IDLE:
+			case occupancysensorpb.Occupancy_UNOCCUPIED, occupancysensorpb.Occupancy_IDLE:
 				if o.V.StateChangeTime == nil {
 					continue
 				}
@@ -227,9 +229,9 @@ func analyseSetPoint(now time.Time, state *ReadState) (auto bool, setPoint float
 func writeSetPointUpdates(ctx context.Context, state *WriteState, actions Actions, updates map[string]float32) error {
 	var errs error
 	for name, setPoint := range updates {
-		req := &traits.UpdateAirTemperatureRequest{
+		req := &airtemperaturepb.UpdateAirTemperatureRequest{
 			Name: name,
-			State: &traits.AirTemperature{TemperatureGoal: &traits.AirTemperature_TemperatureSetPoint{
+			State: &airtemperaturepb.AirTemperature{TemperatureGoal: &airtemperaturepb.AirTemperature_TemperatureSetPoint{
 				TemperatureSetPoint: &types.Temperature{ValueCelsius: float64(setPoint)},
 			}},
 			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"temperature_set_point"}},
@@ -254,9 +256,9 @@ func (m *modeUpdates) setMode(name, key, value string) {
 func (m *modeUpdates) write(ctx context.Context, state *WriteState, actions Actions) error {
 	var errs error
 	for name, modes := range *m {
-		req := &traits.UpdateModeValuesRequest{
+		req := &modepb.UpdateModeValuesRequest{
 			Name:       name,
-			ModeValues: &traits.ModeValues{Values: modes},
+			ModeValues: &modepb.ModeValues{Values: modes},
 		}
 		errs = multierr.Append(errs, actions.UpdateModeValues(ctx, req, state))
 	}

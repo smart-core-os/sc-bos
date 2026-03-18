@@ -7,17 +7,17 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func (a *automation) collectOccupancyChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
-	client := traits.NewOccupancySensorApiClient(a.clients.ClientConn())
+	client := occupancysensorpb.NewOccupancySensorApiClient(a.clients.ClientConn())
 
-	last := newDeduper[*traits.Occupancy](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
+	last := newDeduper[*occupancysensorpb.Occupancy](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
-		stream, err := client.PullOccupancy(ctx, &traits.PullOccupancyRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
+		stream, err := client.PullOccupancy(ctx, &occupancysensorpb.PullOccupancyRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}
@@ -45,7 +45,7 @@ func (a *automation) collectOccupancyChanges(ctx context.Context, source config.
 		}
 	}
 	pollFn := func(ctx context.Context, changes chan<- []byte) error {
-		resp, err := client.GetOccupancy(ctx, &traits.GetOccupancyRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
+		resp, err := client.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}

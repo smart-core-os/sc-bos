@@ -7,7 +7,6 @@
 package electricpb
 
 import (
-	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	time "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -27,7 +26,7 @@ const (
 
 type ElectricDemandRecord struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	ElectricDemand *traits.ElectricDemand `protobuf:"bytes,1,opt,name=electric_demand,json=electricDemand,proto3" json:"electric_demand,omitempty"`
+	ElectricDemand *ElectricDemand        `protobuf:"bytes,1,opt,name=electric_demand,json=electricDemand,proto3" json:"electric_demand,omitempty"`
 	RecordTime     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=record_time,json=recordTime,proto3" json:"record_time,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -63,7 +62,7 @@ func (*ElectricDemandRecord) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_electric_v1_electric_history_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *ElectricDemandRecord) GetElectricDemand() *traits.ElectricDemand {
+func (x *ElectricDemandRecord) GetElectricDemand() *ElectricDemand {
 	if x != nil {
 		return x.ElectricDemand
 	}
@@ -240,9 +239,9 @@ var File_smartcore_bos_electric_v1_electric_history_proto protoreflect.FileDescr
 
 const file_smartcore_bos_electric_v1_electric_history_proto_rawDesc = "" +
 	"\n" +
-	"0smartcore/bos/electric/v1/electric_history.proto\x12\x19smartcore.bos.electric.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15traits/electric.proto\x1a\x17types/time/period.proto\"\x9e\x01\n" +
-	"\x14ElectricDemandRecord\x12I\n" +
-	"\x0felectric_demand\x18\x01 \x01(\v2 .smartcore.traits.ElectricDemandR\x0eelectricDemand\x12;\n" +
+	"0smartcore/bos/electric/v1/electric_history.proto\x12\x19smartcore.bos.electric.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a(smartcore/bos/electric/v1/electric.proto\x1a\x17types/time/period.proto\"\xa7\x01\n" +
+	"\x14ElectricDemandRecord\x12R\n" +
+	"\x0felectric_demand\x18\x01 \x01(\v2).smartcore.bos.electric.v1.ElectricDemandR\x0eelectricDemand\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"recordTime\"\xfc\x01\n" +
 	" ListElectricDemandHistoryRequest\x12\x12\n" +
@@ -278,13 +277,13 @@ var file_smartcore_bos_electric_v1_electric_history_proto_goTypes = []any{
 	(*ElectricDemandRecord)(nil),              // 0: smartcore.bos.electric.v1.ElectricDemandRecord
 	(*ListElectricDemandHistoryRequest)(nil),  // 1: smartcore.bos.electric.v1.ListElectricDemandHistoryRequest
 	(*ListElectricDemandHistoryResponse)(nil), // 2: smartcore.bos.electric.v1.ListElectricDemandHistoryResponse
-	(*traits.ElectricDemand)(nil),             // 3: smartcore.traits.ElectricDemand
+	(*ElectricDemand)(nil),                    // 3: smartcore.bos.electric.v1.ElectricDemand
 	(*timestamppb.Timestamp)(nil),             // 4: google.protobuf.Timestamp
 	(*time.Period)(nil),                       // 5: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),             // 6: google.protobuf.FieldMask
 }
 var file_smartcore_bos_electric_v1_electric_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.electric.v1.ElectricDemandRecord.electric_demand:type_name -> smartcore.traits.ElectricDemand
+	3, // 0: smartcore.bos.electric.v1.ElectricDemandRecord.electric_demand:type_name -> smartcore.bos.electric.v1.ElectricDemand
 	4, // 1: smartcore.bos.electric.v1.ElectricDemandRecord.record_time:type_name -> google.protobuf.Timestamp
 	5, // 2: smartcore.bos.electric.v1.ListElectricDemandHistoryRequest.period:type_name -> smartcore.types.time.Period
 	6, // 3: smartcore.bos.electric.v1.ListElectricDemandHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
@@ -303,6 +302,7 @@ func file_smartcore_bos_electric_v1_electric_history_proto_init() {
 	if File_smartcore_bos_electric_v1_electric_history_proto != nil {
 		return
 	}
+	file_smartcore_bos_electric_v1_electric_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

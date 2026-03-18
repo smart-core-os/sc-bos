@@ -7,17 +7,17 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func (a *automation) collectEnterLeaveEventChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
-	client := traits.NewEnterLeaveSensorApiClient(a.clients.ClientConn())
+	client := enterleavesensorpb.NewEnterLeaveSensorApiClient(a.clients.ClientConn())
 
-	last := newDeduper[*traits.EnterLeaveEvent](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
+	last := newDeduper[*enterleavesensorpb.EnterLeaveEvent](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
-		stream, err := client.PullEnterLeaveEvents(ctx, &traits.PullEnterLeaveEventsRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
+		stream, err := client.PullEnterLeaveEvents(ctx, &enterleavesensorpb.PullEnterLeaveEventsRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}
@@ -45,7 +45,7 @@ func (a *automation) collectEnterLeaveEventChanges(ctx context.Context, source c
 		}
 	}
 	pollFn := func(ctx context.Context, changes chan<- []byte) error {
-		resp, err := client.GetEnterLeaveEvent(ctx, &traits.GetEnterLeaveEventRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
+		resp, err := client.GetEnterLeaveEvent(ctx, &enterleavesensorpb.GetEnterLeaveEventRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}

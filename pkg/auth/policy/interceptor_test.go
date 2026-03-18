@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func TestInterceptor_GRPC(t *testing.T) {
@@ -30,7 +29,7 @@ func TestInterceptor_GRPC(t *testing.T) {
 		grpc.ChainUnaryInterceptor(interceptor.GRPCUnaryInterceptor()),
 		grpc.ChainStreamInterceptor(interceptor.GRPCStreamingInterceptor()),
 	)
-	traits.RegisterOnOffApiServer(server, onoffpb.NewModelServer(onoffpb.NewModel()))
+	onoffpb.RegisterOnOffApiServer(server, onoffpb.NewModelServer(onoffpb.NewModel()))
 	go func() {
 		if err := server.Serve(lis); err != nil {
 			t.Logf("server stopped with error: %v", err)
@@ -55,14 +54,14 @@ func TestInterceptor_GRPC(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	client := traits.NewOnOffApiClient(conn)
+	client := onoffpb.NewOnOffApiClient(conn)
 
 	// check simple name based auth, global for all smartcore.* apis
-	_, err = client.GetOnOff(ctx, &traits.GetOnOffRequest{Name: "allow"})
+	_, err = client.GetOnOff(ctx, &onoffpb.GetOnOffRequest{Name: "allow"})
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	_, err = client.GetOnOff(ctx, &traits.GetOnOffRequest{Name: "deny"})
+	_, err = client.GetOnOff(ctx, &onoffpb.GetOnOffRequest{Name: "deny"})
 	if err == nil {
 		t.Error("expected error")
 	}
@@ -71,11 +70,11 @@ func TestInterceptor_GRPC(t *testing.T) {
 	}
 
 	// check action based auth, specific to this trait
-	_, err = client.UpdateOnOff(ctx, &traits.UpdateOnOffRequest{Name: "any", OnOff: &traits.OnOff{State: traits.OnOff_ON}})
+	_, err = client.UpdateOnOff(ctx, &onoffpb.UpdateOnOffRequest{Name: "any", OnOff: &onoffpb.OnOff{State: onoffpb.OnOff_ON}})
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	_, err = client.UpdateOnOff(ctx, &traits.UpdateOnOffRequest{Name: "any", OnOff: &traits.OnOff{State: traits.OnOff_OFF}})
+	_, err = client.UpdateOnOff(ctx, &onoffpb.UpdateOnOffRequest{Name: "any", OnOff: &onoffpb.OnOff{State: onoffpb.OnOff_OFF}})
 	if err == nil {
 		t.Error("expected error")
 	}

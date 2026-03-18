@@ -6,8 +6,8 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Model provides the data structure for representing an EnterLeaveSensor trait.
@@ -30,9 +30,9 @@ func NewModel(opts ...resource.Option) *Model {
 //  1. No InterceptorBefore option is provided
 //  2. The events direction is either ENTER or LEAVE
 //  3. The event has EnterTotal or LeaveTotal equal to the current value or nil. If non-nil then the totals will be set to the passed values.
-func (m *Model) CreateEnterLeaveEvent(event *traits.EnterLeaveEvent, opts ...resource.WriteOption) error {
+func (m *Model) CreateEnterLeaveEvent(event *enterleavesensorpb.EnterLeaveEvent, opts ...resource.WriteOption) error {
 	updateTotalsOption := resource.InterceptBefore(func(current, value proto.Message) {
-		currentVal, valueVal := current.(*traits.EnterLeaveEvent), value.(*traits.EnterLeaveEvent)
+		currentVal, valueVal := current.(*enterleavesensorpb.EnterLeaveEvent), value.(*enterleavesensorpb.EnterLeaveEvent)
 		adjustTotal := func(val, cur *int32, inc bool) *int32 {
 			var cv int32
 			if cur != nil {
@@ -47,8 +47,8 @@ func (m *Model) CreateEnterLeaveEvent(event *traits.EnterLeaveEvent, opts ...res
 			}
 			return &cv
 		}
-		valueVal.EnterTotal = adjustTotal(valueVal.EnterTotal, currentVal.EnterTotal, valueVal.Direction == traits.EnterLeaveEvent_ENTER)
-		valueVal.LeaveTotal = adjustTotal(valueVal.LeaveTotal, currentVal.LeaveTotal, valueVal.Direction == traits.EnterLeaveEvent_LEAVE)
+		valueVal.EnterTotal = adjustTotal(valueVal.EnterTotal, currentVal.EnterTotal, valueVal.Direction == enterleavesensorpb.EnterLeaveEvent_ENTER)
+		valueVal.LeaveTotal = adjustTotal(valueVal.LeaveTotal, currentVal.LeaveTotal, valueVal.Direction == enterleavesensorpb.EnterLeaveEvent_LEAVE)
 	})
 	opts = append([]resource.WriteOption{updateTotalsOption}, opts...)
 	_, err := m.enterLeaveEvents.Set(event, opts...)
@@ -57,7 +57,7 @@ func (m *Model) CreateEnterLeaveEvent(event *traits.EnterLeaveEvent, opts ...res
 
 type EnterLeaveEventChange struct {
 	ChangeTime time.Time
-	Value      *traits.EnterLeaveEvent
+	Value      *enterleavesensorpb.EnterLeaveEvent
 }
 
 // PullEnterLeaveEvents subscribes to changes in the enter leave sensor resource.
@@ -67,11 +67,11 @@ func (m *Model) PullEnterLeaveEvents(ctx context.Context, opts ...resource.ReadO
 	go func() {
 		defer close(send)
 		for change := range m.enterLeaveEvents.Pull(ctx, opts...) {
-			val := change.Value.(*traits.EnterLeaveEvent)
+			val := change.Value.(*enterleavesensorpb.EnterLeaveEvent)
 			if change.LastSeedValue {
 				// when sending the initial data (not an update), the occupant and direction should be absent.
 				val.Occupant = nil
-				val.Direction = traits.EnterLeaveEvent_DIRECTION_UNSPECIFIED
+				val.Direction = enterleavesensorpb.EnterLeaveEvent_DIRECTION_UNSPECIFIED
 			}
 			select {
 			case <-ctx.Done():
@@ -83,13 +83,13 @@ func (m *Model) PullEnterLeaveEvents(ctx context.Context, opts ...resource.ReadO
 	return send
 }
 
-func (m *Model) GetEnterLeaveEvent(opts ...resource.ReadOption) (*traits.EnterLeaveEvent, error) {
+func (m *Model) GetEnterLeaveEvent(opts ...resource.ReadOption) (*enterleavesensorpb.EnterLeaveEvent, error) {
 	val := m.enterLeaveEvents.Get(opts...)
-	return val.(*traits.EnterLeaveEvent), nil
+	return val.(*enterleavesensorpb.EnterLeaveEvent), nil
 }
 
 func (m *Model) ResetTotals() error {
 	var zero int32
-	_, err := m.enterLeaveEvents.Set(&traits.EnterLeaveEvent{EnterTotal: &zero, LeaveTotal: &zero}, resource.WithUpdatePaths("enter_total", "leave_total"))
+	_, err := m.enterLeaveEvents.Set(&enterleavesensorpb.EnterLeaveEvent{EnterTotal: &zero, LeaveTotal: &zero}, resource.WithUpdatePaths("enter_total", "leave_total"))
 	return err
 }

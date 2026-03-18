@@ -11,9 +11,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/time/clock"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -63,8 +63,8 @@ func NewModel(opts ...resource.Option) *Model {
 
 // Demand gets the demand stored in this Model.
 // The fields returned can be filtered by passing resource.WithReadMask.
-func (m *Model) Demand(opts ...resource.ReadOption) *traits.ElectricDemand {
-	return m.demand.Get(opts...).(*traits.ElectricDemand)
+func (m *Model) Demand(opts ...resource.ReadOption) *electricpb.ElectricDemand {
+	return m.demand.Get(opts...).(*electricpb.ElectricDemand)
 }
 
 // PullDemand subscribes to changes to the electricity demand on this device.
@@ -77,7 +77,7 @@ func (m *Model) PullDemand(ctx context.Context, opts ...resource.ReadOption) <-c
 	go func() {
 		defer close(send)
 		for change := range recv {
-			demand := change.Value.(*traits.ElectricDemand)
+			demand := change.Value.(*electricpb.ElectricDemand)
 			send <- PullDemandChange{
 				Value:      demand,
 				ChangeTime: change.ChangeTime,
@@ -92,12 +92,12 @@ func (m *Model) PullDemand(ctx context.Context, opts ...resource.ReadOption) <-c
 // UpdateDemand will update the stored traits.ElectricDemand associated with this device.
 // The fields to update can be filtered by passing resource.WithUpdateMask.
 // The updated traits.ElectricDemand is returned.
-func (m *Model) UpdateDemand(update *traits.ElectricDemand, opts ...resource.WriteOption) (*traits.ElectricDemand, error) {
+func (m *Model) UpdateDemand(update *electricpb.ElectricDemand, opts ...resource.WriteOption) (*electricpb.ElectricDemand, error) {
 	updated, err := m.demand.Set(update, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return updated.(*traits.ElectricDemand), nil
+	return updated.(*electricpb.ElectricDemand), nil
 }
 
 // ActiveMode returns the electric mode that is currently active on this device.
@@ -105,8 +105,8 @@ func (m *Model) UpdateDemand(update *traits.ElectricDemand, opts ...resource.Wri
 // the first time, it will always correspond to one of the modes that can be listed by Modes.
 // The StartTime fields will reflect when the mode became active.
 // The fields returned can be filtered using resource.WithReadMask
-func (m *Model) ActiveMode(opts ...resource.ReadOption) *traits.ElectricMode {
-	return m.activeMode.Get(opts...).(*traits.ElectricMode)
+func (m *Model) ActiveMode(opts ...resource.ReadOption) *electricpb.ElectricMode {
+	return m.activeMode.Get(opts...).(*electricpb.ElectricMode)
 }
 
 // PullActiveMode subscribes to changes to the active mode. Whenever the active mode is changed (for example, by calling
@@ -120,7 +120,7 @@ func (m *Model) PullActiveMode(ctx context.Context, opts ...resource.ReadOption)
 	go func() {
 		defer close(send)
 		for change := range recv {
-			activeMode := change.Value.(*traits.ElectricMode)
+			activeMode := change.Value.(*electricpb.ElectricMode)
 			send <- PullActiveModeChange{
 				ActiveMode: activeMode,
 				ChangeTime: change.ChangeTime,
@@ -135,7 +135,7 @@ func (m *Model) PullActiveMode(ctx context.Context, opts ...resource.ReadOption)
 // SetActiveMode updates the active mode to the one specified.
 // The mode.Id should exist in the known Modes of this model or an error will be returned.
 // The mode.StartTime will not be set for you.
-func (m *Model) SetActiveMode(mode *traits.ElectricMode) error {
+func (m *Model) SetActiveMode(mode *electricpb.ElectricMode) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if _, ok := m.findMode(mode.Id); !ok {
@@ -149,22 +149,22 @@ func (m *Model) SetActiveMode(mode *traits.ElectricMode) error {
 // ChangeActiveMode will switch the active mode to a previously-defined mode with the given ID.
 // Attempting to change to a mode ID that does not exist on this device will result in an error.
 // Updates the StartTime of the mode to the current time if the mode changes.
-func (m *Model) ChangeActiveMode(id string) (*traits.ElectricMode, error) {
+func (m *Model) ChangeActiveMode(id string) (*electricpb.ElectricMode, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	return m.changeActiveMode(id)
 }
 
-func (m *Model) changeActiveMode(id string) (*traits.ElectricMode, error) {
+func (m *Model) changeActiveMode(id string) (*electricpb.ElectricMode, error) {
 	mode, ok := m.findMode(id)
 	if !ok {
 		return nil, ErrModeNotFound
 	}
 
 	updated, err := m.activeMode.Set(mode, resource.InterceptAfter(func(old, new proto.Message) {
-		oldMode := old.(*traits.ElectricMode)
-		newMode := new.(*traits.ElectricMode)
+		oldMode := old.(*electricpb.ElectricMode)
+		newMode := new.(*electricpb.ElectricMode)
 		if oldMode.Id != newMode.Id {
 			newMode.StartTime = timestamppb.New(m.clock.Now())
 		}
@@ -173,14 +173,14 @@ func (m *Model) changeActiveMode(id string) (*traits.ElectricMode, error) {
 		return nil, err
 	}
 
-	return updated.(*traits.ElectricMode), nil
+	return updated.(*electricpb.ElectricMode), nil
 }
 
 // ChangeToNormalMode will (atomically) look up the device's normal mode (mode with Normal == true) and change to that
 // mode.
 // If this device does not have a normal mode, ErrModeNotFound is returned.
 // Updates the StartTime of the mode to the current time if the mode changes.
-func (m *Model) ChangeToNormalMode() (*traits.ElectricMode, error) {
+func (m *Model) ChangeToNormalMode() (*electricpb.ElectricMode, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -195,28 +195,28 @@ func (m *Model) ChangeToNormalMode() (*traits.ElectricMode, error) {
 // FindMode will attempt to retrieve the mode with the given ID.
 // If the mode was found, it is returned with ok == true.
 // Otherwise, the returned mode is unspecified and ok == false.
-func (m *Model) FindMode(id string) (mode *traits.ElectricMode, ok bool) {
+func (m *Model) FindMode(id string) (mode *electricpb.ElectricMode, ok bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	return m.findMode(id)
 }
 
-func (m *Model) findMode(id string) (*traits.ElectricMode, bool) {
+func (m *Model) findMode(id string) (*electricpb.ElectricMode, bool) {
 	mode, ok := m.modes.Get(id)
 	if !ok {
 		return nil, false
 	}
-	return mode.(*traits.ElectricMode), true
+	return mode.(*electricpb.ElectricMode), true
 }
 
 // Modes returns a list of all registered modes, sorted by their ID.
-func (m *Model) Modes(opts ...resource.ReadOption) []*traits.ElectricMode {
+func (m *Model) Modes(opts ...resource.ReadOption) []*electricpb.ElectricMode {
 	entries := m.modes.List(opts...)
 
-	modes := make([]*traits.ElectricMode, len(entries))
+	modes := make([]*electricpb.ElectricMode, len(entries))
 	for i, entry := range entries {
-		modes[i] = entry.(*traits.ElectricMode)
+		modes[i] = entry.(*electricpb.ElectricMode)
 	}
 	return modes
 }
@@ -225,7 +225,7 @@ func (m *Model) Modes(opts ...resource.ReadOption) []*traits.ElectricMode {
 // The Id field on the mode must not be set, as the Id will be allocated by the device.
 // If mode has Normal == true, and the device already has a normal mode, then ErrNormalModeExists will result.
 // Returns the newly created mode, including its Id.
-func (m *Model) CreateMode(mode *traits.ElectricMode) (*traits.ElectricMode, error) {
+func (m *Model) CreateMode(mode *electricpb.ElectricMode) (*electricpb.ElectricMode, error) {
 	if mode.Id != "" {
 		// If the ID is set, this indicates a bug in the calling code
 		panic("ID field is set")
@@ -240,7 +240,7 @@ func (m *Model) CreateMode(mode *traits.ElectricMode) (*traits.ElectricMode, err
 // AddMode adds a new mode to the device using the modes Id.
 // The Id field on the mode must be set.
 // If mode has Normal == true, and the device already has a normal mode, then ErrNormalModeExists will result.
-func (m *Model) AddMode(mode *traits.ElectricMode) error {
+func (m *Model) AddMode(mode *electricpb.ElectricMode) error {
 	if mode.Id == "" {
 		// If the ID is set, this indicates a bug in the calling code
 		panic("ID field is not set")
@@ -253,9 +253,9 @@ func (m *Model) AddMode(mode *traits.ElectricMode) error {
 	return err
 }
 
-func (m *Model) createOrAddMode(mode *traits.ElectricMode) (*traits.ElectricMode, error) {
+func (m *Model) createOrAddMode(mode *electricpb.ElectricMode) (*electricpb.ElectricMode, error) {
 	// clone mode to avoid mutating the caller's copy
-	mode = proto.Clone(mode).(*traits.ElectricMode)
+	mode = proto.Clone(mode).(*electricpb.ElectricMode)
 
 	// if this mode is normal, check that there isn't another normal mode
 	if mode.Normal {
@@ -269,7 +269,7 @@ func (m *Model) createOrAddMode(mode *traits.ElectricMode) (*traits.ElectricMode
 		mode.Id = id
 	}))
 	if msg != nil {
-		mode = msg.(*traits.ElectricMode)
+		mode = msg.(*electricpb.ElectricMode)
 	}
 	return mode, err
 }
@@ -285,7 +285,7 @@ func (m *Model) DeleteMode(id string, opts ...resource.WriteOption) error {
 }
 
 func (m *Model) deleteMode(id string, opts ...resource.WriteOption) error {
-	active := m.activeMode.Get().(*traits.ElectricMode)
+	active := m.activeMode.Get().(*electricpb.ElectricMode)
 	if id == active.Id {
 		return ErrDeleteActiveMode
 	}
@@ -304,18 +304,18 @@ func (m *Model) deleteMode(id string, opts ...resource.WriteOption) error {
 // UpdateMode will modify one of the modes stored in this device.
 // The mode to be modified is specified by mode.Id, which must be set.
 // Fields to be modified can be selected using mask - to modify all fields, pass a nil mask.
-func (m *Model) UpdateMode(mode *traits.ElectricMode, opts ...resource.WriteOption) (*traits.ElectricMode, error) {
+func (m *Model) UpdateMode(mode *electricpb.ElectricMode, opts ...resource.WriteOption) (*electricpb.ElectricMode, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.updateMode(mode, opts...)
 }
 
-func (m *Model) updateMode(mode *traits.ElectricMode, opts ...resource.WriteOption) (*traits.ElectricMode, error) {
+func (m *Model) updateMode(mode *electricpb.ElectricMode, opts ...resource.WriteOption) (*electricpb.ElectricMode, error) {
 	msg, err := m.modes.Update(mode.Id, mode, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return msg.(*traits.ElectricMode), nil
+	return msg.(*electricpb.ElectricMode), nil
 }
 
 // PullModes subscribes to changes to modes. Creation, modification or deletion of a mode on this device will send
@@ -330,12 +330,12 @@ func (m *Model) PullModes(ctx context.Context, opts ...resource.ReadOption) <-ch
 		defer close(send)
 		// no need to listen to ctx.Done, as modes.Pull does that.
 		for change := range recv {
-			var newValue, oldValue *traits.ElectricMode
+			var newValue, oldValue *electricpb.ElectricMode
 			if change.NewValue != nil {
-				newValue = change.NewValue.(*traits.ElectricMode)
+				newValue = change.NewValue.(*electricpb.ElectricMode)
 			}
 			if change.OldValue != nil {
-				oldValue = change.OldValue.(*traits.ElectricMode)
+				oldValue = change.OldValue.(*electricpb.ElectricMode)
 			}
 
 			pullChange := PullModesChange{
@@ -354,17 +354,17 @@ func (m *Model) PullModes(ctx context.Context, opts ...resource.ReadOption) <-ch
 
 // NormalMode returns the mode which has Normal == true. A device can have at most 1 such mode.
 // If there is no normal mode on this device, then (nil, false) is returned.
-func (m *Model) NormalMode() (*traits.ElectricMode, bool) {
+func (m *Model) NormalMode() (*electricpb.ElectricMode, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.normalMode()
 }
 
-func (m *Model) normalMode() (*traits.ElectricMode, bool) {
+func (m *Model) normalMode() (*electricpb.ElectricMode, bool) {
 	modes := m.modes.List()
 
 	for _, mode := range modes {
-		mode := mode.(*traits.ElectricMode)
+		mode := mode.(*electricpb.ElectricMode)
 		if mode.Normal {
 			return mode, true
 		}
@@ -375,17 +375,17 @@ func (m *Model) normalMode() (*traits.ElectricMode, bool) {
 
 type PullModesChange struct {
 	Type       types.ChangeType
-	NewValue   *traits.ElectricMode
-	OldValue   *traits.ElectricMode
+	NewValue   *electricpb.ElectricMode
+	OldValue   *electricpb.ElectricMode
 	ChangeTime time.Time
 }
 
 type PullDemandChange struct {
-	Value      *traits.ElectricDemand
+	Value      *electricpb.ElectricDemand
 	ChangeTime time.Time
 }
 
 type PullActiveModeChange struct {
-	ActiveMode *traits.ElectricMode
+	ActiveMode *electricpb.ElectricMode
 	ChangeTime time.Time
 }

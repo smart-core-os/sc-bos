@@ -8,13 +8,13 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func TestMemoryDevice_GetState_Initial(t *testing.T) {
 	api := NewMemoryDevice()
-	state, err := api.GetAirTemperature(context.Background(), &traits.GetAirTemperatureRequest{Name: "test"})
+	state, err := api.GetAirTemperature(context.Background(), &airtemperaturepb.GetAirTemperatureRequest{Name: "test"})
 	if err != nil {
 		t.Errorf("error not expected %v", err)
 	}
@@ -25,18 +25,18 @@ func TestMemoryDevice_GetState_Initial(t *testing.T) {
 
 func TestMemoryDevice_UpdateAirTemperature(t *testing.T) {
 	api := NewMemoryDevice()
-	initialState, _ := api.GetAirTemperature(context.Background(), &traits.GetAirTemperatureRequest{Name: "test"})
-	newState := &traits.AirTemperature{
+	initialState, _ := api.GetAirTemperature(context.Background(), &airtemperaturepb.GetAirTemperatureRequest{Name: "test"})
+	newState := &airtemperaturepb.AirTemperature{
 		// fields we can edit
-		Mode: traits.AirTemperature_ECO,
-		TemperatureGoal: &traits.AirTemperature_TemperatureSetPoint{
+		Mode: airtemperaturepb.AirTemperature_ECO,
+		TemperatureGoal: &airtemperaturepb.AirTemperature_TemperatureSetPoint{
 			TemperatureSetPoint: &types.Temperature{ValueCelsius: 30},
 		},
 		// fields we can't edit
 		AmbientTemperature: &types.Temperature{ValueCelsius: -12},
 		AmbientHumidity:    pfloat32(12.2),
 	}
-	updatedState, err := api.UpdateAirTemperature(context.Background(), &traits.UpdateAirTemperatureRequest{
+	updatedState, err := api.UpdateAirTemperature(context.Background(), &airtemperaturepb.UpdateAirTemperatureRequest{
 		Name:  "test",
 		State: newState,
 	})
@@ -63,18 +63,18 @@ func TestMemoryDevice_UpdateAirTemperature(t *testing.T) {
 
 func TestMemoryDevice_UpdateAirTemperature_Mask(t *testing.T) {
 	api := NewMemoryDevice()
-	initialState, _ := api.GetAirTemperature(context.Background(), &traits.GetAirTemperatureRequest{Name: "test"})
-	newState := &traits.AirTemperature{
+	initialState, _ := api.GetAirTemperature(context.Background(), &airtemperaturepb.GetAirTemperatureRequest{Name: "test"})
+	newState := &airtemperaturepb.AirTemperature{
 		// fields we can edit
-		Mode: traits.AirTemperature_ECO,
-		TemperatureGoal: &traits.AirTemperature_TemperatureSetPoint{
+		Mode: airtemperaturepb.AirTemperature_ECO,
+		TemperatureGoal: &airtemperaturepb.AirTemperature_TemperatureSetPoint{
 			TemperatureSetPoint: &types.Temperature{ValueCelsius: 30},
 		},
 		// fields we can't edit
 		AmbientTemperature: &types.Temperature{ValueCelsius: -12},
 		AmbientHumidity:    pfloat32(12.2),
 	}
-	updatedState, err := api.UpdateAirTemperature(context.Background(), &traits.UpdateAirTemperatureRequest{
+	updatedState, err := api.UpdateAirTemperature(context.Background(), &airtemperaturepb.UpdateAirTemperatureRequest{
 		Name:       "test",
 		State:      newState,
 		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"mode"}},

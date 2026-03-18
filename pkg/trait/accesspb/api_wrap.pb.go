@@ -5,32 +5,32 @@ package accesspb
 import (
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // WrapApi	adapts a traits.AccessApiServer	and presents it as a traits.AccessApiClient
-func WrapApi(server traits.AccessApiServer) *ApiWrapper {
-	conn := wrap.ServerToClient(traits.AccessApi_ServiceDesc, server)
-	client := traits.NewAccessApiClient(conn)
+func WrapApi(server accesspb.AccessApiServer) *ApiWrapper {
+	conn := wrap.ServerToClient(accesspb.AccessApi_ServiceDesc, server)
+	client := accesspb.NewAccessApiClient(conn)
 	return &ApiWrapper{
 		AccessApiClient: client,
 		server:          server,
 		conn:            conn,
-		desc:            traits.AccessApi_ServiceDesc,
+		desc:            accesspb.AccessApi_ServiceDesc,
 	}
 }
 
 type ApiWrapper struct {
-	traits.AccessApiClient
+	accesspb.AccessApiClient
 
-	server traits.AccessApiServer
+	server accesspb.AccessApiServer
 	conn   grpc.ClientConnInterface
 	desc   grpc.ServiceDesc
 }
 
 // UnwrapServer returns the underlying server instance.
-func (w *ApiWrapper) UnwrapServer() traits.AccessApiServer {
+func (w *ApiWrapper) UnwrapServer() accesspb.AccessApiServer {
 	return w.server
 }
 

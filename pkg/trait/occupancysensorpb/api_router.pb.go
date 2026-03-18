@@ -9,19 +9,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // ApiRouter is a traits.OccupancySensorApiServer that allows routing named requests to specific traits.OccupancySensorApiClient
 type ApiRouter struct {
-	traits.UnimplementedOccupancySensorApiServer
+	occupancysensorpb.UnimplementedOccupancySensorApiServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.OccupancySensorApiServer = (*ApiRouter)(nil)
+var _ occupancysensorpb.OccupancySensorApiServer = (*ApiRouter)(nil)
 
 func NewApiRouter(opts ...router.Option) *ApiRouter {
 	return &ApiRouter{
@@ -31,14 +31,14 @@ func NewApiRouter(opts ...router.Option) *ApiRouter {
 
 // WithOccupancySensorApiClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithOccupancySensorApiClientFactory(f func(name string) (traits.OccupancySensorApiClient, error)) router.Option {
+func WithOccupancySensorApiClientFactory(f func(name string) (occupancysensorpb.OccupancySensorApiClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *ApiRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterOccupancySensorApiServer(server, r)
+	occupancysensorpb.RegisterOccupancySensorApiServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.OccupancySensorApiClient.
@@ -50,27 +50,27 @@ func (r *ApiRouter) Add(name string, client any) any {
 }
 
 func (r *ApiRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.OccupancySensorApiClient)
+	_, ok := client.(occupancysensorpb.OccupancySensorApiClient)
 	return ok
 }
 
-func (r *ApiRouter) AddOccupancySensorApiClient(name string, client traits.OccupancySensorApiClient) traits.OccupancySensorApiClient {
+func (r *ApiRouter) AddOccupancySensorApiClient(name string, client occupancysensorpb.OccupancySensorApiClient) occupancysensorpb.OccupancySensorApiClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.OccupancySensorApiClient)
+	return res.(occupancysensorpb.OccupancySensorApiClient)
 }
 
-func (r *ApiRouter) RemoveOccupancySensorApiClient(name string) traits.OccupancySensorApiClient {
+func (r *ApiRouter) RemoveOccupancySensorApiClient(name string) occupancysensorpb.OccupancySensorApiClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.OccupancySensorApiClient)
+	return res.(occupancysensorpb.OccupancySensorApiClient)
 }
 
-func (r *ApiRouter) GetOccupancySensorApiClient(name string) (traits.OccupancySensorApiClient, error) {
+func (r *ApiRouter) GetOccupancySensorApiClient(name string) (occupancysensorpb.OccupancySensorApiClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -78,10 +78,10 @@ func (r *ApiRouter) GetOccupancySensorApiClient(name string) (traits.OccupancySe
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.OccupancySensorApiClient), nil
+	return res.(occupancysensorpb.OccupancySensorApiClient), nil
 }
 
-func (r *ApiRouter) GetOccupancy(ctx context.Context, request *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
+func (r *ApiRouter) GetOccupancy(ctx context.Context, request *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
 	child, err := r.GetOccupancySensorApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (r *ApiRouter) GetOccupancy(ctx context.Context, request *traits.GetOccupan
 	return child.GetOccupancy(ctx, request)
 }
 
-func (r *ApiRouter) PullOccupancy(request *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+func (r *ApiRouter) PullOccupancy(request *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
 	child, err := r.GetOccupancySensorApiClient(request.Name)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (r *ApiRouter) PullOccupancy(request *traits.PullOccupancyRequest, server t
 		// Impl note: we could improve throughput here by issuing the Recv and Send in different goroutines, but we're doing
 		// it synchronously until we have a need to change the behaviour
 
-		var msg *traits.PullOccupancyResponse
+		var msg *occupancysensorpb.PullOccupancyResponse
 		msg, err = stream.Recv()
 		if err != nil {
 			break

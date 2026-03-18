@@ -29,10 +29,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/test/shared"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -183,9 +184,9 @@ func waitForNode(t *testing.T, ctx context.Context, addr string) {
 	}
 	defer conn.Close()
 
-	client := traits.NewMetadataApiClient(conn)
+	client := metadatapb.NewMetadataApiClient(conn)
 	err = backoff.Retry(func() error {
-		_, err := client.GetMetadata(ctx, &traits.GetMetadataRequest{})
+		_, err := client.GetMetadata(ctx, &metadatapb.GetMetadataRequest{})
 		if code := status.Code(err); err != nil && code != codes.Unavailable {
 			t.Logf("failed to poll node %q for liveness: %v", addr, err)
 		}
@@ -287,7 +288,7 @@ func testGW(t *testing.T, ctx context.Context, addr string) {
 	})
 
 	t.Run("onOff devices respond", func(t *testing.T) {
-		client := traits.NewOnOffApiClient(conn)
+		client := onoffpb.NewOnOffApiClient(conn)
 		for _, name := range onOffDevices {
 			testOnOffApi(t, ctx, addr, name, client)
 		}
@@ -342,9 +343,9 @@ func testGW(t *testing.T, ctx context.Context, addr string) {
 func waitForDevice(t *testing.T, ctx context.Context, conn *grpc.ClientConn, name string) {
 	t.Helper()
 
-	client := traits.NewMetadataApiClient(conn)
+	client := metadatapb.NewMetadataApiClient(conn)
 	err := backoff.Retry(func() error {
-		_, err := client.GetMetadata(ctx, &traits.GetMetadataRequest{Name: name})
+		_, err := client.GetMetadata(ctx, &metadatapb.GetMetadataRequest{Name: name})
 		return err
 	}, backoff.WithContext(backoff.NewExponentialBackOff(backoff.WithMaxInterval(5*time.Second)), ctx))
 	if err != nil {
@@ -369,7 +370,7 @@ func testDevicesApiHasNames(t *testing.T, ctx context.Context, addr string, name
 	}
 }
 
-func testOnOffApi(t *testing.T, ctx context.Context, addr, name string, client traits.OnOffApiClient) {
+func testOnOffApi(t *testing.T, ctx context.Context, addr, name string, client onoffpb.OnOffApiClient) {
 	t.Helper()
 
 	// useful for cancelling the stream
@@ -377,17 +378,17 @@ func testOnOffApi(t *testing.T, ctx context.Context, addr, name string, client t
 	defer cancel()
 
 	// set initial known state: ON
-	res, err := client.UpdateOnOff(ctx, &traits.UpdateOnOffRequest{Name: name, OnOff: &traits.OnOff{State: traits.OnOff_ON}})
+	res, err := client.UpdateOnOff(ctx, &onoffpb.UpdateOnOffRequest{Name: name, OnOff: &onoffpb.OnOff{State: onoffpb.OnOff_ON}})
 	if err != nil {
 		t.Fatalf("[%s] update onoff %s: %v", addr, name, err)
 	}
-	if diff := cmp.Diff(&traits.OnOff{State: traits.OnOff_ON}, res, protocmp.Transform()); diff != "" {
+	if diff := cmp.Diff(&onoffpb.OnOff{State: onoffpb.OnOff_ON}, res, protocmp.Transform()); diff != "" {
 		t.Fatalf("[%s] update onoff %s: unexpected response (-want +got):\n%s", addr, name, diff)
 	}
 
 	// subscribe
-	changes := make(chan *traits.PullOnOffResponse, 1) // we're only expecting 1
-	stream, err := client.PullOnOff(ctx, &traits.PullOnOffRequest{Name: name, UpdatesOnly: true})
+	changes := make(chan *onoffpb.PullOnOffResponse, 1) // we're only expecting 1
+	stream, err := client.PullOnOff(ctx, &onoffpb.PullOnOffRequest{Name: name, UpdatesOnly: true})
 	if err != nil {
 		t.Fatalf("[%s] pull onoff %s: %v", addr, name, err)
 	}
@@ -407,28 +408,28 @@ func testOnOffApi(t *testing.T, ctx context.Context, addr, name string, client t
 	}()
 
 	// check initial state
-	res, err = client.GetOnOff(ctx, &traits.GetOnOffRequest{Name: name})
+	res, err = client.GetOnOff(ctx, &onoffpb.GetOnOffRequest{Name: name})
 	if err != nil {
 		t.Fatalf("[%s] get onoff %s: %v", addr, name, err)
 	}
-	if diff := cmp.Diff(&traits.OnOff{State: traits.OnOff_ON}, res, protocmp.Transform()); diff != "" {
+	if diff := cmp.Diff(&onoffpb.OnOff{State: onoffpb.OnOff_ON}, res, protocmp.Transform()); diff != "" {
 		t.Fatalf("[%s] get onoff %s: unexpected response (-want +got):\n%s", addr, name, diff)
 	}
 
 	// Perform update and check for change
-	res, err = client.UpdateOnOff(ctx, &traits.UpdateOnOffRequest{Name: name, OnOff: &traits.OnOff{State: traits.OnOff_OFF}})
+	res, err = client.UpdateOnOff(ctx, &onoffpb.UpdateOnOffRequest{Name: name, OnOff: &onoffpb.OnOff{State: onoffpb.OnOff_OFF}})
 	if err != nil {
 		t.Fatalf("[%s] update onoff %s: %v", addr, name, err)
 	}
-	if diff := cmp.Diff(&traits.OnOff{State: traits.OnOff_OFF}, res, protocmp.Transform()); diff != "" {
+	if diff := cmp.Diff(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}, res, protocmp.Transform()); diff != "" {
 		t.Fatalf("[%s] update onoff %s: unexpected response (-want +got):\n%s", addr, name, diff)
 	}
 	select {
 	case res := <-changes:
-		want := &traits.PullOnOffResponse{Changes: []*traits.PullOnOffResponse_Change{
+		want := &onoffpb.PullOnOffResponse{Changes: []*onoffpb.PullOnOffResponse_Change{
 			{
 				Name:  name,
-				OnOff: &traits.OnOff{State: traits.OnOff_OFF},
+				OnOff: &onoffpb.OnOff{State: onoffpb.OnOff_OFF},
 			},
 		}}
 		// clear timestamps to make comparing easier

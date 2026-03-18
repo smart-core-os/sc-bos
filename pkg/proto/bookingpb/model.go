@@ -8,7 +8,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -25,26 +24,26 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) ListBookings(opts ...resource.ReadOption) []*traits.Booking {
+func (m *Model) ListBookings(opts ...resource.ReadOption) []*Booking {
 	msgs := m.bookings.List(opts...)
-	res := make([]*traits.Booking, len(msgs))
+	res := make([]*Booking, len(msgs))
 	for i, msg := range msgs {
-		res[i] = msg.(*traits.Booking)
+		res[i] = msg.(*Booking)
 	}
 	return res
 }
 
-func (m *Model) CreateBooking(booking *traits.Booking) (*traits.Booking, error) {
+func (m *Model) CreateBooking(booking *Booking) (*Booking, error) {
 	msg, err := m.bookings.Add(booking.Id, booking, resource.WithGenIDIfAbsent(), resource.WithIDCallback(func(id string) {
 		booking.Id = id
 	}))
 	if msg == nil {
 		return nil, err
 	}
-	return msg.(*traits.Booking), err
+	return msg.(*Booking), err
 }
 
-func (m *Model) UpdateBooking(booking *traits.Booking, opts ...resource.WriteOption) (*traits.Booking, error) {
+func (m *Model) UpdateBooking(booking *Booking, opts ...resource.WriteOption) (*Booking, error) {
 	if booking.Id == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "missing booking.id")
 	}
@@ -53,7 +52,7 @@ func (m *Model) UpdateBooking(booking *traits.Booking, opts ...resource.WriteOpt
 	if newVal == nil {
 		return nil, err
 	}
-	return newVal.(*traits.Booking), err
+	return newVal.(*Booking), err
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -61,7 +60,7 @@ type BookingChange struct {
 	ChangeTime time.Time
 	ChangeType types.ChangeType
 
-	OldValue, NewValue *traits.Booking
+	OldValue, NewValue *Booking
 }
 
 func (m *Model) PullBookings(ctx context.Context, opts ...resource.ReadOption) <-chan BookingChange {
@@ -75,10 +74,10 @@ func (m *Model) PullBookings(ctx context.Context, opts ...resource.ReadOption) <
 				ChangeType: change.ChangeType,
 			}
 			if change.OldValue != nil {
-				event.OldValue = change.OldValue.(*traits.Booking)
+				event.OldValue = change.OldValue.(*Booking)
 			}
 			if change.NewValue != nil {
-				event.NewValue = change.NewValue.(*traits.Booking)
+				event.NewValue = change.NewValue.(*Booking)
 			}
 
 			select {

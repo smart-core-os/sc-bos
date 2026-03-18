@@ -15,10 +15,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type CardholderList struct {
@@ -168,12 +168,12 @@ func (cc *CardholderController) refreshCardholders(announcer node.Announcer, scN
 	for id, c := range cardholders {
 		if _, ok := cc.cardholders[id]; !ok {
 			c.ScName = path.Join(scNamePrefix, "cardholders", c.Id)
-			c.Meta = &traits.Metadata{
-				Appearance: &traits.Metadata_Appearance{
+			c.Meta = &metadatapb.Metadata{
+				Appearance: &metadatapb.Metadata_Appearance{
 					Title:       "Cardholder: " + c.FirstName + " " + c.LastName,
 					Description: c.Description,
 				},
-				Membership: &traits.Metadata_Membership{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "acs",
 				},
 			}

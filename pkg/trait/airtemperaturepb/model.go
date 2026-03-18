@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Model struct {
@@ -19,16 +19,16 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) UpdateAirTemperature(airTemperature *traits.AirTemperature, opts ...resource.WriteOption) (*traits.AirTemperature, error) {
+func (m *Model) UpdateAirTemperature(airTemperature *airtemperaturepb.AirTemperature, opts ...resource.WriteOption) (*airtemperaturepb.AirTemperature, error) {
 	res, err := m.airTemperature.Set(airTemperature, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*traits.AirTemperature), nil
+	return res.(*airtemperaturepb.AirTemperature), nil
 }
 
-func (m *Model) GetAirTemperature(opts ...resource.ReadOption) (*traits.AirTemperature, error) {
-	return m.airTemperature.Get(opts...).(*traits.AirTemperature), nil
+func (m *Model) GetAirTemperature(opts ...resource.ReadOption) (*airtemperaturepb.AirTemperature, error) {
+	return m.airTemperature.Get(opts...).(*airtemperaturepb.AirTemperature), nil
 }
 
 func (m *Model) PullAirTemperature(ctx context.Context, opts ...resource.ReadOption) <-chan PullAirTemperatureChange {
@@ -38,7 +38,7 @@ func (m *Model) PullAirTemperature(ctx context.Context, opts ...resource.ReadOpt
 	go func() {
 		defer close(send)
 		for change := range recv {
-			value := change.Value.(*traits.AirTemperature)
+			value := change.Value.(*airtemperaturepb.AirTemperature)
 			send <- PullAirTemperatureChange{
 				Value:      value,
 				ChangeTime: change.ChangeTime,
@@ -50,6 +50,6 @@ func (m *Model) PullAirTemperature(ctx context.Context, opts ...resource.ReadOpt
 }
 
 type PullAirTemperatureChange struct {
-	Value      *traits.AirTemperature
+	Value      *airtemperaturepb.AirTemperature
 	ChangeTime time.Time
 }

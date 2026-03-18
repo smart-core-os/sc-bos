@@ -3,15 +3,15 @@ package enterleavesensorpb
 import (
 	"context"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type ModelServer struct {
-	traits.UnimplementedEnterLeaveSensorApiServer
+	enterleavesensorpb.UnimplementedEnterLeaveSensorApiServer
 	model *Model
 }
 
@@ -25,20 +25,20 @@ func (m *ModelServer) Unwrap() any {
 }
 
 func (m *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterEnterLeaveSensorApiServer(server, m)
+	enterleavesensorpb.RegisterEnterLeaveSensorApiServer(server, m)
 }
 
-func (m *ModelServer) GetEnterLeaveEvent(ctx context.Context, request *traits.GetEnterLeaveEventRequest) (*traits.EnterLeaveEvent, error) {
+func (m *ModelServer) GetEnterLeaveEvent(ctx context.Context, request *enterleavesensorpb.GetEnterLeaveEventRequest) (*enterleavesensorpb.EnterLeaveEvent, error) {
 	return m.model.GetEnterLeaveEvent(resource.WithReadMask(request.ReadMask))
 }
 
-func (m *ModelServer) ResetEnterLeaveTotals(ctx context.Context, request *traits.ResetEnterLeaveTotalsRequest) (*traits.ResetEnterLeaveTotalsResponse, error) {
-	return &traits.ResetEnterLeaveTotalsResponse{}, m.model.ResetTotals()
+func (m *ModelServer) ResetEnterLeaveTotals(ctx context.Context, request *enterleavesensorpb.ResetEnterLeaveTotalsRequest) (*enterleavesensorpb.ResetEnterLeaveTotalsResponse, error) {
+	return &enterleavesensorpb.ResetEnterLeaveTotalsResponse{}, m.model.ResetTotals()
 }
 
-func (m *ModelServer) PullEnterLeaveEvents(request *traits.PullEnterLeaveEventsRequest, server traits.EnterLeaveSensorApi_PullEnterLeaveEventsServer) error {
+func (m *ModelServer) PullEnterLeaveEvents(request *enterleavesensorpb.PullEnterLeaveEventsRequest, server enterleavesensorpb.EnterLeaveSensorApi_PullEnterLeaveEventsServer) error {
 	for change := range m.model.PullEnterLeaveEvents(server.Context(), resource.WithReadMask(request.ReadMask)) {
-		err := server.Send(&traits.PullEnterLeaveEventsResponse{Changes: []*traits.PullEnterLeaveEventsResponse_Change{
+		err := server.Send(&enterleavesensorpb.PullEnterLeaveEventsResponse{Changes: []*enterleavesensorpb.PullEnterLeaveEventsResponse_Change{
 			{Name: request.Name, ChangeTime: timestamppb.New(change.ChangeTime), EnterLeaveEvent: change.Value},
 		}})
 		if err != nil {

@@ -30,6 +30,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
@@ -42,7 +43,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func TestSystem_scanRemoteHub(t *testing.T) {
@@ -112,16 +112,16 @@ func TestSystem_scanRemoteHub(t *testing.T) {
 			if want := "ac1/dev2"; c.Old.name != want || c.New.name != want {
 				t.Fatalf("device update: unexpected names: want=%q, got old=%q new=%q", want, c.Old.name, c.New.name)
 			}
-			wantOldMd := &traits.Metadata{
+			wantOldMd := &metadatapb.Metadata{
 				Name: "ac1/dev2",
-				Traits: []*traits.TraitMetadata{
+				Traits: []*metadatapb.TraitMetadata{
 					{Name: string(trait.Metadata)},
 					{Name: string(trait.OnOff)},
 				},
 			}
-			wantNewMd := &traits.Metadata{
+			wantNewMd := &metadatapb.Metadata{
 				Name: "ac1/dev2",
-				Traits: []*traits.TraitMetadata{
+				Traits: []*metadatapb.TraitMetadata{
 					{Name: string(meterpb.TraitName)},
 					{Name: string(trait.Metadata)},
 					{Name: string(trait.OnOff)},

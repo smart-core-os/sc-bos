@@ -9,19 +9,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // ApiRouter is a traits.ElectricApiServer that allows routing named requests to specific traits.ElectricApiClient
 type ApiRouter struct {
-	traits.UnimplementedElectricApiServer
+	electricpb.UnimplementedElectricApiServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.ElectricApiServer = (*ApiRouter)(nil)
+var _ electricpb.ElectricApiServer = (*ApiRouter)(nil)
 
 func NewApiRouter(opts ...router.Option) *ApiRouter {
 	return &ApiRouter{
@@ -31,14 +31,14 @@ func NewApiRouter(opts ...router.Option) *ApiRouter {
 
 // WithElectricApiClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithElectricApiClientFactory(f func(name string) (traits.ElectricApiClient, error)) router.Option {
+func WithElectricApiClientFactory(f func(name string) (electricpb.ElectricApiClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *ApiRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterElectricApiServer(server, r)
+	electricpb.RegisterElectricApiServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.ElectricApiClient.
@@ -50,27 +50,27 @@ func (r *ApiRouter) Add(name string, client any) any {
 }
 
 func (r *ApiRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.ElectricApiClient)
+	_, ok := client.(electricpb.ElectricApiClient)
 	return ok
 }
 
-func (r *ApiRouter) AddElectricApiClient(name string, client traits.ElectricApiClient) traits.ElectricApiClient {
+func (r *ApiRouter) AddElectricApiClient(name string, client electricpb.ElectricApiClient) electricpb.ElectricApiClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.ElectricApiClient)
+	return res.(electricpb.ElectricApiClient)
 }
 
-func (r *ApiRouter) RemoveElectricApiClient(name string) traits.ElectricApiClient {
+func (r *ApiRouter) RemoveElectricApiClient(name string) electricpb.ElectricApiClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.ElectricApiClient)
+	return res.(electricpb.ElectricApiClient)
 }
 
-func (r *ApiRouter) GetElectricApiClient(name string) (traits.ElectricApiClient, error) {
+func (r *ApiRouter) GetElectricApiClient(name string) (electricpb.ElectricApiClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -78,10 +78,10 @@ func (r *ApiRouter) GetElectricApiClient(name string) (traits.ElectricApiClient,
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.ElectricApiClient), nil
+	return res.(electricpb.ElectricApiClient), nil
 }
 
-func (r *ApiRouter) GetDemand(ctx context.Context, request *traits.GetDemandRequest) (*traits.ElectricDemand, error) {
+func (r *ApiRouter) GetDemand(ctx context.Context, request *electricpb.GetDemandRequest) (*electricpb.ElectricDemand, error) {
 	child, err := r.GetElectricApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (r *ApiRouter) GetDemand(ctx context.Context, request *traits.GetDemandRequ
 	return child.GetDemand(ctx, request)
 }
 
-func (r *ApiRouter) PullDemand(request *traits.PullDemandRequest, server traits.ElectricApi_PullDemandServer) error {
+func (r *ApiRouter) PullDemand(request *electricpb.PullDemandRequest, server electricpb.ElectricApi_PullDemandServer) error {
 	child, err := r.GetElectricApiClient(request.Name)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (r *ApiRouter) PullDemand(request *traits.PullDemandRequest, server traits.
 		// Impl note: we could improve throughput here by issuing the Recv and Send in different goroutines, but we're doing
 		// it synchronously until we have a need to change the behaviour
 
-		var msg *traits.PullDemandResponse
+		var msg *electricpb.PullDemandResponse
 		msg, err = stream.Recv()
 		if err != nil {
 			break
@@ -149,7 +149,7 @@ func (r *ApiRouter) PullDemand(request *traits.PullDemandRequest, server traits.
 	}
 }
 
-func (r *ApiRouter) GetActiveMode(ctx context.Context, request *traits.GetActiveModeRequest) (*traits.ElectricMode, error) {
+func (r *ApiRouter) GetActiveMode(ctx context.Context, request *electricpb.GetActiveModeRequest) (*electricpb.ElectricMode, error) {
 	child, err := r.GetElectricApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -158,7 +158,7 @@ func (r *ApiRouter) GetActiveMode(ctx context.Context, request *traits.GetActive
 	return child.GetActiveMode(ctx, request)
 }
 
-func (r *ApiRouter) UpdateActiveMode(ctx context.Context, request *traits.UpdateActiveModeRequest) (*traits.ElectricMode, error) {
+func (r *ApiRouter) UpdateActiveMode(ctx context.Context, request *electricpb.UpdateActiveModeRequest) (*electricpb.ElectricMode, error) {
 	child, err := r.GetElectricApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -167,7 +167,7 @@ func (r *ApiRouter) UpdateActiveMode(ctx context.Context, request *traits.Update
 	return child.UpdateActiveMode(ctx, request)
 }
 
-func (r *ApiRouter) ClearActiveMode(ctx context.Context, request *traits.ClearActiveModeRequest) (*traits.ElectricMode, error) {
+func (r *ApiRouter) ClearActiveMode(ctx context.Context, request *electricpb.ClearActiveModeRequest) (*electricpb.ElectricMode, error) {
 	child, err := r.GetElectricApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -176,7 +176,7 @@ func (r *ApiRouter) ClearActiveMode(ctx context.Context, request *traits.ClearAc
 	return child.ClearActiveMode(ctx, request)
 }
 
-func (r *ApiRouter) PullActiveMode(request *traits.PullActiveModeRequest, server traits.ElectricApi_PullActiveModeServer) error {
+func (r *ApiRouter) PullActiveMode(request *electricpb.PullActiveModeRequest, server electricpb.ElectricApi_PullActiveModeServer) error {
 	child, err := r.GetElectricApiClient(request.Name)
 	if err != nil {
 		return err
@@ -206,7 +206,7 @@ func (r *ApiRouter) PullActiveMode(request *traits.PullActiveModeRequest, server
 		// Impl note: we could improve throughput here by issuing the Recv and Send in different goroutines, but we're doing
 		// it synchronously until we have a need to change the behaviour
 
-		var msg *traits.PullActiveModeResponse
+		var msg *electricpb.PullActiveModeResponse
 		msg, err = stream.Recv()
 		if err != nil {
 			break
@@ -235,7 +235,7 @@ func (r *ApiRouter) PullActiveMode(request *traits.PullActiveModeRequest, server
 	}
 }
 
-func (r *ApiRouter) ListModes(ctx context.Context, request *traits.ListModesRequest) (*traits.ListModesResponse, error) {
+func (r *ApiRouter) ListModes(ctx context.Context, request *electricpb.ListModesRequest) (*electricpb.ListModesResponse, error) {
 	child, err := r.GetElectricApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -244,7 +244,7 @@ func (r *ApiRouter) ListModes(ctx context.Context, request *traits.ListModesRequ
 	return child.ListModes(ctx, request)
 }
 
-func (r *ApiRouter) PullModes(request *traits.PullModesRequest, server traits.ElectricApi_PullModesServer) error {
+func (r *ApiRouter) PullModes(request *electricpb.PullModesRequest, server electricpb.ElectricApi_PullModesServer) error {
 	child, err := r.GetElectricApiClient(request.Name)
 	if err != nil {
 		return err
@@ -274,7 +274,7 @@ func (r *ApiRouter) PullModes(request *traits.PullModesRequest, server traits.El
 		// Impl note: we could improve throughput here by issuing the Recv and Send in different goroutines, but we're doing
 		// it synchronously until we have a need to change the behaviour
 
-		var msg *traits.PullModesResponse
+		var msg *electricpb.PullModesResponse
 		msg, err = stream.Recv()
 		if err != nil {
 			break

@@ -9,12 +9,12 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/lighting/config"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -44,8 +44,8 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	announceGroup := func(name string, lights []string, logger *zap.Logger) error {
 		group := &Group{
-			client:   traits.NewLightApiClient(conn),
-			info:     traits.NewLightInfoClient(conn),
+			client:   lightpb.NewLightApiClient(conn),
+			info:     lightpb.NewLightInfoClient(conn),
 			names:    lights,
 			readOnly: cfg.ReadOnlyLights,
 			logger:   logger,

@@ -20,12 +20,12 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/ptzpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Camera struct {
-	traits.UnimplementedPtzApiServer
+	ptzpb.UnimplementedPtzApiServer
 	mqttpb.UnimplementedMqttServiceServer
 	udmipb.UnimplementedUdmiServiceServer
 
@@ -51,7 +51,7 @@ func NewCamera(client *client, logger *zap.Logger, conf *config.Camera, fc *heal
 	}
 }
 
-func (c *Camera) UpdatePtz(ctx context.Context, request *traits.UpdatePtzRequest) (*traits.Ptz, error) {
+func (c *Camera) UpdatePtz(ctx context.Context, request *ptzpb.UpdatePtzRequest) (*ptzpb.Ptz, error) {
 	if request.State == nil {
 		return nil, status.Error(codes.InvalidArgument, "no PTZ state in request")
 	}
@@ -106,7 +106,7 @@ func (c *Camera) UpdatePtz(ctx context.Context, request *traits.UpdatePtzRequest
 	return nil, nil
 }
 
-func (c *Camera) Stop(ctx context.Context, _ *traits.StopPtzRequest) (*traits.Ptz, error) {
+func (c *Camera) Stop(ctx context.Context, _ *ptzpb.StopPtzRequest) (*ptzpb.Ptz, error) {
 	wg, ctx := errgroup.WithContext(ctx)
 
 	// we don't know which command(s) are running, so stop them all!

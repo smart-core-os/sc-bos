@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -43,11 +43,11 @@ func TestTemperatureSensor_GetAirTemperature(t *testing.T) {
 	}
 	tempSensor := newTemperatureSensor(client, nil)
 
-	res, err := tempSensor.GetAirTemperature(context.Background(), &traits.GetAirTemperatureRequest{})
+	res, err := tempSensor.GetAirTemperature(context.Background(), &airtemperaturepb.GetAirTemperatureRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error %v", err)
 	}
-	expect := &traits.AirTemperature{
+	expect := &airtemperaturepb.AirTemperature{
 		AmbientTemperature: &types.Temperature{
 			ValueCelsius: 20.2,
 		},

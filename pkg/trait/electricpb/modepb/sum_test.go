@@ -6,14 +6,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 func TestSum(t *testing.T) {
 	tests := []struct {
 		name string
-		args []*traits.ElectricMode
-		want *traits.ElectricMode
+		args []*electricpb.ElectricMode
+		want *electricpb.ElectricMode
 	}{
 		{"no modes", modes(), nil},
 		{"no segments st-none", modes(m(), m()), m()},

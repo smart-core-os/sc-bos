@@ -9,7 +9,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 var DefaultPresets = []Preset{
@@ -43,8 +42,8 @@ func NewModel(opts ...resource.Option) *Model {
 }
 
 // FanSpeed gets the current fan speed.
-func (m *Model) FanSpeed(opts ...resource.ReadOption) *traits.FanSpeed {
-	return m.fanSpeed.Get(opts...).(*traits.FanSpeed)
+func (m *Model) FanSpeed(opts ...resource.ReadOption) *FanSpeed {
+	return m.fanSpeed.Get(opts...).(*FanSpeed)
 }
 
 // UpdateFanSpeed changes the fan speed.
@@ -53,7 +52,7 @@ func (m *Model) FanSpeed(opts ...resource.ReadOption) *traits.FanSpeed {
 // for example if the preset changes then the percentage and preset index are also changed.
 // Providing a resource.InterceptAfter option will disable related property updating.
 // Using DeriveValues can re-enable related property computation if needed.
-func (m *Model) UpdateFanSpeed(fanSpeed *traits.FanSpeed, opts ...resource.WriteOption) (*traits.FanSpeed, error) {
+func (m *Model) UpdateFanSpeed(fanSpeed *FanSpeed, opts ...resource.WriteOption) (*FanSpeed, error) {
 	if err := m.validateUpdate(fanSpeed); err != nil {
 		return nil, err
 	}
@@ -63,10 +62,10 @@ func (m *Model) UpdateFanSpeed(fanSpeed *traits.FanSpeed, opts ...resource.Write
 	if val == nil {
 		return nil, err
 	}
-	return val.(*traits.FanSpeed), err
+	return val.(*FanSpeed), err
 }
 
-func (m *Model) validateUpdate(fanSpeed *traits.FanSpeed) error {
+func (m *Model) validateUpdate(fanSpeed *FanSpeed) error {
 	if fanSpeed.Preset != "" {
 		var found bool
 		for _, preset := range m.presets {
@@ -86,8 +85,8 @@ func (m *Model) validateUpdate(fanSpeed *traits.FanSpeed) error {
 // For example setting percentage when the preset changes.
 // Updated values will be set on new.
 func (m *Model) DeriveValues(old, new proto.Message) {
-	oldVal := old.(*traits.FanSpeed)
-	newVal := new.(*traits.FanSpeed)
+	oldVal := old.(*FanSpeed)
+	newVal := new.(*FanSpeed)
 	if oldVal.Preset != newVal.Preset {
 		// preset updated, keep the index and percentage in sync
 		for i, preset := range m.presets {
@@ -131,7 +130,7 @@ func (m *Model) DeriveValues(old, new proto.Message) {
 
 //goland:noinspection GoNameStartsWithPackageName
 type FanSpeedChange struct {
-	Value      *traits.FanSpeed
+	Value      *FanSpeed
 	ChangeTime time.Time
 }
 
@@ -140,7 +139,7 @@ func (m *Model) PullFanSpeed(ctx context.Context, opts ...resource.ReadOption) <
 	go func() {
 		defer close(send)
 		for change := range m.fanSpeed.Pull(ctx, opts...) {
-			val := change.Value.(*traits.FanSpeed)
+			val := change.Value.(*FanSpeed)
 			select {
 			case <-ctx.Done():
 				return

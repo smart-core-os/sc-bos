@@ -6,14 +6,14 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait/electricpb/segmentpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Cut cuts the given mode around the time t.
 // If mode has no start time then start time is assumed to be t, implying (nil, mode, false) is returned.
 // The returned value outside indicates whether t is outside the bounds of mode.
-func Cut(t time.Time, mode *traits.ElectricMode) (before, after *traits.ElectricMode, outside bool) {
+func Cut(t time.Time, mode *electricpb.ElectricMode) (before, after *electricpb.ElectricMode, outside bool) {
 	if len(mode.GetSegments()) == 0 {
 		return mode, mode, true // special case when the mode has no segments
 	}
@@ -29,8 +29,8 @@ func Cut(t time.Time, mode *traits.ElectricMode) (before, after *traits.Electric
 		return mode, nil, true
 	}
 
-	before = proto.Clone(mode).(*traits.ElectricMode)
-	after = proto.Clone(mode).(*traits.ElectricMode)
+	before = proto.Clone(mode).(*electricpb.ElectricMode)
+	after = proto.Clone(mode).(*electricpb.ElectricMode)
 	after.StartTime = timestamppb.New(t)
 
 	sb, sa, _ := segmentpb.Cut(d-elapsed, mode.Segments[index])

@@ -7,16 +7,16 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 func TestCut(t *testing.T) {
 	tests := []struct {
 		name        string
 		t           time.Time
-		mode        *traits.ElectricMode
-		wantBefore  *traits.ElectricMode
-		wantAfter   *traits.ElectricMode
+		mode        *electricpb.ElectricMode
+		wantBefore  *electricpb.ElectricMode
+		wantAfter   *electricpb.ElectricMode
 		wantOutside bool
 	}{
 		// no start time

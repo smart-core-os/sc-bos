@@ -5,32 +5,32 @@ package electricpb
 import (
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // WrapInfo	adapts a traits.ElectricInfoServer	and presents it as a traits.ElectricInfoClient
-func WrapInfo(server traits.ElectricInfoServer) *InfoWrapper {
-	conn := wrap.ServerToClient(traits.ElectricInfo_ServiceDesc, server)
-	client := traits.NewElectricInfoClient(conn)
+func WrapInfo(server electricpb.ElectricInfoServer) *InfoWrapper {
+	conn := wrap.ServerToClient(electricpb.ElectricInfo_ServiceDesc, server)
+	client := electricpb.NewElectricInfoClient(conn)
 	return &InfoWrapper{
 		ElectricInfoClient: client,
 		server:             server,
 		conn:               conn,
-		desc:               traits.ElectricInfo_ServiceDesc,
+		desc:               electricpb.ElectricInfo_ServiceDesc,
 	}
 }
 
 type InfoWrapper struct {
-	traits.ElectricInfoClient
+	electricpb.ElectricInfoClient
 
-	server traits.ElectricInfoServer
+	server electricpb.ElectricInfoServer
 	conn   grpc.ClientConnInterface
 	desc   grpc.ServiceDesc
 }
 
 // UnwrapServer returns the underlying server instance.
-func (w *InfoWrapper) UnwrapServer() traits.ElectricInfoServer {
+func (w *InfoWrapper) UnwrapServer() electricpb.ElectricInfoServer {
 	return w.server
 }
 

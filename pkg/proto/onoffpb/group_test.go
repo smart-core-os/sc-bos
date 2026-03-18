@@ -14,7 +14,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-bos/internal/th"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // todo: test one, some, all failures for get, update, pull
@@ -22,60 +21,60 @@ import (
 func TestGroup_GetOnOff(t *testing.T) {
 	tester := newOnOffTester(t, "A", "B")
 	// initial state
-	tester.assertGet(traits.OnOff_STATE_UNSPECIFIED)
+	tester.assertGet(OnOff_STATE_UNSPECIFIED)
 	// one off
-	tester.prepare(traits.OnOff_OFF, "B")
-	tester.assertGet(traits.OnOff_OFF)
+	tester.prepare(OnOff_OFF, "B")
+	tester.assertGet(OnOff_OFF)
 	// all off
-	tester.prepare(traits.OnOff_OFF, "A", "B")
-	tester.assertGet(traits.OnOff_OFF)
+	tester.prepare(OnOff_OFF, "A", "B")
+	tester.assertGet(OnOff_OFF)
 	// all on
-	tester.prepare(traits.OnOff_ON, "A", "B")
-	tester.assertGet(traits.OnOff_ON)
+	tester.prepare(OnOff_ON, "A", "B")
+	tester.assertGet(OnOff_ON)
 	// some on, prefer on
-	tester.prepare(traits.OnOff_OFF, "A")
-	tester.assertGet(traits.OnOff_ON)
+	tester.prepare(OnOff_OFF, "A")
+	tester.assertGet(OnOff_ON)
 }
 
 func TestGroup_UpdateOnOff(t *testing.T) {
 	tester := newOnOffTester(t, "A", "B")
 	// check no writes happen without us knowing
-	tester.confirm(traits.OnOff_STATE_UNSPECIFIED, "A", "B")
+	tester.confirm(OnOff_STATE_UNSPECIFIED, "A", "B")
 	// turn everything on
-	tester.assertUpdate(traits.OnOff_ON)
-	tester.confirm(traits.OnOff_ON, "A", "B")
+	tester.assertUpdate(OnOff_ON)
+	tester.confirm(OnOff_ON, "A", "B")
 	// turn everything off
-	tester.assertUpdate(traits.OnOff_OFF)
-	tester.confirm(traits.OnOff_OFF, "A", "B")
+	tester.assertUpdate(OnOff_OFF)
+	tester.confirm(OnOff_OFF, "A", "B")
 	// turn everything off again
-	tester.prepare(traits.OnOff_ON, "A", "B")
-	tester.assertUpdate(traits.OnOff_OFF)
-	tester.confirm(traits.OnOff_OFF, "A", "B")
+	tester.prepare(OnOff_ON, "A", "B")
+	tester.assertUpdate(OnOff_OFF)
+	tester.confirm(OnOff_OFF, "A", "B")
 }
 
 func TestGroup_PullOnOff(t *testing.T) {
 	tester := newOnOffTester(t, "A", "B").pull()
 	// current value sent immediately
-	tester.assertPull(traits.OnOff_STATE_UNSPECIFIED)
+	tester.assertPull(OnOff_STATE_UNSPECIFIED)
 	// message on first change
-	tester.prepare(traits.OnOff_ON, "A")
-	tester.assertPull(traits.OnOff_ON)
+	tester.prepare(OnOff_ON, "A")
+	tester.assertPull(OnOff_ON)
 	// no message if no change
-	tester.prepare(traits.OnOff_ON, "B")
+	tester.prepare(OnOff_ON, "B")
 	tester.assertNone()
 	// message on subsequent change
-	tester.prepare(traits.OnOff_OFF, "A", "B")
-	tester.assertPull(traits.OnOff_OFF)
+	tester.prepare(OnOff_OFF, "A", "B")
+	tester.assertPull(OnOff_OFF)
 }
 
 type onOffTester struct {
 	t    *testing.T
-	subj traits.OnOffApiClient
-	impl traits.OnOffApiClient
+	subj OnOffApiClient
+	impl OnOffApiClient
 }
 
 func newOnOffTester(t *testing.T, members ...string) *onOffTester {
-	devices := NewApiRouter(WithOnOffApiClientFactory(func(name string) (traits.OnOffApiClient, error) {
+	devices := NewApiRouter(WithOnOffApiClientFactory(func(name string) (OnOffApiClient, error) {
 		return WrapApi(NewModelServer(NewModel())), nil
 	}))
 	impl := WrapApi(devices)
@@ -85,7 +84,7 @@ func newOnOffTester(t *testing.T, members ...string) *onOffTester {
 	lis := bufconn.Listen(1024 * 1024)
 	// setup the server
 	server := grpc.NewServer()
-	traits.RegisterOnOffApiServer(server, group)
+	RegisterOnOffApiServer(server, group)
 	t.Cleanup(func() {
 		server.Stop()
 	})
@@ -102,7 +101,7 @@ func newOnOffTester(t *testing.T, members ...string) *onOffTester {
 		conn.Close()
 	})
 
-	client := traits.NewOnOffApiClient(conn)
+	client := NewOnOffApiClient(conn)
 
 	return &onOffTester{
 		t:    t,
@@ -111,23 +110,23 @@ func newOnOffTester(t *testing.T, members ...string) *onOffTester {
 	}
 }
 
-func (t *onOffTester) prepare(state traits.OnOff_State, names ...string) {
+func (t *onOffTester) prepare(state OnOff_State, names ...string) {
 	t.t.Helper()
 	for _, name := range names {
-		_, err := t.impl.UpdateOnOff(th.Ctx, &traits.UpdateOnOffRequest{Name: name, OnOff: &traits.OnOff{State: state}})
+		_, err := t.impl.UpdateOnOff(th.Ctx, &UpdateOnOffRequest{Name: name, OnOff: &OnOff{State: state}})
 		th.CheckErr(t.t, err, fmt.Sprintf("%v.UpdateOnOff", name))
 	}
 }
 
-func (t *onOffTester) confirm(state traits.OnOff_State, names ...string) {
+func (t *onOffTester) confirm(state OnOff_State, names ...string) {
 	t.t.Helper()
 	type badName struct {
 		name  string
-		state traits.OnOff_State
+		state OnOff_State
 	}
 	var badNames []badName
 	for _, name := range names {
-		got, err := t.impl.GetOnOff(th.Ctx, &traits.GetOnOffRequest{Name: name})
+		got, err := t.impl.GetOnOff(th.Ctx, &GetOnOffRequest{Name: name})
 		th.CheckErr(t.t, err, fmt.Sprintf("%v.GetOnOff", name))
 		if got.GetState() != state {
 			badNames = append(badNames, badName{name: name, state: got.GetState()})
@@ -147,22 +146,22 @@ func (t *onOffTester) confirm(state traits.OnOff_State, names ...string) {
 	}
 }
 
-func (t *onOffTester) assertGet(expected traits.OnOff_State) {
+func (t *onOffTester) assertGet(expected OnOff_State) {
 	t.t.Helper()
-	res, err := t.subj.GetOnOff(th.Ctx, &traits.GetOnOffRequest{Name: "Parent"})
+	res, err := t.subj.GetOnOff(th.Ctx, &GetOnOffRequest{Name: "Parent"})
 	th.CheckErr(t.t, err, "Parent.GetOnOff")
 	if res.GetState() != expected {
 		t.t.Fatalf("Parent.GetOnOff want %v, got %v", expected, res.GetState())
 	}
 }
 
-func (t *onOffTester) assertUpdate(state traits.OnOff_State, membersUpdated ...string) {
+func (t *onOffTester) assertUpdate(state OnOff_State, membersUpdated ...string) {
 	t.t.Helper()
-	updateState, err := t.subj.UpdateOnOff(th.Ctx, &traits.UpdateOnOffRequest{Name: "Parent", OnOff: &traits.OnOff{State: state}})
+	updateState, err := t.subj.UpdateOnOff(th.Ctx, &UpdateOnOffRequest{Name: "Parent", OnOff: &OnOff{State: state}})
 	th.CheckErr(t.t, err, "Parent.UpdateOnOff")
 	// note: can't compare the update result with the given state as we might be updating just a few
 	// It's more correct to compare with the GetOnOff state as that uses the same merge strategy
-	getState, err := t.subj.GetOnOff(th.Ctx, &traits.GetOnOffRequest{Name: "Parent"})
+	getState, err := t.subj.GetOnOff(th.Ctx, &GetOnOffRequest{Name: "Parent"})
 	if diff := cmp.Diff(getState, updateState, protocmp.Transform()); diff != "" {
 		t.t.Fatalf("Update state doesn't match read state (-want, +got)\n%v", diff)
 	}
@@ -170,21 +169,21 @@ func (t *onOffTester) assertUpdate(state traits.OnOff_State, membersUpdated ...s
 
 func (t *onOffTester) pull() *onOffStreamTester {
 	t.t.Helper()
-	s, err := t.subj.PullOnOff(th.Ctx, &traits.PullOnOffRequest{Name: "Parent"})
+	s, err := t.subj.PullOnOff(th.Ctx, &PullOnOffRequest{Name: "Parent"})
 	th.CheckErr(t.t, err, "Parent.PullOnOff")
 	return &onOffStreamTester{onOffTester: t, s: s, c: make(chan onOffStreamMsg, 10)}
 }
 
 type onOffStreamTester struct {
 	*onOffTester
-	s traits.OnOffApi_PullOnOffClient
+	s OnOffApi_PullOnOffClient
 	c chan onOffStreamMsg
 
 	startOnce sync.Once
 }
 
 type onOffStreamMsg struct {
-	msg *traits.PullOnOffResponse
+	msg *PullOnOffResponse
 	err error
 }
 
@@ -243,7 +242,7 @@ func (t *onOffStreamTester) assertNone() {
 	}
 }
 
-func (t *onOffStreamTester) assertPull(want traits.OnOff_State) {
+func (t *onOffStreamTester) assertPull(want OnOff_State) {
 	t.start()
 	t.t.Helper()
 	now := time.Now()

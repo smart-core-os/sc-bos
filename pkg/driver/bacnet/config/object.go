@@ -3,8 +3,8 @@ package config
 import (
 	"fmt"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Object struct {
@@ -14,8 +14,8 @@ type Object struct {
 
 	COV *COV `json:"COV,omitempty"`
 
-	Trait    trait.Name       `json:"trait,omitempty"`
-	Metadata *traits.Metadata `json:"metadata,omitempty"` // applied to any traits created from this object
+	Trait    trait.Name           `json:"trait,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"` // applied to any traits created from this object
 
 	Priorities []Priority `json:"priorities,omitempty"`
 	Properties []Property `json:"properties,omitempty"`

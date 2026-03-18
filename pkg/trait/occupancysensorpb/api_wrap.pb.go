@@ -5,32 +5,32 @@ package occupancysensorpb
 import (
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // WrapApi	adapts a traits.OccupancySensorApiServer	and presents it as a traits.OccupancySensorApiClient
-func WrapApi(server traits.OccupancySensorApiServer) *ApiWrapper {
-	conn := wrap.ServerToClient(traits.OccupancySensorApi_ServiceDesc, server)
-	client := traits.NewOccupancySensorApiClient(conn)
+func WrapApi(server occupancysensorpb.OccupancySensorApiServer) *ApiWrapper {
+	conn := wrap.ServerToClient(occupancysensorpb.OccupancySensorApi_ServiceDesc, server)
+	client := occupancysensorpb.NewOccupancySensorApiClient(conn)
 	return &ApiWrapper{
 		OccupancySensorApiClient: client,
 		server:                   server,
 		conn:                     conn,
-		desc:                     traits.OccupancySensorApi_ServiceDesc,
+		desc:                     occupancysensorpb.OccupancySensorApi_ServiceDesc,
 	}
 }
 
 type ApiWrapper struct {
-	traits.OccupancySensorApiClient
+	occupancysensorpb.OccupancySensorApiClient
 
-	server traits.OccupancySensorApiServer
+	server occupancysensorpb.OccupancySensorApiServer
 	conn   grpc.ClientConnInterface
 	desc   grpc.ServiceDesc
 }
 
 // UnwrapServer returns the underlying server instance.
-func (w *ApiWrapper) UnwrapServer() traits.OccupancySensorApiServer {
+func (w *ApiWrapper) UnwrapServer() occupancysensorpb.OccupancySensorApiServer {
 	return w.server
 }
 

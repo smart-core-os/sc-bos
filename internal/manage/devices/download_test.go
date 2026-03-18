@@ -17,11 +17,12 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -41,12 +42,12 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 				}}),
 			),
 		),
-		node.HasMetadata(&traits.Metadata{Location: &traits.Metadata_Location{Floor: "01"}}),
+		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "01"}}),
 	)
 
 	airTempDevice := airtemperaturepb2.NewModel()
-	_, _ = airTempDevice.UpdateAirTemperature(&traits.AirTemperature{
-		TemperatureGoal:    &traits.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &types.Temperature{ValueCelsius: 23.5}},
+	_, _ = airTempDevice.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
+		TemperatureGoal:    &airtemperaturepb.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &types.Temperature{ValueCelsius: 23.5}},
 		AmbientTemperature: &types.Temperature{ValueCelsius: 19.2},
 		AmbientHumidity:    proto.Float32(62.1),
 	})
@@ -57,7 +58,7 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 				airtemperaturepb2.WrapApi(airtemperaturepb2.NewModelServer(airTempDevice)),
 			),
 		),
-		node.HasMetadata(&traits.Metadata{Location: &traits.Metadata_Location{Floor: "02"}}),
+		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "02"}}),
 	)
 
 	s := NewServer(n,

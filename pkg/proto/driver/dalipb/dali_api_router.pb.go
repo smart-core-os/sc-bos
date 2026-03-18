@@ -3,12 +3,10 @@
 package dalipb
 
 import (
-	"context"
-	"fmt"
-
-	"google.golang.org/grpc"
-
-	"github.com/smart-core-os/sc-bos/pkg/router"
+	context "context"
+	fmt "fmt"
+	router "github.com/smart-core-os/sc-bos/pkg/router"
+	grpc "google.golang.org/grpc"
 )
 
 // ApiRouter is a DaliApiServer that allows routing named requests to specific DaliApiClient

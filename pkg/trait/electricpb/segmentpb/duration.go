@@ -3,12 +3,12 @@ package segmentpb
 import (
 	"time"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 // Duration returns the total duration for all the given segments.
 // If a segment is found without a length, the total up to that point and true will be returned.
-func Duration(s ...*traits.ElectricMode_Segment) (total time.Duration, infinite bool) {
+func Duration(s ...*electricpb.ElectricMode_Segment) (total time.Duration, infinite bool) {
 	for _, segment := range s {
 		l := segment.GetLength()
 		if l == nil {

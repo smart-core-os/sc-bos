@@ -6,7 +6,7 @@ import (
 	"go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
 )
 
 // NewBoltStorage create a Storage using a Bolt database as the backend.
@@ -29,7 +29,7 @@ type boltStorage struct {
 	bucket []byte
 }
 
-func (b *boltStorage) LoadPublication(_ context.Context, pubID string) (*traits.Publication, error) {
+func (b *boltStorage) LoadPublication(_ context.Context, pubID string) (*publicationpb.Publication, error) {
 	var serialized []byte
 
 	err := b.db.View(func(tx *bbolt.Tx) error {
@@ -50,12 +50,12 @@ func (b *boltStorage) LoadPublication(_ context.Context, pubID string) (*traits.
 	}
 
 	// deserialize the binary protobuf
-	pub := &traits.Publication{}
+	pub := &publicationpb.Publication{}
 	err = proto.Unmarshal(serialized, pub)
 	return pub, err
 }
 
-func (b *boltStorage) StorePublication(_ context.Context, pub *traits.Publication) error {
+func (b *boltStorage) StorePublication(_ context.Context, pub *publicationpb.Publication) error {
 	if pub.GetId() == "" {
 		return ErrPublicationInvalid
 	}

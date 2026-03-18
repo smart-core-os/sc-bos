@@ -6,23 +6,23 @@ import (
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 // Sum combines the segment lists given by segmentSlices together into a single segment list.
-func Sum(segmentSlices ...[]*traits.ElectricMode_Segment) []*traits.ElectricMode_Segment {
+func Sum(segmentSlices ...[]*electricpb.ElectricMode_Segment) []*electricpb.ElectricMode_Segment {
 	// We ignore shape for now, that's a little hard to implement
 
 	// cuts stores all the rising and falling edges of the segment slices
 	cuts := calcCuts(segmentSlices...)
 
-	var result []*traits.ElectricMode_Segment
+	var result []*electricpb.ElectricMode_Segment
 	var lastTime time.Duration
 	for _, cut := range cuts {
 		length := cut.at - lastTime
 
 		if len(result) == 0 {
-			result = append(result, &traits.ElectricMode_Segment{})
+			result = append(result, &electricpb.ElectricMode_Segment{})
 		}
 
 		if length == 0 {
@@ -32,7 +32,7 @@ func Sum(segmentSlices ...[]*traits.ElectricMode_Segment) []*traits.ElectricMode
 
 		lastResult := result[len(result)-1]
 		lastResult.Length = durationpb.New(length)
-		result = append(result, &traits.ElectricMode_Segment{Magnitude: lastResult.Magnitude + cut.delta})
+		result = append(result, &electricpb.ElectricMode_Segment{Magnitude: lastResult.Magnitude + cut.delta})
 
 		lastTime = cut.at
 	}
@@ -47,7 +47,7 @@ func Sum(segmentSlices ...[]*traits.ElectricMode_Segment) []*traits.ElectricMode
 	return result
 }
 
-func calcCuts(segmentSlices ...[]*traits.ElectricMode_Segment) []cut {
+func calcCuts(segmentSlices ...[]*electricpb.ElectricMode_Segment) []cut {
 	var cuts []cut
 	for _, slice := range segmentSlices {
 		var cur time.Duration

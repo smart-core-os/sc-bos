@@ -8,24 +8,26 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/bms/config"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func NewReadState() *ReadState {
 	return &ReadState{
 		Now:            time.Now,
-		AirTemperature: make(map[DeviceName]Value[*traits.AirTemperature]),
+		AirTemperature: make(map[DeviceName]Value[*airtemperaturepb.AirTemperature]),
 		Modes:          make(map[DeviceName]map[string]Value[string]),
-		Occupancy:      make(map[DeviceName]Value[*traits.Occupancy]),
+		Occupancy:      make(map[DeviceName]Value[*occupancysensorpb.Occupancy]),
 	}
 }
 
 func NewWriteState() *WriteState {
 	return &WriteState{
 		Now:             time.Now,
-		Modes:           make(map[DeviceName]Value[*traits.ModeValues]),
-		AirTemperatures: make(map[DeviceName]Value[*traits.AirTemperature]),
+		Modes:           make(map[DeviceName]Value[*modepb.ModeValues]),
+		AirTemperatures: make(map[DeviceName]Value[*airtemperaturepb.AirTemperature]),
 	}
 }
 
@@ -36,9 +38,9 @@ type ReadState struct {
 	Now       func() time.Time
 	StartTime time.Time // when was the automation started
 
-	AirTemperature map[DeviceName]Value[*traits.AirTemperature]
+	AirTemperature map[DeviceName]Value[*airtemperaturepb.AirTemperature]
 	Modes          map[DeviceName]map[string]Value[string]
-	Occupancy      map[DeviceName]Value[*traits.Occupancy]
+	Occupancy      map[DeviceName]Value[*occupancysensorpb.Occupancy]
 
 	MeanOATemp *types.Temperature // mean outdoor air temperature
 }
@@ -59,8 +61,8 @@ type WriteState struct {
 	T0, T1  time.Time
 	Reasons []string
 
-	Modes           map[DeviceName]Value[*traits.ModeValues]
-	AirTemperatures map[DeviceName]Value[*traits.AirTemperature]
+	Modes           map[DeviceName]Value[*modepb.ModeValues]
+	AirTemperatures map[DeviceName]Value[*airtemperaturepb.AirTemperature]
 }
 
 // Before should be called before processing starts.
@@ -91,7 +93,7 @@ func (ws *WriteState) CopyFromReadState(rs *ReadState) {
 	for name, readModes := range rs.Modes {
 		writeVal := ws.Modes[name]
 		if writeVal.V == nil {
-			writeVal.V = &traits.ModeValues{Values: make(map[string]string)}
+			writeVal.V = &modepb.ModeValues{Values: make(map[string]string)}
 		}
 		for key, readVal := range readModes {
 			if readVal.V != "" && readVal.At.Sub(writeVal.At) > propagation {

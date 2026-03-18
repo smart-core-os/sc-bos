@@ -7,15 +7,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 func TestShift(t *testing.T) {
 	tests := []struct {
 		name     string
 		d        time.Duration
-		segments []*traits.ElectricMode_Segment
-		want     []*traits.ElectricMode_Segment
+		segments []*electricpb.ElectricMode_Segment
+		want     []*electricpb.ElectricMode_Segment
 	}{
 		{"empty+0", 0, segs(), segs()},
 		{"empty+10", 10, segs(), segs()},

@@ -21,8 +21,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/system/hub/remote"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -290,8 +290,8 @@ func (n *Server) TestHubNode(ctx context.Context, request *hubpb.TestHubNodeRequ
 		return nil, status.Error(codes.Unavailable, "failed connection")
 	}
 
-	client := traits.NewMetadataApiClient(conn)
-	_, err = client.GetMetadata(ctx, &traits.GetMetadataRequest{})
+	client := metadatapb.NewMetadataApiClient(conn)
+	_, err = client.GetMetadata(ctx, &metadatapb.GetMetadataRequest{})
 	if err != nil {
 		logger.Debug("failed api request", zap.Error(err))
 		return nil, status.Errorf(codes.Unavailable, "failed api request: %v", err)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
@@ -27,7 +26,7 @@ func WithBookingOption(opts ...resource.Option) resource.Option {
 // Can be used multiple times with bookings being additive.
 // Creating a model with duplicate booking ids will panic.
 // Calling this function with an empty booking id property will panic.
-func WithInitialBooking(bookings ...*traits.Booking) resource.Option {
+func WithInitialBooking(bookings ...*Booking) resource.Option {
 	opts := make([]resource.Option, len(bookings))
 	for i, booking := range bookings {
 		if booking.Id == "" {

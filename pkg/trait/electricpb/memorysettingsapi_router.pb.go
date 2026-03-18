@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // MemorySettingsApiRouter is a MemorySettingsApiServer that allows routing named requests to specific MemorySettingsApiClient
@@ -81,7 +81,7 @@ func (r *MemorySettingsApiRouter) GetMemorySettingsApiClient(name string) (Memor
 	return res.(MemorySettingsApiClient), nil
 }
 
-func (r *MemorySettingsApiRouter) UpdateDemand(ctx context.Context, request *UpdateDemandRequest) (*traits.ElectricDemand, error) {
+func (r *MemorySettingsApiRouter) UpdateDemand(ctx context.Context, request *UpdateDemandRequest) (*electricpb.ElectricDemand, error) {
 	child, err := r.GetMemorySettingsApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (r *MemorySettingsApiRouter) UpdateDemand(ctx context.Context, request *Upd
 	return child.UpdateDemand(ctx, request)
 }
 
-func (r *MemorySettingsApiRouter) CreateMode(ctx context.Context, request *CreateModeRequest) (*traits.ElectricMode, error) {
+func (r *MemorySettingsApiRouter) CreateMode(ctx context.Context, request *CreateModeRequest) (*electricpb.ElectricMode, error) {
 	child, err := r.GetMemorySettingsApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (r *MemorySettingsApiRouter) CreateMode(ctx context.Context, request *Creat
 	return child.CreateMode(ctx, request)
 }
 
-func (r *MemorySettingsApiRouter) UpdateMode(ctx context.Context, request *UpdateModeRequest) (*traits.ElectricMode, error) {
+func (r *MemorySettingsApiRouter) UpdateMode(ctx context.Context, request *UpdateModeRequest) (*electricpb.ElectricMode, error) {
 	child, err := r.GetMemorySettingsApiClient(request.Name)
 	if err != nil {
 		return nil, err

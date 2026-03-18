@@ -11,7 +11,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -26,7 +25,7 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) CreatePublication(publication *traits.Publication, opts ...resource.WriteOption) (*traits.Publication, error) {
+func (m *Model) CreatePublication(publication *Publication, opts ...resource.WriteOption) (*Publication, error) {
 	args := calcWriteArgs(opts...)
 	return toPublication(m.publications.Add(publication.Id, publication,
 		resource.WithGenIDIfAbsent(), resource.WithIDCallback(func(id string) {
@@ -36,28 +35,28 @@ func (m *Model) CreatePublication(publication *traits.Publication, opts ...resou
 	))
 }
 
-func (m *Model) GetPublication(id string, opts ...resource.ReadOption) (*traits.Publication, bool) {
+func (m *Model) GetPublication(id string, opts ...resource.ReadOption) (*Publication, bool) {
 	msg, ok := m.publications.Get(id, opts...)
 	if msg == nil {
 		return nil, ok
 	}
-	return msg.(*traits.Publication), ok
+	return msg.(*Publication), ok
 }
 
-func (m *Model) UpdatePublication(id string, publication *traits.Publication, opts ...resource.WriteOption) (*traits.Publication, error) {
+func (m *Model) UpdatePublication(id string, publication *Publication, opts ...resource.WriteOption) (*Publication, error) {
 	args := calcWriteArgs(opts...)
 	opts = append([]resource.WriteOption{m.withComputedProperties(args)}, opts...)
 	return toPublication(m.publications.Update(id, publication, opts...))
 }
 
-func (m *Model) DeletePublication(id string, opts ...resource.WriteOption) (*traits.Publication, error) {
+func (m *Model) DeletePublication(id string, opts ...resource.WriteOption) (*Publication, error) {
 	return toPublication(m.publications.Delete(id, opts...))
 }
 
 //goland:noinspection GoNameStartsWithPackageName
 type PublicationChange struct {
 	ChangeTime time.Time
-	Value      *traits.Publication
+	Value      *Publication
 }
 
 func (m *Model) PullPublication(ctx context.Context, id string, opts ...resource.ReadOption) <-chan PublicationChange {
@@ -68,18 +67,18 @@ func (m *Model) PullPublication(ctx context.Context, id string, opts ...resource
 			select {
 			case <-ctx.Done():
 				return
-			case send <- PublicationChange{ChangeTime: change.ChangeTime, Value: change.Value.(*traits.Publication)}:
+			case send <- PublicationChange{ChangeTime: change.ChangeTime, Value: change.Value.(*Publication)}:
 			}
 		}
 	}()
 	return send
 }
 
-func (m *Model) ListPublications(opts ...resource.ReadOption) []*traits.Publication {
+func (m *Model) ListPublications(opts ...resource.ReadOption) []*Publication {
 	msgs := m.publications.List(opts...)
-	items := make([]*traits.Publication, len(msgs))
+	items := make([]*Publication, len(msgs))
 	for i, msg := range msgs {
-		items[i] = msg.(*traits.Publication)
+		items[i] = msg.(*Publication)
 	}
 	return items
 }
@@ -88,8 +87,8 @@ type PublicationsChange struct {
 	ID         string
 	ChangeTime time.Time
 	ChangeType types.ChangeType
-	OldValue   *traits.Publication
-	NewValue   *traits.Publication
+	OldValue   *Publication
+	NewValue   *Publication
 }
 
 func (m *Model) PullPublications(ctx context.Context, opts ...resource.ReadOption) <-chan PublicationsChange {
@@ -103,10 +102,10 @@ func (m *Model) PullPublications(ctx context.Context, opts ...resource.ReadOptio
 				ChangeType: change.ChangeType,
 			}
 			if change.OldValue != nil {
-				event.OldValue = change.OldValue.(*traits.Publication)
+				event.OldValue = change.OldValue.(*Publication)
 			}
 			if change.NewValue != nil {
-				event.NewValue = change.NewValue.(*traits.Publication)
+				event.NewValue = change.NewValue.(*Publication)
 			}
 
 			select {
@@ -121,11 +120,11 @@ func (m *Model) PullPublications(ctx context.Context, opts ...resource.ReadOptio
 
 func (m *Model) withComputedProperties(args writeArgs) resource.WriteOption {
 	return resource.InterceptAfter(func(old, new proto.Message) {
-		newVal := new.(*traits.Publication)
+		newVal := new.(*Publication)
 		if args.resetReceipt {
 			if newVal.Audience != nil {
 				newVal.Audience.ReceiptTime = nil
-				newVal.Audience.Receipt = traits.Publication_Audience_NO_SIGNAL
+				newVal.Audience.Receipt = Publication_Audience_NO_SIGNAL
 				newVal.Audience.ReceiptRejectedReason = ""
 			}
 		}
@@ -138,14 +137,14 @@ func (m *Model) withComputedProperties(args writeArgs) resource.WriteOption {
 	})
 }
 
-func toPublication(msg proto.Message, err error) (*traits.Publication, error) {
+func toPublication(msg proto.Message, err error) (*Publication, error) {
 	if msg == nil {
 		return nil, err
 	}
-	return msg.(*traits.Publication), err
+	return msg.(*Publication), err
 }
 
-func mintVersion(p *traits.Publication) string {
+func mintVersion(p *Publication) string {
 	// Hash properties we are happy to include in our version calculation.
 	// Note: don't use proto.Marshal as it is non-deterministic
 	hash := md5.New()

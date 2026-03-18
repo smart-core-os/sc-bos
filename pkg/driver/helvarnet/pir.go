@@ -17,14 +17,14 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Pir represents a single PIR sensor within the HelvarNet system.
 type Pir struct {
-	traits.UnimplementedOccupancySensorApiServer
+	occupancysensorpb.UnimplementedOccupancySensorApiServer
 	udmipb.UnimplementedUdmiServiceServer
 
 	client    *tcpClient
@@ -39,7 +39,7 @@ func newPir(client *tcpClient, l *zap.Logger, conf *config.Device) *Pir {
 		client:    client,
 		conf:      conf,
 		logger:    l,
-		occupancy: resource.NewValue(resource.WithInitialValue(&traits.Occupancy{}), resource.WithNoDuplicates()),
+		occupancy: resource.NewValue(resource.WithInitialValue(&occupancysensorpb.Occupancy{}), resource.WithNoDuplicates()),
 	}
 }
 
@@ -64,13 +64,13 @@ func (p *Pir) refreshOccupancyStatus(ctx context.Context) error {
 		return err
 	}
 
-	occupancy := traits.Occupancy_UNOCCUPIED
+	occupancy := occupancysensorpb.Occupancy_UNOCCUPIED
 	if statusInt == 1 {
-		occupancy = traits.Occupancy_OCCUPIED
+		occupancy = occupancysensorpb.Occupancy_OCCUPIED
 	}
 
 	// Update the occupancy status
-	_, _ = p.occupancy.Set(&traits.Occupancy{
+	_, _ = p.occupancy.Set(&occupancysensorpb.Occupancy{
 		State:      occupancy,
 		Confidence: 1,
 	})
@@ -78,15 +78,15 @@ func (p *Pir) refreshOccupancyStatus(ctx context.Context) error {
 	return nil
 }
 
-func (p *Pir) GetOccupancy(context.Context, *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
-	value := p.occupancy.Get().(*traits.Occupancy)
+func (p *Pir) GetOccupancy(context.Context, *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
+	value := p.occupancy.Get().(*occupancysensorpb.Occupancy)
 	return value, nil
 }
 
-func (p *Pir) PullOccupancy(_ *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+func (p *Pir) PullOccupancy(_ *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
 	for value := range p.occupancy.Pull(server.Context()) {
-		occupancy := value.Value.(*traits.Occupancy)
-		err := server.Send(&traits.PullOccupancyResponse{Changes: []*traits.PullOccupancyResponse_Change{
+		occupancy := value.Value.(*occupancysensorpb.Occupancy)
+		err := server.Send(&occupancysensorpb.PullOccupancyResponse{Changes: []*occupancysensorpb.PullOccupancyResponse_Change{
 			{
 				Name:       p.conf.Name,
 				ChangeTime: timestamppb.New(value.ChangeTime),
@@ -124,7 +124,7 @@ func (p *Pir) runUpdateState(ctx context.Context, t time.Duration) error {
 
 func (p *Pir) udmiPointsetFromData() (*udmipb.MqttMessage, error) {
 	points := make(udmi.PointsEvent)
-	occupancy := p.occupancy.Get().(*traits.Occupancy)
+	occupancy := p.occupancy.Get().(*occupancysensorpb.Occupancy)
 	points["OccupancyStatus"] = udmi.PointValue{PresentValue: occupancy.State.String()}
 
 	b, err := json.Marshal(points)

@@ -10,9 +10,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 const PointsetVersion = "1.0.0"
@@ -105,7 +106,7 @@ func (u *udmiServiceServer) PullExportMessages(request *udmipb.PullExportMessage
 				break
 			}
 			if change != nil {
-				airQuality := change.Value.(*traits.EnterLeaveEvent)
+				airQuality := change.Value.(*enterleavesensorpb.EnterLeaveEvent)
 				appendEnterLeaveEventPoints(airQuality, &eventPoints)
 			}
 
@@ -115,7 +116,7 @@ func (u *udmiServiceServer) PullExportMessages(request *udmipb.PullExportMessage
 				break
 			}
 			if change != nil {
-				temperature := change.Value.(*traits.Occupancy)
+				temperature := change.Value.(*occupancysensorpb.Occupancy)
 				appendOccupancyEventPoints(temperature, &eventPoints)
 			}
 		}
@@ -138,12 +139,12 @@ func (u *udmiServiceServer) PullExportMessages(request *udmipb.PullExportMessage
 	}
 }
 
-func appendEnterLeaveEventPoints(e *traits.EnterLeaveEvent, eventPoints *EventPoints) {
+func appendEnterLeaveEventPoints(e *enterleavesensorpb.EnterLeaveEvent, eventPoints *EventPoints) {
 	eventPoints.EnterCount = &EventPoint[int32]{PresentValue: *e.EnterTotal}
 	eventPoints.LeaveCount = &EventPoint[int32]{PresentValue: *e.LeaveTotal}
 }
 
-func appendOccupancyEventPoints(o *traits.Occupancy, eventPoints *EventPoints) {
+func appendOccupancyEventPoints(o *occupancysensorpb.Occupancy, eventPoints *EventPoints) {
 	eventPoints.PeopleCount = &EventPoint[int32]{PresentValue: o.PeopleCount}
 	eventPoints.OccupancyState = &EventPoint[string]{PresentValue: o.State.String()}
 }

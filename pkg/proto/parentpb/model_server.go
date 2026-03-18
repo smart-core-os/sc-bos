@@ -6,13 +6,12 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // ModelServer exposes Model as a traits.ParentApiServer.
 type ModelServer struct {
-	traits.UnimplementedParentApiServer
+	UnimplementedParentApiServer
 	model *Model
 }
 
@@ -24,7 +23,7 @@ func (s *ModelServer) Unwrap() any {
 	return s.model
 }
 
-func (s *ModelServer) ListChildren(_ context.Context, request *traits.ListChildrenRequest) (*traits.ListChildrenResponse, error) {
+func (s *ModelServer) ListChildren(_ context.Context, request *ListChildrenRequest) (*ListChildrenResponse, error) {
 	pageToken := &types.PageToken{}
 	if err := decodePageToken(request.PageToken, pageToken); err != nil {
 		return nil, err
@@ -48,7 +47,7 @@ func (s *ModelServer) ListChildren(_ context.Context, request *traits.ListChildr
 		}
 	}
 
-	result := &traits.ListChildrenResponse{
+	result := &ListChildrenResponse{
 		TotalSize: int32(len(all)),
 	}
 	upperBound := nextIndex + pageSize
@@ -71,15 +70,15 @@ func (s *ModelServer) ListChildren(_ context.Context, request *traits.ListChildr
 	// apply read mask
 	mask := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 	for i, child := range result.Children {
-		result.Children[i] = mask.FilterClone(child).(*traits.Child)
+		result.Children[i] = mask.FilterClone(child).(*Child)
 	}
 
 	return result, nil
 }
 
-func (s *ModelServer) PullChildren(request *traits.PullChildrenRequest, server traits.ParentApi_PullChildrenServer) error {
+func (s *ModelServer) PullChildren(request *PullChildrenRequest, server ParentApi_PullChildrenServer) error {
 	for change := range s.model.PullChildren(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullChildrenResponse{Changes: []*traits.PullChildrenResponse_Change{change}})
+		err := server.Send(&PullChildrenResponse{Changes: []*PullChildrenResponse_Change{change}})
 		if err != nil {
 			return err
 		}

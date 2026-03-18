@@ -16,11 +16,14 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 const AutoName = "sccexporter"
@@ -33,12 +36,12 @@ type AutoImpl struct {
 	*service.Service[config.Root]
 	auto.Services
 
-	airQualityClient     traits.AirQualitySensorApiClient
-	airTemperatureClient traits.AirTemperatureApiClient
-	metadataClient       traits.MetadataApiClient
+	airQualityClient     airqualitysensorpb.AirQualitySensorApiClient
+	airTemperatureClient airtemperaturepb.AirTemperatureApiClient
+	metadataClient       metadatapb.MetadataApiClient
 	meterClient          meterpb.MeterApiClient
 	meterInfoClient      meterpb.MeterInfoClient
-	occupancyClient      traits.OccupancySensorApiClient
+	occupancyClient      occupancysensorpb.OccupancySensorApiClient
 }
 
 func (f factory) New(services auto.Services) service.Lifecycle {
@@ -51,12 +54,12 @@ func (f factory) New(services auto.Services) service.Lifecycle {
 }
 
 func (a *AutoImpl) initialiseClients(n *node.Node) {
-	a.airQualityClient = traits.NewAirQualitySensorApiClient(n.ClientConn())
-	a.airTemperatureClient = traits.NewAirTemperatureApiClient(n.ClientConn())
-	a.metadataClient = traits.NewMetadataApiClient(n.ClientConn())
+	a.airQualityClient = airqualitysensorpb.NewAirQualitySensorApiClient(n.ClientConn())
+	a.airTemperatureClient = airtemperaturepb.NewAirTemperatureApiClient(n.ClientConn())
+	a.metadataClient = metadatapb.NewMetadataApiClient(n.ClientConn())
 	a.meterClient = meterpb.NewMeterApiClient(n.ClientConn())
 	a.meterInfoClient = meterpb.NewMeterInfoClient(n.ClientConn())
-	a.occupancyClient = traits.NewOccupancySensorApiClient(n.ClientConn())
+	a.occupancyClient = occupancysensorpb.NewOccupancySensorApiClient(n.ClientConn())
 }
 
 func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
