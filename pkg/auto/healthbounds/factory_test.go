@@ -15,13 +15,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
@@ -33,7 +33,7 @@ func TestTracksDeviceValues(t *testing.T) {
 		h := newTestHarness(t)
 		h.configureAirTempMonitor()
 
-		airTempModel := airtemperaturepb2.NewModel()
+		airTempModel := airtemperaturepb.NewModel()
 		h.addAirTempDevice("room-1", airTempModel)
 		h.waitForHealthCheck("room-1")
 
@@ -54,11 +54,11 @@ func TestCreatesAndRemovesHealthChecks(t *testing.T) {
 
 		h.assertNoHealthChecks()
 
-		airTempModel1 := airtemperaturepb2.NewModel()
+		airTempModel1 := airtemperaturepb.NewModel()
 		undo1 := h.addAirTempDevice("room-1", airTempModel1)
 		h.waitForHealthCheck("room-1")
 
-		airTempModel2 := airtemperaturepb2.NewModel()
+		airTempModel2 := airtemperaturepb.NewModel()
 		undo2 := h.addAirTempDevice("room-2", airTempModel2)
 		h.waitForHealthCheck("room-2")
 
@@ -85,9 +85,9 @@ func TestCreatesHealthCheckPerDevice(t *testing.T) {
 		h := newTestHarness(t)
 		h.configureAirTempMonitor()
 
-		airTempModel1 := airtemperaturepb2.NewModel()
+		airTempModel1 := airtemperaturepb.NewModel()
 		h.addAirTempDevice("room-1", airTempModel1)
-		airTempModel2 := airtemperaturepb2.NewModel()
+		airTempModel2 := airtemperaturepb.NewModel()
 		h.addAirTempDevice("room-2", airTempModel2)
 
 		h.waitForHealthCheck("room-1")
@@ -112,7 +112,7 @@ func TestUpdatesNormality(t *testing.T) {
 		h := newTestHarness(t)
 		h.configureAirTempMonitor()
 
-		airTempModel := airtemperaturepb2.NewModel()
+		airTempModel := airtemperaturepb.NewModel()
 		h.addAirTempDevice("room-1", airTempModel)
 		h.waitForHealthCheck("room-1")
 
@@ -149,7 +149,7 @@ func TestHealthCheckProperties(t *testing.T) {
 		h := newTestHarness(t)
 		h.configureAirTempMonitor()
 
-		airTempModel := airtemperaturepb2.NewModel()
+		airTempModel := airtemperaturepb.NewModel()
 		h.addAirTempDevice("room-1", airTempModel)
 		h.waitForHealthCheck("room-1")
 
@@ -187,7 +187,7 @@ func TestHandlesNilAmbientTemperature(t *testing.T) {
 		h := newTestHarness(t)
 		h.configureAirTempMonitor()
 
-		airTempModel := airtemperaturepb2.NewModel()
+		airTempModel := airtemperaturepb.NewModel()
 		h.addAirTempDevice("room-1", airTempModel)
 		h.waitForHealthCheck("room-1")
 
@@ -319,9 +319,9 @@ func (h *testHarness) configureAirTempMonitor() {
 	}`)
 }
 
-func (h *testHarness) addAirTempDevice(name string, model *airtemperaturepb2.Model) node.Undo {
+func (h *testHarness) addAirTempDevice(name string, model *airtemperaturepb.Model) node.Undo {
 	return h.node.Announce(name,
-		node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb2.WrapApi(airtemperaturepb2.NewModelServer(model)))),
+		node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb2.WrapApi(airtemperaturepb.NewModelServer(model)))),
 	)
 }
 

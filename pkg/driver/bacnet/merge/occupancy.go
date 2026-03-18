@@ -16,7 +16,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 )
 
 type occupancyCfg struct {
@@ -39,8 +38,8 @@ type occupancy struct {
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *occupancysensorpb2.Model
-	*occupancysensorpb2.ModelServer
+	model *occupancysensorpb.Model
+	*occupancysensorpb.ModelServer
 	config   occupancyCfg
 	pollTask *task.Intermittent
 }
@@ -51,7 +50,7 @@ func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *heal
 		return nil, err
 	}
 
-	model := occupancysensorpb2.NewModel()
+	model := occupancysensorpb.NewModel()
 
 	o := &occupancy{
 		client:      client,
@@ -59,7 +58,7 @@ func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *heal
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: occupancysensorpb2.NewModelServer(model),
+		ModelServer: occupancysensorpb.NewModelServer(model),
 		config:      cfg,
 	}
 
@@ -69,7 +68,7 @@ func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *heal
 }
 
 func (o *occupancy) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(o.config.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(o))))
+	return a.Announce(o.config.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(o))))
 }
 
 func (o *occupancy) GetOccupancy(ctx context.Context, request *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {

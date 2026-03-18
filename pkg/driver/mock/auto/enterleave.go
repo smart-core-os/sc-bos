@@ -7,10 +7,9 @@ import (
 
 	gen_enterleavesensorpb "github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/pkg/trait/enterleavesensorpb"
 )
 
-func EnterLeaveAuto(model *enterleavesensorpb.Model) *service.Service[string] {
+func EnterLeaveAuto(model *gen_enterleavesensorpb.Model) *service.Service[string] {
 	occupant := []*gen_enterleavesensorpb.EnterLeaveEvent_Occupant{
 		nil,
 		{DisplayName: "Scott Lang", Ids: map[string]string{"card": "1234567890"}},

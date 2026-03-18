@@ -8,10 +8,9 @@ import (
 
 	gen_airqualitysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
 )
 
-func AirQualitySensorAuto(model *airqualitysensorpb.Model) *service.Service[string] {
+func AirQualitySensorAuto(model *gen_airqualitysensorpb.Model) *service.Service[string] {
 	slc := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		go func() {
 			ticker := time.NewTicker(30 * time.Second)

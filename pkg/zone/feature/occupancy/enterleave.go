@@ -15,7 +15,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/math2"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
@@ -36,7 +35,7 @@ type enterLeave struct {
 	names  []string
 	sla    *sla
 
-	model *occupancysensorpb.Model
+	model *gen_occupancysensorpb.Model
 
 	logger *zap.Logger
 }

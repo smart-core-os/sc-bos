@@ -12,19 +12,22 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/bookingpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	fanspeedpb2 "github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb"
-	hailpb2 "github.com/smart-core-os/sc-bos/pkg/proto/hailpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hailpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
-	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
-	metadatapb2 "github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/parentpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
@@ -40,11 +43,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
-	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
-	electricpb2 "github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
-	enterleavesensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/enterleavesensorpb"
-	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
@@ -160,11 +158,11 @@ func (d *Driver) applyConfig(_ context.Context, cfg config.Root) error {
 func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) ([]wrap.ServiceUnwrapper, service.Lifecycle) {
 	switch trait.Name(traitMd.Name) {
 	case trait.AirQualitySensor:
-		model := airqualitysensorpb2.NewModel(airqualitysensorpb2.WithInitialAirQuality(auto.GetAirQualityState()))
-		return []wrap.ServiceUnwrapper{airqualitysensorpb2.WrapApi(airqualitysensorpb2.NewModelServer(model))}, auto.AirQualitySensorAuto(model)
+		model := airqualitysensorpb.NewModel(airqualitysensorpb.WithInitialAirQuality(auto.GetAirQualityState()))
+		return []wrap.ServiceUnwrapper{airqualitysensorpb.WrapApi(airqualitysensorpb.NewModelServer(model))}, auto.AirQualitySensorAuto(model)
 	case trait.AirTemperature:
-		model := airtemperaturepb2.NewModel()
-		return []wrap.ServiceUnwrapper{airtemperaturepb2.WrapApi(airtemperaturepb2.NewModelServer(model))}, auto.AirTemperatureAuto(model)
+		model := airtemperaturepb.NewModel()
+		return []wrap.ServiceUnwrapper{airtemperaturepb.WrapApi(airtemperaturepb.NewModelServer(model))}, auto.AirTemperatureAuto(model)
 	case allocationpb.TraitName:
 		model := allocationpb.NewModel()
 		return []wrap.ServiceUnwrapper{allocationpb.WrapApi(allocationpb.NewModelServer(model))}, auto.AllocationAuto(model)
@@ -180,8 +178,8 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		// todo: return []any{count.WrapApi(count.NewModelServer(count.NewModel())), nil
 		return nil, nil
 	case trait.Electric:
-		model := electricpb2.NewModel()
-		return []wrap.ServiceUnwrapper{electricpb2.WrapApi(electricpb2.NewModelServer(model))}, auto.Electric(model)
+		model := electricpb.NewModel()
+		return []wrap.ServiceUnwrapper{electricpb.WrapApi(electricpb.NewModelServer(model))}, auto.Electric(model)
 	case trait.Emergency:
 		// todo: return []any{emergency.WrapApi(emergency.NewModelServer(emergency.NewModel()))}, nil
 		return nil, nil
@@ -202,8 +200,8 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		}
 		return []wrap.ServiceUnwrapper{energystoragepb.WrapApi(energystoragepb.NewModelServer(model))}, auto.EnergyStorage(model, kind)
 	case trait.EnterLeaveSensor:
-		model := enterleavesensorpb2.NewModel()
-		return []wrap.ServiceUnwrapper{enterleavesensorpb2.WrapApi(enterleavesensorpb2.NewModelServer(model))}, auto.EnterLeaveAuto(model)
+		model := enterleavesensorpb.NewModel()
+		return []wrap.ServiceUnwrapper{enterleavesensorpb.WrapApi(enterleavesensorpb.NewModelServer(model))}, auto.EnterLeaveAuto(model)
 	case trait.ExtendRetract:
 		// todo: return []any{extendretract.WrapApi(extendretract.NewModelServer(extendretract.NewModel()))}, nil
 		return nil, nil
@@ -218,24 +216,24 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		model := fanspeedpb2.NewModel(fanspeedpb2.WithPresets(presets...))
 		return []wrap.ServiceUnwrapper{fanspeedpb2.WrapApi(fanspeedpb2.NewModelServer(model))}, auto.FanSpeed(model, presets...)
 	case trait.Hail:
-		return []wrap.ServiceUnwrapper{hailpb2.WrapApi(hailpb2.NewModelServer(hailpb2.NewModel()))}, nil
+		return []wrap.ServiceUnwrapper{hailpb.WrapApi(hailpb.NewModelServer(hailpb.NewModel()))}, nil
 	case trait.InputSelect:
 		// todo: return []any{inputselect.WrapApi(inputselect.NewModelServer(inputselect.NewModel()))}, nil
 		return nil, nil
 	case trait.Light:
-		server := lightpb2.NewModelServer(lightpb2.NewModel(
-			lightpb2.WithPreset(0, &lightpb.LightPreset{Name: "off", Title: "Off"}),
-			lightpb2.WithPreset(40, &lightpb.LightPreset{Name: "low", Title: "Low"}),
-			lightpb2.WithPreset(60, &lightpb.LightPreset{Name: "med", Title: "Normal"}),
-			lightpb2.WithPreset(80, &lightpb.LightPreset{Name: "high", Title: "High"}),
-			lightpb2.WithPreset(100, &lightpb.LightPreset{Name: "full", Title: "Full"}),
+		server := lightpb.NewModelServer(lightpb.NewModel(
+			lightpb.WithPreset(0, &lightpb.LightPreset{Name: "off", Title: "Off"}),
+			lightpb.WithPreset(40, &lightpb.LightPreset{Name: "low", Title: "Low"}),
+			lightpb.WithPreset(60, &lightpb.LightPreset{Name: "med", Title: "Normal"}),
+			lightpb.WithPreset(80, &lightpb.LightPreset{Name: "high", Title: "High"}),
+			lightpb.WithPreset(100, &lightpb.LightPreset{Name: "full", Title: "Full"}),
 		))
-		return []wrap.ServiceUnwrapper{lightpb2.WrapApi(server), lightpb2.WrapInfo(server)}, nil
+		return []wrap.ServiceUnwrapper{lightpb.WrapApi(server), lightpb.WrapInfo(server)}, nil
 	case trait.LockUnlock:
 		// todo: return []any{lockunlock.WrapApi(lockunlock.NewModelServer(lockunlock.NewModel()))}, nil
 		return nil, nil
 	case trait.Metadata:
-		return []wrap.ServiceUnwrapper{metadatapb2.WrapApi(metadatapb2.NewModelServer(metadatapb2.NewModel()))}, nil
+		return []wrap.ServiceUnwrapper{metadatapb.WrapApi(metadatapb.NewModelServer(metadatapb.NewModel()))}, nil
 	case trait.Microphone:
 		// todo: return []any{microphone.WrapApi(microphone.NewModelServer(microphone.NewModel()))}, nil
 		return nil, nil
@@ -245,8 +243,8 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		// todo: return []any{motionsensor.WrapApi(motionsensor.NewModelServer(motionsensor.NewModel()))}, nil
 		return nil, nil
 	case trait.OccupancySensor:
-		model := occupancysensorpb2.NewModel()
-		return []wrap.ServiceUnwrapper{occupancysensorpb2.WrapApi(occupancysensorpb2.NewModelServer(model))}, auto.OccupancySensorAuto(model)
+		model := occupancysensorpb.NewModel()
+		return []wrap.ServiceUnwrapper{occupancysensorpb.WrapApi(occupancysensorpb.NewModelServer(model))}, auto.OccupancySensorAuto(model)
 	case trait.OnOff:
 		return []wrap.ServiceUnwrapper{onoffpb.WrapApi(onoffpb.NewModelServer(onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}))))}, nil
 	case trait.OpenClose:

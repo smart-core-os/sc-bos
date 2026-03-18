@@ -18,7 +18,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
@@ -31,14 +30,14 @@ func TestRouter(t *testing.T) {
 
 	fooModel := onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}))
 	defaultModel := onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_ON}))
-	occupancyModel := occupancysensorpb2.NewModel(resource.WithInitialValue(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED}))
+	occupancyModel := occupancysensorpb.NewModel(resource.WithInitialValue(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED}))
 
 	// register a specific route for "foo"
 	check(t, r.AddRoute("", "foo",
 		wrap.ServerToClient(onoffpb.OnOffApi_ServiceDesc, onoffpb.NewModelServer(fooModel))))
 	// register a specific route for "foo" for the occupancy service - this should have higher priority
 	check(t, r.AddRoute(occupancysensorpb.OccupancySensorApi_ServiceDesc.ServiceName, "foo",
-		wrap.ServerToClient(occupancysensorpb.OccupancySensorApi_ServiceDesc, occupancysensorpb2.NewModelServer(occupancyModel))))
+		wrap.ServerToClient(occupancysensorpb.OccupancySensorApi_ServiceDesc, occupancysensorpb.NewModelServer(occupancyModel))))
 	// add a catch-all for all OnOffApi requests that are not to "foo"
 	check(t, r.AddRoute(onoffpb.OnOffApi_ServiceDesc.ServiceName, "",
 		wrap.ServerToClient(onoffpb.OnOffApi_ServiceDesc, onoffpb.NewModelServer(defaultModel))))

@@ -17,7 +17,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
@@ -44,8 +43,8 @@ type airQualitySensor struct {
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *airqualitysensorpb2.Model
-	*airqualitysensorpb2.ModelServer
+	model *airqualitysensorpb.Model
+	*airqualitysensorpb.ModelServer
 	config   airQualityConfig
 	pollTask *task.Intermittent
 }
@@ -55,7 +54,7 @@ func newAirQualitySensor(client *gobacnet.Client, devices known.Context, faultCh
 	if err != nil {
 		return nil, err
 	}
-	model := airqualitysensorpb2.NewModel(resource.WithMessageEquivalence(cmp.Equal(
+	model := airqualitysensorpb.NewModel(resource.WithMessageEquivalence(cmp.Equal(
 		cmp.FloatValueApprox(0, 10), // report co2 changes of 10ppm or more
 	)))
 	t := &airQualitySensor{
@@ -64,7 +63,7 @@ func newAirQualitySensor(client *gobacnet.Client, devices known.Context, faultCh
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: airqualitysensorpb2.NewModelServer(model),
+		ModelServer: airqualitysensorpb.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
@@ -79,7 +78,7 @@ func (aq *airQualitySensor) startPoll(init context.Context) (stop task.StopFn, e
 }
 
 func (aq *airQualitySensor) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(aq.config.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb2.WrapApi(aq))))
+	return a.Announce(aq.config.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(aq))))
 }
 
 func (aq *airQualitySensor) GetAirQuality(ctx context.Context, request *airqualitysensorpb.GetAirQualityRequest) (*airqualitysensorpb.AirQuality, error) {

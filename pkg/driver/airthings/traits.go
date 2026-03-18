@@ -16,8 +16,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
-	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 	typespb "github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -27,13 +25,13 @@ func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev confi
 		// todo: read the RSSI prop and link it with status
 		switch trait.Name(tn) {
 		case trait.AirQualitySensor:
-			model := airqualitysensorpb2.NewModel()
-			client := airqualitysensorpb2.WrapApi(airqualitysensorpb2.NewModelServer(model))
+			model := airqualitysensorpb.NewModel()
+			client := airqualitysensorpb.WrapApi(airqualitysensorpb.NewModelServer(model))
 			a.Announce(dev.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(client)))
 			go d.pullSampleAirQuality(ctx, dev, loc, model)
 		case trait.AirTemperature:
-			model := airtemperaturepb2.NewModel()
-			client := airtemperaturepb2.WrapApi(roAirTemperatureServer{airtemperaturepb2.NewModelServer(model)})
+			model := airtemperaturepb.NewModel()
+			client := airtemperaturepb.WrapApi(roAirTemperatureServer{airtemperaturepb.NewModelServer(model)})
 			a.Announce(dev.Name, node.HasTrait(trait.AirTemperature, node.WithClients(client)))
 			go d.pullSampleAirTemperature(ctx, dev, loc, model)
 		case trait.BrightnessSensor:
@@ -53,7 +51,7 @@ func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev confi
 	return nil
 }
 
-func (d *Driver) pullSampleAirQuality(ctx context.Context, dev config.Device, loc *local.Location, model *airqualitysensorpb2.Model) {
+func (d *Driver) pullSampleAirQuality(ctx context.Context, dev config.Device, loc *local.Location, model *airqualitysensorpb.Model) {
 	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
 	_, _ = model.UpdateAirQuality(sampleToAirQuality(initial))
 	for {
@@ -111,7 +109,7 @@ func sampleToAirQuality(in api.DeviceSampleResponseEnriched) *airqualitysensorpb
 	return dst
 }
 
-func (d *Driver) pullSampleAirTemperature(ctx context.Context, dev config.Device, loc *local.Location, model *airtemperaturepb2.Model) {
+func (d *Driver) pullSampleAirTemperature(ctx context.Context, dev config.Device, loc *local.Location, model *airtemperaturepb.Model) {
 	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
 	_, _ = model.UpdateAirTemperature(sampleToAirTemperature(initial))
 	for {

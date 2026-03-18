@@ -17,7 +17,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
@@ -83,8 +82,8 @@ type airTemperature struct {
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *airtemperaturepb2.Model
-	*airtemperaturepb2.ModelServer
+	model *airtemperaturepb.Model
+	*airtemperaturepb.ModelServer
 	config   airTemperatureConfig
 	pollTask *task.Intermittent
 }
@@ -94,7 +93,7 @@ func newAirTemperature(client *gobacnet.Client, devices known.Context, faultChec
 	if err != nil {
 		return nil, err
 	}
-	model := airtemperaturepb2.NewModel(resource.WithMessageEquivalence(cmp.Equal(
+	model := airtemperaturepb.NewModel(resource.WithMessageEquivalence(cmp.Equal(
 		cmp.FloatValueApprox(0, 0.1), // report temperature changes of 0.1C or more
 	)))
 	t := &airTemperature{
@@ -103,7 +102,7 @@ func newAirTemperature(client *gobacnet.Client, devices known.Context, faultChec
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: airtemperaturepb2.NewModelServer(model),
+		ModelServer: airtemperaturepb.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
@@ -118,7 +117,7 @@ func (t *airTemperature) startPoll(init context.Context) (stop task.StopFn, err 
 }
 
 func (t *airTemperature) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb2.WrapApi(t))))
+	return a.Announce(t.config.Name, node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(t))))
 }
 
 func (t *airTemperature) GetAirTemperature(ctx context.Context, request *airtemperaturepb.GetAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
