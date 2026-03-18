@@ -141,6 +141,8 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 // migratePackageRefs rewrites selector expressions of the form `pkgAlias.TypeName`
 // to the new per-trait packages via inferTraitPackage.
 // oldImportPath is removed; new per-trait imports are added.
+// Types whose destination package equals the file's own package are rewritten to
+// bare identifiers (no qualifier) and no self-import is added.
 func migratePackageRefs(
 	ctx *fixer.Context,
 	fset *token.FileSet,
@@ -179,8 +181,26 @@ func migratePackageRefs(
 		return 0, nil
 	}
 
+	// Determine the file's own import path to detect self-imports.
+	ownImportPath, err := fileImportPath(ctx.RootDir, filename)
+	if err != nil {
+		// If we can't determine the own path, fall back to no self-import detection.
+		ownImportPath = ""
+	}
+
+	// Classify types: self-types live in the same package as the file being processed.
+	isSelfType := make(map[string]bool)
+	for typeName, ip := range typeToImportPath {
+		if ownImportPath != "" && bosImportPath("pkg/proto", ip) == ownImportPath {
+			isSelfType[typeName] = true
+		}
+	}
+
 	neededPackages := make(map[string]string) // pkg name -> import path
 	for typeName := range usedTypes {
+		if isSelfType[typeName] {
+			continue // self-types need no import
+		}
 		if pkgName, ok := typeToPackageName[typeName]; ok {
 			neededPackages[pkgName] = typeToImportPath[typeName]
 		}
@@ -200,8 +220,8 @@ func migratePackageRefs(
 	modified := false
 	changes := 0
 
-	ast.Inspect(node, func(n ast.Node) bool {
-		selExpr, ok := n.(*ast.SelectorExpr)
+	astutil.Apply(node, func(cursor *astutil.Cursor) bool {
+		selExpr, ok := cursor.Node().(*ast.SelectorExpr)
 		if !ok {
 			return true
 		}
@@ -211,7 +231,14 @@ func migratePackageRefs(
 		}
 
 		typeName := selExpr.Sel.Name
-		if pkgName, ok := typeToPackageName[typeName]; ok {
+		if isSelfType[typeName] {
+			// Replace pkgAlias.TypeName with just TypeName (bare identifier).
+			newSymbol := typeToNewSymbol[typeName]
+			selExpr.Sel.Name = newSymbol
+			cursor.Replace(selExpr.Sel)
+			modified = true
+			changes++
+		} else if pkgName, ok := typeToPackageName[typeName]; ok {
 			newSymbol := typeToNewSymbol[typeName]
 			if alias, hasAlias := packageToAlias[pkgName]; hasAlias {
 				ident.Name = alias
@@ -223,7 +250,7 @@ func migratePackageRefs(
 			changes++
 		}
 		return true
-	})
+	}, nil)
 
 	if !modified {
 		return 0, nil
@@ -271,4 +298,31 @@ func findUsedTypesByAlias(node *ast.File, pkgAlias string) map[string]bool {
 		return true
 	})
 	return types
+}
+
+// fileImportPath returns the Go import path for the directory containing filename,
+// computed by reading the module name from go.mod in rootDir.
+func fileImportPath(rootDir, filename string) (string, error) {
+	goModBytes, err := os.ReadFile(filepath.Join(rootDir, "go.mod"))
+	if err != nil {
+		return "", fmt.Errorf("reading go.mod: %w", err)
+	}
+	var moduleName string
+	for _, line := range strings.Split(string(goModBytes), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			moduleName = strings.TrimPrefix(line, "module ")
+			moduleName = strings.TrimSpace(moduleName)
+			break
+		}
+	}
+	if moduleName == "" {
+		return "", fmt.Errorf("module directive not found in go.mod")
+	}
+	fileDir := filepath.Dir(filename)
+	relDir, err := filepath.Rel(rootDir, fileDir)
+	if err != nil {
+		return "", fmt.Errorf("computing relative path: %w", err)
+	}
+	return moduleName + "/" + filepath.ToSlash(relDir), nil
 }
