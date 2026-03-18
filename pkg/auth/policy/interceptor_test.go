@@ -127,7 +127,7 @@ allow {
 	input.request.name == "allow"
 }
 `,
-	"smartcore.traits.OnOffApi.rego": `package smartcore.traits.OnOffApi
+	"smartcore.bos.onoff.v1.OnOffApi.rego": `package smartcore.bos.onoff.v1.OnOffApi
 
 # This rule allows people to turn any device on (but not off)
 allow {
