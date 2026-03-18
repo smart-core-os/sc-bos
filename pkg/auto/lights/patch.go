@@ -11,9 +11,11 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Patcher represents a single patch that adjusts ReadState.
@@ -42,13 +44,13 @@ func (b *BrightnessAutomation) setupReadSources(ctx context.Context, configChang
 		{
 			names: func(cfg config.Root) []deviceName { return cfg.OccupancySensors },
 			new: func(name deviceName, logger *zap.Logger) subscriber {
-				return &OccupancySensorPatches{name: name, client: traits.NewOccupancySensorApiClient(conn), logger: logger}
+				return &OccupancySensorPatches{name: name, client: occupancysensorpb.NewOccupancySensorApiClient(conn), logger: logger}
 			},
 		},
 		{
 			names: func(cfg config.Root) []deviceName { return cfg.BrightnessSensors },
 			new: func(name deviceName, logger *zap.Logger) subscriber {
-				return &BrightnessSensorPatches{name: name, client: traits.NewBrightnessSensorApiClient(conn), logger: logger}
+				return &BrightnessSensorPatches{name: name, client: brightnesssensorpb.NewBrightnessSensorApiClient(conn), logger: logger}
 			},
 		},
 		{
@@ -97,7 +99,7 @@ func (b *BrightnessAutomation) setupReadSources(ctx context.Context, configChang
 			new: func(name deviceName, logger *zap.Logger) subscriber {
 				return &ModePatches{
 					name:   name,
-					client: traits.NewModeApiClient(conn),
+					client: modepb.NewModeApiClient(conn),
 					logger: logger,
 				}
 			},

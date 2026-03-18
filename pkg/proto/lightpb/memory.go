@@ -10,13 +10,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // MemoryDevice implements the LightApiServer interface for a single device by storing state in memory.
 type MemoryDevice struct {
-	traits.UnimplementedLightApiServer
+	UnimplementedLightApiServer
 	brightness     *resource.Value
 	brightnessTick time.Duration // duration between updates when tweening brightness
 
@@ -28,7 +27,7 @@ func NewMemoryDevice() *MemoryDevice {
 		brightnessTick: time.Second / 15,
 		brightness: resource.NewValue(
 			resource.WithInitialValue(InitialBrightness()),
-			resource.WithWritablePaths(&traits.Brightness{},
+			resource.WithWritablePaths(&Brightness{},
 				"level_percent",
 				"brightness_tween.total_duration",
 				"preset",
@@ -37,18 +36,18 @@ func NewMemoryDevice() *MemoryDevice {
 	}
 }
 
-func InitialBrightness() *traits.Brightness {
-	return &traits.Brightness{}
+func InitialBrightness() *Brightness {
+	return &Brightness{}
 }
 
-func (s *MemoryDevice) GetBrightness(_ context.Context, req *traits.GetBrightnessRequest) (*traits.Brightness, error) {
-	return s.brightness.Get(resource.WithReadMask(req.ReadMask)).(*traits.Brightness), nil
+func (s *MemoryDevice) GetBrightness(_ context.Context, req *GetBrightnessRequest) (*Brightness, error) {
+	return s.brightness.Get(resource.WithReadMask(req.ReadMask)).(*Brightness), nil
 }
 
-func (s *MemoryDevice) UpdateBrightness(ctx context.Context, request *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
+func (s *MemoryDevice) UpdateBrightness(ctx context.Context, request *UpdateBrightnessRequest) (*Brightness, error) {
 	if request.GetBrightness().GetPreset() != nil {
 		res, err := s.brightness.Set(request.GetBrightness())
-		return res.(*traits.Brightness), err
+		return res.(*Brightness), err
 	}
 
 	if err := resource.ValidateTweenOnUpdate("brightness", request.GetBrightness().GetBrightnessTween()); err != nil {
@@ -62,8 +61,8 @@ func (s *MemoryDevice) UpdateBrightness(ctx context.Context, request *traits.Upd
 			resource.WithUpdatePaths("level_percent", "brightness_tween", "target_level_percent"),
 			resource.WithMoreWritablePaths("brightness_tween", "target_level_percent"),
 			resource.InterceptBefore(func(old, new proto.Message) {
-				current := old.(*traits.Brightness)
-				next := new.(*traits.Brightness)
+				current := old.(*Brightness)
+				next := new.(*Brightness)
 				if request.Delta {
 					next.LevelPercent += current.LevelPercent
 				}
@@ -78,7 +77,7 @@ func (s *MemoryDevice) UpdateBrightness(ctx context.Context, request *traits.Upd
 			return nil, err
 		}
 
-		startVal := lastObj.(*traits.Brightness)
+		startVal := lastObj.(*Brightness)
 		tween := gween.New(startVal.LevelPercent, startVal.TargetLevelPercent, float32(duration.Milliseconds()), ease.Linear)
 
 		go func() {
@@ -90,7 +89,7 @@ func (s *MemoryDevice) UpdateBrightness(ctx context.Context, request *traits.Upd
 				newValue, finished := tween.Set(float32(playTime.Milliseconds()))
 				if finished {
 					// the tween has completed, reset the tween data
-					_, err := s.brightness.Set(&traits.Brightness{LevelPercent: newValue},
+					_, err := s.brightness.Set(&Brightness{LevelPercent: newValue},
 						resource.WithUpdatePaths("level_percent"),
 						resource.WithResetPaths("target_level_percent", "brightness_tween"),
 						resource.WithExpectedValue(lastObj),
@@ -103,7 +102,7 @@ func (s *MemoryDevice) UpdateBrightness(ctx context.Context, request *traits.Upd
 
 				// calculate using time, not value, which leave room for easing (and is mentioned in the tween spec)
 				progress := 100 * float32(playTime.Milliseconds()) / float32(duration.Milliseconds())
-				lastObj, err = s.brightness.Set(&traits.Brightness{LevelPercent: newValue, BrightnessTween: &types.Tween{Progress: progress}},
+				lastObj, err = s.brightness.Set(&Brightness{LevelPercent: newValue, BrightnessTween: &types.Tween{Progress: progress}},
 					resource.WithUpdatePaths("level_percent", "brightness_tween.progress"),
 					resource.WithMoreWritablePaths("brightness_tween.progress"),
 					resource.WithExpectedValue(lastObj),
@@ -126,8 +125,8 @@ func (s *MemoryDevice) UpdateBrightness(ctx context.Context, request *traits.Upd
 		// if there's a tween in progress, clear the tween props
 		resource.WithResetPaths("target_level_percent", "brightness_tween"),
 		resource.InterceptBefore(func(old, change proto.Message) {
-			oldVal := old.(*traits.Brightness)
-			newVal := change.(*traits.Brightness)
+			oldVal := old.(*Brightness)
+			newVal := change.(*Brightness)
 			if request.Delta {
 				newVal.LevelPercent += oldVal.LevelPercent
 			}
@@ -136,12 +135,12 @@ func (s *MemoryDevice) UpdateBrightness(ctx context.Context, request *traits.Upd
 	if err != nil {
 		return nil, err
 	}
-	return res.(*traits.Brightness), nil
+	return res.(*Brightness), nil
 }
 
-func (s *MemoryDevice) PullBrightness(request *traits.PullBrightnessRequest, server traits.LightApi_PullBrightnessServer) error {
+func (s *MemoryDevice) PullBrightness(request *PullBrightnessRequest, server LightApi_PullBrightnessServer) error {
 	for event := range s.brightness.Pull(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		brightness := event.Value.(*traits.Brightness)
+		brightness := event.Value.(*Brightness)
 		// don't emit progress if the caller doesn't want it
 		if request.ExcludeRamping {
 			progress := brightness.GetBrightnessTween().GetProgress()
@@ -150,13 +149,13 @@ func (s *MemoryDevice) PullBrightness(request *traits.PullBrightnessRequest, ser
 			}
 		}
 
-		change := &traits.PullBrightnessResponse_Change{
+		change := &PullBrightnessResponse_Change{
 			Name:       request.Name,
 			Brightness: brightness,
 			ChangeTime: timestamppb.New(event.ChangeTime),
 		}
-		err := server.Send(&traits.PullBrightnessResponse{
-			Changes: []*traits.PullBrightnessResponse_Change{change},
+		err := server.Send(&PullBrightnessResponse{
+			Changes: []*PullBrightnessResponse_Change{change},
 		})
 		if err != nil {
 			return err
@@ -166,7 +165,7 @@ func (s *MemoryDevice) PullBrightness(request *traits.PullBrightnessRequest, ser
 	return server.Context().Err()
 }
 
-func capLevelPercent(next *traits.Brightness) {
+func capLevelPercent(next *Brightness) {
 	if next.LevelPercent < 0 {
 		next.LevelPercent = 0
 	}

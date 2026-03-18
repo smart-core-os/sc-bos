@@ -11,8 +11,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -35,11 +35,11 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, look
 		// Generate ambient temperature that varies +/- 2 degrees from set point
 		ambientTemp := setPoint + (rand.Float64()*4 - 2)
 
-		payload, err := proto.Marshal(&traits.AirTemperature{
+		payload, err := proto.Marshal(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &types.Temperature{
 				ValueCelsius: ambientTemp,
 			},
-			TemperatureGoal: &traits.AirTemperature_TemperatureSetPoint{
+			TemperatureGoal: &airtemperaturepb.AirTemperature_TemperatureSetPoint{
 				TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
 			},
 		})

@@ -14,7 +14,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // BinaryObject adapts a binary bacnet object as smart core traits.
@@ -54,7 +53,7 @@ type binaryOnOff struct {
 	*onoffpb.ModelServer
 }
 
-func (b *binaryOnOff) GetOnOff(ctx context.Context, request *traits.GetOnOffRequest) (*traits.OnOff, error) {
+func (b *binaryOnOff) GetOnOff(ctx context.Context, request *onoffpb.GetOnOffRequest) (*onoffpb.OnOff, error) {
 	read, err := b.client.ReadProperty(ctx, b.device, bactypes.ReadPropertyData{
 		Object: bactypes.Object{
 			ID: bactypes.ObjectID(b.object.ID),
@@ -79,20 +78,20 @@ func (b *binaryOnOff) GetOnOff(ctx context.Context, request *traits.GetOnOffRequ
 		return nil, status.Errorf(codes.Internal, "expected bool or uint32 return type for binary value, got %v", v)
 	}
 
-	var state traits.OnOff_State
+	var state onoffpb.OnOff_State
 	if value {
-		state = traits.OnOff_ON
+		state = onoffpb.OnOff_ON
 	} else {
-		state = traits.OnOff_OFF
+		state = onoffpb.OnOff_OFF
 	}
-	return b.model.UpdateOnOff(&traits.OnOff{State: state})
+	return b.model.UpdateOnOff(&onoffpb.OnOff{State: state})
 }
 
-func (b *binaryOnOff) UpdateOnOff(ctx context.Context, request *traits.UpdateOnOffRequest) (*traits.OnOff, error) {
+func (b *binaryOnOff) UpdateOnOff(ctx context.Context, request *onoffpb.UpdateOnOffRequest) (*onoffpb.OnOff, error) {
 	return b.UnimplementedOnOffApiServer.UpdateOnOff(ctx, request)
 }
 
-func (b *binaryOnOff) PullOnOff(request *traits.PullOnOffRequest, server traits.OnOffApi_PullOnOffServer) error {
+func (b *binaryOnOff) PullOnOff(request *onoffpb.PullOnOffRequest, server onoffpb.OnOffApi_PullOnOffServer) error {
 	return b.ModelServer.PullOnOff(request, server)
 }
 

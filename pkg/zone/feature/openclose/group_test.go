@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
 )
 
 func Test_mergeOpenClosePositions(t *testing.T) {
@@ -16,7 +16,7 @@ func Test_mergeOpenClosePositions(t *testing.T) {
 	tests := []struct {
 		name    string
 		in      []value
-		want    *traits.OpenClosePositions
+		want    *openclosepb.OpenClosePositions
 		wantErr bool
 	}{
 		// simple cases
@@ -75,7 +75,7 @@ func Test_mergeOpenClosePositions(t *testing.T) {
 }
 
 func pos(val float32) *position {
-	return &position{OpenClosePosition: &traits.OpenClosePosition{OpenPercent: val}}
+	return &position{OpenClosePosition: &openclosepb.OpenClosePosition{OpenPercent: val}}
 }
 
 func up(val float32) *position {
@@ -86,8 +86,8 @@ func down(val float32) *position {
 	return pos(val).Down()
 }
 
-func ocp(p ...*position) *traits.OpenClosePositions {
-	ocp := &traits.OpenClosePositions{}
+func ocp(p ...*position) *openclosepb.OpenClosePositions {
+	ocp := &openclosepb.OpenClosePositions{}
 	for _, v := range p {
 		ocp.States = append(ocp.States, v.OpenClosePosition)
 	}
@@ -102,16 +102,16 @@ func valPres(name string) value {
 	return value{val: ocpPres(name)}
 }
 
-func ocpPres(name string) *traits.OpenClosePositions {
-	var preset *traits.OpenClosePositions_Preset
+func ocpPres(name string) *openclosepb.OpenClosePositions {
+	var preset *openclosepb.OpenClosePositions_Preset
 	if name != "" {
-		preset = &traits.OpenClosePositions_Preset{Name: name}
+		preset = &openclosepb.OpenClosePositions_Preset{Name: name}
 	}
-	return &traits.OpenClosePositions{Preset: preset}
+	return &openclosepb.OpenClosePositions{Preset: preset}
 }
 
 type position struct {
-	*traits.OpenClosePosition
+	*openclosepb.OpenClosePosition
 }
 
 func (p *position) Val(val float32) *position {
@@ -119,32 +119,32 @@ func (p *position) Val(val float32) *position {
 	return p
 }
 
-func (p *position) Dir(dir traits.OpenClosePosition_Direction) *position {
+func (p *position) Dir(dir openclosepb.OpenClosePosition_Direction) *position {
 	p.Direction = dir
 	return p
 }
 
 func (p *position) Up() *position {
-	return p.Dir(traits.OpenClosePosition_UP)
+	return p.Dir(openclosepb.OpenClosePosition_UP)
 }
 
 func (p *position) Down() *position {
-	return p.Dir(traits.OpenClosePosition_DOWN)
+	return p.Dir(openclosepb.OpenClosePosition_DOWN)
 }
 
-func (p *position) Res(res traits.OpenClosePosition_Resistance) *position {
+func (p *position) Res(res openclosepb.OpenClosePosition_Resistance) *position {
 	p.Resistance = res
 	return p
 }
 
 func (p *position) Held() *position {
-	return p.Res(traits.OpenClosePosition_HELD)
+	return p.Res(openclosepb.OpenClosePosition_HELD)
 }
 
 func (p *position) Slow() *position {
-	return p.Res(traits.OpenClosePosition_SLOW)
+	return p.Res(openclosepb.OpenClosePosition_SLOW)
 }
 
 func (p *position) RM() *position {
-	return p.Res(traits.OpenClosePosition_REDUCED_MOTION)
+	return p.Res(openclosepb.OpenClosePosition_REDUCED_MOTION)
 }

@@ -8,7 +8,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func TestModel_RemoveChildTrait(t *testing.T) {
@@ -43,7 +42,7 @@ func TestModel_RemoveChildTrait(t *testing.T) {
 		if c == nil {
 			t.Fatalf("Nil child")
 		}
-		want := []*traits.Trait{{Name: trait.Light.String()}}
+		want := []*Trait{{Name: trait.Light.String()}}
 		if !reflect.DeepEqual(c.Traits, want) {
 			t.Fatalf("Traits not equal. Want %v, got %v", want, c.Traits)
 		}
@@ -55,7 +54,7 @@ func TestModel_RemoveChildTrait(t *testing.T) {
 		if c == nil {
 			t.Fatalf("Nil child")
 		}
-		var want []*traits.Trait
+		var want []*Trait
 		if !reflect.DeepEqual(c.Traits, want) {
 			t.Fatalf("Traits not equal. Want %v, got %v", want, c.Traits)
 		}
@@ -67,7 +66,7 @@ func TestModel_RemoveChildTrait(t *testing.T) {
 		if c == nil {
 			t.Fatalf("Nil child")
 		}
-		var want []*traits.Trait
+		var want []*Trait
 		if !reflect.DeepEqual(c.Traits, want) {
 			t.Fatalf("Traits not equal. Want %v, got %v", want, c.Traits)
 		}

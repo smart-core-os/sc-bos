@@ -2,12 +2,11 @@ package onoffpb
 
 import (
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
 var DefaultModelOptions = []resource.Option{
-	WithInitialOnOff(&traits.OnOff{}),
+	WithInitialOnOff(&OnOff{}),
 }
 
 // ModelOption defined the base type for all options that apply to this traits model.
@@ -24,7 +23,7 @@ func WithOnOffOption(opts ...resource.Option) resource.Option {
 }
 
 // WithInitialOnOff returns an option that configures the model to initialise with the given onOff.
-func WithInitialOnOff(onOff *traits.OnOff) resource.Option {
+func WithInitialOnOff(onOff *OnOff) resource.Option {
 	return WithOnOffOption(resource.WithInitialValue(onOff))
 }
 

@@ -7,15 +7,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 func TestShift(t *testing.T) {
 	tests := []struct {
 		name string
 		d    time.Duration
-		mode *traits.ElectricMode
-		want *traits.ElectricMode
+		mode *electricpb.ElectricMode
+		want *electricpb.ElectricMode
 	}{
 		// tests without start times (copied from segmentpb shift_test)
 		{"empty+0", 0, m(), m()},

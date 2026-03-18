@@ -3,15 +3,14 @@ package fanspeedpb
 import (
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
 var DefaultModelOptions = []resource.Option{
-	WithInitialFanSpeed(&traits.FanSpeed{
+	WithInitialFanSpeed(&FanSpeed{
 		Percentage: DefaultPresets[0].Percentage,
 		Preset:     DefaultPresets[0].Name,
-		Direction:  traits.FanSpeed_FORWARD,
+		Direction:  FanSpeed_FORWARD,
 	}),
 	WithFanSpeedOption(resource.WithMessageEquivalence(cmp.Equal(cmp.FloatValueApprox(0, 0.01)))),
 	WithPresets(DefaultPresets...),
@@ -31,7 +30,7 @@ func WithFanSpeedOption(opts ...resource.Option) resource.Option {
 }
 
 // WithInitialFanSpeed returns an option that configures the model to initialise with the given fan speed.
-func WithInitialFanSpeed(fanSpeed *traits.FanSpeed) resource.Option {
+func WithInitialFanSpeed(fanSpeed *FanSpeed) resource.Option {
 	return WithFanSpeedOption(resource.WithInitialValue(fanSpeed))
 }
 

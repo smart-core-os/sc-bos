@@ -5,13 +5,13 @@ import (
 	"math/rand/v2"
 	"time"
 
+	gen_enterleavesensorpb "github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait/enterleavesensorpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func EnterLeaveAuto(model *enterleavesensorpb.Model) *service.Service[string] {
-	occupant := []*traits.EnterLeaveEvent_Occupant{
+	occupant := []*gen_enterleavesensorpb.EnterLeaveEvent_Occupant{
 		nil,
 		{DisplayName: "Scott Lang", Ids: map[string]string{"card": "1234567890"}},
 		{DisplayName: "Hope Van Dyne", Ids: map[string]string{"card": "0987654321"}},
@@ -28,16 +28,16 @@ func EnterLeaveAuto(model *enterleavesensorpb.Model) *service.Service[string] {
 
 			for {
 				chance := rand.Float32()
-				direction := traits.EnterLeaveEvent_DIRECTION_UNSPECIFIED
+				direction := gen_enterleavesensorpb.EnterLeaveEvent_DIRECTION_UNSPECIFIED
 				if chance < 0.5 {
 					enterCount++
-					direction = traits.EnterLeaveEvent_ENTER
+					direction = gen_enterleavesensorpb.EnterLeaveEvent_ENTER
 				} else {
 					leaveCount++
-					direction = traits.EnterLeaveEvent_LEAVE
+					direction = gen_enterleavesensorpb.EnterLeaveEvent_LEAVE
 				}
 
-				enterLeave := &traits.EnterLeaveEvent{
+				enterLeave := &gen_enterleavesensorpb.EnterLeaveEvent{
 					Direction:  direction,
 					Occupant:   occupant[rand.IntN(len(occupant))],
 					EnterTotal: &enterCount,

@@ -6,14 +6,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 func TestSum(t *testing.T) {
 	tests := []struct {
 		name string
-		args [][]*traits.ElectricMode_Segment
-		want []*traits.ElectricMode_Segment
+		args [][]*electricpb.ElectricMode_Segment
+		want []*electricpb.ElectricMode_Segment
 	}{
 		{"[] empty", arg(), segs()},
 		{"[[{10,}]] one-inf", arg(segs(s{10, 0})), segs(s{10, 0})},
@@ -36,7 +36,7 @@ func TestSum(t *testing.T) {
 func Test_calcCuts(t *testing.T) {
 	tests := []struct {
 		name string
-		args [][]*traits.ElectricMode_Segment
+		args [][]*electricpb.ElectricMode_Segment
 		want []cut
 	}{
 		{"[] empty", arg(), cuts()},
@@ -57,7 +57,7 @@ func Test_calcCuts(t *testing.T) {
 	}
 }
 
-func arg(ss ...[]*traits.ElectricMode_Segment) [][]*traits.ElectricMode_Segment {
+func arg(ss ...[]*electricpb.ElectricMode_Segment) [][]*electricpb.ElectricMode_Segment {
 	return ss
 }
 

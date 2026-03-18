@@ -8,19 +8,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // InfoRouter is a traits.AirTemperatureInfoServer that allows routing named requests to specific traits.AirTemperatureInfoClient
 type InfoRouter struct {
-	traits.UnimplementedAirTemperatureInfoServer
+	airtemperaturepb.UnimplementedAirTemperatureInfoServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.AirTemperatureInfoServer = (*InfoRouter)(nil)
+var _ airtemperaturepb.AirTemperatureInfoServer = (*InfoRouter)(nil)
 
 func NewInfoRouter(opts ...router.Option) *InfoRouter {
 	return &InfoRouter{
@@ -30,14 +30,14 @@ func NewInfoRouter(opts ...router.Option) *InfoRouter {
 
 // WithAirTemperatureInfoClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithAirTemperatureInfoClientFactory(f func(name string) (traits.AirTemperatureInfoClient, error)) router.Option {
+func WithAirTemperatureInfoClientFactory(f func(name string) (airtemperaturepb.AirTemperatureInfoClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *InfoRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterAirTemperatureInfoServer(server, r)
+	airtemperaturepb.RegisterAirTemperatureInfoServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.AirTemperatureInfoClient.
@@ -49,27 +49,27 @@ func (r *InfoRouter) Add(name string, client any) any {
 }
 
 func (r *InfoRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.AirTemperatureInfoClient)
+	_, ok := client.(airtemperaturepb.AirTemperatureInfoClient)
 	return ok
 }
 
-func (r *InfoRouter) AddAirTemperatureInfoClient(name string, client traits.AirTemperatureInfoClient) traits.AirTemperatureInfoClient {
+func (r *InfoRouter) AddAirTemperatureInfoClient(name string, client airtemperaturepb.AirTemperatureInfoClient) airtemperaturepb.AirTemperatureInfoClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.AirTemperatureInfoClient)
+	return res.(airtemperaturepb.AirTemperatureInfoClient)
 }
 
-func (r *InfoRouter) RemoveAirTemperatureInfoClient(name string) traits.AirTemperatureInfoClient {
+func (r *InfoRouter) RemoveAirTemperatureInfoClient(name string) airtemperaturepb.AirTemperatureInfoClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.AirTemperatureInfoClient)
+	return res.(airtemperaturepb.AirTemperatureInfoClient)
 }
 
-func (r *InfoRouter) GetAirTemperatureInfoClient(name string) (traits.AirTemperatureInfoClient, error) {
+func (r *InfoRouter) GetAirTemperatureInfoClient(name string) (airtemperaturepb.AirTemperatureInfoClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -77,10 +77,10 @@ func (r *InfoRouter) GetAirTemperatureInfoClient(name string) (traits.AirTempera
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.AirTemperatureInfoClient), nil
+	return res.(airtemperaturepb.AirTemperatureInfoClient), nil
 }
 
-func (r *InfoRouter) DescribeAirTemperature(ctx context.Context, request *traits.DescribeAirTemperatureRequest) (*traits.AirTemperatureSupport, error) {
+func (r *InfoRouter) DescribeAirTemperature(ctx context.Context, request *airtemperaturepb.DescribeAirTemperatureRequest) (*airtemperaturepb.AirTemperatureSupport, error) {
 	child, err := r.GetAirTemperatureInfoClient(request.Name)
 	if err != nil {
 		return nil, err

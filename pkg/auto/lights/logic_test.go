@@ -13,9 +13,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func Test_processState(t *testing.T) {
@@ -38,13 +41,13 @@ func Test_processState(t *testing.T) {
 
 		readState.Config.OccupancySensors = []string{"pir01"}
 		readState.Config.Lights = []string{"light01"}
-		readState.Occupancy["pir01"] = &traits.Occupancy{State: traits.Occupancy_OCCUPIED}
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED}
 
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 		assertNoErrAndTtl(t, ttl, err, 0)
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 100,
 			},
 		})
@@ -60,7 +63,7 @@ func Test_processState(t *testing.T) {
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 2 * time.Hour}
 		readState.Config.OccupancySensors = []string{"pir02"}
 		readState.Config.Lights = []string{"light01"}
-		readState.Occupancy["pir01"] = &traits.Occupancy{State: traits.Occupancy_OCCUPIED}
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED}
 
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 		// automation start time should expire after one hour
@@ -77,17 +80,17 @@ func Test_processState(t *testing.T) {
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 		readState.Config.OccupancySensors = []string{"pir01"}
 		readState.Config.Lights = []string{"light01"}
-		readState.Occupancy["pir01"] = &traits.Occupancy{
-			State:           traits.Occupancy_UNOCCUPIED,
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{
+			State:           occupancysensorpb.Occupancy_UNOCCUPIED,
 			StateChangeTime: timestamppb.New(now.Add(-20 * time.Minute)),
 		}
 
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 
 		assertNoErrAndTtl(t, ttl, err, 0)
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 0,
 			},
 		})
@@ -103,8 +106,8 @@ func Test_processState(t *testing.T) {
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 		readState.Config.OccupancySensors = []string{"pir01"}
 		readState.Config.Lights = []string{"light01"}
-		readState.Occupancy["pir01"] = &traits.Occupancy{
-			State:           traits.Occupancy_UNOCCUPIED,
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{
+			State:           occupancysensorpb.Occupancy_UNOCCUPIED,
 			StateChangeTime: timestamppb.New(now.Add(-5 * time.Minute)),
 		}
 
@@ -154,20 +157,20 @@ func Test_processState(t *testing.T) {
 				readState.Config.DaylightDimming = &dd
 				readState.Config.OccupancySensors = []string{"pir01"}
 				readState.Config.Lights = []string{"light01"}
-				readState.Occupancy["pir01"] = &traits.Occupancy{State: traits.Occupancy_OCCUPIED}
+				readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED}
 
 				readState.Config.BrightnessSensors = make([]string, len(tt.lux))
 				for i, lux := range tt.lux {
 					name := fmt.Sprintf("bri%02d", i)
 					readState.Config.BrightnessSensors[i] = name
-					readState.AmbientBrightness[name] = &traits.AmbientBrightness{BrightnessLux: lux}
+					readState.AmbientBrightness[name] = &brightnesssensorpb.AmbientBrightness{BrightnessLux: lux}
 				}
 
 				ttl, err := processState(context.Background(), readState, writeState, actions)
 				assertNoErrAndTtl(t, ttl, err, 0)
-				actions.assertNextCall(&traits.UpdateBrightnessRequest{
+				actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 					Name: "light01",
-					Brightness: &traits.Brightness{
+					Brightness: &lightpb.Brightness{
 						LevelPercent: tt.want,
 					},
 				})
@@ -194,9 +197,9 @@ func Test_processState(t *testing.T) {
 			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 100},
+			V:  &lightpb.Brightness{LevelPercent: 100},
 		}
 		writeState.LastButtonAction = now.Add(-5 * time.Minute)
 
@@ -208,9 +211,9 @@ func Test_processState(t *testing.T) {
 			t.Fatalf("Error want <nil>, got %v", err)
 		}
 
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 0,
 			},
 		})
@@ -234,13 +237,13 @@ func Test_processState(t *testing.T) {
 			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 0},
+			V:  &lightpb.Brightness{LevelPercent: 0},
 		}
-		writeState.Brightness["light02"] = Value[*traits.Brightness]{
+		writeState.Brightness["light02"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 50},
+			V:  &lightpb.Brightness{LevelPercent: 50},
 		}
 		writeState.LastButtonAction = now.Add(-5 * time.Minute)
 
@@ -252,13 +255,13 @@ func Test_processState(t *testing.T) {
 			t.Fatalf("Error want <nil>, got %v", err)
 		}
 
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name:       "light01",
-			Brightness: &traits.Brightness{LevelPercent: 0},
+			Brightness: &lightpb.Brightness{LevelPercent: 0},
 		})
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name:       "light02",
-			Brightness: &traits.Brightness{LevelPercent: 0},
+			Brightness: &lightpb.Brightness{LevelPercent: 0},
 		})
 		actions.assertNoMoreCalls()
 	})
@@ -280,9 +283,9 @@ func Test_processState(t *testing.T) {
 			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 0},
+			V:  &lightpb.Brightness{LevelPercent: 0},
 		}
 		writeState.LastButtonAction = now.Add(-5 * time.Minute)
 
@@ -294,9 +297,9 @@ func Test_processState(t *testing.T) {
 			t.Fatalf("Error want <nil>, got %v", err)
 		}
 
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 100,
 			},
 		})
@@ -319,18 +322,18 @@ func Test_processState(t *testing.T) {
 			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 0},
+			V:  &lightpb.Brightness{LevelPercent: 0},
 		}
 		writeState.LastButtonAction = now.Add(-time.Minute)
 
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 		assertNoErrAndTtl(t, ttl, err, 0)
 
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name:       "light01",
-			Brightness: &traits.Brightness{LevelPercent: 0},
+			Brightness: &lightpb.Brightness{LevelPercent: 0},
 		})
 		actions.assertNoMoreCalls()
 	})
@@ -351,18 +354,18 @@ func Test_processState(t *testing.T) {
 			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 0},
+			V:  &lightpb.Brightness{LevelPercent: 0},
 		}
 		writeState.LastButtonAction = now
 
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 		assertNoErrAndTtl(t, ttl, err, 0)
 
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name:       "light01",
-			Brightness: &traits.Brightness{LevelPercent: 0},
+			Brightness: &lightpb.Brightness{LevelPercent: 0},
 		})
 		actions.assertNoMoreCalls()
 	})
@@ -383,18 +386,18 @@ func Test_processState(t *testing.T) {
 			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 0},
+			V:  &lightpb.Brightness{LevelPercent: 0},
 		}
 		writeState.LastButtonAction = now
 
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 		assertNoErrAndTtl(t, ttl, err, 0)
 
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name:       "light01",
-			Brightness: &traits.Brightness{LevelPercent: 0},
+			Brightness: &lightpb.Brightness{LevelPercent: 0},
 		})
 		actions.assertNoMoreCalls()
 	})
@@ -416,9 +419,9 @@ func Test_processState(t *testing.T) {
 			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 0},
+			V:  &lightpb.Brightness{LevelPercent: 0},
 		}
 		writeState.LastButtonAction = now.Add(-5 * time.Minute)
 
@@ -430,9 +433,9 @@ func Test_processState(t *testing.T) {
 			t.Fatalf("Error want <nil>, got %v", err)
 		}
 
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 100,
 			},
 		})
@@ -456,9 +459,9 @@ func Test_processState(t *testing.T) {
 			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 0},
+			V:  &lightpb.Brightness{LevelPercent: 0},
 		}
 		writeState.LastButtonAction = now.Add(-5 * time.Minute)
 
@@ -470,9 +473,9 @@ func Test_processState(t *testing.T) {
 			t.Fatalf("Error want <nil>, got %v", err)
 		}
 
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 100,
 			},
 		})
@@ -496,9 +499,9 @@ func Test_processState(t *testing.T) {
 			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 100},
+			V:  &lightpb.Brightness{LevelPercent: 100},
 		}
 		writeState.LastButtonAction = now.Add(-5 * time.Minute)
 
@@ -510,9 +513,9 @@ func Test_processState(t *testing.T) {
 			t.Fatalf("Error want <nil>, got %v", err)
 		}
 
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name:       "light01",
-			Brightness: &traits.Brightness{LevelPercent: 100},
+			Brightness: &lightpb.Brightness{LevelPercent: 100},
 		})
 		actions.assertNoMoreCalls()
 	})
@@ -534,18 +537,18 @@ func Test_processState(t *testing.T) {
 			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 100},
+			V:  &lightpb.Brightness{LevelPercent: 100},
 		}
 		writeState.LastButtonAction = now.Add(-5 * time.Minute)
 
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 		assertNoErrAndTtl(t, ttl, err, 0)
 
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 0,
 			},
 		})
@@ -568,17 +571,17 @@ func Test_processState(t *testing.T) {
 			MostRecentGesture: &buttonpb.ButtonState_Gesture{Kind: buttonpb.ButtonState_Gesture_CLICK},
 		}
 
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: now,
-			V:  &traits.Brightness{LevelPercent: 0},
+			V:  &lightpb.Brightness{LevelPercent: 0},
 		}
 
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 		assertNoErrAndTtl(t, ttl, err, 0)
 
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name:       "light01",
-			Brightness: &traits.Brightness{LevelPercent: 0},
+			Brightness: &lightpb.Brightness{LevelPercent: 0},
 		})
 		actions.assertNoMoreCalls()
 	})
@@ -616,8 +619,8 @@ func Test_processState(t *testing.T) {
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 		readState.Config.OccupancySensors = []string{"pir01"}
 
-		readState.Occupancy["pir01"] = &traits.Occupancy{
-			State:           traits.Occupancy_UNOCCUPIED,
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{
+			State:           occupancysensorpb.Occupancy_UNOCCUPIED,
 			StateChangeTime: timestamppb.New(now.Add(-15 * time.Minute)),
 		}
 		writeState.LastButtonOnTime = now.Add(-time.Minute)
@@ -643,8 +646,8 @@ func Test_processState(t *testing.T) {
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 		readState.Config.OccupancySensors = []string{"pir01"}
 
-		readState.Occupancy["pir01"] = &traits.Occupancy{
-			State:           traits.Occupancy_UNOCCUPIED,
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{
+			State:           occupancysensorpb.Occupancy_UNOCCUPIED,
 			StateChangeTime: timestamppb.New(now.Add(-5 * time.Minute)),
 		}
 		writeState.LastButtonOnTime = now.Add(-15 * time.Minute)
@@ -670,17 +673,17 @@ func Test_processState(t *testing.T) {
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 		readState.Config.OccupancySensors = []string{"pir01"}
 
-		readState.Occupancy["pir01"] = &traits.Occupancy{
-			State:           traits.Occupancy_UNOCCUPIED,
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{
+			State:           occupancysensorpb.Occupancy_UNOCCUPIED,
 			StateChangeTime: timestamppb.New(now.Add(-15 * time.Minute)),
 		}
 		writeState.LastButtonOnTime = now.Add(-15 * time.Minute)
 
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 		assertNoErrAndTtl(t, ttl, err, 0)
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 0,
 			},
 		})
@@ -695,7 +698,7 @@ func Test_processState(t *testing.T) {
 
 		readState.Config.OccupancySensors = []string{"pir01"}
 		readState.Config.Lights = []string{"light01"}
-		readState.Occupancy["pir01"] = &traits.Occupancy{State: traits.Occupancy_OCCUPIED}
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED}
 		var onLevel float32 = 78
 		readState.Config.Mode = config.Mode{
 			OnLevelPercent: &onLevel,
@@ -703,9 +706,9 @@ func Test_processState(t *testing.T) {
 
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 		assertNoErrAndTtl(t, ttl, err, 0)
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: onLevel,
 			},
 		})
@@ -722,8 +725,8 @@ func Test_processState(t *testing.T) {
 		readState.Config.UnoccupiedOffDelay = jsontypes.Duration{Duration: 10 * time.Minute}
 		readState.Config.OccupancySensors = []string{"pir01"}
 		readState.Config.Lights = []string{"light01"}
-		readState.Occupancy["pir01"] = &traits.Occupancy{
-			State:           traits.Occupancy_UNOCCUPIED,
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{
+			State:           occupancysensorpb.Occupancy_UNOCCUPIED,
 			StateChangeTime: timestamppb.New(now.Add(-20 * time.Minute)),
 		}
 		var offLevel float32 = 12
@@ -734,9 +737,9 @@ func Test_processState(t *testing.T) {
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 
 		assertNoErrAndTtl(t, ttl, err, 0)
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: offLevel,
 			},
 		})
@@ -752,7 +755,7 @@ func Test_processState(t *testing.T) {
 
 		readState.Config.OccupancySensors = []string{"pir01"}
 		readState.Config.Lights = []string{"light01"}
-		readState.Occupancy["pir01"] = &traits.Occupancy{State: traits.Occupancy_OCCUPIED}
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED}
 		var onLevel, fullLevel float32 = 78, 100
 		readState.Config.Mode = config.Mode{
 			OnLevelPercent: &fullLevel,
@@ -776,9 +779,9 @@ func Test_processState(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Error want <nil>, got %v", err)
 		}
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 100,
 			},
 		})
@@ -791,9 +794,9 @@ func Test_processState(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Error want <nil>, got %v", err)
 		}
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: onLevel,
 			},
 		})
@@ -822,7 +825,7 @@ func Test_processState(t *testing.T) {
 				},
 			},
 		}
-		readState.Modes = &traits.ModeValues{
+		readState.Modes = &modepb.ModeValues{
 			Values: map[string]string{
 				ModeValueKey: "a",
 			},
@@ -850,9 +853,9 @@ func Test_processState(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error %v", err)
 		}
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 33,
 			},
 		})
@@ -864,9 +867,9 @@ func Test_processState(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error %v", err)
 		}
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 66,
 			},
 		})
@@ -891,29 +894,29 @@ func Test_processState(t *testing.T) {
 			},
 		}
 		// unoccupied for 20 minutes, well past the 10-minute timeout
-		readState.Occupancy["pir01"] = &traits.Occupancy{
-			State:           traits.Occupancy_UNOCCUPIED,
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{
+			State:           occupancysensorpb.Occupancy_UNOCCUPIED,
 			StateChangeTime: timestamppb.New(startTime.Add(-20 * time.Minute)),
 		}
 		// writeState already has a brightness assert from the previous (default) mode
 		writeState := NewWriteState(startTime)
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: startTime,
-			V:  &traits.Brightness{LevelPercent: 0},
+			V:  &lightpb.Brightness{LevelPercent: 0},
 		}
 		writeState.ActiveMode = ModeDefault
 
 		// activate nightMode
-		readState.Modes = &traits.ModeValues{
+		readState.Modes = &modepb.ModeValues{
 			Values: map[string]string{ModeValueKey: "nightMode"},
 		}
 
 		actions := newTestActions(t)
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 		assertNoErrAndTtl(t, ttl, err, 0)
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name:       "light01",
-			Brightness: &traits.Brightness{LevelPercent: 75},
+			Brightness: &lightpb.Brightness{LevelPercent: 75},
 		})
 		actions.assertNoMoreCalls()
 	})
@@ -936,18 +939,18 @@ func Test_processState(t *testing.T) {
 				},
 			},
 		}
-		readState.Occupancy["pir01"] = &traits.Occupancy{
-			State:           traits.Occupancy_UNOCCUPIED,
+		readState.Occupancy["pir01"] = &occupancysensorpb.Occupancy{
+			State:           occupancysensorpb.Occupancy_UNOCCUPIED,
 			StateChangeTime: timestamppb.New(startTime.Add(-20 * time.Minute)),
 		}
 		writeState := NewWriteState(startTime)
-		writeState.Brightness["light01"] = Value[*traits.Brightness]{
+		writeState.Brightness["light01"] = Value[*lightpb.Brightness]{
 			At: startTime,
-			V:  &traits.Brightness{LevelPercent: 0},
+			V:  &lightpb.Brightness{LevelPercent: 0},
 		}
 		writeState.ActiveMode = ModeDefault
 
-		readState.Modes = &traits.ModeValues{
+		readState.Modes = &modepb.ModeValues{
 			Values: map[string]string{ModeValueKey: "nightMode"},
 		}
 
@@ -955,9 +958,9 @@ func Test_processState(t *testing.T) {
 		ttl, err := processState(context.Background(), readState, writeState, actions)
 		assertNoErrAndTtl(t, ttl, err, 0)
 		// lights should remain off (switchOff at level 0)
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name:       "light01",
-			Brightness: &traits.Brightness{LevelPercent: 0},
+			Brightness: &lightpb.Brightness{LevelPercent: 0},
 		})
 		actions.assertNoMoreCalls()
 	})
@@ -985,7 +988,7 @@ func Test_processState(t *testing.T) {
 				DisableAuto: true,
 			},
 		}
-		readState.Modes = &traits.ModeValues{
+		readState.Modes = &modepb.ModeValues{
 			Values: map[string]string{
 				ModeValueKey: "a",
 			},
@@ -1013,9 +1016,9 @@ func Test_processState(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error %v", err)
 		}
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 33,
 			},
 		})
@@ -1037,9 +1040,9 @@ func Test_processState(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error %v", err)
 		}
-		actions.assertNextCall(&traits.UpdateBrightnessRequest{
+		actions.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name: "light01",
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: 33,
 			},
 		})
@@ -1082,7 +1085,7 @@ type testActions struct {
 
 	err map[string]error
 
-	brightnessCalls []*traits.UpdateBrightnessRequest
+	brightnessCalls []*lightpb.UpdateBrightnessRequest
 }
 
 func (ta *testActions) assertNoMoreCalls() {
@@ -1122,9 +1125,9 @@ func (ta *testActions) assertNextBrightnessUpdates(level float32, names ...strin
 	}
 
 	for _, name := range names {
-		ta.assertNextCall(&traits.UpdateBrightnessRequest{
+		ta.assertNextCall(&lightpb.UpdateBrightnessRequest{
 			Name:       name,
-			Brightness: &traits.Brightness{LevelPercent: level},
+			Brightness: &lightpb.Brightness{LevelPercent: level},
 		})
 	}
 }
@@ -1145,7 +1148,7 @@ func (ta *testActions) nextCallReturnsError(err error, names ...string) {
 	}
 }
 
-func (ta *testActions) UpdateBrightness(ctx context.Context, now time.Time, req *traits.UpdateBrightnessRequest, state *WriteState) error {
+func (ta *testActions) UpdateBrightness(ctx context.Context, now time.Time, req *lightpb.UpdateBrightnessRequest, state *WriteState) error {
 	ta.m.Lock()
 	defer ta.m.Unlock()
 	ta.calls = append(ta.calls, req)
@@ -1157,7 +1160,7 @@ func (ta *testActions) UpdateBrightness(ctx context.Context, now time.Time, req 
 		return err
 	}
 
-	state.Brightness[req.Name] = Value[*traits.Brightness]{
+	state.Brightness[req.Name] = Value[*lightpb.Brightness]{
 		At: now,
 		V:  req.Brightness,
 	}

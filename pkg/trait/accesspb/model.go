@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Model struct {
@@ -13,24 +13,24 @@ type Model struct {
 }
 
 func NewModel(opts ...resource.Option) *Model {
-	defaultOpts := []resource.Option{resource.WithInitialValue(&traits.AccessAttempt{})}
+	defaultOpts := []resource.Option{resource.WithInitialValue(&accesspb.AccessAttempt{})}
 	opts = append(defaultOpts, opts...)
 	return &Model{
 		accessAttempt: resource.NewValue(opts...),
 	}
 }
 
-func (m *Model) GetLastAccessAttempt(opts ...resource.ReadOption) (*traits.AccessAttempt, error) {
+func (m *Model) GetLastAccessAttempt(opts ...resource.ReadOption) (*accesspb.AccessAttempt, error) {
 	v := m.accessAttempt.Get(opts...)
-	return v.(*traits.AccessAttempt), nil
+	return v.(*accesspb.AccessAttempt), nil
 }
 
-func (m *Model) UpdateLastAccessAttempt(accessAttempt *traits.AccessAttempt, opts ...resource.WriteOption) (*traits.AccessAttempt, error) {
+func (m *Model) UpdateLastAccessAttempt(accessAttempt *accesspb.AccessAttempt, opts ...resource.WriteOption) (*accesspb.AccessAttempt, error) {
 	v, err := m.accessAttempt.Set(accessAttempt, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return v.(*traits.AccessAttempt), nil
+	return v.(*accesspb.AccessAttempt), nil
 }
 
 func (m *Model) PullAccessAttempts(ctx context.Context, opts ...resource.ReadOption) <-chan PullAccessAttemptsChange {
@@ -40,7 +40,7 @@ func (m *Model) PullAccessAttempts(ctx context.Context, opts ...resource.ReadOpt
 	go func() {
 		defer close(send)
 		for change := range recv {
-			value := change.Value.(*traits.AccessAttempt)
+			value := change.Value.(*accesspb.AccessAttempt)
 			send <- PullAccessAttemptsChange{
 				Value:      value,
 				ChangeTime: change.ChangeTime,
@@ -52,6 +52,6 @@ func (m *Model) PullAccessAttempts(ctx context.Context, opts ...resource.ReadOpt
 }
 
 type PullAccessAttemptsChange struct {
-	Value      *traits.AccessAttempt
+	Value      *accesspb.AccessAttempt
 	ChangeTime time.Time
 }

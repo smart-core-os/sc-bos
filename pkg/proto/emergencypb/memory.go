@@ -9,12 +9,10 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
-
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type MemoryDevice struct {
-	traits.UnimplementedEmergencyApiServer
+	UnimplementedEmergencyApiServer
 	state *resource.Value
 }
 
@@ -24,41 +22,41 @@ func NewMemoryDevice() *MemoryDevice {
 	}
 }
 
-func InitialEmergency() *traits.Emergency {
-	return &traits.Emergency{
-		Level:           traits.Emergency_OK,
+func InitialEmergency() *Emergency {
+	return &Emergency{
+		Level:           Emergency_OK,
 		LevelChangeTime: serverTimestamp(),
 	}
 }
 
 func (t *MemoryDevice) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterEmergencyApiServer(server, t)
+	RegisterEmergencyApiServer(server, t)
 }
 
-func (t *MemoryDevice) GetEmergency(_ context.Context, req *traits.GetEmergencyRequest) (*traits.Emergency, error) {
-	return t.state.Get(resource.WithReadMask(req.ReadMask)).(*traits.Emergency), nil
+func (t *MemoryDevice) GetEmergency(_ context.Context, req *GetEmergencyRequest) (*Emergency, error) {
+	return t.state.Get(resource.WithReadMask(req.ReadMask)).(*Emergency), nil
 }
 
-func (t *MemoryDevice) UpdateEmergency(_ context.Context, request *traits.UpdateEmergencyRequest) (*traits.Emergency, error) {
+func (t *MemoryDevice) UpdateEmergency(_ context.Context, request *UpdateEmergencyRequest) (*Emergency, error) {
 	update, err := t.state.Set(request.Emergency, resource.WithUpdateMask(request.UpdateMask), resource.InterceptAfter(func(old, new proto.Message) {
 		// user server time if the level changed but the change time didn't
-		oldt, newt := old.(*traits.Emergency), new.(*traits.Emergency)
+		oldt, newt := old.(*Emergency), new.(*Emergency)
 		if newt.Level != oldt.Level && oldt.LevelChangeTime == newt.LevelChangeTime {
 			newt.LevelChangeTime = serverTimestamp()
 		}
 	}))
-	return update.(*traits.Emergency), err
+	return update.(*Emergency), err
 }
 
-func (t *MemoryDevice) PullEmergency(request *traits.PullEmergencyRequest, server traits.EmergencyApi_PullEmergencyServer) error {
+func (t *MemoryDevice) PullEmergency(request *PullEmergencyRequest, server EmergencyApi_PullEmergencyServer) error {
 	for event := range t.state.Pull(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		change := &traits.PullEmergencyResponse_Change{
+		change := &PullEmergencyResponse_Change{
 			Name:       request.Name,
-			Emergency:  event.Value.(*traits.Emergency),
+			Emergency:  event.Value.(*Emergency),
 			ChangeTime: timestamppb.New(event.ChangeTime),
 		}
-		err := server.Send(&traits.PullEmergencyResponse{
-			Changes: []*traits.PullEmergencyResponse_Change{change},
+		err := server.Send(&PullEmergencyResponse{
+			Changes: []*PullEmergencyResponse_Change{change},
 		})
 		if err != nil {
 			return err

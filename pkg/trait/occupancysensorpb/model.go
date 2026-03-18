@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Model struct {
@@ -20,16 +20,16 @@ func NewModel(opts ...resource.Option) *Model {
 }
 
 // SetOccupancy updates the known occupancy state for this device
-func (m *Model) SetOccupancy(occupancy *traits.Occupancy, opts ...resource.WriteOption) (*traits.Occupancy, error) {
+func (m *Model) SetOccupancy(occupancy *occupancysensorpb.Occupancy, opts ...resource.WriteOption) (*occupancysensorpb.Occupancy, error) {
 	res, err := m.occupancy.Set(occupancy, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*traits.Occupancy), nil
+	return res.(*occupancysensorpb.Occupancy), nil
 }
 
-func (m *Model) GetOccupancy(opts ...resource.ReadOption) (*traits.Occupancy, error) {
-	return m.occupancy.Get(opts...).(*traits.Occupancy), nil
+func (m *Model) GetOccupancy(opts ...resource.ReadOption) (*occupancysensorpb.Occupancy, error) {
+	return m.occupancy.Get(opts...).(*occupancysensorpb.Occupancy), nil
 }
 
 func (m *Model) PullOccupancy(ctx context.Context, opts ...resource.ReadOption) <-chan PullOccupancyChange {
@@ -39,7 +39,7 @@ func (m *Model) PullOccupancy(ctx context.Context, opts ...resource.ReadOption) 
 	go func() {
 		defer close(send)
 		for change := range recv {
-			value := change.Value.(*traits.Occupancy)
+			value := change.Value.(*occupancysensorpb.Occupancy)
 			send <- PullOccupancyChange{
 				Value:      value,
 				ChangeTime: change.ChangeTime,
@@ -52,6 +52,6 @@ func (m *Model) PullOccupancy(ctx context.Context, opts ...resource.ReadOption) 
 }
 
 type PullOccupancyChange struct {
-	Value      *traits.Occupancy
+	Value      *occupancysensorpb.Occupancy
 	ChangeTime time.Time
 }

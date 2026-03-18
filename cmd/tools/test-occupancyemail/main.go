@@ -21,7 +21,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func main() {
@@ -34,13 +33,13 @@ func main() {
 	now, _ := time.Parse(time.DateTime, "2023-11-15 11:36:00")
 	now = now.Round(time.Second) // get rid of millis, etc
 
-	oc := func(age time.Duration, pc int) *traits.PullOccupancyResponse_Change {
-		return &traits.PullOccupancyResponse_Change{
+	oc := func(age time.Duration, pc int) *occupancysensorpb.PullOccupancyResponse_Change {
+		return &occupancysensorpb.PullOccupancyResponse_Change{
 			ChangeTime: timestamppb.New(now.Add(-age)),
-			Occupancy:  &traits.Occupancy{PeopleCount: int32(pc)},
+			Occupancy:  &occupancysensorpb.Occupancy{PeopleCount: int32(pc)},
 		}
 	}
-	testData := []*traits.PullOccupancyResponse_Change{
+	testData := []*occupancysensorpb.PullOccupancyResponse_Change{
 		// note: these _must_ be in chronological order
 		oc(7*24*time.Hour+time.Second, 20), // before the 7-day window
 		oc(7*24*time.Hour-2*time.Second, 6),
@@ -337,8 +336,8 @@ var sampleData = `
 `
 var sampleNow = time.Date(2023, 11, 23, 0, 0, 0, 0, time.Local)
 
-func parseSampleData() []*traits.PullOccupancyResponse_Change {
-	var records []*traits.PullOccupancyResponse_Change
+func parseSampleData() []*occupancysensorpb.PullOccupancyResponse_Change {
+	var records []*occupancysensorpb.PullOccupancyResponse_Change
 	scanner := bufio.NewScanner(strings.NewReader(sampleData))
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -354,9 +353,9 @@ func parseSampleData() []*traits.PullOccupancyResponse_Change {
 		if err != nil {
 			panic(err)
 		}
-		records = append(records, &traits.PullOccupancyResponse_Change{
+		records = append(records, &occupancysensorpb.PullOccupancyResponse_Change{
 			ChangeTime: timestamppb.New(t),
-			Occupancy:  &traits.Occupancy{PeopleCount: int32(pc)},
+			Occupancy:  &occupancysensorpb.Occupancy{PeopleCount: int32(pc)},
 		})
 	}
 	return records

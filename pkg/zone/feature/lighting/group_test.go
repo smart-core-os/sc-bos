@@ -9,9 +9,9 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -32,7 +32,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 	}
 
 	type response struct {
-		R *traits.PullBrightnessResponse
+		R *lightpb.PullBrightnessResponse
 		E error
 	}
 	responses := make(chan response)
@@ -41,7 +41,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 	go func() {
 		defer close(responses)
 		groupClient := lightpb2.WrapApi(group)
-		stream, err := groupClient.PullBrightness(pullCtx, &traits.PullBrightnessRequest{
+		stream, err := groupClient.PullBrightness(pullCtx, &lightpb.PullBrightnessRequest{
 			Name: "anything will do", // we're using a direct client call, not routed
 		})
 		if err != nil {
@@ -80,7 +80,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 	expectedAverage := func() float32 {
 		var total float32
 		for _, name := range group.names {
-			c, err := r.GetBrightness(context.Background(), &traits.GetBrightnessRequest{Name: name})
+			c, err := r.GetBrightness(context.Background(), &lightpb.GetBrightnessRequest{Name: name})
 			if err != nil {
 				t.Fatalf("get brightness %v: %v", name, err)
 			}
@@ -89,9 +89,9 @@ func TestGroup_PullBrightness(t *testing.T) {
 		return total / float32(len(group.names))
 	}
 	testUpdate := func(name string, level float32) {
-		_, err := r.UpdateBrightness(context.Background(), &traits.UpdateBrightnessRequest{
+		_, err := r.UpdateBrightness(context.Background(), &lightpb.UpdateBrightnessRequest{
 			Name: name,
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: level,
 			},
 		})
@@ -134,24 +134,24 @@ func TestGroup_DescribeBrightness(t *testing.T) {
 
 	for _, name := range group.names {
 		modelServer := lightpb2.NewModelServer(lightpb2.NewModel(
-			lightpb2.WithPreset(10, &traits.LightPreset{Name: "dim", Title: "Low Light"}),
-			lightpb2.WithPreset(90, &traits.LightPreset{Name: "blind", Title: "High Light"}),
+			lightpb2.WithPreset(10, &lightpb.LightPreset{Name: "dim", Title: "Low Light"}),
+			lightpb2.WithPreset(90, &lightpb.LightPreset{Name: "blind", Title: "High Light"}),
 		))
 		info.Add(name, lightpb2.WrapInfo(modelServer))
 	}
 
-	support, err := group.DescribeBrightness(context.Background(), &traits.DescribeBrightnessRequest{})
+	support, err := group.DescribeBrightness(context.Background(), &lightpb.DescribeBrightnessRequest{})
 	if err != nil {
 		t.Fatalf("describe brightness: %v", err)
 	}
-	want := &traits.BrightnessSupport{
+	want := &lightpb.BrightnessSupport{
 		ResourceSupport: &types.ResourceSupport{
 			Readable:    true,
 			Writable:    true,
 			Observable:  true,
 			PullSupport: types.PullSupport_PULL_SUPPORT_NATIVE,
 		},
-		Presets: []*traits.LightPreset{
+		Presets: []*lightpb.LightPreset{
 			{Name: "dim", Title: "Low Light"},
 			{Name: "blind", Title: "High Light"},
 		},

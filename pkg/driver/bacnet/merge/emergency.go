@@ -18,7 +18,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // AlarmConfig allows configuring a specific bacnet point to raise an Emergency if the
@@ -64,7 +63,7 @@ type emergencyImpl struct {
 	logger     *zap.Logger
 
 	model *emergencypb.MemoryDevice
-	traits.EmergencyApiServer
+	emergencypb.EmergencyApiServer
 	config   emergencyConfig
 	pollTask *task.Intermittent
 }
@@ -99,7 +98,7 @@ func (t *emergencyImpl) AnnounceSelf(a node.Announcer) node.Undo {
 	return a.Announce(t.config.Name, node.HasTrait(trait.Emergency, node.WithClients(emergencypb.WrapApi(t))))
 }
 
-func (t *emergencyImpl) GetEmergency(ctx context.Context, request *traits.GetEmergencyRequest) (*traits.Emergency, error) {
+func (t *emergencyImpl) GetEmergency(ctx context.Context, request *emergencypb.GetEmergencyRequest) (*emergencypb.Emergency, error) {
 	_, err := t.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -107,17 +106,17 @@ func (t *emergencyImpl) GetEmergency(ctx context.Context, request *traits.GetEme
 	return t.EmergencyApiServer.GetEmergency(ctx, request)
 }
 
-func (t *emergencyImpl) UpdateEmergency(ctx context.Context, request *traits.UpdateEmergencyRequest) (*traits.Emergency, error) {
-	return traits.UnimplementedEmergencyApiServer{}.UpdateEmergency(ctx, request)
+func (t *emergencyImpl) UpdateEmergency(ctx context.Context, request *emergencypb.UpdateEmergencyRequest) (*emergencypb.Emergency, error) {
+	return emergencypb.UnimplementedEmergencyApiServer{}.UpdateEmergency(ctx, request)
 }
 
-func (t *emergencyImpl) PullEmergency(request *traits.PullEmergencyRequest, server traits.EmergencyApi_PullEmergencyServer) error {
+func (t *emergencyImpl) PullEmergency(request *emergencypb.PullEmergencyRequest, server emergencypb.EmergencyApi_PullEmergencyServer) error {
 	_ = t.pollTask.Attach(server.Context())
 	return t.EmergencyApiServer.PullEmergency(request, server)
 }
 
-func (t *emergencyImpl) checkValueForEmergency(response any) (*traits.Emergency, error) {
-	data := &traits.Emergency{}
+func (t *emergencyImpl) checkValueForEmergency(response any) (*emergencypb.Emergency, error) {
+	data := &emergencypb.Emergency{}
 
 	value, err := comm.Float64Value(response)
 	if err != nil {
@@ -127,17 +126,17 @@ func (t *emergencyImpl) checkValueForEmergency(response any) (*traits.Emergency,
 	if value < *t.config.AlarmConfig.OkLowerBound ||
 		value > *t.config.AlarmConfig.OkUpperBound {
 		data.Reason = t.config.AlarmConfig.AlarmReason
-		data.Level = traits.Emergency_EMERGENCY
+		data.Level = emergencypb.Emergency_EMERGENCY
 		return data, nil
 	} else {
-		data.Level = traits.Emergency_OK
+		data.Level = emergencypb.Emergency_OK
 	}
 	return data, nil
 }
 
 // pollPeer fetches data from the peer device and saves the data locally.
-func (t *emergencyImpl) pollPeer(ctx context.Context) (*traits.Emergency, error) {
-	data := &traits.Emergency{}
+func (t *emergencyImpl) pollPeer(ctx context.Context) (*emergencypb.Emergency, error) {
+	data := &emergencypb.Emergency{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
 	var requestNames []string
@@ -153,11 +152,11 @@ func (t *emergencyImpl) pollPeer(ctx context.Context) (*traits.Emergency, error)
 			level := lifesafetystate.LifeSafetyState(enum)
 			switch level {
 			case lifesafetystate.Quiet:
-				data.Level = traits.Emergency_OK
+				data.Level = emergencypb.Emergency_OK
 			case lifesafetystate.PreAlarm, lifesafetystate.FaultPreAlarm:
-				data.Level = traits.Emergency_WARNING
+				data.Level = emergencypb.Emergency_WARNING
 			default:
-				data.Level = traits.Emergency_EMERGENCY
+				data.Level = emergencypb.Emergency_EMERGENCY
 			}
 
 			switch level {
@@ -197,5 +196,5 @@ func (t *emergencyImpl) pollPeer(ctx context.Context) (*traits.Emergency, error)
 		return nil, multierr.Combine(errs...)
 	}
 
-	return t.model.UpdateEmergency(ctx, &traits.UpdateEmergencyRequest{Emergency: data})
+	return t.model.UpdateEmergency(ctx, &emergencypb.UpdateEmergencyRequest{Emergency: data})
 }

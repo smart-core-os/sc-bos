@@ -8,30 +8,30 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 )
 
 func Test_mergeOccupancy(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    []*traits.Occupancy
-		want    *traits.Occupancy
+		args    []*occupancysensorpb.Occupancy
+		want    *occupancysensorpb.Occupancy
 		wantErr bool
 	}{
 		{"empty", nil, nil, true},
-		{"one", []*traits.Occupancy{{State: traits.Occupancy_OCCUPIED}}, &traits.Occupancy{State: traits.Occupancy_OCCUPIED}, false},
-		{"earliestOccupancy", []*traits.Occupancy{
-			{State: traits.Occupancy_OCCUPIED, StateChangeTime: timestamppb.New(time.Unix(100, 0))},
-			{State: traits.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(50, 0))},
-			{State: traits.Occupancy_OCCUPIED, StateChangeTime: timestamppb.New(time.Unix(80, 0))},
-			{State: traits.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(120, 0))},
-		}, &traits.Occupancy{State: traits.Occupancy_OCCUPIED, StateChangeTime: timestamppb.New(time.Unix(80, 0))}, false},
-		{"latestUnoccupied", []*traits.Occupancy{
-			{State: traits.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(100, 0))},
-			{State: traits.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(50, 0))},
-			{State: traits.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(80, 0))},
-			{State: traits.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(120, 0))},
-		}, &traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(120, 0))}, false},
+		{"one", []*occupancysensorpb.Occupancy{{State: occupancysensorpb.Occupancy_OCCUPIED}}, &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED}, false},
+		{"earliestOccupancy", []*occupancysensorpb.Occupancy{
+			{State: occupancysensorpb.Occupancy_OCCUPIED, StateChangeTime: timestamppb.New(time.Unix(100, 0))},
+			{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(50, 0))},
+			{State: occupancysensorpb.Occupancy_OCCUPIED, StateChangeTime: timestamppb.New(time.Unix(80, 0))},
+			{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(120, 0))},
+		}, &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, StateChangeTime: timestamppb.New(time.Unix(80, 0))}, false},
+		{"latestUnoccupied", []*occupancysensorpb.Occupancy{
+			{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(100, 0))},
+			{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(50, 0))},
+			{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(80, 0))},
+			{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(120, 0))},
+		}, &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(120, 0))}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

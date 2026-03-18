@@ -8,9 +8,12 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DataFetcher is a function that fetches device data for a specific trait
@@ -22,10 +25,10 @@ type device struct {
 	logger   *zap.Logger
 	traits   map[trait.Name]DataFetcher
 	info     map[trait.Name]proto.Message
-	metaData *traits.Metadata
+	metaData *metadatapb.Metadata
 }
 
-func newDevice(name string, logger *zap.Logger, metaData *traits.Metadata) *device {
+func newDevice(name string, logger *zap.Logger, metaData *metadatapb.Metadata) *device {
 	d := &device{
 		name:     name,
 		logger:   logger,
@@ -70,10 +73,10 @@ func (d *device) getMeterData(ctx context.Context, meterClient meterpb.MeterApiC
 	return result, nil
 }
 
-func (d *device) getAirQualitySensorData(ctx context.Context, airQualityClient traits.AirQualitySensorApiClient) (map[string]json.RawMessage, error) {
+func (d *device) getAirQualitySensorData(ctx context.Context, airQualityClient airqualitysensorpb.AirQualitySensorApiClient) (map[string]json.RawMessage, error) {
 	result := make(map[string]json.RawMessage)
 
-	airQuality, err := airQualityClient.GetAirQuality(ctx, &traits.GetAirQualityRequest{
+	airQuality, err := airQualityClient.GetAirQuality(ctx, &airqualitysensorpb.GetAirQualityRequest{
 		Name: d.name,
 	})
 	if err != nil {
@@ -91,10 +94,10 @@ func (d *device) getAirQualitySensorData(ctx context.Context, airQualityClient t
 	return result, nil
 }
 
-func (d *device) getOccupancySensorData(ctx context.Context, occupancyClient traits.OccupancySensorApiClient) (map[string]json.RawMessage, error) {
+func (d *device) getOccupancySensorData(ctx context.Context, occupancyClient occupancysensorpb.OccupancySensorApiClient) (map[string]json.RawMessage, error) {
 	result := make(map[string]json.RawMessage)
 
-	occupancy, err := occupancyClient.GetOccupancy(ctx, &traits.GetOccupancyRequest{
+	occupancy, err := occupancyClient.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{
 		Name: d.name,
 	})
 	if err != nil {
@@ -112,10 +115,10 @@ func (d *device) getOccupancySensorData(ctx context.Context, occupancyClient tra
 	return result, nil
 }
 
-func (d *device) getAirTemperatureData(ctx context.Context, client traits.AirTemperatureApiClient) (map[string]json.RawMessage, error) {
+func (d *device) getAirTemperatureData(ctx context.Context, client airtemperaturepb.AirTemperatureApiClient) (map[string]json.RawMessage, error) {
 	result := make(map[string]json.RawMessage)
 
-	airTemperature, err := client.GetAirTemperature(ctx, &traits.GetAirTemperatureRequest{
+	airTemperature, err := client.GetAirTemperature(ctx, &airtemperaturepb.GetAirTemperatureRequest{
 		Name: d.name,
 	})
 	if err != nil {

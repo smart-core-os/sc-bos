@@ -12,27 +12,27 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Group struct {
-	traits.UnimplementedOpenCloseApiServer
-	apiClient traits.OpenCloseApiClient
+	openclosepb.UnimplementedOpenCloseApiServer
+	apiClient openclosepb.OpenCloseApiClient
 	names     []string
 	readOnly  bool
 
 	logger *zap.Logger
 }
 
-func (g *Group) GetPositions(ctx context.Context, request *traits.GetOpenClosePositionsRequest) (*traits.OpenClosePositions, error) {
+func (g *Group) GetPositions(ctx context.Context, request *openclosepb.GetOpenClosePositionsRequest) (*openclosepb.OpenClosePositions, error) {
 	allRes := make([]value, len(g.names))
 	fns := make([]func(), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.GetOpenClosePositionsRequest)
+		request := proto.Clone(request).(*openclosepb.GetOpenClosePositionsRequest)
 		request.Name = name
 		i := i
 		fns[i] = func() {
@@ -46,15 +46,15 @@ func (g *Group) GetPositions(ctx context.Context, request *traits.GetOpenClosePo
 	return mergeOpenClosePositions(allRes)
 }
 
-func (g *Group) UpdatePositions(ctx context.Context, request *traits.UpdateOpenClosePositionsRequest) (*traits.OpenClosePositions, error) {
+func (g *Group) UpdatePositions(ctx context.Context, request *openclosepb.UpdateOpenClosePositionsRequest) (*openclosepb.OpenClosePositions, error) {
 	if g.readOnly {
 		return nil, status.Error(codes.FailedPrecondition, "read-only")
 	}
-	fns := make([]func() (*traits.OpenClosePositions, error), len(g.names))
+	fns := make([]func() (*openclosepb.OpenClosePositions, error), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.UpdateOpenClosePositionsRequest)
+		request := proto.Clone(request).(*openclosepb.UpdateOpenClosePositionsRequest)
 		request.Name = name
-		fns[i] = func() (*traits.OpenClosePositions, error) {
+		fns[i] = func() (*openclosepb.OpenClosePositions, error) {
 			return g.apiClient.UpdatePositions(ctx, request)
 		}
 	}
@@ -78,15 +78,15 @@ func (g *Group) UpdatePositions(ctx context.Context, request *traits.UpdateOpenC
 	return mergeOpenClosePositions(allVals)
 }
 
-func (g *Group) Stop(ctx context.Context, request *traits.StopOpenCloseRequest) (*traits.OpenClosePositions, error) {
+func (g *Group) Stop(ctx context.Context, request *openclosepb.StopOpenCloseRequest) (*openclosepb.OpenClosePositions, error) {
 	if g.readOnly {
 		return nil, status.Error(codes.FailedPrecondition, "read-only")
 	}
-	fns := make([]func() (*traits.OpenClosePositions, error), len(g.names))
+	fns := make([]func() (*openclosepb.OpenClosePositions, error), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.StopOpenCloseRequest)
+		request := proto.Clone(request).(*openclosepb.StopOpenCloseRequest)
 		request.Name = name
-		fns[i] = func() (*traits.OpenClosePositions, error) {
+		fns[i] = func() (*openclosepb.OpenClosePositions, error) {
 			return g.apiClient.Stop(ctx, request)
 		}
 	}
@@ -110,7 +110,7 @@ func (g *Group) Stop(ctx context.Context, request *traits.StopOpenCloseRequest) 
 	return mergeOpenClosePositions(allVals)
 }
 
-func (g *Group) PullPositions(request *traits.PullOpenClosePositionsRequest, server traits.OpenCloseApi_PullPositionsServer) error {
+func (g *Group) PullPositions(request *openclosepb.PullOpenClosePositionsRequest, server openclosepb.OpenCloseApi_PullPositionsServer) error {
 	if len(g.names) == 0 {
 		return status.Error(codes.FailedPrecondition, "zone has no openclose names")
 	}
@@ -120,7 +120,7 @@ func (g *Group) PullPositions(request *traits.PullOpenClosePositionsRequest, ser
 
 	group, ctx := errgroup.WithContext(server.Context())
 	for _, name := range g.names {
-		request := proto.Clone(request).(*traits.PullOpenClosePositionsRequest)
+		request := proto.Clone(request).(*openclosepb.PullOpenClosePositionsRequest)
 		request.Name = name
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(
@@ -140,7 +140,7 @@ func (g *Group) PullPositions(request *traits.PullOpenClosePositionsRequest, ser
 					}
 				},
 				func(ctx context.Context, changes chan<- value) error {
-					res, err := g.apiClient.GetPositions(ctx, &traits.GetOpenClosePositionsRequest{Name: name, ReadMask: request.ReadMask})
+					res, err := g.apiClient.GetPositions(ctx, &openclosepb.GetOpenClosePositionsRequest{Name: name, ReadMask: request.ReadMask})
 					if err != nil {
 						return err
 					}
@@ -160,7 +160,7 @@ func (g *Group) PullPositions(request *traits.PullOpenClosePositionsRequest, ser
 		}
 		values := make([]value, len(g.names))
 
-		var last *traits.OpenClosePositions
+		var last *openclosepb.OpenClosePositions
 		eq := cmp.Equal(cmp.FloatValueApprox(0, 0.001))
 		filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 
@@ -182,7 +182,7 @@ func (g *Group) PullPositions(request *traits.PullOpenClosePositionsRequest, ser
 				}
 				last = b
 
-				err = server.Send(&traits.PullOpenClosePositionsResponse{Changes: []*traits.PullOpenClosePositionsResponse_Change{{
+				err = server.Send(&openclosepb.PullOpenClosePositionsResponse{Changes: []*openclosepb.PullOpenClosePositionsResponse_Change{{
 					Name:              request.Name,
 					ChangeTime:        timestamppb.Now(),
 					OpenClosePosition: b,
@@ -199,11 +199,11 @@ func (g *Group) PullPositions(request *traits.PullOpenClosePositionsRequest, ser
 
 type value struct {
 	name string
-	val  *traits.OpenClosePositions
+	val  *openclosepb.OpenClosePositions
 	err  error
 }
 
-func mergeOpenClosePositions(all []value) (*traits.OpenClosePositions, error) {
+func mergeOpenClosePositions(all []value) (*openclosepb.OpenClosePositions, error) {
 	switch len(all) {
 	case 0:
 		return nil, status.Error(codes.FailedPrecondition, "zone has no open close names")
@@ -215,7 +215,7 @@ func mergeOpenClosePositions(all []value) (*traits.OpenClosePositions, error) {
 			}
 		}
 
-		positionsByDirection := make(map[traits.OpenClosePosition_Direction][]*traits.OpenClosePosition)
+		positionsByDirection := make(map[openclosepb.OpenClosePosition_Direction][]*openclosepb.OpenClosePosition)
 		for _, v := range all {
 			if v.val == nil {
 				continue
@@ -225,12 +225,12 @@ func mergeOpenClosePositions(all []value) (*traits.OpenClosePositions, error) {
 			}
 		}
 
-		out := &traits.OpenClosePositions{}
+		out := &openclosepb.OpenClosePositions{}
 		for _, pos := range positionsByDirection {
 			out.States = append(out.States, mergeOpenClosePosition(pos))
 		}
 		// sort by direction, ascending
-		slices.SortFunc(out.States, func(a, b *traits.OpenClosePosition) int {
+		slices.SortFunc(out.States, func(a, b *openclosepb.OpenClosePosition) int {
 			return int(a.Direction) - int(b.Direction)
 		})
 
@@ -254,8 +254,8 @@ func mergeOpenClosePositions(all []value) (*traits.OpenClosePositions, error) {
 
 // mergeOpenClosePosition merges multiple open close positions into a single one.
 // All positions must have the same direction.
-func mergeOpenClosePosition(all []*traits.OpenClosePosition) *traits.OpenClosePosition {
-	out := &traits.OpenClosePosition{}
+func mergeOpenClosePosition(all []*openclosepb.OpenClosePosition) *openclosepb.OpenClosePosition {
+	out := &openclosepb.OpenClosePosition{}
 
 	presentCount := 0
 	for _, pos := range all {
@@ -268,20 +268,20 @@ func mergeOpenClosePosition(all []*traits.OpenClosePosition) *traits.OpenClosePo
 		// priority order: UNSPECIFIED < SLOW < REDUCED_MOTION < HELD
 		// NO_RESISTANCE would go here ^
 		switch pos.Resistance {
-		case traits.OpenClosePosition_RESISTANCE_UNSPECIFIED: // keep existing
-		case traits.OpenClosePosition_SLOW:
+		case openclosepb.OpenClosePosition_RESISTANCE_UNSPECIFIED: // keep existing
+		case openclosepb.OpenClosePosition_SLOW:
 			switch out.Resistance {
-			case traits.OpenClosePosition_REDUCED_MOTION, traits.OpenClosePosition_HELD: // keep existing
+			case openclosepb.OpenClosePosition_REDUCED_MOTION, openclosepb.OpenClosePosition_HELD: // keep existing
 			default:
 				out.Resistance = pos.Resistance
 			}
-		case traits.OpenClosePosition_REDUCED_MOTION:
+		case openclosepb.OpenClosePosition_REDUCED_MOTION:
 			switch out.Resistance {
-			case traits.OpenClosePosition_HELD: // keep existing
+			case openclosepb.OpenClosePosition_HELD: // keep existing
 			default:
 				out.Resistance = pos.Resistance
 			}
-		case traits.OpenClosePosition_HELD:
+		case openclosepb.OpenClosePosition_HELD:
 			out.Resistance = pos.Resistance
 		}
 	}

@@ -8,8 +8,8 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
 	"github.com/smart-core-os/sc-bos/pkg/util/client"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 var clientConfig client.Config
@@ -41,10 +41,10 @@ func run() error {
 	log.Printf("dialled")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	wc := traits.NewWasteApiClient(conn)
+	wc := wastepb.NewWasteApiClient(conn)
 
 	get := func(c context.Context, name string) error {
-		req := traits.ListWasteRecordsRequest{Name: name}
+		req := wastepb.ListWasteRecordsRequest{Name: name}
 		for {
 			log.Printf("ListWasteRecords %s", name)
 			res, err := wc.ListWasteRecords(c, &req)
@@ -62,7 +62,7 @@ func run() error {
 
 	pull := func(c context.Context, name string) error {
 		log.Printf("PullWasteRecords %s", name)
-		stream, err := wc.PullWasteRecords(c, &traits.PullWasteRecordsRequest{Name: name})
+		stream, err := wc.PullWasteRecords(c, &wastepb.PullWasteRecordsRequest{Name: name})
 		if err != nil {
 			return err
 		}

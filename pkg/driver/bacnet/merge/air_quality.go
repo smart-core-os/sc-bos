@@ -12,13 +12,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type airQualityConfig struct {
@@ -82,7 +82,7 @@ func (aq *airQualitySensor) AnnounceSelf(a node.Announcer) node.Undo {
 	return a.Announce(aq.config.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb2.WrapApi(aq))))
 }
 
-func (aq *airQualitySensor) GetAirQuality(ctx context.Context, request *traits.GetAirQualityRequest) (*traits.AirQuality, error) {
+func (aq *airQualitySensor) GetAirQuality(ctx context.Context, request *airqualitysensorpb.GetAirQualityRequest) (*airqualitysensorpb.AirQuality, error) {
 	_, err := aq.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -90,14 +90,14 @@ func (aq *airQualitySensor) GetAirQuality(ctx context.Context, request *traits.G
 	return aq.ModelServer.GetAirQuality(ctx, request)
 }
 
-func (aq *airQualitySensor) PullAirQuality(request *traits.PullAirQualityRequest, server traits.AirQualitySensorApi_PullAirQualityServer) error {
+func (aq *airQualitySensor) PullAirQuality(request *airqualitysensorpb.PullAirQualityRequest, server airqualitysensorpb.AirQualitySensorApi_PullAirQualityServer) error {
 	_ = aq.pollTask.Attach(server.Context())
 	return aq.ModelServer.PullAirQuality(request, server)
 }
 
 // pollPeer fetches data from the peer device and saves the data locally.
-func (aq *airQualitySensor) pollPeer(ctx context.Context) (*traits.AirQuality, error) {
-	data := &traits.AirQuality{}
+func (aq *airQualitySensor) pollPeer(ctx context.Context) (*airqualitysensorpb.AirQuality, error) {
+	data := &airqualitysensorpb.AirQuality{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
 	var requestNames []string

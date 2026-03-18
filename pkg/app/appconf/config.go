@@ -15,14 +15,14 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/app/files"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/util/slices"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Config struct {
-	Name     string           `json:"name,omitempty"`
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Name     string               `json:"name,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 	// Includes lists other files and glob patterns for config to load.
 	// Files are read in the order specified here then by filepath.Glob.
 	// Drivers, Automation, and Zones are merged using the Name in a first-come, first-served nature.
@@ -108,7 +108,7 @@ func (c *Config) zoneNamesMap() map[string]bool {
 func (c *Config) clone() Config {
 	return Config{
 		Name:       c.Name,
-		Metadata:   proto.Clone(c.Metadata).(*traits.Metadata),
+		Metadata:   proto.Clone(c.Metadata).(*metadatapb.Metadata),
 		Includes:   append([]string(nil), c.Includes...),
 		Drivers:    append([]driver.RawConfig(nil), c.Drivers...),
 		Automation: append([]auto.RawConfig(nil), c.Automation...),

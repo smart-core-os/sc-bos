@@ -10,10 +10,10 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // ExampleRegistry_devicesApi shows how to implement the [gen_devicespb.DevicesApiServer] using a [Registry].
@@ -45,8 +45,8 @@ func ExampleRegistry_devicesApi() {
 	exampleChecks := registry.ForOwner("example")
 
 	// create the device with some metadata
-	_, _ = devs.Update(&devicespb.Device{Name: "device1", Metadata: &traits.Metadata{
-		Appearance: &traits.Metadata_Appearance{Title: "Example Device 1"},
+	_, _ = devs.Update(&devicespb.Device{Name: "device1", Metadata: &metadatapb.Metadata{
+		Appearance: &metadatapb.Metadata_Appearance{Title: "Example Device 1"},
 	}}, resource.WithCreateIfAbsent())
 	// prepare a health check for the device
 	dev1Check, err := exampleChecks.NewFaultCheck("device1", &healthpb.HealthCheck{

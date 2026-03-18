@@ -5,32 +5,32 @@ package wastepb
 import (
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // WrapInfo	adapts a traits.WasteInfoServer	and presents it as a traits.WasteInfoClient
-func WrapInfo(server traits.WasteInfoServer) *InfoWrapper {
-	conn := wrap.ServerToClient(traits.WasteInfo_ServiceDesc, server)
-	client := traits.NewWasteInfoClient(conn)
+func WrapInfo(server wastepb.WasteInfoServer) *InfoWrapper {
+	conn := wrap.ServerToClient(wastepb.WasteInfo_ServiceDesc, server)
+	client := wastepb.NewWasteInfoClient(conn)
 	return &InfoWrapper{
 		WasteInfoClient: client,
 		server:          server,
 		conn:            conn,
-		desc:            traits.WasteInfo_ServiceDesc,
+		desc:            wastepb.WasteInfo_ServiceDesc,
 	}
 }
 
 type InfoWrapper struct {
-	traits.WasteInfoClient
+	wastepb.WasteInfoClient
 
-	server traits.WasteInfoServer
+	server wastepb.WasteInfoServer
 	conn   grpc.ClientConnInterface
 	desc   grpc.ServiceDesc
 }
 
 // UnwrapServer returns the underlying server instance.
-func (w *InfoWrapper) UnwrapServer() traits.WasteInfoServer {
+func (w *InfoWrapper) UnwrapServer() wastepb.WasteInfoServer {
 	return w.server
 }
 

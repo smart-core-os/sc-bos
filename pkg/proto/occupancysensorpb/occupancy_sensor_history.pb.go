@@ -7,7 +7,6 @@
 package occupancysensorpb
 
 import (
-	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	time "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -27,7 +26,7 @@ const (
 
 type OccupancyRecord struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Occupancy     *traits.Occupancy      `protobuf:"bytes,1,opt,name=occupancy,proto3" json:"occupancy,omitempty"`
+	Occupancy     *Occupancy             `protobuf:"bytes,1,opt,name=occupancy,proto3" json:"occupancy,omitempty"`
 	RecordTime    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=record_time,json=recordTime,proto3" json:"record_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -63,7 +62,7 @@ func (*OccupancyRecord) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *OccupancyRecord) GetOccupancy() *traits.Occupancy {
+func (x *OccupancyRecord) GetOccupancy() *Occupancy {
 	if x != nil {
 		return x.Occupancy
 	}
@@ -240,9 +239,9 @@ var File_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto protore
 
 const file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_rawDesc = "" +
 	"\n" +
-	"?smartcore/bos/occupancysensor/v1/occupancy_sensor_history.proto\x12 smartcore.bos.occupancysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1dtraits/occupancy_sensor.proto\x1a\x17types/time/period.proto\"\x89\x01\n" +
-	"\x0fOccupancyRecord\x129\n" +
-	"\toccupancy\x18\x01 \x01(\v2\x1b.smartcore.traits.OccupancyR\toccupancy\x12;\n" +
+	"?smartcore/bos/occupancysensor/v1/occupancy_sensor_history.proto\x12 smartcore.bos.occupancysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a7smartcore/bos/occupancysensor/v1/occupancy_sensor.proto\x1a\x17types/time/period.proto\"\x99\x01\n" +
+	"\x0fOccupancyRecord\x12I\n" +
+	"\toccupancy\x18\x01 \x01(\v2+.smartcore.bos.occupancysensor.v1.OccupancyR\toccupancy\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"recordTime\"\xf7\x01\n" +
 	"\x1bListOccupancyHistoryRequest\x12\x12\n" +
@@ -278,13 +277,13 @@ var file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_goTypes
 	(*OccupancyRecord)(nil),              // 0: smartcore.bos.occupancysensor.v1.OccupancyRecord
 	(*ListOccupancyHistoryRequest)(nil),  // 1: smartcore.bos.occupancysensor.v1.ListOccupancyHistoryRequest
 	(*ListOccupancyHistoryResponse)(nil), // 2: smartcore.bos.occupancysensor.v1.ListOccupancyHistoryResponse
-	(*traits.Occupancy)(nil),             // 3: smartcore.traits.Occupancy
+	(*Occupancy)(nil),                    // 3: smartcore.bos.occupancysensor.v1.Occupancy
 	(*timestamppb.Timestamp)(nil),        // 4: google.protobuf.Timestamp
 	(*time.Period)(nil),                  // 5: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),        // 6: google.protobuf.FieldMask
 }
 var file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.occupancysensor.v1.OccupancyRecord.occupancy:type_name -> smartcore.traits.Occupancy
+	3, // 0: smartcore.bos.occupancysensor.v1.OccupancyRecord.occupancy:type_name -> smartcore.bos.occupancysensor.v1.Occupancy
 	4, // 1: smartcore.bos.occupancysensor.v1.OccupancyRecord.record_time:type_name -> google.protobuf.Timestamp
 	5, // 2: smartcore.bos.occupancysensor.v1.ListOccupancyHistoryRequest.period:type_name -> smartcore.types.time.Period
 	6, // 3: smartcore.bos.occupancysensor.v1.ListOccupancyHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
@@ -303,6 +302,7 @@ func file_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto_init()
 	if File_smartcore_bos_occupancysensor_v1_occupancy_sensor_history_proto != nil {
 		return
 	}
+	file_smartcore_bos_occupancysensor_v1_occupancy_sensor_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

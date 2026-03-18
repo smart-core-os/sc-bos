@@ -5,18 +5,17 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModes define the available modes of a Model if none are provided.
-var DefaultModes = &traits.Modes{
-	Modes: []*traits.Modes_Mode{
-		{Name: "temperature", Ordered: true, Values: []*traits.Modes_Value{
+var DefaultModes = &Modes{
+	Modes: []*Modes_Mode{
+		{Name: "temperature", Ordered: true, Values: []*Modes_Value{
 			{Name: "delicates"},
 			{Name: "medium"},
 			{Name: "whites"},
 		}},
-		{Name: "spin", Ordered: false, Values: []*traits.Modes_Value{
+		{Name: "spin", Ordered: false, Values: []*Modes_Value{
 			{Name: "auto"},
 			{Name: "slow"},
 			{Name: "fast"},
@@ -29,7 +28,7 @@ var DefaultModes = &traits.Modes{
 type Model struct {
 	modeValues *resource.Value // of *traits.ModeValues
 
-	modes *traits.Modes
+	modes *Modes
 }
 
 // NewModel is like NewModelModes(DefaultModes).
@@ -39,8 +38,8 @@ func NewModel() *Model {
 
 // NewModelModes constructs a Model with the given modes.
 // The first value of each mode will be selected.
-func NewModelModes(modes *traits.Modes) *Model {
-	modeValues := &traits.ModeValues{
+func NewModelModes(modes *Modes) *Model {
+	modeValues := &ModeValues{
 		Values: make(map[string]string),
 	}
 	for _, mode := range modes.Modes {
@@ -58,21 +57,21 @@ func NewModelModes(modes *traits.Modes) *Model {
 }
 
 // ModeValues gets the current mode values.
-func (m *Model) ModeValues(opts ...resource.ReadOption) *traits.ModeValues {
-	return m.modeValues.Get(opts...).(*traits.ModeValues)
+func (m *Model) ModeValues(opts ...resource.ReadOption) *ModeValues {
+	return m.modeValues.Get(opts...).(*ModeValues)
 }
 
-func (m *Model) UpdateModeValues(values *traits.ModeValues, opts ...resource.WriteOption) (*traits.ModeValues, error) {
+func (m *Model) UpdateModeValues(values *ModeValues, opts ...resource.WriteOption) (*ModeValues, error) {
 	res, err := m.modeValues.Set(values, opts...)
 	if res == nil {
 		return nil, err
 	}
-	return res.(*traits.ModeValues), err
+	return res.(*ModeValues), err
 }
 
 //goland:noinspection GoNameStartsWithPackageName
 type ModeValuesChange struct {
-	Value      *traits.ModeValues
+	Value      *ModeValues
 	ChangeTime time.Time
 }
 
@@ -82,7 +81,7 @@ func (m *Model) PullModeValues(ctx context.Context, opts ...resource.ReadOption)
 	go func() {
 		defer close(send)
 		for change := range m.modeValues.Pull(ctx, opts...) {
-			val := change.Value.(*traits.ModeValues)
+			val := change.Value.(*ModeValues)
 			select {
 			case <-ctx.Done():
 				return
@@ -94,11 +93,11 @@ func (m *Model) PullModeValues(ctx context.Context, opts ...resource.ReadOption)
 	return send
 }
 
-func (m *Model) Modes() *traits.Modes {
+func (m *Model) Modes() *Modes {
 	return m.modes
 }
 
-func (m *Model) AvailableValues(modeName string) []*traits.Modes_Value {
+func (m *Model) AvailableValues(modeName string) []*Modes_Value {
 	for _, mode := range m.Modes().Modes {
 		if mode.Name == modeName {
 			return mode.Values

@@ -9,7 +9,6 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type ElectricServer struct {
@@ -30,7 +29,7 @@ func (m *ElectricServer) Unwrap() any {
 }
 
 var electricDemandPager = NewPageReader(func(r history.Record) (*electricpb.ElectricDemandRecord, error) {
-	v := &traits.ElectricDemand{}
+	v := &electricpb.ElectricDemand{}
 	err := proto.Unmarshal(r.Payload, v)
 	if err != nil {
 		return nil, err

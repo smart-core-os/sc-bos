@@ -6,12 +6,12 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_airqualitysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality/config"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -40,7 +40,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	if len(cfg.AirQualitySensors) > 0 {
 		group := &Group{
-			client: traits.NewAirQualitySensorApiClient(f.clients.ClientConn()),
+			client: gen_airqualitysensorpb.NewAirQualitySensorApiClient(f.clients.ClientConn()),
 			names:  cfg.AirQualitySensors,
 			logger: logger,
 		}

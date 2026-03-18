@@ -14,7 +14,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/block"
 	"github.com/smart-core-os/sc-bos/pkg/block/mdblock"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 // Root represents a full collection of related configuration properties
@@ -38,7 +38,7 @@ type Root struct {
 	COV *COV `json:"cov,omitempty"`
 
 	// Metadata is applied to all announced names.
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 
 	Devices []Device   `json:"devices,omitempty"`
 	Traits  []RawTrait `json:"traits,omitempty"`
@@ -94,7 +94,7 @@ type Device struct {
 	COV *COV `json:"cov,omitempty"`
 
 	// Metadata applied to any traits sharing this devices name.
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 
 	DiscoverObjects      *bool    `json:"discoverObjects,omitempty"`
 	Objects              []Object `json:"objects,omitempty"`

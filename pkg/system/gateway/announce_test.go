@@ -17,10 +17,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -219,9 +219,9 @@ func TestSystem_announceCohort(t *testing.T) {
 
 				stream := th.n.PullDevices(th.Context(), resource.WithUpdatesOnly(true))
 				now := time.Now()
-				ac1.Devices.Set(remoteDesc{name: "ac1/d1", md: &traits.Metadata{
+				ac1.Devices.Set(remoteDesc{name: "ac1/d1", md: &metadatapb.Metadata{
 					Name:       "ac1/d1",
-					Membership: &traits.Metadata_Membership{Subsystem: "test devices"},
+					Membership: &metadatapb.Metadata_Membership{Subsystem: "test devices"},
 				}})
 
 				wantOldDevice := &devicespb.Device{
@@ -230,9 +230,9 @@ func TestSystem_announceCohort(t *testing.T) {
 				}
 				wantNewDevice := &devicespb.Device{
 					Name: "ac1/d1",
-					Metadata: &traits.Metadata{
+					Metadata: &metadatapb.Metadata{
 						Name:       "ac1/d1",
-						Membership: &traits.Metadata_Membership{Subsystem: "test devices"},
+						Membership: &metadatapb.Metadata_Membership{Subsystem: "test devices"},
 						Traits:     ts(trait.Metadata),
 					},
 				}
@@ -264,9 +264,9 @@ func TestSystem_announceCohort(t *testing.T) {
 				th.assertSimpleDevices() // no devices because it's a gateway
 
 				stream := th.n.PullDevices(th.Context(), resource.WithUpdatesOnly(true))
-				gw1.Devices.Set(remoteDesc{name: "ac1/d1", md: &traits.Metadata{
+				gw1.Devices.Set(remoteDesc{name: "ac1/d1", md: &metadatapb.Metadata{
 					Name:       "ac1/d1",
-					Membership: &traits.Metadata_Membership{Subsystem: "test devices"},
+					Membership: &metadatapb.Metadata_Membership{Subsystem: "test devices"},
 				}})
 				synctest.Wait()
 				select {
@@ -423,18 +423,18 @@ func hcs(descs ...string) []*healthpb.HealthCheck {
 	return hcs
 }
 
-func md(name string, traitList ...*traits.TraitMetadata) *traits.Metadata {
-	return &traits.Metadata{
+func md(name string, traitList ...*metadatapb.TraitMetadata) *metadatapb.Metadata {
+	return &metadatapb.Metadata{
 		Name:       name,
-		Appearance: &traits.Metadata_Appearance{Title: name},
+		Appearance: &metadatapb.Metadata_Appearance{Title: name},
 		Traits:     traitList,
 	}
 }
 
-func ts[S ~string](name ...S) []*traits.TraitMetadata {
-	var ts []*traits.TraitMetadata
+func ts[S ~string](name ...S) []*metadatapb.TraitMetadata {
+	var ts []*metadatapb.TraitMetadata
 	for _, n := range name {
-		ts = append(ts, &traits.TraitMetadata{Name: string(n)})
+		ts = append(ts, &metadatapb.TraitMetadata{Name: string(n)})
 	}
 	return ts
 }
@@ -523,7 +523,7 @@ func (t *announceTester) assertDevices(want ...*devicespb.Device) {
 	t.Helper()
 	slices.SortFunc(want, cmpDevices)
 	// add in the self node t the right place keeping want sorted by name
-	selfDevice := &devicespb.Device{Name: "self", Metadata: &traits.Metadata{Name: "self", Traits: ts(trait.Metadata, trait.Parent)}}
+	selfDevice := &devicespb.Device{Name: "self", Metadata: &metadatapb.Metadata{Name: "self", Traits: ts(trait.Metadata, trait.Parent)}}
 	if i, ok := slices.BinarySearchFunc(want, selfDevice, cmpDevices); !ok {
 		want = slices.Insert(want, i, selfDevice)
 	}

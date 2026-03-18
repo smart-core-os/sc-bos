@@ -11,12 +11,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
 	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	typespb "github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -65,8 +66,8 @@ func (d *Driver) pullSampleAirQuality(ctx context.Context, dev config.Device, lo
 	}
 }
 
-func sampleToAirQuality(in api.DeviceSampleResponseEnriched) *traits.AirQuality {
-	dst := &traits.AirQuality{}
+func sampleToAirQuality(in api.DeviceSampleResponseEnriched) *airqualitysensorpb.AirQuality {
+	dst := &airqualitysensorpb.AirQuality{}
 	data := in.GetData()
 	if v, ok := data.GetAirExchangeRateOk(); ok {
 		dst.AirChangePerHour = float64PtoFloat32P(v)
@@ -123,8 +124,8 @@ func (d *Driver) pullSampleAirTemperature(ctx context.Context, dev config.Device
 	}
 }
 
-func sampleToAirTemperature(in api.DeviceSampleResponseEnriched) *traits.AirTemperature {
-	dst := &traits.AirTemperature{}
+func sampleToAirTemperature(in api.DeviceSampleResponseEnriched) *airtemperaturepb.AirTemperature {
+	dst := &airtemperaturepb.AirTemperature{}
 	data := in.GetData()
 	if v, ok := data.GetTempOk(); ok {
 		dst.AmbientTemperature = &typespb.Temperature{ValueCelsius: *v.Float64}
@@ -156,11 +157,11 @@ func (d *Driver) pullSampleEnergyLevel(ctx context.Context, dev config.Device, l
 	}
 }
 
-func sampleToEnergyLevel(in api.DeviceSampleResponseEnriched) *traits.EnergyLevel {
-	dst := &traits.EnergyLevel{}
+func sampleToEnergyLevel(in api.DeviceSampleResponseEnriched) *energystoragepb.EnergyLevel {
+	dst := &energystoragepb.EnergyLevel{}
 	data := in.GetData()
 	if v, ok := data.GetBatteryOk(); ok {
-		dst.Quantity = &traits.EnergyLevel_Quantity{
+		dst.Quantity = &energystoragepb.EnergyLevel_Quantity{
 			Percentage: *v,
 		}
 	}
@@ -180,8 +181,8 @@ func (d *Driver) pullSampleBrightness(ctx context.Context, dev config.Device, lo
 	}
 }
 
-func sampleToAmbientBrightness(in api.DeviceSampleResponseEnriched) *traits.AmbientBrightness {
-	dst := &traits.AmbientBrightness{}
+func sampleToAmbientBrightness(in api.DeviceSampleResponseEnriched) *brightnesssensorpb.AmbientBrightness {
+	dst := &brightnesssensorpb.AmbientBrightness{}
 	data := in.GetData()
 	if v, ok := data.GetLightOk(); ok {
 		if v.Float32 != nil {
@@ -200,17 +201,17 @@ func float64PtoFloat32P(in *float64) *float32 {
 }
 
 type roAirTemperatureServer struct {
-	traits.AirTemperatureApiServer
+	airtemperaturepb.AirTemperatureApiServer
 }
 
-func (s roAirTemperatureServer) UpdateAirTemperature(context.Context, *traits.UpdateAirTemperatureRequest) (*traits.AirTemperature, error) {
+func (s roAirTemperatureServer) UpdateAirTemperature(context.Context, *airtemperaturepb.UpdateAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
 	return nil, status.Errorf(codes.Unimplemented, "read-only")
 }
 
 type roEnergyStorageServer struct {
-	traits.EnergyStorageApiServer
+	energystoragepb.EnergyStorageApiServer
 }
 
-func (s roEnergyStorageServer) Charge(context.Context, *traits.ChargeRequest) (*traits.ChargeResponse, error) {
+func (s roEnergyStorageServer) Charge(context.Context, *energystoragepb.ChargeRequest) (*energystoragepb.ChargeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "read-only")
 }

@@ -9,11 +9,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type ModelServer struct {
-	traits.UnimplementedEnergyStorageApiServer
+	UnimplementedEnergyStorageApiServer
 
 	model *Model
 
@@ -33,23 +32,23 @@ func (s *ModelServer) Unwrap() any {
 }
 
 func (s *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterEnergyStorageApiServer(server, s)
+	RegisterEnergyStorageApiServer(server, s)
 }
 
-func (s *ModelServer) GetEnergyLevel(_ context.Context, request *traits.GetEnergyLevelRequest) (*traits.EnergyLevel, error) {
+func (s *ModelServer) GetEnergyLevel(_ context.Context, request *GetEnergyLevelRequest) (*EnergyLevel, error) {
 	return s.model.GetEnergyLevel(resource.WithReadMask(request.GetReadMask()))
 }
 
-func (s *ModelServer) PullEnergyLevel(request *traits.PullEnergyLevelRequest, server traits.EnergyStorageApi_PullEnergyLevelServer) error {
+func (s *ModelServer) PullEnergyLevel(request *PullEnergyLevelRequest, server EnergyStorageApi_PullEnergyLevelServer) error {
 	for update := range s.model.PullEnergyLevel(server.Context(), resource.WithReadMask(request.GetReadMask()), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		change := &traits.PullEnergyLevelResponse_Change{
+		change := &PullEnergyLevelResponse_Change{
 			Name:        request.Name,
 			ChangeTime:  timestamppb.New(update.ChangeTime),
 			EnergyLevel: update.Value,
 		}
 
-		err := server.Send(&traits.PullEnergyLevelResponse{
-			Changes: []*traits.PullEnergyLevelResponse_Change{change},
+		err := server.Send(&PullEnergyLevelResponse{
+			Changes: []*PullEnergyLevelResponse_Change{change},
 		})
 		if err != nil {
 			return err
@@ -59,22 +58,22 @@ func (s *ModelServer) PullEnergyLevel(request *traits.PullEnergyLevelRequest, se
 	return server.Context().Err()
 }
 
-func (s *ModelServer) Charge(_ context.Context, request *traits.ChargeRequest) (*traits.ChargeResponse, error) {
+func (s *ModelServer) Charge(_ context.Context, request *ChargeRequest) (*ChargeResponse, error) {
 	if s.readOnly {
 		return nil, status.Errorf(codes.Unimplemented, "EnergyStorage.Charge")
 	}
 
-	level := traits.EnergyLevel{}
+	level := EnergyLevel{}
 	if request.GetCharge() {
-		level.Flow = &traits.EnergyLevel_Charge{}
+		level.Flow = &EnergyLevel_Charge{}
 	} else {
-		level.Flow = &traits.EnergyLevel_Discharge{}
+		level.Flow = &EnergyLevel_Discharge{}
 	}
 	_, err := s.model.UpdateEnergyLevel(&level, resource.WithUpdatePaths("idle", "charge", "discharge"))
 	if err != nil {
 		return nil, err
 	}
-	return &traits.ChargeResponse{}, nil
+	return &ChargeResponse{}, nil
 }
 
 type ServerOption func(s *ModelServer)

@@ -7,7 +7,6 @@
 package airqualitysensorpb
 
 import (
-	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	time "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -27,7 +26,7 @@ const (
 
 type AirQualityRecord struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AirQuality    *traits.AirQuality     `protobuf:"bytes,1,opt,name=air_quality,json=airQuality,proto3" json:"air_quality,omitempty"`
+	AirQuality    *AirQuality            `protobuf:"bytes,1,opt,name=air_quality,json=airQuality,proto3" json:"air_quality,omitempty"`
 	RecordTime    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=record_time,json=recordTime,proto3" json:"record_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -63,7 +62,7 @@ func (*AirQualityRecord) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *AirQualityRecord) GetAirQuality() *traits.AirQuality {
+func (x *AirQualityRecord) GetAirQuality() *AirQuality {
 	if x != nil {
 		return x.AirQuality
 	}
@@ -240,9 +239,9 @@ var File_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto prot
 
 const file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_rawDesc = "" +
 	"\n" +
-	"Bsmartcore/bos/airqualitysensor/v1/air_quality_sensor_history.proto\x12!smartcore.bos.airqualitysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1ftraits/air_quality_sensor.proto\x1a\x17types/time/period.proto\"\x8e\x01\n" +
-	"\x10AirQualityRecord\x12=\n" +
-	"\vair_quality\x18\x01 \x01(\v2\x1c.smartcore.traits.AirQualityR\n" +
+	"Bsmartcore/bos/airqualitysensor/v1/air_quality_sensor_history.proto\x12!smartcore.bos.airqualitysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a:smartcore/bos/airqualitysensor/v1/air_quality_sensor.proto\x1a\x17types/time/period.proto\"\x9f\x01\n" +
+	"\x10AirQualityRecord\x12N\n" +
+	"\vair_quality\x18\x01 \x01(\v2-.smartcore.bos.airqualitysensor.v1.AirQualityR\n" +
 	"airQuality\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"recordTime\"\xf8\x01\n" +
@@ -279,13 +278,13 @@ var file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_goTy
 	(*AirQualityRecord)(nil),              // 0: smartcore.bos.airqualitysensor.v1.AirQualityRecord
 	(*ListAirQualityHistoryRequest)(nil),  // 1: smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest
 	(*ListAirQualityHistoryResponse)(nil), // 2: smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryResponse
-	(*traits.AirQuality)(nil),             // 3: smartcore.traits.AirQuality
+	(*AirQuality)(nil),                    // 3: smartcore.bos.airqualitysensor.v1.AirQuality
 	(*timestamppb.Timestamp)(nil),         // 4: google.protobuf.Timestamp
 	(*time.Period)(nil),                   // 5: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),         // 6: google.protobuf.FieldMask
 }
 var file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.airqualitysensor.v1.AirQualityRecord.air_quality:type_name -> smartcore.traits.AirQuality
+	3, // 0: smartcore.bos.airqualitysensor.v1.AirQualityRecord.air_quality:type_name -> smartcore.bos.airqualitysensor.v1.AirQuality
 	4, // 1: smartcore.bos.airqualitysensor.v1.AirQualityRecord.record_time:type_name -> google.protobuf.Timestamp
 	5, // 2: smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.period:type_name -> smartcore.types.time.Period
 	6, // 3: smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
@@ -304,6 +303,7 @@ func file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto_ini
 	if File_smartcore_bos_airqualitysensor_v1_air_quality_sensor_history_proto != nil {
 		return
 	}
+	file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

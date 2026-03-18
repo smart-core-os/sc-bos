@@ -5,16 +5,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 func TestCut(t *testing.T) {
 	tests := []struct {
 		name        string
 		d           time.Duration
-		segment     *traits.ElectricMode_Segment
-		wantBefore  *traits.ElectricMode_Segment
-		wantAfter   *traits.ElectricMode_Segment
+		segment     *electricpb.ElectricMode_Segment
+		wantBefore  *electricpb.ElectricMode_Segment
+		wantAfter   *electricpb.ElectricMode_Segment
 		wantOutside bool
 	}{
 		{"-10 inf", -10, seg(s{2, 0}), nil, seg(s{2, 0}), true},

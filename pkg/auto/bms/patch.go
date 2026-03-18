@@ -12,8 +12,9 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/bms/config"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Patcher represents a single patch that adjusts ReadState.
@@ -40,7 +41,7 @@ func (a *Auto) setupPatchers(ctx context.Context, configChanged <-chan config.Ro
 			new: func(name string, logger *zap.Logger) subscriber {
 				return &AirTemperaturePatches{
 					name:   name,
-					client: traits.NewAirTemperatureApiClient(conn),
+					client: airtemperaturepb.NewAirTemperatureApiClient(conn),
 					logger: logger.Named("airTemperature"),
 				}
 			},
@@ -55,7 +56,7 @@ func (a *Auto) setupPatchers(ctx context.Context, configChanged <-chan config.Ro
 			new: func(name string, logger *zap.Logger) subscriber {
 				return &ModePatches{
 					name:   name,
-					client: traits.NewModeApiClient(conn),
+					client: modepb.NewModeApiClient(conn),
 					logger: logger.Named("mode"),
 				}
 			},
@@ -65,7 +66,7 @@ func (a *Auto) setupPatchers(ctx context.Context, configChanged <-chan config.Ro
 			new: func(name string, logger *zap.Logger) subscriber {
 				return &OccupancySensorPatches{
 					name:   name,
-					client: traits.NewOccupancySensorApiClient(conn),
+					client: occupancysensorpb.NewOccupancySensorApiClient(conn),
 					logger: logger.Named("occupancy"),
 				}
 			},
@@ -81,7 +82,7 @@ func (a *Auto) setupPatchers(ctx context.Context, configChanged <-chan config.Ro
 			new: func(name string, logger *zap.Logger) subscriber {
 				return &MeanOATempPatches{
 					name:          name,
-					apiClient:     traits.NewAirTemperatureApiClient(conn),
+					apiClient:     airtemperaturepb.NewAirTemperatureApiClient(conn),
 					historyClient: airtemperaturepb.NewAirTemperatureHistoryClient(conn),
 					logger:        logger.Named("meanOATemp"),
 				}

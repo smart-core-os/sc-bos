@@ -5,8 +5,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	segmentpb2 "github.com/smart-core-os/sc-bos/pkg/trait/electricpb/segmentpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Sum combines all the given modes together into a single mode.
@@ -20,13 +20,13 @@ import (
 // If only one mode has a start time, we follow the rules above but also set the start time of the returned mode to this.
 // Any mode without a start time is assumed to start at the most recent start time of the modes that do.
 // The returned mode will have a start time equal to the earliest start time of the given modes, if one exists.
-func Sum(modes ...*traits.ElectricMode) *traits.ElectricMode {
+func Sum(modes ...*electricpb.ElectricMode) *electricpb.ElectricMode {
 	if len(modes) == 0 {
 		return nil
 	}
 	var earliest, latest time.Time
 	var stCount int
-	segmentSlices := make([][]*traits.ElectricMode_Segment, len(modes))
+	segmentSlices := make([][]*electricpb.ElectricMode_Segment, len(modes))
 	for i, mode := range modes {
 		segmentSlices[i] = mode.Segments
 		if mode.StartTime != nil {
@@ -54,7 +54,7 @@ func Sum(modes ...*traits.ElectricMode) *traits.ElectricMode {
 		}
 	}
 
-	result := &traits.ElectricMode{}
+	result := &electricpb.ElectricMode{}
 	if anyHaveST {
 		result.StartTime = timestamppb.New(earliest)
 	}

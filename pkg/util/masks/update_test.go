@@ -1,14 +1,16 @@
 package masks
 
 import (
+	"testing"
+	"time"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
-	"testing"
-	"time"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 // Tests merging of messages using a field mask.
@@ -17,20 +19,20 @@ import (
 //
 // Regression Test: FieldUpdater.Merge used to panic with repeated fields
 func TestFieldUpdater_Merge(t *testing.T) {
-	dst := &traits.ElectricMode{
+	dst := &electricpb.ElectricMode{
 		Id:          "foo",
 		Title:       "old title",
 		Description: "old description",
-		Segments: []*traits.ElectricMode_Segment{
+		Segments: []*electricpb.ElectricMode_Segment{
 			{Length: durationpb.New(30 * time.Second), Magnitude: 0.5},
 		},
 	}
 
-	src := &traits.ElectricMode{
+	src := &electricpb.ElectricMode{
 		Id:          "foo",
 		Title:       "new title",
 		Description: "new description",
-		Segments: []*traits.ElectricMode_Segment{
+		Segments: []*electricpb.ElectricMode_Segment{
 			{Length: durationpb.New(time.Minute), Magnitude: 1},
 			{Length: durationpb.New(2 * time.Minute), Magnitude: 2},
 		},
@@ -41,11 +43,11 @@ func TestFieldUpdater_Merge(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expect := &traits.ElectricMode{
+	expect := &electricpb.ElectricMode{
 		Id:          "foo",
 		Title:       "new title",
 		Description: "old description",
-		Segments: []*traits.ElectricMode_Segment{
+		Segments: []*electricpb.ElectricMode_Segment{
 			{Length: durationpb.New(30 * time.Second), Magnitude: 0.5},
 			{Length: durationpb.New(time.Minute), Magnitude: 1},
 			{Length: durationpb.New(2 * time.Minute), Magnitude: 2},

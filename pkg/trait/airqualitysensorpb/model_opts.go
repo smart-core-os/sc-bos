@@ -1,13 +1,13 @@
 package airqualitysensorpb
 
 import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
 var DefaultModelOptions = []resource.Option{
-	WithInitialAirQuality(&traits.AirQuality{}),
+	WithInitialAirQuality(&airqualitysensorpb.AirQuality{}),
 }
 
 // ModelOption defined the base type for all options that apply to this traits model.
@@ -24,7 +24,7 @@ func WithAirQualityOption(opts ...resource.Option) resource.Option {
 }
 
 // WithInitialAirQuality returns an option that configures the model to initialise with the given air quality.
-func WithInitialAirQuality(airQuality *traits.AirQuality) resource.Option {
+func WithInitialAirQuality(airQuality *airqualitysensorpb.AirQuality) resource.Option {
 	return WithAirQualityOption(resource.WithInitialValue(airQuality))
 }
 

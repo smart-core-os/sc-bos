@@ -8,19 +8,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // InfoRouter is a traits.AirQualitySensorInfoServer that allows routing named requests to specific traits.AirQualitySensorInfoClient
 type InfoRouter struct {
-	traits.UnimplementedAirQualitySensorInfoServer
+	airqualitysensorpb.UnimplementedAirQualitySensorInfoServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.AirQualitySensorInfoServer = (*InfoRouter)(nil)
+var _ airqualitysensorpb.AirQualitySensorInfoServer = (*InfoRouter)(nil)
 
 func NewInfoRouter(opts ...router.Option) *InfoRouter {
 	return &InfoRouter{
@@ -30,14 +30,14 @@ func NewInfoRouter(opts ...router.Option) *InfoRouter {
 
 // WithAirQualitySensorInfoClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithAirQualitySensorInfoClientFactory(f func(name string) (traits.AirQualitySensorInfoClient, error)) router.Option {
+func WithAirQualitySensorInfoClientFactory(f func(name string) (airqualitysensorpb.AirQualitySensorInfoClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *InfoRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterAirQualitySensorInfoServer(server, r)
+	airqualitysensorpb.RegisterAirQualitySensorInfoServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.AirQualitySensorInfoClient.
@@ -49,27 +49,27 @@ func (r *InfoRouter) Add(name string, client any) any {
 }
 
 func (r *InfoRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.AirQualitySensorInfoClient)
+	_, ok := client.(airqualitysensorpb.AirQualitySensorInfoClient)
 	return ok
 }
 
-func (r *InfoRouter) AddAirQualitySensorInfoClient(name string, client traits.AirQualitySensorInfoClient) traits.AirQualitySensorInfoClient {
+func (r *InfoRouter) AddAirQualitySensorInfoClient(name string, client airqualitysensorpb.AirQualitySensorInfoClient) airqualitysensorpb.AirQualitySensorInfoClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.AirQualitySensorInfoClient)
+	return res.(airqualitysensorpb.AirQualitySensorInfoClient)
 }
 
-func (r *InfoRouter) RemoveAirQualitySensorInfoClient(name string) traits.AirQualitySensorInfoClient {
+func (r *InfoRouter) RemoveAirQualitySensorInfoClient(name string) airqualitysensorpb.AirQualitySensorInfoClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.AirQualitySensorInfoClient)
+	return res.(airqualitysensorpb.AirQualitySensorInfoClient)
 }
 
-func (r *InfoRouter) GetAirQualitySensorInfoClient(name string) (traits.AirQualitySensorInfoClient, error) {
+func (r *InfoRouter) GetAirQualitySensorInfoClient(name string) (airqualitysensorpb.AirQualitySensorInfoClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -77,10 +77,10 @@ func (r *InfoRouter) GetAirQualitySensorInfoClient(name string) (traits.AirQuali
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.AirQualitySensorInfoClient), nil
+	return res.(airqualitysensorpb.AirQualitySensorInfoClient), nil
 }
 
-func (r *InfoRouter) DescribeAirQuality(ctx context.Context, request *traits.DescribeAirQualityRequest) (*traits.AirQualitySupport, error) {
+func (r *InfoRouter) DescribeAirQuality(ctx context.Context, request *airqualitysensorpb.DescribeAirQualityRequest) (*airqualitysensorpb.AirQualitySupport, error) {
 	child, err := r.GetAirQualitySensorInfoClient(request.Name)
 	if err != nil {
 		return nil, err

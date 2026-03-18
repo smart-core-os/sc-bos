@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 func DefaultConfig() Root {
@@ -41,10 +41,10 @@ func (c Root) LoadPassword() (string, error) {
 }
 
 type DeviceConfig struct {
-	Name       string           `json:"name"`
-	Occupancy  *LogicConfig     `json:"occupancy"`  // an Occupancy logic
-	EnterLeave *LogicConfig     `json:"enterLeave"` // an In/Out logic
-	Metadata   *traits.Metadata `json:"metadata,omitempty"`
+	Name       string               `json:"name"`
+	Occupancy  *LogicConfig         `json:"occupancy"`  // an Occupancy logic
+	EnterLeave *LogicConfig         `json:"enterLeave"` // an In/Out logic
+	Metadata   *metadatapb.Metadata `json:"metadata,omitempty"`
 
 	// to support UDMI/MQTT automation
 	UDMITopicPrefix string `json:"udmiTopicPrefix,omitempty"`

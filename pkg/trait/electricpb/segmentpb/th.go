@@ -7,7 +7,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 type s struct {
@@ -15,15 +15,15 @@ type s struct {
 	d time.Duration
 }
 
-func seg(seg s) *traits.ElectricMode_Segment {
-	segment := traits.ElectricMode_Segment{Magnitude: seg.m}
+func seg(seg s) *electricpb.ElectricMode_Segment {
+	segment := electricpb.ElectricMode_Segment{Magnitude: seg.m}
 	if seg.d != 0 {
 		segment.Length = durationpb.New(seg.d)
 	}
 	return &segment
 }
 
-func segs(ss ...s) (result []*traits.ElectricMode_Segment) {
+func segs(ss ...s) (result []*electricpb.ElectricMode_Segment) {
 	for _, item := range ss {
 		result = append(result, seg(item))
 	}

@@ -7,19 +7,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // InfoRouter is a traits.EnterLeaveSensorInfoServer that allows routing named requests to specific traits.EnterLeaveSensorInfoClient
 type InfoRouter struct {
-	traits.UnimplementedEnterLeaveSensorInfoServer
+	enterleavesensorpb.UnimplementedEnterLeaveSensorInfoServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.EnterLeaveSensorInfoServer = (*InfoRouter)(nil)
+var _ enterleavesensorpb.EnterLeaveSensorInfoServer = (*InfoRouter)(nil)
 
 func NewInfoRouter(opts ...router.Option) *InfoRouter {
 	return &InfoRouter{
@@ -29,14 +29,14 @@ func NewInfoRouter(opts ...router.Option) *InfoRouter {
 
 // WithEnterLeaveSensorInfoClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithEnterLeaveSensorInfoClientFactory(f func(name string) (traits.EnterLeaveSensorInfoClient, error)) router.Option {
+func WithEnterLeaveSensorInfoClientFactory(f func(name string) (enterleavesensorpb.EnterLeaveSensorInfoClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *InfoRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterEnterLeaveSensorInfoServer(server, r)
+	enterleavesensorpb.RegisterEnterLeaveSensorInfoServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.EnterLeaveSensorInfoClient.
@@ -48,27 +48,27 @@ func (r *InfoRouter) Add(name string, client any) any {
 }
 
 func (r *InfoRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.EnterLeaveSensorInfoClient)
+	_, ok := client.(enterleavesensorpb.EnterLeaveSensorInfoClient)
 	return ok
 }
 
-func (r *InfoRouter) AddEnterLeaveSensorInfoClient(name string, client traits.EnterLeaveSensorInfoClient) traits.EnterLeaveSensorInfoClient {
+func (r *InfoRouter) AddEnterLeaveSensorInfoClient(name string, client enterleavesensorpb.EnterLeaveSensorInfoClient) enterleavesensorpb.EnterLeaveSensorInfoClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.EnterLeaveSensorInfoClient)
+	return res.(enterleavesensorpb.EnterLeaveSensorInfoClient)
 }
 
-func (r *InfoRouter) RemoveEnterLeaveSensorInfoClient(name string) traits.EnterLeaveSensorInfoClient {
+func (r *InfoRouter) RemoveEnterLeaveSensorInfoClient(name string) enterleavesensorpb.EnterLeaveSensorInfoClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.EnterLeaveSensorInfoClient)
+	return res.(enterleavesensorpb.EnterLeaveSensorInfoClient)
 }
 
-func (r *InfoRouter) GetEnterLeaveSensorInfoClient(name string) (traits.EnterLeaveSensorInfoClient, error) {
+func (r *InfoRouter) GetEnterLeaveSensorInfoClient(name string) (enterleavesensorpb.EnterLeaveSensorInfoClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -76,5 +76,5 @@ func (r *InfoRouter) GetEnterLeaveSensorInfoClient(name string) (traits.EnterLea
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.EnterLeaveSensorInfoClient), nil
+	return res.(enterleavesensorpb.EnterLeaveSensorInfoClient), nil
 }

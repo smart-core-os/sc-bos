@@ -7,8 +7,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Model struct {
@@ -16,12 +16,12 @@ type Model struct {
 }
 
 func NewModel(opts ...resource.Option) *Model {
-	defaultOptions := []resource.Option{resource.WithInitialValue(&traits.MeterReading{})}
+	defaultOptions := []resource.Option{resource.WithInitialValue(&meterpb.MeterReading{})}
 	value := resource.NewValue(append(defaultOptions, opts...)...)
 	// make sure start and end time are recorded
-	_, _ = value.Set(&traits.MeterReading{}, resource.InterceptBefore(func(old, new proto.Message) {
-		oldVal := old.(*traits.MeterReading)
-		newVal := new.(*traits.MeterReading)
+	_, _ = value.Set(&meterpb.MeterReading{}, resource.InterceptBefore(func(old, new proto.Message) {
+		oldVal := old.(*meterpb.MeterReading)
+		newVal := new.(*meterpb.MeterReading)
 		now := value.Clock().Now()
 		if oldVal.StartTime == nil {
 			newVal.StartTime = timestamppb.New(now)
@@ -35,31 +35,31 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) GetMeterReading(opts ...resource.ReadOption) (*traits.MeterReading, error) {
-	return m.meterReading.Get(opts...).(*traits.MeterReading), nil
+func (m *Model) GetMeterReading(opts ...resource.ReadOption) (*meterpb.MeterReading, error) {
+	return m.meterReading.Get(opts...).(*meterpb.MeterReading), nil
 }
 
-func (m *Model) UpdateMeterReading(meterReading *traits.MeterReading, opts ...resource.WriteOption) (*traits.MeterReading, error) {
+func (m *Model) UpdateMeterReading(meterReading *meterpb.MeterReading, opts ...resource.WriteOption) (*meterpb.MeterReading, error) {
 	res, err := m.meterReading.Set(meterReading, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*traits.MeterReading), nil
+	return res.(*meterpb.MeterReading), nil
 }
 
 // RecordReading records a new usage value, updating end time to now.
-func (m *Model) RecordReading(val float32) (*traits.MeterReading, error) {
-	return m.UpdateMeterReading(&traits.MeterReading{Usage: val}, resource.InterceptBefore(func(old, new proto.Message) {
+func (m *Model) RecordReading(val float32) (*meterpb.MeterReading, error) {
+	return m.UpdateMeterReading(&meterpb.MeterReading{Usage: val}, resource.InterceptBefore(func(old, new proto.Message) {
 		now := m.meterReading.Clock().Now()
-		newVal := new.(*traits.MeterReading)
+		newVal := new.(*meterpb.MeterReading)
 		newVal.EndTime = timestamppb.New(now)
 	}))
 }
 
 // Reset resets the meter to zero, updating both start and end times to now.
-func (m *Model) Reset() (*traits.MeterReading, error) {
+func (m *Model) Reset() (*meterpb.MeterReading, error) {
 	now := timestamppb.New(m.meterReading.Clock().Now())
-	return m.UpdateMeterReading(&traits.MeterReading{Usage: 0, StartTime: now, EndTime: now},
+	return m.UpdateMeterReading(&meterpb.MeterReading{Usage: 0, StartTime: now, EndTime: now},
 		// force usage (which is zero) to be updated
 		resource.WithUpdatePaths("usage", "start_time", "end_time"))
 }
@@ -71,7 +71,7 @@ func (m *Model) PullMeterReadings(ctx context.Context, opts ...resource.ReadOpti
 	go func() {
 		defer close(send)
 		for change := range recv {
-			value := change.Value.(*traits.MeterReading)
+			value := change.Value.(*meterpb.MeterReading)
 			send <- PullMeterReadingChange{
 				Value:      value,
 				ChangeTime: change.ChangeTime,
@@ -83,6 +83,6 @@ func (m *Model) PullMeterReadings(ctx context.Context, opts ...resource.ReadOpti
 }
 
 type PullMeterReadingChange struct {
-	Value      *traits.MeterReading
+	Value      *meterpb.MeterReading
 	ChangeTime time.Time
 }

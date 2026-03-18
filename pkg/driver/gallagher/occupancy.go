@@ -11,11 +11,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 )
 
 type OccupancyEventController struct {
-	traits.OccupancySensorApiServer
+	occupancysensorpb.OccupancySensorApiServer
 
 	client   *Client
 	interval time.Duration
@@ -117,12 +117,12 @@ type EventUpdateSource struct {
 	Href string `json:"href"`
 }
 
-func (o *OccupancyEventController) loadOccupancyCount() (int32, traits.Occupancy_State, float64) {
+func (o *OccupancyEventController) loadOccupancyCount() (int32, occupancysensorpb.Occupancy_State, float64) {
 	occ := atomic.LoadInt32(&o.totalPeopleCount)
-	state := traits.Occupancy_OCCUPIED
+	state := occupancysensorpb.Occupancy_OCCUPIED
 	if occ <= 0 {
 		occ = 0
-		state = traits.Occupancy_UNOCCUPIED
+		state = occupancysensorpb.Occupancy_UNOCCUPIED
 		// this is a hack to get around the building being occupied by people when the controller boots up
 		// as people keep leaving, the count will converge to 0
 		// then as people start entering the count increases until they leave
@@ -147,26 +147,26 @@ func (o *OccupancyEventController) loadOccupancyCount() (int32, traits.Occupancy
 	return occ, state, confidence
 }
 
-func (o *OccupancyEventController) GetOccupancy(_ context.Context, _ *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
+func (o *OccupancyEventController) GetOccupancy(_ context.Context, _ *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
 	count, state, confidence := o.loadOccupancyCount()
 
-	return &traits.Occupancy{
+	return &occupancysensorpb.Occupancy{
 		State:           state,
 		PeopleCount:     count,
 		StateChangeTime: timestamppb.New(o.lastRefreshCycle),
 		Confidence:      confidence,
 	}, nil
 }
-func (o *OccupancyEventController) PullOccupancy(_ *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+func (o *OccupancyEventController) PullOccupancy(_ *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
 	for {
 		select {
 		case <-o.notifyPull:
 			count, state, confidence := o.loadOccupancyCount()
 
-			if err := server.Send(&traits.PullOccupancyResponse{
-				Changes: []*traits.PullOccupancyResponse_Change{
+			if err := server.Send(&occupancysensorpb.PullOccupancyResponse{
+				Changes: []*occupancysensorpb.PullOccupancyResponse_Change{
 					{
-						Occupancy: &traits.Occupancy{
+						Occupancy: &occupancysensorpb.Occupancy{
 							State:           state,
 							PeopleCount:     count,
 							Confidence:      confidence,

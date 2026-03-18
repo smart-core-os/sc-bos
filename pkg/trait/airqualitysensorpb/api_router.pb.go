@@ -9,19 +9,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // ApiRouter is a traits.AirQualitySensorApiServer that allows routing named requests to specific traits.AirQualitySensorApiClient
 type ApiRouter struct {
-	traits.UnimplementedAirQualitySensorApiServer
+	airqualitysensorpb.UnimplementedAirQualitySensorApiServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.AirQualitySensorApiServer = (*ApiRouter)(nil)
+var _ airqualitysensorpb.AirQualitySensorApiServer = (*ApiRouter)(nil)
 
 func NewApiRouter(opts ...router.Option) *ApiRouter {
 	return &ApiRouter{
@@ -31,14 +31,14 @@ func NewApiRouter(opts ...router.Option) *ApiRouter {
 
 // WithAirQualitySensorApiClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithAirQualitySensorApiClientFactory(f func(name string) (traits.AirQualitySensorApiClient, error)) router.Option {
+func WithAirQualitySensorApiClientFactory(f func(name string) (airqualitysensorpb.AirQualitySensorApiClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *ApiRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterAirQualitySensorApiServer(server, r)
+	airqualitysensorpb.RegisterAirQualitySensorApiServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.AirQualitySensorApiClient.
@@ -50,27 +50,27 @@ func (r *ApiRouter) Add(name string, client any) any {
 }
 
 func (r *ApiRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.AirQualitySensorApiClient)
+	_, ok := client.(airqualitysensorpb.AirQualitySensorApiClient)
 	return ok
 }
 
-func (r *ApiRouter) AddAirQualitySensorApiClient(name string, client traits.AirQualitySensorApiClient) traits.AirQualitySensorApiClient {
+func (r *ApiRouter) AddAirQualitySensorApiClient(name string, client airqualitysensorpb.AirQualitySensorApiClient) airqualitysensorpb.AirQualitySensorApiClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.AirQualitySensorApiClient)
+	return res.(airqualitysensorpb.AirQualitySensorApiClient)
 }
 
-func (r *ApiRouter) RemoveAirQualitySensorApiClient(name string) traits.AirQualitySensorApiClient {
+func (r *ApiRouter) RemoveAirQualitySensorApiClient(name string) airqualitysensorpb.AirQualitySensorApiClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.AirQualitySensorApiClient)
+	return res.(airqualitysensorpb.AirQualitySensorApiClient)
 }
 
-func (r *ApiRouter) GetAirQualitySensorApiClient(name string) (traits.AirQualitySensorApiClient, error) {
+func (r *ApiRouter) GetAirQualitySensorApiClient(name string) (airqualitysensorpb.AirQualitySensorApiClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -78,10 +78,10 @@ func (r *ApiRouter) GetAirQualitySensorApiClient(name string) (traits.AirQuality
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.AirQualitySensorApiClient), nil
+	return res.(airqualitysensorpb.AirQualitySensorApiClient), nil
 }
 
-func (r *ApiRouter) GetAirQuality(ctx context.Context, request *traits.GetAirQualityRequest) (*traits.AirQuality, error) {
+func (r *ApiRouter) GetAirQuality(ctx context.Context, request *airqualitysensorpb.GetAirQualityRequest) (*airqualitysensorpb.AirQuality, error) {
 	child, err := r.GetAirQualitySensorApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (r *ApiRouter) GetAirQuality(ctx context.Context, request *traits.GetAirQua
 	return child.GetAirQuality(ctx, request)
 }
 
-func (r *ApiRouter) PullAirQuality(request *traits.PullAirQualityRequest, server traits.AirQualitySensorApi_PullAirQualityServer) error {
+func (r *ApiRouter) PullAirQuality(request *airqualitysensorpb.PullAirQualityRequest, server airqualitysensorpb.AirQualitySensorApi_PullAirQualityServer) error {
 	child, err := r.GetAirQualitySensorApiClient(request.Name)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (r *ApiRouter) PullAirQuality(request *traits.PullAirQualityRequest, server
 		// Impl note: we could improve throughput here by issuing the Recv and Send in different goroutines, but we're doing
 		// it synchronously until we have a need to change the behaviour
 
-		var msg *traits.PullAirQualityResponse
+		var msg *airqualitysensorpb.PullAirQualityResponse
 		msg, err = stream.Recv()
 		if err != nil {
 			break

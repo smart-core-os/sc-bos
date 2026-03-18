@@ -1,13 +1,13 @@
 package occupancysensorpb
 
 import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
 var DefaultModelOptions = []resource.Option{
-	WithInitialOccupancy(&traits.Occupancy{}),
+	WithInitialOccupancy(&occupancysensorpb.Occupancy{}),
 }
 
 // ModelOption defined the base type for all options that apply to this traits model.
@@ -24,7 +24,7 @@ func WithOccupancyOption(opts ...resource.Option) resource.Option {
 }
 
 // WithInitialOccupancy returns an option that configures the model to initialise with the given occupancy.
-func WithInitialOccupancy(occupancy *traits.Occupancy) resource.Option {
+func WithInitialOccupancy(occupancy *occupancysensorpb.Occupancy) resource.Option {
 	return WithOccupancyOption(resource.WithInitialValue(occupancy))
 }
 

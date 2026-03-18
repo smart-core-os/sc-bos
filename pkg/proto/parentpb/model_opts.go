@@ -5,7 +5,6 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/time/clock"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
@@ -30,7 +29,7 @@ func WithChildrenOption(opts ...resource.Option) resource.Option {
 // Can be called multiple times to add more children.
 // Panics if any child has no name.
 // Panics if any child's traits are not sorted.
-func WithInitialChildren(children ...*traits.Child) resource.Option {
+func WithInitialChildren(children ...*Child) resource.Option {
 	opts := make([]resource.Option, len(children))
 	for i, child := range children {
 		if child.Name == "" {

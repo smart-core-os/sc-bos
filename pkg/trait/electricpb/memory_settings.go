@@ -7,17 +7,17 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 //go:generate protomod protoc -- -I../../.. --go_out=paths=source_relative:../../../ --go-grpc_out=paths=source_relative:../../../ pkg/trait/electricpb/memory_settings.proto
 
-func (s *ModelServer) UpdateDemand(_ context.Context, request *UpdateDemandRequest) (*traits.ElectricDemand, error) {
+func (s *ModelServer) UpdateDemand(_ context.Context, request *UpdateDemandRequest) (*electricpb.ElectricDemand, error) {
 	return s.model.UpdateDemand(request.Demand, resource.WithUpdateMask(request.UpdateMask))
 }
 
-func (s *ModelServer) CreateMode(_ context.Context, request *CreateModeRequest) (*traits.ElectricMode, error) {
+func (s *ModelServer) CreateMode(_ context.Context, request *CreateModeRequest) (*electricpb.ElectricMode, error) {
 	// start by validating things
 	if request.GetMode().GetId() != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "id '%v' should be empty", request.GetMode().GetId())
@@ -26,7 +26,7 @@ func (s *ModelServer) CreateMode(_ context.Context, request *CreateModeRequest) 
 	return s.model.CreateMode(request.Mode)
 }
 
-func (s *ModelServer) UpdateMode(_ context.Context, request *UpdateModeRequest) (*traits.ElectricMode, error) {
+func (s *ModelServer) UpdateMode(_ context.Context, request *UpdateModeRequest) (*electricpb.ElectricMode, error) {
 	// start by validating things
 	if request.GetMode().GetId() == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")

@@ -9,7 +9,6 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type AirQualitySensorServer struct {
@@ -30,7 +29,7 @@ func (m *AirQualitySensorServer) Unwrap() any {
 }
 
 var airQualityPager = NewPageReader(func(r history.Record) (*airqualitysensorpb.AirQualityRecord, error) {
-	v := &traits.AirQuality{}
+	v := &airqualitysensorpb.AirQuality{}
 	err := proto.Unmarshal(r.Payload, v)
 	if err != nil {
 		return nil, err

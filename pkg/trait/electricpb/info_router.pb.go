@@ -7,19 +7,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // InfoRouter is a traits.ElectricInfoServer that allows routing named requests to specific traits.ElectricInfoClient
 type InfoRouter struct {
-	traits.UnimplementedElectricInfoServer
+	electricpb.UnimplementedElectricInfoServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.ElectricInfoServer = (*InfoRouter)(nil)
+var _ electricpb.ElectricInfoServer = (*InfoRouter)(nil)
 
 func NewInfoRouter(opts ...router.Option) *InfoRouter {
 	return &InfoRouter{
@@ -29,14 +29,14 @@ func NewInfoRouter(opts ...router.Option) *InfoRouter {
 
 // WithElectricInfoClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithElectricInfoClientFactory(f func(name string) (traits.ElectricInfoClient, error)) router.Option {
+func WithElectricInfoClientFactory(f func(name string) (electricpb.ElectricInfoClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *InfoRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterElectricInfoServer(server, r)
+	electricpb.RegisterElectricInfoServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.ElectricInfoClient.
@@ -48,27 +48,27 @@ func (r *InfoRouter) Add(name string, client any) any {
 }
 
 func (r *InfoRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.ElectricInfoClient)
+	_, ok := client.(electricpb.ElectricInfoClient)
 	return ok
 }
 
-func (r *InfoRouter) AddElectricInfoClient(name string, client traits.ElectricInfoClient) traits.ElectricInfoClient {
+func (r *InfoRouter) AddElectricInfoClient(name string, client electricpb.ElectricInfoClient) electricpb.ElectricInfoClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.ElectricInfoClient)
+	return res.(electricpb.ElectricInfoClient)
 }
 
-func (r *InfoRouter) RemoveElectricInfoClient(name string) traits.ElectricInfoClient {
+func (r *InfoRouter) RemoveElectricInfoClient(name string) electricpb.ElectricInfoClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.ElectricInfoClient)
+	return res.(electricpb.ElectricInfoClient)
 }
 
-func (r *InfoRouter) GetElectricInfoClient(name string) (traits.ElectricInfoClient, error) {
+func (r *InfoRouter) GetElectricInfoClient(name string) (electricpb.ElectricInfoClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -76,5 +76,5 @@ func (r *InfoRouter) GetElectricInfoClient(name string) (traits.ElectricInfoClie
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.ElectricInfoClient), nil
+	return res.(electricpb.ElectricInfoClient), nil
 }

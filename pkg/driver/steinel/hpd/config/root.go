@@ -8,15 +8,15 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Root struct {
 	driver.BaseConfig
 
 	// Smart core metadata associated with this device.
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 
 	IpAddress    string `json:"ipAddress"`
 	Password     string `json:"password,omitempty"`

@@ -3,13 +3,11 @@
 package temperaturepb
 
 import (
-	"context"
-	"fmt"
-	"io"
-
-	"google.golang.org/grpc"
-
-	"github.com/smart-core-os/sc-bos/pkg/router"
+	context "context"
+	fmt "fmt"
+	router "github.com/smart-core-os/sc-bos/pkg/router"
+	grpc "google.golang.org/grpc"
+	io "io"
 )
 
 // ApiRouter is a TemperatureApiServer that allows routing named requests to specific TemperatureApiClient

@@ -9,19 +9,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // ApiRouter is a traits.WasteApiServer that allows routing named requests to specific traits.WasteApiClient
 type ApiRouter struct {
-	traits.UnimplementedWasteApiServer
+	wastepb.UnimplementedWasteApiServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.WasteApiServer = (*ApiRouter)(nil)
+var _ wastepb.WasteApiServer = (*ApiRouter)(nil)
 
 func NewApiRouter(opts ...router.Option) *ApiRouter {
 	return &ApiRouter{
@@ -31,14 +31,14 @@ func NewApiRouter(opts ...router.Option) *ApiRouter {
 
 // WithWasteApiClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithWasteApiClientFactory(f func(name string) (traits.WasteApiClient, error)) router.Option {
+func WithWasteApiClientFactory(f func(name string) (wastepb.WasteApiClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *ApiRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterWasteApiServer(server, r)
+	wastepb.RegisterWasteApiServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.WasteApiClient.
@@ -50,27 +50,27 @@ func (r *ApiRouter) Add(name string, client any) any {
 }
 
 func (r *ApiRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.WasteApiClient)
+	_, ok := client.(wastepb.WasteApiClient)
 	return ok
 }
 
-func (r *ApiRouter) AddWasteApiClient(name string, client traits.WasteApiClient) traits.WasteApiClient {
+func (r *ApiRouter) AddWasteApiClient(name string, client wastepb.WasteApiClient) wastepb.WasteApiClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.WasteApiClient)
+	return res.(wastepb.WasteApiClient)
 }
 
-func (r *ApiRouter) RemoveWasteApiClient(name string) traits.WasteApiClient {
+func (r *ApiRouter) RemoveWasteApiClient(name string) wastepb.WasteApiClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.WasteApiClient)
+	return res.(wastepb.WasteApiClient)
 }
 
-func (r *ApiRouter) GetWasteApiClient(name string) (traits.WasteApiClient, error) {
+func (r *ApiRouter) GetWasteApiClient(name string) (wastepb.WasteApiClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -78,10 +78,10 @@ func (r *ApiRouter) GetWasteApiClient(name string) (traits.WasteApiClient, error
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.WasteApiClient), nil
+	return res.(wastepb.WasteApiClient), nil
 }
 
-func (r *ApiRouter) ListWasteRecords(ctx context.Context, request *traits.ListWasteRecordsRequest) (*traits.ListWasteRecordsResponse, error) {
+func (r *ApiRouter) ListWasteRecords(ctx context.Context, request *wastepb.ListWasteRecordsRequest) (*wastepb.ListWasteRecordsResponse, error) {
 	child, err := r.GetWasteApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (r *ApiRouter) ListWasteRecords(ctx context.Context, request *traits.ListWa
 	return child.ListWasteRecords(ctx, request)
 }
 
-func (r *ApiRouter) PullWasteRecords(request *traits.PullWasteRecordsRequest, server traits.WasteApi_PullWasteRecordsServer) error {
+func (r *ApiRouter) PullWasteRecords(request *wastepb.PullWasteRecordsRequest, server wastepb.WasteApi_PullWasteRecordsServer) error {
 	child, err := r.GetWasteApiClient(request.Name)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (r *ApiRouter) PullWasteRecords(request *traits.PullWasteRecordsRequest, se
 		// Impl note: we could improve throughput here by issuing the Recv and Send in different goroutines, but we're doing
 		// it synchronously until we have a need to change the behaviour
 
-		var msg *traits.PullWasteRecordsResponse
+		var msg *wastepb.PullWasteRecordsResponse
 		msg, err = stream.Recv()
 		if err != nil {
 			break

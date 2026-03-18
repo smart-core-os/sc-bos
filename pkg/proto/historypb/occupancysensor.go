@@ -9,7 +9,6 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type OccupancySensorServer struct {
@@ -30,7 +29,7 @@ func (m *OccupancySensorServer) Unwrap() any {
 }
 
 var occupancyPager = NewPageReader(func(r history.Record) (*occupancysensorpb.OccupancyRecord, error) {
-	v := &traits.Occupancy{}
+	v := &occupancysensorpb.Occupancy{}
 	err := proto.Unmarshal(r.Payload, v)
 	if err != nil {
 		return nil, err

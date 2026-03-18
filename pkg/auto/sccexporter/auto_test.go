@@ -14,16 +14,19 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	metadatapb2 "github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
 	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -41,13 +44,13 @@ func TestMetadata(t *testing.T) {
 		},
 	}
 
-	metadata := &traits.Metadata{
+	metadata := &metadatapb.Metadata{
 		Name: "foo",
-		Appearance: &traits.Metadata_Appearance{
+		Appearance: &metadatapb.Metadata_Appearance{
 			Title:       "Foo Device",
 			Description: "A device for testing metadata",
 		},
-		Location: &traits.Metadata_Location{
+		Location: &metadatapb.Metadata_Location{
 			Floor: "1",
 			Zone:  "bar",
 		},
@@ -78,7 +81,7 @@ func TestMetadata(t *testing.T) {
 	require.Contains(t, msg.Device.Data, trait.Metadata)
 	require.Contains(t, msg.Device.Data[trait.Metadata], "metadata")
 
-	var receivedMetadata traits.Metadata
+	var receivedMetadata metadatapb.Metadata
 	err = protojson.Unmarshal(msg.Device.Data[trait.Metadata]["metadata"], &receivedMetadata)
 	require.NoError(t, err)
 
@@ -463,7 +466,7 @@ func TestGetAirQualityDeviceAndData(t *testing.T) {
 	co2Level := float32(450.5)
 	score := float32(75.5)
 
-	airQuality := &traits.AirQuality{
+	airQuality := &airqualitysensorpb.AirQuality{
 		CarbonDioxideLevel: &co2Level,
 		Score:              &score,
 	}
@@ -505,7 +508,7 @@ func TestGetAirQualityDeviceAndData(t *testing.T) {
 	// Verify the structure contains airQuality resource
 	require.Contains(t, traitData, "airQuality")
 
-	receivedAirQuality := traits.AirQuality{}
+	receivedAirQuality := airqualitysensorpb.AirQuality{}
 	err = protojson.Unmarshal(traitData["airQuality"], &receivedAirQuality)
 	require.NoError(t, err)
 
@@ -521,7 +524,7 @@ func TestGetAirTemperatureDeviceAndData(t *testing.T) {
 
 	celsius := 22.5
 
-	airTemperature := &traits.AirTemperature{
+	airTemperature := &airtemperaturepb.AirTemperature{
 		AmbientTemperature: &types.Temperature{ValueCelsius: celsius},
 	}
 
@@ -562,7 +565,7 @@ func TestGetAirTemperatureDeviceAndData(t *testing.T) {
 	// Verify the structure contains airTemperature resource
 	require.Contains(t, traitData, "airTemperature")
 
-	receivedAirTemperature := traits.AirTemperature{}
+	receivedAirTemperature := airtemperaturepb.AirTemperature{}
 	err = protojson.Unmarshal(traitData["airTemperature"], &receivedAirTemperature)
 	require.NoError(t, err)
 
@@ -577,8 +580,8 @@ func TestGetOccupancyDeviceAndData(t *testing.T) {
 
 	stateChangeTime := time.Now().Add(-5 * time.Minute)
 
-	occupancy := &traits.Occupancy{
-		State:           traits.Occupancy_OCCUPIED,
+	occupancy := &occupancysensorpb.Occupancy{
+		State:           occupancysensorpb.Occupancy_OCCUPIED,
 		PeopleCount:     5,
 		StateChangeTime: timestamppb.New(stateChangeTime),
 	}
@@ -620,7 +623,7 @@ func TestGetOccupancyDeviceAndData(t *testing.T) {
 	// Verify the structure contains occupancy resource
 	require.Contains(t, traitData, "occupancy")
 
-	receivedOccupancy := traits.Occupancy{}
+	receivedOccupancy := occupancysensorpb.Occupancy{}
 	err = protojson.Unmarshal(traitData["occupancy"], &receivedOccupancy)
 	require.NoError(t, err)
 

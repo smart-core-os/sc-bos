@@ -20,7 +20,9 @@ import (
 	fanspeedpb2 "github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb"
 	hailpb2 "github.com/smart-core-os/sc-bos/pkg/proto/hailpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	metadatapb2 "github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
@@ -45,7 +47,6 @@ import (
 	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -156,7 +157,7 @@ func (d *Driver) applyConfig(_ context.Context, cfg config.Root) error {
 	return nil
 }
 
-func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap.Logger) ([]wrap.ServiceUnwrapper, service.Lifecycle) {
+func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) ([]wrap.ServiceUnwrapper, service.Lifecycle) {
 	switch trait.Name(traitMd.Name) {
 	case trait.AirQualitySensor:
 		model := airqualitysensorpb2.NewModel(airqualitysensorpb2.WithInitialAirQuality(auto.GetAirQualityState()))
@@ -223,11 +224,11 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 		return nil, nil
 	case trait.Light:
 		server := lightpb2.NewModelServer(lightpb2.NewModel(
-			lightpb2.WithPreset(0, &traits.LightPreset{Name: "off", Title: "Off"}),
-			lightpb2.WithPreset(40, &traits.LightPreset{Name: "low", Title: "Low"}),
-			lightpb2.WithPreset(60, &traits.LightPreset{Name: "med", Title: "Normal"}),
-			lightpb2.WithPreset(80, &traits.LightPreset{Name: "high", Title: "High"}),
-			lightpb2.WithPreset(100, &traits.LightPreset{Name: "full", Title: "Full"}),
+			lightpb2.WithPreset(0, &lightpb.LightPreset{Name: "off", Title: "Off"}),
+			lightpb2.WithPreset(40, &lightpb.LightPreset{Name: "low", Title: "Low"}),
+			lightpb2.WithPreset(60, &lightpb.LightPreset{Name: "med", Title: "Normal"}),
+			lightpb2.WithPreset(80, &lightpb.LightPreset{Name: "high", Title: "High"}),
+			lightpb2.WithPreset(100, &lightpb.LightPreset{Name: "full", Title: "Full"}),
 		))
 		return []wrap.ServiceUnwrapper{lightpb2.WrapApi(server), lightpb2.WrapInfo(server)}, nil
 	case trait.LockUnlock:
@@ -247,7 +248,7 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 		model := occupancysensorpb2.NewModel()
 		return []wrap.ServiceUnwrapper{occupancysensorpb2.WrapApi(occupancysensorpb2.NewModelServer(model))}, auto.OccupancySensorAuto(model)
 	case trait.OnOff:
-		return []wrap.ServiceUnwrapper{onoffpb.WrapApi(onoffpb.NewModelServer(onoffpb.NewModel(resource.WithInitialValue(&traits.OnOff{State: traits.OnOff_OFF}))))}, nil
+		return []wrap.ServiceUnwrapper{onoffpb.WrapApi(onoffpb.NewModelServer(onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}))))}, nil
 	case trait.OpenClose:
 		return mockOpenClose(traitMd, deviceName, logger)
 	case trait.Parent:

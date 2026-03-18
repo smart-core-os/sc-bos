@@ -10,8 +10,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -19,7 +20,7 @@ func TestWithUpdatesOnly(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Value (default)", func(t *testing.T) {
-		v := NewValue(WithInitialValue(&traits.OnOff{State: traits.OnOff_ON}))
+		v := NewValue(WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_ON}))
 		ctx, done := context.WithCancel(context.Background())
 		t.Cleanup(done)
 		c := v.Pull(ctx)
@@ -32,7 +33,7 @@ func TestWithUpdatesOnly(t *testing.T) {
 			}
 		}()
 
-		_, err := v.Set(&traits.OnOff{State: traits.OnOff_OFF})
+		_, err := v.Set(&onoffpb.OnOff{State: onoffpb.OnOff_OFF})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -45,8 +46,8 @@ func TestWithUpdatesOnly(t *testing.T) {
 			got[i] = event.Value
 		}
 		want := []proto.Message{
-			&traits.OnOff{State: traits.OnOff_ON},  // initial value
-			&traits.OnOff{State: traits.OnOff_OFF}, // update value
+			&onoffpb.OnOff{State: onoffpb.OnOff_ON},  // initial value
+			&onoffpb.OnOff{State: onoffpb.OnOff_OFF}, // update value
 		}
 
 		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
@@ -54,7 +55,7 @@ func TestWithUpdatesOnly(t *testing.T) {
 		}
 	})
 	t.Run("Value (updates only)", func(t *testing.T) {
-		v := NewValue(WithInitialValue(&traits.OnOff{State: traits.OnOff_ON}))
+		v := NewValue(WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_ON}))
 		ctx, done := context.WithCancel(context.Background())
 		t.Cleanup(done)
 		c := v.Pull(ctx, WithUpdatesOnly(true))
@@ -67,7 +68,7 @@ func TestWithUpdatesOnly(t *testing.T) {
 			}
 		}()
 
-		_, err := v.Set(&traits.OnOff{State: traits.OnOff_OFF})
+		_, err := v.Set(&onoffpb.OnOff{State: onoffpb.OnOff_OFF})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -81,7 +82,7 @@ func TestWithUpdatesOnly(t *testing.T) {
 		}
 		want := []proto.Message{
 			// no initial value
-			&traits.OnOff{State: traits.OnOff_OFF}, // update value
+			&onoffpb.OnOff{State: onoffpb.OnOff_OFF}, // update value
 		}
 
 		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
@@ -91,7 +92,7 @@ func TestWithUpdatesOnly(t *testing.T) {
 
 	t.Run("Collection (default)", func(t *testing.T) {
 		v := NewCollection()
-		add(t, v, "A", &traits.OnOff{State: traits.OnOff_ON})
+		add(t, v, "A", &onoffpb.OnOff{State: onoffpb.OnOff_ON})
 
 		ctx, done := context.WithCancel(context.Background())
 		t.Cleanup(done)
@@ -105,7 +106,7 @@ func TestWithUpdatesOnly(t *testing.T) {
 			}
 		}()
 
-		_, err := v.Update("A", &traits.OnOff{State: traits.OnOff_OFF})
+		_, err := v.Update("A", &onoffpb.OnOff{State: onoffpb.OnOff_OFF})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -118,8 +119,8 @@ func TestWithUpdatesOnly(t *testing.T) {
 			got[i] = collectionChange{Id: event.Id, OldValue: event.OldValue, NewValue: event.NewValue, ChangeType: event.ChangeType}
 		}
 		want := []collectionChange{
-			{Id: "A", OldValue: nil, NewValue: &traits.OnOff{State: traits.OnOff_ON}, ChangeType: types.ChangeType_ADD},
-			{Id: "A", OldValue: &traits.OnOff{State: traits.OnOff_ON}, NewValue: &traits.OnOff{State: traits.OnOff_OFF}, ChangeType: types.ChangeType_UPDATE},
+			{Id: "A", OldValue: nil, NewValue: &onoffpb.OnOff{State: onoffpb.OnOff_ON}, ChangeType: types.ChangeType_ADD},
+			{Id: "A", OldValue: &onoffpb.OnOff{State: onoffpb.OnOff_ON}, NewValue: &onoffpb.OnOff{State: onoffpb.OnOff_OFF}, ChangeType: types.ChangeType_UPDATE},
 		}
 
 		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
@@ -128,7 +129,7 @@ func TestWithUpdatesOnly(t *testing.T) {
 	})
 	t.Run("Collection (updates only)", func(t *testing.T) {
 		v := NewCollection()
-		add(t, v, "A", &traits.OnOff{State: traits.OnOff_ON})
+		add(t, v, "A", &onoffpb.OnOff{State: onoffpb.OnOff_ON})
 
 		ctx, done := context.WithCancel(context.Background())
 		t.Cleanup(done)
@@ -142,7 +143,7 @@ func TestWithUpdatesOnly(t *testing.T) {
 			}
 		}()
 
-		_, err := v.Update("A", &traits.OnOff{State: traits.OnOff_OFF})
+		_, err := v.Update("A", &onoffpb.OnOff{State: onoffpb.OnOff_OFF})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -155,7 +156,7 @@ func TestWithUpdatesOnly(t *testing.T) {
 			got[i] = collectionChange{Id: event.Id, OldValue: event.OldValue, NewValue: event.NewValue, ChangeType: event.ChangeType}
 		}
 		want := []collectionChange{
-			{Id: "A", OldValue: &traits.OnOff{State: traits.OnOff_ON}, NewValue: &traits.OnOff{State: traits.OnOff_OFF}, ChangeType: types.ChangeType_UPDATE},
+			{Id: "A", OldValue: &onoffpb.OnOff{State: onoffpb.OnOff_ON}, NewValue: &onoffpb.OnOff{State: onoffpb.OnOff_OFF}, ChangeType: types.ChangeType_UPDATE},
 		}
 
 		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
@@ -167,17 +168,17 @@ func TestWithUpdatesOnly(t *testing.T) {
 func TestWithInclude(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		c := NewCollection()
-		add(t, c, "A", &traits.OnOff{State: traits.OnOff_ON})
-		add(t, c, "B", &traits.OnOff{State: traits.OnOff_OFF})
-		add(t, c, "C", &traits.OnOff{State: traits.OnOff_STATE_UNSPECIFIED})
+		add(t, c, "A", &onoffpb.OnOff{State: onoffpb.OnOff_ON})
+		add(t, c, "B", &onoffpb.OnOff{State: onoffpb.OnOff_OFF})
+		add(t, c, "C", &onoffpb.OnOff{State: onoffpb.OnOff_STATE_UNSPECIFIED})
 
 		t.Run("id filter", func(t *testing.T) {
 			got := c.List(WithInclude(func(id string, item proto.Message) bool {
 				return id == "B" || id == "C"
 			}))
 			want := []proto.Message{
-				&traits.OnOff{State: traits.OnOff_OFF},
-				&traits.OnOff{State: traits.OnOff_STATE_UNSPECIFIED},
+				&onoffpb.OnOff{State: onoffpb.OnOff_OFF},
+				&onoffpb.OnOff{State: onoffpb.OnOff_STATE_UNSPECIFIED},
 			}
 			if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
 				t.Fatalf("(-want,+got)\n%v", diff)
@@ -186,12 +187,12 @@ func TestWithInclude(t *testing.T) {
 
 		t.Run("body filter", func(t *testing.T) {
 			got := c.List(WithInclude(func(id string, item proto.Message) bool {
-				itemVal := item.(*traits.OnOff)
-				return itemVal.State != traits.OnOff_STATE_UNSPECIFIED
+				itemVal := item.(*onoffpb.OnOff)
+				return itemVal.State != onoffpb.OnOff_STATE_UNSPECIFIED
 			}))
 			want := []proto.Message{
-				&traits.OnOff{State: traits.OnOff_ON},
-				&traits.OnOff{State: traits.OnOff_OFF},
+				&onoffpb.OnOff{State: onoffpb.OnOff_ON},
+				&onoffpb.OnOff{State: onoffpb.OnOff_OFF},
 			}
 			if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
 				t.Fatalf("(-want,+got)\n%v", diff)
@@ -201,17 +202,17 @@ func TestWithInclude(t *testing.T) {
 
 	t.Run("Pull", func(t *testing.T) {
 		v := NewCollection()
-		add(t, v, "A", &traits.OnOff{State: traits.OnOff_ON})
-		add(t, v, "B", &traits.OnOff{State: traits.OnOff_OFF})
-		add(t, v, "C", &traits.OnOff{State: traits.OnOff_STATE_UNSPECIFIED})
+		add(t, v, "A", &onoffpb.OnOff{State: onoffpb.OnOff_ON})
+		add(t, v, "B", &onoffpb.OnOff{State: onoffpb.OnOff_OFF})
+		add(t, v, "C", &onoffpb.OnOff{State: onoffpb.OnOff_STATE_UNSPECIFIED})
 
 		ctx, done := context.WithCancel(context.Background())
 		t.Cleanup(done)
 
 		// pull only items that are off
 		c := v.Pull(ctx, WithInclude(func(_ string, item proto.Message) bool {
-			itemVal := item.(*traits.OnOff)
-			return itemVal.State == traits.OnOff_OFF
+			itemVal := item.(*onoffpb.OnOff)
+			return itemVal.State == onoffpb.OnOff_OFF
 		}))
 		var events []*CollectionChange
 		complete := make(chan struct{})
@@ -222,11 +223,11 @@ func TestWithInclude(t *testing.T) {
 			}
 		}()
 
-		_, err := v.Update("A", &traits.OnOff{State: traits.OnOff_OFF})
+		_, err := v.Update("A", &onoffpb.OnOff{State: onoffpb.OnOff_OFF})
 		if err != nil {
 			t.Fatal(err)
 		}
-		_, err = v.Update("B", &traits.OnOff{State: traits.OnOff_ON})
+		_, err = v.Update("B", &onoffpb.OnOff{State: onoffpb.OnOff_ON})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -239,9 +240,9 @@ func TestWithInclude(t *testing.T) {
 			got[i] = collectionChange{Id: event.Id, OldValue: event.OldValue, NewValue: event.NewValue, ChangeType: event.ChangeType}
 		}
 		want := []collectionChange{
-			{Id: "B", NewValue: &traits.OnOff{State: traits.OnOff_OFF}, ChangeType: types.ChangeType_ADD},
-			{Id: "A", NewValue: &traits.OnOff{State: traits.OnOff_OFF}, ChangeType: types.ChangeType_ADD},
-			{Id: "B", OldValue: &traits.OnOff{State: traits.OnOff_OFF}, ChangeType: types.ChangeType_REMOVE},
+			{Id: "B", NewValue: &onoffpb.OnOff{State: onoffpb.OnOff_OFF}, ChangeType: types.ChangeType_ADD},
+			{Id: "A", NewValue: &onoffpb.OnOff{State: onoffpb.OnOff_OFF}, ChangeType: types.ChangeType_ADD},
+			{Id: "B", OldValue: &onoffpb.OnOff{State: onoffpb.OnOff_OFF}, ChangeType: types.ChangeType_REMOVE},
 		}
 
 		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
@@ -251,7 +252,7 @@ func TestWithInclude(t *testing.T) {
 }
 
 func TestWithBackpressure_False(t *testing.T) {
-	val := NewValue(WithInitialValue(&traits.OnOff{}))
+	val := NewValue(WithInitialValue(&onoffpb.OnOff{}))
 
 	t.Run("false", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -264,7 +265,7 @@ func TestWithBackpressure_False(t *testing.T) {
 			defer close(success)
 
 			// do a set call, which shouldn't block or error
-			_, err := val.Set(&traits.OnOff{State: traits.OnOff_OFF})
+			_, err := val.Set(&onoffpb.OnOff{State: onoffpb.OnOff_OFF})
 			if err != nil {
 				t.Error(err)
 			}
@@ -288,7 +289,7 @@ func TestWithBackpressure_False(t *testing.T) {
 			defer close(completed)
 
 			// do a set call, which should block
-			_, err := val.Set(&traits.OnOff{State: traits.OnOff_OFF})
+			_, err := val.Set(&onoffpb.OnOff{State: onoffpb.OnOff_OFF})
 			if err != nil {
 				t.Error(err)
 			}
@@ -304,8 +305,8 @@ func TestWithBackpressure_False(t *testing.T) {
 
 func TestWithIDInterceptor(t *testing.T) {
 	c := NewCollection(WithIDInterceptor(strings.ToLower))
-	add(t, c, "A", &traits.OnOff{State: traits.OnOff_ON})
-	expect := &traits.OnOff{State: traits.OnOff_ON}
+	add(t, c, "A", &onoffpb.OnOff{State: onoffpb.OnOff_ON})
+	expect := &onoffpb.OnOff{State: onoffpb.OnOff_ON}
 	actual, ok := c.Get("a")
 	if !ok {
 		t.Error("expected to find item with id 'a'")
@@ -316,16 +317,16 @@ func TestWithIDInterceptor(t *testing.T) {
 }
 
 func TestWithMerger(t *testing.T) {
-	md := func(m proto.Message) *traits.Metadata {
-		md, ok := m.(*traits.Metadata)
+	md := func(m proto.Message) *metadatapb.Metadata {
+		md, ok := m.(*metadatapb.Metadata)
 		if !ok {
 			t.Fatalf("expected *traits.Metadata, got %T", m)
 		}
 		return md
 	}
 
-	v := NewValue(WithInitialValue(&traits.Metadata{Name: "initial"}))
-	ret, err := v.Set(&traits.Metadata{Name: "write"},
+	v := NewValue(WithInitialValue(&metadatapb.Metadata{Name: "initial"}))
+	ret, err := v.Set(&metadatapb.Metadata{Name: "write"},
 		WithUpdatePaths("name"),
 		InterceptBefore(func(old, new proto.Message) {
 			if n := md(old).Name; n != "initial" {
@@ -346,9 +347,9 @@ func TestWithMerger(t *testing.T) {
 			md(dst).Name = "merge"
 
 			// test that the mask updates what we expect
-			m1 := &traits.Metadata{Name: "name1", Appearance: &traits.Metadata_Appearance{Title: "title1"}}
-			m2 := &traits.Metadata{Name: "name2", Appearance: &traits.Metadata_Appearance{Title: "title2"}}
-			want := &traits.Metadata{Name: "name2", Appearance: &traits.Metadata_Appearance{Title: "title1"}}
+			m1 := &metadatapb.Metadata{Name: "name1", Appearance: &metadatapb.Metadata_Appearance{Title: "title1"}}
+			m2 := &metadatapb.Metadata{Name: "name2", Appearance: &metadatapb.Metadata_Appearance{Title: "title2"}}
+			want := &metadatapb.Metadata{Name: "name2", Appearance: &metadatapb.Metadata_Appearance{Title: "title1"}}
 			mask.Merge(m1, m2) // should only update m1.Name, not m1.Appearance.Title
 			if diff := cmp.Diff(want, m1, protocmp.Transform()); diff != "" {
 				t.Errorf("mask.Merge() mismatch (-want +got):\n%s", diff)

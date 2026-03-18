@@ -6,8 +6,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait/electricpb/segmentpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Shift adjusts the given mode until it's start time is offset by d.
@@ -15,11 +15,11 @@ import (
 // If no start time exists, this is equivalent to calling segmentpb.Shift on the mode segments.
 //
 // If d is not 0, a new mode instance will be returned.
-func Shift(d time.Duration, mode *traits.ElectricMode) *traits.ElectricMode {
+func Shift(d time.Duration, mode *electricpb.ElectricMode) *electricpb.ElectricMode {
 	if d == 0 {
 		return mode
 	}
-	mode = proto.Clone(mode).(*traits.ElectricMode)
+	mode = proto.Clone(mode).(*electricpb.ElectricMode)
 	if mode.StartTime == nil {
 		mode.Segments = segmentpb.Shift(d, mode.Segments...)
 	} else {

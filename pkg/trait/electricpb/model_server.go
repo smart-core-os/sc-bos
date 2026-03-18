@@ -9,15 +9,15 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 // ModelServer is an implementation of ElectricApiServer and MemorySettingsApiServer backed by a Model.
 type ModelServer struct {
-	traits.UnimplementedElectricApiServer
+	electricpb.UnimplementedElectricApiServer
 	UnimplementedMemorySettingsApiServer
 
 	model *Model
@@ -34,24 +34,24 @@ func (s *ModelServer) Unwrap() any {
 }
 
 func (s *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterElectricApiServer(server, s)
+	electricpb.RegisterElectricApiServer(server, s)
 	RegisterMemorySettingsApiServer(server, s)
 }
 
-func (s *ModelServer) GetDemand(_ context.Context, request *traits.GetDemandRequest) (*traits.ElectricDemand, error) {
+func (s *ModelServer) GetDemand(_ context.Context, request *electricpb.GetDemandRequest) (*electricpb.ElectricDemand, error) {
 	return s.model.Demand(resource.WithReadMask(request.ReadMask)), nil
 }
 
-func (s *ModelServer) PullDemand(request *traits.PullDemandRequest, server traits.ElectricApi_PullDemandServer) error {
+func (s *ModelServer) PullDemand(request *electricpb.PullDemandRequest, server electricpb.ElectricApi_PullDemandServer) error {
 	for update := range s.model.PullDemand(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		change := &traits.PullDemandResponse_Change{
+		change := &electricpb.PullDemandResponse_Change{
 			Name:       request.Name,
 			ChangeTime: timestamppb.New(update.ChangeTime),
 			Demand:     update.Value,
 		}
 
-		err := server.Send(&traits.PullDemandResponse{
-			Changes: []*traits.PullDemandResponse_Change{change},
+		err := server.Send(&electricpb.PullDemandResponse{
+			Changes: []*electricpb.PullDemandResponse_Change{change},
 		})
 		if err != nil {
 			return err
@@ -60,11 +60,11 @@ func (s *ModelServer) PullDemand(request *traits.PullDemandRequest, server trait
 	return server.Context().Err()
 }
 
-func (s *ModelServer) GetActiveMode(_ context.Context, request *traits.GetActiveModeRequest) (*traits.ElectricMode, error) {
+func (s *ModelServer) GetActiveMode(_ context.Context, request *electricpb.GetActiveModeRequest) (*electricpb.ElectricMode, error) {
 	return s.model.ActiveMode(resource.WithReadMask(request.ReadMask)), nil
 }
 
-func (s *ModelServer) UpdateActiveMode(_ context.Context, request *traits.UpdateActiveModeRequest) (*traits.ElectricMode, error) {
+func (s *ModelServer) UpdateActiveMode(_ context.Context, request *electricpb.UpdateActiveModeRequest) (*electricpb.ElectricMode, error) {
 	mode := request.GetActiveMode()
 	// hydrate the mode using the list of known modes (by id)
 	id := mode.GetId()
@@ -75,19 +75,19 @@ func (s *ModelServer) UpdateActiveMode(_ context.Context, request *traits.Update
 	return s.model.ChangeActiveMode(id)
 }
 
-func (s *ModelServer) ClearActiveMode(_ context.Context, _ *traits.ClearActiveModeRequest) (*traits.ElectricMode, error) {
+func (s *ModelServer) ClearActiveMode(_ context.Context, _ *electricpb.ClearActiveModeRequest) (*electricpb.ElectricMode, error) {
 	return s.model.ChangeToNormalMode()
 }
 
-func (s *ModelServer) PullActiveMode(request *traits.PullActiveModeRequest, server traits.ElectricApi_PullActiveModeServer) error {
+func (s *ModelServer) PullActiveMode(request *electricpb.PullActiveModeRequest, server electricpb.ElectricApi_PullActiveModeServer) error {
 	for event := range s.model.PullActiveMode(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		change := &traits.PullActiveModeResponse_Change{
+		change := &electricpb.PullActiveModeResponse_Change{
 			Name:       request.Name,
 			ActiveMode: event.ActiveMode,
 			ChangeTime: timestamppb.New(event.ChangeTime),
 		}
-		err := server.Send(&traits.PullActiveModeResponse{
-			Changes: []*traits.PullActiveModeResponse_Change{change},
+		err := server.Send(&electricpb.PullActiveModeResponse{
+			Changes: []*electricpb.PullActiveModeResponse_Change{change},
 		})
 		if err != nil {
 			return err
@@ -97,7 +97,7 @@ func (s *ModelServer) PullActiveMode(request *traits.PullActiveModeRequest, serv
 	return server.Context().Err()
 }
 
-func (s *ModelServer) ListModes(_ context.Context, request *traits.ListModesRequest) (*traits.ListModesResponse, error) {
+func (s *ModelServer) ListModes(_ context.Context, request *electricpb.ListModesRequest) (*electricpb.ListModesResponse, error) {
 	pageToken := &types.PageToken{}
 	if err := decodePageToken(request.PageToken, pageToken); err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (s *ModelServer) ListModes(_ context.Context, request *traits.ListModesRequ
 		})
 	}
 
-	result := &traits.ListModesResponse{
+	result := &electricpb.ListModesResponse{
 		TotalSize: int32(len(sortedModes)),
 	}
 	upperBound := nextIndex + pageSize
@@ -136,9 +136,9 @@ func (s *ModelServer) ListModes(_ context.Context, request *traits.ListModesRequ
 	return result, nil
 }
 
-func (s *ModelServer) PullModes(request *traits.PullModesRequest, server traits.ElectricApi_PullModesServer) error {
+func (s *ModelServer) PullModes(request *electricpb.PullModesRequest, server electricpb.ElectricApi_PullModesServer) error {
 	for change := range s.model.PullModes(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullModesResponse{Changes: []*traits.PullModesResponse_Change{
+		err := server.Send(&electricpb.PullModesResponse{Changes: []*electricpb.PullModesResponse_Change{
 			{
 				Name:       request.Name,
 				Type:       change.Type,

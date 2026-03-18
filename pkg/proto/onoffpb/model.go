@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Model struct {
@@ -19,16 +18,16 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) GetOnOff(opts ...resource.ReadOption) (*traits.OnOff, error) {
-	return m.onOff.Get(opts...).(*traits.OnOff), nil
+func (m *Model) GetOnOff(opts ...resource.ReadOption) (*OnOff, error) {
+	return m.onOff.Get(opts...).(*OnOff), nil
 }
 
-func (m *Model) UpdateOnOff(value *traits.OnOff, opts ...resource.WriteOption) (*traits.OnOff, error) {
+func (m *Model) UpdateOnOff(value *OnOff, opts ...resource.WriteOption) (*OnOff, error) {
 	res, err := m.onOff.Set(value, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*traits.OnOff), nil
+	return res.(*OnOff), nil
 }
 
 func (m *Model) PullOnOff(ctx context.Context, opts ...resource.ReadOption) <-chan PullOnOffChange {
@@ -38,7 +37,7 @@ func (m *Model) PullOnOff(ctx context.Context, opts ...resource.ReadOption) <-ch
 	go func() {
 		defer close(send)
 		for change := range recv {
-			value := change.Value.(*traits.OnOff)
+			value := change.Value.(*OnOff)
 			send <- PullOnOffChange{
 				Value:      value,
 				ChangeTime: change.ChangeTime,
@@ -51,6 +50,6 @@ func (m *Model) PullOnOff(ctx context.Context, opts ...resource.ReadOption) <-ch
 }
 
 type PullOnOffChange struct {
-	Value      *traits.OnOff
+	Value      *OnOff
 	ChangeTime time.Time
 }

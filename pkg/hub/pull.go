@@ -8,9 +8,9 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/parentpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -21,7 +21,7 @@ type Node struct {
 
 type Child struct {
 	*Node
-	*traits.Child
+	*parentpb.Child
 }
 
 type Change[T any] struct {
@@ -143,8 +143,8 @@ func (a activeNodes) add(ctx context.Context, out chan Change[Child], n *Node, d
 		conn:       conn,
 	}
 
-	parentClient := traits.NewParentApiClient(conn)
-	childChanges := make(chan *traits.PullChildrenResponse_Change)
+	parentClient := parentpb.NewParentApiClient(conn)
+	childChanges := make(chan *parentpb.PullChildrenResponse_Change)
 	go func() {
 		defer close(childChanges)
 		fetcher := &childFetcher{
@@ -154,7 +154,7 @@ func (a activeNodes) add(ctx context.Context, out chan Change[Child], n *Node, d
 		// The error here is either because ctx is canceled or because the node doesn't support the parent trait.
 		// In either case there's not much we can do.
 		// Connection errors are retired by pull.Changes.
-		_ = pull.Changes[*traits.PullChildrenResponse_Change](nodeCtx, fetcher, childChanges)
+		_ = pull.Changes[*parentpb.PullChildrenResponse_Change](nodeCtx, fetcher, childChanges)
 	}()
 	go func() {
 		for change := range childChanges {
@@ -254,13 +254,13 @@ func (c *NodeFetcher) Poll(ctx context.Context, changes chan<- *hubpb.PullHubNod
 }
 
 type childFetcher struct {
-	traits.ParentApiClient
+	parentpb.ParentApiClient
 	name  string
-	known map[string]*traits.Child // in case of polling, this tracks seen children so we correctly send changes
+	known map[string]*parentpb.Child // in case of polling, this tracks seen children so we correctly send changes
 }
 
-func (c *childFetcher) Pull(ctx context.Context, changes chan<- *traits.PullChildrenResponse_Change) error {
-	stream, err := c.PullChildren(ctx, &traits.PullChildrenRequest{Name: c.name})
+func (c *childFetcher) Pull(ctx context.Context, changes chan<- *parentpb.PullChildrenResponse_Change) error {
+	stream, err := c.PullChildren(ctx, &parentpb.PullChildrenRequest{Name: c.name})
 	if err != nil {
 		return err
 	}
@@ -277,16 +277,16 @@ func (c *childFetcher) Pull(ctx context.Context, changes chan<- *traits.PullChil
 	}
 }
 
-func (c *childFetcher) Poll(ctx context.Context, changes chan<- *traits.PullChildrenResponse_Change) error {
+func (c *childFetcher) Poll(ctx context.Context, changes chan<- *parentpb.PullChildrenResponse_Change) error {
 	if c.known == nil {
-		c.known = make(map[string]*traits.Child)
+		c.known = make(map[string]*parentpb.Child)
 	}
 	unseen := make(map[string]struct{}, len(c.known))
 	for s := range c.known {
 		unseen[s] = struct{}{}
 	}
 
-	req := &traits.ListChildrenRequest{Name: c.name, PageSize: 1000}
+	req := &parentpb.ListChildrenRequest{Name: c.name, PageSize: 1000}
 	for {
 		res, err := c.ListChildren(ctx, req)
 		if err != nil {
@@ -295,7 +295,7 @@ func (c *childFetcher) Poll(ctx context.Context, changes chan<- *traits.PullChil
 
 		for _, node := range res.Children {
 			// we do extra work here to try and send out more accurate changes to make callers lives easier
-			change := &traits.PullChildrenResponse_Change{
+			change := &parentpb.PullChildrenResponse_Change{
 				Type:     types.ChangeType_ADD,
 				NewValue: node,
 			}
@@ -323,7 +323,7 @@ func (c *childFetcher) Poll(ctx context.Context, changes chan<- *traits.PullChil
 	for name := range unseen {
 		node := c.known[name]
 		delete(c.known, name)
-		change := &traits.PullChildrenResponse_Change{
+		change := &parentpb.PullChildrenResponse_Change{
 			Type:     types.ChangeType_REMOVE,
 			OldValue: node,
 		}

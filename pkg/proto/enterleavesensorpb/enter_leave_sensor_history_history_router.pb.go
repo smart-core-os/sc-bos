@@ -3,12 +3,10 @@
 package enterleavesensorpb
 
 import (
-	"context"
-	"fmt"
-
-	"google.golang.org/grpc"
-
-	"github.com/smart-core-os/sc-bos/pkg/router"
+	context "context"
+	fmt "fmt"
+	router "github.com/smart-core-os/sc-bos/pkg/router"
+	grpc "google.golang.org/grpc"
 )
 
 // HistoryRouter is a EnterLeaveSensorHistoryServer that allows routing named requests to specific EnterLeaveSensorHistoryClient

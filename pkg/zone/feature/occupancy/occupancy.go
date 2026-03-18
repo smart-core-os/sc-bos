@@ -7,12 +7,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -44,13 +45,13 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 		conn := f.clients.ClientConn()
 
 		if len(cfg.OccupancySensors) > 0 {
-			group.client = traits.NewOccupancySensorApiClient(conn)
+			group.client = occupancysensorpb.NewOccupancySensorApiClient(conn)
 			group.names = cfg.OccupancySensors
 		}
 		if len(cfg.EnterLeaveOccupancySensors) > 0 {
 			elServer := &enterLeave{
 				model:  occupancysensorpb2.NewModel(),
-				client: traits.NewEnterLeaveSensorApiClient(conn),
+				client: enterleavesensorpb.NewEnterLeaveSensorApiClient(conn),
 				names:  cfg.EnterLeaveOccupancySensors,
 				logger: logger,
 			}

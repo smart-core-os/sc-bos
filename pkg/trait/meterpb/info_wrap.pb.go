@@ -5,32 +5,32 @@ package meterpb
 import (
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // WrapInfo	adapts a traits.MeterInfoServer	and presents it as a traits.MeterInfoClient
-func WrapInfo(server traits.MeterInfoServer) *InfoWrapper {
-	conn := wrap.ServerToClient(traits.MeterInfo_ServiceDesc, server)
-	client := traits.NewMeterInfoClient(conn)
+func WrapInfo(server meterpb.MeterInfoServer) *InfoWrapper {
+	conn := wrap.ServerToClient(meterpb.MeterInfo_ServiceDesc, server)
+	client := meterpb.NewMeterInfoClient(conn)
 	return &InfoWrapper{
 		MeterInfoClient: client,
 		server:          server,
 		conn:            conn,
-		desc:            traits.MeterInfo_ServiceDesc,
+		desc:            meterpb.MeterInfo_ServiceDesc,
 	}
 }
 
 type InfoWrapper struct {
-	traits.MeterInfoClient
+	meterpb.MeterInfoClient
 
-	server traits.MeterInfoServer
+	server meterpb.MeterInfoServer
 	conn   grpc.ClientConnInterface
 	desc   grpc.ServiceDesc
 }
 
 // UnwrapServer returns the underlying server instance.
-func (w *InfoWrapper) UnwrapServer() traits.MeterInfoServer {
+func (w *InfoWrapper) UnwrapServer() meterpb.MeterInfoServer {
 	return w.server
 }
 

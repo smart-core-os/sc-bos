@@ -6,13 +6,13 @@ import (
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 func TestMaxMagnitude(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    []*traits.ElectricMode_Segment
+		args    []*electricpb.ElectricMode_Segment
 		wantMax float32
 	}{
 		{"empty", segs(), 0},
@@ -20,7 +20,7 @@ func TestMaxMagnitude(t *testing.T) {
 		{"one-inf", segs(s{10, 10}), 10},
 		{"few", segs(s{2, 10}, s{6, 10}, s{4, 0}), 6},
 		{"inf in the middle", segs(s{2, 10}, s{4, 0}, s{6, 10}), 6},
-		{"zero-length segment", []*traits.ElectricMode_Segment{
+		{"zero-length segment", []*electricpb.ElectricMode_Segment{
 			{Magnitude: 2, Length: durationpb.New(10)},
 			{Magnitude: 6, Length: durationpb.New(0)}, // not counted
 			{Magnitude: 4, Length: durationpb.New(10)},
@@ -38,7 +38,7 @@ func TestMaxMagnitude(t *testing.T) {
 func TestSumMagnitude(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    []*traits.ElectricMode_Segment
+		args    []*electricpb.ElectricMode_Segment
 		wantSum float32
 	}{
 		{"empty", segs(), 0},
@@ -59,7 +59,7 @@ func TestMagnitudeAt(t *testing.T) {
 	tests := []struct {
 		name      string
 		d         time.Duration
-		segments  []*traits.ElectricMode_Segment
+		segments  []*electricpb.ElectricMode_Segment
 		wantLevel float32
 		wantOk    bool
 	}{
@@ -105,7 +105,7 @@ func TestMaxAfter(t *testing.T) {
 	tests := []struct {
 		name      string
 		d         time.Duration
-		segments  []*traits.ElectricMode_Segment
+		segments  []*electricpb.ElectricMode_Segment
 		wantIndex int
 	}{
 		{"empty+0", 0, segs(), 0},

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
@@ -27,7 +26,7 @@ func WithPublicationOption(opts ...resource.Option) resource.Option {
 // Can be used multiple times with publications being additive.
 // Creating a model with duplicate publication IDs will panic.
 // Calling this function with an empty publication id property will panic.
-func WithInitialPublication(publications ...*traits.Publication) resource.Option {
+func WithInitialPublication(publications ...*Publication) resource.Option {
 	opts := make([]resource.Option, len(publications))
 	for i, publication := range publications {
 		if publication.Id == "" {

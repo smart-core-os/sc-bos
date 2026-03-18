@@ -8,12 +8,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // ModelServer adapts a Model as a traits.FanSpeedApiServer.
 type ModelServer struct {
-	traits.UnimplementedFanSpeedApiServer
+	UnimplementedFanSpeedApiServer
 	model *Model
 }
 
@@ -26,18 +25,18 @@ func (s *ModelServer) Unwrap() any {
 }
 
 func (s *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterFanSpeedApiServer(server, s)
+	RegisterFanSpeedApiServer(server, s)
 }
 
-func (s *ModelServer) GetFanSpeed(_ context.Context, request *traits.GetFanSpeedRequest) (*traits.FanSpeed, error) {
+func (s *ModelServer) GetFanSpeed(_ context.Context, request *GetFanSpeedRequest) (*FanSpeed, error) {
 	return s.model.FanSpeed(resource.WithReadMask(request.ReadMask)), nil
 }
 
-func (s *ModelServer) UpdateFanSpeed(_ context.Context, request *traits.UpdateFanSpeedRequest) (*traits.FanSpeed, error) {
+func (s *ModelServer) UpdateFanSpeed(_ context.Context, request *UpdateFanSpeedRequest) (*FanSpeed, error) {
 	return s.model.UpdateFanSpeed(request.FanSpeed, resource.InterceptBefore(func(old, new proto.Message) {
 		if request.Relative {
-			oldVal := old.(*traits.FanSpeed)
-			newVal := new.(*traits.FanSpeed)
+			oldVal := old.(*FanSpeed)
+			newVal := new.(*FanSpeed)
 			newVal.Percentage += oldVal.Percentage
 			newVal.PresetIndex += oldVal.PresetIndex
 			// todo: should we support setting the preset relatively if we're between presets?
@@ -45,9 +44,9 @@ func (s *ModelServer) UpdateFanSpeed(_ context.Context, request *traits.UpdateFa
 	}))
 }
 
-func (s *ModelServer) PullFanSpeed(request *traits.PullFanSpeedRequest, server traits.FanSpeedApi_PullFanSpeedServer) error {
+func (s *ModelServer) PullFanSpeed(request *PullFanSpeedRequest, server FanSpeedApi_PullFanSpeedServer) error {
 	for change := range s.model.PullFanSpeed(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullFanSpeedResponse{Changes: []*traits.PullFanSpeedResponse_Change{
+		err := server.Send(&PullFanSpeedResponse{Changes: []*PullFanSpeedResponse_Change{
 			{Name: request.Name, FanSpeed: change.Value, ChangeTime: timestamppb.New(change.ChangeTime)},
 		}})
 		if err != nil {
@@ -57,7 +56,7 @@ func (s *ModelServer) PullFanSpeed(request *traits.PullFanSpeedRequest, server t
 	return nil
 }
 
-func (s *ModelServer) ReverseFanSpeedDirection(ctx context.Context, request *traits.ReverseFanSpeedDirectionRequest) (*traits.FanSpeed, error) {
+func (s *ModelServer) ReverseFanSpeedDirection(ctx context.Context, request *ReverseFanSpeedDirectionRequest) (*FanSpeed, error) {
 	// TODO implement me
 	panic("implement me")
 }

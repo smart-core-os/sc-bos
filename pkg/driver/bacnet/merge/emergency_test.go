@@ -6,7 +6,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencypb"
 )
 
 // test the emergencyImpl alarmConfig for various bounds & error input
@@ -18,9 +18,9 @@ func Test_emergency(t *testing.T) {
 	tests := []struct {
 		name       string
 		alarmConf  AlarmConfig
-		checkFunc  func(any) (*traits.Emergency, error)
+		checkFunc  func(any) (*emergencypb.Emergency, error)
 		pointValue any
-		wantLevel  traits.Emergency_Level
+		wantLevel  emergencypb.Emergency_Level
 		wantReason string
 		wantErr    bool
 	}{
@@ -32,7 +32,7 @@ func Test_emergency(t *testing.T) {
 				AlarmReason:  "Sensor is not reading the expected value",
 			},
 			pointValue: 233.9998,
-			wantLevel:  traits.Emergency_EMERGENCY,
+			wantLevel:  emergencypb.Emergency_EMERGENCY,
 			wantReason: "Sensor is not reading the expected value",
 			wantErr:    false,
 		},
@@ -43,7 +43,7 @@ func Test_emergency(t *testing.T) {
 				OkUpperBound: &okUpperBound,
 			},
 			pointValue: 233.9999,
-			wantLevel:  traits.Emergency_OK,
+			wantLevel:  emergencypb.Emergency_OK,
 			wantReason: "",
 			wantErr:    false,
 		},
@@ -54,7 +54,7 @@ func Test_emergency(t *testing.T) {
 				OkUpperBound: &okUpperBound,
 			},
 			pointValue: 234.0,
-			wantLevel:  traits.Emergency_OK,
+			wantLevel:  emergencypb.Emergency_OK,
 			wantReason: "",
 			wantErr:    false,
 		},
@@ -65,7 +65,7 @@ func Test_emergency(t *testing.T) {
 				OkUpperBound: &okUpperBound,
 			},
 			pointValue: 234.0001,
-			wantLevel:  traits.Emergency_OK,
+			wantLevel:  emergencypb.Emergency_OK,
 			wantReason: "",
 			wantErr:    false,
 		},
@@ -77,7 +77,7 @@ func Test_emergency(t *testing.T) {
 				AlarmReason:  "Sensor is not reading the expected value",
 			},
 			pointValue: 234.0002,
-			wantLevel:  traits.Emergency_EMERGENCY,
+			wantLevel:  emergencypb.Emergency_EMERGENCY,
 			wantReason: "Sensor is not reading the expected value",
 			wantErr:    false,
 		},
@@ -89,7 +89,7 @@ func Test_emergency(t *testing.T) {
 				AlarmReason:  "",
 			},
 			pointValue: errors.New("error"),
-			wantLevel:  traits.Emergency_EMERGENCY,
+			wantLevel:  emergencypb.Emergency_EMERGENCY,
 			wantReason: "",
 			wantErr:    true,
 		},

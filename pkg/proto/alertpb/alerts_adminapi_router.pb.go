@@ -3,12 +3,10 @@
 package alertpb
 
 import (
-	"context"
-	"fmt"
-
-	"google.golang.org/grpc"
-
-	"github.com/smart-core-os/sc-bos/pkg/router"
+	context "context"
+	fmt "fmt"
+	router "github.com/smart-core-os/sc-bos/pkg/router"
+	grpc "google.golang.org/grpc"
 )
 
 // AdminApiRouter is a AlertAdminApiServer that allows routing named requests to specific AlertAdminApiClient

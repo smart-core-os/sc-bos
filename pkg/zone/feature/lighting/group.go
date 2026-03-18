@@ -11,36 +11,36 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/merge"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // Group implements traits.LightApiServer backed by a group of lights.
 type Group struct {
-	traits.UnimplementedLightApiServer
-	traits.UnimplementedLightInfoServer
-	client   traits.LightApiClient
-	info     traits.LightInfoClient
+	lightpb.UnimplementedLightApiServer
+	lightpb.UnimplementedLightInfoServer
+	client   lightpb.LightApiClient
+	info     lightpb.LightInfoClient
 	names    []string
 	readOnly bool
 
 	logger *zap.Logger
 }
 
-func (g *Group) UpdateBrightness(ctx context.Context, request *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
+func (g *Group) UpdateBrightness(ctx context.Context, request *lightpb.UpdateBrightnessRequest) (*lightpb.Brightness, error) {
 	if g.readOnly {
 		return nil, status.Error(codes.FailedPrecondition, "read-only")
 	}
-	fns := make([]func() (*traits.Brightness, error), len(g.names))
+	fns := make([]func() (*lightpb.Brightness, error), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.UpdateBrightnessRequest)
+		request := proto.Clone(request).(*lightpb.UpdateBrightnessRequest)
 		request.Name = name
-		fns[i] = func() (*traits.Brightness, error) {
+		fns[i] = func() (*lightpb.Brightness, error) {
 			return g.client.UpdateBrightness(ctx, request)
 		}
 	}
@@ -59,12 +59,12 @@ func (g *Group) UpdateBrightness(ctx context.Context, request *traits.UpdateBrig
 	return mergeBrightness(allRes)
 }
 
-func (g *Group) GetBrightness(ctx context.Context, request *traits.GetBrightnessRequest) (*traits.Brightness, error) {
-	fns := make([]func() (*traits.Brightness, error), len(g.names))
+func (g *Group) GetBrightness(ctx context.Context, request *lightpb.GetBrightnessRequest) (*lightpb.Brightness, error) {
+	fns := make([]func() (*lightpb.Brightness, error), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.GetBrightnessRequest)
+		request := proto.Clone(request).(*lightpb.GetBrightnessRequest)
 		request.Name = name
-		fns[i] = func() (*traits.Brightness, error) {
+		fns[i] = func() (*lightpb.Brightness, error) {
 			return g.client.GetBrightness(ctx, request)
 		}
 	}
@@ -83,21 +83,21 @@ func (g *Group) GetBrightness(ctx context.Context, request *traits.GetBrightness
 	return mergeBrightness(allRes)
 }
 
-func (g *Group) PullBrightness(request *traits.PullBrightnessRequest, server traits.LightApi_PullBrightnessServer) error {
+func (g *Group) PullBrightness(request *lightpb.PullBrightnessRequest, server lightpb.LightApi_PullBrightnessServer) error {
 	if len(g.names) == 0 {
 		return status.Error(codes.FailedPrecondition, "zone has no light names")
 	}
 
 	type c struct {
 		name string
-		val  *traits.Brightness
+		val  *lightpb.Brightness
 	}
 	changes := make(chan c)
 	defer close(changes)
 
 	group, ctx := errgroup.WithContext(server.Context())
 	for _, name := range g.names {
-		request := proto.Clone(request).(*traits.PullBrightnessRequest)
+		request := proto.Clone(request).(*lightpb.PullBrightnessRequest)
 		request.Name = name
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(
@@ -117,7 +117,7 @@ func (g *Group) PullBrightness(request *traits.PullBrightnessRequest, server tra
 					}
 				},
 				func(ctx context.Context, changes chan<- c) error {
-					res, err := g.client.GetBrightness(ctx, &traits.GetBrightnessRequest{Name: name, ReadMask: request.ReadMask})
+					res, err := g.client.GetBrightness(ctx, &lightpb.GetBrightnessRequest{Name: name, ReadMask: request.ReadMask})
 					if err != nil {
 						return err
 					}
@@ -135,9 +135,9 @@ func (g *Group) PullBrightness(request *traits.PullBrightnessRequest, server tra
 		for i, name := range g.names {
 			indexes[name] = i
 		}
-		values := make([]*traits.Brightness, len(g.names))
+		values := make([]*lightpb.Brightness, len(g.names))
 
-		var last *traits.Brightness
+		var last *lightpb.Brightness
 		eq := cmp.Equal(cmp.FloatValueApprox(0, 0.001))
 		filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 
@@ -159,7 +159,7 @@ func (g *Group) PullBrightness(request *traits.PullBrightnessRequest, server tra
 				}
 				last = b
 
-				err = server.Send(&traits.PullBrightnessResponse{Changes: []*traits.PullBrightnessResponse_Change{{
+				err = server.Send(&lightpb.PullBrightnessResponse{Changes: []*lightpb.PullBrightnessResponse_Change{{
 					Name:       request.Name,
 					ChangeTime: timestamppb.Now(),
 					Brightness: b,
@@ -174,14 +174,14 @@ func (g *Group) PullBrightness(request *traits.PullBrightnessRequest, server tra
 	return group.Wait()
 }
 
-func mergeBrightness(allRes []*traits.Brightness) (*traits.Brightness, error) {
+func mergeBrightness(allRes []*lightpb.Brightness) (*lightpb.Brightness, error) {
 	switch len(allRes) {
 	case 0:
 		return nil, status.Error(codes.FailedPrecondition, "zone has no light names")
 	case 1:
 		return allRes[0], nil
 	default:
-		out := &traits.Brightness{}
+		out := &lightpb.Brightness{}
 		var l float32
 		for _, b := range allRes {
 			if b != nil {
@@ -200,15 +200,15 @@ func mergeBrightness(allRes []*traits.Brightness) (*traits.Brightness, error) {
 	}
 }
 
-func (g *Group) DescribeBrightness(ctx context.Context, request *traits.DescribeBrightnessRequest) (*traits.BrightnessSupport, error) {
+func (g *Group) DescribeBrightness(ctx context.Context, request *lightpb.DescribeBrightnessRequest) (*lightpb.BrightnessSupport, error) {
 	if g.info == nil {
 		return nil, status.Error(codes.Unimplemented, "info not supported")
 	}
-	fns := make([]func() (*traits.BrightnessSupport, error), len(g.names))
+	fns := make([]func() (*lightpb.BrightnessSupport, error), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.DescribeBrightnessRequest)
+		request := proto.Clone(request).(*lightpb.DescribeBrightnessRequest)
 		request.Name = name
-		fns[i] = func() (*traits.BrightnessSupport, error) {
+		fns[i] = func() (*lightpb.BrightnessSupport, error) {
 			return g.info.DescribeBrightness(ctx, request)
 		}
 	}
@@ -232,18 +232,18 @@ func (g *Group) DescribeBrightness(ctx context.Context, request *traits.Describe
 	return desc, err
 }
 
-func mergeDescription(allRes []*traits.BrightnessSupport) (*traits.BrightnessSupport, error) {
+func mergeDescription(allRes []*lightpb.BrightnessSupport) (*lightpb.BrightnessSupport, error) {
 	switch len(allRes) {
 	case 0:
 		return nil, status.Error(codes.FailedPrecondition, "zone has no light names")
 	case 1:
 		return allRes[0], nil
 	default:
-		out := &traits.BrightnessSupport{}
-		out.ResourceSupport = merge.ResourceSupport(allRes, func(s *traits.BrightnessSupport) *types.ResourceSupport {
+		out := &lightpb.BrightnessSupport{}
+		out.ResourceSupport = merge.ResourceSupport(allRes, func(s *lightpb.BrightnessSupport) *types.ResourceSupport {
 			return s.GetResourceSupport()
 		})
-		out.BrightnessAttributes = merge.Int32Attributes(allRes, func(s *traits.BrightnessSupport) *types.Int32Attributes {
+		out.BrightnessAttributes = merge.Int32Attributes(allRes, func(s *lightpb.BrightnessSupport) *types.Int32Attributes {
 			return s.GetBrightnessAttributes()
 		})
 

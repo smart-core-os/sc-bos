@@ -5,15 +5,14 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 
 	"google.golang.org/grpc"
-
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type ModelServer struct {
-	traits.UnimplementedOccupancySensorApiServer
+	occupancysensorpb.UnimplementedOccupancySensorApiServer
 	model *Model
 }
 
@@ -28,23 +27,23 @@ func (s *ModelServer) Unwrap() any {
 }
 
 func (s *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterOccupancySensorApiServer(server, s)
+	occupancysensorpb.RegisterOccupancySensorApiServer(server, s)
 }
 
-func (s *ModelServer) GetOccupancy(_ context.Context, req *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
+func (s *ModelServer) GetOccupancy(_ context.Context, req *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
 	return s.model.GetOccupancy(resource.WithReadMask(req.ReadMask))
 }
 
-func (s *ModelServer) PullOccupancy(request *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+func (s *ModelServer) PullOccupancy(request *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
 	for update := range s.model.PullOccupancy(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		change := &traits.PullOccupancyResponse_Change{
+		change := &occupancysensorpb.PullOccupancyResponse_Change{
 			Name:       request.Name,
 			ChangeTime: timestamppb.New(update.ChangeTime),
 			Occupancy:  update.Value,
 		}
 
-		err := server.Send(&traits.PullOccupancyResponse{
-			Changes: []*traits.PullOccupancyResponse_Change{change},
+		err := server.Send(&occupancysensorpb.PullOccupancyResponse{
+			Changes: []*occupancysensorpb.PullOccupancyResponse_Change{change},
 		})
 		if err != nil {
 			return err

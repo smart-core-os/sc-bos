@@ -4,15 +4,15 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 const PointsEventTopicSuffix = "/event/pointset"
 
 type ScDevice struct {
-	Meta   *traits.Metadata `json:"meta,omitempty"`
-	ScName string           `json:"scName,omitempty"`
+	Meta   *metadatapb.Metadata `json:"meta,omitempty"`
+	ScName string               `json:"scName,omitempty"`
 }
 
 type Root struct {

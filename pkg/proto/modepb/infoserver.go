@@ -2,15 +2,13 @@ package modepb
 
 import (
 	"context"
-
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type InfoServer struct {
-	traits.UnimplementedModeInfoServer
-	Modes *traits.ModesSupport
+	UnimplementedModeInfoServer
+	Modes *ModesSupport
 }
 
-func (i *InfoServer) DescribeModes(context.Context, *traits.DescribeModesRequest) (*traits.ModesSupport, error) {
+func (i *InfoServer) DescribeModes(context.Context, *DescribeModesRequest) (*ModesSupport, error) {
 	return i.Modes, nil
 }

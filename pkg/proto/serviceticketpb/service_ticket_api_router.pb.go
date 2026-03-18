@@ -3,12 +3,10 @@
 package serviceticketpb
 
 import (
-	"context"
-	"fmt"
-
-	"google.golang.org/grpc"
-
-	"github.com/smart-core-os/sc-bos/pkg/router"
+	context "context"
+	fmt "fmt"
+	router "github.com/smart-core-os/sc-bos/pkg/router"
+	grpc "google.golang.org/grpc"
 )
 
 // ApiRouter is a ServiceTicketApiServer that allows routing named requests to specific ServiceTicketApiClient

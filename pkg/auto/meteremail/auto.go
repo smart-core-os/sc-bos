@@ -16,11 +16,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/meteremail/config"
 	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 const AutoName = "meteremail"
@@ -47,7 +47,7 @@ func (_ factory) ConfigBlocks() []block.Block {
 
 // getMeterReadingAndSource gets the meter reading for the given meter and also the location metadata for the meter
 func (a *autoImpl) getMeterReadingAndSource(ctx context.Context, meterName string, meterType MeterType,
-	meterClient meterpb.MeterApiClient, metadataClient traits.MetadataApiClient, timing *config.Timing) (*config.Source, *MeterReading, error) {
+	meterClient meterpb.MeterApiClient, metadataClient metadatapb.MetadataApiClient, timing *config.Timing) (*config.Source, *MeterReading, error) {
 
 	meterReq := &meterpb.GetMeterReadingRequest{
 		Name: meterName,
@@ -66,7 +66,7 @@ func (a *autoImpl) getMeterReadingAndSource(ctx context.Context, meterName strin
 	meterReading := &MeterReading{MeterType: meterType, Date: time.Now(), Reading: meterRes.Usage}
 	source := &config.Source{Name: meterName}
 
-	metadataReq := &traits.GetMetadataRequest{
+	metadataReq := &metadatapb.GetMetadataRequest{
 		Name: meterName,
 	}
 
@@ -209,7 +209,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	applyDefaults(&cfg.Timing)
 
 	meterClient := meterpb.NewMeterApiClient(a.Node.ClientConn())
-	metadataClient := traits.NewMetadataApiClient(a.Node.ClientConn())
+	metadataClient := metadatapb.NewMetadataApiClient(a.Node.ClientConn())
 
 	sendTime := cfg.Destination.SendTime
 	now := cfg.Now

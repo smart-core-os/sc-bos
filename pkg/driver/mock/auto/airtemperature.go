@@ -8,10 +8,10 @@ import (
 	"golang.org/x/exp/rand"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
+	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -22,11 +22,11 @@ func AirTemperatureAuto(model *airtemperaturepb.Model) *service.Service[string] 
 			randomNumber := 18 + rand.Float64()*6
 			// give each device a random set point between 18 and 24 with .05 degree accuracy
 			setPoint := math.Round(randomNumber*2) / 2
-			state := &traits.AirTemperature{
+			state := &gen_airtemperaturepb.AirTemperature{
 				AmbientTemperature: &types.Temperature{
 					ValueCelsius: setPoint + (rand.Float64()*4 - 2),
 				},
-				TemperatureGoal: &traits.AirTemperature_TemperatureSetPoint{
+				TemperatureGoal: &gen_airtemperaturepb.AirTemperature_TemperatureSetPoint{
 					TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
 				},
 			}

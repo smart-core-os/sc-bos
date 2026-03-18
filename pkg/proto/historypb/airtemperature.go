@@ -9,7 +9,6 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type AirTemperatureServer struct {
@@ -30,7 +29,7 @@ func (m *AirTemperatureServer) Unwrap() any {
 }
 
 var airTemperatureReadingPager = NewPageReader(func(r history.Record) (*airtemperaturepb.AirTemperatureRecord, error) {
-	v := &traits.AirTemperature{}
+	v := &airtemperaturepb.AirTemperature{}
 	err := proto.Unmarshal(r.Payload, v)
 	if err != nil {
 		return nil, err

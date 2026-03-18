@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/scale"
+	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func OccupancySensorAuto(model *occupancysensorpb.Model) *service.Service[string] {
@@ -20,11 +20,11 @@ func OccupancySensorAuto(model *occupancysensorpb.Model) *service.Service[string
 			for {
 				tod := scale.NineToFive.Now()
 				peopleCount := int32(math.Round(tod * float64Between(0, 10)))
-				occupancy := &traits.Occupancy{PeopleCount: peopleCount}
+				occupancy := &gen_occupancysensorpb.Occupancy{PeopleCount: peopleCount}
 				if peopleCount == 0 {
-					occupancy.State = oneOf(traits.Occupancy_UNOCCUPIED, traits.Occupancy_IDLE)
+					occupancy.State = oneOf(gen_occupancysensorpb.Occupancy_UNOCCUPIED, gen_occupancysensorpb.Occupancy_IDLE)
 				} else {
-					occupancy.State = traits.Occupancy_OCCUPIED
+					occupancy.State = gen_occupancysensorpb.Occupancy_OCCUPIED
 				}
 				_, _ = model.SetOccupancy(occupancy, resource.WithUpdatePaths("state", "people_count"))
 				select {

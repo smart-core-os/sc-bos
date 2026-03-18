@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 func TestActiveAt(t *testing.T) {
 	tests := []struct {
 		name        string
 		t           time.Time
-		mode        *traits.ElectricMode
+		mode        *electricpb.ElectricMode
 		wantElapsed time.Duration
 		wantIndex   int
 	}{

@@ -9,19 +9,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // ApiRouter is a traits.MeterApiServer that allows routing named requests to specific traits.MeterApiClient
 type ApiRouter struct {
-	traits.UnimplementedMeterApiServer
+	meterpb.UnimplementedMeterApiServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.MeterApiServer = (*ApiRouter)(nil)
+var _ meterpb.MeterApiServer = (*ApiRouter)(nil)
 
 func NewApiRouter(opts ...router.Option) *ApiRouter {
 	return &ApiRouter{
@@ -31,14 +31,14 @@ func NewApiRouter(opts ...router.Option) *ApiRouter {
 
 // WithMeterApiClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithMeterApiClientFactory(f func(name string) (traits.MeterApiClient, error)) router.Option {
+func WithMeterApiClientFactory(f func(name string) (meterpb.MeterApiClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *ApiRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterMeterApiServer(server, r)
+	meterpb.RegisterMeterApiServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.MeterApiClient.
@@ -50,27 +50,27 @@ func (r *ApiRouter) Add(name string, client any) any {
 }
 
 func (r *ApiRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.MeterApiClient)
+	_, ok := client.(meterpb.MeterApiClient)
 	return ok
 }
 
-func (r *ApiRouter) AddMeterApiClient(name string, client traits.MeterApiClient) traits.MeterApiClient {
+func (r *ApiRouter) AddMeterApiClient(name string, client meterpb.MeterApiClient) meterpb.MeterApiClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.MeterApiClient)
+	return res.(meterpb.MeterApiClient)
 }
 
-func (r *ApiRouter) RemoveMeterApiClient(name string) traits.MeterApiClient {
+func (r *ApiRouter) RemoveMeterApiClient(name string) meterpb.MeterApiClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.MeterApiClient)
+	return res.(meterpb.MeterApiClient)
 }
 
-func (r *ApiRouter) GetMeterApiClient(name string) (traits.MeterApiClient, error) {
+func (r *ApiRouter) GetMeterApiClient(name string) (meterpb.MeterApiClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -78,10 +78,10 @@ func (r *ApiRouter) GetMeterApiClient(name string) (traits.MeterApiClient, error
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.MeterApiClient), nil
+	return res.(meterpb.MeterApiClient), nil
 }
 
-func (r *ApiRouter) GetMeterReading(ctx context.Context, request *traits.GetMeterReadingRequest) (*traits.MeterReading, error) {
+func (r *ApiRouter) GetMeterReading(ctx context.Context, request *meterpb.GetMeterReadingRequest) (*meterpb.MeterReading, error) {
 	child, err := r.GetMeterApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (r *ApiRouter) GetMeterReading(ctx context.Context, request *traits.GetMete
 	return child.GetMeterReading(ctx, request)
 }
 
-func (r *ApiRouter) PullMeterReadings(request *traits.PullMeterReadingsRequest, server traits.MeterApi_PullMeterReadingsServer) error {
+func (r *ApiRouter) PullMeterReadings(request *meterpb.PullMeterReadingsRequest, server meterpb.MeterApi_PullMeterReadingsServer) error {
 	child, err := r.GetMeterApiClient(request.Name)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (r *ApiRouter) PullMeterReadings(request *traits.PullMeterReadingsRequest, 
 		// Impl note: we could improve throughput here by issuing the Recv and Send in different goroutines, but we're doing
 		// it synchronously until we have a need to change the behaviour
 
-		var msg *traits.PullMeterReadingsResponse
+		var msg *meterpb.PullMeterReadingsResponse
 		msg, err = stream.Recv()
 		if err != nil {
 			break

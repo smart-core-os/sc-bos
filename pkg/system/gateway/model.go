@@ -7,10 +7,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/rx"
 	"github.com/smart-core-os/sc-bos/pkg/util/slices"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // cohort describes the hub and enrolled Nodes.
@@ -60,8 +60,8 @@ func newRemoteNode(addr string, conn *grpc.ClientConn) *remoteNode {
 
 // remoteDesc describes the name and metadata for a remote entity; node or name.
 type remoteDesc struct {
-	name   string           // the announced name, this is the routing key
-	md     *traits.Metadata // used to support the DevicesApi locally
+	name   string               // the announced name, this is the routing key
+	md     *metadatapb.Metadata // used to support the DevicesApi locally
 	health []*healthpb.HealthCheck
 }
 

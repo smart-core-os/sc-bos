@@ -10,13 +10,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // ModelServer adapts a Model to implement traits.HailApiServer.
 type ModelServer struct {
-	traits.UnimplementedHailApiServer
+	UnimplementedHailApiServer
 	model *Model
 }
 
@@ -29,18 +28,18 @@ func (m *ModelServer) Unwrap() any {
 }
 
 func (m *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterHailApiServer(server, m)
+	RegisterHailApiServer(server, m)
 }
 
-func (m *ModelServer) CreateHail(_ context.Context, request *traits.CreateHailRequest) (*traits.Hail, error) {
+func (m *ModelServer) CreateHail(_ context.Context, request *CreateHailRequest) (*Hail, error) {
 	hail := request.Hail
-	if hail.State == traits.Hail_STATE_UNSPECIFIED {
-		hail.State = traits.Hail_CALLED
+	if hail.State == Hail_STATE_UNSPECIFIED {
+		hail.State = Hail_CALLED
 	}
 	return m.model.CreateHail(hail)
 }
 
-func (m *ModelServer) GetHail(_ context.Context, request *traits.GetHailRequest) (*traits.Hail, error) {
+func (m *ModelServer) GetHail(_ context.Context, request *GetHailRequest) (*Hail, error) {
 	hail, exists := m.model.GetHail(request.Id, resource.WithReadMask(request.ReadMask))
 	if !exists {
 		return nil, status.Errorf(codes.NotFound, "id:%v", request.Id)
@@ -48,18 +47,18 @@ func (m *ModelServer) GetHail(_ context.Context, request *traits.GetHailRequest)
 	return hail, nil
 }
 
-func (m *ModelServer) UpdateHail(_ context.Context, request *traits.UpdateHailRequest) (*traits.Hail, error) {
+func (m *ModelServer) UpdateHail(_ context.Context, request *UpdateHailRequest) (*Hail, error) {
 	return m.model.UpdateHail(request.Hail, resource.WithUpdateMask(request.UpdateMask))
 }
 
-func (m *ModelServer) DeleteHail(_ context.Context, request *traits.DeleteHailRequest) (*traits.DeleteHailResponse, error) {
+func (m *ModelServer) DeleteHail(_ context.Context, request *DeleteHailRequest) (*DeleteHailResponse, error) {
 	_, err := m.model.DeleteHail(request.Id, resource.WithAllowMissing(request.AllowMissing))
-	return &traits.DeleteHailResponse{}, err
+	return &DeleteHailResponse{}, err
 }
 
-func (m *ModelServer) PullHail(request *traits.PullHailRequest, server traits.HailApi_PullHailServer) error {
+func (m *ModelServer) PullHail(request *PullHailRequest, server HailApi_PullHailServer) error {
 	for change := range m.model.PullHail(server.Context(), request.Id, resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullHailResponse{Changes: []*traits.PullHailResponse_Change{
+		err := server.Send(&PullHailResponse{Changes: []*PullHailResponse_Change{
 			{Name: request.Name, ChangeTime: timestamppb.New(change.ChangeTime), Hail: change.Value},
 		}})
 		if err != nil {
@@ -69,7 +68,7 @@ func (m *ModelServer) PullHail(request *traits.PullHailRequest, server traits.Ha
 	return nil
 }
 
-func (m *ModelServer) ListHails(_ context.Context, request *traits.ListHailsRequest) (*traits.ListHailsResponse, error) {
+func (m *ModelServer) ListHails(_ context.Context, request *ListHailsRequest) (*ListHailsResponse, error) {
 	pageToken := &types.PageToken{}
 	if err := decodePageToken(request.PageToken, pageToken); err != nil {
 		return nil, err
@@ -86,7 +85,7 @@ func (m *ModelServer) ListHails(_ context.Context, request *traits.ListHailsRequ
 		})
 	}
 
-	result := &traits.ListHailsResponse{
+	result := &ListHailsResponse{
 		TotalSize: int32(len(sortedItems)),
 	}
 	upperBound := nextIndex + pageSize
@@ -108,9 +107,9 @@ func (m *ModelServer) ListHails(_ context.Context, request *traits.ListHailsRequ
 	return result, nil
 }
 
-func (m *ModelServer) PullHails(request *traits.PullHailsRequest, server traits.HailApi_PullHailsServer) error {
+func (m *ModelServer) PullHails(request *PullHailsRequest, server HailApi_PullHailsServer) error {
 	for change := range m.model.PullHails(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullHailsResponse{Changes: []*traits.PullHailsResponse_Change{
+		err := server.Send(&PullHailsResponse{Changes: []*PullHailsResponse_Change{
 			{Name: request.Name, Type: change.ChangeType, ChangeTime: timestamppb.New(change.ChangeTime), OldValue: change.OldValue, NewValue: change.NewValue},
 		}})
 		if err != nil {

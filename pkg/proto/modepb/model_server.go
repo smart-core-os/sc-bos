@@ -8,13 +8,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // ModelServer adapts a Model as a traits.ModeApiServer.
 // Relative mode value updates will wrap around in both directions.
 type ModelServer struct {
-	traits.UnimplementedModeApiServer
+	UnimplementedModeApiServer
 	model *Model
 }
 
@@ -23,18 +22,18 @@ func NewModelServer(model *Model) *ModelServer {
 }
 
 func (m *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterModeApiServer(server, m)
+	RegisterModeApiServer(server, m)
 }
 
 func (m *ModelServer) Unwrap() any {
 	return m.model
 }
 
-func (m *ModelServer) GetModeValues(_ context.Context, request *traits.GetModeValuesRequest) (*traits.ModeValues, error) {
+func (m *ModelServer) GetModeValues(_ context.Context, request *GetModeValuesRequest) (*ModeValues, error) {
 	return m.model.ModeValues(resource.WithReadMask(request.ReadMask)), nil
 }
 
-func (m *ModelServer) UpdateModeValues(_ context.Context, request *traits.UpdateModeValuesRequest) (*traits.ModeValues, error) {
+func (m *ModelServer) UpdateModeValues(_ context.Context, request *UpdateModeValuesRequest) (*ModeValues, error) {
 	opts := []resource.WriteOption{
 		resource.WithUpdateMask(request.UpdateMask),
 	}
@@ -45,7 +44,7 @@ func (m *ModelServer) UpdateModeValues(_ context.Context, request *traits.Update
 	values := request.ModeValues
 	if values == nil {
 		// in case all updates are relative, we can't set nothing
-		values = &traits.ModeValues{}
+		values = &ModeValues{}
 	}
 	return m.model.UpdateModeValues(values, opts...)
 }
@@ -54,8 +53,8 @@ func (m *ModelServer) UpdateModeValues(_ context.Context, request *traits.Update
 // This is liberal and will choose the first available mode if, for example, we can't work out the current value index.
 func (m *ModelServer) relativeAdjustment(relative map[string]int32) resource.UpdateInterceptor {
 	return func(old, new proto.Message) {
-		oldVal := old.(*traits.ModeValues)
-		newVal := new.(*traits.ModeValues)
+		oldVal := old.(*ModeValues)
+		newVal := new.(*ModeValues)
 		if newVal.Values == nil {
 			newVal.Values = make(map[string]string)
 		}
@@ -92,9 +91,9 @@ func (m *ModelServer) relativeAdjustment(relative map[string]int32) resource.Upd
 	}
 }
 
-func (m *ModelServer) PullModeValues(request *traits.PullModeValuesRequest, server traits.ModeApi_PullModeValuesServer) error {
+func (m *ModelServer) PullModeValues(request *PullModeValuesRequest, server ModeApi_PullModeValuesServer) error {
 	for change := range m.model.PullModeValues(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullModeValuesResponse{Changes: []*traits.PullModeValuesResponse_Change{
+		err := server.Send(&PullModeValuesResponse{Changes: []*PullModeValuesResponse_Change{
 			{
 				Name:       request.Name,
 				ChangeTime: timestamppb.New(change.ChangeTime),

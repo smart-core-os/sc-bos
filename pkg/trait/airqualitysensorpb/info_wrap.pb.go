@@ -5,32 +5,32 @@ package airqualitysensorpb
 import (
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // WrapInfo	adapts a traits.AirQualitySensorInfoServer	and presents it as a traits.AirQualitySensorInfoClient
-func WrapInfo(server traits.AirQualitySensorInfoServer) *InfoWrapper {
-	conn := wrap.ServerToClient(traits.AirQualitySensorInfo_ServiceDesc, server)
-	client := traits.NewAirQualitySensorInfoClient(conn)
+func WrapInfo(server airqualitysensorpb.AirQualitySensorInfoServer) *InfoWrapper {
+	conn := wrap.ServerToClient(airqualitysensorpb.AirQualitySensorInfo_ServiceDesc, server)
+	client := airqualitysensorpb.NewAirQualitySensorInfoClient(conn)
 	return &InfoWrapper{
 		AirQualitySensorInfoClient: client,
 		server:                     server,
 		conn:                       conn,
-		desc:                       traits.AirQualitySensorInfo_ServiceDesc,
+		desc:                       airqualitysensorpb.AirQualitySensorInfo_ServiceDesc,
 	}
 }
 
 type InfoWrapper struct {
-	traits.AirQualitySensorInfoClient
+	airqualitysensorpb.AirQualitySensorInfoClient
 
-	server traits.AirQualitySensorInfoServer
+	server airqualitysensorpb.AirQualitySensorInfoServer
 	conn   grpc.ClientConnInterface
 	desc   grpc.ServiceDesc
 }
 
 // UnwrapServer returns the underlying server instance.
-func (w *InfoWrapper) UnwrapServer() traits.AirQualitySensorInfoServer {
+func (w *InfoWrapper) UnwrapServer() airqualitysensorpb.AirQualitySensorInfoServer {
 	return w.server
 }
 

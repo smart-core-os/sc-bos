@@ -7,7 +7,6 @@
 package airtemperaturepb
 
 import (
-	traits "github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	time "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -27,7 +26,7 @@ const (
 
 type AirTemperatureRecord struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	AirTemperature *traits.AirTemperature `protobuf:"bytes,1,opt,name=air_temperature,json=airTemperature,proto3" json:"air_temperature,omitempty"`
+	AirTemperature *AirTemperature        `protobuf:"bytes,1,opt,name=air_temperature,json=airTemperature,proto3" json:"air_temperature,omitempty"`
 	RecordTime     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=record_time,json=recordTime,proto3" json:"record_time,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -63,7 +62,7 @@ func (*AirTemperatureRecord) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_airtemperature_v1_air_temperature_history_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *AirTemperatureRecord) GetAirTemperature() *traits.AirTemperature {
+func (x *AirTemperatureRecord) GetAirTemperature() *AirTemperature {
 	if x != nil {
 		return x.AirTemperature
 	}
@@ -240,9 +239,9 @@ var File_smartcore_bos_airtemperature_v1_air_temperature_history_proto protorefl
 
 const file_smartcore_bos_airtemperature_v1_air_temperature_history_proto_rawDesc = "" +
 	"\n" +
-	"=smartcore/bos/airtemperature/v1/air_temperature_history.proto\x12\x1fsmartcore.bos.airtemperature.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1ctraits/air_temperature.proto\x1a\x17types/time/period.proto\"\x9e\x01\n" +
-	"\x14AirTemperatureRecord\x12I\n" +
-	"\x0fair_temperature\x18\x01 \x01(\v2 .smartcore.traits.AirTemperatureR\x0eairTemperature\x12;\n" +
+	"=smartcore/bos/airtemperature/v1/air_temperature_history.proto\x12\x1fsmartcore.bos.airtemperature.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a5smartcore/bos/airtemperature/v1/air_temperature.proto\x1a\x17types/time/period.proto\"\xad\x01\n" +
+	"\x14AirTemperatureRecord\x12X\n" +
+	"\x0fair_temperature\x18\x01 \x01(\v2/.smartcore.bos.airtemperature.v1.AirTemperatureR\x0eairTemperature\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"recordTime\"\xfc\x01\n" +
 	" ListAirTemperatureHistoryRequest\x12\x12\n" +
@@ -278,13 +277,13 @@ var file_smartcore_bos_airtemperature_v1_air_temperature_history_proto_goTypes =
 	(*AirTemperatureRecord)(nil),              // 0: smartcore.bos.airtemperature.v1.AirTemperatureRecord
 	(*ListAirTemperatureHistoryRequest)(nil),  // 1: smartcore.bos.airtemperature.v1.ListAirTemperatureHistoryRequest
 	(*ListAirTemperatureHistoryResponse)(nil), // 2: smartcore.bos.airtemperature.v1.ListAirTemperatureHistoryResponse
-	(*traits.AirTemperature)(nil),             // 3: smartcore.traits.AirTemperature
+	(*AirTemperature)(nil),                    // 3: smartcore.bos.airtemperature.v1.AirTemperature
 	(*timestamppb.Timestamp)(nil),             // 4: google.protobuf.Timestamp
 	(*time.Period)(nil),                       // 5: smartcore.types.time.Period
 	(*fieldmaskpb.FieldMask)(nil),             // 6: google.protobuf.FieldMask
 }
 var file_smartcore_bos_airtemperature_v1_air_temperature_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.airtemperature.v1.AirTemperatureRecord.air_temperature:type_name -> smartcore.traits.AirTemperature
+	3, // 0: smartcore.bos.airtemperature.v1.AirTemperatureRecord.air_temperature:type_name -> smartcore.bos.airtemperature.v1.AirTemperature
 	4, // 1: smartcore.bos.airtemperature.v1.AirTemperatureRecord.record_time:type_name -> google.protobuf.Timestamp
 	5, // 2: smartcore.bos.airtemperature.v1.ListAirTemperatureHistoryRequest.period:type_name -> smartcore.types.time.Period
 	6, // 3: smartcore.bos.airtemperature.v1.ListAirTemperatureHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
@@ -303,6 +302,7 @@ func file_smartcore_bos_airtemperature_v1_air_temperature_history_proto_init() {
 	if File_smartcore_bos_airtemperature_v1_air_temperature_history_proto != nil {
 		return
 	}
+	file_smartcore_bos_airtemperature_v1_air_temperature_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

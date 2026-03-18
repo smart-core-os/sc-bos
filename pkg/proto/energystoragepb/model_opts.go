@@ -5,12 +5,11 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
 var DefaultModelOptions = []resource.Option{
-	WithInitialEnergyLevel(&traits.EnergyLevel{}),
+	WithInitialEnergyLevel(&EnergyLevel{}),
 	WithEnergyLevelOption(resource.WithMessageEquivalence(cmp.Equal(
 		cmp.FloatValueApprox(0, 0.1),
 		cmp.TimeValueWithin(1*time.Second),
@@ -32,7 +31,7 @@ func WithEnergyLevelOption(opts ...resource.Option) resource.Option {
 }
 
 // WithInitialEnergyLevel returns an option that configures the model to initialise with the given energy level.
-func WithInitialEnergyLevel(energyLevel *traits.EnergyLevel) resource.Option {
+func WithInitialEnergyLevel(energyLevel *EnergyLevel) resource.Option {
 	return WithEnergyLevelOption(resource.WithInitialValue(energyLevel))
 }
 

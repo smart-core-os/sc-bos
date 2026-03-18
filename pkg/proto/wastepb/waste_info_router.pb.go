@@ -3,12 +3,10 @@
 package wastepb
 
 import (
-	"context"
-	"fmt"
-
-	"google.golang.org/grpc"
-
-	"github.com/smart-core-os/sc-bos/pkg/router"
+	context "context"
+	fmt "fmt"
+	router "github.com/smart-core-os/sc-bos/pkg/router"
+	grpc "google.golang.org/grpc"
 )
 
 // InfoRouter is a WasteInfoServer that allows routing named requests to specific WasteInfoClient

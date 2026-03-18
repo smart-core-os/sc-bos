@@ -3,7 +3,7 @@ package enterleavesensorpb
 import (
 	"testing"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 )
 
 func TestModel_ResetTotals(t *testing.T) {
@@ -30,8 +30,8 @@ type modelTester struct {
 
 func (mt *modelTester) enter(n int) {
 	for i := 0; i < n; i++ {
-		err := mt.m.CreateEnterLeaveEvent(&traits.EnterLeaveEvent{
-			Direction: traits.EnterLeaveEvent_ENTER,
+		err := mt.m.CreateEnterLeaveEvent(&enterleavesensorpb.EnterLeaveEvent{
+			Direction: enterleavesensorpb.EnterLeaveEvent_ENTER,
 		})
 		if err != nil {
 			mt.t.Fatal(err)
@@ -41,8 +41,8 @@ func (mt *modelTester) enter(n int) {
 
 func (mt *modelTester) leave(n int) {
 	for i := 0; i < n; i++ {
-		err := mt.m.CreateEnterLeaveEvent(&traits.EnterLeaveEvent{
-			Direction: traits.EnterLeaveEvent_LEAVE,
+		err := mt.m.CreateEnterLeaveEvent(&enterleavesensorpb.EnterLeaveEvent{
+			Direction: enterleavesensorpb.EnterLeaveEvent_LEAVE,
 		})
 		if err != nil {
 			mt.t.Fatal(err)

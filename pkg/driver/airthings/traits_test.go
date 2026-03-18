@@ -12,11 +12,12 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_airqualitysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	typespb "github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -24,7 +25,7 @@ func TestSampleToAirQuality(t *testing.T) {
 	tests := []struct {
 		name  string
 		input api.DeviceSampleResponseEnriched
-		want  *traits.AirQuality
+		want  *gen_airqualitysensorpb.AirQuality
 	}{
 		{
 			name: "all indoor fields",
@@ -40,7 +41,7 @@ func TestSampleToAirQuality(t *testing.T) {
 					Voc:             newNullableControlSignal(500.0), // ppb
 				},
 			},
-			want: &traits.AirQuality{
+			want: &gen_airqualitysensorpb.AirQuality{
 				AirChangePerHour:         ptrFloat32(1.5),
 				CarbonDioxideLevel:       ptrFloat32(800.0),
 				ParticulateMatter_1:      ptrFloat32(10.5),
@@ -65,7 +66,7 @@ func TestSampleToAirQuality(t *testing.T) {
 					OutdoorPressure: newNullableControlSignal(1010.0),
 				},
 			},
-			want: &traits.AirQuality{
+			want: &gen_airqualitysensorpb.AirQuality{
 				ParticulateMatter_1:  ptrFloat32(15.0), // outdoor wins
 				ParticulateMatter_25: ptrFloat32(30.0),
 				ParticulateMatter_10: ptrFloat32(50.0),
@@ -82,7 +83,7 @@ func TestSampleToAirQuality(t *testing.T) {
 					OutdoorPressure: newNullableControlSignal(1015.0),
 				},
 			},
-			want: &traits.AirQuality{
+			want: &gen_airqualitysensorpb.AirQuality{
 				ParticulateMatter_1:  ptrFloat32(12.0),
 				ParticulateMatter_25: ptrFloat32(28.0),
 				ParticulateMatter_10: ptrFloat32(48.0),
@@ -94,7 +95,7 @@ func TestSampleToAirQuality(t *testing.T) {
 			input: api.DeviceSampleResponseEnriched{
 				Data: api.SingleSampleDataEnriched{},
 			},
-			want: &traits.AirQuality{},
+			want: &gen_airqualitysensorpb.AirQuality{},
 		},
 	}
 
@@ -112,7 +113,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 	tests := []struct {
 		name  string
 		input api.DeviceSampleResponseEnriched
-		want  *traits.AirTemperature
+		want  *gen_airtemperaturepb.AirTemperature
 	}{
 		{
 			name: "indoor only",
@@ -122,7 +123,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 					Humidity: newNullableControlSignal(45.0),
 				},
 			},
-			want: &traits.AirTemperature{
+			want: &gen_airtemperaturepb.AirTemperature{
 				AmbientTemperature: &typespb.Temperature{ValueCelsius: 22.5},
 				AmbientHumidity:    ptrFloat32(45.0),
 			},
@@ -137,7 +138,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 					OutdoorHumidity: newNullableControlSignal(60.0),
 				},
 			},
-			want: &traits.AirTemperature{
+			want: &gen_airtemperaturepb.AirTemperature{
 				AmbientTemperature: &typespb.Temperature{ValueCelsius: 15.0},
 				AmbientHumidity:    ptrFloat32(60.0),
 			},
@@ -150,7 +151,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 					OutdoorHumidity: newNullableControlSignal(70.0),
 				},
 			},
-			want: &traits.AirTemperature{
+			want: &gen_airtemperaturepb.AirTemperature{
 				AmbientTemperature: &typespb.Temperature{ValueCelsius: 10.0},
 				AmbientHumidity:    ptrFloat32(70.0),
 			},
@@ -160,7 +161,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 			input: api.DeviceSampleResponseEnriched{
 				Data: api.SingleSampleDataEnriched{},
 			},
-			want: &traits.AirTemperature{},
+			want: &gen_airtemperaturepb.AirTemperature{},
 		},
 	}
 
@@ -178,7 +179,7 @@ func TestSampleToEnergyLevel(t *testing.T) {
 	tests := []struct {
 		name  string
 		input api.DeviceSampleResponseEnriched
-		want  *traits.EnergyLevel
+		want  *energystoragepb.EnergyLevel
 	}{
 		{
 			name: "battery present",
@@ -187,8 +188,8 @@ func TestSampleToEnergyLevel(t *testing.T) {
 					Battery: newNullableFloat32(75.5),
 				},
 			},
-			want: &traits.EnergyLevel{
-				Quantity: &traits.EnergyLevel_Quantity{
+			want: &energystoragepb.EnergyLevel{
+				Quantity: &energystoragepb.EnergyLevel_Quantity{
 					Percentage: 75.5,
 				},
 			},
@@ -200,8 +201,8 @@ func TestSampleToEnergyLevel(t *testing.T) {
 					Battery: newNullableFloat32(100.0),
 				},
 			},
-			want: &traits.EnergyLevel{
-				Quantity: &traits.EnergyLevel_Quantity{
+			want: &energystoragepb.EnergyLevel{
+				Quantity: &energystoragepb.EnergyLevel_Quantity{
 					Percentage: 100.0,
 				},
 			},
@@ -213,8 +214,8 @@ func TestSampleToEnergyLevel(t *testing.T) {
 					Battery: newNullableFloat32(5.0),
 				},
 			},
-			want: &traits.EnergyLevel{
-				Quantity: &traits.EnergyLevel_Quantity{
+			want: &energystoragepb.EnergyLevel{
+				Quantity: &energystoragepb.EnergyLevel_Quantity{
 					Percentage: 5.0,
 				},
 			},
@@ -224,7 +225,7 @@ func TestSampleToEnergyLevel(t *testing.T) {
 			input: api.DeviceSampleResponseEnriched{
 				Data: api.SingleSampleDataEnriched{},
 			},
-			want: &traits.EnergyLevel{},
+			want: &energystoragepb.EnergyLevel{},
 		},
 	}
 
@@ -501,7 +502,7 @@ func TestAnnounceDevice(t *testing.T) {
 
 func TestROAirTemperatureServer_UpdateAirTemperature(t *testing.T) {
 	server := roAirTemperatureServer{}
-	_, err := server.UpdateAirTemperature(context.Background(), &traits.UpdateAirTemperatureRequest{})
+	_, err := server.UpdateAirTemperature(context.Background(), &gen_airtemperaturepb.UpdateAirTemperatureRequest{})
 	if err == nil {
 		t.Error("Expected error for read-only operation, got nil")
 	}
@@ -509,7 +510,7 @@ func TestROAirTemperatureServer_UpdateAirTemperature(t *testing.T) {
 
 func TestROEnergyStorageServer_Charge(t *testing.T) {
 	server := roEnergyStorageServer{}
-	_, err := server.Charge(context.Background(), &traits.ChargeRequest{})
+	_, err := server.Charge(context.Background(), &energystoragepb.ChargeRequest{})
 	if err == nil {
 		t.Error("Expected error for read-only operation, got nil")
 	}

@@ -9,19 +9,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // ApiRouter is a traits.AccessApiServer that allows routing named requests to specific traits.AccessApiClient
 type ApiRouter struct {
-	traits.UnimplementedAccessApiServer
+	accesspb.UnimplementedAccessApiServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.AccessApiServer = (*ApiRouter)(nil)
+var _ accesspb.AccessApiServer = (*ApiRouter)(nil)
 
 func NewApiRouter(opts ...router.Option) *ApiRouter {
 	return &ApiRouter{
@@ -31,14 +31,14 @@ func NewApiRouter(opts ...router.Option) *ApiRouter {
 
 // WithAccessApiClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithAccessApiClientFactory(f func(name string) (traits.AccessApiClient, error)) router.Option {
+func WithAccessApiClientFactory(f func(name string) (accesspb.AccessApiClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *ApiRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterAccessApiServer(server, r)
+	accesspb.RegisterAccessApiServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.AccessApiClient.
@@ -50,27 +50,27 @@ func (r *ApiRouter) Add(name string, client any) any {
 }
 
 func (r *ApiRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.AccessApiClient)
+	_, ok := client.(accesspb.AccessApiClient)
 	return ok
 }
 
-func (r *ApiRouter) AddAccessApiClient(name string, client traits.AccessApiClient) traits.AccessApiClient {
+func (r *ApiRouter) AddAccessApiClient(name string, client accesspb.AccessApiClient) accesspb.AccessApiClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.AccessApiClient)
+	return res.(accesspb.AccessApiClient)
 }
 
-func (r *ApiRouter) RemoveAccessApiClient(name string) traits.AccessApiClient {
+func (r *ApiRouter) RemoveAccessApiClient(name string) accesspb.AccessApiClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.AccessApiClient)
+	return res.(accesspb.AccessApiClient)
 }
 
-func (r *ApiRouter) GetAccessApiClient(name string) (traits.AccessApiClient, error) {
+func (r *ApiRouter) GetAccessApiClient(name string) (accesspb.AccessApiClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -78,10 +78,10 @@ func (r *ApiRouter) GetAccessApiClient(name string) (traits.AccessApiClient, err
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.AccessApiClient), nil
+	return res.(accesspb.AccessApiClient), nil
 }
 
-func (r *ApiRouter) GetLastAccessAttempt(ctx context.Context, request *traits.GetLastAccessAttemptRequest) (*traits.AccessAttempt, error) {
+func (r *ApiRouter) GetLastAccessAttempt(ctx context.Context, request *accesspb.GetLastAccessAttemptRequest) (*accesspb.AccessAttempt, error) {
 	child, err := r.GetAccessApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (r *ApiRouter) GetLastAccessAttempt(ctx context.Context, request *traits.Ge
 	return child.GetLastAccessAttempt(ctx, request)
 }
 
-func (r *ApiRouter) PullAccessAttempts(request *traits.PullAccessAttemptsRequest, server traits.AccessApi_PullAccessAttemptsServer) error {
+func (r *ApiRouter) PullAccessAttempts(request *accesspb.PullAccessAttemptsRequest, server accesspb.AccessApi_PullAccessAttemptsServer) error {
 	child, err := r.GetAccessApiClient(request.Name)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (r *ApiRouter) PullAccessAttempts(request *traits.PullAccessAttemptsRequest
 		// Impl note: we could improve throughput here by issuing the Recv and Send in different goroutines, but we're doing
 		// it synchronously until we have a need to change the behaviour
 
-		var msg *traits.PullAccessAttemptsResponse
+		var msg *accesspb.PullAccessAttemptsResponse
 		msg, err = stream.Recv()
 		if err != nil {
 			break

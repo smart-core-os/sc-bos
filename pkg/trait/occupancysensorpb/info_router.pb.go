@@ -8,19 +8,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // InfoRouter is a traits.OccupancySensorInfoServer that allows routing named requests to specific traits.OccupancySensorInfoClient
 type InfoRouter struct {
-	traits.UnimplementedOccupancySensorInfoServer
+	occupancysensorpb.UnimplementedOccupancySensorInfoServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.OccupancySensorInfoServer = (*InfoRouter)(nil)
+var _ occupancysensorpb.OccupancySensorInfoServer = (*InfoRouter)(nil)
 
 func NewInfoRouter(opts ...router.Option) *InfoRouter {
 	return &InfoRouter{
@@ -30,14 +30,14 @@ func NewInfoRouter(opts ...router.Option) *InfoRouter {
 
 // WithOccupancySensorInfoClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithOccupancySensorInfoClientFactory(f func(name string) (traits.OccupancySensorInfoClient, error)) router.Option {
+func WithOccupancySensorInfoClientFactory(f func(name string) (occupancysensorpb.OccupancySensorInfoClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *InfoRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterOccupancySensorInfoServer(server, r)
+	occupancysensorpb.RegisterOccupancySensorInfoServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.OccupancySensorInfoClient.
@@ -49,27 +49,27 @@ func (r *InfoRouter) Add(name string, client any) any {
 }
 
 func (r *InfoRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.OccupancySensorInfoClient)
+	_, ok := client.(occupancysensorpb.OccupancySensorInfoClient)
 	return ok
 }
 
-func (r *InfoRouter) AddOccupancySensorInfoClient(name string, client traits.OccupancySensorInfoClient) traits.OccupancySensorInfoClient {
+func (r *InfoRouter) AddOccupancySensorInfoClient(name string, client occupancysensorpb.OccupancySensorInfoClient) occupancysensorpb.OccupancySensorInfoClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.OccupancySensorInfoClient)
+	return res.(occupancysensorpb.OccupancySensorInfoClient)
 }
 
-func (r *InfoRouter) RemoveOccupancySensorInfoClient(name string) traits.OccupancySensorInfoClient {
+func (r *InfoRouter) RemoveOccupancySensorInfoClient(name string) occupancysensorpb.OccupancySensorInfoClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.OccupancySensorInfoClient)
+	return res.(occupancysensorpb.OccupancySensorInfoClient)
 }
 
-func (r *InfoRouter) GetOccupancySensorInfoClient(name string) (traits.OccupancySensorInfoClient, error) {
+func (r *InfoRouter) GetOccupancySensorInfoClient(name string) (occupancysensorpb.OccupancySensorInfoClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -77,10 +77,10 @@ func (r *InfoRouter) GetOccupancySensorInfoClient(name string) (traits.Occupancy
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.OccupancySensorInfoClient), nil
+	return res.(occupancysensorpb.OccupancySensorInfoClient), nil
 }
 
-func (r *InfoRouter) DescribeOccupancy(ctx context.Context, request *traits.DescribeOccupancyRequest) (*traits.OccupancySupport, error) {
+func (r *InfoRouter) DescribeOccupancy(ctx context.Context, request *occupancysensorpb.DescribeOccupancyRequest) (*occupancysensorpb.OccupancySupport, error) {
 	child, err := r.GetOccupancySensorInfoClient(request.Name)
 	if err != nil {
 		return nil, err

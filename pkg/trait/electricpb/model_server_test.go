@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 func ExampleModelServer() {
@@ -18,10 +18,10 @@ func ExampleModelServer() {
 	ctx := context.Background()
 	_, err := settings.CreateMode(ctx, &CreateModeRequest{
 		Name: "foo",
-		Mode: &traits.ElectricMode{
+		Mode: &electricpb.ElectricMode{
 			Title:       "Normal mode",
 			Description: "Normal mode",
-			Segments: []*traits.ElectricMode_Segment{
+			Segments: []*electricpb.ElectricMode_Segment{
 				{Magnitude: 1},
 			},
 			Normal: true,
@@ -32,14 +32,14 @@ func ExampleModelServer() {
 		return
 	}
 
-	_, err = client.ClearActiveMode(ctx, &traits.ClearActiveModeRequest{
+	_, err = client.ClearActiveMode(ctx, &electricpb.ClearActiveModeRequest{
 		Name: "foo",
 	})
 	if err != nil {
 		log.Println("clear mode failed:", err)
 	}
 
-	mode, err := client.GetActiveMode(ctx, &traits.GetActiveModeRequest{Name: "foo"})
+	mode, err := client.GetActiveMode(ctx, &electricpb.GetActiveModeRequest{Name: "foo"})
 	if err != nil {
 		log.Println("GetActiveMode failed:", err)
 		return

@@ -7,7 +7,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
 )
 
 var (
@@ -19,10 +19,10 @@ var (
 type Storage interface {
 	// LoadPublication retrieves a cached publication from storage.
 	// If a publication with the given ID is not cached, returns ErrPublicationNotFound
-	LoadPublication(ctx context.Context, pubID string) (*traits.Publication, error)
+	LoadPublication(ctx context.Context, pubID string) (*publicationpb.Publication, error)
 	// StorePublication will cache a publication in storage, silently replacing any existing publication with the same ID.
 	// If pub cannot be stored because it is invalid, returns ErrPublicationInvalid
-	StorePublication(ctx context.Context, pub *traits.Publication) error
+	StorePublication(ctx context.Context, pub *publicationpb.Publication) error
 	// ListPublications will list the publication IDs of all publications currently stored in the cache.
 	ListPublications(ctx context.Context) (pubIDs []string, err error)
 	// DeletePublication will remove the publication with the given ID from the cache storage.
@@ -34,15 +34,15 @@ type Storage interface {
 // Publications are copied when inserted or retrieved, so cached publications cannot be accidentally modified.
 // The returned Storage is empty.
 func NewMemoryStorage() Storage {
-	return &memoryStorage{store: make(map[string]*traits.Publication)}
+	return &memoryStorage{store: make(map[string]*publicationpb.Publication)}
 }
 
 type memoryStorage struct {
 	m     sync.RWMutex
-	store map[string]*traits.Publication
+	store map[string]*publicationpb.Publication
 }
 
-func (m *memoryStorage) LoadPublication(_ context.Context, pubID string) (*traits.Publication, error) {
+func (m *memoryStorage) LoadPublication(_ context.Context, pubID string) (*publicationpb.Publication, error) {
 	m.m.RLock()
 	defer m.m.RUnlock()
 
@@ -55,7 +55,7 @@ func (m *memoryStorage) LoadPublication(_ context.Context, pubID string) (*trait
 	return pub, nil
 }
 
-func (m *memoryStorage) StorePublication(_ context.Context, pub *traits.Publication) error {
+func (m *memoryStorage) StorePublication(_ context.Context, pub *publicationpb.Publication) error {
 	// a publication with an empty ID is almost certainly a mistake
 	if pub.GetId() == "" {
 		return ErrPublicationInvalid
@@ -90,6 +90,6 @@ func (m *memoryStorage) DeletePublication(_ context.Context, pubID string) (pres
 	return
 }
 
-func clonePublication(pub *traits.Publication) *traits.Publication {
-	return proto.Clone(pub).(*traits.Publication)
+func clonePublication(pub *publicationpb.Publication) *publicationpb.Publication {
+	return proto.Clone(pub).(*publicationpb.Publication)
 }

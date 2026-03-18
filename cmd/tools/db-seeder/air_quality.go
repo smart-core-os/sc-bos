@@ -10,8 +10,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func SeedAirQuality(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
@@ -30,7 +30,7 @@ func SeedAirQuality(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 		co2 := rand.Float32() * 2000
 		voc := rand.Float32() * 500
 		airPressure := rand.Float32()
-		comfort := traits.AirQuality_Comfort(rand.Intn(2) + 1)
+		comfort := airqualitysensorpb.AirQuality_Comfort(rand.Intn(2) + 1)
 		infection := rand.Float32() * 100
 		score := rand.Float32() * 100
 		particulate1 := rand.Float32()
@@ -38,7 +38,7 @@ func SeedAirQuality(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 		particulate10 := rand.Float32()
 		airChange := rand.Float32() * 5
 
-		payload, err := proto.Marshal(&traits.AirQuality{
+		payload, err := proto.Marshal(&airqualitysensorpb.AirQuality{
 			CarbonDioxideLevel:       &co2,
 			VolatileOrganicCompounds: &voc,
 			AirPressure:              &airPressure,

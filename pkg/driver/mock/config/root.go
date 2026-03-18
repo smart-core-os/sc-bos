@@ -4,7 +4,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/block"
 	"github.com/smart-core-os/sc-bos/pkg/block/mdblock"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 type Root struct {
@@ -13,7 +13,7 @@ type Root struct {
 }
 
 type Device struct {
-	*traits.Metadata
+	*metadatapb.Metadata
 }
 
 var Blocks = []block.Block{

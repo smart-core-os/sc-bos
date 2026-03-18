@@ -6,14 +6,14 @@ import (
 	"strconv"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/conv"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type Trait struct {
-	Name     string           `json:"name,omitempty"`
-	Kind     trait.Name       `json:"kind,omitempty"`
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Name     string               `json:"name,omitempty"`
+	Kind     trait.Name           `json:"kind,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 }
 
 type RawTrait struct {

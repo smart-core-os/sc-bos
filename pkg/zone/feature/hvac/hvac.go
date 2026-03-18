@@ -7,12 +7,12 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/hvac/config"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -38,7 +38,7 @@ type feature struct {
 func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 	announce := f.announcer.Replace(ctx)
 	logger := f.logger
-	client := traits.NewAirTemperatureApiClient(f.clients.ClientConn())
+	client := gen_airtemperaturepb.NewAirTemperatureApiClient(f.clients.ClientConn())
 	publish := func(name string, t config.Thermostat) error {
 		group := &Group{
 			client:   client,

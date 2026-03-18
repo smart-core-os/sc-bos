@@ -15,9 +15,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node/internal/metadatadevices"
 	"github.com/smart-core-os/sc-bos/pkg/node/internal/parentdevices"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/parentpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // Node represents a smart core node.
@@ -73,9 +74,9 @@ func New(name string, opts ...Option) *Node {
 
 	// nodes implement the MetadataApi without using the router,
 	// the ParentApi is implemented for this nodes name only.
-	traits.RegisterMetadataApiServer(node.router, metadatadevices.NewServer(node.devices))
+	metadatapb.RegisterMetadataApiServer(node.router, metadatadevices.NewServer(node.devices))
 	node.announceLocked(name,
-		HasServer(traits.RegisterParentApiServer, traits.ParentApiServer(parentdevices.NewServer(name, node.devices))),
+		HasServer(parentpb.RegisterParentApiServer, parentpb.ParentApiServer(parentdevices.NewServer(name, node.devices))),
 		HasTrait(trait.Parent),
 	)
 	return node
@@ -141,9 +142,9 @@ func (n *Node) announceLocked(name string, features ...Feature) Undo {
 
 	mds := a.metadata
 	if !a.noAutoMetadata && len(ts) > 0 {
-		md := &traits.Metadata{}
+		md := &metadatapb.Metadata{}
 		for _, t := range ts {
-			md.Traits = append(md.Traits, &traits.TraitMetadata{Name: string(t.name)})
+			md.Traits = append(md.Traits, &metadatapb.TraitMetadata{Name: string(t.name)})
 		}
 		mds = append(mds, md)
 	}
@@ -255,8 +256,8 @@ func ensureServiceSupported(r *router.Router, s service) error {
 	serviceName := string(s.desc.FullName())
 	if existing := r.GetService(serviceName); existing != nil {
 		switch {
-		case serviceName == traits.MetadataApi_ServiceDesc.ServiceName:
-		case serviceName == traits.MetadataInfo_ServiceDesc.ServiceName:
+		case serviceName == metadatapb.MetadataApi_ServiceDesc.ServiceName:
+		case serviceName == metadatapb.MetadataInfo_ServiceDesc.ServiceName:
 			// skip, we support metadata specially
 		case s.nameRouting && !existing.KeyRoutable():
 			// existing service does not support name routing!

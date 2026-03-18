@@ -4,13 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
 
 func TestDuration(t *testing.T) {
 	tests := []struct {
 		name         string
-		args         []*traits.ElectricMode_Segment
+		args         []*electricpb.ElectricMode_Segment
 		wantTotal    time.Duration
 		wantInfinite bool
 	}{

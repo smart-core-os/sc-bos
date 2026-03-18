@@ -17,8 +17,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	gen_electricpb "github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
@@ -29,7 +31,6 @@ import (
 	electricpb2 "github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
 	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -54,32 +55,32 @@ func Test_automation_applyConfig(t *testing.T) {
 	announcer.Announce("occupancy",
 		node.HasTrait(trait.OccupancySensor),
 		node.HasServer(
-			traits.RegisterOccupancySensorApiServer,
-			traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occupancy)),
+			occupancysensorpb.RegisterOccupancySensorApiServer,
+			occupancysensorpb.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occupancy)),
 		),
 	)
 
 	announcer.Announce("airquality",
 		node.HasTrait(trait.AirQualitySensor),
 		node.HasServer(
-			traits.RegisterAirQualitySensorApiServer,
-			traits.AirQualitySensorApiServer(airqualitysensorpb2.NewModelServer(airQuality)),
+			airqualitysensorpb.RegisterAirQualitySensorApiServer,
+			airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb2.NewModelServer(airQuality)),
 		),
 	)
 
 	announcer.Announce("airtemperature",
 		node.HasTrait(trait.AirTemperature),
 		node.HasServer(
-			traits.RegisterAirTemperatureApiServer,
-			traits.AirTemperatureApiServer(airtemperaturepb2.NewModelServer(airTemperature)),
+			airtemperaturepb.RegisterAirTemperatureApiServer,
+			airtemperaturepb.AirTemperatureApiServer(airtemperaturepb2.NewModelServer(airTemperature)),
 		),
 	)
 
 	announcer.Announce("electric",
 		node.HasTrait(trait.Electric),
 		node.HasServer(
-			traits.RegisterElectricApiServer,
-			traits.ElectricApiServer(electricpb2.NewModelServer(electric)),
+			electricpb.RegisterElectricApiServer,
+			electricpb.ElectricApiServer(electricpb2.NewModelServer(electric)),
 		),
 	)
 
@@ -115,13 +116,13 @@ func Test_automation_applyConfig(t *testing.T) {
 
 	// many events to each model server
 	for range 10 {
-		if _, err := occupancy.SetOccupancy(&traits.Occupancy{
-			State:       traits.Occupancy_OCCUPIED,
+		if _, err := occupancy.SetOccupancy(&occupancysensorpb.Occupancy{
+			State:       occupancysensorpb.Occupancy_OCCUPIED,
 			PeopleCount: int32(rand.Intn(10)),
 		}); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := airQuality.UpdateAirQuality(&traits.AirQuality{
+		if _, err := airQuality.UpdateAirQuality(&airqualitysensorpb.AirQuality{
 			CarbonDioxideLevel:       ptr(rand.Float32()),
 			VolatileOrganicCompounds: ptr(rand.Float32()),
 			AirPressure:              ptr(rand.Float32()),
@@ -135,13 +136,13 @@ func Test_automation_applyConfig(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if _, err := airTemperature.UpdateAirTemperature(&traits.AirTemperature{
+		if _, err := airTemperature.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &types.Temperature{ValueCelsius: rand.Float64()},
 		}); err != nil {
 			t.Fatal(err)
 		}
 
-		if _, err := electric.UpdateDemand(&traits.ElectricDemand{
+		if _, err := electric.UpdateDemand(&electricpb.ElectricDemand{
 			Voltage:       ptr(rand.Float32()),
 			Current:       rand.Float32(),
 			ReactivePower: ptr(rand.Float32()),
@@ -343,15 +344,15 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 		announcer.Announce("occ1",
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
-				traits.RegisterOccupancySensorApiServer,
-				traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ1)),
+				occupancysensorpb.RegisterOccupancySensorApiServer,
+				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ1)),
 			),
 		)
 		announcer.Announce("occ2",
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
-				traits.RegisterOccupancySensorApiServer,
-				traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ2)),
+				occupancysensorpb.RegisterOccupancySensorApiServer,
+				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ2)),
 			),
 		)
 
@@ -372,10 +373,10 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 		go a.applyConfigDevices(t.Context(), cfg)
 		synctest.Wait()
 
-		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
+		if _, err := occ1.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := occ2.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
+		if _, err := occ2.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
 			t.Fatal(err)
 		}
 		synctest.Wait()
@@ -410,8 +411,8 @@ func Test_automation_applyConfigDevices_remove(t *testing.T) {
 		announcer.Announce("occ1",
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
-				traits.RegisterOccupancySensorApiServer,
-				traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ1)),
+				occupancysensorpb.RegisterOccupancySensorApiServer,
+				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ1)),
 			),
 		)
 
@@ -434,7 +435,7 @@ func Test_automation_applyConfigDevices_remove(t *testing.T) {
 		go a.applyConfigDevices(t.Context(), cfg)
 		synctest.Wait()
 
-		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
+		if _, err := occ1.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
 			t.Fatal(err)
 		}
 		synctest.Wait()
@@ -454,7 +455,7 @@ func Test_automation_applyConfigDevices_remove(t *testing.T) {
 		}}
 		synctest.Wait()
 
-		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
+		if _, err := occ1.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
 			t.Fatal(err)
 		}
 		synctest.Wait()

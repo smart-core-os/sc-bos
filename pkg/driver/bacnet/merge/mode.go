@@ -19,7 +19,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 type modeConfig struct {
@@ -74,7 +73,7 @@ func newMode(client *gobacnet.Client, devices known.Context, faultCheck *healthp
 		return nil, err
 	}
 	model := modepb.NewModel()
-	_, _ = model.UpdateModeValues(&traits.ModeValues{}) // clear the default initial value
+	_, _ = model.UpdateModeValues(&modepb.ModeValues{}) // clear the default initial value
 	t := &mode{
 		client:      client,
 		known:       devices,
@@ -94,7 +93,7 @@ func (t *mode) AnnounceSelf(a node.Announcer) node.Undo {
 		modepb.WrapApi(t), modepb.WrapInfo(t.infoServer))))
 }
 
-func (t *mode) GetModeValues(ctx context.Context, request *traits.GetModeValuesRequest) (*traits.ModeValues, error) {
+func (t *mode) GetModeValues(ctx context.Context, request *modepb.GetModeValuesRequest) (*modepb.ModeValues, error) {
 	_, err := t.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -102,7 +101,7 @@ func (t *mode) GetModeValues(ctx context.Context, request *traits.GetModeValuesR
 	return t.ModelServer.GetModeValues(ctx, request)
 }
 
-func (t *mode) UpdateModeValues(ctx context.Context, request *traits.UpdateModeValuesRequest) (*traits.ModeValues, error) {
+func (t *mode) UpdateModeValues(ctx context.Context, request *modepb.UpdateModeValuesRequest) (*modepb.ModeValues, error) {
 	type toWrite struct {
 		point config.ValueSource
 		value any
@@ -115,7 +114,7 @@ func (t *mode) UpdateModeValues(ctx context.Context, request *traits.UpdateModeV
 	var allExpected []expected
 
 	mask := masks.NewResponseFilter(masks.WithFieldMask(request.UpdateMask))
-	modelValues := mask.FilterClone(request.ModeValues).(*traits.ModeValues)
+	modelValues := mask.FilterClone(request.ModeValues).(*modepb.ModeValues)
 
 	for name, valueName := range modelValues.Values {
 		point, ok := t.config.Modes[name]
@@ -153,7 +152,7 @@ func (t *mode) UpdateModeValues(ctx context.Context, request *traits.UpdateModeV
 		return nil, status.Errorf(codes.Internal, "failed to write mode values: %v", multierr.Combine(errs...))
 	}
 
-	return pollUntil(ctx, t.config.DefaultRWConsistencyTimeoutDuration(), t.pollPeer, func(values *traits.ModeValues) bool {
+	return pollUntil(ctx, t.config.DefaultRWConsistencyTimeoutDuration(), t.pollPeer, func(values *modepb.ModeValues) bool {
 		for _, e := range allExpected {
 			if values.Values[e.name] != e.value {
 				return false
@@ -163,7 +162,7 @@ func (t *mode) UpdateModeValues(ctx context.Context, request *traits.UpdateModeV
 	})
 }
 
-func (t *mode) PullModeValues(request *traits.PullModeValuesRequest, server traits.ModeApi_PullModeValuesServer) error {
+func (t *mode) PullModeValues(request *modepb.PullModeValuesRequest, server modepb.ModeApi_PullModeValuesServer) error {
 	_ = t.pollTask.Attach(server.Context())
 	return t.ModelServer.PullModeValues(request, server)
 }
@@ -175,7 +174,7 @@ func (t *mode) startPoll(init context.Context) (stop task.StopFn, err error) {
 	})
 }
 
-func (t *mode) pollPeer(ctx context.Context) (*traits.ModeValues, error) {
+func (t *mode) pollPeer(ctx context.Context) (*modepb.ModeValues, error) {
 	var readValues []config.ValueSource
 	var requestNames []string
 	type nameAndPoint struct {
@@ -192,7 +191,7 @@ func (t *mode) pollPeer(ctx context.Context) (*traits.ModeValues, error) {
 		readConfig = append(readConfig, nameAndPoint{name: name, point: point})
 	}
 	responses := comm.ReadProperties(ctx, t.client, t.known, readValues...)
-	dst := &traits.ModeValues{
+	dst := &modepb.ModeValues{
 		Values: make(map[string]string, len(responses)),
 	}
 	var errs []error
@@ -220,20 +219,20 @@ responses:
 }
 
 func newModeInfoServer(cfg modeConfig) *modepb.InfoServer {
-	modes := &traits.Modes{}
+	modes := &modepb.Modes{}
 	for name, point := range cfg.Modes {
-		mm := &traits.Modes_Mode{
+		mm := &modepb.Modes_Mode{
 			Name: name,
 		}
 		for _, opt := range point.Opts {
-			mm.Values = append(mm.Values, &traits.Modes_Value{
+			mm.Values = append(mm.Values, &modepb.Modes_Value{
 				Name: opt.Name,
 			})
 		}
 		modes.Modes = append(modes.Modes, mm)
 	}
 	return &modepb.InfoServer{
-		Modes: &traits.ModesSupport{
+		Modes: &modepb.ModesSupport{
 			AvailableModes: modes,
 		},
 	}

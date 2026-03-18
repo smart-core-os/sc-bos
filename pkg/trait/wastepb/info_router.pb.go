@@ -8,19 +8,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // InfoRouter is a traits.WasteInfoServer that allows routing named requests to specific traits.WasteInfoClient
 type InfoRouter struct {
-	traits.UnimplementedWasteInfoServer
+	wastepb.UnimplementedWasteInfoServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.WasteInfoServer = (*InfoRouter)(nil)
+var _ wastepb.WasteInfoServer = (*InfoRouter)(nil)
 
 func NewInfoRouter(opts ...router.Option) *InfoRouter {
 	return &InfoRouter{
@@ -30,14 +30,14 @@ func NewInfoRouter(opts ...router.Option) *InfoRouter {
 
 // WithWasteInfoClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithWasteInfoClientFactory(f func(name string) (traits.WasteInfoClient, error)) router.Option {
+func WithWasteInfoClientFactory(f func(name string) (wastepb.WasteInfoClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *InfoRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterWasteInfoServer(server, r)
+	wastepb.RegisterWasteInfoServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.WasteInfoClient.
@@ -49,27 +49,27 @@ func (r *InfoRouter) Add(name string, client any) any {
 }
 
 func (r *InfoRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.WasteInfoClient)
+	_, ok := client.(wastepb.WasteInfoClient)
 	return ok
 }
 
-func (r *InfoRouter) AddWasteInfoClient(name string, client traits.WasteInfoClient) traits.WasteInfoClient {
+func (r *InfoRouter) AddWasteInfoClient(name string, client wastepb.WasteInfoClient) wastepb.WasteInfoClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.WasteInfoClient)
+	return res.(wastepb.WasteInfoClient)
 }
 
-func (r *InfoRouter) RemoveWasteInfoClient(name string) traits.WasteInfoClient {
+func (r *InfoRouter) RemoveWasteInfoClient(name string) wastepb.WasteInfoClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.WasteInfoClient)
+	return res.(wastepb.WasteInfoClient)
 }
 
-func (r *InfoRouter) GetWasteInfoClient(name string) (traits.WasteInfoClient, error) {
+func (r *InfoRouter) GetWasteInfoClient(name string) (wastepb.WasteInfoClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -77,10 +77,10 @@ func (r *InfoRouter) GetWasteInfoClient(name string) (traits.WasteInfoClient, er
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.WasteInfoClient), nil
+	return res.(wastepb.WasteInfoClient), nil
 }
 
-func (r *InfoRouter) DescribeWasteRecord(ctx context.Context, request *traits.DescribeWasteRecordRequest) (*traits.WasteRecordSupport, error) {
+func (r *InfoRouter) DescribeWasteRecord(ctx context.Context, request *wastepb.DescribeWasteRecordRequest) (*wastepb.WasteRecordSupport, error) {
 	child, err := r.GetWasteInfoClient(request.Name)
 	if err != nil {
 		return nil, err

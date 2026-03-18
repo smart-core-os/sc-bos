@@ -6,8 +6,8 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 var (
@@ -39,8 +39,8 @@ func ExampleBoundsCheck() {
 	})
 	defer tempCheck.Dispose()
 
-	client := traits.NewAirTemperatureApiClient(clientConn)
-	stream, err := client.PullAirTemperature(ctx, &traits.PullAirTemperatureRequest{Name: deviceName})
+	client := airtemperaturepb.NewAirTemperatureApiClient(clientConn)
+	stream, err := client.PullAirTemperature(ctx, &airtemperaturepb.PullAirTemperatureRequest{Name: deviceName})
 	tempCheck.UpdateReliability(ctx, ReliabilityFromErr(err))
 	if err != nil {
 		return

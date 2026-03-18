@@ -11,8 +11,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
@@ -28,7 +28,7 @@ func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, lookBack 
 
 	for current.Before(now) {
 
-		payload, err := proto.Marshal(&traits.Occupancy{
+		payload, err := proto.Marshal(&occupancysensorpb.Occupancy{
 			PeopleCount:     int32(rand.Intn(50)),
 			StateChangeTime: timestamppb.New(current),
 			Confidence:      1,

@@ -12,7 +12,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
 )
 
 // NewFileStorage returns a Storage that persists publications in a directory on the filesystem.
@@ -27,7 +27,7 @@ type fileStorage struct {
 	baseDir string
 }
 
-func (f *fileStorage) LoadPublication(_ context.Context, pubID string) (*traits.Publication, error) {
+func (f *fileStorage) LoadPublication(_ context.Context, pubID string) (*publicationpb.Publication, error) {
 	filename, ok := idToFilename(pubID)
 	if !ok {
 		return nil, ErrPublicationNotFound
@@ -39,7 +39,7 @@ func (f *fileStorage) LoadPublication(_ context.Context, pubID string) (*traits.
 		return nil, err
 	}
 
-	pub := &traits.Publication{}
+	pub := &publicationpb.Publication{}
 	err = proto.Unmarshal(contents, pub)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (f *fileStorage) LoadPublication(_ context.Context, pubID string) (*traits.
 	return pub, nil
 }
 
-func (f *fileStorage) StorePublication(_ context.Context, pub *traits.Publication) error {
+func (f *fileStorage) StorePublication(_ context.Context, pub *publicationpb.Publication) error {
 	if pub.GetId() == "" {
 		return ErrPublicationInvalid
 	}

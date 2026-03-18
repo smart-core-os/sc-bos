@@ -1,13 +1,13 @@
 package enterleavesensorpb
 
 import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // DefaultModelOptions holds the default options for the model.
 var DefaultModelOptions = []resource.Option{
-	WithInitialEnterLeaveEvent(&traits.EnterLeaveEvent{
+	WithInitialEnterLeaveEvent(&enterleavesensorpb.EnterLeaveEvent{
 		EnterTotal: &zero,
 		LeaveTotal: &zero,
 	}),
@@ -29,7 +29,7 @@ func WithEnterLeaveEventOption(opts ...resource.Option) resource.Option {
 }
 
 // WithInitialEnterLeaveEvent returns an option that configures the model to initialise with the given enter leave event.
-func WithInitialEnterLeaveEvent(enterLeaveEvent *traits.EnterLeaveEvent) resource.Option {
+func WithInitialEnterLeaveEvent(enterLeaveEvent *enterleavesensorpb.EnterLeaveEvent) resource.Option {
 	return WithEnterLeaveEventOption(resource.WithInitialValue(enterLeaveEvent))
 }
 

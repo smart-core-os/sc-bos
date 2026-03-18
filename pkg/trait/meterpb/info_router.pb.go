@@ -8,19 +8,19 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/router"
-	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
 )
 
 // InfoRouter is a traits.MeterInfoServer that allows routing named requests to specific traits.MeterInfoClient
 type InfoRouter struct {
-	traits.UnimplementedMeterInfoServer
+	meterpb.UnimplementedMeterInfoServer
 
 	router.Router
 }
 
 // compile time check that we implement the interface we need
-var _ traits.MeterInfoServer = (*InfoRouter)(nil)
+var _ meterpb.MeterInfoServer = (*InfoRouter)(nil)
 
 func NewInfoRouter(opts ...router.Option) *InfoRouter {
 	return &InfoRouter{
@@ -30,14 +30,14 @@ func NewInfoRouter(opts ...router.Option) *InfoRouter {
 
 // WithMeterInfoClientFactory instructs the router to create a new
 // client the first time Get is called for that name.
-func WithMeterInfoClientFactory(f func(name string) (traits.MeterInfoClient, error)) router.Option {
+func WithMeterInfoClientFactory(f func(name string) (meterpb.MeterInfoClient, error)) router.Option {
 	return router.WithFactory(func(name string) (any, error) {
 		return f(name)
 	})
 }
 
 func (r *InfoRouter) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterMeterInfoServer(server, r)
+	meterpb.RegisterMeterInfoServer(server, r)
 }
 
 // Add extends Router.Add to panic if client is not of type traits.MeterInfoClient.
@@ -49,27 +49,27 @@ func (r *InfoRouter) Add(name string, client any) any {
 }
 
 func (r *InfoRouter) HoldsType(client any) bool {
-	_, ok := client.(traits.MeterInfoClient)
+	_, ok := client.(meterpb.MeterInfoClient)
 	return ok
 }
 
-func (r *InfoRouter) AddMeterInfoClient(name string, client traits.MeterInfoClient) traits.MeterInfoClient {
+func (r *InfoRouter) AddMeterInfoClient(name string, client meterpb.MeterInfoClient) meterpb.MeterInfoClient {
 	res := r.Add(name, client)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.MeterInfoClient)
+	return res.(meterpb.MeterInfoClient)
 }
 
-func (r *InfoRouter) RemoveMeterInfoClient(name string) traits.MeterInfoClient {
+func (r *InfoRouter) RemoveMeterInfoClient(name string) meterpb.MeterInfoClient {
 	res := r.Remove(name)
 	if res == nil {
 		return nil
 	}
-	return res.(traits.MeterInfoClient)
+	return res.(meterpb.MeterInfoClient)
 }
 
-func (r *InfoRouter) GetMeterInfoClient(name string) (traits.MeterInfoClient, error) {
+func (r *InfoRouter) GetMeterInfoClient(name string) (meterpb.MeterInfoClient, error) {
 	res, err := r.Get(name)
 	if err != nil {
 		return nil, err
@@ -77,10 +77,10 @@ func (r *InfoRouter) GetMeterInfoClient(name string) (traits.MeterInfoClient, er
 	if res == nil {
 		return nil, nil
 	}
-	return res.(traits.MeterInfoClient), nil
+	return res.(meterpb.MeterInfoClient), nil
 }
 
-func (r *InfoRouter) DescribeMeterReading(ctx context.Context, request *traits.DescribeMeterReadingRequest) (*traits.MeterReadingSupport, error) {
+func (r *InfoRouter) DescribeMeterReading(ctx context.Context, request *meterpb.DescribeMeterReadingRequest) (*meterpb.MeterReadingSupport, error) {
 	child, err := r.GetMeterInfoClient(request.Name)
 	if err != nil {
 		return nil, err
