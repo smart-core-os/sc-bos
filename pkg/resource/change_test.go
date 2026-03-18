@@ -8,15 +8,14 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func TestCollectionChange_include(t *testing.T) {
 	var (
 		now    = time.Now()
-		on     = &onoffpb.OnOff{State: onoffpb.OnOff_ON}
-		off    = &onoffpb.OnOff{State: onoffpb.OnOff_OFF}
+		on     = val(1)
+		off    = val(2)
 		change = func(ov, nv proto.Message, kind types.ChangeType) *CollectionChange {
 			return &CollectionChange{
 				Id:         "id",
