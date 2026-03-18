@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package smartcore.bos.light.v1;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/lightpb";
+option java_multiple_files = true;
+option java_outer_classname = "LightProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/info.proto";
+import "types/number.proto";
+import "types/tween.proto";
+
+// Control the light output of a device. Brightness values should be normalised to 0-100 as a percentage, though the
+// device may not support all steps within. See BrightnessSupport for step values of the device.
+service LightApi {
+  // request that the brightness be changed
+  rpc UpdateBrightness (UpdateBrightnessRequest) returns (Brightness);
+
+  // get the current value of the range
+  rpc GetBrightness (GetBrightnessRequest) returns (Brightness);
+
+  // request updates to changes in the range value
+  rpc PullBrightness (PullBrightnessRequest) returns (stream PullBrightnessResponse);
+}
+
+// Describes the capabilities of a specific named device with respect to this trait.
+service LightInfo {
+  // Get information about how a named device implements Brightness features
+  rpc DescribeBrightness (DescribeBrightnessRequest) returns (BrightnessSupport);
+}
+
+// Brightness represent the light level that is being emitted.
+// It represents the output level as either a percentage or a preset.
+// Both percentage and preset can be present on read if the device supports exposing a presets underlying value,
+// e.g. Full (100%).
+// Off (0%) cannot be distinguished from Off (not present), this is by design as the alternative would complicate the
+// type use for all other cases.
+//
+// If the output level is transitioning towards a value then target_level_percent or target_preset may be present on
+// read to indicate what the final state will be. The level_percent and preset value always represent the current value.
+message Brightness {
+  // A level that the device is set to. [0-100] as a percentage.
+  // A zero value will be ignored iff preset is present.
+  // On write only one of level_percent or preset should be set.
+  float level_percent = 1;
+  // A preset that the device is using
+  LightPreset preset = 2;
+
+  // How the brightness changes or should change over time. On write only duration should be set.
+  smartcore.types.Tween brightness_tween = 3;
+  // The target level_percent. Ignored on write. On read zero values should be ignored iff target_preset is present.
+  float target_level_percent = 4;
+  // The target preset. Ignored on write. If present ignore target_level_percent
+  LightPreset target_preset = 5;
+}
+
+message LightPreset {
+  string name = 1;
+  string title = 2;
+}
+
+// BrightnessSupport describes the capabilities of devices implementing this trait
+message BrightnessSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.types.ResourceSupport resource_support = 1;
+  // control how the brightness can be controlled. The range of these attributes is fixed at 0-100 as a percentage
+  smartcore.types.Int32Attributes brightness_attributes = 2;
+  // A description of the supported presets, none means no presets
+  repeated LightPreset presets = 3;
+}
+
+// A request to update the value of a brightness
+message UpdateBrightnessRequest {
+  // The name of the device to update
+  string name = 1;
+  // The new value for the brightness. Supply ramp to transition
+  Brightness brightness = 2;
+  // if true, then the values in the brightness represent deltas from the current value and not absolute values
+  bool delta = 3;
+  // The state fields to update
+  google.protobuf.FieldMask update_mask = 4;
+}
+
+// A request to get the current value of a brightness
+message GetBrightnessRequest {
+  // The name of the device to get the value for
+  string name = 1;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+// Request to begin a subscription for brightness values
+message PullBrightnessRequest {
+  // The name of the device we want events from
+  string name = 1;
+  // Indicate whether we want to be notified of values while ramping or not. The device may ignore this depending on
+  // capabilities
+  bool exclude_ramping = 2;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 3;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 4;
+}
+
+// A response as part of the stream of changes to the brightness value
+message PullBrightnessResponse {
+  // The list of changes
+  repeated Change changes = 1;
+
+  // A change to a single devices brightness value
+  message Change {
+    // name for the device that issued the change
+    string name = 1;
+    // when the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // The new value for the brightness
+    Brightness brightness = 3;
+  }
+}
+
+message DescribeBrightnessRequest {
+  // The name of the device
+  string name = 1;
+}

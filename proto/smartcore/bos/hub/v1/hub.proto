@@ -5,7 +5,7 @@ package smartcore.bos.hub.v1;
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/hubpb";
 
 import "google/protobuf/timestamp.proto";
-import "traits/metadata.proto";
+import "smartcore/bos/metadata/v1/metadata.proto";
 import "types/change.proto";
 
 service HubApi {
@@ -41,7 +41,7 @@ message HubNode {
 
 message HubNodeInspection {
   // Metadata that the node advertises at its root.
-  smartcore.traits.Metadata metadata = 1;
+  smartcore.bos.metadata.v1.Metadata metadata = 1;
   // The public certificates the node presents during HTTPS handshakes.
   // This will contain PEM encoded x509 certificates.
   repeated string public_certs = 2;

@@ -6,7 +6,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/electricpb";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "traits/electric.proto";
+import "smartcore/bos/electric/v1/electric.proto";
 import "types/time/period.proto";
 
 // ElectricHistory provides access to historical records for smartcore.traits.ElectricApi service resources.
@@ -15,7 +15,7 @@ service ElectricHistory {
 }
 
 message ElectricDemandRecord {
-  smartcore.traits.ElectricDemand electric_demand = 1;
+  ElectricDemand electric_demand = 1;
   google.protobuf.Timestamp record_time = 2;
 }
 

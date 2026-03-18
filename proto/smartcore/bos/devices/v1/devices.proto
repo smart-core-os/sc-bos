@@ -8,7 +8,7 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/health/v1/health.proto";
-import "traits/metadata.proto";
+import "smartcore/bos/metadata/v1/metadata.proto";
 import "types/change.proto";
 import "types/time/period.proto";
 
@@ -25,7 +25,7 @@ service DevicesApi {
 
 message Device {
   string name = 1;
-  smartcore.traits.Metadata metadata = 2;
+  smartcore.bos.metadata.v1.Metadata metadata = 2;
   // A list of health checks associated with the device.
   //
   // Measured values, like bounds.current_value, will be omitted.
