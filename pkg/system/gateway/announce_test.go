@@ -139,6 +139,125 @@ func TestSystem_announceCohort(t *testing.T) {
 			},
 		},
 		{
+			// Hub nodes always proxy all devices regardless of whether they also have an active gateway system.
+			// This is the core behaviour added by the hub-as-gateway change.
+			name: "hub with active gateway system proxies all devices",
+			run: func(t *testing.T, th *announceTester) {
+				hub := th.newRemoteNode("hub", rd("hub"), remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}}, rds("hub/d1", "hub/d2")...)
+				hub.isHub = true
+				th.c.Nodes.Set(hub)
+				th.runAnnounceCohort()
+				// shouldProxyDevice must return true for all hub devices even when isGateway() is true.
+				th.assertSimpleDevices("hub/d1", "hub/d2")
+			},
+		},
+		{
+			// When a hub's gateway status changes, no device removal/re-add events should be emitted.
+			// Without the hub guard in switchGatewayMode, renewDevicesSub() would be called and would
+			// briefly remove all devices before re-adding them, producing spurious PullDevices events.
+			name: "hub gateway status change emits no device churn events",
+			run: func(t *testing.T, th *announceTester) {
+				hub := th.addHub("hub", "hub/d1", "hub/d2")
+				th.runAnnounceCohort()
+				th.assertSimpleDevices("hub/d1", "hub/d2")
+
+				stream := th.n.PullDevices(th.Context(), resource.WithUpdatesOnly(true))
+
+				hub.Systems.Set(remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}})
+				synctest.Wait()
+				select {
+				case c := <-stream:
+					t.Fatalf("unexpected device change when hub became gateway: %+v", c)
+				default:
+				}
+
+				hub.Systems.Set(remoteSystems{msgRecvd: true}) // gateway deactivated
+				synctest.Wait()
+				select {
+				case c := <-stream:
+					t.Fatalf("unexpected device change when hub stopped being gateway: %+v", c)
+				default:
+				}
+			},
+		},
+		{
+			// When a hub's gateway system becomes active, it must continue proxying services.
+			// Without the hub guard in switchGatewayMode, closeServiceSub() would be called and
+			// hub services would stop being proxied.
+			name: "hub becoming gateway keeps services proxied",
+			run: func(t *testing.T, th *announceTester) {
+				desc := findServiceDesc(t, "smartcore.traits.OnOffApi")
+				hub := th.addHub("hub", "hub/d1")
+				hub.Services.Set(desc)
+
+				obsCore, logs := observer.New(zapcore.DebugLevel)
+				th.sys.logger = zap.New(zapcore.NewTee(th.sys.logger.Core(), obsCore))
+
+				th.runAnnounceCohort()
+
+				initialCount := logs.FilterMessage("routable service announced").Len()
+				if initialCount != 1 {
+					t.Fatalf("expected 1 initial service announcement, got %d", initialCount)
+				}
+
+				// Hub gains gateway system — services must remain, no re-announcement.
+				hub.Systems.Set(remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}})
+				synctest.Wait()
+
+				afterCount := logs.FilterMessage("routable service announced").Len()
+				if afterCount != initialCount {
+					t.Errorf("hub gateway status change caused %d spurious service re-announcement(s)", afterCount-initialCount)
+				}
+			},
+		},
+		{
+			// A device added to a hub that has an active gateway system must still be proxied.
+			name: "device added to hub with active gateway is proxied",
+			run: func(t *testing.T, th *announceTester) {
+				hub := th.newRemoteNode("hub", rd("hub"), remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}}, rds("hub/d1")...)
+				hub.isHub = true
+				th.c.Nodes.Set(hub)
+				th.runAnnounceCohort()
+				th.assertSimpleDevices("hub/d1")
+
+				hub.Devices.Set(rd("hub/d2"))
+				synctest.Wait()
+				th.assertSimpleDevices("hub/d1", "hub/d2")
+			},
+		},
+		{
+			// shouldProxyDevice: non-hub gateway with self.name "" must not proxy any device.
+			name: "gateway with unknown name proxies nothing",
+			run: func(t *testing.T, th *announceTester) {
+				gw1 := th.newRemoteNode("gw1",
+					remoteDesc{}, // name not yet known
+					remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}},
+					rds("gw1", "gw1/drivers", "ac1/d1")...)
+				th.c.Nodes.Set(gw1)
+				th.runAnnounceCohort()
+				// name is empty so shouldProxyDevice must return false for everything
+				th.assertSimpleDevices()
+			},
+		},
+		{
+			// shouldProxyDevice: only the gateway's own name and its fixed-service children are proxied.
+			name: "gateway proxies only own name and fixed service children",
+			run: func(t *testing.T, th *announceTester) {
+				th.addGateway("gw1",
+					"gw1",           // own name → proxied
+					"gw1/drivers",   // fixed service child → proxied
+					"gw1/automations", // fixed service child → proxied
+					"gw1/systems",   // fixed service child → proxied
+					"gw1/zones",     // fixed service child → proxied
+					"gw1/d1",        // arbitrary child → NOT proxied
+					"gw1/zone1",     // non-fixed child → NOT proxied
+					"ac1/d1",        // foreign device → NOT proxied
+				)
+				th.runAnnounceCohort()
+				th.assertSimpleDevices("gw1", "gw1/drivers", "gw1/automations", "gw1/systems", "gw1/zones")
+			},
+		},
+		{
 			name: "simple service names aren't proxied",
 			run: func(t *testing.T, th *announceTester) {
 				th.addNode("ac1", "drivers", "automations", "zones", "systems")
