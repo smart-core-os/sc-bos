@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/internal/testproto"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -72,21 +72,21 @@ func parseCaseChange(s string) CollectionChange {
 	switch {
 	case !found: // add: "foo"
 		out.ChangeType = types.ChangeType_ADD
-		out.NewValue = &metadatapb.Metadata{Name: v}
+		out.NewValue = &testproto.TestAllTypes{DefaultString: v}
 	case o == "": // add: ">foo"
 		out.ChangeType = types.ChangeType_ADD
-		out.NewValue = &metadatapb.Metadata{Name: n}
+		out.NewValue = &testproto.TestAllTypes{DefaultString: n}
 	case n == "": // del: "foo>"
 		out.ChangeType = types.ChangeType_REMOVE
-		out.OldValue = &metadatapb.Metadata{Name: o}
+		out.OldValue = &testproto.TestAllTypes{DefaultString: o}
 	case n[0] == '+': // replace: "foo>+bar"
 		out.ChangeType = types.ChangeType_REPLACE
-		out.OldValue = &metadatapb.Metadata{Name: o}
-		out.NewValue = &metadatapb.Metadata{Name: n[1:]}
+		out.OldValue = &testproto.TestAllTypes{DefaultString: o}
+		out.NewValue = &testproto.TestAllTypes{DefaultString: n[1:]}
 	default: // update: "foo>bar"
 		out.ChangeType = types.ChangeType_UPDATE
-		out.OldValue = &metadatapb.Metadata{Name: o}
-		out.NewValue = &metadatapb.Metadata{Name: n}
+		out.OldValue = &testproto.TestAllTypes{DefaultString: o}
+		out.NewValue = &testproto.TestAllTypes{DefaultString: n}
 	}
 	return out
 }

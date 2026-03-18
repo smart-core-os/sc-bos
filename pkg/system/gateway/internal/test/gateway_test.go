@@ -510,18 +510,18 @@ func testReflection(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 		{Name: "smartcore.bos.health.v1.HealthApi"},
 		{Name: "smartcore.bos.health.v1.HealthHistory"},
 		{Name: "smartcore.bos.hub.v1.HubApi"},
+		{Name: "smartcore.bos.metadata.v1.MetadataApi"},
+		{Name: "smartcore.bos.onoff.v1.OnOffApi"},
+		{Name: "smartcore.bos.onoff.v1.OnOffInfo"},
+		{Name: "smartcore.bos.parent.v1.ParentApi"},
 		{Name: "smartcore.bos.services.v1.ServicesApi"},
-		{Name: "smartcore.traits.MetadataApi"},
-		{Name: "smartcore.traits.OnOffApi"},
-		{Name: "smartcore.traits.OnOffInfo"},
-		{Name: "smartcore.traits.ParentApi"},
 	}
 	if diff := cmp.Diff(wantServices, services, protocmp.Transform()); diff != "" {
 		t.Fatalf("services: (-want +got):\n%s", diff)
 	}
 
 	types := []string{
-		"smartcore.traits.OnOffApi",
+		"smartcore.bos.onoff.v1.OnOffApi",
 		"smartcore.bos.devices.v1.DevicesApi",
 	}
 	for _, typ := range types {

@@ -16,7 +16,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/smart-core-os/sc-bos/internal/testproto"
-	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 )
 
 func Test_clientSend(t *testing.T) {
@@ -25,10 +24,10 @@ func Test_clientSend(t *testing.T) {
 	client := clientServer.Client()
 	server := clientServer.Server()
 
-	sentMessage := &lightpb.Brightness{
-		LevelPercent: 12,
+	sentMessage := &testproto.TestAllTypes{
+		DefaultInt32: 12,
 	}
-	receivedMessage := &lightpb.Brightness{}
+	receivedMessage := &testproto.TestAllTypes{}
 
 	go client.SendMsg(sentMessage)
 	server.RecvMsg(receivedMessage)
@@ -44,10 +43,10 @@ func Test_serverSend(t *testing.T) {
 	client := clientServer.Client()
 	server := clientServer.Server()
 
-	sentMessage := &lightpb.Brightness{
-		LevelPercent: 12,
+	sentMessage := &testproto.TestAllTypes{
+		DefaultInt32: 12,
 	}
-	receivedMessage := &lightpb.Brightness{}
+	receivedMessage := &testproto.TestAllTypes{}
 
 	go server.SendMsg(sentMessage)
 	client.RecvMsg(receivedMessage)

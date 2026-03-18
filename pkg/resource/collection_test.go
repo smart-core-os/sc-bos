@@ -8,7 +8,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -20,8 +19,8 @@ func TestCollection_Pull(t *testing.T) {
 		})
 
 		c := NewCollection(WithClock(clock))
-		c.Add("three", &onoffpb.OnOff{State: onoffpb.OnOff_ON})
-		c.Add("one", &onoffpb.OnOff{State: onoffpb.OnOff_ON})
+		c.Add("three", val(1))
+		c.Add("one", val(1))
 
 		ctx, stop := context.WithCancel(context.Background())
 		t.Cleanup(stop)
@@ -33,7 +32,7 @@ func TestCollection_Pull(t *testing.T) {
 			Id:            "one",
 			ChangeTime:    now,
 			ChangeType:    types.ChangeType_ADD,
-			NewValue:      &onoffpb.OnOff{State: onoffpb.OnOff_ON},
+			NewValue:      val(1),
 			SeedValue:     true,
 			LastSeedValue: false,
 		}
@@ -46,7 +45,7 @@ func TestCollection_Pull(t *testing.T) {
 			Id:            "three",
 			ChangeTime:    now,
 			ChangeType:    types.ChangeType_ADD,
-			NewValue:      &onoffpb.OnOff{State: onoffpb.OnOff_ON},
+			NewValue:      val(1),
 			SeedValue:     true,
 			LastSeedValue: true,
 		}
@@ -55,27 +54,27 @@ func TestCollection_Pull(t *testing.T) {
 		}
 
 		// second value should be an update
-		c.Update("one", &onoffpb.OnOff{State: onoffpb.OnOff_OFF})
+		c.Update("one", val(2))
 		next := waitForChan(t, changes, time.Second)
 		want = &CollectionChange{
 			Id:         "one",
 			ChangeTime: now,
 			ChangeType: types.ChangeType_UPDATE,
-			OldValue:   &onoffpb.OnOff{State: onoffpb.OnOff_ON},
-			NewValue:   &onoffpb.OnOff{State: onoffpb.OnOff_OFF},
+			OldValue:   val(1),
+			NewValue:   val(2),
 		}
 		if diff := cmp.Diff(want, next, protocmp.Transform()); diff != "" {
 			t.Fatalf("Next Value (-want,+got)\n%s", diff)
 		}
 
 		// testing that adding also doesn't report as a SeedValue
-		c.Update("two", &onoffpb.OnOff{State: onoffpb.OnOff_ON}, WithCreateIfAbsent())
+		c.Update("two", val(1), WithCreateIfAbsent())
 		next = waitForChan(t, changes, time.Second)
 		want = &CollectionChange{
 			Id:         "two",
 			ChangeTime: now,
 			ChangeType: types.ChangeType_ADD,
-			NewValue:   &onoffpb.OnOff{State: onoffpb.OnOff_ON},
+			NewValue:   val(1),
 		}
 		if diff := cmp.Diff(want, next, protocmp.Transform()); diff != "" {
 			t.Fatalf("Next Value (-want,+got)\n%s", diff)
@@ -89,7 +88,7 @@ func TestCollection_Pull(t *testing.T) {
 		})
 
 		c := NewCollection(WithClock(clock))
-		c.Add("one", &onoffpb.OnOff{State: onoffpb.OnOff_ON})
+		c.Add("one", val(1))
 
 		ctx, stop := context.WithCancel(context.Background())
 		t.Cleanup(stop)
@@ -99,14 +98,14 @@ func TestCollection_Pull(t *testing.T) {
 		noEmitWithin(t, changes, 50*time.Millisecond)
 
 		// first value should be an update
-		c.Update("one", &onoffpb.OnOff{State: onoffpb.OnOff_OFF})
+		c.Update("one", val(2))
 		change := waitForChan(t, changes, time.Second)
 		want := &CollectionChange{
 			Id:         "one",
 			ChangeTime: now,
 			ChangeType: types.ChangeType_UPDATE,
-			OldValue:   &onoffpb.OnOff{State: onoffpb.OnOff_ON},
-			NewValue:   &onoffpb.OnOff{State: onoffpb.OnOff_OFF},
+			OldValue:   val(1),
+			NewValue:   val(2),
 		}
 		if diff := cmp.Diff(want, change, protocmp.Transform()); diff != "" {
 			t.Fatalf("Value (-want,+got)\n%s", diff)

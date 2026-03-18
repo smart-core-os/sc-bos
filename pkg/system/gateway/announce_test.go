@@ -185,7 +185,7 @@ func TestSystem_announceCohort(t *testing.T) {
 			// hub services would stop being proxied.
 			name: "hub becoming gateway keeps services proxied",
 			run: func(t *testing.T, th *announceTester) {
-				desc := findServiceDesc(t, "smartcore.traits.OnOffApi")
+				desc := findServiceDesc(t, "smartcore.bos.onoff.v1.OnOffApi")
 				hub := th.addHub("hub", "hub/d1")
 				hub.Services.Set(desc)
 
@@ -243,14 +243,14 @@ func TestSystem_announceCohort(t *testing.T) {
 			name: "gateway proxies only own name and fixed service children",
 			run: func(t *testing.T, th *announceTester) {
 				th.addGateway("gw1",
-					"gw1",           // own name → proxied
-					"gw1/drivers",   // fixed service child → proxied
+					"gw1",             // own name → proxied
+					"gw1/drivers",     // fixed service child → proxied
 					"gw1/automations", // fixed service child → proxied
-					"gw1/systems",   // fixed service child → proxied
-					"gw1/zones",     // fixed service child → proxied
-					"gw1/d1",        // arbitrary child → NOT proxied
-					"gw1/zone1",     // non-fixed child → NOT proxied
-					"ac1/d1",        // foreign device → NOT proxied
+					"gw1/systems",     // fixed service child → proxied
+					"gw1/zones",       // fixed service child → proxied
+					"gw1/d1",          // arbitrary child → NOT proxied
+					"gw1/zone1",       // non-fixed child → NOT proxied
+					"ac1/d1",          // foreign device → NOT proxied
 				)
 				th.runAnnounceCohort()
 				th.assertSimpleDevices("gw1", "gw1/drivers", "gw1/automations", "gw1/systems", "gw1/zones")
@@ -476,7 +476,7 @@ func TestSystem_announceCohort(t *testing.T) {
 			// log spam and briefly removing routes.
 			name: "service not re-announced when Replace is called with unchanged descriptors",
 			run: func(t *testing.T, th *announceTester) {
-				desc := findServiceDesc(t, "smartcore.traits.OnOffApi")
+				desc := findServiceDesc(t, "smartcore.bos.onoff.v1.OnOffApi")
 				ac1 := th.addNode("ac1", "ac1/d1")
 				ac1.Services.Set(desc)
 
