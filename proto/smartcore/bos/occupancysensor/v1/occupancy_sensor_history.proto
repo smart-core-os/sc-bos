@@ -6,7 +6,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "traits/occupancy_sensor.proto";
+import "smartcore/bos/occupancysensor/v1/occupancy_sensor.proto";
 import "types/time/period.proto";
 
 // OccupancySensorHistory provides access to historical records for smartcore.traits.OccupancySensorApi service resources.
@@ -15,7 +15,7 @@ service OccupancySensorHistory {
 }
 
 message OccupancyRecord {
-  smartcore.traits.Occupancy occupancy = 1;
+  Occupancy occupancy = 1;
   google.protobuf.Timestamp record_time = 2;
 }
 

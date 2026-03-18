@@ -4,9 +4,9 @@ package smartcore.go.trait.electric;
 
 option go_package = "github.com/smart-core-os/sc-bos/pkg/trait/electricpb";
 
-import "traits/electric.proto";
-import "google/protobuf/field_mask.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "smartcore/bos/electric/v1/electric.proto";
 
 // MemorySettingsApi allows a client to adjust the internal state of an in-memory electric device.
 // Use for configuring testing.
@@ -28,7 +28,7 @@ message UpdateDemandRequest {
   // The name of the device.
   string name = 1;
   // Updated properties of the device.
-  smartcore.traits.ElectricDemand demand = 2;
+  smartcore.bos.electric.v1.ElectricDemand demand = 2;
   // Fields that should be updated.
   google.protobuf.FieldMask update_mask = 3;
 }
@@ -37,7 +37,7 @@ message CreateModeRequest {
   // The name of the device.
   string name = 1;
   // The mode to create. ID will be created on the server.
-  smartcore.traits.ElectricMode mode = 2;
+  smartcore.bos.electric.v1.ElectricMode mode = 2;
 }
 
 message UpdateModeRequest {
@@ -45,7 +45,7 @@ message UpdateModeRequest {
   string name = 1;
   // The mode to create.
   // The ID should match an existing mode or NOT_FOUND will be returned.
-  smartcore.traits.ElectricMode mode = 2;
+  smartcore.bos.electric.v1.ElectricMode mode = 2;
   // The fields to update.
   // If absent all fields will be updated.
   google.protobuf.FieldMask update_mask = 3;

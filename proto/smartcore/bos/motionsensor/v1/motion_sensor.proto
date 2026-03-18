@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package smartcore.bos.motionsensor.v1;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/motionsensorpb";
+option java_multiple_files = true;
+option java_outer_classname = "MotionSensorProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/info.proto";
+
+// Represents a sensor that detects motion. Note that the absence of motion does not directly imply an unoccupied space.
+service MotionSensorApi {
+  // Get the current motion state for the device.
+  rpc GetMotionDetection (GetMotionDetectionRequest) returns (MotionDetection);
+
+  // subscribe to changes in the motion state for the device.
+  rpc PullMotionDetections (PullMotionDetectionRequest) returns (stream PullMotionDetectionResponse) {
+  }
+}
+
+// Describes the capabilities of a specific named device with respect to this trait.
+service MotionSensorInfo {
+  // Get information about how a named device implements MotionDetection measurements
+  rpc DescribeMotionDetection (DescribeMotionDetectionRequest) returns (MotionDetectionSupport);
+}
+
+// the current state of the motion sensor
+message MotionDetection {
+  // has motion been detected or not
+  State state = 1;
+  // The time the state last changed
+  google.protobuf.Timestamp state_change_time = 2;
+
+  // Possible states for motion detected
+  enum State {
+    // The state has not been specified.
+    STATE_UNSPECIFIED = 0;
+    // No motion is detected, or has been detected within the not_detected_delay period
+    NOT_DETECTED = 1;
+    // Motion has been detected by the device.
+    DETECTED = 2;
+  }
+}
+
+// MotionDetectionSupport describes the capabilities of devices implementing this trait
+message MotionDetectionSupport {
+  // How a named device supports read/pull apis
+  smartcore.types.ResourceSupport resource_support = 1;
+  // How long the device is configured to wait before reporting a state of NOT_DETECTED
+  google.protobuf.Duration not_detected_delay = 2;
+}
+
+// request to fetch the current state of the device
+message GetMotionDetectionRequest {
+  // the name for the device to get the detection state for
+  string name = 1;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+// request to be notified of changes to the state of the device
+message PullMotionDetectionRequest {
+  // the name for the device to subscribe to
+  string name = 1;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+}
+
+// response containing motion state changes
+message PullMotionDetectionResponse {
+  // the list of changes that have occurred since the last event
+  repeated Change changes = 1;
+
+  // A change to the motion state of the device
+  message Change {
+    // name for the device that issued the change
+    string name = 1;
+    // when the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // the new state for the device
+    MotionDetection motion_detection = 3;
+  }
+}
+
+message DescribeMotionDetectionRequest {
+  // The name of the device
+  string name = 1;
+}

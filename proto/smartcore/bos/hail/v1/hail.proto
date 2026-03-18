@@ -1,0 +1,255 @@
+syntax = "proto3";
+
+package smartcore.bos.hail.v1;
+
+option csharp_namespace = "Smartcore.Traits";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/hailpb";
+option java_multiple_files = true;
+option java_outer_classname = "HailProto";
+option java_package = "dev.smartcore.traits";
+option php_namespace = "Smartcore\\Traits";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "types/change.proto";
+import "types/info.proto";
+
+// HailApi describes devices that may be asked to transport passengers from one location to another.
+// To interact with these devices you create a hail, a description of the origin and destination for your journey.
+// The device keeps you updated on the preparation or progress of your journey by updating the fields in Hail.
+//
+// HailApi applies to devices like lifts or taxis, where the transportation is initiated by the caller. It does not
+// apply to scheduled/regular transportation - like busses or escalators - where the presence of the passenger is not
+// required.
+service HailApi {
+  // Create a new hail against the device.
+  // Creating a hail instructs the device that a passenger would like to be transported from one location to another.
+  // The response from this request may include additional location information than that supplied.
+  // See Hail.origin for more details.
+  //
+  // If Hail.id is specified and is used by an existing hail the device will return an error.
+  // If Hail.id is specified the device may return an error indicating that client supplied ids are not supported.
+  rpc CreateHail(CreateHailRequest) returns (Hail);
+  // Retrieve details on a specific hail by id as returned by CreateHail.
+  rpc GetHail(GetHailRequest) returns (Hail);
+  // Update a hail by id.
+  // Hail.id must be present.
+  rpc UpdateHail(UpdateHailRequest) returns (Hail);
+  // Delete a hail by id.
+  rpc DeleteHail(DeleteHailRequest) returns (DeleteHailResponse);
+  // Subscribe to changes in a specific hail.
+  rpc PullHail(PullHailRequest) returns (stream PullHailResponse);
+
+  // List known hails.
+  rpc ListHails(ListHailsRequest) returns (ListHailsResponse);
+  // Subscribe to changes in the known hails.
+  rpc PullHails(PullHailsRequest) returns (stream PullHailsResponse);
+}
+
+service HailInfo {
+  rpc DescribeHail(DescribeHailRequest) returns (HailSupport);
+}
+
+// A hail is a request from a caller to bring transport to the callers location.
+// Like hailing a taxi.
+message Hail {
+  // A tracking id for this hail.
+  // This id may be used to subscribe or update the hail after creation.
+  string id = 1;
+
+  // A logical location, typically in terms the hail creator will understand.
+  // Locations do not need to accurately or uniquely represent a physical space, instead they should unambiguously
+  // describe that location within the context of the device.
+  // For example "Floor 3" vs "lat:112.33,long:0.222,el:43.2", "Teal Room" vs "Teal Room, Floor 1, HQ, Birmingham, UK"
+  message Location {
+    // An unambiguous name for this location.
+    // Optional on write, if other location fields are used to identify the location.
+    // Required on output.
+    string name = 1;
+    // An unambiguous display name for the location.
+    // Will be presented to the client and should be recognised by people consuming this information.
+    string display_name = 2;
+  }
+  // The location for the start of the transportation.
+  // Optional.
+  // Supplied by the caller on write to indicate where the transport should "pick them up from", if absent on write the
+  // device typically has a defined location - i.e. a call button for a lift inherently has a floor associated.
+  //
+  // During create the device is free to return a different origin location but that location _should_ be a more
+  // specific variation to the supplied origin.
+  // For example you may create a hail with origin "Ground Floor" and the device returns a new, more specific origin
+  // of "Ground Floor, Lobby B, Door 3".
+  //
+  // The origin should not change after the initial creation of the hail unless unavoidable. A changing origin can
+  // confuse callers who are not watching for hail changes.
+  Location origin = 2;
+  // The intended destination of the caller.
+  // Optional.
+  // Supplied by the caller on write, this indicates where the caller wishes to go.
+  // The device may return a more specific location as a response to creating a hail.
+  Location destination = 3;
+
+  enum State {
+    // The state has not been supplied.
+    STATE_UNSPECIFIED = 0;
+    // The hail has been accepted and the transport is on its way to the origin.
+    // Typically transitions into the BOARDING state.
+    CALLED = 1;
+    // The transport has arrived at the origin and is accepting passengers.
+    // Typically transitions into the DEPARTED state.
+    BOARDING = 2;
+    // The transport is moving to the destination.
+    // Typically transitions into the ARRIVED state.
+    DEPARTED = 3;
+    // The transport is at the destination.
+    // This concludes this hail.
+    // The device may remove this hail once it has arrived.
+    // It is recommended that the device keep arrived hails for a short period of time (minutes) to aid clients who are
+    // checking or polling hail states to check for arrival.
+    // It is good practice, but not required, for a client to delete a hail once the information is no longer needed.
+    ARRIVED = 4;
+  }
+
+  // State reports which phase of the journey the transport is in.
+  // Output only.
+  //
+  // Timestamps tracking the different states may report either the time the hail transitioned into that state or
+  // predict when the hail is expected to transition into that state. Compare state with the supplied times to
+  // know if it is a prediction or not. For example if state is CALLED and board_time is present, it represents a
+  // predicted boarding time; if state is DEPARTED, then board_time is the time the transport entered into the BOARDING
+  // state.
+  State state = 4;
+  // The time the vehicle accepted the hail.
+  google.protobuf.Timestamp call_time = 5;
+  // The time the transport either began boarding or is expected to be boarding.
+  google.protobuf.Timestamp board_time = 6;
+  // The time the transport either departed or is expected to be departing.
+  google.protobuf.Timestamp depart_time = 7;
+  // The time the transport either arrived or is expected to arrive.
+  google.protobuf.Timestamp arrive_time = 8;
+}
+
+message CreateHailRequest {
+  // The name of the device
+  string name = 1;
+  Hail hail = 2;
+}
+
+message GetHailRequest {
+  // The name of the device
+  string name = 1;
+  // The id of the hail
+  string id = 2;
+  google.protobuf.FieldMask read_mask = 3;
+}
+
+message UpdateHailRequest {
+  // The name of the device
+  string name = 1;
+  // New hail properties.
+  // Id must be set.
+  Hail hail = 2;
+  // A list of fields to update relative to the Hail type.
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message DeleteHailRequest {
+  // The name of the device
+  string name = 1;
+  // The id of the hail
+  string id = 2;
+
+  // If true, no error is returned if a hail with the given id can't be found.
+  bool allow_missing = 3;
+}
+
+message DeleteHailResponse {}
+
+message PullHailRequest {
+  // The name of the device.
+  string name = 1;
+  // The id of the hail
+  string id = 2;
+  // Fields to fetch relative to the Hail type.
+  google.protobuf.FieldMask read_mask = 3;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 4;
+}
+
+message PullHailResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    // Name of the device that issued the change.
+    string name = 1;
+    // When the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // The new value for the hail.
+    Hail hail = 3;
+  }
+}
+
+message ListHailsRequest {
+  // The name of the device.
+  string name = 1;
+  // Fields to fetch relative to the Hail type
+  google.protobuf.FieldMask read_mask = 2;
+
+  // The maximum number of hails to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 3;
+  // A page token, received from a previous `ListHailsResponse` call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 4;
+}
+message ListHailsResponse {
+  repeated Hail hails = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+  // If non-zero this is the total number of hails.
+  // This may be an estimate.
+  int32 total_size = 3;
+}
+message PullHailsRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the Hail type
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+}
+message PullHailsResponse {
+  // The list of changes which have occurred
+  repeated Change changes = 1;
+
+  message Change {
+    // The name of the device that emitted this change
+    string name = 1;
+    // The type of change (e.g. ADD, UPDATE, etc...)
+    smartcore.types.ChangeType type = 2;
+    // The new value to use for ADD|UPDATE changes
+    Hail new_value = 3;
+    // The old value to use for UPDATE|REMOVE changes
+    Hail old_value = 4;
+    // When the change occurred
+    google.protobuf.Timestamp change_time = 5;
+  }
+}
+
+message DescribeHailRequest {
+  // The name of the device
+  string name = 1;
+}
+
+message HailSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.types.ResourceSupport resource_support = 1;
+  // The list of Locations that the implementing device can be requested to transport the passenger to.
+  repeated Hail.Location supported_locations = 2;
+}
