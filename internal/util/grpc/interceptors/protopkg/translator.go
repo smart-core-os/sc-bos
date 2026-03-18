@@ -20,6 +20,7 @@ func newToOld(path string) string {
 
 // oldToNew converts old-style paths to new-style paths.
 // Example: /smartcore.bos.MeterApi/GetMeterReading -> /smartcore.bos.meter.v1.MeterApi/GetMeterReading
+// Example: /smartcore.traits.LightApi/GetBrightness -> /smartcore.bos.light.v1.LightApi/GetBrightness
 func oldToNew(path string) string {
 	service, method, ok := parsePath(path)
 	if !ok {
@@ -27,6 +28,10 @@ func oldToNew(path string) string {
 	}
 
 	newService := protopkg.V0ToV1(service)
+	if newService == service {
+		// V0ToV1 didn't recognise it; try the traits → bos migration
+		newService = protopkg.TraitsToV1(service)
+	}
 	return buildPath(newService, method)
 }
 
