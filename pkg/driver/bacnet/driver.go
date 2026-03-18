@@ -379,6 +379,7 @@ func (d *Driver) Clear() {
 func (d *Driver) dispose() {
 	if d.systemCheck != nil {
 		d.systemCheck.Dispose()
+		d.systemCheck = nil
 	}
 
 	for _, stop := range d.healthTasks {
@@ -386,10 +387,12 @@ func (d *Driver) dispose() {
 			stop()
 		}
 	}
+	d.healthTasks = nil
 
 	for _, check := range d.checks {
 		if check != nil {
 			check.Dispose()
 		}
 	}
+	d.checks = nil
 }
