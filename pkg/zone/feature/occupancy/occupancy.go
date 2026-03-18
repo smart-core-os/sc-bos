@@ -9,9 +9,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
 )
@@ -50,7 +50,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		if len(cfg.EnterLeaveOccupancySensors) > 0 {
 			elServer := &enterLeave{
-				model:  occupancysensorpb2.NewModel(),
+				model:  occupancysensorpb.NewModel(),
 				client: enterleavesensorpb.NewEnterLeaveSensorApiClient(conn),
 				names:  cfg.EnterLeaveOccupancySensors,
 				logger: logger,

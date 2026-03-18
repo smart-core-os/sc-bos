@@ -18,15 +18,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/xovis/config"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_enterleavesensorpb "github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/pkg/trait/enterleavesensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 )
 
 const DriverName = "xovis"
@@ -107,7 +105,7 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 				multiSensor:    conf.MultiSensor,
 				logicID:        dev.Occupancy.ID,
 				bus:            d.pushDataBus,
-				OccupancyTotal: resource.NewValue(resource.WithInitialValue(&gen_occupancysensorpb.Occupancy{}), resource.WithNoDuplicates()),
+				OccupancyTotal: resource.NewValue(resource.WithInitialValue(&occupancysensorpb.Occupancy{}), resource.WithNoDuplicates()),
 			}
 			features = append(features, node.HasTrait(trait.OccupancySensor,
 				node.WithClients(occupancysensorpb.WrapApi(occupancy))))
@@ -121,7 +119,7 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 				logicID:         dev.EnterLeave.ID,
 				multiSensor:     conf.MultiSensor,
 				bus:             d.pushDataBus,
-				EnterLeaveTotal: resource.NewValue(resource.WithInitialValue(&gen_enterleavesensorpb.EnterLeaveEvent{}), resource.WithNoDuplicates()),
+				EnterLeaveTotal: resource.NewValue(resource.WithInitialValue(&enterleavesensorpb.EnterLeaveEvent{}), resource.WithNoDuplicates()),
 			}
 
 			features = append(features, node.HasTrait(trait.EnterLeaveSensor,

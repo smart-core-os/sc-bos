@@ -16,8 +16,6 @@ import (
 	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 	typespb "github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
@@ -286,7 +284,7 @@ func TestPullSampleAirQuality(t *testing.T) {
 	defer cancel()
 
 	loc := local.NewLocation()
-	model := airqualitysensorpb.NewModel()
+	model := gen_airqualitysensorpb.NewModel()
 
 	// Create a test driver instance
 	d := &Driver{}
@@ -350,7 +348,7 @@ func TestPullSampleAirTemperature(t *testing.T) {
 	defer cancel()
 
 	loc := local.NewLocation()
-	model := airtemperaturepb.NewModel()
+	model := gen_airtemperaturepb.NewModel()
 
 	d := &Driver{}
 

@@ -8,7 +8,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/pkg/proto/vendingpb/unitpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
@@ -243,14 +242,14 @@ func (m *Model) DispenseInstantly(consumable string, quantity *Consumable_Quanti
 
 func updateStock(quantity *Consumable_Quantity, src, dst *Consumable_Stock) error {
 	if src.Used != nil {
-		delta, err := unitpb.Convert32(quantity.Amount, quantity.Unit, src.Used.Unit)
+		delta, err := ConvertUnit32(quantity.Amount, quantity.Unit, src.Used.Unit)
 		if err != nil {
 			return err
 		}
 		dst.Used = &Consumable_Quantity{Unit: src.Used.Unit, Amount: src.Used.Amount + delta}
 	}
 	if src.Remaining != nil {
-		delta, err := unitpb.Convert32(quantity.Amount, quantity.Unit, src.Remaining.Unit)
+		delta, err := ConvertUnit32(quantity.Amount, quantity.Unit, src.Remaining.Unit)
 		if err != nil {
 			return err
 		}

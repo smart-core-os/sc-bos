@@ -26,10 +26,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
-	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
-	electricpb2 "github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
-	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
@@ -41,10 +37,10 @@ func Test_automation_applyConfig(t *testing.T) {
 	t.Cleanup(cancel)
 
 	logger := zap.NewNop()
-	occupancy := occupancysensorpb2.NewModel()
-	airQuality := airqualitysensorpb2.NewModel()
-	airTemperature := airtemperaturepb2.NewModel()
-	electric := electricpb2.NewModel()
+	occupancy := occupancysensorpb.NewModel()
+	airQuality := airqualitysensorpb.NewModel()
+	airTemperature := gen_airtemperaturepb.NewModel()
+	electric := gen_electricpb.NewModel()
 	meter := meterpb.NewModel()
 	status := statuspb.NewModel()
 
@@ -56,7 +52,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.OccupancySensor),
 		node.HasServer(
 			occupancysensorpb.RegisterOccupancySensorApiServer,
-			occupancysensorpb.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occupancy)),
+			occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occupancy)),
 		),
 	)
 
@@ -64,7 +60,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.AirQualitySensor),
 		node.HasServer(
 			airqualitysensorpb.RegisterAirQualitySensorApiServer,
-			airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb2.NewModelServer(airQuality)),
+			airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(airQuality)),
 		),
 	)
 
@@ -72,7 +68,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.AirTemperature),
 		node.HasServer(
 			airtemperaturepb.RegisterAirTemperatureApiServer,
-			airtemperaturepb.AirTemperatureApiServer(airtemperaturepb2.NewModelServer(airTemperature)),
+			airtemperaturepb.AirTemperatureApiServer(gen_airtemperaturepb.NewModelServer(airTemperature)),
 		),
 	)
 
@@ -80,7 +76,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.Electric),
 		node.HasServer(
 			electricpb.RegisterElectricApiServer,
-			electricpb.ElectricApiServer(electricpb2.NewModelServer(electric)),
+			electricpb.ElectricApiServer(gen_electricpb.NewModelServer(electric)),
 		),
 	)
 
@@ -335,8 +331,8 @@ func randString(n int) string {
 func Test_automation_applyConfigDevices(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		logger := zap.NewNop()
-		occ1 := occupancysensorpb2.NewModel()
-		occ2 := occupancysensorpb2.NewModel()
+		occ1 := occupancysensorpb.NewModel()
+		occ2 := occupancysensorpb.NewModel()
 
 		announcer := node.New("test")
 		announcer.Logger = logger
@@ -345,14 +341,14 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
 				occupancysensorpb.RegisterOccupancySensorApiServer,
-				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ1)),
+				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ1)),
 			),
 		)
 		announcer.Announce("occ2",
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
 				occupancysensorpb.RegisterOccupancySensorApiServer,
-				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ2)),
+				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ2)),
 			),
 		)
 
@@ -404,7 +400,7 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 func Test_automation_applyConfigDevices_remove(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		logger := zap.NewNop()
-		occ1 := occupancysensorpb2.NewModel()
+		occ1 := occupancysensorpb.NewModel()
 
 		announcer := node.New("test")
 		announcer.Logger = logger
@@ -412,7 +408,7 @@ func Test_automation_applyConfigDevices_remove(t *testing.T) {
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
 				occupancysensorpb.RegisterOccupancySensorApiServer,
-				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ1)),
+				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ1)),
 			),
 		)
 

@@ -9,10 +9,9 @@ import (
 	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 )
 
-func OccupancySensorAuto(model *occupancysensorpb.Model) *service.Service[string] {
+func OccupancySensorAuto(model *gen_occupancysensorpb.Model) *service.Service[string] {
 	slc := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		go func() {
 			ticker := time.NewTicker(30 * time.Second)

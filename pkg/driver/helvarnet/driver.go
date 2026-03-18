@@ -14,11 +14,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 )
 
 const (
@@ -106,8 +106,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		rootAnnouncer.Announce(l.Name,
 			node.HasTrait(trait.Light,
-				node.WithClients(lightpb2.WrapApi(lightingGroup)),
-				node.WithClients(lightpb2.WrapInfo(lightingGroup))),
+				node.WithClients(lightpb.WrapApi(lightingGroup)),
+				node.WithClients(lightpb.WrapInfo(lightingGroup))),
 			node.HasMetadata(l.Meta))
 	}
 
@@ -126,7 +126,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		rootAnnouncer.Announce(l.Name,
 			node.HasTrait(trait.Light,
-				node.WithClients(lightpb2.WrapApi(lum))),
+				node.WithClients(lightpb.WrapApi(lum))),
 			node.HasTrait(udmipb.TraitName,
 				node.WithClients(udmipb.WrapService(lum))),
 			node.HasMetadata(l.Meta))
@@ -174,7 +174,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		rootAnnouncer.Announce(em.Name,
 			node.HasTrait(trait.Light,
-				node.WithClients(lightpb2.WrapApi(emergencyLight))),
+				node.WithClients(lightpb.WrapApi(emergencyLight))),
 			node.HasTrait(emergencylightpb.TraitName,
 				node.WithClients(emergencylightpb.WrapApi(emergencyLight))),
 			node.HasTrait(udmipb.TraitName,

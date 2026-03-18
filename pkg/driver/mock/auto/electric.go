@@ -7,10 +7,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/scale"
 	gen_electricpb "github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
 )
 
-func Electric(model *electricpb.Model) service.Lifecycle {
+func Electric(model *gen_electricpb.Model) service.Lifecycle {
 	s := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		go func() {
 			timer := time.NewTimer(durationBetween(30*time.Second, 2*time.Minute))

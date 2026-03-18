@@ -15,8 +15,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -24,11 +24,11 @@ var errFailedBrightnessUpdate = errors.New("failed to update brightness this tim
 
 func TestPirsTurnLightsOn(t *testing.T) {
 	// we update this to send messages to the automation
-	pir01 := occupancysensorpb2.NewModel()
-	pir02 := occupancysensorpb2.NewModel()
+	pir01 := occupancysensorpb.NewModel()
+	pir02 := occupancysensorpb.NewModel()
 	rootNode := node.New("test")
-	rootNode.Announce("pir01", node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(occupancysensorpb2.NewModelServer(pir01)))))
-	rootNode.Announce("pir02", node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(occupancysensorpb2.NewModelServer(pir02)))))
+	rootNode.Announce("pir01", node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(occupancysensorpb.NewModelServer(pir01)))))
+	rootNode.Announce("pir02", node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(occupancysensorpb.NewModelServer(pir02)))))
 
 	testActions := newTestActions(t)
 

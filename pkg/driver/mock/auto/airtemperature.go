@@ -11,11 +11,10 @@ import (
 	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
-func AirTemperatureAuto(model *airtemperaturepb.Model) *service.Service[string] {
+func AirTemperatureAuto(model *gen_airtemperaturepb.Model) *service.Service[string] {
 	slc := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		ticker := time.NewTicker(30 * time.Second)
 		go func() {
