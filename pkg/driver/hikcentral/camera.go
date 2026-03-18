@@ -329,7 +329,8 @@ func (c *Camera) getOcc(ctx context.Context) {
 			if len(res.List) == 0 {
 				logger.Warn("no people count data in response", zap.Any("res", res))
 			} else if res.List[0].CameraIndexCode != c.conf.IndexCode {
-				continue // not for this camera
+				logger.Warn("response for unexpected camera", zap.String("got", res.List[0].CameraIndexCode), zap.String("want", c.conf.IndexCode))
+				break
 			} else {
 				i := res.List[0]
 				count := i.EnterNum - i.ExitNum
