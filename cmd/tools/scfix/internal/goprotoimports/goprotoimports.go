@@ -20,7 +20,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
+	"sort"
 	"strings"
 
 	"golang.org/x/tools/go/ast/astutil"
@@ -171,6 +171,14 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 	return totalChanges, nil
 }
 
+// symDest describes the resolved destination for a symbol migrated from the old package.
+type symDest struct {
+	pkgName    string // destination Go package name (e.g. "timepb")
+	importPath string // relative path under pkg/proto (e.g. "timepb", "driver/dalipb")
+	symbol     string // new symbol name (may differ from original for typemap migrations)
+	self       bool   // symbol lives in this file's own package; drop qualifier, no import needed
+}
+
 // migratePackageRefs rewrites selector expressions of the form `pkgAlias.TypeName`
 // to the new per-trait packages via inferTraitPackage.
 // oldImportPath is removed; new per-trait imports are added.
@@ -185,133 +193,22 @@ func migratePackageRefs(
 	oldImportPath string,
 	bosImportPath func(...string) string,
 ) (int, error) {
-	// Find all types used via this package alias.
-	usedTypes := findUsedTypesByAlias(node, pkgAlias)
-	if len(usedTypes) == 0 {
-		return 0, nil
-	}
-
-	typeToPackageName := make(map[string]string)
-	typeToImportPath := make(map[string]string)
-	typeToNewSymbol := make(map[string]string)
-	var unknownTypes []string
-	for typeName := range usedTypes {
-		ip, pkg, sym, ok := inferTraitPackage(typeName)
-		if ok {
-			typeToPackageName[typeName] = pkg
-			typeToImportPath[typeName] = ip
-			typeToNewSymbol[typeName] = sym
-		} else {
-			unknownTypes = append(unknownTypes, typeName)
-		}
-	}
-
-	if len(unknownTypes) > 0 {
-		ctx.Info("! Warning: Cannot determine trait package for types in %s: %v", filepath.Base(filename), unknownTypes)
-	}
-
-	if len(typeToPackageName) == 0 {
-		return 0, nil
-	}
-
-	// Determine the file's own import path to detect self-imports.
-	ownImportPath, err := fileImportPath(ctx.RootDir, filename)
-	if err != nil {
-		// If we can't determine the own path, fall back to no self-import detection.
-		ownImportPath = ""
-	}
-
-	// Classify types: self-types live in the same package as the file being processed.
-	isSelfType := make(map[string]bool)
-	for typeName, ip := range typeToImportPath {
-		if ownImportPath != "" && bosImportPath("pkg/proto", ip) == ownImportPath {
-			isSelfType[typeName] = true
-		}
-	}
-
-	neededPackages := make(map[string]string) // pkg name -> import path
-	for typeName := range usedTypes {
-		if isSelfType[typeName] {
-			continue // self-types need no import
-		}
-		if pkgName, ok := typeToPackageName[typeName]; ok {
-			neededPackages[pkgName] = typeToImportPath[typeName]
-		}
-	}
-
-	existingImports := findExistingTraitImports(node)
-	packageToAlias := make(map[string]string)
-	for pkgName, ip := range neededPackages {
-		expectedFullPath := bosImportPath("pkg/proto", ip)
-		if existingPath, exists := existingImports[pkgName]; exists {
-			if existingPath != expectedFullPath {
-				packageToAlias[pkgName] = pkgName + "2"
+	ownImportPath, _ := fileImportPath(ctx.RootDir, filename)
+	return migrateRefs(ctx, fset, node, filename, pkgAlias, oldImportPath,
+		func(symbol string) (symDest, bool) {
+			ip, pkg, sym, ok := inferTraitPackage(symbol)
+			if !ok {
+				return symDest{}, false
 			}
-		}
-	}
-
-	modified := false
-	changes := 0
-
-	astutil.Apply(node, func(cursor *astutil.Cursor) bool {
-		selExpr, ok := cursor.Node().(*ast.SelectorExpr)
-		if !ok {
-			return true
-		}
-		ident, ok := selExpr.X.(*ast.Ident)
-		if !ok || ident.Name != pkgAlias {
-			return true
-		}
-
-		typeName := selExpr.Sel.Name
-		if isSelfType[typeName] {
-			// Replace pkgAlias.TypeName with just TypeName (bare identifier).
-			newSymbol := typeToNewSymbol[typeName]
-			selExpr.Sel.Name = newSymbol
-			cursor.Replace(selExpr.Sel)
-			modified = true
-			changes++
-		} else if pkgName, ok := typeToPackageName[typeName]; ok {
-			newSymbol := typeToNewSymbol[typeName]
-			if alias, hasAlias := packageToAlias[pkgName]; hasAlias {
-				ident.Name = alias
-			} else {
-				ident.Name = pkgName
-			}
-			selExpr.Sel.Name = newSymbol
-			modified = true
-			changes++
-		}
-		return true
-	}, nil)
-
-	if !modified {
-		return 0, nil
-	}
-
-	// Update comments that reference pkgAlias.Type
-	for _, commentGroup := range node.Comments {
-		for _, comment := range commentGroup.List {
-			updated := updateCommentGenReferences(comment.Text, typeToPackageName, typeToNewSymbol, packageToAlias)
-			if updated != comment.Text {
-				comment.Text = updated
-				changes++
-			}
-		}
-	}
-
-	// Update imports: remove old, add new per-trait imports.
-	deleteSourceImport(fset, node, oldImportPath)
-	for pkgName, ip := range neededPackages {
-		fullImportPath := bosImportPath("pkg/proto", ip)
-		if alias, hasAlias := packageToAlias[pkgName]; hasAlias {
-			astutil.AddNamedImport(fset, node, alias, fullImportPath)
-		} else {
-			astutil.AddImport(fset, node, fullImportPath)
-		}
-	}
-
-	return changes, nil
+			return symDest{
+				pkgName:    pkg,
+				importPath: ip,
+				symbol:     sym,
+				self:       ownImportPath != "" && bosImportPath("pkg/proto", ip) == ownImportPath,
+			}, true
+		},
+		bosImportPath,
+	)
 }
 
 // migrateDirectPackageRefs rewrites selector expressions of the form `pkgAlias.Symbol`
@@ -329,32 +226,85 @@ func migrateDirectPackageRefs(
 	newPkgName string,
 	bosImportPath func(...string) string,
 ) (int, error) {
-	usedTypes := findUsedTypesByAlias(node, pkgAlias)
-	if len(usedTypes) == 0 {
+	ownImportPath, _ := fileImportPath(ctx.RootDir, filename)
+	newImportPath := bosImportPath("pkg/proto", newPkgName)
+	isSelf := ownImportPath != "" && newImportPath == ownImportPath
+	return migrateRefs(ctx, fset, node, filename, pkgAlias, oldImportPath,
+		func(symbol string) (symDest, bool) {
+			return symDest{
+				pkgName:    newPkgName,
+				importPath: newPkgName,
+				symbol:     symbol,
+				self:       isSelf,
+			}, true
+		},
+		bosImportPath,
+	)
+}
+
+// migrateRefs is the shared implementation for package-ref migration.
+// It rewrites selector expressions of the form `pkgAlias.Symbol` using resolve to determine
+// each symbol's destination. resolve returns (symDest, true) for known symbols and
+// (symDest{}, false) for unknown ones (which are warned about and left unchanged).
+// If the old import is present but has zero usages, it is removed as a stale migration artifact.
+func migrateRefs(
+	ctx *fixer.Context,
+	fset *token.FileSet,
+	node *ast.File,
+	filename string,
+	pkgAlias string,
+	oldImportPath string,
+	resolve func(symbol string) (symDest, bool),
+	bosImportPath func(...string) string,
+) (int, error) {
+	usedSymbols := findUsedTypesByAlias(node, pkgAlias)
+	if len(usedSymbols) == 0 {
 		// No usages of the old alias — the import is a stale artifact from a partial migration.
 		// Remove it so the file compiles cleanly.
 		deleteSourceImport(fset, node, oldImportPath)
 		return 1, nil
 	}
 
-	newImportPath := bosImportPath("pkg/proto", newPkgName)
-
-	// Determine the file's own import path to detect self-imports.
-	ownImportPath, err := fileImportPath(ctx.RootDir, filename)
-	if err != nil {
-		ownImportPath = ""
-	}
-	isSelf := ownImportPath != "" && newImportPath == ownImportPath
-
-	// Check whether the destination package name is already occupied by a different import.
-	existingImports := findExistingTraitImports(node)
-	destAlias := newPkgName
-	if !isSelf {
-		if existingPath, exists := existingImports[newPkgName]; exists && existingPath != newImportPath && existingPath != oldImportPath {
-			destAlias = newPkgName + "2"
+	// Resolve each used symbol to its destination.
+	resolved := make(map[string]symDest)
+	var unknownSymbols []string
+	for sym := range usedSymbols {
+		dest, ok := resolve(sym)
+		if ok {
+			resolved[sym] = dest
+		} else {
+			unknownSymbols = append(unknownSymbols, sym)
 		}
 	}
+	if len(unknownSymbols) > 0 {
+		sort.Strings(unknownSymbols)
+		ctx.Info("! Warning: Cannot determine destination for symbols in %s: %v", filepath.Base(filename), unknownSymbols)
+	}
+	if len(resolved) == 0 {
+		return 0, nil
+	}
 
+	// Build pkgToAlias: destination package name → alias to use in this file.
+	// If the destination package name is already occupied by a different import, append "2".
+	existingImports := findExistingTraitImports(node)
+	pkgToAlias := make(map[string]string)
+	for _, dest := range resolved {
+		if dest.self {
+			continue
+		}
+		if _, seen := pkgToAlias[dest.pkgName]; seen {
+			continue
+		}
+		alias := dest.pkgName
+		fullPath := bosImportPath("pkg/proto", dest.importPath)
+		if existing, exists := existingImports[dest.pkgName]; exists &&
+			existing != fullPath && existing != oldImportPath {
+			alias = dest.pkgName + "2"
+		}
+		pkgToAlias[dest.pkgName] = alias
+	}
+
+	// Rewrite AST: replace pkgAlias.Symbol with destAlias.newSymbol (or bare newSymbol if self).
 	changes := 0
 	astutil.Apply(node, func(cursor *astutil.Cursor) bool {
 		selExpr, ok := cursor.Node().(*ast.SelectorExpr)
@@ -365,11 +315,16 @@ func migrateDirectPackageRefs(
 		if !ok || ident.Name != pkgAlias {
 			return true
 		}
-		if isSelf {
-			// Drop qualifier entirely — replace pkg.Symbol with just Symbol.
+		dest, ok := resolved[selExpr.Sel.Name]
+		if !ok {
+			return true // unknown symbol, leave unchanged
+		}
+		if dest.self {
+			selExpr.Sel.Name = dest.symbol
 			cursor.Replace(selExpr.Sel)
 		} else {
-			ident.Name = destAlias
+			ident.Name = pkgToAlias[dest.pkgName]
+			selExpr.Sel.Name = dest.symbol
 		}
 		changes++
 		return true
@@ -380,37 +335,29 @@ func migrateDirectPackageRefs(
 	}
 
 	// Update comments that reference pkgAlias.Symbol.
-	commentPattern := regexp.MustCompile(`\b` + regexp.QuoteMeta(pkgAlias) + `\.([A-Z][a-zA-Z0-9_]*)`)
-	for _, commentGroup := range node.Comments {
-		for _, comment := range commentGroup.List {
-			updated := commentPattern.ReplaceAllStringFunc(comment.Text, func(match string) string {
-				symbol := commentPattern.FindStringSubmatch(match)[1]
-				if isSelf {
-					return symbol
-				}
-				return destAlias + "." + symbol
-			})
-			if updated != comment.Text {
-				comment.Text = updated
-				changes++
-			}
-		}
-	}
+	changes += updateCommentRefs(node, pkgAlias, resolved, pkgToAlias, resolve)
 
-	// Update imports: remove old, add new (unless self-import).
+	// Update imports: remove old, add new per-destination imports.
 	deleteSourceImport(fset, node, oldImportPath)
-	if !isSelf {
-		if destAlias != newPkgName {
-			astutil.AddNamedImport(fset, node, destAlias, newImportPath)
+	addedPkgs := make(map[string]bool)
+	for _, dest := range resolved {
+		if dest.self || addedPkgs[dest.pkgName] {
+			continue
+		}
+		addedPkgs[dest.pkgName] = true
+		fullPath := bosImportPath("pkg/proto", dest.importPath)
+		alias := pkgToAlias[dest.pkgName]
+		if alias != dest.pkgName {
+			astutil.AddNamedImport(fset, node, alias, fullPath)
 		} else {
-			astutil.AddImport(fset, node, newImportPath)
+			astutil.AddImport(fset, node, fullPath)
 		}
 	}
 
 	return changes, nil
 }
 
-// findUsedTypesByAlias finds all type names used via a specific package alias
+// findUsedTypesByAlias finds all symbol names used via a specific package alias
 // (e.g., "gen" or "traits") in selector expressions.
 func findUsedTypesByAlias(node *ast.File, pkgAlias string) map[string]bool {
 	types := make(map[string]bool)

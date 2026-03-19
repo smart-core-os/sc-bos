@@ -1,44 +1,49 @@
 package goprotoimports
 
 import (
+	"go/ast"
 	"regexp"
-	"strings"
 )
 
-// genRefPattern matches gen.TypeName patterns in comments
-var genRefPattern = regexp.MustCompile(`\bgen\.([A-Z][a-zA-Z0-9_]*)`)
-
-// updateCommentGenReferences updates references to gen.Type in comments.
-// Handles both regular comments and doc comments like [gen.Type].
-func updateCommentGenReferences(commentText string, typeToPackageName, typeToNewSymbol, packageToAlias map[string]string) string {
-	updated := commentText
-
-	// Find all gen.TypeName patterns in the comment using the pre-compiled regex
-	updated = genRefPattern.ReplaceAllStringFunc(updated, func(match string) string {
-		// Extract the type name (everything after "gen.")
-		typeName := strings.TrimPrefix(match, "gen.")
-
-		// First check if this type was used in the code (in our map)
-		if pkgName, ok := typeToPackageName[typeName]; ok {
-			newSymbol := typeToNewSymbol[typeName]
-			if alias, hasAlias := packageToAlias[pkgName]; hasAlias {
-				return alias + "." + newSymbol
+// updateCommentRefs rewrites pkgAlias.Symbol references in comments to use the new package aliases.
+// Symbols that appeared only in comments (not in code) are resolved on-demand via resolve.
+// Returns the number of comments modified.
+func updateCommentRefs(
+	node *ast.File,
+	pkgAlias string,
+	resolved map[string]symDest,
+	pkgToAlias map[string]string,
+	resolve func(string) (symDest, bool),
+) int {
+	changes := 0
+	pattern := regexp.MustCompile(`\b` + regexp.QuoteMeta(pkgAlias) + `\.([A-Z][a-zA-Z0-9_]*)`)
+	for _, commentGroup := range node.Comments {
+		for _, comment := range commentGroup.List {
+			updated := pattern.ReplaceAllStringFunc(comment.Text, func(match string) string {
+				symbol := pattern.FindStringSubmatch(match)[1]
+				dest, ok := resolved[symbol]
+				if !ok {
+					// Symbol appeared in a comment but not in code — resolve directly.
+					dest, ok = resolve(symbol)
+					if !ok {
+						return match // unknown, leave as-is
+					}
+				}
+				if dest.self {
+					return dest.symbol
+				}
+				alias, ok := pkgToAlias[dest.pkgName]
+				if !ok {
+					// Destination package wasn't referenced in code; use unaliased name.
+					alias = dest.pkgName
+				}
+				return alias + "." + dest.symbol
+			})
+			if updated != comment.Text {
+				comment.Text = updated
+				changes++
 			}
-			return pkgName + "." + newSymbol
 		}
-
-		// If not in our map, try looking it up in the global typemap
-		if _, pkgName, symbol, ok := inferTraitPackage(typeName); ok {
-			// Check if we have an alias for this package
-			if alias, hasAlias := packageToAlias[pkgName]; hasAlias {
-				return alias + "." + symbol
-			}
-			return pkgName + "." + symbol
-		}
-
-		// Can't find it, leave as-is
-		return match
-	})
-
-	return updated
+	}
+	return changes
 }
