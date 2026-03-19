@@ -1,0 +1,174 @@
+syntax = "proto3";
+
+package smartcore.bos.log.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/logpb";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// LogApi exposes log streaming, log level management, log file metadata,
+// and efficient log file download for a controller.
+service LogApi {
+  // Stream log messages as they are emitted (tail -f -n <count> behaviour).
+  // The server sends up to initial_count recent messages first, then streams
+  // new messages in real-time.
+  rpc PullLogMessages(PullLogMessagesRequest) returns (stream PullLogMessagesResponse);
+
+  // Get the current log level.
+  rpc GetLogLevel(GetLogLevelRequest) returns (LogLevel);
+  // Stream changes to the log level.
+  rpc PullLogLevel(PullLogLevelRequest) returns (stream PullLogLevelResponse);
+  // Update the log level.
+  rpc UpdateLogLevel(UpdateLogLevelRequest) returns (LogLevel);
+
+  // Metadata about on-disk log storage (total size, file count, etc.)
+  rpc GetLogMetadata(GetLogMetadataRequest) returns (LogMetadata);
+  // Stream changes to log metadata.
+  rpc PullLogMetadata(PullLogMetadataRequest) returns (stream PullLogMetadataResponse);
+
+  // Returns one or more HTTP URLs for direct file download (no gRPC serialisation).
+  // Each URL points to a single log file (active or rotated).
+  rpc GetDownloadLogUrl(GetDownloadLogUrlRequest) returns (GetDownloadLogUrlResponse);
+}
+
+// Level is the log severity level, aligned with Go slog / OpenTelemetry severity.
+// Implementation layers must map library-specific levels (e.g. zap DPanic/Panic/Fatal) → LEVEL_ERROR.
+enum Level {
+  LEVEL_UNSPECIFIED = 0;
+  LEVEL_DEBUG = 1;
+  LEVEL_INFO = 2;
+  LEVEL_WARN = 3;
+  LEVEL_ERROR = 4;
+}
+
+// SourceLocation identifies the source code position that emitted a log entry.
+message SourceLocation {
+  // Source file path, typically relative to the module root.
+  string file = 1;
+  int32 line = 2;
+  // Fully-qualified function or method name.
+  string function = 3;
+}
+
+// LogMessage represents a single log entry.
+message LogMessage {
+  google.protobuf.Timestamp timestamp = 1;
+  Level level = 2;
+  // Logger name (e.g. "node", "bacnet").
+  string logger = 3;
+  string message = 4;
+  // Structured fields as key/value string pairs.
+  map<string, string> fields = 5;
+  // Source code location that emitted this entry. Omitted when unavailable.
+  SourceLocation source_location = 6;
+  // Stack trace at the point of logging. Omitted when unavailable.
+  string stack_trace = 7;
+}
+
+// LogLevel represents the current minimum log level that will be emitted.
+message LogLevel {
+  Level level = 1;
+}
+
+// LogMetadata contains metadata about on-disk log storage.
+message LogMetadata {
+  // Total bytes used by all log files (active and rotated).
+  int64 total_size_bytes = 1;
+  // Number of log files (active + rotated).
+  int32 file_count = 2;
+}
+
+message PullLogMessagesRequest {
+  string name = 1;
+  // Number of buffered messages to replay before streaming live.
+  // Analogous to tail -n <count>. Default: 200. Max: 1000.
+  int32 initial_count = 2;
+  // If true, skip the initial replay and stream from now onwards only.
+  bool updates_only = 3;
+  // Minimum level to receive. Absent/LEVEL_UNSPECIFIED = all levels.
+  Level min_level = 4;
+  // Optional: filter by logger name prefix.
+  // Reserved for future use; server may return UNIMPLEMENTED if used.
+  string logger_filter = 5;
+  google.protobuf.FieldMask read_mask = 6;
+}
+
+message PullLogMessagesResponse {
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    repeated LogMessage messages = 3;
+  }
+  repeated Change changes = 1;
+}
+
+message GetLogLevelRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullLogLevelRequest {
+  string name = 1;
+  bool updates_only = 2;
+  google.protobuf.FieldMask read_mask = 3;
+}
+
+message PullLogLevelResponse {
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    LogLevel log_level = 3;
+  }
+  repeated Change changes = 1;
+}
+
+message UpdateLogLevelRequest {
+  string name = 1;
+  LogLevel log_level = 2;
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message GetLogMetadataRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullLogMetadataRequest {
+  string name = 1;
+  bool updates_only = 2;
+  google.protobuf.FieldMask read_mask = 3;
+}
+
+message PullLogMetadataResponse {
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    LogMetadata log_metadata = 3;
+  }
+  repeated Change changes = 1;
+}
+
+message GetDownloadLogUrlRequest {
+  string name = 1;
+  // When true, return URLs for all rotated files as well as the active one.
+  bool include_rotated = 2;
+  // Optional TTL for the returned URL. Default: 15 minutes.
+  google.protobuf.Duration url_ttl = 3;
+}
+
+message GetDownloadLogUrlResponse {
+  repeated LogFile files = 1;
+
+  message LogFile {
+    // HTTP URL for direct download.
+    string url = 1;
+    // Suggested save-as filename.
+    string filename = 2;
+    int64 size_bytes = 3;
+    // MIME type: "text/plain", "application/gzip", etc.
+    // Reflects the actual on-disk format; callers should not assume plain text.
+    string content_type = 4;
+  }
+}

@@ -9,6 +9,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/driver/dalipb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/historypb"
@@ -100,6 +101,8 @@ func NewClient(ptr any, conn grpc.ClientConnInterface) (ok bool) {
 		*ptr = udmipb.NewUdmiServiceClient(conn)
 	case *wastepb.WasteApiClient:
 		*ptr = wastepb.NewWasteApiClient(conn)
+	case *logpb.LogApiClient:
+		*ptr = logpb.NewLogApiClient(conn)
 
 	case *traits.AirQualitySensorInfoClient:
 		*ptr = traits.NewAirQualitySensorInfoClient(conn)

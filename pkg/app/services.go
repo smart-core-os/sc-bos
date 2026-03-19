@@ -97,6 +97,10 @@ func (c *Controller) startSystems() (*service.Map, error) {
 	if err != nil {
 		return nil, err
 	}
+	var httpEndpoint string
+	if hp, err := c.SystemConfig.ExternalHTTPEndpoint(); err == nil {
+		httpEndpoint = hp
+	}
 	ctxServices := system.Services{
 		ConfigDirs:       c.SystemConfig.ConfigDirs,
 		DataDir:          c.SystemConfig.DataDir,
@@ -104,6 +108,7 @@ func (c *Controller) startSystems() (*service.Map, error) {
 		Node:             c.Node,
 		HealthChecks:     devicesToHealthCheckCollection(c.DeviceStore),
 		GRPCEndpoint:     grpcEndpoint,
+		HTTPEndpoint:     httpEndpoint,
 		Database:         c.Database,
 		Stores:           c.Stores,
 		Accounts:         c.Accounts,
@@ -114,6 +119,10 @@ func (c *Controller) startSystems() (*service.Map, error) {
 		PrivateKey:       c.PrivateKey,
 		CohortManager:    c.ManagerConn,
 		ClientTLSConfig:  c.ClientTLSConfig,
+		LogLevel:         c.LogLevel,
+	}
+	if c.LogCapture != nil {
+		ctxServices.AddLogCore = c.LogCapture.Add
 	}
 	m := service.NewMap(func(_, kind string) (service.Lifecycle, error) {
 		f, ok := c.SystemConfig.SystemFactories[kind]

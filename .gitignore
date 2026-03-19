@@ -9,3 +9,4 @@ results_*.csv
 .build/
 .vscode
 podman-build-secret*
+.bin

@@ -44,6 +44,7 @@ export const roleToPermissions = {
       '/system/drivers',
       '/system/features',
       '/system/components',
+      '/system/logs',
       '/signage'
     ],
     limitedAccess: [],
@@ -76,7 +77,8 @@ export const roleToPermissions = {
     blockedAccess: [
       '/auth',
       '/auth/users',
-      '/auth/third-party'
+      '/auth/third-party',
+      '/system/logs'
     ]
   },
   operator: {
@@ -107,7 +109,8 @@ export const roleToPermissions = {
       '/system/components'
     ],
     blockedAccess: [
-      '/auth/users'
+      '/auth/users',
+      '/system/logs'
     ]
   },
   signage: {
@@ -137,7 +140,8 @@ export const roleToPermissions = {
       '/system',
       '/system/drivers',
       '/system/features',
-      '/system/components'
+      '/system/components',
+      '/system/logs'
     ]
   },
   superAdmin: {
@@ -164,6 +168,7 @@ export const roleToPermissions = {
       '/system/drivers',
       '/system/features',
       '/system/components',
+      '/system/logs',
       '/signage'
     ],
     limitedAccess: [],
@@ -197,6 +202,8 @@ export const roleToPermissions = {
       '/system/features',
       '/system/components'
     ],
-    blockedAccess: []
+    blockedAccess: [
+      '/system/logs'
+    ]
   }
 };

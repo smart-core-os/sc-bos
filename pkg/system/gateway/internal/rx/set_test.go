@@ -52,6 +52,24 @@ func TestSet_Sub(t *testing.T) {
 	}
 }
 
+// TestSet_Replace_noUpdateForUnchangedItems demonstrates the root cause of the
+// spurious service re-announcement loop: Replace always reports items as updated
+// and emits Update events even when the values are identical to what is already in the set.
+// The expected behaviour (and the fix target) is that no items should be reported as
+// updated when the replacement slice contains exactly the same values as the current set.
+func TestSet_Replace_noUpdateForUnchangedItems(t *testing.T) {
+	s := NewSet(scslices.NewSorted("a", "b", "c"))
+
+	// Replace with the exact same items — nothing has changed.
+	// We check the return values directly to avoid needing a subscriber
+	// (minibus.Send blocks waiting for listeners, which would deadlock).
+	_, _, updated := s.Replace([]string{"a", "b", "c"})
+
+	if updated.Len() > 0 {
+		t.Errorf("Replace with unchanged items should report 0 updated items, got %d", updated.Len())
+	}
+}
+
 func TestSet_concurrency(t *testing.T) {
 	s := NewSet(scslices.NewSorted("pre000", "pre001", "pre002"))
 
