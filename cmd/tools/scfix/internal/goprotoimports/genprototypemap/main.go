@@ -23,6 +23,16 @@ func main() {
 	}
 }
 
+// excludedPackages are not scanned by genprototypemap.
+// These packages (typespb, infopb, timepb) are handled as direct mappings by goprotoimports
+// and do not need typemap entries. Excluding them prevents name collisions where e.g.
+// typespb.Temperature would overwrite temperaturepb.Temperature in the typemap.
+var excludedPackages = map[string]bool{
+	"typespb": true,
+	"infopb":  true,
+	"timepb":  true,
+}
+
 func run() error {
 	// Find the repository root
 	rootDir, err := findRepoRoot()
@@ -39,6 +49,8 @@ func run() error {
 		return fmt.Errorf("pkg/proto directory not found - run protogopkg fixer and go generate first: %w", err)
 	}
 
+	// Single-pass scan: first-wins. typespb/infopb/timepb are excluded because they are
+	// handled as direct mappings in goprotoimports and must not pollute the typemap.
 	err = filepath.WalkDir(protoDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -52,6 +64,9 @@ func run() error {
 		// Look for trait package directories (e.g., meterpb, hubpb, driver/dalipb)
 		if d.IsDir() && strings.HasSuffix(d.Name(), "pb") {
 			traitPkg := d.Name()
+			if excludedPackages[traitPkg] {
+				return filepath.SkipDir
+			}
 			// Get the relative path from pkg/proto for the import path
 			relPath, err := filepath.Rel(protoDir, path)
 			if err != nil {
@@ -89,6 +104,7 @@ func run() error {
 // scanDirectory scans a directory for .pb.go files and extracts symbols.
 // The traitPkg parameter is the package name (e.g., "meterpb", "hubpb", "dalipb").
 // The importPath parameter is the relative path from pkg/proto (e.g., "meterpb", "driver/dalipb").
+// Uses first-wins semantics: existing entries in symbolToTrait are not overwritten.
 // It maps old gen package symbol names to new import paths with symbols (e.g., "meterpb.WrapApi", "driver/dalipb.AddToGroupRequest").
 func scanDirectory(dir string, symbolToTrait map[string]string, traitPkg, importPath string) error {
 	return filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
@@ -120,7 +136,7 @@ func scanDirectory(dir string, symbolToTrait map[string]string, traitPkg, import
 			// This avoids camel-casing issues with multi-word traits
 			key := strings.ToLower(oldSymbol)
 
-			// Only add if not already present
+			// First-wins: don't overwrite existing entries.
 			if _, exists := symbolToTrait[key]; !exists {
 				symbolToTrait[key] = newSymbol
 			}
