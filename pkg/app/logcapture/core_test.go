@@ -126,6 +126,52 @@ func TestWith_extraCoresStillReceive(t *testing.T) {
 	}
 }
 
+// ---- Enabled gating -------------------------------------------------------------
+
+// TestEnabled_extraBelowBaseLevel verifies that an extra core whose level is lower
+// than the base core's level still receives entries — i.e. Enabled returns true
+// when any extra accepts the level, even if the base does not.
+func TestEnabled_extraBelowBaseLevel(t *testing.T) {
+	// Base accepts WARN and above only.
+	baseCore, _ := observer.New(zapcore.WarnLevel)
+	// Extra accepts DEBUG and above.
+	extraLogs, extraCore := newObserverCore()
+
+	c := Wrap(baseCore)
+	remove := c.Add(extraCore)
+	defer remove()
+
+	// Write a DEBUG entry — base should NOT receive it, extra SHOULD.
+	entry := zapcore.Entry{Level: zapcore.DebugLevel, Message: "debug-msg"}
+	if ce := c.Check(entry, nil); ce != nil {
+		ce.Write()
+	}
+
+	if extraLogs.Len() != 1 {
+		t.Errorf("extra got %d entries, want 1", extraLogs.Len())
+	}
+}
+
+// TestEnabled_childExtraBelowBaseLevel is the same check via a childCore (With).
+func TestEnabled_childExtraBelowBaseLevel(t *testing.T) {
+	baseCore, _ := observer.New(zapcore.WarnLevel)
+	extraLogs, extraCore := newObserverCore()
+
+	c := Wrap(baseCore)
+	child := c.With(nil)
+	remove := c.Add(extraCore)
+	defer remove()
+
+	entry := zapcore.Entry{Level: zapcore.DebugLevel, Message: "child-debug"}
+	if ce := child.Check(entry, nil); ce != nil {
+		ce.Write()
+	}
+
+	if extraLogs.Len() != 1 {
+		t.Errorf("extra got %d entries via child, want 1", extraLogs.Len())
+	}
+}
+
 // ---- concurrent safety ----------------------------------------------------------
 
 func TestCore_concurrent(t *testing.T) {

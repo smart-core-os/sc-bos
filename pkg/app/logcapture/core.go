@@ -56,7 +56,17 @@ func (c *Core) Add(extra zapcore.Core) func() {
 }
 
 func (c *Core) Enabled(level zapcore.Level) bool {
-	return c.base.Enabled(level)
+	if c.base.Enabled(level) {
+		return true
+	}
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	for _, e := range c.extra {
+		if e.Enabled(level) {
+			return true
+		}
+	}
+	return false
 }
 
 // With returns a child core with the fields applied to the base.
@@ -105,7 +115,17 @@ type childCore struct {
 }
 
 func (c *childCore) Enabled(level zapcore.Level) bool {
-	return c.base.Enabled(level)
+	if c.base.Enabled(level) {
+		return true
+	}
+	c.parent.mu.RLock()
+	defer c.parent.mu.RUnlock()
+	for _, e := range c.parent.extra {
+		if e.Enabled(level) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *childCore) With(fields []zapcore.Field) zapcore.Core {
