@@ -224,7 +224,7 @@ async function startStreams(name) {
   try {
     const lvl = await getLogLevel({name});
     if (selectedNode.value === name && selectedLevel.value == null) {
-      selectedLevel.value = lvl.level;
+      selectedLevel.value = lvl.level || null;
     }
   } catch {
     // level not supported — leave null
