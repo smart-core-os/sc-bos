@@ -158,8 +158,9 @@ function formatFields(fieldsMap) {
  * @return {string}
  */
 function formatTime(timestamp) {
-  if (!timestamp) return '--:--:--';
-  return new Date(timestamp.seconds * 1000).toLocaleTimeString();
+  if (!timestamp) return '--:--.---';
+  const ms = (timestamp.seconds * 1000) + Math.floor((timestamp.nanos ?? 0) / 1e6);
+  return new Date(ms).toLocaleTimeString(undefined, {fractionalSecondDigits: 3});
 }
 
 /**
