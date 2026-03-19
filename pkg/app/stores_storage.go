@@ -188,6 +188,7 @@ func updatePostgresStorageModel(ctx context.Context, s *stores.Stores, model *st
 	r, _, _, err := s.Postgres()
 	if err != nil {
 		logger.Warn("failed to get postgres store", zap.Error(err))
+		_, _ = model.SetStorage(&gen.Storage{})
 		return
 	}
 
@@ -195,6 +196,7 @@ func updatePostgresStorageModel(ctx context.Context, s *stores.Stores, model *st
 	err = r.QueryRow(ctx, "SELECT pg_total_relation_size('history')").Scan(&sizeBytes)
 	if err != nil {
 		logger.Warn("failed to query postgres history size", zap.Error(err))
+		_, _ = model.SetStorage(&gen.Storage{})
 		return
 	}
 
@@ -202,6 +204,7 @@ func updatePostgresStorageModel(ctx context.Context, s *stores.Stores, model *st
 	err = r.QueryRow(ctx, "SELECT reltuples::bigint FROM pg_class WHERE relname = 'history'").Scan(&rowCount)
 	if err != nil {
 		logger.Warn("failed to query postgres history row count", zap.Error(err))
+		_, _ = model.SetStorage(&gen.Storage{})
 		return
 	}
 
@@ -209,6 +212,7 @@ func updatePostgresStorageModel(ctx context.Context, s *stores.Stores, model *st
 	err = r.QueryRow(ctx, "SELECT pg_database_size(current_database())").Scan(&dbSizeBytes)
 	if err != nil {
 		logger.Warn("failed to query postgres database size", zap.Error(err))
+		_, _ = model.SetStorage(&gen.Storage{})
 		return
 	}
 
