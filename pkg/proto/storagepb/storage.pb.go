@@ -537,10 +537,10 @@ func (x *PerformStorageAdminRequest) GetAction() StorageAdminAction {
 
 type PerformStorageAdminResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Bytes freed by the action, if measurable.
-	FreedBytes *StorageBytes `protobuf:"bytes,1,opt,name=freed_bytes,json=freedBytes,proto3" json:"freed_bytes,omitempty"`
-	// Items freed by the action, if measurable.
-	FreedItems *StorageItems `protobuf:"bytes,2,opt,name=freed_items,json=freedItems,proto3" json:"freed_items,omitempty"`
+	// Number of bytes freed by the action, if measurable.
+	FreedByteCount *uint64 `protobuf:"varint,1,opt,name=freed_byte_count,json=freedByteCount,proto3,oneof" json:"freed_byte_count,omitempty"`
+	// Number of items (rows, records, files, etc.) freed by the action, if measurable.
+	FreedItemCount *uint64 `protobuf:"varint,2,opt,name=freed_item_count,json=freedItemCount,proto3,oneof" json:"freed_item_count,omitempty"`
 	// Human-readable message describing the outcome.
 	Message       string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -577,18 +577,18 @@ func (*PerformStorageAdminResponse) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_storage_v1_storage_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *PerformStorageAdminResponse) GetFreedBytes() *StorageBytes {
-	if x != nil {
-		return x.FreedBytes
+func (x *PerformStorageAdminResponse) GetFreedByteCount() uint64 {
+	if x != nil && x.FreedByteCount != nil {
+		return *x.FreedByteCount
 	}
-	return nil
+	return 0
 }
 
-func (x *PerformStorageAdminResponse) GetFreedItems() *StorageItems {
-	if x != nil {
-		return x.FreedItems
+func (x *PerformStorageAdminResponse) GetFreedItemCount() uint64 {
+	if x != nil && x.FreedItemCount != nil {
+		return *x.FreedItemCount
 	}
-	return nil
+	return 0
 }
 
 func (x *PerformStorageAdminResponse) GetMessage() string {
@@ -743,13 +743,13 @@ const file_smartcore_bos_storage_v1_storage_proto_rawDesc = "" +
 	"\astorage\x18\x03 \x01(\v2!.smartcore.bos.storage.v1.StorageR\astorage\"v\n" +
 	"\x1aPerformStorageAdminRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12D\n" +
-	"\x06action\x18\x02 \x01(\x0e2,.smartcore.bos.storage.v1.StorageAdminActionR\x06action\"\xc9\x01\n" +
-	"\x1bPerformStorageAdminResponse\x12G\n" +
-	"\vfreed_bytes\x18\x01 \x01(\v2&.smartcore.bos.storage.v1.StorageBytesR\n" +
-	"freedBytes\x12G\n" +
-	"\vfreed_items\x18\x02 \x01(\v2&.smartcore.bos.storage.v1.StorageItemsR\n" +
-	"freedItems\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\",\n" +
+	"\x06action\x18\x02 \x01(\x0e2,.smartcore.bos.storage.v1.StorageAdminActionR\x06action\"\xbf\x01\n" +
+	"\x1bPerformStorageAdminResponse\x12-\n" +
+	"\x10freed_byte_count\x18\x01 \x01(\x04H\x00R\x0efreedByteCount\x88\x01\x01\x12-\n" +
+	"\x10freed_item_count\x18\x02 \x01(\x04H\x01R\x0efreedItemCount\x88\x01\x01\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessageB\x13\n" +
+	"\x11_freed_byte_countB\x13\n" +
+	"\x11_freed_item_count\",\n" +
 	"\x16DescribeStorageRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name*\xdf\x01\n" +
 	"\x12StorageAdminAction\x12$\n" +
@@ -807,23 +807,21 @@ var file_smartcore_bos_storage_v1_storage_proto_depIdxs = []int32{
 	12, // 4: smartcore.bos.storage.v1.PullStorageRequest.read_mask:type_name -> google.protobuf.FieldMask
 	11, // 5: smartcore.bos.storage.v1.PullStorageResponse.changes:type_name -> smartcore.bos.storage.v1.PullStorageResponse.Change
 	0,  // 6: smartcore.bos.storage.v1.PerformStorageAdminRequest.action:type_name -> smartcore.bos.storage.v1.StorageAdminAction
-	2,  // 7: smartcore.bos.storage.v1.PerformStorageAdminResponse.freed_bytes:type_name -> smartcore.bos.storage.v1.StorageBytes
-	3,  // 8: smartcore.bos.storage.v1.PerformStorageAdminResponse.freed_items:type_name -> smartcore.bos.storage.v1.StorageItems
-	13, // 9: smartcore.bos.storage.v1.PullStorageResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 10: smartcore.bos.storage.v1.PullStorageResponse.Change.storage:type_name -> smartcore.bos.storage.v1.Storage
-	5,  // 11: smartcore.bos.storage.v1.StorageApi.GetStorage:input_type -> smartcore.bos.storage.v1.GetStorageRequest
-	6,  // 12: smartcore.bos.storage.v1.StorageApi.PullStorage:input_type -> smartcore.bos.storage.v1.PullStorageRequest
-	8,  // 13: smartcore.bos.storage.v1.StorageAdminApi.PerformStorageAdmin:input_type -> smartcore.bos.storage.v1.PerformStorageAdminRequest
-	10, // 14: smartcore.bos.storage.v1.StorageInfo.DescribeStorage:input_type -> smartcore.bos.storage.v1.DescribeStorageRequest
-	1,  // 15: smartcore.bos.storage.v1.StorageApi.GetStorage:output_type -> smartcore.bos.storage.v1.Storage
-	7,  // 16: smartcore.bos.storage.v1.StorageApi.PullStorage:output_type -> smartcore.bos.storage.v1.PullStorageResponse
-	9,  // 17: smartcore.bos.storage.v1.StorageAdminApi.PerformStorageAdmin:output_type -> smartcore.bos.storage.v1.PerformStorageAdminResponse
-	4,  // 18: smartcore.bos.storage.v1.StorageInfo.DescribeStorage:output_type -> smartcore.bos.storage.v1.StorageSupport
-	15, // [15:19] is the sub-list for method output_type
-	11, // [11:15] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	13, // 7: smartcore.bos.storage.v1.PullStorageResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	1,  // 8: smartcore.bos.storage.v1.PullStorageResponse.Change.storage:type_name -> smartcore.bos.storage.v1.Storage
+	5,  // 9: smartcore.bos.storage.v1.StorageApi.GetStorage:input_type -> smartcore.bos.storage.v1.GetStorageRequest
+	6,  // 10: smartcore.bos.storage.v1.StorageApi.PullStorage:input_type -> smartcore.bos.storage.v1.PullStorageRequest
+	8,  // 11: smartcore.bos.storage.v1.StorageAdminApi.PerformStorageAdmin:input_type -> smartcore.bos.storage.v1.PerformStorageAdminRequest
+	10, // 12: smartcore.bos.storage.v1.StorageInfo.DescribeStorage:input_type -> smartcore.bos.storage.v1.DescribeStorageRequest
+	1,  // 13: smartcore.bos.storage.v1.StorageApi.GetStorage:output_type -> smartcore.bos.storage.v1.Storage
+	7,  // 14: smartcore.bos.storage.v1.StorageApi.PullStorage:output_type -> smartcore.bos.storage.v1.PullStorageResponse
+	9,  // 15: smartcore.bos.storage.v1.StorageAdminApi.PerformStorageAdmin:output_type -> smartcore.bos.storage.v1.PerformStorageAdminResponse
+	4,  // 16: smartcore.bos.storage.v1.StorageInfo.DescribeStorage:output_type -> smartcore.bos.storage.v1.StorageSupport
+	13, // [13:17] is the sub-list for method output_type
+	9,  // [9:13] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_storage_v1_storage_proto_init() }
@@ -833,6 +831,7 @@ func file_smartcore_bos_storage_v1_storage_proto_init() {
 	}
 	file_smartcore_bos_storage_v1_storage_proto_msgTypes[1].OneofWrappers = []any{}
 	file_smartcore_bos_storage_v1_storage_proto_msgTypes[2].OneofWrappers = []any{}
+	file_smartcore_bos_storage_v1_storage_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

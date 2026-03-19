@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"path"
-	"syscall"
 	"time"
 
 	"go.uber.org/zap"
@@ -22,6 +21,9 @@ func startStoresStorageTraits(ctx context.Context, n *node.Node, nodeName string
 	var undos []node.Undo
 	retention := historyRetention(cfg)
 
+	// Each backend is announced as an independent Storage trait device.
+	// {nodeName}/stores/history and {nodeName}/stores/postgres measure separate backends
+	// and must not be aggregated together (e.g. summing bytes.used would not be meaningful).
 	if cfg != nil && cfg.DataDir != "" {
 		undo := announceSqliteStorageTraits(ctx, n, nodeName, s, cfg.DataDir, retention, logger.Named("stores.sqlite"))
 		undos = append(undos, undo)
@@ -113,23 +115,10 @@ func updateSqliteStorageModel(ctx context.Context, s *stores.Stores, model *stor
 	})
 }
 
-// sqliteDiskCapacity returns the total disk capacity and utilization for the filesystem
-// containing dataDir, expressed relative to the current DB size.
-// Returns ok=false if the stats cannot be determined.
-func sqliteDiskCapacity(dataDir string, dbUsedBytes uint64) (capacity uint64, utilization float32, ok bool) {
-	var st syscall.Statfs_t
-	if err := syscall.Statfs(dataDir, &st); err != nil || st.Bsize <= 0 || st.Blocks == 0 {
-		return
-	}
-	capacity = st.Blocks * uint64(st.Bsize)
-	utilization = float32(dbUsedBytes) / float32(capacity) * 100
-	ok = true
-	return
-}
 
 func sqliteAdminHandler(ctx context.Context, s *stores.Stores, retentionAge time.Duration, logger *zap.Logger) storagepb.AdminHandler {
 	return func(reqCtx context.Context, action gen.StorageAdminAction) (*gen.PerformStorageAdminResponse, error) {
-		db, err := s.SqliteHistory(ctx)
+		db, err := s.SqliteHistory(reqCtx)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to get sqlite history store: %v", err)
 		}
@@ -141,9 +130,7 @@ func sqliteAdminHandler(ctx context.Context, s *stores.Stores, retentionAge time
 				return nil, status.Errorf(codes.Internal, "clear failed: %v", err)
 			}
 			deletedU := uint64(deleted)
-			return &gen.PerformStorageAdminResponse{
-				FreedItems: &gen.StorageItems{Used: &deletedU},
-			}, nil
+			return &gen.PerformStorageAdminResponse{FreedItemCount: &deletedU}, nil
 
 		case gen.StorageAdminAction_STORAGE_ADMIN_ACTION_DELETE_OLD:
 			cutoff := time.Now().Add(-retentionAge)
@@ -152,9 +139,7 @@ func sqliteAdminHandler(ctx context.Context, s *stores.Stores, retentionAge time
 				return nil, status.Errorf(codes.Internal, "delete_old failed: %v", err)
 			}
 			deletedU := uint64(deleted)
-			return &gen.PerformStorageAdminResponse{
-				FreedItems: &gen.StorageItems{Used: &deletedU},
-			}, nil
+			return &gen.PerformStorageAdminResponse{FreedItemCount: &deletedU}, nil
 
 		default:
 			return nil, status.Errorf(codes.InvalidArgument, "unsupported action: %v", action)
@@ -220,10 +205,19 @@ func updatePostgresStorageModel(ctx context.Context, s *stores.Stores, model *st
 		return
 	}
 
+	var dbSizeBytes int64
+	err = r.QueryRow(ctx, "SELECT pg_database_size(current_database())").Scan(&dbSizeBytes)
+	if err != nil {
+		logger.Warn("failed to query postgres database size", zap.Error(err))
+		return
+	}
+
 	used := uint64(sizeBytes)
 	usedItems := uint64(rowCount)
+	capacity := uint64(dbSizeBytes)
+	utilization := float32(used) / float32(capacity) * 100
 	_, _ = model.SetStorage(&gen.Storage{
-		Bytes: &gen.StorageBytes{Used: &used},
+		Bytes: &gen.StorageBytes{Used: &used, Capacity: &capacity, Utilization: &utilization},
 		Items: &gen.StorageItems{Used: &usedItems},
 	})
 }
@@ -250,9 +244,7 @@ func postgresAdminHandler(s *stores.Stores, retentionAge time.Duration, logger *
 				return nil, status.Errorf(codes.Internal, "delete_old failed: %v", err)
 			}
 			deletedU := uint64(tag.RowsAffected())
-			return &gen.PerformStorageAdminResponse{
-				FreedItems: &gen.StorageItems{Used: &deletedU},
-			}, nil
+			return &gen.PerformStorageAdminResponse{FreedItemCount: &deletedU}, nil
 
 		case gen.StorageAdminAction_STORAGE_ADMIN_ACTION_CLEAR:
 			tag, err := w.Exec(ctx, "DELETE FROM history")
@@ -260,9 +252,7 @@ func postgresAdminHandler(s *stores.Stores, retentionAge time.Duration, logger *
 				return nil, status.Errorf(codes.Internal, "clear failed: %v", err)
 			}
 			deletedU := uint64(tag.RowsAffected())
-			return &gen.PerformStorageAdminResponse{
-				FreedItems: &gen.StorageItems{Used: &deletedU},
-			}, nil
+			return &gen.PerformStorageAdminResponse{FreedItemCount: &deletedU}, nil
 
 		default:
 			return nil, status.Errorf(codes.InvalidArgument, "unsupported action: %v", action)

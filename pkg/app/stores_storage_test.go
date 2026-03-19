@@ -89,8 +89,8 @@ func TestSqliteAdminHandler_Clear(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CLEAR: %v", err)
 	}
-	if resp.FreedItems == nil || resp.FreedItems.Used == nil || *resp.FreedItems.Used != 5 {
-		t.Errorf("expected 5 freed items, got %v", resp.FreedItems)
+	if resp.FreedItemCount == nil || *resp.FreedItemCount != 5 {
+		t.Errorf("expected FreedItemCount=5, got %v", resp.FreedItemCount)
 	}
 
 	count, err := db.TotalCount(ctx)
@@ -134,8 +134,8 @@ func TestSqliteAdminHandler_DeleteOld(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DELETE_OLD: %v", err)
 	}
-	if resp.FreedItems == nil || resp.FreedItems.Used == nil || *resp.FreedItems.Used != 1 {
-		t.Errorf("expected 1 freed item, got %v", resp.FreedItems)
+	if resp.FreedItemCount == nil || *resp.FreedItemCount != 1 {
+		t.Errorf("expected FreedItemCount=1, got %v", resp.FreedItemCount)
 	}
 
 	count, err := db.TotalCount(ctx)
@@ -144,6 +144,37 @@ func TestSqliteAdminHandler_DeleteOld(t *testing.T) {
 	}
 	if count != 1 {
 		t.Errorf("expected 1 record remaining, got %d", count)
+	}
+}
+
+func TestUpdatePostgresStorageModel_NotConfigured(t *testing.T) {
+	ctx := t.Context()
+	// Stores with no postgres config — should log and return without updating the model.
+	s := stores.New(&stores.Config{DataDir: t.TempDir()})
+	t.Cleanup(func() { _ = s.Close() })
+
+	model := storagepb.NewModel()
+	updatePostgresStorageModel(ctx, s, model, zap.NewNop())
+
+	// Model should be empty (default zero value) since postgres is not configured.
+	got, err := model.GetStorage()
+	if err != nil {
+		t.Fatalf("GetStorage: %v", err)
+	}
+	if got.Bytes != nil || got.Items != nil {
+		t.Errorf("expected empty storage model when postgres not configured, got %v", got)
+	}
+}
+
+func TestPostgresAdminHandler_NotConfigured(t *testing.T) {
+	ctx := t.Context()
+	s := stores.New(&stores.Config{DataDir: t.TempDir()})
+	t.Cleanup(func() { _ = s.Close() })
+
+	handler := postgresAdminHandler(s, 30*24*time.Hour, zap.NewNop())
+	_, err := handler(ctx, gen.StorageAdminAction_STORAGE_ADMIN_ACTION_CLEAR)
+	if err == nil {
+		t.Fatal("expected error when postgres not configured, got nil")
 	}
 }
 

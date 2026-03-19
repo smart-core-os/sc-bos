@@ -103,10 +103,10 @@ message PerformStorageAdminRequest {
 }
 
 message PerformStorageAdminResponse {
-  // Bytes freed by the action, if measurable.
-  StorageBytes freed_bytes = 1;
-  // Items freed by the action, if measurable.
-  StorageItems freed_items = 2;
+  // Number of bytes freed by the action, if measurable.
+  optional uint64 freed_byte_count = 1;
+  // Number of items (rows, records, files, etc.) freed by the action, if measurable.
+  optional uint64 freed_item_count = 2;
   // Human-readable message describing the outcome.
   string message = 3;
 }

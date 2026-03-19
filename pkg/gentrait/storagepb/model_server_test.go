@@ -88,9 +88,7 @@ func TestModelServer_PerformStorageAdmin(t *testing.T) {
 	var calledWith storagepb.StorageAdminAction
 	handler := func(_ context.Context, action storagepb.StorageAdminAction) (*storagepb.PerformStorageAdminResponse, error) {
 		calledWith = action
-		return &storagepb.PerformStorageAdminResponse{
-			FreedItems: &storagepb.StorageItems{Used: &freed},
-		}, nil
+		return &storagepb.PerformStorageAdminResponse{FreedItemCount: &freed}, nil
 	}
 
 	model := NewModel()
@@ -107,8 +105,8 @@ func TestModelServer_PerformStorageAdmin(t *testing.T) {
 	if calledWith != storagepb.StorageAdminAction_STORAGE_ADMIN_ACTION_CLEAR {
 		t.Errorf("expected CLEAR action, got %v", calledWith)
 	}
-	if resp.FreedItems == nil || resp.FreedItems.Used == nil || *resp.FreedItems.Used != freed {
-		t.Errorf("expected freed=%d, got %v", freed, resp.FreedItems)
+	if resp.FreedItemCount == nil || *resp.FreedItemCount != freed {
+		t.Errorf("expected FreedItemCount=%d, got %v", freed, resp.FreedItemCount)
 	}
 }
 
