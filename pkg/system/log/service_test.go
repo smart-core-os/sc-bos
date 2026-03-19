@@ -155,7 +155,7 @@ func TestServeLogDownload_missingToken(t *testing.T) {
 	key := newHMACKey()
 	req := httptest.NewRequest(http.MethodGet, "/dl", nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key)
+	serveLogDownload(w, req, key, "")
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusUnauthorized)
 	}
@@ -165,7 +165,7 @@ func TestServeLogDownload_invalidToken(t *testing.T) {
 	key := newHMACKey()
 	req := httptest.NewRequest(http.MethodGet, "/dl?dlt=notvalid", nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key)
+	serveLogDownload(w, req, key, "")
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusUnauthorized)
 	}
@@ -180,7 +180,7 @@ func TestServeLogDownload_fileNotFound(t *testing.T) {
 	encoded := base64.RawURLEncoding.EncodeToString([]byte(tokenStr))
 	req := httptest.NewRequest(http.MethodGet, "/dl?dlt="+encoded, nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key)
+	serveLogDownload(w, req, key, "")
 	if w.Code != http.StatusNotFound {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusNotFound)
 	}
@@ -202,7 +202,7 @@ func TestServeLogDownload_singleFile(t *testing.T) {
 	encoded := base64.RawURLEncoding.EncodeToString([]byte(tokenStr))
 	req := httptest.NewRequest(http.MethodGet, "/dl?dlt="+encoded, nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key)
+	serveLogDownload(w, req, key, dir)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("status = %d, want 200; body: %s", w.Code, w.Body.String())
@@ -227,7 +227,7 @@ func TestServeLogDownload_zipDownload(t *testing.T) {
 	encoded := base64.RawURLEncoding.EncodeToString([]byte(tokenStr))
 	req := httptest.NewRequest(http.MethodGet, "/dl?dlt="+encoded, nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key)
+	serveLogDownload(w, req, key, dir)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("status = %d, want 200", w.Code)
@@ -237,6 +237,104 @@ func TestServeLogDownload_zipDownload(t *testing.T) {
 	}
 	if w.Body.Len() == 0 {
 		t.Error("empty zip body")
+	}
+}
+
+// ---- path validation (isUnderDir / allowedDir enforcement) ----------------------
+
+func TestServeLogDownload_pathOutsideAllowedDir(t *testing.T) {
+	// Create a real file outside the configured log directory.
+	outsideDir := t.TempDir()
+	secret := filepath.Join(outsideDir, "secret.txt")
+	if err := os.WriteFile(secret, []byte("secret"), 0600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	allowedDir := t.TempDir() // different directory
+
+	key := newHMACKey()
+	tokenStr, err := signDownloadToken(downloadClaims{FilePath: secret}, key, time.Now().Add(time.Minute))
+	if err != nil {
+		t.Fatalf("signDownloadToken: %v", err)
+	}
+	encoded := base64.RawURLEncoding.EncodeToString([]byte(tokenStr))
+	req := httptest.NewRequest(http.MethodGet, "/dl?dlt="+encoded, nil)
+	w := httptest.NewRecorder()
+	serveLogDownload(w, req, key, allowedDir)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("status = %d, want %d (forbidden)", w.Code, http.StatusForbidden)
+	}
+}
+
+func TestServeLogDownload_pathPrefixCollision(t *testing.T) {
+	// Ensure "/var/logmalicious/file" is rejected when allowedDir is "/var/log".
+	// We can't create that literal path in a test, so we use temp dirs that
+	// reproduce the same prefix-collision pattern.
+	parent := t.TempDir()
+	allowedDir := filepath.Join(parent, "log")
+	maliciousDir := filepath.Join(parent, "logmalicious")
+	if err := os.MkdirAll(maliciousDir, 0700); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	fp := filepath.Join(maliciousDir, "file.log")
+	if err := os.WriteFile(fp, []byte("should not be served"), 0600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	key := newHMACKey()
+	tokenStr, err := signDownloadToken(downloadClaims{FilePath: fp}, key, time.Now().Add(time.Minute))
+	if err != nil {
+		t.Fatalf("signDownloadToken: %v", err)
+	}
+	encoded := base64.RawURLEncoding.EncodeToString([]byte(tokenStr))
+	req := httptest.NewRequest(http.MethodGet, "/dl?dlt="+encoded, nil)
+	w := httptest.NewRecorder()
+	serveLogDownload(w, req, key, allowedDir)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("prefix-collision: status = %d, want %d", w.Code, http.StatusForbidden)
+	}
+}
+
+func TestIsUnderDir(t *testing.T) {
+	sep := string(filepath.Separator)
+	tests := []struct {
+		fp, dir string
+		want    bool
+	}{
+		{"/var/log/app.log", "/var/log", true},
+		{"/var/log/sub/app.log", "/var/log", true},
+		{"/var/logmalicious/app.log", "/var/log", false},
+		{"/var/log", "/var/log", false},  // dir itself is not "under" dir
+		{"/etc/passwd", "/var/log", false},
+		{"/var/log/app.log", "", true},   // empty dir: check disabled
+		{"relative/path", "", true},
+		{sep + "var" + sep + "log" + sep + "app.log", "/var/log", true},
+	}
+	for _, tt := range tests {
+		got := isUnderDir(tt.fp, tt.dir)
+		if got != tt.want {
+			t.Errorf("isUnderDir(%q, %q) = %v, want %v", tt.fp, tt.dir, got, tt.want)
+		}
+	}
+}
+
+func TestLogAllowedDir(t *testing.T) {
+	tests := []struct {
+		logFilePath, logDir, want string
+	}{
+		{"", "", ""},
+		{"/var/log/app*.log", "", "/var/log"},
+		{"/var/log/app*.log", "/var/log/archive", "/var/log/archive"},
+		{"", "/var/log/archive", "/var/log/archive"},
+		{"/var/log/", "", "/var/log"},
+	}
+	for _, tt := range tests {
+		got := logAllowedDir(tt.logFilePath, tt.logDir)
+		if got != filepath.Clean(tt.want) && !(tt.want == "" && got == "") {
+			t.Errorf("logAllowedDir(%q, %q) = %q, want %q", tt.logFilePath, tt.logDir, got, tt.want)
+		}
 	}
 }
 

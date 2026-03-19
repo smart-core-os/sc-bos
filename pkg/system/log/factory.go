@@ -5,6 +5,7 @@ package log
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"go.uber.org/zap"
 
@@ -58,4 +59,8 @@ type System struct {
 	// preventing the panic that http.ServeMux raises on duplicate pattern registration.
 	httpOnce         sync.Once
 	registeredDLPath string // set by httpOnce; used for URL construction on subsequent reloads
+	// downloadAllowedDir is the directory under which served log files must reside.
+	// Updated atomically on each applyConfig so the handler always enforces the
+	// current config without requiring a re-registration.
+	downloadAllowedDir atomic.Pointer[string]
 }

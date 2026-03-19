@@ -60,6 +60,11 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	// Wire download URL generation if an HTTP mux is available.
 	if s.services.HTTPMux != nil && cfg.LogFilePath != "" {
+		// Update the allowed directory on every config apply so the handler
+		// always enforces the current log root, even after a reload.
+		allowedDir := logAllowedDir(cfg.LogFilePath, cfg.LogDir)
+		s.downloadAllowedDir.Store(&allowedDir)
+
 		// Register the HTTP handler exactly once. Subsequent applyConfig calls
 		// (e.g. on config reload via MonoApply) reuse the same registration so
 		// that http.ServeMux does not panic on duplicate patterns. The HMAC key
@@ -67,7 +72,11 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		s.httpOnce.Do(func() {
 			s.registeredDLPath = cfg.DownloadPath()
 			s.services.HTTPMux.HandleFunc(s.registeredDLPath, func(w http.ResponseWriter, r *http.Request) {
-				serveLogDownload(w, r, s.downloadKey)
+				var dir string
+				if p := s.downloadAllowedDir.Load(); p != nil {
+					dir = *p
+				}
+				serveLogDownload(w, r, s.downloadKey, dir)
 			})
 		})
 
@@ -410,7 +419,7 @@ func buildDownloadURL(urlBase, downloadPath, tokenStr string) (string, error) {
 // concurrent writes from the logger are safe because io.Copy reads sequentially
 // and log rotation produces a new file (the active file is never truncated while
 // the old one is being served).
-func serveLogDownload(w http.ResponseWriter, r *http.Request, key []byte) {
+func serveLogDownload(w http.ResponseWriter, r *http.Request, key []byte, allowedDir string) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Cache-Control", "no-store")
 
@@ -431,12 +440,16 @@ func serveLogDownload(w http.ResponseWriter, r *http.Request, key []byte) {
 	}
 
 	if len(claims.ZipFiles) > 0 {
-		serveZipDownload(w, claims.ZipFiles)
+		serveZipDownload(w, claims.ZipFiles, allowedDir)
 		return
 	}
 
 	// Single file download.
 	fp := filepath.Clean(claims.FilePath)
+	if !isUnderDir(fp, allowedDir) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
 	f, err := os.Open(fp)
 	if err != nil {
 		http.Error(w, "file not found", http.StatusNotFound)
@@ -457,7 +470,8 @@ func serveLogDownload(w http.ResponseWriter, r *http.Request, key []byte) {
 }
 
 // serveZipDownload streams a zip archive containing the listed files.
-func serveZipDownload(w http.ResponseWriter, files []string) {
+// Files that do not reside under allowedDir are silently skipped.
+func serveZipDownload(w http.ResponseWriter, files []string, allowedDir string) {
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", `attachment; filename="logs.zip"`)
 
@@ -466,6 +480,9 @@ func serveZipDownload(w http.ResponseWriter, files []string) {
 
 	for _, fp := range files {
 		fp = filepath.Clean(fp)
+		if !isUnderDir(fp, allowedDir) {
+			continue
+		}
 		f, err := os.Open(fp)
 		if err != nil {
 			continue
@@ -490,6 +507,30 @@ func serveZipDownload(w http.ResponseWriter, files []string) {
 		_, _ = io.Copy(fw, f)
 		f.Close()
 	}
+}
+
+// logAllowedDir returns the directory under which log files are expected,
+// derived from config. The result is used by isUnderDir to validate paths
+// embedded in download tokens before opening them.
+func logAllowedDir(logFilePath, logDir string) string {
+	if logDir != "" {
+		return filepath.Clean(logDir)
+	}
+	if logFilePath != "" {
+		return filepath.Clean(filepath.Dir(logFilePath))
+	}
+	return ""
+}
+
+// isUnderDir reports whether fp resides directly under dir.
+// An empty dir disables the check (returns true), so callers that have no
+// configured log directory remain unaffected.
+func isUnderDir(fp, dir string) bool {
+	if dir == "" {
+		return true
+	}
+	// Use dir+Sep as prefix to prevent "/var/log" from matching "/var/logmalicious".
+	return strings.HasPrefix(fp, dir+string(filepath.Separator))
 }
 
 func detectContentType(fp string) string {
