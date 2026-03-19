@@ -30,6 +30,7 @@
       <span v-if="metadata" class="text-body-2 text-medium-emphasis mr-4">
         {{ metadata.fileCount }} {{ metadata.fileCount === 1 ? 'file' : 'files' }} · {{ formatBytes(metadata.totalSizeBytes) }}
       </span>
+      <v-chip v-if="downloadError" class="mr-2" color="error" size="small">{{ downloadError }}</v-chip>
       <v-btn
           :disabled="!selectedNode || blockSystemEdit"
           class="mr-2"
@@ -119,6 +120,7 @@ const logEl = ref(null);
 const metadata = ref(null);
 const selectedLevel = ref(null);
 const levelError = ref(null);
+const downloadError = ref(null);
 let _keyCounter = 0;
 let stream = null;
 let levelStream = null;
@@ -285,13 +287,14 @@ async function onLevelChange(level) {
  */
 async function downloadCurrent() {
   if (!selectedNode.value) return;
+  downloadError.value = null;
   try {
     const res = await getDownloadLogUrl({name: selectedNode.value, includeRotated: false});
     for (const file of res.filesList ?? []) {
       triggerDownloadFromUrl(file.url, file.filename);
     }
   } catch (e) {
-    console.warn('Failed to download current log', e);
+    downloadError.value = e.message ?? 'Download failed';
   }
 }
 
@@ -300,13 +303,14 @@ async function downloadCurrent() {
  */
 async function downloadAll() {
   if (!selectedNode.value) return;
+  downloadError.value = null;
   try {
     const res = await getDownloadLogUrl({name: selectedNode.value, includeRotated: true});
     for (const file of res.filesList ?? []) {
       triggerDownloadFromUrl(file.url, file.filename);
     }
   } catch (e) {
-    console.warn('Failed to download all logs', e);
+    downloadError.value = e.message ?? 'Download failed';
   }
 }
 
