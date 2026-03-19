@@ -203,6 +203,8 @@ func TestSubscribe_cancelOneLeaveOther(t *testing.T) {
 // TestSubscribe_slowSubscriberDoesNotBlock verifies that AppendMessage uses a
 // non-blocking send: once a subscriber's channel is full, further messages are
 // dropped rather than stalling the caller.
+//
+//goland:noinspection ALL
 func TestSubscribe_slowSubscriberDoesNotBlock(t *testing.T) {
 	m := NewModel(64)
 	_, cancelSlow := m.Subscribe()
@@ -210,7 +212,7 @@ func TestSubscribe_slowSubscriberDoesNotBlock(t *testing.T) {
 
 	// Fill the slow subscriber's channel to its capacity (32).
 	for i := range 32 {
-		m.AppendMessage(msg(string('A' + i%26)))
+		m.AppendMessage(msg(string(rune('A' + i%26))))
 	}
 
 	// One more message would deadlock if AppendMessage blocked.
@@ -229,13 +231,15 @@ func TestSubscribe_slowSubscriberDoesNotBlock(t *testing.T) {
 
 // TestSubscribe_fastSubscriberReceivesAll verifies that a subscriber whose channel
 // is not full receives every message even when another subscriber is slow/full.
+//
+//goland:noinspection ALL
 func TestSubscribe_fastSubscriberReceivesAll(t *testing.T) {
 	m := NewModel(64)
 
 	_, cancelSlow := m.Subscribe()
 	defer cancelSlow()
 	for i := range 32 {
-		m.AppendMessage(msg(string('A' + i%26)))
+		m.AppendMessage(msg(string(rune('A' + i%26))))
 	}
 
 	chFast, cancelFast := m.Subscribe()
@@ -243,7 +247,7 @@ func TestSubscribe_fastSubscriberReceivesAll(t *testing.T) {
 
 	const n = 10
 	for i := range n {
-		m.AppendMessage(msg(string('a' + i)))
+		m.AppendMessage(msg(string(rune('a' + i))))
 	}
 
 	received := 0
