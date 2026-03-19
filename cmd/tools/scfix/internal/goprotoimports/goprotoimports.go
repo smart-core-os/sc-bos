@@ -20,6 +20,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"golang.org/x/tools/go/ast/astutil"
@@ -86,18 +87,20 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 		return "github.com/smart-core-os/sc-bos/" + path.Join(paths...)
 	}
 
-	// All source packages map to pkg/proto/*pb destinations via the same inferTraitPackage
-	// lookup once typeToTraitMap is populated.
+	// All source packages map to pkg/proto/*pb destinations.
 	// defaultAlias is the Go package name used when no explicit import alias is given.
+	// directDest, if non-empty, bypasses the typemap: all symbols map directly to that
+	// destination package (e.g. "typespb"), no per-symbol lookup is needed.
 	sourcePackages := []struct {
 		defaultAlias string
 		importPath   string
+		directDest   string // non-empty: bypass typemap, map directly to this pkg name
 	}{
-		{"gen", bosImportPath("pkg/gen")},
-		{"traits", bosImportPath("sc-api/go/traits")},
-		{"types", bosImportPath("sc-api/go/types")},
-		{"time", bosImportPath("sc-api/go/types/time")},
-		{"info", bosImportPath("sc-api/go/info")},
+		{"gen", bosImportPath("pkg/gen"), ""},
+		{"traits", bosImportPath("sc-api/go/traits"), ""},
+		{"types", bosImportPath("sc-api/go/types"), "typespb"},
+		{"time", bosImportPath("sc-api/go/types/time"), "timepb"},
+		{"info", bosImportPath("sc-api/go/info"), "infopb"},
 	}
 
 	// importAliases maps import path → the alias actually used in this file.
@@ -127,8 +130,14 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 		if !present {
 			continue
 		}
-		c, err := migratePackageRefs(ctx, fset, node, filename, alias, src.importPath,
-			bosImportPath)
+		var c int
+		if src.directDest != "" {
+			c, err = migrateDirectPackageRefs(ctx, fset, node, filename, alias, src.importPath,
+				src.directDest, bosImportPath)
+		} else {
+			c, err = migratePackageRefs(ctx, fset, node, filename, alias, src.importPath,
+				bosImportPath)
+		}
 		if err != nil {
 			return totalChanges, err
 		}
@@ -236,7 +245,7 @@ func migratePackageRefs(
 		expectedFullPath := bosImportPath("pkg/proto", ip)
 		if existingPath, exists := existingImports[pkgName]; exists {
 			if existingPath != expectedFullPath {
-				packageToAlias[pkgName] = "gen_" + pkgName
+				packageToAlias[pkgName] = pkgName + "2"
 			}
 		}
 	}
@@ -292,13 +301,109 @@ func migratePackageRefs(
 	}
 
 	// Update imports: remove old, add new per-trait imports.
-	astutil.DeleteImport(fset, node, oldImportPath)
+	deleteSourceImport(fset, node, oldImportPath)
 	for pkgName, ip := range neededPackages {
 		fullImportPath := bosImportPath("pkg/proto", ip)
 		if alias, hasAlias := packageToAlias[pkgName]; hasAlias {
 			astutil.AddNamedImport(fset, node, alias, fullImportPath)
 		} else {
 			astutil.AddImport(fset, node, fullImportPath)
+		}
+	}
+
+	return changes, nil
+}
+
+// migrateDirectPackageRefs rewrites selector expressions of the form `pkgAlias.Symbol`
+// to `newPkgName.Symbol` without consulting the typemap — all symbols map directly to
+// newPkgName (e.g. "typespb"). The symbol name is preserved unchanged.
+// oldImportPath is removed; a single new import for bosImportPath("pkg/proto", newPkgName) is added.
+// If the file lives in the destination package itself, qualifiers are dropped entirely.
+func migrateDirectPackageRefs(
+	ctx *fixer.Context,
+	fset *token.FileSet,
+	node *ast.File,
+	filename string,
+	pkgAlias string,
+	oldImportPath string,
+	newPkgName string,
+	bosImportPath func(...string) string,
+) (int, error) {
+	usedTypes := findUsedTypesByAlias(node, pkgAlias)
+	if len(usedTypes) == 0 {
+		// No usages of the old alias — the import is a stale artifact from a partial migration.
+		// Remove it so the file compiles cleanly.
+		deleteSourceImport(fset, node, oldImportPath)
+		return 1, nil
+	}
+
+	newImportPath := bosImportPath("pkg/proto", newPkgName)
+
+	// Determine the file's own import path to detect self-imports.
+	ownImportPath, err := fileImportPath(ctx.RootDir, filename)
+	if err != nil {
+		ownImportPath = ""
+	}
+	isSelf := ownImportPath != "" && newImportPath == ownImportPath
+
+	// Check whether the destination package name is already occupied by a different import.
+	existingImports := findExistingTraitImports(node)
+	destAlias := newPkgName
+	if !isSelf {
+		if existingPath, exists := existingImports[newPkgName]; exists && existingPath != newImportPath && existingPath != oldImportPath {
+			destAlias = newPkgName + "2"
+		}
+	}
+
+	changes := 0
+	astutil.Apply(node, func(cursor *astutil.Cursor) bool {
+		selExpr, ok := cursor.Node().(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		ident, ok := selExpr.X.(*ast.Ident)
+		if !ok || ident.Name != pkgAlias {
+			return true
+		}
+		if isSelf {
+			// Drop qualifier entirely — replace pkg.Symbol with just Symbol.
+			cursor.Replace(selExpr.Sel)
+		} else {
+			ident.Name = destAlias
+		}
+		changes++
+		return true
+	}, nil)
+
+	if changes == 0 {
+		return 0, nil
+	}
+
+	// Update comments that reference pkgAlias.Symbol.
+	commentPattern := regexp.MustCompile(`\b` + regexp.QuoteMeta(pkgAlias) + `\.([A-Z][a-zA-Z0-9_]*)`)
+	for _, commentGroup := range node.Comments {
+		for _, comment := range commentGroup.List {
+			updated := commentPattern.ReplaceAllStringFunc(comment.Text, func(match string) string {
+				symbol := commentPattern.FindStringSubmatch(match)[1]
+				if isSelf {
+					return symbol
+				}
+				return destAlias + "." + symbol
+			})
+			if updated != comment.Text {
+				comment.Text = updated
+				changes++
+			}
+		}
+	}
+
+	// Update imports: remove old, add new (unless self-import).
+	deleteSourceImport(fset, node, oldImportPath)
+	if !isSelf {
+		if destAlias != newPkgName {
+			astutil.AddNamedImport(fset, node, destAlias, newImportPath)
+		} else {
+			astutil.AddImport(fset, node, newImportPath)
 		}
 	}
 
@@ -322,6 +427,22 @@ func findUsedTypesByAlias(node *ast.File, pkgAlias string) map[string]bool {
 		return true
 	})
 	return types
+}
+
+// deleteSourceImport removes an import by path regardless of whether it has an explicit alias.
+// astutil.DeleteImport (via DeleteNamedImport with name="") only removes unaliased imports;
+// for aliased imports like timepb "pkg/path", DeleteNamedImport must be called with the alias.
+func deleteSourceImport(fset *token.FileSet, node *ast.File, importPath string) {
+	for _, imp := range node.Imports {
+		if strings.Trim(imp.Path.Value, `"`) == importPath {
+			if imp.Name != nil {
+				astutil.DeleteNamedImport(fset, node, imp.Name.Name, importPath)
+			} else {
+				astutil.DeleteImport(fset, node, importPath)
+			}
+			return
+		}
+	}
 }
 
 // fileImportPath returns the Go import path for the directory containing filename,

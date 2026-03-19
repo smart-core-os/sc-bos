@@ -23,11 +23,11 @@ func main() {
 	}
 }
 
-// priorityPackages are scanned last and overwrite any earlier entries with the same key.
-// These are packages that contain types migrated from sc-api (smartcore.types, smartcore.info)
-// and must take priority over other packages that happen to define a type with the same name
-// (e.g., typespb.PageToken must win over historypb.PageToken).
-var priorityPackages = map[string]bool{
+// excludedPackages are not scanned by genprototypemap.
+// These packages (typespb, infopb, timepb) are handled as direct mappings by goprotoimports
+// and do not need typemap entries. Excluding them prevents name collisions where e.g.
+// typespb.Temperature would overwrite temperaturepb.Temperature in the typemap.
+var excludedPackages = map[string]bool{
 	"typespb": true,
 	"infopb":  true,
 	"timepb":  true,
@@ -49,45 +49,43 @@ func run() error {
 		return fmt.Errorf("pkg/proto directory not found - run protogopkg fixer and go generate first: %w", err)
 	}
 
-	// Two-pass scan: first non-priority packages (first-wins), then priority packages (overwrite).
-	// Priority packages contain types migrated from sc-api and must win name collisions.
-	for _, priority := range []bool{false, true} {
-		err = filepath.WalkDir(protoDir, func(path string, d os.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
+	// Single-pass scan: first-wins. typespb/infopb/timepb are excluded because they are
+	// handled as direct mappings in goprotoimports and must not pollute the typemap.
+	err = filepath.WalkDir(protoDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
 
-			// Skip the root proto directory itself
-			if path == protoDir {
-				return nil
-			}
+		// Skip the root proto directory itself
+		if path == protoDir {
+			return nil
+		}
 
-			// Look for trait package directories (e.g., meterpb, hubpb, driver/dalipb)
-			if d.IsDir() && strings.HasSuffix(d.Name(), "pb") {
-				traitPkg := d.Name()
-				if priorityPackages[traitPkg] != priority {
-					return filepath.SkipDir
-				}
-				// Get the relative path from pkg/proto for the import path
-				relPath, err := filepath.Rel(protoDir, path)
-				if err != nil {
-					return fmt.Errorf("getting relative path: %w", err)
-				}
-				// Convert to forward slashes for import paths
-				importPath := filepath.ToSlash(relPath)
-
-				if err := scanDirectory(path, symbolToTrait, traitPkg, importPath, priority); err != nil {
-					return fmt.Errorf("scanning %s: %w", path, err)
-				}
-				// Skip descending into this directory since scanDirectory already walked it
+		// Look for trait package directories (e.g., meterpb, hubpb, driver/dalipb)
+		if d.IsDir() && strings.HasSuffix(d.Name(), "pb") {
+			traitPkg := d.Name()
+			if excludedPackages[traitPkg] {
 				return filepath.SkipDir
 			}
+			// Get the relative path from pkg/proto for the import path
+			relPath, err := filepath.Rel(protoDir, path)
+			if err != nil {
+				return fmt.Errorf("getting relative path: %w", err)
+			}
+			// Convert to forward slashes for import paths
+			importPath := filepath.ToSlash(relPath)
 
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("scanning pkg/proto: %w", err)
+			if err := scanDirectory(path, symbolToTrait, traitPkg, importPath); err != nil {
+				return fmt.Errorf("scanning %s: %w", path, err)
+			}
+			// Skip descending into this directory since scanDirectory already walked it
+			return filepath.SkipDir
 		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("scanning pkg/proto: %w", err)
 	}
 
 	if len(symbolToTrait) == 0 {
@@ -106,9 +104,9 @@ func run() error {
 // scanDirectory scans a directory for .pb.go files and extracts symbols.
 // The traitPkg parameter is the package name (e.g., "meterpb", "hubpb", "dalipb").
 // The importPath parameter is the relative path from pkg/proto (e.g., "meterpb", "driver/dalipb").
-// If overwrite is true, existing entries in symbolToTrait are replaced; otherwise first-wins.
+// Uses first-wins semantics: existing entries in symbolToTrait are not overwritten.
 // It maps old gen package symbol names to new import paths with symbols (e.g., "meterpb.WrapApi", "driver/dalipb.AddToGroupRequest").
-func scanDirectory(dir string, symbolToTrait map[string]string, traitPkg, importPath string, overwrite bool) error {
+func scanDirectory(dir string, symbolToTrait map[string]string, traitPkg, importPath string) error {
 	return filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -138,9 +136,8 @@ func scanDirectory(dir string, symbolToTrait map[string]string, traitPkg, import
 			// This avoids camel-casing issues with multi-word traits
 			key := strings.ToLower(oldSymbol)
 
-			if overwrite {
-				symbolToTrait[key] = newSymbol
-			} else if _, exists := symbolToTrait[key]; !exists {
+			// First-wins: don't overwrite existing entries.
+			if _, exists := symbolToTrait[key]; !exists {
 				symbolToTrait[key] = newSymbol
 			}
 		}
