@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"path"
+	"syscall"
 	"time"
 
 	"go.uber.org/zap"
@@ -19,24 +20,33 @@ import (
 // and starts polling goroutines. Returns an undo func to clean up.
 func startStoresStorageTraits(ctx context.Context, n *node.Node, nodeName string, s *stores.Stores, cfg *stores.Config, logger *zap.Logger) node.Undo {
 	var undos []node.Undo
+	retention := historyRetention(cfg)
 
 	if cfg != nil && cfg.DataDir != "" {
-		undo := announceSqliteStorageTraits(ctx, n, nodeName, s, logger.Named("stores.sqlite"))
+		undo := announceSqliteStorageTraits(ctx, n, nodeName, s, cfg.DataDir, retention, logger.Named("stores.sqlite"))
 		undos = append(undos, undo)
 	}
 
 	if cfg != nil && cfg.Postgres != nil {
-		undo := announcePostgresStorageTraits(ctx, n, nodeName, s, logger.Named("stores.postgres"))
+		undo := announcePostgresStorageTraits(ctx, n, nodeName, s, retention, logger.Named("stores.postgres"))
 		undos = append(undos, undo)
 	}
 
 	return node.UndoAll(undos...)
 }
 
-func announceSqliteStorageTraits(ctx context.Context, n *node.Node, nodeName string, s *stores.Stores, logger *zap.Logger) node.Undo {
+// historyRetention returns the configured retention age, defaulting to 30 days.
+func historyRetention(cfg *stores.Config) time.Duration {
+	if cfg != nil && cfg.HistoryRetention > 0 {
+		return cfg.HistoryRetention
+	}
+	return 30 * 24 * time.Hour
+}
+
+func announceSqliteStorageTraits(ctx context.Context, n *node.Node, nodeName string, s *stores.Stores, dataDir string, retentionAge time.Duration, logger *zap.Logger) node.Undo {
 	model := storagepb.NewModel()
 	server := storagepb.NewModelServer(model,
-		storagepb.WithAdminHandler(sqliteAdminHandler(ctx, s, logger)),
+		storagepb.WithAdminHandler(sqliteAdminHandler(ctx, s, retentionAge, logger)),
 		storagepb.WithStorageSupport(&gen.StorageSupport{
 			SupportedActions: []gen.StorageAdminAction{
 				gen.StorageAdminAction_STORAGE_ADMIN_ACTION_CLEAR,
@@ -52,14 +62,16 @@ func announceSqliteStorageTraits(ctx context.Context, n *node.Node, nodeName str
 	go func() {
 		tick := time.NewTicker(30 * time.Second)
 		defer tick.Stop()
-		// poll once immediately
-		updateSqliteStorageModel(ctx, s, model, logger)
+		// poll once immediately so GetStorage returns a value without waiting 30s
+		updateSqliteStorageModel(ctx, s, model, dataDir, logger)
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-tick.C:
-				updateSqliteStorageModel(ctx, s, model, logger)
+				if server.HasSubscribers() {
+					updateSqliteStorageModel(ctx, s, model, dataDir, logger)
+				}
 			}
 		}
 	}()
@@ -67,7 +79,7 @@ func announceSqliteStorageTraits(ctx context.Context, n *node.Node, nodeName str
 	return undo
 }
 
-func updateSqliteStorageModel(ctx context.Context, s *stores.Stores, model *storagepb.Model, logger *zap.Logger) {
+func updateSqliteStorageModel(ctx context.Context, s *stores.Stores, model *storagepb.Model, dataDir string, logger *zap.Logger) {
 	db, err := s.SqliteHistory(ctx)
 	if err != nil {
 		logger.Warn("failed to get sqlite history store", zap.Error(err))
@@ -88,13 +100,34 @@ func updateSqliteStorageModel(ctx context.Context, s *stores.Stores, model *stor
 
 	used := uint64(sizeBytes)
 	usedItems := uint64(count)
+
+	bytesMsg := &gen.StorageBytes{Used: &used}
+	if cap, util, ok := sqliteDiskCapacity(dataDir, used); ok {
+		bytesMsg.Capacity = &cap
+		bytesMsg.Utilization = &util
+	}
+
 	_, _ = model.SetStorage(&gen.Storage{
-		Bytes: &gen.StorageBytes{Used: &used},
+		Bytes: bytesMsg,
 		Items: &gen.StorageItems{Used: &usedItems},
 	})
 }
 
-func sqliteAdminHandler(ctx context.Context, s *stores.Stores, logger *zap.Logger) storagepb.AdminHandler {
+// sqliteDiskCapacity returns the total disk capacity and utilization for the filesystem
+// containing dataDir, expressed relative to the current DB size.
+// Returns ok=false if the stats cannot be determined.
+func sqliteDiskCapacity(dataDir string, dbUsedBytes uint64) (capacity uint64, utilization float32, ok bool) {
+	var st syscall.Statfs_t
+	if err := syscall.Statfs(dataDir, &st); err != nil || st.Bsize <= 0 || st.Blocks == 0 {
+		return
+	}
+	capacity = st.Blocks * uint64(st.Bsize)
+	utilization = float32(dbUsedBytes) / float32(capacity) * 100
+	ok = true
+	return
+}
+
+func sqliteAdminHandler(ctx context.Context, s *stores.Stores, retentionAge time.Duration, logger *zap.Logger) storagepb.AdminHandler {
 	return func(reqCtx context.Context, action gen.StorageAdminAction) (*gen.PerformStorageAdminResponse, error) {
 		db, err := s.SqliteHistory(ctx)
 		if err != nil {
@@ -113,7 +146,7 @@ func sqliteAdminHandler(ctx context.Context, s *stores.Stores, logger *zap.Logge
 			}, nil
 
 		case gen.StorageAdminAction_STORAGE_ADMIN_ACTION_DELETE_OLD:
-			cutoff := time.Now().Add(-30 * 24 * time.Hour)
+			cutoff := time.Now().Add(-retentionAge)
 			deleted, err := db.TrimTime(reqCtx, "", cutoff)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "delete_old failed: %v", err)
@@ -129,10 +162,10 @@ func sqliteAdminHandler(ctx context.Context, s *stores.Stores, logger *zap.Logge
 	}
 }
 
-func announcePostgresStorageTraits(ctx context.Context, n *node.Node, nodeName string, s *stores.Stores, logger *zap.Logger) node.Undo {
+func announcePostgresStorageTraits(ctx context.Context, n *node.Node, nodeName string, s *stores.Stores, retentionAge time.Duration, logger *zap.Logger) node.Undo {
 	model := storagepb.NewModel()
 	server := storagepb.NewModelServer(model,
-		storagepb.WithAdminHandler(postgresAdminHandler(s, logger)),
+		storagepb.WithAdminHandler(postgresAdminHandler(s, retentionAge, logger)),
 		storagepb.WithStorageSupport(&gen.StorageSupport{
 			SupportedActions: []gen.StorageAdminAction{
 				gen.StorageAdminAction_STORAGE_ADMIN_ACTION_CLEAR,
@@ -149,14 +182,16 @@ func announcePostgresStorageTraits(ctx context.Context, n *node.Node, nodeName s
 	go func() {
 		tick := time.NewTicker(30 * time.Second)
 		defer tick.Stop()
-		// poll once immediately
+		// poll once immediately so GetStorage returns a value without waiting 30s
 		updatePostgresStorageModel(ctx, s, model, logger)
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-tick.C:
-				updatePostgresStorageModel(ctx, s, model, logger)
+				if server.HasSubscribers() {
+					updatePostgresStorageModel(ctx, s, model, logger)
+				}
 			}
 		}
 	}()
@@ -193,7 +228,7 @@ func updatePostgresStorageModel(ctx context.Context, s *stores.Stores, model *st
 	})
 }
 
-func postgresAdminHandler(s *stores.Stores, logger *zap.Logger) storagepb.AdminHandler {
+func postgresAdminHandler(s *stores.Stores, retentionAge time.Duration, logger *zap.Logger) storagepb.AdminHandler {
 	return func(ctx context.Context, action gen.StorageAdminAction) (*gen.PerformStorageAdminResponse, error) {
 		_, w, _, err := s.Postgres()
 		if err != nil {
@@ -209,7 +244,7 @@ func postgresAdminHandler(s *stores.Stores, logger *zap.Logger) storagepb.AdminH
 			return &gen.PerformStorageAdminResponse{}, nil
 
 		case gen.StorageAdminAction_STORAGE_ADMIN_ACTION_DELETE_OLD:
-			cutoff := time.Now().Add(-30 * 24 * time.Hour)
+			cutoff := time.Now().Add(-retentionAge)
 			tag, err := w.Exec(ctx, "DELETE FROM history WHERE create_time < $1", cutoff)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "delete_old failed: %v", err)

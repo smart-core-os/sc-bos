@@ -27,6 +27,9 @@ type Config struct {
 	// Local directory for storing database files.
 	DataDir string      `json:"-"`
 	Logger  *zap.Logger `json:"-"`
+	// HistoryRetention controls how far back DELETE_OLD admin actions keep records.
+	// Defaults to 30 days when zero.
+	HistoryRetention time.Duration `json:"historyRetention,omitempty"`
 }
 
 type PostgresConfig struct {

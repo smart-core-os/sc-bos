@@ -2,6 +2,7 @@ package storagepb
 
 import (
 	"context"
+	"sync/atomic"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -25,6 +26,8 @@ type ModelServer struct {
 	model        *Model
 	adminHandler AdminHandler
 	support      *storagepb.StorageSupport
+
+	subscribers atomic.Int32
 }
 
 // NewModelServer creates a ModelServer backed by the given Model.
@@ -67,8 +70,16 @@ func (s *ModelServer) GetStorage(_ context.Context, req *storagepb.GetStorageReq
 	return s.model.GetStorage(resource.WithReadMask(req.ReadMask))
 }
 
+// HasSubscribers reports whether any PullStorage streams are currently active.
+// Polling goroutines can use this to skip work when no one is subscribed.
+func (s *ModelServer) HasSubscribers() bool {
+	return s.subscribers.Load() > 0
+}
+
 // PullStorage implements StorageApiServer.
 func (s *ModelServer) PullStorage(req *storagepb.PullStorageRequest, server storagepb.StorageApi_PullStorageServer) error {
+	s.subscribers.Add(1)
+	defer s.subscribers.Add(-1)
 	for change := range s.model.PullStorage(server.Context(), resource.WithReadMask(req.ReadMask), resource.WithUpdatesOnly(req.UpdatesOnly)) {
 		msg := &storagepb.PullStorageResponse{
 			Changes: []*storagepb.PullStorageResponse_Change{{
