@@ -220,7 +220,7 @@ async function startStreams(name) {
   // Also seed level immediately
   try {
     const lvl = await getLogLevel({name});
-    if (selectedLevel.value == null) {
+    if (selectedNode.value === name && selectedLevel.value == null) {
       selectedLevel.value = lvl.level;
     }
   } catch {
