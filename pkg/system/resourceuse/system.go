@@ -3,6 +3,7 @@ package resourceuse
 import (
 	"context"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -16,6 +17,18 @@ import (
 	gen "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 )
 
+func shouldHideDisk(p disk.PartitionStat, hiddenFsTypes map[string]struct{}, hiddenMountPrefixes []string) bool {
+	if _, hidden := hiddenFsTypes[p.Fstype]; hidden {
+		return true
+	}
+	for _, prefix := range hiddenMountPrefixes {
+		if p.Mountpoint == prefix || strings.HasPrefix(p.Mountpoint, prefix+"/") {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *System) applyConfig(ctx context.Context, cfg Root) error {
 	model := resourceusepb.NewModel()
 	modelServer := resourceusepb.NewModelServer(model)
@@ -28,29 +41,31 @@ func (s *System) applyConfig(ctx context.Context, cfg Root) error {
 		node.HasTrait(resourceusepb.TraitName, node.WithClients(gen.WrapApi(modelServer))),
 	)
 
-	go s.pollLoop(ctx, model, interval)
+	hiddenFsTypes := cfg.effectiveHiddenFsTypes()
+	hiddenMountPrefixes := cfg.effectiveHiddenMountPrefixes()
+	go s.pollLoop(ctx, model, interval, hiddenFsTypes, hiddenMountPrefixes)
 
 	return nil
 }
 
-func (s *System) pollLoop(ctx context.Context, model *resourceusepb.Model, interval time.Duration) {
+func (s *System) pollLoop(ctx context.Context, model *resourceusepb.Model, interval time.Duration, hiddenFsTypes map[string]struct{}, hiddenMountPrefixes []string) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	// collect immediately on start
-	s.collect(ctx, model)
+	s.collect(ctx, model, hiddenFsTypes, hiddenMountPrefixes)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			s.collect(ctx, model)
+			s.collect(ctx, model, hiddenFsTypes, hiddenMountPrefixes)
 		}
 	}
 }
 
-func (s *System) collect(ctx context.Context, model *resourceusepb.Model) {
+func (s *System) collect(ctx context.Context, model *resourceusepb.Model, hiddenFsTypes map[string]struct{}, hiddenMountPrefixes []string) {
 	v := &gen.ResourceUse{}
 
 	// Note: With interval 0, on the very first invocation there's no prior sample, so the initial value may be inaccurate
@@ -82,6 +97,9 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model) {
 
 	if parts, err := disk.PartitionsWithContext(ctx, false); err == nil {
 		for _, p := range parts {
+			if shouldHideDisk(p, hiddenFsTypes, hiddenMountPrefixes) {
+				continue
+			}
 			usage, err := disk.UsageWithContext(ctx, p.Mountpoint)
 			if err != nil {
 				continue
