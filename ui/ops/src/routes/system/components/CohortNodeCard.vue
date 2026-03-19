@@ -52,6 +52,12 @@
             <v-list-item link @click="onShowCertificates(node.grpcAddress)">
               <v-list-item-title>View Certificate</v-list-item-title>
             </v-list-item>
+            <v-list-item v-if="hasLogService" link @click="onDownloadLogs(node.name)">
+              <v-list-item-title>Download Logs</v-list-item-title>
+            </v-list-item>
+            <v-list-item v-if="hasLogService" link @click="onViewLiveLogs(node.name)">
+              <v-list-item-title>View Live Logs</v-list-item-title>
+            </v-list-item>
             <v-list-item v-if="node.role !== NodeRole.HUB && !node.isServer"
                          link
                          @click="onForgetNode(node.grpcAddress)">
@@ -218,10 +224,13 @@
 </template>
 
 <script setup>
-import {usePullServiceMetadata} from '@/composables/services.js';
+import {getDownloadLogUrl} from '@/api/ui/log.js';
+import {triggerDownloadFromUrl} from '@/components/download/download.js';
+import {usePullService, usePullServiceMetadata} from '@/composables/services.js';
 import {NodeRole} from '@/stores/cohort.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
 import {computed, reactive} from 'vue';
+import {useRouter} from 'vue-router';
 
 const props = defineProps({
   node: {
@@ -231,8 +240,13 @@ const props = defineProps({
 });
 const emit = defineEmits(['click:show-certificates', 'click:forget-node']);
 
+const router = useRouter();
+
 const cpuExpanded = defineModel('cpuExpanded', {type: Boolean, default: false});
 const diskExpanded = defineModel('diskExpanded', {type: Boolean, default: false});
+
+const {value: logServiceValue} = usePullService(() => ({name: props.node.name + '/systems', id: 'log'}));
+const hasLogService = computed(() => !!logServiceValue.value);
 
 const nodeDetails = reactive({
   automations: usePullServiceMetadata(() => props.node.name + '/automations'),
@@ -260,6 +274,21 @@ const accentStyle = computed(() => {
 
 const onShowCertificates = (address) => emit('click:show-certificates', address);
 const onForgetNode = (address) => emit('click:forget-node', address);
+
+const onViewLiveLogs = (name) => {
+  router.push({path: '/system/logs', query: {node: name}});
+};
+
+const onDownloadLogs = async (name) => {
+  try {
+    const response = await getDownloadLogUrl({name, includeRotated: true});
+    for (const file of response.filesList) {
+      triggerDownloadFromUrl(file.url, file.filename);
+    }
+  } catch (e) {
+    console.warn('Failed to download logs for', name, e);
+  }
+};
 
 const diskShortLabel = (mountPoint) => {
   return mountPoint.split('/').filter(Boolean).pop() || mountPoint;
