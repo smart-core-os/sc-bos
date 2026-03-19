@@ -241,13 +241,13 @@ func registerDeviceRoute(r *router.Router, name string, s service) (Undo, error)
 }
 
 func registerProxyRoute(r *router.Router, name string, conn grpc.ClientConnInterface) (Undo, error) {
-	err := r.SetRoute("", name, conn)
+	prev, err := r.SwapRoute("", name, conn)
 	if err != nil {
 		return NilUndo, err
 	}
 
 	return func() {
-		_ = r.DeleteRouteIfConn("", name, conn)
+		_ = r.RestoreRouteIfConn("", name, conn, prev)
 	}, nil
 }
 

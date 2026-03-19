@@ -8,8 +8,13 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest"
+	"go.uber.org/zap/zaptest/observer"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-api/go/traits"
@@ -131,6 +136,125 @@ func TestSystem_announceCohort(t *testing.T) {
 				gw1.Systems.Set(remoteSystems{msgRecvd: true})
 				synctest.Wait()
 				th.assertSimpleDevices("gw1/d1", "gw1", "gw1/zones") // now we have devices
+			},
+		},
+		{
+			// Hub nodes always proxy all devices regardless of whether they also have an active gateway system.
+			// This is the core behaviour added by the hub-as-gateway change.
+			name: "hub with active gateway system proxies all devices",
+			run: func(t *testing.T, th *announceTester) {
+				hub := th.newRemoteNode("hub", rd("hub"), remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}}, rds("hub/d1", "hub/d2")...)
+				hub.isHub = true
+				th.c.Nodes.Set(hub)
+				th.runAnnounceCohort()
+				// shouldProxyDevice must return true for all hub devices even when isGateway() is true.
+				th.assertSimpleDevices("hub/d1", "hub/d2")
+			},
+		},
+		{
+			// When a hub's gateway status changes, no device removal/re-add events should be emitted.
+			// Without the hub guard in switchGatewayMode, renewDevicesSub() would be called and would
+			// briefly remove all devices before re-adding them, producing spurious PullDevices events.
+			name: "hub gateway status change emits no device churn events",
+			run: func(t *testing.T, th *announceTester) {
+				hub := th.addHub("hub", "hub/d1", "hub/d2")
+				th.runAnnounceCohort()
+				th.assertSimpleDevices("hub/d1", "hub/d2")
+
+				stream := th.n.PullDevices(th.Context(), resource.WithUpdatesOnly(true))
+
+				hub.Systems.Set(remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}})
+				synctest.Wait()
+				select {
+				case c := <-stream:
+					t.Fatalf("unexpected device change when hub became gateway: %+v", c)
+				default:
+				}
+
+				hub.Systems.Set(remoteSystems{msgRecvd: true}) // gateway deactivated
+				synctest.Wait()
+				select {
+				case c := <-stream:
+					t.Fatalf("unexpected device change when hub stopped being gateway: %+v", c)
+				default:
+				}
+			},
+		},
+		{
+			// When a hub's gateway system becomes active, it must continue proxying services.
+			// Without the hub guard in switchGatewayMode, closeServiceSub() would be called and
+			// hub services would stop being proxied.
+			name: "hub becoming gateway keeps services proxied",
+			run: func(t *testing.T, th *announceTester) {
+				desc := findServiceDesc(t, "smartcore.traits.OnOffApi")
+				hub := th.addHub("hub", "hub/d1")
+				hub.Services.Set(desc)
+
+				obsCore, logs := observer.New(zapcore.DebugLevel)
+				th.sys.logger = zap.New(zapcore.NewTee(th.sys.logger.Core(), obsCore))
+
+				th.runAnnounceCohort()
+
+				initialCount := logs.FilterMessage("routable service announced").Len()
+				if initialCount != 1 {
+					t.Fatalf("expected 1 initial service announcement, got %d", initialCount)
+				}
+
+				// Hub gains gateway system — services must remain, no re-announcement.
+				hub.Systems.Set(remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}})
+				synctest.Wait()
+
+				afterCount := logs.FilterMessage("routable service announced").Len()
+				if afterCount != initialCount {
+					t.Errorf("hub gateway status change caused %d spurious service re-announcement(s)", afterCount-initialCount)
+				}
+			},
+		},
+		{
+			// A device added to a hub that has an active gateway system must still be proxied.
+			name: "device added to hub with active gateway is proxied",
+			run: func(t *testing.T, th *announceTester) {
+				hub := th.newRemoteNode("hub", rd("hub"), remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}}, rds("hub/d1")...)
+				hub.isHub = true
+				th.c.Nodes.Set(hub)
+				th.runAnnounceCohort()
+				th.assertSimpleDevices("hub/d1")
+
+				hub.Devices.Set(rd("hub/d2"))
+				synctest.Wait()
+				th.assertSimpleDevices("hub/d1", "hub/d2")
+			},
+		},
+		{
+			// shouldProxyDevice: non-hub gateway with self.name "" must not proxy any device.
+			name: "gateway with unknown name proxies nothing",
+			run: func(t *testing.T, th *announceTester) {
+				gw1 := th.newRemoteNode("gw1",
+					remoteDesc{}, // name not yet known
+					remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}},
+					rds("gw1", "gw1/drivers", "ac1/d1")...)
+				th.c.Nodes.Set(gw1)
+				th.runAnnounceCohort()
+				// name is empty so shouldProxyDevice must return false for everything
+				th.assertSimpleDevices()
+			},
+		},
+		{
+			// shouldProxyDevice: only the gateway's own name and its fixed-service children are proxied.
+			name: "gateway proxies only own name and fixed service children",
+			run: func(t *testing.T, th *announceTester) {
+				th.addGateway("gw1",
+					"gw1",           // own name → proxied
+					"gw1/drivers",   // fixed service child → proxied
+					"gw1/automations", // fixed service child → proxied
+					"gw1/systems",   // fixed service child → proxied
+					"gw1/zones",     // fixed service child → proxied
+					"gw1/d1",        // arbitrary child → NOT proxied
+					"gw1/zone1",     // non-fixed child → NOT proxied
+					"ac1/d1",        // foreign device → NOT proxied
+				)
+				th.runAnnounceCohort()
+				th.assertSimpleDevices("gw1", "gw1/drivers", "gw1/automations", "gw1/systems", "gw1/zones")
 			},
 		},
 		{
@@ -344,6 +468,124 @@ func TestSystem_announceCohort(t *testing.T) {
 				th.assertSimpleDevices("gw1", "gw1/drivers", "gw1/automations", "gw1/systems")
 			},
 		},
+		{
+			// Regression test: reflectNode polls every 10s and calls node.Services.Replace
+			// with fresh service descriptor objects. rx.Set.Replace emits an Update event for
+			// every item already in the set — even when the value is logically unchanged — because
+			// it can't distinguish a same-valued replacement from a real update. The Update handler
+			// in announceRemoteNode un-announces and re-announces the service on every poll, causing
+			// log spam and briefly removing routes.
+			name: "service not re-announced when Replace is called with unchanged descriptors",
+			run: func(t *testing.T, th *announceTester) {
+				desc := findServiceDesc(t, "smartcore.traits.OnOffApi")
+				ac1 := th.addNode("ac1", "ac1/d1")
+				ac1.Services.Set(desc)
+
+				// Instrument the logger with an observer so we can count announcements.
+				obsCore, logs := observer.New(zapcore.DebugLevel)
+				th.sys.logger = zap.New(zapcore.NewTee(th.sys.logger.Core(), obsCore))
+
+				th.runAnnounceCohort()
+
+				initialCount := logs.FilterMessage("routable service announced").Len()
+				if initialCount != 1 {
+					t.Fatalf("expected 1 initial announcement, got %d", initialCount)
+				}
+
+				// Simulate what reflectNode does on every poll: replace with the same descriptors.
+				// This should NOT trigger a re-announcement.
+				ac1.Services.Replace([]protoreflect.ServiceDescriptor{desc})
+				synctest.Wait()
+
+				afterCount := logs.FilterMessage("routable service announced").Len()
+				if afterCount != initialCount {
+					t.Errorf("Services.Replace with unchanged descriptors caused %d spurious re-announcement(s)", afterCount-initialCount)
+				}
+			},
+		},
+		{
+			name: "multiple gateway nodes with hub and delayed self.name",
+			run: func(t *testing.T, th *announceTester) {
+				gw1 := th.newRemoteNode("gw1",
+					remoteDesc{}, // name not yet known
+					remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}},
+					rds("gw1", "gw1/drivers", "gw1/automations", "gw1/systems")...)
+				gw2 := th.newRemoteNode("gw2",
+					remoteDesc{}, // name not yet known
+					remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}},
+					rds("gw2", "gw2/drivers", "gw2/automations", "gw2/systems")...)
+
+				th.addHub("hub", "hub", "hub/d1", "hub/drivers", "hub/automations", "hub/systems")
+				for _, gw := range []*remoteNode{gw1, gw2} {
+					for _, name := range []string{"hub", "hub/drivers", "hub/automations", "hub/systems"} {
+						gw.Devices.Set(rd(name))
+					}
+				}
+
+				th.c.Nodes.Set(gw1)
+				th.c.Nodes.Set(gw2)
+				th.runAnnounceCohort()
+
+				time.Sleep(waitTimeout) // force waitForFunc to time out with name still empty
+				synctest.Wait()         // switchGatewayMode(true) has now run for both with self.name == ""
+				th.assertSimpleDevices("hub", "hub/d1", "hub/drivers", "hub/automations", "hub/systems")
+
+				gw1.Self.Set(rd("gw1"))
+				gw2.Self.Set(rd("gw2"))
+				synctest.Wait() // renewDevicesSub re-evaluates with the now-known names
+
+				th.assertSimpleDevices(
+					"hub", "hub/d1", "hub/drivers", "hub/automations", "hub/systems",
+					"gw1", "gw1/drivers", "gw1/automations", "gw1/systems",
+					"gw2", "gw2/drivers", "gw2/automations", "gw2/systems",
+				)
+			},
+		},
+		{
+			// Regression test for route-clobbering: when gw1's systems info arrives quickly
+			// (msgRecvd=true) but without an active gateway service, gw1 is immediately treated
+			// as a non-gateway and proxies all its devices — including hub re-exports and
+			// downstream ac1 devices.  Those routes overwrite hub's routes.  When gw1 later
+			// confirms it is a gateway, its non-gateway proxy is undone.  The undo must
+			// *restore* hub's routes (via RestoreRouteIfConn) rather than deleting them.
+			// At the announce layer this is visible as:
+			//   - "ac1/d1" appears while gw1 is non-gateway, then disappears after gateway mode.
+			//   - Hub devices persist throughout because hub announces them independently.
+			name: "gateway with delayed gateway status",
+			run: func(t *testing.T, th *announceTester) {
+				// gw1 re-exports hub devices and has a downstream ac1/d1 device.
+				gw1 := th.newRemoteNode("gw1",
+					rd("gw1"),
+					remoteSystems{msgRecvd: true}, // systems received, gateway status not yet known
+					append(
+						rds("gw1", "gw1/drivers", "gw1/automations", "gw1/systems"),
+						rds("hub", "hub/d1", "hub/drivers", "hub/automations", "ac1/d1")...,
+					)...)
+
+				th.addHub("hub", "hub", "hub/d1", "hub/drivers", "hub/automations")
+				th.c.Nodes.Set(gw1)
+				th.runAnnounceCohort()
+
+				// systems.msgRecvd=true → the systems wait resolves immediately →
+				// isGateway()=false → switchGatewayMode(false) → all gw1 devices proxied.
+				th.assertSimpleDevices(
+					"gw1", "gw1/drivers", "gw1/automations", "gw1/systems",
+					"hub", "hub/d1", "hub/drivers", "hub/automations",
+					"ac1/d1",
+				)
+
+				// Gateway status arrives.
+				gw1.Systems.Set(remoteSystems{msgRecvd: true, gateway: &servicespb.Service{Active: true}})
+				synctest.Wait()
+				// gw1 switches to gateway mode:
+				//   - ac1/d1 is no longer proxied (not a fixed-service device under gw1)
+				//   - hub devices remain because hub announced them independently
+				th.assertSimpleDevices(
+					"gw1", "gw1/drivers", "gw1/automations", "gw1/systems",
+					"hub", "hub/d1", "hub/drivers", "hub/automations",
+				)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -543,4 +785,19 @@ func (t *announceTester) assertDevices(want ...*gen_devicespb.Device) {
 
 func cmpDevices(a, b *gen_devicespb.Device) int {
 	return strings.Compare(a.Name, b.Name)
+}
+
+// findServiceDesc looks up a protoreflect.ServiceDescriptor by full name from the global registry.
+// The relevant proto package must already be imported (and thus init()-registered) for this to succeed.
+func findServiceDesc(t *testing.T, fullName string) protoreflect.ServiceDescriptor {
+	t.Helper()
+	d, err := protoregistry.GlobalFiles.FindDescriptorByName(protoreflect.FullName(fullName))
+	if err != nil {
+		t.Fatalf("service %q not found in proto registry: %v", fullName, err)
+	}
+	sd, ok := d.(protoreflect.ServiceDescriptor)
+	if !ok {
+		t.Fatalf("%q resolved to %T, want protoreflect.ServiceDescriptor", fullName, d)
+	}
+	return sd
 }

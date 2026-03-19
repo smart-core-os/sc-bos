@@ -2,7 +2,6 @@
   <v-card width="200px" class="ma-2 keycloak-card">
     <div class="keycloak-card__accent"/>
     <v-card-text class="pa-2 pb-2" style="position: relative; overflow: hidden;">
-
       <!-- Shield watermark -->
       <v-icon class="keycloak-card__watermark">mdi-shield-account</v-icon>
 
@@ -50,7 +49,6 @@
       <div v-if="keycloakHealth.lastPoll" class="text-caption text-medium-emphasis" style="position: relative;">
         {{ lastCheckedLabel }}
       </div>
-
     </v-card-text>
   </v-card>
 </template>

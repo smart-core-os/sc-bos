@@ -3,6 +3,7 @@ package merge
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"go.uber.org/multierr"
@@ -108,7 +109,17 @@ func (h *Health) initializeChecks() error {
 			OccupantImpact:  healthpb.HealthCheck_OccupantImpact(cc.OccupantImpact),
 			EquipmentImpact: healthpb.HealthCheck_EquipmentImpact(cc.EquipmentImpact),
 		})
+		if errors.Is(err, gen_healthpb.ErrAlreadyExists) {
+			// A device check with the same (name, id) already exists — the device check already covers this point.
+			h.logger.Warn("health check already registered, skipping", zap.String("bmsPoint", bmsPointName), zap.String("id", cc.Id))
+			continue
+		}
 		if err != nil {
+			// Dispose any checks we already created to avoid orphaning them.
+			for _, created := range h.DeviceChecks {
+				created.Dispose()
+			}
+			h.DeviceChecks = make(map[string]*gen_healthpb.FaultCheck)
 			return fmt.Errorf("failed to create fault check for %s: %w", cc.DisplayName, err)
 		}
 

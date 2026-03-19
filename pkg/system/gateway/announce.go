@@ -133,11 +133,36 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 	// So we can undo the API proxy and metadata announcement separately.
 	var undoDevices, undoMD, removeChecks tasks
 	shouldProxyDevice := func(c remoteDesc) bool {
-		if isGateway() {
-			// only special names get proxied for gateway nodes
-			suffix := strings.TrimPrefix(c.name, self.name+"/")
-			return c.name == self.name || isFixedServiceName(suffix)
+		// When the remote node is a hub, always proxy all its devices regardless of gateway system status.
+		// This ensures that hubs with gateway systems configured still get properly proxied by gateways/ACs.
+		if a.node.isHub {
+			return true
 		}
+
+		if isGateway() {
+			// When the remote node is a gateway, only proxy its own special names.
+			// This prevents circular routing where gateways proxy each other's devices.
+
+			// If we don't know the gateway's name yet, don't proxy anything
+			if self.name == "" {
+				return false
+			}
+
+			// Proxy the gateway's own node name (e.g., "EG-01")
+			if c.name == self.name {
+				return true
+			}
+
+			// Proxy the gateway's fixed service names (e.g., "EG-01/drivers", "EG-01/systems")
+			if strings.HasPrefix(c.name, self.name+"/") {
+				suffix := strings.TrimPrefix(c.name, self.name+"/")
+				return isFixedServiceName(suffix)
+			}
+
+			// Don't proxy any other devices from gateway nodes
+			return false
+		}
+		// For non-gateway remote nodes (like area controllers), proxy all devices
 		return true
 	}
 	setupDevicesSub := func() {
@@ -179,6 +204,24 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 
 	// helper for switching between gateway and non-gateway mode
 	switchGatewayMode := func(isGateway bool) {
+		// When the remote node is a hub, always proxy its services, reflection, and devices,
+		// even if the hub has a gateway system configured.
+		// For hubs, we don't need to renew device subscriptions on gateway status changes
+		// because shouldProxyDevice always returns true for all hub devices regardless of gateway status.
+		if a.node.isHub {
+			if stopDevicesSub == nil {
+				// Devices not yet set up for hub - do initial setup
+				setupDevicesSub()
+			}
+			if stopServiceSub == nil {
+				// Services not yet set up for hub - do initial setup
+				setupServiceSub()
+				setupReflection()
+			}
+			return
+		}
+
+		// For non-hub nodes, handle gateway status changes normally
 		renewDevicesSub()
 		if isGateway {
 			closeServiceSub()

@@ -2,6 +2,7 @@ package rx
 
 import (
 	"context"
+	"reflect"
 	"sync"
 
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
@@ -74,6 +75,9 @@ func (s *Set[T]) Replace(items []T) (added, deleted, updated *slices.Sorted[T]) 
 			New:  item,
 		}
 		if replaced {
+			if reflect.DeepEqual(old, item) {
+				continue // identical replacement; no change to announce
+			}
 			updated.Set(old)
 			e.Type = Update
 			e.Old = old

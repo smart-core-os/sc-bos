@@ -2,7 +2,6 @@
   <v-card width="300px" class="ma-2 node-card">
     <div class="node-card__accent" :style="accentStyle"/>
     <v-card-text class="pa-3">
-
       <!-- Header -->
       <div class="d-flex align-start">
         <div class="flex-grow-1 min-width-0">
@@ -88,7 +87,6 @@
         <template v-if="!ruResource.streamError && ruResource.value">
           <v-divider class="my-3"/>
           <div class="resource-use">
-
             <template v-if="ruResource.value.cpu?.utilization != null">
               <div class="resource-section-label d-flex align-center">
                 <span class="flex-grow-1">CPU</span>
@@ -212,11 +210,9 @@
               <v-icon size="12" class="mr-1">mdi-connection</v-icon>
               {{ ruResource.value.network.connectionCount }} connections
             </div>
-
           </div>
         </template>
       </with-resource-use>
-
     </v-card-text>
   </v-card>
 </template>
