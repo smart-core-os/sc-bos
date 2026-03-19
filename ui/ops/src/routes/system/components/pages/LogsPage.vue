@@ -78,14 +78,14 @@
 </template>
 
 <script setup>
-import {grpcWebEndpoint} from '@/api/config.js';
 import {getDownloadLogUrl, getLogLevel, pullLogLevel, pullLogMessages, pullLogMetadata, updateLogLevel} from '@/api/ui/log.js';
+import {closeResource, newResourceValue} from '@/api/resource.js';
 import {getService} from '@/api/ui/services.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
 import useAuthSetup from '@/composables/useAuthSetup.js';
 import {useCohortStore} from '@/stores/cohort.js';
 import {storeToRefs} from 'pinia';
-import {computed, nextTick, onUnmounted, ref, watch} from 'vue';
+import {computed, nextTick, onUnmounted, reactive, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 
 const route = useRoute();
@@ -122,9 +122,9 @@ const selectedLevel = ref(null);
 const levelError = ref(null);
 const downloadError = ref(null);
 let _keyCounter = 0;
-let stream = null;
-let levelStream = null;
-let metadataStream = null;
+const messagesResource = reactive(newResourceValue());
+const levelResource = reactive(newResourceValue());
+const metadataResource = reactive(newResourceValue());
 
 const levelOptions = [
   {label: 'DEBUG', value: 1},
@@ -188,37 +188,9 @@ async function startStreams(name) {
   selectedLevel.value = null;
   levelError.value = null;
 
-  const endpoint = await grpcWebEndpoint();
-
-  stream = pullLogMessages(
-      endpoint,
-      {name, initialCount: 200},
-      (newMsgs) => {
-        for (const m of newMsgs) {
-          m._key = _keyCounter++;
-          messages.value.push(m);
-        }
-        if (messages.value.length > 2000) {
-          messages.value.splice(0, messages.value.length - 2000);
-        }
-        messageCount.value++;
-      },
-      (err) => { streamError.value = err; }
-  );
-
-  levelStream = pullLogLevel(
-      endpoint,
-      {name},
-      (lvl) => { selectedLevel.value = lvl; },
-      (err) => { levelError.value = err.message; }
-  );
-
-  metadataStream = pullLogMetadata(
-      endpoint,
-      {name},
-      (md) => { metadata.value = md; },
-      null
-  );
+  pullLogMessages({name, initialCount: 200}, messagesResource);
+  pullLogLevel({name}, levelResource);
+  pullLogMetadata({name}, metadataResource);
 
   // Also seed level immediately
   try {
@@ -235,13 +207,29 @@ async function startStreams(name) {
  * Cancels all active gRPC streams.
  */
 function cancelStreams() {
-  stream?.cancel();
-  stream = null;
-  levelStream?.cancel();
-  levelStream = null;
-  metadataStream?.cancel();
-  metadataStream = null;
+  closeResource(messagesResource);
+  closeResource(levelResource);
+  closeResource(metadataResource);
 }
+
+// Append each incoming batch to the local message buffer.
+watch(() => messagesResource.value, (batch) => {
+  if (!batch?.length) return;
+  for (const m of batch) {
+    m._key = _keyCounter++;
+    messages.value.push(m);
+  }
+  if (messages.value.length > 2000) {
+    messages.value.splice(0, messages.value.length - 2000);
+  }
+  messageCount.value++;
+});
+watch(() => messagesResource.streamError, err => { streamError.value = err?.error ?? null; });
+
+watch(() => levelResource.value, lvl => { if (lvl != null) selectedLevel.value = lvl; });
+watch(() => levelResource.streamError, err => { levelError.value = err?.error?.message ?? null; });
+
+watch(() => metadataResource.value, md => { if (md) metadata.value = md; });
 
 watch(selectedNode, (name) => {
   if (name) {
