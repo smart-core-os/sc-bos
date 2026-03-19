@@ -69,14 +69,15 @@ func (c *Core) Enabled(level zapcore.Level) bool {
 	return false
 }
 
-// With returns a child core with the fields applied to the base.
-// Extra cores are NOT given the With fields; they receive only per-Write fields.
-// This is a deliberate trade-off: static context fields (e.g. service.id) are
-// omitted from captured messages in favour of a simpler implementation.
+// With returns a child core with the fields applied to the base and accumulated
+// for forwarding to extras. Extra cores receive the same With fields so that
+// context added via logger.With (e.g. service.id, node.name) appears in
+// captured log messages.
 func (c *Core) With(fields []zapcore.Field) zapcore.Core {
 	return &childCore{
-		base:   c.base.With(fields),
-		parent: c,
+		base:       c.base.With(fields),
+		parent:     c,
+		withFields: fields,
 	}
 }
 
@@ -109,9 +110,12 @@ func (c *Core) Sync() error {
 // childCore is a Core with permanent With-fields applied to the base.
 // Extra cores from the parent are resolved dynamically at Check time so that
 // cores added after this child was created still receive entries.
+// withFields accumulates all fields added via With calls on the chain so they
+// can be forwarded to extras (which are stored without fields on the parent).
 type childCore struct {
-	base   zapcore.Core
-	parent *Core
+	base       zapcore.Core
+	parent     *Core
+	withFields []zapcore.Field
 }
 
 func (c *childCore) Enabled(level zapcore.Level) bool {
@@ -129,9 +133,13 @@ func (c *childCore) Enabled(level zapcore.Level) bool {
 }
 
 func (c *childCore) With(fields []zapcore.Field) zapcore.Core {
+	merged := make([]zapcore.Field, len(c.withFields)+len(fields))
+	copy(merged, c.withFields)
+	copy(merged[len(c.withFields):], fields)
 	return &childCore{
-		base:   c.base.With(fields),
-		parent: c.parent,
+		base:       c.base.With(fields),
+		parent:     c.parent,
+		withFields: merged,
 	}
 }
 
@@ -139,6 +147,11 @@ func (c *childCore) Check(entry zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 	ce = c.base.Check(entry, ce)
 	c.parent.mu.RLock()
 	for _, e := range c.parent.extra {
+		// Apply accumulated With fields so extras receive the same context
+		// (e.g. service.id, node.name) that the base core sees.
+		if len(c.withFields) > 0 {
+			e = e.With(c.withFields)
+		}
 		ce = e.Check(entry, ce)
 	}
 	c.parent.mu.RUnlock()

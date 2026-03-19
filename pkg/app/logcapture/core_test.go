@@ -114,7 +114,7 @@ func TestWith_extraCoresStillReceive(t *testing.T) {
 	// Add extra AFTER calling With — the child should still forward via parent.
 	logs, extra := newObserverCore()
 	c := Wrap(newNopCore())
-	child := c.With([]zapcore.Field{zapcore.Field{Key: "k", Type: zapcore.StringType, String: "v"}})
+	child := c.With([]zapcore.Field{{Key: "k", Type: zapcore.StringType, String: "v"}})
 
 	remove := c.Add(extra)
 	defer remove()
@@ -123,6 +123,86 @@ func TestWith_extraCoresStillReceive(t *testing.T) {
 
 	if logs.Len() != 1 {
 		t.Errorf("observer got %d entries, want 1", logs.Len())
+	}
+}
+
+func TestWith_fieldsForwardedToExtra(t *testing.T) {
+	// Extra must receive fields added via logger.With, not just per-Write fields.
+	logs, extra := newObserverCore()
+	c := Wrap(newNopCore())
+	remove := c.Add(extra)
+	defer remove()
+
+	withField := zapcore.Field{Key: "service.id", Type: zapcore.StringType, String: "svc-1"}
+	child := c.With([]zapcore.Field{withField})
+	writeEntry(child, "context check")
+
+	if logs.Len() != 1 {
+		t.Fatalf("observer got %d entries, want 1", logs.Len())
+	}
+	fields := logs.All()[0].Context
+	found := false
+	for _, f := range fields {
+		if f.Key == "service.id" && f.String == "svc-1" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("With field 'service.id' not found in captured entry; got fields: %v", fields)
+	}
+}
+
+func TestWith_nestedWithFieldsForwardedToExtra(t *testing.T) {
+	// Fields from multiple chained With calls must all reach the extra.
+	logs, extra := newObserverCore()
+	c := Wrap(newNopCore())
+	remove := c.Add(extra)
+	defer remove()
+
+	child := c.With([]zapcore.Field{{Key: "a", Type: zapcore.StringType, String: "1"}})
+	grandchild := child.With([]zapcore.Field{{Key: "b", Type: zapcore.StringType, String: "2"}})
+	writeEntry(grandchild, "nested")
+
+	if logs.Len() != 1 {
+		t.Fatalf("observer got %d entries, want 1", logs.Len())
+	}
+	fields := logs.All()[0].Context
+	keys := make(map[string]string, len(fields))
+	for _, f := range fields {
+		keys[f.Key] = f.String
+	}
+	if keys["a"] != "1" || keys["b"] != "2" {
+		t.Errorf("nested With fields not forwarded; got keys: %v", keys)
+	}
+}
+
+func TestWith_extraAddedAfterWithReceivesFields(t *testing.T) {
+	// Extra registered AFTER the child logger is created must still receive
+	// the accumulated With fields (extras are resolved at Check time).
+	c := Wrap(newNopCore())
+	child := c.With([]zapcore.Field{{Key: "node", Type: zapcore.StringType, String: "ac1"}})
+
+	// Register extra only after With — the child resolves parent.extra dynamically.
+	logs, extra := newObserverCore()
+	remove := c.Add(extra)
+	defer remove()
+
+	writeEntry(child, "late extra")
+
+	if logs.Len() != 1 {
+		t.Fatalf("observer got %d entries, want 1", logs.Len())
+	}
+	fields := logs.All()[0].Context
+	found := false
+	for _, f := range fields {
+		if f.Key == "node" && f.String == "ac1" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("With field 'node' not found in entry captured by late-registered extra; got: %v", fields)
 	}
 }
 
