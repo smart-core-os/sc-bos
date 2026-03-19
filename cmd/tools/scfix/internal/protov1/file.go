@@ -15,9 +15,10 @@ const scBOSModule = "github.com/smart-core-os/sc-bos"
 
 // protoFile represents a proto file being migrated.
 type protoFile struct {
-	oldPath        string // absolute path
-	newPath        string // absolute path
-	baseDir        string // base directory for computing import paths
+	oldPath        string   // absolute path
+	newPath        string   // absolute path
+	baseDir        string   // base directory for computing import paths
+	altImportPaths []string // additional import path keys (e.g. sc-api-relative paths)
 	oldContent     []byte
 	newContent     []byte
 	oldPackage     string            // e.g., "smartcore.bos" or "smartcore.bos.driver.dali"
@@ -53,20 +54,26 @@ func collectProtoFiles(ctx *fixer.Context) ([]protoFile, error) {
 
 	// Directories to scan for proto files.
 	// destDir, if non-empty, is the base for computing new file paths when shouldMove is true.
+	// importBase, if non-empty, is used to compute alt import paths (how files in this dir
+	// are referenced in import statements by other protos using protoc's include path).
+	scApiProtobuf := filepath.Join(ctx.RootDir, "sc-api", "protobuf")
 	dirsToScan := []struct {
 		path       string
 		shouldMove bool
 		destDir    string // overrides scan dir as the base for moved files
+		importBase string // base for computing alt import paths (e.g. sc-api/protobuf/)
 	}{
-		{protoRoot, true, ""},                                                         // Move files in proto root to versioned structure
-		{filepath.Join(ctx.RootDir, "internal"), false, ""},                           // Update in place
-		{filepath.Join(ctx.RootDir, "pkg"), false, ""},                                // Update in place
-		{filepath.Join(ctx.RootDir, "sc-api", "protobuf", "traits"), true, protoRoot}, // sc-api traits -> proto/
+		{protoRoot, true, "", ""},                                                                    // Move files in proto root to versioned structure
+		{filepath.Join(ctx.RootDir, "internal"), false, "", ""},                                      // Update in place
+		{filepath.Join(ctx.RootDir, "pkg"), false, "", ""},                                           // Update in place
+		{filepath.Join(ctx.RootDir, "sc-api", "protobuf", "traits"), true, protoRoot, scApiProtobuf}, // sc-api traits -> proto/
+		{filepath.Join(ctx.RootDir, "sc-api", "protobuf", "info"), true, protoRoot, scApiProtobuf},   // sc-api info -> proto/
+		{filepath.Join(ctx.RootDir, "sc-api", "protobuf", "types"), true, protoRoot, scApiProtobuf},  // sc-api types -> proto/
 	}
 
 	var allFiles []protoFile
 	for _, dir := range dirsToScan {
-		files, err := collectProtoFilesFromDir(ctx, dir.path, dir.shouldMove, dir.destDir)
+		files, err := collectProtoFilesFromDir(ctx, dir.path, dir.shouldMove, dir.destDir, dir.importBase)
 		if err != nil {
 			// Directory might not exist, skip it
 			ctx.Verbose("  Skipping directory %s: %v", dir.path, err)
@@ -81,8 +88,10 @@ func collectProtoFiles(ctx *fixer.Context) ([]protoFile, error) {
 // collectProtoFilesFromDir discovers proto files in a specific directory.
 // If shouldMove is true, files will be moved to new versioned directory structure.
 // If shouldMove is false, files will be updated in place (package declaration only).
-// destDir, if non-empty, overrides protoDir as the base directory for moved files (used for sc-api traits).
-func collectProtoFilesFromDir(ctx *fixer.Context, protoDir string, shouldMove bool, destDir string) ([]protoFile, error) {
+// destDir, if non-empty, overrides protoDir as the base directory for moved files (used for sc-api files).
+// importBase, if non-empty, is used to compute alt import paths recording how files in this dir
+// are referenced in import statements by other protos (e.g. "types/unit.proto" relative to sc-api/protobuf/).
+func collectProtoFilesFromDir(ctx *fixer.Context, protoDir string, shouldMove bool, destDir string, importBase string) ([]protoFile, error) {
 	var files []protoFile
 	err := filepath.WalkDir(protoDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -106,10 +115,16 @@ func collectProtoFilesFromDir(ctx *fixer.Context, protoDir string, shouldMove bo
 		}
 
 		// Choose the FQN conversion function based on the source package.
-		isTraitsPkg := currentPkg == "smartcore.traits"
-		convertFQN := protopkg.V0ToV1
-		if isTraitsPkg {
+		var convertFQN func(string) string
+		switch {
+		case currentPkg == "smartcore.traits":
 			convertFQN = protopkg.TraitsToV1
+		case currentPkg == "smartcore.info":
+			convertFQN = protopkg.InfoToV1
+		case strings.HasPrefix(currentPkg, "smartcore.types"):
+			convertFQN = protopkg.TypesToV1
+		default:
+			convertFQN = protopkg.V0ToV1
 		}
 
 		// Extract all services and build rename mapping
@@ -180,20 +195,62 @@ func collectProtoFilesFromDir(ctx *fixer.Context, protoDir string, shouldMove bo
 			baseDir = filepath.Dir(path)
 		}
 
-		// Compute updated go_package for sc-api traits files being moved.
+		// Compute updated go_package for files being migrated or corrected.
 		var newGoPackage string
-		if isTraitsPkg && shouldMove {
-			_, resource := splitPackageService(newPackage) // newPackage ends with ".v1"; resource is the segment before that
-			// newPackage is like "smartcore.bos.meter.v1" — strip ".v1" to get resource segment.
-			pkgWithoutV1 := strings.TrimSuffix(newPackage, ".v1")
-			resource = pkgWithoutV1[strings.LastIndex(pkgWithoutV1, ".")+1:]
-			newGoPackage = scBOSModule + "/pkg/proto/" + resource + "pb"
+		if shouldMove {
+			switch {
+			case currentPkg == "smartcore.traits":
+				// newPackage is like "smartcore.bos.meter.v1" — strip ".v1" to get resource segment.
+				pkgWithoutV1 := strings.TrimSuffix(newPackage, ".v1")
+				resource := pkgWithoutV1[strings.LastIndex(pkgWithoutV1, ".")+1:]
+				newGoPackage = scBOSModule + "/pkg/proto/" + resource + "pb"
+			case currentPkg == "smartcore.info":
+				newGoPackage = scBOSModule + "/pkg/proto/infopb"
+			case currentPkg == "smartcore.types":
+				newGoPackage = scBOSModule + "/pkg/proto/typespb"
+			case strings.HasPrefix(currentPkg, "smartcore.types."):
+				// Subpackages of types get a distinct go package to avoid filename collisions
+				// (e.g. both types/ and types/time/ have unit.proto).
+				sub := strings.TrimPrefix(currentPkg, "smartcore.types.")
+				newGoPackage = scBOSModule + "/pkg/proto/" + sub + "pb"
+			}
+		}
+
+		// Compute alt import paths for sc-api files: the path relative to importBase
+		// (e.g. "types/unit.proto" or "types/time/unit.proto" relative to sc-api/protobuf/).
+		// This allows updateImportPaths to prefer exact path matches over basename fallbacks,
+		// avoiding collisions where multiple files share the same basename (e.g. unit.proto).
+		var altImportPaths []string
+		if importBase != "" {
+			if rel, err := filepath.Rel(importBase, path); err == nil {
+				altImportPaths = []string{rel}
+			}
+		}
+		// For already-migrated sc-api types/info files (already in proto/ from a prior fixer run),
+		// add their old sc-api-relative import paths as alt paths so that other files still
+		// using old import strings (e.g. "types/unit.proto") can resolve them correctly.
+		if importBase == "" {
+			switch currentPkg {
+			case "smartcore.bos.types.v1":
+				altImportPaths = append(altImportPaths, "types/"+filename)
+			case "smartcore.bos.info.v1":
+				altImportPaths = append(altImportPaths, "info/"+filename)
+			}
+			// Handle arbitrary types subpackages (e.g. smartcore.bos.types.time.v1)
+			if strings.HasPrefix(currentPkg, "smartcore.bos.types.") &&
+				strings.HasSuffix(currentPkg, ".v1") &&
+				currentPkg != "smartcore.bos.types.v1" {
+				// e.g. "smartcore.bos.types.time.v1" → sub = "time"
+				middle := strings.TrimSuffix(strings.TrimPrefix(currentPkg, "smartcore.bos.types."), ".v1")
+				altImportPaths = append(altImportPaths, "types/"+middle+"/"+filename)
+			}
 		}
 
 		pf := protoFile{
 			oldPath:        path,
 			newPath:        newPath,
 			baseDir:        baseDir,
+			altImportPaths: altImportPaths,
 			oldContent:     content,
 			oldPackage:     currentPkg,
 			newPackage:     newPackage,
@@ -203,7 +260,7 @@ func collectProtoFilesFromDir(ctx *fixer.Context, protoDir string, shouldMove bo
 		}
 
 		// For sc-api traits files being moved, check for conflicts in the destination.
-		if isTraitsPkg && shouldMove {
+		if currentPkg == "smartcore.traits" && shouldMove {
 			conflict, err := checkTraitsConflict(ctx, pf)
 			if err != nil {
 				return fmt.Errorf("checking conflicts for %s: %w", relPath(ctx.RootDir, path), err)

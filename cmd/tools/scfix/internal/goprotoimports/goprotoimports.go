@@ -34,12 +34,25 @@ var Fix = fixer.Fix{
 	Run:  run,
 }
 
+// skipDirs lists directory path components that goprotoimports should not modify.
+// sc-api/ contains generated or upstream-managed files that are not part of the sc-bos codebase.
+var skipDirs = []string{"/sc-api/"}
+
 func run(ctx *fixer.Context) (int, error) {
 	totalChanges := 0
 
 	err := filepath.WalkDir(ctx.RootDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
+		}
+
+		for _, skip := range skipDirs {
+			if strings.Contains(path, skip) {
+				if d.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
 		}
 
 		info, err := d.Info()
@@ -73,37 +86,48 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 		return "github.com/smart-core-os/sc-bos/" + path.Join(paths...)
 	}
 
-	// Both pkg/gen and sc-api/go/traits map to the same pkg/proto/*pb destinations,
-	// so both use the same inferTraitPackage lookup once typeToTraitMap is populated.
+	// All source packages map to pkg/proto/*pb destinations via the same inferTraitPackage
+	// lookup once typeToTraitMap is populated.
+	// defaultAlias is the Go package name used when no explicit import alias is given.
 	sourcePackages := []struct {
-		alias      string
-		importPath string
+		defaultAlias string
+		importPath   string
 	}{
 		{"gen", bosImportPath("pkg/gen")},
 		{"traits", bosImportPath("sc-api/go/traits")},
+		{"types", bosImportPath("sc-api/go/types")},
+		{"time", bosImportPath("sc-api/go/types/time")},
+		{"info", bosImportPath("sc-api/go/info")},
 	}
 
-	presentPackages := make(map[string]bool)
+	// importAliases maps import path → the alias actually used in this file.
+	// This handles files that explicitly alias an import (e.g. timepb "sc-api/go/types/time").
+	importAliases := make(map[string]string)
 	for _, imp := range node.Imports {
 		p := strings.Trim(imp.Path.Value, `"`)
 		for _, src := range sourcePackages {
 			if p == src.importPath {
-				presentPackages[src.importPath] = true
+				if imp.Name != nil {
+					importAliases[p] = imp.Name.Name
+				} else {
+					importAliases[p] = src.defaultAlias
+				}
 			}
 		}
 	}
 
-	if len(presentPackages) == 0 {
+	if len(importAliases) == 0 {
 		return 0, nil
 	}
 
 	totalChanges := 0
 
 	for _, src := range sourcePackages {
-		if !presentPackages[src.importPath] {
+		alias, present := importAliases[src.importPath]
+		if !present {
 			continue
 		}
-		c, err := migratePackageRefs(ctx, fset, node, filename, src.alias, src.importPath,
+		c, err := migratePackageRefs(ctx, fset, node, filename, alias, src.importPath,
 			bosImportPath)
 		if err != nil {
 			return totalChanges, err

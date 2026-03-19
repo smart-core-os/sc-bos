@@ -90,9 +90,13 @@ func isBOSPackage(pkg string) bool {
 }
 
 func isVersioned(pkg string) bool {
-	lastSeg := lastSegment(pkg)
-	// matches v1 and v2.3-beta intentionally
-	return len(lastSeg) > 1 && lastSeg[0] == 'v' && isDigit(lastSeg[1])
+	// Check any segment, not just the last, so e.g. smartcore.bos.types.time.v1 is recognised.
+	for _, seg := range strings.Split(pkg, ".") {
+		if len(seg) > 1 && seg[0] == 'v' && isDigit(seg[1]) {
+			return true
+		}
+	}
+	return false
 }
 
 func isNestedPackage(segment string) bool {
@@ -194,6 +198,36 @@ func TraitsToV1(fqn string) string {
 	}
 	resource := extractResource(service)
 	return "smartcore.bos." + resource + ".v1." + service
+}
+
+// InfoToV1 converts a fully-qualified name from smartcore.info to smartcore.bos.info.v1.
+// e.g. "smartcore.info.NodeInfo" -> "smartcore.bos.info.v1.NodeInfo"
+// Returns fqn unchanged for non-info packages.
+func InfoToV1(fqn string) string {
+	pkg, service := splitPackageService(fqn)
+	if pkg != "smartcore.info" {
+		return fqn
+	}
+	return "smartcore.bos.info.v1." + service
+}
+
+// TypesToV1 converts a fully-qualified name from smartcore.types[.sub…] to
+// smartcore.bos.types[.sub…].v1.
+// e.g. "smartcore.types.Temperature" -> "smartcore.bos.types.v1.Temperature"
+//
+//	"smartcore.types.time.Period"   -> "smartcore.bos.types.time.v1.Period"
+//
+// Returns fqn unchanged for non-types packages.
+func TypesToV1(fqn string) string {
+	pkg, service := splitPackageService(fqn)
+	if pkg == "smartcore.types" {
+		return "smartcore.bos.types.v1." + service
+	}
+	if strings.HasPrefix(pkg, "smartcore.types.") {
+		sub := strings.TrimPrefix(pkg, "smartcore.types.")
+		return "smartcore.bos.types." + sub + ".v1." + service
+	}
+	return fqn
 }
 
 // V1ToTraits is the inverse of TraitsToV1: smartcore.bos.{resource}.v1.Svc -> smartcore.traits.Svc.
