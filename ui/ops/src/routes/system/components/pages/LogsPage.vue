@@ -112,6 +112,7 @@ const nodeNames = computed(() =>
 const selectedNode = ref(route.query.node ?? null);
 
 const messages = ref([]);
+const messageCount = ref(0); // incremented on each batch; watched for auto-scroll
 const search = ref('');
 const streamError = ref(null);
 const logEl = ref(null);
@@ -197,6 +198,7 @@ async function startStreams(name) {
         if (messages.value.length > 2000) {
           messages.value.splice(0, messages.value.length - 2000);
         }
+        messageCount.value++;
       },
       (err) => { streamError.value = err; }
   );
@@ -246,7 +248,7 @@ watch(selectedNode, (name) => {
   }
 }, {immediate: true});
 
-watch(messages, () => {
+watch(messageCount, () => {
   nextTick(() => {
     if (!logEl.value) return;
     const el = logEl.value;
@@ -254,7 +256,7 @@ watch(messages, () => {
       el.scrollTop = el.scrollHeight;
     }
   });
-}, {deep: false});
+});
 
 /**
  * @param {string|null} name
