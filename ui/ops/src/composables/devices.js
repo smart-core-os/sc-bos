@@ -160,7 +160,8 @@ export function useDevices(props) {
   });
   const deviceCollectionOptions = computed(() => {
     return {
-      wantCount: opts.value.wantCount ?? 20
+      wantCount: opts.value.wantCount ?? 20,
+      paused: opts.value.paused ?? false,
     };
   });
 
