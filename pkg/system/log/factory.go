@@ -4,6 +4,8 @@
 package log
 
 import (
+	"sync"
+
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -25,10 +27,11 @@ func (factory) New(services system.Services) service.Lifecycle {
 func NewSystem(services system.Services) *System {
 	logger := services.Logger.Named("log")
 	s := &System{
-		name:      services.Node.Name(),
-		announcer: node.NewReplaceAnnouncer(services.Node),
-		services:  services,
-		logger:    logger,
+		name:        services.Node.Name(),
+		announcer:   node.NewReplaceAnnouncer(services.Node),
+		services:    services,
+		logger:      logger,
+		downloadKey: newHMACKey(),
 	}
 	s.Service = service.New(
 		service.MonoApply(s.applyConfig),
@@ -47,4 +50,12 @@ type System struct {
 	announcer *node.ReplaceAnnouncer
 	services  system.Services
 	logger    *zap.Logger
+
+	// downloadKey is generated once in NewSystem and reused across config reloads
+	// so that previously issued download URLs remain valid after a reload.
+	downloadKey []byte
+	// httpOnce ensures the HTTP download handler is registered exactly once,
+	// preventing the panic that http.ServeMux raises on duplicate pattern registration.
+	httpOnce         sync.Once
+	registeredDLPath string // set by httpOnce; used for URL construction on subsequent reloads
 }

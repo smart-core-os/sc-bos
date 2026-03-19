@@ -60,21 +60,28 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	// Wire download URL generation if an HTTP mux is available.
 	if s.services.HTTPMux != nil && cfg.LogFilePath != "" {
-		key := newHMACKey()
+		// Register the HTTP handler exactly once. Subsequent applyConfig calls
+		// (e.g. on config reload via MonoApply) reuse the same registration so
+		// that http.ServeMux does not panic on duplicate patterns. The HMAC key
+		// is generated once in NewSystem so previously issued URLs remain valid.
+		s.httpOnce.Do(func() {
+			s.registeredDLPath = cfg.DownloadPath()
+			s.services.HTTPMux.HandleFunc(s.registeredDLPath, func(w http.ResponseWriter, r *http.Request) {
+				serveLogDownload(w, r, s.downloadKey)
+			})
+		})
+
 		ttl := time.Duration(cfg.URLTTLSecondsOrDefault()) * time.Second
-		downloadPath := cfg.DownloadPath()
 		urlBase := cfg.HTTPDownloadURLBase
 		if urlBase == "" && s.services.HTTPEndpoint != "" {
 			urlBase = "https://" + s.services.HTTPEndpoint
 		}
+		key := s.downloadKey
+		dlPath := s.registeredDLPath
 
 		srv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
-			return getDownloadLogURL(req, cfg.LogFilePath, cfg.LogDir, urlBase, downloadPath, key, ttl)
+			return getDownloadLogURL(req, cfg.LogFilePath, cfg.LogDir, urlBase, dlPath, key, ttl)
 		}
-
-		s.services.HTTPMux.HandleFunc(downloadPath, func(w http.ResponseWriter, r *http.Request) {
-			serveLogDownload(w, r, key)
-		})
 	}
 
 	// Periodically refresh LogMetadata by walking the log files.
