@@ -19,6 +19,7 @@
           Enroll Node
         </v-tooltip>
         <keycloak-card v-if="keycloakHealth.isConfigured" class="flex-shrink-0"/>
+        <database-card class="flex-shrink-0"/>
       </div>
     </div>
 
@@ -45,6 +46,7 @@
 import CohortNodeCard from '@/routes/system/components/CohortNodeCard.vue';
 import EnrollHubNodeModal from '@/routes/system/components/EnrollHubNodeModal.vue';
 import KeycloakCard from '@/routes/system/components/KeycloakCard.vue';
+import DatabaseCard from '@/routes/system/components/DatabaseCard.vue';
 import {useCohortStore} from '@/stores/cohort.js';
 import {useKeycloakHealthStore} from '@/stores/keycloakHealth.js';
 import {storeToRefs} from 'pinia';

@@ -2,7 +2,6 @@
   <v-card width="300px" class="ma-2 node-card">
     <div class="node-card__accent" :style="accentStyle"/>
     <v-card-text class="pa-3">
-
       <!-- Header -->
       <div class="d-flex align-start">
         <div class="flex-grow-1 min-width-0">
@@ -88,7 +87,6 @@
         <template v-if="!ruResource.streamError && ruResource.value">
           <v-divider class="my-3"/>
           <div class="resource-use">
-
             <template v-if="ruResource.value.cpu?.utilization != null">
               <div class="resource-section-label d-flex align-center">
                 <span class="flex-grow-1">CPU</span>
@@ -212,11 +210,18 @@
               <v-icon size="12" class="mr-1">mdi-connection</v-icon>
               {{ ruResource.value.network.connectionCount }} connections
             </div>
-
           </div>
         </template>
       </with-resource-use>
 
+      <!-- Storage -->
+      <with-storage :name="node.name + '/stores/history'" v-slot="{ resource: historyStorage }">
+        <template v-if="!historyStorage.streamError && historyStorage.value">
+          <v-divider class="my-3"/>
+          <div class="resource-section-label">History Store</div>
+          <storage-rows :storage="historyStorage.value" item-label="record"/>
+        </template>
+      </with-storage>
     </v-card-text>
   </v-card>
 </template>
@@ -225,7 +230,62 @@
 import {usePullServiceMetadata} from '@/composables/services.js';
 import {NodeRole} from '@/stores/cohort.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
-import {computed, reactive} from 'vue';
+import WithStorage from '@/traits/storage/WithStorage.vue';
+import {computed, defineComponent, h, reactive} from 'vue';
+
+const StorageRows = defineComponent({
+  props: {
+    storage: {type: Object, default: () => null},
+    itemLabel: {type: String, default: 'item'}
+  },
+  setup(props) {
+    const formatBytes = (n) => {
+      if (n == null) return '—';
+      if (n < 1024) return `${n} B`;
+      if (n < 1024 ** 2) return `${(n / 1024).toFixed(1)} KB`;
+      if (n < 1024 ** 3) return `${(n / 1024 ** 2).toFixed(1)} MB`;
+      return `${(n / 1024 ** 3).toFixed(2)} GB`;
+    };
+    return () => {
+      const s = props.storage;
+      if (!s) return null;
+      const rows = [];
+
+      if (s.bytes != null) {
+        const bar = s.bytes.utilization != null
+            ? h('v-progress-linear', {
+              modelValue: s.bytes.utilization,
+              color: s.bytes.utilization >= 80 ? 'error' : s.bytes.utilization >= 60 ? 'warning' : 'success',
+              height: 3,
+              rounded: true,
+              class: 'resource-bar'
+            })
+            : null;
+        const usedStr = formatBytes(s.bytes.used);
+        const totalStr = s.bytes.capacity != null ? ` / ${formatBytes(s.bytes.capacity)}` : '';
+        const pctStr = s.bytes.utilization != null ? ` (${s.bytes.utilization.toFixed(1)}%)` : '';
+        const val = `${usedStr}${totalStr}${pctStr}`;
+        rows.push(h('div', {class: 'resource-row'}, [
+          h('span', {class: 'resource-label'}, 'Used: '),
+          bar,
+          h('span', {class: 'resource-value', style: 'width: auto'}, val)
+        ]));
+      }
+
+      if (s.items?.used != null) {
+        const totalItems = s.items.capacity != null
+            ? ` / ${s.items.capacity.toLocaleString()}`
+            : '';
+        rows.push(h('div', {class: 'resource-row'}, [
+          h('span', {class: 'resource-label'}, 'Items: '),
+          h('span', {class: 'resource-value', style: 'width: auto'}, `${s.items.used.toLocaleString()}${totalItems} ${props.itemLabel}s`)
+        ]));
+      }
+
+      return h('div', rows);
+    };
+  }
+});
 
 const props = defineProps({
   node: {
