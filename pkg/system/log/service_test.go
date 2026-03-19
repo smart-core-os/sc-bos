@@ -112,14 +112,8 @@ func TestBuildDownloadURL(t *testing.T) {
 			if u == "" {
 				t.Error("got empty URL")
 			}
-			if tt.wantContains != "" {
-				if len(u) < len(tt.wantContains) {
-					t.Errorf("URL %q does not contain %q", u, tt.wantContains)
-				}
-			}
-			// Token must be present.
-			if _, err := base64.RawURLEncoding.DecodeString(""); u == "" {
-				_ = err
+			if tt.wantContains != "" && !containsString(u, tt.wantContains) {
+				t.Errorf("URL %q does not contain %q", u, tt.wantContains)
 			}
 		})
 	}
