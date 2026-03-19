@@ -42,7 +42,7 @@
             {{ node.grpcAddress }}
           </div>
         </div>
-        <v-menu v-if="node.role !== NodeRole.INDEPENDENT" min-width="175px">
+        <v-menu v-if="node.role !== NodeRole.INDEPENDENT || true" min-width="175px">
           <template #activator="{ props: _props }">
             <v-btn icon="mdi-dots-vertical" variant="text" size="x-small" density="compact" v-bind="_props">
               <v-icon size="16"/>
@@ -247,7 +247,6 @@
           </div>
         </div>
       </template>
-
     </v-card-text>
   </v-card>
 
