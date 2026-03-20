@@ -25,12 +25,7 @@ func run(ctx *fixer.Context) (int, error) {
 			return err
 		}
 
-		info, err := d.Info()
-		if err != nil {
-			return err
-		}
-
-		if !fixer.ShouldProcessFile(path, info) {
+		if !fixer.ShouldProcessFileDir(path, d) {
 			return nil
 		}
 
