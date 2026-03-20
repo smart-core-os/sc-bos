@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package smartcore.bos.storage.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/storagepb";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// StorageApi provides access to storage utilisation stats.
+service StorageApi {
+  rpc GetStorage(GetStorageRequest) returns (Storage);
+  rpc PullStorage(PullStorageRequest) returns (stream PullStorageResponse);
+}
+
+// StorageAdminApi provides administrative actions for a storage resource.
+service StorageAdminApi {
+  rpc PerformStorageAdmin(PerformStorageAdminRequest) returns (PerformStorageAdminResponse);
+}
+
+// StorageInfo provides metadata about what a device supports for the storage trait.
+service StorageInfo {
+  rpc DescribeStorage(DescribeStorageRequest) returns (StorageSupport);
+}
+
+// Storage represents the current state of a storage resource.
+message Storage {
+  // Byte-based measurement (disk space, file size, DB tablespace, etc.)
+  StorageBytes bytes = 1;
+  // Item-based measurement (rows, records, files, log entries, etc.)
+  StorageItems items = 2;
+}
+
+// StorageBytes describes storage consumption measured in bytes.
+message StorageBytes {
+  // Bytes currently in use.
+  optional uint64 used = 1;
+  // Total capacity in bytes. Omit if unlimited or unknown.
+  optional uint64 capacity = 2;
+  // Utilization as a percentage (0–100).
+  optional float utilization = 3;
+}
+
+// StorageItems describes storage consumption measured in discrete items
+// (rows, records, files, log entries, etc.).
+message StorageItems {
+  // Number of items currently stored.
+  optional uint64 used = 1;
+  // Maximum item count. Omit if unlimited or unknown.
+  optional uint64 capacity = 2;
+  // Utilization as a percentage (0–100).
+  optional float utilization = 3;
+}
+
+// StorageAdminAction enumerates the administrative operations that may be
+// performed on a storage resource.
+enum StorageAdminAction {
+  STORAGE_ADMIN_ACTION_UNSPECIFIED = 0;
+  // Delete all data from the storage resource.
+  STORAGE_ADMIN_ACTION_CLEAR = 1;
+  // Delete expired or old records.
+  STORAGE_ADMIN_ACTION_DELETE_OLD = 2;
+  // Run a garbage-collection pass.
+  STORAGE_ADMIN_ACTION_GC = 3;
+  // Compact or repack storage to reclaim fragmented space.
+  STORAGE_ADMIN_ACTION_COMPACT = 4;
+  // Run a database VACUUM to reclaim dead tuples.
+  STORAGE_ADMIN_ACTION_VACUUM = 5;
+}
+
+// StorageSupport describes the capabilities of a device implementing the storage trait.
+message StorageSupport {
+  // Which administrative actions the device supports.
+  repeated StorageAdminAction supported_actions = 1;
+  // Singular name for the item unit when items is populated (e.g. "row", "record", "file").
+  string item_name = 2;
+}
+
+message GetStorageRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullStorageRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullStorageResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    Storage storage = 3;
+  }
+}
+
+message PerformStorageAdminRequest {
+  string name = 1;
+  StorageAdminAction action = 2;
+  // For DELETE_OLD: how far back to keep records. Must be set to a positive value when action is DELETE_OLD.
+  optional google.protobuf.Duration retention_period = 3;
+}
+
+message PerformStorageAdminResponse {
+  // Number of bytes freed by the action, if measurable.
+  optional uint64 freed_byte_count = 1;
+  // Number of items (rows, records, files, etc.) freed by the action, if measurable.
+  optional uint64 freed_item_count = 2;
+  // Human-readable message describing the outcome.
+  string message = 3;
+}
+
+message DescribeStorageRequest {
+  string name = 1;
+}
