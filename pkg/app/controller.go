@@ -696,7 +696,6 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	return
 }
 
-
 const (
 	configDirName = "config"
 	cloudDirName  = "cloud"

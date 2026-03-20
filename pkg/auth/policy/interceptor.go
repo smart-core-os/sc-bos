@@ -191,6 +191,11 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 			zap.Strings("queries", queries),
 		)
 	}
+	subject, name := "", ""
+	if creds.tokenClaims != nil {
+		subject = creds.tokenClaims.Subject
+		name = creds.tokenClaims.Name
+	}
 	// Only audit once per RPC, not for every message on an open client/bidirectional stream.
 	if i.auditLogger != nil && isWriteMethod(method) && !stream.Open {
 		outcome := "allowed"
@@ -202,6 +207,8 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 			zap.String("service", service),
 			zap.String("method", method),
 			zap.String("peer", addr),
+			zap.String("subject", subject),
+			zap.String("name", name),
 			zap.Bool("cert", creds.certValid),
 			zap.String("certSubject", certSubject(creds.cert)),
 			zap.Bool("token", creds.tokenClaims != nil),
@@ -223,6 +230,8 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 				"service":     service,
 				"method":      method,
 				"peer":        addr,
+				"subject":     subject,
+				"name":        name,
 				"cert":        strconv.FormatBool(creds.certValid),
 				"certSubject": certSubject(creds.cert),
 				"token":       strconv.FormatBool(creds.tokenClaims != nil),
@@ -276,6 +285,11 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 			zap.Strings("queries", queries),
 		)
 	}
+	subject, name := "", ""
+	if creds.tokenClaims != nil {
+		subject = creds.tokenClaims.Subject
+		name = creds.tokenClaims.Name
+	}
 	if i.auditLogger != nil && isHTTPWriteMethod(r.Method) {
 		outcome := "allowed"
 		if err != nil {
@@ -286,6 +300,8 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 			zap.String("path", r.URL.Path),
 			zap.String("httpMethod", r.Method),
 			zap.String("peer", addr),
+			zap.String("subject", subject),
+			zap.String("name", name),
 			zap.Bool("cert", creds.certValid),
 			zap.String("certSubject", certSubject(creds.cert)),
 			zap.Bool("token", creds.tokenClaims != nil),
@@ -307,6 +323,8 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 				"path":        r.URL.Path,
 				"httpMethod":  r.Method,
 				"peer":        addr,
+				"subject":     subject,
+				"name":        name,
 				"cert":        strconv.FormatBool(creds.certValid),
 				"certSubject": certSubject(creds.cert),
 				"token":       strconv.FormatBool(creds.tokenClaims != nil),
@@ -386,7 +404,7 @@ func httpPeerCert(r *http.Request) *x509.Certificate {
 // isWriteMethod reports whether the gRPC method name represents a mutating operation.
 // It returns true for any method that does not begin with a known read-only prefix.
 func isWriteMethod(method string) bool {
-	for _, prefix := range []string{"Get", "Pull", "Describe"} {
+	for _, prefix := range []string{"Get", "Pull", "Describe", "List"} {
 		if strings.HasPrefix(method, prefix) {
 			return false
 		}

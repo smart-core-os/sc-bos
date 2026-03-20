@@ -135,6 +135,9 @@ func TestIsWriteMethod(t *testing.T) {
 		{"PullOnOff", false},
 		{"PullDevices", false},
 		{"DescribeOnOff", false},
+		{"ListDevices", false},
+		{"ListAlerts", false},
+		{"ListHubNodes", false},
 		// mutating methods that used to be missed — must be audited
 		{"AcknowledgeAlert", true},
 		{"UnacknowledgeAlert", true},
