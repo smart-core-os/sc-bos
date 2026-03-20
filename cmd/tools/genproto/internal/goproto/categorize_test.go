@@ -340,6 +340,54 @@ func TestAnalyzeProtoFiles(t *testing.T) {
 	}
 }
 
+func TestOutputDirFromDescriptor(t *testing.T) {
+	tests := []struct {
+		name      string
+		goPackage string
+		want      string
+	}{
+		{
+			name:      "standard sc-bos go_package",
+			goPackage: "github.com/smart-core-os/sc-bos/pkg/proto/countpb",
+			want:      "pkg/proto/countpb",
+		},
+		{
+			name:      "go_package with semicolon alias",
+			goPackage: "github.com/smart-core-os/sc-bos/pkg/proto/countpb;countpb",
+			want:      "pkg/proto/countpb",
+		},
+		{
+			name:      "external module go_package",
+			goPackage: "github.com/smart-core-os/sc-golang/pkg/trait/count",
+			want:      "",
+		},
+		{
+			name:      "empty go_package",
+			goPackage: "",
+			want:      "",
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var desc *descriptorpb.FileDescriptorProto
+			if i == len(tests)-1 {
+				// nil Options case: no Options field set at all
+				desc = &descriptorpb.FileDescriptorProto{}
+			} else {
+				desc = &descriptorpb.FileDescriptorProto{
+					Options: &descriptorpb.FileOptions{
+						GoPackage: proto.String(tt.goPackage),
+					},
+				}
+			}
+			if got := outputDirFromDescriptor(desc); got != tt.want {
+				t.Errorf("outputDirFromDescriptor() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestHasNameField(t *testing.T) {
 	tests := []struct {
 		name string
