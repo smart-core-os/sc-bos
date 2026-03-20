@@ -11,7 +11,7 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // A trait to control the input for a device. Typically related to AV devices like displays or presentation switchers.
 // A more complicated device might have multiple outputs, this trait also supports this.
@@ -54,7 +54,7 @@ message Input {
 // InputSupport describes the capabilities of devices implementing this trait
 message InputSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // the list of inputs that can be selected on this device
   repeated AvPort inputs = 2;
   // indicate the possible mode of input selection that are supported by this device. This is not the current mode, just

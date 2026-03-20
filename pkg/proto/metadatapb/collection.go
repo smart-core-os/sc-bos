@@ -7,8 +7,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type Collection struct {
@@ -112,7 +112,7 @@ func (m *Collection) ListMetadata(opts ...resource.ReadOption) []*Metadata {
 type CollectionChange struct {
 	Name          string
 	ChangeTime    time.Time
-	ChangeType    types.ChangeType
+	ChangeType    typespb.ChangeType
 	OldValue      *Metadata
 	NewValue      *Metadata
 	LastSeedValue bool

@@ -4,9 +4,9 @@ import (
 	"context"
 	"sort"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // ModelServer exposes Model as a traits.ParentApiServer.
@@ -24,7 +24,7 @@ func (s *ModelServer) Unwrap() any {
 }
 
 func (s *ModelServer) ListChildren(_ context.Context, request *ListChildrenRequest) (*ListChildrenResponse, error) {
-	pageToken := &types.PageToken{}
+	pageToken := &typespb.PageToken{}
 	if err := decodePageToken(request.PageToken, pageToken); err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (s *ModelServer) ListChildren(_ context.Context, request *ListChildrenReque
 		upperBound = len(all)
 		pageToken = nil
 	} else {
-		pageToken.PageStart = &types.PageToken_LastResourceName{
+		pageToken.PageStart = &typespb.PageToken_LastResourceName{
 			LastResourceName: all[upperBound-1].Name,
 		}
 	}

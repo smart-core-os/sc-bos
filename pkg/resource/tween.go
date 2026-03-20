@@ -6,14 +6,15 @@ import (
 	"io"
 	"time"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 	"github.com/tanema/gween"
 	"github.com/tanema/gween/ease"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
-func ValidateTweenOnUpdate(name string, tween *types.Tween) error {
+func ValidateTweenOnUpdate(name string, tween *typespb.Tween) error {
 	if tween == nil {
 		return nil
 	}
@@ -27,14 +28,14 @@ func ValidateTweenOnUpdate(name string, tween *types.Tween) error {
 	return nil
 }
 
-func ValidateNoProgress(name string, tween *types.Tween) error {
+func ValidateNoProgress(name string, tween *typespb.Tween) error {
 	if tween.GetProgress() != 0 {
 		return status.Errorf(codes.InvalidArgument, "%v_tween.progress should not be set, got %v", name, tween.GetProgress())
 	}
 	return nil
 }
 
-func ValidateNonNegativeDuration(name string, tween *types.Tween) error {
+func ValidateNonNegativeDuration(name string, tween *typespb.Tween) error {
 	if tween.GetTotalDuration().AsDuration() < 0 {
 		return status.Errorf(codes.InvalidArgument, "%v_tween.total_duration should be non-negative, got %v", name, tween.GetTotalDuration())
 	}

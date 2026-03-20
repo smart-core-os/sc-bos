@@ -11,8 +11,8 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-bos/internal/testproto"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // val returns a simple TestAllTypes with DefaultInt32 set to v, used as a distinguishable proto value.
@@ -121,8 +121,8 @@ func TestWithUpdatesOnly(t *testing.T) {
 			got[i] = collectionChange{Id: event.Id, OldValue: event.OldValue, NewValue: event.NewValue, ChangeType: event.ChangeType}
 		}
 		want := []collectionChange{
-			{Id: "A", OldValue: nil, NewValue: val(1), ChangeType: types.ChangeType_ADD},
-			{Id: "A", OldValue: val(1), NewValue: val(2), ChangeType: types.ChangeType_UPDATE},
+			{Id: "A", OldValue: nil, NewValue: val(1), ChangeType: typespb.ChangeType_ADD},
+			{Id: "A", OldValue: val(1), NewValue: val(2), ChangeType: typespb.ChangeType_UPDATE},
 		}
 
 		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
@@ -158,7 +158,7 @@ func TestWithUpdatesOnly(t *testing.T) {
 			got[i] = collectionChange{Id: event.Id, OldValue: event.OldValue, NewValue: event.NewValue, ChangeType: event.ChangeType}
 		}
 		want := []collectionChange{
-			{Id: "A", OldValue: val(1), NewValue: val(2), ChangeType: types.ChangeType_UPDATE},
+			{Id: "A", OldValue: val(1), NewValue: val(2), ChangeType: typespb.ChangeType_UPDATE},
 		}
 
 		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
@@ -242,9 +242,9 @@ func TestWithInclude(t *testing.T) {
 			got[i] = collectionChange{Id: event.Id, OldValue: event.OldValue, NewValue: event.NewValue, ChangeType: event.ChangeType}
 		}
 		want := []collectionChange{
-			{Id: "B", NewValue: val(2), ChangeType: types.ChangeType_ADD},
-			{Id: "A", NewValue: val(2), ChangeType: types.ChangeType_ADD},
-			{Id: "B", OldValue: val(2), ChangeType: types.ChangeType_REMOVE},
+			{Id: "B", NewValue: val(2), ChangeType: typespb.ChangeType_ADD},
+			{Id: "A", NewValue: val(2), ChangeType: typespb.ChangeType_ADD},
+			{Id: "B", OldValue: val(2), ChangeType: typespb.ChangeType_REMOVE},
 		}
 
 		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
@@ -379,7 +379,7 @@ func TestWithMerger(t *testing.T) {
 type collectionChange struct {
 	Id                 string
 	OldValue, NewValue proto.Message
-	ChangeType         types.ChangeType
+	ChangeType         typespb.ChangeType
 }
 
 func add(t *testing.T, c *Collection, id string, msg proto.Message) {

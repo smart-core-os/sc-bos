@@ -24,9 +24,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func TestSystem_announceCohort(t *testing.T) {
@@ -604,7 +604,7 @@ func assertDeviceUpdate(t *testing.T, stream <-chan devicespb.DevicesChange, wan
 	// all updates look a bit like this, with different old/new values
 	want := devicespb.DevicesChange{
 		Id:         "ac1/d1",
-		ChangeType: types.ChangeType_UPDATE,
+		ChangeType: typespb.ChangeType_UPDATE,
 		ChangeTime: now,
 		OldValue:   wantOld,
 		NewValue:   wantNew,
@@ -622,7 +622,7 @@ func assertDeviceUpdate(t *testing.T, stream <-chan devicespb.DevicesChange, wan
 		// We can't predict the exact state transition, but we can verify the old state
 		wantIntermediate := devicespb.DevicesChange{
 			Id:         "ac1/d1",
-			ChangeType: types.ChangeType_UPDATE,
+			ChangeType: typespb.ChangeType_UPDATE,
 			ChangeTime: now,
 			OldValue:   want.OldValue,
 		}

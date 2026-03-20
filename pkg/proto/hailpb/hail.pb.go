@@ -7,7 +7,7 @@
 package hailpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -916,7 +916,7 @@ func (x *DescribeHailRequest) GetName() string {
 type HailSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// The list of Locations that the implementing device can be requested to transport the passenger to.
 	SupportedLocations []*Hail_Location `protobuf:"bytes,2,rep,name=supported_locations,json=supportedLocations,proto3" json:"supported_locations,omitempty"`
 	unknownFields      protoimpl.UnknownFields
@@ -953,7 +953,7 @@ func (*HailSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_hail_v1_hail_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *HailSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *HailSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -1096,7 +1096,7 @@ type PullHailsResponse_Change struct {
 	// The name of the device that emitted this change
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The type of change (e.g. ADD, UPDATE, etc...)
-	Type types.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type typespb.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	// The new value to use for ADD|UPDATE changes
 	NewValue *Hail `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// The old value to use for UPDATE|REMOVE changes
@@ -1144,11 +1144,11 @@ func (x *PullHailsResponse_Change) GetName() string {
 	return ""
 }
 
-func (x *PullHailsResponse_Change) GetType() types.ChangeType {
+func (x *PullHailsResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 func (x *PullHailsResponse_Change) GetNewValue() *Hail {
@@ -1176,7 +1176,7 @@ var File_smartcore_bos_hail_v1_hail_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_hail_v1_hail_proto_rawDesc = "" +
 	"\n" +
-	" smartcore/bos/hail/v1/hail.proto\x12\x15smartcore.bos.hail.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\x1a\x10types/info.proto\"\xdb\x04\n" +
+	" smartcore/bos/hail/v1/hail.proto\x12\x15smartcore.bos.hail.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a#smartcore/bos/types/v1/change.proto\x1a!smartcore/bos/types/v1/info.proto\"\xdb\x04\n" +
 	"\x04Hail\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12<\n" +
 	"\x06origin\x18\x02 \x01(\v2$.smartcore.bos.hail.v1.Hail.LocationR\x06origin\x12F\n" +
@@ -1242,20 +1242,20 @@ const file_smartcore_bos_hail_v1_hail_proto_rawDesc = "" +
 	"\x10PullHailsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xdf\x02\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xe6\x02\n" +
 	"\x11PullHailsResponse\x12I\n" +
-	"\achanges\x18\x01 \x03(\v2/.smartcore.bos.hail.v1.PullHailsResponse.ChangeR\achanges\x1a\xfe\x01\n" +
+	"\achanges\x18\x01 \x03(\v2/.smartcore.bos.hail.v1.PullHailsResponse.ChangeR\achanges\x1a\x85\x02\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x128\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\x128\n" +
 	"\tnew_value\x18\x03 \x01(\v2\x1b.smartcore.bos.hail.v1.HailR\bnewValue\x128\n" +
 	"\told_value\x18\x04 \x01(\v2\x1b.smartcore.bos.hail.v1.HailR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"changeTime\")\n" +
 	"\x13DescribeHailRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"\xb1\x01\n" +
-	"\vHailSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12U\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\xb8\x01\n" +
+	"\vHailSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12U\n" +
 	"\x13supported_locations\x18\x02 \x03(\v2$.smartcore.bos.hail.v1.Hail.LocationR\x12supportedLocations2\x86\x05\n" +
 	"\aHailApi\x12S\n" +
 	"\n" +
@@ -1307,8 +1307,8 @@ var file_smartcore_bos_hail_v1_hail_proto_goTypes = []any{
 	(*PullHailsResponse_Change)(nil), // 17: smartcore.bos.hail.v1.PullHailsResponse.Change
 	(*timestamppb.Timestamp)(nil),    // 18: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),    // 19: google.protobuf.FieldMask
-	(*types.ResourceSupport)(nil),    // 20: smartcore.types.ResourceSupport
-	(types.ChangeType)(0),            // 21: smartcore.types.ChangeType
+	(*typespb.ResourceSupport)(nil),  // 20: smartcore.bos.types.v1.ResourceSupport
+	(typespb.ChangeType)(0),          // 21: smartcore.bos.types.v1.ChangeType
 }
 var file_smartcore_bos_hail_v1_hail_proto_depIdxs = []int32{
 	15, // 0: smartcore.bos.hail.v1.Hail.origin:type_name -> smartcore.bos.hail.v1.Hail.Location
@@ -1328,11 +1328,11 @@ var file_smartcore_bos_hail_v1_hail_proto_depIdxs = []int32{
 	1,  // 14: smartcore.bos.hail.v1.ListHailsResponse.hails:type_name -> smartcore.bos.hail.v1.Hail
 	19, // 15: smartcore.bos.hail.v1.PullHailsRequest.read_mask:type_name -> google.protobuf.FieldMask
 	17, // 16: smartcore.bos.hail.v1.PullHailsResponse.changes:type_name -> smartcore.bos.hail.v1.PullHailsResponse.Change
-	20, // 17: smartcore.bos.hail.v1.HailSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	20, // 17: smartcore.bos.hail.v1.HailSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	15, // 18: smartcore.bos.hail.v1.HailSupport.supported_locations:type_name -> smartcore.bos.hail.v1.Hail.Location
 	18, // 19: smartcore.bos.hail.v1.PullHailResponse.Change.change_time:type_name -> google.protobuf.Timestamp
 	1,  // 20: smartcore.bos.hail.v1.PullHailResponse.Change.hail:type_name -> smartcore.bos.hail.v1.Hail
-	21, // 21: smartcore.bos.hail.v1.PullHailsResponse.Change.type:type_name -> smartcore.types.ChangeType
+	21, // 21: smartcore.bos.hail.v1.PullHailsResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	1,  // 22: smartcore.bos.hail.v1.PullHailsResponse.Change.new_value:type_name -> smartcore.bos.hail.v1.Hail
 	1,  // 23: smartcore.bos.hail.v1.PullHailsResponse.Change.old_value:type_name -> smartcore.bos.hail.v1.Hail
 	18, // 24: smartcore.bos.hail.v1.PullHailsResponse.Change.change_time:type_name -> google.protobuf.Timestamp

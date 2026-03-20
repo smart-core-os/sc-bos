@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type ModelServer struct {
@@ -60,9 +60,9 @@ func (s *ModelServer) PullBrightness(request *PullBrightnessRequest, server Ligh
 
 func (s *ModelServer) DescribeBrightness(_ context.Context, _ *DescribeBrightnessRequest) (*BrightnessSupport, error) {
 	support := &BrightnessSupport{
-		ResourceSupport: &types.ResourceSupport{
+		ResourceSupport: &typespb.ResourceSupport{
 			Readable: true, Writable: true, Observable: true,
-			PullSupport: types.PullSupport_PULL_SUPPORT_NATIVE,
+			PullSupport: typespb.PullSupport_PULL_SUPPORT_NATIVE,
 		},
 		Presets: s.model.ListPresets(),
 	}

@@ -12,12 +12,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/merge"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type Group struct {
@@ -188,7 +188,7 @@ func mergeAirTemperature(all []*airtemperaturepb.AirTemperature) (*airtemperatur
 				return 0, false
 			}
 		}); ok {
-			out.TemperatureGoal = &airtemperaturepb.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint}}
+			out.TemperatureGoal = &airtemperaturepb.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &typespb.Temperature{ValueCelsius: setPoint}}
 		}
 		// AmbientTemperature
 		if val, ok := merge.Mean(all, func(e *airtemperaturepb.AirTemperature) (float64, bool) {
@@ -197,7 +197,7 @@ func mergeAirTemperature(all []*airtemperaturepb.AirTemperature) (*airtemperatur
 			}
 			return e.AmbientTemperature.ValueCelsius, true
 		}); ok {
-			out.AmbientTemperature = &types.Temperature{ValueCelsius: val}
+			out.AmbientTemperature = &typespb.Temperature{ValueCelsius: val}
 		}
 		// AmbientHumidity
 		if val, ok := merge.Mean(all, func(e *airtemperaturepb.AirTemperature) (float32, bool) {
@@ -215,7 +215,7 @@ func mergeAirTemperature(all []*airtemperaturepb.AirTemperature) (*airtemperatur
 			}
 			return e.DewPoint.ValueCelsius, true
 		}); ok {
-			out.DewPoint = &types.Temperature{ValueCelsius: val}
+			out.DewPoint = &typespb.Temperature{ValueCelsius: val}
 		}
 		// can't average the mode, if they're all the same use it
 		for _, temp := range all {

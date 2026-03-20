@@ -7,8 +7,8 @@
 package bookingpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
-	time "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
+	timepb "github.com/smart-core-os/sc-bos/pkg/proto/timepb"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -92,12 +92,12 @@ type Booking struct {
 	// the name of the owner of this booking
 	OwnerName string `protobuf:"bytes,4,opt,name=owner_name,json=ownerName,proto3" json:"owner_name,omitempty"`
 	// the time period this booking is for
-	Booked *time.Period `protobuf:"bytes,5,opt,name=booked,proto3" json:"booked,omitempty"`
+	Booked *timepb.Period `protobuf:"bytes,5,opt,name=booked,proto3" json:"booked,omitempty"`
 	// The time period this booking was checked in for.
 	// If this is absent, then no check in or check out has happened
 	// If check_in.start_time is absent, no check in has happened
 	// If check_in.end_time is absent, no check out has happened
-	CheckIn *time.Period `protobuf:"bytes,6,opt,name=check_in,json=checkIn,proto3" json:"check_in,omitempty"`
+	CheckIn *timepb.Period `protobuf:"bytes,6,opt,name=check_in,json=checkIn,proto3" json:"check_in,omitempty"`
 	// If true, the booking does not require a check-in and one should not be expected.
 	// Defaults to false; check-in is required.
 	CheckInNotRequired bool `protobuf:"varint,7,opt,name=check_in_not_required,json=checkInNotRequired,proto3" json:"check_in_not_required,omitempty"`
@@ -163,14 +163,14 @@ func (x *Booking) GetOwnerName() string {
 	return ""
 }
 
-func (x *Booking) GetBooked() *time.Period {
+func (x *Booking) GetBooked() *timepb.Period {
 	if x != nil {
 		return x.Booked
 	}
 	return nil
 }
 
-func (x *Booking) GetCheckIn() *time.Period {
+func (x *Booking) GetCheckIn() *timepb.Period {
 	if x != nil {
 		return x.CheckIn
 	}
@@ -188,13 +188,13 @@ func (x *Booking) GetCheckInNotRequired() bool {
 type BookingSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// is check in supported, and how
 	CheckInSupport BookingSupport_CheckInSupport `protobuf:"varint,2,opt,name=check_in_support,json=checkInSupport,proto3,enum=smartcore.bos.booking.v1.BookingSupport_CheckInSupport" json:"check_in_support,omitempty"`
 	// is check out supported, and how
 	CheckOutSupport BookingSupport_CheckInSupport `protobuf:"varint,3,opt,name=check_out_support,json=checkOutSupport,proto3,enum=smartcore.bos.booking.v1.BookingSupport_CheckInSupport" json:"check_out_support,omitempty"`
 	// the supported time resolution for date time fields and queries
-	TimeResolution time.Unit `protobuf:"varint,4,opt,name=time_resolution,json=timeResolution,proto3,enum=smartcore.types.time.Unit" json:"time_resolution,omitempty"`
+	TimeResolution timepb.Unit `protobuf:"varint,4,opt,name=time_resolution,json=timeResolution,proto3,enum=smartcore.bos.types.time.v1.Unit" json:"time_resolution,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -229,7 +229,7 @@ func (*BookingSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_booking_v1_booking_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *BookingSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *BookingSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -250,11 +250,11 @@ func (x *BookingSupport) GetCheckOutSupport() BookingSupport_CheckInSupport {
 	return BookingSupport_CHECK_IN_SUPPORT_UNSPECIFIED
 }
 
-func (x *BookingSupport) GetTimeResolution() time.Unit {
+func (x *BookingSupport) GetTimeResolution() timepb.Unit {
 	if x != nil {
 		return x.TimeResolution
 	}
-	return time.Unit(0)
+	return timepb.Unit(0)
 }
 
 type ListBookingsRequest struct {
@@ -263,7 +263,7 @@ type ListBookingsRequest struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Specify the time period to return bookings for
 	// bookings are returned if they intersect this time period
-	BookingIntersects *time.Period `protobuf:"bytes,2,opt,name=booking_intersects,json=bookingIntersects,proto3" json:"booking_intersects,omitempty"`
+	BookingIntersects *timepb.Period `protobuf:"bytes,2,opt,name=booking_intersects,json=bookingIntersects,proto3" json:"booking_intersects,omitempty"`
 	// The state fields to fetch
 	ReadMask *fieldmaskpb.FieldMask `protobuf:"bytes,3,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
 	// When true the device will only send changes to the resource value.
@@ -310,7 +310,7 @@ func (x *ListBookingsRequest) GetName() string {
 	return ""
 }
 
-func (x *ListBookingsRequest) GetBookingIntersects() *time.Period {
+func (x *ListBookingsRequest) GetBookingIntersects() *timepb.Period {
 	if x != nil {
 		return x.BookingIntersects
 	}
@@ -876,7 +876,7 @@ type PullBookingsResponse_Change struct {
 	// the name of the device that emitted this change
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// the type of change (e.g. ADD, UPDATE, etc...)
-	Type types.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type typespb.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	// the new value to use for ADD|UPDATE changes
 	NewValue *Booking `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// the old value to use for UPDATE|REMOVE changes
@@ -924,11 +924,11 @@ func (x *PullBookingsResponse_Change) GetName() string {
 	return ""
 }
 
-func (x *PullBookingsResponse_Change) GetType() types.ChangeType {
+func (x *PullBookingsResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 func (x *PullBookingsResponse_Change) GetNewValue() *Booking {
@@ -956,30 +956,30 @@ var File_smartcore_bos_booking_v1_booking_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_booking_v1_booking_proto_rawDesc = "" +
 	"\n" +
-	"&smartcore/bos/booking/v1/booking.proto\x12\x18smartcore.bos.booking.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\x1a\x10types/info.proto\x1a\x17types/time/period.proto\x1a\x15types/time/unit.proto\"\x8c\x02\n" +
+	"&smartcore/bos/booking/v1/booking.proto\x12\x18smartcore.bos.booking.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a(smartcore/bos/types/time/v1/period.proto\x1a&smartcore/bos/types/time/v1/unit.proto\x1a#smartcore/bos/types/v1/change.proto\x1a!smartcore/bos/types/v1/info.proto\"\x9a\x02\n" +
 	"\aBooking\x12\x1a\n" +
 	"\bbookable\x18\x01 \x01(\tR\bbookable\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x03 \x01(\tR\x05title\x12\x1d\n" +
 	"\n" +
-	"owner_name\x18\x04 \x01(\tR\townerName\x124\n" +
-	"\x06booked\x18\x05 \x01(\v2\x1c.smartcore.types.time.PeriodR\x06booked\x127\n" +
-	"\bcheck_in\x18\x06 \x01(\v2\x1c.smartcore.types.time.PeriodR\acheckIn\x121\n" +
-	"\x15check_in_not_required\x18\a \x01(\bR\x12checkInNotRequired\"\xc3\x03\n" +
-	"\x0eBookingSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12a\n" +
+	"owner_name\x18\x04 \x01(\tR\townerName\x12;\n" +
+	"\x06booked\x18\x05 \x01(\v2#.smartcore.bos.types.time.v1.PeriodR\x06booked\x12>\n" +
+	"\bcheck_in\x18\x06 \x01(\v2#.smartcore.bos.types.time.v1.PeriodR\acheckIn\x121\n" +
+	"\x15check_in_not_required\x18\a \x01(\bR\x12checkInNotRequired\"\xd1\x03\n" +
+	"\x0eBookingSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12a\n" +
 	"\x10check_in_support\x18\x02 \x01(\x0e27.smartcore.bos.booking.v1.BookingSupport.CheckInSupportR\x0echeckInSupport\x12c\n" +
-	"\x11check_out_support\x18\x03 \x01(\x0e27.smartcore.bos.booking.v1.BookingSupport.CheckInSupportR\x0fcheckOutSupport\x12C\n" +
-	"\x0ftime_resolution\x18\x04 \x01(\x0e2\x1a.smartcore.types.time.UnitR\x0etimeResolution\"W\n" +
+	"\x11check_out_support\x18\x03 \x01(\x0e27.smartcore.bos.booking.v1.BookingSupport.CheckInSupportR\x0fcheckOutSupport\x12J\n" +
+	"\x0ftime_resolution\x18\x04 \x01(\x0e2!.smartcore.bos.types.time.v1.UnitR\x0etimeResolution\"W\n" +
 	"\x0eCheckInSupport\x12 \n" +
 	"\x1cCHECK_IN_SUPPORT_UNSPECIFIED\x10\x00\x12\x0e\n" +
 	"\n" +
 	"NO_SUPPORT\x10\x01\x12\t\n" +
 	"\x05STATE\x10\x02\x12\b\n" +
-	"\x04TIME\x10\x03\"\xd2\x01\n" +
+	"\x04TIME\x10\x03\"\xd9\x01\n" +
 	"\x13ListBookingsRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12K\n" +
-	"\x12booking_intersects\x18\x02 \x01(\v2\x1c.smartcore.types.time.PeriodR\x11bookingIntersects\x127\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12R\n" +
+	"\x12booking_intersects\x18\x02 \x01(\v2#.smartcore.bos.types.time.v1.PeriodR\x11bookingIntersects\x127\n" +
 	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
 	"\fupdates_only\x18\x04 \x01(\bR\vupdatesOnly\"U\n" +
 	"\x14ListBookingsResponse\x12=\n" +
@@ -1008,12 +1008,12 @@ const file_smartcore_bos_booking_v1_booking_proto_rawDesc = "" +
 	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\"T\n" +
 	"\x15UpdateBookingResponse\x12;\n" +
-	"\abooking\x18\x01 \x01(\v2!.smartcore.bos.booking.v1.BookingR\abooking\"\xf4\x02\n" +
+	"\abooking\x18\x01 \x01(\v2!.smartcore.bos.booking.v1.BookingR\abooking\"\xfb\x02\n" +
 	"\x14PullBookingsResponse\x12O\n" +
-	"\achanges\x18\x01 \x03(\v25.smartcore.bos.booking.v1.PullBookingsResponse.ChangeR\achanges\x1a\x8a\x02\n" +
+	"\achanges\x18\x01 \x03(\v25.smartcore.bos.booking.v1.PullBookingsResponse.ChangeR\achanges\x1a\x91\x02\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12>\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\x12>\n" +
 	"\tnew_value\x18\x03 \x01(\v2!.smartcore.bos.booking.v1.BookingR\bnewValue\x12>\n" +
 	"\told_value\x18\x04 \x01(\v2!.smartcore.bos.booking.v1.BookingR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -1063,21 +1063,21 @@ var file_smartcore_bos_booking_v1_booking_proto_goTypes = []any{
 	(*PullBookingsResponse)(nil),        // 13: smartcore.bos.booking.v1.PullBookingsResponse
 	(*DescribeBookingRequest)(nil),      // 14: smartcore.bos.booking.v1.DescribeBookingRequest
 	(*PullBookingsResponse_Change)(nil), // 15: smartcore.bos.booking.v1.PullBookingsResponse.Change
-	(*time.Period)(nil),                 // 16: smartcore.types.time.Period
-	(*types.ResourceSupport)(nil),       // 17: smartcore.types.ResourceSupport
-	(time.Unit)(0),                      // 18: smartcore.types.time.Unit
+	(*timepb.Period)(nil),               // 16: smartcore.bos.types.time.v1.Period
+	(*typespb.ResourceSupport)(nil),     // 17: smartcore.bos.types.v1.ResourceSupport
+	(timepb.Unit)(0),                    // 18: smartcore.bos.types.time.v1.Unit
 	(*fieldmaskpb.FieldMask)(nil),       // 19: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),       // 20: google.protobuf.Timestamp
-	(types.ChangeType)(0),               // 21: smartcore.types.ChangeType
+	(typespb.ChangeType)(0),             // 21: smartcore.bos.types.v1.ChangeType
 }
 var file_smartcore_bos_booking_v1_booking_proto_depIdxs = []int32{
-	16, // 0: smartcore.bos.booking.v1.Booking.booked:type_name -> smartcore.types.time.Period
-	16, // 1: smartcore.bos.booking.v1.Booking.check_in:type_name -> smartcore.types.time.Period
-	17, // 2: smartcore.bos.booking.v1.BookingSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	16, // 0: smartcore.bos.booking.v1.Booking.booked:type_name -> smartcore.bos.types.time.v1.Period
+	16, // 1: smartcore.bos.booking.v1.Booking.check_in:type_name -> smartcore.bos.types.time.v1.Period
+	17, // 2: smartcore.bos.booking.v1.BookingSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	0,  // 3: smartcore.bos.booking.v1.BookingSupport.check_in_support:type_name -> smartcore.bos.booking.v1.BookingSupport.CheckInSupport
 	0,  // 4: smartcore.bos.booking.v1.BookingSupport.check_out_support:type_name -> smartcore.bos.booking.v1.BookingSupport.CheckInSupport
-	18, // 5: smartcore.bos.booking.v1.BookingSupport.time_resolution:type_name -> smartcore.types.time.Unit
-	16, // 6: smartcore.bos.booking.v1.ListBookingsRequest.booking_intersects:type_name -> smartcore.types.time.Period
+	18, // 5: smartcore.bos.booking.v1.BookingSupport.time_resolution:type_name -> smartcore.bos.types.time.v1.Unit
+	16, // 6: smartcore.bos.booking.v1.ListBookingsRequest.booking_intersects:type_name -> smartcore.bos.types.time.v1.Period
 	19, // 7: smartcore.bos.booking.v1.ListBookingsRequest.read_mask:type_name -> google.protobuf.FieldMask
 	1,  // 8: smartcore.bos.booking.v1.ListBookingsResponse.bookings:type_name -> smartcore.bos.booking.v1.Booking
 	20, // 9: smartcore.bos.booking.v1.CheckInBookingRequest.time:type_name -> google.protobuf.Timestamp
@@ -1087,7 +1087,7 @@ var file_smartcore_bos_booking_v1_booking_proto_depIdxs = []int32{
 	19, // 13: smartcore.bos.booking.v1.UpdateBookingRequest.update_mask:type_name -> google.protobuf.FieldMask
 	1,  // 14: smartcore.bos.booking.v1.UpdateBookingResponse.booking:type_name -> smartcore.bos.booking.v1.Booking
 	15, // 15: smartcore.bos.booking.v1.PullBookingsResponse.changes:type_name -> smartcore.bos.booking.v1.PullBookingsResponse.Change
-	21, // 16: smartcore.bos.booking.v1.PullBookingsResponse.Change.type:type_name -> smartcore.types.ChangeType
+	21, // 16: smartcore.bos.booking.v1.PullBookingsResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	1,  // 17: smartcore.bos.booking.v1.PullBookingsResponse.Change.new_value:type_name -> smartcore.bos.booking.v1.Booking
 	1,  // 18: smartcore.bos.booking.v1.PullBookingsResponse.Change.old_value:type_name -> smartcore.bos.booking.v1.Booking
 	20, // 19: smartcore.bos.booking.v1.PullBookingsResponse.Change.change_time:type_name -> google.protobuf.Timestamp

@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	timepb "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 )
 
 func main() {

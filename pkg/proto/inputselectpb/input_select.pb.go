@@ -7,7 +7,7 @@
 package inputselectpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -165,7 +165,7 @@ func (x *Input) GetOutput() string {
 type InputSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// the list of inputs that can be selected on this device
 	Inputs []*AvPort `protobuf:"bytes,2,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	// indicate the possible mode of input selection that are supported by this device. This is not the current mode, just
@@ -207,7 +207,7 @@ func (*InputSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_inputselect_v1_input_select_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *InputSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *InputSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -660,16 +660,16 @@ var File_smartcore_bos_inputselect_v1_input_select_proto protoreflect.FileDescri
 
 const file_smartcore_bos_inputselect_v1_input_select_proto_rawDesc = "" +
 	"\n" +
-	"/smartcore/bos/inputselect/v1/input_select.proto\x12\x1csmartcore.bos.inputselect.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\x88\x01\n" +
+	"/smartcore/bos/inputselect/v1/input_select.proto\x12\x1csmartcore.bos.inputselect.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\x88\x01\n" +
 	"\x05Input\x12\x1f\n" +
 	"\vvideo_input\x18\x01 \x01(\tR\n" +
 	"videoInput\x12\x1f\n" +
 	"\vaudio_input\x18\x02 \x01(\tR\n" +
 	"audioInput\x12%\n" +
 	"\x0eindependent_av\x18\x03 \x01(\bR\rindependentAv\x12\x16\n" +
-	"\x06output\x18\x04 \x01(\tR\x06output\"\x97\x03\n" +
-	"\fInputSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12<\n" +
+	"\x06output\x18\x04 \x01(\tR\x06output\"\x9e\x03\n" +
+	"\fInputSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12<\n" +
 	"\x06inputs\x18\x02 \x03(\v2$.smartcore.bos.inputselect.v1.AvPortR\x06inputs\x12_\n" +
 	"\x11supported_feature\x18\x03 \x01(\x0e22.smartcore.bos.inputselect.v1.InputSupport.FeatureR\x10supportedFeature\x12>\n" +
 	"\aoutputs\x18\x04 \x03(\v2$.smartcore.bos.inputselect.v1.AvPortR\aoutputs\"[\n" +
@@ -741,12 +741,12 @@ var file_smartcore_bos_inputselect_v1_input_select_proto_goTypes = []any{
 	(*PullInputResponse)(nil),        // 7: smartcore.bos.inputselect.v1.PullInputResponse
 	(*DescribeInputRequest)(nil),     // 8: smartcore.bos.inputselect.v1.DescribeInputRequest
 	(*PullInputResponse_Change)(nil), // 9: smartcore.bos.inputselect.v1.PullInputResponse.Change
-	(*types.ResourceSupport)(nil),    // 10: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),  // 10: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),    // 11: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),    // 12: google.protobuf.Timestamp
 }
 var file_smartcore_bos_inputselect_v1_input_select_proto_depIdxs = []int32{
-	10, // 0: smartcore.bos.inputselect.v1.InputSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	10, // 0: smartcore.bos.inputselect.v1.InputSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	3,  // 1: smartcore.bos.inputselect.v1.InputSupport.inputs:type_name -> smartcore.bos.inputselect.v1.AvPort
 	0,  // 2: smartcore.bos.inputselect.v1.InputSupport.supported_feature:type_name -> smartcore.bos.inputselect.v1.InputSupport.Feature
 	3,  // 3: smartcore.bos.inputselect.v1.InputSupport.outputs:type_name -> smartcore.bos.inputselect.v1.AvPort

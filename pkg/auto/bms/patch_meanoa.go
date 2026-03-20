@@ -11,10 +11,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
-	timepb "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 )
 
 // MeanOATempPatches emits MeanOATemp patches based on an exponential running mean.
@@ -157,7 +157,7 @@ func (m *MeanOATempPatches) pullDeviceChanges(ctx context.Context, out chan<- *a
 func (m *MeanOATempPatches) sendMeanChanges(ctx context.Context, in <-chan *airtemperaturepb.AirTemperature, out chan<- Patcher, runningMean *exponentialMean, hourlyTemps dailyTemp) error {
 	setMean := func() error {
 		err := chans.SendContext[Patcher](ctx, out, PatchFunc(func(s *ReadState) {
-			s.MeanOATemp = &types.Temperature{
+			s.MeanOATemp = &typespb.Temperature{
 				ValueCelsius: runningMean.mean,
 			}
 		}))

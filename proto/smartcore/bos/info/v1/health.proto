@@ -1,16 +1,16 @@
 syntax = "proto3";
 
-package smartcore.info;
+package smartcore.bos.info.v1;
 
 option csharp_namespace = "Smartcore.Info";
-option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/info";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/infopb";
 option java_multiple_files = true;
 option java_outer_classname = "HealthProto";
 option java_package = "dev.smartcore.info";
 option php_namespace = "Smartcore\\Info";
 
 import "google/protobuf/timestamp.proto";
-import "types/connection.proto";
+import "smartcore/bos/types/v1/connection.proto";
 
 // Describe the health of a device.
 service Health {
@@ -31,7 +31,7 @@ message HealthState {
 // Describes the health of a connection
 message ConnectionHealth {
   // are we currently connected
-  smartcore.types.Connectivity status = 1;
+  smartcore.bos.types.v1.Connectivity status = 1;
   // When was the last time a successful connection was established
   google.protobuf.Timestamp connect_time = 2;
   // When was the last time a connection was closed/ended
@@ -40,7 +40,7 @@ message ConnectionHealth {
 
 // Describes the health of communication.
 message CommHealth {
-  smartcore.types.CommStatus status = 1;
+  smartcore.bos.types.v1.CommStatus status = 1;
   // The most recent time the status changed to COMM_FAILURE
   google.protobuf.Timestamp failure_time = 2;
   // The most recent time the status changed to COMM_SUCCESS

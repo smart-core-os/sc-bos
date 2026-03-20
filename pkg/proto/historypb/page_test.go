@@ -12,7 +12,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	timepb "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 )
 
 func Test_pageReader_listRecords(t *testing.T) {

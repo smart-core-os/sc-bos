@@ -3,7 +3,7 @@ package resource
 import (
 	"container/list"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 // mergeCollectionExcess acts on a chan of *CollectionChange combining changes with the same key to maintain the
@@ -76,35 +76,35 @@ func mergeChanges(a, b CollectionChange) (c CollectionChange, send bool) {
 	b.LastSeedValue = a.LastSeedValue || b.LastSeedValue
 
 	switch a.ChangeType {
-	case types.ChangeType_ADD:
+	case typespb.ChangeType_ADD:
 		switch b.ChangeType {
-		case types.ChangeType_ADD: // not sure how this happens, but sure
+		case typespb.ChangeType_ADD: // not sure how this happens, but sure
 			return b, true
-		case types.ChangeType_UPDATE, types.ChangeType_REPLACE:
-			b.ChangeType = types.ChangeType_ADD
+		case typespb.ChangeType_UPDATE, typespb.ChangeType_REPLACE:
+			b.ChangeType = typespb.ChangeType_ADD
 			b.OldValue = nil
 			return b, true
-		case types.ChangeType_REMOVE:
+		case typespb.ChangeType_REMOVE:
 			return CollectionChange{}, false
 		default:
 			return b, true
 		}
-	case types.ChangeType_UPDATE:
+	case typespb.ChangeType_UPDATE:
 		b.OldValue = a.OldValue
-		if b.ChangeType == types.ChangeType_ADD { // not sure how this happens, but sure
-			b.ChangeType = types.ChangeType_REPLACE
+		if b.ChangeType == typespb.ChangeType_ADD { // not sure how this happens, but sure
+			b.ChangeType = typespb.ChangeType_REPLACE
 		}
 		return b, true
-	case types.ChangeType_REPLACE:
+	case typespb.ChangeType_REPLACE:
 		b.OldValue = a.OldValue
-		if ct := b.ChangeType; ct == types.ChangeType_ADD || ct == types.ChangeType_UPDATE {
-			b.ChangeType = types.ChangeType_REPLACE
+		if ct := b.ChangeType; ct == typespb.ChangeType_ADD || ct == typespb.ChangeType_UPDATE {
+			b.ChangeType = typespb.ChangeType_REPLACE
 		}
 		return b, true
-	case types.ChangeType_REMOVE:
+	case typespb.ChangeType_REMOVE:
 		b.OldValue = a.OldValue
-		if b.ChangeType != types.ChangeType_REMOVE {
-			b.ChangeType = types.ChangeType_REPLACE
+		if b.ChangeType != typespb.ChangeType_REMOVE {
+			b.ChangeType = typespb.ChangeType_REPLACE
 		}
 		return b, true
 	default:

@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type MemoryDevice struct {
@@ -32,9 +32,9 @@ func NewMemoryDevice() *MemoryDevice {
 
 func InitialAirTemperatureState() *AirTemperature {
 	return &AirTemperature{
-		AmbientTemperature: &types.Temperature{ValueCelsius: 22},
+		AmbientTemperature: &typespb.Temperature{ValueCelsius: 22},
 		TemperatureGoal: &AirTemperature_TemperatureSetPoint{
-			TemperatureSetPoint: &types.Temperature{ValueCelsius: 22},
+			TemperatureSetPoint: &typespb.Temperature{ValueCelsius: 22},
 		},
 	}
 }

@@ -6,7 +6,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // Trait for devices that measure sound/noise levels.
 service SoundSensorApi {
@@ -27,7 +27,7 @@ message SoundLevel {
 
 message SoundLevelSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // The unit associated with the sound_pressure_level value.
   // Known units:
   //   - dBA - decibels SPL, A-weighted

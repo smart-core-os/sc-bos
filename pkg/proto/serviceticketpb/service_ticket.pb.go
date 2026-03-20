@@ -7,7 +7,7 @@
 package serviceticketpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -287,7 +287,7 @@ func (x *DescribeTicketRequest) GetName() string {
 type TicketSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// The classifications supported by the implementing system.
 	Classifications []*Ticket_Classification `protobuf:"bytes,2,rep,name=classifications,proto3" json:"classifications,omitempty"`
 	// The severities supported by the implementing system.
@@ -328,7 +328,7 @@ func (*TicketSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *TicketSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *TicketSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -549,7 +549,7 @@ var File_smartcore_bos_serviceticket_v1_service_ticket_proto protoreflect.FileDe
 
 const file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDesc = "" +
 	"\n" +
-	"3smartcore/bos/serviceticket/v1/service_ticket.proto\x12\x1esmartcore.bos.serviceticket.v1\x1a\x10types/info.proto\"\xec\x05\n" +
+	"3smartcore/bos/serviceticket/v1/service_ticket.proto\x12\x1esmartcore.bos.serviceticket.v1\x1a!smartcore/bos/types/v1/info.proto\"\xec\x05\n" +
 	"\x06Ticket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\asummary\x18\x02 \x01(\tR\asummary\x12 \n" +
@@ -582,9 +582,9 @@ const file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12>\n" +
 	"\x06ticket\x18\x02 \x01(\v2&.smartcore.bos.serviceticket.v1.TicketR\x06ticket\"+\n" +
 	"\x15DescribeTicketRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"\xdd\x02\n" +
-	"\rTicketSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12_\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\xe4\x02\n" +
+	"\rTicketSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12_\n" +
 	"\x0fclassifications\x18\x02 \x03(\v25.smartcore.bos.serviceticket.v1.Ticket.ClassificationR\x0fclassifications\x12O\n" +
 	"\n" +
 	"severities\x18\x03 \x03(\v2/.smartcore.bos.serviceticket.v1.Ticket.SeverityR\n" +
@@ -610,15 +610,15 @@ func file_smartcore_bos_serviceticket_v1_service_ticket_proto_rawDescGZIP() []by
 
 var file_smartcore_bos_serviceticket_v1_service_ticket_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_smartcore_bos_serviceticket_v1_service_ticket_proto_goTypes = []any{
-	(*Ticket)(nil),                // 0: smartcore.bos.serviceticket.v1.Ticket
-	(*CreateTicketRequest)(nil),   // 1: smartcore.bos.serviceticket.v1.CreateTicketRequest
-	(*UpdateTicketRequest)(nil),   // 2: smartcore.bos.serviceticket.v1.UpdateTicketRequest
-	(*DescribeTicketRequest)(nil), // 3: smartcore.bos.serviceticket.v1.DescribeTicketRequest
-	(*TicketSupport)(nil),         // 4: smartcore.bos.serviceticket.v1.TicketSupport
-	(*Ticket_Classification)(nil), // 5: smartcore.bos.serviceticket.v1.Ticket.Classification
-	(*Ticket_Severity)(nil),       // 6: smartcore.bos.serviceticket.v1.Ticket.Severity
-	(*Ticket_Location)(nil),       // 7: smartcore.bos.serviceticket.v1.Ticket.Location
-	(*types.ResourceSupport)(nil), // 8: smartcore.types.ResourceSupport
+	(*Ticket)(nil),                  // 0: smartcore.bos.serviceticket.v1.Ticket
+	(*CreateTicketRequest)(nil),     // 1: smartcore.bos.serviceticket.v1.CreateTicketRequest
+	(*UpdateTicketRequest)(nil),     // 2: smartcore.bos.serviceticket.v1.UpdateTicketRequest
+	(*DescribeTicketRequest)(nil),   // 3: smartcore.bos.serviceticket.v1.DescribeTicketRequest
+	(*TicketSupport)(nil),           // 4: smartcore.bos.serviceticket.v1.TicketSupport
+	(*Ticket_Classification)(nil),   // 5: smartcore.bos.serviceticket.v1.Ticket.Classification
+	(*Ticket_Severity)(nil),         // 6: smartcore.bos.serviceticket.v1.Ticket.Severity
+	(*Ticket_Location)(nil),         // 7: smartcore.bos.serviceticket.v1.Ticket.Location
+	(*typespb.ResourceSupport)(nil), // 8: smartcore.bos.types.v1.ResourceSupport
 }
 var file_smartcore_bos_serviceticket_v1_service_ticket_proto_depIdxs = []int32{
 	5,  // 0: smartcore.bos.serviceticket.v1.Ticket.classification:type_name -> smartcore.bos.serviceticket.v1.Ticket.Classification
@@ -626,7 +626,7 @@ var file_smartcore_bos_serviceticket_v1_service_ticket_proto_depIdxs = []int32{
 	7,  // 2: smartcore.bos.serviceticket.v1.Ticket.location:type_name -> smartcore.bos.serviceticket.v1.Ticket.Location
 	0,  // 3: smartcore.bos.serviceticket.v1.CreateTicketRequest.ticket:type_name -> smartcore.bos.serviceticket.v1.Ticket
 	0,  // 4: smartcore.bos.serviceticket.v1.UpdateTicketRequest.ticket:type_name -> smartcore.bos.serviceticket.v1.Ticket
-	8,  // 5: smartcore.bos.serviceticket.v1.TicketSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	8,  // 5: smartcore.bos.serviceticket.v1.TicketSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	5,  // 6: smartcore.bos.serviceticket.v1.TicketSupport.classifications:type_name -> smartcore.bos.serviceticket.v1.Ticket.Classification
 	6,  // 7: smartcore.bos.serviceticket.v1.TicketSupport.severities:type_name -> smartcore.bos.serviceticket.v1.Ticket.Severity
 	7,  // 8: smartcore.bos.serviceticket.v1.TicketSupport.locations:type_name -> smartcore.bos.serviceticket.v1.Ticket.Location

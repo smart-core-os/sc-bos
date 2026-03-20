@@ -11,7 +11,7 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // ChannelApi allows for querying and updating the chosen channel on a device like a TV.
 service ChannelApi {
@@ -53,7 +53,7 @@ message Channel {
 // ChosenChannelSupport describes the capabilities of devices implementing this trait
 message ChosenChannelSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // The max number of channels away from the current that are supported when adjusting channels. Defaults to 1.
   int32 adjust_max = 2;
   // todo: support for [choose,adjust,return], not sure what the defaults should be

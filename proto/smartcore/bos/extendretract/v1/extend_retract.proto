@@ -11,8 +11,8 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
-import "types/tween.proto";
+import "smartcore/bos/types/v1/info.proto";
+import "smartcore/bos/types/v1/tween.proto";
 
 // Applicable to devices that can be extended or retracted. Like a tv mount or adjustable desk
 service ExtendRetractApi {
@@ -46,7 +46,7 @@ message Extension {
   string extend_preset = 2;
 
   // How the extension changes or should change over time. On write only duration should be set.
-  smartcore.types.Tween extend_tween = 3;
+  smartcore.bos.types.v1.Tween extend_tween = 3;
   // if tweening between values, this is our end goal
   float target_extend_percent = 4;
   // if tweening between values, this is our end goal
@@ -66,14 +66,14 @@ message ExtensionPreset {
 // ExtensionSupport describes the capabilities of devices implementing this trait
 message ExtensionSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // List of presets that this device supports. If empty then the device does not support presets
   repeated ExtensionPreset presets = 2;
   // 0 to 100, how precise is the control of the extension. A value of 0 (or 100) means only 0 or 100 extend_percent
   // are valid.
   float step = 3;
   // Does the device support tweening between the current value and a target value
-  smartcore.types.TweenSupport tween_support = 4;
+  smartcore.bos.types.v1.TweenSupport tween_support = 4;
   // If true, custom preset names can be used to store extension values. If false only writable presets can be updated.
   bool supports_custom_presets = 5;
 }

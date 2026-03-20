@@ -12,7 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 func processReadState(ctx context.Context, readState *ReadState, writeState *WriteState, actions Actions) (time.Duration, error) {
@@ -232,7 +232,7 @@ func writeSetPointUpdates(ctx context.Context, state *WriteState, actions Action
 		req := &airtemperaturepb.UpdateAirTemperatureRequest{
 			Name: name,
 			State: &airtemperaturepb.AirTemperature{TemperatureGoal: &airtemperaturepb.AirTemperature_TemperatureSetPoint{
-				TemperatureSetPoint: &types.Temperature{ValueCelsius: float64(setPoint)},
+				TemperatureSetPoint: &typespb.Temperature{ValueCelsius: float64(setPoint)},
 			}},
 			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"temperature_set_point"}},
 		}

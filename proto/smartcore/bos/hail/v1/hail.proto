@@ -11,8 +11,8 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/change.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/change.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // HailApi describes devices that may be asked to transport passengers from one location to another.
 // To interact with these devices you create a hail, a description of the origin and destination for your journey.
@@ -232,7 +232,7 @@ message PullHailsResponse {
     // The name of the device that emitted this change
     string name = 1;
     // The type of change (e.g. ADD, UPDATE, etc...)
-    smartcore.types.ChangeType type = 2;
+    smartcore.bos.types.v1.ChangeType type = 2;
     // The new value to use for ADD|UPDATE changes
     Hail new_value = 3;
     // The old value to use for UPDATE|REMOVE changes
@@ -249,7 +249,7 @@ message DescribeHailRequest {
 
 message HailSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // The list of Locations that the implementing device can be requested to transport the passenger to.
   repeated Hail.Location supported_locations = 2;
 }

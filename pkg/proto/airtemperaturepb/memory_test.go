@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 func TestMemoryDevice_GetState_Initial(t *testing.T) {
@@ -29,10 +29,10 @@ func TestMemoryDevice_UpdateAirTemperature(t *testing.T) {
 		// fields we can edit
 		Mode: AirTemperature_ECO,
 		TemperatureGoal: &AirTemperature_TemperatureSetPoint{
-			TemperatureSetPoint: &types.Temperature{ValueCelsius: 30},
+			TemperatureSetPoint: &typespb.Temperature{ValueCelsius: 30},
 		},
 		// fields we can't edit
-		AmbientTemperature: &types.Temperature{ValueCelsius: -12},
+		AmbientTemperature: &typespb.Temperature{ValueCelsius: -12},
 		AmbientHumidity:    pfloat32(12.2),
 	}
 	updatedState, err := api.UpdateAirTemperature(context.Background(), &UpdateAirTemperatureRequest{
@@ -67,10 +67,10 @@ func TestMemoryDevice_UpdateAirTemperature_Mask(t *testing.T) {
 		// fields we can edit
 		Mode: AirTemperature_ECO,
 		TemperatureGoal: &AirTemperature_TemperatureSetPoint{
-			TemperatureSetPoint: &types.Temperature{ValueCelsius: 30},
+			TemperatureSetPoint: &typespb.Temperature{ValueCelsius: 30},
 		},
 		// fields we can't edit
-		AmbientTemperature: &types.Temperature{ValueCelsius: -12},
+		AmbientTemperature: &typespb.Temperature{ValueCelsius: -12},
 		AmbientHumidity:    pfloat32(12.2),
 	}
 	updatedState, err := api.UpdateAirTemperature(context.Background(), &UpdateAirTemperatureRequest{

@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 const (
@@ -25,7 +25,7 @@ func capPageSize(pageSize int) int {
 	return pageSize
 }
 
-func decodePageToken(token string, pageToken *types.PageToken) error {
+func decodePageToken(token string, pageToken *typespb.PageToken) error {
 	if token != "" {
 		tokenBytes, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
@@ -38,7 +38,7 @@ func decodePageToken(token string, pageToken *types.PageToken) error {
 	return nil
 }
 
-func encodePageToken(pageToken *types.PageToken) (string, error) {
+func encodePageToken(pageToken *typespb.PageToken) (string, error) {
 	if pageToken != nil {
 		tokenBytes, err := proto.Marshal(pageToken)
 		if err != nil {

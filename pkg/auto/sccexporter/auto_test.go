@@ -24,10 +24,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func TestMetadata(t *testing.T) {
@@ -525,7 +525,7 @@ func TestGetAirTemperatureDeviceAndData(t *testing.T) {
 	celsius := 22.5
 
 	airTemperature := &airtemperaturepb.AirTemperature{
-		AmbientTemperature: &types.Temperature{ValueCelsius: celsius},
+		AmbientTemperature: &typespb.Temperature{ValueCelsius: celsius},
 	}
 
 	devicesApi := devices.NewServer(root)

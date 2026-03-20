@@ -8,8 +8,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // Model describes the data structure needed to implement the Vending trait.
@@ -91,7 +91,7 @@ func (m *Model) ListConsumables(opts ...resource.ReadOption) []*Consumable {
 type ConsumablesChange struct {
 	ID         string
 	ChangeTime time.Time
-	ChangeType types.ChangeType
+	ChangeType typespb.ChangeType
 	OldValue   *Consumable
 	NewValue   *Consumable
 }
@@ -183,7 +183,7 @@ func (m *Model) ListInventory(opts ...resource.ReadOption) []*Consumable_Stock {
 type InventoryChange struct {
 	ID         string
 	ChangeTime time.Time
-	ChangeType types.ChangeType
+	ChangeType typespb.ChangeType
 	OldValue   *Consumable_Stock
 	NewValue   *Consumable_Stock
 }

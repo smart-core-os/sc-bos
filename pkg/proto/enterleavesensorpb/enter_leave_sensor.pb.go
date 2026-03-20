@@ -7,7 +7,7 @@
 package enterleavesensorpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -406,7 +406,7 @@ type EnterLeaveEvent_Occupant struct {
 	// A recognisable display name for this occupant.
 	DisplayName string `protobuf:"bytes,11,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	// A picture of the occupant.
-	Picture *types.Image `protobuf:"bytes,12,opt,name=picture,proto3" json:"picture,omitempty"`
+	Picture *typespb.Image `protobuf:"bytes,12,opt,name=picture,proto3" json:"picture,omitempty"`
 	// A url that resolves to more information on this occupant.
 	Url string `protobuf:"bytes,13,opt,name=url,proto3" json:"url,omitempty"`
 	// An email address for the occupant.
@@ -474,7 +474,7 @@ func (x *EnterLeaveEvent_Occupant) GetDisplayName() string {
 	return ""
 }
 
-func (x *EnterLeaveEvent_Occupant) GetPicture() *types.Image {
+func (x *EnterLeaveEvent_Occupant) GetPicture() *typespb.Image {
 	if x != nil {
 		return x.Picture
 	}
@@ -577,20 +577,20 @@ var File_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_proto protoreflect
 
 const file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_proto_rawDesc = "" +
 	"\n" +
-	":smartcore/bos/enterleavesensor/v1/enter_leave_sensor.proto\x12!smartcore.bos.enterleavesensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x11types/image.proto\"\xc8\x06\n" +
+	":smartcore/bos/enterleavesensor/v1/enter_leave_sensor.proto\x12!smartcore.bos.enterleavesensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/types/v1/image.proto\"\xcf\x06\n" +
 	"\x0fEnterLeaveEvent\x12Z\n" +
 	"\tdirection\x18\x01 \x01(\x0e2<.smartcore.bos.enterleavesensor.v1.EnterLeaveEvent.DirectionR\tdirection\x12W\n" +
 	"\boccupant\x18\x02 \x01(\v2;.smartcore.bos.enterleavesensor.v1.EnterLeaveEvent.OccupantR\boccupant\x12$\n" +
 	"\venter_total\x18\x03 \x01(\x05H\x00R\n" +
 	"enterTotal\x88\x01\x01\x12$\n" +
 	"\vleave_total\x18\x04 \x01(\x05H\x01R\n" +
-	"leaveTotal\x88\x01\x01\x1a\xd5\x03\n" +
+	"leaveTotal\x88\x01\x01\x1a\xdc\x03\n" +
 	"\bOccupant\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05title\x18\n" +
 	" \x01(\tR\x05title\x12!\n" +
-	"\fdisplay_name\x18\v \x01(\tR\vdisplayName\x120\n" +
-	"\apicture\x18\f \x01(\v2\x16.smartcore.types.ImageR\apicture\x12\x10\n" +
+	"\fdisplay_name\x18\v \x01(\tR\vdisplayName\x127\n" +
+	"\apicture\x18\f \x01(\v2\x1d.smartcore.bos.types.v1.ImageR\apicture\x12\x10\n" +
 	"\x03url\x18\r \x01(\tR\x03url\x12\x14\n" +
 	"\x05email\x18\x0e \x01(\tR\x05email\x12V\n" +
 	"\x03ids\x18d \x03(\v2D.smartcore.bos.enterleavesensor.v1.EnterLeaveEvent.Occupant.IdsEntryR\x03ids\x12Y\n" +
@@ -658,7 +658,7 @@ var file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_proto_goTypes = []
 	nil,                                         // 9: smartcore.bos.enterleavesensor.v1.EnterLeaveEvent.Occupant.MoreEntry
 	(*PullEnterLeaveEventsResponse_Change)(nil), // 10: smartcore.bos.enterleavesensor.v1.PullEnterLeaveEventsResponse.Change
 	(*fieldmaskpb.FieldMask)(nil),               // 11: google.protobuf.FieldMask
-	(*types.Image)(nil),                         // 12: smartcore.types.Image
+	(*typespb.Image)(nil),                       // 12: smartcore.bos.types.v1.Image
 	(*timestamppb.Timestamp)(nil),               // 13: google.protobuf.Timestamp
 }
 var file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_proto_depIdxs = []int32{
@@ -667,7 +667,7 @@ var file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_proto_depIdxs = []
 	11, // 2: smartcore.bos.enterleavesensor.v1.PullEnterLeaveEventsRequest.read_mask:type_name -> google.protobuf.FieldMask
 	10, // 3: smartcore.bos.enterleavesensor.v1.PullEnterLeaveEventsResponse.changes:type_name -> smartcore.bos.enterleavesensor.v1.PullEnterLeaveEventsResponse.Change
 	11, // 4: smartcore.bos.enterleavesensor.v1.GetEnterLeaveEventRequest.read_mask:type_name -> google.protobuf.FieldMask
-	12, // 5: smartcore.bos.enterleavesensor.v1.EnterLeaveEvent.Occupant.picture:type_name -> smartcore.types.Image
+	12, // 5: smartcore.bos.enterleavesensor.v1.EnterLeaveEvent.Occupant.picture:type_name -> smartcore.bos.types.v1.Image
 	8,  // 6: smartcore.bos.enterleavesensor.v1.EnterLeaveEvent.Occupant.ids:type_name -> smartcore.bos.enterleavesensor.v1.EnterLeaveEvent.Occupant.IdsEntry
 	9,  // 7: smartcore.bos.enterleavesensor.v1.EnterLeaveEvent.Occupant.more:type_name -> smartcore.bos.enterleavesensor.v1.EnterLeaveEvent.Occupant.MoreEntry
 	13, // 8: smartcore.bos.enterleavesensor.v1.PullEnterLeaveEventsResponse.Change.change_time:type_name -> google.protobuf.Timestamp

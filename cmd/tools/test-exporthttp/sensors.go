@@ -5,8 +5,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func announceOccupancy(root node.Announcer, name string, val int32) error {
@@ -22,7 +22,7 @@ func announceOccupancy(root node.Announcer, name string, val int32) error {
 
 func announceTemperature(root node.Announcer, name string, celsius float64) error {
 	model := airtemperaturepb.NewModel()
-	_, err := model.UpdateAirTemperature(&airtemperaturepb.AirTemperature{AmbientTemperature: &types.Temperature{ValueCelsius: celsius}})
+	_, err := model.UpdateAirTemperature(&airtemperaturepb.AirTemperature{AmbientTemperature: &typespb.Temperature{ValueCelsius: celsius}})
 	if err != nil {
 		return err
 	}

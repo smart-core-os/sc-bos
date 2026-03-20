@@ -9,9 +9,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 const DriverName = "settings"
@@ -48,7 +48,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	modeModel := modepb.NewModelModes(modes)
 	info := &infoServer{
 		Modes: &modepb.ModesSupport{
-			ModeValuesSupport: &types.ResourceSupport{
+			ModeValuesSupport: &typespb.ResourceSupport{
 				Readable: true, Writable: true, Observable: true,
 			},
 			AvailableModes: modes,

@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 func TestTemperatureSensor_GetAirTemperature(t *testing.T) {
@@ -48,7 +48,7 @@ func TestTemperatureSensor_GetAirTemperature(t *testing.T) {
 		t.Fatalf("unexpected error %v", err)
 	}
 	expect := &airtemperaturepb.AirTemperature{
-		AmbientTemperature: &types.Temperature{
+		AmbientTemperature: &typespb.Temperature{
 			ValueCelsius: 20.2,
 		},
 		AmbientHumidity: ref[float32](50.0),

@@ -11,9 +11,9 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
-import "types/number.proto";
-import "types/tween.proto";
+import "smartcore/bos/types/v1/info.proto";
+import "smartcore/bos/types/v1/number.proto";
+import "smartcore/bos/types/v1/tween.proto";
 
 // Applicable to devices that can open or close. Think window contact closure, window blind, or garage door.
 service OpenCloseApi {
@@ -61,7 +61,7 @@ message OpenClosePosition {
   // [0-100] where 0 is fully closed and 100 is fully open.
   float open_percent = 1;
   // How the open percent changes or should change over time. On write, only duration should be set.
-  smartcore.types.Tween open_percent_tween = 2;
+  smartcore.bos.types.v1.Tween open_percent_tween = 2;
   // Read-only, the target open_percent after a transition
   float target_open_percent = 3;
   // Optional direction for devices that support multiple open/close directions
@@ -102,11 +102,11 @@ message OpenClosePosition {
 // PositionsSupport describes the capabilities of devices implementing this trait
 message PositionsSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // Define how the value for open percent behave. The bounds for these attributes will be absent and always in the range
   // [0-100] to represent a percentage.
   // Discreet devices, those that only support fully closed or fully open (i.e. a contact closure) should report a step of 100.
-  smartcore.types.FloatAttributes open_percent_attributes = 2;
+  smartcore.bos.types.v1.FloatAttributes open_percent_attributes = 2;
   // The supported directions for the device. If none then assume only a single direction is supported
   repeated OpenClosePosition.Direction directions = 3;
   // Does the device support the Stop method

@@ -11,9 +11,9 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
-import "types/number.proto";
-import "types/tween.proto";
+import "smartcore/bos/types/v1/info.proto";
+import "smartcore/bos/types/v1/number.proto";
+import "smartcore/bos/types/v1/tween.proto";
 
 // Control the color of a device. This could be a smart-bulb, or a DMX fitting.
 service ColorApi {
@@ -39,7 +39,7 @@ message Color {
   ColorPreset preset = 2;
 
   // How the color changes or should change over time. On write only duration should be set.
-  smartcore.types.Tween color_tween = 3;
+  smartcore.bos.types.v1.Tween color_tween = 3;
   // The target channel values. Ignored on write. On read zero values should be ignored iff target_preset is present.
   ColorChannels target_channels = 4;
   // The target preset. Ignored on write. If present ignore target_channels
@@ -81,9 +81,9 @@ message ColorPreset {
 // ColorSupport describes the capabilities of devices implementing this trait
 message ColorSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // control how the color can be controlled. The range of these attributes is fixed at 0-100 as a percentage
-  smartcore.types.Int32Attributes color_attributes = 2;
+  smartcore.bos.types.v1.Int32Attributes color_attributes = 2;
   // A description of the supported presets, none means no presets
   repeated ColorPreset presets = 3;
   // A description of the supported channels, none means no channels

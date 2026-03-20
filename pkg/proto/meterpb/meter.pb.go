@@ -7,7 +7,7 @@
 package meterpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -106,7 +106,7 @@ func (x *MeterReading) GetProduced() float32 {
 type MeterReadingSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// The unit associated with the usage value
 	UsageUnit string `protobuf:"bytes,2,opt,name=usage_unit,json=usageUnit,proto3" json:"usage_unit,omitempty"`
 	// The unit associated with the produced value
@@ -145,7 +145,7 @@ func (*MeterReadingSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_meter_v1_meter_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *MeterReadingSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *MeterReadingSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -430,15 +430,15 @@ var File_smartcore_bos_meter_v1_meter_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_meter_v1_meter_proto_rawDesc = "" +
 	"\n" +
-	"\"smartcore/bos/meter/v1/meter.proto\x12\x16smartcore.bos.meter.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xb2\x01\n" +
+	"\"smartcore/bos/meter/v1/meter.proto\x12\x16smartcore.bos.meter.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\xb2\x01\n" +
 	"\fMeterReading\x12\x14\n" +
 	"\x05usage\x18\x01 \x01(\x02R\x05usage\x129\n" +
 	"\n" +
 	"start_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x125\n" +
 	"\bend_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aendTime\x12\x1a\n" +
-	"\bproduced\x18\x04 \x01(\x02R\bproduced\"\xa6\x01\n" +
-	"\x13MeterReadingSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12\x1d\n" +
+	"\bproduced\x18\x04 \x01(\x02R\bproduced\"\xad\x01\n" +
+	"\x13MeterReadingSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12\x1d\n" +
 	"\n" +
 	"usage_unit\x18\x02 \x01(\tR\tusageUnit\x12#\n" +
 	"\rproduced_unit\x18\x03 \x01(\tR\fproducedUnit\"e\n" +
@@ -486,13 +486,13 @@ var file_smartcore_bos_meter_v1_meter_proto_goTypes = []any{
 	(*DescribeMeterReadingRequest)(nil),      // 5: smartcore.bos.meter.v1.DescribeMeterReadingRequest
 	(*PullMeterReadingsResponse_Change)(nil), // 6: smartcore.bos.meter.v1.PullMeterReadingsResponse.Change
 	(*timestamppb.Timestamp)(nil),            // 7: google.protobuf.Timestamp
-	(*types.ResourceSupport)(nil),            // 8: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),          // 8: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),            // 9: google.protobuf.FieldMask
 }
 var file_smartcore_bos_meter_v1_meter_proto_depIdxs = []int32{
 	7,  // 0: smartcore.bos.meter.v1.MeterReading.start_time:type_name -> google.protobuf.Timestamp
 	7,  // 1: smartcore.bos.meter.v1.MeterReading.end_time:type_name -> google.protobuf.Timestamp
-	8,  // 2: smartcore.bos.meter.v1.MeterReadingSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	8,  // 2: smartcore.bos.meter.v1.MeterReadingSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	9,  // 3: smartcore.bos.meter.v1.GetMeterReadingRequest.read_mask:type_name -> google.protobuf.FieldMask
 	9,  // 4: smartcore.bos.meter.v1.PullMeterReadingsRequest.read_mask:type_name -> google.protobuf.FieldMask
 	6,  // 5: smartcore.bos.meter.v1.PullMeterReadingsResponse.changes:type_name -> smartcore.bos.meter.v1.PullMeterReadingsResponse.Change

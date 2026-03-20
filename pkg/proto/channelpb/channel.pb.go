@@ -7,7 +7,7 @@
 package channelpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -95,7 +95,7 @@ func (x *Channel) GetTitle() string {
 type ChosenChannelSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// The max number of channels away from the current that are supported when adjusting channels. Defaults to 1.
 	AdjustMax     int32 `protobuf:"varint,2,opt,name=adjust_max,json=adjustMax,proto3" json:"adjust_max,omitempty"` // todo: support for [choose,adjust,return], not sure what the defaults should be
 	unknownFields protoimpl.UnknownFields
@@ -132,7 +132,7 @@ func (*ChosenChannelSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_channel_v1_channel_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ChosenChannelSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *ChosenChannelSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -576,13 +576,13 @@ var File_smartcore_bos_channel_v1_channel_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_channel_v1_channel_proto_rawDesc = "" +
 	"\n" +
-	"&smartcore/bos/channel/v1/channel.proto\x12\x18smartcore.bos.channel.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"V\n" +
+	"&smartcore/bos/channel/v1/channel.proto\x12\x18smartcore.bos.channel.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"V\n" +
 	"\aChannel\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
 	"\x0echannel_number\x18\x02 \x01(\tR\rchannelNumber\x12\x14\n" +
-	"\x05title\x18\x03 \x01(\tR\x05title\"\x82\x01\n" +
-	"\x14ChosenChannelSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12\x1d\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\"\x89\x01\n" +
+	"\x14ChosenChannelSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12\x1d\n" +
 	"\n" +
 	"adjust_max\x18\x02 \x01(\x05R\tadjustMax\"f\n" +
 	"\x17GetChosenChannelRequest\x12\x12\n" +
@@ -644,12 +644,12 @@ var file_smartcore_bos_channel_v1_channel_proto_goTypes = []any{
 	(*PullChosenChannelResponse)(nil),        // 7: smartcore.bos.channel.v1.PullChosenChannelResponse
 	(*DescribeChosenChannelRequest)(nil),     // 8: smartcore.bos.channel.v1.DescribeChosenChannelRequest
 	(*PullChosenChannelResponse_Change)(nil), // 9: smartcore.bos.channel.v1.PullChosenChannelResponse.Change
-	(*types.ResourceSupport)(nil),            // 10: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),          // 10: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),            // 11: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),            // 12: google.protobuf.Timestamp
 }
 var file_smartcore_bos_channel_v1_channel_proto_depIdxs = []int32{
-	10, // 0: smartcore.bos.channel.v1.ChosenChannelSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	10, // 0: smartcore.bos.channel.v1.ChosenChannelSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	11, // 1: smartcore.bos.channel.v1.GetChosenChannelRequest.read_mask:type_name -> google.protobuf.FieldMask
 	0,  // 2: smartcore.bos.channel.v1.ChooseChannelRequest.channel:type_name -> smartcore.bos.channel.v1.Channel
 	11, // 3: smartcore.bos.channel.v1.PullChosenChannelRequest.read_mask:type_name -> google.protobuf.FieldMask

@@ -9,8 +9,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 var wasteTypes = [9]WasteRecord_Type{
@@ -127,7 +127,7 @@ func (m *Model) pullWasteRecordsWrapper(request *PullWasteRecordsRequest, server
 				Name:       request.Name,
 				NewValue:   m.allWasteRecords[i],
 				ChangeTime: m.allWasteRecords[i].WasteCreateTime,
-				Type:       types.ChangeType_ADD,
+				Type:       typespb.ChangeType_ADD,
 			}
 			if err := server.Send(&PullWasteRecordsResponse{Changes: []*PullWasteRecordsResponse_Change{change}}); err != nil {
 				m.mu.Unlock()
@@ -157,7 +157,7 @@ func (m *Model) PullWasteRecords(ctx context.Context, opts ...resource.ReadOptio
 				Name:       "Waste Record",
 				NewValue:   wr, // the mock driver only generates new waste records and does not delete them
 				ChangeTime: wr.WasteCreateTime,
-				Type:       types.ChangeType_ADD,
+				Type:       typespb.ChangeType_ADD,
 			}
 			send <- change
 		}

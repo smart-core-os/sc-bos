@@ -7,7 +7,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/transportpb";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/transport/v1/transport.proto";
-import "types/time/period.proto";
+import "smartcore/bos/types/time/v1/period.proto";
 
 service TransportHistory {
   rpc ListTransportHistory(ListTransportHistoryRequest) returns (ListTransportHistoryResponse);
@@ -20,7 +20,7 @@ message TransportRecord {
 
 message ListTransportHistoryRequest {
   string name = 1;
-  smartcore.types.time.Period period = 2;
+  smartcore.bos.types.time.v1.Period period = 2;
 
   // Fields to fetch relative to the TransportRecord type
   google.protobuf.FieldMask read_mask = 3;

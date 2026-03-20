@@ -20,10 +20,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // TestTracksDeviceValues verifies that the automation extracts values
@@ -38,7 +38,7 @@ func TestTracksDeviceValues(t *testing.T) {
 		h.waitForHealthCheck("room-1")
 
 		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
-			AmbientTemperature: &types.Temperature{ValueCelsius: 21.5},
+			AmbientTemperature: &typespb.Temperature{ValueCelsius: 21.5},
 		})
 
 		h.assertHealthCheckValue("room-1", 21.5)
@@ -94,10 +94,10 @@ func TestCreatesHealthCheckPerDevice(t *testing.T) {
 		h.waitForHealthCheck("room-2")
 
 		_, _ = airTempModel1.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
-			AmbientTemperature: &types.Temperature{ValueCelsius: 20.0},
+			AmbientTemperature: &typespb.Temperature{ValueCelsius: 20.0},
 		})
 		_, _ = airTempModel2.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
-			AmbientTemperature: &types.Temperature{ValueCelsius: 22.0},
+			AmbientTemperature: &typespb.Temperature{ValueCelsius: 22.0},
 		})
 
 		h.assertHealthCheckValue("room-1", 20.0)
@@ -118,25 +118,25 @@ func TestUpdatesNormality(t *testing.T) {
 
 		// Normal value (within 15-25 range)
 		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
-			AmbientTemperature: &types.Temperature{ValueCelsius: 20.0},
+			AmbientTemperature: &typespb.Temperature{ValueCelsius: 20.0},
 		})
 		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_NORMAL)
 
 		// Low value (below 15)
 		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
-			AmbientTemperature: &types.Temperature{ValueCelsius: 10.0},
+			AmbientTemperature: &typespb.Temperature{ValueCelsius: 10.0},
 		})
 		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_LOW)
 
 		// High value (above 25)
 		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
-			AmbientTemperature: &types.Temperature{ValueCelsius: 30.0},
+			AmbientTemperature: &typespb.Temperature{ValueCelsius: 30.0},
 		})
 		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_HIGH)
 
 		// Back to normal
 		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
-			AmbientTemperature: &types.Temperature{ValueCelsius: 22.0},
+			AmbientTemperature: &typespb.Temperature{ValueCelsius: 22.0},
 		})
 		h.assertHealthCheckNormality("room-1", healthpb.HealthCheck_NORMAL)
 	})
@@ -154,7 +154,7 @@ func TestHealthCheckProperties(t *testing.T) {
 		h.waitForHealthCheck("room-1")
 
 		_, _ = airTempModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
-			AmbientTemperature: &types.Temperature{ValueCelsius: 20.0},
+			AmbientTemperature: &typespb.Temperature{ValueCelsius: 20.0},
 		})
 
 		want := &healthpb.HealthCheck{
@@ -575,7 +575,7 @@ func TestPathFieldsAreSet(t *testing.T) {
 		{
 			name: "scalar field set to zero value",
 			message: &airtemperaturepb.AirTemperature{
-				AmbientTemperature: &types.Temperature{
+				AmbientTemperature: &typespb.Temperature{
 					ValueCelsius: 0,
 				},
 			},
@@ -585,7 +585,7 @@ func TestPathFieldsAreSet(t *testing.T) {
 		{
 			name: "scalar field set to non-zero value",
 			message: &airtemperaturepb.AirTemperature{
-				AmbientTemperature: &types.Temperature{
+				AmbientTemperature: &typespb.Temperature{
 					ValueCelsius: 25.5,
 				},
 			},
@@ -603,7 +603,7 @@ func TestPathFieldsAreSet(t *testing.T) {
 		{
 			name: "accessing message field that is set",
 			message: &airtemperaturepb.AirTemperature{
-				AmbientTemperature: &types.Temperature{
+				AmbientTemperature: &typespb.Temperature{
 					ValueCelsius: 20,
 				},
 			},
@@ -621,10 +621,10 @@ func TestPathFieldsAreSet(t *testing.T) {
 		{
 			name: "deeply nested with all fields set",
 			message: &airtemperaturepb.AirTemperature{
-				AmbientTemperature: &types.Temperature{
+				AmbientTemperature: &typespb.Temperature{
 					ValueCelsius: 22,
 				},
-				DewPoint: &types.Temperature{
+				DewPoint: &typespb.Temperature{
 					ValueCelsius: 10,
 				},
 			},

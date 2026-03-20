@@ -11,9 +11,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/time/clock"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 var (
@@ -373,7 +373,7 @@ func (m *Model) normalMode() (*ElectricMode, bool) {
 }
 
 type PullModesChange struct {
-	Type       types.ChangeType
+	Type       typespb.ChangeType
 	NewValue   *ElectricMode
 	OldValue   *ElectricMode
 	ChangeTime time.Time

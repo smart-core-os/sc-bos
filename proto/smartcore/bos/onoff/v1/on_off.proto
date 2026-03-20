@@ -11,7 +11,7 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // Applicable to devices that have a basic binary on and off functionality.
 service OnOffApi {
@@ -44,7 +44,7 @@ message OnOff {
 // OnOffSupport describes the capabilities of devices implementing this trait
 message OnOffSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
 }
 
 message GetOnOffRequest {

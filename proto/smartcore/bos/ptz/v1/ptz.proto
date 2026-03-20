@@ -11,8 +11,8 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
-import "types/tween.proto";
+import "smartcore/bos/types/v1/info.proto";
+import "smartcore/bos/types/v1/tween.proto";
 
 // Allows interaction with a pan-tilt-zoom device, typically a camera.
 service PtzApi {
@@ -81,7 +81,7 @@ message PtzMovement {
   // The speed at which the PTZ device should move. If not specified the device may ramp speed on its own
   int32 speed = 2;
   // How the speed changes or should change over time. On write only duration should be set.
-  smartcore.types.Tween speed_tween = 3;
+  smartcore.bos.types.v1.Tween speed_tween = 3;
   // Read-only, the target speed value after a transition
   int32 target_speed = 4;
 }
@@ -91,7 +91,7 @@ message PtzPosition {
   // The current position.
   PtzVector position = 1;
   // How the position changes or should change over time. On write only duration should be set.
-  smartcore.types.Tween tween = 2;
+  smartcore.bos.types.v1.Tween tween = 2;
   // The target position that will be reached after the tween duration.
   PtzVector target_position = 3;
 }
@@ -112,7 +112,7 @@ message PtzPreset {
 // PtzSupport describes the capabilities of devices implementing this trait
 message PtzSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // Can we ask the device to move to a specific position
   bool supports_position = 2;
   // Can we move the device without a target position in mind

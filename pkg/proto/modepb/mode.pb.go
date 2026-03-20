@@ -7,7 +7,7 @@
 package modepb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -166,7 +166,7 @@ func (x *Modes) GetModes() []*Modes_Mode {
 type ModesSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis for mode values
-	ModeValuesSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=mode_values_support,json=modeValuesSupport,proto3" json:"mode_values_support,omitempty"`
+	ModeValuesSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=mode_values_support,json=modeValuesSupport,proto3" json:"mode_values_support,omitempty"`
 	// AvailableModes holds the list of modes the device supports.
 	AvailableModes *Modes `protobuf:"bytes,2,opt,name=available_modes,json=availableModes,proto3" json:"available_modes,omitempty"`
 	unknownFields  protoimpl.UnknownFields
@@ -203,7 +203,7 @@ func (*ModesSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_mode_v1_mode_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *ModesSupport) GetModeValuesSupport() *types.ResourceSupport {
+func (x *ModesSupport) GetModeValuesSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ModeValuesSupport
 	}
@@ -677,7 +677,7 @@ var File_smartcore_bos_mode_v1_mode_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_mode_v1_mode_proto_rawDesc = "" +
 	"\n" +
-	" smartcore/bos/mode/v1/mode.proto\x12\x15smartcore.bos.mode.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\x8e\x01\n" +
+	" smartcore/bos/mode/v1/mode.proto\x12\x15smartcore.bos.mode.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\x8e\x01\n" +
 	"\n" +
 	"ModeValues\x12E\n" +
 	"\x06values\x18\x01 \x03(\v2-.smartcore.bos.mode.v1.ModeValues.ValuesEntryR\x06values\x1a9\n" +
@@ -696,9 +696,9 @@ const file_smartcore_bos_mode_v1_mode_proto_rawDesc = "" +
 	"\x04Mode\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12:\n" +
 	"\x06values\x18\x02 \x03(\v2\".smartcore.bos.mode.v1.Modes.ValueR\x06values\x12\x18\n" +
-	"\aordered\x18\x03 \x01(\bR\aordered\"\xa7\x01\n" +
-	"\fModesSupport\x12P\n" +
-	"\x13mode_values_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x11modeValuesSupport\x12E\n" +
+	"\aordered\x18\x03 \x01(\bR\aordered\"\xae\x01\n" +
+	"\fModesSupport\x12W\n" +
+	"\x13mode_values_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x11modeValuesSupport\x12E\n" +
 	"\x0favailable_modes\x18\x02 \x01(\v2\x1c.smartcore.bos.mode.v1.ModesR\x0eavailableModes\"c\n" +
 	"\x14GetModeValuesRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
@@ -760,7 +760,7 @@ var file_smartcore_bos_mode_v1_mode_proto_goTypes = []any{
 	(*Modes_Value)(nil),                   // 11: smartcore.bos.mode.v1.Modes.Value
 	(*Modes_Mode)(nil),                    // 12: smartcore.bos.mode.v1.Modes.Mode
 	(*PullModeValuesResponse_Change)(nil), // 13: smartcore.bos.mode.v1.PullModeValuesResponse.Change
-	(*types.ResourceSupport)(nil),         // 14: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),       // 14: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),         // 15: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),         // 16: google.protobuf.Timestamp
 }
@@ -768,7 +768,7 @@ var file_smartcore_bos_mode_v1_mode_proto_depIdxs = []int32{
 	9,  // 0: smartcore.bos.mode.v1.ModeValues.values:type_name -> smartcore.bos.mode.v1.ModeValues.ValuesEntry
 	10, // 1: smartcore.bos.mode.v1.ModeValuesRelative.values:type_name -> smartcore.bos.mode.v1.ModeValuesRelative.ValuesEntry
 	12, // 2: smartcore.bos.mode.v1.Modes.modes:type_name -> smartcore.bos.mode.v1.Modes.Mode
-	14, // 3: smartcore.bos.mode.v1.ModesSupport.mode_values_support:type_name -> smartcore.types.ResourceSupport
+	14, // 3: smartcore.bos.mode.v1.ModesSupport.mode_values_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	2,  // 4: smartcore.bos.mode.v1.ModesSupport.available_modes:type_name -> smartcore.bos.mode.v1.Modes
 	15, // 5: smartcore.bos.mode.v1.GetModeValuesRequest.read_mask:type_name -> google.protobuf.FieldMask
 	0,  // 6: smartcore.bos.mode.v1.UpdateModeValuesRequest.mode_values:type_name -> smartcore.bos.mode.v1.ModeValues

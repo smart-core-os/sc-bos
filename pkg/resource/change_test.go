@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 func TestCollectionChange_include(t *testing.T) {
@@ -16,7 +16,7 @@ func TestCollectionChange_include(t *testing.T) {
 		now    = time.Now()
 		on     = val(1)
 		off    = val(2)
-		change = func(ov, nv proto.Message, kind types.ChangeType) *CollectionChange {
+		change = func(ov, nv proto.Message, kind typespb.ChangeType) *CollectionChange {
 			return &CollectionChange{
 				Id:         "id",
 				ChangeTime: now,
@@ -43,75 +43,75 @@ func TestCollectionChange_include(t *testing.T) {
 	}{
 		{
 			name:   "no filter, ADD",
-			in:     change(nil, on, types.ChangeType_ADD),
-			want:   change(nil, on, types.ChangeType_ADD),
+			in:     change(nil, on, typespb.ChangeType_ADD),
+			want:   change(nil, on, typespb.ChangeType_ADD),
 			wantOk: true,
 		},
 		{
 			name:   "no filter, UPDATE",
-			in:     change(on, off, types.ChangeType_UPDATE),
-			want:   change(on, off, types.ChangeType_UPDATE),
+			in:     change(on, off, typespb.ChangeType_UPDATE),
+			want:   change(on, off, typespb.ChangeType_UPDATE),
 			wantOk: true,
 		},
 		{
 			name:   "no filter, REMOVE",
-			in:     change(on, nil, types.ChangeType_REMOVE),
-			want:   change(on, nil, types.ChangeType_REMOVE),
+			in:     change(on, nil, typespb.ChangeType_REMOVE),
+			want:   change(on, nil, typespb.ChangeType_REMOVE),
 			wantOk: true,
 		},
 		{
 			name:   "ADD on",
-			in:     change(nil, on, types.ChangeType_ADD),
-			want:   change(nil, on, types.ChangeType_ADD),
+			in:     change(nil, on, typespb.ChangeType_ADD),
+			want:   change(nil, on, typespb.ChangeType_ADD),
 			wantOk: true,
 			filter: only(on),
 		},
 		{
 			name:   "ADD off",
-			in:     change(nil, off, types.ChangeType_ADD),
+			in:     change(nil, off, typespb.ChangeType_ADD),
 			filter: only(on),
 		},
 		{
 			name:   "UPDATE on->on",
-			in:     change(on, on, types.ChangeType_UPDATE),
-			want:   change(on, on, types.ChangeType_UPDATE),
+			in:     change(on, on, typespb.ChangeType_UPDATE),
+			want:   change(on, on, typespb.ChangeType_UPDATE),
 			wantOk: true,
 			filter: only(on),
 		},
 		{
 			name:   "UPDATE on->off",
-			in:     change(on, off, types.ChangeType_UPDATE),
-			want:   change(on, nil, types.ChangeType_REMOVE),
+			in:     change(on, off, typespb.ChangeType_UPDATE),
+			want:   change(on, nil, typespb.ChangeType_REMOVE),
 			wantOk: true,
 			filter: only(on),
 		},
 		{
 			name:   "UPDATE off->on",
-			in:     change(off, on, types.ChangeType_UPDATE),
-			want:   change(nil, on, types.ChangeType_ADD),
+			in:     change(off, on, typespb.ChangeType_UPDATE),
+			want:   change(nil, on, typespb.ChangeType_ADD),
 			wantOk: true,
 			filter: only(on),
 		},
 		{
 			name:   "UPDATE off->off",
-			in:     change(off, off, types.ChangeType_UPDATE),
+			in:     change(off, off, typespb.ChangeType_UPDATE),
 			filter: only(on),
 		},
 		{
 			name:   "REMOVE on",
-			in:     change(on, nil, types.ChangeType_REMOVE),
-			want:   change(on, nil, types.ChangeType_REMOVE),
+			in:     change(on, nil, typespb.ChangeType_REMOVE),
+			want:   change(on, nil, typespb.ChangeType_REMOVE),
 			wantOk: true,
 			filter: only(on),
 		},
 		{
 			name:   "REMOVE off",
-			in:     change(off, nil, types.ChangeType_REMOVE),
+			in:     change(off, nil, typespb.ChangeType_REMOVE),
 			filter: only(on),
 		},
 		{
 			name:   "empty change",
-			in:     change(nil, nil, types.ChangeType_UPDATE),
+			in:     change(nil, nil, typespb.ChangeType_UPDATE),
 			filter: only(on),
 		},
 	}

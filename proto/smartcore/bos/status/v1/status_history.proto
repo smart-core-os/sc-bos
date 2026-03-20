@@ -7,7 +7,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/statuspb";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/status/v1/status.proto";
-import "types/time/period.proto";
+import "smartcore/bos/types/time/v1/period.proto";
 
 // Provides historical entries for changes to the status of a device.
 service StatusHistory {
@@ -21,7 +21,7 @@ message StatusLogRecord {
 
 message ListCurrentStatusHistoryRequest {
   string name = 1;
-  smartcore.types.time.Period period = 2;
+  smartcore.bos.types.time.v1.Period period = 2;
 
   // Fields to fetch relative to the StatusLog type
   google.protobuf.FieldMask read_mask = 3;

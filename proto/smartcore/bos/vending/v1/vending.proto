@@ -11,9 +11,9 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/change.proto";
-import "types/image.proto";
-import "types/number.proto";
+import "smartcore/bos/types/v1/change.proto";
+import "smartcore/bos/types/v1/image.proto";
+import "smartcore/bos/types/v1/number.proto";
 
 // VendingApi describes devices that hold a stock and can dispense their consumables on command.
 // Applies to devices like vending machines, water taps, coffee machines, and pet food dispensers.
@@ -101,7 +101,7 @@ message Consumable {
     // The unit the portion is measured in.
     Unit unit = 1;
     // Upper and lower bounds for the portion quantity.
-    smartcore.types.FloatBounds bounds = 2;
+    smartcore.bos.types.v1.FloatBounds bounds = 2;
     // The minimal increment for the portion quantity.
     float step = 3;
   }
@@ -121,7 +121,7 @@ message Consumable {
   // A recognisable display name for this item.
   string display_name = 11;
   // A picture of the item.
-  smartcore.types.Image picture = 12;
+  smartcore.bos.types.v1.Image picture = 12;
   // A url that resolves to more information on this item.
   string url = 13;
 
@@ -209,7 +209,7 @@ message PullConsumablesResponse {
     // The name of the device that emitted this change
     string name = 1;
     // The type of change (e.g. ADD, UPDATE, etc...)
-    smartcore.types.ChangeType type = 2;
+    smartcore.bos.types.v1.ChangeType type = 2;
     // The new value to use for ADD|UPDATE changes
     Consumable new_value = 3;
     // The old value to use for UPDATE|REMOVE changes
@@ -319,7 +319,7 @@ message PullInventoryResponse {
     // The name of the device that emitted this change
     string name = 1;
     // The type of change (e.g. ADD, UPDATE, etc...)
-    smartcore.types.ChangeType type = 2;
+    smartcore.bos.types.v1.ChangeType type = 2;
     // The new value to use for ADD|UPDATE changes
     Consumable.Stock new_value = 3;
     // The old value to use for UPDATE|REMOVE changes

@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+// TODO: find out if this package can change to reflect the new location in the codebase.
 package smartcore.go.trait.electric;
 
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/electricpb";
@@ -11,14 +12,14 @@ import "smartcore/bos/electric/v1/electric.proto";
 // MemorySettingsApi allows a client to adjust the internal state of an in-memory electric device.
 // Use for configuring testing.
 service MemorySettingsApi {
-  rpc UpdateDemand(UpdateDemandRequest) returns (smartcore.traits.ElectricDemand);
+  rpc UpdateDemand(UpdateDemandRequest) returns (smartcore.bos.electric.v1.ElectricDemand);
 
   // Create a new mode in the device.
   // Do not specify the id, this will be provided by the server.
   // This will not validate that exactly one normal mode exists,
   // the ClearActiveMode method will choose the first normal mode found.
-  rpc CreateMode(CreateModeRequest) returns (smartcore.traits.ElectricMode);
-  rpc UpdateMode(UpdateModeRequest) returns (smartcore.traits.ElectricMode);
+  rpc CreateMode(CreateModeRequest) returns (smartcore.bos.electric.v1.ElectricMode);
+  rpc UpdateMode(UpdateModeRequest) returns (smartcore.bos.electric.v1.ElectricMode);
   // Delete an existing mode.
   // Returns NOT_FOUND if the mode, identified by id, is not found. See allow_missing.
   rpc DeleteMode(DeleteModeRequest) returns (google.protobuf.Empty);

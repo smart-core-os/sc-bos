@@ -8,8 +8,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // Model describes the data structure needed to implement the Hail trait.
@@ -94,7 +94,7 @@ func (m *Model) ListHails(opts ...resource.ReadOption) []*Hail {
 }
 
 type HailsChange struct {
-	ChangeType types.ChangeType
+	ChangeType typespb.ChangeType
 	ChangeTime time.Time
 	OldValue   *Hail
 	NewValue   *Hail

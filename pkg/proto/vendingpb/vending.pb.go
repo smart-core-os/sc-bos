@@ -7,7 +7,7 @@
 package vendingpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -108,7 +108,7 @@ type Consumable struct {
 	// A recognisable display name for this item.
 	DisplayName string `protobuf:"bytes,11,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	// A picture of the item.
-	Picture *types.Image `protobuf:"bytes,12,opt,name=picture,proto3" json:"picture,omitempty"`
+	Picture *typespb.Image `protobuf:"bytes,12,opt,name=picture,proto3" json:"picture,omitempty"`
 	// A url that resolves to more information on this item.
 	Url string `protobuf:"bytes,13,opt,name=url,proto3" json:"url,omitempty"`
 	// IDs holds external consumable ids.
@@ -188,7 +188,7 @@ func (x *Consumable) GetDisplayName() string {
 	return ""
 }
 
-func (x *Consumable) GetPicture() *types.Image {
+func (x *Consumable) GetPicture() *typespb.Image {
 	if x != nil {
 		return x.Picture
 	}
@@ -1104,7 +1104,7 @@ type Consumable_Portion struct {
 	// The unit the portion is measured in.
 	Unit Consumable_Unit `protobuf:"varint,1,opt,name=unit,proto3,enum=smartcore.bos.vending.v1.Consumable_Unit" json:"unit,omitempty"`
 	// Upper and lower bounds for the portion quantity.
-	Bounds *types.FloatBounds `protobuf:"bytes,2,opt,name=bounds,proto3" json:"bounds,omitempty"`
+	Bounds *typespb.FloatBounds `protobuf:"bytes,2,opt,name=bounds,proto3" json:"bounds,omitempty"`
 	// The minimal increment for the portion quantity.
 	Step          float32 `protobuf:"fixed32,3,opt,name=step,proto3" json:"step,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1148,7 +1148,7 @@ func (x *Consumable_Portion) GetUnit() Consumable_Unit {
 	return Consumable_UNIT_UNSPECIFIED
 }
 
-func (x *Consumable_Portion) GetBounds() *types.FloatBounds {
+func (x *Consumable_Portion) GetBounds() *typespb.FloatBounds {
 	if x != nil {
 		return x.Bounds
 	}
@@ -1310,7 +1310,7 @@ type PullConsumablesResponse_Change struct {
 	// The name of the device that emitted this change
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The type of change (e.g. ADD, UPDATE, etc...)
-	Type types.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type typespb.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	// The new value to use for ADD|UPDATE changes
 	NewValue *Consumable `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// The old value to use for UPDATE|REMOVE changes
@@ -1358,11 +1358,11 @@ func (x *PullConsumablesResponse_Change) GetName() string {
 	return ""
 }
 
-func (x *PullConsumablesResponse_Change) GetType() types.ChangeType {
+func (x *PullConsumablesResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 func (x *PullConsumablesResponse_Change) GetNewValue() *Consumable {
@@ -1455,7 +1455,7 @@ type PullInventoryResponse_Change struct {
 	// The name of the device that emitted this change
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The type of change (e.g. ADD, UPDATE, etc...)
-	Type types.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type typespb.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	// The new value to use for ADD|UPDATE changes
 	NewValue *Consumable_Stock `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// The old value to use for UPDATE|REMOVE changes
@@ -1503,11 +1503,11 @@ func (x *PullInventoryResponse_Change) GetName() string {
 	return ""
 }
 
-func (x *PullInventoryResponse_Change) GetType() types.ChangeType {
+func (x *PullInventoryResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 func (x *PullInventoryResponse_Change) GetNewValue() *Consumable_Stock {
@@ -1535,7 +1535,7 @@ var File_smartcore_bos_vending_v1_vending_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_vending_v1_vending_proto_rawDesc = "" +
 	"\n" +
-	"&smartcore/bos/vending/v1/vending.proto\x12\x18smartcore.bos.vending.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\x1a\x11types/image.proto\x1a\x12types/number.proto\"\xd9\t\n" +
+	"&smartcore/bos/vending/v1/vending.proto\x12\x18smartcore.bos.vending.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a#smartcore/bos/types/v1/change.proto\x1a\"smartcore/bos/types/v1/image.proto\x1a#smartcore/bos/types/v1/number.proto\"\xe7\t\n" +
 	"\n" +
 	"Consumable\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12[\n" +
@@ -1543,14 +1543,14 @@ const file_smartcore_bos_vending_v1_vending_proto_rawDesc = "" +
 	"\x0fdefault_portion\x18\x03 \x01(\v2-.smartcore.bos.vending.v1.Consumable.QuantityR\x0edefaultPortion\x12\x14\n" +
 	"\x05title\x18\n" +
 	" \x01(\tR\x05title\x12!\n" +
-	"\fdisplay_name\x18\v \x01(\tR\vdisplayName\x120\n" +
-	"\apicture\x18\f \x01(\v2\x16.smartcore.types.ImageR\apicture\x12\x10\n" +
+	"\fdisplay_name\x18\v \x01(\tR\vdisplayName\x127\n" +
+	"\apicture\x18\f \x01(\v2\x1d.smartcore.bos.types.v1.ImageR\apicture\x12\x10\n" +
 	"\x03url\x18\r \x01(\tR\x03url\x12?\n" +
 	"\x03ids\x18d \x03(\v2-.smartcore.bos.vending.v1.Consumable.IdsEntryR\x03ids\x12B\n" +
-	"\x04more\x18e \x03(\v2..smartcore.bos.vending.v1.Consumable.MoreEntryR\x04more\x1a\x92\x01\n" +
+	"\x04more\x18e \x03(\v2..smartcore.bos.vending.v1.Consumable.MoreEntryR\x04more\x1a\x99\x01\n" +
 	"\aPortion\x12=\n" +
-	"\x04unit\x18\x01 \x01(\x0e2).smartcore.bos.vending.v1.Consumable.UnitR\x04unit\x124\n" +
-	"\x06bounds\x18\x02 \x01(\v2\x1c.smartcore.types.FloatBoundsR\x06bounds\x12\x12\n" +
+	"\x04unit\x18\x01 \x01(\x0e2).smartcore.bos.vending.v1.Consumable.UnitR\x04unit\x12;\n" +
+	"\x06bounds\x18\x02 \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x06bounds\x12\x12\n" +
 	"\x04step\x18\x03 \x01(\x02R\x04step\x1aa\n" +
 	"\bQuantity\x12\x16\n" +
 	"\x06amount\x18\x02 \x01(\x02R\x06amount\x12=\n" +
@@ -1593,12 +1593,12 @@ const file_smartcore_bos_vending_v1_vending_proto_rawDesc = "" +
 	"\x16PullConsumablesRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x80\x03\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x87\x03\n" +
 	"\x17PullConsumablesResponse\x12R\n" +
-	"\achanges\x18\x01 \x03(\v28.smartcore.bos.vending.v1.PullConsumablesResponse.ChangeR\achanges\x1a\x90\x02\n" +
+	"\achanges\x18\x01 \x03(\v28.smartcore.bos.vending.v1.PullConsumablesResponse.ChangeR\achanges\x1a\x97\x02\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12A\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\x12A\n" +
 	"\tnew_value\x18\x03 \x01(\v2$.smartcore.bos.vending.v1.ConsumableR\bnewValue\x12A\n" +
 	"\told_value\x18\x04 \x01(\v2$.smartcore.bos.vending.v1.ConsumableR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -1643,12 +1643,12 @@ const file_smartcore_bos_vending_v1_vending_proto_rawDesc = "" +
 	"\x14PullInventoryRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x88\x03\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x8f\x03\n" +
 	"\x15PullInventoryResponse\x12P\n" +
-	"\achanges\x18\x01 \x03(\v26.smartcore.bos.vending.v1.PullInventoryResponse.ChangeR\achanges\x1a\x9c\x02\n" +
+	"\achanges\x18\x01 \x03(\v26.smartcore.bos.vending.v1.PullInventoryResponse.ChangeR\achanges\x1a\xa3\x02\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12G\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\x12G\n" +
 	"\tnew_value\x18\x03 \x01(\v2*.smartcore.bos.vending.v1.Consumable.StockR\bnewValue\x12G\n" +
 	"\told_value\x18\x04 \x01(\v2*.smartcore.bos.vending.v1.Consumable.StockR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -1719,16 +1719,16 @@ var file_smartcore_bos_vending_v1_vending_proto_goTypes = []any{
 	(*PullConsumablesResponse_Change)(nil), // 21: smartcore.bos.vending.v1.PullConsumablesResponse.Change
 	(*PullStockResponse_Change)(nil),       // 22: smartcore.bos.vending.v1.PullStockResponse.Change
 	(*PullInventoryResponse_Change)(nil),   // 23: smartcore.bos.vending.v1.PullInventoryResponse.Change
-	(*types.Image)(nil),                    // 24: smartcore.types.Image
+	(*typespb.Image)(nil),                  // 24: smartcore.bos.types.v1.Image
 	(*fieldmaskpb.FieldMask)(nil),          // 25: google.protobuf.FieldMask
-	(*types.FloatBounds)(nil),              // 26: smartcore.types.FloatBounds
-	(types.ChangeType)(0),                  // 27: smartcore.types.ChangeType
+	(*typespb.FloatBounds)(nil),            // 26: smartcore.bos.types.v1.FloatBounds
+	(typespb.ChangeType)(0),                // 27: smartcore.bos.types.v1.ChangeType
 	(*timestamppb.Timestamp)(nil),          // 28: google.protobuf.Timestamp
 }
 var file_smartcore_bos_vending_v1_vending_proto_depIdxs = []int32{
 	16, // 0: smartcore.bos.vending.v1.Consumable.available_portions:type_name -> smartcore.bos.vending.v1.Consumable.Portion
 	17, // 1: smartcore.bos.vending.v1.Consumable.default_portion:type_name -> smartcore.bos.vending.v1.Consumable.Quantity
-	24, // 2: smartcore.bos.vending.v1.Consumable.picture:type_name -> smartcore.types.Image
+	24, // 2: smartcore.bos.vending.v1.Consumable.picture:type_name -> smartcore.bos.types.v1.Image
 	18, // 3: smartcore.bos.vending.v1.Consumable.ids:type_name -> smartcore.bos.vending.v1.Consumable.IdsEntry
 	19, // 4: smartcore.bos.vending.v1.Consumable.more:type_name -> smartcore.bos.vending.v1.Consumable.MoreEntry
 	25, // 5: smartcore.bos.vending.v1.ListConsumablesRequest.read_mask:type_name -> google.protobuf.FieldMask
@@ -1747,18 +1747,18 @@ var file_smartcore_bos_vending_v1_vending_proto_depIdxs = []int32{
 	17, // 18: smartcore.bos.vending.v1.DispenseRequest.quantity:type_name -> smartcore.bos.vending.v1.Consumable.Quantity
 	25, // 19: smartcore.bos.vending.v1.DispenseRequest.update_mask:type_name -> google.protobuf.FieldMask
 	0,  // 20: smartcore.bos.vending.v1.Consumable.Portion.unit:type_name -> smartcore.bos.vending.v1.Consumable.Unit
-	26, // 21: smartcore.bos.vending.v1.Consumable.Portion.bounds:type_name -> smartcore.types.FloatBounds
+	26, // 21: smartcore.bos.vending.v1.Consumable.Portion.bounds:type_name -> smartcore.bos.types.v1.FloatBounds
 	0,  // 22: smartcore.bos.vending.v1.Consumable.Quantity.unit:type_name -> smartcore.bos.vending.v1.Consumable.Unit
 	17, // 23: smartcore.bos.vending.v1.Consumable.Stock.remaining:type_name -> smartcore.bos.vending.v1.Consumable.Quantity
 	17, // 24: smartcore.bos.vending.v1.Consumable.Stock.used:type_name -> smartcore.bos.vending.v1.Consumable.Quantity
 	17, // 25: smartcore.bos.vending.v1.Consumable.Stock.last_dispensed:type_name -> smartcore.bos.vending.v1.Consumable.Quantity
-	27, // 26: smartcore.bos.vending.v1.PullConsumablesResponse.Change.type:type_name -> smartcore.types.ChangeType
+	27, // 26: smartcore.bos.vending.v1.PullConsumablesResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	1,  // 27: smartcore.bos.vending.v1.PullConsumablesResponse.Change.new_value:type_name -> smartcore.bos.vending.v1.Consumable
 	1,  // 28: smartcore.bos.vending.v1.PullConsumablesResponse.Change.old_value:type_name -> smartcore.bos.vending.v1.Consumable
 	28, // 29: smartcore.bos.vending.v1.PullConsumablesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
 	28, // 30: smartcore.bos.vending.v1.PullStockResponse.Change.change_time:type_name -> google.protobuf.Timestamp
 	20, // 31: smartcore.bos.vending.v1.PullStockResponse.Change.stock:type_name -> smartcore.bos.vending.v1.Consumable.Stock
-	27, // 32: smartcore.bos.vending.v1.PullInventoryResponse.Change.type:type_name -> smartcore.types.ChangeType
+	27, // 32: smartcore.bos.vending.v1.PullInventoryResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	20, // 33: smartcore.bos.vending.v1.PullInventoryResponse.Change.new_value:type_name -> smartcore.bos.vending.v1.Consumable.Stock
 	20, // 34: smartcore.bos.vending.v1.PullInventoryResponse.Change.old_value:type_name -> smartcore.bos.vending.v1.Consumable.Stock
 	28, // 35: smartcore.bos.vending.v1.PullInventoryResponse.Change.change_time:type_name -> google.protobuf.Timestamp

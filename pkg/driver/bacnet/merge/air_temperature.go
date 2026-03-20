@@ -14,11 +14,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type modeDataPoints struct {
@@ -184,7 +184,7 @@ func (t *airTemperature) pollPeer(ctx context.Context) (*airtemperaturepb.AirTem
 				return comm.ErrReadProperty{Prop: "setPoint", Cause: err}
 			}
 			data.TemperatureGoal = &airtemperaturepb.AirTemperature_TemperatureSetPoint{
-				TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
+				TemperatureSetPoint: &typespb.Temperature{ValueCelsius: setPoint},
 			}
 			return nil
 		})
@@ -200,7 +200,7 @@ func (t *airTemperature) pollPeer(ctx context.Context) (*airtemperaturepb.AirTem
 			}
 			setPoint := setPointHigh - float64(*t.config.SetPointDeadBand)
 			data.TemperatureGoal = &airtemperaturepb.AirTemperature_TemperatureSetPoint{
-				TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
+				TemperatureSetPoint: &typespb.Temperature{ValueCelsius: setPoint},
 			}
 			return nil
 		})
@@ -214,7 +214,7 @@ func (t *airTemperature) pollPeer(ctx context.Context) (*airtemperaturepb.AirTem
 			}
 			setPoint := setPointLow + float64(*t.config.SetPointDeadBand)
 			data.TemperatureGoal = &airtemperaturepb.AirTemperature_TemperatureSetPoint{
-				TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
+				TemperatureSetPoint: &typespb.Temperature{ValueCelsius: setPoint},
 			}
 			return nil
 		})
@@ -228,7 +228,7 @@ func (t *airTemperature) pollPeer(ctx context.Context) (*airtemperaturepb.AirTem
 			if err != nil {
 				return comm.ErrReadProperty{Prop: "ambientTemperature", Cause: err}
 			}
-			data.AmbientTemperature = &types.Temperature{ValueCelsius: ambientTemperature}
+			data.AmbientTemperature = &typespb.Temperature{ValueCelsius: ambientTemperature}
 			return nil
 		})
 	}

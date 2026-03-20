@@ -3,13 +3,11 @@
 package electricpb
 
 import (
-	"context"
-	"fmt"
-
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/emptypb"
-
-	"github.com/smart-core-os/sc-bos/pkg/router"
+	context "context"
+	fmt "fmt"
+	router "github.com/smart-core-os/sc-bos/pkg/router"
+	grpc "google.golang.org/grpc"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // MemorySettingsApiRouter is a MemorySettingsApiServer that allows routing named requests to specific MemorySettingsApiClient

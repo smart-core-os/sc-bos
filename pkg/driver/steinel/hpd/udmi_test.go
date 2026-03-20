@@ -11,9 +11,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func Test_PullExportMessages(t *testing.T) {
@@ -23,7 +23,7 @@ func Test_PullExportMessages(t *testing.T) {
 	humidity := float32(0)
 	aq := resource.NewValue(resource.WithInitialValue(&airqualitysensorpb.AirQuality{CarbonDioxideLevel: &co2, VolatileOrganicCompounds: &voc}), resource.WithNoDuplicates())
 	o := resource.NewValue(resource.WithInitialValue(&occupancysensorpb.Occupancy{PeopleCount: 0, State: occupancysensorpb.Occupancy_OCCUPIED}), resource.WithNoDuplicates())
-	temp := resource.NewValue(resource.WithInitialValue(&airtemperaturepb.AirTemperature{AmbientTemperature: &types.Temperature{ValueCelsius: 0}, AmbientHumidity: &humidity}), resource.WithNoDuplicates())
+	temp := resource.NewValue(resource.WithInitialValue(&airtemperaturepb.AirTemperature{AmbientTemperature: &typespb.Temperature{ValueCelsius: 0}, AmbientHumidity: &humidity}), resource.WithNoDuplicates())
 
 	server := newUdmiServiceServer(nil, aq, o, temp, "prefix")
 	client := udmipb.WrapService(server)
@@ -58,7 +58,7 @@ func Test_PullExportMessages(t *testing.T) {
 				temp.Set(&airtemperaturepb.AirTemperature{
 					Mode:               0,
 					TemperatureGoal:    nil,
-					AmbientTemperature: &types.Temperature{ValueCelsius: 765.4},
+					AmbientTemperature: &typespb.Temperature{ValueCelsius: 765.4},
 					AmbientHumidity:    &humidity,
 					DewPoint:           nil,
 				})

@@ -7,7 +7,7 @@
 package healthpb
 
 import (
-	time "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
+	timepb "github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -150,7 +150,7 @@ type ListHealthCheckHistoryRequest struct {
 	// Optional, if not specified the history for all health checks on the device will be returned.
 	Id string `protobuf:"bytes,7,opt,name=id,proto3" json:"id,omitempty"`
 	// The period of time to list the history for.
-	Period *time.Period `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
+	Period *timepb.Period `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
 	// Fields to fetch relative to the HealthCheckRecord type
 	ReadMask *fieldmaskpb.FieldMask `protobuf:"bytes,3,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
 	// The maximum number of devices to return.
@@ -214,7 +214,7 @@ func (x *ListHealthCheckHistoryRequest) GetId() string {
 	return ""
 }
 
-func (x *ListHealthCheckHistoryRequest) GetPeriod() *time.Period {
+func (x *ListHealthCheckHistoryRequest) GetPeriod() *timepb.Period {
 	if x != nil {
 		return x.Period
 	}
@@ -317,7 +317,7 @@ var File_smartcore_bos_health_v1_health_history_proto protoreflect.FileDescripto
 
 const file_smartcore_bos_health_v1_health_history_proto_rawDesc = "" +
 	"\n" +
-	",smartcore/bos/health/v1/health_history.proto\x12\x17smartcore.bos.health.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/health/v1/health.proto\x1a\x17types/time/period.proto\"\xc1\x02\n" +
+	",smartcore/bos/health/v1/health_history.proto\x12\x17smartcore.bos.health.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/health/v1/health.proto\x1a(smartcore/bos/types/time/v1/period.proto\"\xc1\x02\n" +
 	"\x11HealthCheckRecord\x12G\n" +
 	"\fhealth_check\x18\x01 \x01(\v2$.smartcore.bos.health.v1.HealthCheckR\vhealthCheck\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -329,11 +329,11 @@ const file_smartcore_bos_health_v1_health_history_proto_rawDesc = "" +
 	"\x17RECORD_TYPE_UNSPECIFIED\x10\x00\x12\t\n" +
 	"\x05ADDED\x10\x01\x12\v\n" +
 	"\aUPDATED\x10\x02\x12\v\n" +
-	"\aREMOVED\x10\x03\"\x89\x02\n" +
+	"\aREMOVED\x10\x03\"\x90\x02\n" +
 	"\x1dListHealthCheckHistoryRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
-	"\x02id\x18\a \x01(\tR\x02id\x124\n" +
-	"\x06period\x18\x02 \x01(\v2\x1c.smartcore.types.time.PeriodR\x06period\x127\n" +
+	"\x02id\x18\a \x01(\tR\x02id\x12;\n" +
+	"\x06period\x18\x02 \x01(\v2#.smartcore.bos.types.time.v1.PeriodR\x06period\x127\n" +
 	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
@@ -368,14 +368,14 @@ var file_smartcore_bos_health_v1_health_history_proto_goTypes = []any{
 	(*ListHealthCheckHistoryResponse)(nil), // 3: smartcore.bos.health.v1.ListHealthCheckHistoryResponse
 	(*HealthCheck)(nil),                    // 4: smartcore.bos.health.v1.HealthCheck
 	(*timestamppb.Timestamp)(nil),          // 5: google.protobuf.Timestamp
-	(*time.Period)(nil),                    // 6: smartcore.types.time.Period
+	(*timepb.Period)(nil),                  // 6: smartcore.bos.types.time.v1.Period
 	(*fieldmaskpb.FieldMask)(nil),          // 7: google.protobuf.FieldMask
 }
 var file_smartcore_bos_health_v1_health_history_proto_depIdxs = []int32{
 	4, // 0: smartcore.bos.health.v1.HealthCheckRecord.health_check:type_name -> smartcore.bos.health.v1.HealthCheck
 	5, // 1: smartcore.bos.health.v1.HealthCheckRecord.record_time:type_name -> google.protobuf.Timestamp
 	0, // 2: smartcore.bos.health.v1.HealthCheckRecord.record_type:type_name -> smartcore.bos.health.v1.HealthCheckRecord.RecordType
-	6, // 3: smartcore.bos.health.v1.ListHealthCheckHistoryRequest.period:type_name -> smartcore.types.time.Period
+	6, // 3: smartcore.bos.health.v1.ListHealthCheckHistoryRequest.period:type_name -> smartcore.bos.types.time.v1.Period
 	7, // 4: smartcore.bos.health.v1.ListHealthCheckHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
 	1, // 5: smartcore.bos.health.v1.ListHealthCheckHistoryResponse.health_check_records:type_name -> smartcore.bos.health.v1.HealthCheckRecord
 	2, // 6: smartcore.bos.health.v1.HealthHistory.ListHealthCheckHistory:input_type -> smartcore.bos.health.v1.ListHealthCheckHistoryRequest

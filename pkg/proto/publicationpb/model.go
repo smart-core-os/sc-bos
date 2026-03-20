@@ -10,8 +10,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type Model struct {
@@ -86,7 +86,7 @@ func (m *Model) ListPublications(opts ...resource.ReadOption) []*Publication {
 type PublicationsChange struct {
 	ID         string
 	ChangeTime time.Time
-	ChangeType types.ChangeType
+	ChangeType typespb.ChangeType
 	OldValue   *Publication
 	NewValue   *Publication
 }

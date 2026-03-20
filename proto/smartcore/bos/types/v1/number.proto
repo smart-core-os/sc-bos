@@ -1,14 +1,14 @@
 syntax = "proto3";
 
-package smartcore.types;
+package smartcore.bos.types.v1;
 
 option csharp_namespace = "Smartcore.Types";
-option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/types";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/typespb";
 option java_multiple_files = true;
 option java_outer_classname = "NumberProto";
 option java_package = "dev.smartcore.types";
 
-import "types/tween.proto";
+import "smartcore/bos/types/v1/tween.proto";
 
 // Possible behaviours for values that are not allowed by the number
 enum InvalidNumberBehaviour {
@@ -47,16 +47,16 @@ message Int32Bounds {
 
 // Describes features and restrictions applied to a number that is typically used as part of an apis value
 message Int32Attributes {
-  smartcore.types.Int32Bounds bounds = 1;
+  Int32Bounds bounds = 1;
   // The stepping interval, how little the value can change in one go. A default value of 0 is equivalent to a
   // continuous step, i.e. step=1
   int32 step = 3;
   // Indicate whether the device supports delta adjustments when changing the value
   bool supports_delta = 4;
   // Indicate the level of ramp support the device has
-  smartcore.types.TweenSupport ramp_support = 5;
+  TweenSupport ramp_support = 5;
   // Provide information on how invalid values will be handled
-  smartcore.types.NumberCapping default_capping = 6;
+  NumberCapping default_capping = 6;
 }
 
 // Defines the bounds for a number. Either of the min or max values can be absent which means those aspects are
@@ -74,14 +74,14 @@ message FloatBounds {
 
 // Describes features and restrictions applied to a number that is typically used as part of an apis value
 message FloatAttributes {
-  smartcore.types.FloatBounds bounds = 1;
+  FloatBounds bounds = 1;
   // The stepping interval, how little the value can change in one go. A default value of 0 is equivalent to a
   // continuous step, i.e. all possible float values are supported
   float step = 3;
   // Indicate whether the device supports delta adjustments when changing the value
   bool supports_delta = 4;
   // Indicate the level of ramp support the device has
-  smartcore.types.TweenSupport ramp_support = 5;
+  TweenSupport ramp_support = 5;
   // Provide information on how invalid values will be handled
-  smartcore.types.NumberCapping default_capping = 6;
+  NumberCapping default_capping = 6;
 }

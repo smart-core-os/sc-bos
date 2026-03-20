@@ -7,7 +7,7 @@
 package airqualitysensorpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -209,28 +209,28 @@ func (x *AirQuality) GetAirChangePerHour() float32 {
 type AirQualitySupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// If present then the sensor supports reporting CO2 levels, in parts-per-million.
-	CarbonDioxideLevel *types.FloatBounds `protobuf:"bytes,2,opt,name=carbon_dioxide_level,json=carbonDioxideLevel,proto3" json:"carbon_dioxide_level,omitempty"`
+	CarbonDioxideLevel *typespb.FloatBounds `protobuf:"bytes,2,opt,name=carbon_dioxide_level,json=carbonDioxideLevel,proto3" json:"carbon_dioxide_level,omitempty"`
 	// If present then the sensor supports reporting volatile organic compounds, in parts-per-million.
-	VolatileOrganicCompounds *types.FloatBounds `protobuf:"bytes,3,opt,name=volatile_organic_compounds,json=volatileOrganicCompounds,proto3" json:"volatile_organic_compounds,omitempty"`
+	VolatileOrganicCompounds *typespb.FloatBounds `protobuf:"bytes,3,opt,name=volatile_organic_compounds,json=volatileOrganicCompounds,proto3" json:"volatile_organic_compounds,omitempty"`
 	// If present then the sensor supports reporting air pressure, in hPa.
-	AirPressure *types.FloatBounds `protobuf:"bytes,4,opt,name=air_pressure,json=airPressure,proto3" json:"air_pressure,omitempty"`
+	AirPressure *typespb.FloatBounds `protobuf:"bytes,4,opt,name=air_pressure,json=airPressure,proto3" json:"air_pressure,omitempty"`
 	// If non-empty then the sensor supports reporting a general comfort reading of any of the provided types.
 	// Unknown should be assumed to be present if supported.
 	Comfort []AirQuality_Comfort `protobuf:"varint,5,rep,packed,name=comfort,proto3,enum=smartcore.bos.airqualitysensor.v1.AirQuality_Comfort" json:"comfort,omitempty"`
 	// If present then the sensor supports reporting infection risk, as a percentage [0,100].
-	InfectionRisk *types.FloatBounds `protobuf:"bytes,6,opt,name=infection_risk,json=infectionRisk,proto3" json:"infection_risk,omitempty"`
+	InfectionRisk *typespb.FloatBounds `protobuf:"bytes,6,opt,name=infection_risk,json=infectionRisk,proto3" json:"infection_risk,omitempty"`
 	// If present then the sensor supports reporting an air quality score, as a percentage [0,100].
-	Score *types.FloatBounds `protobuf:"bytes,7,opt,name=score,proto3" json:"score,omitempty"`
+	Score *typespb.FloatBounds `protobuf:"bytes,7,opt,name=score,proto3" json:"score,omitempty"`
 	// If present then the sensor supports reporting particulate matter 1, in micrograms per cubic meter.
-	ParticulateMatter_1 *types.FloatBounds `protobuf:"bytes,8,opt,name=particulate_matter_1,json=particulateMatter1,proto3" json:"particulate_matter_1,omitempty"`
+	ParticulateMatter_1 *typespb.FloatBounds `protobuf:"bytes,8,opt,name=particulate_matter_1,json=particulateMatter1,proto3" json:"particulate_matter_1,omitempty"`
 	// If present then the sensor supports reporting particulate matter 2.5, in micrograms per cubic meter.
-	ParticulateMatter_25 *types.FloatBounds `protobuf:"bytes,9,opt,name=particulate_matter_25,json=particulateMatter25,proto3" json:"particulate_matter_25,omitempty"`
+	ParticulateMatter_25 *typespb.FloatBounds `protobuf:"bytes,9,opt,name=particulate_matter_25,json=particulateMatter25,proto3" json:"particulate_matter_25,omitempty"`
 	// If present then the sensor supports reporting particulate matter 10, in micrograms per cubic meter.
-	ParticulateMatter_10 *types.FloatBounds `protobuf:"bytes,10,opt,name=particulate_matter_10,json=particulateMatter10,proto3" json:"particulate_matter_10,omitempty"`
+	ParticulateMatter_10 *typespb.FloatBounds `protobuf:"bytes,10,opt,name=particulate_matter_10,json=particulateMatter10,proto3" json:"particulate_matter_10,omitempty"`
 	// If present then the sensor supports reporting air changes per hour.
-	AirChangePerHour *types.FloatBounds `protobuf:"bytes,11,opt,name=air_change_per_hour,json=airChangePerHour,proto3" json:"air_change_per_hour,omitempty"`
+	AirChangePerHour *typespb.FloatBounds `protobuf:"bytes,11,opt,name=air_change_per_hour,json=airChangePerHour,proto3" json:"air_change_per_hour,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -265,28 +265,28 @@ func (*AirQualitySupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *AirQualitySupport) GetResourceSupport() *types.ResourceSupport {
+func (x *AirQualitySupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
 	return nil
 }
 
-func (x *AirQualitySupport) GetCarbonDioxideLevel() *types.FloatBounds {
+func (x *AirQualitySupport) GetCarbonDioxideLevel() *typespb.FloatBounds {
 	if x != nil {
 		return x.CarbonDioxideLevel
 	}
 	return nil
 }
 
-func (x *AirQualitySupport) GetVolatileOrganicCompounds() *types.FloatBounds {
+func (x *AirQualitySupport) GetVolatileOrganicCompounds() *typespb.FloatBounds {
 	if x != nil {
 		return x.VolatileOrganicCompounds
 	}
 	return nil
 }
 
-func (x *AirQualitySupport) GetAirPressure() *types.FloatBounds {
+func (x *AirQualitySupport) GetAirPressure() *typespb.FloatBounds {
 	if x != nil {
 		return x.AirPressure
 	}
@@ -300,42 +300,42 @@ func (x *AirQualitySupport) GetComfort() []AirQuality_Comfort {
 	return nil
 }
 
-func (x *AirQualitySupport) GetInfectionRisk() *types.FloatBounds {
+func (x *AirQualitySupport) GetInfectionRisk() *typespb.FloatBounds {
 	if x != nil {
 		return x.InfectionRisk
 	}
 	return nil
 }
 
-func (x *AirQualitySupport) GetScore() *types.FloatBounds {
+func (x *AirQualitySupport) GetScore() *typespb.FloatBounds {
 	if x != nil {
 		return x.Score
 	}
 	return nil
 }
 
-func (x *AirQualitySupport) GetParticulateMatter_1() *types.FloatBounds {
+func (x *AirQualitySupport) GetParticulateMatter_1() *typespb.FloatBounds {
 	if x != nil {
 		return x.ParticulateMatter_1
 	}
 	return nil
 }
 
-func (x *AirQualitySupport) GetParticulateMatter_25() *types.FloatBounds {
+func (x *AirQualitySupport) GetParticulateMatter_25() *typespb.FloatBounds {
 	if x != nil {
 		return x.ParticulateMatter_25
 	}
 	return nil
 }
 
-func (x *AirQualitySupport) GetParticulateMatter_10() *types.FloatBounds {
+func (x *AirQualitySupport) GetParticulateMatter_10() *typespb.FloatBounds {
 	if x != nil {
 		return x.ParticulateMatter_10
 	}
 	return nil
 }
 
-func (x *AirQualitySupport) GetAirChangePerHour() *types.FloatBounds {
+func (x *AirQualitySupport) GetAirChangePerHour() *typespb.FloatBounds {
 	if x != nil {
 		return x.AirChangePerHour
 	}
@@ -625,7 +625,7 @@ var File_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto protoreflect
 
 const file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_rawDesc = "" +
 	"\n" +
-	":smartcore/bos/airqualitysensor/v1/air_quality_sensor.proto\x12!smartcore.bos.airqualitysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\x1a\x12types/number.proto\"\xb6\x06\n" +
+	":smartcore/bos/airqualitysensor/v1/air_quality_sensor.proto\x12!smartcore.bos.airqualitysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\x1a#smartcore/bos/types/v1/number.proto\"\xb6\x06\n" +
 	"\n" +
 	"AirQuality\x125\n" +
 	"\x14carbon_dioxide_level\x18\x01 \x01(\x02H\x00R\x12carbonDioxideLevel\x88\x01\x01\x12A\n" +
@@ -651,20 +651,20 @@ const file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_rawDesc = 
 	"\x15_particulate_matter_1B\x18\n" +
 	"\x16_particulate_matter_25B\x18\n" +
 	"\x16_particulate_matter_10B\x16\n" +
-	"\x14_air_change_per_hour\"\xd8\x06\n" +
-	"\x11AirQualitySupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12N\n" +
-	"\x14carbon_dioxide_level\x18\x02 \x01(\v2\x1c.smartcore.types.FloatBoundsR\x12carbonDioxideLevel\x12Z\n" +
-	"\x1avolatile_organic_compounds\x18\x03 \x01(\v2\x1c.smartcore.types.FloatBoundsR\x18volatileOrganicCompounds\x12?\n" +
-	"\fair_pressure\x18\x04 \x01(\v2\x1c.smartcore.types.FloatBoundsR\vairPressure\x12O\n" +
-	"\acomfort\x18\x05 \x03(\x0e25.smartcore.bos.airqualitysensor.v1.AirQuality.ComfortR\acomfort\x12C\n" +
-	"\x0einfection_risk\x18\x06 \x01(\v2\x1c.smartcore.types.FloatBoundsR\rinfectionRisk\x122\n" +
-	"\x05score\x18\a \x01(\v2\x1c.smartcore.types.FloatBoundsR\x05score\x12N\n" +
-	"\x14particulate_matter_1\x18\b \x01(\v2\x1c.smartcore.types.FloatBoundsR\x12particulateMatter1\x12P\n" +
-	"\x15particulate_matter_25\x18\t \x01(\v2\x1c.smartcore.types.FloatBoundsR\x13particulateMatter25\x12P\n" +
+	"\x14_air_change_per_hour\"\x9e\a\n" +
+	"\x11AirQualitySupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12U\n" +
+	"\x14carbon_dioxide_level\x18\x02 \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x12carbonDioxideLevel\x12a\n" +
+	"\x1avolatile_organic_compounds\x18\x03 \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x18volatileOrganicCompounds\x12F\n" +
+	"\fair_pressure\x18\x04 \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\vairPressure\x12O\n" +
+	"\acomfort\x18\x05 \x03(\x0e25.smartcore.bos.airqualitysensor.v1.AirQuality.ComfortR\acomfort\x12J\n" +
+	"\x0einfection_risk\x18\x06 \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\rinfectionRisk\x129\n" +
+	"\x05score\x18\a \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x05score\x12U\n" +
+	"\x14particulate_matter_1\x18\b \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x12particulateMatter1\x12W\n" +
+	"\x15particulate_matter_25\x18\t \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x13particulateMatter25\x12W\n" +
 	"\x15particulate_matter_10\x18\n" +
-	" \x01(\v2\x1c.smartcore.types.FloatBoundsR\x13particulateMatter10\x12K\n" +
-	"\x13air_change_per_hour\x18\v \x01(\v2\x1c.smartcore.types.FloatBoundsR\x10airChangePerHour\"c\n" +
+	" \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x13particulateMatter10\x12R\n" +
+	"\x13air_change_per_hour\x18\v \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x10airChangePerHour\"c\n" +
 	"\x14GetAirQualityRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x87\x01\n" +
@@ -714,24 +714,24 @@ var file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_goTypes = []
 	(*PullAirQualityResponse)(nil),        // 5: smartcore.bos.airqualitysensor.v1.PullAirQualityResponse
 	(*DescribeAirQualityRequest)(nil),     // 6: smartcore.bos.airqualitysensor.v1.DescribeAirQualityRequest
 	(*PullAirQualityResponse_Change)(nil), // 7: smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.Change
-	(*types.ResourceSupport)(nil),         // 8: smartcore.types.ResourceSupport
-	(*types.FloatBounds)(nil),             // 9: smartcore.types.FloatBounds
+	(*typespb.ResourceSupport)(nil),       // 8: smartcore.bos.types.v1.ResourceSupport
+	(*typespb.FloatBounds)(nil),           // 9: smartcore.bos.types.v1.FloatBounds
 	(*fieldmaskpb.FieldMask)(nil),         // 10: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),         // 11: google.protobuf.Timestamp
 }
 var file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_depIdxs = []int32{
 	0,  // 0: smartcore.bos.airqualitysensor.v1.AirQuality.comfort:type_name -> smartcore.bos.airqualitysensor.v1.AirQuality.Comfort
-	8,  // 1: smartcore.bos.airqualitysensor.v1.AirQualitySupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	9,  // 2: smartcore.bos.airqualitysensor.v1.AirQualitySupport.carbon_dioxide_level:type_name -> smartcore.types.FloatBounds
-	9,  // 3: smartcore.bos.airqualitysensor.v1.AirQualitySupport.volatile_organic_compounds:type_name -> smartcore.types.FloatBounds
-	9,  // 4: smartcore.bos.airqualitysensor.v1.AirQualitySupport.air_pressure:type_name -> smartcore.types.FloatBounds
+	8,  // 1: smartcore.bos.airqualitysensor.v1.AirQualitySupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
+	9,  // 2: smartcore.bos.airqualitysensor.v1.AirQualitySupport.carbon_dioxide_level:type_name -> smartcore.bos.types.v1.FloatBounds
+	9,  // 3: smartcore.bos.airqualitysensor.v1.AirQualitySupport.volatile_organic_compounds:type_name -> smartcore.bos.types.v1.FloatBounds
+	9,  // 4: smartcore.bos.airqualitysensor.v1.AirQualitySupport.air_pressure:type_name -> smartcore.bos.types.v1.FloatBounds
 	0,  // 5: smartcore.bos.airqualitysensor.v1.AirQualitySupport.comfort:type_name -> smartcore.bos.airqualitysensor.v1.AirQuality.Comfort
-	9,  // 6: smartcore.bos.airqualitysensor.v1.AirQualitySupport.infection_risk:type_name -> smartcore.types.FloatBounds
-	9,  // 7: smartcore.bos.airqualitysensor.v1.AirQualitySupport.score:type_name -> smartcore.types.FloatBounds
-	9,  // 8: smartcore.bos.airqualitysensor.v1.AirQualitySupport.particulate_matter_1:type_name -> smartcore.types.FloatBounds
-	9,  // 9: smartcore.bos.airqualitysensor.v1.AirQualitySupport.particulate_matter_25:type_name -> smartcore.types.FloatBounds
-	9,  // 10: smartcore.bos.airqualitysensor.v1.AirQualitySupport.particulate_matter_10:type_name -> smartcore.types.FloatBounds
-	9,  // 11: smartcore.bos.airqualitysensor.v1.AirQualitySupport.air_change_per_hour:type_name -> smartcore.types.FloatBounds
+	9,  // 6: smartcore.bos.airqualitysensor.v1.AirQualitySupport.infection_risk:type_name -> smartcore.bos.types.v1.FloatBounds
+	9,  // 7: smartcore.bos.airqualitysensor.v1.AirQualitySupport.score:type_name -> smartcore.bos.types.v1.FloatBounds
+	9,  // 8: smartcore.bos.airqualitysensor.v1.AirQualitySupport.particulate_matter_1:type_name -> smartcore.bos.types.v1.FloatBounds
+	9,  // 9: smartcore.bos.airqualitysensor.v1.AirQualitySupport.particulate_matter_25:type_name -> smartcore.bos.types.v1.FloatBounds
+	9,  // 10: smartcore.bos.airqualitysensor.v1.AirQualitySupport.particulate_matter_10:type_name -> smartcore.bos.types.v1.FloatBounds
+	9,  // 11: smartcore.bos.airqualitysensor.v1.AirQualitySupport.air_change_per_hour:type_name -> smartcore.bos.types.v1.FloatBounds
 	10, // 12: smartcore.bos.airqualitysensor.v1.GetAirQualityRequest.read_mask:type_name -> google.protobuf.FieldMask
 	10, // 13: smartcore.bos.airqualitysensor.v1.PullAirQualityRequest.read_mask:type_name -> google.protobuf.FieldMask
 	7,  // 14: smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.changes:type_name -> smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.Change

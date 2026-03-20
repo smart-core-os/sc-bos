@@ -7,7 +7,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/transportpb";
 import "google/protobuf/duration.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // TransportAPI represents something that can transport something else between places.
 // The transport will often be an elevator, but could be an escalator, conveyor etc.
@@ -282,7 +282,7 @@ message Transport {
 
 message TransportSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // The unit associated with the load value, e.g. kg, % of maximum load.
   string load_unit = 2;
   // The maximum load the transport can carry, in kg, if known.

@@ -9,8 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
-
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -97,7 +96,7 @@ func (s *ModelServer) PullActiveMode(request *PullActiveModeRequest, server Elec
 }
 
 func (s *ModelServer) ListModes(_ context.Context, request *ListModesRequest) (*ListModesResponse, error) {
-	pageToken := &types.PageToken{}
+	pageToken := &typespb.PageToken{}
 	if err := decodePageToken(request.PageToken, pageToken); err != nil {
 		return nil, err
 	}
@@ -121,7 +120,7 @@ func (s *ModelServer) ListModes(_ context.Context, request *ListModesRequest) (*
 		upperBound = len(sortedModes)
 		pageToken = nil
 	} else {
-		pageToken.PageStart = &types.PageToken_LastResourceName{
+		pageToken.PageStart = &typespb.PageToken_LastResourceName{
 			LastResourceName: sortedModes[upperBound-1].Id,
 		}
 	}

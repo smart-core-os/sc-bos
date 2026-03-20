@@ -11,8 +11,8 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
@@ -55,11 +55,11 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, prof
 		ambientTemp := currentAmbient
 
 		payload, err := proto.Marshal(&airtemperaturepb.AirTemperature{
-			AmbientTemperature: &types.Temperature{
+			AmbientTemperature: &typespb.Temperature{
 				ValueCelsius: ambientTemp,
 			},
 			TemperatureGoal: &airtemperaturepb.AirTemperature_TemperatureSetPoint{
-				TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
+				TemperatureSetPoint: &typespb.Temperature{ValueCelsius: setPoint},
 			},
 		})
 		if err != nil {

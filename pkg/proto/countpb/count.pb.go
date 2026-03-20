@@ -7,7 +7,7 @@
 package countpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -93,7 +93,7 @@ func (x *Count) GetResetTime() *timestamppb.Timestamp {
 type CountSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// Two way counters count additions and removals separately. Do NOT use this as a way to ignore the Count.removed
 	// property, the total count is always added - removed.
 	TwoWay bool `protobuf:"varint,2,opt,name=two_way,json=twoWay,proto3" json:"two_way,omitempty"`
@@ -135,7 +135,7 @@ func (*CountSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_count_v1_count_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *CountSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *CountSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -555,14 +555,14 @@ var File_smartcore_bos_count_v1_count_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_count_v1_count_proto_rawDesc = "" +
 	"\n" +
-	"\"smartcore/bos/count/v1/count.proto\x12\x16smartcore.bos.count.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"r\n" +
+	"\"smartcore/bos/count/v1/count.proto\x12\x16smartcore.bos.count.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"r\n" +
 	"\x05Count\x12\x14\n" +
 	"\x05added\x18\x01 \x01(\x05R\x05added\x12\x18\n" +
 	"\aremoved\x18\x02 \x01(\x05R\aremoved\x129\n" +
 	"\n" +
-	"reset_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tresetTime\"\xc2\x01\n" +
-	"\fCountSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12\x17\n" +
+	"reset_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tresetTime\"\xc9\x01\n" +
+	"\fCountSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12\x17\n" +
 	"\atwo_way\x18\x02 \x01(\bR\x06twoWay\x12%\n" +
 	"\x0esupports_reset\x18\x03 \x01(\bR\rsupportsReset\x12%\n" +
 	"\x0esupports_delta\x18\x04 \x01(\bR\rsupportsDelta\"^\n" +
@@ -628,12 +628,12 @@ var file_smartcore_bos_count_v1_count_proto_goTypes = []any{
 	(*DescribeCountRequest)(nil),      // 7: smartcore.bos.count.v1.DescribeCountRequest
 	(*PullCountsResponse_Change)(nil), // 8: smartcore.bos.count.v1.PullCountsResponse.Change
 	(*timestamppb.Timestamp)(nil),     // 9: google.protobuf.Timestamp
-	(*types.ResourceSupport)(nil),     // 10: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),   // 10: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),     // 11: google.protobuf.FieldMask
 }
 var file_smartcore_bos_count_v1_count_proto_depIdxs = []int32{
 	9,  // 0: smartcore.bos.count.v1.Count.reset_time:type_name -> google.protobuf.Timestamp
-	10, // 1: smartcore.bos.count.v1.CountSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	10, // 1: smartcore.bos.count.v1.CountSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	11, // 2: smartcore.bos.count.v1.GetCountRequest.read_mask:type_name -> google.protobuf.FieldMask
 	9,  // 3: smartcore.bos.count.v1.ResetCountRequest.reset_time:type_name -> google.protobuf.Timestamp
 	0,  // 4: smartcore.bos.count.v1.UpdateCountRequest.count:type_name -> smartcore.bos.count.v1.Count

@@ -12,12 +12,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/merge"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // Group implements traits.LightApiServer backed by a group of lights.
@@ -240,10 +240,10 @@ func mergeDescription(allRes []*lightpb.BrightnessSupport) (*lightpb.BrightnessS
 		return allRes[0], nil
 	default:
 		out := &lightpb.BrightnessSupport{}
-		out.ResourceSupport = merge.ResourceSupport(allRes, func(s *lightpb.BrightnessSupport) *types.ResourceSupport {
+		out.ResourceSupport = merge.ResourceSupport(allRes, func(s *lightpb.BrightnessSupport) *typespb.ResourceSupport {
 			return s.GetResourceSupport()
 		})
-		out.BrightnessAttributes = merge.Int32Attributes(allRes, func(s *lightpb.BrightnessSupport) *types.Int32Attributes {
+		out.BrightnessAttributes = merge.Int32Attributes(allRes, func(s *lightpb.BrightnessSupport) *typespb.Int32Attributes {
 			return s.GetBrightnessAttributes()
 		})
 

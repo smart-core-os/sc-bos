@@ -11,7 +11,7 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 
 // Trait for devices that present one or more distinct modes.
@@ -81,7 +81,7 @@ message Modes {
 
 message ModesSupport {
   // How a named device supports read/write/pull apis for mode values
-  smartcore.types.ResourceSupport mode_values_support = 1;
+  smartcore.bos.types.v1.ResourceSupport mode_values_support = 1;
   // AvailableModes holds the list of modes the device supports.
   Modes available_modes = 2;
 }

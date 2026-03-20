@@ -5,8 +5,8 @@ package speakerpb
 import (
 	context "context"
 	fmt "fmt"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	router "github.com/smart-core-os/sc-bos/pkg/router"
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	grpc "google.golang.org/grpc"
 	io "io"
 )
@@ -79,7 +79,7 @@ func (r *ApiRouter) GetSpeakerApiClient(name string) (SpeakerApiClient, error) {
 	return res.(SpeakerApiClient), nil
 }
 
-func (r *ApiRouter) GetVolume(ctx context.Context, request *GetSpeakerVolumeRequest) (*types.AudioLevel, error) {
+func (r *ApiRouter) GetVolume(ctx context.Context, request *GetSpeakerVolumeRequest) (*typespb.AudioLevel, error) {
 	child, err := r.GetSpeakerApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (r *ApiRouter) GetVolume(ctx context.Context, request *GetSpeakerVolumeRequ
 	return child.GetVolume(ctx, request)
 }
 
-func (r *ApiRouter) UpdateVolume(ctx context.Context, request *UpdateSpeakerVolumeRequest) (*types.AudioLevel, error) {
+func (r *ApiRouter) UpdateVolume(ctx context.Context, request *UpdateSpeakerVolumeRequest) (*typespb.AudioLevel, error) {
 	child, err := r.GetSpeakerApiClient(request.Name)
 	if err != nil {
 		return nil, err

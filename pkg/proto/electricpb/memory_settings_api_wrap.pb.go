@@ -3,9 +3,8 @@
 package electricpb
 
 import (
-	"google.golang.org/grpc"
-
-	"github.com/smart-core-os/sc-bos/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
+	grpc "google.golang.org/grpc"
 )
 
 // WrapMemorySettingsApi	adapts a MemorySettingsApiServer	and presents it as a MemorySettingsApiClient

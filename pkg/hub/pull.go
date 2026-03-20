@@ -9,9 +9,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/parentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type Node struct {
@@ -221,11 +221,11 @@ func (c *NodeFetcher) Poll(ctx context.Context, changes chan<- *hubpb.PullHubNod
 	for _, node := range nodes.Nodes {
 		// we do extra work here to try and send out more accurate changes to make callers lives easier
 		change := &hubpb.PullHubNodesResponse_Change{
-			Type:     types.ChangeType_ADD,
+			Type:     typespb.ChangeType_ADD,
 			NewValue: node,
 		}
 		if old, ok := c.known[node.Name]; ok {
-			change.Type = types.ChangeType_UPDATE
+			change.Type = typespb.ChangeType_UPDATE
 			change.OldValue = old
 			delete(unseen, node.Name)
 		}
@@ -243,7 +243,7 @@ func (c *NodeFetcher) Poll(ctx context.Context, changes chan<- *hubpb.PullHubNod
 		node := c.known[name]
 		delete(c.known, name)
 		change := &hubpb.PullHubNodesResponse_Change{
-			Type:     types.ChangeType_REMOVE,
+			Type:     typespb.ChangeType_REMOVE,
 			OldValue: node,
 		}
 		if err := chans.SendContext(ctx, changes, change); err != nil {
@@ -296,11 +296,11 @@ func (c *childFetcher) Poll(ctx context.Context, changes chan<- *parentpb.PullCh
 		for _, node := range res.Children {
 			// we do extra work here to try and send out more accurate changes to make callers lives easier
 			change := &parentpb.PullChildrenResponse_Change{
-				Type:     types.ChangeType_ADD,
+				Type:     typespb.ChangeType_ADD,
 				NewValue: node,
 			}
 			if old, ok := c.known[node.Name]; ok {
-				change.Type = types.ChangeType_UPDATE
+				change.Type = typespb.ChangeType_UPDATE
 				change.OldValue = old
 				delete(unseen, node.Name)
 			}
@@ -324,7 +324,7 @@ func (c *childFetcher) Poll(ctx context.Context, changes chan<- *parentpb.PullCh
 		node := c.known[name]
 		delete(c.known, name)
 		change := &parentpb.PullChildrenResponse_Change{
-			Type:     types.ChangeType_REMOVE,
+			Type:     typespb.ChangeType_REMOVE,
 			OldValue: node,
 		}
 		if err := chans.SendContext(ctx, changes, change); err != nil {

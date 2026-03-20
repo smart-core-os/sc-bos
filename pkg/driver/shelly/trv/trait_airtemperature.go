@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 type airTemperatureServer struct {
@@ -77,14 +77,14 @@ func DataToAirTemperature(data ThermostatData) *airtemperaturepb.AirTemperature 
 	airTemperature := &airtemperaturepb.AirTemperature{}
 
 	if data.Temperature.IsValid {
-		airTemperature.AmbientTemperature = &types.Temperature{
+		airTemperature.AmbientTemperature = &typespb.Temperature{
 			ValueCelsius: data.Temperature.Value,
 		}
 	}
 
 	if data.TargetTemperature.Enabled {
 		airTemperature.TemperatureGoal = &airtemperaturepb.AirTemperature_TemperatureSetPoint{
-			TemperatureSetPoint: &types.Temperature{ValueCelsius: data.TargetTemperature.Value},
+			TemperatureSetPoint: &typespb.Temperature{ValueCelsius: data.TargetTemperature.Value},
 		}
 	}
 

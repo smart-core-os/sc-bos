@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type ModelServer struct {
@@ -52,9 +52,9 @@ func (s *ModelServer) PullPositions(request *PullOpenClosePositionsRequest, serv
 
 func (s *ModelServer) DescribePositions(_ context.Context, _ *DescribePositionsRequest) (*PositionsSupport, error) {
 	support := &PositionsSupport{
-		ResourceSupport: &types.ResourceSupport{
+		ResourceSupport: &typespb.ResourceSupport{
 			Readable: true, Writable: true, Observable: true,
-			PullSupport: types.PullSupport_PULL_SUPPORT_NATIVE,
+			PullSupport: typespb.PullSupport_PULL_SUPPORT_NATIVE,
 		},
 		SupportsStop: true,
 		Presets:      s.model.ListPresets(),

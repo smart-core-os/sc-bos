@@ -4,15 +4,15 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 // ResourceSupport merges all ResourceSupport values into a single ResourceSupport.
 // If any item is readable, the result will be readable, similarly for writable and observable.
 // If any items disagree on PullSupport, the result will be PULL_SUPPORT_UNSPECIFIED.
 // PullPoll is the maximum of all PullPoll values.
-func ResourceSupport[E any](all []E, fn func(E) *types.ResourceSupport) *types.ResourceSupport {
-	var dst *types.ResourceSupport
+func ResourceSupport[E any](all []E, fn func(E) *typespb.ResourceSupport) *typespb.ResourceSupport {
+	var dst *typespb.ResourceSupport
 	only := true
 	for _, item := range all {
 		src := fn(item)
@@ -24,7 +24,7 @@ func ResourceSupport[E any](all []E, fn func(E) *types.ResourceSupport) *types.R
 			continue
 		case only:
 			only = false
-			dst = proto.Clone(dst).(*types.ResourceSupport)
+			dst = proto.Clone(dst).(*typespb.ResourceSupport)
 		}
 
 		resourceSupport(dst, src)
@@ -32,18 +32,18 @@ func ResourceSupport[E any](all []E, fn func(E) *types.ResourceSupport) *types.R
 	return dst
 }
 
-func resourceSupport(dst, src *types.ResourceSupport) {
+func resourceSupport(dst, src *typespb.ResourceSupport) {
 	dst.Readable = dst.Readable || src.Readable
 	dst.Writable = dst.Writable || src.Writable
 	dst.Observable = dst.Observable || src.Observable
 	dst.PullSupport = protoEnum(dst.PullSupport, src.PullSupport)
-	dst.PullPoll = MaxDuration([]*types.ResourceSupport{dst, src}, func(s *types.ResourceSupport) *durationpb.Duration {
+	dst.PullPoll = MaxDuration([]*typespb.ResourceSupport{dst, src}, func(s *typespb.ResourceSupport) *durationpb.Duration {
 		return s.GetPullPoll()
 	})
 }
 
-func Int32Attributes[E any](all []E, fn func(E) *types.Int32Attributes) *types.Int32Attributes {
-	var dst *types.Int32Attributes
+func Int32Attributes[E any](all []E, fn func(E) *typespb.Int32Attributes) *typespb.Int32Attributes {
+	var dst *typespb.Int32Attributes
 	only := true
 	for _, item := range all {
 		src := fn(item)
@@ -55,7 +55,7 @@ func Int32Attributes[E any](all []E, fn func(E) *types.Int32Attributes) *types.I
 			continue
 		case only:
 			only = false
-			dst = proto.Clone(dst).(*types.Int32Attributes)
+			dst = proto.Clone(dst).(*typespb.Int32Attributes)
 		}
 
 		int32Attributes(dst, src)
@@ -63,8 +63,8 @@ func Int32Attributes[E any](all []E, fn func(E) *types.Int32Attributes) *types.I
 	return dst
 }
 
-func int32Attributes(dst, src *types.Int32Attributes) {
-	dst.Bounds = Int32Bounds([]*types.Int32Attributes{dst, src}, func(s *types.Int32Attributes) *types.Int32Bounds {
+func int32Attributes(dst, src *typespb.Int32Attributes) {
+	dst.Bounds = Int32Bounds([]*typespb.Int32Attributes{dst, src}, func(s *typespb.Int32Attributes) *typespb.Int32Bounds {
 		return s.GetBounds()
 	})
 	if dst.Step == 0 || (src.Step != 0 && src.Step < dst.Step) {

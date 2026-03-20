@@ -7,7 +7,7 @@
 package onoffpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -122,7 +122,7 @@ func (x *OnOff) GetState() OnOff_State {
 type OnOffSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -157,7 +157,7 @@ func (*OnOffSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_onoff_v1_on_off_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *OnOffSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *OnOffSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -498,15 +498,15 @@ var File_smartcore_bos_onoff_v1_on_off_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_onoff_v1_on_off_proto_rawDesc = "" +
 	"\n" +
-	"#smartcore/bos/onoff/v1/on_off.proto\x12\x16smartcore.bos.onoff.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"s\n" +
+	"#smartcore/bos/onoff/v1/on_off.proto\x12\x16smartcore.bos.onoff.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"s\n" +
 	"\x05OnOff\x129\n" +
 	"\x05state\x18\x01 \x01(\x0e2#.smartcore.bos.onoff.v1.OnOff.StateR\x05state\"/\n" +
 	"\x05State\x12\x15\n" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x06\n" +
 	"\x02ON\x10\x01\x12\a\n" +
-	"\x03OFF\x10\x02\"[\n" +
-	"\fOnOffSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\"^\n" +
+	"\x03OFF\x10\x02\"b\n" +
+	"\fOnOffSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\"^\n" +
 	"\x0fGetOnOffRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x9b\x01\n" +
@@ -561,13 +561,13 @@ var file_smartcore_bos_onoff_v1_on_off_proto_goTypes = []any{
 	(*PullOnOffResponse)(nil),        // 6: smartcore.bos.onoff.v1.PullOnOffResponse
 	(*DescribeOnOffRequest)(nil),     // 7: smartcore.bos.onoff.v1.DescribeOnOffRequest
 	(*PullOnOffResponse_Change)(nil), // 8: smartcore.bos.onoff.v1.PullOnOffResponse.Change
-	(*types.ResourceSupport)(nil),    // 9: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),  // 9: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),    // 10: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),    // 11: google.protobuf.Timestamp
 }
 var file_smartcore_bos_onoff_v1_on_off_proto_depIdxs = []int32{
 	0,  // 0: smartcore.bos.onoff.v1.OnOff.state:type_name -> smartcore.bos.onoff.v1.OnOff.State
-	9,  // 1: smartcore.bos.onoff.v1.OnOffSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	9,  // 1: smartcore.bos.onoff.v1.OnOffSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	10, // 2: smartcore.bos.onoff.v1.GetOnOffRequest.read_mask:type_name -> google.protobuf.FieldMask
 	1,  // 3: smartcore.bos.onoff.v1.UpdateOnOffRequest.on_off:type_name -> smartcore.bos.onoff.v1.OnOff
 	10, // 4: smartcore.bos.onoff.v1.UpdateOnOffRequest.update_mask:type_name -> google.protobuf.FieldMask

@@ -11,7 +11,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 func NewReadState() *ReadState {
@@ -42,7 +42,7 @@ type ReadState struct {
 	Modes          map[DeviceName]map[string]Value[string]
 	Occupancy      map[DeviceName]Value[*occupancysensorpb.Occupancy]
 
-	MeanOATemp *types.Temperature // mean outdoor air temperature
+	MeanOATemp *typespb.Temperature // mean outdoor air temperature
 }
 
 func (s *ReadState) Clone() *ReadState {

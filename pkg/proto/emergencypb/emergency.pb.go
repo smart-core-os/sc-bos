@@ -7,7 +7,7 @@
 package emergencypb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -168,7 +168,7 @@ func (x *Emergency) GetDrill() bool {
 type EmergencySupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -203,7 +203,7 @@ func (*EmergencySupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_emergency_v1_emergency_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *EmergencySupport) GetResourceSupport() *types.ResourceSupport {
+func (x *EmergencySupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -543,7 +543,7 @@ var File_smartcore_bos_emergency_v1_emergency_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_emergency_v1_emergency_proto_rawDesc = "" +
 	"\n" +
-	"*smartcore/bos/emergency/v1/emergency.proto\x12\x1asmartcore.bos.emergency.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xa0\x02\n" +
+	"*smartcore/bos/emergency/v1/emergency.proto\x12\x1asmartcore.bos.emergency.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\xa0\x02\n" +
 	"\tEmergency\x12A\n" +
 	"\x05level\x18\x01 \x01(\x0e2+.smartcore.bos.emergency.v1.Emergency.LevelR\x05level\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\x12F\n" +
@@ -554,9 +554,9 @@ const file_smartcore_bos_emergency_v1_emergency_proto_rawDesc = "" +
 	"\x11LEVEL_UNSPECIFIED\x10\x00\x12\x06\n" +
 	"\x02OK\x10\x01\x12\v\n" +
 	"\aWARNING\x10\x02\x12\r\n" +
-	"\tEMERGENCY\x10\x03\"_\n" +
-	"\x10EmergencySupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\"b\n" +
+	"\tEMERGENCY\x10\x03\"f\n" +
+	"\x10EmergencySupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\"b\n" +
 	"\x13GetEmergencyRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\xae\x01\n" +
@@ -611,13 +611,13 @@ var file_smartcore_bos_emergency_v1_emergency_proto_goTypes = []any{
 	(*DescribeEmergencyRequest)(nil),     // 7: smartcore.bos.emergency.v1.DescribeEmergencyRequest
 	(*PullEmergencyResponse_Change)(nil), // 8: smartcore.bos.emergency.v1.PullEmergencyResponse.Change
 	(*timestamppb.Timestamp)(nil),        // 9: google.protobuf.Timestamp
-	(*types.ResourceSupport)(nil),        // 10: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),      // 10: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),        // 11: google.protobuf.FieldMask
 }
 var file_smartcore_bos_emergency_v1_emergency_proto_depIdxs = []int32{
 	0,  // 0: smartcore.bos.emergency.v1.Emergency.level:type_name -> smartcore.bos.emergency.v1.Emergency.Level
 	9,  // 1: smartcore.bos.emergency.v1.Emergency.level_change_time:type_name -> google.protobuf.Timestamp
-	10, // 2: smartcore.bos.emergency.v1.EmergencySupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	10, // 2: smartcore.bos.emergency.v1.EmergencySupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	11, // 3: smartcore.bos.emergency.v1.GetEmergencyRequest.read_mask:type_name -> google.protobuf.FieldMask
 	1,  // 4: smartcore.bos.emergency.v1.UpdateEmergencyRequest.emergency:type_name -> smartcore.bos.emergency.v1.Emergency
 	11, // 5: smartcore.bos.emergency.v1.UpdateEmergencyRequest.update_mask:type_name -> google.protobuf.FieldMask
