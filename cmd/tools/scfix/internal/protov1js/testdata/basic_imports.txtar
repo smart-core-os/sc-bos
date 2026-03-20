@@ -33,14 +33,6 @@ import {MeterReadingSupport} from '@smart-core-os/sc-bos-ui-gen/proto/meter_pb';
 /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/meter_pb').MeterReading} */
 const reading = null;
 </script>
--- input/ui/node_modules/@smart-core-os/sc-bos-ui-gen/package.json --
-{
-  "name": "@smart-core-os/sc-bos-ui-gen"
-}
--- input/ui/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alerts/v1/alerts_pb.js --
-// Generated protobuf file
--- input/ui/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb.js --
-// Generated protobuf file
 -- output/ui/ops/package.json --
 {
   "name": "ops-ui",
@@ -49,11 +41,11 @@ const reading = null;
   }
 }
 -- output/ui/ops/src/test.js --
-import {Alert} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alerts/v1/alerts_pb';
+import {Alert} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb';
 import {MeterReading} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb.js';
 
 /**
- * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alerts/v1/alerts_pb').Alert.Query} AlertQuery
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb').Alert.Query} AlertQuery
  */
 
 export function processAlert(alert) {
@@ -73,11 +65,3 @@ import {MeterReadingSupport} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/
 /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb').MeterReading} */
 const reading = null;
 </script>
--- output/ui/node_modules/@smart-core-os/sc-bos-ui-gen/package.json --
-{
-  "name": "@smart-core-os/sc-bos-ui-gen"
-}
--- output/ui/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alerts/v1/alerts_pb.js --
-// Generated protobuf file
--- output/ui/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/meter/v1/meter_pb.js --
-// Generated protobuf file

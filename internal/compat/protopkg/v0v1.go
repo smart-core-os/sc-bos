@@ -93,7 +93,7 @@ func isBOSPackage(pkg string) bool {
 func isVersioned(pkg string) bool {
 	lastSeg := lastSegment(pkg)
 	// matches v1 and v2.3-beta intentionally
-	return len(lastSeg) > 1 && lastSeg[0] == 'v' && isDigit(lastSeg[1])
+	return IsVersionSegment(lastSeg)
 }
 
 func isNestedPackage(segment string) bool {
@@ -110,6 +110,11 @@ func lastSegment(path string) string {
 
 func isDigit(b byte) bool {
 	return b >= '0' && b <= '9'
+}
+
+// IsVersionSegment reports whether s looks like a proto version path segment (e.g. "v1", "v2alpha").
+func IsVersionSegment(s string) bool {
+	return len(s) > 1 && s[0] == 'v' && isDigit(s[1])
 }
 
 // extractResource derives the resource name from a service name.

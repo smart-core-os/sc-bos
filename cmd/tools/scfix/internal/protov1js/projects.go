@@ -3,9 +3,7 @@ package protov1js
 import (
 	"bytes"
 	"io/fs"
-	"os"
 	"path"
-	"path/filepath"
 	"strings"
 )
 
@@ -36,7 +34,8 @@ func findProjectDirs(fsys fs.FS) ([]string, error) {
 			return nil
 		}
 
-		if !bytes.Contains(content, []byte("@smart-core-os/sc-bos-ui-gen")) {
+		if !bytes.Contains(content, []byte("@smart-core-os/sc-bos-ui-gen")) &&
+			!bytes.Contains(content, []byte("@smart-core-os/sc-api-grpc-web")) {
 			return nil
 		}
 
@@ -45,26 +44,4 @@ func findProjectDirs(fsys fs.FS) ([]string, error) {
 	})
 
 	return dirs, err
-}
-
-// findNodeModules returns the path to node_modules containing @smart-core-os/sc-bos-ui-gen for projectDir.
-// It walks up the directory tree until it finds node_modules with ui-gen or reaches the filesystem root.
-func findNodeModules(projectDir string) string {
-	current := projectDir
-	for {
-		nodeModules := filepath.Join(current, "node_modules")
-		uiGenPath := filepath.Join(nodeModules, "@smart-core-os", "sc-bos-ui-gen", "package.json")
-
-		if _, err := os.Stat(uiGenPath); err == nil {
-			return nodeModules
-		}
-
-		parent := filepath.Dir(current)
-		if parent == current {
-			break
-		}
-		current = parent
-	}
-
-	return ""
 }

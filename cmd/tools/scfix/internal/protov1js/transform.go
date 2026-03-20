@@ -11,33 +11,12 @@ import (
 )
 
 // processProject returns the number of files changed in projectDir.
+// It uses the pregenerated uiGenMapping and scApiMapping tables (see mapping_generated.go).
 func processProject(ctx *fixer.Context, projectDir string) (int, error) {
-	nodeModulesDir := findNodeModules(projectDir)
-	if nodeModulesDir == "" {
-		ctx.Verbose("  Skipping %s: no node_modules found", relPath(ctx.RootDir, projectDir))
-		return 0, nil
-	}
-
-	protoDir := filepath.Join(nodeModulesDir, "@smart-core-os", "sc-bos-ui-gen", "proto")
-	if _, err := os.Stat(protoDir); os.IsNotExist(err) {
-		ctx.Verbose("  Skipping %s: proto directory not found in node_modules", relPath(ctx.RootDir, projectDir))
-		return 0, nil
-	}
-
-	importMapping, err := buildJSImportMapping(os.DirFS(protoDir))
-	if err != nil {
-		return 0, fmt.Errorf("building import mapping: %w", err)
-	}
-
-	if len(importMapping) == 0 {
-		ctx.Verbose("  Skipping %s: no versioned proto files found", relPath(ctx.RootDir, projectDir))
-		return 0, nil
-	}
-
-	ctx.Verbose("  Processing %s (%d versioned proto file(s))", relPath(ctx.RootDir, projectDir), len(importMapping))
+	ctx.Verbose("  Processing %s", relPath(ctx.RootDir, projectDir))
 
 	totalChanges := 0
-	err = filepath.WalkDir(projectDir, func(path string, d os.DirEntry, err error) error {
+	err := filepath.WalkDir(projectDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -46,7 +25,7 @@ func processProject(ctx *fixer.Context, projectDir string) (int, error) {
 			return nil
 		}
 
-		changes, err := processFile(ctx, path, importMapping)
+		changes, err := processFile(ctx, path, uiGenMapping, scApiMapping)
 		if err != nil {
 			return fmt.Errorf("processing %s: %w", path, err)
 		}
@@ -76,24 +55,29 @@ func shouldProcessFile(path string, d os.DirEntry) bool {
 		ext == ".mjs" || ext == ".cjs"
 }
 
-func processFile(ctx *fixer.Context, filename string, importMapping map[string]string) (int, error) {
+func processFile(ctx *fixer.Context, filename string, importMapping map[string]string, scApiMapping map[string]string) (int, error) {
 	content, err := os.ReadFile(filename)
 	if err != nil {
 		return 0, err
 	}
 
-	// Quick check: does file contain proto imports?
-	if !bytes.Contains(content, []byte("@smart-core-os/sc-bos-ui-gen/proto/")) {
+	// Quick check: does file contain any proto imports we care about?
+	hasUiGen := bytes.Contains(content, []byte("@smart-core-os/sc-bos-ui-gen/proto/"))
+	hasScApi := len(scApiMapping) > 0 && bytes.Contains(content, []byte("@smart-core-os/sc-api-grpc-web/"))
+	if !hasUiGen && !hasScApi {
 		return 0, nil
 	}
 
 	originalContent := string(content)
 	newContent := originalContent
 
-	// Apply all transformations
+	// Apply intrapackage transformations for sc-bos-ui-gen imports.
 	for oldImport, newImport := range importMapping {
 		newContent = replaceImportPaths(newContent, oldImport, newImport)
 	}
+
+	// Apply cross-package transformations from sc-api-grpc-web to sc-bos-ui-gen.
+	newContent = replaceScApiImportPaths(newContent, scApiMapping)
 
 	if newContent == originalContent {
 		return 0, nil
@@ -105,7 +89,8 @@ func processFile(ctx *fixer.Context, filename string, importMapping map[string]s
 		}
 	}
 
-	changes := countImportChanges(originalContent, newContent, importMapping)
+	changes := countImportChanges(originalContent, newContent, importMapping) +
+		countScApiImportChanges(originalContent, newContent, scApiMapping)
 	ctx.Verbose("  Modified %s (%d import(s) updated)", relPath(ctx.RootDir, filename), changes)
 
 	return changes, nil
@@ -125,6 +110,31 @@ func replaceImportPaths(content, oldImport, newImport string) string {
 	content = strings.ReplaceAll(content, oldPath+")", newPath+")")
 
 	return content
+}
+
+// replaceScApiImportPaths replaces @smart-core-os/sc-api-grpc-web/<subPath> with
+// @smart-core-os/sc-bos-ui-gen/proto/<newVersionedPath> for all entries in scApiMapping.
+func replaceScApiImportPaths(content string, scApiMapping map[string]string) string {
+	for oldSubPath, newImport := range scApiMapping {
+		oldPath := "@smart-core-os/sc-api-grpc-web/" + oldSubPath
+		newPath := "@smart-core-os/sc-bos-ui-gen/proto/" + newImport
+
+		content = strings.ReplaceAll(content, oldPath+".js", newPath+".js")
+		content = strings.ReplaceAll(content, oldPath+"'", newPath+"'")
+		content = strings.ReplaceAll(content, oldPath+"\"", newPath+"\"")
+		content = strings.ReplaceAll(content, oldPath+")", newPath+")")
+	}
+	return content
+}
+
+// countScApiImportChanges returns the number of sc-api-grpc-web import paths replaced.
+func countScApiImportChanges(original, updated string, scApiMapping map[string]string) int {
+	count := 0
+	for oldSubPath := range scApiMapping {
+		oldPath := "@smart-core-os/sc-api-grpc-web/" + oldSubPath
+		count += strings.Count(original, oldPath) - strings.Count(updated, oldPath)
+	}
+	return count
 }
 
 // countImportChanges returns the number of import paths that were changed from original to updated.
