@@ -1,0 +1,18 @@
+{
+  "name": "BC-02",
+  "grpcAddr": "localhost",
+  "listenGrpc": ":23102",
+  "listenHTTPS": ":8102",
+  "cors": {
+    "debugMode": true,
+    "corsOrigins": ["*"]
+  },
+  "systems": {
+    "hub": {
+      "storage": {
+        "type": "proxy"
+      }
+    },
+    "resourceUse": {}
+  }
+}

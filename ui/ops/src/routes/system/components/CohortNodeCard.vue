@@ -9,14 +9,13 @@
             <span class="text-subtitle-2 font-weight-bold text-truncate" :title="node.name">
               {{ node.name }}
             </span>
-            <!-- Split chip: connected + hub -->
-            <span v-if="node.isServer && node.role === NodeRole.HUB"
+            <!-- Split chip: connected + hub/gateway -->
+            <span v-if="node.isServer && isCentralHub"
                   class="split-chip"
                   v-tooltip:bottom="'Connected hub'">
               <span class="split-chip__half split-chip__half--success">connected</span>
-              <span class="split-chip__half split-chip__half--primary">hub</span>
+              <span class="split-chip__half split-chip__half--orange">hub</span>
             </span>
-            <!-- Split chip: connected + gateway -->
             <span v-else-if="node.isServer && node.role === NodeRole.GATEWAY"
                   class="split-chip"
                   v-tooltip:bottom="'Connected gateway'">
@@ -32,9 +31,8 @@
               <v-chip v-if="node.role === NodeRole.GATEWAY" color="secondary" size="x-small" variant="flat">
                 gateway
               </v-chip>
-              <v-chip v-if="node.role === NodeRole.HUB" color="primary" size="x-small" variant="flat">
-                hub
-              </v-chip>
+              <v-chip v-if="isCentralHub" color="orange" size="x-small" variant="flat">hub</v-chip>
+              <v-chip v-if="isProxyHubNode" color="cyan-darken-1" size="x-small" variant="flat">hub-proxy</v-chip>
             </template>
           </div>
           <div class="text-caption text-medium-emphasis d-flex align-center mt-1">
@@ -226,7 +224,7 @@
 <script setup>
 import {getDownloadLogUrl} from '@/api/ui/log.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
-import {usePullService, usePullServiceMetadata} from '@/composables/services.js';
+import {useHasHubSystem, usePullService, usePullServiceMetadata} from '@/composables/services.js';
 import {NodeRole} from '@/stores/cohort.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
 import {computed, reactive} from 'vue';
@@ -248,6 +246,10 @@ const diskExpanded = defineModel('diskExpanded', {type: Boolean, default: false}
 const {value: logServiceValue} = usePullService(() => ({name: props.node.name + '/systems', id: 'log'}));
 const hasLogService = computed(() => !!logServiceValue.value);
 
+const {hasHubSystem, isProxyHub} = useHasHubSystem(() => props.node.name);
+const isCentralHub = computed(() => props.node.role === NodeRole.HUB || (hasHubSystem.value && !isProxyHub.value));
+const isProxyHubNode = computed(() => hasHubSystem.value && isProxyHub.value && props.node.role !== NodeRole.GATEWAY);
+
 const nodeDetails = reactive({
   automations: usePullServiceMetadata(() => props.node.name + '/automations'),
   drivers: usePullServiceMetadata(() => props.node.name + '/drivers'),
@@ -257,8 +259,9 @@ const nodeDetails = reactive({
 const accentStyle = computed(() => {
   const colors = [];
   if (props.node.isServer) colors.push('rgb(var(--v-theme-success))');
-  if (props.node.role === NodeRole.HUB) colors.push('rgb(var(--v-theme-primary))');
+  if (isCentralHub.value) colors.push('#FB8C00');
   if (props.node.role === NodeRole.GATEWAY) colors.push('rgb(var(--v-theme-secondary))');
+  if (isProxyHubNode.value) colors.push('#00ACC1');
 
   if (colors.length === 0) return {background: 'transparent'};
   if (colors.length === 1) return {background: colors[0]};
@@ -340,8 +343,8 @@ const utilizationColor = (value) => {
   background: rgb(var(--v-theme-success));
 }
 
-.split-chip__half--primary {
-  background: rgb(var(--v-theme-primary));
+.split-chip__half--orange {
+  background: #FB8C00;
 }
 
 .split-chip__half--secondary {
