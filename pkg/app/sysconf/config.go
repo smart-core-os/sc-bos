@@ -85,6 +85,8 @@ type Config struct {
 	Policy     policy.Policy `json:"-"` // Override the policy used for RPC calls. Defaults to policy.Default
 	PolicyMode PolicyMode    `json:"-"` // How to apply the policy. Unsafe and can disable security checks. Defaults to PolicyOn.
 
+	AuditLog *AuditLogConfig `json:"auditLog,omitempty"`
+
 	Experimental *Experimental `json:"experimental,omitempty"`
 
 	Cloud *Cloud `json:"cloud,omitempty"`
@@ -225,6 +227,28 @@ func Default() Config {
 	config.Logger.DisableStacktrace = true // because it's annoying
 
 	return config
+}
+
+// AuditLogConfig configures the audit log, which records all write operations for access auditing.
+type AuditLogConfig struct {
+	// Filename is the path to the audit log file. Required to enable audit logging.
+	// The file is appended to if it already exists.
+	Filename string `json:"filename,omitempty"`
+
+	// MaxSizeMB is the maximum size in megabytes before the log is rotated.
+	// Defaults to 100 MB if unset (0).
+	MaxSizeMB int `json:"maxSizeMB,omitempty"`
+
+	// MaxAgeDays is the maximum number of days to retain old log files.
+	// Zero means no age-based deletion.
+	MaxAgeDays int `json:"maxAgeDays,omitempty"`
+
+	// MaxBackups is the maximum number of old log files to retain.
+	// Zero means retain all backups (subject to MaxAgeDays).
+	MaxBackups int `json:"maxBackups,omitempty"`
+
+	// Compress specifies whether rotated files should be gzip-compressed.
+	Compress bool `json:"compress,omitempty"`
 }
 
 // Experimental configures feature flags for experimental features.

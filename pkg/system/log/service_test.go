@@ -13,7 +13,7 @@ import (
 // ---- JWT sign / parse round-trip ------------------------------------------------
 
 func TestSignAndParseDownloadToken_roundtrip(t *testing.T) {
-	key := newHMACKey()
+	key := NewHMACKey()
 	body := downloadClaims{FilePath: "/var/log/app.log"}
 	expiry := time.Now().Add(5 * time.Minute)
 
@@ -32,7 +32,7 @@ func TestSignAndParseDownloadToken_roundtrip(t *testing.T) {
 }
 
 func TestSignAndParseDownloadToken_zipFiles(t *testing.T) {
-	key := newHMACKey()
+	key := NewHMACKey()
 	body := downloadClaims{ZipFiles: []string{"/a.log", "/b.log"}}
 	expiry := time.Now().Add(time.Minute)
 
@@ -50,7 +50,7 @@ func TestSignAndParseDownloadToken_zipFiles(t *testing.T) {
 }
 
 func TestParseDownloadToken_expired(t *testing.T) {
-	key := newHMACKey()
+	key := NewHMACKey()
 	// Sign with a past expiry (more than 1-minute leeway ago).
 	tokenStr, err := signDownloadToken(downloadClaims{FilePath: "/x"}, key, time.Now().Add(-2*time.Minute))
 	if err != nil {
@@ -63,8 +63,8 @@ func TestParseDownloadToken_expired(t *testing.T) {
 }
 
 func TestParseDownloadToken_wrongKey(t *testing.T) {
-	key1 := newHMACKey()
-	key2 := newHMACKey()
+	key1 := NewHMACKey()
+	key2 := NewHMACKey()
 	tokenStr, err := signDownloadToken(downloadClaims{FilePath: "/x"}, key1, time.Now().Add(time.Minute))
 	if err != nil {
 		t.Fatalf("signDownloadToken: %v", err)
@@ -152,27 +152,27 @@ func findSubstring(s, sub string) bool {
 // ---- HTTP download handler ------------------------------------------------------
 
 func TestServeLogDownload_missingToken(t *testing.T) {
-	key := newHMACKey()
+	key := NewHMACKey()
 	req := httptest.NewRequest(http.MethodGet, "/dl", nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key, "")
+	ServeLogDownload(w, req, key, "")
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusUnauthorized)
 	}
 }
 
 func TestServeLogDownload_invalidToken(t *testing.T) {
-	key := newHMACKey()
+	key := NewHMACKey()
 	req := httptest.NewRequest(http.MethodGet, "/dl?dlt=notvalid", nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key, "")
+	ServeLogDownload(w, req, key, "")
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusUnauthorized)
 	}
 }
 
 func TestServeLogDownload_fileNotFound(t *testing.T) {
-	key := newHMACKey()
+	key := NewHMACKey()
 	tokenStr, err := signDownloadToken(downloadClaims{FilePath: "/nonexistent/path/file.log"}, key, time.Now().Add(time.Minute))
 	if err != nil {
 		t.Fatalf("signDownloadToken: %v", err)
@@ -180,7 +180,7 @@ func TestServeLogDownload_fileNotFound(t *testing.T) {
 	encoded := base64.RawURLEncoding.EncodeToString([]byte(tokenStr))
 	req := httptest.NewRequest(http.MethodGet, "/dl?dlt="+encoded, nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key, "")
+	ServeLogDownload(w, req, key, "")
 	if w.Code != http.StatusNotFound {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusNotFound)
 	}
@@ -194,7 +194,7 @@ func TestServeLogDownload_singleFile(t *testing.T) {
 		t.Fatalf("WriteFile: %v", err)
 	}
 
-	key := newHMACKey()
+	key := NewHMACKey()
 	tokenStr, err := signDownloadToken(downloadClaims{FilePath: fp}, key, time.Now().Add(time.Minute))
 	if err != nil {
 		t.Fatalf("signDownloadToken: %v", err)
@@ -202,7 +202,7 @@ func TestServeLogDownload_singleFile(t *testing.T) {
 	encoded := base64.RawURLEncoding.EncodeToString([]byte(tokenStr))
 	req := httptest.NewRequest(http.MethodGet, "/dl?dlt="+encoded, nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key, dir)
+	ServeLogDownload(w, req, key, dir)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("status = %d, want 200; body: %s", w.Code, w.Body.String())
@@ -219,7 +219,7 @@ func TestServeLogDownload_zipDownload(t *testing.T) {
 	_ = os.WriteFile(f1, []byte("file a"), 0600)
 	_ = os.WriteFile(f2, []byte("file b"), 0600)
 
-	key := newHMACKey()
+	key := NewHMACKey()
 	tokenStr, err := signDownloadToken(downloadClaims{ZipFiles: []string{f1, f2}}, key, time.Now().Add(time.Minute))
 	if err != nil {
 		t.Fatalf("signDownloadToken: %v", err)
@@ -227,7 +227,7 @@ func TestServeLogDownload_zipDownload(t *testing.T) {
 	encoded := base64.RawURLEncoding.EncodeToString([]byte(tokenStr))
 	req := httptest.NewRequest(http.MethodGet, "/dl?dlt="+encoded, nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key, dir)
+	ServeLogDownload(w, req, key, dir)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("status = %d, want 200", w.Code)
@@ -252,7 +252,7 @@ func TestServeLogDownload_pathOutsideAllowedDir(t *testing.T) {
 
 	allowedDir := t.TempDir() // different directory
 
-	key := newHMACKey()
+	key := NewHMACKey()
 	tokenStr, err := signDownloadToken(downloadClaims{FilePath: secret}, key, time.Now().Add(time.Minute))
 	if err != nil {
 		t.Fatalf("signDownloadToken: %v", err)
@@ -260,7 +260,7 @@ func TestServeLogDownload_pathOutsideAllowedDir(t *testing.T) {
 	encoded := base64.RawURLEncoding.EncodeToString([]byte(tokenStr))
 	req := httptest.NewRequest(http.MethodGet, "/dl?dlt="+encoded, nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key, allowedDir)
+	ServeLogDownload(w, req, key, allowedDir)
 
 	if w.Code != http.StatusForbidden {
 		t.Errorf("status = %d, want %d (forbidden)", w.Code, http.StatusForbidden)
@@ -282,7 +282,7 @@ func TestServeLogDownload_pathPrefixCollision(t *testing.T) {
 		t.Fatalf("WriteFile: %v", err)
 	}
 
-	key := newHMACKey()
+	key := NewHMACKey()
 	tokenStr, err := signDownloadToken(downloadClaims{FilePath: fp}, key, time.Now().Add(time.Minute))
 	if err != nil {
 		t.Fatalf("signDownloadToken: %v", err)
@@ -290,7 +290,7 @@ func TestServeLogDownload_pathPrefixCollision(t *testing.T) {
 	encoded := base64.RawURLEncoding.EncodeToString([]byte(tokenStr))
 	req := httptest.NewRequest(http.MethodGet, "/dl?dlt="+encoded, nil)
 	w := httptest.NewRecorder()
-	serveLogDownload(w, req, key, allowedDir)
+	ServeLogDownload(w, req, key, allowedDir)
 
 	if w.Code != http.StatusForbidden {
 		t.Errorf("prefix-collision: status = %d, want %d", w.Code, http.StatusForbidden)

@@ -7,10 +7,12 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/pprof"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -42,12 +44,15 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+	genlogpb "github.com/smart-core-os/sc-bos/pkg/gentrait/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/manage/enrollment"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
+	syslog "github.com/smart-core-os/sc-bos/pkg/system/log"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
@@ -298,11 +303,43 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	httpAuth := func(next http.Handler) http.Handler {
 		return next
 	}
-	if pol := configPolicy(config); pol != nil {
-		interceptor := policy.NewInterceptor(pol,
+	pol := configPolicy(config)
+	var auditLogger *zap.Logger
+	var auditCloser io.Closer // non-nil when auditLogger was successfully created
+	if al := config.AuditLog; al != nil && al.Filename != "" {
+		maxSize := al.MaxSizeMB
+		if maxSize == 0 {
+			maxSize = 100
+		}
+		var err error
+		auditLogger, auditCloser, err = syslog.NewAuditFileLogger(al.Filename, maxSize, al.MaxAgeDays, al.MaxBackups, al.Compress)
+		if err != nil {
+			logger.Error("failed to open audit log file", zap.String("file", al.Filename), zap.Error(err))
+		}
+	}
+	var auditModel *genlogpb.Model
+	if config.AuditLog != nil {
+		auditModel = genlogpb.NewModel(0)
+	}
+	if pol != nil || auditLogger != nil || auditModel != nil {
+		if pol == nil {
+			// Policy is disabled but audit logging is configured; use an allow-all policy so the
+			// interceptor still runs and can record write operations.
+			pol = policy.Func(func(_ context.Context, _ string, _ policy.Attributes) (rego.ResultSet, error) {
+				return rego.ResultSet{{Expressions: []*rego.ExpressionValue{{Value: true, Text: "allow"}}}}, nil
+			})
+		}
+		opts := []policy.InterceptorOption{
 			policy.WithLogger(logger.Named("policy")),
 			policy.WithTokenVerifier(tokenValidator),
-		)
+		}
+		if auditLogger != nil {
+			opts = append(opts, policy.WithAuditLogger(auditLogger))
+		}
+		if auditModel != nil {
+			opts = append(opts, policy.WithAuditModel(auditModel))
+		}
+		interceptor := policy.NewInterceptor(pol, opts...)
 		grpcOpts = append(grpcOpts,
 			grpc.ChainUnaryInterceptor(interceptor.GRPCUnaryInterceptor()),
 			grpc.ChainStreamInterceptor(interceptor.GRPCStreamingInterceptor()),
@@ -366,6 +403,54 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	mux := http.NewServeMux()
 	// Devices API aux routes
 	devicesApi.RegisterHTTPMux(mux)
+
+	// Audit log LogApi trait
+	if auditModel != nil {
+		auditSrv := genlogpb.NewModelServer(auditModel)
+
+		if al := config.AuditLog; al != nil && al.Filename != "" {
+			auditDownloadKey := syslog.NewHMACKey()
+			allowedDir := filepath.Dir(al.Filename)
+			auditDLPath := "/__/audit-log/download"
+
+			mux.HandleFunc(auditDLPath, func(w http.ResponseWriter, r *http.Request) {
+				syslog.ServeLogDownload(w, r, auditDownloadKey, allowedDir)
+			})
+
+			ttl := 15 * time.Minute
+			urlBase := ""
+			if hostPort, err := config.ExternalHTTPEndpoint(); err == nil {
+				urlBase = "https://" + hostPort
+			} else {
+				logger.Warn("audit log download URLs will be relative; set externalAddress to generate absolute URLs", zap.Error(err))
+			}
+			auditSrv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
+				return syslog.GetDownloadLogURL(req, al.Filename, "", urlBase, auditDLPath, auditDownloadKey, ttl)
+			}
+
+			go func() {
+				ticker := time.NewTicker(30 * time.Second)
+				defer ticker.Stop()
+				syslog.RefreshMetadata(auditModel, al.Filename, "", logger.Named("audit"))
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case <-ticker.C:
+						syslog.RefreshMetadata(auditModel, al.Filename, "", logger.Named("audit"))
+					}
+				}
+			}()
+		}
+
+		auditLogName := "audit-log"
+		if rootNode.Name() != "" {
+			auditLogName = path.Join(rootNode.Name(), "audit-log")
+		}
+		rootNode.Announce(auditLogName,
+			node.HasTrait(genlogpb.TraitName, node.WithClients(logpb.WrapApi(auditSrv))),
+		)
+	}
 
 	// Static site hosting
 	for _, site := range config.StaticHosting {
@@ -444,6 +529,12 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	c.Defer(closeHealthStore)
 	if cloudDataRoot != nil {
 		c.Defer(cloudDataRoot.Close)
+	}
+	if auditCloser != nil {
+		c.Defer(func() error {
+			_ = auditLogger.Sync()
+			return auditCloser.Close()
+		})
 	}
 	return c, nil
 }

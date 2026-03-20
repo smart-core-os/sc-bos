@@ -32,7 +32,7 @@ func NewSystem(services system.Services) *System {
 		announcer:   node.NewReplaceAnnouncer(services.Node),
 		services:    services,
 		logger:      logger,
-		downloadKey: newHMACKey(),
+		downloadKey: NewHMACKey(),
 	}
 	s.Service = service.New(
 		service.MonoApply(s.applyConfig),

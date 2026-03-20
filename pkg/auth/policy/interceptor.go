@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
@@ -15,15 +16,20 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	genlogpb "github.com/smart-core-os/sc-bos/pkg/gentrait/logpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 )
 
 type Interceptor struct {
-	logger   *zap.Logger
-	policy   Policy
-	verifier token.Validator
+	logger      *zap.Logger
+	auditLogger *zap.Logger
+	auditModel  *genlogpb.Model
+	policy      Policy
+	verifier    token.Validator
 }
 
 func NewInterceptor(policy Policy, opts ...InterceptorOption) *Interceptor {
@@ -185,6 +191,52 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 			zap.Strings("queries", queries),
 		)
 	}
+	subject, name := "", ""
+	if creds.tokenClaims != nil {
+		subject = creds.tokenClaims.Subject
+		name = creds.tokenClaims.Name
+	}
+	// Only audit once per RPC, not for every message on an open client/bidirectional stream.
+	if i.auditLogger != nil && isWriteMethod(method) && !stream.Open {
+		outcome := "allowed"
+		if err != nil {
+			outcome = "denied"
+		}
+		i.auditLogger.Info("write",
+			zap.String("outcome", outcome),
+			zap.String("service", service),
+			zap.String("method", method),
+			zap.String("peer", addr),
+			zap.String("subject", subject),
+			zap.String("name", name),
+			zap.Bool("cert", creds.certValid),
+			zap.String("certSubject", certSubject(creds.cert)),
+			zap.Bool("token", creds.tokenClaims != nil),
+		)
+	}
+	if i.auditModel != nil && isWriteMethod(method) && !stream.Open {
+		outcome, lvl := "allowed", logpb.Level_LEVEL_INFO
+		if err != nil {
+			outcome, lvl = "denied", logpb.Level_LEVEL_WARN
+		}
+		i.auditModel.AppendMessage(&logpb.LogMessage{
+			Timestamp: timestamppb.Now(),
+			Level:     lvl,
+			Logger:    "audit",
+			Message:   "write",
+			Fields: map[string]string{
+				"outcome":     outcome,
+				"service":     service,
+				"method":      method,
+				"peer":        addr,
+				"subject":     subject,
+				"name":        name,
+				"cert":        strconv.FormatBool(creds.certValid),
+				"certSubject": certSubject(creds.cert),
+				"token":       strconv.FormatBool(creds.tokenClaims != nil),
+			},
+		})
+	}
 	return creds, err
 }
 
@@ -232,6 +284,51 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 			zap.Strings("queries", queries),
 		)
 	}
+	subject, name := "", ""
+	if creds.tokenClaims != nil {
+		subject = creds.tokenClaims.Subject
+		name = creds.tokenClaims.Name
+	}
+	if i.auditLogger != nil && isHTTPWriteMethod(r.Method) {
+		outcome := "allowed"
+		if err != nil {
+			outcome = "denied"
+		}
+		i.auditLogger.Info("write",
+			zap.String("outcome", outcome),
+			zap.String("path", r.URL.Path),
+			zap.String("httpMethod", r.Method),
+			zap.String("peer", addr),
+			zap.String("subject", subject),
+			zap.String("name", name),
+			zap.Bool("cert", creds.certValid),
+			zap.String("certSubject", certSubject(creds.cert)),
+			zap.Bool("token", creds.tokenClaims != nil),
+		)
+	}
+	if i.auditModel != nil && isHTTPWriteMethod(r.Method) {
+		outcome, lvl := "allowed", logpb.Level_LEVEL_INFO
+		if err != nil {
+			outcome, lvl = "denied", logpb.Level_LEVEL_WARN
+		}
+		i.auditModel.AppendMessage(&logpb.LogMessage{
+			Timestamp: timestamppb.Now(),
+			Level:     lvl,
+			Logger:    "audit",
+			Message:   "write",
+			Fields: map[string]string{
+				"outcome":     outcome,
+				"path":        r.URL.Path,
+				"httpMethod":  r.Method,
+				"peer":        addr,
+				"subject":     subject,
+				"name":        name,
+				"cert":        strconv.FormatBool(creds.certValid),
+				"certSubject": certSubject(creds.cert),
+				"token":       strconv.FormatBool(creds.tokenClaims != nil),
+			},
+		})
+	}
 	return creds, err
 }
 
@@ -247,6 +344,14 @@ func WithTokenVerifier(tv token.Validator) InterceptorOption {
 	return func(interceptor *Interceptor) {
 		interceptor.verifier = tv
 	}
+}
+
+func WithAuditLogger(logger *zap.Logger) InterceptorOption {
+	return func(i *Interceptor) { i.auditLogger = logger }
+}
+
+func WithAuditModel(m *genlogpb.Model) InterceptorOption {
+	return func(i *Interceptor) { i.auditModel = m }
 }
 
 type verifiedCreds struct {
@@ -292,4 +397,35 @@ func httpPeerCert(r *http.Request) *x509.Certificate {
 		return nil
 	}
 	return r.TLS.VerifiedChains[0][0]
+}
+
+// isWriteMethod reports whether the gRPC method name represents a mutating operation.
+// It returns true for any method that does not begin with a known read-only prefix.
+//
+// The read-only prefixes cover all current SC-BOS proto read methods. Non-standard
+// method names in the codebase (Identify, ConfigureService, RegenerateSecret,
+// OnMessage) are all mutating and correctly classified as writes by this function.
+func isWriteMethod(method string) bool {
+	for _, prefix := range []string{"Get", "Pull", "Describe", "List"} {
+		if strings.HasPrefix(method, prefix) {
+			return false
+		}
+	}
+	return true
+}
+
+func isHTTPWriteMethod(method string) bool {
+	switch method {
+	case http.MethodGet, http.MethodHead, http.MethodOptions:
+		return false
+	default:
+		return true
+	}
+}
+
+func certSubject(cert *x509.Certificate) string {
+	if cert == nil {
+		return ""
+	}
+	return cert.Subject.String()
 }

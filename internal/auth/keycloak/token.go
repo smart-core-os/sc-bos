@@ -25,9 +25,10 @@ var keycloakHTTPClient = &http.Client{Timeout: 30 * time.Second}
 // accessTokenPayload describes the claims present in a token issued by a Keycloak Authorization Server.
 type accessTokenPayload struct {
 	jwt.Claims
-	Roles          []string                  `json:"roles"`
-	Scopes         auth.JWTScopes            `json:"scope"`
-	ResourceAccess map[string]resourceAccess `json:"resource_access"`
+	Roles             []string                  `json:"roles"`
+	Scopes            auth.JWTScopes            `json:"scope"`
+	ResourceAccess    map[string]resourceAccess `json:"resource_access"`
+	PreferredUsername string                    `json:"preferred_username"`
 }
 
 func (a *accessTokenPayload) allRoles() []string {
@@ -120,6 +121,8 @@ func (v *tokenValidator) ValidateAccessToken(ctx context.Context, tokenStr strin
 	}
 
 	return &token.Claims{
+		Subject:     payload.Subject,
+		Name:        payload.PreferredUsername,
 		SystemRoles: payload.allRoles(),
 		IsService:   false,
 	}, nil
