@@ -1,0 +1,29 @@
+{
+  "name": "EG-01",
+  "listenGrpc": ":23201",
+  "listenHttps": ":8201",
+  "cors": {
+    "debugMode": true,
+    "corsOrigins": ["*"]
+  },
+  "staticHosting": [
+    {"path": "/__/vanti-ugs-cohort/", "filePath": "./example/config/vanti-ugs-cohort"}
+  ],
+  "systems": {
+    "authn": {
+      "user": {
+        "fileAccounts": true,
+        "keycloakAccounts": {
+          "url": "http://localhost:8888",
+          "realm": "Smart_Core",
+          "clientId": "sc-opsui"
+        }
+      },
+      "system": {"cohortAccounts": true}
+    },
+    "resourceUse": {},
+    "hub": {"storage": {"type": "proxy"}},
+    "gateway": {},
+    "tenants": {"storage": {"type": "proxy"}}
+  }
+}

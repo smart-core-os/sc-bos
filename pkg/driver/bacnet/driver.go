@@ -113,12 +113,17 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 
 		faultCheck, err := d.health.NewFaultCheck(scDeviceName, createDeviceHealthCheck(device.Health.OccupantImpact.ToProto(), device.Health.EquipmentImpact.ToProto()))
-		if err != nil {
+		if errors.Is(err, gen_healthpb.ErrAlreadyExists) {
+			logger.Warn("device health check already registered, health will not be tracked", zap.String("device", device.Name))
+			faultCheck = nil
+		} else if err != nil {
 			logger.Error("failed to create device fault check", zap.String("device", device.Name), zap.Error(err))
 			return err
 		}
 
-		d.checks = append(d.checks, faultCheck)
+		if faultCheck != nil {
+			d.checks = append(d.checks, faultCheck)
+		}
 
 		go func() {
 			// This is more complicated than I think it should be.
@@ -179,7 +184,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	for _, trait := range cfg.Traits {
 		logger := d.logger.With(zap.Stringer("trait", trait.Kind), zap.String("name", trait.Name))
 		faultCheck, err := d.health.NewFaultCheck(trait.Name, createTraitHealthCheck(trait.Kind, trait.Health.OccupantImpact.ToProto(), trait.Health.EquipmentImpact.ToProto()))
-		if err != nil {
+		if errors.Is(err, gen_healthpb.ErrAlreadyExists) {
+			logger.Warn("trait health check already registered, health will not be tracked", zap.Stringer("trait", trait.Kind), zap.String("name", trait.Name))
+			faultCheck = nil
+		} else if err != nil {
 			logger.Error("failed to create trait fault check", zap.String("trait", trait.Name), zap.Error(err))
 			return err
 		}
@@ -191,7 +199,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 			if err != nil {
 				logger.Error("failed to create a new health impl", zap.Error(err))
-				faultCheck.Dispose()
+				if faultCheck != nil {
+					faultCheck.Dispose()
+				}
 				return err
 			}
 
@@ -203,7 +213,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 			if err != nil {
 				logger.Error("failed to start health polling", zap.Error(err))
-				faultCheck.Dispose()
+				if faultCheck != nil {
+					faultCheck.Dispose()
+				}
 				return err
 			}
 
@@ -214,12 +226,16 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		impl, err := merge.IntoTrait(d.client, devices, faultCheck, trait, logger)
 		if errors.Is(err, merge.ErrTraitNotSupported) {
 			logger.Error("Cannot combine into trait, not supported")
-			faultCheck.Dispose()
+			if faultCheck != nil {
+				faultCheck.Dispose()
+			}
 			continue
 		}
 		if err != nil {
 			logger.Error("Cannot combine into trait", zap.Error(err))
-			faultCheck.Dispose()
+			if faultCheck != nil {
+				faultCheck.Dispose()
+			}
 			continue
 		}
 
@@ -271,19 +287,21 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 
 	bacDevice, err := d.findDevice(ctx, device)
 	if err != nil {
-		healthErr := &healthpb.HealthCheck_Error{
-			SummaryText: "Cannot find device",
-			DetailsText: fmt.Sprintf("net handshake: %v", ctxerr.Cause(ctx, err).Error()),
-			Code:        statusToHealthCode(DeviceUnreachable),
+		if deviceHealth != nil {
+			healthErr := &healthpb.HealthCheck_Error{
+				SummaryText: "Cannot find device",
+				DetailsText: fmt.Sprintf("net handshake: %v", ctxerr.Cause(ctx, err).Error()),
+				Code:        statusToHealthCode(DeviceUnreachable),
+			}
+			deviceHealth.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
+				State:     healthpb.HealthCheck_Reliability_UNRELIABLE,
+				LastError: healthErr,
+				Cause: &healthpb.HealthCheck_Reliability_Cause{
+					Error:       healthErr,
+					DisplayName: "deviceConfiguration",
+				},
+			})
 		}
-		deviceHealth.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
-			State:     healthpb.HealthCheck_Reliability_UNRELIABLE,
-			LastError: healthErr,
-			Cause: &healthpb.HealthCheck_Reliability_Cause{
-				Error:       healthErr,
-				DisplayName: "deviceConfiguration",
-			},
-		})
 
 		return fmt.Errorf("device comm handshake: %w", ctxerr.Cause(ctx, err))
 	}
@@ -379,6 +397,7 @@ func (d *Driver) Clear() {
 func (d *Driver) dispose() {
 	if d.systemCheck != nil {
 		d.systemCheck.Dispose()
+		d.systemCheck = nil
 	}
 
 	for _, stop := range d.healthTasks {
@@ -386,10 +405,12 @@ func (d *Driver) dispose() {
 			stop()
 		}
 	}
+	d.healthTasks = nil
 
 	for _, check := range d.checks {
 		if check != nil {
 			check.Dispose()
 		}
 	}
+	d.checks = nil
 }

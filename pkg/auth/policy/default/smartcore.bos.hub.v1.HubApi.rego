@@ -1,4 +1,4 @@
-package smartcore.bos.HubApi
+package smartcore.bos.hub.v1.HubApi
 
 import data.scutil.rpc.read_request
 import data.scutil.rpc.verb_match

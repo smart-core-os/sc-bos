@@ -31,6 +31,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/cloud"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
+	"github.com/smart-core-os/sc-bos/pkg/app/logcapture"
 	"github.com/smart-core-os/sc-bos/internal/router"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors/protopkg"
@@ -58,7 +59,10 @@ import (
 
 // Bootstrap will obtain a Controller in a ready-to-run state.
 func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) {
-	logger, err := config.Logger.Build()
+	// Create a dynamic capture core so that the Log trait system plugin can
+	// register itself to receive all log entries after the fact.
+	capture := &logcapture.Core{}
+	logger, err := config.Logger.Build(zap.WrapCore(capture.WrapCoreFunc()))
 	if err != nil {
 		return nil, err
 	}
@@ -432,12 +436,15 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		}),
 	}
 
+	logLevel := config.Logger.Level
 	c := &Controller{
 		SystemConfig:     config,
 		ControllerConfig: confStore,
 		Enrollment:       enrollServer,
 		Deployments:      deploymentUpdater,
 		Logger:           logger,
+		LogCapture:       capture,
+		LogLevel:         &logLevel,
 		Node:             rootNode,
 		Devices:          gen_devicespb.NewDevicesApiClient(wrap.ServerToClient(gen_devicespb.DevicesApi_ServiceDesc, devicesApi)),
 		CheckRegistry:    checkRegistry,
@@ -525,6 +532,8 @@ type Controller struct {
 
 	// services for drivers/automations
 	Logger          *zap.Logger
+	LogCapture      *logcapture.Core  // dynamic tee for log capture (nil if not built via Bootstrap)
+	LogLevel        *zap.AtomicLevel  // controls the root logger's minimum level
 	Node            *node.Node
 	Devices         gen_devicespb.DevicesApiClient
 	DeviceStore     *devicespb.Collection // for low level control of devices

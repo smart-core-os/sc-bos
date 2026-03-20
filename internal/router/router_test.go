@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -177,6 +178,102 @@ func TestWithKeyInterceptor(t *testing.T) {
 	if diff := cmp.Diff(expect, res, protocmp.Transform()); diff != "" {
 		t.Errorf("unexpected response (-want +got):\n%s", diff)
 	}
+}
+
+// TestSwapRoute_RestoreRouteIfConn tests that SwapRoute + RestoreRouteIfConn correctly restores
+// the previous route when the current owner undoes its proxy.
+// This is important for the gateway system: when a non-gateway fallback announcer temporarily
+// proxies a device (overwriting the hub's route), undoing the proxy should restore the hub's route.
+func TestSwapRoute_RestoreRouteIfConn(t *testing.T) {
+	r := New()
+
+	// Distinct sentinel values for three different connections.
+	hubConn := &fakeConn{"hub"}
+	eg02Conn := &fakeConn{"eg02"}
+
+	// Step 1: hub sets the route.
+	prev, err := r.SwapRoute("", "BC-01/automations", hubConn)
+	if err != nil {
+		t.Fatalf("hub SwapRoute: %v", err)
+	}
+	if prev != nil {
+		t.Errorf("hub SwapRoute prev: got %v, want nil", prev)
+	}
+
+	// Step 2: EG-02 (non-gateway fallback) overwrites the hub's route.
+	prev, err = r.SwapRoute("", "BC-01/automations", eg02Conn)
+	if err != nil {
+		t.Fatalf("eg02 SwapRoute: %v", err)
+	}
+	if prev != hubConn {
+		t.Errorf("eg02 SwapRoute prev: got %v, want hubConn", prev)
+	}
+
+	// Step 3: EG-02 switches to gateway mode and undoes its proxy.
+	// RestoreRouteIfConn should restore the hub's connection.
+	restored := r.RestoreRouteIfConn("", "BC-01/automations", eg02Conn, hubConn)
+	if !restored {
+		t.Error("RestoreRouteIfConn: expected true (route was eg02Conn), got false")
+	}
+
+	// Step 4: hub's route should now be active — a hub undo should succeed.
+	deleted := r.DeleteRouteIfConn("", "BC-01/automations", hubConn)
+	if !deleted {
+		t.Error("hub DeleteRouteIfConn: expected true (route should be hubConn after restore), got false")
+	}
+}
+
+// TestRestoreRouteIfConn_NopWhenOverwritten verifies that RestoreRouteIfConn is a no-op if
+// the route has already been replaced by a third party.
+func TestRestoreRouteIfConn_NopWhenOverwritten(t *testing.T) {
+	r := New()
+	connA := &fakeConn{"A"}
+	connB := &fakeConn{"B"}
+	connC := &fakeConn{"C"}
+
+	_, _ = r.SwapRoute("", "key", connA)
+	_, _ = r.SwapRoute("", "key", connB) // B overwrites A
+
+	// B's undo: try to restore A (but C has since overwritten B).
+	_, _ = r.SwapRoute("", "key", connC) // C overwrites B
+
+	restored := r.RestoreRouteIfConn("", "key", connB, connA)
+	if restored {
+		t.Error("RestoreRouteIfConn should be a no-op when current conn is not connB")
+	}
+}
+
+// TestRestoreRouteIfConn_DeleteWhenNoPrev verifies that RestoreRouteIfConn deletes the route
+// when prev is nil (i.e., there was no previous route).
+func TestRestoreRouteIfConn_DeleteWhenNoPrev(t *testing.T) {
+	r := New()
+	conn := &fakeConn{"A"}
+
+	prev, _ := r.SwapRoute("", "key", conn)
+	if prev != nil {
+		t.Fatalf("expected no prev route, got %v", prev)
+	}
+
+	deleted := r.RestoreRouteIfConn("", "key", conn, nil)
+	if !deleted {
+		t.Error("RestoreRouteIfConn with nil prev should delete the route")
+	}
+
+	// verify the route is gone
+	if r.DeleteRouteIfConn("", "key", conn) {
+		t.Error("route should have been deleted")
+	}
+}
+
+// fakeConn is a minimal grpc.ClientConnInterface used only for route identity checks.
+type fakeConn struct{ name string }
+
+func (f *fakeConn) Invoke(_ context.Context, _ string, _, _ any, _ ...grpc.CallOption) error {
+	return nil
+}
+
+func (f *fakeConn) NewStream(_ context.Context, _ *grpc.StreamDesc, _ string, _ ...grpc.CallOption) (grpc.ClientStream, error) {
+	return nil, nil
 }
 
 func check(t *testing.T, err error) {

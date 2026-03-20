@@ -124,11 +124,21 @@ export async function triggerDownload(qual = 'devices', query, history = null, t
     table: toValue(table),
   });
 
+  triggerDownloadFromUrl(urlRes.url, filename);
+}
+
+/**
+ * Triggers a browser download for the given URL and filename.
+ *
+ * @param {string} url
+ * @param {string} filename
+ */
+export function triggerDownloadFromUrl(url, filename) {
   const a = document.createElement('a');
   a.style.position = 'absolute';
   a.style.top = '0';
   a.style.visibility = 'hidden';
-  a.href = urlRes.url;
+  a.href = url;
   a.download = filename;
   document.body.appendChild(a);
   a.click();

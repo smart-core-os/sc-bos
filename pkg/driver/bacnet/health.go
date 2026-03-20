@@ -47,6 +47,9 @@ func createTraitHealthCheck(t trait.Name, occupant healthpb.HealthCheck_Occupant
 }
 
 func updateRequestErrorStatus(ctx context.Context, deviceHealth *gen_healthpb.FaultCheck, name, request string, err error) {
+	if deviceHealth == nil {
+		return
+	}
 	problemName := fmt.Sprintf("%s.%s", name, "requested")
 	if errors.Is(err, context.DeadlineExceeded) {
 		deviceHealth.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{

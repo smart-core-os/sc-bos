@@ -217,6 +217,44 @@ func (r *Router) SetRoute(service, key string, target grpc.ClientConnInterface) 
 	return nil
 }
 
+// SwapRoute registers or replaces a target connection for the specified route, returning the previous connection.
+// Unlike SetRoute, SwapRoute returns the previous connection allowing callers to restore it on undo.
+// Returns ErrUnknownService if a service is specified but not registered.
+func (r *Router) SwapRoute(service, key string, target grpc.ClientConnInterface) (prev grpc.ClientConnInterface, err error) {
+	r.m.Lock()
+	defer r.m.Unlock()
+
+	if service != "" {
+		if _, exists := r.services[service]; !exists {
+			return nil, ErrUnknownService
+		}
+	}
+
+	id := routeID{Service: service, Key: key}
+	prev = r.routes[id]
+	r.routes[id] = target
+	return prev, nil
+}
+
+// RestoreRouteIfConn replaces a route's connection with prev only if the current connection is conn.
+// If prev is nil and the current connection is conn, the route is deleted instead.
+// Returns true if the route was changed.
+func (r *Router) RestoreRouteIfConn(service, key string, conn, prev grpc.ClientConnInterface) bool {
+	r.m.Lock()
+	defer r.m.Unlock()
+
+	id := routeID{Service: service, Key: key}
+	if existing, exists := r.routes[id]; exists && existing == conn {
+		if prev != nil {
+			r.routes[id] = prev
+		} else {
+			delete(r.routes, id)
+		}
+		return true
+	}
+	return false
+}
+
 // DeleteRoute removes a route.
 // The service and key parameters are interpreted the same way as in AddRoute.
 //

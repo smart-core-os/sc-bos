@@ -1,0 +1,2084 @@
+{
+  "name": "van/uk/brum/ugs/ac-01",
+  "metadata": {
+    "appearance": {
+      "title": "Vanti UGS 01"
+    }
+  },
+  "drivers": [
+    {
+      "name": "van/uk/brum/ugs/ac-01/driver/basement",
+      "type": "mock",
+      "devices": [
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-LN1-01",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Bar Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Basement", "zone": "Bar"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-LN1-02",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Basement"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-LN1-03",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Stairwell Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Basement", "zone": "Stairwell"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-LN1-04",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Basement", "zone": "Copper Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-LN1-05",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ring Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Basement", "zone": "Copper Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-LN1-06",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Basement", "zone": "Cotswold Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-LN1-07",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ring Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Basement", "zone": "Cotswold Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-LN1-08",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-LN1-09",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ring Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/ELT-LN1-01",
+          "traits": [
+            {"name": "smartcore.traits.Light"},
+            {"name": "smartcore.bos.Status"},
+            {"name": "smartcore.bos.EmergencyLight"},
+            {"name": "smartcore.traits.EnergyStorage"}
+          ],
+          "appearance": {"title": "Stairwell Emergency Light"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Basement", "zone": "Stairwell"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-LN1-01",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Basement"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-LN1-02",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Basement", "zone": "Copper Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-LN1-03",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Basement", "zone": "Cotswold Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-LN1-04",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/EMT-LN1-01",
+          "traits": [
+            {"name": "smartcore.bos.Meter"}, {"name": "smartcore.traits.Electric"}, {"name": "smartcore.bos.Status"}
+          ],
+          "appearance": {"title": "DN1-001"},
+          "membership": {"subsystem": "metering"},
+          "location": {"floor": "Basement", "description": "In the riser room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-LN1-01",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Bar"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-LN1-02",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Copper Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-LN1-03",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Cotswold Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-LN1-04",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-LN1-05",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Stairwell"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-LN1-01",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Copper Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-LN1-02",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Cotswold Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-LN1-03",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-LN1-04",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Bar"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-LN1-01",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Cotswold Door Privacy"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Basement", "zone": "Cotswold Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-LN1-02",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Cotswold Door Blackout"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Basement", "zone": "Cotswold Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-LN1-03",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Copper Door Privacy"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Basement", "zone": "Copper Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-LN1-04",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Copper Door Blackout"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Basement", "zone": "Copper Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-LN1-05",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Kaolin Door Privacy"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-LN1-06",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Kaolin Door Blackout"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SND-L00-01",
+          "traits": [{"name":  "smartcore.bos.SoundSensor"}],
+          "appearance": {"title": "Copper Room"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Copper Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SND-L00-02",
+          "traits": [{"name":  "smartcore.bos.SoundSensor"}],
+          "appearance": {"title": "Cotswold Room"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Cotswold Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SND-L00-03",
+          "traits": [{"name":  "smartcore.bos.SoundSensor"}],
+          "appearance": {"title": "Kaolin Sound Sensor"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/CHW-L00-01",
+          "traits": [{"name":  "smartcore.bos.Temperature"}],
+          "appearance": {"title": "Main Chilled Water"},
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Basement"}
+        }
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/ac-01/driver/ground",
+      "type": "mock",
+      "devices": [
+        {
+          "name": "van/uk/brum/ugs/devices/LOK-L00-01",
+          "traits": [{"name": "smartcore.bos.Allocation"}],
+          "membership": {"subsystem": "lockers"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-01",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Entrance Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-02",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Spiral Stair Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-03",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Meeting Room Corridor Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-04",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Kitchen Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Kitchen"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-05",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Teal Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-06",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Green Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-07",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Yellow Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-08",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Project Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-09",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Lab"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-10",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Tool Station Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Lab"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-11",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Warehouse"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-12",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Workshop"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-13",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Bench Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Workshop"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-14",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Secure Store"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-15",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Goods In"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-16",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Comms Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L00-17",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Loading Bay"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/ELT-L00-01",
+          "traits": [
+            {"name": "smartcore.traits.Light"},
+            {"name": "smartcore.bos.Status"},
+            {"name": "smartcore.bos.EmergencyLight"},
+            {"name": "smartcore.traits.EnergyStorage"}
+          ],
+          "appearance": {"title": "Reception Emergency Light"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-L00-01",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-L00-02",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Ground Floor", "zone": "Teal Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-L00-03",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Ground Floor", "zone": "Green Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-L00-04",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Ground Floor", "zone": "Yellow Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-L00-05",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Ground Floor", "zone": "Project Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-L00-06",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Ground Floor", "zone": "Lab"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/EMT-L00-01",
+          "traits": [
+            {"name": "smartcore.bos.Meter"}, {"name": "smartcore.traits.Electric"}, {"name": "smartcore.bos.Status"}
+          ],
+          "appearance": {"title": "D00-001", "description": "Incomer"},
+          "membership": {"subsystem": "metering"},
+          "location": {"floor": "Ground Floor", "zone": "Loading Bay"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/EMT-L00-02",
+          "traits": [
+            {"name": "smartcore.bos.Meter"}, {"name": "smartcore.traits.Electric"}, {"name": "smartcore.bos.Status"}
+          ],
+          "appearance": {"title": "D00-002"},
+          "membership": {"subsystem": "metering"},
+          "location": {"floor": "Ground Floor", "zone": "Comms Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/EMT-L00-03",
+          "traits": [
+            {"name": "smartcore.bos.Meter"}, {"name": "smartcore.traits.Electric"}, {"name": "smartcore.bos.Status"}
+          ],
+          "appearance": {"title": "D00-003"},
+          "membership": {"subsystem": "metering"},
+          "location": {"floor": "Ground Floor", "zone": "Lab"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/WMT-L00-01",
+          "traits": [
+            {
+              "name": "smartcore.bos.Meter",
+              "more": {"unit": "m³"}
+            },
+            {"name": "smartcore.bos.Status"}
+          ],
+          "appearance": {"title": "BCWS Meter 01"},
+          "membership": {"subsystem": "metering"},
+          "location": {"floor": "Ground Floor", "zone": "Loading Bay"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/WMT-L00-02",
+          "traits": [
+            {
+              "name": "smartcore.bos.Meter",
+              "more": {"unit": "m³"}
+            },
+            {"name": "smartcore.bos.Status"}
+          ],
+          "appearance": {"title": "BCWS Meter 02"},
+          "membership": {"subsystem": "metering"},
+          "location": {"floor": "Basement", "zone": "Stairwell"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-L00-01",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-L00-02",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Teal Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-L00-03",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Green Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-L00-04",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Yellow Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-L00-05",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Project Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-L00-06",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Lab"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-L00-07",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Lab"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/ACR-L00-01",
+          "traits": [
+            {"name": "smartcore.bos.Access"}, {"name": "smartcore.traits.EnterLeaveSensor"}, {"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}
+          ],
+          "appearance": {"title": "Main Door"},
+          "membership": {"subsystem": "acs"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/ACR-L00-02",
+          "traits": [{"name": "smartcore.bos.Access"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Secure Store Door"},
+          "membership": {"subsystem": "acs"},
+          "location": {"floor": "Ground Floor", "zone": "Secure Store"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/DOR-L00-01",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Shutter"},
+          "membership": {"subsystem": "acs"},
+          "location": {"floor": "Ground Floor", "zone": "Loading Bay"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/DOR-L00-02",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Fire Door"},
+          "membership": {"subsystem": "acs"},
+          "location": {"floor": "Ground Floor", "zone": "Warehouse"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-L00-01",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Teal Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-L00-02",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Green Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-L00-03",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Yellow Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-L00-04",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Workshop"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-L00-05",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Lab"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L00-01",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Main Door Privacy"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L00-02",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Teal Door Privacy"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Ground Floor", "zone": "Teal Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L00-03",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Teal Door Blackout"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Ground Floor", "zone": "Teal Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L00-04",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Green Door Privacy"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Ground Floor", "zone": "Green Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L00-05",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Green Door Blackout"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Ground Floor", "zone": "Green Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L00-06",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Yellow Door Privacy"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Ground Floor", "zone": "Yellow Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L00-07",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Yellow Door Blackout"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Ground Floor", "zone": "Yellow Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L00-08",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Project Door Privacy"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Ground Floor", "zone": "Project Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L00-09",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Project Door Blackout"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "Ground Floor", "zone": "Project Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SND-L01-01",
+          "traits": [{"name":  "smartcore.bos.SoundSensor"}],
+          "appearance": {"title": "Reception"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Reception"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SND-L01-02",
+          "traits": [{"name":  "smartcore.bos.SoundSensor"}],
+          "appearance": {"title": "Teal Room"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Teal Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SND-L01-03",
+          "traits": [{"name":  "smartcore.bos.SoundSensor"}],
+          "appearance": {"title": "Green Room"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Green Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SND-L01-04",
+          "traits": [{"name":  "smartcore.bos.SoundSensor"}],
+          "appearance": {"title": "Yellow Room"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Ground Floor", "zone": "Yellow Room"}
+        }
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/ac-01/driver/first",
+      "type": "mock",
+      "devices": [
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L01-01",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "First Floor", "zone": "The Bank"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L01-02",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "First Floor", "zone": "Service"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L01-03",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "First Floor", "zone": "Open Plan"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/LTF-L01-04",
+          "traits": [{"name": "smartcore.traits.Light"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Ceiling Lights"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "First Floor", "zone": "Printer Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/ELT-L01-01",
+          "traits": [
+            {"name": "smartcore.traits.Light"},
+            {"name": "smartcore.bos.Status"},
+            {"name": "smartcore.bos.EmergencyLight"},
+            {"name": "smartcore.traits.EnergyStorage"}
+          ],
+          "appearance": {"title": "Open Plan Emergency Light"},
+          "membership": {"subsystem": "lighting"},
+          "location": {"floor": "First Floor", "zone": "Open Plan"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-L01-01",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "First Floor", "zone": "The Bank"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-L01-02",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "First Floor", "zone": "Open Plan", "description": "Near the toilets"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-L01-03",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "First Floor", "zone": "Open Plan", "description": "Near the back stairs"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/FCU-L01-04",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}, {"name": "smartcore.traits.OnOff"}
+          ],
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "First Floor", "zone": "Service"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-L01-01",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "First Floor", "zone": "The Bank"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-L01-02",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "First Floor", "zone": "Service"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-L01-03",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "First Floor", "zone": "Open Plan", "description": "Near the toilets"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/PIR-L01-04",
+          "traits": [{"name": "smartcore.traits.OccupancySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "First Floor", "zone": "Open Plan", "description": "Near the back stairs"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-L01-01",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "First Floor", "zone": "The Bank"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-L01-02",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "First Floor", "zone": "Printer Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-L01-03",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "First Floor", "zone": "Open Plan"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/IAQ-L01-04",
+          "traits": [{"name": "smartcore.traits.AirQualitySensor"}, {"name": "smartcore.bos.Status"}],
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "First Floor", "zone": "Service"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L01-01",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Open Plan Window 1"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "First Floor", "zone": "Open Plan", "description": "Left to right"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L01-02",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Open Plan Window 2"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "First Floor", "zone": "Open Plan", "description": "Left to right"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L01-03",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Open Plan Window 3"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "First Floor", "zone": "Open Plan", "description": "Left to right"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SHD-L01-04",
+          "traits": [{"name": "smartcore.traits.OpenClose"}, {"name": "smartcore.bos.Status"}],
+          "appearance": {"title": "Open Plan Window 4"},
+          "membership": {"subsystem": "shades"},
+          "location": {"floor": "First Floor", "zone": "Open Plan", "description": "Left to right"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/SND-L02-01",
+          "traits": [{"name":  "smartcore.bos.SoundSensor"}],
+          "appearance": {"title": "The Bank"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "First Floor", "zone": "The Bank"}
+        }
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/ac-01/driver/roof",
+      "type": "mock",
+      "devices": [
+        {
+          "name": "van/uk/brum/ugs/devices/PV-L02-01",
+          "traits": [
+            {"name": "smartcore.bos.Meter"}, {"name": "smartcore.traits.Electric"}, {"name": "smartcore.bos.Status"}
+          ],
+          "appearance": {"title": "Solar PV"},
+          "membership": {"subsystem": "metering"},
+          "location": {"floor": "Roof"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/TMP-L02-01",
+          "traits": [
+            {"name": "smartcore.traits.AirTemperature"}, {"name": "smartcore.traits.FanSpeed"},
+            {"name": "smartcore.bos.Status"}
+          ],
+          "appearance": {"title": "Outside Air Temperature"},
+          "membership": {"subsystem": "hvac"},
+          "location": {"floor": "Roof"}
+        }
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/eg-bc-01/driver/building",
+      "type": "mock",
+      "devices": [
+        {
+          "name": "van/uk/brum/ugs/devices/security-events",
+          "traits": [
+            {
+              "name": "smartcore.bos.SecurityEvent"
+            }
+          ],
+          "appearance": {"title": "Security Events"}
+        }
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/eg-bc-01/driver/building-waste",
+      "type": "mock",
+      "devices": [
+        {
+          "name": "van/uk/brum/ugs/devices/waste",
+          "traits": [
+            {
+              "name": "smartcore.bos.Waste"
+            }
+          ],
+          "appearance": {"title": "Waste"}
+        }
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/eg-bc-01/driver/building-transport",
+      "type": "mock",
+      "devices": [
+        {
+          "name": "van/uk/brum/ugs/devices/lift",
+          "traits": [
+            {
+              "name": "smartcore.bos.Transport",
+              "more": {
+                "numFloors": "2"
+              }
+            }
+          ],
+          "appearance": {"title": "Lifts"},
+          "membership": {"subsystem": "vt"}
+        }
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/eg-bc-01/driver/external", "type": "mock", "devices": [
+      {
+        "name": "van/uk/brum/ugs/devices/EVD-EXT-01",
+        "traits": [
+          {"name": "smartcore.traits.EnergyStorage", "more": {"type": "ev"}}, {"name": "smartcore.bos.Status"}
+        ],
+        "appearance": {"title": "EV Delivery Car", "description": "Delivers AV equipment to sites"},
+        "membership": {"subsystem": "fleet"}
+      }
+    ]
+    }
+  ],
+  "zones": [
+    {
+      "name": "van/uk/brum/ugs/zones/building",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Vanti HQ"},
+        "location": {"more": {"address": "44 Upper Gough Street, Birmingham, B1 1JL"}},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": [
+        "van/uk/brum/ugs/zones/floors/basement",
+        "van/uk/brum/ugs/zones/floors/ground",
+        "van/uk/brum/ugs/zones/floors/first"
+      ],
+      "thermostats": [
+        "van/uk/brum/ugs/zones/floors/basement",
+        "van/uk/brum/ugs/zones/floors/ground",
+        "van/uk/brum/ugs/zones/floors/first"
+      ],
+      "meters": [
+        "van/uk/brum/ugs/zones/floors/basement",
+        "van/uk/brum/ugs/zones/floors/ground"
+      ],
+      "meterGroups": {
+        "generated": ["van/uk/brum/ugs/devices/PV-L02-01"],
+        "water": [
+          "van/uk/brum/ugs/devices/WMT-L00-01",
+          "van/uk/brum/ugs/devices/WMT-L00-02"
+        ]
+      },
+      "electrics": [
+        "van/uk/brum/ugs/zones/floors/basement",
+        "van/uk/brum/ugs/zones/floors/ground"
+      ],
+      "electricGroups": {
+        "generated": ["van/uk/brum/ugs/devices/PV-L02-01"]
+      },
+      "occupancySensors": [
+        "van/uk/brum/ugs/zones/floors/basement",
+        "van/uk/brum/ugs/zones/floors/ground",
+        "van/uk/brum/ugs/zones/floors/first"
+      ],
+      "enterLeaveOccupancySensors": [
+        "van/uk/brum/ugs/devices/ACR-L00-01"
+      ],
+      "airQualitySensors": [
+        "van/uk/brum/ugs/zones/floors/basement",
+        "van/uk/brum/ugs/zones/floors/ground",
+        "van/uk/brum/ugs/zones/floors/first"
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/floors/basement",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Basement"},
+        "location": {"floor": "Basement"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": [
+        "van/uk/brum/ugs/devices/LTF-LN1-01",
+        "van/uk/brum/ugs/devices/LTF-LN1-02",
+        "van/uk/brum/ugs/devices/LTF-LN1-03",
+        "van/uk/brum/ugs/zones/rooms/copper",
+        "van/uk/brum/ugs/zones/rooms/cotswold",
+        "van/uk/brum/ugs/zones/rooms/kaolin"
+      ],
+      "thermostats": [
+        "van/uk/brum/ugs/devices/FCU-LN1-01",
+        "van/uk/brum/ugs/zones/rooms/copper",
+        "van/uk/brum/ugs/zones/rooms/cotswold",
+        "van/uk/brum/ugs/zones/rooms/kaolin"
+      ],
+      "meters": ["van/uk/brum/ugs/devices/EMT-LN1-01"],
+      "electrics": ["van/uk/brum/ugs/devices/EMT-LN1-01"],
+      "occupancySensors": [
+        "van/uk/brum/ugs/devices/PIR-LN1-01",
+        "van/uk/brum/ugs/zones/rooms/copper",
+        "van/uk/brum/ugs/zones/rooms/cotswold",
+        "van/uk/brum/ugs/zones/rooms/kaolin"
+      ],
+      "airQualitySensors": [
+        "van/uk/brum/ugs/devices/IAQ-LN1-04",
+        "van/uk/brum/ugs/zones/rooms/copper",
+        "van/uk/brum/ugs/zones/rooms/cotswold",
+        "van/uk/brum/ugs/zones/rooms/kaolin"
+      ],
+      "onOffs": [
+        "van/uk/brum/ugs/devices/FCU-LN1-01",
+        "van/uk/brum/ugs/devices/FCU-LN1-02",
+        "van/uk/brum/ugs/devices/FCU-LN1-03",
+        "van/uk/brum/ugs/devices/FCU-LN1-04"
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/floors/ground",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Ground Floor"},
+        "location": {"floor": "Ground Floor"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": [
+        "van/uk/brum/ugs/zones/areas/reception",
+        "van/uk/brum/ugs/zones/areas/kitchen",
+        "van/uk/brum/ugs/zones/rooms/teal",
+        "van/uk/brum/ugs/zones/rooms/green",
+        "van/uk/brum/ugs/zones/rooms/yellow",
+        "van/uk/brum/ugs/zones/areas/project",
+        "van/uk/brum/ugs/zones/areas/lab",
+        "van/uk/brum/ugs/zones/areas/warehouse",
+        "van/uk/brum/ugs/zones/areas/workshop",
+        "van/uk/brum/ugs/zones/areas/secure-store",
+        "van/uk/brum/ugs/zones/areas/goods-in",
+        "van/uk/brum/ugs/zones/areas/comms-room",
+        "van/uk/brum/ugs/zones/areas/loading-bay"
+      ],
+      "thermostats": [
+        "van/uk/brum/ugs/zones/areas/reception",
+        "van/uk/brum/ugs/zones/rooms/teal",
+        "van/uk/brum/ugs/zones/rooms/green",
+        "van/uk/brum/ugs/zones/rooms/yellow",
+        "van/uk/brum/ugs/zones/areas/project",
+        "van/uk/brum/ugs/zones/areas/lab"
+      ],
+      "meters": [
+        "van/uk/brum/ugs/devices/EMT-L00-02"
+      ],
+      "electrics": [
+        "van/uk/brum/ugs/devices/EMT-L00-02"
+      ],
+      "occupancySensors": [
+        "van/uk/brum/ugs/devices/PIR-L00-01",
+        "van/uk/brum/ugs/zones/rooms/teal",
+        "van/uk/brum/ugs/zones/rooms/green",
+        "van/uk/brum/ugs/zones/rooms/yellow"
+      ],
+      "enterLeaveSensors": [
+        "van/uk/brum/ugs/devices/ACR-L00-01",
+        "van/uk/brum/ugs/devices/ACR-L00-02",
+        "van/uk/brum/ugs/devices/DOR-L00-01",
+        "van/uk/brum/ugs/devices/DOR-L00-02"
+      ],
+      "airQualitySensors": [
+        "van/uk/brum/ugs/zones/rooms/teal",
+        "van/uk/brum/ugs/zones/rooms/green",
+        "van/uk/brum/ugs/zones/rooms/yellow",
+        "van/uk/brum/ugs/zones/rooms/workshop",
+        "van/uk/brum/ugs/zones/rooms/lab"
+      ],
+      "onOffs": [
+        "van/uk/brum/ugs/devices/FCU-L00-01",
+        "van/uk/brum/ugs/devices/FCU-L00-02",
+        "van/uk/brum/ugs/devices/FCU-L00-03",
+        "van/uk/brum/ugs/devices/FCU-L00-04",
+        "van/uk/brum/ugs/devices/FCU-L00-05",
+        "van/uk/brum/ugs/devices/FCU-L00-06"
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/floors/first",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "First Floor"},
+        "location": {"floor": "First Floor"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": [
+        "van/uk/brum/ugs/zones/rooms/bank",
+        "van/uk/brum/ugs/zones/areas/service",
+        "van/uk/brum/ugs/zones/areas/open-plan",
+        "van/uk/brum/ugs/zones/rooms/printer-room"
+      ],
+      "thermostats": [
+        "van/uk/brum/ugs/zones/rooms/bank",
+        "van/uk/brum/ugs/zones/areas/open-plan",
+        "van/uk/brum/ugs/zones/areas/service"
+      ],
+      "occupancySensors": [
+        "van/uk/brum/ugs/zones/rooms/bank",
+        "van/uk/brum/ugs/zones/areas/service",
+        "van/uk/brum/ugs/zones/areas/open-plan"
+      ],
+      "airQualitySensors": [
+        "van/uk/brum/ugs/zones/rooms/bank",
+        "van/uk/brum/ugs/zones/rooms/printer-room",
+        "van/uk/brum/ugs/zones/areas/open-plan",
+        "van/uk/brum/ugs/zones/areas/service"
+      ],
+      "onOffs": [
+        "van/uk/brum/ugs/devices/FCU-L01-01",
+        "van/uk/brum/ugs/devices/FCU-L01-02",
+        "van/uk/brum/ugs/devices/FCU-L01-03",
+        "van/uk/brum/ugs/devices/FCU-L01-04"
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/rooms/copper",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Copper Room"},
+        "location": {"floor": "Basement", "zone": "Copper Room", "description": "Near the bar"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-LN1-04", "van/uk/brum/ugs/devices/LTF-LN1-05"],
+      "openCloseGroups": {
+        "privacy": ["van/uk/brum/ugs/devices/SHD-LN1-01"],
+        "blackout": ["van/uk/brum/ugs/devices/SHD-LN1-02"]
+      },
+      "thermostats": ["van/uk/brum/ugs/devices/FCU-LN1-02"],
+      "occupancySensors": ["van/uk/brum/ugs/devices/PIR-LN1-02"],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-LN1-01"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/rooms/cotswold",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Cotswold Room"},
+        "location": {"floor": "Basement", "zone": "Cotswold Room", "description": "Far corner"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-LN1-06", "van/uk/brum/ugs/devices/LTF-LN1-07"],
+      "openCloseGroups": {
+        "privacy": ["van/uk/brum/ugs/devices/SHD-LN1-03"],
+        "blackout": ["van/uk/brum/ugs/devices/SHD-LN1-04"]
+      },
+      "thermostats": ["van/uk/brum/ugs/devices/FCU-LN1-03"],
+      "occupancySensors": ["van/uk/brum/ugs/devices/PIR-LN1-03"],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-LN1-02"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/rooms/kaolin",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Kaolin Room"},
+        "location": {"floor": "Basement", "zone": "Kaolin Room", "description": "Near the pool table"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-LN1-08", "van/uk/brum/ugs/devices/LTF-LN1-09"],
+      "openCloseGroups": {
+        "privacy": ["van/uk/brum/ugs/devices/SHD-LN1-05"],
+        "blackout": ["van/uk/brum/ugs/devices/SHD-LN1-06"]
+      },
+      "thermostats": ["van/uk/brum/ugs/devices/FCU-LN1-04"],
+      "occupancySensors": ["van/uk/brum/ugs/devices/PIR-LN1-04"],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-LN1-03"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/rooms/teal",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Teal Room"},
+        "location": {"floor": "Ground Floor", "zone": "Teal Room"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-05"],
+      "openCloseGroups": {
+        "privacy": ["van/uk/brum/ugs/devices/SHD-L00-02"],
+        "blackout": ["van/uk/brum/ugs/devices/SHD-L00-03"]
+      },
+      "thermostats": ["van/uk/brum/ugs/devices/FCU-L00-02"],
+      "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L00-02"],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L00-01"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/rooms/green",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Green Room"},
+        "location": {"floor": "Ground Floor", "zone": "Green Room"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-06"],
+      "openCloseGroups": {
+        "privacy": ["van/uk/brum/ugs/devices/SHD-L00-04"],
+        "blackout": ["van/uk/brum/ugs/devices/SHD-L00-05"]
+      },
+      "thermostats": ["van/uk/brum/ugs/devices/FCU-L00-03"],
+      "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L00-03"],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L00-02"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/rooms/yellow",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Yellow Room"},
+        "location": {"floor": "Ground Floor", "zone": "Yellow Room"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-07"],
+      "openCloseGroups": {
+        "privacy": ["van/uk/brum/ugs/devices/SHD-L00-06"],
+        "blackout": ["van/uk/brum/ugs/devices/SHD-L00-07"]
+      },
+      "thermostats": ["van/uk/brum/ugs/devices/FCU-L00-04"],
+      "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L00-04"],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L00-03"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/project",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Project Room"},
+        "location": {"floor": "Ground Floor", "zone": "Project Room"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-08"],
+      "openCloseGroups": {
+        "privacy": ["van/uk/brum/ugs/devices/SHD-L00-08"],
+        "blackout": ["van/uk/brum/ugs/devices/SHD-L00-09"]
+      },
+      "thermostats": ["van/uk/brum/ugs/devices/FCU-L00-05"],
+      "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L00-05"],
+      "drivers": [
+        {
+          "type": "mock", "name": "van/uk/brum/ugs/zones/areas/project/driver-mock",
+          "devices": [
+            {
+              "name": "van/uk/brum/ugs/zones/areas/project", "traits": [
+              {
+                "name": "smartcore.traits.Mode",
+                "more": {
+                  "modes": "{\"modes\": [{\"name\":\"lighting.mode\",\"values\":[{\"name\":\"auto\"},{\"name\":\"manual\"}]},{\"name\":\"hvac.mode\",\"values\":[{\"name\":\"auto\"},{\"name\":\"manual\"}]}]}"
+                }
+              }
+            ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/lab",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Lab"},
+        "location": {"floor": "Ground Floor", "zone": "Lab"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-09", "van/uk/brum/ugs/devices/LTF-L00-10"],
+      "thermostats": ["van/uk/brum/ugs/devices/FCU-L00-06"],
+      "meters": ["van/uk/brum/ugs/devices/EMT-L00-03"],
+      "electrics": ["van/uk/brum/ugs/devices/EMT-L00-03"],
+      "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L00-06", "van/uk/brum/ugs/devices/PIR-L00-07"],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L00-05"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/warehouse",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Warehouse"},
+        "location": {"floor": "Ground Floor", "zone": "Warehouse"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-11"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/workshop",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Workshop"},
+        "location": {"floor": "Ground Floor", "zone": "Workshop"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-12", "van/uk/brum/ugs/devices/LTF-L00-13"],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L00-04"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/kitchen",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Kitchen"},
+        "location": {"floor": "Ground Floor", "zone": "Kitchen"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-04"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/goods-in",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Goods In"},
+        "location": {"floor": "Ground Floor", "zone": "Goods In"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-15"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/secure-store",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Secure Store"},
+        "location": {"floor": "Ground Floor", "zone": "Secure Store"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-14"],
+      "enterLeaveSensors": ["van/uk/brum/ugs/devices/ACR-L00-02"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/comms-room",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Comms Room"},
+        "location": {"floor": "Ground Floor", "zone": "Comms Room"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-16"],
+      "meters": ["van/uk/brum/ugs/devices/EMT-L00-02"],
+      "electrics": ["van/uk/brum/ugs/devices/EMT-L00-02"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/reception",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Reception"},
+        "location": {"floor": "Ground Floor", "zone": "Reception"},
+        "membership": {"subsystem": "zones"}
+      },
+      "enterLeaveSensors": ["van/uk/brum/ugs/devices/ACR-L00-01"],
+      "lights": [
+        "van/uk/brum/ugs/devices/LTF-L00-01",
+        "van/uk/brum/ugs/devices/LTF-L00-02",
+        "van/uk/brum/ugs/devices/LTF-L00-03"
+      ],
+      "thermostats": ["van/uk/brum/ugs/devices/FCU-L00-01"],
+      "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L00-01"],
+      "openClose": ["van/uk/brum/ugs/devices/ACR-L00-01"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/l00-wc",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "WC"},
+        "location": {"floor": "Ground Floor", "zone": "WC"},
+        "membership": {"subsystem": "zones"}
+      }
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/loading-bay",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Loading Bay"},
+        "location": {"floor": "Ground Floor", "zone": "Loading Bay"},
+        "membership": {"subsystem": "zones"}
+      },
+      "enterLeaveSensors": ["van/uk/brum/ugs/devices/DOR-L00-01"],
+      "lights": ["van/uk/brum/ugs/devices/LTF-L00-17"],
+      "openClose": ["van/uk/brum/ugs/devices/DOR-L00-01"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/rooms/bank",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "The Bank"},
+        "location": {"floor": "First Floor", "zone": "The Bank"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L01-01"],
+      "thermostats": ["van/uk/brum/ugs/devices/FCU-L01-01"],
+      "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L01-01"],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L01-01"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/open-plan",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Open Plan"},
+        "location": {"floor": "First Floor", "zone": "Open Plan"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": [
+        "van/uk/brum/ugs/devices/LTF-L01-03"
+      ],
+      "openCloseGroups": {
+        "window1": ["van/uk/brum/ugs/devices/SHD-L01-01"],
+        "window2": ["van/uk/brum/ugs/devices/SHD-L01-02"],
+        "window3": ["van/uk/brum/ugs/devices/SHD-L01-03"],
+        "window4": ["van/uk/brum/ugs/devices/SHD-L01-04"]
+      },
+      "thermostats": [
+        "van/uk/brum/ugs/devices/FCU-L01-02",
+        "van/uk/brum/ugs/devices/FCU-L01-03"
+      ],
+      "occupancySensors": [
+        "van/uk/brum/ugs/devices/PIR-L01-03",
+        "van/uk/brum/ugs/devices/PIR-L01-04"
+      ],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L01-03"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/rooms/printer-room",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Printer Room"},
+        "location": {"floor": "First Floor", "zone": "Printer Room"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L01-04"],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L01-02"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/service",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "Service"},
+        "location": {"floor": "First Floor", "zone": "Service"},
+        "membership": {"subsystem": "zones"}
+      },
+      "lights": ["van/uk/brum/ugs/devices/LTF-L01-02"],
+      "thermostats": ["van/uk/brum/ugs/devices/FCU-L01-04"],
+      "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L01-02"],
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L01-04"]
+    },
+    {
+      "name": "van/uk/brum/ugs/zones/areas/l01-wc",
+      "type": "area",
+      "metadata": {
+        "appearance": {"title": "WC"},
+        "location": {"floor": "First Floor", "zone": "WC"},
+        "membership": {"subsystem": "zones"}
+      }
+    }
+  ],
+  "automation": [
+    {
+      "name": "van/uk/brum/ugs/automation/electric-history/EMT-LN1-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/EMT-LN1-01", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/electric-history/EMT-L00-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/EMT-L00-01", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/electric-history/EMT-L00-02",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/EMT-L00-02", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/electric-history/EMT-L00-03",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/EMT-L00-03", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/allocation-history/LOK-L00-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/LOK-L00-01", "trait": "smartcore.bos.Allocation"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/electric-history/building",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/building", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/electric-history/building/generated",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/building/generated", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/electric-history/basement",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/floors/basement", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/electric-history/ground",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/floors/ground", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/electric-history/lab",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/lab", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+
+    {
+      "name": "van/uk/brum/ugs/automation/electric-history/comms-room",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/comms-room", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/EMT-LN1-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/EMT-LN1-01", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/EMT-L00-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/EMT-L00-01", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/EMT-L00-02",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/EMT-L00-02", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/EMT-L00-03",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/EMT-L00-03", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/WMT-L00-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/WMT-L00-01", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/WMT-L00-02",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/WMT-L00-02", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/building",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/building", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/building/generated",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/building/generated", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/building/water",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/building/water", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/basement",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/floors/basement", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/ground",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/floors/ground", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/lab",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/lab", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/meter-history/comms-room",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/comms-room", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/lab",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/lab", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/open-plan",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/open-plan", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/service",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/service", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/floors/basement",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/floors/basement", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/floors/first",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/floors/first", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/floors/ground",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/floors/ground", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/rooms/bank",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/bank", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/rooms/printer-room",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/printer-room", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/rooms/bank",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/bank", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/occupancy-history/building",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/building", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/occupancy-history/copper",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/copper", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/occupancy-history/cotswold",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/cotswold", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/occupancy-history/kaolin",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/kaolin", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/occupancy-history/teal",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/teal", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/occupancy-history/green",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/green", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/occupancy-history/yellow",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/yellow", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/occupancy-history/project",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/project", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/occupancy-history/lab",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/lab", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/building",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/building", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/copper",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/copper", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/cotswold",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/cotswold", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/kaolin",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/kaolin", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/teal",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/teal", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/green",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/green", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/yellow",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/yellow", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/workshop",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/workshop", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-LN1-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-LN1-01", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-LN1-02",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-LN1-02", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-LN1-03",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-LN1-03", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-LN1-04",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-LN1-04", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-L00-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-L00-01", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-L00-02",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-L00-02", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-L00-03",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-L00-03", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-L00-04",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-L00-04", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-L00-05",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-L00-05", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-L01-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-L01-01", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-L01-02",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-L01-02", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-L01-03",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-L01-03", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-quality-history/IAQ-L01-04",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/IAQ-L01-04", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/lift-history/lift",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/lift", "trait": "smartcore.bos.Transport"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/sound-history/SND-L00-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/SND-L00-01", "trait": "smartcore.bos.SoundSensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/sound-history/SND-L00-02",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/SND-L00-02", "trait": "smartcore.bos.SoundSensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/sound-history/SND-L00-03",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/SND-L00-03", "trait": "smartcore.bos.SoundSensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/sound-history/SND-L01-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/SND-L01-01", "trait": "smartcore.bos.SoundSensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/sound-history/SND-L01-02",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/SND-L01-02", "trait": "smartcore.bos.SoundSensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/sound-history/SND-L01-03",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/SND-L01-03", "trait": "smartcore.bos.SoundSensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/sound-history/SND-L01-04",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/SND-L01-04", "trait": "smartcore.bos.SoundSensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/sound-history/SND-L02-01",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/SND-L02-01", "trait": "smartcore.bos.SoundSensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/building",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/building", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/floors/basement",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/floors/basement", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/floors/ground",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/floors/ground", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/floors/first",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/floors/first", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/rooms/copper",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/copper", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/rooms/cotswold",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/cotswold", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/rooms/kaolin",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/kaolin", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/rooms/teal",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/teal", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/rooms/green",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/green", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/rooms/yellow",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/yellow", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/areas/reception",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/reception", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/areas/project",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/project", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/areas/lab",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/lab", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/rooms/bank",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/rooms/bank", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/areas/open-plan",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/open-plan", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/air-temperature-history/areas/service",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/zones/areas/service", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/health/air-temperature-range",
+      "type": "healthbounds",
+      "devices": [{"field": "metadata.traits.name", "stringEqual": "smartcore.traits.AirTemperature"}],
+      "source": {"trait": "smartcore.traits.AirTemperature", "value": "ambientTemperature.valueCelsius"},
+      "check": {
+        "displayName": "Comfortable Air Temperature",
+        "description": "Checks that the air temperature is within a comfortable range",
+        "occupantImpact": "COMFORT",
+        "bounds": {
+          "normalRange": {
+            "low": {"floatValue": 18},
+            "high": {"floatValue": 24},
+            "deadband": {"floatValue": 1}
+          },
+          "displayUnit": "°C"
+        }
+      }
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/health/air-temperature-manufacturer-range",
+      "type": "healthbounds",
+      "devices": [{"field": "metadata.traits.name", "stringEqual": "smartcore.traits.AirTemperature"}],
+      "source": {"trait": "smartcore.traits.AirTemperature", "value": "ambientTemperature.valueCelsius"},
+      "check": {
+        "displayName": "Manufacturer Air Temperature Range",
+        "description": "Checks that the air temperature is within the manufacturer's recommended range",
+        "equipmentImpact": "LIFESPAN",
+        "bounds": {
+          "normalRange": {
+            "low": {"floatValue": 10},
+            "high": {"floatValue": 35},
+            "deadband": {"floatValue": 2}
+          },
+          "displayUnit": "°C"
+        }
+      }
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/health/emergency-light-function-test",
+      "type": "healthbounds",
+      "devices": [{"field": "metadata.traits.name", "stringEqual": "smartcore.bos.EmergencyLight"}],
+      "source": {"trait": "smartcore.bos.EmergencyLight", "value": "functionTest.result"},
+      "check": {
+        "displayName": "Emergency Light Function Test",
+        "description": "Checks that an emergency lights function test is passing without error",
+        "complianceImpacts": [
+          {
+            "standard": {"displayName": "BS 5266"},
+            "contribution": "FAIL"
+          }
+        ],
+        "bounds": {
+          "normalValues": {"values": [{"stringValue": "TEST_RESULT_PENDING"}, {"stringValue": "TEST_PASSED"}]}
+        }
+      }
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/health/emergency-light-duration-test",
+      "type": "healthbounds",
+      "devices": [{"field": "metadata.traits.name", "stringEqual": "smartcore.bos.EmergencyLight"}],
+      "source": {"trait": "smartcore.bos.EmergencyLight", "value": "durationTest.result"},
+      "check": {
+        "displayName": "Emergency Light Duration Test",
+        "description": "Checks that an emergency lights duration test is passing without error",
+        "complianceImpacts": [
+          {
+            "standard": {"displayName": "BS 5266"},
+            "contribution": "FAIL"
+          }
+        ],
+        "bounds": {
+          "normalValues": {"values": [{"stringValue": "TEST_RESULT_PENDING"}, {"stringValue": "TEST_PASSED"}]}
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1190 @@
+{
+  "features": {
+    "auth": {
+      "third-party": true,
+      "accounts": false,
+      "roles": false,
+      "users": true
+    },
+    "device": true,
+    "devices": true,
+    "ops": true,
+    "site": false,
+    "automations": true,
+    "automation": true,
+    "system": true
+  },
+  "config": {
+    "home": "/ops",
+    "hub": true,
+    "auth": {
+      "providers": ["localAuth", "keyCloakAuth"],
+      "keycloak": {
+        "realm": "Smart_Core",
+        "url": "http://localhost:8888/",
+        "clientId": "scos-opsui"
+      }
+    },
+    "ops": {
+      "airQuality": false,
+      "emergencyLighting": false,
+      "security": false,
+      "pages": [
+        {
+          "title": "Building Overview",
+          "icon": "mdi-domain",
+          "layout": "builtin:LayoutMainSide",
+          "path": "building",
+          "main": [
+            {
+              "component": "builtin:power-history/PowerHistoryCard",
+              "props": {
+                "demand": "van/uk/brum/ugs/zones/building",
+                "generated": "van/uk/brum/ugs/zones/building/generated",
+                "occupancy": "van/uk/brum/ugs/zones/building"
+              }
+            },
+            {
+              "component": "builtin:occupancy/OccupancyCard",
+              "props": {
+                "source": "van/uk/brum/ugs/zones/building"
+              }
+            },
+            {
+              "component": "builtin:environmental/AirTemperatureHistoryCard",
+              "props": {
+                "title": "Average Air Temperature",
+                "source": "van/uk/brum/ugs/zones/building",
+                "metric": "ambientTemperature"
+              }
+            },
+            {
+              "component": "builtin:usage/AllocationHistoryCard",
+              "props": {
+                "source": ["van/uk/brum/ugs/devices/LOK-L00-01"],
+                "title": "Locker Usage"
+              }
+            }
+          ],
+          "after": [
+            {
+              "component": "builtin:environmental/EnvironmentalCard",
+              "props": {
+                "title": "",
+                "external": "van/uk/brum/ugs/devices/TMP-L02-01",
+                "internal": "van/uk/brum/ugs/zones/building"
+              }
+            }
+          ],
+          "children": [
+            {
+              "title": "Basement",
+              "shortTitle": "B1",
+              "icon": "mdi-layers-triple-outline",
+              "layout": "builtin:LayoutMainSide",
+              "main": [
+                {
+                  "component": "builtin:graphic/LayeredGraphic",
+                  "props": {
+                    "height": "max(70vh, 700px)",
+                    "background": {"svgPath": "./assets/floorn1-bg.svg"},
+                    "pixelsPerMeter": 60,
+                    "layers": [
+                      {
+                        "title": "Zones",
+                        "svgPath": "./assets/floorn1-zones.svg",
+                        "configPath": "./assets/floorn1-zones.json"
+                      },
+                      {
+                        "title": "BMS",
+                        "svgPath": "./assets/floorn1-bms.svg",
+                        "configPath": "./assets/floorn1-bms.json"
+                      },
+                      {
+                        "title": "Lighting",
+                        "svgPath": "./assets/floorn1-lights.svg",
+                        "configPath": "./assets/floorn1-lights.json"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "component": "builtin:power-history/PowerHistoryCard",
+                  "props": {
+                    "demand": "van/uk/brum/ugs/zones/floors/basement",
+                    "hideTotal": true
+                  }
+                },
+                {
+                  "component": "builtin:notifications/ZoneNotifications",
+                  "props": {
+                    "forceQuery": {"floor": "Basement"}
+                  }
+                },
+                {
+                  "component": "builtin:devices/DeviceTable",
+                  "props": {
+                    "forceQuery": {"metadata.location.floor": "Basement"}
+                  }
+                },
+                {
+                  "component": "builtin:environmental/AirTemperatureHistoryCard",
+                  "props": {
+                    "title": "Air Temperature",
+                    "source": "van/uk/brum/ugs/zones/floors/basement",
+                    "metric": "ambientTemperature"
+                  }
+                }
+              ],
+              "after": [
+                {
+                  "component": "builtin:occupancy/PresenceCard",
+                  "props": {
+                    "source": "van/uk/brum/ugs/zones/floors/basement"
+                  }
+                },
+                {
+                  "component": "builtin:environmental/EnvironmentalCard",
+                  "props": {
+                    "title": "Floor Temperature",
+                    "internal": "van/uk/brum/ugs/zones/floors/basement"
+                  }
+                }
+              ],
+              "children": [
+                {
+                  "title": "Copper Room",
+                  "shortTitle": "Cu",
+                  "icon": "mdi-select-all",
+                  "layout": "builtin:LayoutMainSide",
+                  "main": [
+                    {
+                      "component": "builtin:notifications/ZoneNotifications",
+                      "props": {
+                        "forceQuery": {
+                          "floor": "Basement",
+                          "zone": "Copper Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:devices/DeviceTable",
+                      "props": {
+                        "forceQuery": {
+                          "metadata.location.floor": "Basement",
+                          "metadata.location.zone": "Copper Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/SoundSensorHistoryCard",
+                      "props": {
+                        "source": "van/uk/brum/ugs/devices/SND-L00-01",
+                        "title": "Copper Room Sound Levels"
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/copper",
+                        "metric": "ambientTemperature"
+                      }
+                    }
+                  ],
+                  "after": [
+                    {
+                      "component": "builtin:occupancy/PresenceCard",
+                      "props": {
+                        "source": "van/uk/brum/ugs/zones/rooms/copper"
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/EnvironmentalCard",
+                      "props": {
+                        "internal": "van/uk/brum/ugs/zones/rooms/copper",
+                        "soundSensor": "van/uk/brum/ugs/devices/SND-L00-01"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "title": "Cotswold Room",
+                  "shortTitle": "Ct",
+                  "icon": "mdi-select-all",
+                  "layout": "builtin:LayoutMainSide",
+                  "main": [
+                    {
+                      "component": "builtin:notifications/ZoneNotifications",
+                      "props": {
+                        "forceQuery": {
+                          "floor": "Basement",
+                          "zone": "Cotswold Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:devices/DeviceTable",
+                      "props": {
+                        "forceQuery": {
+                          "metadata.location.floor": "Basement",
+                          "metadata.location.zone": "Cotswold Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/cotswold",
+                        "metric": "ambientTemperature"
+                      }
+                    }
+                  ],
+                  "after": [
+                    {
+                      "component": "builtin:occupancy/PresenceCard",
+                      "props": {
+                        "source": "van/uk/brum/ugs/zones/rooms/cotswold"
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/EnvironmentalCard",
+                      "props": {
+                        "internal": "van/uk/brum/ugs/zones/rooms/cotswold",
+                        "soundSensor": "van/uk/brum/ugs/devices/SND-L00-02"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "title": "Kaolin Room",
+                  "shortTitle": "Ko",
+                  "icon": "mdi-select-all",
+                  "layout": "builtin:LayoutMainSide",
+                  "main": [
+                    {
+                      "component": "builtin:notifications/ZoneNotifications",
+                      "props": {
+                        "forceQuery": {
+                          "floor": "Basement",
+                          "zone": "Kaolin Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:devices/DeviceTable",
+                      "props": {
+                        "forceQuery": {
+                          "metadata.location.floor": "Basement",
+                          "metadata.location.zone": "Kaolin Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/kaolin",
+                        "metric": "ambientTemperature"
+                      }
+                    }
+                  ],
+                  "after": [
+                    {
+                      "component": "builtin:occupancy/PresenceCard",
+                      "props": {
+                        "source": "van/uk/brum/ugs/zones/rooms/kaolin"
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/EnvironmentalCard",
+                      "props": {
+                        "internal": "van/uk/brum/ugs/zones/rooms/kaolin",
+                        "soundSensor": "van/uk/brum/ugs/devices/SND-L00-03"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Ground Floor",
+              "shortTitle": "GF",
+              "icon": "mdi-layers-triple-outline",
+              "layout": "builtin:LayoutMainSide",
+              "main": [
+                {
+                  "component": "builtin:graphic/LayeredGraphic",
+                  "props": {
+                    "height": "max(70vh, 700px)",
+                    "background": {"svgPath": "./assets/floor0-bg.svg"},
+                    "pixelsPerMeter": 35,
+                    "layers": [
+                      {
+                        "title": "Zones",
+                        "svgPath": "./assets/floor0-zones.svg",
+                        "configPath": "./assets/floor0-zones.json"
+                      },
+                      {
+                        "title": "BMS",
+                        "svgPath": "./assets/floor0-bms.svg",
+                        "configPath": "./assets/floor0-bms.json"
+                      },
+                      {
+                        "title": "ACS",
+                        "svgPath": "./assets/floor0-acs.svg",
+                        "configPath": "./assets/floor0-acs.json"
+                      },
+                      {
+                        "title": "Lighting",
+                        "svgPath": "./assets/floor0-lights.svg",
+                        "configPath": "./assets/floor0-lights.json"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "component": "builtin:power-history/PowerHistoryCard",
+                  "props": {
+                    "demand": "van/uk/brum/ugs/zones/floors/ground",
+                    "hideTotal": true
+                  }
+                },
+                {
+                  "component": "builtin:notifications/ZoneNotifications",
+                  "props": {
+                    "forceQuery": {"floor": "Ground Floor"}
+                  }
+                },
+                {
+                  "component": "builtin:devices/DeviceTable",
+                  "props": {
+                    "forceQuery": {
+                      "metadata.location.floor": "Ground Floor"
+                    }
+                  }
+                },
+                {
+                  "component": "builtin:environmental/AirTemperatureHistoryCard",
+                  "props": {
+                    "title": "Air Temperature",
+                    "source": "van/uk/brum/ugs/zones/floors/ground",
+                    "metric": "ambientTemperature"
+                  }
+                }
+              ],
+              "after": [
+                {
+                  "component": "builtin:occupancy/PresenceCard",
+                  "props": {
+                    "source": "van/uk/brum/ugs/zones/floors/ground"
+                  }
+                },
+                {
+                  "component": "builtin:environmental/EnvironmentalCard",
+                  "props": {
+                    "title": "Floor Temperature",
+                    "internal": "van/uk/brum/ugs/zones/floors/ground"
+                  }
+                }
+              ],
+              "children": [
+                {
+                  "title": "Reception",
+                  "shortTitle": "Re",
+                  "icon": "mdi-select-all",
+                  "layout": "builtin:LayoutMainSide",
+                  "main": [
+                    {
+                      "component": "builtin:notifications/ZoneNotifications",
+                      "props": {
+                        "forceQuery": {
+                          "floor": "Ground Floor",
+                          "zone": "Reception"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:devices/DeviceTable",
+                      "props": {
+                        "forceQuery": {
+                          "metadata.location.floor": "Ground Floor",
+                          "metadata.location.zone": "Reception"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/areas/reception",
+                        "metric": "ambientTemperature"
+                      }
+                    }
+                  ],
+                  "after": [
+                    {
+                      "component": "builtin:occupancy/PresenceCard",
+                      "props": {
+                        "source": "van/uk/brum/ugs/zones/areas/reception"
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/EnvironmentalCard",
+                      "props": {
+                        "internal": "van/uk/brum/ugs/zones/areas/reception",
+                        "soundSensor": "van/uk/brum/ugs/devices/SND-L01-01"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "title": "Teal Room",
+                  "shortTitle": "Te",
+                  "icon": "mdi-select-all",
+                  "layout": "builtin:LayoutMainSide",
+                  "main": [
+                    {
+                      "component": "builtin:notifications/ZoneNotifications",
+                      "props": {
+                        "forceQuery": {
+                          "floor": "Ground Floor",
+                          "zone": "Teal Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:devices/DeviceTable",
+                      "props": {
+                        "forceQuery": {
+                          "metadata.location.floor": "Ground Floor",
+                          "metadata.location.zone": "Teal Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/teal",
+                        "metric": "ambientTemperature"
+                      }
+                    }
+                  ],
+                  "after": [
+                    {
+                      "component": "builtin:occupancy/PresenceCard",
+                      "props": {
+                        "source": "van/uk/brum/ugs/zones/rooms/teal"
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/EnvironmentalCard",
+                      "props": {
+                        "internal": "van/uk/brum/ugs/zones/rooms/teal",
+                        "soundSensor": "van/uk/brum/ugs/devices/SND-L01-02"
+                      }
+                    },
+                    {
+                      "component": "builtin:graphic/LayeredGraphic",
+                      "props": {
+                        "title": "FCU Status",
+                        "fixed": true,
+                        "layers": [
+                          {
+                            "svgPath": "./assets/fcu.svg",
+                            "configPath": "./assets/floor0-teal-fcu.json"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "title": "Green Room",
+                  "shortTitle": "Gr",
+                  "icon": "mdi-select-all",
+                  "layout": "builtin:LayoutMainSide",
+                  "main": [
+                    {
+                      "component": "builtin:notifications/ZoneNotifications",
+                      "props": {
+                        "forceQuery": {
+                          "floor": "Ground Floor",
+                          "zone": "Green Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:devices/DeviceTable",
+                      "props": {
+                        "forceQuery": {
+                          "metadata.location.floor": "Ground Floor",
+                          "metadata.location.zone": "Green Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/green",
+                        "metric": "ambientTemperature"
+                      }
+                    }
+                  ],
+                  "after": [
+                    {
+                      "component": "builtin:occupancy/PresenceCard",
+                      "props": {
+                        "source": "van/uk/brum/ugs/zones/rooms/green"
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/EnvironmentalCard",
+                      "props": {
+                        "internal": "van/uk/brum/ugs/zones/rooms/green",
+                        "soundSensor": "van/uk/brum/ugs/devices/SND-L01-03"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "title": "Yellow Room",
+                  "shortTitle": "Ye",
+                  "icon": "mdi-select-all",
+                  "layout": "builtin:LayoutMainSide",
+                  "main": [
+                    {
+                      "component": "builtin:notifications/ZoneNotifications",
+                      "props": {
+                        "forceQuery": {
+                          "floor": "Ground Floor",
+                          "zone": "Yellow Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:devices/DeviceTable",
+                      "props": {
+                        "forceQuery": {
+                          "metadata.location.floor": "Ground Floor",
+                          "metadata.location.zone": "Yellow Room"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/yellow",
+                        "metric": "ambientTemperature"
+                      }
+                    }
+                  ],
+                  "after": [
+                    {
+                      "component": "builtin:occupancy/PresenceCard",
+                      "props": {
+                        "source": "van/uk/brum/ugs/zones/rooms/yellow"
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/EnvironmentalCard",
+                      "props": {
+                        "internal": "van/uk/brum/ugs/zones/rooms/yellow",
+                        "soundSensor": "van/uk/brum/ugs/devices/SND-L01-04"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "First Floor",
+              "shortTitle": "L1",
+              "icon": "mdi-layers-triple-outline",
+              "layout": "builtin:LayoutMainSide",
+              "main": [
+                {
+                  "component": "builtin:graphic/LayeredGraphic",
+                  "props": {
+                    "height": "max(70vh, 700px)",
+                    "background": {"svgPath": "./assets/floor1-bg.svg"},
+                    "pixelsPerMeter": 32,
+                    "layers": [
+                      {
+                        "title": "Zones",
+                        "svgPath": "./assets/floor1-zones.svg",
+                        "configPath": "./assets/floor1-zones.json"
+                      },
+                      {
+                        "title": "BMS",
+                        "svgPath": "./assets/floor1-bms.svg",
+                        "configPath": "./assets/floor1-bms.json"
+                      },
+                      {
+                        "title": "Lighting",
+                        "svgPath": "./assets/floor1-lights.svg",
+                        "configPath": "./assets/floor1-lights.json"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "component": "builtin:notifications/ZoneNotifications",
+                  "props": {
+                    "forceQuery": {"floor": "First Floor"}
+                  }
+                },
+                {
+                  "component": "builtin:devices/DeviceTable",
+                  "props": {
+                    "forceQuery": {
+                      "metadata.location.floor": "First Floor"
+                    }
+                  }
+                },
+                {
+                  "component": "builtin:environmental/AirTemperatureHistoryCard",
+                  "props": {
+                    "title": "Air Temperature",
+                    "source": "van/uk/brum/ugs/zones/floors/first",
+                    "metric": "ambientTemperature"
+                  }
+                }
+              ],
+              "after": [
+                {
+                  "component": "builtin:occupancy/PresenceCard",
+                  "props": {
+                    "source": "van/uk/brum/ugs/zones/floors/first"
+                  }
+                },
+                {
+                  "component": "builtin:environmental/EnvironmentalCard",
+                  "props": {
+                    "title": "Floor Temperature",
+                    "internal": "van/uk/brum/ugs/zones/floors/first"
+                  }
+                }
+              ],
+              "children": [
+                {
+                  "title": "The Bank",
+                  "shortTitle": "Ba",
+                  "icon": "mdi-select-all",
+                  "layout": "builtin:LayoutMainSide",
+                  "main": [
+                    {
+                      "component": "builtin:notifications/ZoneNotifications",
+                      "props": {
+                        "forceQuery": {
+                          "floor": "First Floor",
+                          "zone": "The Bank"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:devices/DeviceTable",
+                      "props": {
+                        "forceQuery": {
+                          "metadata.location.floor": "First Floor",
+                          "metadata.location.zone": "The Bank"
+                        }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/bank",
+                        "metric": "ambientTemperature"
+                      }
+                    }
+                  ],
+                  "after": [
+                    {
+                      "component": "builtin:occupancy/PresenceCard",
+                      "props": {
+                        "source": "van/uk/brum/ugs/zones/rooms/bank"
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/EnvironmentalCard",
+                      "props": {
+                        "internal": "van/uk/brum/ugs/zones/rooms/bank",
+                        "soundSensor": "van/uk/brum/ugs/devices/SND-L02-01"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Subsystems",
+          "icon": "mdi-shape",
+          "path": "subsystems",
+          "children": [
+            {
+              "title": "Energy",
+              "icon": "mdi-flash",
+              "layout": "builtin:LayoutMainSide",
+              "path": "energy",
+              "mainWidgetMinHeight": 0,
+              "sideWidth": 420,
+              "main": [
+                {
+                  "component": "builtin:meter/MeterHistoryCard",
+                  "props": {
+                    "title": "Electricity Usage",
+                    "totalConsumptionName": "van/uk/brum/ugs/zones/building",
+                    "totalProductionName": "van/uk/brum/ugs/zones/building/generated",
+                    "subConsumptionNames": [
+                      "van/uk/brum/ugs/zones/floors/ground",
+                      "van/uk/brum/ugs/zones/floors/basement"
+                    ]
+                  }
+                },
+                {
+                  "component": "builtin:energy/DemandHistoryCard",
+                  "props": {
+                    "title": "Average Power Demand",
+                    "metric": "realPower",
+                    "demandNames": [
+                      "van/uk/brum/ugs/devices/EMT-L00-01",
+                      "van/uk/brum/ugs/devices/EMT-L00-02",
+                      "van/uk/brum/ugs/devices/EMT-L00-03",
+                      "van/uk/brum/ugs/devices/EMT-LN1-01"
+                    ],
+                    "minChartHeight": "300px"
+                  }
+                },
+                {
+                  "component": "builtin:power-history/PowerHistoryCard",
+                  "props": {
+                    "demand": "van/uk/brum/ugs/zones/building",
+                    "generated": "van/uk/brum/ugs/zones/building/generated",
+                    "occupancy": "van/uk/brum/ugs/zones/building"
+                  }
+                }
+              ],
+              "after": [
+                {
+                  "component": "builtin:container/FlexRow",
+                  "props": {
+                    "itemMinWidth": "14em",
+                    "title": "Total Today",
+                    "items": [
+                      {
+                        "component": "builtin:meter/ConsumptionCard",
+                        "props": {
+                          "name": "van/uk/brum/ugs/zones/building",
+                          "period": "day",
+                          "title": "Consumed"
+                        }
+                      },
+                      {
+                        "component": "builtin:meter/ConsumptionCard",
+                        "props": {
+                          "name": "van/uk/brum/ugs/zones/building/generated",
+                          "period": "day",
+                          "title": "Produced"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "component": "builtin:container/FlexRow",
+                  "props": {
+                    "itemMinWidth": "14em",
+                    "title": "Total Month",
+                    "items": [
+                      {
+                        "component": "builtin:meter/ConsumptionCard",
+                        "props": {
+                          "name": "van/uk/brum/ugs/zones/building",
+                          "period": "month",
+                          "title": "Consumed"
+                        }
+                      },
+                      {
+                        "component": "builtin:meter/ConsumptionCard",
+                        "props": {
+                          "name": "van/uk/brum/ugs/zones/building/generated",
+                          "period": "month",
+                          "title": "Produced"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "component": "builtin:container/FlexRow",
+                  "props": {
+                    "itemMinWidth": "14em",
+                    "title": "Last Month",
+                    "items": [
+                      {
+                        "component": "builtin:meter/ConsumptionCard",
+                        "props": {
+                          "name": "van/uk/brum/ugs/zones/building",
+                          "period": "month",
+                          "offset": 1,
+                          "title": "Consumed"
+                        }
+                      },
+                      {
+                        "component": "builtin:meter/ConsumptionCard",
+                        "props": {
+                          "name": "van/uk/brum/ugs/zones/building/generated",
+                          "period": "month",
+                          "offset": 1,
+                          "title": "Produced"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "title": "Water",
+              "icon": "mdi-water",
+              "layout": "builtin:LayoutMainSide",
+              "path": "water",
+              "mainWidgetMinHeight": 0,
+              "sideWidth": 420,
+              "main": [
+                {
+                  "component": "builtin:meter/MeterHistoryCard",
+                  "props": {
+                    "title": "Water Usage",
+                    "totalConsumptionName": "van/uk/brum/ugs/zones/building/water",
+                    "subConsumptionNames": [
+                      "van/uk/brum/ugs/devices/WMT-L00-01",
+                      "van/uk/brum/ugs/devices/WMT-L00-02"
+                    ]
+                  }
+                }
+              ],
+              "after": [
+                {
+                  "component": "builtin:container/FlexRow",
+                  "props": {
+                    "itemMinWidth": "14em",
+                    "title": "Total Today",
+                    "items": [
+                      {
+                        "component": "builtin:meter/ConsumptionCard",
+                        "props": {
+                          "name": "van/uk/brum/ugs/devices/WMT-L00-01",
+                          "period": "day",
+                          "title": "Meter 1"
+                        }
+                      },
+                      {
+                        "component": "builtin:meter/ConsumptionCard",
+                        "props": {
+                          "name": "van/uk/brum/ugs/devices/WMT-L00-02",
+                          "period": "day",
+                          "title": "Meter 2"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "title": "Air Quality",
+              "icon": "mdi-air-filter",
+              "path": "iaq",
+              "layout": "builtin:page/AirQuality"
+            },
+            {
+              "title": "Emergency Lighting",
+              "icon": "mdi-alarm-light-outline",
+              "path": "elt",
+              "layout": "builtin:page/EmergencyLightingV2"
+            },
+            {
+              "title": "Security",
+              "icon": "mdi-shield-key",
+              "path": "security",
+              "layout": "builtin:page/Security"
+            },
+            {
+              "title": "Security Events",
+              "icon": "mdi-shield-alert",
+              "path": "security-events",
+              "layout": "builtin:page/SecurityEvents",
+              "name": "van/uk/brum/ugs/devices/security-events"
+            },
+            {
+              "title": "Waste",
+              "icon": "mdi-recycle",
+              "path": "waste",
+              "layout": "builtin:page/Waste",
+              "source": "van/uk/brum/ugs/devices/waste"
+            }
+          ]
+        },
+        {
+          "title": "Dashboards",
+          "icon": "mdi-view-dashboard",
+          "path": "dashboards",
+          "children": [
+            {
+              "title": "FM Dashboard",
+              "shortTitle": "FM",
+              "path": "fm",
+              "layout": "builtin:LayoutGrid",
+              "cells": [
+                {
+                  "loc": {"x": 1, "y": 1, "w": 3, "h": 3},
+                  "id": "CurrentAirQuality",
+                  "component": "builtin:environmental/AirQualityCard",
+                  "props": {
+                    "title": "Building Air Quality",
+                    "name": "van/uk/brum/ugs/zones/building"
+                  }
+                },
+                {
+                  "loc": {"x": 4, "y": 1, "w": 3, "h": 3},
+                  "id": "AirQualityHistory",
+                  "component": "builtin:environmental/AirQualityHistoryCard",
+                  "props": {
+                    "title": "Weekly Air Quality",
+                    "source": ["van/uk/brum/ugs/zones/building", "van/uk/brum/ugs/zones/areas/open-plan"],
+                    "metric": "score",
+                    "start": "day-7",
+                    "end": "day-1"
+                  }
+                },
+                {
+                  "loc": {"x": 1, "y": 4, "w": 2, "h": 3},
+                  "id": "CurrentPowerUse",
+                  "component": "builtin:energy/PowerCompareCard",
+                  "props": {
+                    "title": "System Power Use",
+                    "sources": [
+                      "van/uk/brum/ugs/zones/areas/comms-room",
+                      "van/uk/brum/ugs/zones/areas/lab",
+                      "van/uk/brum/ugs/zones/floors/ground",
+                      "van/uk/brum/ugs/zones/floors/basement"
+                    ]
+                  }
+                },
+                {
+                  "loc": {"x": 3, "y": 4, "w": 4, "h": 3},
+                  "id": "EnergyHistory",
+                  "component": "builtin:meter/MeterHistoryCard",
+                  "props": {
+                    "title": "Weekly Energy Use",
+                    "totalConsumptionName": "van/uk/brum/ugs/zones/building",
+                    "totalProductionName": "van/uk/brum/ugs/zones/building/generated",
+                    "start": "day-7",
+                    "end": "day-1",
+                    "minChartHeight": "100%",
+                    "density": "compact"
+                  }
+                },
+                {
+                  "loc": {"x": 1, "y": 7, "w": 4, "h": 2},
+                  "id": "PeopleCountHistory",
+                  "component": "builtin:occupancy/PeopleCountHistoryCard",
+                  "props": {
+                    "totalOccupancyName": "van/uk/brum/ugs/zones/building",
+                    "start": "day-7",
+                    "end": "day-1"
+                  }
+                },
+                {
+                  "loc": {"x": 5, "y": 7, "w": 2, "h": 2},
+                  "id": "CurrentPeopleCount",
+                  "component": "builtin:occupancy/PeopleCountCard",
+                  "props": {
+                    "source": "van/uk/brum/ugs/zones/building",
+                    "maxOccupancy": 1250,
+                    "thresholds": [
+                      {"percentage": 10, "str": "Quiet"},
+                      {"percentage": 50, "str": "Moderate"},
+                      {"percentage": 70, "str": "Busy"},
+                      {"percentage": 90, "str": "Full"}
+                    ]
+                  }
+                },
+                {
+                  "loc": {"x": 1, "y": 9, "w": 4, "h": 4},
+                  "id": "SecurityEvents",
+                  "component": "builtin:security/SecurityEventsCard",
+                  "props": {
+                    "variant": "card",
+                    "title": "Access Control Log",
+                    "name": "van/uk/brum/ugs/devices/security-events",
+                    "hideTableHeader": true,
+                    "fixedRowCount": 5
+                  }
+                },
+                {
+                  "loc": {"x": 5, "y": 9, "w": 2, "h": 4},
+                  "id": "Environment",
+                  "component": "builtin:environmental/EnvironmentalCard",
+                  "props": {
+                    "title": "Building Environment",
+                    "external": "van/uk/brum/ugs/devices/TMP-L02-01",
+                    "internal": "van/uk/brum/ugs/zones/building",
+                    "leftToRightGauges": true
+                  }
+                },
+                {
+                  "loc": {"x": 7, "y": 1, "w": 2, "h": 1},
+                  "id": "SCStatus",
+                  "component": "builtin:general/CohortStatus",
+                  "props": {
+                    "size": "xx-large",
+                    "class": "text-h4"
+                  }
+                },
+                {
+                  "loc": {"x": 9, "y": 1, "w": 2, "h": 1},
+                  "id": "Weather",
+                  "component": "builtin:general/OpenWeatherMap",
+                  "props": {
+                    "apiKey": "TODO",
+                    "city": "Birmingham",
+                    "hideToolbar": true,
+                    "color": "transparent"
+                  }
+                },
+                {
+                  "loc": {"x": 11, "y": 1, "w": 2, "h": 1},
+                  "id": "DateAndTime",
+                  "component": "builtin:general/DateAndTime",
+                  "props": {
+                    "class": "text-h4"
+                  }
+                },
+                {
+                  "loc": {"x": 7, "y": 2, "w": 3, "h": 7},
+                  "id": "FloorInfo",
+                  "component": "builtin:building/FloorTraitCells",
+                  "props": {
+                    "floors": [
+                      {"level": 7},
+                      {"level": 6, "zoneName": "van/uk/brum/ugs/zones/rooms/bank"},
+                      {"level": 5, "zoneName": "van/uk/brum/ugs/zones/areas/loading-bay"},
+                      {"level": 4, "zoneName": "van/uk/brum/ugs/zones/areas/comms-room"},
+                      {"level": 3, "zoneName": "van/uk/brum/ugs/zones/areas/lab"},
+                      {"level": 2, "zoneName": "van/uk/brum/ugs/zones/areas/reception"},
+                      {"level": 1, "zoneName": "van/uk/brum/ugs/zones/floors/first"},
+                      {"level": 0, "zoneName": "van/uk/brum/ugs/zones/floors/ground"},
+                      {"level": -1, "zoneName": "van/uk/brum/ugs/zones/floors/basement"},
+                      {"level": -2}
+                    ]
+                  }
+                },
+                {
+                  "loc": {"x": 10, "y": 2, "w": 1, "h": 7},
+                  "id": "Floors",
+                  "component": "builtin:building/BuildingFloors",
+                  "props": {
+                    "floors": [
+                      {"level": 7, "title": "Roof"},
+                      {"level": 6, "title": "Floor 6"},
+                      {"level": 5, "title": "Floor 5"},
+                      {"level": 4, "title": "Floor 4"},
+                      {"level": 3, "title": "Floor 3"},
+                      {"level": 2, "title": "Floor 2"},
+                      {"level": 1, "title": "Floor 1"},
+                      {"level": 0, "title": "Ground Floor"},
+                      {"level": -1, "title": "Basement 1"},
+                      {"level": -2, "title": "Basement 2"}
+                    ]
+                  }
+                },
+                {
+                  "loc": {"x": 11, "y": 2, "w": 2, "h": 7},
+                  "id": "Lifts",
+                  "props": {
+                    "title": "Lifts"
+                  }
+                },
+                {
+                  "loc": {"x": 7, "y": 9, "w": 2, "h": 4},
+                  "id": "MeterDensity",
+                  "component": "builtin:meter/MeterDensityCard",
+                  "props": {
+                    "title": "Building Power Density",
+                    "name": "van/uk/brum/ugs/zones/building",
+                    "occupancy": "van/uk/brum/ugs/zones/building",
+                    "period": "day",
+                    "refresh": 60000
+                  }
+                },
+                {
+                  "loc": {"x": 9, "y": 9, "w": 4, "h": 4},
+                  "id": "Notifications",
+                  "component": "builtin:notifications/ZoneNotifications",
+                  "props": {
+                    "title": "Device Notifications",
+                    "hidePaging": true,
+                    "hideTableHeader": true,
+                    "hideHeaderActions": true,
+                    "columns": ["createTime", "severity", "source", "description"],
+                    "fixedRowCount": 5
+                  }
+                }
+              ]
+            },
+            {
+              "title": "Health",
+              "icon": "mdi-heart-pulse",
+              "path": "health",
+              "layout": "builtin:LayoutMainSide",
+              "mainWidgetMinHeight": 0,
+              "main": [
+                {
+                  "id": "ImpactBreakdown",
+                  "component": "builtin:health/HealthImpactBreakdownsCard"
+                },
+                {
+                  "id": "CheckTable",
+                  "component": "builtin:health/HealthCheckTable"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "proxy": true,
+    "siteFloorPlans": [
+      {"name": "Ground Floor", "svgPath": "./assets/floor0-bg.svg"},
+      {"name": "First Floor", "svgPath": "./assets/floor1-bg.svg"}
+    ],
+    "theme": {
+      "appBranding": {
+        "brandName": "Smart Core",
+        "brandLogo": {
+          "altText": "Smart Core logo - representing nodes and connections",
+          "src": ""
+        },
+        "brandColors": {
+          "primary": {
+            "base": "#f26235",
+            "darken3": "#338fa1"
+          }
+        }
+      }
+    }
+  },
+  "experiments": {
+    "health": true
+  }
+}

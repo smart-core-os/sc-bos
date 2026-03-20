@@ -60,6 +60,17 @@ export default [
             rolesRequired: ['superAdmin', 'admin', 'commissioner', 'operator', 'viewer']
           }
         }
+      },
+      {
+        path: 'logs',
+        components: {
+          default: () => import('./components/pages/LogsPage.vue')
+        },
+        meta: {
+          authentication: {
+            rolesRequired: ['admin', 'superAdmin']
+          }
+        }
       }
     ],
     meta: {

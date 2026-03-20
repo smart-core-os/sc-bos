@@ -9,12 +9,14 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-golang/pkg/trait"
@@ -69,13 +71,15 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	grp, ctx := errgroup.WithContext(ctx)
 	var cameras []*Camera
+	var faultChecks []*healthpb.FaultCheck
 	for _, camera := range cfg.Cameras {
 		logger := logger.With(zap.String("device", camera.Name))
 
-		faultCheck, err := d.health.NewFaultCheck(camera.Name, deviceHealthCheck)
+		faultCheck, err := d.health.NewFaultCheck(camera.Name, proto.Clone(deviceHealthCheck).(*gen_healthpb.HealthCheck))
 		if err != nil {
 			return err
 		}
+		faultChecks = append(faultChecks, faultCheck)
 
 		cam := NewCamera(client, logger, camera, faultCheck)
 		rootAnnouncer.Announce(camera.Name,
@@ -93,6 +97,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		err := grp.Wait()
 		if err != nil && !errors.Is(err, context.Canceled) {
 			logger.Error("unexpected error in polling goroutines", zap.Error(err))
+		}
+		for _, fc := range faultChecks {
+			fc.Dispose()
 		}
 		client.httpClient.CloseIdleConnections()
 	}()

@@ -9,11 +9,17 @@
   },
   "systems": {
     "hub": {
-      "storage": {"type": "bolt"},
+      "storage": {
+        "type": "postgres",
+        "uri": "postgres://postgres@localhost:5432/smart_core",
+        "passwordFile": "./.data/secrets/postgres-password"
+      },
       "nodes": [
         {"address": "localhost:23201", "name": "EG-01"},
+        {"address": "localhost:23202", "name": "EG-02"},
         {"address": "localhost:23301", "name": "van/uk/brum/ugs/ac-01"}
       ]
-    }
+    },
+    "resourceUse": {}
   }
 }

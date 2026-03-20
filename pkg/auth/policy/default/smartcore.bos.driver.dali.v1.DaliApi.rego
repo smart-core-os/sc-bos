@@ -1,4 +1,4 @@
-package smartcore.bos.driver.dali.DaliApi
+package smartcore.bos.driver.dali.v1.DaliApi
 
 import future.keywords.in
 import data.scutil.token.token_has_role
