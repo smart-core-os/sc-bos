@@ -4,7 +4,7 @@ package smartcore.bos.serviceticket.v1;
 
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/serviceticketpb";
 
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // ServiceTicketApi is a service which provides an interface for creating and updating service tickets in a
 // third party system. e.g. a CAFM.
@@ -91,7 +91,7 @@ message DescribeTicketRequest {
 
 message TicketSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // The classifications supported by the implementing system.
   repeated Ticket.Classification classifications = 2;
   // The severities supported by the implementing system.

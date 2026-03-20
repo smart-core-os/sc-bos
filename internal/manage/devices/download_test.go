@@ -21,8 +21,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
@@ -46,8 +46,8 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 
 	airTempDevice := airtemperaturepb.NewModel()
 	_, _ = airTempDevice.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
-		TemperatureGoal:    &airtemperaturepb.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &types.Temperature{ValueCelsius: 23.5}},
-		AmbientTemperature: &types.Temperature{ValueCelsius: 19.2},
+		TemperatureGoal:    &airtemperaturepb.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &typespb.Temperature{ValueCelsius: 23.5}},
+		AmbientTemperature: &typespb.Temperature{ValueCelsius: 19.2},
 		AmbientHumidity:    proto.Float32(62.1),
 	})
 	n.Announce("d2",

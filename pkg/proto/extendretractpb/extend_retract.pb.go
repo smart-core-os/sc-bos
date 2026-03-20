@@ -7,7 +7,7 @@
 package extendretractpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -32,7 +32,7 @@ type Extension struct {
 	// A named preset for recall to extend the device to a specific point
 	ExtendPreset string `protobuf:"bytes,2,opt,name=extend_preset,json=extendPreset,proto3" json:"extend_preset,omitempty"`
 	// How the extension changes or should change over time. On write only duration should be set.
-	ExtendTween *types.Tween `protobuf:"bytes,3,opt,name=extend_tween,json=extendTween,proto3" json:"extend_tween,omitempty"`
+	ExtendTween *typespb.Tween `protobuf:"bytes,3,opt,name=extend_tween,json=extendTween,proto3" json:"extend_tween,omitempty"`
 	// if tweening between values, this is our end goal
 	TargetExtendPercent float32 `protobuf:"fixed32,4,opt,name=target_extend_percent,json=targetExtendPercent,proto3" json:"target_extend_percent,omitempty"`
 	// if tweening between values, this is our end goal
@@ -85,7 +85,7 @@ func (x *Extension) GetExtendPreset() string {
 	return ""
 }
 
-func (x *Extension) GetExtendTween() *types.Tween {
+func (x *Extension) GetExtendTween() *typespb.Tween {
 	if x != nil {
 		return x.ExtendTween
 	}
@@ -174,14 +174,14 @@ func (x *ExtensionPreset) GetWritable() bool {
 type ExtensionSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// List of presets that this device supports. If empty then the device does not support presets
 	Presets []*ExtensionPreset `protobuf:"bytes,2,rep,name=presets,proto3" json:"presets,omitempty"`
 	// 0 to 100, how precise is the control of the extension. A value of 0 (or 100) means only 0 or 100 extend_percent
 	// are valid.
 	Step float32 `protobuf:"fixed32,3,opt,name=step,proto3" json:"step,omitempty"`
 	// Does the device support tweening between the current value and a target value
-	TweenSupport types.TweenSupport `protobuf:"varint,4,opt,name=tween_support,json=tweenSupport,proto3,enum=smartcore.types.TweenSupport" json:"tween_support,omitempty"`
+	TweenSupport typespb.TweenSupport `protobuf:"varint,4,opt,name=tween_support,json=tweenSupport,proto3,enum=smartcore.bos.types.v1.TweenSupport" json:"tween_support,omitempty"`
 	// If true, custom preset names can be used to store extension values. If false only writable presets can be updated.
 	SupportsCustomPresets bool `protobuf:"varint,5,opt,name=supports_custom_presets,json=supportsCustomPresets,proto3" json:"supports_custom_presets,omitempty"`
 	unknownFields         protoimpl.UnknownFields
@@ -218,7 +218,7 @@ func (*ExtensionSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_extendretract_v1_extend_retract_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ExtensionSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *ExtensionSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -239,11 +239,11 @@ func (x *ExtensionSupport) GetStep() float32 {
 	return 0
 }
 
-func (x *ExtensionSupport) GetTweenSupport() types.TweenSupport {
+func (x *ExtensionSupport) GetTweenSupport() typespb.TweenSupport {
 	if x != nil {
 		return x.TweenSupport
 	}
-	return types.TweenSupport(0)
+	return typespb.TweenSupport(0)
 }
 
 func (x *ExtensionSupport) GetSupportsCustomPresets() bool {
@@ -693,23 +693,23 @@ var File_smartcore_bos_extendretract_v1_extend_retract_proto protoreflect.FileDe
 
 const file_smartcore_bos_extendretract_v1_extend_retract_proto_rawDesc = "" +
 	"\n" +
-	"3smartcore/bos/extendretract/v1/extend_retract.proto\x12\x1esmartcore.bos.extendretract.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\x1a\x11types/tween.proto\"\xf8\x01\n" +
+	"3smartcore/bos/extendretract/v1/extend_retract.proto\x12\x1esmartcore.bos.extendretract.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\x1a\"smartcore/bos/types/v1/tween.proto\"\xff\x01\n" +
 	"\tExtension\x12%\n" +
 	"\x0eextend_percent\x18\x01 \x01(\x02R\rextendPercent\x12#\n" +
-	"\rextend_preset\x18\x02 \x01(\tR\fextendPreset\x129\n" +
-	"\fextend_tween\x18\x03 \x01(\v2\x16.smartcore.types.TweenR\vextendTween\x122\n" +
+	"\rextend_preset\x18\x02 \x01(\tR\fextendPreset\x12@\n" +
+	"\fextend_tween\x18\x03 \x01(\v2\x1d.smartcore.bos.types.v1.TweenR\vextendTween\x122\n" +
 	"\x15target_extend_percent\x18\x04 \x01(\x02R\x13targetExtendPercent\x120\n" +
 	"\x14target_extend_preset\x18\x05 \x01(\tR\x12targetExtendPreset\"\x80\x01\n" +
 	"\x0fExtensionPreset\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12*\n" +
 	"\x0eextend_percent\x18\x02 \x01(\x02H\x00R\rextendPercent\x88\x01\x01\x12\x1a\n" +
 	"\bwritable\x18\x03 \x01(\bR\bwritableB\x11\n" +
-	"\x0f_extend_percent\"\xba\x02\n" +
-	"\x10ExtensionSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12I\n" +
+	"\x0f_extend_percent\"\xc8\x02\n" +
+	"\x10ExtensionSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12I\n" +
 	"\apresets\x18\x02 \x03(\v2/.smartcore.bos.extendretract.v1.ExtensionPresetR\apresets\x12\x12\n" +
-	"\x04step\x18\x03 \x01(\x02R\x04step\x12B\n" +
-	"\rtween_support\x18\x04 \x01(\x0e2\x1d.smartcore.types.TweenSupportR\ftweenSupport\x126\n" +
+	"\x04step\x18\x03 \x01(\x02R\x04step\x12I\n" +
+	"\rtween_support\x18\x04 \x01(\x0e2$.smartcore.bos.types.v1.TweenSupportR\ftweenSupport\x126\n" +
 	"\x17supports_custom_presets\x18\x05 \x01(\bR\x15supportsCustomPresets\"b\n" +
 	"\x13GetExtensionRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
@@ -772,17 +772,17 @@ var file_smartcore_bos_extendretract_v1_extend_retract_proto_goTypes = []any{
 	(*PullExtensionsResponse)(nil),        // 8: smartcore.bos.extendretract.v1.PullExtensionsResponse
 	(*DescribeExtensionRequest)(nil),      // 9: smartcore.bos.extendretract.v1.DescribeExtensionRequest
 	(*PullExtensionsResponse_Change)(nil), // 10: smartcore.bos.extendretract.v1.PullExtensionsResponse.Change
-	(*types.Tween)(nil),                   // 11: smartcore.types.Tween
-	(*types.ResourceSupport)(nil),         // 12: smartcore.types.ResourceSupport
-	(types.TweenSupport)(0),               // 13: smartcore.types.TweenSupport
+	(*typespb.Tween)(nil),                 // 11: smartcore.bos.types.v1.Tween
+	(*typespb.ResourceSupport)(nil),       // 12: smartcore.bos.types.v1.ResourceSupport
+	(typespb.TweenSupport)(0),             // 13: smartcore.bos.types.v1.TweenSupport
 	(*fieldmaskpb.FieldMask)(nil),         // 14: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),         // 15: google.protobuf.Timestamp
 }
 var file_smartcore_bos_extendretract_v1_extend_retract_proto_depIdxs = []int32{
-	11, // 0: smartcore.bos.extendretract.v1.Extension.extend_tween:type_name -> smartcore.types.Tween
-	12, // 1: smartcore.bos.extendretract.v1.ExtensionSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	11, // 0: smartcore.bos.extendretract.v1.Extension.extend_tween:type_name -> smartcore.bos.types.v1.Tween
+	12, // 1: smartcore.bos.extendretract.v1.ExtensionSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	1,  // 2: smartcore.bos.extendretract.v1.ExtensionSupport.presets:type_name -> smartcore.bos.extendretract.v1.ExtensionPreset
-	13, // 3: smartcore.bos.extendretract.v1.ExtensionSupport.tween_support:type_name -> smartcore.types.TweenSupport
+	13, // 3: smartcore.bos.extendretract.v1.ExtensionSupport.tween_support:type_name -> smartcore.bos.types.v1.TweenSupport
 	14, // 4: smartcore.bos.extendretract.v1.GetExtensionRequest.read_mask:type_name -> google.protobuf.FieldMask
 	0,  // 5: smartcore.bos.extendretract.v1.UpdateExtensionRequest.extension:type_name -> smartcore.bos.extendretract.v1.Extension
 	14, // 6: smartcore.bos.extendretract.v1.UpdateExtensionRequest.update_mask:type_name -> google.protobuf.FieldMask

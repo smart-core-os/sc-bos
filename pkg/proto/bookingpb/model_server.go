@@ -8,9 +8,9 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	timepb2 "github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	timepb "github.com/smart-core-os/sc-bos/pkg/util/time"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 )
 
 type ModelServer struct {
@@ -59,7 +59,7 @@ func (m *ModelServer) CheckInBooking(_ context.Context, request *CheckInBookingR
 	}
 	checkInBooking := &Booking{
 		Id: request.BookingId,
-		CheckIn: &time.Period{
+		CheckIn: &timepb2.Period{
 			StartTime: t,
 		},
 	}
@@ -81,7 +81,7 @@ func (m *ModelServer) CheckOutBooking(_ context.Context, request *CheckOutBookin
 	}
 	checkInBooking := &Booking{
 		Id: request.BookingId,
-		CheckIn: &time.Period{
+		CheckIn: &timepb2.Period{
 			EndTime: t,
 		},
 	}

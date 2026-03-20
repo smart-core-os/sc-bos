@@ -9,8 +9,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // MemoryDevice implements the LightApiServer interface for a single device by storing state in memory.
@@ -102,7 +102,7 @@ func (s *MemoryDevice) UpdateBrightness(ctx context.Context, request *UpdateBrig
 
 				// calculate using time, not value, which leave room for easing (and is mentioned in the tween spec)
 				progress := 100 * float32(playTime.Milliseconds()) / float32(duration.Milliseconds())
-				lastObj, err = s.brightness.Set(&Brightness{LevelPercent: newValue, BrightnessTween: &types.Tween{Progress: progress}},
+				lastObj, err = s.brightness.Set(&Brightness{LevelPercent: newValue, BrightnessTween: &typespb.Tween{Progress: progress}},
 					resource.WithUpdatePaths("level_percent", "brightness_tween.progress"),
 					resource.WithMoreWritablePaths("brightness_tween.progress"),
 					resource.WithExpectedValue(lastObj),

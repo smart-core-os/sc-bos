@@ -9,8 +9,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 var subSystems = [2]string{"access control", "cctv"}
@@ -107,7 +107,7 @@ func (m *Model) pullSecurityEventsWrapper(request *PullSecurityEventsRequest, se
 				Name:       request.Name,
 				NewValue:   event,
 				ChangeTime: event.SecurityEventTime,
-				Type:       types.ChangeType_ADD,
+				Type:       typespb.ChangeType_ADD,
 			}
 			if err := server.Send(&PullSecurityEventsResponse{Changes: []*PullSecurityEventsResponse_Change{change}}); err != nil {
 				m.mu.Unlock()
@@ -137,7 +137,7 @@ func (m *Model) PullSecurityEvents(ctx context.Context, opts ...resource.ReadOpt
 				OldValue:   nil,
 				NewValue:   value, // the mock driver only generates new security events and does not delete them
 				ChangeTime: value.SecurityEventTime,
-				Type:       types.ChangeType_ADD,
+				Type:       typespb.ChangeType_ADD,
 			}
 		}
 	}()

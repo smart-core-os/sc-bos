@@ -11,7 +11,7 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // The reporting of occupancy in a space. Similar to a MotionSensor, this reports whether a space is occupied or
 // unoccupied with additional optional information relating to _how_ occupied the space is (i.e. how many people are
@@ -67,7 +67,7 @@ message Occupancy {
 // OccupancySupport describes the capabilities of devices implementing this trait
 message OccupancySupport {
   // How a named device supports read/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // how many people can the occupancy service report. 0 means it won't report people counts. Note: this is _not_ the
   // total capacity for the space, it's the capacity of the sensor
   int32 max_people = 2;

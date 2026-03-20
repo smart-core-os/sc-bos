@@ -11,8 +11,8 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
-import "types/number.proto";
+import "smartcore/bos/types/v1/info.proto";
+import "smartcore/bos/types/v1/number.proto";
 
 // Trait for devices that can report either numeric or descriptive readings about air quality and comfort.
 service AirQualitySensorApi {
@@ -67,28 +67,28 @@ message AirQuality {
 // AirQualitySupport describes the capabilities of devices implementing this trait
 message AirQualitySupport {
   // How a named device supports read/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // If present then the sensor supports reporting CO2 levels, in parts-per-million.
-  smartcore.types.FloatBounds carbon_dioxide_level = 2;
+  smartcore.bos.types.v1.FloatBounds carbon_dioxide_level = 2;
   // If present then the sensor supports reporting volatile organic compounds, in parts-per-million.
-  smartcore.types.FloatBounds volatile_organic_compounds = 3;
+  smartcore.bos.types.v1.FloatBounds volatile_organic_compounds = 3;
   // If present then the sensor supports reporting air pressure, in hPa.
-  smartcore.types.FloatBounds air_pressure = 4;
+  smartcore.bos.types.v1.FloatBounds air_pressure = 4;
   // If non-empty then the sensor supports reporting a general comfort reading of any of the provided types.
   // Unknown should be assumed to be present if supported.
   repeated AirQuality.Comfort comfort = 5;
   // If present then the sensor supports reporting infection risk, as a percentage [0,100].
-  smartcore.types.FloatBounds infection_risk = 6;
+  smartcore.bos.types.v1.FloatBounds infection_risk = 6;
   // If present then the sensor supports reporting an air quality score, as a percentage [0,100].
-  smartcore.types.FloatBounds score = 7;
+  smartcore.bos.types.v1.FloatBounds score = 7;
   // If present then the sensor supports reporting particulate matter 1, in micrograms per cubic meter.
-  smartcore.types.FloatBounds particulate_matter_1 = 8;
+  smartcore.bos.types.v1.FloatBounds particulate_matter_1 = 8;
   // If present then the sensor supports reporting particulate matter 2.5, in micrograms per cubic meter.
-  smartcore.types.FloatBounds particulate_matter_25 = 9;
+  smartcore.bos.types.v1.FloatBounds particulate_matter_25 = 9;
   // If present then the sensor supports reporting particulate matter 10, in micrograms per cubic meter.
-  smartcore.types.FloatBounds particulate_matter_10 = 10;
+  smartcore.bos.types.v1.FloatBounds particulate_matter_10 = 10;
   // If present then the sensor supports reporting air changes per hour.
-  smartcore.types.FloatBounds air_change_per_hour = 11;
+  smartcore.bos.types.v1.FloatBounds air_change_per_hour = 11;
 }
 
 message GetAirQualityRequest {

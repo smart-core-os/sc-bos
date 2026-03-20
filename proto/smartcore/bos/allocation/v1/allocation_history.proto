@@ -7,7 +7,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/allocation/v1/allocation.proto";
-import "types/time/period.proto";
+import "smartcore/bos/types/time/v1/period.proto";
 
 service AllocationHistory {
   // Lists the history of allocations for a given resource.
@@ -22,7 +22,7 @@ message AllocationRecord {
 message ListAllocationHistoryRequest {
   // The name of the subsystem device or headend.
   string name = 1;
-  smartcore.types.time.Period period = 2;
+  smartcore.bos.types.time.v1.Period period = 2;
   // Fields to fetch relative to the Allocation type
   google.protobuf.FieldMask read_mask = 3;
   // The maximum number of devices to return.

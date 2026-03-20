@@ -15,8 +15,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	typespb "github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // announceDevice sets up and announces the traits supported by the device.

@@ -3,7 +3,7 @@ package time
 import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/types/time"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 )
 
 // cut is an internal interface we use for dividing up a timeline. It has 4 variants belowAll, below, above, and
@@ -15,7 +15,7 @@ type cut interface {
 }
 
 // cutPeriod 'cuts' the timeline based on the given Period. nil values in the Period represent unbounded/absent cuts
-func cutPeriod(p *time.Period) (lower cut, upper cut) {
+func cutPeriod(p *timepb.Period) (lower cut, upper cut) {
 	if p.StartTime == nil && p.EndTime == nil {
 		return cutBelowAll(), cutAboveAll()
 	} else if p.StartTime == nil {

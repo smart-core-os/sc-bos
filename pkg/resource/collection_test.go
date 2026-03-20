@@ -8,7 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 func TestCollection_Pull(t *testing.T) {
@@ -31,7 +31,7 @@ func TestCollection_Pull(t *testing.T) {
 		want := &CollectionChange{
 			Id:            "one",
 			ChangeTime:    now,
-			ChangeType:    types.ChangeType_ADD,
+			ChangeType:    typespb.ChangeType_ADD,
 			NewValue:      val(1),
 			SeedValue:     true,
 			LastSeedValue: false,
@@ -44,7 +44,7 @@ func TestCollection_Pull(t *testing.T) {
 		want = &CollectionChange{
 			Id:            "three",
 			ChangeTime:    now,
-			ChangeType:    types.ChangeType_ADD,
+			ChangeType:    typespb.ChangeType_ADD,
 			NewValue:      val(1),
 			SeedValue:     true,
 			LastSeedValue: true,
@@ -59,7 +59,7 @@ func TestCollection_Pull(t *testing.T) {
 		want = &CollectionChange{
 			Id:         "one",
 			ChangeTime: now,
-			ChangeType: types.ChangeType_UPDATE,
+			ChangeType: typespb.ChangeType_UPDATE,
 			OldValue:   val(1),
 			NewValue:   val(2),
 		}
@@ -73,7 +73,7 @@ func TestCollection_Pull(t *testing.T) {
 		want = &CollectionChange{
 			Id:         "two",
 			ChangeTime: now,
-			ChangeType: types.ChangeType_ADD,
+			ChangeType: typespb.ChangeType_ADD,
 			NewValue:   val(1),
 		}
 		if diff := cmp.Diff(want, next, protocmp.Transform()); diff != "" {
@@ -103,7 +103,7 @@ func TestCollection_Pull(t *testing.T) {
 		want := &CollectionChange{
 			Id:         "one",
 			ChangeTime: now,
-			ChangeType: types.ChangeType_UPDATE,
+			ChangeType: typespb.ChangeType_UPDATE,
 			OldValue:   val(1),
 			NewValue:   val(2),
 		}

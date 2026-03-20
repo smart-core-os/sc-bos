@@ -6,13 +6,12 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/internal/th"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/durationpb"
-
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func TestMemoryDevice_UpdateBrightness(t *testing.T) {
@@ -35,7 +34,7 @@ func TestMemoryDevice_UpdateBrightness(t *testing.T) {
 		expectedInitialValue := &Brightness{
 			LevelPercent:       0,
 			TargetLevelPercent: 50,
-			BrightnessTween: &types.Tween{
+			BrightnessTween: &typespb.Tween{
 				TotalDuration: durationpb.New(duration),
 				Progress:      0,
 			},
@@ -43,7 +42,7 @@ func TestMemoryDevice_UpdateBrightness(t *testing.T) {
 		initialValue, err := api.UpdateBrightness(th.Ctx, &UpdateBrightnessRequest{
 			Brightness: &Brightness{
 				LevelPercent: 50,
-				BrightnessTween: &types.Tween{
+				BrightnessTween: &typespb.Tween{
 					TotalDuration: durationpb.New(duration),
 				},
 			},
@@ -124,7 +123,7 @@ func TestMemoryDevice_UpdateBrightness(t *testing.T) {
 		_, err := api.UpdateBrightness(th.Ctx, &UpdateBrightnessRequest{
 			Brightness: &Brightness{
 				LevelPercent:    100,
-				BrightnessTween: &types.Tween{TotalDuration: durationpb.New(duration)},
+				BrightnessTween: &typespb.Tween{TotalDuration: durationpb.New(duration)},
 			},
 		})
 		if err != nil {

@@ -7,7 +7,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/healthpb";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/health/v1/health.proto";
-import "types/time/period.proto";
+import "smartcore/bos/types/time/v1/period.proto";
 
 // HealthHistory provides access to historical records for HealthApi service resources.
 service HealthHistory {
@@ -39,7 +39,7 @@ message ListHealthCheckHistoryRequest {
   // Optional, if not specified the history for all health checks on the device will be returned.
   string id = 7;
   // The period of time to list the history for.
-  smartcore.types.time.Period period = 2;
+  smartcore.bos.types.time.v1.Period period = 2;
 
   // Fields to fetch relative to the HealthCheckRecord type
   google.protobuf.FieldMask read_mask = 3;

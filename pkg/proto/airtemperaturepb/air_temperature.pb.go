@@ -7,7 +7,7 @@
 package airtemperaturepb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -128,11 +128,11 @@ type AirTemperature struct {
 	//	*AirTemperature_TemperatureRange
 	TemperatureGoal isAirTemperature_TemperatureGoal `protobuf_oneof:"temperature_goal"`
 	// Optional, read-only. The ambient temperature as read by the device
-	AmbientTemperature *types.Temperature `protobuf:"bytes,5,opt,name=ambient_temperature,json=ambientTemperature,proto3" json:"ambient_temperature,omitempty"`
+	AmbientTemperature *typespb.Temperature `protobuf:"bytes,5,opt,name=ambient_temperature,json=ambientTemperature,proto3" json:"ambient_temperature,omitempty"`
 	// Optional, read-only. The ambient relative humidity percentage, as read by the device
 	AmbientHumidity *float32 `protobuf:"fixed32,6,opt,name=ambient_humidity,json=ambientHumidity,proto3,oneof" json:"ambient_humidity,omitempty"`
 	// Optional, read-only. The dew-point as read by the device
-	DewPoint      *types.Temperature `protobuf:"bytes,7,opt,name=dew_point,json=dewPoint,proto3" json:"dew_point,omitempty"`
+	DewPoint      *typespb.Temperature `protobuf:"bytes,7,opt,name=dew_point,json=dewPoint,proto3" json:"dew_point,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -181,7 +181,7 @@ func (x *AirTemperature) GetTemperatureGoal() isAirTemperature_TemperatureGoal {
 	return nil
 }
 
-func (x *AirTemperature) GetTemperatureSetPoint() *types.Temperature {
+func (x *AirTemperature) GetTemperatureSetPoint() *typespb.Temperature {
 	if x != nil {
 		if x, ok := x.TemperatureGoal.(*AirTemperature_TemperatureSetPoint); ok {
 			return x.TemperatureSetPoint
@@ -190,7 +190,7 @@ func (x *AirTemperature) GetTemperatureSetPoint() *types.Temperature {
 	return nil
 }
 
-func (x *AirTemperature) GetTemperatureSetPointDelta() *types.Temperature {
+func (x *AirTemperature) GetTemperatureSetPointDelta() *typespb.Temperature {
 	if x != nil {
 		if x, ok := x.TemperatureGoal.(*AirTemperature_TemperatureSetPointDelta); ok {
 			return x.TemperatureSetPointDelta
@@ -208,7 +208,7 @@ func (x *AirTemperature) GetTemperatureRange() *TemperatureRange {
 	return nil
 }
 
-func (x *AirTemperature) GetAmbientTemperature() *types.Temperature {
+func (x *AirTemperature) GetAmbientTemperature() *typespb.Temperature {
 	if x != nil {
 		return x.AmbientTemperature
 	}
@@ -222,7 +222,7 @@ func (x *AirTemperature) GetAmbientHumidity() float32 {
 	return 0
 }
 
-func (x *AirTemperature) GetDewPoint() *types.Temperature {
+func (x *AirTemperature) GetDewPoint() *typespb.Temperature {
 	if x != nil {
 		return x.DewPoint
 	}
@@ -235,12 +235,12 @@ type isAirTemperature_TemperatureGoal interface {
 
 type AirTemperature_TemperatureSetPoint struct {
 	// A target temperature for the device
-	TemperatureSetPoint *types.Temperature `protobuf:"bytes,2,opt,name=temperature_set_point,json=temperatureSetPoint,proto3,oneof"`
+	TemperatureSetPoint *typespb.Temperature `protobuf:"bytes,2,opt,name=temperature_set_point,json=temperatureSetPoint,proto3,oneof"`
 }
 
 type AirTemperature_TemperatureSetPointDelta struct {
 	// Write-only. Set the target temperature to a value relative to the current value.
-	TemperatureSetPointDelta *types.Temperature `protobuf:"bytes,3,opt,name=temperature_set_point_delta,json=temperatureSetPointDelta,proto3,oneof"`
+	TemperatureSetPointDelta *typespb.Temperature `protobuf:"bytes,3,opt,name=temperature_set_point_delta,json=temperatureSetPointDelta,proto3,oneof"`
 }
 
 type AirTemperature_TemperatureRange struct {
@@ -258,11 +258,11 @@ func (*AirTemperature_TemperatureRange) isAirTemperature_TemperatureGoal() {}
 type TemperatureRange struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Required. The low threshold for the range
-	Low *types.Temperature `protobuf:"bytes,1,opt,name=low,proto3" json:"low,omitempty"`
+	Low *typespb.Temperature `protobuf:"bytes,1,opt,name=low,proto3" json:"low,omitempty"`
 	// Required. The high threshold for the range
-	High *types.Temperature `protobuf:"bytes,2,opt,name=high,proto3" json:"high,omitempty"`
+	High *typespb.Temperature `protobuf:"bytes,2,opt,name=high,proto3" json:"high,omitempty"`
 	// Optional. An ideal value for cases where a device supports three set points
-	Ideal         *types.Temperature `protobuf:"bytes,3,opt,name=ideal,proto3" json:"ideal,omitempty"`
+	Ideal         *typespb.Temperature `protobuf:"bytes,3,opt,name=ideal,proto3" json:"ideal,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -297,21 +297,21 @@ func (*TemperatureRange) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_airtemperature_v1_air_temperature_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *TemperatureRange) GetLow() *types.Temperature {
+func (x *TemperatureRange) GetLow() *typespb.Temperature {
 	if x != nil {
 		return x.Low
 	}
 	return nil
 }
 
-func (x *TemperatureRange) GetHigh() *types.Temperature {
+func (x *TemperatureRange) GetHigh() *typespb.Temperature {
 	if x != nil {
 		return x.High
 	}
 	return nil
 }
 
-func (x *TemperatureRange) GetIdeal() *types.Temperature {
+func (x *TemperatureRange) GetIdeal() *typespb.Temperature {
 	if x != nil {
 		return x.Ideal
 	}
@@ -322,9 +322,9 @@ func (x *TemperatureRange) GetIdeal() *types.Temperature {
 type AirTemperatureSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// How the device thinks, all communications will be in celsius but the device's native unit is this.
-	NativeUnit types.TemperatureUnit `protobuf:"varint,2,opt,name=native_unit,json=nativeUnit,proto3,enum=smartcore.types.TemperatureUnit" json:"native_unit,omitempty"`
+	NativeUnit typespb.TemperatureUnit `protobuf:"varint,2,opt,name=native_unit,json=nativeUnit,proto3,enum=smartcore.bos.types.v1.TemperatureUnit" json:"native_unit,omitempty"`
 	// The list of modes a device supports.
 	SupportedModes []AirTemperature_Mode `protobuf:"varint,3,rep,packed,name=supported_modes,json=supportedModes,proto3,enum=smartcore.bos.airtemperature.v1.AirTemperature_Mode" json:"supported_modes,omitempty"`
 	// The minimum difference between the low and high temperatures when set using a range. 0 means unset, default to 2.
@@ -363,18 +363,18 @@ func (*AirTemperatureSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_airtemperature_v1_air_temperature_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *AirTemperatureSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *AirTemperatureSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
 	return nil
 }
 
-func (x *AirTemperatureSupport) GetNativeUnit() types.TemperatureUnit {
+func (x *AirTemperatureSupport) GetNativeUnit() typespb.TemperatureUnit {
 	if x != nil {
 		return x.NativeUnit
 	}
-	return types.TemperatureUnit(0)
+	return typespb.TemperatureUnit(0)
 }
 
 func (x *AirTemperatureSupport) GetSupportedModes() []AirTemperature_Mode {
@@ -729,15 +729,15 @@ var File_smartcore_bos_airtemperature_v1_air_temperature_proto protoreflect.File
 
 const file_smartcore_bos_airtemperature_v1_air_temperature_proto_rawDesc = "" +
 	"\n" +
-	"5smartcore/bos/airtemperature/v1/air_temperature.proto\x12\x1fsmartcore.bos.airtemperature.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\x1a\x10types/unit.proto\"\xe9\x05\n" +
+	"5smartcore/bos/airtemperature/v1/air_temperature.proto\x12\x1fsmartcore.bos.airtemperature.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\x1a!smartcore/bos/types/v1/unit.proto\"\x85\x06\n" +
 	"\x0eAirTemperature\x12H\n" +
-	"\x04mode\x18\x01 \x01(\x0e24.smartcore.bos.airtemperature.v1.AirTemperature.ModeR\x04mode\x12R\n" +
-	"\x15temperature_set_point\x18\x02 \x01(\v2\x1c.smartcore.types.TemperatureH\x00R\x13temperatureSetPoint\x12]\n" +
-	"\x1btemperature_set_point_delta\x18\x03 \x01(\v2\x1c.smartcore.types.TemperatureH\x00R\x18temperatureSetPointDelta\x12`\n" +
-	"\x11temperature_range\x18\x04 \x01(\v21.smartcore.bos.airtemperature.v1.TemperatureRangeH\x00R\x10temperatureRange\x12M\n" +
-	"\x13ambient_temperature\x18\x05 \x01(\v2\x1c.smartcore.types.TemperatureR\x12ambientTemperature\x12.\n" +
-	"\x10ambient_humidity\x18\x06 \x01(\x02H\x01R\x0fambientHumidity\x88\x01\x01\x129\n" +
-	"\tdew_point\x18\a \x01(\v2\x1c.smartcore.types.TemperatureR\bdewPoint\"\x94\x01\n" +
+	"\x04mode\x18\x01 \x01(\x0e24.smartcore.bos.airtemperature.v1.AirTemperature.ModeR\x04mode\x12Y\n" +
+	"\x15temperature_set_point\x18\x02 \x01(\v2#.smartcore.bos.types.v1.TemperatureH\x00R\x13temperatureSetPoint\x12d\n" +
+	"\x1btemperature_set_point_delta\x18\x03 \x01(\v2#.smartcore.bos.types.v1.TemperatureH\x00R\x18temperatureSetPointDelta\x12`\n" +
+	"\x11temperature_range\x18\x04 \x01(\v21.smartcore.bos.airtemperature.v1.TemperatureRangeH\x00R\x10temperatureRange\x12T\n" +
+	"\x13ambient_temperature\x18\x05 \x01(\v2#.smartcore.bos.types.v1.TemperatureR\x12ambientTemperature\x12.\n" +
+	"\x10ambient_humidity\x18\x06 \x01(\x02H\x01R\x0fambientHumidity\x88\x01\x01\x12@\n" +
+	"\tdew_point\x18\a \x01(\v2#.smartcore.bos.types.v1.TemperatureR\bdewPoint\"\x94\x01\n" +
 	"\x04Mode\x12\x14\n" +
 	"\x10MODE_UNSPECIFIED\x10\x00\x12\x06\n" +
 	"\x02ON\x10\x01\x12\a\n" +
@@ -754,14 +754,14 @@ const file_smartcore_bos_airtemperature_v1_air_temperature_proto_rawDesc = "" +
 	"\n" +
 	"\x06LOCKED\x10\vB\x12\n" +
 	"\x10temperature_goalB\x13\n" +
-	"\x11_ambient_humidity\"\xa8\x01\n" +
-	"\x10TemperatureRange\x12.\n" +
-	"\x03low\x18\x01 \x01(\v2\x1c.smartcore.types.TemperatureR\x03low\x120\n" +
-	"\x04high\x18\x02 \x01(\v2\x1c.smartcore.types.TemperatureR\x04high\x122\n" +
-	"\x05ideal\x18\x03 \x01(\v2\x1c.smartcore.types.TemperatureR\x05ideal\"\xb2\x02\n" +
-	"\x15AirTemperatureSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12A\n" +
-	"\vnative_unit\x18\x02 \x01(\x0e2 .smartcore.types.TemperatureUnitR\n" +
+	"\x11_ambient_humidity\"\xbd\x01\n" +
+	"\x10TemperatureRange\x125\n" +
+	"\x03low\x18\x01 \x01(\v2#.smartcore.bos.types.v1.TemperatureR\x03low\x127\n" +
+	"\x04high\x18\x02 \x01(\v2#.smartcore.bos.types.v1.TemperatureR\x04high\x129\n" +
+	"\x05ideal\x18\x03 \x01(\v2#.smartcore.bos.types.v1.TemperatureR\x05ideal\"\xc0\x02\n" +
+	"\x15AirTemperatureSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12H\n" +
+	"\vnative_unit\x18\x02 \x01(\x0e2'.smartcore.bos.types.v1.TemperatureUnitR\n" +
 	"nativeUnit\x12]\n" +
 	"\x0fsupported_modes\x18\x03 \x03(\x0e24.smartcore.bos.airtemperature.v1.AirTemperature.ModeR\x0esupportedModes\x12*\n" +
 	"\x11min_range_celsius\x18\x04 \x01(\x01R\x0fminRangeCelsius\"g\n" +
@@ -819,24 +819,24 @@ var file_smartcore_bos_airtemperature_v1_air_temperature_proto_goTypes = []any{
 	(*PullAirTemperatureResponse)(nil),        // 7: smartcore.bos.airtemperature.v1.PullAirTemperatureResponse
 	(*DescribeAirTemperatureRequest)(nil),     // 8: smartcore.bos.airtemperature.v1.DescribeAirTemperatureRequest
 	(*PullAirTemperatureResponse_Change)(nil), // 9: smartcore.bos.airtemperature.v1.PullAirTemperatureResponse.Change
-	(*types.Temperature)(nil),                 // 10: smartcore.types.Temperature
-	(*types.ResourceSupport)(nil),             // 11: smartcore.types.ResourceSupport
-	(types.TemperatureUnit)(0),                // 12: smartcore.types.TemperatureUnit
+	(*typespb.Temperature)(nil),               // 10: smartcore.bos.types.v1.Temperature
+	(*typespb.ResourceSupport)(nil),           // 11: smartcore.bos.types.v1.ResourceSupport
+	(typespb.TemperatureUnit)(0),              // 12: smartcore.bos.types.v1.TemperatureUnit
 	(*fieldmaskpb.FieldMask)(nil),             // 13: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),             // 14: google.protobuf.Timestamp
 }
 var file_smartcore_bos_airtemperature_v1_air_temperature_proto_depIdxs = []int32{
 	0,  // 0: smartcore.bos.airtemperature.v1.AirTemperature.mode:type_name -> smartcore.bos.airtemperature.v1.AirTemperature.Mode
-	10, // 1: smartcore.bos.airtemperature.v1.AirTemperature.temperature_set_point:type_name -> smartcore.types.Temperature
-	10, // 2: smartcore.bos.airtemperature.v1.AirTemperature.temperature_set_point_delta:type_name -> smartcore.types.Temperature
+	10, // 1: smartcore.bos.airtemperature.v1.AirTemperature.temperature_set_point:type_name -> smartcore.bos.types.v1.Temperature
+	10, // 2: smartcore.bos.airtemperature.v1.AirTemperature.temperature_set_point_delta:type_name -> smartcore.bos.types.v1.Temperature
 	2,  // 3: smartcore.bos.airtemperature.v1.AirTemperature.temperature_range:type_name -> smartcore.bos.airtemperature.v1.TemperatureRange
-	10, // 4: smartcore.bos.airtemperature.v1.AirTemperature.ambient_temperature:type_name -> smartcore.types.Temperature
-	10, // 5: smartcore.bos.airtemperature.v1.AirTemperature.dew_point:type_name -> smartcore.types.Temperature
-	10, // 6: smartcore.bos.airtemperature.v1.TemperatureRange.low:type_name -> smartcore.types.Temperature
-	10, // 7: smartcore.bos.airtemperature.v1.TemperatureRange.high:type_name -> smartcore.types.Temperature
-	10, // 8: smartcore.bos.airtemperature.v1.TemperatureRange.ideal:type_name -> smartcore.types.Temperature
-	11, // 9: smartcore.bos.airtemperature.v1.AirTemperatureSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	12, // 10: smartcore.bos.airtemperature.v1.AirTemperatureSupport.native_unit:type_name -> smartcore.types.TemperatureUnit
+	10, // 4: smartcore.bos.airtemperature.v1.AirTemperature.ambient_temperature:type_name -> smartcore.bos.types.v1.Temperature
+	10, // 5: smartcore.bos.airtemperature.v1.AirTemperature.dew_point:type_name -> smartcore.bos.types.v1.Temperature
+	10, // 6: smartcore.bos.airtemperature.v1.TemperatureRange.low:type_name -> smartcore.bos.types.v1.Temperature
+	10, // 7: smartcore.bos.airtemperature.v1.TemperatureRange.high:type_name -> smartcore.bos.types.v1.Temperature
+	10, // 8: smartcore.bos.airtemperature.v1.TemperatureRange.ideal:type_name -> smartcore.bos.types.v1.Temperature
+	11, // 9: smartcore.bos.airtemperature.v1.AirTemperatureSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
+	12, // 10: smartcore.bos.airtemperature.v1.AirTemperatureSupport.native_unit:type_name -> smartcore.bos.types.v1.TemperatureUnit
 	0,  // 11: smartcore.bos.airtemperature.v1.AirTemperatureSupport.supported_modes:type_name -> smartcore.bos.airtemperature.v1.AirTemperature.Mode
 	13, // 12: smartcore.bos.airtemperature.v1.GetAirTemperatureRequest.read_mask:type_name -> google.protobuf.FieldMask
 	1,  // 13: smartcore.bos.airtemperature.v1.UpdateAirTemperatureRequest.state:type_name -> smartcore.bos.airtemperature.v1.AirTemperature

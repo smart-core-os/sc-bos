@@ -12,7 +12,7 @@ option php_namespace = "Smartcore\\Traits";
 import "google/protobuf/duration.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // Trait for devices that can store energy or charge another device.
 // Typically applied devices with batteries or chargers of those devices.
@@ -37,7 +37,7 @@ service EnergyStorageInfo {
 // EnergyLevelSupport describes the capabilities of devices implementing this trait.
 message EnergyLevelSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // A true value indicates that the device can be recharged.
   // A rechargeable device should report charging and until_full where appropriate.
   bool rechargeable = 2;

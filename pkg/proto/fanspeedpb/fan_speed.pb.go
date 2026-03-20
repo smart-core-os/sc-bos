@@ -7,7 +7,7 @@
 package fanspeedpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -156,7 +156,7 @@ func (x *FanSpeed) GetDirection() FanSpeed_Direction {
 type FanSpeedSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// Presets is the list of supported fan speed presets, in ascending fan speed order - i.e. index 0 is the slowest.
 	Presets       []string `protobuf:"bytes,2,rep,name=presets,proto3" json:"presets,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -193,7 +193,7 @@ func (*FanSpeedSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_fanspeed_v1_fan_speed_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *FanSpeedSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *FanSpeedSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -600,7 +600,7 @@ var File_smartcore_bos_fanspeed_v1_fan_speed_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_fanspeed_v1_fan_speed_proto_rawDesc = "" +
 	"\n" +
-	")smartcore/bos/fanspeed/v1/fan_speed.proto\x12\x19smartcore.bos.fanspeed.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xf5\x01\n" +
+	")smartcore/bos/fanspeed/v1/fan_speed.proto\x12\x19smartcore.bos.fanspeed.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\xf5\x01\n" +
 	"\bFanSpeed\x12\x1e\n" +
 	"\n" +
 	"percentage\x18\x01 \x01(\x02R\n" +
@@ -611,9 +611,9 @@ const file_smartcore_bos_fanspeed_v1_fan_speed_proto_rawDesc = "" +
 	"\tDirection\x12\x19\n" +
 	"\x15DIRECTION_UNSPECIFIED\x10\x00\x12\v\n" +
 	"\aFORWARD\x10\x01\x12\f\n" +
-	"\bBACKWARD\x10\x02\"x\n" +
-	"\x0fFanSpeedSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12\x18\n" +
+	"\bBACKWARD\x10\x02\"\x7f\n" +
+	"\x0fFanSpeedSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12\x18\n" +
 	"\apresets\x18\x02 \x03(\tR\apresets\"a\n" +
 	"\x12GetFanSpeedRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
@@ -673,13 +673,13 @@ var file_smartcore_bos_fanspeed_v1_fan_speed_proto_goTypes = []any{
 	(*PullFanSpeedResponse)(nil),            // 7: smartcore.bos.fanspeed.v1.PullFanSpeedResponse
 	(*DescribeFanSpeedRequest)(nil),         // 8: smartcore.bos.fanspeed.v1.DescribeFanSpeedRequest
 	(*PullFanSpeedResponse_Change)(nil),     // 9: smartcore.bos.fanspeed.v1.PullFanSpeedResponse.Change
-	(*types.ResourceSupport)(nil),           // 10: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),         // 10: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),           // 11: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),           // 12: google.protobuf.Timestamp
 }
 var file_smartcore_bos_fanspeed_v1_fan_speed_proto_depIdxs = []int32{
 	0,  // 0: smartcore.bos.fanspeed.v1.FanSpeed.direction:type_name -> smartcore.bos.fanspeed.v1.FanSpeed.Direction
-	10, // 1: smartcore.bos.fanspeed.v1.FanSpeedSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	10, // 1: smartcore.bos.fanspeed.v1.FanSpeedSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	11, // 2: smartcore.bos.fanspeed.v1.GetFanSpeedRequest.read_mask:type_name -> google.protobuf.FieldMask
 	1,  // 3: smartcore.bos.fanspeed.v1.UpdateFanSpeedRequest.fan_speed:type_name -> smartcore.bos.fanspeed.v1.FanSpeed
 	11, // 4: smartcore.bos.fanspeed.v1.UpdateFanSpeedRequest.update_mask:type_name -> google.protobuf.FieldMask

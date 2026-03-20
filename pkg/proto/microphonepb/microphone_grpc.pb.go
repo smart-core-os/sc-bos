@@ -8,7 +8,7 @@ package microphonepb
 
 import (
 	context "context"
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -35,9 +35,9 @@ const (
 // For the sakes of this trait "gain" means the combination of a gain and a mute state.
 type MicrophoneApiClient interface {
 	// Get the current state of the gain for the device
-	GetGain(ctx context.Context, in *GetMicrophoneGainRequest, opts ...grpc.CallOption) (*types.AudioLevel, error)
+	GetGain(ctx context.Context, in *GetMicrophoneGainRequest, opts ...grpc.CallOption) (*typespb.AudioLevel, error)
 	// update the gain state for the device
-	UpdateGain(ctx context.Context, in *UpdateMicrophoneGainRequest, opts ...grpc.CallOption) (*types.AudioLevel, error)
+	UpdateGain(ctx context.Context, in *UpdateMicrophoneGainRequest, opts ...grpc.CallOption) (*typespb.AudioLevel, error)
 	PullGain(ctx context.Context, in *PullMicrophoneGainRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PullMicrophoneGainResponse], error)
 }
 
@@ -49,9 +49,9 @@ func NewMicrophoneApiClient(cc grpc.ClientConnInterface) MicrophoneApiClient {
 	return &microphoneApiClient{cc}
 }
 
-func (c *microphoneApiClient) GetGain(ctx context.Context, in *GetMicrophoneGainRequest, opts ...grpc.CallOption) (*types.AudioLevel, error) {
+func (c *microphoneApiClient) GetGain(ctx context.Context, in *GetMicrophoneGainRequest, opts ...grpc.CallOption) (*typespb.AudioLevel, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(types.AudioLevel)
+	out := new(typespb.AudioLevel)
 	err := c.cc.Invoke(ctx, MicrophoneApi_GetGain_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -59,9 +59,9 @@ func (c *microphoneApiClient) GetGain(ctx context.Context, in *GetMicrophoneGain
 	return out, nil
 }
 
-func (c *microphoneApiClient) UpdateGain(ctx context.Context, in *UpdateMicrophoneGainRequest, opts ...grpc.CallOption) (*types.AudioLevel, error) {
+func (c *microphoneApiClient) UpdateGain(ctx context.Context, in *UpdateMicrophoneGainRequest, opts ...grpc.CallOption) (*typespb.AudioLevel, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(types.AudioLevel)
+	out := new(typespb.AudioLevel)
 	err := c.cc.Invoke(ctx, MicrophoneApi_UpdateGain_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -98,9 +98,9 @@ type MicrophoneApi_PullGainClient = grpc.ServerStreamingClient[PullMicrophoneGai
 // For the sakes of this trait "gain" means the combination of a gain and a mute state.
 type MicrophoneApiServer interface {
 	// Get the current state of the gain for the device
-	GetGain(context.Context, *GetMicrophoneGainRequest) (*types.AudioLevel, error)
+	GetGain(context.Context, *GetMicrophoneGainRequest) (*typespb.AudioLevel, error)
 	// update the gain state for the device
-	UpdateGain(context.Context, *UpdateMicrophoneGainRequest) (*types.AudioLevel, error)
+	UpdateGain(context.Context, *UpdateMicrophoneGainRequest) (*typespb.AudioLevel, error)
 	PullGain(*PullMicrophoneGainRequest, grpc.ServerStreamingServer[PullMicrophoneGainResponse]) error
 	mustEmbedUnimplementedMicrophoneApiServer()
 }
@@ -112,10 +112,10 @@ type MicrophoneApiServer interface {
 // pointer dereference when methods are called.
 type UnimplementedMicrophoneApiServer struct{}
 
-func (UnimplementedMicrophoneApiServer) GetGain(context.Context, *GetMicrophoneGainRequest) (*types.AudioLevel, error) {
+func (UnimplementedMicrophoneApiServer) GetGain(context.Context, *GetMicrophoneGainRequest) (*typespb.AudioLevel, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGain not implemented")
 }
-func (UnimplementedMicrophoneApiServer) UpdateGain(context.Context, *UpdateMicrophoneGainRequest) (*types.AudioLevel, error) {
+func (UnimplementedMicrophoneApiServer) UpdateGain(context.Context, *UpdateMicrophoneGainRequest) (*typespb.AudioLevel, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateGain not implemented")
 }
 func (UnimplementedMicrophoneApiServer) PullGain(*PullMicrophoneGainRequest, grpc.ServerStreamingServer[PullMicrophoneGainResponse]) error {

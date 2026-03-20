@@ -11,7 +11,7 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // CountApi tracks both a positive and negative count of some quantity. Can be used for tickers, footfall sensors, and
 // devices like that.
@@ -46,7 +46,7 @@ message Count {
 // CountSupport describes the capabilities of devices implementing this trait
 message CountSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // Two way counters count additions and removals separately. Do NOT use this as a way to ignore the Count.removed
   // property, the total count is always added - removed.
   bool two_way = 2;

@@ -7,7 +7,7 @@
 package temperaturepb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -28,9 +28,9 @@ const (
 type Temperature struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Read/write, the target temperature.
-	SetPoint *types.Temperature `protobuf:"bytes,1,opt,name=set_point,json=setPoint,proto3" json:"set_point,omitempty"`
+	SetPoint *typespb.Temperature `protobuf:"bytes,1,opt,name=set_point,json=setPoint,proto3" json:"set_point,omitempty"`
 	// Output only, the measured temperature.
-	Measured      *types.Temperature `protobuf:"bytes,2,opt,name=measured,proto3" json:"measured,omitempty"`
+	Measured      *typespb.Temperature `protobuf:"bytes,2,opt,name=measured,proto3" json:"measured,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -65,14 +65,14 @@ func (*Temperature) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_temperature_v1_temperature_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Temperature) GetSetPoint() *types.Temperature {
+func (x *Temperature) GetSetPoint() *typespb.Temperature {
 	if x != nil {
 		return x.SetPoint
 	}
 	return nil
 }
 
-func (x *Temperature) GetMeasured() *types.Temperature {
+func (x *Temperature) GetMeasured() *typespb.Temperature {
 	if x != nil {
 		return x.Measured
 	}
@@ -368,10 +368,10 @@ var File_smartcore_bos_temperature_v1_temperature_proto protoreflect.FileDescrip
 
 const file_smartcore_bos_temperature_v1_temperature_proto_rawDesc = "" +
 	"\n" +
-	".smartcore/bos/temperature/v1/temperature.proto\x12\x1csmartcore.bos.temperature.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/unit.proto\"\x82\x01\n" +
-	"\vTemperature\x129\n" +
-	"\tset_point\x18\x01 \x01(\v2\x1c.smartcore.types.TemperatureR\bsetPoint\x128\n" +
-	"\bmeasured\x18\x02 \x01(\v2\x1c.smartcore.types.TemperatureR\bmeasured\"d\n" +
+	".smartcore/bos/temperature/v1/temperature.proto\x12\x1csmartcore.bos.temperature.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/unit.proto\"\x90\x01\n" +
+	"\vTemperature\x12@\n" +
+	"\tset_point\x18\x01 \x01(\v2#.smartcore.bos.types.v1.TemperatureR\bsetPoint\x12?\n" +
+	"\bmeasured\x18\x02 \x01(\v2#.smartcore.bos.types.v1.TemperatureR\bmeasured\"d\n" +
 	"\x15GetTemperatureRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x88\x01\n" +
@@ -417,13 +417,13 @@ var file_smartcore_bos_temperature_v1_temperature_proto_goTypes = []any{
 	(*PullTemperatureResponse)(nil),        // 3: smartcore.bos.temperature.v1.PullTemperatureResponse
 	(*UpdateTemperatureRequest)(nil),       // 4: smartcore.bos.temperature.v1.UpdateTemperatureRequest
 	(*PullTemperatureResponse_Change)(nil), // 5: smartcore.bos.temperature.v1.PullTemperatureResponse.Change
-	(*types.Temperature)(nil),              // 6: smartcore.types.Temperature
+	(*typespb.Temperature)(nil),            // 6: smartcore.bos.types.v1.Temperature
 	(*fieldmaskpb.FieldMask)(nil),          // 7: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),          // 8: google.protobuf.Timestamp
 }
 var file_smartcore_bos_temperature_v1_temperature_proto_depIdxs = []int32{
-	6,  // 0: smartcore.bos.temperature.v1.Temperature.set_point:type_name -> smartcore.types.Temperature
-	6,  // 1: smartcore.bos.temperature.v1.Temperature.measured:type_name -> smartcore.types.Temperature
+	6,  // 0: smartcore.bos.temperature.v1.Temperature.set_point:type_name -> smartcore.bos.types.v1.Temperature
+	6,  // 1: smartcore.bos.temperature.v1.Temperature.measured:type_name -> smartcore.bos.types.v1.Temperature
 	7,  // 2: smartcore.bos.temperature.v1.GetTemperatureRequest.read_mask:type_name -> google.protobuf.FieldMask
 	7,  // 3: smartcore.bos.temperature.v1.PullTemperatureRequest.read_mask:type_name -> google.protobuf.FieldMask
 	5,  // 4: smartcore.bos.temperature.v1.PullTemperatureResponse.changes:type_name -> smartcore.bos.temperature.v1.PullTemperatureResponse.Change

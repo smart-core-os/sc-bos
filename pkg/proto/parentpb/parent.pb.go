@@ -7,7 +7,7 @@
 package parentpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -389,7 +389,7 @@ type PullChildrenResponse_Change struct {
 	// The name of the device that emitted this change
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The type of change (e.g. ADD, UPDATE, etc...)
-	Type types.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type typespb.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	// The new value to use for ADD|UPDATE changes
 	NewValue *Child `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// The old value to use for UPDATE|REMOVE changes
@@ -437,11 +437,11 @@ func (x *PullChildrenResponse_Change) GetName() string {
 	return ""
 }
 
-func (x *PullChildrenResponse_Change) GetType() types.ChangeType {
+func (x *PullChildrenResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 func (x *PullChildrenResponse_Change) GetNewValue() *Child {
@@ -469,7 +469,7 @@ var File_smartcore_bos_parent_v1_parent_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_parent_v1_parent_proto_rawDesc = "" +
 	"\n" +
-	"$smartcore/bos/parent/v1/parent.proto\x12\x17smartcore.bos.parent.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\"k\n" +
+	"$smartcore/bos/parent/v1/parent.proto\x12\x17smartcore.bos.parent.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a#smartcore/bos/types/v1/change.proto\"k\n" +
 	"\x05Child\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
 	"\x06traits\x18\x02 \x03(\v2\x1e.smartcore.bos.parent.v1.TraitR\x06traits\x12\x16\n" +
@@ -490,12 +490,12 @@ const file_smartcore_bos_parent_v1_parent_proto_rawDesc = "" +
 	"\x13PullChildrenRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xed\x02\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xf4\x02\n" +
 	"\x14PullChildrenResponse\x12N\n" +
-	"\achanges\x18\x01 \x03(\v24.smartcore.bos.parent.v1.PullChildrenResponse.ChangeR\achanges\x1a\x84\x02\n" +
+	"\achanges\x18\x01 \x03(\v24.smartcore.bos.parent.v1.PullChildrenResponse.ChangeR\achanges\x1a\x8b\x02\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12;\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\x12;\n" +
 	"\tnew_value\x18\x03 \x01(\v2\x1e.smartcore.bos.parent.v1.ChildR\bnewValue\x12;\n" +
 	"\told_value\x18\x04 \x01(\v2\x1e.smartcore.bos.parent.v1.ChildR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -529,7 +529,7 @@ var file_smartcore_bos_parent_v1_parent_proto_goTypes = []any{
 	(*PullChildrenResponse)(nil),        // 5: smartcore.bos.parent.v1.PullChildrenResponse
 	(*PullChildrenResponse_Change)(nil), // 6: smartcore.bos.parent.v1.PullChildrenResponse.Change
 	(*fieldmaskpb.FieldMask)(nil),       // 7: google.protobuf.FieldMask
-	(types.ChangeType)(0),               // 8: smartcore.types.ChangeType
+	(typespb.ChangeType)(0),             // 8: smartcore.bos.types.v1.ChangeType
 	(*timestamppb.Timestamp)(nil),       // 9: google.protobuf.Timestamp
 }
 var file_smartcore_bos_parent_v1_parent_proto_depIdxs = []int32{
@@ -538,7 +538,7 @@ var file_smartcore_bos_parent_v1_parent_proto_depIdxs = []int32{
 	0,  // 2: smartcore.bos.parent.v1.ListChildrenResponse.children:type_name -> smartcore.bos.parent.v1.Child
 	7,  // 3: smartcore.bos.parent.v1.PullChildrenRequest.read_mask:type_name -> google.protobuf.FieldMask
 	6,  // 4: smartcore.bos.parent.v1.PullChildrenResponse.changes:type_name -> smartcore.bos.parent.v1.PullChildrenResponse.Change
-	8,  // 5: smartcore.bos.parent.v1.PullChildrenResponse.Change.type:type_name -> smartcore.types.ChangeType
+	8,  // 5: smartcore.bos.parent.v1.PullChildrenResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	0,  // 6: smartcore.bos.parent.v1.PullChildrenResponse.Change.new_value:type_name -> smartcore.bos.parent.v1.Child
 	0,  // 7: smartcore.bos.parent.v1.PullChildrenResponse.Change.old_value:type_name -> smartcore.bos.parent.v1.Child
 	9,  // 8: smartcore.bos.parent.v1.PullChildrenResponse.Change.change_time:type_name -> google.protobuf.Timestamp

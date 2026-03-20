@@ -7,7 +7,7 @@
 package energystoragepb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -218,7 +218,7 @@ func (EnergyLevel_Quantity_Threshold) EnumDescriptor() ([]byte, []int) {
 type EnergyLevelSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// A true value indicates that the device can be recharged.
 	// A rechargeable device should report charging and until_full where appropriate.
 	Rechargeable bool `protobuf:"varint,2,opt,name=rechargeable,proto3" json:"rechargeable,omitempty"`
@@ -258,7 +258,7 @@ func (*EnergyLevelSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_energystorage_v1_energy_storage_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *EnergyLevelSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *EnergyLevelSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -983,9 +983,9 @@ var File_smartcore_bos_energystorage_v1_energy_storage_proto protoreflect.FileDe
 
 const file_smartcore_bos_energystorage_v1_energy_storage_proto_rawDesc = "" +
 	"\n" +
-	"3smartcore/bos/energystorage/v1/energy_storage.proto\x12\x1esmartcore.bos.energystorage.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xcc\x02\n" +
-	"\x12EnergyLevelSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12\"\n" +
+	"3smartcore/bos/energystorage/v1/energy_storage.proto\x12\x1esmartcore.bos.energystorage.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\xd3\x02\n" +
+	"\x12EnergyLevelSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12\"\n" +
 	"\frechargeable\x18\x02 \x01(\bR\frechargeable\x12g\n" +
 	"\x0echarge_control\x18\x03 \x01(\x0e2@.smartcore.bos.energystorage.v1.EnergyLevelSupport.ChargeControlR\rchargeControl\"\\\n" +
 	"\rChargeControl\x12\x1e\n" +
@@ -1104,13 +1104,13 @@ var file_smartcore_bos_energystorage_v1_energy_storage_proto_goTypes = []any{
 	(*EnergyLevel_Steady)(nil),             // 12: smartcore.bos.energystorage.v1.EnergyLevel.Steady
 	(*EnergyLevel_Quantity)(nil),           // 13: smartcore.bos.energystorage.v1.EnergyLevel.Quantity
 	(*PullEnergyLevelResponse_Change)(nil), // 14: smartcore.bos.energystorage.v1.PullEnergyLevelResponse.Change
-	(*types.ResourceSupport)(nil),          // 15: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),        // 15: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),          // 16: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),          // 17: google.protobuf.Timestamp
 	(*durationpb.Duration)(nil),            // 18: google.protobuf.Duration
 }
 var file_smartcore_bos_energystorage_v1_energy_storage_proto_depIdxs = []int32{
-	15, // 0: smartcore.bos.energystorage.v1.EnergyLevelSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	15, // 0: smartcore.bos.energystorage.v1.EnergyLevelSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	0,  // 1: smartcore.bos.energystorage.v1.EnergyLevelSupport.charge_control:type_name -> smartcore.bos.energystorage.v1.EnergyLevelSupport.ChargeControl
 	11, // 2: smartcore.bos.energystorage.v1.EnergyLevel.discharge:type_name -> smartcore.bos.energystorage.v1.EnergyLevel.Transfer
 	11, // 3: smartcore.bos.energystorage.v1.EnergyLevel.charge:type_name -> smartcore.bos.energystorage.v1.EnergyLevel.Transfer

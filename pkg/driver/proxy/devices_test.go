@@ -9,8 +9,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func TestDeviceFetcher_Poll(t *testing.T) {
@@ -145,17 +145,17 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 			for change := range changes {
 				var name string
 				switch change.Type {
-				case types.ChangeType_ADD:
+				case typespb.ChangeType_ADD:
 					name = change.NewValue.Name
 					if name != "test" { // filter out the root node
 						gotAdds = append(gotAdds, name)
 					}
-				case types.ChangeType_UPDATE:
+				case typespb.ChangeType_UPDATE:
 					name = change.NewValue.Name
 					if name != "test" {
 						gotUpdts = append(gotUpdts, name)
 					}
-				case types.ChangeType_REMOVE:
+				case typespb.ChangeType_REMOVE:
 					name = change.OldValue.Name
 					if name != "test" {
 						gotRems = append(gotRems, name)
@@ -217,7 +217,7 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 			n.Announce("device1", node.HasMetadata(&metadatapb.Metadata{}))
 			synctest.Wait()
 			change1 := <-changes
-			if change1.Type != types.ChangeType_ADD {
+			if change1.Type != typespb.ChangeType_ADD {
 				t.Errorf("expected ADD change for device1, got %v", change1.Type)
 			}
 			if change1.NewValue.Name != "device1" {
@@ -229,7 +229,7 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 			}), node.HasTrait(trait.OnOff))
 			synctest.Wait()
 			change2 := <-changes
-			if change2.Type != types.ChangeType_ADD && change2.Type != types.ChangeType_UPDATE {
+			if change2.Type != typespb.ChangeType_ADD && change2.Type != typespb.ChangeType_UPDATE {
 				t.Errorf("expected ADD or UPDATE change for device1 update, got %v", change2.Type)
 			}
 

@@ -7,8 +7,8 @@
 package wastepb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
-	time "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
+	timepb "github.com/smart-core-os/sc-bos/pkg/proto/timepb"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -307,7 +307,7 @@ type ListWasteRecordsRequest struct {
 	PageToken string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Optional. If set, only WasteRecords with a `record_create_time` within the
 	// specified period will be returned.
-	Period *time.Period `protobuf:"bytes,5,opt,name=period,proto3" json:"period,omitempty"`
+	Period *timepb.Period `protobuf:"bytes,5,opt,name=period,proto3" json:"period,omitempty"`
 	// Specify the order of the returned records.
 	// The default is `record_create_time asc` - aka oldest record first.
 	// The format is `field_name [asc|desc]`, with asc being the default.
@@ -375,7 +375,7 @@ func (x *ListWasteRecordsRequest) GetPageToken() string {
 	return ""
 }
 
-func (x *ListWasteRecordsRequest) GetPeriod() *time.Period {
+func (x *ListWasteRecordsRequest) GetPeriod() *timepb.Period {
 	if x != nil {
 		return x.Period
 	}
@@ -541,7 +541,7 @@ func (x *DescribeWasteRecordRequest) GetName() string {
 type WasteRecordSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// The unit associated with the weight value
 	Unit string `protobuf:"bytes,2,opt,name=unit,proto3" json:"unit,omitempty"`
 	// The unit associated with the co2_saved value
@@ -582,7 +582,7 @@ func (*WasteRecordSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_waste_v1_waste_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *WasteRecordSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *WasteRecordSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -616,7 +616,7 @@ type PullWasteRecordsResponse_Change struct {
 	ChangeTime    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=change_time,json=changeTime,proto3" json:"change_time,omitempty"`
 	NewValue      *WasteRecord           `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	OldValue      *WasteRecord           `protobuf:"bytes,4,opt,name=old_value,json=oldValue,proto3" json:"old_value,omitempty"`
-	Type          types.ChangeType       `protobuf:"varint,5,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type          typespb.ChangeType     `protobuf:"varint,5,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -679,18 +679,18 @@ func (x *PullWasteRecordsResponse_Change) GetOldValue() *WasteRecord {
 	return nil
 }
 
-func (x *PullWasteRecordsResponse_Change) GetType() types.ChangeType {
+func (x *PullWasteRecordsResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 var File_smartcore_bos_waste_v1_waste_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_waste_v1_waste_proto_rawDesc = "" +
 	"\n" +
-	"\"smartcore/bos/waste/v1/waste.proto\x12\x16smartcore.bos.waste.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\x1a\x10types/info.proto\x1a\x17types/time/period.proto\"\xf5\x04\n" +
+	"\"smartcore/bos/waste/v1/waste.proto\x12\x16smartcore.bos.waste.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a(smartcore/bos/types/time/v1/period.proto\x1a#smartcore/bos/types/v1/change.proto\x1a!smartcore/bos/types/v1/info.proto\"\xf5\x04\n" +
 	"\vWasteRecord\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12H\n" +
 	"\x12record_create_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x10recordCreateTime\x12\x16\n" +
@@ -724,32 +724,32 @@ const file_smartcore_bos_waste_v1_waste_proto_rawDesc = "" +
 	"\fwasteRecords\x18\x01 \x03(\v2#.smartcore.bos.waste.v1.WasteRecordR\fwasteRecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xf3\x01\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xfa\x01\n" +
 	"\x17ListWasteRecordsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\x124\n" +
-	"\x06period\x18\x05 \x01(\v2\x1c.smartcore.types.time.PeriodR\x06period\x12\x19\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\x12;\n" +
+	"\x06period\x18\x05 \x01(\v2#.smartcore.bos.types.time.v1.PeriodR\x06period\x12\x19\n" +
 	"\border_by\x18\x06 \x01(\tR\aorderBy\"\x89\x01\n" +
 	"\x17PullWasteRecordsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xfe\x02\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x85\x03\n" +
 	"\x18PullWasteRecordsResponse\x12Q\n" +
-	"\achanges\x18\x01 \x03(\v27.smartcore.bos.waste.v1.PullWasteRecordsResponse.ChangeR\achanges\x1a\x8e\x02\n" +
+	"\achanges\x18\x01 \x03(\v27.smartcore.bos.waste.v1.PullWasteRecordsResponse.ChangeR\achanges\x1a\x95\x02\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"changeTime\x12@\n" +
 	"\tnew_value\x18\x03 \x01(\v2#.smartcore.bos.waste.v1.WasteRecordR\bnewValue\x12@\n" +
-	"\told_value\x18\x04 \x01(\v2#.smartcore.bos.waste.v1.WasteRecordR\boldValue\x12/\n" +
-	"\x04type\x18\x05 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\"0\n" +
+	"\told_value\x18\x04 \x01(\v2#.smartcore.bos.waste.v1.WasteRecordR\boldValue\x126\n" +
+	"\x04type\x18\x05 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\"0\n" +
 	"\x1aDescribeWasteRecordRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"\xc3\x01\n" +
-	"\x12WasteRecordSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\xca\x01\n" +
+	"\x12WasteRecordSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12\x12\n" +
 	"\x04unit\x18\x02 \x01(\tR\x04unit\x12$\n" +
 	"\x0eco2_saved_unit\x18\x03 \x01(\tR\fco2SavedUnit\x12&\n" +
 	"\x0fland_saved_unit\x18\x04 \x01(\tR\rlandSavedUnit2\xfa\x01\n" +
@@ -785,9 +785,9 @@ var file_smartcore_bos_waste_v1_waste_proto_goTypes = []any{
 	(*PullWasteRecordsResponse_Change)(nil), // 8: smartcore.bos.waste.v1.PullWasteRecordsResponse.Change
 	(*timestamppb.Timestamp)(nil),           // 9: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),           // 10: google.protobuf.FieldMask
-	(*time.Period)(nil),                     // 11: smartcore.types.time.Period
-	(*types.ResourceSupport)(nil),           // 12: smartcore.types.ResourceSupport
-	(types.ChangeType)(0),                   // 13: smartcore.types.ChangeType
+	(*timepb.Period)(nil),                   // 11: smartcore.bos.types.time.v1.Period
+	(*typespb.ResourceSupport)(nil),         // 12: smartcore.bos.types.v1.ResourceSupport
+	(typespb.ChangeType)(0),                 // 13: smartcore.bos.types.v1.ChangeType
 }
 var file_smartcore_bos_waste_v1_waste_proto_depIdxs = []int32{
 	9,  // 0: smartcore.bos.waste.v1.WasteRecord.record_create_time:type_name -> google.protobuf.Timestamp
@@ -795,14 +795,14 @@ var file_smartcore_bos_waste_v1_waste_proto_depIdxs = []int32{
 	9,  // 2: smartcore.bos.waste.v1.WasteRecord.waste_create_time:type_name -> google.protobuf.Timestamp
 	1,  // 3: smartcore.bos.waste.v1.ListWasteRecordsResponse.wasteRecords:type_name -> smartcore.bos.waste.v1.WasteRecord
 	10, // 4: smartcore.bos.waste.v1.ListWasteRecordsRequest.read_mask:type_name -> google.protobuf.FieldMask
-	11, // 5: smartcore.bos.waste.v1.ListWasteRecordsRequest.period:type_name -> smartcore.types.time.Period
+	11, // 5: smartcore.bos.waste.v1.ListWasteRecordsRequest.period:type_name -> smartcore.bos.types.time.v1.Period
 	10, // 6: smartcore.bos.waste.v1.PullWasteRecordsRequest.read_mask:type_name -> google.protobuf.FieldMask
 	8,  // 7: smartcore.bos.waste.v1.PullWasteRecordsResponse.changes:type_name -> smartcore.bos.waste.v1.PullWasteRecordsResponse.Change
-	12, // 8: smartcore.bos.waste.v1.WasteRecordSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	12, // 8: smartcore.bos.waste.v1.WasteRecordSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	9,  // 9: smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
 	1,  // 10: smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.new_value:type_name -> smartcore.bos.waste.v1.WasteRecord
 	1,  // 11: smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.old_value:type_name -> smartcore.bos.waste.v1.WasteRecord
-	13, // 12: smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.type:type_name -> smartcore.types.ChangeType
+	13, // 12: smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	3,  // 13: smartcore.bos.waste.v1.WasteApi.ListWasteRecords:input_type -> smartcore.bos.waste.v1.ListWasteRecordsRequest
 	4,  // 14: smartcore.bos.waste.v1.WasteApi.PullWasteRecords:input_type -> smartcore.bos.waste.v1.PullWasteRecordsRequest
 	6,  // 15: smartcore.bos.waste.v1.WasteInfo.DescribeWasteRecord:input_type -> smartcore.bos.waste.v1.DescribeWasteRecordRequest

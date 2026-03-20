@@ -11,7 +11,7 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // Trait for devices that can control the speed of a fan.
 service FanSpeedApi {
@@ -60,7 +60,7 @@ message FanSpeed {
 
 message FanSpeedSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // Presets is the list of supported fan speed presets, in ascending fan speed order - i.e. index 0 is the slowest.
   repeated string presets = 2;
 }

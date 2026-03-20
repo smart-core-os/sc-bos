@@ -10,9 +10,9 @@ option java_package = "dev.smartcore.traits";
 option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
-import "types/info.proto";
-import "types/number.proto";
-import "types/unit.proto";
+import "smartcore/bos/types/v1/info.proto";
+import "smartcore/bos/types/v1/number.proto";
+import "smartcore/bos/types/v1/unit.proto";
 
 // Trait for devices that support some kind of audio input. The most basic is a simple muting microphone, it's optional
 // to support gain adjustment on a scale.
@@ -20,10 +20,10 @@ import "types/unit.proto";
 // For the sakes of this trait "gain" means the combination of a gain and a mute state.
 service MicrophoneApi {
   // Get the current state of the gain for the device
-  rpc GetGain (GetMicrophoneGainRequest) returns (smartcore.types.AudioLevel);
+  rpc GetGain (GetMicrophoneGainRequest) returns (smartcore.bos.types.v1.AudioLevel);
 
   // update the gain state for the device
-  rpc UpdateGain (UpdateMicrophoneGainRequest) returns (smartcore.types.AudioLevel);
+  rpc UpdateGain (UpdateMicrophoneGainRequest) returns (smartcore.bos.types.v1.AudioLevel);
 
   rpc PullGain (PullMicrophoneGainRequest) returns (stream PullMicrophoneGainResponse);
 }
@@ -37,13 +37,13 @@ service MicrophoneInfo {
 // GainSupport describes the capabilities of devices implementing this trait.
 message GainSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // Attributes associated with the gain property of the microphone. Note that a step value that is the same as the bounds
   // implies that the microphone only supports mute
-  smartcore.types.FloatAttributes gain_attributes = 2;
+  smartcore.bos.types.v1.FloatAttributes gain_attributes = 2;
   // How is mute implemented by the device. Can help to customise behaviour of interfaces to the device, e.g. by
   // disallowing gain change when muted
-  smartcore.types.MuteSupport mute_support = 3;
+  smartcore.bos.types.v1.MuteSupport mute_support = 3;
 }
 
 message GetMicrophoneGainRequest {
@@ -57,7 +57,7 @@ message UpdateMicrophoneGainRequest {
   // Name of the device to update the state for
   string name = 1;
   // The updated gain value
-  smartcore.types.AudioLevel gain = 2;
+  smartcore.bos.types.v1.AudioLevel gain = 2;
   // Only supported for AudioLevel.gain. Update the value relative to the current value.
   bool delta = 3;
   // The fields we intend to update relative to the AudioLevel type
@@ -76,7 +76,7 @@ message PullMicrophoneGainRequest {
 
 message PullMicrophoneGainResponse {
   // Changes since the last message
-  repeated smartcore.types.AudioLevelChange changes = 1;
+  repeated smartcore.bos.types.v1.AudioLevelChange changes = 1;
 }
 
 message DescribeGainRequest {

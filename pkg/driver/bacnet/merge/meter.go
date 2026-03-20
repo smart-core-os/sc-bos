@@ -14,11 +14,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type meterConfig struct {
@@ -68,7 +68,7 @@ func newMeter(client *gobacnet.Client, devices known.Context, faultCheck *health
 func (t *meterTrait) AnnounceSelf(a node.Announcer) node.Undo {
 	return a.Announce(t.config.Name, node.HasTrait(meterpb.TraitName, node.WithClients(meterpb.WrapApi(t), meterpb.WrapInfo(&meterpb.InfoServer{
 		MeterReading: &meterpb.MeterReadingSupport{
-			ResourceSupport: &types.ResourceSupport{Readable: true, Observable: true},
+			ResourceSupport: &typespb.ResourceSupport{Readable: true, Observable: true},
 			UsageUnit:       t.config.Unit,
 		},
 	}))))

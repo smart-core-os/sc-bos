@@ -7,7 +7,7 @@
 package speakerpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -27,13 +27,13 @@ const (
 type VolumeSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// Attributes associated with the gain property of the speaker. Note that a step value that is the same as the bounds
 	// implies that the speaker only supports mute
-	VolumeAttributes *types.FloatAttributes `protobuf:"bytes,2,opt,name=volume_attributes,json=volumeAttributes,proto3" json:"volume_attributes,omitempty"`
+	VolumeAttributes *typespb.FloatAttributes `protobuf:"bytes,2,opt,name=volume_attributes,json=volumeAttributes,proto3" json:"volume_attributes,omitempty"`
 	// How is mute implemented by the device. Can help to customise behaviour of interfaces to the device, e.g. by
 	// disallowing gain change when muted
-	MuteSupport   types.MuteSupport `protobuf:"varint,3,opt,name=mute_support,json=muteSupport,proto3,enum=smartcore.types.MuteSupport" json:"mute_support,omitempty"`
+	MuteSupport   typespb.MuteSupport `protobuf:"varint,3,opt,name=mute_support,json=muteSupport,proto3,enum=smartcore.bos.types.v1.MuteSupport" json:"mute_support,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -68,25 +68,25 @@ func (*VolumeSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_speaker_v1_speaker_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *VolumeSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *VolumeSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
 	return nil
 }
 
-func (x *VolumeSupport) GetVolumeAttributes() *types.FloatAttributes {
+func (x *VolumeSupport) GetVolumeAttributes() *typespb.FloatAttributes {
 	if x != nil {
 		return x.VolumeAttributes
 	}
 	return nil
 }
 
-func (x *VolumeSupport) GetMuteSupport() types.MuteSupport {
+func (x *VolumeSupport) GetMuteSupport() typespb.MuteSupport {
 	if x != nil {
 		return x.MuteSupport
 	}
-	return types.MuteSupport(0)
+	return typespb.MuteSupport(0)
 }
 
 type GetSpeakerVolumeRequest struct {
@@ -148,7 +148,7 @@ type UpdateSpeakerVolumeRequest struct {
 	// Name of the device to update the state for
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The updated volume value
-	Volume *types.AudioLevel `protobuf:"bytes,2,opt,name=volume,proto3" json:"volume,omitempty"`
+	Volume *typespb.AudioLevel `protobuf:"bytes,2,opt,name=volume,proto3" json:"volume,omitempty"`
 	// Only supported for AudioLevel.gain. Update the value relative to the current value.
 	Delta bool `protobuf:"varint,3,opt,name=delta,proto3" json:"delta,omitempty"`
 	// The fields we intend to update relative to the AudioLevel type
@@ -194,7 +194,7 @@ func (x *UpdateSpeakerVolumeRequest) GetName() string {
 	return ""
 }
 
-func (x *UpdateSpeakerVolumeRequest) GetVolume() *types.AudioLevel {
+func (x *UpdateSpeakerVolumeRequest) GetVolume() *typespb.AudioLevel {
 	if x != nil {
 		return x.Volume
 	}
@@ -282,7 +282,7 @@ func (x *PullSpeakerVolumeRequest) GetUpdatesOnly() bool {
 type PullSpeakerVolumeResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Changes since the last message
-	Changes       []*types.AudioLevelChange `protobuf:"bytes,1,rep,name=changes,proto3" json:"changes,omitempty"`
+	Changes       []*typespb.AudioLevelChange `protobuf:"bytes,1,rep,name=changes,proto3" json:"changes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -317,7 +317,7 @@ func (*PullSpeakerVolumeResponse) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_speaker_v1_speaker_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *PullSpeakerVolumeResponse) GetChanges() []*types.AudioLevelChange {
+func (x *PullSpeakerVolumeResponse) GetChanges() []*typespb.AudioLevelChange {
 	if x != nil {
 		return x.Changes
 	}
@@ -373,32 +373,32 @@ var File_smartcore_bos_speaker_v1_speaker_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_speaker_v1_speaker_proto_rawDesc = "" +
 	"\n" +
-	"&smartcore/bos/speaker/v1/speaker.proto\x12\x18smartcore.bos.speaker.v1\x1a google/protobuf/field_mask.proto\x1a\x10types/info.proto\x1a\x12types/number.proto\x1a\x10types/unit.proto\"\xec\x01\n" +
-	"\rVolumeSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12M\n" +
-	"\x11volume_attributes\x18\x02 \x01(\v2 .smartcore.types.FloatAttributesR\x10volumeAttributes\x12?\n" +
-	"\fmute_support\x18\x03 \x01(\x0e2\x1c.smartcore.types.MuteSupportR\vmuteSupport\"f\n" +
+	"&smartcore/bos/speaker/v1/speaker.proto\x12\x18smartcore.bos.speaker.v1\x1a google/protobuf/field_mask.proto\x1a!smartcore/bos/types/v1/info.proto\x1a#smartcore/bos/types/v1/number.proto\x1a!smartcore/bos/types/v1/unit.proto\"\x81\x02\n" +
+	"\rVolumeSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12T\n" +
+	"\x11volume_attributes\x18\x02 \x01(\v2'.smartcore.bos.types.v1.FloatAttributesR\x10volumeAttributes\x12F\n" +
+	"\fmute_support\x18\x03 \x01(\x0e2#.smartcore.bos.types.v1.MuteSupportR\vmuteSupport\"f\n" +
 	"\x17GetSpeakerVolumeRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
-	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\xb8\x01\n" +
+	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\xbf\x01\n" +
 	"\x1aUpdateSpeakerVolumeRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x123\n" +
-	"\x06volume\x18\x02 \x01(\v2\x1b.smartcore.types.AudioLevelR\x06volume\x12\x14\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12:\n" +
+	"\x06volume\x18\x02 \x01(\v2\".smartcore.bos.types.v1.AudioLevelR\x06volume\x12\x14\n" +
 	"\x05delta\x18\x03 \x01(\bR\x05delta\x12;\n" +
 	"\vupdate_mask\x18\x04 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\"\x8a\x01\n" +
 	"\x18PullSpeakerVolumeRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"X\n" +
-	"\x19PullSpeakerVolumeResponse\x12;\n" +
-	"\achanges\x18\x01 \x03(\v2!.smartcore.types.AudioLevelChangeR\achanges\"+\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"_\n" +
+	"\x19PullSpeakerVolumeResponse\x12B\n" +
+	"\achanges\x18\x01 \x03(\v2(.smartcore.bos.types.v1.AudioLevelChangeR\achanges\"+\n" +
 	"\x15DescribeVolumeRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name2\xc5\x02\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name2\xd3\x02\n" +
 	"\n" +
-	"SpeakerApi\x12[\n" +
-	"\tGetVolume\x121.smartcore.bos.speaker.v1.GetSpeakerVolumeRequest\x1a\x1b.smartcore.types.AudioLevel\x12a\n" +
-	"\fUpdateVolume\x124.smartcore.bos.speaker.v1.UpdateSpeakerVolumeRequest\x1a\x1b.smartcore.types.AudioLevel\x12w\n" +
+	"SpeakerApi\x12b\n" +
+	"\tGetVolume\x121.smartcore.bos.speaker.v1.GetSpeakerVolumeRequest\x1a\".smartcore.bos.types.v1.AudioLevel\x12h\n" +
+	"\fUpdateVolume\x124.smartcore.bos.speaker.v1.UpdateSpeakerVolumeRequest\x1a\".smartcore.bos.types.v1.AudioLevel\x12w\n" +
 	"\n" +
 	"PullVolume\x122.smartcore.bos.speaker.v1.PullSpeakerVolumeRequest\x1a3.smartcore.bos.speaker.v1.PullSpeakerVolumeResponse0\x012y\n" +
 	"\vSpeakerInfo\x12j\n" +
@@ -425,28 +425,28 @@ var file_smartcore_bos_speaker_v1_speaker_proto_goTypes = []any{
 	(*PullSpeakerVolumeRequest)(nil),   // 3: smartcore.bos.speaker.v1.PullSpeakerVolumeRequest
 	(*PullSpeakerVolumeResponse)(nil),  // 4: smartcore.bos.speaker.v1.PullSpeakerVolumeResponse
 	(*DescribeVolumeRequest)(nil),      // 5: smartcore.bos.speaker.v1.DescribeVolumeRequest
-	(*types.ResourceSupport)(nil),      // 6: smartcore.types.ResourceSupport
-	(*types.FloatAttributes)(nil),      // 7: smartcore.types.FloatAttributes
-	(types.MuteSupport)(0),             // 8: smartcore.types.MuteSupport
+	(*typespb.ResourceSupport)(nil),    // 6: smartcore.bos.types.v1.ResourceSupport
+	(*typespb.FloatAttributes)(nil),    // 7: smartcore.bos.types.v1.FloatAttributes
+	(typespb.MuteSupport)(0),           // 8: smartcore.bos.types.v1.MuteSupport
 	(*fieldmaskpb.FieldMask)(nil),      // 9: google.protobuf.FieldMask
-	(*types.AudioLevel)(nil),           // 10: smartcore.types.AudioLevel
-	(*types.AudioLevelChange)(nil),     // 11: smartcore.types.AudioLevelChange
+	(*typespb.AudioLevel)(nil),         // 10: smartcore.bos.types.v1.AudioLevel
+	(*typespb.AudioLevelChange)(nil),   // 11: smartcore.bos.types.v1.AudioLevelChange
 }
 var file_smartcore_bos_speaker_v1_speaker_proto_depIdxs = []int32{
-	6,  // 0: smartcore.bos.speaker.v1.VolumeSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	7,  // 1: smartcore.bos.speaker.v1.VolumeSupport.volume_attributes:type_name -> smartcore.types.FloatAttributes
-	8,  // 2: smartcore.bos.speaker.v1.VolumeSupport.mute_support:type_name -> smartcore.types.MuteSupport
+	6,  // 0: smartcore.bos.speaker.v1.VolumeSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
+	7,  // 1: smartcore.bos.speaker.v1.VolumeSupport.volume_attributes:type_name -> smartcore.bos.types.v1.FloatAttributes
+	8,  // 2: smartcore.bos.speaker.v1.VolumeSupport.mute_support:type_name -> smartcore.bos.types.v1.MuteSupport
 	9,  // 3: smartcore.bos.speaker.v1.GetSpeakerVolumeRequest.read_mask:type_name -> google.protobuf.FieldMask
-	10, // 4: smartcore.bos.speaker.v1.UpdateSpeakerVolumeRequest.volume:type_name -> smartcore.types.AudioLevel
+	10, // 4: smartcore.bos.speaker.v1.UpdateSpeakerVolumeRequest.volume:type_name -> smartcore.bos.types.v1.AudioLevel
 	9,  // 5: smartcore.bos.speaker.v1.UpdateSpeakerVolumeRequest.update_mask:type_name -> google.protobuf.FieldMask
 	9,  // 6: smartcore.bos.speaker.v1.PullSpeakerVolumeRequest.read_mask:type_name -> google.protobuf.FieldMask
-	11, // 7: smartcore.bos.speaker.v1.PullSpeakerVolumeResponse.changes:type_name -> smartcore.types.AudioLevelChange
+	11, // 7: smartcore.bos.speaker.v1.PullSpeakerVolumeResponse.changes:type_name -> smartcore.bos.types.v1.AudioLevelChange
 	1,  // 8: smartcore.bos.speaker.v1.SpeakerApi.GetVolume:input_type -> smartcore.bos.speaker.v1.GetSpeakerVolumeRequest
 	2,  // 9: smartcore.bos.speaker.v1.SpeakerApi.UpdateVolume:input_type -> smartcore.bos.speaker.v1.UpdateSpeakerVolumeRequest
 	3,  // 10: smartcore.bos.speaker.v1.SpeakerApi.PullVolume:input_type -> smartcore.bos.speaker.v1.PullSpeakerVolumeRequest
 	5,  // 11: smartcore.bos.speaker.v1.SpeakerInfo.DescribeVolume:input_type -> smartcore.bos.speaker.v1.DescribeVolumeRequest
-	10, // 12: smartcore.bos.speaker.v1.SpeakerApi.GetVolume:output_type -> smartcore.types.AudioLevel
-	10, // 13: smartcore.bos.speaker.v1.SpeakerApi.UpdateVolume:output_type -> smartcore.types.AudioLevel
+	10, // 12: smartcore.bos.speaker.v1.SpeakerApi.GetVolume:output_type -> smartcore.bos.types.v1.AudioLevel
+	10, // 13: smartcore.bos.speaker.v1.SpeakerApi.UpdateVolume:output_type -> smartcore.bos.types.v1.AudioLevel
 	4,  // 14: smartcore.bos.speaker.v1.SpeakerApi.PullVolume:output_type -> smartcore.bos.speaker.v1.PullSpeakerVolumeResponse
 	0,  // 15: smartcore.bos.speaker.v1.SpeakerInfo.DescribeVolume:output_type -> smartcore.bos.speaker.v1.VolumeSupport
 	12, // [12:16] is the sub-list for method output_type

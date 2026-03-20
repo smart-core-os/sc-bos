@@ -7,8 +7,8 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // deviceFetcher implements pull.Fetcher to pull or poll devices from a client
@@ -62,11 +62,11 @@ func (c *deviceFetcher) Poll(ctx context.Context, changes chan<- *devicespb.Pull
 		for _, node := range res.Devices {
 			// we do extra work here to try and send out more accurate changes to make callers lives easier
 			change := &devicespb.PullDevicesResponse_Change{
-				Type:     types.ChangeType_ADD,
+				Type:     typespb.ChangeType_ADD,
 				NewValue: node,
 			}
 			if old, ok := c.known[node.Name]; ok {
-				change.Type = types.ChangeType_UPDATE
+				change.Type = typespb.ChangeType_UPDATE
 				change.OldValue = old
 				delete(unseen, node.Name)
 			}
@@ -90,7 +90,7 @@ func (c *deviceFetcher) Poll(ctx context.Context, changes chan<- *devicespb.Pull
 		node := c.known[name]
 		delete(c.known, name)
 		change := &devicespb.PullDevicesResponse_Change{
-			Type:     types.ChangeType_REMOVE,
+			Type:     typespb.ChangeType_REMOVE,
 			OldValue: node,
 		}
 		if err := chans.SendContext(ctx, changes, change); err != nil {

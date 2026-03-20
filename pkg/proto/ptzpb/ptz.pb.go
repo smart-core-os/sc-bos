@@ -7,7 +7,7 @@
 package ptzpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -228,7 +228,7 @@ type PtzMovement struct {
 	// The speed at which the PTZ device should move. If not specified the device may ramp speed on its own
 	Speed int32 `protobuf:"varint,2,opt,name=speed,proto3" json:"speed,omitempty"`
 	// How the speed changes or should change over time. On write only duration should be set.
-	SpeedTween *types.Tween `protobuf:"bytes,3,opt,name=speed_tween,json=speedTween,proto3" json:"speed_tween,omitempty"`
+	SpeedTween *typespb.Tween `protobuf:"bytes,3,opt,name=speed_tween,json=speedTween,proto3" json:"speed_tween,omitempty"`
 	// Read-only, the target speed value after a transition
 	TargetSpeed   int32 `protobuf:"varint,4,opt,name=target_speed,json=targetSpeed,proto3" json:"target_speed,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -279,7 +279,7 @@ func (x *PtzMovement) GetSpeed() int32 {
 	return 0
 }
 
-func (x *PtzMovement) GetSpeedTween() *types.Tween {
+func (x *PtzMovement) GetSpeedTween() *typespb.Tween {
 	if x != nil {
 		return x.SpeedTween
 	}
@@ -299,7 +299,7 @@ type PtzPosition struct {
 	// The current position.
 	Position *PtzVector `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
 	// How the position changes or should change over time. On write only duration should be set.
-	Tween *types.Tween `protobuf:"bytes,2,opt,name=tween,proto3" json:"tween,omitempty"`
+	Tween *typespb.Tween `protobuf:"bytes,2,opt,name=tween,proto3" json:"tween,omitempty"`
 	// The target position that will be reached after the tween duration.
 	TargetPosition *PtzVector `protobuf:"bytes,3,opt,name=target_position,json=targetPosition,proto3" json:"target_position,omitempty"`
 	unknownFields  protoimpl.UnknownFields
@@ -343,7 +343,7 @@ func (x *PtzPosition) GetPosition() *PtzVector {
 	return nil
 }
 
-func (x *PtzPosition) GetTween() *types.Tween {
+func (x *PtzPosition) GetTween() *typespb.Tween {
 	if x != nil {
 		return x.Tween
 	}
@@ -442,7 +442,7 @@ func (x *PtzPreset) GetWritable() bool {
 type PtzSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// Can we ask the device to move to a specific position
 	SupportsPosition bool `protobuf:"varint,2,opt,name=supports_position,json=supportsPosition,proto3" json:"supports_position,omitempty"`
 	// Can we move the device without a target position in mind
@@ -486,7 +486,7 @@ func (*PtzSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_ptz_v1_ptz_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *PtzSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *PtzSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -957,7 +957,7 @@ var File_smartcore_bos_ptz_v1_ptz_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_ptz_v1_ptz_proto_rawDesc = "" +
 	"\n" +
-	"\x1esmartcore/bos/ptz/v1/ptz.proto\x12\x14smartcore.bos.ptz.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\x1a\x11types/tween.proto\"\xbe\x01\n" +
+	"\x1esmartcore/bos/ptz/v1/ptz.proto\x12\x14smartcore.bos.ptz.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\x1a\"smartcore/bos/types/v1/tween.proto\"\xbe\x01\n" +
 	"\x03Ptz\x12=\n" +
 	"\bposition\x18\x01 \x01(\v2!.smartcore.bos.ptz.v1.PtzPositionR\bposition\x12=\n" +
 	"\bmovement\x18\x02 \x01(\v2!.smartcore.bos.ptz.v1.PtzMovementR\bmovement\x12\x16\n" +
@@ -969,26 +969,26 @@ const file_smartcore_bos_ptz_v1_ptz_proto_rawDesc = "" +
 	"\x04zoom\x18\x03 \x01(\x02R\x04zoom\"q\n" +
 	"\tPtzBounds\x121\n" +
 	"\x03min\x18\x01 \x01(\v2\x1f.smartcore.bos.ptz.v1.PtzVectorR\x03min\x121\n" +
-	"\x03max\x18\x02 \x01(\v2\x1f.smartcore.bos.ptz.v1.PtzVectorR\x03max\"\xbe\x01\n" +
+	"\x03max\x18\x02 \x01(\v2\x1f.smartcore.bos.ptz.v1.PtzVectorR\x03max\"\xc5\x01\n" +
 	"\vPtzMovement\x12=\n" +
 	"\tdirection\x18\x01 \x01(\v2\x1f.smartcore.bos.ptz.v1.PtzVectorR\tdirection\x12\x14\n" +
-	"\x05speed\x18\x02 \x01(\x05R\x05speed\x127\n" +
-	"\vspeed_tween\x18\x03 \x01(\v2\x16.smartcore.types.TweenR\n" +
+	"\x05speed\x18\x02 \x01(\x05R\x05speed\x12>\n" +
+	"\vspeed_tween\x18\x03 \x01(\v2\x1d.smartcore.bos.types.v1.TweenR\n" +
 	"speedTween\x12!\n" +
-	"\ftarget_speed\x18\x04 \x01(\x05R\vtargetSpeed\"\xc2\x01\n" +
+	"\ftarget_speed\x18\x04 \x01(\x05R\vtargetSpeed\"\xc9\x01\n" +
 	"\vPtzPosition\x12;\n" +
-	"\bposition\x18\x01 \x01(\v2\x1f.smartcore.bos.ptz.v1.PtzVectorR\bposition\x12,\n" +
-	"\x05tween\x18\x02 \x01(\v2\x16.smartcore.types.TweenR\x05tween\x12H\n" +
+	"\bposition\x18\x01 \x01(\v2\x1f.smartcore.bos.ptz.v1.PtzVectorR\bposition\x123\n" +
+	"\x05tween\x18\x02 \x01(\v2\x1d.smartcore.bos.types.v1.TweenR\x05tween\x12H\n" +
 	"\x0ftarget_position\x18\x03 \x01(\v2\x1f.smartcore.bos.ptz.v1.PtzVectorR\x0etargetPosition\"\xb0\x01\n" +
 	"\tPtzPreset\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12;\n" +
 	"\bposition\x18\x04 \x01(\v2\x1f.smartcore.bos.ptz.v1.PtzVectorR\bposition\x12\x1a\n" +
-	"\bwritable\x18\x05 \x01(\bR\bwritable\"\xa6\x02\n" +
+	"\bwritable\x18\x05 \x01(\bR\bwritable\"\xad\x02\n" +
 	"\n" +
-	"PtzSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12+\n" +
+	"PtzSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12+\n" +
 	"\x11supports_position\x18\x02 \x01(\bR\x10supportsPosition\x12+\n" +
 	"\x11supports_movement\x18\x03 \x01(\bR\x10supportsMovement\x129\n" +
 	"\apresets\x18\x04 \x03(\v2\x1f.smartcore.bos.ptz.v1.PtzPresetR\apresets\x126\n" +
@@ -1043,25 +1043,25 @@ func file_smartcore_bos_ptz_v1_ptz_proto_rawDescGZIP() []byte {
 
 var file_smartcore_bos_ptz_v1_ptz_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_smartcore_bos_ptz_v1_ptz_proto_goTypes = []any{
-	(*Ptz)(nil),                    // 0: smartcore.bos.ptz.v1.Ptz
-	(*PtzVector)(nil),              // 1: smartcore.bos.ptz.v1.PtzVector
-	(*PtzBounds)(nil),              // 2: smartcore.bos.ptz.v1.PtzBounds
-	(*PtzMovement)(nil),            // 3: smartcore.bos.ptz.v1.PtzMovement
-	(*PtzPosition)(nil),            // 4: smartcore.bos.ptz.v1.PtzPosition
-	(*PtzPreset)(nil),              // 5: smartcore.bos.ptz.v1.PtzPreset
-	(*PtzSupport)(nil),             // 6: smartcore.bos.ptz.v1.PtzSupport
-	(*GetPtzRequest)(nil),          // 7: smartcore.bos.ptz.v1.GetPtzRequest
-	(*UpdatePtzRequest)(nil),       // 8: smartcore.bos.ptz.v1.UpdatePtzRequest
-	(*StopPtzRequest)(nil),         // 9: smartcore.bos.ptz.v1.StopPtzRequest
-	(*CreatePtzPresetRequest)(nil), // 10: smartcore.bos.ptz.v1.CreatePtzPresetRequest
-	(*PullPtzRequest)(nil),         // 11: smartcore.bos.ptz.v1.PullPtzRequest
-	(*PullPtzResponse)(nil),        // 12: smartcore.bos.ptz.v1.PullPtzResponse
-	(*DescribePtzRequest)(nil),     // 13: smartcore.bos.ptz.v1.DescribePtzRequest
-	(*PullPtzResponse_Change)(nil), // 14: smartcore.bos.ptz.v1.PullPtzResponse.Change
-	(*types.Tween)(nil),            // 15: smartcore.types.Tween
-	(*types.ResourceSupport)(nil),  // 16: smartcore.types.ResourceSupport
-	(*fieldmaskpb.FieldMask)(nil),  // 17: google.protobuf.FieldMask
-	(*timestamppb.Timestamp)(nil),  // 18: google.protobuf.Timestamp
+	(*Ptz)(nil),                     // 0: smartcore.bos.ptz.v1.Ptz
+	(*PtzVector)(nil),               // 1: smartcore.bos.ptz.v1.PtzVector
+	(*PtzBounds)(nil),               // 2: smartcore.bos.ptz.v1.PtzBounds
+	(*PtzMovement)(nil),             // 3: smartcore.bos.ptz.v1.PtzMovement
+	(*PtzPosition)(nil),             // 4: smartcore.bos.ptz.v1.PtzPosition
+	(*PtzPreset)(nil),               // 5: smartcore.bos.ptz.v1.PtzPreset
+	(*PtzSupport)(nil),              // 6: smartcore.bos.ptz.v1.PtzSupport
+	(*GetPtzRequest)(nil),           // 7: smartcore.bos.ptz.v1.GetPtzRequest
+	(*UpdatePtzRequest)(nil),        // 8: smartcore.bos.ptz.v1.UpdatePtzRequest
+	(*StopPtzRequest)(nil),          // 9: smartcore.bos.ptz.v1.StopPtzRequest
+	(*CreatePtzPresetRequest)(nil),  // 10: smartcore.bos.ptz.v1.CreatePtzPresetRequest
+	(*PullPtzRequest)(nil),          // 11: smartcore.bos.ptz.v1.PullPtzRequest
+	(*PullPtzResponse)(nil),         // 12: smartcore.bos.ptz.v1.PullPtzResponse
+	(*DescribePtzRequest)(nil),      // 13: smartcore.bos.ptz.v1.DescribePtzRequest
+	(*PullPtzResponse_Change)(nil),  // 14: smartcore.bos.ptz.v1.PullPtzResponse.Change
+	(*typespb.Tween)(nil),           // 15: smartcore.bos.types.v1.Tween
+	(*typespb.ResourceSupport)(nil), // 16: smartcore.bos.types.v1.ResourceSupport
+	(*fieldmaskpb.FieldMask)(nil),   // 17: google.protobuf.FieldMask
+	(*timestamppb.Timestamp)(nil),   // 18: google.protobuf.Timestamp
 }
 var file_smartcore_bos_ptz_v1_ptz_proto_depIdxs = []int32{
 	4,  // 0: smartcore.bos.ptz.v1.Ptz.position:type_name -> smartcore.bos.ptz.v1.PtzPosition
@@ -1069,12 +1069,12 @@ var file_smartcore_bos_ptz_v1_ptz_proto_depIdxs = []int32{
 	1,  // 2: smartcore.bos.ptz.v1.PtzBounds.min:type_name -> smartcore.bos.ptz.v1.PtzVector
 	1,  // 3: smartcore.bos.ptz.v1.PtzBounds.max:type_name -> smartcore.bos.ptz.v1.PtzVector
 	1,  // 4: smartcore.bos.ptz.v1.PtzMovement.direction:type_name -> smartcore.bos.ptz.v1.PtzVector
-	15, // 5: smartcore.bos.ptz.v1.PtzMovement.speed_tween:type_name -> smartcore.types.Tween
+	15, // 5: smartcore.bos.ptz.v1.PtzMovement.speed_tween:type_name -> smartcore.bos.types.v1.Tween
 	1,  // 6: smartcore.bos.ptz.v1.PtzPosition.position:type_name -> smartcore.bos.ptz.v1.PtzVector
-	15, // 7: smartcore.bos.ptz.v1.PtzPosition.tween:type_name -> smartcore.types.Tween
+	15, // 7: smartcore.bos.ptz.v1.PtzPosition.tween:type_name -> smartcore.bos.types.v1.Tween
 	1,  // 8: smartcore.bos.ptz.v1.PtzPosition.target_position:type_name -> smartcore.bos.ptz.v1.PtzVector
 	1,  // 9: smartcore.bos.ptz.v1.PtzPreset.position:type_name -> smartcore.bos.ptz.v1.PtzVector
-	16, // 10: smartcore.bos.ptz.v1.PtzSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	16, // 10: smartcore.bos.ptz.v1.PtzSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	5,  // 11: smartcore.bos.ptz.v1.PtzSupport.presets:type_name -> smartcore.bos.ptz.v1.PtzPreset
 	17, // 12: smartcore.bos.ptz.v1.GetPtzRequest.read_mask:type_name -> google.protobuf.FieldMask
 	0,  // 13: smartcore.bos.ptz.v1.UpdatePtzRequest.state:type_name -> smartcore.bos.ptz.v1.Ptz

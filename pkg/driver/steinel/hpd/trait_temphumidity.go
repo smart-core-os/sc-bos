@@ -7,8 +7,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type TemperatureSensor struct {
@@ -70,7 +70,7 @@ func (a *TemperatureSensor) GetUpdate(response *SensorResponse) error {
 	_, err := a.TemperatureValue.Set(&airtemperaturepb.AirTemperature{
 		Mode:               0,
 		TemperatureGoal:    nil,
-		AmbientTemperature: &types.Temperature{ValueCelsius: response.Temperature},
+		AmbientTemperature: &typespb.Temperature{ValueCelsius: response.Temperature},
 		AmbientHumidity:    &humidity,
 		DewPoint:           nil,
 	})

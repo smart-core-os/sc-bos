@@ -11,9 +11,9 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
-import "types/number.proto";
-import "types/tween.proto";
+import "smartcore/bos/types/v1/info.proto";
+import "smartcore/bos/types/v1/number.proto";
+import "smartcore/bos/types/v1/tween.proto";
 
 // Control the light output of a device. Brightness values should be normalised to 0-100 as a percentage, though the
 // device may not support all steps within. See BrightnessSupport for step values of the device.
@@ -52,7 +52,7 @@ message Brightness {
   LightPreset preset = 2;
 
   // How the brightness changes or should change over time. On write only duration should be set.
-  smartcore.types.Tween brightness_tween = 3;
+  smartcore.bos.types.v1.Tween brightness_tween = 3;
   // The target level_percent. Ignored on write. On read zero values should be ignored iff target_preset is present.
   float target_level_percent = 4;
   // The target preset. Ignored on write. If present ignore target_level_percent
@@ -67,9 +67,9 @@ message LightPreset {
 // BrightnessSupport describes the capabilities of devices implementing this trait
 message BrightnessSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // control how the brightness can be controlled. The range of these attributes is fixed at 0-100 as a percentage
-  smartcore.types.Int32Attributes brightness_attributes = 2;
+  smartcore.bos.types.v1.Int32Attributes brightness_attributes = 2;
   // A description of the supported presets, none means no presets
   repeated LightPreset presets = 3;
 }

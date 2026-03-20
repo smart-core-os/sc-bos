@@ -10,8 +10,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 var VersionMismatchErr = status.Error(codes.FailedPrecondition, "version mismatch: update version != server version")
@@ -98,7 +98,7 @@ func (m *ModelServer) PullPublication(request *PullPublicationRequest, server Pu
 }
 
 func (m *ModelServer) ListPublications(_ context.Context, request *ListPublicationsRequest) (*ListPublicationsResponse, error) {
-	pageToken := &types.PageToken{}
+	pageToken := &typespb.PageToken{}
 	if err := decodePageToken(request.PageToken, pageToken); err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (m *ModelServer) ListPublications(_ context.Context, request *ListPublicati
 		upperBound = len(sortedItems)
 		pageToken = nil
 	} else {
-		pageToken.PageStart = &types.PageToken_LastResourceName{
+		pageToken.PageStart = &typespb.PageToken_LastResourceName{
 			LastResourceName: sortedItems[upperBound-1].Id,
 		}
 	}

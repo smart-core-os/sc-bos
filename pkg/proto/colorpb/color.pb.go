@@ -7,7 +7,7 @@
 package colorpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -30,7 +30,7 @@ type Color struct {
 	Channels *ColorChannels         `protobuf:"bytes,1,opt,name=channels,proto3" json:"channels,omitempty"`
 	Preset   *ColorPreset           `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	// How the color changes or should change over time. On write only duration should be set.
-	ColorTween *types.Tween `protobuf:"bytes,3,opt,name=color_tween,json=colorTween,proto3" json:"color_tween,omitempty"`
+	ColorTween *typespb.Tween `protobuf:"bytes,3,opt,name=color_tween,json=colorTween,proto3" json:"color_tween,omitempty"`
 	// The target channel values. Ignored on write. On read zero values should be ignored iff target_preset is present.
 	TargetChannels *ColorChannels `protobuf:"bytes,4,opt,name=target_channels,json=targetChannels,proto3" json:"target_channels,omitempty"`
 	// The target preset. Ignored on write. If present ignore target_channels
@@ -83,7 +83,7 @@ func (x *Color) GetPreset() *ColorPreset {
 	return nil
 }
 
-func (x *Color) GetColorTween() *types.Tween {
+func (x *Color) GetColorTween() *typespb.Tween {
 	if x != nil {
 		return x.ColorTween
 	}
@@ -262,9 +262,9 @@ func (x *ColorPreset) GetTitle() string {
 type ColorSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// control how the color can be controlled. The range of these attributes is fixed at 0-100 as a percentage
-	ColorAttributes *types.Int32Attributes `protobuf:"bytes,2,opt,name=color_attributes,json=colorAttributes,proto3" json:"color_attributes,omitempty"`
+	ColorAttributes *typespb.Int32Attributes `protobuf:"bytes,2,opt,name=color_attributes,json=colorAttributes,proto3" json:"color_attributes,omitempty"`
 	// A description of the supported presets, none means no presets
 	Presets []*ColorPreset `protobuf:"bytes,3,rep,name=presets,proto3" json:"presets,omitempty"`
 	// A description of the supported channels, none means no channels
@@ -305,14 +305,14 @@ func (*ColorSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_color_v1_color_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *ColorSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *ColorSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
 	return nil
 }
 
-func (x *ColorSupport) GetColorAttributes() *types.Int32Attributes {
+func (x *ColorSupport) GetColorAttributes() *typespb.Int32Attributes {
 	if x != nil {
 		return x.ColorAttributes
 	}
@@ -686,11 +686,11 @@ var File_smartcore_bos_color_v1_color_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_color_v1_color_proto_rawDesc = "" +
 	"\n" +
-	"\"smartcore/bos/color/v1/color.proto\x12\x16smartcore.bos.color.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\x1a\x12types/number.proto\x1a\x11types/tween.proto\"\xda\x02\n" +
+	"\"smartcore/bos/color/v1/color.proto\x12\x16smartcore.bos.color.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\x1a#smartcore/bos/types/v1/number.proto\x1a\"smartcore/bos/types/v1/tween.proto\"\xe1\x02\n" +
 	"\x05Color\x12A\n" +
 	"\bchannels\x18\x01 \x01(\v2%.smartcore.bos.color.v1.ColorChannelsR\bchannels\x12;\n" +
-	"\x06preset\x18\x02 \x01(\v2#.smartcore.bos.color.v1.ColorPresetR\x06preset\x127\n" +
-	"\vcolor_tween\x18\x03 \x01(\v2\x16.smartcore.types.TweenR\n" +
+	"\x06preset\x18\x02 \x01(\v2#.smartcore.bos.color.v1.ColorPresetR\x06preset\x12>\n" +
+	"\vcolor_tween\x18\x03 \x01(\v2\x1d.smartcore.bos.types.v1.TweenR\n" +
 	"colorTween\x12N\n" +
 	"\x0ftarget_channels\x18\x04 \x01(\v2%.smartcore.bos.color.v1.ColorChannelsR\x0etargetChannels\x12H\n" +
 	"\rtarget_preset\x18\x05 \x01(\v2#.smartcore.bos.color.v1.ColorPresetR\ftargetPreset\"\xdb\x02\n" +
@@ -712,10 +712,10 @@ const file_smartcore_bos_color_v1_color_proto_rawDesc = "" +
 	"\f_temperature\"7\n" +
 	"\vColorPreset\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\"\x83\x02\n" +
-	"\fColorSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12K\n" +
-	"\x10color_attributes\x18\x02 \x01(\v2 .smartcore.types.Int32AttributesR\x0fcolorAttributes\x12=\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\"\x91\x02\n" +
+	"\fColorSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12R\n" +
+	"\x10color_attributes\x18\x02 \x01(\v2'.smartcore.bos.types.v1.Int32AttributesR\x0fcolorAttributes\x12=\n" +
 	"\apresets\x18\x03 \x03(\v2#.smartcore.bos.color.v1.ColorPresetR\apresets\x12\x1a\n" +
 	"\bchannels\x18\x04 \x03(\tR\bchannels\"\x9a\x01\n" +
 	"\x12UpdateColorRequest\x12\x12\n" +
@@ -774,21 +774,21 @@ var file_smartcore_bos_color_v1_color_proto_goTypes = []any{
 	(*DescribeColorRequest)(nil),     // 8: smartcore.bos.color.v1.DescribeColorRequest
 	nil,                              // 9: smartcore.bos.color.v1.ColorChannels.MoreEntry
 	(*PullColorResponse_Change)(nil), // 10: smartcore.bos.color.v1.PullColorResponse.Change
-	(*types.Tween)(nil),              // 11: smartcore.types.Tween
-	(*types.ResourceSupport)(nil),    // 12: smartcore.types.ResourceSupport
-	(*types.Int32Attributes)(nil),    // 13: smartcore.types.Int32Attributes
+	(*typespb.Tween)(nil),            // 11: smartcore.bos.types.v1.Tween
+	(*typespb.ResourceSupport)(nil),  // 12: smartcore.bos.types.v1.ResourceSupport
+	(*typespb.Int32Attributes)(nil),  // 13: smartcore.bos.types.v1.Int32Attributes
 	(*fieldmaskpb.FieldMask)(nil),    // 14: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),    // 15: google.protobuf.Timestamp
 }
 var file_smartcore_bos_color_v1_color_proto_depIdxs = []int32{
 	1,  // 0: smartcore.bos.color.v1.Color.channels:type_name -> smartcore.bos.color.v1.ColorChannels
 	2,  // 1: smartcore.bos.color.v1.Color.preset:type_name -> smartcore.bos.color.v1.ColorPreset
-	11, // 2: smartcore.bos.color.v1.Color.color_tween:type_name -> smartcore.types.Tween
+	11, // 2: smartcore.bos.color.v1.Color.color_tween:type_name -> smartcore.bos.types.v1.Tween
 	1,  // 3: smartcore.bos.color.v1.Color.target_channels:type_name -> smartcore.bos.color.v1.ColorChannels
 	2,  // 4: smartcore.bos.color.v1.Color.target_preset:type_name -> smartcore.bos.color.v1.ColorPreset
 	9,  // 5: smartcore.bos.color.v1.ColorChannels.more:type_name -> smartcore.bos.color.v1.ColorChannels.MoreEntry
-	12, // 6: smartcore.bos.color.v1.ColorSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	13, // 7: smartcore.bos.color.v1.ColorSupport.color_attributes:type_name -> smartcore.types.Int32Attributes
+	12, // 6: smartcore.bos.color.v1.ColorSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
+	13, // 7: smartcore.bos.color.v1.ColorSupport.color_attributes:type_name -> smartcore.bos.types.v1.Int32Attributes
 	2,  // 8: smartcore.bos.color.v1.ColorSupport.presets:type_name -> smartcore.bos.color.v1.ColorPreset
 	0,  // 9: smartcore.bos.color.v1.UpdateColorRequest.color:type_name -> smartcore.bos.color.v1.Color
 	14, // 10: smartcore.bos.color.v1.UpdateColorRequest.update_mask:type_name -> google.protobuf.FieldMask

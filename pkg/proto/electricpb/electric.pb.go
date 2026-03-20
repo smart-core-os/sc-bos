@@ -7,7 +7,7 @@
 package electricpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -1155,7 +1155,7 @@ type PullModesResponse_Change struct {
 	// The name of the device that emitted this change
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The type of change (e.g. ADD, UPDATE, etc...)
-	Type types.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type typespb.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	// The new value to use for ADD|UPDATE changes
 	NewValue *ElectricMode `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// The old value to use for UPDATE|REMOVE changes
@@ -1203,11 +1203,11 @@ func (x *PullModesResponse_Change) GetName() string {
 	return ""
 }
 
-func (x *PullModesResponse_Change) GetType() types.ChangeType {
+func (x *PullModesResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 func (x *PullModesResponse_Change) GetNewValue() *ElectricMode {
@@ -1235,7 +1235,7 @@ var File_smartcore_bos_electric_v1_electric_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_electric_v1_electric_proto_rawDesc = "" +
 	"\n" +
-	"(smartcore/bos/electric/v1/electric.proto\x12\x19smartcore.bos.electric.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\"\xd7\x02\n" +
+	"(smartcore/bos/electric/v1/electric.proto\x12\x19smartcore.bos.electric.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a#smartcore/bos/types/v1/change.proto\"\xd7\x02\n" +
 	"\x0eElectricDemand\x12\x18\n" +
 	"\acurrent\x18\x01 \x01(\x02R\acurrent\x12\x1d\n" +
 	"\avoltage\x18\x02 \x01(\x02H\x00R\avoltage\x88\x01\x01\x12\x16\n" +
@@ -1316,12 +1316,12 @@ const file_smartcore_bos_electric_v1_electric_proto_rawDesc = "" +
 	"\x10PullModesRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xfb\x02\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x82\x03\n" +
 	"\x11PullModesResponse\x12M\n" +
-	"\achanges\x18\x01 \x03(\v23.smartcore.bos.electric.v1.PullModesResponse.ChangeR\achanges\x1a\x96\x02\n" +
+	"\achanges\x18\x01 \x03(\v23.smartcore.bos.electric.v1.PullModesResponse.ChangeR\achanges\x1a\x9d\x02\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12D\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\x12D\n" +
 	"\tnew_value\x18\x03 \x01(\v2'.smartcore.bos.electric.v1.ElectricModeR\bnewValue\x12D\n" +
 	"\told_value\x18\x04 \x01(\v2'.smartcore.bos.electric.v1.ElectricModeR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -1374,7 +1374,7 @@ var file_smartcore_bos_electric_v1_electric_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),         // 18: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),         // 19: google.protobuf.FieldMask
 	(*durationpb.Duration)(nil),           // 20: google.protobuf.Duration
-	(types.ChangeType)(0),                 // 21: smartcore.types.ChangeType
+	(typespb.ChangeType)(0),               // 21: smartcore.bos.types.v1.ChangeType
 }
 var file_smartcore_bos_electric_v1_electric_proto_depIdxs = []int32{
 	18, // 0: smartcore.bos.electric.v1.ElectricMode.start_time:type_name -> google.protobuf.Timestamp
@@ -1396,7 +1396,7 @@ var file_smartcore_bos_electric_v1_electric_proto_depIdxs = []int32{
 	0,  // 16: smartcore.bos.electric.v1.PullDemandResponse.Change.demand:type_name -> smartcore.bos.electric.v1.ElectricDemand
 	18, // 17: smartcore.bos.electric.v1.PullActiveModeResponse.Change.change_time:type_name -> google.protobuf.Timestamp
 	1,  // 18: smartcore.bos.electric.v1.PullActiveModeResponse.Change.active_mode:type_name -> smartcore.bos.electric.v1.ElectricMode
-	21, // 19: smartcore.bos.electric.v1.PullModesResponse.Change.type:type_name -> smartcore.types.ChangeType
+	21, // 19: smartcore.bos.electric.v1.PullModesResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	1,  // 20: smartcore.bos.electric.v1.PullModesResponse.Change.new_value:type_name -> smartcore.bos.electric.v1.ElectricMode
 	1,  // 21: smartcore.bos.electric.v1.PullModesResponse.Change.old_value:type_name -> smartcore.bos.electric.v1.ElectricMode
 	18, // 22: smartcore.bos.electric.v1.PullModesResponse.Change.change_time:type_name -> google.protobuf.Timestamp

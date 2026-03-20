@@ -8,10 +8,10 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/system/alerts/alertmd"
 	"github.com/smart-core-os/sc-bos/pkg/util/once"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // Server backs off to a remove server, modifying requests to filter by federation parameter.
@@ -203,7 +203,7 @@ func (s *Server) initAlertMetadata(ctx context.Context) error {
 
 			for _, alert := range list.Alerts {
 				err := alertmd.ApplyMdDelta(val, &alertpb.PullAlertsResponse_Change{
-					Type:     types.ChangeType_ADD,
+					Type:     typespb.ChangeType_ADD,
 					NewValue: alert,
 				})
 				if err != nil {

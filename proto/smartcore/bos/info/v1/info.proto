@@ -1,15 +1,15 @@
 syntax = "proto3";
 
-package smartcore.info;
+package smartcore.bos.info.v1;
 
 option csharp_namespace = "Smartcore.Info";
-option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/info";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/infopb";
 option java_multiple_files = true;
 option java_outer_classname = "InfoProto";
 option java_package = "dev.smartcore.info";
 option php_namespace = "Smartcore\\Info";
 
-import "types/change.proto";
+import "smartcore/bos/types/v1/change.proto";
 
 // Allow exposing information about an endpoint related to devices.
 //
@@ -53,7 +53,7 @@ message PullDevicesResponse {
   repeated Change changes = 1;
 
   message Change {
-    smartcore.types.ChangeType type = 1;
+    smartcore.bos.types.v1.ChangeType type = 1;
     Device new_value = 2;
     Device old_value = 3;
   }

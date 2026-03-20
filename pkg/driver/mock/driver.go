@@ -37,6 +37,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/vendingpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
@@ -45,7 +46,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 const DriverName = "mock"
@@ -286,7 +286,7 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 
 		model := meterpb.NewModel()
 		info := &meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
-			ResourceSupport: &types.ResourceSupport{
+			ResourceSupport: &typespb.ResourceSupport{
 				Readable:   true,
 				Writable:   true,
 				Observable: true,

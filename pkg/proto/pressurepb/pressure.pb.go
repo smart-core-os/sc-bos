@@ -7,7 +7,7 @@
 package pressurepb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -352,7 +352,7 @@ func (x *DescribePressureRequest) GetName() string {
 type PressureSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// The unit associated with the target pressure and measured values
 	PressureUnit  string `protobuf:"bytes,2,opt,name=pressure_unit,json=pressureUnit,proto3" json:"pressure_unit,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -389,7 +389,7 @@ func (*PressureSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_pressure_v1_pressure_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *PressureSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *PressureSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -467,7 +467,7 @@ var File_smartcore_bos_pressure_v1_pressure_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_pressure_v1_pressure_proto_rawDesc = "" +
 	"\n" +
-	"(smartcore/bos/pressure/v1/pressure.proto\x12\x19smartcore.bos.pressure.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"z\n" +
+	"(smartcore/bos/pressure/v1/pressure.proto\x12\x19smartcore.bos.pressure.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"z\n" +
 	"\bPressure\x12,\n" +
 	"\x0ftarget_pressure\x18\x01 \x01(\x02H\x00R\x0etargetPressure\x88\x01\x01\x12\x1f\n" +
 	"\bpressure\x18\x02 \x01(\x02H\x01R\bpressure\x88\x01\x01B\x12\n" +
@@ -494,9 +494,9 @@ const file_smartcore_bos_pressure_v1_pressure_proto_rawDesc = "" +
 	"updateMask\x12\x14\n" +
 	"\x05delta\x18\x04 \x01(\bR\x05delta\"-\n" +
 	"\x17DescribePressureRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"\x83\x01\n" +
-	"\x0fPressureSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12#\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\x8a\x01\n" +
+	"\x0fPressureSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12#\n" +
 	"\rpressure_unit\x18\x02 \x01(\tR\fpressureUnit2\xd2\x02\n" +
 	"\vPressureApi\x12c\n" +
 	"\vGetPressure\x12-.smartcore.bos.pressure.v1.GetPressureRequest\x1a#.smartcore.bos.pressure.v1.Pressure\"\x00\x12s\n" +
@@ -528,7 +528,7 @@ var file_smartcore_bos_pressure_v1_pressure_proto_goTypes = []any{
 	(*PressureSupport)(nil),             // 6: smartcore.bos.pressure.v1.PressureSupport
 	(*PullPressureResponse_Change)(nil), // 7: smartcore.bos.pressure.v1.PullPressureResponse.Change
 	(*fieldmaskpb.FieldMask)(nil),       // 8: google.protobuf.FieldMask
-	(*types.ResourceSupport)(nil),       // 9: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),     // 9: smartcore.bos.types.v1.ResourceSupport
 	(*timestamppb.Timestamp)(nil),       // 10: google.protobuf.Timestamp
 }
 var file_smartcore_bos_pressure_v1_pressure_proto_depIdxs = []int32{
@@ -537,7 +537,7 @@ var file_smartcore_bos_pressure_v1_pressure_proto_depIdxs = []int32{
 	7,  // 2: smartcore.bos.pressure.v1.PullPressureResponse.changes:type_name -> smartcore.bos.pressure.v1.PullPressureResponse.Change
 	0,  // 3: smartcore.bos.pressure.v1.UpdatePressureRequest.pressure:type_name -> smartcore.bos.pressure.v1.Pressure
 	8,  // 4: smartcore.bos.pressure.v1.UpdatePressureRequest.update_mask:type_name -> google.protobuf.FieldMask
-	9,  // 5: smartcore.bos.pressure.v1.PressureSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	9,  // 5: smartcore.bos.pressure.v1.PressureSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	10, // 6: smartcore.bos.pressure.v1.PullPressureResponse.Change.change_time:type_name -> google.protobuf.Timestamp
 	0,  // 7: smartcore.bos.pressure.v1.PullPressureResponse.Change.pressure:type_name -> smartcore.bos.pressure.v1.Pressure
 	1,  // 8: smartcore.bos.pressure.v1.PressureApi.GetPressure:input_type -> smartcore.bos.pressure.v1.GetPressureRequest

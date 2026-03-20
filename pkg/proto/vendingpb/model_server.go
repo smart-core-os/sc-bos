@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 // ModelServer adapts a Model to implement traits.VendingApiServer.
@@ -32,7 +32,7 @@ func (m *ModelServer) Register(server grpc.ServiceRegistrar) {
 }
 
 func (m *ModelServer) ListConsumables(_ context.Context, request *ListConsumablesRequest) (*ListConsumablesResponse, error) {
-	pageToken := &types.PageToken{}
+	pageToken := &typespb.PageToken{}
 	if err := decodePageToken(request.PageToken, pageToken); err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (m *ModelServer) ListConsumables(_ context.Context, request *ListConsumable
 		upperBound = len(sortedItems)
 		pageToken = nil
 	} else {
-		pageToken.PageStart = &types.PageToken_LastResourceName{
+		pageToken.PageStart = &typespb.PageToken_LastResourceName{
 			LastResourceName: sortedItems[upperBound-1].Name,
 		}
 	}
@@ -110,7 +110,7 @@ func (m *ModelServer) PullStock(request *PullStockRequest, server VendingApi_Pul
 }
 
 func (m *ModelServer) ListInventory(_ context.Context, request *ListInventoryRequest) (*ListInventoryResponse, error) {
-	pageToken := &types.PageToken{}
+	pageToken := &typespb.PageToken{}
 	if err := decodePageToken(request.PageToken, pageToken); err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (m *ModelServer) ListInventory(_ context.Context, request *ListInventoryReq
 		upperBound = len(sortedItems)
 		pageToken = nil
 	} else {
-		pageToken.PageStart = &types.PageToken_LastResourceName{
+		pageToken.PageStart = &typespb.PageToken_LastResourceName{
 			LastResourceName: sortedItems[upperBound-1].Consumable,
 		}
 	}

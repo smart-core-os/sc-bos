@@ -7,7 +7,7 @@
 package motionsensorpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -137,7 +137,7 @@ func (x *MotionDetection) GetStateChangeTime() *timestamppb.Timestamp {
 type MotionDetectionSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// How long the device is configured to wait before reporting a state of NOT_DETECTED
 	NotDetectedDelay *durationpb.Duration `protobuf:"bytes,2,opt,name=not_detected_delay,json=notDetectedDelay,proto3" json:"not_detected_delay,omitempty"`
 	unknownFields    protoimpl.UnknownFields
@@ -174,7 +174,7 @@ func (*MotionDetectionSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_motionsensor_v1_motion_sensor_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *MotionDetectionSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *MotionDetectionSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -467,16 +467,16 @@ var File_smartcore_bos_motionsensor_v1_motion_sensor_proto protoreflect.FileDesc
 
 const file_smartcore_bos_motionsensor_v1_motion_sensor_proto_rawDesc = "" +
 	"\n" +
-	"1smartcore/bos/motionsensor/v1/motion_sensor.proto\x12\x1dsmartcore.bos.motionsensor.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xe5\x01\n" +
+	"1smartcore/bos/motionsensor/v1/motion_sensor.proto\x12\x1dsmartcore.bos.motionsensor.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\xe5\x01\n" +
 	"\x0fMotionDetection\x12J\n" +
 	"\x05state\x18\x01 \x01(\x0e24.smartcore.bos.motionsensor.v1.MotionDetection.StateR\x05state\x12F\n" +
 	"\x11state_change_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x0fstateChangeTime\">\n" +
 	"\x05State\x12\x15\n" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fNOT_DETECTED\x10\x01\x12\f\n" +
-	"\bDETECTED\x10\x02\"\xae\x01\n" +
-	"\x16MotionDetectionSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12G\n" +
+	"\bDETECTED\x10\x02\"\xb5\x01\n" +
+	"\x16MotionDetectionSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12G\n" +
 	"\x12not_detected_delay\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x10notDetectedDelay\"h\n" +
 	"\x19GetMotionDetectionRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
@@ -525,14 +525,14 @@ var file_smartcore_bos_motionsensor_v1_motion_sensor_proto_goTypes = []any{
 	(*DescribeMotionDetectionRequest)(nil),     // 6: smartcore.bos.motionsensor.v1.DescribeMotionDetectionRequest
 	(*PullMotionDetectionResponse_Change)(nil), // 7: smartcore.bos.motionsensor.v1.PullMotionDetectionResponse.Change
 	(*timestamppb.Timestamp)(nil),              // 8: google.protobuf.Timestamp
-	(*types.ResourceSupport)(nil),              // 9: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),            // 9: smartcore.bos.types.v1.ResourceSupport
 	(*durationpb.Duration)(nil),                // 10: google.protobuf.Duration
 	(*fieldmaskpb.FieldMask)(nil),              // 11: google.protobuf.FieldMask
 }
 var file_smartcore_bos_motionsensor_v1_motion_sensor_proto_depIdxs = []int32{
 	0,  // 0: smartcore.bos.motionsensor.v1.MotionDetection.state:type_name -> smartcore.bos.motionsensor.v1.MotionDetection.State
 	8,  // 1: smartcore.bos.motionsensor.v1.MotionDetection.state_change_time:type_name -> google.protobuf.Timestamp
-	9,  // 2: smartcore.bos.motionsensor.v1.MotionDetectionSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	9,  // 2: smartcore.bos.motionsensor.v1.MotionDetectionSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	10, // 3: smartcore.bos.motionsensor.v1.MotionDetectionSupport.not_detected_delay:type_name -> google.protobuf.Duration
 	11, // 4: smartcore.bos.motionsensor.v1.GetMotionDetectionRequest.read_mask:type_name -> google.protobuf.FieldMask
 	11, // 5: smartcore.bos.motionsensor.v1.PullMotionDetectionRequest.read_mask:type_name -> google.protobuf.FieldMask

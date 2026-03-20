@@ -7,7 +7,7 @@
 package microphonepb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -27,13 +27,13 @@ const (
 type GainSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// Attributes associated with the gain property of the microphone. Note that a step value that is the same as the bounds
 	// implies that the microphone only supports mute
-	GainAttributes *types.FloatAttributes `protobuf:"bytes,2,opt,name=gain_attributes,json=gainAttributes,proto3" json:"gain_attributes,omitempty"`
+	GainAttributes *typespb.FloatAttributes `protobuf:"bytes,2,opt,name=gain_attributes,json=gainAttributes,proto3" json:"gain_attributes,omitempty"`
 	// How is mute implemented by the device. Can help to customise behaviour of interfaces to the device, e.g. by
 	// disallowing gain change when muted
-	MuteSupport   types.MuteSupport `protobuf:"varint,3,opt,name=mute_support,json=muteSupport,proto3,enum=smartcore.types.MuteSupport" json:"mute_support,omitempty"`
+	MuteSupport   typespb.MuteSupport `protobuf:"varint,3,opt,name=mute_support,json=muteSupport,proto3,enum=smartcore.bos.types.v1.MuteSupport" json:"mute_support,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -68,25 +68,25 @@ func (*GainSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_microphone_v1_microphone_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GainSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *GainSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
 	return nil
 }
 
-func (x *GainSupport) GetGainAttributes() *types.FloatAttributes {
+func (x *GainSupport) GetGainAttributes() *typespb.FloatAttributes {
 	if x != nil {
 		return x.GainAttributes
 	}
 	return nil
 }
 
-func (x *GainSupport) GetMuteSupport() types.MuteSupport {
+func (x *GainSupport) GetMuteSupport() typespb.MuteSupport {
 	if x != nil {
 		return x.MuteSupport
 	}
-	return types.MuteSupport(0)
+	return typespb.MuteSupport(0)
 }
 
 type GetMicrophoneGainRequest struct {
@@ -148,7 +148,7 @@ type UpdateMicrophoneGainRequest struct {
 	// Name of the device to update the state for
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The updated gain value
-	Gain *types.AudioLevel `protobuf:"bytes,2,opt,name=gain,proto3" json:"gain,omitempty"`
+	Gain *typespb.AudioLevel `protobuf:"bytes,2,opt,name=gain,proto3" json:"gain,omitempty"`
 	// Only supported for AudioLevel.gain. Update the value relative to the current value.
 	Delta bool `protobuf:"varint,3,opt,name=delta,proto3" json:"delta,omitempty"`
 	// The fields we intend to update relative to the AudioLevel type
@@ -194,7 +194,7 @@ func (x *UpdateMicrophoneGainRequest) GetName() string {
 	return ""
 }
 
-func (x *UpdateMicrophoneGainRequest) GetGain() *types.AudioLevel {
+func (x *UpdateMicrophoneGainRequest) GetGain() *typespb.AudioLevel {
 	if x != nil {
 		return x.Gain
 	}
@@ -282,7 +282,7 @@ func (x *PullMicrophoneGainRequest) GetUpdatesOnly() bool {
 type PullMicrophoneGainResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Changes since the last message
-	Changes       []*types.AudioLevelChange `protobuf:"bytes,1,rep,name=changes,proto3" json:"changes,omitempty"`
+	Changes       []*typespb.AudioLevelChange `protobuf:"bytes,1,rep,name=changes,proto3" json:"changes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -317,7 +317,7 @@ func (*PullMicrophoneGainResponse) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_microphone_v1_microphone_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *PullMicrophoneGainResponse) GetChanges() []*types.AudioLevelChange {
+func (x *PullMicrophoneGainResponse) GetChanges() []*typespb.AudioLevelChange {
 	if x != nil {
 		return x.Changes
 	}
@@ -373,32 +373,32 @@ var File_smartcore_bos_microphone_v1_microphone_proto protoreflect.FileDescripto
 
 const file_smartcore_bos_microphone_v1_microphone_proto_rawDesc = "" +
 	"\n" +
-	",smartcore/bos/microphone/v1/microphone.proto\x12\x1bsmartcore.bos.microphone.v1\x1a google/protobuf/field_mask.proto\x1a\x10types/info.proto\x1a\x12types/number.proto\x1a\x10types/unit.proto\"\xe6\x01\n" +
-	"\vGainSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12I\n" +
-	"\x0fgain_attributes\x18\x02 \x01(\v2 .smartcore.types.FloatAttributesR\x0egainAttributes\x12?\n" +
-	"\fmute_support\x18\x03 \x01(\x0e2\x1c.smartcore.types.MuteSupportR\vmuteSupport\"g\n" +
+	",smartcore/bos/microphone/v1/microphone.proto\x12\x1bsmartcore.bos.microphone.v1\x1a google/protobuf/field_mask.proto\x1a!smartcore/bos/types/v1/info.proto\x1a#smartcore/bos/types/v1/number.proto\x1a!smartcore/bos/types/v1/unit.proto\"\xfb\x01\n" +
+	"\vGainSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12P\n" +
+	"\x0fgain_attributes\x18\x02 \x01(\v2'.smartcore.bos.types.v1.FloatAttributesR\x0egainAttributes\x12F\n" +
+	"\fmute_support\x18\x03 \x01(\x0e2#.smartcore.bos.types.v1.MuteSupportR\vmuteSupport\"g\n" +
 	"\x18GetMicrophoneGainRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
-	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\xb5\x01\n" +
+	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\xbc\x01\n" +
 	"\x1bUpdateMicrophoneGainRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04gain\x18\x02 \x01(\v2\x1b.smartcore.types.AudioLevelR\x04gain\x12\x14\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
+	"\x04gain\x18\x02 \x01(\v2\".smartcore.bos.types.v1.AudioLevelR\x04gain\x12\x14\n" +
 	"\x05delta\x18\x03 \x01(\bR\x05delta\x12;\n" +
 	"\vupdate_mask\x18\x04 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\"\x8b\x01\n" +
 	"\x19PullMicrophoneGainRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"Y\n" +
-	"\x1aPullMicrophoneGainResponse\x12;\n" +
-	"\achanges\x18\x01 \x03(\v2!.smartcore.types.AudioLevelChangeR\achanges\")\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"`\n" +
+	"\x1aPullMicrophoneGainResponse\x12B\n" +
+	"\achanges\x18\x01 \x03(\v2(.smartcore.bos.types.v1.AudioLevelChangeR\achanges\")\n" +
 	"\x13DescribeGainRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name2\xd2\x02\n" +
-	"\rMicrophoneApi\x12]\n" +
-	"\aGetGain\x125.smartcore.bos.microphone.v1.GetMicrophoneGainRequest\x1a\x1b.smartcore.types.AudioLevel\x12c\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name2\xe0\x02\n" +
+	"\rMicrophoneApi\x12d\n" +
+	"\aGetGain\x125.smartcore.bos.microphone.v1.GetMicrophoneGainRequest\x1a\".smartcore.bos.types.v1.AudioLevel\x12j\n" +
 	"\n" +
-	"UpdateGain\x128.smartcore.bos.microphone.v1.UpdateMicrophoneGainRequest\x1a\x1b.smartcore.types.AudioLevel\x12}\n" +
+	"UpdateGain\x128.smartcore.bos.microphone.v1.UpdateMicrophoneGainRequest\x1a\".smartcore.bos.types.v1.AudioLevel\x12}\n" +
 	"\bPullGain\x126.smartcore.bos.microphone.v1.PullMicrophoneGainRequest\x1a7.smartcore.bos.microphone.v1.PullMicrophoneGainResponse0\x012|\n" +
 	"\x0eMicrophoneInfo\x12j\n" +
 	"\fDescribeGain\x120.smartcore.bos.microphone.v1.DescribeGainRequest\x1a(.smartcore.bos.microphone.v1.GainSupportB\x87\x01\n" +
@@ -424,28 +424,28 @@ var file_smartcore_bos_microphone_v1_microphone_proto_goTypes = []any{
 	(*PullMicrophoneGainRequest)(nil),   // 3: smartcore.bos.microphone.v1.PullMicrophoneGainRequest
 	(*PullMicrophoneGainResponse)(nil),  // 4: smartcore.bos.microphone.v1.PullMicrophoneGainResponse
 	(*DescribeGainRequest)(nil),         // 5: smartcore.bos.microphone.v1.DescribeGainRequest
-	(*types.ResourceSupport)(nil),       // 6: smartcore.types.ResourceSupport
-	(*types.FloatAttributes)(nil),       // 7: smartcore.types.FloatAttributes
-	(types.MuteSupport)(0),              // 8: smartcore.types.MuteSupport
+	(*typespb.ResourceSupport)(nil),     // 6: smartcore.bos.types.v1.ResourceSupport
+	(*typespb.FloatAttributes)(nil),     // 7: smartcore.bos.types.v1.FloatAttributes
+	(typespb.MuteSupport)(0),            // 8: smartcore.bos.types.v1.MuteSupport
 	(*fieldmaskpb.FieldMask)(nil),       // 9: google.protobuf.FieldMask
-	(*types.AudioLevel)(nil),            // 10: smartcore.types.AudioLevel
-	(*types.AudioLevelChange)(nil),      // 11: smartcore.types.AudioLevelChange
+	(*typespb.AudioLevel)(nil),          // 10: smartcore.bos.types.v1.AudioLevel
+	(*typespb.AudioLevelChange)(nil),    // 11: smartcore.bos.types.v1.AudioLevelChange
 }
 var file_smartcore_bos_microphone_v1_microphone_proto_depIdxs = []int32{
-	6,  // 0: smartcore.bos.microphone.v1.GainSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	7,  // 1: smartcore.bos.microphone.v1.GainSupport.gain_attributes:type_name -> smartcore.types.FloatAttributes
-	8,  // 2: smartcore.bos.microphone.v1.GainSupport.mute_support:type_name -> smartcore.types.MuteSupport
+	6,  // 0: smartcore.bos.microphone.v1.GainSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
+	7,  // 1: smartcore.bos.microphone.v1.GainSupport.gain_attributes:type_name -> smartcore.bos.types.v1.FloatAttributes
+	8,  // 2: smartcore.bos.microphone.v1.GainSupport.mute_support:type_name -> smartcore.bos.types.v1.MuteSupport
 	9,  // 3: smartcore.bos.microphone.v1.GetMicrophoneGainRequest.read_mask:type_name -> google.protobuf.FieldMask
-	10, // 4: smartcore.bos.microphone.v1.UpdateMicrophoneGainRequest.gain:type_name -> smartcore.types.AudioLevel
+	10, // 4: smartcore.bos.microphone.v1.UpdateMicrophoneGainRequest.gain:type_name -> smartcore.bos.types.v1.AudioLevel
 	9,  // 5: smartcore.bos.microphone.v1.UpdateMicrophoneGainRequest.update_mask:type_name -> google.protobuf.FieldMask
 	9,  // 6: smartcore.bos.microphone.v1.PullMicrophoneGainRequest.read_mask:type_name -> google.protobuf.FieldMask
-	11, // 7: smartcore.bos.microphone.v1.PullMicrophoneGainResponse.changes:type_name -> smartcore.types.AudioLevelChange
+	11, // 7: smartcore.bos.microphone.v1.PullMicrophoneGainResponse.changes:type_name -> smartcore.bos.types.v1.AudioLevelChange
 	1,  // 8: smartcore.bos.microphone.v1.MicrophoneApi.GetGain:input_type -> smartcore.bos.microphone.v1.GetMicrophoneGainRequest
 	2,  // 9: smartcore.bos.microphone.v1.MicrophoneApi.UpdateGain:input_type -> smartcore.bos.microphone.v1.UpdateMicrophoneGainRequest
 	3,  // 10: smartcore.bos.microphone.v1.MicrophoneApi.PullGain:input_type -> smartcore.bos.microphone.v1.PullMicrophoneGainRequest
 	5,  // 11: smartcore.bos.microphone.v1.MicrophoneInfo.DescribeGain:input_type -> smartcore.bos.microphone.v1.DescribeGainRequest
-	10, // 12: smartcore.bos.microphone.v1.MicrophoneApi.GetGain:output_type -> smartcore.types.AudioLevel
-	10, // 13: smartcore.bos.microphone.v1.MicrophoneApi.UpdateGain:output_type -> smartcore.types.AudioLevel
+	10, // 12: smartcore.bos.microphone.v1.MicrophoneApi.GetGain:output_type -> smartcore.bos.types.v1.AudioLevel
+	10, // 13: smartcore.bos.microphone.v1.MicrophoneApi.UpdateGain:output_type -> smartcore.bos.types.v1.AudioLevel
 	4,  // 14: smartcore.bos.microphone.v1.MicrophoneApi.PullGain:output_type -> smartcore.bos.microphone.v1.PullMicrophoneGainResponse
 	0,  // 15: smartcore.bos.microphone.v1.MicrophoneInfo.DescribeGain:output_type -> smartcore.bos.microphone.v1.GainSupport
 	12, // [12:16] is the sub-list for method output_type

@@ -12,7 +12,7 @@ option php_namespace = "Smartcore\\Traits";
 import "google/protobuf/duration.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/change.proto";
+import "smartcore/bos/types/v1/change.proto";
 
 // Trait for devices that are electrically powered.
 // Can apply to both the end device or an intermediary, for example a TV or an extension cord.
@@ -239,7 +239,7 @@ message PullModesResponse {
     // The name of the device that emitted this change
     string name = 1;
     // The type of change (e.g. ADD, UPDATE, etc...)
-    smartcore.types.ChangeType type = 2;
+    smartcore.bos.types.v1.ChangeType type = 2;
     // The new value to use for ADD|UPDATE changes
     ElectricMode new_value = 3;
     // The old value to use for UPDATE|REMOVE changes

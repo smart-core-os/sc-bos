@@ -25,9 +25,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func Test_automation_applyConfig(t *testing.T) {
@@ -133,7 +133,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		}
 
 		if _, err := airTemperature.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
-			AmbientTemperature: &types.Temperature{ValueCelsius: rand.Float64()},
+			AmbientTemperature: &typespb.Temperature{ValueCelsius: rand.Float64()},
 		}); err != nil {
 			t.Fatal(err)
 		}
@@ -447,7 +447,7 @@ func Test_automation_applyConfigDevices_remove(t *testing.T) {
 		}
 
 		devicesCh <- &devicespb.PullDevicesResponse{Changes: []*devicespb.PullDevicesResponse_Change{
-			{Type: types.ChangeType_REMOVE, Name: "occ1"},
+			{Type: typespb.ChangeType_REMOVE, Name: "occ1"},
 		}}
 		synctest.Wait()
 
@@ -484,7 +484,7 @@ func (s *streamingDevicesClient) PullDevices(ctx context.Context, _ *devicespb.P
 		changes := make([]*devicespb.PullDevicesResponse_Change, len(s.devices))
 		for i, d := range s.devices {
 			changes[i] = &devicespb.PullDevicesResponse_Change{
-				Type:     types.ChangeType_ADD,
+				Type:     typespb.ChangeType_ADD,
 				NewValue: d,
 				Name:     d.Name,
 			}

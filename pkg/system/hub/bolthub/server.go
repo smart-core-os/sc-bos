@@ -18,8 +18,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/system/hub/remote"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func NewServer(dbPath string, logger *zap.Logger) (*Server, error) {
@@ -134,7 +134,7 @@ func (s *Server) EnrollHubNode(ctx context.Context, req *hubpb.EnrollHubNodeRequ
 	go s.dbChanges.Send(context.Background(), &hubpb.PullHubNodesResponse_Change{
 		NewValue:   &hubpb.HubNode{Address: en.TargetAddress, Name: en.TargetName, Description: nodeReg.Description},
 		ChangeTime: timestamppb.Now(),
-		Type:       types.ChangeType_ADD,
+		Type:       typespb.ChangeType_ADD,
 	})
 
 	return nodeReg, nil
@@ -182,7 +182,7 @@ func (s *Server) PullHubNodes(request *hubpb.PullHubNodesRequest, server hubpb.H
 		for _, node := range nodes.Nodes {
 			err := server.Send(&hubpb.PullHubNodesResponse{Changes: []*hubpb.PullHubNodesResponse_Change{
 				{
-					Type:       types.ChangeType_ADD,
+					Type:       typespb.ChangeType_ADD,
 					ChangeTime: timestamppb.Now(),
 					NewValue:   node,
 				},
@@ -247,7 +247,7 @@ func (s *Server) RenewHubNode(ctx context.Context, request *hubpb.RenewHubNodeRe
 		OldValue:   reg,
 		NewValue:   newNode,
 		ChangeTime: timestamppb.Now(),
-		Type:       types.ChangeType_UPDATE,
+		Type:       typespb.ChangeType_UPDATE,
 	})
 
 	return reg, nil
@@ -314,7 +314,7 @@ func (s *Server) ForgetHubNode(ctx context.Context, request *hubpb.ForgetHubNode
 		OldValue:   reg,
 		NewValue:   nil,
 		ChangeTime: timestamppb.Now(),
-		Type:       types.ChangeType_REMOVE,
+		Type:       typespb.ChangeType_REMOVE,
 	})
 
 	return &hubpb.ForgetHubNodeResponse{}, nil

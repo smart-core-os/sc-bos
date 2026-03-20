@@ -14,10 +14,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 type temperatureConfig struct {
@@ -122,7 +122,7 @@ func (t *temperature) pollPeer(ctx context.Context) (*temperaturepb.Temperature,
 			if err != nil {
 				return comm.ErrReadProperty{Prop: "measured", Cause: err}
 			}
-			data.Measured = &types.Temperature{ValueCelsius: measured}
+			data.Measured = &typespb.Temperature{ValueCelsius: measured}
 			return nil
 		})
 	}
@@ -135,7 +135,7 @@ func (t *temperature) pollPeer(ctx context.Context) (*temperaturepb.Temperature,
 			if err != nil {
 				return comm.ErrReadProperty{Prop: "setPoint", Cause: err}
 			}
-			data.SetPoint = &types.Temperature{ValueCelsius: setPoint}
+			data.SetPoint = &typespb.Temperature{ValueCelsius: setPoint}
 			return nil
 		})
 	}

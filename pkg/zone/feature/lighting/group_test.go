@@ -11,8 +11,8 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 func TestGroup_PullBrightness(t *testing.T) {
@@ -145,11 +145,11 @@ func TestGroup_DescribeBrightness(t *testing.T) {
 		t.Fatalf("describe brightness: %v", err)
 	}
 	want := &lightpb.BrightnessSupport{
-		ResourceSupport: &types.ResourceSupport{
+		ResourceSupport: &typespb.ResourceSupport{
 			Readable:    true,
 			Writable:    true,
 			Observable:  true,
-			PullSupport: types.PullSupport_PULL_SUPPORT_NATIVE,
+			PullSupport: typespb.PullSupport_PULL_SUPPORT_NATIVE,
 		},
 		Presets: []*lightpb.LightPreset{
 			{Name: "dim", Title: "Low Light"},

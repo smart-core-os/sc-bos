@@ -1,15 +1,15 @@
 syntax = "proto3";
 
-package smartcore.types;
+package smartcore.bos.types.v1;
 
 option csharp_namespace = "Smartcore.Types";
-option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/types";
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/typespb";
 option java_multiple_files = true;
 option java_outer_classname = "UnitProto";
 option java_package = "dev.smartcore.types";
 
 import "google/protobuf/timestamp.proto";
-import "types/tween.proto";
+import "smartcore/bos/types/v1/tween.proto";
 
 // Possible temperature units for physical bodies.
 enum TemperatureUnit {
@@ -32,7 +32,7 @@ message AudioLevel {
   // The current gain, typically as a percentage unless documented in the AudioLevel usage.
   float gain = 1;
   // How the gain changes or should change over time. On write only duration should be set.
-  smartcore.types.Tween gain_tween = 2;
+  Tween gain_tween = 2;
   // Read-only, the target value for the gain during a transition
   float target_gain = 3;
   // If the audio level muted.

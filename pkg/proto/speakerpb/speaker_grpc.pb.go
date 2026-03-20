@@ -8,7 +8,7 @@ package speakerpb
 
 import (
 	context "context"
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -35,9 +35,9 @@ const (
 // For the sakes of this trait "volume" means the combination of a gain and a mute state.
 type SpeakerApiClient interface {
 	// Get the current state of the volume for the device
-	GetVolume(ctx context.Context, in *GetSpeakerVolumeRequest, opts ...grpc.CallOption) (*types.AudioLevel, error)
+	GetVolume(ctx context.Context, in *GetSpeakerVolumeRequest, opts ...grpc.CallOption) (*typespb.AudioLevel, error)
 	// update the volume state for the device
-	UpdateVolume(ctx context.Context, in *UpdateSpeakerVolumeRequest, opts ...grpc.CallOption) (*types.AudioLevel, error)
+	UpdateVolume(ctx context.Context, in *UpdateSpeakerVolumeRequest, opts ...grpc.CallOption) (*typespb.AudioLevel, error)
 	PullVolume(ctx context.Context, in *PullSpeakerVolumeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PullSpeakerVolumeResponse], error)
 }
 
@@ -49,9 +49,9 @@ func NewSpeakerApiClient(cc grpc.ClientConnInterface) SpeakerApiClient {
 	return &speakerApiClient{cc}
 }
 
-func (c *speakerApiClient) GetVolume(ctx context.Context, in *GetSpeakerVolumeRequest, opts ...grpc.CallOption) (*types.AudioLevel, error) {
+func (c *speakerApiClient) GetVolume(ctx context.Context, in *GetSpeakerVolumeRequest, opts ...grpc.CallOption) (*typespb.AudioLevel, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(types.AudioLevel)
+	out := new(typespb.AudioLevel)
 	err := c.cc.Invoke(ctx, SpeakerApi_GetVolume_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -59,9 +59,9 @@ func (c *speakerApiClient) GetVolume(ctx context.Context, in *GetSpeakerVolumeRe
 	return out, nil
 }
 
-func (c *speakerApiClient) UpdateVolume(ctx context.Context, in *UpdateSpeakerVolumeRequest, opts ...grpc.CallOption) (*types.AudioLevel, error) {
+func (c *speakerApiClient) UpdateVolume(ctx context.Context, in *UpdateSpeakerVolumeRequest, opts ...grpc.CallOption) (*typespb.AudioLevel, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(types.AudioLevel)
+	out := new(typespb.AudioLevel)
 	err := c.cc.Invoke(ctx, SpeakerApi_UpdateVolume_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -98,9 +98,9 @@ type SpeakerApi_PullVolumeClient = grpc.ServerStreamingClient[PullSpeakerVolumeR
 // For the sakes of this trait "volume" means the combination of a gain and a mute state.
 type SpeakerApiServer interface {
 	// Get the current state of the volume for the device
-	GetVolume(context.Context, *GetSpeakerVolumeRequest) (*types.AudioLevel, error)
+	GetVolume(context.Context, *GetSpeakerVolumeRequest) (*typespb.AudioLevel, error)
 	// update the volume state for the device
-	UpdateVolume(context.Context, *UpdateSpeakerVolumeRequest) (*types.AudioLevel, error)
+	UpdateVolume(context.Context, *UpdateSpeakerVolumeRequest) (*typespb.AudioLevel, error)
 	PullVolume(*PullSpeakerVolumeRequest, grpc.ServerStreamingServer[PullSpeakerVolumeResponse]) error
 	mustEmbedUnimplementedSpeakerApiServer()
 }
@@ -112,10 +112,10 @@ type SpeakerApiServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSpeakerApiServer struct{}
 
-func (UnimplementedSpeakerApiServer) GetVolume(context.Context, *GetSpeakerVolumeRequest) (*types.AudioLevel, error) {
+func (UnimplementedSpeakerApiServer) GetVolume(context.Context, *GetSpeakerVolumeRequest) (*typespb.AudioLevel, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVolume not implemented")
 }
-func (UnimplementedSpeakerApiServer) UpdateVolume(context.Context, *UpdateSpeakerVolumeRequest) (*types.AudioLevel, error) {
+func (UnimplementedSpeakerApiServer) UpdateVolume(context.Context, *UpdateSpeakerVolumeRequest) (*typespb.AudioLevel, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateVolume not implemented")
 }
 func (UnimplementedSpeakerApiServer) PullVolume(*PullSpeakerVolumeRequest, grpc.ServerStreamingServer[PullSpeakerVolumeResponse]) error {

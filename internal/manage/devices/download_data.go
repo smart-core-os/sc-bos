@@ -19,8 +19,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	timepb "github.com/smart-core-os/sc-bos/sc-api/go/types/time"
 )
 
 // getTraitInfo returns the data we support exporting via the DevicesApi download endpoint.

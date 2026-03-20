@@ -11,10 +11,10 @@ option php_namespace = "Smartcore\\Traits";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/change.proto";
-import "types/info.proto";
-import "types/time/period.proto";
-import "types/time/unit.proto";
+import "smartcore/bos/types/time/v1/period.proto";
+import "smartcore/bos/types/time/v1/unit.proto";
+import "smartcore/bos/types/v1/change.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // The BookingApi defines an interface for interacting with bookable resources, for example rooms.
 // Bookings can be listed, edited, and created.
@@ -52,12 +52,12 @@ message Booking {
   // the name of the owner of this booking
   string owner_name = 4;
   // the time period this booking is for
-  smartcore.types.time.Period booked = 5;
+  smartcore.bos.types.time.v1.Period booked = 5;
   // The time period this booking was checked in for.
   // If this is absent, then no check in or check out has happened
   // If check_in.start_time is absent, no check in has happened
   // If check_in.end_time is absent, no check out has happened
-  smartcore.types.time.Period check_in = 6;
+  smartcore.bos.types.time.v1.Period check_in = 6;
   // If true, the booking does not require a check-in and one should not be expected.
   // Defaults to false; check-in is required.
   bool check_in_not_required = 7;
@@ -66,13 +66,13 @@ message Booking {
 // BookingSupport describes the capabilities of devices implementing this trait
 message BookingSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // is check in supported, and how
   CheckInSupport check_in_support = 2;
   // is check out supported, and how
   CheckInSupport check_out_support = 3;
   // the supported time resolution for date time fields and queries
-  smartcore.types.time.Unit time_resolution = 4;
+  smartcore.bos.types.time.v1.Unit time_resolution = 4;
 
   enum CheckInSupport {
     // check in support is unknown
@@ -91,7 +91,7 @@ message ListBookingsRequest {
   string name = 1;
   // Specify the time period to return bookings for
   // bookings are returned if they intersect this time period
-  smartcore.types.time.Period booking_intersects = 2;
+  smartcore.bos.types.time.v1.Period booking_intersects = 2;
   // The state fields to fetch
   google.protobuf.FieldMask read_mask = 3;
   // When true the device will only send changes to the resource value.
@@ -162,7 +162,7 @@ message PullBookingsResponse {
     // the name of the device that emitted this change
     string name = 1;
     // the type of change (e.g. ADD, UPDATE, etc...)
-    smartcore.types.ChangeType type = 2;
+    smartcore.bos.types.v1.ChangeType type = 2;
     // the new value to use for ADD|UPDATE changes
     Booking new_value = 3;
     // the old value to use for UPDATE|REMOVE changes

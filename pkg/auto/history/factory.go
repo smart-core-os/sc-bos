@@ -11,8 +11,6 @@ import (
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
-
 	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
@@ -37,6 +35,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
@@ -172,7 +171,7 @@ func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) er
 		for _, change := range resp.GetChanges() {
 			name := change.GetName()
 			switch change.GetType() {
-			case types.ChangeType_ADD:
+			case typespb.ChangeType_ADD:
 				if rec, ok := active[name]; ok {
 					rec.cancel()
 					rec.undo()
@@ -185,7 +184,7 @@ func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) er
 					continue
 				}
 				active[name] = activeRecorder{cancel: cancel, undo: undo}
-			case types.ChangeType_REMOVE:
+			case typespb.ChangeType_REMOVE:
 				if rec, ok := active[name]; ok {
 					rec.cancel()
 					rec.undo()

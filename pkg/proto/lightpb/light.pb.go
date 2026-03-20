@@ -7,7 +7,7 @@
 package lightpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -42,7 +42,7 @@ type Brightness struct {
 	// A preset that the device is using
 	Preset *LightPreset `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	// How the brightness changes or should change over time. On write only duration should be set.
-	BrightnessTween *types.Tween `protobuf:"bytes,3,opt,name=brightness_tween,json=brightnessTween,proto3" json:"brightness_tween,omitempty"`
+	BrightnessTween *typespb.Tween `protobuf:"bytes,3,opt,name=brightness_tween,json=brightnessTween,proto3" json:"brightness_tween,omitempty"`
 	// The target level_percent. Ignored on write. On read zero values should be ignored iff target_preset is present.
 	TargetLevelPercent float32 `protobuf:"fixed32,4,opt,name=target_level_percent,json=targetLevelPercent,proto3" json:"target_level_percent,omitempty"`
 	// The target preset. Ignored on write. If present ignore target_level_percent
@@ -95,7 +95,7 @@ func (x *Brightness) GetPreset() *LightPreset {
 	return nil
 }
 
-func (x *Brightness) GetBrightnessTween() *types.Tween {
+func (x *Brightness) GetBrightnessTween() *typespb.Tween {
 	if x != nil {
 		return x.BrightnessTween
 	}
@@ -172,9 +172,9 @@ func (x *LightPreset) GetTitle() string {
 type BrightnessSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// control how the brightness can be controlled. The range of these attributes is fixed at 0-100 as a percentage
-	BrightnessAttributes *types.Int32Attributes `protobuf:"bytes,2,opt,name=brightness_attributes,json=brightnessAttributes,proto3" json:"brightness_attributes,omitempty"`
+	BrightnessAttributes *typespb.Int32Attributes `protobuf:"bytes,2,opt,name=brightness_attributes,json=brightnessAttributes,proto3" json:"brightness_attributes,omitempty"`
 	// A description of the supported presets, none means no presets
 	Presets       []*LightPreset `protobuf:"bytes,3,rep,name=presets,proto3" json:"presets,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -211,14 +211,14 @@ func (*BrightnessSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_light_v1_light_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *BrightnessSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *BrightnessSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
 	return nil
 }
 
-func (x *BrightnessSupport) GetBrightnessAttributes() *types.Int32Attributes {
+func (x *BrightnessSupport) GetBrightnessAttributes() *typespb.Int32Attributes {
 	if x != nil {
 		return x.BrightnessAttributes
 	}
@@ -594,20 +594,20 @@ var File_smartcore_bos_light_v1_light_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_light_v1_light_proto_rawDesc = "" +
 	"\n" +
-	"\"smartcore/bos/light/v1/light.proto\x12\x16smartcore.bos.light.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\x1a\x12types/number.proto\x1a\x11types/tween.proto\"\xad\x02\n" +
+	"\"smartcore/bos/light/v1/light.proto\x12\x16smartcore.bos.light.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\x1a#smartcore/bos/types/v1/number.proto\x1a\"smartcore/bos/types/v1/tween.proto\"\xb4\x02\n" +
 	"\n" +
 	"Brightness\x12#\n" +
 	"\rlevel_percent\x18\x01 \x01(\x02R\flevelPercent\x12;\n" +
-	"\x06preset\x18\x02 \x01(\v2#.smartcore.bos.light.v1.LightPresetR\x06preset\x12A\n" +
-	"\x10brightness_tween\x18\x03 \x01(\v2\x16.smartcore.types.TweenR\x0fbrightnessTween\x120\n" +
+	"\x06preset\x18\x02 \x01(\v2#.smartcore.bos.light.v1.LightPresetR\x06preset\x12H\n" +
+	"\x10brightness_tween\x18\x03 \x01(\v2\x1d.smartcore.bos.types.v1.TweenR\x0fbrightnessTween\x120\n" +
 	"\x14target_level_percent\x18\x04 \x01(\x02R\x12targetLevelPercent\x12H\n" +
 	"\rtarget_preset\x18\x05 \x01(\v2#.smartcore.bos.light.v1.LightPresetR\ftargetPreset\"7\n" +
 	"\vLightPreset\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\"\xf6\x01\n" +
-	"\x11BrightnessSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12U\n" +
-	"\x15brightness_attributes\x18\x02 \x01(\v2 .smartcore.types.Int32AttributesR\x14brightnessAttributes\x12=\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\"\x84\x02\n" +
+	"\x11BrightnessSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12\\\n" +
+	"\x15brightness_attributes\x18\x02 \x01(\v2'.smartcore.bos.types.v1.Int32AttributesR\x14brightnessAttributes\x12=\n" +
 	"\apresets\x18\x03 \x03(\v2#.smartcore.bos.light.v1.LightPresetR\apresets\"\xc4\x01\n" +
 	"\x17UpdateBrightnessRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12B\n" +
@@ -668,18 +668,18 @@ var file_smartcore_bos_light_v1_light_proto_goTypes = []any{
 	(*PullBrightnessResponse)(nil),        // 6: smartcore.bos.light.v1.PullBrightnessResponse
 	(*DescribeBrightnessRequest)(nil),     // 7: smartcore.bos.light.v1.DescribeBrightnessRequest
 	(*PullBrightnessResponse_Change)(nil), // 8: smartcore.bos.light.v1.PullBrightnessResponse.Change
-	(*types.Tween)(nil),                   // 9: smartcore.types.Tween
-	(*types.ResourceSupport)(nil),         // 10: smartcore.types.ResourceSupport
-	(*types.Int32Attributes)(nil),         // 11: smartcore.types.Int32Attributes
+	(*typespb.Tween)(nil),                 // 9: smartcore.bos.types.v1.Tween
+	(*typespb.ResourceSupport)(nil),       // 10: smartcore.bos.types.v1.ResourceSupport
+	(*typespb.Int32Attributes)(nil),       // 11: smartcore.bos.types.v1.Int32Attributes
 	(*fieldmaskpb.FieldMask)(nil),         // 12: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),         // 13: google.protobuf.Timestamp
 }
 var file_smartcore_bos_light_v1_light_proto_depIdxs = []int32{
 	1,  // 0: smartcore.bos.light.v1.Brightness.preset:type_name -> smartcore.bos.light.v1.LightPreset
-	9,  // 1: smartcore.bos.light.v1.Brightness.brightness_tween:type_name -> smartcore.types.Tween
+	9,  // 1: smartcore.bos.light.v1.Brightness.brightness_tween:type_name -> smartcore.bos.types.v1.Tween
 	1,  // 2: smartcore.bos.light.v1.Brightness.target_preset:type_name -> smartcore.bos.light.v1.LightPreset
-	10, // 3: smartcore.bos.light.v1.BrightnessSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	11, // 4: smartcore.bos.light.v1.BrightnessSupport.brightness_attributes:type_name -> smartcore.types.Int32Attributes
+	10, // 3: smartcore.bos.light.v1.BrightnessSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
+	11, // 4: smartcore.bos.light.v1.BrightnessSupport.brightness_attributes:type_name -> smartcore.bos.types.v1.Int32Attributes
 	1,  // 5: smartcore.bos.light.v1.BrightnessSupport.presets:type_name -> smartcore.bos.light.v1.LightPreset
 	0,  // 6: smartcore.bos.light.v1.UpdateBrightnessRequest.brightness:type_name -> smartcore.bos.light.v1.Brightness
 	12, // 7: smartcore.bos.light.v1.UpdateBrightnessRequest.update_mask:type_name -> google.protobuf.FieldMask

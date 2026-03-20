@@ -8,7 +8,7 @@ package securityeventpb
 
 import (
 	actorpb "github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -666,7 +666,7 @@ type PullSecurityEventsResponse_Change struct {
 	ChangeTime    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=change_time,json=changeTime,proto3" json:"change_time,omitempty"`
 	NewValue      *SecurityEvent         `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	OldValue      *SecurityEvent         `protobuf:"bytes,4,opt,name=old_value,json=oldValue,proto3" json:"old_value,omitempty"`
-	Type          types.ChangeType       `protobuf:"varint,5,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type          typespb.ChangeType     `protobuf:"varint,5,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -729,18 +729,18 @@ func (x *PullSecurityEventsResponse_Change) GetOldValue() *SecurityEvent {
 	return nil
 }
 
-func (x *PullSecurityEventsResponse_Change) GetType() types.ChangeType {
+func (x *PullSecurityEventsResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 var File_smartcore_bos_securityevent_v1_security_event_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_securityevent_v1_security_event_proto_rawDesc = "" +
 	"\n" +
-	"3smartcore/bos/securityevent/v1/security_event.proto\x12\x1esmartcore.bos.securityevent.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\x1a\x12types/change.proto\"\xa9\t\n" +
+	"3smartcore/bos/securityevent/v1/security_event.proto\x12\x1esmartcore.bos.securityevent.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\x1a#smartcore/bos/types/v1/change.proto\"\xa9\t\n" +
 	"\rSecurityEvent\x12J\n" +
 	"\x13security_event_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x11securityEventTime\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x0e\n" +
@@ -807,16 +807,16 @@ const file_smartcore_bos_securityevent_v1_security_event_proto_rawDesc = "" +
 	"\x19PullSecurityEventsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x9e\x03\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xa5\x03\n" +
 	"\x1aPullSecurityEventsResponse\x12[\n" +
-	"\achanges\x18\x01 \x03(\v2A.smartcore.bos.securityevent.v1.PullSecurityEventsResponse.ChangeR\achanges\x1a\xa2\x02\n" +
+	"\achanges\x18\x01 \x03(\v2A.smartcore.bos.securityevent.v1.PullSecurityEventsResponse.ChangeR\achanges\x1a\xa9\x02\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"changeTime\x12J\n" +
 	"\tnew_value\x18\x03 \x01(\v2-.smartcore.bos.securityevent.v1.SecurityEventR\bnewValue\x12J\n" +
-	"\told_value\x18\x04 \x01(\v2-.smartcore.bos.securityevent.v1.SecurityEventR\boldValue\x12/\n" +
-	"\x04type\x18\x05 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type2\xb4\x02\n" +
+	"\told_value\x18\x04 \x01(\v2-.smartcore.bos.securityevent.v1.SecurityEventR\boldValue\x126\n" +
+	"\x04type\x18\x05 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type2\xb4\x02\n" +
 	"\x10SecurityEventApi\x12\x8d\x01\n" +
 	"\x12ListSecurityEvents\x129.smartcore.bos.securityevent.v1.ListSecurityEventsRequest\x1a:.smartcore.bos.securityevent.v1.ListSecurityEventsResponse\"\x00\x12\x8f\x01\n" +
 	"\x12PullSecurityEvents\x129.smartcore.bos.securityevent.v1.PullSecurityEventsRequest\x1a:.smartcore.bos.securityevent.v1.PullSecurityEventsResponse\"\x000\x01B;Z9github.com/smart-core-os/sc-bos/pkg/proto/securityeventpbb\x06proto3"
@@ -848,7 +848,7 @@ var file_smartcore_bos_securityevent_v1_security_event_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),             // 9: google.protobuf.Timestamp
 	(*actorpb.Actor)(nil),                     // 10: smartcore.bos.actor.v1.Actor
 	(*fieldmaskpb.FieldMask)(nil),             // 11: google.protobuf.FieldMask
-	(types.ChangeType)(0),                     // 12: smartcore.types.ChangeType
+	(typespb.ChangeType)(0),                   // 12: smartcore.bos.types.v1.ChangeType
 }
 var file_smartcore_bos_securityevent_v1_security_event_proto_depIdxs = []int32{
 	9,  // 0: smartcore.bos.securityevent.v1.SecurityEvent.security_event_time:type_name -> google.protobuf.Timestamp
@@ -863,7 +863,7 @@ var file_smartcore_bos_securityevent_v1_security_event_proto_depIdxs = []int32{
 	9,  // 9: smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.change_time:type_name -> google.protobuf.Timestamp
 	2,  // 10: smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.new_value:type_name -> smartcore.bos.securityevent.v1.SecurityEvent
 	2,  // 11: smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.old_value:type_name -> smartcore.bos.securityevent.v1.SecurityEvent
-	12, // 12: smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.type:type_name -> smartcore.types.ChangeType
+	12, // 12: smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	3,  // 13: smartcore.bos.securityevent.v1.SecurityEventApi.ListSecurityEvents:input_type -> smartcore.bos.securityevent.v1.ListSecurityEventsRequest
 	5,  // 14: smartcore.bos.securityevent.v1.SecurityEventApi.PullSecurityEvents:input_type -> smartcore.bos.securityevent.v1.PullSecurityEventsRequest
 	4,  // 15: smartcore.bos.securityevent.v1.SecurityEventApi.ListSecurityEvents:output_type -> smartcore.bos.securityevent.v1.ListSecurityEventsResponse

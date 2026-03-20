@@ -7,7 +7,7 @@
 package occupancysensorpb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -174,7 +174,7 @@ func (x *Occupancy) GetConfidence() float64 {
 type OccupancySupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// how many people can the occupancy service report. 0 means it won't report people counts. Note: this is _not_ the
 	// total capacity for the space, it's the capacity of the sensor
 	MaxPeople     int32 `protobuf:"varint,2,opt,name=max_people,json=maxPeople,proto3" json:"max_people,omitempty"`
@@ -212,7 +212,7 @@ func (*OccupancySupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_occupancysensor_v1_occupancy_sensor_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *OccupancySupport) GetResourceSupport() *types.ResourceSupport {
+func (x *OccupancySupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -505,7 +505,7 @@ var File_smartcore_bos_occupancysensor_v1_occupancy_sensor_proto protoreflect.Fi
 
 const file_smartcore_bos_occupancysensor_v1_occupancy_sensor_proto_rawDesc = "" +
 	"\n" +
-	"7smartcore/bos/occupancysensor/v1/occupancy_sensor.proto\x12 smartcore.bos.occupancysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xc1\x02\n" +
+	"7smartcore/bos/occupancysensor/v1/occupancy_sensor.proto\x12 smartcore.bos.occupancysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\xc1\x02\n" +
 	"\tOccupancy\x12G\n" +
 	"\x05state\x18\x01 \x01(\x0e21.smartcore.bos.occupancysensor.v1.Occupancy.StateR\x05state\x12!\n" +
 	"\fpeople_count\x18\x02 \x01(\x05R\vpeopleCount\x12F\n" +
@@ -519,9 +519,9 @@ const file_smartcore_bos_occupancysensor_v1_occupancy_sensor_proto_rawDesc = "" 
 	"\bOCCUPIED\x10\x01\x12\x0e\n" +
 	"\n" +
 	"UNOCCUPIED\x10\x02\x12\b\n" +
-	"\x04IDLE\x10\x03\"~\n" +
-	"\x10OccupancySupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12\x1d\n" +
+	"\x04IDLE\x10\x03\"\x85\x01\n" +
+	"\x10OccupancySupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12\x1d\n" +
 	"\n" +
 	"max_people\x18\x02 \x01(\x05R\tmaxPeople\"b\n" +
 	"\x13GetOccupancyRequest\x12\x12\n" +
@@ -571,13 +571,13 @@ var file_smartcore_bos_occupancysensor_v1_occupancy_sensor_proto_goTypes = []any
 	(*DescribeOccupancyRequest)(nil),     // 6: smartcore.bos.occupancysensor.v1.DescribeOccupancyRequest
 	(*PullOccupancyResponse_Change)(nil), // 7: smartcore.bos.occupancysensor.v1.PullOccupancyResponse.Change
 	(*timestamppb.Timestamp)(nil),        // 8: google.protobuf.Timestamp
-	(*types.ResourceSupport)(nil),        // 9: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),      // 9: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),        // 10: google.protobuf.FieldMask
 }
 var file_smartcore_bos_occupancysensor_v1_occupancy_sensor_proto_depIdxs = []int32{
 	0,  // 0: smartcore.bos.occupancysensor.v1.Occupancy.state:type_name -> smartcore.bos.occupancysensor.v1.Occupancy.State
 	8,  // 1: smartcore.bos.occupancysensor.v1.Occupancy.state_change_time:type_name -> google.protobuf.Timestamp
-	9,  // 2: smartcore.bos.occupancysensor.v1.OccupancySupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	9,  // 2: smartcore.bos.occupancysensor.v1.OccupancySupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	10, // 3: smartcore.bos.occupancysensor.v1.GetOccupancyRequest.read_mask:type_name -> google.protobuf.FieldMask
 	10, // 4: smartcore.bos.occupancysensor.v1.PullOccupancyRequest.read_mask:type_name -> google.protobuf.FieldMask
 	7,  // 5: smartcore.bos.occupancysensor.v1.PullOccupancyResponse.changes:type_name -> smartcore.bos.occupancysensor.v1.PullOccupancyResponse.Change

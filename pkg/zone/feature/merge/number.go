@@ -3,7 +3,7 @@ package merge
 import (
 	"golang.org/x/exp/constraints"
 
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 type Number interface {
@@ -93,8 +93,8 @@ func Ptr[T any](v T, ok bool) *T {
 	return nil
 }
 
-func Int32Bounds[E any](items []E, f func(E) *types.Int32Bounds) *types.Int32Bounds {
-	var dst *types.Int32Bounds
+func Int32Bounds[E any](items []E, f func(E) *typespb.Int32Bounds) *typespb.Int32Bounds {
+	var dst *typespb.Int32Bounds
 	only := true
 	for _, item := range items {
 		src := f(item)
@@ -106,7 +106,7 @@ func Int32Bounds[E any](items []E, f func(E) *types.Int32Bounds) *types.Int32Bou
 			continue
 		case only:
 			only = false
-			dst = &types.Int32Bounds{
+			dst = &typespb.Int32Bounds{
 				Min: dst.Min,
 				Max: dst.Max,
 			}

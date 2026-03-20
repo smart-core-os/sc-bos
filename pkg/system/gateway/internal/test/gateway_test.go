@@ -32,9 +32,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/test/shared"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/sc-api/go/types"
 )
 
 var skipBuild = flag.Bool("skip-build", false, "skip building and running binaries")
@@ -584,13 +584,13 @@ func testStableDeviceList(t *testing.T, ctx context.Context, conn *grpc.ClientCo
 		for _, change := range res.Changes {
 			total := events[change.Name]
 			switch change.Type {
-			case types.ChangeType_ADD:
+			case typespb.ChangeType_ADD:
 				total.add++
-			case types.ChangeType_UPDATE:
+			case typespb.ChangeType_UPDATE:
 				total.update++
-			case types.ChangeType_REMOVE:
+			case typespb.ChangeType_REMOVE:
 				total.remove++
-			case types.ChangeType_REPLACE:
+			case typespb.ChangeType_REPLACE:
 				total.replace++
 			default:
 				t.Fatalf("unknown change type: %v", change.Type)

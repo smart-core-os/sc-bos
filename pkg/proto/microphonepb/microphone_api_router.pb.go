@@ -5,8 +5,8 @@ package microphonepb
 import (
 	context "context"
 	fmt "fmt"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	router "github.com/smart-core-os/sc-bos/pkg/router"
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
 	grpc "google.golang.org/grpc"
 	io "io"
 )
@@ -79,7 +79,7 @@ func (r *ApiRouter) GetMicrophoneApiClient(name string) (MicrophoneApiClient, er
 	return res.(MicrophoneApiClient), nil
 }
 
-func (r *ApiRouter) GetGain(ctx context.Context, request *GetMicrophoneGainRequest) (*types.AudioLevel, error) {
+func (r *ApiRouter) GetGain(ctx context.Context, request *GetMicrophoneGainRequest) (*typespb.AudioLevel, error) {
 	child, err := r.GetMicrophoneApiClient(request.Name)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (r *ApiRouter) GetGain(ctx context.Context, request *GetMicrophoneGainReque
 	return child.GetGain(ctx, request)
 }
 
-func (r *ApiRouter) UpdateGain(ctx context.Context, request *UpdateMicrophoneGainRequest) (*types.AudioLevel, error) {
+func (r *ApiRouter) UpdateGain(ctx context.Context, request *UpdateMicrophoneGainRequest) (*typespb.AudioLevel, error) {
 	child, err := r.GetMicrophoneApiClient(request.Name)
 	if err != nil {
 		return nil, err

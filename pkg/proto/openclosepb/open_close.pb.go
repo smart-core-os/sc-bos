@@ -7,7 +7,7 @@
 package openclosepb
 
 import (
-	types "github.com/smart-core-os/sc-bos/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -210,7 +210,7 @@ type OpenClosePosition struct {
 	// [0-100] where 0 is fully closed and 100 is fully open.
 	OpenPercent float32 `protobuf:"fixed32,1,opt,name=open_percent,json=openPercent,proto3" json:"open_percent,omitempty"`
 	// How the open percent changes or should change over time. On write, only duration should be set.
-	OpenPercentTween *types.Tween `protobuf:"bytes,2,opt,name=open_percent_tween,json=openPercentTween,proto3" json:"open_percent_tween,omitempty"`
+	OpenPercentTween *typespb.Tween `protobuf:"bytes,2,opt,name=open_percent_tween,json=openPercentTween,proto3" json:"open_percent_tween,omitempty"`
 	// Read-only, the target open_percent after a transition
 	TargetOpenPercent float32 `protobuf:"fixed32,3,opt,name=target_open_percent,json=targetOpenPercent,proto3" json:"target_open_percent,omitempty"`
 	// Optional direction for devices that support multiple open/close directions
@@ -262,7 +262,7 @@ func (x *OpenClosePosition) GetOpenPercent() float32 {
 	return 0
 }
 
-func (x *OpenClosePosition) GetOpenPercentTween() *types.Tween {
+func (x *OpenClosePosition) GetOpenPercentTween() *typespb.Tween {
 	if x != nil {
 		return x.OpenPercentTween
 	}
@@ -294,11 +294,11 @@ func (x *OpenClosePosition) GetResistance() OpenClosePosition_Resistance {
 type PositionsSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// Define how the value for open percent behave. The bounds for these attributes will be absent and always in the range
 	// [0-100] to represent a percentage.
 	// Discreet devices, those that only support fully closed or fully open (i.e. a contact closure) should report a step of 100.
-	OpenPercentAttributes *types.FloatAttributes `protobuf:"bytes,2,opt,name=open_percent_attributes,json=openPercentAttributes,proto3" json:"open_percent_attributes,omitempty"`
+	OpenPercentAttributes *typespb.FloatAttributes `protobuf:"bytes,2,opt,name=open_percent_attributes,json=openPercentAttributes,proto3" json:"open_percent_attributes,omitempty"`
 	// The supported directions for the device. If none then assume only a single direction is supported
 	Directions []OpenClosePosition_Direction `protobuf:"varint,3,rep,packed,name=directions,proto3,enum=smartcore.bos.openclose.v1.OpenClosePosition_Direction" json:"directions,omitempty"`
 	// Does the device support the Stop method
@@ -339,14 +339,14 @@ func (*PositionsSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_openclose_v1_open_close_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PositionsSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *PositionsSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
 	return nil
 }
 
-func (x *PositionsSupport) GetOpenPercentAttributes() *types.FloatAttributes {
+func (x *PositionsSupport) GetOpenPercentAttributes() *typespb.FloatAttributes {
 	if x != nil {
 		return x.OpenPercentAttributes
 	}
@@ -836,16 +836,16 @@ var File_smartcore_bos_openclose_v1_open_close_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_openclose_v1_open_close_proto_rawDesc = "" +
 	"\n" +
-	"+smartcore/bos/openclose/v1/open_close.proto\x12\x1asmartcore.bos.openclose.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\x1a\x12types/number.proto\x1a\x11types/tween.proto\"\xde\x01\n" +
+	"+smartcore/bos/openclose/v1/open_close.proto\x12\x1asmartcore.bos.openclose.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\x1a#smartcore/bos/types/v1/number.proto\x1a\"smartcore/bos/types/v1/tween.proto\"\xde\x01\n" +
 	"\x12OpenClosePositions\x12E\n" +
 	"\x06states\x18\x01 \x03(\v2-.smartcore.bos.openclose.v1.OpenClosePositionR\x06states\x12M\n" +
 	"\x06preset\x18\x02 \x01(\v25.smartcore.bos.openclose.v1.OpenClosePositions.PresetR\x06preset\x1a2\n" +
 	"\x06Preset\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\"\x8f\x04\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\"\x96\x04\n" +
 	"\x11OpenClosePosition\x12!\n" +
-	"\fopen_percent\x18\x01 \x01(\x02R\vopenPercent\x12D\n" +
-	"\x12open_percent_tween\x18\x02 \x01(\v2\x16.smartcore.types.TweenR\x10openPercentTween\x12.\n" +
+	"\fopen_percent\x18\x01 \x01(\x02R\vopenPercent\x12K\n" +
+	"\x12open_percent_tween\x18\x02 \x01(\v2\x1d.smartcore.bos.types.v1.TweenR\x10openPercentTween\x12.\n" +
 	"\x13target_open_percent\x18\x03 \x01(\x02R\x11targetOpenPercent\x12U\n" +
 	"\tdirection\x18\x04 \x01(\x0e27.smartcore.bos.openclose.v1.OpenClosePosition.DirectionR\tdirection\x12X\n" +
 	"\n" +
@@ -864,10 +864,10 @@ const file_smartcore_bos_openclose_v1_open_close_proto_rawDesc = "" +
 	"\x16RESISTANCE_UNSPECIFIED\x10\x00\x12\b\n" +
 	"\x04HELD\x10\x01\x12\x12\n" +
 	"\x0eREDUCED_MOTION\x10\x02\x12\b\n" +
-	"\x04SLOW\x10\x03\"\x88\x03\n" +
-	"\x10PositionsSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12X\n" +
-	"\x17open_percent_attributes\x18\x02 \x01(\v2 .smartcore.types.FloatAttributesR\x15openPercentAttributes\x12W\n" +
+	"\x04SLOW\x10\x03\"\x96\x03\n" +
+	"\x10PositionsSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12_\n" +
+	"\x17open_percent_attributes\x18\x02 \x01(\v2'.smartcore.bos.types.v1.FloatAttributesR\x15openPercentAttributes\x12W\n" +
 	"\n" +
 	"directions\x18\x03 \x03(\x0e27.smartcore.bos.openclose.v1.OpenClosePosition.DirectionR\n" +
 	"directions\x12#\n" +
@@ -935,20 +935,20 @@ var file_smartcore_bos_openclose_v1_open_close_proto_goTypes = []any{
 	(*DescribePositionsRequest)(nil),              // 10: smartcore.bos.openclose.v1.DescribePositionsRequest
 	(*OpenClosePositions_Preset)(nil),             // 11: smartcore.bos.openclose.v1.OpenClosePositions.Preset
 	(*PullOpenClosePositionsResponse_Change)(nil), // 12: smartcore.bos.openclose.v1.PullOpenClosePositionsResponse.Change
-	(*types.Tween)(nil),                           // 13: smartcore.types.Tween
-	(*types.ResourceSupport)(nil),                 // 14: smartcore.types.ResourceSupport
-	(*types.FloatAttributes)(nil),                 // 15: smartcore.types.FloatAttributes
+	(*typespb.Tween)(nil),                         // 13: smartcore.bos.types.v1.Tween
+	(*typespb.ResourceSupport)(nil),               // 14: smartcore.bos.types.v1.ResourceSupport
+	(*typespb.FloatAttributes)(nil),               // 15: smartcore.bos.types.v1.FloatAttributes
 	(*fieldmaskpb.FieldMask)(nil),                 // 16: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),                 // 17: google.protobuf.Timestamp
 }
 var file_smartcore_bos_openclose_v1_open_close_proto_depIdxs = []int32{
 	3,  // 0: smartcore.bos.openclose.v1.OpenClosePositions.states:type_name -> smartcore.bos.openclose.v1.OpenClosePosition
 	11, // 1: smartcore.bos.openclose.v1.OpenClosePositions.preset:type_name -> smartcore.bos.openclose.v1.OpenClosePositions.Preset
-	13, // 2: smartcore.bos.openclose.v1.OpenClosePosition.open_percent_tween:type_name -> smartcore.types.Tween
+	13, // 2: smartcore.bos.openclose.v1.OpenClosePosition.open_percent_tween:type_name -> smartcore.bos.types.v1.Tween
 	0,  // 3: smartcore.bos.openclose.v1.OpenClosePosition.direction:type_name -> smartcore.bos.openclose.v1.OpenClosePosition.Direction
 	1,  // 4: smartcore.bos.openclose.v1.OpenClosePosition.resistance:type_name -> smartcore.bos.openclose.v1.OpenClosePosition.Resistance
-	14, // 5: smartcore.bos.openclose.v1.PositionsSupport.resource_support:type_name -> smartcore.types.ResourceSupport
-	15, // 6: smartcore.bos.openclose.v1.PositionsSupport.open_percent_attributes:type_name -> smartcore.types.FloatAttributes
+	14, // 5: smartcore.bos.openclose.v1.PositionsSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
+	15, // 6: smartcore.bos.openclose.v1.PositionsSupport.open_percent_attributes:type_name -> smartcore.bos.types.v1.FloatAttributes
 	0,  // 7: smartcore.bos.openclose.v1.PositionsSupport.directions:type_name -> smartcore.bos.openclose.v1.OpenClosePosition.Direction
 	11, // 8: smartcore.bos.openclose.v1.PositionsSupport.presets:type_name -> smartcore.bos.openclose.v1.OpenClosePositions.Preset
 	16, // 9: smartcore.bos.openclose.v1.GetOpenClosePositionsRequest.read_mask:type_name -> google.protobuf.FieldMask
