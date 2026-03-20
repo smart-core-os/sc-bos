@@ -36,7 +36,8 @@ func findProjectDirs(fsys fs.FS) ([]string, error) {
 			return nil
 		}
 
-		if !bytes.Contains(content, []byte("@smart-core-os/sc-bos-ui-gen")) {
+		if !bytes.Contains(content, []byte("@smart-core-os/sc-bos-ui-gen")) &&
+			!bytes.Contains(content, []byte("@smart-core-os/sc-api-grpc-web")) {
 			return nil
 		}
 

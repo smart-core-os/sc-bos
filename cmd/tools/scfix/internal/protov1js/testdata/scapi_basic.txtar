@@ -1,0 +1,84 @@
+Migrate imports from @smart-core-os/sc-api-grpc-web to @smart-core-os/sc-bos-ui-gen versioned paths.
+Covers traits/ and types/ subpaths, including types/time/ subdirectory flattening.
+expected_changes: 4
+
+-- input/project/package.json --
+{
+  "name": "app",
+  "dependencies": {
+    "@smart-core-os/sc-api-grpc-web": "^2.0.0"
+  }
+}
+-- input/project/src/light.js --
+import {LightApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/light_grpc_web_pb';
+import {Brightness} from '@smart-core-os/sc-api-grpc-web/traits/light_pb';
+import {Tween} from '@smart-core-os/sc-api-grpc-web/types/tween_pb';
+import {Period} from '@smart-core-os/sc-api-grpc-web/types/time/period_pb';
+
+export function setBrightness(client, value) {
+  return client.updateBrightness({brightness: new Brightness([value])});
+}
+-- input/project/node_modules/@smart-core-os/sc-bos-ui-gen/package.json --
+{
+  "name": "@smart-core-os/sc-bos-ui-gen"
+}
+-- input/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb.js --
+// Generated protobuf file
+-- input/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_grpc_web_pb.js --
+// Generated gRPC-Web client
+-- input/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/types/v1/tween_pb.js --
+// Generated protobuf file
+-- input/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/types/v1/period_pb.js --
+// Generated protobuf file
+-- input/project/node_modules/@smart-core-os/sc-api-grpc-web/package.json --
+{
+  "name": "@smart-core-os/sc-api-grpc-web"
+}
+-- input/project/node_modules/@smart-core-os/sc-api-grpc-web/traits/light_pb.js --
+// Old flat protobuf file
+-- input/project/node_modules/@smart-core-os/sc-api-grpc-web/traits/light_grpc_web_pb.js --
+// Old flat gRPC-Web client
+-- input/project/node_modules/@smart-core-os/sc-api-grpc-web/types/tween_pb.js --
+// Old flat protobuf file
+-- input/project/node_modules/@smart-core-os/sc-api-grpc-web/types/time/period_pb.js --
+// Old flat protobuf file (in subdirectory)
+-- output/project/package.json --
+{
+  "name": "app",
+  "dependencies": {
+    "@smart-core-os/sc-api-grpc-web": "^2.0.0"
+  }
+}
+-- output/project/src/light.js --
+import {LightApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_grpc_web_pb';
+import {Brightness} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb';
+import {Tween} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/types/v1/tween_pb';
+import {Period} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/types/v1/period_pb';
+
+export function setBrightness(client, value) {
+  return client.updateBrightness({brightness: new Brightness([value])});
+}
+-- output/project/node_modules/@smart-core-os/sc-bos-ui-gen/package.json --
+{
+  "name": "@smart-core-os/sc-bos-ui-gen"
+}
+-- output/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb.js --
+// Generated protobuf file
+-- output/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_grpc_web_pb.js --
+// Generated gRPC-Web client
+-- output/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/types/v1/tween_pb.js --
+// Generated protobuf file
+-- output/project/node_modules/@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/types/v1/period_pb.js --
+// Generated protobuf file
+-- output/project/node_modules/@smart-core-os/sc-api-grpc-web/package.json --
+{
+  "name": "@smart-core-os/sc-api-grpc-web"
+}
+-- output/project/node_modules/@smart-core-os/sc-api-grpc-web/traits/light_pb.js --
+// Old flat protobuf file
+-- output/project/node_modules/@smart-core-os/sc-api-grpc-web/traits/light_grpc_web_pb.js --
+// Old flat gRPC-Web client
+-- output/project/node_modules/@smart-core-os/sc-api-grpc-web/types/tween_pb.js --
+// Old flat protobuf file
+-- output/project/node_modules/@smart-core-os/sc-api-grpc-web/types/time/period_pb.js --
+// Old flat protobuf file (in subdirectory)

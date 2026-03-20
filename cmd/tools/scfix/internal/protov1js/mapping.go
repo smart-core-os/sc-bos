@@ -1,6 +1,7 @@
 package protov1js
 
 import (
+	"fmt"
 	"io/fs"
 	"path"
 	"regexp"
@@ -77,6 +78,44 @@ func buildJSImportMapping(fsys fs.FS) (map[string]string, error) {
 			mapping[oldImport] = newImport
 		}
 
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return mapping, nil
+}
+
+// buildScApiImportMapping returns a mapping from sc-api-grpc-web subpaths to sc-bos-ui-gen versioned paths.
+// For example: "traits/light_pb" -> "smartcore/bos/light/v1/light_pb".
+// It walks the scApiFS directory and matches basenames against the uiGenProtoFS mapping.
+// Subdirectory structures (e.g. "types/time/period_pb") are handled automatically via basename matching.
+func buildScApiImportMapping(uiGenProtoFS, scApiFS fs.FS) (map[string]string, error) {
+	uiGenMapping, err := buildJSImportMapping(uiGenProtoFS)
+	if err != nil {
+		return nil, fmt.Errorf("building ui-gen import mapping: %w", err)
+	}
+
+	mapping := make(map[string]string)
+	err = fs.WalkDir(scApiFS, ".", func(relPath string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() || !strings.HasSuffix(relPath, "_pb.js") {
+			return nil
+		}
+
+		basename := path.Base(strings.TrimSuffix(relPath, ".js")) // e.g. "light_pb"
+		newImport, exists := uiGenMapping[basename]
+		if !exists {
+			return nil
+		}
+
+		oldSubPath := strings.TrimSuffix(relPath, ".js") // e.g. "traits/light_pb"
+		mapping[oldSubPath] = newImport
 		return nil
 	})
 
