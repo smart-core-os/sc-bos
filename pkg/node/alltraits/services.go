@@ -16,6 +16,7 @@ import (
 	genlogpb "github.com/smart-core-os/sc-bos/pkg/gentrait/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/bootpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/report"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent"
@@ -39,6 +40,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	gen_mqttpb "github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	gen_bootpb "github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/reportpb"
 	gen_resourceusepb "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
@@ -94,6 +96,7 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	healthpb.TraitName:         {gen_healthpb.HealthApi_ServiceDesc, gen_healthpb.HealthHistory_ServiceDesc},
 	meter.TraitName:            {meterpb.MeterApi_ServiceDesc, meterpb.MeterInfo_ServiceDesc, meterpb.MeterHistory_ServiceDesc},
 	mqttpb.TraitName:           {gen_mqttpb.MqttService_ServiceDesc},
+	bootpb.TraitName:           {gen_bootpb.BootApi_ServiceDesc, gen_bootpb.BootHistory_ServiceDesc},
 	report.TraitName:           {reportpb.ReportApi_ServiceDesc},
 	resourceusepb.TraitName:    {gen_resourceusepb.ResourceUseApi_ServiceDesc, gen_resourceusepb.ResourceUseHistory_ServiceDesc},
 	securityevent.TraitName:    {securityeventpb.SecurityEventApi_ServiceDesc},
