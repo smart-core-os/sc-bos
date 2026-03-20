@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
@@ -15,14 +16,18 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	genlogpb "github.com/smart-core-os/sc-bos/pkg/gentrait/logpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 )
 
 type Interceptor struct {
 	logger      *zap.Logger
 	auditLogger *zap.Logger
+	auditModel  *genlogpb.Model
 	policy      Policy
 	verifier    token.Validator
 }
@@ -203,6 +208,27 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 			zap.Any("tokenClaims", creds.tokenClaims),
 		)
 	}
+	if i.auditModel != nil && isWriteMethod(method) && !stream.Open {
+		outcome, lvl := "allowed", logpb.Level_LEVEL_INFO
+		if err != nil {
+			outcome, lvl = "denied", logpb.Level_LEVEL_WARN
+		}
+		i.auditModel.AppendMessage(&logpb.LogMessage{
+			Timestamp: timestamppb.Now(),
+			Level:     lvl,
+			Logger:    "audit",
+			Message:   "write",
+			Fields: map[string]string{
+				"outcome":     outcome,
+				"service":     service,
+				"method":      method,
+				"peer":        addr,
+				"cert":        strconv.FormatBool(creds.certValid),
+				"certSubject": certSubject(creds.cert),
+				"token":       strconv.FormatBool(creds.tokenClaims != nil),
+			},
+		})
+	}
 	return creds, err
 }
 
@@ -266,6 +292,27 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 			zap.Any("tokenClaims", creds.tokenClaims),
 		)
 	}
+	if i.auditModel != nil && isHTTPWriteMethod(r.Method) {
+		outcome, lvl := "allowed", logpb.Level_LEVEL_INFO
+		if err != nil {
+			outcome, lvl = "denied", logpb.Level_LEVEL_WARN
+		}
+		i.auditModel.AppendMessage(&logpb.LogMessage{
+			Timestamp: timestamppb.Now(),
+			Level:     lvl,
+			Logger:    "audit",
+			Message:   "write",
+			Fields: map[string]string{
+				"outcome":     outcome,
+				"path":        r.URL.Path,
+				"httpMethod":  r.Method,
+				"peer":        addr,
+				"cert":        strconv.FormatBool(creds.certValid),
+				"certSubject": certSubject(creds.cert),
+				"token":       strconv.FormatBool(creds.tokenClaims != nil),
+			},
+		})
+	}
 	return creds, err
 }
 
@@ -285,6 +332,10 @@ func WithTokenVerifier(tv token.Validator) InterceptorOption {
 
 func WithAuditLogger(logger *zap.Logger) InterceptorOption {
 	return func(i *Interceptor) { i.auditLogger = logger }
+}
+
+func WithAuditModel(m *genlogpb.Model) InterceptorOption {
+	return func(i *Interceptor) { i.auditModel = m }
 }
 
 type verifiedCreds struct {

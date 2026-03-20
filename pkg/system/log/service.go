@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
 	genlogpb "github.com/smart-core-os/sc-bos/pkg/gentrait/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -76,7 +77,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 				if p := s.downloadAllowedDir.Load(); p != nil {
 					dir = *p
 				}
-				serveLogDownload(w, r, s.downloadKey, dir)
+				ServeLogDownload(w, r, s.downloadKey, dir)
 			})
 		})
 
@@ -89,7 +90,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		dlPath := s.registeredDLPath
 
 		srv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
-			return getDownloadLogURL(req, cfg.LogFilePath, cfg.LogDir, urlBase, dlPath, key, ttl)
+			return GetDownloadLogURL(req, cfg.LogFilePath, cfg.LogDir, urlBase, dlPath, key, ttl)
 		}
 	}
 
@@ -98,13 +99,13 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		go func() {
 			ticker := time.NewTicker(30 * time.Second)
 			defer ticker.Stop()
-			refreshMetadata(model, cfg.LogFilePath, cfg.LogDir, s.logger)
+			RefreshMetadata(model, cfg.LogFilePath, cfg.LogDir, s.logger)
 			for {
 				select {
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
-					refreshMetadata(model, cfg.LogFilePath, cfg.LogDir, s.logger)
+					RefreshMetadata(model, cfg.LogFilePath, cfg.LogDir, s.logger)
 				}
 			}
 		}()
@@ -114,6 +115,40 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer.Announce(s.name, node.HasTrait(genlogpb.TraitName, node.WithClients(logpb.WrapApi(srv))))
 
 	return nil
+}
+
+// --------------------------------------------------------------------------
+// Audit file logger construction
+// --------------------------------------------------------------------------
+
+// NewAuditFileLogger creates a rotating JSON audit log file and returns
+// a zap.Logger that writes to it, plus an io.Closer for cleanup.
+// The caller is responsible for calling Sync() on the logger before Close().
+func NewAuditFileLogger(filename string, maxSizeMB, maxAgeDays, maxBackups int, compress bool) (*zap.Logger, io.Closer, error) {
+	if err := os.MkdirAll(filepath.Dir(filename), 0o755); err != nil {
+		return nil, nil, fmt.Errorf("create audit log dir: %w", err)
+	}
+	// Open eagerly to surface config errors at startup rather than on first write.
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o640)
+	if err != nil {
+		return nil, nil, fmt.Errorf("open audit log: %w", err)
+	}
+	f.Close()
+	w := &lumberjack.Logger{
+		Filename:   filename,
+		MaxSize:    maxSizeMB,
+		MaxAge:     maxAgeDays,
+		MaxBackups: maxBackups,
+		Compress:   compress,
+	}
+	enc := zap.NewProductionEncoderConfig()
+	enc.EncodeTime = zapcore.ISO8601TimeEncoder
+	core := zapcore.NewCore(
+		zapcore.NewJSONEncoder(enc),
+		zapcore.AddSync(w),
+		zapcore.InfoLevel,
+	)
+	return zap.New(core), w, nil
 }
 
 // --------------------------------------------------------------------------
@@ -213,7 +248,7 @@ func setModelLevel(m *genlogpb.Model, l zapcore.Level) error {
 // Log file metadata
 // --------------------------------------------------------------------------
 
-func refreshMetadata(model *genlogpb.Model, glob, logDir string, logger *zap.Logger) {
+func RefreshMetadata(model *genlogpb.Model, glob, logDir string, logger *zap.Logger) {
 	var totalSize int64
 	var fileCount int
 
@@ -272,9 +307,9 @@ type downloadJWTClaims struct {
 	Body downloadClaims `json:"b"`
 }
 
-// newHMACKey generates a random 32-byte HMAC key.
+// NewHMACKey generates a random 32-byte HMAC key.
 // The key is generated once per applyConfig call (i.e. once per config reload).
-func newHMACKey() []byte {
+func NewHMACKey() []byte {
 	key := make([]byte, 32)
 	if _, err := rand.Read(key); err != nil {
 		panic("logpb: failed to generate HMAC key: " + err.Error())
@@ -282,7 +317,7 @@ func newHMACKey() []byte {
 	return key
 }
 
-func getDownloadLogURL(
+func GetDownloadLogURL(
 	req *logpb.GetDownloadLogUrlRequest,
 	glob, logDir, urlBase, downloadPath string,
 	key []byte,
@@ -406,7 +441,7 @@ func buildDownloadURL(urlBase, downloadPath, tokenStr string) (string, error) {
 	return u.String(), nil
 }
 
-// serveLogDownload is the HTTP handler for log file downloads.
+// ServeLogDownload is the HTTP handler for log file downloads.
 // It validates the signed JWT in the "dlt" (download token) query parameter and
 // streams the corresponding file directly via io.Copy — no read→serialise→write cycle.
 //
@@ -419,7 +454,7 @@ func buildDownloadURL(urlBase, downloadPath, tokenStr string) (string, error) {
 // concurrent writes from the logger are safe because io.Copy reads sequentially
 // and log rotation produces a new file (the active file is never truncated while
 // the old one is being served).
-func serveLogDownload(w http.ResponseWriter, r *http.Request, key []byte, allowedDir string) {
+func ServeLogDownload(w http.ResponseWriter, r *http.Request, key []byte, allowedDir string) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Cache-Control", "no-store")
 

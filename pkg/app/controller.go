@@ -12,6 +12,7 @@ import (
 	"net/http/pprof"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -21,11 +22,9 @@ import (
 	"github.com/timshannon/bolthold"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/smart-core-os/sc-bos/internal/account"
 	"github.com/smart-core-os/sc-bos/internal/cloud"
@@ -45,12 +44,15 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
+	genlogpb "github.com/smart-core-os/sc-bos/pkg/gentrait/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/manage/enrollment"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
+	syslog "github.com/smart-core-os/sc-bos/pkg/system/log"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
 	"github.com/smart-core-os/sc-golang/pkg/resource"
@@ -305,13 +307,21 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	var auditLogger *zap.Logger
 	var auditCloser io.Closer // non-nil when auditLogger was successfully created
 	if al := config.AuditLog; al != nil && al.Filename != "" {
+		maxSize := al.MaxSizeMB
+		if maxSize == 0 {
+			maxSize = 100
+		}
 		var err error
-		auditLogger, auditCloser, err = newAuditLogger(al)
+		auditLogger, auditCloser, err = syslog.NewAuditFileLogger(al.Filename, maxSize, al.MaxAgeDays, al.MaxBackups, al.Compress)
 		if err != nil {
 			logger.Error("failed to open audit log file", zap.String("file", al.Filename), zap.Error(err))
 		}
 	}
-	if pol != nil || auditLogger != nil {
+	var auditModel *genlogpb.Model
+	if config.AuditLog != nil {
+		auditModel = genlogpb.NewModel(0)
+	}
+	if pol != nil || auditLogger != nil || auditModel != nil {
 		if pol == nil {
 			// Policy is disabled but audit logging is configured; use an allow-all policy so the
 			// interceptor still runs and can record write operations.
@@ -325,6 +335,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		}
 		if auditLogger != nil {
 			opts = append(opts, policy.WithAuditLogger(auditLogger))
+		}
+		if auditModel != nil {
+			opts = append(opts, policy.WithAuditModel(auditModel))
 		}
 		interceptor := policy.NewInterceptor(pol, opts...)
 		grpcOpts = append(grpcOpts,
@@ -390,6 +403,52 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	mux := http.NewServeMux()
 	// Devices API aux routes
 	devicesApi.RegisterHTTPMux(mux)
+
+	// Audit log LogApi trait
+	if auditModel != nil {
+		auditSrv := genlogpb.NewModelServer(auditModel)
+
+		if al := config.AuditLog; al != nil && al.Filename != "" {
+			auditDownloadKey := syslog.NewHMACKey()
+			allowedDir := filepath.Dir(al.Filename)
+			auditDLPath := "/__/audit-log/download"
+
+			mux.HandleFunc(auditDLPath, func(w http.ResponseWriter, r *http.Request) {
+				syslog.ServeLogDownload(w, r, auditDownloadKey, allowedDir)
+			})
+
+			ttl := 15 * time.Minute
+			urlBase := ""
+			if hostPort, err := config.ExternalHTTPEndpoint(); err == nil {
+				urlBase = "https://" + hostPort
+			}
+			auditSrv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
+				return syslog.GetDownloadLogURL(req, al.Filename, "", urlBase, auditDLPath, auditDownloadKey, ttl)
+			}
+
+			go func() {
+				ticker := time.NewTicker(30 * time.Second)
+				defer ticker.Stop()
+				syslog.RefreshMetadata(auditModel, al.Filename, "", logger.Named("audit"))
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case <-ticker.C:
+						syslog.RefreshMetadata(auditModel, al.Filename, "", logger.Named("audit"))
+					}
+				}
+			}()
+		}
+
+		auditLogName := "audit-log"
+		if rootNode.Name() != "" {
+			auditLogName = path.Join(rootNode.Name(), "audit-log")
+		}
+		rootNode.Announce(auditLogName,
+			node.HasTrait(genlogpb.TraitName, node.WithClients(logpb.WrapApi(auditSrv))),
+		)
+	}
 
 	// Static site hosting
 	for _, site := range config.StaticHosting {
@@ -637,34 +696,6 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	return
 }
 
-func newAuditLogger(cfg *sysconf.AuditLogConfig) (*zap.Logger, io.Closer, error) {
-	// Open the file eagerly so configuration errors surface at startup rather than on first write.
-	if err := os.MkdirAll(filepath.Dir(cfg.Filename), 0o755); err != nil {
-		return nil, nil, fmt.Errorf("create audit log directory: %w", err)
-	}
-	f, err := os.OpenFile(cfg.Filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o640)
-	if err != nil {
-		return nil, nil, fmt.Errorf("open audit log: %w", err)
-	}
-	f.Close()
-
-	maxSize := cfg.MaxSizeMB
-	if maxSize == 0 {
-		maxSize = 100
-	}
-	w := &lumberjack.Logger{
-		Filename:   cfg.Filename,
-		MaxSize:    maxSize,
-		MaxAge:     cfg.MaxAgeDays,
-		MaxBackups: cfg.MaxBackups,
-		Compress:   cfg.Compress,
-	}
-	encoderCfg := zap.NewProductionEncoderConfig()
-	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
-	enc := zapcore.NewJSONEncoder(encoderCfg)
-	core := zapcore.NewCore(enc, zapcore.AddSync(w), zapcore.InfoLevel)
-	return zap.New(core), w, nil
-}
 
 const (
 	configDirName = "config"
