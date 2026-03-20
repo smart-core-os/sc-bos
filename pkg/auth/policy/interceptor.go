@@ -212,7 +212,6 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 			zap.Bool("cert", creds.certValid),
 			zap.String("certSubject", certSubject(creds.cert)),
 			zap.Bool("token", creds.tokenClaims != nil),
-			zap.Any("tokenClaims", creds.tokenClaims),
 		)
 	}
 	if i.auditModel != nil && isWriteMethod(method) && !stream.Open {
@@ -305,7 +304,6 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 			zap.Bool("cert", creds.certValid),
 			zap.String("certSubject", certSubject(creds.cert)),
 			zap.Bool("token", creds.tokenClaims != nil),
-			zap.Any("tokenClaims", creds.tokenClaims),
 		)
 	}
 	if i.auditModel != nil && isHTTPWriteMethod(r.Method) {
@@ -403,6 +401,10 @@ func httpPeerCert(r *http.Request) *x509.Certificate {
 
 // isWriteMethod reports whether the gRPC method name represents a mutating operation.
 // It returns true for any method that does not begin with a known read-only prefix.
+//
+// The read-only prefixes cover all current SC-BOS proto read methods. Non-standard
+// method names in the codebase (Identify, ConfigureService, RegenerateSecret,
+// OnMessage) are all mutating and correctly classified as writes by this function.
 func isWriteMethod(method string) bool {
 	for _, prefix := range []string{"Get", "Pull", "Describe", "List"} {
 		if strings.HasPrefix(method, prefix) {

@@ -421,6 +421,8 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			urlBase := ""
 			if hostPort, err := config.ExternalHTTPEndpoint(); err == nil {
 				urlBase = "https://" + hostPort
+			} else {
+				logger.Warn("audit log download URLs will be relative; set externalAddress to generate absolute URLs", zap.Error(err))
 			}
 			auditSrv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
 				return syslog.GetDownloadLogURL(req, al.Filename, "", urlBase, auditDLPath, auditDownloadKey, ttl)
