@@ -5,13 +5,13 @@ import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
 
 /**
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/energy_storage_pb').EnergyLevel
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/energystorage/v1/energy_storage_pb').EnergyLevel
  * } EnergyLevel
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/energy_storage_pb').PullEnergyLevelRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/energystorage/v1/energy_storage_pb').PullEnergyLevelRequest
  * } PullEnergyLevelRequest
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/energy_storage_pb').PullEnergyLevelResponse
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/energystorage/v1/energy_storage_pb').PullEnergyLevelResponse
  * } PullEnergyLevelResponse
  * @typedef {import('vue').ComputedRef} ComputedRef
  * @typedef {import('@/api/resource').ResourceValue} ResourceValue

@@ -5,16 +5,16 @@ import {setRequestName, toQueryObject, watchResource} from '@/util/traits.js';
 import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
 
 /**
- * @typedef {import('@smart-core-os/sc-api-grpc-web/traits/light_pb').GetBrightnessRequest} GetBrightnessRequest
- * @typedef {import('@smart-core-os/sc-api-grpc-web/traits/light_pb').PullBrightnessRequest} PullBrightnessRequest
- * @typedef {import('@smart-core-os/sc-api-grpc-web/traits/light_pb').PullBrightnessResponse} PullBrightnessResponse
- * @typedef {import('@smart-core-os/sc-api-grpc-web/traits/light_pb').UpdateBrightnessRequest} UpdateBrightnessRequest
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb').GetBrightnessRequest} GetBrightnessRequest
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb').PullBrightnessRequest} PullBrightnessRequest
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb').PullBrightnessResponse} PullBrightnessResponse
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb').UpdateBrightnessRequest} UpdateBrightnessRequest
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/light_pb').DescribeBrightnessRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb').DescribeBrightnessRequest
  * } DescribeBrightnessRequest
- * @typedef {import('@smart-core-os/sc-api-grpc-web/traits/light_pb').Brightness} Brightness
- * @typedef {import('@smart-core-os/sc-api-grpc-web/traits/light_pb').BrightnessSupport} BrightnessSupport
- * @typedef {import('@smart-core-os/sc-api-grpc-web/traits/light_pb').LightPreset} LightPreset
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb').Brightness} Brightness
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb').BrightnessSupport} BrightnessSupport
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb').LightPreset} LightPreset
  * @typedef {import('vue').Ref} Ref
  * @typedef {import('vue').ToRefs} ToRefs
  * @typedef {import('vue').ComputedRef} ComputedRef

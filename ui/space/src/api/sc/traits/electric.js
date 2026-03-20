@@ -1,8 +1,8 @@
 import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setValue, trackAction} from '@/api/resource';
-import {ElectricApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/electric_grpc_web_pb';
-import {GetDemandRequest, PullDemandRequest} from '@smart-core-os/sc-api-grpc-web/traits/electric_pb';
+import {ElectricApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/electric/v1/electric_grpc_web_pb';
+import {GetDemandRequest, PullDemandRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/electric/v1/electric_pb';
 
 /**
  * @param {Partial<PullDemandRequest.AsObject>} request

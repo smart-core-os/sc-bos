@@ -13,14 +13,20 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = globalThis;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
-var types_info_pb = require('@smart-core-os/sc-api-grpc-web/types/info_pb.js');
-goog.object.extend(proto, types_info_pb);
+var smartcore_bos_types_v1_info_pb = require('../../../../smartcore/bos/types/v1/info_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_info_pb);
 goog.exportSymbol('proto.smartcore.bos.meter.v1.DescribeMeterReadingRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.meter.v1.GetMeterReadingRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.meter.v1.MeterReading', null, global);
@@ -223,7 +229,7 @@ produced: jspb.Message.getFloatingPointFieldWithDefault(msg, 4, 0.0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.meter.v1.MeterReading}
  */
 proto.smartcore.bos.meter.v1.MeterReading.deserializeBinary = function(bytes) {
@@ -469,7 +475,7 @@ proto.smartcore.bos.meter.v1.MeterReadingSupport.prototype.toObject = function(o
  */
 proto.smartcore.bos.meter.v1.MeterReadingSupport.toObject = function(includeInstance, msg) {
   var f, obj = {
-resourceSupport: (f = msg.getResourceSupport()) && types_info_pb.ResourceSupport.toObject(includeInstance, f),
+resourceSupport: (f = msg.getResourceSupport()) && smartcore_bos_types_v1_info_pb.ResourceSupport.toObject(includeInstance, f),
 usageUnit: jspb.Message.getFieldWithDefault(msg, 2, ""),
 producedUnit: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
@@ -484,7 +490,7 @@ producedUnit: jspb.Message.getFieldWithDefault(msg, 3, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.meter.v1.MeterReadingSupport}
  */
 proto.smartcore.bos.meter.v1.MeterReadingSupport.deserializeBinary = function(bytes) {
@@ -509,16 +515,16 @@ proto.smartcore.bos.meter.v1.MeterReadingSupport.deserializeBinaryFromReader = f
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new types_info_pb.ResourceSupport;
-      reader.readMessage(value,types_info_pb.ResourceSupport.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_v1_info_pb.ResourceSupport;
+      reader.readMessage(value,smartcore_bos_types_v1_info_pb.ResourceSupport.deserializeBinaryFromReader);
       msg.setResourceSupport(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setUsageUnit(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setProducedUnit(value);
       break;
     default:
@@ -555,7 +561,7 @@ proto.smartcore.bos.meter.v1.MeterReadingSupport.serializeBinaryToWriter = funct
     writer.writeMessage(
       1,
       f,
-      types_info_pb.ResourceSupport.serializeBinaryToWriter
+      smartcore_bos_types_v1_info_pb.ResourceSupport.serializeBinaryToWriter
     );
   }
   f = message.getUsageUnit();
@@ -576,17 +582,17 @@ proto.smartcore.bos.meter.v1.MeterReadingSupport.serializeBinaryToWriter = funct
 
 
 /**
- * optional smartcore.types.ResourceSupport resource_support = 1;
- * @return {?proto.smartcore.types.ResourceSupport}
+ * optional smartcore.bos.types.v1.ResourceSupport resource_support = 1;
+ * @return {?proto.smartcore.bos.types.v1.ResourceSupport}
  */
 proto.smartcore.bos.meter.v1.MeterReadingSupport.prototype.getResourceSupport = function() {
-  return /** @type{?proto.smartcore.types.ResourceSupport} */ (
-    jspb.Message.getWrapperField(this, types_info_pb.ResourceSupport, 1));
+  return /** @type{?proto.smartcore.bos.types.v1.ResourceSupport} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_v1_info_pb.ResourceSupport, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.types.ResourceSupport|undefined} value
+ * @param {?proto.smartcore.bos.types.v1.ResourceSupport|undefined} value
  * @return {!proto.smartcore.bos.meter.v1.MeterReadingSupport} returns this
 */
 proto.smartcore.bos.meter.v1.MeterReadingSupport.prototype.setResourceSupport = function(value) {
@@ -694,7 +700,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.meter.v1.GetMeterReadingRequest}
  */
 proto.smartcore.bos.meter.v1.GetMeterReadingRequest.deserializeBinary = function(bytes) {
@@ -719,7 +725,7 @@ proto.smartcore.bos.meter.v1.GetMeterReadingRequest.deserializeBinaryFromReader 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -876,7 +882,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.meter.v1.PullMeterReadingsRequest}
  */
 proto.smartcore.bos.meter.v1.PullMeterReadingsRequest.deserializeBinary = function(bytes) {
@@ -901,7 +907,7 @@ proto.smartcore.bos.meter.v1.PullMeterReadingsRequest.deserializeBinaryFromReade
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1093,7 +1099,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.meter.v1.PullMeterReadingsResponse}
  */
 proto.smartcore.bos.meter.v1.PullMeterReadingsResponse.deserializeBinary = function(bytes) {
@@ -1209,7 +1215,7 @@ meterReading: (f = msg.getMeterReading()) && proto.smartcore.bos.meter.v1.MeterR
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.meter.v1.PullMeterReadingsResponse.Change}
  */
 proto.smartcore.bos.meter.v1.PullMeterReadingsResponse.Change.deserializeBinary = function(bytes) {
@@ -1234,7 +1240,7 @@ proto.smartcore.bos.meter.v1.PullMeterReadingsResponse.Change.deserializeBinaryF
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1477,7 +1483,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.meter.v1.DescribeMeterReadingRequest}
  */
 proto.smartcore.bos.meter.v1.DescribeMeterReadingRequest.deserializeBinary = function(bytes) {
@@ -1502,7 +1508,7 @@ proto.smartcore.bos.meter.v1.DescribeMeterReadingRequest.deserializeBinaryFromRe
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     default:

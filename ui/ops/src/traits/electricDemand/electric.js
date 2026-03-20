@@ -5,13 +5,13 @@ import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
 
 /**
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/electric_pb').ElectricDemand
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/electric/v1/electric_pb').ElectricDemand
  * } ElectricDemand
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/electric_pb').PullDemandRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/electric/v1/electric_pb').PullDemandRequest
  * } PullDemandRequest
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/electric_pb').PullDemandResponse
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/electric/v1/electric_pb').PullDemandResponse
  * } PullDemandResponse
  * @typedef {import('vue').ComputedRef} ComputedRef
  * @typedef {import('@/api/resource').ResourceValue} ResourceValue

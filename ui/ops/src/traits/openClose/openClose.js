@@ -4,13 +4,13 @@ import {toQueryObject, watchResource} from '@/util/traits';
 import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
 
 /**
- * @typedef {import('@smart-core-os/sc-api-grpc-web/traits/open_close_pb').OpenClosePositions} OpenClosePositions
- * @typedef {import('@smart-core-os/sc-api-grpc-web/traits/open_close_pb').OpenClosePosition} OpenClosePosition
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb').OpenClosePositions} OpenClosePositions
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb').OpenClosePosition} OpenClosePosition
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/open_close_pb').PullOpenClosePositionsRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb').PullOpenClosePositionsRequest
  * } PullOpenClosePositionsRequest
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/open_close_pb').PullOpenClosePositionsResponse
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb').PullOpenClosePositionsResponse
  * } PullOpenClosePositionsResponse
  * @typedef {import('vue').Ref} Ref
  * @typedef {import('vue').ToRefs} ToRefs

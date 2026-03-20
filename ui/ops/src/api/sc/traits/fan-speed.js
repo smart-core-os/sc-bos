@@ -1,8 +1,8 @@
 import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setValue} from '@/api/resource';
-import {FanSpeedApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/fan_speed_grpc_web_pb';
-import {FanSpeed, PullFanSpeedRequest} from '@smart-core-os/sc-api-grpc-web/traits/fan_speed_pb';
+import {FanSpeedApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/fanspeed/v1/fan_speed_grpc_web_pb';
+import {FanSpeed, PullFanSpeedRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/fanspeed/v1/fan_speed_pb';
 
 /**
  * @param {Partial<PullFanSpeedRequest.AsObject>} request

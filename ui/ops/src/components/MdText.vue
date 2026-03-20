@@ -54,7 +54,7 @@ const nameToText = (name) => {
 
 const items = computed(() => {
   if (!props.value) return [{text: '-'}]
-  /** @type {import('@smart-core-os/sc-api-grpc-web/traits/metadata_pb').Metadata.AsObject} */
+  /** @type {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/metadata/v1/metadata_pb').Metadata.AsObject} */
   const md = props.value
   const items = [];
 

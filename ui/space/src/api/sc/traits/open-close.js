@@ -1,8 +1,8 @@
 import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setValue} from '@/api/resource.js';
-import {OpenCloseApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/open_close_grpc_web_pb';
-import {PullOpenClosePositionsRequest} from '@smart-core-os/sc-api-grpc-web/traits/open_close_pb';
+import {OpenCloseApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_grpc_web_pb';
+import {PullOpenClosePositionsRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb';
 
 /**
  * @param {Partial<PullOpenClosePositionsRequest.AsObject>} request

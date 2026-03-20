@@ -13,14 +13,20 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = globalThis;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
-var types_info_pb = require('@smart-core-os/sc-api-grpc-web/types/info_pb.js');
-goog.object.extend(proto, types_info_pb);
+var smartcore_bos_types_v1_info_pb = require('../../../../smartcore/bos/types/v1/info_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_info_pb);
 goog.exportSymbol('proto.smartcore.bos.soundsensor.v1.DescribeSoundLevelRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.soundsensor.v1.GetSoundLevelRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.soundsensor.v1.PullSoundLevelRequest', null, global);
@@ -220,7 +226,7 @@ soundPressureLevel: (f = jspb.Message.getOptionalFloatingPointField(msg, 1)) == 
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.soundsensor.v1.SoundLevel}
  */
 proto.smartcore.bos.soundsensor.v1.SoundLevel.deserializeBinary = function(bytes) {
@@ -355,7 +361,7 @@ proto.smartcore.bos.soundsensor.v1.SoundLevelSupport.prototype.toObject = functi
  */
 proto.smartcore.bos.soundsensor.v1.SoundLevelSupport.toObject = function(includeInstance, msg) {
   var f, obj = {
-resourceSupport: (f = msg.getResourceSupport()) && types_info_pb.ResourceSupport.toObject(includeInstance, f),
+resourceSupport: (f = msg.getResourceSupport()) && smartcore_bos_types_v1_info_pb.ResourceSupport.toObject(includeInstance, f),
 soundLevelUnit: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
@@ -369,7 +375,7 @@ soundLevelUnit: jspb.Message.getFieldWithDefault(msg, 2, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.soundsensor.v1.SoundLevelSupport}
  */
 proto.smartcore.bos.soundsensor.v1.SoundLevelSupport.deserializeBinary = function(bytes) {
@@ -394,12 +400,12 @@ proto.smartcore.bos.soundsensor.v1.SoundLevelSupport.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new types_info_pb.ResourceSupport;
-      reader.readMessage(value,types_info_pb.ResourceSupport.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_v1_info_pb.ResourceSupport;
+      reader.readMessage(value,smartcore_bos_types_v1_info_pb.ResourceSupport.deserializeBinaryFromReader);
       msg.setResourceSupport(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setSoundLevelUnit(value);
       break;
     default:
@@ -436,7 +442,7 @@ proto.smartcore.bos.soundsensor.v1.SoundLevelSupport.serializeBinaryToWriter = f
     writer.writeMessage(
       1,
       f,
-      types_info_pb.ResourceSupport.serializeBinaryToWriter
+      smartcore_bos_types_v1_info_pb.ResourceSupport.serializeBinaryToWriter
     );
   }
   f = message.getSoundLevelUnit();
@@ -450,17 +456,17 @@ proto.smartcore.bos.soundsensor.v1.SoundLevelSupport.serializeBinaryToWriter = f
 
 
 /**
- * optional smartcore.types.ResourceSupport resource_support = 1;
- * @return {?proto.smartcore.types.ResourceSupport}
+ * optional smartcore.bos.types.v1.ResourceSupport resource_support = 1;
+ * @return {?proto.smartcore.bos.types.v1.ResourceSupport}
  */
 proto.smartcore.bos.soundsensor.v1.SoundLevelSupport.prototype.getResourceSupport = function() {
-  return /** @type{?proto.smartcore.types.ResourceSupport} */ (
-    jspb.Message.getWrapperField(this, types_info_pb.ResourceSupport, 1));
+  return /** @type{?proto.smartcore.bos.types.v1.ResourceSupport} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_v1_info_pb.ResourceSupport, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.types.ResourceSupport|undefined} value
+ * @param {?proto.smartcore.bos.types.v1.ResourceSupport|undefined} value
  * @return {!proto.smartcore.bos.soundsensor.v1.SoundLevelSupport} returns this
 */
 proto.smartcore.bos.soundsensor.v1.SoundLevelSupport.prototype.setResourceSupport = function(value) {
@@ -550,7 +556,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.soundsensor.v1.GetSoundLevelRequest}
  */
 proto.smartcore.bos.soundsensor.v1.GetSoundLevelRequest.deserializeBinary = function(bytes) {
@@ -575,7 +581,7 @@ proto.smartcore.bos.soundsensor.v1.GetSoundLevelRequest.deserializeBinaryFromRea
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -732,7 +738,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.soundsensor.v1.PullSoundLevelRequest}
  */
 proto.smartcore.bos.soundsensor.v1.PullSoundLevelRequest.deserializeBinary = function(bytes) {
@@ -757,7 +763,7 @@ proto.smartcore.bos.soundsensor.v1.PullSoundLevelRequest.deserializeBinaryFromRe
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -949,7 +955,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.soundsensor.v1.PullSoundLevelResponse}
  */
 proto.smartcore.bos.soundsensor.v1.PullSoundLevelResponse.deserializeBinary = function(bytes) {
@@ -1065,7 +1071,7 @@ soundLevel: (f = msg.getSoundLevel()) && proto.smartcore.bos.soundsensor.v1.Soun
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.soundsensor.v1.PullSoundLevelResponse.Change}
  */
 proto.smartcore.bos.soundsensor.v1.PullSoundLevelResponse.Change.deserializeBinary = function(bytes) {
@@ -1090,7 +1096,7 @@ proto.smartcore.bos.soundsensor.v1.PullSoundLevelResponse.Change.deserializeBina
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1333,7 +1339,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.soundsensor.v1.DescribeSoundLevelRequest}
  */
 proto.smartcore.bos.soundsensor.v1.DescribeSoundLevelRequest.deserializeBinary = function(bytes) {
@@ -1358,7 +1364,7 @@ proto.smartcore.bos.soundsensor.v1.DescribeSoundLevelRequest.deserializeBinaryFr
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     default:

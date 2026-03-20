@@ -13,7 +13,13 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = globalThis;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -225,7 +231,7 @@ vehicleInfo: (f = msg.getVehicleInfo()) && proto.smartcore.bos.anprcamera.v1.Anp
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.anprcamera.v1.AnprEvent}
  */
 proto.smartcore.bos.anprcamera.v1.AnprEvent.deserializeBinary = function(bytes) {
@@ -255,15 +261,15 @@ proto.smartcore.bos.anprcamera.v1.AnprEvent.deserializeBinaryFromReader = functi
       msg.setEventTime(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setRegistrationPlate(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setCountry(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setArea(value);
       break;
     case 5:
@@ -271,11 +277,11 @@ proto.smartcore.bos.anprcamera.v1.AnprEvent.deserializeBinaryFromReader = functi
       msg.setConfidence(value);
       break;
     case 6:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setPlateType(value);
       break;
     case 7:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setYear(value);
       break;
     case 8:
@@ -421,7 +427,7 @@ model: jspb.Message.getFieldWithDefault(msg, 4, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.anprcamera.v1.AnprEvent.VehicleInfo}
  */
 proto.smartcore.bos.anprcamera.v1.AnprEvent.VehicleInfo.deserializeBinary = function(bytes) {
@@ -446,19 +452,19 @@ proto.smartcore.bos.anprcamera.v1.AnprEvent.VehicleInfo.deserializeBinaryFromRea
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setVehicleType(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setColour(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setMake(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setModel(value);
       break;
     default:
@@ -841,7 +847,7 @@ pageToken: jspb.Message.getFieldWithDefault(msg, 4, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.anprcamera.v1.ListAnprEventsRequest}
  */
 proto.smartcore.bos.anprcamera.v1.ListAnprEventsRequest.deserializeBinary = function(bytes) {
@@ -866,7 +872,7 @@ proto.smartcore.bos.anprcamera.v1.ListAnprEventsRequest.deserializeBinaryFromRea
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -879,7 +885,7 @@ proto.smartcore.bos.anprcamera.v1.ListAnprEventsRequest.deserializeBinaryFromRea
       msg.setPageSize(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setPageToken(value);
       break;
     default:
@@ -1089,7 +1095,7 @@ totalSize: jspb.Message.getFieldWithDefault(msg, 3, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.anprcamera.v1.ListAnprEventsResponse}
  */
 proto.smartcore.bos.anprcamera.v1.ListAnprEventsResponse.deserializeBinary = function(bytes) {
@@ -1119,7 +1125,7 @@ proto.smartcore.bos.anprcamera.v1.ListAnprEventsResponse.deserializeBinaryFromRe
       msg.addAnprEvents(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setNextPageToken(value);
       break;
     case 3:
@@ -1301,7 +1307,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.anprcamera.v1.PullAnprEventsRequest}
  */
 proto.smartcore.bos.anprcamera.v1.PullAnprEventsRequest.deserializeBinary = function(bytes) {
@@ -1326,7 +1332,7 @@ proto.smartcore.bos.anprcamera.v1.PullAnprEventsRequest.deserializeBinaryFromRea
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1518,7 +1524,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.anprcamera.v1.PullAnprEventsResponse}
  */
 proto.smartcore.bos.anprcamera.v1.PullAnprEventsResponse.deserializeBinary = function(bytes) {
@@ -1634,7 +1640,7 @@ anprEvent: (f = msg.getAnprEvent()) && proto.smartcore.bos.anprcamera.v1.AnprEve
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.anprcamera.v1.PullAnprEventsResponse.Change}
  */
 proto.smartcore.bos.anprcamera.v1.PullAnprEventsResponse.Change.deserializeBinary = function(bytes) {
@@ -1659,7 +1665,7 @@ proto.smartcore.bos.anprcamera.v1.PullAnprEventsResponse.Change.deserializeBinar
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:

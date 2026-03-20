@@ -6,10 +6,10 @@ import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
 
 /**
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/metadata_pb').PullMetadataRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/metadata/v1/metadata_pb').PullMetadataRequest
  * } PullMetadataRequest
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/metadata_pb').PullMetadataResponse
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/metadata/v1/metadata_pb').PullMetadataResponse
  * } PullMetadataResponse
  * @typedef {import('vue').Ref} Ref
  * @typedef {import('vue').UnwrapNestedRefs} UnwrapNestedRefs

@@ -1,14 +1,14 @@
 import {fieldMaskFromObject, setProperties} from '@/api/convpb.js';
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setCollection, trackAction} from '@/api/resource.js';
-import {PublicationApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/publication_grpc_web_pb';
+import {PublicationApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/publication/v1/publication_grpc_web_pb';
 import {
   AcknowledgePublicationRequest,
   CreatePublicationRequest,
   Publication,
   PullPublicationsRequest,
   UpdatePublicationRequest
-} from '@smart-core-os/sc-api-grpc-web/traits/publication_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/publication/v1/publication_pb';
 
 /**
  * @param {Partial<PullPublicationsRequest.AsObject>} request

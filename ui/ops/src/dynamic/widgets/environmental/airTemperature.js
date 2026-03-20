@@ -17,7 +17,7 @@ import {usePullMetadata} from '@/traits/metadata/metadata.js';
  * Extracts the metric value from an air temperature record.
  * Needs special handling because some of the values are nested inside Temperature messages.
  *
- * @param {import('@smart-core-os/sc-api-grpc-web/traits/air_temperature_pb').AirTemperature.AsObject} record - The air temperature record
+ * @param {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airtemperature/v1/air_temperature_pb').AirTemperature.AsObject} record - The air temperature record
  * @param {string} metric - The metric to extract
  * @return {number|undefined} The extracted value or undefined if not available
  */
