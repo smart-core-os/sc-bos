@@ -11,12 +11,7 @@
     "hub": {
       "storage": {
         "type": "proxy"
-      },
-      "nodes": [
-        {"address": "localhost:23201", "name": "EG-01"},
-        {"address": "localhost:23202", "name": "EG-02"},
-        {"address": "localhost:23301", "name": "van/uk/brum/ugs/ac-01"}
-      ]
+      }
     },
     "resourceUse": {}
   }

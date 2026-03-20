@@ -87,6 +87,28 @@ export function usePullService(request, options) {
 }
 
 /**
+ * Checks whether the given node name has an active hub system (primary or proxy).
+ *
+ * @param {MaybeRefOrGetter<string>} name
+ * @return {{hasHubSystem: ComputedRef<boolean>, loading: ComputedRef<boolean>, error: ComputedRef<ResourceError>}}
+ */
+export function useHasHubSystem(name) {
+  const {value, streamError: error, loading} = usePullService(
+      () => ({name: toValue(name) + '/systems', id: 'hub'})
+  );
+  const hasHubSystem = computed(() => value.value ? value.value.active : false);
+  const isProxyHub = computed(() => {
+    if (!value.value?.configRaw) return false;
+    try {
+      return JSON.parse(value.value.configRaw)?.storage?.type === 'proxy';
+    } catch {
+      return false;
+    }
+  });
+  return {hasHubSystem, isProxyHub, loading, error};
+}
+
+/**
  * Checks whether the given node name is a gateway.
  *
  * @param {MaybeRefOrGetter<string>} name
