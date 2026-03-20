@@ -13,7 +13,13 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = globalThis;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -222,7 +228,7 @@ mostRecentGesture: (f = msg.getMostRecentGesture()) && proto.smartcore.bos.butto
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.button.v1.ButtonState}
  */
 proto.smartcore.bos.button.v1.ButtonState.deserializeBinary = function(bytes) {
@@ -373,7 +379,7 @@ endTime: (f = msg.getEndTime()) && google_protobuf_timestamp_pb.Timestamp.toObje
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.button.v1.ButtonState.Gesture}
  */
 proto.smartcore.bos.button.v1.ButtonState.Gesture.deserializeBinary = function(bytes) {
@@ -398,7 +404,7 @@ proto.smartcore.bos.button.v1.ButtonState.Gesture.deserializeBinaryFromReader = 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setId(value);
       break;
     case 2:
@@ -763,7 +769,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.button.v1.GetButtonStateRequest}
  */
 proto.smartcore.bos.button.v1.GetButtonStateRequest.deserializeBinary = function(bytes) {
@@ -788,7 +794,7 @@ proto.smartcore.bos.button.v1.GetButtonStateRequest.deserializeBinaryFromReader 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -945,7 +951,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.button.v1.PullButtonStateRequest}
  */
 proto.smartcore.bos.button.v1.PullButtonStateRequest.deserializeBinary = function(bytes) {
@@ -970,7 +976,7 @@ proto.smartcore.bos.button.v1.PullButtonStateRequest.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1162,7 +1168,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.button.v1.PullButtonStateResponse}
  */
 proto.smartcore.bos.button.v1.PullButtonStateResponse.deserializeBinary = function(bytes) {
@@ -1278,7 +1284,7 @@ buttonState: (f = msg.getButtonState()) && proto.smartcore.bos.button.v1.ButtonS
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.button.v1.PullButtonStateResponse.Change}
  */
 proto.smartcore.bos.button.v1.PullButtonStateResponse.Change.deserializeBinary = function(bytes) {
@@ -1303,7 +1309,7 @@ proto.smartcore.bos.button.v1.PullButtonStateResponse.Change.deserializeBinaryFr
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1548,7 +1554,7 @@ buttonState: (f = msg.getButtonState()) && proto.smartcore.bos.button.v1.ButtonS
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.button.v1.UpdateButtonStateRequest}
  */
 proto.smartcore.bos.button.v1.UpdateButtonStateRequest.deserializeBinary = function(bytes) {
@@ -1573,7 +1579,7 @@ proto.smartcore.bos.button.v1.UpdateButtonStateRequest.deserializeBinaryFromRead
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:

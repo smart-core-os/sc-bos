@@ -20,7 +20,7 @@ const grpc = {};
 grpc.web = require('grpc-web');
 
 
-var types_info_pb = require('@smart-core-os/sc-api-grpc-web/types/info_pb.js')
+var smartcore_bos_types_v1_info_pb = require('../../../../smartcore/bos/types/v1/info_pb.js')
 const proto = {};
 proto.smartcore = {};
 proto.smartcore.bos = {};

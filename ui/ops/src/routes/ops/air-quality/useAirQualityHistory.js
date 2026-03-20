@@ -5,7 +5,7 @@ import {useDevices} from '@/composables/devices';
 import useTimePeriod from '@/composables/useTimePeriod';
 import {hasTrait} from '@/util/devices';
 import {csvDownload} from '@/util/downloadCSV';
-import {AirQuality} from '@smart-core-os/sc-api-grpc-web/traits/air_quality_sensor_pb';
+import {AirQuality} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airqualitysensor/v1/air_quality_sensor_pb';
 import {computed, onMounted, onUnmounted, reactive, ref, watch, watchEffect} from 'vue';
 
 /**

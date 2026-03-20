@@ -2,7 +2,7 @@ import {fieldMaskFromObject, setProperties} from '@/api/convpb.js';
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setValue, trackAction} from '@/api/resource.js';
 import {tweenFromObject} from '@/api/sc/types/tween.js';
-import {LightApiPromiseClient, LightInfoPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/light_grpc_web_pb';
+import {LightApiPromiseClient, LightInfoPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_grpc_web_pb';
 import {
   Brightness,
   DescribeBrightnessRequest,
@@ -10,7 +10,7 @@ import {
   LightPreset,
   PullBrightnessRequest,
   UpdateBrightnessRequest
-} from '@smart-core-os/sc-api-grpc-web/traits/light_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/light/v1/light_pb';
 
 /**
  * @param {Partial<PullBrightnessRequest.AsObject>} request

@@ -1,6 +1,6 @@
 import {listRoleAssignments} from '@/api/ui/account.js';
 import useCollection from '@/composables/collection.js';
-import {ChangeType} from '@smart-core-os/sc-api-grpc-web/types/change_pb';
+import {ChangeType} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/types/v1/change_pb';
 import {computed, toValue} from 'vue';
 
 /**

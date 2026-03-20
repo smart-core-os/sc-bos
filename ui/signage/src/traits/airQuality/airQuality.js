@@ -2,15 +2,15 @@ import {closeResource, newResourceValue} from '@/api/resource.js';
 import {pullAirQualitySensor} from '@/api/sc/traits/air-quality-sensor';
 import {toQueryObject, watchResource} from '@/util/traits.js';
 import {isNullOrUndef} from '@/util/types.js';
-import {AirQuality} from '@smart-core-os/sc-api-grpc-web/traits/air_quality_sensor_pb';
+import {AirQuality} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airqualitysensor/v1/air_quality_sensor_pb';
 import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
 
 /**
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/air_quality_sensor_pb').PullAirQualityRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airqualitysensor/v1/air_quality_sensor_pb').PullAirQualityRequest
  * } PullAirQualityRequest
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/air_quality_sensor_pb').PullAirQualityResponse
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airqualitysensor/v1/air_quality_sensor_pb').PullAirQualityResponse
  * } PullAirQualityResponse
  * @typedef {import('vue').ComputedRef} ComputedRef
  * @typedef {import('@/api/resource').ResourceError} ResourceError

@@ -13,7 +13,13 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = globalThis;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 var google_protobuf_duration_pb = require('google-protobuf/google/protobuf/duration_pb.js');
 goog.object.extend(proto, google_protobuf_duration_pb);
@@ -288,7 +294,7 @@ durationTest: (f = msg.getDurationTest()) && proto.smartcore.bos.emergencylight.
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.emergencylight.v1.TestResultSet}
  */
 proto.smartcore.bos.emergencylight.v1.TestResultSet.deserializeBinary = function(bytes) {
@@ -492,7 +498,7 @@ duration: (f = msg.getDuration()) && google_protobuf_duration_pb.Duration.toObje
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.emergencylight.v1.EmergencyTestResult}
  */
 proto.smartcore.bos.emergencylight.v1.EmergencyTestResult.deserializeBinary = function(bytes) {
@@ -789,7 +795,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.emergencylight.v1.StartEmergencyTestRequest}
  */
 proto.smartcore.bos.emergencylight.v1.StartEmergencyTestRequest.deserializeBinary = function(bytes) {
@@ -814,7 +820,7 @@ proto.smartcore.bos.emergencylight.v1.StartEmergencyTestRequest.deserializeBinar
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     default:
@@ -920,7 +926,7 @@ duration: (f = msg.getDuration()) && google_protobuf_duration_pb.Duration.toObje
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.emergencylight.v1.StartEmergencyTestResponse}
  */
 proto.smartcore.bos.emergencylight.v1.StartEmergencyTestResponse.deserializeBinary = function(bytes) {
@@ -1121,7 +1127,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.emergencylight.v1.StopEmergencyTestsRequest}
  */
 proto.smartcore.bos.emergencylight.v1.StopEmergencyTestsRequest.deserializeBinary = function(bytes) {
@@ -1146,7 +1152,7 @@ proto.smartcore.bos.emergencylight.v1.StopEmergencyTestsRequest.deserializeBinar
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     default:
@@ -1251,7 +1257,7 @@ proto.smartcore.bos.emergencylight.v1.StopEmergencyTestsResponse.toObject = func
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.emergencylight.v1.StopEmergencyTestsResponse}
  */
 proto.smartcore.bos.emergencylight.v1.StopEmergencyTestsResponse.deserializeBinary = function(bytes) {
@@ -1354,7 +1360,7 @@ queryDevice: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.emergencylight.v1.GetTestResultSetRequest}
  */
 proto.smartcore.bos.emergencylight.v1.GetTestResultSetRequest.deserializeBinary = function(bytes) {
@@ -1379,7 +1385,7 @@ proto.smartcore.bos.emergencylight.v1.GetTestResultSetRequest.deserializeBinaryF
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1565,7 +1571,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.emergencylight.v1.PullTestResultRequest}
  */
 proto.smartcore.bos.emergencylight.v1.PullTestResultRequest.deserializeBinary = function(bytes) {
@@ -1590,7 +1596,7 @@ proto.smartcore.bos.emergencylight.v1.PullTestResultRequest.deserializeBinaryFro
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1782,7 +1788,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.emergencylight.v1.PullTestResultsResponse}
  */
 proto.smartcore.bos.emergencylight.v1.PullTestResultsResponse.deserializeBinary = function(bytes) {
@@ -1898,7 +1904,7 @@ testResult: (f = msg.getTestResult()) && proto.smartcore.bos.emergencylight.v1.T
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.emergencylight.v1.PullTestResultsResponse.Change}
  */
 proto.smartcore.bos.emergencylight.v1.PullTestResultsResponse.Change.deserializeBinary = function(bytes) {
@@ -1923,7 +1929,7 @@ proto.smartcore.bos.emergencylight.v1.PullTestResultsResponse.Change.deserialize
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:

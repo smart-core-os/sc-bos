@@ -3,7 +3,7 @@ import * as jspb from 'google-protobuf'
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
 import * as smartcore_bos_actor_v1_actor_pb from '../../../../smartcore/bos/actor/v1/actor_pb'; // proto import: "smartcore/bos/actor/v1/actor.proto"
-import * as types_change_pb from '@smart-core-os/sc-api-grpc-web/types/change_pb'; // proto import: "types/change.proto"
+import * as smartcore_bos_types_v1_change_pb from '../../../../smartcore/bos/types/v1/change_pb'; // proto import: "smartcore/bos/types/v1/change.proto"
 
 
 export class SecurityEvent extends jspb.Message {
@@ -254,8 +254,8 @@ export namespace PullSecurityEventsResponse {
     hasOldValue(): boolean;
     clearOldValue(): Change;
 
-    getType(): types_change_pb.ChangeType;
-    setType(value: types_change_pb.ChangeType): Change;
+    getType(): smartcore_bos_types_v1_change_pb.ChangeType;
+    setType(value: smartcore_bos_types_v1_change_pb.ChangeType): Change;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Change.AsObject;
@@ -271,7 +271,7 @@ export namespace PullSecurityEventsResponse {
       changeTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
       newValue?: SecurityEvent.AsObject;
       oldValue?: SecurityEvent.AsObject;
-      type: types_change_pb.ChangeType;
+      type: smartcore_bos_types_v1_change_pb.ChangeType;
     };
   }
 
