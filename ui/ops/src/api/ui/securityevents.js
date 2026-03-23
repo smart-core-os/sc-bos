@@ -44,7 +44,7 @@ export function pullSecurityEvents(request, resource) {
  * @return {SecurityEventApiPromiseClient}
  */
 function apiClient(endpoint) {
-  return new SecurityEventApiPromiseClient(endpoint, clientOptions());
+  return new SecurityEventApiPromiseClient(endpoint, null, clientOptions());
 }
 
 /**
