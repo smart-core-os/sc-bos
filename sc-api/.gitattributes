@@ -1,4 +1,0 @@
-*.sh text eol=lf
-# overrides for repo language detection
-*.proto linguist-detectable
-grpc-web/** -linguist-detectable
