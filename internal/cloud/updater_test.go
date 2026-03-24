@@ -70,8 +70,8 @@ func TestAutoPoll(t *testing.T) {
 				if checkInCalls == 1 {
 					return CheckInResponse{
 						LatestConfig: &LatestConfig{
-							Deployment:    Deployment{ID: 1},
-							ConfigVersion: ConfigVersion{ID: 1, PayloadURL: "http://fake.example/payload.tar.gz"},
+							Deployment:    Deployment{ID: "1"},
+							ConfigVersion: ConfigVersion{ID: "1", PayloadURL: "http://fake.example/payload.tar.gz"},
 						},
 					}, nil
 				}

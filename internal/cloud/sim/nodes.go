@@ -15,9 +15,9 @@ import (
 
 // Node is the JSON representation of a node.
 type Node struct {
-	ID         int64     `json:"id"`
+	ID         int64     `json:"id,string"`
 	Hostname   string    `json:"hostname"`
-	SiteID     int64     `json:"siteId"`
+	SiteID     int64     `json:"siteId,string"`
 	CreateTime time.Time `json:"createTime"`
 }
 
@@ -47,12 +47,12 @@ type CreateNodeResponse struct {
 
 type createNodeRequest struct {
 	Hostname string `json:"hostname"`
-	SiteID   int64  `json:"siteId"`
+	SiteID   int64  `json:"siteId,string"`
 }
 
 type updateNodeRequest struct {
 	Hostname string `json:"hostname"`
-	SiteID   int64  `json:"siteId"`
+	SiteID   int64  `json:"siteId,string"`
 }
 
 func (s *Server) listNodes(w http.ResponseWriter, r *http.Request) {

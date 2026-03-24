@@ -16,6 +16,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -64,7 +65,7 @@ func setupClientEnv(t *testing.T) *clientEnv {
 	var created sim.CreateNodeResponse
 	resp = doSimRequest(t, client, "POST", ts.URL+"/api/v1/management/nodes", map[string]any{
 		"hostname": "test-node",
-		"siteId":   site.ID,
+		"siteId":   strconv.FormatInt(site.ID, 10),
 	}, &created)
 	if resp.StatusCode != http.StatusCreated {
 		t.Fatalf("create node: expected 201, got %d", resp.StatusCode)
@@ -190,7 +191,7 @@ func createConfigVersion(t *testing.T, client *http.Client, baseURL string, node
 	t.Helper()
 	var cv sim.ConfigVersion
 	resp := doSimRequest(t, client, "POST", baseURL+"/api/v1/management/config-versions", map[string]any{
-		"nodeId":      nodeID,
+		"nodeId":      strconv.FormatInt(nodeID, 10),
 		"description": "test config",
 		"payload":     payload,
 	}, &cv)
@@ -205,7 +206,7 @@ func createPendingDeployment(t *testing.T, client *http.Client, baseURL string, 
 	t.Helper()
 	var dep sim.Deployment
 	resp := doSimRequest(t, client, "POST", baseURL+"/api/v1/management/deployments", map[string]any{
-		"configVersionId": configVersionID,
+		"configVersionId": strconv.FormatInt(configVersionID, 10),
 		"status":          "PENDING",
 	}, &dep)
 	if resp.StatusCode != http.StatusCreated {

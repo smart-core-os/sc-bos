@@ -43,14 +43,14 @@ func setupCheckInEnv(t *testing.T) checkInEnv {
 	var created CreateNodeResponse
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "checkin-node",
-		"siteId":   site.ID,
+		"siteId":   sid(site.ID),
 	}, &created)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Create config version
 	var cv ConfigVersion
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":      created.ID,
+		"nodeId":      sid(created.ID),
 		"description": "v1.0.0",
 		"payload":     []byte("config-data"),
 	}, &cv)
@@ -143,7 +143,7 @@ func TestCheckIn_PendingDeployment(t *testing.T) {
 	// Create PENDING deployment
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 		"status":          "PENDING",
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
@@ -170,7 +170,7 @@ func TestCheckIn_InProgressDeployment(t *testing.T) {
 	// Create deployment and set to IN_PROGRESS
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -198,14 +198,14 @@ func TestCheckIn_ReturnsNewestActive(t *testing.T) {
 	// Create dep1, then dep2 — creating dep2 auto-cancels dep1, leaving only dep2 active
 	var dep1 Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 		"status":          "PENDING",
 	}, &dep1)
 	assertStatus(t, resp, http.StatusCreated)
 
 	var dep2 Deployment
 	resp = doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 		"status":          "PENDING",
 	}, &dep2)
 	assertStatus(t, resp, http.StatusCreated)
@@ -229,7 +229,7 @@ func TestCheckIn_CompletedAndFailedExcluded(t *testing.T) {
 	// Create COMPLETED deployment
 	var dep1 Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep1)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep1.ID), map[string]any{
@@ -240,7 +240,7 @@ func TestCheckIn_CompletedAndFailedExcluded(t *testing.T) {
 	// Create FAILED deployment
 	var dep2 Deployment
 	resp = doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep2)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep2.ID), map[string]any{
@@ -297,7 +297,7 @@ func TestCheckIn_WithCurrentDeployment(t *testing.T) {
 	// Create and advance a deployment to COMPLETED
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
@@ -332,7 +332,7 @@ func TestCheckIn_WithInstallingDeployment(t *testing.T) {
 	// Create a PENDING deployment
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -353,7 +353,7 @@ func TestCheckIn_WithFailedDeployment(t *testing.T) {
 	// Create deployment and advance to IN_PROGRESS
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
@@ -391,13 +391,13 @@ func TestCheckIn_FailedDeploymentWrongNode(t *testing.T) {
 	var created2 CreateNodeResponse
 	resp = doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
 		"hostname": "other-node",
-		"siteId":   site2.ID,
+		"siteId":   sid(site2.ID),
 	}, &created2)
 	assertStatus(t, resp, http.StatusCreated)
 
 	var cv2 ConfigVersion
 	resp = doRequest(t, e.client, "POST", listConfigVersionsURL(e.testServer.URL), map[string]any{
-		"nodeId":      created2.ID,
+		"nodeId":      sid(created2.ID),
 		"description": "v1",
 		"payload":     []byte("data"),
 	}, &cv2)
@@ -405,7 +405,7 @@ func TestCheckIn_FailedDeploymentWrongNode(t *testing.T) {
 
 	var dep2 Deployment
 	resp = doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": cv2.ID,
+		"configVersionId": sid(cv2.ID),
 	}, &dep2)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -429,7 +429,7 @@ func TestCheckIn_InstallingAdvancesPendingToInProgress(t *testing.T) {
 	// Create PENDING deployment
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -453,7 +453,7 @@ func TestCheckIn_InstallingDoesNotAdvanceNonPending(t *testing.T) {
 	// Create deployment and advance to FAILED
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
@@ -481,7 +481,7 @@ func TestCheckIn_CurrentAdvancesInProgressToCompleted(t *testing.T) {
 	// Create deployment and advance to IN_PROGRESS
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
@@ -509,7 +509,7 @@ func TestCheckIn_CurrentDoesNotAdvanceNonInProgress(t *testing.T) {
 	// Create PENDING deployment (do not advance)
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -533,7 +533,7 @@ func TestCheckIn_InstallingWithErrorAndAttempts(t *testing.T) {
 	// Create a PENDING deployment
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
