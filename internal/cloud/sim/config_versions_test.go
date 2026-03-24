@@ -39,14 +39,14 @@ func setupConfigVersionsEnv(t *testing.T) configVersionsEnv {
 	var node Node
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "test-node",
-		"siteId":   site.ID,
+		"siteId":   sid(site.ID),
 	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Create config version
 	var cv ConfigVersion
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":      node.ID,
+		"nodeId":      sid(node.ID),
 		"description": "v1.0.0",
 		"payload":     []byte("test-payload"),
 	}, &cv)
@@ -72,7 +72,7 @@ func TestConfigVersions_Create(t *testing.T) {
 			name: "normal create",
 			reqBody: func(e configVersionsEnv) map[string]any {
 				return map[string]any{
-					"nodeId":      e.node.ID,
+					"nodeId":      sid(e.node.ID),
 					"description": "v1.0.0",
 					"payload":     []byte{0xDE, 0xAD, 0xBE, 0xEF},
 				}
@@ -100,7 +100,7 @@ func TestConfigVersions_Create(t *testing.T) {
 			name: "empty payload",
 			reqBody: func(e configVersionsEnv) map[string]any {
 				return map[string]any{
-					"nodeId":      e.node.ID,
+					"nodeId":      sid(e.node.ID),
 					"description": "v1.0.0",
 					"payload":     []byte{},
 				}
@@ -182,7 +182,7 @@ func TestConfigVersions_GetPayload(t *testing.T) {
 		// Create config version with known payload
 		var cv ConfigVersion
 		resp := doRequest(t, e.client, "POST", listConfigVersionsURL(e.testServer.URL), map[string]any{
-			"nodeId":      e.node.ID,
+			"nodeId":      sid(e.node.ID),
 			"description": "test",
 			"payload":     payload,
 		}, &cv)
@@ -240,7 +240,7 @@ func TestConfigVersions_List(t *testing.T) {
 
 		// Create another config version
 		resp := doRequest(t, e.client, "POST", listConfigVersionsURL(e.testServer.URL), map[string]any{
-			"nodeId":      e.node.ID,
+			"nodeId":      sid(e.node.ID),
 			"description": "v2.0.0",
 			"payload":     []byte{0xDE, 0xAD},
 		}, nil)
@@ -260,7 +260,7 @@ func TestConfigVersions_List(t *testing.T) {
 
 		// Create another config version
 		resp := doRequest(t, e.client, "POST", listConfigVersionsURL(e.testServer.URL), map[string]any{
-			"nodeId":      e.node.ID,
+			"nodeId":      sid(e.node.ID),
 			"description": "v2.0.0",
 			"payload":     []byte{0xDE, 0xAD},
 		}, nil)
@@ -296,7 +296,7 @@ func TestConfigVersions_List(t *testing.T) {
 
 		// Create another config version
 		resp := doRequest(t, e.client, "POST", listConfigVersionsURL(e.testServer.URL), map[string]any{
-			"nodeId":      e.node.ID,
+			"nodeId":      sid(e.node.ID),
 			"description": "v2.0.0",
 			"payload":     []byte{0xDE, 0xAD},
 		}, nil)
@@ -350,7 +350,7 @@ func TestConfigVersions_Pagination(t *testing.T) {
 	var node Node
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "test-node",
-		"siteId":   site.ID,
+		"siteId":   sid(site.ID),
 	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -358,7 +358,7 @@ func TestConfigVersions_Pagination(t *testing.T) {
 		func(i int) int64 {
 			var cv ConfigVersion
 			resp := doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-				"nodeId":      node.ID,
+				"nodeId":      sid(node.ID),
 				"description": fmt.Sprintf("v%d.0.0", i),
 				"payload":     []byte(fmt.Sprintf("config-%d", i)),
 			}, &cv)

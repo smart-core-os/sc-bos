@@ -36,19 +36,19 @@ type CheckInRequest struct {
 
 // CheckInInstallingDeployment references a deployment being installed, optionally with error and attempt info.
 type CheckInInstallingDeployment struct {
-	ID       int64  `json:"id"`
+	ID       int64  `json:"id,string"`
 	Error    string `json:"error,omitempty"`
 	Attempts int    `json:"attempts,omitempty"`
 }
 
 // CheckInDeploymentRef references a deployment by ID.
 type CheckInDeploymentRef struct {
-	ID int64 `json:"id"`
+	ID int64 `json:"id,string"`
 }
 
 // CheckInFailedDeployment reports a deployment that failed, triggering a FAILED status update.
 type CheckInFailedDeployment struct {
-	ID     int64  `json:"id"`
+	ID     int64  `json:"id,string"`
 	Reason string `json:"reason,omitempty"`
 }
 

@@ -16,8 +16,8 @@ import (
 
 // ConfigVersion is the JSON representation of a config version.
 type ConfigVersion struct {
-	ID          int64     `json:"id"`
-	NodeID      int64     `json:"nodeId"`
+	ID          int64     `json:"id,string"`
+	NodeID      int64     `json:"nodeId,string"`
 	Description string    `json:"description"`
 	PayloadURL  string    `json:"payloadUrl"`
 	CreateTime  time.Time `json:"createTime"`
@@ -66,7 +66,7 @@ func toConfigVersions(r *http.Request, cvs []queries2.ConfigVersion) []ConfigVer
 }
 
 type createConfigVersionRequest struct {
-	NodeID      int64  `json:"nodeId"`
+	NodeID      int64  `json:"nodeId,string"`
 	Description string `json:"description"`
 	Payload     []byte `json:"payload"`
 }

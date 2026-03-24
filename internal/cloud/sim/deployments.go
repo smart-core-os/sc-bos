@@ -23,8 +23,8 @@ const (
 
 // Deployment is the JSON representation of a deployment.
 type Deployment struct {
-	ID              int64      `json:"id"`
-	ConfigVersionID int64      `json:"configVersionId"`
+	ID              int64      `json:"id,string"`
+	ConfigVersionID int64      `json:"configVersionId,string"`
 	Status          string     `json:"status"`
 	StartTime       time.Time  `json:"startTime"`
 	FinishedTime    *time.Time `json:"finishedTime,omitempty"`
@@ -56,7 +56,7 @@ func toDeployments(deployments []queries2.Deployment) []Deployment {
 }
 
 type createDeploymentRequest struct {
-	ConfigVersionID int64  `json:"configVersionId"`
+	ConfigVersionID int64  `json:"configVersionId,string"`
 	Status          string `json:"status,omitempty"`
 }
 

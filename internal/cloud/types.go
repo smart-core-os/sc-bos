@@ -14,19 +14,19 @@ type CheckInRequest struct {
 
 // CheckInDeploymentRef references a deployment by ID.
 type CheckInDeploymentRef struct {
-	ID int64 `json:"id"`
+	ID string `json:"id"`
 }
 
 // CheckInInstallingDeployment references a deployment being installed, optionally with error and attempt info.
 type CheckInInstallingDeployment struct {
-	ID       int64  `json:"id"`
+	ID       string `json:"id"`
 	Error    string `json:"error,omitempty"`
 	Attempts int    `json:"attempts,omitempty"`
 }
 
 // CheckInFailedDeployment reports a deployment that failed.
 type CheckInFailedDeployment struct {
-	ID     int64  `json:"id"`
+	ID     string `json:"id"`
 	Reason string `json:"reason,omitempty"`
 }
 
@@ -38,11 +38,11 @@ type CheckInResponse struct {
 
 // NodeCheckIn is the JSON representation of a node check-in.
 type NodeCheckIn struct {
-	ID                           int64     `json:"id"`
-	NodeID                       int64     `json:"nodeId"`
+	ID                           string    `json:"id"`
+	NodeID                       string    `json:"nodeId"`
 	CheckInTime                  time.Time `json:"checkInTime"`
-	CurrentDeploymentID          *int64    `json:"currentDeploymentId,omitempty"`
-	InstallingDeploymentID       *int64    `json:"installingDeploymentId,omitempty"`
+	CurrentDeploymentID          *string   `json:"currentDeploymentId,omitempty"`
+	InstallingDeploymentID       *string   `json:"installingDeploymentId,omitempty"`
 	InstallingDeploymentError    string    `json:"installingDeploymentError,omitempty"`
 	InstallingDeploymentAttempts *int64    `json:"installingDeploymentAttempts,omitempty"`
 }
@@ -55,8 +55,8 @@ type LatestConfig struct {
 
 // Deployment is the JSON representation of a deployment.
 type Deployment struct {
-	ID              int64      `json:"id"`
-	ConfigVersionID int64      `json:"configVersionId"`
+	ID              string     `json:"id"`
+	ConfigVersionID string     `json:"configVersionId"`
 	Status          string     `json:"status"`
 	StartTime       time.Time  `json:"startTime"`
 	FinishedTime    *time.Time `json:"finishedTime,omitempty"`
@@ -65,8 +65,8 @@ type Deployment struct {
 
 // ConfigVersion is the JSON representation of a config version.
 type ConfigVersion struct {
-	ID          int64     `json:"id"`
-	NodeID      int64     `json:"nodeId"`
+	ID          string    `json:"id"`
+	NodeID      string    `json:"nodeId"`
 	Description string    `json:"description"`
 	PayloadURL  string    `json:"payloadUrl"`
 	CreateTime  time.Time `json:"createTime"`

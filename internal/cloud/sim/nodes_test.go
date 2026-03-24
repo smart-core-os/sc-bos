@@ -37,7 +37,7 @@ func setupNodesEnv(t *testing.T) nodesEnv {
 	var node Node
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "test-node",
-		"siteId":   site.ID,
+		"siteId":   sid(site.ID),
 	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -63,7 +63,7 @@ func TestNodes_Create(t *testing.T) {
 			reqBody: func(e nodesEnv) map[string]any {
 				return map[string]any{
 					"hostname": "node-01",
-					"siteId":   e.site.ID,
+					"siteId":   sid(e.site.ID),
 				}
 			},
 			expectCode: http.StatusCreated,
@@ -88,7 +88,7 @@ func TestNodes_Create(t *testing.T) {
 			reqBody: func(e nodesEnv) map[string]any {
 				return map[string]any{
 					"hostname": "",
-					"siteId":   e.site.ID,
+					"siteId":   sid(e.site.ID),
 				}
 			},
 			expectCode: http.StatusBadRequest,
@@ -122,7 +122,7 @@ func TestNodes_Create(t *testing.T) {
 		var got CreateNodeResponse
 		resp := doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
 			"hostname": "secret-node",
-			"siteId":   e.site.ID,
+			"siteId":   sid(e.site.ID),
 		}, &got)
 		assertStatus(t, resp, http.StatusCreated)
 		if len(got.Secret) != 32 {
@@ -133,7 +133,7 @@ func TestNodes_Create(t *testing.T) {
 		var got2 CreateNodeResponse
 		resp = doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
 			"hostname": "secret-node-2",
-			"siteId":   e.site.ID,
+			"siteId":   sid(e.site.ID),
 		}, &got2)
 		assertStatus(t, resp, http.StatusCreated)
 		if bytes.Equal(got.Secret, got2.Secret) {
@@ -194,7 +194,7 @@ func TestNodes_Update(t *testing.T) {
 			reqBody: func(e nodesEnv) map[string]any {
 				return map[string]any{
 					"hostname": "updated-node",
-					"siteId":   e.site.ID,
+					"siteId":   sid(e.site.ID),
 				}
 			},
 			expectCode: http.StatusOK,
@@ -217,7 +217,7 @@ func TestNodes_Update(t *testing.T) {
 			reqBody: func(e nodesEnv) map[string]any {
 				return map[string]any{
 					"hostname": "",
-					"siteId":   e.site.ID,
+					"siteId":   sid(e.site.ID),
 				}
 			},
 			expectCode: http.StatusBadRequest,
@@ -251,7 +251,7 @@ func TestNodes_Update(t *testing.T) {
 		e := setupNodesEnv(t)
 		testNotFound(t, e.client, "PUT", listNodesURL(e.testServer.URL)+"/%d", map[string]any{
 			"hostname": "x",
-			"siteId":   e.site.ID,
+			"siteId":   sid(e.site.ID),
 		})
 	})
 
@@ -268,7 +268,7 @@ func TestNodes_List(t *testing.T) {
 		// Create second node
 		resp := doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
 			"hostname": "node-02",
-			"siteId":   e.site.ID,
+			"siteId":   sid(e.site.ID),
 		}, nil)
 		assertStatus(t, resp, http.StatusCreated)
 
@@ -290,7 +290,7 @@ func TestNodes_List(t *testing.T) {
 
 		resp = doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
 			"hostname": "node-02",
-			"siteId":   site2.ID,
+			"siteId":   sid(site2.ID),
 		}, nil)
 		assertStatus(t, resp, http.StatusCreated)
 
@@ -339,7 +339,7 @@ func TestNodes_List(t *testing.T) {
 		// Create another node for pagination test
 		resp := doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
 			"hostname": "node-02",
-			"siteId":   e.site.ID,
+			"siteId":   sid(e.site.ID),
 		}, nil)
 		assertStatus(t, resp, http.StatusCreated)
 
@@ -407,7 +407,7 @@ func TestNodes_RotateSecret(t *testing.T) {
 		var created CreateNodeResponse
 		resp := doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
 			"hostname": "rotate-node",
-			"siteId":   e.site.ID,
+			"siteId":   sid(e.site.ID),
 		}, &created)
 		assertStatus(t, resp, http.StatusCreated)
 
@@ -462,7 +462,7 @@ func TestNodes_Pagination(t *testing.T) {
 			var node Node
 			resp := doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 				"hostname": fmt.Sprintf("node-%d", i),
-				"siteId":   site.ID,
+				"siteId":   sid(site.ID),
 			}, &node)
 			assertStatus(t, resp, http.StatusCreated)
 			return node.ID

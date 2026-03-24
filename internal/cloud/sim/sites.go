@@ -13,7 +13,7 @@ import (
 
 // Site is the JSON representation of a site.
 type Site struct {
-	ID         int64     `json:"id"`
+	ID         int64     `json:"id,string"`
 	Name       string    `json:"name"`
 	CreateTime time.Time `json:"createTime"`
 }
