@@ -3,6 +3,7 @@ package gallagher
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"slices"
 	"time"
 
@@ -86,25 +87,14 @@ func (sc *SecurityEventController) getEvents() ([]*EventPayload, error) {
 func (sc *SecurityEventController) refreshEvents(ctx context.Context) error {
 	events, err := sc.getEvents()
 	if err != nil {
-		sc.logger.Error("failed to get events", zap.Error(err))
-		return err
+		return fmt.Errorf("failed to get events: %w", err)
 	}
 
 	for _, e := range events {
 		if !e.Time.After(sc.lastEventTime) {
 			break
 		}
-		event := &securityeventpb.SecurityEvent{
-			SecurityEventTime: timestamppb.New(e.Time),
-			Description:       e.Message,
-			Id:                e.Id,
-			Priority:          int32(e.Priority),
-			Source: &securityeventpb.SecurityEvent_Source{
-				Id:        e.Source.Id,
-				Name:      e.Source.Name,
-				Subsystem: "acs",
-			},
-		}
+		event := newSecurityEvent(e.Time, e.Id, e.Message, e.Priority, e.Source.Id, e.Source.Name)
 		sc.securityEvents.Value = event
 		sc.securityEvents = sc.securityEvents.Next()
 		sc.updates.Send(ctx, &securityeventpb.PullSecurityEventsResponse_Change{

@@ -4,6 +4,7 @@ import (
 	"container/ring"
 	"context"
 	"encoding/json"
+	"fmt"
 	"slices"
 	"strconv"
 	"sync"
@@ -135,29 +136,32 @@ func (sc *SecurityEventController) getAlarmDetails(alarm *Alarm) {
 	}
 }
 
+func newSecurityEvent(t time.Time, id, message string, priority int, sourceId, sourceName string) *securityeventpb.SecurityEvent {
+	return &securityeventpb.SecurityEvent{
+		SecurityEventTime: timestamppb.New(t),
+		Description:       message,
+		Id:                id,
+		Priority:          int32(priority),
+		Source: &securityeventpb.SecurityEvent_Source{
+			Id:        sourceId,
+			Name:      sourceName,
+			Subsystem: "acs",
+		},
+	}
+}
+
 // refreshAlarms call the Gallagher alarms API and add any new ones to the sc that are newer than our current newest
 func (sc *SecurityEventController) refreshAlarms(ctx context.Context) error {
 	alarms, err := sc.getAlarms()
 	if err != nil {
-		sc.logger.Error("failed to get alarms", zap.Error(err))
-		return err
+		return fmt.Errorf("failed to get alarms: %w", err)
 	}
 
 	for _, alarm := range alarms {
 		if !alarm.Time.After(sc.lastAlarmTime) {
 			break
 		}
-		event := &securityeventpb.SecurityEvent{
-			SecurityEventTime: timestamppb.New(alarm.Time),
-			Description:       alarm.Message,
-			Id:                alarm.Id,
-			Priority:          int32(alarm.Priority),
-			Source: &securityeventpb.SecurityEvent_Source{
-				Id:        alarm.Source.Id,
-				Name:      alarm.Source.Name,
-				Subsystem: "acs",
-			},
-		}
+		event := newSecurityEvent(alarm.Time, alarm.Id, alarm.Message, alarm.Priority, alarm.Source.Id, alarm.Source.Name)
 		sc.securityEvents.Value = event
 		sc.securityEvents = sc.securityEvents.Next()
 		sc.updates.Send(ctx, &securityeventpb.PullSecurityEventsResponse_Change{
@@ -196,7 +200,9 @@ func (sc *SecurityEventController) run(ctx context.Context, schedule *jsontypes.
 		if err := sc.refreshAlarms(ctx); err != nil {
 			sc.logger.Error("failed to refresh alarms, will try again on next run...", zap.Error(err))
 		}
-		_ = sc.refreshEvents(ctx)
+		if err := sc.refreshEvents(ctx); err != nil {
+			sc.logger.Error("failed to refresh events, will try again on next run...", zap.Error(err))
+		}
 		sc.mu.Unlock()
 	}
 }
