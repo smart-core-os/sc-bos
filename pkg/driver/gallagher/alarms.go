@@ -54,12 +54,12 @@ type Alarm struct {
 type SecurityEventController struct {
 	securityeventpb.UnimplementedSecurityEventApiServer
 
-	client *Client
-	logger *zap.Logger
-	mu     sync.Mutex
+	client        *Client
+	logger        *zap.Logger
+	mu            sync.Mutex
+	lastAlarmTime time.Time // cursor for alarms API
+	lastEventTime time.Time // cursor for events API
 	// security events is a circular buffer, it always points to the oldest security event
-	lastEventTime  time.Time  // cursor for alarms API
-	lastEventsTime time.Time  // cursor for events API
 	securityEvents *ring.Ring // *securityeventpb.SecurityEvent
 	updates        minibus.Bus[*securityeventpb.PullSecurityEventsResponse_Change]
 }
@@ -68,8 +68,8 @@ func newSecurityEventController(client *Client, logger *zap.Logger, n int) *Secu
 	return &SecurityEventController{
 		client:         client,
 		logger:         logger,
+		lastAlarmTime:  time.Now().Add(-24 * time.Hour),
 		lastEventTime:  time.Now().Add(-24 * time.Hour),
-		lastEventsTime: time.Now().Add(-24 * time.Hour),
 		securityEvents: ring.New(n),
 	}
 }
@@ -144,7 +144,7 @@ func (sc *SecurityEventController) refreshAlarms(ctx context.Context) error {
 	}
 
 	for _, alarm := range alarms {
-		if !alarm.Time.After(sc.lastEventTime) {
+		if !alarm.Time.After(sc.lastAlarmTime) {
 			break
 		}
 		event := &securityeventpb.SecurityEvent{
@@ -166,7 +166,7 @@ func (sc *SecurityEventController) refreshAlarms(ctx context.Context) error {
 			NewValue:   event,
 		})
 		// the events in alarms are always oldest first, so this is fine
-		sc.lastEventTime = alarm.Time
+		sc.lastAlarmTime = alarm.Time
 		sc.logger.Info("adding new security event", zap.Time("time", alarm.Time), zap.String("message", alarm.Message))
 	}
 	return nil

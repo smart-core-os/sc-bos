@@ -40,10 +40,10 @@ type EventList struct {
 	} `json:"next,omitempty"`
 }
 
-// getEvents fetches events from the Gallagher /events API after lastEventsTime, returning oldest-first.
+// getEvents fetches events from the Gallagher /events API after lastEventTime, returning oldest-first.
 func (sc *SecurityEventController) getEvents() ([]*EventPayload, error) {
 	var result []*EventPayload
-	url := sc.client.getUrl("api/events") + "?after=" + sc.lastEventsTime.Format(time.RFC3339)
+	url := sc.client.getUrl("api/events") + "?after=" + sc.lastEventTime.Format(time.RFC3339)
 
 	for {
 		body, err := sc.client.doRequest(url)
@@ -91,7 +91,7 @@ func (sc *SecurityEventController) refreshEvents(ctx context.Context) error {
 	}
 
 	for _, e := range events {
-		if !e.Time.After(sc.lastEventsTime) {
+		if !e.Time.After(sc.lastEventTime) {
 			break
 		}
 		event := &securityeventpb.SecurityEvent{
@@ -112,7 +112,7 @@ func (sc *SecurityEventController) refreshEvents(ctx context.Context) error {
 			OldValue:   nil,
 			NewValue:   event,
 		})
-		sc.lastEventsTime = e.Time
+		sc.lastEventTime = e.Time
 		sc.logger.Info("adding new security event from events API", zap.Time("time", e.Time), zap.String("message", e.Message))
 	}
 	return nil
