@@ -150,6 +150,16 @@ func newSecurityEvent(t time.Time, id, message string, priority int, sourceId, s
 	}
 }
 
+func (sc *SecurityEventController) addSecurityEvent(ctx context.Context, event *securityeventpb.SecurityEvent) {
+	sc.securityEvents.Value = event
+	sc.securityEvents = sc.securityEvents.Next()
+	sc.updates.Send(ctx, &securityeventpb.PullSecurityEventsResponse_Change{
+		ChangeTime: timestamppb.Now(),
+		OldValue:   nil,
+		NewValue:   event,
+	})
+}
+
 // refreshAlarms call the Gallagher alarms API and add any new ones to the sc that are newer than our current newest
 func (sc *SecurityEventController) refreshAlarms(ctx context.Context) error {
 	alarms, err := sc.getAlarms()
@@ -162,13 +172,7 @@ func (sc *SecurityEventController) refreshAlarms(ctx context.Context) error {
 			break
 		}
 		event := newSecurityEvent(alarm.Time, alarm.Id, alarm.Message, alarm.Priority, alarm.Source.Id, alarm.Source.Name)
-		sc.securityEvents.Value = event
-		sc.securityEvents = sc.securityEvents.Next()
-		sc.updates.Send(ctx, &securityeventpb.PullSecurityEventsResponse_Change{
-			ChangeTime: timestamppb.Now(),
-			OldValue:   nil,
-			NewValue:   event,
-		})
+		sc.addSecurityEvent(ctx, event)
 		// the events in alarms are always oldest first, so this is fine
 		sc.lastAlarmTime = alarm.Time
 		sc.logger.Info("adding new security event", zap.Time("time", alarm.Time), zap.String("message", alarm.Message))

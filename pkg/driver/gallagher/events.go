@@ -8,9 +8,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 )
 
 type EventPayload struct {
@@ -95,13 +92,7 @@ func (sc *SecurityEventController) refreshEvents(ctx context.Context) error {
 			break
 		}
 		event := newSecurityEvent(e.Time, e.Id, e.Message, e.Priority, e.Source.Id, e.Source.Name)
-		sc.securityEvents.Value = event
-		sc.securityEvents = sc.securityEvents.Next()
-		sc.updates.Send(ctx, &securityeventpb.PullSecurityEventsResponse_Change{
-			ChangeTime: timestamppb.Now(),
-			OldValue:   nil,
-			NewValue:   event,
-		})
+		sc.addSecurityEvent(ctx, event)
 		sc.lastEventTime = e.Time
 		sc.logger.Info("adding new security event from events API", zap.Time("time", e.Time), zap.String("message", e.Message))
 	}
