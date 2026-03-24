@@ -39,7 +39,7 @@ export function pullWasteRecords(request, resource) {
  * @return {WasteApiPromiseClient}
  */
 function apiClient(endpoint) {
-  return new WasteApiPromiseClient(endpoint, clientOptions());
+  return new WasteApiPromiseClient(endpoint, null, clientOptions());
 }
 
 /**
