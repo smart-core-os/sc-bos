@@ -2,11 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.types.v1;
 
-option csharp_namespace = "Smartcore.Types";
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/typespb";
-option java_multiple_files = true;
-option java_outer_classname = "PageTokenProto";
-option java_package = "dev.smartcore.types";
 
 // Represents a specialist token used for fetching subsequent pages of a List request. Typically encoded as base64 or
 // something similar.

@@ -2,11 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.types.time.v1;
 
-option csharp_namespace = "Smartcore.Types.Time";
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/timepb";
-option java_multiple_files = true;
-option java_outer_classname = "UnitProto";
-option java_package = "dev.smartcore.types.time";
 
 // Units of time
 enum Unit {

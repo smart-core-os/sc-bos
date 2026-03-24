@@ -2,12 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.info.v1;
 
-option csharp_namespace = "Smartcore.Info";
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/infopb";
-option java_multiple_files = true;
-option java_outer_classname = "HealthProto";
-option java_package = "dev.smartcore.info";
-option php_namespace = "Smartcore\\Info";
 
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/types/v1/connection.proto";
