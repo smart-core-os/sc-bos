@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package smartcore.bos.data_retention.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/dataretentionpb";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// DataRetentionApi provides access to data retention utilisation stats and administrative actions.
+service DataRetentionApi {
+  rpc GetDataRetention(GetDataRetentionRequest) returns (DataRetention);
+  rpc PullDataRetention(PullDataRetentionRequest) returns (stream PullDataRetentionResponse);
+
+  // Remove all records from this data retention resource.
+  rpc ClearDataRetention(ClearDataRetentionRequest) returns (ClearDataRetentionResponse);
+  // Remove records older than retention_period. retention_period must be positive.
+  rpc DeleteOldDataRetention(DeleteOldDataRetentionRequest) returns (DeleteOldDataRetentionResponse);
+  // Compact/optimise storage (GC, VACUUM, repack). No-op if not supported.
+  rpc CompactDataRetention(CompactDataRetentionRequest) returns (CompactDataRetentionResponse);
+  // Delete old records and compact storage in one operation (spring clean).
+  rpc SpringCleanDataRetention(SpringCleanDataRetentionRequest) returns (SpringCleanDataRetentionResponse);
+}
+
+// DataRetentionInfo provides metadata about what a device supports for the data retention trait.
+service DataRetentionInfo {
+  rpc DescribeDataRetention(DescribeDataRetentionRequest) returns (DataRetentionSupport);
+}
+
+// DataRetention represents the current state of a data retention resource.
+message DataRetention {
+  // Byte-based measurement (disk space, file size, DB tablespace, etc.)
+  DataRetentionBytes bytes = 1;
+  // Item-based measurement (rows, records, files, log entries, etc.)
+  DataRetentionItems items = 2;
+}
+
+// DataRetentionBytes describes storage consumption measured in bytes.
+message DataRetentionBytes {
+  // Bytes currently in use.
+  optional uint64 used = 1;
+  // Total capacity in bytes. Omit if unlimited or unknown.
+  optional uint64 capacity = 2;
+  // Utilization as a percentage (0–100).
+  optional float utilization = 3;
+}
+
+// DataRetentionItems describes storage consumption measured in discrete items
+// (rows, records, files, log entries, etc.).
+message DataRetentionItems {
+  // Number of items currently stored.
+  optional uint64 used = 1;
+  // Maximum item count. Omit if unlimited or unknown.
+  optional uint64 capacity = 2;
+  // Utilization as a percentage (0–100).
+  optional float utilization = 3;
+}
+
+// DataRetentionSupport describes the capabilities of a device implementing the data retention trait.
+message DataRetentionSupport {
+  bool can_clear        = 1;
+  bool can_delete_old   = 2;
+  bool can_compact      = 3;
+  bool can_spring_clean = 4;
+  // Singular name for the item unit when items is populated (e.g. "row", "record", "file").
+  string item_name = 5;
+}
+
+message GetDataRetentionRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullDataRetentionRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullDataRetentionResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    DataRetention data_retention = 3;
+  }
+}
+
+message ClearDataRetentionRequest {
+  string name = 1;
+}
+
+message ClearDataRetentionResponse {
+  optional uint64 freed_item_count = 1;
+  optional uint64 freed_byte_count = 2;
+  string message = 3;
+}
+
+message DeleteOldDataRetentionRequest {
+  string name = 1;
+  google.protobuf.Duration retention_period = 2;
+}
+
+message DeleteOldDataRetentionResponse {
+  optional uint64 freed_item_count = 1;
+  optional uint64 freed_byte_count = 2;
+  string message = 3;
+}
+
+message CompactDataRetentionRequest {
+  string name = 1;
+}
+
+message CompactDataRetentionResponse {
+  optional uint64 freed_byte_count = 1;
+  string message = 2;
+}
+
+message SpringCleanDataRetentionRequest {
+  string name = 1;
+  optional google.protobuf.Duration retention_period = 2;
+}
+
+message SpringCleanDataRetentionResponse {
+  optional uint64 freed_item_count = 1;
+  optional uint64 freed_byte_count = 2;
+  string message = 3;
+}
+
+message DescribeDataRetentionRequest {
+  string name = 1;
+}

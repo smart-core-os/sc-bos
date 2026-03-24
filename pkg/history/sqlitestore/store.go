@@ -261,6 +261,36 @@ func (d *Database) Size(ctx context.Context) (int64, error) {
 	return size, err
 }
 
+// TotalCount returns the total number of records across all sources.
+func (d *Database) TotalCount(ctx context.Context) (int64, error) {
+	var count int64
+	err := d.db.ReadTx(ctx, func(tx *sql.Tx) error {
+		return tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM history").Scan(&count)
+	})
+	return count, err
+}
+
+// Clear deletes all history records and sources.
+// Returns the number of rows deleted from the history table.
+func (d *Database) Clear(ctx context.Context) (int64, error) {
+	var deleted int64
+	err := d.db.WriteTx(ctx, func(tx *sql.Tx) error {
+		res, err := tx.ExecContext(ctx, "DELETE FROM history")
+		if err != nil {
+			return err
+		}
+		deleted, err = res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		// Also clear history_sources so stale source IDs don't accumulate.
+		// Sources are re-created automatically when history is next written.
+		_, err = tx.ExecContext(ctx, "DELETE FROM history_sources")
+		return err
+	})
+	return deleted, err
+}
+
 // TrimTime deletes all records with a timestamp before the specified time.
 // If source is non-empty, only deletes records from that source. If source is empty, deletes records from all sources.
 // Returns the number of records deleted.
