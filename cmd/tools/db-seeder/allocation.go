@@ -13,14 +13,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 )
 
-func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
+func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
 	now := time.Now()
 	current := now.Add(-lookBack)
 
 	source := fmt.Sprintf("%s[%s]", name, allocationpb.TraitName)
 
 	store, err := pgxstore.SetupStoreFromPool(ctx, source, db)
-
 	if err != nil {
 		return err
 	}
@@ -29,13 +28,15 @@ func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 	unallocationTotal := int32(0)
 
 	for current.Before(now) {
-		chance := rand.Intn(2)
-		// Randomly pick between ALLOCATED and UNALLOCATED
-		state := allocationpb.Allocation_State(allocationpb.Allocation_State_value[allocationpb.Allocation_State_name[int32(chance+1)]])
+		load := profile.Load(current)
 
-		if state == allocationpb.Allocation_ALLOCATED {
+		// Probability of an ALLOCATED event scales with office activity.
+		var state allocationpb.Allocation_State
+		if rand.Float64() < load*profile.Allocation.MaxProbability {
+			state = allocationpb.Allocation_ALLOCATED
 			allocationTotal += int32(rand.Intn(5) + 1)
 		} else {
+			state = allocationpb.Allocation_UNALLOCATED
 			unallocationTotal += int32(rand.Intn(5) + 1)
 		}
 
@@ -45,18 +46,16 @@ func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 			AllocationTotal:   ptr(allocationTotal),
 			UnallocationTotal: ptr(unallocationTotal),
 		})
-
 		if err != nil {
 			return err
 		}
 
 		_, _, err = store.Insert(ctx, current, payload)
-
 		if err != nil {
 			return err
 		}
 
-		current = current.Add(time.Duration(rand.Intn(30)) * time.Minute)
+		current = current.Add(profile.IntervalForLoad(load))
 	}
 
 	return nil

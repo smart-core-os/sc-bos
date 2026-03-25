@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"math"
 	"math/rand"
 	"time"
 
@@ -16,7 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
-func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
+func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
 	now := time.Now()
 	current := now.Add(-lookBack)
 
@@ -27,13 +26,33 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, look
 		return err
 	}
 
-	// Generate a random set point between 18 and 24 degrees with 0.5 degree accuracy
-	randomNumber := 18 + rand.Float64()*6
-	setPoint := math.Round(randomNumber*2) / 2
+	tp := profile.Temperature
+
+	// Initialise to setback values (building is cold at the start of the lookback period).
+	currentSetpoint := tp.SetbackMin + rand.Float64()*(tp.SetbackMax-tp.SetbackMin)
+	currentAmbient := currentSetpoint + rand.NormFloat64()*tp.AmbientNoiseSigma
 
 	for current.Before(now) {
-		// Generate ambient temperature that varies +/- 2 degrees from set point
-		ambientTemp := setPoint + (rand.Float64()*4 - 2)
+		load := profile.Load(current)
+
+		// Choose target setpoint based on occupancy level.
+		var targetSetpoint float64
+		if load > tp.OccupiedThreshold {
+			targetSetpoint = tp.OccupiedMin + rand.Float64()*(tp.OccupiedMax-tp.OccupiedMin)
+		} else {
+			targetSetpoint = tp.SetbackMin + rand.Float64()*(tp.SetbackMax-tp.SetbackMin)
+		}
+
+		// Move setpoint toward target at HVAC ramp speed.
+		diff := clampFloat64(targetSetpoint-currentSetpoint, -tp.HVACRatePerStep, tp.HVACRatePerStep)
+		currentSetpoint += diff
+
+		// Ambient temperature lags the setpoint (thermal mass of the building).
+		targetAmbient := currentSetpoint + rand.NormFloat64()*tp.AmbientNoiseSigma
+		currentAmbient += (targetAmbient - currentAmbient) * tp.ThermalLagFactor
+
+		setPoint := currentSetpoint
+		ambientTemp := currentAmbient
 
 		payload, err := proto.Marshal(&traits.AirTemperature{
 			AmbientTemperature: &types.Temperature{
@@ -43,7 +62,6 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, look
 				TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
 			},
 		})
-
 		if err != nil {
 			return err
 		}
@@ -53,14 +71,7 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, look
 			return err
 		}
 
-		// Occasionally adjust the set point slightly to simulate realistic behavior
-		if rand.Float64() < 0.1 { // 10% chance to adjust set point
-			adjustment := rand.Float64() - 0.5 // -0.5 to +0.5 degree adjustment
-			setPoint = math.Max(18, math.Min(24, setPoint+adjustment))
-			setPoint = math.Round(setPoint*2) / 2 // Round to 0.5 degrees
-		}
-
-		current = current.Add(time.Duration(rand.Intn(60)) * time.Minute)
+		current = current.Add(tp.Interval)
 	}
 	return nil
 }

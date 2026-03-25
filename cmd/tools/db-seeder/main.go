@@ -27,19 +27,31 @@ import (
 )
 
 var (
-	lookBack time.Duration
-	dbUrl    string
-	app      string
+	lookBack    time.Duration
+	dbUrl       string
+	app         string
+	profileName string
 )
 
 func init() {
 	flag.DurationVar(&lookBack, "look-back", time.Hour*24*30*2, "amount of time to populate database history for starting from now, going backwards")
 	flag.StringVar(&dbUrl, "db-url", "postgres://postgres:postgres@localhost:5432/smart_core", "database url")
 	flag.StringVar(&app, "appconf", "app.conf.json", "app configuration file")
+	flag.StringVar(&profileName, "profile", "office", "building profile to use when generating data (available: office)")
 }
 
 func main() {
 	flag.Parse()
+
+	profile, ok := Profiles[profileName]
+	if !ok {
+		fmt.Printf("unknown profile %q; available profiles: ", profileName)
+		for name := range Profiles {
+			fmt.Printf("%s ", name)
+		}
+		fmt.Println()
+		return
+	}
 
 	appConf, err := appconf.LoadLocalConfig(path.Dir(app), path.Base(app))
 	if err != nil {
@@ -88,7 +100,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		for _, d := range sd.airQuality {
-			err = SeedAirQuality(ctx, db, d, lookBack)
+			err = SeedAirQuality(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
@@ -100,7 +112,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		for _, d := range sd.electric {
-			err = SeedMeter(ctx, db, d, lookBack)
+			err = SeedMeter(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
@@ -112,7 +124,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		for _, d := range sd.airTemperature {
-			err = SeedAirTemperature(ctx, db, d, lookBack)
+			err = SeedAirTemperature(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
@@ -124,7 +136,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		for _, d := range sd.soundSensor {
-			err = SeedSoundSensor(ctx, db, d, lookBack)
+			err = SeedSoundSensor(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
@@ -136,7 +148,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		for _, d := range sd.occupancy {
-			err = SeedOccupancy(ctx, db, d, lookBack)
+			err = SeedOccupancy(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
@@ -148,7 +160,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		for _, d := range sd.allocation {
-			err = SeedAllocation(ctx, db, d, lookBack)
+			err = SeedAllocation(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
