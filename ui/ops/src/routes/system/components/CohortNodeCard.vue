@@ -68,7 +68,7 @@
       <v-divider class="mt-2 mb-3"/>
 
       <!-- Service stats -->
-      <div class="stat-grid">
+      <div v-if="!connectedViaHub" class="stat-grid">
         <div
             v-for="(response, service) in nodeDetails"
             :key="service"
@@ -225,7 +225,7 @@
 import {getDownloadLogUrl} from '@/api/ui/log.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
 import {useHasHubSystem, usePullService, usePullServiceMetadata} from '@/composables/services.js';
-import {NodeRole} from '@/stores/cohort.js';
+import {NodeRole, useCohortStore} from '@/stores/cohort.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
 import {computed, reactive} from 'vue';
 import {useRouter} from 'vue-router';
@@ -250,10 +250,24 @@ const {hasHubSystem, isProxyHub} = useHasHubSystem(() => props.node.name);
 const isCentralHub = computed(() => props.node.role === NodeRole.HUB || (hasHubSystem.value && !isProxyHub.value));
 const isProxyHubNode = computed(() => hasHubSystem.value && isProxyHub.value && props.node.role !== NodeRole.GATEWAY);
 
+const cohortStore = useCohortStore();
+const connectedViaHub = computed(() =>
+  cohortStore.cohortNodes.find(n => n.isServer)?.role === NodeRole.HUB
+);
+
 const nodeDetails = reactive({
-  automations: usePullServiceMetadata(() => props.node.name + '/automations'),
-  drivers: usePullServiceMetadata(() => props.node.name + '/drivers'),
-  systems: usePullServiceMetadata(() => props.node.name + '/systems')
+  automations: usePullServiceMetadata(
+      () => props.node.name + '/automations',
+      () => ({paused: connectedViaHub.value})
+  ),
+  drivers: usePullServiceMetadata(
+      () => props.node.name + '/drivers',
+      () => ({paused: connectedViaHub.value})
+  ),
+  systems: usePullServiceMetadata(
+      () => props.node.name + '/systems',
+      () => ({paused: connectedViaHub.value})
+  )
 });
 
 const accentStyle = computed(() => {
