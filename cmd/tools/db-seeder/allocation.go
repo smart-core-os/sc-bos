@@ -13,7 +13,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 )
 
-func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
+func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
 	now := time.Now()
 	current := now.Add(-lookBack)
 
@@ -28,12 +28,11 @@ func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 	unallocationTotal := int32(0)
 
 	for current.Before(now) {
-		load := officeLoad(current)
+		load := profile.Load(current)
 
-		// Probability of ALLOCATED scales with office activity:
-		// ~80% chance at peak, near 0% at night.
+		// Probability of an ALLOCATED event scales with office activity.
 		var state allocationpb.Allocation_State
-		if rand.Float64() < load*0.8 {
+		if rand.Float64() < load*profile.Allocation.MaxProbability {
 			state = allocationpb.Allocation_ALLOCATED
 			allocationTotal += int32(rand.Intn(5) + 1)
 		} else {
@@ -56,7 +55,7 @@ func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 			return err
 		}
 
-		current = current.Add(intervalForLoad(load))
+		current = current.Add(profile.IntervalForLoad(load))
 	}
 
 	return nil

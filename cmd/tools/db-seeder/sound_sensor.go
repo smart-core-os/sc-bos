@@ -13,7 +13,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 )
 
-func SeedSoundSensor(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
+func SeedSoundSensor(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
 	now := time.Now()
 	current := now.Add(-lookBack)
 
@@ -24,18 +24,20 @@ func SeedSoundSensor(ctx context.Context, db *pgxpool.Pool, name string, lookBac
 		return err
 	}
 
-	// Start at night-time HVAC-hum baseline.
-	baseSoundLevel := 22.0
+	s := profile.Sound
+
+	// Start at the night-time baseline.
+	baseSoundLevel := s.NightDB
 
 	for current.Before(now) {
-		load := officeLoad(current)
+		load := profile.Load(current)
 
-		// Target dB anchored to office load: 22 dB (quiet night) → 60 dB (busy day).
-		targetDb := 22 + load*38
+		// Target dB is anchored to the load-based range defined by NightDB and PeakDB.
+		targetDb := s.NightDB + load*(s.PeakDB-s.NightDB)
 
-		// Random walk toward the load-based target.
-		baseSoundLevel += (targetDb-baseSoundLevel)*0.2 + rand.NormFloat64()*2.0
-		baseSoundLevel = clampFloat64(baseSoundLevel, 15, 75)
+		// Random walk toward the load target.
+		baseSoundLevel += (targetDb-baseSoundLevel)*s.WalkFactor + rand.NormFloat64()*s.NoiseSigma
+		baseSoundLevel = clampFloat64(baseSoundLevel, s.ClampMin, s.ClampMax)
 
 		soundLevel := float32(baseSoundLevel)
 
@@ -51,7 +53,7 @@ func SeedSoundSensor(ctx context.Context, db *pgxpool.Pool, name string, lookBac
 			return err
 		}
 
-		current = current.Add(intervalForLoad(load))
+		current = current.Add(profile.IntervalForLoad(load))
 	}
 	return nil
 }

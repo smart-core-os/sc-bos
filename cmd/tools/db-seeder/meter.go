@@ -13,10 +13,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
 
-// peakPowerKW is the office's peak electrical load in kilowatts.
-const peakPowerKW = 50.0
-
-func SeedMeter(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
+func SeedMeter(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
 	now := time.Now()
 	current := now.Add(-lookBack)
 
@@ -31,11 +28,12 @@ func SeedMeter(ctx context.Context, db *pgxpool.Pool, name string, lookBack time
 	prevTime := current
 
 	for current.Before(now) {
-		load := officeLoad(current)
+		load := profile.Load(current)
 		elapsed := current.Sub(prevTime)
 
-		// Power scales from 5% standby at night to 100% at peak occupancy.
-		instantPowerKW := (0.05 + 0.95*load) * peakPowerKW
+		// Power scales from StandbyFactor at night to full PeakPowerKW at peak occupancy.
+		m := profile.Meter
+		instantPowerKW := (m.StandbyFactor + (1-m.StandbyFactor)*load) * m.PeakPowerKW
 		kWhIncrement := float32(instantPowerKW * elapsed.Hours())
 		// Add ±5% noise to simulate real meter variation.
 		kWhIncrement *= 0.95 + rand.Float32()*0.10
@@ -54,7 +52,7 @@ func SeedMeter(ctx context.Context, db *pgxpool.Pool, name string, lookBack time
 		}
 
 		prevTime = current
-		current = current.Add(intervalForLoad(load))
+		current = current.Add(profile.IntervalForLoad(load))
 	}
 	return nil
 }

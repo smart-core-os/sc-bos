@@ -16,7 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
-func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
+func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
 	now := time.Now()
 	current := now.Add(-lookBack)
 
@@ -28,9 +28,8 @@ func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, lookBack 
 	}
 
 	for current.Before(now) {
-		load := officeLoad(current)
-		baseCount := load * 49
-		count := int32(math.Round(baseCount + rand.NormFloat64()*2))
+		load := profile.Load(current)
+		count := int32(math.Round(load*float64(profile.Occupancy.MaxPeople) + rand.NormFloat64()*2))
 		if count < 0 {
 			count = 0
 		}
@@ -46,7 +45,6 @@ func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, lookBack 
 			StateChangeTime: timestamppb.New(current),
 			Confidence:      1,
 		})
-
 		if err != nil {
 			return err
 		}
@@ -56,7 +54,7 @@ func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, lookBack 
 			return err
 		}
 
-		current = current.Add(intervalForLoad(load))
+		current = current.Add(profile.IntervalForLoad(load))
 	}
 
 	return nil

@@ -15,7 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
-func SeedElectric(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
+func SeedElectric(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
 	now := time.Now()
 	current := now.Add(-lookBack)
 
@@ -26,19 +26,23 @@ func SeedElectric(ctx context.Context, db *pgxpool.Pool, name string, lookBack t
 		return err
 	}
 
+	e := profile.Electric
+
 	for current.Before(now) {
 		// Use the same time-of-day scaling as the mock driver for current.
 		tod := float32(scale.NineToFive.At(current))
-		load := officeLoad(current)
+		load := profile.Load(current)
 
-		// 4A baseline (HVAC/servers always on) plus up to 36A during peak occupancy.
-		currentVal := 4 + 36*tod
-		voltage := float32Between(238, 243)
+		// NightCurrentA is the baseline (HVAC/servers always on); PeakCurrentA is the additional load.
+		currentVal := e.NightCurrentA + e.PeakCurrentA*tod
 
-		// Power factor is physically bounded [0,1]; higher during occupied hours.
-		pfMin := float32(0.75 + load*0.10)
-		pfMax := float32(0.85 + load*0.10)
-		powerFactor := float32Between(pfMin, pfMax)
+		voltage := float32Between(e.VoltageMin, e.VoltageMax)
+
+		// Power factor is bounded [0,1]; higher at full load (more resistive loads switched on).
+		powerFactor := float32Between(
+			e.PFBase+float32(load)*e.PFRange*0.5,
+			e.PFBase+float32(load)*e.PFRange,
+		)
 
 		apparentPower := currentVal * voltage
 		realPower := apparentPower * powerFactor

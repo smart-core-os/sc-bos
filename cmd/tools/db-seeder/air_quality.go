@@ -14,7 +14,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
-func SeedAirQuality(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
+func SeedAirQuality(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
 	now := time.Now()
 	current := now.Add(-lookBack)
 
@@ -25,46 +25,44 @@ func SeedAirQuality(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 		return err
 	}
 
+	aq := profile.AirQuality
+
 	// Stateful accumulators — CO2 and VOC build up with occupancy and decay with ventilation.
-	co2Level := 400.0   // ppm, starts at outdoor baseline
-	vocLevel := 50.0    // µg/m³, starts at clean indoor baseline
+	co2Level := aq.CO2Baseline
+	vocLevel := aq.VOCBaseline
 
 	for current.Before(now) {
-		load := officeLoad(current)
+		load := profile.Load(current)
 
 		// CO2: exponential approach toward occupancy-driven target.
 		// Ventilation rate increases with occupancy (HVAC works harder when occupied).
-		ventRate := 0.1 + load*0.3
-		targetCO2 := 400 + load*800
-		co2Level += (targetCO2 - co2Level) * ventRate
-		co2Level += rand.NormFloat64() * 20
-		co2Level = clampFloat64(co2Level, 350, 1500)
+		ventRate := aq.CO2VentBase + load*aq.CO2VentRange
+		targetCO2 := aq.CO2Baseline + load*aq.CO2PeakAbove
+		co2Level += (targetCO2-co2Level)*ventRate + rand.NormFloat64()*20
+		co2Level = clampFloat64(co2Level, aq.CO2Baseline*0.875, aq.CO2Baseline+aq.CO2PeakAbove*1.25)
 
-		// VOC: similar exponential approach.
-		targetVOC := 50 + load*350
-		vocLevel += (targetVOC - vocLevel) * 0.15
-		vocLevel += rand.NormFloat64() * 10
-		vocLevel = clampFloat64(vocLevel, 20, 500)
+		// VOC: same exponential approach pattern.
+		targetVOC := aq.VOCBaseline + load*aq.VOCPeakAbove
+		vocLevel += (targetVOC-vocLevel)*aq.VOCApproachRate + rand.NormFloat64()*10
+		vocLevel = clampFloat64(vocLevel, aq.VOCBaseline*0.4, aq.VOCBaseline+aq.VOCPeakAbove*1.25)
 
-		// Air pressure: slow daily variation, no units change (hPa).
-		airPressure := float32(1013 + rand.NormFloat64()*3)
-
-		// Air changes per hour: more ventilation when occupied.
-		airChange := float32(2 + load*4)
+		airPressure := float32(aq.PressureHPa + rand.NormFloat64()*aq.PressureNoise)
+		airChange := float32(aq.AirChangeBase + load*aq.AirChangeRange)
 
 		// Infection risk correlates with occupancy and CO2 concentration.
 		infection := float32(clampFloat64(load*0.5*(co2Level/1000)*100, 0, 100))
 
-		// Score: decreases with high CO2 and VOC.
-		score := float32(clampFloat64(100-(co2Level-400)/1600*50-vocLevel/500*50, 0, 100))
+		// Score: decreases with elevated CO2 and VOC.
+		co2Score := (co2Level - aq.CO2Baseline) / (aq.CO2PeakAbove * 1.25) * 50
+		vocScore := vocLevel / (aq.VOCBaseline + aq.VOCPeakAbove) * 50
+		score := float32(clampFloat64(100-co2Score-vocScore, 0, 100))
 
-		// Comfort: good when air quality score is high.
 		comfort := traits.AirQuality_COMFORTABLE
-		if score < 70 {
+		if score < aq.ComfortScoreThreshold {
 			comfort = traits.AirQuality_UNCOMFORTABLE
 		}
 
-		// Particulates: relatively stable in a well-filtered office, slight increase with activity.
+		// Particulates: low in a well-filtered office, slight increase with activity.
 		particulate1 := float32(5 + rand.Float64()*5 + load*5)
 		particulate25 := float32(8 + rand.Float64()*7 + load*5)
 		particulate10 := float32(10 + rand.Float64()*10 + load*5)
@@ -93,7 +91,7 @@ func SeedAirQuality(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 			return err
 		}
 
-		current = current.Add(15 * time.Minute)
+		current = current.Add(aq.Interval)
 	}
 	return nil
 }

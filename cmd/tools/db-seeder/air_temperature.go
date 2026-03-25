@@ -15,15 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
-const (
-	tempOccupiedMin  = 21.0 // °C comfort setpoint lower bound
-	tempOccupiedMax  = 22.0 // °C comfort setpoint upper bound
-	tempSetbackMin   = 16.0 // °C unoccupied setback lower bound
-	tempSetbackMax   = 18.0 // °C unoccupied setback upper bound
-	tempMaxRatePerStep = 0.5 // max °C change per 15-min HVAC step
-)
-
-func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
+func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
 	now := time.Now()
 	current := now.Add(-lookBack)
 
@@ -34,33 +26,30 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, look
 		return err
 	}
 
-	// Initialise to setback values (building is cold at start of lookback).
-	currentSetpoint := tempSetbackMin + rand.Float64()*(tempSetbackMax-tempSetbackMin)
-	currentAmbient := currentSetpoint + rand.NormFloat64()*0.5
+	tp := profile.Temperature
+
+	// Initialise to setback values (building is cold at the start of the lookback period).
+	currentSetpoint := tp.SetbackMin + rand.Float64()*(tp.SetbackMax-tp.SetbackMin)
+	currentAmbient := currentSetpoint + rand.NormFloat64()*tp.AmbientNoiseSigma
 
 	for current.Before(now) {
-		load := officeLoad(current)
+		load := profile.Load(current)
 
 		// Choose target setpoint based on occupancy level.
 		var targetSetpoint float64
-		if load > 0.2 {
-			targetSetpoint = tempOccupiedMin + rand.Float64()*(tempOccupiedMax-tempOccupiedMin)
+		if load > tp.OccupiedThreshold {
+			targetSetpoint = tp.OccupiedMin + rand.Float64()*(tp.OccupiedMax-tp.OccupiedMin)
 		} else {
-			targetSetpoint = tempSetbackMin + rand.Float64()*(tempSetbackMax-tempSetbackMin)
+			targetSetpoint = tp.SetbackMin + rand.Float64()*(tp.SetbackMax-tp.SetbackMin)
 		}
 
 		// Move setpoint toward target at HVAC ramp speed.
-		diff := targetSetpoint - currentSetpoint
-		if diff > tempMaxRatePerStep {
-			diff = tempMaxRatePerStep
-		} else if diff < -tempMaxRatePerStep {
-			diff = -tempMaxRatePerStep
-		}
+		diff := clampFloat64(targetSetpoint-currentSetpoint, -tp.HVACRatePerStep, tp.HVACRatePerStep)
 		currentSetpoint += diff
 
 		// Ambient temperature lags the setpoint (thermal mass of the building).
-		targetAmbient := currentSetpoint + rand.NormFloat64()*0.5
-		currentAmbient += (targetAmbient - currentAmbient) * 0.3
+		targetAmbient := currentSetpoint + rand.NormFloat64()*tp.AmbientNoiseSigma
+		currentAmbient += (targetAmbient - currentAmbient) * tp.ThermalLagFactor
 
 		setPoint := currentSetpoint
 		ambientTemp := currentAmbient
@@ -82,7 +71,7 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, look
 			return err
 		}
 
-		current = current.Add(15 * time.Minute)
+		current = current.Add(tp.Interval)
 	}
 	return nil
 }
