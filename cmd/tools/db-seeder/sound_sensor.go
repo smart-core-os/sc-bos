@@ -24,24 +24,24 @@ func SeedSoundSensor(ctx context.Context, db *pgxpool.Pool, name string, lookBac
 		return err
 	}
 
-	// Start with a base sound level between 20-40 dB
-	baseSoundLevel := 20 + rand.Float32()*20
+	// Start at night-time HVAC-hum baseline.
+	baseSoundLevel := 22.0
 
 	for current.Before(now) {
-		// Generate sound level that varies +/- 2 dB from the current level
-		soundLevel := baseSoundLevel + (rand.Float32()*4 - 2)
+		load := officeLoad(current)
 
-		// Ensure the sound level stays within a reasonable range (15-60 dB)
-		if soundLevel < 15 {
-			soundLevel = 15
-		} else if soundLevel > 60 {
-			soundLevel = 60
-		}
+		// Target dB anchored to office load: 22 dB (quiet night) → 60 dB (busy day).
+		targetDb := 22 + load*38
+
+		// Random walk toward the load-based target.
+		baseSoundLevel += (targetDb-baseSoundLevel)*0.2 + rand.NormFloat64()*2.0
+		baseSoundLevel = clampFloat64(baseSoundLevel, 15, 75)
+
+		soundLevel := float32(baseSoundLevel)
 
 		payload, err := proto.Marshal(&soundsensorpb.SoundLevel{
 			SoundPressureLevel: &soundLevel,
 		})
-
 		if err != nil {
 			return err
 		}
@@ -51,10 +51,7 @@ func SeedSoundSensor(ctx context.Context, db *pgxpool.Pool, name string, lookBac
 			return err
 		}
 
-		// Update the base sound level slightly for next iteration
-		baseSoundLevel = soundLevel
-
-		current = current.Add(time.Duration(rand.Intn(60)) * time.Minute)
+		current = current.Add(intervalForLoad(load))
 	}
 	return nil
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"math"
 	"math/rand"
 	"time"
 
@@ -14,6 +13,14 @@ import (
 	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
+)
+
+const (
+	tempOccupiedMin  = 21.0 // °C comfort setpoint lower bound
+	tempOccupiedMax  = 22.0 // °C comfort setpoint upper bound
+	tempSetbackMin   = 16.0 // °C unoccupied setback lower bound
+	tempSetbackMax   = 18.0 // °C unoccupied setback upper bound
+	tempMaxRatePerStep = 0.5 // max °C change per 15-min HVAC step
 )
 
 func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
@@ -27,13 +34,36 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, look
 		return err
 	}
 
-	// Generate a random set point between 18 and 24 degrees with 0.5 degree accuracy
-	randomNumber := 18 + rand.Float64()*6
-	setPoint := math.Round(randomNumber*2) / 2
+	// Initialise to setback values (building is cold at start of lookback).
+	currentSetpoint := tempSetbackMin + rand.Float64()*(tempSetbackMax-tempSetbackMin)
+	currentAmbient := currentSetpoint + rand.NormFloat64()*0.5
 
 	for current.Before(now) {
-		// Generate ambient temperature that varies +/- 2 degrees from set point
-		ambientTemp := setPoint + (rand.Float64()*4 - 2)
+		load := officeLoad(current)
+
+		// Choose target setpoint based on occupancy level.
+		var targetSetpoint float64
+		if load > 0.2 {
+			targetSetpoint = tempOccupiedMin + rand.Float64()*(tempOccupiedMax-tempOccupiedMin)
+		} else {
+			targetSetpoint = tempSetbackMin + rand.Float64()*(tempSetbackMax-tempSetbackMin)
+		}
+
+		// Move setpoint toward target at HVAC ramp speed.
+		diff := targetSetpoint - currentSetpoint
+		if diff > tempMaxRatePerStep {
+			diff = tempMaxRatePerStep
+		} else if diff < -tempMaxRatePerStep {
+			diff = -tempMaxRatePerStep
+		}
+		currentSetpoint += diff
+
+		// Ambient temperature lags the setpoint (thermal mass of the building).
+		targetAmbient := currentSetpoint + rand.NormFloat64()*0.5
+		currentAmbient += (targetAmbient - currentAmbient) * 0.3
+
+		setPoint := currentSetpoint
+		ambientTemp := currentAmbient
 
 		payload, err := proto.Marshal(&traits.AirTemperature{
 			AmbientTemperature: &types.Temperature{
@@ -43,7 +73,6 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, look
 				TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
 			},
 		})
-
 		if err != nil {
 			return err
 		}
@@ -53,14 +82,7 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, look
 			return err
 		}
 
-		// Occasionally adjust the set point slightly to simulate realistic behavior
-		if rand.Float64() < 0.1 { // 10% chance to adjust set point
-			adjustment := rand.Float64() - 0.5 // -0.5 to +0.5 degree adjustment
-			setPoint = math.Max(18, math.Min(24, setPoint+adjustment))
-			setPoint = math.Round(setPoint*2) / 2 // Round to 0.5 degrees
-		}
-
-		current = current.Add(time.Duration(rand.Intn(60)) * time.Minute)
+		current = current.Add(15 * time.Minute)
 	}
 	return nil
 }

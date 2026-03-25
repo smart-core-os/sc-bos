@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 
@@ -27,9 +28,21 @@ func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, lookBack 
 	}
 
 	for current.Before(now) {
+		load := officeLoad(current)
+		baseCount := load * 49
+		count := int32(math.Round(baseCount + rand.NormFloat64()*2))
+		if count < 0 {
+			count = 0
+		}
+
+		state := traits.Occupancy_UNOCCUPIED
+		if count > 0 {
+			state = traits.Occupancy_OCCUPIED
+		}
 
 		payload, err := proto.Marshal(&traits.Occupancy{
-			PeopleCount:     int32(rand.Intn(50)),
+			PeopleCount:     count,
+			State:           state,
 			StateChangeTime: timestamppb.New(current),
 			Confidence:      1,
 		})
@@ -39,12 +52,11 @@ func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, lookBack 
 		}
 
 		_, _, err = store.Insert(ctx, current, payload)
-
 		if err != nil {
 			return err
 		}
 
-		current = current.Add(time.Duration(rand.Intn(60)) * time.Minute)
+		current = current.Add(intervalForLoad(load))
 	}
 
 	return nil

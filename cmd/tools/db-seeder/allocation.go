@@ -20,7 +20,6 @@ func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 	source := fmt.Sprintf("%s[%s]", name, allocationpb.TraitName)
 
 	store, err := pgxstore.SetupStoreFromPool(ctx, source, db)
-
 	if err != nil {
 		return err
 	}
@@ -29,13 +28,16 @@ func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 	unallocationTotal := int32(0)
 
 	for current.Before(now) {
-		chance := rand.Intn(2)
-		// Randomly pick between ALLOCATED and UNALLOCATED
-		state := allocationpb.Allocation_State(allocationpb.Allocation_State_value[allocationpb.Allocation_State_name[int32(chance+1)]])
+		load := officeLoad(current)
 
-		if state == allocationpb.Allocation_ALLOCATED {
+		// Probability of ALLOCATED scales with office activity:
+		// ~80% chance at peak, near 0% at night.
+		var state allocationpb.Allocation_State
+		if rand.Float64() < load*0.8 {
+			state = allocationpb.Allocation_ALLOCATED
 			allocationTotal += int32(rand.Intn(5) + 1)
 		} else {
+			state = allocationpb.Allocation_UNALLOCATED
 			unallocationTotal += int32(rand.Intn(5) + 1)
 		}
 
@@ -45,18 +47,16 @@ func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, lookBack
 			AllocationTotal:   ptr(allocationTotal),
 			UnallocationTotal: ptr(unallocationTotal),
 		})
-
 		if err != nil {
 			return err
 		}
 
 		_, _, err = store.Insert(ctx, current, payload)
-
 		if err != nil {
 			return err
 		}
 
-		current = current.Add(time.Duration(rand.Intn(30)) * time.Minute)
+		current = current.Add(intervalForLoad(load))
 	}
 
 	return nil

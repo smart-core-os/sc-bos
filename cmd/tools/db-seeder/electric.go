@@ -27,13 +27,18 @@ func SeedElectric(ctx context.Context, db *pgxpool.Pool, name string, lookBack t
 	}
 
 	for current.Before(now) {
-		// Use the same time-of-day scaling as the mock driver
+		// Use the same time-of-day scaling as the mock driver for current.
 		tod := float32(scale.NineToFive.At(current))
+		load := officeLoad(current)
 
-		// Generate electric demand values matching mock driver patterns
-		currentVal := float32Between(20, 40) * tod // 20-40A range scaled by time of day
-		voltage := float32Between(238, 243)        // 238-243V range
-		powerFactor := float32Between(0.7, 1.3)    // 0.7-1.3 range
+		// 4A baseline (HVAC/servers always on) plus up to 36A during peak occupancy.
+		currentVal := 4 + 36*tod
+		voltage := float32Between(238, 243)
+
+		// Power factor is physically bounded [0,1]; higher during occupied hours.
+		pfMin := float32(0.75 + load*0.10)
+		pfMax := float32(0.85 + load*0.10)
+		powerFactor := float32Between(pfMin, pfMax)
 
 		apparentPower := currentVal * voltage
 		realPower := apparentPower * powerFactor
@@ -47,7 +52,6 @@ func SeedElectric(ctx context.Context, db *pgxpool.Pool, name string, lookBack t
 			RealPower:     &realPower,
 			ReactivePower: &reactivePower,
 		})
-
 		if err != nil {
 			return err
 		}
@@ -57,9 +61,7 @@ func SeedElectric(ctx context.Context, db *pgxpool.Pool, name string, lookBack t
 			return err
 		}
 
-		// Random interval between 1-30 minutes, matching mock driver's pattern
-		interval := time.Duration(1+rand.Intn(29)) * time.Minute
-		current = current.Add(interval)
+		current = current.Add(time.Duration(1+rand.Intn(29)) * time.Minute)
 	}
 
 	return nil
