@@ -226,7 +226,7 @@ func Example_deployments() {
 	err = s.Write(ctx, func(tx *store.Tx) error {
 		deployment, err := tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
 			ConfigVersionID: configVersionID,
-			Status:          "PENDING",
+			Status:          "pending",
 		})
 		if err != nil {
 			return err
@@ -243,7 +243,7 @@ func Example_deployments() {
 	err = s.Write(ctx, func(tx *store.Tx) error {
 		deployment, err := tx.UpdateDeploymentStatus(ctx, queries.UpdateDeploymentStatusParams{
 			ID:     deploymentID,
-			Status: "COMPLETED",
+			Status: "completed",
 		})
 		if err != nil {
 			return err
@@ -259,8 +259,8 @@ func Example_deployments() {
 	}
 
 	// Output:
-	// Created deployment (ID: 1) with status: PENDING
-	// Updated deployment to: COMPLETED
+	// Created deployment (ID: 1) with status: pending
+	// Updated deployment to: completed
 	// Finished time is now set
 }
 
@@ -302,7 +302,7 @@ func Example_cascadeDeletes() {
 
 		_, err = tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
 			ConfigVersionID: config.ID,
-			Status:          "PENDING",
+			Status:          "pending",
 		})
 		return err
 	})

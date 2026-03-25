@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	statusPending    = "PENDING"
-	statusInProgress = "IN_PROGRESS"
-	statusCompleted  = "COMPLETED"
-	statusFailed     = "FAILED"
-	statusCancelled  = "CANCELLED"
+	statusPending    = "pending"
+	statusInProgress = "in_progress"
+	statusCompleted  = "completed"
+	statusFailed     = "failed"
+	statusCancelled  = "cancelled"
 )
 
 // Deployment is the JSON representation of a deployment.
@@ -66,11 +66,11 @@ type updateDeploymentStatusRequest struct {
 }
 
 var validStatuses = map[string]bool{
-	"PENDING":     true,
-	"IN_PROGRESS": true,
-	"COMPLETED":   true,
-	"FAILED":      true,
-	"CANCELLED":   true,
+	statusPending:    true,
+	statusInProgress: true,
+	statusCompleted:  true,
+	statusFailed:     true,
+	statusCancelled:  true,
 }
 
 func isValidStatus(status string) bool {

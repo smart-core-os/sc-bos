@@ -182,7 +182,7 @@ UPDATE deployments
 SET status = :status,
     reason = :reason,
     finished_time = CASE
-        WHEN :status = 'COMPLETED' OR :status = 'FAILED' OR :status = 'CANCELLED' THEN datetime('now', 'subsec')
+        WHEN :status = 'completed' OR :status = 'failed' OR :status = 'cancelled' THEN datetime('now', 'subsec')
         ELSE finished_time
     END
 WHERE id = :id
@@ -194,11 +194,11 @@ WHERE id = :id;
 
 -- name: CancelPendingDeploymentsByNode :execrows
 UPDATE deployments
-SET status = 'CANCELLED',
+SET status = 'cancelled',
     finished_time = datetime('now', 'subsec')
 WHERE config_version_id IN (
     SELECT id FROM config_versions WHERE node_id = :node_id
-) AND status = 'PENDING';
+) AND status = 'pending';
 
 -- name: GetNodeBySecretHash :one
 SELECT * FROM nodes WHERE secret_hash = :secret_hash;
@@ -207,6 +207,6 @@ SELECT * FROM nodes WHERE secret_hash = :secret_hash;
 SELECT d.*
 FROM deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
-WHERE cv.node_id = :node_id AND d.status IN ('PENDING', 'IN_PROGRESS')
+WHERE cv.node_id = :node_id AND d.status IN ('pending', 'in_progress')
 ORDER BY d.id DESC
 LIMIT 1;

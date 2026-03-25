@@ -42,7 +42,7 @@ CREATE TABLE deployments (
     reason              TEXT, -- optional field to capture reason for failure or cancellation
 
     FOREIGN KEY (config_version_id) REFERENCES config_versions (id) ON DELETE CASCADE,
-    CONSTRAINT status_valid CHECK ( status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED') ),
+    CONSTRAINT status_valid CHECK ( status IN ('pending', 'in_progress', 'completed', 'failed', 'cancelled') ),
     CONSTRAINT start_time_format CHECK ( start_time IS datetime(start_time, 'subsec') ),
     CONSTRAINT finished_time_format CHECK ( finished_time IS NULL OR finished_time IS datetime(finished_time, 'subsec') )
 );

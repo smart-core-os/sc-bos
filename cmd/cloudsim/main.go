@@ -59,7 +59,10 @@ func run(ctx context.Context, logger *zap.Logger) (err error) {
 	logger.Info("server listening", zap.String("address", lis.Addr().String()))
 
 	mux := http.NewServeMux()
-	apiServer := sim.NewServer(dataStore, logger)
+	apiServer, err := sim.NewServer(dataStore, logger)
+	if err != nil {
+		return fmt.Errorf("failed to create API server: %w", err)
+	}
 	apiServer.RegisterRoutes(mux)
 
 	return serveContext(ctx, lis, mux, logger)
