@@ -34,24 +34,22 @@ func TestScgolangImportToScBos(t *testing.T) {
 		// pkg/trait (exact) -> pkg/trait
 		{name: "trait_exact", input: oldModule + "/pkg/trait", wantPath: newModule + "/pkg/trait", wantOK: true},
 
-		// Conflicting trait packages -> pkg/trait/
-		{name: "conflicting_accesspb", input: oldModule + "/pkg/trait/accesspb", wantPath: newModule + "/pkg/trait/accesspb", wantOK: true},
-		{name: "conflicting_airqualitysensorpb", input: oldModule + "/pkg/trait/airqualitysensorpb", wantPath: newModule + "/pkg/trait/airqualitysensorpb", wantOK: true},
-		{name: "conflicting_airtemperaturepb", input: oldModule + "/pkg/trait/airtemperaturepb", wantPath: newModule + "/pkg/trait/airtemperaturepb", wantOK: true},
-		{name: "conflicting_electricpb", input: oldModule + "/pkg/trait/electricpb", wantPath: newModule + "/pkg/trait/electricpb", wantOK: true},
-		{name: "conflicting_enterleavesensorpb", input: oldModule + "/pkg/trait/enterleavesensorpb", wantPath: newModule + "/pkg/trait/enterleavesensorpb", wantOK: true},
-		{name: "conflicting_meterpb", input: oldModule + "/pkg/trait/meterpb", wantPath: newModule + "/pkg/trait/meterpb", wantOK: true},
-		{name: "conflicting_occupancysensorpb", input: oldModule + "/pkg/trait/occupancysensorpb", wantPath: newModule + "/pkg/trait/occupancysensorpb", wantOK: true},
-		{name: "conflicting_temperaturepb", input: oldModule + "/pkg/trait/temperaturepb", wantPath: newModule + "/pkg/trait/temperaturepb", wantOK: true},
-		{name: "conflicting_wastepb", input: oldModule + "/pkg/trait/wastepb", wantPath: newModule + "/pkg/trait/wastepb", wantOK: true},
-
-		// Non-conflicting trait packages -> pkg/proto/
+		// All trait packages -> pkg/proto/
+		{name: "accesspb", input: oldModule + "/pkg/trait/accesspb", wantPath: newModule + "/pkg/proto/accesspb", wantOK: true},
+		{name: "airqualitysensorpb", input: oldModule + "/pkg/trait/airqualitysensorpb", wantPath: newModule + "/pkg/proto/airqualitysensorpb", wantOK: true},
+		{name: "airtemperaturepb", input: oldModule + "/pkg/trait/airtemperaturepb", wantPath: newModule + "/pkg/proto/airtemperaturepb", wantOK: true},
+		{name: "electricpb", input: oldModule + "/pkg/trait/electricpb", wantPath: newModule + "/pkg/proto/electricpb", wantOK: true},
+		{name: "enterleavesensorpb", input: oldModule + "/pkg/trait/enterleavesensorpb", wantPath: newModule + "/pkg/proto/enterleavesensorpb", wantOK: true},
+		{name: "meterpb", input: oldModule + "/pkg/trait/meterpb", wantPath: newModule + "/pkg/proto/meterpb", wantOK: true},
+		{name: "occupancysensorpb", input: oldModule + "/pkg/trait/occupancysensorpb", wantPath: newModule + "/pkg/proto/occupancysensorpb", wantOK: true},
+		{name: "temperaturepb", input: oldModule + "/pkg/trait/temperaturepb", wantPath: newModule + "/pkg/proto/temperaturepb", wantOK: true},
+		{name: "wastepb", input: oldModule + "/pkg/trait/wastepb", wantPath: newModule + "/pkg/proto/wastepb", wantOK: true},
 		{name: "lightpb", input: oldModule + "/pkg/trait/lightpb", wantPath: newModule + "/pkg/proto/lightpb", wantOK: true},
 		{name: "onoffpb", input: oldModule + "/pkg/trait/onoffpb", wantPath: newModule + "/pkg/proto/onoffpb", wantOK: true},
 		{name: "bookingpb", input: oldModule + "/pkg/trait/bookingpb", wantPath: newModule + "/pkg/proto/bookingpb", wantOK: true},
 		{name: "brightnesssensorpb", input: oldModule + "/pkg/trait/brightnesssensorpb", wantPath: newModule + "/pkg/proto/brightnesssensorpb", wantOK: true},
 		{name: "vendingpb_unitpb", input: oldModule + "/pkg/trait/vendingpb/unitpb", wantPath: newModule + "/pkg/proto/vendingpb/unitpb", wantOK: true},
-		{name: "electricpb_modepb", input: oldModule + "/pkg/trait/electricpb/modepb", wantPath: newModule + "/pkg/trait/electricpb/modepb", wantOK: true},
+		{name: "electricpb_modepb", input: oldModule + "/pkg/trait/electricpb/modepb", wantPath: newModule + "/pkg/proto/electricpb/modepb", wantOK: true},
 
 		// Identity-mapped packages — just swap module prefix.
 		{name: "resource", input: oldModule + "/pkg/resource", wantPath: newModule + "/pkg/resource", wantOK: true},
