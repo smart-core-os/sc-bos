@@ -15,6 +15,29 @@ import (
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/go/gopkg"
 )
 
+// symbolRelocationEntry describes a symbol that moved to a different package than its parent gentrait package.
+type symbolRelocationEntry struct {
+	oldGentraitPath string // e.g. "github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
+	symbol          string // e.g. "Map"
+	newImportPath   string // e.g. "github.com/smart-core-os/sc-bos/pkg/util/statusmap"
+}
+
+// symbolRelocations lists symbols that moved to a different package than their parent gentrait package
+// during the gentrait→proto migration. These are handled as a second pass after the main import remapping.
+var symbolRelocations = []symbolRelocationEntry{
+	// Map and NewMap moved from pkg/gentrait/statuspb to pkg/util/statusmap to break an import cycle.
+	{
+		oldGentraitPath: "github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb",
+		symbol:          "Map",
+		newImportPath:   "github.com/smart-core-os/sc-bos/pkg/util/statusmap",
+	},
+	{
+		oldGentraitPath: "github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb",
+		symbol:          "NewMap",
+		newImportPath:   "github.com/smart-core-os/sc-bos/pkg/util/statusmap",
+	},
+}
+
 // transformReferences updates imports and references from pkg/gentrait to pkg/proto.
 // This will not work on files that are being moved to the new pkg/proto location.
 //
@@ -52,6 +75,10 @@ func transformReferences(content string) (string, error) {
 		}
 	}
 
+	// processedGentraitPaths tracks which gentrait imports were processed and their alias in this file.
+	// Used later to apply symbol-level relocations.
+	processedGentraitPaths := make(map[string]string) // gentrait import path -> alias used in file
+
 	// Second pass: analyze imports and plan changes
 	for _, impSpec := range node.Imports {
 		if impSpec.Path == nil {
@@ -67,6 +94,8 @@ func transformReferences(content string) (string, error) {
 		newPath := convertGentraitImportToProto(importPath)
 		oldName := getImportPackageName(impSpec)
 		newName := gopkg.ImportPathToAssumedName(newPath)
+
+		processedGentraitPaths[oldPath] = oldName
 
 		// Check if the new proto import already exists
 		if existingName, exists := existingProtoImports[newPath]; exists {
@@ -144,6 +173,33 @@ func transformReferences(content string) (string, error) {
 				}
 				return true
 			})
+		}
+	}
+
+	// Apply symbol-level relocations: some symbols moved to different packages than their containing
+	// gentrait package. For each processed gentrait import, check for relocated symbols and rewrite them.
+	for _, reloc := range symbolRelocations {
+		alias, processed := processedGentraitPaths[reloc.oldGentraitPath]
+		if !processed {
+			continue
+		}
+		newPkgName := gopkg.ImportPathToAssumedName(reloc.newImportPath)
+		rewritten := 0
+		astutil.Apply(node, nil, func(c *astutil.Cursor) bool {
+			sel, ok := c.Node().(*ast.SelectorExpr)
+			if !ok {
+				return true
+			}
+			ident, ok := sel.X.(*ast.Ident)
+			if !ok || ident.Name != alias || sel.Sel.Name != reloc.symbol {
+				return true
+			}
+			ident.Name = newPkgName
+			rewritten++
+			return true
+		})
+		if rewritten > 0 {
+			astutil.AddImport(fset, node, reloc.newImportPath)
 		}
 	}
 
