@@ -2,6 +2,8 @@
 package sysconf
 
 import (
+	"crypto/tls"
+	"fmt"
 	"os"
 	"time"
 
@@ -158,6 +160,26 @@ type Certs struct {
 	HTTPCert     bool   `json:"httpCert,omitempty"` // have the https stack (grpc-web and hosting) use different pki.Source from the grpc stack
 	HTTPKeyFile  string `json:"httpKeyFile,omitempty"`
 	HTTPCertFile string `json:"httpCertFile,omitempty"`
+
+	// TLSMinVersion sets the minimum TLS version accepted for gRPC and HTTPS connections.
+	// Valid values are "1.2" and "1.3". Defaults to "1.3" if not set.
+	TLSMinVersion string `json:"tlsMinVersion,omitempty"`
+}
+
+// ParseTLSMinVersion returns the tls.VersionTLS* constant for the configured minimum TLS version.
+// Defaults to tls.VersionTLS13 if TLSMinVersion is not set.
+func (c *Certs) ParseTLSMinVersion() (uint16, error) {
+	if c == nil || c.TLSMinVersion == "" {
+		return tls.VersionTLS13, nil
+	}
+	switch c.TLSMinVersion {
+	case "1.2":
+		return tls.VersionTLS12, nil
+	case "1.3":
+		return tls.VersionTLS13, nil
+	default:
+		return 0, fmt.Errorf("unknown tlsMinVersion %q, valid values are: 1.2, 1.3", c.TLSMinVersion)
+	}
 }
 
 type PolicyMode string

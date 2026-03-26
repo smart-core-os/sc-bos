@@ -243,8 +243,13 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		systemSource,
 		selfSignedSource,
 	}
-	tlsGRPCServerConfig := pki.TLSServerConfig(grpcSource)
-	tlsGRPCClientConfig := pki.TLSClientConfig(grpcSource)
+	tlsMinVersion, err := certConfig.ParseTLSMinVersion()
+	if err != nil {
+		return nil, fmt.Errorf("certs.tlsMinVersion: %w", err)
+	}
+	tlsVersionOpt := pki.WithMinVersion(tlsMinVersion)
+	tlsGRPCServerConfig := pki.TLSServerConfig(grpcSource, tlsVersionOpt)
+	tlsGRPCClientConfig := pki.TLSClientConfig(grpcSource, tlsVersionOpt)
 
 	// Certs used for https (hosting and grpc-web) can be different from the Smart Core native grpc endpoint,
 	// mostly to allow support for trusted certs on the https interface and cohort managed certs for grpc requests.
@@ -262,7 +267,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			selfSignedSource, // reuse the same self signed cert from grpc requests
 		}
 	}
-	tlsHTTPServerConfig := pki.TLSServerConfig(httpCertSource)
+	tlsHTTPServerConfig := pki.TLSServerConfig(httpCertSource, tlsVersionOpt)
 	tlsHTTPServerConfig.ClientAuth = tls.NoClientCert
 
 	// manager represents a delayed connection to the cohort manager.
