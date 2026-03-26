@@ -97,10 +97,16 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 		directDest   string // non-empty: bypass typemap, map directly to this pkg name
 	}{
 		{"gen", bosImportPath("pkg/gen"), ""},
+		// sc-bos-internal copies of sc-api (used during self-migration)
 		{"traits", bosImportPath("sc-api/go/traits"), ""},
 		{"types", bosImportPath("sc-api/go/types"), "typespb"},
 		{"time", bosImportPath("sc-api/go/types/time"), "timepb"},
 		{"info", bosImportPath("sc-api/go/info"), "infopb"},
+		// original sc-api module (used by external consumers such as downstream repos)
+		{"traits", "github.com/smart-core-os/sc-api/go/traits", ""},
+		{"types", "github.com/smart-core-os/sc-api/go/types", "typespb"},
+		{"time", "github.com/smart-core-os/sc-api/go/types/time", "timepb"},
+		{"info", "github.com/smart-core-os/sc-api/go/info", "infopb"},
 	}
 
 	// importAliases maps import path → the alias actually used in this file.
