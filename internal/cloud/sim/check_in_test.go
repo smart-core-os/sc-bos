@@ -14,7 +14,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-func checkInURL(base string) string { return base + checkInEndpointPath }
+func checkInURL(base string) string { return base + "/v1/device/check-in" }
 
 // checkInEnv holds test fixtures for check-in tests.
 type checkInEnv struct {
@@ -75,7 +75,7 @@ func setupCheckInEnv(t *testing.T) checkInEnv {
 func obtainAccessToken(t *testing.T, client *http.Client, baseURL string, nodeID int64, secret []byte) string {
 	t.Helper()
 	encodedSecret := base64.StdEncoding.EncodeToString(secret)
-	resp, err := client.PostForm(baseURL+tokenEndpointPath, url.Values{
+	resp, err := client.PostForm(baseURL+"/v1/device/token", url.Values{
 		"grant_type":    {"client_credentials"},
 		"client_id":     {sid(nodeID)},
 		"client_secret": {encodedSecret},
@@ -286,8 +286,17 @@ func TestCheckIn_MissingAuthHeader(t *testing.T) {
 func TestCheckIn_InvalidBearerToken(t *testing.T) {
 	e := setupCheckInEnv(t)
 
-	// Use a nonsense JWT
-	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), "not-a-valid-jwt", nil, nil)
+	// Issue a valid-looking JWT signed with a different key
+	otherIssuer, err := newTokenIssuer()
+	if err != nil {
+		t.Fatalf("newTokenIssuer: %v", err)
+	}
+	token, _, err := otherIssuer.issue(e.node.ID)
+	if err != nil {
+		t.Fatalf("issue: %v", err)
+	}
+
+	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), token, nil, nil)
 	assertStatus(t, resp, http.StatusUnauthorized)
 }
 

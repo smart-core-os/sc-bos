@@ -21,10 +21,10 @@ type Client interface {
 	DownloadPayload(ctx context.Context, url string) (io.ReadCloser, error)
 }
 
-// Credentials holds the information needed to authenticate with the SCC BOS-facing API.
+// Registration holds the information needed to authenticate with the SCC BOS-facing API.
 // These fields match the registration endpoint response, so the struct can be deserialized directly
 // from a persisted credentials file.
-type Credentials struct {
+type Registration struct {
 	ClientID        string `json:"client_id"`
 	ClientSecret    string `json:"client_secret"`
 	TokenEndpoint   string `json:"token_endpoint"`
@@ -49,7 +49,7 @@ type HTTPClient struct {
 }
 
 // NewHTTPClient creates a new HTTPClient for talking to a Smart Core Connect cloud API.
-func NewHTTPClient(creds Credentials, opts ...HTTPClientOption) *HTTPClient {
+func NewHTTPClient(creds Registration, opts ...HTTPClientOption) *HTTPClient {
 	c := &HTTPClient{
 		checkInEndpoint: creds.CheckInEndpoint,
 		plainHTTP:       http.DefaultClient,

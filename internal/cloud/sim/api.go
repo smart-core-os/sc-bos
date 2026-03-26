@@ -34,11 +34,6 @@ func NewServer(store *store.Store, logger *zap.Logger) (*Server, error) {
 	}, nil
 }
 
-const (
-	tokenEndpointPath   = "/v1/device/token"
-	checkInEndpointPath = "/v1/device/check-in"
-)
-
 // RegisterRoutes registers all API routes on the given mux.
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// Sites
@@ -76,8 +71,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 
 	// Device API (BOS-facing)
 	// TODO: add POST /v1/device/register for enrollment code exchange
-	mux.HandleFunc("POST "+tokenEndpointPath, s.handleToken)
-	mux.HandleFunc("POST "+checkInEndpointPath, s.checkIn)
+	mux.HandleFunc("POST /v1/device/token", s.handleToken)
+	mux.HandleFunc("POST /v1/device/check-in", s.checkIn)
 }
 
 func (s *Server) loggerFor(r *http.Request) *zap.Logger {

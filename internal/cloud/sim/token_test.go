@@ -70,7 +70,7 @@ func TestTokenIssuer_ExpiredToken(t *testing.T) {
 	}
 }
 
-func tokenURL(base string) string { return base + tokenEndpointPath }
+func tokenURL(base string) string { return base + "/v1/device/token" }
 
 func TestHandleToken_Success(t *testing.T) {
 	ts := newTestServer(t)

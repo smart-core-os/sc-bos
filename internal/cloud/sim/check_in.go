@@ -191,7 +191,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			writeError(w, errNotFound)
+			writeError(w, errUnauthorized)
 			logger.Debug("check-in for unknown node")
 			return
 		}

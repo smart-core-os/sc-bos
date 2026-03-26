@@ -64,7 +64,6 @@ type ConfigVersion struct {
 	NodeID      string    `json:"nodeId"`
 	Description string    `json:"description"`
 	PayloadURL  string    `json:"payloadUrl"`
-	Checksum    string    `json:"checksum,omitempty"`
 	CreateTime  time.Time `json:"createTime"`
 }
 

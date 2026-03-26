@@ -80,7 +80,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to load cloud client secret: %w", err)
 		}
-		creds := cloud.Credentials{
+		creds := cloud.Registration{
 			ClientID:        config.Cloud.ClientID,
 			ClientSecret:    clientSecret,
 			TokenEndpoint:   config.Cloud.TokenEndpoint,

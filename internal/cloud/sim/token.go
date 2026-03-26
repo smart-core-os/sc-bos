@@ -7,11 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-jose/go-jose/v4"
-	josejwt "github.com/go-jose/go-jose/v4/jwt"
+	jwt "github.com/go-jose/go-jose/v4/jwt"
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
@@ -50,16 +51,16 @@ func (ti *tokenIssuer) issue(nodeID int64) (token string, expiresIn int, err err
 	}
 
 	now := time.Now()
-	claims := josejwt.Claims{
-		IssuedAt: josejwt.NewNumericDate(now),
-		Expiry:   josejwt.NewNumericDate(now.Add(ti.expiry)),
+	claims := jwt.Claims{
+		IssuedAt: jwt.NewNumericDate(now),
+		Expiry:   jwt.NewNumericDate(now.Add(ti.expiry)),
 	}
 	custom := tokenClaims{
 		NodeID: nodeID,
 		Type:   "bos_node",
 	}
 
-	raw, err := josejwt.Signed(signer).Claims(claims).Claims(custom).Serialize()
+	raw, err := jwt.Signed(signer).Claims(claims).Claims(custom).Serialize()
 	if err != nil {
 		return "", 0, fmt.Errorf("sign token: %w", err)
 	}
@@ -67,18 +68,18 @@ func (ti *tokenIssuer) issue(nodeID int64) (token string, expiresIn int, err err
 }
 
 func (ti *tokenIssuer) validate(tokenStr string) (tokenClaims, error) {
-	tok, err := josejwt.ParseSigned(tokenStr, []jose.SignatureAlgorithm{tokenSigningAlg})
+	tok, err := jwt.ParseSigned(tokenStr, []jose.SignatureAlgorithm{tokenSigningAlg})
 	if err != nil {
 		return tokenClaims{}, fmt.Errorf("parse token: %w", err)
 	}
 
-	var stdClaims josejwt.Claims
+	var stdClaims jwt.Claims
 	var custom tokenClaims
 	if err := tok.Claims(ti.signingKey, &stdClaims, &custom); err != nil {
 		return tokenClaims{}, fmt.Errorf("verify token: %w", err)
 	}
 
-	if err := stdClaims.ValidateWithLeeway(josejwt.Expected{}, 0); err != nil {
+	if err := stdClaims.ValidateWithLeeway(jwt.Expected{}, 0); err != nil {
 		return tokenClaims{}, fmt.Errorf("token expired or invalid: %w", err)
 	}
 
@@ -131,11 +132,21 @@ func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
 	}
 	secretHash := sha256.Sum256(secretBytes)
 
+	parsedClientID, err := strconv.ParseInt(clientID, 10, 64)
+	if err != nil {
+		writeError(w, errUnauthorized)
+		logger.Debug("invalid client_id", zap.Error(err))
+		return
+	}
+
 	var nodeID int64
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		node, err := tx.GetNodeBySecretHash(r.Context(), secretHash[:])
 		if err != nil {
 			return err
+		}
+		if node.ID != parsedClientID {
+			return errUnauthorized
 		}
 		nodeID = node.ID
 		return nil

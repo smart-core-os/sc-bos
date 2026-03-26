@@ -85,7 +85,7 @@ func setupClientEnv(t *testing.T) *clientEnv {
 	}
 	t.Cleanup(func() { _ = storeDir.Close() })
 
-	httpClient := NewHTTPClient(Credentials{
+	httpClient := NewHTTPClient(Registration{
 		CheckInEndpoint: ts.URL + "/v1/device/check-in",
 		TokenEndpoint:   ts.URL + "/v1/device/token",
 		ClientID:        strconv.FormatInt(created.ID, 10),
@@ -558,7 +558,7 @@ func TestPoll(t *testing.T) {
 		env := setupClientEnv(t)
 
 		// Create an updater with a wrong client secret — token endpoint will reject it
-		badHTTPClient := NewHTTPClient(Credentials{
+		badHTTPClient := NewHTTPClient(Registration{
 			CheckInEndpoint: env.testServer.URL + "/v1/device/check-in",
 			TokenEndpoint:   env.testServer.URL + "/v1/device/token",
 			ClientID:        "999999",
@@ -820,7 +820,7 @@ func TestDownloadPayload_InsecureURLBlocked(t *testing.T) {
 	defer ts.Close()
 
 	// checkInEndpoint uses a different HTTPS host so downloads from ts go through plainHTTP.
-	client := NewHTTPClient(Credentials{
+	client := NewHTTPClient(Registration{
 		CheckInEndpoint: "https://other-host/v1/device/check-in",
 		TokenEndpoint:   "https://other-host/v1/device/token",
 		ClientID:        "id",
@@ -875,7 +875,7 @@ func TestDownloadPayload_Authorization(t *testing.T) {
 	defer ts.Close()
 
 	// checkInEndpoint is on a different host than ts, so downloads from ts should not include auth.
-	client := NewHTTPClient(Credentials{
+	client := NewHTTPClient(Registration{
 		CheckInEndpoint: "http://other-host/v1/device/check-in",
 		TokenEndpoint:   "http://other-host/v1/device/token",
 		ClientID:        "id",
