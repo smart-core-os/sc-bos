@@ -240,8 +240,8 @@ func getTraitPackageWrapInfo(pkgInfo *packageWrapInfo, funcName string) *wrapRes
 
 	if strings.Contains(pkgInfo.importPath, "/sc-bos/pkg/trait/") ||
 		strings.Contains(pkgInfo.importPath, "/sc-bos/pkg/proto/") {
-		targetPkg = "traits"
-		needsTraitsImport = true
+		targetPkg = pkgInfo.pkgName
+		needsTraitsImport = false
 	} else if pkgInfo.importPath == "github.com/smart-core-os/sc-api/go/traits" {
 		targetPkg = pkgInfo.pkgName
 		needsTraitsImport = false
