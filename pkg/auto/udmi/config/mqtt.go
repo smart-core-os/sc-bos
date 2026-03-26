@@ -76,6 +76,7 @@ func (b MQTTBroker) tlsConfig() (*tls.Config, error) {
 		cfg.RootCAs = pool
 	}
 
+	// If either client cert or key is set, both must be set. Load the client cert/key pair if provided.
 	if b.ClientCertFile != "" || b.ClientKeyFile != "" {
 		if b.ClientCertFile == "" || b.ClientKeyFile == "" {
 			return nil, fmt.Errorf("clientCertFile and clientKeyFile must both be set")
