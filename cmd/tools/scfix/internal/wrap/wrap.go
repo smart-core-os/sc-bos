@@ -59,6 +59,7 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 	needsTraitsImport := false
 
 	packageInfo := make(map[string]*packageWrapInfo)
+	var nodeLocalPkg string
 	for _, imp := range node.Imports {
 		path := strings.Trim(imp.Path.Value, `"`)
 
@@ -79,11 +80,21 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 				pkgName:    pkgName,
 			}
 		}
+
+		if path == "github.com/smart-core-os/sc-bos/pkg/node" {
+			nodeLocalPkg = pkgName
+		}
 	}
+
+	excludedCalls := collectExcludedCalls(node, nodeLocalPkg)
 
 	ast.Inspect(node, func(n ast.Node) bool {
 		callExpr, ok := n.(*ast.CallExpr)
 		if !ok {
+			return true
+		}
+
+		if excludedCalls[callExpr] {
 			return true
 		}
 
@@ -388,6 +399,84 @@ func toPascalCase(s string) string {
 		return strings.ToUpper(s[:1]) + s[1:]
 	}
 	return s
+}
+
+// nodeServiceUnwrapperFuncs are functions in pkg/node that accept wrap.ServiceUnwrapper arguments.
+// Wrap calls passed to these cannot be transformed because the replacement client types don't
+// implement wrap.ServiceUnwrapper.
+var nodeServiceUnwrapperFuncs = map[string]bool{
+	"WithClients":    true,
+	"WithOptClients": true,
+	"HasClient":      true,
+	"HasOptClient":   true,
+}
+
+// collectExcludedCalls returns the set of CallExpr nodes that should not be transformed.
+// A call is excluded when it is passed (directly or via a local variable assignment) as an
+// argument to node.WithClients / node.HasClient / node.WithOptClients / node.HasOptClient,
+// since those functions require wrap.ServiceUnwrapper which the replacement client types don't implement.
+func collectExcludedCalls(file *ast.File, nodeLocalPkg string) map[*ast.CallExpr]bool {
+	excluded := make(map[*ast.CallExpr]bool)
+	if nodeLocalPkg == "" {
+		return excluded
+	}
+
+	// varNames holds the names of local variables passed directly to ServiceUnwrapper functions.
+	varNames := make(map[string]bool)
+
+	// Pass 1: collect direct CallExpr args and variable names used as ServiceUnwrapper args.
+	ast.Inspect(file, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		pkg, ok := sel.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+		if pkg.Name != nodeLocalPkg || !nodeServiceUnwrapperFuncs[sel.Sel.Name] {
+			return true
+		}
+		for _, arg := range call.Args {
+			switch a := arg.(type) {
+			case *ast.CallExpr:
+				excluded[a] = true
+			case *ast.Ident:
+				varNames[a.Name] = true
+			}
+		}
+		return true
+	})
+
+	if len(varNames) == 0 {
+		return excluded
+	}
+
+	// Pass 2: find assignments of WrapXxx calls to any of the tracked variable names.
+	ast.Inspect(file, func(n ast.Node) bool {
+		assign, ok := n.(*ast.AssignStmt)
+		if !ok {
+			return true
+		}
+		for i, lhs := range assign.Lhs {
+			ident, ok := lhs.(*ast.Ident)
+			if !ok || !varNames[ident.Name] {
+				continue
+			}
+			if i < len(assign.Rhs) {
+				if call, ok := assign.Rhs[i].(*ast.CallExpr); ok {
+					excluded[call] = true
+				}
+			}
+		}
+		return true
+	})
+
+	return excluded
 }
 
 func ensureImport(file *ast.File, importPath string) {
