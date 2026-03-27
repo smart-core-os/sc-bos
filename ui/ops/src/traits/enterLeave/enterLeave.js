@@ -64,7 +64,7 @@ export function usePullEnterLeaveEvents(query, paused = false) {
 export function useEnterLeaveEvent(value, {showChangeDuration = 30 * SECOND} = {}) {
   const _v = computed(() => toValue(value));
 
-  const hasTotals = computed(() => _v.value?.enterTotal !== undefined || _v.value?.leaveTotal !== undefined);
+  const hasTotals = computed(() => _v.value !== undefined && _v.value !== null);
   const enterTotal = computed(() => _v.value?.enterTotal || 0);
   const leaveTotal = computed(() => _v.value?.leaveTotal || 0);
 
