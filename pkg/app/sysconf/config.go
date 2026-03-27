@@ -284,9 +284,9 @@ func (c *Certs) FillDefaults() *Certs {
 
 // Cloud configures the connection to the SCC BOS-facing API.
 type Cloud struct {
-	// BaseURL is the base URL of the SCC BOS-facing API (e.g. "https://bosapi.example.com").
+	// BosapiRoot is the base URL of the SCC BOS-facing API (e.g. "https://bosapi.example.com").
 	// TODO: default to the production URL once it's known.
-	BaseURL          string `json:"baseUrl,omitempty"`
+	BosapiRoot       string `json:"bosapiRoot,omitempty"`
 	ClientID         string `json:"clientId,omitempty"`
 	ClientSecretFile string `json:"clientSecretFile,omitempty"`
 

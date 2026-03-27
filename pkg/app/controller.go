@@ -83,7 +83,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		reg := cloud.Registration{
 			ClientID:     config.Cloud.ClientID,
 			ClientSecret: clientSecret,
-			BosapiRoot:   config.Cloud.BaseURL,
+			BosapiRoot:   config.Cloud.BosapiRoot,
 		}
 
 		cloudDataDir := filepath.Join(config.DataDir, cloudDirName)
