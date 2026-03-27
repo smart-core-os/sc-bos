@@ -9,11 +9,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
@@ -145,12 +145,12 @@ func (azc *AccessZoneController) refreshAccessZones(announcer node.Announcer, sc
 		if _, ok := azc.zones[id]; !ok {
 			z.lastAccessAttempt = resource.NewValue(resource.WithInitialValue(&accesspb.AccessAttempt{}), resource.WithNoDuplicates())
 			z.ScName = path.Join(scNamePrefix, "access_zones", z.Id)
-			z.Meta = &traits.Metadata{
-				Appearance: &traits.Metadata_Appearance{
+			z.Meta = &metadatapb.Metadata{
+				Appearance: &metadatapb.Metadata_Appearance{
 					Title:       z.Name,
 					Description: z.Description,
 				},
-				Membership: &traits.Metadata_Membership{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "acs",
 				},
 			}
