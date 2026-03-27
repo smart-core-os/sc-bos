@@ -15,7 +15,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/pkg/util/math2"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
 )
@@ -239,7 +238,7 @@ func (e *enterLeave) mergeEnterLeaveEvents(all []*enterleavesensorpb.EnterLeaveE
 		}
 		res.State = gen_occupancysensorpb.Occupancy_UNOCCUPIED // so it's not unspecified, overridden later once we have a full count
 		if event.EnterTotal != nil && event.LeaveTotal != nil {
-			res.PeopleCount += math2.Max(*event.EnterTotal-*event.LeaveTotal, 0)
+			res.PeopleCount += max(*event.EnterTotal-*event.LeaveTotal, 0)
 		}
 	}
 
