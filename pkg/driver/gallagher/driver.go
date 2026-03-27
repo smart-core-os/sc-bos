@@ -93,6 +93,12 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		return dc.run(ctx, cfg.RefreshDoors, announcer, cfg.ScNamePrefix)
 	})
 
+	azc := newAccessZoneController(client, cc, d.logger)
+	_ = azc.refreshAccessZones(announcer, cfg.ScNamePrefix) // blocking initial fetch
+	grp.Go(func() error {
+		return azc.run(ctx, cfg.RefreshAccessZones, announcer, cfg.ScNamePrefix)
+	})
+
 	sc := newSecurityEventController(client, d.logger, cfg.NumSecurityEvents)
 	announcer.Announce(cfg.ScNamePrefix, node.HasTrait(securityeventpb.TraitName, node.WithClients(securityeventpb.WrapApi(sc))))
 	grp.Go(func() error {

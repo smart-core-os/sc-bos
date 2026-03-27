@@ -145,7 +145,7 @@ func (cc *CardholderController) getCardholderDetails(cardholder *Cardholder) {
 	_, _ = cardholder.lastAccessAttempt.Set(
 		&accesspb.AccessAttempt{
 			Actor: &actorpb.Actor{
-				Name:          cardholder.FirstName + " " + cardholder.LastName,
+				DisplayName:   cardholder.FirstName + " " + cardholder.LastName,
 				Title:         cardholder.Description,
 				LastGrantTime: accessTimePb,
 				LastGrantZone: accessZone,
@@ -221,6 +221,31 @@ func (cc *CardholderController) run(ctx context.Context, schedule *jsontypes.Sch
 			cc.logger.Error("failed to refresh cardholders, will try again on next run...", zap.Error(err))
 		}
 	}
+}
+
+// lastCardholderForZoneHref returns the cardholder with the most recent LastSuccessfulAccessTime
+// whose LastSuccessfulAccessZone.Href matches zoneHref, or nil if none is found.
+func (cc *CardholderController) lastCardholderForZoneHref(zoneHref string) *Cardholder {
+	cc.mu.Lock()
+	defer cc.mu.Unlock()
+
+	var latest *Cardholder
+	var latestTime time.Time
+
+	for _, c := range cc.cardholders {
+		if c.LastSuccessfulAccessZone == nil || c.LastSuccessfulAccessZone.Href != zoneHref {
+			continue
+		}
+		t, err := time.Parse(time.RFC3339, c.LastSuccessfulAccessTime)
+		if err != nil {
+			continue
+		}
+		if latest == nil || t.After(latestTime) {
+			latest = c
+			latestTime = t
+		}
+	}
+	return latest
 }
 
 func (c *Cardholder) GetLastAccessAttempt(context.Context, *accesspb.GetLastAccessAttemptRequest) (*accesspb.AccessAttempt, error) {
