@@ -360,7 +360,7 @@ func TestConfigVersions_Pagination(t *testing.T) {
 			resp := doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
 				"nodeId":      sid(node.ID),
 				"description": fmt.Sprintf("v%d.0.0", i),
-				"payload":     []byte(fmt.Sprintf("config-%d", i)),
+				"payload":     fmt.Appendf(nil, "config-%d", i),
 			}, &cv)
 			assertStatus(t, resp, http.StatusCreated)
 			return cv.ID

@@ -11,6 +11,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/fixer"
@@ -215,13 +216,7 @@ func isSimpleWrapFunc(funcName string) bool {
 	}
 
 	aspects := []string{"Api", "Info", "History"}
-	for _, validAspect := range aspects {
-		if aspect == validAspect {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(aspects, aspect)
 }
 
 func getTraitPackageWrapInfo(pkgInfo *packageWrapInfo, funcName string) *wrapResult {
@@ -294,8 +289,8 @@ func getTraitInfoFromPackage(importPath, pkgName string) *traitInfo {
 	parts := strings.Split(importPath, "/")
 	packageName := parts[len(parts)-1]
 
-	if strings.HasSuffix(packageName, "pb") {
-		packageName = strings.TrimSuffix(packageName, "pb")
+	if before, ok := strings.CutSuffix(packageName, "pb"); ok {
+		packageName = before
 	}
 
 	traitName := toPascalCase(packageName)

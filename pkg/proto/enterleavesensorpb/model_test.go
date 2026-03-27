@@ -27,7 +27,7 @@ type modelTester struct {
 }
 
 func (mt *modelTester) enter(n int) {
-	for i := 0; i < n; i++ {
+	for range n {
 		err := mt.m.CreateEnterLeaveEvent(&EnterLeaveEvent{
 			Direction: EnterLeaveEvent_ENTER,
 		})
@@ -38,7 +38,7 @@ func (mt *modelTester) enter(n int) {
 }
 
 func (mt *modelTester) leave(n int) {
-	for i := 0; i < n; i++ {
+	for range n {
 		err := mt.m.CreateEnterLeaveEvent(&EnterLeaveEvent{
 			Direction: EnterLeaveEvent_LEAVE,
 		})

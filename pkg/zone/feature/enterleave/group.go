@@ -65,7 +65,6 @@ func (g *Group) PullEnterLeaveEvents(request *enterleavesensorpb.PullEnterLeaveE
 
 	// get enterleave from each of the dedicated clients
 	for i, client := range g.enterLeaveClients {
-		client := client
 		index := i
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(

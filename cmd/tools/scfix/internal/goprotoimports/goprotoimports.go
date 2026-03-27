@@ -406,10 +406,10 @@ func fileImportPath(rootDir, filename string) (string, error) {
 		return "", fmt.Errorf("reading go.mod: %w", err)
 	}
 	var moduleName string
-	for _, line := range strings.Split(string(goModBytes), "\n") {
+	for line := range strings.SplitSeq(string(goModBytes), "\n") {
 		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "module ") {
-			moduleName = strings.TrimPrefix(line, "module ")
+		if after, ok := strings.CutPrefix(line, "module "); ok {
+			moduleName = after
 			moduleName = strings.TrimSpace(moduleName)
 			break
 		}

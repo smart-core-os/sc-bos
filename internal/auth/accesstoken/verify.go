@@ -79,7 +79,6 @@ func (v FirstSuccessfulVerifier) Verify(ctx context.Context, id, secret string) 
 	outstandingTasks.Add(len(v))
 
 	for i, source := range v {
-		i, source := i, source
 		go func() {
 			defer outstandingTasks.Done()
 			data, err := source.Verify(ctx, id, secret)

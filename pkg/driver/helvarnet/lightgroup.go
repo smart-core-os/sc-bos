@@ -102,9 +102,9 @@ func (lg *LightGroup) getSceneNames(ctx context.Context) error {
 	r = strings.TrimPrefix(r, want)
 	r = strings.TrimSuffix(r, "#")
 
-	scenes := strings.Split(r, "@")
+	scenes := strings.SplitSeq(r, "@")
 
-	for _, scene := range scenes {
+	for scene := range scenes {
 		if !strings.HasPrefix(scene, strconv.Itoa(lg.number)) {
 			// not this group
 			// Note: when testing this I was getting responses like @0.1.3:Late Evening,@0.1.4:Cleaners

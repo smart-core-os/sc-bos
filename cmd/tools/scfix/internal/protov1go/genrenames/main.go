@@ -7,6 +7,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -76,9 +77,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error discovering traits renames: %v\n", err)
 			os.Exit(1)
 		}
-		for old, new := range traitsRenames {
-			renames[old] = new
-		}
+		maps.Copy(renames, traitsRenames)
 	}
 
 	// Generate the output file

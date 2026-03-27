@@ -257,8 +257,7 @@ func TestWithBackpressure_False(t *testing.T) {
 	v := NewValue(WithInitialValue(val(0)))
 
 	t.Run("false", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		// with backpressure disabled, we can open a Pull, fail to receive, and it doesn't block
 		_ = v.Pull(ctx, WithBackpressure(false))
@@ -281,8 +280,7 @@ func TestWithBackpressure_False(t *testing.T) {
 	})
 
 	t.Run("true", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		// with backpressure enabled, we can open a Pull, fail to receive, and it will block calls to Set
 		_ = v.Pull(ctx, WithBackpressure(true))

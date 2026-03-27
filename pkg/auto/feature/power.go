@@ -95,7 +95,6 @@ func (t *TurnOffScreensOutsideWorkingHours) setScreenPower(ctx context.Context, 
 	responses := make(chan error)
 	count := 0
 	for _, screen := range t.screens {
-		screen := screen
 		count++
 		go func() {
 			_, err := t.powerClient.UpdateOnOff(ctx, &onoffpb.UpdateOnOffRequest{Name: screen, OnOff: &onoffpb.OnOff{State: state}})

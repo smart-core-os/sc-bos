@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 
 	"github.com/olebedev/emitter"
 	"go.uber.org/zap"
@@ -203,8 +204,6 @@ func (b *BrightnessAutomation) processConfig(ctx context.Context, cfg config.Roo
 
 func shallowCopyMap[K comparable, V any](m map[K]V) map[K]V {
 	n := make(map[K]V, len(m))
-	for k, v := range m {
-		n[k] = v
-	}
+	maps.Copy(n, m)
 	return n
 }

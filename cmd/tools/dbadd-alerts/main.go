@@ -153,10 +153,7 @@ func getSeedState(ctx context.Context, alertClient alertpb.AlertApiClient) (star
 	if err != nil {
 		return fail(err)
 	}
-	alertsNeeded = MinAlerts - int(metadata.TotalCount)
-	if alertsNeeded <= 0 {
-		alertsNeeded = 0
-	}
+	alertsNeeded = max(MinAlerts-int(metadata.TotalCount), 0)
 	return startTime, alertsNeeded, nil
 }
 

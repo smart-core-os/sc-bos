@@ -1,7 +1,6 @@
 package xovis
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -113,8 +112,7 @@ func Test_PullExportMessages(t *testing.T) {
 
 			client := tt.createClient()
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 
 			messages, err := client.PullExportMessages(ctx, req)
 			tt.set()

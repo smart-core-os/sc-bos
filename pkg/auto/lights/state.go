@@ -47,15 +47,9 @@ func (s *ReadState) Clone() *ReadState {
 	clone := NewReadState(s.AutoStartTime)
 	clone.Config = s.Config
 	// assume values in the map are immutable!
-	for name, val := range s.Occupancy {
-		clone.Occupancy[name] = val
-	}
-	for name, val := range s.AmbientBrightness {
-		clone.AmbientBrightness[name] = val
-	}
-	for name, val := range s.Buttons {
-		clone.Buttons[name] = val
-	}
+	maps.Copy(clone.Occupancy, s.Occupancy)
+	maps.Copy(clone.AmbientBrightness, s.AmbientBrightness)
+	maps.Copy(clone.Buttons, s.Buttons)
 	clone.Modes = s.Modes
 	return clone
 }

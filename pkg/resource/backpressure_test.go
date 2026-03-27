@@ -113,7 +113,7 @@ func sendTo(out chan<- *CollectionChange, vals []string) (sent <-chan struct{}) 
 
 func drain(ch <-chan *CollectionChange, n int) []CollectionChange {
 	out := make([]CollectionChange, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out[i] = *(<-ch)
 	}
 	return out

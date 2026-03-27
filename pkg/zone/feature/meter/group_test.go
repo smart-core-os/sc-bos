@@ -1,7 +1,6 @@
 package meter
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -90,8 +89,7 @@ func TestGroup_PullMeterReadings(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 			n := node.New(tt.name)
 			timer := &timeInterceptor{
 				base:    time.Date(2022, 1, 1, 12, 0, 13, 0, time.UTC), // random base time
@@ -370,8 +368,7 @@ func TestGroup_GetMeterReading(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 			n := node.New(tt.name)
 			timer := &timeInterceptor{
 				base:    time.Date(2022, 1, 1, 12, 0, 13, 0, time.UTC), // random base time

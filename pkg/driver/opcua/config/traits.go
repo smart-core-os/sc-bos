@@ -181,7 +181,7 @@ type Location struct {
 	// Or it could contain an array that lists all the destinations. It is unclear what this needs to handle,
 	// so it needs to be flexible enough and extensible to handle future integrations.
 	Type   LocationType `json:"type,omitempty"`
-	Source ValueSource  `json:"source,omitempty"`
+	Source ValueSource  `json:"source"`
 }
 
 // TransportConfig is configured by a Device that wants to implement the Transport trait.

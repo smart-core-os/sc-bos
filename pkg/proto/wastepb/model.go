@@ -47,7 +47,7 @@ func NewModel(opts ...resource.Option) *Model {
 
 	// let's add some records to start with so we can test the list method without waiting
 	startTime := time.Now().Add(-100 * time.Minute)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		_, _ = m.GenerateWasteRecord(timestamppb.New(startTime))
 		startTime = startTime.Add(time.Minute)
 	}
@@ -118,10 +118,7 @@ func (m *Model) ListWasteRecords(start, count int) []*WasteRecord {
 func (m *Model) pullWasteRecordsWrapper(request *PullWasteRecordsRequest, server WasteApi_PullWasteRecordsServer) error {
 	if !request.UpdatesOnly {
 		m.mu.Lock()
-		i := len(m.allWasteRecords) - 50
-		if i < 0 {
-			i = 0
-		}
+		i := max(len(m.allWasteRecords)-50, 0)
 		for ; i < len(m.allWasteRecords)-1; i++ {
 			change := &PullWasteRecordsResponse_Change{
 				Name:       request.Name,

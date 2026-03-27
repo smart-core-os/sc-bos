@@ -123,8 +123,8 @@ func extractResource(service string) string {
 	resourceSuffixes := []string{"History", "AdminApi", "Info", "Api", "Service"}
 
 	for _, suffix := range resourceSuffixes {
-		if strings.HasSuffix(service, suffix) {
-			base := strings.TrimSuffix(service, suffix)
+		if before, ok := strings.CutSuffix(service, suffix); ok {
+			base := before
 			return strings.ToLower(base)
 		}
 	}
@@ -225,8 +225,8 @@ func TypesToV1(fqn string) string {
 	if pkg == "smartcore.types" {
 		return "smartcore.bos.types.v1." + service
 	}
-	if strings.HasPrefix(pkg, "smartcore.types.") {
-		sub := strings.TrimPrefix(pkg, "smartcore.types.")
+	if after, ok := strings.CutPrefix(pkg, "smartcore.types."); ok {
+		sub := after
 		return "smartcore.bos.types." + sub + ".v1." + service
 	}
 	return fqn

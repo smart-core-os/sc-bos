@@ -36,8 +36,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 		E error
 	}
 	responses := make(chan response)
-	pullCtx, pullCancel := context.WithCancel(context.Background())
-	defer pullCancel()
+	pullCtx := t.Context()
 	go func() {
 		defer close(responses)
 		groupClient := lightpb2.WrapApi(group)

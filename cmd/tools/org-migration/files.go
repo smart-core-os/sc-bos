@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -37,10 +38,8 @@ func collectFiles(rootPath string, extensions map[string]bool) ([]string, error)
 					return filepath.SkipDir
 				}
 				// Skip explicitly ignored directories
-				for _, ignored := range ignoredDirs {
-					if name == ignored {
-						return filepath.SkipDir
-					}
+				if slices.Contains(ignoredDirs, name) {
+					return filepath.SkipDir
 				}
 			}
 			return nil

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"path"
+	"slices"
 	"time"
 
 	"go.uber.org/zap"
@@ -124,10 +125,8 @@ func (azc *AccessZoneController) getAccessZoneDetails(zone *AccessZone) {
 // statusFlagsToGrant maps Gallagher access zone status flags to an AccessAttempt Grant value.
 // A zone in lockDown denies entry; all other states (free, secure, codeOrCard, dualAuth) grant access.
 func statusFlagsToGrant(flags []string) accesspb.AccessAttempt_Grant {
-	for _, f := range flags {
-		if f == "lockDown" {
-			return accesspb.AccessAttempt_DENIED
-		}
+	if slices.Contains(flags, "lockDown") {
+		return accesspb.AccessAttempt_DENIED
 	}
 	return accesspb.AccessAttempt_GRANTED
 }

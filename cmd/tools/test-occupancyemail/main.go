@@ -55,7 +55,6 @@ func main() {
 
 	store := memstore.New()
 	for _, td := range testData {
-		td := td
 		memstore.SetNow(store, td.ChangeTime.AsTime)
 		payload, _ := proto.Marshal(td.Occupancy)
 		_, err := store.Append(nil, payload)

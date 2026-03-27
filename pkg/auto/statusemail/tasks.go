@@ -79,7 +79,6 @@ func (s *namedTasks) Run(ctx context.Context, name string, tasks []task.Task, op
 
 	group, ctx := errgroup.WithContext(ctx)
 	for _, t := range tasks {
-		t := t
 		group.Go(func() error {
 			return task.Run(ctx, t, opts...)
 		})

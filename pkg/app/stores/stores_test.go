@@ -29,7 +29,7 @@ func TestPostgresStore_Postgres(t *testing.T) {
 
 		wg := sync.WaitGroup{}
 
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			wg.Go(func() {
 				_, _, _, err := s.Postgres()
 

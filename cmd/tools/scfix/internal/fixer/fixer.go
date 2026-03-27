@@ -14,14 +14,14 @@ type Context struct {
 }
 
 // Info prints progress information (shown by default).
-func (c *Context) Info(format string, args ...interface{}) {
+func (c *Context) Info(format string, args ...any) {
 	if !c.Quiet {
 		fmt.Printf(format+"\n", args...)
 	}
 }
 
 // Verbose prints detailed information (shown with -verbose).
-func (c *Context) Verbose(format string, args ...interface{}) {
+func (c *Context) Verbose(format string, args ...any) {
 	if c.VerboseMode {
 		fmt.Printf(format+"\n", args...)
 	}

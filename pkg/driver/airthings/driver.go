@@ -79,7 +79,6 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, location := range cfg.Locations {
-		location := location
 		ll := local.NewLocation()
 		grp.Go(func() error {
 			return d.pollLocationLatestSamples(ctx, location, ll)

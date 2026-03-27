@@ -1,7 +1,6 @@
 package pubcache
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -14,8 +13,7 @@ import (
 )
 
 func TestCache_Pull(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	id := "foo"
 	initial := &publicationpb.Publication{

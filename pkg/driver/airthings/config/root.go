@@ -27,7 +27,7 @@ var (
 
 type Root struct {
 	driver.BaseConfig
-	Auth    Auth   `json:"auth,omitempty"`
+	Auth    Auth   `json:"auth"`
 	BaseURL string `json:"baseUrl,omitempty"` // default: "https://ext-api.airthings.com"
 
 	Locations []Location `json:"locations,omitempty"`

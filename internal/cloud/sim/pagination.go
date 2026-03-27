@@ -40,10 +40,7 @@ func parsePagination(r *http.Request) (afterID int64, limit int64, err error) {
 		if err != nil || size < 1 {
 			return 0, 0, errInvalidRequest
 		}
-		limit = size
-		if limit > maxPageSize {
-			limit = maxPageSize
-		}
+		limit = min(size, maxPageSize)
 	}
 
 	return afterID, limit, nil

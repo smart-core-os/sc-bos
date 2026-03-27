@@ -155,7 +155,7 @@ func TestNodeCheckIns_List(t *testing.T) {
 
 		// Create more check-ins via store
 		err := e.store.Write(t.Context(), func(tx *store.Tx) error {
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				if _, err := tx.CreateNodeCheckIn(t.Context(), queries2.CreateNodeCheckInParams{NodeID: e.node.ID}); err != nil {
 					return err
 				}

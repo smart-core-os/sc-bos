@@ -30,7 +30,7 @@ type Root struct {
 	RefreshDoors *jsontypes.Schedule `json:"refreshDoors,omitempty"`
 	// poll the access zones API for updates on this schedule, defaults to once per minute
 	RefreshAccessZones *jsontypes.Schedule `json:"refreshAccessZones,omitempty"`
-	UdmiExportInterval jsontypes.Duration  `json:"udmiExportInterval,omitempty"`
+	UdmiExportInterval jsontypes.Duration  `json:"udmiExportInterval"`
 	TopicPrefix        string              `json:"topicPrefix,omitempty"`
 
 	RefreshOccupancyInterval *jsontypes.Duration `json:"refreshOccupancyInterval,omitempty"`

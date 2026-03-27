@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -1094,11 +1095,11 @@ func (ta *testActions) assertNoMoreCalls() {
 	ta.m.Lock()
 	defer ta.m.Unlock()
 	if len(ta.calls) > ta.nextCall {
-		callStr := ""
+		var callStr strings.Builder
 		for i, call := range ta.calls[ta.nextCall:] {
-			callStr += fmt.Sprintf("  [%d] %+v\n", i, call)
+			callStr.WriteString(fmt.Sprintf("  [%d] %+v\n", i, call))
 		}
-		ta.t.Fatalf("Call count want 0, got %d\n%s", len(ta.calls)-ta.nextCall, callStr)
+		ta.t.Fatalf("Call count want 0, got %d\n%s", len(ta.calls)-ta.nextCall, callStr.String())
 	}
 }
 

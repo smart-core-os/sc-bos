@@ -96,9 +96,7 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.airQuality {
 			err = SeedAirQuality(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -106,11 +104,9 @@ func main() {
 			}
 			fmt.Printf("seeded air temperature device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.electric {
 			err = SeedMeter(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -118,11 +114,9 @@ func main() {
 			}
 			fmt.Printf("seeded meter device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.airTemperature {
 			err = SeedAirTemperature(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -130,11 +124,9 @@ func main() {
 			}
 			fmt.Printf("seeded air temperature device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.soundSensor {
 			err = SeedSoundSensor(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -142,11 +134,9 @@ func main() {
 			}
 			fmt.Printf("seeded sound sensor device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.occupancy {
 			err = SeedOccupancy(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -154,11 +144,9 @@ func main() {
 			}
 			fmt.Printf("seeded occupancy device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.allocation {
 			err = SeedAllocation(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -166,7 +154,7 @@ func main() {
 			}
 			fmt.Printf("seeded allocation device %s\n", d)
 		}
-	}()
+	})
 
 	wg.Wait()
 }

@@ -175,10 +175,7 @@ func (s *scanner) string() *token {
 			// Escape sequences may follow
 			er := s.escape()
 			if !er.Valid {
-				end := er.Pos + 1
-				if end > len(s.buf) {
-					end = len(s.buf)
-				}
+				end := min(er.Pos+1, len(s.buf))
 				return &token{Pos: er.Pos, Kind: illegal, Text: string(s.buf[start:end])}
 			}
 			lit.WriteRune(er.Rune)

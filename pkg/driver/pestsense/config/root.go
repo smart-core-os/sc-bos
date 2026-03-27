@@ -19,7 +19,7 @@ const (
 type Root struct {
 	driver.BaseConfig
 
-	Broker  MQTTBroker `json:"broker,omitempty"`
+	Broker  MQTTBroker `json:"broker"`
 	Devices []Device   `json:"devices,omitempty"`
 }
 

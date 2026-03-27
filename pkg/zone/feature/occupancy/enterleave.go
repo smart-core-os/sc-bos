@@ -42,7 +42,6 @@ type enterLeave struct {
 func (e *enterLeave) GetOccupancy(ctx context.Context, request *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
 	fns := make([]func() (*enterleavesensorpb.EnterLeaveEvent, error), 0, len(e.names))
 	for _, name := range e.names {
-		name := name
 		fns = append(fns, run.TagError(name, func() (*enterleavesensorpb.EnterLeaveEvent, error) {
 			res, err := e.client.GetEnterLeaveEvent(ctx, &enterleavesensorpb.GetEnterLeaveEventRequest{Name: name})
 			if err != nil {
@@ -179,7 +178,7 @@ func (e *enterLeave) mergeErrors() error {
 	}
 
 	var combined error
-	e.sla.errs.Range(func(k, v interface{}) bool {
+	e.sla.errs.Range(func(k, v any) bool {
 		if e, ok := v.(error); ok && e != nil {
 			combined = multierr.Append(combined, e)
 		}
@@ -197,7 +196,7 @@ func (e *enterLeave) groupErrored() bool {
 
 	failed := false
 	totalErrors := 0
-	e.sla.errs.Range(func(k, v interface{}) bool {
+	e.sla.errs.Range(func(k, v any) bool {
 		if _, found := e.sla.cantFail[k.(string)]; found {
 			failed = true
 			return false // fail on first non-permitted error

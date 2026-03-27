@@ -29,10 +29,7 @@ func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, profile *
 
 	for current.Before(now) {
 		load := profile.Load(current)
-		count := int32(math.Round(load*float64(profile.Occupancy.MaxPeople) + rand.NormFloat64()*2))
-		if count < 0 {
-			count = 0
-		}
+		count := max(int32(math.Round(load*float64(profile.Occupancy.MaxPeople)+rand.NormFloat64()*2)), 0)
 
 		state := occupancysensorpb.Occupancy_UNOCCUPIED
 		if count > 0 {

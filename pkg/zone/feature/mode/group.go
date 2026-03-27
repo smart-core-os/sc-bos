@@ -58,7 +58,6 @@ func (g *Group) GetModeValues(ctx context.Context, request *modepb.GetModeValues
 	}
 	fns := make([]func() (*modepb.ModeValues, error), len(names))
 	for i, name := range names {
-		name := name
 		fns[i] = func() (*modepb.ModeValues, error) {
 			return g.client.GetModeValues(ctx, &modepb.GetModeValuesRequest{Name: name})
 		}
@@ -108,8 +107,6 @@ func (g *Group) UpdateModeValues(ctx context.Context, request *modepb.UpdateMode
 	var wg sync.WaitGroup
 	wg.Add(len(results))
 	for i, result := range results {
-		i := i
-		result := result
 		go func() {
 			defer wg.Done()
 			var updateMask *fieldmaskpb.FieldMask
@@ -178,7 +175,6 @@ func (g *Group) PullModeValues(request *modepb.PullModeValuesRequest, server mod
 
 	group, ctx := errgroup.WithContext(server.Context())
 	for _, name := range names {
-		name := name
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(
 				func(ctx context.Context, changes chan<- c) error {

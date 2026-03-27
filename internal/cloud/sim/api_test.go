@@ -111,7 +111,7 @@ func testPagination(t *testing.T,
 ) {
 	const numSites = maxPageSize + 10
 	var expectedIDs []int64
-	for i := 0; i < numSites; i++ {
+	for i := range numSites {
 		expectedIDs = append(expectedIDs, create(i))
 	}
 	slices.Sort(expectedIDs)

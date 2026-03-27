@@ -33,8 +33,6 @@ func NewGroup(impl OnOffApiClient, members ...string) *Group {
 func (s *Group) GetOnOff(ctx context.Context, request *GetOnOffRequest) (*OnOff, error) {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (proto.Message, error) {
 			memberRequest := proto.Clone(request).(*GetOnOffRequest)
 			memberRequest.Name = member
@@ -52,8 +50,6 @@ func (s *Group) GetOnOff(ctx context.Context, request *GetOnOffRequest) (*OnOff,
 func (s *Group) UpdateOnOff(ctx context.Context, request *UpdateOnOffRequest) (*OnOff, error) {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (proto.Message, error) {
 			memberRequest := proto.Clone(request).(*UpdateOnOffRequest)
 			memberRequest.Name = member
@@ -128,8 +124,6 @@ func (s *Group) PullOnOff(request *PullOnOffRequest, server OnOffApi_PullOnOffSe
 func (s *Group) pullOnOffActions(request *PullOnOffRequest, memberValues chan<- pullOnOffResponse) []group.Member {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (msg proto.Message, err error) {
 			memberRequest := proto.Clone(request).(*PullOnOffRequest)
 			memberRequest.Name = member

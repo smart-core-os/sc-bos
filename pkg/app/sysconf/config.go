@@ -74,7 +74,7 @@ type Config struct {
 
 	StaticHosting []http.StaticHostingConfig `json:"staticHosting"`
 	CertConfig    *Certs                     `json:"certs,omitempty"`
-	Cors          http.CorsConfig            `json:"cors,omitempty"`
+	Cors          http.CorsConfig            `json:"cors"`
 
 	Devices *Devices `json:"devices,omitempty"`
 
@@ -192,7 +192,7 @@ const (
 
 // Health configures the health check system.
 type Health struct {
-	TTL HealthTTL `json:"ttl,omitempty"` // how long to keep health check results
+	TTL HealthTTL `json:"ttl"` // how long to keep health check results
 }
 
 // HealthDBPath is the location of the SQLite database file used to store health check results.

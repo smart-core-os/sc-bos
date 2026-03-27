@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 	"fmt"
+	"maps"
 	"sync"
 	"time"
 )
@@ -34,9 +35,7 @@ func (g *Group) Tasks() map[string]*GroupTask {
 	defer g.m.Unlock()
 
 	clonedTasks := make(map[string]*GroupTask, len(g.tasks))
-	for tag, gt := range g.tasks {
-		clonedTasks[tag] = gt
-	}
+	maps.Copy(clonedTasks, g.tasks)
 	return clonedTasks
 }
 
