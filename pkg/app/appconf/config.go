@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/proto"
@@ -16,7 +17,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
-	"github.com/smart-core-os/sc-bos/pkg/util/slices"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
@@ -76,7 +76,7 @@ func (c *Config) mergeWith(other *Config) {
 	if err != nil {
 		return
 	}
-	if !slices.Contains(relInc, c.Includes) {
+	if !slices.Contains(c.Includes, relInc) {
 		c.Includes = append(c.Includes, relInc)
 	}
 }
@@ -156,7 +156,7 @@ func loadIncludes(dir string, dst *Config, includes, seen []string) ([]string, e
 	// load first layer of includes
 	for _, include := range includes {
 		p := files.Path(dir, include)
-		if slices.Contains(p, seen) {
+		if slices.Contains(seen, p) {
 			continue
 		}
 		matches, err := filepath.Glob(p)
@@ -193,7 +193,7 @@ func loadIncludesFS(fsys fs.FS, dir string, dst *Config, includes, seen []string
 	var configs []*Config
 	for _, include := range includes {
 		p := path.Join(dir, include)
-		if slices.Contains(p, seen) {
+		if slices.Contains(seen, p) {
 			continue
 		}
 		matches, err := fs.Glob(fsys, p)
