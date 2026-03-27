@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/go-jose/go-jose/v4"
-	jwt "github.com/go-jose/go-jose/v4/jwt"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
