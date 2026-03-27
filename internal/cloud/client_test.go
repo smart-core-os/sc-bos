@@ -86,10 +86,9 @@ func setupClientEnv(t *testing.T) *clientEnv {
 	t.Cleanup(func() { _ = storeDir.Close() })
 
 	httpClient := NewHTTPClient(Registration{
-		CheckInEndpoint: ts.URL + "/v1/device/check-in",
-		TokenEndpoint:   ts.URL + "/v1/device/token",
-		ClientID:        strconv.FormatInt(created.ID, 10),
-		ClientSecret:    encodedSecret,
+		ClientID:     strconv.FormatInt(created.ID, 10),
+		ClientSecret: encodedSecret,
+		BosapiRoot:   ts.URL,
 	}, WithHTTPClient(ts.Client()))
 	updater := NewDeploymentUpdater(storeDir, httpClient)
 
@@ -559,10 +558,9 @@ func TestPoll(t *testing.T) {
 
 		// Create an updater with a wrong client secret — token endpoint will reject it
 		badHTTPClient := NewHTTPClient(Registration{
-			CheckInEndpoint: env.testServer.URL + "/v1/device/check-in",
-			TokenEndpoint:   env.testServer.URL + "/v1/device/token",
-			ClientID:        "999999",
-			ClientSecret:    "wrong-secret",
+			ClientID:     "999999",
+			ClientSecret: "wrong-secret",
+			BosapiRoot:   env.testServer.URL,
 		}, WithHTTPClient(env.httpClient))
 		badUpdater := NewDeploymentUpdater(env.storeDir, badHTTPClient)
 
@@ -821,10 +819,9 @@ func TestDownloadPayload_InsecureURLBlocked(t *testing.T) {
 
 	// checkInEndpoint uses a different HTTPS host so downloads from ts go through plainHTTP.
 	client := NewHTTPClient(Registration{
-		CheckInEndpoint: "https://other-host/v1/device/check-in",
-		TokenEndpoint:   "https://other-host/v1/device/token",
-		ClientID:        "id",
-		ClientSecret:    "secret",
+		ClientID:     "id",
+		ClientSecret: "secret",
+		BosapiRoot:   "https://other-host",
 	}, WithHTTPClient(ts.Client()))
 
 	tests := []struct {
@@ -876,10 +873,9 @@ func TestDownloadPayload_Authorization(t *testing.T) {
 
 	// checkInEndpoint is on a different host than ts, so downloads from ts should not include auth.
 	client := NewHTTPClient(Registration{
-		CheckInEndpoint: "http://other-host/v1/device/check-in",
-		TokenEndpoint:   "http://other-host/v1/device/token",
-		ClientID:        "id",
-		ClientSecret:    "secret",
+		ClientID:     "id",
+		ClientSecret: "secret",
+		BosapiRoot:   "http://other-host",
 	})
 
 	rc, err := client.DownloadPayload(context.Background(), ts.URL+"/payload.tar.gz")

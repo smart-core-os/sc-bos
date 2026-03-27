@@ -21,14 +21,13 @@ type Client interface {
 	DownloadPayload(ctx context.Context, url string) (io.ReadCloser, error)
 }
 
-// Registration holds the information needed to authenticate with the SCC BOS-facing API.
+// Registration holds the information needed to connect to the SCC BOS-facing API.
 // These fields match the registration endpoint response, so the struct can be deserialized directly
-// from a persisted credentials file.
+// from a persisted registration file.
 type Registration struct {
-	ClientID        string `json:"client_id"`
-	ClientSecret    string `json:"client_secret"`
-	TokenEndpoint   string `json:"token_endpoint"`
-	CheckInEndpoint string `json:"check_in_endpoint"`
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	BosapiRoot   string `json:"bosapi_root"`
 }
 
 // HTTPClientOption configures an HTTPClient.
@@ -49,9 +48,10 @@ type HTTPClient struct {
 }
 
 // NewHTTPClient creates a new HTTPClient for talking to a Smart Core Connect cloud API.
-func NewHTTPClient(creds Registration, opts ...HTTPClientOption) *HTTPClient {
+func NewHTTPClient(reg Registration, opts ...HTTPClientOption) *HTTPClient {
+	root := strings.TrimRight(reg.BosapiRoot, "/")
 	c := &HTTPClient{
-		checkInEndpoint: creds.CheckInEndpoint,
+		checkInEndpoint: root + "/v1/device/check-in",
 		plainHTTP:       http.DefaultClient,
 	}
 	for _, opt := range opts {
@@ -59,9 +59,9 @@ func NewHTTPClient(creds Registration, opts ...HTTPClientOption) *HTTPClient {
 	}
 
 	oauthConfig := clientcredentials.Config{
-		ClientID:     creds.ClientID,
-		ClientSecret: creds.ClientSecret,
-		TokenURL:     creds.TokenEndpoint,
+		ClientID:     reg.ClientID,
+		ClientSecret: reg.ClientSecret,
+		TokenURL:     root + "/v1/device/token",
 	}
 	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, c.plainHTTP)
 	c.authenticatedHTTP = oauthConfig.Client(oauthCtx)

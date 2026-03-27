@@ -3,7 +3,6 @@ package sysconf
 
 import (
 	"os"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -286,13 +285,10 @@ func (c *Certs) FillDefaults() *Certs {
 // Cloud configures the connection to the SCC BOS-facing API.
 type Cloud struct {
 	// BaseURL is the base URL of the SCC BOS-facing API (e.g. "https://bosapi.example.com").
-	// Used to derive TokenEndpoint and CheckInEndpoint if they are not set explicitly.
 	// TODO: default to the production URL once it's known.
 	BaseURL          string `json:"baseUrl,omitempty"`
 	ClientID         string `json:"clientId,omitempty"`
 	ClientSecretFile string `json:"clientSecretFile,omitempty"`
-	TokenEndpoint    string `json:"tokenEndpoint,omitempty"`
-	CheckInEndpoint  string `json:"checkInEndpoint,omitempty"`
 
 	PollInterval *jsontypes.Duration `json:"pollInterval,omitempty"`
 	// Preserve old or incomplete downloads instead of deleting them on startup or when they expire.
@@ -305,15 +301,6 @@ type Cloud struct {
 }
 
 func (c *Cloud) FillDefaults() *Cloud {
-	if c.BaseURL != "" {
-		base := strings.TrimRight(c.BaseURL, "/")
-		if c.TokenEndpoint == "" {
-			c.TokenEndpoint = base + "/v1/device/token"
-		}
-		if c.CheckInEndpoint == "" {
-			c.CheckInEndpoint = base + "/v1/device/check-in"
-		}
-	}
 	if c.PollInterval == nil || c.PollInterval.Duration <= 0 {
 		c.PollInterval = &jsontypes.Duration{Duration: 5 * time.Minute}
 	}

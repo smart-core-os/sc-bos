@@ -80,11 +80,10 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to load cloud client secret: %w", err)
 		}
-		creds := cloud.Registration{
-			ClientID:        config.Cloud.ClientID,
-			ClientSecret:    clientSecret,
-			TokenEndpoint:   config.Cloud.TokenEndpoint,
-			CheckInEndpoint: config.Cloud.CheckInEndpoint,
+		reg := cloud.Registration{
+			ClientID:     config.Cloud.ClientID,
+			ClientSecret: clientSecret,
+			BosapiRoot:   config.Cloud.BaseURL,
 		}
 
 		cloudDataDir := filepath.Join(config.DataDir, cloudDirName)
@@ -97,7 +96,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to open cloud data directory: %w", err)
 		}
-		httpClient := cloud.NewHTTPClient(creds)
+		httpClient := cloud.NewHTTPClient(reg)
 		duOptions := []cloud.UpdaterOption{
 			cloud.WithLogger(logger.Named("cloud")),
 			cloud.WithPreserveDownloads(config.Cloud.PreserveDownloads),
