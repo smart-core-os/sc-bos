@@ -79,7 +79,6 @@ func (azc *AccessZoneController) getAccessZones() (map[string]*AccessZone, error
 		for _, z := range list.Results {
 			result[z.Id] = &AccessZone{
 				AccessZonePayload: z,
-				lastAccessAttempt: resource.NewValue(resource.WithInitialValue(&accesspb.AccessAttempt{}), resource.WithNoDuplicates()),
 			}
 		}
 
@@ -144,6 +143,7 @@ func (azc *AccessZoneController) refreshAccessZones(announcer node.Announcer, sc
 	// announce new zones
 	for id, z := range zones {
 		if _, ok := azc.zones[id]; !ok {
+			z.lastAccessAttempt = resource.NewValue(resource.WithInitialValue(&accesspb.AccessAttempt{}), resource.WithNoDuplicates())
 			z.ScName = path.Join(scNamePrefix, "access_zones", z.Id)
 			z.Meta = &traits.Metadata{
 				Appearance: &traits.Metadata_Appearance{
