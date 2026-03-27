@@ -61,7 +61,7 @@ type Cardholder struct {
 	udmipb.UnimplementedUdmiServiceServer
 	config.ScDevice
 	CardholderPayload
-	lastAccessAttempt *resource.Value // gen_accesspb.AccessAttempt
+	lastAccessAttempt *resource.Value // accesspb.AccessAttempt
 	udmiBus           minibus.Bus[*udmipb.PullExportMessagesResponse]
 	undo              []node.Undo
 }

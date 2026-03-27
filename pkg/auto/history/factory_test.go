@@ -18,10 +18,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
-	gen_electricpb "github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
@@ -39,8 +37,8 @@ func Test_automation_applyConfig(t *testing.T) {
 	logger := zap.NewNop()
 	occupancy := occupancysensorpb.NewModel()
 	airQuality := airqualitysensorpb.NewModel()
-	airTemperature := gen_airtemperaturepb.NewModel()
-	electric := gen_electricpb.NewModel()
+	airTemperature := airtemperaturepb.NewModel()
+	electric := electricpb.NewModel()
 	meter := meterpb.NewModel()
 	status := statuspb.NewModel()
 
@@ -68,7 +66,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.AirTemperature),
 		node.HasServer(
 			airtemperaturepb.RegisterAirTemperatureApiServer,
-			airtemperaturepb.AirTemperatureApiServer(gen_airtemperaturepb.NewModelServer(airTemperature)),
+			airtemperaturepb.AirTemperatureApiServer(airtemperaturepb.NewModelServer(airTemperature)),
 		),
 	)
 
@@ -76,7 +74,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		node.HasTrait(trait.Electric),
 		node.HasServer(
 			electricpb.RegisterElectricApiServer,
-			electricpb.ElectricApiServer(gen_electricpb.NewModelServer(electric)),
+			electricpb.ElectricApiServer(electricpb.NewModelServer(electric)),
 		),
 	)
 
@@ -167,8 +165,8 @@ func Test_automation_applyConfig(t *testing.T) {
 
 	aqCli := airqualitysensorpb.NewAirQualitySensorHistoryClient(announcer.ClientConn())
 	occupancyCli := occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
-	airTempCli := gen_airtemperaturepb.NewAirTemperatureHistoryClient(announcer.ClientConn())
-	electricCli := gen_electricpb.NewElectricHistoryClient(announcer.ClientConn())
+	airTempCli := airtemperaturepb.NewAirTemperatureHistoryClient(announcer.ClientConn())
+	electricCli := electricpb.NewElectricHistoryClient(announcer.ClientConn())
 	meterCli := meterpb.NewMeterHistoryClient(announcer.ClientConn())
 	statusCli := statuspb.NewStatusHistoryClient(announcer.ClientConn())
 
@@ -190,7 +188,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		t.Fatal(diff, "occupancy")
 	}
 
-	airTempHist, err := airTempCli.ListAirTemperatureHistory(ctx, &gen_airtemperaturepb.ListAirTemperatureHistoryRequest{Name: "airtemperature", PageSize: 10})
+	airTempHist, err := airTempCli.ListAirTemperatureHistory(ctx, &airtemperaturepb.ListAirTemperatureHistoryRequest{Name: "airtemperature", PageSize: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +197,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		t.Fatal(diff, "airtemperature")
 	}
 
-	electricHist, err := electricCli.ListElectricDemandHistory(ctx, &gen_electricpb.ListElectricDemandHistoryRequest{Name: "electric", PageSize: 10})
+	electricHist, err := electricCli.ListElectricDemandHistory(ctx, &electricpb.ListElectricDemandHistoryRequest{Name: "electric", PageSize: 10})
 	if err != nil {
 		t.Fatal(err)
 	}

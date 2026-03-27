@@ -5,17 +5,17 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/scale"
-	gen_electricpb "github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
-func Electric(model *gen_electricpb.Model) service.Lifecycle {
+func Electric(model *electricpb.Model) service.Lifecycle {
 	s := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		go func() {
 			timer := time.NewTimer(durationBetween(30*time.Second, 2*time.Minute))
 			for {
 				tod := float32(scale.NineToFive.Now())
-				state := &gen_electricpb.ElectricDemand{
+				state := &electricpb.ElectricDemand{
 					Current:     float32Between(20, 40) * tod,
 					Voltage:     new(float32Between(238, 243)),
 					PowerFactor: new(float32Between(0.7, 1.3)),

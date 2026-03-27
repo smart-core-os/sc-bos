@@ -12,8 +12,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_airqualitysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
-	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -23,7 +23,7 @@ func TestSampleToAirQuality(t *testing.T) {
 	tests := []struct {
 		name  string
 		input api.DeviceSampleResponseEnriched
-		want  *gen_airqualitysensorpb.AirQuality
+		want  *airqualitysensorpb.AirQuality
 	}{
 		{
 			name: "all indoor fields",
@@ -39,7 +39,7 @@ func TestSampleToAirQuality(t *testing.T) {
 					Voc:             newNullableControlSignal(500.0), // ppb
 				},
 			},
-			want: &gen_airqualitysensorpb.AirQuality{
+			want: &airqualitysensorpb.AirQuality{
 				AirChangePerHour:         new(float32(1.5)),
 				CarbonDioxideLevel:       new(float32(800.0)),
 				ParticulateMatter_1:      new(float32(10.5)),
@@ -64,7 +64,7 @@ func TestSampleToAirQuality(t *testing.T) {
 					OutdoorPressure: newNullableControlSignal(1010.0),
 				},
 			},
-			want: &gen_airqualitysensorpb.AirQuality{
+			want: &airqualitysensorpb.AirQuality{
 				ParticulateMatter_1:  new(float32(15.0)), // outdoor wins
 				ParticulateMatter_25: new(float32(30.0)),
 				ParticulateMatter_10: new(float32(50.0)),
@@ -81,7 +81,7 @@ func TestSampleToAirQuality(t *testing.T) {
 					OutdoorPressure: newNullableControlSignal(1015.0),
 				},
 			},
-			want: &gen_airqualitysensorpb.AirQuality{
+			want: &airqualitysensorpb.AirQuality{
 				ParticulateMatter_1:  new(float32(12.0)),
 				ParticulateMatter_25: new(float32(28.0)),
 				ParticulateMatter_10: new(float32(48.0)),
@@ -93,7 +93,7 @@ func TestSampleToAirQuality(t *testing.T) {
 			input: api.DeviceSampleResponseEnriched{
 				Data: api.SingleSampleDataEnriched{},
 			},
-			want: &gen_airqualitysensorpb.AirQuality{},
+			want: &airqualitysensorpb.AirQuality{},
 		},
 	}
 
@@ -111,7 +111,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 	tests := []struct {
 		name  string
 		input api.DeviceSampleResponseEnriched
-		want  *gen_airtemperaturepb.AirTemperature
+		want  *airtemperaturepb.AirTemperature
 	}{
 		{
 			name: "indoor only",
@@ -121,7 +121,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 					Humidity: newNullableControlSignal(45.0),
 				},
 			},
-			want: &gen_airtemperaturepb.AirTemperature{
+			want: &airtemperaturepb.AirTemperature{
 				AmbientTemperature: &typespb.Temperature{ValueCelsius: 22.5},
 				AmbientHumidity:    new(float32(45.0)),
 			},
@@ -136,7 +136,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 					OutdoorHumidity: newNullableControlSignal(60.0),
 				},
 			},
-			want: &gen_airtemperaturepb.AirTemperature{
+			want: &airtemperaturepb.AirTemperature{
 				AmbientTemperature: &typespb.Temperature{ValueCelsius: 15.0},
 				AmbientHumidity:    new(float32(60.0)),
 			},
@@ -149,7 +149,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 					OutdoorHumidity: newNullableControlSignal(70.0),
 				},
 			},
-			want: &gen_airtemperaturepb.AirTemperature{
+			want: &airtemperaturepb.AirTemperature{
 				AmbientTemperature: &typespb.Temperature{ValueCelsius: 10.0},
 				AmbientHumidity:    new(float32(70.0)),
 			},
@@ -159,7 +159,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 			input: api.DeviceSampleResponseEnriched{
 				Data: api.SingleSampleDataEnriched{},
 			},
-			want: &gen_airtemperaturepb.AirTemperature{},
+			want: &airtemperaturepb.AirTemperature{},
 		},
 	}
 
@@ -284,7 +284,7 @@ func TestPullSampleAirQuality(t *testing.T) {
 	defer cancel()
 
 	loc := local.NewLocation()
-	model := gen_airqualitysensorpb.NewModel()
+	model := airqualitysensorpb.NewModel()
 
 	// Create a test driver instance
 	d := &Driver{}
@@ -348,7 +348,7 @@ func TestPullSampleAirTemperature(t *testing.T) {
 	defer cancel()
 
 	loc := local.NewLocation()
-	model := gen_airtemperaturepb.NewModel()
+	model := airtemperaturepb.NewModel()
 
 	d := &Driver{}
 
@@ -500,7 +500,7 @@ func TestAnnounceDevice(t *testing.T) {
 
 func TestROAirTemperatureServer_UpdateAirTemperature(t *testing.T) {
 	server := roAirTemperatureServer{}
-	_, err := server.UpdateAirTemperature(context.Background(), &gen_airtemperaturepb.UpdateAirTemperatureRequest{})
+	_, err := server.UpdateAirTemperature(context.Background(), &airtemperaturepb.UpdateAirTemperatureRequest{})
 	if err == nil {
 		t.Error("Expected error for read-only operation, got nil")
 	}

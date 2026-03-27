@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 type healthTestHarness struct {
@@ -75,7 +75,7 @@ func (h *healthTestHarness) assertFaultCount(t *testing.T, checkId string, expec
 	t.Errorf("check with id %s not found (looking for %s). Available checks: %v", checkId, fullId, allIds)
 }
 
-func (h *healthTestHarness) assertNormality(t *testing.T, checkId string, expected gen_healthpb.HealthCheck_Normality) {
+func (h *healthTestHarness) assertNormality(t *testing.T, checkId string, expected healthpb.HealthCheck_Normality) {
 	checks := h.getHealthChecks(t)
 	fullId := "example:" + checkId
 	for _, check := range checks {
@@ -96,7 +96,7 @@ func TestHealthCheck_SingleValue(t *testing.T) {
 		normalValue   float64
 		errorCode     string
 		expectFault   bool
-		expectNormal  gen_healthpb.HealthCheck_Normality
+		expectNormal  healthpb.HealthCheck_Normality
 		validateFault bool
 	}{
 		{
@@ -105,7 +105,7 @@ func TestHealthCheck_SingleValue(t *testing.T) {
 			normalValue:  20.0,
 			errorCode:    "TEMP_ABNORMAL",
 			expectFault:  false,
-			expectNormal: gen_healthpb.HealthCheck_NORMAL,
+			expectNormal: healthpb.HealthCheck_NORMAL,
 		},
 		{
 			name:          "value above normal",
@@ -113,7 +113,7 @@ func TestHealthCheck_SingleValue(t *testing.T) {
 			normalValue:   20.0,
 			errorCode:     "TEMP_HIGH",
 			expectFault:   true,
-			expectNormal:  gen_healthpb.HealthCheck_ABNORMAL,
+			expectNormal:  healthpb.HealthCheck_ABNORMAL,
 			validateFault: true,
 		},
 		{
@@ -122,7 +122,7 @@ func TestHealthCheck_SingleValue(t *testing.T) {
 			normalValue:  20.0,
 			errorCode:    "TEMP_LOW",
 			expectFault:  true,
-			expectNormal: gen_healthpb.HealthCheck_ABNORMAL,
+			expectNormal: healthpb.HealthCheck_ABNORMAL,
 		},
 		{
 			name:         "value very close to normal (within tolerance)",
@@ -130,7 +130,7 @@ func TestHealthCheck_SingleValue(t *testing.T) {
 			normalValue:  20.0,
 			errorCode:    "TEMP_ABNORMAL",
 			expectFault:  false,
-			expectNormal: gen_healthpb.HealthCheck_NORMAL,
+			expectNormal: healthpb.HealthCheck_NORMAL,
 		},
 		{
 			name:         "value different from normal",
@@ -138,7 +138,7 @@ func TestHealthCheck_SingleValue(t *testing.T) {
 			normalValue:  20.0,
 			errorCode:    "TEMP_ABNORMAL",
 			expectFault:  true,
-			expectNormal: gen_healthpb.HealthCheck_ABNORMAL,
+			expectNormal: healthpb.HealthCheck_ABNORMAL,
 		},
 	}
 
@@ -201,22 +201,22 @@ func TestHealthCheck_FaultLifecycle(t *testing.T) {
 	// Value different from normal - should raise fault
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(35.0))
 	h.assertFaultCount(t, "temp-check", 1)
-	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_ABNORMAL)
+	h.assertNormality(t, "temp-check", healthpb.HealthCheck_ABNORMAL)
 
 	// Value equals normal - should clear fault
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.0))
 	h.assertFaultCount(t, "temp-check", 0)
-	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_NORMAL)
+	h.assertNormality(t, "temp-check", healthpb.HealthCheck_NORMAL)
 
 	// Value different from normal again - should raise fault
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(5.0))
 	h.assertFaultCount(t, "temp-check", 1)
-	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_ABNORMAL)
+	h.assertNormality(t, "temp-check", healthpb.HealthCheck_ABNORMAL)
 
 	// Value equals normal again - should clear fault
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.0))
 	h.assertFaultCount(t, "temp-check", 0)
-	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_NORMAL)
+	h.assertNormality(t, "temp-check", healthpb.HealthCheck_NORMAL)
 }
 
 func TestHealthCheck_MultipleChecks(t *testing.T) {
@@ -251,26 +251,26 @@ func TestHealthCheck_MultipleChecks(t *testing.T) {
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Pressure"), float32(150.0))
 
 	h.assertFaultCount(t, "temp-check", 1)
-	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_ABNORMAL)
+	h.assertNormality(t, "temp-check", healthpb.HealthCheck_ABNORMAL)
 	h.assertFaultCount(t, "pressure-check", 0)
-	h.assertNormality(t, "pressure-check", gen_healthpb.HealthCheck_NORMAL)
+	h.assertNormality(t, "pressure-check", healthpb.HealthCheck_NORMAL)
 
 	// Both abnormal
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Pressure"), float32(250.0))
 
 	h.assertFaultCount(t, "temp-check", 1)
-	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_ABNORMAL)
+	h.assertNormality(t, "temp-check", healthpb.HealthCheck_ABNORMAL)
 	h.assertFaultCount(t, "pressure-check", 1)
-	h.assertNormality(t, "pressure-check", gen_healthpb.HealthCheck_ABNORMAL)
+	h.assertNormality(t, "pressure-check", healthpb.HealthCheck_ABNORMAL)
 
 	// Both normal
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.0))
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Pressure"), float32(150.0))
 
 	h.assertFaultCount(t, "temp-check", 0)
-	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_NORMAL)
+	h.assertNormality(t, "temp-check", healthpb.HealthCheck_NORMAL)
 	h.assertFaultCount(t, "pressure-check", 0)
-	h.assertNormality(t, "pressure-check", gen_healthpb.HealthCheck_NORMAL)
+	h.assertNormality(t, "pressure-check", healthpb.HealthCheck_NORMAL)
 }
 
 func TestHealthCheck_MultipleChecksOnSameNode(t *testing.T) {
@@ -304,25 +304,25 @@ func TestHealthCheck_MultipleChecksOnSameNode(t *testing.T) {
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.0))
 
 	h.assertFaultCount(t, "temp-warning", 0)
-	h.assertNormality(t, "temp-warning", gen_healthpb.HealthCheck_NORMAL)
+	h.assertNormality(t, "temp-warning", healthpb.HealthCheck_NORMAL)
 	h.assertFaultCount(t, "temp-critical", 1)
-	h.assertNormality(t, "temp-critical", gen_healthpb.HealthCheck_ABNORMAL)
+	h.assertNormality(t, "temp-critical", healthpb.HealthCheck_ABNORMAL)
 
 	// Value = 35.0: doesn't match either normal value
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(35.0))
 
 	h.assertFaultCount(t, "temp-warning", 1)
-	h.assertNormality(t, "temp-warning", gen_healthpb.HealthCheck_ABNORMAL)
+	h.assertNormality(t, "temp-warning", healthpb.HealthCheck_ABNORMAL)
 	h.assertFaultCount(t, "temp-critical", 1)
-	h.assertNormality(t, "temp-critical", gen_healthpb.HealthCheck_ABNORMAL)
+	h.assertNormality(t, "temp-critical", healthpb.HealthCheck_ABNORMAL)
 
 	// Value = 25.0: doesn't match temp-warning normal, matches temp-critical normal
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(25.0))
 
 	h.assertFaultCount(t, "temp-warning", 1)
-	h.assertNormality(t, "temp-warning", gen_healthpb.HealthCheck_ABNORMAL)
+	h.assertNormality(t, "temp-warning", healthpb.HealthCheck_ABNORMAL)
 	h.assertFaultCount(t, "temp-critical", 0)
-	h.assertNormality(t, "temp-critical", gen_healthpb.HealthCheck_NORMAL)
+	h.assertNormality(t, "temp-critical", healthpb.HealthCheck_NORMAL)
 }
 
 func TestHealthCheck_ToleranceHandling(t *testing.T) {
@@ -344,12 +344,12 @@ func TestHealthCheck_ToleranceHandling(t *testing.T) {
 	// Value within float tolerance - should be treated as normal
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.0000001))
 	h.assertFaultCount(t, "temp-check", 0)
-	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_NORMAL)
+	h.assertNormality(t, "temp-check", healthpb.HealthCheck_NORMAL)
 
 	// Value outside tolerance - should raise fault
 	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(20.1))
 	h.assertFaultCount(t, "temp-check", 1)
-	h.assertNormality(t, "temp-check", gen_healthpb.HealthCheck_ABNORMAL)
+	h.assertNormality(t, "temp-check", healthpb.HealthCheck_ABNORMAL)
 }
 
 func TestHealthCheck_FaultUpdate(t *testing.T) {
