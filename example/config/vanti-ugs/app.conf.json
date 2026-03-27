@@ -949,6 +949,30 @@
         "membership": {"subsystem": "fleet"}
       }
     ]
+    },
+    {
+      "name": "van/uk/brum/ugs/eg-ac-01/driver/mock-health",
+      "type": "mock-health",
+      "checks": [
+        {
+          "name": "bms/bacnet",
+          "displayName": "BACnet Driver",
+          "description": "Simulated BACnet controller connectivity and response",
+          "faultProbability": 0.15
+        },
+        {
+          "name": "bms/bacnet/ahu-01",
+          "displayName": "AHU-01",
+          "description": "Simulated air handling unit health",
+          "faultProbability": 0.1
+        },
+        {
+          "name": "bms/bacnet/fcu-floor1",
+          "displayName": "FCU Floor 1",
+          "description": "Simulated fan coil unit health",
+          "faultProbability": 0.08
+        }
+      ]
     }
   ],
   "zones": [

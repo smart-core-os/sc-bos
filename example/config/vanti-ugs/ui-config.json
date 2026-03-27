@@ -15,7 +15,7 @@
     "system": true
   },
   "config": {
-    "home": "/ops",
+    "home": "/foo",
     "hub": true,
     "auth": {
       "disabled": true,
@@ -27,7 +27,7 @@
       }
     },
     "ops": {
-      "airQuality": false,
+      "airQuality": true,
       "emergencyLighting": false,
       "security": false,
       "pages": [
@@ -1182,6 +1182,22 @@
             "darken3": "#338fa1"
           }
         }
+      }
+    },
+    "system": {
+      "subsystemHealth": {
+        "subsystems": [
+          {
+            "title": "BMS",
+            "icon": "mdi-thermometer",
+            "description": "Building Management System via BACnet",
+            "checks": [
+              {"name": "bms/bacnet", "displayName": "BACnet Driver"},
+              {"name": "bms/bacnet/ahu-01", "displayName": "AHU-01"},
+              {"name": "bms/bacnet/fcu-floor1", "displayName": "FCU Floor 1"}
+            ]
+          }
+        ]
       }
     }
   },
