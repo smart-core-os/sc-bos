@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a LockUnlockInfoServer	and presents it as a LockUnlockInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server LockUnlockInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(LockUnlockInfo_ServiceDesc, server)
 	client := NewLockUnlockInfoClient(conn)

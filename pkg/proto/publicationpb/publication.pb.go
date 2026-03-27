@@ -1236,8 +1236,7 @@ const file_smartcore_bos_publication_v1_publication_proto_rawDesc = "" +
 	"\x0fPullPublication\x124.smartcore.bos.publication.v1.PullPublicationRequest\x1a5.smartcore.bos.publication.v1.PullPublicationResponse0\x01\x12\x81\x01\n" +
 	"\x10ListPublications\x125.smartcore.bos.publication.v1.ListPublicationsRequest\x1a6.smartcore.bos.publication.v1.ListPublicationsResponse\x12\x83\x01\n" +
 	"\x10PullPublications\x125.smartcore.bos.publication.v1.PullPublicationsRequest\x1a6.smartcore.bos.publication.v1.PullPublicationsResponse0\x01\x12\x80\x01\n" +
-	"\x16AcknowledgePublication\x12;.smartcore.bos.publication.v1.AcknowledgePublicationRequest\x1a).smartcore.bos.publication.v1.PublicationB\x89\x01\n" +
-	"\x14dev.smartcore.traitsB\x10PublicationProtoP\x01Z7github.com/smart-core-os/sc-bos/pkg/proto/publicationpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x16AcknowledgePublication\x12;.smartcore.bos.publication.v1.AcknowledgePublicationRequest\x1a).smartcore.bos.publication.v1.PublicationB9Z7github.com/smart-core-os/sc-bos/pkg/proto/publicationpbb\x06proto3"
 
 var (
 	file_smartcore_bos_publication_v1_publication_proto_rawDescOnce sync.Once

@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a ColorApiServer	and presents it as a ColorApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server ColorApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(ColorApi_ServiceDesc, server)
 	client := NewColorApiClient(conn)

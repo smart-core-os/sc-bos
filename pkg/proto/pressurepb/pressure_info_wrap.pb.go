@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a PressureInfoServer	and presents it as a PressureInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server PressureInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(PressureInfo_ServiceDesc, server)
 	client := NewPressureInfoClient(conn)

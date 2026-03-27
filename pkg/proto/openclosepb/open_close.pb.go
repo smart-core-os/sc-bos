@@ -904,8 +904,7 @@ const file_smartcore_bos_openclose_v1_open_close_proto_rawDesc = "" +
 	"\x04Stop\x120.smartcore.bos.openclose.v1.StopOpenCloseRequest\x1a..smartcore.bos.openclose.v1.OpenClosePositions\x12\x88\x01\n" +
 	"\rPullPositions\x129.smartcore.bos.openclose.v1.PullOpenClosePositionsRequest\x1a:.smartcore.bos.openclose.v1.PullOpenClosePositionsResponse0\x012\x88\x01\n" +
 	"\rOpenCloseInfo\x12w\n" +
-	"\x11DescribePositions\x124.smartcore.bos.openclose.v1.DescribePositionsRequest\x1a,.smartcore.bos.openclose.v1.PositionsSupportB\x85\x01\n" +
-	"\x14dev.smartcore.traitsB\x0eOpenCloseProtoP\x01Z5github.com/smart-core-os/sc-bos/pkg/proto/openclosepb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x11DescribePositions\x124.smartcore.bos.openclose.v1.DescribePositionsRequest\x1a,.smartcore.bos.openclose.v1.PositionsSupportB7Z5github.com/smart-core-os/sc-bos/pkg/proto/openclosepbb\x06proto3"
 
 var (
 	file_smartcore_bos_openclose_v1_open_close_proto_rawDescOnce sync.Once

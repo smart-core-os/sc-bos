@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a ModeInfoServer	and presents it as a ModeInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server ModeInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(ModeInfo_ServiceDesc, server)
 	client := NewModeInfoClient(conn)

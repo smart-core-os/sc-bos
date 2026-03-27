@@ -639,8 +639,7 @@ const file_smartcore_bos_info_v1_auth_proto_rawDesc = "" +
 	"AddAccount\x12(.smartcore.bos.info.v1.AddAccountRequest\x1a).smartcore.bos.info.v1.AddAccountResponse\x12j\n" +
 	"\rRemoveAccount\x12+.smartcore.bos.info.v1.RemoveAccountRequest\x1a,.smartcore.bos.info.v1.RemoveAccountResponse\x12\x8b\x01\n" +
 	"\x18UpdateAccountPermissions\x126.smartcore.bos.info.v1.UpdateAccountPermissionsRequest\x1a7.smartcore.bos.info.v1.UpdateAccountPermissionsResponse\x12j\n" +
-	"\rGenerateToken\x12+.smartcore.bos.info.v1.GenerateTokenRequest\x1a,.smartcore.bos.info.v1.GenerateTokenResponseBu\n" +
-	"\x12dev.smartcore.infoB\tAuthProtoP\x01Z0github.com/smart-core-os/sc-bos/pkg/proto/infopb\xaa\x02\x0eSmartcore.Info\xca\x02\x0eSmartcore\\Infob\x06proto3"
+	"\rGenerateToken\x12+.smartcore.bos.info.v1.GenerateTokenRequest\x1a,.smartcore.bos.info.v1.GenerateTokenResponseB2Z0github.com/smart-core-os/sc-bos/pkg/proto/infopbb\x06proto3"
 
 var (
 	file_smartcore_bos_info_v1_auth_proto_rawDescOnce sync.Once

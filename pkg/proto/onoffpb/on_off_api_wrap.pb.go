@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a OnOffApiServer	and presents it as a OnOffApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server OnOffApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(OnOffApi_ServiceDesc, server)
 	client := NewOnOffApiClient(conn)

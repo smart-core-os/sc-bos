@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a MicrophoneApiServer	and presents it as a MicrophoneApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server MicrophoneApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(MicrophoneApi_ServiceDesc, server)
 	client := NewMicrophoneApiClient(conn)

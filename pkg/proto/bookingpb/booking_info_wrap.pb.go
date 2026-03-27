@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a BookingInfoServer	and presents it as a BookingInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server BookingInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(BookingInfo_ServiceDesc, server)
 	client := NewBookingInfoClient(conn)

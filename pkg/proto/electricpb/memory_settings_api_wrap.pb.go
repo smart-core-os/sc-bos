@@ -8,6 +8,7 @@ import (
 )
 
 // WrapMemorySettingsApi	adapts a MemorySettingsApiServer	and presents it as a MemorySettingsApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapMemorySettingsApi(server MemorySettingsApiServer) *MemorySettingsApiWrapper {
 	conn := wrap.ServerToClient(MemorySettingsApi_ServiceDesc, server)
 	client := NewMemorySettingsApiClient(conn)

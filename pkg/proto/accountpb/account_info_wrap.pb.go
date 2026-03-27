@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a AccountInfoServer	and presents it as a AccountInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server AccountInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(AccountInfo_ServiceDesc, server)
 	client := NewAccountInfoClient(conn)

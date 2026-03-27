@@ -1677,8 +1677,7 @@ const file_smartcore_bos_vending_v1_vending_proto_rawDesc = "" +
 	"\rPullInventory\x12..smartcore.bos.vending.v1.PullInventoryRequest\x1a/.smartcore.bos.vending.v1.PullInventoryResponse0\x01\x12a\n" +
 	"\bDispense\x12).smartcore.bos.vending.v1.DispenseRequest\x1a*.smartcore.bos.vending.v1.Consumable.Stock\x12i\n" +
 	"\fStopDispense\x12-.smartcore.bos.vending.v1.StopDispenseRequest\x1a*.smartcore.bos.vending.v1.Consumable.Stock2\r\n" +
-	"\vVendingInfoB\x81\x01\n" +
-	"\x14dev.smartcore.traitsB\fVendingProtoP\x01Z3github.com/smart-core-os/sc-bos/pkg/proto/vendingpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\vVendingInfoB5Z3github.com/smart-core-os/sc-bos/pkg/proto/vendingpbb\x06proto3"
 
 var (
 	file_smartcore_bos_vending_v1_vending_proto_rawDescOnce sync.Once

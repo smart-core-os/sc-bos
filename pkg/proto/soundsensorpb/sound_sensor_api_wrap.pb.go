@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a SoundSensorApiServer	and presents it as a SoundSensorApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server SoundSensorApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(SoundSensorApi_ServiceDesc, server)
 	client := NewSoundSensorApiClient(conn)

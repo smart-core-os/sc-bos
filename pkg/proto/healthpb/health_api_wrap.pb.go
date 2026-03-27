@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a HealthApiServer	and presents it as a HealthApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server HealthApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(HealthApi_ServiceDesc, server)
 	client := NewHealthApiClient(conn)

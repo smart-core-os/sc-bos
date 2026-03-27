@@ -641,9 +641,7 @@ const file_smartcore_bos_light_v1_light_proto_rawDesc = "" +
 	"\rGetBrightness\x12,.smartcore.bos.light.v1.GetBrightnessRequest\x1a\".smartcore.bos.light.v1.Brightness\x12q\n" +
 	"\x0ePullBrightness\x12-.smartcore.bos.light.v1.PullBrightnessRequest\x1a..smartcore.bos.light.v1.PullBrightnessResponse0\x012\x7f\n" +
 	"\tLightInfo\x12r\n" +
-	"\x12DescribeBrightness\x121.smartcore.bos.light.v1.DescribeBrightnessRequest\x1a).smartcore.bos.light.v1.BrightnessSupportB}\n" +
-	"\x14dev.smartcore.traitsB\n" +
-	"LightProtoP\x01Z1github.com/smart-core-os/sc-bos/pkg/proto/lightpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x12DescribeBrightness\x121.smartcore.bos.light.v1.DescribeBrightnessRequest\x1a).smartcore.bos.light.v1.BrightnessSupportB3Z1github.com/smart-core-os/sc-bos/pkg/proto/lightpbb\x06proto3"
 
 var (
 	file_smartcore_bos_light_v1_light_proto_rawDescOnce sync.Once

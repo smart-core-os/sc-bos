@@ -791,8 +791,7 @@ const file_smartcore_bos_airtemperature_v1_air_temperature_proto_rawDesc = "" +
 	"\x14UpdateAirTemperature\x12<.smartcore.bos.airtemperature.v1.UpdateAirTemperatureRequest\x1a/.smartcore.bos.airtemperature.v1.AirTemperature\x12\x8f\x01\n" +
 	"\x12PullAirTemperature\x12:.smartcore.bos.airtemperature.v1.PullAirTemperatureRequest\x1a;.smartcore.bos.airtemperature.v1.PullAirTemperatureResponse0\x012\xa7\x01\n" +
 	"\x12AirTemperatureInfo\x12\x90\x01\n" +
-	"\x16DescribeAirTemperature\x12>.smartcore.bos.airtemperature.v1.DescribeAirTemperatureRequest\x1a6.smartcore.bos.airtemperature.v1.AirTemperatureSupportB\x8f\x01\n" +
-	"\x14dev.smartcore.traitsB\x13AirTemperatureProtoP\x01Z:github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x16DescribeAirTemperature\x12>.smartcore.bos.airtemperature.v1.DescribeAirTemperatureRequest\x1a6.smartcore.bos.airtemperature.v1.AirTemperatureSupportB<Z:github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepbb\x06proto3"
 
 var (
 	file_smartcore_bos_airtemperature_v1_air_temperature_proto_rawDescOnce sync.Once

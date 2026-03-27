@@ -10,6 +10,7 @@ import (
 )
 
 // AdminApiRouter is a HistoryAdminApiServer that allows routing named requests to specific HistoryAdminApiClient
+// Deprecated: routing is now handled dynamically by [node.Node].
 type AdminApiRouter struct {
 	UnimplementedHistoryAdminApiServer
 
@@ -19,6 +20,8 @@ type AdminApiRouter struct {
 // compile time check that we implement the interface we need
 var _ HistoryAdminApiServer = (*AdminApiRouter)(nil)
 
+// NewAdminApiRouter constructs a new empty AdminApiRouter with the provided options.
+// Deprecated: routing is now handled dynamically by [node.Node].
 func NewAdminApiRouter(opts ...router.Option) *AdminApiRouter {
 	return &AdminApiRouter{
 		Router: router.NewRouter(opts...),

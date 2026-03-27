@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a AirQualitySensorInfoServer	and presents it as a AirQualitySensorInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server AirQualitySensorInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(AirQualitySensorInfo_ServiceDesc, server)
 	client := NewAirQualitySensorInfoClient(conn)

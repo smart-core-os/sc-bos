@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a LightInfoServer	and presents it as a LightInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server LightInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(LightInfo_ServiceDesc, server)
 	client := NewLightInfoClient(conn)

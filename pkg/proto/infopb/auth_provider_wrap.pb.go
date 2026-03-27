@@ -8,6 +8,7 @@ import (
 )
 
 // WrapAuthProvider	adapts a AuthProviderServer	and presents it as a AuthProviderClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapAuthProvider(server AuthProviderServer) *AuthProviderWrapper {
 	conn := wrap.ServerToClient(AuthProvider_ServiceDesc, server)
 	client := NewAuthProviderClient(conn)

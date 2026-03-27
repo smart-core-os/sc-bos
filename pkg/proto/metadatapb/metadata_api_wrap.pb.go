@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a MetadataApiServer	and presents it as a MetadataApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server MetadataApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(MetadataApi_ServiceDesc, server)
 	client := NewMetadataApiClient(conn)

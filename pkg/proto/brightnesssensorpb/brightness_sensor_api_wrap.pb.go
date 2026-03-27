@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a BrightnessSensorApiServer	and presents it as a BrightnessSensorApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server BrightnessSensorApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(BrightnessSensorApi_ServiceDesc, server)
 	client := NewBrightnessSensorApiClient(conn)

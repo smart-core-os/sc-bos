@@ -729,8 +729,7 @@ const file_smartcore_bos_mode_v1_mode_proto_rawDesc = "" +
 	"\x10UpdateModeValues\x12..smartcore.bos.mode.v1.UpdateModeValuesRequest\x1a!.smartcore.bos.mode.v1.ModeValues\x12o\n" +
 	"\x0ePullModeValues\x12,.smartcore.bos.mode.v1.PullModeValuesRequest\x1a-.smartcore.bos.mode.v1.PullModeValuesResponse0\x012m\n" +
 	"\bModeInfo\x12a\n" +
-	"\rDescribeModes\x12+.smartcore.bos.mode.v1.DescribeModesRequest\x1a#.smartcore.bos.mode.v1.ModesSupportB{\n" +
-	"\x14dev.smartcore.traitsB\tModeProtoP\x01Z0github.com/smart-core-os/sc-bos/pkg/proto/modepb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\rDescribeModes\x12+.smartcore.bos.mode.v1.DescribeModesRequest\x1a#.smartcore.bos.mode.v1.ModesSupportB2Z0github.com/smart-core-os/sc-bos/pkg/proto/modepbb\x06proto3"
 
 var (
 	file_smartcore_bos_mode_v1_mode_proto_rawDescOnce sync.Once

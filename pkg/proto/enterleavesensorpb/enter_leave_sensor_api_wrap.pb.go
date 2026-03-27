@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a EnterLeaveSensorApiServer	and presents it as a EnterLeaveSensorApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server EnterLeaveSensorApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(EnterLeaveSensorApi_ServiceDesc, server)
 	client := NewEnterLeaveSensorApiClient(conn)

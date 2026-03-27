@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a HailApiServer	and presents it as a HailApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server HailApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(HailApi_ServiceDesc, server)
 	client := NewHailApiClient(conn)

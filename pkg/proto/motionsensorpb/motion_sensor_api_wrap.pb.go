@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a MotionSensorApiServer	and presents it as a MotionSensorApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server MotionSensorApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(MotionSensorApi_ServiceDesc, server)
 	client := NewMotionSensorApiClient(conn)

@@ -688,8 +688,7 @@ const file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_rawDesc = 
 	"\rGetAirQuality\x127.smartcore.bos.airqualitysensor.v1.GetAirQualityRequest\x1a-.smartcore.bos.airqualitysensor.v1.AirQuality\x12\x87\x01\n" +
 	"\x0ePullAirQuality\x128.smartcore.bos.airqualitysensor.v1.PullAirQualityRequest\x1a9.smartcore.bos.airqualitysensor.v1.PullAirQualityResponse0\x012\xa1\x01\n" +
 	"\x14AirQualitySensorInfo\x12\x88\x01\n" +
-	"\x12DescribeAirQuality\x12<.smartcore.bos.airqualitysensor.v1.DescribeAirQualityRequest\x1a4.smartcore.bos.airqualitysensor.v1.AirQualitySupportB\x93\x01\n" +
-	"\x14dev.smartcore.traitsB\x15AirQualitySensorProtoP\x01Z<github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x12DescribeAirQuality\x12<.smartcore.bos.airqualitysensor.v1.DescribeAirQualityRequest\x1a4.smartcore.bos.airqualitysensor.v1.AirQualitySupportB>Z<github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpbb\x06proto3"
 
 var (
 	file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_rawDescOnce sync.Once

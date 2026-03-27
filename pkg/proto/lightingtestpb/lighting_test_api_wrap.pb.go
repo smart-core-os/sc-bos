@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a LightingTestApiServer	and presents it as a LightingTestApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server LightingTestApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(LightingTestApi_ServiceDesc, server)
 	client := NewLightingTestApiClient(conn)

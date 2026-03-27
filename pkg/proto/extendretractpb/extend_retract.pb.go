@@ -744,8 +744,7 @@ const file_smartcore_bos_extendretract_v1_extend_retract_proto_rawDesc = "" +
 	"\x15CreateExtensionPreset\x12<.smartcore.bos.extendretract.v1.CreateExtensionPresetRequest\x1a/.smartcore.bos.extendretract.v1.ExtensionPreset\x12\x81\x01\n" +
 	"\x0ePullExtensions\x125.smartcore.bos.extendretract.v1.PullExtensionsRequest\x1a6.smartcore.bos.extendretract.v1.PullExtensionsResponse0\x012\x94\x01\n" +
 	"\x11ExtendRetractInfo\x12\x7f\n" +
-	"\x11DescribeExtension\x128.smartcore.bos.extendretract.v1.DescribeExtensionRequest\x1a0.smartcore.bos.extendretract.v1.ExtensionSupportB\x8d\x01\n" +
-	"\x14dev.smartcore.traitsB\x12ExtendRetractProtoP\x01Z9github.com/smart-core-os/sc-bos/pkg/proto/extendretractpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x11DescribeExtension\x128.smartcore.bos.extendretract.v1.DescribeExtensionRequest\x1a0.smartcore.bos.extendretract.v1.ExtensionSupportB;Z9github.com/smart-core-os/sc-bos/pkg/proto/extendretractpbb\x06proto3"
 
 var (
 	file_smartcore_bos_extendretract_v1_extend_retract_proto_rawDescOnce sync.Once

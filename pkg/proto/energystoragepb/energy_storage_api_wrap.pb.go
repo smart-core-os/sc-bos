@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a EnergyStorageApiServer	and presents it as a EnergyStorageApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server EnergyStorageApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(EnergyStorageApi_ServiceDesc, server)
 	client := NewEnergyStorageApiClient(conn)

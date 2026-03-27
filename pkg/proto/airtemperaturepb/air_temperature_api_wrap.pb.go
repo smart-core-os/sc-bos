@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a AirTemperatureApiServer	and presents it as a AirTemperatureApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server AirTemperatureApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(AirTemperatureApi_ServiceDesc, server)
 	client := NewAirTemperatureApiClient(conn)

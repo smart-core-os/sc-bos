@@ -1026,8 +1026,7 @@ const file_smartcore_bos_ptz_v1_ptz_proto_rawDesc = "" +
 	"\fCreatePreset\x12,.smartcore.bos.ptz.v1.CreatePtzPresetRequest\x1a\x1f.smartcore.bos.ptz.v1.PtzPreset\x12X\n" +
 	"\aPullPtz\x12$.smartcore.bos.ptz.v1.PullPtzRequest\x1a%.smartcore.bos.ptz.v1.PullPtzResponse0\x012d\n" +
 	"\aPtzInfo\x12Y\n" +
-	"\vDescribePtz\x12(.smartcore.bos.ptz.v1.DescribePtzRequest\x1a .smartcore.bos.ptz.v1.PtzSupportBy\n" +
-	"\x14dev.smartcore.traitsB\bPtzProtoP\x01Z/github.com/smart-core-os/sc-bos/pkg/proto/ptzpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\vDescribePtz\x12(.smartcore.bos.ptz.v1.DescribePtzRequest\x1a .smartcore.bos.ptz.v1.PtzSupportB1Z/github.com/smart-core-os/sc-bos/pkg/proto/ptzpbb\x06proto3"
 
 var (
 	file_smartcore_bos_ptz_v1_ptz_proto_rawDescOnce sync.Once

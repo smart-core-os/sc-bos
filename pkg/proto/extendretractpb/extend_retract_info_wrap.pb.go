@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a ExtendRetractInfoServer	and presents it as a ExtendRetractInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server ExtendRetractInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(ExtendRetractInfo_ServiceDesc, server)
 	client := NewExtendRetractInfoClient(conn)

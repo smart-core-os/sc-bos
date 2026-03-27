@@ -8,6 +8,7 @@ import (
 )
 
 // WrapHistory	adapts a AirQualitySensorHistoryServer	and presents it as a AirQualitySensorHistoryClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHistory(server AirQualitySensorHistoryServer) *HistoryWrapper {
 	conn := wrap.ServerToClient(AirQualitySensorHistory_ServiceDesc, server)
 	client := NewAirQualitySensorHistoryClient(conn)

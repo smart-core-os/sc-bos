@@ -607,9 +607,7 @@ const file_smartcore_bos_press_v1_press_proto_rawDesc = "" +
 	"\bPressApi\x12g\n" +
 	"\x0fGetPressedState\x12..smartcore.bos.press.v1.GetPressedStateRequest\x1a$.smartcore.bos.press.v1.PressedState\x12w\n" +
 	"\x10PullPressedState\x12/.smartcore.bos.press.v1.PullPressedStateRequest\x1a0.smartcore.bos.press.v1.PullPressedStateResponse0\x01\x12m\n" +
-	"\x12UpdatePressedState\x121.smartcore.bos.press.v1.UpdatePressedStateRequest\x1a$.smartcore.bos.press.v1.PressedStateB}\n" +
-	"\x14dev.smartcore.traitsB\n" +
-	"PressProtoP\x01Z1github.com/smart-core-os/sc-bos/pkg/proto/presspb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x12UpdatePressedState\x121.smartcore.bos.press.v1.UpdatePressedStateRequest\x1a$.smartcore.bos.press.v1.PressedStateB3Z1github.com/smart-core-os/sc-bos/pkg/proto/presspbb\x06proto3"
 
 var (
 	file_smartcore_bos_press_v1_press_proto_rawDescOnce sync.Once

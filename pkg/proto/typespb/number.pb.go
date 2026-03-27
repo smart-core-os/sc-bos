@@ -461,8 +461,7 @@ const file_smartcore_bos_types_v1_number_proto_rawDesc = "" +
 	"$INVALID_NUMBER_BEHAVIOUR_UNSPECIFIED\x10\x00\x12\f\n" +
 	"\bRESTRICT\x10\x01\x12\t\n" +
 	"\x05ERROR\x10\x02\x12\t\n" +
-	"\x05ALLOW\x10\x03Bi\n" +
-	"\x13dev.smartcore.typesB\vNumberProtoP\x01Z1github.com/smart-core-os/sc-bos/pkg/proto/typespb\xaa\x02\x0fSmartcore.Typesb\x06proto3"
+	"\x05ALLOW\x10\x03B3Z1github.com/smart-core-os/sc-bos/pkg/proto/typespbb\x06proto3"
 
 var (
 	file_smartcore_bos_types_v1_number_proto_rawDescOnce sync.Once

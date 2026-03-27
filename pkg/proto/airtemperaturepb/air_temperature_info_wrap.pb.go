@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a AirTemperatureInfoServer	and presents it as a AirTemperatureInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server AirTemperatureInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(AirTemperatureInfo_ServiceDesc, server)
 	client := NewAirTemperatureInfoClient(conn)

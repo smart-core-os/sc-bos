@@ -8,6 +8,7 @@ import (
 )
 
 // WrapHistory	adapts a ElectricHistoryServer	and presents it as a ElectricHistoryClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHistory(server ElectricHistoryServer) *HistoryWrapper {
 	conn := wrap.ServerToClient(ElectricHistory_ServiceDesc, server)
 	client := NewElectricHistoryClient(conn)

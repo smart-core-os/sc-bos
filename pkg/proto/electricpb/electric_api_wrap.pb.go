@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a ElectricApiServer	and presents it as a ElectricApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server ElectricApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(ElectricApi_ServiceDesc, server)
 	client := NewElectricApiClient(conn)

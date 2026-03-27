@@ -628,8 +628,7 @@ const file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_proto_rawDesc = 
 	"\x14PullEnterLeaveEvents\x12>.smartcore.bos.enterleavesensor.v1.PullEnterLeaveEventsRequest\x1a?.smartcore.bos.enterleavesensor.v1.PullEnterLeaveEventsResponse0\x01\x12\x86\x01\n" +
 	"\x12GetEnterLeaveEvent\x12<.smartcore.bos.enterleavesensor.v1.GetEnterLeaveEventRequest\x1a2.smartcore.bos.enterleavesensor.v1.EnterLeaveEvent\x12\x9a\x01\n" +
 	"\x15ResetEnterLeaveTotals\x12?.smartcore.bos.enterleavesensor.v1.ResetEnterLeaveTotalsRequest\x1a@.smartcore.bos.enterleavesensor.v1.ResetEnterLeaveTotalsResponse2\x16\n" +
-	"\x14EnterLeaveSensorInfoB\x93\x01\n" +
-	"\x14dev.smartcore.traitsB\x15EnterLeaveSensorProtoP\x01Z<github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x14EnterLeaveSensorInfoB>Z<github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpbb\x06proto3"
 
 var (
 	file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_proto_rawDescOnce sync.Once

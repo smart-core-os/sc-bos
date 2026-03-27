@@ -10,6 +10,7 @@ import (
 )
 
 // DriverServiceRouter is a AxiomXaDriverServiceServer that allows routing named requests to specific AxiomXaDriverServiceClient
+// Deprecated: routing is now handled dynamically by [node.Node].
 type DriverServiceRouter struct {
 	UnimplementedAxiomXaDriverServiceServer
 
@@ -19,6 +20,8 @@ type DriverServiceRouter struct {
 // compile time check that we implement the interface we need
 var _ AxiomXaDriverServiceServer = (*DriverServiceRouter)(nil)
 
+// NewDriverServiceRouter constructs a new empty DriverServiceRouter with the provided options.
+// Deprecated: routing is now handled dynamically by [node.Node].
 func NewDriverServiceRouter(opts ...router.Option) *DriverServiceRouter {
 	return &DriverServiceRouter{
 		Router: router.NewRouter(opts...),

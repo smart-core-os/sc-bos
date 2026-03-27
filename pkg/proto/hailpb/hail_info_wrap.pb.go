@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a HailInfoServer	and presents it as a HailInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server HailInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(HailInfo_ServiceDesc, server)
 	client := NewHailInfoClient(conn)

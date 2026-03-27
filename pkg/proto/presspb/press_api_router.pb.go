@@ -11,6 +11,7 @@ import (
 )
 
 // ApiRouter is a PressApiServer that allows routing named requests to specific PressApiClient
+// Deprecated: routing is now handled dynamically by [node.Node].
 type ApiRouter struct {
 	UnimplementedPressApiServer
 
@@ -20,6 +21,8 @@ type ApiRouter struct {
 // compile time check that we implement the interface we need
 var _ PressApiServer = (*ApiRouter)(nil)
 
+// NewApiRouter constructs a new empty ApiRouter with the provided options.
+// Deprecated: routing is now handled dynamically by [node.Node].
 func NewApiRouter(opts ...router.Option) *ApiRouter {
 	return &ApiRouter{
 		Router: router.NewRouter(opts...),

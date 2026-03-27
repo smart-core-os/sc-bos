@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a BookingApiServer	and presents it as a BookingApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server BookingApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(BookingApi_ServiceDesc, server)
 	client := NewBookingApiClient(conn)

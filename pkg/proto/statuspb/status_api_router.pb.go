@@ -11,6 +11,7 @@ import (
 )
 
 // ApiRouter is a StatusApiServer that allows routing named requests to specific StatusApiClient
+// Deprecated: routing is now handled dynamically by [node.Node].
 type ApiRouter struct {
 	UnimplementedStatusApiServer
 
@@ -20,6 +21,8 @@ type ApiRouter struct {
 // compile time check that we implement the interface we need
 var _ StatusApiServer = (*ApiRouter)(nil)
 
+// NewApiRouter constructs a new empty ApiRouter with the provided options.
+// Deprecated: routing is now handled dynamically by [node.Node].
 func NewApiRouter(opts ...router.Option) *ApiRouter {
 	return &ApiRouter{
 		Router: router.NewRouter(opts...),

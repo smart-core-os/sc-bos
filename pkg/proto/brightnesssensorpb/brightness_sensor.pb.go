@@ -424,8 +424,7 @@ const file_smartcore_bos_brightnesssensor_v1_brightness_sensor_proto_rawDesc = "
 	"\x14GetAmbientBrightness\x12>.smartcore.bos.brightnesssensor.v1.GetAmbientBrightnessRequest\x1a4.smartcore.bos.brightnesssensor.v1.AmbientBrightness\x12\x9c\x01\n" +
 	"\x15PullAmbientBrightness\x12?.smartcore.bos.brightnesssensor.v1.PullAmbientBrightnessRequest\x1a@.smartcore.bos.brightnesssensor.v1.PullAmbientBrightnessResponse0\x012\xb6\x01\n" +
 	"\x14BrightnessSensorInfo\x12\x9d\x01\n" +
-	"\x19DescribeAmbientBrightness\x12C.smartcore.bos.brightnesssensor.v1.DescribeAmbientBrightnessRequest\x1a;.smartcore.bos.brightnesssensor.v1.AmbientBrightnessSupportB\x93\x01\n" +
-	"\x14dev.smartcore.traitsB\x15BrightnessSensorProtoP\x01Z<github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x19DescribeAmbientBrightness\x12C.smartcore.bos.brightnesssensor.v1.DescribeAmbientBrightnessRequest\x1a;.smartcore.bos.brightnesssensor.v1.AmbientBrightnessSupportB>Z<github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpbb\x06proto3"
 
 var (
 	file_smartcore_bos_brightnesssensor_v1_brightness_sensor_proto_rawDescOnce sync.Once

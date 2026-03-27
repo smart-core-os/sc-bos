@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a PublicationApiServer	and presents it as a PublicationApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server PublicationApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(PublicationApi_ServiceDesc, server)
 	client := NewPublicationApiClient(conn)

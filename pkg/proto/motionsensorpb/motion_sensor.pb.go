@@ -498,8 +498,7 @@ const file_smartcore_bos_motionsensor_v1_motion_sensor_proto_rawDesc = "" +
 	"\x12GetMotionDetection\x128.smartcore.bos.motionsensor.v1.GetMotionDetectionRequest\x1a..smartcore.bos.motionsensor.v1.MotionDetection\x12\x91\x01\n" +
 	"\x14PullMotionDetections\x129.smartcore.bos.motionsensor.v1.PullMotionDetectionRequest\x1a:.smartcore.bos.motionsensor.v1.PullMotionDetectionResponse\"\x000\x012\xa4\x01\n" +
 	"\x10MotionSensorInfo\x12\x8f\x01\n" +
-	"\x17DescribeMotionDetection\x12=.smartcore.bos.motionsensor.v1.DescribeMotionDetectionRequest\x1a5.smartcore.bos.motionsensor.v1.MotionDetectionSupportB\x8b\x01\n" +
-	"\x14dev.smartcore.traitsB\x11MotionSensorProtoP\x01Z8github.com/smart-core-os/sc-bos/pkg/proto/motionsensorpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x17DescribeMotionDetection\x12=.smartcore.bos.motionsensor.v1.DescribeMotionDetectionRequest\x1a5.smartcore.bos.motionsensor.v1.MotionDetectionSupportB:Z8github.com/smart-core-os/sc-bos/pkg/proto/motionsensorpbb\x06proto3"
 
 var (
 	file_smartcore_bos_motionsensor_v1_motion_sensor_proto_rawDescOnce sync.Once

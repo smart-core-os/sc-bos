@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a SpeakerInfoServer	and presents it as a SpeakerInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server SpeakerInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(SpeakerInfo_ServiceDesc, server)
 	client := NewSpeakerInfoClient(conn)

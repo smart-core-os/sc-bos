@@ -11,6 +11,7 @@ import (
 )
 
 // MemorySettingsApiRouter is a MemorySettingsApiServer that allows routing named requests to specific MemorySettingsApiClient
+// Deprecated: routing is now handled dynamically by [node.Node].
 type MemorySettingsApiRouter struct {
 	UnimplementedMemorySettingsApiServer
 
@@ -20,6 +21,8 @@ type MemorySettingsApiRouter struct {
 // compile time check that we implement the interface we need
 var _ MemorySettingsApiServer = (*MemorySettingsApiRouter)(nil)
 
+// NewMemorySettingsApiRouter constructs a new empty MemorySettingsApiRouter with the provided options.
+// Deprecated: routing is now handled dynamically by [node.Node].
 func NewMemorySettingsApiRouter(opts ...router.Option) *MemorySettingsApiRouter {
 	return &MemorySettingsApiRouter{
 		Router: router.NewRouter(opts...),

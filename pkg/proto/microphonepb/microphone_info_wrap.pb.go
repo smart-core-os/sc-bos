@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a MicrophoneInfoServer	and presents it as a MicrophoneInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server MicrophoneInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(MicrophoneInfo_ServiceDesc, server)
 	client := NewMicrophoneInfoClient(conn)

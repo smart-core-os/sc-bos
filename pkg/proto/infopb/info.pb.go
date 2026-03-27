@@ -586,8 +586,7 @@ const file_smartcore_bos_info_v1_info_proto_rawDesc = "" +
 	"\bclientCa\x18\x04 \x01(\fR\bclientCa2\xd4\x01\n" +
 	"\x04Info\x12d\n" +
 	"\vListDevices\x12).smartcore.bos.info.v1.ListDevicesRequest\x1a*.smartcore.bos.info.v1.ListDevicesResponse\x12f\n" +
-	"\vPullDevices\x12).smartcore.bos.info.v1.PullDevicesRequest\x1a*.smartcore.bos.info.v1.PullDevicesResponse0\x01Bu\n" +
-	"\x12dev.smartcore.infoB\tInfoProtoP\x01Z0github.com/smart-core-os/sc-bos/pkg/proto/infopb\xaa\x02\x0eSmartcore.Info\xca\x02\x0eSmartcore\\Infob\x06proto3"
+	"\vPullDevices\x12).smartcore.bos.info.v1.PullDevicesRequest\x1a*.smartcore.bos.info.v1.PullDevicesResponse0\x01B2Z0github.com/smart-core-os/sc-bos/pkg/proto/infopbb\x06proto3"
 
 var (
 	file_smartcore_bos_info_v1_info_proto_rawDescOnce sync.Once

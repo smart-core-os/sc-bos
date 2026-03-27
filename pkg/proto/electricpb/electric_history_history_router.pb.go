@@ -10,6 +10,7 @@ import (
 )
 
 // HistoryRouter is a ElectricHistoryServer that allows routing named requests to specific ElectricHistoryClient
+// Deprecated: routing is now handled dynamically by [node.Node].
 type HistoryRouter struct {
 	UnimplementedElectricHistoryServer
 
@@ -19,6 +20,8 @@ type HistoryRouter struct {
 // compile time check that we implement the interface we need
 var _ ElectricHistoryServer = (*HistoryRouter)(nil)
 
+// NewHistoryRouter constructs a new empty HistoryRouter with the provided options.
+// Deprecated: routing is now handled dynamically by [node.Node].
 func NewHistoryRouter(opts ...router.Option) *HistoryRouter {
 	return &HistoryRouter{
 		Router: router.NewRouter(opts...),

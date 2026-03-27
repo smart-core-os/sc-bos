@@ -1368,8 +1368,7 @@ const file_smartcore_bos_metadata_v1_metadata_proto_rawDesc = "" +
 	"\vMetadataApi\x12a\n" +
 	"\vGetMetadata\x12-.smartcore.bos.metadata.v1.GetMetadataRequest\x1a#.smartcore.bos.metadata.v1.Metadata\x12q\n" +
 	"\fPullMetadata\x12..smartcore.bos.metadata.v1.PullMetadataRequest\x1a/.smartcore.bos.metadata.v1.PullMetadataResponse0\x012\x0e\n" +
-	"\fMetadataInfoB\x83\x01\n" +
-	"\x14dev.smartcore.traitsB\rMetadataProtoP\x01Z4github.com/smart-core-os/sc-bos/pkg/proto/metadatapb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\fMetadataInfoB6Z4github.com/smart-core-os/sc-bos/pkg/proto/metadatapbb\x06proto3"
 
 var (
 	file_smartcore_bos_metadata_v1_metadata_proto_rawDescOnce sync.Once

@@ -152,8 +152,7 @@ const file_smartcore_bos_types_v1_connection_proto_rawDesc = "" +
 	"CommStatus\x12\x1b\n" +
 	"\x17COMM_STATUS_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fCOMM_SUCCESS\x10\x01\x12\x10\n" +
-	"\fCOMM_FAILURE\x10\x02Bm\n" +
-	"\x13dev.smartcore.typesB\x0fConnectionProtoP\x01Z1github.com/smart-core-os/sc-bos/pkg/proto/typespb\xaa\x02\x0fSmartcore.Typesb\x06proto3"
+	"\fCOMM_FAILURE\x10\x02B3Z1github.com/smart-core-os/sc-bos/pkg/proto/typespbb\x06proto3"
 
 var (
 	file_smartcore_bos_types_v1_connection_proto_rawDescOnce sync.Once

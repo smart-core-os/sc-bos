@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a ChannelInfoServer	and presents it as a ChannelInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server ChannelInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(ChannelInfo_ServiceDesc, server)
 	client := NewChannelInfoClient(conn)

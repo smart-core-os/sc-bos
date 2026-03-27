@@ -95,8 +95,7 @@ const file_smartcore_bos_types_v1_change_proto_rawDesc = "" +
 	"\x06UPDATE\x10\x02\x12\n" +
 	"\n" +
 	"\x06REMOVE\x10\x03\x12\v\n" +
-	"\aREPLACE\x10\x04Bi\n" +
-	"\x13dev.smartcore.typesB\vChangeProtoP\x01Z1github.com/smart-core-os/sc-bos/pkg/proto/typespb\xaa\x02\x0fSmartcore.Typesb\x06proto3"
+	"\aREPLACE\x10\x04B3Z1github.com/smart-core-os/sc-bos/pkg/proto/typespbb\x06proto3"
 
 var (
 	file_smartcore_bos_types_v1_change_proto_rawDescOnce sync.Once

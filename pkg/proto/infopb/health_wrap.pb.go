@@ -8,6 +8,7 @@ import (
 )
 
 // WrapHealth	adapts a HealthServer	and presents it as a HealthClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHealth(server HealthServer) *HealthWrapper {
 	conn := wrap.ServerToClient(Health_ServiceDesc, server)
 	client := NewHealthClient(conn)

@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a InputSelectInfoServer	and presents it as a InputSelectInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server InputSelectInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(InputSelectInfo_ServiceDesc, server)
 	client := NewInputSelectInfoClient(conn)

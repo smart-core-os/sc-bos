@@ -402,8 +402,7 @@ const file_smartcore_bos_speaker_v1_speaker_proto_rawDesc = "" +
 	"\n" +
 	"PullVolume\x122.smartcore.bos.speaker.v1.PullSpeakerVolumeRequest\x1a3.smartcore.bos.speaker.v1.PullSpeakerVolumeResponse0\x012y\n" +
 	"\vSpeakerInfo\x12j\n" +
-	"\x0eDescribeVolume\x12/.smartcore.bos.speaker.v1.DescribeVolumeRequest\x1a'.smartcore.bos.speaker.v1.VolumeSupportB\x81\x01\n" +
-	"\x14dev.smartcore.traitsB\fSpeakerProtoP\x01Z3github.com/smart-core-os/sc-bos/pkg/proto/speakerpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x0eDescribeVolume\x12/.smartcore.bos.speaker.v1.DescribeVolumeRequest\x1a'.smartcore.bos.speaker.v1.VolumeSupportB5Z3github.com/smart-core-os/sc-bos/pkg/proto/speakerpbb\x06proto3"
 
 var (
 	file_smartcore_bos_speaker_v1_speaker_proto_rawDescOnce sync.Once

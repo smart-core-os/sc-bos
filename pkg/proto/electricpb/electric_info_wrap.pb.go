@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a ElectricInfoServer	and presents it as a ElectricInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server ElectricInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(ElectricInfo_ServiceDesc, server)
 	client := NewElectricInfoClient(conn)

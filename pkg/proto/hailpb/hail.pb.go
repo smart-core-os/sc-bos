@@ -1269,8 +1269,7 @@ const file_smartcore_bos_hail_v1_hail_proto_rawDesc = "" +
 	"\tListHails\x12'.smartcore.bos.hail.v1.ListHailsRequest\x1a(.smartcore.bos.hail.v1.ListHailsResponse\x12`\n" +
 	"\tPullHails\x12'.smartcore.bos.hail.v1.PullHailsRequest\x1a(.smartcore.bos.hail.v1.PullHailsResponse0\x012j\n" +
 	"\bHailInfo\x12^\n" +
-	"\fDescribeHail\x12*.smartcore.bos.hail.v1.DescribeHailRequest\x1a\".smartcore.bos.hail.v1.HailSupportB{\n" +
-	"\x14dev.smartcore.traitsB\tHailProtoP\x01Z0github.com/smart-core-os/sc-bos/pkg/proto/hailpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\fDescribeHail\x12*.smartcore.bos.hail.v1.DescribeHailRequest\x1a\".smartcore.bos.hail.v1.HailSupportB2Z0github.com/smart-core-os/sc-bos/pkg/proto/hailpbb\x06proto3"
 
 var (
 	file_smartcore_bos_hail_v1_hail_proto_rawDescOnce sync.Once

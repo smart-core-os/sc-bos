@@ -6,6 +6,7 @@ package {{.PackageName}}
 {{/*Imports handled by the invoker code*/}}
 
 // Wrap{{.Underlying.Exported}}	adapts a {{.QualifiedServerName}}	and presents it as a {{.QualifiedClientName}}
+// Deprecated: for client use, use [{{.WrapServerToClient}}]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func Wrap{{.Underlying.Exported}}(server {{.QualifiedServerName}}) *{{.Wrapper.Exported}} {
 	conn := {{.WrapServerToClient}}({{.QualifiedServiceDesc}}, server)
 	client := {{.QualifiedClientConstructor}}(conn)

@@ -713,8 +713,7 @@ const file_smartcore_bos_inputselect_v1_input_select_proto_rawDesc = "" +
 	"\bGetInput\x12-.smartcore.bos.inputselect.v1.GetInputRequest\x1a#.smartcore.bos.inputselect.v1.Input\x12n\n" +
 	"\tPullInput\x12..smartcore.bos.inputselect.v1.PullInputRequest\x1a/.smartcore.bos.inputselect.v1.PullInputResponse0\x012\x82\x01\n" +
 	"\x0fInputSelectInfo\x12o\n" +
-	"\rDescribeInput\x122.smartcore.bos.inputselect.v1.DescribeInputRequest\x1a*.smartcore.bos.inputselect.v1.InputSupportB\x89\x01\n" +
-	"\x14dev.smartcore.traitsB\x10InputSelectProtoP\x01Z7github.com/smart-core-os/sc-bos/pkg/proto/inputselectpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\rDescribeInput\x122.smartcore.bos.inputselect.v1.DescribeInputRequest\x1a*.smartcore.bos.inputselect.v1.InputSupportB9Z7github.com/smart-core-os/sc-bos/pkg/proto/inputselectpbb\x06proto3"
 
 var (
 	file_smartcore_bos_inputselect_v1_input_select_proto_rawDescOnce sync.Once

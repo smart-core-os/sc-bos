@@ -433,8 +433,7 @@ const file_smartcore_bos_info_v1_health_proto_rawDesc = "" +
 	"\x06health\x18\x03 \x01(\v2\".smartcore.bos.info.v1.HealthStateR\x06health2\xe7\x01\n" +
 	"\x06Health\x12d\n" +
 	"\x0eGetHealthState\x12,.smartcore.bos.info.v1.GetHealthStateRequest\x1a\".smartcore.bos.info.v1.HealthState\"\x00\x12w\n" +
-	"\x10PullHealthStates\x12..smartcore.bos.info.v1.PullHealthStatesRequest\x1a/.smartcore.bos.info.v1.PullHealthStatesResponse\"\x000\x01Bw\n" +
-	"\x12dev.smartcore.infoB\vHealthProtoP\x01Z0github.com/smart-core-os/sc-bos/pkg/proto/infopb\xaa\x02\x0eSmartcore.Info\xca\x02\x0eSmartcore\\Infob\x06proto3"
+	"\x10PullHealthStates\x12..smartcore.bos.info.v1.PullHealthStatesRequest\x1a/.smartcore.bos.info.v1.PullHealthStatesResponse\"\x000\x01B2Z0github.com/smart-core-os/sc-bos/pkg/proto/infopbb\x06proto3"
 
 var (
 	file_smartcore_bos_info_v1_health_proto_rawDescOnce sync.Once

@@ -745,9 +745,7 @@ const file_smartcore_bos_color_v1_color_proto_rawDesc = "" +
 	"\vUpdateColor\x12*.smartcore.bos.color.v1.UpdateColorRequest\x1a\x1d.smartcore.bos.color.v1.Color\x12b\n" +
 	"\tPullColor\x12(.smartcore.bos.color.v1.PullColorRequest\x1a).smartcore.bos.color.v1.PullColorResponse0\x012p\n" +
 	"\tColorInfo\x12c\n" +
-	"\rDescribeColor\x12,.smartcore.bos.color.v1.DescribeColorRequest\x1a$.smartcore.bos.color.v1.ColorSupportB}\n" +
-	"\x14dev.smartcore.traitsB\n" +
-	"ColorProtoP\x01Z1github.com/smart-core-os/sc-bos/pkg/proto/colorpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\rDescribeColor\x12,.smartcore.bos.color.v1.DescribeColorRequest\x1a$.smartcore.bos.color.v1.ColorSupportB3Z1github.com/smart-core-os/sc-bos/pkg/proto/colorpbb\x06proto3"
 
 var (
 	file_smartcore_bos_color_v1_color_proto_rawDescOnce sync.Once

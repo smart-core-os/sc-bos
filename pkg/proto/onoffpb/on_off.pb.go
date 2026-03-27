@@ -533,9 +533,7 @@ const file_smartcore_bos_onoff_v1_on_off_proto_rawDesc = "" +
 	"\vUpdateOnOff\x12*.smartcore.bos.onoff.v1.UpdateOnOffRequest\x1a\x1d.smartcore.bos.onoff.v1.OnOff\x12b\n" +
 	"\tPullOnOff\x12(.smartcore.bos.onoff.v1.PullOnOffRequest\x1a).smartcore.bos.onoff.v1.PullOnOffResponse0\x012p\n" +
 	"\tOnOffInfo\x12c\n" +
-	"\rDescribeOnOff\x12,.smartcore.bos.onoff.v1.DescribeOnOffRequest\x1a$.smartcore.bos.onoff.v1.OnOffSupportB}\n" +
-	"\x14dev.smartcore.traitsB\n" +
-	"OnOffProtoP\x01Z1github.com/smart-core-os/sc-bos/pkg/proto/onoffpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\rDescribeOnOff\x12,.smartcore.bos.onoff.v1.DescribeOnOffRequest\x1a$.smartcore.bos.onoff.v1.OnOffSupportB3Z1github.com/smart-core-os/sc-bos/pkg/proto/onoffpbb\x06proto3"
 
 var (
 	file_smartcore_bos_onoff_v1_on_off_proto_rawDescOnce sync.Once

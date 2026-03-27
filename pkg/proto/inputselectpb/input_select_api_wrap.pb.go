@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a InputSelectApiServer	and presents it as a InputSelectApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server InputSelectApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(InputSelectApi_ServiceDesc, server)
 	client := NewInputSelectApiClient(conn)

@@ -10,6 +10,7 @@ import (
 )
 
 // InfoRouter is a PressureInfoServer that allows routing named requests to specific PressureInfoClient
+// Deprecated: routing is now handled dynamically by [node.Node].
 type InfoRouter struct {
 	UnimplementedPressureInfoServer
 
@@ -19,6 +20,8 @@ type InfoRouter struct {
 // compile time check that we implement the interface we need
 var _ PressureInfoServer = (*InfoRouter)(nil)
 
+// NewInfoRouter constructs a new empty InfoRouter with the provided options.
+// Deprecated: routing is now handled dynamically by [node.Node].
 func NewInfoRouter(opts ...router.Option) *InfoRouter {
 	return &InfoRouter{
 		Router: router.NewRouter(opts...),

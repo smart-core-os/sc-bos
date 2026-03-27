@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a SpeakerApiServer	and presents it as a SpeakerApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server SpeakerApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(SpeakerApi_ServiceDesc, server)
 	client := NewSpeakerApiClient(conn)

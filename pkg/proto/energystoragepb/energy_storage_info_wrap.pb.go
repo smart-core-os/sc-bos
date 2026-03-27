@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a EnergyStorageInfoServer	and presents it as a EnergyStorageInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server EnergyStorageInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(EnergyStorageInfo_ServiceDesc, server)
 	client := NewEnergyStorageInfoClient(conn)

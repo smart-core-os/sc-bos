@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a OccupancySensorApiServer	and presents it as a OccupancySensorApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server OccupancySensorApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(OccupancySensorApi_ServiceDesc, server)
 	client := NewOccupancySensorApiClient(conn)

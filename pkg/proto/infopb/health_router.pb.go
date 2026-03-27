@@ -11,6 +11,7 @@ import (
 )
 
 // HealthRouter is a HealthServer that allows routing named requests to specific HealthClient
+// Deprecated: routing is now handled dynamically by [node.Node].
 type HealthRouter struct {
 	UnimplementedHealthServer
 
@@ -20,6 +21,8 @@ type HealthRouter struct {
 // compile time check that we implement the interface we need
 var _ HealthServer = (*HealthRouter)(nil)
 
+// NewHealthRouter constructs a new empty HealthRouter with the provided options.
+// Deprecated: routing is now handled dynamically by [node.Node].
 func NewHealthRouter(opts ...router.Option) *HealthRouter {
 	return &HealthRouter{
 		Router: router.NewRouter(opts...),

@@ -4,6 +4,8 @@
 // - protoc             v7.34.0
 // source: smartcore/bos/electric/internal/memory_settings.proto
 
+// TODO: find out if this package can change to reflect the new location in the codebase.
+
 package electricpb
 
 import (

@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a FanSpeedApiServer	and presents it as a FanSpeedApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server FanSpeedApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(FanSpeedApi_ServiceDesc, server)
 	client := NewFanSpeedApiClient(conn)

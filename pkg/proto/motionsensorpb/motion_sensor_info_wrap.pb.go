@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a MotionSensorInfoServer	and presents it as a MotionSensorInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server MotionSensorInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(MotionSensorInfo_ServiceDesc, server)
 	client := NewMotionSensorInfoClient(conn)

@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a CountInfoServer	and presents it as a CountInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server CountInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(CountInfo_ServiceDesc, server)
 	client := NewCountInfoClient(conn)

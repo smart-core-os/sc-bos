@@ -504,8 +504,7 @@ const file_smartcore_bos_parent_v1_parent_proto_rawDesc = "" +
 	"\fListChildren\x12,.smartcore.bos.parent.v1.ListChildrenRequest\x1a-.smartcore.bos.parent.v1.ListChildrenResponse\x12m\n" +
 	"\fPullChildren\x12,.smartcore.bos.parent.v1.PullChildrenRequest\x1a-.smartcore.bos.parent.v1.PullChildrenResponse0\x012\f\n" +
 	"\n" +
-	"ParentInfoB\x7f\n" +
-	"\x14dev.smartcore.traitsB\vParentProtoP\x01Z2github.com/smart-core-os/sc-bos/pkg/proto/parentpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"ParentInfoB4Z2github.com/smart-core-os/sc-bos/pkg/proto/parentpbb\x06proto3"
 
 var (
 	file_smartcore_bos_parent_v1_parent_proto_rawDescOnce sync.Once

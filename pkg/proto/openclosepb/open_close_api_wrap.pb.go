@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a OpenCloseApiServer	and presents it as a OpenCloseApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server OpenCloseApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(OpenCloseApi_ServiceDesc, server)
 	client := NewOpenCloseApiClient(conn)

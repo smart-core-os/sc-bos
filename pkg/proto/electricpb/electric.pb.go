@@ -1336,8 +1336,7 @@ const file_smartcore_bos_electric_v1_electric_proto_rawDesc = "" +
 	"\x0ePullActiveMode\x120.smartcore.bos.electric.v1.PullActiveModeRequest\x1a1.smartcore.bos.electric.v1.PullActiveModeResponse0\x01\x12f\n" +
 	"\tListModes\x12+.smartcore.bos.electric.v1.ListModesRequest\x1a,.smartcore.bos.electric.v1.ListModesResponse\x12h\n" +
 	"\tPullModes\x12+.smartcore.bos.electric.v1.PullModesRequest\x1a,.smartcore.bos.electric.v1.PullModesResponse0\x012\x0e\n" +
-	"\fElectricInfoB\x83\x01\n" +
-	"\x14dev.smartcore.traitsB\rElectricProtoP\x01Z4github.com/smart-core-os/sc-bos/pkg/proto/electricpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\fElectricInfoB6Z4github.com/smart-core-os/sc-bos/pkg/proto/electricpbb\x06proto3"
 
 var (
 	file_smartcore_bos_electric_v1_electric_proto_rawDescOnce sync.Once

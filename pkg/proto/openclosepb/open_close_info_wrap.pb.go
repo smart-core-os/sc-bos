@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a OpenCloseInfoServer	and presents it as a OpenCloseInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server OpenCloseInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(OpenCloseInfo_ServiceDesc, server)
 	client := NewOpenCloseInfoClient(conn)

@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a VendingInfoServer	and presents it as a VendingInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server VendingInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(VendingInfo_ServiceDesc, server)
 	client := NewVendingInfoClient(conn)

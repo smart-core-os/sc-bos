@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a ParentApiServer	and presents it as a ParentApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server ParentApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(ParentApi_ServiceDesc, server)
 	client := NewParentApiClient(conn)

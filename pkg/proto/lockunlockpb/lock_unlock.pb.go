@@ -473,8 +473,7 @@ const file_smartcore_bos_lockunlock_v1_lock_unlock_proto_rawDesc = "" +
 	"\rGetLockUnlock\x121.smartcore.bos.lockunlock.v1.GetLockUnlockRequest\x1a'.smartcore.bos.lockunlock.v1.LockUnlock\x12q\n" +
 	"\x10UpdateLockUnlock\x124.smartcore.bos.lockunlock.v1.UpdateLockUnlockRequest\x1a'.smartcore.bos.lockunlock.v1.LockUnlock\x12{\n" +
 	"\x0ePullLockUnlock\x122.smartcore.bos.lockunlock.v1.PullLockUnlockRequest\x1a3.smartcore.bos.lockunlock.v1.PullLockUnlockResponse0\x012\x10\n" +
-	"\x0eLockUnlockInfoB\x87\x01\n" +
-	"\x14dev.smartcore.traitsB\x0fLockUnlockProtoP\x01Z6github.com/smart-core-os/sc-bos/pkg/proto/lockunlockpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x0eLockUnlockInfoB8Z6github.com/smart-core-os/sc-bos/pkg/proto/lockunlockpbb\x06proto3"
 
 var (
 	file_smartcore_bos_lockunlock_v1_lock_unlock_proto_rawDescOnce sync.Once

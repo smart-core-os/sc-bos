@@ -1029,8 +1029,7 @@ const file_smartcore_bos_booking_v1_booking_proto_rawDesc = "" +
 	"\rUpdateBooking\x12..smartcore.bos.booking.v1.UpdateBookingRequest\x1a/.smartcore.bos.booking.v1.UpdateBookingResponse\x12o\n" +
 	"\fPullBookings\x12-.smartcore.bos.booking.v1.ListBookingsRequest\x1a..smartcore.bos.booking.v1.PullBookingsResponse0\x012|\n" +
 	"\vBookingInfo\x12m\n" +
-	"\x0fDescribeBooking\x120.smartcore.bos.booking.v1.DescribeBookingRequest\x1a(.smartcore.bos.booking.v1.BookingSupportB\x81\x01\n" +
-	"\x14dev.smartcore.traitsB\fBookingProtoP\x01Z3github.com/smart-core-os/sc-bos/pkg/proto/bookingpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x0fDescribeBooking\x120.smartcore.bos.booking.v1.DescribeBookingRequest\x1a(.smartcore.bos.booking.v1.BookingSupportB5Z3github.com/smart-core-os/sc-bos/pkg/proto/bookingpbb\x06proto3"
 
 var (
 	file_smartcore_bos_booking_v1_booking_proto_rawDescOnce sync.Once

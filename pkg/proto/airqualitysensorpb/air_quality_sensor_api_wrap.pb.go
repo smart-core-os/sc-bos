@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a AirQualitySensorApiServer	and presents it as a AirQualitySensorApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server AirQualitySensorApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(AirQualitySensorApi_ServiceDesc, server)
 	client := NewAirQualitySensorApiClient(conn)

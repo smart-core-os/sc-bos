@@ -11,6 +11,7 @@ import (
 )
 
 // ServiceRouter is a UdmiServiceServer that allows routing named requests to specific UdmiServiceClient
+// Deprecated: routing is now handled dynamically by [node.Node].
 type ServiceRouter struct {
 	UnimplementedUdmiServiceServer
 
@@ -20,6 +21,8 @@ type ServiceRouter struct {
 // compile time check that we implement the interface we need
 var _ UdmiServiceServer = (*ServiceRouter)(nil)
 
+// NewServiceRouter constructs a new empty ServiceRouter with the provided options.
+// Deprecated: routing is now handled dynamically by [node.Node].
 func NewServiceRouter(opts ...router.Option) *ServiceRouter {
 	return &ServiceRouter{
 		Router: router.NewRouter(opts...),

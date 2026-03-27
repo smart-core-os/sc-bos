@@ -10,6 +10,7 @@ import (
 )
 
 // AdminApiRouter is a AlertAdminApiServer that allows routing named requests to specific AlertAdminApiClient
+// Deprecated: routing is now handled dynamically by [node.Node].
 type AdminApiRouter struct {
 	UnimplementedAlertAdminApiServer
 
@@ -19,6 +20,8 @@ type AdminApiRouter struct {
 // compile time check that we implement the interface we need
 var _ AlertAdminApiServer = (*AdminApiRouter)(nil)
 
+// NewAdminApiRouter constructs a new empty AdminApiRouter with the provided options.
+// Deprecated: routing is now handled dynamically by [node.Node].
 func NewAdminApiRouter(opts ...router.Option) *AdminApiRouter {
 	return &AdminApiRouter{
 		Router: router.NewRouter(opts...),

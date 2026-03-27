@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a ColorInfoServer	and presents it as a ColorInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server ColorInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(ColorInfo_ServiceDesc, server)
 	client := NewColorInfoClient(conn)

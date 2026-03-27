@@ -617,8 +617,7 @@ const file_smartcore_bos_channel_v1_channel_proto_rawDesc = "" +
 	"\rReturnChannel\x12..smartcore.bos.channel.v1.ReturnChannelRequest\x1a!.smartcore.bos.channel.v1.Channel\x12~\n" +
 	"\x11PullChosenChannel\x122.smartcore.bos.channel.v1.PullChosenChannelRequest\x1a3.smartcore.bos.channel.v1.PullChosenChannelResponse0\x012\x8e\x01\n" +
 	"\vChannelInfo\x12\x7f\n" +
-	"\x15DescribeChosenChannel\x126.smartcore.bos.channel.v1.DescribeChosenChannelRequest\x1a..smartcore.bos.channel.v1.ChosenChannelSupportB\x81\x01\n" +
-	"\x14dev.smartcore.traitsB\fChannelProtoP\x01Z3github.com/smart-core-os/sc-bos/pkg/proto/channelpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x15DescribeChosenChannel\x126.smartcore.bos.channel.v1.DescribeChosenChannelRequest\x1a..smartcore.bos.channel.v1.ChosenChannelSupportB5Z3github.com/smart-core-os/sc-bos/pkg/proto/channelpbb\x06proto3"
 
 var (
 	file_smartcore_bos_channel_v1_channel_proto_rawDescOnce sync.Once

@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a ExtendRetractApiServer	and presents it as a ExtendRetractApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server ExtendRetractApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(ExtendRetractApi_ServiceDesc, server)
 	client := NewExtendRetractApiClient(conn)

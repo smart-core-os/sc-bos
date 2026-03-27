@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a ChannelApiServer	and presents it as a ChannelApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server ChannelApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(ChannelApi_ServiceDesc, server)
 	client := NewChannelApiClient(conn)

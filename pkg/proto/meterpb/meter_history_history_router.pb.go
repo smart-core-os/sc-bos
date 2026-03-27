@@ -10,6 +10,7 @@ import (
 )
 
 // HistoryRouter is a MeterHistoryServer that allows routing named requests to specific MeterHistoryClient
+// Deprecated: routing is now handled dynamically by [node.Node].
 type HistoryRouter struct {
 	UnimplementedMeterHistoryServer
 
@@ -19,6 +20,8 @@ type HistoryRouter struct {
 // compile time check that we implement the interface we need
 var _ MeterHistoryServer = (*HistoryRouter)(nil)
 
+// NewHistoryRouter constructs a new empty HistoryRouter with the provided options.
+// Deprecated: routing is now handled dynamically by [node.Node].
 func NewHistoryRouter(opts ...router.Option) *HistoryRouter {
 	return &HistoryRouter{
 		Router: router.NewRouter(opts...),

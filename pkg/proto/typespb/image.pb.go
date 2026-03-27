@@ -385,9 +385,7 @@ const file_smartcore_bos_types_v1_image_proto_rawDesc = "" +
 	"\aPurpose\x12\x17\n" +
 	"\x13PURPOSE_UNSPECIFIED\x10\x00\x12\a\n" +
 	"\x03ANY\x10\x01\x12\f\n" +
-	"\bMASKABLE\x10\x02Bh\n" +
-	"\x13dev.smartcore.typesB\n" +
-	"ImageProtoP\x01Z1github.com/smart-core-os/sc-bos/pkg/proto/typespb\xaa\x02\x0fSmartcore.Typesb\x06proto3"
+	"\bMASKABLE\x10\x02B3Z1github.com/smart-core-os/sc-bos/pkg/proto/typespbb\x06proto3"
 
 var (
 	file_smartcore_bos_types_v1_image_proto_rawDescOnce sync.Once

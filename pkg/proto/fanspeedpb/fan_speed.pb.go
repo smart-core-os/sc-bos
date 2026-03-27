@@ -645,8 +645,7 @@ const file_smartcore_bos_fanspeed_v1_fan_speed_proto_rawDesc = "" +
 	"\fPullFanSpeed\x12..smartcore.bos.fanspeed.v1.PullFanSpeedRequest\x1a/.smartcore.bos.fanspeed.v1.PullFanSpeedResponse0\x01\x12{\n" +
 	"\x18ReverseFanSpeedDirection\x12:.smartcore.bos.fanspeed.v1.ReverseFanSpeedDirectionRequest\x1a#.smartcore.bos.fanspeed.v1.FanSpeed2\x82\x01\n" +
 	"\fFanSpeedInfo\x12r\n" +
-	"\x10DescribeFanSpeed\x122.smartcore.bos.fanspeed.v1.DescribeFanSpeedRequest\x1a*.smartcore.bos.fanspeed.v1.FanSpeedSupportB\x83\x01\n" +
-	"\x14dev.smartcore.traitsB\rFanSpeedProtoP\x01Z4github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x10DescribeFanSpeed\x122.smartcore.bos.fanspeed.v1.DescribeFanSpeedRequest\x1a*.smartcore.bos.fanspeed.v1.FanSpeedSupportB6Z4github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpbb\x06proto3"
 
 var (
 	file_smartcore_bos_fanspeed_v1_fan_speed_proto_rawDescOnce sync.Once

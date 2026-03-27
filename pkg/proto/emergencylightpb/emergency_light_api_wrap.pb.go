@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a EmergencyLightApiServer	and presents it as a EmergencyLightApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server EmergencyLightApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(EmergencyLightApi_ServiceDesc, server)
 	client := NewEmergencyLightApiClient(conn)

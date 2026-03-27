@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a BrightnessSensorInfoServer	and presents it as a BrightnessSensorInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server BrightnessSensorInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(BrightnessSensorInfo_ServiceDesc, server)
 	client := NewBrightnessSensorInfoClient(conn)

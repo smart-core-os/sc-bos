@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a LockUnlockApiServer	and presents it as a LockUnlockApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server LockUnlockApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(LockUnlockApi_ServiceDesc, server)
 	client := NewLockUnlockApiClient(conn)

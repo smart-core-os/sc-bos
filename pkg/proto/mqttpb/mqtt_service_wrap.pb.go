@@ -8,6 +8,7 @@ import (
 )
 
 // WrapService	adapts a MqttServiceServer	and presents it as a MqttServiceClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapService(server MqttServiceServer) *ServiceWrapper {
 	conn := wrap.ServerToClient(MqttService_ServiceDesc, server)
 	client := NewMqttServiceClient(conn)

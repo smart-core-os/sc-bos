@@ -600,9 +600,7 @@ const file_smartcore_bos_count_v1_count_proto_rawDesc = "" +
 	"\n" +
 	"PullCounts\x12).smartcore.bos.count.v1.PullCountsRequest\x1a*.smartcore.bos.count.v1.PullCountsResponse0\x012p\n" +
 	"\tCountInfo\x12c\n" +
-	"\rDescribeCount\x12,.smartcore.bos.count.v1.DescribeCountRequest\x1a$.smartcore.bos.count.v1.CountSupportB}\n" +
-	"\x14dev.smartcore.traitsB\n" +
-	"CountProtoP\x01Z1github.com/smart-core-os/sc-bos/pkg/proto/countpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\rDescribeCount\x12,.smartcore.bos.count.v1.DescribeCountRequest\x1a$.smartcore.bos.count.v1.CountSupportB3Z1github.com/smart-core-os/sc-bos/pkg/proto/countpbb\x06proto3"
 
 var (
 	file_smartcore_bos_count_v1_count_proto_rawDescOnce sync.Once

@@ -8,6 +8,7 @@ import (
 )
 
 // WrapHistory	adapts a AirTemperatureHistoryServer	and presents it as a AirTemperatureHistoryClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHistory(server AirTemperatureHistoryServer) *HistoryWrapper {
 	conn := wrap.ServerToClient(AirTemperatureHistory_ServiceDesc, server)
 	client := NewAirTemperatureHistoryClient(conn)

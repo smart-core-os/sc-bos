@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a LightApiServer	and presents it as a LightApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server LightApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(LightApi_ServiceDesc, server)
 	client := NewLightApiClient(conn)

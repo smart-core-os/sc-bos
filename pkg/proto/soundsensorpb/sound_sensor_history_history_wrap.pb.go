@@ -8,6 +8,7 @@ import (
 )
 
 // WrapHistory	adapts a SoundSensorHistoryServer	and presents it as a SoundSensorHistoryClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHistory(server SoundSensorHistoryServer) *HistoryWrapper {
 	conn := wrap.ServerToClient(SoundSensorHistory_ServiceDesc, server)
 	client := NewSoundSensorHistoryClient(conn)

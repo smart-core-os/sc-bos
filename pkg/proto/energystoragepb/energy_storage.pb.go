@@ -1071,8 +1071,7 @@ const file_smartcore_bos_energystorage_v1_energy_storage_proto_rawDesc = "" +
 	"\x0fPullEnergyLevel\x126.smartcore.bos.energystorage.v1.PullEnergyLevelRequest\x1a7.smartcore.bos.energystorage.v1.PullEnergyLevelResponse0\x01\x12g\n" +
 	"\x06Charge\x12-.smartcore.bos.energystorage.v1.ChargeRequest\x1a..smartcore.bos.energystorage.v1.ChargeResponse2\x9b\x01\n" +
 	"\x11EnergyStorageInfo\x12\x85\x01\n" +
-	"\x13DescribeEnergyLevel\x12:.smartcore.bos.energystorage.v1.DescribeEnergyLevelRequest\x1a2.smartcore.bos.energystorage.v1.EnergyLevelSupportB\x8d\x01\n" +
-	"\x14dev.smartcore.traitsB\x12EnergyStorageProtoP\x01Z9github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x13DescribeEnergyLevel\x12:.smartcore.bos.energystorage.v1.DescribeEnergyLevelRequest\x1a2.smartcore.bos.energystorage.v1.EnergyLevelSupportB;Z9github.com/smart-core-os/sc-bos/pkg/proto/energystoragepbb\x06proto3"
 
 var (
 	file_smartcore_bos_energystorage_v1_energy_storage_proto_rawDescOnce sync.Once

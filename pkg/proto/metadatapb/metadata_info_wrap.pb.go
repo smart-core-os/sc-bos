@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a MetadataInfoServer	and presents it as a MetadataInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server MetadataInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(MetadataInfo_ServiceDesc, server)
 	client := NewMetadataInfoClient(conn)

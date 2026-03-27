@@ -544,8 +544,7 @@ const file_smartcore_bos_occupancysensor_v1_occupancy_sensor_proto_rawDesc = "" 
 	"\fGetOccupancy\x125.smartcore.bos.occupancysensor.v1.GetOccupancyRequest\x1a+.smartcore.bos.occupancysensor.v1.Occupancy\x12\x82\x01\n" +
 	"\rPullOccupancy\x126.smartcore.bos.occupancysensor.v1.PullOccupancyRequest\x1a7.smartcore.bos.occupancysensor.v1.PullOccupancyResponse0\x012\x9b\x01\n" +
 	"\x13OccupancySensorInfo\x12\x83\x01\n" +
-	"\x11DescribeOccupancy\x12:.smartcore.bos.occupancysensor.v1.DescribeOccupancyRequest\x1a2.smartcore.bos.occupancysensor.v1.OccupancySupportB\x91\x01\n" +
-	"\x14dev.smartcore.traitsB\x14OccupancySensorProtoP\x01Z;github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x11DescribeOccupancy\x12:.smartcore.bos.occupancysensor.v1.DescribeOccupancyRequest\x1a2.smartcore.bos.occupancysensor.v1.OccupancySupportB=Z;github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpbb\x06proto3"
 
 var (
 	file_smartcore_bos_occupancysensor_v1_occupancy_sensor_proto_rawDescOnce sync.Once

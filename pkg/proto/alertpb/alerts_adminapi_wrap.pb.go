@@ -8,6 +8,7 @@ import (
 )
 
 // WrapAdminApi	adapts a AlertAdminApiServer	and presents it as a AlertAdminApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapAdminApi(server AlertAdminApiServer) *AdminApiWrapper {
 	conn := wrap.ServerToClient(AlertAdminApi_ServiceDesc, server)
 	client := NewAlertAdminApiClient(conn)

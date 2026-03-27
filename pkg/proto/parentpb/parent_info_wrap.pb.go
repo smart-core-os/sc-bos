@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a ParentInfoServer	and presents it as a ParentInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server ParentInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(ParentInfo_ServiceDesc, server)
 	client := NewParentInfoClient(conn)

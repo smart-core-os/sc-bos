@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a ModeApiServer	and presents it as a ModeApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server ModeApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(ModeApi_ServiceDesc, server)
 	client := NewModeApiClient(conn)

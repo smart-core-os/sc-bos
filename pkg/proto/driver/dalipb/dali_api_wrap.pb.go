@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a DaliApiServer	and presents it as a DaliApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server DaliApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(DaliApi_ServiceDesc, server)
 	client := NewDaliApiClient(conn)

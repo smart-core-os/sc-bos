@@ -169,9 +169,7 @@ const file_smartcore_bos_types_v1_tween_proto_rawDesc = "" +
 	"\n" +
 	"\x06NATIVE\x10\x02\x12\f\n" +
 	"\bEMULATED\x10\x03\x12\t\n" +
-	"\x05FIXED\x10\x04Bh\n" +
-	"\x13dev.smartcore.typesB\n" +
-	"TweenProtoP\x01Z1github.com/smart-core-os/sc-bos/pkg/proto/typespb\xaa\x02\x0fSmartcore.Typesb\x06proto3"
+	"\x05FIXED\x10\x04B3Z1github.com/smart-core-os/sc-bos/pkg/proto/typespbb\x06proto3"
 
 var (
 	file_smartcore_bos_types_v1_tween_proto_rawDescOnce sync.Once

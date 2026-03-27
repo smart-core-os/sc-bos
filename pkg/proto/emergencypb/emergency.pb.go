@@ -583,8 +583,7 @@ const file_smartcore_bos_emergency_v1_emergency_proto_rawDesc = "" +
 	"\x0fUpdateEmergency\x122.smartcore.bos.emergency.v1.UpdateEmergencyRequest\x1a%.smartcore.bos.emergency.v1.Emergency\x12v\n" +
 	"\rPullEmergency\x120.smartcore.bos.emergency.v1.PullEmergencyRequest\x1a1.smartcore.bos.emergency.v1.PullEmergencyResponse0\x012\x88\x01\n" +
 	"\rEmergencyInfo\x12w\n" +
-	"\x11DescribeEmergency\x124.smartcore.bos.emergency.v1.DescribeEmergencyRequest\x1a,.smartcore.bos.emergency.v1.EmergencySupportB\x85\x01\n" +
-	"\x14dev.smartcore.traitsB\x0eEmergencyProtoP\x01Z5github.com/smart-core-os/sc-bos/pkg/proto/emergencypb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\x11DescribeEmergency\x124.smartcore.bos.emergency.v1.DescribeEmergencyRequest\x1a,.smartcore.bos.emergency.v1.EmergencySupportB7Z5github.com/smart-core-os/sc-bos/pkg/proto/emergencypbb\x06proto3"
 
 var (
 	file_smartcore_bos_emergency_v1_emergency_proto_rawDescOnce sync.Once

@@ -401,8 +401,7 @@ const file_smartcore_bos_microphone_v1_microphone_proto_rawDesc = "" +
 	"UpdateGain\x128.smartcore.bos.microphone.v1.UpdateMicrophoneGainRequest\x1a\".smartcore.bos.types.v1.AudioLevel\x12}\n" +
 	"\bPullGain\x126.smartcore.bos.microphone.v1.PullMicrophoneGainRequest\x1a7.smartcore.bos.microphone.v1.PullMicrophoneGainResponse0\x012|\n" +
 	"\x0eMicrophoneInfo\x12j\n" +
-	"\fDescribeGain\x120.smartcore.bos.microphone.v1.DescribeGainRequest\x1a(.smartcore.bos.microphone.v1.GainSupportB\x87\x01\n" +
-	"\x14dev.smartcore.traitsB\x0fMicrophoneProtoP\x01Z6github.com/smart-core-os/sc-bos/pkg/proto/microphonepb\xaa\x02\x10Smartcore.Traits\xca\x02\x10Smartcore\\Traitsb\x06proto3"
+	"\fDescribeGain\x120.smartcore.bos.microphone.v1.DescribeGainRequest\x1a(.smartcore.bos.microphone.v1.GainSupportB8Z6github.com/smart-core-os/sc-bos/pkg/proto/microphonepbb\x06proto3"
 
 var (
 	file_smartcore_bos_microphone_v1_microphone_proto_rawDescOnce sync.Once

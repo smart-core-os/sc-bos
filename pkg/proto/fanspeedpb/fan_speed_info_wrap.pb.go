@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a FanSpeedInfoServer	and presents it as a FanSpeedInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server FanSpeedInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(FanSpeedInfo_ServiceDesc, server)
 	client := NewFanSpeedInfoClient(conn)

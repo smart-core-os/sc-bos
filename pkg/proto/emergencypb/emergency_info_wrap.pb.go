@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a EmergencyInfoServer	and presents it as a EmergencyInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server EmergencyInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(EmergencyInfo_ServiceDesc, server)
 	client := NewEmergencyInfoClient(conn)
