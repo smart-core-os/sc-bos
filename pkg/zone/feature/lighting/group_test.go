@@ -13,11 +13,12 @@ import (
 	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func TestGroup_PullBrightness(t *testing.T) {
 	r := lightpb2.NewApiRouter()
-	client := lightpb2.WrapApi(r)
+	client := lightpb2.NewLightApiClient(wrap.ServerToClient(lightpb2.LightApi_ServiceDesc, r))
 	group := &Group{
 		client: client,
 		names: []string{
@@ -28,7 +29,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 	}
 
 	for _, name := range group.names {
-		r.Add(name, lightpb2.WrapApi(lightpb2.NewMemoryDevice()))
+		r.Add(name, lightpb2.NewLightApiClient(wrap.ServerToClient(lightpb2.LightApi_ServiceDesc, lightpb2.NewMemoryDevice())))
 	}
 
 	type response struct {
@@ -39,7 +40,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 	pullCtx := t.Context()
 	go func() {
 		defer close(responses)
-		groupClient := lightpb2.WrapApi(group)
+		groupClient := lightpb2.NewLightApiClient(wrap.ServerToClient(lightpb2.LightApi_ServiceDesc, group))
 		stream, err := groupClient.PullBrightness(pullCtx, &lightpb.PullBrightnessRequest{
 			Name: "anything will do", // we're using a direct client call, not routed
 		})
@@ -122,7 +123,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 
 func TestGroup_DescribeBrightness(t *testing.T) {
 	info := lightpb2.NewInfoRouter()
-	infoClient := lightpb2.WrapInfo(info)
+	infoClient := lightpb2.NewLightInfoClient(wrap.ServerToClient(lightpb2.LightInfo_ServiceDesc, info))
 	group := &Group{
 		info: infoClient,
 		names: []string{
@@ -136,7 +137,7 @@ func TestGroup_DescribeBrightness(t *testing.T) {
 			lightpb2.WithPreset(10, &lightpb.LightPreset{Name: "dim", Title: "Low Light"}),
 			lightpb2.WithPreset(90, &lightpb.LightPreset{Name: "blind", Title: "High Light"}),
 		))
-		info.Add(name, lightpb2.WrapInfo(modelServer))
+		info.Add(name, lightpb2.NewLightInfoClient(wrap.ServerToClient(lightpb2.LightInfo_ServiceDesc, modelServer)))
 	}
 
 	support, err := group.DescribeBrightness(context.Background(), &lightpb.DescribeBrightnessRequest{})

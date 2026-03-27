@@ -21,8 +21,9 @@ func addDummyMeters(root *node.Node) {
 		m := meterpb.NewModel()
 		m.RecordReading(123.45)
 		models = append(models, m)
-		client := node.WithClients(meterpb.WrapApi(meterpb.NewModelServer(m)))
-		root.Announce(meterName, node.HasTrait(meterpb.TraitName, client))
+		root.Announce(meterName,
+			node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(m))),
+			node.HasTrait(meterpb.TraitName))
 	}
 }
 

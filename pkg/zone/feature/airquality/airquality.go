@@ -45,7 +45,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 
 		f.devices.Add(cfg.AirQualitySensors...)
-		announce.Announce(cfg.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(group))))
+		announce.Announce(cfg.Name,
+			node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(group)),
+			node.HasTrait(trait.AirQualitySensor),
+		)
 	}
 
 	return nil

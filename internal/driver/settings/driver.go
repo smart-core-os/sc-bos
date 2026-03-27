@@ -55,10 +55,11 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		},
 	}
 
-	announcer.Announce(cfg.Name, node.HasTrait(trait.Mode, node.WithClients(
-		modepb.WrapApi(modepb.NewModelServer(modeModel)),
-		modepb.WrapInfo(info),
-	)))
+	announcer.Announce(cfg.Name,
+		node.HasServer(modepb.RegisterModeApiServer, modepb.ModeApiServer(modepb.NewModelServer(modeModel))),
+		node.HasServer(modepb.RegisterModeInfoServer, modepb.ModeInfoServer(info)),
+		node.HasTrait(trait.Mode),
+	)
 
 	return nil
 }

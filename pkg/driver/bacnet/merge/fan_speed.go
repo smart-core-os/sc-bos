@@ -76,7 +76,10 @@ func (t *fanSpeed) startPoll(init context.Context) (stop task.StopFn, err error)
 }
 
 func (t *fanSpeed) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(trait.FanSpeed, node.WithClients(fanspeedpb2.WrapApi(t))))
+	return a.Announce(t.config.Name,
+		node.HasServer(fanspeedpb2.RegisterFanSpeedApiServer, fanspeedpb2.FanSpeedApiServer(t)),
+		node.HasTrait(trait.FanSpeed),
+	)
 }
 
 func (t *fanSpeed) GetFanSpeed(ctx context.Context, request *fanspeedpb.GetFanSpeedRequest) (*fanspeedpb.FanSpeed, error) {

@@ -117,7 +117,11 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 					return err
 				}
 				opcDev.eventHandlers = append(opcDev.eventHandlers, m)
-				allFeatures = append(allFeatures, node.HasTrait(meterpb.TraitName, node.WithClients(meterpb.WrapApi(m), meterpb.WrapInfo(m))))
+				allFeatures = append(allFeatures,
+					node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(m)),
+					node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(m)),
+					node.HasTrait(meterpb.TraitName),
+				)
 
 			case transportpb.TraitName:
 				tr, err := newTransport(dev.Name, t, d.logger)
@@ -126,7 +130,11 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 					return err
 				}
 				opcDev.eventHandlers = append(opcDev.eventHandlers, tr)
-				allFeatures = append(allFeatures, node.HasTrait(transportpb.TraitName, node.WithClients(transportpb.WrapApi(tr), transportpb.WrapInfo(tr))))
+				allFeatures = append(allFeatures,
+					node.HasServer(transportpb.RegisterTransportApiServer, transportpb.TransportApiServer(tr)),
+					node.HasServer(transportpb.RegisterTransportInfoServer, transportpb.TransportInfoServer(tr)),
+					node.HasTrait(transportpb.TraitName),
+				)
 
 			case udmipb.TraitName:
 				u, err := newUdmi(dev.Name, t, d.logger)
@@ -135,7 +143,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 					return err
 				}
 				opcDev.eventHandlers = append(opcDev.eventHandlers, u)
-				allFeatures = append(allFeatures, node.HasTrait(udmipb.TraitName, node.WithClients(udmipb.WrapService(u))))
+				allFeatures = append(allFeatures,
+					node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(u)),
+					node.HasTrait(udmipb.TraitName),
+				)
 
 			case trait.Electric:
 				e, err := newElectric(dev.Name, t, d.logger)
@@ -144,7 +155,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 					return err
 				}
 				opcDev.eventHandlers = append(opcDev.eventHandlers, e)
-				allFeatures = append(allFeatures, node.HasTrait(trait.Electric, node.WithClients(electricpb.WrapApi(e))))
+				allFeatures = append(allFeatures,
+					node.HasServer(electricpb.RegisterElectricApiServer, electricpb.ElectricApiServer(e)),
+					node.HasTrait(trait.Electric),
+				)
 
 			case healthpb.TraitName:
 				h, err := newHealth(t, d.logger)

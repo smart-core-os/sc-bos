@@ -9,9 +9,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
 )
@@ -70,12 +70,15 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 				}
 			}
 
-			group.clients = append(group.clients, occupancysensorpb2.WrapApi(elServer))
+			group.clients = append(group.clients, occupancysensorpb.NewOccupancySensorApiClient(wrap.ServerToClient(occupancysensorpb.OccupancySensorApi_ServiceDesc, elServer)))
 		}
 
 		f.devices.Add(cfg.OccupancySensors...)
 		f.devices.Add(cfg.EnterLeaveOccupancySensors...)
-		announce.Announce(cfg.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(group))))
+		announce.Announce(cfg.Name,
+			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(group)),
+			node.HasTrait(trait.OccupancySensor),
+		)
 	}
 
 	return nil

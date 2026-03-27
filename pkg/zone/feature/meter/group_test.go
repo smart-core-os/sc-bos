@@ -121,14 +121,12 @@ func TestGroup_PullMeterReadings(t *testing.T) {
 			}
 
 			for meter := range tt.meters {
-				n.Announce(meter, node.HasTrait(
-					meterpb.TraitName,
-					node.WithClients(
-						meterpb.WrapApi(m),
-						meterpb.WrapInfo(m),
-						meterpb.WrapHistory(historypb.NewMeterServer(tt.meters[meter].store)),
-					),
-				))
+				n.Announce(meter,
+					node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(m)),
+					node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(m)),
+					node.HasServer(meterpb.RegisterMeterHistoryServer, meterpb.MeterHistoryServer(historypb.NewMeterServer(tt.meters[meter].store))),
+					node.HasTrait(meterpb.TraitName),
+				)
 			}
 
 			for idx := range tt.meters[maps.Keys(tt.meters)[0]].events {
@@ -400,14 +398,12 @@ func TestGroup_GetMeterReading(t *testing.T) {
 
 			for meter := range tt.meters {
 				m.meterToIndex[meter] = 0
-				n.Announce(meter, node.HasTrait(
-					meterpb.TraitName,
-					node.WithClients(
-						meterpb.WrapApi(m),
-						meterpb.WrapInfo(m),
-						meterpb.WrapHistory(historypb.NewMeterServer(tt.meters[meter].store)),
-					),
-				))
+				n.Announce(meter,
+					node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(m)),
+					node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(m)),
+					node.HasServer(meterpb.RegisterMeterHistoryServer, meterpb.MeterHistoryServer(historypb.NewMeterServer(tt.meters[meter].store))),
+					node.HasTrait(meterpb.TraitName),
+				)
 			}
 
 			for idx, want := range tt.want {

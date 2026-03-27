@@ -73,7 +73,10 @@ func (e *energyStorage) startPoll(init context.Context) (stop task.StopFn, err e
 }
 
 func (e *energyStorage) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(e.config.Name, node.HasTrait(trait.EnergyStorage, node.WithClients(energystoragepb.WrapApi(e))))
+	return a.Announce(e.config.Name,
+		node.HasServer(energystoragepb.RegisterEnergyStorageApiServer, energystoragepb.EnergyStorageApiServer(e)),
+		node.HasTrait(trait.EnergyStorage),
+	)
 }
 
 func (e *energyStorage) GetEnergyLevel(ctx context.Context, request *energystoragepb.GetEnergyLevelRequest) (*energystoragepb.EnergyLevel, error) {

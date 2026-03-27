@@ -10,6 +10,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func TestCache_Pull(t *testing.T) {
@@ -27,7 +28,7 @@ func TestCache_Pull(t *testing.T) {
 		resource.WithInitialRecord(id, initial),
 	)
 	modelServer := publicationpb.NewModelServer(model)
-	modelClient := publicationpb.WrapApi(modelServer)
+	modelClient := publicationpb.NewPublicationApiClient(wrap.ServerToClient(publicationpb.PublicationApi_ServiceDesc, modelServer))
 
 	cache := New(ctx, modelClient, "", id)
 

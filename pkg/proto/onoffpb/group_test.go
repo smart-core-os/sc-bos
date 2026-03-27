@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-bos/internal/th"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // todo: test one, some, all failures for get, update, pull
@@ -75,9 +76,9 @@ type onOffTester struct {
 
 func newOnOffTester(t *testing.T, members ...string) *onOffTester {
 	devices := NewApiRouter(WithOnOffApiClientFactory(func(name string) (OnOffApiClient, error) {
-		return WrapApi(NewModelServer(NewModel())), nil
+		return NewOnOffApiClient(wrap.ServerToClient(OnOffApi_ServiceDesc, NewModelServer(NewModel()))), nil
 	}))
-	impl := WrapApi(devices)
+	impl := NewOnOffApiClient(wrap.ServerToClient(OnOffApi_ServiceDesc, devices))
 	group := NewGroup(impl, members...)
 
 	// server and client setup

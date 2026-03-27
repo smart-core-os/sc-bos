@@ -89,8 +89,11 @@ func newMode(client *gobacnet.Client, devices known.Context, faultCheck *healthp
 }
 
 func (t *mode) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(trait.Mode, node.WithClients(
-		modepb.WrapApi(t), modepb.WrapInfo(t.infoServer))))
+	return a.Announce(t.config.Name,
+		node.HasServer(modepb.RegisterModeApiServer, modepb.ModeApiServer(t)),
+		node.HasServer(modepb.RegisterModeInfoServer, modepb.ModeInfoServer(t.infoServer)),
+		node.HasTrait(trait.Mode),
+	)
 }
 
 func (t *mode) GetModeValues(ctx context.Context, request *modepb.GetModeValuesRequest) (*modepb.ModeValues, error) {

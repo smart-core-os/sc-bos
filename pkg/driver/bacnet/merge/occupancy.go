@@ -68,7 +68,10 @@ func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *heal
 }
 
 func (o *occupancy) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(o.config.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(o))))
+	return a.Announce(o.config.Name,
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(o)),
+		node.HasTrait(trait.OccupancySensor),
+	)
 }
 
 func (o *occupancy) GetOccupancy(ctx context.Context, request *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {

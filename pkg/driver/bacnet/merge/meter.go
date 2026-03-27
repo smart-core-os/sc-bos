@@ -66,12 +66,16 @@ func newMeter(client *gobacnet.Client, devices known.Context, faultCheck *health
 }
 
 func (t *meterTrait) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(meterpb.TraitName, node.WithClients(meterpb.WrapApi(t), meterpb.WrapInfo(&meterpb.InfoServer{
-		MeterReading: &meterpb.MeterReadingSupport{
-			ResourceSupport: &typespb.ResourceSupport{Readable: true, Observable: true},
-			UsageUnit:       t.config.Unit,
-		},
-	}))))
+	return a.Announce(t.config.Name,
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(t)),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{
+			MeterReading: &meterpb.MeterReadingSupport{
+				ResourceSupport: &typespb.ResourceSupport{Readable: true, Observable: true},
+				UsageUnit:       t.config.Unit,
+			},
+		})),
+		node.HasTrait(meterpb.TraitName),
+	)
 }
 
 func (t *meterTrait) GetMeterReading(ctx context.Context, request *meterpb.GetMeterReadingRequest) (*meterpb.MeterReading, error) {

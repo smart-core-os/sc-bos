@@ -76,10 +76,9 @@ func (m *Map) getOrCreateModel(name string) model {
 			ModelServer: statuspb.NewModelServer(nm),
 			m:           m,
 		}
-		client := statuspb.WrapApi(srv)
 		mod = model{
 			Model:      nm,
-			unannounce: m.announcer.Announce(name, node.HasTrait(statuspb.TraitName, node.WithClients(client))),
+			unannounce: m.announcer.Announce(name, node.HasServer(statuspb.RegisterStatusApiServer, statuspb.StatusApiServer(srv)), node.HasTrait(statuspb.TraitName)),
 		}
 		m.known[name] = mod
 	}

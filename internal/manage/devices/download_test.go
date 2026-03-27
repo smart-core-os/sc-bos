@@ -32,15 +32,11 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 	meterDevice := meterpb.NewModel()
 	_, _ = meterDevice.UpdateMeterReading(&meterpb.MeterReading{Usage: 200})
 	n.Announce("d1",
-		node.HasTrait(
-			meterpb.TraitName,
-			node.WithClients(
-				meterpb.WrapApi(meterpb.NewModelServer(meterDevice)),
-				meterpb.WrapInfo(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
-					UsageUnit: "tests per second",
-				}}),
-			),
-		),
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterDevice))),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
+			UsageUnit: "tests per second",
+		}})),
+		node.HasTrait(meterpb.TraitName),
 		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "01"}}),
 	)
 
@@ -51,12 +47,8 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 		AmbientHumidity:    proto.Float32(62.1),
 	})
 	n.Announce("d2",
-		node.HasTrait(
-			trait.AirTemperature,
-			node.WithClients(
-				airtemperaturepb.WrapApi(airtemperaturepb.NewModelServer(airTempDevice)),
-			),
-		),
+		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(airtemperaturepb.NewModelServer(airTempDevice))),
+		node.HasTrait(trait.AirTemperature),
 		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "02"}}),
 	)
 

@@ -57,7 +57,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 						names:  names,
 						logger: logger,
 					}
-					announce.Announce(cfg.Name, node.HasTrait(statuspb.TraitName, node.WithClients(statuspb.WrapApi(group))))
+					announce.Announce(cfg.Name,
+						node.HasServer(statuspb.RegisterStatusApiServer, statuspb.StatusApiServer(group)),
+						node.HasTrait(statuspb.TraitName),
+					)
 				}
 			}()
 		} else {
@@ -66,7 +69,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 				names:  cfg.StatusLogs,
 				logger: logger,
 			}
-			announce.Announce(cfg.Name, node.HasTrait(statuspb.TraitName, node.WithClients(statuspb.WrapApi(group))))
+			announce.Announce(cfg.Name,
+				node.HasServer(statuspb.RegisterStatusApiServer, statuspb.StatusApiServer(group)),
+				node.HasTrait(statuspb.TraitName),
+			)
 		}
 	}
 

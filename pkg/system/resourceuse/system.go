@@ -37,7 +37,8 @@ func (s *System) applyConfig(ctx context.Context, cfg Root) error {
 	announcer := node.NewReplaceAnnouncer(s.node)
 	announce := announcer.Replace(ctx)
 	announce.Announce(s.name,
-		node.HasTrait(resourceusepb.TraitName, node.WithClients(resourceusepb.WrapApi(modelServer))),
+		node.HasServer(resourceusepb.RegisterResourceUseApiServer, resourceusepb.ResourceUseApiServer(modelServer)),
+		node.HasTrait(resourceusepb.TraitName),
 	)
 
 	hiddenFsTypes := cfg.effectiveHiddenFsTypes()

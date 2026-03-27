@@ -100,14 +100,20 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	})
 
 	sc := newSecurityEventController(client, d.logger, cfg.NumSecurityEvents)
-	announcer.Announce(cfg.ScNamePrefix, node.HasTrait(securityeventpb.TraitName, node.WithClients(securityeventpb.WrapApi(sc))))
+	announcer.Announce(cfg.ScNamePrefix,
+		node.HasServer(securityeventpb.RegisterSecurityEventApiServer, securityeventpb.SecurityEventApiServer(sc)),
+		node.HasTrait(securityeventpb.TraitName),
+	)
 	grp.Go(func() error {
 		return sc.run(ctx, cfg.RefreshAlarms)
 	})
 
 	if cfg.OccupancyCountEnabled {
 		occupancyCtrl := newOccupancyEventController(client, d.logger, cfg.RefreshOccupancyInterval.Or(defaultOccupancyRefreshInterval))
-		announcer.Announce(path.Join(cfg.ScNamePrefix, "occupancy"), node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(occupancyCtrl))))
+		announcer.Announce(path.Join(cfg.ScNamePrefix, "occupancy"),
+			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancyCtrl)),
+			node.HasTrait(trait.OccupancySensor),
+		)
 		grp.Go(func() error {
 			if err := occupancyCtrl.run(ctx); err != nil {
 				return err

@@ -26,23 +26,31 @@ func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev confi
 		switch trait.Name(tn) {
 		case trait.AirQualitySensor:
 			model := airqualitysensorpb.NewModel()
-			client := airqualitysensorpb.WrapApi(airqualitysensorpb.NewModelServer(model))
-			a.Announce(dev.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(client)))
+			a.Announce(dev.Name,
+				node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(model))),
+				node.HasTrait(trait.AirQualitySensor),
+			)
 			go d.pullSampleAirQuality(ctx, dev, loc, model)
 		case trait.AirTemperature:
 			model := airtemperaturepb.NewModel()
-			client := airtemperaturepb.WrapApi(roAirTemperatureServer{airtemperaturepb.NewModelServer(model)})
-			a.Announce(dev.Name, node.HasTrait(trait.AirTemperature, node.WithClients(client)))
+			a.Announce(dev.Name,
+				node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(roAirTemperatureServer{airtemperaturepb.NewModelServer(model)})),
+				node.HasTrait(trait.AirTemperature),
+			)
 			go d.pullSampleAirTemperature(ctx, dev, loc, model)
 		case trait.BrightnessSensor:
 			model := brightnesssensorpb.NewModel()
-			client := brightnesssensorpb.WrapApi(brightnesssensorpb.NewModelServer(model))
-			a.Announce(dev.Name, node.HasTrait(trait.BrightnessSensor, node.WithClients(client)))
+			a.Announce(dev.Name,
+				node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, brightnesssensorpb.BrightnessSensorApiServer(brightnesssensorpb.NewModelServer(model))),
+				node.HasTrait(trait.BrightnessSensor),
+			)
 			go d.pullSampleBrightness(ctx, dev, loc, model)
 		case trait.EnergyStorage:
 			model := energystoragepb.NewModel()
-			client := energystoragepb.WrapApi(roEnergyStorageServer{energystoragepb.NewModelServer(model)})
-			a.Announce(dev.Name, node.HasTrait(trait.EnergyStorage, node.WithClients(client)))
+			a.Announce(dev.Name,
+				node.HasServer(energystoragepb.RegisterEnergyStorageApiServer, energystoragepb.EnergyStorageApiServer(roEnergyStorageServer{energystoragepb.NewModelServer(model)})),
+				node.HasTrait(trait.EnergyStorage),
+			)
 			go d.pullSampleEnergyLevel(ctx, dev, loc, model)
 		default:
 			return fmt.Errorf("unsupported trait %q", tn)

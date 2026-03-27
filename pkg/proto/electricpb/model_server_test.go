@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 	"log"
+
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func ExampleModelServer() {
 	mem := NewModel()
 	device := NewModelServer(mem)
 
-	client := WrapApi(device)
-	settings := WrapMemorySettingsApi(device)
+	client := NewElectricApiClient(wrap.ServerToClient(ElectricApi_ServiceDesc, device))
+	settings := NewMemorySettingsApiClient(wrap.ServerToClient(MemorySettingsApi_ServiceDesc, device))
 
 	ctx := context.Background()
 	_, err := settings.CreateMode(ctx, &CreateModeRequest{

@@ -11,6 +11,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func TestDeviceFetcher_Poll(t *testing.T) {
@@ -118,7 +119,7 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 				addDevices(n, tt.devices...)
 			}
 
-			client := devicespb.WrapApi(devicesmanage.NewServer(n))
+			client := devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesmanage.NewServer(n)))
 
 			initial := tt.initial
 
@@ -181,7 +182,7 @@ func TestDeviceFetcher_Poll_Error(t *testing.T) {
 	cancel()
 
 	n := node.New("test")
-	client := devicespb.WrapApi(devicesmanage.NewServer(n))
+	client := devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesmanage.NewServer(n)))
 
 	fetcher := &deviceFetcher{
 		client: client,
@@ -199,7 +200,7 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 	t.Run("streams changes", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			n := node.New("test")
-			client := devicespb.WrapApi(devicesmanage.NewServer(n))
+			client := devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesmanage.NewServer(n)))
 
 			fetcher := &deviceFetcher{
 				client: client,
@@ -243,7 +244,7 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 		cancel()
 
 		n := node.New("test")
-		client := devicespb.WrapApi(devicesmanage.NewServer(n))
+		client := devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesmanage.NewServer(n)))
 
 		fetcher := &deviceFetcher{
 			client: client,

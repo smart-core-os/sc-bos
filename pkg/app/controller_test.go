@@ -29,9 +29,8 @@ func TestController_protoPkgCompat(t *testing.T) {
 
 	// so there's something to return
 	c.Node.Announce("test-device",
-		node.HasTrait(meterpb.TraitName,
-			node.WithClients(meterpb.WrapApi(meterpb.NewModelServer(meterpb.NewModel()))),
-		),
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterpb.NewModel()))),
+		node.HasTrait(meterpb.TraitName),
 	)
 
 	bufl := bufconn.Listen(1024 * 1024)

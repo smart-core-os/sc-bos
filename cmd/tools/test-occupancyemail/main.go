@@ -63,8 +63,9 @@ func main() {
 		}
 	}
 	device := historypb.NewOccupancySensorServer(store)
-	client := occupancysensorpb.WrapHistory(device)
-	root.Announce("test", node.HasTrait(trait.OccupancySensor, node.WithClients(client)))
+	root.Announce("test",
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorHistoryServer, occupancysensorpb.OccupancySensorHistoryServer(device)),
+		node.HasTrait(trait.OccupancySensor))
 
 	serv := auto.Services{
 		Logger: logger,

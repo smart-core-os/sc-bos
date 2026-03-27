@@ -110,7 +110,10 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	// Announce the trait.
-	announcer.Announce(s.name, node.HasTrait(logpb.TraitName, node.WithClients(logpb.WrapApi(srv))))
+	announcer.Announce(s.name,
+		node.HasServer(logpb.RegisterLogApiServer, logpb.LogApiServer(srv)),
+		node.HasTrait(logpb.TraitName),
+	)
 
 	return nil
 }

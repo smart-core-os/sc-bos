@@ -46,7 +46,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 			logger:   logger,
 		}
 		f.devices.Add(t.Thermostats...)
-		announce.Announce(name, node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(group))))
+		announce.Announce(name,
+			node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(group)),
+			node.HasTrait(trait.AirTemperature),
+		)
 		return nil
 	}
 

@@ -21,8 +21,10 @@ func announceMeter(root node.Announcer, name, unit string, sleep time.Duration, 
 		MeterReading:                 &meterpb.MeterReadingSupport{UsageUnit: unit},
 	}
 
-	client := node.WithClients(meterpb.WrapApi(meterpb.NewModelServer(model)), meterpb.WrapInfo(modelInfoServer))
-	root.Announce(name, node.HasTrait(meterpb.TraitName, client))
+	root.Announce(name,
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(model))),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(modelInfoServer)),
+		node.HasTrait(meterpb.TraitName))
 
 	store := memstore.New()
 
@@ -42,7 +44,7 @@ func announceMeter(root node.Announcer, name, unit string, sleep time.Duration, 
 		time.Sleep(sleep)
 	}
 
-	root.Announce(name, node.HasClient(meterpb.WrapHistory(historypb.NewMeterServer(store))))
+	root.Announce(name, node.HasServer(meterpb.RegisterMeterHistoryServer, meterpb.MeterHistoryServer(historypb.NewMeterServer(store))))
 
 	return nil
 }

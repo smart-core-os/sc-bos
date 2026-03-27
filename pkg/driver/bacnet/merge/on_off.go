@@ -77,7 +77,10 @@ func (o *onOff) startPoll(init context.Context) (stop task.StopFn, err error) {
 }
 
 func (o *onOff) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(o.config.Name, node.HasTrait(trait.OnOff, node.WithClients(onoffpb.WrapApi(o))))
+	return a.Announce(o.config.Name,
+		node.HasServer(onoffpb.RegisterOnOffApiServer, onoffpb.OnOffApiServer(o)),
+		node.HasTrait(trait.OnOff),
+	)
 }
 
 func (o *onOff) GetOnOff(ctx context.Context, request *onoffpb.GetOnOffRequest) (*onoffpb.OnOff, error) {

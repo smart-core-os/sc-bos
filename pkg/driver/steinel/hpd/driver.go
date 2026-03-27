@@ -71,12 +71,18 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	announcer.Announce(cfg.Name,
 		node.HasMetadata(cfg.Metadata),
-		node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(d.airQualitySensor))),
-		node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(d.temperature))),
-		node.HasTrait(trait.BrightnessSensor, node.WithClients(brightnesssensorpb.WrapApi(d.brightnessSensor))),
-		node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(d.occupancy))),
-		node.HasTrait(soundsensorpb.TraitName, node.WithClients(soundsensorpb.WrapApi(d.soundSensor))),
-		node.HasTrait(udmipb.TraitName, node.WithClients(udmipb.WrapService(d.udmiServiceServer))),
+		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(d.airQualitySensor)),
+		node.HasTrait(trait.AirQualitySensor),
+		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(d.temperature)),
+		node.HasTrait(trait.AirTemperature),
+		node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, brightnesssensorpb.BrightnessSensorApiServer(d.brightnessSensor)),
+		node.HasTrait(trait.BrightnessSensor),
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(d.occupancy)),
+		node.HasTrait(trait.OccupancySensor),
+		node.HasServer(soundsensorpb.RegisterSoundSensorApiServer, soundsensorpb.SoundSensorApiServer(d.soundSensor)),
+		node.HasTrait(soundsensorpb.TraitName),
+		node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(d.udmiServiceServer)),
+		node.HasTrait(udmipb.TraitName),
 	)
 
 	faultCheck, err := d.health.NewFaultCheck(cfg.Name, commsHealthCheck)

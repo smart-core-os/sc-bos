@@ -10,6 +10,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/enterleave/config"
 )
 
@@ -34,9 +35,12 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 				names:  cfg.EnterLeaveSensors,
 				client: enterleavesensorpb.NewEnterLeaveSensorApiClient(f.clients.ClientConn()),
 			}
-			group.enterLeaveClients = append(group.enterLeaveClients, enterleavesensorpb.WrapApi(elServer))
+			group.enterLeaveClients = append(group.enterLeaveClients, enterleavesensorpb.NewEnterLeaveSensorApiClient(wrap.ServerToClient(enterleavesensorpb.EnterLeaveSensorApi_ServiceDesc, elServer)))
 		}
-		announce.Announce(cfg.Name, node.HasTrait(trait.EnterLeaveSensor, node.WithClients(enterleavesensorpb.WrapApi(group))))
+		announce.Announce(cfg.Name,
+			node.HasServer(enterleavesensorpb.RegisterEnterLeaveSensorApiServer, enterleavesensorpb.EnterLeaveSensorApiServer(group)),
+			node.HasTrait(trait.EnterLeaveSensor),
+		)
 	}
 
 	return nil

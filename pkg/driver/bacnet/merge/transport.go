@@ -100,7 +100,11 @@ func newTransport(client *gobacnet.Client, known known.Context, faultCheck *heal
 }
 
 func (t *transport) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(transportpb.TraitName, node.WithClients(transportpb.WrapApi(t), transportpb.WrapInfo(t))))
+	return a.Announce(t.config.Name,
+		node.HasServer(transportpb.RegisterTransportApiServer, transportpb.TransportApiServer(t)),
+		node.HasServer(transportpb.RegisterTransportInfoServer, transportpb.TransportInfoServer(t)),
+		node.HasTrait(transportpb.TraitName),
+	)
 }
 
 func (t *transport) startPoll(init context.Context) (stop task.StopFn, err error) {

@@ -54,7 +54,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 			logger:    logger,
 		}
 		f.devices.Add(devices...)
-		announce.Announce(name, node.HasTrait(trait.OpenClose, node.WithClients(openclosepb.WrapApi(group))))
+		announce.Announce(name,
+			node.HasServer(openclosepb.RegisterOpenCloseApiServer, openclosepb.OpenCloseApiServer(group)),
+			node.HasTrait(trait.OpenClose),
+		)
 	}
 
 	announceGroup(cfg.Name, cfg.OpenClose)

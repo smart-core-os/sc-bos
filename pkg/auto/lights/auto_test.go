@@ -15,7 +15,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
@@ -27,8 +26,14 @@ func TestPirsTurnLightsOn(t *testing.T) {
 	pir01 := occupancysensorpb.NewModel()
 	pir02 := occupancysensorpb.NewModel()
 	rootNode := node.New("test")
-	rootNode.Announce("pir01", node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(occupancysensorpb.NewModelServer(pir01)))))
-	rootNode.Announce("pir02", node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(occupancysensorpb.NewModelServer(pir02)))))
+	rootNode.Announce("pir01",
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(pir01))),
+		node.HasTrait(trait.OccupancySensor),
+	)
+	rootNode.Announce("pir02",
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(pir02))),
+		node.HasTrait(trait.OccupancySensor),
+	)
 
 	testActions := newTestActions(t)
 

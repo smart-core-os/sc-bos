@@ -133,7 +133,10 @@ func (s *securityEventImpl) startPoll(init context.Context) (stop task.StopFn, e
 }
 
 func (s *securityEventImpl) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(s.config.Name, node.HasTrait(securityeventpb.TraitName, node.WithClients(securityeventpb.WrapApi(s))))
+	return a.Announce(s.config.Name,
+		node.HasServer(securityeventpb.RegisterSecurityEventApiServer, securityeventpb.SecurityEventApiServer(s)),
+		node.HasTrait(securityeventpb.TraitName),
+	)
 }
 
 func (s *securityEventImpl) ListSecurityEvents(ctx context.Context, request *securityeventpb.ListSecurityEventsRequest) (*securityeventpb.ListSecurityEventsResponse, error) {

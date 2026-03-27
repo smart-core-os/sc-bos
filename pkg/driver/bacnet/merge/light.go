@@ -91,7 +91,11 @@ func newLight(client *gobacnet.Client, devices known.Context, faultCheck *health
 }
 
 func (l *light) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(l.config.Name, node.HasTrait(trait.Light, node.WithClients(lightpb2.WrapApi(l), lightpb2.WrapInfo(l))))
+	return a.Announce(l.config.Name,
+		node.HasServer(lightpb2.RegisterLightApiServer, lightpb2.LightApiServer(l)),
+		node.HasServer(lightpb2.RegisterLightInfoServer, lightpb2.LightInfoServer(l)),
+		node.HasTrait(trait.Light),
+	)
 }
 
 func (l *light) UpdateBrightness(ctx context.Context, request *lightpb.UpdateBrightnessRequest) (*lightpb.Brightness, error) {

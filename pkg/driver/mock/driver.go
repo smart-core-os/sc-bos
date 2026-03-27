@@ -45,7 +45,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
-	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 const DriverName = "mock"
@@ -112,18 +111,18 @@ func (d *Driver) applyConfig(_ context.Context, cfg config.Root) error {
 			// the trait is still in the device config, don't delete it
 			delete(toUndo, dt)
 
-			var traitOpts []node.TraitOption
 			var undo []node.Undo
 			if u, ok := d.known[dt]; ok {
 				undo = append(undo, u)
 			}
 
+			var features []node.Feature
 			if _, ok := d.known[dt]; !ok {
-				clients, slc := newMockClient(traitMd, device.Name, d.logger)
-				if len(clients) == 0 {
+				mockFeatures, slc := newMockClient(traitMd, device.Name, d.logger)
+				if len(mockFeatures) == 0 {
 					d.logger.Sugar().Warnf("Cannot create mock client %s::%s", dt.name, dt.trait)
 				} else {
-					traitOpts = append(traitOpts, node.WithClients(clients...))
+					features = append(features, mockFeatures...)
 
 					// start any mock trait automations - e.g. updating occupancy sensors
 					if slc != nil {
@@ -138,7 +137,8 @@ func (d *Driver) applyConfig(_ context.Context, cfg config.Root) error {
 					}
 				}
 			}
-			undo = append(undo, d.announcer.Announce(dt.name, node.HasTrait(dt.trait, traitOpts...)))
+			features = append(features, node.HasTrait(dt.trait))
+			undo = append(undo, d.announcer.Announce(dt.name, features...))
 			d.known[dt] = node.UndoAll(undo...)
 			undos = append(undos, undo...)
 		}
@@ -155,33 +155,33 @@ func (d *Driver) applyConfig(_ context.Context, cfg config.Root) error {
 	return nil
 }
 
-func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) ([]wrap.ServiceUnwrapper, service.Lifecycle) {
+func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) ([]node.Feature, service.Lifecycle) {
 	switch trait.Name(traitMd.Name) {
 	case trait.AirQualitySensor:
 		model := airqualitysensorpb.NewModel(airqualitysensorpb.WithInitialAirQuality(auto.GetAirQualityState()))
-		return []wrap.ServiceUnwrapper{airqualitysensorpb.WrapApi(airqualitysensorpb.NewModelServer(model))}, auto.AirQualitySensorAuto(model)
+		return []node.Feature{node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(model)))}, auto.AirQualitySensorAuto(model)
 	case trait.AirTemperature:
 		model := airtemperaturepb.NewModel()
-		return []wrap.ServiceUnwrapper{airtemperaturepb.WrapApi(airtemperaturepb.NewModelServer(model))}, auto.AirTemperatureAuto(model)
+		return []node.Feature{node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(airtemperaturepb.NewModelServer(model)))}, auto.AirTemperatureAuto(model)
 	case allocationpb.TraitName:
 		model := allocationpb.NewModel()
-		return []wrap.ServiceUnwrapper{allocationpb.WrapApi(allocationpb.NewModelServer(model))}, auto.AllocationAuto(model)
+		return []node.Feature{node.HasServer(allocationpb.RegisterAllocationApiServer, allocationpb.AllocationApiServer(allocationpb.NewModelServer(model)))}, auto.AllocationAuto(model)
 	case trait.Booking:
-		return []wrap.ServiceUnwrapper{bookingpb.WrapApi(bookingpb.NewModelServer(bookingpb.NewModel()))}, nil
+		return []node.Feature{node.HasServer(bookingpb.RegisterBookingApiServer, bookingpb.BookingApiServer(bookingpb.NewModelServer(bookingpb.NewModel())))}, nil
 	case trait.BrightnessSensor:
-		// todo: return []any{brightnesssensor.WrapApi(brightnesssensor.NewModelServer(brightnesssensor.NewModel()))}, nil
+		// todo: return []node.Feature{node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, ...)}, nil
 		return nil, nil
 	case trait.Channel:
-		// todo: return []any{channel.WrapApi(channel.NewModelServer(channel.NewModel())), nil
+		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil
 	case trait.Count:
-		// todo: return []any{count.WrapApi(count.NewModelServer(count.NewModel())), nil
+		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil
 	case trait.Electric:
 		model := electricpb.NewModel()
-		return []wrap.ServiceUnwrapper{electricpb.WrapApi(electricpb.NewModelServer(model))}, auto.Electric(model)
+		return []node.Feature{node.HasServer(electricpb.RegisterElectricApiServer, electricpb.ElectricApiServer(electricpb.NewModelServer(model)))}, auto.Electric(model)
 	case trait.Emergency:
-		// todo: return []any{emergency.WrapApi(emergency.NewModelServer(emergency.NewModel()))}, nil
+		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil
 	case trait.EnergyStorage:
 		model := energystoragepb.NewModel()
@@ -198,12 +198,12 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 				logger.Sugar().Warnf("Unknown energy storage device type '%s' for %s, defaulting to battery", k, deviceName)
 			}
 		}
-		return []wrap.ServiceUnwrapper{energystoragepb.WrapApi(energystoragepb.NewModelServer(model))}, auto.EnergyStorage(model, kind)
+		return []node.Feature{node.HasServer(energystoragepb.RegisterEnergyStorageApiServer, energystoragepb.EnergyStorageApiServer(energystoragepb.NewModelServer(model)))}, auto.EnergyStorage(model, kind)
 	case trait.EnterLeaveSensor:
 		model := enterleavesensorpb.NewModel()
-		return []wrap.ServiceUnwrapper{enterleavesensorpb.WrapApi(enterleavesensorpb.NewModelServer(model))}, auto.EnterLeaveAuto(model)
+		return []node.Feature{node.HasServer(enterleavesensorpb.RegisterEnterLeaveSensorApiServer, enterleavesensorpb.EnterLeaveSensorApiServer(enterleavesensorpb.NewModelServer(model)))}, auto.EnterLeaveAuto(model)
 	case trait.ExtendRetract:
-		// todo: return []any{extendretract.WrapApi(extendretract.NewModelServer(extendretract.NewModel()))}, nil
+		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil
 	case trait.FanSpeed:
 		presets := []fanspeedpb2.Preset{
@@ -214,11 +214,11 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 			{Name: "full", Percentage: 100},
 		}
 		model := fanspeedpb2.NewModel(fanspeedpb2.WithPresets(presets...))
-		return []wrap.ServiceUnwrapper{fanspeedpb2.WrapApi(fanspeedpb2.NewModelServer(model))}, auto.FanSpeed(model, presets...)
+		return []node.Feature{node.HasServer(fanspeedpb2.RegisterFanSpeedApiServer, fanspeedpb2.FanSpeedApiServer(fanspeedpb2.NewModelServer(model)))}, auto.FanSpeed(model, presets...)
 	case trait.Hail:
-		return []wrap.ServiceUnwrapper{hailpb.WrapApi(hailpb.NewModelServer(hailpb.NewModel()))}, nil
+		return []node.Feature{node.HasServer(hailpb.RegisterHailApiServer, hailpb.HailApiServer(hailpb.NewModelServer(hailpb.NewModel())))}, nil
 	case trait.InputSelect:
-		// todo: return []any{inputselect.WrapApi(inputselect.NewModelServer(inputselect.NewModel()))}, nil
+		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil
 	case trait.Light:
 		server := lightpb.NewModelServer(lightpb.NewModel(
@@ -228,53 +228,56 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 			lightpb.WithPreset(80, &lightpb.LightPreset{Name: "high", Title: "High"}),
 			lightpb.WithPreset(100, &lightpb.LightPreset{Name: "full", Title: "Full"}),
 		))
-		return []wrap.ServiceUnwrapper{lightpb.WrapApi(server), lightpb.WrapInfo(server)}, nil
+		return []node.Feature{
+			node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(server)),
+			node.HasServer(lightpb.RegisterLightInfoServer, lightpb.LightInfoServer(server)),
+		}, nil
 	case trait.LockUnlock:
-		// todo: return []any{lockunlock.WrapApi(lockunlock.NewModelServer(lockunlock.NewModel()))}, nil
+		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil
 	case trait.Metadata:
-		return []wrap.ServiceUnwrapper{metadatapb.WrapApi(metadatapb.NewModelServer(metadatapb.NewModel()))}, nil
+		return []node.Feature{node.HasServer(metadatapb.RegisterMetadataApiServer, metadatapb.MetadataApiServer(metadatapb.NewModelServer(metadatapb.NewModel())))}, nil
 	case trait.Microphone:
-		// todo: return []any{microphone.WrapApi(microphone.NewModelServer(microphone.NewModel()))}, nil
+		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil
 	case trait.Mode:
 		return mockMode(traitMd, deviceName, logger)
 	case trait.MotionSensor:
-		// todo: return []any{motionsensor.WrapApi(motionsensor.NewModelServer(motionsensor.NewModel()))}, nil
+		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil
 	case trait.OccupancySensor:
 		model := occupancysensorpb.NewModel()
-		return []wrap.ServiceUnwrapper{occupancysensorpb.WrapApi(occupancysensorpb.NewModelServer(model))}, auto.OccupancySensorAuto(model)
+		return []node.Feature{node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(model)))}, auto.OccupancySensorAuto(model)
 	case trait.OnOff:
-		return []wrap.ServiceUnwrapper{onoffpb.WrapApi(onoffpb.NewModelServer(onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}))))}, nil
+		return []node.Feature{node.HasServer(onoffpb.RegisterOnOffApiServer, onoffpb.OnOffApiServer(onoffpb.NewModelServer(onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF})))))}, nil
 	case trait.OpenClose:
 		return mockOpenClose(traitMd, deviceName, logger)
 	case trait.Parent:
-		return []wrap.ServiceUnwrapper{parentpb.WrapApi(parentpb.NewModelServer(parentpb.NewModel()))}, nil
+		return []node.Feature{node.HasServer(parentpb.RegisterParentApiServer, parentpb.ParentApiServer(parentpb.NewModelServer(parentpb.NewModel())))}, nil
 	case trait.Publication:
-		return []wrap.ServiceUnwrapper{publicationpb.WrapApi(publicationpb.NewModelServer(publicationpb.NewModel()))}, nil
+		return []node.Feature{node.HasServer(publicationpb.RegisterPublicationApiServer, publicationpb.PublicationApiServer(publicationpb.NewModelServer(publicationpb.NewModel())))}, nil
 	case trait.Ptz:
-		// todo: return []any{ptz.WrapApi(ptz.NewModelServer(ptz.NewModel()))}, nil
+		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil
 	case trait.Speaker:
-		// todo: return []any{speaker.WrapApi(speaker.NewModelServer(speaker.NewModel())), nil
+		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil
 	case trait.Vending:
-		return []wrap.ServiceUnwrapper{vendingpb.WrapApi(vendingpb.NewModelServer(vendingpb.NewModel()))}, nil
+		return []node.Feature{node.HasServer(vendingpb.RegisterVendingApiServer, vendingpb.VendingApiServer(vendingpb.NewModelServer(vendingpb.NewModel())))}, nil
 
 	case accesspb.TraitName:
 		model := accesspb.NewModel()
-		return []wrap.ServiceUnwrapper{accesspb.WrapApi(accesspb.NewModelServer(model))}, auto.Access(model)
+		return []node.Feature{node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(accesspb.NewModelServer(model)))}, auto.Access(model)
 	case buttonpb.TraitName:
-		return []wrap.ServiceUnwrapper{buttonpb.WrapApi(buttonpb.NewModelServer(buttonpb.NewModel(buttonpb.ButtonState_UNPRESSED)))}, nil
+		return []node.Feature{node.HasServer(buttonpb.RegisterButtonApiServer, buttonpb.ButtonApiServer(buttonpb.NewModelServer(buttonpb.NewModel(buttonpb.ButtonState_UNPRESSED))))}, nil
 	case emergencylightpb.TraitName:
 		model := emergencylightpb.NewModel()
 		model.SetLastDurationTest(emergencylightpb.EmergencyTestResult_TEST_PASSED)
 		model.SetLastFunctionalTest(emergencylightpb.EmergencyTestResult_TEST_PASSED)
-		return []wrap.ServiceUnwrapper{emergencylightpb.WrapApi(emergencylightpb.NewModelServer(model))}, nil
+		return []node.Feature{node.HasServer(emergencylightpb.RegisterEmergencyLightApiServer, emergencylightpb.EmergencyLightApiServer(emergencylightpb.NewModelServer(model)))}, nil
 	case fluidflowpb.TraitName:
 		model := fluidflowpb.NewModel()
-		return []wrap.ServiceUnwrapper{fluidflowpb.WrapApi(fluidflowpb.NewModelServer(model))}, auto.FluidFlow(model)
+		return []node.Feature{node.HasServer(fluidflowpb.RegisterFluidFlowApiServer, fluidflowpb.FluidFlowApiServer(fluidflowpb.NewModelServer(model)))}, auto.FluidFlow(model)
 	case meterpb.TraitName:
 		var (
 			unit string
@@ -293,24 +296,27 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 			},
 			UsageUnit: unit,
 		}}
-		return []wrap.ServiceUnwrapper{meterpb.WrapApi(meterpb.NewModelServer(model)), meterpb.WrapInfo(info)}, auto.MeterAuto(model)
+		return []node.Feature{
+			node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(model))),
+			node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(info)),
+		}, auto.MeterAuto(model)
 	case pressurepb.TraitName:
 		model := pressurepb.NewModel()
-		return []wrap.ServiceUnwrapper{pressurepb.WrapApi(pressurepb.NewModelServer(model))}, auto.Pressure(model)
+		return []node.Feature{node.HasServer(pressurepb.RegisterPressureApiServer, pressurepb.PressureApiServer(pressurepb.NewModelServer(model)))}, auto.Pressure(model)
 	case securityeventpb.TraitName:
 		model := securityeventpb.NewModel()
-		return []wrap.ServiceUnwrapper{securityeventpb.WrapApi(securityeventpb.NewModelServer(model))}, auto.SecurityEventAuto(model)
+		return []node.Feature{node.HasServer(securityeventpb.RegisterSecurityEventApiServer, securityeventpb.SecurityEventApiServer(securityeventpb.NewModelServer(model)))}, auto.SecurityEventAuto(model)
 	case soundsensorpb.TraitName:
 		model := soundsensorpb.NewModel()
-		return []wrap.ServiceUnwrapper{soundsensorpb.WrapApi(soundsensorpb.NewModelServer(model))}, auto.SoundSensorAuto(model)
+		return []node.Feature{node.HasServer(soundsensorpb.RegisterSoundSensorApiServer, soundsensorpb.SoundSensorApiServer(soundsensorpb.NewModelServer(model)))}, auto.SoundSensorAuto(model)
 	case statuspb.TraitName:
 		model := statuspb.NewModel()
 		// set an initial value or Pull methods can hang
 		_, _ = model.UpdateProblem(&statuspb.StatusLog_Problem{Name: deviceName, Level: statuspb.StatusLog_NOMINAL})
-		return []wrap.ServiceUnwrapper{statuspb.WrapApi(statuspb.NewModelServer(model))}, auto.Status(model, deviceName)
+		return []node.Feature{node.HasServer(statuspb.RegisterStatusApiServer, statuspb.StatusApiServer(statuspb.NewModelServer(model)))}, auto.Status(model, deviceName)
 	case temperaturepb.TraitName:
 		model := temperaturepb.NewModel()
-		return []wrap.ServiceUnwrapper{temperaturepb.WrapApi(temperaturepb.NewModelServer(model))}, auto.TemperatureAuto(model)
+		return []node.Feature{node.HasServer(temperaturepb.RegisterTemperatureApiServer, temperaturepb.TemperatureApiServer(temperaturepb.NewModelServer(model)))}, auto.TemperatureAuto(model)
 	case transportpb.TraitName:
 		model := transportpb.NewModel()
 		maxFloor := 10
@@ -322,12 +328,12 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 				return nil, nil
 			}
 		}
-		return []wrap.ServiceUnwrapper{transportpb.WrapApi(transportpb.NewModelServer(model))}, auto.TransportAuto(model, maxFloor)
+		return []node.Feature{node.HasServer(transportpb.RegisterTransportApiServer, transportpb.TransportApiServer(transportpb.NewModelServer(model)))}, auto.TransportAuto(model, maxFloor)
 	case udmipb.TraitName:
-		return []wrap.ServiceUnwrapper{udmipb.WrapService(auto.NewUdmiServer(logger, deviceName))}, nil
+		return []node.Feature{node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(auto.NewUdmiServer(logger, deviceName)))}, nil
 	case wastepb.TraitName:
 		model := wastepb.NewModel()
-		return []wrap.ServiceUnwrapper{wastepb.WrapApi(wastepb.NewModelServer(model))}, auto.WasteRecordsAuto(model)
+		return []node.Feature{node.HasServer(wastepb.RegisterWasteApiServer, wastepb.WasteApiServer(wastepb.NewModelServer(model)))}, auto.WasteRecordsAuto(model)
 	}
 
 	return nil, nil

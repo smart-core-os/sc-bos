@@ -15,7 +15,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
@@ -321,7 +320,8 @@ func (h *testHarness) configureAirTempMonitor() {
 
 func (h *testHarness) addAirTempDevice(name string, model *airtemperaturepb.Model) node.Undo {
 	return h.node.Announce(name,
-		node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb2.WrapApi(airtemperaturepb.NewModelServer(model)))),
+		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(airtemperaturepb.NewModelServer(model))),
+		node.HasTrait(trait.AirTemperature),
 	)
 }
 

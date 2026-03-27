@@ -59,7 +59,11 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 			historyBackupConf: cfg.HistoryBackup,
 		}
 		f.devices.Add(devices...)
-		announce.Announce(name, node.HasTrait(meterpb.TraitName, node.WithClients(meterpb.WrapApi(group), meterpb.WrapInfo(group))))
+		announce.Announce(name,
+			node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(group)),
+			node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(group)),
+			node.HasTrait(meterpb.TraitName),
+		)
 	}
 
 	announceGroup(cfg.Name, cfg.Meters)

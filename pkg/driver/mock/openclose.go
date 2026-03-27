@@ -7,11 +7,11 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/auto"
+	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // mockOpenClose returns a mock OpenClose device and automation.
@@ -19,14 +19,17 @@ import (
 // Configuration of the mock device is done via the trait metadata more map.
 // You can specify a "presets" key which has the JSON format of `[{name, title?, positions}, ...]`,
 // where `positions` is the protojson representation of either a single or array of traits.OpenClosePosition.
-func mockOpenClose(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) ([]wrap.ServiceUnwrapper, service.Lifecycle) {
+func mockOpenClose(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) ([]node.Feature, service.Lifecycle) {
 	var opts []resource.Option
 
 	opts = append(opts, parseOpenClosePresets(traitMd, deviceName, logger)...)
 
 	model := openclosepb.NewModel(opts...)
 	server := openclosepb.NewModelServer(model)
-	return []wrap.ServiceUnwrapper{openclosepb.WrapApi(server), openclosepb.WrapInfo(server)}, auto.OpenClose(model)
+	return []node.Feature{
+		node.HasServer(openclosepb.RegisterOpenCloseApiServer, openclosepb.OpenCloseApiServer(server)),
+		node.HasServer(openclosepb.RegisterOpenCloseInfoServer, openclosepb.OpenCloseInfoServer(server)),
+	}, auto.OpenClose(model)
 }
 
 func parseOpenClosePresets(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) []resource.Option {

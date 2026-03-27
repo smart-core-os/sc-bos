@@ -75,7 +75,10 @@ func (a *access) startPoll(init context.Context) (stop task.StopFn, err error) {
 }
 
 func (a *access) AnnounceSelf(ann node.Announcer) node.Undo {
-	return ann.Announce(a.cfg.Name, node.HasTrait(accesspb.TraitName, node.WithClients(accesspb.WrapApi(a))))
+	return ann.Announce(a.cfg.Name,
+		node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(a)),
+		node.HasTrait(accesspb.TraitName),
+	)
 }
 
 func (a *access) GetLastAccessAttempt(ctx context.Context, request *accesspb.GetLastAccessAttemptRequest) (*accesspb.AccessAttempt, error) {

@@ -46,7 +46,11 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 		cfg:    cfg,
 		logger: logger,
 	}
-	announce.Announce(cfg.Name, node.HasTrait(trait.Mode, node.WithClients(modepb.WrapApi(group), modepb.WrapInfo(group))))
+	announce.Announce(cfg.Name,
+		node.HasServer(modepb.RegisterModeApiServer, modepb.ModeApiServer(group)),
+		node.HasServer(modepb.RegisterModeInfoServer, modepb.ModeInfoServer(group)),
+		node.HasTrait(trait.Mode),
+	)
 
 	return nil
 }

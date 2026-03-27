@@ -95,7 +95,10 @@ func (t *emergencyImpl) startPoll(init context.Context) (stop task.StopFn, err e
 }
 
 func (t *emergencyImpl) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(trait.Emergency, node.WithClients(emergencypb.WrapApi(t))))
+	return a.Announce(t.config.Name,
+		node.HasServer(emergencypb.RegisterEmergencyApiServer, emergencypb.EmergencyApiServer(t)),
+		node.HasTrait(trait.Emergency),
+	)
 }
 
 func (t *emergencyImpl) GetEmergency(ctx context.Context, request *emergencypb.GetEmergencyRequest) (*emergencypb.Emergency, error) {

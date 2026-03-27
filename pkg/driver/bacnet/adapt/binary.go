@@ -97,7 +97,8 @@ func (b *binaryOnOff) PullOnOff(request *onoffpb.PullOnOffRequest, server onoffp
 
 func (b *binaryOnOff) AnnounceSelf(a node.Announcer) node.Undo {
 	return a.Announce(b.name(),
-		node.HasTrait(trait.OnOff, node.WithClients(onoffpb.WrapApi(b))),
+		node.HasServer(onoffpb.RegisterOnOffApiServer, onoffpb.OnOffApiServer(b)),
+		node.HasTrait(trait.OnOff),
 	)
 }
 

@@ -15,6 +15,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-bos/internal/th"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // todo: test one, some, all failures for get, update, pull
@@ -69,9 +70,9 @@ type brightnessTester struct {
 
 func newBrightnessTester(t *testing.T, members ...string) *brightnessTester {
 	devices := NewApiRouter(WithLightApiClientFactory(func(name string) (LightApiClient, error) {
-		return WrapApi(NewModelServer(NewModel())), nil
+		return NewLightApiClient(wrap.ServerToClient(LightApi_ServiceDesc, NewModelServer(NewModel()))), nil
 	}))
-	impl := WrapApi(devices)
+	impl := NewLightApiClient(wrap.ServerToClient(LightApi_ServiceDesc, devices))
 	group := NewGroup(impl, members...)
 
 	// server and client setup

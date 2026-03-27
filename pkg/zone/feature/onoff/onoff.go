@@ -49,7 +49,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 			logger: logger,
 		}
 		f.devices.Add(devices...)
-		announce.Announce(name, node.HasTrait(trait.OnOff, node.WithClients(onoffpb.WrapApi(group))))
+		announce.Announce(name,
+			node.HasServer(onoffpb.RegisterOnOffApiServer, onoffpb.OnOffApiServer(group)),
+			node.HasTrait(trait.OnOff),
+		)
 	}
 
 	announceGroup(cfg.Name, cfg.OnOffs)

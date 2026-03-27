@@ -145,7 +145,7 @@ func (a *Area) applyConfig(ctx context.Context, cfg config.Root) error {
 	// make the zone area implement the ServicesApi
 	m := service.NewMapOf(featureImpls)
 	api := serviceapi.NewApi(m)
-	announce.Announce(cfg.Name, node.HasClient(servicespb.WrapApi(api)))
+	announce.Announce(cfg.Name, node.HasServer(servicespb.RegisterServicesApiServer, servicespb.ServicesApiServer(api)))
 
 	// stop all features if the area is stopped
 	go func() {

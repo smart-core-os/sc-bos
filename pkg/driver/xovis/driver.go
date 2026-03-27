@@ -107,8 +107,10 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 				bus:            d.pushDataBus,
 				OccupancyTotal: resource.NewValue(resource.WithInitialValue(&occupancysensorpb.Occupancy{}), resource.WithNoDuplicates()),
 			}
-			features = append(features, node.HasTrait(trait.OccupancySensor,
-				node.WithClients(occupancysensorpb.WrapApi(occupancy))))
+			features = append(features,
+				node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancy)),
+				node.HasTrait(trait.OccupancySensor),
+			)
 			occupancyVal = occupancy.OccupancyTotal
 		}
 		var enterLeaveVal *resource.Value
@@ -122,16 +124,20 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 				EnterLeaveTotal: resource.NewValue(resource.WithInitialValue(&enterleavesensorpb.EnterLeaveEvent{}), resource.WithNoDuplicates()),
 			}
 
-			features = append(features, node.HasTrait(trait.EnterLeaveSensor,
-				node.WithClients(enterleavesensorpb.WrapApi(enterLeave))))
+			features = append(features,
+				node.HasServer(enterleavesensorpb.RegisterEnterLeaveSensorApiServer, enterleavesensorpb.EnterLeaveSensorApiServer(enterLeave)),
+				node.HasTrait(trait.EnterLeaveSensor),
+			)
 			enterLeaveVal = enterLeave.EnterLeaveTotal
 		}
 
 		if enterLeaveVal != nil || occupancyVal != nil {
 			server := newUdmiServiceServer(d.logger.Named("udmiServiceServer"), enterLeaveVal, occupancyVal, dev.UDMITopicPrefix)
 			d.udmiServers = append(d.udmiServers, server)
-			features = append(features, node.HasTrait(udmipb.TraitName,
-				node.WithClients(udmipb.WrapService(server))))
+			features = append(features,
+				node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(server)),
+				node.HasTrait(udmipb.TraitName),
+			)
 		}
 
 		announcer.Announce(dev.Name, features...)

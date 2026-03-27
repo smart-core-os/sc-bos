@@ -10,7 +10,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
-	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -33,7 +32,7 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 		service.WithParser(ParseConfig),
 	)
 	d.logger = services.Logger.Named(DriverName)
-	d.lightsByAddress = make(map[string]*lightpb2.Model)
+	d.lightsByAddress = make(map[string]*lightpb.Model)
 	d.modesByAddress = make(map[string]*modepb.Model)
 	return d
 }
@@ -46,7 +45,7 @@ type Driver struct {
 
 	cfg             Config
 	client          *Client
-	lightsByAddress map[string]*lightpb2.Model
+	lightsByAddress map[string]*lightpb.Model
 	modesByAddress  map[string]*modepb.Model
 }
 
@@ -80,14 +79,21 @@ func (d *Driver) applyConfig(ctx context.Context, cfg Config) error {
 		for t, addr := range dev.Addresses {
 			switch t {
 			case "light":
-				l := lightpb2.NewModel()
-				c := lightpb2.WrapApi(lightServer{
-					LightApiServer: lightpb2.NewModelServer(l),
-					client:         d.client,
-					device:         &_dev,
-					logger:         d.logger.With(zap.String("name", dev.Name)),
-				})
-				announcer.Announce(dev.Name, node.HasTrait(trait.Light, node.WithClients(c)))
+				l := lightpb.NewModel()
+				announcer.Announce(
+					dev.Name,
+					node.HasServer(
+						lightpb.RegisterLightApiServer, lightpb.LightApiServer(
+							lightServer{
+								LightApiServer: lightpb.NewModelServer(l),
+								client:         d.client,
+								device:         &_dev,
+								logger:         d.logger.With(zap.String("name", dev.Name)),
+							},
+						),
+					),
+					node.HasTrait(trait.Light),
+				)
 
 				d.lightsByAddress[addr] = l
 			case "override":
@@ -110,15 +116,16 @@ func (d *Driver) applyConfig(ctx context.Context, cfg Config) error {
 					},
 				}
 
-				announcer.Announce(dev.Name, node.HasTrait(trait.Mode, node.WithClients(
-					modepb.WrapApi(&modeServer{
+				announcer.Announce(dev.Name,
+					node.HasServer(modepb.RegisterModeApiServer, modepb.ModeApiServer(&modeServer{
 						ModeApiServer: modepb.NewModelServer(modeModel),
 						client:        d.client,
 						device:        &_dev,
 						logger:        d.logger.With(zap.String("name", dev.Name)),
-					}),
-					modepb.WrapInfo(s),
-				)))
+					})),
+					node.HasServer(modepb.RegisterModeInfoServer, modepb.ModeInfoServer(s)),
+					node.HasTrait(trait.Mode),
+				)
 
 				d.modesByAddress[addr] = modeModel
 			}

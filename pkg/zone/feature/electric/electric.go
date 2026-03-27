@@ -53,7 +53,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 			logger: logger,
 		}
 		f.devices.Add(devices...)
-		announce.Announce(name, node.HasTrait(trait.Electric, node.WithClients(electricpb.WrapApi(group))))
+		announce.Announce(name,
+			node.HasServer(electricpb.RegisterElectricApiServer, electricpb.ElectricApiServer(group)),
+			node.HasTrait(trait.Electric),
+		)
 	}
 
 	announceGroup(cfg.Name, cfg.Electrics)

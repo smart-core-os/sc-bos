@@ -82,7 +82,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		announcer.Announce(device.Name,
 			node.HasMetadata(device.Metadata),
-			node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(sensor))))
+			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(sensor)),
+			node.HasTrait(trait.OccupancySensor))
 	}
 
 	var responseHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {

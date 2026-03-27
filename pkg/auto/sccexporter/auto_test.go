@@ -15,15 +15,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
-	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
-	metadatapb2 "github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -56,10 +52,12 @@ func TestMetadata(t *testing.T) {
 		},
 	}
 
-	metaModel := metadatapb2.NewModel(resource.WithInitialValue(metadata))
-	modelServer := metadatapb2.NewModelServer(metaModel)
-	metaClient := node.WithClients(metadatapb2.WrapApi(modelServer))
-	root.Announce("foo", node.HasTrait(trait.Metadata, metaClient))
+	metaModel := metadatapb.NewModel(resource.WithInitialValue(metadata))
+	modelServer := metadatapb.NewModelServer(metaModel)
+	root.Announce("foo",
+		node.HasServer(metadatapb.RegisterMetadataApiServer, metadatapb.MetadataApiServer(modelServer)),
+		node.HasTrait(trait.Metadata),
+	)
 
 	sccexporter.initialiseClients(root)
 
@@ -331,9 +329,9 @@ func TestGetMeterDeviceAndData(t *testing.T) {
 	devicesApi := devices.NewServer(root)
 	meterModel := meterpb.NewModel(resource.WithInitialValue(meterReading))
 	modelServer := meterpb.NewModelServer(meterModel)
-	meterClient := node.WithClients(meterpb.WrapApi(modelServer))
 	root.Announce("foo",
-		node.HasTrait(meterpb.TraitName, meterClient),
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(modelServer)),
+		node.HasTrait(meterpb.TraitName),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
@@ -398,12 +396,10 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	meterModel := meterpb.NewModel(resource.WithInitialValue(meterReading))
 	modelServer := meterpb.NewModelServer(meterModel)
 	infoServer := &meterpb.InfoServer{MeterReading: meterInfo}
-	meterClient := node.WithClients(
-		meterpb.WrapApi(modelServer),
-		meterpb.WrapInfo(infoServer),
-	)
 	root.Announce("foo",
-		node.HasTrait(meterpb.TraitName, meterClient),
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(modelServer)),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(infoServer)),
+		node.HasTrait(meterpb.TraitName),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
@@ -476,9 +472,9 @@ func TestGetAirQualityDeviceAndData(t *testing.T) {
 	_, err = airQualityModel.UpdateAirQuality(airQuality)
 	require.NoError(t, err)
 	modelServer := airqualitysensorpb.NewModelServer(airQualityModel)
-	airQualityClient := node.WithClients(airqualitysensorpb2.WrapApi(modelServer))
 	root.Announce("foo",
-		node.HasTrait(trait.AirQualitySensor, airQualityClient),
+		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(modelServer)),
+		node.HasTrait(trait.AirQualitySensor),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
@@ -533,9 +529,9 @@ func TestGetAirTemperatureDeviceAndData(t *testing.T) {
 	_, err = airTemperatureModel.UpdateAirTemperature(airTemperature)
 	require.NoError(t, err)
 	modelServer := airtemperaturepb.NewModelServer(airTemperatureModel)
-	airTemperatureClient := node.WithClients(airtemperaturepb2.WrapApi(modelServer))
 	root.Announce("foo",
-		node.HasTrait(trait.AirTemperature, airTemperatureClient),
+		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(modelServer)),
+		node.HasTrait(trait.AirTemperature),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
@@ -591,9 +587,9 @@ func TestGetOccupancyDeviceAndData(t *testing.T) {
 	_, err = occupancyModel.SetOccupancy(occupancy)
 	require.NoError(t, err)
 	modelServer := occupancysensorpb.NewModelServer(occupancyModel)
-	occupancyClient := node.WithClients(occupancysensorpb2.WrapApi(modelServer))
 	root.Announce("foo",
-		node.HasTrait(trait.OccupancySensor, occupancyClient),
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(modelServer)),
+		node.HasTrait(trait.OccupancySensor),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 

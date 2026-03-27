@@ -15,8 +15,9 @@ func announceOccupancy(root node.Announcer, name string, val int32) error {
 	if err != nil {
 		return err
 	}
-	client := node.WithClients(occupancysensorpb.WrapApi(occupancysensorpb.NewModelServer(model)))
-	root.Announce(name, node.HasTrait(trait.OccupancySensor, client))
+	root.Announce(name,
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(model))),
+		node.HasTrait(trait.OccupancySensor))
 	return nil
 }
 
@@ -26,8 +27,9 @@ func announceTemperature(root node.Announcer, name string, celsius float64) erro
 	if err != nil {
 		return err
 	}
-	client := node.WithClients(airtemperaturepb.WrapApi(airtemperaturepb.NewModelServer(model)))
-	root.Announce(name, node.HasTrait(trait.AirTemperature, client))
+	root.Announce(name,
+		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(airtemperaturepb.NewModelServer(model))),
+		node.HasTrait(trait.AirTemperature))
 	return nil
 }
 
@@ -37,7 +39,8 @@ func announceAirQuality(root node.Announcer, name string, val float32) error {
 	if err != nil {
 		return err
 	}
-	client := node.WithClients(airqualitysensorpb.WrapApi(airqualitysensorpb.NewModelServer(model)))
-	root.Announce(name, node.HasTrait(trait.AirQualitySensor, client))
+	root.Announce(name,
+		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(model))),
+		node.HasTrait(trait.AirQualitySensor))
 	return nil
 }

@@ -29,8 +29,9 @@ func main() {
 		m := statuspb.NewModel()
 		m.UpdateProblem(&statuspb.StatusLog_Problem{Name: "test", Level: statuspb.StatusLog_OFFLINE})
 		models = append(models, m)
-		client := node.WithClients(statuspb.WrapApi(statuspb.NewModelServer(m)))
-		root.Announce(fmt.Sprintf("device-%d", i), node.HasTrait(statuspb.TraitName, client),
+		root.Announce(fmt.Sprintf("device-%d", i),
+			node.HasServer(statuspb.RegisterStatusApiServer, statuspb.StatusApiServer(statuspb.NewModelServer(m))),
+			node.HasTrait(statuspb.TraitName),
 			node.HasMetadata(&metadatapb.Metadata{
 				Appearance: &metadatapb.Metadata_Appearance{Title: fmt.Sprintf("Device %d", i)},
 				Location:   &metadatapb.Metadata_Location{Floor: fmt.Sprintf("Floor %d", i%10), Zone: fmt.Sprintf("Room %d", i%5)},

@@ -117,7 +117,10 @@ func (t *airTemperature) startPoll(init context.Context) (stop task.StopFn, err 
 }
 
 func (t *airTemperature) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(t))))
+	return a.Announce(t.config.Name,
+		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(t)),
+		node.HasTrait(trait.AirTemperature),
+	)
 }
 
 func (t *airTemperature) GetAirTemperature(ctx context.Context, request *airtemperaturepb.GetAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {

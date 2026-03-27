@@ -83,16 +83,16 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 			return fmt.Errorf("init: %w", err)
 		}
 
-		announcer.Announce(s.name, node.HasClient(
-			alertpb.WrapApi(server),
-			alertpb.WrapAdminApi(server),
-		))
+		announcer.Announce(s.name,
+			node.HasServer(alertpb.RegisterAlertApiServer, alertpb.AlertApiServer(server)),
+			node.HasServer(alertpb.RegisterAlertAdminApiServer, alertpb.AlertAdminApiServer(server)),
+		)
 	case config.StorageTypeHub:
 		server := hubalerts.NewServer("", s.name, s.cohortManager)
-		announcer.Announce(s.name, node.HasClient(
-			alertpb.WrapApi(server),
-			alertpb.WrapAdminApi(server),
-		))
+		announcer.Announce(s.name,
+			node.HasServer(alertpb.RegisterAlertApiServer, alertpb.AlertApiServer(server)),
+			node.HasServer(alertpb.RegisterAlertAdminApiServer, alertpb.AlertAdminApiServer(server)),
+		)
 	default:
 		return fmt.Errorf("unsuported storage type %s", cfg.Storage.Type)
 	}

@@ -42,7 +42,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
-	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func TestSystem_scanRemoteHub(t *testing.T) {
@@ -312,9 +311,9 @@ func newMockRemoteNode(t *testing.T, name string) *mockRemoteNode {
 		{"zones", rn.zones},
 	}
 	for _, svc := range services {
-		client := servicespb.WrapApi(serviceapi.NewApi(svc.store))
-		n.Announce(svc.base, node.HasClient(client))
-		n.Announce(path.Join(name, svc.base), node.HasClient(client))
+		svcServer := serviceapi.NewApi(svc.store)
+		n.Announce(svc.base, node.HasServer(servicespb.RegisterServicesApiServer, servicespb.ServicesApiServer(svcServer)))
+		n.Announce(path.Join(name, svc.base), node.HasServer(servicespb.RegisterServicesApiServer, servicespb.ServicesApiServer(svcServer)))
 	}
 
 	go func() {
@@ -432,16 +431,22 @@ func (n *mockRemoteNode) announceDeviceTraits(name string, tns ...trait.Name) {
 	}
 	var opts []node.Feature
 	for _, tn := range tns {
-		var client wrap.ServiceUnwrapper
 		switch tn {
 		case meterpb.TraitName:
-			client = meterpb.WrapApi(meterpb.NewModelServer(meterpb.NewModel()))
+			srv := meterpb.NewModelServer(meterpb.NewModel())
+			opts = append(opts,
+				node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(srv)),
+				node.HasTrait(tn),
+			)
 		case trait.OnOff:
-			client = onoffpb.WrapApi(onoffpb.NewModelServer(onoffpb.NewModel()))
+			srv := onoffpb.NewModelServer(onoffpb.NewModel())
+			opts = append(opts,
+				node.HasServer(onoffpb.RegisterOnOffApiServer, onoffpb.OnOffApiServer(srv)),
+				node.HasTrait(tn),
+			)
 		default:
 			n.t.Fatalf("unsupported trait %q", tn)
 		}
-		opts = append(opts, node.HasTrait(tn, node.WithClients(client)))
 	}
 	n.node.Announce(name, opts...)
 }
@@ -471,8 +476,8 @@ func (n *mockRemoteNode) announceZone(name string) {
 		_, _ = n.zones.Delete(id)
 	})
 	zoneServices := service.NewMap(n.newService, service.IdIsRequired)
-	client := servicespb.WrapApi(serviceapi.NewApi(zoneServices))
-	n.node.Announce(name, node.HasClient(client))
+	zoneSvcServer := serviceapi.NewApi(zoneServices)
+	n.node.Announce(name, node.HasServer(servicespb.RegisterServicesApiServer, servicespb.ServicesApiServer(zoneSvcServer)))
 }
 
 func (n *mockRemoteNode) announceDeviceHealth(name string, checks ...string) {

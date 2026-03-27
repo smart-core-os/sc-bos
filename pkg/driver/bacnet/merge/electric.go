@@ -79,7 +79,10 @@ func newElectric(client *gobacnet.Client, devices known.Context, faultCheck *hea
 }
 
 func (t *electricTrait) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(trait.Electric, node.WithClients(electricpb.WrapApi(t))))
+	return a.Announce(t.config.Name,
+		node.HasServer(electricpb.RegisterElectricApiServer, electricpb.ElectricApiServer(t)),
+		node.HasTrait(trait.Electric),
+	)
 }
 
 func (t *electricTrait) GetDemand(ctx context.Context, request *electricpb.GetDemandRequest) (*electricpb.ElectricDemand, error) {

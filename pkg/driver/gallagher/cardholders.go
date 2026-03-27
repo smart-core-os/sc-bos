@@ -177,8 +177,14 @@ func (cc *CardholderController) refreshCardholders(announcer node.Announcer, scN
 					Subsystem: "acs",
 				},
 			}
-			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasTrait(accesspb.TraitName, node.WithClients(accesspb.WrapApi(c)))))
-			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasTrait(udmipb.TraitName, node.WithClients(udmipb.WrapService(c)))))
+			c.undo = append(c.undo, announcer.Announce(c.ScName,
+				node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(c)),
+				node.HasTrait(accesspb.TraitName),
+			))
+			c.undo = append(c.undo, announcer.Announce(c.ScName,
+				node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(c)),
+				node.HasTrait(udmipb.TraitName),
+			))
 			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasMetadata(c.Meta)))
 			cc.cardholders[id] = c
 		}

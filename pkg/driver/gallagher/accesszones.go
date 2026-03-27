@@ -153,7 +153,10 @@ func (azc *AccessZoneController) refreshAccessZones(announcer node.Announcer, sc
 					Subsystem: "acs",
 				},
 			}
-			z.undo = append(z.undo, announcer.Announce(z.ScName, node.HasTrait(accesspb.TraitName, node.WithClients(accesspb.WrapApi(z)))))
+			z.undo = append(z.undo, announcer.Announce(z.ScName,
+				node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(z)),
+				node.HasTrait(accesspb.TraitName),
+			))
 			z.undo = append(z.undo, announcer.Announce(z.ScName, node.HasMetadata(z.Meta)))
 			azc.zones[id] = z
 		}

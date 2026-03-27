@@ -78,7 +78,10 @@ func (aq *airQualitySensor) startPoll(init context.Context) (stop task.StopFn, e
 }
 
 func (aq *airQualitySensor) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(aq.config.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(aq))))
+	return a.Announce(aq.config.Name,
+		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(aq)),
+		node.HasTrait(trait.AirQualitySensor),
+	)
 }
 
 func (aq *airQualitySensor) GetAirQuality(ctx context.Context, request *airqualitysensorpb.GetAirQualityRequest) (*airqualitysensorpb.AirQuality, error) {

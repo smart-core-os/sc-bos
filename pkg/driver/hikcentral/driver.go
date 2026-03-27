@@ -81,9 +81,11 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		cam := NewCamera(client, logger, camera, faultCheck)
 		rootAnnouncer.Announce(camera.Name,
 			node.HasMetadata(camera.Metadata),
-			node.HasClient(mqttpb.WrapService(cam)),
-			node.HasTrait(trait.Ptz, node.WithClients(ptzpb.WrapApi(cam))),
-			node.HasTrait(udmipb.TraitName, node.WithClients(udmipb.WrapService(cam))),
+			node.HasServer(mqttpb.RegisterMqttServiceServer, mqttpb.MqttServiceServer(cam)),
+			node.HasServer(ptzpb.RegisterPtzApiServer, ptzpb.PtzApiServer(cam)),
+			node.HasTrait(trait.Ptz),
+			node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(cam)),
+			node.HasTrait(udmipb.TraitName),
 		)
 		cameras = append(cameras, cam)
 	}
