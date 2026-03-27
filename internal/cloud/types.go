@@ -38,13 +38,8 @@ type CheckInResponse struct {
 
 // NodeCheckIn is the JSON representation of a node check-in.
 type NodeCheckIn struct {
-	ID                           string    `json:"id"`
-	NodeID                       string    `json:"nodeId"`
-	CheckInTime                  time.Time `json:"checkInTime"`
-	CurrentDeploymentID          *string   `json:"currentDeploymentId,omitempty"`
-	InstallingDeploymentID       *string   `json:"installingDeploymentId,omitempty"`
-	InstallingDeploymentError    string    `json:"installingDeploymentError,omitempty"`
-	InstallingDeploymentAttempts *int64    `json:"installingDeploymentAttempts,omitempty"`
+	NodeID      string    `json:"nodeId"`
+	CheckInTime time.Time `json:"checkInTime"`
 }
 
 // LatestConfig bundles the active deployment with its config version.

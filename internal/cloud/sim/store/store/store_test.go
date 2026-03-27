@@ -289,7 +289,7 @@ func TestStore_Deployments(t *testing.T) {
 	err = store.Write(ctx, func(tx *Tx) error {
 		deployment, err := tx.CreateDeployment(ctx, queries2.CreateDeploymentParams{
 			ConfigVersionID: configVersionID,
-			Status:          "PENDING",
+			Status:          "pending",
 		})
 		if err != nil {
 			return err
@@ -310,7 +310,7 @@ func TestStore_Deployments(t *testing.T) {
 		want := queries2.Deployment{
 			ID:              deploymentID,
 			ConfigVersionID: configVersionID,
-			Status:          "PENDING",
+			Status:          "pending",
 			FinishedTime:    sql.NullTime{Valid: false},
 		}
 		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries2.Deployment{}, "StartTime")); diff != "" {
@@ -326,7 +326,7 @@ func TestStore_Deployments(t *testing.T) {
 	err = store.Write(ctx, func(tx *Tx) error {
 		deployment, err := tx.UpdateDeploymentStatus(ctx, queries2.UpdateDeploymentStatusParams{
 			ID:     deploymentID,
-			Status: "COMPLETED",
+			Status: "completed",
 		})
 		if err != nil {
 			return err
@@ -334,7 +334,7 @@ func TestStore_Deployments(t *testing.T) {
 		want := queries2.Deployment{
 			ID:              deploymentID,
 			ConfigVersionID: configVersionID,
-			Status:          "COMPLETED",
+			Status:          "completed",
 		}
 		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries2.Deployment{}, "StartTime", "FinishedTime")); diff != "" {
 			t.Errorf("deployment mismatch (-want +got):\n%s", diff)
@@ -371,7 +371,7 @@ func TestStore_Deployments(t *testing.T) {
 			want := queries2.Deployment{
 				ID:              deploymentID,
 				ConfigVersionID: configVersionID,
-				Status:          "COMPLETED",
+				Status:          "completed",
 			}
 			if diff := cmp.Diff(want, deployments[0], cmpopts.IgnoreFields(queries2.Deployment{}, "StartTime", "FinishedTime")); diff != "" {
 				t.Errorf("deployment in list mismatch (-want +got):\n%s", diff)
@@ -516,7 +516,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 
 		deployment, err := tx.CreateDeployment(ctx, queries2.CreateDeploymentParams{
 			ConfigVersionID: config.ID,
-			Status:          "PENDING",
+			Status:          "pending",
 		})
 		if err != nil {
 			return err
@@ -747,7 +747,7 @@ func TestStore_CountOperations(t *testing.T) {
 		// Create a deployment
 		_, err = tx.CreateDeployment(ctx, queries2.CreateDeploymentParams{
 			ConfigVersionID: cv2.ID,
-			Status:          "PENDING",
+			Status:          "pending",
 		})
 		return err
 	})
@@ -875,7 +875,7 @@ func TestStore_UpdateNonExistent(t *testing.T) {
 	err = store.Write(ctx, func(tx *Tx) error {
 		_, err := tx.UpdateDeploymentStatus(ctx, queries2.UpdateDeploymentStatusParams{
 			ID:     99999,
-			Status: "COMPLETED",
+			Status: "completed",
 		})
 		if !errors.Is(err, sql.ErrNoRows) {
 			t.Errorf("expected sql.ErrNoRows when updating non-existent deployment, got %v", err)

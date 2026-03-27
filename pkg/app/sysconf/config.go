@@ -304,9 +304,14 @@ func (c *Certs) FillDefaults() *Certs {
 	return c
 }
 
+// Cloud configures the connection to the SCC BOS-facing API.
 type Cloud struct {
-	Endpoint     string              `json:"endpoint,omitempty"`
-	TokenFile    string              `json:"tokenFile,omitempty"`
+	// BosapiRoot is the base URL of the SCC BOS-facing API (e.g. "https://bosapi.example.com").
+	// TODO: default to the production URL once it's known.
+	BosapiRoot       string `json:"bosapiRoot,omitempty"`
+	ClientID         string `json:"clientId,omitempty"`
+	ClientSecretFile string `json:"clientSecretFile,omitempty"`
+
 	PollInterval *jsontypes.Duration `json:"pollInterval,omitempty"`
 	// Preserve old or incomplete downloads instead of deleting them on startup or when they expire.
 	// This is useful for debugging and should be used with caution in production since it can lead to unbounded disk usage.

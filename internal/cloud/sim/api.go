@@ -16,16 +16,22 @@ import (
 
 // Server handles HTTP API requests for cloudsim management.
 type Server struct {
-	store  *store.Store
-	logger *zap.Logger
+	store       *store.Store
+	logger      *zap.Logger
+	tokenIssuer *tokenIssuer
 }
 
 // NewServer creates a new API server.
-func NewServer(store *store.Store, logger *zap.Logger) *Server {
-	return &Server{
-		store:  store,
-		logger: logger,
+func NewServer(store *store.Store, logger *zap.Logger) (*Server, error) {
+	ti, err := newTokenIssuer()
+	if err != nil {
+		return nil, fmt.Errorf("create token issuer: %w", err)
 	}
+	return &Server{
+		store:       store,
+		logger:      logger,
+		tokenIssuer: ti,
+	}, nil
 }
 
 // RegisterRoutes registers all API routes on the given mux.
@@ -63,8 +69,10 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PATCH /api/v1/management/deployments/{id}", s.updateDeploymentStatus)
 	mux.HandleFunc("DELETE /api/v1/management/deployments/{id}", s.deleteDeployment)
 
-	// Check-In
-	mux.HandleFunc("POST /api/v1/check-in", s.checkIn)
+	// Device API (BOS-facing)
+	// TODO: add POST /v1/device/register for enrollment code exchange
+	mux.HandleFunc("POST /v1/device/token", s.handleToken)
+	mux.HandleFunc("POST /v1/device/check-in", s.checkIn)
 }
 
 func (s *Server) loggerFor(r *http.Request) *zap.Logger {
