@@ -51,13 +51,9 @@ func TestTemperatureSensor_GetAirTemperature(t *testing.T) {
 		AmbientTemperature: &typespb.Temperature{
 			ValueCelsius: 20.2,
 		},
-		AmbientHumidity: ref[float32](50.0),
+		AmbientHumidity: new(float32(50.0)),
 	}
 	if diff := cmp.Diff(expect, res, protocmp.Transform()); diff != "" {
 		t.Errorf("unexpected response (-want +got):\n%s", diff)
 	}
-}
-
-func ref[T any](t T) *T {
-	return &t
 }

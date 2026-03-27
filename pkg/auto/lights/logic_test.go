@@ -814,14 +814,14 @@ func Test_processState(t *testing.T) {
 				Name: "a",
 				Mode: config.Mode{
 					UnoccupiedOffDelay: jsontypes.Duration{Duration: time.Hour},
-					OnLevelPercent:     asPtr[float32](33),
+					OnLevelPercent:     new(float32(33)),
 				},
 			},
 			{
 				Name: "b",
 				Mode: config.Mode{
 					UnoccupiedOffDelay: jsontypes.Duration{Duration: time.Hour},
-					OnLevelPercent:     asPtr[float32](66),
+					OnLevelPercent:     new(float32(66)),
 				},
 			},
 		}
@@ -888,7 +888,7 @@ func Test_processState(t *testing.T) {
 				Name: "nightMode",
 				Mode: config.Mode{
 					UnoccupiedOffDelay:               jsontypes.Duration{Duration: 10 * time.Minute},
-					OnLevelPercent:                   asPtr[float32](75),
+					OnLevelPercent:                   new(float32(75)),
 					ForceOnLevelPercentWhenActivated: true,
 				},
 			},
@@ -934,7 +934,7 @@ func Test_processState(t *testing.T) {
 				Name: "nightMode",
 				Mode: config.Mode{
 					UnoccupiedOffDelay: jsontypes.Duration{Duration: 10 * time.Minute},
-					OnLevelPercent:     asPtr[float32](75),
+					OnLevelPercent:     new(float32(75)),
 					// ForceOnLevelPercentWhenActivated intentionally not set
 				},
 			},
@@ -976,14 +976,14 @@ func Test_processState(t *testing.T) {
 				Name: "a",
 				Mode: config.Mode{
 					UnoccupiedOffDelay: jsontypes.Duration{Duration: time.Hour},
-					OnLevelPercent:     asPtr[float32](33),
+					OnLevelPercent:     new(float32(33)),
 				},
 			},
 			{
 				Name: "b",
 				Mode: config.Mode{
 					UnoccupiedOffDelay: jsontypes.Duration{Duration: time.Hour},
-					OnLevelPercent:     asPtr[float32](66),
+					OnLevelPercent:     new(float32(66)),
 				},
 				DisableAuto: true,
 			},
@@ -1245,8 +1245,4 @@ func testReadState(start time.Time, now time.Time) *ReadState {
 		return now
 	}
 	return rs
-}
-
-func asPtr[T any](v T) *T {
-	return &v
 }

@@ -17,12 +17,12 @@ func Electric(model *gen_electricpb.Model) service.Lifecycle {
 				tod := float32(scale.NineToFive.Now())
 				state := &gen_electricpb.ElectricDemand{
 					Current:     float32Between(20, 40) * tod,
-					Voltage:     ptr(float32Between(238, 243)),
-					PowerFactor: ptr(float32Between(0.7, 1.3)),
+					Voltage:     new(float32Between(238, 243)),
+					PowerFactor: new(float32Between(0.7, 1.3)),
 				}
-				state.ApparentPower = ptr(state.Current * *state.Voltage)
-				state.RealPower = ptr(*state.ApparentPower * *state.PowerFactor)
-				state.ReactivePower = ptr(*state.ApparentPower * (1 - *state.PowerFactor))
+				state.ApparentPower = new(state.Current * *state.Voltage)
+				state.RealPower = new(*state.ApparentPower * *state.PowerFactor)
+				state.ReactivePower = new(*state.ApparentPower * (1 - *state.PowerFactor))
 				_, _ = model.UpdateDemand(state)
 
 				select {

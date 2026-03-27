@@ -33,7 +33,7 @@ func TestMemoryDevice_UpdateAirTemperature(t *testing.T) {
 		},
 		// fields we can't edit
 		AmbientTemperature: &typespb.Temperature{ValueCelsius: -12},
-		AmbientHumidity:    pfloat32(12.2),
+		AmbientHumidity:    new(float32(12.2)),
 	}
 	updatedState, err := api.UpdateAirTemperature(context.Background(), &UpdateAirTemperatureRequest{
 		Name:  "test",
@@ -71,7 +71,7 @@ func TestMemoryDevice_UpdateAirTemperature_Mask(t *testing.T) {
 		},
 		// fields we can't edit
 		AmbientTemperature: &typespb.Temperature{ValueCelsius: -12},
-		AmbientHumidity:    pfloat32(12.2),
+		AmbientHumidity:    new(float32(12.2)),
 	}
 	updatedState, err := api.UpdateAirTemperature(context.Background(), &UpdateAirTemperatureRequest{
 		Name:       "test",
@@ -98,8 +98,4 @@ func TestMemoryDevice_UpdateAirTemperature_Mask(t *testing.T) {
 	if diff := cmp.Diff(initialState.AmbientTemperature, updatedState.AmbientTemperature, protocmp.Transform()); diff != "" {
 		t.Errorf("UpdateAirTemperature() AmbientTemperature mismatch (-want,+got)\n%v", diff)
 	}
-}
-
-func pfloat32(v float32) *float32 {
-	return &v
 }

@@ -100,7 +100,3 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	return nil
 }
-
-func ptr[T any](v T) *T {
-	return &v
-}

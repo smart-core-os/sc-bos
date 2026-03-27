@@ -119,15 +119,15 @@ func Test_automation_applyConfig(t *testing.T) {
 			t.Fatal(err)
 		}
 		if _, err := airQuality.UpdateAirQuality(&airqualitysensorpb.AirQuality{
-			CarbonDioxideLevel:       ptr(rand.Float32()),
-			VolatileOrganicCompounds: ptr(rand.Float32()),
-			AirPressure:              ptr(rand.Float32()),
-			InfectionRisk:            ptr(rand.Float32()),
-			Score:                    ptr(rand.Float32()),
-			ParticulateMatter_1:      ptr(rand.Float32()),
-			ParticulateMatter_25:     ptr(rand.Float32()),
-			ParticulateMatter_10:     ptr(rand.Float32()),
-			AirChangePerHour:         ptr(rand.Float32()),
+			CarbonDioxideLevel:       new(rand.Float32()),
+			VolatileOrganicCompounds: new(rand.Float32()),
+			AirPressure:              new(rand.Float32()),
+			InfectionRisk:            new(rand.Float32()),
+			Score:                    new(rand.Float32()),
+			ParticulateMatter_1:      new(rand.Float32()),
+			ParticulateMatter_25:     new(rand.Float32()),
+			ParticulateMatter_10:     new(rand.Float32()),
+			AirChangePerHour:         new(rand.Float32()),
 		}); err != nil {
 			t.Fatal(err)
 		}
@@ -139,12 +139,12 @@ func Test_automation_applyConfig(t *testing.T) {
 		}
 
 		if _, err := electric.UpdateDemand(&electricpb.ElectricDemand{
-			Voltage:       ptr(rand.Float32()),
+			Voltage:       new(rand.Float32()),
 			Current:       rand.Float32(),
-			ReactivePower: ptr(rand.Float32()),
-			ApparentPower: ptr(rand.Float32()),
-			PowerFactor:   ptr(rand.Float32()),
-			RealPower:     ptr(rand.Float32()),
+			ReactivePower: new(rand.Float32()),
+			ApparentPower: new(rand.Float32()),
+			PowerFactor:   new(rand.Float32()),
+			RealPower:     new(rand.Float32()),
 		}); err != nil {
 			t.Fatal(err)
 		}
@@ -225,10 +225,6 @@ func Test_automation_applyConfig(t *testing.T) {
 		t.Fatal(diff, "status")
 	}
 
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }
 
 var cfgs = []config.Root{

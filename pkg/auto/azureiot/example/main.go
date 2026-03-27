@@ -84,8 +84,6 @@ func iaq() *airqualitysensorpb.AirQuality {
 	}
 }
 
-func p[T any](t T) *T { return &t }
-
 func randFP(from, to float32) *float32 {
-	return p(from + (to-from)*rand.Float32())
+	return new(from + (to-from)*rand.Float32())
 }

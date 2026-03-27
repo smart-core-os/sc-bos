@@ -14,8 +14,8 @@ func Pressure(model *pressurepb.Model) service.Lifecycle {
 			timer := time.NewTimer(durationBetween(30*time.Second, 2*time.Minute))
 			for {
 				state := &pressurepb.Pressure{
-					Pressure:       ptr(float32Between(0, 100)),
-					TargetPressure: ptr(float32Between(0, 100)),
+					Pressure:       new(float32Between(0, 100)),
+					TargetPressure: new(float32Between(0, 100)),
 				}
 				_, _ = model.UpdatePressure(state)
 

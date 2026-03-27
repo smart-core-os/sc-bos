@@ -9,8 +9,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 )
 
-func float32Ptr(v float32) *float32 { return &v }
-
 func TestUpdateMode(t *testing.T) {
 	// Helper to create modeDataPoints
 	newModeDataPoints := func(fanOn, heatingOn, coolingOn *float32) *modeDataPoints {
@@ -40,67 +38,67 @@ func TestUpdateMode(t *testing.T) {
 		{
 			name:     "Cooling only, above threshold",
 			cfg:      newModeConfig(&one, &one, &one),
-			data:     newModeDataPoints(nil, nil, float32Ptr(2)),
+			data:     newModeDataPoints(nil, nil, new(float32(2))),
 			expected: airtemperaturepb.AirTemperature_COOL,
 		},
 		{
 			name:     "Cooling and Fan, both above threshold",
 			cfg:      newModeConfig(&one, &one, &one),
-			data:     newModeDataPoints(float32Ptr(2), nil, float32Ptr(2)),
+			data:     newModeDataPoints(new(float32(2)), nil, new(float32(2))),
 			expected: airtemperaturepb.AirTemperature_COOL,
 		},
 		{
 			name:     "Cooling and Fan, cooling above threshold, fan off",
 			cfg:      newModeConfig(&one, &one, &one),
-			data:     newModeDataPoints(float32Ptr(0), nil, float32Ptr(2)),
+			data:     newModeDataPoints(new(float32(0)), nil, new(float32(2))),
 			expected: airtemperaturepb.AirTemperature_OFF,
 		},
 		{
 			name:     "Heating only, above threshold",
 			cfg:      newModeConfig(&one, &one, &one),
-			data:     newModeDataPoints(nil, float32Ptr(2), nil),
+			data:     newModeDataPoints(nil, new(float32(2)), nil),
 			expected: airtemperaturepb.AirTemperature_HEAT,
 		},
 		{
 			name:     "Heating and Fan, both above threshold",
 			cfg:      newModeConfig(&one, &one, &one),
-			data:     newModeDataPoints(float32Ptr(2), float32Ptr(2), nil),
+			data:     newModeDataPoints(new(float32(2)), new(float32(2)), nil),
 			expected: airtemperaturepb.AirTemperature_HEAT,
 		},
 		{
 			name:     "Heating and Fan, heating above threshold, fan off",
 			cfg:      newModeConfig(&one, &one, &one),
-			data:     newModeDataPoints(float32Ptr(0), float32Ptr(2), nil),
+			data:     newModeDataPoints(new(float32(0)), new(float32(2)), nil),
 			expected: airtemperaturepb.AirTemperature_OFF,
 		},
 		{
 			name:     "Heating and Cooling, both above threshold, no Fan",
 			cfg:      newModeConfig(&one, &one, &one),
-			data:     newModeDataPoints(nil, float32Ptr(2), float32Ptr(2)),
+			data:     newModeDataPoints(nil, new(float32(2)), new(float32(2))),
 			expected: airtemperaturepb.AirTemperature_HEAT_COOL,
 		},
 		{
 			name:     "Heating and Cooling, both above threshold, Fan above threshold",
 			cfg:      newModeConfig(&one, &one, &one),
-			data:     newModeDataPoints(float32Ptr(2), float32Ptr(2), float32Ptr(2)),
+			data:     newModeDataPoints(new(float32(2)), new(float32(2)), new(float32(2))),
 			expected: airtemperaturepb.AirTemperature_HEAT_COOL,
 		},
 		{
 			name:     "Heating and Cooling, both above threshold, fan off",
 			cfg:      newModeConfig(&one, &one, &one),
-			data:     newModeDataPoints(float32Ptr(0), float32Ptr(2), float32Ptr(2)),
+			data:     newModeDataPoints(new(float32(0)), new(float32(2)), new(float32(2))),
 			expected: airtemperaturepb.AirTemperature_OFF,
 		},
 		{
 			name:     "Fan only, above threshold",
 			cfg:      newModeConfig(&one, &one, &one),
-			data:     newModeDataPoints(float32Ptr(2), nil, nil),
+			data:     newModeDataPoints(new(float32(2)), nil, nil),
 			expected: airtemperaturepb.AirTemperature_FAN_ONLY,
 		},
 		{
 			name:     "All below threshold",
 			cfg:      newModeConfig(&one, &one, &one),
-			data:     newModeDataPoints(float32Ptr(0), float32Ptr(0), float32Ptr(0)),
+			data:     newModeDataPoints(new(float32(0)), new(float32(0)), new(float32(0))),
 			expected: airtemperaturepb.AirTemperature_OFF,
 		},
 		{

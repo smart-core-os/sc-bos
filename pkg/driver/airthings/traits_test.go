@@ -40,14 +40,14 @@ func TestSampleToAirQuality(t *testing.T) {
 				},
 			},
 			want: &gen_airqualitysensorpb.AirQuality{
-				AirChangePerHour:         ptrFloat32(1.5),
-				CarbonDioxideLevel:       ptrFloat32(800.0),
-				ParticulateMatter_1:      ptrFloat32(10.5),
-				ParticulateMatter_25:     ptrFloat32(25.3),
-				ParticulateMatter_10:     ptrFloat32(45.7),
-				AirPressure:              ptrFloat32(1013.25),
-				InfectionRisk:            ptrFloat32(0.3),
-				VolatileOrganicCompounds: ptrFloat32(0.5), // converted to ppm
+				AirChangePerHour:         new(float32(1.5)),
+				CarbonDioxideLevel:       new(float32(800.0)),
+				ParticulateMatter_1:      new(float32(10.5)),
+				ParticulateMatter_25:     new(float32(25.3)),
+				ParticulateMatter_10:     new(float32(45.7)),
+				AirPressure:              new(float32(1013.25)),
+				InfectionRisk:            new(float32(0.3)),
+				VolatileOrganicCompounds: new(float32(0.5)), // converted to ppm
 			},
 		},
 		{
@@ -65,10 +65,10 @@ func TestSampleToAirQuality(t *testing.T) {
 				},
 			},
 			want: &gen_airqualitysensorpb.AirQuality{
-				ParticulateMatter_1:  ptrFloat32(15.0), // outdoor wins
-				ParticulateMatter_25: ptrFloat32(30.0),
-				ParticulateMatter_10: ptrFloat32(50.0),
-				AirPressure:          ptrFloat32(1010.0),
+				ParticulateMatter_1:  new(float32(15.0)), // outdoor wins
+				ParticulateMatter_25: new(float32(30.0)),
+				ParticulateMatter_10: new(float32(50.0)),
+				AirPressure:          new(float32(1010.0)),
 			},
 		},
 		{
@@ -82,10 +82,10 @@ func TestSampleToAirQuality(t *testing.T) {
 				},
 			},
 			want: &gen_airqualitysensorpb.AirQuality{
-				ParticulateMatter_1:  ptrFloat32(12.0),
-				ParticulateMatter_25: ptrFloat32(28.0),
-				ParticulateMatter_10: ptrFloat32(48.0),
-				AirPressure:          ptrFloat32(1015.0),
+				ParticulateMatter_1:  new(float32(12.0)),
+				ParticulateMatter_25: new(float32(28.0)),
+				ParticulateMatter_10: new(float32(48.0)),
+				AirPressure:          new(float32(1015.0)),
 			},
 		},
 		{
@@ -123,7 +123,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 			},
 			want: &gen_airtemperaturepb.AirTemperature{
 				AmbientTemperature: &typespb.Temperature{ValueCelsius: 22.5},
-				AmbientHumidity:    ptrFloat32(45.0),
+				AmbientHumidity:    new(float32(45.0)),
 			},
 		},
 		{
@@ -138,7 +138,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 			},
 			want: &gen_airtemperaturepb.AirTemperature{
 				AmbientTemperature: &typespb.Temperature{ValueCelsius: 15.0},
-				AmbientHumidity:    ptrFloat32(60.0),
+				AmbientHumidity:    new(float32(60.0)),
 			},
 		},
 		{
@@ -151,7 +151,7 @@ func TestSampleToAirTemperature(t *testing.T) {
 			},
 			want: &gen_airtemperaturepb.AirTemperature{
 				AmbientTemperature: &typespb.Temperature{ValueCelsius: 10.0},
-				AmbientHumidity:    ptrFloat32(70.0),
+				AmbientHumidity:    new(float32(70.0)),
 			},
 		},
 		{
@@ -250,18 +250,18 @@ func TestFloat64PtoFloat32P(t *testing.T) {
 		},
 		{
 			name:  "zero",
-			input: ptrFloat64(0.0),
-			want:  ptrFloat32(0.0),
+			input: new(0.0),
+			want:  new(float32(0.0)),
 		},
 		{
 			name:  "positive",
-			input: ptrFloat64(123.456),
-			want:  ptrFloat32(123.456),
+			input: new(123.456),
+			want:  new(float32(123.456)),
 		},
 		{
 			name:  "negative",
-			input: ptrFloat64(-99.9),
-			want:  ptrFloat32(-99.9),
+			input: new(-99.9),
+			want:  new(float32(-99.9)),
 		},
 	}
 
@@ -515,14 +515,6 @@ func TestROEnergyStorageServer_Charge(t *testing.T) {
 }
 
 // Helper functions
-
-func ptrFloat64(v float64) *float64 {
-	return &v
-}
-
-func ptrFloat32(v float32) *float32 {
-	return &v
-}
 
 func newNullableFloat64(v float64) api.NullableFloat64 {
 	return *api.NewNullableFloat64(&v)
