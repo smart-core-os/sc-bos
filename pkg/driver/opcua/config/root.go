@@ -134,11 +134,11 @@ type Root struct {
 	driver.BaseConfig
 
 	Meta    *metadatapb.Metadata `json:"meta,omitempty"`
-	Conn    Conn                 `json:"conn,omitempty"`
+	Conn    Conn                 `json:"conn"`
 	Devices []Device             `json:"devices,omitempty"`
 
 	// settings for the opc ua system health check
-	SystemHealth Health `json:"systemHealth,omitempty"`
+	SystemHealth Health `json:"systemHealth"`
 }
 
 func ParseConfig(data []byte) (cfg Root, err error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"go.uber.org/zap"
@@ -179,9 +180,7 @@ func (a *Auto) processConfig(ctx context.Context, cfg config.Root, sources []*so
 
 func shallowCopyMap[K comparable, V any](m map[K]V) map[K]V {
 	n := make(map[K]V, len(m))
-	for k, v := range m {
-		n[k] = v
-	}
+	maps.Copy(n, m)
 	return n
 }
 

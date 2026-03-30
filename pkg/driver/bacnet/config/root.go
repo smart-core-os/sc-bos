@@ -45,7 +45,7 @@ type Root struct {
 
 	// SystemHealth represents the system-level health check configuration. If not configured,
 	// occupant and equipment impact will default to UNSPECIFIED.
-	SystemHealth Health `json:"systemHealth,omitempty"`
+	SystemHealth Health `json:"systemHealth"`
 }
 
 // ReadFile reads from the named file a config Root.
@@ -82,7 +82,7 @@ type Discovery struct {
 	Min        int      `json:"min,omitempty"`
 	Max        int      `json:"max,omitempty"`
 	Chunk      int      `json:"chunk,omitempty"`
-	ChunkDelay Duration `json:"chunkDelay,omitempty"`
+	ChunkDelay Duration `json:"chunkDelay"`
 }
 
 type Device struct {
@@ -155,7 +155,7 @@ func (d DestinationAddress) Bytes() ([]byte, error) {
 	if d == "" {
 		return addr, nil
 	}
-	for i := 0; i < len(octets); i++ {
+	for i := range octets {
 		octet := octets[i]
 		value, err := strconv.ParseUint(octet, 10, 8)
 		if err != nil {

@@ -113,7 +113,6 @@ func (g *Group) PullOccupancy(request *occupancysensorpb.PullOccupancyRequest, s
 
 	// get occupancy from each of the dedicated clients
 	for i, client := range g.clients {
-		client := client
 		index := len(g.names) + i
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(

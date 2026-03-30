@@ -33,8 +33,6 @@ func NewGroup(impl LightApiClient, members ...string) *Group {
 func (s *Group) GetBrightness(ctx context.Context, request *GetBrightnessRequest) (*Brightness, error) {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (proto.Message, error) {
 			memberRequest := proto.Clone(request).(*GetBrightnessRequest)
 			memberRequest.Name = member
@@ -52,8 +50,6 @@ func (s *Group) GetBrightness(ctx context.Context, request *GetBrightnessRequest
 func (s *Group) UpdateBrightness(ctx context.Context, request *UpdateBrightnessRequest) (*Brightness, error) {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (proto.Message, error) {
 			memberRequest := proto.Clone(request).(*UpdateBrightnessRequest)
 			memberRequest.Name = member
@@ -128,8 +124,6 @@ func (s *Group) PullBrightness(request *PullBrightnessRequest, server LightApi_P
 func (s *Group) pullBrightnessActions(request *PullBrightnessRequest, memberValues chan<- pullBrightnessResponse) []group.Member {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (msg proto.Message, err error) {
 			memberRequest := proto.Clone(request).(*PullBrightnessRequest)
 			memberRequest.Name = member

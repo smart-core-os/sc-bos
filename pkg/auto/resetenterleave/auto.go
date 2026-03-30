@@ -62,7 +62,6 @@ func (a *Auto) applyConfig(ctx context.Context, cfg config.Root) error {
 			case <-tick.C:
 				grp, ctx := errgroup.WithContext(ctx)
 				for _, device := range cfg.Devices {
-					device := device
 					grp.Go(func() error {
 						resetTotals(ctx, elClient, device, a.services.Logger)
 						return nil

@@ -24,7 +24,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/statusmap"
 )
@@ -79,7 +79,6 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, location := range cfg.Locations {
-		location := location
 		ll := local.NewLocation()
 		grp.Go(func() error {
 			return d.pollLocationLatestSamples(ctx, location, ll)
@@ -88,8 +87,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		for _, device := range location.Devices {
 			n := device.Name
 			announcer.Announce(n, node.HasMetadata(device.Metadata))
-			status.UpdateProblem(n, &gen_statuspb.StatusLog_Problem{
-				Level:       gen_statuspb.StatusLog_NOMINAL,
+			status.UpdateProblem(n, &statuspb.StatusLog_Problem{
+				Level:       statuspb.StatusLog_NOMINAL,
 				Description: "Device configured successfully",
 				Name:        n + ":setup",
 			})

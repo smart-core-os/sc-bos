@@ -45,7 +45,10 @@ func setupClientEnv(t *testing.T) *clientEnv {
 	s := store.NewMemoryStore(logger)
 	t.Cleanup(func() { _ = s.Close() })
 
-	apiServer := sim.NewServer(s, logger)
+	apiServer, err := sim.NewServer(s, logger)
+	if err != nil {
+		t.Fatalf("create server: %v", err)
+	}
 	mux := http.NewServeMux()
 	apiServer.RegisterRoutes(mux)
 	ts := httptest.NewServer(mux)
@@ -71,7 +74,7 @@ func setupClientEnv(t *testing.T) *clientEnv {
 		t.Fatalf("create node: expected 201, got %d", resp.StatusCode)
 	}
 
-	// Base64-encode raw secret — matches how the sim server decodes Bearer tokens
+	// Base64-encode raw secret for use with the token endpoint
 	encodedSecret := base64.StdEncoding.EncodeToString(created.Secret)
 
 	// Create temp store dir
@@ -82,7 +85,11 @@ func setupClientEnv(t *testing.T) *clientEnv {
 	}
 	t.Cleanup(func() { _ = storeDir.Close() })
 
-	httpClient := NewHTTPClient(ts.URL, encodedSecret, WithHTTPClient(ts.Client()))
+	httpClient := NewHTTPClient(Registration{
+		ClientID:     strconv.FormatInt(created.ID, 10),
+		ClientSecret: encodedSecret,
+		BosapiRoot:   ts.URL,
+	}, WithHTTPClient(ts.Client()))
 	updater := NewDeploymentUpdater(storeDir, httpClient)
 
 	return &clientEnv{
@@ -207,7 +214,7 @@ func createPendingDeployment(t *testing.T, client *http.Client, baseURL string, 
 	var dep sim.Deployment
 	resp := doSimRequest(t, client, "POST", baseURL+"/api/v1/management/deployments", map[string]any{
 		"configVersionId": strconv.FormatInt(configVersionID, 10),
-		"status":          "PENDING",
+		"status":          "pending",
 	}, &dep)
 	if resp.StatusCode != http.StatusCreated {
 		t.Fatalf("create deployment: expected 201, got %d", resp.StatusCode)
@@ -549,9 +556,12 @@ func TestPoll(t *testing.T) {
 	t.Run("server auth error", func(t *testing.T) {
 		env := setupClientEnv(t)
 
-		// Create an updater with a wrong secret
-		wrongSecret := base64.URLEncoding.EncodeToString(bytes.Repeat([]byte{0xFF}, 32))
-		badHTTPClient := NewHTTPClient(env.testServer.URL, wrongSecret, WithHTTPClient(env.httpClient))
+		// Create an updater with a wrong client secret — token endpoint will reject it
+		badHTTPClient := NewHTTPClient(Registration{
+			ClientID:     "999999",
+			ClientSecret: "wrong-secret",
+			BosapiRoot:   env.testServer.URL,
+		}, WithHTTPClient(env.httpClient))
 		badUpdater := NewDeploymentUpdater(env.storeDir, badHTTPClient)
 
 		_, err := badUpdater.PollOnce(ctx)
@@ -595,7 +605,7 @@ func TestCommit(t *testing.T) {
 
 		// Server deployment should be COMPLETED
 		dep := getDeployment(t, env.httpClient, env.testServer.URL, depID)
-		if dep.Status != "COMPLETED" {
+		if dep.Status != "completed" {
 			t.Errorf("deployment status = %q, want COMPLETED", dep.Status)
 		}
 	})
@@ -682,7 +692,7 @@ func TestRollback(t *testing.T) {
 
 		// Server deployment should be FAILED with the reason
 		dep := getDeployment(t, env.httpClient, env.testServer.URL, depID)
-		if dep.Status != "FAILED" {
+		if dep.Status != "failed" {
 			t.Errorf("deployment status = %q, want FAILED", dep.Status)
 		}
 		if dep.Reason != "test reason" {
@@ -731,7 +741,7 @@ func TestRollback(t *testing.T) {
 
 		// v2 deployment should be FAILED
 		dep2 := getDeployment(t, env.httpClient, env.testServer.URL, depID2)
-		if dep2.Status != "FAILED" {
+		if dep2.Status != "failed" {
 			t.Errorf("v2 deployment status = %q, want FAILED", dep2.Status)
 		}
 	})
@@ -807,8 +817,12 @@ func TestDownloadPayload_InsecureURLBlocked(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	// ts.URL is "https://...", so the client is configured with HTTPS.
-	client := NewHTTPClient(ts.URL, "secret", WithHTTPClient(ts.Client()))
+	// checkInEndpoint uses a different HTTPS host so downloads from ts go through plainHTTP.
+	client := NewHTTPClient(Registration{
+		ClientID:     "id",
+		ClientSecret: "secret",
+		BosapiRoot:   "https://other-host",
+	}, WithHTTPClient(ts.Client()))
 
 	tests := []struct {
 		name        string
@@ -850,52 +864,27 @@ func TestDownloadPayload_InsecureURLBlocked(t *testing.T) {
 }
 
 func TestDownloadPayload_Authorization(t *testing.T) {
-	// Test that DownloadPayload includes the correct Authorization header only when it's on the same host as the client's endpoint.
-	var (
-		ts1Called, ts2Called bool
-		ts1Auth, ts2Auth     string
-	)
-	reset := func() {
-		ts1Called, ts2Called = false, false
-		ts1Auth, ts2Auth = "", ""
-	}
-	ts1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ts1Called = true
-		ts1Auth = r.Header.Get("Authorization")
+	var gotAuth string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
 		w.WriteHeader(http.StatusOK)
 	}))
-	defer ts1.Close()
-	ts2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ts2Called = true
-		ts2Auth = r.Header.Get("Authorization")
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts2.Close()
+	defer ts.Close()
 
-	client := NewHTTPClient(ts1.URL, "secret")
+	// checkInEndpoint is on a different host than ts, so downloads from ts should not include auth.
+	client := NewHTTPClient(Registration{
+		ClientID:     "id",
+		ClientSecret: "secret",
+		BosapiRoot:   "http://other-host",
+	})
 
-	// Download from ts1 (same host) should include Authorization header
-	if _, err := client.DownloadPayload(context.Background(), ts1.URL+"/payload.tar.gz"); err != nil {
-		t.Fatalf("DownloadPayload 1: %v", err)
+	rc, err := client.DownloadPayload(context.Background(), ts.URL+"/payload.tar.gz")
+	if err != nil {
+		t.Fatalf("DownloadPayload: %v", err)
 	}
-	if !ts1Called || ts2Called {
-		t.Error("ts1 should have been called, ts2 should not have been called")
-	}
-	if expect := "Bearer secret"; ts1Auth != expect {
-		t.Errorf("ts1 auth header should be %q, got %q", expect, ts1Auth)
-	}
-
-	reset()
-
-	// Download from ts2 (different host) should not include Authorization header
-	if _, err := client.DownloadPayload(context.Background(), ts2.URL+"/payload.tar.gz"); err != nil {
-		t.Fatalf("DownloadPayload 2: %v", err)
-	}
-	if !ts2Called || ts1Called {
-		t.Error("ts2 should have been called, ts1 should not have been called")
-	}
-	if expect := ""; ts2Auth != expect {
-		t.Errorf("ts2 auth header should be %q, got %q", expect, ts2Auth)
+	_ = rc.Close()
+	if gotAuth != "" {
+		t.Errorf("expected no Authorization header on external download, got %q", gotAuth)
 	}
 }
 

@@ -18,7 +18,7 @@ type Root struct {
 	// Core configuration for the automation.
 	// When the monitored devices leave the state described by Normal,
 	// the automation will wait for ResetDelay before resetting the device to ResetState.
-	Normal     StateRange          `json:"normal,omitempty,omitzero"`     // Defaults to {Max: ResetState}
+	Normal     StateRange          `json:"normal,omitzero"`               // Defaults to {Max: ResetState}
 	ResetDelay *jsontypes.Duration `json:"resetDelay,omitempty"`          // Defaults to 1 hour
 	ResetState float32             `json:"resetState,omitempty,omitzero"` // Defaults to 0
 	TimerStart TimerStart          `json:"timerStart,omitzero"`           // Defaults to "change"

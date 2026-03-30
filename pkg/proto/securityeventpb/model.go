@@ -96,10 +96,7 @@ func (m *Model) ListSecurityEvents(start, count int) []*SecurityEvent {
 func (m *Model) pullSecurityEventsWrapper(request *PullSecurityEventsRequest, server SecurityEventApi_PullSecurityEventsServer) error {
 	if !request.UpdatesOnly {
 		m.mu.Lock()
-		i := m.allSecurityEvents.Len() - 50
-		if i < 0 {
-			i = 0
-		}
+		i := max(m.allSecurityEvents.Len()-50, 0)
 		for ; i < m.allSecurityEvents.Len()-1; i++ {
 			e := m.allSecurityEvents.Move(i)
 			event := e.Value.(*SecurityEvent)

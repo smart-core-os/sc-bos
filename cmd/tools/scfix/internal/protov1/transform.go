@@ -240,8 +240,8 @@ func resolveTypeRef(typeName string, currentPackage string, typeToPackage map[st
 			newPkg = "smartcore.bos.info.v1"
 		} else if packagePart == "smartcore.types" {
 			newPkg = "smartcore.bos.types.v1"
-		} else if strings.HasPrefix(packagePart, "smartcore.types.") {
-			sub := strings.TrimPrefix(packagePart, "smartcore.types.")
+		} else if after, ok := strings.CutPrefix(packagePart, "smartcore.types."); ok {
+			sub := after
 			newPkg = "smartcore.bos.types." + sub + ".v1"
 		}
 		if newPkg != "" {

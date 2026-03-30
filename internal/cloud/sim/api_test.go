@@ -45,7 +45,7 @@ func TestCascadeDelete(t *testing.T) {
 	var deployment Deployment
 	resp = doRequest(t, client, "POST", listDeploymentsURL(ts.URL), map[string]any{
 		"configVersionId": sid(cv.ID),
-		"status":          "PENDING",
+		"status":          "pending",
 	}, &deployment)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -111,7 +111,7 @@ func testPagination(t *testing.T,
 ) {
 	const numSites = maxPageSize + 10
 	var expectedIDs []int64
-	for i := 0; i < numSites; i++ {
+	for i := range numSites {
 		expectedIDs = append(expectedIDs, create(i))
 	}
 	slices.Sort(expectedIDs)
@@ -258,7 +258,10 @@ func newTestServerWithStore(t *testing.T) (*httptest.Server, *store.Store) {
 	s := store.NewMemoryStore(logger)
 	t.Cleanup(func() { _ = s.Close() })
 
-	apiServer := NewServer(s, logger)
+	apiServer, err := NewServer(s, logger)
+	if err != nil {
+		t.Fatalf("create server: %v", err)
+	}
 	mux := http.NewServeMux()
 	apiServer.RegisterRoutes(mux)
 	testServer := httptest.NewServer(mux)

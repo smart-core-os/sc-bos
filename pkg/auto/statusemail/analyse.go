@@ -50,7 +50,6 @@ func sendEmailOnChange(dst config.Destination, c <-chan change, logger *zap.Logg
 		vars := Attrs{}
 		for _, s := range seen {
 			// undefined levels are handled in the select below
-			s := s
 
 			if s.Read.Level > statuspb.StatusLog_NOTICE {
 				vars.BadLogs = append(vars.BadLogs, &s)
@@ -112,10 +111,7 @@ func sendEmailOnChange(dst config.Destination, c <-chan change, logger *zap.Logg
 			return
 		}
 
-		delay := time.Duration(float64(firstRetryDelay) * math.Pow(nextAttemptScale, float64(failedAttempts)))
-		if delay > maxAttemptDelay {
-			delay = maxAttemptDelay
-		}
+		delay := min(time.Duration(float64(firstRetryDelay)*math.Pow(nextAttemptScale, float64(failedAttempts))), maxAttemptDelay)
 		failedAttempts++
 		retryTimer.Reset(delay)
 		errLogLimit.Do(func() {

@@ -19,7 +19,6 @@ func MagnitudeAt(t time.Time, mode *electricpb.ElectricMode) (level float32, ok 
 // If a mode exists without a segment at time t, it's magnitude is treated as 0 and is a candidate to be returned.
 func MinAt(t time.Time, modes map[string]*electricpb.ElectricMode) (mode *electricpb.ElectricMode, magnitude float32) {
 	for _, electricMode := range modes {
-		electricMode := electricMode
 		mag, _ := MagnitudeAt(t, electricMode)
 		if mode == nil || mag < magnitude {
 			mode = electricMode

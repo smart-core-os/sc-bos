@@ -41,7 +41,7 @@ func (s *soundSensor) GetSoundLevel(context.Context, *soundsensorpb.GetSoundLeve
 
 func (s *soundSensor) getUpdate(response *SensorResponse) error {
 	lev := &soundsensorpb.SoundLevel{
-		SoundPressureLevel: ptr(float32(response.Noise)),
+		SoundPressureLevel: new(float32(response.Noise)),
 	}
 	_, err := s.value.Set(lev)
 	return err

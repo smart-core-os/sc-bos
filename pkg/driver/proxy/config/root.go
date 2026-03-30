@@ -18,7 +18,7 @@ type Node struct {
 	Host string `json:"host,omitempty"` // for accepted values see grpc.NewClient
 
 	// TLS allows us to override the default enrollment managed TLS configuration.
-	TLS TLS `json:"tls,omitempty"`
+	TLS TLS `json:"tls"`
 
 	// Children is a list of devices that should be announced by the proxy server.
 	// If empty then all devices on the proxy host will be available (provided the user has authorization)

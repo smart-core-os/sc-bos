@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"slices"
 )
 
 // Replacement represents a pattern replacement with preset restrictions
@@ -72,10 +73,8 @@ func appliesToPreset(repl Replacement, presets []string) bool {
 	}
 	// Check if any of the current presets is in the replacement's preset list
 	for _, p := range presets {
-		for _, rp := range repl.presets {
-			if rp == p {
-				return true
-			}
+		if slices.Contains(repl.presets, p) {
+			return true
 		}
 	}
 	return false

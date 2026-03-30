@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/scale"
-	gen_occupancysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
-func OccupancySensorAuto(model *gen_occupancysensorpb.Model) *service.Service[string] {
+func OccupancySensorAuto(model *occupancysensorpb.Model) *service.Service[string] {
 	slc := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		go func() {
 			ticker := time.NewTicker(30 * time.Second)
@@ -19,11 +19,11 @@ func OccupancySensorAuto(model *gen_occupancysensorpb.Model) *service.Service[st
 			for {
 				tod := scale.NineToFive.Now()
 				peopleCount := int32(math.Round(tod * float64Between(0, 10)))
-				occupancy := &gen_occupancysensorpb.Occupancy{PeopleCount: peopleCount}
+				occupancy := &occupancysensorpb.Occupancy{PeopleCount: peopleCount}
 				if peopleCount == 0 {
-					occupancy.State = oneOf(gen_occupancysensorpb.Occupancy_UNOCCUPIED, gen_occupancysensorpb.Occupancy_IDLE)
+					occupancy.State = oneOf(occupancysensorpb.Occupancy_UNOCCUPIED, occupancysensorpb.Occupancy_IDLE)
 				} else {
-					occupancy.State = gen_occupancysensorpb.Occupancy_OCCUPIED
+					occupancy.State = occupancysensorpb.Occupancy_OCCUPIED
 				}
 				_, _ = model.SetOccupancy(occupancy, resource.WithUpdatePaths("state", "people_count"))
 				select {

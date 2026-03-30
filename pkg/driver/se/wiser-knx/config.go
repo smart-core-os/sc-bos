@@ -37,7 +37,7 @@ type Config struct {
 	jsontypes.Password
 
 	// The poll interval to use when polling the Wiser for KNX controller (default: 10 seconds).
-	Poll jsontypes.Duration `json:"poll,omitempty"`
+	Poll jsontypes.Duration `json:"poll"`
 
 	// The list of exported objects on the Wiser for KNX controller.
 	Devices []Device `json:"devices,omitempty"`

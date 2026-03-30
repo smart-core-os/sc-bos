@@ -232,7 +232,7 @@ func (t *transport) processMakingCarCall(response any, data *transportpb.Transpo
 	}
 
 	switch response.(type) {
-	case []interface{}:
+	case []any:
 		return nil
 	}
 
@@ -397,7 +397,7 @@ func (t *transport) processNextStoppingFloor(response any, data *transportpb.Tra
 }
 
 func (t *transport) processFaultSignals(response any, data *transportpb.Transport, _ *transportCfg) error {
-	res, ok := response.([]interface{})
+	res, ok := response.([]any)
 
 	if !ok {
 		return comm.ErrReadProperty{Prop: "faultSignals", Cause: fmt.Errorf("converting to []interface{}")}

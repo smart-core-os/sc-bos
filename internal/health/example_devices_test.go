@@ -16,7 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
-// ExampleRegistry_devicesApi shows how to implement the [gen_devicespb.DevicesApiServer] using a [Registry].
+// ExampleRegistry_devicesApi shows how to implement the [devicespb.DevicesApiServer] using a [Registry].
 func ExampleRegistry_devicesApi() {
 	devs := devicespb.NewCollection()
 	server := devices.NewServer(devicesServerModel{Collection: devs})

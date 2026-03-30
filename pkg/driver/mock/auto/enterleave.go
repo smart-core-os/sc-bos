@@ -5,12 +5,12 @@ import (
 	"math/rand/v2"
 	"time"
 
-	gen_enterleavesensorpb "github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
-func EnterLeaveAuto(model *gen_enterleavesensorpb.Model) *service.Service[string] {
-	occupant := []*gen_enterleavesensorpb.EnterLeaveEvent_Occupant{
+func EnterLeaveAuto(model *enterleavesensorpb.Model) *service.Service[string] {
+	occupant := []*enterleavesensorpb.EnterLeaveEvent_Occupant{
 		nil,
 		{DisplayName: "Scott Lang", Ids: map[string]string{"card": "1234567890"}},
 		{DisplayName: "Hope Van Dyne", Ids: map[string]string{"card": "0987654321"}},
@@ -27,16 +27,16 @@ func EnterLeaveAuto(model *gen_enterleavesensorpb.Model) *service.Service[string
 
 			for {
 				chance := rand.Float32()
-				direction := gen_enterleavesensorpb.EnterLeaveEvent_DIRECTION_UNSPECIFIED
+				direction := enterleavesensorpb.EnterLeaveEvent_DIRECTION_UNSPECIFIED
 				if chance < 0.5 {
 					enterCount++
-					direction = gen_enterleavesensorpb.EnterLeaveEvent_ENTER
+					direction = enterleavesensorpb.EnterLeaveEvent_ENTER
 				} else {
 					leaveCount++
-					direction = gen_enterleavesensorpb.EnterLeaveEvent_LEAVE
+					direction = enterleavesensorpb.EnterLeaveEvent_LEAVE
 				}
 
-				enterLeave := &gen_enterleavesensorpb.EnterLeaveEvent{
+				enterLeave := &enterleavesensorpb.EnterLeaveEvent{
 					Direction:  direction,
 					Occupant:   occupant[rand.IntN(len(occupant))],
 					EnterTotal: &enterCount,

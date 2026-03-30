@@ -6,11 +6,11 @@ import (
 
 	"golang.org/x/exp/rand"
 
-	gen_airqualitysensorpb "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
-func AirQualitySensorAuto(model *gen_airqualitysensorpb.Model) *service.Service[string] {
+func AirQualitySensorAuto(model *airqualitysensorpb.Model) *service.Service[string] {
 	slc := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		go func() {
 			ticker := time.NewTicker(30 * time.Second)
@@ -33,13 +33,13 @@ func AirQualitySensorAuto(model *gen_airqualitysensorpb.Model) *service.Service[
 	return slc
 }
 
-func GetAirQualityState() *gen_airqualitysensorpb.AirQuality {
+func GetAirQualityState() *airqualitysensorpb.AirQuality {
 	co2 := rand.Float32() * 1000
 	voc := rand.Float32()
 	ap := rand.Float32() * 1200
 	ir := float32(rand.Int31n(100))
 	score := float32(rand.Int31n(100))
-	return &gen_airqualitysensorpb.AirQuality{
+	return &airqualitysensorpb.AirQuality{
 		CarbonDioxideLevel:       &co2,
 		VolatileOrganicCompounds: &voc,
 		AirPressure:              &ap,

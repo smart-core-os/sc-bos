@@ -33,7 +33,6 @@ func (a *Auto) pullDevice(ctx context.Context, dst chan<- proto.Message, device 
 		})
 	}
 	for _, childCfg := range device.Children {
-		childCfg := childCfg
 		grp.Go(func() error {
 			return a.pullTraits(ctx, dst, childCfg)
 		})
@@ -55,7 +54,6 @@ func (a *Auto) pullTraits(ctx context.Context, dst chan<- proto.Message, device 
 
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, tn := range device.Traits {
-		tn := tn
 		switch tn {
 		case trait.AirQualitySensor:
 			grp.Go(func() error {

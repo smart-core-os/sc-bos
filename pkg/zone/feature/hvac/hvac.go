@@ -8,7 +8,6 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
@@ -38,7 +37,7 @@ type feature struct {
 func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 	announce := f.announcer.Replace(ctx)
 	logger := f.logger
-	client := gen_airtemperaturepb.NewAirTemperatureApiClient(f.clients.ClientConn())
+	client := airtemperaturepb.NewAirTemperatureApiClient(f.clients.ClientConn())
 	publish := func(name string, t config.Thermostat) error {
 		group := &Group{
 			client:   client,

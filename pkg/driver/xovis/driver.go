@@ -213,10 +213,7 @@ func (d *Driver) handleWebhook(response http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	n := 150
-	if len(rawBody) < n {
-		n = len(rawBody)
-	}
+	n := min(len(rawBody), 150)
 	d.logger.Debug("received webhook", zap.ByteString("body", rawBody[:n]))
 
 	// send the data to the bus

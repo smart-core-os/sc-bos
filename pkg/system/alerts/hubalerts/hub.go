@@ -258,9 +258,6 @@ func (s *Server) pullAlertsAgain(ctx context.Context, req *alertpb.PullAlertsReq
 		}
 
 		time.Sleep(delay)
-		delay = time.Duration(float64(delay) * scale)
-		if delay > max {
-			delay = max
-		}
+		delay = min(time.Duration(float64(delay)*scale), max)
 	}
 }

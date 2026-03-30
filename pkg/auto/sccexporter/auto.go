@@ -108,7 +108,6 @@ func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 			var wg errgroup.Group
 			wg.SetLimit(100)
 			for _, dev := range allDevices {
-				dev := dev
 
 				wg.Go(func() error {
 					a.fetchAndPublishDeviceData(autoCtx, dev, cfg.Mqtt.Agent, s.messagesCh, publishMetadata, cfg.FetchTimeout.Duration)

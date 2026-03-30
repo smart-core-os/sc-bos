@@ -73,8 +73,8 @@ func scgolangImportToScBos(importPath string) (string, bool) {
 	}
 
 	// pkg/trait/<sub>/...
-	if strings.HasPrefix(suffix, "pkg/trait/") {
-		sub := strings.TrimPrefix(suffix, "pkg/trait/")
+	if after, ok := strings.CutPrefix(suffix, "pkg/trait/"); ok {
+		sub := after
 		return newModule + "/pkg/proto/" + sub, true
 	}
 

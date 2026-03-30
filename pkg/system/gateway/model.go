@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"slices"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -10,7 +11,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/rx"
-	"github.com/smart-core-os/sc-bos/pkg/util/slices"
+	slicesutil "github.com/smart-core-os/sc-bos/pkg/util/slices"
 )
 
 // cohort describes the hub and enrolled Nodes.
@@ -23,12 +24,12 @@ func newCohort(ignore ...string) *cohort {
 	nodeCmp := func(a, b *remoteNode) int { return strings.Compare(a.addr, b.addr) }
 	return &cohort{
 		ignore: ignore,
-		Nodes:  rx.NewSet(slices.NewSortedFunc(nodeCmp)),
+		Nodes:  rx.NewSet(slicesutil.NewSortedFunc(nodeCmp)),
 	}
 }
 
 func (c *cohort) ShouldIgnore(addr string) bool {
-	return slices.Contains(addr, c.ignore)
+	return slices.Contains(c.ignore, addr)
 }
 
 // remoteNode describes a remote node enrolled in the cohort.
@@ -49,10 +50,10 @@ func newRemoteNode(addr string, conn *grpc.ClientConn) *remoteNode {
 		addr:    addr,
 		Self:    rx.NewVal(remoteDesc{}),
 		Systems: rx.NewVal(remoteSystems{}),
-		Services: rx.NewSet(slices.NewSortedFunc[protoreflect.ServiceDescriptor](func(a, b protoreflect.ServiceDescriptor) int {
+		Services: rx.NewSet(slicesutil.NewSortedFunc[protoreflect.ServiceDescriptor](func(a, b protoreflect.ServiceDescriptor) int {
 			return strings.Compare(string(a.FullName()), string(b.FullName()))
 		})),
-		Devices: rx.NewSet(slices.NewSortedFunc[remoteDesc](func(a, b remoteDesc) int {
+		Devices: rx.NewSet(slicesutil.NewSortedFunc[remoteDesc](func(a, b remoteDesc) int {
 			return strings.Compare(a.name, b.name)
 		})),
 	}

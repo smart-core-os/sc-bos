@@ -114,7 +114,6 @@ func (c *Camera) Stop(ctx context.Context, _ *ptzpb.StopPtzRequest) (*ptzpb.Ptz,
 	mu := sync.Mutex{}
 	var multiErr error
 	for _, command := range api.Commands {
-		command := command // save for goroutine usage
 		wg.Go(func() error {
 			_, err := c.client.cameraPtzControl(ctx, &api.PtzRequest{
 				CameraIndexCode: c.conf.IndexCode,
@@ -194,11 +193,11 @@ func marshalUDMIPayload(msg any) ([]byte, error) {
 	}
 	out := make(map[string]val)
 	mt := reflect.TypeOf(msg)
-	if mt.Kind() == reflect.Ptr {
+	if mt.Kind() == reflect.Pointer {
 		mt = mt.Elem()
 	}
 	mv := reflect.ValueOf(msg)
-	if mv.Kind() == reflect.Ptr {
+	if mv.Kind() == reflect.Pointer {
 		mv = mv.Elem()
 	}
 	for i := 0; i < mt.NumField(); i++ {
@@ -333,10 +332,7 @@ func (c *Camera) getOcc(ctx context.Context) {
 				break
 			} else {
 				i := res.List[0]
-				count := i.EnterNum - i.ExitNum
-				if count < 0 {
-					count = 0
-				}
+				count := max(i.EnterNum-i.ExitNum, 0)
 				c.updateCount(ctx, strconv.Itoa(count))
 			}
 			if len(res.List) < pageSize {

@@ -179,7 +179,7 @@ func (c *Collection) Delete(id string, opts ...WriteOption) (proto.Message, erro
 	oldVal, exists := c.byId[id]
 	c.mu.RUnlock()
 
-	for attempt := 0; attempt < 5; attempt++ {
+	for range 5 {
 		if !exists {
 			if !args.allowMissing {
 				return nil, status.Error(codes.NotFound, "not found")

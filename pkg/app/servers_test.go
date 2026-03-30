@@ -103,8 +103,7 @@ func TestServeGRPC(t *testing.T) {
 	reflection.Register(server) // we don't need reflection for the test, it's just a convenient service to use
 
 	serveCtx, cancelServe := context.WithCancel(context.Background())
-	clientCtx, cancelClient := context.WithCancel(context.Background())
-	defer cancelClient()
+	clientCtx := t.Context()
 
 	serveErr := make(chan error, 1)
 	addr := "localhost:20428"

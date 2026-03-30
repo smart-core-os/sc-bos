@@ -198,8 +198,8 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *enterleavesensorpb.Pull
 			}
 			el := &enterleavesensorpb.EnterLeaveEvent{
 				Direction:  direction,
-				EnterTotal: ptr(int32(enterTotal)),
-				LeaveTotal: ptr(int32(leaveTotal)),
+				EnterTotal: new(int32(enterTotal)),
+				LeaveTotal: new(int32(leaveTotal)),
 			}
 			if eq(lastSent, el) {
 				continue
@@ -244,8 +244,4 @@ func findLogicRecords(data *LogicsPushData, logicID int) (records []LogicRecord,
 		}
 	}
 	return
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -189,13 +190,7 @@ func TestHikcentralFaults(t *testing.T) {
 
 			// Check that all expected codes are present (order may vary)
 			for _, expectedCode := range tt.expectedCodes {
-				found := false
-				for _, actualCode := range actualCodes {
-					if actualCode == expectedCode {
-						found = true
-						break
-					}
-				}
+				found := slices.Contains(actualCodes, expectedCode)
 				if !found {
 					t.Errorf("expected fault code %s not found in actual codes: %v", expectedCode, actualCodes)
 				}

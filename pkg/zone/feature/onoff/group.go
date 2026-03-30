@@ -97,7 +97,6 @@ func (g *Group) PullOnOff(request *onoffpb.PullOnOffRequest, server grpc.ServerS
 
 	group, ctx := errgroup.WithContext(server.Context())
 	for _, name := range g.names {
-		name := name
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(
 				func(ctx context.Context, changes chan<- c) error {

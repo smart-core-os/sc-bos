@@ -156,7 +156,6 @@ func (s *securityEventImpl) pollPeer(ctx context.Context) error {
 	var requestNames []string
 
 	for _, se := range s.events {
-		se := se
 		requestNames = append(requestNames, se.cfg.ValueSource.String())
 		readValues = append(readValues, *se.cfg.ValueSource)
 		resProcessors = append(resProcessors, func(response any) error {

@@ -27,8 +27,10 @@ type Root struct {
 	// poll the alerts API for updates on this schedule, defaults to once per minute
 	RefreshAlarms *jsontypes.Schedule `json:"refreshAlerts,omitempty"`
 	// poll the doors on this schedule, defaults to once per day
-	RefreshDoors       *jsontypes.Schedule `json:"refreshDoors,omitempty"`
-	UdmiExportInterval jsontypes.Duration  `json:"udmiExportInterval,omitempty"`
+	RefreshDoors *jsontypes.Schedule `json:"refreshDoors,omitempty"`
+	// poll the access zones API for updates on this schedule, defaults to once per minute
+	RefreshAccessZones *jsontypes.Schedule `json:"refreshAccessZones,omitempty"`
+	UdmiExportInterval jsontypes.Duration  `json:"udmiExportInterval"`
 	TopicPrefix        string              `json:"topicPrefix,omitempty"`
 
 	RefreshOccupancyInterval *jsontypes.Duration `json:"refreshOccupancyInterval,omitempty"`
@@ -54,6 +56,10 @@ func (cfg *Root) ApplyDefaults() {
 
 	if cfg.RefreshDoors == nil {
 		cfg.RefreshDoors = jsontypes.MustParseSchedule("0 0 * * *")
+	}
+
+	if cfg.RefreshAccessZones == nil {
+		cfg.RefreshAccessZones = jsontypes.MustParseSchedule("* * * * *")
 	}
 
 	if cfg.RefreshAlarms == nil {

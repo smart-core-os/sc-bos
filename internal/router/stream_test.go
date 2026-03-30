@@ -23,8 +23,7 @@ import (
 )
 
 func TestStreamHandler(t *testing.T) {
-	ctx, stop := context.WithCancel(context.Background())
-	defer stop()
+	ctx := t.Context()
 
 	// downstream nodes
 	n1Client, err := newNode(t, "n1")

@@ -16,18 +16,18 @@ func FluidFlow(model *fluidflowpb.Model) service.Lifecycle {
 				direction := oneOf(fluidflowpb.FluidFlow_FLOW, fluidflowpb.FluidFlow_RETURN, fluidflowpb.FluidFlow_BLOCKING)
 
 				state := &fluidflowpb.FluidFlow{
-					FlowRate:             ptr(float32Between(1, 100)),
-					DriveFrequency:       ptr(float32Between(0, 100)),
-					TargetFlowRate:       ptr(float32Between(1, 100)),
-					TargetDriveFrequency: ptr(float32Between(0, 100)),
+					FlowRate:             new(float32Between(1, 100)),
+					DriveFrequency:       new(float32Between(0, 100)),
+					TargetFlowRate:       new(float32Between(1, 100)),
+					TargetDriveFrequency: new(float32Between(0, 100)),
 					Direction:            direction,
 				}
 
 				if direction == fluidflowpb.FluidFlow_BLOCKING {
-					state.FlowRate = ptr(float32(0))
-					state.TargetFlowRate = ptr(float32(0))
-					state.DriveFrequency = ptr(float32(0))
-					state.TargetDriveFrequency = ptr(float32(0))
+					state.FlowRate = new(float32(0))
+					state.TargetFlowRate = new(float32(0))
+					state.DriveFrequency = new(float32(0))
+					state.TargetDriveFrequency = new(float32(0))
 				}
 
 				_, _ = model.UpdateFluidFlow(state)

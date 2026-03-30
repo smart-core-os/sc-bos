@@ -95,10 +95,7 @@ func (pr PageReader[R]) ListRecordsBetween(ctx context.Context, store history.St
 		return nil, 0, "", err
 	}
 
-	readRecords := read
-	if readRecords > pageSize {
-		readRecords = pageSize
-	}
+	readRecords := min(read, pageSize)
 	page = make([]R, readRecords)
 
 	var allErrs error
