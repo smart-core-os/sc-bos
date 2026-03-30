@@ -39,11 +39,15 @@ func GetAirQualityState() *airqualitysensorpb.AirQuality {
 	ap := rand.Float32() * 1200
 	ir := float32(rand.Int31n(100))
 	score := float32(rand.Int31n(100))
+	comfort := airqualitysensorpb.AirQuality_COMFORTABLE
+	if score < 70 {
+		comfort = airqualitysensorpb.AirQuality_UNCOMFORTABLE
+	}
 	return &airqualitysensorpb.AirQuality{
 		CarbonDioxideLevel:       &co2,
 		VolatileOrganicCompounds: &voc,
 		AirPressure:              &ap,
-		Comfort:                  0,
+		Comfort:                  comfort,
 		InfectionRisk:            &ir,
 		Score:                    &score,
 	}
