@@ -10,15 +10,14 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
-	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func TestGroup_PullBrightness(t *testing.T) {
-	r := lightpb2.NewApiRouter()
-	client := lightpb2.NewLightApiClient(wrap.ServerToClient(lightpb2.LightApi_ServiceDesc, r))
+	r := lightpb.NewApiRouter()
+	client := lightpb.NewLightApiClient(wrap.ServerToClient(lightpb.LightApi_ServiceDesc, r))
 	group := &Group{
 		client: client,
 		names: []string{
@@ -29,7 +28,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 	}
 
 	for _, name := range group.names {
-		r.Add(name, lightpb2.NewLightApiClient(wrap.ServerToClient(lightpb2.LightApi_ServiceDesc, lightpb2.NewMemoryDevice())))
+		r.Add(name, lightpb.NewLightApiClient(wrap.ServerToClient(lightpb.LightApi_ServiceDesc, lightpb.NewMemoryDevice())))
 	}
 
 	type response struct {
@@ -40,7 +39,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 	pullCtx := t.Context()
 	go func() {
 		defer close(responses)
-		groupClient := lightpb2.NewLightApiClient(wrap.ServerToClient(lightpb2.LightApi_ServiceDesc, group))
+		groupClient := lightpb.NewLightApiClient(wrap.ServerToClient(lightpb.LightApi_ServiceDesc, group))
 		stream, err := groupClient.PullBrightness(pullCtx, &lightpb.PullBrightnessRequest{
 			Name: "anything will do", // we're using a direct client call, not routed
 		})
@@ -122,8 +121,8 @@ func TestGroup_PullBrightness(t *testing.T) {
 }
 
 func TestGroup_DescribeBrightness(t *testing.T) {
-	info := lightpb2.NewInfoRouter()
-	infoClient := lightpb2.NewLightInfoClient(wrap.ServerToClient(lightpb2.LightInfo_ServiceDesc, info))
+	info := lightpb.NewInfoRouter()
+	infoClient := lightpb.NewLightInfoClient(wrap.ServerToClient(lightpb.LightInfo_ServiceDesc, info))
 	group := &Group{
 		info: infoClient,
 		names: []string{
@@ -133,11 +132,11 @@ func TestGroup_DescribeBrightness(t *testing.T) {
 	}
 
 	for _, name := range group.names {
-		modelServer := lightpb2.NewModelServer(lightpb2.NewModel(
-			lightpb2.WithPreset(10, &lightpb.LightPreset{Name: "dim", Title: "Low Light"}),
-			lightpb2.WithPreset(90, &lightpb.LightPreset{Name: "blind", Title: "High Light"}),
+		modelServer := lightpb.NewModelServer(lightpb.NewModel(
+			lightpb.WithPreset(10, &lightpb.LightPreset{Name: "dim", Title: "Low Light"}),
+			lightpb.WithPreset(90, &lightpb.LightPreset{Name: "blind", Title: "High Light"}),
 		))
-		info.Add(name, lightpb2.NewLightInfoClient(wrap.ServerToClient(lightpb2.LightInfo_ServiceDesc, modelServer)))
+		info.Add(name, lightpb.NewLightInfoClient(wrap.ServerToClient(lightpb.LightInfo_ServiceDesc, modelServer)))
 	}
 
 	support, err := group.DescribeBrightness(context.Background(), &lightpb.DescribeBrightnessRequest{})

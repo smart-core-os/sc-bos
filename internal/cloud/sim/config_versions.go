@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
-	queries2 "github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 // ConfigVersion is the JSON representation of a config version.
@@ -43,7 +43,7 @@ func payloadUrl(r *http.Request, id int64) string {
 	}).String()
 }
 
-func toConfigVersion(r *http.Request, cv queries2.ConfigVersion) ConfigVersion {
+func toConfigVersion(r *http.Request, cv queries.ConfigVersion) ConfigVersion {
 	description := ""
 	if cv.Description.Valid {
 		description = cv.Description.String
@@ -57,7 +57,7 @@ func toConfigVersion(r *http.Request, cv queries2.ConfigVersion) ConfigVersion {
 	}
 }
 
-func toConfigVersions(r *http.Request, cvs []queries2.ConfigVersion) []ConfigVersion {
+func toConfigVersions(r *http.Request, cvs []queries.ConfigVersion) []ConfigVersion {
 	out := make([]ConfigVersion, len(cvs))
 	for i, cv := range cvs {
 		out[i] = toConfigVersion(r, cv)
@@ -89,17 +89,17 @@ func (s *Server) listConfigVersions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var items []queries2.ConfigVersion
+	var items []queries.ConfigVersion
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		if nodeID != 0 {
-			items, err = tx.ListConfigVersionsByNode(r.Context(), queries2.ListConfigVersionsByNodeParams{
+			items, err = tx.ListConfigVersionsByNode(r.Context(), queries.ListConfigVersionsByNodeParams{
 				NodeID:  nodeID,
 				AfterID: afterID,
 				Limit:   limit + 1,
 			})
 		} else {
-			items, err = tx.ListConfigVersions(r.Context(), queries2.ListConfigVersionsParams{
+			items, err = tx.ListConfigVersions(r.Context(), queries.ListConfigVersionsParams{
 				AfterID: afterID,
 				Limit:   limit + 1,
 			})
@@ -140,14 +140,14 @@ func (s *Server) createConfigVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries2.ConfigVersion
+	var item queries.ConfigVersion
 	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
 		description := sql.NullString{Valid: false}
 		if req.Description != "" {
 			description = sql.NullString{String: req.Description, Valid: true}
 		}
-		item, err = tx.CreateConfigVersion(r.Context(), queries2.CreateConfigVersionParams{
+		item, err = tx.CreateConfigVersion(r.Context(), queries.CreateConfigVersionParams{
 			NodeID:      req.NodeID,
 			Description: description,
 			Payload:     req.Payload,
@@ -178,7 +178,7 @@ func (s *Server) getConfigVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries2.ConfigVersion
+	var item queries.ConfigVersion
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		item, err = tx.GetConfigVersion(r.Context(), id)

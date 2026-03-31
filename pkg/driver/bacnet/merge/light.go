@@ -18,7 +18,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
-	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -61,8 +60,8 @@ type light struct {
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *lightpb2.Model
-	*lightpb2.ModelServer
+	model *lightpb.Model
+	*lightpb.ModelServer
 	config   lightCfg
 	pollTask *task.Intermittent
 }
@@ -73,7 +72,7 @@ func newLight(client *gobacnet.Client, devices known.Context, faultCheck *health
 		return nil, err
 	}
 
-	model := lightpb2.NewModel(resource.WithMessageEquivalence(cmp.Equal(cmp.FloatValueApprox(0, 1.0)))) // report brightness intensity changes of 1.0% or more
+	model := lightpb.NewModel(resource.WithMessageEquivalence(cmp.Equal(cmp.FloatValueApprox(0, 1.0)))) // report brightness intensity changes of 1.0% or more
 
 	l := &light{
 		client:      client,
@@ -81,7 +80,7 @@ func newLight(client *gobacnet.Client, devices known.Context, faultCheck *health
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: lightpb2.NewModelServer(model),
+		ModelServer: lightpb.NewModelServer(model),
 		config:      cfg,
 	}
 
@@ -92,8 +91,8 @@ func newLight(client *gobacnet.Client, devices known.Context, faultCheck *health
 
 func (l *light) AnnounceSelf(a node.Announcer) node.Undo {
 	return a.Announce(l.config.Name,
-		node.HasServer(lightpb2.RegisterLightApiServer, lightpb2.LightApiServer(l)),
-		node.HasServer(lightpb2.RegisterLightInfoServer, lightpb2.LightInfoServer(l)),
+		node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(l)),
+		node.HasServer(lightpb.RegisterLightInfoServer, lightpb.LightInfoServer(l)),
 		node.HasTrait(trait.Light),
 	)
 }

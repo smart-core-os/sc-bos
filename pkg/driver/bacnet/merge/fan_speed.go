@@ -13,7 +13,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
-	fanspeedpb2 "github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -36,8 +35,8 @@ type fanSpeed struct {
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *fanspeedpb2.Model
-	*fanspeedpb2.ModelServer
+	model *fanspeedpb.Model
+	*fanspeedpb.ModelServer
 	config   fanSpeedConfig
 	pollTask *task.Intermittent
 }
@@ -47,21 +46,21 @@ func newFanSpeed(client *gobacnet.Client, devices known.Context, faultCheck *hea
 	if err != nil {
 		return nil, err
 	}
-	var presets []fanspeedpb2.Preset
+	var presets []fanspeedpb.Preset
 	for preset, speed := range cfg.Presets {
-		presets = append(presets, fanspeedpb2.Preset{
+		presets = append(presets, fanspeedpb.Preset{
 			Name:       preset,
 			Percentage: speed,
 		})
 	}
-	model := fanspeedpb2.NewModel(fanspeedpb2.WithPresets(presets...))
+	model := fanspeedpb.NewModel(fanspeedpb.WithPresets(presets...))
 	t := &fanSpeed{
 		client:      client,
 		known:       devices,
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: fanspeedpb2.NewModelServer(model),
+		ModelServer: fanspeedpb.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
@@ -77,7 +76,7 @@ func (t *fanSpeed) startPoll(init context.Context) (stop task.StopFn, err error)
 
 func (t *fanSpeed) AnnounceSelf(a node.Announcer) node.Undo {
 	return a.Announce(t.config.Name,
-		node.HasServer(fanspeedpb2.RegisterFanSpeedApiServer, fanspeedpb2.FanSpeedApiServer(t)),
+		node.HasServer(fanspeedpb.RegisterFanSpeedApiServer, fanspeedpb.FanSpeedApiServer(t)),
 		node.HasTrait(trait.FanSpeed),
 	)
 }

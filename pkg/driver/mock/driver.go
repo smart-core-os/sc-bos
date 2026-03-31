@@ -21,7 +21,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
-	fanspeedpb2 "github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hailpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
@@ -206,15 +206,15 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil
 	case trait.FanSpeed:
-		presets := []fanspeedpb2.Preset{
+		presets := []fanspeedpb.Preset{
 			{Name: "off", Percentage: 0},
 			{Name: "low", Percentage: 15},
 			{Name: "med", Percentage: 40},
 			{Name: "high", Percentage: 75},
 			{Name: "full", Percentage: 100},
 		}
-		model := fanspeedpb2.NewModel(fanspeedpb2.WithPresets(presets...))
-		return []node.Feature{node.HasServer(fanspeedpb2.RegisterFanSpeedApiServer, fanspeedpb2.FanSpeedApiServer(fanspeedpb2.NewModelServer(model)))}, auto.FanSpeed(model, presets...)
+		model := fanspeedpb.NewModel(fanspeedpb.WithPresets(presets...))
+		return []node.Feature{node.HasServer(fanspeedpb.RegisterFanSpeedApiServer, fanspeedpb.FanSpeedApiServer(fanspeedpb.NewModelServer(model)))}, auto.FanSpeed(model, presets...)
 	case trait.Hail:
 		return []node.Feature{node.HasServer(hailpb.RegisterHailApiServer, hailpb.HailApiServer(hailpb.NewModelServer(hailpb.NewModel())))}, nil
 	case trait.InputSelect:

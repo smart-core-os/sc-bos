@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
-	queries2 "github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 // nodeCheckInsEnv holds test fixtures for node check-in tests
@@ -44,10 +44,10 @@ func setupNodeCheckInsEnv(t *testing.T) nodeCheckInsEnv {
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Create check-in directly via store (no POST endpoint)
-	var checkIn queries2.NodeCheckIn
+	var checkIn queries.NodeCheckIn
 	err := s.Write(t.Context(), func(tx *store.Tx) error {
 		var err error
-		checkIn, err = tx.CreateNodeCheckIn(t.Context(), queries2.CreateNodeCheckInParams{NodeID: node.ID})
+		checkIn, err = tx.CreateNodeCheckIn(t.Context(), queries.CreateNodeCheckInParams{NodeID: node.ID})
 		return err
 	})
 	if err != nil {
@@ -156,7 +156,7 @@ func TestNodeCheckIns_List(t *testing.T) {
 		// Create more check-ins via store
 		err := e.store.Write(t.Context(), func(tx *store.Tx) error {
 			for range 3 {
-				if _, err := tx.CreateNodeCheckIn(t.Context(), queries2.CreateNodeCheckInParams{NodeID: e.node.ID}); err != nil {
+				if _, err := tx.CreateNodeCheckIn(t.Context(), queries.CreateNodeCheckInParams{NodeID: e.node.ID}); err != nil {
 					return err
 				}
 			}
@@ -203,10 +203,10 @@ func TestNodeCheckIns_Pagination(t *testing.T) {
 
 	testPagination(t,
 		func(i int) int64 {
-			var checkIn queries2.NodeCheckIn
+			var checkIn queries.NodeCheckIn
 			err := s.Write(t.Context(), func(tx *store.Tx) error {
 				var err error
-				checkIn, err = tx.CreateNodeCheckIn(t.Context(), queries2.CreateNodeCheckInParams{NodeID: node.ID})
+				checkIn, err = tx.CreateNodeCheckIn(t.Context(), queries.CreateNodeCheckInParams{NodeID: node.ID})
 				return err
 			})
 			if err != nil {

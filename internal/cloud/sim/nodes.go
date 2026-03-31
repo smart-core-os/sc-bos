@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
-	queries2 "github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 // Node is the JSON representation of a node.
@@ -21,7 +21,7 @@ type Node struct {
 	CreateTime time.Time `json:"createTime"`
 }
 
-func toNode(n queries2.Node) Node {
+func toNode(n queries.Node) Node {
 	return Node{
 		ID:         n.ID,
 		Hostname:   n.Hostname,
@@ -30,7 +30,7 @@ func toNode(n queries2.Node) Node {
 	}
 }
 
-func toNodes(nodes []queries2.Node) []Node {
+func toNodes(nodes []queries.Node) []Node {
 	out := make([]Node, len(nodes))
 	for i, n := range nodes {
 		out[i] = toNode(n)
@@ -73,17 +73,17 @@ func (s *Server) listNodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var items []queries2.Node
+	var items []queries.Node
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		if siteID != 0 {
-			items, err = tx.ListNodesBySite(r.Context(), queries2.ListNodesBySiteParams{
+			items, err = tx.ListNodesBySite(r.Context(), queries.ListNodesBySiteParams{
 				SiteID:  siteID,
 				AfterID: afterID,
 				Limit:   limit + 1,
 			})
 		} else {
-			items, err = tx.ListNodes(r.Context(), queries2.ListNodesParams{
+			items, err = tx.ListNodes(r.Context(), queries.ListNodesParams{
 				AfterID: afterID,
 				Limit:   limit + 1,
 			})
@@ -140,10 +140,10 @@ func (s *Server) createNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries2.Node
+	var item queries.Node
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
-		item, err = tx.CreateNode(r.Context(), queries2.CreateNodeParams{
+		item, err = tx.CreateNode(r.Context(), queries.CreateNodeParams{
 			Hostname:   req.Hostname,
 			SiteID:     req.SiteID,
 			SecretHash: hash,
@@ -177,7 +177,7 @@ func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries2.Node
+	var item queries.Node
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		item, err = tx.GetNode(r.Context(), id)
@@ -220,10 +220,10 @@ func (s *Server) updateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries2.Node
+	var item queries.Node
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
-		item, err = tx.UpdateNode(r.Context(), queries2.UpdateNodeParams{
+		item, err = tx.UpdateNode(r.Context(), queries.UpdateNodeParams{
 			ID:       id,
 			Hostname: req.Hostname,
 			SiteID:   req.SiteID,
@@ -297,14 +297,14 @@ func (s *Server) rotateNodeSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries2.Node
+	var item queries.Node
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
 		item, err = tx.GetNode(r.Context(), id)
 		if err != nil {
 			return err
 		}
-		return tx.UpdateNodeSecretHash(r.Context(), queries2.UpdateNodeSecretHashParams{
+		return tx.UpdateNodeSecretHash(r.Context(), queries.UpdateNodeSecretHashParams{
 			ID:         id,
 			SecretHash: hash,
 		})
