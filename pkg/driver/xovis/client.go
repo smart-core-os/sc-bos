@@ -91,17 +91,6 @@ type DeviceInfo struct {
 	HWID      string `json:"hw_id"`
 }
 
-func getDeviceInfo(conn *client) (DeviceInfo, error) {
-	req := conn.newRequest("GET", "/device/info")
-	res, err := conn.Client.Do(req)
-	if err != nil {
-		return DeviceInfo{}, err
-	}
-	var deviceInfo DeviceInfo
-	err = handleResponse(res, &deviceInfo)
-	return deviceInfo, err
-}
-
 type LiveLogicsResponse struct {
 	Time   time.Time       `json:"time"`
 	Logics []LiveLogicData `json:"logics"`
@@ -158,17 +147,6 @@ func doPost(conn *client, target any, endpoint string, body any) error {
 	}
 	err = handleResponse(res, &target)
 	return err
-}
-
-func getLiveLogics(ctx context.Context, conn *client, multiSensor bool, fc *healthpb.FaultCheck) (res LiveLogicsResponse, err error) {
-	if multiSensor {
-		err = doGet(conn, &res, "/multisensor/data/live/logics")
-	} else {
-		err = doGet(conn, &res, "/singlesensor/data/live/logics")
-	}
-
-	updateReliability(ctx, fc, err)
-	return
 }
 
 func getLiveLogic(ctx context.Context, conn *client, multiSensor bool, id int, fc *healthpb.FaultCheck) (res LiveLogicResponse, err error) {

@@ -80,9 +80,6 @@ const (
 	pound       = 0.45359237 * kilogram
 	ounce       = pound / 16
 
-	metricPound = 500 * gram
-	milligram   = gram / 1000
-	microgram   = milligram / 1000
 )
 
 // length/distance

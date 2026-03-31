@@ -11,8 +11,6 @@ import (
 	"unicode/utf8"
 )
 
-const maxCodepoint = 0x10FFFF // Unicode standard limit.
-
 var (
 	identRe   = regexp.MustCompile("^[a-zA-Z_][a-zA-Z_0-9]*")
 	decimalRe = regexp.MustCompile("^-?(0|[1-9][0-9]*)")

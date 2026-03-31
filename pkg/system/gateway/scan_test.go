@@ -375,28 +375,6 @@ func (n *mockRemoteNode) makeGateway() {
 	})
 }
 
-func (n *mockRemoteNode) newAuto(id, kind string) service.Lifecycle {
-	n.t.Helper()
-	id, _, err := n.autos.Create(id, kind, service.State{
-		Active: true,
-		Config: []byte("cfg"),
-	})
-	if err != nil {
-		n.t.Fatalf("failed to create automation service %q/%q: %v", id, kind, err)
-	}
-	n.t.Cleanup(func() {
-		_, err := n.autos.Delete(id)
-		if err != nil {
-			n.t.Errorf("failed to delete automation service %q/%q: %v", id, kind, err)
-		}
-	})
-	r := n.autos.Get(id)
-	if r == nil {
-		n.t.Fatalf("automation service %q/%q not found after creation", id, kind)
-	}
-	return r.Service
-}
-
 func (n *mockRemoteNode) Close() error {
 	return nil
 }

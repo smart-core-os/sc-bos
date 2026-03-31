@@ -206,17 +206,6 @@ func (lt *logicTester) setOccupied(names ...string) {
 	lt.setOccupiedAt(lt.now, names...)
 }
 
-func (lt *logicTester) setUnoccupied(names ...string) {
-	lt.setUnoccupiedAt(lt.now, names...)
-}
-
-func (lt *logicTester) setOccupiedFor(d time.Duration, names ...string) {
-	if d < 0 {
-		d = -d
-	}
-	lt.setOccupiedAt(lt.now.Add(d), names...)
-}
-
 func (lt *logicTester) setUnoccupiedFor(d time.Duration, names ...string) {
 	if d > 0 {
 		d = -d

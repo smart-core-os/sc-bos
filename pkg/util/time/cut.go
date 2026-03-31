@@ -31,10 +31,6 @@ func cutBelow(ts *timestamppb.Timestamp) cut {
 	return (*below)(ts)
 }
 
-func cutAbove(ts *timestamppb.Timestamp) cut {
-	return (*above)(ts)
-}
-
 func cutAboveAll() cut {
 	return aboveAllInstance
 }

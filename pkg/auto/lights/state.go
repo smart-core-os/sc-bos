@@ -143,13 +143,6 @@ type Value[V any] struct {
 	Hit int // cache hits
 }
 
-func (v *Value[V]) set(at time.Time, value V) {
-	v.V = value
-	v.At = at
-	v.Err = nil
-	v.Hit = 0
-}
-
 func (v *Value[V]) hit() {
 	v.Hit++
 }

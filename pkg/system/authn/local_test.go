@@ -14,8 +14,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/account"
 	"github.com/smart-core-os/sc-bos/internal/auth/accesstoken"
 	"github.com/smart-core-os/sc-bos/internal/auth/permission"
-	"github.com/smart-core-os/sc-bos/internal/util/pass"
-	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+"github.com/smart-core-os/sc-bos/pkg/auth/token"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
@@ -583,11 +582,3 @@ func TestLocalServiceVerifier_Verify(t *testing.T) {
 	}
 }
 
-func testHash(t *testing.T, password string) string {
-	t.Helper()
-	hashed, err := pass.Hash([]byte(password))
-	if err != nil {
-		t.Fatalf("failed to hash password: %v", err)
-	}
-	return string(hashed)
-}

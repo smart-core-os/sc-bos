@@ -11,8 +11,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 )
 
-const floatTolerance = 1e-9
-
 func ptr[T any](v T, err error) (*T, error) {
 	return &v, err
 }

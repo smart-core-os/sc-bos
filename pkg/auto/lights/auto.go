@@ -279,7 +279,3 @@ func (b *BrightnessAutomation) processStateChanges(ctx context.Context, readStat
 		}
 	}
 }
-
-type notify interface {
-	Emit(topic string, args ...any) chan struct{}
-}

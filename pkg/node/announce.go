@@ -165,7 +165,6 @@ type announcement struct {
 type traitFeature struct {
 	name     trait.Name
 	services []service
-	metadata map[string]string
 }
 
 // Feature describes some aspect of a named device.

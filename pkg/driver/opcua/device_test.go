@@ -308,13 +308,6 @@ func (h *testHarness) getHealthChecks(t *testing.T) []*healthpb.HealthCheck {
 	return deviceList.Devices[0].GetHealthChecks()
 }
 
-func (h *testHarness) assertFaults(t *testing.T, expectedCount int, normality healthpb.HealthCheck_Normality) {
-	checks := h.getHealthChecks(t)
-	require.Len(t, checks, 1)
-	require.Equal(t, normality, checks[0].Normality)
-	require.Len(t, checks[0].GetFaults().CurrentFaults, expectedCount)
-}
-
 func TestOpcuaConfigFault(t *testing.T) {
 	h := setupTestHarness(t)
 

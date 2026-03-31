@@ -137,19 +137,6 @@ func (p *Pir) udmiPointsetFromData() (*udmipb.MqttMessage, error) {
 	}, nil
 }
 
-func (p *Pir) sendUdmiMessage(ctx context.Context) {
-	m, err := p.udmiPointsetFromData()
-	if err != nil {
-		p.logger.Error("failed to create udmi pointset message", zap.Error(err))
-		return
-	}
-
-	p.udmiBus.Send(ctx, &udmipb.PullExportMessagesResponse{
-		Name:    p.conf.Name,
-		Message: m,
-	})
-}
-
 func (p *Pir) GetExportMessage(context.Context, *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
 	m, err := p.udmiPointsetFromData()
 	if err != nil {

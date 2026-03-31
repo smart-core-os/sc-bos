@@ -224,19 +224,6 @@ func (t *brightnessStreamTester) start() {
 	})
 }
 
-func (t *brightnessStreamTester) assertNone() {
-	t.start()
-	t.t.Helper()
-	timer := time.NewTimer(th.StreamTimout)
-	defer timer.Stop()
-	select {
-	case v := <-t.c:
-		t.t.Fatalf("No messages expected on stream, got %v", v)
-	case <-timer.C:
-		// good case
-	}
-}
-
 func (t *brightnessStreamTester) assertPull(want *Brightness) {
 	t.start()
 	t.t.Helper()
