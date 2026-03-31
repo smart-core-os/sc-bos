@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
@@ -69,7 +68,7 @@ func openCloseDoor(t *transportpb.Transport, nextDest *transportpb.Transport_Loc
 	}
 }
 
-func TransportAuto(model *transport.Model, maxFloor int) *service.Service[string] {
+func TransportAuto(model *transportpb.Model, maxFloor int) *service.Service[string] {
 	slc := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		ticker := time.NewTicker(2 * time.Second)
 		go func() {

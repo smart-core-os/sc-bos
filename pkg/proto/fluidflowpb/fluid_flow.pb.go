@@ -7,7 +7,7 @@
 package fluidflowpb
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -474,7 +474,7 @@ func (x *DescribeFluidFlowRequest) GetName() string {
 type FluidFlowSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// The unit associated with the flow rate target and measured values
 	FlowRateUnit string `protobuf:"bytes,2,opt,name=flow_rate_unit,json=flowRateUnit,proto3" json:"flow_rate_unit,omitempty"`
 	// The unit associated with the drive frequency target and measured values
@@ -513,7 +513,7 @@ func (*FluidFlowSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *FluidFlowSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *FluidFlowSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -598,7 +598,7 @@ var File_smartcore_bos_fluidflow_v1_fluid_flow_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDesc = "" +
 	"\n" +
-	"+smartcore/bos/fluidflow/v1/fluid_flow.proto\x12\x1asmartcore.bos.fluidflow.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xb2\x03\n" +
+	"+smartcore/bos/fluidflow/v1/fluid_flow.proto\x12\x1asmartcore.bos.fluidflow.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\xb2\x03\n" +
 	"\tFluidFlow\x12-\n" +
 	"\x10target_flow_rate\x18\x01 \x01(\x02H\x00R\x0etargetFlowRate\x88\x01\x01\x129\n" +
 	"\x16target_drive_frequency\x18\x02 \x01(\x02H\x01R\x14targetDriveFrequency\x88\x01\x01\x12 \n" +
@@ -638,9 +638,9 @@ const file_smartcore_bos_fluidflow_v1_fluid_flow_proto_rawDesc = "" +
 	"\x17UpdateFluidFlowResponse\x129\n" +
 	"\x04flow\x18\x01 \x01(\v2%.smartcore.bos.fluidflow.v1.FluidFlowR\x04flow\".\n" +
 	"\x18DescribeFluidFlowRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"\xb7\x01\n" +
-	"\x10FluidFlowSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12$\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\xbe\x01\n" +
+	"\x10FluidFlowSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12$\n" +
 	"\x0eflow_rate_unit\x18\x02 \x01(\tR\fflowRateUnit\x120\n" +
 	"\x14drive_frequency_unit\x18\x03 \x01(\tR\x12driveFrequencyUnit2\xe2\x02\n" +
 	"\fFluidFlowApi\x12h\n" +
@@ -676,7 +676,7 @@ var file_smartcore_bos_fluidflow_v1_fluid_flow_proto_goTypes = []any{
 	(*FluidFlowSupport)(nil),             // 8: smartcore.bos.fluidflow.v1.FluidFlowSupport
 	(*PullFluidFlowResponse_Change)(nil), // 9: smartcore.bos.fluidflow.v1.PullFluidFlowResponse.Change
 	(*fieldmaskpb.FieldMask)(nil),        // 10: google.protobuf.FieldMask
-	(*types.ResourceSupport)(nil),        // 11: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),      // 11: smartcore.bos.types.v1.ResourceSupport
 	(*timestamppb.Timestamp)(nil),        // 12: google.protobuf.Timestamp
 }
 var file_smartcore_bos_fluidflow_v1_fluid_flow_proto_depIdxs = []int32{
@@ -687,7 +687,7 @@ var file_smartcore_bos_fluidflow_v1_fluid_flow_proto_depIdxs = []int32{
 	1,  // 4: smartcore.bos.fluidflow.v1.UpdateFluidFlowRequest.flow:type_name -> smartcore.bos.fluidflow.v1.FluidFlow
 	10, // 5: smartcore.bos.fluidflow.v1.UpdateFluidFlowRequest.update_mask:type_name -> google.protobuf.FieldMask
 	1,  // 6: smartcore.bos.fluidflow.v1.UpdateFluidFlowResponse.flow:type_name -> smartcore.bos.fluidflow.v1.FluidFlow
-	11, // 7: smartcore.bos.fluidflow.v1.FluidFlowSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	11, // 7: smartcore.bos.fluidflow.v1.FluidFlowSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	12, // 8: smartcore.bos.fluidflow.v1.PullFluidFlowResponse.Change.change_time:type_name -> google.protobuf.Timestamp
 	1,  // 9: smartcore.bos.fluidflow.v1.PullFluidFlowResponse.Change.flow:type_name -> smartcore.bos.fluidflow.v1.FluidFlow
 	2,  // 10: smartcore.bos.fluidflow.v1.FluidFlowApi.GetFluidFlow:input_type -> smartcore.bos.fluidflow.v1.GetFluidFlowRequest

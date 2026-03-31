@@ -6,7 +6,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/unit.proto";
+import "smartcore/bos/types/v1/unit.proto";
 
 // Trait for devices that have or measure temperature like an oven or shower,
 // distinct from the AirTemperature trait (HVAC, thermostats).
@@ -19,9 +19,9 @@ service TemperatureApi {
 // Temperature represents a target and measured temperature.
 message Temperature {
   // Read/write, the target temperature.
-  smartcore.types.Temperature set_point = 1;
+  smartcore.bos.types.v1.Temperature set_point = 1;
   // Output only, the measured temperature.
-  smartcore.types.Temperature measured = 2;
+  smartcore.bos.types.v1.Temperature measured = 2;
 }
 
 message GetTemperatureRequest {

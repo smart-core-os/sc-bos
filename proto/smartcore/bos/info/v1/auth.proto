@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package smartcore.bos.info.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/infopb";
+
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/types/v1/change.proto";
+
+// The auth provider service enables granular control of security permissions for a particular Smart Core controller or
+// system. It does this using the concept of 'Accounts', each of which has a certain set of permissions for which
+// device(s) and/or trait(s)/service(s) they are allowed to access.
+service AuthProvider {
+  rpc AddAccount (AddAccountRequest) returns (AddAccountResponse);
+  rpc RemoveAccount (RemoveAccountRequest) returns (RemoveAccountResponse);
+  rpc UpdateAccountPermissions (UpdateAccountPermissionsRequest) returns (UpdateAccountPermissionsResponse);
+  rpc GenerateToken (GenerateTokenRequest) returns (GenerateTokenResponse);
+}
+
+// Represents an account which has access to this system
+message Account {
+  // The account identifier
+  string name = 1;
+  // A descriptive name for this account
+  string title = 2;
+  // The current token for this account
+  Token token = 3;
+  // The set of permissions granted to the token bearer
+  repeated Permission permissions = 4;
+}
+
+// Represents a token that can be granted against an Account for
+message Token {
+  // The token ID string
+  string id = 1;
+  // A time the token expires
+  google.protobuf.Timestamp expires_at = 2;
+}
+
+// Describes a permission level for a particular device-trait
+message Permission {
+  // The fully qualified name of the device this permission represents, or '*' for all devices
+  string device_name = 1;
+  // The fully qualified name of the trait on the specified device this permission represents (in package.Service format), or '*' for all traits
+  string trait_name = 2;
+  // Whether to allow read calls for this device-trait
+  bool read = 3;
+  // Whether to allow write calls for this device-trait
+  bool write = 4;
+  // Whether to allow observe calls (i.e. Pull requests) for this device-trait
+  bool observe = 5;
+}
+
+message AddAccountRequest {
+  string name = 1;
+  string title = 2;
+  repeated Permission permissions = 3;
+}
+
+message AddAccountResponse {
+  Account account = 1;
+}
+
+message RemoveAccountRequest {
+  string name = 1;
+}
+
+message RemoveAccountResponse {
+}
+
+message UpdateAccountPermissionsRequest {
+  smartcore.bos.types.v1.ChangeType change_type = 1;
+  repeated Permission permissions = 2;
+}
+
+message UpdateAccountPermissionsResponse {
+}
+
+message GenerateTokenRequest {
+  string account_name = 1;
+}
+
+message GenerateTokenResponse {
+  Token token = 1;
+}

@@ -14,19 +14,17 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/xovis/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/enterleavesensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 const DriverName = "xovis"
@@ -107,7 +105,7 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 				multiSensor:    conf.MultiSensor,
 				logicID:        dev.Occupancy.ID,
 				bus:            d.pushDataBus,
-				OccupancyTotal: resource.NewValue(resource.WithInitialValue(&traits.Occupancy{}), resource.WithNoDuplicates()),
+				OccupancyTotal: resource.NewValue(resource.WithInitialValue(&occupancysensorpb.Occupancy{}), resource.WithNoDuplicates()),
 			}
 			features = append(features, node.HasTrait(trait.OccupancySensor,
 				node.WithClients(occupancysensorpb.WrapApi(occupancy))))
@@ -121,7 +119,7 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 				logicID:         dev.EnterLeave.ID,
 				multiSensor:     conf.MultiSensor,
 				bus:             d.pushDataBus,
-				EnterLeaveTotal: resource.NewValue(resource.WithInitialValue(&traits.EnterLeaveEvent{}), resource.WithNoDuplicates()),
+				EnterLeaveTotal: resource.NewValue(resource.WithInitialValue(&enterleavesensorpb.EnterLeaveEvent{}), resource.WithNoDuplicates()),
 			}
 
 			features = append(features, node.HasTrait(trait.EnterLeaveSensor,
@@ -133,7 +131,7 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 			server := newUdmiServiceServer(d.logger.Named("udmiServiceServer"), enterLeaveVal, occupancyVal, dev.UDMITopicPrefix)
 			d.udmiServers = append(d.udmiServers, server)
 			features = append(features, node.HasTrait(udmipb.TraitName,
-				node.WithClients(gen_udmipb.WrapService(server))))
+				node.WithClients(udmipb.WrapService(server))))
 		}
 
 		announcer.Announce(dev.Name, features...)
@@ -215,10 +213,7 @@ func (d *Driver) handleWebhook(response http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	n := 150
-	if len(rawBody) < n {
-		n = len(rawBody)
-	}
+	n := min(len(rawBody), 150)
 	d.logger.Debug("received webhook", zap.ByteString("body", rawBody[:n]))
 
 	// send the data to the bus

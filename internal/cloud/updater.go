@@ -11,7 +11,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"go.uber.org/zap"
@@ -95,7 +94,7 @@ func (c *DeploymentUpdater) CommitInstall(ctx context.Context) error {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("get active deployment id: %w", err)
 	}
-	// if there is no active deployment, then oldActiveID = 0
+	// if there is no active deployment, then oldActiveID = ""
 
 	// clean installing mark before adding active mark to prevent edge case where both point to the same deployment
 	// if we stop in between
@@ -107,7 +106,7 @@ func (c *DeploymentUpdater) CommitInstall(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("mark active deployment: %w", err)
 	}
-	c.logger.Info("marked deployment as active", zap.Int64("deploymentId", installingID))
+	c.logger.Info("marked deployment as active", zap.String("deploymentId", installingID))
 
 	// tell server that we have installed the deployment
 	_, err = c.client.CheckIn(ctx, CheckInRequest{
@@ -116,13 +115,13 @@ func (c *DeploymentUpdater) CommitInstall(ctx context.Context) error {
 	if err != nil {
 		// it's not vital we report this right here, as it's already committed locally so will be reported at the
 		// next check-in anyway.
-		c.logger.Warn("failed to report successful install to server", zap.Int64("deploymentId", installingID), zap.Error(err))
+		c.logger.Warn("failed to report successful install to server", zap.String("deploymentId", installingID), zap.Error(err))
 	}
 
-	if oldActiveID != 0 && !c.preserveDownloads {
+	if oldActiveID != "" && !c.preserveDownloads {
 		// clean up old deployment storage after successful commit of new deployment
 		oldDir := c.deploymentDirPath(oldActiveID)
-		c.logger.Debug("cleaning up old deployment storage", zap.Int64("deploymentId", oldActiveID), zap.String("path", oldDir))
+		c.logger.Debug("cleaning up old deployment storage", zap.String("deploymentId", oldActiveID), zap.String("path", oldDir))
 		err = c.dir.RemoveAll(oldDir)
 		if err != nil {
 			return fmt.Errorf("remove old deployment storage: %w", err)
@@ -147,9 +146,9 @@ func (c *DeploymentUpdater) FailInstall(ctx context.Context, message string) err
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("get active deployment id: %w", err)
 	}
-	// if there is no active deployment, then activeID = 0
+	// if there is no active deployment, then activeID = ""
 
-	c.logger.Error("marking deployment as failed to install", zap.Int64("deploymentId", installingID), zap.String("reason", message))
+	c.logger.Error("marking deployment as failed to install", zap.String("deploymentId", installingID), zap.String("reason", message))
 	err = c.clearMark(markInstalling)
 	if err != nil {
 		return fmt.Errorf("clear installing mark: %w", err)
@@ -159,18 +158,18 @@ func (c *DeploymentUpdater) FailInstall(ctx context.Context, message string) err
 	req := CheckInRequest{
 		FailedDeployment: &CheckInFailedDeployment{ID: installingID, Reason: message},
 	}
-	if activeID != 0 {
+	if activeID != "" {
 		req.CurrentDeployment = &CheckInDeploymentRef{ID: activeID}
 	}
 	_, err = c.client.CheckIn(ctx, req)
 	if err != nil {
-		c.logger.Warn("failed to report install failure to server", zap.Int64("deploymentId", installingID), zap.Error(err))
+		c.logger.Warn("failed to report install failure to server", zap.String("deploymentId", installingID), zap.Error(err))
 	}
 
-	if installingID != 0 && !c.preserveDownloads {
+	if installingID != "" && !c.preserveDownloads {
 		// clean up failed deployment storage
 		dir := c.deploymentDirPath(installingID)
-		c.logger.Debug("cleaning up failed deployment storage", zap.Int64("deploymentId", installingID), zap.String("path", dir))
+		c.logger.Debug("cleaning up failed deployment storage", zap.String("deploymentId", installingID), zap.String("path", dir))
 		err = c.dir.RemoveAll(dir)
 		if err != nil {
 			return fmt.Errorf("remove failed deployment storage: %w", err)
@@ -217,7 +216,7 @@ func (c *DeploymentUpdater) PollOnce(ctx context.Context) (needReboot bool, err 
 	}
 	defer c.unlock()
 
-	// ID = 0 is a placeholder for "no such mark"
+	// empty string is a placeholder for "no such mark"
 	activeDeploymentID, err := c.deploymentIDByMark(markActive)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return false, fmt.Errorf("get active deployment id: %w", err)
@@ -229,31 +228,31 @@ func (c *DeploymentUpdater) PollOnce(ctx context.Context) (needReboot bool, err 
 
 	// catch store corruption where both active and installing marks point to the same deployment
 	// in that case we can ignore the installing mark because it's already installed, but we should correct it
-	if activeDeploymentID != 0 && activeDeploymentID == installingDeploymentID {
-		c.logger.Warn("corrupted store - active and installing deployment are the same", zap.Int64("deploymentId", activeDeploymentID))
+	if activeDeploymentID != "" && activeDeploymentID == installingDeploymentID {
+		c.logger.Warn("corrupted store - active and installing deployment are the same", zap.String("deploymentId", activeDeploymentID))
 		err = c.clearMark(markInstalling)
 		if err != nil {
 			return false, fmt.Errorf("clear installing mark: %w", err)
 		}
-		installingDeploymentID = 0
+		installingDeploymentID = ""
 	}
 
 	req := CheckInRequest{}
-	if activeDeploymentID != 0 {
+	if activeDeploymentID != "" {
 		req.CurrentDeployment = &CheckInDeploymentRef{ID: activeDeploymentID}
 	}
-	if installingDeploymentID != 0 {
+	if installingDeploymentID != "" {
 		req.InstallingDeployment = &CheckInInstallingDeployment{ID: installingDeploymentID}
 	}
 
-	c.logger.Debug("checking in with deployment server", zap.Int64("activeDeploymentId", activeDeploymentID), zap.Int64("installingDeploymentId", installingDeploymentID))
+	c.logger.Debug("checking in with deployment server", zap.String("activeDeploymentId", activeDeploymentID), zap.String("installingDeploymentId", installingDeploymentID))
 	resp, err := c.client.CheckIn(ctx, req)
 	if err != nil {
 		return false, fmt.Errorf("check-in: %w", err)
 	}
 
 	// if we are already installing a deployment, then we won't start installing another one
-	if installingDeploymentID != 0 {
+	if installingDeploymentID != "" {
 		return true, nil
 	}
 
@@ -268,7 +267,7 @@ func (c *DeploymentUpdater) PollOnce(ctx context.Context) (needReboot bool, err 
 	}
 
 	// report that we will install the new deployment
-	c.logger.Info("new deployment available, starting installation", zap.Int64("deploymentId", latest.Deployment.ID), zap.Int64("configVersionId", latest.ConfigVersion.ID))
+	c.logger.Info("new deployment available, starting installation", zap.String("deploymentId", latest.Deployment.ID), zap.String("configVersionId", latest.ConfigVersion.ID))
 	req.InstallingDeployment = &CheckInInstallingDeployment{ID: latest.Deployment.ID}
 	_, err = c.client.CheckIn(ctx, req)
 	if err != nil {
@@ -278,7 +277,7 @@ func (c *DeploymentUpdater) PollOnce(ctx context.Context) (needReboot bool, err 
 	// download config version
 	err = c.downloadConfigVersion(ctx, latest.Deployment, latest.ConfigVersion)
 	if err != nil {
-		c.logger.Error("failed to download config version package", zap.Int64("deploymentId", latest.Deployment.ID), zap.Int64("configVersionId", latest.ConfigVersion.ID), zap.Error(err))
+		c.logger.Error("failed to download config version package", zap.String("deploymentId", latest.Deployment.ID), zap.String("configVersionId", latest.ConfigVersion.ID), zap.Error(err))
 		// report transient failure to install the deployment
 		req.InstallingDeployment = &CheckInInstallingDeployment{ID: latest.Deployment.ID, Error: err.Error()}
 		_, reportErr := c.client.CheckIn(ctx, req)
@@ -291,7 +290,7 @@ func (c *DeploymentUpdater) PollOnce(ctx context.Context) (needReboot bool, err 
 		return false, fmt.Errorf("mark installing deployment: %w", err)
 	}
 
-	c.logger.Info("new deployment ready to install on next boot", zap.Int64("deploymentId", latest.Deployment.ID), zap.Int64("configVersionId", latest.ConfigVersion.ID))
+	c.logger.Info("new deployment ready to install on next boot", zap.String("deploymentId", latest.Deployment.ID), zap.String("configVersionId", latest.ConfigVersion.ID))
 	return true, nil
 }
 
@@ -319,13 +318,13 @@ func (c *DeploymentUpdater) AutoPoll(ctx context.Context, interval time.Duration
 	}
 }
 
-func (c *DeploymentUpdater) mark(name string, deploymentID int64) error {
+func (c *DeploymentUpdater) mark(name string, deploymentID string) error {
 	err := c.clearMark(name)
 	if err != nil {
 		return err
 	}
 	linkPath := filepath.Join(dirDeployments, name)
-	err = c.dir.Symlink(strconv.FormatInt(deploymentID, 10), linkPath)
+	err = c.dir.Symlink(deploymentID, linkPath)
 	if err != nil {
 		return fmt.Errorf("create %s symlink: %w", name, err)
 	}
@@ -383,8 +382,8 @@ func (c *DeploymentUpdater) downloadConfigVersion(ctx context.Context, deploymen
 			// It's still useful to leave the remains around to assist with debugging, but we should move it out of the way.
 			moveTo := fmt.Sprintf("failed-download-%d", time.Now().UnixMilli())
 			c.logger.Error("failed to download and extract config version package",
-				zap.Int64("deploymentId", deployment.ID),
-				zap.Int64("configVersionId", configVersion.ID),
+				zap.String("deploymentId", deployment.ID),
+				zap.String("configVersionId", configVersion.ID),
 				zap.Error(err),
 				zap.String("moveFailedExtractTo", moveTo),
 			)
@@ -400,11 +399,11 @@ func (c *DeploymentUpdater) downloadConfigVersion(ctx context.Context, deploymen
 	return nil
 }
 
-func (c *DeploymentUpdater) deploymentDirPath(deploymentID int64) string {
-	return filepath.Join(dirDeployments, strconv.FormatInt(deploymentID, 10))
+func (c *DeploymentUpdater) deploymentDirPath(deploymentID string) string {
+	return filepath.Join(dirDeployments, deploymentID)
 }
 
-func (c *DeploymentUpdater) deploymentRoot(deploymentID int64) (*os.Root, error) {
+func (c *DeploymentUpdater) deploymentRoot(deploymentID string) (*os.Root, error) {
 	dir := c.deploymentDirPath(deploymentID)
 	err := c.dir.MkdirAll(dir, 0755)
 	if err != nil {
@@ -423,17 +422,13 @@ func (c *DeploymentUpdater) deploymentRootByMark(name string) (*os.Root, error) 
 	return c.dir.OpenRoot(filepath.Join(dirDeployments, target))
 }
 
-func (c *DeploymentUpdater) deploymentIDByMark(name string) (int64, error) {
+func (c *DeploymentUpdater) deploymentIDByMark(name string) (string, error) {
 	linkPath := filepath.Join(dirDeployments, name)
 	target, err := c.dir.Readlink(linkPath)
 	if err != nil {
-		return 0, fmt.Errorf("read %s link: %w", name, err)
+		return "", fmt.Errorf("read %s link: %w", name, err)
 	}
-	id, err := strconv.ParseInt(filepath.Base(target), 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("parse deployment id from link target: %w", err)
-	}
-	return id, nil
+	return filepath.Base(target), nil
 }
 
 func (c *DeploymentUpdater) lock(ctx context.Context) (ok bool) {

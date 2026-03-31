@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
@@ -32,8 +32,8 @@ func TestRoot_UnmarshalJSON(t *testing.T) {
 			Type: "area",
 		},
 		Self: Self{
-			Metadata: &traits.Metadata{
-				Appearance: &traits.Metadata_Appearance{Title: "TEST"},
+			Metadata: &metadatapb.Metadata{
+				Appearance: &metadatapb.Metadata_Appearance{Title: "TEST"},
 			},
 		},
 		Raw: buf,

@@ -12,11 +12,11 @@ import (
 
 // NodeCheckIn is the JSON representation of a node check-in.
 type NodeCheckIn struct {
-	ID                           int64     `json:"id"`
-	NodeID                       int64     `json:"nodeId"`
+	ID                           int64     `json:"id,string"`
+	NodeID                       int64     `json:"nodeId,string"`
 	CheckInTime                  time.Time `json:"checkInTime"`
-	CurrentDeploymentID          *int64    `json:"currentDeploymentId,omitempty"`
-	InstallingDeploymentID       *int64    `json:"installingDeploymentId,omitempty"`
+	CurrentDeploymentID          *int64    `json:"currentDeploymentId,string,omitempty"`
+	InstallingDeploymentID       *int64    `json:"installingDeploymentId,string,omitempty"`
 	InstallingDeploymentError    string    `json:"installingDeploymentError,omitempty"`
 	InstallingDeploymentAttempts *int64    `json:"installingDeploymentAttempts,omitempty"`
 }

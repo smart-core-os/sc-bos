@@ -6,13 +6,13 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 type Occupancy struct {
-	traits.UnimplementedOccupancySensorApiServer
+	occupancysensorpb.UnimplementedOccupancySensorApiServer
 	udmipb.UnimplementedUdmiServiceServer
 
 	logger *zap.Logger
@@ -28,11 +28,11 @@ func newOccupancySensor(client *Client, logger *zap.Logger) *Occupancy {
 	return &Occupancy{
 		client:         client,
 		logger:         logger,
-		OccupancyValue: resource.NewValue(resource.WithInitialValue(&traits.Occupancy{}), resource.WithNoDuplicates()),
+		OccupancyValue: resource.NewValue(resource.WithInitialValue(&occupancysensorpb.Occupancy{}), resource.WithNoDuplicates()),
 	}
 }
 
-func (o *Occupancy) GetOccupancy(_ context.Context, _ *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
+func (o *Occupancy) GetOccupancy(_ context.Context, _ *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
 	response := SensorResponse{}
 	if err := doGetRequest(o.client, &response, "sensor"); err != nil {
 		return nil, err
@@ -40,20 +40,20 @@ func (o *Occupancy) GetOccupancy(_ context.Context, _ *traits.GetOccupancyReques
 	if err := o.GetUpdate(&response); err != nil {
 		return nil, err
 	}
-	return o.OccupancyValue.Get().(*traits.Occupancy), nil
+	return o.OccupancyValue.Get().(*occupancysensorpb.Occupancy), nil
 }
 
-func (o *Occupancy) PullOccupancy(request *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+func (o *Occupancy) PullOccupancy(request *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
 	ctx, cancel := context.WithCancel(server.Context())
 	defer cancel()
 
 	changes := o.OccupancyValue.Pull(ctx)
 
 	for change := range changes {
-		v := change.Value.(*traits.Occupancy)
+		v := change.Value.(*occupancysensorpb.Occupancy)
 
-		err := server.Send(&traits.PullOccupancyResponse{
-			Changes: []*traits.PullOccupancyResponse_Change{
+		err := server.Send(&occupancysensorpb.PullOccupancyResponse{
+			Changes: []*occupancysensorpb.PullOccupancyResponse_Change{
 				{Name: request.GetName(), ChangeTime: timestamppb.New(change.ChangeTime), Occupancy: v},
 			},
 		})
@@ -68,19 +68,19 @@ func (o *Occupancy) PullOccupancy(request *traits.PullOccupancyRequest, server t
 func (o *Occupancy) GetUpdate(response *SensorResponse) error {
 	peopleCount := 0
 
-	state := traits.Occupancy_STATE_UNSPECIFIED
+	state := occupancysensorpb.Occupancy_STATE_UNSPECIFIED
 	if response.TruePresence1 {
-		state = traits.Occupancy_OCCUPIED
+		state = occupancysensorpb.Occupancy_OCCUPIED
 	} else {
-		state = traits.Occupancy_UNOCCUPIED
+		state = occupancysensorpb.Occupancy_UNOCCUPIED
 	}
 
 	if response.ZonePeople0 > 0 {
-		state = traits.Occupancy_OCCUPIED
+		state = occupancysensorpb.Occupancy_OCCUPIED
 		peopleCount = response.ZonePeople0
 	}
 
-	_, err := o.OccupancyValue.Set(&traits.Occupancy{
+	_, err := o.OccupancyValue.Set(&occupancysensorpb.Occupancy{
 		State:       state,
 		PeopleCount: int32(peopleCount),
 	})

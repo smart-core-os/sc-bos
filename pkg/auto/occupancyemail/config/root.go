@@ -55,9 +55,9 @@ func ReadBytes(data []byte) (cfg Root, err error) {
 type Root struct {
 	auto.Config
 	// Configuration information for how to send the email.
-	Destination Destination `json:"destination,omitempty"`
+	Destination Destination `json:"destination"`
 	// Name of the device that implement OccupancySensor history trait and that is monitored.
-	Source Source `json:"source,omitempty"`
+	Source Source `json:"source"`
 
 	Now func() time.Time `json:"-"`
 }

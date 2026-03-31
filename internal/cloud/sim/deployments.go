@@ -14,17 +14,17 @@ import (
 )
 
 const (
-	statusPending    = "PENDING"
-	statusInProgress = "IN_PROGRESS"
-	statusCompleted  = "COMPLETED"
-	statusFailed     = "FAILED"
-	statusCancelled  = "CANCELLED"
+	statusPending    = "pending"
+	statusInProgress = "in_progress"
+	statusCompleted  = "completed"
+	statusFailed     = "failed"
+	statusCancelled  = "cancelled"
 )
 
 // Deployment is the JSON representation of a deployment.
 type Deployment struct {
-	ID              int64      `json:"id"`
-	ConfigVersionID int64      `json:"configVersionId"`
+	ID              int64      `json:"id,string"`
+	ConfigVersionID int64      `json:"configVersionId,string"`
 	Status          string     `json:"status"`
 	StartTime       time.Time  `json:"startTime"`
 	FinishedTime    *time.Time `json:"finishedTime,omitempty"`
@@ -56,7 +56,7 @@ func toDeployments(deployments []queries2.Deployment) []Deployment {
 }
 
 type createDeploymentRequest struct {
-	ConfigVersionID int64  `json:"configVersionId"`
+	ConfigVersionID int64  `json:"configVersionId,string"`
 	Status          string `json:"status,omitempty"`
 }
 
@@ -66,11 +66,11 @@ type updateDeploymentStatusRequest struct {
 }
 
 var validStatuses = map[string]bool{
-	"PENDING":     true,
-	"IN_PROGRESS": true,
-	"COMPLETED":   true,
-	"FAILED":      true,
-	"CANCELLED":   true,
+	statusPending:    true,
+	statusInProgress: true,
+	statusCompleted:  true,
+	statusFailed:     true,
+	statusCancelled:  true,
 }
 
 func isValidStatus(status string) bool {

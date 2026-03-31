@@ -12,12 +12,12 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 var errFailedBrightnessUpdate = errors.New("failed to update brightness this time")
@@ -27,8 +27,8 @@ func TestPirsTurnLightsOn(t *testing.T) {
 	pir01 := occupancysensorpb.NewModel()
 	pir02 := occupancysensorpb.NewModel()
 	rootNode := node.New("test")
-	rootNode.Announce("pir01", node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(occupancysensorpb.NewModelServer(pir01)))))
-	rootNode.Announce("pir02", node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(occupancysensorpb.NewModelServer(pir02)))))
+	rootNode.Announce("pir01", node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(occupancysensorpb.NewModelServer(pir01)))))
+	rootNode.Announce("pir02", node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb2.WrapApi(occupancysensorpb.NewModelServer(pir02)))))
 
 	testActions := newTestActions(t)
 
@@ -93,40 +93,40 @@ func TestPirsTurnLightsOn(t *testing.T) {
 	}
 
 	// check setting occupied on one PIR causes the lights to come on
-	_, _ = pir01.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED})
+	_, _ = pir01.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED})
 	ttl, err := waitForState(func(state *ReadState) bool {
 		o, ok := state.Occupancy["pir01"]
 		if !ok {
 			return false
 		}
-		return o.State == traits.Occupancy_OCCUPIED
+		return o.State == occupancysensorpb.Occupancy_OCCUPIED
 	})
 	assertNoErrAndTtl(t, ttl, err, cfg.RefreshEvery.Duration)
 
 	testActions.assertNextBrightnessUpdates(100, "light01", "light02")
 
 	// check that setting occupied on the other PIR does nothing
-	_, _ = pir02.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED})
+	_, _ = pir02.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED})
 	ttl, err = waitForState(func(state *ReadState) bool {
 		o, ok := state.Occupancy["pir02"]
 		if !ok {
 			return false
 		}
-		return o.State == traits.Occupancy_OCCUPIED
+		return o.State == occupancysensorpb.Occupancy_OCCUPIED
 	})
 	assertNoErrAndTtl(t, ttl, err, cfg.RefreshEvery.Duration)
 	testActions.assertNoMoreCalls()
 
 	// check that making both PIRs unoccupied doesn't do anything, but then does
-	_, _ = pir01.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(0, 0).Add(-3 * time.Minute))})
-	_, _ = pir02.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(0, 0).Add(-8 * time.Minute))})
+	_, _ = pir01.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(0, 0).Add(-3 * time.Minute))})
+	_, _ = pir02.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(0, 0).Add(-8 * time.Minute))})
 	ttl, err = waitForState(func(state *ReadState) bool {
 		o01, ok01 := state.Occupancy["pir01"]
 		o02, ok02 := state.Occupancy["pir02"]
 		if !ok01 || !ok02 {
 			return false
 		}
-		return o01.State == traits.Occupancy_UNOCCUPIED && o02.State == traits.Occupancy_UNOCCUPIED
+		return o01.State == occupancysensorpb.Occupancy_UNOCCUPIED && o02.State == occupancysensorpb.Occupancy_UNOCCUPIED
 	})
 	if want := 7 * time.Minute; ttl != want {
 		t.Fatalf("TTL want %v, got %v", want, ttl)
@@ -144,13 +144,13 @@ func TestPirsTurnLightsOn(t *testing.T) {
 
 	// test 1 retry
 	testActions.nextCallReturnsError(errFailedBrightnessUpdate, "light01")
-	_, _ = pir01.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED})
+	_, _ = pir01.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED})
 	ttl, err = waitForState(func(state *ReadState) bool {
 		o01, ok01 := state.Occupancy["pir01"]
 		if !ok01 {
 			return false
 		}
-		return o01.State == traits.Occupancy_OCCUPIED
+		return o01.State == occupancysensorpb.Occupancy_OCCUPIED
 	})
 	// jitter is set to ±0.2
 	assertErrorAndTtl(t, ttl, err, cfg.OnProcessError.BackOffMultiplier.Duration*8/10, errFailedBrightnessUpdate)
@@ -163,34 +163,34 @@ func TestPirsTurnLightsOn(t *testing.T) {
 		if !ok01 {
 			return false
 		}
-		return o01.State == traits.Occupancy_OCCUPIED
+		return o01.State == occupancysensorpb.Occupancy_OCCUPIED
 	})
 	assertNoErrAndTtl(t, ttl, err, cfg.RefreshEvery.Duration)
 	// it works after the retry
 	testActions.assertNextBrightnessUpdates(100, "light01") // light02 is cached, so no update
 
 	// testing retries getting cancelled after max attempts
-	_, _ = pir01.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(0, 0).Add(-3 * time.Minute))})
-	_, _ = pir02.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(0, 0).Add(-3 * time.Minute))})
+	_, _ = pir01.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(0, 0).Add(-3 * time.Minute))})
+	_, _ = pir02.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(time.Unix(0, 0).Add(-3 * time.Minute))})
 	ttl, err = waitForState(func(state *ReadState) bool {
 		o01, ok01 := state.Occupancy["pir01"]
 		o02, ok02 := state.Occupancy["pir02"]
 		if !ok01 || !ok02 {
 			return false
 		}
-		return o01.State == traits.Occupancy_UNOCCUPIED && o02.State == traits.Occupancy_UNOCCUPIED
+		return o01.State == occupancysensorpb.Occupancy_UNOCCUPIED && o02.State == occupancysensorpb.Occupancy_UNOCCUPIED
 	})
 	assertNoErrAndTtl(t, ttl, err, cfg.RefreshEvery.Duration)
 	testActions.assertNextBrightnessUpdates(0, "light01", "light02")
 
 	testActions.nextCallReturnsError(fmt.Errorf("attempt 1: %w", errFailedBrightnessUpdate), "light01", "light02")
-	_, _ = pir01.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED})
+	_, _ = pir01.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED})
 	ttl, err = waitForState(func(state *ReadState) bool {
 		o01, ok01 := state.Occupancy["pir01"]
 		if !ok01 {
 			return false
 		}
-		return o01.State == traits.Occupancy_OCCUPIED
+		return o01.State == occupancysensorpb.Occupancy_OCCUPIED
 	})
 	assertErrorAndTtl(t, ttl, err, cfg.OnProcessError.BackOffMultiplier.Duration*8/10, errFailedBrightnessUpdate)
 	testActions.assertNextBrightnessUpdates(100, "light01", "light02")

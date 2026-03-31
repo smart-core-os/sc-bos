@@ -5,15 +5,14 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait/openclosepb"
 )
 
 func OpenClose(model *openclosepb.Model) service.Lifecycle {
-	resistances := maps.Values(traits.OpenClosePosition_Resistance_value)
+	resistances := maps.Values(openclosepb.OpenClosePosition_Resistance_value)
 	slc := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		go func() {
 			timer := time.NewTimer((30 * time.Second) + time.Duration(rand.Float32())*time.Minute)
@@ -21,11 +20,11 @@ func OpenClose(model *openclosepb.Model) service.Lifecycle {
 				presets := model.ListPresets()
 				if len(presets) > 0 {
 					preset := oneOf(presets...)
-					_, _ = model.UpdatePositions(&traits.OpenClosePositions{Preset: preset})
+					_, _ = model.UpdatePositions(&openclosepb.OpenClosePositions{Preset: preset})
 				} else {
-					state := &traits.OpenClosePosition{
+					state := &openclosepb.OpenClosePosition{
 						OpenPercent: float32(rand.Intn(100 + 1)),
-						Resistance:  traits.OpenClosePosition_Resistance(resistances[rand.Intn(len(resistances))]),
+						Resistance:  openclosepb.OpenClosePosition_Resistance(resistances[rand.Intn(len(resistances))]),
 					}
 					_, _ = model.UpdatePosition(state, resource.WithCreateIfAbsent())
 				}

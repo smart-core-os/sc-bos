@@ -2,13 +2,13 @@ import * as jspb from 'google-protobuf'
 
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
-import * as traits_enter_leave_sensor_pb from '@smart-core-os/sc-api-grpc-web/traits/enter_leave_sensor_pb'; // proto import: "traits/enter_leave_sensor.proto"
-import * as types_time_period_pb from '@smart-core-os/sc-api-grpc-web/types/time/period_pb'; // proto import: "types/time/period.proto"
+import * as smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb from '../../../../smartcore/bos/enterleavesensor/v1/enter_leave_sensor_pb'; // proto import: "smartcore/bos/enterleavesensor/v1/enter_leave_sensor.proto"
+import * as smartcore_bos_types_time_v1_period_pb from '../../../../smartcore/bos/types/time/v1/period_pb'; // proto import: "smartcore/bos/types/time/v1/period.proto"
 
 
 export class EnterLeaveEventRecord extends jspb.Message {
-  getEnterLeaveEvent(): traits_enter_leave_sensor_pb.EnterLeaveEvent | undefined;
-  setEnterLeaveEvent(value?: traits_enter_leave_sensor_pb.EnterLeaveEvent): EnterLeaveEventRecord;
+  getEnterLeaveEvent(): smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb.EnterLeaveEvent | undefined;
+  setEnterLeaveEvent(value?: smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb.EnterLeaveEvent): EnterLeaveEventRecord;
   hasEnterLeaveEvent(): boolean;
   clearEnterLeaveEvent(): EnterLeaveEventRecord;
 
@@ -27,7 +27,7 @@ export class EnterLeaveEventRecord extends jspb.Message {
 
 export namespace EnterLeaveEventRecord {
   export type AsObject = {
-    enterLeaveEvent?: traits_enter_leave_sensor_pb.EnterLeaveEvent.AsObject;
+    enterLeaveEvent?: smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb.EnterLeaveEvent.AsObject;
     recordTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
   };
 }
@@ -36,8 +36,8 @@ export class ListEnterLeaveHistoryRequest extends jspb.Message {
   getName(): string;
   setName(value: string): ListEnterLeaveHistoryRequest;
 
-  getPeriod(): types_time_period_pb.Period | undefined;
-  setPeriod(value?: types_time_period_pb.Period): ListEnterLeaveHistoryRequest;
+  getPeriod(): smartcore_bos_types_time_v1_period_pb.Period | undefined;
+  setPeriod(value?: smartcore_bos_types_time_v1_period_pb.Period): ListEnterLeaveHistoryRequest;
   hasPeriod(): boolean;
   clearPeriod(): ListEnterLeaveHistoryRequest;
 
@@ -66,7 +66,7 @@ export class ListEnterLeaveHistoryRequest extends jspb.Message {
 export namespace ListEnterLeaveHistoryRequest {
   export type AsObject = {
     name: string;
-    period?: types_time_period_pb.Period.AsObject;
+    period?: smartcore_bos_types_time_v1_period_pb.Period.AsObject;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
     pageSize: number;
     pageToken: string;

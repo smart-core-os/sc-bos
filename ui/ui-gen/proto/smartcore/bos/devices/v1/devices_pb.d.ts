@@ -4,17 +4,17 @@ import * as google_protobuf_empty_pb from 'google-protobuf/google/protobuf/empty
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
 import * as smartcore_bos_health_v1_health_pb from '../../../../smartcore/bos/health/v1/health_pb'; // proto import: "smartcore/bos/health/v1/health.proto"
-import * as traits_metadata_pb from '@smart-core-os/sc-api-grpc-web/traits/metadata_pb'; // proto import: "traits/metadata.proto"
-import * as types_change_pb from '@smart-core-os/sc-api-grpc-web/types/change_pb'; // proto import: "types/change.proto"
-import * as types_time_period_pb from '@smart-core-os/sc-api-grpc-web/types/time/period_pb'; // proto import: "types/time/period.proto"
+import * as smartcore_bos_metadata_v1_metadata_pb from '../../../../smartcore/bos/metadata/v1/metadata_pb'; // proto import: "smartcore/bos/metadata/v1/metadata.proto"
+import * as smartcore_bos_types_time_v1_period_pb from '../../../../smartcore/bos/types/time/v1/period_pb'; // proto import: "smartcore/bos/types/time/v1/period.proto"
+import * as smartcore_bos_types_v1_change_pb from '../../../../smartcore/bos/types/v1/change_pb'; // proto import: "smartcore/bos/types/v1/change.proto"
 
 
 export class Device extends jspb.Message {
   getName(): string;
   setName(value: string): Device;
 
-  getMetadata(): traits_metadata_pb.Metadata | undefined;
-  setMetadata(value?: traits_metadata_pb.Metadata): Device;
+  getMetadata(): smartcore_bos_metadata_v1_metadata_pb.Metadata | undefined;
+  setMetadata(value?: smartcore_bos_metadata_v1_metadata_pb.Metadata): Device;
   hasMetadata(): boolean;
   clearMetadata(): Device;
 
@@ -34,7 +34,7 @@ export class Device extends jspb.Message {
 export namespace Device {
   export type AsObject = {
     name: string;
-    metadata?: traits_metadata_pb.Metadata.AsObject;
+    metadata?: smartcore_bos_metadata_v1_metadata_pb.Metadata.AsObject;
     healthChecksList: Array<smartcore_bos_health_v1_health_pb.HealthCheck.AsObject>;
   };
 
@@ -432,8 +432,8 @@ export namespace PullDevicesResponse {
     getName(): string;
     setName(value: string): Change;
 
-    getType(): types_change_pb.ChangeType;
-    setType(value: types_change_pb.ChangeType): Change;
+    getType(): smartcore_bos_types_v1_change_pb.ChangeType;
+    setType(value: smartcore_bos_types_v1_change_pb.ChangeType): Change;
 
     getNewValue(): Device | undefined;
     setNewValue(value?: Device): Change;
@@ -461,7 +461,7 @@ export namespace PullDevicesResponse {
   export namespace Change {
     export type AsObject = {
       name: string;
-      type: types_change_pb.ChangeType;
+      type: smartcore_bos_types_v1_change_pb.ChangeType;
       newValue?: Device.AsObject;
       oldValue?: Device.AsObject;
       changeTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
@@ -598,8 +598,8 @@ export class GetDownloadDevicesUrlRequest extends jspb.Message {
   getMediaType(): string;
   setMediaType(value: string): GetDownloadDevicesUrlRequest;
 
-  getHistory(): types_time_period_pb.Period | undefined;
-  setHistory(value?: types_time_period_pb.Period): GetDownloadDevicesUrlRequest;
+  getHistory(): smartcore_bos_types_time_v1_period_pb.Period | undefined;
+  setHistory(value?: smartcore_bos_types_time_v1_period_pb.Period): GetDownloadDevicesUrlRequest;
   hasHistory(): boolean;
   clearHistory(): GetDownloadDevicesUrlRequest;
 
@@ -623,7 +623,7 @@ export namespace GetDownloadDevicesUrlRequest {
   export type AsObject = {
     query?: Device.Query.AsObject;
     mediaType: string;
-    history?: types_time_period_pb.Period.AsObject;
+    history?: smartcore_bos_types_time_v1_period_pb.Period.AsObject;
     table?: GetDownloadDevicesUrlRequest.Table.AsObject;
     filename: string;
   };

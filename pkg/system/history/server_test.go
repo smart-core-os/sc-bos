@@ -35,7 +35,7 @@ func Test_storeServer_ListHistoryRecords(t *testing.T) {
 		secs := int64(i * 10)
 		now = time.Unix(secs, 0)
 		var err error
-		records[i], err = store.Append(nil, []byte(fmt.Sprintf("%ds", secs)))
+		records[i], err = store.Append(nil, fmt.Appendf(nil, "%ds", secs))
 		if err != nil {
 			t.Fatalf("failed to append record: %v", err)
 		}

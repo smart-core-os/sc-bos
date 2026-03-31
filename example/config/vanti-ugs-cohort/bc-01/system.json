@@ -7,7 +7,15 @@
     "debugMode": true,
     "corsOrigins": ["*"]
   },
+  "staticHosting": [
+    {"path": "/__/vanti-ugs-cohort/", "filePath": "./example/config/vanti-ugs-cohort"}
+  ],
   "systems": {
+    "authn": {
+      "user": {
+        "fileAccounts": true
+      }
+    },
     "hub": {
       "storage": {
         "type": "postgres",

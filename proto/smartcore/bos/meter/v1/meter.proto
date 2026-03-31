@@ -6,7 +6,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/meterpb";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // MeterApi represents a metering device, like an electric meter.
 // The device records total usage since some fixed point in time, this trait provides access to that usage value.
@@ -40,7 +40,7 @@ message MeterReading {
 // MeterReadingSupport describes the capabilities of devices implementing this trait
 message MeterReadingSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // The unit associated with the usage value
   string usage_unit = 2;
   // The unit associated with the produced value

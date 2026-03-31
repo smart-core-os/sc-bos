@@ -10,15 +10,14 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/gobacnet"
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 type onOffCfg struct {
@@ -41,7 +40,7 @@ func readOnOffConfig(raw []byte) (cfg onOffCfg, err error) {
 type onOff struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *onoffpb.Model
@@ -50,7 +49,7 @@ type onOff struct {
 	pollTask *task.Intermittent
 }
 
-func newOnOff(client *gobacnet.Client, known known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*onOff, error) {
+func newOnOff(client *gobacnet.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*onOff, error) {
 	cfg, err := readOnOffConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -81,7 +80,7 @@ func (o *onOff) AnnounceSelf(a node.Announcer) node.Undo {
 	return a.Announce(o.config.Name, node.HasTrait(trait.OnOff, node.WithClients(onoffpb.WrapApi(o))))
 }
 
-func (o *onOff) GetOnOff(ctx context.Context, request *traits.GetOnOffRequest) (*traits.OnOff, error) {
+func (o *onOff) GetOnOff(ctx context.Context, request *onoffpb.GetOnOffRequest) (*onoffpb.OnOff, error) {
 	_, err := o.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -89,17 +88,17 @@ func (o *onOff) GetOnOff(ctx context.Context, request *traits.GetOnOffRequest) (
 	return o.ModelServer.GetOnOff(ctx, request)
 }
 
-func (o *onOff) UpdateOnOff(ctx context.Context, request *traits.UpdateOnOffRequest) (*traits.OnOff, error) {
+func (o *onOff) UpdateOnOff(ctx context.Context, request *onoffpb.UpdateOnOffRequest) (*onoffpb.OnOff, error) {
 
 	toSet := request.GetOnOff()
-	if toSet == nil || toSet.State == traits.OnOff_STATE_UNSPECIFIED {
+	if toSet == nil || toSet.State == onoffpb.OnOff_STATE_UNSPECIFIED {
 		o.logger.Error("UpdateOnOff missing or unspecified OnOffs")
 		return nil, errors.New("missing or unspecified OnOffs")
 	}
 
 	if o.config.OnOff != nil {
 		toWrite := int64(0)
-		if toSet.State == traits.OnOff_ON {
+		if toSet.State == onoffpb.OnOff_ON {
 			toWrite = *o.config.OnValue
 		}
 		err := comm.WriteProperty(ctx, o.client, o.known, *o.config.OnOff, toWrite, 0)
@@ -109,18 +108,18 @@ func (o *onOff) UpdateOnOff(ctx context.Context, request *traits.UpdateOnOffRequ
 		}
 	}
 
-	return pollUntil(ctx, o.config.DefaultRWConsistencyTimeoutDuration(), o.pollPeer, func(onOff *traits.OnOff) bool {
+	return pollUntil(ctx, o.config.DefaultRWConsistencyTimeoutDuration(), o.pollPeer, func(onOff *onoffpb.OnOff) bool {
 		return proto.Equal(onOff, toSet)
 	})
 }
 
-func (o *onOff) PullOnOff(request *traits.PullOnOffRequest, server traits.OnOffApi_PullOnOffServer) error {
+func (o *onOff) PullOnOff(request *onoffpb.PullOnOffRequest, server onoffpb.OnOffApi_PullOnOffServer) error {
 	_ = o.pollTask.Attach(server.Context())
 	return o.ModelServer.PullOnOff(request, server)
 }
 
-func (o *onOff) pollPeer(ctx context.Context) (*traits.OnOff, error) {
-	data := &traits.OnOff{}
+func (o *onOff) pollPeer(ctx context.Context) (*onoffpb.OnOff, error) {
+	data := &onoffpb.OnOff{}
 
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
@@ -135,9 +134,9 @@ func (o *onOff) pollPeer(ctx context.Context) (*traits.OnOff, error) {
 				return comm.ErrReadProperty{Prop: "onOff", Cause: err}
 			}
 			if value == *o.config.OnValue {
-				data.State = traits.OnOff_ON
+				data.State = onoffpb.OnOff_ON
 			} else {
-				data.State = traits.OnOff_OFF
+				data.State = onoffpb.OnOff_OFF
 			}
 			return nil
 		})

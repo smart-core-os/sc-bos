@@ -56,10 +56,7 @@ func RetryApply[C any](apply ApplyFunc[C], opts ...RetryOption) ApplyFunc[C] {
 			}
 
 			// retry logic
-			retryCtx.Delay = time.Duration(float64(retry.InitialDelay) * math.Pow(retry.Factor, float64(retryCtx.Attempt)))
-			if retryCtx.Delay > retry.MaxDelay {
-				retryCtx.Delay = retry.MaxDelay
-			}
+			retryCtx.Delay = min(time.Duration(float64(retry.InitialDelay)*math.Pow(retry.Factor, float64(retryCtx.Attempt))), retry.MaxDelay)
 			retryCtx.Attempt++
 			if retry.MaxAttempts > 0 && retryCtx.Attempt >= retry.MaxAttempts {
 				retryCtx.Delay = 0 // no retry

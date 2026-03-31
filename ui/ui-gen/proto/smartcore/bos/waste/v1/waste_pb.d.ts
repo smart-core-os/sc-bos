@@ -2,9 +2,9 @@ import * as jspb from 'google-protobuf'
 
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
-import * as types_change_pb from '@smart-core-os/sc-api-grpc-web/types/change_pb'; // proto import: "types/change.proto"
-import * as types_info_pb from '@smart-core-os/sc-api-grpc-web/types/info_pb'; // proto import: "types/info.proto"
-import * as types_time_period_pb from '@smart-core-os/sc-api-grpc-web/types/time/period_pb'; // proto import: "types/time/period.proto"
+import * as smartcore_bos_types_time_v1_period_pb from '../../../../smartcore/bos/types/time/v1/period_pb'; // proto import: "smartcore/bos/types/time/v1/period.proto"
+import * as smartcore_bos_types_v1_change_pb from '../../../../smartcore/bos/types/v1/change_pb'; // proto import: "smartcore/bos/types/v1/change.proto"
+import * as smartcore_bos_types_v1_info_pb from '../../../../smartcore/bos/types/v1/info_pb'; // proto import: "smartcore/bos/types/v1/info.proto"
 
 
 export class WasteRecord extends jspb.Message {
@@ -145,8 +145,8 @@ export class ListWasteRecordsRequest extends jspb.Message {
   getPageToken(): string;
   setPageToken(value: string): ListWasteRecordsRequest;
 
-  getPeriod(): types_time_period_pb.Period | undefined;
-  setPeriod(value?: types_time_period_pb.Period): ListWasteRecordsRequest;
+  getPeriod(): smartcore_bos_types_time_v1_period_pb.Period | undefined;
+  setPeriod(value?: smartcore_bos_types_time_v1_period_pb.Period): ListWasteRecordsRequest;
   hasPeriod(): boolean;
   clearPeriod(): ListWasteRecordsRequest;
 
@@ -167,7 +167,7 @@ export namespace ListWasteRecordsRequest {
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
     pageSize: number;
     pageToken: string;
-    period?: types_time_period_pb.Period.AsObject;
+    period?: smartcore_bos_types_time_v1_period_pb.Period.AsObject;
     orderBy: string;
   };
 }
@@ -238,8 +238,8 @@ export namespace PullWasteRecordsResponse {
     hasOldValue(): boolean;
     clearOldValue(): Change;
 
-    getType(): types_change_pb.ChangeType;
-    setType(value: types_change_pb.ChangeType): Change;
+    getType(): smartcore_bos_types_v1_change_pb.ChangeType;
+    setType(value: smartcore_bos_types_v1_change_pb.ChangeType): Change;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Change.AsObject;
@@ -255,7 +255,7 @@ export namespace PullWasteRecordsResponse {
       changeTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
       newValue?: WasteRecord.AsObject;
       oldValue?: WasteRecord.AsObject;
-      type: types_change_pb.ChangeType;
+      type: smartcore_bos_types_v1_change_pb.ChangeType;
     };
   }
 
@@ -280,8 +280,8 @@ export namespace DescribeWasteRecordRequest {
 }
 
 export class WasteRecordSupport extends jspb.Message {
-  getResourceSupport(): types_info_pb.ResourceSupport | undefined;
-  setResourceSupport(value?: types_info_pb.ResourceSupport): WasteRecordSupport;
+  getResourceSupport(): smartcore_bos_types_v1_info_pb.ResourceSupport | undefined;
+  setResourceSupport(value?: smartcore_bos_types_v1_info_pb.ResourceSupport): WasteRecordSupport;
   hasResourceSupport(): boolean;
   clearResourceSupport(): WasteRecordSupport;
 
@@ -304,7 +304,7 @@ export class WasteRecordSupport extends jspb.Message {
 
 export namespace WasteRecordSupport {
   export type AsObject = {
-    resourceSupport?: types_info_pb.ResourceSupport.AsObject;
+    resourceSupport?: smartcore_bos_types_v1_info_pb.ResourceSupport.AsObject;
     unit: string;
     co2SavedUnit: string;
     landSavedUnit: string;

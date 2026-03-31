@@ -7,10 +7,10 @@
 package devicespb
 
 import (
-	traits "github.com/smart-core-os/sc-api/go/traits"
-	types "github.com/smart-core-os/sc-api/go/types"
-	time "github.com/smart-core-os/sc-api/go/types/time"
 	healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	metadatapb "github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	timepb "github.com/smart-core-os/sc-bos/pkg/proto/timepb"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -85,7 +85,7 @@ func (Device_Query_Condition_Matcher) EnumDescriptor() ([]byte, []int) {
 type Device struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Name     string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Metadata *traits.Metadata       `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata   `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	// A list of health checks associated with the device.
 	//
 	// Measured values, like bounds.current_value, will be omitted.
@@ -134,7 +134,7 @@ func (x *Device) GetName() string {
 	return ""
 }
 
-func (x *Device) GetMetadata() *traits.Metadata {
+func (x *Device) GetMetadata() *metadatapb.Metadata {
 	if x != nil {
 		return x.Metadata
 	}
@@ -645,7 +645,7 @@ type GetDownloadDevicesUrlRequest struct {
 	MediaType string `protobuf:"bytes,2,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"`
 	// A query for historical records for matched devices.
 	// When present, GETting the url will return rows for each historical record for each device matched by query.
-	History *time.Period `protobuf:"bytes,3,opt,name=history,proto3" json:"history,omitempty"`
+	History *timepb.Period `protobuf:"bytes,3,opt,name=history,proto3" json:"history,omitempty"`
 	// For tabular media types, configure how the table should be formatted.
 	Table *GetDownloadDevicesUrlRequest_Table `protobuf:"bytes,4,opt,name=table,proto3" json:"table,omitempty"`
 	// A filename to suggest for the downloaded file.
@@ -700,7 +700,7 @@ func (x *GetDownloadDevicesUrlRequest) GetMediaType() string {
 	return ""
 }
 
-func (x *GetDownloadDevicesUrlRequest) GetHistory() *time.Period {
+func (x *GetDownloadDevicesUrlRequest) GetHistory() *timepb.Period {
 	if x != nil {
 		return x.History
 	}
@@ -1412,7 +1412,7 @@ type PullDevicesResponse_Change struct {
 	// The name of the device that emitted this change
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The type of change (e.g. ADD, UPDATE, etc...)
-	Type types.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type typespb.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	// The new value to use for ADD|UPDATE changes
 	NewValue *Device `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// The old value to use for UPDATE|REMOVE changes
@@ -1460,11 +1460,11 @@ func (x *PullDevicesResponse_Change) GetName() string {
 	return ""
 }
 
-func (x *PullDevicesResponse_Change) GetType() types.ChangeType {
+func (x *PullDevicesResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 func (x *PullDevicesResponse_Change) GetNewValue() *Device {
@@ -1666,10 +1666,10 @@ var File_smartcore_bos_devices_v1_devices_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_devices_v1_devices_proto_rawDesc = "" +
 	"\n" +
-	"&smartcore/bos/devices/v1/devices.proto\x12\x18smartcore.bos.devices.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/health/v1/health.proto\x1a\x15traits/metadata.proto\x1a\x12types/change.proto\x1a\x17types/time/period.proto\"\x8b\r\n" +
+	"&smartcore/bos/devices/v1/devices.proto\x12\x18smartcore.bos.devices.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/health/v1/health.proto\x1a(smartcore/bos/metadata/v1/metadata.proto\x1a(smartcore/bos/types/time/v1/period.proto\x1a#smartcore/bos/types/v1/change.proto\"\x94\r\n" +
 	"\x06Device\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
-	"\bmetadata\x18\x02 \x01(\v2\x1a.smartcore.traits.MetadataR\bmetadata\x12I\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12?\n" +
+	"\bmetadata\x18\x02 \x01(\v2#.smartcore.bos.metadata.v1.MetadataR\bmetadata\x12I\n" +
 	"\rhealth_checks\x18\x03 \x03(\v2$.smartcore.bos.health.v1.HealthCheckR\fhealthChecks\x1a\xe9\v\n" +
 	"\x05Query\x12P\n" +
 	"\n" +
@@ -1732,12 +1732,12 @@ const file_smartcore_bos_devices_v1_devices_proto_rawDesc = "" +
 	"\x12PullDevicesRequest\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
 	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\x12<\n" +
-	"\x05query\x18\x04 \x01(\v2&.smartcore.bos.devices.v1.Device.QueryR\x05query\"\xf0\x02\n" +
+	"\x05query\x18\x04 \x01(\v2&.smartcore.bos.devices.v1.Device.QueryR\x05query\"\xf7\x02\n" +
 	"\x13PullDevicesResponse\x12N\n" +
-	"\achanges\x18\x01 \x03(\v24.smartcore.bos.devices.v1.PullDevicesResponse.ChangeR\achanges\x1a\x88\x02\n" +
+	"\achanges\x18\x01 \x03(\v24.smartcore.bos.devices.v1.PullDevicesResponse.ChangeR\achanges\x1a\x8f\x02\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12=\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\x12=\n" +
 	"\tnew_value\x18\x03 \x01(\v2 .smartcore.bos.devices.v1.DeviceR\bnewValue\x12=\n" +
 	"\told_value\x18\x04 \x01(\v2 .smartcore.bos.devices.v1.DeviceR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -1757,12 +1757,12 @@ const file_smartcore_bos_devices_v1_devices_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12T\n" +
 	"\x10devices_metadata\x18\x02 \x01(\v2).smartcore.bos.devices.v1.DevicesMetadataR\x0fdevicesMetadata\x12;\n" +
 	"\vchange_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\"\xb1\x04\n" +
+	"changeTime\"\xb8\x04\n" +
 	"\x1cGetDownloadDevicesUrlRequest\x12<\n" +
 	"\x05query\x18\x01 \x01(\v2&.smartcore.bos.devices.v1.Device.QueryR\x05query\x12\x1d\n" +
 	"\n" +
-	"media_type\x18\x02 \x01(\tR\tmediaType\x126\n" +
-	"\ahistory\x18\x03 \x01(\v2\x1c.smartcore.types.time.PeriodR\ahistory\x12R\n" +
+	"media_type\x18\x02 \x01(\tR\tmediaType\x12=\n" +
+	"\ahistory\x18\x03 \x01(\v2#.smartcore.bos.types.time.v1.PeriodR\ahistory\x12R\n" +
 	"\x05table\x18\x04 \x01(\v2<.smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.TableR\x05table\x12\x1a\n" +
 	"\bfilename\x18\x05 \x01(\tR\bfilename\x1a\x8b\x02\n" +
 	"\x05Table\x12f\n" +
@@ -1822,16 +1822,16 @@ var file_smartcore_bos_devices_v1_devices_proto_goTypes = []any{
 	(*PullDevicesMetadataResponse_Change)(nil),        // 19: smartcore.bos.devices.v1.PullDevicesMetadataResponse.Change
 	(*GetDownloadDevicesUrlRequest_Table)(nil),        // 20: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table
 	(*GetDownloadDevicesUrlRequest_Table_Column)(nil), // 21: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table.Column
-	(*traits.Metadata)(nil),                           // 22: smartcore.traits.Metadata
+	(*metadatapb.Metadata)(nil),                       // 22: smartcore.bos.metadata.v1.Metadata
 	(*healthpb.HealthCheck)(nil),                      // 23: smartcore.bos.health.v1.HealthCheck
 	(*fieldmaskpb.FieldMask)(nil),                     // 24: google.protobuf.FieldMask
-	(*time.Period)(nil),                               // 25: smartcore.types.time.Period
+	(*timepb.Period)(nil),                             // 25: smartcore.bos.types.time.v1.Period
 	(*timestamppb.Timestamp)(nil),                     // 26: google.protobuf.Timestamp
 	(*emptypb.Empty)(nil),                             // 27: google.protobuf.Empty
-	(types.ChangeType)(0),                             // 28: smartcore.types.ChangeType
+	(typespb.ChangeType)(0),                           // 28: smartcore.bos.types.v1.ChangeType
 }
 var file_smartcore_bos_devices_v1_devices_proto_depIdxs = []int32{
-	22, // 0: smartcore.bos.devices.v1.Device.metadata:type_name -> smartcore.traits.Metadata
+	22, // 0: smartcore.bos.devices.v1.Device.metadata:type_name -> smartcore.bos.metadata.v1.Metadata
 	23, // 1: smartcore.bos.devices.v1.Device.health_checks:type_name -> smartcore.bos.health.v1.HealthCheck
 	15, // 2: smartcore.bos.devices.v1.DevicesMetadata.field_counts:type_name -> smartcore.bos.devices.v1.DevicesMetadata.StringFieldCount
 	24, // 3: smartcore.bos.devices.v1.ListDevicesRequest.read_mask:type_name -> google.protobuf.FieldMask
@@ -1848,7 +1848,7 @@ var file_smartcore_bos_devices_v1_devices_proto_depIdxs = []int32{
 	12, // 14: smartcore.bos.devices.v1.PullDevicesMetadataRequest.query:type_name -> smartcore.bos.devices.v1.Device.Query
 	19, // 15: smartcore.bos.devices.v1.PullDevicesMetadataResponse.changes:type_name -> smartcore.bos.devices.v1.PullDevicesMetadataResponse.Change
 	12, // 16: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.query:type_name -> smartcore.bos.devices.v1.Device.Query
-	25, // 17: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.history:type_name -> smartcore.types.time.Period
+	25, // 17: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.history:type_name -> smartcore.bos.types.time.v1.Period
 	20, // 18: smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.table:type_name -> smartcore.bos.devices.v1.GetDownloadDevicesUrlRequest.Table
 	26, // 19: smartcore.bos.devices.v1.DownloadDevicesUrl.expire_after_time:type_name -> google.protobuf.Timestamp
 	13, // 20: smartcore.bos.devices.v1.Device.Query.conditions:type_name -> smartcore.bos.devices.v1.Device.Query.Condition
@@ -1865,7 +1865,7 @@ var file_smartcore_bos_devices_v1_devices_proto_depIdxs = []int32{
 	12, // 31: smartcore.bos.devices.v1.Device.Query.Condition.matches:type_name -> smartcore.bos.devices.v1.Device.Query
 	0,  // 32: smartcore.bos.devices.v1.Device.Query.Condition.matcher:type_name -> smartcore.bos.devices.v1.Device.Query.Condition.Matcher
 	17, // 33: smartcore.bos.devices.v1.DevicesMetadata.StringFieldCount.counts:type_name -> smartcore.bos.devices.v1.DevicesMetadata.StringFieldCount.CountsEntry
-	28, // 34: smartcore.bos.devices.v1.PullDevicesResponse.Change.type:type_name -> smartcore.types.ChangeType
+	28, // 34: smartcore.bos.devices.v1.PullDevicesResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	1,  // 35: smartcore.bos.devices.v1.PullDevicesResponse.Change.new_value:type_name -> smartcore.bos.devices.v1.Device
 	1,  // 36: smartcore.bos.devices.v1.PullDevicesResponse.Change.old_value:type_name -> smartcore.bos.devices.v1.Device
 	26, // 37: smartcore.bos.devices.v1.PullDevicesResponse.Change.change_time:type_name -> google.protobuf.Timestamp

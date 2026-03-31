@@ -2,20 +2,20 @@ import {closeResource, newActionTracker, newResourceValue} from '@/api/resource'
 import {pullOnOff, updateOnOff} from '@/api/sc/traits/on-off';
 import {setRequestName, toQueryObject, watchResource} from '@/util/traits';
 import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
-import {OnOff} from '@smart-core-os/sc-api-grpc-web/traits/on_off_pb';
+import {OnOff} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/onoff/v1/on_off_pb';
 
 /**
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/on_off_pb').PullOnOffRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/onoff/v1/on_off_pb').PullOnOffRequest
  * } PullOnOffRequest
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/on_off_pb').PullOnOffResponse
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/onoff/v1/on_off_pb').PullOnOffResponse
  * } PullOnOffResponse
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/on_off_pb').UpdateOnOffRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/onoff/v1/on_off_pb').UpdateOnOffRequest
  * } UpdateOnOffRequest
  * @typedef {
- *  import('@smart-core-os/sc-api-grpc-web/traits/on_off_pb').OnOff
+ *  import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/onoff/v1/on_off_pb').OnOff
  * } OnOff
  * @typedef {import('vue').Ref} Ref
  * @typedef {import('vue').UnwrapNestedRefs} UnwrapNestedRefs

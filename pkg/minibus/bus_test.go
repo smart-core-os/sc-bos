@@ -33,10 +33,7 @@ func TestBus_OneToMany(t *testing.T) {
 	// several goroutines should all receive all the elements
 	var group sync.WaitGroup
 	for listenIndex, listenCh := range listenChs {
-		listenIndex, listenCh := listenIndex, listenCh
-		group.Add(1)
-		go func() {
-			defer group.Done()
+		group.Go(func() {
 			collected := collector(listenCh)
 			if len(collected) != 100 {
 				t.Errorf("{%d} expected to collect 100 items but got %d", listenIndex, len(collected))
@@ -47,7 +44,7 @@ func TestBus_OneToMany(t *testing.T) {
 					t.Errorf("{%d} collected[%d] = %d", listenIndex, i, collected[i])
 				}
 			}
-		}()
+		})
 	}
 }
 

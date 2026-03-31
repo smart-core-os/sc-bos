@@ -3,7 +3,7 @@ import * as jspb from 'google-protobuf'
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
 import * as smartcore_bos_health_v1_health_pb from '../../../../smartcore/bos/health/v1/health_pb'; // proto import: "smartcore/bos/health/v1/health.proto"
-import * as types_time_period_pb from '@smart-core-os/sc-api-grpc-web/types/time/period_pb'; // proto import: "types/time/period.proto"
+import * as smartcore_bos_types_time_v1_period_pb from '../../../../smartcore/bos/types/time/v1/period_pb'; // proto import: "smartcore/bos/types/time/v1/period.proto"
 
 
 export class HealthCheckRecord extends jspb.Message {
@@ -50,8 +50,8 @@ export class ListHealthCheckHistoryRequest extends jspb.Message {
   getId(): string;
   setId(value: string): ListHealthCheckHistoryRequest;
 
-  getPeriod(): types_time_period_pb.Period | undefined;
-  setPeriod(value?: types_time_period_pb.Period): ListHealthCheckHistoryRequest;
+  getPeriod(): smartcore_bos_types_time_v1_period_pb.Period | undefined;
+  setPeriod(value?: smartcore_bos_types_time_v1_period_pb.Period): ListHealthCheckHistoryRequest;
   hasPeriod(): boolean;
   clearPeriod(): ListHealthCheckHistoryRequest;
 
@@ -81,7 +81,7 @@ export namespace ListHealthCheckHistoryRequest {
   export type AsObject = {
     name: string;
     id: string;
-    period?: types_time_period_pb.Period.AsObject;
+    period?: smartcore_bos_types_time_v1_period_pb.Period.AsObject;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
     pageSize: number;
     pageToken: string;

@@ -13,15 +13,17 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
-	meterpb "github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_meterpb "github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 const AutoName = "sccexporter"
@@ -34,12 +36,12 @@ type AutoImpl struct {
 	*service.Service[config.Root]
 	auto.Services
 
-	airQualityClient     traits.AirQualitySensorApiClient
-	airTemperatureClient traits.AirTemperatureApiClient
-	metadataClient       traits.MetadataApiClient
-	meterClient          gen_meterpb.MeterApiClient
-	meterInfoClient      gen_meterpb.MeterInfoClient
-	occupancyClient      traits.OccupancySensorApiClient
+	airQualityClient     airqualitysensorpb.AirQualitySensorApiClient
+	airTemperatureClient airtemperaturepb.AirTemperatureApiClient
+	metadataClient       metadatapb.MetadataApiClient
+	meterClient          meterpb.MeterApiClient
+	meterInfoClient      meterpb.MeterInfoClient
+	occupancyClient      occupancysensorpb.OccupancySensorApiClient
 }
 
 func (f factory) New(services auto.Services) service.Lifecycle {
@@ -52,12 +54,12 @@ func (f factory) New(services auto.Services) service.Lifecycle {
 }
 
 func (a *AutoImpl) initialiseClients(n *node.Node) {
-	a.airQualityClient = traits.NewAirQualitySensorApiClient(n.ClientConn())
-	a.airTemperatureClient = traits.NewAirTemperatureApiClient(n.ClientConn())
-	a.metadataClient = traits.NewMetadataApiClient(n.ClientConn())
-	a.meterClient = gen_meterpb.NewMeterApiClient(n.ClientConn())
-	a.meterInfoClient = gen_meterpb.NewMeterInfoClient(n.ClientConn())
-	a.occupancyClient = traits.NewOccupancySensorApiClient(n.ClientConn())
+	a.airQualityClient = airqualitysensorpb.NewAirQualitySensorApiClient(n.ClientConn())
+	a.airTemperatureClient = airtemperaturepb.NewAirTemperatureApiClient(n.ClientConn())
+	a.metadataClient = metadatapb.NewMetadataApiClient(n.ClientConn())
+	a.meterClient = meterpb.NewMeterApiClient(n.ClientConn())
+	a.meterInfoClient = meterpb.NewMeterInfoClient(n.ClientConn())
+	a.occupancyClient = occupancysensorpb.NewOccupancySensorApiClient(n.ClientConn())
 }
 
 func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
@@ -106,7 +108,6 @@ func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 			var wg errgroup.Group
 			wg.SetLimit(100)
 			for _, dev := range allDevices {
-				dev := dev
 
 				wg.Go(func() error {
 					a.fetchAndPublishDeviceData(autoCtx, dev, cfg.Mqtt.Agent, s.messagesCh, publishMetadata, cfg.FetchTimeout.Duration)
@@ -276,7 +277,7 @@ func (a *AutoImpl) getMeterInfo(ctx context.Context, traitName trait.Name, devic
 			continue
 		}
 
-		support, err := a.meterInfoClient.DescribeMeterReading(ctx, &gen_meterpb.DescribeMeterReadingRequest{
+		support, err := a.meterInfoClient.DescribeMeterReading(ctx, &meterpb.DescribeMeterReadingRequest{
 			Name: deviceName,
 		})
 		if err != nil {

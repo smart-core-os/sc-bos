@@ -10,8 +10,8 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 func Test_fieldMaskIncludesPath(t *testing.T) {
@@ -54,35 +54,35 @@ func Test_convertChangeForQuery(t *testing.T) {
 		{
 			"nil query",
 			nil,
-			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_ADD, NewValue: &alertpb.Alert{Id: "01", Description: "Add alert"}},
-			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_ADD, NewValue: &alertpb.Alert{Id: "01", Description: "Add alert"}},
+			&alertpb.PullAlertsResponse_Change{Type: typespb.ChangeType_ADD, NewValue: &alertpb.Alert{Id: "01", Description: "Add alert"}},
+			&alertpb.PullAlertsResponse_Change{Type: typespb.ChangeType_ADD, NewValue: &alertpb.Alert{Id: "01", Description: "Add alert"}},
 		},
 		{
 			"convert to add",
 			&alertpb.Alert_Query{Floor: "1"},
-			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
+			&alertpb.PullAlertsResponse_Change{Type: typespb.ChangeType_UPDATE,
 				OldValue: &alertpb.Alert{Id: "01", Floor: "2"},
 				NewValue: &alertpb.Alert{Id: "01", Floor: "1"},
 			},
-			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_ADD, NewValue: &alertpb.Alert{Id: "01", Floor: "1"}},
+			&alertpb.PullAlertsResponse_Change{Type: typespb.ChangeType_ADD, NewValue: &alertpb.Alert{Id: "01", Floor: "1"}},
 		},
 		{
 			"convert to remove",
 			&alertpb.Alert_Query{Floor: "1"},
-			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
+			&alertpb.PullAlertsResponse_Change{Type: typespb.ChangeType_UPDATE,
 				OldValue: &alertpb.Alert{Id: "01", Floor: "1"},
 				NewValue: &alertpb.Alert{Id: "01", Floor: "2"},
 			},
-			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_REMOVE, OldValue: &alertpb.Alert{Id: "01", Floor: "1"}},
+			&alertpb.PullAlertsResponse_Change{Type: typespb.ChangeType_REMOVE, OldValue: &alertpb.Alert{Id: "01", Floor: "1"}},
 		},
 		{
 			"update still applies",
 			&alertpb.Alert_Query{Floor: "1"},
-			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
+			&alertpb.PullAlertsResponse_Change{Type: typespb.ChangeType_UPDATE,
 				OldValue: &alertpb.Alert{Id: "01", Floor: "1", Zone: "Z1"},
 				NewValue: &alertpb.Alert{Id: "01", Floor: "1", Zone: "Z2"},
 			},
-			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
+			&alertpb.PullAlertsResponse_Change{Type: typespb.ChangeType_UPDATE,
 				OldValue: &alertpb.Alert{Id: "01", Floor: "1", Zone: "Z1"},
 				NewValue: &alertpb.Alert{Id: "01", Floor: "1", Zone: "Z2"},
 			},
@@ -90,7 +90,7 @@ func Test_convertChangeForQuery(t *testing.T) {
 		{
 			"add doesn't match",
 			&alertpb.Alert_Query{Floor: "1"},
-			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_ADD,
+			&alertpb.PullAlertsResponse_Change{Type: typespb.ChangeType_ADD,
 				NewValue: &alertpb.Alert{Id: "01", Floor: "2"},
 			},
 			nil,
@@ -98,7 +98,7 @@ func Test_convertChangeForQuery(t *testing.T) {
 		{
 			"delete doesn't match",
 			&alertpb.Alert_Query{Floor: "1"},
-			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_REMOVE,
+			&alertpb.PullAlertsResponse_Change{Type: typespb.ChangeType_REMOVE,
 				OldValue: &alertpb.Alert{Id: "01", Floor: "2"},
 			},
 			nil,
@@ -106,7 +106,7 @@ func Test_convertChangeForQuery(t *testing.T) {
 		{
 			"update doesn't match",
 			&alertpb.Alert_Query{Floor: "1"},
-			&alertpb.PullAlertsResponse_Change{Type: types.ChangeType_UPDATE,
+			&alertpb.PullAlertsResponse_Change{Type: typespb.ChangeType_UPDATE,
 				OldValue: &alertpb.Alert{Id: "01", Floor: "2"},
 				NewValue: &alertpb.Alert{Id: "01", Floor: "3"},
 			},

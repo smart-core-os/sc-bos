@@ -6,8 +6,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/internal/health/healthdb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
 // Seeder initialises health checks from historical data.
@@ -24,7 +23,7 @@ func NewSeeder(db SeederStore) *Seeder {
 	return &Seeder{db: db}
 }
 
-func (s *Seeder) Seed(ctx context.Context, name string, c *gen_healthpb.HealthCheck) *gen_healthpb.HealthCheck {
+func (s *Seeder) Seed(ctx context.Context, name string, c *healthpb.HealthCheck) *healthpb.HealthCheck {
 	old, err := s.lastCheck(ctx, name, c.Id)
 	if err != nil {
 		return nil // no change made
@@ -33,7 +32,7 @@ func (s *Seeder) Seed(ctx context.Context, name string, c *gen_healthpb.HealthCh
 	return old
 }
 
-func (s *Seeder) lastCheck(ctx context.Context, name, id string) (*gen_healthpb.HealthCheck, error) {
+func (s *Seeder) lastCheck(ctx context.Context, name, id string) (*healthpb.HealthCheck, error) {
 	oldDBRecord, err := s.db.ReadLastRecord(ctx, healthdb.CheckID{Name: name, ID: id})
 	if err != nil {
 		return nil, err

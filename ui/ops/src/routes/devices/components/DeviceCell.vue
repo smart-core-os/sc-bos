@@ -6,7 +6,7 @@
         :name="props.item.name"
         :paused="props.paused">
       <enter-leave-event-cell
-          v-if="resource?.value?.enterTotal || resource?.value?.leaveTotal"
+          v-if="resource?.value"
           v-bind="resource"/>
     </with-enter-leave>
     <with-electric-demand

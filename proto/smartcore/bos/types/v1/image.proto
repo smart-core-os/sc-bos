@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package smartcore.bos.types.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/typespb";
+
+// Image describes a resolution, context, aspect ratio, and source independent image.
+// When selecting an image to display the renderer inspects the properties of each image source to find the
+// combination that best matches the intended output destination.
+//
+// An image is a visual representation of some subject, for example "A dog chasing it's tail, on grass".
+// The subject does not change when you double the resolution, crop in landscape or square, encode using jpeg or webp,
+// or serve via a url or filesystem path.
+// The choice for each of these properties can only be determined at image display time, i.e. the renderer knows that
+// it doesn't support webp, and the destination area is 480px wide at 1.5x pixel density.
+message Image {
+  // Content describes the location of the image data.
+  message Content {
+    // A media type for the image, e.g. "image/jpeg".
+    // See https://www.iana.org/assignments/media-types/media-types.xhtml#image
+    string type = 1;
+
+    // Content describes the possible choices for where the image bytes come from.
+    oneof content {
+      // The binary content of the image.
+      //
+      // Prefer other content options instead of embedding the body, especially if the image has multiple sources and/or
+      // content types, providing the byte content for each variation can get large and cause performance issues.
+      bytes body = 2;
+      // A url that resolves to the image content.
+      string url = 3;
+      // The image is resolved in a catalog of known images using this identifier.
+      // For example in an icon set.
+      string ref = 4;
+      // A path on the local file system where the image content is located.
+      string path = 5;
+    }
+  }
+
+  // Source represents a variation on the display of an image.
+  // Sources may exist for shape variations, or resolution variations.
+  // Sources should not change the core subject of an image.
+  message Source {
+    // Where to get the image bytes from in preference order.
+    // When displaying the image the renderer will go through each src until it finds one of a type it supports.
+    repeated Content src = 1;
+    // The intrinsic width of the image.
+    int32 width = 2;
+    // The intrinsic height of the image.
+    int32 height = 3;
+
+    // Purpose defines the possible intended context for an image.
+    enum Purpose {
+      // The purpose is unspecified.
+      // Renderers may treat this as ANY.
+      PURPOSE_UNSPECIFIED = 0;
+      // The renderer is free to use the image in any context.
+      ANY = 1;
+      // The image has been designed with masks and safe zones in mind.
+      // As such any part of the image outside the safe zone may be ignored/hidden/masked by the renderer.
+      //
+      // See https://w3c.github.io/manifest/#dfn-safe-zone
+      MASKABLE = 2;
+
+      // todo: the web spec for purpose also defines 'monochrome', which we could support but not sure we need it yet
+    }
+    // The intended purpose for the image.
+    // The purpose informs the user of the image which intended contexts the image has been designed for.
+    //
+    // Purpose is inspired by https://w3c.github.io/manifest/#purpose-member
+    Purpose purpose = 4;
+  }
+  // Possible sources of image data.
+  // Each source encodes a possible representation of the image, typically to solve art direction or resolution
+  // variation. For example there might be a square source and a portrait source, there might be a source sized 128x128
+  // and one sized 32x32.
+  // All sources should represent the same subject.
+  //
+  // The renderer should choose the source that best destination criteria, preferring to select a larger image if no
+  // exact match is found, selecting lower indexes to break ties.
+  repeated Source sources = 1;
+  // A description of the image, typically used when the image cannot be displayed or consumed by the observer, i.e. when using a screen reader.
+  string description = 2;
+}

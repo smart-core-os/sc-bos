@@ -15,8 +15,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 type Server struct {
@@ -85,10 +85,7 @@ func (s *Server) ListDevices(_ context.Context, request *devicespb.ListDevicesRe
 
 	pageSize := 50
 	if request.PageSize > 0 {
-		pageSize = int(request.PageSize)
-		if pageSize > 1000 {
-			pageSize = 1000
-		}
+		pageSize = min(int(request.PageSize), 1000)
 	}
 
 	// note: allDevices is already sorted by name

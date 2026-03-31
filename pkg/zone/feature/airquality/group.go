@@ -11,28 +11,28 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/merge"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
 )
 
 type Group struct {
-	traits.UnimplementedAirQualitySensorApiServer
-	client traits.AirQualitySensorApiClient
+	airqualitysensorpb.UnimplementedAirQualitySensorApiServer
+	client airqualitysensorpb.AirQualitySensorApiClient
 	names  []string
 
 	logger *zap.Logger
 }
 
-func (g *Group) GetAirQuality(ctx context.Context, request *traits.GetAirQualityRequest) (*traits.AirQuality, error) {
-	fns := make([]func() (*traits.AirQuality, error), len(g.names))
+func (g *Group) GetAirQuality(ctx context.Context, request *airqualitysensorpb.GetAirQualityRequest) (*airqualitysensorpb.AirQuality, error) {
+	fns := make([]func() (*airqualitysensorpb.AirQuality, error), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.GetAirQualityRequest)
+		request := proto.Clone(request).(*airqualitysensorpb.GetAirQualityRequest)
 		request.Name = name
-		fns[i] = func() (*traits.AirQuality, error) {
+		fns[i] = func() (*airqualitysensorpb.AirQuality, error) {
 			return g.client.GetAirQuality(ctx, request)
 		}
 	}
@@ -51,14 +51,14 @@ func (g *Group) GetAirQuality(ctx context.Context, request *traits.GetAirQuality
 	return mergeAirQuality(allRes)
 }
 
-func (g *Group) PullAirQuality(request *traits.PullAirQualityRequest, server traits.AirQualitySensorApi_PullAirQualityServer) error {
+func (g *Group) PullAirQuality(request *airqualitysensorpb.PullAirQualityRequest, server airqualitysensorpb.AirQualitySensorApi_PullAirQualityServer) error {
 	if len(g.names) == 0 {
 		return status.Errorf(codes.FailedPrecondition, "zone has no air quality sensor names")
 	}
 
 	type c struct {
 		name string
-		val  *traits.AirQuality
+		val  *airqualitysensorpb.AirQuality
 	}
 	changes := make(chan c)
 	defer close(changes)
@@ -66,7 +66,7 @@ func (g *Group) PullAirQuality(request *traits.PullAirQualityRequest, server tra
 	group, ctx := errgroup.WithContext(server.Context())
 	// get air quality from each of the named devices
 	for _, name := range g.names {
-		request := proto.Clone(request).(*traits.PullAirQualityRequest)
+		request := proto.Clone(request).(*airqualitysensorpb.PullAirQualityRequest)
 		request.Name = name
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(
@@ -86,7 +86,7 @@ func (g *Group) PullAirQuality(request *traits.PullAirQualityRequest, server tra
 					}
 				},
 				func(ctx context.Context, changes chan<- c) error {
-					res, err := g.client.GetAirQuality(ctx, &traits.GetAirQualityRequest{Name: name, ReadMask: request.ReadMask})
+					res, err := g.client.GetAirQuality(ctx, &airqualitysensorpb.GetAirQualityRequest{Name: name, ReadMask: request.ReadMask})
 					if err != nil {
 						return err
 					}
@@ -105,9 +105,9 @@ func (g *Group) PullAirQuality(request *traits.PullAirQualityRequest, server tra
 		for i, name := range g.names {
 			indexes[name] = i
 		}
-		values := make([]*traits.AirQuality, len(g.names))
+		values := make([]*airqualitysensorpb.AirQuality, len(g.names))
 
-		var last *traits.AirQuality
+		var last *airqualitysensorpb.AirQuality
 		eq := cmp.Equal(cmp.FloatValueApprox(0, 0.001))
 		filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 
@@ -129,7 +129,7 @@ func (g *Group) PullAirQuality(request *traits.PullAirQualityRequest, server tra
 				}
 				last = r
 
-				err = server.Send(&traits.PullAirQualityResponse{Changes: []*traits.PullAirQualityResponse_Change{{
+				err = server.Send(&airqualitysensorpb.PullAirQualityResponse{Changes: []*airqualitysensorpb.PullAirQualityResponse_Change{{
 					Name:       request.Name,
 					ChangeTime: timestamppb.Now(),
 					AirQuality: r,
@@ -144,16 +144,16 @@ func (g *Group) PullAirQuality(request *traits.PullAirQualityRequest, server tra
 	return group.Wait()
 }
 
-func mergeAirQuality(all []*traits.AirQuality) (*traits.AirQuality, error) {
+func mergeAirQuality(all []*airqualitysensorpb.AirQuality) (*airqualitysensorpb.AirQuality, error) {
 	switch len(all) {
 	case 0:
 		return nil, status.Errorf(codes.FailedPrecondition, "zone has no air quality sensor names")
 	case 1:
 		return all[0], nil
 	default:
-		out := &traits.AirQuality{}
+		out := &airqualitysensorpb.AirQuality{}
 		// CO2
-		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+		if val, ok := merge.Mean(all, func(e *airqualitysensorpb.AirQuality) (float32, bool) {
 			if e == nil || e.CarbonDioxideLevel == nil {
 				return 0, false
 			}
@@ -162,7 +162,7 @@ func mergeAirQuality(all []*traits.AirQuality) (*traits.AirQuality, error) {
 			out.CarbonDioxideLevel = &val
 		}
 		// VOC
-		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+		if val, ok := merge.Mean(all, func(e *airqualitysensorpb.AirQuality) (float32, bool) {
 			if e == nil || e.VolatileOrganicCompounds == nil {
 				return 0, false
 			}
@@ -171,7 +171,7 @@ func mergeAirQuality(all []*traits.AirQuality) (*traits.AirQuality, error) {
 			out.VolatileOrganicCompounds = &val
 		}
 		// AirPressure
-		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+		if val, ok := merge.Mean(all, func(e *airqualitysensorpb.AirQuality) (float32, bool) {
 			if e == nil || e.AirPressure == nil {
 				return 0, false
 			}
@@ -180,7 +180,7 @@ func mergeAirQuality(all []*traits.AirQuality) (*traits.AirQuality, error) {
 			out.AirPressure = &val
 		}
 		// InfectionRisk
-		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+		if val, ok := merge.Mean(all, func(e *airqualitysensorpb.AirQuality) (float32, bool) {
 			if e == nil || e.InfectionRisk == nil {
 				return 0, false
 			}
@@ -189,16 +189,16 @@ func mergeAirQuality(all []*traits.AirQuality) (*traits.AirQuality, error) {
 			out.InfectionRisk = &val
 		}
 		// comfort
-		if val, ok := merge.Mode(all, func(e *traits.AirQuality) (traits.AirQuality_Comfort, bool) {
+		if val, ok := merge.Mode(all, func(e *airqualitysensorpb.AirQuality) (airqualitysensorpb.AirQuality_Comfort, bool) {
 			if e == nil {
-				return traits.AirQuality_COMFORT_UNSPECIFIED, false
+				return airqualitysensorpb.AirQuality_COMFORT_UNSPECIFIED, false
 			}
 			return e.Comfort, true
 		}); ok {
 			out.Comfort = val
 		}
 		// IAQ Score
-		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+		if val, ok := merge.Mean(all, func(e *airqualitysensorpb.AirQuality) (float32, bool) {
 			if e == nil || e.Score == nil {
 				return 0, false
 			}
@@ -207,7 +207,7 @@ func mergeAirQuality(all []*traits.AirQuality) (*traits.AirQuality, error) {
 			out.Score = &val
 		}
 		// PM1
-		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+		if val, ok := merge.Mean(all, func(e *airqualitysensorpb.AirQuality) (float32, bool) {
 			if e == nil || e.ParticulateMatter_1 == nil {
 				return 0, false
 			}
@@ -216,7 +216,7 @@ func mergeAirQuality(all []*traits.AirQuality) (*traits.AirQuality, error) {
 			out.ParticulateMatter_1 = &val
 		}
 		// PM10
-		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+		if val, ok := merge.Mean(all, func(e *airqualitysensorpb.AirQuality) (float32, bool) {
 			if e == nil || e.ParticulateMatter_10 == nil {
 				return 0, false
 			}
@@ -225,7 +225,7 @@ func mergeAirQuality(all []*traits.AirQuality) (*traits.AirQuality, error) {
 			out.ParticulateMatter_10 = &val
 		}
 		// PM25
-		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+		if val, ok := merge.Mean(all, func(e *airqualitysensorpb.AirQuality) (float32, bool) {
 			if e == nil || e.ParticulateMatter_25 == nil {
 				return 0, false
 			}
@@ -234,7 +234,7 @@ func mergeAirQuality(all []*traits.AirQuality) (*traits.AirQuality, error) {
 			out.ParticulateMatter_25 = &val
 		}
 		// AirChangePerHour
-		if val, ok := merge.Mean(all, func(e *traits.AirQuality) (float32, bool) {
+		if val, ok := merge.Mean(all, func(e *airqualitysensorpb.AirQuality) (float32, bool) {
 			if e == nil || e.AirChangePerHour == nil {
 				return 0, false
 			}

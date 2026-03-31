@@ -8,8 +8,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
@@ -40,7 +40,7 @@ func TestApi_PullServices(t *testing.T) {
 	assertNoErr("Receive", err)
 
 	want := &servicespb.PullServicesResponse_Change{
-		Type:       types.ChangeType_ADD,
+		Type:       typespb.ChangeType_ADD,
 		ChangeTime: timeToTimestamp(now),
 		NewValue:   stateToProto("id1", "k1", state1),
 	}
@@ -55,7 +55,7 @@ func TestApi_PullServices(t *testing.T) {
 	assertNoErr("Receive", err)
 
 	want = &servicespb.PullServicesResponse_Change{
-		Type: types.ChangeType_UPDATE, ChangeTime: timeToTimestamp(now),
+		Type: typespb.ChangeType_UPDATE, ChangeTime: timeToTimestamp(now),
 		OldValue: stateToProto("id1", "k1", state1),
 		NewValue: stateToProto("id1", "k1", state2),
 	}
@@ -72,9 +72,9 @@ func TestApi_PullServices(t *testing.T) {
 	// We don't know which will win, if the record is removed first then we'll get one event, the removal
 	// If the stop wins then we'll get two events, an update to Stopped and then the removal.
 	// It doesn't actually matter which one wins, but we do need to check in our test.
-	if got.Type == types.ChangeType_UPDATE {
+	if got.Type == typespb.ChangeType_UPDATE {
 		want = &servicespb.PullServicesResponse_Change{
-			Type:       types.ChangeType_UPDATE,
+			Type:       typespb.ChangeType_UPDATE,
 			ChangeTime: timeToTimestamp(now),
 			OldValue:   stateToProto("id1", "k1", state2),
 			NewValue:   stateToProto("id1", "k1", state3),
@@ -88,7 +88,7 @@ func TestApi_PullServices(t *testing.T) {
 	}
 
 	want = &servicespb.PullServicesResponse_Change{
-		Type: types.ChangeType_REMOVE, ChangeTime: timeToTimestamp(now),
+		Type: typespb.ChangeType_REMOVE, ChangeTime: timeToTimestamp(now),
 		OldValue: stateToProto("id1", "k1", state3),
 	}
 	if diff := cmpProto(want, got); diff != "" {

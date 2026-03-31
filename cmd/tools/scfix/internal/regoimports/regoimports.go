@@ -95,7 +95,7 @@ func buildRenameMap(rootDir string) (map[string]string, error) {
 
 // hasVersionSegment reports whether s contains a proto version segment like "v1" or "v1alpha".
 func hasVersionSegment(s string) bool {
-	for _, part := range strings.Split(s, ".") {
+	for part := range strings.SplitSeq(s, ".") {
 		if len(part) >= 2 && part[0] == 'v' && part[1] >= '1' && part[1] <= '9' {
 			return true
 		}
@@ -113,8 +113,8 @@ func readPackageDecl(path string) (string, error) {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if strings.HasPrefix(line, "package ") {
-			return strings.TrimPrefix(line, "package "), nil
+		if after, ok := strings.CutPrefix(line, "package "); ok {
+			return after, nil
 		}
 	}
 	return "", scanner.Err()

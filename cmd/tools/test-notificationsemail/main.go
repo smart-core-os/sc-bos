@@ -9,14 +9,13 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/notificationsemail"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/alert"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 )
 
 var sampleNow = time.Date(2024, 01, 19, 0, 0, 0, 0, time.Local)
 
-func addDummyAlerts(m *alert.Model, t *time.Time) {
+func addDummyAlerts(m *alertpb.Model, t *time.Time) {
 
 	sevs := []alertpb.Alert_Severity{
 		alertpb.Alert_SEVERITY_UNSPECIFIED,
@@ -60,12 +59,12 @@ func main() {
 	}
 	root := node.New("testdevice01")
 
-	m := alert.NewModel()
+	m := alertpb.NewModel()
 	// run this test in January to capture the edge case of previous month
 	testTime := time.Date(
 		2024, 01, 01, 00, 00, 00, 651387237, time.UTC)
 	addDummyAlerts(m, &testTime)
-	server := alert.NewModelServer(m)
+	server := alertpb.NewModelServer(m)
 	root.Announce(root.Name(), node.HasServer(alertpb.RegisterAlertApiServer, alertpb.AlertApiServer(server)))
 
 	now, _ := time.Parse(time.DateTime, "2023-11-15 11:36:00")

@@ -11,12 +11,11 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 const AutoType = "udmi"
@@ -48,7 +47,7 @@ type udmiAuto struct {
 }
 
 func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
-	udmiClient := gen_udmipb.NewUdmiServiceClient(e.services.Node.ClientConn())
+	udmiClient := udmipb.NewUdmiServiceClient(e.services.Node.ClientConn())
 
 	client, err := newMqttClient(cfg)
 	if err != nil {
@@ -173,7 +172,6 @@ func (s *namedTasks) Run(ctx context.Context, name string, tasks []task.Task, op
 
 	group, ctx := errgroup.WithContext(ctx)
 	for _, t := range tasks {
-		t := t
 		group.Go(func() error {
 			return task.Run(ctx, t, opts...)
 		})

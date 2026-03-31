@@ -4,15 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 
 	"github.com/olebedev/emitter"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -42,13 +45,13 @@ func (b *BrightnessAutomation) setupReadSources(ctx context.Context, configChang
 		{
 			names: func(cfg config.Root) []deviceName { return cfg.OccupancySensors },
 			new: func(name deviceName, logger *zap.Logger) subscriber {
-				return &OccupancySensorPatches{name: name, client: traits.NewOccupancySensorApiClient(conn), logger: logger}
+				return &OccupancySensorPatches{name: name, client: occupancysensorpb.NewOccupancySensorApiClient(conn), logger: logger}
 			},
 		},
 		{
 			names: func(cfg config.Root) []deviceName { return cfg.BrightnessSensors },
 			new: func(name deviceName, logger *zap.Logger) subscriber {
-				return &BrightnessSensorPatches{name: name, client: traits.NewBrightnessSensorApiClient(conn), logger: logger}
+				return &BrightnessSensorPatches{name: name, client: brightnesssensorpb.NewBrightnessSensorApiClient(conn), logger: logger}
 			},
 		},
 		{
@@ -97,7 +100,7 @@ func (b *BrightnessAutomation) setupReadSources(ctx context.Context, configChang
 			new: func(name deviceName, logger *zap.Logger) subscriber {
 				return &ModePatches{
 					name:   name,
-					client: traits.NewModeApiClient(conn),
+					client: modepb.NewModeApiClient(conn),
 					logger: logger,
 				}
 			},
@@ -201,8 +204,6 @@ func (b *BrightnessAutomation) processConfig(ctx context.Context, cfg config.Roo
 
 func shallowCopyMap[K comparable, V any](m map[K]V) map[K]V {
 	n := make(map[K]V, len(m))
-	for k, v := range m {
-		n[k] = v
-	}
+	maps.Copy(n, m)
 	return n
 }

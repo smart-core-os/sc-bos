@@ -9,34 +9,35 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 )
 
 // Actions defines the only side effects the automation can have.
 // This is intended to allow easier testing of the business logic, a bit like a DAO would for database access.
 type Actions interface {
-	UpdateAirTemperature(ctx context.Context, req *traits.UpdateAirTemperatureRequest, ws *WriteState) error
-	UpdateModeValues(ctx context.Context, req *traits.UpdateModeValuesRequest, ws *WriteState) error
+	UpdateAirTemperature(ctx context.Context, req *airtemperaturepb.UpdateAirTemperatureRequest, ws *WriteState) error
+	UpdateModeValues(ctx context.Context, req *modepb.UpdateModeValuesRequest, ws *WriteState) error
 }
 
 // ClientActions creates a new Actions backed by node.ClientConner clients.
 func ClientActions(clients node.ClientConner) Actions {
 	conn := clients.ClientConn()
 	return &clientActions{
-		airTemperatureClient: traits.NewAirTemperatureApiClient(conn),
-		modeClient:           traits.NewModeApiClient(conn),
+		airTemperatureClient: airtemperaturepb.NewAirTemperatureApiClient(conn),
+		modeClient:           modepb.NewModeApiClient(conn),
 	}
 }
 
 type clientActions struct {
-	airTemperatureClient traits.AirTemperatureApiClient
-	modeClient           traits.ModeApiClient
+	airTemperatureClient airtemperaturepb.AirTemperatureApiClient
+	modeClient           modepb.ModeApiClient
 }
 
-func (a clientActions) UpdateAirTemperature(ctx context.Context, req *traits.UpdateAirTemperatureRequest, ws *WriteState) error {
+func (a clientActions) UpdateAirTemperature(ctx context.Context, req *airtemperaturepb.UpdateAirTemperatureRequest, ws *WriteState) error {
 	got, err := a.airTemperatureClient.UpdateAirTemperature(ctx, req)
-	ws.AirTemperatures[req.Name] = Value[*traits.AirTemperature]{
+	ws.AirTemperatures[req.Name] = Value[*airtemperaturepb.AirTemperature]{
 		V:   got,
 		At:  ws.Now(),
 		Err: err,
@@ -44,11 +45,11 @@ func (a clientActions) UpdateAirTemperature(ctx context.Context, req *traits.Upd
 	return err
 }
 
-func (a clientActions) UpdateModeValues(ctx context.Context, req *traits.UpdateModeValuesRequest, ws *WriteState) error {
+func (a clientActions) UpdateModeValues(ctx context.Context, req *modepb.UpdateModeValuesRequest, ws *WriteState) error {
 	// there's a "bug" in the field mask validation for maps, so we have to use this hack to avoid clearing values
-	oldValues, err := a.modeClient.GetModeValues(ctx, &traits.GetModeValuesRequest{Name: req.Name})
+	oldValues, err := a.modeClient.GetModeValues(ctx, &modepb.GetModeValuesRequest{Name: req.Name})
 	if err != nil {
-		ws.Modes[req.Name] = Value[*traits.ModeValues]{
+		ws.Modes[req.Name] = Value[*modepb.ModeValues]{
 			V:   nil,
 			At:  ws.Now(),
 			Err: err,
@@ -62,7 +63,7 @@ func (a clientActions) UpdateModeValues(ctx context.Context, req *traits.UpdateM
 	}
 
 	got, err := a.modeClient.UpdateModeValues(ctx, req)
-	ws.Modes[req.Name] = Value[*traits.ModeValues]{
+	ws.Modes[req.Name] = Value[*modepb.ModeValues]{
 		V:   got,
 		At:  ws.Now(),
 		Err: err,
@@ -98,9 +99,9 @@ type cacheWriteActions struct {
 	cacheExpiry time.Duration
 }
 
-func (a cacheWriteActions) UpdateAirTemperature(ctx context.Context, req *traits.UpdateAirTemperatureRequest, ws *WriteState) error {
+func (a cacheWriteActions) UpdateAirTemperature(ctx context.Context, req *airtemperaturepb.UpdateAirTemperatureRequest, ws *WriteState) error {
 	if oldWrite, ok := ws.AirTemperatures[req.Name]; ok {
-		if cacheValid(oldWrite, ws.Now(), a.cacheExpiry, func(v *traits.AirTemperature) bool {
+		if cacheValid(oldWrite, ws.Now(), a.cacheExpiry, func(v *airtemperaturepb.AirTemperature) bool {
 			return math.Abs(v.GetTemperatureSetPoint().GetValueCelsius()-req.GetState().GetTemperatureSetPoint().GetValueCelsius()) < 0.01
 		}) {
 			oldWrite.hit()
@@ -111,9 +112,9 @@ func (a cacheWriteActions) UpdateAirTemperature(ctx context.Context, req *traits
 	return a.Actions.UpdateAirTemperature(ctx, req, ws)
 }
 
-func (a cacheWriteActions) UpdateModeValues(ctx context.Context, req *traits.UpdateModeValuesRequest, ws *WriteState) error {
+func (a cacheWriteActions) UpdateModeValues(ctx context.Context, req *modepb.UpdateModeValuesRequest, ws *WriteState) error {
 	if oldWrite, ok := ws.Modes[req.Name]; ok {
-		if cacheValid(oldWrite, ws.Now(), a.cacheExpiry, func(v *traits.ModeValues) bool {
+		if cacheValid(oldWrite, ws.Now(), a.cacheExpiry, func(v *modepb.ModeValues) bool {
 			cv := v.GetValues()
 			for rk, rv := range req.GetModeValues().GetValues() {
 				if cv[rk] != rv {
@@ -183,7 +184,7 @@ type countActions struct {
 	*ActionCounts
 }
 
-func (a *countActions) UpdateAirTemperature(ctx context.Context, req *traits.UpdateAirTemperatureRequest, ws *WriteState) error {
+func (a *countActions) UpdateAirTemperature(ctx context.Context, req *airtemperaturepb.UpdateAirTemperatureRequest, ws *WriteState) error {
 	a.TotalWrites++
 	a.AirTemperatureWrites = append(a.AirTemperatureWrites, req.Name)
 	if a.AirTemperatureUpdates == nil {
@@ -194,7 +195,7 @@ func (a *countActions) UpdateAirTemperature(ctx context.Context, req *traits.Upd
 	return a.Actions.UpdateAirTemperature(ctx, req, ws)
 }
 
-func (a *countActions) UpdateModeValues(ctx context.Context, req *traits.UpdateModeValuesRequest, ws *WriteState) error {
+func (a *countActions) UpdateModeValues(ctx context.Context, req *modepb.UpdateModeValuesRequest, ws *WriteState) error {
 	a.TotalWrites++
 	a.ModeWrites = append(a.ModeWrites, req.Name)
 	if a.ModeUpdates == nil {
@@ -213,16 +214,16 @@ func (a *countActions) UpdateModeValues(ctx context.Context, req *traits.UpdateM
 // Actions are still recorded in the WriteState.
 type NilActions struct{}
 
-func (_ NilActions) UpdateAirTemperature(_ context.Context, req *traits.UpdateAirTemperatureRequest, ws *WriteState) error {
-	ws.AirTemperatures[req.Name] = Value[*traits.AirTemperature]{
+func (_ NilActions) UpdateAirTemperature(_ context.Context, req *airtemperaturepb.UpdateAirTemperatureRequest, ws *WriteState) error {
+	ws.AirTemperatures[req.Name] = Value[*airtemperaturepb.AirTemperature]{
 		V:  req.State,
 		At: ws.Now(),
 	}
 	return nil
 }
 
-func (_ NilActions) UpdateModeValues(_ context.Context, req *traits.UpdateModeValuesRequest, ws *WriteState) error {
-	ws.Modes[req.Name] = Value[*traits.ModeValues]{
+func (_ NilActions) UpdateModeValues(_ context.Context, req *modepb.UpdateModeValuesRequest, ws *WriteState) error {
+	ws.Modes[req.Name] = Value[*modepb.ModeValues]{
 		V:  req.ModeValues,
 		At: ws.Now(),
 	}
@@ -239,7 +240,7 @@ type logActions struct {
 	logger *zap.Logger
 }
 
-func (a logActions) UpdateAirTemperature(ctx context.Context, req *traits.UpdateAirTemperatureRequest, ws *WriteState) error {
+func (a logActions) UpdateAirTemperature(ctx context.Context, req *airtemperaturepb.UpdateAirTemperatureRequest, ws *WriteState) error {
 	err := a.Actions.UpdateAirTemperature(ctx, req, ws)
 	a.logger.Debug("Actions.UpdateAirTemperature",
 		zap.String("name", req.Name),
@@ -248,7 +249,7 @@ func (a logActions) UpdateAirTemperature(ctx context.Context, req *traits.Update
 	return err
 }
 
-func (a logActions) UpdateModeValues(ctx context.Context, req *traits.UpdateModeValuesRequest, ws *WriteState) error {
+func (a logActions) UpdateModeValues(ctx context.Context, req *modepb.UpdateModeValuesRequest, ws *WriteState) error {
 	err := a.Actions.UpdateModeValues(ctx, req, ws)
 	a.logger.Debug("Actions.UpdateModeValues",
 		zap.String("name", req.Name),

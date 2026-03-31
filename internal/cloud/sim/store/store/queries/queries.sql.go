@@ -13,11 +13,11 @@ import (
 
 const cancelPendingDeploymentsByNode = `-- name: CancelPendingDeploymentsByNode :execrows
 UPDATE deployments
-SET status = 'CANCELLED',
+SET status = 'cancelled',
     finished_time = datetime('now', 'subsec')
 WHERE config_version_id IN (
     SELECT id FROM config_versions WHERE node_id = ?1
-) AND status = 'PENDING'
+) AND status = 'pending'
 `
 
 func (q *Queries) CancelPendingDeploymentsByNode(ctx context.Context, nodeID int64) (int64, error) {
@@ -273,7 +273,7 @@ const getActiveDeploymentByNode = `-- name: GetActiveDeploymentByNode :one
 SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time, d.reason
 FROM deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
-WHERE cv.node_id = ?1 AND d.status IN ('PENDING', 'IN_PROGRESS')
+WHERE cv.node_id = ?1 AND d.status IN ('pending', 'in_progress')
 ORDER BY d.id DESC
 LIMIT 1
 `
@@ -829,7 +829,7 @@ UPDATE deployments
 SET status = ?1,
     reason = ?2,
     finished_time = CASE
-        WHEN ?1 = 'COMPLETED' OR ?1 = 'FAILED' OR ?1 = 'CANCELLED' THEN datetime('now', 'subsec')
+        WHEN ?1 = 'completed' OR ?1 = 'failed' OR ?1 = 'cancelled' THEN datetime('now', 'subsec')
         ELSE finished_time
     END
 WHERE id = ?3

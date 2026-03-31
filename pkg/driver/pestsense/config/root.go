@@ -6,8 +6,8 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 // Default values for config fields
@@ -19,7 +19,7 @@ const (
 type Root struct {
 	driver.BaseConfig
 
-	Broker  MQTTBroker `json:"broker,omitempty"`
+	Broker  MQTTBroker `json:"broker"`
 	Devices []Device   `json:"devices,omitempty"`
 }
 
@@ -27,7 +27,7 @@ type Device struct {
 	Name string `json:"name"`
 	Id   string `json:"id,omitempty"`
 
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 }
 
 type MQTTBroker struct {

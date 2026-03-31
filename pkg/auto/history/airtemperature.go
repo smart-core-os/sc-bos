@@ -6,18 +6,18 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 func (a *automation) collectAirTemperatureChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
-	client := traits.NewAirTemperatureApiClient(a.clients.ClientConn())
+	client := airtemperaturepb.NewAirTemperatureApiClient(a.clients.ClientConn())
 
-	last := newDeduper[*traits.AirTemperature](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
+	last := newDeduper[*airtemperaturepb.AirTemperature](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
-		stream, err := client.PullAirTemperature(ctx, &traits.PullAirTemperatureRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
+		stream, err := client.PullAirTemperature(ctx, &airtemperaturepb.PullAirTemperatureRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}
@@ -43,7 +43,7 @@ func (a *automation) collectAirTemperatureChanges(ctx context.Context, source co
 		}
 	}
 	pollFn := func(ctx context.Context, changes chan<- []byte) error {
-		resp, err := client.GetAirTemperature(ctx, &traits.GetAirTemperatureRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
+		resp, err := client.GetAirTemperature(ctx, &airtemperaturepb.GetAirTemperatureRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}

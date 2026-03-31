@@ -7,21 +7,21 @@ import {
 } from '@/api/sc/traits/air-temperature';
 import {setRequestName, toQueryObject, watchResource} from '@/util/traits';
 import {isNullOrUndef} from '@/util/types.js';
-import {AirTemperature} from '@smart-core-os/sc-api-grpc-web/traits/air_temperature_pb';
+import {AirTemperature} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airtemperature/v1/air_temperature_pb';
 import {computed, onScopeDispose, reactive, ref, toRefs, toValue} from 'vue';
 
 /**
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/air_temperature_pb').PullAirTemperatureRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airtemperature/v1/air_temperature_pb').PullAirTemperatureRequest
  * } PullAirTemperatureRequest
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/air_temperature_pb').PullAirTemperatureResponse
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airtemperature/v1/air_temperature_pb').PullAirTemperatureResponse
  * } PullAirTemperatureResponse
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/air_temperature_pb').UpdateAirTemperatureRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airtemperature/v1/air_temperature_pb').UpdateAirTemperatureRequest
  * } UpdateAirTemperatureRequest
  * @typedef {
- *  import('@smart-core-os/sc-api-grpc-web/traits/air_temperature_pb').AirTemperature
+ *  import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airtemperature/v1/air_temperature_pb').AirTemperature
  * } AirTemperature
  * @typedef {import('vue').Ref} Ref
  * @typedef {import('vue').UnwrapNestedRefs} UnwrapNestedRefs

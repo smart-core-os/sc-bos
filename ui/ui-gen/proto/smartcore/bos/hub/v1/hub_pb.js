@@ -13,14 +13,20 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = globalThis;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
-var traits_metadata_pb = require('@smart-core-os/sc-api-grpc-web/traits/metadata_pb.js');
-goog.object.extend(proto, traits_metadata_pb);
-var types_change_pb = require('@smart-core-os/sc-api-grpc-web/types/change_pb.js');
-goog.object.extend(proto, types_change_pb);
+var smartcore_bos_metadata_v1_metadata_pb = require('../../../../smartcore/bos/metadata/v1/metadata_pb.js');
+goog.object.extend(proto, smartcore_bos_metadata_v1_metadata_pb);
+var smartcore_bos_types_v1_change_pb = require('../../../../smartcore/bos/types/v1/change_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_change_pb);
 goog.exportSymbol('proto.smartcore.bos.hub.v1.EnrollHubNodeRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.hub.v1.ForgetHubNodeRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.hub.v1.ForgetHubNodeResponse', null, global);
@@ -398,7 +404,7 @@ description: jspb.Message.getFieldWithDefault(msg, 4, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.HubNode}
  */
 proto.smartcore.bos.hub.v1.HubNode.deserializeBinary = function(bytes) {
@@ -423,15 +429,15 @@ proto.smartcore.bos.hub.v1.HubNode.deserializeBinaryFromReader = function(msg, r
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setAddress(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
       break;
     default:
@@ -580,7 +586,7 @@ proto.smartcore.bos.hub.v1.HubNodeInspection.prototype.toObject = function(opt_i
  */
 proto.smartcore.bos.hub.v1.HubNodeInspection.toObject = function(includeInstance, msg) {
   var f, obj = {
-metadata: (f = msg.getMetadata()) && traits_metadata_pb.Metadata.toObject(includeInstance, f),
+metadata: (f = msg.getMetadata()) && smartcore_bos_metadata_v1_metadata_pb.Metadata.toObject(includeInstance, f),
 publicCertsList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f
   };
 
@@ -594,7 +600,7 @@ publicCertsList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.HubNodeInspection}
  */
 proto.smartcore.bos.hub.v1.HubNodeInspection.deserializeBinary = function(bytes) {
@@ -619,12 +625,12 @@ proto.smartcore.bos.hub.v1.HubNodeInspection.deserializeBinaryFromReader = funct
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new traits_metadata_pb.Metadata;
-      reader.readMessage(value,traits_metadata_pb.Metadata.deserializeBinaryFromReader);
+      var value = new smartcore_bos_metadata_v1_metadata_pb.Metadata;
+      reader.readMessage(value,smartcore_bos_metadata_v1_metadata_pb.Metadata.deserializeBinaryFromReader);
       msg.setMetadata(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.addPublicCerts(value);
       break;
     default:
@@ -661,7 +667,7 @@ proto.smartcore.bos.hub.v1.HubNodeInspection.serializeBinaryToWriter = function(
     writer.writeMessage(
       1,
       f,
-      traits_metadata_pb.Metadata.serializeBinaryToWriter
+      smartcore_bos_metadata_v1_metadata_pb.Metadata.serializeBinaryToWriter
     );
   }
   f = message.getPublicCertsList();
@@ -675,17 +681,17 @@ proto.smartcore.bos.hub.v1.HubNodeInspection.serializeBinaryToWriter = function(
 
 
 /**
- * optional smartcore.traits.Metadata metadata = 1;
- * @return {?proto.smartcore.traits.Metadata}
+ * optional smartcore.bos.metadata.v1.Metadata metadata = 1;
+ * @return {?proto.smartcore.bos.metadata.v1.Metadata}
  */
 proto.smartcore.bos.hub.v1.HubNodeInspection.prototype.getMetadata = function() {
-  return /** @type{?proto.smartcore.traits.Metadata} */ (
-    jspb.Message.getWrapperField(this, traits_metadata_pb.Metadata, 1));
+  return /** @type{?proto.smartcore.bos.metadata.v1.Metadata} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_metadata_v1_metadata_pb.Metadata, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.traits.Metadata|undefined} value
+ * @param {?proto.smartcore.bos.metadata.v1.Metadata|undefined} value
  * @return {!proto.smartcore.bos.hub.v1.HubNodeInspection} returns this
 */
 proto.smartcore.bos.hub.v1.HubNodeInspection.prototype.setMetadata = function(value) {
@@ -793,7 +799,7 @@ address: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.GetHubNodeRequest}
  */
 proto.smartcore.bos.hub.v1.GetHubNodeRequest.deserializeBinary = function(bytes) {
@@ -818,7 +824,7 @@ proto.smartcore.bos.hub.v1.GetHubNodeRequest.deserializeBinaryFromReader = funct
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setAddress(value);
       break;
     default:
@@ -931,7 +937,7 @@ publicCertsList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.EnrollHubNodeRequest}
  */
 proto.smartcore.bos.hub.v1.EnrollHubNodeRequest.deserializeBinary = function(bytes) {
@@ -961,7 +967,7 @@ proto.smartcore.bos.hub.v1.EnrollHubNodeRequest.deserializeBinaryFromReader = fu
       msg.setNode(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.addPublicCerts(value);
       break;
     default:
@@ -1130,7 +1136,7 @@ address: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.RenewHubNodeRequest}
  */
 proto.smartcore.bos.hub.v1.RenewHubNodeRequest.deserializeBinary = function(bytes) {
@@ -1155,7 +1161,7 @@ proto.smartcore.bos.hub.v1.RenewHubNodeRequest.deserializeBinaryFromReader = fun
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setAddress(value);
       break;
     default:
@@ -1260,7 +1266,7 @@ proto.smartcore.bos.hub.v1.ListHubNodesRequest.toObject = function(includeInstan
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.ListHubNodesRequest}
  */
 proto.smartcore.bos.hub.v1.ListHubNodesRequest.deserializeBinary = function(bytes) {
@@ -1369,7 +1375,7 @@ nodesList: jspb.Message.toObjectList(msg.getNodesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.ListHubNodesResponse}
  */
 proto.smartcore.bos.hub.v1.ListHubNodesResponse.deserializeBinary = function(bytes) {
@@ -1521,7 +1527,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.PullHubNodesRequest}
  */
 proto.smartcore.bos.hub.v1.PullHubNodesRequest.deserializeBinary = function(bytes) {
@@ -1659,7 +1665,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.PullHubNodesResponse}
  */
 proto.smartcore.bos.hub.v1.PullHubNodesResponse.deserializeBinary = function(bytes) {
@@ -1776,7 +1782,7 @@ changeTime: (f = msg.getChangeTime()) && google_protobuf_timestamp_pb.Timestamp.
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change}
  */
 proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change.deserializeBinary = function(bytes) {
@@ -1801,7 +1807,7 @@ proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change.deserializeBinaryFromRead
     var field = reader.getFieldNumber();
     switch (field) {
     case 2:
-      var value = /** @type {!proto.smartcore.types.ChangeType} */ (reader.readEnum());
+      var value = /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (reader.readEnum());
       msg.setType(value);
       break;
     case 3:
@@ -1883,16 +1889,16 @@ proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change.serializeBinaryToWriter =
 
 
 /**
- * optional smartcore.types.ChangeType type = 2;
- * @return {!proto.smartcore.types.ChangeType}
+ * optional smartcore.bos.types.v1.ChangeType type = 2;
+ * @return {!proto.smartcore.bos.types.v1.ChangeType}
  */
 proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change.prototype.getType = function() {
-  return /** @type {!proto.smartcore.types.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+  return /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
 };
 
 
 /**
- * @param {!proto.smartcore.types.ChangeType} value
+ * @param {!proto.smartcore.bos.types.v1.ChangeType} value
  * @return {!proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change} returns this
  */
 proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change.prototype.setType = function(value) {
@@ -2094,7 +2100,7 @@ node: (f = msg.getNode()) && proto.smartcore.bos.hub.v1.HubNode.toObject(include
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.InspectHubNodeRequest}
  */
 proto.smartcore.bos.hub.v1.InspectHubNodeRequest.deserializeBinary = function(bytes) {
@@ -2245,7 +2251,7 @@ address: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.TestHubNodeRequest}
  */
 proto.smartcore.bos.hub.v1.TestHubNodeRequest.deserializeBinary = function(bytes) {
@@ -2270,7 +2276,7 @@ proto.smartcore.bos.hub.v1.TestHubNodeRequest.deserializeBinaryFromReader = func
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setAddress(value);
       break;
     default:
@@ -2375,7 +2381,7 @@ proto.smartcore.bos.hub.v1.TestHubNodeResponse.toObject = function(includeInstan
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.TestHubNodeResponse}
  */
 proto.smartcore.bos.hub.v1.TestHubNodeResponse.deserializeBinary = function(bytes) {
@@ -2477,7 +2483,7 @@ allowMissing: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.ForgetHubNodeRequest}
  */
 proto.smartcore.bos.hub.v1.ForgetHubNodeRequest.deserializeBinary = function(bytes) {
@@ -2502,7 +2508,7 @@ proto.smartcore.bos.hub.v1.ForgetHubNodeRequest.deserializeBinaryFromReader = fu
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setAddress(value);
       break;
     case 2:
@@ -2636,7 +2642,7 @@ proto.smartcore.bos.hub.v1.ForgetHubNodeResponse.toObject = function(includeInst
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.hub.v1.ForgetHubNodeResponse}
  */
 proto.smartcore.bos.hub.v1.ForgetHubNodeResponse.deserializeBinary = function(bytes) {

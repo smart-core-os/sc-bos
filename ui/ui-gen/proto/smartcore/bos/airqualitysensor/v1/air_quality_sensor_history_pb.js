@@ -13,16 +13,22 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = globalThis;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
-var traits_air_quality_sensor_pb = require('@smart-core-os/sc-api-grpc-web/traits/air_quality_sensor_pb.js');
-goog.object.extend(proto, traits_air_quality_sensor_pb);
-var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js');
-goog.object.extend(proto, types_time_period_pb);
+var smartcore_bos_airqualitysensor_v1_air_quality_sensor_pb = require('../../../../smartcore/bos/airqualitysensor/v1/air_quality_sensor_pb.js');
+goog.object.extend(proto, smartcore_bos_airqualitysensor_v1_air_quality_sensor_pb);
+var smartcore_bos_types_time_v1_period_pb = require('../../../../smartcore/bos/types/time/v1/period_pb.js');
+goog.object.extend(proto, smartcore_bos_types_time_v1_period_pb);
 goog.exportSymbol('proto.smartcore.bos.airqualitysensor.v1.AirQualityRecord', null, global);
 goog.exportSymbol('proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryResponse', null, global);
@@ -121,7 +127,7 @@ proto.smartcore.bos.airqualitysensor.v1.AirQualityRecord.prototype.toObject = fu
  */
 proto.smartcore.bos.airqualitysensor.v1.AirQualityRecord.toObject = function(includeInstance, msg) {
   var f, obj = {
-airQuality: (f = msg.getAirQuality()) && traits_air_quality_sensor_pb.AirQuality.toObject(includeInstance, f),
+airQuality: (f = msg.getAirQuality()) && smartcore_bos_airqualitysensor_v1_air_quality_sensor_pb.AirQuality.toObject(includeInstance, f),
 recordTime: (f = msg.getRecordTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f)
   };
 
@@ -135,7 +141,7 @@ recordTime: (f = msg.getRecordTime()) && google_protobuf_timestamp_pb.Timestamp.
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airqualitysensor.v1.AirQualityRecord}
  */
 proto.smartcore.bos.airqualitysensor.v1.AirQualityRecord.deserializeBinary = function(bytes) {
@@ -160,8 +166,8 @@ proto.smartcore.bos.airqualitysensor.v1.AirQualityRecord.deserializeBinaryFromRe
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new traits_air_quality_sensor_pb.AirQuality;
-      reader.readMessage(value,traits_air_quality_sensor_pb.AirQuality.deserializeBinaryFromReader);
+      var value = new smartcore_bos_airqualitysensor_v1_air_quality_sensor_pb.AirQuality;
+      reader.readMessage(value,smartcore_bos_airqualitysensor_v1_air_quality_sensor_pb.AirQuality.deserializeBinaryFromReader);
       msg.setAirQuality(value);
       break;
     case 2:
@@ -203,7 +209,7 @@ proto.smartcore.bos.airqualitysensor.v1.AirQualityRecord.serializeBinaryToWriter
     writer.writeMessage(
       1,
       f,
-      traits_air_quality_sensor_pb.AirQuality.serializeBinaryToWriter
+      smartcore_bos_airqualitysensor_v1_air_quality_sensor_pb.AirQuality.serializeBinaryToWriter
     );
   }
   f = message.getRecordTime();
@@ -218,17 +224,17 @@ proto.smartcore.bos.airqualitysensor.v1.AirQualityRecord.serializeBinaryToWriter
 
 
 /**
- * optional smartcore.traits.AirQuality air_quality = 1;
- * @return {?proto.smartcore.traits.AirQuality}
+ * optional AirQuality air_quality = 1;
+ * @return {?proto.smartcore.bos.airqualitysensor.v1.AirQuality}
  */
 proto.smartcore.bos.airqualitysensor.v1.AirQualityRecord.prototype.getAirQuality = function() {
-  return /** @type{?proto.smartcore.traits.AirQuality} */ (
-    jspb.Message.getWrapperField(this, traits_air_quality_sensor_pb.AirQuality, 1));
+  return /** @type{?proto.smartcore.bos.airqualitysensor.v1.AirQuality} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_airqualitysensor_v1_air_quality_sensor_pb.AirQuality, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.traits.AirQuality|undefined} value
+ * @param {?proto.smartcore.bos.airqualitysensor.v1.AirQuality|undefined} value
  * @return {!proto.smartcore.bos.airqualitysensor.v1.AirQualityRecord} returns this
 */
 proto.smartcore.bos.airqualitysensor.v1.AirQualityRecord.prototype.setAirQuality = function(value) {
@@ -324,7 +330,7 @@ proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.prototype.t
 proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
 name: jspb.Message.getFieldWithDefault(msg, 1, ""),
-period: (f = msg.getPeriod()) && types_time_period_pb.Period.toObject(includeInstance, f),
+period: (f = msg.getPeriod()) && smartcore_bos_types_time_v1_period_pb.Period.toObject(includeInstance, f),
 readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toObject(includeInstance, f),
 pageSize: jspb.Message.getFieldWithDefault(msg, 4, 0),
 pageToken: jspb.Message.getFieldWithDefault(msg, 5, ""),
@@ -341,7 +347,7 @@ orderBy: jspb.Message.getFieldWithDefault(msg, 6, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest}
  */
 proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.deserializeBinary = function(bytes) {
@@ -366,12 +372,12 @@ proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.deserialize
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
-      var value = new types_time_period_pb.Period;
-      reader.readMessage(value,types_time_period_pb.Period.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_time_v1_period_pb.Period;
+      reader.readMessage(value,smartcore_bos_types_time_v1_period_pb.Period.deserializeBinaryFromReader);
       msg.setPeriod(value);
       break;
     case 3:
@@ -384,11 +390,11 @@ proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.deserialize
       msg.setPageSize(value);
       break;
     case 5:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setPageToken(value);
       break;
     case 6:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setOrderBy(value);
       break;
     default:
@@ -432,7 +438,7 @@ proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.serializeBi
     writer.writeMessage(
       2,
       f,
-      types_time_period_pb.Period.serializeBinaryToWriter
+      smartcore_bos_types_time_v1_period_pb.Period.serializeBinaryToWriter
     );
   }
   f = message.getReadMask();
@@ -486,17 +492,17 @@ proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.prototype.s
 
 
 /**
- * optional smartcore.types.time.Period period = 2;
- * @return {?proto.smartcore.types.time.Period}
+ * optional smartcore.bos.types.time.v1.Period period = 2;
+ * @return {?proto.smartcore.bos.types.time.v1.Period}
  */
 proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.prototype.getPeriod = function() {
-  return /** @type{?proto.smartcore.types.time.Period} */ (
-    jspb.Message.getWrapperField(this, types_time_period_pb.Period, 2));
+  return /** @type{?proto.smartcore.bos.types.time.v1.Period} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_time_v1_period_pb.Period, 2));
 };
 
 
 /**
- * @param {?proto.smartcore.types.time.Period|undefined} value
+ * @param {?proto.smartcore.bos.types.time.v1.Period|undefined} value
  * @return {!proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest} returns this
 */
 proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryRequest.prototype.setPeriod = function(value) {
@@ -668,7 +674,7 @@ totalSize: jspb.Message.getFieldWithDefault(msg, 3, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryResponse}
  */
 proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryResponse.deserializeBinary = function(bytes) {
@@ -698,7 +704,7 @@ proto.smartcore.bos.airqualitysensor.v1.ListAirQualityHistoryResponse.deserializ
       msg.addAirQualityRecords(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setNextPageToken(value);
       break;
     case 3:

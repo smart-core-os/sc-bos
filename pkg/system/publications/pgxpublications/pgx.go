@@ -14,8 +14,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
 )
 
 //go:embed schema.sql
@@ -53,13 +53,13 @@ func NewServerFromPool(ctx context.Context, pool *pgxpool.Pool, opts ...Option) 
 }
 
 type Server struct {
-	traits.UnimplementedPublicationApiServer
+	publicationpb.UnimplementedPublicationApiServer
 
 	logger *zap.Logger
 	pool   *pgxpool.Pool
 }
 
-func (p *Server) CreatePublication(ctx context.Context, request *traits.CreatePublicationRequest) (*traits.Publication, error) {
+func (p *Server) CreatePublication(ctx context.Context, request *publicationpb.CreatePublicationRequest) (*publicationpb.Publication, error) {
 	logger := rpcutil.ServerLogger(ctx, p.logger)
 	input := request.GetPublication()
 
@@ -71,7 +71,7 @@ func (p *Server) CreatePublication(ctx context.Context, request *traits.CreatePu
 	body := input.GetBody()
 	mediaType := input.GetMediaType()
 
-	var output *traits.Publication
+	var output *publicationpb.Publication
 	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
 		// Register the publication
 		err := CreatePublication(ctx, tx, pubID, audience)
@@ -91,7 +91,7 @@ func (p *Server) CreatePublication(ctx context.Context, request *traits.CreatePu
 			return err
 		}
 
-		output = &traits.Publication{
+		output = &publicationpb.Publication{
 			Id:          pubID,
 			Version:     version,
 			Body:        body,
@@ -99,7 +99,7 @@ func (p *Server) CreatePublication(ctx context.Context, request *traits.CreatePu
 			MediaType:   mediaType,
 		}
 		if audience != "" {
-			output.Audience = &traits.Publication_Audience{
+			output.Audience = &publicationpb.Publication_Audience{
 				Name: audience,
 			}
 		}
@@ -115,11 +115,11 @@ func (p *Server) CreatePublication(ctx context.Context, request *traits.CreatePu
 	return output, nil
 }
 
-func (p *Server) GetPublication(ctx context.Context, request *traits.GetPublicationRequest) (*traits.Publication, error) {
+func (p *Server) GetPublication(ctx context.Context, request *publicationpb.GetPublicationRequest) (*publicationpb.Publication, error) {
 	id := request.GetId()
 	version := request.GetVersion()
 
-	var output *traits.Publication
+	var output *publicationpb.Publication
 	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
 		var err error
 		output, err = GetPublication(ctx, tx, id, version)
@@ -128,7 +128,7 @@ func (p *Server) GetPublication(ctx context.Context, request *traits.GetPublicat
 	return output, err
 }
 
-func (p *Server) UpdatePublication(ctx context.Context, request *traits.UpdatePublicationRequest) (*traits.Publication, error) {
+func (p *Server) UpdatePublication(ctx context.Context, request *publicationpb.UpdatePublicationRequest) (*publicationpb.Publication, error) {
 	if request.GetUpdateMask() != nil {
 		return nil, status.Error(codes.Unimplemented, "field mask support not implemented")
 	}
@@ -139,7 +139,7 @@ func (p *Server) UpdatePublication(ctx context.Context, request *traits.UpdatePu
 		Body:          request.GetPublication().GetBody(),
 		MediaType:     request.GetPublication().GetMediaType(),
 	}
-	var updated *traits.Publication
+	var updated *publicationpb.Publication
 
 	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
 		var err error
@@ -166,8 +166,8 @@ func (p *Server) UpdatePublication(ctx context.Context, request *traits.UpdatePu
 	return updated, nil
 }
 
-func (p *Server) DeletePublication(ctx context.Context, request *traits.DeletePublicationRequest) (*traits.Publication, error) {
-	var pub *traits.Publication
+func (p *Server) DeletePublication(ctx context.Context, request *publicationpb.DeletePublicationRequest) (*publicationpb.Publication, error) {
+	var pub *publicationpb.Publication
 
 	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
 		var err error
@@ -185,7 +185,7 @@ func (p *Server) DeletePublication(ctx context.Context, request *traits.DeletePu
 		if errors.Is(err, pgx.ErrNoRows) && request.GetAllowMissing() {
 			// the publication doesn't exist, and the client indicates that this is acceptable
 			// return an empty publication to indicate this
-			pub = &traits.Publication{}
+			pub = &publicationpb.Publication{}
 			return nil
 		}
 		if err != nil {
@@ -201,18 +201,18 @@ func (p *Server) DeletePublication(ctx context.Context, request *traits.DeletePu
 	return pub, nil
 }
 
-func (p *Server) PullPublication(_ *traits.PullPublicationRequest, _ traits.PublicationApi_PullPublicationServer) error {
+func (p *Server) PullPublication(_ *publicationpb.PullPublicationRequest, _ publicationpb.PublicationApi_PullPublicationServer) error {
 	return status.Error(codes.Unimplemented, "PullPublication not implemented")
 }
 
-func (p *Server) ListPublications(ctx context.Context, request *traits.ListPublicationsRequest) (*traits.ListPublicationsResponse, error) {
+func (p *Server) ListPublications(ctx context.Context, request *publicationpb.ListPublicationsRequest) (*publicationpb.ListPublicationsResponse, error) {
 	limit := 50
 	if request.GetPageSize() > 0 {
 		limit = int(request.GetPageSize())
 	}
 
 	var (
-		publications []*traits.Publication
+		publications []*publicationpb.Publication
 		nextToken    string
 	)
 	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
@@ -225,22 +225,22 @@ func (p *Server) ListPublications(ctx context.Context, request *traits.ListPubli
 		return nil, err
 	}
 
-	return &traits.ListPublicationsResponse{
+	return &publicationpb.ListPublicationsResponse{
 		Publications:  publications,
 		NextPageToken: nextToken,
 	}, nil
 }
 
-func (p *Server) PullPublications(_ *traits.PullPublicationsRequest, _ traits.PublicationApi_PullPublicationsServer) error {
+func (p *Server) PullPublications(_ *publicationpb.PullPublicationsRequest, _ publicationpb.PublicationApi_PullPublicationsServer) error {
 	return status.Error(codes.Unimplemented, "PullPublications not implemented")
 }
 
-func (p *Server) AcknowledgePublication(ctx context.Context, request *traits.AcknowledgePublicationRequest) (*traits.Publication, error) {
+func (p *Server) AcknowledgePublication(ctx context.Context, request *publicationpb.AcknowledgePublicationRequest) (*publicationpb.Publication, error) {
 	var accepted bool
 	switch request.GetReceipt() {
-	case traits.Publication_Audience_REJECTED:
+	case publicationpb.Publication_Audience_REJECTED:
 		accepted = false
-	case traits.Publication_Audience_ACCEPTED:
+	case publicationpb.Publication_Audience_ACCEPTED:
 		accepted = true
 		if request.GetReceiptRejectedReason() != "" {
 			return nil, status.Error(codes.InvalidArgument, "cannot specify rejected_reason when ACCEPTED")
@@ -249,7 +249,7 @@ func (p *Server) AcknowledgePublication(ctx context.Context, request *traits.Ack
 		return nil, status.Error(codes.InvalidArgument, "REJECTED or ACCEPTED must be specified")
 	}
 
-	var updated *traits.Publication
+	var updated *publicationpb.Publication
 	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
 		err := CreatePublicationAcknowledgement(ctx, tx, request.GetId(), request.GetVersion(), time.Now(), accepted,
 			request.GetReceiptRejectedReason(), request.GetAllowAcknowledged())

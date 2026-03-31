@@ -161,7 +161,7 @@ export function useDemands(names, edges, metric) {
  *
  * @param {import('vue').MaybeRefOrGetter<string>} name
  * @param {import('vue').MaybeRefOrGetter<Date[]>} edges
- * @param {import('vue').MaybeRefOrGetter<null|function(import('@smart-core-os/sc-api-grpc-web/traits/electric_pb').ElectricDemand.AsObject):(number|null)>} select
+ * @param {import('vue').MaybeRefOrGetter<null|function(import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/electric/v1/electric_pb').ElectricDemand.AsObject):(number|null)>} select
  * @param {function(number[]):number} aggregate
  * @return {import('vue').ComputedRef<(number|null)[]>}
  */

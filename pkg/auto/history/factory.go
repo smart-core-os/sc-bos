@@ -11,19 +11,10 @@ import (
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/types"
-
 	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/allocationpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/resourceusepb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/transport"
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/history/apistore"
 	"github.com/smart-core-os/sc-bos/pkg/history/boltstore"
@@ -33,20 +24,21 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	gen_allocationpb "github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
-	gen_historypb "github.com/smart-core-os/sc-bos/pkg/proto/historypb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	gen_resourceusepb "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
-	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 var Factory = auto.FactoryFunc(NewAutomation)
@@ -179,7 +171,7 @@ func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) er
 		for _, change := range resp.GetChanges() {
 			name := change.GetName()
 			switch change.GetType() {
-			case types.ChangeType_ADD:
+			case typespb.ChangeType_ADD:
 				if rec, ok := active[name]; ok {
 					rec.cancel()
 					rec.undo()
@@ -192,7 +184,7 @@ func (a *automation) applyConfigDevices(ctx context.Context, cfg config.Root) er
 					continue
 				}
 				active[name] = activeRecorder{cancel: cancel, undo: undo}
-			case types.ChangeType_REMOVE:
+			case typespb.ChangeType_REMOVE:
 				if rec, ok := active[name]; ok {
 					rec.cancel()
 					rec.undo()
@@ -283,7 +275,7 @@ func (a *automation) createStore(ctx context.Context, src config.Source, storage
 		if name == "" {
 			return nil, errors.New("storage.name missing, must exist when storage.type is \"api\"")
 		}
-		client := gen_historypb.NewHistoryAdminApiClient(a.clients.ClientConn())
+		client := historypb.NewHistoryAdminApiClient(a.clients.ClientConn())
 		return apistore.New(client, name, src.SourceName()), nil
 	case "hub":
 		if storage.TTL != nil {
@@ -293,7 +285,7 @@ func (a *automation) createStore(ctx context.Context, src config.Source, storage
 		if err != nil {
 			return nil, err
 		}
-		client := gen_historypb.NewHistoryAdminApiClient(conn)
+		client := historypb.NewHistoryAdminApiClient(conn)
 		return apistore.New(client, a.cohortManagerName, src.SourceName()), nil
 	case "bolt":
 		opts := []boltstore.Option{boltstore.WithLogger(a.logger)}
@@ -329,7 +321,7 @@ func (a *automation) createStore(ctx context.Context, src config.Source, storage
 func (a *automation) createCollector(store history.Store, traitName trait.Name) (wrap.ServiceUnwrapper, collector, error) {
 	switch traitName {
 	case allocationpb.TraitName:
-		return gen_allocationpb.WrapHistory(historypb.NewAllocationServer(store)), a.collectAllocationChanges, nil
+		return allocationpb.WrapHistory(historypb.NewAllocationServer(store)), a.collectAllocationChanges, nil
 	case trait.AirQualitySensor:
 		return airqualitysensorpb.WrapHistory(historypb.NewAirQualitySensorServer(store)), a.collectAirQualityChanges, nil
 	case trait.AirTemperature:
@@ -338,17 +330,17 @@ func (a *automation) createCollector(store history.Store, traitName trait.Name) 
 		return electricpb.WrapHistory(historypb.NewElectricServer(store)), a.collectElectricDemandChanges, nil
 	case trait.EnterLeaveSensor:
 		return enterleavesensorpb.WrapHistory(historypb.NewEnterLeaveSensorServer(store)), a.collectEnterLeaveEventChanges, nil
-	case meter.TraitName:
+	case meterpb.TraitName:
 		return meterpb.WrapHistory(historypb.NewMeterServer(store)), a.collectMeterReadingChanges, nil
 	case trait.OccupancySensor:
 		return occupancysensorpb.WrapHistory(historypb.NewOccupancySensorServer(store)), a.collectOccupancyChanges, nil
 	case resourceusepb.TraitName:
-		return gen_resourceusepb.WrapHistory(historypb.NewResourceUseServer(store)), a.collectResourceUseChanges, nil
+		return resourceusepb.WrapHistory(historypb.NewResourceUseServer(store)), a.collectResourceUseChanges, nil
 	case soundsensorpb.TraitName:
-		return gen_soundsensorpb.WrapHistory(historypb.NewSoundSensorServer(store)), a.collectSoundSensorChanges, nil
+		return soundsensorpb.WrapHistory(historypb.NewSoundSensorServer(store)), a.collectSoundSensorChanges, nil
 	case statuspb.TraitName:
-		return gen_statuspb.WrapHistory(historypb.NewStatusServer(store)), a.collectCurrentStatusChanges, nil
-	case transport.TraitName:
+		return statuspb.WrapHistory(historypb.NewStatusServer(store)), a.collectCurrentStatusChanges, nil
+	case transportpb.TraitName:
 		return transportpb.WrapHistory(historypb.NewTransportServer(store)), a.collectTransportChanges, nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported trait %s", traitName)

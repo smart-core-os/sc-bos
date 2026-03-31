@@ -23,7 +23,7 @@ func findHistoryClientTrait(lines []string) (string, error) {
 	uniqueTraits := make(map[string]bool)
 
 	// Collect all unique client traits from the file
-	for i := 0; i < len(lines); i++ {
+	for i := range lines {
 		// Try single-line import
 		if traits := processSingleLineHistoryImport(lines[i]); len(traits) > 0 {
 			for _, trait := range traits {
@@ -128,7 +128,7 @@ func collectClientTraitsFromSymbols(symbols []string) []string {
 
 // fileHasGenericHistoryImports checks if the file has any imports from generic history files
 func fileHasGenericHistoryImports(lines []string) bool {
-	for i := 0; i < len(lines); i++ {
+	for i := range lines {
 		if hasGenericHistoryImport(lines[i]) {
 			return true
 		}

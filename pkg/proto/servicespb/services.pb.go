@@ -7,7 +7,7 @@
 package servicespb
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -1230,7 +1230,7 @@ type PullServicesResponse_Change struct {
 	// The name of the device that emitted this change
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The type of change (e.g. ADD, UPDATE, etc...)
-	Type types.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type typespb.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	// The new value to use for ADD|UPDATE changes
 	NewValue *Service `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// The old value to use for UPDATE|REMOVE changes
@@ -1278,11 +1278,11 @@ func (x *PullServicesResponse_Change) GetName() string {
 	return ""
 }
 
-func (x *PullServicesResponse_Change) GetType() types.ChangeType {
+func (x *PullServicesResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 func (x *PullServicesResponse_Change) GetNewValue() *Service {
@@ -1373,7 +1373,7 @@ var File_smartcore_bos_services_v1_services_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_services_v1_services_proto_rawDesc = "" +
 	"\n" +
-	"(smartcore/bos/services/v1/services.proto\x12\x19smartcore.bos.services.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\"\xc1\x05\n" +
+	"(smartcore/bos/services/v1/services.proto\x12\x19smartcore.bos.services.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a#smartcore/bos/types/v1/change.proto\"\xc1\x05\n" +
 	"\aService\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x16\n" +
@@ -1438,12 +1438,12 @@ const file_smartcore_bos_services_v1_services_proto_rawDesc = "" +
 	"\x13PullServicesRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xf7\x02\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xfe\x02\n" +
 	"\x14PullServicesResponse\x12P\n" +
-	"\achanges\x18\x01 \x03(\v26.smartcore.bos.services.v1.PullServicesResponse.ChangeR\achanges\x1a\x8c\x02\n" +
+	"\achanges\x18\x01 \x03(\v26.smartcore.bos.services.v1.PullServicesResponse.ChangeR\achanges\x1a\x93\x02\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12?\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\x12?\n" +
 	"\tnew_value\x18\x03 \x01(\v2\".smartcore.bos.services.v1.ServiceR\bnewValue\x12?\n" +
 	"\told_value\x18\x04 \x01(\v2\".smartcore.bos.services.v1.ServiceR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -1526,7 +1526,7 @@ var file_smartcore_bos_services_v1_services_proto_goTypes = []any{
 	(*PullServiceMetadataResponse_Change)(nil), // 20: smartcore.bos.services.v1.PullServiceMetadataResponse.Change
 	(*timestamppb.Timestamp)(nil),              // 21: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),              // 22: google.protobuf.FieldMask
-	(types.ChangeType)(0),                      // 23: smartcore.types.ChangeType
+	(typespb.ChangeType)(0),                    // 23: smartcore.bos.types.v1.ChangeType
 }
 var file_smartcore_bos_services_v1_services_proto_depIdxs = []int32{
 	21, // 0: smartcore.bos.services.v1.Service.last_inactive_time:type_name -> google.protobuf.Timestamp
@@ -1550,7 +1550,7 @@ var file_smartcore_bos_services_v1_services_proto_depIdxs = []int32{
 	20, // 18: smartcore.bos.services.v1.PullServiceMetadataResponse.changes:type_name -> smartcore.bos.services.v1.PullServiceMetadataResponse.Change
 	0,  // 19: smartcore.bos.services.v1.PullServiceResponse.Change.service:type_name -> smartcore.bos.services.v1.Service
 	21, // 20: smartcore.bos.services.v1.PullServiceResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	23, // 21: smartcore.bos.services.v1.PullServicesResponse.Change.type:type_name -> smartcore.types.ChangeType
+	23, // 21: smartcore.bos.services.v1.PullServicesResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	0,  // 22: smartcore.bos.services.v1.PullServicesResponse.Change.new_value:type_name -> smartcore.bos.services.v1.Service
 	0,  // 23: smartcore.bos.services.v1.PullServicesResponse.Change.old_value:type_name -> smartcore.bos.services.v1.Service
 	21, // 24: smartcore.bos.services.v1.PullServicesResponse.Change.change_time:type_name -> google.protobuf.Timestamp

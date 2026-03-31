@@ -5,12 +5,12 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 type pestSensor struct {
-	traits.UnimplementedOccupancySensorApiServer
+	occupancysensorpb.UnimplementedOccupancySensorApiServer
 
 	id        string
 	name      string
@@ -21,20 +21,20 @@ func newPestSensor(id, name string) *pestSensor {
 	return &pestSensor{
 		id:        id,
 		name:      name,
-		occupancy: resource.NewValue(resource.WithInitialValue(&traits.Occupancy{}), resource.WithNoDuplicates()),
+		occupancy: resource.NewValue(resource.WithInitialValue(&occupancysensorpb.Occupancy{}), resource.WithNoDuplicates()),
 	}
 }
 
-func (p *pestSensor) GetOccupancy(_ context.Context, _ *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
+func (p *pestSensor) GetOccupancy(_ context.Context, _ *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
 	value := p.occupancy.Get()
-	occupancy := value.(*traits.Occupancy)
+	occupancy := value.(*occupancysensorpb.Occupancy)
 	return occupancy, nil
 }
 
-func (p *pestSensor) PullOccupancy(_ *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+func (p *pestSensor) PullOccupancy(_ *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
 	for value := range p.occupancy.Pull(server.Context()) {
-		occupancy := value.Value.(*traits.Occupancy)
-		err := server.Send(&traits.PullOccupancyResponse{Changes: []*traits.PullOccupancyResponse_Change{
+		occupancy := value.Value.(*occupancysensorpb.Occupancy)
+		err := server.Send(&occupancysensorpb.PullOccupancyResponse{Changes: []*occupancysensorpb.PullOccupancyResponse_Change{
 			{
 				Name:       p.name,
 				ChangeTime: timestamppb.New(value.ChangeTime),

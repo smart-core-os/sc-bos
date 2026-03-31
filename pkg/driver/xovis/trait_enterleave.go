@@ -9,16 +9,16 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 type enterLeaveServer struct {
-	traits.UnimplementedEnterLeaveSensorApiServer
+	enterleavesensorpb.UnimplementedEnterLeaveSensorApiServer
 	client      *client
 	logicID     int
 	multiSensor bool
@@ -32,7 +32,7 @@ type enterLeaveServer struct {
 	EnterLeaveTotal *resource.Value
 }
 
-func (e *enterLeaveServer) GetEnterLeaveEvent(ctx context.Context, request *traits.GetEnterLeaveEventRequest) (*traits.EnterLeaveEvent, error) {
+func (e *enterLeaveServer) GetEnterLeaveEvent(ctx context.Context, request *enterleavesensorpb.GetEnterLeaveEventRequest) (*enterleavesensorpb.EnterLeaveEvent, error) {
 	res, err := getLiveLogic(ctx, e.client, e.multiSensor, e.logicID, e.faultCheck)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
@@ -47,22 +47,22 @@ func (e *enterLeaveServer) GetEnterLeaveEvent(ctx context.Context, request *trai
 
 	forwardCount32, backwardCount32 := int32(forwardCount), int32(backwardCount)
 
-	e.EnterLeaveTotal.Set(&traits.EnterLeaveEvent{
+	e.EnterLeaveTotal.Set(&enterleavesensorpb.EnterLeaveEvent{
 		EnterTotal: &forwardCount32,
 		LeaveTotal: &backwardCount32,
 	})
 
-	return &traits.EnterLeaveEvent{
+	return &enterleavesensorpb.EnterLeaveEvent{
 		EnterTotal: &forwardCount32,
 		LeaveTotal: &backwardCount32,
 	}, nil
 }
 
-func (e *enterLeaveServer) ResetEnterLeaveTotals(ctx context.Context, request *traits.ResetEnterLeaveTotalsRequest) (*traits.ResetEnterLeaveTotalsResponse, error) {
+func (e *enterLeaveServer) ResetEnterLeaveTotals(ctx context.Context, request *enterleavesensorpb.ResetEnterLeaveTotalsRequest) (*enterleavesensorpb.ResetEnterLeaveTotalsResponse, error) {
 	return nil, resetLiveLogic(ctx, e.client, e.multiSensor, e.logicID, e.faultCheck)
 }
 
-func (e *enterLeaveServer) PullEnterLeaveEvents(request *traits.PullEnterLeaveEventsRequest, server traits.EnterLeaveSensorApi_PullEnterLeaveEventsServer) error {
+func (e *enterLeaveServer) PullEnterLeaveEvents(request *enterleavesensorpb.PullEnterLeaveEventsRequest, server enterleavesensorpb.EnterLeaveSensorApi_PullEnterLeaveEventsServer) error {
 	// get the initial value of the logics so we can compare later
 	res, err := getLiveLogic(server.Context(), e.client, e.multiSensor, e.logicID, e.faultCheck)
 	if err != nil {
@@ -76,14 +76,14 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *traits.PullEnterLeaveEv
 			"Counts don't match expected structure; check that this is an InOut logic")
 	}
 
-	var lastSent *traits.EnterLeaveEvent
+	var lastSent *enterleavesensorpb.EnterLeaveEvent
 	if !request.UpdatesOnly {
 		enterTotal, leaveTotal := int32(forwardCount), int32(backwardCount)
-		elEvent := &traits.EnterLeaveEvent{
+		elEvent := &enterleavesensorpb.EnterLeaveEvent{
 			EnterTotal: &enterTotal,
 			LeaveTotal: &leaveTotal,
 		}
-		err := server.Send(&traits.PullEnterLeaveEventsResponse{Changes: []*traits.PullEnterLeaveEventsResponse_Change{
+		err := server.Send(&enterleavesensorpb.PullEnterLeaveEventsResponse{Changes: []*enterleavesensorpb.PullEnterLeaveEventsResponse_Change{
 			{
 				Name:            request.Name,
 				ChangeTime:      timestamppb.Now(),
@@ -139,18 +139,18 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *traits.PullEnterLeaveEv
 				continue
 			}
 
-			var enterLeaveChanges []*traits.PullEnterLeaveEventsResponse_Change
+			var enterLeaveChanges []*enterleavesensorpb.PullEnterLeaveEventsResponse_Change
 			for _, event := range events {
 				switch event.direction {
-				case traits.EnterLeaveEvent_ENTER:
+				case enterleavesensorpb.EnterLeaveEvent_ENTER:
 					enterTotal++
-				case traits.EnterLeaveEvent_LEAVE:
+				case enterleavesensorpb.EnterLeaveEvent_LEAVE:
 					leaveTotal++
 				}
-				enterLeaveChanges = append(enterLeaveChanges, &traits.PullEnterLeaveEventsResponse_Change{
+				enterLeaveChanges = append(enterLeaveChanges, &enterleavesensorpb.PullEnterLeaveEventsResponse_Change{
 					Name:       request.Name,
 					ChangeTime: timestamppb.New(event.time),
-					EnterLeaveEvent: &traits.EnterLeaveEvent{
+					EnterLeaveEvent: &enterleavesensorpb.EnterLeaveEvent{
 						Direction:  event.direction,
 						EnterTotal: &enterTotal,
 						LeaveTotal: &leaveTotal,
@@ -158,7 +158,7 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *traits.PullEnterLeaveEv
 				})
 			}
 
-			err = server.Send(&traits.PullEnterLeaveEventsResponse{
+			err = server.Send(&enterleavesensorpb.PullEnterLeaveEventsResponse{
 				Changes: enterLeaveChanges,
 			})
 			if err != nil {
@@ -174,7 +174,7 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *traits.PullEnterLeaveEv
 			var reset bool
 			if c, ok := findCountValueByID(data.Logic.Counts, fwID); ok {
 				if c > accumulator.forwardCountValue {
-					direction = traits.EnterLeaveEvent_ENTER
+					direction = enterleavesensorpb.EnterLeaveEvent_ENTER
 				}
 				if c < accumulator.forwardCountValue {
 					reset = true
@@ -184,7 +184,7 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *traits.PullEnterLeaveEv
 			}
 			if c, ok := findCountValueByID(data.Logic.Counts, bwID); ok {
 				if c > accumulator.backwardCountValue {
-					direction = traits.EnterLeaveEvent_LEAVE
+					direction = enterleavesensorpb.EnterLeaveEvent_LEAVE
 				}
 				if c < accumulator.forwardCountValue {
 					reset = true
@@ -194,18 +194,18 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *traits.PullEnterLeaveEv
 			}
 			if reset {
 				// if any count decreased, we make no assumptions about direction
-				direction = traits.EnterLeaveEvent_DIRECTION_UNSPECIFIED
+				direction = enterleavesensorpb.EnterLeaveEvent_DIRECTION_UNSPECIFIED
 			}
-			el := &traits.EnterLeaveEvent{
+			el := &enterleavesensorpb.EnterLeaveEvent{
 				Direction:  direction,
-				EnterTotal: ptr(int32(enterTotal)),
-				LeaveTotal: ptr(int32(leaveTotal)),
+				EnterTotal: new(int32(enterTotal)),
+				LeaveTotal: new(int32(leaveTotal)),
 			}
 			if eq(lastSent, el) {
 				continue
 			}
-			err = server.Send(&traits.PullEnterLeaveEventsResponse{
-				Changes: []*traits.PullEnterLeaveEventsResponse_Change{
+			err = server.Send(&enterleavesensorpb.PullEnterLeaveEventsResponse{
+				Changes: []*enterleavesensorpb.PullEnterLeaveEventsResponse_Change{
 					{
 						Name:            request.Name,
 						ChangeTime:      timestamppb.New(data.Time),
@@ -244,8 +244,4 @@ func findLogicRecords(data *LogicsPushData, logicID int) (records []LogicRecord,
 		}
 	}
 	return
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }

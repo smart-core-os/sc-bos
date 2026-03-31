@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 type ListRequest interface {
@@ -24,7 +24,7 @@ type ListRequest interface {
 func List[T any](req ListRequest, idFunc func(T) string, list func() []T, opts ...ListOption) (_ []T, totalSize int, nextPageToken string, _ error) {
 	lo := newListOptions(opts...)
 
-	pageToken := &types.PageToken{}
+	pageToken := &typespb.PageToken{}
 	if err := decodePageToken(req.GetPageToken(), pageToken); err != nil {
 		return nil, 0, "", err
 	}
@@ -50,7 +50,7 @@ func List[T any](req ListRequest, idFunc func(T) string, list func() []T, opts .
 
 	endOfPage := nextIndex + pageSize
 	if endOfPage < len(all) {
-		pageToken.PageStart = &types.PageToken_LastResourceName{
+		pageToken.PageStart = &typespb.PageToken_LastResourceName{
 			LastResourceName: idFunc(all[endOfPage-1]),
 		}
 	} else {
@@ -111,7 +111,7 @@ func WithMaxPageSize(size int) ListOption {
 	}
 }
 
-func decodePageToken(token string, pageToken *types.PageToken) error {
+func decodePageToken(token string, pageToken *typespb.PageToken) error {
 	if token != "" {
 		tokenBytes, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
@@ -124,7 +124,7 @@ func decodePageToken(token string, pageToken *types.PageToken) error {
 	return nil
 }
 
-func encodePageToken(pageToken *types.PageToken) (string, error) {
+func encodePageToken(pageToken *typespb.PageToken) (string, error) {
 	if pageToken != nil {
 		tokenBytes, err := proto.Marshal(pageToken)
 		if err != nil {

@@ -1,0 +1,106 @@
+Test that existing versioned protos importing sc-api traits get their import paths and type
+references updated when the sc-api traits are also processed in the same run.
+Same-package case: history file and trait land in smartcore.bos.airqualitysensor.v1 — qualifier dropped.
+Cross-package case: hub file imports metadata trait from smartcore.bos.metadata.v1 — full qualifier used.
+expected_changes: 4
+
+-- input/sc-api/protobuf/traits/air_quality_sensor.proto --
+syntax = "proto3";
+
+package smartcore.traits;
+
+option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/traits";
+
+message AirQuality {
+  float score = 1;
+}
+
+-- input/proto/smartcore/bos/airqualitysensor/v1/air_quality_sensor_history.proto --
+syntax = "proto3";
+
+package smartcore.bos.airqualitysensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb";
+
+import "google/protobuf/timestamp.proto";
+import "traits/air_quality_sensor.proto";
+
+message AirQualityRecord {
+  smartcore.traits.AirQuality air_quality = 1;
+  google.protobuf.Timestamp record_time = 2;
+}
+
+-- input/sc-api/protobuf/traits/metadata.proto --
+syntax = "proto3";
+
+package smartcore.traits;
+
+option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/traits";
+
+message Metadata {
+  string name = 1;
+}
+
+-- input/proto/smartcore/bos/hub/v1/hub.proto --
+syntax = "proto3";
+
+package smartcore.bos.hub.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/hubpb";
+
+import "traits/metadata.proto";
+
+message HubNode {
+  smartcore.traits.Metadata metadata = 1;
+}
+
+-- output/proto/smartcore/bos/airqualitysensor/v1/air_quality_sensor.proto --
+syntax = "proto3";
+
+package smartcore.bos.airqualitysensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb";
+
+message AirQuality {
+  float score = 1;
+}
+
+-- output/proto/smartcore/bos/airqualitysensor/v1/air_quality_sensor_history.proto --
+syntax = "proto3";
+
+package smartcore.bos.airqualitysensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb";
+
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/airqualitysensor/v1/air_quality_sensor.proto";
+
+message AirQualityRecord {
+  AirQuality air_quality = 1;
+  google.protobuf.Timestamp record_time = 2;
+}
+
+-- output/proto/smartcore/bos/metadata/v1/metadata.proto --
+syntax = "proto3";
+
+package smartcore.bos.metadata.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/metadatapb";
+
+message Metadata {
+  string name = 1;
+}
+
+-- output/proto/smartcore/bos/hub/v1/hub.proto --
+syntax = "proto3";
+
+package smartcore.bos.hub.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/hubpb";
+
+import "smartcore/bos/metadata/v1/metadata.proto";
+
+message HubNode {
+  smartcore.bos.metadata.v1.Metadata metadata = 1;
+}
+

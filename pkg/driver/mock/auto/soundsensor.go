@@ -7,10 +7,9 @@ import (
 
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb"
-	gen_soundsensorpb "github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 func SoundSensorAuto(model *soundsensorpb.Model) *service.Service[string] {
@@ -18,7 +17,7 @@ func SoundSensorAuto(model *soundsensorpb.Model) *service.Service[string] {
 		ticker := time.NewTicker(10 * time.Second)
 		go func() {
 			randomNumber := 20 + rand.Float32()*20
-			state := &gen_soundsensorpb.SoundLevel{
+			state := &soundsensorpb.SoundLevel{
 				SoundPressureLevel: &randomNumber,
 			}
 			_, _ = model.UpdateSoundLevel(state)

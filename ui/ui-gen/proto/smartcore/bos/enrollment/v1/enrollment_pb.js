@@ -13,7 +13,13 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = globalThis;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 goog.exportSymbol('proto.smartcore.bos.enrollment.v1.CreateEnrollmentRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.enrollment.v1.DeleteEnrollmentRequest', null, global);
@@ -219,7 +225,7 @@ rootCas: msg.getRootCas_asB64()
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.enrollment.v1.Enrollment}
  */
 proto.smartcore.bos.enrollment.v1.Enrollment.deserializeBinary = function(bytes) {
@@ -244,19 +250,19 @@ proto.smartcore.bos.enrollment.v1.Enrollment.deserializeBinaryFromReader = funct
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setTargetName(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setTargetAddress(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setManagerName(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setManagerAddress(value);
       break;
     case 5:
@@ -542,7 +548,7 @@ proto.smartcore.bos.enrollment.v1.GetEnrollmentRequest.toObject = function(inclu
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.enrollment.v1.GetEnrollmentRequest}
  */
 proto.smartcore.bos.enrollment.v1.GetEnrollmentRequest.deserializeBinary = function(bytes) {
@@ -643,7 +649,7 @@ enrollment: (f = msg.getEnrollment()) && proto.smartcore.bos.enrollment.v1.Enrol
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.enrollment.v1.CreateEnrollmentRequest}
  */
 proto.smartcore.bos.enrollment.v1.CreateEnrollmentRequest.deserializeBinary = function(bytes) {
@@ -794,7 +800,7 @@ enrollment: (f = msg.getEnrollment()) && proto.smartcore.bos.enrollment.v1.Enrol
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.enrollment.v1.UpdateEnrollmentRequest}
  */
 proto.smartcore.bos.enrollment.v1.UpdateEnrollmentRequest.deserializeBinary = function(bytes) {
@@ -945,7 +951,7 @@ proto.smartcore.bos.enrollment.v1.DeleteEnrollmentRequest.toObject = function(in
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.enrollment.v1.DeleteEnrollmentRequest}
  */
 proto.smartcore.bos.enrollment.v1.DeleteEnrollmentRequest.deserializeBinary = function(bytes) {
@@ -1046,7 +1052,7 @@ proto.smartcore.bos.enrollment.v1.TestEnrollmentRequest.toObject = function(incl
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.enrollment.v1.TestEnrollmentRequest}
  */
 proto.smartcore.bos.enrollment.v1.TestEnrollmentRequest.deserializeBinary = function(bytes) {
@@ -1148,7 +1154,7 @@ code: jspb.Message.getFieldWithDefault(msg, 2, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.enrollment.v1.TestEnrollmentResponse}
  */
 proto.smartcore.bos.enrollment.v1.TestEnrollmentResponse.deserializeBinary = function(bytes) {
@@ -1173,7 +1179,7 @@ proto.smartcore.bos.enrollment.v1.TestEnrollmentResponse.deserializeBinaryFromRe
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setError(value);
       break;
     case 2:

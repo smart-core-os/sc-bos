@@ -9,7 +9,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 )
 
 func logWrites(logger *zap.Logger, rs *ReadState, ws *WriteState, counts *ActionCounts, ttl time.Duration, err error) {
@@ -76,9 +77,9 @@ func logReads(logger *zap.Logger, oldState, newState *ReadState) {
 	}
 	if diff := cmp.Diff(oldState, newState,
 		cmpopts.IgnoreFields(ReadState{}, "Now", "Config", "StartTime"),
-		cmpopts.IgnoreFields(Value[*traits.AirTemperature]{}, "At", "Hit"),
+		cmpopts.IgnoreFields(Value[*airtemperaturepb.AirTemperature]{}, "At", "Hit"),
 		cmpopts.IgnoreFields(Value[string]{}, "At", "Hit"),
-		cmpopts.IgnoreFields(Value[*traits.ModeValues]{}, "At", "Hit"),
+		cmpopts.IgnoreFields(Value[*modepb.ModeValues]{}, "At", "Hit"),
 		protocmp.Transform()); diff != "" {
 		logger.Debug("processReadState read state changed", zap.String("diff", diff))
 		return

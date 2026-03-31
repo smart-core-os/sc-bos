@@ -8,17 +8,16 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/gobacnet"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_temperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 type temperatureConfig struct {
@@ -36,7 +35,7 @@ func readTemperatureConfig(raw []byte) (cfg temperatureConfig, err error) {
 type temperature struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *temperaturepb.Model
@@ -45,7 +44,7 @@ type temperature struct {
 	pollTask *task.Intermittent
 }
 
-func newTemperature(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*temperature, error) {
+func newTemperature(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*temperature, error) {
 	cfg, err := readTemperatureConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -75,10 +74,10 @@ func (t *temperature) startPoll(init context.Context) (stop task.StopFn, err err
 }
 
 func (t *temperature) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(temperaturepb.TraitName, node.WithClients(gen_temperaturepb.WrapApi(t))))
+	return a.Announce(t.config.Name, node.HasTrait(temperaturepb.TraitName, node.WithClients(temperaturepb.WrapApi(t))))
 }
 
-func (t *temperature) GetTemperature(ctx context.Context, request *gen_temperaturepb.GetTemperatureRequest) (*gen_temperaturepb.Temperature, error) {
+func (t *temperature) GetTemperature(ctx context.Context, request *temperaturepb.GetTemperatureRequest) (*temperaturepb.Temperature, error) {
 	_, err := t.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -86,9 +85,9 @@ func (t *temperature) GetTemperature(ctx context.Context, request *gen_temperatu
 	return t.ModelServer.GetTemperature(ctx, request)
 }
 
-func (t *temperature) UpdateTemperature(ctx context.Context, request *gen_temperaturepb.UpdateTemperatureRequest) (*gen_temperaturepb.Temperature, error) {
+func (t *temperature) UpdateTemperature(ctx context.Context, request *temperaturepb.UpdateTemperatureRequest) (*temperaturepb.Temperature, error) {
 	if request.GetTemperature() == nil || request.GetTemperature().SetPoint == nil {
-		return t.GetTemperature(ctx, &gen_temperaturepb.GetTemperatureRequest{Name: request.Name})
+		return t.GetTemperature(ctx, &temperaturepb.GetTemperatureRequest{Name: request.Name})
 	}
 	newSetPoint := float32(request.GetTemperature().SetPoint.ValueCelsius)
 
@@ -99,18 +98,18 @@ func (t *temperature) UpdateTemperature(ctx context.Context, request *gen_temper
 		}
 	}
 
-	return pollUntil(ctx, t.config.DefaultRWConsistencyTimeoutDuration(), t.pollPeer, func(temperature *gen_temperaturepb.Temperature) bool {
+	return pollUntil(ctx, t.config.DefaultRWConsistencyTimeoutDuration(), t.pollPeer, func(temperature *temperaturepb.Temperature) bool {
 		return temperature.SetPoint.ValueCelsius == float64(newSetPoint)
 	})
 }
 
-func (t *temperature) PullTemperature(request *gen_temperaturepb.PullTemperatureRequest, server gen_temperaturepb.TemperatureApi_PullTemperatureServer) error {
+func (t *temperature) PullTemperature(request *temperaturepb.PullTemperatureRequest, server temperaturepb.TemperatureApi_PullTemperatureServer) error {
 	_ = t.pollTask.Attach(server.Context())
 	return t.ModelServer.PullTemperature(request, server)
 }
 
-func (t *temperature) pollPeer(ctx context.Context) (*gen_temperaturepb.Temperature, error) {
-	data := &gen_temperaturepb.Temperature{}
+func (t *temperature) pollPeer(ctx context.Context) (*temperaturepb.Temperature, error) {
+	data := &temperaturepb.Temperature{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
 	var requestNames []string
@@ -123,7 +122,7 @@ func (t *temperature) pollPeer(ctx context.Context) (*gen_temperaturepb.Temperat
 			if err != nil {
 				return comm.ErrReadProperty{Prop: "measured", Cause: err}
 			}
-			data.Measured = &types.Temperature{ValueCelsius: measured}
+			data.Measured = &typespb.Temperature{ValueCelsius: measured}
 			return nil
 		})
 	}
@@ -136,7 +135,7 @@ func (t *temperature) pollPeer(ctx context.Context) (*gen_temperaturepb.Temperat
 			if err != nil {
 				return comm.ErrReadProperty{Prop: "setPoint", Cause: err}
 			}
-			data.SetPoint = &types.Temperature{ValueCelsius: setPoint}
+			data.SetPoint = &typespb.Temperature{ValueCelsius: setPoint}
 			return nil
 		})
 	}

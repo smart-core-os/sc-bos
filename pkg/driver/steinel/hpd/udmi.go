@@ -10,9 +10,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 const PointsetVersion = "1.0.0"
@@ -109,18 +111,18 @@ func (u *UdmiServiceServer) PullExportMessages(request *udmipb.PullExportMessage
 
 		case change, _ := <-airQualityChanges:
 			if change != nil {
-				airQuality := change.Value.(*traits.AirQuality)
+				airQuality := change.Value.(*airqualitysensorpb.AirQuality)
 				appendAirQualityEventPoints(airQuality, &eventPoints)
 			}
 
 		case change, _ := <-temperatureChanges:
 			if change != nil {
-				temperature := change.Value.(*traits.AirTemperature)
+				temperature := change.Value.(*airtemperaturepb.AirTemperature)
 				appendTempHumidityEventPoints(temperature, &eventPoints)
 			}
 		case change, _ := <-occupancyChanges:
 			if change != nil {
-				occupancy := change.Value.(*traits.Occupancy)
+				occupancy := change.Value.(*occupancysensorpb.Occupancy)
 				appendOccupancyEventPoints(occupancy, &eventPoints)
 			}
 		}
@@ -143,7 +145,7 @@ func (u *UdmiServiceServer) PullExportMessages(request *udmipb.PullExportMessage
 	}
 }
 
-func appendAirQualityEventPoints(aq *traits.AirQuality, eventPoints *EventPoints) {
+func appendAirQualityEventPoints(aq *airqualitysensorpb.AirQuality, eventPoints *EventPoints) {
 
 	eventPoints.Co2Level = &EventPoint[float32]{PresentValue: *aq.CarbonDioxideLevel}
 	eventPoints.VocLevel = &EventPoint[float32]{PresentValue: *aq.VolatileOrganicCompounds}
@@ -161,12 +163,12 @@ func appendAirQualityEventPoints(aq *traits.AirQuality, eventPoints *EventPoints
 	}
 }
 
-func appendTempHumidityEventPoints(a *traits.AirTemperature, eventPoints *EventPoints) {
+func appendTempHumidityEventPoints(a *airtemperaturepb.AirTemperature, eventPoints *EventPoints) {
 	eventPoints.Temperature = &EventPoint[float64]{PresentValue: a.AmbientTemperature.ValueCelsius}
 	eventPoints.Humidity = &EventPoint[float32]{PresentValue: *a.AmbientHumidity}
 }
 
-func appendOccupancyEventPoints(o *traits.Occupancy, eventPoints *EventPoints) {
+func appendOccupancyEventPoints(o *occupancysensorpb.Occupancy, eventPoints *EventPoints) {
 	eventPoints.PeopleCount = &EventPoint[int32]{PresentValue: o.PeopleCount}
 	eventPoints.OccupancyState = &EventPoint[string]{PresentValue: o.State.String()}
 }

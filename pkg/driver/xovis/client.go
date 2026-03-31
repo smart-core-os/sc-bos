@@ -12,10 +12,9 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 )
 
 type client struct {

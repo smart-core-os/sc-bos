@@ -7,8 +7,8 @@
 package hubpb
 
 import (
-	traits "github.com/smart-core-os/sc-api/go/traits"
-	types "github.com/smart-core-os/sc-api/go/types"
+	metadatapb "github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -87,7 +87,7 @@ func (x *HubNode) GetDescription() string {
 type HubNodeInspection struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Metadata that the node advertises at its root.
-	Metadata *traits.Metadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	// The public certificates the node presents during HTTPS handshakes.
 	// This will contain PEM encoded x509 certificates.
 	PublicCerts   []string `protobuf:"bytes,2,rep,name=public_certs,json=publicCerts,proto3" json:"public_certs,omitempty"`
@@ -125,7 +125,7 @@ func (*HubNodeInspection) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *HubNodeInspection) GetMetadata() *traits.Metadata {
+func (x *HubNodeInspection) GetMetadata() *metadatapb.Metadata {
 	if x != nil {
 		return x.Metadata
 	}
@@ -668,7 +668,7 @@ func (*ForgetHubNodeResponse) Descriptor() ([]byte, []int) {
 type PullHubNodesResponse_Change struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The type of change (e.g. ADD, UPDATE, etc...)
-	Type types.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type typespb.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	// The new value to use for ADD|UPDATE changes
 	NewValue *HubNode `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// The old value to use for UPDATE|REMOVE changes
@@ -709,11 +709,11 @@ func (*PullHubNodesResponse_Change) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{8, 0}
 }
 
-func (x *PullHubNodesResponse_Change) GetType() types.ChangeType {
+func (x *PullHubNodesResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 func (x *PullHubNodesResponse_Change) GetNewValue() *HubNode {
@@ -741,13 +741,13 @@ var File_smartcore_bos_hub_v1_hub_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_hub_v1_hub_proto_rawDesc = "" +
 	"\n" +
-	"\x1esmartcore/bos/hub/v1/hub.proto\x12\x14smartcore.bos.hub.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15traits/metadata.proto\x1a\x12types/change.proto\"Y\n" +
+	"\x1esmartcore/bos/hub/v1/hub.proto\x12\x14smartcore.bos.hub.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a(smartcore/bos/metadata/v1/metadata.proto\x1a#smartcore/bos/types/v1/change.proto\"Y\n" +
 	"\aHubNode\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x04 \x01(\tR\vdescription\"n\n" +
-	"\x11HubNodeInspection\x126\n" +
-	"\bmetadata\x18\x01 \x01(\v2\x1a.smartcore.traits.MetadataR\bmetadata\x12!\n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\"w\n" +
+	"\x11HubNodeInspection\x12?\n" +
+	"\bmetadata\x18\x01 \x01(\v2#.smartcore.bos.metadata.v1.MetadataR\bmetadata\x12!\n" +
 	"\fpublic_certs\x18\x02 \x03(\tR\vpublicCerts\"-\n" +
 	"\x11GetHubNodeRequest\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\"l\n" +
@@ -760,11 +760,11 @@ const file_smartcore_bos_hub_v1_hub_proto_rawDesc = "" +
 	"\x14ListHubNodesResponse\x123\n" +
 	"\x05nodes\x18\x01 \x03(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\x05nodes\"8\n" +
 	"\x13PullHubNodesRequest\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xd4\x02\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xdb\x02\n" +
 	"\x14PullHubNodesResponse\x12K\n" +
-	"\achanges\x18\x01 \x03(\v21.smartcore.bos.hub.v1.PullHubNodesResponse.ChangeR\achanges\x1a\xee\x01\n" +
-	"\x06Change\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12:\n" +
+	"\achanges\x18\x01 \x03(\v21.smartcore.bos.hub.v1.PullHubNodesResponse.ChangeR\achanges\x1a\xf5\x01\n" +
+	"\x06Change\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\x12:\n" +
 	"\tnew_value\x18\x03 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\bnewValue\x12:\n" +
 	"\told_value\x18\x04 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -818,17 +818,17 @@ var file_smartcore_bos_hub_v1_hub_proto_goTypes = []any{
 	(*ForgetHubNodeRequest)(nil),        // 12: smartcore.bos.hub.v1.ForgetHubNodeRequest
 	(*ForgetHubNodeResponse)(nil),       // 13: smartcore.bos.hub.v1.ForgetHubNodeResponse
 	(*PullHubNodesResponse_Change)(nil), // 14: smartcore.bos.hub.v1.PullHubNodesResponse.Change
-	(*traits.Metadata)(nil),             // 15: smartcore.traits.Metadata
-	(types.ChangeType)(0),               // 16: smartcore.types.ChangeType
+	(*metadatapb.Metadata)(nil),         // 15: smartcore.bos.metadata.v1.Metadata
+	(typespb.ChangeType)(0),             // 16: smartcore.bos.types.v1.ChangeType
 	(*timestamppb.Timestamp)(nil),       // 17: google.protobuf.Timestamp
 }
 var file_smartcore_bos_hub_v1_hub_proto_depIdxs = []int32{
-	15, // 0: smartcore.bos.hub.v1.HubNodeInspection.metadata:type_name -> smartcore.traits.Metadata
+	15, // 0: smartcore.bos.hub.v1.HubNodeInspection.metadata:type_name -> smartcore.bos.metadata.v1.Metadata
 	0,  // 1: smartcore.bos.hub.v1.EnrollHubNodeRequest.node:type_name -> smartcore.bos.hub.v1.HubNode
 	0,  // 2: smartcore.bos.hub.v1.ListHubNodesResponse.nodes:type_name -> smartcore.bos.hub.v1.HubNode
 	14, // 3: smartcore.bos.hub.v1.PullHubNodesResponse.changes:type_name -> smartcore.bos.hub.v1.PullHubNodesResponse.Change
 	0,  // 4: smartcore.bos.hub.v1.InspectHubNodeRequest.node:type_name -> smartcore.bos.hub.v1.HubNode
-	16, // 5: smartcore.bos.hub.v1.PullHubNodesResponse.Change.type:type_name -> smartcore.types.ChangeType
+	16, // 5: smartcore.bos.hub.v1.PullHubNodesResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	0,  // 6: smartcore.bos.hub.v1.PullHubNodesResponse.Change.new_value:type_name -> smartcore.bos.hub.v1.HubNode
 	0,  // 7: smartcore.bos.hub.v1.PullHubNodesResponse.Change.old_value:type_name -> smartcore.bos.hub.v1.HubNode
 	17, // 8: smartcore.bos.hub.v1.PullHubNodesResponse.Change.change_time:type_name -> google.protobuf.Timestamp

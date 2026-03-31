@@ -8,7 +8,7 @@
     "preview": "vite preview --port 5050"
   },
   "dependencies": {
-    "@smart-core-os/sc-api-grpc-web": "^1.0.0-beta.60",
+    "@smart-core-os/sc-bos-ui-gen": "1.0.0-beta.25",
     "google-protobuf": "^4.0.1",
     "grpc-web": "^2.0.2",
     "keycloak-js": "^25.0.2",

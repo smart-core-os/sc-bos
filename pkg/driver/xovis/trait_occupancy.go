@@ -9,16 +9,16 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 type occupancyServer struct {
-	traits.UnimplementedOccupancySensorApiServer
+	occupancysensorpb.UnimplementedOccupancySensorApiServer
 	bus         *minibus.Bus[PushData]
 	client      *client
 	multiSensor bool
@@ -34,7 +34,7 @@ type occupancyServer struct {
 
 var errDataFormat = status.Error(codes.FailedPrecondition, "data received from sensor did not match expected format")
 
-func (o *occupancyServer) GetOccupancy(ctx context.Context, request *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
+func (o *occupancyServer) GetOccupancy(ctx context.Context, request *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
 	res, err := getLiveLogic(ctx, o.client, o.multiSensor, o.logicID, o.faultCheck)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
@@ -49,7 +49,7 @@ func (o *occupancyServer) GetOccupancy(ctx context.Context, request *traits.GetO
 	return occupancy, nil
 }
 
-func (o *occupancyServer) PullOccupancy(request *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+func (o *occupancyServer) PullOccupancy(request *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
 	// fetch the initial occupancy state
 	res, err := getLiveLogic(server.Context(), o.client, o.multiSensor, o.logicID, o.faultCheck)
 	if err != nil {
@@ -60,10 +60,10 @@ func (o *occupancyServer) PullOccupancy(request *traits.PullOccupancyRequest, se
 		return errDataFormat
 	}
 
-	var lastSent *traits.Occupancy
+	var lastSent *occupancysensorpb.Occupancy
 	if !request.UpdatesOnly {
-		err = server.Send(&traits.PullOccupancyResponse{
-			Changes: []*traits.PullOccupancyResponse_Change{
+		err = server.Send(&occupancysensorpb.PullOccupancyResponse{
+			Changes: []*occupancysensorpb.PullOccupancyResponse_Change{
 				{
 					Name:       request.Name,
 					ChangeTime: timestamppb.New(res.Time),
@@ -103,7 +103,7 @@ func (o *occupancyServer) PullOccupancy(request *traits.PullOccupancyRequest, se
 				continue
 			}
 
-			var changes []*traits.PullOccupancyResponse_Change
+			var changes []*occupancysensorpb.PullOccupancyResponse_Change
 			for _, record := range records {
 				occupancy := decodeOccupancyCounts(record.Counts)
 				if occupancy == nil {
@@ -114,14 +114,14 @@ func (o *occupancyServer) PullOccupancy(request *traits.PullOccupancyRequest, se
 					continue
 				}
 
-				changes = append(changes, &traits.PullOccupancyResponse_Change{
+				changes = append(changes, &occupancysensorpb.PullOccupancyResponse_Change{
 					Name:       request.Name,
 					ChangeTime: timestamppb.New(record.To),
 					Occupancy:  occupancy,
 				})
 			}
 
-			err = server.Send(&traits.PullOccupancyResponse{Changes: changes})
+			err = server.Send(&occupancysensorpb.PullOccupancyResponse{Changes: changes})
 			if err != nil {
 				return err
 			}
@@ -139,8 +139,8 @@ func (o *occupancyServer) PullOccupancy(request *traits.PullOccupancyRequest, se
 			if eq(lastSent, occupancy) {
 				continue
 			}
-			err = server.Send(&traits.PullOccupancyResponse{
-				Changes: []*traits.PullOccupancyResponse_Change{
+			err = server.Send(&occupancysensorpb.PullOccupancyResponse{
+				Changes: []*occupancysensorpb.PullOccupancyResponse_Change{
 					{
 						Name:       request.Name,
 						ChangeTime: timestamppb.New(res.Time),
@@ -172,17 +172,17 @@ func (o *occupancyServer) doPollInit() {
 }
 
 // returns nil if the counts don't match the expected format for an occupancy logic
-func decodeOccupancyCounts(counts []Count) (occupancy *traits.Occupancy) {
+func decodeOccupancyCounts(counts []Count) (occupancy *occupancysensorpb.Occupancy) {
 	if len(counts) != 1 || counts[0].Name != "balance" {
 		return nil
 	}
-	var state traits.Occupancy_State
+	var state occupancysensorpb.Occupancy_State
 	if counts[0].Value > 0 {
-		state = traits.Occupancy_OCCUPIED
+		state = occupancysensorpb.Occupancy_OCCUPIED
 	} else {
-		state = traits.Occupancy_UNOCCUPIED
+		state = occupancysensorpb.Occupancy_UNOCCUPIED
 	}
-	return &traits.Occupancy{
+	return &occupancysensorpb.Occupancy{
 		State:       state,
 		PeopleCount: int32(counts[0].Value),
 	}

@@ -1,0 +1,35 @@
+Tests identity-mapped packages: resource, router, group, wrap.
+expected_changes: 1
+
+-- input/example.go --
+package example
+
+import (
+	"github.com/smart-core-os/sc-golang/pkg/group"
+	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-golang/pkg/router"
+	"github.com/smart-core-os/sc-golang/pkg/wrap"
+)
+
+var (
+	_ = resource.Value{}
+	_ = router.Router{}
+	_ = group.Group{}
+	_ = wrap.NewWrap
+)
+-- output/example.go --
+package example
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/group"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/router"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
+)
+
+var (
+	_ = resource.Value{}
+	_ = router.Router{}
+	_ = group.Group{}
+	_ = wrap.NewWrap
+)

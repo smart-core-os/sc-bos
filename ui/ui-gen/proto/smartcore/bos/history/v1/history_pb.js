@@ -13,7 +13,13 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = globalThis;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
@@ -176,7 +182,7 @@ payload: msg.getPayload_asB64()
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.history.v1.HistoryRecord}
  */
 proto.smartcore.bos.history.v1.HistoryRecord.deserializeBinary = function(bytes) {
@@ -201,11 +207,11 @@ proto.smartcore.bos.history.v1.HistoryRecord.deserializeBinaryFromReader = funct
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setId(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setSource(value);
       break;
     case 3:
@@ -350,7 +356,7 @@ toRecord: (f = msg.getToRecord()) && proto.smartcore.bos.history.v1.HistoryRecor
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.history.v1.HistoryRecord.Query}
  */
 proto.smartcore.bos.history.v1.HistoryRecord.Query.deserializeBinary = function(bytes) {
@@ -375,7 +381,7 @@ proto.smartcore.bos.history.v1.HistoryRecord.Query.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setSourceEqual(value);
       break;
     case 10:
@@ -714,7 +720,7 @@ record: (f = msg.getRecord()) && proto.smartcore.bos.history.v1.HistoryRecord.to
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.history.v1.CreateHistoryRecordRequest}
  */
 proto.smartcore.bos.history.v1.CreateHistoryRecordRequest.deserializeBinary = function(bytes) {
@@ -739,7 +745,7 @@ proto.smartcore.bos.history.v1.CreateHistoryRecordRequest.deserializeBinaryFromR
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -898,7 +904,7 @@ query: (f = msg.getQuery()) && proto.smartcore.bos.history.v1.HistoryRecord.Quer
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.history.v1.ListHistoryRecordsRequest}
  */
 proto.smartcore.bos.history.v1.ListHistoryRecordsRequest.deserializeBinary = function(bytes) {
@@ -923,7 +929,7 @@ proto.smartcore.bos.history.v1.ListHistoryRecordsRequest.deserializeBinaryFromRe
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -931,11 +937,11 @@ proto.smartcore.bos.history.v1.ListHistoryRecordsRequest.deserializeBinaryFromRe
       msg.setPageSize(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setPageToken(value);
       break;
     case 5:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setOrderBy(value);
       break;
     case 4:
@@ -1175,7 +1181,7 @@ totalSize: jspb.Message.getFieldWithDefault(msg, 3, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.history.v1.ListHistoryRecordsResponse}
  */
 proto.smartcore.bos.history.v1.ListHistoryRecordsResponse.deserializeBinary = function(bytes) {
@@ -1205,7 +1211,7 @@ proto.smartcore.bos.history.v1.ListHistoryRecordsResponse.deserializeBinaryFromR
       msg.addRecords(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setNextPageToken(value);
       break;
     case 3:

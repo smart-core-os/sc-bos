@@ -16,13 +16,13 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/system/hub/remote"
 )
 
@@ -148,7 +148,7 @@ func (n *Server) EnrollHubNode(ctx context.Context, request *hubpb.EnrollHubNode
 	go n.dbChanges.Send(context.Background(), &hubpb.PullHubNodesResponse_Change{
 		NewValue:   &hubpb.HubNode{Address: en.TargetAddress, Name: en.TargetName, Description: nodeReg.Description},
 		ChangeTime: timestamppb.Now(),
-		Type:       types.ChangeType_ADD,
+		Type:       typespb.ChangeType_ADD,
 	})
 
 	return nodeReg, nil
@@ -200,7 +200,7 @@ func (n *Server) PullHubNodes(request *hubpb.PullHubNodesRequest, server hubpb.H
 		for _, node := range nodes.Nodes {
 			err := server.Send(&hubpb.PullHubNodesResponse{Changes: []*hubpb.PullHubNodesResponse_Change{
 				{
-					Type:       types.ChangeType_ADD,
+					Type:       typespb.ChangeType_ADD,
 					ChangeTime: timestamppb.Now(),
 					NewValue:   node,
 				},
@@ -270,7 +270,7 @@ func (n *Server) RenewHubNode(ctx context.Context, request *hubpb.RenewHubNodeRe
 		OldValue:   reg,
 		NewValue:   newNode,
 		ChangeTime: timestamppb.Now(),
-		Type:       types.ChangeType_UPDATE,
+		Type:       typespb.ChangeType_UPDATE,
 	})
 
 	return reg, nil
@@ -290,8 +290,8 @@ func (n *Server) TestHubNode(ctx context.Context, request *hubpb.TestHubNodeRequ
 		return nil, status.Error(codes.Unavailable, "failed connection")
 	}
 
-	client := traits.NewMetadataApiClient(conn)
-	_, err = client.GetMetadata(ctx, &traits.GetMetadataRequest{})
+	client := metadatapb.NewMetadataApiClient(conn)
+	_, err = client.GetMetadata(ctx, &metadatapb.GetMetadataRequest{})
 	if err != nil {
 		logger.Debug("failed api request", zap.Error(err))
 		return nil, status.Errorf(codes.Unavailable, "failed api request: %v", err)
@@ -342,7 +342,7 @@ func (n *Server) ForgetHubNode(ctx context.Context, request *hubpb.ForgetHubNode
 		OldValue:   reg,
 		NewValue:   nil,
 		ChangeTime: timestamppb.Now(),
-		Type:       types.ChangeType_REMOVE,
+		Type:       typespb.ChangeType_REMOVE,
 	})
 
 	return &hubpb.ForgetHubNodeResponse{}, nil

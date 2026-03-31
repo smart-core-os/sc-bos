@@ -23,7 +23,7 @@ func (f *stringSliceFlag) String() string {
 
 func (f *stringSliceFlag) Set(value string) error {
 	// Split by comma to support -flag a,b style
-	for _, v := range strings.Split(value, ",") {
+	for v := range strings.SplitSeq(value, ",") {
 		trimmed := strings.TrimSpace(v)
 		if trimmed != "" {
 			*f = append(*f, trimmed)

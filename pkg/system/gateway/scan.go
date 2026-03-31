@@ -16,10 +16,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 )
@@ -74,8 +74,8 @@ func (s *System) scanRemoteNode(ctx context.Context, nodeName string, n *remoteN
 
 // pullSelf updates node.Self with metadata about itself.
 func (s *System) pullSelf(ctx context.Context, node *remoteNode) (task.Next, error) {
-	mdClient := traits.NewMetadataApiClient(node.conn)
-	mdStream, err := mdClient.PullMetadata(ctx, &traits.PullMetadataRequest{}) // no name means "self"
+	mdClient := metadatapb.NewMetadataApiClient(node.conn)
+	mdStream, err := mdClient.PullMetadata(ctx, &metadatapb.PullMetadataRequest{}) // no name means "self"
 	if err != nil {
 		return neverSucceeded, err
 	}

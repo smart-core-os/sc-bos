@@ -12,8 +12,8 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
 )
@@ -137,7 +137,7 @@ func (m *Map) Create(id, kind string, state State) (string, State, error) {
 	if err != nil {
 		go m.bus.Send(context.Background(), &Change{
 			ChangeTime: m.now(),
-			ChangeType: types.ChangeType_ADD,
+			ChangeType: typespb.ChangeType_ADD,
 			NewValue:   r,
 			cID:        cID,
 		})
@@ -172,7 +172,7 @@ func (m *Map) Create(id, kind string, state State) (string, State, error) {
 
 	change := &Change{
 		ChangeTime: m.now(),
-		ChangeType: types.ChangeType_ADD,
+		ChangeType: typespb.ChangeType_ADD,
 		NewValue:   r,
 		cID:        cID,
 	}
@@ -198,7 +198,7 @@ func (m *Map) Delete(id string) (State, error) {
 
 	go m.bus.Send(context.Background(), &Change{
 		ChangeTime: m.now(),
-		ChangeType: types.ChangeType_REMOVE,
+		ChangeType: typespb.ChangeType_REMOVE,
 		OldValue:   r,
 		cID:        cID,
 	})
@@ -319,7 +319,7 @@ func (m *Map) GetAndListenState(ctx context.Context) ([]*StateRecord, <-chan *St
 					OldValue:   nil,
 					NewValue:   stateRecord,
 					ChangeTime: change.ChangeTime,
-					ChangeType: types.ChangeType_ADD,
+					ChangeType: typespb.ChangeType_ADD,
 				}
 				if err := chans.SendContext(ctx, out, stateChange); err != nil {
 					return
@@ -356,7 +356,7 @@ func (m *Map) listenRecordStates(ctx context.Context, record *Record, stateRecor
 		change := &StateChange{
 			OldValue:   old,
 			NewValue:   stateRecord,
-			ChangeType: types.ChangeType_UPDATE,
+			ChangeType: typespb.ChangeType_UPDATE,
 			ChangeTime: m.now(),
 		}
 		if err := chans.SendContext(ctx, out, change); err != nil {
@@ -366,7 +366,7 @@ func (m *Map) listenRecordStates(ctx context.Context, record *Record, stateRecor
 
 	removedChange := &StateChange{
 		OldValue:   stateRecord,
-		ChangeType: types.ChangeType_REMOVE,
+		ChangeType: typespb.ChangeType_REMOVE,
 		ChangeTime: m.now(),
 	}
 	// ignore the error because this is the last thing we're doing anyway
@@ -429,7 +429,7 @@ func (m *Map) idExists(id string) bool {
 // Change represents a change to a Map.
 type Change struct {
 	ChangeTime time.Time
-	ChangeType types.ChangeType
+	ChangeType typespb.ChangeType
 	OldValue   *Record
 	NewValue   *Record
 	cID        uint64
@@ -442,7 +442,7 @@ type StateRecord struct {
 
 type StateChange struct {
 	ChangeTime time.Time
-	ChangeType types.ChangeType
+	ChangeType typespb.ChangeType
 	OldValue   *StateRecord
 	NewValue   *StateRecord
 }

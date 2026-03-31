@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/conv"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 type Trait struct {
-	Name     string           `json:"name,omitempty"`
-	Kind     trait.Name       `json:"kind,omitempty"`
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Name     string               `json:"name,omitempty"`
+	Kind     trait.Name           `json:"kind,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 }
 
 type RawTrait struct {
@@ -181,7 +181,7 @@ type Location struct {
 	// Or it could contain an array that lists all the destinations. It is unclear what this needs to handle,
 	// so it needs to be flexible enough and extensible to handle future integrations.
 	Type   LocationType `json:"type,omitempty"`
-	Source ValueSource  `json:"source,omitempty"`
+	Source ValueSource  `json:"source"`
 }
 
 // TransportConfig is configured by a Device that wants to implement the Transport trait.

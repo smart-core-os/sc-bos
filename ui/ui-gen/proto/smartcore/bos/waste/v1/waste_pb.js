@@ -13,18 +13,24 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = globalThis;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
-var types_change_pb = require('@smart-core-os/sc-api-grpc-web/types/change_pb.js');
-goog.object.extend(proto, types_change_pb);
-var types_info_pb = require('@smart-core-os/sc-api-grpc-web/types/info_pb.js');
-goog.object.extend(proto, types_info_pb);
-var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js');
-goog.object.extend(proto, types_time_period_pb);
+var smartcore_bos_types_time_v1_period_pb = require('../../../../smartcore/bos/types/time/v1/period_pb.js');
+goog.object.extend(proto, smartcore_bos_types_time_v1_period_pb);
+var smartcore_bos_types_v1_change_pb = require('../../../../smartcore/bos/types/v1/change_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_change_pb);
+var smartcore_bos_types_v1_info_pb = require('../../../../smartcore/bos/types/v1/info_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_info_pb);
 goog.exportSymbol('proto.smartcore.bos.waste.v1.DescribeWasteRecordRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.waste.v1.ListWasteRecordsRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.waste.v1.ListWasteRecordsResponse', null, global);
@@ -257,7 +263,7 @@ treesSaved: (f = jspb.Message.getOptionalFloatingPointField(msg, 11)) == null ? 
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.waste.v1.WasteRecord}
  */
 proto.smartcore.bos.waste.v1.WasteRecord.deserializeBinary = function(bytes) {
@@ -282,7 +288,7 @@ proto.smartcore.bos.waste.v1.WasteRecord.deserializeBinaryFromReader = function(
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setId(value);
       break;
     case 2:
@@ -295,7 +301,7 @@ proto.smartcore.bos.waste.v1.WasteRecord.deserializeBinaryFromReader = function(
       msg.setWeight(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setSystem(value);
       break;
     case 5:
@@ -303,7 +309,7 @@ proto.smartcore.bos.waste.v1.WasteRecord.deserializeBinaryFromReader = function(
       msg.setType(value);
       break;
     case 6:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setArea(value);
       break;
     case 7:
@@ -312,7 +318,7 @@ proto.smartcore.bos.waste.v1.WasteRecord.deserializeBinaryFromReader = function(
       msg.setWasteCreateTime(value);
       break;
     case 8:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setStream(value);
       break;
     case 9:
@@ -798,7 +804,7 @@ totalSize: jspb.Message.getFieldWithDefault(msg, 3, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.waste.v1.ListWasteRecordsResponse}
  */
 proto.smartcore.bos.waste.v1.ListWasteRecordsResponse.deserializeBinary = function(bytes) {
@@ -828,7 +834,7 @@ proto.smartcore.bos.waste.v1.ListWasteRecordsResponse.deserializeBinaryFromReade
       msg.addWasterecords(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setNextPageToken(value);
       break;
     case 3:
@@ -999,7 +1005,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, ""),
 readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toObject(includeInstance, f),
 pageSize: jspb.Message.getFieldWithDefault(msg, 3, 0),
 pageToken: jspb.Message.getFieldWithDefault(msg, 4, ""),
-period: (f = msg.getPeriod()) && types_time_period_pb.Period.toObject(includeInstance, f),
+period: (f = msg.getPeriod()) && smartcore_bos_types_time_v1_period_pb.Period.toObject(includeInstance, f),
 orderBy: jspb.Message.getFieldWithDefault(msg, 6, "")
   };
 
@@ -1013,7 +1019,7 @@ orderBy: jspb.Message.getFieldWithDefault(msg, 6, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.waste.v1.ListWasteRecordsRequest}
  */
 proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.deserializeBinary = function(bytes) {
@@ -1038,7 +1044,7 @@ proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1051,16 +1057,16 @@ proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.deserializeBinaryFromReader
       msg.setPageSize(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setPageToken(value);
       break;
     case 5:
-      var value = new types_time_period_pb.Period;
-      reader.readMessage(value,types_time_period_pb.Period.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_time_v1_period_pb.Period;
+      reader.readMessage(value,smartcore_bos_types_time_v1_period_pb.Period.deserializeBinaryFromReader);
       msg.setPeriod(value);
       break;
     case 6:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setOrderBy(value);
       break;
     default:
@@ -1126,7 +1132,7 @@ proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.serializeBinaryToWriter = f
     writer.writeMessage(
       5,
       f,
-      types_time_period_pb.Period.serializeBinaryToWriter
+      smartcore_bos_types_time_v1_period_pb.Period.serializeBinaryToWriter
     );
   }
   f = message.getOrderBy();
@@ -1231,17 +1237,17 @@ proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.prototype.setPageToken = fu
 
 
 /**
- * optional smartcore.types.time.Period period = 5;
- * @return {?proto.smartcore.types.time.Period}
+ * optional smartcore.bos.types.time.v1.Period period = 5;
+ * @return {?proto.smartcore.bos.types.time.v1.Period}
  */
 proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.prototype.getPeriod = function() {
-  return /** @type{?proto.smartcore.types.time.Period} */ (
-    jspb.Message.getWrapperField(this, types_time_period_pb.Period, 5));
+  return /** @type{?proto.smartcore.bos.types.time.v1.Period} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_time_v1_period_pb.Period, 5));
 };
 
 
 /**
- * @param {?proto.smartcore.types.time.Period|undefined} value
+ * @param {?proto.smartcore.bos.types.time.v1.Period|undefined} value
  * @return {!proto.smartcore.bos.waste.v1.ListWasteRecordsRequest} returns this
 */
 proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.prototype.setPeriod = function(value) {
@@ -1332,7 +1338,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.waste.v1.PullWasteRecordsRequest}
  */
 proto.smartcore.bos.waste.v1.PullWasteRecordsRequest.deserializeBinary = function(bytes) {
@@ -1357,7 +1363,7 @@ proto.smartcore.bos.waste.v1.PullWasteRecordsRequest.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1549,7 +1555,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.waste.v1.PullWasteRecordsResponse}
  */
 proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.deserializeBinary = function(bytes) {
@@ -1667,7 +1673,7 @@ type: jspb.Message.getFieldWithDefault(msg, 5, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change}
  */
 proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.deserializeBinary = function(bytes) {
@@ -1692,7 +1698,7 @@ proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.deserializeBinaryFr
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1711,7 +1717,7 @@ proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.deserializeBinaryFr
       msg.setOldValue(value);
       break;
     case 5:
-      var value = /** @type {!proto.smartcore.types.ChangeType} */ (reader.readEnum());
+      var value = /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (reader.readEnum());
       msg.setType(value);
       break;
     default:
@@ -1914,16 +1920,16 @@ proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.prototype.hasOldVal
 
 
 /**
- * optional smartcore.types.ChangeType type = 5;
- * @return {!proto.smartcore.types.ChangeType}
+ * optional smartcore.bos.types.v1.ChangeType type = 5;
+ * @return {!proto.smartcore.bos.types.v1.ChangeType}
  */
 proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.prototype.getType = function() {
-  return /** @type {!proto.smartcore.types.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+  return /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
 };
 
 
 /**
- * @param {!proto.smartcore.types.ChangeType} value
+ * @param {!proto.smartcore.bos.types.v1.ChangeType} value
  * @return {!proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change} returns this
  */
 proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.prototype.setType = function(value) {
@@ -2014,7 +2020,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.waste.v1.DescribeWasteRecordRequest}
  */
 proto.smartcore.bos.waste.v1.DescribeWasteRecordRequest.deserializeBinary = function(bytes) {
@@ -2039,7 +2045,7 @@ proto.smartcore.bos.waste.v1.DescribeWasteRecordRequest.deserializeBinaryFromRea
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     default:
@@ -2131,7 +2137,7 @@ proto.smartcore.bos.waste.v1.WasteRecordSupport.prototype.toObject = function(op
  */
 proto.smartcore.bos.waste.v1.WasteRecordSupport.toObject = function(includeInstance, msg) {
   var f, obj = {
-resourceSupport: (f = msg.getResourceSupport()) && types_info_pb.ResourceSupport.toObject(includeInstance, f),
+resourceSupport: (f = msg.getResourceSupport()) && smartcore_bos_types_v1_info_pb.ResourceSupport.toObject(includeInstance, f),
 unit: jspb.Message.getFieldWithDefault(msg, 2, ""),
 co2SavedUnit: jspb.Message.getFieldWithDefault(msg, 3, ""),
 landSavedUnit: jspb.Message.getFieldWithDefault(msg, 4, "")
@@ -2147,7 +2153,7 @@ landSavedUnit: jspb.Message.getFieldWithDefault(msg, 4, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.waste.v1.WasteRecordSupport}
  */
 proto.smartcore.bos.waste.v1.WasteRecordSupport.deserializeBinary = function(bytes) {
@@ -2172,20 +2178,20 @@ proto.smartcore.bos.waste.v1.WasteRecordSupport.deserializeBinaryFromReader = fu
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new types_info_pb.ResourceSupport;
-      reader.readMessage(value,types_info_pb.ResourceSupport.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_v1_info_pb.ResourceSupport;
+      reader.readMessage(value,smartcore_bos_types_v1_info_pb.ResourceSupport.deserializeBinaryFromReader);
       msg.setResourceSupport(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setUnit(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setCo2SavedUnit(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setLandSavedUnit(value);
       break;
     default:
@@ -2222,7 +2228,7 @@ proto.smartcore.bos.waste.v1.WasteRecordSupport.serializeBinaryToWriter = functi
     writer.writeMessage(
       1,
       f,
-      types_info_pb.ResourceSupport.serializeBinaryToWriter
+      smartcore_bos_types_v1_info_pb.ResourceSupport.serializeBinaryToWriter
     );
   }
   f = message.getUnit();
@@ -2250,17 +2256,17 @@ proto.smartcore.bos.waste.v1.WasteRecordSupport.serializeBinaryToWriter = functi
 
 
 /**
- * optional smartcore.types.ResourceSupport resource_support = 1;
- * @return {?proto.smartcore.types.ResourceSupport}
+ * optional smartcore.bos.types.v1.ResourceSupport resource_support = 1;
+ * @return {?proto.smartcore.bos.types.v1.ResourceSupport}
  */
 proto.smartcore.bos.waste.v1.WasteRecordSupport.prototype.getResourceSupport = function() {
-  return /** @type{?proto.smartcore.types.ResourceSupport} */ (
-    jspb.Message.getWrapperField(this, types_info_pb.ResourceSupport, 1));
+  return /** @type{?proto.smartcore.bos.types.v1.ResourceSupport} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_v1_info_pb.ResourceSupport, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.types.ResourceSupport|undefined} value
+ * @param {?proto.smartcore.bos.types.v1.ResourceSupport|undefined} value
  * @return {!proto.smartcore.bos.waste.v1.WasteRecordSupport} returns this
 */
 proto.smartcore.bos.waste.v1.WasteRecordSupport.prototype.setResourceSupport = function(value) {

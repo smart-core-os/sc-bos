@@ -2,6 +2,8 @@
 package sysconf
 
 import (
+	"crypto/tls"
+	"fmt"
 	"os"
 	"time"
 
@@ -72,7 +74,7 @@ type Config struct {
 
 	StaticHosting []http.StaticHostingConfig `json:"staticHosting"`
 	CertConfig    *Certs                     `json:"certs,omitempty"`
-	Cors          http.CorsConfig            `json:"cors,omitempty"`
+	Cors          http.CorsConfig            `json:"cors"`
 
 	Devices *Devices `json:"devices,omitempty"`
 
@@ -158,6 +160,26 @@ type Certs struct {
 	HTTPCert     bool   `json:"httpCert,omitempty"` // have the https stack (grpc-web and hosting) use different pki.Source from the grpc stack
 	HTTPKeyFile  string `json:"httpKeyFile,omitempty"`
 	HTTPCertFile string `json:"httpCertFile,omitempty"`
+
+	// TLSMinVersion sets the minimum TLS version accepted for gRPC and HTTPS connections.
+	// Valid values are "1.2" and "1.3". Defaults to "1.3" if not set.
+	TLSMinVersion string `json:"tlsMinVersion,omitempty"`
+}
+
+// ParseTLSMinVersion returns the tls.VersionTLS* constant for the configured minimum TLS version.
+// Defaults to tls.VersionTLS13 if TLSMinVersion is not set.
+func (c *Certs) ParseTLSMinVersion() (uint16, error) {
+	if c == nil || c.TLSMinVersion == "" {
+		return tls.VersionTLS13, nil
+	}
+	switch c.TLSMinVersion {
+	case "1.2":
+		return tls.VersionTLS12, nil
+	case "1.3":
+		return tls.VersionTLS13, nil
+	default:
+		return 0, fmt.Errorf("unknown tlsMinVersion %q, valid values are: 1.2, 1.3", c.TLSMinVersion)
+	}
 }
 
 type PolicyMode string
@@ -170,7 +192,7 @@ const (
 
 // Health configures the health check system.
 type Health struct {
-	TTL HealthTTL `json:"ttl,omitempty"` // how long to keep health check results
+	TTL HealthTTL `json:"ttl"` // how long to keep health check results
 }
 
 // HealthDBPath is the location of the SQLite database file used to store health check results.
@@ -282,9 +304,14 @@ func (c *Certs) FillDefaults() *Certs {
 	return c
 }
 
+// Cloud configures the connection to the SCC BOS-facing API.
 type Cloud struct {
-	Endpoint     string              `json:"endpoint,omitempty"`
-	TokenFile    string              `json:"tokenFile,omitempty"`
+	// BosapiRoot is the base URL of the SCC BOS-facing API (e.g. "https://bosapi.example.com").
+	// TODO: default to the production URL once it's known.
+	BosapiRoot       string `json:"bosapiRoot,omitempty"`
+	ClientID         string `json:"clientId,omitempty"`
+	ClientSecretFile string `json:"clientSecretFile,omitempty"`
+
 	PollInterval *jsontypes.Duration `json:"pollInterval,omitempty"`
 	// Preserve old or incomplete downloads instead of deleting them on startup or when they expire.
 	// This is useful for debugging and should be used with caution in production since it can lead to unbounded disk usage.

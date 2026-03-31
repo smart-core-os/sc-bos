@@ -109,6 +109,16 @@ func TestOldToNewInterceptor_Unary(t *testing.T) {
 			input:    "/smartcore.bos.meter.v1.MeterApi/GetMeterReading",
 			expected: "/smartcore.bos.meter.v1.MeterApi/GetMeterReading",
 		},
+		{
+			name:     "traits format translated",
+			input:    "/smartcore.traits.LightApi/GetBrightness",
+			expected: "/smartcore.bos.light.v1.LightApi/GetBrightness",
+		},
+		{
+			name:     "traits special case translated",
+			input:    "/smartcore.traits.MotionSensorSensorInfo/PullMotionSensor",
+			expected: "/smartcore.bos.motionsensor.v1.MotionSensorInfo/PullMotionSensor",
+		},
 	}
 
 	for _, tt := range tests {
@@ -150,6 +160,16 @@ func TestOldToNewInterceptor_Stream(t *testing.T) {
 			input:    "/smartcore.bos.alert.v1.AlertApi/PullAlerts",
 			expected: "/smartcore.bos.alert.v1.AlertApi/PullAlerts",
 		},
+		{
+			name:     "traits format translated",
+			input:    "/smartcore.traits.AirTemperatureApi/PullAirTemperature",
+			expected: "/smartcore.bos.airtemperature.v1.AirTemperatureApi/PullAirTemperature",
+		},
+		{
+			name:     "traits special case translated",
+			input:    "/smartcore.traits.MotionSensorSensorInfo/PullMotionSensor",
+			expected: "/smartcore.bos.motionsensor.v1.MotionSensorInfo/PullMotionSensor",
+		},
 	}
 
 	for _, tt := range tests {
@@ -187,6 +207,50 @@ func TestInterceptorWithUnknownServiceHandler(t *testing.T) {
 
 	input := "/smartcore.bos.MeterApi/GetMeterReading"
 	expected := "/smartcore.bos.meter.v1.MeterApi/GetMeterReading"
+	interceptor := NewOldToNewInterceptor()
+
+	server := grpc.NewServer(
+		grpc.UnknownServiceHandler(unknownHandler),
+		grpc.StreamInterceptor(interceptor.StreamInterceptor()),
+	)
+
+	lis := bufconn.Listen(1024 * 1024)
+	go func() {
+		_ = server.Serve(lis)
+	}()
+	defer server.Stop()
+
+	conn, err := grpc.NewClient("passthrough://bufnet",
+		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return lis.Dial() }),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		t.Fatalf("grpc.NewClient() failed: %v", err)
+	}
+	defer conn.Close()
+
+	_ = conn.Invoke(t.Context(), input, nil, nil)
+
+	if capturedMethod != expected {
+		t.Errorf("grpc.Method() = %q, want %q", capturedMethod, expected)
+	}
+}
+
+// TestInterceptorWithUnknownServiceHandler_Traits is the same as
+// TestInterceptorWithUnknownServiceHandler but exercises the smartcore.traits.* → smartcore.bos.*.v1.* path.
+func TestInterceptorWithUnknownServiceHandler_Traits(t *testing.T) {
+	var capturedMethod string
+	unknownHandler := func(_ any, ss grpc.ServerStream) error {
+		method, ok := grpc.Method(ss.Context())
+		if !ok {
+			t.Error("grpc.Method returned false")
+		}
+		capturedMethod = method
+		return nil
+	}
+
+	input := "/smartcore.traits.LightApi/GetBrightness"
+	expected := "/smartcore.bos.light.v1.LightApi/GetBrightness"
 	interceptor := NewOldToNewInterceptor()
 
 	server := grpc.NewServer(

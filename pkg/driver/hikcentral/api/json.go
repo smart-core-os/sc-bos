@@ -15,9 +15,9 @@ type BaseResponse interface {
 }
 
 type Response struct {
-	Code string      `json:"code,omitempty"`
-	Msg  string      `json:"msg,omitempty"`
-	Data interface{} `json:"data,omitempty"`
+	Code string `json:"code,omitempty"`
+	Msg  string `json:"msg,omitempty"`
+	Data any    `json:"data,omitempty"`
 }
 
 func (r Response) GetCode() string {

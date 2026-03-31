@@ -7,14 +7,14 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 )
 
 // OccupancyJob gets the occupancy at the current point in time
 type OccupancyJob struct {
 	BaseJob
-	client  traits.OccupancySensorApiClient
+	client  occupancysensorpb.OccupancySensorApiClient
 	Sensors []string
 }
 
@@ -25,7 +25,7 @@ func (o *OccupancyJob) Do(ctx context.Context, sendFn sender) error {
 	for _, sensor := range o.Sensors {
 		cctx, cancel := context.WithTimeout(ctx, o.Timeout.Or(defaultTimeout))
 
-		resp, err := o.client.GetOccupancy(cctx, &traits.GetOccupancyRequest{Name: sensor})
+		resp, err := o.client.GetOccupancy(cctx, &occupancysensorpb.GetOccupancyRequest{Name: sensor})
 		cancel()
 
 		if err != nil {

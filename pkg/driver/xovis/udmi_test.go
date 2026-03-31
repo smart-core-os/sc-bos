@@ -1,24 +1,24 @@
 package xovis
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 func Test_PullExportMessages(t *testing.T) {
 
 	enter := int32(0)
 	leave := int32(0)
-	e := resource.NewValue(resource.WithInitialValue(&traits.EnterLeaveEvent{EnterTotal: &enter, LeaveTotal: &leave}), resource.WithNoDuplicates())
-	o := resource.NewValue(resource.WithInitialValue(&traits.Occupancy{PeopleCount: 0, State: traits.Occupancy_OCCUPIED}), resource.WithNoDuplicates())
+	e := resource.NewValue(resource.WithInitialValue(&enterleavesensorpb.EnterLeaveEvent{EnterTotal: &enter, LeaveTotal: &leave}), resource.WithNoDuplicates())
+	o := resource.NewValue(resource.WithInitialValue(&occupancysensorpb.Occupancy{PeopleCount: 0, State: occupancysensorpb.Occupancy_OCCUPIED}), resource.WithNoDuplicates())
 
 	req := &udmipb.PullExportMessagesRequest{
 		Name: "test",
@@ -40,14 +40,14 @@ func Test_PullExportMessages(t *testing.T) {
 				return udmipb.WrapService(server)
 			},
 			set: func() {
-				o.Set(&traits.Occupancy{
+				o.Set(&occupancysensorpb.Occupancy{
 					PeopleCount: 459,
-					State:       traits.Occupancy_OCCUPIED,
+					State:       occupancysensorpb.Occupancy_OCCUPIED,
 				})
 			},
 			want: EventPoints{
 				DeviceType:     &EventPoint[string]{PresentValue: DriverName},
-				OccupancyState: &EventPoint[string]{PresentValue: traits.Occupancy_OCCUPIED.String()},
+				OccupancyState: &EventPoint[string]{PresentValue: occupancysensorpb.Occupancy_OCCUPIED.String()},
 				PeopleCount:    &EventPoint[int32]{PresentValue: 459},
 			},
 		},
@@ -58,7 +58,7 @@ func Test_PullExportMessages(t *testing.T) {
 				return udmipb.WrapService(server)
 			},
 			set: func() {
-				e.Set(&traits.EnterLeaveEvent{
+				e.Set(&enterleavesensorpb.EnterLeaveEvent{
 					EnterTotal: &enterTotal,
 					LeaveTotal: &leaveTotal,
 				})
@@ -76,7 +76,7 @@ func Test_PullExportMessages(t *testing.T) {
 				return udmipb.WrapService(server)
 			},
 			set: func() {
-				e.Set(&traits.EnterLeaveEvent{
+				e.Set(&enterleavesensorpb.EnterLeaveEvent{
 					EnterTotal: &enterTotal,
 					LeaveTotal: &leaveTotal,
 				})
@@ -94,14 +94,14 @@ func Test_PullExportMessages(t *testing.T) {
 				return udmipb.WrapService(server)
 			},
 			set: func() {
-				o.Set(&traits.Occupancy{
+				o.Set(&occupancysensorpb.Occupancy{
 					PeopleCount: 459,
-					State:       traits.Occupancy_OCCUPIED,
+					State:       occupancysensorpb.Occupancy_OCCUPIED,
 				})
 			},
 			want: EventPoints{
 				DeviceType:     &EventPoint[string]{PresentValue: DriverName},
-				OccupancyState: &EventPoint[string]{PresentValue: traits.Occupancy_OCCUPIED.String()},
+				OccupancyState: &EventPoint[string]{PresentValue: occupancysensorpb.Occupancy_OCCUPIED.String()},
 				PeopleCount:    &EventPoint[int32]{PresentValue: 459},
 			},
 		},
@@ -112,8 +112,7 @@ func Test_PullExportMessages(t *testing.T) {
 
 			client := tt.createClient()
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 
 			messages, err := client.PullExportMessages(ctx, req)
 			tt.set()

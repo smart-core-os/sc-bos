@@ -8,9 +8,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -120,12 +120,12 @@ func (dc *DoorController) refreshDoors(announcer node.Announcer, scNamePrefix st
 		if _, ok := dc.doors[id]; !ok {
 
 			d.ScName = path.Join(scNamePrefix, "doors", d.Id)
-			d.Meta = &traits.Metadata{
-				Appearance: &traits.Metadata_Appearance{
+			d.Meta = &metadatapb.Metadata{
+				Appearance: &metadatapb.Metadata_Appearance{
 					Title:       "Door: " + d.Name,
 					Description: d.Description,
 				},
-				Membership: &traits.Metadata_Membership{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "acs",
 				},
 			}

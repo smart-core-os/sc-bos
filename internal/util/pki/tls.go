@@ -6,6 +6,16 @@ import (
 	"errors"
 )
 
+// Option configures a TLS config produced by TLSServerConfig or TLSClientConfig.
+type Option func(*tls.Config)
+
+// WithMinVersion sets the minimum TLS version.
+func WithMinVersion(v uint16) Option {
+	return func(cfg *tls.Config) {
+		cfg.MinVersion = v
+	}
+}
+
 // ALPN protocol IDs
 // https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
 const (
@@ -16,8 +26,10 @@ const (
 // TLSServerConfig returns a *tls.Config for use by a server using source to provide the server cert.
 // If the returned tls.Config requires validation of client certificates then sources roots will be used to validate
 // the client certificates.
-func TLSServerConfig(source Source) *tls.Config {
-	cfg := &tls.Config{}
+func TLSServerConfig(source Source, opts ...Option) *tls.Config {
+	cfg := &tls.Config{
+		MinVersion: tls.VersionTLS13,
+	}
 	// accept both HTTP2 and HTTP1.1, preferring HTTP2
 	cfg.NextProtos = []string{alpnHTTP2, alpnHTTP1}
 	cfg.ClientAuth = tls.VerifyClientCertIfGiven
@@ -39,21 +51,30 @@ func TLSServerConfig(source Source) *tls.Config {
 		}
 		return cfg, nil
 	}
+	for _, opt := range opts {
+		opt(cfg)
+	}
 
 	return cfg
 }
 
 // TLSClientConfig returns a *tls.Config for use by a client using sources roots to validate the server certificate.
 // If the server requests a client certificate then sources cert will be used.
-func TLSClientConfig(source Source) *tls.Config {
+func TLSClientConfig(source Source, opts ...Option) *tls.Config {
 	r := &resolver{
 		source: source,
-		config: new(tls.Config),
+		config: &tls.Config{
+			MinVersion: tls.VersionTLS13,
+		},
 	}
 
 	r.config.GetClientCertificate = r.getClientCertificate
 	r.config.InsecureSkipVerify = true
 	r.config.VerifyConnection = r.verifyConnection
+
+	for _, opt := range opts {
+		opt(r.config)
+	}
 
 	return r.config
 }

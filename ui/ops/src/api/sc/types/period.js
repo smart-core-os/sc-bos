@@ -1,5 +1,5 @@
 import {timestampFromObject} from '@/api/convpb';
-import {Period} from '@smart-core-os/sc-api-grpc-web/types/time/period_pb';
+import {Period} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/types/time/v1/period_pb';
 
 /**
  * @param {Partial<Period.AsObject>} obj

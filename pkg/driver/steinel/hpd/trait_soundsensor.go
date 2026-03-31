@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 type soundSensor struct {
@@ -41,7 +41,7 @@ func (s *soundSensor) GetSoundLevel(context.Context, *soundsensorpb.GetSoundLeve
 
 func (s *soundSensor) getUpdate(response *SensorResponse) error {
 	lev := &soundsensorpb.SoundLevel{
-		SoundPressureLevel: ptr(float32(response.Noise)),
+		SoundPressureLevel: new(float32(response.Noise)),
 	}
 	_, err := s.value.Set(lev)
 	return err

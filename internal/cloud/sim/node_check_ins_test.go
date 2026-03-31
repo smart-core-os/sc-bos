@@ -39,7 +39,7 @@ func setupNodeCheckInsEnv(t *testing.T) nodeCheckInsEnv {
 	var node Node
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "test-node",
-		"siteId":   site.ID,
+		"siteId":   sid(site.ID),
 	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -96,7 +96,7 @@ func TestNodeCheckIns_Get(t *testing.T) {
 		var node2 Node
 		resp := doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
 			"hostname": "other-node",
-			"siteId":   e.site.ID,
+			"siteId":   sid(e.site.ID),
 		}, &node2)
 		assertStatus(t, resp, http.StatusCreated)
 
@@ -127,7 +127,7 @@ func TestNodeCheckIns_List(t *testing.T) {
 		var node Node
 		resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 			"hostname": "test-node",
-			"siteId":   site.ID,
+			"siteId":   sid(site.ID),
 		}, &node)
 		assertStatus(t, resp, http.StatusCreated)
 
@@ -155,7 +155,7 @@ func TestNodeCheckIns_List(t *testing.T) {
 
 		// Create more check-ins via store
 		err := e.store.Write(t.Context(), func(tx *store.Tx) error {
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				if _, err := tx.CreateNodeCheckIn(t.Context(), queries2.CreateNodeCheckInParams{NodeID: e.node.ID}); err != nil {
 					return err
 				}
@@ -197,7 +197,7 @@ func TestNodeCheckIns_Pagination(t *testing.T) {
 	var node Node
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "test-node",
-		"siteId":   site.ID,
+		"siteId":   sid(site.ID),
 	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
 

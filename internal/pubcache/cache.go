@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 const (
@@ -30,7 +30,7 @@ const (
 type Cache struct {
 	logger  *zap.Logger
 	ctx     context.Context // Updating will stop when this ctx ends.
-	source  traits.PublicationApiClient
+	source  publicationpb.PublicationApiClient
 	device  string
 	pubID   string
 	storage Storage // Optional; when nil, storage is not used.
@@ -44,7 +44,7 @@ type Cache struct {
 // Background tasks are not started immediately, they will begin once Pull is called for the first time.
 // The Context ctx can be used to stop the Cache's background tasks.
 // Storage is optional; if nil, storage won't be used.
-func New(ctx context.Context, source traits.PublicationApiClient, device string, pubID string, opts ...CacheOption) *Cache {
+func New(ctx context.Context, source publicationpb.PublicationApiClient, device string, pubID string, opts ...CacheOption) *Cache {
 	if ctx == nil {
 		panic("parameter ctx is required")
 	}
@@ -73,8 +73,8 @@ func New(ctx context.Context, source traits.PublicationApiClient, device string,
 // Storage), then the initial value may be delayed indefinitely.
 // The returned channel does not apply backpressure, so if the consumer is slow, some intermediate values of the
 // publication may be missed.
-func (c *Cache) Pull(ctx context.Context) <-chan *traits.Publication {
-	ch := make(chan *traits.Publication)
+func (c *Cache) Pull(ctx context.Context) <-chan *publicationpb.Publication {
+	ch := make(chan *publicationpb.Publication)
 	c.startBackground()
 
 	go func() {
@@ -89,7 +89,7 @@ func (c *Cache) Pull(ctx context.Context) <-chan *traits.Publication {
 
 		for change := range c.latest.Pull(ctx) {
 			select {
-			case ch <- change.Value.(*traits.Publication):
+			case ch <- change.Value.(*publicationpb.Publication):
 			case <-ctx.Done():
 				return
 			}
@@ -127,7 +127,7 @@ func (c *Cache) runBackground() {
 	_ = c.runUpdate()
 }
 
-func (c *Cache) commitPublication(pub *traits.Publication, store bool) error {
+func (c *Cache) commitPublication(pub *publicationpb.Publication, store bool) error {
 	// the job value might not be initialised yet
 	if c.latest == nil {
 		c.latest = resource.NewValue(
@@ -156,7 +156,7 @@ func (c *Cache) commitPublication(pub *traits.Publication, store bool) error {
 // started will be true if at least one value was successfully received from the server
 // all publication values retrieved are also stored in the cache's Storage
 func (c *Cache) pullPublication() (err error, started bool) {
-	stream, err := c.source.PullPublication(c.ctx, &traits.PullPublicationRequest{
+	stream, err := c.source.PullPublication(c.ctx, &publicationpb.PullPublicationRequest{
 		Name: c.device,
 		Id:   c.pubID,
 	})
@@ -206,7 +206,7 @@ func (c *Cache) pollPublicationOnce() error {
 	ctx, cancel := context.WithTimeout(c.ctx, time.Minute)
 	defer cancel()
 
-	pub, err := c.source.GetPublication(ctx, &traits.GetPublicationRequest{
+	pub, err := c.source.GetPublication(ctx, &publicationpb.GetPublicationRequest{
 		Name: c.device,
 		Id:   c.pubID,
 	})

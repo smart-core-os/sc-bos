@@ -7,7 +7,7 @@
 package actorpb
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -35,7 +35,7 @@ type Actor struct {
 	// A recognisable display name for this actor.
 	DisplayName string `protobuf:"bytes,11,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	// A picture of the actor.
-	Picture *types.Image `protobuf:"bytes,12,opt,name=picture,proto3" json:"picture,omitempty"`
+	Picture *typespb.Image `protobuf:"bytes,12,opt,name=picture,proto3" json:"picture,omitempty"`
 	// A url that resolves to more information on this actor.
 	Url string `protobuf:"bytes,13,opt,name=url,proto3" json:"url,omitempty"`
 	// An email address for the actor.
@@ -114,7 +114,7 @@ func (x *Actor) GetDisplayName() string {
 	return ""
 }
 
-func (x *Actor) GetPicture() *types.Image {
+func (x *Actor) GetPicture() *typespb.Image {
 	if x != nil {
 		return x.Picture
 	}
@@ -181,13 +181,13 @@ var File_smartcore_bos_actor_v1_actor_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_actor_v1_actor_proto_rawDesc = "" +
 	"\n" +
-	"\"smartcore/bos/actor/v1/actor.proto\x12\x16smartcore.bos.actor.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x11types/image.proto\"\xcf\x04\n" +
+	"\"smartcore/bos/actor/v1/actor.proto\x12\x16smartcore.bos.actor.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/types/v1/image.proto\"\xd6\x04\n" +
 	"\x05Actor\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05title\x18\n" +
 	" \x01(\tR\x05title\x12!\n" +
-	"\fdisplay_name\x18\v \x01(\tR\vdisplayName\x120\n" +
-	"\apicture\x18\f \x01(\v2\x16.smartcore.types.ImageR\apicture\x12\x10\n" +
+	"\fdisplay_name\x18\v \x01(\tR\vdisplayName\x127\n" +
+	"\apicture\x18\f \x01(\v2\x1d.smartcore.bos.types.v1.ImageR\apicture\x12\x10\n" +
 	"\x03url\x18\r \x01(\tR\x03url\x12\x14\n" +
 	"\x05email\x18\x0e \x01(\tR\x05email\x12B\n" +
 	"\x0flast_grant_time\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\rlastGrantTime\x12&\n" +
@@ -220,11 +220,11 @@ var file_smartcore_bos_actor_v1_actor_proto_goTypes = []any{
 	(*Actor)(nil),                 // 0: smartcore.bos.actor.v1.Actor
 	nil,                           // 1: smartcore.bos.actor.v1.Actor.IdsEntry
 	nil,                           // 2: smartcore.bos.actor.v1.Actor.MoreEntry
-	(*types.Image)(nil),           // 3: smartcore.types.Image
+	(*typespb.Image)(nil),         // 3: smartcore.bos.types.v1.Image
 	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
 }
 var file_smartcore_bos_actor_v1_actor_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.actor.v1.Actor.picture:type_name -> smartcore.types.Image
+	3, // 0: smartcore.bos.actor.v1.Actor.picture:type_name -> smartcore.bos.types.v1.Image
 	4, // 1: smartcore.bos.actor.v1.Actor.last_grant_time:type_name -> google.protobuf.Timestamp
 	1, // 2: smartcore.bos.actor.v1.Actor.ids:type_name -> smartcore.bos.actor.v1.Actor.IdsEntry
 	2, // 3: smartcore.bos.actor.v1.Actor.more:type_name -> smartcore.bos.actor.v1.Actor.MoreEntry

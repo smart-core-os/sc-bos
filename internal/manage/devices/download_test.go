@@ -16,39 +16,38 @@ import (
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 	now := time.Unix(0, 0)
 	n := node.New("test")
 
-	meterDevice := meter.NewModel()
+	meterDevice := meterpb.NewModel()
 	_, _ = meterDevice.UpdateMeterReading(&meterpb.MeterReading{Usage: 200})
 	n.Announce("d1",
 		node.HasTrait(
-			meter.TraitName,
+			meterpb.TraitName,
 			node.WithClients(
-				meterpb.WrapApi(meter.NewModelServer(meterDevice)),
-				meterpb.WrapInfo(&meter.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
+				meterpb.WrapApi(meterpb.NewModelServer(meterDevice)),
+				meterpb.WrapInfo(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
 					UsageUnit: "tests per second",
 				}}),
 			),
 		),
-		node.HasMetadata(&traits.Metadata{Location: &traits.Metadata_Location{Floor: "01"}}),
+		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "01"}}),
 	)
 
 	airTempDevice := airtemperaturepb.NewModel()
-	_, _ = airTempDevice.UpdateAirTemperature(&traits.AirTemperature{
-		TemperatureGoal:    &traits.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &types.Temperature{ValueCelsius: 23.5}},
-		AmbientTemperature: &types.Temperature{ValueCelsius: 19.2},
+	_, _ = airTempDevice.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
+		TemperatureGoal:    &airtemperaturepb.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &typespb.Temperature{ValueCelsius: 23.5}},
+		AmbientTemperature: &typespb.Temperature{ValueCelsius: 19.2},
 		AmbientHumidity:    proto.Float32(62.1),
 	})
 	n.Announce("d2",
@@ -58,7 +57,7 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 				airtemperaturepb.WrapApi(airtemperaturepb.NewModelServer(airTempDevice)),
 			),
 		),
-		node.HasMetadata(&traits.Metadata{Location: &traits.Metadata_Location{Floor: "02"}}),
+		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "02"}}),
 	)
 
 	s := NewServer(n,

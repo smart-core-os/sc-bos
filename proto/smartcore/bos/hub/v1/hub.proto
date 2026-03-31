@@ -5,8 +5,8 @@ package smartcore.bos.hub.v1;
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/hubpb";
 
 import "google/protobuf/timestamp.proto";
-import "traits/metadata.proto";
-import "types/change.proto";
+import "smartcore/bos/metadata/v1/metadata.proto";
+import "smartcore/bos/types/v1/change.proto";
 
 service HubApi {
   rpc GetHubNode(GetHubNodeRequest) returns (HubNode);
@@ -41,7 +41,7 @@ message HubNode {
 
 message HubNodeInspection {
   // Metadata that the node advertises at its root.
-  smartcore.traits.Metadata metadata = 1;
+  smartcore.bos.metadata.v1.Metadata metadata = 1;
   // The public certificates the node presents during HTTPS handshakes.
   // This will contain PEM encoded x509 certificates.
   repeated string public_certs = 2;
@@ -82,7 +82,7 @@ message PullHubNodesResponse {
   repeated Change changes = 1;
   message Change {
     // The type of change (e.g. ADD, UPDATE, etc...)
-    smartcore.types.ChangeType type = 2;
+    smartcore.bos.types.v1.ChangeType type = 2;
     // The new value to use for ADD|UPDATE changes
     HubNode new_value = 3;
     // The old value to use for UPDATE|REMOVE changes

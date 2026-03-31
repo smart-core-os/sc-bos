@@ -3,7 +3,7 @@ package lights
 import (
 	"context"
 	"errors"
-	"sort"
+	"slices"
 	"sync"
 	"testing"
 
@@ -128,9 +128,7 @@ func keyDiff[V any](m map[string]V, want ...string) string {
 	for k := range m {
 		gotKeys = append(gotKeys, k)
 	}
-	sort.Slice(gotKeys, func(i, j int) bool {
-		return gotKeys[i] < gotKeys[j]
-	})
+	slices.Sort(gotKeys)
 	return cmp.Diff(want, gotKeys)
 }
 

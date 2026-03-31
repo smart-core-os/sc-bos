@@ -6,12 +6,12 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/auto"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait/openclosepb"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // mockOpenClose returns a mock OpenClose device and automation.
@@ -19,7 +19,7 @@ import (
 // Configuration of the mock device is done via the trait metadata more map.
 // You can specify a "presets" key which has the JSON format of `[{name, title?, positions}, ...]`,
 // where `positions` is the protojson representation of either a single or array of traits.OpenClosePosition.
-func mockOpenClose(traitMd *traits.TraitMetadata, deviceName string, logger *zap.Logger) ([]wrap.ServiceUnwrapper, service.Lifecycle) {
+func mockOpenClose(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) ([]wrap.ServiceUnwrapper, service.Lifecycle) {
 	var opts []resource.Option
 
 	opts = append(opts, parseOpenClosePresets(traitMd, deviceName, logger)...)
@@ -29,7 +29,7 @@ func mockOpenClose(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 	return []wrap.ServiceUnwrapper{openclosepb.WrapApi(server), openclosepb.WrapInfo(server)}, auto.OpenClose(model)
 }
 
-func parseOpenClosePresets(traitMd *traits.TraitMetadata, deviceName string, logger *zap.Logger) []resource.Option {
+func parseOpenClosePresets(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) []resource.Option {
 	presets, ok := traitMd.GetMore()["presets"]
 	if !ok {
 		return nil
@@ -75,9 +75,9 @@ func parseOpenClosePresets(traitMd *traits.TraitMetadata, deviceName string, log
 			continue
 		}
 
-		positions := make([]*traits.OpenClosePosition, len(positionsJson))
+		positions := make([]*openclosepb.OpenClosePosition, len(positionsJson))
 		for i, posJson := range positionsJson {
-			pos := &traits.OpenClosePosition{}
+			pos := &openclosepb.OpenClosePosition{}
 			if err := protojson.Unmarshal(posJson, pos); err != nil {
 				logger.Sugar().Warnf("Unable to unmarshal position %s.%d for mock device %q: %v. %v", presetCfg.Name, i, deviceName, err, posJson)
 				continue
@@ -88,7 +88,7 @@ func parseOpenClosePresets(traitMd *traits.TraitMetadata, deviceName string, log
 			continue // errors will already have been logged
 		}
 
-		desc := &traits.OpenClosePositions_Preset{
+		desc := &openclosepb.OpenClosePositions_Preset{
 			Name:  presetCfg.Name,
 			Title: presetCfg.Title,
 		}

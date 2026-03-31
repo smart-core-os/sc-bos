@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -11,12 +12,18 @@ import (
 	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/protofile"
 )
 
-// analyzeProtoFiles returns the required generators for each proto file in protoDir.
+// ProtoFileInfo holds the generator flags and output directory for a proto file.
+type ProtoFileInfo struct {
+	Gen       Generator
+	OutputDir string // relative to repo root, e.g. "pkg/proto/accesspb"; empty if unresolvable
+}
+
+// analyzeProtoFiles returns the required generators and output dirs for each proto file in protoDir.
 // The keys of the returned map are relative paths from protoDir for each proto file.
-// The values are the combined Generator flags needed for that file.
 // analyzeProtoFiles recursively walks protoDir to find all .proto files.
-func analyzeProtoFiles(protoDir string) (map[string]Generator, error) {
-	fileGenerators := make(map[string]Generator)
+// includeDirs are additional -I include paths passed to protoc when parsing files.
+func analyzeProtoFiles(protoDir string, includeDirs []string) (map[string]ProtoFileInfo, error) {
+	fileInfos := make(map[string]ProtoFileInfo)
 
 	err := filepath.Walk(protoDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -32,12 +39,12 @@ func analyzeProtoFiles(protoDir string) (map[string]Generator, error) {
 			return fmt.Errorf("getting relative path: %w", err)
 		}
 
-		gen, err := determineGenerators(protoDir, relPath)
+		fileInfo, err := determineProtoFileInfo(protoDir, relPath, includeDirs)
 		if err != nil {
 			return fmt.Errorf("analyzing %s: %w", relPath, err)
 		}
 
-		fileGenerators[relPath] = gen
+		fileInfos[relPath] = fileInfo
 		return nil
 	})
 
@@ -45,12 +52,25 @@ func analyzeProtoFiles(protoDir string) (map[string]Generator, error) {
 		return nil, err
 	}
 
-	return fileGenerators, nil
+	return fileInfos, nil
+}
+
+// determineProtoFileInfo analyzes a proto file to determine its generator flags and output directory.
+func determineProtoFileInfo(protoDir, relPath string, includeDirs []string) (ProtoFileInfo, error) {
+	fileDesc, err := protofile.Parse(protoDir, relPath, includeDirs)
+	if err != nil {
+		return ProtoFileInfo{}, fmt.Errorf("parsing proto file: %w", err)
+	}
+
+	return ProtoFileInfo{
+		Gen:       determineGeneratorsFromDescriptor(fileDesc),
+		OutputDir: outputDirFromDescriptor(fileDesc),
+	}, nil
 }
 
 // determineGenerators analyzes a proto file to determine which generators it needs.
-func determineGenerators(protoDir, relPath string) (Generator, error) {
-	fileDesc, err := protofile.Parse(protoDir, relPath)
+func determineGenerators(protoDir, relPath string, includeDirs []string) (Generator, error) {
+	fileDesc, err := protofile.Parse(protoDir, relPath, includeDirs)
 	if err != nil {
 		return 0, fmt.Errorf("parsing proto file: %w", err)
 	}
@@ -74,6 +94,21 @@ func determineGeneratorsFromDescriptor(fileDesc *descriptorpb.FileDescriptorProt
 		gen |= GenRouter
 	}
 	return gen
+}
+
+// outputDirFromDescriptor extracts the output directory relative to the repo root
+// from the go_package option of a proto file descriptor.
+// Returns empty string if the package path doesn't start with the sc-bos module prefix.
+func outputDirFromDescriptor(fileDesc *descriptorpb.FileDescriptorProto) string {
+	goPkg := fileDesc.GetOptions().GetGoPackage()
+	if i := strings.Index(goPkg, ";"); i >= 0 {
+		goPkg = goPkg[:i]
+	}
+	const modulePrefix = "github.com/smart-core-os/sc-bos/"
+	if !strings.HasPrefix(goPkg, modulePrefix) {
+		return ""
+	}
+	return strings.TrimPrefix(goPkg, modulePrefix)
 }
 
 // isRoutedAPI determines if a proto file defines a routed API.
@@ -140,4 +175,17 @@ func hasNameField(msg *descriptorpb.DescriptorProto) bool {
 		}
 	}
 	return false
+}
+
+// groupByGeneratorSet groups proto files by their generator flags.
+func groupByGeneratorSet(fileInfos map[string]ProtoFileInfo) map[Generator][]string {
+	buckets := make(map[Generator][]string)
+	for file, info := range fileInfos {
+		buckets[info.Gen] = append(buckets[info.Gen], file)
+	}
+	// Sort each bucket for deterministic output
+	for _, files := range buckets {
+		slices.Sort(files)
+	}
+	return buckets
 }

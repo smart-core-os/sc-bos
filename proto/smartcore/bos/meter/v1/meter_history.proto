@@ -7,7 +7,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/meterpb";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/meter/v1/meter.proto";
-import "types/time/period.proto";
+import "smartcore/bos/types/time/v1/period.proto";
 
 // MeterHistory provides access to historical records for smartcore.bos.MeterApi service resources.
 service MeterHistory {
@@ -21,7 +21,7 @@ message MeterReadingRecord {
 
 message ListMeterReadingHistoryRequest {
   string name = 1;
-  smartcore.types.time.Period period = 2;
+  smartcore.bos.types.time.v1.Period period = 2;
 
   // Fields to fetch relative to the MeterReadingRecord type
   google.protobuf.FieldMask read_mask = 3;

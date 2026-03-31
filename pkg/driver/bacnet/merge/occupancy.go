@@ -8,15 +8,14 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/gobacnet"
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 type occupancyCfg struct {
@@ -29,14 +28,14 @@ func readOccupancyConfig(raw []byte) (cfg occupancyCfg, err error) {
 	return
 }
 
-var _ traits.OccupancySensorApiServer = (*occupancy)(nil)
+var _ occupancysensorpb.OccupancySensorApiServer = (*occupancy)(nil)
 
 type occupancy struct {
-	traits.UnimplementedOccupancySensorApiServer
+	occupancysensorpb.UnimplementedOccupancySensorApiServer
 
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *occupancysensorpb.Model
@@ -45,7 +44,7 @@ type occupancy struct {
 	pollTask *task.Intermittent
 }
 
-func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
+func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
 	cfg, err := readOccupancyConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -72,7 +71,7 @@ func (o *occupancy) AnnounceSelf(a node.Announcer) node.Undo {
 	return a.Announce(o.config.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(o))))
 }
 
-func (o *occupancy) GetOccupancy(ctx context.Context, request *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
+func (o *occupancy) GetOccupancy(ctx context.Context, request *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
 	_, err := o.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -80,7 +79,7 @@ func (o *occupancy) GetOccupancy(ctx context.Context, request *traits.GetOccupan
 	return o.ModelServer.GetOccupancy(ctx, request)
 }
 
-func (o *occupancy) PullOccupancy(request *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+func (o *occupancy) PullOccupancy(request *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
 	_ = o.pollTask.Attach(server.Context())
 	return o.ModelServer.PullOccupancy(request, server)
 }
@@ -92,8 +91,8 @@ func (o *occupancy) startPoll(init context.Context) (stop task.StopFn, err error
 	})
 }
 
-func (o *occupancy) pollPeer(ctx context.Context) (*traits.Occupancy, error) {
-	data := &traits.Occupancy{}
+func (o *occupancy) pollPeer(ctx context.Context) (*occupancysensorpb.Occupancy, error) {
+	data := &occupancysensorpb.Occupancy{}
 
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
@@ -108,10 +107,10 @@ func (o *occupancy) pollPeer(ctx context.Context) (*traits.Occupancy, error) {
 				return comm.ErrReadProperty{Prop: "occupancy", Cause: err}
 			}
 
-			data.State = traits.Occupancy_UNOCCUPIED
+			data.State = occupancysensorpb.Occupancy_UNOCCUPIED
 
 			if value != 0 {
-				data.State = traits.Occupancy_OCCUPIED
+				data.State = occupancysensorpb.Occupancy_OCCUPIED
 			}
 
 			return nil

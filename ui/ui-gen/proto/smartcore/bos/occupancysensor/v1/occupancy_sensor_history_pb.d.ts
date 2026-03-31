@@ -2,13 +2,13 @@ import * as jspb from 'google-protobuf'
 
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
-import * as traits_occupancy_sensor_pb from '@smart-core-os/sc-api-grpc-web/traits/occupancy_sensor_pb'; // proto import: "traits/occupancy_sensor.proto"
-import * as types_time_period_pb from '@smart-core-os/sc-api-grpc-web/types/time/period_pb'; // proto import: "types/time/period.proto"
+import * as smartcore_bos_occupancysensor_v1_occupancy_sensor_pb from '../../../../smartcore/bos/occupancysensor/v1/occupancy_sensor_pb'; // proto import: "smartcore/bos/occupancysensor/v1/occupancy_sensor.proto"
+import * as smartcore_bos_types_time_v1_period_pb from '../../../../smartcore/bos/types/time/v1/period_pb'; // proto import: "smartcore/bos/types/time/v1/period.proto"
 
 
 export class OccupancyRecord extends jspb.Message {
-  getOccupancy(): traits_occupancy_sensor_pb.Occupancy | undefined;
-  setOccupancy(value?: traits_occupancy_sensor_pb.Occupancy): OccupancyRecord;
+  getOccupancy(): smartcore_bos_occupancysensor_v1_occupancy_sensor_pb.Occupancy | undefined;
+  setOccupancy(value?: smartcore_bos_occupancysensor_v1_occupancy_sensor_pb.Occupancy): OccupancyRecord;
   hasOccupancy(): boolean;
   clearOccupancy(): OccupancyRecord;
 
@@ -27,7 +27,7 @@ export class OccupancyRecord extends jspb.Message {
 
 export namespace OccupancyRecord {
   export type AsObject = {
-    occupancy?: traits_occupancy_sensor_pb.Occupancy.AsObject;
+    occupancy?: smartcore_bos_occupancysensor_v1_occupancy_sensor_pb.Occupancy.AsObject;
     recordTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
   };
 }
@@ -36,8 +36,8 @@ export class ListOccupancyHistoryRequest extends jspb.Message {
   getName(): string;
   setName(value: string): ListOccupancyHistoryRequest;
 
-  getPeriod(): types_time_period_pb.Period | undefined;
-  setPeriod(value?: types_time_period_pb.Period): ListOccupancyHistoryRequest;
+  getPeriod(): smartcore_bos_types_time_v1_period_pb.Period | undefined;
+  setPeriod(value?: smartcore_bos_types_time_v1_period_pb.Period): ListOccupancyHistoryRequest;
   hasPeriod(): boolean;
   clearPeriod(): ListOccupancyHistoryRequest;
 
@@ -66,7 +66,7 @@ export class ListOccupancyHistoryRequest extends jspb.Message {
 export namespace ListOccupancyHistoryRequest {
   export type AsObject = {
     name: string;
-    period?: types_time_period_pb.Period.AsObject;
+    period?: smartcore_bos_types_time_v1_period_pb.Period.AsObject;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
     pageSize: number;
     pageToken: string;

@@ -13,10 +13,16 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = globalThis;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
-var types_info_pb = require('@smart-core-os/sc-api-grpc-web/types/info_pb.js');
-goog.object.extend(proto, types_info_pb);
+var smartcore_bos_types_v1_info_pb = require('../../../../smartcore/bos/types/v1/info_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_info_pb);
 goog.exportSymbol('proto.smartcore.bos.serviceticket.v1.CreateTicketRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.serviceticket.v1.DescribeTicketRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.serviceticket.v1.Ticket', null, global);
@@ -245,7 +251,7 @@ location: (f = msg.getLocation()) && proto.smartcore.bos.serviceticket.v1.Ticket
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.serviceticket.v1.Ticket}
  */
 proto.smartcore.bos.serviceticket.v1.Ticket.deserializeBinary = function(bytes) {
@@ -270,19 +276,19 @@ proto.smartcore.bos.serviceticket.v1.Ticket.deserializeBinaryFromReader = functi
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setId(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setSummary(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setReporterName(value);
       break;
     case 5:
@@ -296,7 +302,7 @@ proto.smartcore.bos.serviceticket.v1.Ticket.deserializeBinaryFromReader = functi
       msg.setSeverity(value);
       break;
     case 7:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setExternalUrl(value);
       break;
     case 8:
@@ -442,7 +448,7 @@ description: (f = jspb.Message.getField(msg, 3)) == null ? undefined : f
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.serviceticket.v1.Ticket.Classification}
  */
 proto.smartcore.bos.serviceticket.v1.Ticket.Classification.deserializeBinary = function(bytes) {
@@ -467,15 +473,15 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Classification.deserializeBinaryFrom
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setId(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setTitle(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
       break;
     default:
@@ -650,7 +656,7 @@ description: (f = jspb.Message.getField(msg, 3)) == null ? undefined : f
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.serviceticket.v1.Ticket.Severity}
  */
 proto.smartcore.bos.serviceticket.v1.Ticket.Severity.deserializeBinary = function(bytes) {
@@ -675,15 +681,15 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Severity.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setId(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setTitle(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
       break;
     default:
@@ -858,7 +864,7 @@ description: (f = jspb.Message.getField(msg, 3)) == null ? undefined : f
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.serviceticket.v1.Ticket.Location}
  */
 proto.smartcore.bos.serviceticket.v1.Ticket.Location.deserializeBinary = function(bytes) {
@@ -883,15 +889,15 @@ proto.smartcore.bos.serviceticket.v1.Ticket.Location.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setId(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setTitle(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
       break;
     default:
@@ -1284,7 +1290,7 @@ ticket: (f = msg.getTicket()) && proto.smartcore.bos.serviceticket.v1.Ticket.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.serviceticket.v1.CreateTicketRequest}
  */
 proto.smartcore.bos.serviceticket.v1.CreateTicketRequest.deserializeBinary = function(bytes) {
@@ -1309,7 +1315,7 @@ proto.smartcore.bos.serviceticket.v1.CreateTicketRequest.deserializeBinaryFromRe
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1465,7 +1471,7 @@ ticket: (f = msg.getTicket()) && proto.smartcore.bos.serviceticket.v1.Ticket.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.serviceticket.v1.UpdateTicketRequest}
  */
 proto.smartcore.bos.serviceticket.v1.UpdateTicketRequest.deserializeBinary = function(bytes) {
@@ -1490,7 +1496,7 @@ proto.smartcore.bos.serviceticket.v1.UpdateTicketRequest.deserializeBinaryFromRe
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     case 2:
@@ -1645,7 +1651,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.serviceticket.v1.DescribeTicketRequest}
  */
 proto.smartcore.bos.serviceticket.v1.DescribeTicketRequest.deserializeBinary = function(bytes) {
@@ -1670,7 +1676,7 @@ proto.smartcore.bos.serviceticket.v1.DescribeTicketRequest.deserializeBinaryFrom
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
     default:
@@ -1769,7 +1775,7 @@ proto.smartcore.bos.serviceticket.v1.TicketSupport.prototype.toObject = function
  */
 proto.smartcore.bos.serviceticket.v1.TicketSupport.toObject = function(includeInstance, msg) {
   var f, obj = {
-resourceSupport: (f = msg.getResourceSupport()) && types_info_pb.ResourceSupport.toObject(includeInstance, f),
+resourceSupport: (f = msg.getResourceSupport()) && smartcore_bos_types_v1_info_pb.ResourceSupport.toObject(includeInstance, f),
 classificationsList: jspb.Message.toObjectList(msg.getClassificationsList(),
     proto.smartcore.bos.serviceticket.v1.Ticket.Classification.toObject, includeInstance),
 severitiesList: jspb.Message.toObjectList(msg.getSeveritiesList(),
@@ -1788,7 +1794,7 @@ locationsList: jspb.Message.toObjectList(msg.getLocationsList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.serviceticket.v1.TicketSupport}
  */
 proto.smartcore.bos.serviceticket.v1.TicketSupport.deserializeBinary = function(bytes) {
@@ -1813,8 +1819,8 @@ proto.smartcore.bos.serviceticket.v1.TicketSupport.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new types_info_pb.ResourceSupport;
-      reader.readMessage(value,types_info_pb.ResourceSupport.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_v1_info_pb.ResourceSupport;
+      reader.readMessage(value,smartcore_bos_types_v1_info_pb.ResourceSupport.deserializeBinaryFromReader);
       msg.setResourceSupport(value);
       break;
     case 2:
@@ -1866,7 +1872,7 @@ proto.smartcore.bos.serviceticket.v1.TicketSupport.serializeBinaryToWriter = fun
     writer.writeMessage(
       1,
       f,
-      types_info_pb.ResourceSupport.serializeBinaryToWriter
+      smartcore_bos_types_v1_info_pb.ResourceSupport.serializeBinaryToWriter
     );
   }
   f = message.getClassificationsList();
@@ -1897,17 +1903,17 @@ proto.smartcore.bos.serviceticket.v1.TicketSupport.serializeBinaryToWriter = fun
 
 
 /**
- * optional smartcore.types.ResourceSupport resource_support = 1;
- * @return {?proto.smartcore.types.ResourceSupport}
+ * optional smartcore.bos.types.v1.ResourceSupport resource_support = 1;
+ * @return {?proto.smartcore.bos.types.v1.ResourceSupport}
  */
 proto.smartcore.bos.serviceticket.v1.TicketSupport.prototype.getResourceSupport = function() {
-  return /** @type{?proto.smartcore.types.ResourceSupport} */ (
-    jspb.Message.getWrapperField(this, types_info_pb.ResourceSupport, 1));
+  return /** @type{?proto.smartcore.bos.types.v1.ResourceSupport} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_v1_info_pb.ResourceSupport, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.types.ResourceSupport|undefined} value
+ * @param {?proto.smartcore.bos.types.v1.ResourceSupport|undefined} value
  * @return {!proto.smartcore.bos.serviceticket.v1.TicketSupport} returns this
 */
 proto.smartcore.bos.serviceticket.v1.TicketSupport.prototype.setResourceSupport = function(value) {

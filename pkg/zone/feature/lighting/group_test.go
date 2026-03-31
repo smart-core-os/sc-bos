@@ -9,15 +9,15 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
-	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
 )
 
 func TestGroup_PullBrightness(t *testing.T) {
-	r := lightpb.NewApiRouter()
-	client := lightpb.WrapApi(r)
+	r := lightpb2.NewApiRouter()
+	client := lightpb2.WrapApi(r)
 	group := &Group{
 		client: client,
 		names: []string{
@@ -28,20 +28,19 @@ func TestGroup_PullBrightness(t *testing.T) {
 	}
 
 	for _, name := range group.names {
-		r.Add(name, lightpb.WrapApi(lightpb.NewMemoryDevice()))
+		r.Add(name, lightpb2.WrapApi(lightpb2.NewMemoryDevice()))
 	}
 
 	type response struct {
-		R *traits.PullBrightnessResponse
+		R *lightpb.PullBrightnessResponse
 		E error
 	}
 	responses := make(chan response)
-	pullCtx, pullCancel := context.WithCancel(context.Background())
-	defer pullCancel()
+	pullCtx := t.Context()
 	go func() {
 		defer close(responses)
-		groupClient := lightpb.WrapApi(group)
-		stream, err := groupClient.PullBrightness(pullCtx, &traits.PullBrightnessRequest{
+		groupClient := lightpb2.WrapApi(group)
+		stream, err := groupClient.PullBrightness(pullCtx, &lightpb.PullBrightnessRequest{
 			Name: "anything will do", // we're using a direct client call, not routed
 		})
 		if err != nil {
@@ -80,7 +79,7 @@ func TestGroup_PullBrightness(t *testing.T) {
 	expectedAverage := func() float32 {
 		var total float32
 		for _, name := range group.names {
-			c, err := r.GetBrightness(context.Background(), &traits.GetBrightnessRequest{Name: name})
+			c, err := r.GetBrightness(context.Background(), &lightpb.GetBrightnessRequest{Name: name})
 			if err != nil {
 				t.Fatalf("get brightness %v: %v", name, err)
 			}
@@ -89,9 +88,9 @@ func TestGroup_PullBrightness(t *testing.T) {
 		return total / float32(len(group.names))
 	}
 	testUpdate := func(name string, level float32) {
-		_, err := r.UpdateBrightness(context.Background(), &traits.UpdateBrightnessRequest{
+		_, err := r.UpdateBrightness(context.Background(), &lightpb.UpdateBrightnessRequest{
 			Name: name,
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: level,
 			},
 		})
@@ -122,8 +121,8 @@ func TestGroup_PullBrightness(t *testing.T) {
 }
 
 func TestGroup_DescribeBrightness(t *testing.T) {
-	info := lightpb.NewInfoRouter()
-	infoClient := lightpb.WrapInfo(info)
+	info := lightpb2.NewInfoRouter()
+	infoClient := lightpb2.WrapInfo(info)
 	group := &Group{
 		info: infoClient,
 		names: []string{
@@ -133,25 +132,25 @@ func TestGroup_DescribeBrightness(t *testing.T) {
 	}
 
 	for _, name := range group.names {
-		modelServer := lightpb.NewModelServer(lightpb.NewModel(
-			lightpb.WithPreset(10, &traits.LightPreset{Name: "dim", Title: "Low Light"}),
-			lightpb.WithPreset(90, &traits.LightPreset{Name: "blind", Title: "High Light"}),
+		modelServer := lightpb2.NewModelServer(lightpb2.NewModel(
+			lightpb2.WithPreset(10, &lightpb.LightPreset{Name: "dim", Title: "Low Light"}),
+			lightpb2.WithPreset(90, &lightpb.LightPreset{Name: "blind", Title: "High Light"}),
 		))
-		info.Add(name, lightpb.WrapInfo(modelServer))
+		info.Add(name, lightpb2.WrapInfo(modelServer))
 	}
 
-	support, err := group.DescribeBrightness(context.Background(), &traits.DescribeBrightnessRequest{})
+	support, err := group.DescribeBrightness(context.Background(), &lightpb.DescribeBrightnessRequest{})
 	if err != nil {
 		t.Fatalf("describe brightness: %v", err)
 	}
-	want := &traits.BrightnessSupport{
-		ResourceSupport: &types.ResourceSupport{
+	want := &lightpb.BrightnessSupport{
+		ResourceSupport: &typespb.ResourceSupport{
 			Readable:    true,
 			Writable:    true,
 			Observable:  true,
-			PullSupport: types.PullSupport_PULL_SUPPORT_NATIVE,
+			PullSupport: typespb.PullSupport_PULL_SUPPORT_NATIVE,
 		},
-		Presets: []*traits.LightPreset{
+		Presets: []*lightpb.LightPreset{
 			{Name: "dim", Title: "Low Light"},
 			{Name: "blind", Title: "High Light"},
 		},

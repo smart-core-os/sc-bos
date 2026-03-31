@@ -47,7 +47,7 @@ type Root struct {
 
 	// The device that we read the automation mode from.
 	// See DefaultModeSource for the default values.
-	ModeSource SwitchMode `json:"modeSource,omitempty"`
+	ModeSource SwitchMode `json:"modeSource"`
 	// How long after ModeSource changes away from "auto" do we change it back to "auto".
 	// Defaults to 4h.
 	ResetModeSourceDelay *jsontypes.Duration `json:"resetModeSourceDelay,omitempty"`
@@ -78,8 +78,8 @@ type Root struct {
 }
 
 type Range struct {
-	Start jsontypes.Schedule `json:"start,omitempty"`
-	End   jsontypes.Schedule `json:"end,omitempty"`
+	Start jsontypes.Schedule `json:"start"`
+	End   jsontypes.Schedule `json:"end"`
 }
 
 var (

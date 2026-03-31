@@ -4,17 +4,17 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-func checkInURL(base string) string { return base + "/api/v1/check-in" }
+func checkInURL(base string) string { return base + "/v1/device/check-in" }
 
 // checkInEnv holds test fixtures for check-in tests.
 type checkInEnv struct {
@@ -23,6 +23,7 @@ type checkInEnv struct {
 	site          Site
 	node          Node
 	secret        []byte // raw secret returned from create node
+	accessToken   string // JWT access token obtained from /v1/device/token
 	configVersion ConfigVersion
 }
 
@@ -43,14 +44,17 @@ func setupCheckInEnv(t *testing.T) checkInEnv {
 	var created CreateNodeResponse
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "checkin-node",
-		"siteId":   site.ID,
+		"siteId":   sid(site.ID),
 	}, &created)
 	assertStatus(t, resp, http.StatusCreated)
+
+	// Obtain an access token via the token endpoint
+	accessToken := obtainAccessToken(t, client, ts.URL, created.ID, created.Secret)
 
 	// Create config version
 	var cv ConfigVersion
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":      created.ID,
+		"nodeId":      sid(created.ID),
 		"description": "v1.0.0",
 		"payload":     []byte("config-data"),
 	}, &cv)
@@ -62,12 +66,36 @@ func setupCheckInEnv(t *testing.T) checkInEnv {
 		site:          site,
 		node:          created.Node,
 		secret:        created.Secret,
+		accessToken:   accessToken,
 		configVersion: cv,
 	}
 }
 
-// doCheckIn performs a check-in request with the given bearer secret and optional request body.
-func doCheckIn(t *testing.T, client *http.Client, url string, secret []byte, reqBody any, res any) *http.Response {
+// obtainAccessToken exchanges client credentials for a JWT access token via the token endpoint.
+func obtainAccessToken(t *testing.T, client *http.Client, baseURL string, nodeID int64, secret []byte) string {
+	t.Helper()
+	encodedSecret := base64.StdEncoding.EncodeToString(secret)
+	resp, err := client.PostForm(baseURL+"/v1/device/token", url.Values{
+		"grant_type":    {"client_credentials"},
+		"client_id":     {sid(nodeID)},
+		"client_secret": {encodedSecret},
+	})
+	if err != nil {
+		t.Fatalf("token request failed: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("token endpoint returned %d", resp.StatusCode)
+	}
+	var tokenResp tokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		t.Fatalf("failed to decode token response: %v", err)
+	}
+	return tokenResp.AccessToken
+}
+
+// doCheckIn performs a check-in request with a JWT access token and optional request body.
+func doCheckIn(t *testing.T, client *http.Client, url string, accessToken string, reqBody any, res any) *http.Response {
 	t.Helper()
 	var body io.Reader
 	if reqBody != nil {
@@ -81,9 +109,8 @@ func doCheckIn(t *testing.T, client *http.Client, url string, secret []byte, req
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
-	if secret != nil {
-		token := base64.StdEncoding.EncodeToString(secret)
-		req.Header.Set("Authorization", "Bearer "+token)
+	if accessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+accessToken)
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
@@ -105,35 +132,25 @@ func TestCheckIn_NoDeployment(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	var got CheckInResponse
-	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret, nil, &got)
+	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken, nil, &got)
 	assertStatus(t, resp, http.StatusOK)
 
-	expect := CheckInResponse{
-		CheckIn: NodeCheckIn{
-			NodeID: e.node.ID,
-		},
-		LatestConfig: nil,
-	}
-	diff := cmp.Diff(expect, got,
-		cmpopts.IgnoreFields(NodeCheckIn{}, "ID", "CheckInTime"))
-	if diff != "" {
-		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	if got.CheckIn.NodeID != e.node.ID {
+		t.Errorf("expected nodeId %d, got %d", e.node.ID, got.CheckIn.NodeID)
 	}
 	if got.CheckIn.CheckInTime.IsZero() {
 		t.Error("expected non-zero check-in time")
 	}
+	if got.LatestConfig != nil {
+		t.Errorf("expected no latestConfig, got %+v", got.LatestConfig)
+	}
 
-	// verify check-in was recorded in the store
-	// List check-ins via management API
+	// verify check-in was recorded in the store via management API
 	var list ListResponse[NodeCheckIn]
 	resp = doRequest(t, e.client, "GET", listNodeCheckInsURL(e.testServer.URL, e.node.ID), nil, &list)
 	assertStatus(t, resp, http.StatusOK)
-
 	if len(list.Items) != 1 {
 		t.Fatalf("expected 1 check-in, got %d", len(list.Items))
-	}
-	if diff := cmp.Diff(got.CheckIn, list.Items[0]); diff != "" {
-		t.Errorf("check-in mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -143,14 +160,14 @@ func TestCheckIn_PendingDeployment(t *testing.T) {
 	// Create PENDING deployment
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
-		"status":          "PENDING",
+		"configVersionId": sid(e.configVersion.ID),
+		"status":          "pending",
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret, nil, &got)
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken, nil, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	if got.LatestConfig == nil {
@@ -170,18 +187,18 @@ func TestCheckIn_InProgressDeployment(t *testing.T) {
 	// Create deployment and set to IN_PROGRESS
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
-		"status": "IN_PROGRESS",
+		"status": "in_progress",
 	}, &dep)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Check in
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret, nil, &got)
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken, nil, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	if got.LatestConfig == nil {
@@ -198,21 +215,21 @@ func TestCheckIn_ReturnsNewestActive(t *testing.T) {
 	// Create dep1, then dep2 — creating dep2 auto-cancels dep1, leaving only dep2 active
 	var dep1 Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
-		"status":          "PENDING",
+		"configVersionId": sid(e.configVersion.ID),
+		"status":          "pending",
 	}, &dep1)
 	assertStatus(t, resp, http.StatusCreated)
 
 	var dep2 Deployment
 	resp = doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
-		"status":          "PENDING",
+		"configVersionId": sid(e.configVersion.ID),
+		"status":          "pending",
 	}, &dep2)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in — should return the one with higher ID
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret, nil, &got)
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken, nil, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	if got.LatestConfig == nil {
@@ -229,28 +246,28 @@ func TestCheckIn_CompletedAndFailedExcluded(t *testing.T) {
 	// Create COMPLETED deployment
 	var dep1 Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep1)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep1.ID), map[string]any{
-		"status": "COMPLETED",
+		"status": "completed",
 	}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Create FAILED deployment
 	var dep2 Deployment
 	resp = doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep2)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep2.ID), map[string]any{
-		"status": "FAILED",
+		"status": "failed",
 	}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Check in — should have no active deployment
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret, nil, &got)
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken, nil, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	if got.LatestConfig != nil {
@@ -261,17 +278,25 @@ func TestCheckIn_CompletedAndFailedExcluded(t *testing.T) {
 func TestCheckIn_MissingAuthHeader(t *testing.T) {
 	e := setupCheckInEnv(t)
 
-	// POST with no Authorization head
-	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), nil, nil, nil)
+	// POST with no Authorization header — empty access token
+	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), "", nil, nil)
 	assertStatus(t, resp, http.StatusUnauthorized)
 }
 
 func TestCheckIn_InvalidBearerToken(t *testing.T) {
 	e := setupCheckInEnv(t)
 
-	// Use a wrong secret
-	wrongSecret := bytes.Repeat([]byte{0xFF}, 32)
-	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), wrongSecret, nil, nil)
+	// Issue a valid-looking JWT signed with a different key
+	otherIssuer, err := newTokenIssuer()
+	if err != nil {
+		t.Fatalf("newTokenIssuer: %v", err)
+	}
+	token, _, err := otherIssuer.issue(e.node.ID)
+	if err != nil {
+		t.Fatalf("issue: %v", err)
+	}
+
+	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), token, nil, nil)
 	assertStatus(t, resp, http.StatusUnauthorized)
 }
 
@@ -282,7 +307,7 @@ func TestCheckIn_MalformedBase64(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", "!!!not-base64!!!"))
+	req.Header.Set("Authorization", "Bearer !!!not-a-valid-token!!!")
 	resp, err := e.client.Do(req)
 	if err != nil {
 		t.Fatalf("request failed: %v", err)
@@ -297,32 +322,30 @@ func TestCheckIn_WithCurrentDeployment(t *testing.T) {
 	// Create and advance a deployment to COMPLETED
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
-		"status": "COMPLETED",
+		"status": "completed",
 	}, &dep)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Check in with currentDeployment
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
 		CheckInRequest{CurrentDeployment: &CheckInDeploymentRef{ID: dep.ID}}, &got)
 	assertStatus(t, resp, http.StatusOK)
 
-	if got.CheckIn.CurrentDeploymentID == nil || *got.CheckIn.CurrentDeploymentID != dep.ID {
-		t.Errorf("expected currentDeploymentId %d, got %v", dep.ID, got.CheckIn.CurrentDeploymentID)
-	}
-
-	// Verify field persisted via management GET
-	var stored NodeCheckIn
-	resp = doRequest(t, e.client, "GET",
-		fmt.Sprintf("%s/%d", listNodeCheckInsURL(e.testServer.URL, e.node.ID), got.CheckIn.ID),
-		nil, &stored)
+	// Verify the check-in was recorded with the currentDeploymentId via management API
+	var list ListResponse[NodeCheckIn]
+	resp = doRequest(t, e.client, "GET", listNodeCheckInsURL(e.testServer.URL, e.node.ID), nil, &list)
 	assertStatus(t, resp, http.StatusOK)
-	if stored.CurrentDeploymentID == nil || *stored.CurrentDeploymentID != dep.ID {
-		t.Errorf("stored currentDeploymentId: expected %d, got %v", dep.ID, stored.CurrentDeploymentID)
+	if len(list.Items) == 0 {
+		t.Fatal("expected at least 1 check-in")
+	}
+	latest := list.Items[len(list.Items)-1]
+	if latest.CurrentDeploymentID == nil || *latest.CurrentDeploymentID != dep.ID {
+		t.Errorf("stored currentDeploymentId: expected %d, got %v", dep.ID, latest.CurrentDeploymentID)
 	}
 }
 
@@ -332,18 +355,26 @@ func TestCheckIn_WithInstallingDeployment(t *testing.T) {
 	// Create a PENDING deployment
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in with installingDeployment
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
 		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, &got)
 	assertStatus(t, resp, http.StatusOK)
 
-	if got.CheckIn.InstallingDeploymentID == nil || *got.CheckIn.InstallingDeploymentID != dep.ID {
-		t.Errorf("expected installingDeploymentId %d, got %v", dep.ID, got.CheckIn.InstallingDeploymentID)
+	// Verify the check-in was recorded with the installingDeploymentId via management API
+	var list ListResponse[NodeCheckIn]
+	resp = doRequest(t, e.client, "GET", listNodeCheckInsURL(e.testServer.URL, e.node.ID), nil, &list)
+	assertStatus(t, resp, http.StatusOK)
+	if len(list.Items) == 0 {
+		t.Fatal("expected at least 1 check-in")
+	}
+	latest := list.Items[len(list.Items)-1]
+	if latest.InstallingDeploymentID == nil || *latest.InstallingDeploymentID != dep.ID {
+		t.Errorf("stored installingDeploymentId: expected %d, got %v", dep.ID, latest.InstallingDeploymentID)
 	}
 }
 
@@ -353,17 +384,17 @@ func TestCheckIn_WithFailedDeployment(t *testing.T) {
 	// Create deployment and advance to IN_PROGRESS
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
-		"status": "IN_PROGRESS",
+		"status": "in_progress",
 	}, &dep)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Check in with failedDeployment
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
 		CheckInRequest{FailedDeployment: &CheckInFailedDeployment{ID: dep.ID, Reason: "disk full"}}, &got)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -371,7 +402,7 @@ func TestCheckIn_WithFailedDeployment(t *testing.T) {
 	var updated Deployment
 	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
 	assertStatus(t, resp, http.StatusOK)
-	if updated.Status != "FAILED" {
+	if updated.Status != "failed" {
 		t.Errorf("expected deployment status FAILED, got %s", updated.Status)
 	}
 	if updated.Reason != "disk full" {
@@ -391,13 +422,13 @@ func TestCheckIn_FailedDeploymentWrongNode(t *testing.T) {
 	var created2 CreateNodeResponse
 	resp = doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
 		"hostname": "other-node",
-		"siteId":   site2.ID,
+		"siteId":   sid(site2.ID),
 	}, &created2)
 	assertStatus(t, resp, http.StatusCreated)
 
 	var cv2 ConfigVersion
 	resp = doRequest(t, e.client, "POST", listConfigVersionsURL(e.testServer.URL), map[string]any{
-		"nodeId":      created2.ID,
+		"nodeId":      sid(created2.ID),
 		"description": "v1",
 		"payload":     []byte("data"),
 	}, &cv2)
@@ -405,12 +436,12 @@ func TestCheckIn_FailedDeploymentWrongNode(t *testing.T) {
 
 	var dep2 Deployment
 	resp = doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": cv2.ID,
+		"configVersionId": sid(cv2.ID),
 	}, &dep2)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in as first node with failedDeployment pointing to second node's deployment
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
 		CheckInRequest{FailedDeployment: &CheckInFailedDeployment{ID: dep2.ID, Reason: "bad"}}, nil)
 	assertStatus(t, resp, http.StatusBadRequest)
 }
@@ -418,7 +449,7 @@ func TestCheckIn_FailedDeploymentWrongNode(t *testing.T) {
 func TestCheckIn_FailedDeploymentNotFound(t *testing.T) {
 	e := setupCheckInEnv(t)
 
-	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
 		CheckInRequest{FailedDeployment: &CheckInFailedDeployment{ID: 99999}}, nil)
 	assertStatus(t, resp, http.StatusBadRequest)
 }
@@ -429,12 +460,12 @@ func TestCheckIn_InstallingAdvancesPendingToInProgress(t *testing.T) {
 	// Create PENDING deployment
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in with installingDeployment
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
 		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -442,7 +473,7 @@ func TestCheckIn_InstallingAdvancesPendingToInProgress(t *testing.T) {
 	var updated Deployment
 	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
 	assertStatus(t, resp, http.StatusOK)
-	if updated.Status != "IN_PROGRESS" {
+	if updated.Status != "in_progress" {
 		t.Errorf("expected deployment status IN_PROGRESS, got %s", updated.Status)
 	}
 }
@@ -453,16 +484,16 @@ func TestCheckIn_InstallingDoesNotAdvanceNonPending(t *testing.T) {
 	// Create deployment and advance to FAILED
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
-		"status": "FAILED",
+		"status": "failed",
 	}, &dep)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Check in with installingDeployment
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
 		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -470,7 +501,7 @@ func TestCheckIn_InstallingDoesNotAdvanceNonPending(t *testing.T) {
 	var updated Deployment
 	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
 	assertStatus(t, resp, http.StatusOK)
-	if updated.Status != "FAILED" {
+	if updated.Status != "failed" {
 		t.Errorf("expected deployment status FAILED, got %s", updated.Status)
 	}
 }
@@ -481,16 +512,16 @@ func TestCheckIn_CurrentAdvancesInProgressToCompleted(t *testing.T) {
 	// Create deployment and advance to IN_PROGRESS
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
-		"status": "IN_PROGRESS",
+		"status": "in_progress",
 	}, &dep)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Check in with currentDeployment
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
 		CheckInRequest{CurrentDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -498,7 +529,7 @@ func TestCheckIn_CurrentAdvancesInProgressToCompleted(t *testing.T) {
 	var updated Deployment
 	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
 	assertStatus(t, resp, http.StatusOK)
-	if updated.Status != "COMPLETED" {
+	if updated.Status != "completed" {
 		t.Errorf("expected deployment status COMPLETED, got %s", updated.Status)
 	}
 }
@@ -509,12 +540,12 @@ func TestCheckIn_CurrentDoesNotAdvanceNonInProgress(t *testing.T) {
 	// Create PENDING deployment (do not advance)
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in with currentDeployment
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
 		CheckInRequest{CurrentDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -522,7 +553,7 @@ func TestCheckIn_CurrentDoesNotAdvanceNonInProgress(t *testing.T) {
 	var updated Deployment
 	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
 	assertStatus(t, resp, http.StatusOK)
-	if updated.Status != "PENDING" {
+	if updated.Status != "pending" {
 		t.Errorf("expected deployment status PENDING, got %s", updated.Status)
 	}
 }
@@ -533,19 +564,28 @@ func TestCheckIn_InstallingWithErrorAndAttempts(t *testing.T) {
 	// Create a PENDING deployment
 	var dep Deployment
 	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-		"configVersionId": e.configVersion.ID,
+		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in with installingDeployment including error and attempts
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.secret,
+	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
 		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{
 			ID:       dep.ID,
 			Error:    "transient: timeout",
 			Attempts: 3,
 		}}, &got)
 	assertStatus(t, resp, http.StatusOK)
+
+	// The check-in response only contains an ack — verify the details were stored via management API
+	var list ListResponse[NodeCheckIn]
+	resp = doRequest(t, e.client, "GET", listNodeCheckInsURL(e.testServer.URL, e.node.ID), nil, &list)
+	assertStatus(t, resp, http.StatusOK)
+	if len(list.Items) == 0 {
+		t.Fatal("expected at least 1 check-in")
+	}
+	stored := list.Items[len(list.Items)-1]
 
 	attempts := int64(3)
 	wantCheckIn := NodeCheckIn{
@@ -554,16 +594,6 @@ func TestCheckIn_InstallingWithErrorAndAttempts(t *testing.T) {
 		InstallingDeploymentError:    "transient: timeout",
 		InstallingDeploymentAttempts: &attempts,
 	}
-	if diff := cmp.Diff(wantCheckIn, got.CheckIn, cmpopts.IgnoreFields(NodeCheckIn{}, "ID", "CheckInTime")); diff != "" {
-		t.Errorf("check-in mismatch (-want +got):\n%s", diff)
-	}
-
-	// Verify the stored check-in has the fields set via management GET
-	var stored NodeCheckIn
-	resp = doRequest(t, e.client, "GET",
-		fmt.Sprintf("%s/%d", listNodeCheckInsURL(e.testServer.URL, e.node.ID), got.CheckIn.ID),
-		nil, &stored)
-	assertStatus(t, resp, http.StatusOK)
 	if diff := cmp.Diff(wantCheckIn, stored, cmpopts.IgnoreFields(NodeCheckIn{}, "ID", "CheckInTime")); diff != "" {
 		t.Errorf("stored check-in mismatch (-want +got):\n%s", diff)
 	}

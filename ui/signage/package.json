@@ -14,7 +14,6 @@
     "lint:nofix": "eslint ."
   },
   "dependencies": {
-    "@smart-core-os/sc-api-grpc-web": "^1.0.0-beta.60",
     "@smart-core-os/sc-bos-ui-gen": "^1.0.0-beta.25",
     "change-case": "^5.4.4",
     "date-fns": "^2.29.2",

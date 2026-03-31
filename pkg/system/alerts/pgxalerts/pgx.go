@@ -17,11 +17,11 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 )
 
 //go:embed schema.sql
@@ -704,16 +704,16 @@ func convertChangeForQuery(q *alertpb.Alert_Query, change *alertpb.PullAlertsRes
 	}
 	if res.NewValue == nil {
 		// delete
-		res.Type = types.ChangeType_REMOVE
+		res.Type = typespb.ChangeType_REMOVE
 		return res
 	}
 	if res.OldValue == nil {
 		// create
-		res.Type = types.ChangeType_ADD
+		res.Type = typespb.ChangeType_ADD
 		return res
 	}
 	// else update
-	res.Type = types.ChangeType_UPDATE
+	res.Type = typespb.ChangeType_UPDATE
 	return res
 }
 

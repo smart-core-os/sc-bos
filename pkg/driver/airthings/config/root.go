@@ -8,10 +8,10 @@ import (
 
 	"golang.org/x/oauth2/clientcredentials"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/block"
 	"github.com/smart-core-os/sc-bos/pkg/block/mdblock"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -27,7 +27,7 @@ var (
 
 type Root struct {
 	driver.BaseConfig
-	Auth    Auth   `json:"auth,omitempty"`
+	Auth    Auth   `json:"auth"`
 	BaseURL string `json:"baseUrl,omitempty"` // default: "https://ext-api.airthings.com"
 
 	Locations []Location `json:"locations,omitempty"`
@@ -45,9 +45,9 @@ type Location struct {
 }
 
 type Device struct {
-	ID       string           `json:"id,omitempty"`       // AirThings segment ID
-	Name     string           `json:"name,omitempty"`     // Smart Core name
-	Metadata *traits.Metadata `json:"metadata,omitempty"` // Announced metadata for this SC device
+	ID       string               `json:"id,omitempty"`       // AirThings segment ID
+	Name     string               `json:"name,omitempty"`     // Smart Core name
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"` // Announced metadata for this SC device
 	// Traits lists the trait names to announce for this device.
 	// Status is always announced.
 	// See traits.go for supported trait names.

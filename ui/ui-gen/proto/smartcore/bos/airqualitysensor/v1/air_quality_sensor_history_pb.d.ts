@@ -2,13 +2,13 @@ import * as jspb from 'google-protobuf'
 
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
-import * as traits_air_quality_sensor_pb from '@smart-core-os/sc-api-grpc-web/traits/air_quality_sensor_pb'; // proto import: "traits/air_quality_sensor.proto"
-import * as types_time_period_pb from '@smart-core-os/sc-api-grpc-web/types/time/period_pb'; // proto import: "types/time/period.proto"
+import * as smartcore_bos_airqualitysensor_v1_air_quality_sensor_pb from '../../../../smartcore/bos/airqualitysensor/v1/air_quality_sensor_pb'; // proto import: "smartcore/bos/airqualitysensor/v1/air_quality_sensor.proto"
+import * as smartcore_bos_types_time_v1_period_pb from '../../../../smartcore/bos/types/time/v1/period_pb'; // proto import: "smartcore/bos/types/time/v1/period.proto"
 
 
 export class AirQualityRecord extends jspb.Message {
-  getAirQuality(): traits_air_quality_sensor_pb.AirQuality | undefined;
-  setAirQuality(value?: traits_air_quality_sensor_pb.AirQuality): AirQualityRecord;
+  getAirQuality(): smartcore_bos_airqualitysensor_v1_air_quality_sensor_pb.AirQuality | undefined;
+  setAirQuality(value?: smartcore_bos_airqualitysensor_v1_air_quality_sensor_pb.AirQuality): AirQualityRecord;
   hasAirQuality(): boolean;
   clearAirQuality(): AirQualityRecord;
 
@@ -27,7 +27,7 @@ export class AirQualityRecord extends jspb.Message {
 
 export namespace AirQualityRecord {
   export type AsObject = {
-    airQuality?: traits_air_quality_sensor_pb.AirQuality.AsObject;
+    airQuality?: smartcore_bos_airqualitysensor_v1_air_quality_sensor_pb.AirQuality.AsObject;
     recordTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
   };
 }
@@ -36,8 +36,8 @@ export class ListAirQualityHistoryRequest extends jspb.Message {
   getName(): string;
   setName(value: string): ListAirQualityHistoryRequest;
 
-  getPeriod(): types_time_period_pb.Period | undefined;
-  setPeriod(value?: types_time_period_pb.Period): ListAirQualityHistoryRequest;
+  getPeriod(): smartcore_bos_types_time_v1_period_pb.Period | undefined;
+  setPeriod(value?: smartcore_bos_types_time_v1_period_pb.Period): ListAirQualityHistoryRequest;
   hasPeriod(): boolean;
   clearPeriod(): ListAirQualityHistoryRequest;
 
@@ -66,7 +66,7 @@ export class ListAirQualityHistoryRequest extends jspb.Message {
 export namespace ListAirQualityHistoryRequest {
   export type AsObject = {
     name: string;
-    period?: types_time_period_pb.Period.AsObject;
+    period?: smartcore_bos_types_time_v1_period_pb.Period.AsObject;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
     pageSize: number;
     pageToken: string;

@@ -32,7 +32,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/system/hub/pgxhub"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func Factory() system.Factory {

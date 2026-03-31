@@ -2,18 +2,18 @@ import {closeResource, newResourceValue} from '@/api/resource';
 import {pullEnterLeaveEvents} from '@/api/sc/traits/enter-leave';
 import {SECOND} from '@/components/now.js';
 import {toQueryObject, watchResource} from '@/util/traits';
-import {EnterLeaveEvent} from '@smart-core-os/sc-api-grpc-web/traits/enter_leave_sensor_pb';
+import {EnterLeaveEvent} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor_pb';
 import {computed, onScopeDispose, reactive, ref, toRefs, toValue, watch} from 'vue';
 
 /**
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/enter_leave_sensor_pb').PullEnterLeaveEventsRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor_pb').PullEnterLeaveEventsRequest
  * } PullEnterLeaveEventsRequest
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/enter_leave_sensor_pb').PullEnterLeaveEventsResponse
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor_pb').PullEnterLeaveEventsResponse
  * } PullEnterLeaveEventsResponse
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/enter_leave_sensor_pb').EnterLeaveEvent
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor_pb').EnterLeaveEvent
  * } EnterLeaveEvent
  * @typedef {import('vue').ComputedRef} ComputedRef
  * @typedef {import('@/api/resource').ResourceError} ResourceError
@@ -64,7 +64,7 @@ export function usePullEnterLeaveEvents(query, paused = false) {
 export function useEnterLeaveEvent(value, {showChangeDuration = 30 * SECOND} = {}) {
   const _v = computed(() => toValue(value));
 
-  const hasTotals = computed(() => _v.value?.enterTotal !== undefined || _v.value?.leaveTotal !== undefined);
+  const hasTotals = computed(() => _v.value !== undefined && _v.value !== null);
   const enterTotal = computed(() => _v.value?.enterTotal || 0);
   const leaveTotal = computed(() => _v.value?.leaveTotal || 0);
 

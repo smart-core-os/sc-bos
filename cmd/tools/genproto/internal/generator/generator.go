@@ -23,21 +23,21 @@ type Context struct {
 }
 
 // Info prints progress information (shown by default).
-func (c *Context) Info(format string, args ...interface{}) {
+func (c *Context) Info(format string, args ...any) {
 	if c.LogLevel >= LogLevelInfo {
 		fmt.Printf(format+"\n", args...)
 	}
 }
 
 // Verbose prints detailed information (shown with -v).
-func (c *Context) Verbose(format string, args ...interface{}) {
+func (c *Context) Verbose(format string, args ...any) {
 	if c.LogLevel >= LogLevelVerbose {
 		fmt.Printf(format+"\n", args...)
 	}
 }
 
 // Debug prints debug information (shown with -vv).
-func (c *Context) Debug(format string, args ...interface{}) {
+func (c *Context) Debug(format string, args ...any) {
 	if c.LogLevel >= LogLevelDebug {
 		fmt.Printf(format+"\n", args...)
 	}

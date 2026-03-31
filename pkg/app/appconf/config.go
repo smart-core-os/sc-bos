@@ -8,21 +8,21 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/app/files"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/pkg/util/slices"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
 type Config struct {
-	Name     string           `json:"name,omitempty"`
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Name     string               `json:"name,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 	// Includes lists other files and glob patterns for config to load.
 	// Files are read in the order specified here then by filepath.Glob.
 	// Drivers, Automation, and Zones are merged using the Name in a first-come, first-served nature.
@@ -76,7 +76,7 @@ func (c *Config) mergeWith(other *Config) {
 	if err != nil {
 		return
 	}
-	if !slices.Contains(relInc, c.Includes) {
+	if !slices.Contains(c.Includes, relInc) {
 		c.Includes = append(c.Includes, relInc)
 	}
 }
@@ -108,7 +108,7 @@ func (c *Config) zoneNamesMap() map[string]bool {
 func (c *Config) clone() Config {
 	return Config{
 		Name:       c.Name,
-		Metadata:   proto.Clone(c.Metadata).(*traits.Metadata),
+		Metadata:   proto.Clone(c.Metadata).(*metadatapb.Metadata),
 		Includes:   append([]string(nil), c.Includes...),
 		Drivers:    append([]driver.RawConfig(nil), c.Drivers...),
 		Automation: append([]auto.RawConfig(nil), c.Automation...),
@@ -156,7 +156,7 @@ func loadIncludes(dir string, dst *Config, includes, seen []string) ([]string, e
 	// load first layer of includes
 	for _, include := range includes {
 		p := files.Path(dir, include)
-		if slices.Contains(p, seen) {
+		if slices.Contains(seen, p) {
 			continue
 		}
 		matches, err := filepath.Glob(p)
@@ -193,7 +193,7 @@ func loadIncludesFS(fsys fs.FS, dir string, dst *Config, includes, seen []string
 	var configs []*Config
 	for _, include := range includes {
 		p := path.Join(dir, include)
-		if slices.Contains(p, seen) {
+		if slices.Contains(seen, p) {
 			continue
 		}
 		matches, err := fs.Glob(fsys, p)

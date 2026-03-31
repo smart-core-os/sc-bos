@@ -6,44 +6,44 @@ package test
 
 import (
 	"github.com/smart-core-os/sc-bos/pkg/gen"
-	"github.com/smart-core-os/sc-golang/pkg/trait/accesspb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/bookingpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/brightnesssensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/channelpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/colorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/countpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/electricpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/emergencypb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/energystoragepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/enterleavesensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/extendretractpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/fanspeedpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/hailpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/inputselectpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/lockunlockpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/metadatapb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/meterpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/microphonepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/modepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/motionsensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/openclosepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/parentpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/presspb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/ptzpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/publicationpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/speakerpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/temperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/vendingpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/wastepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/bookingpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/channelpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/colorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/countpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencypb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/extendretractpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hailpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/inputselectpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lockunlockpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/microphonepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/motionsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/parentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/presspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/ptzpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/speakerpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/vendingpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/wastepb"
 )
 
 func wrapAllTraits() {
-	// sc-golang traits
+	// sc-bos trait packages
 	accessClient := accesspb.WrapApi(nil)
 	_ = accessClient
 	aqClient := airqualitysensorpb.WrapApi(nil)
@@ -205,96 +205,129 @@ func wrapAllTraits() {
 package test
 
 import (
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/gen"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/proto/bookingpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/channelpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/colorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/countpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencypb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/extendretractpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hailpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/inputselectpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lockunlockpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/microphonepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/motionsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/parentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/presspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/ptzpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/speakerpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/vendingpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait/wastepb"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func wrapAllTraits() {
-	// sc-golang traits
-	accessClient := traits.NewAccessApiClient(wrap.ServerToClient(traits.AccessApi_ServiceDesc, nil))
+	// sc-bos trait packages
+	accessClient := accesspb.NewAccessApiClient(wrap.ServerToClient(accesspb.AccessApi_ServiceDesc, nil))
 	_ = accessClient
-	aqClient := traits.NewAirQualitySensorApiClient(wrap.ServerToClient(traits.AirQualitySensorApi_ServiceDesc, nil))
-	aqInfo := traits.NewAirQualitySensorInfoClient(wrap.ServerToClient(traits.AirQualitySensorInfo_ServiceDesc, nil))
+	aqClient := airqualitysensorpb.NewAirQualitySensorApiClient(wrap.ServerToClient(airqualitysensorpb.AirQualitySensorApi_ServiceDesc, nil))
+	aqInfo := airqualitysensorpb.NewAirQualitySensorInfoClient(wrap.ServerToClient(airqualitysensorpb.AirQualitySensorInfo_ServiceDesc, nil))
 	aqHistory := gen.NewAirQualitySensorHistoryClient(wrap.ServerToClient(gen.AirQualitySensorHistory_ServiceDesc, nil))
 	_, _, _ = aqClient, aqInfo, aqHistory
-	tempClient := traits.NewAirTemperatureApiClient(wrap.ServerToClient(traits.AirTemperatureApi_ServiceDesc, nil))
-	tempInfo := traits.NewAirTemperatureInfoClient(wrap.ServerToClient(traits.AirTemperatureInfo_ServiceDesc, nil))
+	tempClient := airtemperaturepb.NewAirTemperatureApiClient(wrap.ServerToClient(airtemperaturepb.AirTemperatureApi_ServiceDesc, nil))
+	tempInfo := airtemperaturepb.NewAirTemperatureInfoClient(wrap.ServerToClient(airtemperaturepb.AirTemperatureInfo_ServiceDesc, nil))
 	tempHistory := gen.NewAirTemperatureHistoryClient(wrap.ServerToClient(gen.AirTemperatureHistory_ServiceDesc, nil))
 	_, _, _ = tempClient, tempInfo, tempHistory
-	bookingClient := traits.NewBookingApiClient(wrap.ServerToClient(traits.BookingApi_ServiceDesc, nil))
+	bookingClient := bookingpb.NewBookingApiClient(wrap.ServerToClient(bookingpb.BookingApi_ServiceDesc, nil))
 	_ = bookingClient
-	brightnessSensorClient := traits.NewBrightnessSensorApiClient(wrap.ServerToClient(traits.BrightnessSensorApi_ServiceDesc, nil))
-	brightnessSensorInfo := traits.NewBrightnessSensorInfoClient(wrap.ServerToClient(traits.BrightnessSensorInfo_ServiceDesc, nil))
+	brightnessSensorClient := brightnesssensorpb.NewBrightnessSensorApiClient(wrap.ServerToClient(brightnesssensorpb.BrightnessSensorApi_ServiceDesc, nil))
+	brightnessSensorInfo := brightnesssensorpb.NewBrightnessSensorInfoClient(wrap.ServerToClient(brightnesssensorpb.BrightnessSensorInfo_ServiceDesc, nil))
 	_, _ = brightnessSensorClient, brightnessSensorInfo
-	channelClient := traits.NewChannelApiClient(wrap.ServerToClient(traits.ChannelApi_ServiceDesc, nil))
+	channelClient := channelpb.NewChannelApiClient(wrap.ServerToClient(channelpb.ChannelApi_ServiceDesc, nil))
 	_ = channelClient
-	colorClient := traits.NewColorApiClient(wrap.ServerToClient(traits.ColorApi_ServiceDesc, nil))
+	colorClient := colorpb.NewColorApiClient(wrap.ServerToClient(colorpb.ColorApi_ServiceDesc, nil))
 	_ = colorClient
-	countClient := traits.NewCountApiClient(wrap.ServerToClient(traits.CountApi_ServiceDesc, nil))
-	countInfo := traits.NewCountInfoClient(wrap.ServerToClient(traits.CountInfo_ServiceDesc, nil))
+	countClient := countpb.NewCountApiClient(wrap.ServerToClient(countpb.CountApi_ServiceDesc, nil))
+	countInfo := countpb.NewCountInfoClient(wrap.ServerToClient(countpb.CountInfo_ServiceDesc, nil))
 	_, _ = countClient, countInfo
-	electricClient := traits.NewElectricApiClient(wrap.ServerToClient(traits.ElectricApi_ServiceDesc, nil))
-	electricInfo := traits.NewElectricInfoClient(wrap.ServerToClient(traits.ElectricInfo_ServiceDesc, nil))
+	electricClient := electricpb.NewElectricApiClient(wrap.ServerToClient(electricpb.ElectricApi_ServiceDesc, nil))
+	electricInfo := electricpb.NewElectricInfoClient(wrap.ServerToClient(electricpb.ElectricInfo_ServiceDesc, nil))
 	electricHistory := gen.NewElectricHistoryClient(wrap.ServerToClient(gen.ElectricHistory_ServiceDesc, nil))
 	_, _, _ = electricClient, electricInfo, electricHistory
-	emergencyClient := traits.NewEmergencyApiClient(wrap.ServerToClient(traits.EmergencyApi_ServiceDesc, nil))
+	emergencyClient := emergencypb.NewEmergencyApiClient(wrap.ServerToClient(emergencypb.EmergencyApi_ServiceDesc, nil))
 	_ = emergencyClient
-	energyStorageClient := traits.NewEnergyStorageApiClient(wrap.ServerToClient(traits.EnergyStorageApi_ServiceDesc, nil))
+	energyStorageClient := energystoragepb.NewEnergyStorageApiClient(wrap.ServerToClient(energystoragepb.EnergyStorageApi_ServiceDesc, nil))
 	_ = energyStorageClient
-	enterLeaveClient := traits.NewEnterLeaveSensorApiClient(wrap.ServerToClient(traits.EnterLeaveSensorApi_ServiceDesc, nil))
-	enterLeaveInfo := traits.NewEnterLeaveSensorInfoClient(wrap.ServerToClient(traits.EnterLeaveSensorInfo_ServiceDesc, nil))
+	enterLeaveClient := enterleavesensorpb.NewEnterLeaveSensorApiClient(wrap.ServerToClient(enterleavesensorpb.EnterLeaveSensorApi_ServiceDesc, nil))
+	enterLeaveInfo := enterleavesensorpb.NewEnterLeaveSensorInfoClient(wrap.ServerToClient(enterleavesensorpb.EnterLeaveSensorInfo_ServiceDesc, nil))
 	enterLeaveHistory := gen.NewEnterLeaveHistoryClient(wrap.ServerToClient(gen.EnterLeaveHistory_ServiceDesc, nil))
 	_, _, _ = enterLeaveClient, enterLeaveInfo, enterLeaveHistory
-	extendClient := traits.NewExtendRetractApiClient(wrap.ServerToClient(traits.ExtendRetractApi_ServiceDesc, nil))
+	extendClient := extendretractpb.NewExtendRetractApiClient(wrap.ServerToClient(extendretractpb.ExtendRetractApi_ServiceDesc, nil))
 	_ = extendClient
-	fanClient := traits.NewFanSpeedApiClient(wrap.ServerToClient(traits.FanSpeedApi_ServiceDesc, nil))
+	fanClient := fanspeedpb.NewFanSpeedApiClient(wrap.ServerToClient(fanspeedpb.FanSpeedApi_ServiceDesc, nil))
 	_ = fanClient
-	hailClient := traits.NewHailApiClient(wrap.ServerToClient(traits.HailApi_ServiceDesc, nil))
+	hailClient := hailpb.NewHailApiClient(wrap.ServerToClient(hailpb.HailApi_ServiceDesc, nil))
 	_ = hailClient
-	inputSelectClient := traits.NewInputSelectApiClient(wrap.ServerToClient(traits.InputSelectApi_ServiceDesc, nil))
+	inputSelectClient := inputselectpb.NewInputSelectApiClient(wrap.ServerToClient(inputselectpb.InputSelectApi_ServiceDesc, nil))
 	_ = inputSelectClient
-	lightClient := traits.NewLightApiClient(wrap.ServerToClient(traits.LightApi_ServiceDesc, nil))
-	lightInfo := traits.NewLightInfoClient(wrap.ServerToClient(traits.LightInfo_ServiceDesc, nil))
+	lightClient := lightpb.NewLightApiClient(wrap.ServerToClient(lightpb.LightApi_ServiceDesc, nil))
+	lightInfo := lightpb.NewLightInfoClient(wrap.ServerToClient(lightpb.LightInfo_ServiceDesc, nil))
 	_, _ = lightClient, lightInfo
-	lockUnlockClient := traits.NewLockUnlockApiClient(wrap.ServerToClient(traits.LockUnlockApi_ServiceDesc, nil))
+	lockUnlockClient := lockunlockpb.NewLockUnlockApiClient(wrap.ServerToClient(lockunlockpb.LockUnlockApi_ServiceDesc, nil))
 	_ = lockUnlockClient
-	metadataClient := traits.NewMetadataApiClient(wrap.ServerToClient(traits.MetadataApi_ServiceDesc, nil))
+	metadataClient := metadatapb.NewMetadataApiClient(wrap.ServerToClient(metadatapb.MetadataApi_ServiceDesc, nil))
 	_ = metadataClient
-	meterPbClient := traits.NewMeterApiClient(wrap.ServerToClient(traits.MeterApi_ServiceDesc, nil))
-	meterPbInfo := traits.NewMeterInfoClient(wrap.ServerToClient(traits.MeterInfo_ServiceDesc, nil))
+	meterPbClient := meterpb.NewMeterApiClient(wrap.ServerToClient(meterpb.MeterApi_ServiceDesc, nil))
+	meterPbInfo := meterpb.NewMeterInfoClient(wrap.ServerToClient(meterpb.MeterInfo_ServiceDesc, nil))
 	_, _ = meterPbClient, meterPbInfo
-	microphoneClient := traits.NewMicrophoneApiClient(wrap.ServerToClient(traits.MicrophoneApi_ServiceDesc, nil))
+	microphoneClient := microphonepb.NewMicrophoneApiClient(wrap.ServerToClient(microphonepb.MicrophoneApi_ServiceDesc, nil))
 	_ = microphoneClient
-	modeClient := traits.NewModeApiClient(wrap.ServerToClient(traits.ModeApi_ServiceDesc, nil))
-	modeInfo := traits.NewModeInfoClient(wrap.ServerToClient(traits.ModeInfo_ServiceDesc, nil))
+	modeClient := modepb.NewModeApiClient(wrap.ServerToClient(modepb.ModeApi_ServiceDesc, nil))
+	modeInfo := modepb.NewModeInfoClient(wrap.ServerToClient(modepb.ModeInfo_ServiceDesc, nil))
 	_, _ = modeClient, modeInfo
-	motionSensorClient := traits.NewMotionSensorApiClient(wrap.ServerToClient(traits.MotionSensorApi_ServiceDesc, nil))
+	motionSensorClient := motionsensorpb.NewMotionSensorApiClient(wrap.ServerToClient(motionsensorpb.MotionSensorApi_ServiceDesc, nil))
 	_ = motionSensorClient
-	occupancyClient := traits.NewOccupancySensorApiClient(wrap.ServerToClient(traits.OccupancySensorApi_ServiceDesc, nil))
-	occupancyInfo := traits.NewOccupancySensorInfoClient(wrap.ServerToClient(traits.OccupancySensorInfo_ServiceDesc, nil))
+	occupancyClient := occupancysensorpb.NewOccupancySensorApiClient(wrap.ServerToClient(occupancysensorpb.OccupancySensorApi_ServiceDesc, nil))
+	occupancyInfo := occupancysensorpb.NewOccupancySensorInfoClient(wrap.ServerToClient(occupancysensorpb.OccupancySensorInfo_ServiceDesc, nil))
 	occupancyHistory := gen.NewOccupancySensorHistoryClient(wrap.ServerToClient(gen.OccupancySensorHistory_ServiceDesc, nil))
 	_, _, _ = occupancyClient, occupancyInfo, occupancyHistory
-	onOffClient := traits.NewOnOffApiClient(wrap.ServerToClient(traits.OnOffApi_ServiceDesc, nil))
+	onOffClient := onoffpb.NewOnOffApiClient(wrap.ServerToClient(onoffpb.OnOffApi_ServiceDesc, nil))
 	_ = onOffClient
-	openCloseClient := traits.NewOpenCloseApiClient(wrap.ServerToClient(traits.OpenCloseApi_ServiceDesc, nil))
+	openCloseClient := openclosepb.NewOpenCloseApiClient(wrap.ServerToClient(openclosepb.OpenCloseApi_ServiceDesc, nil))
 	_ = openCloseClient
-	parentClient := traits.NewParentApiClient(wrap.ServerToClient(traits.ParentApi_ServiceDesc, nil))
+	parentClient := parentpb.NewParentApiClient(wrap.ServerToClient(parentpb.ParentApi_ServiceDesc, nil))
 	_ = parentClient
-	pressClient := traits.NewPressApiClient(wrap.ServerToClient(traits.PressApi_ServiceDesc, nil))
+	pressClient := presspb.NewPressApiClient(wrap.ServerToClient(presspb.PressApi_ServiceDesc, nil))
 	_ = pressClient
-	ptzClient := traits.NewPtzApiClient(wrap.ServerToClient(traits.PtzApi_ServiceDesc, nil))
+	ptzClient := ptzpb.NewPtzApiClient(wrap.ServerToClient(ptzpb.PtzApi_ServiceDesc, nil))
 	_ = ptzClient
-	publicationClient := traits.NewPublicationApiClient(wrap.ServerToClient(traits.PublicationApi_ServiceDesc, nil))
+	publicationClient := publicationpb.NewPublicationApiClient(wrap.ServerToClient(publicationpb.PublicationApi_ServiceDesc, nil))
 	_ = publicationClient
-	speakerClient := traits.NewSpeakerApiClient(wrap.ServerToClient(traits.SpeakerApi_ServiceDesc, nil))
+	speakerClient := speakerpb.NewSpeakerApiClient(wrap.ServerToClient(speakerpb.SpeakerApi_ServiceDesc, nil))
 	_ = speakerClient
-	temperatureClient := traits.NewTemperatureApiClient(wrap.ServerToClient(traits.TemperatureApi_ServiceDesc, nil))
+	temperatureClient := temperaturepb.NewTemperatureApiClient(wrap.ServerToClient(temperaturepb.TemperatureApi_ServiceDesc, nil))
 	_ = temperatureClient
-	vendingClient := traits.NewVendingApiClient(wrap.ServerToClient(traits.VendingApi_ServiceDesc, nil))
+	vendingClient := vendingpb.NewVendingApiClient(wrap.ServerToClient(vendingpb.VendingApi_ServiceDesc, nil))
 	_ = vendingClient
-	wastePbClient := traits.NewWasteApiClient(wrap.ServerToClient(traits.WasteApi_ServiceDesc, nil))
-	wastePbInfo := traits.NewWasteInfoClient(wrap.ServerToClient(traits.WasteInfo_ServiceDesc, nil))
+	wastePbClient := wastepb.NewWasteApiClient(wrap.ServerToClient(wastepb.WasteApi_ServiceDesc, nil))
+	wastePbInfo := wastepb.NewWasteInfoClient(wrap.ServerToClient(wastepb.WasteInfo_ServiceDesc, nil))
 	_, _ = wastePbClient, wastePbInfo
 
 	// sc-bos traits

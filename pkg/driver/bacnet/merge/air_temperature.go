@@ -8,18 +8,17 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/gobacnet"
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 type modeDataPoints struct {
@@ -80,7 +79,7 @@ func readAirTemperatureConfig(raw []byte) (cfg airTemperatureConfig, err error) 
 type airTemperature struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *airtemperaturepb.Model
@@ -89,7 +88,7 @@ type airTemperature struct {
 	pollTask *task.Intermittent
 }
 
-func newAirTemperature(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airTemperature, error) {
+func newAirTemperature(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airTemperature, error) {
 	cfg, err := readAirTemperatureConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -121,7 +120,7 @@ func (t *airTemperature) AnnounceSelf(a node.Announcer) node.Undo {
 	return a.Announce(t.config.Name, node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(t))))
 }
 
-func (t *airTemperature) GetAirTemperature(ctx context.Context, request *traits.GetAirTemperatureRequest) (*traits.AirTemperature, error) {
+func (t *airTemperature) GetAirTemperature(ctx context.Context, request *airtemperaturepb.GetAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
 	_, err := t.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -129,9 +128,9 @@ func (t *airTemperature) GetAirTemperature(ctx context.Context, request *traits.
 	return t.ModelServer.GetAirTemperature(ctx, request)
 }
 
-func (t *airTemperature) UpdateAirTemperature(ctx context.Context, request *traits.UpdateAirTemperatureRequest) (*traits.AirTemperature, error) {
+func (t *airTemperature) UpdateAirTemperature(ctx context.Context, request *airtemperaturepb.UpdateAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
 	if request.GetState().GetTemperatureSetPoint() == nil {
-		return t.GetAirTemperature(ctx, &traits.GetAirTemperatureRequest{Name: request.Name})
+		return t.GetAirTemperature(ctx, &airtemperaturepb.GetAirTemperatureRequest{Name: request.Name})
 	}
 	newSetPoint := float32(request.GetState().GetTemperatureSetPoint().GetValueCelsius())
 
@@ -158,19 +157,19 @@ func (t *airTemperature) UpdateAirTemperature(ctx context.Context, request *trai
 	}
 
 	// todo: not strictly correct as we're not paying attention to the require customisation properties that ModelServer would give us
-	return pollUntil(ctx, t.config.DefaultRWConsistencyTimeoutDuration(), t.pollPeer, func(temperature *traits.AirTemperature) bool {
+	return pollUntil(ctx, t.config.DefaultRWConsistencyTimeoutDuration(), t.pollPeer, func(temperature *airtemperaturepb.AirTemperature) bool {
 		return temperature.GetTemperatureSetPoint().ValueCelsius == float64(newSetPoint)
 	})
 }
 
-func (t *airTemperature) PullAirTemperature(request *traits.PullAirTemperatureRequest, server traits.AirTemperatureApi_PullAirTemperatureServer) error {
+func (t *airTemperature) PullAirTemperature(request *airtemperaturepb.PullAirTemperatureRequest, server airtemperaturepb.AirTemperatureApi_PullAirTemperatureServer) error {
 	_ = t.pollTask.Attach(server.Context())
 	return t.ModelServer.PullAirTemperature(request, server)
 }
 
 // pollPeer fetches data from the peer device and saves the data locally.
-func (t *airTemperature) pollPeer(ctx context.Context) (*traits.AirTemperature, error) {
-	data := &traits.AirTemperature{}
+func (t *airTemperature) pollPeer(ctx context.Context) (*airtemperaturepb.AirTemperature, error) {
+	data := &airtemperaturepb.AirTemperature{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
 	var requestNames []string
@@ -184,8 +183,8 @@ func (t *airTemperature) pollPeer(ctx context.Context) (*traits.AirTemperature, 
 			if err != nil {
 				return comm.ErrReadProperty{Prop: "setPoint", Cause: err}
 			}
-			data.TemperatureGoal = &traits.AirTemperature_TemperatureSetPoint{
-				TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
+			data.TemperatureGoal = &airtemperaturepb.AirTemperature_TemperatureSetPoint{
+				TemperatureSetPoint: &typespb.Temperature{ValueCelsius: setPoint},
 			}
 			return nil
 		})
@@ -200,8 +199,8 @@ func (t *airTemperature) pollPeer(ctx context.Context) (*traits.AirTemperature, 
 				return comm.ErrReadProperty{Prop: "setPointHigh", Cause: err}
 			}
 			setPoint := setPointHigh - float64(*t.config.SetPointDeadBand)
-			data.TemperatureGoal = &traits.AirTemperature_TemperatureSetPoint{
-				TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
+			data.TemperatureGoal = &airtemperaturepb.AirTemperature_TemperatureSetPoint{
+				TemperatureSetPoint: &typespb.Temperature{ValueCelsius: setPoint},
 			}
 			return nil
 		})
@@ -214,8 +213,8 @@ func (t *airTemperature) pollPeer(ctx context.Context) (*traits.AirTemperature, 
 				return comm.ErrReadProperty{Prop: "setPointLow", Cause: err}
 			}
 			setPoint := setPointLow + float64(*t.config.SetPointDeadBand)
-			data.TemperatureGoal = &traits.AirTemperature_TemperatureSetPoint{
-				TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
+			data.TemperatureGoal = &airtemperaturepb.AirTemperature_TemperatureSetPoint{
+				TemperatureSetPoint: &typespb.Temperature{ValueCelsius: setPoint},
 			}
 			return nil
 		})
@@ -229,7 +228,7 @@ func (t *airTemperature) pollPeer(ctx context.Context) (*traits.AirTemperature, 
 			if err != nil {
 				return comm.ErrReadProperty{Prop: "ambientTemperature", Cause: err}
 			}
-			data.AmbientTemperature = &types.Temperature{ValueCelsius: ambientTemperature}
+			data.AmbientTemperature = &typespb.Temperature{ValueCelsius: ambientTemperature}
 			return nil
 		})
 	}
@@ -316,7 +315,7 @@ func (t *airTemperature) getModePoints(processors *[]func(response any) error, v
 }
 
 // updateMode updates the AirTemperature.Mode based on the current values of the mode data points.
-func updateMode(modeCfg *airTempModeConfig, data *modeDataPoints, airTemp *traits.AirTemperature) {
+func updateMode(modeCfg *airTempModeConfig, data *modeDataPoints, airTemp *airtemperaturepb.AirTemperature) {
 
 	const (
 		OFF  = -1
@@ -338,18 +337,18 @@ func updateMode(modeCfg *airTempModeConfig, data *modeDataPoints, airTemp *trait
 	heat := calcState(data.HeatingOnValue, modeCfg.HeatingOnThreshold)
 	cool := calcState(data.CoolingOnValue, modeCfg.CoolingOnThreshold)
 
-	m := traits.AirTemperature_MODE_UNSPECIFIED
+	m := airtemperaturepb.AirTemperature_MODE_UNSPECIFIED
 	switch {
 	case fan == OFF:
-		m = traits.AirTemperature_OFF
+		m = airtemperaturepb.AirTemperature_OFF
 	case heat == ON && cool == ON:
-		m = traits.AirTemperature_HEAT_COOL
+		m = airtemperaturepb.AirTemperature_HEAT_COOL
 	case heat == ON:
-		m = traits.AirTemperature_HEAT
+		m = airtemperaturepb.AirTemperature_HEAT
 	case cool == ON:
-		m = traits.AirTemperature_COOL
+		m = airtemperaturepb.AirTemperature_COOL
 	case fan == ON:
-		m = traits.AirTemperature_FAN_ONLY
+		m = airtemperaturepb.AirTemperature_FAN_ONLY
 	}
 
 	airTemp.Mode = m

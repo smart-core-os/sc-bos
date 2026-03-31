@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package smartcore.bos.types.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/typespb";
+
+import "smartcore/bos/types/v1/tween.proto";
+
+// Possible behaviours for values that are not allowed by the number
+enum InvalidNumberBehaviour {
+  // A default behaviour will be applied, typically RESTRICT
+  INVALID_NUMBER_BEHAVIOUR_UNSPECIFIED = 0;
+  // The value will be restricted to the most appropriate value, typically the closest
+  RESTRICT = 1;
+  // An error will be raised to alert to the invalid value
+  ERROR = 2;
+  // Ignore the bounds and apply the value anyway
+  ALLOW = 3;
+}
+
+// Options for how invalid number values will be handled
+message NumberCapping {
+  // If the value is less than the minimum, behave this way. Should default to RESTRICT
+  InvalidNumberBehaviour min = 1;
+  // If the value does not lie on a step value, behave this way. Should default to ALLOW
+  InvalidNumberBehaviour step = 2;
+  // If the value is greater than the maximum, behave this way. Should default to RESTRICT
+  InvalidNumberBehaviour max = 3;
+}
+
+// Defines the bounds for a number. Either of the min or max values can be absent which means those aspects are
+// unbounded. It makes no sense for both to be unset, if so then this is no longer a bounds but that isn't
+// disallowed.
+//
+// Contrary to most programming practices both min and max are inclusive and denote the max allowed value, just like
+// htmls input type=range.
+message Int32Bounds {
+  // the minimum value (inclusive). If absent then there is no minimum, though this is typically Int32.Min
+  optional int32 min = 1;
+  // the maximum value (inclusive). If absent then there is no maximum, though this is typically Int32.Max
+  optional int32 max = 2;
+}
+
+// Describes features and restrictions applied to a number that is typically used as part of an apis value
+message Int32Attributes {
+  Int32Bounds bounds = 1;
+  // The stepping interval, how little the value can change in one go. A default value of 0 is equivalent to a
+  // continuous step, i.e. step=1
+  int32 step = 3;
+  // Indicate whether the device supports delta adjustments when changing the value
+  bool supports_delta = 4;
+  // Indicate the level of ramp support the device has
+  TweenSupport ramp_support = 5;
+  // Provide information on how invalid values will be handled
+  NumberCapping default_capping = 6;
+}
+
+// Defines the bounds for a number. Either of the min or max values can be absent which means those aspects are
+// unbounded. It makes no sense for both to be unset, if so then this is no longer a bounds but that isn't
+// disallowed.
+//
+// Contrary to most programming practices both min and max are inclusive and denote the max allowed value, just like
+// htmls input type=range.
+message FloatBounds {
+  // the minimum value (inclusive). If absent then there is no minimum, though this is typically Float.Min
+  optional float min = 1;
+  // the maximum value (inclusive). If absent then there is no maximum, though this is typically Float.Max
+  optional float max = 2;
+}
+
+// Describes features and restrictions applied to a number that is typically used as part of an apis value
+message FloatAttributes {
+  FloatBounds bounds = 1;
+  // The stepping interval, how little the value can change in one go. A default value of 0 is equivalent to a
+  // continuous step, i.e. all possible float values are supported
+  float step = 3;
+  // Indicate whether the device supports delta adjustments when changing the value
+  bool supports_delta = 4;
+  // Indicate the level of ramp support the device has
+  TweenSupport ramp_support = 5;
+  // Provide information on how invalid values will be handled
+  NumberCapping default_capping = 6;
+}
