@@ -15,15 +15,15 @@
             hide-details
             label="Search devices"/>
         <v-spacer style="pointer-events: none"/>
-        <v-btn-toggle v-model="viewType" mandatory variant="outlined">
+        <v-btn-toggle v-if="hasMapView" v-model="viewType" mandatory variant="outlined">
           <v-btn value="list">List View</v-btn>
           <v-btn value="map">Map View</v-btn>
         </v-btn-toggle>
         <v-select
+            v-if="formattedFloorList.length > 1"
             v-model="selectedFloor"
             class="ml-4"
             density="compact"
-            :disabled="floorList.length <= 1"
             hide-details
             :items="formattedFloorList"
             label="Floor"
@@ -31,7 +31,7 @@
             style="min-width: 100px; width: 100%; max-width: 170px"/>
       </v-row>
       <list-view v-if="viewType === 'list'" :device-names="deviceQuery"/>
-      <map-view v-else :device-names="deviceNames" :floor="selectedFloor"/>
+      <map-view v-else-if="hasMapView" :device-names="deviceNames" :floor="selectedFloor"/>
     </content-card>
   </v-container>
 </template>
@@ -85,9 +85,14 @@ const deviceNames = computed(() => {
   });
 });
 
+const hasMapView = computed(() =>
+  Array.isArray(config.value.siteFloorPlans) &&
+  config.value.siteFloorPlans.some((fp) => fp.svgPath || fp.bgSvgPath)
+);
+
 const formattedFloorList = computed(() => {
   if (viewType.value === 'list') return floorList.value;
-  else return config.value.siteFloorPlans.map((floor) => floor.name);
+  else return (config.value.siteFloorPlans ?? []).map((floor) => floor.name);
 });
 
 const deviceQuery = computed(() => {
@@ -109,7 +114,7 @@ watch(
     viewType,
     (newVal) => {
       if (newVal === 'map') {
-        selectedFloor.value = 'Ground Floor';
+        selectedFloor.value = formattedFloorList.value[0] ?? 'Ground Floor';
         hiddenOnMap.value = true;
       } else {
         selectedFloor.value = 'All';
@@ -118,4 +123,9 @@ watch(
     },
     {immediate: true}
 );
+
+// If map view becomes unavailable, fall back to list view
+watch(hasMapView, (available) => {
+  if (!available) viewType.value = 'list';
+});
 </script>

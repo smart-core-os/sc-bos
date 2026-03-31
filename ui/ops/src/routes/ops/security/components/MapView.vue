@@ -1,27 +1,23 @@
 <template>
   <v-container fluid class="mb-0 mt-0 pt-0 floor-plan__container">
+    <div v-if="showMenu" class="floor-plan__card-anchor">
+      <hot-point
+          v-slot="{ live }"
+          :item-key="elementWithMenu?.device?.name">
+        <access-point-card
+            :device="elementWithMenu?.device"
+            :paused="!live"
+            @click:close="closeMenu"
+            show-close/>
+      </hot-point>
+    </div>
     <pinch-zoom @click="handleClick">
       <template #default="{ scale }">
         <overlay-stack ref="groupingContainer">
           <!-- eslint-disable-next-line vue/no-v-html -->
-          <div v-html="activeFloorPlan" ref="floorPlanSVG" :style="{ '--map-scale': scale }"/>
-          <div v-if="showMenu" style="pointer-events: none">
-            <div :style="calculateAnchorStyle" style="pointer-events: none">
-              <hot-point
-                  v-slot="{ live }"
-                  :item-key="elementWithMenu?.device?.name"
-                  style="position: relative; top: 100%; transform-origin: 0 0; pointer-events: auto"
-                  :style="{
-                    transform: `scale(${1 / scale})`,
-                  }">
-                <access-point-card
-                    :device="elementWithMenu?.device"
-                    :paused="!live"
-                    @click:close="closeMenu"
-                    show-close/>
-              </hot-point>
-            </div>
-          </div>
+          <div v-if="activeBgFloorPlan" v-html="activeBgFloorPlan" class="floor-plan__bg" style="pointer-events: none"/>
+          <!-- eslint-disable-next-line vue/no-v-html -->
+          <div v-html="activeFloorPlan" ref="floorPlanSVG" class="floor-plan__svg" :style="{ '--map-scale': scale }"/>
           <div class="door-status-tracker">
             <hot-point
                 v-slot="{ live }"
@@ -117,6 +113,7 @@ const props = defineProps({
 const uiConfig = useUiConfigStore();
 const showClose = ref(false);
 const activeFloorPlan = ref('');
+const activeBgFloorPlan = ref('');
 const floorPlanSVG = ref(null);
 const groupingContainer = ref(null);
 
@@ -158,42 +155,6 @@ const getSVGViewBox = () => {
   };
 };
 
-const getClickedRectBBox = computed(() => {
-  if (!elementWithMenu.target) {
-    return {};
-  }
-
-  return elementWithMenu.target.getBBox();
-});
-
-const calculateAnchorStyle = computed(() => {
-  if (!elementWithMenu.target || !groupingContainer.value) {
-    return {};
-  }
-
-  // Get the bounding rectangle of the SVG element
-  const clickedRect = getClickedRectBBox.value;
-  const viewBox = getSVGViewBox();
-  if (!viewBox) {
-    return {};
-  }
-
-  const percentage = convertSVGToPercentage(viewBox, clickedRect);
-
-  const x = percentage.x * 100;
-  const y = percentage.y * 100;
-  const width = percentage.width * 100;
-  const height = percentage.height * 100;
-
-  return {
-    width: `${width}%`,
-    height: `${height}%`,
-    left: `${x}%`,
-    top: `${y + 1}%`,
-    position: 'relative'
-  };
-});
-
 // -------------- Methods -------------- //
 const floorPlanSVGPath = computed(() => {
   const floorName = props.floor;
@@ -202,6 +163,12 @@ const floorPlanSVGPath = computed(() => {
       uiConfig.configUrl
   );
   return svgPath;
+});
+
+const bgFloorPlanSVGPath = computed(() => {
+  const floorName = props.floor;
+  const bgSvgPath = uiConfig.config.siteFloorPlans.find((floorPlan) => floorPlan.name === floorName)?.bgSvgPath;
+  return bgSvgPath ? subPath(bgSvgPath, uiConfig.configUrl) : null;
 });
 /**
  * Fetch function to get the floor plan svg
@@ -248,12 +215,6 @@ const findDevice = (needle) => {
 const handleClick = (event) => {
   const clickedElement = event.target.closest('[id]');
   if (!clickedElement) {
-    return;
-  }
-
-  // Find the parent group of the clicked element
-  const parentGroup = clickedElement.closest('g[id^="doors_"]');
-  if (!parentGroup) {
     return;
   }
 
@@ -401,6 +362,10 @@ watch(
     (newValue, oldValue) => {
       if (newValue !== oldValue) {
         closeMenu();
+        if (!newValue) {
+          activeFloorPlan.value = '';
+          return;
+        }
         fetchFloorPlan(newValue).then((response) => {
           response.text().then((text) => {
             activeFloorPlan.value = text;
@@ -413,9 +378,35 @@ watch(
     },
     {immediate: true, deep: true, flush: 'sync'}
 );
+
+watch(
+    bgFloorPlanSVGPath,
+    (newValue, oldValue) => {
+      if (newValue !== oldValue) {
+        if (!newValue) {
+          activeBgFloorPlan.value = '';
+          return;
+        }
+        fetchFloorPlan(newValue).then((response) => {
+          response.text().then((text) => {
+            activeBgFloorPlan.value = text;
+          });
+        });
+      }
+    },
+    {immediate: true}
+);
 </script>
 
 <style lang="scss" scoped>
+.floor-plan__card-anchor {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  pointer-events: auto;
+}
+
 .floor-plan__container {
   position: relative;
   /* fill the container, minus the top bar and sc status bar */
@@ -464,19 +455,19 @@ watch(
 :deep(svg .open),
 :deep(svg .moving) {
   stroke: rgb(var(--v-theme-warning));
-  stroke-width: 125px;
+  stroke-width: 3px;
   transition: all 0.5s ease-in-out;
 }
 
 :deep(svg .closed) {
   stroke: rgb(var(--v-theme-success));
-  stroke-width: 75px;
+  stroke-width: 2px;
   transition: all 0.5s ease-in-out;
 }
 
 :deep(svg .unknown) {
   stroke: #ffffff5e;
-  stroke-width: 75px;
+  stroke-width: 2px;
   transition: all 0.5s ease-in-out;
 }
 
