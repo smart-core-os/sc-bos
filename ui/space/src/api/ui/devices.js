@@ -2,7 +2,7 @@ import {fieldMaskFromObject, setProperties} from '@/api/convpb.js';
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setCollection, setValue} from '@/api/resource';
 import {trackAction} from '@/api/resource.js';
-import {DevicesApiPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/devices_grpc_web_pb';
+import {DevicesApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_grpc_web_pb';
 import {
   Device,
   DevicesMetadata,
@@ -11,7 +11,7 @@ import {
   ListDevicesRequest,
   PullDevicesMetadataRequest,
   PullDevicesRequest
-} from '@vanti-dev/sc-bos-ui-gen/proto/devices_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_pb';
 
 /**
  * @param {Partial<ListDevicesRequest.AsObject>} request

@@ -5,12 +5,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/accesspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-	"github.com/vanti-dev/sc-bos/pkg/zone"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/access/config"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/access/config"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -39,13 +38,13 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	if len(cfg.AccessPoints) > 0 {
 		group := &Group{
-			client: gen.NewAccessApiClient(f.clients.ClientConn()),
+			client: accesspb.NewAccessApiClient(f.clients.ClientConn()),
 			names:  cfg.AccessPoints,
 			logger: logger,
 		}
 
 		f.devices.Add(cfg.AccessPoints...)
-		announce.Announce(cfg.Name, node.HasTrait(accesspb.TraitName, node.WithClients(gen.WrapAccessApi(group))))
+		announce.Announce(cfg.Name, node.HasTrait(accesspb.TraitName, node.WithClients(accesspb.WrapApi(group))))
 	}
 
 	return nil

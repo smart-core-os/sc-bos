@@ -6,8 +6,8 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 type Root struct {
@@ -44,7 +44,7 @@ type Duplicates struct {
 	FloatMargin *float64 `json:"floatMargin,omitempty"`
 
 	// there's room here to configure what we class as duplicate: is 1.200000001 a duplicate of 1.2
-	// Fields should map well to the sc-golang cmp package Value funcs.
+	// Fields should map well to the util/cmp package Value funcs.
 }
 
 func (d *Duplicates) TrackDuplicates() bool {

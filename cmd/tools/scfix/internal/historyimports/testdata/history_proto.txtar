@@ -1,0 +1,28 @@
+This test verifies that history imports from generic history files are correctly updated.
+It covers the basic case with a single trait, sub-resources, and multi-line imports.
+expected_changes: 3
+
+-- input/ui/ops/test.js --
+// Single trait (AirQualitySensor) with client and multiple message imports
+import {AirQualitySensorHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/history_grpc_web_pb';
+import {ListAirQualityHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/history_pb';
+import {
+  ListAirQualityHistoryResponse,
+  GetAirQualityHistoryRequest
+} from '@smart-core-os/sc-bos-ui-gen/proto/history_pb';
+
+export function test() {
+  // implementation
+}
+-- output/ui/ops/test.js --
+// Single trait (AirQualitySensor) with client and multiple message imports
+import {AirQualitySensorHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/air_quality_sensor_history_grpc_web_pb';
+import {ListAirQualityHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/air_quality_sensor_history_pb';
+import {
+  ListAirQualityHistoryResponse,
+  GetAirQualityHistoryRequest,
+} from '@smart-core-os/sc-bos-ui-gen/proto/air_quality_sensor_history_pb';
+
+export function test() {
+  // implementation
+}

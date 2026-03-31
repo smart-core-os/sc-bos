@@ -10,12 +10,12 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/exp/rand"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/auto/azureiot"
-	"github.com/vanti-dev/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/azureiot"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 
 	model := airqualitysensorpb.NewModel(airqualitysensorpb.WithInitialAirQuality(iaq()))
 	root.Announce("IAQ-001", node.HasTrait(trait.AirQualitySensor, node.WithClients(
-		airqualitysensorpb.WrapApi(airqualitysensorpb.NewModelServer(model)))))
+		airqualitysensorpb2.WrapApi(airqualitysensorpb.NewModelServer(model)))))
 
 	l, _ := zap.NewDevelopment()
 	services := auto.Services{
@@ -71,8 +71,8 @@ func main() {
 	}
 }
 
-func iaq() *traits.AirQuality {
-	return &traits.AirQuality{
+func iaq() *airqualitysensorpb.AirQuality {
+	return &airqualitysensorpb.AirQuality{
 		CarbonDioxideLevel:       randFP(400, 1000),
 		VolatileOrganicCompounds: randFP(0.1, 0.23),
 		AirPressure:              randFP(950, 1100),
@@ -84,8 +84,6 @@ func iaq() *traits.AirQuality {
 	}
 }
 
-func p[T any](t T) *T { return &t }
-
 func randFP(from, to float32) *float32 {
-	return p(from + (to-from)*rand.Float32())
+	return new(from + (to-from)*rand.Float32())
 }

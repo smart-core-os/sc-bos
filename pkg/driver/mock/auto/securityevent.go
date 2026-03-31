@@ -6,11 +6,11 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/securityevent"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
-func SecurityEventAuto(model *securityevent.Model) *service.Service[string] {
+func SecurityEventAuto(model *securityeventpb.Model) *service.Service[string] {
 
 	slc := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		ticker := time.NewTicker(30 * time.Second)

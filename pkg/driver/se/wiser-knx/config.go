@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 func DefaultConfig() Config {
@@ -37,7 +37,7 @@ type Config struct {
 	jsontypes.Password
 
 	// The poll interval to use when polling the Wiser for KNX controller (default: 10 seconds).
-	Poll jsontypes.Duration `json:"poll,omitempty"`
+	Poll jsontypes.Duration `json:"poll"`
 
 	// The list of exported objects on the Wiser for KNX controller.
 	Devices []Device `json:"devices,omitempty"`
@@ -55,5 +55,5 @@ type Device struct {
 	// - "override": an optional bool object that disables the Wiser's automation when true - exposed using the Mode trait.
 	Addresses map[string]string `json:"addresses,omitempty"`
 	// The metadata associated with the device.
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 }

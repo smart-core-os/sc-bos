@@ -12,7 +12,7 @@
             <v-list density="compact">
               <v-list-subheader title="Sources"/>
               <v-list-item
-                  v-for="(item, index) in legendItems"
+                  v-for="(item, index) in trackedLegendItems"
                   :key="index"
                   @click="item.onClick(item.hidden)"
                   :title="item.text">
@@ -24,6 +24,27 @@
               </v-list-item>
               <v-list-subheader title="Data"/>
               <period-chooser-rows v-model:start="_start" v-model:end="_end" v-model:offset="_offset"/>
+              <v-list-item v-if="Object.keys(props.scaleValues).length > 0" title="Metric">
+                <template #append>
+                  <v-btn-toggle
+                      mandatory v-model="metricType"
+                      variant="outlined" density="compact"
+                      divided class="ml-4">
+                    <v-btn :value="'unscaled'"
+                           size="small"
+                           :text="unit"
+                           width="5rem"
+                           min-width="auto"
+                           class="px-0"/>
+                    <v-btn :value="'scaled'"
+                           :text="'/' + props.scaleUnit"
+                           size="small"
+                           width="5rem"
+                           min-width="auto"
+                           class="px-0"/>
+                  </v-btn-toggle>
+                </template>
+              </v-list-item>
               <v-list-item title="Export CSV..."
                            @click="onDownloadClick" :disabled="downloadBtnDisabled"
                            v-tooltip:bottom="'Download a CSV of the chart data'"/>
@@ -35,9 +56,12 @@
     <v-card-text class="flex-1-1-100 pt-0">
       <div class="chart__container">
         <bar ref="chartRef" :options="chartOptions" :data="chartData" :plugins="[vueLegendPlugin, themeColorPlugin]"/>
+        <div v-if="showNoData" class="no-data-overlay">
+          <no-data-graphic class="no-data-graphic"/>
+        </div>
       </div>
     </v-card-text>
-    <meter-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit" :unit="unit"/>
+    <meter-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit" :unit="displayUnit" :hide-total-consumption="metricType === 'scaled'"/>
   </v-card>
 </template>
 
@@ -53,10 +77,11 @@ import {isNullOrUndef} from '@/util/types.js';
 import {useLocalProp} from '@/util/vue.js';
 import {BarElement, Chart as ChartJS, Legend, LinearScale, TimeScale, Title, Tooltip} from 'chart.js'
 import {startOfDay, startOfYear} from 'date-fns';
-import {computed, ref, toRef} from 'vue';
+import {computed, nextTick, ref, toRef, watch} from 'vue';
 import {Bar} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
 import {useMeterConsumption, useMetersConsumption} from './consumption.js';
+import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
 
 ChartJS.register(Title, Tooltip, BarElement, LinearScale, TimeScale, Legend);
 const chartRef = ref(null);
@@ -105,6 +130,14 @@ const props = defineProps({
   minChartHeight: {
     type: [String, Number],
     default: '500px',
+  },
+  scaleValues: {
+    type: Object,
+    default: () => ({}),
+  },
+  scaleUnit: {
+    type: String,
+    default: 'm²',
   }
 });
 
@@ -126,8 +159,17 @@ const nameForDescribe = computed(() => {
   if (props.subProductionNames.length > 0) return toName(props.subProductionNames[0]);
   return undefined;
 })
+
+const metricType = ref('unscaled');
 const {response: meterInfo} = useDescribeMeterReading(nameForDescribe);
 const unit = computed(() => meterInfo.value?.usageUnit);
+const displayUnit = computed(() => {
+  const base = meterInfo.value?.usageUnit;
+  if (base && metricType.value === 'scaled') {
+    return `${base}/${props.scaleUnit}`;
+  }
+  return base;
+});
 
 const _start = useLocalProp(toRef(props, 'start'));
 const _end = useLocalProp(toRef(props, 'end'));
@@ -144,9 +186,25 @@ const subProductions = useMetersConsumption(toRef(props, 'subProductionNames'), 
 const {
   external: tooltipExternal,
   data: tooltipData,
-} = useExternalTooltip(edges, tickUnit, unit);
+} = useExternalTooltip(edges, tickUnit, displayUnit);
 const {legendItems, vueLegendPlugin} = useVueLegendPlugin();
 const {themeColorPlugin} = useThemeColorPlugin();
+
+// Track which dataset labels the user has hidden, so selection survives time range changes.
+const hiddenDatasets = ref(new Set());
+
+// Wrap legendItems to intercept clicks and record hidden state by label.
+const trackedLegendItems = computed(() => legendItems.value.map(item => ({
+  ...item,
+  onClick: (wasHidden) => {
+    item.onClick(wasHidden);
+    if (wasHidden) {
+      hiddenDatasets.value.delete(item.text);
+    } else {
+      hiddenDatasets.value.add(item.text);
+    }
+  }
+})));
 
 const chartOptions = computed(() => {
   return /** @type {import('chart.js').ChartOptions} */ {
@@ -171,7 +229,7 @@ const chartOptions = computed(() => {
         stacked: true,
         title: {
           display: true,
-          text: unit.value
+          text: displayUnit.value
         },
         border: {
           color: 'transparent'
@@ -226,14 +284,60 @@ const chartOptions = computed(() => {
 
 const chartLabels = computed(() => edges.value.slice(0, -1));
 const chartData = computed(() => {
-  return {
+  const baseData = {
     labels: chartLabels.value,
     datasets: [
       ...computeDatasets('Consumption', totalConsumption, toRef(props, 'subConsumptionNames'), subConsumptions),
       ...computeDatasets('Production', totalProduction, toRef(props, 'subProductionNames'), subProductions, true),
     ]
   };
+  if (metricType.value === 'scaled') {
+    baseData.datasets.forEach(ds => {
+      const sourceName = ds[datasetSourceName];
+      const scale = props.scaleValues[sourceName] || 1;
+      ds.data = ds.data.map(val => val / scale);
+    });
+  }
+  return baseData;
 });
+
+const hasData = computed(() => {
+  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val));
+});
+
+// Track if initial data load is complete to avoid showing no-data graphic during fetch
+const hasLoadedData = ref(false);
+
+// Reset loading state when date range changes
+watch([startDate, endDate], () => {
+  hasLoadedData.value = false;
+});
+
+watch(chartData, (data) => {
+  // Check if we have any non-null data points (even if they're zero)
+  const hasAnyData = data.datasets.some(ds => ds.data.some(val => val != null));
+  if (hasAnyData && !hasLoadedData.value) {
+    hasLoadedData.value = true;
+  }
+}, {immediate: true});
+
+// After chartData changes (e.g. time range change), re-apply hidden state.
+watch(chartData, async () => {
+  if (hiddenDatasets.value.size === 0) return;
+  await nextTick();
+  const chart = chartRef.value?.chart;
+  if (!chart) return;
+  let changed = false;
+  chart.data.datasets.forEach((ds, idx) => {
+    if (hiddenDatasets.value.has(ds.label)) {
+      chart.setDatasetVisibility(idx, false);
+      changed = true;
+    }
+  });
+  if (changed) chart.update();
+});
+
+const showNoData = computed(() => !hasData.value && hasLoadedData.value);
 
 // download CSV...
 const visibleNames = () => {
@@ -311,5 +415,6 @@ const onDownloadClick = async () => {
   min-height: v-bind(minChartHeight);
   /* The chart seems to have a padding no mater what we do, this gets rid of it */
   margin: -6px;
+  position: relative;
 }
 </style>

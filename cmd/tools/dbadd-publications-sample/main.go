@@ -10,14 +10,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/internal/util/pgxutil"
-	"github.com/vanti-dev/sc-bos/pkg/system/publications/config"
-	"github.com/vanti-dev/sc-bos/pkg/system/publications/pgxpublications"
+	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
+	"github.com/smart-core-os/sc-bos/pkg/system/publications/config"
+	"github.com/smart-core-os/sc-bos/pkg/system/publications/pgxpublications"
 )
 
 func main() {
@@ -93,7 +93,7 @@ func populateDB(ctx context.Context, logger *zap.Logger, conn *pgxpool.Pool) err
 
 	baseTime := time.Date(2022, 7, 6, 11, 18, 0, 0, time.UTC)
 
-	err := conn.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, conn, func(tx pgx.Tx) error {
 		var errs error
 		for _, name := range deviceNames {
 			// register a publication

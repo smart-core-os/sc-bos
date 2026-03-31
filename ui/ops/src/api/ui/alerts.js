@@ -7,7 +7,7 @@ import {
 } from '@/api/convpb.js';
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setCollection, setValue, trackAction} from '@/api/resource';
-import {AlertAdminApiPromiseClient, AlertApiPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/alerts_grpc_web_pb';
+import {AlertAdminApiPromiseClient, AlertApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_grpc_web_pb';
 import {
   AcknowledgeAlertRequest,
   Alert,
@@ -16,7 +16,7 @@ import {
   ListAlertsRequest,
   PullAlertMetadataRequest,
   PullAlertsRequest
-} from '@vanti-dev/sc-bos-ui-gen/proto/alerts_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb';
 
 /**
  * @param {Partial<ListAlertsRequest.AsObject>} request

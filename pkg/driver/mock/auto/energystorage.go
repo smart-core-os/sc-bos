@@ -6,9 +6,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait/energystoragepb"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 type EnergyStorageDeviceType string
@@ -122,8 +121,8 @@ func EnergyStorage(model *energystoragepb.Model, kind EnergyStorageDeviceType) s
 				}
 
 				// Build the energy level state with device-specific fields
-				energyLevel := &traits.EnergyLevel{
-					Quantity: &traits.EnergyLevel_Quantity{
+				energyLevel := &energystoragepb.EnergyLevel{
+					Quantity: &energystoragepb.EnergyLevel_Quantity{
 						Percentage:  currentPercentage,
 						EnergyKwh:   currentPercentage * profile.MaxCapacityKwh / 100,
 						Descriptive: getDescriptiveThreshold(currentPercentage),
@@ -145,16 +144,16 @@ func EnergyStorage(model *energystoragepb.Model, kind EnergyStorageDeviceType) s
 				// Set flow state with device-specific parameters
 				switch currentState {
 				case stateIdle:
-					energyLevel.Flow = &traits.EnergyLevel_Idle{
-						Idle: &traits.EnergyLevel_Steady{
+					energyLevel.Flow = &energystoragepb.EnergyLevel_Idle{
+						Idle: &energystoragepb.EnergyLevel_Steady{
 							StartTime: stateStartTime,
 						},
 					}
 				case stateCharging:
-					target := &traits.EnergyLevel_Quantity{
+					target := &energystoragepb.EnergyLevel_Quantity{
 						Percentage: float32Between(85, 100),
 					}
-					transfer := &traits.EnergyLevel_Transfer{
+					transfer := &energystoragepb.EnergyLevel_Transfer{
 						StartTime: stateStartTime,
 						Speed:     getSpeedFromRate(chargeRate),
 						Target:    target,
@@ -163,14 +162,14 @@ func EnergyStorage(model *energystoragepb.Model, kind EnergyStorageDeviceType) s
 					if profile.IsMobile() {
 						target.DistanceKm = target.Percentage * profile.MaxRangeKm / 100
 					}
-					energyLevel.Flow = &traits.EnergyLevel_Charge{
+					energyLevel.Flow = &energystoragepb.EnergyLevel_Charge{
 						Charge: transfer,
 					}
 				case stateDischarging:
-					target := &traits.EnergyLevel_Quantity{
+					target := &energystoragepb.EnergyLevel_Quantity{
 						Percentage: float32Between(5, 25),
 					}
-					transfer := &traits.EnergyLevel_Transfer{
+					transfer := &energystoragepb.EnergyLevel_Transfer{
 						StartTime: stateStartTime,
 						Speed:     getSpeedFromRate(dischargeRate),
 						Target:    target,
@@ -184,7 +183,7 @@ func EnergyStorage(model *energystoragepb.Model, kind EnergyStorageDeviceType) s
 						target.DistanceKm = target.Percentage * profile.MaxRangeKm / 100
 					}
 
-					energyLevel.Flow = &traits.EnergyLevel_Discharge{
+					energyLevel.Flow = &energystoragepb.EnergyLevel_Discharge{
 						Discharge: transfer,
 					}
 				}
@@ -204,35 +203,35 @@ func EnergyStorage(model *energystoragepb.Model, kind EnergyStorageDeviceType) s
 	return s
 }
 
-func getDescriptiveThreshold(percentage float32) traits.EnergyLevel_Quantity_Threshold {
+func getDescriptiveThreshold(percentage float32) energystoragepb.EnergyLevel_Quantity_Threshold {
 	switch {
 	case percentage < 10:
-		return traits.EnergyLevel_Quantity_CRITICALLY_LOW
+		return energystoragepb.EnergyLevel_Quantity_CRITICALLY_LOW
 	case percentage < 20:
-		return traits.EnergyLevel_Quantity_LOW
+		return energystoragepb.EnergyLevel_Quantity_LOW
 	case percentage < 40:
-		return traits.EnergyLevel_Quantity_MEDIUM
+		return energystoragepb.EnergyLevel_Quantity_MEDIUM
 	case percentage < 80:
-		return traits.EnergyLevel_Quantity_HIGH
+		return energystoragepb.EnergyLevel_Quantity_HIGH
 	case percentage >= 95:
-		return traits.EnergyLevel_Quantity_FULL
+		return energystoragepb.EnergyLevel_Quantity_FULL
 	default:
-		return traits.EnergyLevel_Quantity_HIGH
+		return energystoragepb.EnergyLevel_Quantity_HIGH
 	}
 }
 
-func getSpeedFromRate(rate float32) traits.EnergyLevel_Transfer_Speed {
+func getSpeedFromRate(rate float32) energystoragepb.EnergyLevel_Transfer_Speed {
 	switch {
 	case rate < 0.5:
-		return traits.EnergyLevel_Transfer_EXTRA_SLOW
+		return energystoragepb.EnergyLevel_Transfer_EXTRA_SLOW
 	case rate < 1.0:
-		return traits.EnergyLevel_Transfer_SLOW
+		return energystoragepb.EnergyLevel_Transfer_SLOW
 	case rate < 2.0:
-		return traits.EnergyLevel_Transfer_NORMAL
+		return energystoragepb.EnergyLevel_Transfer_NORMAL
 	case rate < 2.5:
-		return traits.EnergyLevel_Transfer_FAST
+		return energystoragepb.EnergyLevel_Transfer_FAST
 	default:
-		return traits.EnergyLevel_Transfer_EXTRA_FAST
+		return energystoragepb.EnergyLevel_Transfer_EXTRA_FAST
 	}
 }
 

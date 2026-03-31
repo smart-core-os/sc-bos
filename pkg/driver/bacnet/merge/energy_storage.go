@@ -8,19 +8,17 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/energystoragepb"
-	"github.com/vanti-dev/gobacnet"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/comm"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/config"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/known"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/status"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task"
+	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 type energyStorageConfig struct {
@@ -35,10 +33,10 @@ func readEnergyStorageConfig(raw []byte) (cfg energyStorageConfig, err error) {
 }
 
 type energyStorage struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *energystoragepb.Model
 	*energystoragepb.ModelServer
@@ -46,7 +44,7 @@ type energyStorage struct {
 	pollTask *task.Intermittent
 }
 
-func newEnergyStorage(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*energyStorage, error) {
+func newEnergyStorage(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*energyStorage, error) {
 	cfg, err := readEnergyStorageConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -57,14 +55,13 @@ func newEnergyStorage(client *gobacnet.Client, devices known.Context, statuses *
 	e := &energyStorage{
 		client:      client,
 		known:       devices,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: energystoragepb.NewModelServer(model),
 		config:      cfg,
 	}
 	e.pollTask = task.NewIntermittent(e.startPoll)
-	initTraitStatus(statuses, cfg.Name, "EnergyStorage")
 	return e, nil
 }
 
@@ -79,7 +76,7 @@ func (e *energyStorage) AnnounceSelf(a node.Announcer) node.Undo {
 	return a.Announce(e.config.Name, node.HasTrait(trait.EnergyStorage, node.WithClients(energystoragepb.WrapApi(e))))
 }
 
-func (e *energyStorage) GetEnergyLevel(ctx context.Context, request *traits.GetEnergyLevelRequest) (*traits.EnergyLevel, error) {
+func (e *energyStorage) GetEnergyLevel(ctx context.Context, request *energystoragepb.GetEnergyLevelRequest) (*energystoragepb.EnergyLevel, error) {
 	_, err := e.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -87,13 +84,13 @@ func (e *energyStorage) GetEnergyLevel(ctx context.Context, request *traits.GetE
 	return e.ModelServer.GetEnergyLevel(ctx, request)
 }
 
-func (e *energyStorage) PullEnergyLevel(request *traits.PullEnergyLevelRequest, server grpc.ServerStreamingServer[traits.PullEnergyLevelResponse]) error {
+func (e *energyStorage) PullEnergyLevel(request *energystoragepb.PullEnergyLevelRequest, server grpc.ServerStreamingServer[energystoragepb.PullEnergyLevelResponse]) error {
 	_ = e.pollTask.Attach(server.Context())
 	return e.ModelServer.PullEnergyLevel(request, server)
 }
 
-func (e *energyStorage) pollPeer(ctx context.Context) (*traits.EnergyLevel, error) {
-	data := &traits.EnergyLevel{}
+func (e *energyStorage) pollPeer(ctx context.Context) (*energystoragepb.EnergyLevel, error) {
+	data := &energystoragepb.EnergyLevel{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
 	var requestNames []string
@@ -107,7 +104,7 @@ func (e *energyStorage) pollPeer(ctx context.Context) (*traits.EnergyLevel, erro
 				return comm.ErrReadProperty{Prop: "energyKwh", Cause: err}
 			}
 			if data.Quantity == nil {
-				data.Quantity = &traits.EnergyLevel_Quantity{}
+				data.Quantity = &energystoragepb.EnergyLevel_Quantity{}
 			}
 			data.Quantity.EnergyKwh = energyKwh
 			return nil
@@ -122,7 +119,7 @@ func (e *energyStorage) pollPeer(ctx context.Context) (*traits.EnergyLevel, erro
 				return comm.ErrReadProperty{Prop: "percentage", Cause: err}
 			}
 			if data.Quantity == nil {
-				data.Quantity = &traits.EnergyLevel_Quantity{}
+				data.Quantity = &energystoragepb.EnergyLevel_Quantity{}
 			}
 			data.Quantity.Percentage = percentage
 			return nil
@@ -136,7 +133,8 @@ func (e *energyStorage) pollPeer(ctx context.Context) (*traits.EnergyLevel, erro
 			errs = append(errs, err)
 		}
 	}
-	status.UpdatePollErrorStatus(e.statuses, e.config.Name, "EnergyStorage", requestNames, errs)
+
+	updateTraitFaultCheck(ctx, e.faultCheck, e.config.Name, trait.EnergyStorage, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

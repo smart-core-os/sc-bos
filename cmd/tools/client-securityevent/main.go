@@ -1,4 +1,4 @@
-// Command client-securityevent provides a CLI tool for interacting with the [gen.SecurityEventApiClient].
+// Command client-securityevent provides a CLI tool for interacting with the [securityeventpb.SecurityEventApiClient].
 package main
 
 import (
@@ -8,8 +8,8 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/util/client"
+	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/client"
 )
 
 var clientConfig client.Config
@@ -41,10 +41,10 @@ func run() error {
 	log.Printf("dialled")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	em := gen.NewSecurityEventApiClient(conn)
+	em := securityeventpb.NewSecurityEventApiClient(conn)
 
 	get := func(c context.Context, name string) error {
-		req := gen.ListSecurityEventsRequest{Name: name}
+		req := securityeventpb.ListSecurityEventsRequest{Name: name}
 		for {
 			log.Printf("ListSecurityEvents %s", name)
 			res, err := em.ListSecurityEvents(ctx, &req)
@@ -65,7 +65,7 @@ func run() error {
 
 	pull := func(c context.Context, name string) error {
 		log.Printf("PullSecurityEvents %s", name)
-		stream, err := em.PullSecurityEvents(ctx, &gen.PullSecurityEventsRequest{Name: name})
+		stream, err := em.PullSecurityEvents(ctx, &securityeventpb.PullSecurityEventsRequest{Name: name})
 		if err != nil {
 			return err
 		}

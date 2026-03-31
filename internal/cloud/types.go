@@ -1,0 +1,79 @@
+package cloud
+
+import (
+	"fmt"
+	"time"
+)
+
+// CheckInRequest is the optional request body for the check-in endpoint.
+type CheckInRequest struct {
+	CurrentDeployment    *CheckInDeploymentRef        `json:"currentDeployment,omitempty"`
+	InstallingDeployment *CheckInInstallingDeployment `json:"installingDeployment,omitempty"`
+	FailedDeployment     *CheckInFailedDeployment     `json:"failedDeployment,omitempty"`
+}
+
+// CheckInDeploymentRef references a deployment by ID.
+type CheckInDeploymentRef struct {
+	ID string `json:"id"`
+}
+
+// CheckInInstallingDeployment references a deployment being installed, optionally with error and attempt info.
+type CheckInInstallingDeployment struct {
+	ID       string `json:"id"`
+	Error    string `json:"error,omitempty"`
+	Attempts int    `json:"attempts,omitempty"`
+}
+
+// CheckInFailedDeployment reports a deployment that failed.
+type CheckInFailedDeployment struct {
+	ID     string `json:"id"`
+	Reason string `json:"reason,omitempty"`
+}
+
+// CheckInResponse is returned from the check-in endpoint.
+type CheckInResponse struct {
+	CheckIn      NodeCheckIn   `json:"checkIn"`
+	LatestConfig *LatestConfig `json:"latestConfig,omitempty"`
+}
+
+// NodeCheckIn is the JSON representation of a node check-in.
+type NodeCheckIn struct {
+	NodeID      string    `json:"nodeId"`
+	CheckInTime time.Time `json:"checkInTime"`
+}
+
+// LatestConfig bundles the active deployment with its config version.
+type LatestConfig struct {
+	Deployment    Deployment    `json:"deployment"`
+	ConfigVersion ConfigVersion `json:"configVersion"`
+}
+
+// Deployment is the JSON representation of a deployment.
+type Deployment struct {
+	ID              string     `json:"id"`
+	ConfigVersionID string     `json:"configVersionId"`
+	Status          string     `json:"status"`
+	StartTime       time.Time  `json:"startTime"`
+	FinishedTime    *time.Time `json:"finishedTime,omitempty"`
+	Reason          string     `json:"reason,omitempty"`
+}
+
+// ConfigVersion is the JSON representation of a config version.
+type ConfigVersion struct {
+	ID          string    `json:"id"`
+	NodeID      string    `json:"nodeId"`
+	Description string    `json:"description"`
+	PayloadURL  string    `json:"payloadUrl"`
+	CreateTime  time.Time `json:"createTime"`
+}
+
+// APIError represents an error response from the API.
+type APIError struct {
+	StatusCode int    `json:"-"`
+	Code       string `json:"error"`
+	Message    string `json:"message"`
+}
+
+func (e *APIError) Error() string {
+	return fmt.Sprintf("HTTP %d: %s: %s", e.StatusCode, e.Code, e.Message)
+}

@@ -1,27 +1,29 @@
 <template>
   <div class="chart__container">
-    <line-chart :data="chartData" :options="chartOptions" :plugins="[themeColorPlugin]"/>
+    <line-chart :data="chartData" :options="chartOptions" :plugins="[themeColorPlugin, vueLegendPlugin]"/>
   </div>
 </template>
 
 <script setup>
 import {useDateScale} from '@/components/charts/date.js';
-import {useThemeColorPlugin} from '@/components/charts/plugins.js';
+import {useThemeColorPlugin, useVueLegendPlugin} from '@/components/charts/plugins.js';
 import {defineChartOptions} from '@/components/charts/util.js';
-import {useAirQualityHistoryMetric} from '@/dynamic/widgets/environmental/airQuality.js';
+import {useAirQualityHistoryMetrics} from '@/dynamic/widgets/environmental/airQuality.js';
 import {useLocalProp} from '@/util/vue.js';
 import {sentenceCase} from 'change-case';
 import {Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js';
 import {startOfDay, startOfYear} from 'date-fns';
-import {computed, toRef} from 'vue';
+import {computed, toRef, toValue} from 'vue';
 import {Line as LineChart} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns'; // imported for side effects
+
+const datasetSourceName = Symbol('datasetSourceName');
 
 ChartJS.register(Title, Tooltip, LineElement, LinearScale, PointElement, TimeScale, Legend);
 
 const props = defineProps({
   source: {
-    type: String,
+    type: [String, Array],
     default: null
   },
   metric: {
@@ -52,7 +54,24 @@ const _offset = useLocalProp(toRef(props, 'offset'));
 
 const {edges, pastEdges, tickUnit} = useDateScale(_start, _end, _offset);
 
-const sourceMetrics = useAirQualityHistoryMetric(toRef(props, 'source'), toRef(props, 'metric'), pastEdges);
+// Support both single source (string) and multiple sources (array)
+const sources = computed(() => {
+  if (Array.isArray(props.source)) {
+    return props.source;
+  } else if (props.source) {
+    return [props.source];
+  }
+  return [];
+});
+
+const datasetNames = computed(() => {
+  return chartData.value.datasets.map(item => {
+    return item[datasetSourceName];
+  });
+});
+
+// Always use the devices composable for consistency
+const devices = useAirQualityHistoryMetrics(sources, toRef(props, 'metric'), pastEdges);
 
 const yAxisLabel = computed(() => {
   const s = sentenceCase(props.metric);
@@ -62,6 +81,8 @@ const yAxisLabel = computed(() => {
   return s;
 });
 
+// Always use both plugins
+const {legendItems, vueLegendPlugin} = useVueLegendPlugin();
 const {themeColorPlugin} = useThemeColorPlugin();
 const chartOptions = computed(() => {
   return defineChartOptions({
@@ -79,7 +100,7 @@ const chartOptions = computed(() => {
     },
     scales: {
       y: {
-        stacked: true,
+        stacked: false,
         beginAtZero: true,
         title: {
           display: true,
@@ -105,7 +126,7 @@ const chartOptions = computed(() => {
       },
       x: {
         type: 'time',
-        stacked: true,
+        stacked: false,
         grid: {
           color: '#fff1'
         },
@@ -134,18 +155,28 @@ const chartOptions = computed(() => {
     }
   });
 });
+
 const chartLabels = computed(() => edges.value.slice(0, -1));
 const chartData = computed(() => {
+  let datasets = [];
+  for (const [name, device] of Object.entries(devices)) {
+    const label = toValue(device.title) || name;
+    const data = toValue(device.data);
+    datasets.push({
+      label, data, [datasetSourceName]: name
+    })
+  }
   return {
     labels: chartLabels.value,
-    datasets: [
-      {
-        label: 'Air Quality',
-        data: sourceMetrics.value.map(data => data.y)
-      }
-    ]
-  }
-})
+    datasets
+  };
+});
+
+// Expose chart reference for parent component
+defineExpose({
+  legendItems,
+  datasetNames,
+});
 </script>
 
 <style scoped>

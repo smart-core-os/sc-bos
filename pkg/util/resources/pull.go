@@ -6,8 +6,8 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 // ValueChange is like resource.ValueChange, but with a generic type T.
@@ -49,7 +49,7 @@ func PullValue[T proto.Message](ctx context.Context, stream <-chan *resource.Val
 type CollectionChange[T proto.Message] struct {
 	Id         string
 	ChangeTime time.Time
-	ChangeType types.ChangeType
+	ChangeType typespb.ChangeType
 	OldValue   T
 	NewValue   T
 	// LastSeedValue will be true if this change is the last change as part of the seed values.

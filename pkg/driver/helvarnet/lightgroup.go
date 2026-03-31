@@ -11,15 +11,15 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/driver/helvarnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 // LightGroup represents a lighting group within the HelvarNet system.
 type LightGroup struct {
-	traits.UnimplementedLightApiServer
-	traits.UnimplementedLightInfoServer
+	lightpb.UnimplementedLightApiServer
+	lightpb.UnimplementedLightInfoServer
 
 	brightness *resource.Value // *traits.Brightness
 	client     *tcpClient
@@ -31,7 +31,7 @@ type LightGroup struct {
 
 func newLightingGroup(client *tcpClient, l *zap.Logger, conf *config.Device, n int) *LightGroup {
 	return &LightGroup{
-		brightness: resource.NewValue(resource.WithInitialValue(&traits.Brightness{}), resource.WithNoDuplicates()),
+		brightness: resource.NewValue(resource.WithInitialValue(&lightpb.Brightness{}), resource.WithNoDuplicates()),
 		client:     client,
 		conf:       conf,
 		logger:     l,
@@ -40,40 +40,39 @@ func newLightingGroup(client *tcpClient, l *zap.Logger, conf *config.Device, n i
 }
 
 // sends the query commands to get the last known scene for this group
-func (lg *LightGroup) getLastScene() {
+func (lg *LightGroup) getLastScene(ctx context.Context) error {
 
 	command := queryLastSceneInGroup(lg.number)
 	want := "?" + command[1:len(command)-1]
 
-	response, err := lg.client.sendAndReceive(command, want)
+	response, err := lg.client.sendAndReceive(ctx, command, want)
 	if err != nil {
-		lg.logger.Warn("failed to get last scene", zap.Error(err))
-		return
+		return fmt.Errorf("failed to get last scene for group %d: %v", lg.number, err)
 	}
 
 	split := strings.Split(response, "=")
 	if len(split) < 2 {
-		lg.logger.Warn("invalid response in getLastScene", zap.String("response", response))
-		return
+		return fmt.Errorf("invalid response in getLastScene: %s", response)
 	}
 
 	sceneNumber := strings.TrimSuffix(split[1], "#")
-	_, _ = lg.brightness.Set(&traits.Brightness{
-		Preset: &traits.LightPreset{
+	_, _ = lg.brightness.Set(&lightpb.Brightness{
+		Preset: &lightpb.LightPreset{
 			Name: sceneNumber,
 		},
 	})
 	lg.logger.Info(fmt.Sprintf("last scene for %s was %s", lg.conf.Name, sceneNumber))
+	return nil
 }
 
 // setScene sends the command to set the scene for the lighting group
 // there are 8 blocks of 16 scenes, I am not sure what constant actually does, from the spec:
 // "To call a constant light scene, use the Constant Light flag (with a parameter brightness of 1).
 // The scene called will only be a constant light scene if configured so in Designer."
-func (lg *LightGroup) setScene(block string, scene string, constant string) error {
+func (lg *LightGroup) setScene(ctx context.Context, block string, scene string, constant string) error {
 	command := recallGroupScene(lg.number, block, scene, constant)
 
-	_, err := lg.client.sendAndReceive(command, "")
+	_, err := lg.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
@@ -81,21 +80,21 @@ func (lg *LightGroup) setScene(block string, scene string, constant string) erro
 }
 
 // setLevel sends the command to set the level for the lighting group
-func (lg *LightGroup) setLevel(level int) error {
+func (lg *LightGroup) setLevel(ctx context.Context, level int) error {
 	command := changeGroupLevel(lg.number, level)
 
-	_, err := lg.client.sendAndReceive(command, "")
+	_, err := lg.client.sendAndReceive(ctx, command, "")
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (lg *LightGroup) getSceneNames() error {
+func (lg *LightGroup) getSceneNames(ctx context.Context) error {
 	command := querySceneNames()
 	want := "?" + command[1:len(command)-1] + "="
 
-	r, err := lg.client.sendAndReceive(command, want)
+	r, err := lg.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return err
 	}
@@ -103,9 +102,9 @@ func (lg *LightGroup) getSceneNames() error {
 	r = strings.TrimPrefix(r, want)
 	r = strings.TrimSuffix(r, "#")
 
-	scenes := strings.Split(r, "@")
+	scenes := strings.SplitSeq(r, "@")
 
-	for _, scene := range scenes {
+	for scene := range scenes {
 		if !strings.HasPrefix(scene, strconv.Itoa(lg.number)) {
 			// not this group
 			// Note: when testing this I was getting responses like @0.1.3:Late Evening,@0.1.4:Cleaners
@@ -146,7 +145,7 @@ func (lg *LightGroup) getSceneNames() error {
 
 // UpdateBrightness update the brightness level or preset (scene) of the lighting group
 // if the request has a present included, this takes precedence and the level percent is ignored
-func (lg *LightGroup) UpdateBrightness(_ context.Context, req *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
+func (lg *LightGroup) UpdateBrightness(ctx context.Context, req *lightpb.UpdateBrightnessRequest) (*lightpb.Brightness, error) {
 	if req.Brightness == nil {
 		return nil, status.Error(codes.InvalidArgument, "no brightness in request")
 	}
@@ -164,23 +163,23 @@ func (lg *LightGroup) UpdateBrightness(_ context.Context, req *traits.UpdateBrig
 		if len(sceneSplit) == 3 {
 			constant = sceneSplit[2]
 		}
-		err := lg.setScene(block, scene, constant)
+		err := lg.setScene(ctx, block, scene, constant)
 		if err != nil {
 			return nil, status.Error(codes.DeadlineExceeded, "failed to set scene")
 		}
-		_, _ = lg.brightness.Set(&traits.Brightness{
-			Preset: &traits.LightPreset{
+		_, _ = lg.brightness.Set(&lightpb.Brightness{
+			Preset: &lightpb.LightPreset{
 				Name: req.Brightness.Preset.Name,
 			},
 		})
 	} else {
 		lg.logger.Debug(fmt.Sprintf("setting level %f for device %s", req.Brightness.LevelPercent, lg.conf.Name))
 		level := req.Brightness.LevelPercent
-		err := lg.setLevel(int(level))
+		err := lg.setLevel(ctx, int(level))
 		if err != nil {
 			return nil, status.Error(codes.DeadlineExceeded, "failed to set scene")
 		}
-		_, _ = lg.brightness.Set(&traits.Brightness{
+		_, _ = lg.brightness.Set(&lightpb.Brightness{
 			LevelPercent: level,
 		})
 	}
@@ -188,16 +187,16 @@ func (lg *LightGroup) UpdateBrightness(_ context.Context, req *traits.UpdateBrig
 	return nil, nil
 }
 
-func (lg *LightGroup) GetBrightness(_ context.Context, _ *traits.GetBrightnessRequest) (*traits.Brightness, error) {
+func (lg *LightGroup) GetBrightness(_ context.Context, _ *lightpb.GetBrightnessRequest) (*lightpb.Brightness, error) {
 	value := lg.brightness.Get()
-	brightness := value.(*traits.Brightness)
+	brightness := value.(*lightpb.Brightness)
 	return brightness, nil
 }
 
-func (lg *LightGroup) PullBrightness(_ *traits.PullBrightnessRequest, server traits.LightApi_PullBrightnessServer) error {
+func (lg *LightGroup) PullBrightness(_ *lightpb.PullBrightnessRequest, server lightpb.LightApi_PullBrightnessServer) error {
 	for value := range lg.brightness.Pull(server.Context()) {
-		brightness := value.Value.(*traits.Brightness)
-		err := server.Send(&traits.PullBrightnessResponse{Changes: []*traits.PullBrightnessResponse_Change{
+		brightness := value.Value.(*lightpb.Brightness)
+		err := server.Send(&lightpb.PullBrightnessResponse{Changes: []*lightpb.PullBrightnessResponse_Change{
 			{
 				Name:       lg.conf.Name,
 				ChangeTime: timestamppb.New(value.ChangeTime),
@@ -211,10 +210,10 @@ func (lg *LightGroup) PullBrightness(_ *traits.PullBrightnessRequest, server tra
 	return nil
 }
 
-func (lg *LightGroup) DescribeBrightness(context.Context, *traits.DescribeBrightnessRequest) (*traits.BrightnessSupport, error) {
-	result := &traits.BrightnessSupport{}
+func (lg *LightGroup) DescribeBrightness(context.Context, *lightpb.DescribeBrightnessRequest) (*lightpb.BrightnessSupport, error) {
+	result := &lightpb.BrightnessSupport{}
 	for _, scene := range lg.scenes {
-		result.Presets = append(result.Presets, &traits.LightPreset{
+		result.Presets = append(result.Presets, &lightpb.LightPreset{
 			Title: scene.Title,
 			Name:  scene.Block + ":" + scene.Scene,
 		})

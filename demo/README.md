@@ -36,8 +36,8 @@ commands like:
 
 ```shell
 GIT_VERSION=$(git describe --tags --always)
-podman manifest push --all demo-ugs-sc-bos:$GIT_VERSION docker://ghcr.io/vanti-dev/sc-bos/demo-ugs-sc-bos:$GIT_VERSION
-podman manifest push --all demo-ugs-seed-db:$GIT_VERSION docker://ghcr.io/vanti-dev/sc-bos/demo-ugs-seed-db:$GIT_VERSION
+podman manifest push --all demo-ugs-sc-bos:$GIT_VERSION docker://ghcr.io/smart-core-os/sc-bos/demo-ugs-sc-bos:$GIT_VERSION
+podman manifest push --all demo-ugs-seed-db:$GIT_VERSION docker://ghcr.io/smart-core-os/sc-bos/demo-ugs-seed-db:$GIT_VERSION
 ```
 
 The build script should output the correct commands to run, so you can just copy and paste them.
@@ -50,7 +50,7 @@ You will need to update the tags mentioned in that file to the same as the versi
 The demo runs a local instance of Smart Core and related infrastructure, including a db.
 We've packaged these up into a Compose File, which is a convenient way to run multiple containers together.
 Download 
-the [docker-compose-ugs.yml](https://raw.githubusercontent.com/vanti-dev/sc-bos/main/demo/vanti-ugs/docker-compose-ugs.yml)
+the [docker-compose-ugs.yml](https://raw.githubusercontent.com/smart-core-os/sc-bos/main/demo/vanti-ugs/docker-compose-ugs.yml)
 file to your machine.
 
 To run the demo, you need to have Docker/Podman installed on your machine, for non-devs we recommend the Desktop

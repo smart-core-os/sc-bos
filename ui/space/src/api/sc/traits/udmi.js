@@ -1,8 +1,8 @@
 import {setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setValue} from '@/api/resource';
-import {UdmiServicePromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/udmi_grpc_web_pb';
-import {PullExportMessagesRequest} from '@vanti-dev/sc-bos-ui-gen/proto/udmi_pb';
+import {UdmiServicePromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/udmi/v1/udmi_grpc_web_pb';
+import {PullExportMessagesRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/udmi/v1/udmi_pb';
 
 /**
  *

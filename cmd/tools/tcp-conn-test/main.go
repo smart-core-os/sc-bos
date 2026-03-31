@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/vanti-dev/sc-bos/pkg/util/transport"
+	"github.com/smart-core-os/sc-bos/pkg/util/transport"
 )
 
 var (

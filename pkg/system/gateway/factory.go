@@ -38,19 +38,20 @@ package gateway
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
-	"github.com/vanti-dev/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/system"
-	"github.com/vanti-dev/sc-bos/pkg/system/gateway/config"
-	"github.com/vanti-dev/sc-bos/pkg/task"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	"github.com/smart-core-os/sc-bos/pkg/system/gateway/config"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 const (
@@ -66,10 +67,13 @@ type factory struct{}
 
 func (f *factory) New(services system.Services) service.Lifecycle {
 	s := &System{
-		self:       services.Node,
-		hub:        services.CohortManager,
-		ignore:     []string{services.GRPCEndpoint}, // avoid infinite recursion
-		tlsConfig:  services.ClientTLSConfig,
+		self:   services.Node,
+		hub:    services.CohortManager,
+		checks: services.HealthChecks,
+		ignore: []string{services.GRPCEndpoint}, // avoid infinite recursion
+		newClient: func(address string) (*grpc.ClientConn, error) {
+			return grpc.NewClient(address, grpc.WithTransportCredentials(credentials.NewTLS(services.ClientTLSConfig)))
+		},
 		reflection: services.ReflectionServer,
 		announcer:  services.Node,
 		logger:     services.Logger.Named(Name),
@@ -80,11 +84,13 @@ func (f *factory) New(services system.Services) service.Lifecycle {
 type System struct {
 	self       *node.Node
 	hub        node.Remote
+	checks     system.HealthCheckCollection
 	ignore     []string
-	tlsConfig  *tls.Config
 	reflection *reflectionapi.Server
 	announcer  node.Announcer
 	logger     *zap.Logger
+	// for testing
+	newClient func(address string) (*grpc.ClientConn, error)
 }
 
 // applyConfig runs this system based on the given config.
@@ -110,7 +116,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		go s.scanRemoteHub(ctx, c, hubConn)
 	case config.HubModeLocal:
-		hubClient := gen.NewHubApiClient(s.self.ClientConn())
+		hubClient := hubpb.NewHubApiClient(s.self.ClientConn())
 		go s.scanLocalHub(ctx, c, hubClient)
 	}
 

@@ -13,11 +13,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/vanti-dev/sc-bos/internal/iothub"
-	"github.com/vanti-dev/sc-bos/internal/iothub/auth"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/block"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/internal/iothub"
+	"github.com/smart-core-os/sc-bos/internal/iothub/auth"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 const FactoryName = "azureiot"

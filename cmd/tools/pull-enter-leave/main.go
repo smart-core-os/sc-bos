@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
 func main() {
@@ -28,8 +28,8 @@ func main() {
 		if err != nil {
 			return 0, err
 		}
-		client := traits.NewEnterLeaveSensorApiClient(conn)
-		stream, err := client.PullEnterLeaveEvents(ctx, &traits.PullEnterLeaveEventsRequest{Name: "enter-leave"})
+		client := enterleavesensorpb.NewEnterLeaveSensorApiClient(conn)
+		stream, err := client.PullEnterLeaveEvents(ctx, &enterleavesensorpb.PullEnterLeaveEventsRequest{Name: "enter-leave"})
 		if err != nil {
 			return 0, err
 		}

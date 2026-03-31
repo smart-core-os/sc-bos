@@ -3,14 +3,14 @@ package lights
 import (
 	"context"
 	"errors"
-	"sort"
+	"slices"
 	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
 )
 
 func TestBrightnessAutomation_processConfig(t *testing.T) {
@@ -128,9 +128,7 @@ func keyDiff[V any](m map[string]V, want ...string) string {
 	for k := range m {
 		gotKeys = append(gotKeys, k)
 	}
-	sort.Slice(gotKeys, func(i, j int) bool {
-		return gotKeys[i] < gotKeys[j]
-	})
+	slices.Sort(gotKeys)
 	return cmp.Diff(want, gotKeys)
 }
 

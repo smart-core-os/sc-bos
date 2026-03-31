@@ -1,4 +1,4 @@
-// Command client-meter provides a CLI tool for interacting with the [gen.MeterApiClient].
+// Command client-meter provides a CLI tool for interacting with the [meterpb.MeterApiClient].
 package main
 
 import (
@@ -11,8 +11,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/util/client"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/util/client"
 )
 
 var clientConfig client.Config
@@ -48,11 +48,11 @@ func run() error {
 	log.Printf("dialled")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	api := traits.NewAirTemperatureApiClient(conn)
+	api := airtemperaturepb.NewAirTemperatureApiClient(conn)
 
 	get := func(c context.Context, name string) error {
 		log.Printf("GetMeterReading %s", name)
-		res, err := api.GetAirTemperature(ctx, &traits.GetAirTemperatureRequest{Name: name})
+		res, err := api.GetAirTemperature(ctx, &airtemperaturepb.GetAirTemperatureRequest{Name: name})
 		if err != nil {
 			return err
 		}
@@ -62,7 +62,7 @@ func run() error {
 
 	pull := func(c context.Context, name string) error {
 		log.Printf("PullMeterReadings %s", name)
-		stream, err := api.PullAirTemperature(ctx, &traits.PullAirTemperatureRequest{Name: name})
+		stream, err := api.PullAirTemperature(ctx, &airtemperaturepb.PullAirTemperatureRequest{Name: name})
 		if err != nil {
 			return err
 		}

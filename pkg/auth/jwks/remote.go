@@ -8,15 +8,16 @@ import (
 
 	"github.com/go-jose/go-jose/v4"
 
-	"github.com/vanti-dev/sc-bos/internal/util/fetch"
+	"github.com/smart-core-os/sc-bos/internal/util/fetch"
 )
 
 const minimumUpdateInterval = time.Minute
 
-func NewRemoteKeySet(background context.Context, url string, permittedSignatureAlgorithms []jose.SignatureAlgorithm) *RemoteKeySet {
+func NewRemoteKeySet(background context.Context, url string, permittedSignatureAlgorithms []jose.SignatureAlgorithm, options ...fetch.Option) *RemoteKeySet {
 	return &RemoteKeySet{
 		url:                          url,
 		background:                   background,
+		fetchOptions:                 options,
 		permittedSignatureAlgorithms: permittedSignatureAlgorithms,
 	}
 }
@@ -25,8 +26,9 @@ func NewRemoteKeySet(background context.Context, url string, permittedSignatureA
 // If a verification of a signature fails because the signing key is unknown, the RemoteKeySet will automatically
 // query the remote JWKS url for new keys.
 type RemoteKeySet struct {
-	url        string
-	background context.Context
+	url          string
+	background   context.Context
+	fetchOptions []fetch.Option
 
 	m               sync.RWMutex
 	cache           jose.JSONWebKeySet
@@ -96,7 +98,7 @@ func (ks *RemoteKeySet) startKeyFetchJob() *keySetFetchJob {
 
 	go func() {
 		var keySet jose.JSONWebKeySet
-		err := fetch.JSON(ks.background, ks.url, &keySet)
+		err := fetch.JSON(ks.background, ks.url, &keySet, ks.fetchOptions...)
 		job.complete(keySet, err)
 
 		ks.m.Lock()

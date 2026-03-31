@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -16,28 +16,28 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/vanti-dev/sc-bos/internal/util/pki"
-	"github.com/vanti-dev/sc-bos/internal/util/rpcutil"
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
-	"github.com/vanti-dev/sc-bos/pkg/system/hub/remote"
-
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
+	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/system/hub/remote"
 )
 
 //go:embed schema.sql
 var schemaSql string
 
 func SetupDB(ctx context.Context, pool *pgxpool.Pool) error {
-	return pool.BeginTxFunc(ctx, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	return pgx.BeginTxFunc(ctx, pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, schemaSql)
 		return err
 	})
 }
 
 func NewServer(ctx context.Context, connStr string) (*Server, error) {
-	pool, err := pgxpool.Connect(ctx, connStr)
+	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		return nil, fmt.Errorf("connect %w", err)
 	}
@@ -61,11 +61,11 @@ func NewServerFromPool(ctx context.Context, pool *pgxpool.Pool, opts ...Option) 
 }
 
 type Server struct {
-	gen.UnimplementedHubApiServer
+	hubpb.UnimplementedHubApiServer
 	logger *zap.Logger
 	pool   *pgxpool.Pool
 
-	dbChanges minibus.Bus[*gen.PullHubNodesResponse_Change]
+	dbChanges minibus.Bus[*hubpb.PullHubNodesResponse_Change]
 
 	ManagerName   string
 	ManagerAddr   string
@@ -73,10 +73,10 @@ type Server struct {
 	TestTLSConfig *tls.Config // TLS config used when initiating test connections with a node
 }
 
-func (n *Server) GetHubNode(ctx context.Context, request *gen.GetHubNodeRequest) (*gen.HubNode, error) {
+func (n *Server) GetHubNode(ctx context.Context, request *hubpb.GetHubNodeRequest) (*hubpb.HubNode, error) {
 	logger := rpcutil.ServerLogger(ctx, n.logger)
 	var dbEnrollment Enrollment
-	err := n.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) (err error) {
 		dbEnrollment, err = SelectEnrollment(ctx, tx, request.GetAddress())
 		return
 	})
@@ -87,14 +87,14 @@ func (n *Server) GetHubNode(ctx context.Context, request *gen.GetHubNodeRequest)
 		return nil, status.Error(codes.Internal, "failed to retrieve enrollment")
 	}
 
-	return &gen.HubNode{
+	return &hubpb.HubNode{
 		Name:        dbEnrollment.Name,
 		Address:     dbEnrollment.Address,
 		Description: dbEnrollment.Description,
 	}, nil
 }
 
-func (n *Server) EnrollHubNode(ctx context.Context, request *gen.EnrollHubNodeRequest) (*gen.HubNode, error) {
+func (n *Server) EnrollHubNode(ctx context.Context, request *hubpb.EnrollHubNodeRequest) (*hubpb.HubNode, error) {
 	logger := rpcutil.ServerLogger(ctx, n.logger)
 	nodeReg := request.GetNode()
 	if nodeReg == nil {
@@ -105,7 +105,7 @@ func (n *Server) EnrollHubNode(ctx context.Context, request *gen.EnrollHubNodeRe
 	}
 
 	// check if the node is already enrolled
-	err := n.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
 		_, err := SelectEnrollment(ctx, tx, nodeReg.Address)
 		return err
 	})
@@ -113,7 +113,7 @@ func (n *Server) EnrollHubNode(ctx context.Context, request *gen.EnrollHubNodeRe
 		return nil, status.Errorf(codes.AlreadyExists, "%s already enrolled", nodeReg.Address)
 	}
 
-	en, err := remote.Enroll(ctx, &gen.Enrollment{
+	en, err := remote.Enroll(ctx, &enrollmentpb.Enrollment{
 		TargetName:     nodeReg.Name,
 		TargetAddress:  nodeReg.Address,
 		ManagerName:    n.ManagerName,
@@ -125,7 +125,7 @@ func (n *Server) EnrollHubNode(ctx context.Context, request *gen.EnrollHubNodeRe
 		return nil, status.Error(codes.Unknown, "enrollment failed")
 	}
 
-	err = n.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
 		return InsertEnrollment(ctx, tx, Enrollment{
 			Name:        en.TargetName,
 			Description: nodeReg.Description,
@@ -145,17 +145,17 @@ func (n *Server) EnrollHubNode(ctx context.Context, request *gen.EnrollHubNodeRe
 		return nil, status.Error(codes.Aborted, "failed to save the enrollment, no changes have been made")
 	}
 
-	go n.dbChanges.Send(context.Background(), &gen.PullHubNodesResponse_Change{
-		NewValue:   &gen.HubNode{Address: en.TargetAddress, Name: en.TargetName, Description: nodeReg.Description},
+	go n.dbChanges.Send(context.Background(), &hubpb.PullHubNodesResponse_Change{
+		NewValue:   &hubpb.HubNode{Address: en.TargetAddress, Name: en.TargetName, Description: nodeReg.Description},
 		ChangeTime: timestamppb.Now(),
-		Type:       types.ChangeType_ADD,
+		Type:       typespb.ChangeType_ADD,
 	})
 
 	return nodeReg, nil
 }
 
-func (n *Server) deleteHubNode(ctx context.Context, reg *gen.HubNode) error {
-	return remote.Forget(ctx, &gen.Enrollment{
+func (n *Server) deleteHubNode(ctx context.Context, reg *hubpb.HubNode) error {
+	return remote.Forget(ctx, &enrollmentpb.Enrollment{
 		TargetName:     reg.Name,
 		TargetAddress:  reg.Address,
 		ManagerName:    n.ManagerName,
@@ -163,10 +163,10 @@ func (n *Server) deleteHubNode(ctx context.Context, reg *gen.HubNode) error {
 	}, n.TestTLSConfig)
 }
 
-func (n *Server) ListHubNodes(ctx context.Context, request *gen.ListHubNodesRequest) (*gen.ListHubNodesResponse, error) {
+func (n *Server) ListHubNodes(ctx context.Context, request *hubpb.ListHubNodesRequest) (*hubpb.ListHubNodesResponse, error) {
 	logger := rpcutil.ServerLogger(ctx, n.logger)
 	var dbEnrollments []Enrollment
-	err := n.pool.BeginFunc(ctx, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) (err error) {
 		dbEnrollments, err = SelectEnrollments(ctx, tx)
 		return
 	})
@@ -175,32 +175,32 @@ func (n *Server) ListHubNodes(ctx context.Context, request *gen.ListHubNodesRequ
 		return nil, status.Error(codes.Unavailable, "unable to retrieve enrollments")
 	}
 
-	var registrations []*gen.HubNode
+	var registrations []*hubpb.HubNode
 	for _, en := range dbEnrollments {
-		registrations = append(registrations, &gen.HubNode{
+		registrations = append(registrations, &hubpb.HubNode{
 			Name:        en.Name,
 			Address:     en.Address,
 			Description: en.Description,
 		})
 	}
 
-	return &gen.ListHubNodesResponse{Nodes: registrations}, nil
+	return &hubpb.ListHubNodesResponse{Nodes: registrations}, nil
 }
 
-func (n *Server) PullHubNodes(request *gen.PullHubNodesRequest, server gen.HubApi_PullHubNodesServer) error {
+func (n *Server) PullHubNodes(request *hubpb.PullHubNodesRequest, server hubpb.HubApi_PullHubNodesServer) error {
 	// subscribe before we list from the db.
 	// There's still a race here as db access isn't guarded by the same locks as dbChanges is, sorry future dev
 	events := n.dbChanges.Listen(server.Context())
 
 	if !request.UpdatesOnly {
-		nodes, err := n.ListHubNodes(server.Context(), &gen.ListHubNodesRequest{})
+		nodes, err := n.ListHubNodes(server.Context(), &hubpb.ListHubNodesRequest{})
 		if err != nil {
 			return err
 		}
 		for _, node := range nodes.Nodes {
-			err := server.Send(&gen.PullHubNodesResponse{Changes: []*gen.PullHubNodesResponse_Change{
+			err := server.Send(&hubpb.PullHubNodesResponse{Changes: []*hubpb.PullHubNodesResponse_Change{
 				{
-					Type:       types.ChangeType_ADD,
+					Type:       typespb.ChangeType_ADD,
 					ChangeTime: timestamppb.Now(),
 					NewValue:   node,
 				},
@@ -212,7 +212,7 @@ func (n *Server) PullHubNodes(request *gen.PullHubNodesRequest, server gen.HubAp
 	}
 
 	for event := range events {
-		err := server.Send(&gen.PullHubNodesResponse{Changes: []*gen.PullHubNodesResponse_Change{event}})
+		err := server.Send(&hubpb.PullHubNodesResponse{Changes: []*hubpb.PullHubNodesResponse_Change{event}})
 		if err != nil {
 			return err
 		}
@@ -220,21 +220,21 @@ func (n *Server) PullHubNodes(request *gen.PullHubNodesRequest, server gen.HubAp
 	return nil
 }
 
-func (n *Server) InspectHubNode(ctx context.Context, request *gen.InspectHubNodeRequest) (*gen.HubNodeInspection, error) {
+func (n *Server) InspectHubNode(ctx context.Context, request *hubpb.InspectHubNodeRequest) (*hubpb.HubNodeInspection, error) {
 	if request.GetNode().GetAddress() == "" {
 		return nil, status.Error(codes.InvalidArgument, "node.address must be supplied")
 	}
 	return remote.Inspect(ctx, request.Node.Address)
 }
 
-func (n *Server) RenewHubNode(ctx context.Context, request *gen.RenewHubNodeRequest) (*gen.HubNode, error) {
+func (n *Server) RenewHubNode(ctx context.Context, request *hubpb.RenewHubNodeRequest) (*hubpb.HubNode, error) {
 	logger := rpcutil.ServerLogger(ctx, n.logger)
-	reg, err := n.GetHubNode(ctx, &gen.GetHubNodeRequest{Address: request.GetAddress()})
+	reg, err := n.GetHubNode(ctx, &hubpb.GetHubNodeRequest{Address: request.GetAddress()})
 	if err != nil {
 		return nil, err
 	}
 
-	en, err := remote.Renew(ctx, &gen.Enrollment{
+	en, err := remote.Renew(ctx, &enrollmentpb.Enrollment{
 		TargetName:     reg.Name,
 		TargetAddress:  reg.Address,
 		ManagerName:    n.ManagerName,
@@ -246,7 +246,7 @@ func (n *Server) RenewHubNode(ctx context.Context, request *gen.RenewHubNodeRequ
 		return nil, status.Error(codes.Unknown, "enrollment failed")
 	}
 
-	err = n.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
 		return UpdateEnrollment(ctx, tx, Enrollment{
 			Name:        en.TargetName,
 			Description: reg.Description,
@@ -261,23 +261,23 @@ func (n *Server) RenewHubNode(ctx context.Context, request *gen.RenewHubNodeRequ
 		return nil, status.Errorf(codes.DataLoss, "renew failed, unable to rollback - the system is in a corrupt state, manual intervention may be required")
 	}
 
-	newNode := &gen.HubNode{
+	newNode := &hubpb.HubNode{
 		Address:     en.TargetAddress,
 		Name:        en.TargetName,
 		Description: reg.Description,
 	}
-	go n.dbChanges.Send(context.Background(), &gen.PullHubNodesResponse_Change{
+	go n.dbChanges.Send(context.Background(), &hubpb.PullHubNodesResponse_Change{
 		OldValue:   reg,
 		NewValue:   newNode,
 		ChangeTime: timestamppb.Now(),
-		Type:       types.ChangeType_UPDATE,
+		Type:       typespb.ChangeType_UPDATE,
 	})
 
 	return reg, nil
 }
 
-func (n *Server) TestHubNode(ctx context.Context, request *gen.TestHubNodeRequest) (*gen.TestHubNodeResponse, error) {
-	reg, err := n.GetHubNode(ctx, &gen.GetHubNodeRequest{Address: request.GetAddress()})
+func (n *Server) TestHubNode(ctx context.Context, request *hubpb.TestHubNodeRequest) (*hubpb.TestHubNodeResponse, error) {
+	reg, err := n.GetHubNode(ctx, &hubpb.GetHubNodeRequest{Address: request.GetAddress()})
 	if err != nil {
 		return nil, err
 	}
@@ -290,21 +290,21 @@ func (n *Server) TestHubNode(ctx context.Context, request *gen.TestHubNodeReques
 		return nil, status.Error(codes.Unavailable, "failed connection")
 	}
 
-	client := traits.NewMetadataApiClient(conn)
-	_, err = client.GetMetadata(ctx, &traits.GetMetadataRequest{})
+	client := metadatapb.NewMetadataApiClient(conn)
+	_, err = client.GetMetadata(ctx, &metadatapb.GetMetadataRequest{})
 	if err != nil {
 		logger.Debug("failed api request", zap.Error(err))
 		return nil, status.Errorf(codes.Unavailable, "failed api request: %v", err)
 	}
 
-	return &gen.TestHubNodeResponse{}, nil
+	return &hubpb.TestHubNodeResponse{}, nil
 }
 
-func (n *Server) ForgetHubNode(ctx context.Context, request *gen.ForgetHubNodeRequest) (*gen.ForgetHubNodeResponse, error) {
-	reg, err := n.GetHubNode(ctx, &gen.GetHubNodeRequest{Address: request.GetAddress()})
+func (n *Server) ForgetHubNode(ctx context.Context, request *hubpb.ForgetHubNodeRequest) (*hubpb.ForgetHubNodeResponse, error) {
+	reg, err := n.GetHubNode(ctx, &hubpb.GetHubNodeRequest{Address: request.GetAddress()})
 	if err != nil {
 		if request.AllowMissing {
-			return &gen.ForgetHubNodeResponse{}, nil
+			return &hubpb.ForgetHubNodeResponse{}, nil
 		}
 		return nil, err
 	}
@@ -325,7 +325,7 @@ func (n *Server) ForgetHubNode(ctx context.Context, request *gen.ForgetHubNodeRe
 		return nil, err
 	}
 
-	err = n.pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
 		return DeleteEnrollment(ctx, tx, reg.Address)
 	})
 	if err != nil {
@@ -338,12 +338,12 @@ func (n *Server) ForgetHubNode(ctx context.Context, request *gen.ForgetHubNodeRe
 		return nil, status.Errorf(codes.Unknown, "error removing enrollment from database, retrying may resolve this issue")
 	}
 
-	go n.dbChanges.Send(context.Background(), &gen.PullHubNodesResponse_Change{
+	go n.dbChanges.Send(context.Background(), &hubpb.PullHubNodesResponse_Change{
 		OldValue:   reg,
 		NewValue:   nil,
 		ChangeTime: timestamppb.Now(),
-		Type:       types.ChangeType_REMOVE,
+		Type:       typespb.ChangeType_REMOVE,
 	})
 
-	return &gen.ForgetHubNodeResponse{}, nil
+	return &hubpb.ForgetHubNodeResponse{}, nil
 }

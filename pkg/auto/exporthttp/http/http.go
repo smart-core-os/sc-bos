@@ -21,8 +21,8 @@ type Option func(cli *Client)
 
 func New(opts ...Option) *Client {
 	httpClient := retryablehttp.NewClient()
-	// some retry config
 	httpClient.RetryMax = 3
+	httpClient.RetryWaitMin = 1 * time.Second
 	httpClient.RetryWaitMax = time.Second * 10
 
 	cli := &Client{
@@ -53,7 +53,7 @@ func WithLogger(noop bool, loggers ...*zap.Logger) Option {
 			return
 		}
 		cli.logger = loggers[0]
-		cli.client.Logger = &logWrapper{Logger: loggers[0]}
+		cli.client.Logger = &logWrapper{SugaredLogger: loggers[0].Sugar()}
 	}
 }
 

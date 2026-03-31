@@ -1,0 +1,54 @@
+package airtemperaturepb
+
+import (
+	"context"
+	"time"
+
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+)
+
+type Model struct {
+	airTemperature *resource.Value
+}
+
+func NewModel(opts ...resource.Option) *Model {
+	args := calcModelArgs(opts...)
+	return &Model{
+		airTemperature: resource.NewValue(args.airTemperatureOpts...),
+	}
+}
+
+func (m *Model) UpdateAirTemperature(airTemperature *AirTemperature, opts ...resource.WriteOption) (*AirTemperature, error) {
+	res, err := m.airTemperature.Set(airTemperature, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return res.(*AirTemperature), nil
+}
+
+func (m *Model) GetAirTemperature(opts ...resource.ReadOption) (*AirTemperature, error) {
+	return m.airTemperature.Get(opts...).(*AirTemperature), nil
+}
+
+func (m *Model) PullAirTemperature(ctx context.Context, opts ...resource.ReadOption) <-chan PullAirTemperatureChange {
+	send := make(chan PullAirTemperatureChange)
+
+	recv := m.airTemperature.Pull(ctx, opts...)
+	go func() {
+		defer close(send)
+		for change := range recv {
+			value := change.Value.(*AirTemperature)
+			send <- PullAirTemperatureChange{
+				Value:      value,
+				ChangeTime: change.ChangeTime,
+			}
+		}
+	}()
+
+	return send
+}
+
+type PullAirTemperatureChange struct {
+	Value      *AirTemperature
+	ChangeTime time.Time
+}

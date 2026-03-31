@@ -9,9 +9,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // Announcer defines the Announce method.
@@ -157,7 +157,7 @@ type announcement struct {
 	services       []service
 	proxyTo        grpc.ClientConnInterface
 	traits         []traitFeature
-	metadata       []*traits.Metadata
+	metadata       []*metadatapb.Metadata
 	noAutoMetadata bool
 	undo           []Undo
 }
@@ -285,7 +285,7 @@ func HasTrait(name trait.Name, opt ...TraitOption) Feature {
 //
 // See metadata.Model.MergeMetadata for more details.
 // If md is nil, does not adjust the announcement.
-func HasMetadata(md *traits.Metadata) Feature {
+func HasMetadata(md *metadatapb.Metadata) Feature {
 	return featureFunc(func(a *announcement) {
 		if md == nil {
 			return // do nothing, helps callers to avoid nil checks
@@ -293,7 +293,7 @@ func HasMetadata(md *traits.Metadata) Feature {
 		// We clone because if this is the first time the name has been associated with metadata,
 		// then the passed md is used as is instead of cloning which can cause unexpected mutation
 		// from the pov of the caller.
-		a.metadata = append(a.metadata, proto.Clone(md).(*traits.Metadata))
+		a.metadata = append(a.metadata, proto.Clone(md).(*metadatapb.Metadata))
 	})
 }
 

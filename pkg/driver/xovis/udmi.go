@@ -10,9 +10,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 const PointsetVersion = "1.0.0"
@@ -40,8 +41,8 @@ type EventPoints struct {
 type EventPoint[T any] struct {
 	PresentValue T `json:"present_value"`
 }
-type UdmiServiceServer struct {
-	gen.UnimplementedUdmiServiceServer
+type udmiServiceServer struct {
+	udmipb.UnimplementedUdmiServiceServer
 
 	logger *zap.Logger
 
@@ -50,8 +51,8 @@ type UdmiServiceServer struct {
 	udmiTopicPrefix string
 }
 
-func NewUdmiServiceServer(logger *zap.Logger, e *resource.Value, o *resource.Value, udmiPrefix string) *UdmiServiceServer {
-	return &UdmiServiceServer{
+func newUdmiServiceServer(logger *zap.Logger, e *resource.Value, o *resource.Value, udmiPrefix string) *udmiServiceServer {
+	return &udmiServiceServer{
 		logger:          logger,
 		enterLeave:      e,
 		occupancy:       o,
@@ -59,20 +60,20 @@ func NewUdmiServiceServer(logger *zap.Logger, e *resource.Value, o *resource.Val
 	}
 }
 
-func (u *UdmiServiceServer) PullControlTopics(_ *gen.PullControlTopicsRequest, _ gen.UdmiService_PullControlTopicsServer) error {
+func (u *udmiServiceServer) PullControlTopics(_ *udmipb.PullControlTopicsRequest, _ udmipb.UdmiService_PullControlTopicsServer) error {
 	// we don't have any control topics
 	return status.Error(codes.Unimplemented, "not implemented")
 }
-func (u *UdmiServiceServer) OnMessage(_ context.Context, _ *gen.OnMessageRequest) (*gen.OnMessageResponse, error) {
+func (u *udmiServiceServer) OnMessage(_ context.Context, _ *udmipb.OnMessageRequest) (*udmipb.OnMessageResponse, error) {
 	// we don't support doing anything here
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
-func (u *UdmiServiceServer) GetExportMessage(_ context.Context, _ *gen.GetExportMessageRequest) (*gen.MqttMessage, error) {
+func (u *udmiServiceServer) GetExportMessage(_ context.Context, _ *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
-func (u *UdmiServiceServer) PullExportMessages(request *gen.PullExportMessagesRequest, server gen.UdmiService_PullExportMessagesServer) error {
+func (u *udmiServiceServer) PullExportMessages(request *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
 	ctx, cancel := context.WithCancel(server.Context())
 	defer cancel()
 
@@ -105,7 +106,7 @@ func (u *UdmiServiceServer) PullExportMessages(request *gen.PullExportMessagesRe
 				break
 			}
 			if change != nil {
-				airQuality := change.Value.(*traits.EnterLeaveEvent)
+				airQuality := change.Value.(*enterleavesensorpb.EnterLeaveEvent)
 				appendEnterLeaveEventPoints(airQuality, &eventPoints)
 			}
 
@@ -115,7 +116,7 @@ func (u *UdmiServiceServer) PullExportMessages(request *gen.PullExportMessagesRe
 				break
 			}
 			if change != nil {
-				temperature := change.Value.(*traits.Occupancy)
+				temperature := change.Value.(*occupancysensorpb.Occupancy)
 				appendOccupancyEventPoints(temperature, &eventPoints)
 			}
 		}
@@ -125,9 +126,9 @@ func (u *UdmiServiceServer) PullExportMessages(request *gen.PullExportMessagesRe
 			return status.Error(codes.Internal, "failed to encode UDMI message")
 		}
 
-		err = server.Send(&gen.PullExportMessagesResponse{
+		err = server.Send(&udmipb.PullExportMessagesResponse{
 			Name: request.GetName(),
-			Message: &gen.MqttMessage{
+			Message: &udmipb.MqttMessage{
 				Topic:   path.Join(u.udmiTopicPrefix, "events/pointset"),
 				Payload: string(eventEnc),
 			},
@@ -138,12 +139,12 @@ func (u *UdmiServiceServer) PullExportMessages(request *gen.PullExportMessagesRe
 	}
 }
 
-func appendEnterLeaveEventPoints(e *traits.EnterLeaveEvent, eventPoints *EventPoints) {
+func appendEnterLeaveEventPoints(e *enterleavesensorpb.EnterLeaveEvent, eventPoints *EventPoints) {
 	eventPoints.EnterCount = &EventPoint[int32]{PresentValue: *e.EnterTotal}
 	eventPoints.LeaveCount = &EventPoint[int32]{PresentValue: *e.LeaveTotal}
 }
 
-func appendOccupancyEventPoints(o *traits.Occupancy, eventPoints *EventPoints) {
+func appendOccupancyEventPoints(o *occupancysensorpb.Occupancy, eventPoints *EventPoints) {
 	eventPoints.PeopleCount = &EventPoint[int32]{PresentValue: o.PeopleCount}
 	eventPoints.OccupancyState = &EventPoint[string]{PresentValue: o.State.String()}
 }

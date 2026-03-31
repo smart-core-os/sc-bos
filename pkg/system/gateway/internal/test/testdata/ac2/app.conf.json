@@ -3,5 +3,18 @@
     {"type": "mock", "name": "ac2/mock", "devices": [
       {"name": "ac2/dev1", "traits": [{"name": "smartcore.traits.OnOff"}]}
     ]}
+  ],
+  "automation": [
+    {
+      "name": "ac2/dev1/health", "type": "healthbounds",
+      "devices": [{"field": "name", "stringIn": {"strings": ["ac2/dev1"]}}],
+      "source": {"trait": "smartcore.traits.OnOff", "value": "state"},
+      "check": {
+        "bounds": {"normalValue": {"stringValue": "ON"}}
+      }
+    }
+  ],
+  "zones": [
+    {"type": "area", "name": "ac2/zone1"}
   ]
 }

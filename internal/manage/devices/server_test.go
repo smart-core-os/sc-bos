@@ -8,31 +8,42 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 func Test_deviceMatchesQuery(t *testing.T) {
 	// simple validation test, exhaustive tests are at a lower level
 	t.Run("matches", func(t *testing.T) {
-		query := &gen.Device_Query{
-			Conditions: []*gen.Device_Query_Condition{
-				{Field: "metadata.membership.subsystem", Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "Lighting"}},
-				{Field: "metadata.location.more.floor", Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "4"}},
+		query := &devicespb.Device_Query{
+			Conditions: []*devicespb.Device_Query_Condition{
+				{Field: "metadata.membership.subsystem", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "Lighting"}},
+				{Field: "metadata.location.more.floor", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "4"}},
+				{Field: "metadata.nics", Value: &devicespb.Device_Query_Condition_Matches{Matches: &devicespb.Device_Query{
+					Conditions: []*devicespb.Device_Query_Condition{
+						{Field: "gateway", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "1.2.3.4"}},
+						{Field: "assignment", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "DHCP"}},
+					},
+				}}},
 			},
 		}
-		device := &gen.Device{
+		device := &devicespb.Device{
 			Name: "Light on floor 4",
-			Metadata: &traits.Metadata{
-				Membership: &traits.Metadata_Membership{
+			Metadata: &metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "Lighting",
 				},
-				Location: &traits.Metadata_Location{
+				Location: &metadatapb.Metadata_Location{
 					More: map[string]string{
 						"floor": "4",
 					},
+				},
+				Nics: []*metadatapb.Metadata_NIC{
+					{Gateway: "1.2.3.4", Assignment: metadatapb.Metadata_NIC_STATIC},
+					{Gateway: "not1.2.3.4", Assignment: metadatapb.Metadata_NIC_DHCP},
+					{Gateway: "1.2.3.4", Assignment: metadatapb.Metadata_NIC_DHCP},
 				},
 			},
 		}
@@ -43,29 +54,66 @@ func Test_deviceMatchesQuery(t *testing.T) {
 	})
 
 	t.Run("not matches", func(t *testing.T) {
-		query := &gen.Device_Query{
-			Conditions: []*gen.Device_Query_Condition{
-				{Field: "metadata.membership.subsystem", Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "Lighting"}},
-				{Field: "metadata.location.more.floor", Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "4"}},
-			},
-		}
-		device := &gen.Device{
-			Name: "Light on floor 4",
-			Metadata: &traits.Metadata{
-				Membership: &traits.Metadata_Membership{
-					Subsystem: "Lighting",
+		tests := []struct {
+			name  string
+			query *devicespb.Device_Query
+		}{
+			{
+				"floor mismatch",
+				&devicespb.Device_Query{
+					Conditions: []*devicespb.Device_Query_Condition{
+						{Field: "metadata.location.more.floor", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "4"}},
+					},
 				},
-				Location: &traits.Metadata_Location{
-					More: map[string]string{
-						"floor": "5",
+			},
+			{
+				"subsystem mismatch",
+				&devicespb.Device_Query{
+					Conditions: []*devicespb.Device_Query_Condition{
+						{Field: "metadata.membership.subsystem", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "BMS"}},
+					},
+				},
+			},
+			{
+				"nested mismatch",
+				&devicespb.Device_Query{
+					Conditions: []*devicespb.Device_Query_Condition{
+						{Field: "metadata.nics", Value: &devicespb.Device_Query_Condition_Matches{Matches: &devicespb.Device_Query{
+							Conditions: []*devicespb.Device_Query_Condition{
+								{Field: "gateway", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "static.gw"}},
+								{Field: "assignment", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "DHCP"}},
+							},
+						}}},
 					},
 				},
 			},
 		}
-		got := deviceMatchesQuery(query, device)
-		if got {
-			t.Fatalf("deviceMatchesQuery want false, got true")
+		device := &devicespb.Device{
+			Name: "Light on floor 4",
+			Metadata: &metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
+					Subsystem: "Lighting",
+				},
+				Location: &metadatapb.Metadata_Location{
+					More: map[string]string{
+						"floor": "5",
+					},
+				},
+				Nics: []*metadatapb.Metadata_NIC{
+					{Gateway: "static.gw", Assignment: metadatapb.Metadata_NIC_STATIC},
+					{Gateway: "dhcp.gw", Assignment: metadatapb.Metadata_NIC_DHCP},
+				},
+			},
 		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				got := deviceMatchesQuery(tt.query, device)
+				if got {
+					t.Fatalf("deviceMatchesQuery want false, got true")
+				}
+			})
+		}
+
 	})
 }
 
@@ -76,15 +124,15 @@ func TestServer_ListDevices(t *testing.T) {
 	// they're created interleaved to try and avoid page 1 being all lights and page 2 being all hvac
 	for i := range 20 {
 		n.Announce(fmt.Sprintf("device/%02d/light", i),
-			node.HasMetadata(&traits.Metadata{
-				Membership: &traits.Metadata_Membership{
+			node.HasMetadata(&metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "Lighting",
 				},
 			}),
 			node.HasTrait(trait.Light))
 		n.Announce(fmt.Sprintf("device/%02d/hvac", i),
-			node.HasMetadata(&traits.Metadata{
-				Membership: &traits.Metadata_Membership{
+			node.HasMetadata(&metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "HVAC",
 				},
 			}),
@@ -94,18 +142,18 @@ func TestServer_ListDevices(t *testing.T) {
 	server := &Server{m: n}
 	server.ChildPageSize = 5 // force multiple pages to be read from the parent
 
-	mdNamed := func(name string) *traits.Metadata {
-		return &traits.Metadata{
+	mdNamed := func(name string) *metadatapb.Metadata {
+		return &metadatapb.Metadata{
 			Name:       name,
-			Membership: &traits.Metadata_Membership{Subsystem: "Lighting"},
-			Traits: []*traits.TraitMetadata{
+			Membership: &metadatapb.Metadata_Membership{Subsystem: "Lighting"},
+			Traits: []*metadatapb.TraitMetadata{
 				{Name: trait.Light.String()},
 				{Name: trait.Metadata.String()},
 			},
 		}
 	}
 
-	wantPage1 := []*gen.Device{
+	wantPage1 := []*devicespb.Device{
 		{Name: "device/00/light", Metadata: mdNamed("device/00/light")},
 		{Name: "device/01/light", Metadata: mdNamed("device/01/light")},
 		{Name: "device/02/light", Metadata: mdNamed("device/02/light")},
@@ -114,7 +162,7 @@ func TestServer_ListDevices(t *testing.T) {
 		{Name: "device/05/light", Metadata: mdNamed("device/05/light")},
 		{Name: "device/06/light", Metadata: mdNamed("device/06/light")},
 	}
-	wantPage2 := []*gen.Device{
+	wantPage2 := []*devicespb.Device{
 		{Name: "device/07/light", Metadata: mdNamed("device/07/light")},
 		{Name: "device/08/light", Metadata: mdNamed("device/08/light")},
 		{Name: "device/09/light", Metadata: mdNamed("device/09/light")},
@@ -123,7 +171,7 @@ func TestServer_ListDevices(t *testing.T) {
 		{Name: "device/12/light", Metadata: mdNamed("device/12/light")},
 		{Name: "device/13/light", Metadata: mdNamed("device/13/light")},
 	}
-	wantPage3 := []*gen.Device{
+	wantPage3 := []*devicespb.Device{
 		{Name: "device/14/light", Metadata: mdNamed("device/14/light")},
 		{Name: "device/15/light", Metadata: mdNamed("device/15/light")},
 		{Name: "device/16/light", Metadata: mdNamed("device/16/light")},
@@ -133,10 +181,10 @@ func TestServer_ListDevices(t *testing.T) {
 	}
 
 	// PAGE 1 - should return a full page
-	devices, err := server.ListDevices(context.Background(), &gen.ListDevicesRequest{
+	devices, err := server.ListDevices(context.Background(), &devicespb.ListDevicesRequest{
 		PageSize: 7,
-		Query: &gen.Device_Query{Conditions: []*gen.Device_Query_Condition{
-			{Field: "metadata.membership.subsystem", Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "Lighting"}},
+		Query: &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
+			{Field: "metadata.membership.subsystem", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "Lighting"}},
 		}},
 	})
 	if err != nil {
@@ -150,10 +198,10 @@ func TestServer_ListDevices(t *testing.T) {
 	}
 
 	// PAGE 2 - should also return a full page
-	devices, err = server.ListDevices(context.Background(), &gen.ListDevicesRequest{
+	devices, err = server.ListDevices(context.Background(), &devicespb.ListDevicesRequest{
 		PageSize: 7,
-		Query: &gen.Device_Query{Conditions: []*gen.Device_Query_Condition{
-			{Field: "metadata.membership.subsystem", Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "Lighting"}},
+		Query: &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
+			{Field: "metadata.membership.subsystem", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "Lighting"}},
 		}},
 		PageToken: devices.NextPageToken,
 	})
@@ -168,10 +216,10 @@ func TestServer_ListDevices(t *testing.T) {
 	}
 
 	// PAGE 3 - is not a full page, and should have no page token
-	devices, err = server.ListDevices(context.Background(), &gen.ListDevicesRequest{
+	devices, err = server.ListDevices(context.Background(), &devicespb.ListDevicesRequest{
 		PageSize: 7,
-		Query: &gen.Device_Query{Conditions: []*gen.Device_Query_Condition{
-			{Field: "metadata.membership.subsystem", Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "Lighting"}},
+		Query: &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
+			{Field: "metadata.membership.subsystem", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "Lighting"}},
 		}},
 		PageToken: devices.NextPageToken,
 	})
@@ -192,11 +240,11 @@ func TestServer_GetDevicesMetadata(t *testing.T) {
 	// create devices with different subsystems and locations
 	for i := range 10 {
 		n.Announce(fmt.Sprintf("devices/LTF-%03d", i+1),
-			node.HasMetadata(&traits.Metadata{
-				Membership: &traits.Metadata_Membership{
+			node.HasMetadata(&metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "Lighting",
 				},
-				Location: &traits.Metadata_Location{
+				Location: &metadatapb.Metadata_Location{
 					More: map[string]string{
 						"floor": fmt.Sprintf("%d", i%3+1), // floors 1, 2, 3
 					},
@@ -206,11 +254,11 @@ func TestServer_GetDevicesMetadata(t *testing.T) {
 	}
 	for i := range 5 {
 		n.Announce(fmt.Sprintf("devices/FCU-%03d", i+1),
-			node.HasMetadata(&traits.Metadata{
-				Membership: &traits.Metadata_Membership{
+			node.HasMetadata(&metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "HVAC",
 				},
-				Location: &traits.Metadata_Location{
+				Location: &metadatapb.Metadata_Location{
 					More: map[string]string{
 						"floor": fmt.Sprintf("%d", i%2+1), // floors 1, 2
 					},
@@ -222,8 +270,8 @@ func TestServer_GetDevicesMetadata(t *testing.T) {
 	server := &Server{m: n}
 
 	t.Run("all devices", func(t *testing.T) {
-		metadata, err := server.GetDevicesMetadata(context.Background(), &gen.GetDevicesMetadataRequest{
-			Includes: &gen.DevicesMetadata_Include{
+		metadata, err := server.GetDevicesMetadata(context.Background(), &devicespb.GetDevicesMetadataRequest{
+			Includes: &devicespb.DevicesMetadata_Include{
 				Fields: []string{"metadata.membership.subsystem", "metadata.location.more.floor"},
 			},
 		})
@@ -263,13 +311,13 @@ func TestServer_GetDevicesMetadata(t *testing.T) {
 	})
 
 	t.Run("filtered by subsystem", func(t *testing.T) {
-		metadata, err := server.GetDevicesMetadata(context.Background(), &gen.GetDevicesMetadataRequest{
-			Query: &gen.Device_Query{
-				Conditions: []*gen.Device_Query_Condition{
-					{Field: "metadata.membership.subsystem", Value: &gen.Device_Query_Condition_StringEqual{StringEqual: "Lighting"}},
+		metadata, err := server.GetDevicesMetadata(context.Background(), &devicespb.GetDevicesMetadataRequest{
+			Query: &devicespb.Device_Query{
+				Conditions: []*devicespb.Device_Query_Condition{
+					{Field: "metadata.membership.subsystem", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "Lighting"}},
 				},
 			},
-			Includes: &gen.DevicesMetadata_Include{
+			Includes: &devicespb.DevicesMetadata_Include{
 				Fields: []string{"metadata.location.more.floor"},
 			},
 		})
@@ -297,7 +345,7 @@ func TestServer_GetDevicesMetadata(t *testing.T) {
 	})
 
 	t.Run("no includes", func(t *testing.T) {
-		metadata, err := server.GetDevicesMetadata(context.Background(), &gen.GetDevicesMetadataRequest{})
+		metadata, err := server.GetDevicesMetadata(context.Background(), &devicespb.GetDevicesMetadataRequest{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -312,7 +360,7 @@ func TestServer_GetDevicesMetadata(t *testing.T) {
 	})
 }
 
-func findFieldCount(fieldCounts []*gen.DevicesMetadata_StringFieldCount, field string) *gen.DevicesMetadata_StringFieldCount {
+func findFieldCount(fieldCounts []*devicespb.DevicesMetadata_StringFieldCount, field string) *devicespb.DevicesMetadata_StringFieldCount {
 	for _, fc := range fieldCounts {
 		if fc.Field == field {
 			return fc

@@ -5,7 +5,7 @@
     <parameters value="-skip-build -ignore-enrol-err" />
     <root_directory value="$PROJECT_DIR$" />
     <kind value="FILE" />
-    <package value="github.com/vanti-dev/sc-bos/pkg/system/proxy/internal/test" />
+    <package value="github.com/smart-core-os/sc-bos/pkg/system/proxy/internal/test" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/pkg/system/proxy/internal/test/proxy_test.go" />
     <framework value="gotest" />

@@ -6,23 +6,23 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 type airTemperatureServer struct {
-	traits.UnimplementedAirTemperatureApiServer
+	airtemperaturepb.UnimplementedAirTemperatureApiServer
 
 	trv *TRV
 }
 
-func (a *airTemperatureServer) GetAirTemperature(_ context.Context, _ *traits.GetAirTemperatureRequest) (*traits.AirTemperature, error) {
+func (a *airTemperatureServer) GetAirTemperature(_ context.Context, _ *airtemperaturepb.GetAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
 	data, _ := a.trv.Data.Get()
 	airTemperature := DataToAirTemperature(data)
 	return airTemperature, nil
 }
 
-func (a *airTemperatureServer) UpdateAirTemperature(ctx context.Context, request *traits.UpdateAirTemperatureRequest) (*traits.AirTemperature, error) {
+func (a *airTemperatureServer) UpdateAirTemperature(ctx context.Context, request *airtemperaturepb.UpdateAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
 	airTemperature := request.GetState()
 	if setPoint := airTemperature.GetTemperatureSetPoint(); setPoint != nil {
 		err := a.trv.SetTargetTemperature(ctx, setPoint.ValueCelsius)
@@ -38,19 +38,19 @@ func (a *airTemperatureServer) UpdateAirTemperature(ctx context.Context, request
 	return DataToAirTemperature(data), nil
 }
 
-func (a *airTemperatureServer) PullAirTemperature(request *traits.PullAirTemperatureRequest, server traits.AirTemperatureApi_PullAirTemperatureServer) error {
+func (a *airTemperatureServer) PullAirTemperature(request *airtemperaturepb.PullAirTemperatureRequest, server airtemperaturepb.AirTemperatureApi_PullAirTemperatureServer) error {
 	ctx, cancel := context.WithCancel(server.Context())
 	defer cancel()
 
 	send := func(data ThermostatData, t time.Time) error {
 		airTemperature := DataToAirTemperature(data)
-		change := &traits.PullAirTemperatureResponse_Change{
+		change := &airtemperaturepb.PullAirTemperatureResponse_Change{
 			Name:           request.GetName(),
 			ChangeTime:     timestamppb.New(t),
 			AirTemperature: airTemperature,
 		}
-		res := &traits.PullAirTemperatureResponse{
-			Changes: []*traits.PullAirTemperatureResponse_Change{change},
+		res := &airtemperaturepb.PullAirTemperatureResponse{
+			Changes: []*airtemperaturepb.PullAirTemperatureResponse_Change{change},
 		}
 		return server.Send(res)
 	}
@@ -71,27 +71,27 @@ func (a *airTemperatureServer) PullAirTemperature(request *traits.PullAirTempera
 	return nil
 }
 
-var _ traits.AirTemperatureApiServer = (*airTemperatureServer)(nil)
+var _ airtemperaturepb.AirTemperatureApiServer = (*airTemperatureServer)(nil)
 
-func DataToAirTemperature(data ThermostatData) *traits.AirTemperature {
-	airTemperature := &traits.AirTemperature{}
+func DataToAirTemperature(data ThermostatData) *airtemperaturepb.AirTemperature {
+	airTemperature := &airtemperaturepb.AirTemperature{}
 
 	if data.Temperature.IsValid {
-		airTemperature.AmbientTemperature = &types.Temperature{
+		airTemperature.AmbientTemperature = &typespb.Temperature{
 			ValueCelsius: data.Temperature.Value,
 		}
 	}
 
 	if data.TargetTemperature.Enabled {
-		airTemperature.TemperatureGoal = &traits.AirTemperature_TemperatureSetPoint{
-			TemperatureSetPoint: &types.Temperature{ValueCelsius: data.TargetTemperature.Value},
+		airTemperature.TemperatureGoal = &airtemperaturepb.AirTemperature_TemperatureSetPoint{
+			TemperatureSetPoint: &typespb.Temperature{ValueCelsius: data.TargetTemperature.Value},
 		}
 	}
 
 	if data.Position > 0 {
-		airTemperature.Mode = traits.AirTemperature_HEAT
+		airTemperature.Mode = airtemperaturepb.AirTemperature_HEAT
 	} else {
-		airTemperature.Mode = traits.AirTemperature_OFF
+		airTemperature.Mode = airtemperaturepb.AirTemperature_OFF
 	}
 
 	return airTemperature

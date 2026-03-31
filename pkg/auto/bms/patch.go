@@ -4,16 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/auto/bms/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/auto/bms/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
 // Patcher represents a single patch that adjusts ReadState.
@@ -40,7 +42,7 @@ func (a *Auto) setupPatchers(ctx context.Context, configChanged <-chan config.Ro
 			new: func(name string, logger *zap.Logger) subscriber {
 				return &AirTemperaturePatches{
 					name:   name,
-					client: traits.NewAirTemperatureApiClient(conn),
+					client: airtemperaturepb.NewAirTemperatureApiClient(conn),
 					logger: logger.Named("airTemperature"),
 				}
 			},
@@ -55,7 +57,7 @@ func (a *Auto) setupPatchers(ctx context.Context, configChanged <-chan config.Ro
 			new: func(name string, logger *zap.Logger) subscriber {
 				return &ModePatches{
 					name:   name,
-					client: traits.NewModeApiClient(conn),
+					client: modepb.NewModeApiClient(conn),
 					logger: logger.Named("mode"),
 				}
 			},
@@ -65,7 +67,7 @@ func (a *Auto) setupPatchers(ctx context.Context, configChanged <-chan config.Ro
 			new: func(name string, logger *zap.Logger) subscriber {
 				return &OccupancySensorPatches{
 					name:   name,
-					client: traits.NewOccupancySensorApiClient(conn),
+					client: occupancysensorpb.NewOccupancySensorApiClient(conn),
 					logger: logger.Named("occupancy"),
 				}
 			},
@@ -81,8 +83,8 @@ func (a *Auto) setupPatchers(ctx context.Context, configChanged <-chan config.Ro
 			new: func(name string, logger *zap.Logger) subscriber {
 				return &MeanOATempPatches{
 					name:          name,
-					apiClient:     traits.NewAirTemperatureApiClient(conn),
-					historyClient: gen.NewAirTemperatureHistoryClient(conn),
+					apiClient:     airtemperaturepb.NewAirTemperatureApiClient(conn),
+					historyClient: airtemperaturepb.NewAirTemperatureHistoryClient(conn),
 					logger:        logger.Named("meanOATemp"),
 				}
 			},
@@ -178,9 +180,7 @@ func (a *Auto) processConfig(ctx context.Context, cfg config.Root, sources []*so
 
 func shallowCopyMap[K comparable, V any](m map[K]V) map[K]V {
 	n := make(map[K]V, len(m))
-	for k, v := range m {
-		n[k] = v
-	}
+	maps.Copy(n, m)
 	return n
 }
 

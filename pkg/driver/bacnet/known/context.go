@@ -1,6 +1,6 @@
 package known
 
-import bactypes "github.com/vanti-dev/gobacnet/types"
+import bactypes "github.com/smart-core-os/gobacnet/types"
 
 // Context describes what we know about a bacnet system.
 type Context interface {

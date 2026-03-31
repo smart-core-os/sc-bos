@@ -11,11 +11,12 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/pkg/auto/export/config"
-	"github.com/vanti-dev/sc-bos/pkg/task"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/auto/export/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/parentpb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
 func NewSmartCore(services Services) task.Starter {
@@ -32,15 +33,15 @@ type smartCore struct {
 
 func (s *smartCore) applyConfig(ctx context.Context, cfg config.SmartCoreSource) error {
 	conn := s.services.Node.ClientConn()
-	parentClient := traits.NewParentApiClient(conn)
-	lightClient := traits.NewLightApiClient(conn)
+	parentClient := parentpb.NewParentApiClient(conn)
+	lightClient := lightpb.NewLightApiClient(conn)
 
 	sent := allowDuplicates()
 	if cfg.Duplicates.TrackDuplicates() {
 		sent = trackDuplicates(cfg.Duplicates.Cmp())
 	}
 
-	children, err := parentClient.ListChildren(ctx, &traits.ListChildrenRequest{})
+	children, err := parentClient.ListChildren(ctx, &parentpb.ListChildrenRequest{})
 	if err != nil {
 		return err
 	}
@@ -79,16 +80,16 @@ func (s *smartCore) applyConfig(ctx context.Context, cfg config.SmartCoreSource)
 	return nil
 }
 
-func publishLightBrightness(ctx context.Context, name string, lightClient traits.LightApiClient, publisher Publisher, sent *duplicates, logger *zap.Logger) error {
+func publishLightBrightness(ctx context.Context, name string, lightClient lightpb.LightApiClient, publisher Publisher, sent *duplicates, logger *zap.Logger) error {
 	puller := &lightBrightnessPuller{
 		client: lightClient,
 		name:   name,
 	}
-	changes := make(chan *traits.PullBrightnessResponse_Change)
+	changes := make(chan *lightpb.PullBrightnessResponse_Change)
 	tasks, ctx := errgroup.WithContext(ctx)
 	tasks.Go(func() error {
 		defer close(changes)
-		err := pull.Changes[*traits.PullBrightnessResponse_Change](ctx, puller, changes, pull.WithLogger(logger))
+		err := pull.Changes[*lightpb.PullBrightnessResponse_Change](ctx, puller, changes, pull.WithLogger(logger))
 		if status.Code(err) == codes.Unimplemented {
 			logger.Debug("read not supported")
 			return nil
@@ -117,12 +118,12 @@ func publishLightBrightness(ctx context.Context, name string, lightClient traits
 }
 
 type lightBrightnessPuller struct {
-	client traits.LightApiClient
+	client lightpb.LightApiClient
 	name   string
 }
 
-func (p *lightBrightnessPuller) Pull(ctx context.Context, changes chan<- *traits.PullBrightnessResponse_Change) error {
-	stream, err := p.client.PullBrightness(ctx, &traits.PullBrightnessRequest{Name: p.name})
+func (p *lightBrightnessPuller) Pull(ctx context.Context, changes chan<- *lightpb.PullBrightnessResponse_Change) error {
+	stream, err := p.client.PullBrightness(ctx, &lightpb.PullBrightnessRequest{Name: p.name})
 	if err != nil {
 		return err
 	}
@@ -143,15 +144,15 @@ func (p *lightBrightnessPuller) Pull(ctx context.Context, changes chan<- *traits
 	}
 }
 
-func (p *lightBrightnessPuller) Poll(ctx context.Context, changes chan<- *traits.PullBrightnessResponse_Change) error {
-	res, err := p.client.GetBrightness(ctx, &traits.GetBrightnessRequest{Name: p.name})
+func (p *lightBrightnessPuller) Poll(ctx context.Context, changes chan<- *lightpb.PullBrightnessResponse_Change) error {
+	res, err := p.client.GetBrightness(ctx, &lightpb.GetBrightnessRequest{Name: p.name})
 	if err != nil {
 		return err
 	}
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case changes <- &traits.PullBrightnessResponse_Change{Name: p.name, Brightness: res, ChangeTime: timestamppb.Now()}:
+	case changes <- &lightpb.PullBrightnessResponse_Change{Name: p.name, Brightness: res, ChangeTime: timestamppb.Now()}:
 		return nil
 	}
 }

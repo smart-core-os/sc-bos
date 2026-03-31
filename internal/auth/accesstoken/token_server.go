@@ -11,8 +11,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/internal/util/rpcutil"
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
 )
 
 // Server implements an OAuth 2.0 token server that supports client credentials and password grant types.

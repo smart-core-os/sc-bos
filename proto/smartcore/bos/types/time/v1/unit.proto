@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package smartcore.bos.types.time.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/timepb";
+
+// Units of time
+enum Unit {
+  UNIT_UNSPECIFIED = 0;
+  // seconds is the SI unit of time
+  UNIT_SECONDS = 1;
+  UNIT_MICROSECONDS = 2;
+  UNIT_MILLISECONDS = 3;
+  UNIT_NANOSECONDS = 4;
+
+  UNIT_YEARS = 5;
+  UNIT_MONTHS = 6;
+  UNIT_WEEKS = 7;
+  UNIT_DAYS = 8;
+  UNIT_HOURS = 9;
+  UNIT_MINUTES = 10;
+}

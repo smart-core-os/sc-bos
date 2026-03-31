@@ -7,53 +7,53 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 )
 
 func TestMergeOnOff(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    []*traits.OnOff
-		want     traits.OnOff_State
+		input    []*onoffpb.OnOff
+		want     onoffpb.OnOff_State
 		wantErr  bool
 		wantCode codes.Code
 	}{
 		{
 			name:    "all on",
-			input:   []*traits.OnOff{{State: traits.OnOff_ON}, {State: traits.OnOff_ON}},
-			want:    traits.OnOff_ON,
+			input:   []*onoffpb.OnOff{{State: onoffpb.OnOff_ON}, {State: onoffpb.OnOff_ON}},
+			want:    onoffpb.OnOff_ON,
 			wantErr: false,
 		},
 		{
 			name:    "all off",
-			input:   []*traits.OnOff{{State: traits.OnOff_OFF}, {State: traits.OnOff_OFF}},
-			want:    traits.OnOff_OFF,
+			input:   []*onoffpb.OnOff{{State: onoffpb.OnOff_OFF}, {State: onoffpb.OnOff_OFF}},
+			want:    onoffpb.OnOff_OFF,
 			wantErr: false,
 		},
 		{
 			name:     "mixed states",
-			input:    []*traits.OnOff{{State: traits.OnOff_ON}, {State: traits.OnOff_OFF}},
-			want:     traits.OnOff_STATE_UNSPECIFIED,
+			input:    []*onoffpb.OnOff{{State: onoffpb.OnOff_ON}, {State: onoffpb.OnOff_OFF}},
+			want:     onoffpb.OnOff_STATE_UNSPECIFIED,
 			wantErr:  true,
 			wantCode: codes.FailedPrecondition,
 		},
 		{
 			name:     "empty input",
-			input:    []*traits.OnOff{},
-			want:     traits.OnOff_STATE_UNSPECIFIED,
+			input:    []*onoffpb.OnOff{},
+			want:     onoffpb.OnOff_STATE_UNSPECIFIED,
 			wantErr:  true,
 			wantCode: codes.FailedPrecondition,
 		},
 		{
 			name:    "ignore unspecified",
-			input:   []*traits.OnOff{{State: traits.OnOff_ON}, {State: traits.OnOff_STATE_UNSPECIFIED}, {State: traits.OnOff_ON}},
-			want:    traits.OnOff_ON,
+			input:   []*onoffpb.OnOff{{State: onoffpb.OnOff_ON}, {State: onoffpb.OnOff_STATE_UNSPECIFIED}, {State: onoffpb.OnOff_ON}},
+			want:    onoffpb.OnOff_ON,
 			wantErr: false,
 		},
 		{
 			name:    "all unspecified",
-			input:   []*traits.OnOff{{State: traits.OnOff_STATE_UNSPECIFIED}, {State: traits.OnOff_STATE_UNSPECIFIED}},
-			want:    traits.OnOff_STATE_UNSPECIFIED,
+			input:   []*onoffpb.OnOff{{State: onoffpb.OnOff_STATE_UNSPECIFIED}, {State: onoffpb.OnOff_STATE_UNSPECIFIED}},
+			want:    onoffpb.OnOff_STATE_UNSPECIFIED,
 			wantErr: false,
 		},
 	}
@@ -66,7 +66,7 @@ func TestMergeOnOff(t *testing.T) {
 				t.Errorf("mergeOnOff() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if got == nil {
-				if tt.want != traits.OnOff_STATE_UNSPECIFIED {
+				if tt.want != onoffpb.OnOff_STATE_UNSPECIFIED {
 					t.Errorf("mergeOnOff() got = nil, want state %v", tt.want)
 				}
 			} else if got.State != tt.want {

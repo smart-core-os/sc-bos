@@ -1,0 +1,29 @@
+This test verifies that multiple different trait-specific imports work correctly.
+These are trait-specific imports (health_pb, status_pb) not generic history imports,
+so they should all be processed regardless of having different traits.
+expected_changes: 4
+
+-- input/ui/ops/test.js --
+// Multiple different traits - all trait-specific imports (not generic history)
+import {HealthApiPromiseClient, HealthHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/health_grpc_web_pb';
+import {GetHealthCheckRequest, ListHealthCheckHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/health_pb';
+import {StatusApiPromiseClient, StatusHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/status_grpc_web_pb';
+import {CurrentStatus, ListCurrentStatusHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/status_pb';
+
+export function test() {
+  // implementation
+}
+-- output/ui/ops/test.js --
+// Multiple different traits - all trait-specific imports (not generic history)
+import {HealthApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/health_grpc_web_pb';
+import {HealthHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/health_history_grpc_web_pb';
+import {GetHealthCheckRequest} from '@smart-core-os/sc-bos-ui-gen/proto/health_pb';
+import {ListHealthCheckHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/health_history_pb';
+import {StatusApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/status_grpc_web_pb';
+import {StatusHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/status_history_grpc_web_pb';
+import {CurrentStatus} from '@smart-core-os/sc-bos-ui-gen/proto/status_pb';
+import {ListCurrentStatusHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/status_history_pb';
+
+export function test() {
+  // implementation
+}

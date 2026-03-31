@@ -9,12 +9,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/auto/statusemail"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/statusemail"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
 func main() {
@@ -28,14 +27,14 @@ func main() {
 	deviceCount := 100
 	for i := range deviceCount {
 		m := statuspb.NewModel()
-		m.UpdateProblem(&gen.StatusLog_Problem{Name: "test", Level: gen.StatusLog_OFFLINE})
+		m.UpdateProblem(&statuspb.StatusLog_Problem{Name: "test", Level: statuspb.StatusLog_OFFLINE})
 		models = append(models, m)
-		client := node.WithClients(gen.WrapStatusApi(statuspb.NewModelServer(m)))
+		client := node.WithClients(statuspb.WrapApi(statuspb.NewModelServer(m)))
 		root.Announce(fmt.Sprintf("device-%d", i), node.HasTrait(statuspb.TraitName, client),
-			node.HasMetadata(&traits.Metadata{
-				Appearance: &traits.Metadata_Appearance{Title: fmt.Sprintf("Device %d", i)},
-				Location:   &traits.Metadata_Location{Floor: fmt.Sprintf("Floor %d", i%10), Zone: fmt.Sprintf("Room %d", i%5)},
-				Membership: &traits.Metadata_Membership{Subsystem: "bms"},
+			node.HasMetadata(&metadatapb.Metadata{
+				Appearance: &metadatapb.Metadata_Appearance{Title: fmt.Sprintf("Device %d", i)},
+				Location:   &metadatapb.Metadata_Location{Floor: fmt.Sprintf("Floor %d", i%10), Zone: fmt.Sprintf("Room %d", i%5)},
+				Membership: &metadatapb.Metadata_Membership{Subsystem: "bms"},
 			}))
 	}
 
@@ -68,15 +67,15 @@ func main() {
 	// this mimics how drivers work
 	time.Sleep(2 * time.Second)
 	for _, model := range models {
-		model.UpdateProblem(&gen.StatusLog_Problem{Name: "test", Level: gen.StatusLog_NOMINAL})
+		model.UpdateProblem(&statuspb.StatusLog_Problem{Name: "test", Level: statuspb.StatusLog_NOMINAL})
 	}
 
-	levels := []gen.StatusLog_Level{
-		gen.StatusLog_NOMINAL,
-		gen.StatusLog_NOTICE,
-		gen.StatusLog_REDUCED_FUNCTION,
-		gen.StatusLog_NON_FUNCTIONAL,
-		gen.StatusLog_OFFLINE,
+	levels := []statuspb.StatusLog_Level{
+		statuspb.StatusLog_NOMINAL,
+		statuspb.StatusLog_NOTICE,
+		statuspb.StatusLog_REDUCED_FUNCTION,
+		statuspb.StatusLog_NON_FUNCTIONAL,
+		statuspb.StatusLog_OFFLINE,
 	}
 	for range 100 {
 		mi := rand.Int31n(int32(len(models)))
@@ -84,7 +83,7 @@ func main() {
 		l := levels[rand.Int31n(int32(len(levels)))]
 		n := fmt.Sprintf("device-%d", mi)
 		log.Println("updating level for", n, "to", l)
-		_, err := m.UpdateProblem(&gen.StatusLog_Problem{Name: "test", Level: l, Description: "test message"})
+		_, err := m.UpdateProblem(&statuspb.StatusLog_Problem{Name: "test", Level: l, Description: "test message"})
 		if err != nil {
 			panic(err)
 		}

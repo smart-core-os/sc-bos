@@ -2,11 +2,11 @@ package http
 
 import "go.uber.org/zap"
 
-// logWrapper for go-retryablehttp Printf logging intercept
+// logWrapper for intercepting go-retryablehttp Printf logs
 type logWrapper struct {
-	*zap.Logger
+	*zap.SugaredLogger
 }
 
 func (lw *logWrapper) Printf(msg string, args ...any) {
-	lw.Sugar().Debugf(msg, args...)
+	lw.Debugf(msg, args...)
 }

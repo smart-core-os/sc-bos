@@ -1,10 +1,10 @@
 import {setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {trackAction} from '@/api/resource';
-import {DaliApiPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/dali_grpc_web_pb';
-import {StartTestRequest} from '@vanti-dev/sc-bos-ui-gen/proto/dali_pb';
-import {LightingTestApiPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/lighting_test_grpc_web_pb';
-import {GetReportCSVRequest, ListLightHealthRequest} from '@vanti-dev/sc-bos-ui-gen/proto/lighting_test_pb';
+import {DaliApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/driver/dali/v1/dali_grpc_web_pb';
+import {StartTestRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/driver/dali/v1/dali_pb';
+import {LightingTestApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/lightingtest/v1/lighting_test_grpc_web_pb';
+import {GetReportCSVRequest, ListLightHealthRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/lightingtest/v1/lighting_test_pb';
 
 /**
  *

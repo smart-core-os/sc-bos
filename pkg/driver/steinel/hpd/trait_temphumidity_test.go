@@ -10,8 +10,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 func TestTemperatureSensor_GetAirTemperature(t *testing.T) {
@@ -41,23 +41,19 @@ func TestTemperatureSensor_GetAirTemperature(t *testing.T) {
 		Client:   server.Client(),
 		Password: password,
 	}
-	tempSensor := NewTemperatureSensor(client, nil)
+	tempSensor := newTemperatureSensor(client, nil)
 
-	res, err := tempSensor.GetAirTemperature(context.Background(), &traits.GetAirTemperatureRequest{})
+	res, err := tempSensor.GetAirTemperature(context.Background(), &airtemperaturepb.GetAirTemperatureRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error %v", err)
 	}
-	expect := &traits.AirTemperature{
-		AmbientTemperature: &types.Temperature{
+	expect := &airtemperaturepb.AirTemperature{
+		AmbientTemperature: &typespb.Temperature{
 			ValueCelsius: 20.2,
 		},
-		AmbientHumidity: ref[float32](50.0),
+		AmbientHumidity: new(float32(50.0)),
 	}
 	if diff := cmp.Diff(expect, res, protocmp.Transform()); diff != "" {
 		t.Errorf("unexpected response (-want +got):\n%s", diff)
 	}
-}
-
-func ref[T any](t T) *T {
-	return &t
 }

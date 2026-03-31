@@ -11,30 +11,30 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/merge"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/run"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/merge"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
 )
 
 type Group struct {
-	traits.UnimplementedAirTemperatureApiServer
-	client   traits.AirTemperatureApiClient
+	airtemperaturepb.UnimplementedAirTemperatureApiServer
+	client   airtemperaturepb.AirTemperatureApiClient
 	names    []string
 	readOnly bool
 
 	logger *zap.Logger
 }
 
-func (g *Group) GetAirTemperature(ctx context.Context, request *traits.GetAirTemperatureRequest) (*traits.AirTemperature, error) {
-	fns := make([]func() (*traits.AirTemperature, error), len(g.names))
+func (g *Group) GetAirTemperature(ctx context.Context, request *airtemperaturepb.GetAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
+	fns := make([]func() (*airtemperaturepb.AirTemperature, error), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.GetAirTemperatureRequest)
+		request := proto.Clone(request).(*airtemperaturepb.GetAirTemperatureRequest)
 		request.Name = name
-		fns[i] = func() (*traits.AirTemperature, error) {
+		fns[i] = func() (*airtemperaturepb.AirTemperature, error) {
 			return g.client.GetAirTemperature(ctx, request)
 		}
 	}
@@ -53,15 +53,15 @@ func (g *Group) GetAirTemperature(ctx context.Context, request *traits.GetAirTem
 	return mergeAirTemperature(allRes)
 }
 
-func (g *Group) UpdateAirTemperature(ctx context.Context, request *traits.UpdateAirTemperatureRequest) (*traits.AirTemperature, error) {
+func (g *Group) UpdateAirTemperature(ctx context.Context, request *airtemperaturepb.UpdateAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
 	if g.readOnly {
 		return nil, status.Errorf(codes.FailedPrecondition, "read-only")
 	}
-	fns := make([]func() (*traits.AirTemperature, error), len(g.names))
+	fns := make([]func() (*airtemperaturepb.AirTemperature, error), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.UpdateAirTemperatureRequest)
+		request := proto.Clone(request).(*airtemperaturepb.UpdateAirTemperatureRequest)
 		request.Name = name
-		fns[i] = func() (*traits.AirTemperature, error) {
+		fns[i] = func() (*airtemperaturepb.AirTemperature, error) {
 			return g.client.UpdateAirTemperature(ctx, request)
 		}
 	}
@@ -80,21 +80,21 @@ func (g *Group) UpdateAirTemperature(ctx context.Context, request *traits.Update
 	return mergeAirTemperature(allRes)
 }
 
-func (g *Group) PullAirTemperature(request *traits.PullAirTemperatureRequest, server traits.AirTemperatureApi_PullAirTemperatureServer) error {
+func (g *Group) PullAirTemperature(request *airtemperaturepb.PullAirTemperatureRequest, server airtemperaturepb.AirTemperatureApi_PullAirTemperatureServer) error {
 	if len(g.names) == 0 {
 		return status.Error(codes.FailedPrecondition, "zone has no hvac names")
 	}
 
 	type c struct {
 		name string
-		val  *traits.AirTemperature
+		val  *airtemperaturepb.AirTemperature
 	}
 	changes := make(chan c)
 	defer close(changes)
 
 	group, ctx := errgroup.WithContext(server.Context())
 	for _, name := range g.names {
-		request := proto.Clone(request).(*traits.PullAirTemperatureRequest)
+		request := proto.Clone(request).(*airtemperaturepb.PullAirTemperatureRequest)
 		request.Name = name
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(
@@ -114,7 +114,7 @@ func (g *Group) PullAirTemperature(request *traits.PullAirTemperatureRequest, se
 					}
 				},
 				func(ctx context.Context, changes chan<- c) error {
-					res, err := g.client.GetAirTemperature(ctx, &traits.GetAirTemperatureRequest{Name: name, ReadMask: request.ReadMask})
+					res, err := g.client.GetAirTemperature(ctx, &airtemperaturepb.GetAirTemperatureRequest{Name: name, ReadMask: request.ReadMask})
 					if err != nil {
 						return err
 					}
@@ -132,9 +132,9 @@ func (g *Group) PullAirTemperature(request *traits.PullAirTemperatureRequest, se
 		for i, name := range g.names {
 			indexes[name] = i
 		}
-		values := make([]*traits.AirTemperature, len(g.names))
+		values := make([]*airtemperaturepb.AirTemperature, len(g.names))
 
-		var last *traits.AirTemperature
+		var last *airtemperaturepb.AirTemperature
 		eq := cmp.Equal(cmp.FloatValueApprox(0, 0.001))
 		filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 
@@ -156,7 +156,7 @@ func (g *Group) PullAirTemperature(request *traits.PullAirTemperatureRequest, se
 				}
 				last = r
 
-				err = server.Send(&traits.PullAirTemperatureResponse{Changes: []*traits.PullAirTemperatureResponse_Change{{
+				err = server.Send(&airtemperaturepb.PullAirTemperatureResponse{Changes: []*airtemperaturepb.PullAirTemperatureResponse_Change{{
 					Name:           request.Name,
 					ChangeTime:     timestamppb.Now(),
 					AirTemperature: r,
@@ -171,36 +171,36 @@ func (g *Group) PullAirTemperature(request *traits.PullAirTemperatureRequest, se
 	return group.Wait()
 }
 
-func mergeAirTemperature(all []*traits.AirTemperature) (*traits.AirTemperature, error) {
+func mergeAirTemperature(all []*airtemperaturepb.AirTemperature) (*airtemperaturepb.AirTemperature, error) {
 	switch len(all) {
 	case 0:
 		return nil, status.Error(codes.FailedPrecondition, "zone has no hvac names")
 	case 1:
 		return all[0], nil
 	default:
-		out := &traits.AirTemperature{}
+		out := &airtemperaturepb.AirTemperature{}
 		// TemperatureGoal
-		if setPoint, ok := merge.Mean(all, func(e *traits.AirTemperature) (float64, bool) {
+		if setPoint, ok := merge.Mean(all, func(e *airtemperaturepb.AirTemperature) (float64, bool) {
 			switch t := e.GetTemperatureGoal().(type) { // note: Get is e-nil safe
-			case *traits.AirTemperature_TemperatureSetPoint:
+			case *airtemperaturepb.AirTemperature_TemperatureSetPoint:
 				return t.TemperatureSetPoint.ValueCelsius, true
 			default:
 				return 0, false
 			}
 		}); ok {
-			out.TemperatureGoal = &traits.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint}}
+			out.TemperatureGoal = &airtemperaturepb.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &typespb.Temperature{ValueCelsius: setPoint}}
 		}
 		// AmbientTemperature
-		if val, ok := merge.Mean(all, func(e *traits.AirTemperature) (float64, bool) {
+		if val, ok := merge.Mean(all, func(e *airtemperaturepb.AirTemperature) (float64, bool) {
 			if e == nil || e.AmbientTemperature == nil {
 				return 0, false
 			}
 			return e.AmbientTemperature.ValueCelsius, true
 		}); ok {
-			out.AmbientTemperature = &types.Temperature{ValueCelsius: val}
+			out.AmbientTemperature = &typespb.Temperature{ValueCelsius: val}
 		}
 		// AmbientHumidity
-		if val, ok := merge.Mean(all, func(e *traits.AirTemperature) (float32, bool) {
+		if val, ok := merge.Mean(all, func(e *airtemperaturepb.AirTemperature) (float32, bool) {
 			if e == nil || e.AmbientHumidity == nil {
 				return 0, false
 			}
@@ -209,13 +209,13 @@ func mergeAirTemperature(all []*traits.AirTemperature) (*traits.AirTemperature, 
 			out.AmbientHumidity = &val
 		}
 		// DewPoint
-		if val, ok := merge.Mean(all, func(e *traits.AirTemperature) (float64, bool) {
+		if val, ok := merge.Mean(all, func(e *airtemperaturepb.AirTemperature) (float64, bool) {
 			if e == nil || e.DewPoint == nil {
 				return 0, false
 			}
 			return e.DewPoint.ValueCelsius, true
 		}); ok {
-			out.DewPoint = &types.Temperature{ValueCelsius: val}
+			out.DewPoint = &typespb.Temperature{ValueCelsius: val}
 		}
 		// can't average the mode, if they're all the same use it
 		for _, temp := range all {

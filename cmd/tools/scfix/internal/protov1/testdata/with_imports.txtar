@@ -1,0 +1,175 @@
+Proto file with local imports that need to be rewritten.
+expected_changes: 3
+
+-- input/proto/devices.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "traits/metadata.proto";
+import "types/change.proto";
+import "emergency_light.proto";
+import "health.proto";
+
+service DevicesApi {
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
+  rpc PullDevices(PullDevicesRequest) returns (stream PullDevicesResponse);
+}
+
+message Device {
+  string name = 1;
+  smartcore.traits.Metadata metadata = 2;
+}
+
+message ListDevicesRequest {
+  string name = 1;
+}
+
+message ListDevicesResponse {
+  repeated Device devices = 1;
+}
+
+message PullDevicesRequest {
+  string name = 1;
+}
+
+message PullDevicesResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    Device device = 2;
+  }
+}
+-- input/proto/emergency_light.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service EmergencyLightApi {
+  rpc GetEmergencyLight(GetEmergencyLightRequest) returns (EmergencyLight);
+}
+
+message EmergencyLight {
+  string id = 1;
+  bool is_testing = 2;
+}
+
+message GetEmergencyLightRequest {
+  string name = 1;
+}
+-- input/proto/health.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service HealthApi {
+  rpc ListHealthChecks(ListHealthChecksRequest) returns (ListHealthChecksResponse);
+}
+
+message HealthCheck {
+  string id = 1;
+  string description = 2;
+}
+
+message ListHealthChecksRequest {
+  string name = 1;
+}
+
+message ListHealthChecksResponse {
+  repeated HealthCheck health_checks = 1;
+}
+-- output/proto/smartcore/bos/devices/v1/devices.proto --
+syntax = "proto3";
+
+package smartcore.bos.devices.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "smartcore/bos/emergencylight/v1/emergency_light.proto";
+import "smartcore/bos/health/v1/health.proto";
+import "traits/metadata.proto";
+import "types/change.proto";
+
+service DevicesApi {
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
+  rpc PullDevices(PullDevicesRequest) returns (stream PullDevicesResponse);
+}
+
+message Device {
+  string name = 1;
+  smartcore.traits.Metadata metadata = 2;
+}
+
+message ListDevicesRequest {
+  string name = 1;
+}
+
+message ListDevicesResponse {
+  repeated Device devices = 1;
+}
+
+message PullDevicesRequest {
+  string name = 1;
+}
+
+message PullDevicesResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    Device device = 2;
+  }
+}
+-- output/proto/smartcore/bos/emergencylight/v1/emergency_light.proto --
+syntax = "proto3";
+
+package smartcore.bos.emergencylight.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service EmergencyLightApi {
+  rpc GetEmergencyLight(GetEmergencyLightRequest) returns (EmergencyLight);
+}
+
+message EmergencyLight {
+  string id = 1;
+  bool is_testing = 2;
+}
+
+message GetEmergencyLightRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/health/v1/health.proto --
+syntax = "proto3";
+
+package smartcore.bos.health.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service HealthApi {
+  rpc ListHealthChecks(ListHealthChecksRequest) returns (ListHealthChecksResponse);
+}
+
+message HealthCheck {
+  string id = 1;
+  string description = 2;
+}
+
+message ListHealthChecksRequest {
+  string name = 1;
+}
+
+message ListHealthChecksResponse {
+  repeated HealthCheck health_checks = 1;
+}

@@ -15,15 +15,17 @@ const props = defineProps({
   }
 });
 const navigationItemIcons = {
-  lighting: 'mdi-lightbulb',
-  hvac: 'mdi-thermometer',
-  metering: 'mdi-meter-electric',
   acs: 'mdi-badge-account-horizontal',
   cctv: 'mdi-cctv',
   fire: 'mdi-fire',
+  hvac: 'mdi-thermometer',
+  lighting: 'mdi-lightbulb',
+  lockers: 'mdi-locker-multiple',
+  metering: 'mdi-meter-electric',
+  network: 'mdi-router-network-wireless',
+  sensors: 'mdi-leak', // we might need to change this icon
   smart: 'mdi-memory',
   vt: 'mdi-elevator-passenger',
-  sensors: 'mdi-leak', // we might need to change this icon
   zones: 'mdi-select-all'
 };
 const defaultIcon = 'mdi-chevron-right';

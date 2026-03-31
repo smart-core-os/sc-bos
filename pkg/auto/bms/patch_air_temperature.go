@@ -5,14 +5,14 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
 // AirTemperaturePatches contributes patches for changing the state based on occupancy sensor readings.
 type AirTemperaturePatches struct {
 	name   string
-	client traits.AirTemperatureApiClient
+	client airtemperaturepb.AirTemperatureApiClient
 	logger *zap.Logger
 }
 
@@ -25,7 +25,7 @@ func (o *AirTemperaturePatches) Subscribe(ctx context.Context, changes chan<- Pa
 }
 
 func (o *AirTemperaturePatches) Pull(ctx context.Context, changes chan<- Patcher) error {
-	stream, err := o.client.PullAirTemperature(ctx, &traits.PullAirTemperatureRequest{Name: o.name})
+	stream, err := o.client.PullAirTemperature(ctx, &airtemperaturepb.PullAirTemperatureRequest{Name: o.name})
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (o *AirTemperaturePatches) Pull(ctx context.Context, changes chan<- Patcher
 }
 
 func (o *AirTemperaturePatches) Poll(ctx context.Context, changes chan<- Patcher) error {
-	res, err := o.client.GetAirTemperature(ctx, &traits.GetAirTemperatureRequest{Name: o.name})
+	res, err := o.client.GetAirTemperature(ctx, &airtemperaturepb.GetAirTemperatureRequest{Name: o.name})
 	if err != nil {
 		return err
 	}
@@ -56,10 +56,10 @@ func (o *AirTemperaturePatches) Poll(ctx context.Context, changes chan<- Patcher
 	}
 }
 
-type pullAirTemperatureTransition traits.PullAirTemperatureResponse
+type pullAirTemperatureTransition airtemperaturepb.PullAirTemperatureResponse
 
 func (o *pullAirTemperatureTransition) Patch(s *ReadState) {
-	r := (*traits.PullAirTemperatureResponse)(o)
+	r := (*airtemperaturepb.PullAirTemperatureResponse)(o)
 
 	for _, change := range r.Changes {
 		v := s.AirTemperature[change.Name]
@@ -70,7 +70,7 @@ func (o *pullAirTemperatureTransition) Patch(s *ReadState) {
 
 type getAirTemperaturePatcher struct {
 	name string
-	res  *traits.AirTemperature
+	res  *airtemperaturepb.AirTemperature
 }
 
 func (g getAirTemperaturePatcher) Patch(s *ReadState) {

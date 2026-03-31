@@ -24,18 +24,29 @@
         Refresh
         <v-icon end>mdi-refresh</v-icon>
       </v-btn>
-      <v-btn
-          color="primary"
-          class="ml-2"
-          :disabled="loadedResults < totalDevices"
-          @click="downloadCSV">
-        Download CSV
-        <v-icon end>mdi-download</v-icon>
-      </v-btn>
+      <v-spacer/>
+      <div class="d-flex align-center">
+        <template v-if="hasFilters">
+          <filter-choice-chips :ctx="filterCtx" class="mx-2"/>
+          <filter-btn :ctx="filterCtx" flat/>
+        </template>
+        <v-tooltip text="Download data as CSV..." location="bottom">
+          <template #activator="{ props }">
+            <v-btn
+                v-bind="props"
+                flat
+                class="ml-2"
+                :disabled="loadedResults < totalDevices"
+                @click="downloadCSV">
+              <v-icon size="24" end>mdi-file-download</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+      </div>
     </v-card-title>
     <v-data-table
         :headers="headers"
-        :items="testResults"
+        :items="filteredTestResults"
         :items-per-page="50"
         show-select
         item-value="name"
@@ -89,7 +100,16 @@ import {
 } from '@/api/sc/traits/emergency-light.js';
 import {listDevices} from '@/api/ui/devices.js';
 import ContentCard from '@/components/ContentCard.vue';
-import {ref, onMounted, computed} from 'vue';
+import FilterBtn from '@/components/filter/FilterBtn.vue';
+import FilterChoiceChips from '@/components/filter/FilterChoiceChips.vue';
+import {useDeviceFilters} from '@/composables/devices';
+import {ref, onMounted, computed, watch} from 'vue';
+
+const forcedFilters = ref({
+  'metadata.traits.name': 'smartcore.bos.EmergencyLight'
+});
+const {filterCtx, forcedConditions, filterConditions} = useDeviceFilters(forcedFilters);
+const hasFilters = computed(() => filterCtx.filters.value.length > 0);
 
 const headers = [
   {title: 'Name', key: 'name'},
@@ -103,14 +123,23 @@ const selectedLights = ref([]);
 const testResults = ref([]);
 const totalDevices = ref(0);
 const loadedResults = ref(0);
+let currentFetchId = 0; // Track the current fetch to ignore stale results
 
 const findEmLightsQuery = computed(() => {
   const q = {conditionsList: []};
-  q.conditionsList.push({field: 'metadata.traits.name', stringEqual: 'smartcore.bos.EmergencyLight'});
+  q.conditionsList.push(...forcedConditions.value);
+  q.conditionsList.push(...filterConditions.value);
   return q;
 });
 
+const filteredTestResults = computed(() => {
+  return testResults.value;
+});
+
 const getDeviceTestResults = async () => {
+
+  const fetchId = ++currentFetchId;
+
   testResults.value = [];
   loadedResults.value = 0;
   let pageToken = '';
@@ -125,21 +154,32 @@ const getDeviceTestResults = async () => {
     allDevices = allDevices.concat(collection.devicesList);
   } while (pageToken !== '');
 
+  if (fetchId !== currentFetchId) return;
+
   totalDevices.value = allDevices.length;
+
+  const resultsMap = new Map();
 
   for (const item of allDevices) {
     getTestResultSet({ name: item.name, queryDevice: true })
         .then(testResult => {
-          testResults.value.push({
+
+          if (fetchId !== currentFetchId) return;
+
+          const result = {
             name: item.name,
             functionTest: testResult.functionTest,
             durationTest: testResult.durationTest
-          });
+          };
+          resultsMap.set(item.name, result);
+          testResults.value = Array.from(resultsMap.values());
           loadedResults.value++;
         })
         .catch(err => {
+          if (fetchId !== currentFetchId) return;
+
           console.error('Error fetching test results for device: ', item.name, err);
-          testResults.value.push({
+          const result = {
             name: item.name,
             functionTest: {
               testResult: -1,
@@ -147,15 +187,26 @@ const getDeviceTestResults = async () => {
             durationTest: {
               testResult: -1,
             }
-          });
+          };
+          resultsMap.set(item.name, result);
+          testResults.value = Array.from(resultsMap.values());
           loadedResults.value++;
         });
   }
 };
 
+const isInitialLoad = ref(true);
+
 onMounted(async () => {
   await getDeviceTestResults();
+  isInitialLoad.value = false;
 });
+
+watch(filterConditions, () => {
+  if (!isInitialLoad.value) {
+    getDeviceTestResults();
+  }
+}, {deep: true});
 
 /**
  * Refresh the table by fetching the latest emergency light results from the server.

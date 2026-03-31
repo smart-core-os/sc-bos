@@ -4,7 +4,7 @@ import {convertProtoMap} from '@/util/proto';
 import {defineStore} from 'pinia';
 import {computed} from 'vue';
 
-/** @typedef {import('@vanti-dev/sc-bos-ui-gen/proto/alerts_pb').AlertMetadata} AlertMetadata */
+/** @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb').AlertMetadata} AlertMetadata */
 
 export const useAlertMetadataStore = defineStore('alertMetadata', () => {
   const cohort = useCohortStore();

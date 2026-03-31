@@ -1,0 +1,39 @@
+This test verifies Go import replacement for a single trait.
+expected_changes: 3
+
+-- input/pkg/test/meter.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+)
+
+func GetMeter(ctx context.Context) (*gen.MeterReading, error) {
+	return &gen.MeterReading{
+		Usage: 100.5,
+	}, nil
+}
+
+func ProcessMeterRequest(req *gen.GetMeterReadingRequest) {
+	// process request
+}
+-- output/pkg/test/meter.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+func GetMeter(ctx context.Context) (*meterpb.MeterReading, error) {
+	return &meterpb.MeterReading{
+		Usage: 100.5,
+	}, nil
+}
+
+func ProcessMeterRequest(req *meterpb.GetMeterReadingRequest) {
+	// process request
+}

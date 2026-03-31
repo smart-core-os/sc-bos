@@ -11,28 +11,28 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/merge"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/run"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/merge"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
 )
 
 type Group struct {
-	traits.UnimplementedElectricApiServer
-	client traits.ElectricApiClient
+	electricpb.UnimplementedElectricApiServer
+	client electricpb.ElectricApiClient
 	names  []string
 
 	logger *zap.Logger
 }
 
-func (g *Group) GetDemand(ctx context.Context, request *traits.GetDemandRequest) (*traits.ElectricDemand, error) {
-	fns := make([]func() (*traits.ElectricDemand, error), len(g.names))
+func (g *Group) GetDemand(ctx context.Context, request *electricpb.GetDemandRequest) (*electricpb.ElectricDemand, error) {
+	fns := make([]func() (*electricpb.ElectricDemand, error), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.GetDemandRequest)
+		request := proto.Clone(request).(*electricpb.GetDemandRequest)
 		request.Name = name
-		fns[i] = func() (*traits.ElectricDemand, error) {
+		fns[i] = func() (*electricpb.ElectricDemand, error) {
 			return g.client.GetDemand(ctx, request)
 		}
 	}
@@ -51,21 +51,21 @@ func (g *Group) GetDemand(ctx context.Context, request *traits.GetDemandRequest)
 	return mergeDemand(allRes)
 }
 
-func (g *Group) PullDemand(request *traits.PullDemandRequest, server traits.ElectricApi_PullDemandServer) error {
+func (g *Group) PullDemand(request *electricpb.PullDemandRequest, server electricpb.ElectricApi_PullDemandServer) error {
 	if len(g.names) == 0 {
 		return status.Error(codes.FailedPrecondition, "zone has no electric names")
 	}
 
 	type c struct {
 		name string
-		val  *traits.ElectricDemand
+		val  *electricpb.ElectricDemand
 	}
 	changes := make(chan c)
 	defer close(changes)
 
 	group, ctx := errgroup.WithContext(server.Context())
 	for _, name := range g.names {
-		request := proto.Clone(request).(*traits.PullDemandRequest)
+		request := proto.Clone(request).(*electricpb.PullDemandRequest)
 		request.Name = name
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(
@@ -85,7 +85,7 @@ func (g *Group) PullDemand(request *traits.PullDemandRequest, server traits.Elec
 					}
 				},
 				func(ctx context.Context, changes chan<- c) error {
-					res, err := g.client.GetDemand(ctx, &traits.GetDemandRequest{Name: name, ReadMask: request.ReadMask})
+					res, err := g.client.GetDemand(ctx, &electricpb.GetDemandRequest{Name: name, ReadMask: request.ReadMask})
 					if err != nil {
 						return err
 					}
@@ -103,9 +103,9 @@ func (g *Group) PullDemand(request *traits.PullDemandRequest, server traits.Elec
 		for i, name := range g.names {
 			indexes[name] = i
 		}
-		values := make([]*traits.ElectricDemand, len(g.names))
+		values := make([]*electricpb.ElectricDemand, len(g.names))
 
-		var last *traits.ElectricDemand
+		var last *electricpb.ElectricDemand
 		eq := cmp.Equal(cmp.FloatValueApprox(0, 0.001))
 		filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 
@@ -127,7 +127,7 @@ func (g *Group) PullDemand(request *traits.PullDemandRequest, server traits.Elec
 				}
 				last = r
 
-				err = server.Send(&traits.PullDemandResponse{Changes: []*traits.PullDemandResponse_Change{{
+				err = server.Send(&electricpb.PullDemandResponse{Changes: []*electricpb.PullDemandResponse_Change{{
 					Name:       request.Name,
 					ChangeTime: timestamppb.Now(),
 					Demand:     r,
@@ -142,21 +142,21 @@ func (g *Group) PullDemand(request *traits.PullDemandRequest, server traits.Elec
 	return group.Wait()
 }
 
-func mergeDemand(all []*traits.ElectricDemand) (*traits.ElectricDemand, error) {
+func mergeDemand(all []*electricpb.ElectricDemand) (*electricpb.ElectricDemand, error) {
 	switch len(all) {
 	case 0:
 		return nil, status.Error(codes.FailedPrecondition, "zone has no electric names")
 	case 1:
 		return all[0], nil
 	default:
-		out := &traits.ElectricDemand{}
-		out.Current, _ = merge.Sum(all, func(e *traits.ElectricDemand) (float32, bool) {
+		out := &electricpb.ElectricDemand{}
+		out.Current, _ = merge.Sum(all, func(e *electricpb.ElectricDemand) (float32, bool) {
 			if e == nil {
 				return 0, false
 			}
 			return e.Current, true
 		})
-		out.Rating, _ = merge.Sum(all, func(e *traits.ElectricDemand) (float32, bool) {
+		out.Rating, _ = merge.Sum(all, func(e *electricpb.ElectricDemand) (float32, bool) {
 			if e == nil {
 				return 0, false
 			}
@@ -177,19 +177,19 @@ func mergeDemand(all []*traits.ElectricDemand) (*traits.ElectricDemand, error) {
 				break
 			}
 		}
-		out.RealPower = merge.Ptr(merge.Sum(all, func(e *traits.ElectricDemand) (float32, bool) {
+		out.RealPower = merge.Ptr(merge.Sum(all, func(e *electricpb.ElectricDemand) (float32, bool) {
 			if e == nil || e.RealPower == nil {
 				return 0, false
 			}
 			return *e.RealPower, true
 		}))
-		out.ApparentPower = merge.Ptr(merge.Sum(all, func(e *traits.ElectricDemand) (float32, bool) {
+		out.ApparentPower = merge.Ptr(merge.Sum(all, func(e *electricpb.ElectricDemand) (float32, bool) {
 			if e == nil || e.ApparentPower == nil {
 				return 0, false
 			}
 			return *e.ApparentPower, true
 		}))
-		out.ReactivePower = merge.Ptr(merge.Sum(all, func(e *traits.ElectricDemand) (float32, bool) {
+		out.ReactivePower = merge.Ptr(merge.Sum(all, func(e *electricpb.ElectricDemand) (float32, bool) {
 			if e == nil || e.ReactivePower == nil {
 				return 0, false
 			}

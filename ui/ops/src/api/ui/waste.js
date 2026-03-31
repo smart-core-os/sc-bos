@@ -1,8 +1,8 @@
 import {fieldMaskFromObject, setProperties} from '@/api/convpb.js';
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setCollection, trackAction} from '@/api/resource.js';
-import {WasteApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/waste_grpc_web_pb.js';
-import {ListWasteRecordsRequest, PullWasteRecordsRequest} from '@smart-core-os/sc-api-grpc-web/traits/waste_pb';
+import {WasteApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/waste/v1/waste_grpc_web_pb';
+import {ListWasteRecordsRequest, PullWasteRecordsRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/waste/v1/waste_pb';
 
 /**
  * @param {Partial<ListWasteRecordsRequest.AsObject>} request
@@ -39,7 +39,7 @@ export function pullWasteRecords(request, resource) {
  * @return {WasteApiPromiseClient}
  */
 function apiClient(endpoint) {
-  return new WasteApiPromiseClient(endpoint, clientOptions());
+  return new WasteApiPromiseClient(endpoint, null, clientOptions());
 }
 
 /**

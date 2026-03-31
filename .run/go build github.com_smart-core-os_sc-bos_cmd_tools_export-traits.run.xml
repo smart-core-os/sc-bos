@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="go build github.com/smart-core-os/sc-bos/cmd/tools/export-traits" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+    <module name="sc-bos" />
+    <working_directory value="$PROJECT_DIR$" />
+    <parameters value="--endpoint 10.1.104.2:23557 --insecure-no-client-cert --insecure-skip-verify --subsystem metering --trait smartcore.bos.Meter --trait smartcore.traits.Electric" />
+    <kind value="PACKAGE" />
+    <package value="github.com/smart-core-os/sc-bos/cmd/tools/export-traits" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/cmd/tools/export-traits/main.go" />
+    <method v="2" />
+  </configuration>
+</component>

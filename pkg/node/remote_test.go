@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
-	"github.com/vanti-dev/sc-bos/pkg/util/client"
+	"github.com/smart-core-os/sc-bos/pkg/util/client"
 )
 
 func TestDialChan(t *testing.T) {

@@ -17,10 +17,6 @@ func oneOf[T any](vals ...T) T {
 	return vals[rand.Intn(len(vals))]
 }
 
-func ptr[T any](v T) *T {
-	return &v
-}
-
 func durationBetween(min, max time.Duration) time.Duration {
 	return time.Duration(rand.Intn(int(max-min)) + int(min))
 }

@@ -32,7 +32,7 @@ their hashed passwords:
 The secret hash can be generated using the locally provided `pash` tool:
 
 ```shell
-go run github.com/vanti-dev/sc-bos/cmd/pash           
+go run github.com/smart-core-os/sc-bos/cmd/pash           
 Password: <enter your password>
 $2a$10$/uBhiEncrKMgJ8q5AjyRFuqe1dzTNTsOjX1noIzu/lI5JQ78EUvLO
 ```

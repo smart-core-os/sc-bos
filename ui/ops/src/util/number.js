@@ -72,7 +72,11 @@ export function format(num, unit = '') {
     return num.toLocaleString(undefined, {maximumFractionDigits: 0});
   })();
   if (unit) {
-    return `${usageStr} ${unit}`;
+    let sp = ' ';
+    if (unit === '%' || unit === '"' || unit === '\'' || unit[0] === '°') {
+      sp = '';
+    }
+    return `${usageStr}${sp}${unit}`;
   }
   return usageStr;
 }

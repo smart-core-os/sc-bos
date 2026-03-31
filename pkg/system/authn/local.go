@@ -10,13 +10,13 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/internal/account"
-	"github.com/vanti-dev/sc-bos/internal/account/queries"
-	"github.com/vanti-dev/sc-bos/internal/auth/accesstoken"
-	"github.com/vanti-dev/sc-bos/internal/auth/permission"
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/system/authn/config"
+	"github.com/smart-core-os/sc-bos/internal/account"
+	"github.com/smart-core-os/sc-bos/internal/account/queries"
+	"github.com/smart-core-os/sc-bos/internal/auth/accesstoken"
+	"github.com/smart-core-os/sc-bos/internal/auth/permission"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
+	"github.com/smart-core-os/sc-bos/pkg/system/authn/config"
 )
 
 type localUserVerifier struct {
@@ -164,7 +164,7 @@ func importIdentities(ctx context.Context, accounts *account.Store, ids []config
 			// create a new user account
 			created, err := tx.CreateAccount(ctx, queries.CreateAccountParams{
 				DisplayName: id.Title,
-				Type:        gen.Account_USER_ACCOUNT.String(),
+				Type:        accountpb.Account_USER_ACCOUNT.String(),
 			})
 			if err != nil {
 				return fmt.Errorf("failed to import user account %q: %w", id.ID, err)

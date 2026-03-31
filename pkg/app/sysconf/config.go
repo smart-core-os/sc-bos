@@ -2,19 +2,23 @@
 package sysconf
 
 import (
+	"crypto/tls"
+	"fmt"
 	"os"
+	"time"
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/app/http"
-	"github.com/vanti-dev/sc-bos/pkg/app/stores"
-	"github.com/vanti-dev/sc-bos/pkg/auth/policy"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/block"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/system"
-	"github.com/vanti-dev/sc-bos/pkg/util/netutil"
-	"github.com/vanti-dev/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/pkg/app/http"
+	"github.com/smart-core-os/sc-bos/pkg/app/stores"
+	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
 // Load loads into dst any user supplied config from json files and CLI arguments. CLI arguments take precedence.
@@ -70,9 +74,13 @@ type Config struct {
 
 	StaticHosting []http.StaticHostingConfig `json:"staticHosting"`
 	CertConfig    *Certs                     `json:"certs,omitempty"`
-	Cors          http.CorsConfig            `json:"cors,omitempty"`
+	Cors          http.CorsConfig            `json:"cors"`
+
+	Devices *Devices `json:"devices,omitempty"`
 
 	DisablePprof bool `json:"disablePprof"` // don't register net/http/pprof handlers
+
+	Health *Health `json:"health,omitempty"`
 
 	Systems map[string]system.RawConfig `json:"systems,omitempty"`
 
@@ -81,10 +89,20 @@ type Config struct {
 
 	Experimental *Experimental `json:"experimental,omitempty"`
 
+	Cloud *Cloud `json:"cloud,omitempty"`
+
 	DriverFactories map[string]driver.Factory `json:"-"` // keyed by driver name
 	AutoFactories   map[string]auto.Factory   `json:"-"` // keyed by automation type
 	SystemFactories map[string]system.Factory `json:"-"` // keyed by system type
 	ZoneFactories   map[string]zone.Factory   `json:"-"` // keyed by zone type
+}
+
+// Devices configures the devices API server for functionality such as handling Download URLs.
+type Devices struct {
+	// DownloadHMACKeyFile is a path to a file that contains the HMAC key used to sign and verify download requests.
+	// This key can be shared securely between nodes in a SmartCore cohort to allow re-use of cryptographic signatures.
+	// If not specified, the app.Controller will use a HMAC key that is randomly generated on each startup.
+	DownloadHMACKeyFile string `json:"downloadHMACKeyFile,omitempty"`
 }
 
 // DriverConfigBlocks returns a map of driver type to a block list that describes the config for that driver.
@@ -142,6 +160,26 @@ type Certs struct {
 	HTTPCert     bool   `json:"httpCert,omitempty"` // have the https stack (grpc-web and hosting) use different pki.Source from the grpc stack
 	HTTPKeyFile  string `json:"httpKeyFile,omitempty"`
 	HTTPCertFile string `json:"httpCertFile,omitempty"`
+
+	// TLSMinVersion sets the minimum TLS version accepted for gRPC and HTTPS connections.
+	// Valid values are "1.2" and "1.3". Defaults to "1.3" if not set.
+	TLSMinVersion string `json:"tlsMinVersion,omitempty"`
+}
+
+// ParseTLSMinVersion returns the tls.VersionTLS* constant for the configured minimum TLS version.
+// Defaults to tls.VersionTLS13 if TLSMinVersion is not set.
+func (c *Certs) ParseTLSMinVersion() (uint16, error) {
+	if c == nil || c.TLSMinVersion == "" {
+		return tls.VersionTLS13, nil
+	}
+	switch c.TLSMinVersion {
+	case "1.2":
+		return tls.VersionTLS12, nil
+	case "1.3":
+		return tls.VersionTLS13, nil
+	default:
+		return 0, fmt.Errorf("unknown tlsMinVersion %q, valid values are: 1.2, 1.3", c.TLSMinVersion)
+	}
 }
 
 type PolicyMode string
@@ -152,8 +190,24 @@ const (
 	PolicyCheck PolicyMode = "check" // Check requests against the policy if the request has a token or client cert.
 )
 
+// Health configures the health check system.
+type Health struct {
+	TTL HealthTTL `json:"ttl"` // how long to keep health check results
+}
+
+// HealthDBPath is the location of the SQLite database file used to store health check results.
+// Relative paths are relative to DataDir.
+const HealthDBPath = "health/checks.sqlite3"
+
+type HealthTTL struct {
+	MinCount *int                `json:"minCount,omitempty"` // defaults to 1, setting to 0 can disable seeding
+	MaxCount *int                `json:"maxCount,omitempty"` // defaults to no max count
+	MaxAge   *jsontypes.Duration `json:"maxAge,omitempty"`   // defaults to 1 week
+}
+
 func Default() Config {
 	logConf := zap.NewDevelopmentConfig()
+	one := 1
 	config := Config{
 		ConfigDirs:  []string{".conf"},
 		ConfigFiles: []string{"system.conf.json", "system.json"},
@@ -171,6 +225,13 @@ func Default() Config {
 			CorsOrigins: []string{"*"},
 		},
 		StaticHosting: []http.StaticHostingConfig{},
+
+		Health: &Health{
+			TTL: HealthTTL{
+				MinCount: &one,
+				MaxAge:   &jsontypes.Duration{Duration: 7 * 24 * time.Hour},
+			},
+		},
 
 		CertConfig: &Certs{
 			KeyFile:      "grpc.key.pem",
@@ -221,6 +282,9 @@ func (c *Config) Normalize() {
 	}
 
 	c.CertConfig = c.CertConfig.FillDefaults()
+	if c.Cloud != nil {
+		c.Cloud = c.Cloud.FillDefaults()
+	}
 }
 
 func (c *Certs) FillDefaults() *Certs {
@@ -240,6 +304,34 @@ func (c *Certs) FillDefaults() *Certs {
 	return c
 }
 
+// Cloud configures the connection to the SCC BOS-facing API.
+type Cloud struct {
+	// BosapiRoot is the base URL of the SCC BOS-facing API (e.g. "https://bosapi.example.com").
+	// TODO: default to the production URL once it's known.
+	BosapiRoot       string `json:"bosapiRoot,omitempty"`
+	ClientID         string `json:"clientId,omitempty"`
+	ClientSecretFile string `json:"clientSecretFile,omitempty"`
+
+	PollInterval *jsontypes.Duration `json:"pollInterval,omitempty"`
+	// Preserve old or incomplete downloads instead of deleting them on startup or when they expire.
+	// This is useful for debugging and should be used with caution in production since it can lead to unbounded disk usage.
+	PreserveDownloads bool `json:"preserveDownloads,omitempty"`
+	// Maximum size of the decompressed config package that can be downloaded from the server, in MiB.
+	// Defaults to DefaultMaxDeploymentSizeMiB if absent or 0, which should be sufficient for typical use cases.
+	// If negative, no limit is applied.
+	MaxDeploymentSizeMiB int `json:"maxDeploymentSizeMiB,omitempty"`
+}
+
+func (c *Cloud) FillDefaults() *Cloud {
+	if c.PollInterval == nil || c.PollInterval.Duration <= 0 {
+		c.PollInterval = &jsontypes.Duration{Duration: 5 * time.Minute}
+	}
+	if c.MaxDeploymentSizeMiB == 0 {
+		c.MaxDeploymentSizeMiB = DefaultMaxDeploymentSizeMiB
+	}
+	return c
+}
+
 // BlockSource is an interface that can be implemented by a factory to provide a list of blocks that describe the config
 // for that driver/automation/zone type.
 // This is used to produce granular diffs for config changes.
@@ -251,3 +343,5 @@ type BlockSource interface {
 type BlockSource2 interface {
 	ConfigBlocks(cfg *Config) []block.Block
 }
+
+const DefaultMaxDeploymentSizeMiB = 500

@@ -2,6 +2,13 @@
   "name": "EG-01",
   "listenGrpc": ":23201",
   "listenHttps": ":8201",
+  "cors": {
+    "debugMode": true,
+    "corsOrigins": ["*"]
+  },
+  "staticHosting": [
+    {"path": "/__/vanti-ugs/", "filePath": "./example/config/vanti-ugs"}
+  ],
   "systems": {
     "authn": {
       "user": {

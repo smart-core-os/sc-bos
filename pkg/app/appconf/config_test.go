@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"testing"
 	"testing/fstest"
@@ -12,7 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/tools/txtar"
 
-	"github.com/vanti-dev/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
 )
 
 func ExampleConfig() {
@@ -310,21 +309,13 @@ func TestLoadLocalConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			readFile = func(name string) ([]byte, error) {
-				return fs.ReadFile(tt.fs, name)
-			}
-			glob = func(pattern string) (matches []string, err error) {
-				return fs.Glob(tt.fs, pattern)
-			}
-			conf, err := LoadLocalConfig(tt.dir, tt.file)
+			conf, err := LoadLocalConfigFS(tt.fs, tt.dir, tt.file)
 			if tt.config != nil && conf == nil && err != nil {
 				t.Errorf("expected config, got error: %s", err)
 			}
 			if diff := cmp.Diff(tt.config, conf); diff != "" {
 				t.Errorf("wrong config: %s", diff)
 			}
-			glob = filepath.Glob
-			readFile = os.ReadFile
 		})
 	}
 }

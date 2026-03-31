@@ -3,9 +3,9 @@ package config
 import (
 	"encoding/json"
 
-	"github.com/vanti-dev/sc-bos/internal/auth/keycloak"
-	"github.com/vanti-dev/sc-bos/pkg/system"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/internal/auth/keycloak"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 type Root struct {

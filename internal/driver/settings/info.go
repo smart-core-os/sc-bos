@@ -3,14 +3,14 @@ package settings
 import (
 	"context"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 )
 
 type infoServer struct {
-	traits.UnimplementedModeInfoServer
-	Modes *traits.ModesSupport
+	modepb.UnimplementedModeInfoServer
+	Modes *modepb.ModesSupport
 }
 
-func (i *infoServer) DescribeModes(context.Context, *traits.DescribeModesRequest) (*traits.ModesSupport, error) {
+func (i *infoServer) DescribeModes(context.Context, *modepb.DescribeModesRequest) (*modepb.ModesSupport, error) {
 	return i.Modes, nil
 }

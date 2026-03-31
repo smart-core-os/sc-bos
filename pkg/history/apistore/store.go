@@ -6,13 +6,13 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/history"
+	"github.com/smart-core-os/sc-bos/pkg/history"
+	"github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 )
 
 // New creates a new history.Store backed by the given client and name.
 // All records created or read by this store will have the given source.
-func New(client gen.HistoryAdminApiClient, name, source string) *Store {
+func New(client historypb.HistoryAdminApiClient, name, source string) *Store {
 	return &Store{
 		slice: slice{
 			client: client,
@@ -22,7 +22,7 @@ func New(client gen.HistoryAdminApiClient, name, source string) *Store {
 	}
 }
 
-// Store implements history.Store backed by a gen.HistoryAdminApiClient.
+// Store implements history.Store backed by a historypb.HistoryAdminApiClient.
 // As a quirk of how the api works, it's more efficient to call Read then Len, than Len then Read.
 type Store struct {
 	slice
@@ -31,9 +31,9 @@ type Store struct {
 var _ history.Store = (*Store)(nil)
 
 func (s *Store) Append(ctx context.Context, payload []byte) (history.Record, error) {
-	pbRecord, err := s.client.CreateHistoryRecord(ctx, &gen.CreateHistoryRecordRequest{
+	pbRecord, err := s.client.CreateHistoryRecord(ctx, &historypb.CreateHistoryRecordRequest{
 		Name: s.name,
-		Record: &gen.HistoryRecord{
+		Record: &historypb.HistoryRecord{
 			Source:  s.source,
 			Payload: payload,
 		},
@@ -46,7 +46,7 @@ func (s *Store) Append(ctx context.Context, payload []byte) (history.Record, err
 }
 
 type slice struct {
-	client gen.HistoryAdminApiClient
+	client historypb.HistoryAdminApiClient
 	name   string
 
 	source   string
@@ -107,12 +107,12 @@ func (s *slice) read(ctx context.Context, into []history.Record, orderBy string)
 	}
 }
 
-func (s *slice) newListRequest(pageSize int32) *gen.ListHistoryRecordsRequest {
-	req := &gen.ListHistoryRecordsRequest{
+func (s *slice) newListRequest(pageSize int32) *historypb.ListHistoryRecordsRequest {
+	req := &historypb.ListHistoryRecordsRequest{
 		Name:     s.name,
 		PageSize: pageSize,
-		Query: &gen.HistoryRecord_Query{
-			Source: &gen.HistoryRecord_Query_SourceEqual{SourceEqual: s.source},
+		Query: &historypb.HistoryRecord_Query{
+			Source: &historypb.HistoryRecord_Query_SourceEqual{SourceEqual: s.source},
 		},
 	}
 	if !s.from.IsZero() {
@@ -139,7 +139,7 @@ func (s *slice) Len(ctx context.Context) (int, error) {
 	return s.totalSize, nil
 }
 
-func protoRecordToStoreRecord(r *gen.HistoryRecord) (string, history.Record) {
+func protoRecordToStoreRecord(r *historypb.HistoryRecord) (string, history.Record) {
 	return r.GetSource(), history.Record{
 		ID:         r.GetId(),
 		CreateTime: r.GetCreateTime().AsTime(),
@@ -147,8 +147,8 @@ func protoRecordToStoreRecord(r *gen.HistoryRecord) (string, history.Record) {
 	}
 }
 
-func storeRecordToProtoRecord(source string, r history.Record) *gen.HistoryRecord {
-	return &gen.HistoryRecord{
+func storeRecordToProtoRecord(source string, r history.Record) *historypb.HistoryRecord {
+	return &historypb.HistoryRecord{
 		Id:         r.ID,
 		Source:     source,
 		CreateTime: timestamppb.New(r.CreateTime),

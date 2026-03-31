@@ -1,0 +1,34 @@
+{
+  "name": "BC-01",
+  "grpcAddr": "localhost",
+  "listenGrpc": ":23101",
+  "listenHTTPS": ":8101",
+  "cors": {
+    "debugMode": true,
+    "corsOrigins": ["*"]
+  },
+  "staticHosting": [
+    {"path": "/__/vanti-ugs-cohort/", "filePath": "./example/config/vanti-ugs-cohort"}
+  ],
+  "systems": {
+    "authn": {
+      "user": {
+        "fileAccounts": true
+      }
+    },
+    "hub": {
+      "storage": {
+        "type": "postgres",
+        "uri": "postgres://postgres@localhost:5432/smart_core",
+        "passwordFile": "./.data/secrets/postgres-password"
+      },
+      "nodes": [
+        {"address": "localhost:23102", "name": "BC-02"},
+        {"address": "localhost:23201", "name": "EG-01"},
+        {"address": "localhost:23202", "name": "EG-02"},
+        {"address": "localhost:23301", "name": "van/uk/brum/ugs/ac-01"}
+      ]
+    },
+    "resourceUse": {}
+  }
+}

@@ -19,13 +19,22 @@
           {{ item.weight.toFixed(2) }} {{ unit }}
         </template>
         <template #item.co2Saved="{ item }">
-          {{ item.co2Saved.toFixed(2) }} {{ co2SavedUnit }}
+          <span v-if="item.co2Saved">
+            {{ item.co2Saved.toFixed(2) }} {{ co2SavedUnit }}
+          </span>
+          <span v-else>-</span>
         </template>
         <template #item.landSaved="{ item }">
-          {{ item.landSaved.toFixed(2) }} {{ landSavedUnit }}
+          <span v-if="item.landSaved">
+            {{ item.landSaved.toFixed(2) }} {{ landSavedUnit }}
+          </span>
+          <span v-else>-</span>
         </template>
         <template #item.treesSaved="{ item }">
-          {{ item.treesSaved.toFixed(2) }}
+          <span v-if="item.treesSaved">
+            {{ item.treesSaved.toFixed(2) }}
+          </span>
+          <span v-else>-</span>
         </template>
         <template #item.disposalMethod="{ item }">
           {{ getDisposalMethod(item.disposalMethod) }}

@@ -5,14 +5,13 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/modepb"
-	"github.com/vanti-dev/sc-bos/internal/driver/settings/config"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/internal/driver/settings/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 const DriverName = "settings"
@@ -42,14 +41,14 @@ type Driver struct {
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer := d.announcer.Replace(ctx)
 
-	modes := &traits.Modes{}
+	modes := &modepb.Modes{}
 	collectModes(modes, "lighting.mode", cfg.LightingModes...)
 	collectModes(modes, "hvac.mode", cfg.HVACModes...)
 
 	modeModel := modepb.NewModelModes(modes)
 	info := &infoServer{
-		Modes: &traits.ModesSupport{
-			ModeValuesSupport: &types.ResourceSupport{
+		Modes: &modepb.ModesSupport{
+			ModeValuesSupport: &typespb.ResourceSupport{
 				Readable: true, Writable: true, Observable: true,
 			},
 			AvailableModes: modes,
@@ -64,15 +63,15 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func collectModes(modes *traits.Modes, mode string, values ...string) {
-	var modeValues []*traits.Modes_Value
+func collectModes(modes *modepb.Modes, mode string, values ...string) {
+	var modeValues []*modepb.Modes_Value
 	for _, value := range values {
-		modeValues = append(modeValues, &traits.Modes_Value{
+		modeValues = append(modeValues, &modepb.Modes_Value{
 			Name: value,
 		})
 	}
 	if len(modeValues) > 0 {
-		modes.Modes = append(modes.Modes, &traits.Modes_Mode{
+		modes.Modes = append(modes.Modes, &modepb.Modes_Mode{
 			Name:   mode,
 			Values: modeValues,
 		})

@@ -5,14 +5,14 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
 // OccupancySensorPatches contributes patches for changing the state based on occupancy sensor readings.
 type OccupancySensorPatches struct {
 	name   deviceName
-	client traits.OccupancySensorApiClient
+	client occupancysensorpb.OccupancySensorApiClient
 	logger *zap.Logger
 }
 
@@ -25,7 +25,7 @@ func (o *OccupancySensorPatches) Subscribe(ctx context.Context, changes chan<- P
 }
 
 func (o *OccupancySensorPatches) Pull(ctx context.Context, changes chan<- Patcher) error {
-	stream, err := o.client.PullOccupancy(ctx, &traits.PullOccupancyRequest{Name: o.name})
+	stream, err := o.client.PullOccupancy(ctx, &occupancysensorpb.PullOccupancyRequest{Name: o.name})
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (o *OccupancySensorPatches) Pull(ctx context.Context, changes chan<- Patche
 }
 
 func (o *OccupancySensorPatches) Poll(ctx context.Context, changes chan<- Patcher) error {
-	res, err := o.client.GetOccupancy(ctx, &traits.GetOccupancyRequest{Name: o.name})
+	res, err := o.client.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{Name: o.name})
 	if err != nil {
 		return err
 	}
@@ -56,10 +56,10 @@ func (o *OccupancySensorPatches) Poll(ctx context.Context, changes chan<- Patche
 	}
 }
 
-type pullOccupancyTransition traits.PullOccupancyResponse
+type pullOccupancyTransition occupancysensorpb.PullOccupancyResponse
 
 func (o *pullOccupancyTransition) Patch(s *ReadState) {
-	r := (*traits.PullOccupancyResponse)(o)
+	r := (*occupancysensorpb.PullOccupancyResponse)(o)
 
 	for _, change := range r.Changes {
 		s.Occupancy[change.Name] = change.Occupancy
@@ -68,7 +68,7 @@ func (o *pullOccupancyTransition) Patch(s *ReadState) {
 
 type getOccupancyPatcher struct {
 	name deviceName
-	res  *traits.Occupancy
+	res  *occupancysensorpb.Occupancy
 }
 
 func (g getOccupancyPatcher) Patch(s *ReadState) {

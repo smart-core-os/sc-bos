@@ -1,6 +1,6 @@
 <script setup>
-import {OnOffApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/on_off_grpc_web_pb';
-import {GetOnOffRequest} from '@smart-core-os/sc-api-grpc-web/traits/on_off_pb';
+import {OnOffApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/onoff/v1/on_off_grpc_web_pb';
+import {GetOnOffRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/onoff/v1/on_off_pb';
 import {reactive} from 'vue'
 
 const props = defineProps(['token'])

@@ -9,14 +9,16 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/driver/opcua/config"
-	"github.com/vanti-dev/sc-bos/pkg/driver/opcua/conv"
+	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/conv"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
+// Electric implements the Smart Core Electric trait for OPC UA devices.
+// It maps OPC UA variable nodes to Electric demand measurements (power, voltage, current, etc.).
 type Electric struct {
-	traits.UnimplementedElectricApiServer
+	electricpb.UnimplementedElectricApiServer
 
 	cfg    config.ElectricConfig
 	logger *zap.Logger
@@ -38,21 +40,21 @@ func newElectric(n string, config config.RawTrait, l *zap.Logger) (*Electric, er
 		cfg:    cfg,
 		logger: l,
 		scName: n,
-		value:  resource.NewValue(resource.WithInitialValue(&traits.ElectricDemand{}), resource.WithNoDuplicates()),
+		value:  resource.NewValue(resource.WithInitialValue(&electricpb.ElectricDemand{}), resource.WithNoDuplicates()),
 	}, nil
 }
 
-func (e *Electric) GetDemand(context.Context, *traits.GetDemandRequest) (*traits.ElectricDemand, error) {
-	return e.value.Get().(*traits.ElectricDemand), nil
+func (e *Electric) GetDemand(context.Context, *electricpb.GetDemandRequest) (*electricpb.ElectricDemand, error) {
+	return e.value.Get().(*electricpb.ElectricDemand), nil
 }
 
-func (e *Electric) PullDemand(_ *traits.PullDemandRequest, server traits.ElectricApi_PullDemandServer) error {
+func (e *Electric) PullDemand(_ *electricpb.PullDemandRequest, server electricpb.ElectricApi_PullDemandServer) error {
 	for value := range e.value.Pull(server.Context()) {
-		err := server.Send(&traits.PullDemandResponse{Changes: []*traits.PullDemandResponse_Change{
+		err := server.Send(&electricpb.PullDemandResponse{Changes: []*electricpb.PullDemandResponse_Change{
 			{
 				Name:       e.scName,
 				ChangeTime: timestamppb.New(value.ChangeTime),
-				Demand:     value.Value.(*traits.ElectricDemand),
+				Demand:     value.Value.(*electricpb.ElectricDemand),
 			},
 		}})
 		if err != nil {
@@ -62,51 +64,52 @@ func (e *Electric) PullDemand(_ *traits.PullDemandRequest, server traits.Electri
 	return nil
 }
 
-func (e *Electric) handleElectricEvent(node *ua.NodeID, value any) {
-	if e.cfg.Demand == nil {
-		e.logger.Warn("electric trait configured without demand")
+// updatePowerField is a helper that converts, scales, and updates a single power measurement field.
+// It handles conversion to float32, scaling via the ValueSource, type assertion, and updating the demand state.
+func (e *Electric) updatePowerField(value any, source *config.ValueSource, fieldName string, setter func(*electricpb.ElectricDemand, float32)) {
+
+	rawValue, err := conv.Float32Value(value)
+	if err != nil {
+		e.logger.Warn("error reading float32", zap.String("device", e.scName), zap.String("field", fieldName), zap.Error(err))
 		return
 	}
+
+	scaled := source.Scaled(rawValue)
+	powerValue, ok := scaled.(float32)
+	if !ok {
+		e.logger.Warn("scaled value is not float32", zap.String("device", e.scName), zap.String("field", fieldName), zap.Any("value", scaled))
+		return
+	}
+
+	demand := &electricpb.ElectricDemand{}
+	setter(demand, powerValue)
+	_, _ = e.value.Set(demand, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
+		Paths: []string{fieldName},
+	}))
+}
+
+func (e *Electric) handleEvent(_ context.Context, node *ua.NodeID, value any) {
+	if e.cfg.Demand == nil {
+		e.logger.Warn("Electric trait configured without demand", zap.String("device", e.scName))
+		return
+	}
+
 	switch {
-	case e.cfg.Demand.ApparentPower != nil && NodeIdsAreEqual(e.cfg.Demand.ApparentPower.NodeId, node):
-		ap, err := conv.Float32Value(value)
-		if err != nil {
-			e.logger.Warn("error reading float32 for apparent power", zap.String("error", err.Error()))
-		}
-		_, _ = e.value.Set(&traits.ElectricDemand{
-			ApparentPower: &ap,
-		}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
-			Paths: []string{"apparent_power"},
-		}))
-	case e.cfg.Demand.ReactivePower != nil && NodeIdsAreEqual(e.cfg.Demand.ReactivePower.NodeId, node):
-		rp, err := conv.Float32Value(value)
-		if err != nil {
-			e.logger.Warn("error reading float32 for reactive power", zap.String("error", err.Error()))
-		}
-		_, _ = e.value.Set(&traits.ElectricDemand{
-			ReactivePower: &rp,
-		}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
-			Paths: []string{"reactive_power"},
-		}))
-	case e.cfg.Demand.RealPower != nil && NodeIdsAreEqual(e.cfg.Demand.RealPower.NodeId, node):
-		rp, err := conv.Float32Value(value)
-		if err != nil {
-			e.logger.Warn("error reading float32 for real power", zap.String("error", err.Error()))
-		}
-		_, _ = e.value.Set(&traits.ElectricDemand{
-			RealPower: &rp,
-		}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
-			Paths: []string{"real_power"},
-		}))
-	case e.cfg.Demand.PowerFactor != nil && NodeIdsAreEqual(e.cfg.Demand.PowerFactor.NodeId, node):
-		pf, err := conv.Float32Value(value)
-		if err != nil {
-			e.logger.Warn("error reading float32 for power factor", zap.String("error", err.Error()))
-		}
-		_, _ = e.value.Set(&traits.ElectricDemand{
-			PowerFactor: &pf,
-		}, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
-			Paths: []string{"power_factor"},
-		}))
+	case e.cfg.Demand.ApparentPower != nil && nodeIdsAreEqual(e.cfg.Demand.ApparentPower.NodeId, node):
+		e.updatePowerField(value, e.cfg.Demand.ApparentPower, "apparent_power", func(d *electricpb.ElectricDemand, v float32) {
+			d.ApparentPower = &v
+		})
+	case e.cfg.Demand.ReactivePower != nil && nodeIdsAreEqual(e.cfg.Demand.ReactivePower.NodeId, node):
+		e.updatePowerField(value, e.cfg.Demand.ReactivePower, "reactive_power", func(d *electricpb.ElectricDemand, v float32) {
+			d.ReactivePower = &v
+		})
+	case e.cfg.Demand.RealPower != nil && nodeIdsAreEqual(e.cfg.Demand.RealPower.NodeId, node):
+		e.updatePowerField(value, e.cfg.Demand.RealPower, "real_power", func(d *electricpb.ElectricDemand, v float32) {
+			d.RealPower = &v
+		})
+	case e.cfg.Demand.PowerFactor != nil && nodeIdsAreEqual(e.cfg.Demand.PowerFactor.NodeId, node):
+		e.updatePowerField(value, e.cfg.Demand.PowerFactor, "power_factor", func(d *electricpb.ElectricDemand, v float32) {
+			d.PowerFactor = &v
+		})
 	}
 }

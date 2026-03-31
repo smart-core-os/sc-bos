@@ -1,7 +1,6 @@
 package pubcache
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -9,17 +8,15 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait/publicationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 func TestCache_Pull(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	id := "foo"
-	initial := &traits.Publication{
+	initial := &publicationpb.Publication{
 		Id:          id,
 		Version:     "1",
 		Body:        []byte(`{"hello": "world"}`),
@@ -43,7 +40,7 @@ func TestCache_Pull(t *testing.T) {
 	}
 
 	// change the publication in the model
-	updated := &traits.Publication{
+	updated := &publicationpb.Publication{
 		Id:          id,
 		Version:     "2",
 		Body:        []byte(`{"foo":"bar"}`),

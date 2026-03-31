@@ -5,12 +5,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
 )
 
 func CreatePublication(ctx context.Context, tx pgx.Tx, id string, audience string) error {
@@ -88,7 +88,7 @@ func CreatePublicationVersion(ctx context.Context, tx pgx.Tx, data PublicationVe
 	return
 }
 
-func GetPublication(ctx context.Context, tx pgx.Tx, pubID, versionID string) (*traits.Publication, error) {
+func GetPublication(ctx context.Context, tx pgx.Tx, pubID, versionID string) (*publicationpb.Publication, error) {
 	var row pgx.Row
 	if versionID != "" {
 		// fetch the version with a specific identifier
@@ -152,7 +152,7 @@ func GetLatestVersionID(ctx context.Context, tx pgx.Tx, pubID string) (version s
 	return
 }
 
-func GetPublicationsPaginated(ctx context.Context, tx pgx.Tx, token string, limit int) (publications []*traits.Publication, nextToken string, err error) {
+func GetPublicationsPaginated(ctx context.Context, tx pgx.Tx, token string, limit int) (publications []*publicationpb.Publication, nextToken string, err error) {
 	// language=postgresql
 	query := `
 		SELECT DISTINCT ON (p.id) p.id, p.audience_name, pv.id, pv.body, pv.publish_time, pv.media_type, a.accepted, 
@@ -295,17 +295,17 @@ type publicationVersionRow struct {
 	RejectedReason *string
 }
 
-func publicationVersionRowToProto(row publicationVersionRow) *traits.Publication {
-	receipt := traits.Publication_Audience_NO_SIGNAL
+func publicationVersionRowToProto(row publicationVersionRow) *publicationpb.Publication {
+	receipt := publicationpb.Publication_Audience_NO_SIGNAL
 	if row.Accepted != nil {
 		if *row.Accepted {
-			receipt = traits.Publication_Audience_ACCEPTED
+			receipt = publicationpb.Publication_Audience_ACCEPTED
 		} else {
-			receipt = traits.Publication_Audience_REJECTED
+			receipt = publicationpb.Publication_Audience_REJECTED
 		}
 	}
 
-	audience := &traits.Publication_Audience{Receipt: receipt}
+	audience := &publicationpb.Publication_Audience{Receipt: receipt}
 	if row.AudienceName != nil {
 		audience.Name = *row.AudienceName
 	}
@@ -316,7 +316,7 @@ func publicationVersionRowToProto(row publicationVersionRow) *traits.Publication
 		audience.ReceiptRejectedReason = *row.RejectedReason
 	}
 
-	pub := &traits.Publication{
+	pub := &publicationpb.Publication{
 		Id:          row.PublicationID,
 		Version:     row.VersionID,
 		Body:        row.Body,

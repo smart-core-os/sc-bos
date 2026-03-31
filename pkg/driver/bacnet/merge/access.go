@@ -10,16 +10,16 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/gobacnet"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/comm"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/config"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/known"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/status"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/accesspb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task"
+	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 type accessConfig struct {
@@ -37,10 +37,10 @@ func readAccessConfig(raw []byte) (cfg accessConfig, err error) {
 }
 
 type access struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *healthpb.FaultCheck
+	logger     *zap.Logger
 
 	model *accesspb.Model
 	*accesspb.ModelServer
@@ -48,7 +48,7 @@ type access struct {
 	pollTask *task.Intermittent
 }
 
-func newAccess(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*access, error) {
+func newAccess(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*access, error) {
 	cfg, err := readAccessConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -57,14 +57,13 @@ func newAccess(client *gobacnet.Client, devices known.Context, statuses *statusp
 	a := &access{
 		client:      client,
 		known:       devices,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
 		ModelServer: accesspb.NewModelServer(model),
 		cfg:         cfg,
 	}
 	a.pollTask = task.NewIntermittent(a.startPoll)
-	initTraitStatus(statuses, cfg.Name, "Access")
 	return a, nil
 }
 
@@ -76,10 +75,10 @@ func (a *access) startPoll(init context.Context) (stop task.StopFn, err error) {
 }
 
 func (a *access) AnnounceSelf(ann node.Announcer) node.Undo {
-	return ann.Announce(a.cfg.Name, node.HasTrait(accesspb.TraitName, node.WithClients(gen.WrapAccessApi(a))))
+	return ann.Announce(a.cfg.Name, node.HasTrait(accesspb.TraitName, node.WithClients(accesspb.WrapApi(a))))
 }
 
-func (a *access) GetLastAccessAttempt(ctx context.Context, request *gen.GetLastAccessAttemptRequest) (*gen.AccessAttempt, error) {
+func (a *access) GetLastAccessAttempt(ctx context.Context, request *accesspb.GetLastAccessAttemptRequest) (*accesspb.AccessAttempt, error) {
 	_, err := a.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -87,15 +86,15 @@ func (a *access) GetLastAccessAttempt(ctx context.Context, request *gen.GetLastA
 	return a.ModelServer.GetLastAccessAttempt(ctx, request)
 }
 
-func (a *access) PullAccessAttempts(request *gen.PullAccessAttemptsRequest, server gen.AccessApi_PullAccessAttemptsServer) error {
+func (a *access) PullAccessAttempts(request *accesspb.PullAccessAttemptsRequest, server accesspb.AccessApi_PullAccessAttemptsServer) error {
 	_ = a.pollTask.Attach(server.Context())
 	return a.ModelServer.PullAccessAttempts(request, server)
 }
 
-func (a *access) pollPeer(ctx context.Context) (*gen.AccessAttempt, error) {
-	data := &gen.AccessAttempt{}
+func (a *access) pollPeer(ctx context.Context) (*accesspb.AccessAttempt, error) {
+	data := &accesspb.AccessAttempt{}
 
-	var resProcessors []func(response any, data *gen.AccessAttempt, cfg accessConfig) error
+	var resProcessors []func(response any, data *accesspb.AccessAttempt, cfg accessConfig) error
 	var readValues []config.ValueSource
 	var requestNames []string
 
@@ -120,7 +119,7 @@ func (a *access) pollPeer(ctx context.Context) (*gen.AccessAttempt, error) {
 		}
 	}
 
-	status.UpdatePollErrorStatus(a.statuses, a.cfg.Name, "Access", requestNames, errs)
+	updateTraitFaultCheck(ctx, a.faultCheck, a.cfg.Name, trait.Access, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}
@@ -128,14 +127,14 @@ func (a *access) pollPeer(ctx context.Context) (*gen.AccessAttempt, error) {
 	return a.model.UpdateLastAccessAttempt(data)
 }
 
-func processIngressPermitted(response any, data *gen.AccessAttempt, cfg accessConfig) error {
+func processIngressPermitted(response any, data *accesspb.AccessAttempt, cfg accessConfig) error {
 	value, ok := response.(string)
 	if !ok {
 		return comm.ErrReadProperty{Prop: "ingressPermitted", Cause: fmt.Errorf("converting to string")}
 	}
-	data.Grant = gen.AccessAttempt_GRANTED
+	data.Grant = accesspb.AccessAttempt_GRANTED
 	data.AccessAttemptTime = timestamppb.Now()
-	data.Actor = &gen.Actor{
+	data.Actor = &actorpb.Actor{
 		LastGrantTime: timestamppb.Now(),
 	}
 	if cfg.IngressPermittedType != nil {
@@ -146,16 +145,16 @@ func processIngressPermitted(response any, data *gen.AccessAttempt, cfg accessCo
 	return nil
 }
 
-func processIngressDenied(response any, data *gen.AccessAttempt, cfg accessConfig) error {
+func processIngressDenied(response any, data *accesspb.AccessAttempt, cfg accessConfig) error {
 	value, ok := response.(string)
 	if !ok {
 		return comm.ErrReadProperty{Prop: "ingressDenied", Cause: fmt.Errorf("converting to string")}
 	}
-	data.Grant = gen.AccessAttempt_DENIED
+	data.Grant = accesspb.AccessAttempt_DENIED
 	data.AccessAttemptTime = timestamppb.Now()
 
 	if cfg.IngressDeniedType != nil {
-		data.Actor = &gen.Actor{
+		data.Actor = &actorpb.Actor{
 			Ids: map[string]string{
 				*cfg.IngressDeniedType: value,
 			},
@@ -164,22 +163,22 @@ func processIngressDenied(response any, data *gen.AccessAttempt, cfg accessConfi
 	return nil
 }
 
-func (a *access) CreateAccessGrant(context.Context, *gen.CreateAccessGrantRequest) (*gen.AccessGrant, error) {
+func (a *access) CreateAccessGrant(context.Context, *accesspb.CreateAccessGrantRequest) (*accesspb.AccessGrant, error) {
 	return nil, errors.New("method CreateAccessGrant not implemented")
 }
 
-func (a *access) UpdateAccessGrant(context.Context, *gen.UpdateAccessGrantRequest) (*gen.AccessGrant, error) {
+func (a *access) UpdateAccessGrant(context.Context, *accesspb.UpdateAccessGrantRequest) (*accesspb.AccessGrant, error) {
 	return nil, errors.New("method UpdateAccessGrant not implemented")
 }
 
-func (a *access) DeleteAccessGrant(context.Context, *gen.DeleteAccessGrantRequest) (*gen.DeleteAccessGrantResponse, error) {
+func (a *access) DeleteAccessGrant(context.Context, *accesspb.DeleteAccessGrantRequest) (*accesspb.DeleteAccessGrantResponse, error) {
 	return nil, errors.New("method DeleteAccessGrant not implemented")
 }
 
-func (a *access) GetAccessGrant(context.Context, *gen.GetAccessGrantsRequest) (*gen.AccessGrant, error) {
+func (a *access) GetAccessGrant(context.Context, *accesspb.GetAccessGrantsRequest) (*accesspb.AccessGrant, error) {
 	return nil, errors.New("method GetAccessGrant not implemented")
 }
 
-func (a *access) ListAccessGrants(context.Context, *gen.ListAccessGrantsRequest) (*gen.ListAccessGrantsResponse, error) {
+func (a *access) ListAccessGrants(context.Context, *accesspb.ListAccessGrantsRequest) (*accesspb.ListAccessGrantsResponse, error) {
 	return nil, errors.New("method ListAccessGrants not implemented")
 }

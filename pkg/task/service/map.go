@@ -12,10 +12,10 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
-	"github.com/vanti-dev/sc-bos/pkg/util/chans"
-	"github.com/vanti-dev/sc-bos/pkg/util/maps"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/util/chans"
+	"github.com/smart-core-os/sc-bos/pkg/util/maps"
 )
 
 var (
@@ -125,12 +125,23 @@ type Record struct {
 // Create creates and adds a new record to m returning the new ID and the records service State.
 // The kind argument is required, but id is optional. If absent the IdFunc will be used to mint a new ID.
 // Only State.Active and State.Config are optionally used in the passed state to either Start or Configure the created
-// Lifecycle. If either are present and the corresponding Lifecycle call returns an error, then creating the new record
-// will be aborted and that error will be returned.
+// Lifecycle. If Start or Configure return an error, creating the new record will be aborted and that error returned.
+// If the factory fails, the record is still added to the map in an errored state and remains visible via ServicesApi.
 func (m *Map) Create(id, kind string, state State) (string, State, error) {
 	r, cID, err := m.createRecord(id, kind)
-	if err != nil {
+	if r == nil {
+		// Failed before a record could be created (immutable map or bad id).
 		return "", State{}, err
+	}
+
+	if err != nil {
+		go m.bus.Send(context.Background(), &Change{
+			ChangeTime: m.now(),
+			ChangeType: typespb.ChangeType_ADD,
+			NewValue:   r,
+			cID:        cID,
+		})
+		return r.Id, r.Service.State(), err
 	}
 
 	outState := r.Service.State()
@@ -161,7 +172,7 @@ func (m *Map) Create(id, kind string, state State) (string, State, error) {
 
 	change := &Change{
 		ChangeTime: m.now(),
-		ChangeType: types.ChangeType_ADD,
+		ChangeType: typespb.ChangeType_ADD,
 		NewValue:   r,
 		cID:        cID,
 	}
@@ -187,7 +198,7 @@ func (m *Map) Delete(id string) (State, error) {
 
 	go m.bus.Send(context.Background(), &Change{
 		ChangeTime: m.now(),
-		ChangeType: types.ChangeType_REMOVE,
+		ChangeType: typespb.ChangeType_REMOVE,
 		OldValue:   r,
 		cID:        cID,
 	})
@@ -308,7 +319,7 @@ func (m *Map) GetAndListenState(ctx context.Context) ([]*StateRecord, <-chan *St
 					OldValue:   nil,
 					NewValue:   stateRecord,
 					ChangeTime: change.ChangeTime,
-					ChangeType: types.ChangeType_ADD,
+					ChangeType: typespb.ChangeType_ADD,
 				}
 				if err := chans.SendContext(ctx, out, stateChange); err != nil {
 					return
@@ -345,7 +356,7 @@ func (m *Map) listenRecordStates(ctx context.Context, record *Record, stateRecor
 		change := &StateChange{
 			OldValue:   old,
 			NewValue:   stateRecord,
-			ChangeType: types.ChangeType_UPDATE,
+			ChangeType: typespb.ChangeType_UPDATE,
 			ChangeTime: m.now(),
 		}
 		if err := chans.SendContext(ctx, out, change); err != nil {
@@ -355,7 +366,7 @@ func (m *Map) listenRecordStates(ctx context.Context, record *Record, stateRecor
 
 	removedChange := &StateChange{
 		OldValue:   stateRecord,
-		ChangeType: types.ChangeType_REMOVE,
+		ChangeType: typespb.ChangeType_REMOVE,
 		ChangeTime: m.now(),
 	}
 	// ignore the error because this is the last thing we're doing anyway
@@ -377,9 +388,11 @@ func (m *Map) createRecord(id, kind string) (*Record, uint64, error) {
 		}
 	}
 
-	s, err := m.create(id, kind)
-	if err != nil {
-		return nil, 0, err
+	s, createErr := m.create(id, kind)
+	if createErr != nil {
+		s = newRetryLifecycle(createErr, func() (Lifecycle, error) {
+			return m.create(id, kind)
+		})
 	}
 
 	r := &Record{
@@ -389,7 +402,7 @@ func (m *Map) createRecord(id, kind string) (*Record, uint64, error) {
 	}
 	m.known[id] = r
 	m.lastCID++
-	return r, m.lastCID, nil
+	return r, m.lastCID, createErr
 }
 
 func (m *Map) deleteRecord(id string) (*Record, uint64, error) {
@@ -416,7 +429,7 @@ func (m *Map) idExists(id string) bool {
 // Change represents a change to a Map.
 type Change struct {
 	ChangeTime time.Time
-	ChangeType types.ChangeType
+	ChangeType typespb.ChangeType
 	OldValue   *Record
 	NewValue   *Record
 	cID        uint64
@@ -429,7 +442,7 @@ type StateRecord struct {
 
 type StateChange struct {
 	ChangeTime time.Time
-	ChangeType types.ChangeType
+	ChangeType typespb.ChangeType
 	OldValue   *StateRecord
 	NewValue   *StateRecord
 }

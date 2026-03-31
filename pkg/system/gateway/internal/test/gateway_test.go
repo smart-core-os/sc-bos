@@ -25,10 +25,16 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/system/gateway/internal/test/shared"
+	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/test/shared"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 var skipBuild = flag.Bool("skip-build", false, "skip building and running binaries")
@@ -45,35 +51,20 @@ func TestGateway_e2e(t *testing.T) {
 		t.Skip("long test")
 	}
 
-	ctx, stop := newCtx(t)
-	defer stop()
+	ctx := t.Context()
 
 	if !*skipBuild {
-		dir := t.TempDir()
-
-		// First, we need to build each of the different binaries that make up the nodes in the cohort.
-		// After this completes we'll have a gw, ac, and hub binary in the tests temp directory.
-		t.Logf("Building binaries in %s", dir)
-		buildAll(t, dir)
-
-		// Next we start each of the nodes we need for the test
-		startCtx, cancelStart := context.WithTimeout(ctx, 30*time.Second)
-		defer cancelStart()
-		t.Logf("Starting all nodes")
-		go runAllNodes(t, startCtx, dir)
-
-		// Wait for the nodes to start up, shouldn't take more than a few seconds on _decent_ hardware.
-		t.Logf("Waiting for nodes to start")
-		waitForNodes(t, startCtx)
+		runNodes(t, ctx)
 	}
 
 	// Next up we need to configure the cohort
 	t.Logf("Configuring cohort")
+	cohortStart := time.Now()
 	configureCohort(t, ctx)
+	t.Logf("Cohort configured in %s", time.Since(cohortStart))
 
 	// Finally we're ready to start checking the setup
 	for i, addr := range shared.GWGRPCAddrs {
-		addr := addr
 		t.Run(fmt.Sprintf("gw%d %s", i+1, addr), func(t *testing.T) {
 			// this timeout is long because the GW is using an exponential backoff for retries,
 			// capped at 30s, but all attempts before the cohort is configured increase the delay.
@@ -83,6 +74,28 @@ func TestGateway_e2e(t *testing.T) {
 			testGW(t, testCtx, addr)
 		})
 	}
+}
+
+func runNodes(t *testing.T, ctx context.Context) {
+	t.Helper()
+	// We can't use `go run`, even though it has better cache semantics,
+	// because sending kill/interrupt to the `go run` process does not forward
+	// those signals to the bos process which causes them to hang the test process.
+	dir := t.TempDir()
+
+	t.Logf("Building binaries")
+	buildStart := time.Now()
+	buildAll(t, dir)
+
+	t.Logf("Running nodes")
+	runStart := time.Now()
+	go runAllNodes(t, ctx, dir)
+
+	// Wait for the nodes to start up, shouldn't take more than a few seconds on _decent_ hardware.
+	startCtx, cancelStart := context.WithTimeout(ctx, 30*time.Second)
+	defer cancelStart()
+	waitForNodes(t, startCtx)
+	t.Logf("All nodes running in %s (b=%s,w=%s)", time.Since(buildStart), runStart.Sub(buildStart), time.Since(runStart))
 }
 
 func buildAll(t *testing.T, dir string) {
@@ -114,13 +127,9 @@ func runAllNodes(t *testing.T, ctx context.Context, dir string) {
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() error { return runNode(t, ctx, dir, "hub", shared.HubGRPCAddr, shared.HubHTTPSAddr) })
 	for i, addrs := range zip(shared.ACGRPCAddrs, shared.ACHTTPSAddrs) {
-		i := i
-		addrs := addrs
 		g.Go(func() error { return runNode(t, ctx, dir, fmt.Sprintf("ac%d", i+1), addrs[0], addrs[1]) })
 	}
 	for i, addrs := range zip(shared.GWGRPCAddrs, shared.GWHTTPSAddrs) {
-		i := i
-		addrs := addrs
 		g.Go(func() error { return runNode(t, ctx, dir, fmt.Sprintf("gw%d", i+1), addrs[0], addrs[1]) })
 	}
 	if err := g.Wait(); err != nil {
@@ -174,10 +183,10 @@ func waitForNode(t *testing.T, ctx context.Context, addr string) {
 	}
 	defer conn.Close()
 
-	client := traits.NewMetadataApiClient(conn)
+	client := metadatapb.NewMetadataApiClient(conn)
 	err = backoff.Retry(func() error {
-		_, err := client.GetMetadata(ctx, &traits.GetMetadataRequest{})
-		if err != nil {
+		_, err := client.GetMetadata(ctx, &metadatapb.GetMetadataRequest{})
+		if code := status.Code(err); err != nil && code != codes.Unavailable {
 			t.Logf("failed to poll node %q for liveness: %v", addr, err)
 		}
 		return err
@@ -210,13 +219,13 @@ func configureCohort(t *testing.T, ctx context.Context) {
 		}
 	}
 
-	client := gen.NewHubApiClient(hubConn)
+	client := hubpb.NewHubApiClient(hubConn)
 	for _, addr := range shared.ACGRPCAddrs {
-		_, err := client.EnrollHubNode(ctx, &gen.EnrollHubNodeRequest{Node: &gen.HubNode{Address: addr}})
+		_, err := client.EnrollHubNode(ctx, &hubpb.EnrollHubNodeRequest{Node: &hubpb.HubNode{Address: addr}})
 		checkErr(addr, err)
 	}
 	for _, addr := range shared.GWGRPCAddrs {
-		_, err := client.EnrollHubNode(ctx, &gen.EnrollHubNodeRequest{Node: &gen.HubNode{Address: addr}})
+		_, err := client.EnrollHubNode(ctx, &hubpb.EnrollHubNodeRequest{Node: &hubpb.HubNode{Address: addr}})
 		checkErr(addr, err)
 	}
 }
@@ -249,7 +258,8 @@ func testGW(t *testing.T, ctx context.Context, addr string) {
 			serviceDevices = append(serviceDevices, fmt.Sprintf("%s/%s", node, s))
 		}
 	}
-	t.Logf("[%s] Waiting for gw to configure gateway system", addr)
+
+	// these tests are mostly about waiting for the gw to finish its setup
 	t.Run("node devices online", func(t *testing.T) {
 		for _, name := range nodeDevices {
 			waitForDevice(t, ctx, conn, name)
@@ -266,21 +276,64 @@ func testGW(t *testing.T, ctx context.Context, addr string) {
 		}
 	})
 
+	// tests that devices appear in gw DevicesApi responses
+	t.Run("devices api includes devices", func(t *testing.T) {
+		client := devicespb.NewDevicesApiClient(conn)
+		testDevicesApiHasNames(t, ctx, addr, onOffDevices, client, &devicespb.ListDevicesRequest{
+			Query: &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
+				{Field: "metadata.traits.name", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: string(trait.OnOff)}},
+			}},
+		})
+	})
+
 	t.Run("onOff devices respond", func(t *testing.T) {
-		client := traits.NewOnOffApiClient(conn)
+		client := onoffpb.NewOnOffApiClient(conn)
 		for _, name := range onOffDevices {
 			testOnOffApi(t, ctx, addr, name, client)
 		}
 	})
 	t.Run("services respond", func(t *testing.T) {
-		client := gen.NewServicesApiClient(conn)
+		client := servicespb.NewServicesApiClient(conn)
 		for _, name := range serviceDevices {
 			testServicesApi(t, ctx, addr, name, client)
 		}
 	})
+	t.Run("has health check", func(t *testing.T) {
+		client := healthpb.NewHealthApiClient(conn)
+		for _, name := range onOffDevices {
+			testHealthApi(t, ctx, addr, name, client)
+		}
+	})
+	t.Run("devices api has health checks", func(t *testing.T) {
+		client := devicespb.NewDevicesApiClient(conn)
+		testDevicesApiHasNames(t, ctx, addr, onOffDevices, client, &devicespb.ListDevicesRequest{
+			Query: &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
+				{Field: "health_checks.bounds.normal_value.string_value", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "ON"}},
+			}},
+		})
+	})
 
 	t.Run("reflection", func(t *testing.T) {
 		testReflection(t, ctx, conn)
+	})
+
+	t.Run("stable device list", func(t *testing.T) {
+		testStableDeviceList(t, ctx, conn)
+	})
+
+	zoneDevices := []string{
+		"ac1/zone1",
+		"ac2/zone1",
+	}
+	t.Run("zone devices online", func(t *testing.T) {
+		for _, name := range zoneDevices {
+			waitForDevice(t, ctx, conn, name)
+		}
+	})
+	t.Run("zone services list zones", func(t *testing.T) {
+		client := servicespb.NewServicesApiClient(conn)
+		testZoneServicesApi(t, ctx, addr, "ac1/zones", "ac1/zone1", client)
+		testZoneServicesApi(t, ctx, addr, "ac2/zones", "ac2/zone1", client)
 	})
 
 	testHubApis(t, ctx, conn)
@@ -289,17 +342,34 @@ func testGW(t *testing.T, ctx context.Context, addr string) {
 func waitForDevice(t *testing.T, ctx context.Context, conn *grpc.ClientConn, name string) {
 	t.Helper()
 
-	client := traits.NewMetadataApiClient(conn)
+	client := metadatapb.NewMetadataApiClient(conn)
 	err := backoff.Retry(func() error {
-		_, err := client.GetMetadata(ctx, &traits.GetMetadataRequest{Name: name})
+		_, err := client.GetMetadata(ctx, &metadatapb.GetMetadataRequest{Name: name})
 		return err
-	}, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
+	}, backoff.WithContext(backoff.NewExponentialBackOff(backoff.WithMaxInterval(5*time.Second)), ctx))
 	if err != nil {
 		t.Fatalf("wait for device %s: %v", name, err)
 	}
 }
 
-func testOnOffApi(t *testing.T, ctx context.Context, addr, name string, client traits.OnOffApiClient) {
+func testDevicesApiHasNames(t *testing.T, ctx context.Context, addr string, names []string, client devicespb.DevicesApiClient, request *devicespb.ListDevicesRequest) {
+	t.Helper()
+
+	res, err := client.ListDevices(ctx, request)
+	if err != nil {
+		t.Fatalf("[%s] list devices: %v", addr, err)
+	}
+	gotNames := make([]string, len(res.Devices))
+	for i, d := range res.Devices {
+		gotNames[i] = d.Name
+	}
+	sortStrings := cmpopts.SortSlices(func(a, b string) bool { return a < b })
+	if diff := cmp.Diff(names, gotNames, sortStrings); diff != "" {
+		t.Fatalf("[%s] list devices: unexpected response (-want +got):\n%s", addr, diff)
+	}
+}
+
+func testOnOffApi(t *testing.T, ctx context.Context, addr, name string, client onoffpb.OnOffApiClient) {
 	t.Helper()
 
 	// useful for cancelling the stream
@@ -307,17 +377,17 @@ func testOnOffApi(t *testing.T, ctx context.Context, addr, name string, client t
 	defer cancel()
 
 	// set initial known state: ON
-	res, err := client.UpdateOnOff(ctx, &traits.UpdateOnOffRequest{Name: name, OnOff: &traits.OnOff{State: traits.OnOff_ON}})
+	res, err := client.UpdateOnOff(ctx, &onoffpb.UpdateOnOffRequest{Name: name, OnOff: &onoffpb.OnOff{State: onoffpb.OnOff_ON}})
 	if err != nil {
 		t.Fatalf("[%s] update onoff %s: %v", addr, name, err)
 	}
-	if diff := cmp.Diff(&traits.OnOff{State: traits.OnOff_ON}, res, protocmp.Transform()); diff != "" {
+	if diff := cmp.Diff(&onoffpb.OnOff{State: onoffpb.OnOff_ON}, res, protocmp.Transform()); diff != "" {
 		t.Fatalf("[%s] update onoff %s: unexpected response (-want +got):\n%s", addr, name, diff)
 	}
 
 	// subscribe
-	changes := make(chan *traits.PullOnOffResponse, 1) // we're only expecting 1
-	stream, err := client.PullOnOff(ctx, &traits.PullOnOffRequest{Name: name, UpdatesOnly: true})
+	changes := make(chan *onoffpb.PullOnOffResponse, 1) // we're only expecting 1
+	stream, err := client.PullOnOff(ctx, &onoffpb.PullOnOffRequest{Name: name, UpdatesOnly: true})
 	if err != nil {
 		t.Fatalf("[%s] pull onoff %s: %v", addr, name, err)
 	}
@@ -337,28 +407,28 @@ func testOnOffApi(t *testing.T, ctx context.Context, addr, name string, client t
 	}()
 
 	// check initial state
-	res, err = client.GetOnOff(ctx, &traits.GetOnOffRequest{Name: name})
+	res, err = client.GetOnOff(ctx, &onoffpb.GetOnOffRequest{Name: name})
 	if err != nil {
 		t.Fatalf("[%s] get onoff %s: %v", addr, name, err)
 	}
-	if diff := cmp.Diff(&traits.OnOff{State: traits.OnOff_ON}, res, protocmp.Transform()); diff != "" {
+	if diff := cmp.Diff(&onoffpb.OnOff{State: onoffpb.OnOff_ON}, res, protocmp.Transform()); diff != "" {
 		t.Fatalf("[%s] get onoff %s: unexpected response (-want +got):\n%s", addr, name, diff)
 	}
 
 	// Perform update and check for change
-	res, err = client.UpdateOnOff(ctx, &traits.UpdateOnOffRequest{Name: name, OnOff: &traits.OnOff{State: traits.OnOff_OFF}})
+	res, err = client.UpdateOnOff(ctx, &onoffpb.UpdateOnOffRequest{Name: name, OnOff: &onoffpb.OnOff{State: onoffpb.OnOff_OFF}})
 	if err != nil {
 		t.Fatalf("[%s] update onoff %s: %v", addr, name, err)
 	}
-	if diff := cmp.Diff(&traits.OnOff{State: traits.OnOff_OFF}, res, protocmp.Transform()); diff != "" {
+	if diff := cmp.Diff(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}, res, protocmp.Transform()); diff != "" {
 		t.Fatalf("[%s] update onoff %s: unexpected response (-want +got):\n%s", addr, name, diff)
 	}
 	select {
 	case res := <-changes:
-		want := &traits.PullOnOffResponse{Changes: []*traits.PullOnOffResponse_Change{
+		want := &onoffpb.PullOnOffResponse{Changes: []*onoffpb.PullOnOffResponse_Change{
 			{
 				Name:  name,
-				OnOff: &traits.OnOff{State: traits.OnOff_OFF},
+				OnOff: &onoffpb.OnOff{State: onoffpb.OnOff_OFF},
 			},
 		}}
 		// clear timestamps to make comparing easier
@@ -371,12 +441,49 @@ func testOnOffApi(t *testing.T, ctx context.Context, addr, name string, client t
 	}
 }
 
-func testServicesApi(t *testing.T, ctx context.Context, addr, name string, client gen.ServicesApiClient) {
+func testServicesApi(t *testing.T, ctx context.Context, addr, name string, client servicespb.ServicesApiClient) {
 	t.Helper()
 
-	_, err := client.ListServices(ctx, &gen.ListServicesRequest{Name: name})
+	_, err := client.ListServices(ctx, &servicespb.ListServicesRequest{Name: name})
 	if err != nil {
 		t.Fatalf("[%s] list services %s: %v", addr, name, err)
+	}
+}
+
+func testZoneServicesApi(t *testing.T, ctx context.Context, addr, name, wantZone string, client servicespb.ServicesApiClient) {
+	t.Helper()
+	res, err := client.ListServices(ctx, &servicespb.ListServicesRequest{Name: name})
+	if err != nil {
+		t.Fatalf("[%s] list services %s: %v", addr, name, err)
+	}
+	for _, svc := range res.Services {
+		if svc.Id == wantZone {
+			return
+		}
+	}
+	t.Fatalf("[%s] list services %s: zone %q not found in response (got %d services)", addr, name, wantZone, len(res.Services))
+}
+
+func testHealthApi(t *testing.T, ctx context.Context, addr, name string, client healthpb.HealthApiClient) {
+	t.Helper()
+	res, err := client.ListHealthChecks(ctx, &healthpb.ListHealthChecksRequest{Name: name})
+	if err != nil {
+		t.Fatalf("[%s] list health checks %s: %v", addr, name, err)
+	}
+	if len(res.HealthChecks) == 0 {
+		t.Fatalf("[%s] list health checks %s: no health checks found", addr, name)
+	}
+	// the checks we've set up are looking for OnOff being ON,
+	// make sure they exist and the checks we see aren't just some defaults
+	foundOnOffCheck := false
+	for _, check := range res.HealthChecks {
+		if want := check.GetBounds().GetNormalValue().GetStringValue(); want == "ON" {
+			foundOnOffCheck = true
+			break
+		}
+	}
+	if !foundOnOffCheck {
+		t.Fatalf("[%s] list health checks %s: no OnOff=ON health check found", addr, name)
 	}
 }
 
@@ -397,22 +504,24 @@ func testReflection(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 	wantServices := []*reflectionpb.ServiceResponse{
 		{Name: "grpc.reflection.v1.ServerReflection"},
 		{Name: "grpc.reflection.v1alpha.ServerReflection"},
-		{Name: "smartcore.bos.DevicesApi"},
-		{Name: "smartcore.bos.EnrollmentApi"},
-		{Name: "smartcore.bos.HubApi"},
-		{Name: "smartcore.bos.ServicesApi"},
-		{Name: "smartcore.traits.MetadataApi"},
-		{Name: "smartcore.traits.OnOffApi"},
-		{Name: "smartcore.traits.OnOffInfo"},
-		{Name: "smartcore.traits.ParentApi"},
+		{Name: "smartcore.bos.devices.v1.DevicesApi"},
+		{Name: "smartcore.bos.enrollment.v1.EnrollmentApi"},
+		{Name: "smartcore.bos.health.v1.HealthApi"},
+		{Name: "smartcore.bos.health.v1.HealthHistory"},
+		{Name: "smartcore.bos.hub.v1.HubApi"},
+		{Name: "smartcore.bos.metadata.v1.MetadataApi"},
+		{Name: "smartcore.bos.onoff.v1.OnOffApi"},
+		{Name: "smartcore.bos.onoff.v1.OnOffInfo"},
+		{Name: "smartcore.bos.parent.v1.ParentApi"},
+		{Name: "smartcore.bos.services.v1.ServicesApi"},
 	}
 	if diff := cmp.Diff(wantServices, services, protocmp.Transform()); diff != "" {
 		t.Fatalf("services: (-want +got):\n%s", diff)
 	}
 
 	types := []string{
-		"smartcore.traits.OnOffApi",
-		"smartcore.bos.DevicesApi",
+		"smartcore.bos.onoff.v1.OnOffApi",
+		"smartcore.bos.devices.v1.DevicesApi",
 	}
 	for _, typ := range types {
 		_, err = reflectionapi.FileContainingSymbol(stream, typ)
@@ -433,12 +542,78 @@ func testReflection(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 	}
 }
 
+func testStableDeviceList(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
+	ctx, stop := context.WithTimeout(ctx, 2*time.Second)
+	defer stop()
+	client := devicespb.NewDevicesApiClient(conn)
+	type totals struct{ add, update, remove, replace int }
+	// used to track what is being unstable,
+	// technically we could fail on the first event,
+	// but this way gives more info about what is unstable.
+	events := make(map[string]totals)
+	// this stream shouldn't receive anything
+	openStream := func() grpc.ServerStreamingClient[devicespb.PullDevicesResponse] {
+		stream, err := client.PullDevices(ctx, &devicespb.PullDevicesRequest{UpdatesOnly: true})
+		if code := status.Code(err); code == codes.DeadlineExceeded {
+			return nil
+		}
+		if err != nil {
+			t.Fatalf("pull devices: %v", err)
+		}
+		return stream
+	}
+	stream := openStream()
+
+	for {
+		res, err := stream.Recv()
+		if code := status.Code(err); code == codes.DeadlineExceeded {
+			break // our timeout has elapsed
+		}
+		if errors.Is(err, io.EOF) {
+			t.Logf("pull devices stream closed by server (EOF), reopening")
+			stream = openStream()
+			if stream == nil {
+				break
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatalf("recv pull devices: %v", err)
+		}
+		for _, change := range res.Changes {
+			total := events[change.Name]
+			switch change.Type {
+			case typespb.ChangeType_ADD:
+				total.add++
+			case typespb.ChangeType_UPDATE:
+				total.update++
+			case typespb.ChangeType_REMOVE:
+				total.remove++
+			case typespb.ChangeType_REPLACE:
+				total.replace++
+			default:
+				t.Fatalf("unknown change type: %v", change.Type)
+			}
+			events[change.Name] = total
+		}
+	}
+
+	if len(events) > 0 {
+		var sb strings.Builder
+		sb.WriteString("device list unstable, received events:\n")
+		for name, total := range events {
+			fmt.Fprintf(&sb, "\t%s: %+v\n", name, total)
+		}
+		t.Fatal(sb.String())
+	}
+}
+
 func testHubApis(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 	t.Helper()
 
 	t.Run("HubApi", func(t *testing.T) {
-		client := gen.NewHubApiClient(conn)
-		res, err := client.ListHubNodes(ctx, &gen.ListHubNodesRequest{})
+		client := hubpb.NewHubApiClient(conn)
+		res, err := client.ListHubNodes(ctx, &hubpb.ListHubNodesRequest{})
 		if err != nil {
 			t.Fatalf("list hub nodes: %v", err)
 		}

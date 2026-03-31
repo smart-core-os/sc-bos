@@ -1,16 +1,17 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -23,30 +24,41 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
-	"github.com/vanti-dev/sc-bos/internal/account"
-	"github.com/vanti-dev/sc-bos/internal/manage/devices"
-	"github.com/vanti-dev/sc-bos/internal/util/grpc/interceptors"
-	"github.com/vanti-dev/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/vanti-dev/sc-bos/internal/util/pki"
-	"github.com/vanti-dev/sc-bos/internal/util/pki/expire"
-	"github.com/vanti-dev/sc-bos/pkg/app/appconf"
-	"github.com/vanti-dev/sc-bos/pkg/app/files"
-	http2 "github.com/vanti-dev/sc-bos/pkg/app/http"
-	"github.com/vanti-dev/sc-bos/pkg/app/stores"
-	"github.com/vanti-dev/sc-bos/pkg/app/sysconf"
-	"github.com/vanti-dev/sc-bos/pkg/auth/policy"
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/manage/enrollment"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task"
-	"github.com/vanti-dev/sc-bos/pkg/util/netutil"
+	"github.com/smart-core-os/sc-bos/internal/account"
+	"github.com/smart-core-os/sc-bos/internal/cloud"
+	"github.com/smart-core-os/sc-bos/internal/manage/devices"
+	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
+	"github.com/smart-core-os/sc-bos/pkg/app/logcapture"
+	"github.com/smart-core-os/sc-bos/internal/router"
+	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors"
+	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors/protopkg"
+	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
+	"github.com/smart-core-os/sc-bos/internal/util/pki/expire"
+	"github.com/smart-core-os/sc-bos/pkg/app/files"
+	http2 "github.com/smart-core-os/sc-bos/pkg/app/http"
+	"github.com/smart-core-os/sc-bos/pkg/app/stores"
+	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
+	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/manage/enrollment"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // Bootstrap will obtain a Controller in a ready-to-run state.
 func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) {
-	logger, err := config.Logger.Build()
+	// Create a dynamic capture core so that the Log trait system plugin can
+	// register itself to receive all log entries after the fact.
+	capture := &logcapture.Core{}
+	logger, err := config.Logger.Build(zap.WrapCore(capture.WrapCoreFunc()))
 	if err != nil {
 		return nil, err
 	}
@@ -57,28 +69,53 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		return nil, err
 	}
 
-	// load the external config file if possible
-	// TODO: pull config from manager publication
-	var externalConf appconf.Config
-	filesLoaded, err := appconf.LoadIncludes("", &externalConf, config.AppConfig)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			// warn that file(s) couldn't be found, but continue with default config
-			logger.Warn("failed to load some config", zap.Strings("paths", config.AppConfig), zap.Error(err), zap.Strings("filesLoaded", filesLoaded))
-		} else {
-			return nil, err
+	// init the deployment client if configured to connect to a deployment server
+	var (
+		deploymentUpdater *cloud.DeploymentUpdater
+		cloudDataRoot     *os.Root
+		confStore         ConfigStore
+	)
+	if config.Cloud != nil {
+		clientSecret, err := loadCloudClientSecret(config.Cloud.ClientSecretFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load cloud client secret: %w", err)
+		}
+		reg := cloud.Registration{
+			ClientID:     config.Cloud.ClientID,
+			ClientSecret: clientSecret,
+			BosapiRoot:   config.Cloud.BosapiRoot,
+		}
+
+		cloudDataDir := filepath.Join(config.DataDir, cloudDirName)
+		err = os.MkdirAll(cloudDataDir, 0750)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create cloud data directory: %w", err)
+		}
+
+		cloudDataRoot, err = os.OpenRoot(cloudDataDir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open cloud data directory: %w", err)
+		}
+		httpClient := cloud.NewHTTPClient(reg)
+		duOptions := []cloud.UpdaterOption{
+			cloud.WithLogger(logger.Named("cloud")),
+			cloud.WithPreserveDownloads(config.Cloud.PreserveDownloads),
+		}
+		if config.Cloud.MaxDeploymentSizeMiB != 0 {
+			duOptions = append(duOptions, cloud.WithMaxDeploymentSize(int64(config.Cloud.MaxDeploymentSizeMiB)*1024*1024))
+		}
+		deploymentUpdater = cloud.NewDeploymentUpdater(cloudDataRoot, httpClient, duOptions...)
+
+		confStore, err = loadCloudAppConfig(ctx, config, deploymentUpdater, logger)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load config from cloud: %w", err)
 		}
 	} else {
-		// successfully loaded the config
-		logger.Debug("loaded external config", zap.Strings("paths", config.AppConfig), zap.Strings("includes", externalConf.Includes), zap.Strings("filesLoaded", filesLoaded))
-	}
-	confStore, err := appconf.LoadStore(externalConf, appconf.Schema{
-		Drivers:     config.DriverConfigBlocks(),
-		Automations: config.AutoConfigBlocks(),
-		Zones:       config.ZoneConfigBlocks(),
-	}, files.Path(config.DataDir, configDirName), logger)
-	if err != nil {
-		return nil, err
+		// load the external config file if possible
+		confStore, err = loadLocalAppConfig(config, logger)
+		if err != nil {
+			return nil, err
+		}
 	}
 	initialConfig := confStore.Active()
 
@@ -89,7 +126,26 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	if cName == "" {
 		cName = config.Name
 	}
-	rootNode := node.New(cName)
+
+	// idOrNodeName returns the given oldID if non-empty, otherwise returns the node name.
+	idOrNodeName := func(oldID string) (newID string) {
+		if oldID == "" {
+			return cName
+		}
+		return oldID
+	}
+	// external store for devices so we can attach multiple resources to it,
+	// like metadata and health checks.
+	deviceStore := devicespb.NewCollection(
+		resource.WithIDInterceptor(idOrNodeName),
+		resource.WithNoDuplicates(),
+	)
+	// dynamic router for API clients, allows non-Announced services to also be served via rootNode.ClientConn()
+	nodeRouter := router.New(router.WithKeyInterceptor(func(key string) (mappedKey string, err error) {
+		return idOrNodeName(key), nil
+	}))
+
+	rootNode := node.New(cName, nodeopts.WithStore(deviceStore), nodeopts.WithRouter(nodeRouter))
 	rootNode.Logger = logger.Named("node")
 
 	var accountStore *account.Store
@@ -100,7 +156,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			return nil, fmt.Errorf("load accounts: %w", err)
 		}
 		rootNode.Announce(rootNode.Name(),
-			node.HasServer[gen.AccountApiServer](gen.RegisterAccountApiServer, account.NewServer(accountStore, accountLogger.Named("server"))),
+			node.HasServer[accountpb.AccountApiServer](accountpb.RegisterAccountApiServer, account.NewServer(accountStore, accountLogger.Named("server"))),
 		)
 	}
 
@@ -192,8 +248,13 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		systemSource,
 		selfSignedSource,
 	}
-	tlsGRPCServerConfig := pki.TLSServerConfig(grpcSource)
-	tlsGRPCClientConfig := pki.TLSClientConfig(grpcSource)
+	tlsMinVersion, err := certConfig.ParseTLSMinVersion()
+	if err != nil {
+		return nil, fmt.Errorf("certs.tlsMinVersion: %w", err)
+	}
+	tlsVersionOpt := pki.WithMinVersion(tlsMinVersion)
+	tlsGRPCServerConfig := pki.TLSServerConfig(grpcSource, tlsVersionOpt)
+	tlsGRPCClientConfig := pki.TLSClientConfig(grpcSource, tlsVersionOpt)
 
 	// Certs used for https (hosting and grpc-web) can be different from the Smart Core native grpc endpoint,
 	// mostly to allow support for trusted certs on the https interface and cohort managed certs for grpc requests.
@@ -211,7 +272,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			selfSignedSource, // reuse the same self signed cert from grpc requests
 		}
 	}
-	tlsHTTPServerConfig := pki.TLSServerConfig(httpCertSource)
+	tlsHTTPServerConfig := pki.TLSServerConfig(httpCertSource, tlsVersionOpt)
 	tlsHTTPServerConfig.ClientAuth = tls.NoClientCert
 
 	// manager represents a delayed connection to the cohort manager.
@@ -221,6 +282,16 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsGRPCClientConfig)))
 
 	var grpcOpts []grpc.ServerOption
+
+	// Enable backwards compatibility while we transition to versioned gRPC APIs.
+	// This allows old clients to communicate with new servers as part of a rolling upgrade.
+	// Must be done before the interceptors.CorrectStreamInfo call so the /service/method is correct.
+	migrationInterceptor := protopkg.NewOldToNewInterceptor()
+	grpcOpts = append(grpcOpts,
+		grpc.ChainUnaryInterceptor(migrationInterceptor.UnaryInterceptor()),
+		grpc.ChainStreamInterceptor(migrationInterceptor.StreamInterceptor()),
+	)
+
 	grpcOpts = append(grpcOpts,
 		grpc.Creds(credentials.NewTLS(tlsGRPCServerConfig)),
 		grpc.ChainStreamInterceptor(interceptors.CorrectStreamInfo(rootNode)),
@@ -254,9 +325,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	grpcServer := grpc.NewServer(grpcOpts...)
 
 	reflectionServer := reflectionapi.NewServer(grpcServer, rootNode)
-	reflectionServer.Register(grpcServer)
+	reflectionServer.Register(nodeRouter)
 
-	gen.RegisterEnrollmentApiServer(grpcServer, enrollServer)
+	enrollmentpb.RegisterEnrollmentApiServer(nodeRouter, enrollServer)
 
 	// DevicesApi
 	var devicesApiOpts []devices.Option
@@ -270,8 +341,27 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	} else {
 		logger.Error("failed to determine external http endpoint - download URLs unavailable", zap.Error(err))
 	}
+
+	if config.Devices != nil && config.Devices.DownloadHMACKeyFile != "" {
+		hmacKey, err := os.ReadFile(config.Devices.DownloadHMACKeyFile)
+		if err != nil {
+			logger.Warn("failed to read download HMAC key file, using random HMAC key generator", zap.Error(err))
+		} else {
+			hmacKey = bytes.TrimSpace(hmacKey)
+			devicesApiOpts = append(devicesApiOpts, devices.WithHMACKeyGen(func() ([]byte, error) {
+				return hmacKey, nil
+			}))
+		}
+	}
+
 	devicesApi := devices.NewServer(rootNode, devicesApiOpts...)
-	devicesApi.Register(grpcServer)
+	devicesApi.Register(nodeRouter)
+
+	// HealthApi, HealthHistoryApi, and adding health checks to the DevicesApi
+	checkRegistry, closeHealthStore, err := setupHealthRegistry(ctx, config, deviceStore, rootNode, logger.Named("health"))
+	if err != nil {
+		return nil, err
+	}
 
 	grpcWebServer := grpcweb.WrapServer(grpcServer,
 		grpcweb.WithOriginFunc(func(origin string) bool {
@@ -331,13 +421,19 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		}),
 	}
 
+	logLevel := config.Logger.Level
 	c := &Controller{
 		SystemConfig:     config,
 		ControllerConfig: confStore,
 		Enrollment:       enrollServer,
+		Deployments:      deploymentUpdater,
 		Logger:           logger,
+		LogCapture:       capture,
+		LogLevel:         &logLevel,
 		Node:             rootNode,
-		Devices:          gen.NewDevicesApiClient(wrap.ServerToClient(gen.DevicesApi_ServiceDesc, devicesApi)),
+		Devices:          devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+		CheckRegistry:    checkRegistry,
+		DeviceStore:      deviceStore,
 		Tasks:            &task.Group{},
 		Database:         db,
 		Stores:           store,
@@ -354,6 +450,10 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	}
 	c.Defer(manager.Close)
 	c.Defer(store.Close)
+	c.Defer(closeHealthStore)
+	if cloudDataRoot != nil {
+		c.Defer(cloudDataRoot.Close)
+	}
 	return c, nil
 }
 
@@ -405,19 +505,24 @@ func configPolicy(config sysconf.Config) policy.Policy {
 
 type Controller struct {
 	SystemConfig     sysconf.Config
-	ControllerConfig *appconf.Store
+	ControllerConfig ConfigStore
 	Enrollment       *enrollment.Server
+	Deployments      *cloud.DeploymentUpdater
 
 	// services for drivers/automations
 	Logger          *zap.Logger
+	LogCapture      *logcapture.Core  // dynamic tee for log capture (nil if not built via Bootstrap)
+	LogLevel        *zap.AtomicLevel  // controls the root logger's minimum level
 	Node            *node.Node
-	Devices         gen.DevicesApiClient
+	Devices         devicespb.DevicesApiClient
+	DeviceStore     *devicespb.Collection // for low level control of devices
 	Tasks           *task.Group
 	Database        *bolthold.Store
 	TokenValidators *token.ValidatorSet
 	GRPCCerts       *pki.SourceSet
 	Stores          *stores.Stores
 	Accounts        *account.Store
+	CheckRegistry   *healthpb.Registry
 
 	ReflectionServer *reflectionapi.Server
 
@@ -455,6 +560,16 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	if c.Enrollment != nil {
 		group.Go(func() error {
 			return c.Enrollment.AutoRenew(ctx)
+		})
+	}
+	if c.Deployments != nil {
+		group.Go(func() error {
+			needRestart := c.Deployments.AutoPoll(ctx, c.SystemConfig.Cloud.PollInterval.Duration)
+			if needRestart {
+				c.Logger.Info("triggering automatic restart to apply new deployment")
+				return restartNowError{}
+			}
+			return nil
 		})
 	}
 	if c.SystemConfig.ListenGRPC != "" {
@@ -503,5 +618,17 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 
 const (
 	configDirName = "config"
+	cloudDirName  = "cloud"
 	accountsFile  = "accounts.sqlite3"
 )
+
+// a sentinel error type - does not indicate an actual error, but a request to restart the controller immediately
+type restartNowError struct{}
+
+func (e restartNowError) Error() string {
+	return "automatic restart triggered"
+}
+
+func (e restartNowError) ExitCode() int {
+	return 0
+}

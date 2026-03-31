@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/exp/maps"
 
-	"github.com/vanti-dev/sc-bos/internal/iothub/auth"
+	"github.com/smart-core-os/sc-bos/internal/iothub/auth"
 )
 
 type ConnectionParameters struct {

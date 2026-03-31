@@ -7,17 +7,16 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/fanspeedpb"
-	"github.com/vanti-dev/gobacnet"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/comm"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/config"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/known"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/status"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task"
+	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
+	fanspeedpb2 "github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 type fanSpeedConfig struct {
@@ -32,34 +31,40 @@ func readFanSpeedConfig(raw []byte) (cfg fanSpeedConfig, err error) {
 }
 
 type fanSpeed struct {
-	client   *gobacnet.Client
-	known    known.Context
-	statuses *statuspb.Map
-	logger   *zap.Logger
+	client     *gobacnet.Client
+	known      known.Context
+	faultCheck *healthpb.FaultCheck
+	logger     *zap.Logger
 
-	model *fanspeedpb.Model
-	*fanspeedpb.ModelServer
+	model *fanspeedpb2.Model
+	*fanspeedpb2.ModelServer
 	config   fanSpeedConfig
 	pollTask *task.Intermittent
 }
 
-func newFanSpeed(client *gobacnet.Client, devices known.Context, statuses *statuspb.Map, config config.RawTrait, logger *zap.Logger) (*fanSpeed, error) {
+func newFanSpeed(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*fanSpeed, error) {
 	cfg, err := readFanSpeedConfig(config.Raw)
 	if err != nil {
 		return nil, err
 	}
-	model := fanspeedpb.NewModel()
+	var presets []fanspeedpb2.Preset
+	for preset, speed := range cfg.Presets {
+		presets = append(presets, fanspeedpb2.Preset{
+			Name:       preset,
+			Percentage: speed,
+		})
+	}
+	model := fanspeedpb2.NewModel(fanspeedpb2.WithPresets(presets...))
 	t := &fanSpeed{
 		client:      client,
 		known:       devices,
-		statuses:    statuses,
+		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: fanspeedpb.NewModelServer(model),
+		ModelServer: fanspeedpb2.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
-	initTraitStatus(statuses, cfg.Name, "FanSpeed")
 	return t, nil
 }
 
@@ -71,10 +76,10 @@ func (t *fanSpeed) startPoll(init context.Context) (stop task.StopFn, err error)
 }
 
 func (t *fanSpeed) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(trait.FanSpeed, node.WithClients(fanspeedpb.WrapApi(t))))
+	return a.Announce(t.config.Name, node.HasTrait(trait.FanSpeed, node.WithClients(fanspeedpb2.WrapApi(t))))
 }
 
-func (t *fanSpeed) GetFanSpeed(ctx context.Context, request *traits.GetFanSpeedRequest) (*traits.FanSpeed, error) {
+func (t *fanSpeed) GetFanSpeed(ctx context.Context, request *fanspeedpb.GetFanSpeedRequest) (*fanspeedpb.FanSpeed, error) {
 	_, err := t.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -82,7 +87,7 @@ func (t *fanSpeed) GetFanSpeed(ctx context.Context, request *traits.GetFanSpeedR
 	return t.ModelServer.GetFanSpeed(ctx, request)
 }
 
-func (t *fanSpeed) UpdateFanSpeed(ctx context.Context, request *traits.UpdateFanSpeedRequest) (*traits.FanSpeed, error) {
+func (t *fanSpeed) UpdateFanSpeed(ctx context.Context, request *fanspeedpb.UpdateFanSpeedRequest) (*fanspeedpb.FanSpeed, error) {
 	newPreset := request.GetFanSpeed().GetPreset()
 	newFanSpeed := request.GetFanSpeed().GetPercentage()
 	if newPreset != "" {
@@ -92,18 +97,19 @@ func (t *fanSpeed) UpdateFanSpeed(ctx context.Context, request *traits.UpdateFan
 		}
 		newFanSpeed = presetSpeed
 	}
+
 	err := comm.WriteProperty(ctx, t.client, t.known, *t.config.Speed, newFanSpeed, 0)
 	if err != nil {
 		return nil, err
 	}
 
 	// todo: not strictly correct as we're not paying attention to the require customisation properties that ModelServer would give us
-	return pollUntil(ctx, t.config.DefaultRWConsistencyTimeoutDuration(), t.pollPeer, func(data *traits.FanSpeed) bool {
+	return pollUntil(ctx, t.config.DefaultRWConsistencyTimeoutDuration(), t.pollPeer, func(data *fanspeedpb.FanSpeed) bool {
 		return data.GetPercentage() == newFanSpeed
 	})
 }
 
-func (t *fanSpeed) PullFanSpeed(request *traits.PullFanSpeedRequest, server traits.FanSpeedApi_PullFanSpeedServer) error {
+func (t *fanSpeed) PullFanSpeed(request *fanspeedpb.PullFanSpeedRequest, server fanspeedpb.FanSpeedApi_PullFanSpeedServer) error {
 	_ = t.pollTask.Attach(server.Context())
 	return t.ModelServer.PullFanSpeed(request, server)
 }
@@ -118,15 +124,15 @@ func (t *fanSpeed) speedToPreset(speed float32) string {
 }
 
 // pollPeer fetches data from the peer device and saves the data locally.
-func (t *fanSpeed) pollPeer(ctx context.Context) (*traits.FanSpeed, error) {
+func (t *fanSpeed) pollPeer(ctx context.Context) (*fanspeedpb.FanSpeed, error) {
 	speed, err := readPropertyFloat32(ctx, t.client, t.known, *t.config.Speed)
-	status.UpdatePollErrorStatus(t.statuses, t.config.Name, "FanSpeed", []string{"speed"}, []error{err})
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.FanSpeed, []error{err})
 	if err != nil {
 		return nil, comm.ErrReadProperty{Prop: "speed", Cause: err}
 	}
-	data := &traits.FanSpeed{
+	data := &fanspeedpb.FanSpeed{
 		Percentage: speed,
-		Direction:  traits.FanSpeed_DIRECTION_UNSPECIFIED,
+		Direction:  fanspeedpb.FanSpeed_DIRECTION_UNSPECIFIED,
 		Preset:     t.speedToPreset(speed),
 	}
 	return t.model.UpdateFanSpeed(data)

@@ -41,6 +41,10 @@ const props = defineProps({
   color: {
     type: String,
     default: ''
+  },
+  deadband: {
+    type: Number,
+    default: 1
   }
 });
 
@@ -54,8 +58,18 @@ const {
 } = useAirTemperatureValues(currentTempNum, setPointNum);
 const canTellDirection = computed(() => hasTemp.value && hasSetPoint.value);
 
-const isHeating = computed(() => roundTo(props.currentTemp, 1) < roundTo(props.setPoint, 1));
-const isCooling = computed(() => roundTo(props.currentTemp, 1) > roundTo(props.setPoint, 1));
+const isHeating = computed(() => {
+  if (!canTellDirection.value) return false;
+  const current = roundTo(props.currentTemp, 1);
+  const target = roundTo(props.setPoint, 1);
+  return current < (target - props.deadband);
+});
+const isCooling = computed(() => {
+  if (!canTellDirection.value) return false;
+  const current = roundTo(props.currentTemp, 1);
+  const target = roundTo(props.setPoint, 1);
+  return current > (target + props.deadband);
+});
 const iconStr = computed(() => {
   if (!canTellDirection.value) return 'mdi-thermometer';
   if (isHeating.value) return 'mdi-fire';
@@ -93,28 +107,31 @@ const avatarAttrs = computed(() => {
 });
 const avatarTooltip = computed(() => {
   let str = '';
-  switch (comfort.value) {
-    case 'cold':
-      str = 'Temperature too cold';
-      break;
-    case 'normal':
-      str = 'Temperature just right';
-      break;
-    case 'warm':
-      str = 'Temperature too warm';
-      break;
-    case 'hot':
-      str = 'Temperature very hot';
-      break;
-    default:
-      str = 'Unknown';
-      break;
-  }
+
   if (isHeating.value) {
-    str += ', is heating';
+    str = 'Heating';
   } else if (isCooling.value) {
-    str += ', is cooling';
+    str = 'Cooling';
+  } else {
+    switch (comfort.value) {
+      case 'cold':
+        str = 'Temperature is cold';
+        break;
+      case 'normal':
+        str = 'Temperature is comfortable';
+        break;
+      case 'warm':
+        str = 'Temperature is warm';
+        break;
+      case 'hot':
+        str = 'Temperature is hot';
+        break;
+      default:
+        str = 'Temperature unknown';
+        break;
+    }
   }
+
   return str;
 });
 const chipAttrs = computed(() => {

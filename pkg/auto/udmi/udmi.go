@@ -9,14 +9,13 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/udmipb"
-	"github.com/vanti-dev/sc-bos/pkg/task"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/auto/udmi/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/udmi/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 const AutoType = "udmi"
@@ -48,7 +47,7 @@ type udmiAuto struct {
 }
 
 func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
-	udmiClient := gen.NewUdmiServiceClient(e.services.Node.ClientConn())
+	udmiClient := udmipb.NewUdmiServiceClient(e.services.Node.ClientConn())
 
 	client, err := newMqttClient(cfg)
 	if err != nil {
@@ -102,7 +101,7 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 					return
 				default:
 				}
-				for change := range e.services.Node.PullDevices(ctx, resource.WithReadPaths(&gen.Device{}, "metadata.traits")) {
+				for change := range e.services.Node.PullDevices(ctx, resource.WithReadPaths(&devicespb.Device{}, "metadata.traits")) {
 					hadTrait, hasTrait := hasUDMITrait(change.OldValue), hasUDMITrait(change.NewValue)
 					if hadTrait && !hasTrait {
 						// remove
@@ -123,7 +122,7 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func hasUDMITrait(device *gen.Device) bool {
+func hasUDMITrait(device *devicespb.Device) bool {
 	md := device.GetMetadata()
 	for _, t := range md.GetTraits() {
 		if t.Name == udmipb.TraitName.String() {
@@ -173,7 +172,6 @@ func (s *namedTasks) Run(ctx context.Context, name string, tasks []task.Task, op
 
 	group, ctx := errgroup.WithContext(ctx)
 	for _, t := range tasks {
-		t := t
 		group.Go(func() error {
 			return task.Run(ctx, t, opts...)
 		})

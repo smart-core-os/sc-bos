@@ -8,13 +8,13 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-	"github.com/vanti-dev/sc-bos/pkg/zone"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/lighting/config"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/lighting/config"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -44,14 +44,14 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	announceGroup := func(name string, lights []string, logger *zap.Logger) error {
 		group := &Group{
-			client:   traits.NewLightApiClient(conn),
-			info:     traits.NewLightInfoClient(conn),
+			client:   lightpb.NewLightApiClient(conn),
+			info:     lightpb.NewLightInfoClient(conn),
 			names:    lights,
 			readOnly: cfg.ReadOnlyLights,
 			logger:   logger,
 		}
 		f.devices.Add(lights...)
-		announce.Announce(name, node.HasTrait(trait.Light, node.WithClients(lightpb.WrapApi(group), lightpb.WrapInfo(group))))
+		announce.Announce(name, node.HasTrait(trait.Light, node.WithClients(lightpb2.WrapApi(group), lightpb2.WrapInfo(group))))
 		return nil
 	}
 

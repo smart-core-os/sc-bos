@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package smartcore.bos.report.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/reportpb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// ReportApi provides methods to manage and retrieve reports. Reports are typically created by automations, such as
+// monthly metering reports, monthly fault reports etc. This API allows automations to provide these reports on demand.
+service ReportApi {
+  rpc ListReports(ListReportsRequest) returns (ListReportsResponse);
+  rpc GetDownloadReportUrl(GetDownloadReportUrlRequest) returns (DownloadReportUrl);
+}
+
+// ListReportsRequest contains a list of reports that are available for download.
+message ListReportsRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  // The maximum number of Reports to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 3;
+  // A page token, received from a previous `ListReportsResponse` call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 4;
+}
+
+// ListReportsResponse contains a list of reports.
+message ListReportsResponse {
+  // The list of reports.
+  repeated Report reports = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+  // If non-zero this is the total number of Reports after filtering is applied.
+  // This may be an estimate.
+  int32 total_size = 3;
+}
+
+// Report represents a report in the system.
+message Report {
+  // The unique identifier of the report. Can be the filename or a UUID.
+  string id = 1;
+
+  // The title of the report.
+  string title = 2;
+
+  // The description of the report.
+  string description = 3;
+
+  // The timestamp when the report was created.
+  google.protobuf.Timestamp create_time = 4;
+
+  // The media type of the report, e.g., "application/pdf", "text/csv".
+  string media_type = 5;
+}
+
+// GetDownloadReportUrlRequest is used to request a specific report by its ID.
+message GetDownloadReportUrlRequest {
+  string name = 1;
+  // The unique identifier of the report to retrieve.
+  string id = 2;
+}
+
+message DownloadReportUrl {
+  string url = 1;
+  string filename = 2;
+  // The media type of the report, e.g., "application/pdf", "text/csv".
+  string media_type = 3;
+  // The latest time the url will be valid for, you will not be able to use the url after this time.
+  google.protobuf.Timestamp expire_after_time = 4;
+}
+

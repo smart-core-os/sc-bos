@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 type Root struct {
@@ -18,8 +18,8 @@ type Root struct {
 	Settings *Settings `json:"settings,omitempty"`
 
 	// Metadata applied to all cameras
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
-	Cameras  []*Camera        `json:"cameras,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
+	Cameras  []*Camera            `json:"cameras,omitempty"`
 
 	GrantManagement *GrantManagement `json:"grantManagement,omitempty"`
 	ANPRCameras     []ANPR           `json:"anprCameras,omitempty"`
@@ -45,7 +45,7 @@ type GrantManagement struct {
 	// smart core name of the grant management API server
 	// to create, update and delete access grants
 	Name     string           `json:"name,omitempty"`
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 
 	// MaxListAccessGrants is the maximum number of access grants to fetch in a single call to ListAccessGrants.
 	// If not set, defaults to 10.
@@ -60,7 +60,7 @@ type ANPR struct {
 	// smart core name of the access API server
 	// to get and pull access attempts
 	Name     string           `json:"name,omitempty"`
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 	// EntranceCameraIndexCode is the camera used to detect AccessAttempts at entrances
 	EntranceCameraIndexCode string `json:"entranceCameraIndexCode,omitempty"`
 	// ExitCameraIndexCode is the camera used to detect AccessAttempts at exits
@@ -72,8 +72,8 @@ type Camera struct {
 	Topic     string `json:"topic,omitempty"`
 	IndexCode string `json:"indexCode,omitempty"`
 	// Metadata applied to this camera
-	Metadata  *traits.Metadata `json:"metadata,omitempty"`
-	IpAddress string           `json:"ipAddress,omitempty"`
+	Metadata  *metadatapb.Metadata `json:"metadata,omitempty"`
+	IpAddress string               `json:"ipAddress,omitempty"`
 }
 
 func ReadBytes(raw []byte) (dst Root, err error) {

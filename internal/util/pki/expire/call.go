@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 
-	"github.com/vanti-dev/sc-bos/internal/util/pki"
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
 )
 
 // Manually returns a pki.Expiry that returns true the first time it is called after expire is invoked.

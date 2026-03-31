@@ -37,7 +37,7 @@
 <script setup>
 
 import {onOffToString} from '@/traits/onOff/onOff.js';
-import {OnOff} from '@smart-core-os/sc-api-grpc-web/traits/on_off_pb.js';
+import {OnOff} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/onoff/v1/on_off_pb.js';
 import {computed, toValue} from 'vue';
 
 const props = defineProps({

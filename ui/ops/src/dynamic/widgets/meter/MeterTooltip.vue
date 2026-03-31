@@ -16,7 +16,7 @@
                 <span class="ml-4">{{ row.append }}</span>
               </template>
             </v-list-item>
-            <v-list-item v-if="totalConsumptionRow && consumptionRows.length > 1"
+            <v-list-item v-if="totalConsumptionRow && consumptionRows.length > 1 && !props.hideTotalConsumption"
                          :title="totalConsumptionRow.title"
                          active>
               <template #prepend>
@@ -77,6 +77,10 @@ const props = defineProps({
   unit: {
     type: String,
     default: undefined
+  },
+  hideTotalConsumption: {
+    type: Boolean,
+    default: false
   }
 });
 const data = computed(() => /** @type {TooltipData} */ props.data);

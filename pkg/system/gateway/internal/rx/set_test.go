@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/vanti-dev/sc-bos/pkg/util/chans"
-	scslices "github.com/vanti-dev/sc-bos/pkg/util/slices"
+	"github.com/smart-core-os/sc-bos/pkg/util/chans"
+	scslices "github.com/smart-core-os/sc-bos/pkg/util/slices"
 )
 
 func TestSet_Sub(t *testing.T) {
@@ -52,18 +52,34 @@ func TestSet_Sub(t *testing.T) {
 	}
 }
 
+// TestSet_Replace_noUpdateForUnchangedItems demonstrates the root cause of the
+// spurious service re-announcement loop: Replace always reports items as updated
+// and emits Update events even when the values are identical to what is already in the set.
+// The expected behaviour (and the fix target) is that no items should be reported as
+// updated when the replacement slice contains exactly the same values as the current set.
+func TestSet_Replace_noUpdateForUnchangedItems(t *testing.T) {
+	s := NewSet(scslices.NewSorted("a", "b", "c"))
+
+	// Replace with the exact same items — nothing has changed.
+	// We check the return values directly to avoid needing a subscriber
+	// (minibus.Send blocks waiting for listeners, which would deadlock).
+	_, _, updated := s.Replace([]string{"a", "b", "c"})
+
+	if updated.Len() > 0 {
+		t.Errorf("Replace with unchanged items should report 0 updated items, got %d", updated.Len())
+	}
+}
+
 func TestSet_concurrency(t *testing.T) {
 	s := NewSet(scslices.NewSorted("pre000", "pre001", "pre002"))
 
 	var writers sync.WaitGroup
 	// this routine adds items to the set
-	writers.Add(1)
-	go func() {
-		defer writers.Done() // go routine finished
+	writers.Go(func() {
 		for i := range 1000 {
 			s.Set(fmt.Sprintf("set%03d", i))
 		}
-	}()
+	})
 
 	readCtx, stopReadCtx := context.WithCancel(context.Background())
 	go func() {
@@ -73,9 +89,7 @@ func TestSet_concurrency(t *testing.T) {
 
 	var readers sync.WaitGroup
 	for i := range 1000 {
-		readers.Add(1)
-		go func() {
-			defer readers.Done()
+		readers.Go(func() {
 			now, events := s.Sub(readCtx)
 			seen := make(map[string]struct{})
 			for _, v := range now.All {
@@ -95,7 +109,7 @@ func TestSet_concurrency(t *testing.T) {
 				}
 				seen[e.New] = struct{}{}
 			}
-		}()
+		})
 	}
 
 	writers.Wait()

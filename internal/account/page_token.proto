@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package smartcore.bos.account;
 
-option go_package = "github.com/vanti-dev/sc-bos/internal/account";
+option go_package = "github.com/smart-core-os/sc-bos/internal/account";
 
 message PageToken {
   // The ID of the last item in the previous page.

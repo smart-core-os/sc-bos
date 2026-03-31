@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package smartcore.bos.types.time.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/timepb";
+
+import "google/protobuf/timestamp.proto";
+
+// Represents a time period from start_time to end_time
+// where start_time is inclusive, and end_time is exclusive
+// e.g. [start_time, end_time)
+message Period {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+}

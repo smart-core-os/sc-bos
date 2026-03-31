@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	"time"
 
-	"github.com/vanti-dev/sc-bos/internal/util/pki"
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
 )
 
 type Now func() time.Time

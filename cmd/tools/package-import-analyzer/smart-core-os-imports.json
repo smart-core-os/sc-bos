@@ -1,0 +1,4076 @@
+{
+  "base_module": "github.com/smart-core-os/sc-bos",
+  "organization": "vanti-dev",
+  "total_repos": 269,
+  "repos_with_go_files": 66,
+  "repos_with_imports": 19,
+  "package_usage": {
+    "github.com/smart-core-os/sc-bos/pkg/app": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/gateway/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go",
+          "cmd/fire-alarm/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/g2-area-controller/main.go",
+          "cmd/tc3/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/arup-ocw-fitout",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-08-20T15:24:34Z",
+        "last_update": "2025-02-12T11:56:14Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/inf-sc-bos/main.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/sc-azure-iot-hub-exporter",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "main.go"
+        ],
+        "last_push": "2024-06-26T13:23:46Z",
+        "last_update": "2024-06-26T13:23:49Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/ukreiff-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-03-25T11:27:59Z",
+        "last_update": "2025-03-25T11:28:03Z"
+      },
+      {
+        "repository": "vanti-dev/inf-240-bfr-data-collector",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "main.go"
+        ],
+        "last_push": "2024-06-26T10:24:07Z",
+        "last_update": "2024-06-26T10:24:10Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go",
+          "cmd/facilio-adapter/main.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      },
+      {
+        "repository": "vanti-dev/jll-1-bg",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-10T14:25:22Z",
+        "last_update": "2025-11-10T14:25:26Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/app/appconf": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/appconf",
+        "files": [
+          "cmd/tools/gen-config/config.go",
+          "cmd/tools/gen-config/hvac.go",
+          "cmd/tools/gen-config/knx.go",
+          "cmd/tools/gen-config/lighting.go",
+          "cmd/tools/gen-config/zones.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/appconf",
+        "files": [
+          "cmd/tools/gen-axiom-config/main.go",
+          "cmd/tools/gen-axis-config/main.go",
+          "cmd/tools/gen-bms-config/write/model.go",
+          "cmd/tools/gen-fire-config/write/model.go",
+          "cmd/tools/gen-lighting-config/main.go",
+          "cmd/tools/gen-lighting-config/stairwells.go",
+          "cmd/tools/gen-metering-config/write/model.go",
+          "cmd/tools/gen-zones-config/main.go",
+          "cmd/tools/lighting-comm-test/read/config.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/appconf",
+        "files": [
+          "cmd/tools/cctv-config-gen/main.go",
+          "cmd/tools/gen-bms-config/write/model.go",
+          "internal/config/lighting/config.go",
+          "internal/config/lighting/lighting.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/appconf",
+        "files": [
+          "cmd/tools/gen-config-bms/main.go",
+          "cmd/tools/gen-config-lighting/main.go",
+          "cmd/tools/gen-config-smart/main.go",
+          "cmd/tools/gen-config-zones/main.go",
+          "cmd/tools/level-1/gen-config-bms/main.go",
+          "cmd/tools/level-1/gen-config-lighting/main.go",
+          "cmd/tools/level-1/gen-config-smart/main.go",
+          "internal/gen-config/utilFunctions.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/appconf",
+        "files": [
+          "cmd/tools/gen-config-bms/main.go",
+          "internal/gen-config/utilFunctions.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/appconf",
+        "files": [
+          "cmd/tools/gen-lighting-config/write/write.go",
+          "cmd/tools/gen-metering-config/write/write.go",
+          "cmd/tools/gen-tripleplay-config/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/appconf",
+        "files": [
+          "cmd/tools/cctv-config-gen/main.go",
+          "cmd/tools/gen-lighting-config/write/write.go",
+          "cmd/tools/zone-to-proxy-gen/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/appconf",
+        "files": [
+          "cmd/tools/gen-bms-config/main.go",
+          "cmd/tools/gen-lighting-config/main.go",
+          "cmd/tools/gen-lighting-config/write/write.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/appconf",
+        "files": [
+          "cmd/tools/gen-bms-config/bmsconfig/write.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/appconf",
+        "files": [
+          "cmd/tools/gen-bc-proxy-config/main.go",
+          "cmd/tools/gen-cctv-config/main.go",
+          "cmd/tools/gen-lighting-config/write/write.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/app/sysconf": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/gateway/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go",
+          "cmd/fire-alarm/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/g2-area-controller/main.go",
+          "cmd/tc3/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/arup-ocw-fitout",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-08-20T15:24:34Z",
+        "last_update": "2025-02-12T11:56:14Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/inf-sc-bos/main.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/sc-azure-iot-hub-exporter",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "main.go"
+        ],
+        "last_push": "2024-06-26T13:23:46Z",
+        "last_update": "2024-06-26T13:23:49Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/ukreiff-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-03-25T11:27:59Z",
+        "last_update": "2025-03-25T11:28:03Z"
+      },
+      {
+        "repository": "vanti-dev/inf-240-bfr-data-collector",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "main.go"
+        ],
+        "last_push": "2024-06-26T10:24:07Z",
+        "last_update": "2024-06-26T10:24:10Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go",
+          "cmd/facilio-adapter/main.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      },
+      {
+        "repository": "vanti-dev/jll-1-bg",
+        "package": "github.com/smart-core-os/sc-bos/pkg/app/sysconf",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-10T14:25:22Z",
+        "last_update": "2025-11-10T14:25:26Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/auto": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "cmd/tools/gen-config/config.go",
+          "cmd/tools/gen-config/hvac.go",
+          "internal/automations/resethvac/auto.go",
+          "internal/automations/resethvac/root.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "cmd/tools/gen-bms-config/write/model.go",
+          "cmd/tools/gen-fire-config/write/model.go",
+          "cmd/tools/gen-lighting-config/appconf.go",
+          "cmd/tools/gen-lighting-config/main.go",
+          "cmd/tools/gen-lighting-config/reception.go",
+          "cmd/tools/gen-lighting-config/stairwells.go",
+          "cmd/tools/gen-metering-config/write/model.go",
+          "cmd/tools/test-hark-mqtt/main.go",
+          "internal/auto/emergencysignage/auto.go",
+          "internal/auto/emergencysignage/auto_test.go",
+          "internal/auto/emergencysignage/config.go",
+          "internal/auto/harkmqtt/auto.go",
+          "internal/auto/harkmqtt/config.go",
+          "internal/auto/lightreport/auto.go",
+          "internal/auto/lightreport/auto_proxy.go",
+          "internal/auto/lightreport/config.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "cmd/tools/gen-bms-config/write/model.go",
+          "cmd/tools/test-deepki-meter-upload/main.go",
+          "cmd/tools/test-emergency-alert/main.go",
+          "cmd/tools/test-jll-meter-upload/main.go",
+          "cmd/tools/test-monthly-meter/main.go",
+          "internal/auto/emergencyalert/auto.go",
+          "internal/auto/emergencyalert/config.go",
+          "internal/auto/metermomreport/auto.go",
+          "internal/auto/metermomreport/config.go",
+          "internal/auto/metersftp/common.go",
+          "internal/auto/metersftp/config.go",
+          "internal/auto/metersftp/deepki/auto.go",
+          "internal/auto/metersftp/jllsftp/auto.go",
+          "internal/auto/monthlymeterreport/auto.go",
+          "internal/auto/monthlymeterreport/config.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "cmd/tools/gen-config-smart/main.go",
+          "cmd/tools/gen-config-zones/lighting.go",
+          "cmd/tools/gen-config-zones/main.go",
+          "cmd/tools/level-1/gen-config-bms/main.go",
+          "cmd/tools/level-1/gen-config-smart/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/sc-azure-iot-hub-exporter",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "main.go"
+        ],
+        "last_push": "2024-06-26T13:23:46Z",
+        "last_update": "2024-06-26T13:23:49Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "cmd/tools/bueno/test-bueno/main.go",
+          "cmd/tools/gen-metering-config/write/write.go",
+          "cmd/tools/gen-tripleplay-config/main.go",
+          "cmd/tools/test-waste-leaderboard/main.go",
+          "internal/auto/bueno/auto.go",
+          "internal/auto/bueno/config/root.go",
+          "internal/auto/creevx/auto.go",
+          "internal/auto/creevx/config/root.go",
+          "internal/auto/offlinedevices/auto.go",
+          "internal/auto/offlinedevices/auto_test.go",
+          "internal/auto/offlinedevices/config/root.go",
+          "internal/auto/tripleplay/auto.go",
+          "internal/auto/tripleplay/config/root.go",
+          "internal/auto/wasteleaderboard/auto.go",
+          "internal/auto/wasteleaderboard/config/root.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/inf-240-bfr-data-collector",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "main.go"
+        ],
+        "last_push": "2024-06-26T10:24:07Z",
+        "last_update": "2024-06-26T10:24:10Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "cmd/tools/mod-zone-autos/main.go",
+          "cmd/tools/test-monthly-meter/main.go",
+          "internal/auto/monthlymeterreport/auto.go",
+          "internal/auto/monthlymeterreport/config.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "internal/auto/facilio/auto.go",
+          "internal/auto/facilio/config/root.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "cmd/tools/gen-bms-config/bmsconfig/write.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "internal/auto/monthendreport/auto.go",
+          "internal/auto/monthendreport/config/root.go",
+          "internal/auto/monthlymeterreport/auto.go",
+          "internal/auto/monthlymeterreport/config/config.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto",
+        "files": [
+          "cmd/gen-config/main.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/auto/allautos": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/g2-area-controller/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/arup-ocw-fitout",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-08-20T15:24:34Z",
+        "last_update": "2025-02-12T11:56:14Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/inf-sc-bos/main.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/ukreiff-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-03-25T11:27:59Z",
+        "last_update": "2025-03-25T11:28:03Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go",
+          "cmd/facilio-adapter/main.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      },
+      {
+        "repository": "vanti-dev/jll-1-bg",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/allautos",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-10T14:25:22Z",
+        "last_update": "2025-11-10T14:25:26Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/auto/azureiot": [
+      {
+        "repository": "vanti-dev/sc-azure-iot-hub-exporter",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/azureiot",
+        "files": [
+          "main.go"
+        ],
+        "last_push": "2024-06-26T13:23:46Z",
+        "last_update": "2024-06-26T13:23:49Z"
+      },
+      {
+        "repository": "vanti-dev/inf-240-bfr-data-collector",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/azureiot",
+        "files": [
+          "main.go"
+        ],
+        "last_push": "2024-06-26T10:24:07Z",
+        "last_update": "2024-06-26T10:24:10Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/auto/history/config": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/history/config",
+        "files": [
+          "cmd/tools/gen-metering-config/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/history/config",
+        "files": [
+          "cmd/tools/gen-bms-config/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/history/config",
+        "files": [
+          "cmd/tools/gen-config-zones/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/history/config",
+        "files": [
+          "cmd/tools/gen-metering-config/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/history/config",
+        "files": [
+          "cmd/tools/mod-zone-autos/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/auto/lights/config": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/lights/config",
+        "files": [
+          "cmd/tools/gen-lighting-config/appconf.go",
+          "cmd/tools/gen-lighting-config/main.go",
+          "cmd/tools/gen-lighting-config/reception.go",
+          "cmd/tools/gen-lighting-config/stairwells.go",
+          "cmd/tools/generate-daylight-dimming-config/main.go",
+          "internal/config/lighting/data.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/lights/config",
+        "files": [
+          "cmd/tools/gen-config-zones/lighting.go",
+          "cmd/tools/gen-config-zones/presetModes.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/auto/resetenterleave/config": [
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/resetenterleave/config",
+        "files": [
+          "cmd/tools/gen-config-smart/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/resetenterleave/config",
+        "files": [
+          "cmd/gen-config/main.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/auto/udmi": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/udmi",
+        "files": [
+          "cmd/tools/gen-bms-config/main.go",
+          "internal/driver/axiomxa/traits.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/udmi",
+        "files": [
+          "internal/driver/zencontrol/emergency_luminaire.go",
+          "internal/driver/zencontrol/luminaire.go",
+          "internal/driver/zencontrol/luminaire_group.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/udmi",
+        "files": [
+          "internal/driver/zencontrol/luminaire.go",
+          "internal/driver/zencontrol/luminaire_group.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/udmi",
+        "files": [
+          "internal/auto/facilio/subandpub.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/auto/udmi/config": [
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/auto/udmi/config",
+        "files": [
+          "internal/config/lighting/config.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/tools/gen-config/config.go",
+          "cmd/tools/gen-config/divisible.go",
+          "cmd/tools/gen-config/hvac.go",
+          "cmd/tools/gen-config/zones.go",
+          "internal/drivers/divisible/config/root.go",
+          "internal/drivers/divisible/driver.go",
+          "internal/drivers/litenet/config/root.go",
+          "internal/drivers/litenet/litenet.go",
+          "internal/drivers/partition/config/root.go",
+          "internal/drivers/partition/driver.go",
+          "internal/drivers/steinelknx/config/root.go",
+          "internal/drivers/steinelknx/driver.go",
+          "internal/drivers/tc3bool/config/root.go",
+          "internal/drivers/tc3bool/driver.go",
+          "internal/drivers/virtualsensor/driver.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/daylight-power/main.go",
+          "cmd/gateway/main.go",
+          "cmd/tools/dali-integration-test/main.go",
+          "cmd/tools/gen-axiom-config/main.go",
+          "cmd/tools/gen-axis-config/main.go",
+          "cmd/tools/gen-bms-config/write/model.go",
+          "cmd/tools/gen-fire-config/write/model.go",
+          "cmd/tools/gen-lighting-config/main.go",
+          "cmd/tools/gen-metering-config/write/model.go",
+          "internal/driver/axiomxa/config/root.go",
+          "internal/driver/axiomxa/driver.go",
+          "internal/driver/axis/config/root.go",
+          "internal/driver/axis/driver.go",
+          "internal/driver/settings/config/root.go",
+          "internal/driver/settings/driver.go",
+          "internal/driver/tc3dali/config/config.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/edge-gateway/main.go",
+          "cmd/fire-alarm/main.go",
+          "cmd/tools/cctv-config-gen/main.go",
+          "cmd/tools/gen-bms-config/write/model.go",
+          "internal/config/lighting/config.go",
+          "internal/driver/architainment/config/root.go",
+          "internal/driver/architainment/driver.go",
+          "internal/driver/tc3input/config/root.go",
+          "internal/driver/tc3input/driver.go",
+          "internal/driver/zencontrol/config/root.go",
+          "internal/driver/zencontrol/driver.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "internal/driver/airtemp/driver.go",
+          "internal/driver/footfall-meter/driver.go",
+          "internal/driver/pressac/multisensor/config/root.go",
+          "internal/driver/pressac/multisensor/driver.go",
+          "internal/driver/tc3dali/config/config.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go",
+          "internal/driver/xovisocc/driver.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/sc-bos-drivers",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "pkg/driver/mode-settings/config/root.go",
+          "pkg/driver/mode-settings/driver.go",
+          "pkg/driver/pestsense/config/root.go",
+          "pkg/driver/pestsense/driver.go",
+          "pkg/driver/shelly/trv/config/root.go",
+          "pkg/driver/shelly/trv/driver.go",
+          "pkg/driver/steinel/hd2/config/root.go",
+          "pkg/driver/steinel/hd2/driver.go",
+          "pkg/driver/tc3io/config/root.go",
+          "pkg/driver/tc3io/driver.go"
+        ],
+        "last_push": "2024-01-11T14:41:33Z",
+        "last_update": "2023-05-03T13:35:58Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/tc3/main.go",
+          "cmd/tools/gen-config-bms/main.go",
+          "cmd/tools/gen-config-lighting/main.go",
+          "cmd/tools/gen-config-smart/main.go",
+          "cmd/tools/gen-config-zones/config.go",
+          "cmd/tools/gen-config-zones/lighting.go",
+          "cmd/tools/level-1/gen-config-bms/main.go",
+          "cmd/tools/level-1/gen-config-lighting/main.go",
+          "cmd/tools/level-1/gen-config-smart/main.go",
+          "internal/driver/settings/config/root.go",
+          "internal/driver/settings/driver.go",
+          "internal/driver/tc3dali/config/config.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go",
+          "internal/driver/tc3input/config/root.go",
+          "internal/driver/tc3input/driver.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/arup-ocw-fitout",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-08-20T15:24:34Z",
+        "last_update": "2025-02-12T11:56:14Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/tools/gen-config-bms/main.go",
+          "internal/driver/se-wiser-knx/config.go",
+          "internal/driver/se-wiser-knx/driver.go",
+          "internal/driver/settings/config/root.go",
+          "internal/driver/settings/driver.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/tools/bueno/test-bueno/main.go",
+          "cmd/tools/gen-lighting-config/write/write.go",
+          "cmd/tools/gen-metering-config/write/write.go",
+          "internal/driver/firstmile/config/config.go",
+          "internal/driver/firstmile/driver.go",
+          "internal/driver/invida/config/root.go",
+          "internal/driver/invida/driver.go",
+          "internal/driver/meraki/config/root.go",
+          "internal/driver/meraki/driver.go",
+          "internal/driver/prolojik/config.go",
+          "internal/driver/prolojik/driver.go",
+          "internal/driver/releezme/config/config.go",
+          "internal/driver/releezme/driver.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/ukreiff-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/area-controller/main.go",
+          "internal/driver/demooccupancy/driver.go",
+          "internal/driver/tc3sensor/config.go",
+          "internal/driver/tc3sensor/driver.go",
+          "internal/driver/toggle/driver.go"
+        ],
+        "last_push": "2025-03-25T11:27:59Z",
+        "last_update": "2025-03-25T11:28:03Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/edge-gateway/main.go",
+          "cmd/tools/cctv-config-gen/main.go",
+          "cmd/tools/gen-lighting-config/write/write.go",
+          "cmd/tools/zone-to-proxy-gen/main.go",
+          "internal/driver/modbus/config/root.go",
+          "internal/driver/modbus/driver.go",
+          "internal/driver/multifunction/config/root.go",
+          "internal/driver/multifunction/driver.go",
+          "internal/driver/solis/config/root.go",
+          "internal/driver/solis/driver.go",
+          "internal/driver/zencontrol/config/root.go",
+          "internal/driver/zencontrol/driver.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/tools/gen-lighting-config/write/write.go",
+          "internal/drivers/isapi/config/root.go",
+          "internal/drivers/isapi/driver.go",
+          "internal/drivers/otis/config/root.go",
+          "internal/drivers/otis/driver.go",
+          "internal/drivers/paxton/driver.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "internal/driver/2n/cardreader/config.go",
+          "internal/driver/2n/cardreader/driver.go",
+          "internal/driver/2n/intercom/config/root.go",
+          "internal/driver/2n/intercom/driver.go",
+          "internal/driver/firstmile/config.go",
+          "internal/driver/firstmile/driver.go",
+          "internal/driver/tc3bool/config/root.go",
+          "internal/driver/tc3bool/driver.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/tools/gen-bms-config/bmsconfig/write.go",
+          "internal/driver/lighting/config.go",
+          "internal/driver/lighting/driver.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/edge-gateway/main.go",
+          "cmd/tools/gen-bc-proxy-config/main.go",
+          "cmd/tools/gen-cctv-config/main.go",
+          "cmd/tools/gen-lighting-config/write/write.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver",
+        "files": [
+          "cmd/gen-config/main.go",
+          "internal/driver/chirpstack/config.go",
+          "internal/driver/chirpstack/driver.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/g2-area-controller/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/arup-ocw-fitout",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-08-20T15:24:34Z",
+        "last_update": "2025-02-12T11:56:14Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/inf-sc-bos/main.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go",
+          "cmd/facilio-adapter/main.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      },
+      {
+        "repository": "vanti-dev/jll-1-bg",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/alldrivers",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-10T14:25:22Z",
+        "last_update": "2025-11-10T14:25:26Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/bacnet": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet",
+        "files": [
+          "cmd/tools/gen-bms-config/write/model.go",
+          "cmd/tools/gen-fire-config/write/model.go",
+          "cmd/tools/gen-metering-config/write/model.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet",
+        "files": [
+          "cmd/tools/gen-bms-config/write/model.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet",
+        "files": [
+          "cmd/tools/gen-access-control/main.go",
+          "cmd/tools/gen-bms-config/main.go",
+          "cmd/tools/gen-fire-alarm-config/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet",
+        "files": [
+          "cmd/tools/bms-config-gen/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet",
+        "files": [
+          "cmd/tools/gen-bms-config/main.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet",
+        "files": [
+          "cmd/tools/gen-bms-config/bmsconfig/write.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet",
+        "files": [
+          "cmd/tools/gen-bms-config/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config",
+        "files": [
+          "cmd/tools/gen-config/hvac.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config",
+        "files": [
+          "cmd/tools/gen-bms-config/conv/config.go",
+          "cmd/tools/gen-bms-config/conv/traits.go",
+          "cmd/tools/gen-bms-config/write/model.go",
+          "cmd/tools/gen-fire-config/conv/device.go",
+          "cmd/tools/gen-fire-config/conv/trait.go",
+          "cmd/tools/gen-fire-config/write/model.go",
+          "cmd/tools/gen-metering-config/conv/device.go",
+          "cmd/tools/gen-metering-config/conv/trait.go",
+          "cmd/tools/gen-metering-config/write/model.go",
+          "internal/config/multicomm/read.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config",
+        "files": [
+          "cmd/tools/gen-bms-config/conv/comm.go",
+          "cmd/tools/gen-bms-config/conv/device.go",
+          "cmd/tools/gen-bms-config/conv/points.go",
+          "cmd/tools/gen-bms-config/conv/trait.go",
+          "cmd/tools/gen-bms-config/write/model.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config",
+        "files": [
+          "cmd/tools/gen-config-bms/main.go",
+          "cmd/tools/level-1/gen-config-bms/main.go",
+          "cmd/tools/level-1/gen-config-lighting/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config",
+        "files": [
+          "cmd/tools/gen-config-bms/main.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config",
+        "files": [
+          "cmd/tools/gen-access-control/accesscontrolconfig/read.go",
+          "cmd/tools/gen-access-control/accesscontrolconfig/traits.go",
+          "cmd/tools/gen-bms-config/bmsconfig/read.go",
+          "cmd/tools/gen-bms-config/bmsconfig/traits.go",
+          "cmd/tools/gen-fire-alarm-config/firealarmconfig/read.go",
+          "cmd/tools/gen-fire-alarm-config/firealarmconfig/traits.go",
+          "cmd/tools/gen-tripleplay-config/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config",
+        "files": [
+          "cmd/tools/bms-config-gen/bmsconfig/read.go",
+          "cmd/tools/bms-config-gen/bmsconfig/traits.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config",
+        "files": [
+          "cmd/tools/gen-bms-config/bmsconfig/read.go",
+          "cmd/tools/gen-bms-config/bmsconfig/traits.go",
+          "cmd/tools/gen-bms-config/main.go",
+          "cmd/tools/gen-lighting-config/udmi.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config",
+        "files": [
+          "cmd/tools/gen-bms-config/bmsconfig/read.go",
+          "cmd/tools/gen-bms-config/bmsconfig/write.go",
+          "cmd/tools/gen-bms-config/main.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config",
+        "files": [
+          "cmd/tools/gen-bms-config/bmsconfig/read.go",
+          "cmd/tools/gen-bms-config/bmsconfig/traits.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config": [
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config",
+        "files": [
+          "cmd/tools/gen-lighting-config/read/read.go",
+          "cmd/tools/gen-lighting-config/write/write.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config",
+        "files": [
+          "cmd/tools/gen-lighting-config/read/read.go",
+          "cmd/tools/gen-lighting-config/write/write.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral": [
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral",
+        "files": [
+          "cmd/tools/cctv-config-gen/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral",
+        "files": [
+          "cmd/tools/cctv-config-gen/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral",
+        "files": [
+          "cmd/tools/gen-cctv-config/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api": [
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api",
+        "files": [
+          "cmd/tools/cctv-api-tester/main.go",
+          "cmd/tools/cctv-config-gen/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api",
+        "files": [
+          "cmd/tools/cctv-config-gen/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api",
+        "files": [
+          "cmd/tools/gen-cctv-config/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config": [
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config",
+        "files": [
+          "cmd/tools/cctv-api-tester/main.go",
+          "cmd/tools/cctv-config-gen/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config",
+        "files": [
+          "cmd/tools/cctv-config-gen/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config",
+        "files": [
+          "cmd/tools/gen-cctv-config/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/mock": [
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/mock",
+        "files": [
+          "cmd/tools/bueno/test-bueno/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/opcua/config": [
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/opcua/config",
+        "files": [
+          "cmd/tools/gen-metering-config/main.go",
+          "cmd/tools/gen-metering-config/read/read.go",
+          "cmd/tools/gen-metering-config/read/traits.go",
+          "cmd/tools/gen-metering-config/write/write.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/proxy": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/proxy",
+        "files": [
+          "cmd/gateway/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/proxy",
+        "files": [
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/arup-ocw-fitout",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/proxy",
+        "files": [
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-08-20T15:24:34Z",
+        "last_update": "2025-02-12T11:56:14Z"
+      },
+      {
+        "repository": "vanti-dev/ukreiff-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/proxy",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-03-25T11:27:59Z",
+        "last_update": "2025-03-25T11:28:03Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/proxy",
+        "files": [
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/proxy",
+        "files": [
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/proxy/config": [
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/proxy/config",
+        "files": [
+          "cmd/tools/level-1/gen-config-bms/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/proxy/config",
+        "files": [
+          "cmd/tools/zone-to-proxy-gen/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/proxy/config",
+        "files": [
+          "cmd/tools/gen-bc-proxy-config/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd": [
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/g2-area-controller/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/arup-ocw-fitout",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-08-20T15:24:34Z",
+        "last_update": "2025-02-12T11:56:14Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd/config": [
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd/config",
+        "files": [
+          "cmd/tools/gen-config-smart/main.go",
+          "cmd/tools/level-1/gen-config-smart/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/driver/xovis": [
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/xovis",
+        "files": [
+          "internal/driver/xovisocc/driver.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/driver/xovis",
+        "files": [
+          "cmd/tools/gen-config-smart/main.go",
+          "cmd/tools/level-1/gen-config-smart/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gen": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "cmd/tools/dali-grouper/main.go",
+          "cmd/tools/demo-light-eq/main.go",
+          "cmd/tools/gen-bms-config/conv/traits.go",
+          "cmd/tools/gen-bms-config/index/alerts.go",
+          "cmd/tools/lighting-comm-test/read/device.go",
+          "cmd/tools/lighting-comm-test/report/device.go",
+          "cmd/tools/lighting-comm-test/write/result.go",
+          "cmd/tools/lighting-pull-sensors/main.go",
+          "cmd/tools/tenant-groups/dali.go",
+          "cmd/tools/tenant-groups/main.go",
+          "cmd/tools/test-hark-mqtt/main.go",
+          "cmd/tools/udmi-sub/main.go",
+          "internal/auto/harkmqtt/auto.go",
+          "internal/auto/lightreport/auto.go",
+          "internal/auto/lightreport/bolt_store.go",
+          "internal/auto/lightreport/bolt_store_test.go",
+          "internal/auto/lightreport/proxy_server.go",
+          "internal/auto/lightreport/report.go",
+          "internal/auto/lightreport/report_test.go",
+          "internal/auto/lightreport/server.go",
+          "internal/auto/lightreport/store.go",
+          "internal/auto/lightreport/util.go",
+          "internal/auto/lightreport/util_test.go",
+          "internal/driver/axiomxa/driver.go",
+          "internal/driver/axiomxa/driver_test.go",
+          "internal/driver/axiomxa/local/network.go",
+          "internal/driver/axiomxa/qr_server.go",
+          "internal/driver/axiomxa/traits.go",
+          "internal/driver/axis/cctv.go",
+          "internal/driver/axis/ports.go",
+          "internal/driver/tc3dali/button.go",
+          "internal/driver/tc3dali/button_state.go",
+          "internal/driver/tc3dali/button_state_test.go",
+          "internal/driver/tc3dali/control_device.go",
+          "internal/driver/tc3dali/control_gear.go",
+          "internal/driver/tc3dali/control_gear_group.go",
+          "internal/driver/tc3dali/control_gear_multicast.go",
+          "internal/driver/tc3dali/control_gear_test.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go",
+          "internal/driver/tc3dali/emergency_light.go",
+          "internal/driver/tc3dali/emergency_light_test.go",
+          "internal/driver/tc3dali/solenoid.go",
+          "internal/driver/tc3dali/status.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "cmd/tools/client-transport/main.go",
+          "cmd/tools/get-meter-history/main.go",
+          "cmd/tools/list-security-events/main.go",
+          "cmd/tools/mqtt-service-client/main.go",
+          "cmd/tools/test-deepki-meter-upload/main.go",
+          "cmd/tools/test-jll-meter-upload/main.go",
+          "cmd/tools/test-monthly-meter/main.go",
+          "cmd/tools/test-monthly-meter/model/meter_model.go",
+          "cmd/tools/test-monthly-meter/model/meter_model_server.go",
+          "internal/auto/metermomreport/auto.go",
+          "internal/auto/metersftp/common.go",
+          "internal/auto/metersftp/deepki/auto.go",
+          "internal/auto/metersftp/jllsftp/auto.go",
+          "internal/auto/monthlymeterreport/auto.go",
+          "internal/driver/zencontrol/driver.go",
+          "internal/driver/zencontrol/emergency_luminaire.go",
+          "internal/driver/zencontrol/general.go",
+          "internal/driver/zencontrol/luminaire.go",
+          "internal/driver/zencontrol/luminaire_group.go",
+          "internal/driver/zencontrol/occupancy_sensor.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "cmd/bos/main.go",
+          "internal/driver/footfall-meter/driver.go",
+          "internal/driver/tc3dali/button.go",
+          "internal/driver/tc3dali/button_state.go",
+          "internal/driver/tc3dali/button_state_test.go",
+          "internal/driver/tc3dali/control_device.go",
+          "internal/driver/tc3dali/control_gear.go",
+          "internal/driver/tc3dali/control_gear_multicast.go",
+          "internal/driver/tc3dali/control_gear_test.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/emergency_light.go",
+          "internal/driver/tc3dali/emergency_light_test.go",
+          "internal/driver/tc3dali/meta.go",
+          "internal/driver/xovisocc/driver.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "internal/driver/tc3dali/button.go",
+          "internal/driver/tc3dali/button_state.go",
+          "internal/driver/tc3dali/button_state_test.go",
+          "internal/driver/tc3dali/control_device.go",
+          "internal/driver/tc3dali/control_gear.go",
+          "internal/driver/tc3dali/control_gear_multicast.go",
+          "internal/driver/tc3dali/control_gear_test.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go",
+          "internal/driver/tc3dali/emergency_light.go",
+          "internal/driver/tc3dali/emergency_light_test.go",
+          "internal/driver/tc3dali/status.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/arup-ocw-fitout",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "cmd/tools/check-fcu-temperature/main.go"
+        ],
+        "last_push": "2025-08-20T15:24:34Z",
+        "last_update": "2025-02-12T11:56:14Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "cmd/inf-sc-bos/main.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "cmd/tools/gen-access-control/accesscontrolconfig/traits.go",
+          "cmd/tools/test-invida/main.go",
+          "cmd/tools/test-releezeme/main.go",
+          "cmd/tools/test-waste-integration/main.go",
+          "cmd/tools/test-waste-leaderboard/main.go",
+          "internal/auto/creevx/auto.go",
+          "internal/auto/offlinedevices/auto.go",
+          "internal/auto/offlinedevices/auto_test.go",
+          "internal/auto/offlinedevices/check.go",
+          "internal/auto/offlinedevices/lockers.go",
+          "internal/auto/offlinedevices/meraki.go",
+          "internal/auto/wasteleaderboard/auto.go",
+          "internal/auto/wasteleaderboard/leaderboard.go",
+          "internal/driver/firstmile/driver.go",
+          "internal/driver/firstmile/weights.go",
+          "internal/driver/invida/cafm.go",
+          "internal/driver/invida/driver.go",
+          "internal/driver/prolojik/driver.go",
+          "internal/driver/prolojik/lamp.go",
+          "internal/driver/prolojik/lcm.go",
+          "internal/driver/prolojik/sensor.go",
+          "internal/driver/prolojik/switch.go",
+          "internal/driver/releezme/lockers.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "cmd/tools/test-monthly-meter/main.go",
+          "cmd/tools/test-monthly-meter/model/meter_model.go",
+          "cmd/tools/test-monthly-meter/model/meter_model_server.go",
+          "internal/auto/monthlymeterreport/auto.go",
+          "internal/driver/modbus/bitwise.go",
+          "internal/driver/modbus/client.go",
+          "internal/driver/modbus/driver.go",
+          "internal/driver/solis/driver.go",
+          "internal/driver/solis/powerstation.go",
+          "internal/driver/zencontrol/driver.go",
+          "internal/driver/zencontrol/luminaire.go",
+          "internal/driver/zencontrol/luminaire_group.go",
+          "internal/driver/zencontrol/occupancy_sensor.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "internal/auto/facilio/auto.go",
+          "internal/auto/facilio/subandpub.go",
+          "internal/drivers/isapi/alarms.go",
+          "internal/drivers/isapi/driver.go",
+          "internal/drivers/paxton/cardholders.go",
+          "internal/drivers/paxton/doors.go",
+          "internal/drivers/paxton/driver.go",
+          "internal/drivers/paxton/event_codes.go",
+          "internal/drivers/paxton/events.go",
+          "internal/drivers/paxton/events_controller.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "cmd/tools/test-2n-access/main.go",
+          "cmd/tools/test-waste-management/main.go",
+          "internal/driver/2n/cardreader/access.go",
+          "internal/driver/2n/cardreader/driver.go",
+          "internal/driver/firstmile/driver.go",
+          "internal/driver/firstmile/weights.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "internal/driver/lighting/area.go",
+          "internal/driver/lighting/client.go",
+          "internal/driver/lighting/driver.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "internal/auto/monthendreport/auto.go",
+          "internal/auto/monthlymeterreport/auto.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gen",
+        "files": [
+          "internal/driver/chirpstack/device_synetica_oaq.go",
+          "internal/driver/chirpstack/device_synetica_oaq_test.go",
+          "internal/driver/chirpstack/history.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb",
+        "files": [
+          "internal/driver/axiomxa/traits.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb",
+        "files": [
+          "cmd/tools/gen-access-control/accesscontrolconfig/traits.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb",
+        "files": [
+          "internal/drivers/paxton/cardholders.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb",
+        "files": [
+          "internal/driver/2n/cardreader/driver.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gentrait/button": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/button",
+        "files": [
+          "cmd/tools/lighting-comm-test/read/device.go",
+          "cmd/tools/lighting-comm-test/report/device.go",
+          "internal/driver/tc3dali/driver.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/button",
+        "files": [
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/meta.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/button",
+        "files": [
+          "internal/driver/tc3dali/driver.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylight": [
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylight",
+        "files": [
+          "internal/driver/tc3dali/meta.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/emergencylight",
+        "files": [
+          "internal/driver/tc3dali/driver.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gentrait/meter": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/meter",
+        "files": [
+          "cmd/tools/gen-metering-config/main.go",
+          "cmd/tools/test-hark-mqtt/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/meter",
+        "files": [
+          "cmd/tools/gen-bms-config/conv/trait.go",
+          "cmd/tools/gen-bms-config/main.go",
+          "cmd/tools/test-deepki-meter-upload/main.go",
+          "cmd/tools/test-jll-meter-upload/main.go",
+          "cmd/tools/test-monthly-meter/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/meter",
+        "files": [
+          "internal/driver/footfall-meter/driver.go",
+          "internal/driver/xovisocc/driver.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/meter",
+        "files": [
+          "cmd/tools/gen-bms-config/main.go",
+          "cmd/tools/gen-metering-config/main.go",
+          "cmd/tools/gen-metering-config/read/traits.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/meter",
+        "files": [
+          "cmd/tools/bms-config-gen/bmsconfig/traits.go",
+          "cmd/tools/bms-config-gen/main.go",
+          "cmd/tools/mod-zone-autos/main.go",
+          "cmd/tools/test-monthly-meter/main.go",
+          "cmd/tools/zone-to-proxy-gen/main.go",
+          "internal/driver/solis/driver.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/meter",
+        "files": [
+          "cmd/tools/gen-bms-config/bmsconfig/traits.go",
+          "cmd/tools/gen-bms-config/main.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/meter",
+        "files": [
+          "cmd/tools/gen-bc-proxy-config/main.go",
+          "cmd/tools/gen-bms-config/bmsconfig/traits.go",
+          "cmd/tools/gen-bms-config/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gentrait/report": [
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/report",
+        "files": [
+          "internal/auto/monthendreport/auto.go",
+          "internal/auto/monthlymeterreport/auto.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent": [
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent",
+        "files": [
+          "cmd/tools/gen-access-control/accesscontrolconfig/traits.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/securityevent",
+        "files": [
+          "internal/drivers/isapi/driver.go",
+          "internal/drivers/paxton/driver.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gentrait/serviceticketpb": [
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/serviceticketpb",
+        "files": [
+          "internal/auto/offlinedevices/auto_test.go",
+          "internal/driver/invida/driver.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb": [
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/soundsensorpb",
+        "files": [
+          "internal/driver/chirpstack/device_synetica_oaq.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb",
+        "files": [
+          "cmd/tools/dali-integration-test/main.go",
+          "cmd/tools/gen-bms-config/conv/traits.go",
+          "cmd/tools/test-hark-mqtt/main.go",
+          "internal/driver/axiomxa/local/network.go",
+          "internal/driver/axiomxa/traits.go",
+          "internal/driver/axis/cctv.go",
+          "internal/driver/axis/ports.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go",
+          "internal/driver/tc3dali/status.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb",
+        "files": [
+          "cmd/tools/test-deepki-meter-upload/main.go",
+          "cmd/tools/test-jll-meter-upload/main.go",
+          "internal/driver/zencontrol/driver.go",
+          "internal/driver/zencontrol/emergency_luminaire.go",
+          "internal/driver/zencontrol/luminaire.go",
+          "internal/driver/zencontrol/luminaire_group.go",
+          "internal/driver/zencontrol/occupancy_sensor.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb",
+        "files": [
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go",
+          "internal/driver/tc3dali/status.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb",
+        "files": [
+          "internal/driver/prolojik/driver.go",
+          "internal/driver/prolojik/lamp.go",
+          "internal/driver/prolojik/lcm.go",
+          "internal/driver/prolojik/sensor.go",
+          "internal/driver/prolojik/switch.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb",
+        "files": [
+          "internal/driver/modbus/client.go",
+          "internal/driver/modbus/driver.go",
+          "internal/driver/zencontrol/driver.go",
+          "internal/driver/zencontrol/luminaire.go",
+          "internal/driver/zencontrol/luminaire_group.go",
+          "internal/driver/zencontrol/occupancy_sensor.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb",
+        "files": [
+          "internal/drivers/paxton/doors.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb",
+        "files": [
+          "internal/driver/lighting/driver.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb",
+        "files": [
+          "cmd/tools/gen-bms-config/conv/traits.go",
+          "cmd/tools/gen-bms-config/main.go",
+          "cmd/tools/gen-fire-config/conv/trait.go",
+          "cmd/tools/gen-metering-config/conv/trait.go",
+          "cmd/tools/lighting-comm-test/read/device.go",
+          "cmd/tools/lighting-comm-test/report/device.go",
+          "internal/driver/axiomxa/traits.go",
+          "internal/driver/tc3dali/control_device.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb",
+        "files": [
+          "cmd/tools/gen-bms-config/conv/trait.go",
+          "internal/driver/zencontrol/driver.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb",
+        "files": [
+          "internal/driver/tc3dali/driver.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb",
+        "files": [
+          "internal/driver/tc3dali/control_device.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb",
+        "files": [
+          "internal/driver/firstmile/driver.go",
+          "internal/driver/prolojik/driver.go",
+          "internal/driver/releezme/lockers.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb",
+        "files": [
+          "cmd/tools/bms-config-gen/bmsconfig/traits.go",
+          "internal/driver/zencontrol/driver.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb",
+        "files": [
+          "cmd/tools/gen-bms-config/bmsconfig/traits.go",
+          "cmd/tools/gen-bms-config/main.go",
+          "cmd/tools/gen-lighting-config/udmi.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb",
+        "files": [
+          "internal/driver/firstmile/driver.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb",
+        "files": [
+          "cmd/tools/gen-bms-config/bmsconfig/traits.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb": [
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb",
+        "files": [
+          "cmd/tools/test-waste-leaderboard/main.go",
+          "internal/driver/firstmile/driver.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb",
+        "files": [
+          "internal/driver/firstmile/driver.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/minibus": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/minibus",
+        "files": [
+          "internal/drivers/tc3bool/variable.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/minibus",
+        "files": [
+          "internal/auto/lightreport/auto.go",
+          "internal/driver/axiomxa/local/accesspoint.go",
+          "internal/driver/axiomxa/local/network.go",
+          "internal/driver/tc3dali/bridge/bridge.go",
+          "internal/driver/tc3dali/control_gear.go",
+          "internal/driver/tc3dali/emergency_light.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/minibus",
+        "files": [
+          "internal/driver/architainment/client.go",
+          "internal/driver/zencontrol/emergency_luminaire.go",
+          "internal/driver/zencontrol/general.go",
+          "internal/driver/zencontrol/luminaire.go",
+          "internal/driver/zencontrol/luminaire_group.go",
+          "internal/driver/zencontrol/occupancy_sensor.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/minibus",
+        "files": [
+          "internal/driver/tc3dali/bridge/bridge.go",
+          "internal/driver/tc3dali/control_gear.go",
+          "internal/driver/tc3dali/emergency_light.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/minibus",
+        "files": [
+          "internal/driver/tc3dali/bridge/bridge.go",
+          "internal/driver/tc3dali/control_gear.go",
+          "internal/driver/tc3dali/emergency_light.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/minibus",
+        "files": [
+          "internal/driver/firstmile/weights.go",
+          "internal/driver/prolojik/lamp.go",
+          "internal/driver/prolojik/lcm.go",
+          "internal/driver/prolojik/sensor.go",
+          "internal/driver/prolojik/switch.go",
+          "internal/driver/releezme/lockers.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/minibus",
+        "files": [
+          "internal/driver/zencontrol/luminaire.go",
+          "internal/driver/zencontrol/luminaire_group.go",
+          "internal/driver/zencontrol/occupancy_sensor.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/minibus",
+        "files": [
+          "internal/drivers/isapi/alarms.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/minibus",
+        "files": [
+          "internal/driver/firstmile/weights.go",
+          "internal/driver/tc3bool/variable.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/node": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "internal/drivers/divisible/driver.go",
+          "internal/drivers/litenet/litenet.go",
+          "internal/drivers/partition/driver.go",
+          "internal/drivers/steinelknx/driver.go",
+          "internal/drivers/tc3bool/driver.go",
+          "internal/drivers/virtualsensor/driver.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "cmd/daylight-power/main.go",
+          "cmd/tools/dali-integration-test/main.go",
+          "cmd/tools/test-hark-mqtt/main.go",
+          "internal/auto/emergencysignage/auto_test.go",
+          "internal/auto/lightreport/auto.go",
+          "internal/auto/lightreport/auto_proxy.go",
+          "internal/driver/axiomxa/driver.go",
+          "internal/driver/axiomxa/driver_test.go",
+          "internal/driver/axiomxa/traits.go",
+          "internal/driver/axis/cctv.go",
+          "internal/driver/axis/driver.go",
+          "internal/driver/axis/ports.go",
+          "internal/driver/settings/driver.go",
+          "internal/driver/tc3dali/control_device.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "cmd/tools/test-deepki-meter-upload/main.go",
+          "cmd/tools/test-emergency-alert/main.go",
+          "cmd/tools/test-jll-meter-upload/main.go",
+          "cmd/tools/test-monthly-meter/main.go",
+          "internal/driver/architainment/driver.go",
+          "internal/driver/tc3input/driver.go",
+          "internal/driver/zencontrol/driver.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/bos/main.go",
+          "internal/driver/airtemp/driver.go",
+          "internal/driver/footfall-meter/driver.go",
+          "internal/driver/pressac/multisensor/driver.go",
+          "internal/driver/tc3dali/control_device.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go",
+          "internal/driver/xovisocc/driver.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/sc-bos-drivers",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "pkg/driver/mode-settings/driver.go",
+          "pkg/driver/pestsense/driver.go",
+          "pkg/driver/shelly/trv/driver.go",
+          "pkg/driver/steinel/hd2/driver.go",
+          "pkg/driver/tc3io/driver.go"
+        ],
+        "last_push": "2024-01-11T14:41:33Z",
+        "last_update": "2023-05-03T13:35:58Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "internal/driver/settings/driver.go",
+          "internal/driver/tc3dali/control_device.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/driver_test.go",
+          "internal/driver/tc3input/driver.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "internal/driver/se-wiser-knx/driver.go",
+          "internal/driver/settings/driver.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "cmd/tools/bueno/test-bueno/main.go",
+          "cmd/tools/test-waste-leaderboard/main.go",
+          "internal/auto/bueno/auto.go",
+          "internal/auto/offlinedevices/auto_test.go",
+          "internal/driver/firstmile/driver.go",
+          "internal/driver/invida/driver.go",
+          "internal/driver/meraki/driver.go",
+          "internal/driver/prolojik/driver.go",
+          "internal/driver/releezme/driver.go",
+          "internal/driver/releezme/lockers.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/ukreiff-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "internal/driver/demooccupancy/driver.go",
+          "internal/driver/tc3sensor/driver.go",
+          "internal/driver/toggle/driver.go"
+        ],
+        "last_push": "2025-03-25T11:27:59Z",
+        "last_update": "2025-03-25T11:28:03Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "cmd/tools/test-monthly-meter/main.go",
+          "internal/driver/modbus/driver.go",
+          "internal/driver/multifunction/driver.go",
+          "internal/driver/solis/driver.go",
+          "internal/driver/zencontrol/driver.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "internal/drivers/isapi/driver.go",
+          "internal/drivers/otis/driver.go",
+          "internal/drivers/paxton/cardholders.go",
+          "internal/drivers/paxton/doors.go",
+          "internal/drivers/paxton/driver.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "internal/driver/2n/cardreader/driver.go",
+          "internal/driver/2n/intercom/driver.go",
+          "internal/driver/firstmile/driver.go",
+          "internal/driver/tc3bool/driver.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "internal/driver/lighting/driver.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "internal/auto/monthendreport/auto.go",
+          "internal/auto/monthlymeterreport/auto.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node",
+        "files": [
+          "internal/driver/chirpstack/device.go",
+          "internal/driver/chirpstack/device_milesight_vs133.go",
+          "internal/driver/chirpstack/device_netvox_ct.go",
+          "internal/driver/chirpstack/device_netvox_ct_test.go",
+          "internal/driver/chirpstack/device_synetica_oaq.go",
+          "internal/driver/chirpstack/device_synetica_oaq_test.go",
+          "internal/driver/chirpstack/driver.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/node/alltraits": [
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node/alltraits",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/node/alltraits",
+        "files": [
+          "cmd/inf-sc-bos/main.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/system": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/g2-area-controller/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/ukreiff-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-03-25T11:27:59Z",
+        "last_update": "2025-03-25T11:28:03Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/system/alerts": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/alerts",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/alerts",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/alerts",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/g2-area-controller/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/alerts",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/alerts",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/system/allsystems": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/building-controller/main.go",
+          "cmd/gateway/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/arup-ocw-fitout",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-08-20T15:24:34Z",
+        "last_update": "2025-02-12T11:56:14Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/inf-sc-bos/main.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go",
+          "cmd/facilio-adapter/main.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      },
+      {
+        "repository": "vanti-dev/jll-1-bg",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/allsystems",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-10T14:25:22Z",
+        "last_update": "2025-11-10T14:25:26Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/system/authn": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/authn",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/authn",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/authn",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/g2-area-controller/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/ukreiff-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/authn",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-03-25T11:27:59Z",
+        "last_update": "2025-03-25T11:28:03Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/authn",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/system/authn",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/task": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task",
+        "files": [
+          "internal/drivers/tc3bool/variable.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task",
+        "files": [
+          "cmd/tools/dali-integration-test/main.go",
+          "internal/auto/harkmqtt/auto.go",
+          "internal/driver/axiomxa/jsonapi.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/status.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task",
+        "files": [
+          "internal/auto/metersftp/common.go",
+          "internal/auto/monthlymeterreport/auto.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task",
+        "files": [
+          "internal/driver/footfall-meter/driver.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/xovisocc/driver.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task",
+        "files": [
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3dali/status.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task",
+        "files": [
+          "internal/auto/monthlymeterreport/auto.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task",
+        "files": [
+          "internal/driver/tc3bool/variable.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task",
+        "files": [
+          "internal/auto/monthendreport/auto.go",
+          "internal/auto/monthlymeterreport/auto.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/task/service": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/automations/resethvac/auto.go",
+          "internal/drivers/divisible/driver.go",
+          "internal/drivers/litenet/litenet.go",
+          "internal/drivers/partition/driver.go",
+          "internal/drivers/steinelknx/driver.go",
+          "internal/drivers/tc3bool/driver.go",
+          "internal/drivers/virtualsensor/driver.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/auto/emergencysignage/auto.go",
+          "internal/auto/harkmqtt/auto.go",
+          "internal/auto/lightreport/auto.go",
+          "internal/auto/lightreport/auto_proxy.go",
+          "internal/driver/axiomxa/driver.go",
+          "internal/driver/axis/driver.go",
+          "internal/driver/settings/driver.go",
+          "internal/driver/tc3dali/driver.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/auto/emergencyalert/auto.go",
+          "internal/auto/metermomreport/auto.go",
+          "internal/auto/metersftp/common.go",
+          "internal/auto/metersftp/deepki/auto.go",
+          "internal/auto/metersftp/jllsftp/auto.go",
+          "internal/auto/monthlymeterreport/auto.go",
+          "internal/driver/architainment/driver.go",
+          "internal/driver/tc3input/driver.go",
+          "internal/driver/zencontrol/driver.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/driver/airtemp/driver.go",
+          "internal/driver/footfall-meter/driver.go",
+          "internal/driver/pressac/multisensor/driver.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/xovisocc/driver.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/sc-bos-drivers",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "pkg/driver/mode-settings/driver.go",
+          "pkg/driver/pestsense/driver.go",
+          "pkg/driver/shelly/trv/driver.go",
+          "pkg/driver/steinel/hd2/driver.go",
+          "pkg/driver/tc3io/driver.go"
+        ],
+        "last_push": "2024-01-11T14:41:33Z",
+        "last_update": "2023-05-03T13:35:58Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/driver/settings/driver.go",
+          "internal/driver/tc3dali/driver.go",
+          "internal/driver/tc3input/driver.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/driver/se-wiser-knx/driver.go",
+          "internal/driver/settings/driver.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/auto/bueno/auto.go",
+          "internal/auto/creevx/auto.go",
+          "internal/auto/offlinedevices/auto.go",
+          "internal/auto/tripleplay/auto.go",
+          "internal/auto/wasteleaderboard/auto.go",
+          "internal/driver/firstmile/driver.go",
+          "internal/driver/invida/driver.go",
+          "internal/driver/meraki/driver.go",
+          "internal/driver/prolojik/driver.go",
+          "internal/driver/releezme/driver.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/ukreiff-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/driver/demooccupancy/driver.go",
+          "internal/driver/tc3sensor/driver.go",
+          "internal/driver/toggle/driver.go"
+        ],
+        "last_push": "2025-03-25T11:27:59Z",
+        "last_update": "2025-03-25T11:28:03Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/auto/monthlymeterreport/auto.go",
+          "internal/driver/modbus/driver.go",
+          "internal/driver/multifunction/driver.go",
+          "internal/driver/solis/driver.go",
+          "internal/driver/zencontrol/driver.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/auto/facilio/auto.go",
+          "internal/drivers/isapi/driver.go",
+          "internal/drivers/otis/driver.go",
+          "internal/drivers/paxton/driver.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/driver/2n/cardreader/driver.go",
+          "internal/driver/2n/intercom/driver.go",
+          "internal/driver/firstmile/driver.go",
+          "internal/driver/tc3bool/driver.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/driver/lighting/driver.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/auto/monthendreport/auto.go",
+          "internal/auto/monthlymeterreport/auto.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/task/service",
+        "files": [
+          "internal/driver/chirpstack/driver.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/testapi": [
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/testapi",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/testapi",
+        "files": [
+          "cmd/inf-sc-bos/main.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/util/chans": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/chans",
+        "files": [
+          "internal/auto/emergencysignage/auto.go",
+          "internal/auto/emergencysignage/auto_test.go",
+          "internal/driver/axis/client.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/util/client": [
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/client",
+        "files": [
+          "cmd/tools/client-transport/main.go",
+          "cmd/tools/get-lighting-info/main.go",
+          "cmd/tools/get-meter-history/main.go",
+          "cmd/tools/list-security-events/main.go",
+          "cmd/tools/mqtt-service-client/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/client",
+        "files": [
+          "cmd/tools/test-invida/main.go",
+          "cmd/tools/test-meraki-devices/main.go",
+          "cmd/tools/test-meraki-wifi/main.go",
+          "cmd/tools/test-releezeme/main.go",
+          "cmd/tools/test-waste-integration/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/client",
+        "files": [
+          "cmd/tools/create-hail/create-hail.go",
+          "cmd/tools/reset-bms-setpoints/main.go",
+          "internal/driver/multifunction/driver.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/client",
+        "files": [
+          "internal/auto/facilio/auto.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/client",
+        "files": [
+          "cmd/tools/test-2n-access/main.go",
+          "cmd/tools/test-waste-management/main.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/util/cmp": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/cmp",
+        "files": [
+          "internal/driver/axiomxa/local/accesspoint.go",
+          "internal/driver/axiomxa/local/network.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/util/jsontypes": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/jsontypes",
+        "files": [
+          "cmd/tools/gen-config/hvac.go",
+          "internal/automations/resethvac/root.go",
+          "internal/drivers/litenet/config/root.go",
+          "internal/drivers/partition/config/root.go",
+          "internal/drivers/steinelknx/config/root.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/jsontypes",
+        "files": [
+          "cmd/tools/gen-lighting-config/main.go",
+          "cmd/tools/gen-lighting-config/reception.go",
+          "internal/auto/emergencysignage/auto.go",
+          "internal/auto/emergencysignage/auto_test.go",
+          "internal/auto/emergencysignage/config.go",
+          "internal/auto/harkmqtt/config.go",
+          "internal/auto/lightreport/config.go",
+          "internal/driver/axiomxa/config/root.go",
+          "internal/driver/axis/config/root.go",
+          "internal/driver/tc3dali/config/config.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/jsontypes",
+        "files": [
+          "cmd/tools/cctv-config-gen/main.go",
+          "cmd/tools/gen-bms-config/main.go",
+          "internal/auto/emergencyalert/config.go",
+          "internal/auto/metermomreport/config.go",
+          "internal/auto/metersftp/common.go",
+          "internal/auto/metersftp/config.go",
+          "internal/auto/monthlymeterreport/config.go",
+          "internal/config/lighting/config.go",
+          "internal/driver/architainment/config/root.go",
+          "internal/driver/zencontrol/config/root.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/jsontypes",
+        "files": [
+          "internal/driver/tc3dali/config/config.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/jsontypes",
+        "files": [
+          "cmd/tools/gen-config-smart/main.go",
+          "cmd/tools/gen-config-zones/presetModes.go",
+          "internal/driver/tc3dali/config/config.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/jsontypes",
+        "files": [
+          "cmd/tools/gen-bms-config/main.go",
+          "cmd/tools/gen-metering-config/write/write.go",
+          "internal/auto/creevx/config/root.go",
+          "internal/auto/offlinedevices/config/root.go",
+          "internal/auto/wasteleaderboard/config/root.go",
+          "internal/driver/firstmile/config/config.go",
+          "internal/driver/firstmile/weights.go",
+          "internal/driver/meraki/config/root.go",
+          "internal/driver/prolojik/config.go",
+          "internal/driver/releezme/config/config.go",
+          "internal/driver/releezme/lockers.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/jsontypes",
+        "files": [
+          "cmd/tools/bms-config-gen/main.go",
+          "cmd/tools/cctv-config-gen/main.go",
+          "cmd/tools/gen-lighting-config/read/read.go",
+          "cmd/tools/mod-zone-autos/main.go",
+          "internal/auto/monthlymeterreport/config.go",
+          "internal/driver/modbus/config/root.go",
+          "internal/driver/solis/config/root.go",
+          "internal/driver/zencontrol/config/root.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/jsontypes",
+        "files": [
+          "cmd/tools/gen-bms-config/main.go",
+          "internal/auto/facilio/config/root.go",
+          "internal/drivers/otis/config/root.go",
+          "internal/drivers/paxton/config/root.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/jsontypes",
+        "files": [
+          "internal/driver/2n/cardreader/config.go",
+          "internal/driver/2n/intercom/config/root.go",
+          "internal/driver/firstmile/config.go",
+          "internal/driver/firstmile/weights.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/jsontypes",
+        "files": [
+          "cmd/tools/gen-bms-config/main.go",
+          "cmd/tools/gen-cctv-config/main.go",
+          "internal/auto/monthendreport/config/root.go",
+          "internal/auto/monthlymeterreport/config/config.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/jsontypes",
+        "files": [
+          "cmd/gen-config/main.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/util/maps": [
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/maps",
+        "files": [
+          "cmd/tools/gen-bms-config/conv/points.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/util/pull": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/pull",
+        "files": [
+          "internal/auto/emergencysignage/auto.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/pull",
+        "files": [
+          "internal/auto/bueno/air_quality.go",
+          "internal/auto/bueno/air_temperature.go",
+          "internal/auto/bueno/electric.go",
+          "internal/auto/bueno/energy.go",
+          "internal/auto/bueno/extends.go",
+          "internal/auto/bueno/fan.go",
+          "internal/auto/bueno/motion.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/util/transport": [
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/util/transport",
+        "files": [
+          "internal/driver/architainment/client.go",
+          "internal/driver/architainment/config/root.go",
+          "internal/driver/architainment/driver.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/zone": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone",
+        "files": [
+          "cmd/tools/gen-config/config.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone",
+        "files": [
+          "cmd/tools/gen-config-zones/config.go",
+          "cmd/tools/level-1/gen-config-lighting/main.go",
+          "cmd/tools/level-1/gen-config-smart/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone",
+        "files": [
+          "cmd/tools/mod-zone-autos/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/zone/allzones": [
+      {
+        "repository": "vanti-dev/inf-240bfr",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-05-22T09:34:22Z",
+        "last_update": "2025-05-22T09:34:22Z"
+      },
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      },
+      {
+        "repository": "vanti-dev/arg-ocw",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-05T14:41:56Z",
+        "last_update": "2025-11-05T14:41:58Z"
+      },
+      {
+        "repository": "vanti-dev/event-facilities-2023",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T11:03:31Z",
+        "last_update": "2025-02-21T11:03:35Z"
+      },
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/g2-area-controller/main.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      },
+      {
+        "repository": "vanti-dev/arup-ocw-fitout",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go"
+        ],
+        "last_push": "2025-08-20T15:24:34Z",
+        "last_update": "2025-02-12T11:56:14Z"
+      },
+      {
+        "repository": "vanti-dev/inf-sc-bos",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/inf-sc-bos/main.go"
+        ],
+        "last_push": "2024-01-11T14:36:59Z",
+        "last_update": "2023-12-18T22:56:46Z"
+      },
+      {
+        "repository": "vanti-dev/nvn-40-lh",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-20T16:51:49Z",
+        "last_update": "2025-11-20T16:51:50Z"
+      },
+      {
+        "repository": "vanti-dev/ukreiff-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-03-25T11:27:59Z",
+        "last_update": "2025-03-25T11:28:03Z"
+      },
+      {
+        "repository": "vanti-dev/19-cornwall-street",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-17T10:07:59Z",
+        "last_update": "2025-11-17T10:07:36Z"
+      },
+      {
+        "repository": "vanti-dev/hbd-island",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go",
+          "cmd/facilio-adapter/main.go"
+        ],
+        "last_push": "2025-11-20T16:50:38Z",
+        "last_update": "2025-11-20T16:50:40Z"
+      },
+      {
+        "repository": "vanti-dev/event-anticipate-2024",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-02-21T10:37:50Z",
+        "last_update": "2025-01-03T16:21:06Z"
+      },
+      {
+        "repository": "vanti-dev/inf-dxb-oc",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go"
+        ],
+        "last_push": "2025-07-01T15:06:40Z",
+        "last_update": "2025-03-04T10:59:08Z"
+      },
+      {
+        "repository": "vanti-dev/mepc-3cs",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-13T10:19:31Z",
+        "last_update": "2025-11-12T10:06:22Z"
+      },
+      {
+        "repository": "vanti-dev/ove-smart-site",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/bos/main.go"
+        ],
+        "last_push": "2025-11-19T14:49:58Z",
+        "last_update": "2025-11-19T14:50:01Z"
+      },
+      {
+        "repository": "vanti-dev/jll-1-bg",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/allzones",
+        "files": [
+          "cmd/area-controller/main.go",
+          "cmd/building-controller/main.go",
+          "cmd/edge-gateway/main.go"
+        ],
+        "last_push": "2025-11-10T14:25:22Z",
+        "last_update": "2025-11-10T14:25:26Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/zone/feature/electric/config": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/feature/electric/config",
+        "files": [
+          "cmd/tools/gen-zones-config/zone.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/zone/feature/hvac/config": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/feature/hvac/config",
+        "files": [
+          "cmd/tools/gen-zones-config/zone.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/zone/feature/lighting/config": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/feature/lighting/config",
+        "files": [
+          "cmd/tools/gen-zones-config/zone.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config",
+        "files": [
+          "cmd/tools/gen-zones-config/zone.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/zone/feature/mode/config": [
+      {
+        "repository": "vanti-dev/inf-5hp",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/feature/mode/config",
+        "files": [
+          "cmd/tools/gen-config-zones/config.go",
+          "cmd/tools/gen-config-zones/lighting.go"
+        ],
+        "last_push": "2025-09-23T19:46:49Z",
+        "last_update": "2025-09-23T19:46:50Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config",
+        "files": [
+          "cmd/tools/gen-zones-config/zone.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      }
+    ],
+    "github.com/smart-core-os/sc-bos/pkg/zone/feature/status/config": [
+      {
+        "repository": "vanti-dev/bsp-ew",
+        "package": "github.com/smart-core-os/sc-bos/pkg/zone/feature/status/config",
+        "files": [
+          "cmd/tools/gen-zones-config/zone.go"
+        ],
+        "last_push": "2025-11-20T13:36:02Z",
+        "last_update": "2025-11-20T13:36:03Z"
+      }
+    ]
+  },
+  "timestamp": "2025-11-21T09:44:10.182756Z"
+}

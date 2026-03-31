@@ -6,24 +6,23 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/auto/meteremail"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/meter"
-	"github.com/vanti-dev/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/meteremail"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
 
 var sampleNow = time.Date(2024, 01, 19, 0, 0, 0, 0, time.Local)
 
 func addDummyMeters(root *node.Node) {
-	var models []*meter.Model
+	var models []*meterpb.Model
 	meterNames := []string{"elecmeter1", "elecmeter2", "watermeter1", "watermeter2"}
 	for _, meterName := range meterNames {
-		m := meter.NewModel()
+		m := meterpb.NewModel()
 		m.RecordReading(123.45)
 		models = append(models, m)
-		client := node.WithClients(gen.WrapMeterApi(meter.NewModelServer(m)))
-		root.Announce(meterName, node.HasTrait(meter.TraitName, client))
+		client := node.WithClients(meterpb.WrapApi(meterpb.NewModelServer(m)))
+		root.Announce(meterName, node.HasTrait(meterpb.TraitName, client))
 	}
 }
 

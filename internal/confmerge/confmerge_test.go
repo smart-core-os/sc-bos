@@ -8,7 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/vanti-dev/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/block"
 )
 
 // a made-up example of a config struct

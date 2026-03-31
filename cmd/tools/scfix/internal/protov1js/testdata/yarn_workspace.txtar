@@ -1,0 +1,37 @@
+Yarn workspace: import in a nested package is rewritten using the pregenerated mapping.
+expected_changes: 1
+
+-- input/workspace/package.json --
+{
+  "name": "workspace-root",
+  "private": true,
+  "workspaces": ["packages/*"]
+}
+-- input/workspace/packages/app/package.json --
+{
+  "name": "@workspace/app",
+  "dependencies": {
+    "@smart-core-os/sc-bos-ui-gen": "^1.0.0"
+  }
+}
+-- input/workspace/packages/app/src/index.js --
+import {EmergencyStatus} from '@smart-core-os/sc-bos-ui-gen/proto/dali_pb';
+
+console.log(EmergencyStatus);
+-- output/workspace/package.json --
+{
+  "name": "workspace-root",
+  "private": true,
+  "workspaces": ["packages/*"]
+}
+-- output/workspace/packages/app/package.json --
+{
+  "name": "@workspace/app",
+  "dependencies": {
+    "@smart-core-os/sc-bos-ui-gen": "^1.0.0"
+  }
+}
+-- output/workspace/packages/app/src/index.js --
+import {EmergencyStatus} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/driver/dali/v1/dali_pb';
+
+console.log(EmergencyStatus);

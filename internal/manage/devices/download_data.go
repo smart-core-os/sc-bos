@@ -6,13 +6,21 @@ import (
 	"io"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	timepb "github.com/smart-core-os/sc-api/go/types/time"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/accesspb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/meter"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 // getTraitInfo returns the data we support exporting via the DevicesApi download endpoint.
@@ -27,44 +35,80 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(accesspb.TraitName): {
 			headers: []string{"access.grant", "access.reason", "access.actor.name", "access.actor.title", "access.actor.displayname", "access.actor.email"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := gen.NewAccessApiClient(s.m.ClientConn())
-				data, err := c.GetLastAccessAttempt(ctx, &gen.GetLastAccessAttemptRequest{Name: name})
+				c := accesspb.NewAccessApiClient(s.m.ClientConn())
+				data, err := c.GetLastAccessAttempt(ctx, &accesspb.GetLastAccessAttemptRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
 				return accessAttemptToRow(data), nil
 			},
 		},
-		string(meter.TraitName): {
+		string(allocationpb.TraitName): {
+			headers: []string{"allocation.state", "allocation.actor.title", "allocation.groupId", "allocation.allocationTotal", "allocation.unallocationTotal"},
+			get: func(ctx context.Context, name string) (map[string]string, error) {
+				c := allocationpb.NewAllocationApiClient(s.m.ClientConn())
+				data, err := c.GetAllocation(ctx, &allocationpb.GetAllocationRequest{Name: name})
+				if err != nil {
+					return nil, err
+				}
+				return allocationToRow(data), nil
+			},
+			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
+				c := allocationpb.NewAllocationHistoryClient(s.m.ClientConn())
+				return &historyCursor{
+					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
+						page, err := c.ListAllocationHistory(ctx, &allocationpb.ListAllocationHistoryRequest{
+							Name:      name,
+							PageToken: token,
+							PageSize:  pageSize,
+							Period:    period,
+						})
+						if err != nil {
+							return nil, "", err
+						}
+
+						records := make([]historyRecord, 0, len(page.AllocationRecords))
+						for _, record := range page.AllocationRecords {
+							records = append(records, historyRecord{
+								at:   record.GetRecordTime().AsTime(),
+								vals: allocationToRow(record.GetAllocation()),
+							})
+						}
+						return records, page.NextPageToken, nil
+					},
+				}
+			},
+		},
+		string(meterpb.TraitName): {
 			headers: []string{"meter.usage", "meter.unit"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := gen.NewMeterApiClient(s.m.ClientConn())
-				data, err := c.GetMeterReading(ctx, &gen.GetMeterReadingRequest{Name: name})
+				c := meterpb.NewMeterApiClient(s.m.ClientConn())
+				data, err := c.GetMeterReading(ctx, &meterpb.GetMeterReadingRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
 
 				var unit string
-				ci := gen.NewMeterInfoClient(s.m.ClientConn())
-				if info, err := ci.DescribeMeterReading(ctx, &gen.DescribeMeterReadingRequest{Name: name}); err == nil {
+				ci := meterpb.NewMeterInfoClient(s.m.ClientConn())
+				if info, err := ci.DescribeMeterReading(ctx, &meterpb.DescribeMeterReadingRequest{Name: name}); err == nil {
 					unit = info.GetUsageUnit()
 				}
 				return meterReadingToRow(data, unit), nil
 			},
 			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
-				c := gen.NewMeterHistoryClient(s.m.ClientConn())
-				ci := gen.NewMeterInfoClient(s.m.ClientConn())
+				c := meterpb.NewMeterHistoryClient(s.m.ClientConn())
+				ci := meterpb.NewMeterInfoClient(s.m.ClientConn())
 				var unit string
 				return &historyCursor{
 					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
 						if token == "" {
 							// fetch info the first time
-							if info, err := ci.DescribeMeterReading(ctx, &gen.DescribeMeterReadingRequest{Name: name}); err == nil {
+							if info, err := ci.DescribeMeterReading(ctx, &meterpb.DescribeMeterReadingRequest{Name: name}); err == nil {
 								unit = info.GetUsageUnit()
 							}
 						}
 
-						page, err := c.ListMeterReadingHistory(ctx, &gen.ListMeterReadingHistoryRequest{
+						page, err := c.ListMeterReadingHistory(ctx, &meterpb.ListMeterReadingHistoryRequest{
 							Name:      name,
 							PageToken: token,
 							PageSize:  pageSize,
@@ -89,8 +133,8 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(statuspb.TraitName): {
 			headers: []string{"status.level", "status.description", "status.recordtime"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := gen.NewStatusApiClient(s.m.ClientConn())
-				data, err := c.GetCurrentStatus(ctx, &gen.GetCurrentStatusRequest{Name: name})
+				c := statuspb.NewStatusApiClient(s.m.ClientConn())
+				data, err := c.GetCurrentStatus(ctx, &statuspb.GetCurrentStatusRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
@@ -100,18 +144,18 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(trait.AirQualitySensor): {
 			headers: []string{"iaq.co2", "iaq.voc", "iaq.pressure", "iaq.comfort", "iaq.infectionrisk", "iaq.score", "iaq.pm1", "iaq.pm25", "iaq.pm10", "iaq.airchange"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := traits.NewAirQualitySensorApiClient(s.m.ClientConn())
-				data, err := c.GetAirQuality(ctx, &traits.GetAirQualityRequest{Name: name})
+				c := airqualitysensorpb.NewAirQualitySensorApiClient(s.m.ClientConn())
+				data, err := c.GetAirQuality(ctx, &airqualitysensorpb.GetAirQualityRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
 				return airQualityToRow(data), nil
 			},
 			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
-				c := gen.NewAirQualitySensorHistoryClient(s.m.ClientConn())
+				c := airqualitysensorpb.NewAirQualitySensorHistoryClient(s.m.ClientConn())
 				return &historyCursor{
 					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
-						page, err := c.ListAirQualityHistory(ctx, &gen.ListAirQualityHistoryRequest{
+						page, err := c.ListAirQualityHistory(ctx, &airqualitysensorpb.ListAirQualityHistoryRequest{
 							Name:      name,
 							PageToken: token,
 							PageSize:  pageSize,
@@ -136,18 +180,18 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(trait.AirTemperature): {
 			headers: []string{"airtemperature.temperature", "airtemperature.humidity", "airtemperature.setpoint", "airtemperature.mode"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := traits.NewAirTemperatureApiClient(s.m.ClientConn())
-				data, err := c.GetAirTemperature(ctx, &traits.GetAirTemperatureRequest{Name: name})
+				c := airtemperaturepb.NewAirTemperatureApiClient(s.m.ClientConn())
+				data, err := c.GetAirTemperature(ctx, &airtemperaturepb.GetAirTemperatureRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
 				return airTemperatureToRow(data), nil
 			},
 			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
-				c := gen.NewAirTemperatureHistoryClient(s.m.ClientConn())
+				c := airtemperaturepb.NewAirTemperatureHistoryClient(s.m.ClientConn())
 				return &historyCursor{
 					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
-						page, err := c.ListAirTemperatureHistory(ctx, &gen.ListAirTemperatureHistoryRequest{
+						page, err := c.ListAirTemperatureHistory(ctx, &airtemperaturepb.ListAirTemperatureHistoryRequest{
 							Name:      name,
 							PageToken: token,
 							PageSize:  pageSize,
@@ -172,18 +216,18 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(trait.Electric): {
 			headers: []string{"electric.current", "electric.voltage", "electric.powerfactor", "electric.realpower", "electric.apparentpower", "electric.reactivepower"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := traits.NewElectricApiClient(s.m.ClientConn())
-				data, err := c.GetDemand(ctx, &traits.GetDemandRequest{Name: name})
+				c := electricpb.NewElectricApiClient(s.m.ClientConn())
+				data, err := c.GetDemand(ctx, &electricpb.GetDemandRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
 				return electricDemandToRow(data), nil
 			},
 			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
-				c := gen.NewElectricHistoryClient(s.m.ClientConn())
+				c := electricpb.NewElectricHistoryClient(s.m.ClientConn())
 				return &historyCursor{
 					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
-						page, err := c.ListElectricDemandHistory(ctx, &gen.ListElectricDemandHistoryRequest{
+						page, err := c.ListElectricDemandHistory(ctx, &electricpb.ListElectricDemandHistoryRequest{
 							Name:      name,
 							PageToken: token,
 							PageSize:  pageSize,
@@ -208,19 +252,44 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(trait.EnterLeaveSensor): {
 			headers: []string{"enterleave.entertotal", "enterleave.leavetotal"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := traits.NewEnterLeaveSensorApiClient(s.m.ClientConn())
-				data, err := c.GetEnterLeaveEvent(ctx, &traits.GetEnterLeaveEventRequest{Name: name})
+				c := enterleavesensorpb.NewEnterLeaveSensorApiClient(s.m.ClientConn())
+				data, err := c.GetEnterLeaveEvent(ctx, &enterleavesensorpb.GetEnterLeaveEventRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
 				return enterLeaveEventToRow(data), nil
 			},
+			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
+				c := enterleavesensorpb.NewEnterLeaveSensorHistoryClient(s.m.ClientConn())
+				return &historyCursor{
+					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
+						page, err := c.ListEnterLeaveSensorHistory(ctx, &enterleavesensorpb.ListEnterLeaveHistoryRequest{
+							Name:      name,
+							PageToken: token,
+							PageSize:  pageSize,
+							Period:    period,
+						})
+						if err != nil {
+							return nil, "", err
+						}
+
+						records := make([]historyRecord, 0, len(page.EnterLeaveRecords))
+						for _, record := range page.EnterLeaveRecords {
+							records = append(records, historyRecord{
+								at:   record.GetRecordTime().AsTime(),
+								vals: enterLeaveEventToRow(record.GetEnterLeaveEvent()),
+							})
+						}
+						return records, page.NextPageToken, nil
+					},
+				}
+			},
 		},
 		string(trait.FanSpeed): {
 			headers: []string{"fanspeed.percentage", "fanspeed.preset"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := traits.NewFanSpeedApiClient(s.m.ClientConn())
-				data, err := c.GetFanSpeed(ctx, &traits.GetFanSpeedRequest{Name: name})
+				c := fanspeedpb.NewFanSpeedApiClient(s.m.ClientConn())
+				data, err := c.GetFanSpeed(ctx, &fanspeedpb.GetFanSpeedRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
@@ -230,8 +299,8 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(trait.Light): {
 			headers: []string{"light.level", "light.preset"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := traits.NewLightApiClient(s.m.ClientConn())
-				data, err := c.GetBrightness(ctx, &traits.GetBrightnessRequest{Name: name})
+				c := lightpb.NewLightApiClient(s.m.ClientConn())
+				data, err := c.GetBrightness(ctx, &lightpb.GetBrightnessRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
@@ -241,18 +310,18 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(trait.OccupancySensor): {
 			headers: []string{"occupancy.state", "occupancy.peoplecount", "occupancy.changetime"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := traits.NewOccupancySensorApiClient(s.m.ClientConn())
-				data, err := c.GetOccupancy(ctx, &traits.GetOccupancyRequest{Name: name})
+				c := occupancysensorpb.NewOccupancySensorApiClient(s.m.ClientConn())
+				data, err := c.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
 				return occupancyToRow(data), nil
 			},
 			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
-				c := gen.NewOccupancySensorHistoryClient(s.m.ClientConn())
+				c := occupancysensorpb.NewOccupancySensorHistoryClient(s.m.ClientConn())
 				return &historyCursor{
 					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
-						page, err := c.ListOccupancyHistory(ctx, &gen.ListOccupancyHistoryRequest{
+						page, err := c.ListOccupancyHistory(ctx, &occupancysensorpb.ListOccupancyHistoryRequest{
 							Name:      name,
 							PageToken: token,
 							PageSize:  pageSize,
@@ -277,12 +346,48 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 		string(trait.OpenClose): {
 			headers: []string{"openclose.openpercent"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := traits.NewOpenCloseApiClient(s.m.ClientConn())
-				data, err := c.GetPositions(ctx, &traits.GetOpenClosePositionsRequest{Name: name})
+				c := openclosepb.NewOpenCloseApiClient(s.m.ClientConn())
+				data, err := c.GetPositions(ctx, &openclosepb.GetOpenClosePositionsRequest{Name: name})
 				if err != nil {
 					return nil, err
 				}
 				return openClosePositionsToRow(data), nil
+			},
+		},
+		string(soundsensorpb.TraitName): {
+			headers: []string{"sound.soundpressurelevel"},
+			get: func(ctx context.Context, name string) (map[string]string, error) {
+				c := soundsensorpb.NewSoundSensorApiClient(s.m.ClientConn())
+				data, err := c.GetSoundLevel(ctx, &soundsensorpb.GetSoundLevelRequest{Name: name})
+				if err != nil {
+					return nil, err
+				}
+				return soundLevelToRow(data), nil
+			},
+			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
+				c := soundsensorpb.NewSoundSensorHistoryClient(s.m.ClientConn())
+				return &historyCursor{
+					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
+						page, err := c.ListSoundLevelHistory(ctx, &soundsensorpb.ListSoundLevelHistoryRequest{
+							Name:      name,
+							PageToken: token,
+							PageSize:  pageSize,
+							Period:    period,
+						})
+						if err != nil {
+							return nil, "", err
+						}
+
+						records := make([]historyRecord, 0, len(page.SoundLevelRecords))
+						for _, record := range page.SoundLevelRecords {
+							records = append(records, historyRecord{
+								at:   record.GetRecordTime().AsTime(),
+								vals: soundLevelToRow(record.GetSoundLevel()),
+							})
+						}
+						return records, page.NextPageToken, nil
+					},
+				}
 			},
 		},
 	}
@@ -324,7 +429,19 @@ type historyRecord struct {
 	use  func()
 }
 
-func accessAttemptToRow(d *gen.AccessAttempt) map[string]string {
+func allocationToRow(d *allocationpb.Allocation) map[string]string {
+	vals := make(map[string]string)
+	vals["allocation.state"] = d.GetState().String()
+	if actor := d.GetActor(); actor != nil {
+		vals["allocation.actor.title"] = actor.Title
+	}
+	vals["allocation.groupId"] = d.GetGroupId()
+	vals["allocation.allocationTotal"] = fmt.Sprintf("%d", d.GetAllocationTotal())
+	vals["allocation.unallocationTotal"] = fmt.Sprintf("%d", d.GetUnallocationTotal())
+	return vals
+}
+
+func accessAttemptToRow(d *accesspb.AccessAttempt) map[string]string {
 	vals := make(map[string]string)
 	vals["access.grant"] = d.GetGrant().String()
 	vals["access.reason"] = d.GetReason()
@@ -337,14 +454,14 @@ func accessAttemptToRow(d *gen.AccessAttempt) map[string]string {
 	return vals
 }
 
-func meterReadingToRow(d *gen.MeterReading, unit string) map[string]string {
+func meterReadingToRow(d *meterpb.MeterReading, unit string) map[string]string {
 	return map[string]string{
 		"meter.usage": fmt.Sprintf("%.3f", d.Usage),
 		"meter.unit":  unit,
 	}
 }
 
-func statusLogToRow(d *gen.StatusLog) map[string]string {
+func statusLogToRow(d *statuspb.StatusLog) map[string]string {
 	vals := make(map[string]string)
 	vals["status.level"] = d.GetLevel().String()
 	vals["status.description"] = d.GetDescription()
@@ -354,7 +471,7 @@ func statusLogToRow(d *gen.StatusLog) map[string]string {
 	return vals
 }
 
-func airQualityToRow(d *traits.AirQuality) map[string]string {
+func airQualityToRow(d *airqualitysensorpb.AirQuality) map[string]string {
 	vals := make(map[string]string)
 	if d.CarbonDioxideLevel != nil {
 		vals["iaq.co2"] = fmt.Sprintf("%.3f", *d.CarbonDioxideLevel)
@@ -365,7 +482,7 @@ func airQualityToRow(d *traits.AirQuality) map[string]string {
 	if d.AirPressure != nil {
 		vals["iaq.pressure"] = fmt.Sprintf("%.3f", *d.AirPressure)
 	}
-	if d.Comfort != traits.AirQuality_COMFORT_UNSPECIFIED {
+	if d.Comfort != airqualitysensorpb.AirQuality_COMFORT_UNSPECIFIED {
 		vals["iaq.comfort"] = d.Comfort.String()
 	}
 	if d.InfectionRisk != nil {
@@ -389,7 +506,7 @@ func airQualityToRow(d *traits.AirQuality) map[string]string {
 	return vals
 }
 
-func airTemperatureToRow(d *traits.AirTemperature) map[string]string {
+func airTemperatureToRow(d *airtemperaturepb.AirTemperature) map[string]string {
 	vals := make(map[string]string)
 	if d.AmbientTemperature != nil {
 		vals["airtemperature.temperature"] = fmt.Sprintf("%.1f", d.AmbientTemperature.ValueCelsius)
@@ -400,13 +517,13 @@ func airTemperatureToRow(d *traits.AirTemperature) map[string]string {
 	if d.GetTemperatureSetPoint() != nil {
 		vals["airtemperature.setpoint"] = fmt.Sprintf("%.1f", d.GetTemperatureSetPoint().ValueCelsius)
 	}
-	if d.Mode != traits.AirTemperature_MODE_UNSPECIFIED {
+	if d.Mode != airtemperaturepb.AirTemperature_MODE_UNSPECIFIED {
 		vals["airtemperature.mode"] = d.Mode.String()
 	}
 	return vals
 }
 
-func electricDemandToRow(d *traits.ElectricDemand) map[string]string {
+func electricDemandToRow(d *electricpb.ElectricDemand) map[string]string {
 	vals := make(map[string]string)
 	if d.Current != 0 {
 		vals["electric.current"] = fmt.Sprintf("%.3f", d.Current)
@@ -429,21 +546,21 @@ func electricDemandToRow(d *traits.ElectricDemand) map[string]string {
 	return vals
 }
 
-func enterLeaveEventToRow(d *traits.EnterLeaveEvent) map[string]string {
+func enterLeaveEventToRow(d *enterleavesensorpb.EnterLeaveEvent) map[string]string {
 	vals := make(map[string]string)
-	vals["enterleave.entertotal"] = fmt.Sprintf("%d", d.EnterTotal)
-	vals["enterleave.leavetotal"] = fmt.Sprintf("%d", d.LeaveTotal)
+	vals["enterleave.entertotal"] = fmt.Sprintf("%d", d.GetEnterTotal())
+	vals["enterleave.leavetotal"] = fmt.Sprintf("%d", d.GetLeaveTotal())
 	return vals
 }
 
-func fanSpeedToRow(d *traits.FanSpeed) map[string]string {
+func fanSpeedToRow(d *fanspeedpb.FanSpeed) map[string]string {
 	vals := make(map[string]string)
 	vals["fanspeed.percentage"] = fmt.Sprintf("%.1f", d.Percentage)
 	vals["fanspeed.preset"] = d.Preset
 	return vals
 }
 
-func brightnessToRow(d *traits.Brightness) map[string]string {
+func brightnessToRow(d *lightpb.Brightness) map[string]string {
 	vals := make(map[string]string)
 	vals["light.level"] = fmt.Sprintf("%.1f", d.LevelPercent)
 	if d.Preset != nil {
@@ -452,7 +569,7 @@ func brightnessToRow(d *traits.Brightness) map[string]string {
 	return vals
 }
 
-func occupancyToRow(d *traits.Occupancy) map[string]string {
+func occupancyToRow(d *occupancysensorpb.Occupancy) map[string]string {
 	vals := make(map[string]string)
 	vals["occupancy.state"] = d.State.String()
 	vals["occupancy.peoplecount"] = fmt.Sprintf("%d", d.PeopleCount)
@@ -462,7 +579,7 @@ func occupancyToRow(d *traits.Occupancy) map[string]string {
 	return vals
 }
 
-func openClosePositionsToRow(d *traits.OpenClosePositions) map[string]string {
+func openClosePositionsToRow(d *openclosepb.OpenClosePositions) map[string]string {
 	vals := make(map[string]string)
 	if len(d.States) != 1 {
 		return vals
@@ -470,4 +587,10 @@ func openClosePositionsToRow(d *traits.OpenClosePositions) map[string]string {
 	pos := d.States[0]
 	vals["openclose.openpercent"] = fmt.Sprintf("%.1f", pos.OpenPercent)
 	return vals
+}
+
+func soundLevelToRow(d *soundsensorpb.SoundLevel) map[string]string {
+	return map[string]string{
+		"sound.soundpressurelevel": fmt.Sprintf("%.1f", d.GetSoundPressureLevel()),
+	}
 }

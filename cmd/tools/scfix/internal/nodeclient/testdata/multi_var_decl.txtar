@@ -1,0 +1,39 @@
+expected_changes: 2
+
+Test declaring multiple clients at once, then calling n.Client for each separately.
+
+-- input/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+func example(n *node.Node) error {
+	var onOffClient, brightnessClient traits.OnOffApiClient
+	err := n.Client(&onOffClient)
+	if err != nil {
+		return err
+	}
+	err = n.Client(&brightnessClient)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+-- output/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+func example(n *node.Node) error {
+	var onOffClient, brightnessClient traits.OnOffApiClient
+	onOffClient = traits.NewOnOffApiClient(n.ClientConn())
+	brightnessClient = traits.NewOnOffApiClient(n.ClientConn())
+
+	return nil
+}

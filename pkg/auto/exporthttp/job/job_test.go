@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 func Test_shouldExecuteImmediately(t *testing.T) {

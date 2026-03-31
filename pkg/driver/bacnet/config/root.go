@@ -10,12 +10,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	bactypes "github.com/vanti-dev/gobacnet/types"
-	"github.com/vanti-dev/sc-bos/pkg/block"
-	"github.com/vanti-dev/sc-bos/pkg/block/mdblock"
-
-	"github.com/vanti-dev/sc-bos/pkg/driver"
+	bactypes "github.com/smart-core-os/gobacnet/types"
+	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/block/mdblock"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 // Root represents a full collection of related configuration properties
@@ -39,10 +38,14 @@ type Root struct {
 	COV *COV `json:"cov,omitempty"`
 
 	// Metadata is applied to all announced names.
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 
 	Devices []Device   `json:"devices,omitempty"`
 	Traits  []RawTrait `json:"traits,omitempty"`
+
+	// SystemHealth represents the system-level health check configuration. If not configured,
+	// occupant and equipment impact will default to UNSPECIFIED.
+	SystemHealth Health `json:"systemHealth"`
 }
 
 // ReadFile reads from the named file a config Root.
@@ -79,7 +82,7 @@ type Discovery struct {
 	Min        int      `json:"min,omitempty"`
 	Max        int      `json:"max,omitempty"`
 	Chunk      int      `json:"chunk,omitempty"`
-	ChunkDelay Duration `json:"chunkDelay,omitempty"`
+	ChunkDelay Duration `json:"chunkDelay"`
 }
 
 type Device struct {
@@ -91,11 +94,15 @@ type Device struct {
 	COV *COV `json:"cov,omitempty"`
 
 	// Metadata applied to any traits sharing this devices name.
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 
 	DiscoverObjects      *bool    `json:"discoverObjects,omitempty"`
 	Objects              []Object `json:"objects,omitempty"`
 	DefaultWritePriority uint     `json:"defaultWritePriority,omitempty"`
+
+	// Health contains settings for a BACnet device health check
+	// If not configured, the occupant and equipment impact will default to UNSPECIFIED
+	Health Health `json:"health"`
 }
 
 type Comm struct {
@@ -148,7 +155,7 @@ func (d DestinationAddress) Bytes() ([]byte, error) {
 	if d == "" {
 		return addr, nil
 	}
-	for i := 0; i < len(octets); i++ {
+	for i := range octets {
 		octet := octets[i]
 		value, err := strconv.ParseUint(octet, 10, 8)
 		if err != nil {

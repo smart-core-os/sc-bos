@@ -7,8 +7,8 @@ import (
 
 	"go.uber.org/multierr"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 const (
@@ -145,13 +145,17 @@ type LevelThreshold struct {
 type Mode struct {
 	// UnoccupiedOffDelay configures how long we wait after the most recent occupancy sensor reported unoccupied before
 	// we turn the light off.
-	UnoccupiedOffDelay jsontypes.Duration `json:"unoccupiedOffDelay,omitempty"`
+	UnoccupiedOffDelay jsontypes.Duration `json:"unoccupiedOffDelay"`
 	// DaylightDimming configures how the brightness measured in the space affects the luminosity of the lights that
 	// are on.
 	DaylightDimming *DaylightDimming `json:"daylightDimming,omitempty"`
 	// Levels to use when the lights are on or off. If present overrides daylight dimming.
 	OnLevelPercent  *float32 `json:"onLevelPercent,omitempty"`
 	OffLevelPercent *float32 `json:"offLevelPercent,omitempty"`
+	// ForceOnLevelPercentWhenActivated if true, when a mode becomes active, this will set the light to OnLevelPercent even if than the duration since last occupied state is greater than UnoccupiedOffDelay.
+	// This is useful for making sure the light goes to the correct level when a mode becomes active, even if it was already off from a different mode.
+	// An example usage is to switch on lights to a certain level in the morning when the mode switches to "morning", even if the building is currently still unoccupied.
+	ForceOnLevelPercentWhenActivated bool `json:"forceOnLevelPercentWhenActivated,omitempty"`
 }
 
 type ModeOption struct {

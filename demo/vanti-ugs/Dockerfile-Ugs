@@ -39,7 +39,7 @@ ENV GIT_VERSION=$GIT_VERSION
 WORKDIR ops
 RUN yarn run build
 
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine3.22 AS build_go
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine3.22 AS build_go
 
 RUN apk add --no-cache git
 
@@ -80,7 +80,7 @@ ENTRYPOINT ["/app/sc-bos", "--appconf=/cfg/app.conf.json", "--sysconf=/cfg/syste
 # END COPIED SECTION
 
 # Image built using the Dockerfile in the root of the repository
-# FROM localhost/vanti-dev-sc-bos:demo-ugs-base
+# FROM localhost/smart-core-os-sc-bos:demo-ugs-base
 
 # The demo db is unauthenticated, so we don't need a password. Still need the file though.
 RUN mkdir -p /data/secrets

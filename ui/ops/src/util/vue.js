@@ -55,6 +55,8 @@ export function asyncWatch(source, callback, options) {
       const {nv, ov, onCleanup} = task;
 
       await callback(nv, ov, onCleanup);
+    } catch (e) {
+      console.error('asyncAction error:', e);
     } finally {
       const next = nextTask.value;
       nextTask.value = null;

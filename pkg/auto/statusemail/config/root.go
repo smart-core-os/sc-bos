@@ -10,8 +10,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 func ReadBytes(data []byte) (cfg Root, err error) {
@@ -49,7 +49,7 @@ func ReadBytes(data []byte) (cfg Root, err error) {
 type Root struct {
 	auto.Config
 	// Configuration information for how to send the email.
-	Destination Destination `json:"destination,omitempty"`
+	Destination Destination `json:"destination"`
 	// If true, all devices on the current node that implement Status will be monitored.
 	// Additional sources may be defined via Sources.
 	DiscoverSources bool `json:"discoverSources,omitempty"`

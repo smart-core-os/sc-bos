@@ -5,18 +5,24 @@ import (
 	"fmt"
 	"path"
 
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/system"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-	"github.com/vanti-dev/sc-bos/pkg/task/serviceapi"
-	"github.com/vanti-dev/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
 func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, error) {
@@ -25,12 +31,14 @@ func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, err
 		Node:            c.Node,
 		ClientTLSConfig: c.ClientTLSConfig,
 		HTTPMux:         c.Mux,
+		Database:        c.Database,
 	}
 
 	m := service.NewMap(func(id, kind string) (service.Lifecycle, error) {
 		driverServices := ctxServices
 		driverServices.Config = &serviceConfigStore{store: c.ControllerConfig.Drivers(), id: id}
 		driverServices.Logger = loggerWithServiceInfo(driverServices.Logger, id, kind)
+		driverServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
 
 		f, ok := c.SystemConfig.DriverFactories[kind]
 		if !ok {
@@ -39,12 +47,13 @@ func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, err
 		return f.New(driverServices), nil
 	}, service.IdIsRequired)
 
-	var allErrs error
+	logger := c.Logger.Named("driver")
 	for _, cfg := range configs {
-		_, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw})
-		allErrs = multierr.Append(allErrs, err)
+		if _, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw}); err != nil {
+			loggerWithServiceInfo(logger, cfg.Name, cfg.Type).Warn("Failed to create service", zap.Error(err))
+		}
 	}
-	return m, allErrs
+	return m, nil
 }
 
 func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, error) {
@@ -63,6 +72,7 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 		autoServices := ctxServices
 		autoServices.Config = &serviceConfigStore{store: c.ControllerConfig.Automations(), id: id}
 		autoServices.Logger = loggerWithServiceInfo(autoServices.Logger, id, kind)
+		autoServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
 
 		f, ok := c.SystemConfig.AutoFactories[kind]
 		if !ok {
@@ -71,12 +81,13 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 		return f.New(autoServices), nil
 	}, service.IdIsRequired)
 
-	var allErrs error
+	logger := c.Logger.Named("auto")
 	for _, cfg := range configs {
-		_, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw})
-		allErrs = multierr.Append(allErrs, err)
+		if _, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw}); err != nil {
+			loggerWithServiceInfo(logger, cfg.Name, cfg.Type).Warn("Failed to create service", zap.Error(err))
+		}
 	}
-	return m, allErrs
+	return m, nil
 }
 
 func (c *Controller) startSystems() (*service.Map, error) {
@@ -84,12 +95,18 @@ func (c *Controller) startSystems() (*service.Map, error) {
 	if err != nil {
 		return nil, err
 	}
+	var httpEndpoint string
+	if hp, err := c.SystemConfig.ExternalHTTPEndpoint(); err == nil {
+		httpEndpoint = hp
+	}
 	ctxServices := system.Services{
 		ConfigDirs:       c.SystemConfig.ConfigDirs,
 		DataDir:          c.SystemConfig.DataDir,
 		Logger:           c.Logger.Named("system"),
 		Node:             c.Node,
+		HealthChecks:     devicesToHealthCheckCollection(c.DeviceStore),
 		GRPCEndpoint:     grpcEndpoint,
+		HTTPEndpoint:     httpEndpoint,
 		Database:         c.Database,
 		Stores:           c.Stores,
 		Accounts:         c.Accounts,
@@ -100,6 +117,10 @@ func (c *Controller) startSystems() (*service.Map, error) {
 		PrivateKey:       c.PrivateKey,
 		CohortManager:    c.ManagerConn,
 		ClientTLSConfig:  c.ClientTLSConfig,
+		LogLevel:         c.LogLevel,
+	}
+	if c.LogCapture != nil {
+		ctxServices.AddLogCore = c.LogCapture.Add
 	}
 	m := service.NewMap(func(_, kind string) (service.Lifecycle, error) {
 		f, ok := c.SystemConfig.SystemFactories[kind]
@@ -109,12 +130,13 @@ func (c *Controller) startSystems() (*service.Map, error) {
 		return f.New(ctxServices), nil
 	}, service.IdIsKind)
 
-	var allErrs error
+	logger := c.Logger.Named("system")
 	for kind, cfg := range c.SystemConfig.Systems {
-		_, _, err := m.Create("", kind, service.State{Active: !cfg.Disabled, Config: cfg.Raw})
-		allErrs = multierr.Append(allErrs, err)
+		if _, _, err := m.Create("", kind, service.State{Active: !cfg.Disabled, Config: cfg.Raw}); err != nil {
+			loggerWithServiceInfo(logger, kind, kind).Warn("Failed to create service", zap.Error(err))
+		}
 	}
-	return m, allErrs
+	return m, nil
 }
 
 func (c *Controller) startZones(configs []zone.RawConfig) (*service.Map, error) {
@@ -130,6 +152,7 @@ func (c *Controller) startZones(configs []zone.RawConfig) (*service.Map, error) 
 		zoneServices := ctxServices
 		zoneServices.Config = &serviceConfigStore{store: c.ControllerConfig.Zones(), id: id}
 		zoneServices.Logger = loggerWithServiceInfo(zoneServices.Logger, id, kind)
+		zoneServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
 
 		f, ok := c.SystemConfig.ZoneFactories[kind]
 		if !ok {
@@ -138,12 +161,13 @@ func (c *Controller) startZones(configs []zone.RawConfig) (*service.Map, error) 
 		return f.New(zoneServices), nil
 	}, service.IdIsRequired)
 
-	var allErrs error
+	logger := c.Logger.Named("zone")
 	for _, cfg := range configs {
-		_, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw})
-		allErrs = multierr.Append(allErrs, err)
+		if _, _, err := m.Create(cfg.Name, cfg.Type, service.State{Active: !cfg.Disabled, Config: cfg.Raw}); err != nil {
+			loggerWithServiceInfo(logger, cfg.Name, cfg.Type).Warn("Failed to create service", zap.Error(err))
+		}
 	}
-	return m, allErrs
+	return m, nil
 }
 
 func logServiceMapChanges(ctx context.Context, logger *zap.Logger, m *service.Map) {
@@ -165,11 +189,15 @@ func logServiceRecordChange(logger *zap.Logger, oldVal, newVal *service.StateRec
 		logger = loggerWithServiceInfo(logger, oldVal.Id, oldVal.Kind)
 	}
 	switch {
-	case oldVal == nil && newVal != nil: // do nothing
+	case oldVal == nil && newVal != nil: // created or initial snapshot
+		if newVal.State.Err != nil {
+			logger.Warn("Failed to configure service", zap.Error(newVal.State.Err))
+		} else {
+			logger.Debug("Created", zap.Bool("active", newVal.State.Active), zap.Bool("loading", newVal.State.Loading))
+		}
 	case newVal == nil: // removed
 		logger.Debug("Removed")
-	case oldVal == nil: // created
-		logger.Debug("Created", zap.Bool("active", newVal.State.Active), zap.Bool("loading", newVal.State.Loading), zap.Error(newVal.State.Err))
+	case oldVal == nil: // created (with no new value — should not normally happen)
 	case !newVal.State.Active && newVal.State.Err != nil && oldVal.State.Err == nil: // error
 		logger.Warn("Failed to load", zap.Error(newVal.State.Err))
 	case oldVal.State.Active && !newVal.State.Active: // stopped
@@ -195,8 +223,40 @@ func loggerWithServiceInfo(logger *zap.Logger, id, kind string) *zap.Logger {
 	return logger.With(zap.String("service.id", id), zap.String("service.kind", kind))
 }
 
+func healthChecksForService(r *healthpb.Registry, id, kind string) *healthpb.Checks {
+	owner := fmt.Sprintf("%s:%s", kind, id)
+	return r.ForOwner(owner)
+}
+
+func devicesToHealthCheckCollection(d *devicespb.Collection) system.HealthCheckCollection {
+	return (*devicesHealthCheckCollection)(d)
+}
+
+type devicesHealthCheckCollection devicespb.Collection
+
+func (d *devicesHealthCheckCollection) MergeHealthChecks(name string, checks ...*healthpb.HealthCheck) error {
+	_, err := (*devicespb.Collection)(d).Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+		dstDev := dst.(*devicespb.Device)
+		dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, checks...)
+	}), resource.WithCreateIfAbsent())
+	return err
+}
+
+func (d *devicesHealthCheckCollection) RemoveHealthChecks(name string, ids ...string) error {
+	_, err := (*devicespb.Collection)(d).Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
+		dstDev := dst.(*devicespb.Device)
+		for _, id := range ids {
+			dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
+		}
+	}))
+	if code := status.Code(err); code == codes.NotFound {
+		err = nil
+	}
+	return err
+}
+
 func announceServices[M ~map[string]T, T any](c *Controller, name string, services *service.Map, factories M, store serviceapi.Store) node.Undo {
-	client := gen.WrapServicesApi(serviceapi.NewApi(services,
+	client := servicespb.WrapApi(serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 		serviceapi.WithStore(store),
@@ -206,7 +266,7 @@ func announceServices[M ~map[string]T, T any](c *Controller, name string, servic
 
 func announceAutoServices[M ~map[string]T, T any](c *Controller, services *service.Map, factories M) node.Undo {
 	// special because the config name isn't the name we announce as
-	client := gen.WrapServicesApi(serviceapi.NewApi(services,
+	client := servicespb.WrapApi(serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 		serviceapi.WithStore(c.ControllerConfig.Automations()),
@@ -217,7 +277,7 @@ func announceAutoServices[M ~map[string]T, T any](c *Controller, services *servi
 func announceSystemServices[M ~map[string]T, T any](c *Controller, services *service.Map, factories M) node.Undo {
 	// special because we don't support writing this config, yet
 	// todo: support writing system config
-	client := gen.WrapServicesApi(serviceapi.NewApi(services,
+	client := servicespb.WrapApi(serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 	))

@@ -50,6 +50,21 @@
               "props": {
                 "source": "van/uk/brum/ugs/zones/building"
               }
+            },
+            {
+              "component": "builtin:environmental/AirTemperatureHistoryCard",
+              "props": {
+                "title": "Average Air Temperature",
+                "source": "van/uk/brum/ugs/zones/building",
+                "metric": "ambientTemperature"
+              }
+            },
+            {
+              "component": "builtin:usage/AllocationHistoryCard",
+              "props": {
+                "source": ["van/uk/brum/ugs/devices/LOK-L00-01"],
+                "title": "Locker Usage"
+              }
             }
           ],
           "after": [
@@ -112,6 +127,14 @@
                   "props": {
                     "forceQuery": {"metadata.location.floor": "Basement"}
                   }
+                },
+                {
+                  "component": "builtin:environmental/AirTemperatureHistoryCard",
+                  "props": {
+                    "title": "Air Temperature",
+                    "source": "van/uk/brum/ugs/zones/floors/basement",
+                    "metric": "ambientTemperature"
+                  }
                 }
               ],
               "after": [
@@ -152,6 +175,21 @@
                           "metadata.location.floor": "Basement",
                           "metadata.location.zone": "Copper Room"
                         }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/SoundSensorHistoryCard",
+                      "props": {
+                        "source": "van/uk/brum/ugs/devices/SND-L00-01",
+                        "title": "Copper Room Sound Levels"
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/copper",
+                        "metric": "ambientTemperature"
                       }
                     }
                   ],
@@ -194,6 +232,14 @@
                           "metadata.location.zone": "Cotswold Room"
                         }
                       }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/cotswold",
+                        "metric": "ambientTemperature"
+                      }
                     }
                   ],
                   "after": [
@@ -234,6 +280,14 @@
                           "metadata.location.floor": "Basement",
                           "metadata.location.zone": "Kaolin Room"
                         }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/kaolin",
+                        "metric": "ambientTemperature"
                       }
                     }
                   ],
@@ -311,6 +365,14 @@
                       "metadata.location.floor": "Ground Floor"
                     }
                   }
+                },
+                {
+                  "component": "builtin:environmental/AirTemperatureHistoryCard",
+                  "props": {
+                    "title": "Air Temperature",
+                    "source": "van/uk/brum/ugs/zones/floors/ground",
+                    "metric": "ambientTemperature"
+                  }
                 }
               ],
               "after": [
@@ -352,6 +414,14 @@
                           "metadata.location.zone": "Reception"
                         }
                       }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/areas/reception",
+                        "metric": "ambientTemperature"
+                      }
                     }
                   ],
                   "after": [
@@ -392,6 +462,14 @@
                           "metadata.location.floor": "Ground Floor",
                           "metadata.location.zone": "Teal Room"
                         }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/teal",
+                        "metric": "ambientTemperature"
                       }
                     }
                   ],
@@ -447,6 +525,14 @@
                           "metadata.location.zone": "Green Room"
                         }
                       }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/green",
+                        "metric": "ambientTemperature"
+                      }
                     }
                   ],
                   "after": [
@@ -487,6 +573,14 @@
                           "metadata.location.floor": "Ground Floor",
                           "metadata.location.zone": "Yellow Room"
                         }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/yellow",
+                        "metric": "ambientTemperature"
                       }
                     }
                   ],
@@ -552,6 +646,14 @@
                       "metadata.location.floor": "First Floor"
                     }
                   }
+                },
+                {
+                  "component": "builtin:environmental/AirTemperatureHistoryCard",
+                  "props": {
+                    "title": "Air Temperature",
+                    "source": "van/uk/brum/ugs/zones/floors/first",
+                    "metric": "ambientTemperature"
+                  }
                 }
               ],
               "after": [
@@ -592,6 +694,14 @@
                           "metadata.location.floor": "First Floor",
                           "metadata.location.zone": "The Bank"
                         }
+                      }
+                    },
+                    {
+                      "component": "builtin:environmental/AirTemperatureHistoryCard",
+                      "props": {
+                        "title": "Air Temperature",
+                        "source": "van/uk/brum/ugs/zones/rooms/bank",
+                        "metric": "ambientTemperature"
                       }
                     }
                   ],
@@ -851,7 +961,7 @@
                   "component": "builtin:environmental/AirQualityHistoryCard",
                   "props": {
                     "title": "Weekly Air Quality",
-                    "source": "van/uk/brum/ugs/zones/building",
+                    "source": ["van/uk/brum/ugs/zones/building", "van/uk/brum/ugs/zones/areas/open-plan"],
                     "metric": "score",
                     "start": "day-7",
                     "end": "day-1"
@@ -888,7 +998,7 @@
                 {
                   "loc": {"x": 1, "y": 7, "w": 4, "h": 2},
                   "id": "PeopleCountHistory",
-                  "component": "builtin:occupancy/PeopleCountHistoryChart",
+                  "component": "builtin:occupancy/PeopleCountHistoryCard",
                   "props": {
                     "totalOccupancyName": "van/uk/brum/ugs/zones/building",
                     "start": "day-7",
@@ -901,7 +1011,13 @@
                   "component": "builtin:occupancy/PeopleCountCard",
                   "props": {
                     "source": "van/uk/brum/ugs/zones/building",
-                    "maxOccupancy": 1250
+                    "maxOccupancy": 1250,
+                    "thresholds": [
+                      {"percentage": 10, "str": "Quiet"},
+                      {"percentage": 50, "str": "Moderate"},
+                      {"percentage": 70, "str": "Busy"},
+                      {"percentage": 90, "str": "Full"}
+                    ]
                   }
                 },
                 {
@@ -918,9 +1034,13 @@
                 },
                 {
                   "loc": {"x": 5, "y": 9, "w": 2, "h": 4},
-                  "id": "Visitors",
+                  "id": "Environment",
+                  "component": "builtin:environmental/EnvironmentalCard",
                   "props": {
-                    "title": "Visitors"
+                    "title": "Building Environment",
+                    "external": "van/uk/brum/ugs/devices/TMP-L02-01",
+                    "internal": "van/uk/brum/ugs/zones/building",
+                    "leftToRightGauges": true
                   }
                 },
                 {
@@ -997,7 +1117,19 @@
                   }
                 },
                 {
-                  "loc": {"x": 7, "y": 9, "w": 6, "h": 4},
+                  "loc": {"x": 7, "y": 9, "w": 2, "h": 4},
+                  "id": "MeterDensity",
+                  "component": "builtin:meter/MeterDensityCard",
+                  "props": {
+                    "title": "Building Power Density",
+                    "name": "van/uk/brum/ugs/zones/building",
+                    "occupancy": "van/uk/brum/ugs/zones/building",
+                    "period": "day",
+                    "refresh": 60000
+                  }
+                },
+                {
+                  "loc": {"x": 9, "y": 9, "w": 4, "h": 4},
                   "id": "Notifications",
                   "component": "builtin:notifications/ZoneNotifications",
                   "props": {
@@ -1008,6 +1140,23 @@
                     "columns": ["createTime", "severity", "source", "description"],
                     "fixedRowCount": 5
                   }
+                }
+              ]
+            },
+            {
+              "title": "Health",
+              "icon": "mdi-heart-pulse",
+              "path": "health",
+              "layout": "builtin:LayoutMainSide",
+              "mainWidgetMinHeight": 0,
+              "main": [
+                {
+                  "id": "ImpactBreakdown",
+                  "component": "builtin:health/HealthImpactBreakdownsCard"
+                },
+                {
+                  "id": "CheckTable",
+                  "component": "builtin:health/HealthCheckTable"
                 }
               ]
             }
@@ -1035,5 +1184,8 @@
         }
       }
     }
+  },
+  "experiments": {
+    "health": true
   }
 }

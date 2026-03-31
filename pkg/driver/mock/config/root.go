@@ -1,10 +1,10 @@
 package config
 
 import (
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/block"
-	"github.com/vanti-dev/sc-bos/pkg/block/mdblock"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/block/mdblock"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 type Root struct {
@@ -13,7 +13,7 @@ type Root struct {
 }
 
 type Device struct {
-	*traits.Metadata
+	*metadatapb.Metadata
 }
 
 var Blocks = []block.Block{

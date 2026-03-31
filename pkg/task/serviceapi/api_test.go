@@ -8,9 +8,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 func TestApi_PullServices(t *testing.T) {
@@ -31,7 +31,7 @@ func TestApi_PullServices(t *testing.T) {
 
 	ctx, stop := context.WithCancel(context.Background())
 	t.Cleanup(stop)
-	responses := api.pullServices(ctx, &gen.PullServicesRequest{UpdatesOnly: true})
+	responses := api.pullServices(ctx, &servicespb.PullServicesRequest{UpdatesOnly: true})
 
 	_, state1, err := m.Create("id1", "k1", service.State{})
 	assertNoErr("Create", err)
@@ -39,8 +39,8 @@ func TestApi_PullServices(t *testing.T) {
 	got, err := receiveWithin(responses, time.Second)
 	assertNoErr("Receive", err)
 
-	want := &gen.PullServicesResponse_Change{
-		Type:       types.ChangeType_ADD,
+	want := &servicespb.PullServicesResponse_Change{
+		Type:       typespb.ChangeType_ADD,
 		ChangeTime: timeToTimestamp(now),
 		NewValue:   stateToProto("id1", "k1", state1),
 	}
@@ -54,8 +54,8 @@ func TestApi_PullServices(t *testing.T) {
 	got, err = receiveWithin(responses, time.Millisecond)
 	assertNoErr("Receive", err)
 
-	want = &gen.PullServicesResponse_Change{
-		Type: types.ChangeType_UPDATE, ChangeTime: timeToTimestamp(now),
+	want = &servicespb.PullServicesResponse_Change{
+		Type: typespb.ChangeType_UPDATE, ChangeTime: timeToTimestamp(now),
 		OldValue: stateToProto("id1", "k1", state1),
 		NewValue: stateToProto("id1", "k1", state2),
 	}
@@ -72,9 +72,9 @@ func TestApi_PullServices(t *testing.T) {
 	// We don't know which will win, if the record is removed first then we'll get one event, the removal
 	// If the stop wins then we'll get two events, an update to Stopped and then the removal.
 	// It doesn't actually matter which one wins, but we do need to check in our test.
-	if got.Type == types.ChangeType_UPDATE {
-		want = &gen.PullServicesResponse_Change{
-			Type:       types.ChangeType_UPDATE,
+	if got.Type == typespb.ChangeType_UPDATE {
+		want = &servicespb.PullServicesResponse_Change{
+			Type:       typespb.ChangeType_UPDATE,
 			ChangeTime: timeToTimestamp(now),
 			OldValue:   stateToProto("id1", "k1", state2),
 			NewValue:   stateToProto("id1", "k1", state3),
@@ -87,8 +87,8 @@ func TestApi_PullServices(t *testing.T) {
 		assertNoErr("Receive race", err)
 	}
 
-	want = &gen.PullServicesResponse_Change{
-		Type: types.ChangeType_REMOVE, ChangeTime: timeToTimestamp(now),
+	want = &servicespb.PullServicesResponse_Change{
+		Type: typespb.ChangeType_REMOVE, ChangeTime: timeToTimestamp(now),
 		OldValue: stateToProto("id1", "k1", state3),
 	}
 	if diff := cmpProto(want, got); diff != "" {

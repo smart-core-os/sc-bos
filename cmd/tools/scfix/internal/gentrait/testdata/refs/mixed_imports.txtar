@@ -1,0 +1,105 @@
+Test files that import both proto and gentrait versions of the same package.
+The gentrait import should be updated to proto, and if it creates a duplicate, it should be deduplicated.
+expected_changes: 1
+
+-- input/pkg/driver/test/driver.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	mywaste "github.com/smart-core-os/sc-bos/pkg/gentrait/wastepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/alert"
+	myalert "github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+	"github.com/smart-core-os/sc-bos/pkg/gentrait/occupancy"
+	gen_occupancypb "github.com/smart-core-os/sc-bos/pkg/proto/occupancypb"
+	myair "github.com/smart-core-os/sc-bos/pkg/gentrait/airquality"
+	gen_airqualitypb "github.com/smart-core-os/sc-bos/pkg/proto/airqualitypb"
+)
+
+type Driver struct {
+	// Scenario 1: both unaliased
+	meterInfo    *meter.InfoServer
+	meterReading *meterpb.MeterReading
+	// Scenario 2: gentrait aliased, proto unaliased
+	wasteInfo  *mywaste.InfoServer
+	wasteLevel *wastepb.WasteLevel
+	// Scenario 3: proto aliased, gentrait unaliased
+	alertInfo  *alert.InfoServer
+	alertLevel *myalert.Level
+	// Scenario 4: proto with gen_ alias, gentrait unaliased
+	occupancyInfo  *occupancy.InfoServer
+	occupancyState *gen_occupancypb.Occupancy
+	// Scenario 5: proto with gen_ alias, gentrait aliased
+	airQualityInfo  *myair.InfoServer
+	airQualityState *gen_airqualitypb.AirQuality
+}
+
+func (d *Driver) GetMeterInfo() *meter.InfoServer {
+	return d.meterInfo
+}
+
+func (d *Driver) GetWasteInfo() *mywaste.InfoServer {
+	return d.wasteInfo
+}
+
+func (d *Driver) GetAlertInfo() *alert.InfoServer {
+	return d.alertInfo
+}
+
+func (d *Driver) GetOccupancyInfo() *occupancy.InfoServer {
+	return d.occupancyInfo
+}
+
+func (d *Driver) GetAirQualityInfo() *myair.InfoServer {
+	return d.airQualityInfo
+}
+-- output/pkg/driver/test/driver.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitypb"
+	myalert "github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancypb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
+)
+
+type Driver struct {
+	// Scenario 1: both unaliased
+	meterInfo    *meterpb.InfoServer
+	meterReading *meterpb.MeterReading
+	// Scenario 2: gentrait aliased, proto unaliased
+	wasteInfo  *wastepb.InfoServer
+	wasteLevel *wastepb.WasteLevel
+	// Scenario 3: proto aliased, gentrait unaliased
+	alertInfo  *myalert.InfoServer
+	alertLevel *myalert.Level
+	// Scenario 4: proto with gen_ alias, gentrait unaliased
+	occupancyInfo  *occupancypb.InfoServer
+	occupancyState *occupancypb.Occupancy
+	// Scenario 5: proto with gen_ alias, gentrait aliased
+	airQualityInfo  *airqualitypb.InfoServer
+	airQualityState *airqualitypb.AirQuality
+}
+
+func (d *Driver) GetMeterInfo() *meterpb.InfoServer {
+	return d.meterInfo
+}
+
+func (d *Driver) GetWasteInfo() *wastepb.InfoServer {
+	return d.wasteInfo
+}
+
+func (d *Driver) GetAlertInfo() *myalert.InfoServer {
+	return d.alertInfo
+}
+
+func (d *Driver) GetOccupancyInfo() *occupancypb.InfoServer {
+	return d.occupancyInfo
+}
+
+func (d *Driver) GetAirQualityInfo() *airqualitypb.InfoServer {
+	return d.airQualityInfo
+}

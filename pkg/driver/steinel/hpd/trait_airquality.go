@@ -6,16 +6,16 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 type AirQualitySensor struct {
-	traits.UnimplementedAirQualitySensorApiServer
-	gen.UnimplementedMqttServiceServer
-	gen.UnimplementedUdmiServiceServer
+	airqualitysensorpb.UnimplementedAirQualitySensorApiServer
+	mqttpb.UnimplementedMqttServiceServer
+	udmipb.UnimplementedUdmiServiceServer
 
 	logger *zap.Logger
 
@@ -26,15 +26,15 @@ type AirQualitySensor struct {
 
 var _ sensor = (*AirQualitySensor)(nil)
 
-func NewAirQualitySensor(client *Client, logger *zap.Logger) *AirQualitySensor {
+func newAirQualitySensor(client *Client, logger *zap.Logger) *AirQualitySensor {
 	return &AirQualitySensor{
 		client:          client,
 		logger:          logger,
-		AirQualityValue: resource.NewValue(resource.WithInitialValue(&traits.AirQuality{}), resource.WithNoDuplicates()),
+		AirQualityValue: resource.NewValue(resource.WithInitialValue(&airqualitysensorpb.AirQuality{}), resource.WithNoDuplicates()),
 	}
 }
 
-func (a *AirQualitySensor) GetAirQuality(_ context.Context, _ *traits.GetAirQualityRequest) (*traits.AirQuality, error) {
+func (a *AirQualitySensor) GetAirQuality(_ context.Context, _ *airqualitysensorpb.GetAirQualityRequest) (*airqualitysensorpb.AirQuality, error) {
 	response := SensorResponse{}
 	if err := doGetRequest(a.client, &response, "sensor"); err != nil {
 		return nil, err
@@ -42,20 +42,20 @@ func (a *AirQualitySensor) GetAirQuality(_ context.Context, _ *traits.GetAirQual
 	if err := a.GetUpdate(&response); err != nil {
 		return nil, err
 	}
-	return a.AirQualityValue.Get().(*traits.AirQuality), nil
+	return a.AirQualityValue.Get().(*airqualitysensorpb.AirQuality), nil
 }
 
-func (a *AirQualitySensor) PullAirQuality(request *traits.PullAirQualityRequest, server traits.AirQualitySensorApi_PullAirQualityServer) error {
+func (a *AirQualitySensor) PullAirQuality(request *airqualitysensorpb.PullAirQualityRequest, server airqualitysensorpb.AirQualitySensorApi_PullAirQualityServer) error {
 	ctx, cancel := context.WithCancel(server.Context())
 	defer cancel()
 
 	changes := a.AirQualityValue.Pull(ctx)
 
 	for change := range changes {
-		v := change.Value.(*traits.AirQuality)
+		v := change.Value.(*airqualitysensorpb.AirQuality)
 
-		err := server.Send(&traits.PullAirQualityResponse{
-			Changes: []*traits.PullAirQualityResponse_Change{
+		err := server.Send(&airqualitysensorpb.PullAirQualityResponse{
+			Changes: []*airqualitysensorpb.PullAirQualityResponse_Change{
 				{Name: request.GetName(), ChangeTime: timestamppb.New(change.ChangeTime), AirQuality: v},
 			},
 		})
@@ -74,7 +74,7 @@ func (a *AirQualitySensor) GetUpdate(response *SensorResponse) error {
 	airPressure := float32(response.AirPressure)
 	infectionRisk := float32(response.AerosolRiskOfInfection)
 
-	q := &traits.AirQuality{
+	q := &airqualitysensorpb.AirQuality{
 		CarbonDioxideLevel:       &co2,
 		VolatileOrganicCompounds: &voc,
 	}

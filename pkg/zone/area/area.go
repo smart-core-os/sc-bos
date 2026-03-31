@@ -6,27 +6,27 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/app/sysconf"
-	"github.com/vanti-dev/sc-bos/pkg/block"
-	"github.com/vanti-dev/sc-bos/pkg/block/mdblock"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-	"github.com/vanti-dev/sc-bos/pkg/task/serviceapi"
-	"github.com/vanti-dev/sc-bos/pkg/zone"
-	"github.com/vanti-dev/sc-bos/pkg/zone/area/config"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/airquality"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/electric"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/enterleave"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/hvac"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/lighting"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/meter"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/mode"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/occupancy"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/onoff"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/openclose"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/status"
+	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
+	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/block/mdblock"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/pkg/zone/area/config"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/electric"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/enterleave"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/hvac"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/lighting"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/meter"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/mode"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/onoff"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/openclose"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/status"
 )
 
 // DefaultFeatures lists all the default features for an area.
@@ -145,7 +145,7 @@ func (a *Area) applyConfig(ctx context.Context, cfg config.Root) error {
 	// make the zone area implement the ServicesApi
 	m := service.NewMapOf(featureImpls)
 	api := serviceapi.NewApi(m)
-	announce.Announce(cfg.Name, node.HasClient(gen.WrapServicesApi(api)))
+	announce.Announce(cfg.Name, node.HasClient(servicespb.WrapApi(api)))
 
 	// stop all features if the area is stopped
 	go func() {

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/vanti-dev/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
 type Root struct {

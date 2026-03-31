@@ -2,7 +2,9 @@ import {timestampToDate} from '@/api/convpb.js';
 import {listAirQualitySensorHistory} from '@/api/sc/traits/air-quality-sensor.js';
 import {asyncWatch} from '@/util/vue.js';
 import binarySearch from 'binary-search';
-import {computed, reactive, toValue} from 'vue';
+import {computed, reactive, toValue, watch, effectScope} from 'vue';
+import {usePullMetadata} from '@/traits/metadata/metadata.js';
+
 
 /**
  * @typedef {Object} AirQualityMetricRecord
@@ -182,4 +184,63 @@ async function readAverageAirQualityMetricSeries(name, metric, edges, before = n
     }
   }
   return dst; // dst should have no null entries by now
+}
+
+/**
+ * @typedef {Object} AirQualityMetric
+ * @property {import('vue').MaybeRefOrGetter<string>} title
+ * @property {import('vue').ComputedRef<{x:Date, y:number|null}[]>} data
+ * @property {function():void} stop
+ */
+/**
+ * @typedef {Object} ConfigSubName
+ * @property {string} name
+ * @property {string} [title]
+ */
+/**
+ * @param {import('vue').MaybeRefOrGetter<(string|ConfigSubName)[]>} names
+ * @param {import('vue').MaybeRefOrGetter<string>} metric
+ * @param {import('vue').MaybeRefOrGetter<Date[]>} edges
+ * @return {import('vue').Reactive<Record<string, AirQualityMetric>>}
+ */
+export function useAirQualityHistoryMetrics(names, metric, edges) {
+  const res = reactive({});
+  watch(() => toValue(names), (names) => {
+    const toStop = Object.fromEntries(Object.entries(res)); // clone
+    for (const item of names) {
+      let name = item;
+      let title = undefined;
+      if (typeof name === 'object') {
+        name = item.name;
+        title = item.title;
+      }
+      if (res[name]) {
+        delete toStop[name];
+        continue;
+      }
+      const scope = effectScope();
+      scope.run(() => {
+        const airQuality = {data: useAirQualityHistoryMetric(name, metric, edges), stop: () => scope.stop()};
+        // use the configured title if possible, otherwise get it from the metadata, or just fall back to the name
+        if (title) {
+          airQuality.title = title;
+        } else {
+          const {value: md} = usePullMetadata(name);
+          airQuality.title = computed(() => {
+            const mdTitle = md.value?.appearance?.title;
+            if (mdTitle) return mdTitle;
+            return name;
+          })
+        }
+
+        res[name] = airQuality;
+      });
+    }
+
+    for (const [name, {stop}] of Object.entries(toStop)) {
+      stop();
+      delete res[name];
+    }
+  }, {immediate: true});
+  return res;
 }

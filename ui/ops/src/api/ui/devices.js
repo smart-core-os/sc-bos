@@ -3,7 +3,7 @@ import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setCollection, setValue} from '@/api/resource';
 import {trackAction} from '@/api/resource.js';
 import {periodFromObject} from '@/api/sc/types/period.js';
-import {DevicesApiPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/devices_grpc_web_pb';
+import {DevicesApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_grpc_web_pb';
 import {
   Device,
   DevicesMetadata,
@@ -12,7 +12,7 @@ import {
   ListDevicesRequest,
   PullDevicesMetadataRequest,
   PullDevicesRequest
-} from '@vanti-dev/sc-bos-ui-gen/proto/devices_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_pb';
 import {Empty} from 'google-protobuf/google/protobuf/empty_pb.js';
 
 /**
@@ -141,7 +141,7 @@ function deviceQueryFromObject(obj) {
 function deviceQueryConditionFromObject(obj) {
   if (!obj) return undefined;
   const dst = new Device.Query.Condition();
-  setProperties(dst, obj, 'field',
+  setProperties(dst, obj, 'field', 'matcher',
       'stringEqual', 'stringEqualFold',
       'stringContains', 'stringContainsFold',
       'nameDescendant', 'nameDescendantInc'
@@ -164,9 +164,9 @@ function deviceQueryConditionFromObject(obj) {
   if (obj.present) {
     dst.setPresent(new Empty())
   }
+  dst.setMatches(deviceQueryFromObject(obj.matches));
   return dst;
 }
-
 /**
  *
  * @param {Partial<DevicesMetadata.Include.AsObject>} obj

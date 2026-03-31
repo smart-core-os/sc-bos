@@ -7,8 +7,8 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/util/client"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/client"
 )
 
 var clientConfig client.Config
@@ -31,7 +31,7 @@ func main() {
 	}
 }
 
-func printTransport(res *gen.Transport) {
+func printTransport(res *transportpb.Transport) {
 	log.Printf("------------------------------------")
 	log.Printf("Actual Position: %s", res.ActualPosition.Floor)
 	log.Printf("Moving Direction: %s", res.MovingDirection)
@@ -56,10 +56,10 @@ func run() error {
 	log.Printf("dialled")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	tc := gen.NewTransportApiClient(conn)
+	tc := transportpb.NewTransportApiClient(conn)
 
 	get := func(c context.Context, name string) error {
-		req := gen.GetTransportRequest{Name: name}
+		req := transportpb.GetTransportRequest{Name: name}
 		log.Printf("GetTransportRequest %s", name)
 		res, err := tc.GetTransport(ctx, &req)
 		if err != nil {
@@ -71,7 +71,7 @@ func run() error {
 
 	pull := func(c context.Context, name string) error {
 		log.Printf("PullTransportRequest %s", name)
-		stream, err := tc.PullTransport(ctx, &gen.PullTransportRequest{Name: name})
+		stream, err := tc.PullTransport(ctx, &transportpb.PullTransportRequest{Name: name})
 		if err != nil {
 			return err
 		}

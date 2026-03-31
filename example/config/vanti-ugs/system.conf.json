@@ -14,8 +14,15 @@
       "passwordFile": "./.data/secrets/postgres-password"
     }
   },
+  "logger": {
+    "outputPaths": ["stderr", ".data/sc-bos.log"]
+  },
   "systems": {
     "alerts": {"storage": {"type": "postgres"}},
+    "log": {
+      "logFilePath": ".data/sc-bos*.log",
+      "logDir": ".data/"
+    },
     "authn": {
       "user": {
         "localAccounts": true,
@@ -27,7 +34,8 @@
         "localAccounts": true
       }
     },
-    "tenants": {"storage": {"type": "postgres"}}
+    "tenants": {"storage": {"type": "postgres"}},
+    "resourceUse": {}
   },
   "experimental": {
     "accounts": true

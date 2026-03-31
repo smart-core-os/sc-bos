@@ -2,6 +2,7 @@ package concurrent
 
 import (
 	"context"
+	"maps"
 	"sync"
 	"time"
 )
@@ -52,9 +53,7 @@ func (m *Map[K, V]) Copy() map[K]V {
 
 func (m *Map[K, V]) clone() map[K]V {
 	cloned := make(map[K]V)
-	for k, v := range m.values {
-		cloned[k] = v
-	}
+	maps.Copy(cloned, m.values)
 	return cloned
 }
 

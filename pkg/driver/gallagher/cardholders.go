@@ -10,15 +10,15 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/driver/gallagher/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/accesspb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/udmipb"
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 type CardholderList struct {
@@ -57,12 +57,12 @@ type CardholderPayload struct {
 }
 
 type Cardholder struct {
-	gen.UnimplementedAccessApiServer
-	gen.UnimplementedUdmiServiceServer
+	accesspb.UnimplementedAccessApiServer
+	udmipb.UnimplementedUdmiServiceServer
 	config.ScDevice
 	CardholderPayload
-	lastAccessAttempt *resource.Value // gen.AccessAttempt
-	udmiBus           minibus.Bus[*gen.PullExportMessagesResponse]
+	lastAccessAttempt *resource.Value // accesspb.AccessAttempt
+	udmiBus           minibus.Bus[*udmipb.PullExportMessagesResponse]
 	undo              []node.Undo
 }
 
@@ -104,7 +104,7 @@ func (cc *CardholderController) getCardholders() (map[string]*Cardholder, error)
 		for _, cardholder := range resultsList.Results {
 			result[cardholder.Id] = &Cardholder{
 				CardholderPayload: cardholder,
-				lastAccessAttempt: resource.NewValue(resource.WithInitialValue(&gen.AccessAttempt{}), resource.WithNoDuplicates()),
+				lastAccessAttempt: resource.NewValue(resource.WithInitialValue(&accesspb.AccessAttempt{}), resource.WithNoDuplicates()),
 			}
 		}
 
@@ -143,9 +143,9 @@ func (cc *CardholderController) getCardholderDetails(cardholder *Cardholder) {
 	}
 
 	_, _ = cardholder.lastAccessAttempt.Set(
-		&gen.AccessAttempt{
-			Actor: &gen.Actor{
-				Name:          cardholder.FirstName + " " + cardholder.LastName,
+		&accesspb.AccessAttempt{
+			Actor: &actorpb.Actor{
+				DisplayName:   cardholder.FirstName + " " + cardholder.LastName,
 				Title:         cardholder.Description,
 				LastGrantTime: accessTimePb,
 				LastGrantZone: accessZone,
@@ -168,17 +168,17 @@ func (cc *CardholderController) refreshCardholders(announcer node.Announcer, scN
 	for id, c := range cardholders {
 		if _, ok := cc.cardholders[id]; !ok {
 			c.ScName = path.Join(scNamePrefix, "cardholders", c.Id)
-			c.Meta = &traits.Metadata{
-				Appearance: &traits.Metadata_Appearance{
+			c.Meta = &metadatapb.Metadata{
+				Appearance: &metadatapb.Metadata_Appearance{
 					Title:       "Cardholder: " + c.FirstName + " " + c.LastName,
 					Description: c.Description,
 				},
-				Membership: &traits.Metadata_Membership{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "acs",
 				},
 			}
-			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasTrait(accesspb.TraitName, node.WithClients(gen.WrapAccessApi(c)))))
-			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasTrait(udmipb.TraitName, node.WithClients(gen.WrapUdmiService(c)))))
+			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasTrait(accesspb.TraitName, node.WithClients(accesspb.WrapApi(c)))))
+			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasTrait(udmipb.TraitName, node.WithClients(udmipb.WrapService(c)))))
 			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasMetadata(c.Meta)))
 			cc.cardholders[id] = c
 		}
@@ -223,16 +223,41 @@ func (cc *CardholderController) run(ctx context.Context, schedule *jsontypes.Sch
 	}
 }
 
-func (c *Cardholder) GetLastAccessAttempt(context.Context, *gen.GetLastAccessAttemptRequest) (*gen.AccessAttempt, error) {
+// lastCardholderForZoneHref returns the cardholder with the most recent LastSuccessfulAccessTime
+// whose LastSuccessfulAccessZone.Href matches zoneHref, or nil if none is found.
+func (cc *CardholderController) lastCardholderForZoneHref(zoneHref string) *Cardholder {
+	cc.mu.Lock()
+	defer cc.mu.Unlock()
+
+	var latest *Cardholder
+	var latestTime time.Time
+
+	for _, c := range cc.cardholders {
+		if c.LastSuccessfulAccessZone == nil || c.LastSuccessfulAccessZone.Href != zoneHref {
+			continue
+		}
+		t, err := time.Parse(time.RFC3339, c.LastSuccessfulAccessTime)
+		if err != nil {
+			continue
+		}
+		if latest == nil || t.After(latestTime) {
+			latest = c
+			latestTime = t
+		}
+	}
+	return latest
+}
+
+func (c *Cardholder) GetLastAccessAttempt(context.Context, *accesspb.GetLastAccessAttemptRequest) (*accesspb.AccessAttempt, error) {
 	value := c.lastAccessAttempt.Get()
-	access := value.(*gen.AccessAttempt)
+	access := value.(*accesspb.AccessAttempt)
 	return access, nil
 }
 
-func (c *Cardholder) PullAccessAttempts(_ *gen.PullAccessAttemptsRequest, server gen.AccessApi_PullAccessAttemptsServer) error {
+func (c *Cardholder) PullAccessAttempts(_ *accesspb.PullAccessAttemptsRequest, server accesspb.AccessApi_PullAccessAttemptsServer) error {
 	for value := range c.lastAccessAttempt.Pull(server.Context()) {
-		accessAttempt := value.Value.(*gen.AccessAttempt)
-		err := server.Send(&gen.PullAccessAttemptsResponse{Changes: []*gen.PullAccessAttemptsResponse_Change{
+		accessAttempt := value.Value.(*accesspb.AccessAttempt)
+		err := server.Send(&accesspb.PullAccessAttemptsResponse{Changes: []*accesspb.PullAccessAttemptsResponse_Change{
 			{
 				Name:          c.ScName,
 				ChangeTime:    timestamppb.New(value.ChangeTime),
@@ -246,7 +271,7 @@ func (c *Cardholder) PullAccessAttempts(_ *gen.PullAccessAttemptsRequest, server
 	return nil
 }
 
-func (c *Cardholder) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen.UdmiService_PullExportMessagesServer) error {
+func (c *Cardholder) PullExportMessages(_ *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
 	for msg := range c.udmiBus.Listen(server.Context()) {
 		err := server.Send(msg)
 		if err != nil {
@@ -256,13 +281,13 @@ func (c *Cardholder) PullExportMessages(_ *gen.PullExportMessagesRequest, server
 	return nil
 }
 
-func (c *Cardholder) PullControlTopics(_ *gen.PullControlTopicsRequest, topicsServer gen.UdmiService_PullControlTopicsServer) error {
+func (c *Cardholder) PullControlTopics(_ *udmipb.PullControlTopicsRequest, topicsServer udmipb.UdmiService_PullControlTopicsServer) error {
 	<-topicsServer.Context().Done()
 	return nil
 }
 
-func (c *Cardholder) OnMessage(context.Context, *gen.OnMessageRequest) (*gen.OnMessageResponse, error) {
-	return &gen.OnMessageResponse{}, nil
+func (c *Cardholder) OnMessage(context.Context, *udmipb.OnMessageRequest) (*udmipb.OnMessageResponse, error) {
+	return &udmipb.OnMessageResponse{}, nil
 }
 
 func (cc *CardholderController) sendUdmiMessages(ctx context.Context) {
@@ -291,9 +316,9 @@ func (cc *CardholderController) sendUdmiMessages(ctx context.Context) {
 			continue
 		}
 
-		c.udmiBus.Send(ctx, &gen.PullExportMessagesResponse{
+		c.udmiBus.Send(ctx, &udmipb.PullExportMessagesResponse{
 			Name: c.ScName,
-			Message: &gen.MqttMessage{
+			Message: &udmipb.MqttMessage{
 				Topic:   cc.topicPrefix + config.PointsEventTopicSuffix,
 				Payload: string(payload),
 			},

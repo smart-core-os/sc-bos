@@ -39,6 +39,11 @@ const menuItems = [
     title: 'Components',
     icon: 'mdi-memory',
     link: {path: '/system/components'}
+  },
+  {
+    title: 'Logs',
+    icon: 'mdi-text-box-outline',
+    link: {path: '/system/logs'}
   }
 ];
 

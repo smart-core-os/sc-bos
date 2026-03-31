@@ -5,7 +5,7 @@
         <v-icon size="20">mdi-dots-vertical</v-icon>
       </v-btn>
     </template>
-    <v-card class="history-card" min-width="420">
+    <v-card class="history-card" min-width="360">
       <v-card-text>
         <div class="d-flex align-start">
           <v-date-input
@@ -19,6 +19,13 @@
                 icon="mdi-file-download" elevation="0" class="ml-2 mr-n2 mt-1"
                 :loading="fetchingHistory" :disabled="!!downloadBtnDisabled"/>
           </div>
+        </div>
+        <div class="mt-2">
+          <div class="text-caption text-medium-emphasis mb-1">Columns</div>
+          <v-checkbox-btn
+              v-for="field in optionalFields" :key="field.name"
+              v-model="selectedFields" :value="field.name" :label="field.title"
+              density="compact" hide-details/>
         </div>
       </v-card-text>
     </v-card>
@@ -38,12 +45,21 @@ const p = defineProps({
   }
 });
 
+const optionalFields = [
+  {name: 'meter.usage', title: 'Usage'},
+  {name: 'meter.unit', title: 'Unit'},
+];
+
 const dateRange = ref([]);
 const startDate = computed(() => dateRange.value[0]);
 const endDate = computed(() => dateRange.value[dateRange.value.length - 1]);
+const selectedFields = ref(optionalFields.map(f => f.name));
 const downloadBtnDisabled = computed(() => {
   if (dateRange.value.length === 0) {
     return 'No date range selected';
+  }
+  if (selectedFields.value.length === 0) {
+    return 'No columns selected';
   }
   return '';
 });
@@ -56,6 +72,7 @@ const downloadError = ref('');
 function resetMenu() {
   dateRange.value = [];
   downloadError.value = '';
+  selectedFields.value = optionalFields.map(f => f.name);
 }
 
 const onDownloadClick = async () => {
@@ -66,13 +83,16 @@ const onDownloadClick = async () => {
   try {
     fetchingHistory.value = true;
     const names = [p.name];
+    const mandatory = [
+      {name: 'timestamp', title: 'Reading Time'},
+      {name: 'md.name', title: 'Device Name'},
+    ];
+    const selected = optionalFields.filter(f => selectedFields.value.includes(f.name));
     await triggerDownload(
         'meter-readings',
         {conditionsList: [{stringIn: {stringsList: names}}]},
         {startTime: startOfDay(startDate.value), endTime: startOfDay(addDays(endDate.value, 1))},
-        {
-
-        }
+        {includeColsList: [...mandatory, ...selected]}
     )
   } finally {
     fetchingHistory.value = false;

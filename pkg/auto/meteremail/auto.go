@@ -13,14 +13,14 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/auto/meteremail/config"
-	"github.com/vanti-dev/sc-bos/pkg/block"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/task"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/meteremail/config"
+	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 const AutoName = "meteremail"
@@ -47,13 +47,13 @@ func (_ factory) ConfigBlocks() []block.Block {
 
 // getMeterReadingAndSource gets the meter reading for the given meter and also the location metadata for the meter
 func (a *autoImpl) getMeterReadingAndSource(ctx context.Context, meterName string, meterType MeterType,
-	meterClient gen.MeterApiClient, metadataClient traits.MetadataApiClient, timing *config.Timing) (*config.Source, *MeterReading, error) {
+	meterClient meterpb.MeterApiClient, metadataClient metadatapb.MetadataApiClient, timing *config.Timing) (*config.Source, *MeterReading, error) {
 
-	meterReq := &gen.GetMeterReadingRequest{
+	meterReq := &meterpb.GetMeterReadingRequest{
 		Name: meterName,
 	}
 
-	meterRes, err := retryT(ctx, timing, func(ctx context.Context) (*gen.MeterReading, error) {
+	meterRes, err := retryT(ctx, timing, func(ctx context.Context) (*meterpb.MeterReading, error) {
 		withTimeoutCtx, cancel := context.WithTimeout(ctx, timing.Timeout.Duration)
 		defer cancel()
 		return meterClient.GetMeterReading(withTimeoutCtx, meterReq)
@@ -66,7 +66,7 @@ func (a *autoImpl) getMeterReadingAndSource(ctx context.Context, meterName strin
 	meterReading := &MeterReading{MeterType: meterType, Date: time.Now(), Reading: meterRes.Usage}
 	source := &config.Source{Name: meterName}
 
-	metadataReq := &traits.GetMetadataRequest{
+	metadataReq := &metadatapb.GetMetadataRequest{
 		Name: meterName,
 	}
 
@@ -208,8 +208,8 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	logger = logger.With(zap.String("snmp.addr", cfg.Destination.Addr()))
 	applyDefaults(&cfg.Timing)
 
-	meterClient := gen.NewMeterApiClient(a.Node.ClientConn())
-	metadataClient := traits.NewMetadataApiClient(a.Node.ClientConn())
+	meterClient := meterpb.NewMeterApiClient(a.Node.ClientConn())
+	metadataClient := metadatapb.NewMetadataApiClient(a.Node.ClientConn())
 
 	sendTime := cfg.Destination.SendTime
 	now := cfg.Now

@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/vanti-dev/sc-bos/internal/util/fetch"
+	"github.com/smart-core-os/sc-bos/internal/util/fetch"
 )
 
 // Config represents an OpenID Connect configuration document.
@@ -17,11 +17,11 @@ type Config struct {
 }
 
 // FetchConfig retrieves OIDC Config from the given issuer URL prefix using the `.well-known/openid-configuration` suffix.
-func FetchConfig(ctx context.Context, issuer string) (Config, error) {
+func FetchConfig(ctx context.Context, issuer string, options ...fetch.Option) (Config, error) {
 	url := fmt.Sprintf("%s/.well-known/openid-configuration", issuer)
 
 	var config Config
-	err := fetch.JSON(ctx, url, &config)
+	err := fetch.JSON(ctx, url, &config, options...)
 	if err != nil {
 		return Config{}, err
 	}

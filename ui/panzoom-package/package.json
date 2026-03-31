@@ -1,8 +1,8 @@
 {
-  "name": "@vanti-dev/sc-bos-panzoom-package",
+  "name": "@smart-core-os/sc-bos-panzoom-package",
   "version": "1.0.1-vanti.0",
   "main": "panzoom.js",
-  "repository": "https://github.com/vanti-dev/sc-bos",
+  "repository": "https://github.com/smart-core-os/sc-bos",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   }

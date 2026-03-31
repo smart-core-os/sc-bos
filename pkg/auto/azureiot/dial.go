@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/vanti-dev/sc-bos/internal/iothub"
-	"github.com/vanti-dev/sc-bos/internal/iothub/auth"
-	"github.com/vanti-dev/sc-bos/internal/iothub/dps"
+	"github.com/smart-core-os/sc-bos/internal/iothub"
+	"github.com/smart-core-os/sc-bos/internal/iothub/auth"
+	"github.com/smart-core-os/sc-bos/internal/iothub/dps"
 )
 
 type dialler interface {

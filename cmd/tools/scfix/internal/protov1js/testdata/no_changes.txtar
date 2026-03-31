@@ -1,0 +1,25 @@
+No changes when proto files are not versioned or no projects found.
+expected_changes: 0
+
+-- input/project/package.json --
+{
+  "name": "no-ui-gen-dep",
+  "dependencies": {
+    "vue": "^3.0.0"
+  }
+}
+-- input/project/src/index.js --
+import {Component} from 'vue';
+
+export default Component;
+-- output/project/package.json --
+{
+  "name": "no-ui-gen-dep",
+  "dependencies": {
+    "vue": "^3.0.0"
+  }
+}
+-- output/project/src/index.js --
+import {Component} from 'vue';
+
+export default Component;

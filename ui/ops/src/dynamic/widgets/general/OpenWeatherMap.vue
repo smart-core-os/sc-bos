@@ -52,6 +52,10 @@ const props = defineProps({
     type: String,
     default: 'London'
   },
+  country: {
+    type: String,
+    default: ''
+  },
   refreshInterval: {
     type: Number,
     default: 30 * MINUTE
@@ -79,9 +83,13 @@ const weatherIconUrl = computed(() => {
 const fetchWeather = async () => {
   loading.value = !weatherData.value;
   try {
-    const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${props.city}&units=metric&appid=${props.apiKey}`
-    );
+    let url = `https://api.openweathermap.org/data/2.5/weather?q=${props.city}&units=metric&appid=${props.apiKey}`
+
+    if (props.country !== '') {
+      url = `https://api.openweathermap.org/data/2.5/weather?q=${props.city},${props.country}&units=metric&appid=${props.apiKey}`
+    }
+
+    const response = await fetch(url);
 
     if (!response.ok) {
       if (response.status === 401) {

@@ -42,7 +42,7 @@ export function useServiceConfig(beforeEdit = (v) => v, beforeSave = (v) => v) {
     return v2;
   };
 
-  const configParsed = computed(() => doBefore(JSON.parse(service.value?.configRaw ?? '{}'), beforeEdit));
+  const configParsed = computed(() => doBefore(JSON.parse(service.value?.configRaw || '{}'), beforeEdit));
   const configModel = ref();
   const localParseError = ref();
   const localChanges = computed({

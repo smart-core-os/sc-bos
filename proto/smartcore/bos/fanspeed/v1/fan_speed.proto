@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package smartcore.bos.fanspeed.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/types/v1/info.proto";
+
+// Trait for devices that can control the speed of a fan.
+service FanSpeedApi {
+  // GetFanSpeed returns the fan speed for the device.
+  rpc GetFanSpeed(GetFanSpeedRequest) returns (FanSpeed);
+  // UpdateFanSpeed updates the fan speed for the device.
+  rpc UpdateFanSpeed(UpdateFanSpeedRequest) returns (FanSpeed);
+  // PullFanSpeed returns a stream of changes to the current fan speed for the device.
+  rpc PullFanSpeed(PullFanSpeedRequest) returns (stream PullFanSpeedResponse);
+
+  // ReverseFanSpeedDirection reverses the fan speed direction.
+  // If the fan is spinning FORWARD it will be changed to BACKWARD, etc.
+  rpc ReverseFanSpeedDirection(ReverseFanSpeedDirectionRequest) returns (FanSpeed);
+}
+
+// Describes the capabilities of a specific named device with respect to this trait.
+service FanSpeedInfo {
+  // Get information about how a named device implements FanSpeed features
+  rpc DescribeFanSpeed (DescribeFanSpeedRequest) returns (FanSpeedSupport);
+}
+
+// FanSpeed describes how fast a fan is spinning.
+message FanSpeed {
+  // Percentage describes the fan speed relative to it's minimum and maximum fan speed.
+  // In the range [0,100].
+  float percentage = 1;
+  // Preset describes the fan speed in terms of qualitative values, low, high, etc.
+  // Available values are reported via FanSpeedSupport.presets.
+  string preset = 2;
+  // Preset index is the index in FanSpeedSupport.presets of the currently selected preset.
+  // This field is primarily used for relative speed adjustment, a value of 1 when the update is relative, adds 1
+  // to the active preset, increasing the fan speed by one adjustment. Negative values would decrease the fan speed
+  // by an equivalent number of steps.
+  int32 preset_index = 3;
+
+  enum Direction {
+    DIRECTION_UNSPECIFIED = 0;
+    FORWARD = 1;
+    BACKWARD = 2;
+  }
+  // Direction describes the direction of the fan rotation.
+  // This is typically described relative to the function of the fan.
+  // For example a table top fan might describe FORWARD as blowing air out the front of the fan.
+  Direction direction = 4;
+}
+
+message FanSpeedSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
+  // Presets is the list of supported fan speed presets, in ascending fan speed order - i.e. index 0 is the slowest.
+  repeated string presets = 2;
+}
+
+message GetFanSpeedRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the FanSpeed type
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message UpdateFanSpeedRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // The new fan speed.
+  FanSpeed fan_speed = 2;
+  // Fields to fetch relative to the FanSpeed type
+  google.protobuf.FieldMask update_mask = 3;
+  // Values in fan_speed are relative to their current values.
+  // FanSpeed.preset cannot be directly set relatively, use preset_index instead to adjust the selected preset index.
+  bool relative = 4;
+}
+
+message ReverseFanSpeedDirectionRequest {
+  // Name of the device to reverse the fan speed for.
+  string name = 1;
+}
+
+message PullFanSpeedRequest {
+  // Name of the device to fetch the state for
+  string name = 1;
+  // Fields to fetch relative to the FanSpeed type
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+}
+
+message PullFanSpeedResponse {
+  // Changes since the last message.
+  repeated Change changes = 1;
+
+  message Change {
+    // Name of the device that issued the change.
+    string name = 1;
+    // When the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // The new value for the current fan speed.
+    FanSpeed fan_speed = 3;
+  }
+}
+
+message DescribeFanSpeedRequest {
+  // The name of the device
+  string name = 1;
+}

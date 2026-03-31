@@ -9,15 +9,16 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/internal/node/nodeopts"
-	"github.com/vanti-dev/sc-bos/internal/router"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/devicespb"
-	"github.com/vanti-dev/sc-bos/pkg/node/alltraits"
-	"github.com/vanti-dev/sc-bos/pkg/node/internal/metadatadevices"
-	"github.com/vanti-dev/sc-bos/pkg/node/internal/parentdevices"
+	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
+	"github.com/smart-core-os/sc-bos/internal/router"
+	"github.com/smart-core-os/sc-bos/pkg/node/alltraits"
+	"github.com/smart-core-os/sc-bos/pkg/node/internal/metadatadevices"
+	"github.com/smart-core-os/sc-bos/pkg/node/internal/parentdevices"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/parentpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 // Node represents a smart core node.
@@ -57,12 +58,15 @@ func New(name string, opts ...Option) *Node {
 	if cfg.Store == nil {
 		cfg.Store = devicespb.NewCollection(resource.WithIDInterceptor(mapID))
 	}
+	if cfg.Router == nil {
+		cfg.Router = router.New(router.WithKeyInterceptor(func(key string) (mappedKey string, err error) {
+			return mapID(key), nil
+		}))
+	}
 
 	node := &Node{
-		name: name,
-		router: router.New(router.WithKeyInterceptor(func(key string) (mappedKey string, err error) {
-			return mapID(key), nil
-		})),
+		name:    name,
+		router:  cfg.Router,
 		devices: cfg.Store,
 		mlLists: make(map[string]*metadataList),
 		Logger:  zap.NewNop(),
@@ -70,9 +74,9 @@ func New(name string, opts ...Option) *Node {
 
 	// nodes implement the MetadataApi without using the router,
 	// the ParentApi is implemented for this nodes name only.
-	traits.RegisterMetadataApiServer(node.router, metadatadevices.NewServer(node.devices))
+	metadatapb.RegisterMetadataApiServer(node.router, metadatadevices.NewServer(node.devices))
 	node.announceLocked(name,
-		HasServer(traits.RegisterParentApiServer, traits.ParentApiServer(parentdevices.NewServer(name, node.devices))),
+		HasServer(parentpb.RegisterParentApiServer, parentpb.ParentApiServer(parentdevices.NewServer(name, node.devices))),
 		HasTrait(trait.Parent),
 	)
 	return node
@@ -138,9 +142,9 @@ func (n *Node) announceLocked(name string, features ...Feature) Undo {
 
 	mds := a.metadata
 	if !a.noAutoMetadata && len(ts) > 0 {
-		md := &traits.Metadata{}
+		md := &metadatapb.Metadata{}
 		for _, t := range ts {
-			md.Traits = append(md.Traits, &traits.TraitMetadata{Name: string(t.name)})
+			md.Traits = append(md.Traits, &metadatapb.TraitMetadata{Name: string(t.name)})
 		}
 		mds = append(mds, md)
 	}
@@ -238,13 +242,13 @@ func registerDeviceRoute(r *router.Router, name string, s service) (Undo, error)
 }
 
 func registerProxyRoute(r *router.Router, name string, conn grpc.ClientConnInterface) (Undo, error) {
-	err := r.AddRoute("", name, conn)
+	prev, err := r.SwapRoute("", name, conn)
 	if err != nil {
 		return NilUndo, err
 	}
 
 	return func() {
-		_ = r.DeleteRoute("", name)
+		_ = r.RestoreRouteIfConn("", name, conn, prev)
 	}, nil
 }
 
@@ -252,8 +256,8 @@ func ensureServiceSupported(r *router.Router, s service) error {
 	serviceName := string(s.desc.FullName())
 	if existing := r.GetService(serviceName); existing != nil {
 		switch {
-		case serviceName == traits.MetadataApi_ServiceDesc.ServiceName:
-		case serviceName == traits.MetadataInfo_ServiceDesc.ServiceName:
+		case serviceName == metadatapb.MetadataApi_ServiceDesc.ServiceName:
+		case serviceName == metadatapb.MetadataInfo_ServiceDesc.ServiceName:
 			// skip, we support metadata specially
 		case s.nameRouting && !existing.KeyRoutable():
 			// existing service does not support name routing!

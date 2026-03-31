@@ -3,7 +3,7 @@ package lights
 import (
 	"time"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
 )
 
 // captureButtonActions consumes button clicks returning the intended actions.
@@ -78,7 +78,7 @@ func getButtonType(state *ReadState, buttonName deviceName) ButtonType {
 	return buttonType
 }
 
-func getMostRecentButtonPress(readState *ReadState) (name deviceName, state *gen.ButtonState, ok bool) {
+func getMostRecentButtonPress(readState *ReadState) (name deviceName, state *buttonpb.ButtonState, ok bool) {
 	mostRecentTime := time.Time{}
 	for n, button := range readState.Buttons {
 		if button.StateChangeTime.AsTime().After(mostRecentTime) {
@@ -91,8 +91,8 @@ func getMostRecentButtonPress(readState *ReadState) (name deviceName, state *gen
 }
 
 // isButtonActionRequired returns true if state is unpressed and change time is more recent than last button action
-func isButtonActionRequired(button *gen.ButtonState, writeState *WriteState) bool {
-	if button.State == gen.ButtonState_UNPRESSED && button.StateChangeTime.AsTime().After(writeState.LastButtonAction) {
+func isButtonActionRequired(button *buttonpb.ButtonState, writeState *WriteState) bool {
+	if button.State == buttonpb.ButtonState_UNPRESSED && button.StateChangeTime.AsTime().After(writeState.LastButtonAction) {
 		return true
 	}
 	return false

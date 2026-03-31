@@ -12,8 +12,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/util/jsontypes"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 type ParsedDestination struct {
@@ -58,7 +58,7 @@ type TemplateArgs struct {
 type Root struct {
 	auto.Config
 	// Configuration information for how to send the email.
-	Destination Destination `json:"destination,omitempty"`
+	Destination Destination `json:"destination"`
 
 	AlertHubName string `json:"source,omitempty"`
 
@@ -68,7 +68,7 @@ type Root struct {
 
 	Subject string `json:"subject,omitempty"`
 
-	TemplateArgs TemplateArgs `json:"templateArgs,omitempty"`
+	TemplateArgs TemplateArgs `json:"templateArgs"`
 }
 
 type AttachmentCfg struct {

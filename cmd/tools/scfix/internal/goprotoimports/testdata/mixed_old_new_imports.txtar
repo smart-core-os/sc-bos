@@ -1,0 +1,43 @@
+This test verifies handling when a file uses both gen.Type and the new traitpb.Type for the SAME type.
+This could happen during partial migration. Should not create duplicate imports.
+expected_changes: 1
+
+-- input/pkg/test/mixed_old_new.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+func ProcessData(ctx context.Context) {
+	// Using old gen import for MeterReading - should be converted to meterpb
+	oldMeter := &gen.MeterReading{Usage: 100.5}
+
+	// Already using new proto import for MeterReading - should remain unchanged
+	newMeter := &meterpb.MeterReading{Usage: 200.0}
+
+	_ = oldMeter
+	_ = newMeter
+}
+-- output/pkg/test/mixed_old_new.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+func ProcessData(ctx context.Context) {
+	// Using old gen import for MeterReading - should be converted to meterpb
+	oldMeter := &meterpb.MeterReading{Usage: 100.5}
+
+	// Already using new proto import for MeterReading - should remain unchanged
+	newMeter := &meterpb.MeterReading{Usage: 200.0}
+
+	_ = oldMeter
+	_ = newMeter
+}

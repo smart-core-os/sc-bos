@@ -10,6 +10,18 @@
         <v-menu activator="parent" location="bottom right" offset="8" :close-on-content-click="false">
           <v-card min-width="24em">
             <v-list density="compact">
+              <v-list-subheader title="Devices"/>
+              <v-list-item
+                  v-for="(item, index) in legendItems"
+                  :key="index"
+                  @click="item.onClick(item.hidden)"
+                  :title="item.text">
+                <template #prepend>
+                  <v-list-item-action start>
+                    <v-checkbox-btn :model-value="!item.hidden" readonly :color="item.bgColor" density="compact"/>
+                  </v-list-item-action>
+                </template>
+              </v-list-item>
               <v-list-subheader title="Data"/>
               <period-chooser-rows v-model:start="_start" v-model:end="_end" v-model:offset="_offset"/>
               <v-list-item title="Export CSV..."
@@ -21,8 +33,14 @@
       </v-btn>
     </v-toolbar>
     <v-card-text class="flex-grow-1 d-flex pt-0">
-      <air-quality-history-chart class="flex-grow-1 ma-n2" v-bind="$attrs" :source="source"
-                                 :start="_start" :end="_end" :offset="_offset"/>
+      <air-quality-history-chart
+          class="flex-grow-1 ma-n2"
+          v-bind="$attrs"
+          :source="source"
+          :start="_start"
+          :end="_end"
+          :offset="_offset"
+          ref="chartRef"/>
     </v-card-text>
   </v-card>
 </template>
@@ -33,11 +51,11 @@ import {triggerDownload} from '@/components/download/download.js';
 import PeriodChooserRows from '@/components/PeriodChooserRows.vue';
 import AirQualityHistoryChart from '@/dynamic/widgets/environmental/AirQualityHistoryChart.vue';
 import {useLocalProp} from '@/util/vue.js';
-import {toRef} from 'vue';
+import {computed, ref, toRef} from 'vue';
 
 const props = defineProps({
   source: {
-    type: String,
+    type: [String, Array],
     required: true,
   },
   title: {
@@ -64,15 +82,44 @@ const props = defineProps({
   },
 });
 
+const chartRef = ref(null);
+const _source = computed(() => Array.isArray(props.source) ? props.source : [props.source]);
+
 const _start = useLocalProp(toRef(props, 'start'));
 const _end = useLocalProp(toRef(props, 'end'));
 const _offset = useLocalProp(toRef(props, 'offset'));
 const {startDate, endDate} = useDateScale(_start, _end, _offset);
 
+// Get legend items from the chart component
+const legendItems = computed(() => chartRef.value?.legendItems || []);
+
+// Get visible device names for CSV export
+const visibleDeviceNames = () => {
+  const names = [];
+  for (const [i, item] of legendItems.value.entries()) {
+    if (!item.hidden) {
+      const datasetNames = chartRef.value?.datasetNames;
+      if (!datasetNames) continue;
+      names.push(chartRef.value.datasetNames[i]);
+    }
+  }
+
+  if (names.length === 0) {
+    return _source.value;
+  } else {
+    return names;
+  }
+};
+
 const onDownloadClick = async () => {
+  const deviceNames = visibleDeviceNames();
+  const conditions = Array.isArray(deviceNames) 
+    ? {conditionsList: [{field: 'name', stringIn: {stringsList: deviceNames}}]}
+    : {conditionsList: [{field: 'name', stringEqual: deviceNames}]};
+
   await triggerDownload(
       props.title?.toLowerCase()?.replace(' ', '-') ?? 'air-quality',
-      {conditionsList: [{field: 'name', stringEqual: props.source}]},
+      conditions,
       {startTime: startDate.value, endTime: endDate.value},
       {
         includeColsList: [

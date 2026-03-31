@@ -1,0 +1,16 @@
+-- device_pb.js --
+var jspb = require('google-protobuf');
+var goog = jspb;
+
+-- services/api_pb.js --
+var jspb = require('google-protobuf');
+var goog = jspb;
+var traits_on_off_pb = require('../traits/on_off_pb.js');
+var types_change_pb = require('../types/change_pb.js');
+
+-- deep/nested/controller_pb.js --
+var jspb = require('google-protobuf');
+var goog = jspb;
+var traits_brightness_pb = require('../../traits/brightness_pb.js');
+var info_device_pb = require('../../info/device_pb.js');
+var types_info_pb = require('../../types/info_pb.js');

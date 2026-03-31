@@ -1,7 +1,7 @@
 <template>
   <content-card class="pt-6 pb-6">
     <v-card-title v-if="title.length > 0" class="text-h4 mb-0">{{ title }}</v-card-title>
-    <v-card-text class="d-flex flex-row flex-wrap justify-center align-center pa-0 text-white">
+    <v-card-text :class="gaugeLayoutClass">
       <circular-gauge
           v-if="!isNullOrUndef(internal)"
           :value="indoorTemperature"
@@ -87,6 +87,10 @@ const props = defineProps({
   soundSensor : {
     type: String,
     default: null
+  },
+  leftToRightGauges: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -100,6 +104,12 @@ const {value: outdoorValue} = usePullAirTemperature(() => props.external);
 const {temp: outdoorTemperature} = useAirTemperature(outdoorValue);
 const {value: soundPressureValue} = usePullSoundLevel(() => props.soundSensor);
 const {soundPressureLevel: soundPressureLevel} = useSoundLevel(soundPressureValue);
+
+const gaugeLayoutClass = computed(() => {
+  return props.leftToRightGauges
+    ? 'd-flex flex-row flex-wrap justify-center align-center pa-0 text-white'
+    : 'd-flex flex-column flex-wrap justify-center align-center pa-0 text-white';
+});
 
 const vOrDash = (r) => {
   const v = r.value ?? '-';

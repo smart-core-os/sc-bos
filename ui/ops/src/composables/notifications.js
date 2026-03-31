@@ -1,6 +1,6 @@
 import {acknowledgeAlert, unacknowledgeAlert} from '@/api/ui/alerts.js';
 import {useAccountStore} from '@/stores/account.js';
-import {Alert} from '@vanti-dev/sc-bos-ui-gen/proto/alerts_pb';
+import {Alert} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/alert/v1/alerts_pb';
 
 export const SeverityStrings = {
   [Alert.Severity.INFO]: 'INFO',

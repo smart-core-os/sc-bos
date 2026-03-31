@@ -12,10 +12,10 @@ import (
 
 	"go.uber.org/multierr"
 
-	"github.com/vanti-dev/sc-bos/internal/auth/permission"
-	"github.com/vanti-dev/sc-bos/internal/util/pass"
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/internal/auth/permission"
+	"github.com/smart-core-os/sc-bos/internal/util/pass"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
 // Verifier verifies that an id is associated with a given secret.
@@ -79,7 +79,6 @@ func (v FirstSuccessfulVerifier) Verify(ctx context.Context, id, secret string) 
 	outstandingTasks.Add(len(v))
 
 	for i, source := range v {
-		i, source := i, source
 		go func() {
 			defer outstandingTasks.Done()
 			data, err := source.Verify(ctx, id, secret)
@@ -369,7 +368,7 @@ func LegacyZonePermission(zone string) token.PermissionAssignment {
 	return token.PermissionAssignment{
 		Permission:   permission.TraitWrite,
 		Scoped:       true,
-		ResourceType: token.ResourceType(gen.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+		ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
 		Resource:     zone,
 	}
 }

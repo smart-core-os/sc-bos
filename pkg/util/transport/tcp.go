@@ -77,7 +77,7 @@ func (t *Tcp) close() error {
 }
 
 func (t *Tcp) dial() error {
-	address := fmt.Sprintf("%s:%d", t.conf.Ip, t.conf.Port)
+	address := net.JoinHostPort(t.conf.Ip, fmt.Sprintf("%d", t.conf.Port))
 	t.logger.Debug("dialling", zap.String("address", address))
 	t.lock.Lock()
 	defer t.lock.Unlock()

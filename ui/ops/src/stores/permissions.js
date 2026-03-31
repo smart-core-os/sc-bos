@@ -3,7 +3,7 @@ import {computed, ref} from 'vue';
 
 // todo: stop using a fixed permissions list
 /**
- * @type {import('@vanti-dev/sc-bos-ui-gen/proto/account_pb').Permission.AsObject[]}
+ * @type {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_pb').Permission.AsObject[]}
  * @private
  */
 const _permissions = [

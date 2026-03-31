@@ -70,3 +70,9 @@ const isDefault = computed(() => props.defaultChoice);
 
 const choiceText = computed(() => props.choice?.text);
 </script>
+<style scoped lang="scss">
+.v-switch.v-input--density-default {
+  // the default for normal density is 56px, which is too tall for list items
+  --v-input-control-height: auto;
+}
+</style>

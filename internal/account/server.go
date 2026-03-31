@@ -11,11 +11,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/vanti-dev/sc-bos/internal/account/queries"
-	"github.com/vanti-dev/sc-bos/internal/auth/permission"
-	"github.com/vanti-dev/sc-bos/internal/sqlite"
-	"github.com/vanti-dev/sc-bos/internal/util/pass"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/internal/account/queries"
+	"github.com/smart-core-os/sc-bos/internal/auth/permission"
+	"github.com/smart-core-os/sc-bos/internal/sqlite"
+	"github.com/smart-core-os/sc-bos/internal/util/pass"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
 
 var (
@@ -54,8 +54,8 @@ var (
 )
 
 type Server struct {
-	gen.UnimplementedAccountApiServer
-	gen.UnimplementedAccountInfoServer
+	accountpb.UnimplementedAccountApiServer
+	accountpb.UnimplementedAccountInfoServer
 	store  *Store
 	logger *zap.Logger
 }
@@ -65,7 +65,7 @@ func NewServer(store *Store, logger *zap.Logger) *Server {
 }
 
 // GetAccount returns a single account by ID.
-func (s *Server) GetAccount(ctx context.Context, req *gen.GetAccountRequest) (*gen.Account, error) {
+func (s *Server) GetAccount(ctx context.Context, req *accountpb.GetAccountRequest) (*accountpb.Account, error) {
 	id, ok := parseID(req.Id)
 	if !ok {
 		return nil, ErrAccountNotFound
@@ -86,10 +86,10 @@ func (s *Server) GetAccount(ctx context.Context, req *gen.GetAccountRequest) (*g
 	return accountToProto(dbAccount, ""), nil
 }
 
-func (s *Server) ListAccounts(ctx context.Context, req *gen.ListAccountsRequest) (*gen.ListAccountsResponse, error) {
+func (s *Server) ListAccounts(ctx context.Context, req *accountpb.ListAccountsRequest) (*accountpb.ListAccountsResponse, error) {
 	pageSize := resolvePageSize(req.PageSize)
 
-	res := &gen.ListAccountsResponse{
+	res := &accountpb.ListAccountsResponse{
 		TotalSize: -1, // sentinel, indicates we need to calculate this
 	}
 	var afterID int64 = 0
@@ -148,7 +148,7 @@ func (s *Server) ListAccounts(ctx context.Context, req *gen.ListAccountsRequest)
 	return res, nil
 }
 
-func (s *Server) CreateAccount(ctx context.Context, req *gen.CreateAccountRequest) (*gen.Account, error) {
+func (s *Server) CreateAccount(ctx context.Context, req *accountpb.CreateAccountRequest) (*accountpb.Account, error) {
 	account := req.Account
 	if account == nil {
 		return nil, status.Error(codes.InvalidArgument, "account is required")
@@ -164,7 +164,7 @@ func (s *Server) CreateAccount(ctx context.Context, req *gen.CreateAccountReques
 
 	var username string
 	switch account.Type {
-	case gen.Account_USER_ACCOUNT:
+	case accountpb.Account_USER_ACCOUNT:
 		if account.Details == nil {
 			return nil, ErrMissingUserDetails
 		}
@@ -179,7 +179,7 @@ func (s *Server) CreateAccount(ctx context.Context, req *gen.CreateAccountReques
 		if !validateUsername(username) {
 			return nil, ErrInvalidUsername
 		}
-	case gen.Account_SERVICE_ACCOUNT:
+	case accountpb.Account_SERVICE_ACCOUNT:
 		// allow not providing a details value for service accounts because there are no required fields
 		// but still check that no other type of details is provided
 		if account.Details != nil && account.GetServiceDetails() == nil {
@@ -217,7 +217,7 @@ func (s *Server) CreateAccount(ctx context.Context, req *gen.CreateAccountReques
 		}
 
 		switch req.Account.Type {
-		case gen.Account_USER_ACCOUNT:
+		case accountpb.Account_USER_ACCOUNT:
 			var passwordHash []byte
 			if req.Password != "" {
 				passwordHash, err = hashPassword(req.Password)
@@ -239,7 +239,7 @@ func (s *Server) CreateAccount(ctx context.Context, req *gen.CreateAccountReques
 			}
 			detail.Username = sql.NullString{Valid: true, String: userAccount.Username}
 			detail.PasswordHash = userAccount.PasswordHash
-		case gen.Account_SERVICE_ACCOUNT:
+		case accountpb.Account_SERVICE_ACCOUNT:
 			secret, err = genSecret()
 			if err != nil {
 				s.logger.Error("failed to generate secret on account create", zap.Error(err))
@@ -268,7 +268,7 @@ func (s *Server) CreateAccount(ctx context.Context, req *gen.CreateAccountReques
 	return accountToProto(detail, secret), nil
 }
 
-func (s *Server) UpdateAccount(ctx context.Context, req *gen.UpdateAccountRequest) (*gen.Account, error) {
+func (s *Server) UpdateAccount(ctx context.Context, req *accountpb.UpdateAccountRequest) (*accountpb.Account, error) {
 	const (
 		fieldDisplayName            = "display_name"
 		fieldDescription            = "description"
@@ -339,7 +339,7 @@ func (s *Server) UpdateAccount(ctx context.Context, req *gen.UpdateAccountReques
 		}
 
 		// only user accounts can have usernames
-		usernameAllowed := account.Type == gen.Account_USER_ACCOUNT.String()
+		usernameAllowed := account.Type == accountpb.Account_USER_ACCOUNT.String()
 		if updateUsername && !usernameAllowed {
 			return ErrUnexpectedUsernameUpdate
 		}
@@ -389,7 +389,7 @@ func (s *Server) UpdateAccount(ctx context.Context, req *gen.UpdateAccountReques
 	return accountToProto(account, ""), nil
 }
 
-func (s *Server) DeleteAccount(ctx context.Context, req *gen.DeleteAccountRequest) (*gen.DeleteAccountResponse, error) {
+func (s *Server) DeleteAccount(ctx context.Context, req *accountpb.DeleteAccountRequest) (*accountpb.DeleteAccountResponse, error) {
 	id, ok := parseID(req.Id)
 	if !ok {
 		return nil, ErrAccountNotFound
@@ -410,10 +410,10 @@ func (s *Server) DeleteAccount(ctx context.Context, req *gen.DeleteAccountReques
 	if !deleted && !req.AllowMissing {
 		return nil, ErrAccountNotFound
 	}
-	return &gen.DeleteAccountResponse{}, nil
+	return &accountpb.DeleteAccountResponse{}, nil
 }
 
-func (s *Server) UpdateAccountPassword(ctx context.Context, req *gen.UpdateAccountPasswordRequest) (*gen.UpdateAccountPasswordResponse, error) {
+func (s *Server) UpdateAccountPassword(ctx context.Context, req *accountpb.UpdateAccountPasswordRequest) (*accountpb.UpdateAccountPasswordResponse, error) {
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
@@ -452,10 +452,10 @@ func (s *Server) UpdateAccountPassword(ctx context.Context, req *gen.UpdateAccou
 		return nil, s.processError(err, zap.String("rpc", "UpdateAccountPassword"), zap.String("id", req.Id))
 	}
 
-	return &gen.UpdateAccountPasswordResponse{}, nil
+	return &accountpb.UpdateAccountPasswordResponse{}, nil
 }
 
-func (s *Server) RotateAccountClientSecret(ctx context.Context, req *gen.RotateAccountClientSecretRequest) (*gen.RotateAccountClientSecretResponse, error) {
+func (s *Server) RotateAccountClientSecret(ctx context.Context, req *accountpb.RotateAccountClientSecretRequest) (*accountpb.RotateAccountClientSecretResponse, error) {
 	id, ok := parseID(req.Id)
 	if !ok {
 		return nil, ErrAccountNotFound
@@ -474,7 +474,7 @@ func (s *Server) RotateAccountClientSecret(ctx context.Context, req *gen.RotateA
 		} else if err != nil {
 			return err
 		}
-		if account.Type != gen.Account_SERVICE_ACCOUNT.String() {
+		if account.Type != accountpb.Account_SERVICE_ACCOUNT.String() {
 			return ErrUnexpectedSecretRotate
 		}
 
@@ -493,10 +493,10 @@ func (s *Server) RotateAccountClientSecret(ctx context.Context, req *gen.RotateA
 		return nil, s.processError(err, zap.String("rpc", "RotateAccountClientSecret"), zap.String("id", req.Id))
 	}
 
-	return &gen.RotateAccountClientSecretResponse{ClientSecret: secret}, nil
+	return &accountpb.RotateAccountClientSecretResponse{ClientSecret: secret}, nil
 }
 
-func (s *Server) GetRole(ctx context.Context, req *gen.GetRoleRequest) (*gen.Role, error) {
+func (s *Server) GetRole(ctx context.Context, req *accountpb.GetRoleRequest) (*accountpb.Role, error) {
 	id, ok := parseID(req.Id)
 	if !ok {
 		return nil, ErrRoleNotFound
@@ -524,10 +524,10 @@ func (s *Server) GetRole(ctx context.Context, req *gen.GetRoleRequest) (*gen.Rol
 	return roleToProto(role, permissions), nil
 }
 
-func (s *Server) ListRoles(ctx context.Context, req *gen.ListRolesRequest) (*gen.ListRolesResponse, error) {
+func (s *Server) ListRoles(ctx context.Context, req *accountpb.ListRolesRequest) (*accountpb.ListRolesResponse, error) {
 	pageSize := resolvePageSize(req.PageSize)
 
-	res := &gen.ListRolesResponse{
+	res := &accountpb.ListRolesResponse{
 		TotalSize: -1, // sentinel, indicates we need to calculate this
 	}
 	var afterID int64
@@ -583,7 +583,7 @@ func (s *Server) ListRoles(ctx context.Context, req *gen.ListRolesRequest) (*gen
 	return res, nil
 }
 
-func (s *Server) CreateRole(ctx context.Context, req *gen.CreateRoleRequest) (*gen.Role, error) {
+func (s *Server) CreateRole(ctx context.Context, req *accountpb.CreateRoleRequest) (*accountpb.Role, error) {
 	if req.Role == nil {
 		return nil, ErrResourceMissing
 	}
@@ -636,7 +636,7 @@ func (s *Server) CreateRole(ctx context.Context, req *gen.CreateRoleRequest) (*g
 	return roleToProto(role, permissions), nil
 }
 
-func (s *Server) UpdateRole(ctx context.Context, req *gen.UpdateRoleRequest) (*gen.Role, error) {
+func (s *Server) UpdateRole(ctx context.Context, req *accountpb.UpdateRoleRequest) (*accountpb.Role, error) {
 	if req.Role == nil {
 		return nil, status.Error(codes.InvalidArgument, "role is required")
 	}
@@ -767,7 +767,7 @@ func (s *Server) UpdateRole(ctx context.Context, req *gen.UpdateRoleRequest) (*g
 	return roleToProto(role, permissions), nil
 }
 
-func (s *Server) DeleteRole(ctx context.Context, req *gen.DeleteRoleRequest) (*gen.DeleteRoleResponse, error) {
+func (s *Server) DeleteRole(ctx context.Context, req *accountpb.DeleteRoleRequest) (*accountpb.DeleteRoleResponse, error) {
 	id, ok := parseID(req.Id)
 	if !ok {
 		return nil, ErrRoleNotFound
@@ -807,10 +807,10 @@ func (s *Server) DeleteRole(ctx context.Context, req *gen.DeleteRoleRequest) (*g
 		return nil, ErrRoleNotFound
 	}
 
-	return &gen.DeleteRoleResponse{}, nil
+	return &accountpb.DeleteRoleResponse{}, nil
 }
 
-func (s *Server) GetRoleAssignment(ctx context.Context, req *gen.GetRoleAssignmentRequest) (*gen.RoleAssignment, error) {
+func (s *Server) GetRoleAssignment(ctx context.Context, req *accountpb.GetRoleAssignmentRequest) (*accountpb.RoleAssignment, error) {
 	id, ok := parseID(req.Id)
 	if !ok {
 		return nil, ErrRoleAssignmentNotFound
@@ -832,7 +832,7 @@ func (s *Server) GetRoleAssignment(ctx context.Context, req *gen.GetRoleAssignme
 	return roleAssignmentToProto(assignment), nil
 }
 
-func (s *Server) ListRoleAssignments(ctx context.Context, req *gen.ListRoleAssignmentsRequest) (*gen.ListRoleAssignmentsResponse, error) {
+func (s *Server) ListRoleAssignments(ctx context.Context, req *accountpb.ListRoleAssignmentsRequest) (*accountpb.ListRoleAssignmentsResponse, error) {
 	pageSize := resolvePageSize(req.PageSize)
 
 	filterField, filterID, ok := parseRoleAssignmentFilter(req.Filter)
@@ -850,7 +850,7 @@ func (s *Server) ListRoleAssignments(ctx context.Context, req *gen.ListRoleAssig
 	}
 
 	var (
-		res = &gen.ListRoleAssignmentsResponse{}
+		res = &accountpb.ListRoleAssignmentsResponse{}
 		err error
 	)
 	err = s.store.Read(ctx, func(tx *Tx) error {
@@ -879,7 +879,7 @@ func (s *Server) ListRoleAssignments(ctx context.Context, req *gen.ListRoleAssig
 	return res, nil
 }
 
-func (s *Server) CreateRoleAssignment(ctx context.Context, req *gen.CreateRoleAssignmentRequest) (*gen.RoleAssignment, error) {
+func (s *Server) CreateRoleAssignment(ctx context.Context, req *accountpb.CreateRoleAssignmentRequest) (*accountpb.RoleAssignment, error) {
 	if req.RoleAssignment == nil {
 		return nil, ErrResourceMissing
 	}
@@ -943,7 +943,7 @@ func (s *Server) CreateRoleAssignment(ctx context.Context, req *gen.CreateRoleAs
 	return roleAssignmentToProto(assignment), nil
 }
 
-func (s *Server) DeleteRoleAssignment(ctx context.Context, req *gen.DeleteRoleAssignmentRequest) (*gen.DeleteRoleAssignmentResponse, error) {
+func (s *Server) DeleteRoleAssignment(ctx context.Context, req *accountpb.DeleteRoleAssignmentRequest) (*accountpb.DeleteRoleAssignmentResponse, error) {
 	id, ok := parseID(req.Id)
 	if !ok {
 		return nil, ErrRoleAssignmentNotFound
@@ -965,23 +965,23 @@ func (s *Server) DeleteRoleAssignment(ctx context.Context, req *gen.DeleteRoleAs
 		return nil, ErrRoleAssignmentNotFound
 	}
 
-	return &gen.DeleteRoleAssignmentResponse{}, nil
+	return &accountpb.DeleteRoleAssignmentResponse{}, nil
 }
 
-func (s *Server) GetPermission(_ context.Context, req *gen.GetPermissionRequest) (*gen.Permission, error) {
+func (s *Server) GetPermission(_ context.Context, req *accountpb.GetPermissionRequest) (*accountpb.Permission, error) {
 	details, ok := permission.GetDetails(permission.ID(req.Id))
 	if !ok {
 		return nil, ErrPermissionNotFound
 	}
 
-	return &gen.Permission{
+	return &accountpb.Permission{
 		Id:          string(details.ID),
 		DisplayName: details.DisplayName,
 		Description: details.Description,
 	}, nil
 }
 
-func (s *Server) ListPermissions(ctx context.Context, req *gen.ListPermissionsRequest) (*gen.ListPermissionsResponse, error) {
+func (s *Server) ListPermissions(ctx context.Context, req *accountpb.ListPermissionsRequest) (*accountpb.ListPermissionsResponse, error) {
 	// We currently have few permissions, so we can return them all at once without pagination.
 	// If the number becomes significantly larger, we should implement pagination.
 	if req.PageToken != "" {
@@ -989,34 +989,34 @@ func (s *Server) ListPermissions(ctx context.Context, req *gen.ListPermissionsRe
 	}
 
 	allPerms := permission.All()
-	converted := make([]*gen.Permission, 0, len(allPerms))
+	converted := make([]*accountpb.Permission, 0, len(allPerms))
 	for _, details := range allPerms {
-		converted = append(converted, &gen.Permission{
+		converted = append(converted, &accountpb.Permission{
 			Id:          string(details.ID),
 			DisplayName: details.DisplayName,
 			Description: details.Description,
 		})
 	}
-	return &gen.ListPermissionsResponse{
+	return &accountpb.ListPermissionsResponse{
 		Permissions: converted,
 	}, nil
 }
 
-func (s *Server) GetAccountLimits(ctx context.Context, req *gen.GetAccountLimitsRequest) (*gen.AccountLimits, error) {
-	return &gen.AccountLimits{
-		Username: &gen.AccountLimits_Field{
+func (s *Server) GetAccountLimits(ctx context.Context, req *accountpb.GetAccountLimitsRequest) (*accountpb.AccountLimits, error) {
+	return &accountpb.AccountLimits{
+		Username: &accountpb.AccountLimits_Field{
 			MinLength: minUsernameLength,
 			MaxLength: maxUsernameLength,
 		},
-		Password: &gen.AccountLimits_Field{
+		Password: &accountpb.AccountLimits_Field{
 			MinLength: minPasswordLength,
 			MaxLength: maxPasswordLength,
 		},
-		DisplayName: &gen.AccountLimits_Field{
+		DisplayName: &accountpb.AccountLimits_Field{
 			MinLength: minDisplayNameLength,
 			MaxLength: maxDisplayNameLength,
 		},
-		Description: &gen.AccountLimits_Field{
+		Description: &accountpb.AccountLimits_Field{
 			MinLength: minDescriptionLength,
 			MaxLength: maxDescriptionLength,
 		},

@@ -5,15 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
+
 	"net/http"
 	"net/url"
 	"time"
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/driver/shelly/trv/config"
-	"github.com/vanti-dev/sc-bos/pkg/util/concurrent"
+	"github.com/smart-core-os/sc-bos/pkg/driver/shelly/trv/config"
+	"github.com/smart-core-os/sc-bos/pkg/util/concurrent"
 )
 
 const DefaultPollInterval = 30 * time.Second
@@ -157,7 +158,7 @@ func (t *TRV) request(ctx context.Context, endpoint string, params map[string]st
 		_ = res.Body.Close()
 	}()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}

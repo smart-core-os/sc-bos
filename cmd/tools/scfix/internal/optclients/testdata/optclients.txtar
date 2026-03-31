@@ -1,0 +1,35 @@
+This test verifies the optclients fix for node.WithOptClients and node.HasOptClient.
+expected_changes: 4
+
+-- input/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+func optClients() {
+	node.WithOptClients(nil)
+	node.HasOptClient(nil)
+	n := node.New("test")
+	n.Announce("test",
+		node.HasTrait("foo", node.WithOptClients(nil)),
+		node.HasOptClient(nil),
+	)
+}
+-- output/test.go --
+package test
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/node"
+)
+
+func optClients() {
+	node.WithClients(nil)
+	node.HasClient(nil)
+	n := node.New("test")
+	n.Announce("test",
+		node.HasTrait("foo", node.WithClients(nil)),
+		node.HasClient(nil),
+	)
+}

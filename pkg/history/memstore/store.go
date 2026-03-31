@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vanti-dev/sc-bos/pkg/history"
+	"github.com/smart-core-os/sc-bos/pkg/history"
 )
 
 type Store struct {

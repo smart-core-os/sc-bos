@@ -8,9 +8,9 @@ import (
 
 	"go.uber.org/multierr"
 
-	"github.com/vanti-dev/sc-bos/internal/auth/accesstoken"
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
-	"github.com/vanti-dev/sc-bos/pkg/system/authn/config"
+	"github.com/smart-core-os/sc-bos/internal/auth/accesstoken"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/system/authn/config"
 )
 
 func loadFileVerifier(idConfig *config.Identities, dataDirs []string, defaultFilename string) (accesstoken.Verifier, error) {

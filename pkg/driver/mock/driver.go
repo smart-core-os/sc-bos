@@ -6,44 +6,46 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/bookingpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/electricpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/energystoragepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/enterleavesensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/fanspeedpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/hailpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/metadatapb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/parentpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/publicationpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/vendingpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/wastepb"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
-	"github.com/vanti-dev/sc-bos/pkg/block"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/driver/mock/auto"
-	"github.com/vanti-dev/sc-bos/pkg/driver/mock/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/accesspb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/button"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/emergencylightpb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/meter"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/securityevent"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/soundsensorpb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/transport"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/udmipb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-	"github.com/vanti-dev/sc-bos/pkg/util/maps"
+	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/driver/mock/auto"
+	"github.com/smart-core-os/sc-bos/pkg/driver/mock/config"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/bookingpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	fanspeedpb2 "github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hailpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/parentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/pressurepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/vendingpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/wastepb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/maps"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 const DriverName = "mock"
@@ -153,7 +155,7 @@ func (d *Driver) applyConfig(_ context.Context, cfg config.Root) error {
 	return nil
 }
 
-func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap.Logger) ([]wrap.ServiceUnwrapper, service.Lifecycle) {
+func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) ([]wrap.ServiceUnwrapper, service.Lifecycle) {
 	switch trait.Name(traitMd.Name) {
 	case trait.AirQualitySensor:
 		model := airqualitysensorpb.NewModel(airqualitysensorpb.WithInitialAirQuality(auto.GetAirQualityState()))
@@ -161,6 +163,9 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 	case trait.AirTemperature:
 		model := airtemperaturepb.NewModel()
 		return []wrap.ServiceUnwrapper{airtemperaturepb.WrapApi(airtemperaturepb.NewModelServer(model))}, auto.AirTemperatureAuto(model)
+	case allocationpb.TraitName:
+		model := allocationpb.NewModel()
+		return []wrap.ServiceUnwrapper{allocationpb.WrapApi(allocationpb.NewModelServer(model))}, auto.AllocationAuto(model)
 	case trait.Booking:
 		return []wrap.ServiceUnwrapper{bookingpb.WrapApi(bookingpb.NewModelServer(bookingpb.NewModel()))}, nil
 	case trait.BrightnessSensor:
@@ -195,20 +200,21 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 		}
 		return []wrap.ServiceUnwrapper{energystoragepb.WrapApi(energystoragepb.NewModelServer(model))}, auto.EnergyStorage(model, kind)
 	case trait.EnterLeaveSensor:
-		return []wrap.ServiceUnwrapper{enterleavesensorpb.WrapApi(enterleavesensorpb.NewModelServer(enterleavesensorpb.NewModel()))}, nil
+		model := enterleavesensorpb.NewModel()
+		return []wrap.ServiceUnwrapper{enterleavesensorpb.WrapApi(enterleavesensorpb.NewModelServer(model))}, auto.EnterLeaveAuto(model)
 	case trait.ExtendRetract:
 		// todo: return []any{extendretract.WrapApi(extendretract.NewModelServer(extendretract.NewModel()))}, nil
 		return nil, nil
 	case trait.FanSpeed:
-		presets := []fanspeedpb.Preset{
+		presets := []fanspeedpb2.Preset{
 			{Name: "off", Percentage: 0},
 			{Name: "low", Percentage: 15},
 			{Name: "med", Percentage: 40},
 			{Name: "high", Percentage: 75},
 			{Name: "full", Percentage: 100},
 		}
-		model := fanspeedpb.NewModel(fanspeedpb.WithPresets(presets...))
-		return []wrap.ServiceUnwrapper{fanspeedpb.WrapApi(fanspeedpb.NewModelServer(model))}, auto.FanSpeed(model, presets...)
+		model := fanspeedpb2.NewModel(fanspeedpb2.WithPresets(presets...))
+		return []wrap.ServiceUnwrapper{fanspeedpb2.WrapApi(fanspeedpb2.NewModelServer(model))}, auto.FanSpeed(model, presets...)
 	case trait.Hail:
 		return []wrap.ServiceUnwrapper{hailpb.WrapApi(hailpb.NewModelServer(hailpb.NewModel()))}, nil
 	case trait.InputSelect:
@@ -216,11 +222,11 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 		return nil, nil
 	case trait.Light:
 		server := lightpb.NewModelServer(lightpb.NewModel(
-			lightpb.WithPreset(0, &traits.LightPreset{Name: "off", Title: "Off"}),
-			lightpb.WithPreset(40, &traits.LightPreset{Name: "low", Title: "Low"}),
-			lightpb.WithPreset(60, &traits.LightPreset{Name: "med", Title: "Normal"}),
-			lightpb.WithPreset(80, &traits.LightPreset{Name: "high", Title: "High"}),
-			lightpb.WithPreset(100, &traits.LightPreset{Name: "full", Title: "Full"}),
+			lightpb.WithPreset(0, &lightpb.LightPreset{Name: "off", Title: "Off"}),
+			lightpb.WithPreset(40, &lightpb.LightPreset{Name: "low", Title: "Low"}),
+			lightpb.WithPreset(60, &lightpb.LightPreset{Name: "med", Title: "Normal"}),
+			lightpb.WithPreset(80, &lightpb.LightPreset{Name: "high", Title: "High"}),
+			lightpb.WithPreset(100, &lightpb.LightPreset{Name: "full", Title: "Full"}),
 		))
 		return []wrap.ServiceUnwrapper{lightpb.WrapApi(server), lightpb.WrapInfo(server)}, nil
 	case trait.LockUnlock:
@@ -240,7 +246,7 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 		model := occupancysensorpb.NewModel()
 		return []wrap.ServiceUnwrapper{occupancysensorpb.WrapApi(occupancysensorpb.NewModelServer(model))}, auto.OccupancySensorAuto(model)
 	case trait.OnOff:
-		return []wrap.ServiceUnwrapper{onoffpb.WrapApi(onoffpb.NewModelServer(onoffpb.NewModel(resource.WithInitialValue(&traits.OnOff{State: traits.OnOff_OFF}))))}, nil
+		return []wrap.ServiceUnwrapper{onoffpb.WrapApi(onoffpb.NewModelServer(onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}))))}, nil
 	case trait.OpenClose:
 		return mockOpenClose(traitMd, deviceName, logger)
 	case trait.Parent:
@@ -255,21 +261,21 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 		return nil, nil
 	case trait.Vending:
 		return []wrap.ServiceUnwrapper{vendingpb.WrapApi(vendingpb.NewModelServer(vendingpb.NewModel()))}, nil
-	case trait.Waste:
-		model := wastepb.NewModel()
-		return []wrap.ServiceUnwrapper{wastepb.WrapApi(wastepb.NewModelServer(model))}, auto.WasteRecordsAuto(model)
 
 	case accesspb.TraitName:
 		model := accesspb.NewModel()
-		return []wrap.ServiceUnwrapper{gen.WrapAccessApi(accesspb.NewModelServer(model))}, auto.Access(model)
-	case button.TraitName:
-		return []wrap.ServiceUnwrapper{gen.WrapButtonApi(button.NewModelServer(button.NewModel(gen.ButtonState_UNPRESSED)))}, nil
+		return []wrap.ServiceUnwrapper{accesspb.WrapApi(accesspb.NewModelServer(model))}, auto.Access(model)
+	case buttonpb.TraitName:
+		return []wrap.ServiceUnwrapper{buttonpb.WrapApi(buttonpb.NewModelServer(buttonpb.NewModel(buttonpb.ButtonState_UNPRESSED)))}, nil
 	case emergencylightpb.TraitName:
 		model := emergencylightpb.NewModel()
-		model.SetLastDurationTest(gen.EmergencyTestResult_TEST_PASSED)
-		model.SetLastFunctionalTest(gen.EmergencyTestResult_TEST_PASSED)
-		return []wrap.ServiceUnwrapper{gen.WrapEmergencyLightApi(emergencylightpb.NewModelServer(model))}, nil
-	case meter.TraitName:
+		model.SetLastDurationTest(emergencylightpb.EmergencyTestResult_TEST_PASSED)
+		model.SetLastFunctionalTest(emergencylightpb.EmergencyTestResult_TEST_PASSED)
+		return []wrap.ServiceUnwrapper{emergencylightpb.WrapApi(emergencylightpb.NewModelServer(model))}, nil
+	case fluidflowpb.TraitName:
+		model := fluidflowpb.NewModel()
+		return []wrap.ServiceUnwrapper{fluidflowpb.WrapApi(fluidflowpb.NewModelServer(model))}, auto.FluidFlow(model)
+	case meterpb.TraitName:
 		var (
 			unit string
 			ok   bool
@@ -278,29 +284,35 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 			unit = "kWh"
 		}
 
-		model := meter.NewModel()
-		info := &meter.InfoServer{MeterReading: &gen.MeterReadingSupport{
-			ResourceSupport: &types.ResourceSupport{
+		model := meterpb.NewModel()
+		info := &meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
+			ResourceSupport: &typespb.ResourceSupport{
 				Readable:   true,
 				Writable:   true,
 				Observable: true,
 			},
 			UsageUnit: unit,
 		}}
-		return []wrap.ServiceUnwrapper{gen.WrapMeterApi(meter.NewModelServer(model)), gen.WrapMeterInfo(info)}, auto.MeterAuto(model)
-	case securityevent.TraitName:
-		model := securityevent.NewModel()
-		return []wrap.ServiceUnwrapper{gen.WrapSecurityEventApi(securityevent.NewModelServer(model))}, auto.SecurityEventAuto(model)
+		return []wrap.ServiceUnwrapper{meterpb.WrapApi(meterpb.NewModelServer(model)), meterpb.WrapInfo(info)}, auto.MeterAuto(model)
+	case pressurepb.TraitName:
+		model := pressurepb.NewModel()
+		return []wrap.ServiceUnwrapper{pressurepb.WrapApi(pressurepb.NewModelServer(model))}, auto.Pressure(model)
+	case securityeventpb.TraitName:
+		model := securityeventpb.NewModel()
+		return []wrap.ServiceUnwrapper{securityeventpb.WrapApi(securityeventpb.NewModelServer(model))}, auto.SecurityEventAuto(model)
 	case soundsensorpb.TraitName:
 		model := soundsensorpb.NewModel()
-		return []wrap.ServiceUnwrapper{gen.WrapSoundSensorApi(soundsensorpb.NewModelServer(model))}, auto.SoundSensorAuto(model)
+		return []wrap.ServiceUnwrapper{soundsensorpb.WrapApi(soundsensorpb.NewModelServer(model))}, auto.SoundSensorAuto(model)
 	case statuspb.TraitName:
 		model := statuspb.NewModel()
 		// set an initial value or Pull methods can hang
-		_, _ = model.UpdateProblem(&gen.StatusLog_Problem{Name: deviceName, Level: gen.StatusLog_NOMINAL})
-		return []wrap.ServiceUnwrapper{gen.WrapStatusApi(statuspb.NewModelServer(model))}, auto.Status(model, deviceName)
-	case transport.TraitName:
-		model := transport.NewModel()
+		_, _ = model.UpdateProblem(&statuspb.StatusLog_Problem{Name: deviceName, Level: statuspb.StatusLog_NOMINAL})
+		return []wrap.ServiceUnwrapper{statuspb.WrapApi(statuspb.NewModelServer(model))}, auto.Status(model, deviceName)
+	case temperaturepb.TraitName:
+		model := temperaturepb.NewModel()
+		return []wrap.ServiceUnwrapper{temperaturepb.WrapApi(temperaturepb.NewModelServer(model))}, auto.TemperatureAuto(model)
+	case transportpb.TraitName:
+		model := transportpb.NewModel()
 		maxFloor := 10
 		if m, ok := traitMd.GetMore()["numFloors"]; ok {
 			mi, err := strconv.Atoi(m)
@@ -310,9 +322,12 @@ func newMockClient(traitMd *traits.TraitMetadata, deviceName string, logger *zap
 				return nil, nil
 			}
 		}
-		return []wrap.ServiceUnwrapper{gen.WrapTransportApi(transport.NewModelServer(model))}, auto.TransportAuto(model, maxFloor)
+		return []wrap.ServiceUnwrapper{transportpb.WrapApi(transportpb.NewModelServer(model))}, auto.TransportAuto(model, maxFloor)
 	case udmipb.TraitName:
-		return []wrap.ServiceUnwrapper{gen.WrapUdmiService(auto.NewUdmiServer(logger, deviceName))}, nil
+		return []wrap.ServiceUnwrapper{udmipb.WrapService(auto.NewUdmiServer(logger, deviceName))}, nil
+	case wastepb.TraitName:
+		model := wastepb.NewModel()
+		return []wrap.ServiceUnwrapper{wastepb.WrapApi(wastepb.NewModelServer(model))}, auto.WasteRecordsAuto(model)
 	}
 
 	return nil, nil

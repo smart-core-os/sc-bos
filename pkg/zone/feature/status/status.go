@@ -5,12 +5,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-	"github.com/vanti-dev/sc-bos/pkg/zone"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/status/config"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/status/config"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -38,7 +37,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 	logger := f.logger
 
 	if len(cfg.StatusLogs) > 0 || cfg.StatusLogAll {
-		client := gen.NewStatusApiClient(f.clients.ClientConn())
+		client := statuspb.NewStatusApiClient(f.clients.ClientConn())
 
 		f.devices.Add(cfg.StatusLogs...)
 		if cfg.StatusLogAll {
@@ -58,7 +57,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 						names:  names,
 						logger: logger,
 					}
-					announce.Announce(cfg.Name, node.HasTrait(statuspb.TraitName, node.WithClients(gen.WrapStatusApi(group))))
+					announce.Announce(cfg.Name, node.HasTrait(statuspb.TraitName, node.WithClients(statuspb.WrapApi(group))))
 				}
 			}()
 		} else {
@@ -67,7 +66,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 				names:  cfg.StatusLogs,
 				logger: logger,
 			}
-			announce.Announce(cfg.Name, node.HasTrait(statuspb.TraitName, node.WithClients(gen.WrapStatusApi(group))))
+			announce.Announce(cfg.Name, node.HasTrait(statuspb.TraitName, node.WithClients(statuspb.WrapApi(group))))
 		}
 	}
 

@@ -16,13 +16,13 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/auto/resetbrightness/config"
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-	"github.com/vanti-dev/sc-bos/pkg/util/chans"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/resetbrightness/config"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/util/chans"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
 const AutoName = "resetbrightness"
@@ -48,7 +48,7 @@ func (a *impl) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	// pull brightness from all the devices, notify via readEvents
 	readEvents := make(chan func(rs *readState))
-	lightClient := traits.NewLightApiClient(a.Node.ClientConn())
+	lightClient := lightpb.NewLightApiClient(a.Node.ClientConn())
 	for _, device := range cfg.Devices {
 		grp.Go(func() error {
 			return pull.Changes(ctx, brightnessPuller{
@@ -142,9 +142,9 @@ func (a *impl) applyConfig(ctx context.Context, cfg config.Root) error {
 			case <-timer.C:
 				var errs error
 				for _, device := range cfg.Devices {
-					req := &traits.UpdateBrightnessRequest{
+					req := &lightpb.UpdateBrightnessRequest{
 						Name:       device,
-						Brightness: &traits.Brightness{LevelPercent: cfg.ResetState},
+						Brightness: &lightpb.Brightness{LevelPercent: cfg.ResetState},
 					}
 					_, err := lightClient.UpdateBrightness(ctx, req)
 					if err != nil {
@@ -164,7 +164,7 @@ type readState struct {
 	Brightness map[string]value
 }
 
-func (rs *readState) SetBrightness(device string, now time.Time, v *traits.Brightness, normal config.StateRange) {
+func (rs *readState) SetBrightness(device string, now time.Time, v *lightpb.Brightness, normal config.StateRange) {
 	if v == nil {
 		delete(rs.Brightness, device)
 		return
@@ -192,20 +192,20 @@ func (rs *readState) SetBrightness(device string, now time.Time, v *traits.Brigh
 }
 
 type value struct {
-	V *traits.Brightness
+	V *lightpb.Brightness
 	// Times when V left the normal state.
 	// EnterAt is when V first left normal, UpdateAt is the time of the most recent update to V that was off-normal.
 	EnterAt, UpdateAt time.Time
 }
 
 type brightnessPuller struct {
-	client traits.LightApiClient
+	client lightpb.LightApiClient
 	name   string
 	normal config.StateRange
 }
 
 func (b brightnessPuller) Pull(ctx context.Context, changes chan<- func(rs *readState)) error {
-	stream, err := b.client.PullBrightness(ctx, &traits.PullBrightnessRequest{Name: b.name})
+	stream, err := b.client.PullBrightness(ctx, &lightpb.PullBrightnessRequest{Name: b.name})
 	if err != nil {
 		return fmt.Errorf("pull %q: %w", b.name, err)
 	}
@@ -230,7 +230,7 @@ func (b brightnessPuller) Pull(ctx context.Context, changes chan<- func(rs *read
 }
 
 func (b brightnessPuller) Poll(ctx context.Context, changes chan<- func(rs *readState)) error {
-	res, err := b.client.GetBrightness(ctx, &traits.GetBrightnessRequest{Name: b.name})
+	res, err := b.client.GetBrightness(ctx, &lightpb.GetBrightnessRequest{Name: b.name})
 	if err != nil {
 		return fmt.Errorf("get %q: %w", b.name, err)
 	}

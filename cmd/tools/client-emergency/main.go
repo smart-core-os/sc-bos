@@ -8,8 +8,8 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/util/client"
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencypb"
+	"github.com/smart-core-os/sc-bos/pkg/util/client"
 )
 
 var clientConfig client.Config
@@ -41,11 +41,11 @@ func run() error {
 	log.Printf("dialled")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	em := traits.NewEmergencyApiClient(conn)
+	em := emergencypb.NewEmergencyApiClient(conn)
 
 	get := func(c context.Context, name string) error {
 		log.Printf("GetEmergency %s", name)
-		res, err := em.GetEmergency(ctx, &traits.GetEmergencyRequest{Name: name})
+		res, err := em.GetEmergency(ctx, &emergencypb.GetEmergencyRequest{Name: name})
 		if err != nil {
 			return err
 		}
@@ -55,7 +55,7 @@ func run() error {
 
 	pull := func(c context.Context, name string) error {
 		log.Printf("PullEmergency %s", name)
-		stream, err := em.PullEmergency(ctx, &traits.PullEmergencyRequest{Name: name})
+		stream, err := em.PullEmergency(ctx, &emergencypb.PullEmergencyRequest{Name: name})
 		if err != nil {
 			return err
 		}

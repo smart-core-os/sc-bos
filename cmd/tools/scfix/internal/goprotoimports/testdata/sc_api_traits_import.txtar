@@ -1,0 +1,35 @@
+This test verifies Go import replacement for sc-api/go/traits package.
+expected_changes: 3
+
+-- input/pkg/test/meter_traits.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+)
+
+func GetMeter(ctx context.Context) (*traits.MeterReading, error) {
+	return &traits.MeterReading{}, nil
+}
+
+func ProcessMeterRequest(req *traits.GetMeterReadingRequest) {
+	// process request
+}
+-- output/pkg/test/meter_traits.go --
+package test
+
+import (
+	"context"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+)
+
+func GetMeter(ctx context.Context) (*meterpb.MeterReading, error) {
+	return &meterpb.MeterReading{}, nil
+}
+
+func ProcessMeterRequest(req *meterpb.GetMeterReadingRequest) {
+	// process request
+}

@@ -72,7 +72,13 @@ if (window) {
      * Finally, if none of the above conditions are met, proceed to the next route (allow the navigation).
      */
     const isPathEnabled = uiConfig.pathEnabled(to.path);
-    const redirectToHome = () => next(uiConfig.homePath);
+    const redirectToHome = () => {
+      const home = uiConfig.homePath;
+      // If homePath doesn't resolve to a known route, it would cause an infinite redirect loop.
+      // Fall back to the default home path instead.
+      const resolved = router.resolve(home);
+      next(resolved.matched.length > 0 ? home : uiConfig.defaultConfig.config.home);
+    };
     const isLoginPath = to.path === '/login';
     const isAuthenticated = accountStore.isLoggedIn;
 

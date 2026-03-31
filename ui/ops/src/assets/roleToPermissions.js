@@ -35,6 +35,8 @@ export const roleToPermissions = {
       '/ops/air-quality',
       '/ops/notifications',
       '/ops/security',
+      '/ops/security-events',
+      '/ops/overview/security-events',
       '/site',
       '/site/zone',
       '/site/zone/.*',
@@ -44,6 +46,7 @@ export const roleToPermissions = {
       '/system/drivers',
       '/system/features',
       '/system/components',
+      '/system/logs',
       '/signage'
     ],
     limitedAccess: [],
@@ -61,6 +64,8 @@ export const roleToPermissions = {
       '/ops/air-quality',
       '/ops/notifications',
       '/ops/security',
+      '/ops/security-events',
+      '/ops/overview/security-events',
       '/site',
       '/site/zone',
       '/site/zone/.*',
@@ -76,7 +81,8 @@ export const roleToPermissions = {
     blockedAccess: [
       '/auth',
       '/auth/users',
-      '/auth/third-party'
+      '/auth/third-party',
+      '/system/logs'
     ]
   },
   operator: {
@@ -93,6 +99,8 @@ export const roleToPermissions = {
       '/ops/air-quality',
       '/ops/notifications',
       '/ops/security',
+      '/ops/security-events',
+      '/ops/overview/security-events',
       '/signage'
     ],
     limitedAccess: [
@@ -107,7 +115,8 @@ export const roleToPermissions = {
       '/system/components'
     ],
     blockedAccess: [
-      '/auth/users'
+      '/auth/users',
+      '/system/logs'
     ]
   },
   signage: {
@@ -129,6 +138,8 @@ export const roleToPermissions = {
       '/ops/air-quality',
       '/ops/notifications',
       '/ops/security',
+      '/ops/security-events',
+      '/ops/overview/security-events',
       '/site',
       '/site/zone',
       '/site/zone/.*',
@@ -137,7 +148,8 @@ export const roleToPermissions = {
       '/system',
       '/system/drivers',
       '/system/features',
-      '/system/components'
+      '/system/components',
+      '/system/logs'
     ]
   },
   superAdmin: {
@@ -155,6 +167,8 @@ export const roleToPermissions = {
       '/ops/air-quality',
       '/ops/notifications',
       '/ops/security',
+      '/ops/security-events',
+      '/ops/overview/security-events',
       '/site',
       '/site/zone',
       '/site/zone/.*',
@@ -164,6 +178,7 @@ export const roleToPermissions = {
       '/system/drivers',
       '/system/features',
       '/system/components',
+      '/system/logs',
       '/signage'
     ],
     limitedAccess: [],
@@ -187,6 +202,8 @@ export const roleToPermissions = {
       '/ops/air-quality',
       '/ops/notifications',
       '/ops/security',
+      '/ops/security-events',
+      '/ops/overview/security-events',
       '/site',
       '/site/zone',
       '/site/zone/.*',
@@ -197,6 +214,8 @@ export const roleToPermissions = {
       '/system/features',
       '/system/components'
     ],
-    blockedAccess: []
+    blockedAccess: [
+      '/system/logs'
+    ]
   }
 };

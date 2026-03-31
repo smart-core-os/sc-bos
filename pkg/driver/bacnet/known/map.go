@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	bactypes "github.com/vanti-dev/gobacnet/types"
+	bactypes "github.com/smart-core-os/gobacnet/types"
 )
 
 var (

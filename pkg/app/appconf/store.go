@@ -14,11 +14,12 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 
-	"github.com/vanti-dev/sc-bos/internal/confmerge"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/block"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/zone"
+	"github.com/smart-core-os/sc-bos/internal/confmerge"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
 type Store struct {
@@ -50,15 +51,15 @@ func (s *Store) Active() Config {
 	return s.active.clone()
 }
 
-func (s *Store) Drivers() *DriverStore {
+func (s *Store) Drivers() serviceapi.Store {
 	return &DriverStore{store: s}
 }
 
-func (s *Store) Automations() *AutomationStore {
+func (s *Store) Automations() serviceapi.Store {
 	return &AutomationStore{store: s}
 }
 
-func (s *Store) Zones() *ZoneStore {
+func (s *Store) Zones() serviceapi.Store {
 	return &ZoneStore{store: s}
 }
 

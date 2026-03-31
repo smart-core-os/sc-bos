@@ -6,29 +6,28 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/historypb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/meter"
-	"github.com/vanti-dev/sc-bos/pkg/history/memstore"
-	"github.com/vanti-dev/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/historypb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
 
 // announceMeter with events in order
 func announceMeter(root node.Announcer, name, unit string, sleep time.Duration, events []float32) error {
-	model := meter.NewModel()
+	model := meterpb.NewModel()
 
-	modelInfoServer := &meter.InfoServer{
-		UnimplementedMeterInfoServer: gen.UnimplementedMeterInfoServer{},
-		MeterReading:                 &gen.MeterReadingSupport{UsageUnit: unit},
+	modelInfoServer := &meterpb.InfoServer{
+		UnimplementedMeterInfoServer: meterpb.UnimplementedMeterInfoServer{},
+		MeterReading:                 &meterpb.MeterReadingSupport{UsageUnit: unit},
 	}
 
-	client := node.WithClients(gen.WrapMeterApi(meter.NewModelServer(model)), gen.WrapMeterInfo(modelInfoServer))
-	root.Announce(name, node.HasTrait(meter.TraitName, client))
+	client := node.WithClients(meterpb.WrapApi(meterpb.NewModelServer(model)), meterpb.WrapInfo(modelInfoServer))
+	root.Announce(name, node.HasTrait(meterpb.TraitName, client))
 
 	store := memstore.New()
 
 	for _, event := range events {
-		rec, err := proto.Marshal(&gen.MeterReading{
+		rec, err := proto.Marshal(&meterpb.MeterReading{
 			Usage:     event,
 			EndTime:   timestamppb.Now(),
 			StartTime: timestamppb.Now(),
@@ -43,7 +42,7 @@ func announceMeter(root node.Announcer, name, unit string, sleep time.Duration, 
 		time.Sleep(sleep)
 	}
 
-	root.Announce(name, node.HasClient(gen.WrapMeterHistory(historypb.NewMeterServer(store))))
+	root.Announce(name, node.HasClient(meterpb.WrapHistory(historypb.NewMeterServer(store))))
 
 	return nil
 }

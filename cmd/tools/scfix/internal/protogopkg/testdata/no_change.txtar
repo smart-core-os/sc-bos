@@ -1,0 +1,119 @@
+This test verifies files are skipped when: already correct package, unversioned, or non-v1 version.
+expected_changes: 0
+
+-- input/proto/smartcore/bos/meter/v1/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/meterpb";
+
+import "google/protobuf/timestamp.proto";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+  google.protobuf.Timestamp start_time = 2;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}
+-- input/proto/smartcore/bos/account/account.proto --
+syntax = "proto3";
+
+package smartcore.bos.account;
+
+option go_package = "github.com/smart-core-os/sc-bos/internal/account";
+
+service AccountApi {
+  rpc GetAccount(GetAccountRequest) returns (Account);
+}
+
+message Account {
+  string id = 1;
+  string name = 2;
+}
+
+message GetAccountRequest {
+  string id = 1;
+}
+-- input/proto/smartcore/bos/meter/v2/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v2;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/meter/v1/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/meterpb";
+
+import "google/protobuf/timestamp.proto";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+  google.protobuf.Timestamp start_time = 2;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/account/account.proto --
+syntax = "proto3";
+
+package smartcore.bos.account;
+
+option go_package = "github.com/smart-core-os/sc-bos/internal/account";
+
+service AccountApi {
+  rpc GetAccount(GetAccountRequest) returns (Account);
+}
+
+message Account {
+  string id = 1;
+  string name = 2;
+}
+
+message GetAccountRequest {
+  string id = 1;
+}
+-- output/proto/smartcore/bos/meter/v2/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v2;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}

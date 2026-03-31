@@ -2,7 +2,7 @@ import {getAccount, listAccounts} from '@/api/ui/account.js';
 import {useAction} from '@/composables/action.js';
 import useCollection from '@/composables/collection.js';
 import {toAddChange, toRemoveChange, useRoleAssignmentsCollection} from '@/routes/auth/accounts.js';
-import {Account} from '@vanti-dev/sc-bos-ui-gen/proto/account_pb';
+import {Account} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_pb';
 import {computed, effectScope, reactive, toValue, watch} from 'vue';
 
 /**

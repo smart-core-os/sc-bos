@@ -2,6 +2,7 @@ package jsonutil
 
 import (
 	"encoding/json"
+	"maps"
 )
 
 // MarshalObjects marshals multiple objects into a single JSON object.
@@ -20,9 +21,7 @@ func MarshalObjects(objects ...any) ([]byte, error) {
 		if err := json.Unmarshal(data, &m); err != nil {
 			return nil, err
 		}
-		for k, v := range m {
-			result[k] = v
-		}
+		maps.Copy(result, m)
 	}
 	return json.Marshal(result)
 }

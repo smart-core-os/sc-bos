@@ -1,0 +1,50 @@
+-- proto.mod --
+module github.com/example/proto
+-- basic.proto --
+syntax = "proto3";
+
+package example;
+
+option go_package = "github.com/example/gen";
+
+message Device {
+  string id = 1;
+  string model = 2;
+}
+-- routed.proto --
+syntax = "proto3";
+
+package example;
+
+option go_package = "github.com/example/gen";
+
+service DeviceApi {
+  rpc GetDevice(GetDeviceRequest) returns (Device);
+}
+
+message GetDeviceRequest {
+  string name = 1;
+}
+
+message Device {
+  string id = 1;
+}
+-- wrapper.proto --
+syntax = "proto3";
+
+package example;
+
+option go_package = "github.com/example/gen";
+
+service ConfigApi {
+  rpc GetConfig(GetConfigRequest) returns (Config);
+}
+
+message GetConfigRequest {
+  string key = 1;  // Not 'name'
+}
+
+message Config {
+  string value = 1;
+}
+

@@ -9,13 +9,13 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/auto/statusemail/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/task"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/statusemail/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/task"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 const AutoName = "statusemail"
@@ -40,7 +40,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	logger := a.Logger
 	logger = logger.With(zap.String("snmp.host", cfg.Destination.Host), zap.Int("snmp.port", cfg.Destination.Port))
 
-	statusClient := gen.NewStatusApiClient(a.Node.ClientConn())
+	statusClient := statuspb.NewStatusApiClient(a.Node.ClientConn())
 
 	if cfg.DelayStart != nil {
 		time.Sleep(cfg.DelayStart.Duration)
@@ -76,9 +76,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	if cfg.DiscoverSources {
 		// Force the counter to be non-zero so Wait and Add don't race.
 		// See sync.WaitGroup docs for reasons, specifically the docs for Add.
-		activePullers.Add(1)
-		go func() {
-			defer activePullers.Done()
+		activePullers.Go(func() {
 			// we use a replacer here because it's an easy and memory efficient way to do prefix matching.
 			// strings.Replacer uses a Trie internally.
 			// This replacer replaces any matching prefix with a !, to check if we should ignore a name check s[0] == '!'
@@ -96,7 +94,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 					return
 				default:
 				}
-				for change := range a.Node.PullDevices(ctx, resource.WithReadPaths(&gen.Device{}, "metadata.traits", "metadata.appearance", "metadata.location", "metadata.membership")) {
+				for change := range a.Node.PullDevices(ctx, resource.WithReadPaths(&devicespb.Device{}, "metadata.traits", "metadata.appearance", "metadata.location", "metadata.membership")) {
 					if s := ignore.Replace(change.Id); len(s) == 0 || s[0] == '!' {
 						continue // ignore
 					}
@@ -120,7 +118,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 					}
 				}
 			}
-		}()
+		})
 	}
 
 	go func() {
@@ -134,7 +132,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func hasStatusTrait(device *gen.Device) bool {
+func hasStatusTrait(device *devicespb.Device) bool {
 	md := device.GetMetadata()
 	for _, t := range md.GetTraits() {
 		if t.Name == statuspb.TraitName.String() {

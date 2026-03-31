@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ConnectConfig struct {
@@ -28,7 +28,15 @@ func Connect(ctx context.Context, sysConf ConnectConfig) (*pgxpool.Pool, error) 
 		poolConfig.ConnConfig.Password = strings.TrimSpace(string(passwordFile))
 	}
 
-	return pgxpool.ConnectConfig(ctx, poolConfig)
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
+	if err != nil {
+		return nil, err
+	}
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
+		return nil, err
+	}
+	return pool, nil
 }
 
 func (cc ConnectConfig) IsZero() bool {

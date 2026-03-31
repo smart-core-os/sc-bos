@@ -1,8 +1,8 @@
 import {fieldMaskFromObject, setProperties} from '@/api/convpb.js';
 import {clientOptions} from '@/api/grpcweb.js';
 import {trackAction} from '@/api/resource.js';
-import {ReportApiPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/report_grpc_web_pb';
-import {GetDownloadReportUrlRequest, ListReportsRequest} from '@vanti-dev/sc-bos-ui-gen/proto/report_pb';
+import {ReportApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/report/v1/report_grpc_web_pb';
+import {GetDownloadReportUrlRequest, ListReportsRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/report/v1/report_pb';
 
 /**
  * @param {Partial<GetDownloadReportUrlRequest.AsObject>} request

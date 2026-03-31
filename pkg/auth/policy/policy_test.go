@@ -8,6 +8,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/open-policy-agent/opa/rego"
+
+	"github.com/smart-core-os/sc-bos/internal/auth/permission"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 )
 
 func TestValidate(t *testing.T) {
@@ -177,5 +182,50 @@ func TestValidate_Integration(t *testing.T) {
 				t.Errorf("unexpected error: %v", err)
 			}
 		})
+	}
+}
+
+// tests that the policy knows which BOS APIs are traits
+func TestDefaultPolicy_Traits(t *testing.T) {
+	policy := Default(false)
+
+	attrs := Attributes{
+		Protocol: ProtocolGRPC,
+		Service:  "smartcore.bos.soundsensor.v1.SoundSensorApi",
+		Method:   "GetSoundLevel",
+		Request: &soundsensorpb.GetSoundLevelRequest{
+			Name: "foo/testsoundsensor",
+		},
+		TokenPresent: true,
+		TokenValid:   true,
+		TokenClaims: token.Claims{
+			Permissions: []token.PermissionAssignment{
+				{
+					Permission:   permission.TraitRead,
+					Scoped:       true,
+					ResourceType: token.ResourceType(accountpb.RoleAssignment_NAMED_RESOURCE_PATH_PREFIX),
+					Resource:     "foo",
+				},
+			},
+		},
+	}
+	_, err := Validate(context.Background(), policy, attrs)
+	if err != nil {
+		t.Errorf("expected access to be allowed, got error: %v", err)
+	}
+
+	// try an API that has nothing to do with any known trait
+	attrs.Service = "smartcore.bos.NonExistentTraitApi"
+	_, err = Validate(context.Background(), policy, attrs)
+	if !errors.Is(err, ErrPermissionDenied) {
+		t.Errorf("%s: expected permission denied, got: %v", attrs.Service, err)
+	}
+
+	// try an API that looks like a trait API, but isn't registered
+	// this would have been allowed by a previous, looser implementation of trait matching, but shouldn't be
+	attrs.Service = "smartcore.bos.SoundSensorFoobar"
+	_, err = Validate(context.Background(), policy, attrs)
+	if !errors.Is(err, ErrPermissionDenied) {
+		t.Errorf("%s: expected permission denied, got: %v", attrs.Service, err)
 	}
 }

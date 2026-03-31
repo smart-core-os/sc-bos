@@ -1,0 +1,51 @@
+This test verifies that a bug where comments in statements immediately after the import block remain "attached"
+to the correct statement, instead of being pulled into the import block, is fixed.
+expected_changes: 4
+
+-- input/pkg/test/embed.go --
+package test
+
+import (
+	"context"
+	_ "embed"
+
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+)
+
+//go:embed schema.sql
+var schemaSql string
+
+func GetNode(ctx context.Context) *gen.HubNode {
+	var bus minibus.Bus[string]
+	_ = bus
+	return &gen.HubNode{Name: "test"}
+}
+
+func GetEnrollment() *gen.Enrollment {
+	return &gen.Enrollment{TargetName: "test"}
+}
+-- output/pkg/test/embed.go --
+package test
+
+import (
+	"context"
+	_ "embed"
+
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+)
+
+//go:embed schema.sql
+var schemaSql string
+
+func GetNode(ctx context.Context) *hubpb.HubNode {
+	var bus minibus.Bus[string]
+	_ = bus
+	return &hubpb.HubNode{Name: "test"}
+}
+
+func GetEnrollment() *enrollmentpb.Enrollment {
+	return &enrollmentpb.Enrollment{TargetName: "test"}
+}

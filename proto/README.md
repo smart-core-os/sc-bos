@@ -2,11 +2,10 @@
 
 ## Re-generating source code
 
-These proto files are used to generate both Go and JavaScript grpc-web source files. The Go files end up in `pkg/gen` and the JavaScript files end up in `ui/ui-gen/proto`. There's a script in `scripts/gen-proto.sh` that executes the generator and does some cleanup of the files afterwards. For IDEA IDEs we've provided a run configuration that executes this script for you.
+These proto files are used to generate both Go and JavaScript grpc-web source files. The Go files end up in `pkg/gen` and the JavaScript files end up in `ui/ui-gen/proto`. Use the `genproto` tool to execute the generator and perform cleanup of the files afterwards.
 
 ```shell
-cd scripts
-./gen-proto.sh
+go run ./cmd/tools/genproto
 ```
 
 ## Required tooling

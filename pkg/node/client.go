@@ -1,23 +1,10 @@
 package node
 
 import (
-	"fmt"
-
 	"google.golang.org/grpc"
 
-	"github.com/vanti-dev/sc-bos/internal/router"
-	"github.com/vanti-dev/sc-bos/pkg/node/alltraits"
+	"github.com/smart-core-os/sc-bos/internal/router"
 )
-
-// Client implements Clienter backed by the node's router.
-//
-// Deprecated: Use ClientConn() to acquire a connection and construct clients directly.
-func (n *Node) Client(p any) error {
-	if !alltraits.NewClient(p, n.ClientConn()) {
-		return fmt.Errorf("no client of type %T", p)
-	}
-	return nil
-}
 
 // ClientConn returns a connection to the Node's router.
 func (n *Node) ClientConn() grpc.ClientConnInterface {

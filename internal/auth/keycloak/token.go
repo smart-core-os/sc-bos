@@ -4,16 +4,23 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
+	"time"
 
 	"github.com/go-jose/go-jose/v4/jwt"
 
-	jose_utils "github.com/vanti-dev/sc-bos/internal/util/jose"
-	"github.com/vanti-dev/sc-bos/pkg/auth"
-	"github.com/vanti-dev/sc-bos/pkg/auth/jwks"
-	"github.com/vanti-dev/sc-bos/pkg/auth/oidc"
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/internal/util/fetch"
+	joseUtils "github.com/smart-core-os/sc-bos/internal/util/jose"
+	"github.com/smart-core-os/sc-bos/pkg/auth"
+	"github.com/smart-core-os/sc-bos/pkg/auth/jwks"
+	"github.com/smart-core-os/sc-bos/pkg/auth/oidc"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
 )
+
+// keycloakHTTPClient is used for all HTTP requests to Keycloak (OIDC config and JWKS fetches).
+// The timeout prevents requests from hanging indefinitely when Keycloak is unreachable.
+var keycloakHTTPClient = &http.Client{Timeout: 30 * time.Second}
 
 // accessTokenPayload describes the claims present in a token issued by a Keycloak Authorization Server.
 type accessTokenPayload struct {
@@ -69,11 +76,11 @@ func NewOIDCTokenValidator(cfg Config) token.Validator {
 
 			// todo: during error conditions this fetches every time, make it not do that.
 			// This is in the critical path of token validation which is in the critical path of RPCs
-			authUrls, err := oidc.FetchConfig(ctx, issuer)
+			authUrls, err := oidc.FetchConfig(ctx, issuer, fetch.WithHTTPClient(keycloakHTTPClient))
 			if err != nil {
 				return nil, fmt.Errorf("oidc fetch: %w", err)
 			}
-			keySet := jwks.NewRemoteKeySet(ctx, authUrls.JWKSURI, jose_utils.ConvertToNativeJose(DefaultPermittedSignatureAlgorithms))
+			keySet := jwks.NewRemoteKeySet(ctx, authUrls.JWKSURI, joseUtils.ConvertToNativeJose(DefaultPermittedSignatureAlgorithms), fetch.WithHTTPClient(keycloakHTTPClient))
 			v = NewTokenValidator(&cfg, keySet)
 			underlying = v
 		}

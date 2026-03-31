@@ -11,28 +11,27 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
-	"github.com/vanti-dev/sc-bos/pkg/zone/feature/run"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
 )
 
 type Group struct {
-	gen.UnimplementedStatusApiServer
-	client gen.StatusApiClient
+	statuspb.UnimplementedStatusApiServer
+	client statuspb.StatusApiClient
 	names  []string
 
 	logger *zap.Logger
 }
 
-func (g *Group) GetCurrentStatus(ctx context.Context, request *gen.GetCurrentStatusRequest) (*gen.StatusLog, error) {
-	fns := make([]func() (*gen.StatusLog, error), len(g.names))
+func (g *Group) GetCurrentStatus(ctx context.Context, request *statuspb.GetCurrentStatusRequest) (*statuspb.StatusLog, error) {
+	fns := make([]func() (*statuspb.StatusLog, error), len(g.names))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*gen.GetCurrentStatusRequest)
+		request := proto.Clone(request).(*statuspb.GetCurrentStatusRequest)
 		request.Name = name
-		fns[i] = func() (*gen.StatusLog, error) {
+		fns[i] = func() (*statuspb.StatusLog, error) {
 			return g.client.GetCurrentStatus(ctx, request)
 		}
 	}
@@ -51,21 +50,21 @@ func (g *Group) GetCurrentStatus(ctx context.Context, request *gen.GetCurrentSta
 	return mergeStatusLog(allRes)
 }
 
-func (g *Group) PullCurrentStatus(request *gen.PullCurrentStatusRequest, server gen.StatusApi_PullCurrentStatusServer) error {
+func (g *Group) PullCurrentStatus(request *statuspb.PullCurrentStatusRequest, server statuspb.StatusApi_PullCurrentStatusServer) error {
 	if len(g.names) == 0 {
 		return status.Error(codes.FailedPrecondition, "zone has no status names")
 	}
 
 	type c struct {
 		name string
-		val  *gen.StatusLog
+		val  *statuspb.StatusLog
 	}
 	changes := make(chan c)
 	defer close(changes)
 
 	group, ctx := errgroup.WithContext(server.Context())
 	for _, name := range g.names {
-		request := proto.Clone(request).(*gen.PullCurrentStatusRequest)
+		request := proto.Clone(request).(*statuspb.PullCurrentStatusRequest)
 		request.Name = name
 		group.Go(func() error {
 			err := pull.Changes(ctx, pull.NewFetcher(
@@ -85,7 +84,7 @@ func (g *Group) PullCurrentStatus(request *gen.PullCurrentStatusRequest, server 
 					}
 				},
 				func(ctx context.Context, changes chan<- c) error {
-					res, err := g.client.GetCurrentStatus(ctx, &gen.GetCurrentStatusRequest{Name: name, ReadMask: request.ReadMask})
+					res, err := g.client.GetCurrentStatus(ctx, &statuspb.GetCurrentStatusRequest{Name: name, ReadMask: request.ReadMask})
 					if err != nil {
 						return err
 					}
@@ -107,9 +106,9 @@ func (g *Group) PullCurrentStatus(request *gen.PullCurrentStatusRequest, server 
 		for i, name := range g.names {
 			indexes[name] = i
 		}
-		values := make([]*gen.StatusLog, len(g.names))
+		values := make([]*statuspb.StatusLog, len(g.names))
 
-		var last *gen.StatusLog
+		var last *statuspb.StatusLog
 		eq := cmp.Equal(cmp.FloatValueApprox(0, 0.001))
 		filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 
@@ -131,7 +130,7 @@ func (g *Group) PullCurrentStatus(request *gen.PullCurrentStatusRequest, server 
 				}
 				last = r
 
-				err = server.Send(&gen.PullCurrentStatusResponse{Changes: []*gen.PullCurrentStatusResponse_Change{{
+				err = server.Send(&statuspb.PullCurrentStatusResponse{Changes: []*statuspb.PullCurrentStatusResponse_Change{{
 					Name:          request.Name,
 					ChangeTime:    timestamppb.Now(),
 					CurrentStatus: r,
@@ -146,7 +145,7 @@ func (g *Group) PullCurrentStatus(request *gen.PullCurrentStatusRequest, server 
 	return group.Wait()
 }
 
-func mergeStatusLog(all []*gen.StatusLog) (*gen.StatusLog, error) {
+func mergeStatusLog(all []*statuspb.StatusLog) (*statuspb.StatusLog, error) {
 	switch len(all) {
 	case 0:
 		return nil, status.Error(codes.FailedPrecondition, "zone has no statusLogs names")

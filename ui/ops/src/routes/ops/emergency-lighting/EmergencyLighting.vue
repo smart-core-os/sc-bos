@@ -68,7 +68,7 @@ import {faultToString, getReportCSV, listLightHealth, runTest} from '@/api/sc/tr
 import ContentCard from '@/components/ContentCard.vue';
 import {useErrorStore} from '@/components/ui-error/error';
 import useAuthSetup from '@/composables/useAuthSetup';
-import {EmergencyStatus} from '@vanti-dev/sc-bos-ui-gen/proto/dali_pb';
+import {EmergencyStatus} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/driver/dali/v1/dali_pb';
 import {computed, onMounted, onUnmounted, reactive, ref} from 'vue';
 
 const {blockActions} = useAuthSetup();

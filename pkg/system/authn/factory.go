@@ -9,14 +9,14 @@ import (
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/internal/account"
-	"github.com/vanti-dev/sc-bos/internal/auth/accesstoken"
-	"github.com/vanti-dev/sc-bos/internal/auth/keycloak"
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/system"
-	"github.com/vanti-dev/sc-bos/pkg/system/authn/config"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/internal/account"
+	"github.com/smart-core-os/sc-bos/internal/auth/accesstoken"
+	"github.com/smart-core-os/sc-bos/internal/auth/keycloak"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	"github.com/smart-core-os/sc-bos/pkg/system/authn/config"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 const TokenEndpointPath = "/oauth2/token"

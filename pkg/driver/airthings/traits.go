@@ -7,22 +7,21 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	typespb "github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/energystoragepb"
-	"github.com/vanti-dev/sc-bos/pkg/driver/airthings/api"
-	"github.com/vanti-dev/sc-bos/pkg/driver/airthings/local"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/api"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
+	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 // announceDevice sets up and announces the traits supported by the device.
-func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev Device, loc *local.Location, stat *statuspb.Map) error {
+func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev config.Device, loc *local.Location) error {
 	for _, tn := range dev.Traits {
-		// todo: case trait.BrightnessSensor: once it has a model, backed by "light" data
 		// todo: read the RSSI prop and link it with status
 		switch trait.Name(tn) {
 		case trait.AirQualitySensor:
@@ -35,6 +34,11 @@ func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev Devic
 			client := airtemperaturepb.WrapApi(roAirTemperatureServer{airtemperaturepb.NewModelServer(model)})
 			a.Announce(dev.Name, node.HasTrait(trait.AirTemperature, node.WithClients(client)))
 			go d.pullSampleAirTemperature(ctx, dev, loc, model)
+		case trait.BrightnessSensor:
+			model := brightnesssensorpb.NewModel()
+			client := brightnesssensorpb.WrapApi(brightnesssensorpb.NewModelServer(model))
+			a.Announce(dev.Name, node.HasTrait(trait.BrightnessSensor, node.WithClients(client)))
+			go d.pullSampleBrightness(ctx, dev, loc, model)
 		case trait.EnergyStorage:
 			model := energystoragepb.NewModel()
 			client := energystoragepb.WrapApi(roEnergyStorageServer{energystoragepb.NewModelServer(model)})
@@ -47,9 +51,8 @@ func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev Devic
 	return nil
 }
 
-func (d *Driver) pullSampleAirQuality(ctx context.Context, dev Device, loc *local.Location, model *airqualitysensorpb.Model) {
-	initial, stream, stop := loc.PullLatestSamples(dev.ID)
-	defer stop()
+func (d *Driver) pullSampleAirQuality(ctx context.Context, dev config.Device, loc *local.Location, model *airqualitysensorpb.Model) {
+	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
 	_, _ = model.UpdateAirQuality(sampleToAirQuality(initial))
 	for {
 		select {
@@ -61,8 +64,8 @@ func (d *Driver) pullSampleAirQuality(ctx context.Context, dev Device, loc *loca
 	}
 }
 
-func sampleToAirQuality(in api.DeviceSampleResponseEnriched) *traits.AirQuality {
-	dst := &traits.AirQuality{}
+func sampleToAirQuality(in api.DeviceSampleResponseEnriched) *airqualitysensorpb.AirQuality {
+	dst := &airqualitysensorpb.AirQuality{}
 	data := in.GetData()
 	if v, ok := data.GetAirExchangeRateOk(); ok {
 		dst.AirChangePerHour = float64PtoFloat32P(v)
@@ -106,9 +109,8 @@ func sampleToAirQuality(in api.DeviceSampleResponseEnriched) *traits.AirQuality 
 	return dst
 }
 
-func (d *Driver) pullSampleAirTemperature(ctx context.Context, dev Device, loc *local.Location, model *airtemperaturepb.Model) {
-	initial, stream, stop := loc.PullLatestSamples(dev.ID)
-	defer stop()
+func (d *Driver) pullSampleAirTemperature(ctx context.Context, dev config.Device, loc *local.Location, model *airtemperaturepb.Model) {
+	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
 	_, _ = model.UpdateAirTemperature(sampleToAirTemperature(initial))
 	for {
 		select {
@@ -120,8 +122,8 @@ func (d *Driver) pullSampleAirTemperature(ctx context.Context, dev Device, loc *
 	}
 }
 
-func sampleToAirTemperature(in api.DeviceSampleResponseEnriched) *traits.AirTemperature {
-	dst := &traits.AirTemperature{}
+func sampleToAirTemperature(in api.DeviceSampleResponseEnriched) *airtemperaturepb.AirTemperature {
+	dst := &airtemperaturepb.AirTemperature{}
 	data := in.GetData()
 	if v, ok := data.GetTempOk(); ok {
 		dst.AmbientTemperature = &typespb.Temperature{ValueCelsius: *v.Float64}
@@ -140,9 +142,8 @@ func sampleToAirTemperature(in api.DeviceSampleResponseEnriched) *traits.AirTemp
 	return dst
 }
 
-func (d *Driver) pullSampleEnergyLevel(ctx context.Context, dev Device, loc *local.Location, model *energystoragepb.Model) {
-	initial, stream, stop := loc.PullLatestSamples(dev.ID)
-	defer stop()
+func (d *Driver) pullSampleEnergyLevel(ctx context.Context, dev config.Device, loc *local.Location, model *energystoragepb.Model) {
+	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
 	_, _ = model.UpdateEnergyLevel(sampleToEnergyLevel(initial))
 	for {
 		select {
@@ -154,12 +155,36 @@ func (d *Driver) pullSampleEnergyLevel(ctx context.Context, dev Device, loc *loc
 	}
 }
 
-func sampleToEnergyLevel(in api.DeviceSampleResponseEnriched) *traits.EnergyLevel {
-	dst := &traits.EnergyLevel{}
+func sampleToEnergyLevel(in api.DeviceSampleResponseEnriched) *energystoragepb.EnergyLevel {
+	dst := &energystoragepb.EnergyLevel{}
 	data := in.GetData()
 	if v, ok := data.GetBatteryOk(); ok {
-		dst.Quantity = &traits.EnergyLevel_Quantity{
+		dst.Quantity = &energystoragepb.EnergyLevel_Quantity{
 			Percentage: *v,
+		}
+	}
+	return dst
+}
+
+func (d *Driver) pullSampleBrightness(ctx context.Context, dev config.Device, loc *local.Location, model *brightnesssensorpb.Model) {
+	initial, stream := loc.PullLatestSamples(ctx, dev.ID)
+	_, _ = model.UpdateAmbientBrightness(sampleToAmbientBrightness(initial))
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case sample := <-stream:
+			_, _ = model.UpdateAmbientBrightness(sampleToAmbientBrightness(sample))
+		}
+	}
+}
+
+func sampleToAmbientBrightness(in api.DeviceSampleResponseEnriched) *brightnesssensorpb.AmbientBrightness {
+	dst := &brightnesssensorpb.AmbientBrightness{}
+	data := in.GetData()
+	if v, ok := data.GetLightOk(); ok {
+		if v.Float32 != nil {
+			dst.BrightnessLux = *v.Float32
 		}
 	}
 	return dst
@@ -174,17 +199,17 @@ func float64PtoFloat32P(in *float64) *float32 {
 }
 
 type roAirTemperatureServer struct {
-	traits.AirTemperatureApiServer
+	airtemperaturepb.AirTemperatureApiServer
 }
 
-func (s roAirTemperatureServer) UpdateAirTemperature(context.Context, *traits.UpdateAirTemperatureRequest) (*traits.AirTemperature, error) {
+func (s roAirTemperatureServer) UpdateAirTemperature(context.Context, *airtemperaturepb.UpdateAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
 	return nil, status.Errorf(codes.Unimplemented, "read-only")
 }
 
 type roEnergyStorageServer struct {
-	traits.EnergyStorageApiServer
+	energystoragepb.EnergyStorageApiServer
 }
 
-func (s roEnergyStorageServer) Charge(context.Context, *traits.ChargeRequest) (*traits.ChargeResponse, error) {
+func (s roEnergyStorageServer) Charge(context.Context, *energystoragepb.ChargeRequest) (*energystoragepb.ChargeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "read-only")
 }

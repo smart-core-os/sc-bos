@@ -14,7 +14,7 @@
           :selected="selectionsByLayer[i]"
           @update:selected="onLayerSelectUpdate(i, $event)"/>
     </overlay-stack>
-    <pinch-zoom v-else class="fill-height" :hide-controls="props.hideControls" center>
+    <pinch-zoom v-else class="fill-height" :hide-controls="props.hideControls" center v-bind="defaultTransform ? {defaultTransform} : {}">
       <template #default>
         <overlay-stack :style="stackStyle">
           <img v-if="bgSrc" :src="bgSrc" alt="Background for other layers" ref="bgRef">
@@ -78,7 +78,16 @@ const props = defineProps({
   layers: {
     type: Array,
     default: () => []
+  },
+  defaultZoom: {
+    type: Number,
+    default: null
   }
+});
+
+const defaultTransform = computed(() => {
+  if (!props.defaultZoom) return undefined;
+  return {x: 0, y: 0, scale: props.defaultZoom};
 });
 
 const {toPath} = usePathUtils();
@@ -108,9 +117,11 @@ const optLayerList = computed(() => {
   });
 });
 const optVisibleLayers = ref(/** @type {string[]} */ []);
-watch(optLayerList, (l) => {
+watch(() => props.layers, () => {
   // todo: remember which layers are selected when this changes
-  optVisibleLayers.value = l.map(v => v.value);
+  optVisibleLayers.value = props.layers
+      .filter((layer) => !layer.hidden)
+      .map((layer) => layer.title);
 }, {immediate: true});
 
 const toggleSettings = () => {

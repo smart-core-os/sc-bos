@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/vanti-dev/sc-bos/pkg/history"
+	"github.com/smart-core-os/sc-bos/pkg/history"
 )
 
 // makeSlice returns a slice of n records, each 1 hour apart in ascending order, with the last record being now.
@@ -19,7 +19,7 @@ func makeSlice(n int) (slice, time.Time) {
 	all := make(slice, n)
 	for i := range all {
 		t := now.Add(time.Duration(i-n+1) * time.Hour)
-		all[i] = history.Record{ID: createTimeToID(t), CreateTime: t, Payload: []byte(fmt.Sprint(i))}
+		all[i] = history.Record{ID: createTimeToID(t), CreateTime: t, Payload: fmt.Append(nil, i)}
 	}
 	return all, now
 }

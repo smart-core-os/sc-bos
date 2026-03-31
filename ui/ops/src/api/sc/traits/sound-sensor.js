@@ -1,7 +1,11 @@
-import {fieldMaskFromObject, setProperties} from '@/api/convpb.js';
+import {fieldMaskFromObject, setProperties, timestampToDate} from '@/api/convpb.js';
+import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setValue, trackAction} from '@/api/resource.js';
-import {SoundSensorApiPromiseClient, SoundSensorInfoPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/sound_sensor_grpc_web_pb';
-import {DescribeSoundLevelRequest, PullSoundLevelRequest} from '@vanti-dev/sc-bos-ui-gen/proto/sound_sensor_pb';
+import {periodFromObject} from '@/api/sc/types/period';
+import {SoundSensorHistoryPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_history_grpc_web_pb';
+import {ListSoundLevelHistoryRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_history_pb';
+import {SoundSensorApiPromiseClient, SoundSensorInfoPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_grpc_web_pb';
+import {DescribeSoundLevelRequest, PullSoundLevelRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/soundsensor/v1/sound_sensor_pb';
 
 /**
  * @param {Partial<PullSoundLevelRequest.AsObject>} request
@@ -35,11 +39,35 @@ export function describeSoundLevel(request, tracker) {
 }
 
 /**
+ *
+ * @param {Partial<ListSoundLevelHistoryRequest.AsObject>} request
+ * @param {ActionTracker<ListSoundLevelHistoryResponse.AsObject>} tracker
+ * @return {Promise<ListSoundLevelHistoryResponse.AsObject>}
+ */
+export function listSoundLevelHistory(request, tracker) {
+  return trackAction('SoundSensorHistory.listSoundLevelHistory', tracker ?? {}, (endpoint) => {
+    const api = historyClient(endpoint);
+    return api.listSoundLevelHistory(listSoundLevelHistoryRequestFromObject(request));
+  });
+}
+
+/**
+ * @param {SoundLevelRecord | SoundLevelRecord.AsObject} obj
+ * @return {SoundLevelRecord.AsObject & {recordTime: Date|undefined}}
+ */
+export function soundLevelRecordToObject(obj) {
+  if (!obj) return undefined;
+  if (typeof obj.toObject === 'function') obj = obj.toObject();
+  if (obj.recordTime) obj.recordTime = timestampToDate(obj.recordTime);
+  return obj;
+}
+
+/**
  * @param {string} endpoint
  * @return {SoundSensorApiPromiseClient}
  */
 function apiClient(endpoint) {
-  return new SoundSensorApiPromiseClient(endpoint, null, null);
+  return new SoundSensorApiPromiseClient(endpoint, null, clientOptions());
 }
 
 /**
@@ -47,7 +75,16 @@ function apiClient(endpoint) {
  * @return {SoundSensorInfoPromiseClient}
  */
 function infoClient(endpoint) {
-  return new SoundSensorInfoPromiseClient(endpoint, null, null);
+  return new SoundSensorInfoPromiseClient(endpoint, null, clientOptions());
+}
+
+/**
+ *
+ * @param {string} endpoint
+ * @return {SoundSensorHistoryPromiseClient}
+ */
+function historyClient(endpoint) {
+  return new SoundSensorHistoryPromiseClient(endpoint, null, clientOptions());
 }
 
 /**
@@ -70,5 +107,18 @@ function describeSoundLevelRequestFromObject(obj) {
   if (!obj) return undefined;
   const dst = new DescribeSoundLevelRequest();
   setProperties(dst, obj, 'name');
+  return dst;
+}
+
+/**
+ * @param {Partial<ListSoundLevelHistoryRequest.AsObject>} obj
+ * @return {ListSoundLevelHistoryRequest|undefined}
+ */
+function listSoundLevelHistoryRequestFromObject(obj) {
+  if (!obj) return undefined;
+  const dst = new ListSoundLevelHistoryRequest();
+  setProperties(dst, obj, 'name', 'pageToken', 'pageSize', 'orderBy');
+  dst.setReadMask(fieldMaskFromObject(obj.readMask));
+  dst.setPeriod(periodFromObject(obj.period));
   return dst;
 }

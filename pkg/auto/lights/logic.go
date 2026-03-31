@@ -6,9 +6,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-
-	"github.com/vanti-dev/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 )
 
 // processState executes actions based on both read and write states.
@@ -116,6 +116,13 @@ func decideAction(now time.Time, readState *ReadState, writeState *WriteState) (
 
 	if sinceUnoccupied >= unoccupiedDelayBeforeDarkness {
 		// we've been unoccupied for long enough, turn things off now
+		// unless the mode just changed and ForceOnLevelPercentWhenActivated is set, in which case turn on
+		if modeChanged && mode.ForceOnLevelPercentWhenActivated {
+			writeState.AddReason("mode changed, forcing on level")
+			writeState.LastButtonOnTime = now // resets sinceUnoccupied so lights stay on for full unoccupiedOffDelay duration
+			switchOn = true
+			return
+		}
 		writeState.AddReasonf("unoccupied for %v", formatDuration(sinceUnoccupied))
 		switchOff = true
 		return
@@ -232,11 +239,11 @@ func brightnessAllOff(state *WriteState) bool {
 }
 
 // areAnyOccupied returns true if any occupancy sensors in the list are occupied
-func areAnyOccupied(sensorsPresent []deviceName, occupancyStates map[deviceName]*traits.Occupancy) bool {
+func areAnyOccupied(sensorsPresent []deviceName, occupancyStates map[deviceName]*occupancysensorpb.Occupancy) bool {
 	var ret = false
 	for _, name := range sensorsPresent {
 		if o, ok := occupancyStates[name]; ok {
-			if o.State == traits.Occupancy_OCCUPIED {
+			if o.State == occupancysensorpb.Occupancy_OCCUPIED {
 				ret = true
 				break
 			}
@@ -255,7 +262,7 @@ func lastUnoccupiedTime(state *ReadState) time.Time {
 			continue
 		}
 
-		if o.State == traits.Occupancy_UNOCCUPIED {
+		if o.State == occupancysensorpb.Occupancy_UNOCCUPIED {
 			if o.StateChangeTime == nil {
 				continue
 			}
@@ -336,7 +343,7 @@ func getAverageLevel(state *WriteState) (float32, error) {
 	return sum / float32(n), nil
 }
 
-func combinedLuxLevel(brightness map[deviceName]*traits.AmbientBrightness) float32 {
+func combinedLuxLevel(brightness map[deviceName]*brightnesssensorpb.AmbientBrightness) float32 {
 	var n, v float32
 	n, v = float32(len(brightness)), 0
 	for _, ambientBrightness := range brightness {

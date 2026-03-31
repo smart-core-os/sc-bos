@@ -65,5 +65,5 @@ certificates can be customised in the system config.
 The area controller can be built, run, and tested using standard `go build`, `go run`, or `go test` commands
 
 ```shell
-go run github.com/vanti-dev/sc-bos/cmd/bos
+go run github.com/smart-core-os/sc-bos/cmd/bos
 ```

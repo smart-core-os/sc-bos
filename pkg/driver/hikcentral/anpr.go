@@ -14,11 +14,12 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/driver/hikcentral/api"
-	"github.com/vanti-dev/sc-bos/pkg/driver/hikcentral/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api"
+	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 var (
@@ -28,32 +29,32 @@ var (
 )
 
 type ANPRController struct {
-	gen.UnimplementedAccessApiServer
+	accesspb.UnimplementedAccessApiServer
 
-	client *api.Client
+	client *client
 	logger *zap.Logger
 	conf   *config.Root
 
-	listAccessGrants *Ring[*gen.AccessGrant]
+	listAccessGrants *Ring[*accesspb.AccessGrant]
 
 	// key is the camera's smart-core name
-	accessAttemptsResources map[string]*resource.Value // of type *gen.AccessAttempt
+	accessAttemptsResources map[string]*resource.Value // of type *accesspb.AccessAttempt
 	lastPollTime            time.Time
 }
 
-func NewANPRController(client *api.Client, conf *config.Root, resources map[string]*resource.Value, logger *zap.Logger) *ANPRController {
+func NewANPRController(client *client, conf *config.Root, resources map[string]*resource.Value, logger *zap.Logger) *ANPRController {
 	return &ANPRController{
 		client: client,
 		logger: logger.Named("anpr"),
 		conf:   conf,
 
-		listAccessGrants:        NewRing[*gen.AccessGrant](conf.GrantManagement.MaxListAccessGrants),
+		listAccessGrants:        NewRing[*accesspb.AccessGrant](conf.GrantManagement.MaxListAccessGrants),
 		accessAttemptsResources: resources,
 		lastPollTime:            time.Now().Add(time.Hour * -1), // start polling from 1 hour ago
 	}
 }
 
-var _ gen.AccessApiServer = (*ANPRController)(nil)
+var _ accesspb.AccessApiServer = (*ANPRController)(nil)
 
 func (c *ANPRController) poll(ctx context.Context) error {
 	c.logger.Debug("starting anpr poll")
@@ -78,7 +79,7 @@ func (c *ANPRController) poll(ctx context.Context) error {
 			return ctx.Err()
 		default:
 		}
-		res, err := c.client.ListVisitorAppointments(ctx, &api.ListVisitorAppointmentsRequest{
+		res, err := c.client.listVisitorAppointments(ctx, &api.ListVisitorAppointmentsRequest{
 			AppointStartTime: formatTime(today),
 			AppointEndTime:   formatTime(tomorrow),
 			Request: api.Request{
@@ -109,7 +110,7 @@ func (c *ANPRController) poll(ctx context.Context) error {
 		default:
 		}
 		for {
-			resp, err := c.client.ListANPREvents(ctx, &api.ANPREventsRequest{
+			resp, err := c.client.listANPREvents(ctx, &api.ANPREventsRequest{
 				CameraIndexCode: cam.EntranceCameraIndexCode,
 				StartTime:       formatTime(c.lastPollTime),
 				EndTime:         formatTime(time.Now()),
@@ -138,10 +139,10 @@ func (c *ANPRController) poll(ctx context.Context) error {
 
 				if !ok {
 					c.logger.Debug("no appointments found for ANPR event", zap.String("plateNo", event.PlateNo))
-					accessAttempt := &gen.AccessAttempt{
-						Grant:             gen.AccessAttempt_DENIED,
+					accessAttempt := &accesspb.AccessAttempt{
+						Grant:             accesspb.AccessAttempt_DENIED,
 						Reason:            "no appointment found",
-						Actor:             &gen.Actor{},
+						Actor:             &actorpb.Actor{},
 						AccessAttemptTime: timestamppb.New(accessTime),
 					}
 
@@ -157,8 +158,8 @@ func (c *ANPRController) poll(ctx context.Context) error {
 				appointment := getMostRelevantAppointment(accessTime, relevantAppointments)
 				reason, actor := extractFieldsFromAppointment(appointment)
 
-				accessAttempt := &gen.AccessAttempt{
-					Grant:             gen.AccessAttempt_GRANTED,
+				accessAttempt := &accesspb.AccessAttempt{
+					Grant:             accesspb.AccessAttempt_GRANTED,
 					Reason:            reason,
 					Actor:             actor,
 					AccessAttemptTime: timestamppb.New(accessTime),
@@ -180,16 +181,16 @@ func (c *ANPRController) poll(ctx context.Context) error {
 	return nil
 }
 
-func (c *ANPRController) GetLastAccessAttempt(ctx context.Context, request *gen.GetLastAccessAttemptRequest) (*gen.AccessAttempt, error) {
+func (c *ANPRController) GetLastAccessAttempt(ctx context.Context, request *accesspb.GetLastAccessAttemptRequest) (*accesspb.AccessAttempt, error) {
 	res, ok := c.accessAttemptsResources[request.GetName()]
 
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "no access attempt resource found: %s", request.GetName())
 	}
-	return res.Get(resource.WithReadMask(request.GetReadMask())).(*gen.AccessAttempt), nil
+	return res.Get(resource.WithReadMask(request.GetReadMask())).(*accesspb.AccessAttempt), nil
 }
 
-func (c *ANPRController) PullAccessAttempts(request *gen.PullAccessAttemptsRequest, server gen.AccessApi_PullAccessAttemptsServer) error {
+func (c *ANPRController) PullAccessAttempts(request *accesspb.PullAccessAttemptsRequest, server accesspb.AccessApi_PullAccessAttemptsServer) error {
 	res, ok := c.accessAttemptsResources[request.GetName()]
 	if !ok {
 		return status.Errorf(codes.InvalidArgument, "no access attempt resource found with name: %s", request.GetName())
@@ -201,10 +202,10 @@ func (c *ANPRController) PullAccessAttempts(request *gen.PullAccessAttemptsReque
 			continue
 		}
 
-		accessAttempt := item.Value.(*gen.AccessAttempt)
+		accessAttempt := item.Value.(*accesspb.AccessAttempt)
 
-		if err := server.Send(&gen.PullAccessAttemptsResponse{
-			Changes: []*gen.PullAccessAttemptsResponse_Change{
+		if err := server.Send(&accesspb.PullAccessAttemptsResponse{
+			Changes: []*accesspb.PullAccessAttemptsResponse_Change{
 				{
 					AccessAttempt: accessAttempt,
 					ChangeTime:    timestamppb.New(item.ChangeTime),
@@ -219,7 +220,7 @@ func (c *ANPRController) PullAccessAttempts(request *gen.PullAccessAttemptsReque
 	return nil
 }
 
-func (c *ANPRController) GetAccessGrant(ctx context.Context, request *gen.GetAccessGrantsRequest) (*gen.AccessGrant, error) {
+func (c *ANPRController) GetAccessGrant(ctx context.Context, request *accesspb.GetAccessGrantsRequest) (*accesspb.AccessGrant, error) {
 	if c.conf.GrantManagement == nil || request.GetName() != c.conf.GrantManagement.Name {
 		return nil, status.Error(codes.Unimplemented, "not implemented per camera")
 	}
@@ -227,7 +228,7 @@ func (c *ANPRController) GetAccessGrant(ctx context.Context, request *gen.GetAcc
 		return nil, status.Error(codes.InvalidArgument, "access grant ID is required")
 	}
 
-	res := c.listAccessGrants.Find(func(grant *gen.AccessGrant) bool {
+	res := c.listAccessGrants.Find(func(grant *accesspb.AccessGrant) bool {
 		return grant.GetId() == request.GetAccessGrantId()
 	})
 
@@ -238,7 +239,7 @@ func (c *ANPRController) GetAccessGrant(ctx context.Context, request *gen.GetAcc
 	return res, nil
 }
 
-func (c *ANPRController) ListAccessGrants(ctx context.Context, request *gen.ListAccessGrantsRequest) (*gen.ListAccessGrantsResponse, error) {
+func (c *ANPRController) ListAccessGrants(ctx context.Context, request *accesspb.ListAccessGrantsRequest) (*accesspb.ListAccessGrantsResponse, error) {
 	if c.conf.GrantManagement == nil || request.GetName() != c.conf.GrantManagement.Name {
 		return nil, status.Error(codes.Unimplemented, "not implemented per camera")
 	}
@@ -269,14 +270,14 @@ func (c *ANPRController) ListAccessGrants(ctx context.Context, request *gen.List
 		v = v[:request.GetPageSize()]
 	}
 
-	return &gen.ListAccessGrantsResponse{
+	return &accesspb.ListAccessGrantsResponse{
 		AccessGrants:  v,
 		NextPageToken: nextPageToken,
 		TotalSize:     int32(c.listAccessGrants.Len()),
 	}, nil
 }
 
-func (c *ANPRController) CreateAccessGrant(ctx context.Context, request *gen.CreateAccessGrantRequest) (*gen.AccessGrant, error) {
+func (c *ANPRController) CreateAccessGrant(ctx context.Context, request *accesspb.CreateAccessGrantRequest) (*accesspb.AccessGrant, error) {
 	if c.conf.GrantManagement == nil || request.GetName() != c.conf.GrantManagement.Name {
 		return nil, status.Error(codes.Unimplemented, "not implemented per camera")
 	}
@@ -285,7 +286,7 @@ func (c *ANPRController) CreateAccessGrant(ctx context.Context, request *gen.Cre
 		return nil, err
 	}
 
-	autoApproval, err := c.client.CheckAutoReviewFlow(ctx, &api.AutoReviewFlowRequest{})
+	autoApproval, err := c.client.checkAutoReviewFlow(ctx, &api.AutoReviewFlowRequest{})
 
 	if err != nil {
 		c.logger.Warn("failed to check auto review flow", zap.Error(err))
@@ -296,7 +297,7 @@ func (c *ANPRController) CreateAccessGrant(ctx context.Context, request *gen.Cre
 
 	req := createAppointmentRequest(request)
 
-	resp, err := c.client.CreateVisitorAppointment(ctx, req)
+	resp, err := c.client.createVisitorAppointment(ctx, req)
 
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
@@ -311,7 +312,7 @@ func (c *ANPRController) CreateAccessGrant(ctx context.Context, request *gen.Cre
 			return nil, status.Error(codes.Internal, "failed to parse appointment record ID: "+err.Error())
 		}
 
-		resp, err := c.client.ManuallyApproveVisitor(ctx, &api.VisitorApprovalRequest{
+		resp, err := c.client.manuallyApproveVisitor(ctx, &api.VisitorApprovalRequest{
 			OperateType:     0,
 			ApprovalOpinion: "approved via SmartCore",
 			ApprovalFlowInfo: api.ApprovalFlowInfo{
@@ -334,13 +335,13 @@ func (c *ANPRController) CreateAccessGrant(ctx context.Context, request *gen.Cre
 		return nil, status.Error(codes.Internal, "failed to decode QR code image: "+err.Error())
 	}
 
-	grant := &gen.AccessGrant{
+	grant := &accesspb.AccessGrant{
 		Id:        resp.AppointRecordID,
 		StartTime: request.GetAccessGrant().GetStartTime(),
 		EndTime:   request.GetAccessGrant().GetEndTime(),
 		Purpose:   ptr(request.GetAccessGrant().GetPurpose()),
 		EntryCode: ptr(resp.AppointCode),
-		QrCode:    &gen.AccessGrant_QrCodeImage{QrCodeImage: qrCodeBytes},
+		QrCode:    &accesspb.AccessGrant_QrCodeImage{QrCodeImage: qrCodeBytes},
 		Grantee:   grantee,
 		Granter:   request.GetAccessGrant().GetGranter(),
 	}
@@ -350,7 +351,7 @@ func (c *ANPRController) CreateAccessGrant(ctx context.Context, request *gen.Cre
 	return grant, nil
 }
 
-func (c *ANPRController) UpdateAccessGrant(ctx context.Context, request *gen.UpdateAccessGrantRequest) (*gen.AccessGrant, error) {
+func (c *ANPRController) UpdateAccessGrant(ctx context.Context, request *accesspb.UpdateAccessGrantRequest) (*accesspb.AccessGrant, error) {
 	if c.conf.GrantManagement == nil || request.GetName() != c.conf.GrantManagement.Name {
 		return nil, status.Error(codes.Unimplemented, "not implemented per camera")
 	}
@@ -367,7 +368,7 @@ func (c *ANPRController) UpdateAccessGrant(ctx context.Context, request *gen.Upd
 
 	req.AppointRecordID = request.GetAccessGrant().GetId()
 
-	resp, err := c.client.UpdateVisitorAppointment(ctx, req)
+	resp, err := c.client.updateVisitorAppointment(ctx, req)
 
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
@@ -381,27 +382,27 @@ func (c *ANPRController) UpdateAccessGrant(ctx context.Context, request *gen.Upd
 		return nil, status.Error(codes.Internal, "failed to decode QR code image: "+err.Error())
 	}
 
-	updatedGrant := &gen.AccessGrant{
+	updatedGrant := &accesspb.AccessGrant{
 		Id:        resp.AppointRecordID,
 		StartTime: request.GetAccessGrant().GetStartTime(),
 		EndTime:   request.GetAccessGrant().GetEndTime(),
 		Purpose:   ptr(request.GetAccessGrant().GetPurpose()),
 		EntryCode: ptr(resp.AppointCode),
-		QrCode:    &gen.AccessGrant_QrCodeImage{QrCodeImage: qrCodeBytes},
+		QrCode:    &accesspb.AccessGrant_QrCodeImage{QrCodeImage: qrCodeBytes},
 		Grantee:   grantee,
 		Granter:   request.GetAccessGrant().GetGranter(),
 	}
 
-	c.listAccessGrants.Update(func(grant *gen.AccessGrant) bool {
+	c.listAccessGrants.Update(func(grant *accesspb.AccessGrant) bool {
 		return grant.GetId() == request.GetAccessGrant().GetId()
-	}, func(old *gen.AccessGrant) {
+	}, func(old *accesspb.AccessGrant) {
 		proto.Merge(old, updatedGrant)
 	})
 
 	return updatedGrant, nil
 }
 
-func (c *ANPRController) DeleteAccessGrant(ctx context.Context, request *gen.DeleteAccessGrantRequest) (*gen.DeleteAccessGrantResponse, error) {
+func (c *ANPRController) DeleteAccessGrant(ctx context.Context, request *accesspb.DeleteAccessGrantRequest) (*accesspb.DeleteAccessGrantResponse, error) {
 	if c.conf.GrantManagement == nil || request.GetName() != c.conf.GrantManagement.Name {
 		return nil, status.Error(codes.Unimplemented, "not implemented per camera")
 	}
@@ -410,20 +411,20 @@ func (c *ANPRController) DeleteAccessGrant(ctx context.Context, request *gen.Del
 		return nil, status.Error(codes.InvalidArgument, "access Grant ID is required")
 	}
 
-	_, err := c.client.DeleteVisitorAppointment(ctx, &api.DeleteVisitorAppointmentRequest{AppointRecordID: request.GetAccessGrantId()})
+	_, err := c.client.deleteVisitorAppointment(ctx, &api.DeleteVisitorAppointmentRequest{AppointRecordID: request.GetAccessGrantId()})
 
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
-	return &gen.DeleteAccessGrantResponse{}, nil
+	return &accesspb.DeleteAccessGrantResponse{}, nil
 }
 
 type accessGrantRequest interface {
-	GetAccessGrant() *gen.AccessGrant
+	GetAccessGrant() *accesspb.AccessGrant
 }
 
-func validAccessGrantTiming(grant *gen.AccessGrant) error {
+func validAccessGrantTiming(grant *accesspb.AccessGrant) error {
 	if grant.GetStartTime().AsTime().IsZero() {
 		return errStartTimeIsZero
 	}
@@ -561,7 +562,7 @@ func getMostRelevantAppointment(now time.Time, appointments []*api.Appointment) 
 	return relevantAppointment
 }
 
-func extractFieldsFromAppointment(appointment *api.Appointment) (string, *gen.Actor) {
+func extractFieldsFromAppointment(appointment *api.Appointment) (string, *actorpb.Actor) {
 	var reason string
 	switch appointment.VisitReasonType {
 	case 0:
@@ -574,21 +575,21 @@ func extractFieldsFromAppointment(appointment *api.Appointment) (string, *gen.Ac
 		reason = "meeting"
 	}
 
-	var pictures []*types.Image_Content
+	var pictures []*typespb.Image_Content
 	for _, pic := range appointment.VisitorInfo.VisitorPhoto {
-		pictures = append(pictures, &types.Image_Content{
-			Content: &types.Image_Content_Url{
+		pictures = append(pictures, &typespb.Image_Content{
+			Content: &typespb.Image_Content_Url{
 				Url: pic.ImageURL,
 			},
 		})
 	}
 
-	actor := &gen.Actor{
+	actor := &actorpb.Actor{
 		Name:        appointment.VisitorInfo.VisitorID,
 		Title:       appointment.VisitorInfo.VisitorFamilyName,
 		DisplayName: appointment.VisitorInfo.VisitorGivenName,
-		Picture: &types.Image{
-			Sources: []*types.Image_Source{
+		Picture: &typespb.Image{
+			Sources: []*typespb.Image_Source{
 				{
 					Src: pictures,
 				},

@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/vanti-dev/sc-bos/pkg/driver/xovis"
+	"github.com/smart-core-os/sc-bos/pkg/driver/xovis"
 )
 
 var (

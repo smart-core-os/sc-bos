@@ -21,7 +21,7 @@ import (
 
 	"github.com/google/renameio/v2/maybe"
 
-	"github.com/vanti-dev/sc-bos/pkg/block"
+	"github.com/smart-core-os/sc-bos/pkg/block"
 )
 
 // Store is the set of operations required for a config store, as used by Merge.

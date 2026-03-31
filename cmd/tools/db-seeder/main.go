@@ -6,53 +6,69 @@ import (
 	"flag"
 	"fmt"
 	"path"
+	"slices"
 	"sync"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/vanti-dev/sc-bos/pkg/app/appconf"
-	"github.com/vanti-dev/sc-bos/pkg/app/sysconf"
-	"github.com/vanti-dev/sc-bos/pkg/driver/alldrivers"
-	mockcfg "github.com/vanti-dev/sc-bos/pkg/driver/mock/config"
-	"github.com/vanti-dev/sc-bos/pkg/history/pgxstore"
-	airqualitycfg "github.com/vanti-dev/sc-bos/pkg/zone/feature/airquality/config"
-	occupancycfg "github.com/vanti-dev/sc-bos/pkg/zone/feature/occupancy/config"
-
-	"github.com/vanti-dev/sc-bos/pkg/zone/allzones"
-	meterscfg "github.com/vanti-dev/sc-bos/pkg/zone/feature/meter/config"
+	"github.com/smart-core-os/sc-bos/pkg/app/appconf"
+	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
+	"github.com/smart-core-os/sc-bos/pkg/driver/alldrivers"
+	mockcfg "github.com/smart-core-os/sc-bos/pkg/driver/mock/config"
+	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
+	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/zone/allzones"
+	airqualitycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality/config"
+	meterscfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config"
+	occupancycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
 )
 
 var (
-	lookBack time.Duration
-	dbUrl    string
-	app      string
+	lookBack    time.Duration
+	dbUrl       string
+	app         string
+	profileName string
 )
 
 func init() {
 	flag.DurationVar(&lookBack, "look-back", time.Hour*24*30*2, "amount of time to populate database history for starting from now, going backwards")
 	flag.StringVar(&dbUrl, "db-url", "postgres://postgres:postgres@localhost:5432/smart_core", "database url")
 	flag.StringVar(&app, "appconf", "app.conf.json", "app configuration file")
+	flag.StringVar(&profileName, "profile", "office", "building profile to use when generating data (available: office)")
 }
 
 func main() {
 	flag.Parse()
+
+	profile, ok := Profiles[profileName]
+	if !ok {
+		fmt.Printf("unknown profile %q; available profiles: ", profileName)
+		for name := range Profiles {
+			fmt.Printf("%s ", name)
+		}
+		fmt.Println()
+		return
+	}
 
 	appConf, err := appconf.LoadLocalConfig(path.Dir(app), path.Base(app))
 	if err != nil {
 		panic(err)
 	}
 
-	aqs, occs, meters, err := parseZoneConfig(appConf)
+	var sd seedDevices
+	err = parseZoneConfig(&sd, appConf)
 	if err != nil {
 		panic(err)
 	}
 
-	airqualityDevices, electricDevices, err := parseDeviceConfig(appConf)
+	err = parseDeviceConfig(&sd, appConf)
 	if err != nil {
 		panic(err)
 	}
+	sd.normalise()
 
 	ctx := context.Background()
 
@@ -65,7 +81,7 @@ func main() {
 	conf.MaxConns = 4
 	conf.MinConns = 1
 
-	db, err := pgxpool.ConnectConfig(ctx, conf)
+	db, err := pgxpool.NewWithConfig(ctx, conf)
 	if err != nil {
 		panic(err)
 	}
@@ -80,75 +96,65 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for _, aq := range aqs {
-			err = SeedAirQuality(ctx, db, aq.Name, lookBack)
+	wg.Go(func() {
+		for _, d := range sd.airQuality {
+			err = SeedAirQuality(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("seeded air quality zone %s\n", aq.Name)
+			fmt.Printf("seeded air temperature device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for _, occ := range occs {
-			err = SeedOccupancy(ctx, db, occ.Name, lookBack)
+	wg.Go(func() {
+		for _, d := range sd.electric {
+			err = SeedMeter(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("seeded occupancycfg zone %s\n", occ.Name)
+			fmt.Printf("seeded meter device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for _, mtr := range meters {
-			err = SeedMeter(ctx, db, mtr.Name, lookBack)
+	wg.Go(func() {
+		for _, d := range sd.airTemperature {
+			err = SeedAirTemperature(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
-			for name, group := range mtr.MeterGroups {
-				for _, met := range group {
-					err = SeedMeter(ctx, db, met, lookBack)
-					if err != nil {
-						panic(err)
-					}
-					fmt.Printf("seeded meter %s in group %s in zone %s\n", met, name, mtr.Name)
-				}
-				fmt.Printf("seeded meter group %s in zone %s\n", name, mtr.Name)
-			}
-			fmt.Printf("seeded meter zone %s\n", mtr.Name)
+			fmt.Printf("seeded air temperature device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for _, d := range airqualityDevices {
-			err = SeedAirQuality(ctx, db, d, lookBack)
+	wg.Go(func() {
+		for _, d := range sd.soundSensor {
+			err = SeedSoundSensor(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("seeded air quality device %s\n", d)
+			fmt.Printf("seeded sound sensor device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for _, d := range electricDevices {
-			err = SeedElectric(ctx, db, d, lookBack)
+	wg.Go(func() {
+		for _, d := range sd.occupancy {
+			err = SeedOccupancy(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("seeded electric device %s\n", d)
+			fmt.Printf("seeded occupancy device %s\n", d)
 		}
-	}()
+	})
+
+	wg.Go(func() {
+		for _, d := range sd.allocation {
+			err = SeedAllocation(ctx, db, d, profile, lookBack)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("seeded allocation device %s\n", d)
+		}
+	})
 
 	wg.Wait()
 }
@@ -163,11 +169,7 @@ func loadSystemConfig() (sysconf.Config, error) {
 	return systemConfig, err
 }
 
-func parseZoneConfig(appConf *appconf.Config) ([]*airqualitycfg.Root, []*occupancycfg.Root, []*meterscfg.Root, error) {
-	var aqs []*airqualitycfg.Root
-	var occs []*occupancycfg.Root
-	var meters []*meterscfg.Root
-
+func parseZoneConfig(sd *seedDevices, appConf *appconf.Config) error {
 	for _, conf := range appConf.Zones {
 		if conf.Type != "area" {
 			continue
@@ -178,62 +180,98 @@ func parseZoneConfig(appConf *appconf.Config) ([]*airqualitycfg.Root, []*occupan
 
 		buf, err := conf.MarshalJSON()
 		if err != nil {
-			return nil, nil, nil, err
+			return err
 		}
 
 		err = json.Unmarshal(buf, &aq)
 		if err != nil {
-			return nil, nil, nil, err
+			return err
 		}
 
-		aqs = append(aqs, &aq)
+		if len(aq.AirQualitySensors) > 0 {
+			sd.airQuality = append(sd.airQuality, conf.Name)
+		}
 
 		err = json.Unmarshal(buf, &occ)
 		if err != nil {
-			return nil, nil, nil, err
+			return err
 		}
 
-		occs = append(occs, &occ)
+		if len(occ.OccupancySensors) > 0 || len(occ.EnterLeaveOccupancySensors) > 0 {
+			sd.occupancy = append(sd.occupancy, conf.Name)
+		}
 
 		err = json.Unmarshal(buf, &mtr)
 		if err != nil {
-			return nil, nil, nil, err
+			return err
 		}
 
-		meters = append(meters, &mtr)
+		if len(mtr.Meters) > 0 {
+			sd.electric = append(sd.electric, conf.Name)
+		}
+		for _, group := range mtr.MeterGroups {
+			for _, met := range group {
+				sd.electric = append(sd.electric, met)
+			}
+		}
 
 	}
 
-	return aqs, occs, meters, nil
+	return nil
 }
 
-func parseDeviceConfig(appConf *appconf.Config) ([]string, []string, error) {
-	var airqualityDevices []string
-	var electricDevices []string
+type seedDevices struct {
+	airQuality     []string
+	electric       []string
+	airTemperature []string
+	soundSensor    []string
+	occupancy      []string
+	allocation     []string
+}
 
+func (sd *seedDevices) normalise() {
+	slices.Sort(sd.airQuality)
+	slices.Sort(sd.electric)
+	slices.Sort(sd.airTemperature)
+	slices.Sort(sd.soundSensor)
+	slices.Sort(sd.occupancy)
+	slices.Compact(sd.airQuality)
+	slices.Compact(sd.electric)
+	slices.Compact(sd.airTemperature)
+	slices.Compact(sd.soundSensor)
+	slices.Compact(sd.occupancy)
+}
+
+func parseDeviceConfig(sd *seedDevices, appConf *appconf.Config) error {
 	for _, dr := range appConf.Drivers {
 		buf, err := dr.MarshalJSON()
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
 
 		var devices mockcfg.Root
 		err = json.Unmarshal(buf, &devices)
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
 
 		for _, device := range devices.Devices {
 			for _, trt := range device.Traits {
-				if trt.Name == trait.AirQualitySensor.String() {
-					airqualityDevices = append(airqualityDevices, device.Name)
-				}
-				if trt.Name == trait.Electric.String() {
-					electricDevices = append(electricDevices, device.Name)
+				switch trait.Name(trt.Name) {
+				case trait.AirQualitySensor:
+					sd.airQuality = append(sd.airQuality, device.Name)
+				case trait.Electric:
+					sd.electric = append(sd.electric, device.Name)
+				case trait.AirTemperature:
+					sd.airTemperature = append(sd.airTemperature, device.Name)
+				case soundsensorpb.TraitName:
+					sd.soundSensor = append(sd.soundSensor, device.Name)
+				case allocationpb.TraitName:
+					sd.allocation = append(sd.allocation, device.Name)
 				}
 			}
 		}
 	}
 
-	return airqualityDevices, electricDevices, nil
+	return nil
 }

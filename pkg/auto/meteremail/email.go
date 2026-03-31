@@ -12,7 +12,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto/meteremail/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/meteremail/config"
 )
 
 // sendEmail creates the MIME/multipart email with attachment and then sends it over SMTP to the recipient in  dst
@@ -35,13 +35,13 @@ func sendEmail(dst config.Destination, attachment config.AttachmentCfg, attrs At
 
 	// To
 	var addrs []string
-	toString := ""
+	var toString strings.Builder
 	for _, a := range p.To {
 		addrs = append(addrs, a.Address)
-		toString += a.String() + ", "
+		toString.WriteString(a.String() + ", ")
 	}
 
-	fmt.Fprintf(buf, "To: %s\n", strings.TrimSuffix(toString, ", "))
+	fmt.Fprintf(buf, "To: %s\n", strings.TrimSuffix(toString.String(), ", "))
 	fmt.Fprintf(buf, "MIME-Version: 1.0\n")
 
 	// Main message

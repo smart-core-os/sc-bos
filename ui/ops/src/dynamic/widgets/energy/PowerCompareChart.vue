@@ -48,10 +48,18 @@ const props = defineProps({
     type: Array, // of String or {title: String, name: String}
     default: () => [],
   },
+  metric: {
+    type: String,
+    default: 'realPower',
+  },
+  unit: {
+    type: String,
+    default: undefined,
+  }
 });
 
-const totalUsage = usePullElectricDemandRecord(toRef(props, 'totalSource'));
-const otherUsages = usePullElectricDemands(toRef(props, 'sources'));
+const totalUsage = usePullElectricDemandRecord(toRef(props, 'totalSource'), toRef(props, 'metric'));
+const otherUsages = usePullElectricDemands(toRef(props, 'sources'), toRef(props, 'metric'));
 
 const records = useChartTotalDataset(totalUsage, otherUsages);
 const recordValues = computed(() => records.value.datasets[0].data);
@@ -82,7 +90,17 @@ const totalStr = computed(() => {
   })}`;
 });
 const totalUnits = computed(() => {
-  return 'kW';
+  if (props.unit) {
+    return props.unit;
+  }
+  switch (props.metric) {
+    case 'realPower':
+      return 'kW';
+    case 'current':
+      return 'A';
+    default:
+      return '';
+  }
 });
 
 const chartOptions = computed(() => {

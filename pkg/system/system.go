@@ -7,14 +7,16 @@ import (
 
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
-	"github.com/vanti-dev/sc-bos/internal/account"
-	"github.com/vanti-dev/sc-bos/internal/util/grpc/reflectionapi"
-	"github.com/vanti-dev/sc-bos/internal/util/pki"
-	"github.com/vanti-dev/sc-bos/pkg/app/stores"
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/internal/account"
+	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
+	"github.com/smart-core-os/sc-bos/pkg/app/stores"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 type Services struct {
@@ -22,7 +24,9 @@ type Services struct {
 	DataDir         string
 	Logger          *zap.Logger
 	GRPCEndpoint    string     // host:port of this controllers grpc api
+	HTTPEndpoint    string     // host:port of this controller's HTTPS API (e.g. "localhost:8301")
 	Node            *node.Node // for advertising devices
+	HealthChecks    HealthCheckCollection
 	CohortManager   node.Remote
 	Database        *bolthold.Store
 	Stores          *stores.Stores
@@ -40,6 +44,16 @@ type Services struct {
 	GRPCCerts       *pki.SourceSet
 	PrivateKey      pki.PrivateKey // the key managed by the controller
 	ClientTLSConfig *tls.Config    // for connecting to other smartcore nodes
+
+	// AddLogCore, if non-nil, allows a system to register an additional zapcore.Core
+	// that will receive every log entry emitted by the controller's root logger.
+	// Returns a cancel function that deregisters the core.
+	// Provided by the controller when using pkg/app/logcapture.
+	AddLogCore func(core zapcore.Core) func()
+
+	// LogLevel is the zap.AtomicLevel controlling the controller's root logger.
+	// Systems can read and update the live log level via this handle.
+	LogLevel *zap.AtomicLevel
 }
 
 type Factory interface {
@@ -50,4 +64,12 @@ type FactoryFunc func(services Services) service.Lifecycle
 
 func (f FactoryFunc) New(services Services) service.Lifecycle {
 	return f(services)
+}
+
+// HealthCheckCollection allows the modification of health checks for named devices.
+type HealthCheckCollection interface {
+	// MergeHealthChecks adds or updates checks for name based on existing check ids.
+	MergeHealthChecks(name string, checks ...*healthpb.HealthCheck) error
+	// RemoveHealthChecks removes any present ids from names checks.
+	RemoveHealthChecks(name string, ids ...string) error
 }

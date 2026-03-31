@@ -2,6 +2,7 @@ import {closeResource, newResourceCollection} from '@/api/resource.js';
 import {useAction} from '@/composables/action.js';
 import {cap} from '@/util/number.js';
 import {watchResource} from '@/util/traits.js';
+import {isNullOrUndef} from '@/util/types.js';
 import deepEqual from 'fast-deep-equal';
 import {computed, onScopeDispose, reactive, ref, toValue, watch} from 'vue';
 
@@ -80,7 +81,7 @@ export default function useCollection(request, client, options) {
     // most pull responses look like {changesList: [{oldValue, newValue}]}
     if (r && typeof r.toObject === 'function' && typeof r.getChangesList === 'function') {
       unprocessedChanges.value.push(...r.getChangesList().map(change => change.toObject()));
-      processChanges();
+      pullCountDelta.value += processChanges();
     }
   }, {flush: 'sync'});
 
@@ -98,8 +99,12 @@ export default function useCollection(request, client, options) {
   // A guess at how many total items there are, either from the server or calculated locally based on fetched items.
   const totalItems = computed(() => {
     if (toValue(options)?.filterFn) return items.value.length; // can't use server total if we filter items locally
-    return lastListResponse.value?.totalSize ?? items.value.length;
+    const serverTotalSize = lastListResponse.value?.totalSize;
+    if (isNullOrUndef(serverTotalSize)) return items.value.length;
+    return lastListResponse.value?.totalSize + pullCountDelta.value;
   });
+  // A positive or negative number indicating how many items we added/removed as a result of pull changes.
+  const pullCountDelta = ref(0);
   // Is totalItems a value returned by the server or calculated locally.
   const hasServerTotalItems = computed(() => Boolean(lastListResponse.value?.totalSize));
 
@@ -283,11 +288,13 @@ export default function useCollection(request, client, options) {
    * unprocessedChanges will be empty after this call.
    *
    * If options.cmp is not defined, items created via pull will not be added to the list.
+   *
+   * @return {number} delta of items added/removed from the items list
    */
   function processChanges() {
     const _items = items.value;
     const _changes = unprocessedChanges.value;
-    if (!_changes.length) return; // no changes, nothing to do
+    if (!_changes.length) return 0; // no changes, nothing to do
     const opts = toValue(options);
     const transform = opts?.transform ?? (v => v);
     const filterFn = opts?.filterFn;
@@ -329,6 +336,8 @@ export default function useCollection(request, client, options) {
       }
     }
 
+    let countDelta = -toDeleteIndexes.length;
+
     // process deletes first
     toDeleteIndexes.sort((a, b) => b - a); // sort in reverse order
     for (const i of toDeleteIndexes) {
@@ -338,6 +347,7 @@ export default function useCollection(request, client, options) {
     // only insert if options.cmp is defined, then insert in the correct place
     const cmp = toValue(options)?.cmp;
     if (cmp) {
+      countDelta += toAddItems.length;
       for (const item of toAddItems) {
         let i = 0;
         // todo: replace with a binary search
@@ -350,6 +360,7 @@ export default function useCollection(request, client, options) {
 
     items.value = _items;
     unprocessedChanges.value = [];
+    return countDelta;
   }
 
   return {

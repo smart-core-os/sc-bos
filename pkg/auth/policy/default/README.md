@@ -11,3 +11,12 @@ We've split the policies into rules and utilities:
 
 The bulk of the rules are in `smartcore.rego`, which applies these rules to the standard verbs and conventions of Smart
 Core apis. Exceptions are encoded into specific rpc rego files.
+
+## Global Data Available to All Policies
+
+The policy package injects some global data into the policy evaluation context. 
+
+### `data.system` - Information about the Smart Core system
+- `data.system.known_traits` - A list of fully qualified traits recognised by BOS. 
+  Each entry is an object like `{"name": "smartcore.bos.SoundSensor", "grpc_services": ["smartcore.bos.soundsensor.v1.SoundSensorApi"]}`.
+  This can be used by the policies to tell which gRPC requests are for trait APIs.

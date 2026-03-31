@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/vanti-dev/sc-bos/pkg/util/chans"
+	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 )
 
 func TestOrPoll(t *testing.T) {

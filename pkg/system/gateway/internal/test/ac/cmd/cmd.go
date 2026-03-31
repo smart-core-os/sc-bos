@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vanti-dev/sc-bos/pkg/system/gateway/internal/test/ac"
+	"github.com/smart-core-os/sc-bos/pkg/system/gateway/internal/test/ac"
 )
 
 func main() {

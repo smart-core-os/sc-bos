@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package smartcore.bos.types.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/typespb";
+
+// Represents a specialist token used for fetching subsequent pages of a List request. Typically encoded as base64 or
+// something similar.
+//
+// @see https://cloud.google.com/apis/design/design_patterns#list_pagination
+message PageToken {
+  // there can be only one indicator of the start of the next page
+  oneof page_start {
+    // The offset representing the tail resource returned in the last page
+    int32 last_offset = 1;
+    // The name of the tail resource returned in the last page response
+    string last_resource_name = 2;
+  }
+
+  // todo: some fields representing the query params so we can check if they've changed
+  // todo: some fields indicating the point-in-time the page was created so we can recreate the snapshot
+}

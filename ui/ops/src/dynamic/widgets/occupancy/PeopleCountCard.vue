@@ -4,7 +4,10 @@
       <v-toolbar-title class="text-h4">{{ props.title }}</v-toolbar-title>
     </v-toolbar>
     <v-card-text class="text-h1 px-5 d-flex align-center">
-      <occupancy-people-count :people-count="peopleCount" :max-occupancy="props.maxOccupancy" class="justify-space-between flex-grow-1"/>
+      <occupancy-people-count :people-count="peopleCount"
+                              :max-occupancy="props.maxOccupancy"
+                              :thresholds="props.thresholds"
+                              class="justify-space-between flex-grow-1"/>
       <donut-gauge class="gauge" fill-color="primary" size="3em" width="15px" min="0" :max="props.maxOccupancy" :value="peopleCount" arc-start="0" arc-end="230"/>
     </v-card-text>
   </v-card>
@@ -32,6 +35,10 @@ const props = defineProps({
   maxOccupancy: {
     type: Number,
     default: 0
+  },
+  thresholds: {
+    type: Array, // {percentage: number, str: string} ordered by percentage in ascending order
+    default: null
   }
 });
 

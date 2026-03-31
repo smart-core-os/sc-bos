@@ -1,0 +1,44 @@
+This test verifies Vue files with script setup and history symbols.
+expected_changes: 1
+
+-- input/ui/ops/test.vue --
+<template>
+  <div>Emergency Lighting</div>
+</template>
+
+<script setup>
+import {timestampToDate} from '@/api/convpb.js';
+import {
+  emergencyLightResultToString,
+  getTestResultSet,
+  startDurationTest
+} from '@/api/sc/traits/emergency-light.js';
+import {ref, onMounted} from 'vue';
+import {StatusLog, StatusHistoryRecord, CurrentStatus} from '@smart-core-os/sc-bos-ui-gen/proto/status_pb';
+
+const headers = [
+  {title: 'Name', key: 'name'},
+  {title: 'Status', key: 'status'}
+];
+</script>
+-- output/ui/ops/test.vue --
+<template>
+  <div>Emergency Lighting</div>
+</template>
+
+<script setup>
+import {timestampToDate} from '@/api/convpb.js';
+import {
+  emergencyLightResultToString,
+  getTestResultSet,
+  startDurationTest
+} from '@/api/sc/traits/emergency-light.js';
+import {ref, onMounted} from 'vue';
+import {StatusLog, CurrentStatus} from '@smart-core-os/sc-bos-ui-gen/proto/status_pb';
+import {StatusHistoryRecord} from '@smart-core-os/sc-bos-ui-gen/proto/status_history_pb';
+
+const headers = [
+  {title: 'Name', key: 'name'},
+  {title: 'Status', key: 'status'}
+];
+</script>

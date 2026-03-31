@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/vanti-dev/sc-bos/pkg/driver/hikcentral/api"
+	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api"
 )
 
 func TestANPRController_getMostRelevantAppointment(t *testing.T) {

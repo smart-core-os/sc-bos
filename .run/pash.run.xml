@@ -3,7 +3,7 @@
     <module name="sc-bos" />
     <working_directory value="$PROJECT_DIR$" />
     <kind value="FILE" />
-    <package value="github.com/vanti-dev/sc-bos" />
+    <package value="github.com/smart-core-os/sc-bos" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/cmd/pash/main.go" />
     <method v="2" />

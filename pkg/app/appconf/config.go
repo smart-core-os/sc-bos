@@ -4,29 +4,25 @@ package appconf
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
+	"slices"
 
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/app/files"
-	"github.com/vanti-dev/sc-bos/pkg/auto"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/util/slices"
-	"github.com/vanti-dev/sc-bos/pkg/zone"
-)
-
-// replaceable for testing
-var (
-	readFile = os.ReadFile
-	glob     = filepath.Glob
+	"github.com/smart-core-os/sc-bos/pkg/app/files"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
 type Config struct {
-	Name     string           `json:"name,omitempty"`
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Name     string               `json:"name,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 	// Includes lists other files and glob patterns for config to load.
 	// Files are read in the order specified here then by filepath.Glob.
 	// Drivers, Automation, and Zones are merged using the Name in a first-come, first-served nature.
@@ -80,7 +76,7 @@ func (c *Config) mergeWith(other *Config) {
 	if err != nil {
 		return
 	}
-	if !slices.Contains(relInc, c.Includes) {
+	if !slices.Contains(c.Includes, relInc) {
 		c.Includes = append(c.Includes, relInc)
 	}
 }
@@ -112,7 +108,7 @@ func (c *Config) zoneNamesMap() map[string]bool {
 func (c *Config) clone() Config {
 	return Config{
 		Name:       c.Name,
-		Metadata:   proto.Clone(c.Metadata).(*traits.Metadata),
+		Metadata:   proto.Clone(c.Metadata).(*metadatapb.Metadata),
 		Includes:   append([]string(nil), c.Includes...),
 		Drivers:    append([]driver.RawConfig(nil), c.Drivers...),
 		Automation: append([]auto.RawConfig(nil), c.Automation...),
@@ -123,16 +119,23 @@ func (c *Config) clone() Config {
 
 // LoadLocalConfig will load Config from a local file, as well as any included files
 func LoadLocalConfig(dir, file string) (*Config, error) {
-	path := files.Path(dir, file)
-	conf, err := configFromFile(path)
+	if dir == "" {
+		dir = "."
+	}
+	return LoadLocalConfigFS(os.DirFS(dir), ".", file)
+}
+
+// LoadLocalConfigFS will load Config from an fs.FS, as well as any included files.
+func LoadLocalConfigFS(fsys fs.FS, dir, file string) (*Config, error) {
+	p := path.Join(dir, file)
+	conf, err := configFromFileFS(fsys, p)
 	if err != nil {
 		return nil, err
 	}
-	// if we successfully loaded config, also load included files
 	includes := conf.Includes
-	conf.Includes = nil // includes are added back into the config during merge. This gets rid of globs and files we couldn't find
-	_, err = loadIncludes(dir, conf, includes, nil)
-	return conf, err // return the config we have, and any errors
+	conf.Includes = nil
+	_, err = loadIncludesFS(fsys, dir, conf, includes, nil)
+	return conf, err
 }
 
 // LoadIncludes will go through each include, load the configs, merge the configs, then load any further includes.
@@ -141,26 +144,33 @@ func LoadIncludes(dir string, dst *Config, includes []string) ([]string, error) 
 	return loadIncludes(dir, dst, includes, nil)
 }
 
+// LoadIncludesFS is like LoadIncludes but reads from an fs.FS.
+func LoadIncludesFS(fsys fs.FS, dir string, dst *Config, includes []string) ([]string, error) {
+	return loadIncludesFS(fsys, dir, dst, includes, nil)
+}
+
 // loadIncludes recursively loads includes from config files and merges them
 func loadIncludes(dir string, dst *Config, includes, seen []string) ([]string, error) {
 	var errs error
 	var configs []*Config
 	// load first layer of includes
 	for _, include := range includes {
-		path := files.Path(dir, include)
-		if slices.Contains(path, seen) {
+		p := files.Path(dir, include)
+		if slices.Contains(seen, p) {
 			continue
 		}
-		matches, err := glob(path)
+		matches, err := filepath.Glob(p)
 		if err != nil || matches == nil {
-			matches = []string{path}
+			matches = []string{p}
 		}
-		for _, path := range matches {
-			seen = append(seen, path) // track files we've seen, to avoid getting in a loop
-			extraConf, err := configFromFile(path)
+		for _, p := range matches {
+			seen = append(seen, p) // track files we've seen, to avoid getting in a loop
+			fsys := os.DirFS(filepath.Dir(p))
+			extraConf, err := configFromFileFS(fsys, filepath.Base(p))
 			if err != nil {
 				errs = multierr.Append(errs, err)
 			} else {
+				extraConf.FilePath = p // restore full OS path
 				configs = append(configs, extraConf)
 				dst.mergeWith(extraConf)
 			}
@@ -177,17 +187,51 @@ func loadIncludes(dir string, dst *Config, includes, seen []string) ([]string, e
 	return seen, errs
 }
 
-// configFromFile will load Config for a local file
-func configFromFile(path string) (*Config, error) {
+// loadIncludesFS recursively loads includes from config files in an fs.FS and merges them
+func loadIncludesFS(fsys fs.FS, dir string, dst *Config, includes, seen []string) ([]string, error) {
+	var errs error
+	var configs []*Config
+	for _, include := range includes {
+		p := path.Join(dir, include)
+		if slices.Contains(seen, p) {
+			continue
+		}
+		matches, err := fs.Glob(fsys, p)
+		if err != nil || matches == nil {
+			matches = []string{p}
+		}
+		for _, p := range matches {
+			seen = append(seen, p)
+			extraConf, err := configFromFileFS(fsys, p)
+			if err != nil {
+				errs = multierr.Append(errs, err)
+			} else {
+				configs = append(configs, extraConf)
+				dst.mergeWith(extraConf)
+			}
+		}
+	}
+	for _, config := range configs {
+		alsoSeen, err := loadIncludesFS(fsys, path.Dir(config.FilePath), dst, config.Includes, seen)
+		if err != nil {
+			seen = alsoSeen
+		}
+		errs = multierr.Append(errs, err)
+	}
+	return seen, errs
+}
+
+// configFromFileFS will load Config from an fs.FS
+func configFromFileFS(fsys fs.FS, name string) (*Config, error) {
 	var conf Config
-	raw, err := readFile(path)
+	raw, err := fs.ReadFile(fsys, name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config from file %s: %w", path, err)
+		return nil, fmt.Errorf("failed to load config from file %s: %w", name, err)
 	}
 	err = json.Unmarshal(raw, &conf)
 	if err != nil {
-		return nil, fmt.Errorf("config JSON unmarshal %s: %w", path, err)
+		return nil, fmt.Errorf("config JSON unmarshal %s: %w", name, err)
 	}
-	conf.FilePath = path
+	conf.FilePath = name
 	return &conf, nil
 }

@@ -13,24 +13,26 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
-	"github.com/vanti-dev/sc-bos/internal/util/pgxutil"
-	"github.com/vanti-dev/sc-bos/internal/util/pki"
-	"github.com/vanti-dev/sc-bos/internal/util/pki/expire"
-	"github.com/vanti-dev/sc-bos/pkg/app/stores"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/system"
-	"github.com/vanti-dev/sc-bos/pkg/system/hub/bolthub"
-	"github.com/vanti-dev/sc-bos/pkg/system/hub/config"
-	"github.com/vanti-dev/sc-bos/pkg/system/hub/pgxhub"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
-	"github.com/vanti-dev/sc-bos/pkg/util/netutil"
+	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
+	"github.com/smart-core-os/sc-bos/internal/util/pki/expire"
+	"github.com/smart-core-os/sc-bos/pkg/app/stores"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	"github.com/smart-core-os/sc-bos/pkg/system/hub/bolthub"
+	"github.com/smart-core-os/sc-bos/pkg/system/hub/config"
+	"github.com/smart-core-os/sc-bos/pkg/system/hub/pgxhub"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func Factory() system.Factory {
@@ -147,7 +149,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		s.sources = append(s.sources, grpcSource)
 		s.certs.Append(grpcSource)
-		hubConn = wrap.ServerToClient(gen.HubApi_ServiceDesc, server)
+		hubConn = wrap.ServerToClient(hubpb.HubApi_ServiceDesc, server)
 	case config.StorageTypeBolt:
 		server := bolthub.NewServerFromBolthold(s.boltDb, s.logger)
 
@@ -176,17 +178,41 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		s.sources = append(s.sources, grpcSource)
 		s.certs.Append(grpcSource)
-		hubConn = wrap.ServerToClient(gen.HubApi_ServiceDesc, server)
+		hubConn = wrap.ServerToClient(hubpb.HubApi_ServiceDesc, server)
 	default:
 		return fmt.Errorf("unsuported storage type %s", cfg.Storage.Type)
 	}
 
-	srv, err := node.RegistryConnService(gen.HubApi_ServiceDesc, hubConn)
+	srv, err := node.RegistryConnService(hubpb.HubApi_ServiceDesc, hubConn)
 	if err != nil {
 		return err
 	}
 	undo, err := s.node.AnnounceService(srv)
 	s.undos = append(s.undos, undo)
+
+	if err == nil {
+		hubClient := hubpb.NewHubApiClient(hubConn)
+		for _, n := range cfg.Nodes {
+			go func() {
+				for {
+					_, err := hubClient.EnrollHubNode(ctx, &hubpb.EnrollHubNodeRequest{
+						Node: &hubpb.HubNode{Address: n.Address, Name: n.Name},
+					})
+					if err == nil || status.Code(err) == codes.AlreadyExists {
+						s.logger.Info("hub node enrolled", zap.String("address", n.Address))
+						return
+					}
+					s.logger.Debug("waiting to enroll hub node",
+						zap.String("address", n.Address), zap.Error(err))
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(2 * time.Second):
+					}
+				}
+			}()
+		}
+	}
 
 	return err
 }

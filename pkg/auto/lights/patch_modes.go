@@ -5,14 +5,14 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/vanti-dev/sc-bos/pkg/util/pull"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
 // ModePatches contributes patches for changing the state based on mode changes.
 type ModePatches struct {
 	name   deviceName
-	client traits.ModeApiClient
+	client modepb.ModeApiClient
 	logger *zap.Logger
 }
 
@@ -25,7 +25,7 @@ func (o *ModePatches) Subscribe(ctx context.Context, changes chan<- Patcher) err
 }
 
 func (o *ModePatches) Pull(ctx context.Context, changes chan<- Patcher) error {
-	stream, err := o.client.PullModeValues(ctx, &traits.PullModeValuesRequest{Name: o.name})
+	stream, err := o.client.PullModeValues(ctx, &modepb.PullModeValuesRequest{Name: o.name})
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (o *ModePatches) Pull(ctx context.Context, changes chan<- Patcher) error {
 }
 
 func (o *ModePatches) Poll(ctx context.Context, changes chan<- Patcher) error {
-	res, err := o.client.GetModeValues(ctx, &traits.GetModeValuesRequest{Name: o.name})
+	res, err := o.client.GetModeValues(ctx, &modepb.GetModeValuesRequest{Name: o.name})
 	if err != nil {
 		return err
 	}
@@ -56,10 +56,10 @@ func (o *ModePatches) Poll(ctx context.Context, changes chan<- Patcher) error {
 	}
 }
 
-type pullModeValuesTransition traits.PullModeValuesResponse
+type pullModeValuesTransition modepb.PullModeValuesResponse
 
 func (o *pullModeValuesTransition) Patch(s *ReadState) {
-	r := (*traits.PullModeValuesResponse)(o)
+	r := (*modepb.PullModeValuesResponse)(o)
 
 	for _, change := range r.Changes {
 		s.Modes = change.ModeValues
@@ -68,7 +68,7 @@ func (o *pullModeValuesTransition) Patch(s *ReadState) {
 
 type getModeValuesPatcher struct {
 	name deviceName
-	res  *traits.ModeValues
+	res  *modepb.ModeValues
 }
 
 func (g getModeValuesPatcher) Patch(s *ReadState) {

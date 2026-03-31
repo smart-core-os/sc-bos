@@ -5,20 +5,20 @@ import (
 	"net"
 	"time"
 
+	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
-	"github.com/vanti-dev/sc-bos/pkg/driver"
-	"github.com/vanti-dev/sc-bos/pkg/driver/helvarnet/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/emergencylightpb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/udmipb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
-	"github.com/vanti-dev/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 const (
@@ -34,6 +34,8 @@ type Driver struct {
 	announcer *node.ReplaceAnnouncer
 	logger    *zap.Logger
 	clients   map[string]*tcpClient
+	database  *bolthold.Store
+	health    *healthpb.Checks
 }
 
 func (f factory) New(services driver.Services) service.Lifecycle {
@@ -42,6 +44,8 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 	d := &Driver{
 		logger:    logger,
 		announcer: node.NewReplaceAnnouncer(services.Node),
+		database:  services.Database,
+		health:    services.Health,
 	}
 
 	d.Service = service.New(
@@ -60,6 +64,23 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	rootAnnouncer := d.announcer.Replace(ctx)
 	grp, ctx := errgroup.WithContext(ctx)
 	d.clients = make(map[string]*tcpClient)
+	faultChecks := make(map[string]*healthpb.FaultCheck)
+
+	createFaultCheck := func(name string) *healthpb.FaultCheck {
+		faultCheck, ok := faultChecks[name]
+
+		if !ok {
+			var err error
+			faultCheck, err = d.health.NewFaultCheck(name, getDeviceHealthCheck())
+			if err != nil {
+				d.logger.Error("failed to create health check", zap.String("device", name), zap.Error(err))
+			} else {
+				faultChecks[name] = faultCheck
+			}
+		}
+
+		return faultCheck
+	}
 
 	for _, l := range cfg.LightingGroups {
 		if _, ok := d.clients[l.IpAddress]; !ok {
@@ -76,10 +97,12 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		lightingGroup := newLightingGroup(d.clients[l.IpAddress], d.logger, l, *l.GroupNumber)
 		// try to get the last scene on a restart of the area controller
-		lightingGroup.getLastScene()
-		err := lightingGroup.getSceneNames()
+		if err := lightingGroup.getLastScene(ctx); err != nil {
+			d.logger.Error("getLastScene error", zap.Error(err))
+		}
+		err := lightingGroup.getSceneNames(ctx)
 		if err != nil {
-			d.logger.Error("getSceneNames error", zap.String("error", err.Error()))
+			d.logger.Error("getSceneNames error", zap.Error(err))
 		}
 		rootAnnouncer.Announce(l.Name,
 			node.HasTrait(trait.Light,
@@ -96,19 +119,21 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			}
 			d.clients[l.IpAddress] = newTcpClient(tcpAddr, d.logger, &cfg)
 		}
-		lum := newLight(d.clients[l.IpAddress], d.logger, l)
+
+		lum := newLight(d.clients[l.IpAddress], d.logger, l, d.database, false)
+
+		faultCheck := createFaultCheck(l.Name)
 
 		rootAnnouncer.Announce(l.Name,
 			node.HasTrait(trait.Light,
 				node.WithClients(lightpb.WrapApi(lum))),
-			node.HasTrait(statuspb.TraitName,
-				node.WithClients(gen.WrapStatusApi(lum))),
 			node.HasTrait(udmipb.TraitName,
-				node.WithClients(gen.WrapUdmiService(lum))),
+				node.WithClients(udmipb.WrapService(lum))),
 			node.HasMetadata(l.Meta))
 		grp.Go(func() error {
-			return lum.runHealthCheck(ctx, cfg.RefreshStatus.Duration)
+			return lum.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck)
 		})
+
 	}
 
 	for _, pir := range cfg.Pirs {
@@ -124,10 +149,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasTrait(trait.OccupancySensor,
 				node.WithClients(occupancysensorpb.WrapApi(p))),
 			node.HasTrait(udmipb.TraitName,
-				node.WithClients(gen.WrapUdmiService(p))),
+				node.WithClients(udmipb.WrapService(p))),
 			node.HasMetadata(pir.Meta))
 		grp.Go(func() error {
-			return p.runUpdateState(ctx, cfg.RefreshStatus.Duration)
+			return p.runUpdateState(ctx, cfg.RefreshOccupancy.Duration)
 		})
 	}
 
@@ -139,19 +164,24 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			}
 			d.clients[em.IpAddress] = newTcpClient(tcpAddr, d.logger, &cfg)
 		}
-		emergencyLight := newLight(d.clients[em.IpAddress], d.logger, em)
+		emergencyLight := newLight(d.clients[em.IpAddress], d.logger, em, d.database, true)
+		err := emergencyLight.loadTestResults()
+		if err != nil {
+			d.logger.Error("loadTestResults error", zap.Error(err))
+		}
+
+		faultCheck := createFaultCheck(em.Name)
+
 		rootAnnouncer.Announce(em.Name,
 			node.HasTrait(trait.Light,
 				node.WithClients(lightpb.WrapApi(emergencyLight))),
-			node.HasTrait(statuspb.TraitName,
-				node.WithClients(gen.WrapStatusApi(emergencyLight))),
 			node.HasTrait(emergencylightpb.TraitName,
-				node.WithClients(gen.WrapEmergencyLightApi(emergencyLight))),
+				node.WithClients(emergencylightpb.WrapApi(emergencyLight))),
 			node.HasTrait(udmipb.TraitName,
-				node.WithClients(gen.WrapUdmiService(emergencyLight))),
+				node.WithClients(udmipb.WrapService(emergencyLight))),
 			node.HasMetadata(em.Meta))
 		grp.Go(func() error {
-			return emergencyLight.runHealthCheck(ctx, cfg.RefreshStatus.Duration)
+			return emergencyLight.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck)
 		})
 	}
 
@@ -162,9 +192,24 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 				client.close()
 			}
 		}
+		for _, fc := range faultChecks {
+			fc.Dispose()
+		}
 		if err != nil {
-			d.logger.Error("run error", zap.String("error", err.Error()))
+			d.logger.Error("run error", zap.Error(err))
 		}
 	}()
 	return nil
+}
+
+// this health check monitors the device to check if it is online, communicating properly and if it is reporting a fault itself
+// via the status register in the device.
+func getDeviceHealthCheck() *healthpb.HealthCheck {
+	return &healthpb.HealthCheck{
+		Id:              "deviceStatusCheck",
+		DisplayName:     "Device Status Check",
+		Description:     "Checks the status from the device itself and also if communication is healthy",
+		OccupantImpact:  healthpb.HealthCheck_COMFORT,
+		EquipmentImpact: healthpb.HealthCheck_FUNCTION,
+	}
 }

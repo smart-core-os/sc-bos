@@ -3,13 +3,13 @@ package accesstoken
 import (
 	"context"
 
-	"github.com/vanti-dev/sc-bos/pkg/auth/token"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/proto/tenantpb"
 )
 
 // RemoteVerifier implements Verifier by calling TenantApiClient.VerifySecret.
 type RemoteVerifier struct {
-	Client gen.TenantApiClient
+	Client tenantpb.TenantApiClient
 }
 
 func (r *RemoteVerifier) Verify(ctx context.Context, id, secret string) (SecretData, error) {
@@ -17,7 +17,7 @@ func (r *RemoteVerifier) Verify(ctx context.Context, id, secret string) (SecretD
 }
 
 // RemoteVerify verifies that id and secret are a valid pair using client.
-func RemoteVerify(ctx context.Context, id, secret string, client gen.TenantApiClient) (SecretData, error) {
+func RemoteVerify(ctx context.Context, id, secret string, client tenantpb.TenantApiClient) (SecretData, error) {
 	fail := func(e error) (SecretData, error) {
 		return SecretData{}, e
 	}
@@ -29,17 +29,17 @@ func RemoteVerify(ctx context.Context, id, secret string, client gen.TenantApiCl
 	// Get the tenant info in parallel, we don't use it if the verify request fails, but we think it's better to reduce
 	// latency for the verify call over doing extra requests on the server in the case of failure.
 	type getResponse struct {
-		t *gen.Tenant
+		t *tenantpb.Tenant
 		e error
 	}
 	getC := make(chan getResponse, 1)
 	go func() {
 		var r getResponse
-		r.t, r.e = client.GetTenant(ctx, &gen.GetTenantRequest{Id: id})
+		r.t, r.e = client.GetTenant(ctx, &tenantpb.GetTenantRequest{Id: id})
 		getC <- r
 	}()
 
-	_, err := client.VerifySecret(ctx, &gen.VerifySecretRequest{TenantId: id, Secret: secret})
+	_, err := client.VerifySecret(ctx, &tenantpb.VerifySecretRequest{TenantId: id, Secret: secret})
 	if err != nil {
 		return fail(err)
 	}

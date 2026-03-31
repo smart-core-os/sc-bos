@@ -1,7 +1,7 @@
 import {setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setCollection, trackAction} from '@/api/resource';
-import {HubApiPromiseClient} from '@vanti-dev/sc-bos-ui-gen/proto/hub_grpc_web_pb';
+import {HubApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/hub/v1/hub_grpc_web_pb';
 import {
   EnrollHubNodeRequest,
   ForgetHubNodeRequest,
@@ -10,7 +10,7 @@ import {
   ListHubNodesRequest,
   PullHubNodesRequest,
   TestHubNodeRequest
-} from '@vanti-dev/sc-bos-ui-gen/proto/hub_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/hub/v1/hub_pb';
 
 /**
  *

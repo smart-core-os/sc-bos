@@ -11,7 +11,7 @@ import (
 
 	"golang.org/x/term"
 
-	"github.com/vanti-dev/sc-bos/internal/util/pass"
+	"github.com/smart-core-os/sc-bos/internal/util/pass"
 )
 
 var (

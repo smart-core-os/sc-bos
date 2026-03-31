@@ -6,30 +6,31 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/onoffpb"
-	"github.com/vanti-dev/gobacnet"
-	"github.com/vanti-dev/gobacnet/property"
-	bactypes "github.com/vanti-dev/gobacnet/types"
-	"github.com/vanti-dev/sc-bos/pkg/driver/bacnet/config"
-	"github.com/vanti-dev/sc-bos/pkg/gentrait/statuspb"
-	"github.com/vanti-dev/sc-bos/pkg/node"
+	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/gobacnet/property"
+	bactypes "github.com/smart-core-os/gobacnet/types"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 // BinaryObject adapts a binary bacnet object as smart core traits.
-func BinaryObject(prefix string, client *gobacnet.Client, device bactypes.Device, object config.Object, statuses *statuspb.Map) (node.SelfAnnouncer, error) {
+func BinaryObject(prefix string, client *gobacnet.Client, device bactypes.Device, object config.Object, deviceHealth *healthpb.FaultCheck, errFn errFn) (node.SelfAnnouncer, error) {
 	switch object.Trait {
 	case "":
 		return nil, ErrNoDefault
 	case trait.OnOff:
 		model := onoffpb.NewModel()
 		return &binaryOnOff{
-			prefix:   prefix,
-			client:   client,
-			device:   device,
-			object:   object,
-			statuses: statuses,
+			prefix: prefix,
+			client: client,
+			device: device,
+			object: object,
+
+			deviceHealth: deviceHealth,
+			errFn:        errFn,
 
 			model:       model,
 			ModelServer: onoffpb.NewModelServer(model),
@@ -40,17 +41,19 @@ func BinaryObject(prefix string, client *gobacnet.Client, device bactypes.Device
 }
 
 type binaryOnOff struct {
-	prefix   string
-	client   *gobacnet.Client
-	device   bactypes.Device
-	object   config.Object
-	statuses *statuspb.Map
+	prefix string
+	client *gobacnet.Client
+	device bactypes.Device
+	object config.Object
+
+	deviceHealth *healthpb.FaultCheck
+	errFn        errFn
 
 	model *onoffpb.Model
 	*onoffpb.ModelServer
 }
 
-func (b *binaryOnOff) GetOnOff(ctx context.Context, request *traits.GetOnOffRequest) (*traits.OnOff, error) {
+func (b *binaryOnOff) GetOnOff(ctx context.Context, request *onoffpb.GetOnOffRequest) (*onoffpb.OnOff, error) {
 	read, err := b.client.ReadProperty(ctx, b.device, bactypes.ReadPropertyData{
 		Object: bactypes.Object{
 			ID: bactypes.ObjectID(b.object.ID),
@@ -60,7 +63,7 @@ func (b *binaryOnOff) GetOnOff(ctx context.Context, request *traits.GetOnOffRequ
 		},
 	})
 
-	updateRequestErrorStatus(b.statuses, b.name(), "getOnOff", err)
+	b.errFn(ctx, b.deviceHealth, b.name(), "getOnOff", err)
 	if err != nil {
 		return nil, err
 	}
@@ -75,20 +78,20 @@ func (b *binaryOnOff) GetOnOff(ctx context.Context, request *traits.GetOnOffRequ
 		return nil, status.Errorf(codes.Internal, "expected bool or uint32 return type for binary value, got %v", v)
 	}
 
-	var state traits.OnOff_State
+	var state onoffpb.OnOff_State
 	if value {
-		state = traits.OnOff_ON
+		state = onoffpb.OnOff_ON
 	} else {
-		state = traits.OnOff_OFF
+		state = onoffpb.OnOff_OFF
 	}
-	return b.model.UpdateOnOff(&traits.OnOff{State: state})
+	return b.model.UpdateOnOff(&onoffpb.OnOff{State: state})
 }
 
-func (b *binaryOnOff) UpdateOnOff(ctx context.Context, request *traits.UpdateOnOffRequest) (*traits.OnOff, error) {
+func (b *binaryOnOff) UpdateOnOff(ctx context.Context, request *onoffpb.UpdateOnOffRequest) (*onoffpb.OnOff, error) {
 	return b.UnimplementedOnOffApiServer.UpdateOnOff(ctx, request)
 }
 
-func (b *binaryOnOff) PullOnOff(request *traits.PullOnOffRequest, server traits.OnOffApi_PullOnOffServer) error {
+func (b *binaryOnOff) PullOnOff(request *onoffpb.PullOnOffRequest, server onoffpb.OnOffApi_PullOnOffServer) error {
 	return b.ModelServer.PullOnOff(request, server)
 }
 

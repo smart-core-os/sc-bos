@@ -1,0 +1,200 @@
+Type qualification scenarios: cross-package and same-package type references.
+Covers both when types need full qualification (different packages) and when they don't (same package).
+expected_changes: 4
+
+-- input/proto/actor.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+message Actor {
+  string name = 1;
+  string title = 2;
+}
+-- input/proto/access.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+import "actor.proto";
+
+service AccessApi {
+  rpc GetLastAccessAttempt(GetLastAccessAttemptRequest) returns (AccessAttempt) {}
+}
+
+message AccessAttempt {
+  enum Grant {
+    GRANT_UNKNOWN = 0;
+    GRANTED = 1;
+  }
+  Grant grant = 1;
+  Actor actor = 2;
+  google.protobuf.Timestamp access_attempt_time = 3;
+}
+
+message GetLastAccessAttemptRequest {
+  string name = 1;
+}
+
+message AccessGrant {
+  string id = 1;
+  Actor grantee = 2;
+  Actor granter = 3;
+}
+
+message PullAccessAttemptsResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    AccessAttempt access_attempt = 2;
+    Actor actor = 3;
+  }
+}
+-- input/proto/base.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+message BaseType {
+  string id = 1;
+}
+
+service BaseApi {
+  rpc GetBase(GetBaseRequest) returns (BaseType);
+}
+
+message GetBaseRequest {
+  string name = 1;
+}
+-- input/proto/base_history.proto --
+syntax = "proto3";
+
+package smartcore.bos;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+import "base.proto";
+
+service BaseHistory {
+  rpc ListHistory(ListHistoryRequest) returns (ListHistoryResponse);
+}
+
+message HistoryRecord {
+  BaseType value = 1;
+  google.protobuf.Timestamp record_time = 2;
+}
+
+message ListHistoryRequest {
+  string name = 1;
+}
+
+message ListHistoryResponse {
+  repeated HistoryRecord records = 1;
+}
+-- output/proto/smartcore/bos/access/v1/access.proto --
+syntax = "proto3";
+
+package smartcore.bos.access.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/actor/v1/actor.proto";
+
+service AccessApi {
+  rpc GetLastAccessAttempt(GetLastAccessAttemptRequest) returns (AccessAttempt) {}
+}
+
+message AccessAttempt {
+  enum Grant {
+    GRANT_UNKNOWN = 0;
+    GRANTED = 1;
+  }
+  Grant grant = 1;
+  smartcore.bos.actor.v1.Actor actor = 2;
+  google.protobuf.Timestamp access_attempt_time = 3;
+}
+
+message GetLastAccessAttemptRequest {
+  string name = 1;
+}
+
+message AccessGrant {
+  string id = 1;
+  smartcore.bos.actor.v1.Actor grantee = 2;
+  smartcore.bos.actor.v1.Actor granter = 3;
+}
+
+message PullAccessAttemptsResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    AccessAttempt access_attempt = 2;
+    smartcore.bos.actor.v1.Actor actor = 3;
+  }
+}
+-- output/proto/smartcore/bos/actor/v1/actor.proto --
+syntax = "proto3";
+
+package smartcore.bos.actor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+message Actor {
+  string name = 1;
+  string title = 2;
+}
+-- output/proto/smartcore/bos/base/v1/base.proto --
+syntax = "proto3";
+
+package smartcore.bos.base.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+message BaseType {
+  string id = 1;
+}
+
+service BaseApi {
+  rpc GetBase(GetBaseRequest) returns (BaseType);
+}
+
+message GetBaseRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/base/v1/base_history.proto --
+syntax = "proto3";
+
+package smartcore.bos.base.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/gen";
+
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/base/v1/base.proto";
+
+service BaseHistory {
+  rpc ListHistory(ListHistoryRequest) returns (ListHistoryResponse);
+}
+
+message HistoryRecord {
+  BaseType value = 1;
+  google.protobuf.Timestamp record_time = 2;
+}
+
+message ListHistoryRequest {
+  string name = 1;
+}
+
+message ListHistoryResponse {
+  repeated HistoryRecord records = 1;
+}

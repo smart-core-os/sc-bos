@@ -1,4 +1,4 @@
-// Command export-alerts reads alerts from [gen.AlertApiClient] and writes them to a CSV file.
+// Command export-alerts reads alerts from [alertpb.AlertApiClient] and writes them to a CSV file.
 package main
 
 import (
@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/util/client"
+	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/client"
 )
 
 var clientConfig client.Config
@@ -45,17 +45,17 @@ func main() {
 		panic(err)
 	}
 
-	apiClient := gen.NewAlertApiClient(conn)
-	req := &gen.ListAlertsRequest{
+	apiClient := alertpb.NewAlertApiClient(conn)
+	req := &alertpb.ListAlertsRequest{
 		Name:     clientConfig.Name,
 		PageSize: 1000,
-		Query: &gen.Alert_Query{
+		Query: &alertpb.Alert_Query{
 			// Resolved: &falseVal,
 			Subsystem: "lighting",
 		},
 	}
 
-	var alerts []*gen.Alert
+	var alerts []*alertpb.Alert
 	for {
 		res, err := apiClient.ListAlerts(ctx, req)
 		if err != nil {

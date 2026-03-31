@@ -15,16 +15,16 @@ type BaseResponse interface {
 }
 
 type Response struct {
-	Code string      `json:"code,omitempty"`
-	Msg  string      `json:"msg,omitempty"`
-	Data interface{} `json:"data,omitempty"`
+	Code string `json:"code,omitempty"`
+	Msg  string `json:"msg,omitempty"`
+	Data any    `json:"data,omitempty"`
 }
 
-func (r Response) getCode() string {
+func (r Response) GetCode() string {
 	return r.Code
 }
 
-func (r Response) getMsg() string {
+func (r Response) GetMsg() string {
 	return r.Msg
 }
 

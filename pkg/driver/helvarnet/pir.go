@@ -14,24 +14,24 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/vanti-dev/sc-bos/pkg/auto/udmi"
-	"github.com/vanti-dev/sc-bos/pkg/driver/helvarnet/config"
-	"github.com/vanti-dev/sc-bos/pkg/gen"
-	"github.com/vanti-dev/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 // Pir represents a single PIR sensor within the HelvarNet system.
 type Pir struct {
-	traits.UnimplementedOccupancySensorApiServer
-	gen.UnimplementedUdmiServiceServer
+	occupancysensorpb.UnimplementedOccupancySensorApiServer
+	udmipb.UnimplementedUdmiServiceServer
 
 	client    *tcpClient
 	conf      *config.Device
 	logger    *zap.Logger
 	occupancy *resource.Value // *traits.Occupancy
-	udmiBus   minibus.Bus[*gen.PullExportMessagesResponse]
+	udmiBus   minibus.Bus[*udmipb.PullExportMessagesResponse]
 }
 
 func newPir(client *tcpClient, l *zap.Logger, conf *config.Device) *Pir {
@@ -39,16 +39,16 @@ func newPir(client *tcpClient, l *zap.Logger, conf *config.Device) *Pir {
 		client:    client,
 		conf:      conf,
 		logger:    l,
-		occupancy: resource.NewValue(resource.WithInitialValue(&traits.Occupancy{}), resource.WithNoDuplicates()),
+		occupancy: resource.NewValue(resource.WithInitialValue(&occupancysensorpb.Occupancy{}), resource.WithNoDuplicates()),
 	}
 }
 
 // refreshOccupancyStatus refreshes the occupancy by querying the input state of the sensor
-func (p *Pir) refreshOccupancyStatus() error {
+func (p *Pir) refreshOccupancyStatus(ctx context.Context) error {
 	command := queryInputState(p.conf.Address)
 	want := "?" + command[1:len(command)-1]
 
-	r, err := p.client.sendAndReceive(command, want)
+	r, err := p.client.sendAndReceive(ctx, command, want)
 	if err != nil {
 		return err
 	}
@@ -64,13 +64,13 @@ func (p *Pir) refreshOccupancyStatus() error {
 		return err
 	}
 
-	occupancy := traits.Occupancy_UNOCCUPIED
+	occupancy := occupancysensorpb.Occupancy_UNOCCUPIED
 	if statusInt == 1 {
-		occupancy = traits.Occupancy_OCCUPIED
+		occupancy = occupancysensorpb.Occupancy_OCCUPIED
 	}
 
 	// Update the occupancy status
-	_, _ = p.occupancy.Set(&traits.Occupancy{
+	_, _ = p.occupancy.Set(&occupancysensorpb.Occupancy{
 		State:      occupancy,
 		Confidence: 1,
 	})
@@ -78,15 +78,15 @@ func (p *Pir) refreshOccupancyStatus() error {
 	return nil
 }
 
-func (p *Pir) GetOccupancy(context.Context, *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
-	value := p.occupancy.Get().(*traits.Occupancy)
+func (p *Pir) GetOccupancy(context.Context, *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
+	value := p.occupancy.Get().(*occupancysensorpb.Occupancy)
 	return value, nil
 }
 
-func (p *Pir) PullOccupancy(_ *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+func (p *Pir) PullOccupancy(_ *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
 	for value := range p.occupancy.Pull(server.Context()) {
-		occupancy := value.Value.(*traits.Occupancy)
-		err := server.Send(&traits.PullOccupancyResponse{Changes: []*traits.PullOccupancyResponse_Change{
+		occupancy := value.Value.(*occupancysensorpb.Occupancy)
+		err := server.Send(&occupancysensorpb.PullOccupancyResponse{Changes: []*occupancysensorpb.PullOccupancyResponse_Change{
 			{
 				Name:       p.conf.Name,
 				ChangeTime: timestamppb.New(value.ChangeTime),
@@ -102,7 +102,7 @@ func (p *Pir) PullOccupancy(_ *traits.PullOccupancyRequest, server traits.Occupa
 
 func (p *Pir) runUpdateState(ctx context.Context, t time.Duration) error {
 
-	err := p.refreshOccupancyStatus()
+	err := p.refreshOccupancyStatus(ctx)
 	if err != nil {
 		p.logger.Error("failed to refresh occupancy status", zap.Error(err))
 	}
@@ -114,7 +114,7 @@ func (p *Pir) runUpdateState(ctx context.Context, t time.Duration) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			err := p.refreshOccupancyStatus()
+			err := p.refreshOccupancyStatus(ctx)
 			if err != nil {
 				p.logger.Error("failed to refresh occupancy status", zap.Error(err))
 			}
@@ -122,16 +122,16 @@ func (p *Pir) runUpdateState(ctx context.Context, t time.Duration) error {
 	}
 }
 
-func (p *Pir) udmiPointsetFromData() (*gen.MqttMessage, error) {
+func (p *Pir) udmiPointsetFromData() (*udmipb.MqttMessage, error) {
 	points := make(udmi.PointsEvent)
-	occupancy := p.occupancy.Get().(*traits.Occupancy)
+	occupancy := p.occupancy.Get().(*occupancysensorpb.Occupancy)
 	points["OccupancyStatus"] = udmi.PointValue{PresentValue: occupancy.State.String()}
 
 	b, err := json.Marshal(points)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal udmi points: %w", err)
 	}
-	return &gen.MqttMessage{
+	return &udmipb.MqttMessage{
 		Topic:   p.conf.TopicPrefix + "/event/pointset/points",
 		Payload: string(b),
 	}, nil
@@ -144,13 +144,13 @@ func (p *Pir) sendUdmiMessage(ctx context.Context) {
 		return
 	}
 
-	p.udmiBus.Send(ctx, &gen.PullExportMessagesResponse{
+	p.udmiBus.Send(ctx, &udmipb.PullExportMessagesResponse{
 		Name:    p.conf.Name,
 		Message: m,
 	})
 }
 
-func (p *Pir) GetExportMessage(context.Context, *gen.GetExportMessageRequest) (*gen.MqttMessage, error) {
+func (p *Pir) GetExportMessage(context.Context, *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
 	m, err := p.udmiPointsetFromData()
 	if err != nil {
 		p.logger.Error("failed to create udmi pointset message", zap.Error(err))
@@ -159,7 +159,7 @@ func (p *Pir) GetExportMessage(context.Context, *gen.GetExportMessageRequest) (*
 	return m, nil
 }
 
-func (p *Pir) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen.UdmiService_PullExportMessagesServer) error {
+func (p *Pir) PullExportMessages(_ *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
 	for msg := range p.udmiBus.Listen(server.Context()) {
 		err := server.Send(msg)
 		if err != nil {
@@ -169,10 +169,10 @@ func (p *Pir) PullExportMessages(_ *gen.PullExportMessagesRequest, server gen.Ud
 	return nil
 }
 
-func (p *Pir) PullControlTopics(*gen.PullControlTopicsRequest, grpc.ServerStreamingServer[gen.PullControlTopicsResponse]) error {
+func (p *Pir) PullControlTopics(*udmipb.PullControlTopicsRequest, grpc.ServerStreamingServer[udmipb.PullControlTopicsResponse]) error {
 	return status.Error(codes.Unimplemented, "PullControlTopics is not implemented for Pir")
 }
 
-func (p *Pir) OnMessage(context.Context, *gen.OnMessageRequest) (*gen.OnMessageResponse, error) {
+func (p *Pir) OnMessage(context.Context, *udmipb.OnMessageRequest) (*udmipb.OnMessageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "OnMessage is not implemented for Pir")
 }

@@ -10,7 +10,7 @@
 <script setup>
 import {timestampFromObject} from '@/api/convpb.js';
 import {useDescribeTransport, usePullTransport, useTransportHistory} from '@/traits/transport/transport.js';
-import {Period} from '@smart-core-os/sc-api-grpc-web/types/time/period_pb';
+import {Period} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/types/time/v1/period_pb';
 import {computed, onMounted, onUnmounted, reactive, ref, watch} from 'vue';
 
 const props = defineProps({

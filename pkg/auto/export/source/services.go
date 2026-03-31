@@ -3,7 +3,7 @@ package source
 import (
 	"context"
 
-	"github.com/vanti-dev/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
 )
 
 type Services struct {

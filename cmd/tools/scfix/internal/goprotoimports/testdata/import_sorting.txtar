@@ -1,0 +1,33 @@
+This test checks that the import ordering after translation matches gofmt's expected ordering.
+expected_changes: 1
+
+-- input/pkg/test/import_sorting.go --
+package test
+
+import (
+	_ "context"
+	_ "flag"
+	_ "log"
+
+	_ "golang.org/x/sync/errgroup"
+
+	_ "github.com/smart-core-os/sc-bos/pkg/util/client"
+	"github.com/smart-core-os/sc-bos/pkg/gen"
+)
+
+var _ = gen.MeterReading{}
+-- output/pkg/test/import_sorting.go --
+package test
+
+import (
+	_ "context"
+	_ "flag"
+	_ "log"
+
+	_ "golang.org/x/sync/errgroup"
+
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	_ "github.com/smart-core-os/sc-bos/pkg/util/client"
+)
+
+var _ = meterpb.MeterReading{}
