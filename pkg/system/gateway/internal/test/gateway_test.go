@@ -138,7 +138,7 @@ func runAllNodes(t *testing.T, ctx context.Context, dir string) {
 			return
 		default:
 		}
-		t.Fatal("run failed", err)
+		t.Error("run failed", err)
 	}
 }
 

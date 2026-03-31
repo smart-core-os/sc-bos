@@ -235,11 +235,11 @@ func (sd *seedDevices) normalise() {
 	slices.Sort(sd.airTemperature)
 	slices.Sort(sd.soundSensor)
 	slices.Sort(sd.occupancy)
-	slices.Compact(sd.airQuality)
-	slices.Compact(sd.electric)
-	slices.Compact(sd.airTemperature)
-	slices.Compact(sd.soundSensor)
-	slices.Compact(sd.occupancy)
+	sd.airQuality = slices.Compact(sd.airQuality)
+	sd.electric = slices.Compact(sd.electric)
+	sd.airTemperature = slices.Compact(sd.airTemperature)
+	sd.soundSensor = slices.Compact(sd.soundSensor)
+	sd.occupancy = slices.Compact(sd.occupancy)
 }
 
 func parseDeviceConfig(sd *seedDevices, appConf *appconf.Config) error {
