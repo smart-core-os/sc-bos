@@ -1,0 +1,24 @@
+{
+  "templates": {
+    "area": {
+      "selector": "#{{dir}} #{{id}}",
+      "sidebar": {"name": "van/uk/brum/ugs/zones/{{dir}}/{{id}}"}
+    }
+  },
+  "elements": [
+    {"template": {"ref": "area", "dir": "rooms", "id": "teal"}},
+    {"template": {"ref": "area", "dir": "rooms", "id": "green"}},
+    {"template": {"ref": "area", "dir": "rooms", "id": "yellow"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "comms-room"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "goods-in"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "kitchen"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "l00-wc"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "lab"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "loading-bay"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "project"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "reception"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "secure-store"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "warehouse"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "workshop"}}
+  ]
+}

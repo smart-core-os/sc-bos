@@ -1,0 +1,39 @@
+{
+  "templates": {
+    "fan": {
+      "selector": "#fan",
+      "sidebar": {"name": "van/uk/brum/ugs/devices/{{id}}"},
+      "sources": {
+        "airTemp": {
+          "trait": "smartcore.traits.AirTemperature",
+          "request": {"name": "van/uk/brum/ugs/devices/{{id}}"}
+        },
+        "fanSpeed": {
+          "trait": "smartcore.traits.FanSpeed",
+          "request": {"name": "van/uk/brum/ugs/devices/{{id}}"}
+        }
+      },
+      "effects": [
+        {
+          "type": "spin",
+          "source": {"ref": "fanSpeed"},
+          "direction": {
+            "property": "direction",
+            "clockwise": 1,
+            "anticlockwise": 2
+          },
+          "duration": {
+            "property": "percentage",
+            "interpolate": [
+              {"value": 1, "durationMs": 5000},
+              {"value": 100, "durationMs": 500}
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "elements": [
+    {"template": {"ref": "fan", "id": "FCU-L00-03"}}
+  ]
+}

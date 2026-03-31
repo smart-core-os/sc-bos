@@ -1,0 +1,14 @@
+{
+  "templates": {
+    "area": {
+      "selector": "#{{id}}",
+      "sidebar": {"name": "van/uk/brum/ugs/zones/{{dir}}/{{id}}"}
+    }
+  },
+  "elements": [
+    {"template": {"ref": "area", "dir": "floors", "id": "basement"}},
+    {"template": {"ref": "area", "dir": "rooms", "id": "copper"}},
+    {"template": {"ref": "area", "dir": "rooms", "id": "cotswold"}},
+    {"template": {"ref": "area", "dir": "rooms", "id": "kaolin"}}
+  ]
+}
