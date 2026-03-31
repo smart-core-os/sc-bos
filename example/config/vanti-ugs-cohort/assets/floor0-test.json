@@ -1,0 +1,30 @@
+{
+  "templates": {
+    "rect": {
+      "selector": "#{{id}}",
+      "sidebar": {"name": "van/uk/brum/ugs/devices/{{id}}"},
+      "sources": {
+        "light": {
+          "trait": "smartcore.traits.Light",
+          "request": {"name": "van/uk/brum/ugs/devices/{{id}}"}
+        }
+      },
+      "effects": [
+        {
+          "type": "widget",
+          "component": "builtin:lighting/LightIcon",
+          "props": {
+            "level": {"ref": "light", "property": "levelPercent"}
+          }
+        }
+      ]
+    }
+  },
+  "elements": [
+    {"template": {"ref": "rect", "id": "all"}},
+    {"template": {"ref": "rect", "id": "tl"}},
+    {"template": {"ref": "rect", "id": "tr"}},
+    {"template": {"ref": "rect", "id": "bl"}},
+    {"template": {"ref": "rect", "id": "br"}}
+  ]
+}

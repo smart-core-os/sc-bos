@@ -1,0 +1,14 @@
+{
+  "templates": {
+    "area": {
+      "selector": "#{{id}}",
+      "sidebar": {"name": "van/uk/brum/ugs/zones/{{dir}}/{{id}}"}
+    }
+  },
+  "elements": [
+    {"template": {"ref": "area", "dir": "rooms", "id": "bank"}},
+    {"template": {"ref": "area", "dir": "rooms", "id": "printer-room"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "service"}},
+    {"template": {"ref": "area", "dir": "areas", "id": "open-plan"}}
+  ]
+}
