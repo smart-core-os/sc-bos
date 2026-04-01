@@ -136,7 +136,7 @@ func Test_PullExportMessages(t *testing.T) {
 
 				ctx := t.Context()
 
-				messages, err := client.PullExportMessages(ctx, req)
+				messages, _ := client.PullExportMessages(ctx, req)
 				tt.set()
 				time.Sleep(1 * time.Millisecond)
 				tt.set()

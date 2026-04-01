@@ -162,7 +162,7 @@ func (t *onOffTester) assertUpdate(state OnOff_State, membersUpdated ...string) 
 	th.CheckErr(t.t, err, "Parent.UpdateOnOff")
 	// note: can't compare the update result with the given state as we might be updating just a few
 	// It's more correct to compare with the GetOnOff state as that uses the same merge strategy
-	getState, err := t.subj.GetOnOff(th.Ctx, &GetOnOffRequest{Name: "Parent"})
+	getState, _ := t.subj.GetOnOff(th.Ctx, &GetOnOffRequest{Name: "Parent"})
 	if diff := cmp.Diff(getState, updateState, protocmp.Transform()); diff != "" {
 		t.t.Fatalf("Update state doesn't match read state (-want, +got)\n%v", diff)
 	}

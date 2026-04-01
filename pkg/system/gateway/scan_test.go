@@ -257,11 +257,11 @@ func (c *mockCohort) newClient(address string) (*grpc.ClientConn, error) {
 
 func (c *mockCohort) newNode(name string) *mockRemoteNode {
 	c.t.Helper()
-	n, exists := c.nodes[name]
+	_, exists := c.nodes[name]
 	if exists {
 		c.t.Fatalf("mock cohort node %q already exists", name)
 	}
-	n = newMockRemoteNode(c.t, name)
+	n := newMockRemoteNode(c.t, name)
 	c.nodes[name] = n
 	c.hubServer.AddHubNode(n)
 	return n

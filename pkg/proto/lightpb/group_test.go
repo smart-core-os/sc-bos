@@ -156,7 +156,7 @@ func (t *brightnessTester) assertUpdate(state *Brightness, membersUpdated ...str
 	th.CheckErr(t.t, err, "Parent.UpdateBrightness")
 	// note: can't compare the update result with the given state as we might be updating just a few
 	// It's more correct to compare with the GetBrightness state as that uses the same merge strategy
-	getState, err := t.subj.GetBrightness(th.Ctx, &GetBrightnessRequest{Name: "Parent"})
+	getState, _ := t.subj.GetBrightness(th.Ctx, &GetBrightnessRequest{Name: "Parent"})
 	if diff := cmp.Diff(getState, updateState, protocmp.Transform()); diff != "" {
 		t.t.Fatalf("Update state doesn't match read state (-want, +got)\n%v", diff)
 	}
