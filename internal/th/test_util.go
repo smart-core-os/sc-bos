@@ -23,7 +23,7 @@ func CheckErr(t *testing.T, err error, msg string) {
 }
 
 func Dial(lis *bufconn.Listener) (*grpc.ClientConn, error) {
-	return grpc.DialContext(Ctx, "test",
+	return grpc.NewClient("passthrough:///test",
 		grpc.WithContextDialer(func(ctx context.Context, s string) (net.Conn, error) {
 			return lis.Dial()
 		}),
