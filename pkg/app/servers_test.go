@@ -1,5 +1,7 @@
 package app
 
+//lint:file-ignore SA1019 we need to test how the server handles grpc_reflection_v1alpha.ServerReflectionRequest
+
 import (
 	"context"
 	"crypto/rand"
