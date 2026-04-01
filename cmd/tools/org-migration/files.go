@@ -100,10 +100,6 @@ func renameFiles(files []string, projects []string) (map[string]string, error) {
 		}
 
 		renamedFiles[filePath] = newFilePath
-		if *verbose {
-			// verbose is imported from flags.go
-			// This is OK since they're in the same package
-		}
 	}
 
 	return renamedFiles, nil

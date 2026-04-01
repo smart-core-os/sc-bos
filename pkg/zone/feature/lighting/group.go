@@ -218,10 +218,8 @@ func (g *Group) DescribeBrightness(ctx context.Context, request *lightpb.Describ
 	if len(multierr.Errors(err)) == len(g.names) {
 		return nil, err
 	}
+	// err ignored here — some lights may not support the info aspect
 
-	if err != nil {
-		// ignore this error, assume some lights just don't support the info aspect
-	}
 	desc, err := mergeDescription(allRes)
 	if err != nil {
 		return nil, err
