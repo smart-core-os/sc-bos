@@ -33,7 +33,7 @@ type Property struct {
 
 func (o Object) String() string {
 	if o.Name == "" {
-		return fmt.Sprintf("%s", o.ID)
+		return o.ID.String()
 	}
 	return fmt.Sprintf("%s (%s)", o.Name, o.ID)
 }

@@ -501,7 +501,7 @@ func (l *Light) StartFunctionTest(ctx context.Context, _ *emergencylightpb.Start
 	err := l.runFunctionTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to start function test", zap.String("name", l.conf.Name), zap.Error(err))
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to start function test"))
+		return nil, status.Error(codes.Internal, "failed to start function test")
 	}
 	_, _ = l.testResultSet.Set(&emergencylightpb.TestResultSet{
 		FunctionTest: &emergencylightpb.EmergencyTestResult{
@@ -518,7 +518,7 @@ func (l *Light) StartDurationTest(ctx context.Context, _ *emergencylightpb.Start
 	err := l.runDurationTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to start duration test", zap.String("name", l.conf.Name), zap.Error(err))
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to start duration test"))
+		return nil, status.Error(codes.Internal, "failed to start duration test")
 	}
 	_, _ = l.testResultSet.Set(&emergencylightpb.TestResultSet{
 		DurationTest: &emergencylightpb.EmergencyTestResult{

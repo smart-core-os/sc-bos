@@ -80,10 +80,7 @@ func Test_pollUntil(t *testing.T) {
 					count := 0
 					return func(t B) bool {
 						count++
-						if count > 2 {
-							return true
-						}
-						return false
+						return count > 2
 					}
 				},
 			},
@@ -121,10 +118,7 @@ func Test_pollUntil(t *testing.T) {
 					count := 0
 					return func(t B) bool {
 						count++
-						if count > 2 {
-							return true
-						}
-						return false
+						return count > 2
 					}
 				},
 			},

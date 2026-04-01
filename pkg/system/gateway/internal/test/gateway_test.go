@@ -423,21 +423,19 @@ func testOnOffApi(t *testing.T, ctx context.Context, addr, name string, client o
 	if diff := cmp.Diff(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}, res, protocmp.Transform()); diff != "" {
 		t.Fatalf("[%s] update onoff %s: unexpected response (-want +got):\n%s", addr, name, diff)
 	}
-	select {
-	case res := <-changes:
-		want := &onoffpb.PullOnOffResponse{Changes: []*onoffpb.PullOnOffResponse_Change{
-			{
-				Name:  name,
-				OnOff: &onoffpb.OnOff{State: onoffpb.OnOff_OFF},
-			},
-		}}
-		// clear timestamps to make comparing easier
-		for i := range res.Changes {
-			res.Changes[i].ChangeTime = nil
-		}
-		if diff := cmp.Diff(want, res, protocmp.Transform()); diff != "" {
-			t.Fatalf("[%s] pull onoff %s: unexpected response (-want +got):\n%s", addr, name, diff)
-		}
+	pullRes := <-changes
+	want := &onoffpb.PullOnOffResponse{Changes: []*onoffpb.PullOnOffResponse_Change{
+		{
+			Name:  name,
+			OnOff: &onoffpb.OnOff{State: onoffpb.OnOff_OFF},
+		},
+	}}
+	// clear timestamps to make comparing easier
+	for i := range pullRes.Changes {
+		pullRes.Changes[i].ChangeTime = nil
+	}
+	if diff := cmp.Diff(want, pullRes, protocmp.Transform()); diff != "" {
+		t.Fatalf("[%s] pull onoff %s: unexpected response (-want +got):\n%s", addr, name, diff)
 	}
 }
 

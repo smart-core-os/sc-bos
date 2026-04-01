@@ -252,7 +252,7 @@ func (t *onOffStreamTester) assertPull(want OnOff_State) {
 
 	select {
 	case <-timer.C:
-		t.t.Fatalf("want %v, got timeout after %v", want, time.Now().Sub(now))
+		t.t.Fatalf("want %v, got timeout after %v", want, time.Since(now))
 	case v := <-t.c:
 		if v.err != nil {
 			t.t.Fatalf("Parent.PullOnOff.Recv want %v, got error %v", want, v.err)

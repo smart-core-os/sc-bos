@@ -445,10 +445,7 @@ func (opts rangeValuesOptions) scanMap(path []pathSegment, fd protoreflect.Field
 		return func(yield func(value) bool) {
 			if !opts.Stable {
 				m.Range(func(key protoreflect.MapKey, v protoreflect.Value) bool {
-					if !yield(value{fd.MapValue(), v}) {
-						return false
-					}
-					return true
+					return yield(value{fd.MapValue(), v})
 				})
 				return
 			}

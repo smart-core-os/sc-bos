@@ -58,7 +58,7 @@ func readSecurityEventConfig(raw []byte) (cfg securityEventConfig, err error) {
 		return
 	}
 
-	if cfg.SecurityEventSources == nil || len(cfg.SecurityEventSources) == 0 {
+	if len(cfg.SecurityEventSources) == 0 {
 		return cfg, errors.New("no security events configured")
 	}
 

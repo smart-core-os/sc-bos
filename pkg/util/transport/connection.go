@@ -117,11 +117,9 @@ func (c *Connection) watchConnection(ctx context.Context) error {
 		currentState, onStateChange := c.state.stateChanges(ctx)
 		if currentState == Connected {
 			// wait for an error, then re-dial
-			select {
-			case <-onStateChange:
-				cancelOnStateChange()
-				reconnect()
-			}
+			<-onStateChange
+			cancelOnStateChange()
+			reconnect()
 		} else {
 			cancelOnStateChange()
 			reconnect()

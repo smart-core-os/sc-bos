@@ -109,18 +109,18 @@ func (u *UdmiServiceServer) PullExportMessages(request *udmipb.PullExportMessage
 		case <-ctx.Done():
 			return ctx.Err()
 
-		case change, _ := <-airQualityChanges:
+		case change := <-airQualityChanges:
 			if change != nil {
 				airQuality := change.Value.(*airqualitysensorpb.AirQuality)
 				appendAirQualityEventPoints(airQuality, &eventPoints)
 			}
 
-		case change, _ := <-temperatureChanges:
+		case change := <-temperatureChanges:
 			if change != nil {
 				temperature := change.Value.(*airtemperaturepb.AirTemperature)
 				appendTempHumidityEventPoints(temperature, &eventPoints)
 			}
-		case change, _ := <-occupancyChanges:
+		case change := <-occupancyChanges:
 			if change != nil {
 				occupancy := change.Value.(*occupancysensorpb.Occupancy)
 				appendOccupancyEventPoints(occupancy, &eventPoints)

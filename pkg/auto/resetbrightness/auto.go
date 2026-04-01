@@ -131,7 +131,7 @@ func (a *impl) applyConfig(ctx context.Context, cfg config.Root) error {
 				}
 				if timerT.IsZero() || t.Before(timerT) {
 					timerT = t
-					delay := t.Sub(time.Now()) + cfg.ResetDelay.Or(config.DefaultResetDelay)
+					delay := time.Until(t) + cfg.ResetDelay.Or(config.DefaultResetDelay)
 					if delay <= 0 {
 						// assume the reset has already happened
 						timer.Stop()

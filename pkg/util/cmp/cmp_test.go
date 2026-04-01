@@ -195,7 +195,7 @@ func setFloatValues(base *testproto.TestAllTypes, f float32) *testproto.TestAllT
 			message.Corecursive = setFloatValues(message.Corecursive, f)
 		}
 	}
-	for i, _ := range base.RepeatedFloat {
+	for i := range base.RepeatedFloat {
 		base.RepeatedFloat[i] = f
 	}
 	return base
@@ -213,7 +213,7 @@ func setDoubleValues(base *testproto.TestAllTypes, f float64) *testproto.TestAll
 			message.Corecursive = setDoubleValues(message.Corecursive, f)
 		}
 	}
-	for i, _ := range base.RepeatedDouble {
+	for i := range base.RepeatedDouble {
 		base.RepeatedDouble[i] = f
 	}
 	return base

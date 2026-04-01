@@ -50,7 +50,7 @@ func queryInputState(addr string) string {
 // The scene description string contains the group, block, and scene numbers and scene description,
 // and takes the form of '@G.B.S:Description'.
 func querySceneNames() string {
-	return fmt.Sprintf(">V:2,C:166#")
+	return ">V:2,C:166#"
 }
 
 // query the load level of a device, for a light device this returns the brightness

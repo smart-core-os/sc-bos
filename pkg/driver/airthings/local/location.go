@@ -41,7 +41,7 @@ func (m *Location) GetLatestSample(deviceID string) (api.DeviceSampleResponseEnr
 func (m *Location) PullLatestSamples(ctx context.Context, deviceID string) (api.DeviceSampleResponseEnriched, <-chan api.DeviceSampleResponseEnriched) {
 	topic := fmt.Sprintf("sample/%s/change", deviceID)
 	m.mu.RLock()
-	latestSample, _ := m.latestSamplesByDevice[deviceID]
+	latestSample := m.latestSamplesByDevice[deviceID]
 	stream := m.bus.On(topic)
 	m.mu.RUnlock()
 
