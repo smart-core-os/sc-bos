@@ -14,6 +14,9 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func main() {
@@ -158,7 +161,7 @@ func deriveOldGenSymbol(symbol, basename, traitPkg string) string {
 
 	// Convert trait name to title case for insertion into symbol name
 	// e.g., "meter" → "Meter", "emergencylight" → "Emergencylight"
-	traitTitle := strings.Title(trait)
+	traitTitle := cases.Title(language.English).String(trait)
 
 	// Check if this file is a wrapper, router, or other specialized file
 	// For these files, the trait name was inserted into the middle of the function name
