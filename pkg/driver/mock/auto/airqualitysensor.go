@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"golang.org/x/exp/rand"
+	"math/rand/v2"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -37,8 +37,8 @@ func GetAirQualityState() *airqualitysensorpb.AirQuality {
 	co2 := rand.Float32() * 1000
 	voc := rand.Float32()
 	ap := rand.Float32() * 1200
-	ir := float32(rand.Int31n(100))
-	score := float32(rand.Int31n(100))
+	ir := float32(rand.Int32N(100))
+	score := float32(rand.Int32N(100))
 	comfort := airqualitysensorpb.AirQuality_COMFORTABLE
 	if score < 70 {
 		comfort = airqualitysensorpb.AirQuality_UNCOMFORTABLE

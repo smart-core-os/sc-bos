@@ -5,7 +5,7 @@ import (
 	"math"
 	"time"
 
-	"golang.org/x/exp/rand"
+	"math/rand/v2"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"golang.org/x/exp/rand"
+	"math/rand/v2"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"

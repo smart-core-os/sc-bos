@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
-	"golang.org/x/exp/rand"
+	"math/rand/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -112,7 +112,7 @@ func Test_automation_applyConfig(t *testing.T) {
 	for range 10 {
 		if _, err := occupancy.SetOccupancy(&occupancysensorpb.Occupancy{
 			State:       occupancysensorpb.Occupancy_OCCUPIED,
-			PeopleCount: int32(rand.Intn(10)),
+			PeopleCount: int32(rand.IntN(10)),
 		}); err != nil {
 			t.Fatal(err)
 		}
@@ -317,7 +317,7 @@ const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456
 func randString(n int) string {
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+		b[i] = letterBytes[rand.IntN(len(letterBytes))]
 	}
 	return string(b)
 }

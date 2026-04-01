@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gopcua/opcua/ua"
-	"golang.org/x/exp/rand"
+	"math/rand/v2"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
