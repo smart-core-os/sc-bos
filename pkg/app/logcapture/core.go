@@ -25,10 +25,10 @@ func Wrap(base zapcore.Core) *Core {
 	return &Core{base: base}
 }
 
-// WrapCoreOption returns a zap.Option that installs this Core as a wrapper
+// WrapCoreFunc returns a function that installs this Core as a wrapper
 // around the logger's existing core.  The existing core becomes the base.
-// Use as: zap.New(core, capture.WrapCoreOption()) or
-// logger.WithOptions(capture.WrapCoreOption()).
+// Use as: zap.New(core, capture.WrapCoreFunc()) or
+// logger.WithOptions(capture.WrapCoreFunc()).
 // After Build() the Core's base field will be set.
 func (c *Core) WrapCoreFunc() func(zapcore.Core) zapcore.Core {
 	return func(base zapcore.Core) zapcore.Core {

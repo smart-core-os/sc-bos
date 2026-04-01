@@ -16,7 +16,7 @@ func (c *Config) Issuer() string {
 	return fmt.Sprintf("%s/realms/%s", c.URL, c.Realm)
 }
 
-// DefaultPermittedSignatureAlgorithms
+// DefaultPermittedSignatureAlgorithms lists the signature algorithms permitted by default.
 // TODO: reduce the number of permitted signature algorithms for all keycloak installations
 // KeyCloak will select "a reasonable default" cipher suite if none is specified by the installation
 var DefaultPermittedSignatureAlgorithms = []string{

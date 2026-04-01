@@ -75,7 +75,7 @@ func (t *TRV) Poll(ctx context.Context) error {
 	}
 }
 
-// API calls
+// Refresh fetches the current thermostat state from the device via API calls.
 func (t *TRV) Refresh(ctx context.Context) (data ThermostatData, err error) {
 	result, err := t.request(ctx, "thermostat/0", nil)
 	if err != nil {
