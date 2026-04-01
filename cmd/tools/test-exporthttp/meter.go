@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -37,7 +38,7 @@ func announceMeter(root node.Announcer, name, unit string, sleep time.Duration, 
 		if err != nil {
 			return err
 		}
-		_, err = store.Append(nil, rec)
+		_, err = store.Append(context.TODO(), rec)
 		if err != nil {
 			return err
 		}

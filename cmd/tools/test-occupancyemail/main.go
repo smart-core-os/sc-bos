@@ -37,7 +37,7 @@ func main() {
 	for _, td := range testData {
 		memstore.SetNow(store, td.ChangeTime.AsTime)
 		payload, _ := proto.Marshal(td.Occupancy)
-		_, err := store.Append(nil, payload)
+		_, err := store.Append(context.TODO(), payload)
 		if err != nil {
 			panic(err)
 		}
