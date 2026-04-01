@@ -13,14 +13,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/appconf"
-	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
-	"github.com/smart-core-os/sc-bos/pkg/driver/alldrivers"
 	mockcfg "github.com/smart-core-os/sc-bos/pkg/driver/mock/config"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/pkg/zone/allzones"
 	airqualitycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality/config"
 	meterscfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config"
 	occupancycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
@@ -157,16 +154,6 @@ func main() {
 	})
 
 	wg.Wait()
-}
-
-func loadSystemConfig() (sysconf.Config, error) {
-	systemConfig := sysconf.Default()
-
-	systemConfig.ZoneFactories = allzones.Factories()
-	systemConfig.DriverFactories = alldrivers.Factories()
-
-	err := sysconf.Load(&systemConfig)
-	return systemConfig, err
 }
 
 func parseZoneConfig(sd *seedDevices, appConf *appconf.Config) error {

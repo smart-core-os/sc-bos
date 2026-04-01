@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strings"
 )
 
@@ -116,7 +115,3 @@ func containsProject(specs []ProjectSpec, name string) bool {
 	return false
 }
 
-// contains checks if a string slice contains a string
-func contains(slice []string, str string) bool {
-	return slices.Contains(slice, str)
-}
