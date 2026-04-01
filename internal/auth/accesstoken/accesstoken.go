@@ -3,15 +3,21 @@ package accesstoken
 import (
 	"context"
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
+	"io/fs"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
+	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/auth/permission"
-	jose_utils "github.com/smart-core-os/sc-bos/internal/util/jose"
+	joseUtils "github.com/smart-core-os/sc-bos/internal/util/jose"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
@@ -102,7 +108,7 @@ func (ts *Source) GenerateAccessToken(data SecretData, validity time.Duration) (
 }
 
 func (ts *Source) ValidateAccessToken(_ context.Context, tokenStr string) (*token.Claims, error) {
-	tok, err := jwt.ParseSigned(tokenStr, jose_utils.ConvertToNativeJose(ts.SignatureAlgorithms))
+	tok, err := jwt.ParseSigned(tokenStr, joseUtils.ConvertToNativeJose(ts.SignatureAlgorithms))
 	if err != nil {
 		return nil, err
 	}
@@ -134,6 +140,10 @@ func (ts *Source) ValidateAccessToken(_ context.Context, tokenStr string) (*toke
 	}, nil
 }
 
+// generateKey generates a random ephemeral HS256 signing key.
+// Keys generated this way are not persisted and will differ between server instances and restarts,
+// meaning tokens issued by one instance will not be accepted by another.
+// Use LoadOrGenerateSigningKey to load a persistent key from a file that can be shared across instances.
 func generateKey() (jose.SigningKey, error) {
 	key := make([]byte, 32)
 	_, err := io.ReadFull(rand.Reader, key)
@@ -145,4 +155,39 @@ func generateKey() (jose.SigningKey, error) {
 		Algorithm: jose.HS256,
 		Key:       key,
 	}, nil
+}
+
+// LoadOrGenerateSigningKey loads a 32-byte HS256 signing key from path.
+// The file must contain exactly 64 hex characters (the output of e.g. `openssl rand -hex 32`).
+// If the file does not exist, a new key is generated and saved to path with mode 0600.
+// The file can be shared between servers so they all validate each other's tokens.
+func LoadOrGenerateSigningKey(path string, logger *zap.Logger) (jose.SigningKey, error) {
+	data, err := os.ReadFile(path)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return jose.SigningKey{}, err
+	}
+	if err == nil {
+		keyBytes, decodeErr := hex.DecodeString(strings.TrimSpace(string(data)))
+		if decodeErr != nil {
+			return jose.SigningKey{}, fmt.Errorf("decode signing key %q: %w", path, decodeErr)
+		}
+		if len(keyBytes) != 32 {
+			return jose.SigningKey{}, fmt.Errorf("signing key %q must contain exactly 64 hex characters (32 bytes)", path)
+		}
+		logger.Info("loaded shared token signing key", zap.String("path", path))
+		return jose.SigningKey{Algorithm: jose.HS256, Key: keyBytes}, nil
+	}
+
+	// file doesn't exist — generate and save
+	logger.Warn("token signing key file not found, generating a new key; tokens will not be accepted by other instances",
+		zap.String("path", path))
+	sk, err := generateKey()
+	if err != nil {
+		return jose.SigningKey{}, err
+	}
+	encoded := []byte(hex.EncodeToString(sk.Key.([]byte)))
+	if err := os.WriteFile(path, encoded, 0600); err != nil {
+		return jose.SigningKey{}, err
+	}
+	return sk, nil
 }

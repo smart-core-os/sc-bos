@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-jose/go-jose/v4"
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
@@ -38,19 +39,27 @@ type Server struct {
 }
 
 func NewServer(name string, opts ...ServerOption) (*Server, error) {
-	key, err := generateKey()
-	if err != nil {
-		return nil, err
+	s := &Server{
+		tokens: &Source{
+			Issuer: name,
+			Now:    time.Now,
+		},
 	}
-	tokens := &Source{
-		Key:    key,
-		Issuer: name,
-		Now:    time.Now,
-	}
-
-	s := &Server{tokens: tokens}
 	for _, opt := range opts {
 		opt(s)
+	}
+
+	if s.tokens.Key.Key == nil {
+		key, err := generateKey()
+		if err != nil {
+			return nil, err
+		}
+		s.tokens.Key = key
+	} else {
+		keyBytes, ok := s.tokens.Key.Key.([]byte)
+		if !ok || len(keyBytes) == 0 {
+			return nil, fmt.Errorf("signing key must be a non-empty []byte")
+		}
 	}
 
 	return s, nil
@@ -75,6 +84,16 @@ func WithPasswordFlow(v Verifier, validity time.Duration) ServerOption {
 	return func(ts *Server) {
 		ts.passwordVerifier = v
 		ts.passwordValidity = validity
+	}
+}
+
+// WithSigningKey sets the signing key used to issue and validate access tokens.
+// When not set, a random ephemeral key is generated at startup.
+// Use LoadOrGenerateSigningKey to load a persistent key from a file that can be shared
+// across multiple server instances so they all accept each other's tokens.
+func WithSigningKey(key jose.SigningKey) ServerOption {
+	return func(ts *Server) {
+		ts.tokens.Key = key
 	}
 }
 
