@@ -58,7 +58,7 @@ func NewServer(name string, opts ...ServerOption) (*Server, error) {
 	} else {
 		keyBytes, ok := s.tokens.Key.Key.([]byte)
 		if !ok || len(keyBytes) == 0 {
-			return nil, fmt.Errorf("signing key must be a non-empty []byte")
+			return nil, fmt.Errorf("WithSigningKey: key must be a non-empty []byte (HS256), got %T", s.tokens.Key.Key)
 		}
 	}
 

@@ -185,7 +185,11 @@ func LoadOrGenerateSigningKey(path string, logger *zap.Logger) (jose.SigningKey,
 	if err != nil {
 		return jose.SigningKey{}, err
 	}
-	encoded := []byte(hex.EncodeToString(sk.Key.([]byte)))
+	keyBytes, ok := sk.Key.([]byte)
+	if !ok {
+		return jose.SigningKey{}, fmt.Errorf("key must be []byte for HS256, got %T", sk.Key)
+	}
+	encoded := []byte(hex.EncodeToString(keyBytes))
 	if err := os.WriteFile(path, encoded, 0600); err != nil {
 		return jose.SigningKey{}, err
 	}
