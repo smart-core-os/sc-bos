@@ -179,7 +179,6 @@ func (t *mode) startPoll(init context.Context) (stop task.StopFn, err error) {
 
 func (t *mode) pollPeer(ctx context.Context) (*modepb.ModeValues, error) {
 	var readValues []config.ValueSource
-	var requestNames []string
 	type nameAndPoint struct {
 		name  string
 		point modeConfigPoint
@@ -189,7 +188,6 @@ func (t *mode) pollPeer(ctx context.Context) (*modepb.ModeValues, error) {
 		if point.Value == nil {
 			continue
 		}
-		requestNames = append(requestNames, name)
 		readValues = append(readValues, *point.Value)
 		readConfig = append(readConfig, nameAndPoint{name: name, point: point})
 	}

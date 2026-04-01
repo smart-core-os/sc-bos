@@ -115,11 +115,9 @@ func (t *temperature) pollPeer(ctx context.Context) (*temperaturepb.Temperature,
 	data := &temperaturepb.Temperature{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if t.config.Measured != nil {
 		readValues = append(readValues, *t.config.Measured)
-		requestNames = append(requestNames, "measured")
 		resProcessors = append(resProcessors, func(response any) error {
 			measured, err := comm.Float64Value(response)
 			if err != nil {
@@ -132,7 +130,6 @@ func (t *temperature) pollPeer(ctx context.Context) (*temperaturepb.Temperature,
 
 	if t.config.SetPoint != nil {
 		readValues = append(readValues, *t.config.SetPoint)
-		requestNames = append(requestNames, "setPoint")
 		resProcessors = append(resProcessors, func(response any) error {
 			setPoint, err := comm.Float64Value(response)
 			if err != nil {

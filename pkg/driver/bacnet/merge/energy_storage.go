@@ -96,10 +96,8 @@ func (e *energyStorage) pollPeer(ctx context.Context) (*energystoragepb.EnergyLe
 	data := &energystoragepb.EnergyLevel{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if e.config.EnergyKwh != nil {
-		requestNames = append(requestNames, "energyKwh")
 		readValues = append(readValues, *e.config.EnergyKwh)
 		resProcessors = append(resProcessors, func(response any) error {
 			energyKwh, err := comm.Float32Value(response)
@@ -114,7 +112,6 @@ func (e *energyStorage) pollPeer(ctx context.Context) (*energystoragepb.EnergyLe
 		})
 	}
 	if e.config.Percentage != nil {
-		requestNames = append(requestNames, "percentage")
 		readValues = append(readValues, *e.config.Percentage)
 		resProcessors = append(resProcessors, func(response any) error {
 			percentage, err := comm.Float32Value(response)

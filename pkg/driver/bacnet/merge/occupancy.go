@@ -99,10 +99,8 @@ func (o *occupancy) pollPeer(ctx context.Context) (*occupancysensorpb.Occupancy,
 
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if o.config.OccupancyStatus != nil {
-		requestNames = append(requestNames, "occupancy")
 		readValues = append(readValues, *o.config.OccupancyStatus)
 		resProcessors = append(resProcessors, func(response any) error {
 			value, err := comm.IntValue(response)

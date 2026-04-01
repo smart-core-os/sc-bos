@@ -102,11 +102,9 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*airqualitysensorpb.A
 	data := &airqualitysensorpb.AirQuality{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if aq.config.AirPressure != nil {
 		readValues = append(readValues, *aq.config.AirPressure)
-		requestNames = append(requestNames, "AirPressure")
 		resProcessors = append(resProcessors, func(response any) error {
 			pressure, err := comm.Float32Value(response)
 			if err != nil {
@@ -118,7 +116,6 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*airqualitysensorpb.A
 	}
 	if aq.config.Co2 != nil {
 		readValues = append(readValues, *aq.config.Co2)
-		requestNames = append(requestNames, "Co2")
 		resProcessors = append(resProcessors, func(response any) error {
 			co2, err := comm.Float32Value(response)
 			if err != nil {
@@ -130,7 +127,6 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*airqualitysensorpb.A
 	}
 	if aq.config.IaqScore != nil {
 		readValues = append(readValues, *aq.config.IaqScore)
-		requestNames = append(requestNames, "IaqScore")
 		resProcessors = append(resProcessors, func(response any) error {
 			iaq, err := comm.Float32Value(response)
 			if err != nil {
@@ -142,7 +138,6 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*airqualitysensorpb.A
 	}
 	if aq.config.Pm10 != nil {
 		readValues = append(readValues, *aq.config.Pm10)
-		requestNames = append(requestNames, "Pm10")
 		resProcessors = append(resProcessors, func(response any) error {
 			pm10, err := comm.Float32Value(response)
 			if err != nil {
@@ -154,7 +149,6 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*airqualitysensorpb.A
 	}
 	if aq.config.Pm25 != nil {
 		readValues = append(readValues, *aq.config.Pm25)
-		requestNames = append(requestNames, "Pm25")
 		resProcessors = append(resProcessors, func(response any) error {
 			pm25, err := comm.Float32Value(response)
 			if err != nil {
@@ -166,7 +160,6 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*airqualitysensorpb.A
 	}
 	if aq.config.VOC != nil {
 		readValues = append(readValues, *aq.config.VOC)
-		requestNames = append(requestNames, "VOC")
 		resProcessors = append(resProcessors, func(response any) error {
 			voc, err := comm.Float32Value(response)
 			if err != nil {

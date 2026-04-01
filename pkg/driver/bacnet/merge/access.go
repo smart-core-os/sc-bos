@@ -99,16 +99,13 @@ func (a *access) pollPeer(ctx context.Context) (*accesspb.AccessAttempt, error) 
 
 	var resProcessors []func(response any, data *accesspb.AccessAttempt, cfg accessConfig) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if a.cfg.IngressPermitted != nil {
-		requestNames = append(requestNames, "ingressPermitted")
 		readValues = append(readValues, *a.cfg.IngressPermitted)
 		resProcessors = append(resProcessors, processIngressPermitted)
 	}
 
 	if a.cfg.IngressDenied != nil {
-		requestNames = append(requestNames, "ingressDenied")
 		readValues = append(readValues, *a.cfg.IngressDenied)
 		resProcessors = append(resProcessors, processIngressDenied)
 	}

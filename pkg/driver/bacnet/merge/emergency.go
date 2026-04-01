@@ -142,10 +142,8 @@ func (t *emergencyImpl) pollPeer(ctx context.Context) (*emergencypb.Emergency, e
 	data := &emergencypb.Emergency{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if t.config.Level != nil {
-		requestNames = append(requestNames, "level")
 		readValues = append(readValues, *t.config.Level)
 		resProcessors = append(resProcessors, func(response any) error {
 			enum, err := comm.EnumValue(response)
@@ -175,7 +173,6 @@ func (t *emergencyImpl) pollPeer(ctx context.Context) (*emergencypb.Emergency, e
 	}
 
 	if t.config.AlarmConfig != nil {
-		requestNames = append(requestNames, "alarmConfig")
 		readValues = append(readValues, t.config.AlarmConfig.ValueSource)
 		resProcessors = append(resProcessors, func(response any) error {
 			if e, err := t.checkValueForEmergency(response); err == nil {

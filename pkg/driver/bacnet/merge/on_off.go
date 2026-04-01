@@ -126,10 +126,8 @@ func (o *onOff) pollPeer(ctx context.Context) (*onoffpb.OnOff, error) {
 
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if o.config.OnOff != nil {
-		requestNames = append(requestNames, "onOff")
 		readValues = append(readValues, *o.config.OnOff)
 		resProcessors = append(resProcessors, func(response any) error {
 			value, err := comm.IntValue(response)

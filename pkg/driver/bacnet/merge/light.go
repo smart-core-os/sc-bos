@@ -157,10 +157,8 @@ func (l *light) pollPeer(ctx context.Context) (*lightpb.Brightness, error) {
 	data := &lightpb.Brightness{Preset: &lightpb.LightPreset{}}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if l.config.Point != nil {
-		requestNames = append(requestNames, "light")
 		readValues = append(readValues, *l.config.Point)
 		resProcessors = append(resProcessors, func(response any) error {
 			value, err := comm.Float32Value(response)
