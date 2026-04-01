@@ -10,7 +10,7 @@ import (
 func TestModelServer_UpdateModeValues(t *testing.T) {
 	m := NewModel()
 	s := NewModelServer(m)
-	newValues, err := s.UpdateModeValues(nil, &UpdateModeValuesRequest{
+	newValues, err := s.UpdateModeValues(t.Context(), &UpdateModeValuesRequest{
 		Relative: &ModeValuesRelative{Values: map[string]int32{
 			"temperature": 1,
 			"spin":        -1,

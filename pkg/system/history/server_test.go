@@ -1,7 +1,6 @@
 package history
 
 import (
-	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -35,7 +34,7 @@ func Test_storeServer_ListHistoryRecords(t *testing.T) {
 		secs := int64(i * 10)
 		now = time.Unix(secs, 0)
 		var err error
-		records[i], err = store.Append(nil, fmt.Appendf(nil, "%ds", secs))
+		records[i], err = store.Append(t.Context(), fmt.Appendf(nil, "%ds", secs))
 		if err != nil {
 			t.Fatalf("failed to append record: %v", err)
 		}
@@ -64,7 +63,7 @@ func Test_storeServer_ListHistoryRecords(t *testing.T) {
 			req := proto.Clone(tt.req).(*historypb.ListHistoryRecordsRequest)
 			var pageNum int
 			for {
-				res, err := server.ListHistoryRecords(context.Background(), req)
+				res, err := server.ListHistoryRecords(t.Context(), req)
 				if err != nil {
 					t.Fatalf("ListHistoryRecords(%v) = %v", pageNum, err)
 				}

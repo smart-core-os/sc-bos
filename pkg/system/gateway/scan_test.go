@@ -252,7 +252,7 @@ func (c *mockCohort) newClient(address string) (*grpc.ClientConn, error) {
 	if !exists {
 		c.t.Fatalf("mock cohort node %q does not exist", address)
 	}
-	return n.Connect(nil)
+	return n.Connect(c.t.Context())
 }
 
 func (c *mockCohort) newNode(name string) *mockRemoteNode {

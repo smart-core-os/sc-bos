@@ -18,7 +18,7 @@ func TestTokenSource_createAndVerify(t *testing.T) {
 		t.Fatalf("GenerateAccessToken %v", err)
 	}
 
-	_, err = ts.ValidateAccessToken(nil, token)
+	_, err = ts.ValidateAccessToken(t.Context(), token)
 	if err != nil {
 		t.Fatalf("ValidateAccessToken %v", err)
 	}

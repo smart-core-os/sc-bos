@@ -416,7 +416,7 @@ func TestGroup_GetMeterReading(t *testing.T) {
 							panic(err)
 						}
 
-						_, err = tt.meters[meter].store.Append(nil, rec)
+						_, err = tt.meters[meter].store.Append(ctx, rec)
 						if err != nil {
 							panic(err)
 						}
