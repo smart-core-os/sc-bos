@@ -23,7 +23,7 @@ var Factory factory
 
 type factory struct{}
 
-func (_ factory) New(services system.Services) service.Lifecycle {
+func (factory) New(services system.Services) service.Lifecycle {
 	return NewSystem(services)
 }
 

@@ -41,7 +41,7 @@ func (f factory) New(services auto.Services) service.Lifecycle {
 	return a
 }
 
-func (_ factory) ConfigBlocks() []block.Block {
+func (factory) ConfigBlocks() []block.Block {
 	return config.Blocks
 }
 

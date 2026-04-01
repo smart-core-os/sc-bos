@@ -53,11 +53,11 @@ var Factory driver.Factory = factory{}
 
 type factory struct{}
 
-func (_ factory) New(services driver.Services) service.Lifecycle {
+func (factory) New(services driver.Services) service.Lifecycle {
 	return NewDriver(services)
 }
 
-func (_ factory) ConfigBlocks() []block.Block {
+func (factory) ConfigBlocks() []block.Block {
 	return config.Blocks
 }
 

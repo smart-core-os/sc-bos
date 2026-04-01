@@ -214,7 +214,7 @@ func (a *countActions) UpdateModeValues(ctx context.Context, req *modepb.UpdateM
 // Actions are still recorded in the WriteState.
 type NilActions struct{}
 
-func (_ NilActions) UpdateAirTemperature(_ context.Context, req *airtemperaturepb.UpdateAirTemperatureRequest, ws *WriteState) error {
+func (NilActions) UpdateAirTemperature(_ context.Context, req *airtemperaturepb.UpdateAirTemperatureRequest, ws *WriteState) error {
 	ws.AirTemperatures[req.Name] = Value[*airtemperaturepb.AirTemperature]{
 		V:  req.State,
 		At: ws.Now(),
@@ -222,7 +222,7 @@ func (_ NilActions) UpdateAirTemperature(_ context.Context, req *airtemperaturep
 	return nil
 }
 
-func (_ NilActions) UpdateModeValues(_ context.Context, req *modepb.UpdateModeValuesRequest, ws *WriteState) error {
+func (NilActions) UpdateModeValues(_ context.Context, req *modepb.UpdateModeValuesRequest, ws *WriteState) error {
 	ws.Modes[req.Name] = Value[*modepb.ModeValues]{
 		V:  req.ModeValues,
 		At: ws.Now(),

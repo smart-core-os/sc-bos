@@ -46,7 +46,7 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 	return d
 }
 
-func (_ factory) ConfigBlocks() []block.Block {
+func (factory) ConfigBlocks() []block.Block {
 	return config.Blocks
 }
 
