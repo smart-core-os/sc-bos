@@ -54,7 +54,7 @@ func allTypesFull() *testproto.TestAllTypes {
 	var optionalFloat float32 = 1.1
 	var optionalDouble float64 = 1.2
 	var optionalBool bool = true
-	var optionalString string = "foo"
+	var optionalString = "foo"
 
 	return &testproto.TestAllTypes{
 		DefaultInt32:         1,

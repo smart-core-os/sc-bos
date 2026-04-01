@@ -81,7 +81,7 @@ func EnergyStorage(model *energystoragepb.Model, kind EnergyStorageDeviceType) s
 		go func() {
 			// Initialize with a random starting percentage
 			currentPercentage := float32Between(20, 80)
-			var currentState state = stateIdle
+			var currentState = stateIdle
 			var stateStartTime *timestamppb.Timestamp
 
 			for {

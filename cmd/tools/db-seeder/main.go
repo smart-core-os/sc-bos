@@ -197,9 +197,7 @@ func parseZoneConfig(sd *seedDevices, appConf *appconf.Config) error {
 			sd.electric = append(sd.electric, conf.Name)
 		}
 		for _, group := range mtr.MeterGroups {
-			for _, met := range group {
-				sd.electric = append(sd.electric, met)
-			}
+			sd.electric = append(sd.electric, group...)
 		}
 
 	}
