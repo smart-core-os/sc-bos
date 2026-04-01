@@ -47,7 +47,7 @@ func main() {
 	defer proxyServer.Stop()
 
 	log.Printf("Proxy server hosted on %v", proxyLis.Addr())
-	proxyConn, err := grpc.NewClient(proxyLis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	proxyConn, _ := grpc.NewClient(proxyLis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	client := onoffpb.NewOnOffApiClient(proxyConn)
 	test, err := client.GetOnOff(context.Background(), &onoffpb.GetOnOffRequest{})
 	if err != nil {

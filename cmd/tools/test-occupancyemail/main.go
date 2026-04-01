@@ -30,28 +30,8 @@ func main() {
 	}
 	root := node.New("test")
 
-	now, _ := time.Parse(time.DateTime, "2023-11-15 11:36:00")
-	now = now.Round(time.Second) // get rid of millis, etc
-
-	oc := func(age time.Duration, pc int) *occupancysensorpb.PullOccupancyResponse_Change {
-		return &occupancysensorpb.PullOccupancyResponse_Change{
-			ChangeTime: timestamppb.New(now.Add(-age)),
-			Occupancy:  &occupancysensorpb.Occupancy{PeopleCount: int32(pc)},
-		}
-	}
-	testData := []*occupancysensorpb.PullOccupancyResponse_Change{
-		// note: these _must_ be in chronological order
-		oc(7*24*time.Hour+time.Second, 20), // before the 7-day window
-		oc(7*24*time.Hour-2*time.Second, 6),
-		oc(7*24*time.Hour-2*time.Hour, 0),
-		oc(7*24*time.Hour-3*time.Hour, 7),
-		oc(3*24*time.Hour, 4),
-		oc(-time.Second, 22), // in the future, just in case
-	}
-
-	// use sample prod data instead
-	now = sampleNow
-	testData = parseSampleData()
+	now := sampleNow
+	testData := parseSampleData()
 
 	store := memstore.New()
 	for _, td := range testData {

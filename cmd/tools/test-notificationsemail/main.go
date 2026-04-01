@@ -13,8 +13,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 )
 
-var sampleNow = time.Date(2024, 01, 19, 0, 0, 0, 0, time.Local)
-
 func addDummyAlerts(m *alertpb.Model, t *time.Time) {
 
 	sevs := []alertpb.Alert_Severity{
@@ -66,11 +64,6 @@ func main() {
 	addDummyAlerts(m, &testTime)
 	server := alertpb.NewModelServer(m)
 	root.Announce(root.Name(), node.HasServer(alertpb.RegisterAlertApiServer, alertpb.AlertApiServer(server)))
-
-	now, _ := time.Parse(time.DateTime, "2023-11-15 11:36:00")
-	now = now.Round(time.Second) // get rid of millis, etc
-
-	now = sampleNow
 
 	serv := auto.Services{
 		Logger: logger,
