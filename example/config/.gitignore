@@ -1,3 +1,4 @@
 db.bolt
 *.pem
 enrollment/
+authn_token_signing_key

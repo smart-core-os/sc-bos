@@ -14,7 +14,8 @@
     "authn": {
       "user": {
         "fileAccounts": true
-      }
+      },
+      "tokenSigningKeyFile": "./example/config/vanti-ugs-cohort/authn_token_signing_key"
     },
     "hub": {
       "storage": {

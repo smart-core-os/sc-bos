@@ -34,7 +34,8 @@
       "system": {
         "tenantAccounts": true,
         "localAccounts": true
-      }
+      },
+      "tokenSigningKeyFile": "./example/config/vanti-ugs-cohort/authn_token_signing_key"
     },
     "tenants": {"storage": {"type": "postgres"}},
     "resourceUse": {}

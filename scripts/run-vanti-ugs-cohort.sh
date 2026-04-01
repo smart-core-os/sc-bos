@@ -55,6 +55,15 @@ if [ "$CLEAN" = true ]; then
   echo "Clean complete."
 fi
 
+KEY_FILE="example/config/vanti-ugs-cohort/authn_token_signing_key"
+if [ ! -f "$KEY_FILE" ]; then
+  echo "Generating shared token signing key at $KEY_FILE..."
+  old_umask=$(umask)
+  umask 077
+  openssl rand -hex 32 > "$KEY_FILE"
+  umask "$old_umask"
+fi
+
 echo "Building .bin/bos..."
 go build -o .bin/bos ./cmd/bos
 
