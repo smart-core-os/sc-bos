@@ -152,6 +152,13 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	if serveTokenEndpoint {
+		if cfg.TokenSigningKeyFile != "" {
+			signingKey, err := accesstoken.LoadOrGenerateSigningKey(cfg.TokenSigningKeyFile, s.logger)
+			if err != nil {
+				return fmt.Errorf("load token signing key: %w", err)
+			}
+			tokenServerOpts = append(tokenServerOpts, accesstoken.WithSigningKey(signingKey))
+		}
 		server, err := accesstoken.NewServer("authn", tokenServerOpts...)
 		if err != nil {
 			return fmt.Errorf("new token server: %w", err)

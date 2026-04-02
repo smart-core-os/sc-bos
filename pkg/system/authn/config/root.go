@@ -16,6 +16,23 @@ type Root struct {
 	// System configures credential and access token validation for applications acting on their own behalf.
 	// This includes OAuth2 Client Credentials key exchange and validation backed by different key stores.
 	System *System `json:"system,omitempty"`
+	// TokenSigningKeyFile, if set, specifies a path to a file containing the HS256 signing key used to
+	// issue and validate access tokens. The file must contain exactly 64 hex characters (32 bytes), e.g.
+	// as produced by `openssl rand -hex 32`. If the file does not exist it will be created with a newly
+	// generated key and a warning will be logged — this is only safe for single-instance deployments,
+	// as other instances will have different keys and will reject each other's tokens.
+	//
+	// Implications:
+	//   - Shared key: distribute the same key file to all instances before starting them. Tokens issued
+	//     by any instance are then accepted by all others, allowing clients to be served by any node
+	//     without re-authenticating (e.g. when behind a load balancer).
+	//   - Key rotation: all instances must be updated to the new key file and restarted together.
+	//     Any instance still using the old key will reject tokens issued after rotation.
+	//   - Persistence: unlike the default ephemeral key, a restart or config reload does not invalidate
+	//     existing tokens — they remain valid until their natural expiry.
+	//   - Security: the key file must be kept secret (mode 0600). Anyone with read access can forge
+	//     tokens for any account on any instance sharing that key.
+	TokenSigningKeyFile string `json:"tokenSigningKeyFile,omitempty"`
 }
 
 type User struct {
