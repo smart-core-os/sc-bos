@@ -124,6 +124,9 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 			if cfg.User.ImportFileAccounts && localAccountsAvailable {
 				s.logger.Debug("importing user accounts from file into database", zap.Int("count", len(identities)))
 				err = importIdentities(ctx, s.accounts, identities, s.logger.Named("import"))
+				if err != nil {
+					return fmt.Errorf("importing file accounts: %w", err)
+				}
 			} else {
 				s.logger.Debug("using static file verifier for user accounts")
 				fileVerifier, err := newStaticVerifier(identities)
