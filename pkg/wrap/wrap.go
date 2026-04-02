@@ -101,7 +101,7 @@ func (w *wrapper) NewStream(ctx context.Context, desc *grpc.StreamDesc, method s
 		return nil, ErrMethodShape
 	}
 
-	ctx, clientServerStream, ss, cs := w.startStream(ctx, method)
+	_, clientServerStream, ss, cs := w.startStream(ctx, method)
 	go func() {
 		err := matched.Handler(w.srv, ss)
 		clientServerStream.Close(err)
