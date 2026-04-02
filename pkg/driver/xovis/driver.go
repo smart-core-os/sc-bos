@@ -65,7 +65,7 @@ type Driver struct {
 
 func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 	announcer := d.announcer.Replace(ctx)
-	grp, ctx := errgroup.WithContext(ctx)
+	var grp errgroup.Group
 
 	// A route can't be removed from an HTTP ServeMux, so if it's been changed or removed then we can't support the
 	// new configuration. This is likely to be rare in practice. Adding a route is fine.
