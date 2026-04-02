@@ -16,6 +16,9 @@ import (
 
 func ReadBytes(data []byte) (cfg Root, err error) {
 	err = json.Unmarshal(data, &cfg)
+	if err != nil {
+		return
+	}
 	if cfg.Debounce != nil {
 		for i, source := range cfg.Sources {
 			if source.Debounce == nil {
@@ -26,9 +29,11 @@ func ReadBytes(data []byte) (cfg Root, err error) {
 	}
 	if cfg.Destination.Host == "" {
 		err = fmt.Errorf("destination.host not specified")
+		return
 	}
 	if len(cfg.Destination.To) == 0 {
 		err = fmt.Errorf("destination.recipients is empty")
+		return
 	}
 	// validate email addresses
 	parsed, err := cfg.Destination.Parse()
