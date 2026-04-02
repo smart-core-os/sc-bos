@@ -10,7 +10,9 @@
         :hide-default-footer="_hidePaging"
         v-bind="tableAttrs"
         disable-sort
-        :items-length="queryTotalCount">
+        :items-length="queryTotalCount"
+        :fixed-header="props.fixedHeader"
+        :style="tableStyles">
       <template #top v-if="showCardHeader">
         <v-toolbar color="transparent">
           <v-toolbar-title v-if="showCardHeader" class="text-h4">{{ props.title }}</v-toolbar-title>
@@ -57,6 +59,14 @@ const props = defineProps({
   fixedRowCount: {
     type: Number,
     default: null
+  },
+  fixedHeader: {
+    type: Boolean,
+    default: true
+  },
+  height: {
+    type: [String, Number],
+    default: undefined
   }
 });
 
@@ -108,6 +118,17 @@ const allHeaders = [
   {title: 'Priority', value: 'priority', width: '10em', align: 'end'},
   {title: 'Source', value: 'source.name', width: '30%'}
 ];
+
+const tableStyles = computed(() => {
+  if (!props.fixedHeader) {
+    return {};
+  }
+  if (props.height) {
+    return {height: typeof props.height === 'number' ? `${props.height}px` : props.height};
+  }
+  return {height: '80vh'};
+});
+
 
 </script>
 
