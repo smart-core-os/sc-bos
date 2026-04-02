@@ -143,6 +143,9 @@ func (g *Group) PullOnOff(request *onoffpb.PullOnOffRequest, server grpc.ServerS
 				all[change.name] = change.val
 
 				values, err := mergeOnOff(maps.Values(all))
+				if err != nil {
+					return err
+				}
 				filter.Filter(values)
 				if eq(last, values) {
 					continue
