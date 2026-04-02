@@ -6,6 +6,7 @@ import (
 	"maps"
 	"math"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
@@ -85,7 +86,7 @@ func (s *ReadState) ChangesSince(other *ReadState) []string {
 		if a.MostRecentGesture != b.MostRecentGesture {
 			changes = append(changes, fmt.Sprintf("%s->%s", a.MostRecentGesture, b.MostRecentGesture))
 		}
-		return ""
+		return strings.Join(changes, ",")
 	})...)
 	return changes
 }
