@@ -473,6 +473,9 @@ func TestLocalServiceVerifier_Verify(t *testing.T) {
 		adminRoleID = strconv.FormatInt(roles[0].ID, 10)
 		return nil
 	})
+	if err != nil {
+		t.Fatalf("failed to find admin role: %v", err)
+	}
 
 	// role to test permissions propagation
 	roleWithPermissions, err := accountServer.CreateRole(ctx, &accountpb.CreateRoleRequest{
@@ -516,6 +519,9 @@ func TestLocalServiceVerifier_Verify(t *testing.T) {
 			RoleId:    adminRoleID,
 		},
 	})
+	if err != nil {
+		t.Fatalf("failed to assign admin role to service account: %v", err)
+	}
 
 	type testCase struct {
 		clientID      string
