@@ -25,7 +25,39 @@
           },
           "ipAddress": "172.16.1.3"
         }
-      ]
+      ],
+      "anprCameras": [
+        {
+          "name": "site/floors/building/devices/ANPR-1",
+          "metadata": {
+            "appearance": {
+              "title": "ANPR Camera 1"
+            },
+            "location": {
+              "floor": "External"
+            },
+            "product": {
+              "manufacturer": "Hikvision",
+              "model": "iDS-2CD7A26G0/P-IZHSY"
+            },
+            "membership": {
+              "subsystem": "anpr"
+            }
+          },
+          "entranceCameraIndexCode": "1"
+        }
+      ],
+      "grantManagement": {
+        "name": "site/floors/building/grant-management",
+        "metadata": {
+          "appearance": {
+            "title": "Grant Management"
+          },
+          "membership": {
+            "subsystem": "anpr"
+          }
+        }
+      }
     }
   ]
 }
