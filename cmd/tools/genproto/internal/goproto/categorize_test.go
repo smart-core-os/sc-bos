@@ -314,7 +314,7 @@ func TestAnalyzeProtoFiles(t *testing.T) {
 			extractAllFiles(t, archive, tmpDir)
 
 			// Test analyzeProtoFiles
-			got, err := analyzeProtoFiles(tmpDir, nil)
+			got, err := analyzeProtoFiles(tmpDir, nil, "github.com/example/gen")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("analyzeProtoFiles() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -380,7 +380,7 @@ func TestOutputDirFromDescriptor(t *testing.T) {
 					},
 				}
 			}
-			if got := outputDirFromDescriptor(desc); got != tt.want {
+			if got := outputDirFromDescriptor(desc, "github.com/smart-core-os/sc-bos"); got != tt.want {
 				t.Errorf("outputDirFromDescriptor() = %q, want %q", got, tt.want)
 			}
 		})

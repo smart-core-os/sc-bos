@@ -15,10 +15,18 @@ import (
 	"github.com/smart-core-os/sc-bos/cmd/tools/genproto/internal/toolchain"
 )
 
-var Step = generator.Step{
-	ID:   "goproto",
-	Desc: "Go protoc code generation",
-	Run:  run,
+// NewStep returns a goproto generator step for the given Go module prefix.
+// The module prefix is used to determine which proto files belong to the repo
+// and to set the --go_opt=module= flags for protoc.
+// Use "github.com/smart-core-os/sc-bos" for sc-bos itself.
+func NewStep(modulePrefix string) generator.Step {
+	return generator.Step{
+		ID:   "goproto",
+		Desc: "Go protoc code generation",
+		Run: func(ctx *generator.Context) error {
+			return run(ctx, modulePrefix)
+		},
+	}
 }
 
 // Generator represents protoc generator flags using a bitset.
@@ -49,13 +57,16 @@ func (g Generator) String() string {
 	return strings.Join(parts, "+")
 }
 
-func run(ctx *generator.Context) error {
+func run(ctx *generator.Context, modulePrefix string) error {
 	protoDir := filepath.Join(ctx.RootDir, "proto")
-	protoIncludeDirs := []string{protoDir, filepath.Join(ctx.RootDir, "sc-api", "protobuf")}
+	protoIncludeDirs := []string{protoDir}
+	if scApiDir := filepath.Join(ctx.RootDir, "sc-api", "protobuf"); dirExists(scApiDir) {
+		protoIncludeDirs = append(protoIncludeDirs, scApiDir)
+	}
 
 	// Discover proto files and their required generators.
 	// This must happen before cleaning so we know which dirs are bos-owned.
-	fileInfos, err := analyzeProtoFiles(protoDir, protoIncludeDirs)
+	fileInfos, err := analyzeProtoFiles(protoDir, protoIncludeDirs, modulePrefix)
 	if err != nil {
 		return fmt.Errorf("analyzing proto files: %w", err)
 	}
@@ -69,12 +80,17 @@ func run(ctx *generator.Context) error {
 	ctx.Verbose("Found %d proto files in %d generator groups", len(fileInfos), len(groups))
 
 	for gen, files := range groups {
-		if err := generateProtos(ctx, protoIncludeDirs, gen, files); err != nil {
+		if err := generateProtos(ctx, protoIncludeDirs, modulePrefix, gen, files); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func dirExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
 }
 
 // collectOwnedDirs returns the set of repo-relative output dirs owned by bos proto files.
@@ -207,19 +223,18 @@ func cleanOwnedDir(ctx *generator.Context, dir string) (int, error) {
 	return removed, nil
 }
 
-// shouldDeleteInOwnedDir reports whether a .pb.go file in a bos-owned dir should be deleted.
-// Router/wrapper files are always deleted (they have no // source: header).
-// Other files are deleted only if their header identifies them as bos-derived.
+// shouldDeleteInOwnedDir reports whether a .pb.go file in an owned dir should be deleted.
+// Router/wrapper files are always deleted (they have no // Code generated header).
+// Other files are deleted only if their header identifies them as generated code.
 func shouldDeleteInOwnedDir(path, name string) bool {
 	if strings.HasSuffix(name, "_router.pb.go") || strings.HasSuffix(name, "_wrap.pb.go") {
 		return true
 	}
-	return hasBosSourceHeader(path)
+	return hasGeneratedHeader(path)
 }
 
-// hasBosSourceHeader reports whether the file's first 10 lines contain a
-// "// source: smartcore/bos/..." comment, identifying it as generated from a bos proto.
-func hasBosSourceHeader(path string) bool {
+// hasGeneratedHeader reports whether the file starts with the standard Go generated-code marker.
+func hasGeneratedHeader(path string) bool {
 	f, err := os.Open(path)
 	if err != nil {
 		return false
@@ -228,7 +243,7 @@ func hasBosSourceHeader(path string) bool {
 
 	scanner := bufio.NewScanner(f)
 	for i := 0; i < 10 && scanner.Scan(); i++ {
-		if strings.HasPrefix(scanner.Text(), "// source: smartcore/bos/") {
+		if strings.HasPrefix(scanner.Text(), "// Code generated") {
 			return true
 		}
 	}
@@ -266,11 +281,10 @@ func removeEmptyDirs(ctx *generator.Context, dir string) error {
 }
 
 // generateProtos generates code for a set of proto files with the same generator requirements.
-func generateProtos(ctx *generator.Context, protoIncludeDirs []string, gen Generator, files []string) error {
+func generateProtos(ctx *generator.Context, protoIncludeDirs []string, modulePrefix string, gen Generator, files []string) error {
 	if len(files) == 0 {
 		return nil
 	}
-	modulePrefix := "github.com/smart-core-os/sc-bos"
 	outDir := ctx.RootDir
 
 	ctx.Verbose("Generating %s: %s", gen, strings.Join(files, ", "))
@@ -299,10 +313,13 @@ func generateProtos(ctx *generator.Context, protoIncludeDirs []string, gen Gener
 	)
 
 	if gen.Has(GenRouter) {
-		routerPluginPath, err := toolchain.GetGoToolPath("protoc-gen-router")
+		// protoc-gen-router lives in sc-bos; build it to a temp dir rather than declaring
+		// it as a go.mod tool dep (which would pull in unwanted transitive dependencies).
+		routerPluginPath, cleanup, err := toolchain.BuildPlugin("github.com/smart-core-os/sc-bos/cmd/tools/protoc-gen-router")
 		if err != nil {
-			return fmt.Errorf("getting protoc-gen-router path: %w", err)
+			return fmt.Errorf("building protoc-gen-router: %w", err)
 		}
+		defer cleanup()
 		ctx.Verbose("  protoc-gen-router path: %q", routerPluginPath)
 		args = append(args,
 			"--plugin=protoc-gen-router="+routerPluginPath,
@@ -312,10 +329,13 @@ func generateProtos(ctx *generator.Context, protoIncludeDirs []string, gen Gener
 		)
 	}
 	if gen.Has(GenWrapper) {
-		wrapperPluginPath, err := toolchain.GetGoToolPath("protoc-gen-wrapper")
+		// protoc-gen-wrapper lives in sc-bos; build it to a temp dir rather than declaring
+		// it as a go.mod tool dep (which would pull in unwanted transitive dependencies).
+		wrapperPluginPath, cleanup, err := toolchain.BuildPlugin("github.com/smart-core-os/sc-bos/cmd/tools/protoc-gen-wrapper")
 		if err != nil {
-			return fmt.Errorf("getting protoc-gen-wrapper path: %w", err)
+			return fmt.Errorf("building protoc-gen-wrapper: %w", err)
 		}
+		defer cleanup()
 		ctx.Verbose("  protoc-gen-wrapper path: %q", wrapperPluginPath)
 		args = append(args,
 			"--plugin=protoc-gen-wrapper="+wrapperPluginPath,
