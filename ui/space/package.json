@@ -33,7 +33,7 @@
     "eslint": "^9.18.0",
     "eslint-plugin-jsdoc": "^50.6.2",
     "eslint-plugin-vue": "^9.32.0",
-    "glob": "^11.0.3",
+    "glob": "^13.0.6",
     "globals": "^15.14.0",
     "vite": "^6.3.3",
     "vite-plugin-eslint": "^1.8.1",
