@@ -45,11 +45,12 @@ func main() {
 
 	flag.Var(&onlySteps, "only", "run only specified steps by ID (can be comma-separated or specified multiple times)")
 	flag.Var(&skipSteps, "skip", "skip specified steps by ID (can be comma-separated or specified multiple times)")
+	module := flag.String("module", "github.com/smart-core-os/sc-bos", "Go module prefix for the repo being generated")
 	flag.Parse()
 
 	allSteps := []generator.Step{
 		toolchain.Step,
-		goproto.Step,
+		goproto.NewStep(*module),
 		uiproto.Step,
 	}
 
