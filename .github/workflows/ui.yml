@@ -1,11 +1,22 @@
 name: UI checks
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ui/**/package.json'
+      - 'ui/**/yarn.lock'
+
+  pull_request:
+    paths:
+      - 'ui/**/package.json'
+      - 'ui/**/yarn.lock'
 
 jobs:
- ui_job:
+  ui_job:
     runs-on: ubuntu-latest
-    name: UI integrity check
+    name: UI dependency check
     steps:
       - uses: actions/checkout@v4
         with:
@@ -16,28 +27,11 @@ jobs:
           node-version: 22.x
           registry-url: https://npm.pkg.github.com
       - name: Clean yarn.lock private dependencies
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Checking for private yarn.lock dependencies"
           if grep -E "nexus\.vanti\.co\.uk/repository/npm-public/" ui/yarn.lock; then
-            echo "Private URLs found in yarn.lock"
-            echo "Auto cleaning yarn.lock dependencies"
-            echo "YARN_LOCK_CLEANED=true" >> $GITHUB_ENV
-            sed -i -e 's/nexus\.vanti\.co\.uk\/repository\/npm-public/registry\.npmjs\.org/g' ui/yarn.lock
-            echo "Checking integrity of yarn.lock edits"
-            pushd ui/
-            yarn install --immutable --immutable-cache --check-cache
-            echo "Integrity check passed."
-            popd
+            echo "Private URLs found in yarn.lock" >&2
+            exit 1
           else
             echo "No private URLs found."
           fi
-      - name: Commit & push auto-edited yarn.lock file
-        if: ${{ env.YARN_LOCK_CLEANED }}
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add ui/yarn.lock
-          git commit -m "[auto] remove private repository references from ui/yarn.lock"
-          git push
