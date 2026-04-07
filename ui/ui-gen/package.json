@@ -6,7 +6,6 @@
     "gen": "go run ../../cmd/tools/genproto -only uiproto"
   },
   "dependencies": {
-    "@smart-core-os/sc-api-grpc-web": "^1.0.0-beta.60",
     "google-protobuf": "^4.0.1",
     "grpc-web": "^2.0.2"
   },

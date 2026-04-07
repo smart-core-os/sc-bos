@@ -743,14 +743,6 @@
   resolved "https://registry.npmjs.org/@sindresorhus/merge-streams/-/merge-streams-2.3.0.tgz#719df7fb41766bc143369eaa0dd56d8dc87c9958"
   integrity sha512-LtoMMhxAlorcGhmFYI+LhPgbPZCkgP6ra1YL604EeF6U98pLlQ3iWIGMdWSC+vWmPBWBNgmDBAhnAobLROJmwg==
 
-"@smart-core-os/sc-api-grpc-web@^1.0.0-beta.60":
-  version "1.0.0-beta.60"
-  resolved "https://npm.pkg.github.com/download/@smart-core-os/sc-api-grpc-web/1.0.0-beta.60/b7f0284ce571ae85fadb11abce62d63316af405d#b7f0284ce571ae85fadb11abce62d63316af405d"
-  integrity sha512-5Oeo/3CsU6R+x9uE6WtSqULR1hieSsLzVbJEnkfvs+Zfpxl/CVi9LofEsQB59DGdObs2P5dVhmNeizOl0nlbQQ==
-  dependencies:
-    google-protobuf "^4.0.1"
-    grpc-web "^2.0.2"
-
 "@sphinxxxx/color-conversion@^2.2.2":
   version "2.2.2"
   resolved "https://registry.npmjs.org/@sphinxxxx/color-conversion/-/color-conversion-2.2.2.tgz#03ecc29279e3c0c832f6185a5bfa3497858ac8ca"
