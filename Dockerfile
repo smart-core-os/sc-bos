@@ -1,9 +1,6 @@
 # Dockerfile for sc-bos
 # This dockerfile performs the entire build itself.
 # To enable fetching of private dependencies, an npmrc file must be be injected using a secret.
-#
-# To build, assuming your .npmrc is set up on your machine, run:
-#     docker/podman build --secret=id=npmrc,src=$HOME/.npmrc .
 
 FROM --platform=$BUILDPLATFORM node:22 AS build_ui
 
@@ -18,7 +15,6 @@ COPY ui/panzoom-package/package.json ./panzoom-package/
 COPY ui/space/package.json ./space/
 COPY ui/ui-gen/package.json ./ui-gen/
 RUN --mount=type=cache,target=/yarn-cache \
-    --mount=type=secret,id=npmrc,required=true,target=/root/.npmrc \
     yarn install --frozen-lockfile --check-files
 
 COPY ui/ops ./ops/

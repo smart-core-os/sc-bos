@@ -23,8 +23,6 @@ on:
 jobs:
   lint-all:
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/smart-core-os/*
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5

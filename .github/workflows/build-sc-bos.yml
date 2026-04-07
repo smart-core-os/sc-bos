@@ -8,8 +8,6 @@ on:
 jobs:
   build-sc-bos:
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/smart-core-os/*
 
     steps:
       - uses: actions/checkout@v4
@@ -19,10 +17,6 @@ jobs:
         with:
           cache: true
           go-version: '1.26.x'
-
-      - name: Private repo auth
-        run: |
-          git config --global url."https://${{ secrets.GO_MOD_TOKEN }}:x-oauth-basic@github.com/smart-core-os".insteadOf "https://github.com/smart-core-os"
 
       - name: Install Dependencies
         run: go mod download
@@ -74,8 +68,6 @@ jobs:
 
   build-ops-ui:
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/smart-core-os/*
 
     steps:
       - name: Checkout
