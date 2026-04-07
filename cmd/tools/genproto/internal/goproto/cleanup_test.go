@@ -150,14 +150,14 @@ func TestHasBosSourceHeader(t *testing.T) {
 			}
 			f.Close()
 
-			if got := hasBosSourceHeader(f.Name()); got != tt.want {
+			if got := hasGeneratedHeader(f.Name()); got != tt.want {
 				t.Errorf("hasBosSourceHeader() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 
 	t.Run("non-existent file", func(t *testing.T) {
-		if got := hasBosSourceHeader("/does/not/exist.pb.go"); got != false {
+		if got := hasGeneratedHeader("/does/not/exist.pb.go"); got != false {
 			t.Errorf("hasBosSourceHeader() = %v, want false", got)
 		}
 	})
