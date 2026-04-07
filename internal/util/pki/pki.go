@@ -171,7 +171,7 @@ func ValidKeyPair(public crypto.PublicKey, private crypto.PrivateKey) error {
 		if !ok {
 			return errors.New("tls: private key type does not match public key type")
 		}
-		if pub.N.Cmp(priv.N) != 0 {
+		if !priv.PublicKey.Equal(pub) {
 			return errors.New("tls: private key does not match public key")
 		}
 	case *ecdsa.PublicKey:
@@ -179,7 +179,7 @@ func ValidKeyPair(public crypto.PublicKey, private crypto.PrivateKey) error {
 		if !ok {
 			return errors.New("tls: private key type does not match public key type")
 		}
-		if pub.X.Cmp(priv.X) != 0 || pub.Y.Cmp(priv.Y) != 0 {
+		if !priv.PublicKey.Equal(pub) {
 			return errors.New("tls: private key does not match public key")
 		}
 	case ed25519.PublicKey:
@@ -187,7 +187,7 @@ func ValidKeyPair(public crypto.PublicKey, private crypto.PrivateKey) error {
 		if !ok {
 			return errors.New("tls: private key type does not match public key type")
 		}
-		if !bytes.Equal(priv.Public().(ed25519.PublicKey), pub) {
+		if !priv.Public().(ed25519.PublicKey).Equal(pub) {
 			return errors.New("tls: private key does not match public key")
 		}
 	default:
