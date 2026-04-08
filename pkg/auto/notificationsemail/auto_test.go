@@ -51,9 +51,7 @@ func TestGetAlertsInLastMonth_FirstPageError(t *testing.T) {
 
 	// Before the fix this panics with a nil dereference on res.Alerts.
 	result := a.getAlertsInLastMonth(context.Background(), client, "test", now)
-	if result == nil {
-		// nil slice is acceptable
-	}
+	// nil slice is acceptable
 	if len(result) != 0 {
 		t.Errorf("expected empty result on RPC error, got %d alerts", len(result))
 	}
