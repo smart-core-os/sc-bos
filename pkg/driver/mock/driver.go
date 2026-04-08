@@ -16,6 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/bookingpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
@@ -169,8 +170,8 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 	case trait.Booking:
 		return []node.Feature{node.HasServer(bookingpb.RegisterBookingApiServer, bookingpb.BookingApiServer(bookingpb.NewModelServer(bookingpb.NewModel())))}, nil
 	case trait.BrightnessSensor:
-		// todo: return []node.Feature{node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, ...)}, nil
-		return nil, nil
+		model := brightnesssensorpb.NewModel()
+		return []node.Feature{node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, brightnesssensorpb.BrightnessSensorApiServer(brightnesssensorpb.NewModelServer(model)))}, auto.BrightnessSensorAuto(model)
 	case trait.Channel:
 		// todo: return []node.Feature{node.HasServer(...)}, nil
 		return nil, nil

@@ -248,6 +248,27 @@
           "location": {"floor": "Basement", "zone": "Kaolin Room"}
         },
         {
+          "name": "van/uk/brum/ugs/devices/BRT-L00-01",
+          "traits": [{"name":  "smartcore.traits.BrightnessSensor"}],
+          "appearance": {"title": "Copper Room Brightness Sensor"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Copper Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/BRT-L00-02",
+          "traits": [{"name":  "smartcore.traits.BrightnessSensor"}],
+          "appearance": {"title": "Cotswold Room Brightness Sensor"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Cotswold Room"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/BRT-L00-03",
+          "traits": [{"name":  "smartcore.traits.BrightnessSensor"}],
+          "appearance": {"title": "Kaolin Room Brightness Sensor"},
+          "membership": {"subsystem": "sensors"},
+          "location": {"floor": "Basement", "zone": "Kaolin Room"}
+        },
+        {
           "name": "van/uk/brum/ugs/devices/CHW-L00-01",
           "traits": [{"name":  "smartcore.bos.Temperature"}],
           "appearance": {"title": "Main Chilled Water"},
