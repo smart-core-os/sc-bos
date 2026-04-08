@@ -10,7 +10,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
-//go:generate protomod protoc -- -I../../.. --go_out=paths=source_relative:../../../ --go-grpc_out=paths=source_relative:../../../ pkg/trait/electricpb/memory_settings.proto
+//go:generate protoc -I../../.. --go_out=paths=source_relative:../../../ --go-grpc_out=paths=source_relative:../../../ pkg/trait/electricpb/memory_settings.proto
 
 func (s *ModelServer) UpdateDemand(_ context.Context, request *UpdateDemandRequest) (*ElectricDemand, error) {
 	return s.model.UpdateDemand(request.Demand, resource.WithUpdateMask(request.UpdateMask))
