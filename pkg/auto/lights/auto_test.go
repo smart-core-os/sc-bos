@@ -197,7 +197,7 @@ func TestPirsTurnLightsOn(t *testing.T) {
 		}
 		return o01.State == occupancysensorpb.Occupancy_OCCUPIED
 	})
-	assertErrorAndTtl(t, ttl, err, cfg.OnProcessError.BackOffMultiplier.Duration*8/10, errFailedBrightnessUpdate)
+	assertErrorAndTtl(t, ttl, err, (cfg.OnProcessError.BackOffMultiplier.Duration*8)/10, errFailedBrightnessUpdate)
 	testActions.assertNextBrightnessUpdates(100, "light01", "light02")
 
 	// second try
@@ -207,7 +207,7 @@ func TestPirsTurnLightsOn(t *testing.T) {
 	ttl, err = waitForState(func(state *ReadState) bool {
 		return true // no state change, only time change
 	})
-	assertErrorAndTtl(t, ttl, err, 2*cfg.OnProcessError.BackOffMultiplier.Duration*(8/10), errFailedBrightnessUpdate)
+	assertErrorAndTtl(t, ttl, err, 2*(cfg.OnProcessError.BackOffMultiplier.Duration*8)/10, errFailedBrightnessUpdate)
 	testActions.assertNextBrightnessUpdates(100, "light01", "light02")
 
 	// third try and is cancelled

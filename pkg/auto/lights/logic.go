@@ -338,7 +338,7 @@ func getAverageLevel(state *WriteState) (float32, error) {
 		n++
 	}
 	if n == 0 {
-		return 0, errors.New("No brightness readings available")
+		return 0, errors.New("no brightness readings available")
 	}
 	return sum / float32(n), nil
 }
