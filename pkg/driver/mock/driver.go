@@ -184,10 +184,10 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		return []node.Feature{node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, brightnesssensorpb.BrightnessSensorApiServer(brightnesssensorpb.NewModelServer(model)))}, auto.BrightnessSensorAuto(model)
 	case trait.Channel:
 		model := channelpb.NewModel()
-		return []node.Feature{node.HasServer(channelpb.RegisterChannelApiServer, channelpb.ChannelApiServer(channelpb.NewModelServer(model)))}, nil
+		return []node.Feature{node.HasServer(channelpb.RegisterChannelApiServer, channelpb.ChannelApiServer(channelpb.NewModelServer(model)))}, auto.ChannelAuto(model)
 	case trait.Count:
 		model := countpb.NewModel()
-		return []node.Feature{node.HasServer(countpb.RegisterCountApiServer, countpb.CountApiServer(countpb.NewModelServer(model)))}, nil
+		return []node.Feature{node.HasServer(countpb.RegisterCountApiServer, countpb.CountApiServer(countpb.NewModelServer(model)))}, auto.CountAuto(model)
 	case trait.Electric:
 		model := electricpb.NewModel()
 		return []node.Feature{node.HasServer(electricpb.RegisterElectricApiServer, electricpb.ElectricApiServer(electricpb.NewModelServer(model)))}, auto.Electric(model)
@@ -215,7 +215,7 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		return []node.Feature{node.HasServer(enterleavesensorpb.RegisterEnterLeaveSensorApiServer, enterleavesensorpb.EnterLeaveSensorApiServer(enterleavesensorpb.NewModelServer(model)))}, auto.EnterLeaveAuto(model)
 	case trait.ExtendRetract:
 		model := extendretractpb.NewModel()
-		return []node.Feature{node.HasServer(extendretractpb.RegisterExtendRetractApiServer, extendretractpb.ExtendRetractApiServer(extendretractpb.NewModelServer(model)))}, nil
+		return []node.Feature{node.HasServer(extendretractpb.RegisterExtendRetractApiServer, extendretractpb.ExtendRetractApiServer(extendretractpb.NewModelServer(model)))}, auto.ExtendRetractAuto(model)
 	case trait.FanSpeed:
 		presets := []fanspeedpb.Preset{
 			{Name: "off", Percentage: 0},
@@ -230,37 +230,39 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		return []node.Feature{node.HasServer(hailpb.RegisterHailApiServer, hailpb.HailApiServer(hailpb.NewModelServer(hailpb.NewModel())))}, nil
 	case trait.InputSelect:
 		model := inputselectpb.NewModel()
-		return []node.Feature{node.HasServer(inputselectpb.RegisterInputSelectApiServer, inputselectpb.InputSelectApiServer(inputselectpb.NewModelServer(model)))}, nil
+		return []node.Feature{node.HasServer(inputselectpb.RegisterInputSelectApiServer, inputselectpb.InputSelectApiServer(inputselectpb.NewModelServer(model)))}, auto.InputSelectAuto(model)
 	case trait.Light:
-		server := lightpb.NewModelServer(lightpb.NewModel(
+		model := lightpb.NewModel(
 			lightpb.WithPreset(0, &lightpb.LightPreset{Name: "off", Title: "Off"}),
 			lightpb.WithPreset(40, &lightpb.LightPreset{Name: "low", Title: "Low"}),
 			lightpb.WithPreset(60, &lightpb.LightPreset{Name: "med", Title: "Normal"}),
 			lightpb.WithPreset(80, &lightpb.LightPreset{Name: "high", Title: "High"}),
 			lightpb.WithPreset(100, &lightpb.LightPreset{Name: "full", Title: "Full"}),
-		))
+		)
+		server := lightpb.NewModelServer(model)
 		return []node.Feature{
 			node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(server)),
 			node.HasServer(lightpb.RegisterLightInfoServer, lightpb.LightInfoServer(server)),
-		}, nil
+		}, auto.LightAuto(model)
 	case trait.LockUnlock:
 		model := lockunlockpb.NewModel()
-		return []node.Feature{node.HasServer(lockunlockpb.RegisterLockUnlockApiServer, lockunlockpb.LockUnlockApiServer(lockunlockpb.NewModelServer(model)))}, nil
+		return []node.Feature{node.HasServer(lockunlockpb.RegisterLockUnlockApiServer, lockunlockpb.LockUnlockApiServer(lockunlockpb.NewModelServer(model)))}, auto.LockUnlockAuto(model)
 	case trait.Metadata:
 		return []node.Feature{node.HasServer(metadatapb.RegisterMetadataApiServer, metadatapb.MetadataApiServer(metadatapb.NewModelServer(metadatapb.NewModel())))}, nil
 	case trait.Microphone:
 		model := microphonepb.NewModel()
-		return []node.Feature{node.HasServer(microphonepb.RegisterMicrophoneApiServer, microphonepb.MicrophoneApiServer(microphonepb.NewModelServer(model)))}, nil
+		return []node.Feature{node.HasServer(microphonepb.RegisterMicrophoneApiServer, microphonepb.MicrophoneApiServer(microphonepb.NewModelServer(model)))}, auto.MicrophoneAuto(model)
 	case trait.Mode:
 		return mockMode(traitMd, deviceName, logger)
 	case trait.MotionSensor:
 		model := motionsensorpb.NewModel()
-		return []node.Feature{node.HasServer(motionsensorpb.RegisterMotionSensorApiServer, motionsensorpb.MotionSensorApiServer(motionsensorpb.NewModelServer(model)))}, nil
+		return []node.Feature{node.HasServer(motionsensorpb.RegisterMotionSensorApiServer, motionsensorpb.MotionSensorApiServer(motionsensorpb.NewModelServer(model)))}, auto.MotionSensorAuto(model)
 	case trait.OccupancySensor:
 		model := occupancysensorpb.NewModel()
 		return []node.Feature{node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(model)))}, auto.OccupancySensorAuto(model)
 	case trait.OnOff:
-		return []node.Feature{node.HasServer(onoffpb.RegisterOnOffApiServer, onoffpb.OnOffApiServer(onoffpb.NewModelServer(onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF})))))}, nil
+		model := onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}))
+		return []node.Feature{node.HasServer(onoffpb.RegisterOnOffApiServer, onoffpb.OnOffApiServer(onoffpb.NewModelServer(model)))}, auto.OnOffAuto(model)
 	case trait.OpenClose:
 		return mockOpenClose(traitMd, deviceName, logger)
 	case trait.Parent:
@@ -269,10 +271,10 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		return []node.Feature{node.HasServer(publicationpb.RegisterPublicationApiServer, publicationpb.PublicationApiServer(publicationpb.NewModelServer(publicationpb.NewModel())))}, nil
 	case trait.Ptz:
 		model := ptzpb.NewModel()
-		return []node.Feature{node.HasServer(ptzpb.RegisterPtzApiServer, ptzpb.PtzApiServer(ptzpb.NewModelServer(model)))}, nil
+		return []node.Feature{node.HasServer(ptzpb.RegisterPtzApiServer, ptzpb.PtzApiServer(ptzpb.NewModelServer(model)))}, auto.PtzAuto(model)
 	case trait.Speaker:
 		model := speakerpb.NewModel()
-		return []node.Feature{node.HasServer(speakerpb.RegisterSpeakerApiServer, speakerpb.SpeakerApiServer(speakerpb.NewModelServer(model)))}, nil
+		return []node.Feature{node.HasServer(speakerpb.RegisterSpeakerApiServer, speakerpb.SpeakerApiServer(speakerpb.NewModelServer(model)))}, auto.SpeakerAuto(model)
 	case trait.Vending:
 		return []node.Feature{node.HasServer(vendingpb.RegisterVendingApiServer, vendingpb.VendingApiServer(vendingpb.NewModelServer(vendingpb.NewModel())))}, nil
 
@@ -280,7 +282,8 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		model := accesspb.NewModel()
 		return []node.Feature{node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(accesspb.NewModelServer(model)))}, auto.Access(model)
 	case buttonpb.TraitName:
-		return []node.Feature{node.HasServer(buttonpb.RegisterButtonApiServer, buttonpb.ButtonApiServer(buttonpb.NewModelServer(buttonpb.NewModel(buttonpb.ButtonState_UNPRESSED))))}, nil
+		model := buttonpb.NewModel(buttonpb.ButtonState_UNPRESSED)
+		return []node.Feature{node.HasServer(buttonpb.RegisterButtonApiServer, buttonpb.ButtonApiServer(buttonpb.NewModelServer(model)))}, auto.ButtonAuto(model)
 	case emergencylightpb.TraitName:
 		model := emergencylightpb.NewModel()
 		model.SetLastDurationTest(emergencylightpb.EmergencyTestResult_TEST_PASSED)
