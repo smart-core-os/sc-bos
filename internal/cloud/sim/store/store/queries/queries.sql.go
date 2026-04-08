@@ -175,7 +175,13 @@ type CreateNodeCheckInParams struct {
 
 // Node Check-Ins
 func (q *Queries) CreateNodeCheckIn(ctx context.Context, arg CreateNodeCheckInParams) (NodeCheckIn, error) {
-	row := q.db.QueryRowContext(ctx, createNodeCheckIn, arg.NodeID, arg.CurrentDeploymentID, arg.InstallingDeploymentID, arg.InstallingDeploymentError, arg.InstallingDeploymentAttempts)
+	row := q.db.QueryRowContext(ctx, createNodeCheckIn,
+		arg.NodeID,
+		arg.CurrentDeploymentID,
+		arg.InstallingDeploymentID,
+		arg.InstallingDeploymentError,
+		arg.InstallingDeploymentAttempts,
+	)
 	var i NodeCheckIn
 	err := row.Scan(
 		&i.ID,

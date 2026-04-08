@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
@@ -117,7 +111,7 @@ expireTime: (f = msg.getExpireTime()) && google_protobuf_timestamp_pb.Timestamp.
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.axiomxa.v1.SaveQRCredentialRequest}
  */
 proto.smartcore.bos.driver.axiomxa.v1.SaveQRCredentialRequest.deserializeBinary = function(bytes) {
@@ -142,7 +136,7 @@ proto.smartcore.bos.driver.axiomxa.v1.SaveQRCredentialRequest.deserializeBinaryF
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -150,11 +144,11 @@ proto.smartcore.bos.driver.axiomxa.v1.SaveQRCredentialRequest.deserializeBinaryF
       msg.setCardNumber(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setFirstName(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setLastName(value);
       break;
     case 5:
@@ -434,7 +428,7 @@ proto.smartcore.bos.driver.axiomxa.v1.SaveQRCredentialResponse.toObject = functi
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.axiomxa.v1.SaveQRCredentialResponse}
  */
 proto.smartcore.bos.driver.axiomxa.v1.SaveQRCredentialResponse.deserializeBinary = function(bytes) {

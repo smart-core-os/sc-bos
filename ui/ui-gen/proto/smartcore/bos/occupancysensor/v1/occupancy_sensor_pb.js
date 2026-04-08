@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -238,7 +232,7 @@ confidence: jspb.Message.getFloatingPointFieldWithDefault(msg, 5, 0.0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.occupancysensor.v1.Occupancy}
  */
 proto.smartcore.bos.occupancysensor.v1.Occupancy.deserializeBinary = function(bytes) {
@@ -276,7 +270,7 @@ proto.smartcore.bos.occupancysensor.v1.Occupancy.deserializeBinaryFromReader = f
       msg.setStateChangeTime(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.addReasons(value);
       break;
     case 5:
@@ -535,7 +529,7 @@ maxPeople: jspb.Message.getFieldWithDefault(msg, 2, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.occupancysensor.v1.OccupancySupport}
  */
 proto.smartcore.bos.occupancysensor.v1.OccupancySupport.deserializeBinary = function(bytes) {
@@ -716,7 +710,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.occupancysensor.v1.GetOccupancyRequest}
  */
 proto.smartcore.bos.occupancysensor.v1.GetOccupancyRequest.deserializeBinary = function(bytes) {
@@ -741,7 +735,7 @@ proto.smartcore.bos.occupancysensor.v1.GetOccupancyRequest.deserializeBinaryFrom
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -898,7 +892,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.occupancysensor.v1.PullOccupancyRequest}
  */
 proto.smartcore.bos.occupancysensor.v1.PullOccupancyRequest.deserializeBinary = function(bytes) {
@@ -923,7 +917,7 @@ proto.smartcore.bos.occupancysensor.v1.PullOccupancyRequest.deserializeBinaryFro
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1115,7 +1109,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.occupancysensor.v1.PullOccupancyResponse}
  */
 proto.smartcore.bos.occupancysensor.v1.PullOccupancyResponse.deserializeBinary = function(bytes) {
@@ -1231,7 +1225,7 @@ occupancy: (f = msg.getOccupancy()) && proto.smartcore.bos.occupancysensor.v1.Oc
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.occupancysensor.v1.PullOccupancyResponse.Change}
  */
 proto.smartcore.bos.occupancysensor.v1.PullOccupancyResponse.Change.deserializeBinary = function(bytes) {
@@ -1256,7 +1250,7 @@ proto.smartcore.bos.occupancysensor.v1.PullOccupancyResponse.Change.deserializeB
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1499,7 +1493,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.occupancysensor.v1.DescribeOccupancyRequest}
  */
 proto.smartcore.bos.occupancysensor.v1.DescribeOccupancyRequest.deserializeBinary = function(bytes) {
@@ -1524,7 +1518,7 @@ proto.smartcore.bos.occupancysensor.v1.DescribeOccupancyRequest.deserializeBinar
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:

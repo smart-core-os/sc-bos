@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -407,7 +401,7 @@ presetSpeed: jspb.Message.getFieldWithDefault(msg, 4, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.Ptz}
  */
 proto.smartcore.bos.ptz.v1.Ptz.deserializeBinary = function(bytes) {
@@ -442,7 +436,7 @@ proto.smartcore.bos.ptz.v1.Ptz.deserializeBinaryFromReader = function(msg, reade
       msg.setMovement(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setPreset(value);
       break;
     case 4:
@@ -668,7 +662,7 @@ zoom: jspb.Message.getFloatingPointFieldWithDefault(msg, 3, 0.0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.PtzVector}
  */
 proto.smartcore.bos.ptz.v1.PtzVector.deserializeBinary = function(bytes) {
@@ -857,7 +851,7 @@ max: (f = msg.getMax()) && proto.smartcore.bos.ptz.v1.PtzVector.toObject(include
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.PtzBounds}
  */
 proto.smartcore.bos.ptz.v1.PtzBounds.deserializeBinary = function(bytes) {
@@ -1061,7 +1055,7 @@ targetSpeed: jspb.Message.getFieldWithDefault(msg, 4, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.PtzMovement}
  */
 proto.smartcore.bos.ptz.v1.PtzMovement.deserializeBinary = function(bytes) {
@@ -1322,7 +1316,7 @@ targetPosition: (f = msg.getTargetPosition()) && proto.smartcore.bos.ptz.v1.PtzV
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.PtzPosition}
  */
 proto.smartcore.bos.ptz.v1.PtzPosition.deserializeBinary = function(bytes) {
@@ -1577,7 +1571,7 @@ writable: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.PtzPreset}
  */
 proto.smartcore.bos.ptz.v1.PtzPreset.deserializeBinary = function(bytes) {
@@ -1602,15 +1596,15 @@ proto.smartcore.bos.ptz.v1.PtzPreset.deserializeBinaryFromReader = function(msg,
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setTitle(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setDescription(value);
       break;
     case 4:
@@ -1856,7 +1850,7 @@ supportsCustomPresets: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.PtzSupport}
  */
 proto.smartcore.bos.ptz.v1.PtzSupport.deserializeBinary = function(bytes) {
@@ -2146,7 +2140,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.GetPtzRequest}
  */
 proto.smartcore.bos.ptz.v1.GetPtzRequest.deserializeBinary = function(bytes) {
@@ -2171,7 +2165,7 @@ proto.smartcore.bos.ptz.v1.GetPtzRequest.deserializeBinaryFromReader = function(
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2328,7 +2322,7 @@ updateMask: (f = msg.getUpdateMask()) && google_protobuf_field_mask_pb.FieldMask
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.UpdatePtzRequest}
  */
 proto.smartcore.bos.ptz.v1.UpdatePtzRequest.deserializeBinary = function(bytes) {
@@ -2353,7 +2347,7 @@ proto.smartcore.bos.ptz.v1.UpdatePtzRequest.deserializeBinaryFromReader = functi
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2558,7 +2552,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.StopPtzRequest}
  */
 proto.smartcore.bos.ptz.v1.StopPtzRequest.deserializeBinary = function(bytes) {
@@ -2583,7 +2577,7 @@ proto.smartcore.bos.ptz.v1.StopPtzRequest.deserializeBinaryFromReader = function
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:
@@ -2689,7 +2683,7 @@ preset: (f = msg.getPreset()) && proto.smartcore.bos.ptz.v1.PtzPreset.toObject(i
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.CreatePtzPresetRequest}
  */
 proto.smartcore.bos.ptz.v1.CreatePtzPresetRequest.deserializeBinary = function(bytes) {
@@ -2714,7 +2708,7 @@ proto.smartcore.bos.ptz.v1.CreatePtzPresetRequest.deserializeBinaryFromReader = 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2871,7 +2865,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.PullPtzRequest}
  */
 proto.smartcore.bos.ptz.v1.PullPtzRequest.deserializeBinary = function(bytes) {
@@ -2896,7 +2890,7 @@ proto.smartcore.bos.ptz.v1.PullPtzRequest.deserializeBinaryFromReader = function
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -3088,7 +3082,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.PullPtzResponse}
  */
 proto.smartcore.bos.ptz.v1.PullPtzResponse.deserializeBinary = function(bytes) {
@@ -3204,7 +3198,7 @@ ptz: (f = msg.getPtz()) && proto.smartcore.bos.ptz.v1.Ptz.toObject(includeInstan
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.PullPtzResponse.Change}
  */
 proto.smartcore.bos.ptz.v1.PullPtzResponse.Change.deserializeBinary = function(bytes) {
@@ -3229,7 +3223,7 @@ proto.smartcore.bos.ptz.v1.PullPtzResponse.Change.deserializeBinaryFromReader = 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -3472,7 +3466,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.ptz.v1.DescribePtzRequest}
  */
 proto.smartcore.bos.ptz.v1.DescribePtzRequest.deserializeBinary = function(bytes) {
@@ -3497,7 +3491,7 @@ proto.smartcore.bos.ptz.v1.DescribePtzRequest.deserializeBinaryFromReader = func
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:

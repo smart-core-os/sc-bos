@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -209,7 +203,7 @@ allocationTotal: (f = jspb.Message.getField(msg, 5)) == null ? undefined : f
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.allocation.v1.Allocation}
  */
 proto.smartcore.bos.allocation.v1.Allocation.deserializeBinary = function(bytes) {
@@ -243,7 +237,7 @@ proto.smartcore.bos.allocation.v1.Allocation.deserializeBinaryFromReader = funct
       msg.setActor(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setGroupId(value);
       break;
     case 4:
@@ -540,7 +534,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.allocation.v1.GetAllocationRequest}
  */
 proto.smartcore.bos.allocation.v1.GetAllocationRequest.deserializeBinary = function(bytes) {
@@ -565,7 +559,7 @@ proto.smartcore.bos.allocation.v1.GetAllocationRequest.deserializeBinaryFromRead
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -722,7 +716,7 @@ updateMask: (f = msg.getUpdateMask()) && google_protobuf_field_mask_pb.FieldMask
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.allocation.v1.UpdateAllocationRequest}
  */
 proto.smartcore.bos.allocation.v1.UpdateAllocationRequest.deserializeBinary = function(bytes) {
@@ -747,7 +741,7 @@ proto.smartcore.bos.allocation.v1.UpdateAllocationRequest.deserializeBinaryFromR
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -954,7 +948,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.allocation.v1.PullAllocationRequest}
  */
 proto.smartcore.bos.allocation.v1.PullAllocationRequest.deserializeBinary = function(bytes) {
@@ -979,7 +973,7 @@ proto.smartcore.bos.allocation.v1.PullAllocationRequest.deserializeBinaryFromRea
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1171,7 +1165,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.allocation.v1.PullAllocationResponse}
  */
 proto.smartcore.bos.allocation.v1.PullAllocationResponse.deserializeBinary = function(bytes) {
@@ -1287,7 +1281,7 @@ allocation: (f = msg.getAllocation()) && proto.smartcore.bos.allocation.v1.Alloc
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.allocation.v1.PullAllocationResponse.Change}
  */
 proto.smartcore.bos.allocation.v1.PullAllocationResponse.Change.deserializeBinary = function(bytes) {
@@ -1312,7 +1306,7 @@ proto.smartcore.bos.allocation.v1.PullAllocationResponse.Change.deserializeBinar
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:

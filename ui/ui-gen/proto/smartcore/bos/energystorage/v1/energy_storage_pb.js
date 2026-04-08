@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_duration_pb = require('google-protobuf/google/protobuf/duration_pb.js');
 goog.object.extend(proto, google_protobuf_duration_pb);
@@ -344,7 +338,7 @@ chargeControl: jspb.Message.getFieldWithDefault(msg, 3, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.EnergyLevelSupport}
  */
 proto.smartcore.bos.energystorage.v1.EnergyLevelSupport.deserializeBinary = function(bytes) {
@@ -595,7 +589,7 @@ pluggedIn: jspb.Message.getBooleanFieldWithDefault(msg, 6, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.EnergyLevel}
  */
 proto.smartcore.bos.energystorage.v1.EnergyLevel.deserializeBinary = function(bytes) {
@@ -763,7 +757,7 @@ target: (f = msg.getTarget()) && proto.smartcore.bos.energystorage.v1.EnergyLeve
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.EnergyLevel.Transfer}
  */
 proto.smartcore.bos.energystorage.v1.EnergyLevel.Transfer.deserializeBinary = function(bytes) {
@@ -1084,7 +1078,7 @@ startTime: (f = msg.getStartTime()) && google_protobuf_timestamp_pb.Timestamp.to
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.EnergyLevel.Steady}
  */
 proto.smartcore.bos.energystorage.v1.EnergyLevel.Steady.deserializeBinary = function(bytes) {
@@ -1239,7 +1233,7 @@ voltage: (f = jspb.Message.getOptionalFloatingPointField(msg, 5)) == null ? unde
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.EnergyLevel.Quantity}
  */
 proto.smartcore.bos.energystorage.v1.EnergyLevel.Quantity.deserializeBinary = function(bytes) {
@@ -1684,7 +1678,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.GetEnergyLevelRequest}
  */
 proto.smartcore.bos.energystorage.v1.GetEnergyLevelRequest.deserializeBinary = function(bytes) {
@@ -1709,7 +1703,7 @@ proto.smartcore.bos.energystorage.v1.GetEnergyLevelRequest.deserializeBinaryFrom
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1866,7 +1860,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.PullEnergyLevelRequest}
  */
 proto.smartcore.bos.energystorage.v1.PullEnergyLevelRequest.deserializeBinary = function(bytes) {
@@ -1891,7 +1885,7 @@ proto.smartcore.bos.energystorage.v1.PullEnergyLevelRequest.deserializeBinaryFro
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2083,7 +2077,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.PullEnergyLevelResponse}
  */
 proto.smartcore.bos.energystorage.v1.PullEnergyLevelResponse.deserializeBinary = function(bytes) {
@@ -2199,7 +2193,7 @@ energyLevel: (f = msg.getEnergyLevel()) && proto.smartcore.bos.energystorage.v1.
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.PullEnergyLevelResponse.Change}
  */
 proto.smartcore.bos.energystorage.v1.PullEnergyLevelResponse.Change.deserializeBinary = function(bytes) {
@@ -2224,7 +2218,7 @@ proto.smartcore.bos.energystorage.v1.PullEnergyLevelResponse.Change.deserializeB
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2468,7 +2462,7 @@ charge: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.ChargeRequest}
  */
 proto.smartcore.bos.energystorage.v1.ChargeRequest.deserializeBinary = function(bytes) {
@@ -2493,7 +2487,7 @@ proto.smartcore.bos.energystorage.v1.ChargeRequest.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2627,7 +2621,7 @@ proto.smartcore.bos.energystorage.v1.ChargeResponse.toObject = function(includeI
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.ChargeResponse}
  */
 proto.smartcore.bos.energystorage.v1.ChargeResponse.deserializeBinary = function(bytes) {
@@ -2728,7 +2722,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.energystorage.v1.DescribeEnergyLevelRequest}
  */
 proto.smartcore.bos.energystorage.v1.DescribeEnergyLevelRequest.deserializeBinary = function(bytes) {
@@ -2753,7 +2747,7 @@ proto.smartcore.bos.energystorage.v1.DescribeEnergyLevelRequest.deserializeBinar
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:

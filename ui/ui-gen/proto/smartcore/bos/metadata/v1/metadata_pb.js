@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -420,7 +414,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.Metadata}
  */
 proto.smartcore.bos.metadata.v1.Metadata.deserializeBinary = function(bytes) {
@@ -445,7 +439,7 @@ proto.smartcore.bos.metadata.v1.Metadata.deserializeBinaryFromReader = function(
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -496,7 +490,7 @@ proto.smartcore.bos.metadata.v1.Metadata.deserializeBinaryFromReader = function(
     case 100:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     default:
@@ -609,7 +603,12 @@ proto.smartcore.bos.metadata.v1.Metadata.serializeBinaryToWriter = function(mess
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(100, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    100,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -661,7 +660,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.Metadata.Appearance}
  */
 proto.smartcore.bos.metadata.v1.Metadata.Appearance.deserializeBinary = function(bytes) {
@@ -686,17 +685,17 @@ proto.smartcore.bos.metadata.v1.Metadata.Appearance.deserializeBinaryFromReader 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setTitle(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setDescription(value);
       break;
     case 100:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     default:
@@ -744,7 +743,12 @@ proto.smartcore.bos.metadata.v1.Metadata.Appearance.serializeBinaryToWriter = fu
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(100, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    100,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -858,7 +862,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.Metadata.Location}
  */
 proto.smartcore.bos.metadata.v1.Metadata.Location.deserializeBinary = function(bytes) {
@@ -883,29 +887,29 @@ proto.smartcore.bos.metadata.v1.Metadata.Location.deserializeBinaryFromReader = 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setTitle(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setDescription(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setArchitectureReference(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setFloor(value);
       break;
     case 5:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setZone(value);
       break;
     case 100:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     default:
@@ -974,7 +978,12 @@ proto.smartcore.bos.metadata.v1.Metadata.Location.serializeBinaryToWriter = func
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(100, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    100,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -1140,7 +1149,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.Metadata.ID}
  */
 proto.smartcore.bos.metadata.v1.Metadata.ID.deserializeBinary = function(bytes) {
@@ -1165,21 +1174,21 @@ proto.smartcore.bos.metadata.v1.Metadata.ID.deserializeBinaryFromReader = functi
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setSerialNumber(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setBim(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setBacnet(value);
       break;
     case 100:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     default:
@@ -1234,7 +1243,12 @@ proto.smartcore.bos.metadata.v1.Metadata.ID.serializeBinaryToWriter = function(m
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(100, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    100,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -1368,7 +1382,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.Metadata.Product}
  */
 proto.smartcore.bos.metadata.v1.Metadata.Product.deserializeBinary = function(bytes) {
@@ -1393,27 +1407,27 @@ proto.smartcore.bos.metadata.v1.Metadata.Product.deserializeBinaryFromReader = f
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setTitle(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setManufacturer(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setModel(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setHardwareVersion(value);
       break;
     case 5:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setFirmwareVersion(value);
       break;
     case 6:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setSoftwareVersion(value);
       break;
     case 7:
@@ -1424,7 +1438,7 @@ proto.smartcore.bos.metadata.v1.Metadata.Product.deserializeBinaryFromReader = f
     case 100:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     default:
@@ -1508,7 +1522,12 @@ proto.smartcore.bos.metadata.v1.Metadata.Product.serializeBinaryToWriter = funct
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(100, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    100,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -1559,7 +1578,7 @@ code: jspb.Message.getFieldWithDefault(msg, 2, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.Metadata.Product.Kind}
  */
 proto.smartcore.bos.metadata.v1.Metadata.Product.Kind.deserializeBinary = function(bytes) {
@@ -1584,11 +1603,11 @@ proto.smartcore.bos.metadata.v1.Metadata.Product.Kind.deserializeBinaryFromReade
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setTitle(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setCode(value);
       break;
     default:
@@ -1893,7 +1912,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.Metadata.Revision}
  */
 proto.smartcore.bos.metadata.v1.Metadata.Revision.deserializeBinary = function(bytes) {
@@ -1918,7 +1937,7 @@ proto.smartcore.bos.metadata.v1.Metadata.Revision.deserializeBinaryFromReader = 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setTitle(value);
       break;
     case 2:
@@ -1927,29 +1946,29 @@ proto.smartcore.bos.metadata.v1.Metadata.Revision.deserializeBinaryFromReader = 
       msg.setManufactureDate(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setModel(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setHardwareVersion(value);
       break;
     case 5:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setFirmwareVersion(value);
       break;
     case 6:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setSoftwareVersion(value);
       break;
     case 7:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setBatch(value);
       break;
     case 100:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     default:
@@ -2033,7 +2052,12 @@ proto.smartcore.bos.metadata.v1.Metadata.Revision.serializeBinaryToWriter = func
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(100, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    100,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -2256,7 +2280,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.Metadata.Installation}
  */
 proto.smartcore.bos.metadata.v1.Metadata.Installation.deserializeBinary = function(bytes) {
@@ -2291,7 +2315,7 @@ proto.smartcore.bos.metadata.v1.Metadata.Installation.deserializeBinaryFromReade
       msg.setReplaceTime(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setInstaller(value);
       break;
     case 4:
@@ -2306,7 +2330,7 @@ proto.smartcore.bos.metadata.v1.Metadata.Installation.deserializeBinaryFromReade
     case 100:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     default:
@@ -2378,7 +2402,12 @@ proto.smartcore.bos.metadata.v1.Metadata.Installation.serializeBinaryToWriter = 
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(100, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    100,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -2612,7 +2641,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.Metadata.NIC}
  */
 proto.smartcore.bos.metadata.v1.Metadata.NIC.deserializeBinary = function(bytes) {
@@ -2637,27 +2666,27 @@ proto.smartcore.bos.metadata.v1.Metadata.NIC.deserializeBinaryFromReader = funct
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setDisplayName(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setMacAddress(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setIp(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setNetwork(value);
       break;
     case 5:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setGateway(value);
       break;
     case 6:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.addDns(value);
       break;
     case 10:
@@ -2667,7 +2696,7 @@ proto.smartcore.bos.metadata.v1.Metadata.NIC.deserializeBinaryFromReader = funct
     case 100:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     default:
@@ -2750,7 +2779,12 @@ proto.smartcore.bos.metadata.v1.Metadata.NIC.serializeBinaryToWriter = function(
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(100, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    100,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -2979,7 +3013,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.Metadata.Membership}
  */
 proto.smartcore.bos.metadata.v1.Metadata.Membership.deserializeBinary = function(bytes) {
@@ -3004,17 +3038,17 @@ proto.smartcore.bos.metadata.v1.Metadata.Membership.deserializeBinaryFromReader 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setGroup(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setSubsystem(value);
       break;
     case 100:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     default:
@@ -3062,7 +3096,12 @@ proto.smartcore.bos.metadata.v1.Metadata.Membership.serializeBinaryToWriter = fu
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(100, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    100,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -3548,7 +3587,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.TraitMetadata}
  */
 proto.smartcore.bos.metadata.v1.TraitMetadata.deserializeBinary = function(bytes) {
@@ -3573,13 +3612,13 @@ proto.smartcore.bos.metadata.v1.TraitMetadata.deserializeBinaryFromReader = func
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 100:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     default:
@@ -3620,7 +3659,12 @@ proto.smartcore.bos.metadata.v1.TraitMetadata.serializeBinaryToWriter = function
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(100, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    100,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -3712,7 +3756,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.GetMetadataRequest}
  */
 proto.smartcore.bos.metadata.v1.GetMetadataRequest.deserializeBinary = function(bytes) {
@@ -3737,7 +3781,7 @@ proto.smartcore.bos.metadata.v1.GetMetadataRequest.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -3894,7 +3938,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.PullMetadataRequest}
  */
 proto.smartcore.bos.metadata.v1.PullMetadataRequest.deserializeBinary = function(bytes) {
@@ -3919,7 +3963,7 @@ proto.smartcore.bos.metadata.v1.PullMetadataRequest.deserializeBinaryFromReader 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -4111,7 +4155,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.PullMetadataResponse}
  */
 proto.smartcore.bos.metadata.v1.PullMetadataResponse.deserializeBinary = function(bytes) {
@@ -4227,7 +4271,7 @@ changeTime: (f = msg.getChangeTime()) && google_protobuf_timestamp_pb.Timestamp.
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.metadata.v1.PullMetadataResponse.Change}
  */
 proto.smartcore.bos.metadata.v1.PullMetadataResponse.Change.deserializeBinary = function(bytes) {
@@ -4252,7 +4296,7 @@ proto.smartcore.bos.metadata.v1.PullMetadataResponse.Change.deserializeBinaryFro
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:

@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -300,7 +294,7 @@ targetPreset: (f = msg.getTargetPreset()) && proto.smartcore.bos.color.v1.ColorP
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.color.v1.Color}
  */
 proto.smartcore.bos.color.v1.Color.deserializeBinary = function(bytes) {
@@ -656,7 +650,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.color.v1.ColorChannels}
  */
 proto.smartcore.bos.color.v1.ColorChannels.deserializeBinary = function(bytes) {
@@ -703,7 +697,7 @@ proto.smartcore.bos.color.v1.ColorChannels.deserializeBinaryFromReader = functio
     case 6:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readUint32, null, "", 0);
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readUint32, null, "", 0);
          });
       break;
     default:
@@ -772,7 +766,12 @@ proto.smartcore.bos.color.v1.ColorChannels.serializeBinaryToWriter = function(me
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(6, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeUint32);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    6,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeUint32);
   }
 };
 
@@ -1026,7 +1025,7 @@ title: jspb.Message.getFieldWithDefault(msg, 2, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.color.v1.ColorPreset}
  */
 proto.smartcore.bos.color.v1.ColorPreset.deserializeBinary = function(bytes) {
@@ -1051,11 +1050,11 @@ proto.smartcore.bos.color.v1.ColorPreset.deserializeBinaryFromReader = function(
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setTitle(value);
       break;
     default:
@@ -1196,7 +1195,7 @@ channelsList: (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : 
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.color.v1.ColorSupport}
  */
 proto.smartcore.bos.color.v1.ColorSupport.deserializeBinary = function(bytes) {
@@ -1236,7 +1235,7 @@ proto.smartcore.bos.color.v1.ColorSupport.deserializeBinaryFromReader = function
       msg.addPresets(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.addChannels(value);
       break;
     default:
@@ -1498,7 +1497,7 @@ updateMask: (f = msg.getUpdateMask()) && google_protobuf_field_mask_pb.FieldMask
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.color.v1.UpdateColorRequest}
  */
 proto.smartcore.bos.color.v1.UpdateColorRequest.deserializeBinary = function(bytes) {
@@ -1523,7 +1522,7 @@ proto.smartcore.bos.color.v1.UpdateColorRequest.deserializeBinaryFromReader = fu
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1729,7 +1728,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.color.v1.GetColorRequest}
  */
 proto.smartcore.bos.color.v1.GetColorRequest.deserializeBinary = function(bytes) {
@@ -1754,7 +1753,7 @@ proto.smartcore.bos.color.v1.GetColorRequest.deserializeBinaryFromReader = funct
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1912,7 +1911,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.color.v1.PullColorRequest}
  */
 proto.smartcore.bos.color.v1.PullColorRequest.deserializeBinary = function(bytes) {
@@ -1937,7 +1936,7 @@ proto.smartcore.bos.color.v1.PullColorRequest.deserializeBinaryFromReader = func
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2158,7 +2157,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.color.v1.PullColorResponse}
  */
 proto.smartcore.bos.color.v1.PullColorResponse.deserializeBinary = function(bytes) {
@@ -2274,7 +2273,7 @@ color: (f = msg.getColor()) && proto.smartcore.bos.color.v1.Color.toObject(inclu
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.color.v1.PullColorResponse.Change}
  */
 proto.smartcore.bos.color.v1.PullColorResponse.Change.deserializeBinary = function(bytes) {
@@ -2299,7 +2298,7 @@ proto.smartcore.bos.color.v1.PullColorResponse.Change.deserializeBinaryFromReade
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2542,7 +2541,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.color.v1.DescribeColorRequest}
  */
 proto.smartcore.bos.color.v1.DescribeColorRequest.deserializeBinary = function(bytes) {
@@ -2567,7 +2566,7 @@ proto.smartcore.bos.color.v1.DescribeColorRequest.deserializeBinaryFromReader = 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:

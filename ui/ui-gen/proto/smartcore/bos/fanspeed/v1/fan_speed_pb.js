@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -274,7 +268,7 @@ direction: jspb.Message.getFieldWithDefault(msg, 4, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fanspeed.v1.FanSpeed}
  */
 proto.smartcore.bos.fanspeed.v1.FanSpeed.deserializeBinary = function(bytes) {
@@ -303,7 +297,7 @@ proto.smartcore.bos.fanspeed.v1.FanSpeed.deserializeBinaryFromReader = function(
       msg.setPercentage(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setPreset(value);
       break;
     case 3:
@@ -508,7 +502,7 @@ presetsList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fanspeed.v1.FanSpeedSupport}
  */
 proto.smartcore.bos.fanspeed.v1.FanSpeedSupport.deserializeBinary = function(bytes) {
@@ -538,7 +532,7 @@ proto.smartcore.bos.fanspeed.v1.FanSpeedSupport.deserializeBinaryFromReader = fu
       msg.setResourceSupport(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.addPresets(value);
       break;
     default:
@@ -708,7 +702,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fanspeed.v1.GetFanSpeedRequest}
  */
 proto.smartcore.bos.fanspeed.v1.GetFanSpeedRequest.deserializeBinary = function(bytes) {
@@ -733,7 +727,7 @@ proto.smartcore.bos.fanspeed.v1.GetFanSpeedRequest.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -891,7 +885,7 @@ relative: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fanspeed.v1.UpdateFanSpeedRequest}
  */
 proto.smartcore.bos.fanspeed.v1.UpdateFanSpeedRequest.deserializeBinary = function(bytes) {
@@ -916,7 +910,7 @@ proto.smartcore.bos.fanspeed.v1.UpdateFanSpeedRequest.deserializeBinaryFromReade
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1150,7 +1144,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fanspeed.v1.ReverseFanSpeedDirectionRequest}
  */
 proto.smartcore.bos.fanspeed.v1.ReverseFanSpeedDirectionRequest.deserializeBinary = function(bytes) {
@@ -1175,7 +1169,7 @@ proto.smartcore.bos.fanspeed.v1.ReverseFanSpeedDirectionRequest.deserializeBinar
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:
@@ -1282,7 +1276,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fanspeed.v1.PullFanSpeedRequest}
  */
 proto.smartcore.bos.fanspeed.v1.PullFanSpeedRequest.deserializeBinary = function(bytes) {
@@ -1307,7 +1301,7 @@ proto.smartcore.bos.fanspeed.v1.PullFanSpeedRequest.deserializeBinaryFromReader 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1499,7 +1493,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fanspeed.v1.PullFanSpeedResponse}
  */
 proto.smartcore.bos.fanspeed.v1.PullFanSpeedResponse.deserializeBinary = function(bytes) {
@@ -1615,7 +1609,7 @@ fanSpeed: (f = msg.getFanSpeed()) && proto.smartcore.bos.fanspeed.v1.FanSpeed.to
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fanspeed.v1.PullFanSpeedResponse.Change}
  */
 proto.smartcore.bos.fanspeed.v1.PullFanSpeedResponse.Change.deserializeBinary = function(bytes) {
@@ -1640,7 +1634,7 @@ proto.smartcore.bos.fanspeed.v1.PullFanSpeedResponse.Change.deserializeBinaryFro
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1883,7 +1877,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fanspeed.v1.DescribeFanSpeedRequest}
  */
 proto.smartcore.bos.fanspeed.v1.DescribeFanSpeedRequest.deserializeBinary = function(bytes) {
@@ -1908,7 +1902,7 @@ proto.smartcore.bos.fanspeed.v1.DescribeFanSpeedRequest.deserializeBinaryFromRea
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:

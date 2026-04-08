@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -555,7 +549,7 @@ moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.Consumable}
  */
 proto.smartcore.bos.vending.v1.Consumable.deserializeBinary = function(bytes) {
@@ -580,7 +574,7 @@ proto.smartcore.bos.vending.v1.Consumable.deserializeBinaryFromReader = function
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -594,11 +588,11 @@ proto.smartcore.bos.vending.v1.Consumable.deserializeBinaryFromReader = function
       msg.setDefaultPortion(value);
       break;
     case 10:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setTitle(value);
       break;
     case 11:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setDisplayName(value);
       break;
     case 12:
@@ -607,19 +601,19 @@ proto.smartcore.bos.vending.v1.Consumable.deserializeBinaryFromReader = function
       msg.setPicture(value);
       break;
     case 13:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setUrl(value);
       break;
     case 100:
       var value = msg.getIdsMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     case 101:
       var value = msg.getMoreMap();
       reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
          });
       break;
     default:
@@ -705,11 +699,21 @@ proto.smartcore.bos.vending.v1.Consumable.serializeBinaryToWriter = function(mes
   }
   f = message.getIdsMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(100, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getIdsMap(true),
+    100,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(101, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getMoreMap(true),
+    101,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -774,7 +778,7 @@ step: jspb.Message.getFloatingPointFieldWithDefault(msg, 3, 0.0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.Consumable.Portion}
  */
 proto.smartcore.bos.vending.v1.Consumable.Portion.deserializeBinary = function(bytes) {
@@ -984,7 +988,7 @@ unit: jspb.Message.getFieldWithDefault(msg, 3, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.Consumable.Quantity}
  */
 proto.smartcore.bos.vending.v1.Consumable.Quantity.deserializeBinary = function(bytes) {
@@ -1147,7 +1151,7 @@ dispensing: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.Consumable.Stock}
  */
 proto.smartcore.bos.vending.v1.Consumable.Stock.deserializeBinary = function(bytes) {
@@ -1172,7 +1176,7 @@ proto.smartcore.bos.vending.v1.Consumable.Stock.deserializeBinaryFromReader = fu
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setConsumable(value);
       break;
     case 2:
@@ -1689,7 +1693,7 @@ pageToken: jspb.Message.getFieldWithDefault(msg, 4, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.ListConsumablesRequest}
  */
 proto.smartcore.bos.vending.v1.ListConsumablesRequest.deserializeBinary = function(bytes) {
@@ -1714,7 +1718,7 @@ proto.smartcore.bos.vending.v1.ListConsumablesRequest.deserializeBinaryFromReade
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1727,7 +1731,7 @@ proto.smartcore.bos.vending.v1.ListConsumablesRequest.deserializeBinaryFromReade
       msg.setPageSize(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setPageToken(value);
       break;
     default:
@@ -1937,7 +1941,7 @@ totalSize: jspb.Message.getFieldWithDefault(msg, 3, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.ListConsumablesResponse}
  */
 proto.smartcore.bos.vending.v1.ListConsumablesResponse.deserializeBinary = function(bytes) {
@@ -1967,7 +1971,7 @@ proto.smartcore.bos.vending.v1.ListConsumablesResponse.deserializeBinaryFromRead
       msg.addConsumables(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setNextPageToken(value);
       break;
     case 3:
@@ -2149,7 +2153,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.PullConsumablesRequest}
  */
 proto.smartcore.bos.vending.v1.PullConsumablesRequest.deserializeBinary = function(bytes) {
@@ -2174,7 +2178,7 @@ proto.smartcore.bos.vending.v1.PullConsumablesRequest.deserializeBinaryFromReade
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2366,7 +2370,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.PullConsumablesResponse}
  */
 proto.smartcore.bos.vending.v1.PullConsumablesResponse.deserializeBinary = function(bytes) {
@@ -2484,7 +2488,7 @@ changeTime: (f = msg.getChangeTime()) && google_protobuf_timestamp_pb.Timestamp.
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.PullConsumablesResponse.Change}
  */
 proto.smartcore.bos.vending.v1.PullConsumablesResponse.Change.deserializeBinary = function(bytes) {
@@ -2509,7 +2513,7 @@ proto.smartcore.bos.vending.v1.PullConsumablesResponse.Change.deserializeBinaryF
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2833,7 +2837,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.GetStockRequest}
  */
 proto.smartcore.bos.vending.v1.GetStockRequest.deserializeBinary = function(bytes) {
@@ -2858,11 +2862,11 @@ proto.smartcore.bos.vending.v1.GetStockRequest.deserializeBinaryFromReader = fun
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setConsumable(value);
       break;
     case 2:
@@ -3045,7 +3049,7 @@ relative: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.UpdateStockRequest}
  */
 proto.smartcore.bos.vending.v1.UpdateStockRequest.deserializeBinary = function(bytes) {
@@ -3070,7 +3074,7 @@ proto.smartcore.bos.vending.v1.UpdateStockRequest.deserializeBinaryFromReader = 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -3307,7 +3311,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.PullStockRequest}
  */
 proto.smartcore.bos.vending.v1.PullStockRequest.deserializeBinary = function(bytes) {
@@ -3332,11 +3336,11 @@ proto.smartcore.bos.vending.v1.PullStockRequest.deserializeBinaryFromReader = fu
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setConsumable(value);
       break;
     case 2:
@@ -3553,7 +3557,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.PullStockResponse}
  */
 proto.smartcore.bos.vending.v1.PullStockResponse.deserializeBinary = function(bytes) {
@@ -3669,7 +3673,7 @@ stock: (f = msg.getStock()) && proto.smartcore.bos.vending.v1.Consumable.Stock.t
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.PullStockResponse.Change}
  */
 proto.smartcore.bos.vending.v1.PullStockResponse.Change.deserializeBinary = function(bytes) {
@@ -3694,7 +3698,7 @@ proto.smartcore.bos.vending.v1.PullStockResponse.Change.deserializeBinaryFromRea
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -3940,7 +3944,7 @@ pageToken: jspb.Message.getFieldWithDefault(msg, 4, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.ListInventoryRequest}
  */
 proto.smartcore.bos.vending.v1.ListInventoryRequest.deserializeBinary = function(bytes) {
@@ -3965,7 +3969,7 @@ proto.smartcore.bos.vending.v1.ListInventoryRequest.deserializeBinaryFromReader 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -3978,7 +3982,7 @@ proto.smartcore.bos.vending.v1.ListInventoryRequest.deserializeBinaryFromReader 
       msg.setPageSize(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setPageToken(value);
       break;
     default:
@@ -4188,7 +4192,7 @@ totalSize: jspb.Message.getFieldWithDefault(msg, 3, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.ListInventoryResponse}
  */
 proto.smartcore.bos.vending.v1.ListInventoryResponse.deserializeBinary = function(bytes) {
@@ -4218,7 +4222,7 @@ proto.smartcore.bos.vending.v1.ListInventoryResponse.deserializeBinaryFromReader
       msg.addInventory(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setNextPageToken(value);
       break;
     case 3:
@@ -4400,7 +4404,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.PullInventoryRequest}
  */
 proto.smartcore.bos.vending.v1.PullInventoryRequest.deserializeBinary = function(bytes) {
@@ -4425,7 +4429,7 @@ proto.smartcore.bos.vending.v1.PullInventoryRequest.deserializeBinaryFromReader 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -4617,7 +4621,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.PullInventoryResponse}
  */
 proto.smartcore.bos.vending.v1.PullInventoryResponse.deserializeBinary = function(bytes) {
@@ -4735,7 +4739,7 @@ changeTime: (f = msg.getChangeTime()) && google_protobuf_timestamp_pb.Timestamp.
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.PullInventoryResponse.Change}
  */
 proto.smartcore.bos.vending.v1.PullInventoryResponse.Change.deserializeBinary = function(bytes) {
@@ -4760,7 +4764,7 @@ proto.smartcore.bos.vending.v1.PullInventoryResponse.Change.deserializeBinaryFro
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -5085,7 +5089,7 @@ updateMask: (f = msg.getUpdateMask()) && google_protobuf_field_mask_pb.FieldMask
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.DispenseRequest}
  */
 proto.smartcore.bos.vending.v1.DispenseRequest.deserializeBinary = function(bytes) {
@@ -5110,11 +5114,11 @@ proto.smartcore.bos.vending.v1.DispenseRequest.deserializeBinaryFromReader = fun
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setConsumable(value);
       break;
     case 2:
@@ -5345,7 +5349,7 @@ consumable: jspb.Message.getFieldWithDefault(msg, 2, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.vending.v1.StopDispenseRequest}
  */
 proto.smartcore.bos.vending.v1.StopDispenseRequest.deserializeBinary = function(bytes) {
@@ -5370,11 +5374,11 @@ proto.smartcore.bos.vending.v1.StopDispenseRequest.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setConsumable(value);
       break;
     default:

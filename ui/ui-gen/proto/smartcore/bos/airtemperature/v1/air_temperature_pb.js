@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -307,7 +301,7 @@ dewPoint: (f = msg.getDewPoint()) && smartcore_bos_types_v1_unit_pb.Temperature.
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airtemperature.v1.AirTemperature}
  */
 proto.smartcore.bos.airtemperature.v1.AirTemperature.deserializeBinary = function(bytes) {
@@ -754,7 +748,7 @@ ideal: (f = msg.getIdeal()) && smartcore_bos_types_v1_unit_pb.Temperature.toObje
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airtemperature.v1.TemperatureRange}
  */
 proto.smartcore.bos.airtemperature.v1.TemperatureRange.deserializeBinary = function(bytes) {
@@ -1015,7 +1009,7 @@ minRangeCelsius: jspb.Message.getFloatingPointFieldWithDefault(msg, 4, 0.0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airtemperature.v1.AirTemperatureSupport}
  */
 proto.smartcore.bos.airtemperature.v1.AirTemperatureSupport.deserializeBinary = function(bytes) {
@@ -1049,10 +1043,7 @@ proto.smartcore.bos.airtemperature.v1.AirTemperatureSupport.deserializeBinaryFro
       msg.setNativeUnit(value);
       break;
     case 3:
-      var values = /** @type {!Array<!proto.smartcore.bos.airtemperature.v1.AirTemperature.Mode>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addSupportedModes(values[i]);
-      }
+      reader.readPackableEnumInto(msg.getSupportedModesList());
       break;
     case 4:
       var value = /** @type {number} */ (reader.readDouble());
@@ -1275,7 +1266,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airtemperature.v1.GetAirTemperatureRequest}
  */
 proto.smartcore.bos.airtemperature.v1.GetAirTemperatureRequest.deserializeBinary = function(bytes) {
@@ -1300,7 +1291,7 @@ proto.smartcore.bos.airtemperature.v1.GetAirTemperatureRequest.deserializeBinary
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1457,7 +1448,7 @@ updateMask: (f = msg.getUpdateMask()) && google_protobuf_field_mask_pb.FieldMask
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airtemperature.v1.UpdateAirTemperatureRequest}
  */
 proto.smartcore.bos.airtemperature.v1.UpdateAirTemperatureRequest.deserializeBinary = function(bytes) {
@@ -1482,7 +1473,7 @@ proto.smartcore.bos.airtemperature.v1.UpdateAirTemperatureRequest.deserializeBin
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1689,7 +1680,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airtemperature.v1.PullAirTemperatureRequest}
  */
 proto.smartcore.bos.airtemperature.v1.PullAirTemperatureRequest.deserializeBinary = function(bytes) {
@@ -1714,7 +1705,7 @@ proto.smartcore.bos.airtemperature.v1.PullAirTemperatureRequest.deserializeBinar
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1906,7 +1897,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airtemperature.v1.PullAirTemperatureResponse}
  */
 proto.smartcore.bos.airtemperature.v1.PullAirTemperatureResponse.deserializeBinary = function(bytes) {
@@ -2022,7 +2013,7 @@ airTemperature: (f = msg.getAirTemperature()) && proto.smartcore.bos.airtemperat
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airtemperature.v1.PullAirTemperatureResponse.Change}
  */
 proto.smartcore.bos.airtemperature.v1.PullAirTemperatureResponse.Change.deserializeBinary = function(bytes) {
@@ -2047,7 +2038,7 @@ proto.smartcore.bos.airtemperature.v1.PullAirTemperatureResponse.Change.deserial
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2290,7 +2281,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.airtemperature.v1.DescribeAirTemperatureRequest}
  */
 proto.smartcore.bos.airtemperature.v1.DescribeAirTemperatureRequest.deserializeBinary = function(bytes) {
@@ -2315,7 +2306,7 @@ proto.smartcore.bos.airtemperature.v1.DescribeAirTemperatureRequest.deserializeB
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:

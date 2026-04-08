@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 goog.exportSymbol('proto.smartcore.bos.types.v1.PageToken', null, global);
 goog.exportSymbol('proto.smartcore.bos.types.v1.PageToken.PageStartCase', null, global);
@@ -116,7 +110,7 @@ lastResourceName: (f = jspb.Message.getField(msg, 2)) == null ? undefined : f
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.types.v1.PageToken}
  */
 proto.smartcore.bos.types.v1.PageToken.deserializeBinary = function(bytes) {
@@ -145,7 +139,7 @@ proto.smartcore.bos.types.v1.PageToken.deserializeBinaryFromReader = function(ms
       msg.setLastOffset(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setLastResourceName(value);
       break;
     default:

@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var smartcore_bos_types_v1_tween_pb = require('../../../../smartcore/bos/types/v1/tween_pb.js');
 goog.object.extend(proto, smartcore_bos_types_v1_tween_pb);
@@ -181,7 +175,7 @@ max: jspb.Message.getFieldWithDefault(msg, 3, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.types.v1.NumberCapping}
  */
 proto.smartcore.bos.types.v1.NumberCapping.deserializeBinary = function(bytes) {
@@ -370,7 +364,7 @@ max: (f = jspb.Message.getField(msg, 2)) == null ? undefined : f
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.types.v1.Int32Bounds}
  */
 proto.smartcore.bos.types.v1.Int32Bounds.deserializeBinary = function(bytes) {
@@ -569,7 +563,7 @@ defaultCapping: (f = msg.getDefaultCapping()) && proto.smartcore.bos.types.v1.Nu
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.types.v1.Int32Attributes}
  */
 proto.smartcore.bos.types.v1.Int32Attributes.deserializeBinary = function(bytes) {
@@ -858,7 +852,7 @@ max: (f = jspb.Message.getOptionalFloatingPointField(msg, 2)) == null ? undefine
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.types.v1.FloatBounds}
  */
 proto.smartcore.bos.types.v1.FloatBounds.deserializeBinary = function(bytes) {
@@ -1057,7 +1051,7 @@ defaultCapping: (f = msg.getDefaultCapping()) && proto.smartcore.bos.types.v1.Nu
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.types.v1.FloatAttributes}
  */
 proto.smartcore.bos.types.v1.FloatAttributes.deserializeBinary = function(bytes) {

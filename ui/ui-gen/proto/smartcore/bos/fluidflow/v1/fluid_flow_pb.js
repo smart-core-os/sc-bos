@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -275,7 +269,7 @@ direction: jspb.Message.getFieldWithDefault(msg, 11, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fluidflow.v1.FluidFlow}
  */
 proto.smartcore.bos.fluidflow.v1.FluidFlow.deserializeBinary = function(bytes) {
@@ -604,7 +598,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fluidflow.v1.GetFluidFlowRequest}
  */
 proto.smartcore.bos.fluidflow.v1.GetFluidFlowRequest.deserializeBinary = function(bytes) {
@@ -629,7 +623,7 @@ proto.smartcore.bos.fluidflow.v1.GetFluidFlowRequest.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -786,7 +780,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fluidflow.v1.PullFluidFlowRequest}
  */
 proto.smartcore.bos.fluidflow.v1.PullFluidFlowRequest.deserializeBinary = function(bytes) {
@@ -811,7 +805,7 @@ proto.smartcore.bos.fluidflow.v1.PullFluidFlowRequest.deserializeBinaryFromReade
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1003,7 +997,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fluidflow.v1.PullFluidFlowResponse}
  */
 proto.smartcore.bos.fluidflow.v1.PullFluidFlowResponse.deserializeBinary = function(bytes) {
@@ -1119,7 +1113,7 @@ flow: (f = msg.getFlow()) && proto.smartcore.bos.fluidflow.v1.FluidFlow.toObject
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fluidflow.v1.PullFluidFlowResponse.Change}
  */
 proto.smartcore.bos.fluidflow.v1.PullFluidFlowResponse.Change.deserializeBinary = function(bytes) {
@@ -1144,7 +1138,7 @@ proto.smartcore.bos.fluidflow.v1.PullFluidFlowResponse.Change.deserializeBinaryF
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1389,7 +1383,7 @@ updateMask: (f = msg.getUpdateMask()) && google_protobuf_field_mask_pb.FieldMask
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fluidflow.v1.UpdateFluidFlowRequest}
  */
 proto.smartcore.bos.fluidflow.v1.UpdateFluidFlowRequest.deserializeBinary = function(bytes) {
@@ -1414,7 +1408,7 @@ proto.smartcore.bos.fluidflow.v1.UpdateFluidFlowRequest.deserializeBinaryFromRea
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1619,7 +1613,7 @@ flow: (f = msg.getFlow()) && proto.smartcore.bos.fluidflow.v1.FluidFlow.toObject
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fluidflow.v1.UpdateFluidFlowResponse}
  */
 proto.smartcore.bos.fluidflow.v1.UpdateFluidFlowResponse.deserializeBinary = function(bytes) {
@@ -1770,7 +1764,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fluidflow.v1.DescribeFluidFlowRequest}
  */
 proto.smartcore.bos.fluidflow.v1.DescribeFluidFlowRequest.deserializeBinary = function(bytes) {
@@ -1795,7 +1789,7 @@ proto.smartcore.bos.fluidflow.v1.DescribeFluidFlowRequest.deserializeBinaryFromR
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:
@@ -1902,7 +1896,7 @@ driveFrequencyUnit: jspb.Message.getFieldWithDefault(msg, 3, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.fluidflow.v1.FluidFlowSupport}
  */
 proto.smartcore.bos.fluidflow.v1.FluidFlowSupport.deserializeBinary = function(bytes) {
@@ -1932,11 +1926,11 @@ proto.smartcore.bos.fluidflow.v1.FluidFlowSupport.deserializeBinaryFromReader = 
       msg.setResourceSupport(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setFlowRateUnit(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setDriveFrequencyUnit(value);
       break;
     default:

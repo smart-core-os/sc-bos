@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -320,7 +314,7 @@ targetExtendPreset: jspb.Message.getFieldWithDefault(msg, 5, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.extendretract.v1.Extension}
  */
 proto.smartcore.bos.extendretract.v1.Extension.deserializeBinary = function(bytes) {
@@ -349,7 +343,7 @@ proto.smartcore.bos.extendretract.v1.Extension.deserializeBinaryFromReader = fun
       msg.setExtendPercent(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setExtendPreset(value);
       break;
     case 3:
@@ -362,7 +356,7 @@ proto.smartcore.bos.extendretract.v1.Extension.deserializeBinaryFromReader = fun
       msg.setTargetExtendPercent(value);
       break;
     case 5:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setTargetExtendPreset(value);
       break;
     default:
@@ -589,7 +583,7 @@ writable: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.extendretract.v1.ExtensionPreset}
  */
 proto.smartcore.bos.extendretract.v1.ExtensionPreset.deserializeBinary = function(bytes) {
@@ -614,7 +608,7 @@ proto.smartcore.bos.extendretract.v1.ExtensionPreset.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -807,7 +801,7 @@ supportsCustomPresets: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.extendretract.v1.ExtensionSupport}
  */
 proto.smartcore.bos.extendretract.v1.ExtensionSupport.deserializeBinary = function(bytes) {
@@ -1097,7 +1091,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.extendretract.v1.GetExtensionRequest}
  */
 proto.smartcore.bos.extendretract.v1.GetExtensionRequest.deserializeBinary = function(bytes) {
@@ -1122,7 +1116,7 @@ proto.smartcore.bos.extendretract.v1.GetExtensionRequest.deserializeBinaryFromRe
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1279,7 +1273,7 @@ updateMask: (f = msg.getUpdateMask()) && google_protobuf_field_mask_pb.FieldMask
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.extendretract.v1.UpdateExtensionRequest}
  */
 proto.smartcore.bos.extendretract.v1.UpdateExtensionRequest.deserializeBinary = function(bytes) {
@@ -1304,7 +1298,7 @@ proto.smartcore.bos.extendretract.v1.UpdateExtensionRequest.deserializeBinaryFro
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1509,7 +1503,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.extendretract.v1.ExtendRetractStopRequest}
  */
 proto.smartcore.bos.extendretract.v1.ExtendRetractStopRequest.deserializeBinary = function(bytes) {
@@ -1534,7 +1528,7 @@ proto.smartcore.bos.extendretract.v1.ExtendRetractStopRequest.deserializeBinaryF
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:
@@ -1640,7 +1634,7 @@ preset: (f = msg.getPreset()) && proto.smartcore.bos.extendretract.v1.ExtensionP
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.extendretract.v1.CreateExtensionPresetRequest}
  */
 proto.smartcore.bos.extendretract.v1.CreateExtensionPresetRequest.deserializeBinary = function(bytes) {
@@ -1665,7 +1659,7 @@ proto.smartcore.bos.extendretract.v1.CreateExtensionPresetRequest.deserializeBin
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1822,7 +1816,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.extendretract.v1.PullExtensionsRequest}
  */
 proto.smartcore.bos.extendretract.v1.PullExtensionsRequest.deserializeBinary = function(bytes) {
@@ -1847,7 +1841,7 @@ proto.smartcore.bos.extendretract.v1.PullExtensionsRequest.deserializeBinaryFrom
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2039,7 +2033,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.extendretract.v1.PullExtensionsResponse}
  */
 proto.smartcore.bos.extendretract.v1.PullExtensionsResponse.deserializeBinary = function(bytes) {
@@ -2155,7 +2149,7 @@ extension: (f = msg.getExtension$()) && proto.smartcore.bos.extendretract.v1.Ext
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.extendretract.v1.PullExtensionsResponse.Change}
  */
 proto.smartcore.bos.extendretract.v1.PullExtensionsResponse.Change.deserializeBinary = function(bytes) {
@@ -2180,7 +2174,7 @@ proto.smartcore.bos.extendretract.v1.PullExtensionsResponse.Change.deserializeBi
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2423,7 +2417,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.extendretract.v1.DescribeExtensionRequest}
  */
 proto.smartcore.bos.extendretract.v1.DescribeExtensionRequest.deserializeBinary = function(bytes) {
@@ -2448,7 +2442,7 @@ proto.smartcore.bos.extendretract.v1.DescribeExtensionRequest.deserializeBinaryF
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:

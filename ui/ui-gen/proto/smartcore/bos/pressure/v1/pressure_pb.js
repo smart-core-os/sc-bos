@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
@@ -249,7 +243,7 @@ pressure: (f = jspb.Message.getOptionalFloatingPointField(msg, 2)) == null ? und
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.pressure.v1.Pressure}
  */
 proto.smartcore.bos.pressure.v1.Pressure.deserializeBinary = function(bytes) {
@@ -445,7 +439,7 @@ readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toO
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.pressure.v1.GetPressureRequest}
  */
 proto.smartcore.bos.pressure.v1.GetPressureRequest.deserializeBinary = function(bytes) {
@@ -470,7 +464,7 @@ proto.smartcore.bos.pressure.v1.GetPressureRequest.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -627,7 +621,7 @@ updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.pressure.v1.PullPressureRequest}
  */
 proto.smartcore.bos.pressure.v1.PullPressureRequest.deserializeBinary = function(bytes) {
@@ -652,7 +646,7 @@ proto.smartcore.bos.pressure.v1.PullPressureRequest.deserializeBinaryFromReader 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -844,7 +838,7 @@ changesList: jspb.Message.toObjectList(msg.getChangesList(),
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.pressure.v1.PullPressureResponse}
  */
 proto.smartcore.bos.pressure.v1.PullPressureResponse.deserializeBinary = function(bytes) {
@@ -960,7 +954,7 @@ pressure: (f = msg.getPressure()) && proto.smartcore.bos.pressure.v1.Pressure.to
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.pressure.v1.PullPressureResponse.Change}
  */
 proto.smartcore.bos.pressure.v1.PullPressureResponse.Change.deserializeBinary = function(bytes) {
@@ -985,7 +979,7 @@ proto.smartcore.bos.pressure.v1.PullPressureResponse.Change.deserializeBinaryFro
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1231,7 +1225,7 @@ delta: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.pressure.v1.UpdatePressureRequest}
  */
 proto.smartcore.bos.pressure.v1.UpdatePressureRequest.deserializeBinary = function(bytes) {
@@ -1256,7 +1250,7 @@ proto.smartcore.bos.pressure.v1.UpdatePressureRequest.deserializeBinaryFromReade
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1490,7 +1484,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.pressure.v1.DescribePressureRequest}
  */
 proto.smartcore.bos.pressure.v1.DescribePressureRequest.deserializeBinary = function(bytes) {
@@ -1515,7 +1509,7 @@ proto.smartcore.bos.pressure.v1.DescribePressureRequest.deserializeBinaryFromRea
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:
@@ -1621,7 +1615,7 @@ pressureUnit: jspb.Message.getFieldWithDefault(msg, 2, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.pressure.v1.PressureSupport}
  */
 proto.smartcore.bos.pressure.v1.PressureSupport.deserializeBinary = function(bytes) {
@@ -1651,7 +1645,7 @@ proto.smartcore.bos.pressure.v1.PressureSupport.deserializeBinaryFromReader = fu
       msg.setResourceSupport(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setPressureUnit(value);
       break;
     default:

@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
@@ -138,7 +132,7 @@ valueCelsius: jspb.Message.getFloatingPointFieldWithDefault(msg, 1, 0.0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.types.v1.Temperature}
  */
 proto.smartcore.bos.types.v1.Temperature.deserializeBinary = function(bytes) {
@@ -271,7 +265,7 @@ muted: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.types.v1.AudioLevel}
  */
 proto.smartcore.bos.types.v1.AudioLevel.deserializeBinary = function(bytes) {
@@ -511,7 +505,7 @@ level: (f = msg.getLevel()) && proto.smartcore.bos.types.v1.AudioLevel.toObject(
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.types.v1.AudioLevelChange}
  */
 proto.smartcore.bos.types.v1.AudioLevelChange.deserializeBinary = function(bytes) {
@@ -536,7 +530,7 @@ proto.smartcore.bos.types.v1.AudioLevelChange.deserializeBinaryFromReader = func
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:

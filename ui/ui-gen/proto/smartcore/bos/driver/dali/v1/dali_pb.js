@@ -13,13 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var google_protobuf_duration_pb = require('google-protobuf/google/protobuf/duration_pb.js');
 goog.object.extend(proto, google_protobuf_duration_pb);
@@ -536,7 +530,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.GetGroupMembershipRequest}
  */
 proto.smartcore.bos.driver.dali.v1.GetGroupMembershipRequest.deserializeBinary = function(bytes) {
@@ -561,7 +555,7 @@ proto.smartcore.bos.driver.dali.v1.GetGroupMembershipRequest.deserializeBinaryFr
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:
@@ -673,7 +667,7 @@ groupsList: (f = jspb.Message.getRepeatedField(msg, 1)) == null ? undefined : f
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.GetGroupMembershipResponse}
  */
 proto.smartcore.bos.driver.dali.v1.GetGroupMembershipResponse.deserializeBinary = function(bytes) {
@@ -698,10 +692,7 @@ proto.smartcore.bos.driver.dali.v1.GetGroupMembershipResponse.deserializeBinaryF
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var values = /** @type {!Array<number>} */ (reader.isDelimited() ? reader.readPackedInt32() : [reader.readInt32()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addGroups(values[i]);
-      }
+      reader.readPackableInt32Into(msg.getGroupsList());
       break;
     default:
       reader.skipField();
@@ -825,7 +816,7 @@ group: jspb.Message.getFieldWithDefault(msg, 2, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.AddToGroupRequest}
  */
 proto.smartcore.bos.driver.dali.v1.AddToGroupRequest.deserializeBinary = function(bytes) {
@@ -850,7 +841,7 @@ proto.smartcore.bos.driver.dali.v1.AddToGroupRequest.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -984,7 +975,7 @@ proto.smartcore.bos.driver.dali.v1.AddToGroupResponse.toObject = function(includ
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.AddToGroupResponse}
  */
 proto.smartcore.bos.driver.dali.v1.AddToGroupResponse.deserializeBinary = function(bytes) {
@@ -1086,7 +1077,7 @@ group: jspb.Message.getFieldWithDefault(msg, 2, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.RemoveFromGroupRequest}
  */
 proto.smartcore.bos.driver.dali.v1.RemoveFromGroupRequest.deserializeBinary = function(bytes) {
@@ -1111,7 +1102,7 @@ proto.smartcore.bos.driver.dali.v1.RemoveFromGroupRequest.deserializeBinaryFromR
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1245,7 +1236,7 @@ proto.smartcore.bos.driver.dali.v1.RemoveFromGroupResponse.toObject = function(i
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.RemoveFromGroupResponse}
  */
 proto.smartcore.bos.driver.dali.v1.RemoveFromGroupResponse.deserializeBinary = function(bytes) {
@@ -1360,7 +1351,7 @@ failuresList: (f = jspb.Message.getRepeatedField(msg, 8)) == null ? undefined : 
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.EmergencyStatus}
  */
 proto.smartcore.bos.driver.dali.v1.EmergencyStatus.deserializeBinary = function(bytes) {
@@ -1385,28 +1376,16 @@ proto.smartcore.bos.driver.dali.v1.EmergencyStatus.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var values = /** @type {!Array<!proto.smartcore.bos.driver.dali.v1.EmergencyStatus.Mode>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addActiveModes(values[i]);
-      }
+      reader.readPackableEnumInto(msg.getActiveModesList());
       break;
     case 2:
-      var values = /** @type {!Array<!proto.smartcore.bos.driver.dali.v1.EmergencyStatus.Test>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addPendingTests(values[i]);
-      }
+      reader.readPackableEnumInto(msg.getPendingTestsList());
       break;
     case 3:
-      var values = /** @type {!Array<!proto.smartcore.bos.driver.dali.v1.EmergencyStatus.Test>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addOverdueTests(values[i]);
-      }
+      reader.readPackableEnumInto(msg.getOverdueTestsList());
       break;
     case 4:
-      var values = /** @type {!Array<!proto.smartcore.bos.driver.dali.v1.EmergencyStatus.Test>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addResultsAvailable(values[i]);
-      }
+      reader.readPackableEnumInto(msg.getResultsAvailableList());
       break;
     case 5:
       var value = /** @type {boolean} */ (reader.readBool());
@@ -1421,10 +1400,7 @@ proto.smartcore.bos.driver.dali.v1.EmergencyStatus.deserializeBinaryFromReader =
       msg.setBatteryLevelPercent(value);
       break;
     case 8:
-      var values = /** @type {!Array<!proto.smartcore.bos.driver.dali.v1.EmergencyStatus.Failure>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addFailures(values[i]);
-      }
+      reader.readPackableEnumInto(msg.getFailuresList());
       break;
     default:
       reader.skipField();
@@ -1836,7 +1812,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.GetEmergencyStatusRequest}
  */
 proto.smartcore.bos.driver.dali.v1.GetEmergencyStatusRequest.deserializeBinary = function(bytes) {
@@ -1861,7 +1837,7 @@ proto.smartcore.bos.driver.dali.v1.GetEmergencyStatusRequest.deserializeBinaryFr
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:
@@ -1973,7 +1949,7 @@ failuresList: (f = jspb.Message.getRepeatedField(msg, 1)) == null ? undefined : 
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.ControlGearStatus}
  */
 proto.smartcore.bos.driver.dali.v1.ControlGearStatus.deserializeBinary = function(bytes) {
@@ -1998,10 +1974,7 @@ proto.smartcore.bos.driver.dali.v1.ControlGearStatus.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var values = /** @type {!Array<!proto.smartcore.bos.driver.dali.v1.ControlGearStatus.Failure>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addFailures(values[i]);
-      }
+      reader.readPackableEnumInto(msg.getFailuresList());
       break;
     default:
       reader.skipField();
@@ -2133,7 +2106,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.GetControlGearStatusRequest}
  */
 proto.smartcore.bos.driver.dali.v1.GetControlGearStatusRequest.deserializeBinary = function(bytes) {
@@ -2158,7 +2131,7 @@ proto.smartcore.bos.driver.dali.v1.GetControlGearStatusRequest.deserializeBinary
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:
@@ -2263,7 +2236,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.IdentifyRequest}
  */
 proto.smartcore.bos.driver.dali.v1.IdentifyRequest.deserializeBinary = function(bytes) {
@@ -2288,7 +2261,7 @@ proto.smartcore.bos.driver.dali.v1.IdentifyRequest.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:
@@ -2393,7 +2366,7 @@ proto.smartcore.bos.driver.dali.v1.IdentifyResponse.toObject = function(includeI
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.IdentifyResponse}
  */
 proto.smartcore.bos.driver.dali.v1.IdentifyResponse.deserializeBinary = function(bytes) {
@@ -2495,7 +2468,7 @@ test: jspb.Message.getFieldWithDefault(msg, 2, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.StartTestRequest}
  */
 proto.smartcore.bos.driver.dali.v1.StartTestRequest.deserializeBinary = function(bytes) {
@@ -2520,7 +2493,7 @@ proto.smartcore.bos.driver.dali.v1.StartTestRequest.deserializeBinaryFromReader 
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -2654,7 +2627,7 @@ proto.smartcore.bos.driver.dali.v1.StartTestResponse.toObject = function(include
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.StartTestResponse}
  */
 proto.smartcore.bos.driver.dali.v1.StartTestResponse.deserializeBinary = function(bytes) {
@@ -2755,7 +2728,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.StopTestRequest}
  */
 proto.smartcore.bos.driver.dali.v1.StopTestRequest.deserializeBinary = function(bytes) {
@@ -2780,7 +2753,7 @@ proto.smartcore.bos.driver.dali.v1.StopTestRequest.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     default:
@@ -2885,7 +2858,7 @@ proto.smartcore.bos.driver.dali.v1.StopTestResponse.toObject = function(includeI
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.StopTestResponse}
  */
 proto.smartcore.bos.driver.dali.v1.StopTestResponse.deserializeBinary = function(bytes) {
@@ -2988,7 +2961,7 @@ interval: (f = msg.getInterval()) && google_protobuf_duration_pb.Duration.toObje
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.UpdateTestIntervalRequest}
  */
 proto.smartcore.bos.driver.dali.v1.UpdateTestIntervalRequest.deserializeBinary = function(bytes) {
@@ -3013,7 +2986,7 @@ proto.smartcore.bos.driver.dali.v1.UpdateTestIntervalRequest.deserializeBinaryFr
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -3197,7 +3170,7 @@ interval: (f = msg.getInterval()) && google_protobuf_duration_pb.Duration.toObje
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.UpdateTestIntervalResponse}
  */
 proto.smartcore.bos.driver.dali.v1.UpdateTestIntervalResponse.deserializeBinary = function(bytes) {
@@ -3354,7 +3327,7 @@ failureReason: jspb.Message.getFieldWithDefault(msg, 9, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.TestResult}
  */
 proto.smartcore.bos.driver.dali.v1.TestResult.deserializeBinary = function(bytes) {
@@ -3392,7 +3365,7 @@ proto.smartcore.bos.driver.dali.v1.TestResult.deserializeBinaryFromReader = func
       msg.setDuration(value);
       break;
     case 6:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setEtag(value);
       break;
     case 7:
@@ -3722,7 +3695,7 @@ test: jspb.Message.getFieldWithDefault(msg, 2, 0)
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.GetTestResultRequest}
  */
 proto.smartcore.bos.driver.dali.v1.GetTestResultRequest.deserializeBinary = function(bytes) {
@@ -3747,7 +3720,7 @@ proto.smartcore.bos.driver.dali.v1.GetTestResultRequest.deserializeBinaryFromRea
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -3883,7 +3856,7 @@ etag: jspb.Message.getFieldWithDefault(msg, 3, "")
 
 /**
  * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.smartcore.bos.driver.dali.v1.DeleteTestResultRequest}
  */
 proto.smartcore.bos.driver.dali.v1.DeleteTestResultRequest.deserializeBinary = function(bytes) {
@@ -3908,7 +3881,7 @@ proto.smartcore.bos.driver.dali.v1.DeleteTestResultRequest.deserializeBinaryFrom
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -3916,7 +3889,7 @@ proto.smartcore.bos.driver.dali.v1.DeleteTestResultRequest.deserializeBinaryFrom
       msg.setTest(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setEtag(value);
       break;
     default:
