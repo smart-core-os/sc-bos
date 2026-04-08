@@ -87,7 +87,7 @@ func (e *EnergyJob) getUnitMultiplier(ctx context.Context, meter string) (float3
 
 	switch strings.ToLower(infoResp.GetUsageUnit()) {
 	case "wh":
-		multiplier = 1 / 1_000
+		multiplier = 1.0 / 1_000
 	case "mwh":
 		multiplier = 1_000
 	case "kwh":
