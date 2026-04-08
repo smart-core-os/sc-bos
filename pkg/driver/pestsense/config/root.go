@@ -53,7 +53,7 @@ func ParseConfig(data []byte) (Root, error) {
 	if root.Broker.QoS == nil {
 		root.Broker.QoS = new(byte)
 		*root.Broker.QoS = DefaultQoS
-	} else if *root.Broker.QoS > 2 || *root.Broker.QoS < 0 {
+	} else if *root.Broker.QoS > 2 {
 		return Root{}, fmt.Errorf("invalid MQTT QoS level in config: %d", *root.Broker.QoS)
 	}
 
