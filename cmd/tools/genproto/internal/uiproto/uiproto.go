@@ -20,7 +20,13 @@ var Step = generator.Step{
 
 func run(ctx *generator.Context) error {
 	protoDir := filepath.Join(ctx.RootDir, "proto")
-	protoIncludeDirs := []string{protoDir, filepath.Join(ctx.RootDir, "sc-api", "protobuf")}
+	protoIncludeDirs := []string{protoDir}
+	// sc-api/protobuf was a separate submodule during the migration of sc-api
+	// into sc-bos; guard the include path so protoc doesn't warn about a
+	// missing directory on repos that have already completed the migration.
+	if scApiDir := filepath.Join(ctx.RootDir, "sc-api", "protobuf"); dirExists(scApiDir) {
+		protoIncludeDirs = append(protoIncludeDirs, scApiDir)
+	}
 	uiGenDir := filepath.Join(ctx.RootDir, "ui", "ui-gen")
 	outDir := filepath.Join(uiGenDir, "proto")
 
@@ -54,6 +60,11 @@ func run(ctx *generator.Context) error {
 	}
 
 	return nil
+}
+
+func dirExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
 }
 
 // cleanGeneratedFiles removes old generated files from the output directory.
