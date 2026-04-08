@@ -104,7 +104,7 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	securityeventpb.TraitName:  {securityeventpb.SecurityEventApi_ServiceDesc},
 	serviceticketpb.TraitName:  {serviceticketpb.ServiceTicketApi_ServiceDesc, serviceticketpb.ServiceTicketInfo_ServiceDesc},
 	soundsensorpb.TraitName:    {soundsensorpb.SoundSensorApi_ServiceDesc, soundsensorpb.SoundSensorInfo_ServiceDesc},
-	statusTraitName:            {statuspb.StatusApi_ServiceDesc, statuspb.StatusHistory_ServiceDesc},
+	statuspb.TraitName:         {statuspb.StatusApi_ServiceDesc, statuspb.StatusHistory_ServiceDesc},
 	temperaturepb.TraitName:    {temperaturepb.TemperatureApi_ServiceDesc},
 	transportpb.TraitName:      {transportpb.TransportApi_ServiceDesc, transportpb.TransportInfo_ServiceDesc, transportpb.TransportHistory_ServiceDesc},
 	udmipb.TraitName:           {udmipb.UdmiService_ServiceDesc},
@@ -125,6 +125,3 @@ func ServiceDesc(t trait.Name) []grpc.ServiceDesc {
 	return serviceRegistry[t]
 }
 
-// had to add this to resolve an import cycle
-// TODO: resolve import cycle
-const statusTraitName trait.Name = "smartcore.bos.Status"
