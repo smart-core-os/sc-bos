@@ -48,6 +48,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/config"
 	"github.com/smart-core-os/sc-bos/pkg/task"
@@ -99,6 +100,11 @@ type System struct {
 // announcing metadata for each.
 func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	s.logger.Debug("applying config", zap.Any("config", cfg))
+
+	// While the gateway system is active, this node is a GATEWAY rather than just a NODE.
+	// This overrides the NODE type set during node initialisation.
+	// When applyConfig returns (ctx cancelled), the undo reverts the node to NODE.
+	defer s.self.Announce(s.self.Name(), node.HasDeviceType(metadatapb.Metadata_GATEWAY))()
 	ignore := append([]string{}, s.ignore...)
 	ignore = append(ignore, cfg.Ignore...)
 

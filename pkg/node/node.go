@@ -78,6 +78,7 @@ func New(name string, opts ...Option) *Node {
 	node.announceLocked(name,
 		HasServer(parentpb.RegisterParentApiServer, parentpb.ParentApiServer(parentdevices.NewServer(name, node.devices))),
 		HasTrait(trait.Parent),
+		HasDeviceType(metadatapb.Metadata_NODE),
 	)
 	return node
 }
