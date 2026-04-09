@@ -1,7 +1,6 @@
 package gentrait
 
 import (
-	"fmt"
 	"path"
 	"path/filepath"
 	"strings"
@@ -18,24 +17,6 @@ var specialCaseMappings = map[string]string{
 	"dalipb":    "driver/dalipb",
 	"lighttest": "lightingtestpb",
 	"servicepb": "servicespb",
-}
-
-// gentraitToProtoFilePath converts a relative gentrait file path to an absolute proto file path.
-// Examples:
-//   - meter/info.go -> {rootDir}/pkg/proto/meterpb/info.go
-//   - wastepb/model.go -> {rootDir}/pkg/proto/wastepb/model.go
-//   - healthpb/standard/common.go -> {rootDir}/pkg/proto/healthpb/standard/common.go
-func gentraitToProtoFilePath(rootDir, relPath string) (string, error) {
-	relPath = filepath.ToSlash(relPath)
-	dir, filename := path.Split(relPath)
-
-	if dir == "." || filename == relPath {
-		return "", fmt.Errorf("path too short: %s", relPath)
-	}
-
-	protoPath := gentraitToProtoImportPath(dir)
-	destPath := filepath.Join(rootDir, "pkg", "proto", filepath.FromSlash(protoPath), filename)
-	return destPath, nil
 }
 
 // relPathToProtoImport returns both the package name and full import path for a file's new location.
