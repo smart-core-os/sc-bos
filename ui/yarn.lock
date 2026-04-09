@@ -2295,7 +2295,7 @@ sass-embedded-win32-x64@1.99.0:
   resolved "https://registry.yarnpkg.com/sass-embedded-win32-x64/-/sass-embedded-win32-x64-1.99.0.tgz#3d08d273b268918647093fd7d0bf0fb84ac2c321"
   integrity sha512-ipuOv1R2K4MHeuCEAZGpuUbAgma4gb0sdacyrTjJtMOy/OY9UvWfVlwErdB09KIkp4fPDpQJDJfvYN6bC8jeNg==
 
-sass-embedded@^1.99.0:
+sass-embedded@^1.93.2, sass-embedded@^1.99.0:
   version "1.99.0"
   resolved "https://registry.yarnpkg.com/sass-embedded/-/sass-embedded-1.99.0.tgz#348fdb98b02694d8b193e7a0e1bfc47408f89d4f"
   integrity sha512-gF/juR1aX02lZHkvwxdF80SapkQeg2fetoDF6gIQkNbSw5YEUFspMkyGTjPjgZSgIHuZpy+Wz4PlebKnLXMjdg==
