@@ -70,6 +70,34 @@ func (c *client) listEvents(ctx context.Context, req *api.EventsRequest, fc *hea
 	return makeReqWrapper[api.EventsRequest, api.EventsResponse](ctx, c, "/artemis/api/eventService/v1/eventRecords/page", req, fc)
 }
 
+func (c *client) checkAutoReviewFlow(ctx context.Context, req *api.AutoReviewFlowRequest) (*api.AutoReviewFlowResponse, error) {
+	return makeReq[api.AutoReviewFlowRequest, api.AutoReviewFlowResponse](ctx, c, "/artemis/api/visitor/v1/visitorconfig/automaticapproval", req)
+}
+
+func (c *client) manuallyApproveVisitor(ctx context.Context, req *api.VisitorApprovalRequest) (*api.VisitorApprovalResponse, error) {
+	return makeReq[api.VisitorApprovalRequest, api.VisitorApprovalResponse](ctx, c, "/artemis/api/visitor/v1/visitorapprovalflow/status", req)
+}
+
+func (c *client) listVisitorAppointments(ctx context.Context, req *api.ListVisitorAppointmentsRequest) (*api.ListVisitorAppointmentsResponse, error) {
+	return makeReq[api.ListVisitorAppointmentsRequest, api.ListVisitorAppointmentsResponse](ctx, c, "/artemis/api/visitor/v1/appointment/appointmentlist", req)
+}
+
+func (c *client) listANPREvents(ctx context.Context, req *api.ANPREventsRequest) (*api.ANPREventsResponse, error) {
+	return makeReq[api.ANPREventsRequest, api.ANPREventsResponse](ctx, c, "/artemis/api/pms/v1/crossRecords/page", req)
+}
+
+func (c *client) createVisitorAppointment(ctx context.Context, req *api.VisitorAppointmentRequest) (*api.VisitorAppointmentData, error) {
+	return makeReq[api.VisitorAppointmentRequest, api.VisitorAppointmentData](ctx, c, "/artemis/api/visitor/v2/appointment", req)
+}
+
+func (c *client) updateVisitorAppointment(ctx context.Context, req *api.VisitorAppointmentRequest) (*api.VisitorAppointmentData, error) {
+	return makeReq[api.VisitorAppointmentRequest, api.VisitorAppointmentData](ctx, c, "/artemis/api/visitor/v2/appointment/update", req)
+}
+
+func (c *client) deleteVisitorAppointment(ctx context.Context, req *api.DeleteVisitorAppointmentRequest) (*api.DeleteVisitorAppointmentResponse, error) {
+	return makeReq[api.DeleteVisitorAppointmentRequest, api.DeleteVisitorAppointmentResponse](ctx, c, "/artemis/api/visitor/v1/appointment/single/delete", req)
+}
+
 func makeReqWrapper[R any, T any](ctx context.Context, client *client, path string, r *R, fc *healthpb.FaultCheck) (*T, error) {
 	t, err := makeReq[R, T](ctx, client, path, r)
 	updateReliability(ctx, err, fc)

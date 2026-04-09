@@ -10,3 +10,4 @@ results_*.csv
 .vscode
 podman-build-secret*
 .bin
+*/worktrees/*

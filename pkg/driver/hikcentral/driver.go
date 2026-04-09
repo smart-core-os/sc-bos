@@ -14,10 +14,12 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ptzpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -90,7 +92,33 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		cameras = append(cameras, cam)
 	}
 
-	run(ctx, cameras, cfg, grp)
+	var ctrl *ANPRController
+	if cfg.GrantManagement != nil || len(cfg.ANPRCameras) > 0 {
+		resources := make(map[string]*resource.Value)
+		ctrl = NewANPRController(client, &cfg, resources, logger)
+
+		for _, anpr := range cfg.ANPRCameras {
+			if _, ok := resources[anpr.Name]; ok {
+				logger.Warn("ANPR resource already exists, skipping", zap.String("name", anpr.Name))
+				continue
+			}
+
+			resources[anpr.Name] = resource.NewValue(resource.WithInitialValue(&accesspb.AccessAttempt{}), resource.WithNoDuplicates())
+
+			rootAnnouncer.Announce(anpr.Name,
+				node.HasMetadata(anpr.Metadata),
+				node.HasTrait(accesspb.TraitName, node.WithClients(accesspb.WrapApi(ctrl))))
+		}
+
+		if cfg.GrantManagement != nil {
+			rootAnnouncer.Announce(cfg.GrantManagement.Name,
+				node.HasMetadata(cfg.GrantManagement.Metadata),
+				node.HasTrait(accesspb.TraitName, node.WithClients(accesspb.WrapApi(ctrl))),
+			)
+		}
+	}
+
+	run(ctx, ctrl, cameras, cfg, grp, logger)
 
 	go func() {
 		err := grp.Wait()
@@ -105,8 +133,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func run(ctx context.Context, cameras []*Camera, cfg config.Root, grp *errgroup.Group) {
-
+func run(ctx context.Context, ctrl *ANPRController, cameras []*Camera, cfg config.Root, grp *errgroup.Group, logger *zap.Logger) {
 	if cfg.Settings.InfoPoll != nil {
 		grp.Go(func() error {
 			t := newTickerWithCtx(ctx, cfg.Settings.InfoPoll.Duration)
@@ -152,6 +179,20 @@ func run(ctx context.Context, cameras []*Camera, cfg config.Root, grp *errgroup.
 				}
 			}
 			return ctx.Err()
+		})
+	}
+
+	if ctrl != nil {
+		grp.Go(func() error {
+			t := newTickerWithCtx(ctx, cfg.Settings.ANPREventsPoll.Or(5*time.Minute))
+
+			for range t {
+				if err := ctrl.poll(ctx); err != nil {
+					logger.Error("failed to poll anpr controller", zap.Error(err))
+					continue
+				}
+			}
+			return nil
 		})
 	}
 }
