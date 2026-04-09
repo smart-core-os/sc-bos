@@ -31,10 +31,10 @@
           <filter-btn :ctx="filterCtx" flat/>
         </template>
         <v-tooltip text="Download data as CSV..." location="bottom">
-          <template #activator="{ props }">
+          <template #activator="{ props: tooltipProps }">
             <v-btn
-                v-bind="props"
-                flat
+                v-bind="tooltipProps"
+                color="primary"
                 class="ml-2"
                 :disabled="loadedResults < totalDevices"
                 @click="downloadCSV">
@@ -51,7 +51,9 @@
         show-select
         item-value="name"
         v-model="selectedLights"
-        item-key="name">
+        item-key="name"
+        :fixed-header="props.fixedHeader"
+        :style="tableStyles">
       <template #top>
         <span v-if="selectedLights.length > 0">
           <v-btn
@@ -105,6 +107,17 @@ import FilterChoiceChips from '@/components/filter/FilterChoiceChips.vue';
 import {useDeviceFilters} from '@/composables/devices';
 import {ref, onMounted, computed, watch} from 'vue';
 
+const props = defineProps({
+  fixedHeader: {
+    type: Boolean,
+    default: true
+  },
+  height: {
+    type: [String, Number],
+    default: undefined
+  }
+});
+
 const forcedFilters = ref({
   'metadata.traits.name': 'smartcore.bos.EmergencyLight'
 });
@@ -134,6 +147,16 @@ const findEmLightsQuery = computed(() => {
 
 const filteredTestResults = computed(() => {
   return testResults.value;
+});
+
+const tableStyles = computed(() => {
+  if (!props.fixedHeader) {
+    return {};
+  }
+  if (props.height) {
+    return {height: typeof props.height === 'number' ? `${props.height}px` : props.height};
+  }
+  return {height: '80vh'};
 });
 
 const getDeviceTestResults = async () => {
