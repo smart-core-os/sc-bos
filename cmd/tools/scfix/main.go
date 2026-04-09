@@ -41,7 +41,6 @@ var allFixes = []fix{
 	{Fix: protogopkg.Fix, Enabled: false},
 	{Fix: scgolang.Fix, Enabled: true}, // must run before goprotoimports to avoid alias conflicts
 	{Fix: goprotoimports.Fix, Enabled: true},
-	{Fix: gentrait.FixMove, Enabled: false},
 	{Fix: gentrait.FixRefs, Enabled: true},
 	{Fix: regoimports.Fix, Enabled: true},
 }
