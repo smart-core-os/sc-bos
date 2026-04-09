@@ -53,6 +53,9 @@ export class Metadata extends jspb.Message {
   hasMembership(): boolean;
   clearMembership(): Metadata;
 
+  getDeviceType(): Metadata.DeviceType;
+  setDeviceType(value: Metadata.DeviceType): Metadata;
+
   getMoreMap(): jspb.Map<string, string>;
   clearMoreMap(): Metadata;
 
@@ -76,6 +79,7 @@ export namespace Metadata {
     installation?: Metadata.Installation.AsObject;
     nicsList: Array<Metadata.NIC.AsObject>;
     membership?: Metadata.Membership.AsObject;
+    deviceType: Metadata.DeviceType;
     moreMap: Array<[string, string]>;
   };
 
@@ -423,6 +427,20 @@ export namespace Metadata {
     };
   }
 
+
+  export enum DeviceType {
+    DEVICE_TYPE_UNSPECIFIED = 0,
+    NODE = 1,
+    GATEWAY = 2,
+    HUB = 3,
+    AUTOMATION = 4,
+    ZONE = 5,
+    GROUP = 6,
+    SERVICE = 7,
+    VIRTUAL = 8,
+    SUB_DEVICE = 9,
+    DEVICE = 10,
+  }
 }
 
 export class TraitMetadata extends jspb.Message {

@@ -11,6 +11,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/block/mdblock"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
@@ -106,6 +107,7 @@ type Area struct {
 
 func (a *Area) applyConfig(ctx context.Context, cfg config.Root) error {
 	announce := a.announcer.Replace(ctx)
+	announce.Announce(cfg.Name, node.HasDeviceType(metadatapb.Metadata_ZONE))
 	if cfg.Metadata != nil {
 		announce.Announce(cfg.Name, node.HasMetadata(cfg.Metadata))
 	}

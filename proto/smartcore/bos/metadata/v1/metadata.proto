@@ -171,6 +171,32 @@ message Metadata {
   // Membership describes how this device is related to other devices.
   Membership membership = 10;
 
+  // DeviceType classifies what kind of SC-BOS entity this named device is.
+  // This is distinct from traits (which describe device capabilities) and from
+  // membership.subsystem (which describes building-system classification like "HVAC" or "Lighting").
+  // DeviceType describes the structural role of the entity within the SC-BOS system.
+  //
+  // Query via Device.Query using field path "metadata.device_type" with string_equal conditions
+  // using the enum value name, e.g. string_equal: "NODE".
+  //
+  // Devices with DEVICE_TYPE_UNSPECIFIED will not match any Device.Query condition on this field,
+  // including "present", and will not appear in DevicesMetadata.field_counts for this field.
+  enum DeviceType {
+    DEVICE_TYPE_UNSPECIFIED = 0;  // type not set; device is excluded from device_type queries
+    NODE       = 1;   // a standalone SC-BOS node, e.g. an area controller without a special role
+    GATEWAY    = 2;   // an SC-BOS node that proxies one or more remote nodes
+    HUB        = 3;   // an SC-BOS node that manages enrollment of area controllers
+    AUTOMATION = 4;   // an automation plugin instance
+    ZONE       = 5;   // a logical zone area that aggregates multiple devices
+    GROUP      = 6;   // a named logical group of devices
+    SERVICE    = 7;   // a service collection endpoint, e.g. "ac1/zones" or "automations"
+    VIRTUAL    = 8;   // a computed or aggregated virtual device
+    SUB_DEVICE = 9;   // a named point or channel within a larger physical device
+    DEVICE     = 10;  // a physical or hardware device, e.g. a sensor, light, or HVAC unit
+  }
+  // device_type classifies what kind of SC-BOS entity this device name represents.
+  DeviceType device_type = 11;
+
   // More contains any non-specified additional metadata that wouldn't fit into the other categories.
   map<string, string> more = 100;
 }

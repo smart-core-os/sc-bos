@@ -305,6 +305,16 @@ func HasNoAutoMetadata() Feature {
 	})
 }
 
+// HasDeviceType sets the device_type field in the Metadata for this announcement.
+// It is a convenience wrapper around HasMetadata for the common case of setting only the device type.
+// If typ is DEVICE_TYPE_UNSPECIFIED the feature has no effect.
+func HasDeviceType(typ metadatapb.Metadata_DeviceType) Feature {
+	if typ == metadatapb.Metadata_DEVICE_TYPE_UNSPECIFIED {
+		return EmptyFeature{}
+	}
+	return HasMetadata(&metadatapb.Metadata{DeviceType: typ})
+}
+
 // TraitOption controls how a Node behaves when presented with a new device trait.
 type TraitOption func(t *traitFeature)
 
