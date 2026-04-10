@@ -282,7 +282,7 @@ func nodeServer(name string) *grpc.Server {
 }
 
 func bufConn(buf *bufconn.Listener) (*grpc.ClientConn, error) {
-	return grpc.NewClient("localhost:0",
+	return grpc.NewClient("passthrough://localhost:0",
 		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
 			return buf.Dial()
 		}),
