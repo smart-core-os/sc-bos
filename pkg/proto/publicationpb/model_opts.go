@@ -3,7 +3,6 @@ package publicationpb
 import (
 	"fmt"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -27,7 +26,7 @@ func WithPublicationOption(opts ...resource.Option) resource.Option {
 // Can be used multiple times with publications being additive.
 // Creating a model with duplicate publication IDs will panic.
 // Calling this function with an empty publication id property will panic.
-func WithInitialPublication(publications ...*traits.Publication) resource.Option {
+func WithInitialPublication(publications ...*Publication) resource.Option {
 	opts := make([]resource.Option, len(publications))
 	for i, publication := range publications {
 		if publication.Id == "" {

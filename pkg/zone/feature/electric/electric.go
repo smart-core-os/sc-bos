@@ -6,11 +6,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/electric/config"
 )
@@ -39,7 +38,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 	if len(cfg.Electrics) == 0 && len(cfg.ElectricGroups) == 0 {
 		return nil
 	}
-	client := traits.NewElectricApiClient(f.clients.ClientConn())
+	client := electricpb.NewElectricApiClient(f.clients.ClientConn())
 
 	announce := f.announcer.Replace(ctx)
 	logger := f.logger
@@ -54,7 +53,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 			logger: logger,
 		}
 		f.devices.Add(devices...)
-		announce.Announce(name, node.HasTrait(trait.Electric, node.WithClients(electricpb.WrapApi(group))))
+		announce.Announce(name,
+			node.HasServer(electricpb.RegisterElectricApiServer, electricpb.ElectricApiServer(group)),
+			node.HasTrait(trait.Electric),
+		)
 	}
 
 	announceGroup(cfg.Name, cfg.Electrics)

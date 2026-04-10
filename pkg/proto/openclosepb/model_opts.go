@@ -1,7 +1,6 @@
 package openclosepb
 
 import (
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -19,7 +18,7 @@ func WithPositionsOption(opts ...resource.Option) resource.Option {
 
 // WithInitialPositions returns an option that configures the positions resource to initialise with the given positions.
 // This option should only be used once per model.
-func WithInitialPositions(positions ...*traits.OpenClosePosition) resource.Option {
+func WithInitialPositions(positions ...*OpenClosePosition) resource.Option {
 	var opts []resource.Option
 	for _, state := range positions {
 		opts = append(opts, resource.WithInitialRecord(directionToID(state.Direction), state))
@@ -29,7 +28,7 @@ func WithInitialPositions(positions ...*traits.OpenClosePosition) resource.Optio
 
 // WithPreset returns an option that configures the model with the given preset.
 // This option does not apply to any resource.
-func WithPreset(desc *traits.OpenClosePositions_Preset, positions ...*traits.OpenClosePosition) resource.Option {
+func WithPreset(desc *OpenClosePositions_Preset, positions ...*OpenClosePosition) resource.Option {
 	sortPositions(positions)
 	return modelOptionFunc(func(args *modelArgs) {
 		args.presets = append(args.presets, preset{desc: desc, positions: positions})

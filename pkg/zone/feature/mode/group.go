@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
@@ -25,24 +25,24 @@ import (
 const MixedValue = "<< mixed >>"
 
 type Group struct {
-	traits.UnimplementedModeApiServer
-	traits.UnimplementedModeInfoServer
+	modepb.UnimplementedModeApiServer
+	modepb.UnimplementedModeInfoServer
 
-	client traits.ModeApiClient
+	client modepb.ModeApiClient
 	cfg    config.Root
 
 	logger *zap.Logger
 }
 
-func (g *Group) DescribeModes(_ context.Context, _ *traits.DescribeModesRequest) (*traits.ModesSupport, error) {
-	dst := &traits.ModesSupport{AvailableModes: &traits.Modes{}}
+func (g *Group) DescribeModes(_ context.Context, _ *modepb.DescribeModesRequest) (*modepb.ModesSupport, error) {
+	dst := &modepb.ModesSupport{AvailableModes: &modepb.Modes{}}
 	for mode, options := range g.cfg.Modes {
-		modeMsg := &traits.Modes_Mode{
+		modeMsg := &modepb.Modes_Mode{
 			Name:    mode,
 			Ordered: false,
 		}
 		for _, option := range options {
-			modeMsg.Values = append(modeMsg.Values, &traits.Modes_Value{
+			modeMsg.Values = append(modeMsg.Values, &modepb.Modes_Value{
 				Name: option.Name,
 			})
 		}
@@ -51,16 +51,15 @@ func (g *Group) DescribeModes(_ context.Context, _ *traits.DescribeModesRequest)
 	return dst, nil
 }
 
-func (g *Group) GetModeValues(ctx context.Context, request *traits.GetModeValuesRequest) (*traits.ModeValues, error) {
+func (g *Group) GetModeValues(ctx context.Context, request *modepb.GetModeValuesRequest) (*modepb.ModeValues, error) {
 	names := g.cfg.AllDeviceNames()
 	if len(names) == 0 {
 		return nil, status.Error(codes.FailedPrecondition, "zone has no mode names")
 	}
-	fns := make([]func() (*traits.ModeValues, error), len(names))
+	fns := make([]func() (*modepb.ModeValues, error), len(names))
 	for i, name := range names {
-		name := name
-		fns[i] = func() (*traits.ModeValues, error) {
-			return g.client.GetModeValues(ctx, &traits.GetModeValuesRequest{Name: name})
+		fns[i] = func() (*modepb.ModeValues, error) {
+			return g.client.GetModeValues(ctx, &modepb.GetModeValuesRequest{Name: name})
 		}
 	}
 
@@ -77,7 +76,7 @@ func (g *Group) GetModeValues(ctx context.Context, request *traits.GetModeValues
 		}
 	}
 
-	all := make(map[string]*traits.ModeValues)
+	all := make(map[string]*modepb.ModeValues)
 	for i, res := range allRes {
 		if res == nil {
 			continue
@@ -88,14 +87,14 @@ func (g *Group) GetModeValues(ctx context.Context, request *traits.GetModeValues
 	return g.mergeModeValues(all), nil
 }
 
-func (g *Group) UpdateModeValues(ctx context.Context, request *traits.UpdateModeValuesRequest) (*traits.ModeValues, error) {
+func (g *Group) UpdateModeValues(ctx context.Context, request *modepb.UpdateModeValuesRequest) (*modepb.ModeValues, error) {
 	values := request.ModeValues
 	// remove any values that we've been sent that shouldn't be written
 	masks.NewResponseFilter(masks.WithFieldMask(request.UpdateMask)).Filter(values)
 	all := g.unmergeModeValues(values)
 	type r struct {
 		name string
-		val  *traits.ModeValues
+		val  *modepb.ModeValues
 		err  error
 	}
 	results := make([]r, len(all))
@@ -108,8 +107,6 @@ func (g *Group) UpdateModeValues(ctx context.Context, request *traits.UpdateMode
 	var wg sync.WaitGroup
 	wg.Add(len(results))
 	for i, result := range results {
-		i := i
-		result := result
 		go func() {
 			defer wg.Done()
 			var updateMask *fieldmaskpb.FieldMask
@@ -119,7 +116,7 @@ func (g *Group) UpdateModeValues(ctx context.Context, request *traits.UpdateMode
 			// for k := range result.val.Values {
 			// 	updateMask.Paths = append(updateMask.Paths, fmt.Sprintf("values.%s", k))
 			// }
-			val, err := g.client.UpdateModeValues(ctx, &traits.UpdateModeValuesRequest{
+			val, err := g.client.UpdateModeValues(ctx, &modepb.UpdateModeValuesRequest{
 				Name:       result.name,
 				ModeValues: result.val,
 				UpdateMask: updateMask,
@@ -141,7 +138,7 @@ func (g *Group) UpdateModeValues(ctx context.Context, request *traits.UpdateMode
 	}
 
 	var allErrs []error
-	all = make(map[string]*traits.ModeValues)
+	all = make(map[string]*modepb.ModeValues)
 	for _, r := range results {
 		if r.err != nil {
 			allErrs = append(allErrs, r.err)
@@ -163,7 +160,7 @@ func (g *Group) UpdateModeValues(ctx context.Context, request *traits.UpdateMode
 	return g.mergeModeValues(all), nil
 }
 
-func (g *Group) PullModeValues(request *traits.PullModeValuesRequest, server traits.ModeApi_PullModeValuesServer) error {
+func (g *Group) PullModeValues(request *modepb.PullModeValuesRequest, server modepb.ModeApi_PullModeValuesServer) error {
 	names := g.cfg.AllDeviceNames()
 	if len(names) == 0 {
 		return status.Error(codes.FailedPrecondition, "zone has no mode names")
@@ -171,18 +168,17 @@ func (g *Group) PullModeValues(request *traits.PullModeValuesRequest, server tra
 
 	type c struct {
 		name string
-		val  *traits.ModeValues
+		val  *modepb.ModeValues
 	}
 	changes := make(chan c)
 	defer close(changes)
 
 	group, ctx := errgroup.WithContext(server.Context())
 	for _, name := range names {
-		name := name
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(
 				func(ctx context.Context, changes chan<- c) error {
-					stream, err := g.client.PullModeValues(ctx, &traits.PullModeValuesRequest{Name: name})
+					stream, err := g.client.PullModeValues(ctx, &modepb.PullModeValuesRequest{Name: name})
 					if err != nil {
 						return err
 					}
@@ -200,7 +196,7 @@ func (g *Group) PullModeValues(request *traits.PullModeValuesRequest, server tra
 					}
 				},
 				func(ctx context.Context, changes chan<- c) error {
-					res, err := g.client.GetModeValues(ctx, &traits.GetModeValuesRequest{Name: name})
+					res, err := g.client.GetModeValues(ctx, &modepb.GetModeValuesRequest{Name: name})
 					if err != nil {
 						return err
 					}
@@ -211,9 +207,9 @@ func (g *Group) PullModeValues(request *traits.PullModeValuesRequest, server tra
 	}
 
 	group.Go(func() error {
-		all := make(map[string]*traits.ModeValues, len(names))
+		all := make(map[string]*modepb.ModeValues, len(names))
 
-		var last *traits.ModeValues
+		var last *modepb.ModeValues
 		eq := cmp.Equal()
 		filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 
@@ -229,7 +225,7 @@ func (g *Group) PullModeValues(request *traits.PullModeValuesRequest, server tra
 					continue
 				}
 				last = values
-				err := server.Send(&traits.PullModeValuesResponse{Changes: []*traits.PullModeValuesResponse_Change{
+				err := server.Send(&modepb.PullModeValuesResponse{Changes: []*modepb.PullModeValuesResponse_Change{
 					{
 						Name:       request.Name,
 						ChangeTime: timestamppb.Now(),
@@ -246,7 +242,7 @@ func (g *Group) PullModeValues(request *traits.PullModeValuesRequest, server tra
 	return group.Wait()
 }
 
-func (g *Group) mergeModeValues(all map[string]*traits.ModeValues) *traits.ModeValues {
+func (g *Group) mergeModeValues(all map[string]*modepb.ModeValues) *modepb.ModeValues {
 	type dstModeValue struct {
 		name, mode, value string
 	}
@@ -275,7 +271,7 @@ func (g *Group) mergeModeValues(all map[string]*traits.ModeValues) *traits.ModeV
 			}
 		}
 	}
-	dst := &traits.ModeValues{Values: make(map[string]string)}
+	dst := &modepb.ModeValues{Values: make(map[string]string)}
 	for _, value := range dstModeValues {
 		if old, ok := dst.Values[value.mode]; ok {
 			if old != value.value {
@@ -288,8 +284,8 @@ func (g *Group) mergeModeValues(all map[string]*traits.ModeValues) *traits.ModeV
 	return dst
 }
 
-func (g *Group) unmergeModeValues(values *traits.ModeValues) map[string]*traits.ModeValues {
-	all := make(map[string]*traits.ModeValues)
+func (g *Group) unmergeModeValues(values *modepb.ModeValues) map[string]*modepb.ModeValues {
+	all := make(map[string]*modepb.ModeValues)
 	for srcMode, srcValue := range values.Values {
 		options, ok := g.cfg.Modes[srcMode]
 		if !ok {
@@ -302,7 +298,7 @@ func (g *Group) unmergeModeValues(values *traits.ModeValues) map[string]*traits.
 			for _, source := range option.Sources {
 				for _, device := range source.Devices {
 					if _, ok := all[device]; !ok {
-						all[device] = &traits.ModeValues{Values: make(map[string]string)}
+						all[device] = &modepb.ModeValues{Values: make(map[string]string)}
 					}
 					all[device].Values[source.Mode] = source.Value
 				}

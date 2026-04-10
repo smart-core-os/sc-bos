@@ -23,7 +23,7 @@ var Factory factory
 
 type factory struct{}
 
-func (_ factory) New(services system.Services) service.Lifecycle {
+func (factory) New(services system.Services) service.Lifecycle {
 	return NewSystem(services)
 }
 
@@ -77,7 +77,10 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		// Note, ctx in cancelled each time config is updated (and on stop) because we use MonoApply in NewSystem
 		announcer := s.announcer.Replace(ctx)
-		announcer.Announce(s.name, node.HasTrait(trait.Publication, node.WithClients(publicationpb.WrapApi(server))))
+		announcer.Announce(s.name,
+			node.HasServer(publicationpb.RegisterPublicationApiServer, publicationpb.PublicationApiServer(server)),
+			node.HasTrait(trait.Publication),
+		)
 	default:
 		return fmt.Errorf("unsuported storage type %s", cfg.Storage.Type)
 	}

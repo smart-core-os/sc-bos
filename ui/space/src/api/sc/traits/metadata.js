@@ -2,8 +2,8 @@ import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {trackAction} from '@/api/resource';
 import {pullResource, setValue} from '@/api/resource.js';
-import {MetadataApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/metadata_grpc_web_pb';
-import {GetMetadataRequest, PullMetadataRequest} from '@smart-core-os/sc-api-grpc-web/traits/metadata_pb';
+import {MetadataApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/metadata/v1/metadata_grpc_web_pb';
+import {GetMetadataRequest, PullMetadataRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/metadata/v1/metadata_pb';
 
 
 /**

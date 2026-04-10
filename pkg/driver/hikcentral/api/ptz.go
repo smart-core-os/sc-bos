@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/ptzpb"
 )
 
 var Commands = []string{
@@ -23,7 +23,7 @@ var Commands = []string{
 	"IRIS_REDUCE",
 }
 
-func MovementToCommand(mov *traits.PtzMovement) string {
+func MovementToCommand(mov *ptzpb.PtzMovement) string {
 	var zoom, pan, tilt string
 	if mov.Direction.Zoom != 0 {
 		if mov.Direction.Zoom > 0 {

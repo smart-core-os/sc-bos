@@ -88,53 +88,6 @@ func shouldSkipPath(path string) bool {
 	return false
 }
 
-// classifyPackage determines the package type based on its path
-func classifyPackage(pkg, baseModule string) string {
-	// Remove base module prefix
-	subPath := strings.TrimPrefix(pkg, baseModule+"/")
-	if subPath == pkg {
-		// Package is the base module itself
-		return "core"
-	}
-
-	parts := strings.Split(subPath, "/")
-	if len(parts) == 0 {
-		return "unknown"
-	}
-
-	firstPart := parts[0]
-
-	// Classify based on top-level directory
-	switch {
-	case firstPart == "cmd":
-		if len(parts) >= 3 && parts[1] == "tools" {
-			return "tools"
-		}
-		return "commands"
-	case firstPart == "pkg":
-		if len(parts) >= 2 {
-			switch parts[1] {
-			case "auto":
-				return "automations"
-			case "driver":
-				return "drivers"
-			case "gentrait":
-				return "traits"
-			case "app":
-				return "app"
-			case "node":
-				return "node"
-			}
-		}
-		return "packages"
-	case firstPart == "internal":
-		return "internal"
-	case firstPart == "proto":
-		return "proto"
-	default:
-		return firstPart
-	}
-}
 
 // classifyImportByFilePath determines the category based on the file path in the dependent repository
 // This classifies where the import is being used (e.g., in a tool, driver, automation, etc.)

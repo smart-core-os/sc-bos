@@ -13,8 +13,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/page"
@@ -218,7 +218,7 @@ func (a *Api) pullServices(ctx context.Context, request *servicespb.PullServices
 			change := &servicespb.PullServicesResponse_Change{
 				Name:       request.Name,
 				ChangeTime: timestamppb.New(a.now()),
-				Type:       types.ChangeType_ADD,
+				Type:       typespb.ChangeType_ADD,
 				NewValue:   last,
 			}
 			if !publish(change) {
@@ -232,7 +232,7 @@ func (a *Api) pullServices(ctx context.Context, request *servicespb.PullServices
 			change := &servicespb.PullServicesResponse_Change{
 				Name:       request.Name,
 				ChangeTime: timestamppb.New(a.now()),
-				Type:       types.ChangeType_UPDATE,
+				Type:       typespb.ChangeType_UPDATE,
 				OldValue:   old,
 				NewValue:   last,
 			}
@@ -274,7 +274,7 @@ func (a *Api) pullServices(ctx context.Context, request *servicespb.PullServices
 						change := &servicespb.PullServicesResponse_Change{
 							Name:       request.Name,
 							ChangeTime: timestamppb.New(c.ChangeTime),
-							Type:       types.ChangeType_REMOVE,
+							Type:       typespb.ChangeType_REMOVE,
 							OldValue:   recordToProto(c.OldValue),
 						}
 						if !publish(change) {

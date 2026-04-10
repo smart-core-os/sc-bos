@@ -7,14 +7,6 @@ const (
 	newModule = "github.com/smart-core-os/sc-bos"
 )
 
-// conflictingTraitPackages are the *pb packages that moved to pkg/trait/
-// instead of pkg/proto/ because pkg/proto/ already had a BOS-specific version.
-var conflictingTraitPackages = map[string]bool{
-	"accesspb": true, "airqualitysensorpb": true, "airtemperaturepb": true,
-	"electricpb": true, "enterleavesensorpb": true, "meterpb": true,
-	"occupancysensorpb": true, "temperaturepb": true, "wastepb": true,
-}
-
 // removedPrefixes are package path suffixes (relative to oldModule) that were
 // deleted during the merge, not migrated. The fixer leaves these imports unchanged.
 var removedPrefixes = []string{
@@ -81,13 +73,8 @@ func scgolangImportToScBos(importPath string) (string, bool) {
 	}
 
 	// pkg/trait/<sub>/...
-	if strings.HasPrefix(suffix, "pkg/trait/") {
-		sub := strings.TrimPrefix(suffix, "pkg/trait/")
-		// Get the first path component to check if it's a conflicting package.
-		parts := strings.SplitN(sub, "/", 2)
-		if conflictingTraitPackages[parts[0]] {
-			return newModule + "/pkg/trait/" + sub, true
-		}
+	if after, ok := strings.CutPrefix(suffix, "pkg/trait/"); ok {
+		sub := after
 		return newModule + "/pkg/proto/" + sub, true
 	}
 

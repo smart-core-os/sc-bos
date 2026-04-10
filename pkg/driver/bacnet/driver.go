@@ -34,11 +34,11 @@ var Factory driver.Factory = factory{}
 
 type factory struct{}
 
-func (_ factory) New(services driver.Services) service.Lifecycle {
+func (factory) New(services driver.Services) service.Lifecycle {
 	return NewDriver(services)
 }
 
-func (_ factory) ConfigBlocks() []block.Block {
+func (factory) ConfigBlocks() []block.Block {
 	return config.Blocks
 }
 
@@ -98,7 +98,6 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	// setup all our devices and objects...
 	for _, device := range cfg.Devices {
 		// make sure to retry setting up devices in case they aren't yet online but might be in the future
-		device := device
 		deviceName := adapt.DeviceName(device)
 		logger := d.logger.With(zap.String("device", deviceName), zap.Uint32("deviceId", uint32(device.ID)),
 			zap.Stringer("address", device.Comm.IP))

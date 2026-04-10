@@ -6,23 +6,22 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/group"
 )
 
 // Group combines multiple named devices into a single named device.
 type Group struct {
-	traits.UnimplementedLightApiServer
+	UnimplementedLightApiServer
 
 	ReadExecution  group.ExecutionStrategy
 	WriteExecution group.ExecutionStrategy
 
 	members []string
-	impl    traits.LightApiClient
+	impl    LightApiClient
 }
 
 // NewGroup creates a new Group instance with ExecutionStrategyAll for both reads and writes.
-func NewGroup(impl traits.LightApiClient, members ...string) *Group {
+func NewGroup(impl LightApiClient, members ...string) *Group {
 	return &Group{
 		ReadExecution:  group.ExecutionStrategyAll,
 		WriteExecution: group.ExecutionStrategyAll,
@@ -31,13 +30,11 @@ func NewGroup(impl traits.LightApiClient, members ...string) *Group {
 	}
 }
 
-func (s *Group) GetBrightness(ctx context.Context, request *traits.GetBrightnessRequest) (*traits.Brightness, error) {
+func (s *Group) GetBrightness(ctx context.Context, request *GetBrightnessRequest) (*Brightness, error) {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (proto.Message, error) {
-			memberRequest := proto.Clone(request).(*traits.GetBrightnessRequest)
+			memberRequest := proto.Clone(request).(*GetBrightnessRequest)
 			memberRequest.Name = member
 			return s.impl.GetBrightness(ctx, memberRequest)
 		}
@@ -50,13 +47,11 @@ func (s *Group) GetBrightness(ctx context.Context, request *traits.GetBrightness
 	return s.reduce(results), nil
 }
 
-func (s *Group) UpdateBrightness(ctx context.Context, request *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
+func (s *Group) UpdateBrightness(ctx context.Context, request *UpdateBrightnessRequest) (*Brightness, error) {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (proto.Message, error) {
-			memberRequest := proto.Clone(request).(*traits.UpdateBrightnessRequest)
+			memberRequest := proto.Clone(request).(*UpdateBrightnessRequest)
 			memberRequest.Name = member
 			return s.impl.UpdateBrightness(ctx, memberRequest)
 		}
@@ -69,7 +64,7 @@ func (s *Group) UpdateBrightness(ctx context.Context, request *traits.UpdateBrig
 	return s.reduce(results), nil
 }
 
-func (s *Group) PullBrightness(request *traits.PullBrightnessRequest, server traits.LightApi_PullBrightnessServer) error {
+func (s *Group) PullBrightness(request *PullBrightnessRequest, server LightApi_PullBrightnessServer) error {
 	// NB we dont connect response headers or trailers for the members with the passed server.
 	// If we did we'd be in a situation where one member who didn't send headers could cause
 	// the entire subscription to be blocked. Either that or we'd be introducing timeouts and latency.
@@ -86,8 +81,8 @@ func (s *Group) PullBrightness(request *traits.PullBrightnessRequest, server tra
 		returnErr <- err
 	}()
 
-	lastChange := new(traits.PullBrightnessResponse_Change)
-	memberChanges := make([]*traits.PullBrightnessResponse_Change, len(s.members))
+	lastChange := new(PullBrightnessResponse_Change)
+	memberChanges := make([]*PullBrightnessResponse_Change, len(s.members))
 
 	for {
 		select {
@@ -108,14 +103,14 @@ func (s *Group) PullBrightness(request *traits.PullBrightnessRequest, server tra
 				continue
 			}
 			lastChange = newChange
-			toSend := proto.Clone(lastChange).(*traits.PullBrightnessResponse_Change)
+			toSend := proto.Clone(lastChange).(*PullBrightnessResponse_Change)
 			toSend.Name = request.Name
 			toSend.ChangeTime = endChange.ChangeTime
 			if toSend.ChangeTime == nil {
 				toSend.ChangeTime = timestamppb.Now()
 			}
-			err := server.Send(&traits.PullBrightnessResponse{
-				Changes: []*traits.PullBrightnessResponse_Change{toSend},
+			err := server.Send(&PullBrightnessResponse{
+				Changes: []*PullBrightnessResponse_Change{toSend},
 			})
 			if err != nil {
 				cancelFunc()
@@ -126,13 +121,11 @@ func (s *Group) PullBrightness(request *traits.PullBrightnessRequest, server tra
 	}
 }
 
-func (s *Group) pullBrightnessActions(request *traits.PullBrightnessRequest, memberValues chan<- pullBrightnessResponse) []group.Member {
+func (s *Group) pullBrightnessActions(request *PullBrightnessRequest, memberValues chan<- pullBrightnessResponse) []group.Member {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (msg proto.Message, err error) {
-			memberRequest := proto.Clone(request).(*traits.PullBrightnessRequest)
+			memberRequest := proto.Clone(request).(*PullBrightnessRequest)
 			memberRequest.Name = member
 			stream, err := s.impl.PullBrightness(ctx, memberRequest)
 			if err != nil {
@@ -142,7 +135,7 @@ func (s *Group) pullBrightnessActions(request *traits.PullBrightnessRequest, mem
 			// NB ctx cancellation is handled by the Recv method
 			for {
 				// read a message
-				var response *traits.PullBrightnessResponse
+				var response *PullBrightnessResponse
 				response, err = stream.Recv()
 				if err != nil {
 					break
@@ -161,20 +154,20 @@ func (s *Group) pullBrightnessActions(request *traits.PullBrightnessRequest, mem
 	return actions
 }
 
-func (s *Group) reduce(results []proto.Message) *traits.Brightness {
-	val := new(traits.Brightness)
+func (s *Group) reduce(results []proto.Message) *Brightness {
+	val := new(Brightness)
 	for i, result := range results {
 		if result == nil {
 			continue
 		}
-		typedResult := result.(*traits.Brightness)
+		typedResult := result.(*Brightness)
 		val = s.reduceBrightness(val, typedResult, i)
 	}
 	return val
 }
 
-func (s *Group) reduceBrightnessChanges(arr []*traits.PullBrightnessResponse_Change) *traits.PullBrightnessResponse_Change {
-	val := &traits.PullBrightnessResponse_Change{}
+func (s *Group) reduceBrightnessChanges(arr []*PullBrightnessResponse_Change) *PullBrightnessResponse_Change {
+	val := &PullBrightnessResponse_Change{}
 	for i, change := range arr {
 		if change == nil {
 			// nil changes happen because the incoming array can be partially populated
@@ -186,12 +179,12 @@ func (s *Group) reduceBrightnessChanges(arr []*traits.PullBrightnessResponse_Cha
 	return val
 }
 
-func (s *Group) reduceBrightness(acc, v *traits.Brightness, i int) *traits.Brightness {
+func (s *Group) reduceBrightness(acc, v *Brightness, i int) *Brightness {
 	if v == nil {
 		return acc
 	}
 	if acc == nil {
-		val := &traits.Brightness{}
+		val := &Brightness{}
 		proto.Merge(val, v)
 		return val
 	}
@@ -204,5 +197,5 @@ func (s *Group) reduceBrightness(acc, v *traits.Brightness, i int) *traits.Brigh
 
 type pullBrightnessResponse struct {
 	i int
-	m *traits.PullBrightnessResponse
+	m *PullBrightnessResponse
 }

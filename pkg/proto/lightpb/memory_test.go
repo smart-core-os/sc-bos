@@ -6,14 +6,12 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/internal/th"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/durationpb"
-
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 )
 
 func TestMemoryDevice_UpdateBrightness(t *testing.T) {
@@ -33,18 +31,18 @@ func TestMemoryDevice_UpdateBrightness(t *testing.T) {
 		}()
 
 		duration := 100 * time.Millisecond
-		expectedInitialValue := &traits.Brightness{
+		expectedInitialValue := &Brightness{
 			LevelPercent:       0,
 			TargetLevelPercent: 50,
-			BrightnessTween: &types.Tween{
+			BrightnessTween: &typespb.Tween{
 				TotalDuration: durationpb.New(duration),
 				Progress:      0,
 			},
 		}
-		initialValue, err := api.UpdateBrightness(th.Ctx, &traits.UpdateBrightnessRequest{
-			Brightness: &traits.Brightness{
+		initialValue, err := api.UpdateBrightness(th.Ctx, &UpdateBrightnessRequest{
+			Brightness: &Brightness{
 				LevelPercent: 50,
-				BrightnessTween: &types.Tween{
+				BrightnessTween: &typespb.Tween{
 					TotalDuration: durationpb.New(duration),
 				},
 			},
@@ -70,8 +68,8 @@ func TestMemoryDevice_UpdateBrightness(t *testing.T) {
 				t.Fatalf("changes out of order [%v] %v is after [%v] %v", i, lastChange, i+1, change)
 			}
 			// changes move the value closer to the target value
-			brightness := change.Value.(*traits.Brightness)
-			lastBrightness := lastChange.Value.(*traits.Brightness)
+			brightness := change.Value.(*Brightness)
+			lastBrightness := lastChange.Value.(*Brightness)
 			if brightness.LevelPercent <= lastBrightness.LevelPercent {
 				t.Fatalf("LevelPercent is moving backwards [%v] %v >= [%v] %v", i, lastBrightness.LevelPercent, i+1, brightness.LevelPercent)
 			}
@@ -90,8 +88,8 @@ func TestMemoryDevice_UpdateBrightness(t *testing.T) {
 
 		// the last update should be equal to our expected
 		lastUpdate := updates[len(updates)-1]
-		lastValue := lastUpdate.Value.(*traits.Brightness)
-		expectedLastValue := &traits.Brightness{
+		lastValue := lastUpdate.Value.(*Brightness)
+		expectedLastValue := &Brightness{
 			LevelPercent: 50,
 		}
 		if diff := cmp.Diff(expectedLastValue, lastValue, protocmp.Transform()); diff != "" {
@@ -122,10 +120,10 @@ func TestMemoryDevice_UpdateBrightness(t *testing.T) {
 		}()
 
 		duration := 100 * time.Millisecond
-		_, err := api.UpdateBrightness(th.Ctx, &traits.UpdateBrightnessRequest{
-			Brightness: &traits.Brightness{
+		_, err := api.UpdateBrightness(th.Ctx, &UpdateBrightnessRequest{
+			Brightness: &Brightness{
 				LevelPercent:    100,
-				BrightnessTween: &types.Tween{TotalDuration: durationpb.New(duration)},
+				BrightnessTween: &typespb.Tween{TotalDuration: durationpb.New(duration)},
 			},
 		})
 		if err != nil {
@@ -137,8 +135,8 @@ func TestMemoryDevice_UpdateBrightness(t *testing.T) {
 		<-tweenStarted
 		<-tweenStarted
 
-		finalValue, err := api.UpdateBrightness(th.Ctx, &traits.UpdateBrightnessRequest{
-			Brightness: &traits.Brightness{LevelPercent: 10},
+		finalValue, err := api.UpdateBrightness(th.Ctx, &UpdateBrightnessRequest{
+			Brightness: &Brightness{LevelPercent: 10},
 		})
 		if err != nil {
 			t.Fatalf("got error %v", err)
@@ -153,7 +151,7 @@ func TestMemoryDevice_UpdateBrightness(t *testing.T) {
 		if updateCount != 4 {
 			t.Fatalf("update count, want 4, got %v", updateCount)
 		}
-		expectedFinalValue := &traits.Brightness{LevelPercent: 10}
+		expectedFinalValue := &Brightness{LevelPercent: 10}
 		if diff := cmp.Diff(expectedFinalValue, finalValue, protocmp.Transform()); diff != "" {
 			t.Fatalf("final value (-want,+got)\n%v", diff)
 		}

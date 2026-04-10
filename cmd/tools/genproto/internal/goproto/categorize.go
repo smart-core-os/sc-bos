@@ -21,7 +21,9 @@ type ProtoFileInfo struct {
 // analyzeProtoFiles returns the required generators and output dirs for each proto file in protoDir.
 // The keys of the returned map are relative paths from protoDir for each proto file.
 // analyzeProtoFiles recursively walks protoDir to find all .proto files.
-func analyzeProtoFiles(protoDir string) (map[string]ProtoFileInfo, error) {
+// includeDirs are additional -I include paths passed to protoc when parsing files.
+// modulePrefix is the Go module prefix used to determine which proto files belong to the repo.
+func analyzeProtoFiles(protoDir string, includeDirs []string, modulePrefix string) (map[string]ProtoFileInfo, error) {
 	fileInfos := make(map[string]ProtoFileInfo)
 
 	err := filepath.Walk(protoDir, func(path string, info os.FileInfo, err error) error {
@@ -38,7 +40,7 @@ func analyzeProtoFiles(protoDir string) (map[string]ProtoFileInfo, error) {
 			return fmt.Errorf("getting relative path: %w", err)
 		}
 
-		fileInfo, err := determineProtoFileInfo(protoDir, relPath)
+		fileInfo, err := determineProtoFileInfo(protoDir, relPath, includeDirs, modulePrefix)
 		if err != nil {
 			return fmt.Errorf("analyzing %s: %w", relPath, err)
 		}
@@ -55,21 +57,21 @@ func analyzeProtoFiles(protoDir string) (map[string]ProtoFileInfo, error) {
 }
 
 // determineProtoFileInfo analyzes a proto file to determine its generator flags and output directory.
-func determineProtoFileInfo(protoDir, relPath string) (ProtoFileInfo, error) {
-	fileDesc, err := protofile.Parse(protoDir, relPath)
+func determineProtoFileInfo(protoDir, relPath string, includeDirs []string, modulePrefix string) (ProtoFileInfo, error) {
+	fileDesc, err := protofile.Parse(protoDir, relPath, includeDirs)
 	if err != nil {
 		return ProtoFileInfo{}, fmt.Errorf("parsing proto file: %w", err)
 	}
 
 	return ProtoFileInfo{
 		Gen:       determineGeneratorsFromDescriptor(fileDesc),
-		OutputDir: outputDirFromDescriptor(fileDesc),
+		OutputDir: outputDirFromDescriptor(fileDesc, modulePrefix),
 	}, nil
 }
 
 // determineGenerators analyzes a proto file to determine which generators it needs.
-func determineGenerators(protoDir, relPath string) (Generator, error) {
-	fileDesc, err := protofile.Parse(protoDir, relPath)
+func determineGenerators(protoDir, relPath string, includeDirs []string) (Generator, error) {
+	fileDesc, err := protofile.Parse(protoDir, relPath, includeDirs)
 	if err != nil {
 		return 0, fmt.Errorf("parsing proto file: %w", err)
 	}
@@ -97,17 +99,17 @@ func determineGeneratorsFromDescriptor(fileDesc *descriptorpb.FileDescriptorProt
 
 // outputDirFromDescriptor extracts the output directory relative to the repo root
 // from the go_package option of a proto file descriptor.
-// Returns empty string if the package path doesn't start with the sc-bos module prefix.
-func outputDirFromDescriptor(fileDesc *descriptorpb.FileDescriptorProto) string {
+// Returns empty string if the package path doesn't start with modulePrefix.
+func outputDirFromDescriptor(fileDesc *descriptorpb.FileDescriptorProto, modulePrefix string) string {
 	goPkg := fileDesc.GetOptions().GetGoPackage()
 	if i := strings.Index(goPkg, ";"); i >= 0 {
 		goPkg = goPkg[:i]
 	}
-	const modulePrefix = "github.com/smart-core-os/sc-bos/"
-	if !strings.HasPrefix(goPkg, modulePrefix) {
+	prefix := strings.TrimSuffix(modulePrefix, "/") + "/"
+	if !strings.HasPrefix(goPkg, prefix) {
 		return ""
 	}
-	return strings.TrimPrefix(goPkg, modulePrefix)
+	return strings.TrimPrefix(goPkg, prefix)
 }
 
 // isRoutedAPI determines if a proto file defines a routed API.

@@ -130,9 +130,9 @@ func (r *serviceRewriter) Visit(node ast.Node) ast.Visitor {
 }
 
 func (r *serviceRewriter) handleSelector(sel *ast.SelectorExpr) {
-	// Check if selector is from "gen" package
+	// Check if selector is from "gen" or "traits" package
 	ident, ok := sel.X.(*ast.Ident)
-	if !ok || ident.Name != "gen" {
+	if !ok || (ident.Name != "gen" && ident.Name != "traits") {
 		return
 	}
 

@@ -6,14 +6,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 type ModelServer struct {
-	traits.UnimplementedLightApiServer
-	traits.UnimplementedLightInfoServer
+	UnimplementedLightApiServer
+	UnimplementedLightInfoServer
 	model *Model
 }
 
@@ -28,28 +27,28 @@ func (s *ModelServer) Unwrap() any {
 }
 
 func (s *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterLightApiServer(server, s)
-	traits.RegisterLightInfoServer(server, s)
+	RegisterLightApiServer(server, s)
+	RegisterLightInfoServer(server, s)
 }
 
-func (s *ModelServer) GetBrightness(_ context.Context, req *traits.GetBrightnessRequest) (*traits.Brightness, error) {
+func (s *ModelServer) GetBrightness(_ context.Context, req *GetBrightnessRequest) (*Brightness, error) {
 	return s.model.GetBrightness(resource.WithReadMask(req.ReadMask))
 }
 
-func (s *ModelServer) UpdateBrightness(_ context.Context, request *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
+func (s *ModelServer) UpdateBrightness(_ context.Context, request *UpdateBrightnessRequest) (*Brightness, error) {
 	return s.model.UpdateBrightness(request.Brightness, resource.WithUpdateMask(request.UpdateMask))
 }
 
-func (s *ModelServer) PullBrightness(request *traits.PullBrightnessRequest, server traits.LightApi_PullBrightnessServer) error {
+func (s *ModelServer) PullBrightness(request *PullBrightnessRequest, server LightApi_PullBrightnessServer) error {
 	for update := range s.model.PullBrightness(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		change := &traits.PullBrightnessResponse_Change{
+		change := &PullBrightnessResponse_Change{
 			Name:       request.Name,
 			ChangeTime: timestamppb.New(update.ChangeTime),
 			Brightness: update.Value,
 		}
 
-		err := server.Send(&traits.PullBrightnessResponse{
-			Changes: []*traits.PullBrightnessResponse_Change{change},
+		err := server.Send(&PullBrightnessResponse{
+			Changes: []*PullBrightnessResponse_Change{change},
 		})
 		if err != nil {
 			return err
@@ -59,11 +58,11 @@ func (s *ModelServer) PullBrightness(request *traits.PullBrightnessRequest, serv
 	return server.Context().Err()
 }
 
-func (s *ModelServer) DescribeBrightness(_ context.Context, _ *traits.DescribeBrightnessRequest) (*traits.BrightnessSupport, error) {
-	support := &traits.BrightnessSupport{
-		ResourceSupport: &types.ResourceSupport{
+func (s *ModelServer) DescribeBrightness(_ context.Context, _ *DescribeBrightnessRequest) (*BrightnessSupport, error) {
+	support := &BrightnessSupport{
+		ResourceSupport: &typespb.ResourceSupport{
 			Readable: true, Writable: true, Observable: true,
-			PullSupport: types.PullSupport_PULL_SUPPORT_NATIVE,
+			PullSupport: typespb.PullSupport_PULL_SUPPORT_NATIVE,
 		},
 		Presets: s.model.ListPresets(),
 	}

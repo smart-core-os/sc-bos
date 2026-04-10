@@ -1,0 +1,45 @@
+name: Go Lint
+
+on:
+  # run tests on any commit that touches Go files on main, or in any PR
+  push:
+    branches: [ main ]
+    paths:
+      - 'go.mod'
+      - 'go.sum'
+      - 'cmd/**'
+      - 'internal/**'
+      - 'pkg/**'
+      - '.github/**'
+  pull_request:
+    paths:
+      - 'go.mod'
+      - 'go.sum'
+      - 'cmd/**'
+      - 'internal/**'
+      - 'pkg/**'
+      - '.github/**'
+
+jobs:
+  lint-all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          cache: true
+          go-version: '^1.26.x'
+
+      - name: Install tools
+        run: go install honnef.co/go/tools/cmd/staticcheck@2026.1
+
+      - name: Go Vet
+        # exclude certain checks that produce false positives
+        run: |
+          go vet \
+            -lostcancel=false \
+            ./...
+
+      - name: Staticcheck
+        if: always() # run staticcheck even if vet fails
+        run: staticcheck ./...

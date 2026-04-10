@@ -5,7 +5,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -38,7 +37,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 	announce := f.announcer.Replace(ctx)
 	logger := f.logger
 
-	client := traits.NewOnOffApiClient(f.clients.ClientConn())
+	client := onoffpb.NewOnOffApiClient(f.clients.ClientConn())
 	announceGroup := func(name string, devices []string) {
 		if len(devices) == 0 {
 			return
@@ -50,7 +49,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 			logger: logger,
 		}
 		f.devices.Add(devices...)
-		announce.Announce(name, node.HasTrait(trait.OnOff, node.WithClients(onoffpb.WrapApi(group))))
+		announce.Announce(name,
+			node.HasServer(onoffpb.RegisterOnOffApiServer, onoffpb.OnOffApiServer(group)),
+			node.HasTrait(trait.OnOff),
+		)
 	}
 
 	announceGroup(cfg.Name, cfg.OnOffs)

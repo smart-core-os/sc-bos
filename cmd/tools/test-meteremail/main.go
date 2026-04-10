@@ -15,14 +15,13 @@ import (
 var sampleNow = time.Date(2024, 01, 19, 0, 0, 0, 0, time.Local)
 
 func addDummyMeters(root *node.Node) {
-	var models []*meterpb.Model
 	meterNames := []string{"elecmeter1", "elecmeter2", "watermeter1", "watermeter2"}
 	for _, meterName := range meterNames {
 		m := meterpb.NewModel()
 		m.RecordReading(123.45)
-		models = append(models, m)
-		client := node.WithClients(meterpb.WrapApi(meterpb.NewModelServer(m)))
-		root.Announce(meterName, node.HasTrait(meterpb.TraitName, client))
+		root.Announce(meterName,
+			node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(m))),
+			node.HasTrait(meterpb.TraitName))
 	}
 }
 
@@ -34,10 +33,7 @@ func main() {
 	root := node.New("test")
 	addDummyMeters(root)
 
-	now, _ := time.Parse(time.DateTime, "2023-11-15 11:36:00")
-	now = now.Round(time.Second) // get rid of millis, etc
-
-	now = sampleNow
+	now := sampleNow
 
 	serv := auto.Services{
 		Logger: logger,

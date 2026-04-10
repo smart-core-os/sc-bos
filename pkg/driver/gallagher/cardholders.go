@@ -10,12 +10,12 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
@@ -61,7 +61,7 @@ type Cardholder struct {
 	udmipb.UnimplementedUdmiServiceServer
 	config.ScDevice
 	CardholderPayload
-	lastAccessAttempt *resource.Value // gen_accesspb.AccessAttempt
+	lastAccessAttempt *resource.Value // accesspb.AccessAttempt
 	udmiBus           minibus.Bus[*udmipb.PullExportMessagesResponse]
 	undo              []node.Undo
 }
@@ -145,7 +145,7 @@ func (cc *CardholderController) getCardholderDetails(cardholder *Cardholder) {
 	_, _ = cardholder.lastAccessAttempt.Set(
 		&accesspb.AccessAttempt{
 			Actor: &actorpb.Actor{
-				Name:          cardholder.FirstName + " " + cardholder.LastName,
+				DisplayName:   cardholder.FirstName + " " + cardholder.LastName,
 				Title:         cardholder.Description,
 				LastGrantTime: accessTimePb,
 				LastGrantZone: accessZone,
@@ -168,17 +168,23 @@ func (cc *CardholderController) refreshCardholders(announcer node.Announcer, scN
 	for id, c := range cardholders {
 		if _, ok := cc.cardholders[id]; !ok {
 			c.ScName = path.Join(scNamePrefix, "cardholders", c.Id)
-			c.Meta = &traits.Metadata{
-				Appearance: &traits.Metadata_Appearance{
+			c.Meta = &metadatapb.Metadata{
+				Appearance: &metadatapb.Metadata_Appearance{
 					Title:       "Cardholder: " + c.FirstName + " " + c.LastName,
 					Description: c.Description,
 				},
-				Membership: &traits.Metadata_Membership{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "acs",
 				},
 			}
-			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasTrait(accesspb.TraitName, node.WithClients(accesspb.WrapApi(c)))))
-			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasTrait(udmipb.TraitName, node.WithClients(udmipb.WrapService(c)))))
+			c.undo = append(c.undo, announcer.Announce(c.ScName,
+				node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(c)),
+				node.HasTrait(accesspb.TraitName),
+			))
+			c.undo = append(c.undo, announcer.Announce(c.ScName,
+				node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(c)),
+				node.HasTrait(udmipb.TraitName),
+			))
 			c.undo = append(c.undo, announcer.Announce(c.ScName, node.HasMetadata(c.Meta)))
 			cc.cardholders[id] = c
 		}
@@ -221,6 +227,31 @@ func (cc *CardholderController) run(ctx context.Context, schedule *jsontypes.Sch
 			cc.logger.Error("failed to refresh cardholders, will try again on next run...", zap.Error(err))
 		}
 	}
+}
+
+// lastCardholderForZoneHref returns the cardholder with the most recent LastSuccessfulAccessTime
+// whose LastSuccessfulAccessZone.Href matches zoneHref, or nil if none is found.
+func (cc *CardholderController) lastCardholderForZoneHref(zoneHref string) *Cardholder {
+	cc.mu.Lock()
+	defer cc.mu.Unlock()
+
+	var latest *Cardholder
+	var latestTime time.Time
+
+	for _, c := range cc.cardholders {
+		if c.LastSuccessfulAccessZone == nil || c.LastSuccessfulAccessZone.Href != zoneHref {
+			continue
+		}
+		t, err := time.Parse(time.RFC3339, c.LastSuccessfulAccessTime)
+		if err != nil {
+			continue
+		}
+		if latest == nil || t.After(latestTime) {
+			latest = c
+			latestTime = t
+		}
+	}
+	return latest
 }
 
 func (c *Cardholder) GetLastAccessAttempt(context.Context, *accesspb.GetLastAccessAttemptRequest) (*accesspb.AccessAttempt, error) {

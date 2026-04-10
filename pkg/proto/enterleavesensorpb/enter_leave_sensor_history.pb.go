@@ -7,8 +7,7 @@
 package enterleavesensorpb
 
 import (
-	traits "github.com/smart-core-os/sc-api/go/traits"
-	time "github.com/smart-core-os/sc-api/go/types/time"
+	timepb "github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -26,9 +25,9 @@ const (
 )
 
 type EnterLeaveEventRecord struct {
-	state           protoimpl.MessageState  `protogen:"open.v1"`
-	EnterLeaveEvent *traits.EnterLeaveEvent `protobuf:"bytes,1,opt,name=enter_leave_event,json=enterLeaveEvent,proto3" json:"enter_leave_event,omitempty"`
-	RecordTime      *timestamppb.Timestamp  `protobuf:"bytes,2,opt,name=record_time,json=recordTime,proto3" json:"record_time,omitempty"`
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	EnterLeaveEvent *EnterLeaveEvent       `protobuf:"bytes,1,opt,name=enter_leave_event,json=enterLeaveEvent,proto3" json:"enter_leave_event,omitempty"`
+	RecordTime      *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=record_time,json=recordTime,proto3" json:"record_time,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -63,7 +62,7 @@ func (*EnterLeaveEventRecord) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *EnterLeaveEventRecord) GetEnterLeaveEvent() *traits.EnterLeaveEvent {
+func (x *EnterLeaveEventRecord) GetEnterLeaveEvent() *EnterLeaveEvent {
 	if x != nil {
 		return x.EnterLeaveEvent
 	}
@@ -80,7 +79,7 @@ func (x *EnterLeaveEventRecord) GetRecordTime() *timestamppb.Timestamp {
 type ListEnterLeaveHistoryRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Name   string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Period *time.Period           `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
+	Period *timepb.Period         `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
 	// Fields to fetch relative to the EnterLeaveEventRecord type
 	ReadMask *fieldmaskpb.FieldMask `protobuf:"bytes,3,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
 	// The maximum number of records to return.
@@ -137,7 +136,7 @@ func (x *ListEnterLeaveHistoryRequest) GetName() string {
 	return ""
 }
 
-func (x *ListEnterLeaveHistoryRequest) GetPeriod() *time.Period {
+func (x *ListEnterLeaveHistoryRequest) GetPeriod() *timepb.Period {
 	if x != nil {
 		return x.Period
 	}
@@ -240,14 +239,14 @@ var File_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto prot
 
 const file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_rawDesc = "" +
 	"\n" +
-	"Bsmartcore/bos/enterleavesensor/v1/enter_leave_sensor_history.proto\x12!smartcore.bos.enterleavesensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1ftraits/enter_leave_sensor.proto\x1a\x17types/time/period.proto\"\xa3\x01\n" +
-	"\x15EnterLeaveEventRecord\x12M\n" +
-	"\x11enter_leave_event\x18\x01 \x01(\v2!.smartcore.traits.EnterLeaveEventR\x0fenterLeaveEvent\x12;\n" +
+	"Bsmartcore/bos/enterleavesensor/v1/enter_leave_sensor_history.proto\x12!smartcore.bos.enterleavesensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a:smartcore/bos/enterleavesensor/v1/enter_leave_sensor.proto\x1a(smartcore/bos/types/time/v1/period.proto\"\xb4\x01\n" +
+	"\x15EnterLeaveEventRecord\x12^\n" +
+	"\x11enter_leave_event\x18\x01 \x01(\v22.smartcore.bos.enterleavesensor.v1.EnterLeaveEventR\x0fenterLeaveEvent\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"recordTime\"\xf8\x01\n" +
+	"recordTime\"\xff\x01\n" +
 	"\x1cListEnterLeaveHistoryRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x124\n" +
-	"\x06period\x18\x02 \x01(\v2\x1c.smartcore.types.time.PeriodR\x06period\x127\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
+	"\x06period\x18\x02 \x01(\v2#.smartcore.bos.types.time.v1.PeriodR\x06period\x127\n" +
 	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
@@ -278,15 +277,15 @@ var file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_goTy
 	(*EnterLeaveEventRecord)(nil),         // 0: smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord
 	(*ListEnterLeaveHistoryRequest)(nil),  // 1: smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest
 	(*ListEnterLeaveHistoryResponse)(nil), // 2: smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryResponse
-	(*traits.EnterLeaveEvent)(nil),        // 3: smartcore.traits.EnterLeaveEvent
+	(*EnterLeaveEvent)(nil),               // 3: smartcore.bos.enterleavesensor.v1.EnterLeaveEvent
 	(*timestamppb.Timestamp)(nil),         // 4: google.protobuf.Timestamp
-	(*time.Period)(nil),                   // 5: smartcore.types.time.Period
+	(*timepb.Period)(nil),                 // 5: smartcore.bos.types.time.v1.Period
 	(*fieldmaskpb.FieldMask)(nil),         // 6: google.protobuf.FieldMask
 }
 var file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_depIdxs = []int32{
-	3, // 0: smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.enter_leave_event:type_name -> smartcore.traits.EnterLeaveEvent
+	3, // 0: smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.enter_leave_event:type_name -> smartcore.bos.enterleavesensor.v1.EnterLeaveEvent
 	4, // 1: smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.record_time:type_name -> google.protobuf.Timestamp
-	5, // 2: smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.period:type_name -> smartcore.types.time.Period
+	5, // 2: smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.period:type_name -> smartcore.bos.types.time.v1.Period
 	6, // 3: smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
 	0, // 4: smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryResponse.enter_leave_records:type_name -> smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord
 	1, // 5: smartcore.bos.enterleavesensor.v1.EnterLeaveSensorHistory.ListEnterLeaveSensorHistory:input_type -> smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest
@@ -303,6 +302,7 @@ func file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto_ini
 	if File_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_history_proto != nil {
 		return
 	}
+	file_smartcore_bos_enterleavesensor_v1_enter_leave_sensor_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

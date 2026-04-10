@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -12,24 +11,24 @@ type Model struct {
 	pressedState *resource.Value // of *traits.PressedState
 }
 
-func NewModel(initialPressState traits.PressedState_Press) *Model {
+func NewModel(initialPressState PressedState_Press) *Model {
 	return &Model{
-		pressedState: resource.NewValue(resource.WithInitialValue(&traits.PressedState{
+		pressedState: resource.NewValue(resource.WithInitialValue(&PressedState{
 			State: initialPressState,
 		})),
 	}
 }
 
-func (m *Model) GetPressedState(options ...resource.ReadOption) *traits.PressedState {
-	return m.pressedState.Get(options...).(*traits.PressedState)
+func (m *Model) GetPressedState(options ...resource.ReadOption) *PressedState {
+	return m.pressedState.Get(options...).(*PressedState)
 }
 
-func (m *Model) UpdatePressedState(value *traits.PressedState, options ...resource.WriteOption) (*traits.PressedState, error) {
+func (m *Model) UpdatePressedState(value *PressedState, options ...resource.WriteOption) (*PressedState, error) {
 	updated, err := m.pressedState.Set(value, options...)
 	if err != nil {
 		return nil, err
 	}
-	return updated.(*traits.PressedState), nil
+	return updated.(*PressedState), nil
 }
 
 func (m *Model) PullPressedState(ctx context.Context, options ...resource.ReadOption) <-chan PullPressedStateChange {
@@ -39,7 +38,7 @@ func (m *Model) PullPressedState(ctx context.Context, options ...resource.ReadOp
 	go func() {
 		defer close(tx)
 		for change := range rx {
-			value := change.Value.(*traits.PressedState)
+			value := change.Value.(*PressedState)
 			tx <- PullPressedStateChange{
 				Value:         value,
 				ChangeTime:    change.ChangeTime,
@@ -51,7 +50,7 @@ func (m *Model) PullPressedState(ctx context.Context, options ...resource.ReadOp
 }
 
 type PullPressedStateChange struct {
-	Value         *traits.PressedState
+	Value         *PressedState
 	ChangeTime    time.Time
 	LastSeedValue bool
 }

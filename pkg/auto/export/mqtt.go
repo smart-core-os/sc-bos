@@ -19,7 +19,7 @@ var MQTTFactory auto.Factory = factory{}
 
 type factory struct{}
 
-func (_ factory) New(services auto.Services) service.Lifecycle {
+func (factory) New(services auto.Services) service.Lifecycle {
 	return NewMQTTExport(services)
 }
 

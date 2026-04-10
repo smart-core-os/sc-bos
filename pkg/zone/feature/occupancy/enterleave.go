@@ -12,10 +12,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/util/math2"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
 )
@@ -30,8 +29,8 @@ type sla struct {
 }
 
 type enterLeave struct {
-	traits.UnimplementedOccupancySensorApiServer
-	client traits.EnterLeaveSensorApiClient
+	occupancysensorpb.UnimplementedOccupancySensorApiServer
+	client enterleavesensorpb.EnterLeaveSensorApiClient
 	names  []string
 	sla    *sla
 
@@ -40,12 +39,11 @@ type enterLeave struct {
 	logger *zap.Logger
 }
 
-func (e *enterLeave) GetOccupancy(ctx context.Context, request *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
-	fns := make([]func() (*traits.EnterLeaveEvent, error), 0, len(e.names))
+func (e *enterLeave) GetOccupancy(ctx context.Context, request *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
+	fns := make([]func() (*enterleavesensorpb.EnterLeaveEvent, error), 0, len(e.names))
 	for _, name := range e.names {
-		name := name
-		fns = append(fns, run.TagError(name, func() (*traits.EnterLeaveEvent, error) {
-			res, err := e.client.GetEnterLeaveEvent(ctx, &traits.GetEnterLeaveEventRequest{Name: name})
+		fns = append(fns, run.TagError(name, func() (*enterleavesensorpb.EnterLeaveEvent, error) {
+			res, err := e.client.GetEnterLeaveEvent(ctx, &enterleavesensorpb.GetEnterLeaveEventRequest{Name: name})
 			if err != nil {
 				e.storeErr(name, err)
 				return nil, err
@@ -67,14 +65,14 @@ func (e *enterLeave) GetOccupancy(ctx context.Context, request *traits.GetOccupa
 	return e.update(all)
 }
 
-func (e *enterLeave) PullOccupancy(request *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+func (e *enterLeave) PullOccupancy(request *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
 	if len(e.names) == 0 {
 		return status.Error(codes.FailedPrecondition, "zone has no occupancy sensor names")
 	}
 
 	type c struct {
 		name string
-		val  *traits.EnterLeaveEvent
+		val  *enterleavesensorpb.EnterLeaveEvent
 	}
 	changes := make(chan c, len(e.names))
 	group, ctx := errgroup.WithContext(server.Context())
@@ -84,7 +82,7 @@ func (e *enterLeave) PullOccupancy(request *traits.PullOccupancyRequest, server 
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(
 				func(ctx context.Context, changes chan<- c) error {
-					stream, err := e.client.PullEnterLeaveEvents(ctx, &traits.PullEnterLeaveEventsRequest{Name: name})
+					stream, err := e.client.PullEnterLeaveEvents(ctx, &enterleavesensorpb.PullEnterLeaveEventsRequest{Name: name})
 					if err != nil {
 						if e.logger != nil {
 							e.logger.Error("failed to pull enter leave events", zap.String("name", name), zap.Error(err))
@@ -112,7 +110,7 @@ func (e *enterLeave) PullOccupancy(request *traits.PullOccupancyRequest, server 
 					}
 				},
 				func(ctx context.Context, changes chan<- c) error {
-					res, err := e.client.GetEnterLeaveEvent(ctx, &traits.GetEnterLeaveEventRequest{Name: name})
+					res, err := e.client.GetEnterLeaveEvent(ctx, &enterleavesensorpb.GetEnterLeaveEventRequest{Name: name})
 					if err != nil {
 						return err
 					}
@@ -131,7 +129,7 @@ func (e *enterLeave) PullOccupancy(request *traits.PullOccupancyRequest, server 
 		for i, name := range e.names {
 			indexes[name] = i
 		}
-		values := make([]*traits.EnterLeaveEvent, len(e.names))
+		values := make([]*enterleavesensorpb.EnterLeaveEvent, len(e.names))
 		for {
 			select {
 			case <-ctx.Done():
@@ -149,7 +147,7 @@ func (e *enterLeave) PullOccupancy(request *traits.PullOccupancyRequest, server 
 	// pull changes from e.model and send them to server
 	group.Go(func() error {
 		for change := range e.model.PullOccupancy(ctx, resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-			msg := &traits.PullOccupancyResponse{Changes: []*traits.PullOccupancyResponse_Change{
+			msg := &occupancysensorpb.PullOccupancyResponse{Changes: []*occupancysensorpb.PullOccupancyResponse_Change{
 				{Name: request.Name, Occupancy: change.Value, ChangeTime: timestamppb.New(change.ChangeTime)},
 			}}
 			if err := server.Send(msg); err != nil {
@@ -180,7 +178,7 @@ func (e *enterLeave) mergeErrors() error {
 	}
 
 	var combined error
-	e.sla.errs.Range(func(k, v interface{}) bool {
+	e.sla.errs.Range(func(k, v any) bool {
 		if e, ok := v.(error); ok && e != nil {
 			combined = multierr.Append(combined, e)
 		}
@@ -198,7 +196,7 @@ func (e *enterLeave) groupErrored() bool {
 
 	failed := false
 	totalErrors := 0
-	e.sla.errs.Range(func(k, v interface{}) bool {
+	e.sla.errs.Range(func(k, v any) bool {
 		if _, found := e.sla.cantFail[k.(string)]; found {
 			failed = true
 			return false // fail on first non-permitted error
@@ -217,10 +215,10 @@ func (e *enterLeave) groupErrored() bool {
 	return float64(100*totalErrors/len(e.names)) > e.sla.percentageOfAcceptableFailures
 }
 
-func (e *enterLeave) update(all []*traits.EnterLeaveEvent) (*traits.Occupancy, error) {
+func (e *enterLeave) update(all []*enterleavesensorpb.EnterLeaveEvent) (*occupancysensorpb.Occupancy, error) {
 	return e.model.SetOccupancy(e.mergeEnterLeaveEvents(all),
 		resource.InterceptAfter(func(old, new proto.Message) {
-			oldVal, newVal := old.(*traits.Occupancy), new.(*traits.Occupancy)
+			oldVal, newVal := old.(*occupancysensorpb.Occupancy), new.(*occupancysensorpb.Occupancy)
 			if oldVal.State != newVal.State {
 				newVal.StateChangeTime = timestamppb.Now()
 			}
@@ -231,20 +229,20 @@ func (e *enterLeave) update(all []*traits.EnterLeaveEvent) (*traits.Occupancy, e
 	)
 }
 
-func (e *enterLeave) mergeEnterLeaveEvents(all []*traits.EnterLeaveEvent) *traits.Occupancy {
-	res := &traits.Occupancy{}
+func (e *enterLeave) mergeEnterLeaveEvents(all []*enterleavesensorpb.EnterLeaveEvent) *occupancysensorpb.Occupancy {
+	res := &occupancysensorpb.Occupancy{}
 	for _, event := range all {
 		if event == nil {
 			continue
 		}
-		res.State = traits.Occupancy_UNOCCUPIED // so it's not unspecified, overridden later once we have a full count
+		res.State = occupancysensorpb.Occupancy_UNOCCUPIED // so it's not unspecified, overridden later once we have a full count
 		if event.EnterTotal != nil && event.LeaveTotal != nil {
-			res.PeopleCount += math2.Max(*event.EnterTotal-*event.LeaveTotal, 0)
+			res.PeopleCount += max(*event.EnterTotal-*event.LeaveTotal, 0)
 		}
 	}
 
 	if res.PeopleCount > 0 {
-		res.State = traits.Occupancy_OCCUPIED
+		res.State = occupancysensorpb.Occupancy_OCCUPIED
 	}
 	return res
 }

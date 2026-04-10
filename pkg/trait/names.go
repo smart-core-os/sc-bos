@@ -54,5 +54,4 @@ const (
 	Speaker          Name = "smartcore.traits.Speaker"
 	Temperature      Name = "smartcore.traits.Temperature"
 	Vending          Name = "smartcore.traits.Vending"
-	Waste            Name = "smartcore.traits.Waste"
 )

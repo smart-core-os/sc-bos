@@ -100,7 +100,11 @@ func newTransport(client *gobacnet.Client, known known.Context, faultCheck *heal
 }
 
 func (t *transport) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(transportpb.TraitName, node.WithClients(transportpb.WrapApi(t), transportpb.WrapInfo(t))))
+	return a.Announce(t.config.Name,
+		node.HasServer(transportpb.RegisterTransportApiServer, transportpb.TransportApiServer(t)),
+		node.HasServer(transportpb.RegisterTransportInfoServer, transportpb.TransportInfoServer(t)),
+		node.HasTrait(transportpb.TraitName),
+	)
 }
 
 func (t *transport) startPoll(init context.Context) (stop task.StopFn, err error) {
@@ -115,70 +119,58 @@ func (t *transport) pollPeer(ctx context.Context) (*transportpb.Transport, error
 
 	var resProcessors []func(response any, data *transportpb.Transport, cfg *transportCfg) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if t.config.CarLoadUnits != nil {
-		requestNames = append(requestNames, "loadUnits")
 		readValues = append(readValues, *t.config.CarLoadUnits)
 		resProcessors = append(resProcessors, t.processCarLoadUnits)
 	}
 
 	if t.config.AssignedLandingCalls != nil {
-		requestNames = append(requestNames, "assignedLandingCalls")
 		readValues = append(readValues, *t.config.AssignedLandingCalls)
 		resProcessors = append(resProcessors, t.processAssignedLandingCalls)
 	}
 
 	if t.config.MakingCarCall != nil {
-		requestNames = append(requestNames, "makingCarCall")
 		readValues = append(readValues, *t.config.MakingCarCall)
 		resProcessors = append(resProcessors, t.processMakingCarCall)
 	}
 
 	if t.config.CarPosition != nil {
-		requestNames = append(requestNames, "carPosition")
 		readValues = append(readValues, *t.config.CarPosition.Value)
 		resProcessors = append(resProcessors, t.processCarPosition)
 	}
 
 	if t.config.CarAssignedDirection != nil {
-		requestNames = append(requestNames, "carAssignedDirection")
 		readValues = append(readValues, *t.config.CarAssignedDirection)
 		resProcessors = append(resProcessors, t.processCarAssignedDirection)
 	}
 
 	if t.config.CarDoorStatus != nil {
-		requestNames = append(requestNames, "carDoorStatus")
 		readValues = append(readValues, *t.config.CarDoorStatus)
 		resProcessors = append(resProcessors, t.processCarDoorStatus)
 	}
 
 	if t.config.CarMode != nil {
-		requestNames = append(requestNames, "carMode")
 		readValues = append(readValues, *t.config.CarMode)
 		resProcessors = append(resProcessors, t.processCarMode)
 	}
 
 	if t.config.CarLoad != nil {
-		requestNames = append(requestNames, "carLoad")
 		readValues = append(readValues, *t.config.CarLoad)
 		resProcessors = append(resProcessors, t.processCarLoad)
 	}
 
 	if t.config.NextStoppingFloor != nil {
-		requestNames = append(requestNames, "nextStoppingFloor")
 		readValues = append(readValues, *t.config.NextStoppingFloor)
 		resProcessors = append(resProcessors, t.processNextStoppingFloor)
 	}
 
 	if t.config.FaultSignals != nil {
-		requestNames = append(requestNames, "faultSignals")
 		readValues = append(readValues, *t.config.FaultSignals)
 		resProcessors = append(resProcessors, t.processFaultSignals)
 	}
 
 	if t.config.PassengerAlarm != nil {
-		requestNames = append(requestNames, "passengerAlarm")
 		readValues = append(readValues, *t.config.PassengerAlarm)
 		resProcessors = append(resProcessors, t.processPassengerAlarm)
 	}
@@ -232,7 +224,7 @@ func (t *transport) processMakingCarCall(response any, data *transportpb.Transpo
 	}
 
 	switch response.(type) {
-	case []interface{}:
+	case []any:
 		return nil
 	}
 
@@ -397,7 +389,7 @@ func (t *transport) processNextStoppingFloor(response any, data *transportpb.Tra
 }
 
 func (t *transport) processFaultSignals(response any, data *transportpb.Transport, _ *transportCfg) error {
-	res, ok := response.([]interface{})
+	res, ok := response.([]any)
 
 	if !ok {
 		return comm.ErrReadProperty{Prop: "faultSignals", Cause: fmt.Errorf("converting to []interface{}")}

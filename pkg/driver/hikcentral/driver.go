@@ -15,11 +15,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ptzpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
-	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -74,7 +72,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	for _, camera := range cfg.Cameras {
 		logger := logger.With(zap.String("device", camera.Name))
 
-		faultCheck, err := d.health.NewFaultCheck(camera.Name, proto.Clone(deviceHealthCheck).(*gen_healthpb.HealthCheck))
+		faultCheck, err := d.health.NewFaultCheck(camera.Name, proto.Clone(deviceHealthCheck).(*healthpb.HealthCheck))
 		if err != nil {
 			return err
 		}
@@ -83,9 +81,11 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		cam := NewCamera(client, logger, camera, faultCheck)
 		rootAnnouncer.Announce(camera.Name,
 			node.HasMetadata(camera.Metadata),
-			node.HasClient(mqttpb.WrapService(cam)),
-			node.HasTrait(trait.Ptz, node.WithClients(ptzpb.WrapApi(cam))),
-			node.HasTrait(gen_udmipb.TraitName, node.WithClients(udmipb.WrapService(cam))),
+			node.HasServer(mqttpb.RegisterMqttServiceServer, mqttpb.MqttServiceServer(cam)),
+			node.HasServer(ptzpb.RegisterPtzApiServer, ptzpb.PtzApiServer(cam)),
+			node.HasTrait(trait.Ptz),
+			node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(cam)),
+			node.HasTrait(udmipb.TraitName),
 		)
 		cameras = append(cameras, cam)
 	}

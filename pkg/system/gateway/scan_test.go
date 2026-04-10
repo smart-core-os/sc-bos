@@ -23,7 +23,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
@@ -31,6 +30,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
@@ -42,7 +42,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
-	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func TestSystem_scanRemoteHub(t *testing.T) {
@@ -112,16 +111,16 @@ func TestSystem_scanRemoteHub(t *testing.T) {
 			if want := "ac1/dev2"; c.Old.name != want || c.New.name != want {
 				t.Fatalf("device update: unexpected names: want=%q, got old=%q new=%q", want, c.Old.name, c.New.name)
 			}
-			wantOldMd := &traits.Metadata{
+			wantOldMd := &metadatapb.Metadata{
 				Name: "ac1/dev2",
-				Traits: []*traits.TraitMetadata{
+				Traits: []*metadatapb.TraitMetadata{
 					{Name: string(trait.Metadata)},
 					{Name: string(trait.OnOff)},
 				},
 			}
-			wantNewMd := &traits.Metadata{
+			wantNewMd := &metadatapb.Metadata{
 				Name: "ac1/dev2",
-				Traits: []*traits.TraitMetadata{
+				Traits: []*metadatapb.TraitMetadata{
 					{Name: string(meterpb.TraitName)},
 					{Name: string(trait.Metadata)},
 					{Name: string(trait.OnOff)},
@@ -253,16 +252,16 @@ func (c *mockCohort) newClient(address string) (*grpc.ClientConn, error) {
 	if !exists {
 		c.t.Fatalf("mock cohort node %q does not exist", address)
 	}
-	return n.Connect(nil)
+	return n.Connect(c.t.Context())
 }
 
 func (c *mockCohort) newNode(name string) *mockRemoteNode {
 	c.t.Helper()
-	n, exists := c.nodes[name]
+	_, exists := c.nodes[name]
 	if exists {
 		c.t.Fatalf("mock cohort node %q already exists", name)
 	}
-	n = newMockRemoteNode(c.t, name)
+	n := newMockRemoteNode(c.t, name)
 	c.nodes[name] = n
 	c.hubServer.AddHubNode(n)
 	return n
@@ -312,9 +311,9 @@ func newMockRemoteNode(t *testing.T, name string) *mockRemoteNode {
 		{"zones", rn.zones},
 	}
 	for _, svc := range services {
-		client := servicespb.WrapApi(serviceapi.NewApi(svc.store))
-		n.Announce(svc.base, node.HasClient(client))
-		n.Announce(path.Join(name, svc.base), node.HasClient(client))
+		svcServer := serviceapi.NewApi(svc.store)
+		n.Announce(svc.base, node.HasServer(servicespb.RegisterServicesApiServer, servicespb.ServicesApiServer(svcServer)))
+		n.Announce(path.Join(name, svc.base), node.HasServer(servicespb.RegisterServicesApiServer, servicespb.ServicesApiServer(svcServer)))
 	}
 
 	go func() {
@@ -376,28 +375,6 @@ func (n *mockRemoteNode) makeGateway() {
 	})
 }
 
-func (n *mockRemoteNode) newAuto(id, kind string) service.Lifecycle {
-	n.t.Helper()
-	id, _, err := n.autos.Create(id, kind, service.State{
-		Active: true,
-		Config: []byte("cfg"),
-	})
-	if err != nil {
-		n.t.Fatalf("failed to create automation service %q/%q: %v", id, kind, err)
-	}
-	n.t.Cleanup(func() {
-		_, err := n.autos.Delete(id)
-		if err != nil {
-			n.t.Errorf("failed to delete automation service %q/%q: %v", id, kind, err)
-		}
-	})
-	r := n.autos.Get(id)
-	if r == nil {
-		n.t.Fatalf("automation service %q/%q not found after creation", id, kind)
-	}
-	return r.Service
-}
-
 func (n *mockRemoteNode) Close() error {
 	return nil
 }
@@ -432,16 +409,22 @@ func (n *mockRemoteNode) announceDeviceTraits(name string, tns ...trait.Name) {
 	}
 	var opts []node.Feature
 	for _, tn := range tns {
-		var client wrap.ServiceUnwrapper
 		switch tn {
 		case meterpb.TraitName:
-			client = meterpb.WrapApi(meterpb.NewModelServer(meterpb.NewModel()))
+			srv := meterpb.NewModelServer(meterpb.NewModel())
+			opts = append(opts,
+				node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(srv)),
+				node.HasTrait(tn),
+			)
 		case trait.OnOff:
-			client = onoffpb.WrapApi(onoffpb.NewModelServer(onoffpb.NewModel()))
+			srv := onoffpb.NewModelServer(onoffpb.NewModel())
+			opts = append(opts,
+				node.HasServer(onoffpb.RegisterOnOffApiServer, onoffpb.OnOffApiServer(srv)),
+				node.HasTrait(tn),
+			)
 		default:
 			n.t.Fatalf("unsupported trait %q", tn)
 		}
-		opts = append(opts, node.HasTrait(tn, node.WithClients(client)))
 	}
 	n.node.Announce(name, opts...)
 }
@@ -471,8 +454,8 @@ func (n *mockRemoteNode) announceZone(name string) {
 		_, _ = n.zones.Delete(id)
 	})
 	zoneServices := service.NewMap(n.newService, service.IdIsRequired)
-	client := servicespb.WrapApi(serviceapi.NewApi(zoneServices))
-	n.node.Announce(name, node.HasClient(client))
+	zoneSvcServer := serviceapi.NewApi(zoneServices)
+	n.node.Announce(name, node.HasServer(servicespb.RegisterServicesApiServer, servicespb.ServicesApiServer(zoneSvcServer)))
 }
 
 func (n *mockRemoteNode) announceDeviceHealth(name string, checks ...string) {

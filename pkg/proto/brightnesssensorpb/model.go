@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -19,21 +18,21 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) GetAmbientBrightness(opts ...resource.ReadOption) (*traits.AmbientBrightness, error) {
+func (m *Model) GetAmbientBrightness(opts ...resource.ReadOption) (*AmbientBrightness, error) {
 	res := m.ambientBrightness.Get(opts...)
-	return res.(*traits.AmbientBrightness), nil
+	return res.(*AmbientBrightness), nil
 }
 
-func (m *Model) UpdateAmbientBrightness(ambientBrightness *traits.AmbientBrightness, opts ...resource.WriteOption) (*traits.AmbientBrightness, error) {
+func (m *Model) UpdateAmbientBrightness(ambientBrightness *AmbientBrightness, opts ...resource.WriteOption) (*AmbientBrightness, error) {
 	res, err := m.ambientBrightness.Set(ambientBrightness, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*traits.AmbientBrightness), nil
+	return res.(*AmbientBrightness), nil
 }
 
 type PullAmbientBrightnessChange struct {
-	Value      *traits.AmbientBrightness
+	Value      *AmbientBrightness
 	ChangeTime time.Time
 }
 
@@ -45,7 +44,7 @@ func (m *Model) PullAmbientBrightness(ctx context.Context, opts ...resource.Read
 		defer close(send)
 		for change := range recv {
 			send <- PullAmbientBrightnessChange{
-				Value:      change.Value.(*traits.AmbientBrightness),
+				Value:      change.Value.(*AmbientBrightness),
 				ChangeTime: change.ChangeTime,
 			}
 		}

@@ -71,7 +71,8 @@ func Test_pollUntil(t *testing.T) {
 			name: "deadline before timeout - test succeeds after deadline",
 			args: args{
 				ctx: func() context.Context {
-					ctx, _ := context.WithTimeout(context.Background(), 5*time.Millisecond)
+					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Millisecond)
+					t.Cleanup(cancel)
 					return ctx
 				},
 				timeout: 10 * time.Millisecond,
@@ -79,10 +80,7 @@ func Test_pollUntil(t *testing.T) {
 					count := 0
 					return func(t B) bool {
 						count++
-						if count > 2 {
-							return true
-						}
-						return false
+						return count > 2
 					}
 				},
 			},
@@ -93,7 +91,8 @@ func Test_pollUntil(t *testing.T) {
 			name: "deadline before timeout - test succeeds before deadline",
 			args: args{
 				ctx: func() context.Context {
-					ctx, _ := context.WithTimeout(context.Background(), 5*time.Millisecond)
+					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Millisecond)
+					t.Cleanup(cancel)
 					return ctx
 				},
 				timeout: 10 * time.Millisecond,
@@ -110,7 +109,8 @@ func Test_pollUntil(t *testing.T) {
 			name: "deadline after timeout - test succeeds after deadline",
 			args: args{
 				ctx: func() context.Context {
-					ctx, _ := context.WithTimeout(context.Background(), 50*time.Millisecond)
+					ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+					t.Cleanup(cancel)
 					return ctx
 				},
 				timeout: 10 * time.Millisecond,
@@ -118,10 +118,7 @@ func Test_pollUntil(t *testing.T) {
 					count := 0
 					return func(t B) bool {
 						count++
-						if count > 2 {
-							return true
-						}
-						return false
+						return count > 2
 					}
 				},
 			},
@@ -132,7 +129,8 @@ func Test_pollUntil(t *testing.T) {
 			name: "deadline after timeout - test succeeds before deadline",
 			args: args{
 				ctx: func() context.Context {
-					ctx, _ := context.WithTimeout(context.Background(), 50*time.Millisecond)
+					ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+					t.Cleanup(cancel)
 					return ctx
 				},
 				timeout: 10 * time.Millisecond,

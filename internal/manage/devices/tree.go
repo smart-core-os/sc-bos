@@ -136,24 +136,3 @@ func (h *mapping[K, V]) find(k K) (v V, found bool) {
 	}
 	return v, false
 }
-
-// eachPair calls f for each pair in the mapping.
-// If f returns false, pairs returns immediately.
-func (h *mapping[K, V]) eachPair(f func(k K, v V) bool) {
-	if h == nil {
-		return
-	}
-	if h.m != nil {
-		for k, v := range h.m {
-			if !f(k, v) {
-				return
-			}
-		}
-	} else {
-		for _, e := range h.s {
-			if !f(e.key, e.value) {
-				return
-			}
-		}
-	}
-}

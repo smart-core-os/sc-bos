@@ -7,6 +7,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -17,8 +18,9 @@ import (
 )
 
 var (
-	output   = flag.String("output", "service_renames_gen.go", "output file path")
-	protoDir = flag.String("protodir", "../../../../../proto", "path to proto directory relative to this tool")
+	output    = flag.String("output", "service_renames_gen.go", "output file path")
+	protoDir  = flag.String("protodir", "../../../../../proto", "path to proto directory relative to this tool")
+	traitsDir = flag.String("traitsdir", "../../../../../sc-api/protobuf/traits", "path to sc-api/protobuf/traits relative to this tool")
 )
 
 var (
@@ -54,11 +56,28 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Resolve traits directory
+	traitsPath, err := filepath.Abs(*traitsDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error resolving traits directory: %v\n", err)
+		os.Exit(1)
+	}
+
 	// Discover service renames
 	renames, err := discoverServiceRenames(protoPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error discovering renames: %v\n", err)
 		os.Exit(1)
+	}
+
+	// Also scan sc-api traits for renames caused by the traits->v1 migration.
+	if _, err := os.Stat(traitsPath); err == nil {
+		traitsRenames, err := discoverTraitsServiceRenames(traitsPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error discovering traits renames: %v\n", err)
+			os.Exit(1)
+		}
+		maps.Copy(renames, traitsRenames)
 	}
 
 	// Generate the output file
@@ -132,6 +151,53 @@ func discoverServiceRenames(protoDir string) (map[string]string, error) {
 			_, v0Service := splitPackageService(v0FQN)
 
 			// If the service name changed, record it
+			if v0Service != v1Service {
+				renames[v0Service] = v1Service
+			}
+		}
+
+		return nil
+	})
+
+	return renames, err
+}
+
+// discoverTraitsServiceRenames scans sc-api/protobuf/traits/ and records any service renames
+// that would occur when migrating from smartcore.traits to smartcore.bos.{resource}.v1.
+func discoverTraitsServiceRenames(traitsDir string) (map[string]string, error) {
+	renames := make(map[string]string)
+
+	err := filepath.WalkDir(traitsDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || !strings.HasSuffix(d.Name(), ".proto") {
+			return nil
+		}
+
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("reading %s: %w", path, err)
+		}
+
+		pkgMatch := packageRe.FindSubmatch(content)
+		if len(pkgMatch) < 2 || string(pkgMatch[1]) != "smartcore.traits" {
+			return nil
+		}
+
+		serviceMatches := serviceRe.FindAllSubmatch(content, -1)
+		for _, match := range serviceMatches {
+			if len(match) < 2 {
+				continue
+			}
+			traitsService := string(match[1])
+
+			v1FQN := protopkg.TraitsToV1("smartcore.traits." + traitsService)
+			_, v1Service := splitPackageService(v1FQN)
+
+			v0FQN := protopkg.V1ToTraits(v1FQN)
+			_, v0Service := splitPackageService(v0FQN)
+
 			if v0Service != v1Service {
 				renames[v0Service] = v1Service
 			}

@@ -6,7 +6,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/pressurepb";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 
 // Pressure trait is applicable to devices that measure or control pressure in a system.
@@ -68,7 +68,7 @@ message DescribePressureRequest {
 // MeterReadingSupport describes the capabilities of devices implementing this trait
 message PressureSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // The unit associated with the target pressure and measured values
   string pressure_unit = 2;
 }

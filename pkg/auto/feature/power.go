@@ -9,9 +9,9 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/util/times"
 	"github.com/smart-core-os/sc-bos/pkg/auto/runstate"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/state"
 )
 
@@ -23,7 +23,7 @@ type TurnOffScreensOutsideWorkingHours struct {
 	disabledWeekdays    map[time.Weekday]struct{}
 
 	screens     []string
-	powerClient traits.OnOffApiClient
+	powerClient onoffpb.OnOffApiClient
 
 	logger *zap.Logger
 	now    func() time.Time
@@ -91,14 +91,13 @@ func (t *TurnOffScreensOutsideWorkingHours) state() *state.Manager[runstate.RunS
 	return t.sm
 }
 
-func (t *TurnOffScreensOutsideWorkingHours) setScreenPower(ctx context.Context, state traits.OnOff_State) error {
+func (t *TurnOffScreensOutsideWorkingHours) setScreenPower(ctx context.Context, state onoffpb.OnOff_State) error {
 	responses := make(chan error)
 	count := 0
 	for _, screen := range t.screens {
-		screen := screen
 		count++
 		go func() {
-			_, err := t.powerClient.UpdateOnOff(ctx, &traits.UpdateOnOffRequest{Name: screen, OnOff: &traits.OnOff{State: state}})
+			_, err := t.powerClient.UpdateOnOff(ctx, &onoffpb.UpdateOnOffRequest{Name: screen, OnOff: &onoffpb.OnOff{State: state}})
 			responses <- err
 		}()
 	}
@@ -115,18 +114,18 @@ func (t *TurnOffScreensOutsideWorkingHours) setScreenPower(ctx context.Context, 
 	return err
 }
 
-func (t *TurnOffScreensOutsideWorkingHours) expectedPowerState(now time.Time) traits.OnOff_State {
+func (t *TurnOffScreensOutsideWorkingHours) expectedPowerState(now time.Time) onoffpb.OnOff_State {
 	if _, off := t.disabledWeekdays[now.Weekday()]; off {
-		return traits.OnOff_OFF
+		return onoffpb.OnOff_OFF
 	}
 	offBefore, onBefore := t.offTime(now)
 	if now.Before(offBefore) {
-		return traits.OnOff_OFF
+		return onoffpb.OnOff_OFF
 	}
 	if now.Before(onBefore) {
-		return traits.OnOff_ON
+		return onoffpb.OnOff_ON
 	}
-	return traits.OnOff_OFF
+	return onoffpb.OnOff_OFF
 }
 
 func (t *TurnOffScreensOutsideWorkingHours) nextWakeTime(now time.Time) time.Time {

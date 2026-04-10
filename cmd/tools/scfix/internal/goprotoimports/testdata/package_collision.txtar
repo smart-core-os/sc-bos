@@ -28,12 +28,12 @@ import (
 	"context"
 
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
-	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	devicespb2 "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 )
 
 func ProcessDevices(ctx context.Context) {
-	// Using gen_devicespb.Device from pkg/gen
-	device := &gen_devicespb.Device{Name: "device1"}
+	// Using devicespb2.Device from pkg/gen
+	device := &devicespb2.Device{Name: "device1"}
 
 	// Also using something from gentrait/devicespb
 	collection := devicespb.NewCollection()

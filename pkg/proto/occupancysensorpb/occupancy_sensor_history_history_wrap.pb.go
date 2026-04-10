@@ -8,6 +8,7 @@ import (
 )
 
 // WrapHistory	adapts a OccupancySensorHistoryServer	and presents it as a OccupancySensorHistoryClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHistory(server OccupancySensorHistoryServer) *HistoryWrapper {
 	conn := wrap.ServerToClient(OccupancySensorHistory_ServiceDesc, server)
 	client := NewOccupancySensorHistoryClient(conn)

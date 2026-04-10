@@ -8,9 +8,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
@@ -44,14 +43,18 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	announceGroup := func(name string, lights []string, logger *zap.Logger) error {
 		group := &Group{
-			client:   traits.NewLightApiClient(conn),
-			info:     traits.NewLightInfoClient(conn),
+			client:   lightpb.NewLightApiClient(conn),
+			info:     lightpb.NewLightInfoClient(conn),
 			names:    lights,
 			readOnly: cfg.ReadOnlyLights,
 			logger:   logger,
 		}
 		f.devices.Add(lights...)
-		announce.Announce(name, node.HasTrait(trait.Light, node.WithClients(lightpb2.WrapApi(group), lightpb2.WrapInfo(group))))
+		announce.Announce(name,
+			node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(group)),
+			node.HasServer(lightpb.RegisterLightInfoServer, lightpb.LightInfoServer(group)),
+			node.HasTrait(trait.Light),
+		)
 		return nil
 	}
 

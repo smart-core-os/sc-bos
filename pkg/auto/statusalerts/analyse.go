@@ -51,10 +51,7 @@ func analyseStatusLogs(ctx context.Context, source config.Source, c <-chan *stat
 			failedLog = msg
 			failedCount++
 			// setup the next attempt to send the msg
-			nextAttemptDelay = time.Duration(float64(nextAttemptDelay) * nextAttemptScale)
-			if nextAttemptDelay > maxAttemptDelay {
-				nextAttemptDelay = maxAttemptDelay
-			}
+			nextAttemptDelay = min(time.Duration(float64(nextAttemptDelay)*nextAttemptScale), maxAttemptDelay)
 
 			switch {
 			case failedCount == 5:

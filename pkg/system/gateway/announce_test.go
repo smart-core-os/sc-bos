@@ -17,14 +17,14 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -185,7 +185,7 @@ func TestSystem_announceCohort(t *testing.T) {
 			// hub services would stop being proxied.
 			name: "hub becoming gateway keeps services proxied",
 			run: func(t *testing.T, th *announceTester) {
-				desc := findServiceDesc(t, "smartcore.traits.OnOffApi")
+				desc := findServiceDesc(t, "smartcore.bos.onoff.v1.OnOffApi")
 				hub := th.addHub("hub", "hub/d1")
 				hub.Services.Set(desc)
 
@@ -243,14 +243,14 @@ func TestSystem_announceCohort(t *testing.T) {
 			name: "gateway proxies only own name and fixed service children",
 			run: func(t *testing.T, th *announceTester) {
 				th.addGateway("gw1",
-					"gw1",           // own name → proxied
-					"gw1/drivers",   // fixed service child → proxied
+					"gw1",             // own name → proxied
+					"gw1/drivers",     // fixed service child → proxied
 					"gw1/automations", // fixed service child → proxied
-					"gw1/systems",   // fixed service child → proxied
-					"gw1/zones",     // fixed service child → proxied
-					"gw1/d1",        // arbitrary child → NOT proxied
-					"gw1/zone1",     // non-fixed child → NOT proxied
-					"ac1/d1",        // foreign device → NOT proxied
+					"gw1/systems",     // fixed service child → proxied
+					"gw1/zones",       // fixed service child → proxied
+					"gw1/d1",          // arbitrary child → NOT proxied
+					"gw1/zone1",       // non-fixed child → NOT proxied
+					"ac1/d1",          // foreign device → NOT proxied
 				)
 				th.runAnnounceCohort()
 				th.assertSimpleDevices("gw1", "gw1/drivers", "gw1/automations", "gw1/systems", "gw1/zones")
@@ -343,9 +343,9 @@ func TestSystem_announceCohort(t *testing.T) {
 
 				stream := th.n.PullDevices(th.Context(), resource.WithUpdatesOnly(true))
 				now := time.Now()
-				ac1.Devices.Set(remoteDesc{name: "ac1/d1", md: &traits.Metadata{
+				ac1.Devices.Set(remoteDesc{name: "ac1/d1", md: &metadatapb.Metadata{
 					Name:       "ac1/d1",
-					Membership: &traits.Metadata_Membership{Subsystem: "test devices"},
+					Membership: &metadatapb.Metadata_Membership{Subsystem: "test devices"},
 				}})
 
 				wantOldDevice := &devicespb.Device{
@@ -354,9 +354,9 @@ func TestSystem_announceCohort(t *testing.T) {
 				}
 				wantNewDevice := &devicespb.Device{
 					Name: "ac1/d1",
-					Metadata: &traits.Metadata{
+					Metadata: &metadatapb.Metadata{
 						Name:       "ac1/d1",
-						Membership: &traits.Metadata_Membership{Subsystem: "test devices"},
+						Membership: &metadatapb.Metadata_Membership{Subsystem: "test devices"},
 						Traits:     ts(trait.Metadata),
 					},
 				}
@@ -388,9 +388,9 @@ func TestSystem_announceCohort(t *testing.T) {
 				th.assertSimpleDevices() // no devices because it's a gateway
 
 				stream := th.n.PullDevices(th.Context(), resource.WithUpdatesOnly(true))
-				gw1.Devices.Set(remoteDesc{name: "ac1/d1", md: &traits.Metadata{
+				gw1.Devices.Set(remoteDesc{name: "ac1/d1", md: &metadatapb.Metadata{
 					Name:       "ac1/d1",
-					Membership: &traits.Metadata_Membership{Subsystem: "test devices"},
+					Membership: &metadatapb.Metadata_Membership{Subsystem: "test devices"},
 				}})
 				synctest.Wait()
 				select {
@@ -476,7 +476,7 @@ func TestSystem_announceCohort(t *testing.T) {
 			// log spam and briefly removing routes.
 			name: "service not re-announced when Replace is called with unchanged descriptors",
 			run: func(t *testing.T, th *announceTester) {
-				desc := findServiceDesc(t, "smartcore.traits.OnOffApi")
+				desc := findServiceDesc(t, "smartcore.bos.onoff.v1.OnOffApi")
 				ac1 := th.addNode("ac1", "ac1/d1")
 				ac1.Services.Set(desc)
 
@@ -604,7 +604,7 @@ func assertDeviceUpdate(t *testing.T, stream <-chan devicespb.DevicesChange, wan
 	// all updates look a bit like this, with different old/new values
 	want := devicespb.DevicesChange{
 		Id:         "ac1/d1",
-		ChangeType: types.ChangeType_UPDATE,
+		ChangeType: typespb.ChangeType_UPDATE,
 		ChangeTime: now,
 		OldValue:   wantOld,
 		NewValue:   wantNew,
@@ -622,7 +622,7 @@ func assertDeviceUpdate(t *testing.T, stream <-chan devicespb.DevicesChange, wan
 		// We can't predict the exact state transition, but we can verify the old state
 		wantIntermediate := devicespb.DevicesChange{
 			Id:         "ac1/d1",
-			ChangeType: types.ChangeType_UPDATE,
+			ChangeType: typespb.ChangeType_UPDATE,
 			ChangeTime: now,
 			OldValue:   want.OldValue,
 		}
@@ -665,18 +665,18 @@ func hcs(descs ...string) []*healthpb.HealthCheck {
 	return hcs
 }
 
-func md(name string, traitList ...*traits.TraitMetadata) *traits.Metadata {
-	return &traits.Metadata{
+func md(name string, traitList ...*metadatapb.TraitMetadata) *metadatapb.Metadata {
+	return &metadatapb.Metadata{
 		Name:       name,
-		Appearance: &traits.Metadata_Appearance{Title: name},
+		Appearance: &metadatapb.Metadata_Appearance{Title: name},
 		Traits:     traitList,
 	}
 }
 
-func ts[S ~string](name ...S) []*traits.TraitMetadata {
-	var ts []*traits.TraitMetadata
+func ts[S ~string](name ...S) []*metadatapb.TraitMetadata {
+	var ts []*metadatapb.TraitMetadata
 	for _, n := range name {
-		ts = append(ts, &traits.TraitMetadata{Name: string(n)})
+		ts = append(ts, &metadatapb.TraitMetadata{Name: string(n)})
 	}
 	return ts
 }
@@ -765,7 +765,7 @@ func (t *announceTester) assertDevices(want ...*devicespb.Device) {
 	t.Helper()
 	slices.SortFunc(want, cmpDevices)
 	// add in the self node t the right place keeping want sorted by name
-	selfDevice := &devicespb.Device{Name: "self", Metadata: &traits.Metadata{Name: "self", Traits: ts(trait.Metadata, trait.Parent)}}
+	selfDevice := &devicespb.Device{Name: "self", Metadata: &metadatapb.Metadata{Name: "self", Traits: ts(trait.Metadata, trait.Parent)}}
 	if i, ok := slices.BinarySearchFunc(want, selfDevice, cmpDevices); !ok {
 		want = slices.Insert(want, i, selfDevice)
 	}

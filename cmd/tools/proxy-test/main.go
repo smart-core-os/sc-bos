@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 )
 
@@ -20,9 +19,9 @@ func main() {
 		log.Fatalln(err)
 	}
 	realServer := grpc.NewServer()
-	model := onoffpb.NewModel(onoffpb.WithInitialOnOff(&traits.OnOff{State: traits.OnOff_ON}))
+	model := onoffpb.NewModel(onoffpb.WithInitialOnOff(&onoffpb.OnOff{State: onoffpb.OnOff_ON}))
 	apiImpl := onoffpb.NewModelServer(model)
-	traits.RegisterOnOffApiServer(realServer, apiImpl)
+	onoffpb.RegisterOnOffApiServer(realServer, apiImpl)
 	go realServer.Serve(realLis)
 	defer realServer.Stop()
 
@@ -48,9 +47,9 @@ func main() {
 	defer proxyServer.Stop()
 
 	log.Printf("Proxy server hosted on %v", proxyLis.Addr())
-	proxyConn, err := grpc.NewClient(proxyLis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	client := traits.NewOnOffApiClient(proxyConn)
-	test, err := client.GetOnOff(context.Background(), &traits.GetOnOffRequest{})
+	proxyConn, _ := grpc.NewClient(proxyLis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client := onoffpb.NewOnOffApiClient(proxyConn)
+	test, err := client.GetOnOff(context.Background(), &onoffpb.GetOnOffRequest{})
 	if err != nil {
 		log.Fatalln(err)
 	}

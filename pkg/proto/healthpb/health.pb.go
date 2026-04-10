@@ -7,7 +7,7 @@
 package healthpb
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -1980,7 +1980,7 @@ type PullHealthChecksResponse_Change struct {
 	// The name of the device the health check belongs to.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The type of change (e.g. ADD, UPDATE, etc...)
-	Type types.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type typespb.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	// The new value to use for ADD|UPDATE changes
 	NewValue *HealthCheck `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// The old value to use for UPDATE|REMOVE changes
@@ -2028,11 +2028,11 @@ func (x *PullHealthChecksResponse_Change) GetName() string {
 	return ""
 }
 
-func (x *PullHealthChecksResponse_Change) GetType() types.ChangeType {
+func (x *PullHealthChecksResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 func (x *PullHealthChecksResponse_Change) GetNewValue() *HealthCheck {
@@ -2123,7 +2123,7 @@ var File_smartcore_bos_health_v1_health_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_health_v1_health_proto_rawDesc = "" +
 	"\n" +
-	"$smartcore/bos/health/v1/health.proto\x12\x17smartcore.bos.health.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\"\x90\x1f\n" +
+	"$smartcore/bos/health/v1/health.proto\x12\x17smartcore.bos.health.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a#smartcore/bos/types/v1/change.proto\"\x90\x1f\n" +
 	"\vHealthCheck\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12 \n" +
@@ -2256,12 +2256,12 @@ const file_smartcore_bos_health_v1_health_proto_rawDesc = "" +
 	"\x17PullHealthChecksRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x81\x03\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\x88\x03\n" +
 	"\x18PullHealthChecksResponse\x12R\n" +
-	"\achanges\x18\x01 \x03(\v28.smartcore.bos.health.v1.PullHealthChecksResponse.ChangeR\achanges\x1a\x90\x02\n" +
+	"\achanges\x18\x01 \x03(\v28.smartcore.bos.health.v1.PullHealthChecksResponse.ChangeR\achanges\x1a\x97\x02\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12A\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\x12A\n" +
 	"\tnew_value\x18\x03 \x01(\v2$.smartcore.bos.health.v1.HealthCheckR\bnewValue\x12A\n" +
 	"\told_value\x18\x04 \x01(\v2$.smartcore.bos.health.v1.HealthCheckR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -2333,7 +2333,7 @@ var file_smartcore_bos_health_v1_health_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),                  // 27: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),                  // 28: google.protobuf.FieldMask
 	(*durationpb.Duration)(nil),                    // 29: google.protobuf.Duration
-	(types.ChangeType)(0),                          // 30: smartcore.types.ChangeType
+	(typespb.ChangeType)(0),                        // 30: smartcore.bos.types.v1.ChangeType
 }
 var file_smartcore_bos_health_v1_health_proto_depIdxs = []int32{
 	27, // 0: smartcore.bos.health.v1.HealthCheck.create_time:type_name -> google.protobuf.Timestamp
@@ -2376,7 +2376,7 @@ var file_smartcore_bos_health_v1_health_proto_depIdxs = []int32{
 	18, // 37: smartcore.bos.health.v1.HealthCheck.Bounds.abnormal_values:type_name -> smartcore.bos.health.v1.HealthCheck.Values
 	14, // 38: smartcore.bos.health.v1.HealthCheck.Faults.current_faults:type_name -> smartcore.bos.health.v1.HealthCheck.Error
 	14, // 39: smartcore.bos.health.v1.HealthCheck.Reliability.Cause.error:type_name -> smartcore.bos.health.v1.HealthCheck.Error
-	30, // 40: smartcore.bos.health.v1.PullHealthChecksResponse.Change.type:type_name -> smartcore.types.ChangeType
+	30, // 40: smartcore.bos.health.v1.PullHealthChecksResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	5,  // 41: smartcore.bos.health.v1.PullHealthChecksResponse.Change.new_value:type_name -> smartcore.bos.health.v1.HealthCheck
 	5,  // 42: smartcore.bos.health.v1.PullHealthChecksResponse.Change.old_value:type_name -> smartcore.bos.health.v1.HealthCheck
 	27, // 43: smartcore.bos.health.v1.PullHealthChecksResponse.Change.change_time:type_name -> google.protobuf.Timestamp

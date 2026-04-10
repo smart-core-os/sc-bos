@@ -1,8 +1,8 @@
 import * as jspb from 'google-protobuf'
 
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
-import * as traits_metadata_pb from '@smart-core-os/sc-api-grpc-web/traits/metadata_pb'; // proto import: "traits/metadata.proto"
-import * as types_change_pb from '@smart-core-os/sc-api-grpc-web/types/change_pb'; // proto import: "types/change.proto"
+import * as smartcore_bos_metadata_v1_metadata_pb from '../../../../smartcore/bos/metadata/v1/metadata_pb'; // proto import: "smartcore/bos/metadata/v1/metadata.proto"
+import * as smartcore_bos_types_v1_change_pb from '../../../../smartcore/bos/types/v1/change_pb'; // proto import: "smartcore/bos/types/v1/change.proto"
 
 
 export class HubNode extends jspb.Message {
@@ -32,8 +32,8 @@ export namespace HubNode {
 }
 
 export class HubNodeInspection extends jspb.Message {
-  getMetadata(): traits_metadata_pb.Metadata | undefined;
-  setMetadata(value?: traits_metadata_pb.Metadata): HubNodeInspection;
+  getMetadata(): smartcore_bos_metadata_v1_metadata_pb.Metadata | undefined;
+  setMetadata(value?: smartcore_bos_metadata_v1_metadata_pb.Metadata): HubNodeInspection;
   hasMetadata(): boolean;
   clearMetadata(): HubNodeInspection;
 
@@ -52,7 +52,7 @@ export class HubNodeInspection extends jspb.Message {
 
 export namespace HubNodeInspection {
   export type AsObject = {
-    metadata?: traits_metadata_pb.Metadata.AsObject;
+    metadata?: smartcore_bos_metadata_v1_metadata_pb.Metadata.AsObject;
     publicCertsList: Array<string>;
   };
 }
@@ -191,8 +191,8 @@ export namespace PullHubNodesResponse {
   };
 
   export class Change extends jspb.Message {
-    getType(): types_change_pb.ChangeType;
-    setType(value: types_change_pb.ChangeType): Change;
+    getType(): smartcore_bos_types_v1_change_pb.ChangeType;
+    setType(value: smartcore_bos_types_v1_change_pb.ChangeType): Change;
 
     getNewValue(): HubNode | undefined;
     setNewValue(value?: HubNode): Change;
@@ -219,7 +219,7 @@ export namespace PullHubNodesResponse {
 
   export namespace Change {
     export type AsObject = {
-      type: types_change_pb.ChangeType;
+      type: smartcore_bos_types_v1_change_pb.ChangeType;
       newValue?: HubNode.AsObject;
       oldValue?: HubNode.AsObject;
       changeTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;

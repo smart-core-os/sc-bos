@@ -9,7 +9,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -47,7 +47,7 @@ func NewModel(opts ...resource.Option) *Model {
 
 	// let's add some records to start with so we can test the list method without waiting
 	startTime := time.Now().Add(-100 * time.Minute)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		_, _ = m.GenerateWasteRecord(timestamppb.New(startTime))
 		startTime = startTime.Add(time.Minute)
 	}
@@ -118,16 +118,13 @@ func (m *Model) ListWasteRecords(start, count int) []*WasteRecord {
 func (m *Model) pullWasteRecordsWrapper(request *PullWasteRecordsRequest, server WasteApi_PullWasteRecordsServer) error {
 	if !request.UpdatesOnly {
 		m.mu.Lock()
-		i := len(m.allWasteRecords) - 50
-		if i < 0 {
-			i = 0
-		}
+		i := max(len(m.allWasteRecords)-50, 0)
 		for ; i < len(m.allWasteRecords)-1; i++ {
 			change := &PullWasteRecordsResponse_Change{
 				Name:       request.Name,
 				NewValue:   m.allWasteRecords[i],
 				ChangeTime: m.allWasteRecords[i].WasteCreateTime,
-				Type:       types.ChangeType_ADD,
+				Type:       typespb.ChangeType_ADD,
 			}
 			if err := server.Send(&PullWasteRecordsResponse{Changes: []*PullWasteRecordsResponse_Change{change}}); err != nil {
 				m.mu.Unlock()
@@ -157,7 +154,7 @@ func (m *Model) PullWasteRecords(ctx context.Context, opts ...resource.ReadOptio
 				Name:       "Waste Record",
 				NewValue:   wr, // the mock driver only generates new waste records and does not delete them
 				ChangeTime: wr.WasteCreateTime,
-				Type:       types.ChangeType_ADD,
+				Type:       typespb.ChangeType_ADD,
 			}
 			send <- change
 		}

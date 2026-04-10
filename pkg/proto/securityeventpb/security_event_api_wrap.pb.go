@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a SecurityEventApiServer	and presents it as a SecurityEventApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server SecurityEventApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(SecurityEventApi_ServiceDesc, server)
 	client := NewSecurityEventApiClient(conn)

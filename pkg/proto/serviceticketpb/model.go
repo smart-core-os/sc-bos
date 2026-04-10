@@ -19,14 +19,14 @@ func NewModel(opts ...resource.Option) *Model {
 	return m
 }
 
-func (m Model) addTicket(ticket *Ticket) *Ticket {
+func (m *Model) addTicket(ticket *Ticket) *Ticket {
 	id := uuid.NewUUID().String()
 	ticket.Id = id
 	m.tickets[id] = ticket
 	return ticket
 }
 
-func (m Model) updateTicket(ticket *Ticket) (*Ticket, error) {
+func (m *Model) updateTicket(ticket *Ticket) (*Ticket, error) {
 	if _, ok := m.tickets[ticket.Id]; !ok {
 		return nil, errors.New("ticket not found")
 	}
@@ -35,10 +35,10 @@ func (m Model) updateTicket(ticket *Ticket) (*Ticket, error) {
 }
 
 // SetSupport sets the serviceticketpb.TicketSupport to use in the ServiceTicketInfoServer.
-func (m Model) SetSupport(s *TicketSupport) {
+func (m *Model) SetSupport(s *TicketSupport) {
 	m.support = s
 }
 
-func (m Model) GetTickets() (map[string]*Ticket, error) {
+func (m *Model) GetTickets() (map[string]*Ticket, error) {
 	return m.tickets, nil
 }

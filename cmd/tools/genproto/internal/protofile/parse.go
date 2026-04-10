@@ -11,7 +11,8 @@ import (
 )
 
 // Parse parses a proto file and returns its descriptor.
-func Parse(protoDir, fileName string) (*descriptorpb.FileDescriptorProto, error) {
+// includeDirs are additional -I include paths passed to protoc.
+func Parse(protoDir, fileName string, includeDirs []string) (*descriptorpb.FileDescriptorProto, error) {
 	// Create a temporary file for the descriptor set output
 	tmpFile, err := os.CreateTemp("", "proto-descriptor-*.pb")
 	if err != nil {
@@ -21,14 +22,18 @@ func Parse(protoDir, fileName string) (*descriptorpb.FileDescriptorProto, error)
 	tmpFile.Close()
 	defer os.Remove(tmpPath)
 
-	err = toolchain.RunProtomod("", "protoc", "--",
-		"-I", protoDir,
+	protocArgs := []string{"-I", protoDir}
+	for _, dir := range includeDirs {
+		protocArgs = append(protocArgs, "-I", dir)
+	}
+	protocArgs = append(protocArgs,
 		"--descriptor_set_out="+tmpPath,
 		"--include_imports",
 		fileName,
 	)
+	err = toolchain.RunProtoc("", protocArgs...)
 	if err != nil {
-		return nil, fmt.Errorf("running protomod protoc: %w", err)
+		return nil, fmt.Errorf("running protoc: %w", err)
 	}
 
 	// Read the descriptor set from the temp file

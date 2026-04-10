@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
+
 	"net/http"
 	"net/url"
 	"time"
@@ -74,7 +75,7 @@ func (t *TRV) Poll(ctx context.Context) error {
 	}
 }
 
-// API calls
+// Refresh fetches the current thermostat state from the device via API calls.
 func (t *TRV) Refresh(ctx context.Context) (data ThermostatData, err error) {
 	result, err := t.request(ctx, "thermostat/0", nil)
 	if err != nil {
@@ -157,7 +158,7 @@ func (t *TRV) request(ctx context.Context, endpoint string, params map[string]st
 		_ = res.Body.Close()
 	}()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}

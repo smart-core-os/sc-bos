@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -19,21 +18,21 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) GetEnergyLevel(opts ...resource.ReadOption) (*traits.EnergyLevel, error) {
+func (m *Model) GetEnergyLevel(opts ...resource.ReadOption) (*EnergyLevel, error) {
 	res := m.energyLevel.Get(opts...)
-	return res.(*traits.EnergyLevel), nil
+	return res.(*EnergyLevel), nil
 }
 
-func (m *Model) UpdateEnergyLevel(energyLevel *traits.EnergyLevel, opts ...resource.WriteOption) (*traits.EnergyLevel, error) {
+func (m *Model) UpdateEnergyLevel(energyLevel *EnergyLevel, opts ...resource.WriteOption) (*EnergyLevel, error) {
 	res, err := m.energyLevel.Set(energyLevel, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*traits.EnergyLevel), nil
+	return res.(*EnergyLevel), nil
 }
 
 type PullEnergyLevelChange struct {
-	Value      *traits.EnergyLevel
+	Value      *EnergyLevel
 	ChangeTime time.Time
 }
 
@@ -44,7 +43,7 @@ func (m *Model) PullEnergyLevel(ctx context.Context, opts ...resource.ReadOption
 	go func() {
 		defer close(send)
 		for change := range recv {
-			demand := change.Value.(*traits.EnergyLevel)
+			demand := change.Value.(*EnergyLevel)
 			send <- PullEnergyLevelChange{
 				Value:      demand,
 				ChangeTime: change.ChangeTime,

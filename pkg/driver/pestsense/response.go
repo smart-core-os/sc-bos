@@ -6,7 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 )
 
 type Response struct {
@@ -43,13 +43,13 @@ func handleResponse(body []byte, devices map[string]*pestSensor, logger *zap.Log
 	if exists {
 		if occupied {
 			logger.Debug("setting device state", zap.String("deviceId", response.DeviceNumber), zap.Bool("occupied", true))
-			_, err = device.occupancy.Set(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			_, err = device.occupancy.Set(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
 			if err != nil {
 				logger.Error("failed to set occupancy state", zap.String("deviceId", response.DeviceNumber), zap.Error(err))
 			}
 		} else {
 			logger.Debug("setting device state", zap.String("deviceId", response.DeviceNumber), zap.Bool("occupied", false))
-			_, err = device.occupancy.Set(&traits.Occupancy{State: traits.Occupancy_UNOCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
+			_, err = device.occupancy.Set(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED, PeopleCount: int32(response.IndividualDeviceDetections)})
 			if err != nil {
 				logger.Error("failed to set occupancy state", zap.String("deviceId", response.DeviceNumber), zap.Error(err))
 			}

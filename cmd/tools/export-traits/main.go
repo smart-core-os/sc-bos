@@ -16,8 +16,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/client"
@@ -63,8 +63,8 @@ var getter = map[trait.Name]func(context.Context, grpc.ClientConnInterface, *dev
 		return nil
 	},
 	trait.Electric: func(ctx context.Context, conn grpc.ClientConnInterface, device *devicespb.Device, r *report) error {
-		apiClient := traits.NewElectricApiClient(conn)
-		res, err := apiClient.GetDemand(ctx, &traits.GetDemandRequest{Name: device.Name})
+		apiClient := electricpb.NewElectricApiClient(conn)
+		res, err := apiClient.GetDemand(ctx, &electricpb.GetDemandRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}

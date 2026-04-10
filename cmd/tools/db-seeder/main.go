@@ -13,14 +13,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/appconf"
-	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
-	"github.com/smart-core-os/sc-bos/pkg/driver/alldrivers"
 	mockcfg "github.com/smart-core-os/sc-bos/pkg/driver/mock/config"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/pkg/zone/allzones"
 	airqualitycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality/config"
 	meterscfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config"
 	occupancycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
@@ -96,9 +93,7 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.airQuality {
 			err = SeedAirQuality(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -106,11 +101,9 @@ func main() {
 			}
 			fmt.Printf("seeded air temperature device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.electric {
 			err = SeedMeter(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -118,11 +111,9 @@ func main() {
 			}
 			fmt.Printf("seeded meter device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.airTemperature {
 			err = SeedAirTemperature(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -130,11 +121,9 @@ func main() {
 			}
 			fmt.Printf("seeded air temperature device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.soundSensor {
 			err = SeedSoundSensor(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -142,11 +131,9 @@ func main() {
 			}
 			fmt.Printf("seeded sound sensor device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.occupancy {
 			err = SeedOccupancy(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -154,11 +141,9 @@ func main() {
 			}
 			fmt.Printf("seeded occupancy device %s\n", d)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for _, d := range sd.allocation {
 			err = SeedAllocation(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -166,19 +151,9 @@ func main() {
 			}
 			fmt.Printf("seeded allocation device %s\n", d)
 		}
-	}()
+	})
 
 	wg.Wait()
-}
-
-func loadSystemConfig() (sysconf.Config, error) {
-	systemConfig := sysconf.Default()
-
-	systemConfig.ZoneFactories = allzones.Factories()
-	systemConfig.DriverFactories = alldrivers.Factories()
-
-	err := sysconf.Load(&systemConfig)
-	return systemConfig, err
 }
 
 func parseZoneConfig(sd *seedDevices, appConf *appconf.Config) error {
@@ -222,9 +197,7 @@ func parseZoneConfig(sd *seedDevices, appConf *appconf.Config) error {
 			sd.electric = append(sd.electric, conf.Name)
 		}
 		for _, group := range mtr.MeterGroups {
-			for _, met := range group {
-				sd.electric = append(sd.electric, met)
-			}
+			sd.electric = append(sd.electric, group...)
 		}
 
 	}
@@ -247,11 +220,11 @@ func (sd *seedDevices) normalise() {
 	slices.Sort(sd.airTemperature)
 	slices.Sort(sd.soundSensor)
 	slices.Sort(sd.occupancy)
-	slices.Compact(sd.airQuality)
-	slices.Compact(sd.electric)
-	slices.Compact(sd.airTemperature)
-	slices.Compact(sd.soundSensor)
-	slices.Compact(sd.occupancy)
+	sd.airQuality = slices.Compact(sd.airQuality)
+	sd.electric = slices.Compact(sd.electric)
+	sd.airTemperature = slices.Compact(sd.airTemperature)
+	sd.soundSensor = slices.Compact(sd.soundSensor)
+	sd.occupancy = slices.Compact(sd.occupancy)
 }
 
 func parseDeviceConfig(sd *seedDevices, appConf *appconf.Config) error {

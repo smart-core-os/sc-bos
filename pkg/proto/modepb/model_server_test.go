@@ -5,15 +5,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
-
-	"github.com/smart-core-os/sc-api/go/traits"
 )
 
 func TestModelServer_UpdateModeValues(t *testing.T) {
 	m := NewModel()
 	s := NewModelServer(m)
-	newValues, err := s.UpdateModeValues(nil, &traits.UpdateModeValuesRequest{
-		Relative: &traits.ModeValuesRelative{Values: map[string]int32{
+	newValues, err := s.UpdateModeValues(t.Context(), &UpdateModeValuesRequest{
+		Relative: &ModeValuesRelative{Values: map[string]int32{
 			"temperature": 1,
 			"spin":        -1,
 		}},
@@ -22,7 +20,7 @@ func TestModelServer_UpdateModeValues(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := &traits.ModeValues{
+	want := &ModeValues{
 		Values: map[string]string{
 			"temperature": "medium",
 			"spin":        "fast",

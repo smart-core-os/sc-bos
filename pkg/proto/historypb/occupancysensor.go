@@ -7,7 +7,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 )
@@ -30,7 +29,7 @@ func (m *OccupancySensorServer) Unwrap() any {
 }
 
 var occupancyPager = NewPageReader(func(r history.Record) (*occupancysensorpb.OccupancyRecord, error) {
-	v := &traits.Occupancy{}
+	v := &occupancysensorpb.Occupancy{}
 	err := proto.Unmarshal(r.Payload, v)
 	if err != nil {
 		return nil, err

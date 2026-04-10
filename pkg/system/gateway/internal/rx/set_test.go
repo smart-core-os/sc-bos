@@ -75,13 +75,11 @@ func TestSet_concurrency(t *testing.T) {
 
 	var writers sync.WaitGroup
 	// this routine adds items to the set
-	writers.Add(1)
-	go func() {
-		defer writers.Done() // go routine finished
+	writers.Go(func() {
 		for i := range 1000 {
 			s.Set(fmt.Sprintf("set%03d", i))
 		}
-	}()
+	})
 
 	readCtx, stopReadCtx := context.WithCancel(context.Background())
 	go func() {
@@ -91,9 +89,7 @@ func TestSet_concurrency(t *testing.T) {
 
 	var readers sync.WaitGroup
 	for i := range 1000 {
-		readers.Add(1)
-		go func() {
-			defer readers.Done()
+		readers.Go(func() {
 			now, events := s.Sub(readCtx)
 			seen := make(map[string]struct{})
 			for _, v := range now.All {
@@ -113,7 +109,7 @@ func TestSet_concurrency(t *testing.T) {
 				}
 				seen[e.New] = struct{}{}
 			}
-		}()
+		})
 	}
 
 	writers.Wait()

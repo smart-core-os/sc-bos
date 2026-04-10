@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package smartcore.bos.types.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/typespb";
+
+import "google/protobuf/duration.proto";
+
+// Denote different types of tween support. Clients may use this to control performance sensitive areas by enabling or
+// disabling tweening when support is not native, for example
+enum TweenSupport {
+  // Tween support is not specified.
+  TWEEN_SUPPORT_UNSPECIFIED = 0;
+  // The device does not support tweening
+  NO_SUPPORT = 1;
+  // The device natively supports tweening. Natively typically means with minimal performance impact (i.e. no network)
+  NATIVE = 2;
+  // The device supports tweening via emulation. Typically tweening is implemented by the Smart Core driver or a
+  // supervisor node and not the device itself.
+  EMULATED = 3;
+  // The device tweens values, but the duration or rate is fixed and cannot be adjusted. For example a motor might only
+  // have one speed when operating an adjustable desk
+  FIXED = 4;
+}
+
+// An in-progress transition between two values. The values themselves should be defined in an enclosing message.
+//
+// Typically an enclosing message will define three properties, the value, the tween, and the target value.
+//
+// Example definition
+//
+//   message WaterHeight {
+//     // The current or expected height of water, in meters
+//     float height = 1;
+//     // Describe how the height changes or should change over time
+//     Tween height_tween = 2;
+//     // Read-only, the target height at the end of a transition
+//     float target_height = 3;
+//   }
+message Tween {
+  // Read-only [0-100], how far along the transition (in time) are we.
+  float progress = 1;
+  // how long the transition will last in total
+  google.protobuf.Duration total_duration = 2;
+}

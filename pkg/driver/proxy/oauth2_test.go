@@ -39,7 +39,7 @@ func TestOAuth2Credentials_GetRequestMetadata(t *testing.T) {
 				t.Errorf("client_secret = %s, want test-secret", got)
 			}
 
-			resp := map[string]interface{}{
+			resp := map[string]any{
 				"access_token": "test-token-123",
 				"expires_in":   3600,
 			}
@@ -78,7 +78,7 @@ func TestOAuth2Credentials_GetRequestMetadata(t *testing.T) {
 		callCount := 0
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			callCount++
-			resp := map[string]interface{}{
+			resp := map[string]any{
 				"access_token": "test-token",
 				"expires_in":   3600,
 			}
@@ -113,7 +113,7 @@ func TestOAuth2Credentials_GetRequestMetadata(t *testing.T) {
 
 	t.Run("refreshes expired token", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			resp := map[string]interface{}{
+			resp := map[string]any{
 				"access_token": "new-token",
 				"expires_in":   3600,
 			}
@@ -246,7 +246,7 @@ func TestFetchNewToken(t *testing.T) {
 	t.Run("successful token fetch", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				resp := map[string]interface{}{
+				resp := map[string]any{
 					"access_token": "fetched-token",
 					"expires_in":   1800,
 				}

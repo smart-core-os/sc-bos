@@ -24,7 +24,7 @@ var Factory auto.Factory = factory{}
 
 type factory struct{}
 
-func (_ factory) New(services auto.Services) service.Lifecycle {
+func (factory) New(services auto.Services) service.Lifecycle {
 	return NewUDMI(services)
 }
 
@@ -172,7 +172,6 @@ func (s *namedTasks) Run(ctx context.Context, name string, tasks []task.Task, op
 
 	group, ctx := errgroup.WithContext(ctx)
 	for _, t := range tasks {
-		t := t
 		group.Go(func() error {
 			return task.Run(ctx, t, opts...)
 		})

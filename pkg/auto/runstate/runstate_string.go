@@ -21,8 +21,9 @@ const _RunState_name = "IdleStartingRunningTransientFailureStoppedFailed"
 var _RunState_index = [...]uint8{0, 4, 12, 19, 35, 42, 48}
 
 func (i RunState) String() string {
-	if i < 0 || i >= RunState(len(_RunState_index)-1) {
+	idx := int(i) - 0
+	if i < 0 || idx >= len(_RunState_index)-1 {
 		return "RunState(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
-	return _RunState_name[_RunState_index[i]:_RunState_index[i+1]]
+	return _RunState_name[_RunState_index[idx]:_RunState_index[idx+1]]
 }

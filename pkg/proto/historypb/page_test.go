@@ -10,10 +10,9 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	timepb "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 )
 
 func Test_pageReader_listRecords(t *testing.T) {
@@ -26,7 +25,7 @@ func Test_pageReader_listRecords(t *testing.T) {
 
 	for _, i := range []int64{0, 10, 20, 30, 40, 50, 60, 70, 80, 90} {
 		now = time.UnixMilli(i)
-		data, err := proto.Marshal(&traits.Occupancy{StateChangeTime: timestamppb.New(now)})
+		data, err := proto.Marshal(&occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(now)})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -51,7 +50,7 @@ func Test_pageReader_listRecords(t *testing.T) {
 	for i, t := range []int64{0, 10, 20, 30, 40} {
 		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
-			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
+			Occupancy:  &occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}
 	}
 	if diff := cmp.Diff(wantPage, page, protocmp.Transform()); diff != "" {
@@ -71,7 +70,7 @@ func Test_pageReader_listRecords(t *testing.T) {
 	for i, t := range []int64{50, 60, 70, 80, 90} {
 		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
-			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
+			Occupancy:  &occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}
 	}
 	if diff := cmp.Diff(wantPage, page, protocmp.Transform()); diff != "" {
@@ -89,7 +88,7 @@ func Test_pageReader_listRecords_reverse(t *testing.T) {
 
 	for _, i := range []int64{0, 10, 20, 30, 40, 50, 60, 70, 80, 90} {
 		now = time.UnixMilli(i)
-		data, err := proto.Marshal(&traits.Occupancy{StateChangeTime: timestamppb.New(now)})
+		data, err := proto.Marshal(&occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(now)})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -114,7 +113,7 @@ func Test_pageReader_listRecords_reverse(t *testing.T) {
 	for i, t := range []int64{90, 80, 70, 60, 50} {
 		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
-			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
+			Occupancy:  &occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}
 	}
 	if diff := cmp.Diff(wantPage, page, protocmp.Transform()); diff != "" {
@@ -134,7 +133,7 @@ func Test_pageReader_listRecords_reverse(t *testing.T) {
 	for i, t := range []int64{40, 30, 20, 10, 0} {
 		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
-			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
+			Occupancy:  &occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}
 	}
 	if diff := cmp.Diff(wantPage, page, protocmp.Transform()); diff != "" {
@@ -152,7 +151,7 @@ func Test_pageReader_listRecords_period(t *testing.T) {
 
 	for _, i := range []int64{0, 10, 20, 30, 40, 50, 60, 70, 80, 90} {
 		now = time.UnixMilli(i)
-		data, err := proto.Marshal(&traits.Occupancy{StateChangeTime: timestamppb.New(now)})
+		data, err := proto.Marshal(&occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(now)})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -180,7 +179,7 @@ func Test_pageReader_listRecords_period(t *testing.T) {
 	for i, t := range []int64{30, 40, 50, 60} {
 		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
-			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
+			Occupancy:  &occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}
 	}
 	if diff := cmp.Diff(wantPage, page, protocmp.Transform()); diff != "" {
@@ -198,7 +197,7 @@ func Test_pageReader_listRecords_period_reverse(t *testing.T) {
 
 	for _, i := range []int64{0, 10, 20, 30, 40, 50, 60, 70, 80, 90} {
 		now = time.UnixMilli(i)
-		data, err := proto.Marshal(&traits.Occupancy{StateChangeTime: timestamppb.New(now)})
+		data, err := proto.Marshal(&occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(now)})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -226,7 +225,7 @@ func Test_pageReader_listRecords_period_reverse(t *testing.T) {
 	for i, t := range []int64{60, 50, 40, 30} {
 		wantPage[i] = &occupancysensorpb.OccupancyRecord{
 			RecordTime: timestamppb.New(time.UnixMilli(t)),
-			Occupancy:  &traits.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
+			Occupancy:  &occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(time.UnixMilli(t))},
 		}
 	}
 	if diff := cmp.Diff(wantPage, page, protocmp.Transform()); diff != "" {

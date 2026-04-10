@@ -5,7 +5,7 @@ import (
 	"slices"
 	"time"
 
-	"golang.org/x/exp/rand"
+	"math/rand/v2"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
@@ -35,9 +35,9 @@ func Access(model *accesspb.Model) service.Lifecycle {
 			timer := time.NewTimer((30 * time.Second) + time.Duration(rand.Float32())*time.Minute)
 			for {
 				state := &accesspb.AccessAttempt{
-					Grant:  accesspb.AccessAttempt_Grant(grants[rand.Intn(len(grants))]),
-					Reason: reasons[rand.Intn(len(reasons))],
-					Actor:  actors[rand.Intn(len(actors))],
+					Grant:  accesspb.AccessAttempt_Grant(grants[rand.IntN(len(grants))]),
+					Reason: reasons[rand.IntN(len(reasons))],
+					Actor:  actors[rand.IntN(len(actors))],
 				}
 				_, _ = model.UpdateLastAccessAttempt(state)
 

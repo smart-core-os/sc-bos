@@ -12,7 +12,7 @@
             <v-list density="compact">
               <v-list-subheader title="Sources"/>
               <v-list-item
-                  v-for="(item, index) in legendItems"
+                  v-for="(item, index) in trackedLegendItems"
                   :key="index"
                   @click="item.onClick(item.hidden)"
                   :title="item.text">
@@ -77,7 +77,7 @@ import {isNullOrUndef} from '@/util/types.js';
 import {useLocalProp} from '@/util/vue.js';
 import {BarElement, Chart as ChartJS, Legend, LinearScale, TimeScale, Title, Tooltip} from 'chart.js'
 import {startOfDay, startOfYear} from 'date-fns';
-import {computed, ref, toRef, watch} from 'vue';
+import {computed, nextTick, ref, toRef, watch} from 'vue';
 import {Bar} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
 import {useMeterConsumption, useMetersConsumption} from './consumption.js';
@@ -189,6 +189,22 @@ const {
 } = useExternalTooltip(edges, tickUnit, displayUnit);
 const {legendItems, vueLegendPlugin} = useVueLegendPlugin();
 const {themeColorPlugin} = useThemeColorPlugin();
+
+// Track which dataset labels the user has hidden, so selection survives time range changes.
+const hiddenDatasets = ref(new Set());
+
+// Wrap legendItems to intercept clicks and record hidden state by label.
+const trackedLegendItems = computed(() => legendItems.value.map(item => ({
+  ...item,
+  onClick: (wasHidden) => {
+    item.onClick(wasHidden);
+    if (wasHidden) {
+      hiddenDatasets.value.delete(item.text);
+    } else {
+      hiddenDatasets.value.add(item.text);
+    }
+  }
+})));
 
 const chartOptions = computed(() => {
   return /** @type {import('chart.js').ChartOptions} */ {
@@ -304,6 +320,22 @@ watch(chartData, (data) => {
     hasLoadedData.value = true;
   }
 }, {immediate: true});
+
+// After chartData changes (e.g. time range change), re-apply hidden state.
+watch(chartData, async () => {
+  if (hiddenDatasets.value.size === 0) return;
+  await nextTick();
+  const chart = chartRef.value?.chart;
+  if (!chart) return;
+  let changed = false;
+  chart.data.datasets.forEach((ds, idx) => {
+    if (hiddenDatasets.value.has(ds.label)) {
+      chart.setDatasetVisibility(idx, false);
+      changed = true;
+    }
+  });
+  if (changed) chart.update();
+});
 
 const showNoData = computed(() => !hasData.value && hasLoadedData.value);
 

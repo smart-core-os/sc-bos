@@ -1,13 +1,12 @@
 package lightpb
 
 import (
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 // DefaultModelOptions holds the default options for the model.
 var DefaultModelOptions = []resource.Option{
-	WithInitialBrightness(&traits.Brightness{}),
+	WithInitialBrightness(&Brightness{}),
 }
 
 // ModelOption defined the base type for all options that apply to this traits model.
@@ -24,12 +23,12 @@ func WithBrightnessOption(opts ...resource.Option) resource.Option {
 }
 
 // WithInitialBrightness returns an option that configures the model to initialise with the given brightness.
-func WithInitialBrightness(brightness *traits.Brightness) resource.Option {
+func WithInitialBrightness(brightness *Brightness) resource.Option {
 	return WithBrightnessOption(resource.WithInitialValue(brightness))
 }
 
 // WithPreset instructs the model to set the light to the given level when preset p is selected.
-func WithPreset(levelPercent float32, p *traits.LightPreset) resource.Option {
+func WithPreset(levelPercent float32, p *LightPreset) resource.Option {
 	return modelOptionFunc(func(args *modelArgs) {
 		args.presets = append(args.presets, preset{p, levelPercent})
 	})

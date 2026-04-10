@@ -2,7 +2,7 @@ import * as jspb from 'google-protobuf'
 
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
-import * as types_info_pb from '@smart-core-os/sc-api-grpc-web/types/info_pb'; // proto import: "types/info.proto"
+import * as smartcore_bos_types_v1_info_pb from '../../../../smartcore/bos/types/v1/info_pb'; // proto import: "smartcore/bos/types/v1/info.proto"
 
 
 export class MeterReading extends jspb.Message {
@@ -40,8 +40,8 @@ export namespace MeterReading {
 }
 
 export class MeterReadingSupport extends jspb.Message {
-  getResourceSupport(): types_info_pb.ResourceSupport | undefined;
-  setResourceSupport(value?: types_info_pb.ResourceSupport): MeterReadingSupport;
+  getResourceSupport(): smartcore_bos_types_v1_info_pb.ResourceSupport | undefined;
+  setResourceSupport(value?: smartcore_bos_types_v1_info_pb.ResourceSupport): MeterReadingSupport;
   hasResourceSupport(): boolean;
   clearResourceSupport(): MeterReadingSupport;
 
@@ -61,7 +61,7 @@ export class MeterReadingSupport extends jspb.Message {
 
 export namespace MeterReadingSupport {
   export type AsObject = {
-    resourceSupport?: types_info_pb.ResourceSupport.AsObject;
+    resourceSupport?: smartcore_bos_types_v1_info_pb.ResourceSupport.AsObject;
     usageUnit: string;
     producedUnit: string;
   };

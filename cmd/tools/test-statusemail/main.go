@@ -9,10 +9,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/statusemail"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 )
 
@@ -29,12 +29,13 @@ func main() {
 		m := statuspb.NewModel()
 		m.UpdateProblem(&statuspb.StatusLog_Problem{Name: "test", Level: statuspb.StatusLog_OFFLINE})
 		models = append(models, m)
-		client := node.WithClients(statuspb.WrapApi(statuspb.NewModelServer(m)))
-		root.Announce(fmt.Sprintf("device-%d", i), node.HasTrait(statuspb.TraitName, client),
-			node.HasMetadata(&traits.Metadata{
-				Appearance: &traits.Metadata_Appearance{Title: fmt.Sprintf("Device %d", i)},
-				Location:   &traits.Metadata_Location{Floor: fmt.Sprintf("Floor %d", i%10), Zone: fmt.Sprintf("Room %d", i%5)},
-				Membership: &traits.Metadata_Membership{Subsystem: "bms"},
+		root.Announce(fmt.Sprintf("device-%d", i),
+			node.HasServer(statuspb.RegisterStatusApiServer, statuspb.StatusApiServer(statuspb.NewModelServer(m))),
+			node.HasTrait(statuspb.TraitName),
+			node.HasMetadata(&metadatapb.Metadata{
+				Appearance: &metadatapb.Metadata_Appearance{Title: fmt.Sprintf("Device %d", i)},
+				Location:   &metadatapb.Metadata_Location{Floor: fmt.Sprintf("Floor %d", i%10), Zone: fmt.Sprintf("Room %d", i%5)},
+				Membership: &metadatapb.Metadata_Membership{Subsystem: "bms"},
 			}))
 	}
 

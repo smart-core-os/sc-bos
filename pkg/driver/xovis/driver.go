@@ -14,18 +14,17 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/xovis/config"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/pkg/trait/enterleavesensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 )
 
 const DriverName = "xovis"
@@ -66,7 +65,7 @@ type Driver struct {
 
 func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 	announcer := d.announcer.Replace(ctx)
-	grp, ctx := errgroup.WithContext(ctx)
+	var grp errgroup.Group
 
 	// A route can't be removed from an HTTP ServeMux, so if it's been changed or removed then we can't support the
 	// new configuration. This is likely to be rare in practice. Adding a route is fine.
@@ -106,10 +105,12 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 				multiSensor:    conf.MultiSensor,
 				logicID:        dev.Occupancy.ID,
 				bus:            d.pushDataBus,
-				OccupancyTotal: resource.NewValue(resource.WithInitialValue(&traits.Occupancy{}), resource.WithNoDuplicates()),
+				OccupancyTotal: resource.NewValue(resource.WithInitialValue(&occupancysensorpb.Occupancy{}), resource.WithNoDuplicates()),
 			}
-			features = append(features, node.HasTrait(trait.OccupancySensor,
-				node.WithClients(occupancysensorpb.WrapApi(occupancy))))
+			features = append(features,
+				node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancy)),
+				node.HasTrait(trait.OccupancySensor),
+			)
 			occupancyVal = occupancy.OccupancyTotal
 		}
 		var enterLeaveVal *resource.Value
@@ -120,19 +121,23 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 				logicID:         dev.EnterLeave.ID,
 				multiSensor:     conf.MultiSensor,
 				bus:             d.pushDataBus,
-				EnterLeaveTotal: resource.NewValue(resource.WithInitialValue(&traits.EnterLeaveEvent{}), resource.WithNoDuplicates()),
+				EnterLeaveTotal: resource.NewValue(resource.WithInitialValue(&enterleavesensorpb.EnterLeaveEvent{}), resource.WithNoDuplicates()),
 			}
 
-			features = append(features, node.HasTrait(trait.EnterLeaveSensor,
-				node.WithClients(enterleavesensorpb.WrapApi(enterLeave))))
+			features = append(features,
+				node.HasServer(enterleavesensorpb.RegisterEnterLeaveSensorApiServer, enterleavesensorpb.EnterLeaveSensorApiServer(enterLeave)),
+				node.HasTrait(trait.EnterLeaveSensor),
+			)
 			enterLeaveVal = enterLeave.EnterLeaveTotal
 		}
 
 		if enterLeaveVal != nil || occupancyVal != nil {
 			server := newUdmiServiceServer(d.logger.Named("udmiServiceServer"), enterLeaveVal, occupancyVal, dev.UDMITopicPrefix)
 			d.udmiServers = append(d.udmiServers, server)
-			features = append(features, node.HasTrait(udmipb.TraitName,
-				node.WithClients(udmipb.WrapService(server))))
+			features = append(features,
+				node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(server)),
+				node.HasTrait(udmipb.TraitName),
+			)
 		}
 
 		announcer.Announce(dev.Name, features...)
@@ -214,10 +219,7 @@ func (d *Driver) handleWebhook(response http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	n := 150
-	if len(rawBody) < n {
-		n = len(rawBody)
-	}
+	n := min(len(rawBody), 150)
 	d.logger.Debug("received webhook", zap.ByteString("body", rawBody[:n]))
 
 	// send the data to the bus

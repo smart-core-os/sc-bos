@@ -1,19 +1,21 @@
 package math2
 
 import (
-	"golang.org/x/exp/constraints"
+	"cmp"
 )
 
-func Max[N constraints.Ordered](a, b N) N {
-	if a > b {
-		return a
-	}
-	return b
+// Max is equivalent to built-in max.
+// Deprecated: use max directly
+//
+//go:fix inline
+func Max[N cmp.Ordered](a, b N) N {
+	return max(a, b)
 }
 
-func Min[N constraints.Ordered](a, b N) N {
-	if a < b {
-		return a
-	}
-	return b
+// Min is equivalent to built-in min.
+// Deprecated: use min directly
+//
+//go:fix inline
+func Min[N cmp.Ordered](a, b N) N {
+	return min(a, b)
 }

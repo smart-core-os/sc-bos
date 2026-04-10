@@ -16,13 +16,13 @@ import (
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 )
 
 func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
@@ -32,32 +32,24 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 	meterDevice := meterpb.NewModel()
 	_, _ = meterDevice.UpdateMeterReading(&meterpb.MeterReading{Usage: 200})
 	n.Announce("d1",
-		node.HasTrait(
-			meterpb.TraitName,
-			node.WithClients(
-				meterpb.WrapApi(meterpb.NewModelServer(meterDevice)),
-				meterpb.WrapInfo(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
-					UsageUnit: "tests per second",
-				}}),
-			),
-		),
-		node.HasMetadata(&traits.Metadata{Location: &traits.Metadata_Location{Floor: "01"}}),
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterDevice))),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
+			UsageUnit: "tests per second",
+		}})),
+		node.HasTrait(meterpb.TraitName),
+		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "01"}}),
 	)
 
-	airTempDevice := airtemperaturepb2.NewModel()
-	_, _ = airTempDevice.UpdateAirTemperature(&traits.AirTemperature{
-		TemperatureGoal:    &traits.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &types.Temperature{ValueCelsius: 23.5}},
-		AmbientTemperature: &types.Temperature{ValueCelsius: 19.2},
+	airTempDevice := airtemperaturepb.NewModel()
+	_, _ = airTempDevice.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
+		TemperatureGoal:    &airtemperaturepb.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &typespb.Temperature{ValueCelsius: 23.5}},
+		AmbientTemperature: &typespb.Temperature{ValueCelsius: 19.2},
 		AmbientHumidity:    proto.Float32(62.1),
 	})
 	n.Announce("d2",
-		node.HasTrait(
-			trait.AirTemperature,
-			node.WithClients(
-				airtemperaturepb2.WrapApi(airtemperaturepb2.NewModelServer(airTempDevice)),
-			),
-		),
-		node.HasMetadata(&traits.Metadata{Location: &traits.Metadata_Location{Floor: "02"}}),
+		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(airtemperaturepb.NewModelServer(airTempDevice))),
+		node.HasTrait(trait.AirTemperature),
+		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "02"}}),
 	)
 
 	s := NewServer(n,

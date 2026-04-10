@@ -117,7 +117,7 @@ func isSingleVarDecl(stmt ast.Stmt, varName string) bool {
 
 // hasVarDeclInBlock checks if a variable is declared anywhere in the block before a given index
 func hasVarDeclInBlock(block *ast.BlockStmt, varName string, beforeIndex int) bool {
-	for i := 0; i < beforeIndex; i++ {
+	for i := range beforeIndex {
 		declStmt, ok := block.List[i].(*ast.DeclStmt)
 		if !ok {
 			continue

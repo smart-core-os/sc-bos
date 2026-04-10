@@ -6,58 +6,57 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 func TestModel_MergeMetadata(t *testing.T) {
 	tests := []struct {
 		name   string
-		before *traits.Metadata
-		update *traits.Metadata
-		want   *traits.Metadata
+		before *Metadata
+		update *Metadata
+		want   *Metadata
 	}{
 		{
 			name:   "apply to empty",
-			before: &traits.Metadata{},
-			update: &traits.Metadata{Membership: &traits.Metadata_Membership{Group: "Test Device"}},
-			want:   &traits.Metadata{Membership: &traits.Metadata_Membership{Group: "Test Device"}},
+			before: &Metadata{},
+			update: &Metadata{Membership: &Metadata_Membership{Group: "Test Device"}},
+			want:   &Metadata{Membership: &Metadata_Membership{Group: "Test Device"}},
 		},
 		{
 			name:   "apply to different group",
-			before: &traits.Metadata{Membership: &traits.Metadata_Membership{Group: "Test Device"}},
-			update: &traits.Metadata{Appearance: &traits.Metadata_Appearance{Description: "Foo"}},
-			want:   &traits.Metadata{Membership: &traits.Metadata_Membership{Group: "Test Device"}, Appearance: &traits.Metadata_Appearance{Description: "Foo"}},
+			before: &Metadata{Membership: &Metadata_Membership{Group: "Test Device"}},
+			update: &Metadata{Appearance: &Metadata_Appearance{Description: "Foo"}},
+			want:   &Metadata{Membership: &Metadata_Membership{Group: "Test Device"}, Appearance: &Metadata_Appearance{Description: "Foo"}},
 		},
 		{
 			name:   "update group",
-			before: &traits.Metadata{Membership: &traits.Metadata_Membership{Group: "Test Device"}},
-			update: &traits.Metadata{Membership: &traits.Metadata_Membership{Subsystem: "Lights"}},
-			want:   &traits.Metadata{Membership: &traits.Metadata_Membership{Group: "Test Device", Subsystem: "Lights"}},
+			before: &Metadata{Membership: &Metadata_Membership{Group: "Test Device"}},
+			update: &Metadata{Membership: &Metadata_Membership{Subsystem: "Lights"}},
+			want:   &Metadata{Membership: &Metadata_Membership{Group: "Test Device", Subsystem: "Lights"}},
 		},
 		{
 			name:   "overwrite group",
-			before: &traits.Metadata{Membership: &traits.Metadata_Membership{Group: "Test Device"}},
-			update: &traits.Metadata{Membership: &traits.Metadata_Membership{Group: "Real Device"}},
-			want:   &traits.Metadata{Membership: &traits.Metadata_Membership{Group: "Real Device"}},
+			before: &Metadata{Membership: &Metadata_Membership{Group: "Test Device"}},
+			update: &Metadata{Membership: &Metadata_Membership{Group: "Real Device"}},
+			want:   &Metadata{Membership: &Metadata_Membership{Group: "Real Device"}},
 		},
 		{
 			name:   "add trait",
-			before: &traits.Metadata{},
-			update: &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "SuperTrait"}}},
-			want:   &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "SuperTrait"}}},
+			before: &Metadata{},
+			update: &Metadata{Traits: []*TraitMetadata{{Name: "SuperTrait"}}},
+			want:   &Metadata{Traits: []*TraitMetadata{{Name: "SuperTrait"}}},
 		},
 		{
 			name:   "add another trait",
-			before: &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "SuperTrait"}}},
-			update: &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "AnotherTrait"}}},
-			want:   &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "AnotherTrait"}, {Name: "SuperTrait"}}},
+			before: &Metadata{Traits: []*TraitMetadata{{Name: "SuperTrait"}}},
+			update: &Metadata{Traits: []*TraitMetadata{{Name: "AnotherTrait"}}},
+			want:   &Metadata{Traits: []*TraitMetadata{{Name: "AnotherTrait"}, {Name: "SuperTrait"}}},
 		},
 		{
 			name:   "add trait meta",
-			before: &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "SuperTrait", More: map[string]string{"one": "1", "two": "2"}}}},
-			update: &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "SuperTrait", More: map[string]string{"two": "II", "three": "3"}}}},
-			want:   &traits.Metadata{Traits: []*traits.TraitMetadata{{Name: "SuperTrait", More: map[string]string{"one": "1", "two": "II", "three": "3"}}}},
+			before: &Metadata{Traits: []*TraitMetadata{{Name: "SuperTrait", More: map[string]string{"one": "1", "two": "2"}}}},
+			update: &Metadata{Traits: []*TraitMetadata{{Name: "SuperTrait", More: map[string]string{"two": "II", "three": "3"}}}},
+			want:   &Metadata{Traits: []*TraitMetadata{{Name: "SuperTrait", More: map[string]string{"one": "1", "two": "II", "three": "3"}}}},
 		},
 	}
 

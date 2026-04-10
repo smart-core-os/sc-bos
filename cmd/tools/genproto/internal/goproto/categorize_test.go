@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"golang.org/x/tools/txtar"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -21,10 +20,10 @@ func TestDetermineGeneratorsFromDescriptor(t *testing.T) {
 		{
 			name: "basic proto without services",
 			desc: &descriptorpb.FileDescriptorProto{
-				Name:    proto.String("test.proto"),
-				Package: proto.String("test"),
+				Name:    new("test.proto"),
+				Package: new("test"),
 				MessageType: []*descriptorpb.DescriptorProto{
-					{Name: proto.String("Message")},
+					{Name: new("Message")},
 				},
 			},
 			want: 0,
@@ -32,25 +31,25 @@ func TestDetermineGeneratorsFromDescriptor(t *testing.T) {
 		{
 			name: "service with routed API",
 			desc: &descriptorpb.FileDescriptorProto{
-				Name:    proto.String("test.proto"),
-				Package: proto.String("test"),
+				Name:    new("test.proto"),
+				Package: new("test"),
 				MessageType: []*descriptorpb.DescriptorProto{
 					{
-						Name: proto.String("GetRequest"),
+						Name: new("GetRequest"),
 						Field: []*descriptorpb.FieldDescriptorProto{
 							{
-								Name:   proto.String("name"),
-								Number: proto.Int32(1),
+								Name:   new("name"),
+								Number: new(int32(1)),
 								Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 							},
 						},
 					},
 					{
-						Name: proto.String("UpdateRequest"),
+						Name: new("UpdateRequest"),
 						Field: []*descriptorpb.FieldDescriptorProto{
 							{
-								Name:   proto.String("name"),
-								Number: proto.Int32(1),
+								Name:   new("name"),
+								Number: new(int32(1)),
 								Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 							},
 						},
@@ -58,15 +57,15 @@ func TestDetermineGeneratorsFromDescriptor(t *testing.T) {
 				},
 				Service: []*descriptorpb.ServiceDescriptorProto{
 					{
-						Name: proto.String("TestService"),
+						Name: new("TestService"),
 						Method: []*descriptorpb.MethodDescriptorProto{
 							{
-								Name:      proto.String("Get"),
-								InputType: proto.String(".test.GetRequest"),
+								Name:      new("Get"),
+								InputType: new(".test.GetRequest"),
 							},
 							{
-								Name:      proto.String("Update"),
-								InputType: proto.String(".test.UpdateRequest"),
+								Name:      new("Update"),
+								InputType: new(".test.UpdateRequest"),
 							},
 						},
 					},
@@ -77,20 +76,20 @@ func TestDetermineGeneratorsFromDescriptor(t *testing.T) {
 		{
 			name: "service with routed API name at different position",
 			desc: &descriptorpb.FileDescriptorProto{
-				Name:    proto.String("test.proto"),
-				Package: proto.String("test"),
+				Name:    new("test.proto"),
+				Package: new("test"),
 				MessageType: []*descriptorpb.DescriptorProto{
 					{
-						Name: proto.String("GetRequest"),
+						Name: new("GetRequest"),
 						Field: []*descriptorpb.FieldDescriptorProto{
 							{
-								Name:   proto.String("id"),
-								Number: proto.Int32(1),
+								Name:   new("id"),
+								Number: new(int32(1)),
 								Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 							},
 							{
-								Name:   proto.String("name"),
-								Number: proto.Int32(2),
+								Name:   new("name"),
+								Number: new(int32(2)),
 								Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 							},
 						},
@@ -98,11 +97,11 @@ func TestDetermineGeneratorsFromDescriptor(t *testing.T) {
 				},
 				Service: []*descriptorpb.ServiceDescriptorProto{
 					{
-						Name: proto.String("TestService"),
+						Name: new("TestService"),
 						Method: []*descriptorpb.MethodDescriptorProto{
 							{
-								Name:      proto.String("Get"),
-								InputType: proto.String(".test.GetRequest"),
+								Name:      new("Get"),
+								InputType: new(".test.GetRequest"),
 							},
 						},
 					},
@@ -113,15 +112,15 @@ func TestDetermineGeneratorsFromDescriptor(t *testing.T) {
 		{
 			name: "service without routed API",
 			desc: &descriptorpb.FileDescriptorProto{
-				Name:    proto.String("test.proto"),
-				Package: proto.String("test"),
+				Name:    new("test.proto"),
+				Package: new("test"),
 				MessageType: []*descriptorpb.DescriptorProto{
 					{
-						Name: proto.String("GetRequest"),
+						Name: new("GetRequest"),
 						Field: []*descriptorpb.FieldDescriptorProto{
 							{
-								Name:   proto.String("key"),
-								Number: proto.Int32(1),
+								Name:   new("key"),
+								Number: new(int32(1)),
 								Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 							},
 						},
@@ -129,11 +128,11 @@ func TestDetermineGeneratorsFromDescriptor(t *testing.T) {
 				},
 				Service: []*descriptorpb.ServiceDescriptorProto{
 					{
-						Name: proto.String("TestService"),
+						Name: new("TestService"),
 						Method: []*descriptorpb.MethodDescriptorProto{
 							{
-								Name:      proto.String("Get"),
-								InputType: proto.String(".test.GetRequest"),
+								Name:      new("Get"),
+								InputType: new(".test.GetRequest"),
 							},
 						},
 					},
@@ -144,25 +143,25 @@ func TestDetermineGeneratorsFromDescriptor(t *testing.T) {
 		{
 			name: "service with mixed request types",
 			desc: &descriptorpb.FileDescriptorProto{
-				Name:    proto.String("test.proto"),
-				Package: proto.String("test"),
+				Name:    new("test.proto"),
+				Package: new("test"),
 				MessageType: []*descriptorpb.DescriptorProto{
 					{
-						Name: proto.String("GetRequest"),
+						Name: new("GetRequest"),
 						Field: []*descriptorpb.FieldDescriptorProto{
 							{
-								Name:   proto.String("name"),
-								Number: proto.Int32(1),
+								Name:   new("name"),
+								Number: new(int32(1)),
 								Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 							},
 						},
 					},
 					{
-						Name: proto.String("ListRequest"),
+						Name: new("ListRequest"),
 						Field: []*descriptorpb.FieldDescriptorProto{
 							{
-								Name:   proto.String("parent"),
-								Number: proto.Int32(1),
+								Name:   new("parent"),
+								Number: new(int32(1)),
 								Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 							},
 						},
@@ -170,15 +169,15 @@ func TestDetermineGeneratorsFromDescriptor(t *testing.T) {
 				},
 				Service: []*descriptorpb.ServiceDescriptorProto{
 					{
-						Name: proto.String("TestService"),
+						Name: new("TestService"),
 						Method: []*descriptorpb.MethodDescriptorProto{
 							{
-								Name:      proto.String("Get"),
-								InputType: proto.String(".test.GetRequest"),
+								Name:      new("Get"),
+								InputType: new(".test.GetRequest"),
 							},
 							{
-								Name:      proto.String("List"),
-								InputType: proto.String(".test.ListRequest"),
+								Name:      new("List"),
+								InputType: new(".test.ListRequest"),
 							},
 						},
 					},
@@ -189,15 +188,15 @@ func TestDetermineGeneratorsFromDescriptor(t *testing.T) {
 		{
 			name: "service with external request types",
 			desc: &descriptorpb.FileDescriptorProto{
-				Name:    proto.String("test.proto"),
-				Package: proto.String("test"),
+				Name:    new("test.proto"),
+				Package: new("test"),
 				Service: []*descriptorpb.ServiceDescriptorProto{
 					{
-						Name: proto.String("TestService"),
+						Name: new("TestService"),
 						Method: []*descriptorpb.MethodDescriptorProto{
 							{
-								Name:      proto.String("Get"),
-								InputType: proto.String(".external.GetRequest"),
+								Name:      new("Get"),
+								InputType: new(".external.GetRequest"),
 							},
 						},
 					},
@@ -258,7 +257,7 @@ func TestDetermineGenerators(t *testing.T) {
 			}
 
 			// Test determineGenerators
-			got, err := determineGenerators(tmpDir, relPath)
+			got, err := determineGenerators(tmpDir, relPath, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("determineGenerators() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -315,7 +314,7 @@ func TestAnalyzeProtoFiles(t *testing.T) {
 			extractAllFiles(t, archive, tmpDir)
 
 			// Test analyzeProtoFiles
-			got, err := analyzeProtoFiles(tmpDir)
+			got, err := analyzeProtoFiles(tmpDir, nil, "github.com/example/gen")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("analyzeProtoFiles() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -377,11 +376,11 @@ func TestOutputDirFromDescriptor(t *testing.T) {
 			} else {
 				desc = &descriptorpb.FileDescriptorProto{
 					Options: &descriptorpb.FileOptions{
-						GoPackage: proto.String(tt.goPackage),
+						GoPackage: new(tt.goPackage),
 					},
 				}
 			}
-			if got := outputDirFromDescriptor(desc); got != tt.want {
+			if got := outputDirFromDescriptor(desc, "github.com/smart-core-os/sc-bos"); got != tt.want {
 				t.Errorf("outputDirFromDescriptor() = %q, want %q", got, tt.want)
 			}
 		})
@@ -399,8 +398,8 @@ func TestHasNameField(t *testing.T) {
 			msg: &descriptorpb.DescriptorProto{
 				Field: []*descriptorpb.FieldDescriptorProto{
 					{
-						Name:   proto.String("name"),
-						Number: proto.Int32(1),
+						Name:   new("name"),
+						Number: new(int32(1)),
 						Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 					},
 				},
@@ -412,13 +411,13 @@ func TestHasNameField(t *testing.T) {
 			msg: &descriptorpb.DescriptorProto{
 				Field: []*descriptorpb.FieldDescriptorProto{
 					{
-						Name:   proto.String("other"),
-						Number: proto.Int32(1),
+						Name:   new("other"),
+						Number: new(int32(1)),
 						Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 					},
 					{
-						Name:   proto.String("name"),
-						Number: proto.Int32(2),
+						Name:   new("name"),
+						Number: new(int32(2)),
 						Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 					},
 				},
@@ -430,8 +429,8 @@ func TestHasNameField(t *testing.T) {
 			msg: &descriptorpb.DescriptorProto{
 				Field: []*descriptorpb.FieldDescriptorProto{
 					{
-						Name:   proto.String("name"),
-						Number: proto.Int32(1),
+						Name:   new("name"),
+						Number: new(int32(1)),
 						Type:   descriptorpb.FieldDescriptorProto_TYPE_INT32.Enum(),
 					},
 				},
@@ -443,8 +442,8 @@ func TestHasNameField(t *testing.T) {
 			msg: &descriptorpb.DescriptorProto{
 				Field: []*descriptorpb.FieldDescriptorProto{
 					{
-						Name:   proto.String("id"),
-						Number: proto.Int32(1),
+						Name:   new("id"),
+						Number: new(int32(1)),
 						Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 					},
 				},

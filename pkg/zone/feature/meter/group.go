@@ -13,8 +13,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/once"
@@ -66,7 +66,7 @@ func (g *Group) DescribeMeterReading(ctx context.Context, _ *meterpb.DescribeMet
 	}
 
 	return &meterpb.MeterReadingSupport{
-		ResourceSupport: &types.ResourceSupport{
+		ResourceSupport: &typespb.ResourceSupport{
 			Readable:   true,
 			Writable:   !g.readOnly,
 			Observable: true,

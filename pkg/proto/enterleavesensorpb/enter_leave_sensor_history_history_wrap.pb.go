@@ -8,6 +8,7 @@ import (
 )
 
 // WrapHistory	adapts a EnterLeaveSensorHistoryServer	and presents it as a EnterLeaveSensorHistoryClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHistory(server EnterLeaveSensorHistoryServer) *HistoryWrapper {
 	conn := wrap.ServerToClient(EnterLeaveSensorHistory_ServiceDesc, server)
 	client := NewEnterLeaveSensorHistoryClient(conn)

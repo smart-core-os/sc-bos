@@ -3,31 +3,30 @@ package goproto
 import (
 	"testing"
 
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 func BenchmarkDetermineGeneratorsFromDescriptor(b *testing.B) {
 	desc := &descriptorpb.FileDescriptorProto{
-		Name:    proto.String("test.proto"),
-		Package: proto.String("test"),
+		Name:    new("test.proto"),
+		Package: new("test"),
 		MessageType: []*descriptorpb.DescriptorProto{
 			{
-				Name: proto.String("GetRequest"),
+				Name: new("GetRequest"),
 				Field: []*descriptorpb.FieldDescriptorProto{
 					{
-						Name:   proto.String("name"),
-						Number: proto.Int32(1),
+						Name:   new("name"),
+						Number: new(int32(1)),
 						Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 					},
 				},
 			},
 			{
-				Name: proto.String("UpdateRequest"),
+				Name: new("UpdateRequest"),
 				Field: []*descriptorpb.FieldDescriptorProto{
 					{
-						Name:   proto.String("name"),
-						Number: proto.Int32(1),
+						Name:   new("name"),
+						Number: new(int32(1)),
 						Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
 					},
 				},
@@ -35,15 +34,15 @@ func BenchmarkDetermineGeneratorsFromDescriptor(b *testing.B) {
 		},
 		Service: []*descriptorpb.ServiceDescriptorProto{
 			{
-				Name: proto.String("TestService"),
+				Name: new("TestService"),
 				Method: []*descriptorpb.MethodDescriptorProto{
 					{
-						Name:      proto.String("Get"),
-						InputType: proto.String(".test.GetRequest"),
+						Name:      new("Get"),
+						InputType: new(".test.GetRequest"),
 					},
 					{
-						Name:      proto.String("Update"),
-						InputType: proto.String(".test.UpdateRequest"),
+						Name:      new("Update"),
+						InputType: new(".test.UpdateRequest"),
 					},
 				},
 			},

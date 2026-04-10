@@ -8,6 +8,7 @@ import (
 )
 
 // WrapInfo	adapts a SoundSensorInfoServer	and presents it as a SoundSensorInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server SoundSensorInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(SoundSensorInfo_ServiceDesc, server)
 	client := NewSoundSensorInfoClient(conn)

@@ -8,9 +8,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
@@ -31,19 +31,19 @@ func Test_deviceMatchesQuery(t *testing.T) {
 		}
 		device := &devicespb.Device{
 			Name: "Light on floor 4",
-			Metadata: &traits.Metadata{
-				Membership: &traits.Metadata_Membership{
+			Metadata: &metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "Lighting",
 				},
-				Location: &traits.Metadata_Location{
+				Location: &metadatapb.Metadata_Location{
 					More: map[string]string{
 						"floor": "4",
 					},
 				},
-				Nics: []*traits.Metadata_NIC{
-					{Gateway: "1.2.3.4", Assignment: traits.Metadata_NIC_STATIC},
-					{Gateway: "not1.2.3.4", Assignment: traits.Metadata_NIC_DHCP},
-					{Gateway: "1.2.3.4", Assignment: traits.Metadata_NIC_DHCP},
+				Nics: []*metadatapb.Metadata_NIC{
+					{Gateway: "1.2.3.4", Assignment: metadatapb.Metadata_NIC_STATIC},
+					{Gateway: "not1.2.3.4", Assignment: metadatapb.Metadata_NIC_DHCP},
+					{Gateway: "1.2.3.4", Assignment: metadatapb.Metadata_NIC_DHCP},
 				},
 			},
 		}
@@ -90,18 +90,18 @@ func Test_deviceMatchesQuery(t *testing.T) {
 		}
 		device := &devicespb.Device{
 			Name: "Light on floor 4",
-			Metadata: &traits.Metadata{
-				Membership: &traits.Metadata_Membership{
+			Metadata: &metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "Lighting",
 				},
-				Location: &traits.Metadata_Location{
+				Location: &metadatapb.Metadata_Location{
 					More: map[string]string{
 						"floor": "5",
 					},
 				},
-				Nics: []*traits.Metadata_NIC{
-					{Gateway: "static.gw", Assignment: traits.Metadata_NIC_STATIC},
-					{Gateway: "dhcp.gw", Assignment: traits.Metadata_NIC_DHCP},
+				Nics: []*metadatapb.Metadata_NIC{
+					{Gateway: "static.gw", Assignment: metadatapb.Metadata_NIC_STATIC},
+					{Gateway: "dhcp.gw", Assignment: metadatapb.Metadata_NIC_DHCP},
 				},
 			},
 		}
@@ -124,15 +124,15 @@ func TestServer_ListDevices(t *testing.T) {
 	// they're created interleaved to try and avoid page 1 being all lights and page 2 being all hvac
 	for i := range 20 {
 		n.Announce(fmt.Sprintf("device/%02d/light", i),
-			node.HasMetadata(&traits.Metadata{
-				Membership: &traits.Metadata_Membership{
+			node.HasMetadata(&metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "Lighting",
 				},
 			}),
 			node.HasTrait(trait.Light))
 		n.Announce(fmt.Sprintf("device/%02d/hvac", i),
-			node.HasMetadata(&traits.Metadata{
-				Membership: &traits.Metadata_Membership{
+			node.HasMetadata(&metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "HVAC",
 				},
 			}),
@@ -142,11 +142,11 @@ func TestServer_ListDevices(t *testing.T) {
 	server := &Server{m: n}
 	server.ChildPageSize = 5 // force multiple pages to be read from the parent
 
-	mdNamed := func(name string) *traits.Metadata {
-		return &traits.Metadata{
+	mdNamed := func(name string) *metadatapb.Metadata {
+		return &metadatapb.Metadata{
 			Name:       name,
-			Membership: &traits.Metadata_Membership{Subsystem: "Lighting"},
-			Traits: []*traits.TraitMetadata{
+			Membership: &metadatapb.Metadata_Membership{Subsystem: "Lighting"},
+			Traits: []*metadatapb.TraitMetadata{
 				{Name: trait.Light.String()},
 				{Name: trait.Metadata.String()},
 			},
@@ -240,11 +240,11 @@ func TestServer_GetDevicesMetadata(t *testing.T) {
 	// create devices with different subsystems and locations
 	for i := range 10 {
 		n.Announce(fmt.Sprintf("devices/LTF-%03d", i+1),
-			node.HasMetadata(&traits.Metadata{
-				Membership: &traits.Metadata_Membership{
+			node.HasMetadata(&metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "Lighting",
 				},
-				Location: &traits.Metadata_Location{
+				Location: &metadatapb.Metadata_Location{
 					More: map[string]string{
 						"floor": fmt.Sprintf("%d", i%3+1), // floors 1, 2, 3
 					},
@@ -254,11 +254,11 @@ func TestServer_GetDevicesMetadata(t *testing.T) {
 	}
 	for i := range 5 {
 		n.Announce(fmt.Sprintf("devices/FCU-%03d", i+1),
-			node.HasMetadata(&traits.Metadata{
-				Membership: &traits.Metadata_Membership{
+			node.HasMetadata(&metadatapb.Metadata{
+				Membership: &metadatapb.Metadata_Membership{
 					Subsystem: "HVAC",
 				},
-				Location: &traits.Metadata_Location{
+				Location: &metadatapb.Metadata_Location{
 					More: map[string]string{
 						"floor": fmt.Sprintf("%d", i%2+1), // floors 1, 2
 					},

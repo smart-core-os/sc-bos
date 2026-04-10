@@ -6,34 +6,34 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 func TestMetadataCollection_repeated(t *testing.T) {
 	c := newMetadataCollector("metadata.nics.assignment")
 	c.add(&devicespb.Device{
-		Metadata: &traits.Metadata{
-			Nics: []*traits.Metadata_NIC{
-				{Assignment: traits.Metadata_NIC_DHCP},
+		Metadata: &metadatapb.Metadata{
+			Nics: []*metadatapb.Metadata_NIC{
+				{Assignment: metadatapb.Metadata_NIC_DHCP},
 			},
 		},
 	})
 	c.add(&devicespb.Device{
-		Metadata: &traits.Metadata{
-			Nics: []*traits.Metadata_NIC{
-				{Assignment: traits.Metadata_NIC_STATIC},
+		Metadata: &metadatapb.Metadata{
+			Nics: []*metadatapb.Metadata_NIC{
+				{Assignment: metadatapb.Metadata_NIC_STATIC},
 			},
 		},
 	})
 
 	d := &devicespb.Device{
-		Metadata: &traits.Metadata{
-			Nics: []*traits.Metadata_NIC{
-				{Assignment: traits.Metadata_NIC_DHCP},
-				{Assignment: traits.Metadata_NIC_DHCP},
-				{Assignment: traits.Metadata_NIC_STATIC},
-				{Assignment: traits.Metadata_NIC_STATIC},
+		Metadata: &metadatapb.Metadata{
+			Nics: []*metadatapb.Metadata_NIC{
+				{Assignment: metadatapb.Metadata_NIC_DHCP},
+				{Assignment: metadatapb.Metadata_NIC_DHCP},
+				{Assignment: metadatapb.Metadata_NIC_STATIC},
+				{Assignment: metadatapb.Metadata_NIC_STATIC},
 			},
 		},
 	}

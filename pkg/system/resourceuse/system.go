@@ -37,7 +37,8 @@ func (s *System) applyConfig(ctx context.Context, cfg Root) error {
 	announcer := node.NewReplaceAnnouncer(s.node)
 	announce := announcer.Replace(ctx)
 	announce.Announce(s.name,
-		node.HasTrait(resourceusepb.TraitName, node.WithClients(resourceusepb.WrapApi(modelServer))),
+		node.HasServer(resourceusepb.RegisterResourceUseApiServer, resourceusepb.ResourceUseApiServer(modelServer)),
+		node.HasTrait(resourceusepb.TraitName),
 	)
 
 	hiddenFsTypes := cfg.effectiveHiddenFsTypes()
@@ -75,7 +76,7 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model, hidden
 			core32[i] = float32(p)
 		}
 		v.Cpu = &resourceusepb.CpuUse{
-			Utilization: ptr(float32(overall)),
+			Utilization: new(float32(overall)),
 			CorePercent: core32,
 		}
 	} else {
@@ -85,9 +86,9 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model, hidden
 	if vmStat, err := mem.VirtualMemoryWithContext(ctx); err == nil {
 		if vmStat != nil {
 			v.Memory = &resourceusepb.MemoryUse{
-				Usage:       ptr(vmStat.Used),
-				Limit:       ptr(vmStat.Total),
-				Utilization: ptr(float32(vmStat.UsedPercent)),
+				Usage:       new(vmStat.Used),
+				Limit:       new(vmStat.Total),
+				Utilization: new(float32(vmStat.UsedPercent)),
 			}
 		}
 	} else {
@@ -105,10 +106,10 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model, hidden
 			}
 			v.Disks = append(v.Disks, &resourceusepb.DiskUse{
 				MountPoint:  p.Mountpoint,
-				Usage:       ptr(usage.Used),
-				FreeBytes:   ptr(usage.Free),
-				Limit:       ptr(usage.Total),
-				Utilization: ptr(float32(usage.UsedPercent)),
+				Usage:       new(usage.Used),
+				FreeBytes:   new(usage.Free),
+				Limit:       new(usage.Total),
+				Utilization: new(float32(usage.UsedPercent)),
 			})
 		}
 	} else {
@@ -124,7 +125,7 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model, hidden
 			}
 		}
 		v.Network = &resourceusepb.NetworkUse{
-			ConnectionCount: ptr(established),
+			ConnectionCount: new(established),
 		}
 	} else {
 		s.logger.Warn("network connections", zap.Error(err))
@@ -134,8 +135,6 @@ func (s *System) collect(ctx context.Context, model *resourceusepb.Model, hidden
 		s.logger.Warn("set resource use", zap.Error(err))
 	}
 }
-
-func ptr[T any](v T) *T { return &v }
 
 func average(vals []float64) float64 {
 	if len(vals) == 0 {

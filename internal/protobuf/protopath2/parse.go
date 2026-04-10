@@ -123,10 +123,7 @@ func (p *parser) showState(pos int) string {
 	if spanLength < 2 {
 		endcap = ""
 	}
-	dashes := spanLength - 2
-	if dashes < 0 {
-		dashes = 0
-	}
+	dashes := max(spanLength-2, 0)
 	filler := strings.Repeat("-", dashes)
 	attention := fmt.Sprintf("%s^%s%s", whitespace, filler, endcap)
 	return fmt.Sprintf("{expect %s}\n%s%s\n%s\n", p.state.expect(), prefix, string(p.s.buf), attention)

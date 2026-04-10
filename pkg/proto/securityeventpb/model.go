@@ -9,7 +9,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -96,10 +96,7 @@ func (m *Model) ListSecurityEvents(start, count int) []*SecurityEvent {
 func (m *Model) pullSecurityEventsWrapper(request *PullSecurityEventsRequest, server SecurityEventApi_PullSecurityEventsServer) error {
 	if !request.UpdatesOnly {
 		m.mu.Lock()
-		i := m.allSecurityEvents.Len() - 50
-		if i < 0 {
-			i = 0
-		}
+		i := max(m.allSecurityEvents.Len()-50, 0)
 		for ; i < m.allSecurityEvents.Len()-1; i++ {
 			e := m.allSecurityEvents.Move(i)
 			event := e.Value.(*SecurityEvent)
@@ -107,7 +104,7 @@ func (m *Model) pullSecurityEventsWrapper(request *PullSecurityEventsRequest, se
 				Name:       request.Name,
 				NewValue:   event,
 				ChangeTime: event.SecurityEventTime,
-				Type:       types.ChangeType_ADD,
+				Type:       typespb.ChangeType_ADD,
 			}
 			if err := server.Send(&PullSecurityEventsResponse{Changes: []*PullSecurityEventsResponse_Change{change}}); err != nil {
 				m.mu.Unlock()
@@ -137,7 +134,7 @@ func (m *Model) PullSecurityEvents(ctx context.Context, opts ...resource.ReadOpt
 				OldValue:   nil,
 				NewValue:   value, // the mock driver only generates new security events and does not delete them
 				ChangeTime: value.SecurityEventTime,
-				Type:       types.ChangeType_ADD,
+				Type:       typespb.ChangeType_ADD,
 			}
 		}
 	}()

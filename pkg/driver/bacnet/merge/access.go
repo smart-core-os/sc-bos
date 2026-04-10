@@ -75,7 +75,10 @@ func (a *access) startPoll(init context.Context) (stop task.StopFn, err error) {
 }
 
 func (a *access) AnnounceSelf(ann node.Announcer) node.Undo {
-	return ann.Announce(a.cfg.Name, node.HasTrait(accesspb.TraitName, node.WithClients(accesspb.WrapApi(a))))
+	return ann.Announce(a.cfg.Name,
+		node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(a)),
+		node.HasTrait(accesspb.TraitName),
+	)
 }
 
 func (a *access) GetLastAccessAttempt(ctx context.Context, request *accesspb.GetLastAccessAttemptRequest) (*accesspb.AccessAttempt, error) {
@@ -96,16 +99,13 @@ func (a *access) pollPeer(ctx context.Context) (*accesspb.AccessAttempt, error) 
 
 	var resProcessors []func(response any, data *accesspb.AccessAttempt, cfg accessConfig) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if a.cfg.IngressPermitted != nil {
-		requestNames = append(requestNames, "ingressPermitted")
 		readValues = append(readValues, *a.cfg.IngressPermitted)
 		resProcessors = append(resProcessors, processIngressPermitted)
 	}
 
 	if a.cfg.IngressDenied != nil {
-		requestNames = append(requestNames, "ingressDenied")
 		readValues = append(readValues, *a.cfg.IngressDenied)
 		resProcessors = append(resProcessors, processIngressDenied)
 	}

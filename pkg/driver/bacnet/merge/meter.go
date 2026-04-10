@@ -8,13 +8,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/gobacnet"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -66,12 +66,16 @@ func newMeter(client *gobacnet.Client, devices known.Context, faultCheck *health
 }
 
 func (t *meterTrait) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(meterpb.TraitName, node.WithClients(meterpb.WrapApi(t), meterpb.WrapInfo(&meterpb.InfoServer{
-		MeterReading: &meterpb.MeterReadingSupport{
-			ResourceSupport: &types.ResourceSupport{Readable: true, Observable: true},
-			UsageUnit:       t.config.Unit,
-		},
-	}))))
+	return a.Announce(t.config.Name,
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(t)),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{
+			MeterReading: &meterpb.MeterReadingSupport{
+				ResourceSupport: &typespb.ResourceSupport{Readable: true, Observable: true},
+				UsageUnit:       t.config.Unit,
+			},
+		})),
+		node.HasTrait(meterpb.TraitName),
+	)
 }
 
 func (t *meterTrait) GetMeterReading(ctx context.Context, request *meterpb.GetMeterReadingRequest) (*meterpb.MeterReading, error) {

@@ -6,23 +6,22 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/group"
 )
 
 // Group combines multiple named devices into a single named device.
 type Group struct {
-	traits.UnimplementedOnOffApiServer
+	UnimplementedOnOffApiServer
 
 	ReadExecution  group.ExecutionStrategy
 	WriteExecution group.ExecutionStrategy
 
 	members []string
-	impl    traits.OnOffApiClient
+	impl    OnOffApiClient
 }
 
 // NewGroup creates a new Group instance with ExecutionStrategyAll for both reads and writes.
-func NewGroup(impl traits.OnOffApiClient, members ...string) *Group {
+func NewGroup(impl OnOffApiClient, members ...string) *Group {
 	return &Group{
 		ReadExecution:  group.ExecutionStrategyAll,
 		WriteExecution: group.ExecutionStrategyAll,
@@ -31,13 +30,11 @@ func NewGroup(impl traits.OnOffApiClient, members ...string) *Group {
 	}
 }
 
-func (s *Group) GetOnOff(ctx context.Context, request *traits.GetOnOffRequest) (*traits.OnOff, error) {
+func (s *Group) GetOnOff(ctx context.Context, request *GetOnOffRequest) (*OnOff, error) {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (proto.Message, error) {
-			memberRequest := proto.Clone(request).(*traits.GetOnOffRequest)
+			memberRequest := proto.Clone(request).(*GetOnOffRequest)
 			memberRequest.Name = member
 			return s.impl.GetOnOff(ctx, memberRequest)
 		}
@@ -50,13 +47,11 @@ func (s *Group) GetOnOff(ctx context.Context, request *traits.GetOnOffRequest) (
 	return s.reduce(results), nil
 }
 
-func (s *Group) UpdateOnOff(ctx context.Context, request *traits.UpdateOnOffRequest) (*traits.OnOff, error) {
+func (s *Group) UpdateOnOff(ctx context.Context, request *UpdateOnOffRequest) (*OnOff, error) {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (proto.Message, error) {
-			memberRequest := proto.Clone(request).(*traits.UpdateOnOffRequest)
+			memberRequest := proto.Clone(request).(*UpdateOnOffRequest)
 			memberRequest.Name = member
 			return s.impl.UpdateOnOff(ctx, memberRequest)
 		}
@@ -69,7 +64,7 @@ func (s *Group) UpdateOnOff(ctx context.Context, request *traits.UpdateOnOffRequ
 	return s.reduce(results), nil
 }
 
-func (s *Group) PullOnOff(request *traits.PullOnOffRequest, server traits.OnOffApi_PullOnOffServer) error {
+func (s *Group) PullOnOff(request *PullOnOffRequest, server OnOffApi_PullOnOffServer) error {
 	// NB we dont connect response headers or trailers for the members with the passed server.
 	// If we did we'd be in a situation where one member who didn't send headers could cause
 	// the entire subscription to be blocked. Either that or we'd be introducing timeouts and latency.
@@ -86,8 +81,8 @@ func (s *Group) PullOnOff(request *traits.PullOnOffRequest, server traits.OnOffA
 		returnErr <- err
 	}()
 
-	lastChange := new(traits.PullOnOffResponse_Change)
-	memberChanges := make([]*traits.PullOnOffResponse_Change, len(s.members))
+	lastChange := new(PullOnOffResponse_Change)
+	memberChanges := make([]*PullOnOffResponse_Change, len(s.members))
 
 	for {
 		select {
@@ -108,14 +103,14 @@ func (s *Group) PullOnOff(request *traits.PullOnOffRequest, server traits.OnOffA
 				continue
 			}
 			lastChange = newChange
-			toSend := proto.Clone(lastChange).(*traits.PullOnOffResponse_Change)
+			toSend := proto.Clone(lastChange).(*PullOnOffResponse_Change)
 			toSend.Name = request.Name
 			toSend.ChangeTime = endChange.ChangeTime
 			if toSend.ChangeTime == nil {
 				toSend.ChangeTime = timestamppb.Now()
 			}
-			err := server.Send(&traits.PullOnOffResponse{
-				Changes: []*traits.PullOnOffResponse_Change{toSend},
+			err := server.Send(&PullOnOffResponse{
+				Changes: []*PullOnOffResponse_Change{toSend},
 			})
 			if err != nil {
 				cancelFunc()
@@ -126,13 +121,11 @@ func (s *Group) PullOnOff(request *traits.PullOnOffRequest, server traits.OnOffA
 	}
 }
 
-func (s *Group) pullOnOffActions(request *traits.PullOnOffRequest, memberValues chan<- pullOnOffResponse) []group.Member {
+func (s *Group) pullOnOffActions(request *PullOnOffRequest, memberValues chan<- pullOnOffResponse) []group.Member {
 	actions := make([]group.Member, len(s.members))
 	for i, member := range s.members {
-		i := i
-		member := member
 		actions[i] = func(ctx context.Context) (msg proto.Message, err error) {
-			memberRequest := proto.Clone(request).(*traits.PullOnOffRequest)
+			memberRequest := proto.Clone(request).(*PullOnOffRequest)
 			memberRequest.Name = member
 			stream, err := s.impl.PullOnOff(ctx, memberRequest)
 			if err != nil {
@@ -142,7 +135,7 @@ func (s *Group) pullOnOffActions(request *traits.PullOnOffRequest, memberValues 
 			// NB ctx cancellation is handled by the Recv method
 			for {
 				// read a message
-				var response *traits.PullOnOffResponse
+				var response *PullOnOffResponse
 				response, err = stream.Recv()
 				if err != nil {
 					break
@@ -161,20 +154,20 @@ func (s *Group) pullOnOffActions(request *traits.PullOnOffRequest, memberValues 
 	return actions
 }
 
-func (s *Group) reduce(results []proto.Message) *traits.OnOff {
-	val := new(traits.OnOff)
+func (s *Group) reduce(results []proto.Message) *OnOff {
+	val := new(OnOff)
 	for _, result := range results {
 		if result == nil {
 			continue
 		}
-		typedResult := result.(*traits.OnOff)
+		typedResult := result.(*OnOff)
 		val = s.reduceOnOff(val, typedResult)
 	}
 	return val
 }
 
-func (s *Group) reduceOnOffChanges(arr []*traits.PullOnOffResponse_Change) *traits.PullOnOffResponse_Change {
-	val := &traits.PullOnOffResponse_Change{}
+func (s *Group) reduceOnOffChanges(arr []*PullOnOffResponse_Change) *PullOnOffResponse_Change {
+	val := &PullOnOffResponse_Change{}
 	for _, change := range arr {
 		if change == nil {
 			// nil changes happen because the incoming array can be partially populated
@@ -186,21 +179,21 @@ func (s *Group) reduceOnOffChanges(arr []*traits.PullOnOffResponse_Change) *trai
 	return val
 }
 
-func (s *Group) reduceOnOff(acc, v *traits.OnOff) *traits.OnOff {
+func (s *Group) reduceOnOff(acc, v *OnOff) *OnOff {
 	if v == nil {
 		return acc
 	}
 	if acc == nil {
-		val := &traits.OnOff{}
+		val := &OnOff{}
 		proto.Merge(val, v)
 		return val
 	}
 
 	// max strategy
-	if acc.State == traits.OnOff_STATE_UNSPECIFIED {
+	if acc.State == OnOff_STATE_UNSPECIFIED {
 		acc.State = v.State
-	} else if v.State == traits.OnOff_ON {
-		acc.State = traits.OnOff_ON
+	} else if v.State == OnOff_ON {
+		acc.State = OnOff_ON
 	}
 
 	return acc
@@ -208,5 +201,5 @@ func (s *Group) reduceOnOff(acc, v *traits.OnOff) *traits.OnOff {
 
 type pullOnOffResponse struct {
 	i int
-	m *traits.PullOnOffResponse
+	m *PullOnOffResponse
 }

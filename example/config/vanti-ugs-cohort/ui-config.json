@@ -28,7 +28,7 @@
     "ops": {
       "airQuality": false,
       "emergencyLighting": false,
-      "security": false,
+      "security": true,
       "pages": [
         {
           "title": "Building Overview",
@@ -1165,8 +1165,7 @@
     },
     "proxy": true,
     "siteFloorPlans": [
-      {"name": "Ground Floor", "svgPath": "./assets/floor0-bg.svg"},
-      {"name": "First Floor", "svgPath": "./assets/floor1-bg.svg"}
+      {"name": "Ground Floor", "svgPath": "./assets/floor0-acs.svg", "bgSvgPath": "./assets/floor0-bg.svg"}
     ],
     "theme": {
       "appBranding": {

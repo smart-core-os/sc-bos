@@ -119,6 +119,3 @@ func csvEscape(s string) string {
 	return s
 }
 
-var (
-	falseVal = false
-)

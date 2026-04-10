@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 )
 
@@ -48,7 +48,7 @@ func (v *ValueChange) filter(filter *masks.ResponseFilter) *ValueChange {
 type CollectionChange struct {
 	Id         string
 	ChangeTime time.Time
-	ChangeType types.ChangeType
+	ChangeType typespb.ChangeType
 	OldValue   proto.Message
 	NewValue   proto.Message
 	// Deprecated, use LastSeedValue instead.
@@ -115,7 +115,7 @@ func (c *CollectionChange) include(includeFunc FilterFunc) (newChange *Collectio
 		// treat this like an Add
 		return &CollectionChange{
 			Id:         c.Id,
-			ChangeType: types.ChangeType_ADD,
+			ChangeType: typespb.ChangeType_ADD,
 			ChangeTime: c.ChangeTime,
 			NewValue:   c.NewValue,
 			SeedValue:  c.SeedValue,
@@ -127,7 +127,7 @@ func (c *CollectionChange) include(includeFunc FilterFunc) (newChange *Collectio
 	// treat this like a remove
 	return &CollectionChange{
 		Id:         c.Id,
-		ChangeType: types.ChangeType_REMOVE,
+		ChangeType: typespb.ChangeType_REMOVE,
 		ChangeTime: c.ChangeTime,
 		OldValue:   c.OldValue,
 	}, true

@@ -1,8 +1,8 @@
 import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setValue, trackAction} from '@/api/resource';
-import {EmergencyApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/emergency_grpc_web_pb';
-import {GetEmergencyRequest, PullEmergencyRequest} from '@smart-core-os/sc-api-grpc-web/traits/emergency_pb';
+import {EmergencyApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/emergency/v1/emergency_grpc_web_pb';
+import {GetEmergencyRequest, PullEmergencyRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/emergency/v1/emergency_pb';
 
 /**
  * @param {Partial<PullEmergencyRequest.AsObject>} request

@@ -54,7 +54,7 @@ func allTypesFull() *testproto.TestAllTypes {
 	var optionalFloat float32 = 1.1
 	var optionalDouble float64 = 1.2
 	var optionalBool bool = true
-	var optionalString string = "foo"
+	var optionalString = "foo"
 
 	return &testproto.TestAllTypes{
 		DefaultInt32:         1,
@@ -195,7 +195,7 @@ func setFloatValues(base *testproto.TestAllTypes, f float32) *testproto.TestAllT
 			message.Corecursive = setFloatValues(message.Corecursive, f)
 		}
 	}
-	for i, _ := range base.RepeatedFloat {
+	for i := range base.RepeatedFloat {
 		base.RepeatedFloat[i] = f
 	}
 	return base
@@ -213,7 +213,7 @@ func setDoubleValues(base *testproto.TestAllTypes, f float64) *testproto.TestAll
 			message.Corecursive = setDoubleValues(message.Corecursive, f)
 		}
 	}
-	for i, _ := range base.RepeatedDouble {
+	for i := range base.RepeatedDouble {
 		base.RepeatedDouble[i] = f
 	}
 	return base

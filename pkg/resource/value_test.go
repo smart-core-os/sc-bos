@@ -7,8 +7,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
-
-	"github.com/smart-core-os/sc-api/go/traits"
 )
 
 func TestValue_Pull(t *testing.T) {
@@ -18,7 +16,7 @@ func TestValue_Pull(t *testing.T) {
 			return now
 		})
 
-		v := NewValue(WithInitialValue(&traits.OnOff{State: traits.OnOff_ON}), WithClock(clock))
+		v := NewValue(WithInitialValue(val(1)), WithClock(clock))
 
 		ctx, stop := context.WithCancel(context.Background())
 		t.Cleanup(stop)
@@ -28,7 +26,7 @@ func TestValue_Pull(t *testing.T) {
 		seed := waitForChan(t, changes, time.Second)
 		want := &ValueChange{
 			ChangeTime:    now,
-			Value:         &traits.OnOff{State: traits.OnOff_ON},
+			Value:         val(1),
 			SeedValue:     true,
 			LastSeedValue: true,
 		}
@@ -37,11 +35,11 @@ func TestValue_Pull(t *testing.T) {
 		}
 
 		// second value should be an update
-		v.Set(&traits.OnOff{State: traits.OnOff_OFF})
+		v.Set(val(2))
 		next := waitForChan(t, changes, time.Second)
 		want = &ValueChange{
 			ChangeTime:    now,
-			Value:         &traits.OnOff{State: traits.OnOff_OFF},
+			Value:         val(2),
 			SeedValue:     false,
 			LastSeedValue: false,
 		}
@@ -56,7 +54,7 @@ func TestValue_Pull(t *testing.T) {
 			return now
 		})
 
-		v := NewValue(WithInitialValue(&traits.OnOff{State: traits.OnOff_ON}), WithClock(clock))
+		v := NewValue(WithInitialValue(val(1)), WithClock(clock))
 
 		ctx, stop := context.WithCancel(context.Background())
 		t.Cleanup(stop)
@@ -66,11 +64,11 @@ func TestValue_Pull(t *testing.T) {
 		noEmitWithin(t, changes, 50*time.Millisecond)
 
 		// first value should be an update
-		v.Set(&traits.OnOff{State: traits.OnOff_OFF})
+		v.Set(val(2))
 		change := waitForChan(t, changes, time.Second)
 		want := &ValueChange{
 			ChangeTime:    now,
-			Value:         &traits.OnOff{State: traits.OnOff_OFF},
+			Value:         val(2),
 			SeedValue:     false,
 			LastSeedValue: false,
 		}
@@ -80,19 +78,19 @@ func TestValue_Pull(t *testing.T) {
 	})
 
 	t.Run("doesnt panic with no initial value", func(t *testing.T) {
-		val := NewValue()
+		v := NewValue()
 
-		res, err := val.Set(&traits.OnOff{State: traits.OnOff_OFF})
+		res, err := v.Set(val(2))
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if diff := cmp.Diff(&traits.OnOff{State: traits.OnOff_OFF}, res, protocmp.Transform()); diff != "" {
+		if diff := cmp.Diff(val(2), res, protocmp.Transform()); diff != "" {
 			t.Fatalf("Set response (-want,+got)\n%s", diff)
 		}
 
-		if diff := cmp.Diff(&traits.OnOff{State: traits.OnOff_OFF}, val.Get(), protocmp.Transform()); diff != "" {
+		if diff := cmp.Diff(val(2), v.Get(), protocmp.Transform()); diff != "" {
 			t.Fatalf("Get response (-want,+got)\n%s", diff)
 		}
 	})

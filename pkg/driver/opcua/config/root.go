@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/gopcua/opcua/ua"
-	"golang.org/x/exp/rand"
+	"math/rand/v2"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
@@ -115,7 +115,7 @@ type Device struct {
 	// Name the Smart Core device name
 	Name string `json:"name,omitempty"`
 	// Meta the Smart Core device metadata
-	Meta *traits.Metadata `json:"meta,omitempty"`
+	Meta *metadatapb.Metadata `json:"meta,omitempty"`
 	// Variables a list of OPC variables the device has
 	Variables []*Variable `json:"variables,omitempty"`
 	// Traits a map Smart Core traits the device implements
@@ -133,12 +133,12 @@ type Health struct {
 type Root struct {
 	driver.BaseConfig
 
-	Meta    *traits.Metadata `json:"meta,omitempty"`
-	Conn    Conn             `json:"conn,omitempty"`
-	Devices []Device         `json:"devices,omitempty"`
+	Meta    *metadatapb.Metadata `json:"meta,omitempty"`
+	Conn    Conn                 `json:"conn"`
+	Devices []Device             `json:"devices,omitempty"`
 
 	// settings for the opc ua system health check
-	SystemHealth Health `json:"systemHealth,omitempty"`
+	SystemHealth Health `json:"systemHealth"`
 }
 
 func ParseConfig(data []byte) (cfg Root, err error) {

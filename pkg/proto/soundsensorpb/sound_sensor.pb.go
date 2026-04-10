@@ -7,7 +7,7 @@
 package soundsensorpb
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -74,7 +74,7 @@ func (x *SoundLevel) GetSoundPressureLevel() float32 {
 type SoundLevelSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// The unit associated with the sound_pressure_level value.
 	// Known units:
 	//   - dBA - decibels SPL, A-weighted
@@ -114,7 +114,7 @@ func (*SoundLevelSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *SoundLevelSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *SoundLevelSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -392,13 +392,13 @@ var File_smartcore_bos_soundsensor_v1_sound_sensor_proto protoreflect.FileDescri
 
 const file_smartcore_bos_soundsensor_v1_sound_sensor_proto_rawDesc = "" +
 	"\n" +
-	"/smartcore/bos/soundsensor/v1/sound_sensor.proto\x12\x1csmartcore.bos.soundsensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\\\n" +
+	"/smartcore/bos/soundsensor/v1/sound_sensor.proto\x12\x1csmartcore.bos.soundsensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\\\n" +
 	"\n" +
 	"SoundLevel\x125\n" +
 	"\x14sound_pressure_level\x18\x01 \x01(\x02H\x00R\x12soundPressureLevel\x88\x01\x01B\x17\n" +
-	"\x15_sound_pressure_level\"\x8a\x01\n" +
-	"\x11SoundLevelSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12(\n" +
+	"\x15_sound_pressure_level\"\x91\x01\n" +
+	"\x11SoundLevelSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12(\n" +
 	"\x10sound_level_unit\x18\x02 \x01(\tR\x0esoundLevelUnit\"c\n" +
 	"\x14GetSoundLevelRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
@@ -444,12 +444,12 @@ var file_smartcore_bos_soundsensor_v1_sound_sensor_proto_goTypes = []any{
 	(*PullSoundLevelResponse)(nil),        // 4: smartcore.bos.soundsensor.v1.PullSoundLevelResponse
 	(*DescribeSoundLevelRequest)(nil),     // 5: smartcore.bos.soundsensor.v1.DescribeSoundLevelRequest
 	(*PullSoundLevelResponse_Change)(nil), // 6: smartcore.bos.soundsensor.v1.PullSoundLevelResponse.Change
-	(*types.ResourceSupport)(nil),         // 7: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),       // 7: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),         // 8: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),         // 9: google.protobuf.Timestamp
 }
 var file_smartcore_bos_soundsensor_v1_sound_sensor_proto_depIdxs = []int32{
-	7, // 0: smartcore.bos.soundsensor.v1.SoundLevelSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	7, // 0: smartcore.bos.soundsensor.v1.SoundLevelSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	8, // 1: smartcore.bos.soundsensor.v1.GetSoundLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
 	8, // 2: smartcore.bos.soundsensor.v1.PullSoundLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
 	6, // 3: smartcore.bos.soundsensor.v1.PullSoundLevelResponse.changes:type_name -> smartcore.bos.soundsensor.v1.PullSoundLevelResponse.Change

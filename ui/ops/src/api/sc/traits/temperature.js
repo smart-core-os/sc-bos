@@ -8,7 +8,7 @@ import {
   Temperature,
   UpdateTemperatureRequest
 } from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/temperature/v1/temperature_pb';
-import {Temperature as TemperatureUnit} from '@smart-core-os/sc-api-grpc-web/types/unit_pb';
+import {Temperature as TemperatureUnit} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/types/v1/unit_pb';
 
 /**
  * @param {Partial<PullTemperatureRequest.AsObject>} request

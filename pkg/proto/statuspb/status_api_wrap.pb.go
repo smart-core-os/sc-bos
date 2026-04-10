@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a StatusApiServer	and presents it as a StatusApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server StatusApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(StatusApi_ServiceDesc, server)
 	client := NewStatusApiClient(conn)

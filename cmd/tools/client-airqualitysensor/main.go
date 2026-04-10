@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/client"
 )
 
@@ -48,11 +48,11 @@ func run() error {
 	log.Printf("dialled")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	api := traits.NewAirQualitySensorApiClient(conn)
+	api := airqualitysensorpb.NewAirQualitySensorApiClient(conn)
 
 	get := func(c context.Context, name string) error {
 		log.Printf("GetMeterReading %s", name)
-		res, err := api.GetAirQuality(ctx, &traits.GetAirQualityRequest{Name: name})
+		res, err := api.GetAirQuality(ctx, &airqualitysensorpb.GetAirQualityRequest{Name: name})
 		if err != nil {
 			return err
 		}
@@ -62,7 +62,7 @@ func run() error {
 
 	pull := func(c context.Context, name string) error {
 		log.Printf("PullMeterReadings %s", name)
-		stream, err := api.PullAirQuality(ctx, &traits.PullAirQualityRequest{Name: name})
+		stream, err := api.PullAirQuality(ctx, &airqualitysensorpb.PullAirQualityRequest{Name: name})
 		if err != nil {
 			return err
 		}

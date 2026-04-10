@@ -62,6 +62,11 @@ func generateFile(plugin *protogen.Plugin, file *protogen.File) error {
 
 	for _, service := range file.Services {
 		name := trimPrefixIgnoreCase(service.GoName, strings.TrimSuffix(pkg, "pb"))
+		// name may be empty when the service name exactly matches the package prefix
+		// (e.g. service "Info" in package "infopb"). Fall back to the full service name.
+		if name == "" {
+			name = service.GoName
+		}
 		filename := fmt.Sprintf("pkg/trait/%s/%s_wrap.pb.go", pkg, strings.ToLower(name))
 		importPath := protogen.GoImportPath(fmt.Sprintf("github.com/smart-core-os/sc-bos/pkg/trait/%s", pkg))
 		const modulePath = "github.com/smart-core-os/sc-bos/"

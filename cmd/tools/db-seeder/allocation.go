@@ -42,9 +42,9 @@ func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, profile 
 
 		payload, err := proto.Marshal(&allocationpb.Allocation{
 			State:             state,
-			GroupId:           ptr("GroupA"),
-			AllocationTotal:   ptr(allocationTotal),
-			UnallocationTotal: ptr(unallocationTotal),
+			GroupId:           new("GroupA"),
+			AllocationTotal:   new(allocationTotal),
+			UnallocationTotal: new(unallocationTotal),
 		})
 		if err != nil {
 			return err
@@ -59,8 +59,4 @@ func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, profile 
 	}
 
 	return nil
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }

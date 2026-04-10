@@ -3,7 +3,7 @@ import * as jspb from 'google-protobuf'
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
 import * as smartcore_bos_soundsensor_v1_sound_sensor_pb from '../../../../smartcore/bos/soundsensor/v1/sound_sensor_pb'; // proto import: "smartcore/bos/soundsensor/v1/sound_sensor.proto"
-import * as types_time_period_pb from '@smart-core-os/sc-api-grpc-web/types/time/period_pb'; // proto import: "types/time/period.proto"
+import * as smartcore_bos_types_time_v1_period_pb from '../../../../smartcore/bos/types/time/v1/period_pb'; // proto import: "smartcore/bos/types/time/v1/period.proto"
 
 
 export class SoundLevelRecord extends jspb.Message {
@@ -36,8 +36,8 @@ export class ListSoundLevelHistoryRequest extends jspb.Message {
   getName(): string;
   setName(value: string): ListSoundLevelHistoryRequest;
 
-  getPeriod(): types_time_period_pb.Period | undefined;
-  setPeriod(value?: types_time_period_pb.Period): ListSoundLevelHistoryRequest;
+  getPeriod(): smartcore_bos_types_time_v1_period_pb.Period | undefined;
+  setPeriod(value?: smartcore_bos_types_time_v1_period_pb.Period): ListSoundLevelHistoryRequest;
   hasPeriod(): boolean;
   clearPeriod(): ListSoundLevelHistoryRequest;
 
@@ -66,7 +66,7 @@ export class ListSoundLevelHistoryRequest extends jspb.Message {
 export namespace ListSoundLevelHistoryRequest {
   export type AsObject = {
     name: string;
-    period?: types_time_period_pb.Period.AsObject;
+    period?: smartcore_bos_types_time_v1_period_pb.Period.AsObject;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
     pageSize: number;
     pageToken: string;

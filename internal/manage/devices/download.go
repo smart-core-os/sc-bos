@@ -26,14 +26,14 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	timepb "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
-//go:generate go tool protomod protoc -- -I . -I ../../../proto --go_out=paths=source_relative:. download.proto
+//go:generate protoc -I . -I ../../../proto --go_out=paths=source_relative:. download.proto
 
 type tokenClaims struct {
 	Body string `json:"b"`
@@ -427,7 +427,7 @@ func (s *Server) listDevicesAndHeaders(token *DownloadToken, traitInfo map[strin
 			}
 			// Skip boring devices, aka those that have no metadata or other trait data.
 			// They'd just show up as name=md.Name and a bunch of empty columns anyway.
-			if proto.Equal(md, &traits.Metadata{Name: md.Name, Traits: []*traits.TraitMetadata{{Name: string(trait.Metadata)}}}) {
+			if proto.Equal(md, &metadatapb.Metadata{Name: md.Name, Traits: []*metadatapb.TraitMetadata{{Name: string(trait.Metadata)}}}) {
 				return false
 			}
 			return deviceMatchesQuery(token.Request.Query, device)

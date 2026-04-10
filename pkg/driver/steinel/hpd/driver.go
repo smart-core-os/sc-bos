@@ -9,15 +9,15 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 )
 
 const DriverName = "steinel-hpd"
@@ -71,12 +71,18 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	announcer.Announce(cfg.Name,
 		node.HasMetadata(cfg.Metadata),
-		node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(d.airQualitySensor))),
-		node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(d.temperature))),
-		node.HasTrait(trait.BrightnessSensor, node.WithClients(brightnesssensorpb.WrapApi(d.brightnessSensor))),
-		node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(d.occupancy))),
-		node.HasTrait(soundsensorpb.TraitName, node.WithClients(soundsensorpb.WrapApi(d.soundSensor))),
-		node.HasTrait(udmipb.TraitName, node.WithClients(udmipb.WrapService(d.udmiServiceServer))),
+		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(d.airQualitySensor)),
+		node.HasTrait(trait.AirQualitySensor),
+		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(d.temperature)),
+		node.HasTrait(trait.AirTemperature),
+		node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, brightnesssensorpb.BrightnessSensorApiServer(d.brightnessSensor)),
+		node.HasTrait(trait.BrightnessSensor),
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(d.occupancy)),
+		node.HasTrait(trait.OccupancySensor),
+		node.HasServer(soundsensorpb.RegisterSoundSensorApiServer, soundsensorpb.SoundSensorApiServer(d.soundSensor)),
+		node.HasTrait(soundsensorpb.TraitName),
+		node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(d.udmiServiceServer)),
+		node.HasTrait(udmipb.TraitName),
 	)
 
 	faultCheck, err := d.health.NewFaultCheck(cfg.Name, commsHealthCheck)
@@ -99,8 +105,4 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	}()
 
 	return nil
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }

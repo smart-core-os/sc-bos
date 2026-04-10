@@ -154,8 +154,8 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 			}
 
 			// Proxy the gateway's fixed service names (e.g., "EG-01/drivers", "EG-01/systems")
-			if strings.HasPrefix(c.name, self.name+"/") {
-				suffix := strings.TrimPrefix(c.name, self.name+"/")
+			if after, ok := strings.CutPrefix(c.name, self.name+"/"); ok {
+				suffix := after
 				return isFixedServiceName(suffix)
 			}
 

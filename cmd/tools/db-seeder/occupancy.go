@@ -11,8 +11,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
@@ -29,17 +29,14 @@ func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, profile *
 
 	for current.Before(now) {
 		load := profile.Load(current)
-		count := int32(math.Round(load*float64(profile.Occupancy.MaxPeople) + rand.NormFloat64()*2))
-		if count < 0 {
-			count = 0
-		}
+		count := max(int32(math.Round(load*float64(profile.Occupancy.MaxPeople)+rand.NormFloat64()*2)), 0)
 
-		state := traits.Occupancy_UNOCCUPIED
+		state := occupancysensorpb.Occupancy_UNOCCUPIED
 		if count > 0 {
-			state = traits.Occupancy_OCCUPIED
+			state = occupancysensorpb.Occupancy_OCCUPIED
 		}
 
-		payload, err := proto.Marshal(&traits.Occupancy{
+		payload, err := proto.Marshal(&occupancysensorpb.Occupancy{
 			PeopleCount:     count,
 			State:           state,
 			StateChangeTime: timestamppb.New(current),

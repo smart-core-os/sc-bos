@@ -174,8 +174,6 @@ func executeEach(ctx context.Context, members []Member) <-chan memberResponse {
 	all.Add(len(members))
 
 	for i, member := range members {
-		member := member
-		i := i
 		go func() {
 			defer all.Done()
 			result, err := member(ctx)

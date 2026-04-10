@@ -8,6 +8,7 @@ import (
 )
 
 // WrapDriverService	adapts a AxiomXaDriverServiceServer	and presents it as a AxiomXaDriverServiceClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapDriverService(server AxiomXaDriverServiceServer) *DriverServiceWrapper {
 	conn := wrap.ServerToClient(AxiomXaDriverService_ServiceDesc, server)
 	client := NewAxiomXaDriverServiceClient(conn)

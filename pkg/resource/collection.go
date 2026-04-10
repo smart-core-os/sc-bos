@@ -11,9 +11,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/types"
-
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 type Collection struct {
@@ -150,9 +149,9 @@ func (c *Collection) Update(id string, msg proto.Message, opts ...WriteOption) (
 		}
 		return nil, err
 	}
-	changeType := types.ChangeType_UPDATE
+	changeType := typespb.ChangeType_UPDATE
 	if oldValue == nil || created != nil {
-		changeType = types.ChangeType_ADD
+		changeType = typespb.ChangeType_ADD
 		oldValue = nil
 	}
 	c.bus.Send(context.TODO(), &CollectionChange{
@@ -180,7 +179,7 @@ func (c *Collection) Delete(id string, opts ...WriteOption) (proto.Message, erro
 	oldVal, exists := c.byId[id]
 	c.mu.RUnlock()
 
-	for attempt := 0; attempt < 5; attempt++ {
+	for range 5 {
 		if !exists {
 			if !args.allowMissing {
 				return nil, status.Error(codes.NotFound, "not found")
@@ -210,7 +209,7 @@ func (c *Collection) Delete(id string, opts ...WriteOption) (proto.Message, erro
 		c.bus.Send(context.TODO(), &CollectionChange{
 			Id:         id,
 			ChangeTime: c.clock.Now(),
-			ChangeType: types.ChangeType_REMOVE,
+			ChangeType: typespb.ChangeType_REMOVE,
 			OldValue:   oldVal.body,
 		})
 		c.mu.Unlock()
@@ -239,7 +238,7 @@ func (c *Collection) Pull(ctx context.Context, opts ...ReadOption) <-chan *Colle
 				change := &CollectionChange{
 					Id:            value.id,
 					ChangeTime:    value.changeTime,
-					ChangeType:    types.ChangeType_ADD,
+					ChangeType:    typespb.ChangeType_ADD,
 					NewValue:      value.body,
 					SeedValue:     true,
 					LastSeedValue: i == lastIndex,
@@ -288,7 +287,7 @@ func (c *Collection) PullID(ctx context.Context, id string, opts ...ReadOption) 
 				continue
 			}
 
-			if change.ChangeType == types.ChangeType_REMOVE {
+			if change.ChangeType == typespb.ChangeType_REMOVE {
 				return
 			}
 

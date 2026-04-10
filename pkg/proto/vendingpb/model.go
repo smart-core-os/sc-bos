@@ -8,9 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
-	"github.com/smart-core-os/sc-bos/pkg/proto/vendingpb/unitpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -35,21 +33,21 @@ func NewModel(opts ...resource.Option) *Model {
 // CreateConsumable creates a new consumable record.
 // If consumable.Name is specified it will be used as the key, it absent a new name will be invented.
 // If the consumables name already exists, an error will be returned.
-func (m *Model) CreateConsumable(consumable *traits.Consumable) (*traits.Consumable, error) {
+func (m *Model) CreateConsumable(consumable *Consumable) (*Consumable, error) {
 	return castConsumable(m.consumables.Add(consumable.Name, consumable, resource.WithGenIDIfAbsent(), resource.WithIDCallback(func(id string) {
 		consumable.Name = id
 	})))
 }
 
-func (m *Model) GetConsumable(name string, opts ...resource.ReadOption) (*traits.Consumable, bool) {
+func (m *Model) GetConsumable(name string, opts ...resource.ReadOption) (*Consumable, bool) {
 	msg, exists := m.consumables.Get(name, opts...)
 	if msg == nil {
 		return nil, exists
 	}
-	return msg.(*traits.Consumable), exists
+	return msg.(*Consumable), exists
 }
 
-func (m *Model) UpdateConsumable(consumable *traits.Consumable, opts ...resource.WriteOption) (*traits.Consumable, error) {
+func (m *Model) UpdateConsumable(consumable *Consumable, opts ...resource.WriteOption) (*Consumable, error) {
 	if consumable.Name == "" {
 		return nil, status.Error(codes.NotFound, "name not specified")
 	}
@@ -57,13 +55,13 @@ func (m *Model) UpdateConsumable(consumable *traits.Consumable, opts ...resource
 	return castConsumable(msg, err)
 }
 
-func (m *Model) DeleteConsumable(name string, opts ...resource.WriteOption) (*traits.Consumable, error) {
+func (m *Model) DeleteConsumable(name string, opts ...resource.WriteOption) (*Consumable, error) {
 	return castConsumable(m.consumables.Delete(name, opts...))
 }
 
 type ConsumableChange struct {
 	ChangeTime time.Time
-	Value      *traits.Consumable
+	Value      *Consumable
 }
 
 func (m *Model) PullConsumable(ctx context.Context, name string, opts ...resource.ReadOption) <-chan ConsumableChange {
@@ -74,18 +72,18 @@ func (m *Model) PullConsumable(ctx context.Context, name string, opts ...resourc
 			select {
 			case <-ctx.Done():
 				return
-			case send <- ConsumableChange{ChangeTime: change.ChangeTime, Value: change.Value.(*traits.Consumable)}:
+			case send <- ConsumableChange{ChangeTime: change.ChangeTime, Value: change.Value.(*Consumable)}:
 			}
 		}
 	}()
 	return send
 }
 
-func (m *Model) ListConsumables(opts ...resource.ReadOption) []*traits.Consumable {
+func (m *Model) ListConsumables(opts ...resource.ReadOption) []*Consumable {
 	msgs := m.consumables.List(opts...)
-	res := make([]*traits.Consumable, len(msgs))
+	res := make([]*Consumable, len(msgs))
 	for i, msg := range msgs {
-		res[i] = msg.(*traits.Consumable)
+		res[i] = msg.(*Consumable)
 	}
 	return res
 }
@@ -93,9 +91,9 @@ func (m *Model) ListConsumables(opts ...resource.ReadOption) []*traits.Consumabl
 type ConsumablesChange struct {
 	ID         string
 	ChangeTime time.Time
-	ChangeType types.ChangeType
-	OldValue   *traits.Consumable
-	NewValue   *traits.Consumable
+	ChangeType typespb.ChangeType
+	OldValue   *Consumable
+	NewValue   *Consumable
 }
 
 func (m *Model) PullConsumables(ctx context.Context, opts ...resource.ReadOption) <-chan ConsumablesChange {
@@ -124,21 +122,21 @@ func (m *Model) PullConsumables(ctx context.Context, opts ...resource.ReadOption
 // CreateStock adds a stock record to this model.
 // If stock.Consumable is not supplied, a new consumable name will be invented.
 // Errors if the stock.Consumable already exists as a known stock entry.
-func (m *Model) CreateStock(stock *traits.Consumable_Stock) (*traits.Consumable_Stock, error) {
+func (m *Model) CreateStock(stock *Consumable_Stock) (*Consumable_Stock, error) {
 	return castStock(m.inventory.Add(stock.Consumable, stock, resource.WithGenIDIfAbsent(), resource.WithIDCallback(func(id string) {
 		stock.Consumable = id
 	})))
 }
 
-func (m *Model) GetStock(consumable string, opts ...resource.ReadOption) (*traits.Consumable_Stock, bool) {
+func (m *Model) GetStock(consumable string, opts ...resource.ReadOption) (*Consumable_Stock, bool) {
 	msg, exists := m.inventory.Get(consumable, opts...)
 	if msg == nil {
 		return nil, exists
 	}
-	return msg.(*traits.Consumable_Stock), exists
+	return msg.(*Consumable_Stock), exists
 }
 
-func (m *Model) UpdateStock(stock *traits.Consumable_Stock, opts ...resource.WriteOption) (*traits.Consumable_Stock, error) {
+func (m *Model) UpdateStock(stock *Consumable_Stock, opts ...resource.WriteOption) (*Consumable_Stock, error) {
 	if stock.Consumable == "" {
 		return nil, status.Error(codes.NotFound, "consumable not specified")
 	}
@@ -146,13 +144,13 @@ func (m *Model) UpdateStock(stock *traits.Consumable_Stock, opts ...resource.Wri
 	return castStock(msg, err)
 }
 
-func (m *Model) DeleteStock(consumable string, opts ...resource.WriteOption) (*traits.Consumable_Stock, error) {
+func (m *Model) DeleteStock(consumable string, opts ...resource.WriteOption) (*Consumable_Stock, error) {
 	return castStock(m.inventory.Delete(consumable, opts...))
 }
 
 type StockChange struct {
 	ChangeTime time.Time
-	Value      *traits.Consumable_Stock
+	Value      *Consumable_Stock
 }
 
 // PullStock subscribes to changes in a single consumables stock.
@@ -165,7 +163,7 @@ func (m *Model) PullStock(ctx context.Context, consumable string, opts ...resour
 			select {
 			case <-ctx.Done():
 				return
-			case send <- StockChange{ChangeTime: change.ChangeTime, Value: change.Value.(*traits.Consumable_Stock)}:
+			case send <- StockChange{ChangeTime: change.ChangeTime, Value: change.Value.(*Consumable_Stock)}:
 			}
 		}
 	}()
@@ -173,11 +171,11 @@ func (m *Model) PullStock(ctx context.Context, consumable string, opts ...resour
 }
 
 // ListInventory returns all known stock records.
-func (m *Model) ListInventory(opts ...resource.ReadOption) []*traits.Consumable_Stock {
+func (m *Model) ListInventory(opts ...resource.ReadOption) []*Consumable_Stock {
 	msgs := m.inventory.List(opts...)
-	res := make([]*traits.Consumable_Stock, len(msgs))
+	res := make([]*Consumable_Stock, len(msgs))
 	for i, msg := range msgs {
-		res[i] = msg.(*traits.Consumable_Stock)
+		res[i] = msg.(*Consumable_Stock)
 	}
 	return res
 }
@@ -185,9 +183,9 @@ func (m *Model) ListInventory(opts ...resource.ReadOption) []*traits.Consumable_
 type InventoryChange struct {
 	ID         string
 	ChangeTime time.Time
-	ChangeType types.ChangeType
-	OldValue   *traits.Consumable_Stock
-	NewValue   *traits.Consumable_Stock
+	ChangeType typespb.ChangeType
+	OldValue   *Consumable_Stock
+	NewValue   *Consumable_Stock
 }
 
 // PullInventory subscribes to changes in the list of known stock records.
@@ -218,11 +216,11 @@ func (m *Model) PullInventory(ctx context.Context, opts ...resource.ReadOption) 
 // This updates the stock LastDispensed, Used, and Remaining. Used and Remaining are only updated if they have a
 // (possibly zero) value in the stock already.
 // Stock Used and Remaining units are maintained, the quantity is converted to those units before modification.
-func (m *Model) DispenseInstantly(consumable string, quantity *traits.Consumable_Quantity) (*traits.Consumable_Stock, error) {
+func (m *Model) DispenseInstantly(consumable string, quantity *Consumable_Quantity) (*Consumable_Stock, error) {
 	var maskedErr error // for tracking errors in interceptors
-	stock, err := m.UpdateStock(&traits.Consumable_Stock{Consumable: consumable}, resource.InterceptBefore(func(old, new proto.Message) {
-		oldVal := old.(*traits.Consumable_Stock)
-		newVal := new.(*traits.Consumable_Stock)
+	stock, err := m.UpdateStock(&Consumable_Stock{Consumable: consumable}, resource.InterceptBefore(func(old, new proto.Message) {
+		oldVal := old.(*Consumable_Stock)
+		newVal := new.(*Consumable_Stock)
 		if err := updateStock(quantity, oldVal, newVal); err != nil {
 			// on error we don't want to make any changes to the stock value, reset things
 			maskedErr = err
@@ -242,16 +240,16 @@ func (m *Model) DispenseInstantly(consumable string, quantity *traits.Consumable
 	return stock, nil
 }
 
-func updateStock(quantity *traits.Consumable_Quantity, src, dst *traits.Consumable_Stock) error {
+func updateStock(quantity *Consumable_Quantity, src, dst *Consumable_Stock) error {
 	if src.Used != nil {
-		delta, err := unitpb.Convert32(quantity.Amount, quantity.Unit, src.Used.Unit)
+		delta, err := ConvertUnit32(quantity.Amount, quantity.Unit, src.Used.Unit)
 		if err != nil {
 			return err
 		}
-		dst.Used = &traits.Consumable_Quantity{Unit: src.Used.Unit, Amount: src.Used.Amount + delta}
+		dst.Used = &Consumable_Quantity{Unit: src.Used.Unit, Amount: src.Used.Amount + delta}
 	}
 	if src.Remaining != nil {
-		delta, err := unitpb.Convert32(quantity.Amount, quantity.Unit, src.Remaining.Unit)
+		delta, err := ConvertUnit32(quantity.Amount, quantity.Unit, src.Remaining.Unit)
 		if err != nil {
 			return err
 		}
@@ -259,41 +257,41 @@ func updateStock(quantity *traits.Consumable_Quantity, src, dst *traits.Consumab
 		if amount < 0 {
 			amount = 0
 		}
-		dst.Remaining = &traits.Consumable_Quantity{Unit: src.Used.Unit, Amount: amount}
+		dst.Remaining = &Consumable_Quantity{Unit: src.Used.Unit, Amount: amount}
 	}
 	return nil
 }
 
-func castConsumable(msg proto.Message, err error) (*traits.Consumable, error) {
+func castConsumable(msg proto.Message, err error) (*Consumable, error) {
 	if msg == nil {
 		return nil, err
 	}
-	return msg.(*traits.Consumable), err
+	return msg.(*Consumable), err
 }
 
-func castConsumableChange(change *resource.CollectionChange) (oldVal, newVal *traits.Consumable) {
+func castConsumableChange(change *resource.CollectionChange) (oldVal, newVal *Consumable) {
 	if change.OldValue != nil {
-		oldVal = change.OldValue.(*traits.Consumable)
+		oldVal = change.OldValue.(*Consumable)
 	}
 	if change.NewValue != nil {
-		newVal = change.NewValue.(*traits.Consumable)
+		newVal = change.NewValue.(*Consumable)
 	}
 	return
 }
 
-func castStock(msg proto.Message, err error) (*traits.Consumable_Stock, error) {
+func castStock(msg proto.Message, err error) (*Consumable_Stock, error) {
 	if msg == nil {
 		return nil, err
 	}
-	return msg.(*traits.Consumable_Stock), err
+	return msg.(*Consumable_Stock), err
 }
 
-func castStockChange(change *resource.CollectionChange) (oldVal, newVal *traits.Consumable_Stock) {
+func castStockChange(change *resource.CollectionChange) (oldVal, newVal *Consumable_Stock) {
 	if change.OldValue != nil {
-		oldVal = change.OldValue.(*traits.Consumable_Stock)
+		oldVal = change.OldValue.(*Consumable_Stock)
 	}
 	if change.NewValue != nil {
-		newVal = change.NewValue.(*traits.Consumable_Stock)
+		newVal = change.NewValue.(*Consumable_Stock)
 	}
 	return
 }

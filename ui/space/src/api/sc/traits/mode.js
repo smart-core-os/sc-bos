@@ -2,14 +2,14 @@ import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb.js';
 import {trackAction} from '@/api/resource';
 import {pullResource, setValue} from '@/api/resource.js';
-import {ModeApiPromiseClient, ModeInfoPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/mode_grpc_web_pb';
+import {ModeApiPromiseClient, ModeInfoPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/mode/v1/mode_grpc_web_pb';
 import {
   DescribeModesRequest,
   ModeValues,
   ModeValuesRelative,
   PullModeValuesRequest,
   UpdateModeValuesRequest
-} from '@smart-core-os/sc-api-grpc-web/traits/mode_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/mode/v1/mode_pb';
 
 /**
  * @param {Partial<PullModeValuesRequest.AsObject>} request

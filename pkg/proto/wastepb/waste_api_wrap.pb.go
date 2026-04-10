@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a WasteApiServer	and presents it as a WasteApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server WasteApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(WasteApi_ServiceDesc, server)
 	client := NewWasteApiClient(conn)

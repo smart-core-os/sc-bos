@@ -1,0 +1,99 @@
+sc-api trait with existing dir but non-overlapping services (Case 2: orthogonal merge).
+expected_changes: 1
+
+-- input/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor_history.proto --
+syntax = "proto3";
+
+package smartcore.bos.enterleavesensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb";
+
+service EnterLeaveSensorHistory {
+  rpc ListHistory(ListRequest) returns (ListResponse);
+}
+
+message ListRequest {
+  string name = 1;
+}
+
+message ListResponse {
+  repeated string records = 1;
+}
+-- input/sc-api/protobuf/traits/enter_leave_sensor.proto --
+syntax = "proto3";
+
+package smartcore.traits;
+
+option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/traits";
+
+service EnterLeaveSensorApi {
+  rpc PullEnterLeaveEvents(PullEnterLeaveEventsRequest) returns (stream PullEnterLeaveEventsResponse);
+}
+
+service EnterLeaveSensorInfo {
+  rpc DescribeEnterLeaveSensor(DescribeEnterLeaveSensorRequest) returns (EnterLeaveSensorSupport);
+}
+
+message PullEnterLeaveEventsRequest {
+  string name = 1;
+}
+
+message PullEnterLeaveEventsResponse {
+  string event = 1;
+}
+
+message DescribeEnterLeaveSensorRequest {
+  string name = 1;
+}
+
+message EnterLeaveSensorSupport {
+  bool supported = 1;
+}
+-- output/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor_history.proto --
+syntax = "proto3";
+
+package smartcore.bos.enterleavesensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb";
+
+service EnterLeaveSensorHistory {
+  rpc ListHistory(ListRequest) returns (ListResponse);
+}
+
+message ListRequest {
+  string name = 1;
+}
+
+message ListResponse {
+  repeated string records = 1;
+}
+-- output/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor.proto --
+syntax = "proto3";
+
+package smartcore.bos.enterleavesensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb";
+
+service EnterLeaveSensorApi {
+  rpc PullEnterLeaveEvents(PullEnterLeaveEventsRequest) returns (stream PullEnterLeaveEventsResponse);
+}
+
+service EnterLeaveSensorInfo {
+  rpc DescribeEnterLeaveSensor(DescribeEnterLeaveSensorRequest) returns (EnterLeaveSensorSupport);
+}
+
+message PullEnterLeaveEventsRequest {
+  string name = 1;
+}
+
+message PullEnterLeaveEventsResponse {
+  string event = 1;
+}
+
+message DescribeEnterLeaveSensorRequest {
+  string name = 1;
+}
+
+message EnterLeaveSensorSupport {
+  bool supported = 1;
+}

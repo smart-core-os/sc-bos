@@ -7,7 +7,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 )
@@ -30,7 +29,7 @@ func (m *ElectricServer) Unwrap() any {
 }
 
 var electricDemandPager = NewPageReader(func(r history.Record) (*electricpb.ElectricDemandRecord, error) {
-	v := &traits.ElectricDemand{}
+	v := &electricpb.ElectricDemand{}
 	err := proto.Unmarshal(r.Payload, v)
 	if err != nil {
 		return nil, err

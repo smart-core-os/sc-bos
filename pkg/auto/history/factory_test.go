@@ -8,28 +8,23 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
-	"golang.org/x/exp/rand"
+	"math/rand/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
-	gen_airtemperaturepb "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_electricpb "github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
-	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
-	electricpb2 "github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
-	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -40,10 +35,10 @@ func Test_automation_applyConfig(t *testing.T) {
 	t.Cleanup(cancel)
 
 	logger := zap.NewNop()
-	occupancy := occupancysensorpb2.NewModel()
-	airQuality := airqualitysensorpb2.NewModel()
-	airTemperature := airtemperaturepb2.NewModel()
-	electric := electricpb2.NewModel()
+	occupancy := occupancysensorpb.NewModel()
+	airQuality := airqualitysensorpb.NewModel()
+	airTemperature := airtemperaturepb.NewModel()
+	electric := electricpb.NewModel()
 	meter := meterpb.NewModel()
 	status := statuspb.NewModel()
 
@@ -54,32 +49,32 @@ func Test_automation_applyConfig(t *testing.T) {
 	announcer.Announce("occupancy",
 		node.HasTrait(trait.OccupancySensor),
 		node.HasServer(
-			traits.RegisterOccupancySensorApiServer,
-			traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occupancy)),
+			occupancysensorpb.RegisterOccupancySensorApiServer,
+			occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occupancy)),
 		),
 	)
 
 	announcer.Announce("airquality",
 		node.HasTrait(trait.AirQualitySensor),
 		node.HasServer(
-			traits.RegisterAirQualitySensorApiServer,
-			traits.AirQualitySensorApiServer(airqualitysensorpb2.NewModelServer(airQuality)),
+			airqualitysensorpb.RegisterAirQualitySensorApiServer,
+			airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(airQuality)),
 		),
 	)
 
 	announcer.Announce("airtemperature",
 		node.HasTrait(trait.AirTemperature),
 		node.HasServer(
-			traits.RegisterAirTemperatureApiServer,
-			traits.AirTemperatureApiServer(airtemperaturepb2.NewModelServer(airTemperature)),
+			airtemperaturepb.RegisterAirTemperatureApiServer,
+			airtemperaturepb.AirTemperatureApiServer(airtemperaturepb.NewModelServer(airTemperature)),
 		),
 	)
 
 	announcer.Announce("electric",
 		node.HasTrait(trait.Electric),
 		node.HasServer(
-			traits.RegisterElectricApiServer,
-			traits.ElectricApiServer(electricpb2.NewModelServer(electric)),
+			electricpb.RegisterElectricApiServer,
+			electricpb.ElectricApiServer(electricpb.NewModelServer(electric)),
 		),
 	)
 
@@ -115,39 +110,39 @@ func Test_automation_applyConfig(t *testing.T) {
 
 	// many events to each model server
 	for range 10 {
-		if _, err := occupancy.SetOccupancy(&traits.Occupancy{
-			State:       traits.Occupancy_OCCUPIED,
-			PeopleCount: int32(rand.Intn(10)),
+		if _, err := occupancy.SetOccupancy(&occupancysensorpb.Occupancy{
+			State:       occupancysensorpb.Occupancy_OCCUPIED,
+			PeopleCount: int32(rand.IntN(10)),
 		}); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := airQuality.UpdateAirQuality(&traits.AirQuality{
-			CarbonDioxideLevel:       ptr(rand.Float32()),
-			VolatileOrganicCompounds: ptr(rand.Float32()),
-			AirPressure:              ptr(rand.Float32()),
-			InfectionRisk:            ptr(rand.Float32()),
-			Score:                    ptr(rand.Float32()),
-			ParticulateMatter_1:      ptr(rand.Float32()),
-			ParticulateMatter_25:     ptr(rand.Float32()),
-			ParticulateMatter_10:     ptr(rand.Float32()),
-			AirChangePerHour:         ptr(rand.Float32()),
-		}); err != nil {
-			t.Fatal(err)
-		}
-
-		if _, err := airTemperature.UpdateAirTemperature(&traits.AirTemperature{
-			AmbientTemperature: &types.Temperature{ValueCelsius: rand.Float64()},
+		if _, err := airQuality.UpdateAirQuality(&airqualitysensorpb.AirQuality{
+			CarbonDioxideLevel:       new(rand.Float32()),
+			VolatileOrganicCompounds: new(rand.Float32()),
+			AirPressure:              new(rand.Float32()),
+			InfectionRisk:            new(rand.Float32()),
+			Score:                    new(rand.Float32()),
+			ParticulateMatter_1:      new(rand.Float32()),
+			ParticulateMatter_25:     new(rand.Float32()),
+			ParticulateMatter_10:     new(rand.Float32()),
+			AirChangePerHour:         new(rand.Float32()),
 		}); err != nil {
 			t.Fatal(err)
 		}
 
-		if _, err := electric.UpdateDemand(&traits.ElectricDemand{
-			Voltage:       ptr(rand.Float32()),
+		if _, err := airTemperature.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
+			AmbientTemperature: &typespb.Temperature{ValueCelsius: rand.Float64()},
+		}); err != nil {
+			t.Fatal(err)
+		}
+
+		if _, err := electric.UpdateDemand(&electricpb.ElectricDemand{
+			Voltage:       new(rand.Float32()),
 			Current:       rand.Float32(),
-			ReactivePower: ptr(rand.Float32()),
-			ApparentPower: ptr(rand.Float32()),
-			PowerFactor:   ptr(rand.Float32()),
-			RealPower:     ptr(rand.Float32()),
+			ReactivePower: new(rand.Float32()),
+			ApparentPower: new(rand.Float32()),
+			PowerFactor:   new(rand.Float32()),
+			RealPower:     new(rand.Float32()),
 		}); err != nil {
 			t.Fatal(err)
 		}
@@ -170,8 +165,8 @@ func Test_automation_applyConfig(t *testing.T) {
 
 	aqCli := airqualitysensorpb.NewAirQualitySensorHistoryClient(announcer.ClientConn())
 	occupancyCli := occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
-	airTempCli := gen_airtemperaturepb.NewAirTemperatureHistoryClient(announcer.ClientConn())
-	electricCli := gen_electricpb.NewElectricHistoryClient(announcer.ClientConn())
+	airTempCli := airtemperaturepb.NewAirTemperatureHistoryClient(announcer.ClientConn())
+	electricCli := electricpb.NewElectricHistoryClient(announcer.ClientConn())
 	meterCli := meterpb.NewMeterHistoryClient(announcer.ClientConn())
 	statusCli := statuspb.NewStatusHistoryClient(announcer.ClientConn())
 
@@ -193,7 +188,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		t.Fatal(diff, "occupancy")
 	}
 
-	airTempHist, err := airTempCli.ListAirTemperatureHistory(ctx, &gen_airtemperaturepb.ListAirTemperatureHistoryRequest{Name: "airtemperature", PageSize: 10})
+	airTempHist, err := airTempCli.ListAirTemperatureHistory(ctx, &airtemperaturepb.ListAirTemperatureHistoryRequest{Name: "airtemperature", PageSize: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -202,7 +197,7 @@ func Test_automation_applyConfig(t *testing.T) {
 		t.Fatal(diff, "airtemperature")
 	}
 
-	electricHist, err := electricCli.ListElectricDemandHistory(ctx, &gen_electricpb.ListElectricDemandHistoryRequest{Name: "electric", PageSize: 10})
+	electricHist, err := electricCli.ListElectricDemandHistory(ctx, &electricpb.ListElectricDemandHistoryRequest{Name: "electric", PageSize: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -228,10 +223,6 @@ func Test_automation_applyConfig(t *testing.T) {
 		t.Fatal(diff, "status")
 	}
 
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }
 
 var cfgs = []config.Root{
@@ -326,7 +317,7 @@ const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456
 func randString(n int) string {
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+		b[i] = letterBytes[rand.IntN(len(letterBytes))]
 	}
 	return string(b)
 }
@@ -334,8 +325,8 @@ func randString(n int) string {
 func Test_automation_applyConfigDevices(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		logger := zap.NewNop()
-		occ1 := occupancysensorpb2.NewModel()
-		occ2 := occupancysensorpb2.NewModel()
+		occ1 := occupancysensorpb.NewModel()
+		occ2 := occupancysensorpb.NewModel()
 
 		announcer := node.New("test")
 		announcer.Logger = logger
@@ -343,15 +334,15 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 		announcer.Announce("occ1",
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
-				traits.RegisterOccupancySensorApiServer,
-				traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ1)),
+				occupancysensorpb.RegisterOccupancySensorApiServer,
+				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ1)),
 			),
 		)
 		announcer.Announce("occ2",
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
-				traits.RegisterOccupancySensorApiServer,
-				traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ2)),
+				occupancysensorpb.RegisterOccupancySensorApiServer,
+				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ2)),
 			),
 		)
 
@@ -372,10 +363,10 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 		go a.applyConfigDevices(t.Context(), cfg)
 		synctest.Wait()
 
-		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
+		if _, err := occ1.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := occ2.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
+		if _, err := occ2.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
 			t.Fatal(err)
 		}
 		synctest.Wait()
@@ -403,15 +394,15 @@ func Test_automation_applyConfigDevices(t *testing.T) {
 func Test_automation_applyConfigDevices_remove(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		logger := zap.NewNop()
-		occ1 := occupancysensorpb2.NewModel()
+		occ1 := occupancysensorpb.NewModel()
 
 		announcer := node.New("test")
 		announcer.Logger = logger
 		announcer.Announce("occ1",
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(
-				traits.RegisterOccupancySensorApiServer,
-				traits.OccupancySensorApiServer(occupancysensorpb2.NewModelServer(occ1)),
+				occupancysensorpb.RegisterOccupancySensorApiServer,
+				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occ1)),
 			),
 		)
 
@@ -434,7 +425,7 @@ func Test_automation_applyConfigDevices_remove(t *testing.T) {
 		go a.applyConfigDevices(t.Context(), cfg)
 		synctest.Wait()
 
-		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
+		if _, err := occ1.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 1}); err != nil {
 			t.Fatal(err)
 		}
 		synctest.Wait()
@@ -450,11 +441,11 @@ func Test_automation_applyConfigDevices_remove(t *testing.T) {
 		}
 
 		devicesCh <- &devicespb.PullDevicesResponse{Changes: []*devicespb.PullDevicesResponse_Change{
-			{Type: types.ChangeType_REMOVE, Name: "occ1"},
+			{Type: typespb.ChangeType_REMOVE, Name: "occ1"},
 		}}
 		synctest.Wait()
 
-		if _, err := occ1.SetOccupancy(&traits.Occupancy{State: traits.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
+		if _, err := occ1.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 2}); err != nil {
 			t.Fatal(err)
 		}
 		synctest.Wait()
@@ -487,7 +478,7 @@ func (s *streamingDevicesClient) PullDevices(ctx context.Context, _ *devicespb.P
 		changes := make([]*devicespb.PullDevicesResponse_Change, len(s.devices))
 		for i, d := range s.devices {
 			changes[i] = &devicespb.PullDevicesResponse_Change{
-				Type:     types.ChangeType_ADD,
+				Type:     typespb.ChangeType_ADD,
 				NewValue: d,
 				Name:     d.Name,
 			}

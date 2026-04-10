@@ -1,18 +1,18 @@
 import {closeResource, newResourceValue} from '@/api/resource';
 import {pullEmergency} from '@/api/sc/traits/emergency';
 import {toQueryObject, watchResource} from '@/util/traits.js';
-import {Emergency} from '@smart-core-os/sc-api-grpc-web/traits/emergency_pb';
+import {Emergency} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/emergency/v1/emergency_pb';
 import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
 
 /**
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/emergency_pb').Emergency
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/emergency/v1/emergency_pb').Emergency
  * } Emergency
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/emergency_pb').PullEmergencyRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/emergency/v1/emergency_pb').PullEmergencyRequest
  * } PullEmergencyRequest
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/emergency_pb').PullEmergencyResponse
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/emergency/v1/emergency_pb').PullEmergencyResponse
  * } PullEmergencyResponse
  * @typedef {import('vue').ComputedRef} ComputedRef
  * @typedef {import('@/api/resource').ResourceValue} ResourceValue

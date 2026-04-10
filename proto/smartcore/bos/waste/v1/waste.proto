@@ -6,9 +6,9 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/wastepb";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/change.proto";
-import "types/info.proto";
-import "types/time/period.proto";
+import "smartcore/bos/types/time/v1/period.proto";
+import "smartcore/bos/types/v1/change.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // WasteApi exposes details about units of waste that have been produced by the building
 service WasteApi {
@@ -82,7 +82,7 @@ message ListWasteRecordsRequest {
   string page_token = 4;
   // Optional. If set, only WasteRecords with a `record_create_time` within the
   // specified period will be returned.
-  smartcore.types.time.Period period = 5;
+  smartcore.bos.types.time.v1.Period period = 5;
   // Specify the order of the returned records.
   // The default is `record_create_time asc` - aka oldest record first.
   // The format is `field_name [asc|desc]`, with asc being the default.
@@ -104,7 +104,7 @@ message PullWasteRecordsResponse {
     google.protobuf.Timestamp change_time = 2;
     WasteRecord new_value = 3;
     WasteRecord old_value = 4;
-    smartcore.types.ChangeType type = 5;
+    smartcore.bos.types.v1.ChangeType type = 5;
   }
 }
 
@@ -115,7 +115,7 @@ message DescribeWasteRecordRequest {
 // WasteRecordSupport describes the capabilities of devices implementing this trait
 message WasteRecordSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // The unit associated with the weight value
   string unit = 2;
   // The unit associated with the co2_saved value

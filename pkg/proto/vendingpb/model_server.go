@@ -9,14 +9,13 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 // ModelServer adapts a Model to implement traits.VendingApiServer.
 type ModelServer struct {
-	traits.UnimplementedVendingApiServer
+	UnimplementedVendingApiServer
 	model *Model
 }
 
@@ -29,11 +28,11 @@ func (m *ModelServer) Unwrap() any {
 }
 
 func (m *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterVendingApiServer(server, m)
+	RegisterVendingApiServer(server, m)
 }
 
-func (m *ModelServer) ListConsumables(_ context.Context, request *traits.ListConsumablesRequest) (*traits.ListConsumablesResponse, error) {
-	pageToken := &types.PageToken{}
+func (m *ModelServer) ListConsumables(_ context.Context, request *ListConsumablesRequest) (*ListConsumablesResponse, error) {
+	pageToken := &typespb.PageToken{}
 	if err := decodePageToken(request.PageToken, pageToken); err != nil {
 		return nil, err
 	}
@@ -49,7 +48,7 @@ func (m *ModelServer) ListConsumables(_ context.Context, request *traits.ListCon
 		})
 	}
 
-	result := &traits.ListConsumablesResponse{
+	result := &ListConsumablesResponse{
 		TotalSize: int32(len(sortedItems)),
 	}
 	upperBound := nextIndex + pageSize
@@ -57,7 +56,7 @@ func (m *ModelServer) ListConsumables(_ context.Context, request *traits.ListCon
 		upperBound = len(sortedItems)
 		pageToken = nil
 	} else {
-		pageToken.PageStart = &types.PageToken_LastResourceName{
+		pageToken.PageStart = &typespb.PageToken_LastResourceName{
 			LastResourceName: sortedItems[upperBound-1].Name,
 		}
 	}
@@ -71,9 +70,9 @@ func (m *ModelServer) ListConsumables(_ context.Context, request *traits.ListCon
 	return result, nil
 }
 
-func (m *ModelServer) PullConsumables(request *traits.PullConsumablesRequest, server traits.VendingApi_PullConsumablesServer) error {
+func (m *ModelServer) PullConsumables(request *PullConsumablesRequest, server VendingApi_PullConsumablesServer) error {
 	for change := range m.model.PullConsumables(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullConsumablesResponse{Changes: []*traits.PullConsumablesResponse_Change{
+		err := server.Send(&PullConsumablesResponse{Changes: []*PullConsumablesResponse_Change{
 			{Name: request.Name, Type: change.ChangeType, ChangeTime: timestamppb.New(change.ChangeTime), OldValue: change.OldValue, NewValue: change.NewValue},
 		}})
 		if err != nil {
@@ -83,7 +82,7 @@ func (m *ModelServer) PullConsumables(request *traits.PullConsumablesRequest, se
 	return nil
 }
 
-func (m *ModelServer) GetStock(_ context.Context, request *traits.GetStockRequest) (*traits.Consumable_Stock, error) {
+func (m *ModelServer) GetStock(_ context.Context, request *GetStockRequest) (*Consumable_Stock, error) {
 	if request.Consumable == "" {
 		return nil, status.Error(codes.InvalidArgument, "GetStockRequest.consumable empty")
 	}
@@ -94,13 +93,13 @@ func (m *ModelServer) GetStock(_ context.Context, request *traits.GetStockReques
 	return stock, nil
 }
 
-func (m *ModelServer) UpdateStock(_ context.Context, request *traits.UpdateStockRequest) (*traits.Consumable_Stock, error) {
+func (m *ModelServer) UpdateStock(_ context.Context, request *UpdateStockRequest) (*Consumable_Stock, error) {
 	return m.model.UpdateStock(request.Stock, resource.WithUpdateMask(request.UpdateMask))
 }
 
-func (m *ModelServer) PullStock(request *traits.PullStockRequest, server traits.VendingApi_PullStockServer) error {
+func (m *ModelServer) PullStock(request *PullStockRequest, server VendingApi_PullStockServer) error {
 	for change := range m.model.PullStock(server.Context(), request.Consumable, resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullStockResponse{Changes: []*traits.PullStockResponse_Change{
+		err := server.Send(&PullStockResponse{Changes: []*PullStockResponse_Change{
 			{Name: request.Name, ChangeTime: timestamppb.New(change.ChangeTime), Stock: change.Value},
 		}})
 		if err != nil {
@@ -110,8 +109,8 @@ func (m *ModelServer) PullStock(request *traits.PullStockRequest, server traits.
 	return nil
 }
 
-func (m *ModelServer) ListInventory(_ context.Context, request *traits.ListInventoryRequest) (*traits.ListInventoryResponse, error) {
-	pageToken := &types.PageToken{}
+func (m *ModelServer) ListInventory(_ context.Context, request *ListInventoryRequest) (*ListInventoryResponse, error) {
+	pageToken := &typespb.PageToken{}
 	if err := decodePageToken(request.PageToken, pageToken); err != nil {
 		return nil, err
 	}
@@ -127,7 +126,7 @@ func (m *ModelServer) ListInventory(_ context.Context, request *traits.ListInven
 		})
 	}
 
-	result := &traits.ListInventoryResponse{
+	result := &ListInventoryResponse{
 		TotalSize: int32(len(sortedItems)),
 	}
 	upperBound := nextIndex + pageSize
@@ -135,7 +134,7 @@ func (m *ModelServer) ListInventory(_ context.Context, request *traits.ListInven
 		upperBound = len(sortedItems)
 		pageToken = nil
 	} else {
-		pageToken.PageStart = &types.PageToken_LastResourceName{
+		pageToken.PageStart = &typespb.PageToken_LastResourceName{
 			LastResourceName: sortedItems[upperBound-1].Consumable,
 		}
 	}
@@ -149,9 +148,9 @@ func (m *ModelServer) ListInventory(_ context.Context, request *traits.ListInven
 	return result, nil
 }
 
-func (m *ModelServer) PullInventory(request *traits.PullInventoryRequest, server traits.VendingApi_PullInventoryServer) error {
+func (m *ModelServer) PullInventory(request *PullInventoryRequest, server VendingApi_PullInventoryServer) error {
 	for change := range m.model.PullInventory(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullInventoryResponse{Changes: []*traits.PullInventoryResponse_Change{
+		err := server.Send(&PullInventoryResponse{Changes: []*PullInventoryResponse_Change{
 			{Name: request.Name, Type: change.ChangeType, ChangeTime: timestamppb.New(change.ChangeTime), OldValue: change.OldValue, NewValue: change.NewValue},
 		}})
 		if err != nil {
@@ -161,14 +160,14 @@ func (m *ModelServer) PullInventory(request *traits.PullInventoryRequest, server
 	return nil
 }
 
-func (m *ModelServer) Dispense(_ context.Context, request *traits.DispenseRequest) (*traits.Consumable_Stock, error) {
+func (m *ModelServer) Dispense(_ context.Context, request *DispenseRequest) (*Consumable_Stock, error) {
 	if request.Consumable == "" {
 		return nil, status.Error(codes.InvalidArgument, "request.consumable is absent")
 	}
 	return m.model.DispenseInstantly(request.Consumable, request.Quantity)
 }
 
-func (m *ModelServer) StopDispense(ctx context.Context, request *traits.StopDispenseRequest) (*traits.Consumable_Stock, error) {
+func (m *ModelServer) StopDispense(ctx context.Context, request *StopDispenseRequest) (*Consumable_Stock, error) {
 	// always succeeds, we always dispense immediately
-	return m.GetStock(ctx, &traits.GetStockRequest{Consumable: request.Name})
+	return m.GetStock(ctx, &GetStockRequest{Consumable: request.Name})
 }

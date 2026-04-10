@@ -58,7 +58,7 @@ func readSecurityEventConfig(raw []byte) (cfg securityEventConfig, err error) {
 		return
 	}
 
-	if cfg.SecurityEventSources == nil || len(cfg.SecurityEventSources) == 0 {
+	if len(cfg.SecurityEventSources) == 0 {
 		return cfg, errors.New("no security events configured")
 	}
 
@@ -133,7 +133,10 @@ func (s *securityEventImpl) startPoll(init context.Context) (stop task.StopFn, e
 }
 
 func (s *securityEventImpl) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(s.config.Name, node.HasTrait(securityeventpb.TraitName, node.WithClients(securityeventpb.WrapApi(s))))
+	return a.Announce(s.config.Name,
+		node.HasServer(securityeventpb.RegisterSecurityEventApiServer, securityeventpb.SecurityEventApiServer(s)),
+		node.HasTrait(securityeventpb.TraitName),
+	)
 }
 
 func (s *securityEventImpl) ListSecurityEvents(ctx context.Context, request *securityeventpb.ListSecurityEventsRequest) (*securityeventpb.ListSecurityEventsResponse, error) {
@@ -153,11 +156,8 @@ func (s *securityEventImpl) pollPeer(ctx context.Context) error {
 	var data []*securityeventpb.SecurityEvent
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	for _, se := range s.events {
-		se := se
-		requestNames = append(requestNames, se.cfg.ValueSource.String())
 		readValues = append(readValues, *se.cfg.ValueSource)
 		resProcessors = append(resProcessors, func(response any) error {
 			event, err := se.checkResponseForSecurityEvent(response)

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	//lint:ignore SA1019 the old OPA interface remains supported - we may migrate in future
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/rs/cors"
 	"github.com/timshannon/bolthold"
@@ -28,7 +29,6 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/cloud"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
-	"github.com/smart-core-os/sc-bos/pkg/app/logcapture"
 	"github.com/smart-core-os/sc-bos/internal/router"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors/protopkg"
@@ -37,6 +37,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/pki/expire"
 	"github.com/smart-core-os/sc-bos/pkg/app/files"
 	http2 "github.com/smart-core-os/sc-bos/pkg/app/http"
+	"github.com/smart-core-os/sc-bos/pkg/app/logcapture"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
@@ -76,9 +77,14 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		confStore         ConfigStore
 	)
 	if config.Cloud != nil {
-		cloudSecret, err := loadCloudSecret(config.Cloud.TokenFile)
+		clientSecret, err := loadCloudClientSecret(config.Cloud.ClientSecretFile)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load cloud secret: %w", err)
+			return nil, fmt.Errorf("failed to load cloud client secret: %w", err)
+		}
+		reg := cloud.Registration{
+			ClientID:     config.Cloud.ClientID,
+			ClientSecret: clientSecret,
+			BosapiRoot:   config.Cloud.BosapiRoot,
 		}
 
 		cloudDataDir := filepath.Join(config.DataDir, cloudDirName)
@@ -91,7 +97,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to open cloud data directory: %w", err)
 		}
-		httpClient := cloud.NewHTTPClient(config.Cloud.Endpoint, cloudSecret)
+		httpClient := cloud.NewHTTPClient(reg)
 		duOptions := []cloud.UpdaterOption{
 			cloud.WithLogger(logger.Named("cloud")),
 			cloud.WithPreserveDownloads(config.Cloud.PreserveDownloads),
@@ -506,8 +512,8 @@ type Controller struct {
 
 	// services for drivers/automations
 	Logger          *zap.Logger
-	LogCapture      *logcapture.Core  // dynamic tee for log capture (nil if not built via Bootstrap)
-	LogLevel        *zap.AtomicLevel  // controls the root logger's minimum level
+	LogCapture      *logcapture.Core // dynamic tee for log capture (nil if not built via Bootstrap)
+	LogLevel        *zap.AtomicLevel // controls the root logger's minimum level
 	Node            *node.Node
 	Devices         devicespb.DevicesApiClient
 	DeviceStore     *devicespb.Collection // for low level control of devices

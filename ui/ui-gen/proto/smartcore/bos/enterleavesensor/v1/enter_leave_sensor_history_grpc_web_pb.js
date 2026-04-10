@@ -24,9 +24,9 @@ var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/fie
 
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js')
 
-var traits_enter_leave_sensor_pb = require('@smart-core-os/sc-api-grpc-web/traits/enter_leave_sensor_pb.js')
+var smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb = require('../../../../smartcore/bos/enterleavesensor/v1/enter_leave_sensor_pb.js')
 
-var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js')
+var smartcore_bos_types_time_v1_period_pb = require('../../../../smartcore/bos/types/time/v1/period_pb.js')
 const proto = {};
 proto.smartcore = {};
 proto.smartcore.bos = {};

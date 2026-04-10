@@ -27,6 +27,6 @@ type Storage struct {
 }
 
 type TTL struct {
-	MaxAge   jsontypes.Duration `json:"maxAge,omitempty"`
+	MaxAge   jsontypes.Duration `json:"maxAge"`
 	MaxCount int64              `json:"maxCount,omitempty"`
 }

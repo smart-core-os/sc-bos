@@ -1,0 +1,33 @@
+{
+  "templates": {
+    "fcu": {
+      "selector": "#{{id}}",
+      "sidebar": {"name": "van/uk/brum/ugs/devices/{{id}}"},
+      "sources": {
+        "airTemperature": {
+          "trait": "smartcore.traits.AirTemperature",
+          "request": {"name": "van/uk/brum/ugs/devices/{{id}}"}
+        }
+      },
+      "effects": [
+        {
+          "type": "widget",
+          "component": "builtin:environmental/AirTemperatureChip",
+          "props": {
+            "layout": "{{layout}}",
+            "size": "20",
+            "variant": "outlined-filled",
+            "set-point": {"ref": "airTemperature", "property": "temperatureSetPoint.valueCelsius"},
+            "current-temp": {"ref": "airTemperature", "property": "ambientTemperature.valueCelsius"}
+          }
+        }
+      ]
+    }
+  },
+  "elements": [
+    {"template": {"ref": "fcu", "id": "FCU-L00-01", "layout": "top"}},
+    {"template": {"ref": "fcu", "id": "FCU-L00-02", "layout": "left"}},
+    {"template": {"ref": "fcu", "id": "FCU-L00-03", "layout": "left"}},
+    {"template": {"ref": "fcu", "id": "FCU-L00-04", "layout": "left"}}
+  ]
+}

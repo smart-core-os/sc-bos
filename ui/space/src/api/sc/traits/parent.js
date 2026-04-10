@@ -1,8 +1,8 @@
 import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb.js';
 import {pullResource, setCollection} from '@/api/resource.js';
-import {ParentApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/parent_grpc_web_pb';
-import {PullChildrenRequest} from '@smart-core-os/sc-api-grpc-web/traits/parent_pb';
+import {ParentApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/parent/v1/parent_grpc_web_pb';
+import {PullChildrenRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/parent/v1/parent_pb';
 
 /**
  * @param {Partial<PullChildrenRequest.AsObject>} request

@@ -44,7 +44,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 
 		f.devices.Add(cfg.AccessPoints...)
-		announce.Announce(cfg.Name, node.HasTrait(accesspb.TraitName, node.WithClients(accesspb.WrapApi(group))))
+		announce.Announce(cfg.Name,
+			node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(group)),
+			node.HasTrait(accesspb.TraitName),
+		)
 	}
 
 	return nil

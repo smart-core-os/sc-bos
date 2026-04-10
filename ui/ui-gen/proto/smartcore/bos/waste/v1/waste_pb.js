@@ -19,12 +19,12 @@ var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/fie
 goog.object.extend(proto, google_protobuf_field_mask_pb);
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
-var types_change_pb = require('@smart-core-os/sc-api-grpc-web/types/change_pb.js');
-goog.object.extend(proto, types_change_pb);
-var types_info_pb = require('@smart-core-os/sc-api-grpc-web/types/info_pb.js');
-goog.object.extend(proto, types_info_pb);
-var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js');
-goog.object.extend(proto, types_time_period_pb);
+var smartcore_bos_types_time_v1_period_pb = require('../../../../smartcore/bos/types/time/v1/period_pb.js');
+goog.object.extend(proto, smartcore_bos_types_time_v1_period_pb);
+var smartcore_bos_types_v1_change_pb = require('../../../../smartcore/bos/types/v1/change_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_change_pb);
+var smartcore_bos_types_v1_info_pb = require('../../../../smartcore/bos/types/v1/info_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_info_pb);
 goog.exportSymbol('proto.smartcore.bos.waste.v1.DescribeWasteRecordRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.waste.v1.ListWasteRecordsRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.waste.v1.ListWasteRecordsResponse', null, global);
@@ -999,7 +999,7 @@ name: jspb.Message.getFieldWithDefault(msg, 1, ""),
 readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toObject(includeInstance, f),
 pageSize: jspb.Message.getFieldWithDefault(msg, 3, 0),
 pageToken: jspb.Message.getFieldWithDefault(msg, 4, ""),
-period: (f = msg.getPeriod()) && types_time_period_pb.Period.toObject(includeInstance, f),
+period: (f = msg.getPeriod()) && smartcore_bos_types_time_v1_period_pb.Period.toObject(includeInstance, f),
 orderBy: jspb.Message.getFieldWithDefault(msg, 6, "")
   };
 
@@ -1055,8 +1055,8 @@ proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.deserializeBinaryFromReader
       msg.setPageToken(value);
       break;
     case 5:
-      var value = new types_time_period_pb.Period;
-      reader.readMessage(value,types_time_period_pb.Period.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_time_v1_period_pb.Period;
+      reader.readMessage(value,smartcore_bos_types_time_v1_period_pb.Period.deserializeBinaryFromReader);
       msg.setPeriod(value);
       break;
     case 6:
@@ -1126,7 +1126,7 @@ proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.serializeBinaryToWriter = f
     writer.writeMessage(
       5,
       f,
-      types_time_period_pb.Period.serializeBinaryToWriter
+      smartcore_bos_types_time_v1_period_pb.Period.serializeBinaryToWriter
     );
   }
   f = message.getOrderBy();
@@ -1231,17 +1231,17 @@ proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.prototype.setPageToken = fu
 
 
 /**
- * optional smartcore.types.time.Period period = 5;
- * @return {?proto.smartcore.types.time.Period}
+ * optional smartcore.bos.types.time.v1.Period period = 5;
+ * @return {?proto.smartcore.bos.types.time.v1.Period}
  */
 proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.prototype.getPeriod = function() {
-  return /** @type{?proto.smartcore.types.time.Period} */ (
-    jspb.Message.getWrapperField(this, types_time_period_pb.Period, 5));
+  return /** @type{?proto.smartcore.bos.types.time.v1.Period} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_time_v1_period_pb.Period, 5));
 };
 
 
 /**
- * @param {?proto.smartcore.types.time.Period|undefined} value
+ * @param {?proto.smartcore.bos.types.time.v1.Period|undefined} value
  * @return {!proto.smartcore.bos.waste.v1.ListWasteRecordsRequest} returns this
 */
 proto.smartcore.bos.waste.v1.ListWasteRecordsRequest.prototype.setPeriod = function(value) {
@@ -1711,7 +1711,7 @@ proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.deserializeBinaryFr
       msg.setOldValue(value);
       break;
     case 5:
-      var value = /** @type {!proto.smartcore.types.ChangeType} */ (reader.readEnum());
+      var value = /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (reader.readEnum());
       msg.setType(value);
       break;
     default:
@@ -1914,16 +1914,16 @@ proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.prototype.hasOldVal
 
 
 /**
- * optional smartcore.types.ChangeType type = 5;
- * @return {!proto.smartcore.types.ChangeType}
+ * optional smartcore.bos.types.v1.ChangeType type = 5;
+ * @return {!proto.smartcore.bos.types.v1.ChangeType}
  */
 proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.prototype.getType = function() {
-  return /** @type {!proto.smartcore.types.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+  return /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
 };
 
 
 /**
- * @param {!proto.smartcore.types.ChangeType} value
+ * @param {!proto.smartcore.bos.types.v1.ChangeType} value
  * @return {!proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change} returns this
  */
 proto.smartcore.bos.waste.v1.PullWasteRecordsResponse.Change.prototype.setType = function(value) {
@@ -2131,7 +2131,7 @@ proto.smartcore.bos.waste.v1.WasteRecordSupport.prototype.toObject = function(op
  */
 proto.smartcore.bos.waste.v1.WasteRecordSupport.toObject = function(includeInstance, msg) {
   var f, obj = {
-resourceSupport: (f = msg.getResourceSupport()) && types_info_pb.ResourceSupport.toObject(includeInstance, f),
+resourceSupport: (f = msg.getResourceSupport()) && smartcore_bos_types_v1_info_pb.ResourceSupport.toObject(includeInstance, f),
 unit: jspb.Message.getFieldWithDefault(msg, 2, ""),
 co2SavedUnit: jspb.Message.getFieldWithDefault(msg, 3, ""),
 landSavedUnit: jspb.Message.getFieldWithDefault(msg, 4, "")
@@ -2172,8 +2172,8 @@ proto.smartcore.bos.waste.v1.WasteRecordSupport.deserializeBinaryFromReader = fu
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new types_info_pb.ResourceSupport;
-      reader.readMessage(value,types_info_pb.ResourceSupport.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_v1_info_pb.ResourceSupport;
+      reader.readMessage(value,smartcore_bos_types_v1_info_pb.ResourceSupport.deserializeBinaryFromReader);
       msg.setResourceSupport(value);
       break;
     case 2:
@@ -2222,7 +2222,7 @@ proto.smartcore.bos.waste.v1.WasteRecordSupport.serializeBinaryToWriter = functi
     writer.writeMessage(
       1,
       f,
-      types_info_pb.ResourceSupport.serializeBinaryToWriter
+      smartcore_bos_types_v1_info_pb.ResourceSupport.serializeBinaryToWriter
     );
   }
   f = message.getUnit();
@@ -2250,17 +2250,17 @@ proto.smartcore.bos.waste.v1.WasteRecordSupport.serializeBinaryToWriter = functi
 
 
 /**
- * optional smartcore.types.ResourceSupport resource_support = 1;
- * @return {?proto.smartcore.types.ResourceSupport}
+ * optional smartcore.bos.types.v1.ResourceSupport resource_support = 1;
+ * @return {?proto.smartcore.bos.types.v1.ResourceSupport}
  */
 proto.smartcore.bos.waste.v1.WasteRecordSupport.prototype.getResourceSupport = function() {
-  return /** @type{?proto.smartcore.types.ResourceSupport} */ (
-    jspb.Message.getWrapperField(this, types_info_pb.ResourceSupport, 1));
+  return /** @type{?proto.smartcore.bos.types.v1.ResourceSupport} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_v1_info_pb.ResourceSupport, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.types.ResourceSupport|undefined} value
+ * @param {?proto.smartcore.bos.types.v1.ResourceSupport|undefined} value
  * @return {!proto.smartcore.bos.waste.v1.WasteRecordSupport} returns this
 */
 proto.smartcore.bos.waste.v1.WasteRecordSupport.prototype.setResourceSupport = function(value) {

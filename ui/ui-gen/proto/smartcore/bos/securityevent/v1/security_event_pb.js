@@ -21,8 +21,8 @@ var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/time
 goog.object.extend(proto, google_protobuf_timestamp_pb);
 var smartcore_bos_actor_v1_actor_pb = require('../../../../smartcore/bos/actor/v1/actor_pb.js');
 goog.object.extend(proto, smartcore_bos_actor_v1_actor_pb);
-var types_change_pb = require('@smart-core-os/sc-api-grpc-web/types/change_pb.js');
-goog.object.extend(proto, types_change_pb);
+var smartcore_bos_types_v1_change_pb = require('../../../../smartcore/bos/types/v1/change_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_change_pb);
 goog.exportSymbol('proto.smartcore.bos.securityevent.v1.ListSecurityEventsRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.securityevent.v1.ListSecurityEventsResponse', null, global);
 goog.exportSymbol('proto.smartcore.bos.securityevent.v1.PullSecurityEventsRequest', null, global);
@@ -1760,7 +1760,7 @@ proto.smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.deseriali
       msg.setOldValue(value);
       break;
     case 5:
-      var value = /** @type {!proto.smartcore.types.ChangeType} */ (reader.readEnum());
+      var value = /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (reader.readEnum());
       msg.setType(value);
       break;
     default:
@@ -1963,16 +1963,16 @@ proto.smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.prototype
 
 
 /**
- * optional smartcore.types.ChangeType type = 5;
- * @return {!proto.smartcore.types.ChangeType}
+ * optional smartcore.bos.types.v1.ChangeType type = 5;
+ * @return {!proto.smartcore.bos.types.v1.ChangeType}
  */
 proto.smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.prototype.getType = function() {
-  return /** @type {!proto.smartcore.types.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+  return /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
 };
 
 
 /**
- * @param {!proto.smartcore.types.ChangeType} value
+ * @param {!proto.smartcore.bos.types.v1.ChangeType} value
  * @return {!proto.smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change} returns this
  */
 proto.smartcore.bos.securityevent.v1.PullSecurityEventsResponse.Change.prototype.setType = function(value) {

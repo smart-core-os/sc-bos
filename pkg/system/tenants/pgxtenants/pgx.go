@@ -60,7 +60,6 @@ func NewServerFromPool(ctx context.Context, pool *pgxpool.Pool, opts ...Option) 
 var (
 	errDatabase       = status.Error(codes.Internal, "database transaction failed")
 	errTenantNotFound = status.Error(codes.NotFound, "tenant not found")
-	errSecretNotFound = status.Error(codes.NotFound, "secret not found")
 )
 
 type Server struct {

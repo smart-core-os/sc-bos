@@ -998,7 +998,7 @@ func TestServer_DeleteAccount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create role assignment: %v", err)
 	}
-	ra2, err := server.CreateRoleAssignment(ctx, &accountpb.CreateRoleAssignmentRequest{
+	ra2, _ := server.CreateRoleAssignment(ctx, &accountpb.CreateRoleAssignmentRequest{
 		RoleAssignment: &accountpb.RoleAssignment{
 			AccountId: service.Id,
 			RoleId:    role.Id,

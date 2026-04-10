@@ -9,8 +9,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/parentpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/page"
@@ -18,7 +18,7 @@ import (
 
 // Server implements the ParentApi where children are devices in a devicespb.Collection.
 type Server struct {
-	traits.UnimplementedParentApiServer
+	parentpb.UnimplementedParentApiServer
 	devices    Collection
 	parentName string
 }
@@ -36,7 +36,7 @@ func NewServer(parentName string, devices Collection) *Server {
 	}
 }
 
-func (s *Server) ListChildren(_ context.Context, request *traits.ListChildrenRequest) (*traits.ListChildrenResponse, error) {
+func (s *Server) ListChildren(_ context.Context, request *parentpb.ListChildrenRequest) (*parentpb.ListChildrenResponse, error) {
 	if err := s.validateRequest(request); err != nil {
 		return nil, err
 	}
@@ -47,8 +47,8 @@ func (s *Server) ListChildren(_ context.Context, request *traits.ListChildrenReq
 		return nil, err
 	}
 
-	res := &traits.ListChildrenResponse{
-		Children:      make([]*traits.Child, len(devices)),
+	res := &parentpb.ListChildrenResponse{
+		Children:      make([]*parentpb.Child, len(devices)),
 		TotalSize:     int32(totalSize),
 		NextPageToken: nextPageToken,
 	}
@@ -62,14 +62,14 @@ func (s *Server) ListChildren(_ context.Context, request *traits.ListChildrenReq
 	return res, nil
 }
 
-func (s *Server) PullChildren(request *traits.PullChildrenRequest, stream grpc.ServerStreamingServer[traits.PullChildrenResponse]) error {
+func (s *Server) PullChildren(request *parentpb.PullChildrenRequest, stream grpc.ServerStreamingServer[parentpb.PullChildrenResponse]) error {
 	if err := s.validateRequest(request); err != nil {
 		return err
 	}
 	filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 	for change := range s.devices.PullDevices(stream.Context(), resource.WithInclude(s.deviceIncludeFunc), resource.WithUpdatesOnly(request.UpdatesOnly)) {
 		changeProto := s.devicesChangeToProto(change, filter)
-		err := stream.Send(&traits.PullChildrenResponse{Changes: []*traits.PullChildrenResponse_Change{changeProto}})
+		err := stream.Send(&parentpb.PullChildrenResponse{Changes: []*parentpb.PullChildrenResponse_Change{changeProto}})
 		if err != nil {
 			return err
 		}
@@ -104,16 +104,16 @@ func (s *Server) deviceIncludeFunc(id string, item proto.Message) bool {
 	return true
 }
 
-func deviceToChild(d *devicespb.Device) *traits.Child {
-	c := &traits.Child{Name: d.Name}
+func deviceToChild(d *devicespb.Device) *parentpb.Child {
+	c := &parentpb.Child{Name: d.Name}
 	for _, t := range d.GetMetadata().GetTraits() {
-		c.Traits = append(c.Traits, &traits.Trait{Name: t.Name})
+		c.Traits = append(c.Traits, &parentpb.Trait{Name: t.Name})
 	}
 	return c
 }
 
-func (s *Server) devicesChangeToProto(c devicespb.DevicesChange, filter *masks.ResponseFilter) *traits.PullChildrenResponse_Change {
-	res := &traits.PullChildrenResponse_Change{
+func (s *Server) devicesChangeToProto(c devicespb.DevicesChange, filter *masks.ResponseFilter) *parentpb.PullChildrenResponse_Change {
+	res := &parentpb.PullChildrenResponse_Change{
 		Name:       s.parentName,
 		Type:       c.ChangeType,
 		ChangeTime: timestamppb.New(c.ChangeTime),

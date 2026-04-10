@@ -7,8 +7,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/internal/testproto"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 func Test_mergeCollectionExcess(t *testing.T) {
@@ -71,22 +71,22 @@ func parseCaseChange(s string) CollectionChange {
 	o, n, found := strings.Cut(v, ">")
 	switch {
 	case !found: // add: "foo"
-		out.ChangeType = types.ChangeType_ADD
-		out.NewValue = &traits.Metadata{Name: v}
+		out.ChangeType = typespb.ChangeType_ADD
+		out.NewValue = &testproto.TestAllTypes{DefaultString: v}
 	case o == "": // add: ">foo"
-		out.ChangeType = types.ChangeType_ADD
-		out.NewValue = &traits.Metadata{Name: n}
+		out.ChangeType = typespb.ChangeType_ADD
+		out.NewValue = &testproto.TestAllTypes{DefaultString: n}
 	case n == "": // del: "foo>"
-		out.ChangeType = types.ChangeType_REMOVE
-		out.OldValue = &traits.Metadata{Name: o}
+		out.ChangeType = typespb.ChangeType_REMOVE
+		out.OldValue = &testproto.TestAllTypes{DefaultString: o}
 	case n[0] == '+': // replace: "foo>+bar"
-		out.ChangeType = types.ChangeType_REPLACE
-		out.OldValue = &traits.Metadata{Name: o}
-		out.NewValue = &traits.Metadata{Name: n[1:]}
+		out.ChangeType = typespb.ChangeType_REPLACE
+		out.OldValue = &testproto.TestAllTypes{DefaultString: o}
+		out.NewValue = &testproto.TestAllTypes{DefaultString: n[1:]}
 	default: // update: "foo>bar"
-		out.ChangeType = types.ChangeType_UPDATE
-		out.OldValue = &traits.Metadata{Name: o}
-		out.NewValue = &traits.Metadata{Name: n}
+		out.ChangeType = typespb.ChangeType_UPDATE
+		out.OldValue = &testproto.TestAllTypes{DefaultString: o}
+		out.NewValue = &testproto.TestAllTypes{DefaultString: n}
 	}
 	return out
 }
@@ -113,7 +113,7 @@ func sendTo(out chan<- *CollectionChange, vals []string) (sent <-chan struct{}) 
 
 func drain(ch <-chan *CollectionChange, n int) []CollectionChange {
 	out := make([]CollectionChange, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out[i] = *(<-ch)
 	}
 	return out

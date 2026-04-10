@@ -4,12 +4,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/smart-core-os/sc-api/go/types/time"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 )
 
 func Test_cutPeriod(t *testing.T) {
 	type args struct {
-		p *time.Period
+		p *timepb.Period
 	}
 	tests := []struct {
 		name      string

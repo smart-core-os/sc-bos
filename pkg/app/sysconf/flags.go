@@ -79,8 +79,7 @@ func (a *sysConfArg) Set(s string) error {
 }
 
 type appConfArg struct {
-	dst   *Config
-	isSet bool
+	dst *Config
 }
 
 func (a appConfArg) String() string {
@@ -89,10 +88,7 @@ func (a appConfArg) String() string {
 
 func (a appConfArg) Set(s string) error {
 	str := strings.Split(s, ",")
-	if !a.isSet {
-		a.dst.AppConfig = []string{}
-		a.isSet = true
-	}
+	a.dst.AppConfig = nil
 	for _, f := range str {
 		if !strings.HasPrefix(f, "/") {
 			f = path.Join(".", f)

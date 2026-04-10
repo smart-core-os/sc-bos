@@ -11,19 +11,18 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	metadatapb2 "github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	airqualitysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/airqualitysensorpb"
-	airtemperaturepb2 "github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
-	occupancysensorpb2 "github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
@@ -41,22 +40,24 @@ func TestMetadata(t *testing.T) {
 		},
 	}
 
-	metadata := &traits.Metadata{
+	metadata := &metadatapb.Metadata{
 		Name: "foo",
-		Appearance: &traits.Metadata_Appearance{
+		Appearance: &metadatapb.Metadata_Appearance{
 			Title:       "Foo Device",
 			Description: "A device for testing metadata",
 		},
-		Location: &traits.Metadata_Location{
+		Location: &metadatapb.Metadata_Location{
 			Floor: "1",
 			Zone:  "bar",
 		},
 	}
 
-	metaModel := metadatapb2.NewModel(resource.WithInitialValue(metadata))
-	modelServer := metadatapb2.NewModelServer(metaModel)
-	metaClient := node.WithClients(metadatapb2.WrapApi(modelServer))
-	root.Announce("foo", node.HasTrait(trait.Metadata, metaClient))
+	metaModel := metadatapb.NewModel(resource.WithInitialValue(metadata))
+	modelServer := metadatapb.NewModelServer(metaModel)
+	root.Announce("foo",
+		node.HasServer(metadatapb.RegisterMetadataApiServer, metadatapb.MetadataApiServer(modelServer)),
+		node.HasTrait(trait.Metadata),
+	)
 
 	sccexporter.initialiseClients(root)
 
@@ -78,7 +79,7 @@ func TestMetadata(t *testing.T) {
 	require.Contains(t, msg.Device.Data, trait.Metadata)
 	require.Contains(t, msg.Device.Data[trait.Metadata], "metadata")
 
-	var receivedMetadata traits.Metadata
+	var receivedMetadata metadatapb.Metadata
 	err = protojson.Unmarshal(msg.Device.Data[trait.Metadata]["metadata"], &receivedMetadata)
 	require.NoError(t, err)
 
@@ -328,9 +329,9 @@ func TestGetMeterDeviceAndData(t *testing.T) {
 	devicesApi := devices.NewServer(root)
 	meterModel := meterpb.NewModel(resource.WithInitialValue(meterReading))
 	modelServer := meterpb.NewModelServer(meterModel)
-	meterClient := node.WithClients(meterpb.WrapApi(modelServer))
 	root.Announce("foo",
-		node.HasTrait(meterpb.TraitName, meterClient),
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(modelServer)),
+		node.HasTrait(meterpb.TraitName),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
@@ -395,12 +396,10 @@ func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
 	meterModel := meterpb.NewModel(resource.WithInitialValue(meterReading))
 	modelServer := meterpb.NewModelServer(meterModel)
 	infoServer := &meterpb.InfoServer{MeterReading: meterInfo}
-	meterClient := node.WithClients(
-		meterpb.WrapApi(modelServer),
-		meterpb.WrapInfo(infoServer),
-	)
 	root.Announce("foo",
-		node.HasTrait(meterpb.TraitName, meterClient),
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(modelServer)),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(infoServer)),
+		node.HasTrait(meterpb.TraitName),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
@@ -463,19 +462,19 @@ func TestGetAirQualityDeviceAndData(t *testing.T) {
 	co2Level := float32(450.5)
 	score := float32(75.5)
 
-	airQuality := &traits.AirQuality{
+	airQuality := &airqualitysensorpb.AirQuality{
 		CarbonDioxideLevel: &co2Level,
 		Score:              &score,
 	}
 
 	devicesApi := devices.NewServer(root)
-	airQualityModel := airqualitysensorpb2.NewModel()
+	airQualityModel := airqualitysensorpb.NewModel()
 	_, err = airQualityModel.UpdateAirQuality(airQuality)
 	require.NoError(t, err)
-	modelServer := airqualitysensorpb2.NewModelServer(airQualityModel)
-	airQualityClient := node.WithClients(airqualitysensorpb2.WrapApi(modelServer))
+	modelServer := airqualitysensorpb.NewModelServer(airQualityModel)
 	root.Announce("foo",
-		node.HasTrait(trait.AirQualitySensor, airQualityClient),
+		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(modelServer)),
+		node.HasTrait(trait.AirQualitySensor),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
@@ -505,7 +504,7 @@ func TestGetAirQualityDeviceAndData(t *testing.T) {
 	// Verify the structure contains airQuality resource
 	require.Contains(t, traitData, "airQuality")
 
-	receivedAirQuality := traits.AirQuality{}
+	receivedAirQuality := airqualitysensorpb.AirQuality{}
 	err = protojson.Unmarshal(traitData["airQuality"], &receivedAirQuality)
 	require.NoError(t, err)
 
@@ -521,18 +520,18 @@ func TestGetAirTemperatureDeviceAndData(t *testing.T) {
 
 	celsius := 22.5
 
-	airTemperature := &traits.AirTemperature{
-		AmbientTemperature: &types.Temperature{ValueCelsius: celsius},
+	airTemperature := &airtemperaturepb.AirTemperature{
+		AmbientTemperature: &typespb.Temperature{ValueCelsius: celsius},
 	}
 
 	devicesApi := devices.NewServer(root)
-	airTemperatureModel := airtemperaturepb2.NewModel()
+	airTemperatureModel := airtemperaturepb.NewModel()
 	_, err = airTemperatureModel.UpdateAirTemperature(airTemperature)
 	require.NoError(t, err)
-	modelServer := airtemperaturepb2.NewModelServer(airTemperatureModel)
-	airTemperatureClient := node.WithClients(airtemperaturepb2.WrapApi(modelServer))
+	modelServer := airtemperaturepb.NewModelServer(airTemperatureModel)
 	root.Announce("foo",
-		node.HasTrait(trait.AirTemperature, airTemperatureClient),
+		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(modelServer)),
+		node.HasTrait(trait.AirTemperature),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
@@ -562,7 +561,7 @@ func TestGetAirTemperatureDeviceAndData(t *testing.T) {
 	// Verify the structure contains airTemperature resource
 	require.Contains(t, traitData, "airTemperature")
 
-	receivedAirTemperature := traits.AirTemperature{}
+	receivedAirTemperature := airtemperaturepb.AirTemperature{}
 	err = protojson.Unmarshal(traitData["airTemperature"], &receivedAirTemperature)
 	require.NoError(t, err)
 
@@ -577,20 +576,20 @@ func TestGetOccupancyDeviceAndData(t *testing.T) {
 
 	stateChangeTime := time.Now().Add(-5 * time.Minute)
 
-	occupancy := &traits.Occupancy{
-		State:           traits.Occupancy_OCCUPIED,
+	occupancy := &occupancysensorpb.Occupancy{
+		State:           occupancysensorpb.Occupancy_OCCUPIED,
 		PeopleCount:     5,
 		StateChangeTime: timestamppb.New(stateChangeTime),
 	}
 
 	devicesApi := devices.NewServer(root)
-	occupancyModel := occupancysensorpb2.NewModel()
+	occupancyModel := occupancysensorpb.NewModel()
 	_, err = occupancyModel.SetOccupancy(occupancy)
 	require.NoError(t, err)
-	modelServer := occupancysensorpb2.NewModelServer(occupancyModel)
-	occupancyClient := node.WithClients(occupancysensorpb2.WrapApi(modelServer))
+	modelServer := occupancysensorpb.NewModelServer(occupancyModel)
 	root.Announce("foo",
-		node.HasTrait(trait.OccupancySensor, occupancyClient),
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(modelServer)),
+		node.HasTrait(trait.OccupancySensor),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
@@ -620,7 +619,7 @@ func TestGetOccupancyDeviceAndData(t *testing.T) {
 	// Verify the structure contains occupancy resource
 	require.Contains(t, traitData, "occupancy")
 
-	receivedOccupancy := traits.Occupancy{}
+	receivedOccupancy := occupancysensorpb.Occupancy{}
 	err = protojson.Unmarshal(traitData["occupancy"], &receivedOccupancy)
 	require.NoError(t, err)
 

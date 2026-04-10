@@ -15,17 +15,17 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api"
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/ptzpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 )
 
 type Camera struct {
-	traits.UnimplementedPtzApiServer
+	ptzpb.UnimplementedPtzApiServer
 	mqttpb.UnimplementedMqttServiceServer
 	udmipb.UnimplementedUdmiServiceServer
 
@@ -51,7 +51,7 @@ func NewCamera(client *client, logger *zap.Logger, conf *config.Camera, fc *heal
 	}
 }
 
-func (c *Camera) UpdatePtz(ctx context.Context, request *traits.UpdatePtzRequest) (*traits.Ptz, error) {
+func (c *Camera) UpdatePtz(ctx context.Context, request *ptzpb.UpdatePtzRequest) (*ptzpb.Ptz, error) {
 	if request.State == nil {
 		return nil, status.Error(codes.InvalidArgument, "no PTZ state in request")
 	}
@@ -106,7 +106,7 @@ func (c *Camera) UpdatePtz(ctx context.Context, request *traits.UpdatePtzRequest
 	return nil, nil
 }
 
-func (c *Camera) Stop(ctx context.Context, _ *traits.StopPtzRequest) (*traits.Ptz, error) {
+func (c *Camera) Stop(ctx context.Context, _ *ptzpb.StopPtzRequest) (*ptzpb.Ptz, error) {
 	wg, ctx := errgroup.WithContext(ctx)
 
 	// we don't know which command(s) are running, so stop them all!
@@ -114,7 +114,6 @@ func (c *Camera) Stop(ctx context.Context, _ *traits.StopPtzRequest) (*traits.Pt
 	mu := sync.Mutex{}
 	var multiErr error
 	for _, command := range api.Commands {
-		command := command // save for goroutine usage
 		wg.Go(func() error {
 			_, err := c.client.cameraPtzControl(ctx, &api.PtzRequest{
 				CameraIndexCode: c.conf.IndexCode,
@@ -194,11 +193,11 @@ func marshalUDMIPayload(msg any) ([]byte, error) {
 	}
 	out := make(map[string]val)
 	mt := reflect.TypeOf(msg)
-	if mt.Kind() == reflect.Ptr {
+	if mt.Kind() == reflect.Pointer {
 		mt = mt.Elem()
 	}
 	mv := reflect.ValueOf(msg)
-	if mv.Kind() == reflect.Ptr {
+	if mv.Kind() == reflect.Pointer {
 		mv = mv.Elem()
 	}
 	for i := 0; i < mt.NumField(); i++ {
@@ -333,10 +332,7 @@ func (c *Camera) getOcc(ctx context.Context) {
 				break
 			} else {
 				i := res.List[0]
-				count := i.EnterNum - i.ExitNum
-				if count < 0 {
-					count = 0
-				}
+				count := max(i.EnterNum-i.ExitNum, 0)
 				c.updateCount(ctx, strconv.Itoa(count))
 			}
 			if len(res.List) < pageSize {

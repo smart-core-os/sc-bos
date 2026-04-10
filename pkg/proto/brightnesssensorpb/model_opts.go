@@ -1,14 +1,13 @@
 package brightnesssensorpb
 
 import (
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 // DefaultModelOptions holds the default options for the model.
 var DefaultModelOptions = []resource.Option{
-	WithInitialAmbientBrightness(&traits.AmbientBrightness{}),
+	WithInitialAmbientBrightness(&AmbientBrightness{}),
 	WithAmbientBrightnessOption(resource.WithMessageEquivalence(cmp.Equal(
 		cmp.FloatValueApprox(0, 0.1),
 	))),
@@ -28,7 +27,7 @@ func WithAmbientBrightnessOption(opts ...resource.Option) resource.Option {
 }
 
 // WithInitialAmbientBrightness returns an option that configures the model to initialise with the given ambient brightness.
-func WithInitialAmbientBrightness(ambientBrightness *traits.AmbientBrightness) resource.Option {
+func WithInitialAmbientBrightness(ambientBrightness *AmbientBrightness) resource.Option {
 	return WithAmbientBrightnessOption(resource.WithInitialValue(ambientBrightness))
 }
 

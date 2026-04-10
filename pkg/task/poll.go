@@ -31,7 +31,10 @@ func PollErr(action PollErrTask, opts ...PollOption) *Intermittent {
 		opt(&p)
 	}
 
-	return NewIntermittent(func(ctx context.Context) (StopFn, error) {
+	return NewIntermittent(func(_ context.Context) (StopFn, error) {
+		// The work context is intentionally derived from context.Background(), not the
+		// init context passed here. The poll goroutine's lifetime is controlled by the
+		// returned cancel (StopFn), independent of the initialisation caller's context.
 		ctx, cancel := context.WithCancel(context.Background())
 		go p.poll(ctx, func(ctx context.Context) error {
 			return action(ctx)

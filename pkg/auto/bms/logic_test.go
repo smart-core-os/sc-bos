@@ -12,8 +12,10 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/bms/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -204,17 +206,6 @@ func (lt *logicTester) setOccupied(names ...string) {
 	lt.setOccupiedAt(lt.now, names...)
 }
 
-func (lt *logicTester) setUnoccupied(names ...string) {
-	lt.setUnoccupiedAt(lt.now, names...)
-}
-
-func (lt *logicTester) setOccupiedFor(d time.Duration, names ...string) {
-	if d < 0 {
-		d = -d
-	}
-	lt.setOccupiedAt(lt.now.Add(d), names...)
-}
-
 func (lt *logicTester) setUnoccupiedFor(d time.Duration, names ...string) {
 	if d > 0 {
 		d = -d
@@ -228,11 +219,11 @@ func (lt *logicTester) setOccupiedAt(t time.Time, names ...string) {
 		slices.Sort(lt.cfg.OccupancySensors)
 	}
 	for _, name := range names {
-		v := &traits.Occupancy{State: traits.Occupancy_OCCUPIED}
+		v := &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED}
 		if !t.IsZero() {
 			v.StateChangeTime = timestamppb.New(t)
 		}
-		lt.rs.Occupancy[name] = Value[*traits.Occupancy]{
+		lt.rs.Occupancy[name] = Value[*occupancysensorpb.Occupancy]{
 			V:  v,
 			At: lt.now,
 		}
@@ -245,11 +236,11 @@ func (lt *logicTester) setUnoccupiedAt(t time.Time, names ...string) {
 		slices.Sort(lt.cfg.OccupancySensors)
 	}
 	for _, name := range names {
-		v := &traits.Occupancy{State: traits.Occupancy_UNOCCUPIED}
+		v := &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED}
 		if !t.IsZero() {
 			v.StateChangeTime = timestamppb.New(t)
 		}
-		lt.rs.Occupancy[name] = Value[*traits.Occupancy]{
+		lt.rs.Occupancy[name] = Value[*occupancysensorpb.Occupancy]{
 			V:  v,
 			At: lt.now,
 		}
@@ -268,16 +259,16 @@ func collectMissing(slice []string, values ...string) []string {
 
 type testActions struct {
 	t                     *testing.T
-	airTemperatureUpdates []*traits.UpdateAirTemperatureRequest
-	modeValuesUpdates     []*traits.UpdateModeValuesRequest
+	airTemperatureUpdates []*airtemperaturepb.UpdateAirTemperatureRequest
+	modeValuesUpdates     []*modepb.UpdateModeValuesRequest
 }
 
-func (a *testActions) UpdateAirTemperature(ctx context.Context, req *traits.UpdateAirTemperatureRequest, ws *WriteState) error {
+func (a *testActions) UpdateAirTemperature(ctx context.Context, req *airtemperaturepb.UpdateAirTemperatureRequest, ws *WriteState) error {
 	a.airTemperatureUpdates = append(a.airTemperatureUpdates, req)
 	return nil
 }
 
-func (a *testActions) UpdateModeValues(ctx context.Context, req *traits.UpdateModeValuesRequest, ws *WriteState) error {
+func (a *testActions) UpdateModeValues(ctx context.Context, req *modepb.UpdateModeValuesRequest, ws *WriteState) error {
 	a.modeValuesUpdates = append(a.modeValuesUpdates, req)
 	return nil
 }
@@ -298,10 +289,10 @@ func (a *testActions) AssertNoModeUpdates() {
 
 func (a *testActions) AssertOccupancyModeOnCall() {
 	a.t.Helper()
-	want := []*traits.UpdateModeValuesRequest{
-		{Name: "occupancyMode1", ModeValues: &traits.ModeValues{Values: map[string]string{"occupancy": "occupied"}}},
-		{Name: "occupancyMode2", ModeValues: &traits.ModeValues{Values: map[string]string{"k2": "occupied"}}},
-		{Name: "occupancyMode3", ModeValues: &traits.ModeValues{Values: map[string]string{"k3": "y"}}},
+	want := []*modepb.UpdateModeValuesRequest{
+		{Name: "occupancyMode1", ModeValues: &modepb.ModeValues{Values: map[string]string{"occupancy": "occupied"}}},
+		{Name: "occupancyMode2", ModeValues: &modepb.ModeValues{Values: map[string]string{"k2": "occupied"}}},
+		{Name: "occupancyMode3", ModeValues: &modepb.ModeValues{Values: map[string]string{"k3": "y"}}},
 	}
 
 	if len(a.modeValuesUpdates) < len(want) {
@@ -309,7 +300,7 @@ func (a *testActions) AssertOccupancyModeOnCall() {
 	}
 	got := a.modeValuesUpdates[:len(want)]
 	a.modeValuesUpdates = a.modeValuesUpdates[len(want):]
-	if diff := cmp.Diff(want, got, protocmp.Transform(), cmpopts.SortSlices(func(a, b *traits.UpdateModeValuesRequest) int {
+	if diff := cmp.Diff(want, got, protocmp.Transform(), cmpopts.SortSlices(func(a, b *modepb.UpdateModeValuesRequest) int {
 		return strings.Compare(a.Name, b.Name)
 	})); diff != "" {
 		a.t.Errorf("unexpected mode values update (-want +got):\n%s", diff)
@@ -318,10 +309,10 @@ func (a *testActions) AssertOccupancyModeOnCall() {
 
 func (a *testActions) AssertOccupancyModeOffCall() {
 	a.t.Helper()
-	want := []*traits.UpdateModeValuesRequest{
-		{Name: "occupancyMode1", ModeValues: &traits.ModeValues{Values: map[string]string{"occupancy": "unoccupied"}}},
-		{Name: "occupancyMode2", ModeValues: &traits.ModeValues{Values: map[string]string{"k2": "unoccupied"}}},
-		{Name: "occupancyMode3", ModeValues: &traits.ModeValues{Values: map[string]string{"k3": "n"}}},
+	want := []*modepb.UpdateModeValuesRequest{
+		{Name: "occupancyMode1", ModeValues: &modepb.ModeValues{Values: map[string]string{"occupancy": "unoccupied"}}},
+		{Name: "occupancyMode2", ModeValues: &modepb.ModeValues{Values: map[string]string{"k2": "unoccupied"}}},
+		{Name: "occupancyMode3", ModeValues: &modepb.ModeValues{Values: map[string]string{"k3": "n"}}},
 	}
 
 	if len(a.modeValuesUpdates) < len(want) {
@@ -329,7 +320,7 @@ func (a *testActions) AssertOccupancyModeOffCall() {
 	}
 	got := a.modeValuesUpdates[:len(want)]
 	a.modeValuesUpdates = a.modeValuesUpdates[len(want):]
-	if diff := cmp.Diff(want, got, protocmp.Transform(), cmpopts.SortSlices(func(a, b *traits.UpdateModeValuesRequest) int {
+	if diff := cmp.Diff(want, got, protocmp.Transform(), cmpopts.SortSlices(func(a, b *modepb.UpdateModeValuesRequest) int {
 		return strings.Compare(a.Name, b.Name)
 	})); diff != "" {
 		a.t.Errorf("unexpected mode values update (-want +got):\n%s", diff)

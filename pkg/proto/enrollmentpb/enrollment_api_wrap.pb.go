@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a EnrollmentApiServer	and presents it as a EnrollmentApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server EnrollmentApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(EnrollmentApi_ServiceDesc, server)
 	client := NewEnrollmentApiClient(conn)

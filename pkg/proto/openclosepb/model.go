@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
@@ -34,17 +33,17 @@ func NewModel(opts ...resource.Option) *Model {
 
 // preset describes a proto preset combined with the positions applied when activating that preset.
 type preset struct {
-	desc      *traits.OpenClosePositions_Preset
-	positions []*traits.OpenClosePosition
+	desc      *OpenClosePositions_Preset
+	positions []*OpenClosePosition
 }
 
-func (m *Model) GetPositions(opts ...resource.ReadOption) (*traits.OpenClosePositions, error) {
+func (m *Model) GetPositions(opts ...resource.ReadOption) (*OpenClosePositions, error) {
 	allPositions := m.positions.List(opts...) // already sorted by ID aka Direction ordinal
-	dst := &traits.OpenClosePositions{
-		States: make([]*traits.OpenClosePosition, len(allPositions)),
+	dst := &OpenClosePositions{
+		States: make([]*OpenClosePosition, len(allPositions)),
 	}
 	for i, position := range allPositions {
-		dst.States[i] = position.(*traits.OpenClosePosition)
+		dst.States[i] = position.(*OpenClosePosition)
 	}
 
 	preset, _ := m.presetForValue(dst.States)
@@ -55,15 +54,15 @@ func (m *Model) GetPositions(opts ...resource.ReadOption) (*traits.OpenClosePosi
 	return dst, nil
 }
 
-func (m *Model) GetPosition(dir traits.OpenClosePosition_Direction, opts ...resource.ReadOption) (*traits.OpenClosePosition, error) {
+func (m *Model) GetPosition(dir OpenClosePosition_Direction, opts ...resource.ReadOption) (*OpenClosePosition, error) {
 	position, ok := m.positions.Get(directionToID(dir), opts...)
 	if !ok {
 		return nil, status.Errorf(codes.NotFound, "position %v not found", dir)
 	}
-	return position.(*traits.OpenClosePosition), nil
+	return position.(*OpenClosePosition), nil
 }
 
-func (m *Model) UpdatePositions(positions *traits.OpenClosePositions, opts ...resource.WriteOption) (*traits.OpenClosePositions, error) {
+func (m *Model) UpdatePositions(positions *OpenClosePositions, opts ...resource.WriteOption) (*OpenClosePositions, error) {
 	// preset handling
 	if positions.Preset != nil {
 		preset, presetPositions := m.presetForName(positions.Preset.Name)
@@ -90,16 +89,16 @@ func (m *Model) UpdatePositions(positions *traits.OpenClosePositions, opts ...re
 	return m.GetPositions()
 }
 
-func (m *Model) UpdatePosition(position *traits.OpenClosePosition, opts ...resource.WriteOption) (*traits.OpenClosePosition, error) {
+func (m *Model) UpdatePosition(position *OpenClosePosition, opts ...resource.WriteOption) (*OpenClosePosition, error) {
 	return m.UpdatePositionN(position.Direction, position, opts...)
 }
 
-func (m *Model) UpdatePositionN(dir traits.OpenClosePosition_Direction, position *traits.OpenClosePosition, opts ...resource.WriteOption) (*traits.OpenClosePosition, error) {
+func (m *Model) UpdatePositionN(dir OpenClosePosition_Direction, position *OpenClosePosition, opts ...resource.WriteOption) (*OpenClosePosition, error) {
 	msg, err := m.positions.Update(directionToID(dir), position, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return msg.(*traits.OpenClosePosition), nil
+	return msg.(*OpenClosePosition), nil
 }
 
 func (m *Model) PullPositions(ctx context.Context, ops ...resource.ReadOption) <-chan PullOpenClosePositionsChange {
@@ -110,15 +109,15 @@ func (m *Model) PullPositions(ctx context.Context, ops ...resource.ReadOption) <
 	send := make(chan PullOpenClosePositionsChange)
 	go func() {
 		defer close(send)
-		all := make(map[string]*traits.OpenClosePosition, 1)
+		all := make(map[string]*OpenClosePosition, 1)
 		seenAll := false
-		var last *traits.OpenClosePositions
+		var last *OpenClosePositions
 
 		for change := range m.positions.Pull(ctx) {
 			if change.NewValue == nil {
 				delete(all, change.Id)
 			} else {
-				all[change.Id] = change.NewValue.(*traits.OpenClosePosition)
+				all[change.Id] = change.NewValue.(*OpenClosePosition)
 			}
 
 			shouldSend := seenAll || (change.LastSeedValue && !readRequest.UpdatesOnly)
@@ -130,7 +129,7 @@ func (m *Model) PullPositions(ctx context.Context, ops ...resource.ReadOption) <
 			}
 
 			// transform into the correct output format
-			positions := &traits.OpenClosePositions{
+			positions := &OpenClosePositions{
 				States: maps.Values(all),
 			}
 			sortPositions(positions.States)
@@ -159,12 +158,12 @@ func (m *Model) PullPositions(ctx context.Context, ops ...resource.ReadOption) <
 }
 
 type PullOpenClosePositionsChange struct {
-	Positions  *traits.OpenClosePositions
+	Positions  *OpenClosePositions
 	ChangeTime time.Time
 }
 
-func (m *Model) ListPresets() []*traits.OpenClosePositions_Preset {
-	presets := make([]*traits.OpenClosePositions_Preset, len(m.presets))
+func (m *Model) ListPresets() []*OpenClosePositions_Preset {
+	presets := make([]*OpenClosePositions_Preset, len(m.presets))
 	for i, preset := range m.presets {
 		presets[i] = preset.desc
 	}
@@ -176,7 +175,7 @@ func (m *Model) HasPreset(name string) bool {
 	return n != nil
 }
 
-func (m *Model) presetForName(name string) (*traits.OpenClosePositions_Preset, []*traits.OpenClosePosition) {
+func (m *Model) presetForName(name string) (*OpenClosePositions_Preset, []*OpenClosePosition) {
 	for _, preset := range m.presets {
 		if preset.desc.Name == name {
 			return preset.desc, preset.positions
@@ -185,21 +184,21 @@ func (m *Model) presetForName(name string) (*traits.OpenClosePositions_Preset, [
 	return nil, nil
 }
 
-func (m *Model) presetForValue(value []*traits.OpenClosePosition) (*traits.OpenClosePositions_Preset, []*traits.OpenClosePosition) {
+func (m *Model) presetForValue(value []*OpenClosePosition) (*OpenClosePositions_Preset, []*OpenClosePosition) {
 	for _, preset := range m.presets {
-		if proto.Equal(&traits.OpenClosePositions{States: preset.positions}, &traits.OpenClosePositions{States: value}) {
+		if proto.Equal(&OpenClosePositions{States: preset.positions}, &OpenClosePositions{States: value}) {
 			return preset.desc, preset.positions
 		}
 	}
 	return nil, nil
 }
 
-func directionToID(direction traits.OpenClosePosition_Direction) string {
+func directionToID(direction OpenClosePosition_Direction) string {
 	// if the number of directions ever exceeds 99 we need to change this
 	return fmt.Sprintf("%02d", direction)
 }
-func sortPositions(ps []*traits.OpenClosePosition) {
-	slices.SortFunc(ps, func(a, b *traits.OpenClosePosition) int {
+func sortPositions(ps []*OpenClosePosition) {
+	slices.SortFunc(ps, func(a, b *OpenClosePosition) int {
 		return int(a.Direction - b.Direction)
 	})
 }

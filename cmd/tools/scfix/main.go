@@ -18,8 +18,8 @@ import (
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1go"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1js"
-	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/scgolang"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/regoimports"
+	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/scgolang"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/wrap"
 )
 
@@ -39,10 +39,10 @@ var allFixes = []fix{
 	{Fix: protov1go.Fix, Enabled: true},
 	{Fix: protov1js.Fix, Enabled: true},
 	{Fix: protogopkg.Fix, Enabled: false},
+	{Fix: scgolang.Fix, Enabled: true}, // must run before goprotoimports to avoid alias conflicts
 	{Fix: goprotoimports.Fix, Enabled: true},
 	{Fix: gentrait.FixMove, Enabled: false},
-	{Fix: gentrait.FixRefs, Enabled: false},
-	{Fix: scgolang.Fix, Enabled: false},
+	{Fix: gentrait.FixRefs, Enabled: true},
 	{Fix: regoimports.Fix, Enabled: true},
 }
 
@@ -55,7 +55,7 @@ func (f *stringSliceFlag) String() string {
 }
 
 func (f *stringSliceFlag) Set(value string) error {
-	for _, v := range strings.Split(value, ",") {
+	for v := range strings.SplitSeq(value, ",") {
 		trimmed := strings.TrimSpace(v)
 		if trimmed != "" {
 			*f = append(*f, trimmed)

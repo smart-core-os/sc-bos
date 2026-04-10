@@ -92,8 +92,6 @@ func (f *FieldUpdater) Merge(dst, src proto.Message) {
 	if f.resetMask != nil {
 		fmutils.Prune(dst, f.resetMask.Paths)
 	}
-
-	return
 }
 
 func pruneEmpty(dst, src proto.Message, mask fmutils.NestedMask) {

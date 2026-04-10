@@ -6,12 +6,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 type ModelServer struct {
-	traits.UnimplementedBrightnessSensorApiServer
+	UnimplementedBrightnessSensorApiServer
 
 	model *Model
 }
@@ -29,23 +28,23 @@ func (s *ModelServer) Unwrap() any {
 }
 
 func (s *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterBrightnessSensorApiServer(server, s)
+	RegisterBrightnessSensorApiServer(server, s)
 }
 
-func (s *ModelServer) GetAmbientBrightness(_ context.Context, request *traits.GetAmbientBrightnessRequest) (*traits.AmbientBrightness, error) {
+func (s *ModelServer) GetAmbientBrightness(_ context.Context, request *GetAmbientBrightnessRequest) (*AmbientBrightness, error) {
 	return s.model.GetAmbientBrightness(resource.WithReadMask(request.GetReadMask()))
 }
 
-func (s *ModelServer) PullAmbientBrightness(request *traits.PullAmbientBrightnessRequest, server traits.BrightnessSensorApi_PullAmbientBrightnessServer) error {
+func (s *ModelServer) PullAmbientBrightness(request *PullAmbientBrightnessRequest, server BrightnessSensorApi_PullAmbientBrightnessServer) error {
 	for update := range s.model.PullAmbientBrightness(server.Context(), resource.WithReadMask(request.GetReadMask()), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		change := &traits.PullAmbientBrightnessResponse_Change{
+		change := &PullAmbientBrightnessResponse_Change{
 			Name:              request.Name,
 			ChangeTime:        timestamppb.New(update.ChangeTime),
 			AmbientBrightness: update.Value,
 		}
 
-		err := server.Send(&traits.PullAmbientBrightnessResponse{
-			Changes: []*traits.PullAmbientBrightnessResponse_Change{change},
+		err := server.Send(&PullAmbientBrightnessResponse{
+			Changes: []*PullAmbientBrightnessResponse_Change{change},
 		})
 		if err != nil {
 			return err

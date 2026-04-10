@@ -9,14 +9,14 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 )
 
 // AirQualityJob gets average Co2 level at current point in time
 type AirQualityJob struct {
 	BaseJob
-	client  traits.AirQualitySensorApiClient
+	client  airqualitysensorpb.AirQualitySensorApiClient
 	Sensors []string
 }
 
@@ -27,7 +27,7 @@ func (a *AirQualityJob) Do(ctx context.Context, sendFn sender) error {
 	for _, sensor := range a.Sensors {
 		cctx, cancel := context.WithTimeout(ctx, a.Timeout.Or(defaultTimeout))
 
-		resp, err := a.client.GetAirQuality(cctx, &traits.GetAirQualityRequest{Name: sensor})
+		resp, err := a.client.GetAirQuality(cctx, &airqualitysensorpb.GetAirQualityRequest{Name: sensor})
 
 		cancel()
 		if err != nil {

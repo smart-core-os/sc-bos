@@ -5,7 +5,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -43,11 +42,15 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	f.devices.Add(cfg.AllDeviceNames()...)
 	group := &Group{
-		client: traits.NewModeApiClient(f.clients.ClientConn()),
+		client: modepb.NewModeApiClient(f.clients.ClientConn()),
 		cfg:    cfg,
 		logger: logger,
 	}
-	announce.Announce(cfg.Name, node.HasTrait(trait.Mode, node.WithClients(modepb.WrapApi(group), modepb.WrapInfo(group))))
+	announce.Announce(cfg.Name,
+		node.HasServer(modepb.RegisterModeApiServer, modepb.ModeApiServer(group)),
+		node.HasServer(modepb.RegisterModeInfoServer, modepb.ModeInfoServer(group)),
+		node.HasTrait(trait.Mode),
+	)
 
 	return nil
 }

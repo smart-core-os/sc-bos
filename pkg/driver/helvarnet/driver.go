@@ -14,11 +14,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	lightpb2 "github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
 )
 
 const (
@@ -105,9 +105,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			d.logger.Error("getSceneNames error", zap.Error(err))
 		}
 		rootAnnouncer.Announce(l.Name,
-			node.HasTrait(trait.Light,
-				node.WithClients(lightpb2.WrapApi(lightingGroup)),
-				node.WithClients(lightpb2.WrapInfo(lightingGroup))),
+			node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(lightingGroup)),
+			node.HasServer(lightpb.RegisterLightInfoServer, lightpb.LightInfoServer(lightingGroup)),
+			node.HasTrait(trait.Light),
 			node.HasMetadata(l.Meta))
 	}
 
@@ -125,10 +125,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		faultCheck := createFaultCheck(l.Name)
 
 		rootAnnouncer.Announce(l.Name,
-			node.HasTrait(trait.Light,
-				node.WithClients(lightpb2.WrapApi(lum))),
-			node.HasTrait(udmipb.TraitName,
-				node.WithClients(udmipb.WrapService(lum))),
+			node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(lum)),
+			node.HasTrait(trait.Light),
+			node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(lum)),
+			node.HasTrait(udmipb.TraitName),
 			node.HasMetadata(l.Meta))
 		grp.Go(func() error {
 			return lum.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck)
@@ -146,10 +146,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		p := newPir(d.clients[pir.IpAddress], d.logger, pir)
 		rootAnnouncer.Announce(pir.Name,
-			node.HasTrait(trait.OccupancySensor,
-				node.WithClients(occupancysensorpb.WrapApi(p))),
-			node.HasTrait(udmipb.TraitName,
-				node.WithClients(udmipb.WrapService(p))),
+			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(p)),
+			node.HasTrait(trait.OccupancySensor),
+			node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(p)),
+			node.HasTrait(udmipb.TraitName),
 			node.HasMetadata(pir.Meta))
 		grp.Go(func() error {
 			return p.runUpdateState(ctx, cfg.RefreshOccupancy.Duration)
@@ -173,12 +173,12 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		faultCheck := createFaultCheck(em.Name)
 
 		rootAnnouncer.Announce(em.Name,
-			node.HasTrait(trait.Light,
-				node.WithClients(lightpb2.WrapApi(emergencyLight))),
-			node.HasTrait(emergencylightpb.TraitName,
-				node.WithClients(emergencylightpb.WrapApi(emergencyLight))),
-			node.HasTrait(udmipb.TraitName,
-				node.WithClients(udmipb.WrapService(emergencyLight))),
+			node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(emergencyLight)),
+			node.HasTrait(trait.Light),
+			node.HasServer(emergencylightpb.RegisterEmergencyLightApiServer, emergencylightpb.EmergencyLightApiServer(emergencyLight)),
+			node.HasTrait(emergencylightpb.TraitName),
+			node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(emergencyLight)),
+			node.HasTrait(udmipb.TraitName),
 			node.HasMetadata(em.Meta))
 		grp.Go(func() error {
 			return emergencyLight.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck)

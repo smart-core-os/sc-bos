@@ -1,0 +1,96 @@
+{
+  "templates": {
+    "stripGroup": {
+      "selector": "g[id='{{el}}'] > [id^='Lights-Strip'],g[id^='Lights-Strip'][id='{{el}}']",
+      "sidebar": {"name": "van/uk/brum/ugs/devices/{{sc}}"},
+      "sources": {
+        "light": {
+          "trait": "smartcore.traits.Light",
+          "request": {"name": "van/uk/brum/ugs/devices/{{sc}}"}
+        }
+      },
+      "effects": [
+        {
+          "type": "widget",
+          "component": "builtin:lighting/LightIcon",
+          "selector": ":scope > [id^='light-widget']",
+          "props": {
+            "level": {"ref": "light", "property": "levelPercent"}
+          }
+        },
+        {
+          "type": "stroke",
+          "source": {"ref": "light", "property": "levelPercent"},
+          "selector": ":scope > :nth-child(2)",
+          "interpolate": {
+            "steps": [
+              {"value": 0, "color": "#4A4F55"},
+              {"value": 1, "color": "#FBBF24"}
+            ]
+          }
+        },
+        {
+          "type": "fill",
+          "source": {"ref": "light", "property": "levelPercent"},
+          "selector": ":scope > :nth-child(1)",
+          "interpolate": {
+            "steps": [
+              {"value": 0, "color": "#4A4F55"},
+              {"value": 1, "color": "#FBBF24"}
+            ]
+          }
+        }
+      ]
+    },
+    "spotGroup": {
+      "selector": "g[id='{{el}}'] > [id^='Lights'],[id$='\\:{{el}}']",
+      "sidebar": {"name": "van/uk/brum/ugs/devices/{{sc}}"},
+      "sources": {
+        "light": {
+          "trait": "smartcore.traits.Light",
+          "request": {"name": "van/uk/brum/ugs/devices/{{sc}}"}
+        }
+      },
+      "effects": [
+        {
+          "type": "widget",
+          "component": "builtin:lighting/LightIcon",
+          "selector": ":scope > [id^='light-widget']",
+          "props": {
+            "level": {"ref": "light", "property": "levelPercent"}
+          }
+        },
+        {
+          "type": "stroke",
+          "source": {"ref": "light", "property": "levelPercent"},
+          "selector": ":scope > rect:nth-child(2)",
+          "interpolate": {
+            "steps": [
+              {"value": 0, "color": "#4A4F55"},
+              {"value": 1, "color": "#FBBF24"}
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "elements": [
+    {"template": {"ref": "spotGroup", "el": "Group 12", "sc": "LTF-L00-01"}},
+    {"template": {"ref": "spotGroup", "el": "Group 4", "sc": "LTF-L00-02"}},
+    {"template": {"ref": "spotGroup", "el": "Group 5", "sc": "LTF-L00-03"}},
+    {"template": {"ref": "spotGroup", "el": "Group 1", "sc": "LTF-L00-04"}},
+    {"template": {"ref": "spotGroup", "el": "Group 6", "sc": "LTF-L00-05"}},
+    {"template": {"ref": "spotGroup", "el": "Group 7", "sc": "LTF-L00-06"}},
+    {"template": {"ref": "spotGroup", "el": "Group 8", "sc": "LTF-L00-07"}},
+    {"template": {"ref": "spotGroup", "el": "Group 9", "sc": "LTF-L00-08"}},
+    {"template": {"ref": "spotGroup", "el": "Group 10", "sc": "LTF-L00-09"}},
+    {"template": {"ref": "spotGroup", "el": "Group 11", "sc": "LTF-L00-10"}},
+    {"template": {"ref": "stripGroup", "el": "Group 13", "sc": "LTF-L00-11"}},
+    {"template": {"ref": "spotGroup", "el": "Group 2", "sc": "LTF-L00-12"}},
+    {"template": {"ref": "stripGroup", "el": "Lights-Strip", "sc": "LTF-L00-13"}},
+    {"template": {"ref": "spotGroup", "el": "364", "sc": "LTF-L00-14"}},
+    {"template": {"ref": "spotGroup", "el": "Group 3", "sc": "LTF-L00-15"}},
+    {"template": {"ref": "spotGroup", "el": "343", "sc": "LTF-L00-16"}},
+    {"template": {"ref": "stripGroup", "el": "Group 14", "sc": "LTF-L00-17"}}
+  ]
+}

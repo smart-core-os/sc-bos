@@ -8,8 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -35,22 +34,22 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) CreateHail(hail *traits.Hail) (*traits.Hail, error) {
+func (m *Model) CreateHail(hail *Hail) (*Hail, error) {
 	defer m.gc()
 	return castReturn(m.hails.Add("", hail, resource.WithGenIDIfAbsent(), resource.WithIDCallback(func(id string) {
 		hail.Id = id
 	})))
 }
 
-func (m *Model) GetHail(id string, opts ...resource.ReadOption) (*traits.Hail, bool) {
+func (m *Model) GetHail(id string, opts ...resource.ReadOption) (*Hail, bool) {
 	msg, exists := m.hails.Get(id, opts...)
 	if msg == nil {
 		return nil, exists
 	}
-	return msg.(*traits.Hail), exists
+	return msg.(*Hail), exists
 }
 
-func (m *Model) UpdateHail(hail *traits.Hail, opts ...resource.WriteOption) (*traits.Hail, error) {
+func (m *Model) UpdateHail(hail *Hail, opts ...resource.WriteOption) (*Hail, error) {
 	if hail.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing ID")
 	}
@@ -58,14 +57,14 @@ func (m *Model) UpdateHail(hail *traits.Hail, opts ...resource.WriteOption) (*tr
 	return castReturn(msg, err)
 }
 
-func (m *Model) DeleteHail(id string, opts ...resource.WriteOption) (*traits.Hail, error) {
+func (m *Model) DeleteHail(id string, opts ...resource.WriteOption) (*Hail, error) {
 	return castReturn(m.hails.Delete(id, opts...))
 }
 
 //goland:noinspection GoNameStartsWithPackageName
 type HailChange struct {
 	ChangeTime time.Time
-	Value      *traits.Hail
+	Value      *Hail
 }
 
 // PullHail subscribes to changes in a single hail.
@@ -78,27 +77,27 @@ func (m *Model) PullHail(ctx context.Context, id string, opts ...resource.ReadOp
 			select {
 			case <-ctx.Done():
 				return
-			case send <- HailChange{ChangeTime: change.ChangeTime, Value: change.Value.(*traits.Hail)}:
+			case send <- HailChange{ChangeTime: change.ChangeTime, Value: change.Value.(*Hail)}:
 			}
 		}
 	}()
 	return send
 }
 
-func (m *Model) ListHails(opts ...resource.ReadOption) []*traits.Hail {
+func (m *Model) ListHails(opts ...resource.ReadOption) []*Hail {
 	msgs := m.hails.List(opts...)
-	hails := make([]*traits.Hail, len(msgs))
+	hails := make([]*Hail, len(msgs))
 	for i, msg := range msgs {
-		hails[i] = msg.(*traits.Hail)
+		hails[i] = msg.(*Hail)
 	}
 	return hails
 }
 
 type HailsChange struct {
-	ChangeType types.ChangeType
+	ChangeType typespb.ChangeType
 	ChangeTime time.Time
-	OldValue   *traits.Hail
-	NewValue   *traits.Hail
+	OldValue   *Hail
+	NewValue   *Hail
 }
 
 func (m *Model) PullHails(ctx context.Context, opts ...resource.ReadOption) <-chan HailsChange {
@@ -143,14 +142,14 @@ func (m *Model) gc() {
 	now := m.hails.Clock().Now()
 	t := now.Add(-m.keepAlive)
 	for _, msg := range m.hails.List() {
-		hail := msg.(*traits.Hail)
+		hail := msg.(*Hail)
 		if arrivedBefore(hail, t) {
 			_, _ = m.hails.Delete(hail.Id, resource.WithAllowMissing(true), resource.WithExpectedValue(hail))
 		}
 	}
 }
 
-func arrivedBefore(hail *traits.Hail, t time.Time) bool {
+func arrivedBefore(hail *Hail, t time.Time) bool {
 	if hail.ArriveTime == nil {
 		return false
 	}
@@ -158,19 +157,19 @@ func arrivedBefore(hail *traits.Hail, t time.Time) bool {
 	return arriveTime.Before(t)
 }
 
-func castReturn(msg proto.Message, err error) (*traits.Hail, error) {
+func castReturn(msg proto.Message, err error) (*Hail, error) {
 	if msg == nil {
 		return nil, err
 	}
-	return msg.(*traits.Hail), err
+	return msg.(*Hail), err
 }
 
-func castChange(change *resource.CollectionChange) (old, new *traits.Hail) {
+func castChange(change *resource.CollectionChange) (old, new *Hail) {
 	if change.OldValue != nil {
-		old = change.OldValue.(*traits.Hail)
+		old = change.OldValue.(*Hail)
 	}
 	if change.NewValue != nil {
-		new = change.NewValue.(*traits.Hail)
+		new = change.NewValue.(*Hail)
 	}
 	return
 }

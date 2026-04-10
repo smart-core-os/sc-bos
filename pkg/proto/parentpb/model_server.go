@@ -4,15 +4,14 @@ import (
 	"context"
 	"sort"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 )
 
 // ModelServer exposes Model as a traits.ParentApiServer.
 type ModelServer struct {
-	traits.UnimplementedParentApiServer
+	UnimplementedParentApiServer
 	model *Model
 }
 
@@ -24,8 +23,8 @@ func (s *ModelServer) Unwrap() any {
 	return s.model
 }
 
-func (s *ModelServer) ListChildren(_ context.Context, request *traits.ListChildrenRequest) (*traits.ListChildrenResponse, error) {
-	pageToken := &types.PageToken{}
+func (s *ModelServer) ListChildren(_ context.Context, request *ListChildrenRequest) (*ListChildrenResponse, error) {
+	pageToken := &typespb.PageToken{}
 	if err := decodePageToken(request.PageToken, pageToken); err != nil {
 		return nil, err
 	}
@@ -48,7 +47,7 @@ func (s *ModelServer) ListChildren(_ context.Context, request *traits.ListChildr
 		}
 	}
 
-	result := &traits.ListChildrenResponse{
+	result := &ListChildrenResponse{
 		TotalSize: int32(len(all)),
 	}
 	upperBound := nextIndex + pageSize
@@ -56,7 +55,7 @@ func (s *ModelServer) ListChildren(_ context.Context, request *traits.ListChildr
 		upperBound = len(all)
 		pageToken = nil
 	} else {
-		pageToken.PageStart = &types.PageToken_LastResourceName{
+		pageToken.PageStart = &typespb.PageToken_LastResourceName{
 			LastResourceName: all[upperBound-1].Name,
 		}
 	}
@@ -71,15 +70,15 @@ func (s *ModelServer) ListChildren(_ context.Context, request *traits.ListChildr
 	// apply read mask
 	mask := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 	for i, child := range result.Children {
-		result.Children[i] = mask.FilterClone(child).(*traits.Child)
+		result.Children[i] = mask.FilterClone(child).(*Child)
 	}
 
 	return result, nil
 }
 
-func (s *ModelServer) PullChildren(request *traits.PullChildrenRequest, server traits.ParentApi_PullChildrenServer) error {
+func (s *ModelServer) PullChildren(request *PullChildrenRequest, server ParentApi_PullChildrenServer) error {
 	for change := range s.model.PullChildren(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		err := server.Send(&traits.PullChildrenResponse{Changes: []*traits.PullChildrenResponse_Change{change}})
+		err := server.Send(&PullChildrenResponse{Changes: []*PullChildrenResponse_Change{change}})
 		if err != nil {
 			return err
 		}

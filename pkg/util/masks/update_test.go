@@ -1,14 +1,14 @@
 package masks
 
 import (
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/smart-core-os/sc-api/go/traits"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
-	"testing"
-	"time"
+
+	"github.com/smart-core-os/sc-bos/internal/testproto"
 )
 
 // Tests merging of messages using a field mask.
@@ -17,39 +17,30 @@ import (
 //
 // Regression Test: FieldUpdater.Merge used to panic with repeated fields
 func TestFieldUpdater_Merge(t *testing.T) {
-	dst := &traits.ElectricMode{
-		Id:          "foo",
-		Title:       "old title",
-		Description: "old description",
-		Segments: []*traits.ElectricMode_Segment{
-			{Length: durationpb.New(30 * time.Second), Magnitude: 0.5},
-		},
+	dst := &testproto.TestAllTypes{
+		DefaultInt32:   1,
+		DefaultString:  "old title",
+		DefaultFloat:   1.0,
+		RepeatedString: []string{"a"},
 	}
 
-	src := &traits.ElectricMode{
-		Id:          "foo",
-		Title:       "new title",
-		Description: "new description",
-		Segments: []*traits.ElectricMode_Segment{
-			{Length: durationpb.New(time.Minute), Magnitude: 1},
-			{Length: durationpb.New(2 * time.Minute), Magnitude: 2},
-		},
+	src := &testproto.TestAllTypes{
+		DefaultInt32:   1,
+		DefaultString:  "new title",
+		DefaultFloat:   2.0,
+		RepeatedString: []string{"b", "c"},
 	}
 
-	mask, err := fieldmaskpb.New(dst, "title", "segments")
+	mask, err := fieldmaskpb.New(dst, "default_string", "repeated_string")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expect := &traits.ElectricMode{
-		Id:          "foo",
-		Title:       "new title",
-		Description: "old description",
-		Segments: []*traits.ElectricMode_Segment{
-			{Length: durationpb.New(30 * time.Second), Magnitude: 0.5},
-			{Length: durationpb.New(time.Minute), Magnitude: 1},
-			{Length: durationpb.New(2 * time.Minute), Magnitude: 2},
-		},
+	expect := &testproto.TestAllTypes{
+		DefaultInt32:   1,
+		DefaultString:  "new title",
+		DefaultFloat:   1.0,
+		RepeatedString: []string{"a", "b", "c"},
 	}
 
 	updater := NewFieldUpdater(WithUpdateMask(mask))

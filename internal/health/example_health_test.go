@@ -25,7 +25,10 @@ func ExampleRegistry_healthApi() {
 			mu.Lock()
 			defer mu.Unlock()
 			m := healthpb.NewModel()
-			undo := n.Announce(name, node.HasTrait(healthpb.TraitName, node.WithClients(healthpb.WrapApi(healthpb.NewModelServer(m)))))
+			undo := n.Announce(name,
+				node.HasServer(healthpb.RegisterHealthApiServer, healthpb.HealthApiServer(healthpb.NewModelServer(m))),
+				node.HasTrait(healthpb.TraitName),
+			)
 			announced[name] = device{undo: undo, m: m}
 			return nil
 		}),

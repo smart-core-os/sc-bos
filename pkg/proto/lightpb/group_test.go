@@ -14,8 +14,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/th"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // todo: test one, some, all failures for get, update, pull
@@ -23,63 +23,63 @@ import (
 func TestGroup_GetBrightness(t *testing.T) {
 	tester := newBrightnessTester(t, "A", "B")
 	// initial state
-	tester.assertGet(&traits.Brightness{})
+	tester.assertGet(&Brightness{})
 	// 0, 100
-	tester.prepare(&traits.Brightness{LevelPercent: 100}, "B")
-	tester.assertGet(&traits.Brightness{LevelPercent: 50})
+	tester.prepare(&Brightness{LevelPercent: 100}, "B")
+	tester.assertGet(&Brightness{LevelPercent: 50})
 	// 80, 80
-	tester.prepare(&traits.Brightness{LevelPercent: 80}, "A", "B")
-	tester.assertGet(&traits.Brightness{LevelPercent: 80})
+	tester.prepare(&Brightness{LevelPercent: 80}, "A", "B")
+	tester.assertGet(&Brightness{LevelPercent: 80})
 	// 60, 80
-	tester.prepare(&traits.Brightness{LevelPercent: 60}, "A")
-	tester.assertGet(&traits.Brightness{LevelPercent: 70})
+	tester.prepare(&Brightness{LevelPercent: 60}, "A")
+	tester.assertGet(&Brightness{LevelPercent: 70})
 }
 
 func TestGroup_UpdateBrightness(t *testing.T) {
 	tester := newBrightnessTester(t, "A", "B")
 	// check no writes happen without us knowing
-	tester.confirm(&traits.Brightness{}, "A", "B")
+	tester.confirm(&Brightness{}, "A", "B")
 	// set a value
-	tester.assertUpdate(&traits.Brightness{LevelPercent: 40})
-	tester.confirm(&traits.Brightness{LevelPercent: 40}, "A", "B")
+	tester.assertUpdate(&Brightness{LevelPercent: 40})
+	tester.confirm(&Brightness{LevelPercent: 40}, "A", "B")
 	// set another value
-	tester.assertUpdate(&traits.Brightness{LevelPercent: 90})
-	tester.confirm(&traits.Brightness{LevelPercent: 90}, "A", "B")
+	tester.assertUpdate(&Brightness{LevelPercent: 90})
+	tester.confirm(&Brightness{LevelPercent: 90}, "A", "B")
 }
 
 func TestGroup_PullBrightness(t *testing.T) {
 	tester := newBrightnessTester(t, "A", "B").pull()
 	// initial value sent immediately
-	tester.assertPull(&traits.Brightness{})
+	tester.assertPull(&Brightness{})
 	// message on first change: 40, 0
-	tester.prepare(&traits.Brightness{LevelPercent: 40}, "A")
-	tester.assertPull(&traits.Brightness{LevelPercent: 20})
+	tester.prepare(&Brightness{LevelPercent: 40}, "A")
+	tester.assertPull(&Brightness{LevelPercent: 20})
 	// message on first change: 40, 40
-	tester.prepare(&traits.Brightness{LevelPercent: 40}, "B")
-	tester.assertPull(&traits.Brightness{LevelPercent: 40})
+	tester.prepare(&Brightness{LevelPercent: 40}, "B")
+	tester.assertPull(&Brightness{LevelPercent: 40})
 	// message on first change: 20, 40
-	tester.prepare(&traits.Brightness{LevelPercent: 20}, "A")
-	tester.assertPull(&traits.Brightness{LevelPercent: 30})
+	tester.prepare(&Brightness{LevelPercent: 20}, "A")
+	tester.assertPull(&Brightness{LevelPercent: 30})
 }
 
 type brightnessTester struct {
 	t    *testing.T
-	subj traits.LightApiClient
-	impl traits.LightApiClient
+	subj LightApiClient
+	impl LightApiClient
 }
 
 func newBrightnessTester(t *testing.T, members ...string) *brightnessTester {
-	devices := NewApiRouter(WithLightApiClientFactory(func(name string) (traits.LightApiClient, error) {
-		return WrapApi(NewModelServer(NewModel())), nil
+	devices := NewApiRouter(WithLightApiClientFactory(func(name string) (LightApiClient, error) {
+		return NewLightApiClient(wrap.ServerToClient(LightApi_ServiceDesc, NewModelServer(NewModel()))), nil
 	}))
-	impl := WrapApi(devices)
+	impl := NewLightApiClient(wrap.ServerToClient(LightApi_ServiceDesc, devices))
 	group := NewGroup(impl, members...)
 
 	// server and client setup
 	lis := bufconn.Listen(1024 * 1024)
 	// setup the server
 	server := grpc.NewServer()
-	traits.RegisterLightApiServer(server, group)
+	RegisterLightApiServer(server, group)
 	t.Cleanup(func() {
 		server.Stop()
 	})
@@ -96,7 +96,7 @@ func newBrightnessTester(t *testing.T, members ...string) *brightnessTester {
 		conn.Close()
 	})
 
-	client := traits.NewLightApiClient(conn)
+	client := NewLightApiClient(conn)
 
 	return &brightnessTester{
 		t:    t,
@@ -105,23 +105,23 @@ func newBrightnessTester(t *testing.T, members ...string) *brightnessTester {
 	}
 }
 
-func (t *brightnessTester) prepare(state *traits.Brightness, names ...string) {
+func (t *brightnessTester) prepare(state *Brightness, names ...string) {
 	t.t.Helper()
 	for _, name := range names {
-		_, err := t.impl.UpdateBrightness(th.Ctx, &traits.UpdateBrightnessRequest{Name: name, Brightness: state})
+		_, err := t.impl.UpdateBrightness(th.Ctx, &UpdateBrightnessRequest{Name: name, Brightness: state})
 		th.CheckErr(t.t, err, fmt.Sprintf("%v.UpdateBrightness", name))
 	}
 }
 
-func (t *brightnessTester) confirm(state *traits.Brightness, names ...string) {
+func (t *brightnessTester) confirm(state *Brightness, names ...string) {
 	t.t.Helper()
 	type badName struct {
 		name  string
-		state *traits.Brightness
+		state *Brightness
 	}
 	var badNames []badName
 	for _, name := range names {
-		got, err := t.impl.GetBrightness(th.Ctx, &traits.GetBrightnessRequest{Name: name})
+		got, err := t.impl.GetBrightness(th.Ctx, &GetBrightnessRequest{Name: name})
 		th.CheckErr(t.t, err, fmt.Sprintf("%v.GetBrightness", name))
 		if !proto.Equal(got, state) {
 			badNames = append(badNames, badName{name: name, state: got})
@@ -141,22 +141,22 @@ func (t *brightnessTester) confirm(state *traits.Brightness, names ...string) {
 	}
 }
 
-func (t *brightnessTester) assertGet(expected *traits.Brightness) {
+func (t *brightnessTester) assertGet(expected *Brightness) {
 	t.t.Helper()
-	res, err := t.subj.GetBrightness(th.Ctx, &traits.GetBrightnessRequest{Name: "Parent"})
+	res, err := t.subj.GetBrightness(th.Ctx, &GetBrightnessRequest{Name: "Parent"})
 	th.CheckErr(t.t, err, "Parent.GetBrightness")
 	if diff := cmp.Diff(expected, res, protocmp.Transform()); diff != "" {
 		t.t.Fatalf("Parent.GetBrightness (-want,+got)\n%v", diff)
 	}
 }
 
-func (t *brightnessTester) assertUpdate(state *traits.Brightness, membersUpdated ...string) {
+func (t *brightnessTester) assertUpdate(state *Brightness, membersUpdated ...string) {
 	t.t.Helper()
-	updateState, err := t.subj.UpdateBrightness(th.Ctx, &traits.UpdateBrightnessRequest{Name: "Parent", Brightness: state})
+	updateState, err := t.subj.UpdateBrightness(th.Ctx, &UpdateBrightnessRequest{Name: "Parent", Brightness: state})
 	th.CheckErr(t.t, err, "Parent.UpdateBrightness")
 	// note: can't compare the update result with the given state as we might be updating just a few
 	// It's more correct to compare with the GetBrightness state as that uses the same merge strategy
-	getState, err := t.subj.GetBrightness(th.Ctx, &traits.GetBrightnessRequest{Name: "Parent"})
+	getState, _ := t.subj.GetBrightness(th.Ctx, &GetBrightnessRequest{Name: "Parent"})
 	if diff := cmp.Diff(getState, updateState, protocmp.Transform()); diff != "" {
 		t.t.Fatalf("Update state doesn't match read state (-want, +got)\n%v", diff)
 	}
@@ -164,21 +164,21 @@ func (t *brightnessTester) assertUpdate(state *traits.Brightness, membersUpdated
 
 func (t *brightnessTester) pull() *brightnessStreamTester {
 	t.t.Helper()
-	s, err := t.subj.PullBrightness(th.Ctx, &traits.PullBrightnessRequest{Name: "Parent"})
+	s, err := t.subj.PullBrightness(th.Ctx, &PullBrightnessRequest{Name: "Parent"})
 	th.CheckErr(t.t, err, "Parent.PullBrightness")
 	return &brightnessStreamTester{brightnessTester: t, s: s, c: make(chan brightnessStreamMsg, 10)}
 }
 
 type brightnessStreamTester struct {
 	*brightnessTester
-	s traits.LightApi_PullBrightnessClient
+	s LightApi_PullBrightnessClient
 	c chan brightnessStreamMsg
 
 	startOnce sync.Once
 }
 
 type brightnessStreamMsg struct {
-	msg *traits.PullBrightnessResponse
+	msg *PullBrightnessResponse
 	err error
 }
 
@@ -224,20 +224,7 @@ func (t *brightnessStreamTester) start() {
 	})
 }
 
-func (t *brightnessStreamTester) assertNone() {
-	t.start()
-	t.t.Helper()
-	timer := time.NewTimer(th.StreamTimout)
-	defer timer.Stop()
-	select {
-	case v := <-t.c:
-		t.t.Fatalf("No messages expected on stream, got %v", v)
-	case <-timer.C:
-		// good case
-	}
-}
-
-func (t *brightnessStreamTester) assertPull(want *traits.Brightness) {
+func (t *brightnessStreamTester) assertPull(want *Brightness) {
 	t.start()
 	t.t.Helper()
 	now := time.Now()
@@ -246,7 +233,7 @@ func (t *brightnessStreamTester) assertPull(want *traits.Brightness) {
 
 	select {
 	case <-timer.C:
-		t.t.Fatalf("want %v, got timeout after %v", want, time.Now().Sub(now))
+		t.t.Fatalf("want %v, got timeout after %v", want, time.Since(now))
 	case v := <-t.c:
 		if v.err != nil {
 			t.t.Fatalf("Parent.PullBrightness.Recv want %v, got error %v", want, v.err)

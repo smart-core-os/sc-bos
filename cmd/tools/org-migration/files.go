@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -37,10 +38,8 @@ func collectFiles(rootPath string, extensions map[string]bool) ([]string, error)
 					return filepath.SkipDir
 				}
 				// Skip explicitly ignored directories
-				for _, ignored := range ignoredDirs {
-					if name == ignored {
-						return filepath.SkipDir
-					}
+				if slices.Contains(ignoredDirs, name) {
+					return filepath.SkipDir
 				}
 			}
 			return nil
@@ -101,10 +100,6 @@ func renameFiles(files []string, projects []string) (map[string]string, error) {
 		}
 
 		renamedFiles[filePath] = newFilePath
-		if *verbose {
-			// verbose is imported from flags.go
-			// This is OK since they're in the same package
-		}
 	}
 
 	return renamedFiles, nil

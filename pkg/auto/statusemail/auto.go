@@ -76,9 +76,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	if cfg.DiscoverSources {
 		// Force the counter to be non-zero so Wait and Add don't race.
 		// See sync.WaitGroup docs for reasons, specifically the docs for Add.
-		activePullers.Add(1)
-		go func() {
-			defer activePullers.Done()
+		activePullers.Go(func() {
 			// we use a replacer here because it's an easy and memory efficient way to do prefix matching.
 			// strings.Replacer uses a Trie internally.
 			// This replacer replaces any matching prefix with a !, to check if we should ignore a name check s[0] == '!'
@@ -120,7 +118,7 @@ func (a *autoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 					}
 				}
 			}
-		}()
+		})
 	}
 
 	go func() {

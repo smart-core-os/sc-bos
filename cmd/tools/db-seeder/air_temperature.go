@@ -9,9 +9,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
@@ -54,12 +54,12 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, prof
 		setPoint := currentSetpoint
 		ambientTemp := currentAmbient
 
-		payload, err := proto.Marshal(&traits.AirTemperature{
-			AmbientTemperature: &types.Temperature{
+		payload, err := proto.Marshal(&airtemperaturepb.AirTemperature{
+			AmbientTemperature: &typespb.Temperature{
 				ValueCelsius: ambientTemp,
 			},
-			TemperatureGoal: &traits.AirTemperature_TemperatureSetPoint{
-				TemperatureSetPoint: &types.Temperature{ValueCelsius: setPoint},
+			TemperatureGoal: &airtemperaturepb.AirTemperature_TemperatureSetPoint{
+				TemperatureSetPoint: &typespb.Temperature{ValueCelsius: setPoint},
 			},
 		})
 		if err != nil {

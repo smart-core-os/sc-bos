@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/testproto"
 )
 
@@ -25,10 +24,10 @@ func Test_clientSend(t *testing.T) {
 	client := clientServer.Client()
 	server := clientServer.Server()
 
-	sentMessage := &traits.Brightness{
-		LevelPercent: 12,
+	sentMessage := &testproto.TestAllTypes{
+		DefaultInt32: 12,
 	}
-	receivedMessage := &traits.Brightness{}
+	receivedMessage := &testproto.TestAllTypes{}
 
 	go client.SendMsg(sentMessage)
 	server.RecvMsg(receivedMessage)
@@ -44,10 +43,10 @@ func Test_serverSend(t *testing.T) {
 	client := clientServer.Client()
 	server := clientServer.Server()
 
-	sentMessage := &traits.Brightness{
-		LevelPercent: 12,
+	sentMessage := &testproto.TestAllTypes{
+		DefaultInt32: 12,
 	}
-	receivedMessage := &traits.Brightness{}
+	receivedMessage := &testproto.TestAllTypes{}
 
 	go server.SendMsg(sentMessage)
 	client.RecvMsg(receivedMessage)

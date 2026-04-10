@@ -21,7 +21,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
-	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
@@ -256,39 +255,39 @@ func (d *devicesHealthCheckCollection) RemoveHealthChecks(name string, ids ...st
 }
 
 func announceServices[M ~map[string]T, T any](c *Controller, name string, services *service.Map, factories M, store serviceapi.Store) node.Undo {
-	client := servicespb.WrapApi(serviceapi.NewApi(services,
+	srv := serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 		serviceapi.WithStore(store),
-	))
-	return announceNodeClient(c.Node, name, client)
+	)
+	return announceNodeServer(c.Node, name, srv)
 }
 
 func announceAutoServices[M ~map[string]T, T any](c *Controller, services *service.Map, factories M) node.Undo {
 	// special because the config name isn't the name we announce as
-	client := servicespb.WrapApi(serviceapi.NewApi(services,
+	srv := serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 		serviceapi.WithStore(c.ControllerConfig.Automations()),
-	))
-	return announceNodeClient(c.Node, "automations", client)
+	)
+	return announceNodeServer(c.Node, "automations", srv)
 }
 
 func announceSystemServices[M ~map[string]T, T any](c *Controller, services *service.Map, factories M) node.Undo {
 	// special because we don't support writing this config, yet
 	// todo: support writing system config
-	client := servicespb.WrapApi(serviceapi.NewApi(services,
+	srv := serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
-	))
-	return announceNodeClient(c.Node, "systems", client)
+	)
+	return announceNodeServer(c.Node, "systems", srv)
 }
 
-func announceNodeClient(n *node.Node, base string, client wrap.ServiceUnwrapper) node.Undo {
+func announceNodeServer(n *node.Node, base string, srv servicespb.ServicesApiServer) node.Undo {
 	var undos []node.Undo
-	undos = append(undos, n.Announce(base, node.HasClient(client)))
+	undos = append(undos, n.Announce(base, node.HasServer(servicespb.RegisterServicesApiServer, srv)))
 	if n.Name() != "" {
-		undos = append(undos, n.Announce(path.Join(n.Name(), base), node.HasClient(client)))
+		undos = append(undos, n.Announce(path.Join(n.Name(), base), node.HasServer(servicespb.RegisterServicesApiServer, srv)))
 	}
 	return node.UndoAll(undos...)
 }

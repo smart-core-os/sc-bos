@@ -8,14 +8,13 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types/time"
+	timepb2 "github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	timepb "github.com/smart-core-os/sc-bos/pkg/util/time"
 )
 
 type ModelServer struct {
-	traits.UnimplementedBookingApiServer
+	UnimplementedBookingApiServer
 
 	model *Model
 }
@@ -29,10 +28,10 @@ func (m *ModelServer) Unwrap() any {
 }
 
 func (m *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterBookingApiServer(server, m)
+	RegisterBookingApiServer(server, m)
 }
 
-func (m *ModelServer) ListBookings(_ context.Context, request *traits.ListBookingsRequest) (*traits.ListBookingsResponse, error) {
+func (m *ModelServer) ListBookings(_ context.Context, request *ListBookingsRequest) (*ListBookingsResponse, error) {
 	opts := []resource.ReadOption{
 		resource.WithReadMask(request.ReadMask),
 	}
@@ -41,26 +40,26 @@ func (m *ModelServer) ListBookings(_ context.Context, request *traits.ListBookin
 			if item == nil {
 				return false
 			}
-			itemVal := item.(*traits.Booking)
+			itemVal := item.(*Booking)
 			return timepb.PeriodsIntersect(itemVal.Booked, request.BookingIntersects)
 		}))
 	}
 	bookings := m.model.ListBookings(opts...)
-	return &traits.ListBookingsResponse{Bookings: bookings}, nil
+	return &ListBookingsResponse{Bookings: bookings}, nil
 }
 
-func (m *ModelServer) CheckInBooking(_ context.Context, request *traits.CheckInBookingRequest) (*traits.CheckInBookingResponse, error) {
+func (m *ModelServer) CheckInBooking(_ context.Context, request *CheckInBookingRequest) (*CheckInBookingResponse, error) {
 	t := request.Time
 	if t == nil {
 		t = serverTimestamp() // todo: use the resource clock
 	}
-	mask, err := fieldmaskpb.New(&traits.Booking{}, "check_in.start_time")
+	mask, err := fieldmaskpb.New(&Booking{}, "check_in.start_time")
 	if err != nil {
 		return nil, err // panic?
 	}
-	checkInBooking := &traits.Booking{
+	checkInBooking := &Booking{
 		Id: request.BookingId,
-		CheckIn: &time.Period{
+		CheckIn: &timepb2.Period{
 			StartTime: t,
 		},
 	}
@@ -68,21 +67,21 @@ func (m *ModelServer) CheckInBooking(_ context.Context, request *traits.CheckInB
 	if err != nil {
 		return nil, err
 	}
-	return &traits.CheckInBookingResponse{}, nil
+	return &CheckInBookingResponse{}, nil
 }
 
-func (m *ModelServer) CheckOutBooking(_ context.Context, request *traits.CheckOutBookingRequest) (*traits.CheckOutBookingResponse, error) {
+func (m *ModelServer) CheckOutBooking(_ context.Context, request *CheckOutBookingRequest) (*CheckOutBookingResponse, error) {
 	t := request.Time
 	if t == nil {
 		t = serverTimestamp() // todo: use the resource clock
 	}
-	mask, err := fieldmaskpb.New(&traits.Booking{}, "check_in.end_time")
+	mask, err := fieldmaskpb.New(&Booking{}, "check_in.end_time")
 	if err != nil {
 		return nil, err // panic?
 	}
-	checkInBooking := &traits.Booking{
+	checkInBooking := &Booking{
 		Id: request.BookingId,
-		CheckIn: &time.Period{
+		CheckIn: &timepb2.Period{
 			EndTime: t,
 		},
 	}
@@ -90,31 +89,31 @@ func (m *ModelServer) CheckOutBooking(_ context.Context, request *traits.CheckOu
 	if err != nil {
 		return nil, err
 	}
-	return &traits.CheckOutBookingResponse{}, nil
+	return &CheckOutBookingResponse{}, nil
 }
 
-func (m *ModelServer) CreateBooking(_ context.Context, request *traits.CreateBookingRequest) (*traits.CreateBookingResponse, error) {
+func (m *ModelServer) CreateBooking(_ context.Context, request *CreateBookingRequest) (*CreateBookingResponse, error) {
 	b := request.GetBooking()
 	if b == nil {
-		b = &traits.Booking{}
+		b = &Booking{}
 	}
 
 	booking, err := m.model.CreateBooking(b)
 	if err != nil {
 		return nil, err
 	}
-	return &traits.CreateBookingResponse{BookingId: booking.Id}, nil
+	return &CreateBookingResponse{BookingId: booking.Id}, nil
 }
 
-func (m *ModelServer) UpdateBooking(ctx context.Context, request *traits.UpdateBookingRequest) (*traits.UpdateBookingResponse, error) {
+func (m *ModelServer) UpdateBooking(ctx context.Context, request *UpdateBookingRequest) (*UpdateBookingResponse, error) {
 	booking, err := m.model.UpdateBooking(request.Booking, resource.WithUpdateMask(request.UpdateMask))
 	if err != nil {
 		return nil, err
 	}
-	return &traits.UpdateBookingResponse{Booking: booking}, nil
+	return &UpdateBookingResponse{Booking: booking}, nil
 }
 
-func (m *ModelServer) PullBookings(request *traits.ListBookingsRequest, server traits.BookingApi_PullBookingsServer) error {
+func (m *ModelServer) PullBookings(request *ListBookingsRequest, server BookingApi_PullBookingsServer) error {
 	opts := []resource.ReadOption{
 		resource.WithReadMask(request.ReadMask),
 		resource.WithUpdatesOnly(request.UpdatesOnly),
@@ -124,13 +123,13 @@ func (m *ModelServer) PullBookings(request *traits.ListBookingsRequest, server t
 			if item == nil {
 				return false
 			}
-			itemVal := item.(*traits.Booking)
+			itemVal := item.(*Booking)
 			return timepb.PeriodsIntersect(itemVal.Booked, request.BookingIntersects)
 		}))
 	}
 
 	for change := range m.model.PullBookings(server.Context(), opts...) {
-		err := server.Send(&traits.PullBookingsResponse{Changes: []*traits.PullBookingsResponse_Change{
+		err := server.Send(&PullBookingsResponse{Changes: []*PullBookingsResponse_Change{
 			{
 				Name:       request.Name,
 				ChangeTime: timestamppb.New(change.ChangeTime),

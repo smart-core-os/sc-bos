@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	testproto2 "github.com/smart-core-os/sc-bos/internal/testproto"
+	"github.com/smart-core-os/sc-bos/internal/testproto"
 )
 
 // Given the following gRPC service definition:
@@ -22,10 +22,10 @@ import (
 
 func ExampleServerToClient() {
 	srv := &exampleServer{}
-	conn := ServerToClient(testproto2.TestApi_ServiceDesc, srv)
-	client := testproto2.NewTestApiClient(conn)
+	conn := ServerToClient(testproto.TestApi_ServiceDesc, srv)
+	client := testproto.NewTestApiClient(conn)
 
-	res, err := client.Unary(context.Background(), &testproto2.UnaryRequest{Msg: "hello"})
+	res, err := client.Unary(context.Background(), &testproto.UnaryRequest{Msg: "hello"})
 	if err != nil {
 		panic(err)
 	}
@@ -34,9 +34,9 @@ func ExampleServerToClient() {
 }
 
 type exampleServer struct {
-	testproto2.UnimplementedTestApiServer
+	testproto.UnimplementedTestApiServer
 }
 
-func (s *exampleServer) Unary(ctx context.Context, req *testproto2.UnaryRequest) (*testproto2.UnaryResponse, error) {
-	return &testproto2.UnaryResponse{Msg: req.Msg}, nil
+func (s *exampleServer) Unary(ctx context.Context, req *testproto.UnaryRequest) (*testproto.UnaryResponse, error) {
+	return &testproto.UnaryResponse{Msg: req.Msg}, nil
 }

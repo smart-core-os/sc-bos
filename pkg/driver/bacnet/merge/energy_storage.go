@@ -9,7 +9,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/gobacnet"
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -74,10 +73,13 @@ func (e *energyStorage) startPoll(init context.Context) (stop task.StopFn, err e
 }
 
 func (e *energyStorage) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(e.config.Name, node.HasTrait(trait.EnergyStorage, node.WithClients(energystoragepb.WrapApi(e))))
+	return a.Announce(e.config.Name,
+		node.HasServer(energystoragepb.RegisterEnergyStorageApiServer, energystoragepb.EnergyStorageApiServer(e)),
+		node.HasTrait(trait.EnergyStorage),
+	)
 }
 
-func (e *energyStorage) GetEnergyLevel(ctx context.Context, request *traits.GetEnergyLevelRequest) (*traits.EnergyLevel, error) {
+func (e *energyStorage) GetEnergyLevel(ctx context.Context, request *energystoragepb.GetEnergyLevelRequest) (*energystoragepb.EnergyLevel, error) {
 	_, err := e.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -85,19 +87,17 @@ func (e *energyStorage) GetEnergyLevel(ctx context.Context, request *traits.GetE
 	return e.ModelServer.GetEnergyLevel(ctx, request)
 }
 
-func (e *energyStorage) PullEnergyLevel(request *traits.PullEnergyLevelRequest, server grpc.ServerStreamingServer[traits.PullEnergyLevelResponse]) error {
+func (e *energyStorage) PullEnergyLevel(request *energystoragepb.PullEnergyLevelRequest, server grpc.ServerStreamingServer[energystoragepb.PullEnergyLevelResponse]) error {
 	_ = e.pollTask.Attach(server.Context())
 	return e.ModelServer.PullEnergyLevel(request, server)
 }
 
-func (e *energyStorage) pollPeer(ctx context.Context) (*traits.EnergyLevel, error) {
-	data := &traits.EnergyLevel{}
+func (e *energyStorage) pollPeer(ctx context.Context) (*energystoragepb.EnergyLevel, error) {
+	data := &energystoragepb.EnergyLevel{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if e.config.EnergyKwh != nil {
-		requestNames = append(requestNames, "energyKwh")
 		readValues = append(readValues, *e.config.EnergyKwh)
 		resProcessors = append(resProcessors, func(response any) error {
 			energyKwh, err := comm.Float32Value(response)
@@ -105,14 +105,13 @@ func (e *energyStorage) pollPeer(ctx context.Context) (*traits.EnergyLevel, erro
 				return comm.ErrReadProperty{Prop: "energyKwh", Cause: err}
 			}
 			if data.Quantity == nil {
-				data.Quantity = &traits.EnergyLevel_Quantity{}
+				data.Quantity = &energystoragepb.EnergyLevel_Quantity{}
 			}
 			data.Quantity.EnergyKwh = energyKwh
 			return nil
 		})
 	}
 	if e.config.Percentage != nil {
-		requestNames = append(requestNames, "percentage")
 		readValues = append(readValues, *e.config.Percentage)
 		resProcessors = append(resProcessors, func(response any) error {
 			percentage, err := comm.Float32Value(response)
@@ -120,7 +119,7 @@ func (e *energyStorage) pollPeer(ctx context.Context) (*traits.EnergyLevel, erro
 				return comm.ErrReadProperty{Prop: "percentage", Cause: err}
 			}
 			if data.Quantity == nil {
-				data.Quantity = &traits.EnergyLevel_Quantity{}
+				data.Quantity = &energystoragepb.EnergyLevel_Quantity{}
 			}
 			data.Quantity.Percentage = percentage
 			return nil

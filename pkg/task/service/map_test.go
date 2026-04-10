@@ -22,8 +22,7 @@ func factoryOK(id, kind string) (Lifecycle, error) {
 func TestMap_Create_FactoryError(t *testing.T) {
 	m := NewMap(factoryWithError, IdIsKind)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	records, changes := m.GetAndListen(ctx)
 	if len(records) != 0 {

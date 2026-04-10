@@ -3,13 +3,13 @@ package time
 import (
 	"testing"
 
-	"github.com/smart-core-os/sc-api/go/types/time"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 )
 
 func TestPeriodsConnected(t *testing.T) {
 	type args struct {
-		p1 *time.Period
-		p2 *time.Period
+		p1 *timepb.Period
+		p2 *timepb.Period
 	}
 	tests := []struct {
 		name string
@@ -62,8 +62,8 @@ func TestPeriodsConnected(t *testing.T) {
 
 func TestPeriodsIntersect(t *testing.T) {
 	type args struct {
-		p1 *time.Period
-		p2 *time.Period
+		p1 *timepb.Period
+		p2 *timepb.Period
 	}
 	tests := []struct {
 		name string

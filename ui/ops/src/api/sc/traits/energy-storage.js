@@ -1,8 +1,8 @@
 import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setValue, trackAction} from '@/api/resource';
-import {EnergyStorageApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/energy_storage_grpc_web_pb';
-import {GetEnergyLevelRequest, PullEnergyLevelRequest, ChargeRequest} from '@smart-core-os/sc-api-grpc-web/traits/energy_storage_pb';
+import {EnergyStorageApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/energystorage/v1/energy_storage_grpc_web_pb';
+import {GetEnergyLevelRequest, PullEnergyLevelRequest, ChargeRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/energystorage/v1/energy_storage_pb';
 
 /**
  * @param {Partial<PullEnergyLevelRequest.AsObject>} request

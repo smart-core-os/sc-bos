@@ -15,8 +15,8 @@ var jspb = require('google-protobuf');
 var goog = jspb;
 var global = globalThis;
 
-var types_info_pb = require('@smart-core-os/sc-api-grpc-web/types/info_pb.js');
-goog.object.extend(proto, types_info_pb);
+var smartcore_bos_types_v1_info_pb = require('../../../../smartcore/bos/types/v1/info_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_info_pb);
 goog.exportSymbol('proto.smartcore.bos.serviceticket.v1.CreateTicketRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.serviceticket.v1.DescribeTicketRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.serviceticket.v1.Ticket', null, global);
@@ -1769,7 +1769,7 @@ proto.smartcore.bos.serviceticket.v1.TicketSupport.prototype.toObject = function
  */
 proto.smartcore.bos.serviceticket.v1.TicketSupport.toObject = function(includeInstance, msg) {
   var f, obj = {
-resourceSupport: (f = msg.getResourceSupport()) && types_info_pb.ResourceSupport.toObject(includeInstance, f),
+resourceSupport: (f = msg.getResourceSupport()) && smartcore_bos_types_v1_info_pb.ResourceSupport.toObject(includeInstance, f),
 classificationsList: jspb.Message.toObjectList(msg.getClassificationsList(),
     proto.smartcore.bos.serviceticket.v1.Ticket.Classification.toObject, includeInstance),
 severitiesList: jspb.Message.toObjectList(msg.getSeveritiesList(),
@@ -1813,8 +1813,8 @@ proto.smartcore.bos.serviceticket.v1.TicketSupport.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new types_info_pb.ResourceSupport;
-      reader.readMessage(value,types_info_pb.ResourceSupport.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_v1_info_pb.ResourceSupport;
+      reader.readMessage(value,smartcore_bos_types_v1_info_pb.ResourceSupport.deserializeBinaryFromReader);
       msg.setResourceSupport(value);
       break;
     case 2:
@@ -1866,7 +1866,7 @@ proto.smartcore.bos.serviceticket.v1.TicketSupport.serializeBinaryToWriter = fun
     writer.writeMessage(
       1,
       f,
-      types_info_pb.ResourceSupport.serializeBinaryToWriter
+      smartcore_bos_types_v1_info_pb.ResourceSupport.serializeBinaryToWriter
     );
   }
   f = message.getClassificationsList();
@@ -1897,17 +1897,17 @@ proto.smartcore.bos.serviceticket.v1.TicketSupport.serializeBinaryToWriter = fun
 
 
 /**
- * optional smartcore.types.ResourceSupport resource_support = 1;
- * @return {?proto.smartcore.types.ResourceSupport}
+ * optional smartcore.bos.types.v1.ResourceSupport resource_support = 1;
+ * @return {?proto.smartcore.bos.types.v1.ResourceSupport}
  */
 proto.smartcore.bos.serviceticket.v1.TicketSupport.prototype.getResourceSupport = function() {
-  return /** @type{?proto.smartcore.types.ResourceSupport} */ (
-    jspb.Message.getWrapperField(this, types_info_pb.ResourceSupport, 1));
+  return /** @type{?proto.smartcore.bos.types.v1.ResourceSupport} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_v1_info_pb.ResourceSupport, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.types.ResourceSupport|undefined} value
+ * @param {?proto.smartcore.bos.types.v1.ResourceSupport|undefined} value
  * @return {!proto.smartcore.bos.serviceticket.v1.TicketSupport} returns this
 */
 proto.smartcore.bos.serviceticket.v1.TicketSupport.prototype.setResourceSupport = function(value) {

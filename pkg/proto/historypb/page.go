@@ -11,11 +11,11 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	timepb "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/history"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 )
 
-//go:generate go tool protomod protoc -- -I . -I ../../../proto --go_out=paths=source_relative:. historypb_page.proto
+//go:generate protoc -I . -I ../../../proto --go_out=paths=source_relative:. historypb_page.proto
 
 // NewPageReader returns a new PageReader capable of reading pages from a history.Store.
 func NewPageReader[R proto.Message](decodePayload func(r history.Record) (R, error)) PageReader[R] {
@@ -95,10 +95,7 @@ func (pr PageReader[R]) ListRecordsBetween(ctx context.Context, store history.St
 		return nil, 0, "", err
 	}
 
-	readRecords := read
-	if readRecords > pageSize {
-		readRecords = pageSize
-	}
+	readRecords := min(read, pageSize)
 	page = make([]R, readRecords)
 
 	var allErrs error

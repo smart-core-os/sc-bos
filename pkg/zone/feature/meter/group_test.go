@@ -1,7 +1,6 @@
 package meter
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -90,8 +89,7 @@ func TestGroup_PullMeterReadings(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 			n := node.New(tt.name)
 			timer := &timeInterceptor{
 				base:    time.Date(2022, 1, 1, 12, 0, 13, 0, time.UTC), // random base time
@@ -123,14 +121,12 @@ func TestGroup_PullMeterReadings(t *testing.T) {
 			}
 
 			for meter := range tt.meters {
-				n.Announce(meter, node.HasTrait(
-					meterpb.TraitName,
-					node.WithClients(
-						meterpb.WrapApi(m),
-						meterpb.WrapInfo(m),
-						meterpb.WrapHistory(historypb.NewMeterServer(tt.meters[meter].store)),
-					),
-				))
+				n.Announce(meter,
+					node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(m)),
+					node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(m)),
+					node.HasServer(meterpb.RegisterMeterHistoryServer, meterpb.MeterHistoryServer(historypb.NewMeterServer(tt.meters[meter].store))),
+					node.HasTrait(meterpb.TraitName),
+				)
 			}
 
 			for idx := range tt.meters[maps.Keys(tt.meters)[0]].events {
@@ -370,8 +366,7 @@ func TestGroup_GetMeterReading(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 			n := node.New(tt.name)
 			timer := &timeInterceptor{
 				base:    time.Date(2022, 1, 1, 12, 0, 13, 0, time.UTC), // random base time
@@ -403,14 +398,12 @@ func TestGroup_GetMeterReading(t *testing.T) {
 
 			for meter := range tt.meters {
 				m.meterToIndex[meter] = 0
-				n.Announce(meter, node.HasTrait(
-					meterpb.TraitName,
-					node.WithClients(
-						meterpb.WrapApi(m),
-						meterpb.WrapInfo(m),
-						meterpb.WrapHistory(historypb.NewMeterServer(tt.meters[meter].store)),
-					),
-				))
+				n.Announce(meter,
+					node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(m)),
+					node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(m)),
+					node.HasServer(meterpb.RegisterMeterHistoryServer, meterpb.MeterHistoryServer(historypb.NewMeterServer(tt.meters[meter].store))),
+					node.HasTrait(meterpb.TraitName),
+				)
 			}
 
 			for idx, want := range tt.want {
@@ -423,7 +416,7 @@ func TestGroup_GetMeterReading(t *testing.T) {
 							panic(err)
 						}
 
-						_, err = tt.meters[meter].store.Append(nil, rec)
+						_, err = tt.meters[meter].store.Append(ctx, rec)
 						if err != nil {
 							panic(err)
 						}

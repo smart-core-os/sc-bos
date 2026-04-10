@@ -8,9 +8,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/shelly/trv/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	"github.com/smart-core-os/sc-bos/pkg/trait/airtemperaturepb"
 )
 
 const DriverName = "shelly-trv"
@@ -47,7 +47,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		d.devices = append(d.devices, trv)
 
-		announcer.Announce(device.Name, node.HasTrait(trait.AirTemperature, node.WithClients(airtemperaturepb.WrapApi(trv.airTemperatureServer))))
+		announcer.Announce(device.Name,
+			node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(trv.airTemperatureServer)),
+			node.HasTrait(trait.AirTemperature),
+		)
 	}
 
 	return nil

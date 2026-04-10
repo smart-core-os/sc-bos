@@ -7,7 +7,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -16,47 +15,47 @@ type Model struct {
 }
 
 func NewModel(opts ...resource.Option) *Model {
-	defaultOpts := []resource.Option{resource.WithInitialValue(&traits.Metadata{})}
+	defaultOpts := []resource.Option{resource.WithInitialValue(&Metadata{})}
 	return &Model{
 		metadata: resource.NewValue(append(defaultOpts, opts...)...),
 	}
 }
 
-func (m *Model) GetMetadata(opts ...resource.ReadOption) (*traits.Metadata, error) {
+func (m *Model) GetMetadata(opts ...resource.ReadOption) (*Metadata, error) {
 	res := m.metadata.Get(opts...)
-	return res.(*traits.Metadata), nil
+	return res.(*Metadata), nil
 }
 
-func (m *Model) UpdateMetadata(metadata *traits.Metadata, opts ...resource.WriteOption) (*traits.Metadata, error) {
+func (m *Model) UpdateMetadata(metadata *Metadata, opts ...resource.WriteOption) (*Metadata, error) {
 	res, err := m.metadata.Set(metadata, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*traits.Metadata), nil
+	return res.(*Metadata), nil
 }
 
 // MergeMetadata writes any present fields in metadata to the existing data.
 // Traits that exist in the given metadata are merged with existing traits, so that each trait appears only once and
 // the 'more' maps are merged.
-func (m *Model) MergeMetadata(metadata *traits.Metadata, opts ...resource.WriteOption) (*traits.Metadata, error) {
+func (m *Model) MergeMetadata(metadata *Metadata, opts ...resource.WriteOption) (*Metadata, error) {
 	newOpts := make([]resource.WriteOption, 1, len(opts)+1)
 	newOpts[0] = resource.InterceptBefore(metadataMergeInterceptor)
 	newOpts = append(newOpts, opts...)
 	return m.UpdateMetadata(metadata, newOpts...)
 }
 
-func (m *Model) UpdateTraitMetadata(traitMetadata *traits.TraitMetadata, opts ...resource.WriteOption) (*traits.Metadata, error) {
-	return m.MergeMetadata(&traits.Metadata{Traits: []*traits.TraitMetadata{traitMetadata}}, opts...)
+func (m *Model) UpdateTraitMetadata(traitMetadata *TraitMetadata, opts ...resource.WriteOption) (*Metadata, error) {
+	return m.MergeMetadata(&Metadata{Traits: []*TraitMetadata{traitMetadata}}, opts...)
 }
 
 // mergeTraitMetadata merged tmd into tmds and returns the updated slice.
 // If a trait with tmd.Name already exists in tmds then tmd will be merged into it.
 // Otherwise tmd will be added appended to the slice.
-func mergeTraitMetadata(tmds []*traits.TraitMetadata, tmd *traits.TraitMetadata) []*traits.TraitMetadata {
+func mergeTraitMetadata(tmds []*TraitMetadata, tmd *TraitMetadata) []*TraitMetadata {
 	// todo: this would be more efficient if tmds were sorted by Name, so figure out how to do that.
 
 	if len(tmds) == 0 {
-		return []*traits.TraitMetadata{tmd}
+		return []*TraitMetadata{tmd}
 	}
 	for _, trait := range tmds {
 		if trait.Name == tmd.Name {
@@ -68,8 +67,8 @@ func mergeTraitMetadata(tmds []*traits.TraitMetadata, tmd *traits.TraitMetadata)
 	return append(tmds, tmd)
 }
 
-func (m *Model) PullMetadata(ctx context.Context, opts ...resource.ReadOption) <-chan *traits.PullMetadataResponse_Change {
-	send := make(chan *traits.PullMetadataResponse_Change)
+func (m *Model) PullMetadata(ctx context.Context, opts ...resource.ReadOption) <-chan *PullMetadataResponse_Change {
+	send := make(chan *PullMetadataResponse_Change)
 
 	// when ctx is cancelled, then the resource will close recv for us
 	recv := m.metadata.Pull(ctx, opts...)
@@ -87,10 +86,10 @@ func (m *Model) PullMetadata(ctx context.Context, opts ...resource.ReadOption) <
 	return send
 }
 
-func metadataValueChangeToProto(change *resource.ValueChange) *traits.PullMetadataResponse_Change {
-	return &traits.PullMetadataResponse_Change{
+func metadataValueChangeToProto(change *resource.ValueChange) *PullMetadataResponse_Change {
+	return &PullMetadataResponse_Change{
 		ChangeTime: timestamppb.New(change.ChangeTime),
-		Metadata:   change.Value.(*traits.Metadata),
+		Metadata:   change.Value.(*Metadata),
 	}
 }
 
@@ -103,8 +102,8 @@ func metadataValueChangeToProto(change *resource.ValueChange) *traits.PullMetada
 //	target   = {B: "b2", C: "c2"}
 //	Merge(existing, target)
 //	// Output: target == {A: "a1", B: "b2", C: "c2"}
-func Merge(existing, target *traits.Metadata) {
-	clean := proto.Clone(target).(*traits.Metadata)
+func Merge(existing, target *Metadata) {
+	clean := proto.Clone(target).(*Metadata)
 	// handle trait updates specially
 	cleanTraits := clean.Traits
 	clean.Traits = nil
@@ -129,8 +128,8 @@ func Merge(existing, target *traits.Metadata) {
 // special handling for updating a *traits.Metadata
 // because Traits is supposed to be a map-like slice
 func metadataMergeInterceptor(old, new proto.Message) {
-	oldVal := old.(*traits.Metadata)
-	newVal := new.(*traits.Metadata)
+	oldVal := old.(*Metadata)
+	newVal := new.(*Metadata)
 
 	Merge(oldVal, newVal)
 }

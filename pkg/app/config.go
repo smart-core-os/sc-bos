@@ -166,7 +166,7 @@ func (i immutableServiceStore) SaveConfig(ctx context.Context, name, typ string,
 
 var ErrImmutableConfig = errors.New("cannot modify config when in cloud config mode")
 
-func loadCloudSecret(p string) (string, error) {
+func loadCloudClientSecret(p string) (string, error) {
 	data, err := os.ReadFile(p)
 	if err != nil {
 		return "", err

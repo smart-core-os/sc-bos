@@ -11,10 +11,12 @@ import (
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -144,7 +146,7 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, no
 				Timeout:  cfg.Sources.Occupancy.Timeout,
 			},
 			Sensors: cfg.Sources.Occupancy.Sensors,
-			client:  traits.NewOccupancySensorApiClient(node.ClientConn()),
+			client:  occupancysensorpb.NewOccupancySensorApiClient(node.ClientConn()),
 		}
 
 		occ.PreviousExecution = occ.getPreviousExecution()
@@ -164,7 +166,7 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, no
 				Timeout:  cfg.Sources.Temperature.Timeout,
 			},
 			Sensors: cfg.Sources.Temperature.Sensors,
-			client:  traits.NewAirTemperatureApiClient(node.ClientConn()),
+			client:  airtemperaturepb.NewAirTemperatureApiClient(node.ClientConn()),
 		}
 
 		temperature.PreviousExecution = temperature.getPreviousExecution()
@@ -205,7 +207,7 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, no
 				Timeout:  cfg.Sources.AirQuality.Timeout,
 			},
 			Sensors: cfg.Sources.AirQuality.Sensors,
-			client:  traits.NewAirQualitySensorApiClient(node.ClientConn()),
+			client:  airqualitysensorpb.NewAirQualitySensorApiClient(node.ClientConn()),
 		}
 
 		air.PreviousExecution = air.getPreviousExecution()

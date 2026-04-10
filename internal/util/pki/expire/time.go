@@ -37,7 +37,7 @@ func BeforeInvalid(d time.Duration) pki.Expiry {
 // BeforeInvalidT returns a pki.Expiry that returns true if now >= cert.NotAfter - d.
 func BeforeInvalidT(d time.Duration, now Now) pki.Expiry {
 	return func(cert *tls.Certificate, pool []*x509.Certificate, err error) bool {
-		if cert == nil {
+		if cert == nil || err != nil {
 			return false
 		}
 
@@ -58,7 +58,7 @@ func AfterValid(d time.Duration) pki.Expiry {
 // AfterValidT returns a pki.Expiry that returns true if now >= cert.NotBefore + d.
 func AfterValidT(d time.Duration, now Now) pki.Expiry {
 	return func(cert *tls.Certificate, pool []*x509.Certificate, err error) bool {
-		if cert == nil {
+		if cert == nil || err != nil {
 			return false
 		}
 		c, err := pki.TLSLeaf(cert)
@@ -79,7 +79,7 @@ func AfterProgress(progress float32) pki.Expiry {
 // For example if progress were 0.5 then true is returned when now is half way between NotAfter and NotBefore.
 func AfterProgressT(progress float32, now Now) pki.Expiry {
 	return func(cert *tls.Certificate, pool []*x509.Certificate, err error) bool {
-		if cert == nil {
+		if cert == nil || err != nil {
 			return false
 		}
 

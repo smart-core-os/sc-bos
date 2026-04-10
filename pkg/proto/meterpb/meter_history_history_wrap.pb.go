@@ -8,6 +8,7 @@ import (
 )
 
 // WrapHistory	adapts a MeterHistoryServer	and presents it as a MeterHistoryClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHistory(server MeterHistoryServer) *HistoryWrapper {
 	conn := wrap.ServerToClient(MeterHistory_ServiceDesc, server)
 	client := NewMeterHistoryClient(conn)

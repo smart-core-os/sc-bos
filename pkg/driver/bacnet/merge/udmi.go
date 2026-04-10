@@ -72,7 +72,10 @@ func newUdmiMerge(client *gobacnet.Client, devices known.Context, faultCheck *he
 }
 
 func (f *udmiMerge) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(f.config.Name, node.HasTrait(udmipb.TraitName, node.WithClients(udmipb.WrapService(f))))
+	return a.Announce(f.config.Name,
+		node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(f)),
+		node.HasTrait(udmipb.TraitName),
+	)
 }
 
 func (f *udmiMerge) PullControlTopics(request *udmipb.PullControlTopicsRequest, server udmipb.UdmiService_PullControlTopicsServer) error {

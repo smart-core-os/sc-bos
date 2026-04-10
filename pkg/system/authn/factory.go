@@ -124,6 +124,9 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 			if cfg.User.ImportFileAccounts && localAccountsAvailable {
 				s.logger.Debug("importing user accounts from file into database", zap.Int("count", len(identities)))
 				err = importIdentities(ctx, s.accounts, identities, s.logger.Named("import"))
+				if err != nil {
+					return fmt.Errorf("importing file accounts: %w", err)
+				}
 			} else {
 				s.logger.Debug("using static file verifier for user accounts")
 				fileVerifier, err := newStaticVerifier(identities)
@@ -152,6 +155,13 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	if serveTokenEndpoint {
+		if cfg.TokenSigningKeyFile != "" {
+			signingKey, err := accesstoken.LoadOrGenerateSigningKey(cfg.TokenSigningKeyFile, s.logger)
+			if err != nil {
+				return fmt.Errorf("load token signing key: %w", err)
+			}
+			tokenServerOpts = append(tokenServerOpts, accesstoken.WithSigningKey(signingKey))
+		}
 		server, err := accesstoken.NewServer("authn", tokenServerOpts...)
 		if err != nil {
 			return fmt.Errorf("new token server: %w", err)

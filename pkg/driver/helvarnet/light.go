@@ -18,12 +18,12 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
@@ -37,7 +37,7 @@ type TestResults struct {
 
 // Light represents a single light device within the HelvarNet system.
 type Light struct {
-	traits.UnimplementedLightApiServer
+	lightpb.UnimplementedLightApiServer
 	emergencylightpb.UnimplementedEmergencyLightApiServer
 	udmipb.UnimplementedUdmiServiceServer
 
@@ -56,7 +56,7 @@ type Light struct {
 
 func newLight(client *tcpClient, l *zap.Logger, conf *config.Device, db *bolthold.Store, em bool) *Light {
 	return &Light{
-		brightness: resource.NewValue(resource.WithInitialValue(&traits.Brightness{}), resource.WithNoDuplicates()),
+		brightness: resource.NewValue(resource.WithInitialValue(&lightpb.Brightness{}), resource.WithNoDuplicates()),
 		client:     client,
 		conf:       conf,
 		database:   db,
@@ -112,7 +112,7 @@ func (l *Light) refreshBrightness(ctx context.Context) error {
 		return err
 	}
 
-	_, _ = l.brightness.Set(&traits.Brightness{
+	_, _ = l.brightness.Set(&lightpb.Brightness{
 		LevelPercent: float32(brightness),
 	})
 	return nil
@@ -144,7 +144,7 @@ func (l *Light) refreshDeviceStatus(ctx context.Context) (int64, error) {
 
 // UpdateBrightness update the brightness level or preset (scene) of the device
 // if the request has a present included, this takes precedence and the level percent is ignored
-func (l *Light) UpdateBrightness(ctx context.Context, req *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
+func (l *Light) UpdateBrightness(ctx context.Context, req *lightpb.UpdateBrightnessRequest) (*lightpb.Brightness, error) {
 	if req.Brightness == nil {
 		return nil, status.Error(codes.InvalidArgument, "no brightness in request")
 	}
@@ -168,8 +168,8 @@ func (l *Light) UpdateBrightness(ctx context.Context, req *traits.UpdateBrightne
 		if err != nil {
 			return nil, status.Error(codes.DeadlineExceeded, "failed to set scene")
 		}
-		_, _ = l.brightness.Set(&traits.Brightness{
-			Preset: &traits.LightPreset{
+		_, _ = l.brightness.Set(&lightpb.Brightness{
+			Preset: &lightpb.LightPreset{
 				Name: req.Brightness.Preset.Name,
 			},
 		})
@@ -179,7 +179,7 @@ func (l *Light) UpdateBrightness(ctx context.Context, req *traits.UpdateBrightne
 		if err != nil {
 			return nil, status.Error(codes.DeadlineExceeded, "failed to set scene")
 		}
-		_, _ = l.brightness.Set(&traits.Brightness{
+		_, _ = l.brightness.Set(&lightpb.Brightness{
 			LevelPercent: level,
 		})
 	}
@@ -187,20 +187,20 @@ func (l *Light) UpdateBrightness(ctx context.Context, req *traits.UpdateBrightne
 	return nil, nil
 }
 
-func (l *Light) GetBrightness(ctx context.Context, _ *traits.GetBrightnessRequest) (*traits.Brightness, error) {
+func (l *Light) GetBrightness(ctx context.Context, _ *lightpb.GetBrightnessRequest) (*lightpb.Brightness, error) {
 	err := l.refreshBrightness(ctx)
 	if err != nil {
 		return nil, status.Error(codes.DeadlineExceeded, "failed to get brightness")
 	}
 	value := l.brightness.Get()
-	brightness := value.(*traits.Brightness)
+	brightness := value.(*lightpb.Brightness)
 	return brightness, nil
 }
 
-func (l *Light) PullBrightness(_ *traits.PullBrightnessRequest, server traits.LightApi_PullBrightnessServer) error {
+func (l *Light) PullBrightness(_ *lightpb.PullBrightnessRequest, server lightpb.LightApi_PullBrightnessServer) error {
 	for value := range l.brightness.Pull(server.Context()) {
-		brightness := value.Value.(*traits.Brightness)
-		err := server.Send(&traits.PullBrightnessResponse{Changes: []*traits.PullBrightnessResponse_Change{
+		brightness := value.Value.(*lightpb.Brightness)
+		err := server.Send(&lightpb.PullBrightnessResponse{Changes: []*lightpb.PullBrightnessResponse_Change{
 			{
 				Name:       l.conf.Name,
 				ChangeTime: timestamppb.New(value.ChangeTime),
@@ -216,7 +216,7 @@ func (l *Light) PullBrightness(_ *traits.PullBrightnessRequest, server traits.Li
 
 func (l *Light) udmiPointsetFromData() (*udmipb.MqttMessage, error) {
 	points := make(udmi.PointsEvent)
-	brightness := l.brightness.Get().(*traits.Brightness)
+	brightness := l.brightness.Get().(*lightpb.Brightness)
 	points["BrightnessLvl%"] = udmi.PointValue{PresentValue: brightness.LevelPercent}
 
 	if brightness.Preset != nil && brightness.Preset.Title != "" {
@@ -501,7 +501,7 @@ func (l *Light) StartFunctionTest(ctx context.Context, _ *emergencylightpb.Start
 	err := l.runFunctionTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to start function test", zap.String("name", l.conf.Name), zap.Error(err))
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to start function test"))
+		return nil, status.Error(codes.Internal, "failed to start function test")
 	}
 	_, _ = l.testResultSet.Set(&emergencylightpb.TestResultSet{
 		FunctionTest: &emergencylightpb.EmergencyTestResult{
@@ -518,7 +518,7 @@ func (l *Light) StartDurationTest(ctx context.Context, _ *emergencylightpb.Start
 	err := l.runDurationTest(ctx)
 	if err != nil {
 		l.logger.Error("Failed to start duration test", zap.String("name", l.conf.Name), zap.Error(err))
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to start duration test"))
+		return nil, status.Error(codes.Internal, "failed to start duration test")
 	}
 	_, _ = l.testResultSet.Set(&emergencylightpb.TestResultSet{
 		DurationTest: &emergencylightpb.EmergencyTestResult{

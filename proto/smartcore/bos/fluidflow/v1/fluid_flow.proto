@@ -6,7 +6,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb";
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "types/info.proto";
+import "smartcore/bos/types/v1/info.proto";
 
 // FluidFlow trait is applicable to devices that control the flow of a fluid (liquid or gas)
 // by opening or closing a passageway. This includes devices such as water valves,
@@ -91,7 +91,7 @@ message DescribeFluidFlowRequest {
 // FluidFlowSupport describes the capabilities of devices implementing this trait
 message FluidFlowSupport {
   // How a named device supports read/write/pull apis
-  smartcore.types.ResourceSupport resource_support = 1;
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
   // The unit associated with the flow rate target and measured values
   string flow_rate_unit = 2;
   // The unit associated with the drive frequency target and measured values

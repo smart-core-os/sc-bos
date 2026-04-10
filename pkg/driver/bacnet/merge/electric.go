@@ -10,15 +10,14 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/gobacnet"
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
-	electricpb2 "github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
 )
 
 type electricConfig struct {
@@ -53,8 +52,8 @@ type electricTrait struct {
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *electricpb2.Model
-	*electricpb2.ModelServer
+	model *electricpb.Model
+	*electricpb.ModelServer
 	config   electricConfig
 	pollTask *task.Intermittent
 }
@@ -64,15 +63,15 @@ func newElectric(client *gobacnet.Client, devices known.Context, faultCheck *hea
 	if err != nil {
 		return nil, err
 	}
-	model := electricpb2.NewModel()
-	_, _ = model.UpdateDemand(&traits.ElectricDemand{}) // reset defaults
+	model := electricpb.NewModel()
+	_, _ = model.UpdateDemand(&electricpb.ElectricDemand{}) // reset defaults
 	t := &electricTrait{
 		client:      client,
 		known:       devices,
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: electricpb2.NewModelServer(model),
+		ModelServer: electricpb.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
@@ -80,10 +79,13 @@ func newElectric(client *gobacnet.Client, devices known.Context, faultCheck *hea
 }
 
 func (t *electricTrait) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(trait.Electric, node.WithClients(electricpb2.WrapApi(t))))
+	return a.Announce(t.config.Name,
+		node.HasServer(electricpb.RegisterElectricApiServer, electricpb.ElectricApiServer(t)),
+		node.HasTrait(trait.Electric),
+	)
 }
 
-func (t *electricTrait) GetDemand(ctx context.Context, request *traits.GetDemandRequest) (*traits.ElectricDemand, error) {
+func (t *electricTrait) GetDemand(ctx context.Context, request *electricpb.GetDemandRequest) (*electricpb.ElectricDemand, error) {
 	_, err := t.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -91,7 +93,7 @@ func (t *electricTrait) GetDemand(ctx context.Context, request *traits.GetDemand
 	return t.ModelServer.GetDemand(ctx, request)
 }
 
-func (t *electricTrait) PullDemand(request *traits.PullDemandRequest, server traits.ElectricApi_PullDemandServer) error {
+func (t *electricTrait) PullDemand(request *electricpb.PullDemandRequest, server electricpb.ElectricApi_PullDemandServer) error {
 	err := t.pollTask.Attach(server.Context())
 	if err != nil {
 		return err
@@ -101,7 +103,7 @@ func (t *electricTrait) PullDemand(request *traits.PullDemandRequest, server tra
 	timeoutCtx, cleanup := context.WithTimeout(server.Context(), t.config.PollTimeoutDuration())
 	defer cleanup()
 	for change := range t.model.PullDemand(timeoutCtx) {
-		if !proto.Equal(change.Value, &traits.ElectricDemand{}) { // skip zero value
+		if !proto.Equal(change.Value, &electricpb.ElectricDemand{}) { // skip zero value
 			break
 		}
 	}
@@ -116,12 +118,12 @@ func (t *electricTrait) startPoll(init context.Context) (stop task.StopFn, err e
 	})
 }
 
-func (t *electricTrait) pollPeer(ctx context.Context) (*traits.ElectricDemand, error) {
+func (t *electricTrait) pollPeer(ctx context.Context) (*electricpb.ElectricDemand, error) {
 	var toRead []config.ValueSource
 	var toWrite []func(v any) error // already scaled
 	var requestNames []string
-	dst := &traits.ElectricDemand{}
-	var phaseDemand [3]*traits.ElectricDemand
+	dst := &electricpb.ElectricDemand{}
+	var phaseDemand [3]*electricpb.ElectricDemand
 
 	if cfg := t.config.Demand; cfg != nil {
 		if cfg.Current != nil {
@@ -149,7 +151,7 @@ func (t *electricTrait) pollPeer(ctx context.Context) (*traits.ElectricDemand, e
 			})
 		}
 
-		readPhase := func(i int, phase ElectricPhaseConfig, dst *traits.ElectricDemand) {
+		readPhase := func(i int, phase ElectricPhaseConfig, dst *electricpb.ElectricDemand) {
 			suffix := ""
 			if i >= 0 {
 				suffix = fmt.Sprintf("L%d", i)
@@ -193,7 +195,7 @@ func (t *electricTrait) pollPeer(ctx context.Context) (*traits.ElectricDemand, e
 		}
 
 		for i, phase := range cfg.Phases {
-			dst := &traits.ElectricDemand{}
+			dst := &electricpb.ElectricDemand{}
 			phaseDemand[i] = dst
 			readPhase(i, phase, dst)
 		}

@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package smartcore.bos.color.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/colorpb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/types/v1/info.proto";
+import "smartcore/bos/types/v1/number.proto";
+import "smartcore/bos/types/v1/tween.proto";
+
+// Control the color of a device. This could be a smart-bulb, or a DMX fitting.
+service ColorApi {
+  // get the current color
+  rpc GetColor (GetColorRequest) returns (Color);
+
+  // request that the color be changed
+  rpc UpdateColor (UpdateColorRequest) returns (Color);
+
+  // request updates to changes to the color value
+  rpc PullColor (PullColorRequest) returns (stream PullColorResponse);
+}
+
+// Describes the capabilities of a specific named device with respect to this trait.
+service ColorInfo {
+  // Get information about how a named device implements Color features
+  rpc DescribeColor (DescribeColorRequest) returns (ColorSupport);
+}
+
+// Represents the color
+message Color {
+  ColorChannels channels = 1;
+  ColorPreset preset = 2;
+
+  // How the color changes or should change over time. On write only duration should be set.
+  smartcore.bos.types.v1.Tween color_tween = 3;
+  // The target channel values. Ignored on write. On read zero values should be ignored iff target_preset is present.
+  ColorChannels target_channels = 4;
+  // The target preset. Ignored on write. If present ignore target_channels
+  ColorPreset target_preset = 5;
+}
+
+// ColorChannels represents different channels of color for a device, e.g. red, green, and blue
+message ColorChannels {
+  // red channel value in the range [0,255]
+  // optional on write, required on read if supported
+  optional uint32 red = 1;
+  // green channel value in the range [0,255]
+  // optional on write, required on read if supported
+  optional uint32 green = 2;
+  // blue channel value in the range [0,255]
+  // optional on write, required on read if supported
+  optional uint32 blue = 3;
+  // if the device supports an intensity channel, that is represented here in the range [0,255]
+  // optional on write, required on read if supported
+  optional uint32 intensity = 4;
+  // if the device supports color temperature, that is represented here in Kelvin, typically in the range [2000,9000]
+  // optional on write, required on read if supported
+  optional uint32 temperature = 5;
+  // a map of other channel names to value, where the value is [0-255]
+  // all values supported (that aren't specific fields above) should be present in the map,
+  // even if the value is 0; except on write when values not to be changed should be omitted
+  // e.g. if a device supports RGBW (red, green, blue, and white), then this map
+  // should contain the white value: {more: {white: 255}}
+  map<string, uint32> more = 6;
+}
+
+message ColorPreset {
+  // a unique name for this preset, which could be a number or ID, e.g. "143", or "preset_1"
+  string name = 1;
+  // a display name for this preset, e.g. "Wake Up", or "Film Mode"
+  string title = 2;
+}
+
+// ColorSupport describes the capabilities of devices implementing this trait
+message ColorSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
+  // control how the color can be controlled. The range of these attributes is fixed at 0-100 as a percentage
+  smartcore.bos.types.v1.Int32Attributes color_attributes = 2;
+  // A description of the supported presets, none means no presets
+  repeated ColorPreset presets = 3;
+  // A description of the supported channels, none means no channels
+  // this would include "red", "green", "blue", "intensity" and "temperature" as appropriate,
+  // as well as any other channels
+  repeated string channels = 4;
+}
+
+// A request to update the value of a color
+message UpdateColorRequest {
+  // The name of the device to update
+  string name = 1;
+  // The new value for the color. Supply ramp to transition
+  Color color = 2;
+  // The state fields to update
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+// A request to get the current value of a color
+message GetColorRequest {
+  // The name of the device to get the value for
+  string name = 1;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+// Request to begin a subscription for color values
+message PullColorRequest {
+  // The name of the device we want events from
+  string name = 1;
+  // Indicate whether we want to be notified of values while ramping or not. The device may ignore this depending on
+  // capabilities
+  bool exclude_ramping = 2;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 3;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 4;
+}
+
+// A response as part of the stream of changes to the color value
+message PullColorResponse {
+  // The list of changes
+  repeated Change changes = 1;
+
+  // A change to a single devices color value
+  message Change {
+    // name for the device that issued the change
+    string name = 1;
+    // when the change occurred
+    google.protobuf.Timestamp change_time = 2;
+    // The new value for the color
+    Color color = 3;
+  }
+}
+
+message DescribeColorRequest {
+  // The name of the device
+  string name = 1;
+}

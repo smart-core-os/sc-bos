@@ -1,0 +1,67 @@
+sc-api trait with no existing target directory (Case 1: new) is moved to proto/smartcore/bos/light/v1/.
+expected_changes: 1
+
+-- input/sc-api/protobuf/traits/light.proto --
+syntax = "proto3";
+
+package smartcore.traits;
+
+option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/traits";
+
+import "google/protobuf/field_mask.proto";
+
+service LightApi {
+  rpc GetBrightness(GetBrightnessRequest) returns (Brightness);
+}
+
+service LightInfo {
+  rpc DescribeLight(DescribeLightRequest) returns (LightSupport);
+}
+
+message Brightness {
+  float level_percent = 1;
+}
+
+message GetBrightnessRequest {
+  string name = 1;
+}
+
+message DescribeLightRequest {
+  string name = 1;
+}
+
+message LightSupport {
+  bool supports_brightness = 1;
+}
+-- output/proto/smartcore/bos/light/v1/light.proto --
+syntax = "proto3";
+
+package smartcore.bos.light.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/lightpb";
+
+import "google/protobuf/field_mask.proto";
+
+service LightApi {
+  rpc GetBrightness(GetBrightnessRequest) returns (Brightness);
+}
+
+service LightInfo {
+  rpc DescribeLight(DescribeLightRequest) returns (LightSupport);
+}
+
+message Brightness {
+  float level_percent = 1;
+}
+
+message GetBrightnessRequest {
+  string name = 1;
+}
+
+message DescribeLightRequest {
+  string name = 1;
+}
+
+message LightSupport {
+  bool supports_brightness = 1;
+}

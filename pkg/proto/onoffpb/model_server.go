@@ -6,12 +6,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 type ModelServer struct {
-	traits.UnimplementedOnOffApiServer
+	UnimplementedOnOffApiServer
 	model *Model
 }
 
@@ -24,27 +23,27 @@ func (s *ModelServer) Unwrap() any {
 }
 
 func (s *ModelServer) Register(server grpc.ServiceRegistrar) {
-	traits.RegisterOnOffApiServer(server, s)
+	RegisterOnOffApiServer(server, s)
 }
 
-func (s *ModelServer) GetOnOff(_ context.Context, req *traits.GetOnOffRequest) (*traits.OnOff, error) {
+func (s *ModelServer) GetOnOff(_ context.Context, req *GetOnOffRequest) (*OnOff, error) {
 	return s.model.GetOnOff(resource.WithReadMask(req.ReadMask))
 }
 
-func (s *ModelServer) UpdateOnOff(_ context.Context, request *traits.UpdateOnOffRequest) (*traits.OnOff, error) {
+func (s *ModelServer) UpdateOnOff(_ context.Context, request *UpdateOnOffRequest) (*OnOff, error) {
 	return s.model.UpdateOnOff(request.OnOff, resource.WithUpdateMask(request.UpdateMask))
 }
 
-func (s *ModelServer) PullOnOff(request *traits.PullOnOffRequest, server traits.OnOffApi_PullOnOffServer) error {
+func (s *ModelServer) PullOnOff(request *PullOnOffRequest, server OnOffApi_PullOnOffServer) error {
 	for update := range s.model.PullOnOff(server.Context(), resource.WithReadMask(request.ReadMask), resource.WithUpdatesOnly(request.UpdatesOnly)) {
-		change := &traits.PullOnOffResponse_Change{
+		change := &PullOnOffResponse_Change{
 			Name:       request.Name,
 			ChangeTime: timestamppb.New(update.ChangeTime),
 			OnOff:      update.Value,
 		}
 
-		err := server.Send(&traits.PullOnOffResponse{
-			Changes: []*traits.PullOnOffResponse_Change{change},
+		err := server.Send(&PullOnOffResponse{
+			Changes: []*PullOnOffResponse_Change{change},
 		})
 		if err != nil {
 			return err

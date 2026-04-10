@@ -109,7 +109,3 @@ func (l *listener[T]) stop() {
 		l.ch = nil
 	}
 }
-
-func (l *listener[T]) alive() bool {
-	return l.ctx.Err() == nil
-}

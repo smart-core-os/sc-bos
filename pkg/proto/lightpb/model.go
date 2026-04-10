@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -21,11 +20,11 @@ func NewModel(opts ...resource.Option) *Model {
 	}
 }
 
-func (m *Model) GetBrightness(opts ...resource.ReadOption) (*traits.Brightness, error) {
-	return m.brightness.Get(opts...).(*traits.Brightness), nil
+func (m *Model) GetBrightness(opts ...resource.ReadOption) (*Brightness, error) {
+	return m.brightness.Get(opts...).(*Brightness), nil
 }
 
-func (m *Model) UpdateBrightness(light *traits.Brightness, opts ...resource.WriteOption) (*traits.Brightness, error) {
+func (m *Model) UpdateBrightness(light *Brightness, opts ...resource.WriteOption) (*Brightness, error) {
 	if m.setLevelFromPreset(light) {
 		opts = append(opts, resource.WithMoreUpdatePaths("level_percent"))
 	}
@@ -33,7 +32,7 @@ func (m *Model) UpdateBrightness(light *traits.Brightness, opts ...resource.Writ
 	if err != nil {
 		return nil, err
 	}
-	return res.(*traits.Brightness), nil
+	return res.(*Brightness), nil
 }
 
 func (m *Model) PullBrightness(ctx context.Context, opts ...resource.ReadOption) <-chan PullBrightnessChange {
@@ -43,7 +42,7 @@ func (m *Model) PullBrightness(ctx context.Context, opts ...resource.ReadOption)
 	go func() {
 		defer close(send)
 		for change := range recv {
-			value := change.Value.(*traits.Brightness)
+			value := change.Value.(*Brightness)
 			send <- PullBrightnessChange{
 				Value:      value,
 				ChangeTime: change.ChangeTime,
@@ -54,15 +53,15 @@ func (m *Model) PullBrightness(ctx context.Context, opts ...resource.ReadOption)
 	return send
 }
 
-func (m *Model) ListPresets() []*traits.LightPreset {
-	var res []*traits.LightPreset
+func (m *Model) ListPresets() []*LightPreset {
+	var res []*LightPreset
 	for _, p := range m.presets {
 		res = append(res, p.LightPreset)
 	}
 	return res
 }
 
-func (m *Model) setLevelFromPreset(b *traits.Brightness) bool {
+func (m *Model) setLevelFromPreset(b *Brightness) bool {
 	if b.GetPreset() == nil {
 		return false
 	}
@@ -77,11 +76,11 @@ func (m *Model) setLevelFromPreset(b *traits.Brightness) bool {
 }
 
 type PullBrightnessChange struct {
-	Value      *traits.Brightness
+	Value      *Brightness
 	ChangeTime time.Time
 }
 
 type preset struct {
-	*traits.LightPreset
+	*LightPreset
 	levelPercent float32
 }

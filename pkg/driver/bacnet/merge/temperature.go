@@ -8,13 +8,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/gobacnet"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
@@ -74,7 +74,10 @@ func (t *temperature) startPoll(init context.Context) (stop task.StopFn, err err
 }
 
 func (t *temperature) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(temperaturepb.TraitName, node.WithClients(temperaturepb.WrapApi(t))))
+	return a.Announce(t.config.Name,
+		node.HasServer(temperaturepb.RegisterTemperatureApiServer, temperaturepb.TemperatureApiServer(t)),
+		node.HasTrait(temperaturepb.TraitName),
+	)
 }
 
 func (t *temperature) GetTemperature(ctx context.Context, request *temperaturepb.GetTemperatureRequest) (*temperaturepb.Temperature, error) {
@@ -112,30 +115,27 @@ func (t *temperature) pollPeer(ctx context.Context) (*temperaturepb.Temperature,
 	data := &temperaturepb.Temperature{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if t.config.Measured != nil {
 		readValues = append(readValues, *t.config.Measured)
-		requestNames = append(requestNames, "measured")
 		resProcessors = append(resProcessors, func(response any) error {
 			measured, err := comm.Float64Value(response)
 			if err != nil {
 				return comm.ErrReadProperty{Prop: "measured", Cause: err}
 			}
-			data.Measured = &types.Temperature{ValueCelsius: measured}
+			data.Measured = &typespb.Temperature{ValueCelsius: measured}
 			return nil
 		})
 	}
 
 	if t.config.SetPoint != nil {
 		readValues = append(readValues, *t.config.SetPoint)
-		requestNames = append(requestNames, "setPoint")
 		resProcessors = append(resProcessors, func(response any) error {
 			setPoint, err := comm.Float64Value(response)
 			if err != nil {
 				return comm.ErrReadProperty{Prop: "setPoint", Cause: err}
 			}
-			data.SetPoint = &types.Temperature{ValueCelsius: setPoint}
+			data.SetPoint = &typespb.Temperature{ValueCelsius: setPoint}
 			return nil
 		})
 	}

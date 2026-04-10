@@ -8,6 +8,7 @@ import (
 )
 
 // WrapHistory	adapts a AllocationHistoryServer	and presents it as a AllocationHistoryClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHistory(server AllocationHistoryServer) *HistoryWrapper {
 	conn := wrap.ServerToClient(AllocationHistory_ServiceDesc, server)
 	client := NewAllocationHistoryClient(conn)

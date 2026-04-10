@@ -65,6 +65,75 @@ func TestV1ToV0(t *testing.T) {
 	}
 }
 
+// traitPairs defines test cases for bidirectional translation between smartcore.traits and v1 formats.
+var traitPairs = []struct {
+	name   string
+	traits string
+	v1     string
+}{
+	{"MeterApi", "smartcore.traits.MeterApi", "smartcore.bos.meter.v1.MeterApi"},
+	{"MeterInfo", "smartcore.traits.MeterInfo", "smartcore.bos.meter.v1.MeterInfo"},
+	{"EnterLeaveSensorApi", "smartcore.traits.EnterLeaveSensorApi", "smartcore.bos.enterleavesensor.v1.EnterLeaveSensorApi"},
+	{"EnterLeaveSensorInfo", "smartcore.traits.EnterLeaveSensorInfo", "smartcore.bos.enterleavesensor.v1.EnterLeaveSensorInfo"},
+	// Special case: MotionSensorSensorInfo is a typo corrected to MotionSensorInfo
+	{"MotionSensorSensorInfo", "smartcore.traits.MotionSensorSensorInfo", "smartcore.bos.motionsensor.v1.MotionSensorInfo"},
+	{"MotionSensorApi", "smartcore.traits.MotionSensorApi", "smartcore.bos.motionsensor.v1.MotionSensorApi"},
+}
+
+func TestTraitsToV1(t *testing.T) {
+	for _, tt := range traitPairs {
+		t.Run(tt.name, func(t *testing.T) {
+			result := TraitsToV1(tt.traits)
+			if result != tt.v1 {
+				t.Errorf("TraitsToV1(%q) = %q, want %q", tt.traits, result, tt.v1)
+			}
+		})
+	}
+
+	// Non-traits packages should be unchanged
+	t.Run("non-traits unchanged", func(t *testing.T) {
+		input := "other.package.SomeApi"
+		if got := TraitsToV1(input); got != input {
+			t.Errorf("TraitsToV1(%q) = %q, want unchanged", input, got)
+		}
+	})
+
+	// smartcore.bos packages should be unchanged
+	t.Run("smartcore.bos unchanged", func(t *testing.T) {
+		input := "smartcore.bos.MeterApi"
+		if got := TraitsToV1(input); got != input {
+			t.Errorf("TraitsToV1(%q) = %q, want unchanged", input, got)
+		}
+	})
+}
+
+func TestV1ToTraits(t *testing.T) {
+	for _, tt := range traitPairs {
+		t.Run(tt.name, func(t *testing.T) {
+			result := V1ToTraits(tt.v1)
+			if result != tt.traits {
+				t.Errorf("V1ToTraits(%q) = %q, want %q", tt.v1, result, tt.traits)
+			}
+		})
+	}
+
+	// Nested packages should be unchanged
+	t.Run("nested package unchanged", func(t *testing.T) {
+		input := "smartcore.bos.driver.dali.v1.DaliApi"
+		if got := V1ToTraits(input); got != input {
+			t.Errorf("V1ToTraits(%q) = %q, want unchanged", input, got)
+		}
+	})
+
+	// Non-bos packages should be unchanged
+	t.Run("non-bos unchanged", func(t *testing.T) {
+		input := "other.package.SomeApi"
+		if got := V1ToTraits(input); got != input {
+			t.Errorf("V1ToTraits(%q) = %q, want unchanged", input, got)
+		}
+	})
+}
+
 func TestExtractResource(t *testing.T) {
 	tests := []struct {
 		service  string

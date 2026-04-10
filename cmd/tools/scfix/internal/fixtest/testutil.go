@@ -109,9 +109,9 @@ func ReadTestCase(t *testing.T, txtarPath string) *TestCase {
 
 	// Process all files in the archive
 	for _, file := range archive.Files {
-		if strings.HasPrefix(file.Name, "input/") {
+		if after, ok := strings.CutPrefix(file.Name, "input/"); ok {
 			// Extract relative path from input/
-			relPath := strings.TrimPrefix(file.Name, "input/")
+			relPath := after
 			inputFiles[relPath] = file.Data
 
 			// Write input file to temp directory
@@ -124,9 +124,9 @@ func ReadTestCase(t *testing.T, txtarPath string) *TestCase {
 			if err := os.WriteFile(fullPath, file.Data, 0644); err != nil {
 				t.Fatalf("Failed to write input file %s: %v", relPath, err)
 			}
-		} else if strings.HasPrefix(file.Name, "output/") {
+		} else if after, ok := strings.CutPrefix(file.Name, "output/"); ok {
 			// Extract relative path from output/
-			relPath := strings.TrimPrefix(file.Name, "output/")
+			relPath := after
 			outputFiles[relPath] = file.Data
 		}
 	}
@@ -153,8 +153,8 @@ func ReadTestCase(t *testing.T, txtarPath string) *TestCase {
 func parseExpectedChanges(t *testing.T, comment string) int {
 	t.Helper()
 
-	lines := strings.Split(comment, "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(comment, "\n")
+	for line := range lines {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "expected_changes:") {
 			parts := strings.SplitN(line, ":", 2)

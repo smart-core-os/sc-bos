@@ -10,9 +10,11 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -47,15 +49,15 @@ var (
 		}
 		knownTraits.add(trait.AirQualitySensor, Resource{
 			name: "AirQualitySensor",
-			desc: (&traits.AirQuality{}).ProtoReflect().Descriptor(),
-			get:  getter(traits.NewAirQualitySensorApiClient, traits.AirQualitySensorApiClient.GetAirQuality),
-			pull: puller(traits.NewAirQualitySensorApiClient, traits.AirQualitySensorApiClient.PullAirQuality, (*traits.PullAirQualityResponse_Change).GetAirQuality),
+			desc: (&airqualitysensorpb.AirQuality{}).ProtoReflect().Descriptor(),
+			get:  getter(airqualitysensorpb.NewAirQualitySensorApiClient, airqualitysensorpb.AirQualitySensorApiClient.GetAirQuality),
+			pull: puller(airqualitysensorpb.NewAirQualitySensorApiClient, airqualitysensorpb.AirQualitySensorApiClient.PullAirQuality, (*airqualitysensorpb.PullAirQualityResponse_Change).GetAirQuality),
 		})
 		knownTraits.add(trait.AirTemperature, Resource{
 			name: "AirTemperature",
-			desc: (&traits.AirTemperature{}).ProtoReflect().Descriptor(),
-			get:  getter(traits.NewAirTemperatureApiClient, traits.AirTemperatureApiClient.GetAirTemperature),
-			pull: puller(traits.NewAirTemperatureApiClient, traits.AirTemperatureApiClient.PullAirTemperature, (*traits.PullAirTemperatureResponse_Change).GetAirTemperature),
+			desc: (&airtemperaturepb.AirTemperature{}).ProtoReflect().Descriptor(),
+			get:  getter(airtemperaturepb.NewAirTemperatureApiClient, airtemperaturepb.AirTemperatureApiClient.GetAirTemperature),
+			pull: puller(airtemperaturepb.NewAirTemperatureApiClient, airtemperaturepb.AirTemperatureApiClient.PullAirTemperature, (*airtemperaturepb.PullAirTemperatureResponse_Change).GetAirTemperature),
 		})
 		knownTraits.add(emergencylightpb.TraitName, Resource{
 			name: "TestResultSet",
@@ -71,9 +73,9 @@ var (
 		})
 		knownTraits.add(trait.OnOff, Resource{
 			name: "OnOff",
-			desc: (&traits.OnOff{}).ProtoReflect().Descriptor(),
-			get:  getter(traits.NewOnOffApiClient, traits.OnOffApiClient.GetOnOff),
-			pull: puller(traits.NewOnOffApiClient, traits.OnOffApiClient.PullOnOff, (*traits.PullOnOffResponse_Change).GetOnOff),
+			desc: (&onoffpb.OnOff{}).ProtoReflect().Descriptor(),
+			get:  getter(onoffpb.NewOnOffApiClient, onoffpb.OnOffApiClient.GetOnOff),
+			pull: puller(onoffpb.NewOnOffApiClient, onoffpb.OnOffApiClient.PullOnOff, (*onoffpb.PullOnOffResponse_Change).GetOnOff),
 		})
 		knownTraits.add(soundsensorpb.TraitName, Resource{
 			name: "SoundLevel",

@@ -1,4 +1,4 @@
-Tests conflicting trait packages that move to pkg/trait/ instead of pkg/proto/.
+Tests that all sc-golang trait packages (including formerly-conflicting ones) map to pkg/proto/.
 expected_changes: 1
 
 -- input/example.go --
@@ -21,10 +21,10 @@ var (
 package example
 
 import (
-	"github.com/smart-core-os/sc-bos/pkg/trait/accesspb"
-	"github.com/smart-core-os/sc-bos/pkg/trait/electricpb"
-	"github.com/smart-core-os/sc-bos/pkg/trait/meterpb"
-	"github.com/smart-core-os/sc-bos/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 )
 
 var (

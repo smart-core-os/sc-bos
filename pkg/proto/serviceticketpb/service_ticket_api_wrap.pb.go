@@ -8,6 +8,7 @@ import (
 )
 
 // WrapApi	adapts a ServiceTicketApiServer	and presents it as a ServiceTicketApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server ServiceTicketApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(ServiceTicketApi_ServiceDesc, server)
 	client := NewServiceTicketApiClient(conn)
