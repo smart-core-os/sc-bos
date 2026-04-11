@@ -260,28 +260,58 @@ export function useIdleConsumption(meterName, occupancyName, edges, pastEdges, r
     });
   });
 
-  const totalIdle = computed(() =>
-    idleConsumption.value.reduce((acc, pt) => acc + (pt.y ?? 0), 0)
-  );
+  const totalIdle = computed(() => {
+    let sum = 0;
+    let hasValue = false;
+    for (const pt of idleConsumption.value) {
+      if (pt.y != null) {
+        sum += pt.y;
+        hasValue = true;
+      }
+    }
+    return hasValue ? sum : null;
+  });
 
-  const totalEnergy = computed(() =>
-    totalConsumption.value.reduce((acc, pt) => acc + (pt.y ?? 0), 0)
-  );
+  const totalEnergy = computed(() => {
+    let sum = 0;
+    let hasValue = false;
+    for (const pt of totalConsumption.value) {
+      if (pt.y != null) {
+        sum += pt.y;
+        hasValue = true;
+      }
+    }
+    return hasValue ? sum : null;
+  });
 
   const historicalIdle = computed(() => {
     const ongoingIdx = ongoingBucketIdx.value;
-    return idleConsumption.value.reduce((acc, pt, i) => {
-      if (ongoingIdx !== -1 && i === ongoingIdx) return acc;
-      return acc + (pt.y ?? 0);
-    }, 0);
+    let sum = 0;
+    let hasValue = false;
+    for (let i = 0; i < idleConsumption.value.length; i++) {
+      if (ongoingIdx !== -1 && i === ongoingIdx) continue;
+      const pt = idleConsumption.value[i];
+      if (pt.y != null) {
+        sum += pt.y;
+        hasValue = true;
+      }
+    }
+    return hasValue ? sum : null;
   });
 
   const historicalEnergy = computed(() => {
     const ongoingIdx = ongoingBucketIdx.value;
-    return totalConsumption.value.reduce((acc, pt, i) => {
-      if (ongoingIdx !== -1 && i === ongoingIdx) return acc;
-      return acc + (pt.y ?? 0);
-    }, 0);
+    let sum = 0;
+    let hasValue = false;
+    for (let i = 0; i < totalConsumption.value.length; i++) {
+      if (ongoingIdx !== -1 && i === ongoingIdx) continue;
+      const pt = totalConsumption.value[i];
+      if (pt.y != null) {
+        sum += pt.y;
+        hasValue = true;
+      }
+    }
+    return hasValue ? sum : null;
   });
 
   const wastePercent = computed(() => {
