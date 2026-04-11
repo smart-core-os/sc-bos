@@ -1,7 +1,7 @@
 <template>
   <v-card class="d-flex flex-column" :class="rootClasses">
     <v-toolbar class="chart-header" color="transparent" v-if="!props.hideToolbar">
-      <v-toolbar-title class="text-h4">{{ props.title }}</v-toolbar-title>
+      <v-toolbar-title class="text-h4" style="overflow-wrap: break-word">{{ props.title }}</v-toolbar-title>
       <v-btn
           icon="mdi-dots-vertical"
           size="small"
@@ -302,7 +302,7 @@ const chartData = computed(() => {
 });
 
 const hasData = computed(() => {
-  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val));
+  return chartData.value.datasets.some(ds => ds.data.some(val => val != null));
 });
 
 // Track if initial data load is complete to avoid showing no-data graphic during fetch
