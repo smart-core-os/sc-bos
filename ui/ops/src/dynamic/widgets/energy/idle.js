@@ -119,9 +119,10 @@ function useOccupancyStateChangesPerBucket(name, edges) {
  * @param {import('vue').MaybeRefOrGetter<Occupancy.State|null>} [realtimeState] - Optional real-time occupancy state
  * @param {import('vue').MaybeRefOrGetter<{usage: number, produced?: number}|null>} [liveMeterReading] - Optional live meter readings
  * @param {import('vue').MaybeRefOrGetter<Array<{timestamp: Date, state: Occupancy.State}>>} [realtimeHistory] - Pull-stream state history
+ * @param {import('vue').MaybeRefOrGetter<number>} [negligibleEnergy=0.001] - Values below this are treated as effectively zero
  * @return {{idleConsumption: ComputedRef<({x: *, y: null}|{x: *, y: null}|{x: *, y})[]>, totalConsumption: import('vue').ComputedRef<{x: Date, y: (number|null)}[]>, totalIdle: ComputedRef<{x: *, y: null}|{x: *, y: null}|{x: *, y}>, totalEnergy: ComputedRef<number>, wastePercent: ComputedRef<number|*>}} Object containing idle consumption metrics and percentages
  */
-export function useIdleConsumption(meterName, occupancyName, edges, pastEdges, realtimeState, liveMeterReading, realtimeHistory) {
+export function useIdleConsumption(meterName, occupancyName, edges, pastEdges, realtimeState, liveMeterReading, realtimeHistory, negligibleEnergy = 0.001) {
   const consumption = useMeterConsumption(meterName, edges);
   const stateChanges = useOccupancyStateChangesPerBucket(occupancyName, pastEdges);
   const {now} = useNow(SECOND); // Update every second for real-time idle time calculation
@@ -316,7 +317,7 @@ export function useIdleConsumption(meterName, occupancyName, edges, pastEdges, r
 
   const wastePercent = computed(() => {
     const total = totalEnergy.value;
-    if (!total) return 0;
+    if (!total || total < toValue(negligibleEnergy)) return 0;
     return (totalIdle.value / total) * 100;
   });
 

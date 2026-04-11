@@ -13,7 +13,7 @@
       <div v-if="!hasData" class="text-h2 opacity-40 my-2">—</div>
 
       <!-- Has energy data but no meaningful idle — all zones occupied -->
-      <div v-else-if="totalIdle != null && totalIdle < 0.001" class="d-flex flex-column align-center my-2 ga-1">
+      <div v-else-if="totalIdle != null && totalIdle < props.negligibleEnergy" class="d-flex flex-column align-center my-2 ga-1">
         <span class="text-h2 font-weight-bold">{{ totalStr }}</span>
         <span class="text-caption text-medium-emphasis">{{ props.unit }}</span>
         <span class="text-body-2 text-success mt-1">All zones occupied</span>
@@ -112,6 +112,7 @@ const props = defineProps({
       {percent: Infinity, label: 'Wasteful', color: 'error', icon: 'mdi-fire-alert'},
     ],
   },
+  negligibleEnergy: {type: Number, default: 0.001},
 });
 
 const _start = useLocalProp(toRef(props, 'start'));
@@ -190,7 +191,8 @@ watch(allZones, (currentZones) => {
           pastEdges,
           realtimeState,
           liveMeterReading,
-          realtimeHistory
+          realtimeHistory,
+          () => props.negligibleEnergy
       );
     });
 
@@ -360,7 +362,7 @@ const wastePercent = computed(() => {
   const total = totalEnergy.value;
   const idle = totalIdle.value;
 
-  if (!total) return 0;
+  if (!total || total < props.negligibleEnergy) return 0;
   return Math.abs((idle / total) * 100);
 });
 
@@ -370,6 +372,9 @@ const wasteStr = computed(() => `${wastePercent.value.toFixed(1)}%`);
 
 const activeThreshold = computed(() => {
   if (totalIdle.value === null) return null;
+  // If idle energy is negligible, force the first threshold (e.g. "Occupied")
+  if (totalIdle.value < props.negligibleEnergy) return props.thresholds[0];
+
   for (const t of props.thresholds) {
     if (wastePercent.value <= t.percent) return t;
   }

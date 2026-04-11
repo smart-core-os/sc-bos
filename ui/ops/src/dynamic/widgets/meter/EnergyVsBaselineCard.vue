@@ -1,7 +1,9 @@
 <template>
   <v-card class="d-flex flex-column">
     <v-toolbar color="transparent">
-      <v-toolbar-title class="text-h4" style="overflow-wrap: break-word">{{ props.title }}</v-toolbar-title>
+      <v-toolbar-title class="text-h4 flex-grow-1 flex-shrink-1 min-width-0 pr-2">
+        <div class="text-truncate">{{ props.title }}</div>
+      </v-toolbar-title>
       <v-spacer/>
       <v-chip
           v-if="summaryPct !== null"
@@ -18,7 +20,7 @@
         <bar :data="chartData" :options="chartOptions" :plugins="[]"/>
       </div>
     </v-card-text>
-    <div class="d-flex ga-8 justify-center pb-3 text-caption opacity-70">
+    <div class="d-flex flex-wrap ga-4 justify-center pb-3 text-caption opacity-70">
       <span class="d-flex align-center ga-3">
         <span class="legend-dot" :style="{background: currentColor}"/>
         Current
