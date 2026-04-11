@@ -302,8 +302,12 @@ const chartLabels = computed(() => edges.value.slice(0, -1));
 const chartData = computed(() => {
   const datasets = [];
 
+  const sourceList = sources.value;
+
   // Current period — themeColorPlugin assigns palette colours in dataset order
-  for (const [name, device] of Object.entries(devices)) {
+  for (const name of sourceList) {
+    const device = devices[name];
+    if (!device) continue;
     const label = toValue(device.title) || name;
     const data = toValue(device.data);
     datasets.push({label, data, [datasetSourceName]: name});
@@ -313,7 +317,9 @@ const chartData = computed(() => {
   // backgroundColor: 'transparent' causes themeColorPlugin to skip these datasets, so
   // we pre-set borderColor to match the current dataset at the same index.
   if (props.showBaseline) {
-    Object.entries(baselineDevices).forEach(([name, device], i) => {
+    sourceList.forEach((name, i) => {
+      const device = baselineDevices[name];
+      if (!device) return;
       datasets.push({
         label: `${toValue(device.title) || name} (prior)`,
         data: toValue(device.data),
