@@ -35,6 +35,7 @@
               <template v-else>{{ f.score !== null ? f.score + '%' : '—' }}</template>
             </span>
             <v-chip
+                v-if="props.showTrend"
                 :color="getTrendColor(factorTrends.get(f.key))"
                 size="x-small"
                 style="height: 18px;">
@@ -60,6 +61,7 @@ const props = defineProps({
   airTemperature: {type: String, default: ''},
   sound: {type: String, default: ''},
   tempSetpoint: {type: Number, default: 21},
+  showTrend: {type: Boolean, default: true},
 });
 
 const {score, factors} = useComfortScore(
@@ -74,7 +76,7 @@ const {score, factors} = useComfortScore(
 const factorOldScores = Object.fromEntries(
   ['temp', 'co2', 'voc', 'pm25', 'sound'].map(key => [
     key,
-    useRollingValue(() => factors.value.find(f => f.key === key)?.score ?? null)
+    useRollingValue(() => props.showTrend ? (factors.value.find(f => f.key === key)?.score ?? null) : null)
   ])
 );
 
