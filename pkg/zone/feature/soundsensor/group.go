@@ -152,8 +152,8 @@ func mergeSoundLevel(all []*soundsensorpb.SoundLevel) (*soundsensorpb.SoundLevel
 		return all[0], nil
 	default:
 		out := &soundsensorpb.SoundLevel{}
-		// SoundPressureLevel - use mean average
-		if val, ok := merge.Mean(all, func(e *soundsensorpb.SoundLevel) (float32, bool) {
+		// SoundPressureLevel - use logarithmic average (mean energy)
+		if val, ok := merge.LogMean(all, func(e *soundsensorpb.SoundLevel) (float32, bool) {
 			if e == nil || e.SoundPressureLevel == nil {
 				return 0, false
 			}
