@@ -16,9 +16,8 @@ func SoundSensorAuto(model *soundsensorpb.Model) *service.Service[string] {
 	slc := service.New(service.MonoApply(func(ctx context.Context, _ string) error {
 		ticker := time.NewTicker(10 * time.Second)
 		go func() {
-			randomNumber := 20 + rand.Float32()*20
 			state := &soundsensorpb.SoundLevel{
-				SoundPressureLevel: &randomNumber,
+				SoundPressureLevel: new(20 + rand.Float32()*20),
 			}
 			_, _ = model.UpdateSoundLevel(state)
 			for {
@@ -28,8 +27,7 @@ func SoundSensorAuto(model *soundsensorpb.Model) *service.Service[string] {
 				case <-ticker.C:
 					state, err := model.GetSoundLevel()
 					if err == nil {
-						newLevel := *state.SoundPressureLevel + (rand.Float32()*4 - 2)
-						state.SoundPressureLevel = &newLevel
+						state.SoundPressureLevel = new(*state.SoundPressureLevel + (rand.Float32()*4 - 2))
 						_, _ = model.UpdateSoundLevel(state, resource.WithUpdateMask(&fieldmaskpb.FieldMask{
 							Paths: []string{"sound_pressure_level"},
 						}))

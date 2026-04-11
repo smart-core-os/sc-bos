@@ -18,7 +18,12 @@ func OccupancySensorAuto(model *occupancysensorpb.Model) *service.Service[string
 			defer ticker.Stop()
 			for {
 				tod := scale.NineToFive.Now()
-				peopleCount := int32(math.Round(tod * float64Between(0, 10)))
+				// Two-stage: first decide if anyone is present (probability = tod/2,
+				// so even at peak hours there's ~50% chance of 0), then pick a count.
+				var peopleCount int32
+				if randomBool(tod * 0.50) {
+					peopleCount = int32(math.Round(float64Between(1, 1500) * tod))
+				}
 				occupancy := &occupancysensorpb.Occupancy{PeopleCount: peopleCount}
 				if peopleCount == 0 {
 					occupancy.State = oneOf(occupancysensorpb.Occupancy_UNOCCUPIED, occupancysensorpb.Occupancy_IDLE)
