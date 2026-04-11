@@ -8,7 +8,8 @@
         <v-list density="compact">
           <v-list-item v-for="(row, index) in demandRows" :key="index" :title="row.title">
             <template #prepend>
-              <v-avatar :color="row.prependColor" size="1.5em"/>
+              <span v-if="row.isDashed" class="peak-swatch" :style="{borderColor: row.prependColor}"/>
+              <v-avatar v-else :color="row.prependColor" size="1.5em"/>
             </template>
             <template #append>
               <span class="ml-4">{{ row.append }}</span>
@@ -88,17 +89,31 @@ const titleStr = computed(() => {
 
 const demandData = computed(() => {
   const tt = data.value;
-  if (!tt) return null;
-  return tt.dataPoints.filter((dp) => !dp.dataset._inverted);
+  if (!tt) return [];
+  return tt.dataPoints.filter((dp) => !dp.dataset._inverted && !dp.dataset._isPeak);
+})
+const peakData = computed(() => {
+  const tt = data.value;
+  if (!tt) return [];
+  return tt.dataPoints.filter((dp) => !dp.dataset._inverted && dp.dataset._isPeak);
 })
 const demandRows = computed(() => {
-  return (demandData.value ?? []).map((dp) => {
+  const rows = (demandData.value ?? []).map((dp) => {
     return {
       title: dp.dataset.label,
       prependColor: dp.dataset.borderColor,
       append: usageToString(dp.parsed.y, unit.value),
     };
   });
+  const peaks = (peakData.value ?? []).map((dp) => {
+    return {
+      title: dp.dataset.label,
+      prependColor: dp.dataset.borderColor,
+      append: usageToString(dp.parsed.y, unit.value),
+      isDashed: true,
+    };
+  });
+  return [...rows, ...peaks];
 });
 const totalDemandRow = computed(() => {
   const total = demandData.value?.reduce((acc, dp) => acc + dp.parsed.y, 0);
@@ -111,5 +126,13 @@ const totalDemandRow = computed(() => {
 </script>
 
 <style scoped>
-
+.peak-swatch {
+  display: inline-block;
+  width: 1.5em;
+  height: 0;
+  border-top: 2px dashed;
+  margin-right: 0; /* aligns with v-avatar spacing */
+  flex-shrink: 0;
+  align-self: center;
+}
 </style>

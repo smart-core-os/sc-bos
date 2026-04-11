@@ -9,6 +9,7 @@ import {useDateScale} from '@/components/charts/date.js';
 import {useThemeColorPlugin, useVueLegendPlugin} from '@/components/charts/plugins.js';
 import {defineChartOptions} from '@/components/charts/util.js';
 import {useSoundLevelHistoryMetrics} from '@/dynamic/widgets/environmental/soundSensor.js';
+import {shiftFnFromStr} from '@/dynamic/widgets/occupancy/baseline.js';
 import {useLocalProp} from '@/util/vue.js';
 import {sentenceCase} from 'change-case';
 import {Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js';
@@ -45,7 +46,15 @@ const props = defineProps({
   offset: {
     type: [String, Number],
     default: 0, // when start/End is 'month', 'day', etc. offset that value into the past, like 'last month'
-  }
+  },
+  showBaseline: {
+    type: Boolean,
+    default: false,
+  },
+  baselineShift: {
+    type: String,
+    default: 'week',
+  },
 });
 
 const _start = useLocalProp(toRef(props, 'start'));
@@ -53,6 +62,12 @@ const _end = useLocalProp(toRef(props, 'end'));
 const _offset = useLocalProp(toRef(props, 'offset'));
 
 const {edges, pastEdges, tickUnit} = useDateScale(_start, _end, _offset);
+
+const shiftFn = computed(() => shiftFnFromStr(props.baselineShift));
+const baselineEdges = computed(() => {
+  if (!props.showBaseline) return pastEdges.value;
+  return toValue(pastEdges).map(shiftFn.value);
+});
 
 // Support both single source (string) and multiple sources (array)
 const sources = computed(() => {
@@ -72,6 +87,11 @@ const datasetNames = computed(() => {
 
 // Always use the devices composable for consistency
 const devices = useSoundLevelHistoryMetrics(sources, toRef(props, 'metric'), pastEdges);
+const baselineDevices = useSoundLevelHistoryMetrics(
+    computed(() => props.showBaseline ? sources.value : []),
+    toRef(props, 'metric'),
+    baselineEdges
+);
 
 const yAxisLabel = computed(() => {
   const s = sentenceCase(props.metric);
@@ -163,13 +183,44 @@ const chartOptions = computed(() => {
 const chartLabels = computed(() => edges.value.slice(0, -1));
 const chartData = computed(() => {
   let datasets = [];
-  for (const [name, device] of Object.entries(devices)) {
+  const sourceList = sources.value;
+
+  // Add current period datasets
+  for (const name of sourceList) {
+    const device = devices[name];
+    if (!device) continue;
     const label = toValue(device.title) || name;
     const data = toValue(device.data);
     datasets.push({
-      label, data, [datasetSourceName]: name
-    })
+      label,
+      data,
+      [datasetSourceName]: name,
+      _pluginColor: true,
+    });
   }
+
+  // Add baseline (prior period) datasets if enabled
+  if (props.showBaseline) {
+    for (const name of sourceList) {
+      const device = baselineDevices[name];
+      if (!device) continue;
+      const data = toValue(device.data);
+      datasets.push({
+        label: (toValue(device.title) || name) + ' (prior)',
+        data,
+        [datasetSourceName]: name,
+        _pluginColor: true,
+        isDashed: true, // Custom property for legend/plugin
+        borderDash: [5, 5],
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: 0.3,
+        borderColor: 'transparent', // pluginColor will override this
+        backgroundColor: 'transparent',
+      });
+    }
+  }
+
   return {
     labels: chartLabels.value,
     datasets

@@ -2,7 +2,41 @@ import {timestampToDate} from '@/api/convpb.js';
 import {listOccupancySensorHistory} from '@/api/sc/traits/occupancy.js';
 import {asyncWatch} from '@/util/vue.js';
 import binarySearch from 'binary-search';
+import {sentenceCase} from 'change-case';
 import {computed, reactive, toValue} from 'vue';
+
+// Default colours/icons for thresholds that don't specify one (ascending occupancy = worsening state)
+const _defaultThresholdColors = ['success-lighten-1', 'info', 'warning', 'error-lighten-1'];
+const _defaultThresholdIcons = ['mdi-account-group-outline', 'mdi-account-group', 'mdi-account-multiple-plus', 'mdi-account-alert'];
+
+/**
+ * Resolves the active threshold entry for a given occupancy percentage.
+ *
+ * @param {number} percentage
+ * @param {{percentage: number, str?: string, color?: string, icon?: string}[]|null} thresholds
+ * @return {{label: string, color: string, icon: string}|null}
+ */
+export function resolveOccupancyThreshold(percentage, thresholds) {
+  if (!thresholds || thresholds.length === 0) return null;
+  for (let i = 0; i < thresholds.length; i++) {
+    const t = thresholds[i];
+    if (t.percentage >= percentage) {
+      return {
+        label: sentenceCase(t.str ?? ''),
+        color: t.color ?? _defaultThresholdColors[i] ?? 'error-lighten-1',
+        icon: t.icon ?? _defaultThresholdIcons[i] ?? 'mdi-account-alert',
+      };
+    }
+  }
+  // Percentage exceeds all thresholds — use the last one
+  const lastIndex = thresholds.length - 1;
+  const t = thresholds[lastIndex];
+  return {
+    label: sentenceCase(t.str ?? ''),
+    color: t.color ?? _defaultThresholdColors[lastIndex] ?? 'error-lighten-1',
+    icon: t.icon ?? _defaultThresholdIcons[lastIndex] ?? 'mdi-account-alert',
+  };
+}
 
 /**
  * @typedef {Object} PeopleCountRecord
@@ -31,6 +65,10 @@ export function useMaxPeopleCount(name, edges) {
   asyncWatch([() => toValue(name), () => toValue(edges)], async ([name, edges], [oldName]) => {
     if (name !== oldName) {
       Object.keys(countsByEdge).forEach(k => delete countsByEdge[k]);
+    }
+
+    if (!name || edges.length < 2) {
+      return;
     }
 
     const toDelete = new Set(Object.keys(countsByEdge));

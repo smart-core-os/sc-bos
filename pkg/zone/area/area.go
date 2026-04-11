@@ -16,6 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/area/config"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/access"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/electric"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/enterleave"
@@ -26,11 +27,14 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/onoff"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/openclose"
+	"github.com/smart-core-os/sc-bos/pkg/zone/feature/soundsensor"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/status"
 )
 
 // DefaultFeatures lists all the default features for an area.
 var DefaultFeatures = []zone.Factory{
+	access.Feature,
+	airquality.Feature,
 	electric.Feature,
 	enterleave.Feature,
 	hvac.Feature,
@@ -38,10 +42,10 @@ var DefaultFeatures = []zone.Factory{
 	meter.Feature,
 	mode.Feature,
 	occupancy.Feature,
-	openclose.Feature,
-	status.Feature,
-	airquality.Feature,
 	onoff.Feature,
+	openclose.Feature,
+	soundsensor.Feature,
+	status.Feature,
 }
 
 // Factory builds a generic area using DefaultFeatures.

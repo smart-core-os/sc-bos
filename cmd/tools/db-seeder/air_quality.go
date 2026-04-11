@@ -31,7 +31,7 @@ func SeedAirQuality(ctx context.Context, db *pgxpool.Pool, name string, profile 
 	co2Level := aq.CO2Baseline
 	vocLevel := aq.VOCBaseline
 
-	for current.Before(now) {
+	for !current.After(now) {
 		load := profile.Load(current)
 
 		// CO2: exponential approach toward occupancy-driven target.

@@ -18,6 +18,7 @@
     "home": "/ops",
     "hub": true,
     "auth": {
+      "disabled": true,
       "providers": ["localAuth", "keyCloakAuth"],
       "keycloak": {
         "realm": "Smart_Core",
@@ -963,7 +964,10 @@
                     "source": ["van/uk/brum/ugs/zones/building", "van/uk/brum/ugs/zones/areas/open-plan"],
                     "metric": "score",
                     "start": "day-7",
-                    "end": "day-1"
+                    "end": "day-1",
+                    "occupancy": "van/uk/brum/ugs/zones/building",
+                    "showBaseline": true,
+                    "baselineShift": "week"
                   }
                 },
                 {
@@ -983,11 +987,18 @@
                 {
                   "loc": {"x": 3, "y": 4, "w": 4, "h": 3},
                   "id": "EnergyHistory",
-                  "component": "builtin:meter/MeterHistoryCard",
+                  "component": "builtin:energy/DemandHistoryCard",
                   "props": {
-                    "title": "Weekly Energy Use",
-                    "totalConsumptionName": "van/uk/brum/ugs/zones/building",
-                    "totalProductionName": "van/uk/brum/ugs/zones/building/generated",
+                    "title": "Weekly Demand & Peak",
+                    "totalDemandName": "van/uk/brum/ugs/zones/building",
+                    "demandNames": [
+                      "van/uk/brum/ugs/zones/areas/comms-room",
+                      "van/uk/brum/ugs/zones/areas/lab",
+                      "van/uk/brum/ugs/zones/floors/ground",
+                      "van/uk/brum/ugs/zones/floors/basement"
+                    ],
+                    "showPeaks": true,
+                    "stacking": "stack",
                     "start": "day-7",
                     "end": "day-1",
                     "minChartHeight": "100%",
@@ -1033,13 +1044,15 @@
                 },
                 {
                   "loc": {"x": 5, "y": 9, "w": 2, "h": 4},
-                  "id": "Environment",
-                  "component": "builtin:environmental/EnvironmentalCard",
+                  "id": "PowerDensity",
+                  "component": "builtin:meter/MeterDensityCard",
                   "props": {
-                    "title": "Building Environment",
-                    "external": "van/uk/brum/ugs/devices/TMP-L02-01",
-                    "internal": "van/uk/brum/ugs/zones/building",
-                    "leftToRightGauges": true
+                    "title": "Power Density",
+                    "name": "van/uk/brum/ugs/zones/building",
+                    "generatedName": "van/uk/brum/ugs/zones/building/generated",
+                    "occupancy": "van/uk/brum/ugs/zones/building",
+                    "meterUnit": "kWh",
+                    "period": "day"
                   }
                 },
                 {
@@ -1071,10 +1084,12 @@
                   }
                 },
                 {
-                  "loc": {"x": 7, "y": 2, "w": 3, "h": 7},
+                  "loc": {"x": 7, "y": 2, "w": 5, "h": 7},
                   "id": "FloorInfo",
                   "component": "builtin:building/FloorTraitCells",
                   "props": {
+                    "columns": ["temp", "humidity", "co2", "voc", "sound"],
+                    "showTrend": true,
                     "floors": [
                       {"level": 7},
                       {"level": 6, "zoneName": "van/uk/brum/ugs/zones/rooms/bank"},
@@ -1090,7 +1105,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 10, "y": 2, "w": 1, "h": 7},
+                  "loc": {"x": 12, "y": 2, "w": 1, "h": 7},
                   "id": "Floors",
                   "component": "builtin:building/BuildingFloors",
                   "props": {
@@ -1109,35 +1124,99 @@
                   }
                 },
                 {
-                  "loc": {"x": 11, "y": 2, "w": 2, "h": 7},
-                  "id": "Lifts",
-                  "props": {
-                    "title": "Lifts"
-                  }
-                },
-                {
                   "loc": {"x": 7, "y": 9, "w": 2, "h": 4},
-                  "id": "MeterDensity",
-                  "component": "builtin:meter/MeterDensityCard",
+                  "id": "IdleEnergy",
+                  "component": "builtin:energy/IdleEnergyCard",
                   "props": {
-                    "title": "Building Power Density",
-                    "name": "van/uk/brum/ugs/zones/building",
-                    "occupancy": "van/uk/brum/ugs/zones/building",
-                    "period": "day",
-                    "refresh": 60000
+                    "title": "Idle Energy",
+                    "zones": [
+                      {
+                        "name": "van/uk/brum/ugs/zones/areas/lab",
+                        "occupancy": "van/uk/brum/ugs/zones/areas/lab",
+                        "label": "Lab"
+                      },
+                      {
+                        "name": "van/uk/brum/ugs/zones/floors/basement",
+                        "occupancy": "van/uk/brum/ugs/zones/floors/basement",
+                        "label": "Basement"
+                      },
+                      {
+                        "name": "van/uk/brum/ugs/zones/floors/ground",
+                        "occupancy": "van/uk/brum/ugs/zones/floors/ground",
+                        "label": "Ground Floor"
+                      },
+                      {
+                        "name": "van/uk/brum/ugs/zones/floors/first",
+                        "occupancy": "van/uk/brum/ugs/zones/floors/first",
+                        "label": "First Floor"
+                      },
+                      {
+                        "name": "van/uk/brum/ugs/zones/areas/comms-room",
+                        "occupancy": "van/uk/brum/ugs/zones/areas/comms-room",
+                        "label": "Comms Room"
+                      },
+                      {
+                        "name": "van/uk/brum/ugs/zones/areas/reception",
+                        "occupancy": "van/uk/brum/ugs/zones/areas/reception",
+                        "label": "Reception"
+                      },
+                      {
+                        "name": "van/uk/brum/ugs/zones/areas/loading-bay",
+                        "occupancy": "van/uk/brum/ugs/zones/areas/loading-bay",
+                        "label": "Loading Bay"
+                      },
+                      {
+                        "name": "van/uk/brum/ugs/zones/rooms/bank",
+                        "occupancy": "van/uk/brum/ugs/zones/rooms/bank",
+                        "label": "Bank"
+                      }
+                    ],
+                    "unit": "kWh"
                   }
                 },
                 {
-                  "loc": {"x": 9, "y": 9, "w": 4, "h": 4},
-                  "id": "Notifications",
-                  "component": "builtin:notifications/ZoneNotifications",
+                  "loc": {"x": 9, "y": 9, "w": 2, "h": 4},
+                  "id": "PowerFactor",
+                  "component": "builtin:energy/PowerFactorCard",
                   "props": {
-                    "title": "Device Notifications",
-                    "hidePaging": true,
-                    "hideTableHeader": true,
-                    "hideHeaderActions": true,
-                    "columns": ["createTime", "severity", "source", "description"],
-                    "fixedRowCount": 5
+                    "title": "Power Factor",
+                    "name": "van/uk/brum/ugs/zones/building"
+                  }
+                },
+                {
+                  "loc": {"x": 11, "y": 9, "w": 2, "h": 4},
+                  "id": "ComfortScore",
+                  "component": "builtin:environmental/ComfortScoreCard",
+                  "props": {
+                    "title": "Comfort Score",
+                    "airQuality": "van/uk/brum/ugs/zones/building",
+                    "airTemperature": "van/uk/brum/ugs/zones/building",
+                    "sound": "van/uk/brum/ugs/zones/building",
+                    "tempSetpoint": 21
+                  }
+                },
+                {
+                  "loc": {"x": 1, "y": 13, "w": 6, "h": 4},
+                  "id": "EnergyVsBaseline",
+                  "component": "builtin:meter/EnergyVsBaselineCard",
+                  "props": {
+                    "title": "Energy vs Last Week",
+                    "name": "van/uk/brum/ugs/zones/building",
+                    "unit": "kWh",
+                    "period": "week",
+                    "baselineShift": "week"
+                  }
+                },
+                {
+                  "loc": {"x": 7, "y": 13, "w": 6, "h": 4},
+                  "id": "EnergyVsBaselineZones",
+                  "component": "builtin:meter/EnergyVsBaselineCard",
+                  "props": {
+                    "title": "Comms Room vs Last Week",
+                    "name": "van/uk/brum/ugs/zones/areas/comms-room",
+                    "unit": "kWh",
+                    "period": "week",
+                    "baselineShift": "week"
                   }
                 }
               ]
@@ -1165,7 +1244,8 @@
     },
     "proxy": true,
     "siteFloorPlans": [
-      {"name": "Ground Floor", "svgPath": "./assets/floor0-acs.svg", "bgSvgPath": "./assets/floor0-bg.svg"}
+      {"name": "Ground Floor", "svgPath": "./assets/floor0-acs.svg", "bgSvgPath": "./assets/floor0-bg.svg"},
+      {"name": "First Floor", "bgSvgPath": "./assets/floor1-bg.svg"}
     ],
     "theme": {
       "appBranding": {

@@ -27,7 +27,7 @@ func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, profile *
 		return err
 	}
 
-	for current.Before(now) {
+	for !current.After(now) {
 		load := profile.Load(current)
 		count := max(int32(math.Round(load*float64(profile.Occupancy.MaxPeople)+rand.NormFloat64()*2)), 0)
 

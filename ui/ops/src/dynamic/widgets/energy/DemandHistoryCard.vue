@@ -1,7 +1,7 @@
 <template>
   <v-card class="d-flex flex-column" :class="rootClasses">
     <v-toolbar class="chart-header" color="transparent" v-if="!props.hideToolbar">
-      <v-toolbar-title class="text-h4">{{ props.title }}</v-toolbar-title>
+      <v-toolbar-title class="text-h4" style="overflow-wrap: break-word">{{ props.title }}</v-toolbar-title>
       <v-btn
           icon="mdi-dots-vertical"
           size="small"
@@ -18,7 +18,8 @@
                   :title="item.text">
                 <template #prepend>
                   <v-list-item-action start>
-                    <v-checkbox-btn :model-value="!item.hidden" readonly :color="item.bgColor" density="compact"/>
+                    <span v-if="item.isDashed" class="peak-legend-swatch" :style="{borderColor: item.bgColor}"/>
+                    <v-checkbox-btn v-else :model-value="!item.hidden" readonly :color="item.bgColor" density="compact"/>
                   </v-list-item-action>
                 </template>
               </v-list-item>
@@ -33,7 +34,9 @@
       </v-btn>
     </v-toolbar>
     <v-card-text class="flex-1-1-100 pt-0">
-      <div class="chart__container">
+      <div class="chart__container"
+           @mouseenter="onChartEnter"
+           @mouseleave="onChartLeave">
         <line-chart ref="chartRef"
                     :options="chartOptions"
                     :data="chartData"
@@ -53,13 +56,14 @@ import {useExternalTooltip, useThemeColorPlugin, useVueLegendPlugin} from '@/com
 import {defineChartOptions} from '@/components/charts/util.js';
 import {triggerDownload} from '@/components/download/download.js';
 import {computeDatasets, datasetSourceName} from '@/dynamic/widgets/energy/chart.js';
-import {Units, useDemand, useDemands, usePresentMetric} from '@/dynamic/widgets/energy/demand.js';
+import {Units, useDemand, useDemands, usePeakDemand, usePeakDemands, usePresentMetric} from '@/dynamic/widgets/energy/demand.js';
+import * as vColors from 'vuetify/util/colors';
 import DemandTooltip from '@/dynamic/widgets/energy/DemandTooltip.vue';
 import PeriodChooserRows from '@/components/PeriodChooserRows.vue';
 import {useLocalProp} from '@/util/vue.js';
 import {Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js'
 import {startOfDay, startOfYear} from 'date-fns';
-import {computed, ref, toRef, watch} from 'vue';
+import {computed, ref, toRef, toValue, watch} from 'vue';
 import {Line as LineChart} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
 import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
@@ -121,7 +125,13 @@ const props = defineProps({
   minChartHeight: {
     type: [String, Number],
     default: '100%',
-  }
+  },
+  // When true, overlays a dashed line per sub-demand showing the peak value in each bucket.
+  // Peak lines share the same colour as their corresponding average bar.
+  showPeaks: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const rootClasses = computed(() => {
@@ -148,7 +158,9 @@ const _offset = useLocalProp(toRef(props, 'offset'));
 const {edges, pastEdges, tickUnit, startDate, endDate} = useDateScale(_start, _end, _offset);
 
 const totalDemand = useDemand(toRef(props, 'totalDemandName'), pastEdges, _metric);
+const peakTotalDemand = usePeakDemand(toRef(props, 'totalDemandName'), pastEdges, _metric);
 const subDemands = useDemands(toRef(props, 'demandNames'), pastEdges, _metric);
+const peakDemands = usePeakDemands(toRef(props, 'demandNames'), pastEdges, _metric);
 
 const {
   external: tooltipExternal,
@@ -170,6 +182,7 @@ const chartOptions = computed(() => {
     maintainAspectRatio: false,
     borderRadius: 3,
     borderWidth: 1,
+    spanGaps: true,
     interaction: {
       mode: 'index', // a single tooltip with all stacked datasets at the same x location in it
     },
@@ -239,18 +252,81 @@ const chartOptions = computed(() => {
   });
 });
 
+// The same colour palette the themeColorPlugin applies in dataset order
+const paletteColors = [
+  vColors.blue.base,
+  vColors.green.base,
+  vColors.orange.base,
+  vColors.yellow.base,
+  vColors.red.base,
+];
+
 const chartLabels = computed(() => edges.value.slice(0, -1));
 const chartData = computed(() => {
-  return {
-    labels: chartLabels.value,
-    datasets: [
-      ...computeDatasets('Demand', totalDemand, toRef(props, 'demandNames'), subDemands),
-    ]
-  };
+  const avgDatasets = computeDatasets('Demand', totalDemand, toRef(props, 'demandNames'), subDemands);
+
+  if (!props.showPeaks) {
+    return {labels: chartLabels.value, datasets: avgDatasets};
+  }
+
+  // Build one dashed line per sub-demand. They are added AFTER the avg datasets so the
+  // themeColorPlugin (which processes datasets in order) has already assigned colours to the
+  // avg bars. We manually pre-set the peak colours so the plugin skips them.
+  const _names = toRef(props, 'demandNames').value ?? [];
+  const peakDatasets = _names.flatMap((item, i) => {
+    const name = typeof item === 'object' ? item.name : item;
+    const series = peakDemands[name];
+    if (!series) return [];
+    const color = paletteColors[i % paletteColors.length];
+    return [{
+      type: 'line',
+      _isPeak: true,
+      [datasetSourceName]: name,
+      label: `${toValue(series.title)} peak`,
+      data: toValue(series.data).map(pt => pt.y),
+      borderColor: color,
+      backgroundColor: 'transparent',
+      borderDash: [6, 3],
+      borderWidth: 1, // revealed on hover via onChartEnter
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      spanGaps: true,
+      fill: false,
+      tension: 0,
+      // Unique stack key keeps peak lines out of the avg stacking group
+      stack: `peak-${name}`,
+    }];
+  });
+
+  // Add a peak line for the total demand if present
+  const totalPeakDatasets = [];
+  if (peakTotalDemand.value?.length) {
+    // Total avg bar uses the first palette colour (index 0 in avgDatasets)
+    // but only if it's the only dataset.
+    const totalColor = _names.length === 0 ? paletteColors[0] : '#ffffff';
+    totalPeakDatasets.push({
+      type: 'line',
+      _isPeak: true,
+      label: 'Total Demand peak',
+      data: peakTotalDemand.value.map(pt => pt.y),
+      borderColor: totalColor,
+      backgroundColor: 'transparent',
+      borderDash: [6, 3],
+      borderWidth: 1, // revealed on hover via onChartEnter
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      spanGaps: true,
+      fill: false,
+      tension: 0,
+      stack: 'peak-total',
+    });
+  }
+
+  return {labels: chartLabels.value, datasets: [...avgDatasets, ...peakDatasets, ...totalPeakDatasets]};
 });
 
 const hasData = computed(() => {
-  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val));
+  return chartData.value.datasets.some(ds => ds.data.some(val => val != null));
 });
 
 // Track if initial data load is complete to avoid showing no-data graphic during fetch
@@ -270,6 +346,36 @@ watch(chartData, (data) => {
 }, {immediate: true});
 
 const showNoData = computed(() => !hasData.value && hasLoadedData.value);
+
+// Show/hide peak datasets on chart hover
+const onChartEnter = () => {
+  const chart = chartRef.value?.chart;
+  if (!chart) return;
+  let changed = false;
+  for (const ds of chart.data.datasets) {
+    if (ds._isPeak) {
+      ds.borderWidth = 1.5;
+      ds.pointRadius = 3;
+      ds.pointHoverRadius = 5;
+      changed = true;
+    }
+  }
+  if (changed) chart.update('none');
+};
+const onChartLeave = () => {
+  const chart = chartRef.value?.chart;
+  if (!chart) return;
+  let changed = false;
+  for (const ds of chart.data.datasets) {
+    if (ds._isPeak) {
+      ds.borderWidth = 1;
+      ds.pointRadius = 0;
+      ds.pointHoverRadius = 0;
+      changed = true;
+    }
+  }
+  if (changed) chart.update('none');
+};
 
 // download CSV...
 const visibleNames = () => {
@@ -340,8 +446,14 @@ const onDownloadClick = async () => {
     flex-wrap: wrap;
   }
 
+  :deep(.v-toolbar-title) {
+    flex: 1 1 auto;
+    overflow: visible;
+    white-space: normal;
+  }
   :deep(.v-toolbar-title__placeholder) {
     overflow: visible;
+    white-space: normal;
   }
 }
 
@@ -350,5 +462,15 @@ const onDownloadClick = async () => {
   /* The chart seems to have a padding no mater what we do, this gets rid of it */
   margin: -6px;
   position: relative;
+}
+
+.peak-legend-swatch {
+  display: inline-block;
+  width: 20px;
+  height: 0;
+  border-top: 2px dashed;
+  margin: 0 10px;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 </style>
