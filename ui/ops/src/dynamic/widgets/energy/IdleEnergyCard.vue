@@ -262,13 +262,13 @@ const worstZoneIdx = computed(() => {
 
   for (let i = 0; i < items.length; i++) {
     const consumption = items[i];
-    if (!consumption?.totalEnergy || !consumption?.totalIdle) continue;
-
     const energy = toValue(consumption.totalEnergy);
-    const idle = toValue(consumption.totalIdle) ?? 0;
+    const idle = toValue(consumption.totalIdle);
+
+    if (energy === null || idle === null) continue;
 
     // Track first zone with any energy data
-    if (firstWithData === -1 && energy !== 0 && energy !== null) {
+    if (firstWithData === -1) {
       firstWithData = i;
     }
 
@@ -289,7 +289,7 @@ const hasData = computed(() => {
   if (items.length === 0) return false;
   return items.some(c => {
     const energy = toValue(c?.totalEnergy);
-    return energy !== 0 && energy !== null;
+    return energy !== null;
   });
 });
 
@@ -303,27 +303,55 @@ const worstZoneLabel = computed(() => {
 
 // Aggregate metrics across all zones
 const totalIdle = computed(() => {
-  return consumptions.reduce((sum, c) => {
-    return sum + (toValue(c?.totalIdle) ?? 0);
-  }, 0);
+  let sum = 0;
+  let hasValue = false;
+  for (const c of consumptions) {
+    const val = toValue(c?.totalIdle);
+    if (val !== null) {
+      sum += val;
+      hasValue = true;
+    }
+  }
+  return hasValue ? sum : null;
 });
 
 const totalEnergy = computed(() => {
-  return consumptions.reduce((sum, c) => {
-    return sum + (toValue(c?.totalEnergy) ?? 0);
-  }, 0);
+  let sum = 0;
+  let hasValue = false;
+  for (const c of consumptions) {
+    const val = toValue(c?.totalEnergy);
+    if (val !== null) {
+      sum += val;
+      hasValue = true;
+    }
+  }
+  return hasValue ? sum : null;
 });
 
 const totalHistoricalIdle = computed(() => {
-  return consumptions.reduce((sum, c) => {
-    return sum + (toValue(c?.historicalIdle) ?? 0);
-  }, 0);
+  let sum = 0;
+  let hasValue = false;
+  for (const c of consumptions) {
+    const val = toValue(c?.historicalIdle);
+    if (val !== null) {
+      sum += val;
+      hasValue = true;
+    }
+  }
+  return hasValue ? sum : null;
 });
 
 const totalHistoricalEnergy = computed(() => {
-  return consumptions.reduce((sum, c) => {
-    return sum + (toValue(c?.historicalEnergy) ?? 0);
-  }, 0);
+  let sum = 0;
+  let hasValue = false;
+  for (const c of consumptions) {
+    const val = toValue(c?.historicalEnergy);
+    if (val !== null) {
+      sum += val;
+      hasValue = true;
+    }
+  }
+  return hasValue ? sum : null;
 });
 
 const wastePercent = computed(() => {
@@ -362,6 +390,12 @@ const energyChange = useRollingValue(() => {
   return totalHistoricalEnergy.value > 0 ? totalEnergy.value : null;
 });
 
+// Reset trend baseline when the period changes
+watch([_start, _end, _offset], () => {
+  idleChange.reset();
+  energyChange.reset();
+});
+
 const idleTrend = computed(() => idleChange.percentChange.value);
 const totalTrend = computed(() => energyChange.percentChange.value);
 
@@ -372,7 +406,7 @@ const totalTrend = computed(() => energyChange.percentChange.value);
  * @return {string} The icon name
  */
 function getTrendIcon(change) {
-  if (change === null || change === undefined || Math.round(Math.abs(change)) === 0) return 'mdi-minus';
+  if (change === null || change === undefined || Math.abs(change) < 0.05) return 'mdi-minus';
   return change > 0 ? 'mdi-trending-up' : 'mdi-trending-down';
 }
 
@@ -383,7 +417,7 @@ function getTrendIcon(change) {
  * @return {string} The color name
  */
 function getTrendColor(change) {
-  if (change === null || change === undefined || Math.round(Math.abs(change)) === 0) return 'grey-lighten-1';
+  if (change === null || change === undefined || Math.abs(change) < 0.05) return 'grey-lighten-1';
   return change > 0 ? 'error' : 'success';
 }
 
@@ -394,9 +428,14 @@ function getTrendColor(change) {
  * @return {string} Formatted percentage string
  */
 function formatTrend(change) {
-  if (change === null || change === undefined) return '0%';
+  if (change === null || change === undefined || Math.abs(change) < 0.05) return '0%';
+  const absChange = Math.abs(change);
+  if (absChange < 10) {
+    const formatted = change.toFixed(1);
+    if (formatted === '0.0' || formatted === '-0.0') return '0%';
+    return `${change > 0 ? '+' : ''}${formatted}%`;
+  }
   const rounded = Math.round(change);
-  if (rounded === 0) return '0%';
   return `${rounded > 0 ? '+' : ''}${rounded}%`;
 }
 
