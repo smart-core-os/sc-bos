@@ -71,14 +71,13 @@
             {{ consumedDensityDisplayStr }}
           </span>
           <v-chip
-              v-if="consumedTrend !== null"
+              v-if="props.showTrend"
               :color="getTrendColor(consumedTrend, false)"
               size="x-small"
               style="height: 18px;">
             <v-icon :icon="getTrendIcon(consumedTrend)" size="x-small" start/>
             <span style="font-size: 0.65rem;">{{ formatTrend(consumedTrend) }}</span>
           </v-chip>
-          <span v-else class="text-caption" style="font-size: 0.65rem;">—</span>
         </div>
 
         <!-- Generated -->
@@ -91,14 +90,13 @@
             {{ generatedDensityDisplayStr }}
           </span>
           <v-chip
-              v-if="generatedTrend !== null"
+              v-if="props.showTrend"
               :color="getTrendColor(generatedTrend, true)"
               size="x-small"
               style="height: 18px;">
             <v-icon :icon="getTrendIcon(generatedTrend)" size="x-small" start/>
             <span style="font-size: 0.65rem;">{{ formatTrend(generatedTrend) }}</span>
           </v-chip>
-          <span v-else class="text-caption" style="font-size: 0.65rem;">—</span>
         </div>
 
         <!-- Net -->
@@ -111,14 +109,13 @@
             {{ netDensityDisplayStr }}
           </span>
           <v-chip
-              v-if="netTrend !== null"
+              v-if="props.showTrend"
               :color="getTrendColor(netTrend, false)"
               size="x-small"
               style="height: 18px;">
             <v-icon :icon="getTrendIcon(netTrend)" size="x-small" start/>
             <span style="font-size: 0.65rem;">{{ formatTrend(netTrend) }}</span>
           </v-chip>
-          <span v-else class="text-caption" style="font-size: 0.65rem;">—</span>
         </div>
       </div>
     </v-card-text>
@@ -160,6 +157,10 @@ const props = defineProps({
       Object // Occupancy.AsObject
     ],
     default: null
+  },
+  showTrend: {
+    type: Boolean,
+    default: true
   },
   thresholds: {
     type: Array, // {density: number, str: string, icon: string} ordered by density (kW per day) in ascending order
@@ -296,9 +297,9 @@ const hasData = computed(() => consumedDensity.value !== null || generatedDensit
 // Track historical values for trend calculation
 // Only track when we have actual data to avoid capturing initial null/zero as baseline
 // This allows negative values and actual zeros once data is loaded
-const consumedTracker = useRollingValue(() => hasData.value && consumedDensity.value !== null ? consumedDensity.value : null);
-const generatedTracker = useRollingValue(() => hasData.value && generatedDensity.value !== null ? generatedDensity.value : null);
-const netTracker = useRollingValue(() => hasData.value && netDensity.value !== null ? netDensity.value : null);
+const consumedTracker = useRollingValue(() => props.showTrend && hasData.value && consumedDensity.value !== null ? consumedDensity.value : null);
+const generatedTracker = useRollingValue(() => props.showTrend && hasData.value && generatedDensity.value !== null ? generatedDensity.value : null);
+const netTracker = useRollingValue(() => props.showTrend && hasData.value && netDensity.value !== null ? netDensity.value : null);
 
 // Compute trends using percentChange from rolling value trackers
 const consumedTrend = computed(() => consumedTracker.percentChange.value);

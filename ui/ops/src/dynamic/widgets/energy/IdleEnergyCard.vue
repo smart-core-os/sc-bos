@@ -48,14 +48,13 @@
             {{ idleStr }} {{ props.unit }}
           </span>
           <v-chip
-              v-if="idleTrend !== null"
+              v-if="props.showTrend"
               :color="getTrendColor(idleTrend)"
               size="x-small"
               style="height: 18px;">
             <v-icon :icon="getTrendIcon(idleTrend)" size="x-small" start/>
             <span style="font-size: 0.65rem;">{{ formatTrend(idleTrend) }}</span>
           </v-chip>
-          <span v-else class="text-caption" style="font-size: 0.65rem;">—</span>
         </div>
 
         <!-- Total -->
@@ -65,14 +64,13 @@
             {{ totalStr }} {{ props.unit }}
           </span>
           <v-chip
-              v-if="totalTrend !== null"
+              v-if="props.showTrend"
               :color="getTrendColor(totalTrend)"
               size="x-small"
               style="height: 18px;">
             <v-icon :icon="getTrendIcon(totalTrend)" size="x-small" start/>
             <span style="font-size: 0.65rem;">{{ formatTrend(totalTrend) }}</span>
           </v-chip>
-          <span v-else class="text-caption" style="font-size: 0.65rem;">—</span>
         </div>
       </div>
     </v-card-text>
@@ -101,6 +99,7 @@ const props = defineProps({
   // Pull-based updates configuration
   usePull: {type: Boolean, default: true},
   pullLookback: {type: Number, default: 5 * 60 * 1000}, // 5 minutes in milliseconds
+  showTrend: {type: Boolean, default: true},
   thresholds: {
     type: Array,
     default: () => [
@@ -379,13 +378,13 @@ const badgeIcon = computed(() => activeThreshold.value.icon);
 
 // Trend tracking for aggregated totals
 const idleChange = useRollingValue(() => {
-  if (!hasData.value) return null;
+  if (!props.showTrend || !hasData.value) return null;
   // Use historical baseline if we have completed at least one bucket with non-zero data
   return totalHistoricalIdle.value > 0 ? totalIdle.value : null;
 });
 
 const energyChange = useRollingValue(() => {
-  if (!hasData.value) return null;
+  if (!props.showTrend || !hasData.value) return null;
   // Use historical baseline if we have completed at least one bucket with non-zero data
   return totalHistoricalEnergy.value > 0 ? totalEnergy.value : null;
 });
