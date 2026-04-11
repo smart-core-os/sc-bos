@@ -355,7 +355,7 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 			},
 		},
 		string(soundsensorpb.TraitName): {
-			headers: []string{"sound.soundpressurelevel"},
+			headers: []string{"sound.pressurelevel"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
 				c := soundsensorpb.NewSoundSensorApiClient(s.m.ClientConn())
 				data, err := c.GetSoundLevel(ctx, &soundsensorpb.GetSoundLevelRequest{Name: name})
@@ -590,7 +590,9 @@ func openClosePositionsToRow(d *openclosepb.OpenClosePositions) map[string]strin
 }
 
 func soundLevelToRow(d *soundsensorpb.SoundLevel) map[string]string {
-	return map[string]string{
-		"sound.soundpressurelevel": fmt.Sprintf("%.1f", d.GetSoundPressureLevel()),
+	vals := make(map[string]string)
+	if d.SoundPressureLevel != nil {
+		vals["sound.pressurelevel"] = fmt.Sprintf("%.1f", *d.SoundPressureLevel)
 	}
+	return vals
 }
