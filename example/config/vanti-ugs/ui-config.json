@@ -965,7 +965,9 @@
                     "metric": "score",
                     "start": "day-7",
                     "end": "day-1",
-                    "occupancy": "van/uk/brum/ugs/zones/building"
+                    "occupancy": "van/uk/brum/ugs/zones/building",
+                    "showBaseline": true,
+                    "baselineShift": "week"
                   }
                 },
                 {
@@ -1087,6 +1089,7 @@
                   "component": "builtin:building/FloorTraitCells",
                   "props": {
                     "columns": ["temp", "humidity", "co2", "voc", "sound"],
+                    "showTrend": true,
                     "floors": [
                       {"level": 7},
                       {"level": 6, "zoneName": "van/uk/brum/ugs/zones/rooms/bank"},

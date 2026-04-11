@@ -53,6 +53,8 @@ import {HOUR, useNow} from '@/components/now.js';
 import {useDevicesCollection} from '@/composables/devices.js';
 import DeviceCell from '@/routes/devices/components/DeviceCell.vue';
 import {useAirQualityPeriodAverages} from '@/dynamic/widgets/environmental/airQuality.js';
+import {useAirTemperaturePeriodAverages} from '@/dynamic/widgets/environmental/airTemperature.js';
+import {useSoundLevelPeriodAverages} from '@/dynamic/widgets/environmental/soundSensor.js';
 import {useAirQuality, usePullAirQuality} from '@/traits/airQuality/airQuality.js';
 import {useAirTemperature, usePullAirTemperature} from '@/traits/airTemperature/airTemperature.js';
 import {usePullSoundLevel, useSoundLevel} from '@/traits/sound/sound.js';
@@ -64,8 +66,8 @@ const props = defineProps({
     required: true,
   },
   columns: {
-    type: Array, // subset of ['temp', 'humidity', 'co2', 'voc', 'sound']
-    default: () => ['temp', 'humidity', 'co2', 'voc', 'sound'],
+    type: Array, // subset of ['temp', 'humidity', 'co2', 'voc', 'pm25', 'sound']
+    default: () => ['temp', 'humidity', 'co2', 'voc', 'pm25', 'sound'],
   },
   tempSetpoint: {
     type: Number,
@@ -109,7 +111,7 @@ const deviceItemByLevel = computed(() => {
 
 // ── AQ comfort matrix: per-zone sensor data ───────────────────────────────────
 
-const floorData = reactive(/** @type {Record<string, {temp, humidity, co2, voc, sound, trends?}>} */ {});
+const floorData = reactive(/** @type {Record<string, {temp, humidity, co2, voc, pm25, sound, trends?}>} */ {});
 const scopeByZone = {};
 
 // Prior-period edges (prior 24 h window), refreshed every hour.
@@ -117,6 +119,8 @@ const {now} = useNow(HOUR);
 const priorStart = computed(() => new Date(now.value - 48 * 3600_000));
 const priorEnd = computed(() => new Date(now.value - 24 * 3600_000));
 const AQ_TREND_METRICS = ['carbonDioxideLevel', 'volatileOrganicCompounds', 'particulateMatter25'];
+const AT_TREND_METRICS = ['ambientTemperature', 'ambientHumidity'];
+const SL_TREND_METRICS = ['soundPressureLevel'];
 
 watch(() => props.floors.map(f => f.zoneName), (zoneNames) => {
   const toStop = new Set(Object.keys(scopeByZone));
@@ -152,19 +156,34 @@ watch(() => props.floors.map(f => f.zoneName), (zoneNames) => {
       }, {immediate: true, deep: true});
 
       // Prior-period averages for trend arrows — only fetched when showTrend is on
-      const priorAvgs = useAirQualityPeriodAverages(
+      const aqAvgs = useAirQualityPeriodAverages(
         computed(() => props.showTrend ? zoneName : null),
         AQ_TREND_METRICS,
         priorStart,
         priorEnd
       );
-      watch(priorAvgs, (avgs) => {
+      const atAvgs = useAirTemperaturePeriodAverages(
+        computed(() => props.showTrend ? zoneName : null),
+        AT_TREND_METRICS,
+        priorStart,
+        priorEnd
+      );
+      const slAvgs = useSoundLevelPeriodAverages(
+        computed(() => props.showTrend ? zoneName : null),
+        SL_TREND_METRICS,
+        priorStart,
+        priorEnd
+      );
+      watch([aqAvgs, atAvgs, slAvgs], ([aq, at, sl]) => {
         floorData[zoneName] = {
           ...(floorData[zoneName] ?? {}),
           trends: {
-            co2: avgs.carbonDioxideLevel,
-            voc: avgs.volatileOrganicCompounds,
-            pm25: avgs.particulateMatter25,
+            co2: aq.carbonDioxideLevel,
+            voc: aq.volatileOrganicCompounds,
+            pm25: aq.particulateMatter25,
+            temp: at.ambientTemperature,
+            humidity: at.ambientHumidity,
+            sound: sl.soundPressureLevel,
           },
         };
       }, {immediate: true});
@@ -182,13 +201,12 @@ onScopeDispose(() => {
   for (const scope of Object.values(scopeByZone)) scope.stop();
 });
 
-// Returns ↑ / ↓ / '' based on % change from prior to current (higher = worse for pollutants)
-function trendArrow(current, prior, higherIsWorse = true) {
+// Returns ↑ / ↓ / '' based on % change from prior to current
+function trendArrow(current, prior) {
   if (current == null || prior == null || prior === 0) return '';
   const pct = (current - prior) / prior;
-  if (Math.abs(pct) < 0.05) return ''; // < 5% change — ignore noise
-  const up = pct > 0;
-  return (up === higherIsWorse) ? ' ↑' : ' ↓';
+  if (Math.abs(pct) < 0.0005) return ''; // < 0.05% change — ignore noise
+  return pct > 0 ? ' ↑' : ' ↓';
 }
 function trendTooltipSuffix(current, prior, unit = '') {
   if (!props.showTrend || prior == null) return '';
@@ -201,8 +219,13 @@ const allColumns = computed(() => [
   {
     key: 'temp',
     label: 'Temp',
-    display: (d) => d?.temp !== null && d?.temp !== undefined ? `${d.temp.toFixed(1)}°` : '—',
-    tooltip: (d) => d?.temp !== null && d?.temp !== undefined ? `Temperature: ${d.temp.toFixed(1)} °C` : 'No data',
+    display: (d) => {
+      if (d?.temp == null) return '—';
+      return `${d.temp.toFixed(1)}°${trendArrow(d.temp, d.trends?.temp)}`;
+    },
+    tooltip: (d) => d?.temp != null
+      ? `Temperature: ${d.temp.toFixed(1)} °C${trendTooltipSuffix(d.temp, d.trends?.temp, '°C')}`
+      : 'No data',
     colorClass: (d) => {
       if (!d || d.temp === null) return 'chip--unknown';
       const dev = Math.abs(d.temp - props.tempSetpoint);
@@ -214,8 +237,13 @@ const allColumns = computed(() => [
   {
     key: 'humidity',
     label: 'RH%',
-    display: (d) => d?.humidity !== null && d?.humidity !== undefined ? `${d.humidity.toFixed(0)}%` : '—',
-    tooltip: (d) => d?.humidity !== null && d?.humidity !== undefined ? `Humidity: ${d.humidity.toFixed(1)} %` : 'No data',
+    display: (d) => {
+      if (d?.humidity == null) return '—';
+      return `${d.humidity.toFixed(0)}%${trendArrow(d.humidity, d.trends?.humidity)}`;
+    },
+    tooltip: (d) => d?.humidity != null
+      ? `Humidity: ${d.humidity.toFixed(1)} %${trendTooltipSuffix(d.humidity, d.trends?.humidity, '%')}`
+      : 'No data',
     colorClass: (d) => {
       if (!d || d.humidity === null) return 'chip--unknown';
       const h = d.humidity;
@@ -259,10 +287,32 @@ const allColumns = computed(() => [
     },
   },
   {
+    key: 'pm25',
+    label: 'PM2.5',
+    display: (d) => {
+      if (d?.pm25 == null) return '—';
+      return `${Math.round(d.pm25)}${trendArrow(d.pm25, d.trends?.pm25)}`;
+    },
+    tooltip: (d) => d?.pm25 != null
+      ? `PM2.5: ${Math.round(d.pm25)} µg/m³${trendTooltipSuffix(d.pm25, d.trends?.pm25, 'µg/m³')}`
+      : 'No data',
+    colorClass: (d) => {
+      if (!d || d.pm25 === null) return 'chip--unknown';
+      if (d.pm25 < 10) return 'chip--good';
+      if (d.pm25 < 20) return 'chip--warn';
+      return 'chip--bad';
+    },
+  },
+  {
     key: 'sound',
     label: 'dB',
-    display: (d) => d?.sound !== null && d?.sound !== undefined ? `${d.sound.toFixed(0)}` : '—',
-    tooltip: (d) => d?.sound !== null && d?.sound !== undefined ? `Sound: ${d.sound.toFixed(1)} dB` : 'No data',
+    display: (d) => {
+      if (d?.sound == null) return '—';
+      return `${d.sound.toFixed(0)}${trendArrow(d.sound, d.trends?.sound)}`;
+    },
+    tooltip: (d) => d?.sound != null
+      ? `Sound: ${d.sound.toFixed(1)} dB${trendTooltipSuffix(d.sound, d.trends?.sound, 'dB')}`
+      : 'No data',
     colorClass: (d) => {
       if (!d || d.sound === null) return 'chip--unknown';
       if (d.sound < 50) return 'chip--good';

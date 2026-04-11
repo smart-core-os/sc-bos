@@ -305,6 +305,13 @@ const consumedTrend = computed(() => consumedTracker.percentChange.value);
 const generatedTrend = computed(() => generatedTracker.percentChange.value);
 const netTrend = computed(() => netTracker.percentChange.value);
 
+// Reset trend baseline when sources or period changes
+watch([toRef(props, 'name'), toRef(props, 'generatedName'), toRef(props, 'period'), toRef(props, 'offset')], () => {
+  consumedTracker.reset();
+  generatedTracker.reset();
+  netTracker.reset();
+});
+
 /**
  * Get trend icon based on change value
  *
@@ -312,7 +319,7 @@ const netTrend = computed(() => netTracker.percentChange.value);
  * @return {string} Material Design icon name
  */
 function getTrendIcon(change) {
-  if (change === null || change === undefined || Math.abs(change) < 0.01) return 'mdi-minus';
+  if (change === null || change === undefined || Math.abs(change) < 0.05) return 'mdi-minus';
   return change > 0 ? 'mdi-trending-up' : 'mdi-trending-down';
 }
 
@@ -326,7 +333,7 @@ function getTrendIcon(change) {
  * @return {string} Vuetify color name
  */
 function getTrendColor(change, inverted = false) {
-  if (change === null || change === undefined || Math.abs(change) < 0.01) return 'grey-lighten-1';
+  if (change === null || change === undefined || Math.abs(change) < 0.05) return 'grey-lighten-1';
   if (inverted) {
     // For generated: increasing is good, decreasing is bad
     return change > 0 ? 'success' : 'error';
@@ -342,9 +349,14 @@ function getTrendColor(change, inverted = false) {
  * @return {string}
  */
 function formatTrend(change) {
-  if (change === null || change === undefined) return '0%';
+  if (change === null || change === undefined || Math.abs(change) < 0.05) return '0%';
+  const absChange = Math.abs(change);
+  if (absChange < 10) {
+    const formatted = change.toFixed(1);
+    if (formatted === '0.0' || formatted === '-0.0') return '0%';
+    return `${change > 0 ? '+' : ''}${formatted}%`;
+  }
   const rounded = Math.round(change);
-  if (rounded === 0) return '0%';
   return `${rounded > 0 ? '+' : ''}${rounded}%`;
 }
 
