@@ -12,13 +12,6 @@
       <!-- No data -->
       <div v-if="!hasData" class="text-h2 opacity-40 my-2">—</div>
 
-      <!-- Has energy data but no meaningful idle — all zones occupied -->
-      <div v-else-if="totalIdle != null && totalIdle < props.negligibleEnergy" class="d-flex flex-column align-center my-2 ga-1">
-        <span class="text-h2 font-weight-bold">{{ totalStr }}</span>
-        <span class="text-caption text-medium-emphasis">{{ props.unit }}</span>
-        <span class="text-body-2 text-success mt-1">All zones occupied</span>
-      </div>
-
       <!-- Show gauge with idle data -->
       <template v-else-if="totalIdle != null">
         <div class="gauge-container">
@@ -106,7 +99,7 @@ const props = defineProps({
   thresholds: {
     type: Array,
     default: () => [
-      {percent: 0, label: 'Occupied', color: 'success', icon: 'mdi-check-circle-outline'},
+      {percent: 0, label: 'Optimal', color: 'success', icon: 'mdi-check-circle-outline'},
       {percent: 10, label: 'Efficient', color: 'success', icon: 'mdi-leaf'},
       {percent: 30, label: 'Moderate', color: 'warning', icon: 'mdi-alert-circle-outline'},
       {percent: Infinity, label: 'Wasteful', color: 'error', icon: 'mdi-fire-alert'},
@@ -362,17 +355,21 @@ const wastePercent = computed(() => {
   const total = totalEnergy.value;
   const idle = totalIdle.value;
 
-  if (!total || total < props.negligibleEnergy) return 0;
+  if (!total || total < props.negligibleEnergy || (idle !== null && idle < props.negligibleEnergy)) return 0;
   return Math.abs((idle / total) * 100);
 });
 
 const idleStr = computed(() => format(totalIdle.value));
 const totalStr = computed(() => format(totalEnergy.value));
-const wasteStr = computed(() => `${wastePercent.value.toFixed(1)}%`);
+const wasteStr = computed(() => {
+  const v = wastePercent.value;
+  if (v < 0.05) return '0%';
+  return `${v.toFixed(1)}%`;
+});
 
 const activeThreshold = computed(() => {
   if (totalIdle.value === null) return null;
-  // If idle energy is negligible, force the first threshold (e.g. "Occupied")
+  // If idle energy is negligible, force the first threshold (e.g. "Optimal")
   if (totalIdle.value < props.negligibleEnergy) return props.thresholds[0];
 
   for (const t of props.thresholds) {

@@ -353,11 +353,20 @@ export function usePullOccupancyState(name, lookback) {
     watch(() => resource.value, (value) => {
       if (!value?.state) return;
 
-      const now = new Date();
-      stateHistory.push({timestamp: now, state: value.state});
+      const t = value.stateChangeTime ? timestampToDate(value.stateChangeTime) : new Date();
+      
+      // Only add to history if it's a new state or a different transition time
+      const isNew = stateHistory.length === 0 || 
+                    stateHistory.some(h => h.timestamp.getTime() === t.getTime() && h.state === value.state) === false;
+
+      if (isNew) {
+        stateHistory.push({timestamp: t, state: value.state});
+        stateHistory.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      }
 
       // Clean up old entries beyond lookback period, but keep one as a baseline
       // so the state at the start of the lookback window is still known.
+      const now = new Date();
       const cutoff = now.getTime() - lookback;
       while (stateHistory.length > 1 && stateHistory[1].timestamp.getTime() < cutoff) {
         stateHistory.shift();
