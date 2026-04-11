@@ -18,7 +18,8 @@
                   :title="item.text">
                 <template #prepend>
                   <v-list-item-action start>
-                    <v-checkbox-btn :model-value="!item.hidden" readonly :color="item.bgColor" density="compact"/>
+                    <span v-if="item.isDashed" class="peak-legend-swatch" :style="{borderColor: item.bgColor}"/>
+                    <v-checkbox-btn v-else :model-value="!item.hidden" readonly :color="item.bgColor" density="compact"/>
                   </v-list-item-action>
                 </template>
               </v-list-item>
@@ -192,9 +193,6 @@ const chartOptions = computed(() => {
       },
       legend: {
         display: false, // we use a custom legend plugin and vue for this
-        labels: {
-          filter: (item, data) => !data.datasets[item.datasetIndex]?._isPeak,
-        },
       }
     },
     scales: {
@@ -464,5 +462,15 @@ const onDownloadClick = async () => {
   /* The chart seems to have a padding no mater what we do, this gets rid of it */
   margin: -6px;
   position: relative;
+}
+
+.peak-legend-swatch {
+  display: inline-block;
+  width: 20px;
+  height: 0;
+  border-top: 2px dashed;
+  margin: 0 10px;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 </style>
