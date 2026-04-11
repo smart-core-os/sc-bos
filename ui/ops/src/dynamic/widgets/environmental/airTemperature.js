@@ -217,6 +217,46 @@ async function readAverageAirTemperatureMetricSeries(name, metric, edges, before
 }
 
 /**
+ * Returns the average of multiple air temperature metrics over a single time span using one API call.
+ * When `name` resolves to null/undefined the fetch is skipped and all values return null.
+ *
+ * @param {import('vue').MaybeRefOrGetter<string|null>} name
+ * @param {string[]} metrics - metric property names on the AirTemperature proto object
+ * @param {import('vue').MaybeRefOrGetter<Date>} start
+ * @param {import('vue').MaybeRefOrGetter<Date>} end
+ * @return {import('vue').ComputedRef<Record<string, number|null>>}
+ */
+export function useAirTemperaturePeriodAverages(name, metrics, start, end) {
+  const sums = reactive(Object.fromEntries(metrics.map(m => [m, 0])));
+  const counts = reactive(Object.fromEntries(metrics.map(m => [m, 0])));
+
+  asyncWatch(
+    [() => toValue(name), () => toValue(start), () => toValue(end)],
+    async ([name, start, end]) => {
+      for (const m of metrics) { sums[m] = 0; counts[m] = 0; }
+      if (!name || !start || !end) return;
+      const req = {name, period: {startTime: start, endTime: end}, pageSize: 500};
+      do {
+        const res = await listAirTemperatureHistory(req, {});
+        if (!res.airTemperatureRecordsList.length) break;
+        for (const record of res.airTemperatureRecordsList) {
+          for (const m of metrics) {
+            const num = extractMetricValue(record.airTemperature, m);
+            if (num != null && !isNaN(num)) { sums[m] += num; counts[m]++; }
+          }
+        }
+        req.pageToken = res.nextPageToken;
+      } while (req.pageToken);
+    },
+    {immediate: true}
+  );
+
+  return computed(() =>
+    Object.fromEntries(metrics.map(m => [m, counts[m] > 0 ? sums[m] / counts[m] : null]))
+  );
+}
+
+/**
  * @typedef {Object} AirTemperatureMetric
  * @property {import('vue').MaybeRefOrGetter<string>} title
  * @property {import('vue').ComputedRef<{x:Date, y:number|null}[]>} data

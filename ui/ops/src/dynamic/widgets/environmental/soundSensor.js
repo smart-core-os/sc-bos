@@ -133,7 +133,12 @@ async function readAverageSoundLevelMetricSeries(name, metric, edges, before = n
       }
       const val = record.soundLevel[metric];
       const span = spans[beforeIdx];
-      span.sum += val;
+      // soundPressureLevel and other decibel metrics should use logarithmic averaging (mean energy)
+      if (metric === 'soundPressureLevel' || metric.startsWith('decibel')) {
+        span.sum += Math.pow(10, val / 10);
+      } else {
+        span.sum += val;
+      }
       span.count++;
       span.last = val;
     }
@@ -143,7 +148,11 @@ async function readAverageSoundLevelMetricSeries(name, metric, edges, before = n
   const dst = spans.map((span, i) => {
     const record = {x: edges[i], y: null, last: null};
     if (span.count > 0) {
-      record.y = span.sum / span.count;
+      if (metric === 'soundPressureLevel' || metric.startsWith('decibel')) {
+        record.y = 10 * Math.log10(span.sum / span.count);
+      } else {
+        record.y = span.sum / span.count;
+      }
       record.last = span.last;
     }
     return record;
@@ -184,6 +193,61 @@ async function readAverageSoundLevelMetricSeries(name, metric, edges, before = n
     }
   }
   return dst; // dst should have no null entries by now
+}
+
+/**
+ * Returns the average of multiple sound level metrics over a single time span using one API call.
+ * When `name` resolves to null/undefined the fetch is skipped and all values return null.
+ *
+ * @param {import('vue').MaybeRefOrGetter<string|null>} name
+ * @param {string[]} metrics - metric property names on the SoundLevel proto object
+ * @param {import('vue').MaybeRefOrGetter<Date>} start
+ * @param {import('vue').MaybeRefOrGetter<Date>} end
+ * @return {import('vue').ComputedRef<Record<string, number|null>>}
+ */
+export function useSoundLevelPeriodAverages(name, metrics, start, end) {
+  const sums = reactive(Object.fromEntries(metrics.map(m => [m, 0])));
+  const counts = reactive(Object.fromEntries(metrics.map(m => [m, 0])));
+
+  asyncWatch(
+    [() => toValue(name), () => toValue(start), () => toValue(end)],
+    async ([name, start, end]) => {
+      for (const m of metrics) { sums[m] = 0; counts[m] = 0; }
+      if (!name || !start || !end) return;
+      const req = {name, period: {startTime: start, endTime: end}, pageSize: 500};
+      do {
+        const res = await listSoundLevelHistory(req, {});
+        if (!res.soundLevelRecordsList.length) break;
+        for (const record of res.soundLevelRecordsList) {
+          for (const m of metrics) {
+            const raw = record.soundLevel[m];
+            // proto FloatValue wraps the number in { value }, plain fields are numbers
+            const num = typeof raw === 'number' ? raw : raw?.value;
+            if (num != null && !isNaN(num)) {
+              if (m === 'soundPressureLevel' || m.startsWith('decibel')) {
+                sums[m] += Math.pow(10, num / 10);
+              } else {
+                sums[m] += num;
+              }
+              counts[m]++;
+            }
+          }
+        }
+        req.pageToken = res.nextPageToken;
+      } while (req.pageToken);
+    },
+    {immediate: true}
+  );
+
+  return computed(() =>
+    Object.fromEntries(metrics.map(m => {
+      if (counts[m] === 0) return [m, null];
+      if (m === 'soundPressureLevel' || m.startsWith('decibel')) {
+        return [m, 10 * Math.log10(sums[m] / counts[m])];
+      }
+      return [m, sums[m] / counts[m]];
+    }))
+  );
 }
 
 /**
