@@ -11,6 +11,7 @@ import {defineChartOptions} from '@/components/charts/util.js';
 import {timestampToDate} from '@/api/convpb.js';
 import {listOccupancySensorHistory} from '@/api/sc/traits/occupancy.js';
 import {useAirQualityHistoryMetrics} from '@/dynamic/widgets/environmental/airQuality.js';
+import {shiftFnFromStr} from '@/dynamic/widgets/occupancy/baseline.js';
 import {asyncWatch, useLocalProp} from '@/util/vue.js';
 import binarySearch from 'binary-search';
 import {Occupancy} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/occupancysensor/v1/occupancy_sensor_pb';
@@ -21,6 +22,7 @@ import {Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeSc
 import {startOfDay, startOfYear} from 'date-fns';
 import {computed, toRef, toValue} from 'vue';
 import {Line as LineChart} from 'vue-chartjs';
+import * as vColors from 'vuetify/util/colors';
 import 'chartjs-adapter-date-fns'; // imported for side effects
 
 const datasetSourceName = Symbol('datasetSourceName');
@@ -59,6 +61,16 @@ const props = defineProps({
     type: [String, Array],
     default: null,
   },
+  // When true, overlays a dashed line per source showing the same metric for the prior period.
+  showBaseline: {
+    type: Boolean,
+    default: false,
+  },
+  // 'day', 'week', 'month' — how far back to shift the baseline window.
+  baselineShift: {
+    type: String,
+    default: 'week',
+  },
 });
 
 const _start = useLocalProp(toRef(props, 'start'));
@@ -83,8 +95,28 @@ const datasetNames = computed(() => {
   });
 });
 
-// Always use the devices composable for consistency
+// The same colour palette the themeColorPlugin assigns in dataset order
+const paletteColors = [
+  vColors.blue.base,
+  vColors.green.base,
+  vColors.orange.base,
+  vColors.yellow.base,
+  vColors.red.base,
+];
+
+// Current period
 const devices = useAirQualityHistoryMetrics(sources, toRef(props, 'metric'), pastEdges);
+
+// Prior period — edges shifted back; empty when showBaseline is off so no fetches are made
+const shiftFn = computed(() => shiftFnFromStr(props.baselineShift));
+const baselineEdges = computed(() =>
+  props.showBaseline ? pastEdges.value.map(shiftFn.value) : []
+);
+const baselineDevices = useAirQualityHistoryMetrics(
+  computed(() => props.showBaseline ? sources.value : []),
+  toRef(props, 'metric'),
+  baselineEdges
+);
 
 // --- Occupancy overlay ---
 // For each occupancy source, fetch state history and convert to 0/1 step values per edge.
@@ -269,10 +301,32 @@ const chartOptions = computed(() => {
 const chartLabels = computed(() => edges.value.slice(0, -1));
 const chartData = computed(() => {
   const datasets = [];
+
+  // Current period — themeColorPlugin assigns palette colours in dataset order
   for (const [name, device] of Object.entries(devices)) {
     const label = toValue(device.title) || name;
     const data = toValue(device.data);
     datasets.push({label, data, [datasetSourceName]: name});
+  }
+
+  // Prior period — dashed lines in the same palette colour as their current counterpart.
+  // backgroundColor: 'transparent' causes themeColorPlugin to skip these datasets, so
+  // we pre-set borderColor to match the current dataset at the same index.
+  if (props.showBaseline) {
+    Object.entries(baselineDevices).forEach(([name, device], i) => {
+      datasets.push({
+        label: `${toValue(device.title) || name} (prior)`,
+        data: toValue(device.data),
+        [datasetSourceName]: name,
+        borderColor: paletteColors[i % paletteColors.length],
+        backgroundColor: 'transparent',
+        borderDash: [5, 5],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        tension: 0.3,
+      });
+    });
   }
 
   // Occupancy overlay: one semi-transparent filled step-line per occupancy source.

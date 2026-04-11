@@ -18,7 +18,8 @@
                   :title="item.text">
                 <template #prepend>
                   <v-list-item-action start>
-                    <v-checkbox-btn :model-value="!item.hidden" readonly :color="item.bgColor" density="compact"/>
+                    <span v-if="item.isDashed" class="baseline-legend-swatch" :style="{borderColor: item.bgColor}"/>
+                    <v-checkbox-btn v-else :model-value="!item.hidden" readonly :color="item.bgColor" density="compact"/>
                   </v-list-item-action>
                 </template>
               </v-list-item>
@@ -41,8 +42,20 @@
           :end="_end"
           :offset="_offset"
           :occupancy="occupancy"
+          :show-baseline="props.showBaseline"
+          :baseline-shift="props.baselineShift"
           ref="chartRef"/>
     </v-card-text>
+    <div v-if="props.showBaseline" class="d-flex ga-8 justify-center pb-3 text-caption opacity-70">
+      <span class="d-flex align-center ga-3">
+        <span class="legend-dot"/>
+        Current
+      </span>
+      <span class="d-flex align-center ga-3">
+        <span class="legend-line"/>
+        Prior period
+      </span>
+    </div>
   </v-card>
 </template>
 
@@ -86,6 +99,16 @@ const props = defineProps({
   occupancy: {
     type: [String, Array],
     default: null,
+  },
+  // When true, overlays a dashed prior-period line for each source.
+  showBaseline: {
+    type: Boolean,
+    default: false,
+  },
+  // 'day', 'week', 'month' — how far back to shift the prior period window.
+  baselineShift: {
+    type: String,
+    default: 'week',
   },
 });
 
@@ -150,5 +173,32 @@ const onDownloadClick = async () => {
 </script>
 
 <style scoped>
+.baseline-legend-swatch {
+  display: inline-block;
+  width: 20px;
+  height: 0;
+  border-top: 2px dashed;
+  margin: 0 10px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
 
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.8;
+}
+
+.legend-line {
+  display: inline-block;
+  width: 20px;
+  height: 2px;
+  background-image: linear-gradient(to right, currentColor 50%, transparent 50%);
+  background-size: 8px 2px;
+  background-repeat: repeat-x;
+  opacity: 0.8;
+}
 </style>
