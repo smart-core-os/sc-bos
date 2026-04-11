@@ -31,14 +31,13 @@
               {{ format(m.value) }} {{ m.unit }}
             </span>
             <v-chip
-                v-if="metricTrends.get(m.key) !== null"
+                v-if="props.showTrend"
                 :color="getTrendColor(metricTrends.get(m.key))"
                 size="x-small"
                 style="height: 18px;">
               <v-icon :icon="getTrendIcon(metricTrends.get(m.key))" size="x-small" start/>
               <span style="font-size: 0.65rem;">{{ formatTrend(metricTrends.get(m.key)) }}</span>
             </v-chip>
-            <span v-else class="text-caption" style="font-size: 0.65rem;">—</span>
           </div>
         </template>
       </div>
@@ -56,6 +55,7 @@ import {computed, toRef, watch} from 'vue';
 const props = defineProps({
   title: {type: String, default: 'Power Factor'},
   name: {type: String, default: ''},
+  showTrend: {type: Boolean, default: true},
   thresholds: {
     type: Array,
     default: () => [
@@ -116,9 +116,9 @@ const metrics = computed(() => {
 // Track each metric individually
 // Filter out zero values to avoid capturing 0 as baseline (which causes null percentChange)
 // But allow negative values (reverse power flow / generation)
-const realChange = useRollingValue(() => realPower.value !== 0 ? realPower.value : null);
-const apparentChange = useRollingValue(() => apparentPower.value !== 0 ? apparentPower.value : null);
-const reactiveChange = useRollingValue(() => reactivePower.value !== 0 ? reactivePower.value : null);
+const realChange = useRollingValue(() => props.showTrend && realPower.value !== 0 ? realPower.value : null);
+const apparentChange = useRollingValue(() => props.showTrend && apparentPower.value !== 0 ? apparentPower.value : null);
+const reactiveChange = useRollingValue(() => props.showTrend && reactivePower.value !== 0 ? reactivePower.value : null);
 
 // Reset trend baseline when the device name changes
 watch(toRef(props, 'name'), () => {
