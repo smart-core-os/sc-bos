@@ -24,10 +24,12 @@ export function useMeterConsumption(name, edges) {
         res.push({x: startEdge, y: null});
         continue;
       }
-      res.push({x: startEdge, y: endReading.usage - startReading.usage});
+      const consumption = endReading.usage - startReading.usage;
+      // Use Math.max to ensure non-negative consumption (handles meter resets or data anomalies)
+      res.push({x: startEdge, y: Math.max(0, consumption)});
     }
     return res;
-  })
+  });
 }
 
 
