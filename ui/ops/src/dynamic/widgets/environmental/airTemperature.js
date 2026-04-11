@@ -57,7 +57,6 @@ export function useAirTemperatureHistoryMetric(name, metric, edges) {
     }
 
     if (edges.length < 2) {
-      console.warn('useAirTemperatureHistoryMetric: edges must have at least 2 elements', edges);
       return;
     }
 

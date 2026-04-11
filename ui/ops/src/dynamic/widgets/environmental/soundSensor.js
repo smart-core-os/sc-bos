@@ -33,7 +33,6 @@ export function useSoundLevelHistoryMetric(name, metric, edges) {
     }
 
     if (edges.length < 2) {
-      console.warn('useSoundLevelHistoryMetric: edges must have at least 2 elements', edges);
       return;
     }
 
