@@ -1,7 +1,7 @@
 <template>
   <v-card :class="props.class" :style="props.style" class="d-flex flex-column">
     <v-toolbar v-if="!hideToolbar" color="transparent">
-      <v-toolbar-title class="text-h4">{{ title }}</v-toolbar-title>
+      <v-toolbar-title class="text-h4" style="overflow-wrap: break-word">{{ title }}</v-toolbar-title>
       <v-btn
           icon="mdi-dots-vertical"
           size="small"
@@ -40,6 +40,7 @@
           :start="_start"
           :end="_end"
           :offset="_offset"
+          :occupancy="occupancy"
           ref="chartRef"/>
     </v-card-text>
   </v-card>
@@ -79,6 +80,12 @@ const props = defineProps({
   offset: {
     type: [Number, String],
     default: 0, // when start/End is 'month', 'day', etc. offset that value into the past, like 'last month'
+  },
+  // Optional occupancy sensor name(s). When provided, an occupied/unoccupied shading band is
+  // overlaid on the chart so CO₂ spikes can be correlated with occupancy transitions.
+  occupancy: {
+    type: [String, Array],
+    default: null,
   },
 });
 
