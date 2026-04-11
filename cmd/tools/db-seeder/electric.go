@@ -28,7 +28,7 @@ func SeedElectric(ctx context.Context, db *pgxpool.Pool, name string, profile *O
 
 	e := profile.Electric
 
-	for current.Before(now) {
+	for !current.After(now) {
 		// Use the same time-of-day scaling as the mock driver for current.
 		tod := float32(scale.NineToFive.At(current))
 		load := profile.Load(current)
