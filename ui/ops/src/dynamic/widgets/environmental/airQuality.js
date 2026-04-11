@@ -33,7 +33,6 @@ export function useAirQualityHistoryMetric(name, metric, edges) {
     }
 
     if (edges.length < 2) {
-      console.warn('useAirQualityHistoryMetric: edges must have at least 2 elements', edges);
       return;
     }
 

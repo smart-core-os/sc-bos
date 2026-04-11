@@ -67,6 +67,10 @@ export function useMaxPeopleCount(name, edges) {
       Object.keys(countsByEdge).forEach(k => delete countsByEdge[k]);
     }
 
+    if (!name || edges.length < 2) {
+      return;
+    }
+
     const toDelete = new Set(Object.keys(countsByEdge));
     for (const edge of edges) {
       toDelete.delete(edge.getTime().toString());
