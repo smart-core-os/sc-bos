@@ -58,7 +58,7 @@ export function useOccupancyNormalized(name, edges, shiftFn = (d) => subWeeks(d,
 export function shiftFnFromStr(str) {
   switch (str) {
     case 'month': return (d) => subMonths(d, 1);
-    case 'day': return (d) => subDays(d, 7);
+    case 'day': return (d) => subDays(d, 1);
     case 'week':
     default: return (d) => subWeeks(d, 1);
   }

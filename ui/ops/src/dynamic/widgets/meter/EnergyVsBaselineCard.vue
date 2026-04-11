@@ -60,7 +60,8 @@ const shiftFn = computed(() => {
   switch (props.baselineShift) {
     case 'month': return (d) => subMonths(d, 1);
     case 'week': return (d) => subWeeks(d, 1);
-    default: return (d) => subDays(d, 7);
+    case 'day': return (d) => subDays(d, 1);
+    default: return (d) => subWeeks(d, 1);
   }
 });
 

@@ -286,11 +286,12 @@ export function usePastDates(dates) {
   return computed(() => {
     const t = now.value.getTime();
     const _dates = toValue(dates);
+    if (_dates.length === 0) return _dates;
     if (_dates[_dates.length - 1].getTime() < t) return _dates;
     const res = [];
     for (let i = 0; i < _dates.length; i++) {
+      if (_dates[i].getTime() > t) break;
       res.push(_dates[i]);
-      if (_dates[i].getTime() >= t) break;
     }
     return res;
   });

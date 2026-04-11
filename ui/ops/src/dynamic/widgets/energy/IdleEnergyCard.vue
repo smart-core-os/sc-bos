@@ -13,14 +13,14 @@
       <div v-if="!hasData" class="text-h2 opacity-40 my-2">—</div>
 
       <!-- Has energy data but no meaningful idle — all zones occupied -->
-      <div v-else-if="totalIdle < 0.001" class="d-flex flex-column align-center my-2 ga-1">
+      <div v-else-if="totalIdle != null && totalIdle < 0.001" class="d-flex flex-column align-center my-2 ga-1">
         <span class="text-h2 font-weight-bold">{{ totalStr }}</span>
         <span class="text-caption text-medium-emphasis">{{ props.unit }}</span>
         <span class="text-body-2 text-success mt-1">All zones occupied</span>
       </div>
 
       <!-- Show gauge with idle data -->
-      <template v-else>
+      <template v-else-if="totalIdle != null">
         <div class="gauge-container">
           <circular-gauge
               :value="100 - Math.min(wastePercent, 100)"
@@ -38,6 +38,9 @@
           </div>
         </div>
       </template>
+
+      <!-- Occupancy missing -->
+      <div v-else class="text-h2 opacity-40 my-2">—</div>
 
       <!-- Metrics underneath - always in DOM so they align with other cards -->
       <div class="metrics d-flex flex-row flex-wrap justify-center ga-8 align-self-stretch px-2 mt-2">
@@ -366,15 +369,16 @@ const totalStr = computed(() => format(totalEnergy.value));
 const wasteStr = computed(() => `${wastePercent.value.toFixed(1)}%`);
 
 const activeThreshold = computed(() => {
+  if (totalIdle.value === null) return null;
   for (const t of props.thresholds) {
     if (wastePercent.value <= t.percent) return t;
   }
   return props.thresholds[props.thresholds.length - 1];
 });
 
-const badgeColor = computed(() => activeThreshold.value.color);
-const badgeLabel = computed(() => activeThreshold.value.label);
-const badgeIcon = computed(() => activeThreshold.value.icon);
+const badgeColor = computed(() => activeThreshold.value?.color ?? 'grey-lighten-1');
+const badgeLabel = computed(() => activeThreshold.value?.label ?? 'Unknown');
+const badgeIcon = computed(() => activeThreshold.value?.icon ?? 'mdi-help-circle-outline');
 
 // Trend tracking for aggregated totals
 const idleChange = useRollingValue(() => {

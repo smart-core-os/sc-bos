@@ -151,7 +151,7 @@ watch(() => props.floors.map(f => f.zoneName), (zoneNames) => {
           co2: presentMetrics.value?.carbonDioxideLevel?.value ?? null,
           voc: presentMetrics.value?.volatileOrganicCompounds?.value ?? null,
           pm25: presentMetrics.value?.particulateMatter25?.value ?? null,
-          sound: toValue(soundPressureLevel) || null,
+          sound: toValue(soundPressureLevel) ?? null,
         };
       }, {immediate: true, deep: true});
 
