@@ -4,7 +4,7 @@
       <v-toolbar-title class="text-h4" style="overflow-wrap: break-word">{{ title }}</v-toolbar-title>
       <v-spacer/>
       <v-chip
-          v-if="summaryPct !== null"
+          v-if="props.showBaseline && summaryPct !== null"
           :color="summaryPct > 0 ? 'success-lighten-1' : 'error-lighten-1'"
           size="small"
           label
@@ -33,9 +33,9 @@
     <v-card-text class="flex-grow-1 d-flex pt-0">
       <people-count-history-chart class="flex-grow-1 ma-n2" v-bind="$attrs" :total-occupancy-name="totalOccupancyName"
                                   :start="_start" :end="_end" :offset="_offset"
-                                  :show-baseline="true" :baseline-shift="baselineShift"/>
+                                  :show-baseline="props.showBaseline" :baseline-shift="baselineShift"/>
     </v-card-text>
-    <div class="d-flex ga-8 justify-center pb-3 text-caption opacity-70">
+    <div v-if="props.showBaseline" class="d-flex ga-8 justify-center pb-3 text-caption opacity-70">
       <span class="d-flex align-center ga-3">
         <span class="legend-dot" :style="{background: currentColor}"/>
         Current
@@ -84,6 +84,11 @@ const props = defineProps({
   offset: {
     type: [Number, String],
     default: 0, // when start/End is 'month', 'day', etc. offset that value into the past, like 'last month'
+  },
+  // When true, overlays a dashed prior-period line.
+  showBaseline: {
+    type: Boolean,
+    default: true,
   },
   // 'day', 'week', 'month' — how far back to shift the baseline
   baselineShift: {
