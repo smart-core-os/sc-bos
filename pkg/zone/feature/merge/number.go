@@ -1,6 +1,8 @@
 package merge
 
 import (
+	"math"
+
 	"golang.org/x/exp/constraints"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
@@ -84,6 +86,26 @@ func Sum[N Number, E any](items []E, f func(E) (N, bool)) (N, bool) {
 		}
 	}
 	return res, c > 0
+}
+
+func LogMean[N Number, E any](items []E, f func(E) (N, bool)) (N, bool) {
+	var n float64
+	for _, item := range items {
+		if _, ok := f(item); ok {
+			n++
+		}
+	}
+	if n == 0 {
+		return 0, false
+	}
+
+	var totalEnergy float64
+	for _, item := range items {
+		if v, ok := f(item); ok {
+			totalEnergy += math.Pow(10, float64(v)/10.0)
+		}
+	}
+	return N(10.0 * math.Log10(totalEnergy/n)), true
 }
 
 func Ptr[T any](v T, ok bool) *T {
