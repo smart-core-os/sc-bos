@@ -66,7 +66,10 @@ const baselineEdges = computed(() => {
 });
 
 const totalOccupancyCounts = useMaxPeopleCount(toRef(props, 'totalOccupancyName'), pastEdges);
-const baselineCounts = useMaxPeopleCount(toRef(props, 'totalOccupancyName'), baselineEdges);
+const baselineCounts = useMaxPeopleCount(
+    computed(() => props.showBaseline ? props.totalOccupancyName : null),
+    baselineEdges
+);
 
 const {themeColorPlugin} = useThemeColorPlugin();
 
