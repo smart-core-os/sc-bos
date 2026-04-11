@@ -1,7 +1,7 @@
 <template>
   <v-card :class="props.class" :style="props.style" class="d-flex flex-column">
     <v-toolbar v-if="!hideToolbar" color="transparent">
-      <v-toolbar-title class="text-h4">{{ title }}</v-toolbar-title>
+      <v-toolbar-title class="text-h4" style="overflow-wrap: break-word">{{ title }}</v-toolbar-title>
       <v-btn
           icon="mdi-dots-vertical"
           size="small"
