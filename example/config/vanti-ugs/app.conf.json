@@ -1021,6 +1021,16 @@
         "van/uk/brum/ugs/zones/floors/basement",
         "van/uk/brum/ugs/zones/floors/ground",
         "van/uk/brum/ugs/zones/floors/first"
+      ],
+      "soundSensors": [
+        "van/uk/brum/ugs/devices/SND-L00-01",
+        "van/uk/brum/ugs/devices/SND-L00-02",
+        "van/uk/brum/ugs/devices/SND-L00-03",
+        "van/uk/brum/ugs/devices/SND-L01-01",
+        "van/uk/brum/ugs/devices/SND-L01-02",
+        "van/uk/brum/ugs/devices/SND-L01-03",
+        "van/uk/brum/ugs/devices/SND-L01-04",
+        "van/uk/brum/ugs/devices/SND-L02-01"
       ]
     },
     {
@@ -1055,6 +1065,11 @@
       ],
       "airQualitySensors": [
         "van/uk/brum/ugs/devices/IAQ-LN1-04",
+        "van/uk/brum/ugs/zones/rooms/copper",
+        "van/uk/brum/ugs/zones/rooms/cotswold",
+        "van/uk/brum/ugs/zones/rooms/kaolin"
+      ],
+      "soundSensors": [
         "van/uk/brum/ugs/zones/rooms/copper",
         "van/uk/brum/ugs/zones/rooms/cotswold",
         "van/uk/brum/ugs/zones/rooms/kaolin"
@@ -1122,6 +1137,12 @@
         "van/uk/brum/ugs/zones/rooms/workshop",
         "van/uk/brum/ugs/zones/rooms/lab"
       ],
+      "soundSensors": [
+        "van/uk/brum/ugs/zones/rooms/teal",
+        "van/uk/brum/ugs/zones/rooms/green",
+        "van/uk/brum/ugs/zones/rooms/yellow",
+        "van/uk/brum/ugs/zones/areas/reception"
+      ],
       "onOffs": [
         "van/uk/brum/ugs/devices/FCU-L00-01",
         "van/uk/brum/ugs/devices/FCU-L00-02",
@@ -1161,6 +1182,9 @@
         "van/uk/brum/ugs/zones/areas/open-plan",
         "van/uk/brum/ugs/zones/areas/service"
       ],
+      "soundSensors": [
+        "van/uk/brum/ugs/zones/rooms/bank"
+      ],
       "onOffs": [
         "van/uk/brum/ugs/devices/FCU-L01-01",
         "van/uk/brum/ugs/devices/FCU-L01-02",
@@ -1183,7 +1207,8 @@
       },
       "thermostats": ["van/uk/brum/ugs/devices/FCU-LN1-02"],
       "occupancySensors": ["van/uk/brum/ugs/devices/PIR-LN1-02"],
-      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-LN1-01"]
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-LN1-01"],
+      "soundSensors": ["van/uk/brum/ugs/devices/SND-L00-01"]
     },
     {
       "name": "van/uk/brum/ugs/zones/rooms/cotswold",
@@ -1200,7 +1225,8 @@
       },
       "thermostats": ["van/uk/brum/ugs/devices/FCU-LN1-03"],
       "occupancySensors": ["van/uk/brum/ugs/devices/PIR-LN1-03"],
-      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-LN1-02"]
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-LN1-02"],
+      "soundSensors": ["van/uk/brum/ugs/devices/SND-L00-02"]
     },
     {
       "name": "van/uk/brum/ugs/zones/rooms/kaolin",
@@ -1217,7 +1243,8 @@
       },
       "thermostats": ["van/uk/brum/ugs/devices/FCU-LN1-04"],
       "occupancySensors": ["van/uk/brum/ugs/devices/PIR-LN1-04"],
-      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-LN1-03"]
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-LN1-03"],
+      "soundSensors": ["van/uk/brum/ugs/devices/SND-L00-03"]
     },
     {
       "name": "van/uk/brum/ugs/zones/rooms/teal",
@@ -1234,7 +1261,8 @@
       },
       "thermostats": ["van/uk/brum/ugs/devices/FCU-L00-02"],
       "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L00-02"],
-      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L00-01"]
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L00-01"],
+      "soundSensors": ["van/uk/brum/ugs/devices/SND-L01-02"]
     },
     {
       "name": "van/uk/brum/ugs/zones/rooms/green",
@@ -1251,7 +1279,8 @@
       },
       "thermostats": ["van/uk/brum/ugs/devices/FCU-L00-03"],
       "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L00-03"],
-      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L00-02"]
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L00-02"],
+      "soundSensors": ["van/uk/brum/ugs/devices/SND-L01-03"]
     },
     {
       "name": "van/uk/brum/ugs/zones/rooms/yellow",
@@ -1268,7 +1297,8 @@
       },
       "thermostats": ["van/uk/brum/ugs/devices/FCU-L00-04"],
       "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L00-04"],
-      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L00-03"]
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L00-03"],
+      "soundSensors": ["van/uk/brum/ugs/devices/SND-L01-04"]
     },
     {
       "name": "van/uk/brum/ugs/zones/areas/project",
@@ -1398,6 +1428,7 @@
       ],
       "thermostats": ["van/uk/brum/ugs/devices/FCU-L00-01"],
       "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L00-01"],
+      "soundSensors": ["van/uk/brum/ugs/devices/SND-L01-01"],
       "openClose": ["van/uk/brum/ugs/devices/ACR-L00-01"]
     },
     {
@@ -1432,7 +1463,8 @@
       "lights": ["van/uk/brum/ugs/devices/LTF-L01-01"],
       "thermostats": ["van/uk/brum/ugs/devices/FCU-L01-01"],
       "occupancySensors": ["van/uk/brum/ugs/devices/PIR-L01-01"],
-      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L01-01"]
+      "airQualitySensors": ["van/uk/brum/ugs/devices/IAQ-L01-01"],
+      "soundSensors": ["van/uk/brum/ugs/devices/SND-L02-01"]
     },
     {
       "name": "van/uk/brum/ugs/zones/areas/open-plan",
