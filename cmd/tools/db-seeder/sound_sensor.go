@@ -29,7 +29,7 @@ func SeedSoundSensor(ctx context.Context, db *pgxpool.Pool, name string, profile
 	// Start at the night-time baseline.
 	baseSoundLevel := s.NightDB
 
-	for current.Before(now) {
+	for !current.After(now) {
 		load := profile.Load(current)
 
 		// Target dB is anchored to the load-based range defined by NightDB and PeakDB.

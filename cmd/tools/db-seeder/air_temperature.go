@@ -32,7 +32,7 @@ func SeedAirTemperature(ctx context.Context, db *pgxpool.Pool, name string, prof
 	currentSetpoint := tp.SetbackMin + rand.Float64()*(tp.SetbackMax-tp.SetbackMin)
 	currentAmbient := currentSetpoint + rand.NormFloat64()*tp.AmbientNoiseSigma
 
-	for current.Before(now) {
+	for !current.After(now) {
 		load := profile.Load(current)
 
 		// Choose target setpoint based on occupancy level.

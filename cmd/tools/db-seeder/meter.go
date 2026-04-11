@@ -27,7 +27,7 @@ func SeedMeter(ctx context.Context, db *pgxpool.Pool, name string, profile *Offi
 	usage := float32(0)
 	prevTime := current
 
-	for current.Before(now) {
+	for !current.After(now) {
 		load := profile.Load(current)
 		elapsed := current.Sub(prevTime)
 
