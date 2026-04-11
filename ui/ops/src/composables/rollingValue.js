@@ -58,6 +58,7 @@ export function useRollingValue(value) {
     previousValue: computed(() => baselineValue.value),
     percentChange,
     absoluteChange,
-    hasChange
+    hasChange,
+    reset: () => { baselineValue.value = null; }
   };
 }
