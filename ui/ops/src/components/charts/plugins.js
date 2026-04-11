@@ -35,12 +35,19 @@ export function useVueLegendPlugin() {
       afterUpdate(chart) {
         const items = chart.options.plugins.legend.labels.generateLabels(chart);
         legendItems.value = items.map((item) => {
-          const bgColor = new Color(item.fillStyle);
+          // Dashed line datasets (e.g. peak overlays) have no meaningful fill —
+          // Chart.js parses 'transparent' to 'rgba(0,0,0,0)' which becomes opaque
+          // black after forcing alpha to 1. Use strokeStyle for dashed lines instead.
+          const isDashed = (item.lineDash?.length ?? 0) > 0;
+          const colorSource = isDashed ? item.strokeStyle : item.fillStyle;
+          const bgColor = new Color(colorSource ?? '#fff');
           bgColor.alpha = 1;
           return {
             text: item.text,
             hidden: item.hidden,
             bgColor: bgColor.toString(),
+            datasetIndex: item.datasetIndex,
+            isDashed,
             onClick: (e) => {
               const {type} = chart.config;
               if (type === 'pie' || type === 'doughnut') {
