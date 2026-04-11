@@ -1,7 +1,7 @@
 <template>
   <v-card class="d-flex flex-column px-8 py-4" :class="props.class" :style="props.style">
     <v-toolbar v-if="!hideTitle" color="transparent" class="mb-4">
-      <v-toolbar-title class="text-h4">{{ title }}</v-toolbar-title>
+      <v-toolbar-title class="text-h4" style="overflow-wrap: break-word">{{ title }}</v-toolbar-title>
       <template v-if="!hideTotals">
         <occupancy-people-count :people-count="peopleCount" :error="streamError" class="text-h2 align-self-center"/>
       </template>
