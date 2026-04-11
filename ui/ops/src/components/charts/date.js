@@ -74,3 +74,25 @@ export function useDateScale(start, end, offset) {
     startDate, endDate
   }
 }
+
+/**
+ * Returns a date format string suitable for tooltips based on the tick unit.
+ *
+ * @param {string} tickUnit
+ * @return {string}
+ */
+export function getTooltipDateFormat(tickUnit) {
+  switch (tickUnit) {
+    case 'minute':
+    case 'hour':
+      return 'MMM d, h:mm a';
+    case 'day':
+      return 'MMM d, yyyy';
+    case 'month':
+      return 'MMM yyyy';
+    case 'year':
+      return 'yyyy';
+    default:
+      return 'MMM d, yyyy';
+  }
+}

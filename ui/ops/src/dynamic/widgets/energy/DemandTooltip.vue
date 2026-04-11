@@ -88,17 +88,30 @@ const titleStr = computed(() => {
 
 const demandData = computed(() => {
   const tt = data.value;
-  if (!tt) return null;
-  return tt.dataPoints.filter((dp) => !dp.dataset._inverted);
+  if (!tt) return [];
+  return tt.dataPoints.filter((dp) => !dp.dataset._inverted && !dp.dataset._isPeak);
+})
+const peakData = computed(() => {
+  const tt = data.value;
+  if (!tt) return [];
+  return tt.dataPoints.filter((dp) => !dp.dataset._inverted && dp.dataset._isPeak);
 })
 const demandRows = computed(() => {
-  return (demandData.value ?? []).map((dp) => {
+  const rows = (demandData.value ?? []).map((dp) => {
     return {
       title: dp.dataset.label,
       prependColor: dp.dataset.borderColor,
       append: usageToString(dp.parsed.y, unit.value),
     };
   });
+  const peaks = (peakData.value ?? []).map((dp) => {
+    return {
+      title: dp.dataset.label,
+      prependColor: dp.dataset.borderColor,
+      append: usageToString(dp.parsed.y, unit.value),
+    };
+  });
+  return [...rows, ...peaks];
 });
 const totalDemandRow = computed(() => {
   const total = demandData.value?.reduce((acc, dp) => acc + dp.parsed.y, 0);
