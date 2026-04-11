@@ -178,10 +178,6 @@ const props = defineProps({
   offset: {
     type: [Number, String],
     default: 0 // Used via Math.abs, {period: 'day', offset: 1} means yesterday, and so on
-  },
-  refresh: { // refresh period in ms
-    type: Number,
-    default: 10000,
   }
 });
 

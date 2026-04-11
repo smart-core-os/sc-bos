@@ -290,8 +290,8 @@ export function usePastDates(dates) {
     if (_dates[_dates.length - 1].getTime() < t) return _dates;
     const res = [];
     for (let i = 0; i < _dates.length; i++) {
+      if (_dates[i].getTime() > t) break;
       res.push(_dates[i]);
-      if (_dates[i].getTime() >= t) break;
     }
     return res;
   });
