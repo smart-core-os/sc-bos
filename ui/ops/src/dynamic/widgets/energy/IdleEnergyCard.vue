@@ -385,18 +385,18 @@ const badgeIcon = computed(() => activeThreshold.value?.icon ?? 'mdi-help-circle
 // Trend tracking for aggregated totals
 const idleChange = useRollingValue(() => {
   if (!props.showTrend || !hasData.value) return null;
-  // Use historical baseline if we have completed at least one bucket with non-zero data
-  return totalHistoricalIdle.value > 0 ? totalIdle.value : null;
+  // Use current total as soon as we have non-negligible data
+  return totalIdle.value > props.negligibleEnergy ? totalIdle.value : null;
 });
 
 const energyChange = useRollingValue(() => {
   if (!props.showTrend || !hasData.value) return null;
-  // Use historical baseline if we have completed at least one bucket with non-zero data
-  return totalHistoricalEnergy.value > 0 ? totalEnergy.value : null;
+  // Use current total as soon as we have non-negligible data
+  return totalEnergy.value > props.negligibleEnergy ? totalEnergy.value : null;
 });
 
-// Reset trend baseline when the period changes
-watch([_start, _end, _offset], () => {
+// Reset trend baseline when the period or zones change
+watch([_start, _end, _offset, allZones], () => {
   idleChange.reset();
   energyChange.reset();
 });
