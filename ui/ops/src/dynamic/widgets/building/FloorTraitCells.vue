@@ -49,8 +49,10 @@
  *   tempSetpoint: comfort target in °C (default 21)
  */
 import FloorList from '@/components/FloorList.vue';
+import {HOUR, useNow} from '@/components/now.js';
 import {useDevicesCollection} from '@/composables/devices.js';
 import DeviceCell from '@/routes/devices/components/DeviceCell.vue';
+import {useAirQualityPeriodAverages} from '@/dynamic/widgets/environmental/airQuality.js';
 import {useAirQuality, usePullAirQuality} from '@/traits/airQuality/airQuality.js';
 import {useAirTemperature, usePullAirTemperature} from '@/traits/airTemperature/airTemperature.js';
 import {usePullSoundLevel, useSoundLevel} from '@/traits/sound/sound.js';
@@ -68,6 +70,11 @@ const props = defineProps({
   tempSetpoint: {
     type: Number,
     default: 21,
+  },
+  // When true, show ↑↓ trend arrows in chips comparing current live values to the prior 24 h.
+  showTrend: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -102,8 +109,14 @@ const deviceItemByLevel = computed(() => {
 
 // ── AQ comfort matrix: per-zone sensor data ───────────────────────────────────
 
-const floorData = reactive(/** @type {Record<string, {temp, humidity, co2, voc, sound}>} */ {});
+const floorData = reactive(/** @type {Record<string, {temp, humidity, co2, voc, sound, trends?}>} */ {});
 const scopeByZone = {};
+
+// Prior-period edges (prior 24 h window), refreshed every hour.
+const {now} = useNow(HOUR);
+const priorStart = computed(() => new Date(now.value - 48 * 3600_000));
+const priorEnd = computed(() => new Date(now.value - 24 * 3600_000));
+const AQ_TREND_METRICS = ['carbonDioxideLevel', 'volatileOrganicCompounds', 'particulateMatter25'];
 
 watch(() => props.floors.map(f => f.zoneName), (zoneNames) => {
   const toStop = new Set(Object.keys(scopeByZone));
@@ -128,6 +141,7 @@ watch(() => props.floors.map(f => f.zoneName), (zoneNames) => {
 
       watch([presentMetrics, temp, humidity, soundPressureLevel], () => {
         floorData[zoneName] = {
+          ...(floorData[zoneName] ?? {}),
           temp: toValue(temp) ?? null,
           humidity: toValue(humidity) ?? null,
           co2: presentMetrics.value?.carbonDioxideLevel?.value ?? null,
@@ -136,6 +150,24 @@ watch(() => props.floors.map(f => f.zoneName), (zoneNames) => {
           sound: toValue(soundPressureLevel) || null,
         };
       }, {immediate: true, deep: true});
+
+      // Prior-period averages for trend arrows — only fetched when showTrend is on
+      const priorAvgs = useAirQualityPeriodAverages(
+        computed(() => props.showTrend ? zoneName : null),
+        AQ_TREND_METRICS,
+        priorStart,
+        priorEnd
+      );
+      watch(priorAvgs, (avgs) => {
+        floorData[zoneName] = {
+          ...(floorData[zoneName] ?? {}),
+          trends: {
+            co2: avgs.carbonDioxideLevel,
+            voc: avgs.volatileOrganicCompounds,
+            pm25: avgs.particulateMatter25,
+          },
+        };
+      }, {immediate: true});
     });
   }
 
@@ -150,8 +182,22 @@ onScopeDispose(() => {
   for (const scope of Object.values(scopeByZone)) scope.stop();
 });
 
-// Column definitions
-const allColumns = [
+// Returns ↑ / ↓ / '' based on % change from prior to current (higher = worse for pollutants)
+function trendArrow(current, prior, higherIsWorse = true) {
+  if (current == null || prior == null || prior === 0) return '';
+  const pct = (current - prior) / prior;
+  if (Math.abs(pct) < 0.05) return ''; // < 5% change — ignore noise
+  const up = pct > 0;
+  return (up === higherIsWorse) ? ' ↑' : ' ↓';
+}
+function trendTooltipSuffix(current, prior, unit = '') {
+  if (!props.showTrend || prior == null) return '';
+  const val = typeof prior === 'number' ? prior.toFixed(prior < 10 ? 2 : 0) : '—';
+  return ` (prior: ${val}${unit ? ' ' + unit : ''})`;
+}
+
+// Column definitions — computed so display/tooltip close over reactive props.showTrend
+const allColumns = computed(() => [
   {
     key: 'temp',
     label: 'Temp',
@@ -181,8 +227,13 @@ const allColumns = [
   {
     key: 'co2',
     label: 'CO₂',
-    display: (d) => d?.co2 !== null && d?.co2 !== undefined ? `${Math.round(d.co2)}` : '—',
-    tooltip: (d) => d?.co2 !== null && d?.co2 !== undefined ? `CO₂: ${Math.round(d.co2)} ppm` : 'No data',
+    display: (d) => {
+      if (d?.co2 == null) return '—';
+      return `${Math.round(d.co2)}${trendArrow(d.co2, d.trends?.co2)}`;
+    },
+    tooltip: (d) => d?.co2 != null
+      ? `CO₂: ${Math.round(d.co2)} ppm${trendTooltipSuffix(d.co2, d.trends?.co2, 'ppm')}`
+      : 'No data',
     colorClass: (d) => {
       if (!d || d.co2 === null) return 'chip--unknown';
       if (d.co2 < 1000) return 'chip--good';
@@ -193,8 +244,13 @@ const allColumns = [
   {
     key: 'voc',
     label: 'VOC',
-    display: (d) => d?.voc !== null && d?.voc !== undefined ? `${d.voc.toFixed(2)}` : '—',
-    tooltip: (d) => d?.voc !== null && d?.voc !== undefined ? `VOC: ${d.voc.toFixed(2)} ppm` : 'No data',
+    display: (d) => {
+      if (d?.voc == null) return '—';
+      return `${d.voc.toFixed(2)}${trendArrow(d.voc, d.trends?.voc)}`;
+    },
+    tooltip: (d) => d?.voc != null
+      ? `VOC: ${d.voc.toFixed(2)} ppm${trendTooltipSuffix(d.voc, d.trends?.voc, 'ppm')}`
+      : 'No data',
     colorClass: (d) => {
       if (!d || d.voc === null) return 'chip--unknown';
       if (d.voc < 0.3) return 'chip--good';
@@ -214,10 +270,10 @@ const allColumns = [
       return 'chip--bad';
     },
   },
-];
+]);
 
 const visibleColumns = computed(() =>
-  allColumns.filter(c => props.columns.includes(c.key))
+  allColumns.value.filter(c => props.columns.includes(c.key))
 );
 
 </script>
