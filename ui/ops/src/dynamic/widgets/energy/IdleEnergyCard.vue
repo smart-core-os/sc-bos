@@ -325,32 +325,6 @@ const totalEnergy = computed(() => {
   return hasValue ? sum : null;
 });
 
-const totalHistoricalIdle = computed(() => {
-  let sum = 0;
-  let hasValue = false;
-  for (const c of consumptions) {
-    const val = toValue(c?.historicalIdle);
-    if (val !== null) {
-      sum += val;
-      hasValue = true;
-    }
-  }
-  return hasValue ? sum : null;
-});
-
-const totalHistoricalEnergy = computed(() => {
-  let sum = 0;
-  let hasValue = false;
-  for (const c of consumptions) {
-    const val = toValue(c?.historicalEnergy);
-    if (val !== null) {
-      sum += val;
-      hasValue = true;
-    }
-  }
-  return hasValue ? sum : null;
-});
-
 const wastePercent = computed(() => {
   const total = totalEnergy.value;
   const idle = totalIdle.value;

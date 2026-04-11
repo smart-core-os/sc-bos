@@ -202,12 +202,27 @@ onScopeDispose(() => {
 });
 
 // Returns ↑ / ↓ / '' based on % change from prior to current
+/**
+ * Returns an arrow indicator based on the percentage change between current and prior values.
+ *
+ * @param {number|null} current - The current value
+ * @param {number|null} prior - The prior value
+ * @return {string} ' ↑', ' ↓', or ''
+ */
 function trendArrow(current, prior) {
   if (current == null || prior == null || prior === 0) return '';
   const pct = (current - prior) / prior;
   if (Math.abs(pct) < 0.0005) return ''; // < 0.05% change — ignore noise
   return pct > 0 ? ' ↑' : ' ↓';
 }
+/**
+ * Generates a tooltip suffix with the prior value and unit if trend display is enabled.
+ *
+ * @param {number|null} current - The current value
+ * @param {number|null} prior - The prior value
+ * @param {string} [unit] - The unit to display
+ * @return {string} Tooltip suffix or empty string
+ */
 function trendTooltipSuffix(current, prior, unit = '') {
   if (!props.showTrend || prior == null) return '';
   const val = typeof prior === 'number' ? prior.toFixed(prior < 10 ? 2 : 0) : '—';
