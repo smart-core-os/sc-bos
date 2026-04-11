@@ -1,60 +1,310 @@
 <template>
-  <floor-list :floors="props.floors">
-    <template #floor="{floor}">
-      <device-cell :item="deviceItemByLevel[floor.level]"/>
-    </template>
-  </floor-list>
+  <div class="floor-comfort">
+    <div class="column-headers">
+      <span class="header-device">Device</span>
+      <span
+          v-for="col in visibleColumns"
+          :key="col.key"
+          class="header-label">
+        {{ col.label }}
+      </span>
+    </div>
+    <floor-list :floors="props.floors">
+      <template #floor="{floor}">
+        <div class="comfort-row">
+          <device-cell
+              v-if="deviceItemByLevel[floor.level]"
+              class="device-cell"
+              :item="deviceItemByLevel[floor.level]"/>
+          <span v-else class="device-cell"/>
+          <v-tooltip
+              v-for="col in visibleColumns"
+              :key="col.key"
+              location="top"
+              :text="col.tooltip(floorData[floor.zoneName])">
+            <template #activator="{props: tp}">
+              <span
+                  v-bind="tp"
+                  class="comfort-chip"
+                  :class="col.colorClass(floorData[floor.zoneName])">
+                {{ col.display(floorData[floor.zoneName]) }}
+              </span>
+            </template>
+          </v-tooltip>
+        </div>
+      </template>
+    </floor-list>
+  </div>
 </template>
 
 <script setup>
 /**
- * @typedef {Object} Floor
- * @property {number} level - 0 for ground, negative for basements (counting down), positive for upper floors (counting up). Defaults to len - i - 1.
- * @property {string} zoneName - smart core name for the floor zone, we will interrogate this to capture metadata and trait info
+ * Per-floor view combining:
+ *  1. DeviceCell — live trait data (occupancy, temperature, electric, etc.) from device metadata
+ *  2. Environmental comfort matrix — colour-coded AQ chips (Temp | RH% | CO₂ | VOC | dB)
+ *
+ * Props:
+ *   floors: [{level, zoneName, title?}]  — same shape as BuildingFloors/FloorList
+ *   columns: subset of ['temp','humidity','co2','voc','pm25','sound']
+ *   tempSetpoint: comfort target in °C (default 21)
  */
 import FloorList from '@/components/FloorList.vue';
 import {useDevicesCollection} from '@/composables/devices.js';
 import DeviceCell from '@/routes/devices/components/DeviceCell.vue';
-import {computed} from 'vue';
+import {useAirQuality, usePullAirQuality} from '@/traits/airQuality/airQuality.js';
+import {useAirTemperature, usePullAirTemperature} from '@/traits/airTemperature/airTemperature.js';
+import {usePullSoundLevel, useSoundLevel} from '@/traits/sound/sound.js';
+import {computed, effectScope, onScopeDispose, reactive, toValue, watch} from 'vue';
 
 const props = defineProps({
   floors: {
-    type: Array, // of Floor
-    required: true
-  }
+    type: Array, // [{level: number, zoneName: string, title?: string}]
+    required: true,
+  },
+  columns: {
+    type: Array, // subset of ['temp', 'humidity', 'co2', 'voc', 'sound']
+    default: () => ['temp', 'humidity', 'co2', 'voc', 'sound'],
+  },
+  tempSetpoint: {
+    type: Number,
+    default: 21,
+  },
 });
 
-const devicesReq = computed(() => {
-  return {
-    query: {
-      conditionsList: [
-        {field: 'name', stringIn: {stringsList: props.floors.map(f => f.zoneName)}},
-      ]
-    }
-  }
-});
-const deviceCollection = useDevicesCollection(devicesReq)
+// ── Original FloorTraitCells: device metadata + DeviceCell per floor ──────────
+
+const devicesReq = computed(() => ({
+  query: {
+    conditionsList: [
+      {field: 'name', stringIn: {stringsList: props.floors.map(f => f.zoneName).filter(Boolean)}},
+    ],
+  },
+}));
+const deviceCollection = useDevicesCollection(devicesReq);
+
 const floorByZoneName = computed(() => {
   const res = {};
   for (const floor of props.floors) {
-    res[floor.zoneName] = floor;
+    if (floor.zoneName) res[floor.zoneName] = floor;
   }
   return res;
 });
+
 const deviceItemByLevel = computed(() => {
   const byZoneName = floorByZoneName.value;
-  const mdItems = deviceCollection.items.value;
   const dst = {};
-  for (const item of mdItems) {
-    const zoneName = item.name;
-    const floor = byZoneName[zoneName];
-    if (!floor) continue;
-    dst[floor.level] = item;
+  for (const item of deviceCollection.items.value) {
+    const floor = byZoneName[item.name];
+    if (floor) dst[floor.level] = item;
   }
   return dst;
-})
+});
+
+// ── AQ comfort matrix: per-zone sensor data ───────────────────────────────────
+
+const floorData = reactive(/** @type {Record<string, {temp, humidity, co2, voc, sound}>} */ {});
+const scopeByZone = {};
+
+watch(() => props.floors.map(f => f.zoneName), (zoneNames) => {
+  const toStop = new Set(Object.keys(scopeByZone));
+
+  for (const zoneName of zoneNames) {
+    if (!zoneName) continue;
+    if (scopeByZone[zoneName]) {
+      toStop.delete(zoneName);
+      continue;
+    }
+    const scope = effectScope();
+    scopeByZone[zoneName] = scope;
+    scope.run(() => {
+      const {value: aq} = usePullAirQuality(zoneName);
+      const {presentMetrics} = useAirQuality(aq);
+
+      const {value: at} = usePullAirTemperature(zoneName);
+      const {temp, humidity} = useAirTemperature(at);
+
+      const {value: sl} = usePullSoundLevel(zoneName);
+      const {soundPressureLevel} = useSoundLevel(sl);
+
+      watch([presentMetrics, temp, humidity, soundPressureLevel], () => {
+        floorData[zoneName] = {
+          temp: toValue(temp) ?? null,
+          humidity: toValue(humidity) ?? null,
+          co2: presentMetrics.value?.carbonDioxideLevel?.value ?? null,
+          voc: presentMetrics.value?.volatileOrganicCompounds?.value ?? null,
+          pm25: presentMetrics.value?.particulateMatter25?.value ?? null,
+          sound: toValue(soundPressureLevel) || null,
+        };
+      }, {immediate: true, deep: true});
+    });
+  }
+
+  for (const zoneName of toStop) {
+    scopeByZone[zoneName].stop();
+    delete scopeByZone[zoneName];
+    delete floorData[zoneName];
+  }
+}, {immediate: true});
+
+onScopeDispose(() => {
+  for (const scope of Object.values(scopeByZone)) scope.stop();
+});
+
+// Column definitions
+const allColumns = [
+  {
+    key: 'temp',
+    label: 'Temp',
+    display: (d) => d?.temp !== null && d?.temp !== undefined ? `${d.temp.toFixed(1)}°` : '—',
+    tooltip: (d) => d?.temp !== null && d?.temp !== undefined ? `Temperature: ${d.temp.toFixed(1)} °C` : 'No data',
+    colorClass: (d) => {
+      if (!d || d.temp === null) return 'chip--unknown';
+      const dev = Math.abs(d.temp - props.tempSetpoint);
+      if (dev <= 2) return 'chip--good';
+      if (dev <= 4) return 'chip--warn';
+      return 'chip--bad';
+    },
+  },
+  {
+    key: 'humidity',
+    label: 'RH%',
+    display: (d) => d?.humidity !== null && d?.humidity !== undefined ? `${d.humidity.toFixed(0)}%` : '—',
+    tooltip: (d) => d?.humidity !== null && d?.humidity !== undefined ? `Humidity: ${d.humidity.toFixed(1)} %` : 'No data',
+    colorClass: (d) => {
+      if (!d || d.humidity === null) return 'chip--unknown';
+      const h = d.humidity;
+      if (h >= 40 && h <= 60) return 'chip--good';
+      if (h >= 30 && h <= 70) return 'chip--warn';
+      return 'chip--bad';
+    },
+  },
+  {
+    key: 'co2',
+    label: 'CO₂',
+    display: (d) => d?.co2 !== null && d?.co2 !== undefined ? `${Math.round(d.co2)}` : '—',
+    tooltip: (d) => d?.co2 !== null && d?.co2 !== undefined ? `CO₂: ${Math.round(d.co2)} ppm` : 'No data',
+    colorClass: (d) => {
+      if (!d || d.co2 === null) return 'chip--unknown';
+      if (d.co2 < 1000) return 'chip--good';
+      if (d.co2 < 2000) return 'chip--warn';
+      return 'chip--bad';
+    },
+  },
+  {
+    key: 'voc',
+    label: 'VOC',
+    display: (d) => d?.voc !== null && d?.voc !== undefined ? `${d.voc.toFixed(2)}` : '—',
+    tooltip: (d) => d?.voc !== null && d?.voc !== undefined ? `VOC: ${d.voc.toFixed(2)} ppm` : 'No data',
+    colorClass: (d) => {
+      if (!d || d.voc === null) return 'chip--unknown';
+      if (d.voc < 0.3) return 'chip--good';
+      if (d.voc < 0.5) return 'chip--warn';
+      return 'chip--bad';
+    },
+  },
+  {
+    key: 'sound',
+    label: 'dB',
+    display: (d) => d?.sound !== null && d?.sound !== undefined ? `${d.sound.toFixed(0)}` : '—',
+    tooltip: (d) => d?.sound !== null && d?.sound !== undefined ? `Sound: ${d.sound.toFixed(1)} dB` : 'No data',
+    colorClass: (d) => {
+      if (!d || d.sound === null) return 'chip--unknown';
+      if (d.sound < 50) return 'chip--good';
+      if (d.sound < 65) return 'chip--warn';
+      return 'chip--bad';
+    },
+  },
+];
+
+const visibleColumns = computed(() =>
+  allColumns.filter(c => props.columns.includes(c.key))
+);
+
 </script>
 
 <style scoped>
+.floor-comfort {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
 
+.column-headers {
+  display: grid;
+  grid-template-columns: 1fr repeat(v-bind('visibleColumns.length'), minmax(0, 2.5rem));
+  gap: 3px;
+  align-items: center;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.header-device {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.header-label {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.floor-comfort :deep(.floor-list) {
+  flex: 1;
+  min-height: 0;
+}
+
+.comfort-row {
+  display: grid;
+  grid-template-columns: 1fr repeat(v-bind('visibleColumns.length'), minmax(0, 2.5rem));
+  gap: 3px;
+  align-items: center;
+}
+
+.device-cell {
+  overflow: hidden;
+  min-width: 0;
+}
+
+.comfort-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  height: 22px;
+  cursor: default;
+  user-select: none;
+}
+
+.chip--good {
+  background: rgba(76, 175, 80, 0.30);
+  color: #a5d6a7;
+}
+
+.chip--warn {
+  background: rgba(255, 152, 0, 0.30);
+  color: #ffcc80;
+}
+
+.chip--bad {
+  background: rgba(244, 67, 54, 0.30);
+  color: #ef9a9a;
+}
+
+.chip--unknown {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.35);
+}
 </style>
