@@ -8,19 +8,20 @@
 </template>
 
 <script setup>
-import {useDateScale} from '@/components/charts/date.js';
+import {useDateScale, getTooltipDateFormat} from '@/components/charts/date.js';
 import {useThemeColorPlugin} from '@/components/charts/plugins.js';
 import {defineChartOptions} from '@/components/charts/util.js';
+import {shiftFnFromStr} from '@/dynamic/widgets/occupancy/baseline.js';
 import {useMaxPeopleCount} from '@/dynamic/widgets/occupancy/occupancy.js';
 import {useLocalProp} from '@/util/vue.js';
-import {BarElement, Chart as ChartJS, Legend, LinearScale, TimeScale, Title, Tooltip} from 'chart.js'
-import {startOfDay, startOfYear} from 'date-fns';
-import {computed, ref, toRef, watch} from 'vue';
+import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js'
+import {startOfDay, startOfYear, format as fmtDate} from 'date-fns';
+import {computed, ref, toRef, toValue, watch} from 'vue';
 import {Bar} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
 import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
 
-ChartJS.register(Title, Tooltip, BarElement, LinearScale, TimeScale, Legend);
+ChartJS.register(Title, Tooltip, BarElement, CategoryScale, LinearScale, TimeScale, Legend, LineElement, PointElement);
 
 const props = defineProps({
   totalOccupancyName: {
@@ -38,7 +39,16 @@ const props = defineProps({
   offset: {
     type: [String, Number],
     default: 0, // when start/End is 'month', 'day', etc. offset that value into the past, like 'last month'
-  }
+  },
+  showBaseline: {
+    type: Boolean,
+    default: false
+  },
+  // 'day', 'week', 'month' — how far back to shift the baseline
+  baselineShift: {
+    type: String,
+    default: 'week'
+  },
 });
 
 const _start = useLocalProp(toRef(props, 'start'));
@@ -47,7 +57,16 @@ const _offset = useLocalProp(toRef(props, 'offset'));
 
 const {edges, pastEdges, tickUnit, startDate, endDate} = useDateScale(_start, _end, _offset);
 
+const shiftFn = computed(() => shiftFnFromStr(props.baselineShift));
+
+// Conditionally use baseline comparison or just current data
+const baselineEdges = computed(() => {
+  if (!props.showBaseline) return pastEdges.value;
+  return toValue(pastEdges).map(shiftFn.value);
+});
+
 const totalOccupancyCounts = useMaxPeopleCount(toRef(props, 'totalOccupancyName'), pastEdges);
+const baselineCounts = useMaxPeopleCount(toRef(props, 'totalOccupancyName'), baselineEdges);
 
 const {themeColorPlugin} = useThemeColorPlugin();
 
@@ -59,15 +78,28 @@ const chartOptions = computed(() => {
     borderWidth: 1,
     interaction: {
       mode: 'index', // a single tooltip with all stacked datasets at the same x location in it
+      intersect: false,
     },
     plugins: {
       legend: {
         display: false, // we use a custom legend plugin and vue for this
+      },
+      tooltip: {
+        callbacks: {
+          title: () => '',
+          label: (ctx) => {
+            const dates = ctx.dataset.dates;
+            const date = dates ? dates[ctx.dataIndex] : null;
+            const fmt = getTooltipDateFormat(tickUnit.value);
+            const dateStr = date ? ` (${fmtDate(date, fmt)})` : '';
+            return `${ctx.dataset.label}${dateStr}: ${ctx.parsed.y != null ? new Intl.NumberFormat(undefined, {}).format(ctx.parsed.y) : '—'}`;
+          }
+        }
       }
     },
     scales: {
       y: {
-        stacked: true,
+        stacked: false, // Don't stack when mixing bar and line
         title: {
           display: true,
           text: 'People Count'
@@ -92,7 +124,7 @@ const chartOptions = computed(() => {
       },
       x: {
         type: 'time',
-        stacked: true,
+        stacked: false, // Don't stack when mixing bar and line
         grid: {
           offset: false, // bars default to true here, put ticks back inline with grid lines
           color: '#fff1'
@@ -124,19 +156,45 @@ const chartOptions = computed(() => {
 });
 const chartLabels = computed(() => edges.value.slice(0, -1));
 const chartData = computed(() => {
+  const datasets = [];
+
+  // Add baseline dataset first as a dotted line (if showing baseline)
+  if (props.showBaseline && baselineCounts.value.length > 0) {
+    datasets.push({
+      type: 'line',
+      label: 'Prior period',
+      data: baselineCounts.value.map(data => data.y),
+      dates: baselineCounts.value.map(data => data.x),
+      backgroundColor: 'transparent',
+      borderColor: '#aaaaaa',
+      borderWidth: 2,
+      borderDash: [5, 5], // Dotted line
+      pointRadius: 0, // No points on the line
+      pointHoverRadius: 4,
+      fill: false,
+      tension: 0.1, // Slight curve
+    });
+  }
+
+  // Add current dataset as blue bars
+  datasets.push({
+    type: 'bar',
+    label: props.showBaseline ? 'Current' : 'Total People Count',
+    data: totalOccupancyCounts.value.map(data => data.y),
+    dates: totalOccupancyCounts.value.map(data => data.x),
+    backgroundColor: props.showBaseline ? '#2196F399' : undefined,
+    borderColor: props.showBaseline ? '#2196F3' : undefined,
+    borderWidth: props.showBaseline ? 1 : undefined,
+  });
+
   return {
     labels: chartLabels.value,
-    datasets: [
-      {
-        label: 'Total People Count',
-        data: totalOccupancyCounts.value.map(data => data.y),
-      }
-    ]
+    datasets
   };
 });
 
 const hasData = computed(() => {
-  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val));
+  return chartData.value.datasets.some(ds => ds.data.some(val => val != null));
 });
 
 // Track if initial data load is complete to avoid showing no-data graphic during fetch
