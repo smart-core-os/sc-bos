@@ -24,9 +24,10 @@
       <line-chart-generator
           :options="props.chartOptions"
           :data="props.chartData"
-          :plugins="[vueLegendPlugin]"
+          :plugins="[vueLegendPlugin, ...props.plugins]"
           :dataset-id-key="props.datasetIdKey"/>
     </div>
+    <slot name="tooltip"/>
   </div>
 </template>
 
@@ -73,6 +74,10 @@ const props = defineProps({
     default: () => {
       return {};
     }
+  },
+  plugins: {
+    type: Array,
+    default: () => []
   }
 });
 
