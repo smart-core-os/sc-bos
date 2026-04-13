@@ -7,6 +7,7 @@
     <v-list-item
         v-for="(item, key) in enabledMenuItems"
         :to="item.link"
+        :exact="item.exact"
         :key="key"
         :disabled="hasNoAccess(item.link.path)">
       <template #prepend>

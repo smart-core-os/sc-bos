@@ -1,9 +1,9 @@
 <template>
-  <div class="grid--container" :class="{signage: signageEnabled}" :style="signageStyles">
+  <div class="grid--container" :class="{signage: signageEnabled}" :style="containerStyles">
     <component
         :is="cellComponent(cell)"
         v-for="(cell, index) in props.cells"
-        :key="cell.id ?? cell.component ?? index"
+        :key="cell.id ?? `${cell.component}-${index}`"
         :style="cellStyles(cell)"
         v-bind="cell.props"
         class="grid--cell"/>
@@ -32,10 +32,18 @@ const countLines = (cells, inlineStartProp, inlineSpanProp) => {
   return lines;
 }
 // these have -1 because there's 1 less column/row than lines: | col1 | col2 | <- cols = 2, lines = 3
-const columnCount = computed(() => countLines(props.cells, 'x', 'w') - 1);
-const rowCount = computed(() => countLines(props.cells, 'y', 'h') - 1);
+const columnCount = computed(() => Math.max(1, countLines(props.cells, 'x', 'w') - 1));
+const rowCount = computed(() => Math.max(1, countLines(props.cells, 'y', 'h') - 1));
 
 const {enabled: signageEnabled, styles: signageStyles} = useSignage();
+
+const containerStyles = computed(() => {
+  return {
+    '--column-count': columnCount.value,
+    '--row-count': rowCount.value,
+    ...signageStyles.value,
+  };
+});
 
 const cellStyles = (cell) => {
   return {
@@ -54,14 +62,19 @@ const cellComponent = (cell) => {
 .grid--container {
   --gap: 10px;
   display: grid;
-  grid-template-columns: repeat(v-bind(columnCount), 1fr);
-  align-content: stretch;
+  grid-template-columns: repeat(var(--column-count), 1fr);
+  grid-template-rows: repeat(var(--row-count), 80px);
+  grid-auto-rows: 80px;
+  align-content: start;
   gap: var(--gap);
-  min-height: 100%;
+  padding: var(--gap);
 }
 
 .signage.grid--container {
-  grid-template-rows: repeat(v-bind(rowCount), 1fr);
+  grid-template-rows: repeat(var(--row-count), minmax(80px, 1fr));
+  grid-auto-rows: minmax(80px, 1fr);
+  align-content: stretch;
+  min-height: 100%;
   padding: var(--gap);
   // add scrollbar gutter to match the app one when needed
   scrollbar-gutter: stable;

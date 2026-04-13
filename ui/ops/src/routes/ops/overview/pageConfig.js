@@ -97,25 +97,29 @@ export default function usePageConfig(path) {
           // decode segments just like vue-router does
           .map(s => decodeURIComponent(s))));
     }
-    return pageConfigNorm.value;
+    return pageConfigNorm.value ?? {};
   });
 
   // We filter out special properties of the config when binding it to elements.
   // Without this we'd be trying to bind props like `children` which is a DOM property.
   const filterProps = {'layout': true, 'children': true};
-  const filteredConfig = computed(() => Object.entries(configObj.value)
-      .reduce((acc, [k, v]) => {
-        if (Object.hasOwn(filterProps, k)) return acc;
-        acc[k] = v;
-        return acc;
-      }, {}));
+  const filteredConfig = computed(() => {
+    const config = configObj.value;
+    if (!config) return {};
+    return Object.entries(config)
+        .reduce((acc, [k, v]) => {
+          if (Object.hasOwn(filterProps, k)) return acc;
+          acc[k] = v;
+          return acc;
+        }, {});
+  });
 
   return {
     pageConfig,
     pageConfigNorm,
     isLegacyOverview,
     isLegacySubPage,
-    layout: computed(() => configObj.value.layout),
+    layout: computed(() => configObj.value?.layout),
     config: filteredConfig
   };
 }

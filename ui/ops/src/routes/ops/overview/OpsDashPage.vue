@@ -1,10 +1,10 @@
 <template>
-  <component :is="pageConfig.layout" v-bind="pageConfig.config"/>
+  <component :is="pageConfig.layout" v-bind="pageConfig.config" :key="pageKey"/>
 </template>
 
 <script setup>
 import usePageConfig from '@/routes/ops/overview/pageConfig.js';
-import {reactive} from 'vue';
+import {computed, reactive} from 'vue';
 
 const props = defineProps({
   pathSegments: {
@@ -14,4 +14,5 @@ const props = defineProps({
 });
 
 const pageConfig = reactive(usePageConfig(() => props.pathSegments));
+const pageKey = computed(() => props.pathSegments.join('/'));
 </script>
