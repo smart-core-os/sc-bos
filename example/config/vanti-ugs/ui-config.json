@@ -965,7 +965,7 @@
                     "metric": "score",
                     "start": "day-7",
                     "end": "day-1",
-                    "occupancy": "van/uk/brum/ugs/zones/building",
+                    "occupancy": ["van/uk/brum/ugs/zones/building", "van/uk/brum/ugs/zones/areas/open-plan"],
                     "showBaseline": true,
                     "baselineShift": "week"
                   }
@@ -1006,7 +1006,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 1, "y": 7, "w": 4, "h": 2},
+                  "loc": {"x": 1, "y": 7, "w": 4, "h": 3},
                   "id": "PeopleCountHistory",
                   "component": "builtin:occupancy/PeopleCountHistoryCard",
                   "props": {
@@ -1016,7 +1016,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 5, "y": 7, "w": 2, "h": 2},
+                  "loc": {"x": 5, "y": 7, "w": 2, "h": 3},
                   "id": "CurrentPeopleCount",
                   "component": "builtin:occupancy/PeopleCountCard",
                   "props": {
@@ -1024,14 +1024,14 @@
                     "maxOccupancy": 1250,
                     "thresholds": [
                       {"percentage": 10, "str": "Quiet"},
-                      {"percentage": 50, "str": "Moderate"},
+                      {"percentage": 50, "str": "Comfortable"},
                       {"percentage": 70, "str": "Busy"},
                       {"percentage": 90, "str": "Full"}
                     ]
                   }
                 },
                 {
-                  "loc": {"x": 1, "y": 9, "w": 4, "h": 4},
+                  "loc": {"x": 1, "y": 10, "w": 4, "h": 4},
                   "id": "SecurityEvents",
                   "component": "builtin:security/SecurityEventsCard",
                   "props": {
@@ -1043,7 +1043,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 5, "y": 9, "w": 2, "h": 4},
+                  "loc": {"x": 5, "y": 10, "w": 2, "h": 4},
                   "id": "PowerDensity",
                   "component": "builtin:meter/MeterDensityCard",
                   "props": {
@@ -1084,7 +1084,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 7, "y": 2, "w": 5, "h": 7},
+                  "loc": {"x": 7, "y": 2, "w": 5, "h": 6},
                   "id": "FloorInfo",
                   "component": "builtin:building/FloorTraitCells",
                   "props": {
@@ -1105,7 +1105,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 12, "y": 2, "w": 1, "h": 7},
+                  "loc": {"x": 12, "y": 2, "w": 1, "h": 6},
                   "id": "Floors",
                   "component": "builtin:building/BuildingFloors",
                   "props": {
@@ -1124,7 +1124,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 7, "y": 9, "w": 2, "h": 4},
+                  "loc": {"x": 7, "y": 10, "w": 2, "h": 4},
                   "id": "IdleEnergy",
                   "component": "builtin:energy/IdleEnergyCard",
                   "props": {
@@ -1167,7 +1167,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 9, "y": 9, "w": 2, "h": 4},
+                  "loc": {"x": 9, "y": 10, "w": 2, "h": 4},
                   "id": "PowerFactor",
                   "component": "builtin:energy/PowerFactorCard",
                   "props": {
@@ -1176,7 +1176,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 11, "y": 9, "w": 2, "h": 4},
+                  "loc": {"x": 11, "y": 10, "w": 2, "h": 4},
                   "id": "ComfortScore",
                   "component": "builtin:environmental/ComfortScoreCard",
                   "props": {
@@ -1188,7 +1188,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 1, "y": 13, "w": 6, "h": 4},
+                  "loc": {"x": 1, "y": 14, "w": 6, "h": 4},
                   "id": "EnergyVsBaseline",
                   "component": "builtin:meter/EnergyVsBaselineCard",
                   "props": {
@@ -1200,7 +1200,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 7, "y": 13, "w": 6, "h": 4},
+                  "loc": {"x": 7, "y": 14, "w": 6, "h": 4},
                   "id": "EnergyVsBaselineZones",
                   "component": "builtin:meter/EnergyVsBaselineCard",
                   "props": {
