@@ -5,49 +5,56 @@ import {computed, ref, toValue, watch} from 'vue';
  * More lightweight than rollingHistory - only stores one baseline value.
  *
  * @param {import('vue').MaybeRefOrGetter<number|null>} value - The current value to track
+ * @param {import('vue').MaybeRefOrGetter<number|null>} [baseline] - Optional fixed or historical baseline to override captured value
  * @return {{
  *   previousValue: import('vue').ComputedRef<number|null>,
  *   percentChange: import('vue').ComputedRef<number|null>,
  *   absoluteChange: import('vue').ComputedRef<number|null>,
- *   hasChange: import('vue').ComputedRef<boolean>
+ *   hasChange: import('vue').ComputedRef<boolean>,
+ *   reset: function():void
  * }} Previous value and change calculations
  */
-export function useRollingValue(value) {
-  const baselineValue = ref(null);
+export function useRollingValue(value, baseline = null) {
+  const capturedBaseline = ref(null);
 
   watch(() => toValue(value), (newValue) => {
     // Skip null/undefined values
     if (newValue === null || newValue === undefined) return;
 
     // Store first valid value as baseline
-    if (baselineValue.value === null) {
-      baselineValue.value = newValue;
+    if (capturedBaseline.value === null) {
+      capturedBaseline.value = newValue;
     }
   }, {immediate: true});
 
+  const effectiveBaseline = computed(() => {
+    if (baseline !== null) return toValue(baseline);
+    return capturedBaseline.value;
+  });
+
   const absoluteChange = computed(() => {
     const current = toValue(value);
-    const baseline = baselineValue.value;
+    const b = effectiveBaseline.value;
 
-    if (current === null || current === undefined || baseline === null || baseline === undefined) {
+    if (current === null || current === undefined || b === null || b === undefined) {
       return null;
     }
 
-    return current - baseline;
+    return current - b;
   });
 
   const percentChange = computed(() => {
     const current = toValue(value);
-    const baseline = baselineValue.value;
+    const b = effectiveBaseline.value;
 
-    if (current === null || current === undefined || baseline === null || baseline === undefined) {
+    if (current === null || current === undefined || b === null || b === undefined) {
       return null;
     }
 
     // Avoid division by zero
-    if (baseline === 0) return null;
+    if (b === 0) return null;
 
-    return ((current - baseline) / Math.abs(baseline)) * 100;
+    return ((current - b) / Math.abs(b)) * 100;
   });
 
   const hasChange = computed(() => {
@@ -55,10 +62,10 @@ export function useRollingValue(value) {
   });
 
   return {
-    previousValue: computed(() => baselineValue.value),
+    previousValue: effectiveBaseline,
     percentChange,
     absoluteChange,
     hasChange,
-    reset: () => { baselineValue.value = null; }
+    reset: () => { capturedBaseline.value = null; }
   };
 }
