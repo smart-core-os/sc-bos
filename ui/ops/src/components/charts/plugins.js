@@ -40,12 +40,18 @@ export function useVueLegendPlugin() {
           // black after forcing alpha to 1. Use strokeStyle for dashed lines instead.
           const isDashed = (item.lineDash?.length ?? 0) > 0;
           const colorSource = isDashed ? item.strokeStyle : item.fillStyle;
-          const bgColor = new Color(colorSource ?? '#fff');
-          bgColor.alpha = 1;
+          let bgColor;
+          try {
+            bgColor = new Color(colorSource ?? '#fff');
+            bgColor.alpha = 1;
+            bgColor = bgColor.toString();
+          } catch {
+            bgColor = colorSource;
+          }
           return {
             text: item.text,
             hidden: item.hidden,
-            bgColor: bgColor.toString(),
+            bgColor,
             datasetIndex: item.datasetIndex,
             isDashed,
             onClick: (e) => {
