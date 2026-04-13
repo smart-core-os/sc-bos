@@ -151,7 +151,7 @@ export function useExternalTooltip() {
         y: ctx.tooltip.caretY + canvasBounds.top,
         opacity: ctx.tooltip.opacity,
         dataPoints: ctx.tooltip.dataPoints,
-        displayFormats: ctx.chart.options.scales.x.time.displayFormats,
+        displayFormats: ctx.chart.options.scales.x.time?.displayFormats,
       };
     }
   }

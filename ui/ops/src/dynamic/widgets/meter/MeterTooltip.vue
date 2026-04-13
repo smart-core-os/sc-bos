@@ -101,7 +101,7 @@ const titleStr = computed(() => {
   // the tooltip title should match the tick label where possible.
   // For short timeUnits (minutes, hours) we explicitly show the range to make it more obvious.
   // For larger timeUnits this disambiguation isn't needed: Feb 10 or 2024 are clear enough
-  const formatStr = tt.displayFormats[tickUnit.value];
+  const formatStr = tt.displayFormats?.[tickUnit.value] || 'HH:mm';
   const index = tt.dataPoints[0].dataIndex;
   switch (tickUnit.value) {
     case 'minute':
@@ -126,7 +126,7 @@ const productionData = computed(() => {
 const consumptionRows = computed(() => {
   return (consumptionData.value ?? []).map((dp) => {
     return {
-      title: dp.dataset.label,
+      title: dp.dataset.label || undefined,
       prependColor: dp.dataset.borderColor,
       append: usageToString(dp.parsed.y, unit.value),
     };
@@ -135,7 +135,7 @@ const consumptionRows = computed(() => {
 const productionRows = computed(() => {
   return (productionData.value ?? []).map((dp) => {
     return {
-      title: dp.dataset.label,
+      title: dp.dataset.label || undefined,
       prependColor: dp.dataset.borderColor,
       append: usageToString(-dp.parsed.y, unit.value),
     };

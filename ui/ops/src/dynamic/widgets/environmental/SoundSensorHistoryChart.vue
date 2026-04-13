@@ -2,7 +2,7 @@
   <div class="chart__container">
     <line-chart :data="chartData" :options="chartOptions" :plugins="[themeColorPlugin, vueLegendPlugin]"/>
     <chart-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit"
-                   :format-value="(y) => (y != null ? new Intl.NumberFormat(undefined, {}).format(y) + (unit ? ' ' + unit : '') : '—')"/>
+                   :format-value="(y) => (y != null ? new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(y) + (unit ? ' ' + unit : '') : '—')"/>
   </div>
 </template>
 

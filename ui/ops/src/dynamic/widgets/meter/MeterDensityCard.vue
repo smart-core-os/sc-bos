@@ -182,7 +182,7 @@ const props = defineProps({
   }
 });
 
-const _unit = computed(() => `${props.meterUnit} per person`);
+const _unit = computed(() => `${props.meterUnit} per person per day`);
 
 // Gauge max: the last finite threshold, or 2 as a sensible default
 const densityGaugeMax = computed(() => {
@@ -203,11 +203,16 @@ watch(maxPeopleCounts, (counts) => {
     _occupancy.value = 0;
     return;
   }
-  const sum = counts.reduce((acc, el) => {
-    acc += el.y ?? 0;
+  const validCounts = counts.filter(el => el.y != null);
+  if (validCounts.length === 0) {
+    _occupancy.value = 0;
+    return;
+  }
+  const sum = validCounts.reduce((acc, el) => {
+    acc += el.y;
     return acc;
   }, 0);
-  _occupancy.value = sum / counts.length;
+  _occupancy.value = sum / validCounts.length;
 }, {deep: true, immediate: true});
 
 // Live pull streams — density updates whenever the meter reports a new reading
@@ -225,28 +230,45 @@ const generationBefore = useMeterReadingAt(
     true
 );
 
+const durationDays = computed(() => {
+  if (!start.value || !end.value) return 1;
+  const diff = end.value.getTime() - start.value.getTime();
+  // Ensure we have at least some duration, and default to 1 for safety
+  return Math.max(diff / (1000 * 60 * 60 * 24), 0.001);
+});
+
 const consumedDensity = computed(() => {
   const after = liveConsumedReading.value;
   const before = consumptionBefore.value;
   if (isNull(after) || isNull(before)) return null;
-  const consumed = Math.abs(after.usage - before.usage);
-  const occupancy = _occupancy.value === 0 ? 1 : _occupancy.value;
-  return consumed / occupancy;
+  // Use non-negative difference to handle cumulative readings properly
+  let consumed = after.usage - before.usage;
+  if (consumed < 0) consumed = after.usage; // assume reset to 0
+  const occupancy = _occupancy.value;
+  if (occupancy === 0) return null;
+  // Normalize by duration (days) so it's comparable to thresholds (kWh per day)
+  return (consumed / occupancy) / durationDays.value;
 });
 
 const generatedDensity = computed(() => {
-  const occupancy = _occupancy.value === 0 ? 1 : _occupancy.value;
+  const occupancy = _occupancy.value;
+  if (occupancy === 0) return null;
+  let generated = 0;
   if (useGeneratedMeter.value) {
     const after = liveGeneratedReading.value;
     const before = generationBefore.value;
     if (isNull(after) || isNull(before)) return null;
-    return Math.abs(after.usage - before.usage) / occupancy;
+    generated = after.usage - before.usage;
+    if (generated < 0) generated = after.usage;
+  } else {
+    // Use produced field from consumption meter
+    const after = liveConsumedReading.value;
+    const before = consumptionBefore.value;
+    if (isNull(after) || isNull(before)) return null;
+    generated = (after.produced ?? 0) - (before.produced ?? 0);
+    if (generated < 0) generated = after.produced ?? 0;
   }
-  // Use produced field from consumption meter
-  const after = liveConsumedReading.value;
-  const before = consumptionBefore.value;
-  if (isNull(after) || isNull(before)) return null;
-  return Math.abs((after.produced ?? 0) - (before.produced ?? 0)) / occupancy;
+  return (generated / occupancy) / durationDays.value;
 });
 const netDensity = computed(() => {
   if (consumedDensity.value === null && generatedDensity.value === null) return null;

@@ -38,7 +38,12 @@ export function useComparedConsumption(name, currentEdges, baselineEdges) {
           res.push({x: _edges[i - 1], y: null});
           continue;
         }
-        res.push({x: _edges[i - 1], y: end.usage - start.usage});
+        let consumption = end.usage - start.usage;
+        if (consumption < 0) {
+          // Handle meter reset
+          consumption = end.usage;
+        }
+        res.push({x: _edges[i - 1], y: consumption});
       }
       return res;
     });

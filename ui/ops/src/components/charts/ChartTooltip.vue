@@ -113,15 +113,16 @@ const rows = computed(() => {
       const colorSource = dp.dataset.borderColor;
       const color = Array.isArray(colorSource) ? colorSource[dp.dataIndex] : colorSource;
       return {
-        title: dp.dataset.label,
+        title: dp.dataset.label || undefined,
         color: color,
-        valueStr: props.formatValue(dp.parsed.y, dp.dataset),
+        valueStr: props.formatValue(dp.parsed.y, dp),
         isDashed: (dp.dataset.borderDash?.length ?? 0) > 0 || dp.dataset._isPeak,
       };
     });
 });
 
 const totalRow = computed(() => {
+  if (!props.showTotal) return null;
   const tt = data.value;
   if (!tt) return null;
 
