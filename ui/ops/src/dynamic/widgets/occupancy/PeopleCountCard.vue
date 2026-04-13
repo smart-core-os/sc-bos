@@ -49,7 +49,12 @@ const props = defineProps({
   },
   thresholds: {
     type: Array, // {percentage: number, str: string} ordered by percentage in ascending order
-    default: null
+    default: () => [
+      {percentage: 10, str: "Quiet"},
+      {percentage: 50, str: "Comfortable"},
+      {percentage: 70, str: "Busy"},
+      {percentage: 90, str: "Full"}
+    ]
   }
 });
 
