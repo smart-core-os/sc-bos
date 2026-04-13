@@ -285,13 +285,43 @@ export function useIdleConsumption(meterName, occupancyName, edges, pastEdges, r
     return hasValue ? sum : null;
   });
 
+  const historicalIdle = computed(() => {
+    const ongoingIdx = ongoingBucketIdx.value;
+    let sum = 0;
+    let hasValue = false;
+    for (let i = 0; i < idleConsumption.value.length; i++) {
+      if (ongoingIdx !== -1 && i === ongoingIdx) continue;
+      const pt = idleConsumption.value[i];
+      if (pt.y != null) {
+        sum += pt.y;
+        hasValue = true;
+      }
+    }
+    return hasValue ? sum : null;
+  });
+
+  const historicalEnergy = computed(() => {
+    const ongoingIdx = ongoingBucketIdx.value;
+    let sum = 0;
+    let hasValue = false;
+    for (let i = 0; i < totalConsumption.value.length; i++) {
+      if (ongoingIdx !== -1 && i === ongoingIdx) continue;
+      const pt = totalConsumption.value[i];
+      if (pt.y != null) {
+        sum += pt.y;
+        hasValue = true;
+      }
+    }
+    return hasValue ? sum : null;
+  });
+
   const wastePercent = computed(() => {
     const total = totalEnergy.value;
     if (!total || total < toValue(negligibleEnergy)) return 0;
     return (totalIdle.value / total) * 100;
   });
 
-  return {idleConsumption, totalConsumption, totalIdle, totalEnergy, wastePercent};
+  return {idleConsumption, totalConsumption, totalIdle, totalEnergy, historicalIdle, historicalEnergy, wastePercent};
 }
 
 /**

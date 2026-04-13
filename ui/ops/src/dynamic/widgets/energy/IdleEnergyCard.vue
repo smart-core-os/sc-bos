@@ -325,6 +325,32 @@ const totalEnergy = computed(() => {
   return hasValue ? sum : null;
 });
 
+const totalHistoricalIdle = computed(() => {
+  let sum = 0;
+  let hasValue = false;
+  for (const c of consumptions) {
+    const val = toValue(c?.historicalIdle);
+    if (val !== null) {
+      sum += val;
+      hasValue = true;
+    }
+  }
+  return hasValue ? sum : null;
+});
+
+const totalHistoricalEnergy = computed(() => {
+  let sum = 0;
+  let hasValue = false;
+  for (const c of consumptions) {
+    const val = toValue(c?.historicalEnergy);
+    if (val !== null) {
+      sum += val;
+      hasValue = true;
+    }
+  }
+  return hasValue ? sum : null;
+});
+
 const wastePercent = computed(() => {
   const total = totalEnergy.value;
   const idle = totalIdle.value;
@@ -357,17 +383,15 @@ const badgeLabel = computed(() => activeThreshold.value?.label ?? 'Unknown');
 const badgeIcon = computed(() => activeThreshold.value?.icon ?? 'mdi-help-circle-outline');
 
 // Trend tracking for aggregated totals
-const idleChange = useRollingValue(() => {
-  if (!props.showTrend || !hasData.value) return null;
-  // Use current total as soon as we have non-negligible data
-  return totalIdle.value > props.negligibleEnergy ? totalIdle.value : null;
-});
+const idleChange = useRollingValue(
+    () => props.showTrend && hasData.value && totalIdle.value > props.negligibleEnergy ? totalIdle.value : null,
+    () => totalHistoricalIdle.value
+);
 
-const energyChange = useRollingValue(() => {
-  if (!props.showTrend || !hasData.value) return null;
-  // Use current total as soon as we have non-negligible data
-  return totalEnergy.value > props.negligibleEnergy ? totalEnergy.value : null;
-});
+const energyChange = useRollingValue(
+    () => props.showTrend && hasData.value && totalEnergy.value > props.negligibleEnergy ? totalEnergy.value : null,
+    () => totalHistoricalEnergy.value
+);
 
 // Reset trend baseline when the period or zones change
 watch([_start, _end, _offset, allZones], () => {
