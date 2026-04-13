@@ -2,13 +2,13 @@ package history
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"testing/synctest"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
-	"math/rand/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -29,200 +29,183 @@ import (
 )
 
 func Test_automation_applyConfig(t *testing.T) {
-	ctx := context.Background()
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithCancel(ctx)
-	t.Cleanup(cancel)
+	synctest.Test(t, func(t *testing.T) {
+		logger := zap.NewNop()
+		occupancy := occupancysensorpb.NewModel()
+		airQuality := airqualitysensorpb.NewModel()
+		airTemperature := airtemperaturepb.NewModel()
+		electric := electricpb.NewModel()
+		meter := meterpb.NewModel()
+		status := statuspb.NewModel()
 
-	logger := zap.NewNop()
-	occupancy := occupancysensorpb.NewModel()
-	airQuality := airqualitysensorpb.NewModel()
-	airTemperature := airtemperaturepb.NewModel()
-	electric := electricpb.NewModel()
-	meter := meterpb.NewModel()
-	status := statuspb.NewModel()
+		announcer := node.New("test")
+		announcer.Logger = logger
 
-	announcer := node.New("test")
+		announcer.Announce("occupancy",
+			node.HasTrait(trait.OccupancySensor),
+			node.HasServer(
+				occupancysensorpb.RegisterOccupancySensorApiServer,
+				occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occupancy)),
+			),
+		)
+		announcer.Announce("airquality",
+			node.HasTrait(trait.AirQualitySensor),
+			node.HasServer(
+				airqualitysensorpb.RegisterAirQualitySensorApiServer,
+				airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(airQuality)),
+			),
+		)
+		announcer.Announce("airtemperature",
+			node.HasTrait(trait.AirTemperature),
+			node.HasServer(
+				airtemperaturepb.RegisterAirTemperatureApiServer,
+				airtemperaturepb.AirTemperatureApiServer(airtemperaturepb.NewModelServer(airTemperature)),
+			),
+		)
+		announcer.Announce("electric",
+			node.HasTrait(trait.Electric),
+			node.HasServer(
+				electricpb.RegisterElectricApiServer,
+				electricpb.ElectricApiServer(electricpb.NewModelServer(electric)),
+			),
+		)
+		announcer.Announce("meter",
+			node.HasTrait(meterpb.TraitName),
+			node.HasServer(
+				meterpb.RegisterMeterApiServer,
+				meterpb.MeterApiServer(meterpb.NewModelServer(meter)),
+			),
+		)
+		announcer.Announce("status",
+			node.HasTrait(statuspb.TraitName),
+			node.HasServer(
+				statuspb.RegisterStatusApiServer,
+				statuspb.StatusApiServer(statuspb.NewModelServer(status)),
+			),
+		)
 
-	announcer.Logger = logger
-
-	announcer.Announce("occupancy",
-		node.HasTrait(trait.OccupancySensor),
-		node.HasServer(
-			occupancysensorpb.RegisterOccupancySensorApiServer,
-			occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occupancy)),
-		),
-	)
-
-	announcer.Announce("airquality",
-		node.HasTrait(trait.AirQualitySensor),
-		node.HasServer(
-			airqualitysensorpb.RegisterAirQualitySensorApiServer,
-			airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(airQuality)),
-		),
-	)
-
-	announcer.Announce("airtemperature",
-		node.HasTrait(trait.AirTemperature),
-		node.HasServer(
-			airtemperaturepb.RegisterAirTemperatureApiServer,
-			airtemperaturepb.AirTemperatureApiServer(airtemperaturepb.NewModelServer(airTemperature)),
-		),
-	)
-
-	announcer.Announce("electric",
-		node.HasTrait(trait.Electric),
-		node.HasServer(
-			electricpb.RegisterElectricApiServer,
-			electricpb.ElectricApiServer(electricpb.NewModelServer(electric)),
-		),
-	)
-
-	announcer.Announce("meter",
-		node.HasTrait(meterpb.TraitName),
-		node.HasServer(
-			meterpb.RegisterMeterApiServer,
-			meterpb.MeterApiServer(meterpb.NewModelServer(meter)),
-		),
-	)
-
-	announcer.Announce("status",
-		node.HasTrait(statuspb.TraitName),
-		node.HasServer(
-			statuspb.RegisterStatusApiServer,
-			statuspb.StatusApiServer(statuspb.NewModelServer(status)),
-		),
-	)
-
-	for _, cfg := range cfgs {
-		a := &automation{
-			clients:   announcer,
-			announcer: node.NewReplaceAnnouncer(announcer),
-			logger:    logger,
+		for _, cfg := range cfgs {
+			a := &automation{
+				clients:   announcer,
+				announcer: node.NewReplaceAnnouncer(announcer),
+				logger:    logger,
+			}
+			if err := a.applyConfig(t.Context(), cfg); err != nil {
+				t.Fatal(err)
+			}
 		}
 
-		err := a.applyConfig(ctx, cfg)
+		// Let all collector goroutines settle into their first time.After wait.
+		synctest.Wait()
 
+		// Many events to each model server; synctest.Wait after each sleep ensures any
+		// poll that fires on that second completes before the next iteration's updates.
+		for i := range 10 {
+			v := float32(i + 1)
+			if _, err := occupancy.SetOccupancy(&occupancysensorpb.Occupancy{
+				State:       occupancysensorpb.Occupancy_OCCUPIED,
+				PeopleCount: int32(i + 1),
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := airQuality.UpdateAirQuality(&airqualitysensorpb.AirQuality{
+				CarbonDioxideLevel:       new(v),
+				VolatileOrganicCompounds: new(v),
+				AirPressure:              new(v),
+				InfectionRisk:            new(v),
+				Score:                    new(v),
+				ParticulateMatter_1:      new(v),
+				ParticulateMatter_25:     new(v),
+				ParticulateMatter_10:     new(v),
+				AirChangePerHour:         new(v),
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := airTemperature.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
+				AmbientTemperature: &typespb.Temperature{ValueCelsius: float64(i + 1)},
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := electric.UpdateDemand(&electricpb.ElectricDemand{
+				Voltage:       new(v),
+				Current:       v,
+				ReactivePower: new(v),
+				ApparentPower: new(v),
+				PowerFactor:   new(v),
+				RealPower:     new(v),
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := meter.UpdateMeterReading(&meterpb.MeterReading{
+				Usage:    v,
+				Produced: v,
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := status.UpdateProblem(&statuspb.StatusLog_Problem{
+				Name: fmt.Sprintf("problem-%d", i+1),
+			}); err != nil {
+				t.Fatal(err)
+			}
+			time.Sleep(time.Second)
+			synctest.Wait()
+		}
+
+		aqCli := airqualitysensorpb.NewAirQualitySensorHistoryClient(announcer.ClientConn())
+		occupancyCli := occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
+		airTempCli := airtemperaturepb.NewAirTemperatureHistoryClient(announcer.ClientConn())
+		electricCli := electricpb.NewElectricHistoryClient(announcer.ClientConn())
+		meterCli := meterpb.NewMeterHistoryClient(announcer.ClientConn())
+		statusCli := statuspb.NewStatusHistoryClient(announcer.ClientConn())
+
+		aqHist, err := aqCli.ListAirQualityHistory(t.Context(), &airqualitysensorpb.ListAirQualityHistoryRequest{Name: "airquality", PageSize: 10})
 		if err != nil {
 			t.Fatal(err)
 		}
-	}
-
-	// many events to each model server
-	for range 10 {
-		if _, err := occupancy.SetOccupancy(&occupancysensorpb.Occupancy{
-			State:       occupancysensorpb.Occupancy_OCCUPIED,
-			PeopleCount: int32(rand.IntN(10)),
-		}); err != nil {
-			t.Fatal(err)
-		}
-		if _, err := airQuality.UpdateAirQuality(&airqualitysensorpb.AirQuality{
-			CarbonDioxideLevel:       new(rand.Float32()),
-			VolatileOrganicCompounds: new(rand.Float32()),
-			AirPressure:              new(rand.Float32()),
-			InfectionRisk:            new(rand.Float32()),
-			Score:                    new(rand.Float32()),
-			ParticulateMatter_1:      new(rand.Float32()),
-			ParticulateMatter_25:     new(rand.Float32()),
-			ParticulateMatter_10:     new(rand.Float32()),
-			AirChangePerHour:         new(rand.Float32()),
-		}); err != nil {
-			t.Fatal(err)
+		if diff := cmp.Diff(int32(2), aqHist.GetTotalSize()); diff != "" {
+			t.Fatal(diff, "airquality")
 		}
 
-		if _, err := airTemperature.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
-			AmbientTemperature: &typespb.Temperature{ValueCelsius: rand.Float64()},
-		}); err != nil {
+		occHist, err := occupancyCli.ListOccupancyHistory(t.Context(), &occupancysensorpb.ListOccupancyHistoryRequest{Name: "occupancy", PageSize: 10})
+		if err != nil {
 			t.Fatal(err)
 		}
-
-		if _, err := electric.UpdateDemand(&electricpb.ElectricDemand{
-			Voltage:       new(rand.Float32()),
-			Current:       rand.Float32(),
-			ReactivePower: new(rand.Float32()),
-			ApparentPower: new(rand.Float32()),
-			PowerFactor:   new(rand.Float32()),
-			RealPower:     new(rand.Float32()),
-		}); err != nil {
-			t.Fatal(err)
+		if diff := cmp.Diff(int32(2), occHist.GetTotalSize()); diff != "" {
+			t.Fatal(diff, "occupancy")
 		}
 
-		if _, err := meter.UpdateMeterReading(&meterpb.MeterReading{
-			Usage:    rand.Float32(),
-			Produced: rand.Float32(),
-		}); err != nil {
+		airTempHist, err := airTempCli.ListAirTemperatureHistory(t.Context(), &airtemperaturepb.ListAirTemperatureHistoryRequest{Name: "airtemperature", PageSize: 10})
+		if err != nil {
 			t.Fatal(err)
 		}
-
-		if _, err := status.UpdateProblem(&statuspb.StatusLog_Problem{
-			Name: randString(16),
-		}); err != nil {
-			t.Fatal(err)
+		if diff := cmp.Diff(int32(2), airTempHist.GetTotalSize()); diff != "" {
+			t.Fatal(diff, "airtemperature")
 		}
 
-		time.Sleep(time.Second)
-	}
+		electricHist, err := electricCli.ListElectricDemandHistory(t.Context(), &electricpb.ListElectricDemandHistoryRequest{Name: "electric", PageSize: 10})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(int32(2), electricHist.GetTotalSize()); diff != "" {
+			t.Fatal(diff, "electric")
+		}
 
-	aqCli := airqualitysensorpb.NewAirQualitySensorHistoryClient(announcer.ClientConn())
-	occupancyCli := occupancysensorpb.NewOccupancySensorHistoryClient(announcer.ClientConn())
-	airTempCli := airtemperaturepb.NewAirTemperatureHistoryClient(announcer.ClientConn())
-	electricCli := electricpb.NewElectricHistoryClient(announcer.ClientConn())
-	meterCli := meterpb.NewMeterHistoryClient(announcer.ClientConn())
-	statusCli := statuspb.NewStatusHistoryClient(announcer.ClientConn())
+		meterHist, err := meterCli.ListMeterReadingHistory(t.Context(), &meterpb.ListMeterReadingHistoryRequest{Name: "meter", PageSize: 10})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(int32(2), meterHist.GetTotalSize()); diff != "" {
+			t.Fatal(diff, "meter")
+		}
 
-	aqHist, err := aqCli.ListAirQualityHistory(ctx, &airqualitysensorpb.ListAirQualityHistoryRequest{Name: "airquality", PageSize: 10})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if diff := cmp.Diff(int32(2), aqHist.GetTotalSize()); diff != "" {
-		t.Fatal(diff, "airquality")
-	}
-
-	occHist, err := occupancyCli.ListOccupancyHistory(ctx, &occupancysensorpb.ListOccupancyHistoryRequest{Name: "occupancy", PageSize: 10})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if diff := cmp.Diff(int32(2), occHist.GetTotalSize()); diff != "" {
-		t.Fatal(diff, "occupancy")
-	}
-
-	airTempHist, err := airTempCli.ListAirTemperatureHistory(ctx, &airtemperaturepb.ListAirTemperatureHistoryRequest{Name: "airtemperature", PageSize: 10})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if diff := cmp.Diff(int32(2), airTempHist.GetTotalSize()); diff != "" {
-		t.Fatal(diff, "airtemperature")
-	}
-
-	electricHist, err := electricCli.ListElectricDemandHistory(ctx, &electricpb.ListElectricDemandHistoryRequest{Name: "electric", PageSize: 10})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if diff := cmp.Diff(int32(2), electricHist.GetTotalSize()); diff != "" {
-		t.Fatal(diff, "electric")
-	}
-
-	meterHist, err := meterCli.ListMeterReadingHistory(ctx, &meterpb.ListMeterReadingHistoryRequest{Name: "meter", PageSize: 10})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if diff := cmp.Diff(int32(2), meterHist.GetTotalSize()); diff != "" {
-		t.Fatal(diff, "meter")
-	}
-
-	statusHist, err := statusCli.ListCurrentStatusHistory(ctx, &statuspb.ListCurrentStatusHistoryRequest{Name: "status", PageSize: 10})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if diff := cmp.Diff(int32(2), statusHist.GetTotalSize()); diff != "" {
-		t.Fatal(diff, "status")
-	}
-
+		statusHist, err := statusCli.ListCurrentStatusHistory(t.Context(), &statuspb.ListCurrentStatusHistoryRequest{Name: "status", PageSize: 10})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(int32(2), statusHist.GetTotalSize()); diff != "" {
+			t.Fatal(diff, "status")
+		}
+	})
 }
 
 var cfgs = []config.Root{
@@ -310,16 +293,6 @@ var cfgs = []config.Root{
 			},
 		},
 	},
-}
-
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-func randString(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.IntN(len(letterBytes))]
-	}
-	return string(b)
 }
 
 func Test_automation_applyConfigDevices(t *testing.T) {

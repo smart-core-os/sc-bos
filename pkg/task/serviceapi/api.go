@@ -4,7 +4,6 @@ package serviceapi
 import (
 	"context"
 	"errors"
-	"time"
 
 	"go.uber.org/zap"
 	"golang.org/x/exp/constraints"
@@ -23,8 +22,7 @@ import (
 // Api implements a servicespb.ServicesApiServer backed by service.Map.
 type Api struct {
 	servicespb.UnimplementedServicesApiServer
-	m   *service.Map
-	now func() time.Time
+	m *service.Map
 
 	knownTypes []string
 	store      Store
@@ -32,7 +30,7 @@ type Api struct {
 }
 
 func NewApi(m *service.Map, opts ...Option) *Api {
-	a := &Api{m: m, now: time.Now}
+	a := &Api{m: m}
 	for _, opt := range opts {
 		opt(a)
 	}
@@ -217,7 +215,7 @@ func (a *Api) pullServices(ctx context.Context, request *servicespb.PullServices
 			last = stateToProto(record.Id, record.Kind, state)
 			change := &servicespb.PullServicesResponse_Change{
 				Name:       request.Name,
-				ChangeTime: timestamppb.New(a.now()),
+				ChangeTime: timestamppb.Now(),
 				Type:       typespb.ChangeType_ADD,
 				NewValue:   last,
 			}
@@ -231,7 +229,7 @@ func (a *Api) pullServices(ctx context.Context, request *servicespb.PullServices
 			last = stateToProto(record.Id, record.Kind, state)
 			change := &servicespb.PullServicesResponse_Change{
 				Name:       request.Name,
-				ChangeTime: timestamppb.New(a.now()),
+				ChangeTime: timestamppb.Now(),
 				Type:       typespb.ChangeType_UPDATE,
 				OldValue:   old,
 				NewValue:   last,

@@ -31,7 +31,7 @@ func (t *TemperatureJob) Do(ctx context.Context, sendFn sender) error {
 		cancel()
 
 		if err != nil {
-			t.Logger.Error("getting air temperature", zap.String("sensor", sensor), zap.Error(err))
+			t.Logger.Warn("getting air temperature", zap.String("sensor", sensor), zap.Error(err))
 			continue
 		}
 		count++

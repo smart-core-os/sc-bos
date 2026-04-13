@@ -26,6 +26,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/system/hub/bolthub"
 	"github.com/smart-core-os/sc-bos/pkg/system/hub/config"
@@ -87,6 +88,10 @@ type System struct {
 func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	s.undoAll()
 	s.deleteSources()
+
+	// While the hub system is active, this node is a HUB rather than just a NODE.
+	// When applyConfig returns (ctx cancelled), the undo reverts the node to NODE.
+	defer s.node.Announce(s.node.Name(), node.HasDeviceType(metadatapb.Metadata_HUB))()
 
 	// todo: move this validation to the config parse function
 	if cfg.Storage == nil {

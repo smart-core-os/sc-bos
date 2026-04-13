@@ -29,7 +29,7 @@ func (o *OccupancyJob) Do(ctx context.Context, sendFn sender) error {
 		cancel()
 
 		if err != nil {
-			o.Logger.Error("getting occupancy", zap.String("sensor", sensor), zap.Error(err))
+			o.Logger.Warn("getting occupancy", zap.String("sensor", sensor), zap.Error(err))
 			continue
 		}
 

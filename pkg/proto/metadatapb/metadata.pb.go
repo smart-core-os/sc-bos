@@ -23,6 +23,89 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// DeviceType classifies what kind of SC-BOS entity this named device is.
+// This is distinct from traits (which describe device capabilities) and from
+// membership.subsystem (which describes building-system classification like "HVAC" or "Lighting").
+// DeviceType describes the structural role of the entity within the SC-BOS system.
+//
+// Query via Device.Query using field path "metadata.device_type" with string_equal conditions
+// using the enum value name, e.g. string_equal: "NODE".
+//
+// Devices with DEVICE_TYPE_UNSPECIFIED will not match any Device.Query condition on this field,
+// including "present", and will not appear in DevicesMetadata.field_counts for this field.
+type Metadata_DeviceType int32
+
+const (
+	Metadata_DEVICE_TYPE_UNSPECIFIED Metadata_DeviceType = 0  // type not set; device is excluded from device_type queries
+	Metadata_NODE                    Metadata_DeviceType = 1  // a standalone SC-BOS node, e.g. an area controller without a special role
+	Metadata_GATEWAY                 Metadata_DeviceType = 2  // an SC-BOS node that proxies one or more remote nodes
+	Metadata_HUB                     Metadata_DeviceType = 3  // an SC-BOS node that manages enrollment of area controllers
+	Metadata_AUTOMATION              Metadata_DeviceType = 4  // an automation plugin instance
+	Metadata_ZONE                    Metadata_DeviceType = 5  // a logical zone area that aggregates multiple devices
+	Metadata_GROUP                   Metadata_DeviceType = 6  // a named logical group of devices
+	Metadata_SERVICE                 Metadata_DeviceType = 7  // a service collection endpoint, e.g. "ac1/zones" or "automations"
+	Metadata_VIRTUAL                 Metadata_DeviceType = 8  // a computed or aggregated virtual device
+	Metadata_SUB_DEVICE              Metadata_DeviceType = 9  // a named point or channel within a larger physical device
+	Metadata_DEVICE                  Metadata_DeviceType = 10 // a physical or hardware device, e.g. a sensor, light, or HVAC unit
+)
+
+// Enum value maps for Metadata_DeviceType.
+var (
+	Metadata_DeviceType_name = map[int32]string{
+		0:  "DEVICE_TYPE_UNSPECIFIED",
+		1:  "NODE",
+		2:  "GATEWAY",
+		3:  "HUB",
+		4:  "AUTOMATION",
+		5:  "ZONE",
+		6:  "GROUP",
+		7:  "SERVICE",
+		8:  "VIRTUAL",
+		9:  "SUB_DEVICE",
+		10: "DEVICE",
+	}
+	Metadata_DeviceType_value = map[string]int32{
+		"DEVICE_TYPE_UNSPECIFIED": 0,
+		"NODE":                    1,
+		"GATEWAY":                 2,
+		"HUB":                     3,
+		"AUTOMATION":              4,
+		"ZONE":                    5,
+		"GROUP":                   6,
+		"SERVICE":                 7,
+		"VIRTUAL":                 8,
+		"SUB_DEVICE":              9,
+		"DEVICE":                  10,
+	}
+)
+
+func (x Metadata_DeviceType) Enum() *Metadata_DeviceType {
+	p := new(Metadata_DeviceType)
+	*p = x
+	return p
+}
+
+func (x Metadata_DeviceType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Metadata_DeviceType) Descriptor() protoreflect.EnumDescriptor {
+	return file_smartcore_bos_metadata_v1_metadata_proto_enumTypes[0].Descriptor()
+}
+
+func (Metadata_DeviceType) Type() protoreflect.EnumType {
+	return &file_smartcore_bos_metadata_v1_metadata_proto_enumTypes[0]
+}
+
+func (x Metadata_DeviceType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Metadata_DeviceType.Descriptor instead.
+func (Metadata_DeviceType) EnumDescriptor() ([]byte, []int) {
+	return file_smartcore_bos_metadata_v1_metadata_proto_rawDescGZIP(), []int{0, 0}
+}
+
 type Metadata_NIC_Assignment int32
 
 const (
@@ -56,11 +139,11 @@ func (x Metadata_NIC_Assignment) String() string {
 }
 
 func (Metadata_NIC_Assignment) Descriptor() protoreflect.EnumDescriptor {
-	return file_smartcore_bos_metadata_v1_metadata_proto_enumTypes[0].Descriptor()
+	return file_smartcore_bos_metadata_v1_metadata_proto_enumTypes[1].Descriptor()
 }
 
 func (Metadata_NIC_Assignment) Type() protoreflect.EnumType {
-	return &file_smartcore_bos_metadata_v1_metadata_proto_enumTypes[0]
+	return &file_smartcore_bos_metadata_v1_metadata_proto_enumTypes[1]
 }
 
 func (x Metadata_NIC_Assignment) Number() protoreflect.EnumNumber {
@@ -97,6 +180,8 @@ type Metadata struct {
 	Nics []*Metadata_NIC `protobuf:"bytes,9,rep,name=nics,proto3" json:"nics,omitempty"`
 	// Membership describes how this device is related to other devices.
 	Membership *Metadata_Membership `protobuf:"bytes,10,opt,name=membership,proto3" json:"membership,omitempty"`
+	// device_type classifies what kind of SC-BOS entity this device name represents.
+	DeviceType Metadata_DeviceType `protobuf:"varint,11,opt,name=device_type,json=deviceType,proto3,enum=smartcore.bos.metadata.v1.Metadata_DeviceType" json:"device_type,omitempty"`
 	// More contains any non-specified additional metadata that wouldn't fit into the other categories.
 	More          map[string]string `protobuf:"bytes,100,rep,name=more,proto3" json:"more,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
@@ -201,6 +286,13 @@ func (x *Metadata) GetMembership() *Metadata_Membership {
 		return x.Membership
 	}
 	return nil
+}
+
+func (x *Metadata) GetDeviceType() Metadata_DeviceType {
+	if x != nil {
+		return x.DeviceType
+	}
+	return Metadata_DEVICE_TYPE_UNSPECIFIED
 }
 
 func (x *Metadata) GetMore() map[string]string {
@@ -1230,7 +1322,7 @@ var File_smartcore_bos_metadata_v1_metadata_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_metadata_v1_metadata_proto_rawDesc = "" +
 	"\n" +
-	"(smartcore/bos/metadata/v1/metadata.proto\x12\x19smartcore.bos.metadata.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf2\x1a\n" +
+	"(smartcore/bos/metadata/v1/metadata.proto\x12\x19smartcore.bos.metadata.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xea\x1c\n" +
 	"\bMetadata\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12@\n" +
 	"\x06traits\x18\x02 \x03(\v2(.smartcore.bos.metadata.v1.TraitMetadataR\x06traits\x12N\n" +
@@ -1246,7 +1338,9 @@ const file_smartcore_bos_metadata_v1_metadata_proto_rawDesc = "" +
 	"\n" +
 	"membership\x18\n" +
 	" \x01(\v2..smartcore.bos.metadata.v1.Metadata.MembershipR\n" +
-	"membership\x12A\n" +
+	"membership\x12O\n" +
+	"\vdevice_type\x18\v \x01(\x0e2..smartcore.bos.metadata.v1.Metadata.DeviceTypeR\n" +
+	"deviceType\x12A\n" +
 	"\x04more\x18d \x03(\v2-.smartcore.bos.metadata.v1.Metadata.MoreEntryR\x04more\x1a\xcb\x01\n" +
 	"\n" +
 	"Appearance\x12\x14\n" +
@@ -1345,6 +1439,23 @@ const file_smartcore_bos_metadata_v1_metadata_proto_rawDesc = "" +
 	"\tMoreEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa4\x01\n" +
+	"\n" +
+	"DeviceType\x12\x1b\n" +
+	"\x17DEVICE_TYPE_UNSPECIFIED\x10\x00\x12\b\n" +
+	"\x04NODE\x10\x01\x12\v\n" +
+	"\aGATEWAY\x10\x02\x12\a\n" +
+	"\x03HUB\x10\x03\x12\x0e\n" +
+	"\n" +
+	"AUTOMATION\x10\x04\x12\b\n" +
+	"\x04ZONE\x10\x05\x12\t\n" +
+	"\x05GROUP\x10\x06\x12\v\n" +
+	"\aSERVICE\x10\a\x12\v\n" +
+	"\aVIRTUAL\x10\b\x12\x0e\n" +
+	"\n" +
+	"SUB_DEVICE\x10\t\x12\n" +
+	"\n" +
+	"\x06DEVICE\x10\n" +
+	"\"\xa4\x01\n" +
 	"\rTraitMetadata\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12F\n" +
 	"\x04more\x18d \x03(\v22.smartcore.bos.metadata.v1.TraitMetadata.MoreEntryR\x04more\x1a7\n" +
@@ -1382,78 +1493,80 @@ func file_smartcore_bos_metadata_v1_metadata_proto_rawDescGZIP() []byte {
 	return file_smartcore_bos_metadata_v1_metadata_proto_rawDescData
 }
 
-var file_smartcore_bos_metadata_v1_metadata_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_smartcore_bos_metadata_v1_metadata_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_smartcore_bos_metadata_v1_metadata_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_smartcore_bos_metadata_v1_metadata_proto_goTypes = []any{
-	(Metadata_NIC_Assignment)(0),        // 0: smartcore.bos.metadata.v1.Metadata.NIC.Assignment
-	(*Metadata)(nil),                    // 1: smartcore.bos.metadata.v1.Metadata
-	(*TraitMetadata)(nil),               // 2: smartcore.bos.metadata.v1.TraitMetadata
-	(*GetMetadataRequest)(nil),          // 3: smartcore.bos.metadata.v1.GetMetadataRequest
-	(*PullMetadataRequest)(nil),         // 4: smartcore.bos.metadata.v1.PullMetadataRequest
-	(*PullMetadataResponse)(nil),        // 5: smartcore.bos.metadata.v1.PullMetadataResponse
-	(*Metadata_Appearance)(nil),         // 6: smartcore.bos.metadata.v1.Metadata.Appearance
-	(*Metadata_Location)(nil),           // 7: smartcore.bos.metadata.v1.Metadata.Location
-	(*Metadata_ID)(nil),                 // 8: smartcore.bos.metadata.v1.Metadata.ID
-	(*Metadata_Product)(nil),            // 9: smartcore.bos.metadata.v1.Metadata.Product
-	(*Metadata_Revision)(nil),           // 10: smartcore.bos.metadata.v1.Metadata.Revision
-	(*Metadata_Installation)(nil),       // 11: smartcore.bos.metadata.v1.Metadata.Installation
-	(*Metadata_NIC)(nil),                // 12: smartcore.bos.metadata.v1.Metadata.NIC
-	(*Metadata_Membership)(nil),         // 13: smartcore.bos.metadata.v1.Metadata.Membership
-	nil,                                 // 14: smartcore.bos.metadata.v1.Metadata.MoreEntry
-	nil,                                 // 15: smartcore.bos.metadata.v1.Metadata.Appearance.MoreEntry
-	nil,                                 // 16: smartcore.bos.metadata.v1.Metadata.Location.MoreEntry
-	nil,                                 // 17: smartcore.bos.metadata.v1.Metadata.ID.MoreEntry
-	(*Metadata_Product_Kind)(nil),       // 18: smartcore.bos.metadata.v1.Metadata.Product.Kind
-	nil,                                 // 19: smartcore.bos.metadata.v1.Metadata.Product.MoreEntry
-	nil,                                 // 20: smartcore.bos.metadata.v1.Metadata.Revision.MoreEntry
-	nil,                                 // 21: smartcore.bos.metadata.v1.Metadata.Installation.MoreEntry
-	nil,                                 // 22: smartcore.bos.metadata.v1.Metadata.NIC.MoreEntry
-	nil,                                 // 23: smartcore.bos.metadata.v1.Metadata.Membership.MoreEntry
-	nil,                                 // 24: smartcore.bos.metadata.v1.TraitMetadata.MoreEntry
-	(*PullMetadataResponse_Change)(nil), // 25: smartcore.bos.metadata.v1.PullMetadataResponse.Change
-	(*fieldmaskpb.FieldMask)(nil),       // 26: google.protobuf.FieldMask
-	(*timestamppb.Timestamp)(nil),       // 27: google.protobuf.Timestamp
+	(Metadata_DeviceType)(0),            // 0: smartcore.bos.metadata.v1.Metadata.DeviceType
+	(Metadata_NIC_Assignment)(0),        // 1: smartcore.bos.metadata.v1.Metadata.NIC.Assignment
+	(*Metadata)(nil),                    // 2: smartcore.bos.metadata.v1.Metadata
+	(*TraitMetadata)(nil),               // 3: smartcore.bos.metadata.v1.TraitMetadata
+	(*GetMetadataRequest)(nil),          // 4: smartcore.bos.metadata.v1.GetMetadataRequest
+	(*PullMetadataRequest)(nil),         // 5: smartcore.bos.metadata.v1.PullMetadataRequest
+	(*PullMetadataResponse)(nil),        // 6: smartcore.bos.metadata.v1.PullMetadataResponse
+	(*Metadata_Appearance)(nil),         // 7: smartcore.bos.metadata.v1.Metadata.Appearance
+	(*Metadata_Location)(nil),           // 8: smartcore.bos.metadata.v1.Metadata.Location
+	(*Metadata_ID)(nil),                 // 9: smartcore.bos.metadata.v1.Metadata.ID
+	(*Metadata_Product)(nil),            // 10: smartcore.bos.metadata.v1.Metadata.Product
+	(*Metadata_Revision)(nil),           // 11: smartcore.bos.metadata.v1.Metadata.Revision
+	(*Metadata_Installation)(nil),       // 12: smartcore.bos.metadata.v1.Metadata.Installation
+	(*Metadata_NIC)(nil),                // 13: smartcore.bos.metadata.v1.Metadata.NIC
+	(*Metadata_Membership)(nil),         // 14: smartcore.bos.metadata.v1.Metadata.Membership
+	nil,                                 // 15: smartcore.bos.metadata.v1.Metadata.MoreEntry
+	nil,                                 // 16: smartcore.bos.metadata.v1.Metadata.Appearance.MoreEntry
+	nil,                                 // 17: smartcore.bos.metadata.v1.Metadata.Location.MoreEntry
+	nil,                                 // 18: smartcore.bos.metadata.v1.Metadata.ID.MoreEntry
+	(*Metadata_Product_Kind)(nil),       // 19: smartcore.bos.metadata.v1.Metadata.Product.Kind
+	nil,                                 // 20: smartcore.bos.metadata.v1.Metadata.Product.MoreEntry
+	nil,                                 // 21: smartcore.bos.metadata.v1.Metadata.Revision.MoreEntry
+	nil,                                 // 22: smartcore.bos.metadata.v1.Metadata.Installation.MoreEntry
+	nil,                                 // 23: smartcore.bos.metadata.v1.Metadata.NIC.MoreEntry
+	nil,                                 // 24: smartcore.bos.metadata.v1.Metadata.Membership.MoreEntry
+	nil,                                 // 25: smartcore.bos.metadata.v1.TraitMetadata.MoreEntry
+	(*PullMetadataResponse_Change)(nil), // 26: smartcore.bos.metadata.v1.PullMetadataResponse.Change
+	(*fieldmaskpb.FieldMask)(nil),       // 27: google.protobuf.FieldMask
+	(*timestamppb.Timestamp)(nil),       // 28: google.protobuf.Timestamp
 }
 var file_smartcore_bos_metadata_v1_metadata_proto_depIdxs = []int32{
-	2,  // 0: smartcore.bos.metadata.v1.Metadata.traits:type_name -> smartcore.bos.metadata.v1.TraitMetadata
-	6,  // 1: smartcore.bos.metadata.v1.Metadata.appearance:type_name -> smartcore.bos.metadata.v1.Metadata.Appearance
-	7,  // 2: smartcore.bos.metadata.v1.Metadata.location:type_name -> smartcore.bos.metadata.v1.Metadata.Location
-	8,  // 3: smartcore.bos.metadata.v1.Metadata.id:type_name -> smartcore.bos.metadata.v1.Metadata.ID
-	9,  // 4: smartcore.bos.metadata.v1.Metadata.product:type_name -> smartcore.bos.metadata.v1.Metadata.Product
-	10, // 5: smartcore.bos.metadata.v1.Metadata.revision:type_name -> smartcore.bos.metadata.v1.Metadata.Revision
-	11, // 6: smartcore.bos.metadata.v1.Metadata.installation:type_name -> smartcore.bos.metadata.v1.Metadata.Installation
-	12, // 7: smartcore.bos.metadata.v1.Metadata.nics:type_name -> smartcore.bos.metadata.v1.Metadata.NIC
-	13, // 8: smartcore.bos.metadata.v1.Metadata.membership:type_name -> smartcore.bos.metadata.v1.Metadata.Membership
-	14, // 9: smartcore.bos.metadata.v1.Metadata.more:type_name -> smartcore.bos.metadata.v1.Metadata.MoreEntry
-	24, // 10: smartcore.bos.metadata.v1.TraitMetadata.more:type_name -> smartcore.bos.metadata.v1.TraitMetadata.MoreEntry
-	26, // 11: smartcore.bos.metadata.v1.GetMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	26, // 12: smartcore.bos.metadata.v1.PullMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	25, // 13: smartcore.bos.metadata.v1.PullMetadataResponse.changes:type_name -> smartcore.bos.metadata.v1.PullMetadataResponse.Change
-	15, // 14: smartcore.bos.metadata.v1.Metadata.Appearance.more:type_name -> smartcore.bos.metadata.v1.Metadata.Appearance.MoreEntry
-	16, // 15: smartcore.bos.metadata.v1.Metadata.Location.more:type_name -> smartcore.bos.metadata.v1.Metadata.Location.MoreEntry
-	17, // 16: smartcore.bos.metadata.v1.Metadata.ID.more:type_name -> smartcore.bos.metadata.v1.Metadata.ID.MoreEntry
-	18, // 17: smartcore.bos.metadata.v1.Metadata.Product.kind:type_name -> smartcore.bos.metadata.v1.Metadata.Product.Kind
-	19, // 18: smartcore.bos.metadata.v1.Metadata.Product.more:type_name -> smartcore.bos.metadata.v1.Metadata.Product.MoreEntry
-	27, // 19: smartcore.bos.metadata.v1.Metadata.Revision.manufacture_date:type_name -> google.protobuf.Timestamp
-	20, // 20: smartcore.bos.metadata.v1.Metadata.Revision.more:type_name -> smartcore.bos.metadata.v1.Metadata.Revision.MoreEntry
-	27, // 21: smartcore.bos.metadata.v1.Metadata.Installation.install_time:type_name -> google.protobuf.Timestamp
-	27, // 22: smartcore.bos.metadata.v1.Metadata.Installation.replace_time:type_name -> google.protobuf.Timestamp
-	27, // 23: smartcore.bos.metadata.v1.Metadata.Installation.label_time:type_name -> google.protobuf.Timestamp
-	21, // 24: smartcore.bos.metadata.v1.Metadata.Installation.more:type_name -> smartcore.bos.metadata.v1.Metadata.Installation.MoreEntry
-	0,  // 25: smartcore.bos.metadata.v1.Metadata.NIC.assignment:type_name -> smartcore.bos.metadata.v1.Metadata.NIC.Assignment
-	22, // 26: smartcore.bos.metadata.v1.Metadata.NIC.more:type_name -> smartcore.bos.metadata.v1.Metadata.NIC.MoreEntry
-	23, // 27: smartcore.bos.metadata.v1.Metadata.Membership.more:type_name -> smartcore.bos.metadata.v1.Metadata.Membership.MoreEntry
-	1,  // 28: smartcore.bos.metadata.v1.PullMetadataResponse.Change.metadata:type_name -> smartcore.bos.metadata.v1.Metadata
-	27, // 29: smartcore.bos.metadata.v1.PullMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	3,  // 30: smartcore.bos.metadata.v1.MetadataApi.GetMetadata:input_type -> smartcore.bos.metadata.v1.GetMetadataRequest
-	4,  // 31: smartcore.bos.metadata.v1.MetadataApi.PullMetadata:input_type -> smartcore.bos.metadata.v1.PullMetadataRequest
-	1,  // 32: smartcore.bos.metadata.v1.MetadataApi.GetMetadata:output_type -> smartcore.bos.metadata.v1.Metadata
-	5,  // 33: smartcore.bos.metadata.v1.MetadataApi.PullMetadata:output_type -> smartcore.bos.metadata.v1.PullMetadataResponse
-	32, // [32:34] is the sub-list for method output_type
-	30, // [30:32] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	3,  // 0: smartcore.bos.metadata.v1.Metadata.traits:type_name -> smartcore.bos.metadata.v1.TraitMetadata
+	7,  // 1: smartcore.bos.metadata.v1.Metadata.appearance:type_name -> smartcore.bos.metadata.v1.Metadata.Appearance
+	8,  // 2: smartcore.bos.metadata.v1.Metadata.location:type_name -> smartcore.bos.metadata.v1.Metadata.Location
+	9,  // 3: smartcore.bos.metadata.v1.Metadata.id:type_name -> smartcore.bos.metadata.v1.Metadata.ID
+	10, // 4: smartcore.bos.metadata.v1.Metadata.product:type_name -> smartcore.bos.metadata.v1.Metadata.Product
+	11, // 5: smartcore.bos.metadata.v1.Metadata.revision:type_name -> smartcore.bos.metadata.v1.Metadata.Revision
+	12, // 6: smartcore.bos.metadata.v1.Metadata.installation:type_name -> smartcore.bos.metadata.v1.Metadata.Installation
+	13, // 7: smartcore.bos.metadata.v1.Metadata.nics:type_name -> smartcore.bos.metadata.v1.Metadata.NIC
+	14, // 8: smartcore.bos.metadata.v1.Metadata.membership:type_name -> smartcore.bos.metadata.v1.Metadata.Membership
+	0,  // 9: smartcore.bos.metadata.v1.Metadata.device_type:type_name -> smartcore.bos.metadata.v1.Metadata.DeviceType
+	15, // 10: smartcore.bos.metadata.v1.Metadata.more:type_name -> smartcore.bos.metadata.v1.Metadata.MoreEntry
+	25, // 11: smartcore.bos.metadata.v1.TraitMetadata.more:type_name -> smartcore.bos.metadata.v1.TraitMetadata.MoreEntry
+	27, // 12: smartcore.bos.metadata.v1.GetMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	27, // 13: smartcore.bos.metadata.v1.PullMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	26, // 14: smartcore.bos.metadata.v1.PullMetadataResponse.changes:type_name -> smartcore.bos.metadata.v1.PullMetadataResponse.Change
+	16, // 15: smartcore.bos.metadata.v1.Metadata.Appearance.more:type_name -> smartcore.bos.metadata.v1.Metadata.Appearance.MoreEntry
+	17, // 16: smartcore.bos.metadata.v1.Metadata.Location.more:type_name -> smartcore.bos.metadata.v1.Metadata.Location.MoreEntry
+	18, // 17: smartcore.bos.metadata.v1.Metadata.ID.more:type_name -> smartcore.bos.metadata.v1.Metadata.ID.MoreEntry
+	19, // 18: smartcore.bos.metadata.v1.Metadata.Product.kind:type_name -> smartcore.bos.metadata.v1.Metadata.Product.Kind
+	20, // 19: smartcore.bos.metadata.v1.Metadata.Product.more:type_name -> smartcore.bos.metadata.v1.Metadata.Product.MoreEntry
+	28, // 20: smartcore.bos.metadata.v1.Metadata.Revision.manufacture_date:type_name -> google.protobuf.Timestamp
+	21, // 21: smartcore.bos.metadata.v1.Metadata.Revision.more:type_name -> smartcore.bos.metadata.v1.Metadata.Revision.MoreEntry
+	28, // 22: smartcore.bos.metadata.v1.Metadata.Installation.install_time:type_name -> google.protobuf.Timestamp
+	28, // 23: smartcore.bos.metadata.v1.Metadata.Installation.replace_time:type_name -> google.protobuf.Timestamp
+	28, // 24: smartcore.bos.metadata.v1.Metadata.Installation.label_time:type_name -> google.protobuf.Timestamp
+	22, // 25: smartcore.bos.metadata.v1.Metadata.Installation.more:type_name -> smartcore.bos.metadata.v1.Metadata.Installation.MoreEntry
+	1,  // 26: smartcore.bos.metadata.v1.Metadata.NIC.assignment:type_name -> smartcore.bos.metadata.v1.Metadata.NIC.Assignment
+	23, // 27: smartcore.bos.metadata.v1.Metadata.NIC.more:type_name -> smartcore.bos.metadata.v1.Metadata.NIC.MoreEntry
+	24, // 28: smartcore.bos.metadata.v1.Metadata.Membership.more:type_name -> smartcore.bos.metadata.v1.Metadata.Membership.MoreEntry
+	2,  // 29: smartcore.bos.metadata.v1.PullMetadataResponse.Change.metadata:type_name -> smartcore.bos.metadata.v1.Metadata
+	28, // 30: smartcore.bos.metadata.v1.PullMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	4,  // 31: smartcore.bos.metadata.v1.MetadataApi.GetMetadata:input_type -> smartcore.bos.metadata.v1.GetMetadataRequest
+	5,  // 32: smartcore.bos.metadata.v1.MetadataApi.PullMetadata:input_type -> smartcore.bos.metadata.v1.PullMetadataRequest
+	2,  // 33: smartcore.bos.metadata.v1.MetadataApi.GetMetadata:output_type -> smartcore.bos.metadata.v1.Metadata
+	6,  // 34: smartcore.bos.metadata.v1.MetadataApi.PullMetadata:output_type -> smartcore.bos.metadata.v1.PullMetadataResponse
+	33, // [33:35] is the sub-list for method output_type
+	31, // [31:33] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_metadata_v1_metadata_proto_init() }
@@ -1466,7 +1579,7 @@ func file_smartcore_bos_metadata_v1_metadata_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_metadata_v1_metadata_proto_rawDesc), len(file_smartcore_bos_metadata_v1_metadata_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   2,
