@@ -1,25 +1,31 @@
 <template>
   <div class="chart__container">
     <line-chart :data="chartData" :options="chartOptions" :plugins="[themeColorPlugin, vueLegendPlugin]"/>
+    <chart-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit"
+                   :format-value="(y) => (y != null ? new Intl.NumberFormat(undefined, {}).format(y) + (unit ? ' ' + unit : '') : '—')"
+                   :filter="(dp) => dp.dataset.yAxisID !== 'y_occ'"/>
   </div>
 </template>
 
 <script setup>
-import {useDateScale, getTooltipDateFormat} from '@/components/charts/date.js';
-import {useThemeColorPlugin, useVueLegendPlugin} from '@/components/charts/plugins.js';
+import {useDateScale} from '@/components/charts/date.js';
+import {useExternalTooltip, useThemeColorPlugin, useVueLegendPlugin} from '@/components/charts/plugins.js';
+import ChartTooltip from '@/components/charts/ChartTooltip.vue';
 import {defineChartOptions} from '@/components/charts/util.js';
 import {timestampToDate} from '@/api/convpb.js';
 import {listOccupancySensorHistory} from '@/api/sc/traits/occupancy.js';
+import {metrics} from '@/traits/airQuality/airQuality.js';
 import {useAirQualityHistoryMetrics} from '@/dynamic/widgets/environmental/airQuality.js';
 import {shiftFnFromStr} from '@/dynamic/widgets/occupancy/baseline.js';
 import {asyncWatch, useLocalProp} from '@/util/vue.js';
 import binarySearch from 'binary-search';
 import {Occupancy} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/occupancysensor/v1/occupancy_sensor_pb';
 import {usePullMetadata} from '@/traits/metadata/metadata.js';
+import {usePullOccupancy} from '@/traits/occupancy/occupancy.js';
 import {effectScope, reactive, watch as vWatch} from 'vue';
 import {sentenceCase} from 'change-case';
 import {Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js';
-import {startOfDay, startOfYear, format as fmtDate} from 'date-fns';
+import {startOfDay, startOfYear} from 'date-fns';
 import {computed, toRef, toValue} from 'vue';
 import {Line as LineChart} from 'vue-chartjs';
 import * as vColors from 'vuetify/util/colors';
@@ -28,6 +34,12 @@ import 'chartjs-adapter-date-fns'; // imported for side effects
 const datasetSourceName = Symbol('datasetSourceName');
 
 ChartJS.register(Title, Tooltip, LineElement, LinearScale, PointElement, TimeScale, Legend);
+
+const findIdx = (edges, at) => {
+  let i = binarySearch(edges, at, (a, b) => a.getTime() - b.getTime());
+  if (i < 0) i = ~i - 1;
+  return i;
+};
 
 const props = defineProps({
   source: {
@@ -77,7 +89,10 @@ const _start = useLocalProp(toRef(props, 'start'));
 const _end = useLocalProp(toRef(props, 'end'));
 const _offset = useLocalProp(toRef(props, 'offset'));
 
-const {edges, pastEdges, tickUnit} = useDateScale(_start, _end, _offset);
+const metricInfo = computed(() => metrics[props.metric] || {});
+const unit = computed(() => props.unit || metricInfo.value.unit || '');
+
+const {edges, pastEdges, tickUnit, startDate, endDate} = useDateScale(_start, _end, _offset);
 
 // Support both single source (string) and multiple sources (array)
 const sources = computed(() => {
@@ -110,7 +125,7 @@ const devices = useAirQualityHistoryMetrics(sources, toRef(props, 'metric'), pas
 // Prior period — edges shifted back; empty when showBaseline is off so no fetches are made
 const shiftFn = computed(() => shiftFnFromStr(props.baselineShift));
 const baselineEdges = computed(() =>
-  props.showBaseline ? pastEdges.value.map(shiftFn.value) : []
+  props.showBaseline ? edges.value.map(shiftFn.value) : []
 );
 const baselineDevices = useAirQualityHistoryMetrics(
   computed(() => props.showBaseline ? sources.value : []),
@@ -126,6 +141,9 @@ const occupancySources = computed(() => {
   return Array.isArray(props.occupancy) ? props.occupancy : [props.occupancy];
 });
 
+// occupancyEdges: includes all buckets so the shading extends until the end of the chart.
+const occupancyEdges = computed(() => edges.value);
+
 // occupancyDatasets: one dataset per occupancy sensor, each with 0/1 values per edge.
 const occupancyStoreByName = reactive(/** @type {Record<string, {title: string, states: (0|1)[]}>} */ {});
 const occupancyScopes = {};
@@ -138,16 +156,11 @@ vWatch(occupancySources, (names) => {
     occupancyScopes[name] = scope;
     scope.run(() => {
       const {value: md} = usePullMetadata(name);
+      const {value: liveOcc} = usePullOccupancy(name);
       const statesRef = reactive({values: []});
 
-      asyncWatch([() => toValue(pastEdges)], async ([edges]) => {
+      asyncWatch([() => toValue(occupancyEdges)], async ([edges]) => {
         if (!edges || edges.length < 2) return;
-
-        const findIdx = (edges, at) => {
-          let i = binarySearch(edges, at, (a, b) => a.getTime() - b.getTime());
-          if (i < 0) i = ~i - 1;
-          return i;
-        };
 
         const states = Array(edges.length - 1).fill(null);
 
@@ -189,6 +202,25 @@ vWatch(occupancySources, (names) => {
         statesRef.values = states;
       }, {immediate: true});
 
+      // Update current bucket state in real-time as events arrive
+      vWatch(liveOcc, (occ) => {
+        if (!occ) return;
+        const edges = toValue(occupancyEdges);
+        if (!edges || edges.length < 2) return;
+        const d = timestampToDate(occ.stateChangeTime) || new Date();
+        const idx = findIdx(edges, d);
+        if (idx >= 0 && idx < statesRef.values.length) {
+          const val = occ.state === Occupancy.State.OCCUPIED ? 1 : 0;
+          if (statesRef.values[idx] !== val) {
+            statesRef.values[idx] = val;
+            // carry forward to any subsequent buckets already in statesRef
+            for (let i = idx + 1; i < statesRef.values.length; i++) {
+              statesRef.values[i] = val;
+            }
+          }
+        }
+      });
+
       vWatch([statesRef, md], () => {
         occupancyStoreByName[name] = {
           title: md.value?.appearance?.title ?? name,
@@ -205,9 +237,9 @@ vWatch(occupancySources, (names) => {
 }, {immediate: true});
 
 const yAxisLabel = computed(() => {
-  const s = sentenceCase(props.metric);
-  if (props.unit) {
-    return `${s} (${props.unit})`;
+  const s = metricInfo.value.labelText || sentenceCase(props.metric);
+  if (unit.value) {
+    return `${s} (${unit.value})`;
   }
   return s;
 });
@@ -215,31 +247,54 @@ const yAxisLabel = computed(() => {
 // Always use both plugins
 const {legendItems, vueLegendPlugin} = useVueLegendPlugin();
 const {themeColorPlugin} = useThemeColorPlugin();
+const {external: tooltipExternal, data: tooltipData} = useExternalTooltip();
 const hasOccupancy = computed(() => occupancySources.value.length > 0);
+const occupancyDataMap = computed(() => {
+  const map = {};
+  const sourcesArr = sources.value;
+  const occSourcesArr = occupancySources.value;
+  const stores = occupancyStoreByName;
+
+  sourcesArr.forEach((source, i) => {
+    let occName = null;
+    if (occSourcesArr.length === sourcesArr.length) {
+      occName = occSourcesArr[i];
+    } else if (occSourcesArr.length === 1) {
+      occName = occSourcesArr[0];
+    }
+    if (!occName && occSourcesArr.length > 0) {
+      occName = occSourcesArr.find(o => o.includes(source) || source.includes(o));
+    }
+
+    if (occName && stores[occName]) {
+      map[source] = stores[occName].states;
+    }
+  });
+  return map;
+});
 
 const chartOptions = computed(() => {
   return defineChartOptions({
     responsive: true,
     maintainAspectRatio: false,
     borderRadius: 3,
-    borderWidth: 1,
     interaction: {
       mode: 'index', // a single tooltip with all stacked datasets at the same x location in it
+      intersect: false,
     },
     plugins: {
       legend: {
         display: false, // we use a custom legend plugin and vue for this
-      },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => {
-            const dates = ctx.dataset.dates;
-            const date = dates ? dates[ctx.dataIndex] : null;
-            const fmt = getTooltipDateFormat(tickUnit.value);
-            const dateStr = date ? ` (${fmtDate(date, fmt)})` : '';
-            return `${ctx.dataset.label}${dateStr}: ${ctx.parsed.y != null ? new Intl.NumberFormat(undefined, {}).format(ctx.parsed.y) : '—'}`;
+        labels: {
+          filter: (item, data) => {
+            const ds = data?.datasets?.[item.datasetIndex];
+            return ds && ds.yAxisID !== 'y_occ';
           }
         }
+      },
+      tooltip: {
+        enabled: false,
+        external: tooltipExternal,
       }
     },
     scales: {
@@ -248,15 +303,16 @@ const chartOptions = computed(() => {
         beginAtZero: true,
         title: {
           display: true,
-          text: yAxisLabel.value
+          text: yAxisLabel.value,
+          color: 'rgba(255, 255, 255, 0.7)',
         },
         border: {
-          color: 'transparent'
+          display: false
         },
         grid: {
           color(ctx) {
-            if (ctx.tick.value === 0) return '#fff4';
-            return '#fff1';
+            if (ctx.tick.value === 0) return 'rgba(255, 255, 255, 0.25)';
+            return 'rgba(255, 255, 255, 0.08)';
           },
           drawTicks: false,
         },
@@ -264,7 +320,7 @@ const chartOptions = computed(() => {
           callback(value) {
             return new Intl.NumberFormat(undefined, {}).format(Math.abs(value));
           },
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           padding: 8
         },
       },
@@ -279,9 +335,14 @@ const chartOptions = computed(() => {
       } : {}),
       x: {
         type: 'time',
+        min: startDate.value,
+        max: endDate.value,
         stacked: false,
+        border: {
+          display: false
+        },
         grid: {
-          color: '#fff1'
+          display: false,
         },
         ticks: {
           maxTicksLimit: 11,
@@ -292,7 +353,7 @@ const chartOptions = computed(() => {
             if (unit === 'hour' && value === startOfDay(value).getTime()) return this.format(value, this.options.time.displayFormats['day']);
             return this.format(value);
           },
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           padding: 8,
           maxRotation: 0
         },
@@ -321,11 +382,45 @@ const chartData = computed(() => {
     if (!device) continue;
     const label = toValue(device.title) || name;
     const deviceData = toValue(device.data);
+    const d = deviceData.map(p => ({x: p.x, y: p.y}));
+    const dates = deviceData.map(p => p.x);
+    if (d.length > 0) {
+      // Add a padding point at the end of the chart to ensure the line renders fully across the x axis
+      const lastChartEdge = edges.value[edges.value.length - 1];
+      d.push({x: lastChartEdge, y: d[d.length - 1].y});
+      dates.push(lastChartEdge);
+    }
+
     datasets.push({
       label,
-      data: deviceData.map(d => d.y),
-      dates: deviceData.map(d => d.x),
+      data: d,
+      dates,
       [datasetSourceName]: name,
+      order: 0,
+      segment: {
+        borderColor: (ctx) => {
+          const ds = ctx.chart.data.datasets[ctx.datasetIndex];
+          const color = ds.borderColor;
+          const occStates = occupancyDataMap.value[name];
+          if (!occStates) return color;
+          const idx = ctx.p0DataIndex;
+          const occupied = occStates[idx] === 1;
+          if (occupied) return color;
+
+          // themeColorPlugin sets borderColor as a hex string (e.g. #3f51b5)
+          if (typeof color === 'string' && color.startsWith('#')) {
+            return color + '40'; // 25% opacity
+          }
+          return color;
+        },
+        borderWidth: (ctx) => {
+          const occStates = occupancyDataMap.value[name];
+          if (!occStates) return undefined;
+          const idx = ctx.p0DataIndex;
+          const occupied = occStates[idx] === 1;
+          return occupied ? 3 : 1.5;
+        }
+      }
     });
   }
 
@@ -337,10 +432,18 @@ const chartData = computed(() => {
       const device = baselineDevices[name];
       if (!device) return;
       const deviceData = toValue(device.data);
+      const d = deviceData.map((p, j) => ({x: chartLabels.value[j], y: p.y}));
+      const dates = deviceData.map(p => p.x);
+      if (d.length > 0) {
+        // Add a padding point at the end of the chart to ensure the line renders fully across the x axis
+        const lastChartEdge = edges.value[edges.value.length - 1];
+        d.push({x: lastChartEdge, y: d[d.length - 1].y});
+        dates.push(lastChartEdge);
+      }
       datasets.push({
         label: `${toValue(device.title) || name} (prior)`,
-        data: deviceData.map(d => d.y),
-        dates: deviceData.map(d => d.x),
+        data: d,
+        dates,
         [datasetSourceName]: name,
         borderColor: paletteColors[i % paletteColors.length],
         backgroundColor: 'transparent',
@@ -350,28 +453,37 @@ const chartData = computed(() => {
         pointRadius: 0,
         pointHoverRadius: 3,
         tension: 0.3,
+        order: 5,
       });
     });
   }
 
   // Occupancy overlay: one semi-transparent filled step-line per occupancy source.
   // Rendered on the hidden y_occ axis so it doesn't interfere with the main scale.
-  for (const occ of Object.values(occupancyStoreByName)) {
+  Object.entries(occupancyStoreByName).forEach(([, occ]) => {
+    const data = occ.states.map((s, i) => ({x: chartLabels.value[i], y: s}));
+    if (occ.states.length > 0) {
+      // Add a point at the end of the last bucket to close the stepped line
+      const lastBucketEnd = edges.value[occ.states.length];
+      data.push({x: lastBucketEnd, y: occ.states[occ.states.length - 1]});
+    }
     datasets.push({
       type: 'line',
       label: `${occ.title} occupied`,
-      data: occ.states,
+      data,
       yAxisID: 'y_occ',
-      stepped: 'before',
+      stepped: 'after',
       fill: true,
       borderWidth: 0,
       pointRadius: 0,
-      backgroundColor: 'rgba(255,255,255,0.06)',
+      pointHitRadius: 0, // don't trigger tooltips for the background shade
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
       borderColor: 'transparent',
       // Pre-setting backgroundColor prevents themeColorPlugin from overriding it
       _pluginColor: false,
+      order: 10, // draw behind other datasets
     });
-  }
+  });
 
   return {labels: chartLabels.value, datasets};
 });

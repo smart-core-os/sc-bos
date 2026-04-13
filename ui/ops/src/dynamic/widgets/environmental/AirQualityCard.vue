@@ -6,6 +6,7 @@
     <v-card-text class="flex-1-1-100 pt-0 flex-grow-1 d-flex">
       <div class="chart__container mb-n2 flex-grow-1">
         <bar :data="metricData" :options="metricOptions" :plugins="[]"/>
+        <chart-tooltip :data="tooltipData" :format-value="(y) => format(y) + '%'"/>
       </div>
     </v-card-text>
   </v-card>
@@ -13,8 +14,10 @@
 
 <script setup>
 import {defineChartOptions} from '@/components/charts/util.js';
+import {useExternalTooltip} from '@/components/charts/plugins.js';
+import ChartTooltip from '@/components/charts/ChartTooltip.vue';
 import {metrics, statusToColor, useAirQuality, usePullAirQuality} from '@/traits/airQuality/airQuality.js';
-import {cap, scale} from '@/util/number.js';
+import {cap, format, scale} from '@/util/number.js';
 import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip} from 'chart.js';
 import Color from 'colorjs.io';
 import {computed} from 'vue';
@@ -42,11 +45,12 @@ const orderedMetrics = [
 const {value: airQuality, loading} = usePullAirQuality(() => props.name);
 const {presentMetrics} = useAirQuality(airQuality);
 
+const {external: tooltipExternal, data: tooltipData} = useExternalTooltip();
+
 const metricOptions = computed(() => {
   return defineChartOptions({
     maintainAspectRatio: false,
     borderRadius: 3,
-    borderWidth: 1,
     interaction: {
       mode: 'index', // a single tooltip with all stacked datasets at the same x location in it
       intersect: false,
@@ -54,6 +58,10 @@ const metricOptions = computed(() => {
     plugins: {
       legend: {
         display: false, // no legend needed
+      },
+      tooltip: {
+        enabled: false,
+        external: tooltipExternal
       }
     },
     scales: {
@@ -61,26 +69,29 @@ const metricOptions = computed(() => {
         min: 0,
         max: 100,
         border: {
-          color: 'transparent'
+          display: false
         },
         grid: {
           color(ctx) {
-            if (ctx.tick.value === 0) return '#fff4';
-            return '#fff1';
+            if (ctx.tick.value === 0) return 'rgba(255, 255, 255, 0.25)';
+            return 'rgba(255, 255, 255, 0.08)';
           },
           drawTicks: false,
         },
         ticks: {
-          display: false
+          color: 'rgba(255, 255, 255, 0.9)',
+          padding: 8,
         },
       },
       x: {
+        border: {
+          display: false
+        },
         grid: {
-          offset: false, // bars default to true here, put ticks back inline with grid lines
-          color: '#fff1'
+          display: false,
         },
         ticks: {
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           padding: 8,
         },
       }
@@ -89,6 +100,7 @@ const metricOptions = computed(() => {
 });
 
 const theme = useTheme();
+
 const metricLabels = computed(() => {
   const dst = [];
   const src = presentMetrics.value;

@@ -219,7 +219,7 @@ export function useSoundLevelPeriodAverages(name, metrics, start, end) {
         if (!res.soundLevelRecordsList.length) break;
         for (const record of res.soundLevelRecordsList) {
           for (const m of metrics) {
-            const raw = record.soundLevel[m];
+            const raw = record.soundLevel?.[m];
             // proto FloatValue wraps the number in { value }, plain fields are numbers
             const num = typeof raw === 'number' ? raw : raw?.value;
             if (num != null && !isNaN(num)) {
