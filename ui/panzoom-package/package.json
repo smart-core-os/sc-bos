@@ -5,5 +5,9 @@
   "repository": "https://github.com/smart-core-os/sc-bos",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
+  },
+  "scripts": {
+    "lint": "echo this is a vendored package, no point linting it",
+    "lint:nofix": "echo this is a vendored package, no point linting it"
   }
 }
