@@ -46,7 +46,9 @@
         </div>
       </div>
     </v-card-text>
-    <demand-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit" :unit="unit" :show-total="stacked"/>
+    <chart-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit"
+                   :format-value="(y) => usageToString(y, unit)"
+                   :show-total="stacked" total-title="Total Demand"/>
   </v-card>
 </template>
 
@@ -57,8 +59,9 @@ import {defineChartOptions} from '@/components/charts/util.js';
 import {triggerDownload} from '@/components/download/download.js';
 import {computeDatasets, datasetSourceName} from '@/dynamic/widgets/energy/chart.js';
 import {Units, useDemand, useDemands, usePeakDemand, usePeakDemands, usePresentMetric} from '@/dynamic/widgets/energy/demand.js';
+import {usageToString} from '@/traits/meter/meter.js';
 import * as vColors from 'vuetify/util/colors';
-import DemandTooltip from '@/dynamic/widgets/energy/DemandTooltip.vue';
+import ChartTooltip from '@/components/charts/ChartTooltip.vue';
 import PeriodChooserRows from '@/components/PeriodChooserRows.vue';
 import {useLocalProp} from '@/util/vue.js';
 import {Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js'
@@ -181,10 +184,10 @@ const chartOptions = computed(() => {
     responsive: true,
     maintainAspectRatio: false,
     borderRadius: 3,
-    borderWidth: 1,
     spanGaps: true,
     interaction: {
       mode: 'index', // a single tooltip with all stacked datasets at the same x location in it
+      intersect: false,
     },
     plugins: {
       tooltip: {
@@ -200,15 +203,16 @@ const chartOptions = computed(() => {
         stacked: stacked.value,
         title: {
           display: true,
-          text: unit.value
+          text: unit.value,
+          color: 'rgba(255, 255, 255, 0.7)',
         },
         border: {
-          color: 'transparent'
+          display: false
         },
         grid: {
           color(ctx) {
-            if (ctx.tick.value === 0) return '#fff4';
-            return '#fff1';
+            if (ctx.tick.value === 0) return 'rgba(255, 255, 255, 0.25)';
+            return 'rgba(255, 255, 255, 0.08)';
           },
           drawTicks: false,
         },
@@ -216,15 +220,20 @@ const chartOptions = computed(() => {
           callback(value) {
             return new Intl.NumberFormat(undefined, {}).format(Math.abs(value));
           },
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           padding: 8
         },
       },
       x: {
         type: 'time',
+        min: startDate.value,
+        max: endDate.value,
         stacked: false,
+        border: {
+          display: false
+        },
         grid: {
-          color: '#fff1'
+          display: false,
         },
         ticks: {
           maxTicksLimit: 11,
@@ -235,7 +244,7 @@ const chartOptions = computed(() => {
             if (unit === 'hour' && value === startOfDay(value).getTime()) return this.format(value, this.options.time.displayFormats['day']);
             return this.format(value);
           },
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           padding: 8,
           maxRotation: 0
         },
@@ -283,7 +292,7 @@ const chartData = computed(() => {
       _isPeak: true,
       [datasetSourceName]: name,
       label: `${toValue(series.title)} peak`,
-      data: toValue(series.data).map(pt => pt.y),
+      data: toValue(series.data).map(pt => ({x: pt.x, y: pt.y})),
       borderColor: color,
       backgroundColor: 'transparent',
       borderDash: [6, 3],
@@ -308,7 +317,7 @@ const chartData = computed(() => {
       type: 'line',
       _isPeak: true,
       label: 'Total Demand peak',
-      data: peakTotalDemand.value.map(pt => pt.y),
+      data: peakTotalDemand.value.map(pt => ({x: pt.x, y: pt.y})),
       borderColor: totalColor,
       backgroundColor: 'transparent',
       borderDash: [6, 3],
@@ -326,7 +335,7 @@ const chartData = computed(() => {
 });
 
 const hasData = computed(() => {
-  return chartData.value.datasets.some(ds => ds.data.some(val => val != null));
+  return chartData.value.datasets.some(ds => ds.data.some(val => val?.y != null));
 });
 
 // Track if initial data load is complete to avoid showing no-data graphic during fetch

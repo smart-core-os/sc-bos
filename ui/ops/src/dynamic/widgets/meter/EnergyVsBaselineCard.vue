@@ -18,6 +18,8 @@
     <v-card-text class="flex-grow-1 d-flex pt-0">
       <div class="chart__container flex-grow-1">
         <bar :data="chartData" :options="chartOptions" :plugins="[]"/>
+        <chart-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit"
+                       :format-value="(y) => (y != null ? format(y) + ' ' + props.unit : '—')"/>
       </div>
     </v-card-text>
     <div class="d-flex flex-wrap ga-4 justify-center pb-3 text-caption opacity-70">
@@ -34,19 +36,22 @@
 </template>
 
 <script setup>
-import {useDateScale, getTooltipDateFormat} from '@/components/charts/date.js';
+import {useDateScale} from '@/components/charts/date.js';
+import {useExternalTooltip} from '@/components/charts/plugins.js';
+import ChartTooltip from '@/components/charts/ChartTooltip.vue';
 import {defineChartOptions} from '@/components/charts/util.js';
 import {usePeriod} from '@/composables/time.js';
 import {useEnergyNormalized, subDays, subWeeks, subMonths} from '@/dynamic/widgets/meter/baseline.js';
 import {useLocalProp} from '@/util/vue.js';
-import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from 'chart.js';
-import {format as fmtDate} from 'date-fns';
+import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js';
+import {startOfDay, startOfYear} from 'date-fns';
 import {format} from '@/util/number.js';
 import {computed, toRef} from 'vue';
 import {Bar} from 'vue-chartjs';
 import * as vColors from 'vuetify/util/colors';
+import 'chartjs-adapter-date-fns';
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, LineElement, PointElement);
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, LineElement, PointElement, TimeScale);
 
 const props = defineProps({
   title: {type: String, default: 'Energy vs Baseline'},
@@ -69,30 +74,19 @@ const shiftFn = computed(() => {
 
 const _offset = computed(() => -Math.abs(parseInt(props.offset)));
 const {start, end} = usePeriod(toRef(props, 'period'), toRef(props, 'period'), _offset);
-const {edges, pastEdges, tickUnit} = useDateScale(start, end, useLocalProp(toRef(props, 'offset')));
+const {edges, tickUnit, startDate, endDate} = useDateScale(start, end, useLocalProp(toRef(props, 'offset')));
 
 const {currentConsumption, baselineConsumption, summaryPct} = useEnergyNormalized(
   toRef(props, 'name'),
-  pastEdges,
+  edges,
   shiftFn.value
 );
 
 const currentColor = vColors.blue.base;
 const baselineColor = '#aaaaaa';
 
-const tickFmt = computed(() => {
-  switch (tickUnit.value) {
-    case 'minute':
-    case 'hour':   return 'H:mm';
-    case 'month':  return 'MMM';
-    case 'year':   return 'yyyy';
-    default:       return 'd MMM'; // day
-  }
-});
-
-const chartLabels = computed(() =>
-  edges.value.slice(0, -1).map(d => fmtDate(d, tickFmt.value))
-);
+const {external: tooltipExternal, data: tooltipData} = useExternalTooltip();
+const chartLabels = computed(() => edges.value.slice(0, -1));
 
 const chartData = computed(() => ({
   labels: chartLabels.value,
@@ -100,7 +94,7 @@ const chartData = computed(() => ({
     {
       type: 'line',
       label: 'Prior period',
-      data: baselineConsumption.value.map(pt => pt.y),
+      data: baselineConsumption.value.map((pt, i) => ({x: chartLabels.value[i], y: pt.y})),
       dates: baselineConsumption.value.map(pt => pt.x),
       backgroundColor: 'transparent',
       borderColor: baselineColor,
@@ -114,7 +108,7 @@ const chartData = computed(() => ({
     {
       type: 'bar',
       label: 'Current',
-      data: currentConsumption.value.map(pt => pt.y),
+      data: currentConsumption.value.map(pt => ({x: pt.x, y: pt.y})),
       dates: currentConsumption.value.map(pt => pt.x),
       backgroundColor: currentColor + '99',
       borderColor: currentColor,
@@ -132,36 +126,64 @@ const chartOptions = computed(() => defineChartOptions({
   plugins: {
     legend: {display: false},
     tooltip: {
-      callbacks: {
-        title: () => {
-          return '';
-        },
-        label: (ctx) => {
-          const dates = ctx.dataset.dates;
-          const date = dates ? dates[ctx.dataIndex] : null;
-          const fmt = getTooltipDateFormat(tickUnit.value);
-          const dateStr = date ? ` (${fmtDate(date, fmt)})` : '';
-          return `${ctx.dataset.label}${dateStr}: ${ctx.parsed.y != null ? format(ctx.parsed.y) : '—'} ${props.unit}`;
-        },
-      },
+      enabled: false,
+      external: tooltipExternal,
     },
   },
   scales: {
     y: {
       beginAtZero: true,
-      title: {display: true, text: props.unit, color: '#fff8'},
-      border: {color: 'transparent'},
+      title: {
+        display: true,
+        text: props.unit,
+        color: 'rgba(255, 255, 255, 0.7)',
+      },
+      border: {
+        display: false
+      },
       grid: {
         color(ctx) {
-          return ctx.tick.value === 0 ? '#fff4' : '#fff1';
+          if (ctx.tick.value === 0) return 'rgba(255, 255, 255, 0.25)';
+          return 'rgba(255, 255, 255, 0.08)';
         },
         drawTicks: false,
       },
-      ticks: {color: '#fff', padding: 8},
+      ticks: {
+        color: 'rgba(255, 255, 255, 0.9)',
+        padding: 8
+      },
     },
     x: {
-      grid: {color: '#fff1'},
-      ticks: {color: '#fff', padding: 8, maxRotation: 0},
+      type: 'time',
+      min: startDate.value,
+      max: endDate.value,
+      border: {
+        display: false
+      },
+      grid: {
+        display: false,
+      },
+      ticks: {
+        maxTicksLimit: 11,
+        includeBounds: true,
+        callback(value) {
+          const unit = tickUnit.value;
+          if (unit === 'month' && value === startOfYear(value).getTime()) return this.format(value, this.options.time.displayFormats['year']);
+          if (unit === 'hour' && value === startOfDay(value).getTime()) return this.format(value, this.options.time.displayFormats['day']);
+          return this.format(value);
+        },
+        color: 'rgba(255, 255, 255, 0.9)',
+        padding: 8,
+        maxRotation: 0
+      },
+      time: {
+        unit: tickUnit.value,
+        displayFormats: {
+          hour: 'H:mm',
+          day: 'd MMM',
+          month: 'MMM',
+        }
+      }
     },
   },
 }));

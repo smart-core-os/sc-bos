@@ -59,12 +59,19 @@ export function useComparedConsumption(name, currentEdges, baselineEdges) {
     });
   });
 
-  // Overall % vs baseline across all buckets (total current vs total baseline)
+  // Overall % vs baseline across all buckets where current data exists
   const summaryPct = computed(() => {
-    const cur = currentConsumption.value.reduce((acc, pt) => acc + (pt.y ?? 0), 0);
-    const bas = baselineConsumption.value.reduce((acc, pt) => acc + (pt.y ?? 0), 0);
-    if (!bas) return null;
-    return ((cur - bas) / bas) * 100;
+    let curTotal = 0;
+    let basTotal = 0;
+    const cur = currentConsumption.value;
+    const bas = baselineConsumption.value;
+    for (let i = 0; i < cur.length; i++) {
+      if (cur[i].y === null) continue;
+      curTotal += (cur[i].y ?? 0);
+      basTotal += (bas[i]?.y ?? 0);
+    }
+    if (!basTotal) return null;
+    return ((curTotal - basTotal) / basTotal) * 100;
   });
 
   return {currentConsumption, baselineConsumption, deviations, summaryPct};
