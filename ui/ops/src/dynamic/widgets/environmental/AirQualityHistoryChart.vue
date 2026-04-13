@@ -2,7 +2,7 @@
   <div class="chart__container">
     <line-chart :data="chartData" :options="chartOptions" :plugins="[themeColorPlugin, vueLegendPlugin]"/>
     <chart-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit"
-                   :format-value="(y) => (y != null ? new Intl.NumberFormat(undefined, {}).format(y) + (unit ? ' ' + unit : '') : '—')"
+                   :format-value="(y) => (y != null ? new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(y) + (unit ? ' ' + unit : '') : '—')"
                    :filter="(dp) => dp.dataset.yAxisID !== 'y_occ'"/>
   </div>
 </template>
@@ -194,7 +194,6 @@ vWatch(occupancySources, (names) => {
         } while (req.pageToken);
 
         // carry forward
-        if (states[0] === null) states[0] = 0;
         for (let i = 1; i < states.length; i++) {
           if (states[i] === null) states[i] = states[i - 1];
         }
@@ -404,12 +403,12 @@ const chartData = computed(() => {
           const occStates = occupancyDataMap.value[name];
           if (!occStates) return color;
           const idx = ctx.p0DataIndex;
-          const occupied = occStates[idx] === 1;
-          if (occupied) return color;
+          const state = occStates[idx];
+          if (state === 1 || state == null) return color;
 
           // themeColorPlugin sets borderColor as a hex string (e.g. #3f51b5)
           if (typeof color === 'string' && color.startsWith('#')) {
-            return color + '40'; // 25% opacity
+            return color + '80'; // 50% opacity
           }
           return color;
         },
@@ -417,8 +416,8 @@ const chartData = computed(() => {
           const occStates = occupancyDataMap.value[name];
           if (!occStates) return undefined;
           const idx = ctx.p0DataIndex;
-          const occupied = occStates[idx] === 1;
-          return occupied ? 3 : 1.5;
+          const state = occStates[idx];
+          return (state === 1 || state == null) ? 3 : 1.5;
         }
       }
     });

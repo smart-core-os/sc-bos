@@ -76,7 +76,7 @@ const divIfPresent = (a, b) => {
     return a;
   }
   if (b == null || b === 0) {
-    return a;
+    return null;
   }
   return a / b;
 };

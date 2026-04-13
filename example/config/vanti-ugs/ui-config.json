@@ -1052,7 +1052,7 @@
                     "generatedName": "van/uk/brum/ugs/zones/building/generated",
                     "occupancy": "van/uk/brum/ugs/zones/building",
                     "meterUnit": "kWh",
-                    "period": "day"
+                    "period": "day-3"
                   }
                 },
                 {

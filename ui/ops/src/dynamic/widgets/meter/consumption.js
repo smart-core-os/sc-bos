@@ -24,9 +24,13 @@ export function useMeterConsumption(name, edges) {
         res.push({x: startEdge, y: null});
         continue;
       }
-      const consumption = endReading.usage - startReading.usage;
-      // Use Math.max to ensure non-negative consumption (handles meter resets or data anomalies)
-      res.push({x: startEdge, y: Math.max(0, consumption)});
+      let consumption = endReading.usage - startReading.usage;
+      if (consumption < 0) {
+        // Meter reset? Use the end reading as the consumption for this period,
+        // assuming it reset to 0 at some point after the start reading.
+        consumption = endReading.usage;
+      }
+      res.push({x: startEdge, y: consumption});
     }
     return res;
   });

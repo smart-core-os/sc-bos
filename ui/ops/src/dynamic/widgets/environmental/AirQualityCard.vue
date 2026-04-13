@@ -5,8 +5,15 @@
     </v-toolbar>
     <v-card-text class="flex-1-1-100 pt-0 flex-grow-1 d-flex">
       <div class="chart__container mb-n2 flex-grow-1">
-        <bar :data="metricData" :options="metricOptions" :plugins="[]"/>
-        <chart-tooltip :data="tooltipData" :format-value="(y) => format(y) + '%'"/>
+        <Bar :data="metricData" :options="metricOptions"/>
+        <chart-tooltip :data="tooltipData" :format-value="(y, item) => {
+          const raw = item?.dataset?._rawValues?.[item.dataIndex];
+          const unit = item?.dataset?._units?.[item.dataIndex];
+          const val = raw ?? y;
+          if (val == null) return '—';
+          const formatted = new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+          return formatted + (unit ? (unit === '%' || unit === '/h' ? unit : ' ' + unit) : (raw == null ? '%' : ''));
+        }"/>
       </div>
     </v-card-text>
   </v-card>
@@ -17,7 +24,7 @@ import {defineChartOptions} from '@/components/charts/util.js';
 import {useExternalTooltip} from '@/components/charts/plugins.js';
 import ChartTooltip from '@/components/charts/ChartTooltip.vue';
 import {metrics, statusToColor, useAirQuality, usePullAirQuality} from '@/traits/airQuality/airQuality.js';
-import {cap, format, scale} from '@/util/number.js';
+import {cap, scale} from '@/util/number.js';
 import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip} from 'chart.js';
 import Color from 'colorjs.io';
 import {computed} from 'vue';
@@ -112,12 +119,16 @@ const metricLabels = computed(() => {
 });
 const metricData = computed(() => {
   const data = [];
+  const rawValues = [];
+  const units = [];
   const colors = [];
   const src = presentMetrics.value;
   for (const m of orderedMetrics) {
     if (!src[m]) continue;
     const mInfo = metrics[m];
     data.push(cap(scale(src[m].value, mInfo.min, mInfo.max, 0, 100), 0, 100));
+    rawValues.push(src[m].value);
+    units.push(mInfo.unit || '');
     colors.push(statusToColor(src[m].status));
   }
   const backgroundColors = colors.map(color => {
@@ -133,8 +144,10 @@ const metricData = computed(() => {
     labels: metricLabels.value,
     datasets: [
       {
-        label: 'Air Quality',
+        label: '',
         data: data,
+        _rawValues: rawValues,
+        _units: units,
         backgroundColor: backgroundColors,
         borderColor: borderColors,
         borderWidth: 1
@@ -148,5 +161,6 @@ const metricData = computed(() => {
 <style scoped>
 .chart__container {
   min-height: 100%;
+  position: relative;
 }
 </style>
