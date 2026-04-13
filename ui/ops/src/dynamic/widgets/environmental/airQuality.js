@@ -210,7 +210,7 @@ export function useAirQualityPeriodAverages(name, metrics, start, end) {
         if (!res.airQualityRecordsList.length) break;
         for (const record of res.airQualityRecordsList) {
           for (const m of metrics) {
-            const raw = record.airQuality[m];
+            const raw = record.airQuality?.[m];
             // proto FloatValue wraps the number in { value }, plain fields are numbers
             const num = typeof raw === 'number' ? raw : raw?.value;
             if (num != null && !isNaN(num)) { sums[m] += num; counts[m]++; }

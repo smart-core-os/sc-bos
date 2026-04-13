@@ -63,6 +63,14 @@ const props = defineProps({
   sound: {type: String, default: ''},
   tempSetpoint: {type: Number, default: 21},
   showTrend: {type: Boolean, default: true},
+  thresholds: {
+    type: Array,
+    default: () => [
+      {value: 40, label: 'Poor', color: 'error-lighten-1', icon: 'mdi-emoticon-sad-outline'},
+      {value: 70, label: 'Acceptable', color: 'warning', icon: 'mdi-emoticon-neutral-outline'},
+      {value: 101, label: 'Good', color: 'success-lighten-1', icon: 'mdi-emoticon-happy-outline'},
+    ],
+  },
 });
 
 const {score, factors} = useComfortScore(
@@ -101,26 +109,17 @@ const factorTrends = computed(() => {
   return trends;
 });
 
-const gaugeColor = computed(() => {
-  if (score.value === null) return 'primary';
-  if (score.value >= 70) return 'success-lighten-1';
-  if (score.value >= 40) return 'warning';
-  return 'error-lighten-1';
+const activeThreshold = computed(() => {
+  if (score.value === null) return null;
+  for (const t of props.thresholds) {
+    if (score.value < t.value) return t;
+  }
+  return props.thresholds[props.thresholds.length - 1];
 });
 
-const scoreLabel = computed(() => {
-  if (score.value === null) return 'No data';
-  if (score.value >= 70) return 'Good';
-  if (score.value >= 40) return 'Acceptable';
-  return 'Poor';
-});
-
-const scoreIcon = computed(() => {
-  if (score.value === null) return 'mdi-help-circle-outline';
-  if (score.value >= 70) return 'mdi-emoticon-happy-outline';
-  if (score.value >= 40) return 'mdi-emoticon-neutral-outline';
-  return 'mdi-emoticon-sad-outline';
-});
+const gaugeColor = computed(() => activeThreshold.value?.color ?? 'primary');
+const scoreLabel = computed(() => activeThreshold.value?.label ?? 'No data');
+const scoreIcon = computed(() => activeThreshold.value?.icon ?? 'mdi-help-circle-outline');
 
 /**
  * @param {number|null} s factor percentage (0-100)
@@ -128,8 +127,9 @@ const scoreIcon = computed(() => {
  */
 function factorColor(s) {
   if (s === null) return '';
-  if (s >= 70) return 'success-lighten-1';
-  if (s >= 40) return 'warning';
-  return 'error-lighten-1';
+  for (const t of props.thresholds) {
+    if (s < t.value) return t.color;
+  }
+  return props.thresholds[props.thresholds.length - 1].color;
 }
 </script>

@@ -157,7 +157,7 @@ const onDownloadClick = async () => {
           {name: 'md.name', title: 'Device Name'},
           // see devices/download_data.go for list of available fields
           {name: 'iaq.co2', title: 'CO2 (ppm)'},
-          {name: 'iaq.voc', title: 'VOC (ppb)'},
+          {name: 'iaq.voc', title: 'VOC (ppm)'},
           {name: 'iaq.pressure', title: 'Pressure (hPa)'},
           {name: 'iaq.comfort', title: 'Comfort'},
           {name: 'iaq.infectionrisk', title: 'Infection Risk (%)'},
