@@ -31,7 +31,7 @@ func (a *AirQualityJob) Do(ctx context.Context, sendFn sender) error {
 
 		cancel()
 		if err != nil {
-			a.Logger.Error("getting air quality", zap.String("sensor", sensor), zap.Error(err))
+			a.Logger.Warn("getting air quality", zap.String("sensor", sensor), zap.Error(err))
 			continue
 		}
 

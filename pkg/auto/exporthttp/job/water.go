@@ -31,14 +31,14 @@ func (w *WaterJob) Do(ctx context.Context, sendFn sender) error {
 		multiplier, err := w.getUnitMultiplier(cctx, meter)
 
 		if err != nil {
-			w.Logger.Error("getting unit multiplier", zap.String("meter", meter), zap.Error(err))
+			w.Logger.Warn("getting unit multiplier", zap.String("meter", meter), zap.Error(err))
 		}
 
 		earliest, latest, err := getRecordsByTime(cctx, w.Logger, w.client.ListMeterReadingHistory, meter, now, filterTime)
 
 		cancel()
 		if err != nil {
-			w.Logger.Error("getting records by time", zap.String("meter", meter), zap.Error(err))
+			w.Logger.Warn("getting records by time", zap.String("meter", meter), zap.Error(err))
 			continue
 		}
 

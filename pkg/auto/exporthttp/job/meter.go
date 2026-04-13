@@ -26,7 +26,7 @@ func getRecordsByTime(ctx context.Context, logger *zap.Logger, historyFn listMet
 	}
 
 	if len(resp.GetMeterReadingRecords()) == 0 {
-		logger.Error("no records found in earliest", zap.String("meter", meter), zap.Time("start", start))
+		logger.Warn("no records found in earliest", zap.String("meter", meter), zap.Time("start", start))
 		return earliest, latest, nil
 	}
 
@@ -39,7 +39,7 @@ func getRecordsByTime(ctx context.Context, logger *zap.Logger, historyFn listMet
 	}
 
 	if len(resp.GetMeterReadingRecords()) == 0 {
-		logger.Error("no records found in latest", zap.String("meter", meter), zap.Time("end", now))
+		logger.Warn("no records found in latest", zap.String("meter", meter), zap.Time("end", now))
 		return earliest, earliest, nil // make sure this resolves consumption to 0 by returning < earliest, earliest, nil >
 	}
 
