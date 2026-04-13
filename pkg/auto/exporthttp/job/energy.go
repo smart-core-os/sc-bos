@@ -33,7 +33,7 @@ func (e *EnergyJob) Do(ctx context.Context, sendFn sender) error {
 		multiplier, err := e.getUnitMultiplier(cctx, meter)
 
 		if err != nil {
-			e.Logger.Error("getting unit multiplier", zap.String("meter", meter), zap.Error(err))
+			e.Logger.Warn("getting unit multiplier", zap.String("meter", meter), zap.Error(err))
 		}
 
 		earliest, latest, err := getRecordsByTime(cctx, e.Logger, e.client.ListMeterReadingHistory, meter, now, filterTime)
@@ -41,7 +41,7 @@ func (e *EnergyJob) Do(ctx context.Context, sendFn sender) error {
 		cancel()
 
 		if err != nil {
-			e.Logger.Error("getting records by time", zap.String("meter", meter), zap.Error(err))
+			e.Logger.Warn("getting records by time", zap.String("meter", meter), zap.Error(err))
 			continue
 		}
 
