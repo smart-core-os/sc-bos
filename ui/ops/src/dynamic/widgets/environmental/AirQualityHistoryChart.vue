@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import {useDateScale} from '@/components/charts/date.js';
+import {useDateScale, getTooltipDateFormat} from '@/components/charts/date.js';
 import {useThemeColorPlugin, useVueLegendPlugin} from '@/components/charts/plugins.js';
 import {defineChartOptions} from '@/components/charts/util.js';
 import {timestampToDate} from '@/api/convpb.js';
@@ -19,7 +19,7 @@ import {usePullMetadata} from '@/traits/metadata/metadata.js';
 import {effectScope, reactive, watch as vWatch} from 'vue';
 import {sentenceCase} from 'change-case';
 import {Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js';
-import {startOfDay, startOfYear} from 'date-fns';
+import {startOfDay, startOfYear, format as fmtDate} from 'date-fns';
 import {computed, toRef, toValue} from 'vue';
 import {Line as LineChart} from 'vue-chartjs';
 import * as vColors from 'vuetify/util/colors';
@@ -229,6 +229,17 @@ const chartOptions = computed(() => {
     plugins: {
       legend: {
         display: false, // we use a custom legend plugin and vue for this
+      },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            const dates = ctx.dataset.dates;
+            const date = dates ? dates[ctx.dataIndex] : null;
+            const fmt = getTooltipDateFormat(tickUnit.value);
+            const dateStr = date ? ` (${fmtDate(date, fmt)})` : '';
+            return `${ctx.dataset.label}${dateStr}: ${ctx.parsed.y != null ? new Intl.NumberFormat(undefined, {}).format(ctx.parsed.y) : '—'}`;
+          }
+        }
       }
     },
     scales: {
@@ -309,8 +320,13 @@ const chartData = computed(() => {
     const device = devices[name];
     if (!device) continue;
     const label = toValue(device.title) || name;
-    const data = toValue(device.data);
-    datasets.push({label, data, [datasetSourceName]: name});
+    const deviceData = toValue(device.data);
+    datasets.push({
+      label,
+      data: deviceData.map(d => d.y),
+      dates: deviceData.map(d => d.x),
+      [datasetSourceName]: name,
+    });
   }
 
   // Prior period — dashed lines in the same palette colour as their current counterpart.
@@ -320,12 +336,15 @@ const chartData = computed(() => {
     sourceList.forEach((name, i) => {
       const device = baselineDevices[name];
       if (!device) return;
+      const deviceData = toValue(device.data);
       datasets.push({
         label: `${toValue(device.title) || name} (prior)`,
-        data: toValue(device.data),
+        data: deviceData.map(d => d.y),
+        dates: deviceData.map(d => d.x),
         [datasetSourceName]: name,
         borderColor: paletteColors[i % paletteColors.length],
         backgroundColor: 'transparent',
+        isDashed: true,
         borderDash: [5, 5],
         borderWidth: 1.5,
         pointRadius: 0,

@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import {useDateScale} from '@/components/charts/date.js';
+import {useDateScale, getTooltipDateFormat} from '@/components/charts/date.js';
 import {useThemeColorPlugin, useVueLegendPlugin} from '@/components/charts/plugins.js';
 import {defineChartOptions} from '@/components/charts/util.js';
 import {useSoundLevelHistoryMetrics} from '@/dynamic/widgets/environmental/soundSensor.js';
@@ -13,7 +13,7 @@ import {shiftFnFromStr} from '@/dynamic/widgets/occupancy/baseline.js';
 import {useLocalProp} from '@/util/vue.js';
 import {sentenceCase} from 'change-case';
 import {Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js';
-import {startOfDay, startOfYear} from 'date-fns';
+import {startOfDay, startOfYear, format as fmtDate} from 'date-fns';
 import {computed, toRef, toValue} from 'vue';
 import {Line as LineChart} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
@@ -120,6 +120,17 @@ const chartOptions = computed(() => {
     plugins: {
       legend: {
         display: false, // we use a custom legend plugin and vue for this
+      },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            const dates = ctx.dataset.dates;
+            const date = dates ? dates[ctx.dataIndex] : null;
+            const fmt = getTooltipDateFormat(tickUnit.value);
+            const dateStr = date ? ` (${fmtDate(date, fmt)})` : '';
+            return `${ctx.dataset.label}${dateStr}: ${ctx.parsed.y != null ? new Intl.NumberFormat(undefined, {}).format(ctx.parsed.y) : '—'}`;
+          }
+        }
       }
     },
     scales: {
@@ -190,10 +201,11 @@ const chartData = computed(() => {
     const device = devices[name];
     if (!device) continue;
     const label = toValue(device.title) || name;
-    const data = toValue(device.data);
+    const deviceData = toValue(device.data);
     datasets.push({
       label,
-      data,
+      data: deviceData.map(d => d.y),
+      dates: deviceData.map(d => d.x),
       [datasetSourceName]: name,
       _pluginColor: true,
     });
@@ -204,10 +216,11 @@ const chartData = computed(() => {
     for (const name of sourceList) {
       const device = baselineDevices[name];
       if (!device) continue;
-      const data = toValue(device.data);
+      const deviceData = toValue(device.data);
       datasets.push({
         label: (toValue(device.title) || name) + ' (prior)',
-        data,
+        data: deviceData.map(d => d.y),
+        dates: deviceData.map(d => d.x),
         [datasetSourceName]: name,
         _pluginColor: true,
         isDashed: true, // Custom property for legend/plugin
