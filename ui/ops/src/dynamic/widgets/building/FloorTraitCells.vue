@@ -58,7 +58,8 @@ import {useSoundLevelPeriodAverages} from '@/dynamic/widgets/environmental/sound
 import {useAirQuality, usePullAirQuality} from '@/traits/airQuality/airQuality.js';
 import {useAirTemperature, usePullAirTemperature} from '@/traits/airTemperature/airTemperature.js';
 import {usePullSoundLevel, useSoundLevel} from '@/traits/sound/sound.js';
-import {computed, effectScope, onScopeDispose, reactive, toValue, watch} from 'vue';
+import {useRollingValue} from '@/composables/rollingValue.js';
+import {computed, effectScope, onScopeDispose, reactive, watch} from 'vue';
 
 const props = defineProps({
   floors: {
@@ -143,18 +144,6 @@ watch(() => props.floors.map(f => f.zoneName), (zoneNames) => {
       const {value: sl} = usePullSoundLevel(zoneName);
       const {soundPressureLevel} = useSoundLevel(sl);
 
-      watch([presentMetrics, temp, humidity, soundPressureLevel], () => {
-        floorData[zoneName] = {
-          ...(floorData[zoneName] ?? {}),
-          temp: toValue(temp) ?? null,
-          humidity: toValue(humidity) ?? null,
-          co2: presentMetrics.value?.carbonDioxideLevel?.value ?? null,
-          voc: presentMetrics.value?.volatileOrganicCompounds?.value ?? null,
-          pm25: presentMetrics.value?.particulateMatter25?.value ?? null,
-          sound: toValue(soundPressureLevel) ?? null,
-        };
-      }, {immediate: true, deep: true});
-
       // Prior-period averages for trend arrows — only fetched when showTrend is on
       const aqAvgs = useAirQualityPeriodAverages(
         computed(() => props.showTrend ? zoneName : null),
@@ -174,19 +163,27 @@ watch(() => props.floors.map(f => f.zoneName), (zoneNames) => {
         priorStart,
         priorEnd
       );
-      watch([aqAvgs, atAvgs, slAvgs], ([aq, at, sl]) => {
+
+      const trends = {
+        co2: useRollingValue(computed(() => presentMetrics.value?.carbonDioxideLevel?.value), computed(() => aqAvgs.value.carbonDioxideLevel)),
+        voc: useRollingValue(computed(() => presentMetrics.value?.volatileOrganicCompounds?.value), computed(() => aqAvgs.value.volatileOrganicCompounds)),
+        pm25: useRollingValue(computed(() => presentMetrics.value?.particulateMatter25?.value), computed(() => aqAvgs.value.particulateMatter25)),
+        temp: useRollingValue(temp, computed(() => atAvgs.value.ambientTemperature)),
+        humidity: useRollingValue(humidity, computed(() => atAvgs.value.ambientHumidity)),
+        sound: useRollingValue(soundPressureLevel, computed(() => slAvgs.value.soundPressureLevel)),
+      };
+
+      watch([presentMetrics, temp, humidity, soundPressureLevel, aqAvgs, atAvgs, slAvgs], ([pm, t, h, sl]) => {
         floorData[zoneName] = {
-          ...(floorData[zoneName] ?? {}),
-          trends: {
-            co2: aq.carbonDioxideLevel,
-            voc: aq.volatileOrganicCompounds,
-            pm25: aq.particulateMatter25,
-            temp: at.ambientTemperature,
-            humidity: at.ambientHumidity,
-            sound: sl.soundPressureLevel,
-          },
+          temp: t ?? null,
+          humidity: h ?? null,
+          co2: pm?.carbonDioxideLevel?.value ?? null,
+          voc: pm?.volatileOrganicCompounds?.value ?? null,
+          pm25: pm?.particulateMatter25?.value ?? null,
+          sound: sl ?? null,
+          trends,
         };
-      }, {immediate: true});
+      }, {immediate: true, deep: true});
     });
   }
 
@@ -205,26 +202,24 @@ onScopeDispose(() => {
 /**
  * Returns an arrow indicator based on the percentage change between current and prior values.
  *
- * @param {number|null} current - The current value
- * @param {number|null} prior - The prior value
+ * @param {object|null} rolling - Result from useRollingValue
  * @return {string} ' ↑', ' ↓', or ''
  */
-function trendArrow(current, prior) {
-  if (current == null || prior == null || prior === 0) return '';
-  const pct = (current - prior) / prior;
-  if (Math.abs(pct) < 0.0005) return ''; // < 0.05% change — ignore noise
-  return pct > 0 ? ' ↑' : ' ↓';
+function trendArrow(rolling) {
+  if (!props.showTrend || !rolling || rolling.percentChange == null) return '';
+  if (Math.abs(rolling.percentChange) < 0.05) return ''; // < 0.05% change — ignore noise
+  return rolling.percentChange > 0 ? ' ↑' : ' ↓';
 }
 /**
  * Generates a tooltip suffix with the prior value and unit if trend display is enabled.
  *
- * @param {number|null} current - The current value
- * @param {number|null} prior - The prior value
+ * @param {object|null} rolling - Result from useRollingValue
  * @param {string} [unit] - The unit to display
  * @return {string} Tooltip suffix or empty string
  */
-function trendTooltipSuffix(current, prior, unit = '') {
-  if (!props.showTrend || prior == null) return '';
+function trendTooltipSuffix(rolling, unit = '') {
+  if (!props.showTrend || !rolling || rolling.baselineValue == null) return '';
+  const prior = rolling.baselineValue;
   const val = typeof prior === 'number' ? prior.toFixed(prior < 10 ? 2 : 0) : '—';
   return ` (prior: ${val}${unit ? ' ' + unit : ''})`;
 }
@@ -236,10 +231,10 @@ const allColumns = computed(() => [
     label: 'Temp',
     display: (d) => {
       if (d?.temp == null) return '—';
-      return `${d.temp.toFixed(1)}°${trendArrow(d.temp, d.trends?.temp)}`;
+      return `${d.temp.toFixed(1)}°${trendArrow(d.trends?.temp)}`;
     },
     tooltip: (d) => d?.temp != null
-      ? `Temperature: ${d.temp.toFixed(1)} °C${trendTooltipSuffix(d.temp, d.trends?.temp, '°C')}`
+      ? `Temperature: ${d.temp.toFixed(1)} °C${trendTooltipSuffix(d.trends?.temp, '°C')}`
       : 'No data',
     colorClass: (d) => {
       if (!d || d.temp === null) return 'chip--unknown';
@@ -254,10 +249,10 @@ const allColumns = computed(() => [
     label: 'RH%',
     display: (d) => {
       if (d?.humidity == null) return '—';
-      return `${d.humidity.toFixed(0)}%${trendArrow(d.humidity, d.trends?.humidity)}`;
+      return `${d.humidity.toFixed(0)}%${trendArrow(d.trends?.humidity)}`;
     },
     tooltip: (d) => d?.humidity != null
-      ? `Humidity: ${d.humidity.toFixed(1)} %${trendTooltipSuffix(d.humidity, d.trends?.humidity, '%')}`
+      ? `Humidity: ${d.humidity.toFixed(1)} %${trendTooltipSuffix(d.trends?.humidity, '%')}`
       : 'No data',
     colorClass: (d) => {
       if (!d || d.humidity === null) return 'chip--unknown';
@@ -272,10 +267,10 @@ const allColumns = computed(() => [
     label: 'CO₂',
     display: (d) => {
       if (d?.co2 == null) return '—';
-      return `${Math.round(d.co2)}${trendArrow(d.co2, d.trends?.co2)}`;
+      return `${Math.round(d.co2)}${trendArrow(d.trends?.co2)}`;
     },
     tooltip: (d) => d?.co2 != null
-      ? `CO₂: ${Math.round(d.co2)} ppm${trendTooltipSuffix(d.co2, d.trends?.co2, 'ppm')}`
+      ? `CO₂: ${Math.round(d.co2)} ppm${trendTooltipSuffix(d.trends?.co2, 'ppm')}`
       : 'No data',
     colorClass: (d) => {
       if (!d || d.co2 === null) return 'chip--unknown';
@@ -289,10 +284,10 @@ const allColumns = computed(() => [
     label: 'VOC',
     display: (d) => {
       if (d?.voc == null) return '—';
-      return `${d.voc.toFixed(2)}${trendArrow(d.voc, d.trends?.voc)}`;
+      return `${d.voc.toFixed(2)}${trendArrow(d.trends?.voc)}`;
     },
     tooltip: (d) => d?.voc != null
-      ? `VOC: ${d.voc.toFixed(2)} ppm${trendTooltipSuffix(d.voc, d.trends?.voc, 'ppm')}`
+      ? `VOC: ${d.voc.toFixed(2)} ppm${trendTooltipSuffix(d.trends?.voc, 'ppm')}`
       : 'No data',
     colorClass: (d) => {
       if (!d || d.voc === null) return 'chip--unknown';
@@ -306,10 +301,10 @@ const allColumns = computed(() => [
     label: 'PM2.5',
     display: (d) => {
       if (d?.pm25 == null) return '—';
-      return `${Math.round(d.pm25)}${trendArrow(d.pm25, d.trends?.pm25)}`;
+      return `${Math.round(d.pm25)}${trendArrow(d.trends?.pm25)}`;
     },
     tooltip: (d) => d?.pm25 != null
-      ? `PM2.5: ${Math.round(d.pm25)} µg/m³${trendTooltipSuffix(d.pm25, d.trends?.pm25, 'µg/m³')}`
+      ? `PM2.5: ${Math.round(d.pm25)} µg/m³${trendTooltipSuffix(d.trends?.pm25, 'µg/m³')}`
       : 'No data',
     colorClass: (d) => {
       if (!d || d.pm25 === null) return 'chip--unknown';
@@ -323,10 +318,10 @@ const allColumns = computed(() => [
     label: 'dB',
     display: (d) => {
       if (d?.sound == null) return '—';
-      return `${d.sound.toFixed(0)}${trendArrow(d.sound, d.trends?.sound)}`;
+      return `${d.sound.toFixed(0)}${trendArrow(d.trends?.sound)}`;
     },
     tooltip: (d) => d?.sound != null
-      ? `Sound: ${d.sound.toFixed(1)} dB${trendTooltipSuffix(d.sound, d.trends?.sound, 'dB')}`
+      ? `Sound: ${d.sound.toFixed(1)} dB${trendTooltipSuffix(d.trends?.sound, 'dB')}`
       : 'No data',
     colorClass: (d) => {
       if (!d || d.sound === null) return 'chip--unknown';

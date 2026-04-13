@@ -4,18 +4,20 @@
     <div v-if="showNoData" class="no-data-overlay">
       <no-data-graphic class="no-data-graphic"/>
     </div>
+    <chart-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit"/>
   </div>
 </template>
 
 <script setup>
-import {useDateScale, getTooltipDateFormat} from '@/components/charts/date.js';
-import {useThemeColorPlugin} from '@/components/charts/plugins.js';
+import {useDateScale} from '@/components/charts/date.js';
+import {useExternalTooltip, useThemeColorPlugin} from '@/components/charts/plugins.js';
+import ChartTooltip from '@/components/charts/ChartTooltip.vue';
 import {defineChartOptions} from '@/components/charts/util.js';
 import {shiftFnFromStr} from '@/dynamic/widgets/occupancy/baseline.js';
 import {useMaxPeopleCount} from '@/dynamic/widgets/occupancy/occupancy.js';
 import {useLocalProp} from '@/util/vue.js';
 import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js'
-import {startOfDay, startOfYear, format as fmtDate} from 'date-fns';
+import {startOfDay, startOfYear} from 'date-fns';
 import {computed, ref, toRef, toValue, watch} from 'vue';
 import {Bar} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
@@ -61,8 +63,8 @@ const shiftFn = computed(() => shiftFnFromStr(props.baselineShift));
 
 // Conditionally use baseline comparison or just current data
 const baselineEdges = computed(() => {
-  if (!props.showBaseline) return pastEdges.value;
-  return toValue(pastEdges).map(shiftFn.value);
+  if (!props.showBaseline) return [];
+  return toValue(edges).map(shiftFn.value);
 });
 
 const totalOccupancyCounts = useMaxPeopleCount(toRef(props, 'totalOccupancyName'), pastEdges);
@@ -72,13 +74,13 @@ const baselineCounts = useMaxPeopleCount(
 );
 
 const {themeColorPlugin} = useThemeColorPlugin();
+const {external: tooltipExternal, data: tooltipData} = useExternalTooltip();
 
 const chartOptions = computed(() => {
   return defineChartOptions({
     responsive: true,
     maintainAspectRatio: false,
     borderRadius: 3,
-    borderWidth: 1,
     interaction: {
       mode: 'index', // a single tooltip with all stacked datasets at the same x location in it
       intersect: false,
@@ -88,16 +90,8 @@ const chartOptions = computed(() => {
         display: false, // we use a custom legend plugin and vue for this
       },
       tooltip: {
-        callbacks: {
-          title: () => '',
-          label: (ctx) => {
-            const dates = ctx.dataset.dates;
-            const date = dates ? dates[ctx.dataIndex] : null;
-            const fmt = getTooltipDateFormat(tickUnit.value);
-            const dateStr = date ? ` (${fmtDate(date, fmt)})` : '';
-            return `${ctx.dataset.label}${dateStr}: ${ctx.parsed.y != null ? new Intl.NumberFormat(undefined, {}).format(ctx.parsed.y) : '—'}`;
-          }
-        }
+        enabled: false,
+        external: tooltipExternal,
       }
     },
     scales: {
@@ -105,15 +99,16 @@ const chartOptions = computed(() => {
         stacked: false, // Don't stack when mixing bar and line
         title: {
           display: true,
-          text: 'People Count'
+          text: 'People Count',
+          color: 'rgba(255, 255, 255, 0.7)',
         },
         border: {
-          color: 'transparent'
+          display: false
         },
         grid: {
           color(ctx) {
-            if (ctx.tick.value === 0) return '#fff4';
-            return '#fff1';
+            if (ctx.tick.value === 0) return 'rgba(255, 255, 255, 0.25)';
+            return 'rgba(255, 255, 255, 0.08)';
           },
           drawTicks: false,
         },
@@ -121,16 +116,20 @@ const chartOptions = computed(() => {
           callback(value) {
             return new Intl.NumberFormat(undefined, {}).format(Math.abs(value));
           },
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           padding: 8
         },
       },
       x: {
         type: 'time',
+        min: startDate.value,
+        max: endDate.value,
         stacked: false, // Don't stack when mixing bar and line
+        border: {
+          display: false
+        },
         grid: {
-          offset: false, // bars default to true here, put ticks back inline with grid lines
-          color: '#fff1'
+          display: false,
         },
         ticks: {
           maxTicksLimit: 11,
@@ -141,7 +140,7 @@ const chartOptions = computed(() => {
             if (unit === 'hour' && value === startOfDay(value).getTime()) return this.format(value, this.options.time.displayFormats['day']);
             return this.format(value);
           },
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           padding: 8,
           maxRotation: 0
         },
@@ -166,7 +165,7 @@ const chartData = computed(() => {
     datasets.push({
       type: 'line',
       label: 'Prior period',
-      data: baselineCounts.value.map(data => data.y),
+      data: baselineCounts.value.map((data, i) => ({x: chartLabels.value[i], y: data.y})),
       dates: baselineCounts.value.map(data => data.x),
       backgroundColor: 'transparent',
       borderColor: '#aaaaaa',
@@ -183,7 +182,7 @@ const chartData = computed(() => {
   datasets.push({
     type: 'bar',
     label: props.showBaseline ? 'Current' : 'Total People Count',
-    data: totalOccupancyCounts.value.map(data => data.y),
+    data: totalOccupancyCounts.value.map(data => ({x: data.x, y: data.y})),
     dates: totalOccupancyCounts.value.map(data => data.x),
     backgroundColor: props.showBaseline ? '#2196F399' : undefined,
     borderColor: props.showBaseline ? '#2196F3' : undefined,
@@ -197,7 +196,7 @@ const chartData = computed(() => {
 });
 
 const hasData = computed(() => {
-  return chartData.value.datasets.some(ds => ds.data.some(val => val != null));
+  return chartData.value.datasets.some(ds => ds.data.some(val => val?.y != null));
 });
 
 // Track if initial data load is complete to avoid showing no-data graphic during fetch
