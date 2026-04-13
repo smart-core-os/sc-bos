@@ -765,7 +765,7 @@ func (t *announceTester) assertDevices(want ...*devicespb.Device) {
 	t.Helper()
 	slices.SortFunc(want, cmpDevices)
 	// add in the self node t the right place keeping want sorted by name
-	selfDevice := &devicespb.Device{Name: "self", Metadata: &metadatapb.Metadata{Name: "self", Traits: ts(trait.Metadata, trait.Parent)}}
+	selfDevice := &devicespb.Device{Name: "self", Metadata: &metadatapb.Metadata{Name: "self", Traits: ts(trait.Metadata, trait.Parent), DeviceType: metadatapb.Metadata_NODE}}
 	if i, ok := slices.BinarySearchFunc(want, selfDevice, cmpDevices); !ok {
 		want = slices.Insert(want, i, selfDevice)
 	}

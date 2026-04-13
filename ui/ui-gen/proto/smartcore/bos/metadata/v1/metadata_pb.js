@@ -22,6 +22,7 @@ goog.object.extend(proto, google_protobuf_timestamp_pb);
 goog.exportSymbol('proto.smartcore.bos.metadata.v1.GetMetadataRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.metadata.v1.Metadata', null, global);
 goog.exportSymbol('proto.smartcore.bos.metadata.v1.Metadata.Appearance', null, global);
+goog.exportSymbol('proto.smartcore.bos.metadata.v1.Metadata.DeviceType', null, global);
 goog.exportSymbol('proto.smartcore.bos.metadata.v1.Metadata.ID', null, global);
 goog.exportSymbol('proto.smartcore.bos.metadata.v1.Metadata.Installation', null, global);
 goog.exportSymbol('proto.smartcore.bos.metadata.v1.Metadata.Location', null, global);
@@ -401,6 +402,7 @@ installation: (f = msg.getInstallation()) && proto.smartcore.bos.metadata.v1.Met
 nicsList: jspb.Message.toObjectList(msg.getNicsList(),
     proto.smartcore.bos.metadata.v1.Metadata.NIC.toObject, includeInstance),
 membership: (f = msg.getMembership()) && proto.smartcore.bos.metadata.v1.Metadata.Membership.toObject(includeInstance, f),
+deviceType: jspb.Message.getFieldWithDefault(msg, 11, 0),
 moreMap: (f = msg.getMoreMap()) ? f.toObject(includeInstance, undefined) : []
   };
 
@@ -486,6 +488,10 @@ proto.smartcore.bos.metadata.v1.Metadata.deserializeBinaryFromReader = function(
       var value = new proto.smartcore.bos.metadata.v1.Metadata.Membership;
       reader.readMessage(value,proto.smartcore.bos.metadata.v1.Metadata.Membership.deserializeBinaryFromReader);
       msg.setMembership(value);
+      break;
+    case 11:
+      var value = /** @type {!proto.smartcore.bos.metadata.v1.Metadata.DeviceType} */ (reader.readEnum());
+      msg.setDeviceType(value);
       break;
     case 100:
       var value = msg.getMoreMap();
@@ -601,6 +607,13 @@ proto.smartcore.bos.metadata.v1.Metadata.serializeBinaryToWriter = function(mess
       proto.smartcore.bos.metadata.v1.Metadata.Membership.serializeBinaryToWriter
     );
   }
+  f = message.getDeviceType();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      11,
+      f
+    );
+  }
   f = message.getMoreMap(true);
   if (f && f.getLength() > 0) {
 jspb.internal.public_for_gencode.serializeMapToBinary(
@@ -612,6 +625,23 @@ jspb.internal.public_for_gencode.serializeMapToBinary(
   }
 };
 
+
+/**
+ * @enum {number}
+ */
+proto.smartcore.bos.metadata.v1.Metadata.DeviceType = {
+  DEVICE_TYPE_UNSPECIFIED: 0,
+  NODE: 1,
+  GATEWAY: 2,
+  HUB: 3,
+  AUTOMATION: 4,
+  ZONE: 5,
+  GROUP: 6,
+  SERVICE: 7,
+  VIRTUAL: 8,
+  SUB_DEVICE: 9,
+  DEVICE: 10
+};
 
 
 
@@ -3515,6 +3545,24 @@ proto.smartcore.bos.metadata.v1.Metadata.prototype.clearMembership = function() 
  */
 proto.smartcore.bos.metadata.v1.Metadata.prototype.hasMembership = function() {
   return jspb.Message.getField(this, 10) != null;
+};
+
+
+/**
+ * optional DeviceType device_type = 11;
+ * @return {!proto.smartcore.bos.metadata.v1.Metadata.DeviceType}
+ */
+proto.smartcore.bos.metadata.v1.Metadata.prototype.getDeviceType = function() {
+  return /** @type {!proto.smartcore.bos.metadata.v1.Metadata.DeviceType} */ (jspb.Message.getFieldWithDefault(this, 11, 0));
+};
+
+
+/**
+ * @param {!proto.smartcore.bos.metadata.v1.Metadata.DeviceType} value
+ * @return {!proto.smartcore.bos.metadata.v1.Metadata} returns this
+ */
+proto.smartcore.bos.metadata.v1.Metadata.prototype.setDeviceType = function(value) {
+  return jspb.Message.setProto3EnumField(this, 11, value);
 };
 
 
