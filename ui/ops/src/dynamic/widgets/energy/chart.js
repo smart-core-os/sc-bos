@@ -3,7 +3,7 @@ import {toValue} from 'vue';
 const toChartDataset = (title, data) => {
   return {
     label: title,
-    data: toValue(data).map((c) => c.y),
+    data: toValue(data).map((c) => ({x: c.x, y: c.y})),
   }
 }
 
@@ -36,10 +36,10 @@ export function computeDatasets(key, totals, subNames, subValues, invert = false
     dataset[datasetSourceName] = name;
     let hasAny = false;
     for (let i = 0; i < dataset.data.length; i++) {
-      if (dataset.data[i] !== null) {
+      if (dataset.data[i].y !== null) {
         hasAny = true;
-        if (remaining.data[i] !== null) {
-          remaining.data[i] -= dataset.data[i];
+        if (remaining.data[i].y !== null) {
+          remaining.data[i].y -= dataset.data[i].y;
         }
       }
     }
@@ -48,15 +48,15 @@ export function computeDatasets(key, totals, subNames, subValues, invert = false
   }
 
   // get rid of negative remaining values
-  remaining.data = remaining.data.map((v) => v <= 0 ? null : v);
-  if (remaining.data.some((v) => v !== null)) {
+  remaining.data = remaining.data.map((v) => ({x: v.x, y: (v.y === null || v.y <= 0) ? null : v.y}));
+  if (remaining.data.some((v) => v.y !== null)) {
     datasets.push(remaining);
   }
 
   if (invert) {
     // make all values negative so the bars appear below the x-axis
     for (const dataset of datasets) {
-      dataset.data = dataset.data.map((v) => v === null ? null : -v);
+      dataset.data = dataset.data.map((v) => ({x: v.x, y: v.y === null ? null : -v.y}));
       dataset._inverted = true;
     }
   }

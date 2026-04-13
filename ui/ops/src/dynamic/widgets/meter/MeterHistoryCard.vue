@@ -211,9 +211,9 @@ const chartOptions = computed(() => {
     responsive: true,
     maintainAspectRatio: false,
     borderRadius: 3,
-    borderWidth: 1,
     interaction: {
       mode: 'index', // a single tooltip with all stacked datasets at the same x location in it
+      intersect: false,
     },
     plugins: {
       tooltip: {
@@ -229,15 +229,16 @@ const chartOptions = computed(() => {
         stacked: true,
         title: {
           display: true,
-          text: displayUnit.value
+          text: displayUnit.value,
+          color: 'rgba(255, 255, 255, 0.7)',
         },
         border: {
-          color: 'transparent'
+          display: false
         },
         grid: {
           color(ctx) {
-            if (ctx.tick.value === 0) return '#fff4';
-            return '#fff1';
+            if (ctx.tick.value === 0) return 'rgba(255, 255, 255, 0.25)';
+            return 'rgba(255, 255, 255, 0.08)';
           },
           drawTicks: false,
         },
@@ -245,7 +246,7 @@ const chartOptions = computed(() => {
           callback(value) {
             return new Intl.NumberFormat(undefined, {}).format(Math.abs(value));
           },
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           padding: 8
         },
       },
@@ -253,8 +254,7 @@ const chartOptions = computed(() => {
         type: 'time',
         stacked: true,
         grid: {
-          offset: false, // bars default to true here, put ticks back inline with grid lines
-          color: '#fff1'
+          display: false,
         },
         ticks: {
           maxTicksLimit: 11,
@@ -265,7 +265,7 @@ const chartOptions = computed(() => {
             if (unit === 'hour' && value === startOfDay(value).getTime()) return this.format(value, this.options.time.displayFormats['day']);
             return this.format(value);
           },
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           padding: 8,
           maxRotation: 0
         },
@@ -295,14 +295,14 @@ const chartData = computed(() => {
     baseData.datasets.forEach(ds => {
       const sourceName = ds[datasetSourceName];
       const scale = props.scaleValues[sourceName] || 1;
-      ds.data = ds.data.map(val => val / scale);
+      ds.data = ds.data.map(val => ({x: val.x, y: val.y / scale}));
     });
   }
   return baseData;
 });
 
 const hasData = computed(() => {
-  return chartData.value.datasets.some(ds => ds.data.some(val => val != null));
+  return chartData.value.datasets.some(ds => ds.data.some(val => val?.y != null));
 });
 
 // Track if initial data load is complete to avoid showing no-data graphic during fetch
@@ -315,7 +315,7 @@ watch([startDate, endDate], () => {
 
 watch(chartData, (data) => {
   // Check if we have any non-null data points (even if they're zero)
-  const hasAnyData = data.datasets.some(ds => ds.data.some(val => val != null));
+  const hasAnyData = data.datasets.some(ds => ds.data.some(val => val?.y != null));
   if (hasAnyData && !hasLoadedData.value) {
     hasLoadedData.value = true;
   }
