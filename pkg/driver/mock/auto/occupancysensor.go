@@ -22,7 +22,7 @@ func OccupancySensorAuto(model *occupancysensorpb.Model) *service.Service[string
 				// so even at peak hours there's ~50% chance of 0), then pick a count.
 				var peopleCount int32
 				if randomBool(tod * 0.50) {
-					peopleCount = int32(math.Round(float64Between(1, 1500) * tod))
+					peopleCount = int32(math.Round(float64Between(1, 200) * tod))
 				}
 				occupancy := &occupancysensorpb.Occupancy{PeopleCount: peopleCount}
 				if peopleCount == 0 {
