@@ -78,6 +78,7 @@ import {useDateScale} from '@/components/charts/date.js';
 import CircularGauge from '@/components/CircularGauge.vue';
 import {useRollingValue} from '@/composables/rollingValue.js';
 import {useIdleConsumption, usePullOccupancyState} from '@/dynamic/widgets/energy/idle.js';
+import {usePullMetadata} from '@/traits/metadata/metadata.js';
 import {usePullMeterReading} from '@/traits/meter/meter.js';
 import {format} from '@/util/number.js';
 import {formatTrend, getTrendColor, getTrendIcon} from '@/util/trend.js';
@@ -168,6 +169,7 @@ watch(allZones, (currentZones) => {
     // Create new consumption tracking in an effect scope
     const scope = effectScope();
     let consumptionData;
+    let metadata;
 
     scope.run(() => {
       const {state: realtimeState, stateHistory: realtimeHistory} = props.usePull
@@ -177,6 +179,8 @@ watch(allZones, (currentZones) => {
       const {value: liveMeterReading} = props.usePull
           ? usePullMeterReading(() => zone.name)
           : {value: ref(null)};
+
+      metadata = usePullMetadata(() => zone.name);
 
       consumptionData = useIdleConsumption(
           () => zone.name,
@@ -193,6 +197,7 @@ watch(allZones, (currentZones) => {
     // Attach metadata
     consumptionData._scope = scope;
     consumptionData._zone = zone;
+    consumptionData._metadata = metadata;
     consumptionsByZone.set(key, consumptionData);
   }
 
@@ -294,9 +299,10 @@ const hasData = computed(() => {
 // Label for the worst zone, shown only when there are multiple zones
 const worstZoneLabel = computed(() => {
   const idx = worstZoneIdx.value;
-  const zones = allZones.value;
-  if (idx < 0 || zones.length <= 1) return '';
-  return zones[idx].label ?? zones[idx].name ?? '';
+  const items = consumptions;
+  if (idx < 0 || items.length <= 1) return '';
+  const item = items[idx];
+  return toValue(item._metadata.value)?.appearance?.title ?? item._zone.label ?? item._zone.name ?? '';
 });
 
 // Aggregate metrics across all zones

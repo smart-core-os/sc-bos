@@ -1132,43 +1132,35 @@
                     "zones": [
                       {
                         "name": "van/uk/brum/ugs/zones/areas/lab",
-                        "occupancy": "van/uk/brum/ugs/zones/areas/lab",
-                        "label": "Lab"
+                        "occupancy": "van/uk/brum/ugs/zones/areas/lab"
                       },
                       {
                         "name": "van/uk/brum/ugs/zones/floors/basement",
-                        "occupancy": "van/uk/brum/ugs/zones/floors/basement",
-                        "label": "Basement"
+                        "occupancy": "van/uk/brum/ugs/zones/floors/basement"
                       },
                       {
                         "name": "van/uk/brum/ugs/zones/floors/ground",
-                        "occupancy": "van/uk/brum/ugs/zones/floors/ground",
-                        "label": "Ground Floor"
+                        "occupancy": "van/uk/brum/ugs/zones/floors/ground"
                       },
                       {
                         "name": "van/uk/brum/ugs/zones/floors/first",
-                        "occupancy": "van/uk/brum/ugs/zones/floors/first",
-                        "label": "First Floor"
+                        "occupancy": "van/uk/brum/ugs/zones/floors/first"
                       },
                       {
                         "name": "van/uk/brum/ugs/zones/areas/comms-room",
-                        "occupancy": "van/uk/brum/ugs/zones/areas/comms-room",
-                        "label": "Comms Room"
+                        "occupancy": "van/uk/brum/ugs/zones/areas/comms-room"
                       },
                       {
                         "name": "van/uk/brum/ugs/zones/areas/reception",
-                        "occupancy": "van/uk/brum/ugs/zones/areas/reception",
-                        "label": "Reception"
+                        "occupancy": "van/uk/brum/ugs/zones/areas/reception"
                       },
                       {
                         "name": "van/uk/brum/ugs/zones/areas/loading-bay",
-                        "occupancy": "van/uk/brum/ugs/zones/areas/loading-bay",
-                        "label": "Loading Bay"
+                        "occupancy": "van/uk/brum/ugs/zones/areas/loading-bay"
                       },
                       {
                         "name": "van/uk/brum/ugs/zones/rooms/bank",
-                        "occupancy": "van/uk/brum/ugs/zones/rooms/bank",
-                        "label": "Bank"
+                        "occupancy": "van/uk/brum/ugs/zones/rooms/bank"
                       }
                     ],
                     "unit": "kWh"
