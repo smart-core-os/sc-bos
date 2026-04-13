@@ -1,13 +1,17 @@
 import {computed, ref, toValue, watch} from 'vue';
 
 /**
- * Tracks the first non-null value and computes percentage change from current to that baseline.
- * More lightweight than rollingHistory - only stores one baseline value.
+ * Tracks values over time to compute change metrics against a stable baseline.
+ * By default, the baseline is the first non-null value received.
+ * An optional baseline parameter can provide a fixed or historical reference.
+ * Also tracks the previous sample's value for step-by-step comparisons.
+ * More lightweight than rollingHistory - only stores necessary state.
  *
  * @param {import('vue').MaybeRefOrGetter<number|null>} value - The current value to track
  * @param {import('vue').MaybeRefOrGetter<number|null>} [baseline] - Optional fixed or historical baseline to override captured value
  * @return {{
  *   previousValue: import('vue').ComputedRef<number|null>,
+ *   baselineValue: import('vue').ComputedRef<number|null>,
  *   percentChange: import('vue').ComputedRef<number|null>,
  *   absoluteChange: import('vue').ComputedRef<number|null>,
  *   hasChange: import('vue').ComputedRef<boolean>,
@@ -16,8 +20,9 @@ import {computed, ref, toValue, watch} from 'vue';
  */
 export function useRollingValue(value, baseline = null) {
   const capturedBaseline = ref(null);
+  const lastValue = ref(null);
 
-  watch(() => toValue(value), (newValue) => {
+  watch(() => toValue(value), (newValue, oldValue) => {
     // Skip null/undefined values
     if (newValue === null || newValue === undefined) return;
 
@@ -25,11 +30,15 @@ export function useRollingValue(value, baseline = null) {
     if (capturedBaseline.value === null) {
       capturedBaseline.value = newValue;
     }
+    // Track previous sample's value
+    lastValue.value = oldValue === undefined ? null : oldValue;
   }, {immediate: true});
 
   const effectiveBaseline = computed(() => {
-    if (baseline !== null) return toValue(baseline);
-    return capturedBaseline.value;
+    const b = baseline !== null ? toValue(baseline) : null;
+    // Fall back to captured baseline if the explicit one is missing or zero (to avoid division by zero)
+    if (b === null || b === 0) return capturedBaseline.value;
+    return b;
   });
 
   const absoluteChange = computed(() => {
@@ -62,7 +71,8 @@ export function useRollingValue(value, baseline = null) {
   });
 
   return {
-    previousValue: effectiveBaseline,
+    previousValue: computed(() => lastValue.value),
+    baselineValue: effectiveBaseline,
     percentChange,
     absoluteChange,
     hasChange,
