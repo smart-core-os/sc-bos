@@ -72,7 +72,7 @@
           </span>
           <v-chip
               v-if="props.showTrend"
-              :color="getTrendColor(consumedTrend, false)"
+              :color="getLocalTrendColor(consumedTrend, false)"
               size="x-small"
               style="height: 18px;">
             <v-icon :icon="getTrendIcon(consumedTrend)" size="x-small" start/>
@@ -91,7 +91,7 @@
           </span>
           <v-chip
               v-if="props.showTrend"
-              :color="getTrendColor(generatedTrend, true)"
+              :color="getLocalTrendColor(generatedTrend, true)"
               size="x-small"
               style="height: 18px;">
             <v-icon :icon="getTrendIcon(generatedTrend)" size="x-small" start/>
@@ -110,7 +110,7 @@
           </span>
           <v-chip
               v-if="props.showTrend"
-              :color="getTrendColor(netTrend, false)"
+              :color="getLocalTrendColor(netTrend, false)"
               size="x-small"
               style="height: 18px;">
             <v-icon :icon="getTrendIcon(netTrend)" size="x-small" start/>
@@ -122,13 +122,14 @@
   </v-card>
 </template>
 <script setup>
-import {useDateScale} from '@/components/charts/date.js';
 import CircularGauge from '@/components/CircularGauge.vue';
+import {useDateScale} from '@/components/charts/date.js';
+import {useRollingValue} from '@/composables/rollingValue.js';
 import {usePeriod} from '@/composables/time.js';
 import {useMaxPeopleCount} from '@/dynamic/widgets/occupancy/occupancy.js';
-import {useRollingValue} from '@/composables/rollingValue.js';
 import {useMeterReadingAt, usePullMeterReading} from '@/traits/meter/meter.js';
 import {format} from '@/util/number.js';
+import {formatTrend, getTrendColor, getTrendIcon} from '@/util/trend.js';
 import {isNull} from '@/util/types.js';
 import {useLocalProp} from '@/util/vue.js';
 import {computed, ref, toRef, watch} from 'vue';
@@ -310,17 +311,6 @@ watch([toRef(props, 'name'), toRef(props, 'generatedName'), toRef(props, 'period
 });
 
 /**
- * Get trend icon based on change value
- *
- * @param {number|null} change
- * @return {string} Material Design icon name
- */
-function getTrendIcon(change) {
-  if (change === null || change === undefined || Math.abs(change) < 0.05) return 'mdi-minus';
-  return change > 0 ? 'mdi-trending-up' : 'mdi-trending-down';
-}
-
-/**
  * Get trend color based on change value
  * For consumed/net: down is good (green), up is bad (red)
  * For generated: up is good (green), down is bad (red)
@@ -329,32 +319,8 @@ function getTrendIcon(change) {
  * @param {boolean} inverted - If true, positive change is good (green), negative is bad (red)
  * @return {string} Vuetify color name
  */
-function getTrendColor(change, inverted = false) {
-  if (change === null || change === undefined || Math.abs(change) < 0.05) return 'grey-lighten-1';
-  if (inverted) {
-    // For generated: increasing is good, decreasing is bad
-    return change > 0 ? 'success' : 'error';
-  }
-  // For consumed/net: decreasing is good, increasing is bad
-  return change > 0 ? 'error' : 'success';
-}
-
-/**
- * Format trend value for display
- *
- * @param {number|null} change
- * @return {string}
- */
-function formatTrend(change) {
-  if (change === null || change === undefined || Math.abs(change) < 0.05) return '0%';
-  const absChange = Math.abs(change);
-  if (absChange < 10) {
-    const formatted = change.toFixed(1);
-    if (formatted === '0.0' || formatted === '-0.0') return '0%';
-    return `${change > 0 ? '+' : ''}${formatted}%`;
-  }
-  const rounded = Math.round(change);
-  return `${rounded > 0 ? '+' : ''}${rounded}%`;
+function getLocalTrendColor(change, inverted = false) {
+  return getTrendColor(change, inverted);
 }
 
 

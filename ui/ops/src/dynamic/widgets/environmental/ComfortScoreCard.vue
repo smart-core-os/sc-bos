@@ -36,7 +36,7 @@
             </span>
             <v-chip
                 v-if="props.showTrend"
-                :color="getTrendColor(factorTrends.get(f.key))"
+                :color="getTrendColor(factorTrends.get(f.key), true)"
                 size="x-small"
                 style="height: 18px;">
               <v-icon :icon="getTrendIcon(factorTrends.get(f.key))" size="x-small" start/>
@@ -51,8 +51,9 @@
 
 <script setup>
 import CircularGauge from '@/components/CircularGauge.vue';
-import {useComfortScore} from '@/dynamic/widgets/environmental/comfort.js';
 import {useRollingValue} from '@/composables/rollingValue.js';
+import {useComfortScore} from '@/dynamic/widgets/environmental/comfort.js';
+import {formatTrend, getTrendColor, getTrendIcon} from '@/util/trend.js';
 import {computed, toRef, watch} from 'vue';
 
 const props = defineProps({
@@ -130,45 +131,5 @@ function factorColor(s) {
   if (s >= 70) return 'success-lighten-1';
   if (s >= 40) return 'warning';
   return 'error-lighten-1';
-}
-
-/**
- * Get trend icon based on change value
- *
- * @param {number|null} change
- * @return {string} Material Design icon name
- */
-function getTrendIcon(change) {
-  if (change === null || change === undefined || Math.abs(change) < 0.05) return 'mdi-minus';
-  return change > 0 ? 'mdi-trending-up' : 'mdi-trending-down';
-}
-
-/**
- * Get trend color based on change value
- *
- * @param {number|null} change
- * @return {string} Vuetify color name
- */
-function getTrendColor(change) {
-  if (change === null || change === undefined || Math.abs(change) < 0.05) return 'grey-lighten-1';
-  return change > 0 ? 'success' : 'error';
-}
-
-/**
- * Format trend value for display
- *
- * @param {number|null} change
- * @return {string}
- */
-function formatTrend(change) {
-  if (change === null || change === undefined || Math.abs(change) < 0.05) return '0%';
-  const absChange = Math.abs(change);
-  if (absChange < 10) {
-    const formatted = change.toFixed(1);
-    if (formatted === '0.0' || formatted === '-0.0') return '0%';
-    return `${change > 0 ? '+' : ''}${formatted}%`;
-  }
-  const rounded = Math.round(change);
-  return `${rounded > 0 ? '+' : ''}${rounded}%`;
 }
 </script>
