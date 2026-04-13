@@ -80,6 +80,7 @@ import {useRollingValue} from '@/composables/rollingValue.js';
 import {useIdleConsumption, usePullOccupancyState} from '@/dynamic/widgets/energy/idle.js';
 import {usePullMeterReading} from '@/traits/meter/meter.js';
 import {format} from '@/util/number.js';
+import {formatTrend, getTrendColor, getTrendIcon} from '@/util/trend.js';
 import {useLocalProp} from '@/util/vue.js';
 import {computed, effectScope, onScopeDispose, reactive, ref, toRef, toValue, watch} from 'vue';
 
@@ -401,46 +402,6 @@ watch([_start, _end, _offset, allZones], () => {
 
 const idleTrend = computed(() => idleChange.percentChange.value);
 const totalTrend = computed(() => energyChange.percentChange.value);
-
-/**
- * Get trend icon based on change value
- *
- * @param {number|null} change - The change value
- * @return {string} The icon name
- */
-function getTrendIcon(change) {
-  if (change === null || change === undefined || Math.abs(change) < 0.05) return 'mdi-minus';
-  return change > 0 ? 'mdi-trending-up' : 'mdi-trending-down';
-}
-
-/**
- * Get trend color based on change value
- *
- * @param {number|null} change - The change value
- * @return {string} The color name
- */
-function getTrendColor(change) {
-  if (change === null || change === undefined || Math.abs(change) < 0.05) return 'grey-lighten-1';
-  return change > 0 ? 'error' : 'success';
-}
-
-/**
- * Format trend value as percentage string
- *
- * @param {number|null} change - The change value
- * @return {string} Formatted percentage string
- */
-function formatTrend(change) {
-  if (change === null || change === undefined || Math.abs(change) < 0.05) return '0%';
-  const absChange = Math.abs(change);
-  if (absChange < 10) {
-    const formatted = change.toFixed(1);
-    if (formatted === '0.0' || formatted === '-0.0') return '0%';
-    return `${change > 0 ? '+' : ''}${formatted}%`;
-  }
-  const rounded = Math.round(change);
-  return `${rounded > 0 ? '+' : ''}${rounded}%`;
-}
 
 </script>
 <style scoped>
