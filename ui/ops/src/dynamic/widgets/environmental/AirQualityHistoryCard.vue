@@ -46,14 +46,24 @@
           :baseline-shift="props.baselineShift"
           ref="chartRef"/>
     </v-card-text>
-    <div v-if="props.showBaseline" class="d-flex ga-8 justify-center pb-3 text-caption opacity-70">
-      <span class="d-flex align-center ga-3">
-        <span class="legend-dot"/>
-        Current
+    <div v-if="props.showBaseline || occupancy" class="d-flex ga-8 justify-center pb-3 text-caption opacity-70">
+      <template v-if="props.showBaseline">
+        <span class="d-flex align-center ga-3">
+          <span class="legend-dot"/>
+          Current
+        </span>
+        <span class="d-flex align-center ga-3">
+          <span class="legend-line"/>
+          Prior period
+        </span>
+      </template>
+      <span v-if="occupancy" class="d-flex align-center ga-3" v-tooltip:top="'Thick lines and background shading indicate occupancy'">
+        <span class="legend-occupied"/>
+        Occupied
       </span>
-      <span class="d-flex align-center ga-3">
-        <span class="legend-line"/>
-        Prior period
+      <span v-if="occupancy" class="d-flex align-center ga-3">
+        <span class="legend-vacant"/>
+        Vacant
       </span>
     </div>
   </v-card>
@@ -200,5 +210,33 @@ const onDownloadClick = async () => {
   background-size: 8px 2px;
   background-repeat: repeat-x;
   opacity: 0.8;
+}
+
+.legend-occupied {
+  display: inline-block;
+  width: 20px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  position: relative;
+}
+
+.legend-occupied::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: currentColor;
+  transform: translateY(-50%);
+}
+
+.legend-vacant {
+  display: inline-block;
+  width: 20px;
+  height: 1.5px;
+  background: currentColor;
+  opacity: 0.5;
 }
 </style>

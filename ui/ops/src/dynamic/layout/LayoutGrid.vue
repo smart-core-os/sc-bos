@@ -1,12 +1,28 @@
 <template>
   <div class="grid--container" :class="{signage: signageEnabled}" :style="containerStyles">
-    <component
-        :is="cellComponent(cell)"
+    <div
         v-for="(cell, index) in props.cells"
         :key="cell.id ?? `${cell.component}-${index}`"
         :style="cellStyles(cell)"
-        v-bind="cell.props"
-        class="grid--cell"/>
+        class="grid--cell-wrapper">
+      <component
+          :is="cellComponent(cell)"
+          v-bind="cell.props"
+          class="grid--cell"/>
+      <v-tooltip v-if="cell.description" location="top start" offset="5">
+        <template #activator="{props: tp}">
+          <v-icon
+              v-bind="tp"
+              class="help-icon"
+              size="18">
+            mdi-help-circle-outline
+          </v-icon>
+        </template>
+        <div class="help-tooltip-content">
+          {{ cell.description }}
+        </div>
+      </v-tooltip>
+    </div>
   </div>
 </template>
 
@@ -79,18 +95,48 @@ const cellComponent = (cell) => {
   // add scrollbar gutter to match the app one when needed
   scrollbar-gutter: stable;
 
-  .grid--cell {
+  .grid--cell-wrapper {
     overflow: hidden;
   }
 }
 
-.grid--cell {
+.grid--cell-wrapper {
   grid-column-start: var(--x);
   grid-column-end: span var(--w);
   grid-row-start: var(--y);
   grid-row-end: span var(--h);
   min-height: 0;
   min-width: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.grid--cell {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
   overflow: auto;
+}
+
+.help-icon {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 10;
+  opacity: 0.3;
+  transition: opacity 0.2s;
+  cursor: help;
+}
+
+.help-icon:hover {
+  opacity: 1;
+}
+
+.help-tooltip-content {
+  max-width: 320px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  padding: 4px;
 }
 </style>

@@ -2,7 +2,7 @@
   <div class="chart__container">
     <line-chart :data="chartData" :options="chartOptions" :plugins="[themeColorPlugin, vueLegendPlugin]"/>
     <chart-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit"
-                   :format-value="(y) => (y != null ? new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(y) + (unit ? ' ' + unit : '') : '—')"
+                   :format-value="formatValue"
                    :filter="(dp) => dp.dataset.yAxisID !== 'y_occ'"/>
   </div>
 </template>
@@ -271,6 +271,18 @@ const occupancyDataMap = computed(() => {
   });
   return map;
 });
+
+const formatValue = (y, dp) => {
+  const s = y != null ? new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(y) + (unit.value ? ' ' + unit.value : '') : '—';
+  if (!dp || dp.dataset.isDashed) return s;
+  const name = dp.dataset[datasetSourceName];
+  const occStates = occupancyDataMap.value[name];
+  if (!occStates) return s;
+  const state = occStates[dp.dataIndex];
+  if (state === 1) return s + ' (Occupied)';
+  if (state === 0) return s + ' (Vacant)';
+  return s;
+};
 
 const chartOptions = computed(() => {
   return defineChartOptions({
