@@ -15,6 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
@@ -56,6 +57,8 @@ func IntoTrait(client *gobacnet.Client, devices known.Context, faultCheck *healt
 		return newAccess(client, devices, faultCheck, traitConfig, logger)
 	case securityeventpb.TraitName:
 		return newSecurityEvent(client, devices, faultCheck, traitConfig, logger)
+	case soundsensorpb.TraitName:
+		return newSoundSensor(client, devices, faultCheck, traitConfig, logger)
 	case temperaturepb.TraitName:
 		return newTemperature(client, devices, faultCheck, traitConfig, logger)
 	case transportpb.TraitName:
