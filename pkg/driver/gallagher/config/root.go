@@ -41,6 +41,8 @@ type Root struct {
 }
 
 type HTTP struct {
+	// BaseURL is the base URL of the Gallagher API, e.g. https://gallagher.example.com/api
+	// must include the /api suffix
 	BaseURL    string `json:"baseUrl,omitempty"`
 	ApiKeyFile string `json:"apiKeyFile,omitempty"`
 }
