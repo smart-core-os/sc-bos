@@ -27,6 +27,7 @@ export const widgetDescriptions = {
   'occupancy/PresenceCard': 'A simple "Occupied" or "Vacant" sign that updates automatically based on motion sensors in the room.',
   'power-history/PowerHistoryCard': 'A historical look at your total power usage. It helps you see long-term trends and whether your energy-saving efforts are working over time.',
   'security/SecurityEventsCard': 'Lists recent security activities, like doors being opened or motion detected after hours, so you can keep the building safe.',
+  'transport/LiftPositionCard': 'Shows the real-time position and movement of multiple lifts across all floors of the building. It also indicates if the lift doors are currently open.',
   'usage/AllocationHistoryCard': 'Shows how many items like desks, lockers, or rooms are currently being used and who has them. This helps you understand which resources are popular and how they are being shared.',
   'devices/DeviceTable': 'A comprehensive list of every piece of equipment in an area, showing its current status and whether it\'s working correctly.',
   'environmental/AirTemperatureChip': 'A tiny, quick-glance indicator of the current temperature in a specific spot.',
