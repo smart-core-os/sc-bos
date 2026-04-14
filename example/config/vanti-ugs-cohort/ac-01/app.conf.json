@@ -924,16 +924,29 @@
       "type": "mock",
       "devices": [
         {
-          "name": "van/uk/brum/ugs/devices/lift",
+          "name": "van/uk/brum/ugs/devices/lift-01",
           "traits": [
             {
               "name": "smartcore.bos.Transport",
               "more": {
-                "numFloors": "2"
+                "numFloors": "5"
               }
             }
           ],
-          "appearance": {"title": "Lifts"},
+          "appearance": {"title": "Lift 1"},
+          "membership": {"subsystem": "vt"}
+        },
+        {
+          "name": "van/uk/brum/ugs/devices/lift-02",
+          "traits": [
+            {
+              "name": "smartcore.bos.Transport",
+              "more": {
+                "numFloors": "5"
+              }
+            }
+          ],
+          "appearance": {"title": "Lift 2"},
           "membership": {"subsystem": "vt"}
         }
       ]
@@ -1882,9 +1895,15 @@
       "storage": {"type": "postgres"}
     },
     {
-      "name": "van/uk/brum/ugs/automation/lift-history/lift",
+      "name": "van/uk/brum/ugs/automation/lift-history/lift-01",
       "type": "history",
-      "source": {"name": "van/uk/brum/ugs/devices/lift", "trait": "smartcore.bos.Transport"},
+      "source": {"name": "van/uk/brum/ugs/devices/lift-01", "trait": "smartcore.bos.Transport"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/lift-history/lift-02",
+      "type": "history",
+      "source": {"name": "van/uk/brum/ugs/devices/lift-02", "trait": "smartcore.bos.Transport"},
       "storage": {"type": "postgres"}
     },
     {

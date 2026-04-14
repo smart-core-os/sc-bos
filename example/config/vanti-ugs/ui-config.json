@@ -69,6 +69,18 @@
           ],
           "after": [
             {
+              "component": "builtin:transport/LiftPositionCard",
+              "props": {
+                "title": "Building Lifts",
+                "height": 450,
+                "deviceNames": [
+                  "van/uk/brum/ugs/devices/lift-01",
+                  "van/uk/brum/ugs/devices/lift-02"
+                ],
+                "floors": ["5", "4", "3", "2", "1", "GF"]
+              }
+            },
+            {
               "component": "builtin:environmental/EnvironmentalCard",
               "props": {
                 "title": "",
@@ -1209,6 +1221,19 @@
                     "unit": "kWh",
                     "period": "week",
                     "baselineShift": "week"
+                  }
+                },
+                {
+                  "loc": {"x": 1, "y": 18, "w": 4, "h": 4},
+                  "id": "BuildingLifts",
+                  "component": "builtin:transport/LiftPositionCard",
+                  "props": {
+                    "title": "Building Lifts",
+                    "deviceNames": [
+                      "van/uk/brum/ugs/devices/lift-01",
+                      "van/uk/brum/ugs/devices/lift-02"
+                    ],
+                    "floors": ["5", "4", "3", "2", "1", "GF"]
                   }
                 }
               ]
