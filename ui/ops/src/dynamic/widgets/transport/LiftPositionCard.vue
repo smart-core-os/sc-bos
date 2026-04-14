@@ -49,7 +49,8 @@ const props = defineProps({
     default: 0
   },
   floors: {
-    type: Array
+    type: Array,
+    default: () => []
   },
   hideToolbar: {
     type: Boolean,
@@ -62,7 +63,7 @@ const props = defineProps({
 });
 
 const floors = computed(() => {
-  if (props.floors != null) {
+  if (props.floors != null && props.floors.length > 0) {
     return props.floors;
   }
   const res = [];
