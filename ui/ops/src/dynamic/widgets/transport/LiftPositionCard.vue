@@ -3,24 +3,31 @@
     <v-toolbar v-if="!props.hideToolbar" color="transparent" density="comfortable">
       <v-toolbar-title class="text-h6 font-weight-bold">{{ props.title }}</v-toolbar-title>
     </v-toolbar>
-    <v-card-text class="flex-grow-1 overflow-auto pt-0">
-      <div class="lift-grid">
-        <div class="floor-labels">
-          <div v-for="floorNum in floors" :key="floorNum" class="floor-label">
-            {{ floorNum }}
-          </div>
-        </div>
-        <div class="shafts-container">
-          <div v-for="name in deviceNames" :key="name" class="shaft">
-            <div class="shaft-name text-caption text-center" :title="name">
+    <v-card-text class="flex-grow-1 overflow-hidden pt-0">
+      <div :class="['lift-grid', { 'lift-grid--compact': props.compact }]">
+        <!-- Shaft names header — stays fixed while floors scroll in compact mode -->
+        <div class="lift-header">
+          <div class="floor-label-spacer"/>
+          <div class="shafts-names-row">
+            <div v-for="name in deviceNames" :key="name" class="shaft-name" :title="name">
               {{ shortName(name) }}
             </div>
-            <div class="shaft-track">
+          </div>
+        </div>
+        <!-- Floor grid — scrollable in compact mode -->
+        <div class="lift-body">
+          <div class="floor-labels">
+            <div v-for="floorNum in floors" :key="floorNum" class="floor-label">
+              {{ floorNum }}
+            </div>
+          </div>
+          <div class="shafts-tracks">
+            <div v-for="name in deviceNames" :key="name" class="shaft-track">
               <div v-for="floorNum in floors" :key="floorNum" class="floor-cell">
                 <div v-if="isAtFloor(name, floorNum)"
                      class="lift-car"
                      :class="directionClass(name)">
-                  <v-icon :icon="directionIcon(name)" size="small"/>
+                  <v-icon :icon="directionIcon(name)" class="lift-icon"/>
                 </div>
               </div>
             </div>
@@ -59,6 +66,12 @@ const props = defineProps({
   height: {
     type: [String, Number],
     default: '100%'
+  },
+  // When true, renders each floor as a compact fixed-height row with scrolling.
+  // Useful when there are many floors (20+) that would otherwise be squished.
+  compact: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -163,22 +176,68 @@ function shortName(name) {
 </script>
 
 <style scoped>
+/* ── Outer grid: column layout so the header row sits above the floor body ─── */
 .lift-grid {
   display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ── Header: shaft names + floor-label column spacer ─────────────────────── */
+.lift-header {
+  display: flex;
   gap: 12px;
-  overflow-x: auto;
+  flex-shrink: 0;
+  align-items: flex-end;
+  padding-bottom: 4px;
+}
+
+/* Same width as .floor-label so shaft names align with shaft tracks */
+.floor-label-spacer {
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.shafts-names-row {
+  display: flex;
+  gap: 12px;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.shaft-name {
+  flex: 1;
+  min-width: 32px;
+  height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+/* ── Body: floor labels + shaft tracks ───────────────────────────────────── */
+.lift-body {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   padding-bottom: 8px;
-  min-height: 100%;
 }
 
 .floor-labels {
   display: flex;
   flex-direction: column;
-  padding-top: 24px; /* Align with shaft track */
+  flex-shrink: 0;
 }
 
 .floor-label {
-  height: 36px;
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -188,40 +247,29 @@ function shortName(name) {
   width: 24px;
 }
 
-.shafts-container {
+.shafts-tracks {
   display: flex;
   gap: 12px;
   flex-grow: 1;
-}
-
-.shaft {
-  display: flex;
-  flex-direction: column;
-  min-width: 44px;
-}
-
-.shaft-name {
-  height: 24px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.7);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  min-width: 0;
 }
 
 .shaft-track {
+  flex: 1;
+  min-width: 32px;
+  min-height: 0;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .floor-cell {
-  height: 36px;
-  width: 44px;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
@@ -232,17 +280,80 @@ function shortName(name) {
   border-bottom: none;
 }
 
+/* ── Compact mode ─────────────────────────────────────────────────────────── */
+/*
+ * In compact mode, floor rows have a fixed height instead of flex-stretching.
+ * .floor-labels and .shafts-tracks use align-self: flex-start so their natural
+ * content height (floors × 20px) causes .lift-body to overflow and scroll,
+ * rather than being stretched down to the body's height.
+ *
+ * Shaft gap is reduced from 12px → 4px and min-width from 32px → 20px so that
+ * many shafts (e.g. 32) fit side-by-side without overflow or clipping.
+ */
+.lift-grid--compact .lift-body {
+  overflow: hidden auto; /* clip x, scroll y */
+}
+
+.lift-grid--compact .floor-labels,
+.lift-grid--compact .shafts-tracks {
+  align-self: flex-start;
+}
+
+/* Tighter gap between shafts — must match on both the header names row and the
+   tracks row so shaft names stay aligned above their tracks. */
+.lift-grid--compact .shafts-names-row,
+.lift-grid--compact .shafts-tracks {
+  gap: 4px;
+}
+
+.lift-grid--compact .shaft-name,
+.lift-grid--compact .shaft-track {
+  min-width: 20px;
+}
+
+.lift-grid--compact .floor-label {
+  flex: 0 0 20px;
+}
+
+.lift-grid--compact .floor-cell {
+  flex: 0 0 20px;
+}
+
+.lift-grid--compact .lift-car {
+  width: 18px;
+  height: 18px;
+}
+
+.lift-grid--compact .lift-icon {
+  font-size: 0.8rem;
+}
+
+/* ── Lift car states ──────────────────────────────────────────────────────── */
 .lift-car {
   background: rgb(var(--v-theme-primary));
   color: white;
   border-radius: 4px;
   width: 34px;
   height: 34px;
+  max-width: 90%;
+  max-height: 90%;
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lift-icon {
+  font-size: 1.1rem;
+  width: 100%;
+  height: 100%;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .lift-moving-up {
@@ -254,7 +365,6 @@ function shortName(name) {
 }
 
 .lift-door-open {
-  background: #ff9800 !important; /* Orange for door open/opening */
+  background: #ff9800 !important;
 }
-
 </style>

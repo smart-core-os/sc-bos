@@ -1,10 +1,10 @@
 <template>
-  <div class="floor-list">
+  <div :class="['floor-list', { 'floor-list--compact': props.compact }]">
     <template v-for="floor in floorItems" :key="floor.level">
       <slot name="floor" v-bind="{floor}"/>
       <template v-if="floor.level === 0">
         <slot name="ground">
-          <v-divider thickness="3"/>
+          <v-divider :thickness="props.compact ? 2 : 3"/>
         </slot>
       </template>
     </template>
@@ -28,6 +28,12 @@ const props = defineProps({
   selectedFloor: {
     type: Number,
     default: null
+  },
+  // When true, floors use a fixed row height instead of stretching equally to fill the container.
+  // The parent is responsible for overflow-y scrolling.
+  compact: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -52,5 +58,14 @@ const floorItems = computed(() => {
 
 .floor-list > *:not(.v-divider) {
   flex: 1;
+}
+
+/* compact: rows have a natural fixed height; parent handles overflow scrolling */
+.floor-list--compact {
+  gap: 2px;
+}
+
+.floor-list--compact > *:not(.v-divider) {
+  flex: 0 0 auto;
 }
 </style>
