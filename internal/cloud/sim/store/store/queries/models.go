@@ -26,6 +26,14 @@ type Deployment struct {
 	Reason          sql.NullString
 }
 
+type EnrollmentCode struct {
+	ID        int64
+	NodeID    int64
+	Code      string
+	ExpiresAt time.Time
+	UsedAt    sql.NullTime
+}
+
 type Node struct {
 	ID         int64
 	Hostname   string

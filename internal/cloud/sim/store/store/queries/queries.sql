@@ -210,3 +210,17 @@ JOIN config_versions cv ON d.config_version_id = cv.id
 WHERE cv.node_id = :node_id AND d.status IN ('pending', 'in_progress')
 ORDER BY d.id DESC
 LIMIT 1;
+
+-- Enrollment Codes
+
+-- name: CreateEnrollmentCode :one
+INSERT INTO enrollment_codes (node_id, code, expires_at)
+VALUES (:node_id, :code, :expires_at)
+RETURNING *;
+
+-- name: GetActiveEnrollmentCode :one
+SELECT * FROM enrollment_codes
+WHERE code = :code AND used_at IS NULL AND expires_at > datetime('now', 'subsec');
+
+-- name: MarkEnrollmentCodeUsed :exec
+UPDATE enrollment_codes SET used_at = datetime('now', 'subsec') WHERE id = :id;

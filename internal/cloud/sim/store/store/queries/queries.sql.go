@@ -131,6 +131,33 @@ func (q *Queries) CreateDeployment(ctx context.Context, arg CreateDeploymentPara
 	return i, err
 }
 
+const createEnrollmentCode = `-- name: CreateEnrollmentCode :one
+
+INSERT INTO enrollment_codes (node_id, code, expires_at)
+VALUES (?1, ?2, ?3)
+RETURNING id, node_id, code, expires_at, used_at
+`
+
+type CreateEnrollmentCodeParams struct {
+	NodeID    int64
+	Code      string
+	ExpiresAt time.Time
+}
+
+// Enrollment Codes
+func (q *Queries) CreateEnrollmentCode(ctx context.Context, arg CreateEnrollmentCodeParams) (EnrollmentCode, error) {
+	row := q.db.QueryRowContext(ctx, createEnrollmentCode, arg.NodeID, arg.Code, arg.ExpiresAt)
+	var i EnrollmentCode
+	err := row.Scan(
+		&i.ID,
+		&i.NodeID,
+		&i.Code,
+		&i.ExpiresAt,
+		&i.UsedAt,
+	)
+	return i, err
+}
+
 const createNode = `-- name: CreateNode :one
 
 INSERT INTO nodes (hostname, site_id, secret_hash, create_time)
@@ -294,6 +321,24 @@ func (q *Queries) GetActiveDeploymentByNode(ctx context.Context, nodeID int64) (
 		&i.StartTime,
 		&i.FinishedTime,
 		&i.Reason,
+	)
+	return i, err
+}
+
+const getActiveEnrollmentCode = `-- name: GetActiveEnrollmentCode :one
+SELECT id, node_id, code, expires_at, used_at FROM enrollment_codes
+WHERE code = ?1 AND used_at IS NULL AND expires_at > datetime('now', 'subsec')
+`
+
+func (q *Queries) GetActiveEnrollmentCode(ctx context.Context, code string) (EnrollmentCode, error) {
+	row := q.db.QueryRowContext(ctx, getActiveEnrollmentCode, code)
+	var i EnrollmentCode
+	err := row.Scan(
+		&i.ID,
+		&i.NodeID,
+		&i.Code,
+		&i.ExpiresAt,
+		&i.UsedAt,
 	)
 	return i, err
 }
@@ -828,6 +873,15 @@ func (q *Queries) ListSites(ctx context.Context, arg ListSitesParams) ([]Site, e
 		return nil, err
 	}
 	return items, nil
+}
+
+const markEnrollmentCodeUsed = `-- name: MarkEnrollmentCodeUsed :exec
+UPDATE enrollment_codes SET used_at = datetime('now', 'subsec') WHERE id = ?1
+`
+
+func (q *Queries) MarkEnrollmentCodeUsed(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, markEnrollmentCodeUsed, id)
+	return err
 }
 
 const updateDeploymentStatus = `-- name: UpdateDeploymentStatus :one

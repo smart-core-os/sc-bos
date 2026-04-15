@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -69,8 +70,11 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PATCH /api/v1/management/deployments/{id}", s.updateDeploymentStatus)
 	mux.HandleFunc("DELETE /api/v1/management/deployments/{id}", s.deleteDeployment)
 
+	// Enrollment codes
+	mux.HandleFunc("POST /api/v1/management/nodes/{id}/enrollment-codes", s.createEnrollmentCode)
+
 	// Device API (BOS-facing)
-	// TODO: add POST /v1/device/register for enrollment code exchange
+	mux.HandleFunc("POST /v1/device/register", s.deviceRegister)
 	mux.HandleFunc("POST /v1/device/token", s.handleToken)
 	mux.HandleFunc("POST /v1/device/check-in", s.checkIn)
 }
@@ -87,6 +91,26 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+// Returns a complete URL using the same scheme and host as request r, but with a different path.
+// The path is absolute - it is not calculated relative to the path of r.
+func sameHostURL(r *http.Request, path string) string {
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	// Check X-Forwarded-Proto header for connections behind reverse proxies
+	if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" {
+		scheme = proto
+	}
+	return (&url.URL{
+		Scheme: scheme,
+		// for a production server, you would want to validate the Host header against a list of known hostnames
+		// to prevent DNS rebinding
+		Host: r.Host,
+		Path: path,
+	}).String()
 }
 
 // parseID decodes an entity ID string from a query parameter into a numeric ID.

@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"math"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"time"
@@ -303,17 +304,25 @@ func (c *DeploymentUpdater) AutoPoll(ctx context.Context, interval time.Duration
 	}
 	t := time.NewTicker(interval)
 	defer t.Stop()
+
+	// run the first poll shortly after boot
+	// don't run immediately, because a lot of services will be busy initialising, best to wait
+	// randomise a bit, so many nodes coming online at the same time don't hammer the server
+	initC := time.After(30*time.Second + time.Duration(rand.Int64N(int64(30*time.Second))))
+
 	for {
 		select {
 		case <-ctx.Done():
 			return false
 		case <-t.C:
-			needReboot, err := c.PollOnce(ctx)
-			if err != nil {
-				c.logger.Error("failed to poll deployment server", zap.Error(err))
-			} else if needReboot {
-				return true
-			}
+			initC = nil // suppress pending init if timer fires first
+		case <-initC:
+		}
+		needsReboot, err := c.PollOnce(ctx)
+		if err != nil {
+			c.logger.Error("failed to poll deployment server", zap.Error(err))
+		} else if needsReboot {
+			return true
 		}
 	}
 }

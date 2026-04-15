@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 
 	"go.uber.org/zap"
@@ -26,21 +25,7 @@ type ConfigVersion struct {
 // payloadUrl constructs a fully qualified URL to download a config version's payload.
 // Hostname and scheme are inferred based on the request r.
 func payloadUrl(r *http.Request, id int64) string {
-	scheme := "http"
-	if r.TLS != nil {
-		scheme = "https"
-	}
-	// Check X-Forwarded-Proto header for connections behind reverse proxies
-	if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" {
-		scheme = proto
-	}
-	return (&url.URL{
-		Scheme: scheme,
-		// for a production server, you would want to validate the Host header against a list of known hostnames
-		// to prevent DNS rebinding
-		Host: r.Host,
-		Path: fmt.Sprintf("/api/v1/management/config-versions/%d/payload", id),
-	}).String()
+	return sameHostURL(r, fmt.Sprintf("/api/v1/management/config-versions/%d/payload", id))
 }
 
 func toConfigVersion(r *http.Request, cv queries.ConfigVersion) ConfigVersion {
