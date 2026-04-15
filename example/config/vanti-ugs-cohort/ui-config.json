@@ -1224,11 +1224,12 @@
                   }
                 },
                 {
-                  "loc": {"x": 1, "y": 18, "w": 4, "h": 4},
+                  "loc": {"x": 1, "y": 18, "w": 1, "h": 3},
                   "id": "BuildingLifts",
                   "component": "builtin:transport/LiftPositionCard",
                   "props": {
                     "title": "Building Lifts",
+                    "compact": true,
                     "deviceNames": [
                       "van/uk/brum/ugs/devices/lift-01",
                       "van/uk/brum/ugs/devices/lift-02"

@@ -1,7 +1,7 @@
 <template>
-  <div class="floor-comfort">
-    <div class="column-headers">
-      <span class="header-device">Device</span>
+  <div :class="['floor-comfort', { 'floor-comfort--compact': props.compact }]">
+    <div :class="['column-headers', { 'column-headers--compact': props.compact }]">
+      <span class="header-device">{{ props.compact ? '' : 'Device' }}</span>
       <span
           v-for="col in visibleColumns"
           :key="col.key"
@@ -9,14 +9,19 @@
         {{ col.label }}
       </span>
     </div>
-    <floor-list :floors="props.floors">
+    <floor-list
+        :class="['floor-list-wrap', { 'floor-list-wrap--compact': props.compact }]"
+        :floors="props.floors"
+        :compact="props.compact">
       <template #floor="{floor}">
-        <div class="comfort-row">
-          <device-cell
-              v-if="deviceItemByLevel[floor.level]"
-              class="device-cell"
-              :item="deviceItemByLevel[floor.level]"/>
-          <span v-else class="device-cell"/>
+        <div :class="['comfort-row', { 'comfort-row--compact': props.compact }]">
+          <div :class="['device-col', { 'device-col--compact': props.compact }]">
+            <device-cell
+                v-if="deviceItemByLevel[floor.level]"
+                class="device-cell"
+                :item="deviceItemByLevel[floor.level]"/>
+            <span v-else class="device-cell"/>
+          </div>
           <v-tooltip
               v-for="col in visibleColumns"
               :key="col.key"
@@ -25,8 +30,7 @@
             <template #activator="{props: tp}">
               <span
                   v-bind="tp"
-                  class="comfort-chip"
-                  :class="col.colorClass(floorData[floor.zoneName])">
+                  :class="['comfort-chip', col.colorClass(floorData[floor.zoneName]), { 'comfort-chip--compact': props.compact }]">
                 {{ col.display(floorData[floor.zoneName]) }}
               </span>
             </template>
@@ -79,9 +83,15 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // When true, renders each floor as a compact fixed-height row with scrolling and a sticky header.
+  // Useful when there are many floors (20+) that would otherwise be squished.
+  compact: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-// ── Original FloorTraitCells: device metadata + DeviceCell per floor ──────────
+// ── Device metadata + DeviceCell per floor ────────────────────────────────────
 
 const devicesReq = computed(() => ({
   query: {
@@ -336,14 +346,17 @@ const visibleColumns = computed(() =>
   allColumns.value.filter(c => props.columns.includes(c.key))
 );
 
+
 </script>
 
 <style scoped>
 .floor-comfort {
   height: 100%;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
+}
+
+.floor-comfort--compact {
 }
 
 .column-headers {
@@ -354,6 +367,7 @@ const visibleColumns = computed(() =>
   padding-bottom: 8px;
   margin-bottom: 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
 }
 
 .header-device {
@@ -375,8 +389,17 @@ const visibleColumns = computed(() =>
   letter-spacing: 0.5px;
 }
 
-.floor-comfort :deep(.floor-list) {
+.floor-list-wrap {
+  height: 100%;
+}
+
+.floor-list-wrap--compact {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.floor-comfort :deep(.floor-list) {
   min-height: 0;
 }
 
@@ -387,10 +410,49 @@ const visibleColumns = computed(() =>
   align-items: center;
 }
 
+
+.comfort-row--compact {
+  gap: 2px;
+  height: 20px;
+  overflow: hidden;
+}
+
+.comfort-chip--compact {
+  height: 18px;
+  font-size: 0.6rem;
+}
+
+.device-col {
+  display: contents; /* non-compact: DeviceCell is a direct grid child */
+}
+
+.device-col--compact {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Resize DeviceCell sub-components to fit compact 20px rows */
+.device-col--compact :deep(.v-icon) {
+  font-size: 14px;
+}
+.device-col--compact :deep(.v-avatar) {
+  width: 16px !important;
+  height: 16px !important;
+}
+.device-col--compact :deep(.overlap) {
+  --size: 16px;
+}
+
 .device-cell {
   overflow: hidden;
   min-width: 0;
 }
+
 
 .comfort-chip {
   display: flex;
