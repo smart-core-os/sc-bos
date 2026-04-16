@@ -6,6 +6,9 @@ import {useUiConfigStore} from '@/stores/ui-config.js';
 import {computed} from 'vue';
 
 /**
+ * @param {import('vue').ComputedRef<string>} [zoneIdOverride]
+ *   Optional ref to override the zone ID used by widgets (e.g. in admin mode).
+ *   Defaults to the active zone from the config store.
  * @return {{
  *   widgets: import('vue').ComputedRef<{
  *     'is': import('vue').Component,
@@ -14,14 +17,14 @@ import {computed} from 'vue';
  *   }[]>
  * }}
  */
-export function useHomeConfig() {
+export function useHomeConfig(zoneIdOverride) {
   const uiConfigStore = useUiConfigStore();
   const uiConfig = computed(() => uiConfigStore.config);
   const homePageConfig = computed(() => uiConfig.value?.pages?.home);
   const widgetConfig = computed(() => homePageConfig.value?.widgets ?? []);
 
   const appConfigStore = useConfigStore();
-  const zoneId = computed(() => appConfigStore.activeZoneId);
+  const zoneId = zoneIdOverride ?? computed(() => appConfigStore.activeZoneId);
 
   const availableWidgets = {
     'air-quality': {

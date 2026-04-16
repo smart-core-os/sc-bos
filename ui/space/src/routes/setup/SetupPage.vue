@@ -9,7 +9,9 @@
     <list-selector
         v-if="step === 1"
         title="Select your room"
+        :show-admin-mode="true"
         @zone-selected="onSingleZone"
+        @admin-mode="onAdminMode"
         @should-auto-logout="shouldAutoLogout"/>
     <list-selector
         v-else
@@ -56,6 +58,11 @@ const onJoinedZone = async (zone) => {
 const skipJoinedZone = async () => {
   await configStore.setJoinedZone('', null);
   await router.push({name: 'home'});
+};
+
+const onAdminMode = () => {
+  configStore.setAdminMode();
+  router.push({name: 'admin'});
 };
 const autoLogoutAlert = ref(false);
 const autoLogoutOn = ref(false);

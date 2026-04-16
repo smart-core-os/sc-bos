@@ -22,6 +22,9 @@
     <v-btn v-if="showSkip" block class="mt-4" variant="text" @click="emits('zone-skipped')">
       Skip
     </v-btn>
+    <v-btn v-if="showAdminMode" block class="mt-4" variant="text" @click="emits('admin-mode')">
+      Admin Mode
+    </v-btn>
     <v-btn v-if="!disableAuthentication" block class="mt-12" variant="text" @click="accountStore.logout">
       Logout
     </v-btn>
@@ -37,7 +40,7 @@ import {useUiConfigStore} from '@/stores/ui-config';
 import {storeToRefs} from 'pinia';
 import {computed, watch} from 'vue';
 
-const emits = defineEmits(['shouldAutoLogout', 'zone-selected', 'zone-skipped']);
+const emits = defineEmits(['shouldAutoLogout', 'zone-selected', 'zone-skipped', 'admin-mode']);
 
 defineProps({
   title: {
@@ -45,6 +48,10 @@ defineProps({
     default: 'Panel Setup'
   },
   showSkip: {
+    type: Boolean,
+    default: false
+  },
+  showAdminMode: {
     type: Boolean,
     default: false
   }

@@ -23,6 +23,11 @@ const router = createRouter({
       name: 'setup',
       component: () => import('@/routes/setup/SetupPage.vue')
     },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('@/routes/home/AdminPage.vue')
+    },
     // everything else to redirect to the home page
     {
       path: '/:pathMatch(.*)*',
@@ -71,6 +76,11 @@ if (window) {
     const reconfiguring = configStore.isReconfiguring;
     if (!configured || reconfiguring) {
       intercept('/setup');
+      return;
+    }
+
+    if (configStore.isAdminMode && to.path === '/home') {
+      go('/admin');
       return;
     }
 

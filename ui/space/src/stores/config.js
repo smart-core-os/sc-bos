@@ -27,9 +27,11 @@ export const useConfigStore = defineStore('config', () => {
 
   const zoneName = computed(() => activeZoneMeta.value?.appearance?.title ?? activeZoneId.value ?? '');
 
+  const isAdminMode = ref(false);
+
   const isReconfiguring = ref(false);
   const isConfigured = computed(() => {
-    return Boolean(zoneId.value);
+    return Boolean(zoneId.value) || isAdminMode.value;
   });
 
   /**
@@ -39,6 +41,7 @@ export const useConfigStore = defineStore('config', () => {
   async function setZone(zone, meta = null) {
     if (zone) {
       isReconfiguring.value = false;
+      isAdminMode.value = false;
       zoneId.value = zone;
       if (meta) {
         zoneMeta.value = meta;
@@ -72,12 +75,21 @@ export const useConfigStore = defineStore('config', () => {
   /**
    *
    */
+  function setAdminMode() {
+    isAdminMode.value = true;
+    isReconfiguring.value = false;
+  }
+
+  /**
+   *
+   */
   function reset() {
     zoneId.value = '';
     zoneMeta.value = {};
     joinedZoneId.value = '';
     joinedZoneMeta.value = {};
     mode.value = 'single';
+    isAdminMode.value = false;
   }
 
   const uiConfig = useUiConfigStore();
@@ -118,10 +130,12 @@ export const useConfigStore = defineStore('config', () => {
     hasJoinedZone,
     mode,
     zoneName,
+    isAdminMode,
     isConfigured,
     isReconfiguring,
     setZone,
     setJoinedZone,
+    setAdminMode,
     toggleMode,
     reset,
     reconfigure,
