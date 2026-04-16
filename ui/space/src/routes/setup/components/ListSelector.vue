@@ -58,15 +58,19 @@ const disableAuthentication = computed(() => uiConfig.auth.disabled);
 const configStore = useConfigStore();
 
 const zoneIds = computed(() => {
-  // prefer using the account zones over fetching from the server
-  if (zones.value.length > 0) return zones.value;
   if (!zoneCollection?.response?.servicesList) {
     return [];
   }
-  const zoneIds = zoneCollection.response.servicesList
-      .filter(s => s.active)
-      .map(s => s.id);
-  return [...new Set(zoneIds)];
+  const allIds = [...new Set(
+    zoneCollection.response.servicesList
+        .filter(s => s.active)
+        .map(s => s.id)
+  )];
+  if (zones.value.length === 0) return allIds;
+  // Filter to zones that exactly match or fall under a configured zone path
+  return allIds.filter(id =>
+    zones.value.some(z => id === z || id.startsWith(z + '/'))
+  );
 });
 const {loading: zoneMetadataLoading, trackers: zoneMetadata} = useMetadata(zoneIds);
 
@@ -86,7 +90,6 @@ const noZones = computed(() => {
 
 const fetch = async ({done}) => {
   if (!isInitialized.value) return; // don't do anything until we know about account zones
-  if (zones.value.length > 0) return; // don't load zones from server if we have account zones to use
 
   const prev = zoneList.value.length;
 

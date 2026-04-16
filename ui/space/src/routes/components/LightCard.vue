@@ -3,8 +3,9 @@
     <v-card-title class="d-flex align-center pl-7">
       <span class="text-h4 font-weight-medium flex-grow-1">Lights</span>
       <v-switch
+          v-if="hasLightAutoSwitch"
           color="accent"
-          :disabled="!hasLightAutoSwitch || blockActions"
+          :disabled="blockActions"
           hide-details
           :model-value="lightIsAuto"
           inset
