@@ -3,7 +3,7 @@
     <div class="timedate">
       <h1 class="time">{{ timeStr }}</h1>
       <span class="text-h5">{{ dateStr }}</span>
-      <span v-if="zoneName" class="text-h5 zone-name">{{ zoneName }}</span>
+      <span v-if="zoneName" class="text-h6 zone-name d-block">{{ zoneName }}</span>
     </div>
   </div>
 </template>
