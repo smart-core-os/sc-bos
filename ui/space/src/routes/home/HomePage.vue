@@ -63,6 +63,7 @@ const handle10Click = () => {
 <style>
 .logo {
   width: 100%;
+  max-height: 40px;
 }
 
 .home {
