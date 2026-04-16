@@ -21,7 +21,7 @@ export function useHomeConfig() {
   const widgetConfig = computed(() => homePageConfig.value?.widgets ?? []);
 
   const appConfigStore = useConfigStore();
-  const zoneId = computed(() => appConfigStore.zoneId);
+  const zoneId = computed(() => appConfigStore.activeZoneId);
 
   const availableWidgets = {
     'air-quality': {

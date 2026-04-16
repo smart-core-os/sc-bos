@@ -6,10 +6,26 @@ import {computed, ref} from 'vue';
 import {useRouter} from 'vue-router';
 
 export const useConfigStore = defineStore('config', () => {
+  // Single zone — the panel's own room. Persisted as 'zoneId' for backward compat.
   const zoneId = ref('');
   const zoneMeta = ref({});
 
-  const zoneName = computed(() => zoneMeta.value?.appearance?.title ?? zoneId.value ?? '');
+  // Joined zone — the combined space when the rooms are merged (optional).
+  const joinedZoneId = ref('');
+  const joinedZoneMeta = ref({});
+
+  // Current display mode: 'single' (own room) or 'joined' (combined room).
+  const mode = ref('single');
+
+  // The zone currently active for the home page widgets.
+  const activeZoneId = computed(() =>
+    mode.value === 'joined' && joinedZoneId.value ? joinedZoneId.value : zoneId.value);
+  const activeZoneMeta = computed(() =>
+    mode.value === 'joined' && joinedZoneId.value ? joinedZoneMeta.value : zoneMeta.value);
+
+  const hasJoinedZone = computed(() => Boolean(joinedZoneId.value));
+
+  const zoneName = computed(() => activeZoneMeta.value?.appearance?.title ?? activeZoneId.value ?? '');
 
   const isReconfiguring = ref(false);
   const isConfigured = computed(() => {
@@ -33,11 +49,35 @@ export const useConfigStore = defineStore('config', () => {
   }
 
   /**
+   * @param {string} zone - empty string to clear the joined zone
+   * @param {Metadata.AsObject} [meta]
+   */
+  async function setJoinedZone(zone, meta = null) {
+    joinedZoneId.value = zone ?? '';
+    if (zone) {
+      joinedZoneMeta.value = meta ? meta : await getMetadata({name: zone});
+    } else {
+      joinedZoneMeta.value = {};
+    }
+  }
+
+  /**
+   * Toggle between 'single' and 'joined' mode. No-op if no joined zone is configured.
+   */
+  function toggleMode() {
+    if (!hasJoinedZone.value) return;
+    mode.value = mode.value === 'single' ? 'joined' : 'single';
+  }
+
+  /**
    *
    */
   function reset() {
     zoneId.value = '';
     zoneMeta.value = {};
+    joinedZoneId.value = '';
+    joinedZoneMeta.value = {};
+    mode.value = 'single';
   }
 
   const uiConfig = useUiConfigStore();
@@ -71,10 +111,18 @@ export const useConfigStore = defineStore('config', () => {
   return {
     zoneId,
     zoneMeta,
+    joinedZoneId,
+    joinedZoneMeta,
+    activeZoneId,
+    activeZoneMeta,
+    hasJoinedZone,
+    mode,
     zoneName,
     isConfigured,
     isReconfiguring,
     setZone,
+    setJoinedZone,
+    toggleMode,
     reset,
     reconfigure,
     abortReconfigure,

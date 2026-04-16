@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-h1 py-12 mt-n12">Panel Setup</h1>
+    <h1 class="text-h1 py-12 mt-n12">{{ title }}</h1>
     <v-card class="px-4 py-4" color="rgba(255,255,255,0.3)" :loading="zoneMetadataLoading">
       <v-infinite-scroll
           class="overflow-auto"
@@ -19,6 +19,9 @@
         </template>
       </v-infinite-scroll>
     </v-card>
+    <v-btn v-if="showSkip" block class="mt-4" variant="text" @click="emits('zone-skipped')">
+      Skip
+    </v-btn>
     <v-btn v-if="!disableAuthentication" block class="mt-12" variant="text" @click="accountStore.logout">
       Logout
     </v-btn>
@@ -33,11 +36,20 @@ import {useConfigStore} from '@/stores/config';
 import {useUiConfigStore} from '@/stores/ui-config';
 import {storeToRefs} from 'pinia';
 import {computed, watch} from 'vue';
-import {useRouter} from 'vue-router';
 
-const emits = defineEmits(['shouldAutoLogout']);
+const emits = defineEmits(['shouldAutoLogout', 'zone-selected', 'zone-skipped']);
 
-const router = useRouter();
+defineProps({
+  title: {
+    type: String,
+    default: 'Panel Setup'
+  },
+  showSkip: {
+    type: Boolean,
+    default: false
+  }
+});
+
 const {zoneCollection, getNextZones} = useZoneCollection();
 const accountStore = useAccountStore();
 const {zones, isInitialized} = storeToRefs(accountStore);
@@ -91,10 +103,9 @@ const fetch = async ({done}) => {
  *
  * @param {{id: string, metadata: Metadata.AsObject}} zone
  */
-async function submit(zone) {
-  await configStore.setZone(zone.id, zone.metadata);
+function submit(zone) {
   emits('shouldAutoLogout', false);
-  await router.push({name: 'home'});
+  emits('zone-selected', zone);
 }
 
 // Watch for changes to the zoneList, zoneName, and zoneId

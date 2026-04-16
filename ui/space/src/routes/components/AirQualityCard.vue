@@ -1,5 +1,5 @@
 <template>
-  <v-card :loading="loading">
+  <v-card v-if="hasAirQualitySensor" :loading="loading">
     <v-card-title class="text-h4 font-weight-medium d-flex align-center pl-7 pr-6">
       <span class="mr-auto">Air Quality</span>
       <span v-if="hasScore" class="text-uppercase font-weight-light">{{ score.label }}</span>
@@ -24,8 +24,14 @@
 <script setup>
 import CircularGauge from '@/components/CircularGauge.vue';
 import StatusChip from '@/components/StatusChip.vue';
+import {listServices} from '@/api/ui/services.js';
 import {metrics, useAirQuality, usePullAirQuality} from '@/routes/components/airQuality.js';
-import {computed} from 'vue';
+import {computed, ref, watch} from 'vue';
+
+const AIR_QUALITY_SENSOR_TRAIT = 'smartcore.traits.AirQualitySensor';
+
+// null = unknown (checking), true = sensor present, false = not present
+const hasAirQualitySensor = ref(null);
 
 const props = defineProps({
   name: {
@@ -33,6 +39,20 @@ const props = defineProps({
     default: ''
   }
 });
+
+watch(() => props.name, async (name) => {
+  if (!name) {
+    hasAirQualitySensor.value = false;
+    return;
+  }
+  try {
+    const res = await listServices({name});
+    hasAirQualitySensor.value =
+        res.servicesList?.some(s => s.id === AIR_QUALITY_SENSOR_TRAIT) ?? false;
+  } catch {
+    hasAirQualitySensor.value = false;
+  }
+}, {immediate: true});
 
 const orderedMetrics = [
   'volatileOrganicCompounds', 'carbonDioxideLevel',
