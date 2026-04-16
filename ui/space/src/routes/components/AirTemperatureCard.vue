@@ -18,7 +18,7 @@
     <v-card-text>
       <v-slider
           track-color="#0C0921"
-          track-fill-color="#26004D"
+          track-fill-color="#5A0066"
           :disabled="blockActions"
           hide-details="auto"
           :max="temperatureRange.high"
