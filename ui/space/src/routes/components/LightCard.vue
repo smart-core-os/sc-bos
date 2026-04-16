@@ -17,8 +17,8 @@
     </v-card-title>
     <v-card-text>
       <v-slider
-          track-color="primary"
-          track-fill-color="accent"
+          track-color="#0C0921"
+          track-fill-color="#26004D"
           :disabled="!lightValue.value || blockActions"
           hide-details="auto"
           v-model="brightness">
