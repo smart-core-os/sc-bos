@@ -75,11 +75,13 @@ const {
   reactivePower, hasReactivePower,
 } = useElectricDemand(value);
 
-// Derive PF from realPower/apparentPower when not reported directly
+// Derive PF from realPower/apparentPower when not reported directly.
+// Power factor is always a magnitude in [0, 1]; use Math.abs to handle negative
+// real power (reverse/export flow) and devices that report a signed PF.
 const effectivePowerFactor = computed(() => {
-  if (hasPowerFactor.value) return powerFactor.value;
+  if (hasPowerFactor.value) return Math.min(1, Math.abs(powerFactor.value));
   if (hasApparentPower.value && apparentPower.value > 0) {
-    return Math.min(1, realPower.value / apparentPower.value);
+    return Math.min(1, Math.abs(realPower.value) / apparentPower.value);
   }
   return null;
 });
