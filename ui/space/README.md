@@ -119,6 +119,10 @@ See [Authentication](#authentication) below.
 
 ## Authentication
 
+> **Security warning:** When local account authentication is used, the Space UI stores the user's password in browser
+> `localStorage` to support automatic silent re-authentication after a server restart. The Space UI should only be
+> deployed on trusted, physically-secured devices. Do not use it on shared or publicly accessible hardware.
+
 Authentication is optional. By default the UI will attempt to use a local account login if no auth config is provided.
 
 ### Disable authentication
