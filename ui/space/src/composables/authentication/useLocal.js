@@ -77,10 +77,15 @@ export default function() {
         const payload = await res.json();
 
         if (payload?.access_token) {
+          const decoded = jwtDecode(payload.access_token);
+          // Derive zones from legacy zone permissions (NAMED_RESOURCE_PATH_PREFIX = rt:2)
+          // so that claims.zones is populated even when the JWT doesn't include it directly.
+          const permZones = (decoded.perms ?? []).filter(p => p.rt === 2).map(p => p.r);
           const details = /** @type {AuthenticationDetails} */ {
             claims: {
               email: username,
-              ...jwtDecode(payload.access_token)
+              ...decoded,
+              zones: decoded.zones ?? permZones
             },
             loggedIn: true,
             token: payload.access_token
