@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-h1 py-12 mt-n12">Panel Setup</h1>
+    <h1 class="text-h1 py-12 mt-n12">{{ title }}</h1>
     <v-card class="px-4 py-4" color="rgba(255,255,255,0.3)" :loading="zoneMetadataLoading">
       <v-infinite-scroll
           class="overflow-auto"
@@ -19,6 +19,12 @@
         </template>
       </v-infinite-scroll>
     </v-card>
+    <v-btn v-if="showSkip" block class="mt-4" variant="text" @click="emits('zone-skipped')">
+      Skip
+    </v-btn>
+    <v-btn v-if="showAdminMode" block class="mt-4" variant="text" @click="emits('admin-mode')">
+      Admin Mode
+    </v-btn>
     <v-btn v-if="!disableAuthentication" block class="mt-12" variant="text" @click="accountStore.logout">
       Logout
     </v-btn>
@@ -33,11 +39,24 @@ import {useConfigStore} from '@/stores/config';
 import {useUiConfigStore} from '@/stores/ui-config';
 import {storeToRefs} from 'pinia';
 import {computed, watch} from 'vue';
-import {useRouter} from 'vue-router';
 
-const emits = defineEmits(['shouldAutoLogout']);
+const emits = defineEmits(['shouldAutoLogout', 'zone-selected', 'zone-skipped', 'admin-mode']);
 
-const router = useRouter();
+defineProps({
+  title: {
+    type: String,
+    default: 'Panel Setup'
+  },
+  showSkip: {
+    type: Boolean,
+    default: false
+  },
+  showAdminMode: {
+    type: Boolean,
+    default: false
+  }
+});
+
 const {zoneCollection, getNextZones} = useZoneCollection();
 const accountStore = useAccountStore();
 const {zones, isInitialized} = storeToRefs(accountStore);
@@ -46,15 +65,19 @@ const disableAuthentication = computed(() => uiConfig.auth.disabled);
 const configStore = useConfigStore();
 
 const zoneIds = computed(() => {
-  // prefer using the account zones over fetching from the server
-  if (zones.value.length > 0) return zones.value;
   if (!zoneCollection?.response?.servicesList) {
     return [];
   }
-  const zoneIds = zoneCollection.response.servicesList
-      .filter(s => s.active)
-      .map(s => s.id);
-  return [...new Set(zoneIds)];
+  const allIds = [...new Set(
+    zoneCollection.response.servicesList
+        .filter(s => s.active)
+        .map(s => s.id)
+  )];
+  if (zones.value.length === 0) return allIds;
+  // Filter to zones that exactly match or fall under a configured zone path
+  return allIds.filter(id =>
+    zones.value.some(z => id === z || id.startsWith(z + '/'))
+  );
 });
 const {loading: zoneMetadataLoading, trackers: zoneMetadata} = useMetadata(zoneIds);
 
@@ -74,7 +97,6 @@ const noZones = computed(() => {
 
 const fetch = async ({done}) => {
   if (!isInitialized.value) return; // don't do anything until we know about account zones
-  if (zones.value.length > 0) return; // don't load zones from server if we have account zones to use
 
   const prev = zoneList.value.length;
 
@@ -91,10 +113,9 @@ const fetch = async ({done}) => {
  *
  * @param {{id: string, metadata: Metadata.AsObject}} zone
  */
-async function submit(zone) {
-  await configStore.setZone(zone.id, zone.metadata);
+function submit(zone) {
   emits('shouldAutoLogout', false);
-  await router.push({name: 'home'});
+  emits('zone-selected', zone);
 }
 
 // Watch for changes to the zoneList, zoneName, and zoneId

@@ -1,9 +1,17 @@
 <template>
   <div class="home pa-8 d-flex flex-column fill-height">
     <glance-widget @admin-click="handle10Click"/>
+    <v-btn
+        v-if="configStore.hasJoinedZone"
+        variant="tonal"
+        size="large"
+        block
+        @click="configStore.toggleMode()">
+      {{ configStore.mode === 'single' ? 'Switch to Combined Room' : 'Switch to Your Room' }}
+    </v-btn>
     <v-spacer/>
     <component v-for="widget in widgets" :key="widget.key" :is="widget.is" v-bind="widget.props"/>
-    <img :src="uiConfigStore.theme.logoUrl" class="logo pt-3 pr-3 align-self-end" alt="Smart Core logo">
+    <img :src="uiConfigStore.theme.logoUrl" class="logo pt-3" alt="Smart Core logo">
     <NotificationToast :show-alert="alertMessage.show" :message="alertMessage.message"/>
   </div>
 </template>
@@ -54,8 +62,8 @@ const handle10Click = () => {
 
 <style>
 .logo {
-  max-width: 50%;
-  max-height: 75px;
+  width: 100%;
+  max-height: 40px;
 }
 
 .home {

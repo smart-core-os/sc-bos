@@ -6,7 +6,20 @@
       @keydown="resetTimer"
       @touchstart="resetTimer"
       @touchmove="resetTimer">
-    <list-selector @should-auto-logout="shouldAutoLogout"/>
+    <list-selector
+        v-if="step === 1"
+        title="Select your room"
+        :show-admin-mode="true"
+        @zone-selected="onSingleZone"
+        @admin-mode="onAdminMode"
+        @should-auto-logout="shouldAutoLogout"/>
+    <list-selector
+        v-else
+        title="Select combined room"
+        :show-skip="true"
+        @zone-selected="onJoinedZone"
+        @zone-skipped="skipJoinedZone"
+        @should-auto-logout="shouldAutoLogout"/>
     <v-snackbar
         class="d-flex flex-row justify-center mb-4 elevation-0"
         color="transparent"
@@ -29,6 +42,28 @@ const router = useRouter();
 const uiConfig = useUiConfigStore();
 const configStore = useConfigStore();
 const {logout} = useAccountStore();
+
+const step = ref(1);
+
+const onSingleZone = async (zone) => {
+  await configStore.setZone(zone.id, zone.metadata);
+  step.value = 2;
+};
+
+const onJoinedZone = async (zone) => {
+  await configStore.setJoinedZone(zone.id, zone.metadata);
+  await router.push({name: 'home'});
+};
+
+const skipJoinedZone = async () => {
+  await configStore.setJoinedZone('', null);
+  await router.push({name: 'home'});
+};
+
+const onAdminMode = () => {
+  configStore.setAdminMode();
+  router.push({name: 'admin'});
+};
 const autoLogoutAlert = ref(false);
 const autoLogoutOn = ref(false);
 const disableAuthentication = computed(() => uiConfig.auth.disabled);

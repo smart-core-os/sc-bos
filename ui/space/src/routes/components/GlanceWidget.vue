@@ -3,12 +3,15 @@
     <div class="timedate">
       <h1 class="time">{{ timeStr }}</h1>
       <span class="text-h5">{{ dateStr }}</span>
+      <span v-if="zoneName" class="text-h6 zone-name d-block">{{ zoneName }}</span>
     </div>
   </div>
 </template>
 
 <script setup>
 import {SECOND, useNow} from '@/components/now';
+import {useConfigStore} from '@/stores/config';
+import {storeToRefs} from 'pinia';
 import {computed} from 'vue';
 
 const {now} = useNow(SECOND);
@@ -22,6 +25,8 @@ const dateStr = computed(() => now.value.toLocaleDateString('en-GB', {
   month: 'long',
   year: 'numeric'
 }));
+
+const {zoneName} = storeToRefs(useConfigStore());
 
 const emits = defineEmits(['adminClick']);
 </script>
