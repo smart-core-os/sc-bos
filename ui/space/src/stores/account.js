@@ -145,6 +145,9 @@ export const useAccountStore = defineStore('accountStore', () => {
     if (isInitialized.value) return;
     try {
       await _initialise(providerNames);
+      if (!isLoggedIn.value) {
+        await tryAutoLogin();
+      }
       initResolved();
     } catch (e) {
       initRejected(e);
@@ -358,6 +361,38 @@ export const useAccountStore = defineStore('accountStore', () => {
     }
   };
 
+  // Deduplicate concurrent auto-relogin attempts (e.g. multiple simultaneous 401 errors)
+  let _reloginPromise = null;
+
+  /**
+   * Silently re-authenticates using auto-login credentials from the UI config.
+   * Returns true on success, false if credentials are not configured or login fails.
+   * Concurrent calls are collapsed into a single login attempt.
+   *
+   * @return {Promise<boolean>}
+   */
+  const tryAutoLogin = () => {
+    if (_reloginPromise) return _reloginPromise;
+    _reloginPromise = (async () => {
+      try {
+        const creds = await localAuth.getSavedCredentials();
+        if (!creds?.username || !creds?.password) return false;
+        const details = await localAuth.login(creds.username, creds.password);
+        if (details) {
+          authenticationDetails.value = {...details, authProvider: 'localAuth'};
+          forceLogIn.value = false;
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      } finally {
+        _reloginPromise = null;
+      }
+    })();
+    return _reloginPromise;
+  };
+
   const shouldRedirect = computed(() => {
     return isLoggedIn.value && route.name === 'login' && !forceLogIn.value;
   });
@@ -390,6 +425,7 @@ export const useAccountStore = defineStore('accountStore', () => {
     beginDeviceFlow,
     logout,
     refreshToken,
+    tryAutoLogin,
 
 
     /**

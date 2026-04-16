@@ -9,13 +9,16 @@ export function clientOptions(options = {}) {
   const account = useAccountStore();
 
   /**
-   * Log the user out if we get a permission denied/unauthenticated error
-   * (this going to clear the pinia state too)
+   * Handle an auth error by trying auto-relogin first, falling back to full logout.
    *
    * @param {string} reason
    */
-  const handleLogout = (reason) => {
-    account.logout(reason).catch(e => console.error('Logout failed', e));
+  const handleAuthError = (reason) => {
+    account.tryAutoLogin().then(relogged => {
+      if (!relogged) {
+        account.logout(reason).catch(e => console.error('Logout failed', e));
+      }
+    }).catch(e => console.error('Auto-relogin failed', e));
   };
 
   /**
@@ -26,10 +29,10 @@ export function clientOptions(options = {}) {
   const handleError = (e) => {
     switch (e.code) {
       case StatusCode.PERMISSION_DENIED:
-        handleLogout('Permission denied');
+        handleAuthError('Permission denied');
         break;
       case StatusCode.UNAUTHENTICATED:
-        handleLogout('Unauthenticated');
+        handleAuthError('Unauthenticated');
         break;
     }
   };

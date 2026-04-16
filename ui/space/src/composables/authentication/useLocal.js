@@ -52,6 +52,35 @@ export default function() {
   };
 
   /**
+   * Write the credentials to local storage so they can be used for silent re-authentication.
+   *
+   * @param {string} username
+   * @param {string} password
+   * @return {Promise<void>}
+   */
+  const writeCredentialsToStorage = async (username, password) => {
+    saveToBrowserStorage('local', 'localAuthCredentials', {username, password});
+  };
+
+  /**
+   * Read stored credentials from local storage.
+   *
+   * @return {Promise<{username: string, password: string}|null>}
+   */
+  const getSavedCredentials = async () => {
+    return loadFromBrowserStorage('local', 'localAuthCredentials', null)[0];
+  };
+
+  /**
+   * Remove stored credentials from local storage.
+   *
+   * @return {Promise<void>}
+   */
+  const clearCredentialsStorage = async () => {
+    window.localStorage.removeItem('localAuthCredentials');
+  };
+
+  /**
    * Initialize local authentication - set the existing local authentication details
    * or the default store values
    *
@@ -91,6 +120,7 @@ export default function() {
             token: payload.access_token
           };
           await writeToStorage(details);
+          await writeCredentialsToStorage(username, password);
           existingLocalAuth.value = details;
           return details;
         }
@@ -114,6 +144,7 @@ export default function() {
   const logoutLocal = async () => {
     existingLocalAuth.value = null;
     await clearStorage();
+    await clearCredentialsStorage();
   };
 
   /**
@@ -130,6 +161,7 @@ export default function() {
     init: initializeLocal,
     login: loginLocal,
     logout: logoutLocal,
-    refreshToken
+    refreshToken,
+    getSavedCredentials
   };
 }
