@@ -126,29 +126,32 @@ func (t *electricTrait) pollPeer(ctx context.Context) (*electricpb.ElectricDeman
 	var phaseDemand [3]*electricpb.ElectricDemand
 
 	if cfg := t.config.Demand; cfg != nil {
-		if cfg.Current != nil {
-			requestNames = append(requestNames, "current")
-			toRead = append(toRead, *cfg.Current)
-			toWrite = append(toWrite, func(v any) (err error) {
-				dst.Current, err = comm.Float32Value(v)
-				return
-			})
-		}
-		if cfg.Voltage != nil {
-			requestNames = append(requestNames, "voltage")
-			toRead = append(toRead, *cfg.Voltage)
-			toWrite = append(toWrite, func(v any) (err error) {
-				dst.Voltage, err = ptr(comm.Float32Value(v))
-				return
-			})
-		}
-		if cfg.Rating != nil {
-			toRead = append(toRead, *cfg.Rating)
-			requestNames = append(requestNames, "rating")
-			toWrite = append(toWrite, func(v any) (err error) {
-				dst.Rating, err = comm.Float32Value(v)
-				return
-			})
+		// Check embedded ElectricPhaseConfig pointer before accessing its fields
+		if cfg.ElectricPhaseConfig != nil {
+			if cfg.Current != nil {
+				requestNames = append(requestNames, "current")
+				toRead = append(toRead, *cfg.Current)
+				toWrite = append(toWrite, func(v any) (err error) {
+					dst.Current, err = comm.Float32Value(v)
+					return
+				})
+			}
+			if cfg.Voltage != nil {
+				requestNames = append(requestNames, "voltage")
+				toRead = append(toRead, *cfg.Voltage)
+				toWrite = append(toWrite, func(v any) (err error) {
+					dst.Voltage, err = ptr(comm.Float32Value(v))
+					return
+				})
+			}
+			if cfg.Rating != nil {
+				toRead = append(toRead, *cfg.Rating)
+				requestNames = append(requestNames, "rating")
+				toWrite = append(toWrite, func(v any) (err error) {
+					dst.Rating, err = comm.Float32Value(v)
+					return
+				})
+			}
 		}
 
 		readPhase := func(i int, phase ElectricPhaseConfig, dst *electricpb.ElectricDemand) {
