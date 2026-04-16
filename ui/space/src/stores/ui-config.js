@@ -227,7 +227,7 @@ const _defaultConfig = {
   config: {
     'home': '/home',
     theme: {
-      logoUrl: import.meta.env.BASE_URL + 'img/sc-fav.svg',
+      logoUrl: import.meta.env.BASE_URL + 'img/powered-by.svg',
     }
   }
 };
