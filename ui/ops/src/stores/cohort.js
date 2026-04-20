@@ -109,7 +109,7 @@ export const useCohortStore = defineStore('cohort', () => {
       const task = scope.run(() => {
         return useIsGateway(name);
       });
-      task.stop = () => scope.stop;
+      task.stop = () => scope.stop();
       nodeGatewayChecks[name] = task;
     }
 
