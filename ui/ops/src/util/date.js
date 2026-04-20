@@ -69,23 +69,46 @@ export function roundUp(date, round) {
  * @return {string}
  */
 export function formatTimeAgo(date, now, MINUTE, HOUR, DAY) {
-  let diffInSeconds = (now - date) / 1000;
+  return formatTimeAgoRounded(date, now, 0, MINUTE, HOUR, DAY);
+}
+
+/**
+ * Formats the given date as an `in / time ago` string.
+ * The date is formatted as `in` when the date is in the future.
+ * The date is formatted as `time ago` when the date is in the past.
+ * The granularity sets the smallest unit that will be displayed.
+ * E.g. `in 5 minutes` or `5 minutes ago`.
+ *
+ * @param {Date} date
+ * @param {Date} now
+ * @param {number} granularity - in milliseconds
+ * @param {number} MINUTE
+ * @param {number} HOUR
+ * @param {number} DAY
+ * @return {string}
+ */
+export function formatTimeAgoRounded(date, now, granularity, MINUTE, HOUR, DAY) {
+  let diff = now - date;
 
   // Adding a small buffer to account for minimal future time differences
-  const bufferInSeconds = 1;
-  if (diffInSeconds < 0 && Math.abs(diffInSeconds) < bufferInSeconds) {
-    diffInSeconds = 0;
+  const bufferMs= 1000;
+  if (diff < 0 && Math.abs(diff) < bufferMs) {
+    diff = 0;
+  }
+
+  if (granularity > 0) {
+    diff = Math.trunc(diff / granularity) * granularity;
   }
 
   const rtf = new Intl.RelativeTimeFormat('en', {numeric: 'auto'});
 
-  if (Math.abs(diffInSeconds) < MINUTE) {
-    return rtf.format(-Math.floor(diffInSeconds), 'second');
-  } else if (Math.abs(diffInSeconds) < HOUR) {
-    return rtf.format(-Math.floor(diffInSeconds / MINUTE), 'minute');
-  } else if (Math.abs(diffInSeconds) < DAY) {
-    return rtf.format(-Math.floor(diffInSeconds / HOUR), 'hour');
+  if (Math.abs(diff) < MINUTE) {
+    return rtf.format(-Math.floor(diff / 1000), 'second');
+  } else if (Math.abs(diff) < HOUR) {
+    return rtf.format(-Math.floor(diff / MINUTE), 'minute');
+  } else if (Math.abs(diff) < DAY) {
+    return rtf.format(-Math.floor(diff / HOUR), 'hour');
   } else {
-    return rtf.format(-Math.floor(diffInSeconds / DAY), 'day');
+    return rtf.format(-Math.floor(diff / DAY), 'day');
   }
 }

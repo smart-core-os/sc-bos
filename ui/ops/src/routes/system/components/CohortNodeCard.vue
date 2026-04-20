@@ -34,20 +34,34 @@
               <v-chip v-if="isCentralHub" color="orange" size="x-small" variant="flat">hub</v-chip>
               <v-chip v-if="isProxyHubNode" color="cyan-darken-1" size="x-small" variant="flat">hub-proxy</v-chip>
             </template>
+            <!-- Cloud connection chips -->
+            <v-chip v-if="cloudConnected" color="info" size="x-small" variant="flat"
+                    v-tooltip:bottom="'Connected to Smart Core Connect'">
+              cloud
+            </v-chip>
+            <v-chip v-else-if="cloudConnecting" size="x-small" variant="flat"
+                    v-tooltip:bottom="'Connecting to Smart Core Connect'">
+              cloud connecting...
+            </v-chip>
+            <v-chip v-else-if="cloudLinked" color="warning" size="x-small" variant="flat"
+                    v-tooltip:bottom="cloudLastError">
+              cloud offline
+            </v-chip>
           </div>
           <div class="text-caption text-medium-emphasis d-flex align-center mt-1">
             <v-icon size="11" class="mr-1">mdi-network</v-icon>
             {{ node.grpcAddress }}
           </div>
         </div>
-        <v-menu v-if="node.role !== NodeRole.INDEPENDENT" min-width="175px">
+        <v-menu min-width="175px">
           <template #activator="{ props: _props }">
             <v-btn icon="mdi-dots-vertical" variant="text" size="x-small" density="compact" v-bind="_props">
               <v-icon size="16"/>
             </v-btn>
           </template>
           <v-list class="py-0">
-            <v-list-item link @click="onShowCertificates(node.grpcAddress)">
+            <!-- Independent nodes can't retrieve their certificate -->
+            <v-list-item v-if="!isIndependent" link @click="onShowCertificates(node.grpcAddress)">
               <v-list-item-title>View Certificate</v-list-item-title>
             </v-list-item>
             <v-list-item v-if="hasLogService" link @click="onDownloadLogs(node.name)">
@@ -55,6 +69,9 @@
             </v-list-item>
             <v-list-item v-if="hasLogService" link @click="onViewLiveLogs(node.name)">
               <v-list-item-title>View Live Logs</v-list-item-title>
+            </v-list-item>
+            <v-list-item link @click="cloudDialogOpen = true">
+              <v-list-item-title>{{ cloudLinked ? 'Manage Cloud Link' : 'Link to Cloud' }}</v-list-item-title>
             </v-list-item>
             <v-list-item v-if="node.role !== NodeRole.HUB && !node.isServer"
                          link
@@ -65,6 +82,10 @@
         </v-menu>
       </div>
 
+      <link-cloud-dialog
+          v-model="cloudDialogOpen"
+          :node-name="node.name"
+          :cloud-connection="cloudResource.value"/>
       <v-divider class="mt-2 mb-3"/>
 
       <!-- Service stats -->
@@ -222,13 +243,17 @@
 </template>
 
 <script setup>
+import {pullCloudConnection, CloudErrMessage} from '@/api/ui/cloud-connection.js';
 import {getDownloadLogUrl} from '@/api/ui/log.js';
+import {newResourceValue} from '@/api/resource.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
 import {useHasHubSystem, usePullService, usePullServiceMetadata} from '@/composables/services.js';
 import {NodeRole, useCohortStore} from '@/stores/cohort.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
-import {computed, reactive} from 'vue';
+import {CloudConnection} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb';
+import {computed, onScopeDispose, reactive, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
+import LinkCloudDialog from './LinkCloudDialog.vue';
 
 const props = defineProps({
   node: {
@@ -249,6 +274,7 @@ const hasLogService = computed(() => !!logServiceValue.value);
 const {hasHubSystem, isProxyHub} = useHasHubSystem(() => props.node.name);
 const isCentralHub = computed(() => props.node.role === NodeRole.HUB || (hasHubSystem.value && !isProxyHub.value));
 const isProxyHubNode = computed(() => hasHubSystem.value && isProxyHub.value && props.node.role !== NodeRole.GATEWAY);
+const isIndependent = computed(() => props.node.role === NodeRole.INDEPENDENT)
 
 const cohortStore = useCohortStore();
 const connectedViaHub = computed(() =>
@@ -287,6 +313,29 @@ const accentStyle = computed(() => {
     return i === 0 ? `${c} ${end}%` : `${c} ${start}% ${end}%`;
   });
   return {background: `linear-gradient(to right, ${stops.join(', ')})`};
+});
+
+// Cloud connection status
+const cloudResource = reactive(newResourceValue());
+onScopeDispose(() => {
+  if (cloudResource.stream) cloudResource.stream.cancel();
+});
+watch(() => props.node?.name, (name) => {
+  if (cloudResource.stream) cloudResource.stream.cancel();
+  if (name) pullCloudConnection({name, updatesOnly: false}, cloudResource);
+}, {immediate: true});
+
+const cloudState = computed(() => cloudResource.value?.state);
+const cloudLinked = computed(() =>
+  cloudState.value === CloudConnection.State.CONNECTED ||
+  cloudState.value === CloudConnection.State.CONNECTING ||
+  cloudState.value === CloudConnection.State.FAILED
+);
+const cloudConnected  = computed(() => cloudState.value === CloudConnection.State.CONNECTED);
+const cloudConnecting = computed(() => cloudState.value === CloudConnection.State.CONNECTING);
+const cloudDialogOpen = ref(false);
+const cloudLastError = computed(() => {
+  return CloudErrMessage[cloudResource.value?.lastError] || cloudResource.value?.lastError || 'Cloud connection offline';
 });
 
 const onShowCertificates = (address) => emit('click:show-certificates', address);
