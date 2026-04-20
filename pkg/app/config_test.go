@@ -60,8 +60,9 @@ func setupActiveState(t *testing.T, storeDir string, depID int64, configJSON str
 	}
 }
 
-// newTestUpdater creates a DeploymentUpdater backed by a temp dir and a noopClient.
-func newTestUpdater(t *testing.T) (*cloud.DeploymentUpdater, string) {
+// newTestEnv creates a Conn and DeploymentStore backed by a temp dir.
+// The Conn has a fake registration so that CommitInstall/FailInstall have an updater.
+func newTestEnv(t *testing.T) (*cloud.Conn, *cloud.DeploymentStore, string) {
 	t.Helper()
 	storePath := t.TempDir()
 	storeDir, err := os.OpenRoot(storePath)
@@ -69,7 +70,24 @@ func newTestUpdater(t *testing.T) (*cloud.DeploymentUpdater, string) {
 		t.Fatalf("open root: %v", err)
 	}
 	t.Cleanup(func() { _ = storeDir.Close() })
-	return cloud.NewDeploymentUpdater(storeDir, noopClient{}), storePath
+	store := cloud.NewDeploymentStore(storeDir)
+
+	regStore := cloud.NewFileRegistrationStore(filepath.Join(t.TempDir(), "registration.json"))
+	conn, err := cloud.OpenConn(t.Context(), regStore, store,
+		cloud.WithClientFactory(func(cloud.Registration) cloud.Client { return noopClient{} }),
+	)
+	if err != nil {
+		t.Fatalf("OpenConn: %v", err)
+	}
+	// Pre-register so the updater is initialised (needed for CommitInstall/FailInstall).
+	if _, err = conn.Register(t.Context(), cloud.Registration{
+		ClientID:     "test-client",
+		ClientSecret: "test-secret",
+		BosapiRoot:   "http://localhost",
+	}); err != nil {
+		t.Fatalf("conn.Register: %v", err)
+	}
+	return conn, store, storePath
 }
 
 func TestLoadCloudInstallingConfig(t *testing.T) {
@@ -77,25 +95,25 @@ func TestLoadCloudInstallingConfig(t *testing.T) {
 	logger := zap.NewNop()
 
 	t.Run("no installing config", func(t *testing.T) {
-		updater, _ := newTestUpdater(t)
+		conn, store, _ := newTestEnv(t)
 
-		_, loaded := loadCloudInstallingConfig(ctx, updater, logger)
+		_, loaded := loadCloudInstallingConfig(ctx, store, conn, logger)
 		if loaded {
 			t.Error("want loaded=false when no installing config")
 		}
 	})
 
 	t.Run("valid config is committed", func(t *testing.T) {
-		updater, storePath := newTestUpdater(t)
+		conn, store, storePath := newTestEnv(t)
 		setupInstallingState(t, storePath, 1, "{}")
 
-		_, loaded := loadCloudInstallingConfig(ctx, updater, logger)
+		_, loaded := loadCloudInstallingConfig(ctx, store, conn, logger)
 		if !loaded {
 			t.Fatal("want loaded=true for valid installing config")
 		}
 
 		// CommitInstall should have cleared the installing mark
-		fsys, err := updater.InstallingConfig()
+		fsys, err := store.InstallingConfig()
 		if err != nil {
 			t.Fatalf("InstallingConfig after commit: %v", err)
 		}
@@ -106,7 +124,7 @@ func TestLoadCloudInstallingConfig(t *testing.T) {
 	})
 
 	t.Run("unreadable installing FS triggers FailInstall", func(t *testing.T) {
-		updater, storePath := newTestUpdater(t)
+		conn, store, storePath := newTestEnv(t)
 
 		// Create installing symlink and deployment dir but no config-version subdir
 		deploymentsDir := filepath.Join(storePath, "deployments")
@@ -117,13 +135,13 @@ func TestLoadCloudInstallingConfig(t *testing.T) {
 			t.Fatalf("create installing symlink: %v", err)
 		}
 
-		_, loaded := loadCloudInstallingConfig(ctx, updater, logger)
+		_, loaded := loadCloudInstallingConfig(ctx, store, conn, logger)
 		if loaded {
 			t.Error("want loaded=false when config-version dir is missing")
 		}
 
 		// FailInstall should have cleared the installing mark
-		fsys, err := updater.InstallingConfig()
+		fsys, err := store.InstallingConfig()
 		if err != nil {
 			t.Fatalf("InstallingConfig after FailInstall: %v", err)
 		}
@@ -134,16 +152,16 @@ func TestLoadCloudInstallingConfig(t *testing.T) {
 	})
 
 	t.Run("invalid config JSON triggers FailInstall", func(t *testing.T) {
-		updater, storePath := newTestUpdater(t)
+		conn, store, storePath := newTestEnv(t)
 		setupInstallingState(t, storePath, 1, "{invalid json}")
 
-		_, loaded := loadCloudInstallingConfig(ctx, updater, logger)
+		_, loaded := loadCloudInstallingConfig(ctx, store, conn, logger)
 		if loaded {
 			t.Error("want loaded=false for invalid config JSON")
 		}
 
 		// FailInstall should have cleared the installing mark
-		fsys, err := updater.InstallingConfig()
+		fsys, err := store.InstallingConfig()
 		if err != nil {
 			t.Fatalf("InstallingConfig after FailInstall: %v", err)
 		}
@@ -159,46 +177,46 @@ func TestLoadCloudAppConfig(t *testing.T) {
 	logger := zap.NewNop()
 
 	t.Run("installing config takes precedence over active", func(t *testing.T) {
-		updater, storePath := newTestUpdater(t)
+		conn, store, storePath := newTestEnv(t)
 		setupInstallingState(t, storePath, 1, `{"name":"installing"}`)
 		setupActiveState(t, storePath, 2, `{"name":"active"}`)
 
-		store, err := loadCloudAppConfig(ctx, sysconf.Config{DataDir: t.TempDir()}, updater, logger)
+		cs, err := loadCloudAppConfig(ctx, sysconf.Config{DataDir: t.TempDir()}, store, conn, logger)
 		if err != nil {
 			t.Fatalf("loadCloudAppConfig: %v", err)
 		}
-		if store == nil {
+		if cs == nil {
 			t.Fatal("want non-nil ConfigStore")
 		}
-		if _, ok := store.(*immutableConfigStore); !ok {
-			t.Errorf("want *immutableConfigStore, got %T", store)
+		if _, ok := cs.(*immutableConfigStore); !ok {
+			t.Errorf("want *immutableConfigStore, got %T", cs)
 		}
-		if got := store.Active().Name; got != "installing" {
+		if got := cs.Active().Name; got != "installing" {
 			t.Errorf("active config name = %q, want %q", got, "installing")
 		}
 	})
 
 	t.Run("falls back to active config when no installing", func(t *testing.T) {
-		updater, storePath := newTestUpdater(t)
+		conn, store, storePath := newTestEnv(t)
 		setupActiveState(t, storePath, 1, `{"name":"active"}`)
 
-		store, err := loadCloudAppConfig(ctx, sysconf.Config{DataDir: t.TempDir()}, updater, logger)
+		cs, err := loadCloudAppConfig(ctx, sysconf.Config{DataDir: t.TempDir()}, store, conn, logger)
 		if err != nil {
 			t.Fatalf("loadCloudAppConfig: %v", err)
 		}
-		if store == nil {
+		if cs == nil {
 			t.Fatal("want non-nil ConfigStore")
 		}
-		if _, ok := store.(*immutableConfigStore); !ok {
-			t.Errorf("want *immutableConfigStore, got %T", store)
+		if _, ok := cs.(*immutableConfigStore); !ok {
+			t.Errorf("want *immutableConfigStore, got %T", cs)
 		}
-		if got := store.Active().Name; got != "active" {
+		if got := cs.Active().Name; got != "active" {
 			t.Errorf("active config name = %q, want %q", got, "active")
 		}
 	})
 
 	t.Run("falls back to local config when no active", func(t *testing.T) {
-		updater, _ := newTestUpdater(t)
+		conn, store, _ := newTestEnv(t)
 
 		const localConfigName = "localconf.json"
 		const localConfig = `{"name":"local"}`
@@ -207,17 +225,17 @@ func TestLoadCloudAppConfig(t *testing.T) {
 			t.Fatalf("write local config: %v", err)
 		}
 
-		store, err := loadCloudAppConfig(ctx, sysconf.Config{DataDir: t.TempDir(), AppConfig: []string{localConfigPath}}, updater, logger)
+		cs, err := loadCloudAppConfig(ctx, sysconf.Config{DataDir: t.TempDir(), AppConfig: []string{localConfigPath}}, store, conn, logger)
 		if err != nil {
 			t.Fatalf("loadCloudAppConfig: %v", err)
 		}
-		if store == nil {
+		if cs == nil {
 			t.Fatal("want non-nil ConfigStore (from local fallback)")
 		}
-		if _, ok := store.(*immutableConfigStore); ok {
+		if _, ok := cs.(*immutableConfigStore); ok {
 			t.Error("want mutable (local) ConfigStore, not *immutableConfigStore")
 		}
-		if got := store.Active().Name; got != "local" {
+		if got := cs.Active().Name; got != "local" {
 			t.Errorf("active config name = %q, want %q", got, "local")
 		}
 	})

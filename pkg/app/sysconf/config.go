@@ -306,11 +306,10 @@ func (c *Certs) FillDefaults() *Certs {
 
 // Cloud configures the connection to the SCC BOS-facing API.
 type Cloud struct {
-	// BosapiRoot is the base URL of the SCC BOS-facing API (e.g. "https://bosapi.example.com").
-	// TODO: default to the production URL once it's known.
-	BosapiRoot       string `json:"bosapiRoot,omitempty"`
-	ClientID         string `json:"clientId,omitempty"`
-	ClientSecretFile string `json:"clientSecretFile,omitempty"`
+	// RegisterURL is the default URL for the device-registration POST endpoint
+	// (e.g. "https://scc.example.com/v1/device/register"). Used when an operator
+	// enrolls via the Ops UI without supplying an explicit register URL.
+	RegisterURL string `json:"registerUrl,omitempty"`
 
 	PollInterval *jsontypes.Duration `json:"pollInterval,omitempty"`
 	// Preserve old or incomplete downloads instead of deleting them on startup or when they expire.

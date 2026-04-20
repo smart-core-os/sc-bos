@@ -1,8 +1,13 @@
 package cloud
 
 import (
+	"errors"
 	"fmt"
+	"net"
+	"net/http"
 	"time"
+
+	"golang.org/x/oauth2"
 )
 
 // CheckInRequest is the optional request body for the check-in endpoint.
@@ -76,4 +81,44 @@ type APIError struct {
 
 func (e *APIError) Error() string {
 	return fmt.Sprintf("HTTP %d: %s: %s", e.StatusCode, e.Code, e.Message)
+}
+
+// CredentialCheckError wraps an error from a trial check-in performed to validate
+// credentials before they are persisted. The server layer uses this to return a
+// domain-specific status code rather than a generic internal error.
+type CredentialCheckError struct{ Err error }
+
+func (e *CredentialCheckError) Error() string { return "credential check: " + e.Err.Error() }
+func (e *CredentialCheckError) Unwrap() error { return e.Err }
+
+func IsCredentialCheckError(err error) bool {
+	var e *CredentialCheckError
+	return errors.As(err, &e)
+}
+
+// IsInvalidCredentialsError reports whether err indicates that the OAuth2
+// client credentials were rejected by the server.
+func IsInvalidCredentialsError(err error) bool {
+	var re *oauth2.RetrieveError
+	if errors.As(err, &re) {
+		return true
+	}
+	var apiErr *APIError
+	return errors.As(err, &apiErr) &&
+		(apiErr.StatusCode == http.StatusUnauthorized || apiErr.StatusCode == http.StatusForbidden)
+}
+
+// IsConnectionError reports whether err is a network-level failure (DNS,
+// connection refused, timeout, etc.) that prevented reaching the server.
+func IsConnectionError(err error) bool {
+	var netErr net.Error
+	return errors.As(err, &netErr)
+}
+
+func IsInvalidEnrollmentCode(err error) bool {
+	apiErr, ok := errors.AsType[*APIError](err)
+	if !ok {
+		return false
+	}
+	return apiErr.Code == "invalid_enrollment_code"
 }

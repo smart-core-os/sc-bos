@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package smartcore.bos.ops.cloud.v1alpha;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/ops/cloudpb";
+
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/types/v1/change.proto";
+
+service CloudConnectionApi {
+  rpc GetCloudConnection(GetCloudConnectionRequest) returns (GetCloudConnectionResponse);
+  rpc PullCloudConnection(PullCloudConnectionRequest) returns (stream PullCloudConnectionResponse);
+  rpc RegisterCloudConnection(RegisterCloudConnectionRequest) returns (RegisterCloudConnectionResponse);
+  rpc UnlinkCloudConnection(UnlinkCloudConnectionRequest) returns (UnlinkCloudConnectionResponse);
+
+  rpc GetCloudConnectionDefaults(GetCloudConnectionDefaultsRequest) returns (GetCloudConnectionDefaultsResponse);
+  rpc TestCloudConnection(TestCloudConnectionRequest) returns (TestCloudConnectionResponse);
+}
+
+message CloudConnection {
+  string name = 1;
+  State state = 2;
+  string client_id = 3;
+  string bosapi_root = 4;
+  google.protobuf.Timestamp last_check_in_time = 5;
+  string last_error = 6;
+
+  enum State {
+    STATE_UNSPECIFIED = 0;
+    UNCONFIGURED      = 1;
+    CONNECTING        = 2;
+    CONNECTED         = 3;
+    FAILED            = 4;
+  }
+}
+
+message GetCloudConnectionRequest {
+  string name = 1;
+}
+
+message GetCloudConnectionResponse {
+  CloudConnection cloud_connection = 1;
+}
+
+message PullCloudConnectionRequest {
+  string name = 1;
+  bool updates_only = 2;
+}
+
+message PullCloudConnectionResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    smartcore.bos.types.v1.ChangeType type = 2;
+    google.protobuf.Timestamp change_time = 3;
+    CloudConnection cloud_connection = 4;
+  }
+}
+
+message RegisterCloudConnectionRequest {
+  string name = 1;
+  oneof method {
+    EnrollmentCode enrollment_code = 2;
+    ManualCredentials manual = 3;
+  }
+
+  // EnrollmentCode registers using a short-lived enrollment code obtained from the SCC management console.
+  message EnrollmentCode {
+    string code = 1;
+    // register_url is the POST endpoint for the registration server.
+    // If empty, the server falls back to its configured default.
+    string register_url = 2;
+  }
+
+  // ManualCredentials registers by supplying OAuth2 client credentials directly,
+  // for cases where no enrollment code is available.
+  message ManualCredentials {
+    string client_id = 1;
+    string client_secret = 2;
+    string bosapi_root = 3;
+  }
+}
+
+message RegisterCloudConnectionResponse {
+  CloudConnection cloud_connection = 1;
+}
+
+message UnlinkCloudConnectionRequest {
+  string name = 1;
+}
+
+message UnlinkCloudConnectionResponse {
+  CloudConnection cloud_connection = 1;
+}
+
+message GetCloudConnectionDefaultsRequest {
+  string name = 1;
+}
+
+message GetCloudConnectionDefaultsResponse {
+  CloudConnectionDefaults defaults = 1;
+}
+
+message CloudConnectionDefaults {
+  string register_url = 1;
+}
+
+message TestCloudConnectionRequest {
+  string name = 1;
+}
+
+message TestCloudConnectionResponse {}
