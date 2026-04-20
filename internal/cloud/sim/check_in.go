@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -89,13 +90,13 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			// auto-update deployment status to IN_PROGRESS when node reports it's installing, if it was PENDING before
 			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.InstallingDeployment.ID)
 			if errors.Is(err, sql.ErrNoRows) {
-				return errInvalidRequest
+				return fmt.Errorf("installing deployment %d: not found: %w", req.InstallingDeployment.ID, errInvalidRequest)
 			}
 			if err != nil {
 				return err
 			}
 			if row.NodeID != node.ID {
-				return errInvalidRequest
+				return fmt.Errorf("installing deployment %d: belongs to a different node: %w", req.InstallingDeployment.ID, errInvalidRequest)
 			}
 			if row.Status == statusPending {
 				_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
@@ -112,13 +113,13 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			// auto-update deployment status to COMPLETED if node reports its current version
 			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.CurrentDeployment.ID)
 			if errors.Is(err, sql.ErrNoRows) {
-				return errInvalidRequest
+				return fmt.Errorf("current deployment %d: not found: %w", req.CurrentDeployment.ID, errInvalidRequest)
 			}
 			if err != nil {
 				return err
 			}
 			if row.NodeID != node.ID {
-				return errInvalidRequest
+				return fmt.Errorf("current deployment %d: belongs to a different node: %w", req.CurrentDeployment.ID, errInvalidRequest)
 			}
 			if row.Status == statusInProgress {
 				_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
@@ -134,13 +135,13 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 		if req.FailedDeployment != nil {
 			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.FailedDeployment.ID)
 			if errors.Is(err, sql.ErrNoRows) {
-				return errInvalidRequest
+				return fmt.Errorf("failed deployment %d: not found: %w", req.FailedDeployment.ID, errInvalidRequest)
 			}
 			if err != nil {
 				return err
 			}
 			if row.NodeID != node.ID {
-				return errInvalidRequest
+				return fmt.Errorf("failed deployment %d: belongs to a different node: %w", req.FailedDeployment.ID, errInvalidRequest)
 			}
 			_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
 				ID:     req.FailedDeployment.ID,
@@ -197,7 +198,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 		}
 		if errors.Is(err, errInvalidRequest) {
 			writeError(w, errInvalidRequest)
-			logger.Info("invalid check-in request")
+			logger.Info("invalid check-in request", zap.Error(err))
 			return
 		}
 		writeError(w, errInternal)
