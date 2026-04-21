@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -513,6 +514,10 @@ func testReflection(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 		{Name: "smartcore.bos.parent.v1.ParentApi"},
 		{Name: "smartcore.bos.services.v1.ServicesApi"},
 	}
+	services = slices.DeleteFunc(services, func(response *reflectionpb.ServiceResponse) bool {
+		// ignore private BOS APIs, as these are expected to change fairly often
+		return strings.HasPrefix(response.Name, "smartcore.bos.ops.")
+	})
 	if diff := cmp.Diff(wantServices, services, protocmp.Transform()); diff != "" {
 		t.Fatalf("services: (-want +got):\n%s", diff)
 	}
