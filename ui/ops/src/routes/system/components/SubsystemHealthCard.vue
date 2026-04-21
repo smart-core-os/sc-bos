@@ -24,19 +24,66 @@
 
       <!-- Individual check rows -->
       <template v-if="checkEntries.length > 0">
-        <div
-            v-for="entry in checkEntries"
-            :key="entry.check.name"
-            class="d-flex align-center check-row py-1"
-            style="position: relative;">
-          <normality-icon :model-value="{ normality: worstNormality(entry.items) }" size="14" class="mr-1"/>
-          <reliability-icon :model-value="{ reliability: { state: worstReliabilityState(entry.items) } }" size="14" class="mr-2"/>
-          <span class="text-caption text-truncate flex-grow-1" :title="entry.check.displayName ?? entry.check.name">
-            {{ entry.check.displayName ?? entry.check.name }}
-          </span>
-          <span class="text-caption text-medium-emphasis flex-shrink-0 ml-1">
-            {{ checkCountLabel(entry.items) }}
-          </span>
+        <div v-for="entry in checkEntries" :key="entry.check.name" style="position: relative;">
+          <!-- Clickable summary row -->
+          <div
+              class="d-flex align-center check-row py-1"
+              :class="{ 'check-row--expandable': hasDetail(entry) }"
+              @click="hasDetail(entry) && toggleExpand(entry.check.name)">
+            <normality-icon :model-value="{ normality: worstNormality(entry.items) }" size="14" class="mr-1"/>
+            <reliability-icon :model-value="{ reliability: { state: worstReliabilityState(entry.items) } }" size="14" class="mr-2"/>
+            <span class="text-caption text-truncate flex-grow-1" :title="entry.check.displayName ?? entry.check.name">
+              {{ entry.check.displayName ?? entry.check.name }}
+            </span>
+            <span class="text-caption text-medium-emphasis flex-shrink-0 ml-1">
+              {{ checkCountLabel(entry.items) }}
+            </span>
+            <v-icon
+                v-if="hasDetail(entry)"
+                size="14"
+                class="ml-1 flex-shrink-0 expand-chevron"
+                :class="{ 'expand-chevron--open': expandedChecks.has(entry.check.name) }">
+              mdi-chevron-down
+            </v-icon>
+          </div>
+
+          <!-- Expandable detail -->
+          <v-expand-transition>
+            <div v-if="expandedChecks.has(entry.check.name)" class="check-detail pb-1">
+              <template v-for="item in entry.items" :key="item.id">
+                <!-- Item header when multiple checks exist under this entry -->
+                <div v-if="entry.items.length > 1" class="text-caption font-weight-medium text-medium-emphasis mt-1 mb-0-5">
+                  {{ item.displayName || item.id }}
+                </div>
+                <!-- Description -->
+                <div v-if="item.description" class="detail-line text-caption text-medium-emphasis">
+                  <v-icon size="12" class="mr-1">mdi-information-outline</v-icon>
+                  {{ item.description }}
+                </div>
+                <!-- Reliability error -->
+                <div
+                    v-if="item.reliability && item.reliability.state > reliableState && item.reliability.lastError"
+                    class="detail-line text-caption text-error">
+                  <v-icon size="12" class="mr-1" color="error">mdi-alert-circle-outline</v-icon>
+                  {{ item.reliability.lastError.summaryText }}
+                  <span v-if="item.reliability.lastError.detailsText" class="text-medium-emphasis d-block ml-4">
+                    {{ item.reliability.lastError.detailsText }}
+                  </span>
+                </div>
+                <!-- Faults -->
+                <div
+                    v-for="(fault, fi) in item.faultsList"
+                    :key="fi"
+                    class="detail-line text-caption text-warning">
+                  <v-icon size="12" class="mr-1" color="warning">mdi-alert-outline</v-icon>
+                  {{ fault.summaryText }}
+                  <span v-if="fault.detailsText" class="text-medium-emphasis d-block ml-4">
+                    {{ fault.detailsText }}
+                  </span>
+                </div>
+              </template>
+            </div>
+          </v-expand-transition>
         </div>
       </template>
       <div v-else class="text-caption text-medium-emphasis" style="position: relative;">
@@ -51,7 +98,7 @@ import {usePullHealthChecks} from '@/traits/health/health.js';
 import NormalityIcon from '@/traits/health/NormalityIcon.vue';
 import ReliabilityIcon from '@/traits/health/ReliabilityIcon.vue';
 import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb';
-import {computed} from 'vue';
+import {computed, ref} from 'vue';
 
 const props = defineProps({
   title: {type: String, required: true},
@@ -63,6 +110,8 @@ const props = defineProps({
     default: () => []
   }
 });
+
+const reliableState = HealthCheck.Reliability.State.RELIABLE;
 
 // One stream per configured device name. props.checks is static config — safe to call in a loop.
 const checkResources = props.checks.map(check => {
@@ -91,6 +140,26 @@ function checkCountLabel(items) {
   if (!items.length) return '';
   const normal = items.filter(c => (c.normality ?? 0) === HealthCheck.Normality.NORMAL).length;
   return `${normal}/${items.length}`;
+}
+
+function hasDetail(entry) {
+  return entry.items.some(item =>
+      item.description ||
+      (item.reliability?.state > reliableState && item.reliability?.lastError) ||
+      item.faultsList?.length > 0
+  );
+}
+
+const expandedChecks = ref(new Set());
+
+function toggleExpand(name) {
+  const next = new Set(expandedChecks.value);
+  if (next.has(name)) {
+    next.delete(name);
+  } else {
+    next.add(name);
+  }
+  expandedChecks.value = next;
 }
 
 const aggregateStatus = computed(() => {
@@ -164,5 +233,39 @@ const accentColor = computed(() => {
 
 .check-row:not(:last-child) {
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+}
+
+.check-row--expandable {
+  cursor: pointer;
+}
+
+.check-row--expandable:hover {
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  border-radius: 4px;
+}
+
+.expand-chevron {
+  transition: transform 0.2s ease;
+  opacity: 0.6;
+}
+
+.expand-chevron--open {
+  transform: rotate(180deg);
+}
+
+.check-detail {
+  padding-left: 30px;
+  border-left: 2px solid rgba(var(--v-theme-on-surface), 0.08);
+  margin-left: 4px;
+  margin-bottom: 4px;
+}
+
+.detail-line {
+  line-height: 1.4;
+  padding: 1px 0;
+}
+
+.mb-0-5 {
+  margin-bottom: 2px;
 }
 </style>
