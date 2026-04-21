@@ -166,7 +166,7 @@ const props = defineProps({
   },
   showGenerated: {
     type: Boolean,
-    default: false
+    default: true
   },
   thresholds: {
     type: Array, // {density: number, str: string, icon: string} ordered by density (kW per day) in ascending order
