@@ -15,7 +15,8 @@
         :compact="props.compact">
       <template #floor="{floor}">
         <div :class="['comfort-row', { 'comfort-row--compact': props.compact }]">
-          <div :class="['device-col', { 'device-col--compact': props.compact }]">
+          <div :class="['device-col', { 'device-col--compact': props.compact, 'device-col--named': props.showFloorName }]">
+            <span v-if="props.showFloorName" class="floor-name-label">{{ floor.title ?? `L${floor.level}` }}</span>
             <device-cell
                 v-if="deviceItemByLevel[floor.level]"
                 class="device-cell"
@@ -88,6 +89,11 @@ const props = defineProps({
   compact: {
     type: Boolean,
     default: false,
+  },
+  // When true, shows the floor title (or "L{level}" fallback) in the device column.
+  showFloorName: {
+    type: Boolean,
+    default: true,
   },
 });
 
@@ -424,6 +430,31 @@ const visibleColumns = computed(() =>
 
 .device-col {
   display: contents; /* non-compact: DeviceCell is a direct grid child */
+}
+
+.device-col--named {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.device-col--named .device-cell {
+  flex: 1;
+  min-width: 0;
+}
+
+.floor-name-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .device-col--compact {
