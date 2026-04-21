@@ -3,6 +3,7 @@ package gallagher
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -22,13 +24,18 @@ import (
 const (
 	DriverName                      = "gallagher"
 	defaultOccupancyRefreshInterval = time.Minute * 30
+
+	errCodeServerUnreachable = "ServerUnreachable"
+	errCodeInvalidLicence    = "InvalidLicence"
 )
 
 type Driver struct {
 	*service.Service[config.Root]
-	announcer node.Announcer
-	logger    *zap.Logger
-	ticker    *time.Ticker
+	announcer   node.Announcer
+	logger      *zap.Logger
+	ticker      *time.Ticker
+	health      *healthpb.Checks
+	systemCheck *healthpb.FaultCheck
 }
 
 var Factory driver.Factory = factory{}
@@ -39,6 +46,7 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 	logger := services.Logger.Named(DriverName)
 	d := &Driver{
 		announcer: services.Node,
+		health:    services.Health,
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
@@ -51,6 +59,10 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
+	if d.systemCheck != nil {
+		d.systemCheck.Dispose()
+		d.systemCheck = nil
+	}
 
 	cfg.ApplyDefaults()
 	announcer, undo := node.AnnounceScope(d.announcer)
@@ -71,6 +83,17 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		return fmt.Errorf("gallagher BaseURL is not set")
 	}
 
+	systemCheck, err := d.health.NewFaultCheck(cfg.Name, &healthpb.HealthCheck{
+		Id:          "systemStatusCheck",
+		DisplayName: "System Status Check",
+		Description: "Checks the Gallagher Command Centre server is reachable and the API licence is valid",
+	})
+	if err != nil {
+		d.logger.Warn("failed to create system health check", zap.Error(err))
+	} else {
+		d.systemCheck = systemCheck
+	}
+
 	bytes, err := os.ReadFile(cfg.HTTP.ApiKeyFile)
 	if err != nil {
 		return fmt.Errorf("error reading api key file: %w", err)
@@ -81,6 +104,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		d.logger.Error("failed to create client", zap.Error(err))
 		return nil
 	}
+
+	d.probeServer(ctx, client, systemCheck)
 
 	cc := newCardholderController(client, cfg.TopicPrefix, d.logger)
 	grp.Go(func() error {
@@ -132,6 +157,38 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		undo()
 	}()
 	return nil
+}
+
+// probeServer checks whether the Gallagher server is reachable and the API key is accepted,
+// updating the system health check with the result.
+func (d *Driver) probeServer(ctx context.Context, client *Client, check *healthpb.FaultCheck) {
+	if check == nil {
+		return
+	}
+	probeCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	statusCode, err := client.probe(probeCtx)
+	if err != nil {
+		check.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
+			State: healthpb.HealthCheck_Reliability_UNRELIABLE,
+			LastError: &healthpb.HealthCheck_Error{
+				SummaryText: "Server unreachable",
+				DetailsText: err.Error(),
+				Code:        &healthpb.HealthCheck_Error_Code{Code: errCodeServerUnreachable, System: DriverName},
+			},
+		})
+		return
+	}
+	if statusCode == http.StatusUnauthorized {
+		check.SetFault(&healthpb.HealthCheck_Error{
+			SummaryText: "API licence not valid",
+			DetailsText: "Server returned 401 Unauthorized — check the API key and Gallagher licence",
+			Code:        &healthpb.HealthCheck_Error_Code{Code: errCodeInvalidLicence, System: DriverName},
+		})
+		return
+	}
+	check.ClearFaults()
 }
 
 // run the udmi export for all the controllers. currently only cardholders are exported but might be extended to others

@@ -1,6 +1,7 @@
 package gallagher
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -42,6 +43,22 @@ func newHttpClient(baseURL string, apiKey string, caPath string, certPath string
 
 func (c *Client) getUrl(p string) string {
 	return fmt.Sprintf("%s/%s", c.BaseURL, p)
+}
+
+// probe checks basic connectivity to the Gallagher server.
+// Returns (statusCode, nil) on any HTTP response, or (0, err) if the server is unreachable.
+func (c *Client) probe(ctx context.Context) (int, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", c.BaseURL, nil)
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Set("Authorization", "GGL-API-KEY "+c.ApiKey)
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	resp.Body.Close()
+	return resp.StatusCode, nil
 }
 
 func (c *Client) doRequest(url string) ([]byte, error) {
