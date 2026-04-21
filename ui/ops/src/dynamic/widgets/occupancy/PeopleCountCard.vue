@@ -13,7 +13,7 @@
         {{ activeThreshold.label }}
       </v-chip>
     </v-toolbar>
-    <v-card-text class="text-h1 px-5 d-flex align-center">
+    <v-card-text class="text-h2 px-5 d-flex align-center">
       <occupancy-people-count
           :people-count="peopleCount"
           :max-occupancy="props.maxOccupancy"
@@ -86,6 +86,6 @@ const gaugeColor = computed(() => {
 }
 .gauge {
   margin-left: calc(-1.5em - 15px);
-  margin-top: 60px;
+  margin-top: 38px;
 }
 </style>
