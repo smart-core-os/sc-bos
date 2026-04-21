@@ -62,13 +62,15 @@ type Driver struct {
 
 func NewDriver(services driver.Services) *Driver {
 	d := &Driver{
-		announcer: node.NewReplaceAnnouncer(services.Node),
-		devices:   known.NewMap(),
-		health:    services.Health,
-		logger:    services.Logger.Named("bacnet"),
+		announcer:   node.NewReplaceAnnouncer(services.Node),
+		devices:     known.NewMap(),
+		health:      services.Health,
+		systemCheck: services.SystemCheck,
+		logger:      services.Logger.Named("bacnet"),
 	}
 	d.Service = service.New(service.MonoApply(d.applyConfig),
 		service.WithParser(config.ReadBytes),
+		service.WithServiceCheck[config.Root](services.SystemCheck),
 		service.WithOnStop[config.Root](d.Clear))
 	return d
 }
@@ -82,15 +84,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	// we start fresh each time config is updated
 	d.Clear()
 
-	systemCheck, err := d.health.NewFaultCheck(cfg.Name, createSystemHealthCheck(cfg.SystemHealth.OccupantImpact.ToProto(), cfg.SystemHealth.EquipmentImpact.ToProto()))
-	if err != nil {
-		return err
-	}
-
-	d.systemCheck = systemCheck
-
-	err = d.initClient(ctx, cfg, systemCheck)
-	if err != nil {
+	if err := d.initClient(ctx, cfg, d.systemCheck); err != nil {
 		return err
 	}
 
@@ -427,11 +421,6 @@ func (d *Driver) Clear() {
 }
 
 func (d *Driver) dispose() {
-	if d.systemCheck != nil {
-		d.systemCheck.Dispose()
-		d.systemCheck = nil
-	}
-
 	for _, stop := range d.healthTasks {
 		if stop != nil {
 			stop()

@@ -51,6 +51,31 @@ func WithOnStop[T any](onStop func()) Option[T] {
 	})
 }
 
+// Disposable is implemented by resources whose lifetime should match the service lifetime.
+type Disposable interface {
+	Dispose()
+}
+
+// WithServiceCheck registers one or more resources to be disposed when the service stops.
+// Unlike resources created inside applyConfig, these are NOT disposed between retry attempts,
+// so they remain visible (e.g. in the health registry) during connection failures.
+// nil entries are silently ignored.
+func WithServiceCheck[T any](checks ...Disposable) Option[T] {
+	return OptionFunc[T](func(l *Service[T]) {
+		existing := l.onStop
+		l.onStop = func() {
+			for _, c := range checks {
+				if c != nil {
+					c.Dispose()
+				}
+			}
+			if existing != nil {
+				existing()
+			}
+		}
+	})
+}
+
 // WithRetry configures a service to retry ApplyFunc when it returns an error.
 func WithRetry[T any](opts ...RetryOption) Option[T] {
 	return OptionFunc[T](func(l *Service[T]) {

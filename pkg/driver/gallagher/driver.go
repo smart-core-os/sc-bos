@@ -34,7 +34,6 @@ type Driver struct {
 	announcer   node.Announcer
 	logger      *zap.Logger
 	ticker      *time.Ticker
-	health      *healthpb.Checks
 	systemCheck *healthpb.FaultCheck
 }
 
@@ -45,11 +44,12 @@ type factory struct{}
 func (f factory) New(services driver.Services) service.Lifecycle {
 	logger := services.Logger.Named(DriverName)
 	d := &Driver{
-		announcer: services.Node,
-		health:    services.Health,
+		announcer:   services.Node,
+		systemCheck: services.SystemCheck,
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
+		service.WithServiceCheck[config.Root](services.SystemCheck),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
 			logContext.LogTo("applyConfig", logger)
 		})),
@@ -59,11 +59,6 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
-	if d.systemCheck != nil {
-		d.systemCheck.Dispose()
-		d.systemCheck = nil
-	}
-
 	cfg.ApplyDefaults()
 	announcer, undo := node.AnnounceScope(d.announcer)
 	grp, ctx := errgroup.WithContext(ctx)
@@ -83,17 +78,6 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		return fmt.Errorf("gallagher BaseURL is not set")
 	}
 
-	systemCheck, err := d.health.NewFaultCheck(cfg.Name, &healthpb.HealthCheck{
-		Id:          "systemStatusCheck",
-		DisplayName: "System Status Check",
-		Description: "Checks the Gallagher Command Centre server is reachable and the API licence is valid",
-	})
-	if err != nil {
-		d.logger.Warn("failed to create system health check", zap.Error(err))
-	} else {
-		d.systemCheck = systemCheck
-	}
-
 	bytes, err := os.ReadFile(cfg.HTTP.ApiKeyFile)
 	if err != nil {
 		return fmt.Errorf("error reading api key file: %w", err)
@@ -105,7 +89,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		return nil
 	}
 
-	d.probeServer(ctx, client, systemCheck)
+	d.probeServer(ctx, client, d.systemCheck)
 
 	cc := newCardholderController(client, cfg.TopicPrefix, d.logger)
 	grp.Go(func() error {

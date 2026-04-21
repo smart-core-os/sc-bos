@@ -42,13 +42,15 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 	logger := services.Logger.Named(DriverName)
 
 	d := &Driver{
-		announcer: node.NewReplaceAnnouncer(services.Node),
-		health:    services.Health,
-		logger:    logger,
+		announcer:   node.NewReplaceAnnouncer(services.Node),
+		health:      services.Health,
+		systemCheck: services.SystemCheck,
+		logger:      logger,
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
 		service.WithParser(config.ParseConfig),
+		service.WithServiceCheck[config.Root](services.SystemCheck),
 		service.WithOnStop[config.Root](d.onStop),
 		service.WithRetry[config.Root](
 			service.RetryWithLogger(func(logContext service.RetryContext) {
@@ -77,15 +79,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	d.dispose()
 
-	systemCheck, err := d.health.NewFaultCheck(cfg.Name, getSystemHealthCheck(cfg.SystemHealth.OccupantImpact.ToProto(), cfg.SystemHealth.EquipmentImpact.ToProto()))
-	if err != nil {
-		d.logger.Warn("NewClient error", zap.Error(err))
-		return err
-	}
-
-	d.systemCheck = systemCheck
-
-	opcClient, err := d.connectOpcClient(ctx, cfg, systemCheck)
+	opcClient, err := d.connectOpcClient(ctx, cfg, d.systemCheck)
 	if err != nil {
 		d.logger.Warn("Connect error", zap.Error(err))
 		return err
@@ -240,10 +234,6 @@ func (d *Driver) onStop() {
 }
 
 func (d *Driver) dispose() {
-	if d.systemCheck != nil {
-		d.systemCheck.Dispose()
-	}
-
 	for _, c := range d.checks {
 		if c != nil {
 			c.Dispose()

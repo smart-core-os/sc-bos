@@ -39,6 +39,7 @@ func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, err
 		driverServices.Config = &serviceConfigStore{store: c.ControllerConfig.Drivers(), id: id}
 		driverServices.Logger = loggerWithServiceInfo(driverServices.Logger, id, kind)
 		driverServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
+		driverServices.SystemCheck = newDriverSystemCheck(driverServices.Health, id, kind)
 
 		f, ok := c.SystemConfig.DriverFactories[kind]
 		if !ok {
@@ -226,6 +227,21 @@ func loggerWithServiceInfo(logger *zap.Logger, id, kind string) *zap.Logger {
 func healthChecksForService(r *healthpb.Registry, id, kind string) *healthpb.Checks {
 	owner := fmt.Sprintf("%s:%s", kind, id)
 	return r.ForOwner(owner)
+}
+
+// newDriverSystemCheck creates a persistent driver-level system check registered under the
+// driver's own name. The check survives applyConfig retries; the caller is responsible for
+// disposing it (typically via service.WithServiceCheck).
+func newDriverSystemCheck(health *healthpb.Checks, id, kind string) *healthpb.FaultCheck {
+	check, err := health.NewFaultCheck(id, &healthpb.HealthCheck{
+		Id:          "systemStatusCheck",
+		DisplayName: "System Status Check",
+		Description: fmt.Sprintf("Checks the %s driver is connected and operating correctly", kind),
+	})
+	if err != nil {
+		return nil
+	}
+	return check
 }
 
 func devicesToHealthCheckCollection(d *devicespb.Collection) system.HealthCheckCollection {
