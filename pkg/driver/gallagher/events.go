@@ -41,7 +41,7 @@ type EventList struct {
 // getEvents fetches events from the Gallagher /events API after lastEventTime, returning oldest-first.
 func (sc *SecurityEventController) getEvents() ([]*EventPayload, error) {
 	var result []*EventPayload
-	url := sc.client.getUrl("api/events") + "?after=" + sc.lastEventTime.Format(time.RFC3339)
+	url := sc.client.getUrl("events") + "?after=" + sc.lastEventTime.UTC().Format(time.RFC3339)
 
 	for {
 		body, err := sc.client.doRequest(url)

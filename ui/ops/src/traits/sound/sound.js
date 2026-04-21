@@ -50,7 +50,7 @@ export function usePullSoundLevel(query, paused = false) {
 export function useSoundLevel(value) {
   const soundPressureLevel = computed(() => {
     const v = toValue(value);
-    return v?.soundPressureLevel ?? 0;
+    return v?.soundPressureLevel;
   });
 
   return {

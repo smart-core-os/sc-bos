@@ -27,7 +27,7 @@ func SeedAllocation(ctx context.Context, db *pgxpool.Pool, name string, profile 
 	allocationTotal := int32(0)
 	unallocationTotal := int32(0)
 
-	for current.Before(now) {
+	for !current.After(now) {
 		load := profile.Load(current)
 
 		// Probability of an ALLOCATED event scales with office activity.

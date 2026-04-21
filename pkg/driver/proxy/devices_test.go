@@ -128,7 +128,7 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 				known:  initial,
 			}
 
-			ctx := context.Background()
+			ctx := t.Context()
 			changes := make(chan *devicespb.PullDevicesResponse_Change, 10)
 
 			err := fetcher.Poll(ctx, changes)
@@ -178,7 +178,7 @@ func TestDeviceFetcher_Poll(t *testing.T) {
 }
 
 func TestDeviceFetcher_Poll_Error(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
 	n := node.New("test")
@@ -206,14 +206,23 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 				client: client,
 			}
 
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
-			changes := make(chan *devicespb.PullDevicesResponse_Change, 10)
+			changes := make(chan *devicespb.PullDevicesResponse_Change)
 
 			errCh := make(chan error, 1)
 			go func() {
 				errCh <- fetcher.Pull(ctx, changes)
 			}()
+
+			// Drain the initial "test" node state before making any announcements.
+			// resource.Collection.Pull sends the current state sorted by name, so with just
+			// the root node "test" in the collection this is always the first and only change.
+			synctest.Wait()
+			initial := <-changes
+			if initial.Type != typespb.ChangeType_ADD || initial.NewValue.Name != "test" {
+				t.Fatalf("expected initial ADD for test node, got type=%v name=%v", initial.Type, initial.NewValue.GetName())
+			}
 
 			n.Announce("device1", node.HasMetadata(&metadatapb.Metadata{}))
 			synctest.Wait()
@@ -240,7 +249,7 @@ func TestDeviceFetcher_Pull(t *testing.T) {
 	})
 
 	t.Run("handles context cancellation", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		cancel()
 
 		n := node.New("test")

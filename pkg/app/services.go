@@ -15,6 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/system"
@@ -285,9 +286,15 @@ func announceSystemServices[M ~map[string]T, T any](c *Controller, services *ser
 
 func announceNodeServer(n *node.Node, base string, srv servicespb.ServicesApiServer) node.Undo {
 	var undos []node.Undo
-	undos = append(undos, n.Announce(base, node.HasServer(servicespb.RegisterServicesApiServer, srv)))
+	undos = append(undos, n.Announce(base,
+		node.HasServer(servicespb.RegisterServicesApiServer, srv),
+		node.HasDeviceType(metadatapb.Metadata_SERVICE),
+	))
 	if n.Name() != "" {
-		undos = append(undos, n.Announce(path.Join(n.Name(), base), node.HasServer(servicespb.RegisterServicesApiServer, srv)))
+		undos = append(undos, n.Announce(path.Join(n.Name(), base),
+			node.HasServer(servicespb.RegisterServicesApiServer, srv),
+			node.HasDeviceType(metadatapb.Metadata_SERVICE),
+		))
 	}
 	return node.UndoAll(undos...)
 }

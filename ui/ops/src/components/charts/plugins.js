@@ -35,12 +35,25 @@ export function useVueLegendPlugin() {
       afterUpdate(chart) {
         const items = chart.options.plugins.legend.labels.generateLabels(chart);
         legendItems.value = items.map((item) => {
-          const bgColor = new Color(item.fillStyle);
-          bgColor.alpha = 1;
+          // Dashed line datasets (e.g. peak overlays) have no meaningful fill —
+          // Chart.js parses 'transparent' to 'rgba(0,0,0,0)' which becomes opaque
+          // black after forcing alpha to 1. Use strokeStyle for dashed lines instead.
+          const isDashed = (item.lineDash?.length ?? 0) > 0;
+          const colorSource = isDashed ? item.strokeStyle : item.fillStyle;
+          let bgColor;
+          try {
+            bgColor = new Color(colorSource ?? '#fff');
+            bgColor.alpha = 1;
+            bgColor = bgColor.toString();
+          } catch {
+            bgColor = colorSource;
+          }
           return {
             text: item.text,
             hidden: item.hidden,
-            bgColor: bgColor.toString(),
+            bgColor,
+            datasetIndex: item.datasetIndex,
+            isDashed,
             onClick: (e) => {
               const {type} = chart.config;
               if (type === 'pie' || type === 'doughnut') {
@@ -138,7 +151,7 @@ export function useExternalTooltip() {
         y: ctx.tooltip.caretY + canvasBounds.top,
         opacity: ctx.tooltip.opacity,
         dataPoints: ctx.tooltip.dataPoints,
-        displayFormats: ctx.chart.options.scales.x.time.displayFormats,
+        displayFormats: ctx.chart.options.scales.x.time?.displayFormats,
       };
     }
   }

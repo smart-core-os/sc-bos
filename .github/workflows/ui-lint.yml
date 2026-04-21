@@ -1,0 +1,53 @@
+name: UI Lint
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ui/**'
+      - '.github/**'
+
+  pull_request:
+    paths:
+      - 'ui/**'
+      - '.github/**'
+
+jobs:
+  ui_job:
+    runs-on: ubuntu-latest
+    name: UI Lint
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          registry-url: https://npm.pkg.github.com
+
+      - name: Check there are no private dependencies in yarn.lock
+        run: |
+          echo "Checking for private yarn.lock dependencies"
+          if grep -E "nexus\.vanti\.co\.uk/repository/" ui/yarn.lock; then
+            echo "Private URLs found in yarn.lock" >&2
+            exit 1
+          else
+            echo "No private URLs found."
+          fi
+
+      - name: Install dependencies
+        run: yarn --frozen-lockfile
+        working-directory: ui
+
+      - name: Run lint
+        working-directory: ui
+        run: |
+          for dir in $(jq -r '.workspaces[]' package.json); do
+            echo "Linting $dir..."
+            yarn --cwd "$dir" lint:nofix
+            echo 
+          done
+

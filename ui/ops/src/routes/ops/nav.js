@@ -6,6 +6,7 @@ import {computed} from 'vue';
  * @property {string} title - The title of the menu item
  * @property {string} icon - The icon to display for the menu item
  * @property {{path: string}} link - The route link for the menu item
+ * @property {boolean} [exact] - Optional exact match for the menu item
  * @property {string} [badgeType] - Optional badge type for the menu item
  * @property {function} [enabled] - Optional function to determine if the item is enabled
  */
@@ -51,6 +52,7 @@ export const navItems = [
     title: 'Security',
     icon: 'mdi-shield-key',
     link: {path: '/ops/security'},
+    exact: true,
     badgeType: null,
     enabled: () => {
       const uiConfig = useUiConfigStore();

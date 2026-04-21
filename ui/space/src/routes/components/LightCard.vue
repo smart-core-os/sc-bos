@@ -3,8 +3,9 @@
     <v-card-title class="d-flex align-center pl-7">
       <span class="text-h4 font-weight-medium flex-grow-1">Lights</span>
       <v-switch
+          v-if="hasLightAutoSwitch"
           color="accent"
-          :disabled="!hasLightAutoSwitch || blockActions"
+          :disabled="blockActions"
           hide-details
           :model-value="lightIsAuto"
           inset
@@ -16,8 +17,8 @@
     </v-card-title>
     <v-card-text>
       <v-slider
-          track-color="primary"
-          track-fill-color="accent"
+          track-color="#0C0921"
+          track-fill-color="#5A0066"
           :disabled="!lightValue.value || blockActions"
           hide-details="auto"
           v-model="brightness">

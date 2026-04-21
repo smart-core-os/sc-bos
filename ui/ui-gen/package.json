@@ -3,7 +3,9 @@
   "version": "1.0.0-beta.25",
   "type": "commonjs",
   "scripts": {
-    "gen": "go run ../../cmd/tools/genproto -only uiproto"
+    "gen": "go run ../../cmd/tools/genproto -only uiproto",
+    "lint": "eslint . --fix",
+    "lint:nofix": "eslint ."
   },
   "dependencies": {
     "google-protobuf": "^4.0.1",

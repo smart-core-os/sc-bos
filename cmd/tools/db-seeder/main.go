@@ -19,8 +19,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	airqualitycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality/config"
+	hvaccfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/hvac/config"
 	meterscfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/meter/config"
 	occupancycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
+	electriccfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/electric/config"
+	soundsensorcfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/soundsensor/config"
 )
 
 var (
@@ -99,17 +102,27 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("seeded air temperature device %s\n", d)
+			fmt.Printf("seeded air quality device %s\n", d)
 		}
 	})
 
 	wg.Go(func() {
-		for _, d := range sd.electric {
+		for _, d := range sd.meter {
 			err = SeedMeter(ctx, db, d, profile, lookBack)
 			if err != nil {
 				panic(err)
 			}
 			fmt.Printf("seeded meter device %s\n", d)
+		}
+	})
+
+	wg.Go(func() {
+		for _, d := range sd.electric {
+			err = SeedElectric(ctx, db, d, profile, lookBack)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("seeded electric device %s\n", d)
 		}
 	})
 
@@ -158,12 +171,12 @@ func main() {
 
 func parseZoneConfig(sd *seedDevices, appConf *appconf.Config) error {
 	for _, conf := range appConf.Zones {
-		if conf.Type != "area" {
-			continue
-		}
 		aq := airqualitycfg.Root{}
 		occ := occupancycfg.Root{}
 		mtr := meterscfg.Root{}
+		elec := electriccfg.Root{}
+		hvac := hvaccfg.Root{}
+		ss := soundsensorcfg.Root{}
 
 		buf, err := conf.MarshalJSON()
 		if err != nil {
@@ -171,35 +184,55 @@ func parseZoneConfig(sd *seedDevices, appConf *appconf.Config) error {
 		}
 
 		err = json.Unmarshal(buf, &aq)
-		if err != nil {
-			return err
-		}
-
-		if len(aq.AirQualitySensors) > 0 {
+		if err == nil && len(aq.AirQualitySensors) > 0 {
 			sd.airQuality = append(sd.airQuality, conf.Name)
+			sd.airQuality = append(sd.airQuality, aq.AirQualitySensors...)
 		}
 
 		err = json.Unmarshal(buf, &occ)
-		if err != nil {
-			return err
-		}
-
-		if len(occ.OccupancySensors) > 0 || len(occ.EnterLeaveOccupancySensors) > 0 {
+		if err == nil && (len(occ.OccupancySensors) > 0 || len(occ.EnterLeaveOccupancySensors) > 0) {
 			sd.occupancy = append(sd.occupancy, conf.Name)
+			sd.occupancy = append(sd.occupancy, occ.OccupancySensors...)
 		}
 
 		err = json.Unmarshal(buf, &mtr)
-		if err != nil {
-			return err
+		if err == nil {
+			if len(mtr.Meters) > 0 {
+				sd.meter = append(sd.meter, conf.Name)
+			}
+			for k, group := range mtr.MeterGroups {
+				sd.meter = append(sd.meter, path.Join(conf.Name, k))
+				sd.meter = append(sd.meter, group...)
+			}
 		}
 
-		if len(mtr.Meters) > 0 {
-			sd.electric = append(sd.electric, conf.Name)
-		}
-		for _, group := range mtr.MeterGroups {
-			sd.electric = append(sd.electric, group...)
+		err = json.Unmarshal(buf, &elec)
+		if err == nil {
+			if len(elec.Electrics) > 0 {
+				sd.electric = append(sd.electric, conf.Name)
+			}
+			for k, group := range elec.ElectricGroups {
+				sd.electric = append(sd.electric, path.Join(conf.Name, k))
+				sd.electric = append(sd.electric, group...)
+			}
 		}
 
+		err = json.Unmarshal(buf, &hvac)
+		if err == nil {
+			if len(hvac.Thermostats) > 0 {
+				sd.airTemperature = append(sd.airTemperature, conf.Name)
+			}
+			for k, group := range hvac.ThermostatGroups {
+				sd.airTemperature = append(sd.airTemperature, path.Join(conf.Name, k))
+				sd.airTemperature = append(sd.airTemperature, group.Thermostats...)
+			}
+		}
+
+		err = json.Unmarshal(buf, &ss)
+		if err == nil && len(ss.SoundSensors) > 0 {
+			sd.soundSensor = append(sd.soundSensor, conf.Name)
+			sd.soundSensor = append(sd.soundSensor, ss.SoundSensors...)
+		}
 	}
 
 	return nil
@@ -208,6 +241,7 @@ func parseZoneConfig(sd *seedDevices, appConf *appconf.Config) error {
 type seedDevices struct {
 	airQuality     []string
 	electric       []string
+	meter          []string
 	airTemperature []string
 	soundSensor    []string
 	occupancy      []string
@@ -217,11 +251,13 @@ type seedDevices struct {
 func (sd *seedDevices) normalise() {
 	slices.Sort(sd.airQuality)
 	slices.Sort(sd.electric)
+	slices.Sort(sd.meter)
 	slices.Sort(sd.airTemperature)
 	slices.Sort(sd.soundSensor)
 	slices.Sort(sd.occupancy)
 	sd.airQuality = slices.Compact(sd.airQuality)
 	sd.electric = slices.Compact(sd.electric)
+	sd.meter = slices.Compact(sd.meter)
 	sd.airTemperature = slices.Compact(sd.airTemperature)
 	sd.soundSensor = slices.Compact(sd.soundSensor)
 	sd.occupancy = slices.Compact(sd.occupancy)
@@ -247,8 +283,12 @@ func parseDeviceConfig(sd *seedDevices, appConf *appconf.Config) error {
 					sd.airQuality = append(sd.airQuality, device.Name)
 				case trait.Electric:
 					sd.electric = append(sd.electric, device.Name)
+				case trait.Meter:
+					sd.meter = append(sd.meter, device.Name)
 				case trait.AirTemperature:
 					sd.airTemperature = append(sd.airTemperature, device.Name)
+				case trait.OccupancySensor:
+					sd.occupancy = append(sd.occupancy, device.Name)
 				case soundsensorpb.TraitName:
 					sd.soundSensor = append(sd.soundSensor, device.Name)
 				case allocationpb.TraitName:

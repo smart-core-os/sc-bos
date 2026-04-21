@@ -119,7 +119,7 @@ const currentPath = computed(() => {
 });
 
 const activeExact = computed(() => route.path === toAreaLink.value);
-const active = computed(() => route.path.startsWith(toAreaLink.value));
+const active = computed(() => route.path === toAreaLink.value || route.path.startsWith(toAreaLink.value + '/'));
 
 /**
  * Computed checker to return the link to the area

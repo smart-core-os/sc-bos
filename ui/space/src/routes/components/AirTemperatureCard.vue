@@ -3,8 +3,9 @@
     <v-card-title class="d-flex align-center pl-7">
       <span class="text-h4 font-weight-medium flex-grow-1">Temperature</span>
       <v-switch
+          v-if="hasHvacAutoSwitch"
           color="accent"
-          :disabled="!hasHvacAutoSwitch || blockActions"
+          :disabled="blockActions"
           hide-details
           inset
           :model-value="hvacIsAuto"
@@ -16,8 +17,8 @@
     </v-card-title>
     <v-card-text>
       <v-slider
-          track-color="primary"
-          track-fill-color="accent"
+          track-color="#0C0921"
+          track-fill-color="#5A0066"
           :disabled="blockActions"
           hide-details="auto"
           :max="temperatureRange.high"

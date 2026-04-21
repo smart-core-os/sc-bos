@@ -156,7 +156,7 @@ func TestNode_ListDevices(t *testing.T) {
 	}
 
 	// the metadata representing the node itself
-	nodeMd := &metadatapb.Metadata{Name: "-test", Traits: []*metadatapb.TraitMetadata{{Name: string(trait.Metadata)}, {Name: string(trait.Parent)}}}
+	nodeMd := &metadatapb.Metadata{Name: "-test", Traits: []*metadatapb.TraitMetadata{{Name: string(trait.Metadata)}, {Name: string(trait.Parent)}}, DeviceType: metadatapb.Metadata_NODE}
 	nodeDev := &devicespb.Device{Name: nodeMd.Name, Metadata: nodeMd}
 
 	t.Run("no announce", func(t *testing.T) {
