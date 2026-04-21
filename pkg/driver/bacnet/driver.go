@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/netip"
 	"os"
 	"sync"
 	"time"
@@ -95,6 +96,27 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	devices := known.SyncContext(d.mu.RLocker(), d.devices)
 
+	// Build per-controller health checks, grouping devices by IP.
+	controllerDeviceCount := make(map[netip.AddrPort]int)
+	for _, device := range cfg.Devices {
+		if device.Comm != nil && device.Comm.IP != nil {
+			controllerDeviceCount[*device.Comm.IP]++
+		}
+	}
+	controllerChecks := make(map[netip.AddrPort]*controllerCheck, len(controllerDeviceCount))
+	for ip, count := range controllerDeviceCount {
+		fc, err := d.health.NewFaultCheck(cfg.Name, createControllerHealthCheck(ip,
+			cfg.SystemHealth.OccupantImpact.ToProto(),
+			cfg.SystemHealth.EquipmentImpact.ToProto()))
+		if err != nil {
+			d.logger.Warn("failed to create controller health check", zap.Stringer("ip", ip), zap.Error(err))
+			continue
+		}
+		d.checks = append(d.checks, fc)
+		controllerChecks[ip] = newControllerCheck(fc, count)
+	}
+	controllerDeviceIdx := make(map[netip.AddrPort]int)
+
 	// setup all our devices and objects...
 	for _, device := range cfg.Devices {
 		// make sure to retry setting up devices in case they aren't yet online but might be in the future
@@ -121,6 +143,15 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		if faultCheck != nil {
 			d.checks = append(d.checks, faultCheck)
+		}
+
+		var ctrlCheck *controllerCheck
+		var ctrlIdx int
+		if device.Comm != nil && device.Comm.IP != nil {
+			ip := *device.Comm.IP
+			ctrlCheck = controllerChecks[ip]
+			ctrlIdx = controllerDeviceIdx[ip]
+			controllerDeviceIdx[ip]++
 		}
 
 		go func() {
@@ -151,6 +182,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 				// It's ok for configureDevices to receive the task context here as ctx is only used for queries
 				err := d.configureDevice(ctx, announcer, cfg, device, devices, faultCheck, logger)
+				if ctrlCheck != nil {
+					ctrlCheck.updateDevice(cfgCtx, ctrlIdx, err == nil)
+				}
 
 				if err != nil {
 					if errors.Is(err, context.Canceled) {
