@@ -23,7 +23,7 @@
               class="outer-gauge">
             <!-- Inner gauge: generated with tooltip -->
             <div class="inner-gauge-wrapper">
-              <v-tooltip location="top">
+              <v-tooltip v-if="props.showGenerated" location="top">
                 <template #activator="{ props: generatedTooltipProps }">
                   <div v-bind="generatedTooltipProps" class="inner-gauge-activator">
                     <circular-gauge
@@ -42,6 +42,7 @@
                 </template>
                 <span>Generated: {{ generatedDensityDisplayStr }} {{ _unit }}</span>
               </v-tooltip>
+              <span v-else class="text-h2 font-weight-bold">{{ consumedDensityDisplayStr }}</span>
             </div>
           </circular-gauge>
 
@@ -81,7 +82,7 @@
         </div>
 
         <!-- Generated -->
-        <div class="d-flex flex-column ga-2 align-center" style="min-width: 70px; max-width: 90px;">
+        <div v-if="props.showGenerated" class="d-flex flex-column ga-2 align-center" style="min-width: 70px; max-width: 90px;">
           <span class="text-caption font-weight-bold text-center" style="font-size: 0.7rem;">Generated</span>
           <span
               class="text-caption font-weight-medium"
@@ -162,6 +163,10 @@ const props = defineProps({
   showTrend: {
     type: Boolean,
     default: true
+  },
+  showGenerated: {
+    type: Boolean,
+    default: false
   },
   thresholds: {
     type: Array, // {density: number, str: string, icon: string} ordered by density (kW per day) in ascending order
