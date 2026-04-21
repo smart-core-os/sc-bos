@@ -93,7 +93,7 @@ const props = defineProps({
   // When true, shows the floor title (or "L{level}" fallback) in the device column.
   showFloorName: {
     type: Boolean,
-    default: false,
+    default: true,
   },
 });
 
@@ -438,6 +438,11 @@ const visibleColumns = computed(() =>
   align-items: center;
   gap: 4px;
   overflow: hidden;
+  min-width: 0;
+}
+
+.device-col--named .device-cell {
+  flex: 1;
   min-width: 0;
 }
 
