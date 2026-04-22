@@ -131,7 +131,8 @@ func (c *FaultCheck) MarkRunning() {
 }
 
 // MarkFailed marks the check as unhealthy with the given error. Called automatically by
-// service.WithSystemCheck when applyConfig returns an error.
+// service.WithSystemCheck as a fallback when applyConfig returns an error and the driver
+// has not already called MarkFailed during that invocation.
 func (c *FaultCheck) MarkFailed(err error) {
 	c.SetFault(&HealthCheck_Error{
 		SummaryText: "Service failed to start",

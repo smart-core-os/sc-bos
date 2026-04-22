@@ -282,12 +282,12 @@ func (d *Driver) initClient(ctx context.Context, cfg config.Root) error {
 		return fmt.Errorf("failed to create BACnet client: %w", err)
 	}
 	d.client = client
-	if address, err := client.LocalUDPAddress(); err == nil {
-		d.logger.Debug("bacnet client configured", zap.Stringer("local", address),
-			zap.String("localInterface", cfg.LocalInterface), zap.Uint16("localPort", cfg.LocalPort))
-	} else {
-		d.logger.Warn("failed to get local UDP address", zap.Error(err))
+	address, err := client.LocalUDPAddress()
+	if err != nil {
+		return fmt.Errorf("failed to get BACnet local UDP address: %w", err)
 	}
+	d.logger.Debug("bacnet client configured", zap.Stringer("local", address),
+		zap.String("localInterface", cfg.LocalInterface), zap.Uint16("localPort", cfg.LocalPort))
 	return nil
 }
 

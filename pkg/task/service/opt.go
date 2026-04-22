@@ -63,8 +63,37 @@ type SystemCheck interface {
 	Disposable
 	// MarkRunning is called automatically when applyConfig returns nil.
 	MarkRunning()
-	// MarkFailed is called automatically when applyConfig returns a non-nil error.
+	// MarkFailed is called automatically when applyConfig returns a non-nil error,
+	// unless the driver already called it during that same invocation.
 	MarkFailed(err error)
+}
+
+// trackedCheck wraps a SystemCheck and records whether MarkFailed was called
+// during the current apply invocation, so WithSystemCheck can skip the generic
+// fallback when the driver has already supplied a richer failure message.
+// Not thread-safe — apply is called sequentially by the retry loop.
+type trackedCheck struct {
+	SystemCheck
+	failed bool
+}
+
+func (t *trackedCheck) MarkFailed(err error) {
+	t.failed = true
+	t.SystemCheck.MarkFailed(err)
+}
+
+// NewTrackedSystemCheck wraps check so that [WithSystemCheck] can detect whether
+// applyConfig called MarkFailed before returning an error. When it did, the
+// framework skips its generic fallback, preserving the driver's richer message.
+//
+// The driver and [WithSystemCheck] must hold the SAME value: pass the result as
+// services.SystemCheck and forward it unchanged to WithSystemCheck.
+// Returns nil when check is nil.
+func NewTrackedSystemCheck(check SystemCheck) SystemCheck {
+	if check == nil {
+		return nil
+	}
+	return &trackedCheck{SystemCheck: check}
 }
 
 // WithSystemCheck registers a health check whose lifecycle matches the service lifetime.
@@ -73,11 +102,10 @@ type SystemCheck interface {
 // attempts, so it remains visible (e.g. in the health registry) during connection failures.
 //
 // The check is updated automatically:
-//   - MarkFailed(err) is called when applyConfig returns an error.
+//   - MarkFailed(err) is called when applyConfig returns an error, unless the driver
+//     already called MarkFailed during that invocation (requires NewTrackedSystemCheck).
 //   - MarkRunning() is called when applyConfig returns nil.
 //
-// Drivers may call MarkFailed before returning an error to provide richer context; the
-// framework will call it again as a fallback if the driver does not.
 // Dispose is called exactly once when the service stops, after any WithOnStop handlers.
 // A nil check is silently ignored.
 func WithSystemCheck[T any](check SystemCheck) Option[T] {
@@ -85,11 +113,17 @@ func WithSystemCheck[T any](check SystemCheck) Option[T] {
 		return OptionFunc[T](func(*Service[T]) {})
 	}
 	return OptionFunc[T](func(l *Service[T]) {
+		tracked, _ := check.(*trackedCheck) // nil when not using NewTrackedSystemCheck
 		orig := l.apply
 		l.apply = func(ctx context.Context, cfg T) error {
+			if tracked != nil {
+				tracked.failed = false // reset before each attempt
+			}
 			err := orig(ctx, cfg)
 			if err != nil {
-				check.MarkFailed(err)
+				if tracked == nil || !tracked.failed {
+					check.MarkFailed(err)
+				}
 			} else {
 				check.MarkRunning()
 			}

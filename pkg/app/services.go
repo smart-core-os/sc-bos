@@ -242,7 +242,7 @@ func newDriverSystemCheck(health *healthpb.Checks, id, kind string) service.Syst
 	if err != nil {
 		return nil
 	}
-	return check
+	return service.NewTrackedSystemCheck(check)
 }
 
 func devicesToHealthCheckCollection(d *devicespb.Collection) system.HealthCheckCollection {
