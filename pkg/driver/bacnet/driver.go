@@ -55,22 +55,20 @@ type Driver struct {
 	devices *known.Map
 
 	health      *healthpb.Checks
-	systemCheck *healthpb.FaultCheck
 	checks      []*healthpb.FaultCheck
 	healthTasks []task.StopFn
 }
 
 func NewDriver(services driver.Services) *Driver {
 	d := &Driver{
-		announcer:   node.NewReplaceAnnouncer(services.Node),
-		devices:     known.NewMap(),
-		health:      services.Health,
-		systemCheck: services.SystemCheck,
-		logger:      services.Logger.Named("bacnet"),
+		announcer: node.NewReplaceAnnouncer(services.Node),
+		devices:   known.NewMap(),
+		health:    services.Health,
+		logger:    services.Logger.Named("bacnet"),
 	}
 	d.Service = service.New(service.MonoApply(d.applyConfig),
 		service.WithParser(config.ReadBytes),
-		service.WithServiceCheck[config.Root](services.SystemCheck),
+		service.WithSystemCheck[config.Root](services.SystemCheck),
 		service.WithOnStop[config.Root](d.Clear))
 	return d
 }
@@ -84,7 +82,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	// we start fresh each time config is updated
 	d.Clear()
 
-	if err := d.initClient(ctx, cfg, d.systemCheck); err != nil {
+	if err := d.initClient(ctx, cfg); err != nil {
 		return err
 	}
 
@@ -277,34 +275,20 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func (d *Driver) initClient(ctx context.Context, cfg config.Root, faultCheck *healthpb.FaultCheck) error {
-	rel := &healthpb.HealthCheck_Reliability{}
+func (d *Driver) initClient(ctx context.Context, cfg config.Root) error {
 	client, err := gobacnet.NewClient(cfg.LocalInterface, int(cfg.LocalPort),
 		gobacnet.WithMaxConcurrentTransactions(cfg.MaxConcurrentTransactions), gobacnet.WithLogLevel(logrus.InfoLevel))
 	if err != nil {
-		rel.State = healthpb.HealthCheck_Reliability_UNRELIABLE
-		rel.LastError = &healthpb.HealthCheck_Error{
-			SummaryText: "Internal Driver Error",
-			DetailsText: fmt.Sprintf("Failed to create BACnet client: %v", err),
-			Code:        statusToHealthCode(DriverConfigError),
-		}
-		faultCheck.UpdateReliability(ctx, rel)
-		return err
+		return fmt.Errorf("failed to create BACnet client: %w", err)
 	}
 	d.client = client
 	if address, err := client.LocalUDPAddress(); err == nil {
 		d.logger.Debug("bacnet client configured", zap.Stringer("local", address),
 			zap.String("localInterface", cfg.LocalInterface), zap.Uint16("localPort", cfg.LocalPort))
 	} else {
-		rel.State = healthpb.HealthCheck_Reliability_UNRELIABLE
-		rel.LastError = &healthpb.HealthCheck_Error{
-			SummaryText: "Internal Driver Error",
-			DetailsText: "Failed to get local UDP address",
-			Code:        statusToHealthCode(DriverConfigError),
-		}
-		faultCheck.UpdateReliability(ctx, rel)
+		d.logger.Warn("failed to get local UDP address", zap.Error(err))
 	}
-	return err
+	return nil
 }
 
 func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announcer, cfg config.Root, device config.Device, devices known.Context, deviceHealth *healthpb.FaultCheck, logger *zap.Logger) error {

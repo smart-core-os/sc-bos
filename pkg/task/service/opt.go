@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 )
@@ -56,22 +57,51 @@ type Disposable interface {
 	Dispose()
 }
 
-// WithServiceCheck registers one or more resources to be disposed when the service stops.
-// Unlike resources created inside applyConfig, these are NOT disposed between retry attempts,
-// so they remain visible (e.g. in the health registry) during connection failures.
-// nil entries are silently ignored.
-func WithServiceCheck[T any](checks ...Disposable) Option[T] {
+// SystemCheck is a health check whose lifecycle is managed by the service framework.
+// Use [WithSystemCheck] to register one with a service.
+type SystemCheck interface {
+	Disposable
+	// MarkRunning is called automatically when applyConfig returns nil.
+	MarkRunning()
+	// MarkFailed is called automatically when applyConfig returns a non-nil error.
+	MarkFailed(err error)
+}
+
+// WithSystemCheck registers a health check whose lifecycle matches the service lifetime.
+//
+// Unlike resources created inside applyConfig, the check is NOT disposed between retry
+// attempts, so it remains visible (e.g. in the health registry) during connection failures.
+//
+// The check is updated automatically:
+//   - MarkFailed(err) is called when applyConfig returns an error.
+//   - MarkRunning() is called when applyConfig returns nil.
+//
+// Drivers may call MarkFailed before returning an error to provide richer context; the
+// framework will call it again as a fallback if the driver does not.
+// Dispose is called exactly once when the service stops, after any WithOnStop handlers.
+// A nil check is silently ignored.
+func WithSystemCheck[T any](check SystemCheck) Option[T] {
+	if check == nil {
+		return OptionFunc[T](func(*Service[T]) {})
+	}
 	return OptionFunc[T](func(l *Service[T]) {
+		orig := l.apply
+		l.apply = func(ctx context.Context, cfg T) error {
+			err := orig(ctx, cfg)
+			if err != nil {
+				check.MarkFailed(err)
+			} else {
+				check.MarkRunning()
+			}
+			return err
+		}
+		// Append to onStop so disposal runs AFTER driver cleanup (WithOnStop handlers).
 		existing := l.onStop
 		l.onStop = func() {
-			for _, c := range checks {
-				if c != nil {
-					c.Dispose()
-				}
-			}
 			if existing != nil {
 				existing()
 			}
+			check.Dispose()
 		}
 	})
 }

@@ -9,6 +9,7 @@ package opcua
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gopcua/opcua"
@@ -42,15 +43,14 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 	logger := services.Logger.Named(DriverName)
 
 	d := &Driver{
-		announcer:   node.NewReplaceAnnouncer(services.Node),
-		health:      services.Health,
-		systemCheck: services.SystemCheck,
-		logger:      logger,
+		announcer: node.NewReplaceAnnouncer(services.Node),
+		health:    services.Health,
+		logger:    logger,
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
 		service.WithParser(config.ParseConfig),
-		service.WithServiceCheck[config.Root](services.SystemCheck),
+		service.WithSystemCheck[config.Root](services.SystemCheck),
 		service.WithOnStop[config.Root](d.onStop),
 		service.WithRetry[config.Root](
 			service.RetryWithLogger(func(logContext service.RetryContext) {
@@ -70,8 +70,7 @@ type Driver struct {
 	health    *healthpb.Checks
 	logger    *zap.Logger
 
-	systemCheck *healthpb.FaultCheck
-	checks      []*healthpb.FaultCheck
+	checks []*healthpb.FaultCheck
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
@@ -79,7 +78,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	d.dispose()
 
-	opcClient, err := d.connectOpcClient(ctx, cfg, d.systemCheck)
+	opcClient, err := d.connectOpcClient(ctx, cfg)
 	if err != nil {
 		d.logger.Warn("Connect error", zap.Error(err))
 		return err
@@ -198,34 +197,17 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, faultCheck *healthpb.FaultCheck) (*opcua.Client, error) {
-	rel := &healthpb.HealthCheck_Reliability{}
+func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root) (*opcua.Client, error) {
 	opcClient, err := opcua.NewClient(cfg.Conn.Endpoint)
 	if err != nil {
-		rel.State = healthpb.HealthCheck_Reliability_UNRELIABLE
-		rel.LastError = &healthpb.HealthCheck_Error{
-			SummaryText: "Internal Driver Error",
-			DetailsText: "Failed to create new OPC UA client",
-			Code:        statusToHealthCode(DriverConfigError),
-		}
-		faultCheck.UpdateReliability(ctx, rel)
 		d.logger.Error("error creating new client", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("failed to create OPC UA client: %w", err)
 	}
 
-	err = opcClient.Connect(ctx)
-	if err != nil {
-		rel.State = healthpb.HealthCheck_Reliability_NO_RESPONSE
-		rel.LastError = &healthpb.HealthCheck_Error{
-			SummaryText: "Server Unreachable",
-			DetailsText: "The opcua server is unreachable",
-			Code:        statusToHealthCode(ServerUnreachable),
-		}
-		faultCheck.UpdateReliability(ctx, rel)
+	if err = opcClient.Connect(ctx); err != nil {
 		d.logger.Error("error connecting to opc ua server", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("OPC UA server unreachable (%s): %w", cfg.Conn.Endpoint, err)
 	}
-	faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
 	return opcClient, nil
 }
 

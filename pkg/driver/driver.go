@@ -20,11 +20,13 @@ type Services struct {
 	Config          service.ConfigUpdater
 	Database        *bolthold.Store
 	Health          *healthpb.Checks
-	// SystemCheck is a persistent driver-level health check created by the app layer.
-	// It is registered under the driver's own name and survives applyConfig retries —
-	// use it to report top-level connectivity state (server reachable, licence valid, etc.).
-	// Drivers should update but never dispose this check; disposal is handled by the service framework.
-	SystemCheck *healthpb.FaultCheck
+	// SystemCheck is a persistent driver-level health check for top-level connectivity state
+	// (server reachable, licence valid, etc.). It is created by the app layer, survives
+	// applyConfig retries, and is disposed automatically when the service stops.
+	//
+	// Pass it to service.WithSystemCheck — the framework then calls MarkFailed/MarkRunning
+	// automatically based on applyConfig return value. Drivers do not need to call Dispose.
+	SystemCheck service.SystemCheck
 }
 
 type Factory interface {

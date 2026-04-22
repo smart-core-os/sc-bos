@@ -230,9 +230,10 @@ func healthChecksForService(r *healthpb.Registry, id, kind string) *healthpb.Che
 }
 
 // newDriverSystemCheck creates a persistent driver-level system check registered under the
-// driver's own name. The check survives applyConfig retries; the caller is responsible for
-// disposing it (typically via service.WithServiceCheck).
-func newDriverSystemCheck(health *healthpb.Checks, id, kind string) *healthpb.FaultCheck {
+// driver's own name. The check survives applyConfig retries and is disposed automatically
+// when the service stops via service.WithSystemCheck.
+// Returns nil (as a nil service.SystemCheck) if the check cannot be created.
+func newDriverSystemCheck(health *healthpb.Checks, id, kind string) service.SystemCheck {
 	check, err := health.NewFaultCheck(id, &healthpb.HealthCheck{
 		Id:          "systemStatusCheck",
 		DisplayName: "System Status Check",

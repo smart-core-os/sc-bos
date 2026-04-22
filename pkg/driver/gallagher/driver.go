@@ -14,7 +14,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -24,17 +23,13 @@ import (
 const (
 	DriverName                      = "gallagher"
 	defaultOccupancyRefreshInterval = time.Minute * 30
-
-	errCodeServerUnreachable = "ServerUnreachable"
-	errCodeInvalidLicence    = "InvalidLicence"
 )
 
 type Driver struct {
 	*service.Service[config.Root]
-	announcer   node.Announcer
-	logger      *zap.Logger
-	ticker      *time.Ticker
-	systemCheck *healthpb.FaultCheck
+	announcer node.Announcer
+	logger    *zap.Logger
+	ticker    *time.Ticker
 }
 
 var Factory driver.Factory = factory{}
@@ -44,12 +39,11 @@ type factory struct{}
 func (f factory) New(services driver.Services) service.Lifecycle {
 	logger := services.Logger.Named(DriverName)
 	d := &Driver{
-		announcer:   services.Node,
-		systemCheck: services.SystemCheck,
+		announcer: services.Node,
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
-		service.WithServiceCheck[config.Root](services.SystemCheck),
+		service.WithSystemCheck[config.Root](services.SystemCheck),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
 			logContext.LogTo("applyConfig", logger)
 		})),
@@ -89,7 +83,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		return nil
 	}
 
-	d.probeServer(ctx, client, d.systemCheck)
+	if err := d.probeServer(ctx, client); err != nil {
+		return err
+	}
 
 	cc := newCardholderController(client, cfg.TopicPrefix, d.logger)
 	grp.Go(func() error {
@@ -143,36 +139,21 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-// probeServer checks whether the Gallagher server is reachable and the API key is accepted,
-// updating the system health check with the result.
-func (d *Driver) probeServer(ctx context.Context, client *Client, check *healthpb.FaultCheck) {
-	if check == nil {
-		return
-	}
+// probeServer checks whether the Gallagher server is reachable and the API key is accepted.
+// Returns an error if the server is unreachable or the licence is invalid, causing applyConfig
+// to fail and the retry loop to re-attempt until the server is available.
+func (d *Driver) probeServer(ctx context.Context, client *Client) error {
 	probeCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	statusCode, err := client.probe(probeCtx)
 	if err != nil {
-		check.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
-			State: healthpb.HealthCheck_Reliability_UNRELIABLE,
-			LastError: &healthpb.HealthCheck_Error{
-				SummaryText: "Server unreachable",
-				DetailsText: err.Error(),
-				Code:        &healthpb.HealthCheck_Error_Code{Code: errCodeServerUnreachable, System: DriverName},
-			},
-		})
-		return
+		return fmt.Errorf("server unreachable: %w", err)
 	}
 	if statusCode == http.StatusUnauthorized {
-		check.SetFault(&healthpb.HealthCheck_Error{
-			SummaryText: "API licence not valid",
-			DetailsText: "Server returned 401 Unauthorized — check the API key and Gallagher licence",
-			Code:        &healthpb.HealthCheck_Error_Code{Code: errCodeInvalidLicence, System: DriverName},
-		})
-		return
+		return fmt.Errorf("API licence not valid: server returned 401 Unauthorized — check the API key and Gallagher licence")
 	}
-	check.ClearFaults()
+	return nil
 }
 
 // run the udmi export for all the controllers. currently only cardholders are exported but might be extended to others
