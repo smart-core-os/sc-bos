@@ -1288,7 +1288,9 @@
             "icon": "mdi-lightbulb-group-outline",
             "description": "Lighting control system health across all floors",
             "checks": [
-              {"name": "van/uk/brum/ugs/eg-ac-01/driver/lighting", "displayName": "Lighting Controller"}
+              {"name": "van/uk/brum/ugs/floor-b1/driver/lighting", "displayName": "Basement"},
+              {"name": "van/uk/brum/ugs/floor-gf/driver/lighting", "displayName": "Ground Floor"},
+              {"name": "van/uk/brum/ugs/floor-01/driver/lighting", "displayName": "First Floor"}
             ]
           },
           {
@@ -1296,7 +1298,10 @@
             "icon": "mdi-hvac",
             "description": "Heating, ventilation and air conditioning",
             "checks": [
-              {"name": "van/uk/brum/ugs/eg-ac-01/driver/hvac", "displayName": "HVAC Controller"}
+              {"name": "van/uk/brum/ugs/floor-b1/driver/hvac", "displayName": "Basement"},
+              {"name": "van/uk/brum/ugs/floor-gf/driver/hvac", "displayName": "Ground Floor"},
+              {"name": "van/uk/brum/ugs/floor-01/driver/hvac", "displayName": "First Floor"},
+              {"name": "van/uk/brum/ugs/floor-rf/driver/hvac", "displayName": "Roof"}
             ]
           },
           {
@@ -1304,7 +1309,7 @@
             "icon": "mdi-shield-key-outline",
             "description": "Door access readers and security controllers",
             "checks": [
-              {"name": "van/uk/brum/ugs/eg-ac-01/driver/acs", "displayName": "Access Control System"}
+              {"name": "van/uk/brum/ugs/floor-gf/driver/acs", "displayName": "Ground Floor"}
             ]
           },
           {
@@ -1312,7 +1317,9 @@
             "icon": "mdi-leak",
             "description": "Environmental and occupancy sensors",
             "checks": [
-              {"name": "van/uk/brum/ugs/eg-ac-01/driver/sensors", "displayName": "Sensor Network"}
+              {"name": "van/uk/brum/ugs/floor-b1/driver/sensors", "displayName": "Basement"},
+              {"name": "van/uk/brum/ugs/floor-gf/driver/sensors", "displayName": "Ground Floor"},
+              {"name": "van/uk/brum/ugs/floor-01/driver/sensors", "displayName": "First Floor"}
             ]
           }
         ]
