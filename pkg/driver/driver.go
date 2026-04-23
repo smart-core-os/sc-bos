@@ -20,6 +20,10 @@ type Services struct {
 	Config          service.ConfigUpdater
 	Database        *bolthold.Store
 	Health          *healthpb.Checks
+	// SystemCheck is a driver-level health check for top-level connectivity state
+	// (server reachable, licence valid, etc.). Call MarkFailed when connectivity is lost and
+	// MarkRunning when it is restored. Call Dispose in the driver's stop handler.
+	SystemCheck service.SystemCheck
 }
 
 type Factory interface {

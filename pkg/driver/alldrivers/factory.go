@@ -8,6 +8,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet"
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral"
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock"
+	"github.com/smart-core-os/sc-bos/pkg/driver/mockhealthcheck"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua"
 	"github.com/smart-core-os/sc-bos/pkg/driver/pestsense"
 	"github.com/smart-core-os/sc-bos/pkg/driver/proxy"
@@ -25,8 +26,9 @@ func Factories() map[string]driver.Factory {
 		gallagher.DriverName:  gallagher.Factory,
 		helvarnet.DriverName:  helvarnet.Factory,
 		hikcentral.DriverName: hikcentral.Factory,
-		mock.DriverName:       mock.Factory,
-		opcua.DriverName:      opcua.Factory,
+		mock.DriverName:            mock.Factory,
+		mockhealthcheck.DriverName: mockhealthcheck.Factory,
+		opcua.DriverName:           opcua.Factory,
 		pestsense.DriverName:  pestsense.Factory,
 		proxy.DriverName:      proxy.Factory,
 		seWiserKnx.DriverName: seWiserKnx.Factory,

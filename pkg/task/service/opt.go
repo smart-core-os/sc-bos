@@ -51,6 +51,15 @@ func WithOnStop[T any](onStop func()) Option[T] {
 	})
 }
 
+// SystemCheck is the driver's persistent top-level health indicator, created by the framework
+// and passed via driver.Services.SystemCheck. Drivers call MarkFailed when connectivity is
+// lost and MarkRunning when it is restored. Drivers must call Dispose in their stop handler.
+type SystemCheck interface {
+	Dispose()
+	MarkRunning()
+	MarkFailed(err error)
+}
+
 // WithRetry configures a service to retry ApplyFunc when it returns an error.
 func WithRetry[T any](opts ...RetryOption) Option[T] {
 	return OptionFunc[T](func(l *Service[T]) {
