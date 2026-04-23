@@ -38,7 +38,8 @@
 </template>
 
 <script setup>
-import {MINUTE} from '@/components/now.js';
+
+import {MINUTE} from '@/util/date.js';
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue';
 import OwmIcon from './open-weather-logo.svg'
 

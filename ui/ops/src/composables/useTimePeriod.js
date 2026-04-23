@@ -1,5 +1,5 @@
-import {HOUR, MINUTE} from '@/components/now.js';
-import {roundDown} from '@/util/date.js';
+
+import {HOUR, MINUTE, roundDown} from '@/util/date.js';
 import {computed, toValue} from 'vue';
 
 /**

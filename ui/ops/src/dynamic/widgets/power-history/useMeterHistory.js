@@ -1,6 +1,7 @@
 import {timestampToDate} from '@/api/convpb.js';
 import {listMeterReadingHistory} from '@/api/sc/traits/meter.js';
-import {HOUR, MINUTE, useNow} from '@/components/now.js';
+import {useNow} from '@/components/now.js';
+import {HOUR, MINUTE} from '@/util/date.js';
 import debounce from 'debounce';
 import {computed, ref, toValue, watch} from 'vue';
 

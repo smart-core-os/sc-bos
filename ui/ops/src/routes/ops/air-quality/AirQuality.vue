@@ -61,9 +61,9 @@
 
 <script setup>
 import AirQualityHistoryCard from '@/dynamic/widgets/environmental/AirQualityHistoryCard.vue';
-import {HOUR, MINUTE} from '@/components/now';
 import ContentCard from '@/components/ContentCard.vue';
 import useAirQuality from '@/routes/ops/air-quality/useAirQualityHistory';
+import {HOUR, MINUTE} from '@/util/date.js';
 import {computed, reactive, ref} from 'vue';
 
 const airQualityProps = reactive({

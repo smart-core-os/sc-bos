@@ -1,9 +1,10 @@
 import {timestampToDate} from '@/api/convpb.js';
 import {listOccupancySensorHistory, pullOccupancy} from '@/api/sc/traits/occupancy.js';
 import {closeResource, newResourceValue} from '@/api/resource.js';
-import {SECOND, useNow} from '@/components/now.js';
+import {useNow} from '@/components/now.js';
 import {useMeterConsumption} from '@/dynamic/widgets/meter/consumption.js';
 import {useMeterReadingAt} from '@/traits/meter/meter.js';
+import {SECOND} from '@/util/date.js';
 import {asyncWatch} from '@/util/vue.js';
 import binarySearch from 'binary-search';
 import {Occupancy} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/occupancysensor/v1/occupancy_sensor_pb';

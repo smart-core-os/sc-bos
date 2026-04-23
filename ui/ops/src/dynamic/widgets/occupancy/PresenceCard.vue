@@ -21,10 +21,10 @@
 
 <script setup>
 import ContentCard from '@/components/ContentCard.vue';
-import {DAY, HOUR, MINUTE, SECOND, useNow} from '@/components/now.js';
+import {useNow} from '@/components/now.js';
 import StatusAlert from '@/components/StatusAlert.vue';
 import {useOccupancy, usePullOccupancy} from '@/traits/occupancy/occupancy.js';
-import {formatTimeAgo} from '@/util/date.js';
+import {formatTimeAgo, SECOND} from '@/util/date.js';
 import {computed} from 'vue';
 
 const props = defineProps({
@@ -43,6 +43,6 @@ const {now} = useNow(SECOND);
 // Create a timeAgo computed property to display time in words
 const timeAgo = computed(() => {
   if (!lastUpdate.value) return 'Never';
-  return formatTimeAgo(lastUpdate.value, now.value, MINUTE, HOUR, DAY);
+  return formatTimeAgo(lastUpdate.value, now.value);
 });
 </script>

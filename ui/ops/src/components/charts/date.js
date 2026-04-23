@@ -1,5 +1,6 @@
-import {DAY, HOUR} from '@/components/now.js';
+
 import {isNamedPeriod, previousNamedPeriod, usePastDates, usePeriod} from '@/composables/time.js';
+import {DAY, HOUR} from '@/util/date.js';
 import {
   eachDayOfInterval,
   eachHourOfInterval,

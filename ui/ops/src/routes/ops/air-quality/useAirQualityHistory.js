@@ -1,8 +1,9 @@
 import {timestampToDate} from '@/api/convpb';
 import {listAirQualitySensorHistory} from '@/api/sc/traits/air-quality-sensor';
-import {DAY, useNow} from '@/components/now';
+import {useNow} from '@/components/now';
 import {useDevices} from '@/composables/devices';
 import useTimePeriod from '@/composables/useTimePeriod';
+import {DAY} from '@/util/date.js';
 import {hasTrait} from '@/util/devices';
 import {csvDownload} from '@/util/downloadCSV';
 import {AirQuality} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airqualitysensor/v1/air_quality_sensor_pb';

@@ -161,10 +161,10 @@ import {
   CloudErrMessage, getCloudConnectionDefaults, registerCloudConnection, testCloudConnection, unlinkCloudConnection
 } from '@/api/ui/cloud-connection.js';
 import {newActionTracker} from '@/api/resource.js';
-import {DAY, HOUR, MINUTE, SECOND, useNow} from '@/components/now.js';
+import {useNow} from '@/components/now.js';
 import {CloudConnection} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb';
 import {computed, reactive, ref, watch} from 'vue';
-import {formatTimeAgoRounded} from '@/util/date.js';
+import {formatTimeAgoRounded, MINUTE, SECOND} from '@/util/date.js';
 
 const props = defineProps({
   nodeName: {type: String, required: true},
@@ -213,7 +213,7 @@ const lastCheckInText = computed(() => {
   if (now.value - lastCheckInDate.value < MINUTE) {
     return 'less than a minute ago';
   }
-  return formatTimeAgoRounded(lastCheckInDate.value, now.value, MINUTE, MINUTE, HOUR, DAY);
+  return formatTimeAgoRounded(lastCheckInDate.value, now.value, MINUTE);
 });
 
 // null = not yet loaded; '' = loaded but empty; string = loaded with value

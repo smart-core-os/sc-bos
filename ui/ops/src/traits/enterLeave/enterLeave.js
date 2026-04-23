@@ -1,6 +1,7 @@
 import {closeResource, newResourceValue} from '@/api/resource';
 import {pullEnterLeaveEvents} from '@/api/sc/traits/enter-leave';
-import {SECOND} from '@/components/now.js';
+
+import {SECOND} from '@/util/date.js';
 import {toQueryObject, watchResource} from '@/util/traits';
 import {EnterLeaveEvent} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor_pb';
 import {computed, onScopeDispose, reactive, ref, toRefs, toValue, watch} from 'vue';

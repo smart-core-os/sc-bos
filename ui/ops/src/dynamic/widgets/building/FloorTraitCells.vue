@@ -54,7 +54,7 @@
  *   tempSetpoint: comfort target in °C (default 21)
  */
 import FloorList from '@/components/FloorList.vue';
-import {HOUR, useNow} from '@/components/now.js';
+import {useNow} from '@/components/now.js';
 import {useDevicesCollection} from '@/composables/devices.js';
 import DeviceCell from '@/routes/devices/components/DeviceCell.vue';
 import {useAirQualityPeriodAverages} from '@/dynamic/widgets/environmental/airQuality.js';
@@ -64,6 +64,7 @@ import {useAirQuality, usePullAirQuality} from '@/traits/airQuality/airQuality.j
 import {useAirTemperature, usePullAirTemperature} from '@/traits/airTemperature/airTemperature.js';
 import {usePullSoundLevel, useSoundLevel} from '@/traits/sound/sound.js';
 import {useRollingValue} from '@/composables/rollingValue.js';
+import {HOUR} from '@/util/date.js';
 import {computed, effectScope, onScopeDispose, reactive, watch} from 'vue';
 
 const props = defineProps({

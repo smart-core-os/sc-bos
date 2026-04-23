@@ -1,3 +1,9 @@
+export const MILLISECOND = 1;
+export const SECOND = 1000 * MILLISECOND;
+export const MINUTE = 60 * SECOND;
+export const HOUR = 60 * MINUTE;
+export const DAY = 24 * HOUR;
+
 /**
  * Compares two dates in ascending order.
  * Null values are compared after non-null values.
@@ -63,13 +69,10 @@ export function roundUp(date, round) {
  *
  * @param {Date} date
  * @param {Date} now
- * @param {number} MINUTE
- * @param {number} HOUR
- * @param {number} DAY
  * @return {string}
  */
-export function formatTimeAgo(date, now, MINUTE, HOUR, DAY) {
-  return formatTimeAgoRounded(date, now, 0, MINUTE, HOUR, DAY);
+export function formatTimeAgo(date, now) {
+  return formatTimeAgoRounded(date, now, 0);
 }
 
 /**
@@ -82,12 +85,9 @@ export function formatTimeAgo(date, now, MINUTE, HOUR, DAY) {
  * @param {Date} date
  * @param {Date} now
  * @param {number} granularity - in milliseconds
- * @param {number} MINUTE
- * @param {number} HOUR
- * @param {number} DAY
  * @return {string}
  */
-export function formatTimeAgoRounded(date, now, granularity, MINUTE, HOUR, DAY) {
+export function formatTimeAgoRounded(date, now, granularity) {
   let diff = now - date;
 
   // Adding a small buffer to account for minimal future time differences
@@ -103,7 +103,7 @@ export function formatTimeAgoRounded(date, now, granularity, MINUTE, HOUR, DAY) 
   const rtf = new Intl.RelativeTimeFormat('en', {numeric: 'auto'});
 
   if (Math.abs(diff) < MINUTE) {
-    return rtf.format(-Math.floor(diff / 1000), 'second');
+    return rtf.format(-Math.floor(diff / SECOND), 'second');
   } else if (Math.abs(diff) < HOUR) {
     return rtf.format(-Math.floor(diff / MINUTE), 'minute');
   } else if (Math.abs(diff) < DAY) {

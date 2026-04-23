@@ -86,7 +86,8 @@
 
 <script setup>
 import {useDownloadLink} from '@/components/download/download.js';
-import {DAY, HOUR, MINUTE, SECOND, useNow} from '@/components/now.js';
+import {useNow} from '@/components/now.js';
+import {DAY, HOUR, MINUTE, SECOND} from '@/util/date.js';
 import {addDays, startOfDay} from 'date-fns';
 import {computed, onScopeDispose, ref} from 'vue';
 import {VDateInput} from 'vuetify/labs/components';

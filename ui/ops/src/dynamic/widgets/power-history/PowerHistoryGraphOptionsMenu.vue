@@ -73,7 +73,7 @@
 </template>
 
 <script>
-import {DAY, HOUR, MINUTE} from '@/components/now.js';
+import {DAY, HOUR, MINUTE} from '@/util/date.js';
 
 // Defining the options for the duration type buttons
 export const durationOptions = [

@@ -1,4 +1,5 @@
-import {DAY, HOUR, MINUTE, useNow} from '@/components/now';
+import {useNow} from '@/components/now';
+import {DAY, HOUR, MINUTE} from '@/util/date.js';
 import {acceptHMRUpdate, defineStore} from 'pinia';
 import {computed, ref, watchEffect} from 'vue';
 
