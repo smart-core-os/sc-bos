@@ -39,7 +39,7 @@ ENV GIT_VERSION=$GIT_VERSION
 WORKDIR ops
 RUN yarn run build
 
-FROM --platform=$BUILDPLATFORM golang:1.25-alpine3.22 AS build_go
+FROM --platform=$BUILDPLATFORM golang:1.26.2-alpine3.23 AS build_go
 
 RUN apk add --no-cache git
 
@@ -61,7 +61,7 @@ ENV GOARCH=$TARGETARCH
 RUN --mount=type=cache,target=/go/pkg/mod \
     go build -o sc-bos ./cmd/bos
 
-FROM alpine:3.22
+FROM alpine:3.23
 LABEL vendor="Vanti Ltd"
 
 COPY --from=build_go /src/sc-bos /app/
@@ -73,6 +73,10 @@ EXPOSE 443
 EXPOSE 23557
 EXPOSE 7000-7999
 
+# The demo db is unauthenticated, so we don't need a password. Still need the file though.
+# Must be before VOLUME — writes to VOLUME paths after declaration are discarded.
+RUN mkdir -p /data/secrets && echo "" > /data/secrets/postgres-password
+
 VOLUME ["/cfg", "/data"]
 
 ENTRYPOINT ["/app/sc-bos", "--appconf=/cfg/app.conf.json", "--sysconf=/cfg/system.conf.json", "--data=/data"]
@@ -81,10 +85,6 @@ ENTRYPOINT ["/app/sc-bos", "--appconf=/cfg/app.conf.json", "--sysconf=/cfg/syste
 
 # Image built using the Dockerfile in the root of the repository
 # FROM localhost/smart-core-os-sc-bos:demo-ugs-base
-
-# The demo db is unauthenticated, so we don't need a password. Still need the file though.
-RUN mkdir -p /data/secrets
-RUN echo "" >> /data/secrets/postgres-password
 # Files will be relative to the repository root
 COPY example/config/vanti-ugs/ /cfg/
 # Special system conf for the container env
