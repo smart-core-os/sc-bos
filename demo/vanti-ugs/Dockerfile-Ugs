@@ -46,6 +46,7 @@ RUN apk add --no-cache git
 WORKDIR /src
 
 COPY go.mod go.sum ./
+RUN which go && go version && echo "GOPATH=$GOPATH" && echo "GOTOOLCHAIN=$GOTOOLCHAIN"
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 
