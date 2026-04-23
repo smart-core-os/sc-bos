@@ -9,7 +9,15 @@ import (
 
 type Root struct {
 	driver.BaseConfig
-	Devices []Device `json:"devices,omitempty"`
+	HealthCheck *HealthCheck `json:"healthCheck,omitempty"`
+	Devices     []Device     `json:"devices,omitempty"`
+}
+
+// HealthCheck configures a simulated driver-level connectivity health check for UI testing.
+type HealthCheck struct {
+	// FaultProbability is the probability (0.0–1.0) that each tick results in a fault state.
+	// The remaining probability results in a healthy state. Defaults to 0.15.
+	FaultProbability float64 `json:"faultProbability,omitempty"`
 }
 
 type Device struct {

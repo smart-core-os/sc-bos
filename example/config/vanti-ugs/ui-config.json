@@ -1279,6 +1279,44 @@
           }
         }
       }
+    },
+    "system": {
+      "subsystemHealth": {
+        "subsystems": [
+          {
+            "title": "Lighting",
+            "icon": "mdi-lightbulb-group-outline",
+            "description": "Lighting control system health across all floors",
+            "checks": [
+              {"name": "van/uk/brum/ugs/eg-ac-01/driver/lighting", "displayName": "Lighting Controller"}
+            ]
+          },
+          {
+            "title": "HVAC",
+            "icon": "mdi-hvac",
+            "description": "Heating, ventilation and air conditioning",
+            "checks": [
+              {"name": "van/uk/brum/ugs/eg-ac-01/driver/hvac", "displayName": "HVAC Controller"}
+            ]
+          },
+          {
+            "title": "Access Control",
+            "icon": "mdi-shield-key-outline",
+            "description": "Door access readers and security controllers",
+            "checks": [
+              {"name": "van/uk/brum/ugs/eg-ac-01/driver/acs", "displayName": "Access Control System"}
+            ]
+          },
+          {
+            "title": "Sensors",
+            "icon": "mdi-leak",
+            "description": "Environmental and occupancy sensors",
+            "checks": [
+              {"name": "van/uk/brum/ugs/eg-ac-01/driver/sensors", "displayName": "Sensor Network"}
+            ]
+          }
+        ]
+      }
     }
   },
   "experiments": {

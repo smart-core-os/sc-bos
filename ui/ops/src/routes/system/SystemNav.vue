@@ -41,6 +41,11 @@ const menuItems = [
     link: {path: '/system/components'}
   },
   {
+    title: 'Subsystems',
+    icon: 'mdi-check-network',
+    link: {path: '/system/subsystems'}
+  },
+  {
     title: 'Logs',
     icon: 'mdi-text-box-outline',
     link: {path: '/system/logs'}

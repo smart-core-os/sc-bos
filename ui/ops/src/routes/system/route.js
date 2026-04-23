@@ -62,6 +62,17 @@ export default [
         }
       },
       {
+        path: 'subsystems',
+        components: {
+          default: () => import('./components/pages/SubsystemHealthList.vue')
+        },
+        meta: {
+          authentication: {
+            rolesRequired: ['superAdmin', 'admin', 'commissioner', 'operator', 'viewer']
+          }
+        }
+      },
+      {
         path: 'logs',
         components: {
           default: () => import('./components/pages/LogsPage.vue')
