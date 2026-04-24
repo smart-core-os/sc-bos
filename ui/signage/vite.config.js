@@ -4,7 +4,6 @@ import {createRequire} from 'module';
 import {dirname, relative, sep, posix} from 'path';
 import {fileURLToPath, URL} from 'url';
 import {defineConfig} from 'vite';
-import eslintPlugin from 'vite-plugin-eslint';
 import vuetify from 'vite-plugin-vuetify';
 
 const _require = createRequire(import.meta.url);
@@ -32,7 +31,6 @@ export default defineConfig(() => {
     css: {
       preprocessorOptions: {
         scss: {
-          api: 'modern-compiler',
           additionalData: `
           @use "@/assets/_variables.scss" as *;
         `,
@@ -42,7 +40,7 @@ export default defineConfig(() => {
     optimizeDeps: {
       include: optimizeDepsInclude,
       // See https://github.com/vueuse/vue-demi
-      exclude: ['vue-demi']
+      exclude: ['vue-demi', 'vuetify']
     },
     build: {
       commonjsOptions: {
@@ -58,7 +56,6 @@ export default defineConfig(() => {
           configFile: 'src/sass/settings.scss'
         }
       }),
-      eslintPlugin()
     ],
     resolve: {
       alias: {

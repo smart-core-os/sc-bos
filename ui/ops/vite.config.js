@@ -5,7 +5,6 @@ import {createRequire} from 'module';
 import {dirname, posix, relative, sep} from 'path';
 import {fileURLToPath, URL} from 'url';
 import {defineConfig, loadEnv} from 'vite';
-import eslintPlugin from 'vite-plugin-eslint';
 import vuetify from 'vite-plugin-vuetify';
 import svgLoader from 'vite-svg-loader';
 
@@ -41,7 +40,7 @@ export default defineConfig(({mode}) => {
     optimizeDeps: {
       include: optimizeDepsInclude,
       // See https://github.com/vueuse/vue-demi
-      exclude: ['vue-demi']
+      exclude: ['vue-demi', 'vuetify']
     },
     build: {
       commonjsOptions: {
@@ -58,7 +57,6 @@ export default defineConfig(({mode}) => {
         }
       }),
       svgLoader(),
-      eslintPlugin()
     ],
     resolve: {
       alias: {
