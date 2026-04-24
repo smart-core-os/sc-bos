@@ -30,7 +30,7 @@ services:
       - "8881:80"
 
   sc-ugs:
-    image: ghcr.io/smart-core-os/sc-bos/demo-ugs-sc-bos:v1.0.1-vanti.0-1131-gcbfd6c2eb
+    image: ghcr.io/smart-core-os/sc-bos/demo-ugs-sc-bos:v1.0.1-vanti.0-1135-gb373839dd
     restart: always
     ports:
       - "8443:8443"
@@ -44,7 +44,7 @@ services:
         condition: service_healthy
 
   seed-db:
-    image: ghcr.io/smart-core-os/sc-bos/demo-ugs-seed-db:v1.0.1-vanti.0-1131-gcbfd6c2eb
+    image: ghcr.io/smart-core-os/sc-bos/demo-ugs-seed-db:v1.0.1-vanti.0-1135-gb373839dd
     restart: no
     depends_on:
       db:
