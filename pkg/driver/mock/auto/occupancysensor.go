@@ -19,15 +19,11 @@ func OccupancySensorAuto(model *occupancysensorpb.Model) *service.Service[string
 			for {
 				tod := scale.NineToFive.Now()
 				// Two-stage: first decide if anyone is present (probability = tod/2,
-				// so even at peak hours there's ~50% chance of 0), then pick a count.
+				// so even at peak hours there's ~10% chance of 0), then pick a count.
+				// we want to keep some zero counts to demo the Idle Energy card
 				var peopleCount int32
-				if randomBool(tod * 0.50) {
+				if randomBool(tod * 0.1) {
 					peopleCount = int32(math.Round(float64Between(1, 200) * tod))
-				}
-				// Minimum of 10: the power density card requires some occupancy to render,
-				// and animations like lifts moving make no sense in an empty building.
-				if peopleCount < 10 {
-					peopleCount = 10
 				}
 				occupancy := &occupancysensorpb.Occupancy{PeopleCount: peopleCount}
 				if peopleCount == 0 {
