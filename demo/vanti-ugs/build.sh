@@ -46,6 +46,7 @@ done
 # Add config to the sc-bos image
 echo "Building the sc-bos demo image with version: $GIT_VERSION"
 $containerCmd build \
+  --no-cache \
   --build-arg GIT_VERSION=$GIT_VERSION \
   --secret=id=npmrc,src=$HOME/.npmrc \
   --platform=$PLATFORMS \
@@ -54,6 +55,7 @@ $containerCmd build \
 # Build the db seeder image
 echo "Building the sc-bos demo seed-db image with version: $GIT_VERSION"
 $containerCmd build \
+  --no-cache \
   --platform=$PLATFORMS \
   --manifest "demo-ugs-seed-db" \
   -f demo/vanti-ugs/Dockerfile-SeedDb .
