@@ -580,18 +580,18 @@ func (q *Queries) ListConfigVersionsByNode(ctx context.Context, arg ListConfigVe
 const listDeployments = `-- name: ListDeployments :many
 SELECT id, config_version_id, status, start_time, finished_time, reason
 FROM deployments
-WHERE id > ?1
-ORDER BY id
+WHERE id < ?1
+ORDER BY id DESC
 LIMIT ?2
 `
 
 type ListDeploymentsParams struct {
-	AfterID int64
-	Limit   int64
+	BeforeID int64
+	Limit    int64
 }
 
 func (q *Queries) ListDeployments(ctx context.Context, arg ListDeploymentsParams) ([]Deployment, error) {
-	rows, err := q.db.QueryContext(ctx, listDeployments, arg.AfterID, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, listDeployments, arg.BeforeID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -623,19 +623,19 @@ func (q *Queries) ListDeployments(ctx context.Context, arg ListDeploymentsParams
 const listDeploymentsByConfigVersion = `-- name: ListDeploymentsByConfigVersion :many
 SELECT id, config_version_id, status, start_time, finished_time, reason
 FROM deployments
-WHERE config_version_id = ?1 AND id > ?2
-ORDER BY id
+WHERE config_version_id = ?1 AND id < ?2
+ORDER BY id DESC
 LIMIT ?3
 `
 
 type ListDeploymentsByConfigVersionParams struct {
 	ConfigVersionID int64
-	AfterID         int64
+	BeforeID        int64
 	Limit           int64
 }
 
 func (q *Queries) ListDeploymentsByConfigVersion(ctx context.Context, arg ListDeploymentsByConfigVersionParams) ([]Deployment, error) {
-	rows, err := q.db.QueryContext(ctx, listDeploymentsByConfigVersion, arg.ConfigVersionID, arg.AfterID, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, listDeploymentsByConfigVersion, arg.ConfigVersionID, arg.BeforeID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -668,19 +668,19 @@ const listDeploymentsByNode = `-- name: ListDeploymentsByNode :many
 SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time, d.reason
 FROM deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
-WHERE cv.node_id = ?1 AND d.id > ?2
-ORDER BY d.id
+WHERE cv.node_id = ?1 AND d.id < ?2
+ORDER BY d.id DESC
 LIMIT ?3
 `
 
 type ListDeploymentsByNodeParams struct {
-	NodeID  int64
-	AfterID int64
-	Limit   int64
+	NodeID   int64
+	BeforeID int64
+	Limit    int64
 }
 
 func (q *Queries) ListDeploymentsByNode(ctx context.Context, arg ListDeploymentsByNodeParams) ([]Deployment, error) {
-	rows, err := q.db.QueryContext(ctx, listDeploymentsByNode, arg.NodeID, arg.AfterID, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, listDeploymentsByNode, arg.NodeID, arg.BeforeID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

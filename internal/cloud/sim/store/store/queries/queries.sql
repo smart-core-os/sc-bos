@@ -154,23 +154,23 @@ WHERE d.id = :id;
 -- name: ListDeployments :many
 SELECT *
 FROM deployments
-WHERE id > :after_id
-ORDER BY id
+WHERE id < :before_ID
+ORDER BY id DESC
 LIMIT :limit;
 
 -- name: ListDeploymentsByConfigVersion :many
 SELECT *
 FROM deployments
-WHERE config_version_id = :config_version_id AND id > :after_id
-ORDER BY id
+WHERE config_version_id = :config_version_id AND id < :before_id
+ORDER BY id DESC
 LIMIT :limit;
 
 -- name: ListDeploymentsByNode :many
 SELECT d.*
 FROM deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
-WHERE cv.node_id = :node_id AND d.id > :after_id
-ORDER BY d.id
+WHERE cv.node_id = :node_id AND d.id < :before_id
+ORDER BY d.id DESC
 LIMIT :limit;
 
 -- name: CountDeployments :one

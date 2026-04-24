@@ -80,7 +80,7 @@ func isValidStatus(status string) bool {
 func (s *Server) listDeployments(w http.ResponseWriter, r *http.Request) {
 	logger := s.loggerFor(r)
 
-	afterID, limit, err := parsePagination(r)
+	beforeID, limit, err := parsePaginationDesc(r)
 	if err != nil {
 		writeError(w, errInvalidRequest)
 		logger.Info("invalid pagination", zap.Error(err))
@@ -115,20 +115,20 @@ func (s *Server) listDeployments(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case nodeID != 0:
 			items, err = tx.ListDeploymentsByNode(r.Context(), queries.ListDeploymentsByNodeParams{
-				NodeID:  nodeID,
-				AfterID: afterID,
-				Limit:   limit + 1,
+				NodeID:   nodeID,
+				BeforeID: beforeID,
+				Limit:    limit + 1,
 			})
 		case configVersionID != 0:
 			items, err = tx.ListDeploymentsByConfigVersion(r.Context(), queries.ListDeploymentsByConfigVersionParams{
 				ConfigVersionID: configVersionID,
-				AfterID:         afterID,
+				BeforeID:        beforeID,
 				Limit:           limit + 1,
 			})
 		default:
 			items, err = tx.ListDeployments(r.Context(), queries.ListDeploymentsParams{
-				AfterID: afterID,
-				Limit:   limit + 1,
+				BeforeID: beforeID,
+				Limit:    limit + 1,
 			})
 		}
 		return err
