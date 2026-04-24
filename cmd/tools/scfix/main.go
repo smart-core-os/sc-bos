@@ -14,7 +14,6 @@ import (
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/historyimports"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/nodeclient"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/optclients"
-	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protogopkg"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1go"
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/protov1js"
@@ -38,10 +37,8 @@ var allFixes = []fix{
 	{Fix: protov1.Fix, Enabled: false},
 	{Fix: protov1go.Fix, Enabled: true},
 	{Fix: protov1js.Fix, Enabled: true},
-	{Fix: protogopkg.Fix, Enabled: false},
 	{Fix: scgolang.Fix, Enabled: true}, // must run before goprotoimports to avoid alias conflicts
 	{Fix: goprotoimports.Fix, Enabled: true},
-	{Fix: gentrait.FixMove, Enabled: false},
 	{Fix: gentrait.FixRefs, Enabled: true},
 	{Fix: regoimports.Fix, Enabled: true},
 }
