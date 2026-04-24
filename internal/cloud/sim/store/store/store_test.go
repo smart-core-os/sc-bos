@@ -358,9 +358,9 @@ func TestStore_Deployments(t *testing.T) {
 		}
 
 		deployments, err := tx.ListDeploymentsByNode(ctx, queries.ListDeploymentsByNodeParams{
-			NodeID:  config.NodeID,
-			AfterID: 0,
-			Limit:   10,
+			NodeID:   config.NodeID,
+			BeforeID: math.MaxInt64,
+			Limit:    10,
 		})
 		if err != nil {
 			return err
