@@ -1043,7 +1043,7 @@
                   }
                 },
                 {
-                  "loc": {"x": 1, "y": 10, "w": 4, "h": 4},
+                  "loc": {"x": 1, "y": 10, "w": 3, "h": 4},
                   "id": "SecurityEvents",
                   "component": "builtin:security/SecurityEventsCard",
                   "props": {
@@ -1052,6 +1052,20 @@
                     "name": "van/uk/brum/ugs/devices/security-events",
                     "hideTableHeader": true,
                     "fixedRowCount": 5
+                  }
+                },
+                {
+                  "loc": {"x": 4, "y": 10, "w": 1, "h": 4},
+                  "id": "BuildingLifts",
+                  "component": "builtin:transport/LiftPositionCard",
+                  "props": {
+                    "title": "Building Lifts",
+                    "compact": true,
+                    "deviceNames": [
+                      "van/uk/brum/ugs/devices/lift-01",
+                      "van/uk/brum/ugs/devices/lift-02"
+                    ],
+                    "floors": ["5", "4", "3", "2", "1", "GF"]
                   }
                 },
                 {
@@ -1081,7 +1095,7 @@
                   "id": "Weather",
                   "component": "builtin:general/OpenWeatherMap",
                   "props": {
-                    "apiKey": "TODO",
+                    "apiKey": "${OPENWEATHERMAP_API_KEY}",
                     "city": "Birmingham",
                     "hideToolbar": true,
                     "color": "transparent"
@@ -1221,20 +1235,6 @@
                     "unit": "kWh",
                     "period": "week",
                     "baselineShift": "week"
-                  }
-                },
-                {
-                  "loc": {"x": 1, "y": 18, "w": 1, "h": 3},
-                  "id": "BuildingLifts",
-                  "component": "builtin:transport/LiftPositionCard",
-                  "props": {
-                    "title": "Building Lifts",
-                    "compact": true,
-                    "deviceNames": [
-                      "van/uk/brum/ugs/devices/lift-01",
-                      "van/uk/brum/ugs/devices/lift-02"
-                    ],
-                    "floors": ["5", "4", "3", "2", "1", "GF"]
                   }
                 }
               ]

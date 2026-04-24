@@ -122,7 +122,7 @@ const chartData = computed(() => records.value);
 <style scoped lang="scss">
 .root {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr 2fr;
 }
 
 .chart__legend {
@@ -140,7 +140,6 @@ const chartData = computed(() => records.value);
   grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   align-items: stretch;
   justify-self: end;
-  padding-top: 10px;
   aspect-ratio: 1;
 
   > * {

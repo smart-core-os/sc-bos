@@ -24,6 +24,11 @@ func OccupancySensorAuto(model *occupancysensorpb.Model) *service.Service[string
 				if randomBool(tod * 0.50) {
 					peopleCount = int32(math.Round(float64Between(1, 200) * tod))
 				}
+				// Minimum of 10: the power density card requires some occupancy to render,
+				// and animations like lifts moving make no sense in an empty building.
+				if peopleCount < 10 {
+					peopleCount = 10
+				}
 				occupancy := &occupancysensorpb.Occupancy{PeopleCount: peopleCount}
 				if peopleCount == 0 {
 					occupancy.State = oneOf(occupancysensorpb.Occupancy_UNOCCUPIED, occupancysensorpb.Occupancy_IDLE)

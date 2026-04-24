@@ -90,6 +90,10 @@ ENTRYPOINT ["/app/sc-bos", "--appconf=/cfg/app.conf.json", "--sysconf=/cfg/syste
 COPY example/config/vanti-ugs/ /cfg/
 # Special system conf for the container env
 COPY demo/vanti-ugs/system.conf.json /cfg/system.conf.json
+# entrypoint.sh uses envsubst to inject runtime secrets (e.g. OPENWEATHERMAP_API_KEY) into the UI config
+RUN apk add --no-cache gettext
+COPY demo/vanti-ugs/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 EXPOSE 8443
 
-ENTRYPOINT ["/app/sc-bos", "--policy-mode=check", "--appconf=/cfg/app.conf.json", "--sysconf=/cfg/system.conf.json", "--data=/data"]
+ENTRYPOINT ["/app/entrypoint.sh", "/app/sc-bos", "--policy-mode=check", "--appconf=/cfg/app.conf.json", "--sysconf=/cfg/system.conf.json", "--data=/data"]

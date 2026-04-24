@@ -72,6 +72,9 @@ podman compose -f docker-compose-ugs.yml up -d
 Then you can access the site at `https://localhost:8443/` in your browser. (for the Vanti example, for any other
 examples refer to the `listenHTTPS` setting in the relevant system.conf.json)
 
+NOTE: the database seeder takes a few minutes to run and populate all the data.
+After first starting the demo, wait 10 minutes before showing dashboards.
+
 You can also use this demo to test against the API, for example, to get the list of children of the root node,
 run the `client-parent` tool in `cmd/tools` and it will print the devices in `vanti-ugs`
 set the insecure-skip-verify flag to true as the demo uses a self-signed certificate.
