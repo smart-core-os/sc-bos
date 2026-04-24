@@ -140,6 +140,7 @@ const chartData = computed(() => records.value);
   grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   align-items: stretch;
   justify-self: end;
+  margin-right: 8px;
   aspect-ratio: 1;
 
   > * {

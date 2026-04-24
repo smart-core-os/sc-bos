@@ -22,7 +22,7 @@
       "providers": ["localAuth", "keyCloakAuth"],
       "keycloak": {
         "realm": "Smart_Core",
-        "url": "http://localhost:8888/",
+        "url": "https://localhost:8888/",
         "clientId": "scos-opsui"
       }
     },
@@ -1110,42 +1110,21 @@
                   }
                 },
                 {
-                  "loc": {"x": 7, "y": 2, "w": 5, "h": 6},
+                  "loc": {"x": 7, "y": 2, "w": 6, "h": 6},
                   "id": "FloorInfo",
                   "component": "builtin:building/FloorTraitCells",
                   "props": {
                     "columns": ["temp", "humidity", "co2", "voc", "sound"],
                     "showTrend": true,
                     "floors": [
-                      {"level": 7},
-                      {"level": 6, "zoneName": "van/uk/brum/ugs/zones/rooms/bank"},
-                      {"level": 5, "zoneName": "van/uk/brum/ugs/zones/areas/loading-bay"},
-                      {"level": 4, "zoneName": "van/uk/brum/ugs/zones/areas/comms-room"},
-                      {"level": 3, "zoneName": "van/uk/brum/ugs/zones/areas/lab"},
-                      {"level": 2, "zoneName": "van/uk/brum/ugs/zones/areas/reception"},
-                      {"level": 1, "zoneName": "van/uk/brum/ugs/zones/floors/first"},
-                      {"level": 0, "zoneName": "van/uk/brum/ugs/zones/floors/ground"},
-                      {"level": -1, "zoneName": "van/uk/brum/ugs/zones/floors/basement"},
-                      {"level": -2}
-                    ]
-                  }
-                },
-                {
-                  "loc": {"x": 12, "y": 2, "w": 1, "h": 6},
-                  "id": "Floors",
-                  "component": "builtin:building/BuildingFloors",
-                  "props": {
-                    "floors": [
-                      {"level": 7, "title": "Roof"},
-                      {"level": 6, "title": "Floor 6"},
-                      {"level": 5, "title": "Floor 5"},
-                      {"level": 4, "title": "Floor 4"},
-                      {"level": 3, "title": "Floor 3"},
-                      {"level": 2, "title": "Floor 2"},
-                      {"level": 1, "title": "Floor 1"},
-                      {"level": 0, "title": "Ground Floor"},
-                      {"level": -1, "title": "Basement 1"},
-                      {"level": -2, "title": "Basement 2"}
+                      {"level": 6, "title": "Sixth Floor", "zoneName": "van/uk/brum/ugs/zones/rooms/bank"},
+                      {"level": 5, "title": "Fifth Floor", "zoneName": "van/uk/brum/ugs/zones/areas/loading-bay"},
+                      {"level": 4, "title": "Fourth Floor", "zoneName": "van/uk/brum/ugs/zones/areas/comms-room"},
+                      {"level": 3, "title": "Third Floor", "zoneName": "van/uk/brum/ugs/zones/areas/lab"},
+                      {"level": 2, "title": "Second Floor", "zoneName": "van/uk/brum/ugs/zones/areas/reception"},
+                      {"level": 1, "title": "First Floor", "zoneName": "van/uk/brum/ugs/zones/floors/first"},
+                      {"level": 0, "title": "Ground Floor", "zoneName": "van/uk/brum/ugs/zones/floors/ground"},
+                      {"level": -1, "title": "Basement", "zoneName": "van/uk/brum/ugs/zones/floors/basement"}
                     ]
                   }
                 },
