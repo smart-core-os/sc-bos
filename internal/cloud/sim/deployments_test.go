@@ -595,5 +595,6 @@ func TestDeployments_Pagination(t *testing.T) {
 			}
 			return resp, ids, list.NextPageToken
 		},
+		true,
 	)
 }

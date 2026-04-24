@@ -47,8 +47,8 @@ type DeviceRegisterResponse struct {
 	BosapiRoot   string `json:"bosapi_root"`
 }
 
-// generateEnrollmentCode generates a random 6-character uppercase alphanumeric string.
-func generateEnrollmentCode() string {
+// GenerateEnrollmentCode generates a random 6-character uppercase alphanumeric string.
+func GenerateEnrollmentCode() string {
 	return rand.Text()[:6]
 }
 
@@ -64,7 +64,7 @@ func (s *Server) createEnrollmentCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	code := generateEnrollmentCode()
+	code := GenerateEnrollmentCode()
 	expiresAt := time.Now().Add(enrollmentCodeExpiry)
 
 	var item queries.EnrollmentCode

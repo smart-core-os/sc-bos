@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"errors"
+	"math"
 	"path/filepath"
 	"testing"
 
@@ -357,9 +358,9 @@ func TestStore_Deployments(t *testing.T) {
 		}
 
 		deployments, err := tx.ListDeploymentsByNode(ctx, queries.ListDeploymentsByNodeParams{
-			NodeID:  config.NodeID,
-			AfterID: 0,
-			Limit:   10,
+			NodeID:   config.NodeID,
+			BeforeID: math.MaxInt64,
+			Limit:    10,
 		})
 		if err != nil {
 			return err
@@ -454,9 +455,9 @@ func TestStore_NodeCheckIns(t *testing.T) {
 	// Test listing check-ins by node
 	err = store.Read(ctx, func(tx *Tx) error {
 		checkIns, err := tx.ListNodeCheckInsByNode(ctx, queries.ListNodeCheckInsByNodeParams{
-			NodeID:  nodeID,
-			AfterID: 0,
-			Limit:   10,
+			NodeID:   nodeID,
+			BeforeID: math.MaxInt64,
+			Limit:    10,
 		})
 		if err != nil {
 			return err
