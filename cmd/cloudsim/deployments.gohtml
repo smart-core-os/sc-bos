@@ -1,0 +1,67 @@
+{{- /*gotype: github.com/smart-core-os/sc-bos/cmd/cloudsim.deploymentsViewData*/ -}}
+{{define "deployments"}}
+<!DOCTYPE html>
+<html>
+<head><title>Deployments - CloudSim</title></head>
+<body>
+{{template "nav" .}}
+<h1>Deployments</h1>
+{{if .Error}}<p><strong>Error: {{.Error}}</strong></p>{{end}}
+
+<h2>Create Deployment</h2>
+<form method="post" action="/ui/deployments">
+  <label>Config Version ID: <input type="number" name="configVersionId" required></label><br>
+  <label>Status:
+    <select name="status">
+      <option value="pending">pending</option>
+      <option value="in_progress">in_progress</option>
+    </select>
+  </label><br>
+  <button type="submit">Create</button>
+</form>
+
+<h2>Filter</h2>
+<form method="get" action="/ui/deployments">
+  <label>Node ID: <input type="number" name="nodeId" value="{{.NodeID}}"></label>
+  <button type="submit">Filter</button>
+  {{if .NodeID}}<a href="/ui/deployments">Clear filter</a>{{end}}
+</form>
+
+<h2>Deployments{{if .NodeID}} (node {{.NodeID}}){{end}}</h2>
+<table border="1">
+<tr><th>ID</th><th>Config Version</th><th>Status</th><th>Started</th><th>Finished</th><th>Reason</th><th>Actions</th></tr>
+{{range .Deployments}}
+<tr>
+  <td>{{.ID}}</td>
+  <td>{{.ConfigVersionID}}</td>
+  <td>{{.Status}}</td>
+  <td>{{.StartTime.Format "2006-01-02 15:04:05"}}</td>
+  <td>{{if .FinishedTime.Valid}}{{.FinishedTime.Time.Format "2006-01-02 15:04:05"}}{{end}}</td>
+  <td>{{.Reason.String}}</td>
+  <td>
+    <form method="post" action="{{$.UpdateDeploymentStatusPath .ID}}">
+      <select name="status">
+        <option value="pending">pending</option>
+        <option value="in_progress">in_progress</option>
+        <option value="completed">completed</option>
+        <option value="failed">failed</option>
+        <option value="cancelled">cancelled</option>
+      </select>
+      <input type="text" name="reason" placeholder="reason (optional)" size="20">
+      <button type="submit">Update status</button>
+    </form>
+    <form method="post" action="{{$.DeleteDeploymentPath .ID}}">
+      <button type="submit">Delete</button>
+    </form>
+  </td>
+</tr>
+{{else}}
+<tr><td colspan="7">No deployments.</td></tr>
+{{end}}
+</table>
+{{if .NextPageToken}}
+<p><a href="/ui/deployments?before={{.NextPageToken}}{{if .NodeID}}&amp;nodeId={{.NodeID}}{{end}}">Next page &raquo;</a></p>
+{{end}}
+</body>
+</html>
+{{end}}

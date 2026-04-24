@@ -1,0 +1,52 @@
+{{- /*gotype: github.com/smart-core-os/sc-bos/cmd/cloudsim.configVersionsViewData*/ -}}
+{{define "config_versions"}}
+<!DOCTYPE html>
+<html>
+<head><title>Config Versions - CloudSim</title></head>
+<body>
+{{template "nav" .}}
+<h1>Config Versions</h1>
+{{if .Error}}<p><strong>Error: {{.Error}}</strong></p>{{end}}
+
+<h2>Create Config Version</h2>
+<form method="post" action="/ui/config-versions" enctype="multipart/form-data">
+  <label>Node ID: <input type="number" name="nodeId" value="{{.NodeID}}" required></label><br>
+  <label>Description: <input type="text" name="description"></label><br>
+  <label>Payload: <input type="file" name="payload"></label><br>
+  <button type="submit">Create</button>
+</form>
+
+<h2>Filter</h2>
+<form method="get" action="/ui/config-versions">
+  <label>Node ID: <input type="number" name="nodeId" value="{{.NodeID}}"></label>
+  <button type="submit">Filter</button>
+  {{if .NodeID}}<a href="/ui/config-versions">Clear filter</a>{{end}}
+</form>
+
+<h2>Config Versions{{if .NodeID}} (node {{.NodeID}}){{end}}</h2>
+<table border="1">
+<tr><th>ID</th><th>Node ID</th><th>Description</th><th>Payload</th><th>Created</th><th>Actions</th></tr>
+{{range .ConfigVersions}}
+<tr>
+  <td>{{.ID}}</td>
+  <td>{{.NodeID}}</td>
+  <td>{{.Description.String}}</td>
+  <td>{{len .Payload}} bytes</td>
+  <td>{{.CreateTime.Format "2006-01-02 15:04:05"}}</td>
+  <td>
+    <a href="/api/v1/management/config-versions/{{.ID}}/payload">Download payload</a><br>
+    <form method="post" action="{{$.DeleteConfigVersionPath .ID}}">
+      <button type="submit">Delete</button>
+    </form>
+  </td>
+</tr>
+{{else}}
+<tr><td colspan="6">No config versions.</td></tr>
+{{end}}
+</table>
+{{if .NextPageToken}}
+<p><a href="/ui/config-versions?after={{.NextPageToken}}{{if .NodeID}}&amp;nodeId={{.NodeID}}{{end}}">Next page &raquo;</a></p>
+{{end}}
+</body>
+</html>
+{{end}}
