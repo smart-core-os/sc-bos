@@ -22,7 +22,7 @@
       "providers": ["localAuth", "keyCloakAuth"],
       "keycloak": {
         "realm": "Smart_Core",
-        "url": "https://localhost:8888/",
+        "url": "http://localhost:8888/",
         "clientId": "scos-opsui"
       }
     },
