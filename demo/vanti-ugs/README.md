@@ -39,13 +39,3 @@ The key is never baked into the image — it is injected at container startup vi
 
 The `.env` file is gitignored and will never be committed. If the variable is not set the weather widget will
 simply fail to load data; the rest of the demo is unaffected.
-
-## Keycloak HTTPS
-
-Keycloak is configured to serve over HTTPS using a self-signed certificate committed to the repository at
-`manifests/keycloak/server.crt.pem`. Because it is self-signed, browsers will show a certificate warning
-the first time you connect.
-
-**Before starting the demo for the first time**, visit https://localhost:8888 in your browser and accept the
-certificate warning. Without this step the OPS UI cannot reach the auth provider and will show
-"Unable to reach auth provider" in the status bar.
