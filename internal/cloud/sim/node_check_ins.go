@@ -60,7 +60,7 @@ func (s *Server) listNodeCheckIns(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	afterID, limit, err := parsePagination(r)
+	beforeID, limit, err := parsePaginationDesc(r)
 	if err != nil {
 		writeError(w, errInvalidRequest)
 		logger.Info("invalid pagination", zap.Error(err))
@@ -71,9 +71,9 @@ func (s *Server) listNodeCheckIns(w http.ResponseWriter, r *http.Request) {
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		items, err = tx.ListNodeCheckInsByNode(r.Context(), queries.ListNodeCheckInsByNodeParams{
-			NodeID:  nodeID,
-			AfterID: afterID,
-			Limit:   limit + 1,
+			NodeID:   nodeID,
+			BeforeID: beforeID,
+			Limit:    limit + 1,
 		})
 		return err
 	})

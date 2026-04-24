@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"math"
 	"net/http"
 	"strconv"
 )
@@ -51,6 +52,30 @@ func parsePagination(r *http.Request) (afterID int64, limit int64, err error) {
 // On a real implementation, you'd perhaps want a different ID and page token format.
 func encodePageToken(id int64) string {
 	return strconv.FormatInt(id, 10)
+}
+
+// parsePaginationDesc is like parsePagination but for descending-order list endpoints.
+// When no pageToken is given, beforeID defaults to math.MaxInt64 (no upper-bound filter).
+func parsePaginationDesc(r *http.Request) (beforeID int64, limit int64, err error) {
+	beforeID = math.MaxInt64
+	if token := r.URL.Query().Get("pageToken"); token != "" {
+		var ok bool
+		beforeID, ok = decodePageToken(token)
+		if !ok || beforeID < 0 {
+			return 0, 0, errInvalidRequest
+		}
+	}
+
+	limit = defaultPageSize
+	if sizeStr := r.URL.Query().Get("pageSize"); sizeStr != "" {
+		size, err := strconv.ParseInt(sizeStr, 10, 64)
+		if err != nil || size < 1 {
+			return 0, 0, errInvalidRequest
+		}
+		limit = min(size, maxPageSize)
+	}
+
+	return beforeID, limit, nil
 }
 
 func decodePageToken(pageToken string) (afterID int64, ok bool) {

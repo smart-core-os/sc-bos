@@ -95,6 +95,7 @@ func TestPagination_EdgeCases(t *testing.T) {
 			}
 			return resp, ids, list.NextPageToken
 		},
+		false,
 	)
 }
 
@@ -108,6 +109,7 @@ func testPagination(t *testing.T,
 	create func(i int) (id int64),
 	listDefault func(pageToken string) (resp *http.Response, ids []int64, nextPageToken string),
 	listSize func(pageSize string, pageToken string) (resp *http.Response, ids []int64, nextPageToken string),
+	desc bool,
 ) {
 	const numSites = maxPageSize + 10
 	var expectedIDs []int64
@@ -115,6 +117,16 @@ func testPagination(t *testing.T,
 		expectedIDs = append(expectedIDs, create(i))
 	}
 	slices.Sort(expectedIDs)
+	if desc {
+		slices.Reverse(expectedIDs)
+	}
+
+	// For ascending pagination, a token beyond the max ID returns empty results.
+	// For descending pagination, a token below the min ID (0, since all IDs are > 0) returns empty results.
+	emptyToken := "99999"
+	if desc {
+		emptyToken = "0"
+	}
 
 	t.Run("pageSize=0 should be rejected", func(t *testing.T) {
 		resp, _, _ := listSize("0", "")
@@ -172,7 +184,7 @@ func testPagination(t *testing.T,
 	})
 
 	t.Run("empty results with valid pagination", func(t *testing.T) {
-		resp, ids, nextPageToken := listDefault("99999")
+		resp, ids, nextPageToken := listDefault(emptyToken)
 		assertStatus(t, resp, http.StatusOK)
 		if len(ids) != 0 {
 			t.Errorf("expected 0 items for page beyond end, got %d", len(ids))

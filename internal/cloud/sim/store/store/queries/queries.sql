@@ -94,8 +94,8 @@ WHERE id = :id;
 -- name: ListNodeCheckInsByNode :many
 SELECT *
 FROM node_check_ins
-WHERE node_id = :node_id AND id > :after_id
-ORDER BY id
+WHERE node_id = :node_id AND id < :before_id
+ORDER BY id DESC
 LIMIT :limit;
 
 -- name: DeleteNodeCheckIn :execrows
