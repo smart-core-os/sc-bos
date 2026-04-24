@@ -1,0 +1,58 @@
+{{- /*gotype: github.com/smart-core-os/sc-bos/cmd/cloudsim.nodesViewData*/ -}}
+{{define "nodes"}}
+<!DOCTYPE html>
+<html>
+<head><title>Nodes - CloudSim</title></head>
+<body>
+{{template "nav" .}}
+<h1>Nodes</h1>
+{{if .Error}}<p><strong>Error: {{.Error}}</strong></p>{{end}}
+
+<h2>Create Node</h2>
+<form method="post" action="/ui/nodes">
+  <label>Hostname: <input type="text" name="hostname" required></label><br>
+  <label>Site ID: <input type="number" name="siteId" value="{{.SiteID}}"></label><br>
+  <button type="submit">Create</button>
+</form>
+
+<h2>Filter</h2>
+<form method="get" action="/ui/nodes">
+  <label>Site ID: <input type="number" name="siteId" value="{{.SiteID}}"></label>
+  <button type="submit">Filter</button>
+  {{if .SiteID}}<a href="/ui/nodes">Clear filter</a>{{end}}
+</form>
+
+<h2>Nodes{{if .SiteID}} (site {{.SiteID}}){{end}}</h2>
+<table border="1">
+<tr><th>ID</th><th>Hostname</th><th>Site ID</th><th>Created</th><th>Actions</th></tr>
+{{range .Nodes}}
+<tr>
+  <td>{{.ID}}</td>
+  <td>{{.Hostname}}</td>
+  <td>{{.SiteID}}</td>
+  <td>{{.CreateTime.Format "2006-01-02 15:04:05"}}</td>
+  <td>
+    <a href="/ui/nodes/{{.ID}}/check-ins">Check-ins</a> |
+    <a href="/ui/config-versions?nodeId={{.ID}}">Configs</a> |
+    <a href="/ui/deployments?nodeId={{.ID}}">Deployments</a><br>
+    <form method="post" action="{{$.RotateSecretPath .ID}}">
+      <button type="submit">Rotate Secret</button>
+    </form>
+    <form method="post" action="{{$.CreateEnrollmentCodePath .ID}}">
+      <button type="submit">Create Enrollment Code</button>
+    </form>
+    <form method="post" action="{{$.DeleteNodePath .ID}}">
+      <button type="submit">Delete</button>
+    </form>
+  </td>
+</tr>
+{{else}}
+<tr><td colspan="5">No nodes.</td></tr>
+{{end}}
+</table>
+{{if .NextPageToken}}
+<p><a href="/ui/nodes?after={{.NextPageToken}}{{if .SiteID}}&amp;siteId={{.SiteID}}{{end}}">Next page &raquo;</a></p>
+{{end}}
+</body>
+</html>
+{{end}}

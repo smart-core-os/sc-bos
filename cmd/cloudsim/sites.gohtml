@@ -1,0 +1,41 @@
+{{- /*gotype: github.com/smart-core-os/sc-bos/cmd/cloudsim.sitesViewData*/ -}}
+{{define "sites"}}
+<!DOCTYPE html>
+<html>
+<head><title>Sites - CloudSim</title></head>
+<body>
+{{template "nav" .}}
+<h1>Sites</h1>
+{{if .Error}}<p><strong>Error: {{.Error}}</strong></p>{{end}}
+
+<h2>Create Site</h2>
+<form method="post" action="/ui/sites">
+  <label>Name: <input type="text" name="name" required></label>
+  <button type="submit">Create</button>
+</form>
+
+<h2>All Sites</h2>
+<table border="1">
+<tr><th>ID</th><th>Name</th><th>Created</th><th>Actions</th></tr>
+{{range .Sites}}
+<tr>
+  <td>{{.ID}}</td>
+  <td>{{.Name}}</td>
+  <td>{{.CreateTime.Format "2006-01-02 15:04:05"}}</td>
+  <td>
+    <a href="/ui/nodes?siteId={{.ID}}">Nodes</a>
+    <form method="post" action="{{$.DeleteSitePath .ID}}">
+      <button type="submit">Delete</button>
+    </form>
+  </td>
+</tr>
+{{else}}
+<tr><td colspan="4">No sites.</td></tr>
+{{end}}
+</table>
+{{if .NextPageToken}}
+<p><a href="/ui/sites?after={{.NextPageToken}}">Next page &raquo;</a></p>
+{{end}}
+</body>
+</html>
+{{end}}

@@ -64,6 +64,8 @@ func run(ctx context.Context, logger *zap.Logger) (err error) {
 		return fmt.Errorf("failed to create API server: %w", err)
 	}
 	apiServer.RegisterRoutes(mux)
+	uiSrv := &uiServer{store: dataStore}
+	uiSrv.RegisterRoutes(mux)
 
 	return serveContext(ctx, lis, mux, logger)
 }
