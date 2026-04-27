@@ -39,6 +39,7 @@ func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, err
 		driverServices.Config = &serviceConfigStore{store: c.ControllerConfig.Drivers(), id: id}
 		driverServices.Logger = loggerWithServiceInfo(driverServices.Logger, id, kind)
 		driverServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
+		driverServices.SystemCheck = newDriverSystemCheck(driverServices.Health, id, kind, driverServices.Logger)
 
 		f, ok := c.SystemConfig.DriverFactories[kind]
 		if !ok {
@@ -226,6 +227,22 @@ func loggerWithServiceInfo(logger *zap.Logger, id, kind string) *zap.Logger {
 func healthChecksForService(r *healthpb.Registry, id, kind string) *healthpb.Checks {
 	owner := fmt.Sprintf("%s:%s", kind, id)
 	return r.ForOwner(owner)
+}
+
+// newDriverSystemCheck creates a driver-level system check registered under the driver's own name.
+// Drivers should call MarkFailed/MarkRunning to reflect connectivity state, and must call
+// Dispose in their stop handler. Returns nil if the check cannot be created.
+func newDriverSystemCheck(health *healthpb.Checks, id, kind string, logger *zap.Logger) service.SystemCheck {
+	check, err := health.NewFaultCheck(id, &healthpb.HealthCheck{
+		Id:          "systemStatusCheck",
+		DisplayName: "System Status Check",
+		Description: fmt.Sprintf("Checks the %s driver is connected and operating correctly", kind),
+	})
+	if err != nil {
+		logger.Warn("failed to create driver system check", zap.Error(err))
+		return nil
+	}
+	return check
 }
 
 func devicesToHealthCheckCollection(d *devicespb.Collection) system.HealthCheckCollection {

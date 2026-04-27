@@ -124,6 +124,18 @@ func findFault(n *HealthCheck_Error, faults []*HealthCheck_Error) (int, bool) {
 	})
 }
 
+// MarkRunning marks the check as healthy. Equivalent to ClearFaults.
+func (c *FaultCheck) MarkRunning() {
+	c.ClearFaults()
+}
+
+// MarkFailed marks the check as unhealthy with the given error.
+func (c *FaultCheck) MarkFailed(err error) {
+	c.SetFault(&HealthCheck_Error{
+		SummaryText: err.Error(),
+	})
+}
+
 func (c *FaultCheck) writeFaults(f func(old []*HealthCheck_Error) []*HealthCheck_Error) {
 	c.write(func(dst *HealthCheck) {
 		out := dst.GetFaults()
