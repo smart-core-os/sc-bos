@@ -93,7 +93,7 @@
                       <!-- Last error message -->
                       <div v-if="item.reliability.lastError" class="detail-line text-caption text-error">
                         <v-icon size="12" class="mr-1" color="error">mdi-alert-circle-outline</v-icon>
-                        {{ item.reliability.lastError.summaryText }}
+                        {{ toSentenceCase(item.reliability.lastError.summaryText) }}
                         <span v-if="item.reliability.lastError.detailsText" class="text-medium-emphasis d-block ml-4">
                           {{ item.reliability.lastError.detailsText }}
                         </span>
@@ -103,7 +103,7 @@
                         <v-icon size="12" class="mr-1">mdi-transit-connection-variant</v-icon>
                         Caused by: {{ item.reliability.cause.displayName || item.reliability.cause.name }}
                         <span v-if="item.reliability.cause.error && item.reliability.cause.error.summaryText" class="d-block ml-4">
-                          {{ item.reliability.cause.error.summaryText }}
+                          {{ toSentenceCase(item.reliability.cause.error.summaryText) }}
                         </span>
                       </div>
                     </template>
@@ -120,7 +120,7 @@
                         :key="fi"
                         class="detail-line text-caption text-warning">
                       <v-icon size="12" class="mr-1" color="warning">mdi-alert-outline</v-icon>
-                      {{ fault.summaryText }}
+                      {{ toSentenceCase(fault.summaryText) }}
                       <span v-if="fault.detailsText" class="text-medium-emphasis d-block ml-4">
                         {{ fault.detailsText }}
                       </span>
@@ -178,6 +178,12 @@ const normalNormality = HealthCheck.Normality.NORMAL;
 function formatTimestamp(ts) {
   if (!ts) return '';
   return timestampToDate(ts).toLocaleString();
+}
+
+/** @param {string|undefined} str */
+function toSentenceCase(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 // Flatten all leaf checks so we can set up composable streams at component setup time.
