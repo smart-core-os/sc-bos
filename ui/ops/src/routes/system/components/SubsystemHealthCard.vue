@@ -145,6 +145,7 @@ import {reliabilityStateToString} from '@/api/sc/traits/health.js';
 import {usePullHealthChecks} from '@/traits/health/health.js';
 import NormalityIcon from '@/traits/health/NormalityIcon.vue';
 import ReliabilityIcon from '@/traits/health/ReliabilityIcon.vue';
+import {toSentenceCase} from '@/util/string.js';
 import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb';
 import {computed, ref} from 'vue';
 
@@ -180,11 +181,6 @@ function formatTimestamp(ts) {
   return timestampToDate(ts).toLocaleString();
 }
 
-/** @param {string|undefined} str */
-function toSentenceCase(str) {
-  if (!str) return '';
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
 
 // Flatten all leaf checks so we can set up composable streams at component setup time.
 // Composables cannot be called conditionally or in dynamically-sized loops after setup.
