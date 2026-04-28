@@ -2,7 +2,10 @@ package mock
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"strconv"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -74,10 +77,20 @@ func (factory) ConfigBlocks() []block.Block {
 
 func NewDriver(services driver.Services) *Driver {
 	d := &Driver{
-		announcer: services.Node,
-		known:     make(map[deviceTrait]node.Undo),
+		announcer:   services.Node,
+		systemCheck: services.SystemCheck,
+		known:       make(map[deviceTrait]node.Undo),
 	}
-	d.Service = service.New(d.applyConfig, service.WithOnStop[config.Root](d.Clean))
+	d.Service = service.New(d.applyConfig, service.WithOnStop[config.Root](func() {
+		if d.simCancel != nil {
+			d.simCancel()
+			d.simCancel = nil
+		}
+		d.Clean()
+		if d.systemCheck != nil {
+			d.systemCheck.Dispose()
+		}
+	}))
 	d.logger = services.Logger.Named(DriverName)
 	return d
 }
@@ -85,9 +98,11 @@ func NewDriver(services driver.Services) *Driver {
 type Driver struct {
 	*service.Service[config.Root]
 
-	logger    *zap.Logger
-	announcer node.Announcer
-	known     map[deviceTrait]node.Undo
+	logger      *zap.Logger
+	announcer   node.Announcer
+	systemCheck service.SystemCheck
+	simCancel   context.CancelFunc
+	known       map[deviceTrait]node.Undo
 }
 
 type deviceTrait struct {
@@ -102,7 +117,13 @@ func (d *Driver) Clean() {
 	d.known = make(map[deviceTrait]node.Undo)
 }
 
-func (d *Driver) applyConfig(_ context.Context, cfg config.Root) error {
+func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
+	// Cancel any running health simulation before (re)configuring.
+	if d.simCancel != nil {
+		d.simCancel()
+		d.simCancel = nil
+	}
+
 	toUndo := maps.Clone(d.known)
 	for _, device := range cfg.Devices {
 		var undos []node.Undo
@@ -161,6 +182,21 @@ func (d *Driver) applyConfig(_ context.Context, cfg config.Root) error {
 	for k, undo := range toUndo {
 		undo()
 		delete(d.known, k)
+	}
+
+	// Start driver-level health simulation if configured.
+	if cfg.HealthCheck != nil && d.systemCheck != nil {
+		p := cfg.HealthCheck.FaultProbability
+		if p <= 0 {
+			p = 0.15
+		}
+		if p > 1 {
+			return fmt.Errorf("healthCheck.faultProbability must be between 0 and 1, got %g", p)
+		}
+		simCtx, cancel := context.WithCancel(ctx)
+		d.simCancel = cancel
+		d.systemCheck.MarkRunning()
+		go runDriverHealthSimulation(simCtx, d.systemCheck, p)
 	}
 
 	return nil
@@ -351,4 +387,28 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 	}
 
 	return nil, nil
+}
+
+// runDriverHealthSimulation periodically randomises the driver's system-level health check state.
+// With probability p it transitions to a fault state; otherwise healthy.
+func runDriverHealthSimulation(ctx context.Context, check service.SystemCheck, p float64) {
+	timer := time.NewTimer(randDuration(30*time.Second, 90*time.Second))
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+		}
+		timer.Reset(randDuration(30*time.Second, 90*time.Second))
+		if rand.Float64() < p {
+			check.MarkFailed(fmt.Errorf("simulated connectivity failure"))
+		} else {
+			check.MarkRunning()
+		}
+	}
+}
+
+func randDuration(min, max time.Duration) time.Duration {
+	return time.Duration(rand.Intn(int(max-min))) + min
 }

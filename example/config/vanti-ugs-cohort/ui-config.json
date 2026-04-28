@@ -1279,6 +1279,69 @@
           }
         }
       }
+    },
+    "system": {
+      "subsystemHealth": {
+        "subsystems": [
+          {
+            "title": "Lighting",
+            "icon": "mdi-lightbulb-group-outline",
+            "description": "Lighting control",
+            "checks": [
+              {
+                "displayName": "Basement",
+                "checks": [
+                  {"name": "van/uk/brum/ugs/floor-b1/driver/lighting-ctrl-a", "displayName": "Panel A – Bar & Common"},
+                  {"name": "van/uk/brum/ugs/floor-b1/driver/lighting-ctrl-b", "displayName": "Panel B – Meeting Rooms"}
+                ]
+              },
+              {
+                "displayName": "Ground Floor",
+                "checks": [
+                  {"name": "van/uk/brum/ugs/floor-gf/driver/lighting-ctrl-a", "displayName": "Panel A – Office"},
+                  {"name": "van/uk/brum/ugs/floor-gf/driver/lighting-ctrl-b", "displayName": "Panel B – Industrial"}
+                ]
+              },
+              {
+                "displayName": "First Floor",
+                "checks": [
+                  {"name": "van/uk/brum/ugs/floor-01/driver/lighting-ctrl-a", "displayName": "Panel A – Open Plan"},
+                  {"name": "van/uk/brum/ugs/floor-01/driver/lighting-ctrl-b", "displayName": "Panel B – Service"}
+                ]
+              }
+            ]
+          },
+          {
+            "title": "HVAC",
+            "icon": "mdi-hvac",
+            "description": "Heating, ventilation and air conditioning",
+            "checks": [
+              {"name": "van/uk/brum/ugs/floor-b1/driver/hvac", "displayName": "Basement"},
+              {"name": "van/uk/brum/ugs/floor-gf/driver/hvac", "displayName": "Ground Floor"},
+              {"name": "van/uk/brum/ugs/floor-01/driver/hvac", "displayName": "First Floor"},
+              {"name": "van/uk/brum/ugs/floor-rf/driver/hvac", "displayName": "Roof"}
+            ]
+          },
+          {
+            "title": "Access Control",
+            "icon": "mdi-shield-key-outline",
+            "description": "Door access readers",
+            "checks": [
+              {"name": "van/uk/brum/ugs/floor-gf/driver/acs", "displayName": "Ground Floor"}
+            ]
+          },
+          {
+            "title": "Sensors",
+            "icon": "mdi-leak",
+            "description": "Environmental and occupancy sensors",
+            "checks": [
+              {"name": "van/uk/brum/ugs/floor-b1/driver/sensors", "displayName": "Basement"},
+              {"name": "van/uk/brum/ugs/floor-gf/driver/sensors", "displayName": "Ground Floor"},
+              {"name": "van/uk/brum/ugs/floor-01/driver/sensors", "displayName": "First Floor"}
+            ]
+          }
+        ]
+      }
     }
   },
   "experiments": {

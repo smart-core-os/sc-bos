@@ -1,6 +1,7 @@
 package healthpb
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -371,6 +372,91 @@ func TestFaultCheck_RemoveFault(t *testing.T) {
 				if got := fc.check.GetReliability().GetState(); got != HealthCheck_Reliability_RELIABLE {
 					t.Errorf("RemoveFault() reliability = %v, want %v", got, HealthCheck_Reliability_RELIABLE)
 				}
+			}
+		})
+	}
+}
+
+func TestFaultCheck_MarkFailed(t *testing.T) {
+	tests := map[string]struct {
+		err         error
+		wantSummary string
+	}{
+		"uses error message as summary": {
+			err:         errors.New("connection timeout"),
+			wantSummary: "connection timeout",
+		},
+		"replaces existing fault": {
+			err:         errors.New("new error"),
+			wantSummary: "new error",
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			c := &HealthCheck{
+				Check: &HealthCheck_Faults_{Faults: &HealthCheck_Faults{
+					CurrentFaults: []*HealthCheck_Error{newFault("", "", "old error", "")},
+				}},
+				Normality: HealthCheck_ABNORMAL,
+			}
+			fc, err := newFaultCheck(c)
+			if err != nil {
+				t.Fatalf("newFaultCheck() error = %v", err)
+			}
+			fc.MarkFailed(tt.err)
+			faults := fc.check.GetFaults().GetCurrentFaults()
+			if len(faults) != 1 {
+				t.Fatalf("MarkFailed() fault count = %d, want 1", len(faults))
+			}
+			if got := faults[0].GetSummaryText(); got != tt.wantSummary {
+				t.Errorf("MarkFailed() summary = %q, want %q", got, tt.wantSummary)
+			}
+			if got := fc.check.GetNormality(); got != HealthCheck_ABNORMAL {
+				t.Errorf("MarkFailed() normality = %v, want %v", got, HealthCheck_ABNORMAL)
+			}
+			if got := fc.check.GetReliability().GetState(); got != HealthCheck_Reliability_RELIABLE {
+				t.Errorf("MarkFailed() reliability = %v, want %v", got, HealthCheck_Reliability_RELIABLE)
+			}
+		})
+	}
+}
+
+func TestFaultCheck_MarkRunning(t *testing.T) {
+	tests := map[string]struct {
+		initial []*HealthCheck_Error
+	}{
+		"clears faults when unhealthy": {
+			initial: []*HealthCheck_Error{newFault("", "", "some error", "")},
+		},
+		"no-op when already healthy": {
+			initial: nil,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			normality := HealthCheck_NORMAL
+			if len(tt.initial) > 0 {
+				normality = HealthCheck_ABNORMAL
+			}
+			c := &HealthCheck{
+				Check: &HealthCheck_Faults_{Faults: &HealthCheck_Faults{
+					CurrentFaults: tt.initial,
+				}},
+				Normality: normality,
+			}
+			fc, err := newFaultCheck(c)
+			if err != nil {
+				t.Fatalf("newFaultCheck() error = %v", err)
+			}
+			fc.MarkRunning()
+			if faults := fc.check.GetFaults().GetCurrentFaults(); len(faults) != 0 {
+				t.Errorf("MarkRunning() faults = %v, want none", faults)
+			}
+			if got := fc.check.GetNormality(); got != HealthCheck_NORMAL {
+				t.Errorf("MarkRunning() normality = %v, want %v", got, HealthCheck_NORMAL)
+			}
+			if got := fc.check.GetReliability().GetState(); got != HealthCheck_Reliability_RELIABLE {
+				t.Errorf("MarkRunning() reliability = %v, want %v", got, HealthCheck_Reliability_RELIABLE)
 			}
 		})
 	}
