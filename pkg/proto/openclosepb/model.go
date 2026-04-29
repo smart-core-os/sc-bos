@@ -11,14 +11,16 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 )
 
 type Model struct {
-	positions *resource.Collection // of *traits.OpenClosePosition
-	presets   []preset
+	positions        *resource.Collection // of *traits.OpenClosePosition
+	presets          []preset
+	openPercentAttrs *typespb.FloatAttributes
 }
 
 // NewModel creates a new *Model with the given options.
@@ -26,8 +28,9 @@ type Model struct {
 func NewModel(opts ...resource.Option) *Model {
 	args := calcModelArgs(opts...)
 	return &Model{
-		positions: resource.NewCollection(args.positionsOpts...),
-		presets:   args.presets,
+		positions:        resource.NewCollection(args.positionsOpts...),
+		presets:          args.presets,
+		openPercentAttrs: args.openPercentAttrs,
 	}
 }
 
@@ -160,6 +163,10 @@ func (m *Model) PullPositions(ctx context.Context, ops ...resource.ReadOption) <
 type PullOpenClosePositionsChange struct {
 	Positions  *OpenClosePositions
 	ChangeTime time.Time
+}
+
+func (m *Model) OpenPercentAttributes() *typespb.FloatAttributes {
+	return m.openPercentAttrs
 }
 
 func (m *Model) ListPresets() []*OpenClosePositions_Preset {

@@ -1,6 +1,7 @@
 package openclosepb
 
 import (
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -35,6 +36,15 @@ func WithPreset(desc *OpenClosePositions_Preset, positions ...*OpenClosePosition
 	})
 }
 
+// WithOpenPercentAttributes returns an option that configures the model with the given open percent attributes.
+// These attributes are reported via OpenCloseInfo.DescribePositions and inform clients of the bounds and step
+// available for the open percent value.
+func WithOpenPercentAttributes(attrs *typespb.FloatAttributes) resource.Option {
+	return modelOptionFunc(func(args *modelArgs) {
+		args.openPercentAttrs = attrs
+	})
+}
+
 func calcModelArgs(opts ...resource.Option) modelArgs {
 	args := new(modelArgs)
 	args.apply(DefaultModelOptions...)
@@ -43,8 +53,9 @@ func calcModelArgs(opts ...resource.Option) modelArgs {
 }
 
 type modelArgs struct {
-	positionsOpts []resource.Option
-	presets       []preset
+	positionsOpts    []resource.Option
+	presets          []preset
+	openPercentAttrs *typespb.FloatAttributes
 }
 
 func (a *modelArgs) apply(opts ...resource.Option) {

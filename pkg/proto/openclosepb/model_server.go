@@ -56,8 +56,9 @@ func (s *ModelServer) DescribePositions(_ context.Context, _ *DescribePositionsR
 			Readable: true, Writable: true, Observable: true,
 			PullSupport: typespb.PullSupport_PULL_SUPPORT_NATIVE,
 		},
-		SupportsStop: true,
-		Presets:      s.model.ListPresets(),
+		SupportsStop:          true,
+		Presets:               s.model.ListPresets(),
+		OpenPercentAttributes: s.model.OpenPercentAttributes(),
 	}
 	return support, nil
 }
