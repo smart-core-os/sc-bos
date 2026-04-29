@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
@@ -116,6 +117,137 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	)
 
 	return nil
+}
+
+// --------------------------------------------------------------------------
+// Audit file logger construction
+// --------------------------------------------------------------------------
+
+// AuditSetup holds an initialised audit log subsystem for use by Bootstrap.
+// Create it with NewAuditSetup; always call Close on shutdown.
+type AuditSetup struct {
+	// Logger writes structured JSON audit entries to a rotating file.
+	// Nil when no filename was configured.
+	Logger *zap.Logger
+	// Model holds the in-memory ring buffer of audit entries. Always non-nil.
+	Model *logpb.Model
+
+	downloadKey []byte
+	filename    string
+	closer      io.Closer
+}
+
+// NewAuditSetup creates the audit log subsystem.
+// When filename is non-empty a rotating JSON logger is also created;
+// a non-nil error means the file could not be opened — the returned
+// *AuditSetup is still valid for in-memory use. The caller must call Close.
+func NewAuditSetup(filename string, maxSizeMB, maxAgeDays, maxBackups int, compress bool) (*AuditSetup, error) {
+	a := &AuditSetup{Model: logpb.NewModel(0)}
+	if filename == "" {
+		return a, nil
+	}
+	maxSize := maxSizeMB
+	if maxSize == 0 {
+		maxSize = 100
+	}
+	logger, closer, err := newAuditFileLogger(filename, maxSize, maxAgeDays, maxBackups, compress)
+	if err != nil {
+		return a, err
+	}
+	a.Logger = logger
+	a.closer = closer
+	a.downloadKey = newHMACKey()
+	a.filename = filename
+	return a, nil
+}
+
+// RegisterHTTP installs the audit-log file download handler on mux at dlPath.
+// Does nothing when the AuditSetup has no file backing.
+func (a *AuditSetup) RegisterHTTP(mux *http.ServeMux, dlPath string) {
+	if a.filename == "" {
+		return
+	}
+	allowedDir := filepath.Dir(a.filename)
+	mux.HandleFunc(dlPath, func(w http.ResponseWriter, r *http.Request) {
+		serveLogDownload(w, r, a.downloadKey, allowedDir)
+	})
+}
+
+// NewModelServer returns a ModelServer backed by this AuditSetup's model.
+// When dlPath is non-empty and a file was configured, GetDownloadLogUrl is
+// wired up using urlBase as the URL prefix with a 15-minute token TTL.
+func (a *AuditSetup) NewModelServer(urlBase, dlPath string) *logpb.ModelServer {
+	srv := logpb.NewModelServer(a.Model)
+	if a.filename != "" && dlPath != "" {
+		ttl := 15 * time.Minute
+		key, filename := a.downloadKey, a.filename
+		srv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
+			return getDownloadLogURL(req, filename, "", urlBase, dlPath, key, ttl)
+		}
+	}
+	return srv
+}
+
+// StartMetadataRefresh launches a background goroutine that scans the audit
+// log files every 30 seconds and updates the model's LogMetadata.
+// Does nothing when the AuditSetup has no file backing.
+func (a *AuditSetup) StartMetadataRefresh(ctx context.Context, logger *zap.Logger) {
+	if a.filename == "" {
+		return
+	}
+	filename := a.filename
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		refreshMetadata(a.Model, filename, "", logger)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				refreshMetadata(a.Model, filename, "", logger)
+			}
+		}
+	}()
+}
+
+// Close releases file resources held by the AuditSetup.
+// The caller should call Logger.Sync() before Close.
+func (a *AuditSetup) Close() error {
+	if a.closer != nil {
+		return a.closer.Close()
+	}
+	return nil
+}
+
+// newAuditFileLogger creates a rotating JSON audit log file and returns
+// a zap.Logger that writes to it, plus an io.Closer for cleanup.
+// The caller is responsible for calling Sync() on the logger before Close().
+func newAuditFileLogger(filename string, maxSizeMB, maxAgeDays, maxBackups int, compress bool) (*zap.Logger, io.Closer, error) {
+	if err := os.MkdirAll(filepath.Dir(filename), 0o755); err != nil {
+		return nil, nil, fmt.Errorf("create audit log dir: %w", err)
+	}
+	// Open eagerly to surface config errors at startup rather than on first write.
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o640)
+	if err != nil {
+		return nil, nil, fmt.Errorf("open audit log: %w", err)
+	}
+	f.Close()
+	w := &lumberjack.Logger{
+		Filename:   filename,
+		MaxSize:    maxSizeMB,
+		MaxAge:     maxAgeDays,
+		MaxBackups: maxBackups,
+		Compress:   compress,
+	}
+	enc := zap.NewProductionEncoderConfig()
+	enc.EncodeTime = zapcore.ISO8601TimeEncoder
+	core := zapcore.NewCore(
+		zapcore.NewJSONEncoder(enc),
+		zapcore.AddSync(w),
+		zapcore.InfoLevel,
+	)
+	return zap.New(core), w, nil
 }
 
 // --------------------------------------------------------------------------

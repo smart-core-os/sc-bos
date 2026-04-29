@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
@@ -15,15 +16,19 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 )
 
 type Interceptor struct {
-	logger   *zap.Logger
-	policy   Policy
-	verifier token.Validator
+	logger      *zap.Logger
+	auditLogger *zap.Logger
+	auditModel  *logpb.Model
+	policy      Policy
+	verifier    token.Validator
 }
 
 func NewInterceptor(policy Policy, opts ...InterceptorOption) *Interceptor {
@@ -185,6 +190,17 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 			zap.Strings("queries", queries),
 		)
 	}
+	// Only audit once per RPC, not for every message on an open client/bidirectional stream.
+	if isWriteMethod(method) && !stream.Open {
+		outcome := "allowed"
+		if err != nil {
+			outcome = "denied"
+		}
+		i.writeAuditEntry(outcome, creds, addr,
+			auditField{"service", service},
+			auditField{"method", method},
+		)
+	}
 	return creds, err
 }
 
@@ -232,6 +248,16 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 			zap.Strings("queries", queries),
 		)
 	}
+	if isHTTPWriteMethod(r.Method) {
+		outcome := "allowed"
+		if err != nil {
+			outcome = "denied"
+		}
+		i.writeAuditEntry(outcome, creds, addr,
+			auditField{"path", r.URL.Path},
+			auditField{"httpMethod", r.Method},
+		)
+	}
 	return creds, err
 }
 
@@ -247,6 +273,14 @@ func WithTokenVerifier(tv token.Validator) InterceptorOption {
 	return func(interceptor *Interceptor) {
 		interceptor.verifier = tv
 	}
+}
+
+func WithAuditLogger(logger *zap.Logger) InterceptorOption {
+	return func(i *Interceptor) { i.auditLogger = logger }
+}
+
+func WithAuditModel(m *logpb.Model) InterceptorOption {
+	return func(i *Interceptor) { i.auditModel = m }
 }
 
 type verifiedCreds struct {
@@ -292,4 +326,99 @@ func httpPeerCert(r *http.Request) *x509.Certificate {
 		return nil
 	}
 	return r.TLS.VerifiedChains[0][0]
+}
+
+// auditField is a protocol-specific key/value pair appended to every audit entry.
+type auditField struct {
+	key   string
+	value string
+}
+
+// writeAuditEntry records a single audit event to the configured audit sinks.
+// outcome is "allowed" or "denied". extra carries protocol-specific fields
+// (e.g. service+method for gRPC, path+httpMethod for HTTP).
+func (i *Interceptor) writeAuditEntry(outcome string, creds *verifiedCreds, addr string, extra ...auditField) {
+	if i.auditLogger == nil && i.auditModel == nil {
+		return
+	}
+	subject, name := "", ""
+	if creds.tokenClaims != nil {
+		subject = creds.tokenClaims.Subject
+		name = creds.tokenClaims.Name
+	}
+	certSubjectStr := certSubject(creds.cert)
+	hasToken := creds.tokenClaims != nil
+
+	if i.auditLogger != nil {
+		fields := make([]zap.Field, 0, 7+len(extra))
+		fields = append(fields, zap.String("outcome", outcome))
+		for _, f := range extra {
+			fields = append(fields, zap.String(f.key, f.value))
+		}
+		fields = append(fields,
+			zap.String("peer", addr),
+			zap.String("subject", subject),
+			zap.String("name", name),
+			zap.Bool("cert", creds.certValid),
+			zap.String("certSubject", certSubjectStr),
+			zap.Bool("token", hasToken),
+		)
+		i.auditLogger.Info("write", fields...)
+	}
+
+	if i.auditModel != nil {
+		lvl := logpb.Level_LEVEL_INFO
+		if outcome == "denied" {
+			lvl = logpb.Level_LEVEL_WARN
+		}
+		allFields := make(map[string]string, 7+len(extra))
+		allFields["outcome"] = outcome
+		allFields["peer"] = addr
+		allFields["subject"] = subject
+		allFields["name"] = name
+		allFields["cert"] = strconv.FormatBool(creds.certValid)
+		allFields["certSubject"] = certSubjectStr
+		allFields["token"] = strconv.FormatBool(hasToken)
+		for _, f := range extra {
+			allFields[f.key] = f.value
+		}
+		i.auditModel.AppendMessage(&logpb.LogMessage{
+			Timestamp: timestamppb.Now(),
+			Level:     lvl,
+			Logger:    "audit",
+			Message:   "write",
+			Fields:    allFields,
+		})
+	}
+}
+
+// isWriteMethod reports whether the gRPC method name represents a mutating operation.
+// It returns true for any method that does not begin with a known read-only prefix.
+//
+// The read-only prefixes cover all current SC-BOS proto read methods. Non-standard
+// method names in the codebase (Identify, ConfigureService, RegenerateSecret,
+// OnMessage) are all mutating and correctly classified as writes by this function.
+func isWriteMethod(method string) bool {
+	for _, prefix := range []string{"Get", "Pull", "Describe", "List"} {
+		if strings.HasPrefix(method, prefix) {
+			return false
+		}
+	}
+	return true
+}
+
+func isHTTPWriteMethod(method string) bool {
+	switch method {
+	case http.MethodGet, http.MethodHead, http.MethodOptions:
+		return false
+	default:
+		return true
+	}
+}
+
+func certSubject(cert *x509.Certificate) string {
+	if cert == nil {
+		return ""
+	}
+	return cert.Subject.String()
 }
