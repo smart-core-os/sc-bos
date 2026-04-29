@@ -132,23 +132,13 @@ onScopeDispose(() => {
 
 const anyLoading = computed(() => Object.values(liftData).some(d => d.loading));
 
-/**
- *
- * @param name
- * @param floorNum
- */
 function isAtFloor(name, floorNum) {
   const currentPos = liftData[name]?.pos;
   if (!currentPos) return false;
-  // Handle if floorNum is a string and currentPos is a string/number
-  // Trim spaces to handle mock driver formatting like " 1"
+  // Trim to handle mock driver formatting like " 1".
   return currentPos.toString().trim() === floorNum.toString().trim();
 }
 
-/**
- *
- * @param name
- */
 function directionIcon(name) {
   const data = liftData[name];
   const dir = data?.dir;
@@ -159,20 +149,12 @@ function directionIcon(name) {
   return 'mdi-elevator';
 }
 
-/**
- *
- * @param name
- */
 function isDoorOpen(name) {
   const data = liftData[name];
   if (!data || !data.doors) return false;
   return data.doors.some(d => d.value === 'Open' || d.value === 'Opening');
 }
 
-/**
- *
- * @param name
- */
 function directionClass(name) {
   const data = liftData[name];
   const dir = data?.dir;
@@ -182,19 +164,11 @@ function directionClass(name) {
   return '';
 }
 
-/**
- *
- * @param h
- */
 function formatHeight(h) {
   if (typeof h === 'number') return `${h}px`;
   return h;
 }
 
-/**
- *
- * @param name
- */
 function shortName(name) {
   return name.split('/').pop();
 }
