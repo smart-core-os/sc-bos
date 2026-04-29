@@ -10,6 +10,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
@@ -19,10 +20,17 @@ import (
 // Configuration of the mock device is done via the trait metadata more map.
 // You can specify a "presets" key which has the JSON format of `[{name, title?, positions}, ...]`,
 // where `positions` is the protojson representation of either a single or array of traits.OpenClosePosition.
+//
+// You can also specify an "openPercentAttributes" key with the protojson representation of
+// types.FloatAttributes to advertise the bounds and step of the open percent value via DescribePositions,
+// e.g. `{"bounds":{"min":0,"max":100},"step":25}`.
 func mockOpenClose(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) ([]node.Feature, service.Lifecycle) {
 	var opts []resource.Option
 
 	opts = append(opts, parseOpenClosePresets(traitMd, deviceName, logger)...)
+	if attrsOpt := parseOpenPercentAttributes(traitMd, deviceName, logger); attrsOpt != nil {
+		opts = append(opts, attrsOpt)
+	}
 
 	model := openclosepb.NewModel(opts...)
 	server := openclosepb.NewModelServer(model)
@@ -30,6 +38,19 @@ func mockOpenClose(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		node.HasServer(openclosepb.RegisterOpenCloseApiServer, openclosepb.OpenCloseApiServer(server)),
 		node.HasServer(openclosepb.RegisterOpenCloseInfoServer, openclosepb.OpenCloseInfoServer(server)),
 	}, auto.OpenClose(model)
+}
+
+func parseOpenPercentAttributes(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) resource.Option {
+	raw, ok := traitMd.GetMore()["openPercentAttributes"]
+	if !ok {
+		return nil
+	}
+	attrs := &typespb.FloatAttributes{}
+	if err := protojson.Unmarshal([]byte(raw), attrs); err != nil {
+		logger.Sugar().Warnf("Unable to unmarshal openPercentAttributes for mock device %q: %v. %v", deviceName, err, raw)
+		return nil
+	}
+	return openclosepb.WithOpenPercentAttributes(attrs)
 }
 
 func parseOpenClosePresets(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) []resource.Option {
