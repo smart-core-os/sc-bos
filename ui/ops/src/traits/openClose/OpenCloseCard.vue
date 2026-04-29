@@ -15,7 +15,6 @@
         class="mx-4 my-2"
         :model-value="sliderValue"
         @update:model-value="onSliderInput"
-        @start="onSliderStart"
         @end="onSliderEnd"
         :min="sliderMin"
         :max="sliderMax"
@@ -45,7 +44,7 @@
 <script setup>
 import useAuthSetup from '@/composables/useAuthSetup';
 import {useOpenClosePositions} from '@/traits/openClose/openClose.js';
-import {computed, ref} from 'vue';
+import {computed, ref, watch} from 'vue';
 
 const {blockActions} = useAuthSetup();
 
@@ -71,7 +70,7 @@ const emit = defineEmits([
   'updatePositions' // OpenClosePositions.AsObject
 ]);
 
-const {openStr, openPercent} = useOpenClosePositions(() => props.value);
+const {state, openStr, openPercent} = useOpenClosePositions(() => props.value);
 
 const support = computed(() => props.info?.response ?? props.info ?? null);
 const presets = computed(() => support.value?.presetsList ?? []);
@@ -84,29 +83,41 @@ const sliderMax = computed(() => openPercentAttrs.value?.bounds?.max ?? 100);
 // proto step of 0 means "continuous"; v-slider needs a positive number so fall back to 1.
 const sliderStep = computed(() => openPercentAttrs.value?.step || 1);
 
-// While the user drags, dragValue holds the local position so the thumb tracks
-// the cursor without round-tripping through the device. When null, the slider
-// mirrors the device's reported openPercent.
+// While the user is interacting, dragValue holds the local position so the thumb
+// tracks the cursor without round-tripping through the device. It is cleared
+// once the device echoes back a value matching the user's release, at which
+// point sliderValue falls back to mirroring openPercent.
 const dragValue = ref(null);
 const sliderValue = computed(() => dragValue.value ?? openPercent.value ?? 0);
+
+watch(openPercent, (v) => {
+  if (dragValue.value !== null && v === dragValue.value) {
+    dragValue.value = null;
+  }
+});
 
 /**
  * @param {number} v
  */
 function onSliderInput(v) {
-  if (dragValue.value !== null) dragValue.value = v;
-}
-
-function onSliderStart() {
-  dragValue.value = openPercent.value ?? 0;
+  dragValue.value = v;
 }
 
 /**
  * @param {number} v
  */
 function onSliderEnd(v) {
-  dragValue.value = null;
-  emit('updatePositions', {statesList: [{openPercent: v}]});
+  dragValue.value = v;
+  // Preserve the current state's direction so the server addresses the right
+  // element on multi-direction devices (and doesn't create a new direction-0
+  // element). The update mask scopes the write to open_percent so other
+  // fields like resistance / target_open_percent / open_percent_tween aren't
+  // reset to defaults.
+  const direction = state.value?.direction ?? 0;
+  emit('updatePositions', {
+    states: {statesList: [{openPercent: v, direction}]},
+    updateMask: {pathsList: ['states.open_percent']}
+  });
 }
 
 /**
