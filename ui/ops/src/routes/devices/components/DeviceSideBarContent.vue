@@ -16,6 +16,18 @@
     <with-on-off v-if="traits['smartcore.traits.OnOff']" :name="deviceId" v-slot="{resource, update}">
       <on-off-card v-bind="resource" @update-on-off="update" :name="deviceId"/>
     </with-on-off>
+    <with-open-close
+        v-if="traits['smartcore.traits.OpenClose']"
+        :name="deviceId"
+        v-slot="{resource, info, update, updateTracker}">
+      <v-divider class="mt-4 mb-1"/>
+      <open-close-card
+          v-bind="resource"
+          :info="info"
+          :update-tracker="updateTracker"
+          :name="deviceId"
+          @update-positions="update"/>
+    </with-open-close>
     <with-air-quality v-if="traits['smartcore.traits.AirQualitySensor']" :name="deviceId" v-slot="{resource}">
       <v-divider class="mt-4 mb-1"/>
       <air-quality-card v-bind="resource" :name="deviceId"/>
@@ -88,6 +100,8 @@ import OccupancyCard from '@/traits/occupancy/OccupancyCard.vue';
 import WithOccupancy from '@/traits/occupancy/WithOccupancy.vue';
 import OnOffCard from '@/traits/onOff/OnOffCard.vue';
 import WithOnOff from '@/traits/onOff/WithOnOff.vue';
+import OpenCloseCard from '@/traits/openClose/OpenCloseCard.vue';
+import WithOpenClose from '@/traits/openClose/WithOpenClose.vue';
 import StatusLogCard from '@/traits/status/StatusLogCard.vue';
 import WithStatus from '@/traits/status/WithStatus.vue';
 import TemperatureCard from '@/traits/temperature/TemperatureCard.vue';

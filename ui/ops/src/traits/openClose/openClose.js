@@ -1,20 +1,29 @@
-import {closeResource, newResourceValue} from '@/api/resource';
-import {pullOpenClosePositions} from '@/api/sc/traits/open-close';
-import {toQueryObject, watchResource} from '@/util/traits';
+import {closeResource, newActionTracker, newResourceValue} from '@/api/resource';
+import {describeOpenClosePositions, pullOpenClosePositions, updateOpenClosePositions} from '@/api/sc/traits/open-close';
+import {setRequestName, toQueryObject, watchResource} from '@/util/traits';
 import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
 
 /**
  * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb').OpenClosePositions} OpenClosePositions
  * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb').OpenClosePosition} OpenClosePosition
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb').PositionsSupport} PositionsSupport
  * @typedef {
  *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb').PullOpenClosePositionsRequest
  * } PullOpenClosePositionsRequest
  * @typedef {
  *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb').PullOpenClosePositionsResponse
  * } PullOpenClosePositionsResponse
+ * @typedef {
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb').UpdateOpenClosePositionsRequest
+ * } UpdateOpenClosePositionsRequest
+ * @typedef {
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/openclose/v1/open_close_pb').DescribePositionsRequest
+ * } DescribePositionsRequest
  * @typedef {import('vue').Ref} Ref
  * @typedef {import('vue').ToRefs} ToRefs
  * @typedef {import('vue').ComputedRef} ComputedRef
+ * @typedef {import('@/api/resource').ResourceValue} ResourceValue
+ * @typedef {import('@/api/resource').ActionTracker} ActionTracker
  */
 
 /**
@@ -41,6 +50,66 @@ export function usePullOpenClosePositions(query, paused = false) {
   );
 
   return toRefs(openCloseValue);
+}
+
+/**
+ * @param {MaybeRefOrGetter<string>} name
+ * @return {{
+ *   loading: Ref<boolean>,
+ *   response: Ref<OpenClosePositions.AsObject|null>,
+ *   error: Ref<*>,
+ *   updatePositions: (req: Partial<UpdateOpenClosePositionsRequest.AsObject>|Partial<OpenClosePositions.AsObject>) => Promise<OpenClosePositions.AsObject>
+ * }}
+ */
+export function useUpdateOpenClosePositions(name) {
+  const tracker = reactive(
+      /** @type {ActionTracker<OpenClosePositions.AsObject>} */
+      newActionTracker()
+  );
+
+  /**
+   * @param {Partial<UpdateOpenClosePositionsRequest.AsObject>|Partial<OpenClosePositions.AsObject>} req
+   * @return {UpdateOpenClosePositionsRequest.AsObject}
+   */
+  const toRequestObject = (req) => {
+    req = toValue(req);
+    if (!Object.hasOwn(req, 'states')) {
+      req = {states: /** @type {OpenClosePositions.AsObject} */ req};
+    }
+    return setRequestName(req, name);
+  };
+
+  return {
+    ...toRefs(tracker),
+    updatePositions: (req) => {
+      return updateOpenClosePositions(toRequestObject(req), tracker);
+    }
+  };
+}
+
+/**
+ * @param {MaybeRefOrGetter<string|DescribePositionsRequest.AsObject>} query
+ * @return {ToRefs<ActionTracker<PositionsSupport.AsObject>>}
+ */
+export function useDescribePositions(query) {
+  const tracker = reactive(
+      /** @type {ActionTracker<PositionsSupport.AsObject>} */
+      newActionTracker()
+  );
+
+  const queryObject = computed(() => toQueryObject(query));
+
+  watchResource(
+      () => toValue(queryObject),
+      false,
+      (req) => {
+        describeOpenClosePositions(req, tracker)
+            .catch(() => {}); // errors are tracked by tracker
+        return () => closeResource(tracker);
+      }
+  );
+
+  return toRefs(tracker);
 }
 
 /**
