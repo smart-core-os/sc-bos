@@ -16,18 +16,18 @@ func RemovePrefix(prefix string, mask *fieldmaskpb.FieldMask) *fieldmaskpb.Field
 		case path == prefix:
 			continue // skip this one
 		case strings.HasPrefix(path, prefix+"."):
-			path = path[7:]
+			path = path[len(prefix)+1:]
 			switch {
 			case path == "*":
 				continue
 			case strings.HasPrefix(path, "*."):
 				path = path[2:]
 			}
-			out.Paths = append(mask.Paths, path)
+			out.Paths = append(out.Paths, path)
 		}
 	}
 
-	if len(mask.Paths) == 0 {
+	if len(out.Paths) == 0 {
 		return nil
 	}
 	return out
