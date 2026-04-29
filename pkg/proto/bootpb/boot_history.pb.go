@@ -7,8 +7,8 @@
 package bootpb
 
 import (
-	time "github.com/smart-core-os/sc-api/go/types/time"
 	actorpb "github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
+	timepb "github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -102,7 +102,7 @@ type ListBootRecordsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The time period to query.
-	Period *time.Period `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
+	Period *timepb.Period `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
 	// Fields to include in the response.
 	ReadMask *fieldmaskpb.FieldMask `protobuf:"bytes,3,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
 	// The maximum number of records to return.
@@ -157,7 +157,7 @@ func (x *ListBootRecordsRequest) GetName() string {
 	return ""
 }
 
-func (x *ListBootRecordsRequest) GetPeriod() *time.Period {
+func (x *ListBootRecordsRequest) GetPeriod() *timepb.Period {
 	if x != nil {
 		return x.Period
 	}
@@ -258,7 +258,7 @@ var File_smartcore_bos_boot_v1_boot_history_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_boot_v1_boot_history_proto_rawDesc = "" +
 	"\n" +
-	"(smartcore/bos/boot/v1/boot_history.proto\x12\x15smartcore.bos.boot.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\x1a\x17types/time/period.proto\"\xd3\x01\n" +
+	"(smartcore/bos/boot/v1/boot_history.proto\x12\x15smartcore.bos.boot.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"smartcore/bos/actor/v1/actor.proto\x1a(smartcore/bos/types/time/v1/period.proto\"\xd3\x01\n" +
 	"\n" +
 	"BootRecord\x12;\n" +
 	"\vreboot_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -266,10 +266,10 @@ const file_smartcore_bos_boot_v1_boot_history_proto_rawDesc = "" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\x123\n" +
 	"\x05actor\x18\x03 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\x05actor\x12;\n" +
 	"\vrecord_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"recordTime\"\xf2\x01\n" +
+	"recordTime\"\xf9\x01\n" +
 	"\x16ListBootRecordsRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x124\n" +
-	"\x06period\x18\x02 \x01(\v2\x1c.smartcore.types.time.PeriodR\x06period\x127\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
+	"\x06period\x18\x02 \x01(\v2#.smartcore.bos.types.time.v1.PeriodR\x06period\x127\n" +
 	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
@@ -302,14 +302,14 @@ var file_smartcore_bos_boot_v1_boot_history_proto_goTypes = []any{
 	(*ListBootRecordsResponse)(nil), // 2: smartcore.bos.boot.v1.ListBootRecordsResponse
 	(*timestamppb.Timestamp)(nil),   // 3: google.protobuf.Timestamp
 	(*actorpb.Actor)(nil),           // 4: smartcore.bos.actor.v1.Actor
-	(*time.Period)(nil),             // 5: smartcore.types.time.Period
+	(*timepb.Period)(nil),           // 5: smartcore.bos.types.time.v1.Period
 	(*fieldmaskpb.FieldMask)(nil),   // 6: google.protobuf.FieldMask
 }
 var file_smartcore_bos_boot_v1_boot_history_proto_depIdxs = []int32{
 	3, // 0: smartcore.bos.boot.v1.BootRecord.reboot_time:type_name -> google.protobuf.Timestamp
 	4, // 1: smartcore.bos.boot.v1.BootRecord.actor:type_name -> smartcore.bos.actor.v1.Actor
 	3, // 2: smartcore.bos.boot.v1.BootRecord.record_time:type_name -> google.protobuf.Timestamp
-	5, // 3: smartcore.bos.boot.v1.ListBootRecordsRequest.period:type_name -> smartcore.types.time.Period
+	5, // 3: smartcore.bos.boot.v1.ListBootRecordsRequest.period:type_name -> smartcore.bos.types.time.v1.Period
 	6, // 4: smartcore.bos.boot.v1.ListBootRecordsRequest.read_mask:type_name -> google.protobuf.FieldMask
 	0, // 5: smartcore.bos.boot.v1.ListBootRecordsResponse.boot_records:type_name -> smartcore.bos.boot.v1.BootRecord
 	1, // 6: smartcore.bos.boot.v1.BootHistory.ListBootRecords:input_type -> smartcore.bos.boot.v1.ListBootRecordsRequest

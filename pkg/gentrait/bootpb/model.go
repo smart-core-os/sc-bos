@@ -4,8 +4,8 @@ import (
 	"context"
 
 	proto "github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
 
 // Model holds the live BootState for a device or process.

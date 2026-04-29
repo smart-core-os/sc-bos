@@ -3,7 +3,7 @@ import * as jspb from 'google-protobuf'
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
 import * as smartcore_bos_actor_v1_actor_pb from '../../../../smartcore/bos/actor/v1/actor_pb'; // proto import: "smartcore/bos/actor/v1/actor.proto"
-import * as types_time_period_pb from '@smart-core-os/sc-api-grpc-web/types/time/period_pb'; // proto import: "types/time/period.proto"
+import * as smartcore_bos_types_time_v1_period_pb from '../../../../smartcore/bos/types/time/v1/period_pb'; // proto import: "smartcore/bos/types/time/v1/period.proto"
 
 
 export class BootRecord extends jspb.Message {
@@ -20,6 +20,11 @@ export class BootRecord extends jspb.Message {
   hasActor(): boolean;
   clearActor(): BootRecord;
 
+  getRecordTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setRecordTime(value?: google_protobuf_timestamp_pb.Timestamp): BootRecord;
+  hasRecordTime(): boolean;
+  clearRecordTime(): BootRecord;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): BootRecord.AsObject;
   static toObject(includeInstance: boolean, msg: BootRecord): BootRecord.AsObject;
@@ -33,6 +38,7 @@ export namespace BootRecord {
     rebootTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
     reason: string;
     actor?: smartcore_bos_actor_v1_actor_pb.Actor.AsObject;
+    recordTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
   };
 }
 
@@ -40,8 +46,8 @@ export class ListBootRecordsRequest extends jspb.Message {
   getName(): string;
   setName(value: string): ListBootRecordsRequest;
 
-  getPeriod(): types_time_period_pb.Period | undefined;
-  setPeriod(value?: types_time_period_pb.Period): ListBootRecordsRequest;
+  getPeriod(): smartcore_bos_types_time_v1_period_pb.Period | undefined;
+  setPeriod(value?: smartcore_bos_types_time_v1_period_pb.Period): ListBootRecordsRequest;
   hasPeriod(): boolean;
   clearPeriod(): ListBootRecordsRequest;
 
@@ -70,7 +76,7 @@ export class ListBootRecordsRequest extends jspb.Message {
 export namespace ListBootRecordsRequest {
   export type AsObject = {
     name: string;
-    period?: types_time_period_pb.Period.AsObject;
+    period?: smartcore_bos_types_time_v1_period_pb.Period.AsObject;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
     pageSize: number;
     pageToken: string;

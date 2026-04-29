@@ -21,8 +21,8 @@ var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/time
 goog.object.extend(proto, google_protobuf_timestamp_pb);
 var smartcore_bos_actor_v1_actor_pb = require('../../../../smartcore/bos/actor/v1/actor_pb.js');
 goog.object.extend(proto, smartcore_bos_actor_v1_actor_pb);
-var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js');
-goog.object.extend(proto, types_time_period_pb);
+var smartcore_bos_types_time_v1_period_pb = require('../../../../smartcore/bos/types/time/v1/period_pb.js');
+goog.object.extend(proto, smartcore_bos_types_time_v1_period_pb);
 goog.exportSymbol('proto.smartcore.bos.boot.v1.BootRecord', null, global);
 goog.exportSymbol('proto.smartcore.bos.boot.v1.ListBootRecordsRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.boot.v1.ListBootRecordsResponse', null, global);
@@ -123,7 +123,8 @@ proto.smartcore.bos.boot.v1.BootRecord.toObject = function(includeInstance, msg)
   var f, obj = {
 rebootTime: (f = msg.getRebootTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
 reason: jspb.Message.getFieldWithDefault(msg, 2, ""),
-actor: (f = msg.getActor()) && smartcore_bos_actor_v1_actor_pb.Actor.toObject(includeInstance, f)
+actor: (f = msg.getActor()) && smartcore_bos_actor_v1_actor_pb.Actor.toObject(includeInstance, f),
+recordTime: (f = msg.getRecordTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -173,6 +174,11 @@ proto.smartcore.bos.boot.v1.BootRecord.deserializeBinaryFromReader = function(ms
       var value = new smartcore_bos_actor_v1_actor_pb.Actor;
       reader.readMessage(value,smartcore_bos_actor_v1_actor_pb.Actor.deserializeBinaryFromReader);
       msg.setActor(value);
+      break;
+    case 4:
+      var value = new google_protobuf_timestamp_pb.Timestamp;
+      reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
+      msg.setRecordTime(value);
       break;
     default:
       reader.skipField();
@@ -224,6 +230,14 @@ proto.smartcore.bos.boot.v1.BootRecord.serializeBinaryToWriter = function(messag
       3,
       f,
       smartcore_bos_actor_v1_actor_pb.Actor.serializeBinaryToWriter
+    );
+  }
+  f = message.getRecordTime();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
     );
   }
 };
@@ -321,6 +335,43 @@ proto.smartcore.bos.boot.v1.BootRecord.prototype.hasActor = function() {
 };
 
 
+/**
+ * optional google.protobuf.Timestamp record_time = 4;
+ * @return {?proto.google.protobuf.Timestamp}
+ */
+proto.smartcore.bos.boot.v1.BootRecord.prototype.getRecordTime = function() {
+  return /** @type{?proto.google.protobuf.Timestamp} */ (
+    jspb.Message.getWrapperField(this, google_protobuf_timestamp_pb.Timestamp, 4));
+};
+
+
+/**
+ * @param {?proto.google.protobuf.Timestamp|undefined} value
+ * @return {!proto.smartcore.bos.boot.v1.BootRecord} returns this
+*/
+proto.smartcore.bos.boot.v1.BootRecord.prototype.setRecordTime = function(value) {
+  return jspb.Message.setWrapperField(this, 4, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.smartcore.bos.boot.v1.BootRecord} returns this
+ */
+proto.smartcore.bos.boot.v1.BootRecord.prototype.clearRecordTime = function() {
+  return this.setRecordTime(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.boot.v1.BootRecord.prototype.hasRecordTime = function() {
+  return jspb.Message.getField(this, 4) != null;
+};
+
+
 
 
 
@@ -354,7 +405,7 @@ proto.smartcore.bos.boot.v1.ListBootRecordsRequest.prototype.toObject = function
 proto.smartcore.bos.boot.v1.ListBootRecordsRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
 name: jspb.Message.getFieldWithDefault(msg, 1, ""),
-period: (f = msg.getPeriod()) && types_time_period_pb.Period.toObject(includeInstance, f),
+period: (f = msg.getPeriod()) && smartcore_bos_types_time_v1_period_pb.Period.toObject(includeInstance, f),
 readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toObject(includeInstance, f),
 pageSize: jspb.Message.getFieldWithDefault(msg, 4, 0),
 pageToken: jspb.Message.getFieldWithDefault(msg, 5, ""),
@@ -400,8 +451,8 @@ proto.smartcore.bos.boot.v1.ListBootRecordsRequest.deserializeBinaryFromReader =
       msg.setName(value);
       break;
     case 2:
-      var value = new types_time_period_pb.Period;
-      reader.readMessage(value,types_time_period_pb.Period.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_time_v1_period_pb.Period;
+      reader.readMessage(value,smartcore_bos_types_time_v1_period_pb.Period.deserializeBinaryFromReader);
       msg.setPeriod(value);
       break;
     case 3:
@@ -462,7 +513,7 @@ proto.smartcore.bos.boot.v1.ListBootRecordsRequest.serializeBinaryToWriter = fun
     writer.writeMessage(
       2,
       f,
-      types_time_period_pb.Period.serializeBinaryToWriter
+      smartcore_bos_types_time_v1_period_pb.Period.serializeBinaryToWriter
     );
   }
   f = message.getReadMask();
@@ -516,17 +567,17 @@ proto.smartcore.bos.boot.v1.ListBootRecordsRequest.prototype.setName = function(
 
 
 /**
- * optional smartcore.types.time.Period period = 2;
- * @return {?proto.smartcore.types.time.Period}
+ * optional smartcore.bos.types.time.v1.Period period = 2;
+ * @return {?proto.smartcore.bos.types.time.v1.Period}
  */
 proto.smartcore.bos.boot.v1.ListBootRecordsRequest.prototype.getPeriod = function() {
-  return /** @type{?proto.smartcore.types.time.Period} */ (
-    jspb.Message.getWrapperField(this, types_time_period_pb.Period, 2));
+  return /** @type{?proto.smartcore.bos.types.time.v1.Period} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_time_v1_period_pb.Period, 2));
 };
 
 
 /**
- * @param {?proto.smartcore.types.time.Period|undefined} value
+ * @param {?proto.smartcore.bos.types.time.v1.Period|undefined} value
  * @return {!proto.smartcore.bos.boot.v1.ListBootRecordsRequest} returns this
 */
 proto.smartcore.bos.boot.v1.ListBootRecordsRequest.prototype.setPeriod = function(value) {

@@ -16,16 +16,15 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/gentrait/bootpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
 	proto "github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/historypb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
 )
-
 
 // bootTime is captured at package init to record the process start time as accurately as possible.
 var bootTime = time.Now()
@@ -118,10 +117,9 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 	histServer := historypb.NewBootServer(store)
 
 	announcer.Announce(s.nodeName,
-		node.HasTrait(bootpb.TraitName, node.WithClients(
-			proto.WrapApi(server),
-			proto.WrapHistory(histServer),
-		)),
+		node.HasServer(proto.RegisterBootApiServer, proto.BootApiServer(server)),
+		node.HasServer(proto.RegisterBootHistoryServer, proto.BootHistoryServer(histServer)),
+		node.HasTrait(bootpb.TraitName),
 	)
 
 	return nil

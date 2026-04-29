@@ -7,7 +7,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/bootpb";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/actor/v1/actor.proto";
-import "types/time/period.proto";
+import "smartcore/bos/types/time/v1/period.proto";
 
 // BootHistory provides access to historical reboot records.
 service BootHistory {
@@ -29,7 +29,7 @@ message BootRecord {
 message ListBootRecordsRequest {
   string name = 1;
   // The time period to query.
-  smartcore.types.time.Period period = 2;
+  smartcore.bos.types.time.v1.Period period = 2;
   // Fields to include in the response.
   google.protobuf.FieldMask read_mask = 3;
   // The maximum number of records to return.

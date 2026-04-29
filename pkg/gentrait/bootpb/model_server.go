@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	bootproto "github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 // ModelServer implements BootApiServer backed by a Model.
