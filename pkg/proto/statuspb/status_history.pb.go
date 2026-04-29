@@ -7,7 +7,7 @@
 package statuspb
 
 import (
-	time "github.com/smart-core-os/sc-api/go/types/time"
+	timepb "github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -79,7 +79,7 @@ func (x *StatusLogRecord) GetRecordTime() *timestamppb.Timestamp {
 type ListCurrentStatusHistoryRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Name   string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Period *time.Period           `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
+	Period *timepb.Period         `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
 	// Fields to fetch relative to the StatusLog type
 	ReadMask *fieldmaskpb.FieldMask `protobuf:"bytes,3,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
 	// The maximum number of devices to return.
@@ -136,7 +136,7 @@ func (x *ListCurrentStatusHistoryRequest) GetName() string {
 	return ""
 }
 
-func (x *ListCurrentStatusHistoryRequest) GetPeriod() *time.Period {
+func (x *ListCurrentStatusHistoryRequest) GetPeriod() *timepb.Period {
 	if x != nil {
 		return x.Period
 	}
@@ -239,14 +239,14 @@ var File_smartcore_bos_status_v1_status_history_proto protoreflect.FileDescripto
 
 const file_smartcore_bos_status_v1_status_history_proto_rawDesc = "" +
 	"\n" +
-	",smartcore/bos/status/v1/status_history.proto\x12\x17smartcore.bos.status.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/status/v1/status.proto\x1a\x17types/time/period.proto\"\x99\x01\n" +
+	",smartcore/bos/status/v1/status_history.proto\x12\x17smartcore.bos.status.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/status/v1/status.proto\x1a(smartcore/bos/types/time/v1/period.proto\"\x99\x01\n" +
 	"\x0fStatusLogRecord\x12I\n" +
 	"\x0ecurrent_status\x18\x01 \x01(\v2\".smartcore.bos.status.v1.StatusLogR\rcurrentStatus\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"recordTime\"\xfb\x01\n" +
+	"recordTime\"\x82\x02\n" +
 	"\x1fListCurrentStatusHistoryRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x124\n" +
-	"\x06period\x18\x02 \x01(\v2\x1c.smartcore.types.time.PeriodR\x06period\x127\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
+	"\x06period\x18\x02 \x01(\v2#.smartcore.bos.types.time.v1.PeriodR\x06period\x127\n" +
 	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
@@ -279,13 +279,13 @@ var file_smartcore_bos_status_v1_status_history_proto_goTypes = []any{
 	(*ListCurrentStatusHistoryResponse)(nil), // 2: smartcore.bos.status.v1.ListCurrentStatusHistoryResponse
 	(*StatusLog)(nil),                        // 3: smartcore.bos.status.v1.StatusLog
 	(*timestamppb.Timestamp)(nil),            // 4: google.protobuf.Timestamp
-	(*time.Period)(nil),                      // 5: smartcore.types.time.Period
+	(*timepb.Period)(nil),                    // 5: smartcore.bos.types.time.v1.Period
 	(*fieldmaskpb.FieldMask)(nil),            // 6: google.protobuf.FieldMask
 }
 var file_smartcore_bos_status_v1_status_history_proto_depIdxs = []int32{
 	3, // 0: smartcore.bos.status.v1.StatusLogRecord.current_status:type_name -> smartcore.bos.status.v1.StatusLog
 	4, // 1: smartcore.bos.status.v1.StatusLogRecord.record_time:type_name -> google.protobuf.Timestamp
-	5, // 2: smartcore.bos.status.v1.ListCurrentStatusHistoryRequest.period:type_name -> smartcore.types.time.Period
+	5, // 2: smartcore.bos.status.v1.ListCurrentStatusHistoryRequest.period:type_name -> smartcore.bos.types.time.v1.Period
 	6, // 3: smartcore.bos.status.v1.ListCurrentStatusHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
 	0, // 4: smartcore.bos.status.v1.ListCurrentStatusHistoryResponse.current_status_records:type_name -> smartcore.bos.status.v1.StatusLogRecord
 	1, // 5: smartcore.bos.status.v1.StatusHistory.ListCurrentStatusHistory:input_type -> smartcore.bos.status.v1.ListCurrentStatusHistoryRequest

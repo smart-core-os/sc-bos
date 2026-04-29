@@ -2,13 +2,11 @@ package auto
 
 import (
 	"context"
+	"math/rand/v2"
 	"time"
 
-	"golang.org/x/exp/rand"
-
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
 )
 
 func AirQualitySensorAuto(model *airqualitysensorpb.Model) *service.Service[string] {
@@ -34,18 +32,21 @@ func AirQualitySensorAuto(model *airqualitysensorpb.Model) *service.Service[stri
 	return slc
 }
 
-func GetAirQualityState() *traits.AirQuality {
-	co2 := rand.Float32() * 1000
-	voc := rand.Float32()
-	ap := rand.Float32() * 1200
-	ir := float32(rand.Int31n(100))
-	score := float32(rand.Int31n(100))
-	return &traits.AirQuality{
-		CarbonDioxideLevel:       &co2,
-		VolatileOrganicCompounds: &voc,
-		AirPressure:              &ap,
-		Comfort:                  0,
-		InfectionRisk:            &ir,
+func GetAirQualityState() *airqualitysensorpb.AirQuality {
+	score := float32(rand.Int32N(100))
+	comfort := airqualitysensorpb.AirQuality_COMFORTABLE
+	if score < 70 {
+		comfort = airqualitysensorpb.AirQuality_UNCOMFORTABLE
+	}
+	return &airqualitysensorpb.AirQuality{
+		CarbonDioxideLevel:       new(rand.Float32() * 1000),
+		VolatileOrganicCompounds: new(rand.Float32()),
+		AirPressure:              new(rand.Float32() * 1200),
+		ParticulateMatter_1:      new(rand.Float32() * 1000),
+		ParticulateMatter_25:     new(rand.Float32() * 1000),
+		ParticulateMatter_10:     new(rand.Float32() * 1000),
+		Comfort:                  comfort,
+		InfectionRisk:            new(float32(rand.Int32N(100))),
 		Score:                    &score,
 	}
 }

@@ -6,11 +6,15 @@ import (
 	"maps"
 	"math"
 	"slices"
+	"strings"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/lights/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 )
 
 // deviceName is a smart core name for a device.
@@ -23,19 +27,19 @@ type ReadState struct {
 	Config config.Root
 
 	AutoStartTime time.Time // time that the automation started up
-	Occupancy     map[deviceName]*traits.Occupancy
+	Occupancy     map[deviceName]*occupancysensorpb.Occupancy
 	// used for daylight dimming
-	AmbientBrightness map[deviceName]*traits.AmbientBrightness
+	AmbientBrightness map[deviceName]*brightnesssensorpb.AmbientBrightness
 	Buttons           map[deviceName]*buttonpb.ButtonState
 	// used for selecting the run modes, aka "modes" config property
-	Modes *traits.ModeValues
+	Modes *modepb.ModeValues
 }
 
 func NewReadState(t time.Time) *ReadState {
 	return &ReadState{
 		AutoStartTime:     t,
-		Occupancy:         make(map[deviceName]*traits.Occupancy),
-		AmbientBrightness: make(map[deviceName]*traits.AmbientBrightness),
+		Occupancy:         make(map[deviceName]*occupancysensorpb.Occupancy),
+		AmbientBrightness: make(map[deviceName]*brightnesssensorpb.AmbientBrightness),
 		Buttons:           make(map[deviceName]*buttonpb.ButtonState),
 	}
 }
@@ -44,15 +48,9 @@ func (s *ReadState) Clone() *ReadState {
 	clone := NewReadState(s.AutoStartTime)
 	clone.Config = s.Config
 	// assume values in the map are immutable!
-	for name, val := range s.Occupancy {
-		clone.Occupancy[name] = val
-	}
-	for name, val := range s.AmbientBrightness {
-		clone.AmbientBrightness[name] = val
-	}
-	for name, val := range s.Buttons {
-		clone.Buttons[name] = val
-	}
+	maps.Copy(clone.Occupancy, s.Occupancy)
+	maps.Copy(clone.AmbientBrightness, s.AmbientBrightness)
+	maps.Copy(clone.Buttons, s.Buttons)
 	clone.Modes = s.Modes
 	return clone
 }
@@ -67,14 +65,14 @@ func (s *ReadState) Now() time.Time {
 // ChangesSince returns a human/log compatible list of changes between other and s.
 func (s *ReadState) ChangesSince(other *ReadState) []string {
 	var changes []string
-	changes = append(changes, mapChanges("occupancy", other.Occupancy, s.Occupancy, func(a, b *traits.Occupancy) string {
+	changes = append(changes, mapChanges("occupancy", other.Occupancy, s.Occupancy, func(a, b *occupancysensorpb.Occupancy) string {
 		if a.State != b.State {
 			return fmt.Sprintf("%s->%s", a.State, b.State)
 		}
 		// we could report on state change time, but that could get noisy
 		return ""
 	})...)
-	changes = append(changes, mapChanges("ambient brightness", other.AmbientBrightness, s.AmbientBrightness, func(a, b *traits.AmbientBrightness) string {
+	changes = append(changes, mapChanges("ambient brightness", other.AmbientBrightness, s.AmbientBrightness, func(a, b *brightnesssensorpb.AmbientBrightness) string {
 		if math.Abs(float64(a.BrightnessLux-b.BrightnessLux)) > 0.01 {
 			return fmt.Sprintf("%.2f->%.2f", a.BrightnessLux, b.BrightnessLux)
 		}
@@ -88,7 +86,7 @@ func (s *ReadState) ChangesSince(other *ReadState) []string {
 		if a.MostRecentGesture != b.MostRecentGesture {
 			changes = append(changes, fmt.Sprintf("%s->%s", a.MostRecentGesture, b.MostRecentGesture))
 		}
-		return ""
+		return strings.Join(changes, ",")
 	})...)
 	return changes
 }
@@ -132,7 +130,7 @@ func mapChanges[V any](prefix string, a, b map[deviceName]V, cmp func(a, b V) st
 type WriteState struct {
 	Reasons []string
 
-	Brightness       map[deviceName]Value[*traits.Brightness]
+	Brightness       map[deviceName]Value[*lightpb.Brightness]
 	LastButtonAction time.Time // used for button press deduplication, the last time we did anything due to a button press
 	LastButtonOnTime time.Time // used for occupancy related darkness, the last time lights were turned on due to button press
 	ActiveMode       string
@@ -146,20 +144,13 @@ type Value[V any] struct {
 	Hit int // cache hits
 }
 
-func (v *Value[V]) set(at time.Time, value V) {
-	v.V = value
-	v.At = at
-	v.Err = nil
-	v.Hit = 0
-}
-
 func (v *Value[V]) hit() {
 	v.Hit++
 }
 
 func NewWriteState(startTime time.Time) *WriteState {
 	return &WriteState{
-		Brightness: make(map[deviceName]Value[*traits.Brightness]),
+		Brightness: make(map[deviceName]Value[*lightpb.Brightness]),
 		// This causes all button presses before we boot to be ignored for action purposes - i.e. they don't directly turn lights on or off.
 		// This doesn't affect occupancy timeouts, so if a button was pressed 2 mins ago it still counts towards unoccupied darkness.
 		LastButtonAction: startTime,

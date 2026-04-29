@@ -59,8 +59,6 @@ func Collect[T any](ctx context.Context, concurrency int, fns ...func() (T, erro
 	returns, errs = make([]T, len(fns)), make([]error, len(fns))
 	jobs := make([]func(), len(fns))
 	for i, fn := range fns {
-		i := i
-		fn := fn
 		jobs[i] = func() {
 			returns[i], errs[i] = fn()
 			done[i] = true

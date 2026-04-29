@@ -1,0 +1,31 @@
+{{- /*gotype: github.com/smart-core-os/sc-bos/cmd/cloudsim.checkInsViewData*/ -}}
+{{define "check_ins"}}
+<!DOCTYPE html>
+<html>
+<head><title>Check-ins: {{.Hostname}} - CloudSim</title></head>
+<body>
+{{template "nav" .}}
+<h1>Check-ins: node {{.NodeID}} ({{.Hostname}})</h1>
+
+<table border="1">
+<tr><th>ID</th><th>Time</th><th>Current Deployment</th><th>Installing Deployment</th><th>Install Error</th><th>Install Attempts</th></tr>
+{{range .CheckIns}}
+<tr>
+  <td>{{.ID}}</td>
+  <td>{{.CheckInTime.Format "2006-01-02 15:04:05"}}</td>
+  <td>{{if .CurrentDeploymentID.Valid}}{{.CurrentDeploymentID.Int64}}{{end}}</td>
+  <td>{{if .InstallingDeploymentID.Valid}}{{.InstallingDeploymentID.Int64}}{{end}}</td>
+  <td>{{if .InstallingDeploymentError.Valid}}{{.InstallingDeploymentError.String}}{{end}}</td>
+  <td>{{if .InstallingDeploymentAttempts.Valid}}{{.InstallingDeploymentAttempts.Int64}}{{end}}</td>
+</tr>
+{{else}}
+<tr><td colspan="6">No check-ins.</td></tr>
+{{end}}
+</table>
+{{if .NextPageToken}}
+<p><a href="/ui/nodes/{{.NodeID}}/check-ins?before={{.NextPageToken}}">Next page &raquo;</a></p>
+{{end}}
+<p><a href="/ui/nodes">Back to Nodes</a></p>
+</body>
+</html>
+{{end}}

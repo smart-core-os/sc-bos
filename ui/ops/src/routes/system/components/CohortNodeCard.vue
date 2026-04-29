@@ -9,14 +9,13 @@
             <span class="text-subtitle-2 font-weight-bold text-truncate" :title="node.name">
               {{ node.name }}
             </span>
-            <!-- Split chip: connected + hub -->
-            <span v-if="node.isServer && node.role === NodeRole.HUB"
+            <!-- Split chip: connected + hub/gateway -->
+            <span v-if="node.isServer && isCentralHub"
                   class="split-chip"
                   v-tooltip:bottom="'Connected hub'">
               <span class="split-chip__half split-chip__half--success">connected</span>
-              <span class="split-chip__half split-chip__half--primary">hub</span>
+              <span class="split-chip__half split-chip__half--orange">hub</span>
             </span>
-            <!-- Split chip: connected + gateway -->
             <span v-else-if="node.isServer && node.role === NodeRole.GATEWAY"
                   class="split-chip"
                   v-tooltip:bottom="'Connected gateway'">
@@ -32,24 +31,37 @@
               <v-chip v-if="node.role === NodeRole.GATEWAY" color="secondary" size="x-small" variant="flat">
                 gateway
               </v-chip>
-              <v-chip v-if="node.role === NodeRole.HUB" color="primary" size="x-small" variant="flat">
-                hub
-              </v-chip>
+              <v-chip v-if="isCentralHub" color="orange" size="x-small" variant="flat">hub</v-chip>
+              <v-chip v-if="isProxyHubNode" color="cyan-darken-1" size="x-small" variant="flat">hub-proxy</v-chip>
             </template>
+            <!-- Cloud connection chips -->
+            <v-chip v-if="cloudConnected" color="info" size="x-small" variant="flat"
+                    v-tooltip:bottom="'Connected to Smart Core Connect'">
+              cloud
+            </v-chip>
+            <v-chip v-else-if="cloudConnecting" size="x-small" variant="flat"
+                    v-tooltip:bottom="'Connecting to Smart Core Connect'">
+              cloud connecting...
+            </v-chip>
+            <v-chip v-else-if="cloudLinked" color="warning" size="x-small" variant="flat"
+                    v-tooltip:bottom="cloudLastError">
+              cloud offline
+            </v-chip>
           </div>
           <div class="text-caption text-medium-emphasis d-flex align-center mt-1">
             <v-icon size="11" class="mr-1">mdi-network</v-icon>
             {{ node.grpcAddress }}
           </div>
         </div>
-        <v-menu v-if="node.role !== NodeRole.INDEPENDENT || true" min-width="175px">
+        <v-menu min-width="175px">
           <template #activator="{ props: _props }">
             <v-btn icon="mdi-dots-vertical" variant="text" size="x-small" density="compact" v-bind="_props">
               <v-icon size="16"/>
             </v-btn>
           </template>
           <v-list class="py-0">
-            <v-list-item link @click="onShowCertificates(node.grpcAddress)">
+            <!-- Independent nodes can't retrieve their certificate -->
+            <v-list-item v-if="!isIndependent" link @click="onShowCertificates(node.grpcAddress)">
               <v-list-item-title>View Certificate</v-list-item-title>
             </v-list-item>
             <v-list-item v-if="hasLogService" link @click="onDownloadLogs(node.name)">
@@ -57,6 +69,9 @@
             </v-list-item>
             <v-list-item v-if="hasLogService" link @click="onViewLiveLogs(node.name)">
               <v-list-item-title>View Live Logs</v-list-item-title>
+            </v-list-item>
+            <v-list-item link @click="cloudDialogOpen = true">
+              <v-list-item-title>{{ cloudLinked ? 'Manage Cloud Link' : 'Link to Cloud' }}</v-list-item-title>
             </v-list-item>
             <v-list-item v-if="node.role !== NodeRole.HUB && !node.isServer"
                          link
@@ -70,10 +85,14 @@
         </v-menu>
       </div>
 
+      <link-cloud-dialog
+          v-model="cloudDialogOpen"
+          :node-name="node.name"
+          :cloud-connection="cloudResource.value"/>
       <v-divider class="mt-2 mb-3"/>
 
       <!-- Service stats -->
-      <div class="stat-grid">
+      <div v-if="!connectedViaHub" class="stat-grid">
         <div
             v-for="(response, service) in nodeDetails"
             :key="service"
@@ -275,8 +294,12 @@
 </template>
 
 <script setup>
+import {pullCloudConnection, CloudErrMessage} from '@/api/ui/cloud-connection.js';
 import {getDownloadLogUrl} from '@/api/ui/log.js';
+import {newResourceValue} from '@/api/resource.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
+import {useHasHubSystem, usePullService, usePullServiceMetadata} from '@/composables/services.js';
+import {NodeRole, useCohortStore} from '@/stores/cohort.js';
 import {usePullService, usePullServiceMetadata} from '@/composables/services.js';
 import {pullBootState, reboot} from '@/api/sc/traits/boot.js';
 import {closeResource, newResourceValue} from '@/api/resource.js';
@@ -284,7 +307,10 @@ import useAuthSetup from '@/composables/useAuthSetup.js';
 import {useAccountStore} from '@/stores/account.js';
 import {NodeRole} from '@/stores/cohort.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
+import {CloudConnection} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb';
+import {computed, onScopeDispose, reactive, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
+import LinkCloudDialog from './LinkCloudDialog.vue';
 import {watchResource} from '@/util/traits.js';
 import {computed, onScopeDispose, reactive, ref} from 'vue';
 
@@ -304,21 +330,41 @@ const diskExpanded = defineModel('diskExpanded', {type: Boolean, default: false}
 const {value: logServiceValue} = usePullService(() => ({name: props.node.name + '/systems', id: 'log'}));
 const hasLogService = computed(() => !!logServiceValue.value);
 
+const {hasHubSystem, isProxyHub} = useHasHubSystem(() => props.node.name);
+const isCentralHub = computed(() => props.node.role === NodeRole.HUB || (hasHubSystem.value && !isProxyHub.value));
+const isProxyHubNode = computed(() => hasHubSystem.value && isProxyHub.value && props.node.role !== NodeRole.GATEWAY);
+const isIndependent = computed(() => props.node.role === NodeRole.INDEPENDENT)
+
+const cohortStore = useCohortStore();
+const connectedViaHub = computed(() =>
+  cohortStore.cohortNodes.find(n => n.isServer)?.role === NodeRole.HUB
+);
+
 const {hasAnyRole} = useAuthSetup();
 const canReboot = computed(() => hasAnyRole('admin', 'superAdmin'));
 const accountStore = useAccountStore();
 
 const nodeDetails = reactive({
-  automations: usePullServiceMetadata(() => props.node.name + '/automations'),
-  drivers: usePullServiceMetadata(() => props.node.name + '/drivers'),
-  systems: usePullServiceMetadata(() => props.node.name + '/systems')
+  automations: usePullServiceMetadata(
+      () => props.node.name + '/automations',
+      () => ({paused: connectedViaHub.value})
+  ),
+  drivers: usePullServiceMetadata(
+      () => props.node.name + '/drivers',
+      () => ({paused: connectedViaHub.value})
+  ),
+  systems: usePullServiceMetadata(
+      () => props.node.name + '/systems',
+      () => ({paused: connectedViaHub.value})
+  )
 });
 
 const accentStyle = computed(() => {
   const colors = [];
   if (props.node.isServer) colors.push('rgb(var(--v-theme-success))');
-  if (props.node.role === NodeRole.HUB) colors.push('rgb(var(--v-theme-primary))');
+  if (isCentralHub.value) colors.push('#FB8C00');
   if (props.node.role === NodeRole.GATEWAY) colors.push('rgb(var(--v-theme-secondary))');
+  if (isProxyHubNode.value) colors.push('#00ACC1');
 
   if (colors.length === 0) return {background: 'transparent'};
   if (colors.length === 1) return {background: colors[0]};
@@ -330,6 +376,29 @@ const accentStyle = computed(() => {
     return i === 0 ? `${c} ${end}%` : `${c} ${start}% ${end}%`;
   });
   return {background: `linear-gradient(to right, ${stops.join(', ')})`};
+});
+
+// Cloud connection status
+const cloudResource = reactive(newResourceValue());
+onScopeDispose(() => {
+  if (cloudResource.stream) cloudResource.stream.cancel();
+});
+watch(() => props.node?.name, (name) => {
+  if (cloudResource.stream) cloudResource.stream.cancel();
+  if (name) pullCloudConnection({name, updatesOnly: false}, cloudResource);
+}, {immediate: true});
+
+const cloudState = computed(() => cloudResource.value?.state);
+const cloudLinked = computed(() =>
+  cloudState.value === CloudConnection.State.CONNECTED ||
+  cloudState.value === CloudConnection.State.CONNECTING ||
+  cloudState.value === CloudConnection.State.FAILED
+);
+const cloudConnected  = computed(() => cloudState.value === CloudConnection.State.CONNECTED);
+const cloudConnecting = computed(() => cloudState.value === CloudConnection.State.CONNECTING);
+const cloudDialogOpen = ref(false);
+const cloudLastError = computed(() => {
+  return CloudErrMessage[cloudResource.value?.lastError] || cloudResource.value?.lastError || 'Cloud connection offline';
 });
 
 const onShowCertificates = (address) => emit('click:show-certificates', address);
@@ -450,8 +519,8 @@ function confirmReboot() {
   background: rgb(var(--v-theme-success));
 }
 
-.split-chip__half--primary {
-  background: rgb(var(--v-theme-primary));
+.split-chip__half--orange {
+  background: #FB8C00;
 }
 
 .split-chip__half--secondary {

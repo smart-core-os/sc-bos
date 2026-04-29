@@ -6,8 +6,8 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "traits/air_temperature.proto";
-import "types/time/period.proto";
+import "smartcore/bos/airtemperature/v1/air_temperature.proto";
+import "smartcore/bos/types/time/v1/period.proto";
 
 // AirTemperatureHistory provides access to historical records for smartcore.traits.AirTemperatureApi service resources.
 service AirTemperatureHistory {
@@ -15,13 +15,13 @@ service AirTemperatureHistory {
 }
 
 message AirTemperatureRecord {
-  smartcore.traits.AirTemperature air_temperature = 1;
+  AirTemperature air_temperature = 1;
   google.protobuf.Timestamp record_time = 2;
 }
 
 message ListAirTemperatureHistoryRequest {
   string name = 1;
-  smartcore.types.time.Period period = 2;
+  smartcore.bos.types.time.v1.Period period = 2;
 
   // Fields to fetch relative to the AirTemperatureRecord type
   google.protobuf.FieldMask read_mask = 3;

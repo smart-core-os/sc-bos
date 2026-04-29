@@ -63,6 +63,10 @@ func (a *autoImpl) getAlertsInLastMonth(ctx context.Context, alertClient alertpb
 	}
 
 	res, err := alertClient.ListAlerts(ctx, &listAlerts)
+	if err != nil {
+		a.Logger.Warn("failed to get alerts for "+name, zap.Error(err))
+		return lastMonth
+	}
 
 	for _, a := range res.Alerts {
 		if isAlertInPreviousMonth(a.CreateTime.AsTime(), t) {
@@ -81,7 +85,7 @@ func (a *autoImpl) getAlertsInLastMonth(ctx context.Context, alertClient alertpb
 		res, err = alertClient.ListAlerts(ctx, &listAlerts)
 		if err != nil {
 			a.Logger.Warn("failed to get alerts for "+name, zap.Error(err))
-			continue
+			break
 		}
 
 		for _, a := range res.Alerts {

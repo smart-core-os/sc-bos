@@ -3,11 +3,12 @@
 package pressurepb
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapApi	adapts a PressureApiServer	and presents it as a PressureApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server PressureApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(PressureApi_ServiceDesc, server)
 	client := NewPressureApiClient(conn)

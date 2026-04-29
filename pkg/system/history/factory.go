@@ -28,7 +28,7 @@ var Factory factory
 
 type factory struct{}
 
-func (_ factory) New(services system.Services) service.Lifecycle {
+func (factory) New(services system.Services) service.Lifecycle {
 	return NewSystem(services)
 }
 
@@ -157,7 +157,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	server := &storeServer{store: store}
-	announcer.Announce(s.name, node.HasClient(historypb.WrapAdminApi(server)))
+	announcer.Announce(s.name, node.HasServer(historypb.RegisterHistoryAdminApiServer, historypb.HistoryAdminApiServer(server)))
 
 	return nil
 }

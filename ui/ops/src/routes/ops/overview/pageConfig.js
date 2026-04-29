@@ -2,6 +2,7 @@ import {computed, defineAsyncComponent, markRaw, reactive, toValue} from 'vue';
 import {builtinLayouts} from '@/dynamic/layout/pallet.js';
 const PlaceholderCard = defineAsyncComponent(() => import('@/dynamic/widgets/general/PlaceholderCard.vue'));
 import {builtinWidgets} from '@/dynamic/widgets/pallet.js';
+import {widgetDescriptions} from '@/dynamic/widgets/descriptions.js';
 import useBuildingConfig from '@/routes/ops/overview/pages/buildingConfig.js';
 import useDashPage from '@/routes/ops/overview/pages/dashPage.js';
 import {useUiConfigStore} from '@/stores/uiConfig.js';
@@ -49,10 +50,17 @@ export default function usePageConfig(path) {
       if (Array.isArray(o)) {
         return o.map(v => norm(v));
       } else if (typeof o === 'object') {
-        return Object.entries(o).reduce((acc, [k, v]) => {
+        const res = Object.entries(o).reduce((acc, [k, v]) => {
           acc[k] = norm(v, k);
           return acc;
         }, {});
+        if (!res.description && typeof o.component === 'string' && o.component.startsWith('builtin:')) {
+          const [, builtin] = o.component.split(':');
+          if (widgetDescriptions[builtin]) {
+            res.description = widgetDescriptions[builtin];
+          }
+        }
+        return res;
       } else if (typeof o === 'string') {
         if (o.startsWith('builtin:')) {
           const [, builtin] = o.split(':');
@@ -97,25 +105,29 @@ export default function usePageConfig(path) {
           // decode segments just like vue-router does
           .map(s => decodeURIComponent(s))));
     }
-    return pageConfigNorm.value;
+    return pageConfigNorm.value ?? {};
   });
 
   // We filter out special properties of the config when binding it to elements.
   // Without this we'd be trying to bind props like `children` which is a DOM property.
   const filterProps = {'layout': true, 'children': true};
-  const filteredConfig = computed(() => Object.entries(configObj.value)
-      .reduce((acc, [k, v]) => {
-        if (Object.hasOwn(filterProps, k)) return acc;
-        acc[k] = v;
-        return acc;
-      }, {}));
+  const filteredConfig = computed(() => {
+    const config = configObj.value;
+    if (!config) return {};
+    return Object.entries(config)
+        .reduce((acc, [k, v]) => {
+          if (Object.hasOwn(filterProps, k)) return acc;
+          acc[k] = v;
+          return acc;
+        }, {});
+  });
 
   return {
     pageConfig,
     pageConfigNorm,
     isLegacyOverview,
     isLegacySubPage,
-    layout: computed(() => configObj.value.layout),
+    layout: computed(() => configObj.value?.layout),
     config: filteredConfig
   };
 }

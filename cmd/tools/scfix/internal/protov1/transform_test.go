@@ -268,7 +268,7 @@ message OtherMessage {
   string id = 1;
   int32 assignment = 2;
   optional smartcore.bos.actor.v1.Actor actor = 3;
-  optional smartcore.types.time.Period period = 4;
+  optional smartcore.bos.types.time.v1.Period period = 4;
 }
 
 message OtherMessage {

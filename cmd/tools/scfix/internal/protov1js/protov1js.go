@@ -1,5 +1,7 @@
 package protov1js
 
+//go:generate go run ./genmapping
+
 import (
 	"fmt"
 	"os"

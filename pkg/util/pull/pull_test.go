@@ -2,7 +2,6 @@ package pull
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 
@@ -167,7 +166,6 @@ type testGetter struct {
 	t         *testing.T
 	name      string
 	calls     chan chan error
-	closeOnce sync.Once
 }
 
 func (g *testGetter) Getter(ctx context.Context) error {

@@ -6,19 +6,83 @@ info:
 
 servers:
   - url: /api/v1/management
-  - url: /api/v1
+  - url: /v1/device
 
 paths:
+  /token:
+    post:
+      summary: OAuth2 token endpoint
+      operationId: token
+      tags: [DeviceAPI]
+      description: >-
+        Implements the OAuth2 Client Credentials Grant (RFC 6749 §4.4).
+        Exchanges client_id and client_secret for a short-lived JWT access token.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [grant_type, client_id, client_secret]
+              properties:
+                grant_type:
+                  type: string
+                  enum: [client_credentials]
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        '200':
+          description: Access token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /register:
+    post:
+      summary: Register device
+      operationId: deviceRegister
+      tags: [DeviceAPI]
+      description: >-
+        Exchanges a valid enrollment code (provided as a Bearer token) for
+        client credentials. The enrollment code is single-use and invalidated
+        on success. The returned client_secret cannot be retrieved later.
+      security:
+        - bearerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceRegisterRequest'
+      responses:
+        '201':
+          description: Device registered; client credentials issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegisterResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /check-in:
     post:
       summary: Node check-in
       operationId: checkIn
-      tags: [CheckIn]
+      tags: [DeviceAPI]
       description: >-
-        Authenticates a node using its bearer secret, records a check-in,
-        and returns the newest active deployment (if any).
+        Records a check-in for the authenticated node and returns the
+        newest active deployment (if any).
       security:
-        - bearerAuth: []
+        - bearerToken: []
       requestBody:
         required: false
         content:
@@ -214,6 +278,28 @@ paths:
       responses:
         '204':
           description: Node deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /nodes/{id}/enrollment-codes:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    post:
+      summary: Create enrollment code
+      operationId: createEnrollmentCode
+      tags: [Nodes]
+      description: >-
+        Generates a new single-use enrollment code for the given node.
+        The code expires after 15 minutes and is invalidated once used.
+      responses:
+        '201':
+          description: Enrollment code created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentCode'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -745,7 +831,7 @@ components:
           format: int64
         status:
           type: string
-          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+          enum: [pending, in_progress, completed, failed, cancelled]
         startTime:
           type: string
           format: date-time
@@ -778,9 +864,9 @@ components:
           format: int64
         status:
           type: string
-          enum: [PENDING]
-          default: PENDING
-          description: Deployment status. Must be PENDING if provided. Defaults to PENDING if omitted.
+          enum: [pending]
+          default: pending
+          description: Deployment status. Must be pending if provided. Defaults to pending if omitted.
 
     UpdateDeploymentStatusRequest:
       type: object
@@ -788,10 +874,53 @@ components:
       properties:
         status:
           type: string
-          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+          enum: [pending, in_progress, completed, failed, cancelled]
         reason:
           type: string
           description: Optional reason, typically used for FAILED or CANCELLED status
+
+    EnrollmentCode:
+      type: object
+      required: [id, nodeId, code, expiresAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        nodeId:
+          type: integer
+          format: int64
+        code:
+          type: string
+          description: Single-use enrollment code
+        expiresAt:
+          type: string
+          format: date-time
+
+    DeviceRegisterRequest:
+      type: object
+      properties:
+        client_name:
+          type: string
+
+    DeviceRegisterResponse:
+      type: object
+      required: [client_id, client_secret, client_name, bosapi_root]
+      properties:
+        client_id:
+          type: string
+          description: Numeric node ID as a decimal string
+        client_secret:
+          type: string
+          format: byte
+          description: >-
+            32-byte secret (base64-encoded). Must be stored by the client;
+            it cannot be retrieved later.
+        client_name:
+          type: string
+        bosapi_root:
+          type: string
+          format: uri
+          description: Base URL of the BOS API for this node
 
     CheckInRequest:
       type: object
@@ -845,16 +974,39 @@ components:
           type: string
           description: Reason the deployment failed
 
+    TokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Token lifetime in seconds
+
     CheckInResponse:
       type: object
       required: [checkIn]
       properties:
         checkIn:
-          $ref: '#/components/schemas/NodeCheckIn'
+          $ref: '#/components/schemas/CheckInAck'
         latestConfig:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/LatestConfig'
+
+    CheckInAck:
+      type: object
+      required: [nodeId, checkInTime]
+      properties:
+        nodeId:
+          type: string
+        checkInTime:
+          type: string
+          format: date-time
 
     LatestConfig:
       description: The newest active deployment and its associated config version, returned as part of a check-in response.
@@ -867,14 +1019,15 @@ components:
           $ref: '#/components/schemas/ConfigVersion'
 
   securitySchemes:
-    bearerAuth:
+    bearerToken:
       type: http
       scheme: bearer
-      description: Base64-encoded node secret
+      bearerFormat: JWT
+      description: JWT access token obtained from the token endpoint
 
 tags:
-  - name: CheckIn
-    description: Node check-in endpoint (authenticated by bearer secret)
+  - name: DeviceAPI
+    description: BOS-facing device API (token, check-in)
   - name: Sites
     description: Physical location management
   - name: Nodes

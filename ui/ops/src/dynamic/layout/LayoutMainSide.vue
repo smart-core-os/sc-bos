@@ -92,6 +92,5 @@ const mainWidgetStyle = computed(() => {
 }
 
 .layout-main-side > header {
-  grid-column: 1 / span 2;
 }
 </style>

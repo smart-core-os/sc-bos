@@ -4,10 +4,10 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait/modepb"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
 )
 
 // mockMode returns a mock Mode device and automation.
@@ -15,7 +15,7 @@ import (
 // The mode device can be configured via the trait metadata more map.
 // You can specify a "modes" key which has the JSON format of `{modes:[{name, ordered?, values}, ...]}`,
 // this format is the protojson serialized form of traits.Modes.
-func mockMode(traitMd *traits.TraitMetadata, deviceName string, logger *zap.Logger) ([]wrap.ServiceUnwrapper, service.Lifecycle) {
+func mockMode(traitMd *metadatapb.TraitMetadata, deviceName string, logger *zap.Logger) ([]node.Feature, service.Lifecycle) {
 	var model *modepb.Model
 	if modes, err := parseModes(traitMd); modes != nil {
 		model = modepb.NewModelModes(modes)
@@ -26,16 +26,19 @@ func mockMode(traitMd *traits.TraitMetadata, deviceName string, logger *zap.Logg
 		model = modepb.NewModel()
 	}
 	modes := model.Modes()
-	infoServer := &modepb.InfoServer{Modes: &traits.ModesSupport{AvailableModes: modes}}
-	return []wrap.ServiceUnwrapper{modepb.WrapApi(modepb.NewModelServer(model)), modepb.WrapInfo(infoServer)}, nil
+	infoServer := &modepb.InfoServer{Modes: &modepb.ModesSupport{AvailableModes: modes}}
+	return []node.Feature{
+		node.HasServer(modepb.RegisterModeApiServer, modepb.ModeApiServer(modepb.NewModelServer(model))),
+		node.HasServer(modepb.RegisterModeInfoServer, modepb.ModeInfoServer(infoServer)),
+	}, nil
 }
 
-func parseModes(traitMd *traits.TraitMetadata) (*traits.Modes, error) {
+func parseModes(traitMd *metadatapb.TraitMetadata) (*modepb.Modes, error) {
 	modesJson, ok := traitMd.GetMore()["modes"]
 	if !ok || modesJson == "" {
 		return nil, nil
 	}
-	modes := &traits.Modes{}
+	modes := &modepb.Modes{}
 	err := protojson.Unmarshal([]byte(modesJson), modes)
 	if err != nil {
 		return nil, err

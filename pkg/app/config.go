@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io/fs"
 	"os"
-	"strings"
 
 	"go.uber.org/zap"
 
@@ -45,15 +44,15 @@ func loadLocalAppConfig(sysConfig sysconf.Config, logger *zap.Logger) (ConfigSto
 	return confStore, nil
 }
 
-func loadCloudAppConfig(ctx context.Context, sysConfig sysconf.Config, client *cloud.DeploymentUpdater, logger *zap.Logger) (ConfigStore, error) {
+func loadCloudAppConfig(ctx context.Context, sysConfig sysconf.Config, store *cloud.DeploymentStore, conn *cloud.Conn, logger *zap.Logger) (ConfigStore, error) {
 	// first, try loading the installing config, if there is one
 	// if that doesn't exist or didn't work, proceed to the active config
-	installingConfig, loaded := loadCloudInstallingConfig(ctx, client, logger)
+	installingConfig, loaded := loadCloudInstallingConfig(ctx, store, conn, logger)
 	if loaded {
 		return &immutableConfigStore{active: installingConfig}, nil
 	}
 
-	activeConfigFS, err := client.ActiveConfig()
+	activeConfigFS, err := store.ActiveConfig()
 	if err != nil {
 		// There is an active config from the cloud, but we can't load it. Quite a big problem - the config should
 		// have been validated when it was committed, so this likely indicates a code problem. Not safe to load local
@@ -84,15 +83,15 @@ func loadCloudAppConfig(ctx context.Context, sysConfig sysconf.Config, client *c
 	return &immutableConfigStore{active: activeConfig}, nil
 }
 
-func loadCloudInstallingConfig(ctx context.Context, client *cloud.DeploymentUpdater, logger *zap.Logger) (conf appconf.Config, loaded bool) {
+func loadCloudInstallingConfig(ctx context.Context, store *cloud.DeploymentStore, conn *cloud.Conn, logger *zap.Logger) (conf appconf.Config, loaded bool) {
 	fail := func(msg string) {
-		err := client.FailInstall(ctx, msg)
+		err := conn.FailInstall(ctx, msg)
 		if err != nil {
 			logger.Error("failed to report install failure to deployment server", zap.Error(err))
 		}
 	}
 
-	installingFS, err := client.InstallingConfig()
+	installingFS, err := store.InstallingConfig()
 	if err != nil {
 		logger.Error("failed to open installing config FS", zap.Error(err))
 		fail("failed to open installing config FS")
@@ -113,7 +112,7 @@ func loadCloudInstallingConfig(ctx context.Context, client *cloud.DeploymentUpda
 	}
 
 	logger.Info("loaded installing config")
-	err = client.CommitInstall(ctx)
+	err = conn.CommitInstall(ctx)
 	if err != nil {
 		logger.Error("failed to report install success to server", zap.Error(err))
 	}
@@ -165,12 +164,3 @@ func (i immutableServiceStore) SaveConfig(ctx context.Context, name, typ string,
 }
 
 var ErrImmutableConfig = errors.New("cannot modify config when in cloud config mode")
-
-func loadCloudSecret(p string) (string, error) {
-	data, err := os.ReadFile(p)
-	if err != nil {
-		return "", err
-	}
-
-	return strings.TrimSpace(string(data)), nil
-}

@@ -23,6 +23,7 @@ func DefaultOpts[C any]() []Option[C] {
 // OptionFunc adapts a func of the correct signature to implement Option.
 type OptionFunc[T any] func(l *Service[T])
 
+//lint:ignore U1000 this is used via interface Option, but staticcheck can't see it (because of generics?)
 func (o OptionFunc[T]) apply(l *Service[T]) {
 	o(l)
 }

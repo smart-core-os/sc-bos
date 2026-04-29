@@ -26,7 +26,7 @@ var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/time
 
 var smartcore_bos_status_v1_status_pb = require('../../../../smartcore/bos/status/v1/status_pb.js')
 
-var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js')
+var smartcore_bos_types_time_v1_period_pb = require('../../../../smartcore/bos/types/time/v1/period_pb.js')
 const proto = {};
 proto.smartcore = {};
 proto.smartcore.bos = {};

@@ -1,0 +1,75 @@
+sc-api trait with conflicting service name in existing target directory (Case 3: skip).
+expected_changes: 0
+
+-- input/proto/smartcore/bos/meter/v1/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/meterpb";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}
+-- input/sc-api/protobuf/traits/meter.proto --
+syntax = "proto3";
+
+package smartcore.traits;
+
+option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/traits";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}
+-- output/sc-api/protobuf/traits/meter.proto --
+syntax = "proto3";
+
+package smartcore.traits;
+
+option go_package = "github.com/smart-core-os/sc-bos/sc-api/go/traits";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}
+-- output/proto/smartcore/bos/meter/v1/meter.proto --
+syntax = "proto3";
+
+package smartcore.bos.meter.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/meterpb";
+
+service MeterApi {
+  rpc GetMeterReading(GetMeterReadingRequest) returns (MeterReading);
+}
+
+message MeterReading {
+  float usage = 1;
+}
+
+message GetMeterReadingRequest {
+  string name = 1;
+}

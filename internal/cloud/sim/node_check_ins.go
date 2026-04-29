@@ -7,21 +7,21 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
-	queries2 "github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 // NodeCheckIn is the JSON representation of a node check-in.
 type NodeCheckIn struct {
-	ID                           int64     `json:"id"`
-	NodeID                       int64     `json:"nodeId"`
+	ID                           int64     `json:"id,string"`
+	NodeID                       int64     `json:"nodeId,string"`
 	CheckInTime                  time.Time `json:"checkInTime"`
-	CurrentDeploymentID          *int64    `json:"currentDeploymentId,omitempty"`
-	InstallingDeploymentID       *int64    `json:"installingDeploymentId,omitempty"`
+	CurrentDeploymentID          *int64    `json:"currentDeploymentId,string,omitempty"`
+	InstallingDeploymentID       *int64    `json:"installingDeploymentId,string,omitempty"`
 	InstallingDeploymentError    string    `json:"installingDeploymentError,omitempty"`
 	InstallingDeploymentAttempts *int64    `json:"installingDeploymentAttempts,omitempty"`
 }
 
-func toNodeCheckIn(c queries2.NodeCheckIn) NodeCheckIn {
+func toNodeCheckIn(c queries.NodeCheckIn) NodeCheckIn {
 	out := NodeCheckIn{
 		ID:          c.ID,
 		NodeID:      c.NodeID,
@@ -42,7 +42,7 @@ func toNodeCheckIn(c queries2.NodeCheckIn) NodeCheckIn {
 	return out
 }
 
-func toNodeCheckIns(checkIns []queries2.NodeCheckIn) []NodeCheckIn {
+func toNodeCheckIns(checkIns []queries.NodeCheckIn) []NodeCheckIn {
 	out := make([]NodeCheckIn, len(checkIns))
 	for i, c := range checkIns {
 		out[i] = toNodeCheckIn(c)
@@ -60,20 +60,20 @@ func (s *Server) listNodeCheckIns(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	afterID, limit, err := parsePagination(r)
+	beforeID, limit, err := parsePaginationDesc(r)
 	if err != nil {
 		writeError(w, errInvalidRequest)
 		logger.Info("invalid pagination", zap.Error(err))
 		return
 	}
 
-	var items []queries2.NodeCheckIn
+	var items []queries.NodeCheckIn
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
-		items, err = tx.ListNodeCheckInsByNode(r.Context(), queries2.ListNodeCheckInsByNodeParams{
-			NodeID:  nodeID,
-			AfterID: afterID,
-			Limit:   limit + 1,
+		items, err = tx.ListNodeCheckInsByNode(r.Context(), queries.ListNodeCheckInsByNodeParams{
+			NodeID:   nodeID,
+			BeforeID: beforeID,
+			Limit:    limit + 1,
 		})
 		return err
 	})
@@ -112,7 +112,7 @@ func (s *Server) getNodeCheckIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries2.NodeCheckIn
+	var item queries.NodeCheckIn
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		item, err = tx.GetNodeCheckIn(r.Context(), id)

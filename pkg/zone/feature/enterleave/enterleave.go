@@ -6,17 +6,17 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/enterleave/config"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/enterleavesensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 type enterLeave struct {
-	traits.UnimplementedEnterLeaveSensorApiServer
-	client traits.EnterLeaveSensorApiClient
+	enterleavesensorpb.UnimplementedEnterLeaveSensorApiServer
+	client enterleavesensorpb.EnterLeaveSensorApiClient
 	names  []string
 
 	model *occupancysensorpb.Model
@@ -33,23 +33,26 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 			elServer := &enterLeave{
 				model:  occupancysensorpb.NewModel(),
 				names:  cfg.EnterLeaveSensors,
-				client: traits.NewEnterLeaveSensorApiClient(f.clients.ClientConn()),
+				client: enterleavesensorpb.NewEnterLeaveSensorApiClient(f.clients.ClientConn()),
 			}
-			group.enterLeaveClients = append(group.enterLeaveClients, enterleavesensorpb.WrapApi(elServer))
+			group.enterLeaveClients = append(group.enterLeaveClients, enterleavesensorpb.NewEnterLeaveSensorApiClient(wrap.ServerToClient(enterleavesensorpb.EnterLeaveSensorApi_ServiceDesc, elServer)))
 		}
-		announce.Announce(cfg.Name, node.HasTrait(trait.EnterLeaveSensor, node.WithClients(enterleavesensorpb.WrapApi(group))))
+		announce.Announce(cfg.Name,
+			node.HasServer(enterleavesensorpb.RegisterEnterLeaveSensorApiServer, enterleavesensorpb.EnterLeaveSensorApiServer(group)),
+			node.HasTrait(trait.EnterLeaveSensor),
+		)
 	}
 
 	return nil
 }
 
-func (e *enterLeave) GetEnterLeaveEvent(ctx context.Context, _ *traits.GetEnterLeaveEventRequest) (*traits.EnterLeaveEvent, error) {
+func (e *enterLeave) GetEnterLeaveEvent(ctx context.Context, _ *enterleavesensorpb.GetEnterLeaveEventRequest) (*enterleavesensorpb.EnterLeaveEvent, error) {
 
 	enterCount := int32(0)
 	leaveCount := int32(0)
-	all := make([]*traits.EnterLeaveEvent, len(e.names))
+	all := make([]*enterleavesensorpb.EnterLeaveEvent, len(e.names))
 	for i, name := range e.names {
-		event, err := e.client.GetEnterLeaveEvent(ctx, &traits.GetEnterLeaveEventRequest{
+		event, err := e.client.GetEnterLeaveEvent(ctx, &enterleavesensorpb.GetEnterLeaveEventRequest{
 			Name: name,
 		})
 		if err != nil {
@@ -61,13 +64,13 @@ func (e *enterLeave) GetEnterLeaveEvent(ctx context.Context, _ *traits.GetEnterL
 		leaveCount += *event.LeaveTotal
 	}
 
-	return &traits.EnterLeaveEvent{
+	return &enterleavesensorpb.EnterLeaveEvent{
 		EnterTotal: &enterCount,
 		LeaveTotal: &leaveCount,
 	}, nil
 }
 
-func (e *enterLeave) PullEnterLeaveEvents(request *traits.PullEnterLeaveEventsRequest, server traits.EnterLeaveSensorApi_PullEnterLeaveEventsServer) error {
+func (e *enterLeave) PullEnterLeaveEvents(request *enterleavesensorpb.PullEnterLeaveEventsRequest, server enterleavesensorpb.EnterLeaveSensorApi_PullEnterLeaveEventsServer) error {
 
 	ctx := server.Context()
 	for {
@@ -78,10 +81,10 @@ func (e *enterLeave) PullEnterLeaveEvents(request *traits.PullEnterLeaveEventsRe
 		default:
 			enterCount := int32(0)
 			leaveCount := int32(0)
-			all := make([]*traits.EnterLeaveEvent, len(e.names))
+			all := make([]*enterleavesensorpb.EnterLeaveEvent, len(e.names))
 
 			for i, name := range e.names {
-				event, err := e.client.GetEnterLeaveEvent(ctx, &traits.GetEnterLeaveEventRequest{
+				event, err := e.client.GetEnterLeaveEvent(ctx, &enterleavesensorpb.GetEnterLeaveEventRequest{
 					Name: name,
 				})
 				if err != nil {
@@ -93,17 +96,17 @@ func (e *enterLeave) PullEnterLeaveEvents(request *traits.PullEnterLeaveEventsRe
 				leaveCount += *event.LeaveTotal
 			}
 
-			var enterLeaveChanges []*traits.PullEnterLeaveEventsResponse_Change
-			enterLeaveChanges = append(enterLeaveChanges, &traits.PullEnterLeaveEventsResponse_Change{
+			var enterLeaveChanges []*enterleavesensorpb.PullEnterLeaveEventsResponse_Change
+			enterLeaveChanges = append(enterLeaveChanges, &enterleavesensorpb.PullEnterLeaveEventsResponse_Change{
 				Name:       request.Name,
 				ChangeTime: timestamppb.New(time.Now()),
-				EnterLeaveEvent: &traits.EnterLeaveEvent{
+				EnterLeaveEvent: &enterleavesensorpb.EnterLeaveEvent{
 					EnterTotal: &enterCount,
 					LeaveTotal: &leaveCount,
 				},
 			})
 
-			err := server.Send(&traits.PullEnterLeaveEventsResponse{
+			err := server.Send(&enterleavesensorpb.PullEnterLeaveEventsResponse{
 				Changes: enterLeaveChanges,
 			})
 

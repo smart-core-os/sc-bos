@@ -12,6 +12,10 @@
             v-model:show-conversion="showConversion"
             @export-csv="onDownloadClick"/>
       </template>
+      <template #tooltip>
+        <chart-tooltip :data="tooltipData" :edges="edges" :tick-unit="tickUnit"
+                       :format-value="(y) => (y != null ? format(y) + ' ' + (showConversion ? 'gCO2' : 'kW') : '—')"/>
+      </template>
     </line-chart>
     <div v-if="showNoData" class="no-data-overlay">
       <no-data-graphic class="no-data-graphic"/>
@@ -21,12 +25,16 @@
 
 <script setup>
 import LineChart from '@/components/charts/LineChart.vue';
+import ChartTooltip from '@/components/charts/ChartTooltip.vue';
+import {useExternalTooltip} from '@/components/charts/plugins.js';
 import {triggerDownload} from '@/components/download/download.js';
-import {HOUR, MINUTE, useNow} from '@/components/now.js';
+import {useNow} from '@/components/now.js';
 import useTimePeriod from '@/composables/useTimePeriod.js';
 import PowerHistoryGraphOptionsMenu from '@/dynamic/widgets/power-history/PowerHistoryGraphOptionsMenu.vue';
 import useMeterHistory from '@/dynamic/widgets/power-history/useMeterHistory.js';
 import {useCarbonIntensity} from '@/stores/carbonIntensity.js';
+import {HOUR, MINUTE} from '@/util/date.js';
+import {format} from '@/util/number.js';
 import {computed, ref, watch} from 'vue';
 import {useTheme} from 'vuetify';
 import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
@@ -72,6 +80,28 @@ const {periodStart, periodEnd} = useTimePeriod(
 const showConversion = ref(false);
 const carbonIntensity = useCarbonIntensity();
 const gramsOfCO2PerKWh = ref(86);
+
+const {external: tooltipExternal, data: tooltipData} = useExternalTooltip();
+
+const edges = computed(() => {
+  const start = periodStart.value;
+  const end = periodEnd.value;
+  const span = durationOption.value.span;
+  if (!start || !end) return [];
+  const res = [];
+  let curr = start;
+  while (curr <= end) {
+    res.push(new Date(curr));
+    curr += span;
+  }
+  return res;
+});
+
+const tickUnit = computed(() => {
+  const span = durationOption.value.span;
+  if (span < HOUR) return 'minute';
+  return 'hour';
+});
 
 const themeColor = computed(() => {
   return {
@@ -231,8 +261,9 @@ const chartOptions = computed(() => {
     animation: {
       duration: 500
     },
-    hover: {
-      intersect: false
+    interaction: {
+      mode: 'index',
+      intersect: false,
     },
     layout: {
       padding: {
@@ -264,81 +295,48 @@ const chartOptions = computed(() => {
         }
       },
       tooltip: {
-        backgroundColor: '#000',
-        bodyColor: '#fff',
-        borderColor: '#000',
-        callbacks: {
-          // Format the tooltip title to Month Date, 24 Hour:Minute
-          title: (data) => {
-            const date = new Date(data[0].parsed.x);
-            return date.toLocaleString('en-GB', {
-              month: 'short',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: 'numeric',
-              hour12: false
-            });
-          },
-          labelPointStyle: function() {
-            return {
-              pointStyle: 'line',
-              rotation: 0
-            };
-          },
-          labelColor: function(context) {
-            return {
-              borderColor: context.dataset.borderColor,
-              backgroundColor: context.dataset.borderColor,
-              borderWidth: 2,
-              borderDash: [2, 2]
-            };
-          }
-        },
-        borderWidth: 2,
-        cornerRadius: 5,
-        displayColors: true,
-        enabled: true,
-        interaction: {
-          axis: 'xy',
-          mode: 'index'
-        },
-        padding: 12,
-        titleColor: '#fff',
-        usePointStyle: true
+        enabled: false,
+        external: tooltipExternal,
       }
     },
     scales: {
       y: {
         border: {
-          color: 'white'
+          display: false
         },
         grid: {
-          color: 'rgba(100, 100, 100, 0.35)'
+          color(ctx) {
+            if (ctx.tick.value === 0) return 'rgba(255, 255, 255, 0.25)';
+            return 'rgba(255, 255, 255, 0.08)';
+          },
+          drawTicks: false,
         },
         ticks: {
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           display: true,
           font: {
-            size: 12 // Specify the desired font size
+            size: 12
           }
         },
         title: {
           display: true,
-          text: yAxisUnit.value
+          text: yAxisUnit.value,
+          color: 'rgba(255, 255, 255, 0.7)',
         },
         min: 0
       },
       x: {
+        type: 'time',
         border: {
-          color: 'white'
+          display: false
+        },
+        grid: {
+          display: false,
         },
         ticks: {
           align: 'center',
-          // autoSkip: true,
           callback: (value) => {
-            // Format the xAxis label to either Month Date or 24 Hour:Minute
             const date = new Date(value);
-
             if (date.getHours() === 0) {
               return date.toLocaleString('en-GB', {
                 day: 'numeric',
@@ -352,27 +350,23 @@ const chartOptions = computed(() => {
               });
             }
           },
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           display: true,
           font: {
-            size: 11 // Specify the desired font size
+            size: 11
           },
-          includeBounds: true, // Include the first and last ticks
-          maxRotation: 0 // Limit xAxis label rotation to 0 degrees
-        },
-        grid: {
-          color: ''
+          includeBounds: true,
+          maxRotation: 0
         },
         time: {
           displayFormats: {
-            hour: 'HH : mm' // Format the xAxis label to 24 Hour:Minute
+            hour: 'HH : mm'
           },
-          min: '00:00', // Set the min time to 00:00
-          max: '23:59', // Set the max time to 23:59
-          stepSize: 1, // Display a label for every hour
+          min: '00:00',
+          max: '23:59',
+          stepSize: 1,
           unit: 'hour'
         },
-        type: 'time'
       }
     },
     type: 'line'

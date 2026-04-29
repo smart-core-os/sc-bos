@@ -2,17 +2,17 @@ import {timestampToDate} from '@/api/convpb.js';
 import {closeResource, newResourceValue} from '@/api/resource';
 import {occupancyStateToString, pullOccupancy} from '@/api/sc/traits/occupancy';
 import {toQueryObject, watchResource} from '@/util/traits';
-import {Occupancy} from '@smart-core-os/sc-api-grpc-web/traits/occupancy_sensor_pb';
+import {Occupancy} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/occupancysensor/v1/occupancy_sensor_pb';
 import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
 
 /**
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/occupancy_sensor_pb').PullOccupancyRequest
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/occupancysensor/v1/occupancy_sensor_pb').PullOccupancyRequest
  * } PullOccupancyRequest
  * @typedef {
- *   import('@smart-core-os/sc-api-grpc-web/traits/occupancy_sensor_pb').PullOccupancyResponse
+ *   import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/occupancysensor/v1/occupancy_sensor_pb').PullOccupancyResponse
  * } PullOccupancyResponse
- * @typedef {import('@smart-core-os/sc-api-grpc-web/traits/occupancy_sensor_pb').Occupancy} Occupancy
+ * @typedef {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/occupancysensor/v1/occupancy_sensor_pb').Occupancy} Occupancy
  * @typedef {import('vue').ComputedRef} ComputedRef
  * @typedef {import('vue').Ref} Ref
  * @typedef {import('vue').ToRefs} ToRefs

@@ -23,7 +23,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	genlogpb "github.com/smart-core-os/sc-bos/pkg/gentrait/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/system/log/config"
@@ -32,7 +31,7 @@ import (
 func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer := s.announcer.Replace(ctx)
 
-	model := genlogpb.NewModel(cfg.BufCapOrDefault())
+	model := logpb.NewModel(cfg.BufCapOrDefault())
 
 	// Install log capture: hook every zap entry into the model's ring buffer.
 	if s.services.AddLogCore != nil {
@@ -56,7 +55,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	// Create the gRPC server backed by this model.
-	srv := genlogpb.NewModelServer(model)
+	srv := logpb.NewModelServer(model)
 
 	// Wire download URL generation if an HTTP mux is available.
 	if s.services.HTTPMux != nil && cfg.LogFilePath != "" {
@@ -111,7 +110,10 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	// Announce the trait.
-	announcer.Announce(s.name, node.HasTrait(genlogpb.TraitName, node.WithClients(logpb.WrapApi(srv))))
+	announcer.Announce(s.name,
+		node.HasServer(logpb.RegisterLogApiServer, logpb.LogApiServer(srv)),
+		node.HasTrait(logpb.TraitName),
+	)
 
 	return nil
 }
@@ -123,7 +125,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 // captureCore is a zapcore.Core that captures every log entry into the model.
 // withFields accumulates fields added via With() so they appear on every Write.
 type captureCore struct {
-	model      *genlogpb.Model
+	model      *logpb.Model
 	withFields []zapcore.Field
 }
 
@@ -204,7 +206,7 @@ func logpbLevelToZap(l logpb.Level) zapcore.Level {
 	}
 }
 
-func setModelLevel(m *genlogpb.Model, l zapcore.Level) error {
+func setModelLevel(m *logpb.Model, l zapcore.Level) error {
 	_, err := m.UpdateLogLevel(&logpb.LogLevel{Level: zapLevelToLogpb(l)})
 	return err
 }
@@ -213,7 +215,7 @@ func setModelLevel(m *genlogpb.Model, l zapcore.Level) error {
 // Log file metadata
 // --------------------------------------------------------------------------
 
-func refreshMetadata(model *genlogpb.Model, glob, logDir string, logger *zap.Logger) {
+func refreshMetadata(model *logpb.Model, glob, logDir string, logger *zap.Logger) {
 	var totalSize int64
 	var fileCount int
 

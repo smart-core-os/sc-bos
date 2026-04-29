@@ -6,8 +6,8 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorp
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "traits/air_quality_sensor.proto";
-import "types/time/period.proto";
+import "smartcore/bos/airqualitysensor/v1/air_quality_sensor.proto";
+import "smartcore/bos/types/time/v1/period.proto";
 
 // AirQualitySensorHistory provides access to historical records for smartcore.traits.AirQualityApi service resources.
 service AirQualitySensorHistory {
@@ -15,13 +15,13 @@ service AirQualitySensorHistory {
 }
 
 message AirQualityRecord {
-  smartcore.traits.AirQuality air_quality = 1;
+  AirQuality air_quality = 1;
   google.protobuf.Timestamp record_time = 2;
 }
 
 message ListAirQualityHistoryRequest {
   string name = 1;
-  smartcore.types.time.Period period = 2;
+  smartcore.bos.types.time.v1.Period period = 2;
 
   // Fields to fetch relative to the AirQualityRecord type
   google.protobuf.FieldMask read_mask = 3;

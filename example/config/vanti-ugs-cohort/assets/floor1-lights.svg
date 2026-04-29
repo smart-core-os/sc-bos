@@ -1,0 +1,132 @@
+<svg width="295" height="619" viewBox="0 0 295 619" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="floor1-lights">
+<g id="LTF-L01-04">
+<g id="Lights">
+<path d="M120 397.5L106 397.5C105.172 397.5 104.5 396.828 104.5 396L104.5 389C104.5 384.306 108.306 380.5 113 380.5C117.694 380.5 121.5 384.306 121.5 389L121.5 396C121.5 396.828 120.828 397.5 120 397.5Z" fill="#2A3138"/>
+<path d="M120 397.5L106 397.5C105.172 397.5 104.5 396.828 104.5 396L104.5 389C104.5 384.306 108.306 380.5 113 380.5C117.694 380.5 121.5 384.306 121.5 389L121.5 396C121.5 396.828 120.828 397.5 120 397.5Z" stroke="#FBBF24"/>
+<ellipse id="light-widget" cx="113" cy="389" rx="6" ry="6" transform="rotate(90 113 389)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_2">
+<path d="M40 312.5L54 312.5C54.8284 312.5 55.5 313.172 55.5 314L55.5 321C55.5 325.694 51.6944 329.5 47 329.5C42.3056 329.5 38.5 325.694 38.5 321L38.5 314C38.5 313.172 39.1716 312.5 40 312.5Z" fill="#2A3138"/>
+<path d="M40 312.5L54 312.5C54.8284 312.5 55.5 313.172 55.5 314L55.5 321C55.5 325.694 51.6944 329.5 47 329.5C42.3056 329.5 38.5 325.694 38.5 321L38.5 314C38.5 313.172 39.1716 312.5 40 312.5Z" stroke="#FBBF24"/>
+<ellipse id="light-widget_2" cx="47" cy="321" rx="6" ry="6" transform="rotate(-90 47 321)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_3">
+<path d="M55 397.5L41 397.5C40.1716 397.5 39.5 396.828 39.5 396L39.5 389C39.5 384.306 43.3056 380.5 48 380.5C52.6944 380.5 56.5 384.306 56.5 389L56.5 396C56.5 396.828 55.8284 397.5 55 397.5Z" fill="#2A3138"/>
+<path d="M55 397.5L41 397.5C40.1716 397.5 39.5 396.828 39.5 396L39.5 389C39.5 384.306 43.3056 380.5 48 380.5C52.6944 380.5 56.5 384.306 56.5 389L56.5 396C56.5 396.828 55.8284 397.5 55 397.5Z" stroke="#FBBF24"/>
+<ellipse id="light-widget_3" cx="48" cy="389" rx="6" ry="6" transform="rotate(90 48 389)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_4">
+<path d="M105 312.5L119 312.5C119.828 312.5 120.5 313.172 120.5 314L120.5 321C120.5 325.694 116.694 329.5 112 329.5C107.306 329.5 103.5 325.694 103.5 321L103.5 314C103.5 313.172 104.172 312.5 105 312.5Z" fill="#2A3138"/>
+<path d="M105 312.5L119 312.5C119.828 312.5 120.5 313.172 120.5 314L120.5 321C120.5 325.694 116.694 329.5 112 329.5C107.306 329.5 103.5 325.694 103.5 321L103.5 314C103.5 313.172 104.172 312.5 105 312.5Z" stroke="#FBBF24"/>
+<ellipse id="light-widget_4" cx="112" cy="321" rx="6" ry="6" transform="rotate(-90 112 321)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+</g>
+<g id="LTF-L01-03">
+<g id="Lights_5">
+<rect x="186.5" y="171.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="186.5" y="171.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_5" cx="195" cy="180" rx="6" ry="6" transform="rotate(-90 195 180)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_6">
+<rect x="186.5" y="283.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="186.5" y="283.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_6" cx="195" cy="292" rx="6" ry="6" transform="rotate(-90 195 292)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_7">
+<rect x="186.5" y="395.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="186.5" y="395.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_7" cx="195" cy="404" rx="6" ry="6" transform="rotate(-90 195 404)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_8">
+<rect x="242.5" y="171.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="242.5" y="171.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_8" cx="251" cy="180" rx="6" ry="6" transform="rotate(-90 251 180)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_9">
+<rect x="242.5" y="283.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="242.5" y="283.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_9" cx="251" cy="292" rx="6" ry="6" transform="rotate(-90 251 292)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_10">
+<rect x="242.5" y="395.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="242.5" y="395.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_10" cx="251" cy="404" rx="6" ry="6" transform="rotate(-90 251 404)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_11">
+<rect x="186.5" y="227.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="186.5" y="227.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_11" cx="195" cy="236" rx="6" ry="6" transform="rotate(-90 195 236)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_12">
+<rect x="186.5" y="339.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="186.5" y="339.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_12" cx="195" cy="348" rx="6" ry="6" transform="rotate(-90 195 348)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_13">
+<rect x="186.5" y="451.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="186.5" y="451.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_13" cx="195" cy="460" rx="6" ry="6" transform="rotate(-90 195 460)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_14">
+<rect x="242.5" y="227.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="242.5" y="227.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_14" cx="251" cy="236" rx="6" ry="6" transform="rotate(-90 251 236)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_15">
+<rect x="242.5" y="339.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="242.5" y="339.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_15" cx="251" cy="348" rx="6" ry="6" transform="rotate(-90 251 348)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_16">
+<rect x="242.5" y="451.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="242.5" y="451.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_16" cx="251" cy="460" rx="6" ry="6" transform="rotate(-90 251 460)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+</g>
+<g id="LTF-L01-02">
+<g id="Lights_17">
+<path id="Line 3" d="M48 179C48 177.895 47.1046 177 46 177C44.8954 177 44 177.895 44 179L48 179ZM48 263L48 179L44 179L44 263L48 263Z" fill="#FBBF24"/>
+<circle id="Ellipse 6" cx="46" cy="263" r="7.5" fill="#2A3138" stroke="#FBBF24"/>
+<ellipse id="light-widget_17" cx="46" cy="263" rx="6" ry="6" transform="rotate(-90 46 263)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_18">
+<path id="Line 3_2" d="M48 127C48 128.105 47.1046 129 46 129C44.8954 129 44 128.105 44 127L48 127ZM48 43L48 127L44 127L44 43L48 43Z" fill="#FBBF24"/>
+<circle id="Ellipse 6_2" cx="8" cy="8" r="7.5" transform="matrix(1 0 0 -1 38 51)" fill="#2A3138" stroke="#FBBF24"/>
+<ellipse id="light-widget_18" cx="6" cy="6" rx="6" ry="6" transform="matrix(-4.37114e-08 1 1 4.37114e-08 40 37)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_19">
+<path id="Line 3_3" d="M116 179C116 177.895 115.105 177 114 177C112.895 177 112 177.895 112 179L116 179ZM116 263L116 179L112 179L112 263L116 263Z" fill="#FBBF24"/>
+<circle id="Ellipse 6_3" cx="114" cy="263" r="7.5" fill="#2A3138" stroke="#FBBF24"/>
+<ellipse id="light-widget_19" cx="114" cy="263" rx="6" ry="6" transform="rotate(-90 114 263)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_20">
+<path id="Line 3_4" d="M116 127C116 128.105 115.105 129 114 129C112.895 129 112 128.105 112 127L116 127ZM116 43L116 127L112 127L112 43L116 43Z" fill="#FBBF24"/>
+<circle id="Ellipse 6_4" cx="8" cy="8" r="7.5" transform="matrix(1 0 0 -1 106 51)" fill="#2A3138" stroke="#FBBF24"/>
+<ellipse id="light-widget_20" cx="6" cy="6" rx="6" ry="6" transform="matrix(-4.37114e-08 1 1 4.37114e-08 108 37)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+</g>
+<g id="LTF-L01-01">
+<g id="Lights_21">
+<rect x="39.5" y="502.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="39.5" y="502.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_21" cx="48" cy="511" rx="6" ry="6" transform="rotate(-90 48 511)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_22">
+<rect x="104.5" y="502.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="104.5" y="502.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_22" cx="113" cy="511" rx="6" ry="6" transform="rotate(-90 113 511)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_23">
+<rect x="39.5" y="558.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="39.5" y="558.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_23" cx="48" cy="567" rx="6" ry="6" transform="rotate(-90 48 567)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+<g id="Lights_24">
+<rect x="104.5" y="558.5" width="17" height="17" rx="1.5" fill="#2A3138"/>
+<rect x="104.5" y="558.5" width="17" height="17" rx="1.5" stroke="#FBBF24"/>
+<ellipse id="light-widget_24" cx="113" cy="567" rx="6" ry="6" transform="rotate(-90 113 567)" fill="#4A4F55" stroke="#4A4F55" stroke-width="0.559238" stroke-linejoin="round"/>
+</g>
+</g>
+</g>
+</svg>

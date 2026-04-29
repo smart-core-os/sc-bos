@@ -422,10 +422,7 @@ func (es *Server) AutoRenew(ctx context.Context) error {
 				} else if renewAttempt%20 == 0 {
 					es.logger.Warn("Auto-renewal of enrolled certificate is still failing", zap.Error(err), zap.Int("attempts", renewAttempt))
 				}
-				newDelay := time.Duration(float64(100*time.Millisecond) * math.Pow(1.1, float64(renewAttempt)))
-				if newDelay > 5*time.Minute {
-					newDelay = 5 * time.Minute
-				}
+				newDelay := min(time.Duration(float64(100*time.Millisecond)*math.Pow(1.1, float64(renewAttempt))), 5*time.Minute)
 				renewAfter.Reset(newDelay)
 			}
 		}

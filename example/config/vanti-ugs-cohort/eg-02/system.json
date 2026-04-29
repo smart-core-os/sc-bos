@@ -19,7 +19,8 @@
           "clientId": "sc-opsui"
         }
       },
-      "system": {"cohortAccounts": true}
+      "system": {"cohortAccounts": true},
+      "tokenSigningKeyFile": "./example/config/vanti-ugs-cohort/authn_token_signing_key"
     },
     "resourceUse": {},
     "hub": {"storage": {"type": "proxy"}},

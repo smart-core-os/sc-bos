@@ -7,7 +7,7 @@
 package soundsensorpb
 
 import (
-	time "github.com/smart-core-os/sc-api/go/types/time"
+	timepb "github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -79,7 +79,7 @@ func (x *SoundLevelRecord) GetRecordTime() *timestamppb.Timestamp {
 type ListSoundLevelHistoryRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Name   string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Period *time.Period           `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
+	Period *timepb.Period         `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
 	// Fields to fetch relative to the SoundLevelRecord type
 	ReadMask *fieldmaskpb.FieldMask `protobuf:"bytes,3,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
 	// The maximum number of records to return.
@@ -136,7 +136,7 @@ func (x *ListSoundLevelHistoryRequest) GetName() string {
 	return ""
 }
 
-func (x *ListSoundLevelHistoryRequest) GetPeriod() *time.Period {
+func (x *ListSoundLevelHistoryRequest) GetPeriod() *timepb.Period {
 	if x != nil {
 		return x.Period
 	}
@@ -239,15 +239,15 @@ var File_smartcore_bos_soundsensor_v1_sound_sensor_history_proto protoreflect.Fi
 
 const file_smartcore_bos_soundsensor_v1_sound_sensor_history_proto_rawDesc = "" +
 	"\n" +
-	"7smartcore/bos/soundsensor/v1/sound_sensor_history.proto\x12\x1csmartcore.bos.soundsensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a/smartcore/bos/soundsensor/v1/sound_sensor.proto\x1a\x17types/time/period.proto\"\x9a\x01\n" +
+	"7smartcore/bos/soundsensor/v1/sound_sensor_history.proto\x12\x1csmartcore.bos.soundsensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a/smartcore/bos/soundsensor/v1/sound_sensor.proto\x1a(smartcore/bos/types/time/v1/period.proto\"\x9a\x01\n" +
 	"\x10SoundLevelRecord\x12I\n" +
 	"\vsound_level\x18\x01 \x01(\v2(.smartcore.bos.soundsensor.v1.SoundLevelR\n" +
 	"soundLevel\x12;\n" +
 	"\vrecord_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"recordTime\"\xf8\x01\n" +
+	"recordTime\"\xff\x01\n" +
 	"\x1cListSoundLevelHistoryRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x124\n" +
-	"\x06period\x18\x02 \x01(\v2\x1c.smartcore.types.time.PeriodR\x06period\x127\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
+	"\x06period\x18\x02 \x01(\v2#.smartcore.bos.types.time.v1.PeriodR\x06period\x127\n" +
 	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
@@ -280,13 +280,13 @@ var file_smartcore_bos_soundsensor_v1_sound_sensor_history_proto_goTypes = []any
 	(*ListSoundLevelHistoryResponse)(nil), // 2: smartcore.bos.soundsensor.v1.ListSoundLevelHistoryResponse
 	(*SoundLevel)(nil),                    // 3: smartcore.bos.soundsensor.v1.SoundLevel
 	(*timestamppb.Timestamp)(nil),         // 4: google.protobuf.Timestamp
-	(*time.Period)(nil),                   // 5: smartcore.types.time.Period
+	(*timepb.Period)(nil),                 // 5: smartcore.bos.types.time.v1.Period
 	(*fieldmaskpb.FieldMask)(nil),         // 6: google.protobuf.FieldMask
 }
 var file_smartcore_bos_soundsensor_v1_sound_sensor_history_proto_depIdxs = []int32{
 	3, // 0: smartcore.bos.soundsensor.v1.SoundLevelRecord.sound_level:type_name -> smartcore.bos.soundsensor.v1.SoundLevel
 	4, // 1: smartcore.bos.soundsensor.v1.SoundLevelRecord.record_time:type_name -> google.protobuf.Timestamp
-	5, // 2: smartcore.bos.soundsensor.v1.ListSoundLevelHistoryRequest.period:type_name -> smartcore.types.time.Period
+	5, // 2: smartcore.bos.soundsensor.v1.ListSoundLevelHistoryRequest.period:type_name -> smartcore.bos.types.time.v1.Period
 	6, // 3: smartcore.bos.soundsensor.v1.ListSoundLevelHistoryRequest.read_mask:type_name -> google.protobuf.FieldMask
 	0, // 4: smartcore.bos.soundsensor.v1.ListSoundLevelHistoryResponse.sound_level_records:type_name -> smartcore.bos.soundsensor.v1.SoundLevelRecord
 	1, // 5: smartcore.bos.soundsensor.v1.SoundSensorHistory.ListSoundLevelHistory:input_type -> smartcore.bos.soundsensor.v1.ListSoundLevelHistoryRequest

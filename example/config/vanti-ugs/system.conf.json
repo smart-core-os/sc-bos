@@ -40,5 +40,10 @@
   },
   "experimental": {
     "accounts": true
+  },
+  "cloud": {
+    "pollInterval": "10s",
+    "preserveDownloads": true,
+    "registerUrl": "http://localhost:8080/v1/device/register"
   }
 }

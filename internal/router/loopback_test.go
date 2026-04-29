@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/dynamicpb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 func TestCopyRecver_RecvMsg(t *testing.T) {
@@ -24,10 +24,10 @@ func TestCopyRecver_RecvMsg(t *testing.T) {
 		return m
 	}
 	msg := func(s string, more ...string) proto.Message {
-		return &traits.Metadata{Name: s, More: moreMap(more...)}
+		return &metadatapb.Metadata{Name: s, More: moreMap(more...)}
 	}
 	msg2 := func(s string, more ...string) proto.Message {
-		return &traits.TraitMetadata{Name: s, More: moreMap(more...)}
+		return &metadatapb.TraitMetadata{Name: s, More: moreMap(more...)}
 	}
 	// simulate descriptors from the reflection package
 	mkDynamic := func(m proto.Message) proto.Message {

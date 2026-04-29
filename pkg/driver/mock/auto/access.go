@@ -5,17 +5,16 @@ import (
 	"slices"
 	"time"
 
-	"golang.org/x/exp/rand"
+	"math/rand/v2"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
-	gen_accesspb "github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/maps"
 )
 
 func Access(model *accesspb.Model) service.Lifecycle {
-	grants := maps.Values(gen_accesspb.AccessAttempt_Grant_value)
+	grants := maps.Values(accesspb.AccessAttempt_Grant_value)
 	slices.Sort(grants)
 	grants = grants[1:]
 	reasons := []string{
@@ -35,10 +34,10 @@ func Access(model *accesspb.Model) service.Lifecycle {
 		go func() {
 			timer := time.NewTimer((30 * time.Second) + time.Duration(rand.Float32())*time.Minute)
 			for {
-				state := &gen_accesspb.AccessAttempt{
-					Grant:  gen_accesspb.AccessAttempt_Grant(grants[rand.Intn(len(grants))]),
-					Reason: reasons[rand.Intn(len(reasons))],
-					Actor:  actors[rand.Intn(len(actors))],
+				state := &accesspb.AccessAttempt{
+					Grant:  accesspb.AccessAttempt_Grant(grants[rand.IntN(len(grants))]),
+					Reason: reasons[rand.IntN(len(reasons))],
+					Actor:  actors[rand.IntN(len(actors))],
 				}
 				_, _ = model.UpdateLastAccessAttempt(state)
 

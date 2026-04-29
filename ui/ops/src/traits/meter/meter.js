@@ -220,7 +220,13 @@ export function useMeterReadingsAt(name, ts) {
    */
   /** @type {Record<number, Watcher>} */
   const trackers = {}; // keyed by Date.getTime()
-  onScopeDispose(() => Object.values(trackers).forEach(({stop}) => stop()));
+  // Intentionally no onScopeDispose(forEach stop) here: a batch cleanup that
+  // stops many sibling scopes at once does swap-removes on the parent's scopes[]
+  // array, which corrupts the parent's own stop() iteration during unmount.
+  // Instead we rely on Vue's normal parent-scope teardown to stop each tracker
+  // child cleanly via fromParent=true (no swap-remove). We only explicitly stop
+  // a tracker below when its edge is no longer needed (ts changed), which runs
+  // during normal operation (not mid-iteration of the parent's stop).
 
   return computed(() => {
     const _ts = toValue(ts);

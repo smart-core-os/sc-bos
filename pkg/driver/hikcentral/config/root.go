@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -18,8 +18,8 @@ type Root struct {
 	Settings *Settings `json:"settings,omitempty"`
 
 	// Metadata applied to all cameras
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
-	Cameras  []*Camera        `json:"cameras,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
+	Cameras  []*Camera            `json:"cameras,omitempty"`
 }
 
 type API struct {
@@ -42,8 +42,8 @@ type Camera struct {
 	Topic     string `json:"topic,omitempty"`
 	IndexCode string `json:"indexCode,omitempty"`
 	// Metadata applied to this camera
-	Metadata  *traits.Metadata `json:"metadata,omitempty"`
-	IpAddress string           `json:"ipAddress,omitempty"`
+	Metadata  *metadatapb.Metadata `json:"metadata,omitempty"`
+	IpAddress string               `json:"ipAddress,omitempty"`
 }
 
 func ReadBytes(raw []byte) (dst Root, err error) {

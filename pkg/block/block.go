@@ -279,9 +279,8 @@ func splitMap(m map[string]any, tree blockTree) (map[string]any, []blockValue) {
 				p.Path = append([]string{k}, p.Path...)
 				pages = append(pages, p)
 			}
-		} else {
-			// not a map, don't need to delete this field or any of its children
 		}
+		// if v is not a map, no fields need to be deleted from it
 	}
 	markIgnored(m, tree)
 	return m, pages

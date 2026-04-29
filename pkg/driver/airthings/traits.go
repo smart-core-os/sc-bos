@@ -7,17 +7,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	typespb "github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/api"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airtemperaturepb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/brightnesssensorpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 // announceDevice sets up and announces the traits supported by the device.
@@ -27,23 +26,31 @@ func (d *Driver) announceDevice(ctx context.Context, a node.Announcer, dev confi
 		switch trait.Name(tn) {
 		case trait.AirQualitySensor:
 			model := airqualitysensorpb.NewModel()
-			client := airqualitysensorpb.WrapApi(airqualitysensorpb.NewModelServer(model))
-			a.Announce(dev.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(client)))
+			a.Announce(dev.Name,
+				node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(model))),
+				node.HasTrait(trait.AirQualitySensor),
+			)
 			go d.pullSampleAirQuality(ctx, dev, loc, model)
 		case trait.AirTemperature:
 			model := airtemperaturepb.NewModel()
-			client := airtemperaturepb.WrapApi(roAirTemperatureServer{airtemperaturepb.NewModelServer(model)})
-			a.Announce(dev.Name, node.HasTrait(trait.AirTemperature, node.WithClients(client)))
+			a.Announce(dev.Name,
+				node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(roAirTemperatureServer{airtemperaturepb.NewModelServer(model)})),
+				node.HasTrait(trait.AirTemperature),
+			)
 			go d.pullSampleAirTemperature(ctx, dev, loc, model)
 		case trait.BrightnessSensor:
 			model := brightnesssensorpb.NewModel()
-			client := brightnesssensorpb.WrapApi(brightnesssensorpb.NewModelServer(model))
-			a.Announce(dev.Name, node.HasTrait(trait.BrightnessSensor, node.WithClients(client)))
+			a.Announce(dev.Name,
+				node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, brightnesssensorpb.BrightnessSensorApiServer(brightnesssensorpb.NewModelServer(model))),
+				node.HasTrait(trait.BrightnessSensor),
+			)
 			go d.pullSampleBrightness(ctx, dev, loc, model)
 		case trait.EnergyStorage:
 			model := energystoragepb.NewModel()
-			client := energystoragepb.WrapApi(roEnergyStorageServer{energystoragepb.NewModelServer(model)})
-			a.Announce(dev.Name, node.HasTrait(trait.EnergyStorage, node.WithClients(client)))
+			a.Announce(dev.Name,
+				node.HasServer(energystoragepb.RegisterEnergyStorageApiServer, energystoragepb.EnergyStorageApiServer(roEnergyStorageServer{energystoragepb.NewModelServer(model)})),
+				node.HasTrait(trait.EnergyStorage),
+			)
 			go d.pullSampleEnergyLevel(ctx, dev, loc, model)
 		default:
 			return fmt.Errorf("unsupported trait %q", tn)
@@ -65,8 +72,8 @@ func (d *Driver) pullSampleAirQuality(ctx context.Context, dev config.Device, lo
 	}
 }
 
-func sampleToAirQuality(in api.DeviceSampleResponseEnriched) *traits.AirQuality {
-	dst := &traits.AirQuality{}
+func sampleToAirQuality(in api.DeviceSampleResponseEnriched) *airqualitysensorpb.AirQuality {
+	dst := &airqualitysensorpb.AirQuality{}
 	data := in.GetData()
 	if v, ok := data.GetAirExchangeRateOk(); ok {
 		dst.AirChangePerHour = float64PtoFloat32P(v)
@@ -123,8 +130,8 @@ func (d *Driver) pullSampleAirTemperature(ctx context.Context, dev config.Device
 	}
 }
 
-func sampleToAirTemperature(in api.DeviceSampleResponseEnriched) *traits.AirTemperature {
-	dst := &traits.AirTemperature{}
+func sampleToAirTemperature(in api.DeviceSampleResponseEnriched) *airtemperaturepb.AirTemperature {
+	dst := &airtemperaturepb.AirTemperature{}
 	data := in.GetData()
 	if v, ok := data.GetTempOk(); ok {
 		dst.AmbientTemperature = &typespb.Temperature{ValueCelsius: *v.Float64}
@@ -156,11 +163,11 @@ func (d *Driver) pullSampleEnergyLevel(ctx context.Context, dev config.Device, l
 	}
 }
 
-func sampleToEnergyLevel(in api.DeviceSampleResponseEnriched) *traits.EnergyLevel {
-	dst := &traits.EnergyLevel{}
+func sampleToEnergyLevel(in api.DeviceSampleResponseEnriched) *energystoragepb.EnergyLevel {
+	dst := &energystoragepb.EnergyLevel{}
 	data := in.GetData()
 	if v, ok := data.GetBatteryOk(); ok {
-		dst.Quantity = &traits.EnergyLevel_Quantity{
+		dst.Quantity = &energystoragepb.EnergyLevel_Quantity{
 			Percentage: *v,
 		}
 	}
@@ -180,8 +187,8 @@ func (d *Driver) pullSampleBrightness(ctx context.Context, dev config.Device, lo
 	}
 }
 
-func sampleToAmbientBrightness(in api.DeviceSampleResponseEnriched) *traits.AmbientBrightness {
-	dst := &traits.AmbientBrightness{}
+func sampleToAmbientBrightness(in api.DeviceSampleResponseEnriched) *brightnesssensorpb.AmbientBrightness {
+	dst := &brightnesssensorpb.AmbientBrightness{}
 	data := in.GetData()
 	if v, ok := data.GetLightOk(); ok {
 		if v.Float32 != nil {
@@ -200,17 +207,17 @@ func float64PtoFloat32P(in *float64) *float32 {
 }
 
 type roAirTemperatureServer struct {
-	traits.AirTemperatureApiServer
+	airtemperaturepb.AirTemperatureApiServer
 }
 
-func (s roAirTemperatureServer) UpdateAirTemperature(context.Context, *traits.UpdateAirTemperatureRequest) (*traits.AirTemperature, error) {
+func (s roAirTemperatureServer) UpdateAirTemperature(context.Context, *airtemperaturepb.UpdateAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
 	return nil, status.Errorf(codes.Unimplemented, "read-only")
 }
 
 type roEnergyStorageServer struct {
-	traits.EnergyStorageApiServer
+	energystoragepb.EnergyStorageApiServer
 }
 
-func (s roEnergyStorageServer) Charge(context.Context, *traits.ChargeRequest) (*traits.ChargeResponse, error) {
+func (s roEnergyStorageServer) Charge(context.Context, *energystoragepb.ChargeRequest) (*energystoragepb.ChargeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "read-only")
 }

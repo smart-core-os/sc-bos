@@ -29,7 +29,8 @@
 </template>
 <script setup>
 import {timestampToDate} from '@/api/convpb';
-import {SECOND, useNow} from '@/components/now';
+import {useNow} from '@/components/now';
+import {SECOND} from '@/util/date.js';
 import {computed, ref, watch} from 'vue';
 
 const props = defineProps({

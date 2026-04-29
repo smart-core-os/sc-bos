@@ -6,18 +6,18 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 func (a *automation) collectElectricDemandChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
-	client := traits.NewElectricApiClient(a.clients.ClientConn())
+	client := electricpb.NewElectricApiClient(a.clients.ClientConn())
 
-	last := newDeduper[*traits.ElectricDemand](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
+	last := newDeduper[*electricpb.ElectricDemand](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
-		stream, err := client.PullDemand(ctx, &traits.PullDemandRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
+		stream, err := client.PullDemand(ctx, &electricpb.PullDemandRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}
@@ -45,7 +45,7 @@ func (a *automation) collectElectricDemandChanges(ctx context.Context, source co
 		}
 	}
 	pollFn := func(ctx context.Context, changes chan<- []byte) error {
-		resp, err := client.GetDemand(ctx, &traits.GetDemandRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
+		resp, err := client.GetDemand(ctx, &electricpb.GetDemandRequest{Name: source.Name, ReadMask: source.ReadMask.PB()})
 		if err != nil {
 			return err
 		}

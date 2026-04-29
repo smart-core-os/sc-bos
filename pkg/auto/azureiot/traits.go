@@ -12,12 +12,16 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
 )
 
 // pullDevice calls pullTraits for each SCDeviceConfig.
@@ -29,7 +33,6 @@ func (a *Auto) pullDevice(ctx context.Context, dst chan<- proto.Message, device 
 		})
 	}
 	for _, childCfg := range device.Children {
-		childCfg := childCfg
 		grp.Go(func() error {
 			return a.pullTraits(ctx, dst, childCfg)
 		})
@@ -51,7 +54,6 @@ func (a *Auto) pullTraits(ctx context.Context, dst chan<- proto.Message, device 
 
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, tn := range device.Traits {
-		tn := tn
 		switch tn {
 		case trait.AirQualitySensor:
 			grp.Go(func() error {
@@ -73,7 +75,7 @@ func (a *Auto) pullTraits(ctx context.Context, dst chan<- proto.Message, device 
 			grp.Go(func() error {
 				return handleErr(tn, a.pullBrightness(ctx, dst, device))
 			})
-		case meter.TraitName:
+		case meterpb.TraitName:
 			grp.Go(func() error {
 				return handleErr(tn, a.pullMeterReadings(ctx, dst, device))
 			})
@@ -95,31 +97,31 @@ func (a *Auto) pullTraits(ctx context.Context, dst chan<- proto.Message, device 
 // pullAirQuality publishes device's air quality changes (as *traits.PullAirQualityResponse) to dst,
 // returning when ctx is done or a non-recoverable error occurs.
 func (a *Auto) pullAirQuality(ctx context.Context, dst chan<- proto.Message, device SCDeviceConfig) error {
-	client, err := grpcClient(a, traits.NewAirQualitySensorApiClient, device)
+	client, err := grpcClient(a, airqualitysensorpb.NewAirQualitySensorApiClient, device)
 	if err != nil {
 		return err
 	}
 
-	pullFunc := func(ctx context.Context, stream chan<- *traits.PullAirQualityResponse_Change) error {
-		ss, err := client.PullAirQuality(ctx, &traits.PullAirQualityRequest{Name: device.Name})
+	pullFunc := func(ctx context.Context, stream chan<- *airqualitysensorpb.PullAirQualityResponse_Change) error {
+		ss, err := client.PullAirQuality(ctx, &airqualitysensorpb.PullAirQualityRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return pullStreamChanges[*traits.PullAirQualityResponse](ctx, stream, ss)
+		return pullStreamChanges[*airqualitysensorpb.PullAirQualityResponse](ctx, stream, ss)
 	}
-	pollFunc := func(ctx context.Context, stream chan<- *traits.PullAirQualityResponse_Change) error {
-		msg, err := client.GetAirQuality(ctx, &traits.GetAirQualityRequest{Name: device.Name})
+	pollFunc := func(ctx context.Context, stream chan<- *airqualitysensorpb.PullAirQualityResponse_Change) error {
+		msg, err := client.GetAirQuality(ctx, &airqualitysensorpb.GetAirQualityRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return chans.SendContext(ctx, stream, &traits.PullAirQualityResponse_Change{
+		return chans.SendContext(ctx, stream, &airqualitysensorpb.PullAirQualityResponse_Change{
 			Name:       device.Name,
 			ChangeTime: timestamppb.Now(),
 			AirQuality: msg,
 		})
 	}
-	reduce := func(cs []*traits.PullAirQualityResponse_Change) proto.Message {
-		return &traits.PullAirQualityResponse{Changes: cs}
+	reduce := func(cs []*airqualitysensorpb.PullAirQualityResponse_Change) proto.Message {
+		return &airqualitysensorpb.PullAirQualityResponse{Changes: cs}
 	}
 	delay := device.PollInterval.Or(DefaultPollInterval)
 
@@ -129,31 +131,31 @@ func (a *Auto) pullAirQuality(ctx context.Context, dst chan<- proto.Message, dev
 // pullAirTemperature publishes device's air temperature changes (as *traits.PullAirTemperatureResponse) to dst,
 // returning when ctx is done or a non-recoverable error occurs.
 func (a *Auto) pullAirTemperature(ctx context.Context, dst chan<- proto.Message, device SCDeviceConfig) error {
-	client, err := grpcClient(a, traits.NewAirTemperatureApiClient, device)
+	client, err := grpcClient(a, airtemperaturepb.NewAirTemperatureApiClient, device)
 	if err != nil {
 		return err
 	}
 
-	pullFunc := func(ctx context.Context, stream chan<- *traits.PullAirTemperatureResponse_Change) error {
-		ss, err := client.PullAirTemperature(ctx, &traits.PullAirTemperatureRequest{Name: device.Name})
+	pullFunc := func(ctx context.Context, stream chan<- *airtemperaturepb.PullAirTemperatureResponse_Change) error {
+		ss, err := client.PullAirTemperature(ctx, &airtemperaturepb.PullAirTemperatureRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return pullStreamChanges[*traits.PullAirTemperatureResponse](ctx, stream, ss)
+		return pullStreamChanges[*airtemperaturepb.PullAirTemperatureResponse](ctx, stream, ss)
 	}
-	pollFunc := func(ctx context.Context, stream chan<- *traits.PullAirTemperatureResponse_Change) error {
-		msg, err := client.GetAirTemperature(ctx, &traits.GetAirTemperatureRequest{Name: device.Name})
+	pollFunc := func(ctx context.Context, stream chan<- *airtemperaturepb.PullAirTemperatureResponse_Change) error {
+		msg, err := client.GetAirTemperature(ctx, &airtemperaturepb.GetAirTemperatureRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return chans.SendContext(ctx, stream, &traits.PullAirTemperatureResponse_Change{
+		return chans.SendContext(ctx, stream, &airtemperaturepb.PullAirTemperatureResponse_Change{
 			Name:           device.Name,
 			ChangeTime:     timestamppb.Now(),
 			AirTemperature: msg,
 		})
 	}
-	reduce := func(cs []*traits.PullAirTemperatureResponse_Change) proto.Message {
-		return &traits.PullAirTemperatureResponse{Changes: cs}
+	reduce := func(cs []*airtemperaturepb.PullAirTemperatureResponse_Change) proto.Message {
+		return &airtemperaturepb.PullAirTemperatureResponse{Changes: cs}
 	}
 	delay := device.PollInterval.Or(DefaultPollInterval)
 
@@ -163,31 +165,31 @@ func (a *Auto) pullAirTemperature(ctx context.Context, dst chan<- proto.Message,
 // pullAmbientBrightness publishes device's ambient brightness changes (as *traits.PullAmbientBrightnessResponse) to dst,
 // returning when ctx is done or a non-recoverable error occurs.
 func (a *Auto) pullAmbientBrightness(ctx context.Context, dst chan<- proto.Message, device SCDeviceConfig) error {
-	client, err := grpcClient(a, traits.NewBrightnessSensorApiClient, device)
+	client, err := grpcClient(a, brightnesssensorpb.NewBrightnessSensorApiClient, device)
 	if err != nil {
 		return err
 	}
 
-	pullFunc := func(ctx context.Context, stream chan<- *traits.PullAmbientBrightnessResponse_Change) error {
-		ss, err := client.PullAmbientBrightness(ctx, &traits.PullAmbientBrightnessRequest{Name: device.Name})
+	pullFunc := func(ctx context.Context, stream chan<- *brightnesssensorpb.PullAmbientBrightnessResponse_Change) error {
+		ss, err := client.PullAmbientBrightness(ctx, &brightnesssensorpb.PullAmbientBrightnessRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return pullStreamChanges[*traits.PullAmbientBrightnessResponse](ctx, stream, ss)
+		return pullStreamChanges[*brightnesssensorpb.PullAmbientBrightnessResponse](ctx, stream, ss)
 	}
-	pollFunc := func(ctx context.Context, stream chan<- *traits.PullAmbientBrightnessResponse_Change) error {
-		msg, err := client.GetAmbientBrightness(ctx, &traits.GetAmbientBrightnessRequest{Name: device.Name})
+	pollFunc := func(ctx context.Context, stream chan<- *brightnesssensorpb.PullAmbientBrightnessResponse_Change) error {
+		msg, err := client.GetAmbientBrightness(ctx, &brightnesssensorpb.GetAmbientBrightnessRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return chans.SendContext(ctx, stream, &traits.PullAmbientBrightnessResponse_Change{
+		return chans.SendContext(ctx, stream, &brightnesssensorpb.PullAmbientBrightnessResponse_Change{
 			Name:              device.Name,
 			ChangeTime:        timestamppb.Now(),
 			AmbientBrightness: msg,
 		})
 	}
-	reduce := func(cs []*traits.PullAmbientBrightnessResponse_Change) proto.Message {
-		return &traits.PullAmbientBrightnessResponse{Changes: cs}
+	reduce := func(cs []*brightnesssensorpb.PullAmbientBrightnessResponse_Change) proto.Message {
+		return &brightnesssensorpb.PullAmbientBrightnessResponse{Changes: cs}
 	}
 	delay := device.PollInterval.Or(DefaultPollInterval)
 
@@ -197,31 +199,31 @@ func (a *Auto) pullAmbientBrightness(ctx context.Context, dst chan<- proto.Messa
 // pullBrightness publishes device's brightness changes (as *traits.PullBrightnessResponse) to dst,
 // returning when ctx is done or a non-recoverable error occurs.
 func (a *Auto) pullBrightness(ctx context.Context, dst chan<- proto.Message, device SCDeviceConfig) error {
-	client, err := grpcClient(a, traits.NewLightApiClient, device)
+	client, err := grpcClient(a, lightpb.NewLightApiClient, device)
 	if err != nil {
 		return err
 	}
 
-	pullFunc := func(ctx context.Context, stream chan<- *traits.PullBrightnessResponse_Change) error {
-		ss, err := client.PullBrightness(ctx, &traits.PullBrightnessRequest{Name: device.Name})
+	pullFunc := func(ctx context.Context, stream chan<- *lightpb.PullBrightnessResponse_Change) error {
+		ss, err := client.PullBrightness(ctx, &lightpb.PullBrightnessRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return pullStreamChanges[*traits.PullBrightnessResponse](ctx, stream, ss)
+		return pullStreamChanges[*lightpb.PullBrightnessResponse](ctx, stream, ss)
 	}
-	pollFunc := func(ctx context.Context, stream chan<- *traits.PullBrightnessResponse_Change) error {
-		msg, err := client.GetBrightness(ctx, &traits.GetBrightnessRequest{Name: device.Name})
+	pollFunc := func(ctx context.Context, stream chan<- *lightpb.PullBrightnessResponse_Change) error {
+		msg, err := client.GetBrightness(ctx, &lightpb.GetBrightnessRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return chans.SendContext(ctx, stream, &traits.PullBrightnessResponse_Change{
+		return chans.SendContext(ctx, stream, &lightpb.PullBrightnessResponse_Change{
 			Name:       device.Name,
 			ChangeTime: timestamppb.Now(),
 			Brightness: msg,
 		})
 	}
-	reduce := func(cs []*traits.PullBrightnessResponse_Change) proto.Message {
-		return &traits.PullBrightnessResponse{Changes: cs}
+	reduce := func(cs []*lightpb.PullBrightnessResponse_Change) proto.Message {
+		return &lightpb.PullBrightnessResponse{Changes: cs}
 	}
 	delay := device.PollInterval.Or(DefaultPollInterval)
 
@@ -265,31 +267,31 @@ func (a *Auto) pullMeterReadings(ctx context.Context, dst chan<- proto.Message, 
 // pullOccupancy publishes device's occupancy changes (as *traits.PullOccupancyResponse) to dst,
 // returning when ctx is done or a non-recoverable error occurs.
 func (a *Auto) pullOccupancy(ctx context.Context, dst chan<- proto.Message, device SCDeviceConfig) error {
-	client, err := grpcClient(a, traits.NewOccupancySensorApiClient, device)
+	client, err := grpcClient(a, occupancysensorpb.NewOccupancySensorApiClient, device)
 	if err != nil {
 		return err
 	}
 
-	pullFunc := func(ctx context.Context, stream chan<- *traits.PullOccupancyResponse_Change) error {
-		ss, err := client.PullOccupancy(ctx, &traits.PullOccupancyRequest{Name: device.Name})
+	pullFunc := func(ctx context.Context, stream chan<- *occupancysensorpb.PullOccupancyResponse_Change) error {
+		ss, err := client.PullOccupancy(ctx, &occupancysensorpb.PullOccupancyRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return pullStreamChanges[*traits.PullOccupancyResponse](ctx, stream, ss)
+		return pullStreamChanges[*occupancysensorpb.PullOccupancyResponse](ctx, stream, ss)
 	}
-	pollFunc := func(ctx context.Context, stream chan<- *traits.PullOccupancyResponse_Change) error {
-		msg, err := client.GetOccupancy(ctx, &traits.GetOccupancyRequest{Name: device.Name})
+	pollFunc := func(ctx context.Context, stream chan<- *occupancysensorpb.PullOccupancyResponse_Change) error {
+		msg, err := client.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return chans.SendContext(ctx, stream, &traits.PullOccupancyResponse_Change{
+		return chans.SendContext(ctx, stream, &occupancysensorpb.PullOccupancyResponse_Change{
 			Name:       device.Name,
 			ChangeTime: timestamppb.Now(),
 			Occupancy:  msg,
 		})
 	}
-	reduce := func(cs []*traits.PullOccupancyResponse_Change) proto.Message {
-		return &traits.PullOccupancyResponse{Changes: cs}
+	reduce := func(cs []*occupancysensorpb.PullOccupancyResponse_Change) proto.Message {
+		return &occupancysensorpb.PullOccupancyResponse{Changes: cs}
 	}
 	delay := device.PollInterval.Or(DefaultPollInterval)
 
@@ -299,31 +301,31 @@ func (a *Auto) pullOccupancy(ctx context.Context, dst chan<- proto.Message, devi
 // pullEnterLeave publishes device's EnterLeave changes (as *traits.PullEnterLeaveEventsResponse) to dst,
 // returning when ctx is done or a non-recoverable error occurs.
 func (a *Auto) pullEnterLeave(ctx context.Context, dst chan<- proto.Message, device SCDeviceConfig) error {
-	client, err := grpcClient(a, traits.NewEnterLeaveSensorApiClient, device)
+	client, err := grpcClient(a, enterleavesensorpb.NewEnterLeaveSensorApiClient, device)
 	if err != nil {
 		return err
 	}
 
-	pullFunc := func(ctx context.Context, stream chan<- *traits.PullEnterLeaveEventsResponse_Change) error {
-		ss, err := client.PullEnterLeaveEvents(ctx, &traits.PullEnterLeaveEventsRequest{Name: device.Name})
+	pullFunc := func(ctx context.Context, stream chan<- *enterleavesensorpb.PullEnterLeaveEventsResponse_Change) error {
+		ss, err := client.PullEnterLeaveEvents(ctx, &enterleavesensorpb.PullEnterLeaveEventsRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return pullStreamChanges[*traits.PullEnterLeaveEventsResponse](ctx, stream, ss)
+		return pullStreamChanges[*enterleavesensorpb.PullEnterLeaveEventsResponse](ctx, stream, ss)
 	}
-	pollFunc := func(ctx context.Context, stream chan<- *traits.PullEnterLeaveEventsResponse_Change) error {
-		msg, err := client.GetEnterLeaveEvent(ctx, &traits.GetEnterLeaveEventRequest{Name: device.Name})
+	pollFunc := func(ctx context.Context, stream chan<- *enterleavesensorpb.PullEnterLeaveEventsResponse_Change) error {
+		msg, err := client.GetEnterLeaveEvent(ctx, &enterleavesensorpb.GetEnterLeaveEventRequest{Name: device.Name})
 		if err != nil {
 			return err
 		}
-		return chans.SendContext(ctx, stream, &traits.PullEnterLeaveEventsResponse_Change{
+		return chans.SendContext(ctx, stream, &enterleavesensorpb.PullEnterLeaveEventsResponse_Change{
 			Name:            device.Name,
 			ChangeTime:      timestamppb.Now(),
 			EnterLeaveEvent: msg,
 		})
 	}
-	reduce := func(cs []*traits.PullEnterLeaveEventsResponse_Change) proto.Message {
-		return &traits.PullEnterLeaveEventsResponse{Changes: cs}
+	reduce := func(cs []*enterleavesensorpb.PullEnterLeaveEventsResponse_Change) proto.Message {
+		return &enterleavesensorpb.PullEnterLeaveEventsResponse{Changes: cs}
 	}
 	delay := device.PollInterval.Or(DefaultPollInterval)
 

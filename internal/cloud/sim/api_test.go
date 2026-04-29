@@ -30,13 +30,13 @@ func TestCascadeDelete(t *testing.T) {
 	var node Node
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "cascade-node",
-		"siteId":   site.ID,
+		"siteId":   sid(site.ID),
 	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
 
 	var cv ConfigVersion
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":      node.ID,
+		"nodeId":      sid(node.ID),
 		"description": "v1.0.0",
 		"payload":     []byte("data"),
 	}, &cv)
@@ -44,8 +44,8 @@ func TestCascadeDelete(t *testing.T) {
 
 	var deployment Deployment
 	resp = doRequest(t, client, "POST", listDeploymentsURL(ts.URL), map[string]any{
-		"configVersionId": cv.ID,
-		"status":          "PENDING",
+		"configVersionId": sid(cv.ID),
+		"status":          "pending",
 	}, &deployment)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -95,6 +95,7 @@ func TestPagination_EdgeCases(t *testing.T) {
 			}
 			return resp, ids, list.NextPageToken
 		},
+		false,
 	)
 }
 
@@ -108,13 +109,24 @@ func testPagination(t *testing.T,
 	create func(i int) (id int64),
 	listDefault func(pageToken string) (resp *http.Response, ids []int64, nextPageToken string),
 	listSize func(pageSize string, pageToken string) (resp *http.Response, ids []int64, nextPageToken string),
+	desc bool,
 ) {
 	const numSites = maxPageSize + 10
 	var expectedIDs []int64
-	for i := 0; i < numSites; i++ {
+	for i := range numSites {
 		expectedIDs = append(expectedIDs, create(i))
 	}
 	slices.Sort(expectedIDs)
+	if desc {
+		slices.Reverse(expectedIDs)
+	}
+
+	// For ascending pagination, a token beyond the max ID returns empty results.
+	// For descending pagination, a token below the min ID (0, since all IDs are > 0) returns empty results.
+	emptyToken := "99999"
+	if desc {
+		emptyToken = "0"
+	}
 
 	t.Run("pageSize=0 should be rejected", func(t *testing.T) {
 		resp, _, _ := listSize("0", "")
@@ -172,7 +184,7 @@ func testPagination(t *testing.T,
 	})
 
 	t.Run("empty results with valid pagination", func(t *testing.T) {
-		resp, ids, nextPageToken := listDefault("99999")
+		resp, ids, nextPageToken := listDefault(emptyToken)
 		assertStatus(t, resp, http.StatusOK)
 		if len(ids) != 0 {
 			t.Errorf("expected 0 items for page beyond end, got %d", len(ids))
@@ -183,7 +195,6 @@ func testPagination(t *testing.T,
 	})
 
 	t.Run("pageSize=1 should paginate correctly", func(t *testing.T) {
-		// resp := doRequest(t, client, "GET", ts.URL+"/api/v1/management/sites?pageSize=1", nil, &page1)
 		resp, ids1, nextPageToken := listSize("1", "")
 		assertStatus(t, resp, http.StatusOK)
 		if len(ids1) != 1 {
@@ -197,8 +208,6 @@ func testPagination(t *testing.T,
 		}
 
 		// Get second page
-		// var page2 ListResponse[Site]
-		// resp = doRequest(t, client, "GET", fmt.Sprintf("%s/api/v1/management/sites?pageSize=1&pageToken=%s", ts.URL, page1.NextPageToken), nil, &page2)
 		resp, ids2, nextPageToken := listSize("1", nextPageToken)
 		assertStatus(t, resp, http.StatusOK)
 		if len(ids2) != 1 {
@@ -261,7 +270,10 @@ func newTestServerWithStore(t *testing.T) (*httptest.Server, *store.Store) {
 	s := store.NewMemoryStore(logger)
 	t.Cleanup(func() { _ = s.Close() })
 
-	apiServer := NewServer(s, logger)
+	apiServer, err := NewServer(s, logger)
+	if err != nil {
+		t.Fatalf("create server: %v", err)
+	}
 	mux := http.NewServeMux()
 	apiServer.RegisterRoutes(mux)
 	testServer := httptest.NewServer(mux)
@@ -369,4 +381,10 @@ func testNotFound(t *testing.T, client *http.Client, method, urlTemplate string,
 	url := fmt.Sprintf(urlTemplate, 99999)
 	resp := doRequest(t, client, method, url, body, nil)
 	assertStatus(t, resp, http.StatusNotFound)
+}
+
+// sid converts an int64 ID to a string for use in JSON request bodies.
+// The server expects string-encoded IDs in JSON (due to json:",string" tags).
+func sid(id int64) string {
+	return strconv.FormatInt(id, 10)
 }

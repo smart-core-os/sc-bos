@@ -13,34 +13,34 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/run"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
 )
 
 type Group struct {
-	traits.UnimplementedOccupancySensorApiServer
-	client traits.OccupancySensorApiClient
+	occupancysensorpb.UnimplementedOccupancySensorApiServer
+	client occupancysensorpb.OccupancySensorApiClient
 	names  []string
 
-	clients []traits.OccupancySensorApiClient // dedicated clients that don't use names for anything
+	clients []occupancysensorpb.OccupancySensorApiClient // dedicated clients that don't use names for anything
 
 	logger *zap.Logger
 }
 
-func (g *Group) GetOccupancy(ctx context.Context, request *traits.GetOccupancyRequest) (*traits.Occupancy, error) {
-	fns := make([]func() (*traits.Occupancy, error), len(g.names)+len(g.clients))
+func (g *Group) GetOccupancy(ctx context.Context, request *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
+	fns := make([]func() (*occupancysensorpb.Occupancy, error), len(g.names)+len(g.clients))
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.GetOccupancyRequest)
+		request := proto.Clone(request).(*occupancysensorpb.GetOccupancyRequest)
 		request.Name = name
-		fns[i] = run.TagError(name, func() (*traits.Occupancy, error) {
+		fns[i] = run.TagError(name, func() (*occupancysensorpb.Occupancy, error) {
 			return g.client.GetOccupancy(ctx, request)
 		})
 	}
 	for i, client := range g.clients {
-		fns[i+len(g.names)] = run.TagError("client", func() (*traits.Occupancy, error) {
+		fns[i+len(g.names)] = run.TagError("client", func() (*occupancysensorpb.Occupancy, error) {
 			return client.GetOccupancy(ctx, request)
 		})
 	}
@@ -59,7 +59,7 @@ func (g *Group) GetOccupancy(ctx context.Context, request *traits.GetOccupancyRe
 	return mergeOccupancy(allRes)
 }
 
-func (g *Group) PullOccupancy(request *traits.PullOccupancyRequest, server traits.OccupancySensorApi_PullOccupancyServer) error {
+func (g *Group) PullOccupancy(request *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
 	if len(g.names) == 0 && len(g.clients) == 0 {
 		return status.Error(codes.FailedPrecondition, "zone has no occupancy sensors")
 	}
@@ -69,7 +69,7 @@ func (g *Group) PullOccupancy(request *traits.PullOccupancyRequest, server trait
 
 	type c struct {
 		index int
-		val   *traits.Occupancy
+		val   *occupancysensorpb.Occupancy
 	}
 	changes := make(chan c)
 	defer close(changes)
@@ -78,7 +78,7 @@ func (g *Group) PullOccupancy(request *traits.PullOccupancyRequest, server trait
 
 	// get occupancy from each of the named devices
 	for i, name := range g.names {
-		request := proto.Clone(request).(*traits.PullOccupancyRequest)
+		request := proto.Clone(request).(*occupancysensorpb.PullOccupancyRequest)
 		request.Name = name
 		index := i
 		group.Go(func() error {
@@ -99,7 +99,7 @@ func (g *Group) PullOccupancy(request *traits.PullOccupancyRequest, server trait
 					}
 				},
 				func(ctx context.Context, changes chan<- c) error {
-					res, err := g.client.GetOccupancy(ctx, &traits.GetOccupancyRequest{Name: name, ReadMask: request.ReadMask})
+					res, err := g.client.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{Name: name, ReadMask: request.ReadMask})
 					if err != nil {
 						return err
 					}
@@ -113,7 +113,6 @@ func (g *Group) PullOccupancy(request *traits.PullOccupancyRequest, server trait
 
 	// get occupancy from each of the dedicated clients
 	for i, client := range g.clients {
-		client := client
 		index := len(g.names) + i
 		group.Go(func() error {
 			return pull.Changes(ctx, pull.NewFetcher(
@@ -133,7 +132,7 @@ func (g *Group) PullOccupancy(request *traits.PullOccupancyRequest, server trait
 					}
 				},
 				func(ctx context.Context, changes chan<- c) error {
-					res, err := client.GetOccupancy(ctx, &traits.GetOccupancyRequest{Name: request.Name, ReadMask: request.ReadMask})
+					res, err := client.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{Name: request.Name, ReadMask: request.ReadMask})
 					if err != nil {
 						return err
 					}
@@ -148,9 +147,9 @@ func (g *Group) PullOccupancy(request *traits.PullOccupancyRequest, server trait
 	// merge all the changes into one occupancy and send to server
 	group.Go(func() error {
 		// indexes reports which index in values each name name has
-		values := make([]*traits.Occupancy, len(g.names)+len(g.clients))
+		values := make([]*occupancysensorpb.Occupancy, len(g.names)+len(g.clients))
 
-		var last *traits.Occupancy
+		var last *occupancysensorpb.Occupancy
 		eq := cmp.Equal(cmp.FloatValueApprox(0, 0.001))
 		filter := masks.NewResponseFilter(masks.WithFieldMask(request.ReadMask))
 
@@ -172,7 +171,7 @@ func (g *Group) PullOccupancy(request *traits.PullOccupancyRequest, server trait
 				}
 				last = r
 
-				err = server.Send(&traits.PullOccupancyResponse{Changes: []*traits.PullOccupancyResponse_Change{{
+				err = server.Send(&occupancysensorpb.PullOccupancyResponse{Changes: []*occupancysensorpb.PullOccupancyResponse_Change{{
 					Name:       request.Name,
 					ChangeTime: timestamppb.Now(),
 					Occupancy:  r,
@@ -187,14 +186,14 @@ func (g *Group) PullOccupancy(request *traits.PullOccupancyRequest, server trait
 	return group.Wait()
 }
 
-func mergeOccupancy(all []*traits.Occupancy) (*traits.Occupancy, error) {
+func mergeOccupancy(all []*occupancysensorpb.Occupancy) (*occupancysensorpb.Occupancy, error) {
 	switch len(all) {
 	case 0:
 		return nil, status.Error(codes.FailedPrecondition, "zone has no occupancy sensor names")
 	case 1:
 		return all[0], nil
 	default:
-		out := &traits.Occupancy{}
+		out := &occupancysensorpb.Occupancy{}
 		nilCount := 0
 		occupiedCount := 0
 		var earliestOccupiedTime, latestUnoccupiedTime time.Time
@@ -207,7 +206,7 @@ func mergeOccupancy(all []*traits.Occupancy) (*traits.Occupancy, error) {
 			out.PeopleCount += occupancy.PeopleCount
 
 			switch occupancy.State {
-			case traits.Occupancy_OCCUPIED:
+			case occupancysensorpb.Occupancy_OCCUPIED:
 				occupiedCount++
 
 				// Recording the state change time takes our priority for occupied over unoccupied.
@@ -228,13 +227,13 @@ func mergeOccupancy(all []*traits.Occupancy) (*traits.Occupancy, error) {
 			}
 		}
 		if occupiedCount > 0 {
-			out.State = traits.Occupancy_OCCUPIED
+			out.State = occupancysensorpb.Occupancy_OCCUPIED
 			if !earliestOccupiedTime.IsZero() {
 				out.StateChangeTime = timestamppb.New(earliestOccupiedTime)
 			}
 		} else {
 			if len(all) > nilCount {
-				out.State = traits.Occupancy_UNOCCUPIED
+				out.State = occupancysensorpb.Occupancy_UNOCCUPIED
 				out.Confidence = float64(nilCount) / float64(len(all))
 				if !latestUnoccupiedTime.IsZero() {
 					out.StateChangeTime = timestamppb.New(latestUnoccupiedTime)

@@ -41,7 +41,6 @@ func (m *mqtt) applyConfig(ctx context.Context, cfg config.MqttServiceSource) er
 	grp, ctx := errgroup.WithContext(ctx)
 
 	for _, name := range cfg.RpcNames {
-		name := name // save for go routine usage
 		puller := &mqttMessagePuller{
 			client: client,
 			name:   name,

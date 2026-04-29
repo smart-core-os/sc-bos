@@ -10,6 +10,9 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 // Client abstracts the check-in API.
@@ -18,34 +21,50 @@ type Client interface {
 	DownloadPayload(ctx context.Context, url string) (io.ReadCloser, error)
 }
 
+// Registration holds the information needed to connect to the SCC BOS-facing API.
+// These fields match the registration endpoint response, so the struct can be deserialized directly
+// from a persisted registration file.
+type Registration struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	BosapiRoot   string `json:"bosapi_root"`
+}
+
 // HTTPClientOption configures an HTTPClient.
 type HTTPClientOption func(*HTTPClient)
 
 // WithHTTPClient sets the underlying http.Client (e.g. for tests).
 func WithHTTPClient(c *http.Client) HTTPClientOption {
 	return func(h *HTTPClient) {
-		h.httpClient = c
+		h.plainHTTP = c
 	}
 }
 
-// HTTPClient implements Client using net/http.
+// HTTPClient implements Client for talking to a Smart Core Connect cloud API.
 type HTTPClient struct {
-	baseURL    string
-	secret     string
-	httpClient *http.Client
+	checkInEndpoint   string
+	authenticatedHTTP *http.Client // attaches OAuth2 access tokens to requests
+	plainHTTP         *http.Client // for downloads where the URL carries its own auth
 }
 
-// NewHTTPClient creates a new HTTPClient.
-// The secret is used verbatim as the Bearer token value in authenticated requests to the server.
-func NewHTTPClient(baseURL, secret string, opts ...HTTPClientOption) *HTTPClient {
+// NewHTTPClient creates a new HTTPClient for talking to a Smart Core Connect cloud API.
+func NewHTTPClient(reg Registration, opts ...HTTPClientOption) *HTTPClient {
+	root := strings.TrimRight(reg.BosapiRoot, "/")
 	c := &HTTPClient{
-		baseURL:    baseURL,
-		secret:     secret,
-		httpClient: http.DefaultClient,
+		checkInEndpoint: root + "/v1/device/check-in",
+		plainHTTP:       http.DefaultClient,
 	}
 	for _, opt := range opts {
 		opt(c)
 	}
+
+	oauthConfig := clientcredentials.Config{
+		ClientID:     reg.ClientID,
+		ClientSecret: reg.ClientSecret,
+		TokenURL:     root + "/v1/device/token",
+	}
+	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, c.plainHTTP)
+	c.authenticatedHTTP = oauthConfig.Client(oauthCtx)
 	return c
 }
 
@@ -59,14 +78,13 @@ func (c *HTTPClient) CheckIn(ctx context.Context, req CheckInRequest) (CheckInRe
 		return CheckInResponse{}, fmt.Errorf("encode request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/api/v1/check-in", bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.checkInEndpoint, bytes.NewReader(body))
 	if err != nil {
 		return CheckInResponse{}, fmt.Errorf("create request: %w", err)
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+c.secret)
 
-	httpResp, err := c.httpClient.Do(httpReq)
+	httpResp, err := c.authenticatedHTTP.Do(httpReq)
 	if err != nil {
 		return CheckInResponse{}, fmt.Errorf("send request: %w", err)
 	}
@@ -97,7 +115,7 @@ func (c *HTTPClient) CheckIn(ctx context.Context, req CheckInRequest) (CheckInRe
 //
 // If the client's endpoint is using HTTPS, then the provided URL must also use HTTPS.
 func (c *HTTPClient) DownloadPayload(ctx context.Context, url string) (io.ReadCloser, error) {
-	if strings.HasPrefix(c.baseURL, "https:") {
+	if strings.HasPrefix(c.checkInEndpoint, "https:") {
 		if !strings.HasPrefix(url, "https:") {
 			return nil, errInsecureDownloadURL
 		}
@@ -109,11 +127,11 @@ func (c *HTTPClient) DownloadPayload(ctx context.Context, url string) (io.ReadCl
 	}
 	// only include the Authorization header if the download URL is on the same domain as the API server, as the
 	// credentials are only intended for that server
+	httpClient := c.plainHTTP
 	if c.isOnAPIDomain(url) {
-		req.Header.Set("Authorization", "Bearer "+c.secret)
+		httpClient = c.authenticatedHTTP
 	}
-
-	httpResp, err := c.httpClient.Do(req)
+	httpResp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("send request: %w", err)
 	}
@@ -127,12 +145,12 @@ func (c *HTTPClient) DownloadPayload(ctx context.Context, url string) (io.ReadCl
 }
 
 func (c *HTTPClient) isOnAPIDomain(urlStr string) bool {
-	// compare scheme + host (ignore path) of the client's baseURL and the provided URL
+	// compare scheme + host (ignore path) of the client's checkInEndpoint and the provided URL
 	u, err := url.Parse(urlStr)
 	if err != nil {
 		return false
 	}
-	baseURL, err := url.Parse(c.baseURL)
+	baseURL, err := url.Parse(c.checkInEndpoint)
 	if err != nil {
 		return false
 	}

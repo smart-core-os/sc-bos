@@ -1,7 +1,7 @@
 import * as grpcWeb from "grpc-web";
 import {Message} from "google-protobuf";
 import {Timestamp} from "google-protobuf/google/protobuf/timestamp_pb";
-import {ChangeType} from "@smart-core-os/sc-api-grpc-web/types/change_pb";
+import {ChangeType} from "@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/types/v1/change_pb";
 
 type Opt<T> = T | null | undefined;
 type Msg<T> = Message & { toObject(includeInstance?: boolean): T };

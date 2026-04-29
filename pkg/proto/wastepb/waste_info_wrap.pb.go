@@ -3,11 +3,12 @@
 package wastepb
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapInfo	adapts a WasteInfoServer	and presents it as a WasteInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server WasteInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(WasteInfo_ServiceDesc, server)
 	client := NewWasteInfoClient(conn)

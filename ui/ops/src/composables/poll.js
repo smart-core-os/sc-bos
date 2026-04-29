@@ -1,4 +1,5 @@
-import {SECOND, useNow} from '@/components/now.js';
+import {useNow} from '@/components/now.js';
+import {SECOND} from '@/util/date.js';
 import {computed, ref, toValue, watch} from 'vue';
 
 /**

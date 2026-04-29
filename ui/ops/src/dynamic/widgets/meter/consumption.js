@@ -24,10 +24,16 @@ export function useMeterConsumption(name, edges) {
         res.push({x: startEdge, y: null});
         continue;
       }
-      res.push({x: startEdge, y: endReading.usage - startReading.usage});
+      let consumption = endReading.usage - startReading.usage;
+      if (consumption < 0) {
+        // Meter reset? Use the end reading as the consumption for this period,
+        // assuming it reset to 0 at some point after the start reading.
+        consumption = endReading.usage;
+      }
+      res.push({x: startEdge, y: consumption});
     }
     return res;
-  })
+  });
 }
 
 

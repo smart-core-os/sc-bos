@@ -32,9 +32,6 @@ func TestDatabase_Insert(t *testing.T) {
 		{Source: source, Payload: []byte("test-payload-3"), CreateTime: originTime},
 	}
 
-	// Use zero-sized slice with capacity
-	insertedRecords := make([]Record, 0, len(records))
-
 	// Insert all records and collect the results
 	for _, r := range records {
 		record, err := db.Insert(ctx, r)
@@ -49,8 +46,6 @@ func TestDatabase_Insert(t *testing.T) {
 		if record.Payload == nil || string(record.Payload) != string(r.Payload) {
 			t.Errorf("expected payload to match %q, got %q", r.Payload, record.Payload)
 		}
-
-		insertedRecords = append(insertedRecords, record)
 	}
 
 	// Verify all records were stored correctly

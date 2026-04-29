@@ -12,7 +12,7 @@ import {
   StartServiceRequest,
   StopServiceRequest
 } from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/services/v1/services_pb';
-import {GetMetadataRequest} from '@smart-core-os/sc-api-grpc-web/traits/metadata_pb';
+import {GetMetadataRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/metadata/v1/metadata_pb';
 
 /**
  * @param {Partial<GetServiceRequest.AsObject>} request

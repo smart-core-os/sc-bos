@@ -155,13 +155,89 @@ export function useDemands(names, edges, metric) {
 }
 
 /**
+ * Returns the peak (maximum) demand for each pair of edges using the given metric.
+ * Useful for spotting demand spikes vs the average returned by useDemand.
+ *
+ * @param {import('vue').MaybeRefOrGetter<string>} name
+ * @param {import('vue').MaybeRefOrGetter<Date[]>} edges
+ * @param {import('vue').MaybeRefOrGetter<string>} metric
+ * @return {import('vue').ComputedRef<{x:Date, y:number|null}[]>}
+ */
+export function usePeakDemand(name, edges, metric) {
+  const select = computed(() => {
+    const m = toValue(metric);
+    if (!m) return null;
+    return selectors[m] || null;
+  });
+  const aggregate = (values) => Math.max(...values);
+  const between = useDemandBetween(name, edges, select, aggregate);
+  return computed(() => {
+    const _edges = toValue(edges);
+    const _between = toValue(between);
+    const res = [];
+    for (let i = 0; i < _between.length; i++) {
+      res.push({x: _edges[i], y: _between[i]});
+    }
+    return res;
+  });
+}
+
+/**
+ * Returns a reactive object mapping each name to its peak demand series.
+ * Peak is the maximum demand sample recorded within each time edge pair.
+ *
+ * @param {import('vue').MaybeRefOrGetter<(string|SeriesName)[]>} names
+ * @param {import('vue').MaybeRefOrGetter<Date[]>} edges
+ * @param {import('vue').MaybeRefOrGetter<string>} metric
+ * @return {import('vue').Reactive<Record<string, Series>>}
+ */
+export function usePeakDemands(names, edges, metric) {
+  const res = reactive({});
+  watch(() => toValue(names), (names) => {
+    const toStop = Object.fromEntries(Object.entries(res)); // clone
+    for (const item of names) {
+      let name = item;
+      let title = undefined;
+      if (typeof name === 'object') {
+        name = item.name;
+        title = item.title;
+      }
+      if (res[name]) {
+        delete toStop[name];
+        continue;
+      }
+      const scope = effectScope();
+      scope.run(() => {
+        const series = {data: usePeakDemand(name, edges, metric), stop: () => scope.stop()};
+        if (title) {
+          series.title = title;
+        } else {
+          const {value: md} = usePullMetadata(name);
+          series.title = computed(() => {
+            const mdTitle = md.value?.appearance?.title;
+            if (mdTitle) return mdTitle;
+            return name;
+          });
+        }
+        res[name] = series;
+      });
+    }
+    for (const [name, {stop}] of Object.entries(toStop)) {
+      stop();
+      delete res[name];
+    }
+  }, {immediate: true});
+  return res;
+}
+
+/**
  * Returns an array of the results of applying aggregate to all demand records between each pair of edges.
  * The result at index i is the result of applying aggregate to all records between edges[i] and edges[i+1].
  * If there are no records between a pair of edges, the result for that pair is null.
  *
  * @param {import('vue').MaybeRefOrGetter<string>} name
  * @param {import('vue').MaybeRefOrGetter<Date[]>} edges
- * @param {import('vue').MaybeRefOrGetter<null|function(import('@smart-core-os/sc-api-grpc-web/traits/electric_pb').ElectricDemand.AsObject):(number|null)>} select
+ * @param {import('vue').MaybeRefOrGetter<null|function(import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/electric/v1/electric_pb').ElectricDemand.AsObject):(number|null)>} select
  * @param {function(number[]):number} aggregate
  * @return {import('vue').ComputedRef<(number|null)[]>}
  */
@@ -177,8 +253,8 @@ function useDemandBetween(name, edges, select, aggregate) {
     return {
       name: nameVal,
       period: {
-        start_time: _edges[0],
-        end_time: _edges[_edges.length - 1],
+        startTime: _edges[0],
+        endTime: _edges[_edges.length - 1],
       },
       pageSize: 1000, // we're likely going to be getting a lot of records
       // we want to get the newest records first, this makes the most sense for charts
@@ -233,11 +309,6 @@ function useDemandBetween(name, edges, select, aggregate) {
         segment.entries.push(value);
       }
     }
-
-    // compact all segments
-    for (const segment of Object.values(segments)) {
-      compact(segment);
-    }
   }
 
   // abort is used to exit early from the following action,
@@ -246,6 +317,10 @@ function useDemandBetween(name, edges, select, aggregate) {
   watch(baseQuery, () => abort.value = true);
 
   useAction(baseQuery, async (req) => {
+    // clear existing segments
+    for (const key of Object.keys(segments)) {
+      delete segments[key];
+    }
     const _edges = toValue(edges);
     const pageReq = {...req, pageToken: ''};
     try {
@@ -254,6 +329,11 @@ function useDemandBetween(name, edges, select, aggregate) {
         processPage(res.electricDemandRecordsList, _edges);
         pageReq.pageToken = res.nextPageToken;
       } while (pageReq.pageToken !== '' && !abort.value);
+
+      // compact all segments once all pages are read
+      for (const segment of Object.values(segments)) {
+        compact(segment);
+      }
     } catch (e) {
       console.error('failed to list electric demand history for', req.name, ':', e.message ?? e);
     } finally {

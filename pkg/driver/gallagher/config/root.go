@@ -3,16 +3,16 @@ package config
 import (
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 const PointsEventTopicSuffix = "/event/pointset"
 
 type ScDevice struct {
-	Meta   *traits.Metadata `json:"meta,omitempty"`
-	ScName string           `json:"scName,omitempty"`
+	Meta   *metadatapb.Metadata `json:"meta,omitempty"`
+	ScName string               `json:"scName,omitempty"`
 }
 
 type Root struct {
@@ -27,8 +27,10 @@ type Root struct {
 	// poll the alerts API for updates on this schedule, defaults to once per minute
 	RefreshAlarms *jsontypes.Schedule `json:"refreshAlerts,omitempty"`
 	// poll the doors on this schedule, defaults to once per day
-	RefreshDoors       *jsontypes.Schedule `json:"refreshDoors,omitempty"`
-	UdmiExportInterval jsontypes.Duration  `json:"udmiExportInterval,omitempty"`
+	RefreshDoors *jsontypes.Schedule `json:"refreshDoors,omitempty"`
+	// poll the access zones API for updates on this schedule, defaults to once per minute
+	RefreshAccessZones *jsontypes.Schedule `json:"refreshAccessZones,omitempty"`
+	UdmiExportInterval jsontypes.Duration  `json:"udmiExportInterval"`
 	TopicPrefix        string              `json:"topicPrefix,omitempty"`
 
 	RefreshOccupancyInterval *jsontypes.Duration `json:"refreshOccupancyInterval,omitempty"`
@@ -39,6 +41,8 @@ type Root struct {
 }
 
 type HTTP struct {
+	// BaseURL is the base URL of the Gallagher API, e.g. https://gallagher.example.com/api
+	// must include the /api suffix
 	BaseURL    string `json:"baseUrl,omitempty"`
 	ApiKeyFile string `json:"apiKeyFile,omitempty"`
 }
@@ -54,6 +58,10 @@ func (cfg *Root) ApplyDefaults() {
 
 	if cfg.RefreshDoors == nil {
 		cfg.RefreshDoors = jsontypes.MustParseSchedule("0 0 * * *")
+	}
+
+	if cfg.RefreshAccessZones == nil {
+		cfg.RefreshAccessZones = jsontypes.MustParseSchedule("* * * * *")
 	}
 
 	if cfg.RefreshAlarms == nil {

@@ -10,10 +10,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
-	timepb "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
@@ -23,7 +22,7 @@ import (
 // updated data from the device. If this fails then the initial mean will be potentially inaccurate.
 type MeanOATempPatches struct {
 	name          string
-	apiClient     traits.AirTemperatureApiClient
+	apiClient     airtemperaturepb.AirTemperatureApiClient
 	historyClient airtemperaturepb.AirTemperatureHistoryClient
 	logger        *zap.Logger
 }
@@ -51,7 +50,7 @@ func (m *MeanOATempPatches) Subscribe(ctx context.Context, changes chan<- Patche
 		}
 	}
 
-	tc := make(chan *traits.AirTemperature)
+	tc := make(chan *airtemperaturepb.AirTemperature)
 	grp, ctx := errgroup.WithContext(ctx)
 	grp.Go(func() error {
 		defer close(tc)
@@ -123,10 +122,10 @@ func (m *MeanOATempPatches) readHistoricalMean(ctx context.Context, runningMean 
 
 // pullDeviceChanges pulls changes from the device and sends them on out.
 // Returns when ctx is done or non-recoverable error occurs talking to the device.
-func (m *MeanOATempPatches) pullDeviceChanges(ctx context.Context, out chan<- *traits.AirTemperature) error {
+func (m *MeanOATempPatches) pullDeviceChanges(ctx context.Context, out chan<- *airtemperaturepb.AirTemperature) error {
 	return pull.Changes(ctx, pull.NewFetcher(
-		func(ctx context.Context, changes chan<- *traits.AirTemperature) error {
-			stream, err := m.apiClient.PullAirTemperature(ctx, &traits.PullAirTemperatureRequest{Name: m.name})
+		func(ctx context.Context, changes chan<- *airtemperaturepb.AirTemperature) error {
+			stream, err := m.apiClient.PullAirTemperature(ctx, &airtemperaturepb.PullAirTemperatureRequest{Name: m.name})
 			if err != nil {
 				return err
 			}
@@ -142,8 +141,8 @@ func (m *MeanOATempPatches) pullDeviceChanges(ctx context.Context, out chan<- *t
 				}
 			}
 		},
-		func(ctx context.Context, changes chan<- *traits.AirTemperature) error {
-			res, err := m.apiClient.GetAirTemperature(ctx, &traits.GetAirTemperatureRequest{Name: m.name})
+		func(ctx context.Context, changes chan<- *airtemperaturepb.AirTemperature) error {
+			res, err := m.apiClient.GetAirTemperature(ctx, &airtemperaturepb.GetAirTemperatureRequest{Name: m.name})
 			if err != nil {
 				return err
 			}
@@ -155,10 +154,10 @@ func (m *MeanOATempPatches) pullDeviceChanges(ctx context.Context, out chan<- *t
 // sendMeanChanges reads temperatures from in and sends mean changes on out.
 // runningMean and hourlyTemps can be used to seed the running mean with historical data.
 // Returns either when ctx is done, or in is closed.
-func (m *MeanOATempPatches) sendMeanChanges(ctx context.Context, in <-chan *traits.AirTemperature, out chan<- Patcher, runningMean *exponentialMean, hourlyTemps dailyTemp) error {
+func (m *MeanOATempPatches) sendMeanChanges(ctx context.Context, in <-chan *airtemperaturepb.AirTemperature, out chan<- Patcher, runningMean *exponentialMean, hourlyTemps dailyTemp) error {
 	setMean := func() error {
 		err := chans.SendContext[Patcher](ctx, out, PatchFunc(func(s *ReadState) {
-			s.MeanOATemp = &types.Temperature{
+			s.MeanOATemp = &typespb.Temperature{
 				ValueCelsius: runningMean.mean,
 			}
 		}))

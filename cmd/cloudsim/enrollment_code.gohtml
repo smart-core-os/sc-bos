@@ -1,0 +1,18 @@
+{{- /*gotype: github.com/smart-core-os/sc-bos/cmd/cloudsim.enrollmentCodeViewData*/ -}}
+{{define "enrollment_code"}}
+<!DOCTYPE html>
+<html>
+<head><title>Enrollment Code - CloudSim</title></head>
+<body>
+{{template "nav" .}}
+<h1>Enrollment Code</h1>
+<dl>
+  <dt>Node ID</dt><dd>{{.Node.ID}}</dd>
+  <dt>Hostname</dt><dd>{{.Node.Hostname}}</dd>
+  <dt>Code</dt><dd><code>{{.Code.Code}}</code></dd>
+  <dt>Expires</dt><dd>{{.Code.ExpiresAt.Format "2006-01-02 15:04:05"}}</dd>
+</dl>
+<p><a href="/ui/nodes">Back to Nodes</a></p>
+</body>
+</html>
+{{end}}

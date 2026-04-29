@@ -6,13 +6,14 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy/config"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
 )
 
 var Feature = zone.FactoryFunc(func(services zone.Services) service.Lifecycle {
@@ -44,13 +45,13 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 		conn := f.clients.ClientConn()
 
 		if len(cfg.OccupancySensors) > 0 {
-			group.client = traits.NewOccupancySensorApiClient(conn)
+			group.client = occupancysensorpb.NewOccupancySensorApiClient(conn)
 			group.names = cfg.OccupancySensors
 		}
 		if len(cfg.EnterLeaveOccupancySensors) > 0 {
 			elServer := &enterLeave{
 				model:  occupancysensorpb.NewModel(),
-				client: traits.NewEnterLeaveSensorApiClient(conn),
+				client: enterleavesensorpb.NewEnterLeaveSensorApiClient(conn),
 				names:  cfg.EnterLeaveOccupancySensors,
 				logger: logger,
 			}
@@ -69,12 +70,15 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 				}
 			}
 
-			group.clients = append(group.clients, occupancysensorpb.WrapApi(elServer))
+			group.clients = append(group.clients, occupancysensorpb.NewOccupancySensorApiClient(wrap.ServerToClient(occupancysensorpb.OccupancySensorApi_ServiceDesc, elServer)))
 		}
 
 		f.devices.Add(cfg.OccupancySensors...)
 		f.devices.Add(cfg.EnterLeaveOccupancySensors...)
-		announce.Announce(cfg.Name, node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(group))))
+		announce.Announce(cfg.Name,
+			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(group)),
+			node.HasTrait(trait.OccupancySensor),
+		)
 	}
 
 	return nil

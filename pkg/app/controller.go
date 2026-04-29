@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	//lint:ignore SA1019 the old OPA interface remains supported - we may migrate in future
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/rs/cors"
 	"github.com/timshannon/bolthold"
@@ -28,7 +29,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/cloud"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
-	"github.com/smart-core-os/sc-bos/pkg/app/logcapture"
+	opscloud "github.com/smart-core-os/sc-bos/internal/opsapi"
 	"github.com/smart-core-os/sc-bos/internal/router"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors/protopkg"
@@ -37,21 +38,22 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/pki/expire"
 	"github.com/smart-core-os/sc-bos/pkg/app/files"
 	http2 "github.com/smart-core-os/sc-bos/pkg/app/http"
+	"github.com/smart-core-os/sc-bos/pkg/app/logcapture"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/manage/enrollment"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
-	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/ops/cloudpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // Bootstrap will obtain a Controller in a ready-to-run state.
@@ -70,44 +72,44 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		return nil, err
 	}
 
-	// init the deployment client if configured to connect to a deployment server
-	var (
-		deploymentUpdater *cloud.DeploymentUpdater
-		cloudDataRoot     *os.Root
-		confStore         ConfigStore
-	)
+	// Set up the cloud connection. The Conn is always created; it is a no-op when unconfigured.
+	cloudDataDir := filepath.Join(config.DataDir, cloudDirName)
+	if err = os.MkdirAll(cloudDataDir, 0750); err != nil {
+		return nil, fmt.Errorf("failed to create cloud data directory: %w", err)
+	}
+	cloudDataRoot, err := os.OpenRoot(cloudDataDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open cloud data directory: %w", err)
+	}
+	var cloudStoreOptions []cloud.StoreOption
+	var cloudConnOptions []cloud.ConnOption
+	var cloudRegisterURL string
 	if config.Cloud != nil {
-		cloudSecret, err := loadCloudSecret(config.Cloud.TokenFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load cloud secret: %w", err)
-		}
-
-		cloudDataDir := filepath.Join(config.DataDir, cloudDirName)
-		err = os.MkdirAll(cloudDataDir, 0750)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create cloud data directory: %w", err)
-		}
-
-		cloudDataRoot, err = os.OpenRoot(cloudDataDir)
-		if err != nil {
-			return nil, fmt.Errorf("failed to open cloud data directory: %w", err)
-		}
-		httpClient := cloud.NewHTTPClient(config.Cloud.Endpoint, cloudSecret)
-		duOptions := []cloud.UpdaterOption{
-			cloud.WithLogger(logger.Named("cloud")),
-			cloud.WithPreserveDownloads(config.Cloud.PreserveDownloads),
-		}
+		cloudStoreOptions = append(cloudStoreOptions, cloud.WithPreserveDownloads(config.Cloud.PreserveDownloads))
 		if config.Cloud.MaxDeploymentSizeMiB != 0 {
-			duOptions = append(duOptions, cloud.WithMaxDeploymentSize(int64(config.Cloud.MaxDeploymentSizeMiB)*1024*1024))
+			cloudStoreOptions = append(cloudStoreOptions, cloud.WithMaxDeploymentSize(int64(config.Cloud.MaxDeploymentSizeMiB)*1024*1024))
 		}
-		deploymentUpdater = cloud.NewDeploymentUpdater(cloudDataRoot, httpClient, duOptions...)
+		cloudRegisterURL = config.Cloud.RegisterURL
+	}
+	cloudStoreOptions = append(cloudStoreOptions, cloud.WithStoreLogger(logger.Named("cloud.store")))
+	cloudStore := cloud.NewDeploymentStore(cloudDataRoot, cloudStoreOptions...)
+	cloudConnOptions = append(cloudConnOptions, cloud.WithUpdaterOptions(cloud.WithLogger(logger.Named("cloud"))))
 
-		confStore, err = loadCloudAppConfig(ctx, config, deploymentUpdater, logger)
+	regStorePath := filepath.Join(cloudDataDir, "registration.json")
+	regStore := cloud.NewFileRegistrationStore(regStorePath)
+
+	cloudConn, err := cloud.OpenConn(ctx, regStore, cloudStore, cloudConnOptions...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start cloud connection: %w", err)
+	}
+
+	var confStore ConfigStore
+	if st := cloudConn.State(); st.Connectivity != cloud.Unconfigured {
+		confStore, err = loadCloudAppConfig(ctx, config, cloudStore, cloudConn, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load config from cloud: %w", err)
 		}
 	} else {
-		// load the external config file if possible
 		confStore, err = loadLocalAppConfig(config, logger)
 		if err != nil {
 			return nil, err
@@ -155,6 +157,11 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			node.HasServer[accountpb.AccountApiServer](accountpb.RegisterAccountApiServer, account.NewServer(accountStore, accountLogger.Named("server"))),
 		)
 	}
+
+	// Register the cloud connection API so the Ops UI can read status and enroll the node.
+	rootNode.Announce(cName,
+		node.HasServer[cloudpb.CloudConnectionApiServer](cloudpb.RegisterCloudConnectionApiServer, opscloud.NewCloudConnectionServer(cloudConn, cName, cloudRegisterURL)),
+	)
 
 	// Setup a local database for storing non-critical data.
 	// This is made available to automations and systems as a local cache, for example for lighting reports.
@@ -244,8 +251,13 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		systemSource,
 		selfSignedSource,
 	}
-	tlsGRPCServerConfig := pki.TLSServerConfig(grpcSource)
-	tlsGRPCClientConfig := pki.TLSClientConfig(grpcSource)
+	tlsMinVersion, err := certConfig.ParseTLSMinVersion()
+	if err != nil {
+		return nil, fmt.Errorf("certs.tlsMinVersion: %w", err)
+	}
+	tlsVersionOpt := pki.WithMinVersion(tlsMinVersion)
+	tlsGRPCServerConfig := pki.TLSServerConfig(grpcSource, tlsVersionOpt)
+	tlsGRPCClientConfig := pki.TLSClientConfig(grpcSource, tlsVersionOpt)
 
 	// Certs used for https (hosting and grpc-web) can be different from the Smart Core native grpc endpoint,
 	// mostly to allow support for trusted certs on the https interface and cohort managed certs for grpc requests.
@@ -263,7 +275,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			selfSignedSource, // reuse the same self signed cert from grpc requests
 		}
 	}
-	tlsHTTPServerConfig := pki.TLSServerConfig(httpCertSource)
+	tlsHTTPServerConfig := pki.TLSServerConfig(httpCertSource, tlsVersionOpt)
 	tlsHTTPServerConfig.ClientAuth = tls.NoClientCert
 
 	// manager represents a delayed connection to the cohort manager.
@@ -417,12 +429,12 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		SystemConfig:     config,
 		ControllerConfig: confStore,
 		Enrollment:       enrollServer,
-		Deployments:      deploymentUpdater,
+		Cloud:            cloudConn,
 		Logger:           logger,
 		LogCapture:       capture,
 		LogLevel:         &logLevel,
 		Node:             rootNode,
-		Devices:          gen_devicespb.NewDevicesApiClient(wrap.ServerToClient(gen_devicespb.DevicesApi_ServiceDesc, devicesApi)),
+		Devices:          devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
 		CheckRegistry:    checkRegistry,
 		DeviceStore:      deviceStore,
 		Tasks:            &task.Group{},
@@ -442,9 +454,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	c.Defer(manager.Close)
 	c.Defer(store.Close)
 	c.Defer(closeHealthStore)
-	if cloudDataRoot != nil {
-		c.Defer(cloudDataRoot.Close)
-	}
+	c.Defer(cloudStore.Close)
 	return c, nil
 }
 
@@ -498,14 +508,14 @@ type Controller struct {
 	SystemConfig     sysconf.Config
 	ControllerConfig ConfigStore
 	Enrollment       *enrollment.Server
-	Deployments      *cloud.DeploymentUpdater
+	Cloud            *cloud.Conn
 
 	// services for drivers/automations
 	Logger          *zap.Logger
-	LogCapture      *logcapture.Core  // dynamic tee for log capture (nil if not built via Bootstrap)
-	LogLevel        *zap.AtomicLevel  // controls the root logger's minimum level
+	LogCapture      *logcapture.Core // dynamic tee for log capture (nil if not built via Bootstrap)
+	LogLevel        *zap.AtomicLevel // controls the root logger's minimum level
 	Node            *node.Node
-	Devices         gen_devicespb.DevicesApiClient
+	Devices         devicespb.DevicesApiClient
 	DeviceStore     *devicespb.Collection // for low level control of devices
 	Tasks           *task.Group
 	Database        *bolthold.Store
@@ -553,9 +563,13 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 			return c.Enrollment.AutoRenew(ctx)
 		})
 	}
-	if c.Deployments != nil {
+	if c.Cloud != nil {
 		group.Go(func() error {
-			needRestart := c.Deployments.AutoPoll(ctx, c.SystemConfig.Cloud.PollInterval.Duration)
+			pollInterval := 5 * time.Minute
+			if c.SystemConfig.Cloud != nil {
+				pollInterval = c.SystemConfig.Cloud.PollInterval.Duration
+			}
+			needRestart := cloud.AutoPoll(ctx, c.Cloud, pollInterval, c.Logger.Named("cloud.auto-poll"))
 			if needRestart {
 				c.Logger.Info("triggering automatic restart to apply new deployment")
 				return restartNowError{}

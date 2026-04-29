@@ -1,0 +1,31 @@
+This test verifies that types whose destination package matches the file's own package
+are rewritten to bare identifiers (no qualifier) and no self-import is added.
+expected_changes: 2
+
+-- input/go.mod --
+module github.com/smart-core-os/sc-bos
+
+go 1.25
+
+-- input/pkg/proto/meterpb/model.go --
+package meterpb
+
+import (
+	"github.com/smart-core-os/sc-bos/sc-api/go/traits"
+)
+
+func WrapReading(r *traits.MeterReading) *traits.MeterReading {
+	return r
+}
+
+-- output/go.mod --
+module github.com/smart-core-os/sc-bos
+
+go 1.25
+
+-- output/pkg/proto/meterpb/model.go --
+package meterpb
+
+func WrapReading(r *MeterReading) *MeterReading {
+	return r
+}

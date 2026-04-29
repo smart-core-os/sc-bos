@@ -2,7 +2,7 @@ import * as jspb from 'google-protobuf'
 
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
-import * as types_change_pb from '@smart-core-os/sc-api-grpc-web/types/change_pb'; // proto import: "types/change.proto"
+import * as smartcore_bos_types_v1_change_pb from '../../../../smartcore/bos/types/v1/change_pb'; // proto import: "smartcore/bos/types/v1/change.proto"
 
 
 export class Service extends jspb.Message {
@@ -391,8 +391,8 @@ export namespace PullServicesResponse {
     getName(): string;
     setName(value: string): Change;
 
-    getType(): types_change_pb.ChangeType;
-    setType(value: types_change_pb.ChangeType): Change;
+    getType(): smartcore_bos_types_v1_change_pb.ChangeType;
+    setType(value: smartcore_bos_types_v1_change_pb.ChangeType): Change;
 
     getNewValue(): Service | undefined;
     setNewValue(value?: Service): Change;
@@ -420,7 +420,7 @@ export namespace PullServicesResponse {
   export namespace Change {
     export type AsObject = {
       name: string;
-      type: types_change_pb.ChangeType;
+      type: smartcore_bos_types_v1_change_pb.ChangeType;
       newValue?: Service.AsObject;
       oldValue?: Service.AsObject;
       changeTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;

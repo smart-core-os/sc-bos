@@ -1,10 +1,10 @@
 {
   "private": true,
   "workspaces": [
-    "keycloak-login-prototype",
     "ops",
     "panzoom-package",
     "space",
+    "signage",
     "ui-gen"
   ]
 }

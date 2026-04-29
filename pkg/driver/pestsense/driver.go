@@ -10,9 +10,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/pestsense/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 const DriverName = "pestsense"
@@ -82,7 +82,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		announcer.Announce(device.Name,
 			node.HasMetadata(device.Metadata),
-			node.HasTrait(trait.OccupancySensor, node.WithClients(occupancysensorpb.WrapApi(sensor))))
+			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(sensor)),
+			node.HasTrait(trait.OccupancySensor))
 	}
 
 	var responseHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {

@@ -8,32 +8,32 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 )
 
 // actions defines the only side effects the automation can have.
 // This is intended to allow easier testing of the business logic, a bit like a DAO would for database access.
 type actions interface {
 	// UpdateBrightness sends a LightApiClient.UpdateBrightness request and stores successful result in state.
-	UpdateBrightness(ctx context.Context, now time.Time, req *traits.UpdateBrightnessRequest, state *WriteState) error
+	UpdateBrightness(ctx context.Context, now time.Time, req *lightpb.UpdateBrightnessRequest, state *WriteState) error
 }
 
 // newClientActions creates an actions backed by node.ClientConner clients.
 func newClientActions(clients node.ClientConner) actions {
 	conn := clients.ClientConn()
 	return &clientActions{
-		lightClient: traits.NewLightApiClient(conn),
+		lightClient: lightpb.NewLightApiClient(conn),
 	}
 }
 
 type clientActions struct {
-	lightClient traits.LightApiClient
+	lightClient lightpb.LightApiClient
 }
 
-func (a *clientActions) UpdateBrightness(ctx context.Context, now time.Time, req *traits.UpdateBrightnessRequest, state *WriteState) error {
+func (a *clientActions) UpdateBrightness(ctx context.Context, now time.Time, req *lightpb.UpdateBrightnessRequest, state *WriteState) error {
 	got, err := a.lightClient.UpdateBrightness(ctx, req)
-	state.Brightness[req.Name] = Value[*traits.Brightness]{
+	state.Brightness[req.Name] = Value[*lightpb.Brightness]{
 		V:   got,
 		At:  now,
 		Err: err,
@@ -55,9 +55,9 @@ type cachedActions struct {
 	expiry time.Duration
 }
 
-func (a cachedActions) UpdateBrightness(ctx context.Context, now time.Time, req *traits.UpdateBrightnessRequest, state *WriteState) error {
+func (a cachedActions) UpdateBrightness(ctx context.Context, now time.Time, req *lightpb.UpdateBrightnessRequest, state *WriteState) error {
 	if old, hasOld := state.Brightness[req.Name]; hasOld {
-		if cacheValid(old, now, a.expiry, func(v *traits.Brightness) bool {
+		if cacheValid(old, now, a.expiry, func(v *lightpb.Brightness) bool {
 			if v == nil {
 				return false
 			}
@@ -113,7 +113,7 @@ type countActions struct {
 	*actionCounts
 }
 
-func (a *countActions) UpdateBrightness(ctx context.Context, now time.Time, req *traits.UpdateBrightnessRequest, state *WriteState) error {
+func (a *countActions) UpdateBrightness(ctx context.Context, now time.Time, req *lightpb.UpdateBrightnessRequest, state *WriteState) error {
 	a.TotalWrites++
 	a.BrightnessWrites = append(a.BrightnessWrites, req.Name)
 	if a.BrightnessUpdates == nil {
@@ -128,8 +128,8 @@ func (a *countActions) UpdateBrightness(ctx context.Context, now time.Time, req 
 // Actions are still recorded in the WriteState.
 type nilActions struct{}
 
-func (nilActions) UpdateBrightness(ctx context.Context, now time.Time, req *traits.UpdateBrightnessRequest, state *WriteState) error {
-	state.Brightness[req.Name] = Value[*traits.Brightness]{
+func (nilActions) UpdateBrightness(ctx context.Context, now time.Time, req *lightpb.UpdateBrightnessRequest, state *WriteState) error {
+	state.Brightness[req.Name] = Value[*lightpb.Brightness]{
 		V:  req.Brightness,
 		At: now,
 	}
@@ -146,7 +146,7 @@ type logActions struct {
 	logger *zap.Logger
 }
 
-func (a *logActions) UpdateBrightness(ctx context.Context, now time.Time, req *traits.UpdateBrightnessRequest, state *WriteState) error {
+func (a *logActions) UpdateBrightness(ctx context.Context, now time.Time, req *lightpb.UpdateBrightnessRequest, state *WriteState) error {
 	err := a.actions.UpdateBrightness(ctx, now, req, state)
 	a.logger.Debug("actions.UpdateBrightness",
 		zap.String("name", req.Name),
@@ -160,9 +160,9 @@ func (a *logActions) UpdateBrightness(ctx context.Context, now time.Time, req *t
 func updateBrightnessLevel(ctx context.Context, now time.Time, state *WriteState, actions actions, level float32, names ...deviceName) error {
 	var errs error
 	for _, name := range names {
-		err := actions.UpdateBrightness(ctx, now, &traits.UpdateBrightnessRequest{
+		err := actions.UpdateBrightness(ctx, now, &lightpb.UpdateBrightnessRequest{
 			Name: name,
-			Brightness: &traits.Brightness{
+			Brightness: &lightpb.Brightness{
 				LevelPercent: level,
 			},
 		}, state)
@@ -179,7 +179,7 @@ func refreshBrightnessLevel(ctx context.Context, now time.Time, state *WriteStat
 		if !ok || val.V == nil {
 			continue
 		}
-		err := actions.UpdateBrightness(ctx, now, &traits.UpdateBrightnessRequest{
+		err := actions.UpdateBrightness(ctx, now, &lightpb.UpdateBrightnessRequest{
 			Name:       name,
 			Brightness: val.V,
 		}, state)

@@ -144,8 +144,6 @@ type csr struct {
 	validSince  time.Duration
 	rand        io.Reader
 
-	cacheFile string
-
 	keyUsage    x509.KeyUsage
 	extKeyUsage []x509.ExtKeyUsage
 }

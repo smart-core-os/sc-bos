@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
 )
 
 func TestMemoryStorage(t *testing.T) {
@@ -32,7 +32,7 @@ func TestMemoryStorage(t *testing.T) {
 func publicationRoundTrip(ctx context.Context, t *testing.T, storage Storage) (ok bool) {
 	id := "publicationRoundTrip!:$@.-_"
 	baseTime := time.Date(2022, 7, 18, 11, 27, 0, 0, time.UTC)
-	pub1 := &traits.Publication{
+	pub1 := &publicationpb.Publication{
 		Id:          id,
 		Version:     "1",
 		Body:        []byte("1"),
@@ -69,7 +69,7 @@ func publicationRoundTrip(ctx context.Context, t *testing.T, storage Storage) (o
 	}
 
 	// update it with a different value
-	pub2 := &traits.Publication{
+	pub2 := &publicationpb.Publication{
 		Id:          id,
 		Version:     "2",
 		Body:        []byte("2"),
@@ -133,7 +133,7 @@ func rejectsNilPublication(ctx context.Context, t *testing.T, storage Storage) (
 
 // checks that the storage returns ErrPublicationInvalid when storing a publication with an empty ID string
 func rejectsEmptyPublicationID(ctx context.Context, t *testing.T, storage Storage) (ok bool) {
-	pub := &traits.Publication{Id: ""}
+	pub := &publicationpb.Publication{Id: ""}
 	err := storage.StorePublication(ctx, pub)
 	if errors.Is(err, ErrPublicationInvalid) {
 		return true

@@ -14,7 +14,7 @@ import (
 	"github.com/open-policy-agent/opa/storage/inmem"
 
 	"github.com/smart-core-os/sc-bos/pkg/node/alltraits"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 type static struct {

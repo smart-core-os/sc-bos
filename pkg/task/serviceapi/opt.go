@@ -16,7 +16,7 @@ func WithKnownTypes(t ...string) Option {
 func WithKnownTypesFromMapKeys[M ~map[string]T, T any](m M) Option {
 	return func(a *Api) {
 		a.knownTypes = slices.Grow(a.knownTypes, len(m))
-		for k, _ := range m {
+		for k := range m {
 			a.knownTypes = append(a.knownTypes, k)
 		}
 	}

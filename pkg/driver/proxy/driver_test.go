@@ -5,10 +5,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 func Test_proxy_announceChange(t *testing.T) {
@@ -23,8 +23,8 @@ func Test_proxy_announceChange(t *testing.T) {
 			change: &devicespb.PullDevicesResponse_Change{
 				NewValue: &devicespb.Device{
 					Name: "device01",
-					Metadata: &traits.Metadata{
-						Traits: []*traits.TraitMetadata{
+					Metadata: &metadatapb.Metadata{
+						Traits: []*metadatapb.TraitMetadata{
 							{Name: trait.OnOff.String()},
 							{Name: trait.Hail.String()},
 						},
@@ -41,8 +41,8 @@ func Test_proxy_announceChange(t *testing.T) {
 			change: &devicespb.PullDevicesResponse_Change{
 				NewValue: &devicespb.Device{
 					Name: "device01",
-					Metadata: &traits.Metadata{
-						Traits: []*traits.TraitMetadata{
+					Metadata: &metadatapb.Metadata{
+						Traits: []*metadatapb.TraitMetadata{
 							{Name: trait.OnOff.String()},
 							{Name: trait.Hail.String()},
 							{Name: trait.Light.String()},
@@ -61,8 +61,8 @@ func Test_proxy_announceChange(t *testing.T) {
 			change: &devicespb.PullDevicesResponse_Change{
 				OldValue: &devicespb.Device{
 					Name: "device01",
-					Metadata: &traits.Metadata{
-						Traits: []*traits.TraitMetadata{
+					Metadata: &metadatapb.Metadata{
+						Traits: []*metadatapb.TraitMetadata{
 							{Name: trait.OnOff.String()},
 							{Name: trait.Hail.String()},
 							{Name: trait.Light.String()},
@@ -71,8 +71,8 @@ func Test_proxy_announceChange(t *testing.T) {
 				},
 				NewValue: &devicespb.Device{
 					Name: "device01",
-					Metadata: &traits.Metadata{
-						Traits: []*traits.TraitMetadata{
+					Metadata: &metadatapb.Metadata{
+						Traits: []*metadatapb.TraitMetadata{
 							{Name: trait.OnOff.String()},
 							{Name: trait.Light.String()},
 						},
@@ -131,8 +131,8 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 			oldDevice: nil,
 			newDevice: &devicespb.Device{
 				Name: "device1",
-				Metadata: &traits.Metadata{
-					Traits: []*traits.TraitMetadata{
+				Metadata: &metadatapb.Metadata{
+					Traits: []*metadatapb.TraitMetadata{
 						{Name: "OnOff"},
 						{Name: "Light"},
 					},
@@ -157,8 +157,8 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 			},
 			oldDevice: &devicespb.Device{
 				Name: "device1",
-				Metadata: &traits.Metadata{
-					Traits: []*traits.TraitMetadata{
+				Metadata: &metadatapb.Metadata{
+					Traits: []*metadatapb.TraitMetadata{
 						{Name: "OnOff"},
 						{Name: "Light"},
 					},
@@ -176,16 +176,16 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 			},
 			oldDevice: &devicespb.Device{
 				Name: "device1",
-				Metadata: &traits.Metadata{
-					Traits: []*traits.TraitMetadata{
+				Metadata: &metadatapb.Metadata{
+					Traits: []*metadatapb.TraitMetadata{
 						{Name: "OnOff"},
 					},
 				},
 			},
 			newDevice: &devicespb.Device{
 				Name: "device1",
-				Metadata: &traits.Metadata{
-					Traits: []*traits.TraitMetadata{
+				Metadata: &metadatapb.Metadata{
+					Traits: []*metadatapb.TraitMetadata{
 						{Name: "OnOff"},
 						{Name: "Light"},
 						{Name: "Brightness"},
@@ -204,8 +204,8 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 			},
 			oldDevice: &devicespb.Device{
 				Name: "device1",
-				Metadata: &traits.Metadata{
-					Traits: []*traits.TraitMetadata{
+				Metadata: &metadatapb.Metadata{
+					Traits: []*metadatapb.TraitMetadata{
 						{Name: "OnOff"},
 						{Name: "Light"},
 						{Name: "Brightness"},
@@ -214,8 +214,8 @@ func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
 			},
 			newDevice: &devicespb.Device{
 				Name: "device1",
-				Metadata: &traits.Metadata{
-					Traits: []*traits.TraitMetadata{
+				Metadata: &metadatapb.Metadata{
+					Traits: []*metadatapb.TraitMetadata{
 						{Name: "OnOff"},
 					},
 				},
@@ -269,8 +269,8 @@ func TestAnnouncedTraits_DeleteDevice(t *testing.T) {
 			},
 			device: &devicespb.Device{
 				Name: "device1",
-				Metadata: &traits.Metadata{
-					Traits: []*traits.TraitMetadata{
+				Metadata: &metadatapb.Metadata{
+					Traits: []*metadatapb.TraitMetadata{
 						{Name: "OnOff"},
 						{Name: "Light"},
 					},
@@ -287,8 +287,8 @@ func TestAnnouncedTraits_DeleteDevice(t *testing.T) {
 			},
 			device: &devicespb.Device{
 				Name: "device2",
-				Metadata: &traits.Metadata{
-					Traits: []*traits.TraitMetadata{},
+				Metadata: &metadatapb.Metadata{
+					Traits: []*metadatapb.TraitMetadata{},
 				},
 			},
 			wantRemaining: 1,

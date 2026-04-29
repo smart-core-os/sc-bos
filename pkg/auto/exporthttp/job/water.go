@@ -31,14 +31,14 @@ func (w *WaterJob) Do(ctx context.Context, sendFn sender) error {
 		multiplier, err := w.getUnitMultiplier(cctx, meter)
 
 		if err != nil {
-			w.Logger.Error("getting unit multiplier", zap.String("meter", meter), zap.Error(err))
+			w.Logger.Warn("getting unit multiplier", zap.String("meter", meter), zap.Error(err))
 		}
 
 		earliest, latest, err := getRecordsByTime(cctx, w.Logger, w.client.ListMeterReadingHistory, meter, now, filterTime)
 
 		cancel()
 		if err != nil {
-			w.Logger.Error("getting records by time", zap.String("meter", meter), zap.Error(err))
+			w.Logger.Warn("getting records by time", zap.String("meter", meter), zap.Error(err))
 			continue
 		}
 
@@ -81,10 +81,10 @@ func (w *WaterJob) getUnitMultiplier(ctx context.Context, meter string) (float32
 	var multiplier float32
 
 	switch infoResp.GetUsageUnit() {
-	case "cm3": // TODO: these strings may need correcting I tried guessing them
-		multiplier = 1 / 1_000_000
+	case "cm3":
+		multiplier = 1.0 / 1_000
 	case "m3":
-		fallthrough
+		multiplier = 1000
 	case "litres":
 		fallthrough
 	default:

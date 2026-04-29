@@ -19,8 +19,8 @@ var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/fie
 goog.object.extend(proto, google_protobuf_field_mask_pb);
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
-var types_change_pb = require('@smart-core-os/sc-api-grpc-web/types/change_pb.js');
-goog.object.extend(proto, types_change_pb);
+var smartcore_bos_types_v1_change_pb = require('../../../../smartcore/bos/types/v1/change_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_change_pb);
 goog.exportSymbol('proto.smartcore.bos.services.v1.ConfigureServiceRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.services.v1.CreateServiceRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.services.v1.DeleteServiceRequest', null, global);
@@ -3444,7 +3444,7 @@ proto.smartcore.bos.services.v1.PullServicesResponse.Change.deserializeBinaryFro
       msg.setName(value);
       break;
     case 2:
-      var value = /** @type {!proto.smartcore.types.ChangeType} */ (reader.readEnum());
+      var value = /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (reader.readEnum());
       msg.setType(value);
       break;
     case 3:
@@ -3551,16 +3551,16 @@ proto.smartcore.bos.services.v1.PullServicesResponse.Change.prototype.setName = 
 
 
 /**
- * optional smartcore.types.ChangeType type = 2;
- * @return {!proto.smartcore.types.ChangeType}
+ * optional smartcore.bos.types.v1.ChangeType type = 2;
+ * @return {!proto.smartcore.bos.types.v1.ChangeType}
  */
 proto.smartcore.bos.services.v1.PullServicesResponse.Change.prototype.getType = function() {
-  return /** @type {!proto.smartcore.types.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+  return /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
 };
 
 
 /**
- * @param {!proto.smartcore.types.ChangeType} value
+ * @param {!proto.smartcore.bos.types.v1.ChangeType} value
  * @return {!proto.smartcore.bos.services.v1.PullServicesResponse.Change} returns this
  */
 proto.smartcore.bos.services.v1.PullServicesResponse.Change.prototype.setType = function(value) {

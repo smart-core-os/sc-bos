@@ -11,19 +11,19 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/system/publications/config"
 	"github.com/smart-core-os/sc-bos/pkg/system/publications/pgxpublications"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/publicationpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 var Factory factory
 
 type factory struct{}
 
-func (_ factory) New(services system.Services) service.Lifecycle {
+func (factory) New(services system.Services) service.Lifecycle {
 	return NewSystem(services)
 }
 
@@ -77,7 +77,10 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		// Note, ctx in cancelled each time config is updated (and on stop) because we use MonoApply in NewSystem
 		announcer := s.announcer.Replace(ctx)
-		announcer.Announce(s.name, node.HasTrait(trait.Publication, node.WithClients(publicationpb.WrapApi(server))))
+		announcer.Announce(s.name,
+			node.HasServer(publicationpb.RegisterPublicationApiServer, publicationpb.PublicationApiServer(server)),
+			node.HasTrait(trait.Publication),
+		)
 	default:
 		return fmt.Errorf("unsuported storage type %s", cfg.Storage.Type)
 	}

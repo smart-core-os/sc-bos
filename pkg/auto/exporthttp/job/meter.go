@@ -8,8 +8,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	sctime "github.com/smart-core-os/sc-api/go/types/time"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 )
 
 type listMeterReadingFn func(ctx context.Context, in *meterpb.ListMeterReadingHistoryRequest, opts ...grpc.CallOption) (*meterpb.ListMeterReadingHistoryResponse, error)
@@ -26,7 +26,7 @@ func getRecordsByTime(ctx context.Context, logger *zap.Logger, historyFn listMet
 	}
 
 	if len(resp.GetMeterReadingRecords()) == 0 {
-		logger.Error("no records found in earliest", zap.String("meter", meter), zap.Time("start", start))
+		logger.Warn("no records found in earliest", zap.String("meter", meter), zap.Time("start", start))
 		return earliest, latest, nil
 	}
 
@@ -39,7 +39,7 @@ func getRecordsByTime(ctx context.Context, logger *zap.Logger, historyFn listMet
 	}
 
 	if len(resp.GetMeterReadingRecords()) == 0 {
-		logger.Error("no records found in latest", zap.String("meter", meter), zap.Time("end", now))
+		logger.Warn("no records found in latest", zap.String("meter", meter), zap.Time("end", now))
 		return earliest, earliest, nil // make sure this resolves consumption to 0 by returning < earliest, earliest, nil >
 	}
 
@@ -55,7 +55,7 @@ func processMeterRecords(multiplier float32, earliest, latest *meterpb.MeterRead
 func getLastReadingBefore(ctx context.Context, meter string, t time.Time, historyFn listMeterReadingFn) (*meterpb.ListMeterReadingHistoryResponse, error) {
 	return historyFn(ctx, &meterpb.ListMeterReadingHistoryRequest{
 		Name: meter,
-		Period: &sctime.Period{
+		Period: &timepb.Period{
 			EndTime: timestamppb.New(t),
 		},
 		PageSize: 1,

@@ -17,10 +17,10 @@ var global = globalThis;
 
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
-var traits_metadata_pb = require('@smart-core-os/sc-api-grpc-web/traits/metadata_pb.js');
-goog.object.extend(proto, traits_metadata_pb);
-var types_change_pb = require('@smart-core-os/sc-api-grpc-web/types/change_pb.js');
-goog.object.extend(proto, types_change_pb);
+var smartcore_bos_metadata_v1_metadata_pb = require('../../../../smartcore/bos/metadata/v1/metadata_pb.js');
+goog.object.extend(proto, smartcore_bos_metadata_v1_metadata_pb);
+var smartcore_bos_types_v1_change_pb = require('../../../../smartcore/bos/types/v1/change_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_change_pb);
 goog.exportSymbol('proto.smartcore.bos.hub.v1.EnrollHubNodeRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.hub.v1.ForgetHubNodeRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.hub.v1.ForgetHubNodeResponse', null, global);
@@ -580,7 +580,7 @@ proto.smartcore.bos.hub.v1.HubNodeInspection.prototype.toObject = function(opt_i
  */
 proto.smartcore.bos.hub.v1.HubNodeInspection.toObject = function(includeInstance, msg) {
   var f, obj = {
-metadata: (f = msg.getMetadata()) && traits_metadata_pb.Metadata.toObject(includeInstance, f),
+metadata: (f = msg.getMetadata()) && smartcore_bos_metadata_v1_metadata_pb.Metadata.toObject(includeInstance, f),
 publicCertsList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f
   };
 
@@ -619,8 +619,8 @@ proto.smartcore.bos.hub.v1.HubNodeInspection.deserializeBinaryFromReader = funct
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new traits_metadata_pb.Metadata;
-      reader.readMessage(value,traits_metadata_pb.Metadata.deserializeBinaryFromReader);
+      var value = new smartcore_bos_metadata_v1_metadata_pb.Metadata;
+      reader.readMessage(value,smartcore_bos_metadata_v1_metadata_pb.Metadata.deserializeBinaryFromReader);
       msg.setMetadata(value);
       break;
     case 2:
@@ -661,7 +661,7 @@ proto.smartcore.bos.hub.v1.HubNodeInspection.serializeBinaryToWriter = function(
     writer.writeMessage(
       1,
       f,
-      traits_metadata_pb.Metadata.serializeBinaryToWriter
+      smartcore_bos_metadata_v1_metadata_pb.Metadata.serializeBinaryToWriter
     );
   }
   f = message.getPublicCertsList();
@@ -675,17 +675,17 @@ proto.smartcore.bos.hub.v1.HubNodeInspection.serializeBinaryToWriter = function(
 
 
 /**
- * optional smartcore.traits.Metadata metadata = 1;
- * @return {?proto.smartcore.traits.Metadata}
+ * optional smartcore.bos.metadata.v1.Metadata metadata = 1;
+ * @return {?proto.smartcore.bos.metadata.v1.Metadata}
  */
 proto.smartcore.bos.hub.v1.HubNodeInspection.prototype.getMetadata = function() {
-  return /** @type{?proto.smartcore.traits.Metadata} */ (
-    jspb.Message.getWrapperField(this, traits_metadata_pb.Metadata, 1));
+  return /** @type{?proto.smartcore.bos.metadata.v1.Metadata} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_metadata_v1_metadata_pb.Metadata, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.traits.Metadata|undefined} value
+ * @param {?proto.smartcore.bos.metadata.v1.Metadata|undefined} value
  * @return {!proto.smartcore.bos.hub.v1.HubNodeInspection} returns this
 */
 proto.smartcore.bos.hub.v1.HubNodeInspection.prototype.setMetadata = function(value) {
@@ -1801,7 +1801,7 @@ proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change.deserializeBinaryFromRead
     var field = reader.getFieldNumber();
     switch (field) {
     case 2:
-      var value = /** @type {!proto.smartcore.types.ChangeType} */ (reader.readEnum());
+      var value = /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (reader.readEnum());
       msg.setType(value);
       break;
     case 3:
@@ -1883,16 +1883,16 @@ proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change.serializeBinaryToWriter =
 
 
 /**
- * optional smartcore.types.ChangeType type = 2;
- * @return {!proto.smartcore.types.ChangeType}
+ * optional smartcore.bos.types.v1.ChangeType type = 2;
+ * @return {!proto.smartcore.bos.types.v1.ChangeType}
  */
 proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change.prototype.getType = function() {
-  return /** @type {!proto.smartcore.types.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+  return /** @type {!proto.smartcore.bos.types.v1.ChangeType} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
 };
 
 
 /**
- * @param {!proto.smartcore.types.ChangeType} value
+ * @param {!proto.smartcore.bos.types.v1.ChangeType} value
  * @return {!proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change} returns this
  */
 proto.smartcore.bos.hub.v1.PullHubNodesResponse.Change.prototype.setType = function(value) {

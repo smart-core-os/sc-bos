@@ -20,7 +20,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/pass"
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
 	"github.com/smart-core-os/sc-bos/pkg/proto/tenantpb"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 )
 
 //go:embed schema.sql
@@ -60,7 +60,6 @@ func NewServerFromPool(ctx context.Context, pool *pgxpool.Pool, opts ...Option) 
 var (
 	errDatabase       = status.Error(codes.Internal, "database transaction failed")
 	errTenantNotFound = status.Error(codes.NotFound, "tenant not found")
-	errSecretNotFound = status.Error(codes.NotFound, "secret not found")
 )
 
 type Server struct {

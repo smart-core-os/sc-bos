@@ -15,7 +15,6 @@ import (
 type mockPullServer struct {
 	ctx     context.Context
 	changes chan *meterpb.PullMeterReadingsResponse
-	mtx     sync.Mutex
 }
 
 func (m *mockPullServer) SetHeader(md metadata.MD) error {
@@ -58,16 +57,6 @@ type timeInterceptor struct {
 
 func (t *timeInterceptor) now() time.Time {
 	return t.base.Add(t.step * time.Duration(t.current))
-}
-
-func (t *timeInterceptor) time() time.Time {
-	ti := t.base.Add(t.step * time.Duration(t.current))
-	t.current++
-	return ti
-}
-
-func (t *timeInterceptor) from(index int) time.Time {
-	return t.base.Add(t.step * time.Duration(index))
 }
 
 type event struct {

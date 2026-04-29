@@ -5,9 +5,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_accesspb "github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/access/config"
@@ -39,13 +38,16 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	if len(cfg.AccessPoints) > 0 {
 		group := &Group{
-			client: gen_accesspb.NewAccessApiClient(f.clients.ClientConn()),
+			client: accesspb.NewAccessApiClient(f.clients.ClientConn()),
 			names:  cfg.AccessPoints,
 			logger: logger,
 		}
 
 		f.devices.Add(cfg.AccessPoints...)
-		announce.Announce(cfg.Name, node.HasTrait(accesspb.TraitName, node.WithClients(gen_accesspb.WrapApi(group))))
+		announce.Announce(cfg.Name,
+			node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(group)),
+			node.HasTrait(accesspb.TraitName),
+		)
 	}
 
 	return nil

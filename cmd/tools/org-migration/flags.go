@@ -16,7 +16,7 @@ func (m *multiValue) String() string {
 
 func (m *multiValue) Set(value string) error {
 	// Split by comma and append each non-empty value
-	for _, v := range strings.Split(value, ",") {
+	for v := range strings.SplitSeq(value, ",") {
 		v = strings.TrimSpace(v)
 		if v != "" {
 			*m = append(*m, v)
@@ -141,7 +141,7 @@ func parseProjectSpecs(projects []string) []ProjectSpec {
 
 func parseExtensions(typesStr string) map[string]bool {
 	extensions := make(map[string]bool)
-	for _, ext := range strings.Split(typesStr, ",") {
+	for ext := range strings.SplitSeq(typesStr, ",") {
 		ext = strings.TrimSpace(ext)
 		if ext != "" {
 			extensions[ext] = true

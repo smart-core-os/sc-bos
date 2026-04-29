@@ -67,10 +67,11 @@
 <script setup>
 import {newActionTracker} from '@/api/resource';
 import {deleteSecret, listSecrets, secretToObject} from '@/api/ui/tenant';
-import {HOUR, useNow} from '@/components/now.js';
+import {useNow} from '@/components/now.js';
 import {useErrorStore} from '@/components/ui-error/error';
 import useAuthSetup from '@/composables/useAuthSetup';
 import DeleteConfirmationDialog from '@/routes/auth/third-party/components/DeleteConfirmationDialog.vue';
+import {HOUR} from '@/util/date.js';
 import {compareDesc, formatDistance} from 'date-fns';
 import {computed, onMounted, onUnmounted, reactive, watch} from 'vue';
 import NewSecretForm from './NewSecretForm.vue';

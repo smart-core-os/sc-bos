@@ -24,7 +24,7 @@
         <span class="text-title text-center">External<br>Temperature</span>
       </div>
       <circular-gauge
-          v-if="indoorHumidity > 0"
+          v-if="!isNullOrUndef(indoorHumidity)"
           :value="indoorHumidity"
           :color="props.gaugeColor"
           :min="0"
@@ -39,7 +39,7 @@
         </template>
       </circular-gauge>
       <circular-gauge
-          v-if="soundPressureLevel > 0"
+          v-if="!isNullOrUndef(props.soundSensor) && !isNullOrUndef(soundPressureLevel)"
           :value="soundPressureLevel"
           :color="props.gaugeColor"
           :min="0"

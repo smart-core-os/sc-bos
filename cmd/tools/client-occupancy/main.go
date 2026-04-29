@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/client"
 )
 
@@ -41,11 +41,11 @@ func run() error {
 	log.Printf("dialled")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	em := traits.NewOccupancySensorApiClient(conn)
+	em := occupancysensorpb.NewOccupancySensorApiClient(conn)
 
 	get := func(c context.Context, name string) error {
 		log.Printf("GetOccupancy %s", name)
-		res, err := em.GetOccupancy(ctx, &traits.GetOccupancyRequest{Name: name})
+		res, err := em.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{Name: name})
 		if err != nil {
 			return err
 		}
@@ -55,7 +55,7 @@ func run() error {
 
 	pull := func(c context.Context, name string) error {
 		log.Printf("PullOccupancy %s", name)
-		stream, err := em.PullOccupancy(ctx, &traits.PullOccupancyRequest{Name: name})
+		stream, err := em.PullOccupancy(ctx, &occupancysensorpb.PullOccupancyRequest{Name: name})
 		if err != nil {
 			return err
 		}

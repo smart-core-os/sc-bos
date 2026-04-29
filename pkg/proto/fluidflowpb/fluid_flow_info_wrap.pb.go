@@ -3,11 +3,12 @@
 package fluidflowpb
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapInfo	adapts a FluidFlowInfoServer	and presents it as a FluidFlowInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server FluidFlowInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(FluidFlowInfo_ServiceDesc, server)
 	client := NewFluidFlowInfoClient(conn)

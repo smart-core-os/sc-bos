@@ -2,17 +2,17 @@ import * as jspb from 'google-protobuf'
 
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
-import * as types_unit_pb from '@smart-core-os/sc-api-grpc-web/types/unit_pb'; // proto import: "types/unit.proto"
+import * as smartcore_bos_types_v1_unit_pb from '../../../../smartcore/bos/types/v1/unit_pb'; // proto import: "smartcore/bos/types/v1/unit.proto"
 
 
 export class Temperature extends jspb.Message {
-  getSetPoint(): types_unit_pb.Temperature | undefined;
-  setSetPoint(value?: types_unit_pb.Temperature): Temperature;
+  getSetPoint(): smartcore_bos_types_v1_unit_pb.Temperature | undefined;
+  setSetPoint(value?: smartcore_bos_types_v1_unit_pb.Temperature): Temperature;
   hasSetPoint(): boolean;
   clearSetPoint(): Temperature;
 
-  getMeasured(): types_unit_pb.Temperature | undefined;
-  setMeasured(value?: types_unit_pb.Temperature): Temperature;
+  getMeasured(): smartcore_bos_types_v1_unit_pb.Temperature | undefined;
+  setMeasured(value?: smartcore_bos_types_v1_unit_pb.Temperature): Temperature;
   hasMeasured(): boolean;
   clearMeasured(): Temperature;
 
@@ -26,8 +26,8 @@ export class Temperature extends jspb.Message {
 
 export namespace Temperature {
   export type AsObject = {
-    setPoint?: types_unit_pb.Temperature.AsObject;
-    measured?: types_unit_pb.Temperature.AsObject;
+    setPoint?: smartcore_bos_types_v1_unit_pb.Temperature.AsObject;
+    measured?: smartcore_bos_types_v1_unit_pb.Temperature.AsObject;
   };
 }
 

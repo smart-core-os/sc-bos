@@ -1,0 +1,35 @@
+Tests special remaps: time, masks, cmp, and minibus.
+expected_changes: 1
+
+-- input/example.go --
+package example
+
+import (
+	"github.com/smart-core-os/sc-golang/internal/minibus"
+	"github.com/smart-core-os/sc-golang/pkg/cmp"
+	"github.com/smart-core-os/sc-golang/pkg/masks"
+	"github.com/smart-core-os/sc-golang/pkg/time"
+)
+
+var (
+	_ = minibus.Bus{}
+	_ = cmp.Message{}
+	_ = masks.FieldMask{}
+	_ = time.Clock{}
+)
+-- output/example.go --
+package example
+
+import (
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
+	"github.com/smart-core-os/sc-bos/pkg/util/time"
+)
+
+var (
+	_ = minibus.Bus{}
+	_ = cmp.Message{}
+	_ = masks.FieldMask{}
+	_ = time.Clock{}
+)

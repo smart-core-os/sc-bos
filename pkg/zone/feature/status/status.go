@@ -5,9 +5,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_statuspb "github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/status/config"
@@ -38,7 +37,7 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 	logger := f.logger
 
 	if len(cfg.StatusLogs) > 0 || cfg.StatusLogAll {
-		client := gen_statuspb.NewStatusApiClient(f.clients.ClientConn())
+		client := statuspb.NewStatusApiClient(f.clients.ClientConn())
 
 		f.devices.Add(cfg.StatusLogs...)
 		if cfg.StatusLogAll {
@@ -58,7 +57,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 						names:  names,
 						logger: logger,
 					}
-					announce.Announce(cfg.Name, node.HasTrait(statuspb.TraitName, node.WithClients(gen_statuspb.WrapApi(group))))
+					announce.Announce(cfg.Name,
+						node.HasServer(statuspb.RegisterStatusApiServer, statuspb.StatusApiServer(group)),
+						node.HasTrait(statuspb.TraitName),
+					)
 				}
 			}()
 		} else {
@@ -67,7 +69,10 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 				names:  cfg.StatusLogs,
 				logger: logger,
 			}
-			announce.Announce(cfg.Name, node.HasTrait(statuspb.TraitName, node.WithClients(gen_statuspb.WrapApi(group))))
+			announce.Announce(cfg.Name,
+				node.HasServer(statuspb.RegisterStatusApiServer, statuspb.StatusApiServer(group)),
+				node.HasTrait(statuspb.TraitName),
+			)
 		}
 	}
 

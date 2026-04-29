@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package smartcore.bos.brightnesssensor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/types/v1/info.proto";
+import "smartcore/bos/types/v1/number.proto";
+
+// BrightnessSensorApi reports on the measured ambient brightness for a space.
+service BrightnessSensorApi {
+  // GetAmbientBrightness returns the current brightness level as measured by the device.
+  rpc GetAmbientBrightness (GetAmbientBrightnessRequest) returns (AmbientBrightness);
+  // PullAmbientBrightness returns a stream of brightness changes as the device measures them.
+  rpc PullAmbientBrightness (PullAmbientBrightnessRequest) returns (stream PullAmbientBrightnessResponse);
+}
+
+// Describes the capabilities of a specific named device with respect to this trait.
+service BrightnessSensorInfo {
+  // Get information about how a named device implements AmbientBrightness measurements
+  rpc DescribeAmbientBrightness (DescribeAmbientBrightnessRequest) returns (AmbientBrightnessSupport);
+}
+
+// AmbientBrightness records the light level measured by a device.
+message AmbientBrightness {
+  // Brightness measured in LUX
+  float brightness_lux = 1;
+}
+
+// AmbientBrightnessSupport describes the capabilities of devices implementing this trait
+message AmbientBrightnessSupport {
+  // How a named device supports read/pull apis
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
+  // The range of values the device is capable of reporting.
+  smartcore.bos.types.v1.FloatBounds brightness_lux = 2;
+}
+
+message GetAmbientBrightnessRequest {
+  // The name for the device.
+  string name = 1;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullAmbientBrightnessRequest {
+  // The name for the device.
+  string name = 1;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 2;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 3;
+}
+
+message PullAmbientBrightnessResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    // The name for the device that changed
+    string name = 1;
+    AmbientBrightness ambient_brightness = 2;
+    // when the change occurred
+    google.protobuf.Timestamp change_time = 3;
+  }
+}
+
+message DescribeAmbientBrightnessRequest {
+  // The name of the device
+  string name = 1;
+}

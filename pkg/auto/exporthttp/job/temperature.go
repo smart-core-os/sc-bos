@@ -9,14 +9,14 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/types"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 )
 
 // TemperatureJob gets average air temperature in Celsius at current point in time
 type TemperatureJob struct {
 	BaseJob
-	client  traits.AirTemperatureApiClient
+	client  airtemperaturepb.AirTemperatureApiClient
 	Sensors []string
 }
 
@@ -27,11 +27,11 @@ func (t *TemperatureJob) Do(ctx context.Context, sendFn sender) error {
 	for _, sensor := range t.Sensors {
 		cctx, cancel := context.WithTimeout(ctx, t.Timeout.Or(defaultTimeout))
 
-		resp, err := t.client.GetAirTemperature(cctx, &traits.GetAirTemperatureRequest{Name: sensor})
+		resp, err := t.client.GetAirTemperature(cctx, &airtemperaturepb.GetAirTemperatureRequest{Name: sensor})
 		cancel()
 
 		if err != nil {
-			t.Logger.Error("getting air temperature", zap.String("sensor", sensor), zap.Error(err))
+			t.Logger.Warn("getting air temperature", zap.String("sensor", sensor), zap.Error(err))
 			continue
 		}
 		count++

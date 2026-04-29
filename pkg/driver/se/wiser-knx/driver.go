@@ -7,14 +7,13 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
-	"github.com/smart-core-os/sc-golang/pkg/trait/modepb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 const DriverName = "se-wiser-knx"
@@ -81,44 +80,52 @@ func (d *Driver) applyConfig(ctx context.Context, cfg Config) error {
 			switch t {
 			case "light":
 				l := lightpb.NewModel()
-				c := lightpb.WrapApi(lightServer{
-					LightApiServer: lightpb.NewModelServer(l),
-					client:         d.client,
-					device:         &_dev,
-					logger:         d.logger.With(zap.String("name", dev.Name)),
-				})
-				announcer.Announce(dev.Name, node.HasTrait(trait.Light, node.WithClients(c)))
+				announcer.Announce(
+					dev.Name,
+					node.HasServer(
+						lightpb.RegisterLightApiServer, lightpb.LightApiServer(
+							lightServer{
+								LightApiServer: lightpb.NewModelServer(l),
+								client:         d.client,
+								device:         &_dev,
+								logger:         d.logger.With(zap.String("name", dev.Name)),
+							},
+						),
+					),
+					node.HasTrait(trait.Light),
+				)
 
 				d.lightsByAddress[addr] = l
 			case "override":
-				modes := &traits.Modes{
-					Modes: []*traits.Modes_Mode{
-						&traits.Modes_Mode{
+				modes := &modepb.Modes{
+					Modes: []*modepb.Modes_Mode{
+						&modepb.Modes_Mode{
 							Name:   "lighting.mode",
-							Values: []*traits.Modes_Value{{Name: "auto"}, {Name: "manual"}},
+							Values: []*modepb.Modes_Value{{Name: "auto"}, {Name: "manual"}},
 						},
 					},
 				}
 
 				modeModel := modepb.NewModelModes(modes)
 				s := &modeInfoServer{
-					Modes: &traits.ModesSupport{
-						ModeValuesSupport: &types.ResourceSupport{
+					Modes: &modepb.ModesSupport{
+						ModeValuesSupport: &typespb.ResourceSupport{
 							Readable: true, Writable: true, Observable: true,
 						},
 						AvailableModes: modes,
 					},
 				}
 
-				announcer.Announce(dev.Name, node.HasTrait(trait.Mode, node.WithClients(
-					modepb.WrapApi(&modeServer{
+				announcer.Announce(dev.Name,
+					node.HasServer(modepb.RegisterModeApiServer, modepb.ModeApiServer(&modeServer{
 						ModeApiServer: modepb.NewModelServer(modeModel),
 						client:        d.client,
 						device:        &_dev,
 						logger:        d.logger.With(zap.String("name", dev.Name)),
-					}),
-					modepb.WrapInfo(s),
-				)))
+					})),
+					node.HasServer(modepb.RegisterModeInfoServer, modepb.ModeInfoServer(s)),
+					node.HasTrait(trait.Mode),
+				)
 
 				d.modesByAddress[addr] = modeModel
 			}
@@ -159,7 +166,7 @@ func (d *Driver) doPoll() {
 		if dev, ok := d.lightsByAddress[obj.Address]; ok {
 			// update model brightness value for that device
 			lvl := obj.Data.(float64)
-			b := &traits.Brightness{
+			b := &lightpb.Brightness{
 				LevelPercent: float32(lvl),
 			}
 			_, err = dev.UpdateBrightness(b)
@@ -174,7 +181,7 @@ func (d *Driver) doPoll() {
 			} else {
 				modeStr = "auto"
 			}
-			m := &traits.ModeValues{
+			m := &modepb.ModeValues{
 				Values: map[string]string{"lighting.mode": modeStr},
 			}
 			_, err = dev.UpdateModeValues(m)
@@ -186,13 +193,13 @@ func (d *Driver) doPoll() {
 }
 
 type lightServer struct {
-	traits.LightApiServer
+	lightpb.LightApiServer
 	client *Client
 	device *Device
 	logger *zap.Logger
 }
 
-func (l lightServer) UpdateBrightness(ctx context.Context, req *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
+func (l lightServer) UpdateBrightness(ctx context.Context, req *lightpb.UpdateBrightnessRequest) (*lightpb.Brightness, error) {
 	err := SetValue(l.client, l.device.Addresses["light"], fmt.Sprintf("%f", req.Brightness.LevelPercent))
 	if err != nil {
 		return nil, err
@@ -206,22 +213,22 @@ func (l lightServer) UpdateBrightness(ctx context.Context, req *traits.UpdateBri
 }
 
 type modeInfoServer struct {
-	traits.UnimplementedModeInfoServer
-	Modes *traits.ModesSupport
+	modepb.UnimplementedModeInfoServer
+	Modes *modepb.ModesSupport
 }
 
-func (i *modeInfoServer) DescribeModes(context.Context, *traits.DescribeModesRequest) (*traits.ModesSupport, error) {
+func (i *modeInfoServer) DescribeModes(context.Context, *modepb.DescribeModesRequest) (*modepb.ModesSupport, error) {
 	return i.Modes, nil
 }
 
 type modeServer struct {
-	traits.ModeApiServer
+	modepb.ModeApiServer
 	client *Client
 	device *Device
 	logger *zap.Logger
 }
 
-func (m *modeServer) UpdateModeValues(ctx context.Context, req *traits.UpdateModeValuesRequest) (*traits.ModeValues, error) {
+func (m *modeServer) UpdateModeValues(ctx context.Context, req *modepb.UpdateModeValuesRequest) (*modepb.ModeValues, error) {
 	val := req.ModeValues.Values["lighting.mode"] == "manual"
 
 	err := SetValue(m.client, m.device.Addresses["override"], val)

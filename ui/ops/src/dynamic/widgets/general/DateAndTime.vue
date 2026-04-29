@@ -6,7 +6,8 @@
 </template>
 
 <script setup>
-import {SECOND, useNow} from '@/components/now.js';
+import {useNow} from '@/components/now.js';
+import {SECOND} from '@/util/date.js';
 import {computed} from 'vue';
 
 const {now} = useNow(SECOND);

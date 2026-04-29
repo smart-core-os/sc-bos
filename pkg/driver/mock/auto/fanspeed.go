@@ -4,11 +4,10 @@ import (
 	"context"
 	"time"
 
-	"golang.org/x/exp/rand"
+	"math/rand/v2"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-golang/pkg/trait/fanspeedpb"
 )
 
 func FanSpeed(model *fanspeedpb.Model, presets ...fanspeedpb.Preset) service.Lifecycle {
@@ -16,8 +15,8 @@ func FanSpeed(model *fanspeedpb.Model, presets ...fanspeedpb.Preset) service.Lif
 		go func() {
 			timer := time.NewTimer((30 * time.Second) + time.Duration(rand.Float32())*time.Minute)
 			for {
-				state := &traits.FanSpeed{
-					Direction: oneOf(traits.FanSpeed_FORWARD, traits.FanSpeed_BACKWARD),
+				state := &fanspeedpb.FanSpeed{
+					Direction: oneOf(fanspeedpb.FanSpeed_FORWARD, fanspeedpb.FanSpeed_BACKWARD),
 				}
 				if len(presets) > 0 {
 					// pick a new value from the presets

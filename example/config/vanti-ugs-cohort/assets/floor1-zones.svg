@@ -1,0 +1,8 @@
+<svg width="295" height="619" viewBox="0 0 295 619" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="floor1-zones">
+<path id="service" d="M146 16H16.5V299.5H146V16Z" fill="white" fill-opacity="0.01"/>
+<path id="open-plan" d="M158 408.5V111H238V146H279V502H158V465H117V408.5H158Z" fill="white" fill-opacity="0.01"/>
+<rect id="printer-room" x="14" y="309" width="133" height="90" fill="white" fill-opacity="0.01"/>
+<rect id="bank" x="16" y="477" width="131" height="127" fill="white" fill-opacity="0.01"/>
+</g>
+</svg>

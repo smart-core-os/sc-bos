@@ -1,25 +1,30 @@
 package sim
 
 import (
-	"crypto/sha256"
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
-	"strings"
+	"time"
 
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
-	queries2 "github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 // CheckInResponse is returned from the check-in endpoint.
 type CheckInResponse struct {
-	CheckIn      NodeCheckIn   `json:"checkIn"`
+	CheckIn      CheckInAck    `json:"checkIn"`
 	LatestConfig *LatestConfig `json:"latestConfig,omitempty"`
+}
+
+// CheckInAck is the acknowledgement portion of the check-in response.
+type CheckInAck struct {
+	NodeID      int64     `json:"nodeId,string"`
+	CheckInTime time.Time `json:"checkInTime"`
 }
 
 type LatestConfig struct {
@@ -36,49 +41,26 @@ type CheckInRequest struct {
 
 // CheckInInstallingDeployment references a deployment being installed, optionally with error and attempt info.
 type CheckInInstallingDeployment struct {
-	ID       int64  `json:"id"`
+	ID       int64  `json:"id,string"`
 	Error    string `json:"error,omitempty"`
 	Attempts int    `json:"attempts,omitempty"`
 }
 
 // CheckInDeploymentRef references a deployment by ID.
 type CheckInDeploymentRef struct {
-	ID int64 `json:"id"`
+	ID int64 `json:"id,string"`
 }
 
 // CheckInFailedDeployment reports a deployment that failed, triggering a FAILED status update.
 type CheckInFailedDeployment struct {
-	ID     int64  `json:"id"`
+	ID     int64  `json:"id,string"`
 	Reason string `json:"reason,omitempty"`
-}
-
-// parseBearerSecret extracts a bearer token from the Authorization header,
-// base64-decodes it, and returns the SHA-256 hash of the decoded secret.
-func parseBearerSecret(r *http.Request) ([]byte, error) {
-	auth := r.Header.Get("Authorization")
-	if auth == "" {
-		return nil, errors.New("missing authorization header")
-	}
-	const prefix = "Bearer "
-	if !strings.HasPrefix(auth, prefix) {
-		return nil, errors.New("invalid authorization scheme")
-	}
-	token := auth[len(prefix):]
-	if token == "" {
-		return nil, errors.New("empty bearer token")
-	}
-	secret, err := base64.StdEncoding.DecodeString(token)
-	if err != nil {
-		return nil, errors.New("invalid base64 in bearer token")
-	}
-	hash := sha256.Sum256(secret)
-	return hash[:], nil
 }
 
 func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 	logger := s.loggerFor(r)
 
-	secretHash, err := parseBearerSecret(r)
+	nodeID, err := s.authenticateNode(r)
 	if err != nil {
 		writeError(w, errUnauthorized)
 		logger.Debug("check-in auth failed", zap.Error(err))
@@ -93,13 +75,13 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		checkIn       queries2.NodeCheckIn
-		deployment    queries2.Deployment
-		configVersion queries2.ConfigVersion
+		checkIn       queries.NodeCheckIn
+		deployment    queries.Deployment
+		configVersion queries.ConfigVersion
 		hasDeploy     bool
 	)
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
-		node, err := tx.GetNodeBySecretHash(r.Context(), secretHash)
+		node, err := tx.GetNode(r.Context(), nodeID)
 		if err != nil {
 			return err
 		}
@@ -108,16 +90,16 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			// auto-update deployment status to IN_PROGRESS when node reports it's installing, if it was PENDING before
 			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.InstallingDeployment.ID)
 			if errors.Is(err, sql.ErrNoRows) {
-				return errInvalidRequest
+				return fmt.Errorf("installing deployment %d: not found: %w", req.InstallingDeployment.ID, errInvalidRequest)
 			}
 			if err != nil {
 				return err
 			}
 			if row.NodeID != node.ID {
-				return errInvalidRequest
+				return fmt.Errorf("installing deployment %d: belongs to a different node: %w", req.InstallingDeployment.ID, errInvalidRequest)
 			}
 			if row.Status == statusPending {
-				_, err = tx.UpdateDeploymentStatus(r.Context(), queries2.UpdateDeploymentStatusParams{
+				_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
 					ID:     req.InstallingDeployment.ID,
 					Status: statusInProgress,
 				})
@@ -131,16 +113,16 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			// auto-update deployment status to COMPLETED if node reports its current version
 			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.CurrentDeployment.ID)
 			if errors.Is(err, sql.ErrNoRows) {
-				return errInvalidRequest
+				return fmt.Errorf("current deployment %d: not found: %w", req.CurrentDeployment.ID, errInvalidRequest)
 			}
 			if err != nil {
 				return err
 			}
 			if row.NodeID != node.ID {
-				return errInvalidRequest
+				return fmt.Errorf("current deployment %d: belongs to a different node: %w", req.CurrentDeployment.ID, errInvalidRequest)
 			}
 			if row.Status == statusInProgress {
-				_, err = tx.UpdateDeploymentStatus(r.Context(), queries2.UpdateDeploymentStatusParams{
+				_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
 					ID:     req.CurrentDeployment.ID,
 					Status: statusCompleted,
 				})
@@ -153,15 +135,15 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 		if req.FailedDeployment != nil {
 			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.FailedDeployment.ID)
 			if errors.Is(err, sql.ErrNoRows) {
-				return errInvalidRequest
+				return fmt.Errorf("failed deployment %d: not found: %w", req.FailedDeployment.ID, errInvalidRequest)
 			}
 			if err != nil {
 				return err
 			}
 			if row.NodeID != node.ID {
-				return errInvalidRequest
+				return fmt.Errorf("failed deployment %d: belongs to a different node: %w", req.FailedDeployment.ID, errInvalidRequest)
 			}
-			_, err = tx.UpdateDeploymentStatus(r.Context(), queries2.UpdateDeploymentStatusParams{
+			_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
 				ID:     req.FailedDeployment.ID,
 				Status: statusFailed,
 				Reason: nullString(req.FailedDeployment.Reason),
@@ -185,7 +167,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			installingError = req.InstallingDeployment.Error
 			installingAttempts = req.InstallingDeployment.Attempts
 		}
-		checkIn, err = tx.CreateNodeCheckIn(r.Context(), queries2.CreateNodeCheckInParams{
+		checkIn, err = tx.CreateNodeCheckIn(r.Context(), queries.CreateNodeCheckInParams{
 			NodeID:                       node.ID,
 			CurrentDeploymentID:          nullInt64(currentID),
 			InstallingDeploymentID:       nullInt64(installingID),
@@ -210,14 +192,13 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			// Node not found by secret hash — return 401 to avoid revealing existence
 			writeError(w, errUnauthorized)
-			logger.Debug("check-in with unknown secret hash")
+			logger.Debug("check-in for unknown node")
 			return
 		}
 		if errors.Is(err, errInvalidRequest) {
 			writeError(w, errInvalidRequest)
-			logger.Info("invalid check-in request")
+			logger.Info("invalid check-in request", zap.Error(err))
 			return
 		}
 		writeError(w, errInternal)
@@ -226,7 +207,10 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := CheckInResponse{
-		CheckIn: toNodeCheckIn(checkIn),
+		CheckIn: CheckInAck{
+			NodeID:      checkIn.NodeID,
+			CheckInTime: checkIn.CheckInTime,
+		},
 	}
 	if hasDeploy {
 		resp.LatestConfig = &LatestConfig{

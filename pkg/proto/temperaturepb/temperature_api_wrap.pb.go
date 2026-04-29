@@ -3,11 +3,12 @@
 package temperaturepb
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapApi	adapts a TemperatureApiServer	and presents it as a TemperatureApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server TemperatureApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(TemperatureApi_ServiceDesc, server)
 	client := NewTemperatureApiClient(conn)

@@ -12,5 +12,5 @@ const (
 
 type COV struct {
 	Method    COVMethod `json:"method,omitempty"`
-	PollDelay Duration  `json:"pollDelay,omitempty"`
+	PollDelay Duration  `json:"pollDelay"`
 }

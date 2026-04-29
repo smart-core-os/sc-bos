@@ -11,6 +11,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/smart-core-os/sc-bos/cmd/tools/scfix/internal/fixer"
@@ -58,6 +59,7 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 	needsTraitsImport := false
 
 	packageInfo := make(map[string]*packageWrapInfo)
+	var nodeLocalPkg string
 	for _, imp := range node.Imports {
 		path := strings.Trim(imp.Path.Value, `"`)
 
@@ -69,8 +71,8 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 			pkgName = parts[len(parts)-1]
 		}
 
-		if strings.Contains(path, "/sc-golang/pkg/trait/") ||
-			strings.Contains(path, "/sc-bos/pkg/gentrait/") ||
+		if strings.Contains(path, "/sc-bos/pkg/trait/") ||
+			strings.Contains(path, "/sc-bos/pkg/proto/") ||
 			path == "github.com/smart-core-os/sc-api/go/traits" ||
 			path == "github.com/smart-core-os/sc-bos/pkg/gen" {
 			packageInfo[pkgName] = &packageWrapInfo{
@@ -78,11 +80,21 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 				pkgName:    pkgName,
 			}
 		}
+
+		if path == "github.com/smart-core-os/sc-bos/pkg/node" {
+			nodeLocalPkg = pkgName
+		}
 	}
+
+	excludedCalls := collectExcludedCalls(node, nodeLocalPkg)
 
 	ast.Inspect(node, func(n ast.Node) bool {
 		callExpr, ok := n.(*ast.CallExpr)
 		if !ok {
+			return true
+		}
+
+		if excludedCalls[callExpr] {
 			return true
 		}
 
@@ -149,7 +161,7 @@ func processFile(ctx *fixer.Context, filename string) (int, error) {
 
 	if !ctx.DryRun {
 		if needsWrapImport {
-			ensureImport(node, "github.com/smart-core-os/sc-golang/pkg/wrap")
+			ensureImport(node, "github.com/smart-core-os/sc-bos/pkg/wrap")
 		}
 		if needsTraitsImport {
 			ensureImport(node, "github.com/smart-core-os/sc-api/go/traits")
@@ -215,13 +227,7 @@ func isSimpleWrapFunc(funcName string) bool {
 	}
 
 	aspects := []string{"Api", "Info", "History"}
-	for _, validAspect := range aspects {
-		if aspect == validAspect {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(aspects, aspect)
 }
 
 func getTraitPackageWrapInfo(pkgInfo *packageWrapInfo, funcName string) *wrapResult {
@@ -238,13 +244,11 @@ func getTraitPackageWrapInfo(pkgInfo *packageWrapInfo, funcName string) *wrapRes
 	var targetPkg string
 	var needsTraitsImport bool
 
-	if strings.Contains(pkgInfo.importPath, "/sc-golang/pkg/trait/") {
-		targetPkg = "traits"
-		needsTraitsImport = true
-	} else if pkgInfo.importPath == "github.com/smart-core-os/sc-api/go/traits" {
+	if strings.Contains(pkgInfo.importPath, "/sc-bos/pkg/trait/") ||
+		strings.Contains(pkgInfo.importPath, "/sc-bos/pkg/proto/") {
 		targetPkg = pkgInfo.pkgName
 		needsTraitsImport = false
-	} else if strings.Contains(pkgInfo.importPath, "/sc-bos/pkg/gentrait/") {
+	} else if pkgInfo.importPath == "github.com/smart-core-os/sc-api/go/traits" {
 		targetPkg = pkgInfo.pkgName
 		needsTraitsImport = false
 	} else {
@@ -287,8 +291,8 @@ type traitInfo struct {
 }
 
 func getTraitInfoFromPackage(importPath, pkgName string) *traitInfo {
-	if !strings.Contains(importPath, "/sc-golang/pkg/trait/") &&
-		!strings.Contains(importPath, "/sc-bos/pkg/gentrait/") &&
+	if !strings.Contains(importPath, "/sc-bos/pkg/trait/") &&
+		!strings.Contains(importPath, "/sc-bos/pkg/proto/") &&
 		importPath != "github.com/smart-core-os/sc-api/go/traits" {
 		return nil
 	}
@@ -296,8 +300,8 @@ func getTraitInfoFromPackage(importPath, pkgName string) *traitInfo {
 	parts := strings.Split(importPath, "/")
 	packageName := parts[len(parts)-1]
 
-	if strings.HasSuffix(packageName, "pb") {
-		packageName = strings.TrimSuffix(packageName, "pb")
+	if before, ok := strings.CutSuffix(packageName, "pb"); ok {
+		packageName = before
 	}
 
 	traitName := toPascalCase(packageName)
@@ -395,6 +399,84 @@ func toPascalCase(s string) string {
 		return strings.ToUpper(s[:1]) + s[1:]
 	}
 	return s
+}
+
+// nodeServiceUnwrapperFuncs are functions in pkg/node that accept wrap.ServiceUnwrapper arguments.
+// Wrap calls passed to these cannot be transformed because the replacement client types don't
+// implement wrap.ServiceUnwrapper.
+var nodeServiceUnwrapperFuncs = map[string]bool{
+	"WithClients":    true,
+	"WithOptClients": true,
+	"HasClient":      true,
+	"HasOptClient":   true,
+}
+
+// collectExcludedCalls returns the set of CallExpr nodes that should not be transformed.
+// A call is excluded when it is passed (directly or via a local variable assignment) as an
+// argument to node.WithClients / node.HasClient / node.WithOptClients / node.HasOptClient,
+// since those functions require wrap.ServiceUnwrapper which the replacement client types don't implement.
+func collectExcludedCalls(file *ast.File, nodeLocalPkg string) map[*ast.CallExpr]bool {
+	excluded := make(map[*ast.CallExpr]bool)
+	if nodeLocalPkg == "" {
+		return excluded
+	}
+
+	// varNames holds the names of local variables passed directly to ServiceUnwrapper functions.
+	varNames := make(map[string]bool)
+
+	// Pass 1: collect direct CallExpr args and variable names used as ServiceUnwrapper args.
+	ast.Inspect(file, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		pkg, ok := sel.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+		if pkg.Name != nodeLocalPkg || !nodeServiceUnwrapperFuncs[sel.Sel.Name] {
+			return true
+		}
+		for _, arg := range call.Args {
+			switch a := arg.(type) {
+			case *ast.CallExpr:
+				excluded[a] = true
+			case *ast.Ident:
+				varNames[a.Name] = true
+			}
+		}
+		return true
+	})
+
+	if len(varNames) == 0 {
+		return excluded
+	}
+
+	// Pass 2: find assignments of WrapXxx calls to any of the tracked variable names.
+	ast.Inspect(file, func(n ast.Node) bool {
+		assign, ok := n.(*ast.AssignStmt)
+		if !ok {
+			return true
+		}
+		for i, lhs := range assign.Lhs {
+			ident, ok := lhs.(*ast.Ident)
+			if !ok || !varNames[ident.Name] {
+				continue
+			}
+			if i < len(assign.Rhs) {
+				if call, ok := assign.Rhs[i].(*ast.CallExpr); ok {
+					excluded[call] = true
+				}
+			}
+		}
+		return true
+	})
+
+	return excluded
 }
 
 func ensureImport(file *ast.File, importPath string) {

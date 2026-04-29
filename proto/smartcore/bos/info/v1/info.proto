@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package smartcore.bos.info.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/infopb";
+
+import "smartcore/bos/types/v1/change.proto";
+
+// Allow exposing information about an endpoint related to devices.
+//
+// Deprecated: use the Parent trait for listing devices, use Metadata trait for display name.
+service Info {
+  // Get devices that this service knows about
+  rpc ListDevices (ListDevicesRequest) returns (ListDevicesResponse);
+
+  // Open a server stream that responds with changes to the set of devices described in the request
+  rpc PullDevices (PullDevicesRequest) returns (stream PullDevicesResponse);
+}
+
+message ListDevicesRequest {
+  // Only return devices this deep in the device -> device -> device tree. Default is unlimited depth, 1 means only
+  // return devices owned by the enclosing service.
+  int32 depth = 1;
+  // How many items should be returned. Default is 10, max is 100.
+  int32 page_size = 2;
+  // The next_page_token from the previous response
+  string page_token = 3;
+}
+
+message ListDevicesResponse {
+  // The current page of devices to satisfy the request
+  repeated Device devices = 1;
+  // Use in page_token to retrieve the next page
+  string next_page_token = 2;
+  // Total number of devices that would be returned if not splitting the response into pages.
+  int32 total_size = 3;
+}
+
+message PullDevicesRequest {
+  // Only return devices this deep in the device -> device -> device tree. Default is unlimited depth, 1 means only
+  // return devices owned by the enclosing service.
+  int32 depth = 1;
+  // if true, all existing devices will be sent down the stream before any updates.
+  bool sync = 2;
+}
+
+message PullDevicesResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    smartcore.bos.types.v1.ChangeType type = 1;
+    Device new_value = 2;
+    Device old_value = 3;
+  }
+}
+
+// Describes basic information about a device. Device hierarchy is loosely defined via the owner property
+message Device {
+  // the relative resource name for the device
+  string name = 1;
+  // List of traits the device has.
+  repeated Trait traits = 2;
+  // Owner of the device. This is the the device, supervisor, or area controller that is directly responsible for
+  // communication with the device, i.e. service requests should go through the owner.
+  Device owner = 3;
+  // Information used to connect to the device directly via gRPC. This must not be present if we are supposed to connect
+  // via the owner device. This may be present if direct communication is possible, even if owner is also set. Prefer
+  // Connecting via owner if possible.
+  GrpcClientOptions client = 4;
+  // Official name for the device
+  string title = 5;
+  // Readable name for the device
+  string display_name = 6;
+  // One or more paragraphs of text describing the device
+  string description = 7;
+
+  // arbitrary flags that can be applied to the device to encode additional information
+  map<string, string> labels = 8;
+}
+
+// describes a trait for the api. See the devices/traits apis for details of these.
+message Trait {
+  // Name of the trait service that is implemented. In the format package.Service excluding Api or other type suffix.
+  string name = 1;
+}
+
+// describes options relating to client connections
+message GrpcClientOptions {
+  // The host:port for the server
+  string authority = 1;
+  // PEM encoded client certificate for use with gRPC transport security
+  bytes clientCert = 2;
+  // PEM encoded client private key for use with gRPC transport security
+  bytes clientKey = 3;
+  // PEM encoded certificate chan representing the certificate authority for use with gRPC transport security
+  bytes clientCa = 4;
+}

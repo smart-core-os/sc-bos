@@ -3,11 +3,12 @@
 package enterleavesensorpb
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapHistory	adapts a EnterLeaveSensorHistoryServer	and presents it as a EnterLeaveSensorHistoryClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHistory(server EnterLeaveSensorHistoryServer) *HistoryWrapper {
 	conn := wrap.ServerToClient(EnterLeaveSensorHistory_ServiceDesc, server)
 	client := NewEnterLeaveSensorHistoryClient(conn)

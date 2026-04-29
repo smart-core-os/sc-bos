@@ -1,0 +1,173 @@
+syntax = "proto3";
+
+package smartcore.bos.booking.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/bookingpb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/types/time/v1/period.proto";
+import "smartcore/bos/types/time/v1/unit.proto";
+import "smartcore/bos/types/v1/change.proto";
+import "smartcore/bos/types/v1/info.proto";
+
+// The BookingApi defines an interface for interacting with bookable resources, for example rooms.
+// Bookings can be listed, edited, and created.
+service BookingApi {
+  // list bookings for a given bookable
+  rpc ListBookings (ListBookingsRequest) returns (ListBookingsResponse);
+
+  // check in an existing booking
+  rpc CheckInBooking (CheckInBookingRequest) returns (CheckInBookingResponse);
+  // check out an existing booking
+  rpc CheckOutBooking (CheckOutBookingRequest) returns (CheckOutBookingResponse);
+
+  // create a new booking
+  rpc CreateBooking (CreateBookingRequest) returns (CreateBookingResponse);
+  // update an existing booking
+  rpc UpdateBooking (UpdateBookingRequest) returns (UpdateBookingResponse);
+
+  // request updates to booking changes for a given bookable
+  rpc PullBookings (ListBookingsRequest) returns (stream PullBookingsResponse);
+}
+
+// Describes the capabilities of a specific named device with respect to this trait.
+service BookingInfo {
+  // Get information about how a named device implements Booking features
+  rpc DescribeBooking (DescribeBookingRequest) returns (BookingSupport);
+}
+
+message Booking {
+  // The name of the bookable (e.g. the resource name)
+  string bookable = 1;
+  // the unique identifier for this booking
+  string id = 2;
+  // the title of this booking
+  string title = 3;
+  // the name of the owner of this booking
+  string owner_name = 4;
+  // the time period this booking is for
+  smartcore.bos.types.time.v1.Period booked = 5;
+  // The time period this booking was checked in for.
+  // If this is absent, then no check in or check out has happened
+  // If check_in.start_time is absent, no check in has happened
+  // If check_in.end_time is absent, no check out has happened
+  smartcore.bos.types.time.v1.Period check_in = 6;
+  // If true, the booking does not require a check-in and one should not be expected.
+  // Defaults to false; check-in is required.
+  bool check_in_not_required = 7;
+}
+
+// BookingSupport describes the capabilities of devices implementing this trait
+message BookingSupport {
+  // How a named device supports read/write/pull apis
+  smartcore.bos.types.v1.ResourceSupport resource_support = 1;
+  // is check in supported, and how
+  CheckInSupport check_in_support = 2;
+  // is check out supported, and how
+  CheckInSupport check_out_support = 3;
+  // the supported time resolution for date time fields and queries
+  smartcore.bos.types.time.v1.Unit time_resolution = 4;
+
+  enum CheckInSupport {
+    // check in support is unknown
+    CHECK_IN_SUPPORT_UNSPECIFIED = 0;
+    // check in is not supported
+    NO_SUPPORT = 1;
+    // check in is supported as a state, without an associated time
+    STATE = 2;
+    // check in is supported with an associated time
+    TIME = 3;
+  }
+}
+
+message ListBookingsRequest {
+  // The name of the bookable (e.g. the resource name)
+  string name = 1;
+  // Specify the time period to return bookings for
+  // bookings are returned if they intersect this time period
+  smartcore.bos.types.time.v1.Period booking_intersects = 2;
+  // The state fields to fetch
+  google.protobuf.FieldMask read_mask = 3;
+  // When true the device will only send changes to the resource value.
+  // The default behaviour is to send the current value immediately followed by any updates as they happen.
+  bool updates_only = 4;
+}
+
+message ListBookingsResponse {
+  // the list of bookings for the given request
+  repeated Booking bookings = 1;
+}
+
+message CheckInBookingRequest {
+  // The name of the bookable (e.g. the resource name)
+  string name = 1;
+  // Which booking to check in
+  string booking_id = 2;
+  // The time the booking was checked-in. If omitted the server time will be used.
+  google.protobuf.Timestamp time = 3;
+}
+
+message CheckInBookingResponse {
+}
+
+message CheckOutBookingRequest {
+  // The name of the bookable (e.g. the resource name)
+  string name = 1;
+  // Which booking to check out
+  string booking_id = 2;
+  // The time the booking was checked-out. If omitted the server time will be used.
+  google.protobuf.Timestamp time = 3;
+}
+
+message CheckOutBookingResponse {
+}
+
+message CreateBookingRequest {
+  // The name of the bookable (e.g. the resource name)
+  string name = 1;
+  // the booking to add, the id field should not be set
+  Booking booking = 2;
+}
+
+message CreateBookingResponse {
+  // The created bookings' id
+  string booking_id = 1;
+}
+
+message UpdateBookingRequest {
+  // The name of the bookable (e.g. the resource name)
+  string name = 1;
+  // The new value of the booking to use, make sure id is set
+  Booking booking = 2;
+  // Which fields in the booking to update, any unsupported fields will be ignored, check the return value
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message UpdateBookingResponse {
+  // The new value of the booking
+  Booking booking = 1;
+}
+
+message PullBookingsResponse {
+  // the list of changes which have occurred
+  repeated Change changes = 1;
+
+  message Change {
+    // the name of the device that emitted this change
+    string name = 1;
+    // the type of change (e.g. ADD, UPDATE, etc...)
+    smartcore.bos.types.v1.ChangeType type = 2;
+    // the new value to use for ADD|UPDATE changes
+    Booking new_value = 3;
+    // the old value to use for UPDATE|REMOVE changes
+    Booking old_value = 4;
+    // when the change occurred
+    google.protobuf.Timestamp change_time = 5;
+  }
+}
+
+message DescribeBookingRequest {
+  // The name of the device
+  string name = 1;
+}

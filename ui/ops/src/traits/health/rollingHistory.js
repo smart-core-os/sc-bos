@@ -1,4 +1,4 @@
-import {MINUTE} from '@/components/now.js';
+import {MINUTE} from '@/util/date.js';
 import {computed, onScopeDispose, ref, toValue, watch} from 'vue';
 
 /**

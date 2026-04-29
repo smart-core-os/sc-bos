@@ -5,14 +5,14 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
 // BrightnessSensorPatches contributes patches for changing the state based on brightness sensor readings.
 type BrightnessSensorPatches struct {
 	name   deviceName
-	client traits.BrightnessSensorApiClient
+	client brightnesssensorpb.BrightnessSensorApiClient
 	logger *zap.Logger
 }
 
@@ -25,7 +25,7 @@ func (o *BrightnessSensorPatches) Subscribe(ctx context.Context, changes chan<- 
 }
 
 func (o *BrightnessSensorPatches) Pull(ctx context.Context, changes chan<- Patcher) error {
-	stream, err := o.client.PullAmbientBrightness(ctx, &traits.PullAmbientBrightnessRequest{Name: o.name})
+	stream, err := o.client.PullAmbientBrightness(ctx, &brightnesssensorpb.PullAmbientBrightnessRequest{Name: o.name})
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (o *BrightnessSensorPatches) Pull(ctx context.Context, changes chan<- Patch
 }
 
 func (o *BrightnessSensorPatches) Poll(ctx context.Context, changes chan<- Patcher) error {
-	res, err := o.client.GetAmbientBrightness(ctx, &traits.GetAmbientBrightnessRequest{Name: o.name})
+	res, err := o.client.GetAmbientBrightness(ctx, &brightnesssensorpb.GetAmbientBrightnessRequest{Name: o.name})
 	if err != nil {
 		return err
 	}
@@ -56,10 +56,10 @@ func (o *BrightnessSensorPatches) Poll(ctx context.Context, changes chan<- Patch
 	}
 }
 
-type pullAmbientBrightnessTransition traits.PullAmbientBrightnessResponse
+type pullAmbientBrightnessTransition brightnesssensorpb.PullAmbientBrightnessResponse
 
 func (o *pullAmbientBrightnessTransition) Patch(s *ReadState) {
-	r := (*traits.PullAmbientBrightnessResponse)(o)
+	r := (*brightnesssensorpb.PullAmbientBrightnessResponse)(o)
 
 	for _, change := range r.Changes {
 		s.AmbientBrightness[change.Name] = change.AmbientBrightness
@@ -68,7 +68,7 @@ func (o *pullAmbientBrightnessTransition) Patch(s *ReadState) {
 
 type getAmbientBrightnessPatcher struct {
 	name deviceName
-	res  *traits.AmbientBrightness
+	res  *brightnesssensorpb.AmbientBrightness
 }
 
 func (g getAmbientBrightnessPatcher) Patch(s *ReadState) {

@@ -3,11 +3,12 @@
 package rpc
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapBacnetDriverService	adapts a BacnetDriverServiceServer	and presents it as a BacnetDriverServiceClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapBacnetDriverService(server BacnetDriverServiceServer) *BacnetDriverServiceWrapper {
 	conn := wrap.ServerToClient(BacnetDriverService_ServiceDesc, server)
 	client := NewBacnetDriverServiceClient(conn)

@@ -2,9 +2,32 @@
   <v-card elevation="0">
     <v-card-title class="d-flex align-center pl-7">
       <span class="text-h4 font-weight-medium flex-grow-1">Lights</span>
+      <v-menu v-if="presets.length > 0" :close-on-content-click="true" location="top">
+        <template #activator="{ props: menuProps }">
+          <v-btn
+              v-bind="menuProps"
+              :disabled="blockActions"
+              size="small"
+              variant="tonal"
+              prepend-icon="mdi-playlist-check">
+            {{ currentPresetTitle || 'Presets' }}
+          </v-btn>
+        </template>
+        <v-list density="compact" class="presets-list">
+          <v-list-item
+              v-for="preset in presets"
+              :key="preset.name"
+              :active="preset.title === currentPresetTitle"
+              color="accent"
+              @click="setPreset(preset)">
+            <v-list-item-title>{{ preset.title || preset.name }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
       <v-switch
+          v-if="hasLightAutoSwitch"
           color="accent"
-          :disabled="!hasLightAutoSwitch || blockActions"
+          :disabled="blockActions"
           hide-details
           :model-value="lightIsAuto"
           inset
@@ -16,8 +39,8 @@
     </v-card-title>
     <v-card-text>
       <v-slider
-          track-color="primary"
-          track-fill-color="accent"
+          track-color="#0C0921"
+          track-fill-color="#5A0066"
           :disabled="!lightValue.value || blockActions"
           hide-details="auto"
           v-model="brightness">
@@ -35,7 +58,7 @@
 
 <script setup>
 import {closeResource, newActionTracker, newResourceValue} from '@/api/resource';
-import {pullBrightness, updateBrightness} from '@/api/sc/traits/light';
+import {describeBrightness, pullBrightness, updateBrightness} from '@/api/sc/traits/light';
 import {pullModeValues, updateModeValues} from '@/api/sc/traits/mode';
 import {useRoundTrip} from '@/routes/components/useRoundTrip';
 import debounce from 'debounce';
@@ -154,6 +177,28 @@ const hasLightAutoSwitch = computed(() => {
   return modeValuesMap.value['lighting.mode'] !== undefined;
 });
 
+const brightnessSupport = reactive(newActionTracker());
+
+watch(() => props.name, (name) => {
+  if (name && name !== '') {
+    describeBrightness({name}, brightnessSupport);
+  }
+}, {immediate: true});
+
+const presets = computed(() => brightnessSupport.response?.presetsList ?? []);
+const currentPresetTitle = computed(() => value.value?.preset?.title ?? '');
+
+/**
+ * @param {LightPreset.AsObject} preset
+ */
+function setPreset(preset) {
+  autoMode(false);
+  updateBrightness({
+    name: props.name,
+    brightness: {preset}
+  }, updateValue);
+}
+
 const manualTimeoutHandle = ref(0);
 
 /**
@@ -192,4 +237,7 @@ function autoMode(value) {
 </script>
 
 <style scoped>
+.presets-list {
+  background: rgba(224, 223, 222, 0.3) !important;
+}
 </style>

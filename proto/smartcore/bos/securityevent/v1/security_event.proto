@@ -7,7 +7,7 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "smartcore/bos/actor/v1/actor.proto";
-import "types/change.proto";
+import "smartcore/bos/types/v1/change.proto";
 
 // SecurityEventApi describes the capability to view and manage security events.
 // These are typically events from an access control system's API, but could be from any security system.
@@ -165,6 +165,6 @@ message PullSecurityEventsResponse {
     google.protobuf.Timestamp change_time = 2;
     SecurityEvent new_value = 3;
     SecurityEvent old_value = 4;
-    smartcore.types.ChangeType type = 5;
+    smartcore.bos.types.v1.ChangeType type = 5;
   }
 }

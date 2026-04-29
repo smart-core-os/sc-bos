@@ -29,7 +29,11 @@ export default function useBuildingConfig() {
   const generatedSource = supplyZone;
   const occupancySource = buildingZone;
   const envInternalSource = buildingZone;
-  const envExternalSource = computed(() => envInternalSource.value + '/outside');
+  const envExternalSource = computed(() => {
+    const s = envInternalSource.value;
+    if (!s) return undefined;
+    return s + '/outside';
+  });
 
   const showPowerHistory = computed(() => {
     const v = uiConfig.getOrDefault('ops.overview.widgets.showEnergyConsumption');

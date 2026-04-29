@@ -3,7 +3,7 @@ package xovis
 import (
 	"time"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 )
 
 type countAccumulator struct {
@@ -17,7 +17,7 @@ type countEvent struct {
 	time time.Time
 	// We associate the Xovis API's "forward" events with "enter" events in Smart Core,
 	// and Xovis "backward" events with "leave" events in Smart Core.
-	direction traits.EnterLeaveEvent_Direction
+	direction enterleavesensorpb.EnterLeaveEvent_Direction
 }
 
 func (c *countAccumulator) consumeRecords(records ...LogicRecord) ([]countEvent, error) {
@@ -28,7 +28,7 @@ func (c *countAccumulator) consumeRecords(records ...LogicRecord) ([]countEvent,
 			c.forwardCountValue += fwDelta
 			event := countEvent{
 				time:      record.To,
-				direction: traits.EnterLeaveEvent_ENTER,
+				direction: enterleavesensorpb.EnterLeaveEvent_ENTER,
 			}
 			for range fwDelta {
 				events = append(events, event)
@@ -40,7 +40,7 @@ func (c *countAccumulator) consumeRecords(records ...LogicRecord) ([]countEvent,
 			c.backwardCountValue += bwDelta // always write this, if the count is reset we only want to desync once
 			event := countEvent{
 				time:      record.To,
-				direction: traits.EnterLeaveEvent_LEAVE,
+				direction: enterleavesensorpb.EnterLeaveEvent_LEAVE,
 			}
 			for range bwDelta {
 				events = append(events, event)

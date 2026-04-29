@@ -4,7 +4,6 @@ package serviceapi
 import (
 	"context"
 	"errors"
-	"time"
 
 	"go.uber.org/zap"
 	"golang.org/x/exp/constraints"
@@ -13,18 +12,17 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/util/page"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
 )
 
 // Api implements a servicespb.ServicesApiServer backed by service.Map.
 type Api struct {
 	servicespb.UnimplementedServicesApiServer
-	m   *service.Map
-	now func() time.Time
+	m *service.Map
 
 	knownTypes []string
 	store      Store
@@ -32,7 +30,7 @@ type Api struct {
 }
 
 func NewApi(m *service.Map, opts ...Option) *Api {
-	a := &Api{m: m, now: time.Now}
+	a := &Api{m: m}
 	for _, opt := range opts {
 		opt(a)
 	}
@@ -217,8 +215,8 @@ func (a *Api) pullServices(ctx context.Context, request *servicespb.PullServices
 			last = stateToProto(record.Id, record.Kind, state)
 			change := &servicespb.PullServicesResponse_Change{
 				Name:       request.Name,
-				ChangeTime: timestamppb.New(a.now()),
-				Type:       types.ChangeType_ADD,
+				ChangeTime: timestamppb.Now(),
+				Type:       typespb.ChangeType_ADD,
 				NewValue:   last,
 			}
 			if !publish(change) {
@@ -231,8 +229,8 @@ func (a *Api) pullServices(ctx context.Context, request *servicespb.PullServices
 			last = stateToProto(record.Id, record.Kind, state)
 			change := &servicespb.PullServicesResponse_Change{
 				Name:       request.Name,
-				ChangeTime: timestamppb.New(a.now()),
-				Type:       types.ChangeType_UPDATE,
+				ChangeTime: timestamppb.Now(),
+				Type:       typespb.ChangeType_UPDATE,
 				OldValue:   old,
 				NewValue:   last,
 			}
@@ -274,7 +272,7 @@ func (a *Api) pullServices(ctx context.Context, request *servicespb.PullServices
 						change := &servicespb.PullServicesResponse_Change{
 							Name:       request.Name,
 							ChangeTime: timestamppb.New(c.ChangeTime),
-							Type:       types.ChangeType_REMOVE,
+							Type:       typespb.ChangeType_REMOVE,
 							OldValue:   recordToProto(c.OldValue),
 						}
 						if !publish(change) {

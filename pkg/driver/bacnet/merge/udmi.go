@@ -16,11 +16,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_udmipb "github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
@@ -41,14 +40,14 @@ func readUdmiMergeConfig(raw []byte) (cfg UdmiMergeConfig, err error) {
 // BACnet objects are polled for changes, and any changes sent as UDMI events
 // control is implemented via OnMessage, only points present in the config are controllable.
 type udmiMerge struct {
-	gen_udmipb.UnimplementedUdmiServiceServer
+	udmipb.UnimplementedUdmiServiceServer
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	config UdmiMergeConfig
-	bus    minibus.Bus[*gen_udmipb.PullExportMessagesResponse]
+	bus    minibus.Bus[*udmipb.PullExportMessagesResponse]
 
 	pollTask *task.Intermittent
 	// protect the points value
@@ -56,7 +55,7 @@ type udmiMerge struct {
 	points     udmi.PointsEvent
 }
 
-func newUdmiMerge(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*udmiMerge, error) {
+func newUdmiMerge(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*udmiMerge, error) {
 	cfg, err := readUdmiMergeConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -73,11 +72,14 @@ func newUdmiMerge(client *gobacnet.Client, devices known.Context, faultCheck *ge
 }
 
 func (f *udmiMerge) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(f.config.Name, node.HasTrait(udmipb.TraitName, node.WithClients(gen_udmipb.WrapService(f))))
+	return a.Announce(f.config.Name,
+		node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(f)),
+		node.HasTrait(udmipb.TraitName),
+	)
 }
 
-func (f *udmiMerge) PullControlTopics(request *gen_udmipb.PullControlTopicsRequest, server gen_udmipb.UdmiService_PullControlTopicsServer) error {
-	err := server.Send(&gen_udmipb.PullControlTopicsResponse{
+func (f *udmiMerge) PullControlTopics(request *udmipb.PullControlTopicsRequest, server udmipb.UdmiService_PullControlTopicsServer) error {
+	err := server.Send(&udmipb.PullControlTopicsResponse{
 		Name:   f.config.Name,
 		Topics: []string{f.config.TopicPrefix + "/config"},
 	})
@@ -89,7 +91,7 @@ func (f *udmiMerge) PullControlTopics(request *gen_udmipb.PullControlTopicsReque
 	return ctx.Err()
 }
 
-func (f *udmiMerge) OnMessage(ctx context.Context, request *gen_udmipb.OnMessageRequest) (*gen_udmipb.OnMessageResponse, error) {
+func (f *udmiMerge) OnMessage(ctx context.Context, request *udmipb.OnMessageRequest) (*udmipb.OnMessageResponse, error) {
 	if request.Message == nil {
 		return nil, status.Error(codes.InvalidArgument, "no message")
 	}
@@ -111,10 +113,10 @@ func (f *udmiMerge) OnMessage(ctx context.Context, request *gen_udmipb.OnMessage
 			}
 		}
 	}
-	return &gen_udmipb.OnMessageResponse{Name: f.config.Name}, nil
+	return &udmipb.OnMessageResponse{Name: f.config.Name}, nil
 }
 
-func (f *udmiMerge) GetExportMessage(ctx context.Context, request *gen_udmipb.GetExportMessageRequest) (*gen_udmipb.MqttMessage, error) {
+func (f *udmiMerge) GetExportMessage(ctx context.Context, request *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
 	pollCtx, cleanup := context.WithTimeout(ctx, f.config.PollTimeoutDuration()/4)
 	defer cleanup()
 	events := f.bus.Listen(pollCtx)
@@ -138,7 +140,7 @@ func (f *udmiMerge) GetExportMessage(ctx context.Context, request *gen_udmipb.Ge
 	}
 }
 
-func (f *udmiMerge) PullExportMessages(request *gen_udmipb.PullExportMessagesRequest, server gen_udmipb.UdmiService_PullExportMessagesServer) error {
+func (f *udmiMerge) PullExportMessages(request *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
 	events := f.bus.Listen(server.Context())
 	_ = f.pollTask.Attach(server.Context())
 
@@ -152,7 +154,7 @@ func (f *udmiMerge) PullExportMessages(request *gen_udmipb.PullExportMessagesReq
 			if err != nil {
 				return err
 			}
-			err = server.Send(&gen_udmipb.PullExportMessagesResponse{
+			err = server.Send(&udmipb.PullExportMessagesResponse{
 				Name:    request.Name,
 				Message: msg,
 			})
@@ -219,7 +221,7 @@ func (f *udmiMerge) pollPeer(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		f.bus.Send(ctx, &gen_udmipb.PullExportMessagesResponse{
+		f.bus.Send(ctx, &udmipb.PullExportMessagesResponse{
 			Name:    f.config.Name,
 			Message: msg,
 		})
@@ -237,7 +239,7 @@ func sanitise(points udmi.PointsEvent) {
 	}
 }
 
-func (f *udmiMerge) pointsToPointSet(topicPrefix string, points udmi.PointsEvent) (*gen_udmipb.MqttMessage, error) {
+func (f *udmiMerge) pointsToPointSet(topicPrefix string, points udmi.PointsEvent) (*udmipb.MqttMessage, error) {
 
 	sanitise(points)
 
@@ -245,7 +247,7 @@ func (f *udmiMerge) pointsToPointSet(topicPrefix string, points udmi.PointsEvent
 	if err != nil {
 		return nil, err
 	}
-	return &gen_udmipb.MqttMessage{
+	return &udmipb.MqttMessage{
 		Topic:   topicPrefix + "/event/pointset/points",
 		Payload: string(b),
 	}, nil

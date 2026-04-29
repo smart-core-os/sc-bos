@@ -8,18 +8,17 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/gobacnet"
-	"github.com/smart-core-os/sc-api/go/types"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 type meterConfig struct {
@@ -36,21 +35,21 @@ func readMeterConfig(raw []byte) (cfg meterConfig, err error) {
 type meterTrait struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
-	model *meter.Model
-	*meter.ModelServer
+	model *meterpb.Model
+	*meterpb.ModelServer
 	config   meterConfig
 	pollTask *task.Intermittent
 }
 
-func newMeter(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*meterTrait, error) {
+func newMeter(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*meterTrait, error) {
 	cfg, err := readMeterConfig(config.Raw)
 	if err != nil {
 		return nil, err
 	}
-	model := meter.NewModel(resource.WithMessageEquivalence(cmp.Equal(
+	model := meterpb.NewModel(resource.WithMessageEquivalence(cmp.Equal(
 		cmp.FloatValueApprox(0, 0.0001),
 	)))
 	t := &meterTrait{
@@ -59,7 +58,7 @@ func newMeter(client *gobacnet.Client, devices known.Context, faultCheck *gen_he
 		faultCheck:  faultCheck,
 		logger:      logger,
 		model:       model,
-		ModelServer: meter.NewModelServer(model),
+		ModelServer: meterpb.NewModelServer(model),
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
@@ -67,12 +66,16 @@ func newMeter(client *gobacnet.Client, devices known.Context, faultCheck *gen_he
 }
 
 func (t *meterTrait) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(t.config.Name, node.HasTrait(meter.TraitName, node.WithClients(meterpb.WrapApi(t), meterpb.WrapInfo(&meter.InfoServer{
-		MeterReading: &meterpb.MeterReadingSupport{
-			ResourceSupport: &types.ResourceSupport{Readable: true, Observable: true},
-			UsageUnit:       t.config.Unit,
-		},
-	}))))
+	return a.Announce(t.config.Name,
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(t)),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{
+			MeterReading: &meterpb.MeterReadingSupport{
+				ResourceSupport: &typespb.ResourceSupport{Readable: true, Observable: true},
+				UsageUnit:       t.config.Unit,
+			},
+		})),
+		node.HasTrait(meterpb.TraitName),
+	)
 }
 
 func (t *meterTrait) GetMeterReading(ctx context.Context, request *meterpb.GetMeterReadingRequest) (*meterpb.MeterReading, error) {

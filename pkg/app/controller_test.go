@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/meter"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
@@ -30,9 +29,8 @@ func TestController_protoPkgCompat(t *testing.T) {
 
 	// so there's something to return
 	c.Node.Announce("test-device",
-		node.HasTrait(meter.TraitName,
-			node.WithClients(meterpb.WrapApi(meter.NewModelServer(meter.NewModel()))),
-		),
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterpb.NewModel()))),
+		node.HasTrait(meterpb.TraitName),
 	)
 
 	bufl := bufconn.Listen(1024 * 1024)

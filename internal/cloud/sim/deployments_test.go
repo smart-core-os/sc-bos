@@ -38,14 +38,14 @@ func setupDeploymentsEnv(t *testing.T) deploymentsEnv {
 	var node Node
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "test-node",
-		"siteId":   site.ID,
+		"siteId":   sid(site.ID),
 	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Create config version
 	var cv ConfigVersion
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":      node.ID,
+		"nodeId":      sid(node.ID),
 		"description": "v1.0.0",
 		"payload":     []byte("config"),
 	}, &cv)
@@ -54,8 +54,8 @@ func setupDeploymentsEnv(t *testing.T) deploymentsEnv {
 	// Create a sample deployment
 	var deployment Deployment
 	resp = doRequest(t, client, "POST", listDeploymentsURL(ts.URL), map[string]any{
-		"configVersionId": cv.ID,
-		"status":          "PENDING",
+		"configVersionId": sid(cv.ID),
+		"status":          "pending",
 	}, &deployment)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -81,82 +81,82 @@ func TestDeployments_Create(t *testing.T) {
 		{
 			name: "normal create with PENDING",
 			reqBody: map[string]any{
-				"configVersionId": e.configVersion.ID,
-				"status":          "PENDING",
+				"configVersionId": sid(e.configVersion.ID),
+				"status":          "pending",
 			},
 			expectCode: http.StatusCreated,
 			expect: Deployment{
 				ConfigVersionID: e.configVersion.ID,
-				Status:          "PENDING",
+				Status:          "pending",
 				FinishedTime:    nil,
 			},
 		},
 		{
 			name: "absent status defaults to PENDING",
 			reqBody: map[string]any{
-				"configVersionId": e.configVersion.ID,
+				"configVersionId": sid(e.configVersion.ID),
 			},
 			expectCode: http.StatusCreated,
 			expect: Deployment{
 				ConfigVersionID: e.configVersion.ID,
-				Status:          "PENDING",
+				Status:          "pending",
 				FinishedTime:    nil,
 			},
 		},
 		{
 			name: "empty status defaults to PENDING",
 			reqBody: map[string]any{
-				"configVersionId": e.configVersion.ID,
+				"configVersionId": sid(e.configVersion.ID),
 				"status":          "",
 			},
 			expectCode: http.StatusCreated,
 			expect: Deployment{
 				ConfigVersionID: e.configVersion.ID,
-				Status:          "PENDING",
+				Status:          "pending",
 				FinishedTime:    nil,
 			},
 		},
 		{
 			name: "explicit PENDING allowed",
 			reqBody: map[string]any{
-				"configVersionId": e.configVersion.ID,
-				"status":          "PENDING",
+				"configVersionId": sid(e.configVersion.ID),
+				"status":          "pending",
 			},
 			expectCode: http.StatusCreated,
 			expect: Deployment{
 				ConfigVersionID: e.configVersion.ID,
-				Status:          "PENDING",
+				Status:          "pending",
 				FinishedTime:    nil,
 			},
 		},
 		{
 			name: "IN_PROGRESS rejected",
 			reqBody: map[string]any{
-				"configVersionId": e.configVersion.ID,
-				"status":          "IN_PROGRESS",
+				"configVersionId": sid(e.configVersion.ID),
+				"status":          "in_progress",
 			},
 			expectCode: http.StatusBadRequest,
 		},
 		{
 			name: "COMPLETED rejected",
 			reqBody: map[string]any{
-				"configVersionId": e.configVersion.ID,
-				"status":          "COMPLETED",
+				"configVersionId": sid(e.configVersion.ID),
+				"status":          "completed",
 			},
 			expectCode: http.StatusBadRequest,
 		},
 		{
 			name: "FAILED rejected",
 			reqBody: map[string]any{
-				"configVersionId": e.configVersion.ID,
-				"status":          "FAILED",
+				"configVersionId": sid(e.configVersion.ID),
+				"status":          "failed",
 			},
 			expectCode: http.StatusBadRequest,
 		},
 		{
 			name: "invalid status rejected",
 			reqBody: map[string]any{
-				"configVersionId": e.configVersion.ID,
+				"configVersionId": sid(e.configVersion.ID),
 				"status":          "INVALID",
 			},
 			expectCode: http.StatusBadRequest,
@@ -164,8 +164,8 @@ func TestDeployments_Create(t *testing.T) {
 		{
 			name: "CANCELLED rejected on creation",
 			reqBody: map[string]any{
-				"configVersionId": e.configVersion.ID,
-				"status":          "CANCELLED",
+				"configVersionId": sid(e.configVersion.ID),
+				"status":          "cancelled",
 			},
 			expectCode: http.StatusBadRequest,
 		},
@@ -173,14 +173,14 @@ func TestDeployments_Create(t *testing.T) {
 			name: "invalid configVersionId rejected",
 			reqBody: map[string]any{
 				"configVersionId": 99999,
-				"status":          "PENDING",
+				"status":          "pending",
 			},
 			expectCode: http.StatusBadRequest,
 		},
 		{
 			name: "missing configVersionId rejected",
 			reqBody: map[string]any{
-				"status": "PENDING",
+				"status": "pending",
 			},
 			expectCode: http.StatusBadRequest,
 		},
@@ -213,13 +213,13 @@ func TestDeployments_Create(t *testing.T) {
 		// Create a new deployment for the same node — should auto-cancel the existing one
 		var newDep Deployment
 		resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-			"configVersionId": e.configVersion.ID,
-			"status":          "PENDING",
+			"configVersionId": sid(e.configVersion.ID),
+			"status":          "pending",
 		}, &newDep)
 		assertStatus(t, resp, http.StatusCreated)
 
 		// The new deployment should be PENDING
-		if newDep.Status != "PENDING" {
+		if newDep.Status != "pending" {
 			t.Errorf("expected new deployment status PENDING, got %s", newDep.Status)
 		}
 
@@ -227,7 +227,7 @@ func TestDeployments_Create(t *testing.T) {
 		var old Deployment
 		resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, e.deployment.ID), nil, &old)
 		assertStatus(t, resp, http.StatusOK)
-		if old.Status != "CANCELLED" {
+		if old.Status != "cancelled" {
 			t.Errorf("expected old deployment status CANCELLED, got %s", old.Status)
 		}
 		if old.FinishedTime == nil || old.FinishedTime.IsZero() {
@@ -240,14 +240,14 @@ func TestDeployments_Create(t *testing.T) {
 
 		// Advance the existing PENDING deployment to IN_PROGRESS
 		resp := doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, e.deployment.ID), map[string]any{
-			"status": "IN_PROGRESS",
+			"status": "in_progress",
 		}, nil)
 		assertStatus(t, resp, http.StatusOK)
 
 		// Attempt to create another deployment — should get 409
 		resp = doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-			"configVersionId": e.configVersion.ID,
-			"status":          "PENDING",
+			"configVersionId": sid(e.configVersion.ID),
+			"status":          "pending",
 		}, nil)
 		assertStatus(t, resp, http.StatusConflict)
 	})
@@ -266,7 +266,7 @@ func TestDeployments_Get(t *testing.T) {
 		resp := doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, e.deployment.ID), nil, &d)
 		assertStatus(t, resp, http.StatusOK)
 
-		want := Deployment{ID: e.deployment.ID, ConfigVersionID: e.configVersion.ID, Status: "PENDING"}
+		want := Deployment{ID: e.deployment.ID, ConfigVersionID: e.configVersion.ID, Status: "pending"}
 		if diff := cmp.Diff(want, d, cmpopts.IgnoreFields(Deployment{}, "StartTime", "FinishedTime")); diff != "" {
 			t.Errorf("response mismatch (-want +got):\n%s", diff)
 		}
@@ -296,39 +296,39 @@ func TestDeployments_Update(t *testing.T) {
 		{
 			name: "update to IN_PROGRESS",
 			reqBody: map[string]any{
-				"status": "IN_PROGRESS",
+				"status": "in_progress",
 			},
 			expect: Deployment{
-				Status: "IN_PROGRESS",
+				Status: "in_progress",
 			},
 		},
 		{
 			name: "update to COMPLETED",
 			reqBody: map[string]any{
-				"status": "COMPLETED",
+				"status": "completed",
 			},
 			expect: Deployment{
-				Status: "COMPLETED",
+				Status: "completed",
 				// FinishedTime will be set by server, verified separately
 			},
 		},
 		{
 			name: "update to FAILED",
 			reqBody: map[string]any{
-				"status": "FAILED",
+				"status": "failed",
 			},
 			expect: Deployment{
-				Status: "FAILED",
+				Status: "failed",
 				// FinishedTime will be set by server, verified separately
 			},
 		},
 		{
 			name: "update to CANCELLED",
 			reqBody: map[string]any{
-				"status": "CANCELLED",
+				"status": "cancelled",
 			},
 			expect: Deployment{
-				Status: "CANCELLED",
+				Status: "cancelled",
 				// FinishedTime will be set by server, verified separately
 			},
 		},
@@ -336,50 +336,50 @@ func TestDeployments_Update(t *testing.T) {
 			name: "protected field ID ignored",
 			reqBody: map[string]any{
 				"id":     99999,
-				"status": "IN_PROGRESS",
+				"status": "in_progress",
 			},
 			expect: Deployment{
-				Status: "IN_PROGRESS",
+				Status: "in_progress",
 			},
 		},
 		{
 			name: "protected field configVersionId ignored",
 			reqBody: map[string]any{
 				"configVersionId": 99999,
-				"status":          "IN_PROGRESS",
+				"status":          "in_progress",
 			},
 			expect: Deployment{
-				Status: "IN_PROGRESS",
+				Status: "in_progress",
 			},
 		},
 		{
 			name: "protected field startTime ignored",
 			reqBody: map[string]any{
 				"startTime": "2020-01-01T00:00:00Z",
-				"status":    "IN_PROGRESS",
+				"status":    "in_progress",
 			},
 			expect: Deployment{
-				Status: "IN_PROGRESS",
+				Status: "in_progress",
 			},
 		},
 		{
 			name: "protected field finishedTime ignored",
 			reqBody: map[string]any{
 				"finishedTime": "2020-01-01T00:00:00Z",
-				"status":       "IN_PROGRESS",
+				"status":       "in_progress",
 			},
 			expect: Deployment{
-				Status: "IN_PROGRESS",
+				Status: "in_progress",
 			},
 		},
 		{
 			name: "update to FAILED with reason",
 			reqBody: map[string]any{
-				"status": "FAILED",
+				"status": "failed",
 				"reason": "timeout",
 			},
 			expect: Deployment{
-				Status: "FAILED",
+				Status: "failed",
 				Reason: "timeout",
 			},
 		},
@@ -410,7 +410,7 @@ func TestDeployments_Update(t *testing.T) {
 			}
 
 			// Verify finishedTime behavior based on status
-			if tc.expect.Status == "COMPLETED" || tc.expect.Status == "FAILED" || tc.expect.Status == "CANCELLED" {
+			if tc.expect.Status == "completed" || tc.expect.Status == "failed" || tc.expect.Status == "cancelled" {
 				if d.FinishedTime == nil || d.FinishedTime.IsZero() {
 					t.Errorf("expected finishedTime to be set for %s, got %v", tc.expect.Status, d.FinishedTime)
 				}
@@ -430,7 +430,7 @@ func TestDeployments_Update(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		e := setupDeploymentsEnv(t)
 		testNotFound(t, e.client, "PATCH", listDeploymentsURL(e.testServer.URL)+"/%d", map[string]string{
-			"status": "COMPLETED",
+			"status": "completed",
 		})
 	})
 
@@ -455,8 +455,8 @@ func TestDeployments_List(t *testing.T) {
 
 		// Create one additional deployment (e already has one)
 		resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
-			"configVersionId": e.configVersion.ID,
-			"status":          "PENDING",
+			"configVersionId": sid(e.configVersion.ID),
+			"status":          "pending",
 		}, nil)
 		assertStatus(t, resp, http.StatusCreated)
 
@@ -557,13 +557,13 @@ func TestDeployments_Pagination(t *testing.T) {
 	var node Node
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "test-node",
-		"siteId":   site.ID,
+		"siteId":   sid(site.ID),
 	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
 
 	var cv ConfigVersion
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":      node.ID,
+		"nodeId":      sid(node.ID),
 		"description": "v1.0.0",
 		"payload":     []byte("config"),
 	}, &cv)
@@ -573,8 +573,8 @@ func TestDeployments_Pagination(t *testing.T) {
 		func(i int) int64 {
 			var deployment Deployment
 			resp := doRequest(t, client, "POST", listDeploymentsURL(ts.URL), map[string]any{
-				"configVersionId": cv.ID,
-				"status":          "PENDING",
+				"configVersionId": sid(cv.ID),
+				"status":          "pending",
 			}, &deployment)
 			assertStatus(t, resp, http.StatusCreated)
 			return deployment.ID
@@ -595,5 +595,6 @@ func TestDeployments_Pagination(t *testing.T) {
 			}
 			return resp, ids, list.NextPageToken
 		},
+		true,
 	)
 }

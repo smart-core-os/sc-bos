@@ -12,17 +12,16 @@ import (
 	grpcStatus "google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/gobacnet"
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 var (
@@ -58,7 +57,7 @@ func readLightConfig(raw []byte) (cfg lightCfg, err error) {
 type light struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *lightpb.Model
@@ -67,7 +66,7 @@ type light struct {
 	pollTask *task.Intermittent
 }
 
-func newLight(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*light, error) {
+func newLight(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*light, error) {
 	cfg, err := readLightConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -91,10 +90,14 @@ func newLight(client *gobacnet.Client, devices known.Context, faultCheck *gen_he
 }
 
 func (l *light) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(l.config.Name, node.HasTrait(trait.Light, node.WithClients(lightpb.WrapApi(l), lightpb.WrapInfo(l))))
+	return a.Announce(l.config.Name,
+		node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(l)),
+		node.HasServer(lightpb.RegisterLightInfoServer, lightpb.LightInfoServer(l)),
+		node.HasTrait(trait.Light),
+	)
 }
 
-func (l *light) UpdateBrightness(ctx context.Context, request *traits.UpdateBrightnessRequest) (*traits.Brightness, error) {
+func (l *light) UpdateBrightness(ctx context.Context, request *lightpb.UpdateBrightnessRequest) (*lightpb.Brightness, error) {
 	presetName := request.GetBrightness().GetPreset().GetName()
 
 	scene, err := l.findSceneByName(presetName)
@@ -111,12 +114,12 @@ func (l *light) UpdateBrightness(ctx context.Context, request *traits.UpdateBrig
 		}
 	}
 
-	return pollUntil(ctx, l.config.DefaultRWConsistencyTimeoutDuration(), l.pollPeer, func(brightness *traits.Brightness) bool {
+	return pollUntil(ctx, l.config.DefaultRWConsistencyTimeoutDuration(), l.pollPeer, func(brightness *lightpb.Brightness) bool {
 		return brightness.LevelPercent == scene.Brightness
 	})
 }
 
-func (l *light) GetBrightness(ctx context.Context, request *traits.GetBrightnessRequest) (*traits.Brightness, error) {
+func (l *light) GetBrightness(ctx context.Context, request *lightpb.GetBrightnessRequest) (*lightpb.Brightness, error) {
 	_, err := l.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -124,21 +127,21 @@ func (l *light) GetBrightness(ctx context.Context, request *traits.GetBrightness
 	return l.ModelServer.GetBrightness(ctx, request)
 }
 
-func (l *light) PullBrightness(request *traits.PullBrightnessRequest, server traits.LightApi_PullBrightnessServer) error {
+func (l *light) PullBrightness(request *lightpb.PullBrightnessRequest, server lightpb.LightApi_PullBrightnessServer) error {
 	_ = l.pollTask.Attach(server.Context())
 	return l.ModelServer.PullBrightness(request, server)
 }
 
-func (l *light) DescribeBrightness(ctx context.Context, request *traits.DescribeBrightnessRequest) (*traits.BrightnessSupport, error) {
-	var presets []*traits.LightPreset
+func (l *light) DescribeBrightness(ctx context.Context, request *lightpb.DescribeBrightnessRequest) (*lightpb.BrightnessSupport, error) {
+	var presets []*lightpb.LightPreset
 	for _, scene := range l.config.Scenes {
-		presets = append(presets, &traits.LightPreset{
+		presets = append(presets, &lightpb.LightPreset{
 			Name:  scene.Name,
 			Title: scene.Title,
 		})
 	}
 
-	return &traits.BrightnessSupport{
+	return &lightpb.BrightnessSupport{
 		Presets: presets,
 	}, nil
 }
@@ -150,14 +153,12 @@ func (l *light) startPoll(init context.Context) (stop task.StopFn, err error) {
 	})
 }
 
-func (l *light) pollPeer(ctx context.Context) (*traits.Brightness, error) {
-	data := &traits.Brightness{Preset: &traits.LightPreset{}}
+func (l *light) pollPeer(ctx context.Context) (*lightpb.Brightness, error) {
+	data := &lightpb.Brightness{Preset: &lightpb.LightPreset{}}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if l.config.Point != nil {
-		requestNames = append(requestNames, "light")
 		readValues = append(readValues, *l.config.Point)
 		resProcessors = append(resProcessors, func(response any) error {
 			value, err := comm.Float32Value(response)

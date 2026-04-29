@@ -204,14 +204,3 @@ func (lt *lifecycleTester) assertCurrentState(want Status, wait time.Duration) {
 		lt.Fatalf("CurrentState want %s, got %s", want, got)
 	}
 }
-
-func (lt *lifecycleTester) assertNextConfig(want string) {
-	if len(lt.applyConfigCalls) == 0 {
-		lt.Fatalf("Expecting 1 config call, got 0")
-	}
-	call := lt.applyConfigCalls[0]
-	lt.applyConfigCalls = lt.applyConfigCalls[1:]
-	if call.config != want {
-		lt.Fatalf("Config want %s, got %s", want, call.config)
-	}
-}

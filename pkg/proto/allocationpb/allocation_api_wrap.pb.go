@@ -3,11 +3,12 @@
 package allocationpb
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapApi	adapts a AllocationApiServer	and presents it as a AllocationApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server AllocationApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(AllocationApi_ServiceDesc, server)
 	client := NewAllocationApiClient(conn)

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 
@@ -10,12 +11,12 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
-func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, lookBack time.Duration) error {
+func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, profile *OfficeProfile, lookBack time.Duration) error {
 	now := time.Now()
 	current := now.Add(-lookBack)
 
@@ -26,25 +27,31 @@ func SeedOccupancy(ctx context.Context, db *pgxpool.Pool, name string, lookBack 
 		return err
 	}
 
-	for current.Before(now) {
+	for !current.After(now) {
+		load := profile.Load(current)
+		count := max(int32(math.Round(load*float64(profile.Occupancy.MaxPeople)+rand.NormFloat64()*2)), 0)
 
-		payload, err := proto.Marshal(&traits.Occupancy{
-			PeopleCount:     int32(rand.Intn(50)),
+		state := occupancysensorpb.Occupancy_UNOCCUPIED
+		if count > 0 {
+			state = occupancysensorpb.Occupancy_OCCUPIED
+		}
+
+		payload, err := proto.Marshal(&occupancysensorpb.Occupancy{
+			PeopleCount:     count,
+			State:           state,
 			StateChangeTime: timestamppb.New(current),
 			Confidence:      1,
 		})
-
 		if err != nil {
 			return err
 		}
 
 		_, _, err = store.Insert(ctx, current, payload)
-
 		if err != nil {
 			return err
 		}
 
-		current = current.Add(time.Duration(rand.Intn(60)) * time.Minute)
+		current = current.Add(profile.IntervalForLoad(load))
 	}
 
 	return nil

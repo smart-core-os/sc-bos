@@ -7,7 +7,7 @@
 package transportpb
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -772,7 +772,7 @@ func (x *Transport) GetStoppedReason() *Transport_StoppedReason {
 type TransportSupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How a named device supports read/write/pull apis
-	ResourceSupport *types.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
+	ResourceSupport *typespb.ResourceSupport `protobuf:"bytes,1,opt,name=resource_support,json=resourceSupport,proto3" json:"resource_support,omitempty"`
 	// The unit associated with the load value, e.g. kg, % of maximum load.
 	LoadUnit string `protobuf:"bytes,2,opt,name=load_unit,json=loadUnit,proto3" json:"load_unit,omitempty"`
 	// The maximum load the transport can carry, in kg, if known.
@@ -814,7 +814,7 @@ func (*TransportSupport) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_transport_v1_transport_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *TransportSupport) GetResourceSupport() *types.ResourceSupport {
+func (x *TransportSupport) GetResourceSupport() *typespb.ResourceSupport {
 	if x != nil {
 		return x.ResourceSupport
 	}
@@ -1586,7 +1586,7 @@ var File_smartcore_bos_transport_v1_transport_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_transport_v1_transport_proto_rawDesc = "" +
 	"\n" +
-	"*smartcore/bos/transport/v1/transport.proto\x12\x1asmartcore.bos.transport.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10types/info.proto\"\xf6!\n" +
+	"*smartcore/bos/transport/v1/transport.proto\x12\x1asmartcore.bos.transport.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\xf6!\n" +
 	"\tTransport\x12W\n" +
 	"\x0factual_position\x18\x01 \x01(\v2..smartcore.bos.transport.v1.Transport.LocationR\x0eactualPosition\x12[\n" +
 	"\x11next_destinations\x18\x02 \x03(\v2..smartcore.bos.transport.v1.Transport.LocationR\x10nextDestinations\x12Z\n" +
@@ -1746,9 +1746,9 @@ const file_smartcore_bos_transport_v1_transport_proto_rawDesc = "" +
 	"\x06ACTIVE\x10\x02\x12\v\n" +
 	"\aSTANDBY\x10\x03B\a\n" +
 	"\x05_loadB\b\n" +
-	"\x06_speed\"\xb6\x01\n" +
-	"\x10TransportSupport\x12K\n" +
-	"\x10resource_support\x18\x01 \x01(\v2 .smartcore.types.ResourceSupportR\x0fresourceSupport\x12\x1b\n" +
+	"\x06_speed\"\xbd\x01\n" +
+	"\x10TransportSupport\x12R\n" +
+	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12\x1b\n" +
 	"\tload_unit\x18\x02 \x01(\tR\bloadUnit\x12\x19\n" +
 	"\bmax_load\x18\x03 \x01(\x05R\amaxLoad\x12\x1d\n" +
 	"\n" +
@@ -1813,7 +1813,7 @@ var file_smartcore_bos_transport_v1_transport_proto_goTypes = []any{
 	nil,                                  // 20: smartcore.bos.transport.v1.Transport.Payload.ExternalIdsEntry
 	(*PullTransportResponse_Change)(nil), // 21: smartcore.bos.transport.v1.PullTransportResponse.Change
 	(*durationpb.Duration)(nil),          // 22: google.protobuf.Duration
-	(*types.ResourceSupport)(nil),        // 23: smartcore.types.ResourceSupport
+	(*typespb.ResourceSupport)(nil),      // 23: smartcore.bos.types.v1.ResourceSupport
 	(*fieldmaskpb.FieldMask)(nil),        // 24: google.protobuf.FieldMask
 	(*timestamppb.Timestamp)(nil),        // 25: google.protobuf.Timestamp
 }
@@ -1830,7 +1830,7 @@ var file_smartcore_bos_transport_v1_transport_proto_depIdxs = []int32{
 	19, // 9: smartcore.bos.transport.v1.Transport.payloads:type_name -> smartcore.bos.transport.v1.Transport.Payload
 	22, // 10: smartcore.bos.transport.v1.Transport.eta_to_next_destination:type_name -> google.protobuf.Duration
 	18, // 11: smartcore.bos.transport.v1.Transport.stopped_reason:type_name -> smartcore.bos.transport.v1.Transport.StoppedReason
-	23, // 12: smartcore.bos.transport.v1.TransportSupport.resource_support:type_name -> smartcore.types.ResourceSupport
+	23, // 12: smartcore.bos.transport.v1.TransportSupport.resource_support:type_name -> smartcore.bos.types.v1.ResourceSupport
 	24, // 13: smartcore.bos.transport.v1.GetTransportRequest.read_mask:type_name -> google.protobuf.FieldMask
 	24, // 14: smartcore.bos.transport.v1.PullTransportRequest.read_mask:type_name -> google.protobuf.FieldMask
 	21, // 15: smartcore.bos.transport.v1.PullTransportResponse.changes:type_name -> smartcore.bos.transport.v1.PullTransportResponse.Change

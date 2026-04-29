@@ -21,15 +21,16 @@
         <span class="unit">%</span>
       </span>
     </div>
-    <span v-if="thresholdStrDisplay">
-      {{ thresholdStrDisplay }}
-    </span>
+    <v-chip v-if="activeThreshold" :color="activeThreshold.color" size="small" label class="mt-1">
+      <v-icon start :icon="activeThreshold.icon"/>
+      {{ activeThreshold.label }}
+    </v-chip>
   </div>
 </template>
 
 <script setup>
 import useError from '@/composables/error.js';
-import {sentenceCase} from 'change-case';
+import {resolveOccupancyThreshold} from '@/dynamic/widgets/occupancy/occupancy.js';
 import {computed} from 'vue';
 
 const props = defineProps({
@@ -39,7 +40,7 @@ const props = defineProps({
   },
   maxOccupancy: {
     type: Number,
-    default: 1625
+    default: 0
   },
   thresholds: {
     type: Array, // {percentage: number, str: string} ordered by percentage in ascending order
@@ -62,15 +63,7 @@ const occupancyPercentageDisplay = computed(() =>
     occupancyPercentage.value > 0 ? occupancyPercentage.value.toFixed(1) : occupancyPercentage.value.toFixed(0)
 );
 
-const thresholdStrDisplay = computed(() => {
-  if (!props.thresholds) {
-    return '';
-  }
-  for (const threshold of props.thresholds) {
-    if (threshold.percentage >= occupancyPercentage.value) return sentenceCase(threshold.str);
-  }
-  return '';
-});
+const activeThreshold = computed(() => resolveOccupancyThreshold(occupancyPercentage.value, props.thresholds));
 
 const {errStr, showErr} = useError(() => props.error);
 </script>

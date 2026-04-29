@@ -1,12 +1,12 @@
 import {fieldMaskFromObject, setProperties} from '@/api/convpb';
 import {clientOptions} from '@/api/grpcweb';
 import {pullResource, setValue, trackAction} from '@/api/resource';
-import {EnterLeaveSensorApiPromiseClient} from '@smart-core-os/sc-api-grpc-web/traits/enter_leave_sensor_grpc_web_pb';
+import {EnterLeaveSensorApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor_grpc_web_pb';
 import {
   GetEnterLeaveEventRequest,
   PullEnterLeaveEventsRequest,
   ResetEnterLeaveTotalsRequest
-} from '@smart-core-os/sc-api-grpc-web/traits/enter_leave_sensor_pb';
+} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/enterleavesensor/v1/enter_leave_sensor_pb';
 
 /**
  * @param {Partial<PullEnterLeaveEventsRequest.AsObject>} request

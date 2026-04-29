@@ -16,17 +16,17 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 )
 
 // type names we know exist as part of the OnOff trait apis
 var onOffTypes = []string{
-	"smartcore.traits.OnOffApi",
-	"smartcore.traits.OnOffInfo",
-	"smartcore.traits.GetOnOffRequest",
-	"smartcore.traits.DescribeOnOffRequest",
-	"smartcore.traits.OnOff",
-	"smartcore.traits.PullOnOffResponse.Change",
+	"smartcore.bos.onoff.v1.OnOffApi",
+	"smartcore.bos.onoff.v1.OnOffInfo",
+	"smartcore.bos.onoff.v1.GetOnOffRequest",
+	"smartcore.bos.onoff.v1.DescribeOnOffRequest",
+	"smartcore.bos.onoff.v1.OnOff",
+	"smartcore.bos.onoff.v1.PullOnOffResponse.Change",
 }
 
 func TestServer(t *testing.T) {
@@ -34,10 +34,10 @@ func TestServer(t *testing.T) {
 	t.Cleanup(stop)
 
 	apiClient := nodeClient(t, func(s grpc.ServiceRegistrar) {
-		traits.RegisterOnOffApiServer(s, &traits.UnimplementedOnOffApiServer{})
+		onoffpb.RegisterOnOffApiServer(s, &onoffpb.UnimplementedOnOffApiServer{})
 	})
 	infoClient := nodeClient(t, func(s grpc.ServiceRegistrar) {
-		traits.RegisterOnOffInfoServer(s, &traits.UnimplementedOnOffInfoServer{})
+		onoffpb.RegisterOnOffInfoServer(s, &onoffpb.UnimplementedOnOffInfoServer{})
 	})
 
 	gwClient, rs := gwServer(t)
@@ -77,8 +77,8 @@ func testDynamicAPIs(t *testing.T, ctx context.Context, client *grpc.ClientConn)
 	wantServices := []*reflectionpb.ServiceResponse{
 		{Name: "grpc.reflection.v1.ServerReflection"},
 		{Name: "grpc.reflection.v1alpha.ServerReflection"},
-		{Name: "smartcore.traits.OnOffApi"},
-		{Name: "smartcore.traits.OnOffInfo"},
+		{Name: "smartcore.bos.onoff.v1.OnOffApi"},
+		{Name: "smartcore.bos.onoff.v1.OnOffInfo"},
 	}
 	if diff := cmp.Diff(services, wantServices, protocmp.Transform()); diff != "" {
 		t.Errorf("ListServices(reflectionStream) mismatch (-want +got):\n%s", diff)

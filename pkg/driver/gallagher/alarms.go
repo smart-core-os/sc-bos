@@ -4,6 +4,7 @@ import (
 	"container/ring"
 	"context"
 	"encoding/json"
+	"fmt"
 	"slices"
 	"strconv"
 	"sync"
@@ -54,11 +55,12 @@ type Alarm struct {
 type SecurityEventController struct {
 	securityeventpb.UnimplementedSecurityEventApiServer
 
-	client *Client
-	logger *zap.Logger
-	mu     sync.Mutex
+	client        *Client
+	logger        *zap.Logger
+	mu            sync.Mutex
+	lastAlarmTime time.Time // cursor for alarms API
+	lastEventTime time.Time // cursor for events API
 	// security events is a circular buffer, it always points to the oldest security event
-	lastEventTime  time.Time  // *securityeventpb.SecurityEvent
 	securityEvents *ring.Ring // *securityeventpb.SecurityEvent
 	updates        minibus.Bus[*securityeventpb.PullSecurityEventsResponse_Change]
 }
@@ -67,6 +69,7 @@ func newSecurityEventController(client *Client, logger *zap.Logger, n int) *Secu
 	return &SecurityEventController{
 		client:         client,
 		logger:         logger,
+		lastAlarmTime:  time.Now().Add(-24 * time.Hour),
 		lastEventTime:  time.Now().Add(-24 * time.Hour),
 		securityEvents: ring.New(n),
 	}
@@ -133,49 +136,58 @@ func (sc *SecurityEventController) getAlarmDetails(alarm *Alarm) {
 	}
 }
 
+func newSecurityEvent(t time.Time, id, message string, priority int, sourceId, sourceName string) *securityeventpb.SecurityEvent {
+	return &securityeventpb.SecurityEvent{
+		SecurityEventTime: timestamppb.New(t),
+		Description:       message,
+		Id:                id,
+		Priority:          int32(priority),
+		Source: &securityeventpb.SecurityEvent_Source{
+			Id:        sourceId,
+			Name:      sourceName,
+			Subsystem: "acs",
+		},
+	}
+}
+
+func (sc *SecurityEventController) addSecurityEvent(ctx context.Context, event *securityeventpb.SecurityEvent) {
+	sc.securityEvents.Value = event
+	sc.securityEvents = sc.securityEvents.Next()
+	sc.updates.Send(ctx, &securityeventpb.PullSecurityEventsResponse_Change{
+		ChangeTime: timestamppb.Now(),
+		OldValue:   nil,
+		NewValue:   event,
+	})
+}
+
 // refreshAlarms call the Gallagher alarms API and add any new ones to the sc that are newer than our current newest
 func (sc *SecurityEventController) refreshAlarms(ctx context.Context) error {
 	alarms, err := sc.getAlarms()
 	if err != nil {
-		sc.logger.Error("failed to get alarms", zap.Error(err))
-		return err
+		return fmt.Errorf("failed to get alarms: %w", err)
 	}
 
 	for _, alarm := range alarms {
-		// we only want to add new alarms
-		if alarm.Time.After(sc.lastEventTime) {
-			event := &securityeventpb.SecurityEvent{
-				SecurityEventTime: timestamppb.New(alarm.Time),
-				Description:       alarm.Message,
-				Id:                alarm.Id,
-				Priority:          int32(alarm.Priority),
-				Source: &securityeventpb.SecurityEvent_Source{
-					Id:        alarm.Source.Id,
-					Name:      alarm.Source.Name,
-					Subsystem: "acs",
-				},
-			}
-			sc.securityEvents.Value = event
-			sc.securityEvents = sc.securityEvents.Next()
-			sc.updates.Send(ctx, &securityeventpb.PullSecurityEventsResponse_Change{
-				ChangeTime: timestamppb.Now(),
-				OldValue:   nil,
-				NewValue:   event,
-			})
-			// the events in alarms are always oldest first, so this is fine
-			sc.lastEventTime = alarm.Time
-			sc.logger.Info("adding new security event", zap.Time("time", alarm.Time), zap.String("message", alarm.Message))
+		if !alarm.Time.After(sc.lastAlarmTime) {
+			break
 		}
+		event := newSecurityEvent(alarm.Time, alarm.Id, alarm.Message, alarm.Priority, alarm.Source.Id, alarm.Source.Name)
+		sc.addSecurityEvent(ctx, event)
+		// the events in alarms are always oldest first, so this is fine
+		sc.lastAlarmTime = alarm.Time
+		sc.logger.Info("adding new security event", zap.Time("time", alarm.Time), zap.String("message", alarm.Message))
 	}
 	return nil
 }
 
-// run the alarm controller schedule to refresh the alarms
+// run the alarm controller schedule to refresh the alarms and events
 func (sc *SecurityEventController) run(ctx context.Context, schedule *jsontypes.Schedule) error {
 
-	err := sc.refreshAlarms(ctx)
-	if err != nil {
+	if err := sc.refreshAlarms(ctx); err != nil {
 		sc.logger.Error("failed to refresh alarms, will try again on next run...", zap.Error(err))
+	}
+	if err := sc.refreshEvents(ctx); err != nil {
+		sc.logger.Error("failed to refresh events, will try again on next run...", zap.Error(err))
 	}
 
 	t := time.Now()
@@ -189,11 +201,13 @@ func (sc *SecurityEventController) run(ctx context.Context, schedule *jsontypes.
 		}
 
 		sc.mu.Lock()
-		err := sc.refreshAlarms(ctx)
-		sc.mu.Unlock()
-		if err != nil {
+		if err := sc.refreshAlarms(ctx); err != nil {
 			sc.logger.Error("failed to refresh alarms, will try again on next run...", zap.Error(err))
 		}
+		if err := sc.refreshEvents(ctx); err != nil {
+			sc.logger.Error("failed to refresh events, will try again on next run...", zap.Error(err))
+		}
+		sc.mu.Unlock()
 	}
 }
 

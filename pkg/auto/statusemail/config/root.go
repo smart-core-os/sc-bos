@@ -16,6 +16,9 @@ import (
 
 func ReadBytes(data []byte) (cfg Root, err error) {
 	err = json.Unmarshal(data, &cfg)
+	if err != nil {
+		return
+	}
 	if cfg.Debounce != nil {
 		for i, source := range cfg.Sources {
 			if source.Debounce == nil {
@@ -26,9 +29,11 @@ func ReadBytes(data []byte) (cfg Root, err error) {
 	}
 	if cfg.Destination.Host == "" {
 		err = fmt.Errorf("destination.host not specified")
+		return
 	}
 	if len(cfg.Destination.To) == 0 {
 		err = fmt.Errorf("destination.recipients is empty")
+		return
 	}
 	// validate email addresses
 	parsed, err := cfg.Destination.Parse()
@@ -49,7 +54,7 @@ func ReadBytes(data []byte) (cfg Root, err error) {
 type Root struct {
 	auto.Config
 	// Configuration information for how to send the email.
-	Destination Destination `json:"destination,omitempty"`
+	Destination Destination `json:"destination"`
 	// If true, all devices on the current node that implement Status will be monitored.
 	// Additional sources may be defined via Sources.
 	DiscoverSources bool `json:"discoverSources,omitempty"`

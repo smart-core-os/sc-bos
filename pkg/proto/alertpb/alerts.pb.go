@@ -7,7 +7,7 @@
 package alertpb
 
 import (
-	types "github.com/smart-core-os/sc-api/go/types"
+	typespb "github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -1396,7 +1396,7 @@ type PullAlertsResponse_Change struct {
 	// The name of the device that emitted this change
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The type of change (e.g. ADD, UPDATE, etc...)
-	Type types.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.types.ChangeType" json:"type,omitempty"`
+	Type typespb.ChangeType `protobuf:"varint,2,opt,name=type,proto3,enum=smartcore.bos.types.v1.ChangeType" json:"type,omitempty"`
 	// The new value to use for ADD|UPDATE changes
 	NewValue *Alert `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// The old value to use for UPDATE|REMOVE changes
@@ -1444,11 +1444,11 @@ func (x *PullAlertsResponse_Change) GetName() string {
 	return ""
 }
 
-func (x *PullAlertsResponse_Change) GetType() types.ChangeType {
+func (x *PullAlertsResponse_Change) GetType() typespb.ChangeType {
 	if x != nil {
 		return x.Type
 	}
-	return types.ChangeType(0)
+	return typespb.ChangeType(0)
 }
 
 func (x *PullAlertsResponse_Change) GetNewValue() *Alert {
@@ -1539,7 +1539,7 @@ var File_smartcore_bos_alert_v1_alerts_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_alert_v1_alerts_proto_rawDesc = "" +
 	"\n" +
-	"#smartcore/bos/alert/v1/alerts.proto\x12\x16smartcore.bos.alert.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12types/change.proto\"\x9e\v\n" +
+	"#smartcore/bos/alert/v1/alerts.proto\x12\x16smartcore.bos.alert.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a#smartcore/bos/types/v1/change.proto\"\x9e\v\n" +
 	"\x05Alert\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12;\n" +
@@ -1636,12 +1636,12 @@ const file_smartcore_bos_alert_v1_alerts_proto_rawDesc = "" +
 	"\x11PullAlertsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x129\n" +
-	"\x05query\x18\x05 \x01(\v2#.smartcore.bos.alert.v1.Alert.QueryR\x05query\"\xe6\x02\n" +
+	"\x05query\x18\x05 \x01(\v2#.smartcore.bos.alert.v1.Alert.QueryR\x05query\"\xed\x02\n" +
 	"\x12PullAlertsResponse\x12K\n" +
-	"\achanges\x18\x01 \x03(\v21.smartcore.bos.alert.v1.PullAlertsResponse.ChangeR\achanges\x1a\x82\x02\n" +
+	"\achanges\x18\x01 \x03(\v21.smartcore.bos.alert.v1.PullAlertsResponse.ChangeR\achanges\x1a\x89\x02\n" +
 	"\x06Change\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1b.smartcore.types.ChangeTypeR\x04type\x12:\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".smartcore.bos.types.v1.ChangeTypeR\x04type\x12:\n" +
 	"\tnew_value\x18\x03 \x01(\v2\x1d.smartcore.bos.alert.v1.AlertR\bnewValue\x12:\n" +
 	"\told_value\x18\x04 \x01(\v2\x1d.smartcore.bos.alert.v1.AlertR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -1744,7 +1744,7 @@ var file_smartcore_bos_alert_v1_alerts_proto_goTypes = []any{
 	(*PullAlertMetadataResponse_Change)(nil), // 27: smartcore.bos.alert.v1.PullAlertMetadataResponse.Change
 	(*timestamppb.Timestamp)(nil),            // 28: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil),            // 29: google.protobuf.FieldMask
-	(types.ChangeType)(0),                    // 30: smartcore.types.ChangeType
+	(typespb.ChangeType)(0),                  // 30: smartcore.bos.types.v1.ChangeType
 }
 var file_smartcore_bos_alert_v1_alerts_proto_depIdxs = []int32{
 	28, // 0: smartcore.bos.alert.v1.Alert.create_time:type_name -> google.protobuf.Timestamp
@@ -1778,7 +1778,7 @@ var file_smartcore_bos_alert_v1_alerts_proto_depIdxs = []int32{
 	28, // 28: smartcore.bos.alert.v1.Alert.Query.created_not_after:type_name -> google.protobuf.Timestamp
 	28, // 29: smartcore.bos.alert.v1.Alert.Query.resolved_not_before:type_name -> google.protobuf.Timestamp
 	28, // 30: smartcore.bos.alert.v1.Alert.Query.resolved_not_after:type_name -> google.protobuf.Timestamp
-	30, // 31: smartcore.bos.alert.v1.PullAlertsResponse.Change.type:type_name -> smartcore.types.ChangeType
+	30, // 31: smartcore.bos.alert.v1.PullAlertsResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
 	1,  // 32: smartcore.bos.alert.v1.PullAlertsResponse.Change.new_value:type_name -> smartcore.bos.alert.v1.Alert
 	1,  // 33: smartcore.bos.alert.v1.PullAlertsResponse.Change.old_value:type_name -> smartcore.bos.alert.v1.Alert
 	28, // 34: smartcore.bos.alert.v1.PullAlertsResponse.Change.change_time:type_name -> google.protobuf.Timestamp

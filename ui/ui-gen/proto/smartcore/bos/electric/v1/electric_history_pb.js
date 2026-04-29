@@ -19,10 +19,10 @@ var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/fie
 goog.object.extend(proto, google_protobuf_field_mask_pb);
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
-var traits_electric_pb = require('@smart-core-os/sc-api-grpc-web/traits/electric_pb.js');
-goog.object.extend(proto, traits_electric_pb);
-var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js');
-goog.object.extend(proto, types_time_period_pb);
+var smartcore_bos_electric_v1_electric_pb = require('../../../../smartcore/bos/electric/v1/electric_pb.js');
+goog.object.extend(proto, smartcore_bos_electric_v1_electric_pb);
+var smartcore_bos_types_time_v1_period_pb = require('../../../../smartcore/bos/types/time/v1/period_pb.js');
+goog.object.extend(proto, smartcore_bos_types_time_v1_period_pb);
 goog.exportSymbol('proto.smartcore.bos.electric.v1.ElectricDemandRecord', null, global);
 goog.exportSymbol('proto.smartcore.bos.electric.v1.ListElectricDemandHistoryRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.electric.v1.ListElectricDemandHistoryResponse', null, global);
@@ -121,7 +121,7 @@ proto.smartcore.bos.electric.v1.ElectricDemandRecord.prototype.toObject = functi
  */
 proto.smartcore.bos.electric.v1.ElectricDemandRecord.toObject = function(includeInstance, msg) {
   var f, obj = {
-electricDemand: (f = msg.getElectricDemand()) && traits_electric_pb.ElectricDemand.toObject(includeInstance, f),
+electricDemand: (f = msg.getElectricDemand()) && smartcore_bos_electric_v1_electric_pb.ElectricDemand.toObject(includeInstance, f),
 recordTime: (f = msg.getRecordTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f)
   };
 
@@ -160,8 +160,8 @@ proto.smartcore.bos.electric.v1.ElectricDemandRecord.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new traits_electric_pb.ElectricDemand;
-      reader.readMessage(value,traits_electric_pb.ElectricDemand.deserializeBinaryFromReader);
+      var value = new smartcore_bos_electric_v1_electric_pb.ElectricDemand;
+      reader.readMessage(value,smartcore_bos_electric_v1_electric_pb.ElectricDemand.deserializeBinaryFromReader);
       msg.setElectricDemand(value);
       break;
     case 2:
@@ -203,7 +203,7 @@ proto.smartcore.bos.electric.v1.ElectricDemandRecord.serializeBinaryToWriter = f
     writer.writeMessage(
       1,
       f,
-      traits_electric_pb.ElectricDemand.serializeBinaryToWriter
+      smartcore_bos_electric_v1_electric_pb.ElectricDemand.serializeBinaryToWriter
     );
   }
   f = message.getRecordTime();
@@ -218,17 +218,17 @@ proto.smartcore.bos.electric.v1.ElectricDemandRecord.serializeBinaryToWriter = f
 
 
 /**
- * optional smartcore.traits.ElectricDemand electric_demand = 1;
- * @return {?proto.smartcore.traits.ElectricDemand}
+ * optional ElectricDemand electric_demand = 1;
+ * @return {?proto.smartcore.bos.electric.v1.ElectricDemand}
  */
 proto.smartcore.bos.electric.v1.ElectricDemandRecord.prototype.getElectricDemand = function() {
-  return /** @type{?proto.smartcore.traits.ElectricDemand} */ (
-    jspb.Message.getWrapperField(this, traits_electric_pb.ElectricDemand, 1));
+  return /** @type{?proto.smartcore.bos.electric.v1.ElectricDemand} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_electric_v1_electric_pb.ElectricDemand, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.traits.ElectricDemand|undefined} value
+ * @param {?proto.smartcore.bos.electric.v1.ElectricDemand|undefined} value
  * @return {!proto.smartcore.bos.electric.v1.ElectricDemandRecord} returns this
 */
 proto.smartcore.bos.electric.v1.ElectricDemandRecord.prototype.setElectricDemand = function(value) {
@@ -324,7 +324,7 @@ proto.smartcore.bos.electric.v1.ListElectricDemandHistoryRequest.prototype.toObj
 proto.smartcore.bos.electric.v1.ListElectricDemandHistoryRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
 name: jspb.Message.getFieldWithDefault(msg, 1, ""),
-period: (f = msg.getPeriod()) && types_time_period_pb.Period.toObject(includeInstance, f),
+period: (f = msg.getPeriod()) && smartcore_bos_types_time_v1_period_pb.Period.toObject(includeInstance, f),
 readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toObject(includeInstance, f),
 pageSize: jspb.Message.getFieldWithDefault(msg, 4, 0),
 pageToken: jspb.Message.getFieldWithDefault(msg, 5, ""),
@@ -370,8 +370,8 @@ proto.smartcore.bos.electric.v1.ListElectricDemandHistoryRequest.deserializeBina
       msg.setName(value);
       break;
     case 2:
-      var value = new types_time_period_pb.Period;
-      reader.readMessage(value,types_time_period_pb.Period.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_time_v1_period_pb.Period;
+      reader.readMessage(value,smartcore_bos_types_time_v1_period_pb.Period.deserializeBinaryFromReader);
       msg.setPeriod(value);
       break;
     case 3:
@@ -432,7 +432,7 @@ proto.smartcore.bos.electric.v1.ListElectricDemandHistoryRequest.serializeBinary
     writer.writeMessage(
       2,
       f,
-      types_time_period_pb.Period.serializeBinaryToWriter
+      smartcore_bos_types_time_v1_period_pb.Period.serializeBinaryToWriter
     );
   }
   f = message.getReadMask();
@@ -486,17 +486,17 @@ proto.smartcore.bos.electric.v1.ListElectricDemandHistoryRequest.prototype.setNa
 
 
 /**
- * optional smartcore.types.time.Period period = 2;
- * @return {?proto.smartcore.types.time.Period}
+ * optional smartcore.bos.types.time.v1.Period period = 2;
+ * @return {?proto.smartcore.bos.types.time.v1.Period}
  */
 proto.smartcore.bos.electric.v1.ListElectricDemandHistoryRequest.prototype.getPeriod = function() {
-  return /** @type{?proto.smartcore.types.time.Period} */ (
-    jspb.Message.getWrapperField(this, types_time_period_pb.Period, 2));
+  return /** @type{?proto.smartcore.bos.types.time.v1.Period} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_time_v1_period_pb.Period, 2));
 };
 
 
 /**
- * @param {?proto.smartcore.types.time.Period|undefined} value
+ * @param {?proto.smartcore.bos.types.time.v1.Period|undefined} value
  * @return {!proto.smartcore.bos.electric.v1.ListElectricDemandHistoryRequest} returns this
 */
 proto.smartcore.bos.electric.v1.ListElectricDemandHistoryRequest.prototype.setPeriod = function(value) {

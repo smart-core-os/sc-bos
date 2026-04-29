@@ -5,7 +5,6 @@ import {createRequire} from 'module';
 import {dirname, relative, sep, posix} from 'path';
 import {fileURLToPath, URL} from 'url';
 import {defineConfig, loadEnv} from 'vite';
-import eslintPlugin from 'vite-plugin-eslint';
 import vuetify from 'vite-plugin-vuetify';
 
 const _require = createRequire(import.meta.url);
@@ -16,7 +15,7 @@ const optimizeDepsInclude = [
 // Typically that includes local proto files that are referenced via either `file:../` dependencies in package.json
 // or via yarn/npm linking the generated sources into this project (or both).
 // This snippet will find all *_pb.js files and ensure that they will be handled correctly by vite.
-for (const dep of ['@smart-core-os/sc-bos-ui-gen', '@smart-core-os/sc-api-grpc-web']) {
+for (const dep of ['@smart-core-os/sc-bos-ui-gen']) {
   // find proto files in projects
   const protoDirRoot = dirname(_require.resolve(dep + '/package.json'));
   const globPattern = posix.join(protoDirRoot, '!(node_modules)/**/*_pb.js');
@@ -39,7 +38,7 @@ export default defineConfig(({mode}) => {
     optimizeDeps: {
       include: optimizeDepsInclude,
       // See https://github.com/vueuse/vue-demi
-      exclude: ['vue-demi']
+      exclude: ['vue-demi', 'vuetify']
     },
     build: {
       commonjsOptions: {
@@ -55,7 +54,6 @@ export default defineConfig(({mode}) => {
           configFile: 'src/sass/settings.scss'
         }
       }),
-      eslintPlugin()
     ],
     resolve: {
       alias: {

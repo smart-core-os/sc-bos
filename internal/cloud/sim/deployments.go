@@ -10,28 +10,28 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
-	queries2 "github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 const (
-	statusPending    = "PENDING"
-	statusInProgress = "IN_PROGRESS"
-	statusCompleted  = "COMPLETED"
-	statusFailed     = "FAILED"
-	statusCancelled  = "CANCELLED"
+	statusPending    = "pending"
+	statusInProgress = "in_progress"
+	statusCompleted  = "completed"
+	statusFailed     = "failed"
+	statusCancelled  = "cancelled"
 )
 
 // Deployment is the JSON representation of a deployment.
 type Deployment struct {
-	ID              int64      `json:"id"`
-	ConfigVersionID int64      `json:"configVersionId"`
+	ID              int64      `json:"id,string"`
+	ConfigVersionID int64      `json:"configVersionId,string"`
 	Status          string     `json:"status"`
 	StartTime       time.Time  `json:"startTime"`
 	FinishedTime    *time.Time `json:"finishedTime,omitempty"`
 	Reason          string     `json:"reason,omitempty"`
 }
 
-func toDeployment(d queries2.Deployment) Deployment {
+func toDeployment(d queries.Deployment) Deployment {
 	out := Deployment{
 		ID:              d.ID,
 		ConfigVersionID: d.ConfigVersionID,
@@ -47,7 +47,7 @@ func toDeployment(d queries2.Deployment) Deployment {
 	return out
 }
 
-func toDeployments(deployments []queries2.Deployment) []Deployment {
+func toDeployments(deployments []queries.Deployment) []Deployment {
 	out := make([]Deployment, len(deployments))
 	for i, d := range deployments {
 		out[i] = toDeployment(d)
@@ -56,7 +56,7 @@ func toDeployments(deployments []queries2.Deployment) []Deployment {
 }
 
 type createDeploymentRequest struct {
-	ConfigVersionID int64  `json:"configVersionId"`
+	ConfigVersionID int64  `json:"configVersionId,string"`
 	Status          string `json:"status,omitempty"`
 }
 
@@ -66,11 +66,11 @@ type updateDeploymentStatusRequest struct {
 }
 
 var validStatuses = map[string]bool{
-	"PENDING":     true,
-	"IN_PROGRESS": true,
-	"COMPLETED":   true,
-	"FAILED":      true,
-	"CANCELLED":   true,
+	statusPending:    true,
+	statusInProgress: true,
+	statusCompleted:  true,
+	statusFailed:     true,
+	statusCancelled:  true,
 }
 
 func isValidStatus(status string) bool {
@@ -80,7 +80,7 @@ func isValidStatus(status string) bool {
 func (s *Server) listDeployments(w http.ResponseWriter, r *http.Request) {
 	logger := s.loggerFor(r)
 
-	afterID, limit, err := parsePagination(r)
+	beforeID, limit, err := parsePaginationDesc(r)
 	if err != nil {
 		writeError(w, errInvalidRequest)
 		logger.Info("invalid pagination", zap.Error(err))
@@ -109,26 +109,26 @@ func (s *Server) listDeployments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var items []queries2.Deployment
+	var items []queries.Deployment
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		switch {
 		case nodeID != 0:
-			items, err = tx.ListDeploymentsByNode(r.Context(), queries2.ListDeploymentsByNodeParams{
-				NodeID:  nodeID,
-				AfterID: afterID,
-				Limit:   limit + 1,
+			items, err = tx.ListDeploymentsByNode(r.Context(), queries.ListDeploymentsByNodeParams{
+				NodeID:   nodeID,
+				BeforeID: beforeID,
+				Limit:    limit + 1,
 			})
 		case configVersionID != 0:
-			items, err = tx.ListDeploymentsByConfigVersion(r.Context(), queries2.ListDeploymentsByConfigVersionParams{
+			items, err = tx.ListDeploymentsByConfigVersion(r.Context(), queries.ListDeploymentsByConfigVersionParams{
 				ConfigVersionID: configVersionID,
-				AfterID:         afterID,
+				BeforeID:        beforeID,
 				Limit:           limit + 1,
 			})
 		default:
-			items, err = tx.ListDeployments(r.Context(), queries2.ListDeploymentsParams{
-				AfterID: afterID,
-				Limit:   limit + 1,
+			items, err = tx.ListDeployments(r.Context(), queries.ListDeploymentsParams{
+				BeforeID: beforeID,
+				Limit:    limit + 1,
 			})
 		}
 		return err
@@ -173,7 +173,7 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 		logger.Info("invalid status for creation", zap.String("status", status))
 	}
 
-	var item queries2.Deployment
+	var item queries.Deployment
 	var conflicted bool
 	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
 		cv, err := tx.GetConfigVersion(r.Context(), req.ConfigVersionID)
@@ -200,7 +200,7 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		item, err = tx.CreateDeployment(r.Context(), queries2.CreateDeploymentParams{
+		item, err = tx.CreateDeployment(r.Context(), queries.CreateDeploymentParams{
 			ConfigVersionID: req.ConfigVersionID,
 			Status:          status,
 		})
@@ -240,7 +240,7 @@ func (s *Server) getDeployment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries2.Deployment
+	var item queries.Deployment
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		item, err = tx.GetDeployment(r.Context(), id)
@@ -283,10 +283,10 @@ func (s *Server) updateDeploymentStatus(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var item queries2.Deployment
+	var item queries.Deployment
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
-		item, err = tx.UpdateDeploymentStatus(r.Context(), queries2.UpdateDeploymentStatusParams{
+		item, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
 			ID:     id,
 			Status: req.Status,
 			Reason: nullString(req.Reason),

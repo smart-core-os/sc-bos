@@ -63,7 +63,8 @@ export default function useDashPage(path) {
     if (!v) return false;
     return {
       internal: /** @type {string} */ v.indoor,
-      external: /** @type {string} */ v.outdoor
+      external: /** @type {string} */ v.outdoor,
+      sound: /** @type {string} */ v.sound
     };
   });
 

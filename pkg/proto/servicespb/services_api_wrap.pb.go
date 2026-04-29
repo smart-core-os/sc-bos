@@ -3,11 +3,12 @@
 package servicespb
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapApi	adapts a ServicesApiServer	and presents it as a ServicesApiClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapApi(server ServicesApiServer) *ApiWrapper {
 	conn := wrap.ServerToClient(ServicesApi_ServiceDesc, server)
 	client := NewServicesApiClient(conn)

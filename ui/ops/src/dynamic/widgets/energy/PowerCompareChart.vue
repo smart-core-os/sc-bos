@@ -109,6 +109,9 @@ const chartOptions = computed(() => {
     circumference: 230,
     borderWidth: 0,
     spacing: 1,
+    layout: {
+      padding: 12,
+    },
     plugins: {
       legend: {
         display: false
@@ -122,7 +125,7 @@ const chartData = computed(() => records.value);
 <style scoped lang="scss">
 .root {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr 2fr;
 }
 
 .chart__legend {
@@ -140,22 +143,15 @@ const chartData = computed(() => records.value);
   grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   align-items: stretch;
   justify-self: end;
-  padding-top: 10px;
+  padding-right: 16px;
   aspect-ratio: 1;
+  transform: translateX(-8%);
 
   > * {
     grid-column: 1 / span 1;
     grid-row: 1 / span 1;
   }
 
-  // fix alignment issues caused by the donut chart not having an option to lay out as if it were a full circle.
-  & {
-    overflow: hidden;
-  }
-  .chart__parent {
-    position: relative;
-    left: 10%; // this should be ok as we have aspect-ratio 1
-  }
 }
 
 .chart__total {

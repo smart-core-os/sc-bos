@@ -1,5 +1,6 @@
-import {DAY, HOUR} from '@/components/now.js';
+
 import {isNamedPeriod, previousNamedPeriod, usePastDates, usePeriod} from '@/composables/time.js';
+import {DAY, HOUR} from '@/util/date.js';
 import {
   eachDayOfInterval,
   eachHourOfInterval,
@@ -72,5 +73,27 @@ export function useDateScale(start, end, offset) {
     edges, pastEdges,
     tickUnit,
     startDate, endDate
+  }
+}
+
+/**
+ * Returns a date format string suitable for tooltips based on the tick unit.
+ *
+ * @param {string} tickUnit
+ * @return {string}
+ */
+export function getTooltipDateFormat(tickUnit) {
+  switch (tickUnit) {
+    case 'minute':
+    case 'hour':
+      return 'MMM d, h:mm a';
+    case 'day':
+      return 'MMM d, yyyy';
+    case 'month':
+      return 'MMM yyyy';
+    case 'year':
+      return 'yyyy';
+    default:
+      return 'MMM d, yyyy';
   }
 }

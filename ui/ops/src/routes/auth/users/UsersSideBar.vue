@@ -116,11 +116,11 @@
 <script setup>
 import {timestampToDate} from '@/api/convpb.js';
 import CopyDiv from '@/components/CopyDiv.vue';
-import {DAY, HOUR, MINUTE} from '@/components/now.js';
 import SideBar from '@/components/SideBar.vue';
 import {useIsFutureDate} from '@/composables/time.js';
 import RoleAssignmentLink from '@/routes/auth/accounts/RoleAssignmentLink.vue';
 import {useSidebarStore} from '@/stores/sidebar.js';
+import {DAY, HOUR, MINUTE} from '@/util/date.js';
 import {Account} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/account/v1/account_pb';
 import {computed, reactive, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';

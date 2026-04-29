@@ -1,7 +1,7 @@
 <template>
   <v-card class="d-flex flex-column" :class="rootClasses">
     <v-toolbar class="chart-header" color="transparent" v-if="!props.hideToolbar">
-      <v-toolbar-title class="text-h4">{{ props.title }}</v-toolbar-title>
+      <v-toolbar-title class="text-h4" style="overflow-wrap: break-word">{{ props.title }}</v-toolbar-title>
       <v-btn
           icon="mdi-dots-vertical"
           size="small"
@@ -12,7 +12,7 @@
             <v-list density="compact">
               <v-list-subheader title="Sources"/>
               <v-list-item
-                  v-for="(item, index) in legendItems"
+                  v-for="(item, index) in trackedLegendItems"
                   :key="index"
                   @click="item.onClick(item.hidden)"
                   :title="item.text">
@@ -77,7 +77,7 @@ import {isNullOrUndef} from '@/util/types.js';
 import {useLocalProp} from '@/util/vue.js';
 import {BarElement, Chart as ChartJS, Legend, LinearScale, TimeScale, Title, Tooltip} from 'chart.js'
 import {startOfDay, startOfYear} from 'date-fns';
-import {computed, ref, toRef, watch} from 'vue';
+import {computed, nextTick, ref, toRef, watch} from 'vue';
 import {Bar} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
 import {useMeterConsumption, useMetersConsumption} from './consumption.js';
@@ -190,14 +190,30 @@ const {
 const {legendItems, vueLegendPlugin} = useVueLegendPlugin();
 const {themeColorPlugin} = useThemeColorPlugin();
 
+// Track which dataset labels the user has hidden, so selection survives time range changes.
+const hiddenDatasets = ref(new Set());
+
+// Wrap legendItems to intercept clicks and record hidden state by label.
+const trackedLegendItems = computed(() => legendItems.value.map(item => ({
+  ...item,
+  onClick: (wasHidden) => {
+    item.onClick(wasHidden);
+    if (wasHidden) {
+      hiddenDatasets.value.delete(item.text);
+    } else {
+      hiddenDatasets.value.add(item.text);
+    }
+  }
+})));
+
 const chartOptions = computed(() => {
   return /** @type {import('chart.js').ChartOptions} */ {
     responsive: true,
     maintainAspectRatio: false,
     borderRadius: 3,
-    borderWidth: 1,
     interaction: {
       mode: 'index', // a single tooltip with all stacked datasets at the same x location in it
+      intersect: false,
     },
     plugins: {
       tooltip: {
@@ -213,15 +229,16 @@ const chartOptions = computed(() => {
         stacked: true,
         title: {
           display: true,
-          text: displayUnit.value
+          text: displayUnit.value,
+          color: 'rgba(255, 255, 255, 0.7)',
         },
         border: {
-          color: 'transparent'
+          display: false
         },
         grid: {
           color(ctx) {
-            if (ctx.tick.value === 0) return '#fff4';
-            return '#fff1';
+            if (ctx.tick.value === 0) return 'rgba(255, 255, 255, 0.25)';
+            return 'rgba(255, 255, 255, 0.08)';
           },
           drawTicks: false,
         },
@@ -229,7 +246,7 @@ const chartOptions = computed(() => {
           callback(value) {
             return new Intl.NumberFormat(undefined, {}).format(Math.abs(value));
           },
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           padding: 8
         },
       },
@@ -237,8 +254,7 @@ const chartOptions = computed(() => {
         type: 'time',
         stacked: true,
         grid: {
-          offset: false, // bars default to true here, put ticks back inline with grid lines
-          color: '#fff1'
+          display: false,
         },
         ticks: {
           maxTicksLimit: 11,
@@ -249,7 +265,7 @@ const chartOptions = computed(() => {
             if (unit === 'hour' && value === startOfDay(value).getTime()) return this.format(value, this.options.time.displayFormats['day']);
             return this.format(value);
           },
-          color: '#fff',
+          color: 'rgba(255, 255, 255, 0.9)',
           padding: 8,
           maxRotation: 0
         },
@@ -279,14 +295,14 @@ const chartData = computed(() => {
     baseData.datasets.forEach(ds => {
       const sourceName = ds[datasetSourceName];
       const scale = props.scaleValues[sourceName] || 1;
-      ds.data = ds.data.map(val => val / scale);
+      ds.data = ds.data.map(val => ({x: val.x, y: val.y / scale}));
     });
   }
   return baseData;
 });
 
 const hasData = computed(() => {
-  return chartData.value.datasets.some(ds => ds.data.some(val => val !== 0 && val));
+  return chartData.value.datasets.some(ds => ds.data.some(val => val?.y != null));
 });
 
 // Track if initial data load is complete to avoid showing no-data graphic during fetch
@@ -299,11 +315,27 @@ watch([startDate, endDate], () => {
 
 watch(chartData, (data) => {
   // Check if we have any non-null data points (even if they're zero)
-  const hasAnyData = data.datasets.some(ds => ds.data.some(val => val != null));
+  const hasAnyData = data.datasets.some(ds => ds.data.some(val => val?.y != null));
   if (hasAnyData && !hasLoadedData.value) {
     hasLoadedData.value = true;
   }
 }, {immediate: true});
+
+// After chartData changes (e.g. time range change), re-apply hidden state.
+watch(chartData, async () => {
+  if (hiddenDatasets.value.size === 0) return;
+  await nextTick();
+  const chart = chartRef.value?.chart;
+  if (!chart) return;
+  let changed = false;
+  chart.data.datasets.forEach((ds, idx) => {
+    if (hiddenDatasets.value.has(ds.label)) {
+      chart.setDatasetVisibility(idx, false);
+      changed = true;
+    }
+  });
+  if (changed) chart.update();
+});
 
 const showNoData = computed(() => !hasData.value && hasLoadedData.value);
 

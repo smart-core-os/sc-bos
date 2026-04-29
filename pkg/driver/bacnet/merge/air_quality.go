@@ -8,17 +8,16 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/gobacnet"
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
-	"github.com/smart-core-os/sc-golang/pkg/cmp"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
-	"github.com/smart-core-os/sc-golang/pkg/trait/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 type airQualityConfig struct {
@@ -41,7 +40,7 @@ func readAirQualitySensorConfig(raw []byte) (cfg airQualityConfig, err error) {
 type airQualitySensor struct {
 	client     *gobacnet.Client
 	known      known.Context
-	faultCheck *gen_healthpb.FaultCheck
+	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
 
 	model *airqualitysensorpb.Model
@@ -50,7 +49,7 @@ type airQualitySensor struct {
 	pollTask *task.Intermittent
 }
 
-func newAirQualitySensor(client *gobacnet.Client, devices known.Context, faultCheck *gen_healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airQualitySensor, error) {
+func newAirQualitySensor(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airQualitySensor, error) {
 	cfg, err := readAirQualitySensorConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -79,10 +78,13 @@ func (aq *airQualitySensor) startPoll(init context.Context) (stop task.StopFn, e
 }
 
 func (aq *airQualitySensor) AnnounceSelf(a node.Announcer) node.Undo {
-	return a.Announce(aq.config.Name, node.HasTrait(trait.AirQualitySensor, node.WithClients(airqualitysensorpb.WrapApi(aq))))
+	return a.Announce(aq.config.Name,
+		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(aq)),
+		node.HasTrait(trait.AirQualitySensor),
+	)
 }
 
-func (aq *airQualitySensor) GetAirQuality(ctx context.Context, request *traits.GetAirQualityRequest) (*traits.AirQuality, error) {
+func (aq *airQualitySensor) GetAirQuality(ctx context.Context, request *airqualitysensorpb.GetAirQualityRequest) (*airqualitysensorpb.AirQuality, error) {
 	_, err := aq.pollPeer(ctx)
 	if err != nil {
 		return nil, err
@@ -90,21 +92,19 @@ func (aq *airQualitySensor) GetAirQuality(ctx context.Context, request *traits.G
 	return aq.ModelServer.GetAirQuality(ctx, request)
 }
 
-func (aq *airQualitySensor) PullAirQuality(request *traits.PullAirQualityRequest, server traits.AirQualitySensorApi_PullAirQualityServer) error {
+func (aq *airQualitySensor) PullAirQuality(request *airqualitysensorpb.PullAirQualityRequest, server airqualitysensorpb.AirQualitySensorApi_PullAirQualityServer) error {
 	_ = aq.pollTask.Attach(server.Context())
 	return aq.ModelServer.PullAirQuality(request, server)
 }
 
 // pollPeer fetches data from the peer device and saves the data locally.
-func (aq *airQualitySensor) pollPeer(ctx context.Context) (*traits.AirQuality, error) {
-	data := &traits.AirQuality{}
+func (aq *airQualitySensor) pollPeer(ctx context.Context) (*airqualitysensorpb.AirQuality, error) {
+	data := &airqualitysensorpb.AirQuality{}
 	var resProcessors []func(response any) error
 	var readValues []config.ValueSource
-	var requestNames []string
 
 	if aq.config.AirPressure != nil {
 		readValues = append(readValues, *aq.config.AirPressure)
-		requestNames = append(requestNames, "AirPressure")
 		resProcessors = append(resProcessors, func(response any) error {
 			pressure, err := comm.Float32Value(response)
 			if err != nil {
@@ -116,7 +116,6 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*traits.AirQuality, e
 	}
 	if aq.config.Co2 != nil {
 		readValues = append(readValues, *aq.config.Co2)
-		requestNames = append(requestNames, "Co2")
 		resProcessors = append(resProcessors, func(response any) error {
 			co2, err := comm.Float32Value(response)
 			if err != nil {
@@ -128,7 +127,6 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*traits.AirQuality, e
 	}
 	if aq.config.IaqScore != nil {
 		readValues = append(readValues, *aq.config.IaqScore)
-		requestNames = append(requestNames, "IaqScore")
 		resProcessors = append(resProcessors, func(response any) error {
 			iaq, err := comm.Float32Value(response)
 			if err != nil {
@@ -140,7 +138,6 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*traits.AirQuality, e
 	}
 	if aq.config.Pm10 != nil {
 		readValues = append(readValues, *aq.config.Pm10)
-		requestNames = append(requestNames, "Pm10")
 		resProcessors = append(resProcessors, func(response any) error {
 			pm10, err := comm.Float32Value(response)
 			if err != nil {
@@ -152,7 +149,6 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*traits.AirQuality, e
 	}
 	if aq.config.Pm25 != nil {
 		readValues = append(readValues, *aq.config.Pm25)
-		requestNames = append(requestNames, "Pm25")
 		resProcessors = append(resProcessors, func(response any) error {
 			pm25, err := comm.Float32Value(response)
 			if err != nil {
@@ -164,7 +160,6 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*traits.AirQuality, e
 	}
 	if aq.config.VOC != nil {
 		readValues = append(readValues, *aq.config.VOC)
-		requestNames = append(requestNames, "VOC")
 		resProcessors = append(resProcessors, func(response any) error {
 			voc, err := comm.Float32Value(response)
 			if err != nil {

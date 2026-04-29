@@ -48,8 +48,6 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 	if strings.HasSuffix(str, "m0s") {
 		str = str[:len(str)-2]
 	}
-	if strings.Contains(str, "h0m") {
-		str = strings.Replace(str, "h0m", "h", 1)
-	}
+	str = strings.Replace(str, "h0m", "h", 1)
 	return json.Marshal(str)
 }

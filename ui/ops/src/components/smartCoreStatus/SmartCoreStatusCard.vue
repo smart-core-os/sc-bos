@@ -74,12 +74,12 @@
 </template>
 
 <script setup>
-import {DAY, HOUR, MINUTE, SECOND, useNow} from '@/components/now';
+import {useNow} from '@/components/now';
 import StatusAlert from '@/components/StatusAlert.vue';
 import useAuthSetup from '@/composables/useAuthSetup';
 import {EnrollmentStatus, NodeRole, useCohortHealthStore, useCohortStore} from '@/stores/cohort.js';
 import {useKeycloakHealthStore} from '@/stores/keycloakHealth.js';
-import {formatTimeAgo} from '@/util/date';
+import {formatTimeAgo, SECOND} from '@/util/date';
 import {formatErrorMessage, isNetworkError} from '@/util/error';
 import {computed, ref} from 'vue';
 
@@ -253,9 +253,9 @@ const showLastCheckTime = ref(true); // choose last check, or next check time
 const checkStatusStr = computed(() => {
   if (cohortHealth.isPolling) return 'Checking now...';
   if (showLastCheckTime.value) {
-    return `Last checked ${formatTimeAgo(lastCheckTime.value, currentTime.value, MINUTE, HOUR, DAY)}`;
+    return `Last checked ${formatTimeAgo(lastCheckTime.value, currentTime.value)}`;
   } else {
-    return `Next check ${formatTimeAgo(nextCheckTime.value, currentTime.value, MINUTE, HOUR, DAY)}`;
+    return `Next check ${formatTimeAgo(nextCheckTime.value, currentTime.value)}`;
   }
 });
 const rotateCheckIcon = ref(false);

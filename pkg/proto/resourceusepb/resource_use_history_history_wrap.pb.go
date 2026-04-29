@@ -3,11 +3,12 @@
 package resourceusepb
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapHistory	adapts a ResourceUseHistoryServer	and presents it as a ResourceUseHistoryClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHistory(server ResourceUseHistoryServer) *HistoryWrapper {
 	conn := wrap.ServerToClient(ResourceUseHistory_ServiceDesc, server)
 	client := NewResourceUseHistoryClient(conn)

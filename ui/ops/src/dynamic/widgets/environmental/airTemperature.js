@@ -17,7 +17,7 @@ import {usePullMetadata} from '@/traits/metadata/metadata.js';
  * Extracts the metric value from an air temperature record.
  * Needs special handling because some of the values are nested inside Temperature messages.
  *
- * @param {import('@smart-core-os/sc-api-grpc-web/traits/air_temperature_pb').AirTemperature.AsObject} record - The air temperature record
+ * @param {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/airtemperature/v1/air_temperature_pb').AirTemperature.AsObject} record - The air temperature record
  * @param {string} metric - The metric to extract
  * @return {number|undefined} The extracted value or undefined if not available
  */
@@ -57,7 +57,6 @@ export function useAirTemperatureHistoryMetric(name, metric, edges) {
     }
 
     if (edges.length < 2) {
-      console.warn('useAirTemperatureHistoryMetric: edges must have at least 2 elements', edges);
       return;
     }
 
@@ -214,6 +213,46 @@ async function readAverageAirTemperatureMetricSeries(name, metric, edges, before
     }
   }
   return dst; // dst should have no null entries by now
+}
+
+/**
+ * Returns the average of multiple air temperature metrics over a single time span using one API call.
+ * When `name` resolves to null/undefined the fetch is skipped and all values return null.
+ *
+ * @param {import('vue').MaybeRefOrGetter<string|null>} name
+ * @param {string[]} metrics - metric property names on the AirTemperature proto object
+ * @param {import('vue').MaybeRefOrGetter<Date>} start
+ * @param {import('vue').MaybeRefOrGetter<Date>} end
+ * @return {import('vue').ComputedRef<Record<string, number|null>>}
+ */
+export function useAirTemperaturePeriodAverages(name, metrics, start, end) {
+  const sums = reactive(Object.fromEntries(metrics.map(m => [m, 0])));
+  const counts = reactive(Object.fromEntries(metrics.map(m => [m, 0])));
+
+  asyncWatch(
+    [() => toValue(name), () => toValue(start), () => toValue(end)],
+    async ([name, start, end]) => {
+      for (const m of metrics) { sums[m] = 0; counts[m] = 0; }
+      if (!name || !start || !end) return;
+      const req = {name, period: {startTime: start, endTime: end}, pageSize: 500};
+      do {
+        const res = await listAirTemperatureHistory(req, {});
+        if (!res.airTemperatureRecordsList.length) break;
+        for (const record of res.airTemperatureRecordsList) {
+          for (const m of metrics) {
+            const num = extractMetricValue(record.airTemperature, m);
+            if (num != null && !isNaN(num)) { sums[m] += num; counts[m]++; }
+          }
+        }
+        req.pageToken = res.nextPageToken;
+      } while (req.pageToken);
+    },
+    {immediate: true}
+  );
+
+  return computed(() =>
+    Object.fromEntries(metrics.map(m => [m, counts[m] > 0 ? sums[m] / counts[m] : null]))
+  );
 }
 
 /**

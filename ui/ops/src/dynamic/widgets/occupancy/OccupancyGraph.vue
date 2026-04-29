@@ -192,10 +192,11 @@ const chartOptions = {
   scales: {
     y: {
       border: {
-        color: 'white'
+        display: false
       },
       grid: {
-        color: 'rgba(100, 100, 100, 0.35)'
+        color: 'rgba(100, 100, 100, 0.35)',
+        drawTicks: false,
       },
       ticks: {
         color: '#fff',
@@ -220,7 +221,7 @@ const chartOptions = {
     },
     x: {
       border: {
-        color: 'white'
+        display: false
       },
       ticks: {
         align: 'center',
@@ -234,7 +235,8 @@ const chartOptions = {
         minRotation: 0
       },
       grid: {
-        color: ''
+        color: '',
+        drawTicks: false,
       }
     }
   }

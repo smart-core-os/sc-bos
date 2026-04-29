@@ -3,11 +3,12 @@
 package transportpb
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapHistory	adapts a TransportHistoryServer	and presents it as a TransportHistoryClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapHistory(server TransportHistoryServer) *HistoryWrapper {
 	conn := wrap.ServerToClient(TransportHistory_ServiceDesc, server)
 	client := NewTransportHistoryClient(conn)

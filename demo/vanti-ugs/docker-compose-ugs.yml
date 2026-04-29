@@ -30,22 +30,45 @@ services:
       - "8881:80"
 
   sc-ugs:
-    image: demo-ugs-sc-bos
+    image: ghcr.io/smart-core-os/sc-bos/demo-ugs-sc-bos:v1.0.1-vanti.0-1135-gb373839dd
     restart: always
     ports:
       - "8443:8443"
       - "23557:23557"
+    environment:
+      # Create a .env file alongside this compose file and set OPENWEATHERMAP_API_KEY there.
+      # See README.md for instructions on obtaining an API key.
+      OPENWEATHERMAP_API_KEY: ${OPENWEATHERMAP_API_KEY:-}
     depends_on:
       db:
         condition: service_healthy
 
   seed-db:
-    image: demo-ugs-seed-db
+    image: ghcr.io/smart-core-os/sc-bos/demo-ugs-seed-db:v1.0.1-vanti.0-1135-gb373839dd
     restart: no
     depends_on:
       db:
         condition: service_healthy
         restart: true
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.0.1
+    restart: always
+    ports:
+      - "8888:8888"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: "jdbc:postgresql://db/keycloak"
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+      KC_HTTP_PORT: 8888
+    volumes:
+      - ./manifests/keycloak/realm-smart-core.json:/opt/keycloak/data/import/realm-smart-core.json
+      - ./manifests/keycloak/themes/smartcore:/opt/keycloak/themes/smartcore
+    command: "start-dev --import-realm"
+
 volumes:
   postgres-storage:
 configs:
@@ -53,24 +76,6 @@ configs:
     content: |
       CREATE EXTENSION "uuid-ossp";
       CREATE DATABASE keycloak;
-
-#  keycloak:
-#    image: quay.io/keycloak/keycloak:21.0.1
-#    restart: always
-#    ports:
-#      - "8888:8080"
-#    environment:
-#      KEYCLOAK_ADMIN: admin
-#      KEYCLOAK_ADMIN_PASSWORD: admin
-#      KC_DB: postgres
-#      KC_DB_URL: "jdbc:postgresql://db/keycloak"
-#      KC_DB_USERNAME: postgres
-#      KC_DB_PASSWORD: postgres
-#    volumes:
-#      - ./manifests/keycloak/realm-smart-core.json:/opt/keycloak/data/import/realm-smart-core.json
-#      - ./manifests/keycloak/themes/smartcore:/opt/keycloak/themes/smartcore
-#    command: "start-dev --import-realm"
-
 
 
 # Podman doesn't support profiles as of Oct 2023 - when they do we can uncomment this

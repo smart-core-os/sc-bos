@@ -94,8 +94,8 @@ WHERE id = :id;
 -- name: ListNodeCheckInsByNode :many
 SELECT *
 FROM node_check_ins
-WHERE node_id = :node_id AND id > :after_id
-ORDER BY id
+WHERE node_id = :node_id AND id < :before_id
+ORDER BY id DESC
 LIMIT :limit;
 
 -- name: DeleteNodeCheckIn :execrows
@@ -154,23 +154,23 @@ WHERE d.id = :id;
 -- name: ListDeployments :many
 SELECT *
 FROM deployments
-WHERE id > :after_id
-ORDER BY id
+WHERE id < :before_ID
+ORDER BY id DESC
 LIMIT :limit;
 
 -- name: ListDeploymentsByConfigVersion :many
 SELECT *
 FROM deployments
-WHERE config_version_id = :config_version_id AND id > :after_id
-ORDER BY id
+WHERE config_version_id = :config_version_id AND id < :before_id
+ORDER BY id DESC
 LIMIT :limit;
 
 -- name: ListDeploymentsByNode :many
 SELECT d.*
 FROM deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
-WHERE cv.node_id = :node_id AND d.id > :after_id
-ORDER BY d.id
+WHERE cv.node_id = :node_id AND d.id < :before_id
+ORDER BY d.id DESC
 LIMIT :limit;
 
 -- name: CountDeployments :one
@@ -182,7 +182,7 @@ UPDATE deployments
 SET status = :status,
     reason = :reason,
     finished_time = CASE
-        WHEN :status = 'COMPLETED' OR :status = 'FAILED' OR :status = 'CANCELLED' THEN datetime('now', 'subsec')
+        WHEN :status = 'completed' OR :status = 'failed' OR :status = 'cancelled' THEN datetime('now', 'subsec')
         ELSE finished_time
     END
 WHERE id = :id
@@ -194,11 +194,11 @@ WHERE id = :id;
 
 -- name: CancelPendingDeploymentsByNode :execrows
 UPDATE deployments
-SET status = 'CANCELLED',
+SET status = 'cancelled',
     finished_time = datetime('now', 'subsec')
 WHERE config_version_id IN (
     SELECT id FROM config_versions WHERE node_id = :node_id
-) AND status = 'PENDING';
+) AND status = 'pending';
 
 -- name: GetNodeBySecretHash :one
 SELECT * FROM nodes WHERE secret_hash = :secret_hash;
@@ -207,6 +207,20 @@ SELECT * FROM nodes WHERE secret_hash = :secret_hash;
 SELECT d.*
 FROM deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
-WHERE cv.node_id = :node_id AND d.status IN ('PENDING', 'IN_PROGRESS')
+WHERE cv.node_id = :node_id AND d.status IN ('pending', 'in_progress')
 ORDER BY d.id DESC
 LIMIT 1;
+
+-- Enrollment Codes
+
+-- name: CreateEnrollmentCode :one
+INSERT INTO enrollment_codes (node_id, code, expires_at)
+VALUES (:node_id, :code, :expires_at)
+RETURNING *;
+
+-- name: GetActiveEnrollmentCode :one
+SELECT * FROM enrollment_codes
+WHERE code = :code AND used_at IS NULL AND expires_at > datetime('now', 'subsec');
+
+-- name: MarkEnrollmentCodeUsed :exec
+UPDATE enrollment_codes SET used_at = datetime('now', 'subsec') WHERE id = :id;

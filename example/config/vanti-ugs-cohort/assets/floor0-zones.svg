@@ -1,0 +1,22 @@
+<svg width="982" height="771" viewBox="0 0 982 771" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="floor0-zones">
+<g id="rooms">
+<rect id="yellow" x="426" y="598" width="88" height="152" fill="white" fill-opacity="0.01"/>
+<rect id="green" x="323" y="598" width="88" height="152" fill="white" fill-opacity="0.01"/>
+<rect id="teal" x="172" y="598" width="136" height="152" fill="white" fill-opacity="0.01"/>
+</g>
+<g id="areas">
+<rect id="workshop" x="454" y="237" width="175" height="272" fill="white" fill-opacity="0.01"/>
+<path id="warehouse" d="M961.5 46H380.5V225.5H641V505.5H961.5V46Z" fill="white" fill-opacity="0.01"/>
+<rect id="secure-store" x="265" y="263" width="63" height="86" fill="white" fill-opacity="0.01"/>
+<path id="reception" d="M19.5 423.5V495.5H171V584.5H516V530H432V519H327.5V359H194V423.5H19.5Z" fill="white" fill-opacity="0.01"/>
+<rect id="project" x="525" y="527" width="104" height="223" fill="white" fill-opacity="0.01"/>
+<rect id="loading-bay" x="21" y="18" width="201" height="132" fill="white" fill-opacity="0.01"/>
+<rect id="lab" x="639" y="520" width="241" height="230" fill="white" fill-opacity="0.01"/>
+<rect id="l00-wc" x="21" y="550" width="137" height="200" fill="white" fill-opacity="0.01"/>
+<path id="kitchen" d="M69 383.5H21.5V412H182V237.5H69V383.5Z" fill="white" fill-opacity="0.01"/>
+<rect id="goods-in" x="339" y="237" width="105" height="272" fill="white" fill-opacity="0.01"/>
+<rect id="comms-room" x="193" y="237" width="62" height="112" fill="white" fill-opacity="0.01"/>
+</g>
+</g>
+</svg>

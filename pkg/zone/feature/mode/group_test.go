@@ -6,7 +6,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/smart-core-os/sc-api/go/traits"
+	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/mode/config"
 )
 
@@ -14,8 +14,8 @@ func TestGroup_mergeModeValues(t *testing.T) {
 	tests := []struct {
 		name string
 		cfg  config.Root
-		all  map[string]*traits.ModeValues
-		one  *traits.ModeValues
+		all  map[string]*modepb.ModeValues
+		one  *modepb.ModeValues
 	}{
 		{
 			"renamed",
@@ -55,12 +55,12 @@ func TestGroup_mergeModeValues(t *testing.T) {
 					},
 				},
 			},
-			map[string]*traits.ModeValues{
+			map[string]*modepb.ModeValues{
 				"dev01": {Values: map[string]string{"occupancy": "occupied"}},
 				"dev02": {Values: map[string]string{"occupancy": "occupied"}},
 				"dev03": {Values: map[string]string{"present": "yup"}},
 			},
-			&traits.ModeValues{
+			&modepb.ModeValues{
 				Values: map[string]string{"bms.occupancy": "yes"},
 			},
 		}, {
@@ -91,11 +91,11 @@ func TestGroup_mergeModeValues(t *testing.T) {
 					},
 				},
 			},
-			map[string]*traits.ModeValues{
+			map[string]*modepb.ModeValues{
 				"dev01": {Values: map[string]string{"occupancy": "occupied"}},
 				"dev02": {Values: map[string]string{"occupancy": "unoccupied"}},
 			},
-			&traits.ModeValues{
+			&modepb.ModeValues{
 				Values: map[string]string{"occupancy": MixedValue},
 			},
 		},
@@ -114,8 +114,8 @@ func TestGroup_unmergeModeValues(t *testing.T) {
 	tests := []struct {
 		name string
 		cfg  config.Root
-		one  *traits.ModeValues
-		all  map[string]*traits.ModeValues
+		one  *modepb.ModeValues
+		all  map[string]*modepb.ModeValues
 	}{
 		{
 			"renamed",
@@ -155,10 +155,10 @@ func TestGroup_unmergeModeValues(t *testing.T) {
 					},
 				},
 			},
-			&traits.ModeValues{
+			&modepb.ModeValues{
 				Values: map[string]string{"bms.occupancy": "yes"},
 			},
-			map[string]*traits.ModeValues{
+			map[string]*modepb.ModeValues{
 				"dev01": {Values: map[string]string{"occupancy": "occupied"}},
 				"dev02": {Values: map[string]string{"occupancy": "occupied"}},
 				"dev03": {Values: map[string]string{"present": "yup"}},

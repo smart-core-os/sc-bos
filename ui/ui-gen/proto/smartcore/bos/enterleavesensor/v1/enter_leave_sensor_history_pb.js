@@ -19,10 +19,10 @@ var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/fie
 goog.object.extend(proto, google_protobuf_field_mask_pb);
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
-var traits_enter_leave_sensor_pb = require('@smart-core-os/sc-api-grpc-web/traits/enter_leave_sensor_pb.js');
-goog.object.extend(proto, traits_enter_leave_sensor_pb);
-var types_time_period_pb = require('@smart-core-os/sc-api-grpc-web/types/time/period_pb.js');
-goog.object.extend(proto, types_time_period_pb);
+var smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb = require('../../../../smartcore/bos/enterleavesensor/v1/enter_leave_sensor_pb.js');
+goog.object.extend(proto, smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb);
+var smartcore_bos_types_time_v1_period_pb = require('../../../../smartcore/bos/types/time/v1/period_pb.js');
+goog.object.extend(proto, smartcore_bos_types_time_v1_period_pb);
 goog.exportSymbol('proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord', null, global);
 goog.exportSymbol('proto.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryResponse', null, global);
@@ -121,7 +121,7 @@ proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.prototype.toObject
  */
 proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.toObject = function(includeInstance, msg) {
   var f, obj = {
-enterLeaveEvent: (f = msg.getEnterLeaveEvent()) && traits_enter_leave_sensor_pb.EnterLeaveEvent.toObject(includeInstance, f),
+enterLeaveEvent: (f = msg.getEnterLeaveEvent()) && smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb.EnterLeaveEvent.toObject(includeInstance, f),
 recordTime: (f = msg.getRecordTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f)
   };
 
@@ -160,8 +160,8 @@ proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.deserializeBinaryF
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new traits_enter_leave_sensor_pb.EnterLeaveEvent;
-      reader.readMessage(value,traits_enter_leave_sensor_pb.EnterLeaveEvent.deserializeBinaryFromReader);
+      var value = new smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb.EnterLeaveEvent;
+      reader.readMessage(value,smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb.EnterLeaveEvent.deserializeBinaryFromReader);
       msg.setEnterLeaveEvent(value);
       break;
     case 2:
@@ -203,7 +203,7 @@ proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.serializeBinaryToW
     writer.writeMessage(
       1,
       f,
-      traits_enter_leave_sensor_pb.EnterLeaveEvent.serializeBinaryToWriter
+      smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb.EnterLeaveEvent.serializeBinaryToWriter
     );
   }
   f = message.getRecordTime();
@@ -218,17 +218,17 @@ proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.serializeBinaryToW
 
 
 /**
- * optional smartcore.traits.EnterLeaveEvent enter_leave_event = 1;
- * @return {?proto.smartcore.traits.EnterLeaveEvent}
+ * optional EnterLeaveEvent enter_leave_event = 1;
+ * @return {?proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEvent}
  */
 proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.prototype.getEnterLeaveEvent = function() {
-  return /** @type{?proto.smartcore.traits.EnterLeaveEvent} */ (
-    jspb.Message.getWrapperField(this, traits_enter_leave_sensor_pb.EnterLeaveEvent, 1));
+  return /** @type{?proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEvent} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_enterleavesensor_v1_enter_leave_sensor_pb.EnterLeaveEvent, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.traits.EnterLeaveEvent|undefined} value
+ * @param {?proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEvent|undefined} value
  * @return {!proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord} returns this
 */
 proto.smartcore.bos.enterleavesensor.v1.EnterLeaveEventRecord.prototype.setEnterLeaveEvent = function(value) {
@@ -324,7 +324,7 @@ proto.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.prototype.t
 proto.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
 name: jspb.Message.getFieldWithDefault(msg, 1, ""),
-period: (f = msg.getPeriod()) && types_time_period_pb.Period.toObject(includeInstance, f),
+period: (f = msg.getPeriod()) && smartcore_bos_types_time_v1_period_pb.Period.toObject(includeInstance, f),
 readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toObject(includeInstance, f),
 pageSize: jspb.Message.getFieldWithDefault(msg, 4, 0),
 pageToken: jspb.Message.getFieldWithDefault(msg, 5, ""),
@@ -370,8 +370,8 @@ proto.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.deserialize
       msg.setName(value);
       break;
     case 2:
-      var value = new types_time_period_pb.Period;
-      reader.readMessage(value,types_time_period_pb.Period.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_time_v1_period_pb.Period;
+      reader.readMessage(value,smartcore_bos_types_time_v1_period_pb.Period.deserializeBinaryFromReader);
       msg.setPeriod(value);
       break;
     case 3:
@@ -432,7 +432,7 @@ proto.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.serializeBi
     writer.writeMessage(
       2,
       f,
-      types_time_period_pb.Period.serializeBinaryToWriter
+      smartcore_bos_types_time_v1_period_pb.Period.serializeBinaryToWriter
     );
   }
   f = message.getReadMask();
@@ -486,17 +486,17 @@ proto.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.prototype.s
 
 
 /**
- * optional smartcore.types.time.Period period = 2;
- * @return {?proto.smartcore.types.time.Period}
+ * optional smartcore.bos.types.time.v1.Period period = 2;
+ * @return {?proto.smartcore.bos.types.time.v1.Period}
  */
 proto.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.prototype.getPeriod = function() {
-  return /** @type{?proto.smartcore.types.time.Period} */ (
-    jspb.Message.getWrapperField(this, types_time_period_pb.Period, 2));
+  return /** @type{?proto.smartcore.bos.types.time.v1.Period} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_time_v1_period_pb.Period, 2));
 };
 
 
 /**
- * @param {?proto.smartcore.types.time.Period|undefined} value
+ * @param {?proto.smartcore.bos.types.time.v1.Period|undefined} value
  * @return {!proto.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest} returns this
 */
 proto.smartcore.bos.enterleavesensor.v1.ListEnterLeaveHistoryRequest.prototype.setPeriod = function(value) {

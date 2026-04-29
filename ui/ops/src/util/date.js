@@ -1,3 +1,9 @@
+export const MILLISECOND = 1;
+export const SECOND = 1000 * MILLISECOND;
+export const MINUTE = 60 * SECOND;
+export const HOUR = 60 * MINUTE;
+export const DAY = 24 * HOUR;
+
 /**
  * Compares two dates in ascending order.
  * Null values are compared after non-null values.
@@ -63,29 +69,46 @@ export function roundUp(date, round) {
  *
  * @param {Date} date
  * @param {Date} now
- * @param {number} MINUTE
- * @param {number} HOUR
- * @param {number} DAY
  * @return {string}
  */
-export function formatTimeAgo(date, now, MINUTE, HOUR, DAY) {
-  let diffInSeconds = (now - date) / 1000;
+export function formatTimeAgo(date, now) {
+  return formatTimeAgoRounded(date, now, 0);
+}
+
+/**
+ * Formats the given date as an `in / time ago` string.
+ * The date is formatted as `in` when the date is in the future.
+ * The date is formatted as `time ago` when the date is in the past.
+ * The granularity sets the smallest unit that will be displayed.
+ * E.g. `in 5 minutes` or `5 minutes ago`.
+ *
+ * @param {Date} date
+ * @param {Date} now
+ * @param {number} granularity - in milliseconds
+ * @return {string}
+ */
+export function formatTimeAgoRounded(date, now, granularity) {
+  let diff = now - date;
 
   // Adding a small buffer to account for minimal future time differences
-  const bufferInSeconds = 1;
-  if (diffInSeconds < 0 && Math.abs(diffInSeconds) < bufferInSeconds) {
-    diffInSeconds = 0;
+  const bufferMs= 1000;
+  if (diff < 0 && Math.abs(diff) < bufferMs) {
+    diff = 0;
+  }
+
+  if (granularity > 0) {
+    diff = Math.trunc(diff / granularity) * granularity;
   }
 
   const rtf = new Intl.RelativeTimeFormat('en', {numeric: 'auto'});
 
-  if (Math.abs(diffInSeconds) < MINUTE) {
-    return rtf.format(-Math.floor(diffInSeconds), 'second');
-  } else if (Math.abs(diffInSeconds) < HOUR) {
-    return rtf.format(-Math.floor(diffInSeconds / MINUTE), 'minute');
-  } else if (Math.abs(diffInSeconds) < DAY) {
-    return rtf.format(-Math.floor(diffInSeconds / HOUR), 'hour');
+  if (Math.abs(diff) < MINUTE) {
+    return rtf.format(-Math.floor(diff / SECOND), 'second');
+  } else if (Math.abs(diff) < HOUR) {
+    return rtf.format(-Math.floor(diff / MINUTE), 'minute');
+  } else if (Math.abs(diff) < DAY) {
+    return rtf.format(-Math.floor(diff / HOUR), 'hour');
   } else {
-    return rtf.format(-Math.floor(diffInSeconds / DAY), 'day');
+    return rtf.format(-Math.floor(diff / DAY), 'day');
   }
 }

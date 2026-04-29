@@ -14,11 +14,8 @@ type Bus[T any] struct {
 
 func (b *Bus[T]) Send(ctx context.Context, event T) (ok bool) {
 	// create a copy of the listeners so avoid holding the mutex a long time
-	var listeners []*listener[T]
 	b.listenerM.RLock()
-	for _, l := range b.listeners {
-		listeners = append(listeners, l)
-	}
+	listeners := append([]*listener[T]{}, b.listeners...)
 	b.listenerM.RUnlock()
 
 	needGc := false

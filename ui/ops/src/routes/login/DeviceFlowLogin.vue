@@ -34,8 +34,9 @@
   </div>
 </template>
 <script setup>
-import {SECOND, useNow} from '@/components/now';
+import {useNow} from '@/components/now';
 import {useAccountStore} from '@/stores/account';
+import {SECOND} from '@/util/date.js';
 import QRCode from 'qrcode';
 import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 

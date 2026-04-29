@@ -7,17 +7,16 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/trait/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 // mergeAllMetadata uses the metadatapb.Merge algorithm to merge multiple metadata objects into one.
 // The input metadata objects will not be modified.
 // Metadata at higher indexes in the mds slice will override metadata at lower indexes.
-func mergeAllMetadata(name string, mds ...*traits.Metadata) *traits.Metadata {
+func mergeAllMetadata(name string, mds ...*metadatapb.Metadata) *metadatapb.Metadata {
 	if len(mds) == 0 {
 		return nil
 	}
@@ -25,17 +24,17 @@ func mergeAllMetadata(name string, mds ...*traits.Metadata) *traits.Metadata {
 		md := mds[0]
 		md.Name = name
 		// for consistency, sort the traits by name
-		slices.SortFunc(md.Traits, func(a, b *traits.TraitMetadata) int {
+		slices.SortFunc(md.Traits, func(a, b *metadatapb.TraitMetadata) int {
 			return strings.Compare(a.Name, b.Name)
 		})
 		return md
 	}
 
-	md := &traits.Metadata{
+	md := &metadatapb.Metadata{
 		Name: name,
 	}
 	for _, m := range mds {
-		m = proto.Clone(m).(*traits.Metadata)
+		m = proto.Clone(m).(*metadatapb.Metadata)
 		metadatapb.Merge(md, m)
 		md = m
 	}
@@ -47,10 +46,10 @@ type metadataList []metadataEntry
 
 type metadataEntry struct {
 	id uint64
-	md *traits.Metadata
+	md *metadatapb.Metadata
 }
 
-func (ml *metadataList) add(md *traits.Metadata) uint64 {
+func (ml *metadataList) add(md *metadatapb.Metadata) uint64 {
 	if len(*ml) == 0 {
 		*ml = append(*ml, metadataEntry{id: 0, md: md})
 		return 0
@@ -75,7 +74,7 @@ func (ml *metadataList) remove(id uint64) {
 	*ml = slices.Replace(*ml, i, i+1)
 }
 
-func (ml *metadataList) merge() *traits.Metadata {
+func (ml *metadataList) merge() *metadatapb.Metadata {
 	if len(*ml) == 0 {
 		return nil
 	}
@@ -84,7 +83,7 @@ func (ml *metadataList) merge() *traits.Metadata {
 	}
 
 	name := ""
-	mds := make([]*traits.Metadata, len(*ml))
+	mds := make([]*metadatapb.Metadata, len(*ml))
 	for i, entry := range *ml {
 		mds[i] = entry.md
 		if name == "" && entry.md.Name != "" {

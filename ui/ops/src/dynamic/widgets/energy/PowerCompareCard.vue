@@ -1,7 +1,7 @@
 <template>
   <v-card class="d-flex flex-column">
     <v-toolbar v-if="!props.hideToolbar" color="transparent">
-      <v-toolbar-title class="text-h4">{{ props.title }}</v-toolbar-title>
+      <v-toolbar-title class="text-h4" style="overflow-wrap: break-word">{{ props.title }}</v-toolbar-title>
     </v-toolbar>
     <power-compare-chart class="content" :total-source="props.totalSource" :sources="props.sources" :metric="props.metric" :unit="props.unit"/>
   </v-card>

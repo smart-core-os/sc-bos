@@ -4,7 +4,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 func ApplyMdDelta(md *resource.Value, e *alertpb.PullAlertsResponse_Change) error {
@@ -40,9 +40,9 @@ func ApplyMdDelta(md *resource.Value, e *alertpb.PullAlertsResponse_Change) erro
 		if e.OldValue == nil && e.NewValue != nil {
 			newMd.TotalCount++
 		} else if e.OldValue != nil && e.NewValue == nil {
-			newMd.TotalCount--
-			if newMd.TotalCount < 0 { // shouldn't be needed, but just in case
-				newMd.TotalCount = 0
+			// unsigned value will wrap if we try to go below 0
+			if newMd.TotalCount > 0 {
+				newMd.TotalCount--
 			}
 		}
 

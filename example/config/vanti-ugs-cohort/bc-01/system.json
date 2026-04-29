@@ -7,7 +7,16 @@
     "debugMode": true,
     "corsOrigins": ["*"]
   },
+  "staticHosting": [
+    {"path": "/__/vanti-ugs-cohort/", "filePath": "./example/config/vanti-ugs-cohort"}
+  ],
   "systems": {
+    "authn": {
+      "user": {
+        "fileAccounts": true
+      },
+      "tokenSigningKeyFile": "./example/config/vanti-ugs-cohort/authn_token_signing_key"
+    },
     "hub": {
       "storage": {
         "type": "postgres",
@@ -15,6 +24,7 @@
         "passwordFile": "./.data/secrets/postgres-password"
       },
       "nodes": [
+        {"address": "localhost:23102", "name": "BC-02"},
         {"address": "localhost:23201", "name": "EG-01"},
         {"address": "localhost:23202", "name": "EG-02"},
         {"address": "localhost:23301", "name": "van/uk/brum/ugs/ac-01"}

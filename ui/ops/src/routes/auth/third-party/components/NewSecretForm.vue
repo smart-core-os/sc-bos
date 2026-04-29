@@ -99,9 +99,10 @@
 <script setup>
 import {newActionTracker} from '@/api/resource';
 import {createSecret, secretToObject} from '@/api/ui/tenant';
-import {DAY, useNow} from '@/components/now.js';
+import {useNow} from '@/components/now.js';
 import RelativeDate from '@/components/RelativeDate.vue';
 import {useErrorStore} from '@/components/ui-error/error';
+import {DAY} from '@/util/date.js';
 import {add} from 'date-fns';
 import {computed, onMounted, onUnmounted, reactive, ref} from 'vue';
 import {useDate} from 'vuetify';

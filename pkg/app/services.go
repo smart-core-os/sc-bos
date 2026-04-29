@@ -12,19 +12,17 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/devicespb"
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	gen_devicespb "github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	gen_healthpb "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/task/serviceapi"
+	"github.com/smart-core-os/sc-bos/pkg/util/masks"
 	"github.com/smart-core-os/sc-bos/pkg/zone"
-	"github.com/smart-core-os/sc-golang/pkg/masks"
-	"github.com/smart-core-os/sc-golang/pkg/resource"
-	"github.com/smart-core-os/sc-golang/pkg/wrap"
 )
 
 func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, error) {
@@ -41,6 +39,7 @@ func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, err
 		driverServices.Config = &serviceConfigStore{store: c.ControllerConfig.Drivers(), id: id}
 		driverServices.Logger = loggerWithServiceInfo(driverServices.Logger, id, kind)
 		driverServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
+		driverServices.SystemCheck = newDriverSystemCheck(driverServices.Health, id, kind, driverServices.Logger)
 
 		f, ok := c.SystemConfig.DriverFactories[kind]
 		if !ok {
@@ -230,23 +229,39 @@ func healthChecksForService(r *healthpb.Registry, id, kind string) *healthpb.Che
 	return r.ForOwner(owner)
 }
 
+// newDriverSystemCheck creates a driver-level system check registered under the driver's own name.
+// Drivers should call MarkFailed/MarkRunning to reflect connectivity state, and must call
+// Dispose in their stop handler. Returns nil if the check cannot be created.
+func newDriverSystemCheck(health *healthpb.Checks, id, kind string, logger *zap.Logger) service.SystemCheck {
+	check, err := health.NewFaultCheck(id, &healthpb.HealthCheck{
+		Id:          "systemStatusCheck",
+		DisplayName: "System Status Check",
+		Description: fmt.Sprintf("Checks the %s driver is connected and operating correctly", kind),
+	})
+	if err != nil {
+		logger.Warn("failed to create driver system check", zap.Error(err))
+		return nil
+	}
+	return check
+}
+
 func devicesToHealthCheckCollection(d *devicespb.Collection) system.HealthCheckCollection {
 	return (*devicesHealthCheckCollection)(d)
 }
 
 type devicesHealthCheckCollection devicespb.Collection
 
-func (d *devicesHealthCheckCollection) MergeHealthChecks(name string, checks ...*gen_healthpb.HealthCheck) error {
-	_, err := (*devicespb.Collection)(d).Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
-		dstDev := dst.(*gen_devicespb.Device)
+func (d *devicesHealthCheckCollection) MergeHealthChecks(name string, checks ...*healthpb.HealthCheck) error {
+	_, err := (*devicespb.Collection)(d).Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+		dstDev := dst.(*devicespb.Device)
 		dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, checks...)
 	}), resource.WithCreateIfAbsent())
 	return err
 }
 
 func (d *devicesHealthCheckCollection) RemoveHealthChecks(name string, ids ...string) error {
-	_, err := (*devicespb.Collection)(d).Update(&gen_devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
-		dstDev := dst.(*gen_devicespb.Device)
+	_, err := (*devicespb.Collection)(d).Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, _ proto.Message) {
+		dstDev := dst.(*devicespb.Device)
 		for _, id := range ids {
 			dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
 		}
@@ -258,39 +273,45 @@ func (d *devicesHealthCheckCollection) RemoveHealthChecks(name string, ids ...st
 }
 
 func announceServices[M ~map[string]T, T any](c *Controller, name string, services *service.Map, factories M, store serviceapi.Store) node.Undo {
-	client := servicespb.WrapApi(serviceapi.NewApi(services,
+	srv := serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 		serviceapi.WithStore(store),
-	))
-	return announceNodeClient(c.Node, name, client)
+	)
+	return announceNodeServer(c.Node, name, srv)
 }
 
 func announceAutoServices[M ~map[string]T, T any](c *Controller, services *service.Map, factories M) node.Undo {
 	// special because the config name isn't the name we announce as
-	client := servicespb.WrapApi(serviceapi.NewApi(services,
+	srv := serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
 		serviceapi.WithStore(c.ControllerConfig.Automations()),
-	))
-	return announceNodeClient(c.Node, "automations", client)
+	)
+	return announceNodeServer(c.Node, "automations", srv)
 }
 
 func announceSystemServices[M ~map[string]T, T any](c *Controller, services *service.Map, factories M) node.Undo {
 	// special because we don't support writing this config, yet
 	// todo: support writing system config
-	client := servicespb.WrapApi(serviceapi.NewApi(services,
+	srv := serviceapi.NewApi(services,
 		serviceapi.WithKnownTypesFromMapKeys(factories),
 		serviceapi.WithLogger(c.Logger.Named("serviceapi")),
-	))
-	return announceNodeClient(c.Node, "systems", client)
+	)
+	return announceNodeServer(c.Node, "systems", srv)
 }
 
-func announceNodeClient(n *node.Node, base string, client wrap.ServiceUnwrapper) node.Undo {
+func announceNodeServer(n *node.Node, base string, srv servicespb.ServicesApiServer) node.Undo {
 	var undos []node.Undo
-	undos = append(undos, n.Announce(base, node.HasClient(client)))
+	undos = append(undos, n.Announce(base,
+		node.HasServer(servicespb.RegisterServicesApiServer, srv),
+		node.HasDeviceType(metadatapb.Metadata_SERVICE),
+	))
 	if n.Name() != "" {
-		undos = append(undos, n.Announce(path.Join(n.Name(), base), node.HasClient(client)))
+		undos = append(undos, n.Announce(path.Join(n.Name(), base),
+			node.HasServer(servicespb.RegisterServicesApiServer, srv),
+			node.HasDeviceType(metadatapb.Metadata_SERVICE),
+		))
 	}
 	return node.UndoAll(undos...)
 }

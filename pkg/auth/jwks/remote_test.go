@@ -26,7 +26,6 @@ func TestRemoteKeySet_VerifySignature(t *testing.T) {
 			t.Error(err)
 			panic(err)
 		}
-		return
 	}))
 	defer server.Close()
 

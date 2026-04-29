@@ -8,17 +8,17 @@ import (
 	"time"
 )
 
-var testErr = errors.New("Test Error")
+var errTest = errors.New("test error")
 
 func TestRun(t *testing.T) {
 	task := Task(func(ctx context.Context) (next Next, err error) {
-		err = testErr
+		err = errTest
 		return
 	})
 
 	err := Run(context.Background(), task)
 
-	if err != testErr {
+	if err != errTest {
 		t.Errorf("got the wrong error: %v", err)
 	}
 }
@@ -27,11 +27,11 @@ func TestWithRetry(t *testing.T) {
 	var actual int
 	task := Task(func(ctx context.Context) (Next, error) {
 		actual++
-		return Normal, testErr
+		return Normal, errTest
 	})
 
 	err := Run(context.Background(), task, WithRetry(10))
-	if err != testErr {
+	if err != errTest {
 		t.Errorf("got the wrong error: %v", err)
 	}
 	if actual != 10 {
@@ -42,7 +42,7 @@ func TestWithRetry(t *testing.T) {
 func TestWithRetry_StopNow(t *testing.T) {
 	var actual int
 	task := Task(func(ctx context.Context) (next Next, err error) {
-		err = testErr
+		err = errTest
 		actual++
 		if actual >= 5 {
 			next = StopNow
@@ -51,7 +51,7 @@ func TestWithRetry_StopNow(t *testing.T) {
 	})
 
 	err := Run(context.Background(), task, WithRetry(10))
-	if err != testErr {
+	if err != errTest {
 		t.Errorf("got the wrong error: %v", err)
 	}
 	if actual != 5 {

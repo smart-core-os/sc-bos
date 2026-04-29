@@ -1,0 +1,83 @@
+{
+  "templates": {
+    "stripGroup": {
+      "selector": "g[id='{{id}}'] > [id^='Lights']",
+      "sidebar": {"name": "van/uk/brum/ugs/devices/{{id}}"},
+      "sources": {
+        "light": {
+          "trait": "smartcore.traits.Light",
+          "request": {"name": "van/uk/brum/ugs/devices/{{id}}"}
+        }
+      },
+      "effects": [
+        {
+          "type": "widget",
+          "component": "builtin:lighting/LightIcon",
+          "selector": ":scope > [id^='light-widget']",
+          "props": {
+            "level": {"ref": "light", "property": "levelPercent"}
+          }
+        },
+        {
+          "type": "stroke",
+          "source": {"ref": "light", "property": "levelPercent"},
+          "selector": ":scope > :nth-child(2)",
+          "interpolate": {
+            "steps": [
+              {"value": 0, "color": "#4A4F55"},
+              {"value": 1, "color": "#FBBF24"}
+            ]
+          }
+        },
+        {
+          "type": "fill",
+          "source": {"ref": "light", "property": "levelPercent"},
+          "selector": ":scope > :nth-child(1)",
+          "interpolate": {
+            "steps": [
+              {"value": 0, "color": "#4A4F55"},
+              {"value": 1, "color": "#FBBF24"}
+            ]
+          }
+        }
+      ]
+    },
+    "spotGroup": {
+      "selector": "g[id='{{id}}'] > [id^='Lights']",
+      "sidebar": {"name": "van/uk/brum/ugs/devices/{{id}}"},
+      "sources": {
+        "light": {
+          "trait": "smartcore.traits.Light",
+          "request": {"name": "van/uk/brum/ugs/devices/{{id}}"}
+        }
+      },
+      "effects": [
+        {
+          "type": "widget",
+          "component": "builtin:lighting/LightIcon",
+          "selector": ":scope > [id^='light-widget']",
+          "props": {
+            "level": {"ref": "light", "property": "levelPercent"}
+          }
+        },
+        {
+          "type": "stroke",
+          "source": {"ref": "light", "property": "levelPercent"},
+          "selector": ":scope > :nth-child(2)",
+          "interpolate": {
+            "steps": [
+              {"value": 0, "color": "#4A4F55"},
+              {"value": 1, "color": "#FBBF24"}
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "elements": [
+    {"template": {"ref": "spotGroup", "id": "LTF-L01-01"}},
+    {"template": {"ref": "stripGroup", "id": "LTF-L01-02"}},
+    {"template": {"ref": "spotGroup", "id": "LTF-L01-03"}},
+    {"template": {"ref": "spotGroup", "id": "LTF-L01-04"}}
+  ]
+}

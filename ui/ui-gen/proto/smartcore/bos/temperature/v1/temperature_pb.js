@@ -19,8 +19,8 @@ var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/fie
 goog.object.extend(proto, google_protobuf_field_mask_pb);
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
-var types_unit_pb = require('@smart-core-os/sc-api-grpc-web/types/unit_pb.js');
-goog.object.extend(proto, types_unit_pb);
+var smartcore_bos_types_v1_unit_pb = require('../../../../smartcore/bos/types/v1/unit_pb.js');
+goog.object.extend(proto, smartcore_bos_types_v1_unit_pb);
 goog.exportSymbol('proto.smartcore.bos.temperature.v1.GetTemperatureRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.temperature.v1.PullTemperatureRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.temperature.v1.PullTemperatureResponse', null, global);
@@ -185,8 +185,8 @@ proto.smartcore.bos.temperature.v1.Temperature.prototype.toObject = function(opt
  */
 proto.smartcore.bos.temperature.v1.Temperature.toObject = function(includeInstance, msg) {
   var f, obj = {
-setPoint: (f = msg.getSetPoint()) && types_unit_pb.Temperature.toObject(includeInstance, f),
-measured: (f = msg.getMeasured()) && types_unit_pb.Temperature.toObject(includeInstance, f)
+setPoint: (f = msg.getSetPoint()) && smartcore_bos_types_v1_unit_pb.Temperature.toObject(includeInstance, f),
+measured: (f = msg.getMeasured()) && smartcore_bos_types_v1_unit_pb.Temperature.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -224,13 +224,13 @@ proto.smartcore.bos.temperature.v1.Temperature.deserializeBinaryFromReader = fun
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new types_unit_pb.Temperature;
-      reader.readMessage(value,types_unit_pb.Temperature.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_v1_unit_pb.Temperature;
+      reader.readMessage(value,smartcore_bos_types_v1_unit_pb.Temperature.deserializeBinaryFromReader);
       msg.setSetPoint(value);
       break;
     case 2:
-      var value = new types_unit_pb.Temperature;
-      reader.readMessage(value,types_unit_pb.Temperature.deserializeBinaryFromReader);
+      var value = new smartcore_bos_types_v1_unit_pb.Temperature;
+      reader.readMessage(value,smartcore_bos_types_v1_unit_pb.Temperature.deserializeBinaryFromReader);
       msg.setMeasured(value);
       break;
     default:
@@ -267,7 +267,7 @@ proto.smartcore.bos.temperature.v1.Temperature.serializeBinaryToWriter = functio
     writer.writeMessage(
       1,
       f,
-      types_unit_pb.Temperature.serializeBinaryToWriter
+      smartcore_bos_types_v1_unit_pb.Temperature.serializeBinaryToWriter
     );
   }
   f = message.getMeasured();
@@ -275,24 +275,24 @@ proto.smartcore.bos.temperature.v1.Temperature.serializeBinaryToWriter = functio
     writer.writeMessage(
       2,
       f,
-      types_unit_pb.Temperature.serializeBinaryToWriter
+      smartcore_bos_types_v1_unit_pb.Temperature.serializeBinaryToWriter
     );
   }
 };
 
 
 /**
- * optional smartcore.types.Temperature set_point = 1;
- * @return {?proto.smartcore.types.Temperature}
+ * optional smartcore.bos.types.v1.Temperature set_point = 1;
+ * @return {?proto.smartcore.bos.types.v1.Temperature}
  */
 proto.smartcore.bos.temperature.v1.Temperature.prototype.getSetPoint = function() {
-  return /** @type{?proto.smartcore.types.Temperature} */ (
-    jspb.Message.getWrapperField(this, types_unit_pb.Temperature, 1));
+  return /** @type{?proto.smartcore.bos.types.v1.Temperature} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_v1_unit_pb.Temperature, 1));
 };
 
 
 /**
- * @param {?proto.smartcore.types.Temperature|undefined} value
+ * @param {?proto.smartcore.bos.types.v1.Temperature|undefined} value
  * @return {!proto.smartcore.bos.temperature.v1.Temperature} returns this
 */
 proto.smartcore.bos.temperature.v1.Temperature.prototype.setSetPoint = function(value) {
@@ -319,17 +319,17 @@ proto.smartcore.bos.temperature.v1.Temperature.prototype.hasSetPoint = function(
 
 
 /**
- * optional smartcore.types.Temperature measured = 2;
- * @return {?proto.smartcore.types.Temperature}
+ * optional smartcore.bos.types.v1.Temperature measured = 2;
+ * @return {?proto.smartcore.bos.types.v1.Temperature}
  */
 proto.smartcore.bos.temperature.v1.Temperature.prototype.getMeasured = function() {
-  return /** @type{?proto.smartcore.types.Temperature} */ (
-    jspb.Message.getWrapperField(this, types_unit_pb.Temperature, 2));
+  return /** @type{?proto.smartcore.bos.types.v1.Temperature} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_v1_unit_pb.Temperature, 2));
 };
 
 
 /**
- * @param {?proto.smartcore.types.Temperature|undefined} value
+ * @param {?proto.smartcore.bos.types.v1.Temperature|undefined} value
  * @return {!proto.smartcore.bos.temperature.v1.Temperature} returns this
 */
 proto.smartcore.bos.temperature.v1.Temperature.prototype.setMeasured = function(value) {

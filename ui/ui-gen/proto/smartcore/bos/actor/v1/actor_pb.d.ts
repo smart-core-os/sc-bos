@@ -1,7 +1,7 @@
 import * as jspb from 'google-protobuf'
 
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
-import * as types_image_pb from '@smart-core-os/sc-api-grpc-web/types/image_pb'; // proto import: "types/image.proto"
+import * as smartcore_bos_types_v1_image_pb from '../../../../smartcore/bos/types/v1/image_pb'; // proto import: "smartcore/bos/types/v1/image.proto"
 
 
 export class Actor extends jspb.Message {
@@ -14,8 +14,8 @@ export class Actor extends jspb.Message {
   getDisplayName(): string;
   setDisplayName(value: string): Actor;
 
-  getPicture(): types_image_pb.Image | undefined;
-  setPicture(value?: types_image_pb.Image): Actor;
+  getPicture(): smartcore_bos_types_v1_image_pb.Image | undefined;
+  setPicture(value?: smartcore_bos_types_v1_image_pb.Image): Actor;
   hasPicture(): boolean;
   clearPicture(): Actor;
 
@@ -58,7 +58,7 @@ export namespace Actor {
     name: string;
     title: string;
     displayName: string;
-    picture?: types_image_pb.Image.AsObject;
+    picture?: smartcore_bos_types_v1_image_pb.Image.AsObject;
     url: string;
     email: string;
     lastGrantTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;

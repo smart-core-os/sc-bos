@@ -145,7 +145,7 @@ type LevelThreshold struct {
 type Mode struct {
 	// UnoccupiedOffDelay configures how long we wait after the most recent occupancy sensor reported unoccupied before
 	// we turn the light off.
-	UnoccupiedOffDelay jsontypes.Duration `json:"unoccupiedOffDelay,omitempty"`
+	UnoccupiedOffDelay jsontypes.Duration `json:"unoccupiedOffDelay"`
 	// DaylightDimming configures how the brightness measured in the space affects the luminosity of the lights that
 	// are on.
 	DaylightDimming *DaylightDimming `json:"daylightDimming,omitempty"`

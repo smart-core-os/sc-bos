@@ -11,10 +11,12 @@ import (
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -40,6 +42,12 @@ type Job interface {
 	GetLogger() *zap.Logger
 
 	GetNextExecution() <-chan time.Time
+	// SetLastAttempt records when the job last ran (success or failure) and is used
+	// solely to pace the schedule. It is not persisted.
+	SetLastAttempt(t time.Time)
+	// SetPreviousExecution records a successful execution and persists the timestamp.
+	// It is used by meter-based jobs to define the data window for the next run, so
+	// it must only be called on success to preserve catch-up across outages.
 	SetPreviousExecution(t time.Time)
 
 	Do(ctx context.Context, sendFn sender) error
@@ -58,11 +66,17 @@ func ExecuteAll(ctx context.Context, sender sender, jobs ...Job) error {
 			for {
 				select {
 				case <-j.GetNextExecution():
+					// Record the attempt time before running so GetNextExecution
+					// schedules the next run correctly even if Do fails.
+					j.SetLastAttempt(time.Now())
 					if err := j.Do(ctx, sender); err != nil {
 						j.GetLogger().Warn("failed to run", zap.Error(err))
-						continue
+					} else {
+						// Only advance PreviousExecution on success: meter-based jobs
+						// use it as the start of their data window, so it must not
+						// advance during an outage or catch-up data would be lost.
+						j.SetPreviousExecution(time.Now())
 					}
-					j.SetPreviousExecution(time.Now())
 				case <-ctx.Done():
 					return ctx.Err()
 				}
@@ -98,16 +112,29 @@ type BaseJob struct {
 	PreviousExecution time.Time
 	Site              string
 	Logger            *zap.Logger
+
+	lastAttempt time.Time // in-memory only; tracks last run attempt for scheduling
 }
 
 func (b *BaseJob) GetLogger() *zap.Logger {
 	return b.Logger
 }
 
+func (b *BaseJob) SetLastAttempt(t time.Time) {
+	b.lastAttempt = t
+}
+
 func (b *BaseJob) GetNextExecution() <-chan time.Time {
 	t := time.Now().UTC()
 
+	// Use whichever is more recent: the last successful execution (persisted) or the
+	// last attempt (in-memory). This prevents a tight retry loop after a failed run
+	// while still allowing meter-based jobs to catch up across an outage on success.
 	previous := b.getPreviousExecution()
+	if b.lastAttempt.After(previous) {
+		previous = b.lastAttempt
+	}
+
 	executeImmediately := shouldExecuteImmediately(b.Schedule, t, previous.UTC())
 
 	b.Logger.Debug("previous execution time detected", zap.String("name", b.Name), zap.Time("previous", previous), zap.Time("current", t), zap.Bool("executeImmediately", executeImmediately))
@@ -144,7 +171,7 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, no
 				Timeout:  cfg.Sources.Occupancy.Timeout,
 			},
 			Sensors: cfg.Sources.Occupancy.Sensors,
-			client:  traits.NewOccupancySensorApiClient(node.ClientConn()),
+			client:  occupancysensorpb.NewOccupancySensorApiClient(node.ClientConn()),
 		}
 
 		occ.PreviousExecution = occ.getPreviousExecution()
@@ -164,7 +191,7 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, no
 				Timeout:  cfg.Sources.Temperature.Timeout,
 			},
 			Sensors: cfg.Sources.Temperature.Sensors,
-			client:  traits.NewAirTemperatureApiClient(node.ClientConn()),
+			client:  airtemperaturepb.NewAirTemperatureApiClient(node.ClientConn()),
 		}
 
 		temperature.PreviousExecution = temperature.getPreviousExecution()
@@ -205,7 +232,7 @@ func FromConfig(cfg config.Root, db *bolthold.Store, autoName, scName string, no
 				Timeout:  cfg.Sources.AirQuality.Timeout,
 			},
 			Sensors: cfg.Sources.AirQuality.Sensors,
-			client:  traits.NewAirQualitySensorApiClient(node.ClientConn()),
+			client:  airqualitysensorpb.NewAirQualitySensorApiClient(node.ClientConn()),
 		}
 
 		air.PreviousExecution = air.getPreviousExecution()
@@ -240,7 +267,9 @@ func (b *BaseJob) getPreviousExecution() time.Time {
 	previous := time.Time{}
 	key := fmt.Sprintf(boltKeyTemplate, b.AutoName, b.ScName, b.Name)
 	if err := b.Db.Get(key, &previous); err != nil {
-		b.Logger.Error("failed to get previous execution time", zap.String("name", b.Name), zap.Error(err), zap.String("key", key))
+		if !errors.Is(err, bolthold.ErrNotFound) {
+			b.Logger.Warn("failed to get previous execution time", zap.String("name", b.Name), zap.Error(err), zap.String("key", key))
+		}
 		// assume the job executed successfully one interval ago if we can't retrieve the previous execution time
 		now := time.Now()
 		next := b.Schedule.Next(now)

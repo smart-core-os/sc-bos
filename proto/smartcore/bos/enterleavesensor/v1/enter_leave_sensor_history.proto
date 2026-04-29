@@ -6,21 +6,21 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorp
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "traits/enter_leave_sensor.proto";
-import "types/time/period.proto";
+import "smartcore/bos/enterleavesensor/v1/enter_leave_sensor.proto";
+import "smartcore/bos/types/time/v1/period.proto";
 
 service EnterLeaveSensorHistory {
   rpc ListEnterLeaveSensorHistory(ListEnterLeaveHistoryRequest) returns (ListEnterLeaveHistoryResponse) {}
 }
 
 message EnterLeaveEventRecord {
-  smartcore.traits.EnterLeaveEvent enter_leave_event = 1;
+  EnterLeaveEvent enter_leave_event = 1;
   google.protobuf.Timestamp record_time = 2;
 }
 
 message ListEnterLeaveHistoryRequest {
   string name = 1;
-  smartcore.types.time.Period period = 2;
+  smartcore.bos.types.time.v1.Period period = 2;
 
   // Fields to fetch relative to the EnterLeaveEventRecord type
   google.protobuf.FieldMask read_mask = 3;

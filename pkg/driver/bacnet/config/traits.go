@@ -8,9 +8,9 @@ import (
 
 	"github.com/smart-core-os/gobacnet/property"
 	bactypes "github.com/smart-core-os/gobacnet/types"
-	"github.com/smart-core-os/sc-api/go/traits"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
-	"github.com/smart-core-os/sc-golang/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
 // Trait is the common configuration for bacnet device traits.
@@ -22,9 +22,9 @@ import (
 //	  Value *ValueSource `json:"value,omitempty"`
 //	}
 type Trait struct {
-	Name     string           `json:"name,omitempty"`
-	Kind     trait.Name       `json:"kind,omitempty"`
-	Metadata *traits.Metadata `json:"metadata,omitempty"`
+	Name     string               `json:"name,omitempty"`
+	Kind     trait.Name           `json:"kind,omitempty"`
+	Metadata *metadatapb.Metadata `json:"metadata,omitempty"`
 	// poll period used to poll the objects for pull updates
 	// defaults to 10s
 	PollPeriod *Duration `json:"pollPeriod,omitempty"`

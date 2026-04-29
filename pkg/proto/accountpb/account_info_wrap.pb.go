@@ -3,11 +3,12 @@
 package accountpb
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapInfo	adapts a AccountInfoServer	and presents it as a AccountInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server AccountInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(AccountInfo_ServiceDesc, server)
 	client := NewAccountInfoClient(conn)

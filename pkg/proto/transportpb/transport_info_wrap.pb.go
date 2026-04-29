@@ -3,11 +3,12 @@
 package transportpb
 
 import (
-	wrap "github.com/smart-core-os/sc-golang/pkg/wrap"
+	wrap "github.com/smart-core-os/sc-bos/pkg/wrap"
 	grpc "google.golang.org/grpc"
 )
 
 // WrapInfo	adapts a TransportInfoServer	and presents it as a TransportInfoClient
+// Deprecated: for client use, use [wrap.ServerToClient]; for server registration, use [github.com/smart-core-os/sc-bos/pkg/node.HasServer].
 func WrapInfo(server TransportInfoServer) *InfoWrapper {
 	conn := wrap.ServerToClient(TransportInfo_ServiceDesc, server)
 	client := NewTransportInfoClient(conn)

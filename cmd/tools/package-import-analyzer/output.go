@@ -24,7 +24,7 @@ func outputPackageTypeAnalysis(analysis []PackageTypeAnalysis) error {
 	case "json":
 		encoder := json.NewEncoder(writer)
 		encoder.SetIndent("", "  ")
-		return encoder.Encode(map[string]interface{}{
+		return encoder.Encode(map[string]any{
 			"analysis_type": "package-types",
 			"results":       analysis,
 		})
@@ -73,7 +73,7 @@ func outputPackageTypeAnalysis(analysis []PackageTypeAnalysis) error {
 				}
 			} else {
 				fmt.Fprintf(writer, "  Top 10 packages imported:\n")
-				for i := 0; i < 10; i++ {
+				for i := range 10 {
 					count := a.PackageCounts[a.Packages[i]]
 					fmt.Fprintf(writer, "    - %s (%d imports)\n", a.Packages[i], count)
 				}
@@ -101,7 +101,7 @@ func outputRepoDependencyAnalysis(analysis []RepoDependencyAnalysis) error {
 	case "json":
 		encoder := json.NewEncoder(writer)
 		encoder.SetIndent("", "  ")
-		return encoder.Encode(map[string]interface{}{
+		return encoder.Encode(map[string]any{
 			"analysis_type": "repo-dependencies",
 			"results":       analysis,
 		})

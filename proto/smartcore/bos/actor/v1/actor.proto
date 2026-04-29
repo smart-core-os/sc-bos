@@ -5,7 +5,7 @@ package smartcore.bos.actor.v1;
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/actorpb";
 
 import "google/protobuf/timestamp.proto";
-import "types/image.proto";
+import "smartcore/bos/types/v1/image.proto";
 
 // An Actor is some entity that attempted to access the resource.
 // It could be an object, like a car, or a person or animal.
@@ -21,7 +21,7 @@ message Actor {
   // A recognisable display name for this actor.
   string display_name = 11;
   // A picture of the actor.
-  smartcore.types.Image picture = 12;
+  smartcore.bos.types.v1.Image picture = 12;
   // A url that resolves to more information on this actor.
   string url = 13;
   // An email address for the actor.

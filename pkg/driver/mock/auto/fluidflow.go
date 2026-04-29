@@ -4,8 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/fluidflowpb"
-	gen_fluidflowpb "github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
@@ -14,21 +13,21 @@ func FluidFlow(model *fluidflowpb.Model) service.Lifecycle {
 		go func() {
 			timer := time.NewTimer(durationBetween(30*time.Second, 2*time.Minute))
 			for {
-				direction := oneOf(gen_fluidflowpb.FluidFlow_FLOW, gen_fluidflowpb.FluidFlow_RETURN, gen_fluidflowpb.FluidFlow_BLOCKING)
+				direction := oneOf(fluidflowpb.FluidFlow_FLOW, fluidflowpb.FluidFlow_RETURN, fluidflowpb.FluidFlow_BLOCKING)
 
-				state := &gen_fluidflowpb.FluidFlow{
-					FlowRate:             ptr(float32Between(1, 100)),
-					DriveFrequency:       ptr(float32Between(0, 100)),
-					TargetFlowRate:       ptr(float32Between(1, 100)),
-					TargetDriveFrequency: ptr(float32Between(0, 100)),
+				state := &fluidflowpb.FluidFlow{
+					FlowRate:             new(float32Between(1, 100)),
+					DriveFrequency:       new(float32Between(0, 100)),
+					TargetFlowRate:       new(float32Between(1, 100)),
+					TargetDriveFrequency: new(float32Between(0, 100)),
 					Direction:            direction,
 				}
 
-				if direction == gen_fluidflowpb.FluidFlow_BLOCKING {
-					state.FlowRate = ptr(float32(0))
-					state.TargetFlowRate = ptr(float32(0))
-					state.DriveFrequency = ptr(float32(0))
-					state.TargetDriveFrequency = ptr(float32(0))
+				if direction == fluidflowpb.FluidFlow_BLOCKING {
+					state.FlowRate = new(float32(0))
+					state.TargetFlowRate = new(float32(0))
+					state.DriveFrequency = new(float32(0))
+					state.TargetDriveFrequency = new(float32(0))
 				}
 
 				_, _ = model.UpdateFluidFlow(state)
