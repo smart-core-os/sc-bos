@@ -64,7 +64,11 @@ func (o *OccupancyEventController) run(ctx context.Context) error {
 
 func (o *OccupancyEventController) refresh() error {
 
-	reqUrl := fmt.Sprintf("%s?after=%s&fields=source&top=1000", o.client.getUrl("events"), o.lastRefreshCycle.Format(time.RFC3339))
+	if o.lastRefreshCycle.IsZero() {
+		o.lastRefreshCycle = o.bootupTime
+	}
+
+	reqUrl := fmt.Sprintf("%s?after=%s&fields=source&top=1000", o.client.getUrl("events"), o.lastRefreshCycle.UTC().Format(time.RFC3339))
 
 	bytes, err := o.client.doRequest(reqUrl)
 
