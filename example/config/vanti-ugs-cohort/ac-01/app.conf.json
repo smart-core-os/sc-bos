@@ -707,7 +707,11 @@
           "name": "van/uk/brum/ugs/devices/SHD-LN1-01",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]",
+                "openPercentAttributes": "{\"bounds\":{\"min\":0,\"max\":100},\"step\":25}"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -728,7 +732,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-LN1-02",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -749,7 +756,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-LN1-03",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -770,7 +780,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-LN1-04",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -791,7 +804,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-LN1-05",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -812,7 +828,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-LN1-06",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -1800,7 +1819,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L00-01",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -1821,7 +1843,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L00-02",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -1842,7 +1867,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L00-03",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -1863,7 +1891,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L00-04",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -1884,7 +1915,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L00-05",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -1905,7 +1939,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L00-06",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -1926,7 +1963,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L00-07",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -1947,7 +1987,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L00-08",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -1968,7 +2011,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L00-09",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -2004,7 +2050,10 @@
               "name": "smartcore.traits.EnterLeaveSensor"
             },
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -2046,7 +2095,10 @@
           "name": "van/uk/brum/ugs/devices/DOR-L00-01",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -2067,7 +2119,10 @@
           "name": "van/uk/brum/ugs/devices/DOR-L00-02",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -2530,7 +2585,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L01-01",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -2552,7 +2610,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L01-02",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -2574,7 +2635,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L01-03",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
@@ -2596,7 +2660,10 @@
           "name": "van/uk/brum/ugs/devices/SHD-L01-04",
           "traits": [
             {
-              "name": "smartcore.traits.OpenClose"
+              "name": "smartcore.traits.OpenClose",
+              "more": {
+                "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
+              }
             },
             {
               "name": "smartcore.bos.Status"
