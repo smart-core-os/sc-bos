@@ -75,7 +75,7 @@ import PeriodChooserRows from '@/components/PeriodChooserRows.vue';
 import {useDescribeMeterReading} from '@/traits/meter/meter.js';
 import {isNullOrUndef} from '@/util/types.js';
 import {useLocalProp} from '@/util/vue.js';
-import {BarElement, Chart as ChartJS, Legend, LinearScale, TimeScale, Title, Tooltip} from 'chart.js'
+import {BarElement, Chart as ChartJS, Filler, Legend, LinearScale, TimeScale, Title, Tooltip} from 'chart.js'
 import {startOfDay, startOfYear} from 'date-fns';
 import {computed, nextTick, ref, toRef, watch} from 'vue';
 import {Bar} from 'vue-chartjs';
@@ -83,7 +83,7 @@ import 'chartjs-adapter-date-fns';
 import {useMeterConsumption, useMetersConsumption} from './consumption.js';
 import NoDataGraphic from '@/dynamic/widgets/general/no-data-in-date-range.svg';
 
-ChartJS.register(Title, Tooltip, BarElement, LinearScale, TimeScale, Legend);
+ChartJS.register(Title, Tooltip, BarElement, Filler, LinearScale, TimeScale, Legend);
 const chartRef = ref(null);
 
 const props = defineProps({
