@@ -222,17 +222,17 @@ func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root) (*opcua.
 }
 
 func (d *Driver) onStop() {
+	if d.systemCheck != nil {
+		d.systemCheck.Dispose()
+	}
 	d.dispose()
 }
 
 func (d *Driver) dispose() {
-	if d.systemCheck != nil {
-		d.systemCheck.Dispose()
-	}
-
 	for _, c := range d.checks {
 		if c != nil {
 			c.Dispose()
 		}
 	}
+	d.checks = nil
 }
