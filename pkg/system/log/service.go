@@ -161,6 +161,25 @@ func NewAuditSetup(filename string, maxSizeMB, maxAgeDays, maxBackups int, compr
 	return a, nil
 }
 
+// Write records msg to both the file logger (if configured) and the in-memory model,
+// guaranteeing both sinks always contain identical data.
+// Implements policy.AuditSink.
+func (a *AuditSetup) Write(msg *logpb.LogMessage) {
+	if a.Logger != nil {
+		fields := make([]zap.Field, 0, len(msg.Fields))
+		for k, v := range msg.Fields {
+			fields = append(fields, zap.String(k, v))
+		}
+		switch msg.Level {
+		case logpb.Level_LEVEL_WARN, logpb.Level_LEVEL_ERROR:
+			a.Logger.Warn(msg.Message, fields...)
+		default:
+			a.Logger.Info(msg.Message, fields...)
+		}
+	}
+	a.Model.AppendMessage(msg)
+}
+
 // RegisterHTTP installs the audit-log file download handler on mux at dlPath.
 // Does nothing when the AuditSetup has no file backing.
 func (a *AuditSetup) RegisterHTTP(mux *http.ServeMux, dlPath string) {

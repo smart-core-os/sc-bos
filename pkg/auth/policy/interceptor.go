@@ -25,12 +25,16 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 )
 
+// AuditSink receives pre-formatted audit log entries. Implementations must be safe for concurrent use.
+type AuditSink interface {
+	Write(msg *logpb.LogMessage)
+}
+
 type Interceptor struct {
-	logger      *zap.Logger
-	auditLogger *zap.Logger
-	auditModel  *logpb.Model
-	policy      Policy
-	verifier    token.Validator
+	logger    *zap.Logger
+	auditSink AuditSink
+	policy    Policy
+	verifier  token.Validator
 
 	auditQueue chan auditRecord
 	auditDone  chan struct{}
@@ -45,7 +49,7 @@ func NewInterceptor(policy Policy, opts ...InterceptorOption) *Interceptor {
 	for _, o := range opts {
 		o(interceptor)
 	}
-	if interceptor.auditLogger != nil || interceptor.auditModel != nil {
+	if interceptor.auditSink != nil {
 		interceptor.auditQueue = make(chan auditRecord, 1024)
 		interceptor.auditDone = make(chan struct{})
 		go interceptor.runAuditWorker()
@@ -305,12 +309,8 @@ func WithTokenVerifier(tv token.Validator) InterceptorOption {
 	}
 }
 
-func WithAuditLogger(logger *zap.Logger) InterceptorOption {
-	return func(i *Interceptor) { i.auditLogger = logger }
-}
-
-func WithAuditModel(m *logpb.Model) InterceptorOption {
-	return func(i *Interceptor) { i.auditModel = m }
+func WithAuditSink(s AuditSink) InterceptorOption {
+	return func(i *Interceptor) { i.auditSink = s }
 }
 
 type verifiedCreds struct {
@@ -408,50 +408,31 @@ func (i *Interceptor) writeAuditEntry(outcome string, creds *verifiedCreds, addr
 	}
 }
 
-// doWriteAuditEntry performs the actual I/O for a queued audit record.
+// doWriteAuditEntry builds a LogMessage from the queued record and passes it to the sink.
 // Called only from the background worker goroutine.
 func (i *Interceptor) doWriteAuditEntry(rec auditRecord) {
-	if i.auditLogger != nil {
-		fields := make([]zap.Field, 0, 7+len(rec.extra))
-		fields = append(fields, zap.String("outcome", rec.outcome))
-		for _, f := range rec.extra {
-			fields = append(fields, zap.String(f.key, f.value))
-		}
-		fields = append(fields,
-			zap.String("peer", rec.addr),
-			zap.String("subject", rec.subject),
-			zap.String("name", rec.name),
-			zap.Bool("cert", rec.certValid),
-			zap.String("certSubject", rec.certSubject),
-			zap.Bool("token", rec.hasToken),
-		)
-		i.auditLogger.Info("write", fields...)
+	lvl := logpb.Level_LEVEL_INFO
+	if rec.outcome == "denied" {
+		lvl = logpb.Level_LEVEL_WARN
 	}
-
-	if i.auditModel != nil {
-		lvl := logpb.Level_LEVEL_INFO
-		if rec.outcome == "denied" {
-			lvl = logpb.Level_LEVEL_WARN
-		}
-		allFields := make(map[string]string, 7+len(rec.extra))
-		allFields["outcome"] = rec.outcome
-		allFields["peer"] = rec.addr
-		allFields["subject"] = rec.subject
-		allFields["name"] = rec.name
-		allFields["cert"] = strconv.FormatBool(rec.certValid)
-		allFields["certSubject"] = rec.certSubject
-		allFields["token"] = strconv.FormatBool(rec.hasToken)
-		for _, f := range rec.extra {
-			allFields[f.key] = f.value
-		}
-		i.auditModel.AppendMessage(&logpb.LogMessage{
-			Timestamp: timestamppb.New(rec.ts),
-			Level:     lvl,
-			Logger:    "audit",
-			Message:   "write",
-			Fields:    allFields,
-		})
+	fields := make(map[string]string, 7+len(rec.extra))
+	fields["outcome"] = rec.outcome
+	fields["peer"] = rec.addr
+	fields["subject"] = rec.subject
+	fields["name"] = rec.name
+	fields["cert"] = strconv.FormatBool(rec.certValid)
+	fields["certSubject"] = rec.certSubject
+	fields["token"] = strconv.FormatBool(rec.hasToken)
+	for _, f := range rec.extra {
+		fields[f.key] = f.value
 	}
+	i.auditSink.Write(&logpb.LogMessage{
+		Timestamp: timestamppb.New(rec.ts),
+		Level:     lvl,
+		Logger:    "audit",
+		Message:   "write",
+		Fields:    fields,
+	})
 }
 
 // isWriteMethod reports whether the gRPC method name represents a mutating operation.

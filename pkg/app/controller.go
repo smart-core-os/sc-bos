@@ -336,10 +336,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			policy.WithTokenVerifier(tokenValidator),
 		}
 		if auditSetup != nil {
-			if auditSetup.Logger != nil {
-				opts = append(opts, policy.WithAuditLogger(auditSetup.Logger))
-			}
-			opts = append(opts, policy.WithAuditModel(auditSetup.Model))
+			opts = append(opts, policy.WithAuditSink(auditSetup))
 		}
 		auditInterceptor = policy.NewInterceptor(pol, opts...)
 		grpcOpts = append(grpcOpts,

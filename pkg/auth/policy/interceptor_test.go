@@ -7,11 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"sync"
+
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"go.uber.org/zap/zaptest/observer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -169,12 +168,11 @@ func TestIsWriteMethod(t *testing.T) {
 	}
 }
 
-func TestInterceptor_AuditLogger(t *testing.T) {
-	core, logs := observer.New(zapcore.InfoLevel)
-	auditLog := zap.New(core)
+func TestInterceptor_AuditSink(t *testing.T) {
+	sink := &captureSink{}
 
 	lis := bufconn.Listen(1024 * 1024)
-	interceptor := NewInterceptor(allowAll{}, WithAuditLogger(auditLog))
+	interceptor := NewInterceptor(allowAll{}, WithAuditSink(sink))
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(interceptor.GRPCUnaryInterceptor()),
 		grpc.ChainStreamInterceptor(interceptor.GRPCStreamingInterceptor()),
@@ -204,7 +202,7 @@ func TestInterceptor_AuditLogger(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetOnOff: %v", err)
 	}
-	if n := logs.Len(); n != 0 {
+	if n := len(sink.all()); n != 0 {
 		t.Errorf("GetOnOff: expected 0 audit entries, got %d", n)
 	}
 
@@ -214,28 +212,28 @@ func TestInterceptor_AuditLogger(t *testing.T) {
 		t.Fatalf("UpdateOnOff: %v", err)
 	}
 	interceptor.Close() // drain the async audit queue before asserting
-	if n := logs.Len(); n != 1 {
+	msgs := sink.all()
+	if n := len(msgs); n != 1 {
 		t.Errorf("UpdateOnOff: expected 1 audit entry, got %d", n)
 	} else {
-		entry := logs.All()[0]
-		if entry.Message != "write" {
-			t.Errorf("expected message %q, got %q", "write", entry.Message)
+		msg := msgs[0]
+		if msg.Message != "write" {
+			t.Errorf("message = %q, want %q", "write", msg.Message)
 		}
-		if v := entry.ContextMap()["outcome"]; v != "allowed" {
-			t.Errorf("expected outcome %q, got %v", "allowed", v)
+		if v := msg.Fields["outcome"]; v != "allowed" {
+			t.Errorf("outcome = %q, want %q", "allowed", v)
 		}
-		if v := entry.ContextMap()["method"]; v != "UpdateOnOff" {
-			t.Errorf("expected method %q, got %v", "UpdateOnOff", v)
+		if v := msg.Fields["method"]; v != "UpdateOnOff" {
+			t.Errorf("method = %q, want %q", "UpdateOnOff", v)
 		}
 	}
 }
 
-func TestInterceptor_AuditLogger_DeniedWrite(t *testing.T) {
-	core, logs := observer.New(zapcore.InfoLevel)
-	auditLog := zap.New(core)
+func TestInterceptor_AuditSink_DeniedWrite(t *testing.T) {
+	sink := &captureSink{}
 
 	lis := bufconn.Listen(1024 * 1024)
-	interceptor := NewInterceptor(denyAll{}, WithAuditLogger(auditLog))
+	interceptor := NewInterceptor(denyAll{}, WithAuditSink(sink))
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(interceptor.GRPCUnaryInterceptor()),
 		grpc.ChainStreamInterceptor(interceptor.GRPCStreamingInterceptor()),
@@ -265,73 +263,30 @@ func TestInterceptor_AuditLogger_DeniedWrite(t *testing.T) {
 		t.Fatal("expected UpdateOnOff to be denied")
 	}
 	interceptor.Close() // drain the async audit queue before asserting
-	if n := logs.Len(); n != 1 {
+	msgs := sink.all()
+	if n := len(msgs); n != 1 {
 		t.Errorf("expected 1 audit entry for denied write, got %d", n)
-	} else {
-		entry := logs.All()[0]
-		if v := entry.ContextMap()["outcome"]; v != "denied" {
-			t.Errorf("expected outcome %q, got %v", "denied", v)
-		}
+	} else if v := msgs[0].Fields["outcome"]; v != "denied" {
+		t.Errorf("outcome = %q, want %q", v, "denied")
 	}
 }
 
-func TestInterceptor_AuditModel(t *testing.T) {
-	model := logpb.NewModel(0)
+// captureSink is a test-only AuditSink that records every message it receives.
+type captureSink struct {
+	mu   sync.Mutex
+	msgs []*logpb.LogMessage
+}
 
-	lis := bufconn.Listen(1024 * 1024)
-	interceptor := NewInterceptor(allowAll{}, WithAuditModel(model))
-	server := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(interceptor.GRPCUnaryInterceptor()),
-		grpc.ChainStreamInterceptor(interceptor.GRPCStreamingInterceptor()),
-	)
-	onoffpb.RegisterOnOffApiServer(server, onoffpb.NewModelServer(onoffpb.NewModel()))
-	go func() {
-		if err := server.Serve(lis); err != nil {
-			t.Logf("server stopped: %v", err)
-		}
-	}()
-	t.Cleanup(func() { lis.Close(); server.Stop() })
+func (s *captureSink) Write(msg *logpb.LogMessage) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.msgs = append(s.msgs, msg)
+}
 
-	ctx := context.Background()
-	conn, err := grpc.NewClient("localhost:0",
-		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
-			return lis.DialContext(ctx)
-		}),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	client := onoffpb.NewOnOffApiClient(conn)
-
-	_, err = client.GetOnOff(ctx, &onoffpb.GetOnOffRequest{Name: "x"})
-	if err != nil {
-		t.Fatalf("GetOnOff: %v", err)
-	}
-	if n := len(model.TailMessages(10)); n != 0 {
-		t.Errorf("GetOnOff: expected 0 model entries, got %d", n)
-	}
-
-	_, err = client.UpdateOnOff(ctx, &onoffpb.UpdateOnOffRequest{Name: "x", OnOff: &onoffpb.OnOff{State: onoffpb.OnOff_ON}})
-	if err != nil {
-		t.Fatalf("UpdateOnOff: %v", err)
-	}
-	interceptor.Close() // drain the async audit queue before asserting
-	msgs := model.TailMessages(10)
-	if n := len(msgs); n != 1 {
-		t.Errorf("UpdateOnOff: expected 1 model entry, got %d", n)
-	} else {
-		msg := msgs[0]
-		if msg.Message != "write" {
-			t.Errorf("message = %q, want %q", msg.Message, "write")
-		}
-		if v := msg.Fields["outcome"]; v != "allowed" {
-			t.Errorf("outcome = %q, want %q", v, "allowed")
-		}
-		if v := msg.Fields["method"]; v != "UpdateOnOff" {
-			t.Errorf("method = %q, want %q", v, "UpdateOnOff")
-		}
-	}
+func (s *captureSink) all() []*logpb.LogMessage {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]*logpb.LogMessage(nil), s.msgs...)
 }
 
 // allowAll is a Policy that permits every request.
