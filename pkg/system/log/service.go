@@ -1,29 +1,16 @@
 package log
 
 import (
-	"archive/zip"
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
-	"io"
-	"mime"
 	"net/http"
-	"net/url"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
-	"github.com/go-jose/go-jose/v4"
-	josejwt "github.com/go-jose/go-jose/v4/jwt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"gopkg.in/natefinch/lumberjack.v2"
 
+	"github.com/smart-core-os/sc-bos/internal/logdownload"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/system/log/config"
@@ -62,7 +49,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	if s.services.HTTPMux != nil && cfg.LogFilePath != "" {
 		// Update the allowed directory on every config apply so the handler
 		// always enforces the current log root, even after a reload.
-		allowedDir := logAllowedDir(cfg.LogFilePath, cfg.LogDir)
+		allowedDir := logdownload.LogAllowedDir(cfg.LogFilePath, cfg.LogDir)
 		s.downloadAllowedDir.Store(&allowedDir)
 
 		// Register the HTTP handler exactly once. Subsequent applyConfig calls
@@ -76,7 +63,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 				if p := s.downloadAllowedDir.Load(); p != nil {
 					dir = *p
 				}
-				serveLogDownload(w, r, s.downloadKey, dir)
+				logdownload.ServeLogDownload(w, r, s.downloadKey, dir)
 			})
 		})
 
@@ -89,7 +76,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		dlPath := s.registeredDLPath
 
 		srv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
-			return getDownloadLogURL(req, cfg.LogFilePath, cfg.LogDir, urlBase, dlPath, key, ttl)
+			return logdownload.GetDownloadLogURL(req, cfg.LogFilePath, cfg.LogDir, urlBase, dlPath, key, ttl)
 		}
 	}
 
@@ -98,13 +85,13 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		go func() {
 			ticker := time.NewTicker(30 * time.Second)
 			defer ticker.Stop()
-			refreshMetadata(model, cfg.LogFilePath, cfg.LogDir, s.logger)
+			logdownload.RefreshMetadata(model, cfg.LogFilePath, cfg.LogDir, s.logger)
 			for {
 				select {
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
-					refreshMetadata(model, cfg.LogFilePath, cfg.LogDir, s.logger)
+					logdownload.RefreshMetadata(model, cfg.LogFilePath, cfg.LogDir, s.logger)
 				}
 			}
 		}()
@@ -117,156 +104,6 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	)
 
 	return nil
-}
-
-// --------------------------------------------------------------------------
-// Audit file logger construction
-// --------------------------------------------------------------------------
-
-// AuditSetup holds an initialised audit log subsystem for use by Bootstrap.
-// Create it with NewAuditSetup; always call Close on shutdown.
-type AuditSetup struct {
-	// Logger writes structured JSON audit entries to a rotating file.
-	// Nil when no filename was configured.
-	Logger *zap.Logger
-	// Model holds the in-memory ring buffer of audit entries. Always non-nil.
-	Model *logpb.Model
-
-	downloadKey []byte
-	filename    string
-	closer      io.Closer
-}
-
-// NewAuditSetup creates the audit log subsystem.
-// When filename is non-empty a rotating JSON logger is also created;
-// a non-nil error means the file could not be opened — the returned
-// *AuditSetup is still valid for in-memory use. The caller must call Close.
-func NewAuditSetup(filename string, maxSizeMB, maxAgeDays, maxBackups int, compress bool) (*AuditSetup, error) {
-	a := &AuditSetup{Model: logpb.NewModel(0)}
-	if filename == "" {
-		return a, nil
-	}
-	maxSize := maxSizeMB
-	if maxSize == 0 {
-		maxSize = 100
-	}
-	logger, closer, err := newAuditFileLogger(filename, maxSize, maxAgeDays, maxBackups, compress)
-	if err != nil {
-		return a, err
-	}
-	a.Logger = logger
-	a.closer = closer
-	a.downloadKey = newHMACKey()
-	a.filename = filename
-	return a, nil
-}
-
-// Write records msg to both the file logger (if configured) and the in-memory model,
-// guaranteeing both sinks always contain identical data.
-// Implements policy.AuditSink.
-func (a *AuditSetup) Write(msg *logpb.LogMessage) {
-	if a.Logger != nil {
-		fields := make([]zap.Field, 0, len(msg.Fields))
-		for k, v := range msg.Fields {
-			fields = append(fields, zap.String(k, v))
-		}
-		switch msg.Level {
-		case logpb.Level_LEVEL_WARN, logpb.Level_LEVEL_ERROR:
-			a.Logger.Warn(msg.Message, fields...)
-		default:
-			a.Logger.Info(msg.Message, fields...)
-		}
-	}
-	a.Model.AppendMessage(msg)
-}
-
-// RegisterHTTP installs the audit-log file download handler on mux at dlPath.
-// Does nothing when the AuditSetup has no file backing.
-func (a *AuditSetup) RegisterHTTP(mux *http.ServeMux, dlPath string) {
-	if a.filename == "" {
-		return
-	}
-	allowedDir := filepath.Dir(a.filename)
-	mux.HandleFunc(dlPath, func(w http.ResponseWriter, r *http.Request) {
-		serveLogDownload(w, r, a.downloadKey, allowedDir)
-	})
-}
-
-// NewModelServer returns a ModelServer backed by this AuditSetup's model.
-// When dlPath is non-empty and a file was configured, GetDownloadLogUrl is
-// wired up using urlBase as the URL prefix with a 15-minute token TTL.
-func (a *AuditSetup) NewModelServer(urlBase, dlPath string) *logpb.ModelServer {
-	srv := logpb.NewModelServer(a.Model)
-	if a.filename != "" && dlPath != "" {
-		ttl := 15 * time.Minute
-		key, filename := a.downloadKey, a.filename
-		srv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
-			return getDownloadLogURL(req, filename, "", urlBase, dlPath, key, ttl)
-		}
-	}
-	return srv
-}
-
-// StartMetadataRefresh launches a background goroutine that scans the audit
-// log files every 30 seconds and updates the model's LogMetadata.
-// Does nothing when the AuditSetup has no file backing.
-func (a *AuditSetup) StartMetadataRefresh(ctx context.Context, logger *zap.Logger) {
-	if a.filename == "" {
-		return
-	}
-	filename := a.filename
-	go func() {
-		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
-		refreshMetadata(a.Model, filename, "", logger)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				refreshMetadata(a.Model, filename, "", logger)
-			}
-		}
-	}()
-}
-
-// Close releases file resources held by the AuditSetup.
-// The caller should call Logger.Sync() before Close.
-func (a *AuditSetup) Close() error {
-	if a.closer != nil {
-		return a.closer.Close()
-	}
-	return nil
-}
-
-// newAuditFileLogger creates a rotating JSON audit log file and returns
-// a zap.Logger that writes to it, plus an io.Closer for cleanup.
-// The caller is responsible for calling Sync() on the logger before Close().
-func newAuditFileLogger(filename string, maxSizeMB, maxAgeDays, maxBackups int, compress bool) (*zap.Logger, io.Closer, error) {
-	if err := os.MkdirAll(filepath.Dir(filename), 0o755); err != nil {
-		return nil, nil, fmt.Errorf("create audit log dir: %w", err)
-	}
-	// Open eagerly to surface config errors at startup rather than on first write.
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o640)
-	if err != nil {
-		return nil, nil, fmt.Errorf("open audit log: %w", err)
-	}
-	f.Close()
-	w := &lumberjack.Logger{
-		Filename:   filename,
-		MaxSize:    maxSizeMB,
-		MaxAge:     maxAgeDays,
-		MaxBackups: maxBackups,
-		Compress:   compress,
-	}
-	enc := zap.NewProductionEncoderConfig()
-	enc.EncodeTime = zapcore.ISO8601TimeEncoder
-	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(enc),
-		zapcore.AddSync(w),
-		zapcore.InfoLevel,
-	)
-	return zap.New(core), w, nil
 }
 
 // --------------------------------------------------------------------------
@@ -362,343 +199,3 @@ func setModelLevel(m *logpb.Model, l zapcore.Level) error {
 	return err
 }
 
-// --------------------------------------------------------------------------
-// Log file metadata
-// --------------------------------------------------------------------------
-
-func refreshMetadata(model *logpb.Model, glob, logDir string, logger *zap.Logger) {
-	var totalSize int64
-	var fileCount int
-
-	if logDir != "" {
-		entries, err := os.ReadDir(logDir)
-		if err != nil {
-			logger.Warn("failed to read log dir", zap.String("dir", logDir), zap.Error(err))
-			return
-		}
-		for _, e := range entries {
-			if !e.Type().IsRegular() {
-				continue
-			}
-			info, err := e.Info()
-			if err != nil {
-				continue
-			}
-			totalSize += info.Size()
-			fileCount++
-		}
-	} else {
-		files, err := filepath.Glob(glob)
-		if err != nil {
-			logger.Warn("failed to glob log files", zap.String("glob", glob), zap.Error(err))
-			return
-		}
-		for _, f := range files {
-			info, err := os.Stat(f)
-			if err != nil {
-				continue
-			}
-			totalSize += info.Size()
-			fileCount++
-		}
-	}
-
-	_, _ = model.UpdateLogMetadata(&logpb.LogMetadata{
-		TotalSizeBytes: totalSize,
-		FileCount:      int32(fileCount),
-	})
-}
-
-// --------------------------------------------------------------------------
-// Download URL generation and HTTP handler
-// --------------------------------------------------------------------------
-
-type downloadClaims struct {
-	// FilePath is the absolute path to a single log file to download.
-	FilePath string `json:"fp,omitempty"`
-	// ZipFiles is a list of absolute paths to include in a zip archive download.
-	ZipFiles []string `json:"zf,omitempty"`
-}
-
-type downloadJWTClaims struct {
-	josejwt.Claims
-	Body downloadClaims `json:"b"`
-}
-
-// newHMACKey generates a random 32-byte HMAC key.
-// The key is generated once per applyConfig call (i.e. once per config reload).
-func newHMACKey() []byte {
-	key := make([]byte, 32)
-	if _, err := rand.Read(key); err != nil {
-		panic("logpb: failed to generate HMAC key: " + err.Error())
-	}
-	return key
-}
-
-func getDownloadLogURL(
-	req *logpb.GetDownloadLogUrlRequest,
-	glob, logDir, urlBase, downloadPath string,
-	key []byte,
-	ttl time.Duration,
-) (*logpb.GetDownloadLogUrlResponse, error) {
-	if req.IncludeRotated {
-		// Collect all files and return a single zip download URL.
-		var files []string
-		if logDir != "" {
-			entries, err := os.ReadDir(logDir)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "read log dir: %v", err)
-			}
-			for _, e := range entries {
-				if !e.Type().IsRegular() {
-					continue
-				}
-				files = append(files, filepath.Join(logDir, e.Name()))
-			}
-		} else {
-			var err error
-			files, err = filepath.Glob(glob)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "glob log files: %v", err)
-			}
-		}
-		if len(files) == 0 {
-			return &logpb.GetDownloadLogUrlResponse{}, nil
-		}
-		tokenStr, err := signDownloadToken(downloadClaims{ZipFiles: files}, key, time.Now().Add(ttl))
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "sign token: %v", err)
-		}
-		u, err := buildDownloadURL(urlBase, downloadPath, tokenStr)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "build url: %v", err)
-		}
-		return &logpb.GetDownloadLogUrlResponse{Files: []*logpb.GetDownloadLogUrlResponse_LogFile{{
-			Url:         u,
-			Filename:    "logs.zip",
-			ContentType: "application/zip",
-		}}}, nil
-	}
-
-	// include_rotated=false: single most recent file.
-	files, err := filepath.Glob(glob)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "glob log files: %v", err)
-	}
-	if len(files) == 0 {
-		return &logpb.GetDownloadLogUrlResponse{}, nil
-	}
-	fp := files[len(files)-1]
-	info, err := os.Stat(fp)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "stat log file: %v", err)
-	}
-	tokenStr, err := signDownloadToken(downloadClaims{FilePath: fp}, key, time.Now().Add(ttl))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "sign token: %v", err)
-	}
-	u, err := buildDownloadURL(urlBase, downloadPath, tokenStr)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "build url: %v", err)
-	}
-	return &logpb.GetDownloadLogUrlResponse{Files: []*logpb.GetDownloadLogUrlResponse_LogFile{{
-		Url:         u,
-		Filename:    filepath.Base(fp),
-		SizeBytes:   info.Size(),
-		ContentType: detectContentType(fp),
-	}}}, nil
-}
-
-func signDownloadToken(body downloadClaims, key []byte, expiry time.Time) (string, error) {
-	signer, err := jose.NewSigner(
-		jose.SigningKey{Algorithm: jose.HS256, Key: key},
-		(&jose.SignerOptions{}).WithType("JWT"),
-	)
-	if err != nil {
-		return "", err
-	}
-	claims := downloadJWTClaims{
-		Claims: josejwt.Claims{Expiry: josejwt.NewNumericDate(expiry)},
-		Body:   body,
-	}
-	return josejwt.Signed(signer).Claims(claims).Serialize()
-}
-
-func parseDownloadToken(tokenStr string, key []byte) (*downloadClaims, error) {
-	tok, err := josejwt.ParseSigned(tokenStr, []jose.SignatureAlgorithm{jose.HS256})
-	if err != nil {
-		return nil, err
-	}
-	var claims downloadJWTClaims
-	if err := tok.Claims(key, &claims); err != nil {
-		return nil, err
-	}
-	if err := claims.ValidateWithLeeway(josejwt.Expected{Time: time.Now()}, time.Minute); err != nil {
-		return nil, err
-	}
-	return &claims.Body, nil
-}
-
-func buildDownloadURL(urlBase, downloadPath, tokenStr string) (string, error) {
-	base := urlBase
-	if base == "" {
-		base = downloadPath
-	}
-	u, err := url.Parse(base)
-	if err != nil {
-		return "", err
-	}
-	if !strings.HasPrefix(u.Path, "/") {
-		u.Path = downloadPath
-	} else if u.Path == "" {
-		u.Path = downloadPath
-	}
-	q := u.Query()
-	q.Set("dlt", base64.RawURLEncoding.EncodeToString([]byte(tokenStr)))
-	u.RawQuery = q.Encode()
-	return u.String(), nil
-}
-
-// serveLogDownload is the HTTP handler for log file downloads.
-// It validates the signed JWT in the "dlt" (download token) query parameter and
-// streams the corresponding file directly via io.Copy — no read→serialise→write cycle.
-//
-// The "dlt" parameter is a base64url-encoded HS256-signed JWT containing either
-// a single file path (downloadClaims.FilePath) or a list of paths to zip
-// (downloadClaims.ZipFiles). Tokens are short-lived and signed with a per-config
-// HMAC key; see signDownloadToken / parseDownloadToken.
-//
-// Concurrency note: active log file downloads use a sequential read handle;
-// concurrent writes from the logger are safe because io.Copy reads sequentially
-// and log rotation produces a new file (the active file is never truncated while
-// the old one is being served).
-func serveLogDownload(w http.ResponseWriter, r *http.Request, key []byte, allowedDir string) {
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.Header().Set("Cache-Control", "no-store")
-
-	tokenB64 := r.URL.Query().Get("dlt")
-	if tokenB64 == "" {
-		http.Error(w, "missing download token", http.StatusUnauthorized)
-		return
-	}
-	tokenStr, err := base64.RawURLEncoding.DecodeString(tokenB64)
-	if err != nil {
-		http.Error(w, "invalid download token", http.StatusUnauthorized)
-		return
-	}
-	claims, err := parseDownloadToken(string(tokenStr), key)
-	if err != nil {
-		http.Error(w, "invalid or expired download token", http.StatusUnauthorized)
-		return
-	}
-
-	if len(claims.ZipFiles) > 0 {
-		serveZipDownload(w, claims.ZipFiles, allowedDir)
-		return
-	}
-
-	// Single file download.
-	fp := filepath.Clean(claims.FilePath)
-	if !isUnderDir(fp, allowedDir) {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-	f, err := os.Open(fp)
-	if err != nil {
-		http.Error(w, "file not found", http.StatusNotFound)
-		return
-	}
-	defer f.Close()
-
-	info, err := f.Stat()
-	if err != nil || info.IsDir() {
-		http.Error(w, "not a file", http.StatusBadRequest)
-		return
-	}
-
-	w.Header().Set("Content-Type", detectContentType(fp))
-	w.Header().Set("Content-Disposition", `attachment; filename="`+filepath.Base(fp)+`"`)
-	w.Header().Set("Content-Length", fmt.Sprintf("%d", info.Size()))
-	_, _ = io.Copy(w, f)
-}
-
-// serveZipDownload streams a zip archive containing the listed files.
-// Files that do not reside under allowedDir are silently skipped.
-func serveZipDownload(w http.ResponseWriter, files []string, allowedDir string) {
-	w.Header().Set("Content-Type", "application/zip")
-	w.Header().Set("Content-Disposition", `attachment; filename="logs.zip"`)
-
-	zw := zip.NewWriter(w)
-	defer zw.Close()
-
-	for _, fp := range files {
-		fp = filepath.Clean(fp)
-		if !isUnderDir(fp, allowedDir) {
-			continue
-		}
-		f, err := os.Open(fp)
-		if err != nil {
-			continue
-		}
-		info, err := f.Stat()
-		if err != nil || info.IsDir() {
-			f.Close()
-			continue
-		}
-		fh, err := zip.FileInfoHeader(info)
-		if err != nil {
-			f.Close()
-			continue
-		}
-		fh.Name = filepath.Base(fp)
-		fh.Method = zip.Deflate
-		fw, err := zw.CreateHeader(fh)
-		if err != nil {
-			f.Close()
-			continue
-		}
-		_, _ = io.Copy(fw, f)
-		f.Close()
-	}
-}
-
-// logAllowedDir returns the directory under which log files are expected,
-// derived from config. The result is used by isUnderDir to validate paths
-// embedded in download tokens before opening them.
-func logAllowedDir(logFilePath, logDir string) string {
-	if logDir != "" {
-		return filepath.Clean(logDir)
-	}
-	if logFilePath != "" {
-		return filepath.Clean(filepath.Dir(logFilePath))
-	}
-	return ""
-}
-
-// isUnderDir reports whether fp resides directly under dir.
-// An empty dir disables the check (returns true), so callers that have no
-// configured log directory remain unaffected.
-func isUnderDir(fp, dir string) bool {
-	if dir == "" {
-		return true
-	}
-	// Use dir+Sep as prefix to prevent "/var/log" from matching "/var/logmalicious".
-	return strings.HasPrefix(fp, dir+string(filepath.Separator))
-}
-
-func detectContentType(fp string) string {
-	switch {
-	case strings.HasSuffix(fp, ".gz"):
-		return "application/gzip"
-	case strings.HasSuffix(fp, ".zst"):
-		return "application/zstd"
-	case strings.HasSuffix(fp, ".bz2"):
-		return "application/x-bzip2"
-	default:
-		ct := mime.TypeByExtension(filepath.Ext(fp))
-		if ct == "" {
-			return "text/plain"
-		}
-		return ct
-	}
-}

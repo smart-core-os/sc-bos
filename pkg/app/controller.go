@@ -50,10 +50,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/app/audit"
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ops/cloudpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
-	syslog "github.com/smart-core-os/sc-bos/pkg/system/log"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
@@ -315,10 +315,10 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	}
 	pol := configPolicy(config)
 	var auditInterceptor *policy.Interceptor
-	var auditSetup *syslog.AuditSetup
+	var auditSetup *audit.Setup
 	if al := config.AuditLog; al != nil {
 		var err error
-		auditSetup, err = syslog.NewAuditSetup(al.Filename, al.MaxSizeMB, al.MaxAgeDays, al.MaxBackups, al.Compress)
+		auditSetup, err = audit.NewSetup(al.Filename, al.MaxSizeMB, al.MaxAgeDays, al.MaxBackups, al.Compress)
 		if err != nil {
 			logger.Error("failed to open audit log file, continuing with in-memory audit only", zap.String("file", al.Filename), zap.Error(err))
 		}

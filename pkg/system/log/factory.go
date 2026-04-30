@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/smart-core-os/sc-bos/internal/logdownload"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/system/log/config"
@@ -32,7 +33,7 @@ func NewSystem(services system.Services) *System {
 		announcer:   node.NewReplaceAnnouncer(services.Node),
 		services:    services,
 		logger:      logger,
-		downloadKey: newHMACKey(),
+		downloadKey: logdownload.NewHMACKey(),
 	}
 	s.Service = service.New(
 		service.MonoApply(s.applyConfig),
