@@ -32,7 +32,7 @@ func TestDevice_newDevice(t *testing.T) {
 		},
 	}
 
-	dev := newDevice(cfg, logger, nil, fc)
+	dev := newDevice(cfg, logger, nil, fc, nil)
 	require.NotNil(t, dev)
 	require.Equal(t, cfg, dev.conf)
 	require.NotNil(t, dev.logger)

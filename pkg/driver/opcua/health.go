@@ -26,16 +26,6 @@ const (
 	floatTolerance = 1e-9
 )
 
-func getSystemHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, equipment healthpb.HealthCheck_EquipmentImpact) *healthpb.HealthCheck {
-	return &healthpb.HealthCheck{
-		Id:              "systemStatusCheck",
-		DisplayName:     "System Status Check",
-		Description:     "Checks the opc ua server is reachable and the configured nodes are responding correctly",
-		OccupantImpact:  occupant,
-		EquipmentImpact: equipment,
-	}
-}
-
 func getDeviceHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, equipment healthpb.HealthCheck_EquipmentImpact) *healthpb.HealthCheck {
 	return &healthpb.HealthCheck{
 		Id:              "deviceStatusCheck",
