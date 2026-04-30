@@ -29,12 +29,12 @@ type ModelServer struct {
 	UnimplementedDataRetentionApiServer
 	UnimplementedDataRetentionInfoServer
 
-	model            *Model
-	clearHandler     ClearHandler
-	deleteOldHandler DeleteOldHandler
-	compactHandler   CompactHandler
+	model              *Model
+	clearHandler       ClearHandler
+	deleteOldHandler   DeleteOldHandler
+	compactHandler     CompactHandler
 	springCleanHandler SpringCleanHandler
-	support          *DataRetentionSupport
+	support            *DataRetentionSupport
 
 	subscribers atomic.Int32
 }
@@ -91,12 +91,6 @@ func (s *ModelServer) Unwrap() any {
 // GetDataRetention implements DataRetentionApiServer.
 func (s *ModelServer) GetDataRetention(_ context.Context, req *GetDataRetentionRequest) (*DataRetention, error) {
 	return s.model.GetDataRetention(resource.WithReadMask(req.ReadMask))
-}
-
-// HasSubscribers reports whether any PullDataRetention streams are currently active.
-// Polling goroutines can use this to skip work when no one is subscribed.
-func (s *ModelServer) HasSubscribers() bool {
-	return s.subscribers.Load() > 0
 }
 
 // PullDataRetention implements DataRetentionApiServer.

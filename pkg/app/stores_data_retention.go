@@ -5,6 +5,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -202,7 +203,6 @@ func updatePostgresDataRetentionModel(ctx context.Context, s *stores.Stores, mod
 	r, _, _, err := s.Postgres()
 	if err != nil {
 		logger.Warn("failed to get postgres store", zap.Error(err))
-		_, _ = model.SetDataRetention(&dataretentionpb.DataRetention{})
 		return
 	}
 
@@ -262,14 +262,22 @@ func postgresDeleteOldHandler(s *stores.Stores) dataretentionpb.DeleteOldHandler
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to get postgres store: %v", err)
 		}
-		cutoff := time.Now().Add(-d)
-		tag, err := w.Exec(ctx, "DELETE FROM history WHERE create_time < $1", cutoff)
+		deleted, err := postgresDeleteOld(ctx, w, d)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "delete_old failed: %v", err)
 		}
-		deletedU := uint64(tag.RowsAffected())
-		return &dataretentionpb.DeleteOldDataRetentionResponse{FreedItemCount: &deletedU}, nil
+		return &dataretentionpb.DeleteOldDataRetentionResponse{FreedItemCount: &deleted}, nil
 	}
+}
+
+// postgresDeleteOld deletes history records older than d and returns the number of rows removed.
+func postgresDeleteOld(ctx context.Context, w *pgxpool.Pool, d time.Duration) (uint64, error) {
+	cutoff := time.Now().Add(-d)
+	tag, err := w.Exec(ctx, "DELETE FROM history WHERE create_time < $1", cutoff)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(tag.RowsAffected()), nil
 }
 
 func postgresCompactHandler(s *stores.Stores) dataretentionpb.CompactHandler {
@@ -300,13 +308,11 @@ func postgresSpringCleanHandler(s *stores.Stores) dataretentionpb.SpringCleanHan
 			if d <= 0 {
 				return nil, status.Error(codes.InvalidArgument, "retention_period must be positive")
 			}
-			cutoff := time.Now().Add(-d)
-			tag, err := w.Exec(ctx, "DELETE FROM history WHERE create_time < $1", cutoff)
+			deleted, err := postgresDeleteOld(ctx, w, d)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "delete_old failed: %v", err)
 			}
-			deletedU := uint64(tag.RowsAffected())
-			resp.FreedItemCount = &deletedU
+			resp.FreedItemCount = &deleted
 		}
 
 		_, err = w.Exec(ctx, "VACUUM ANALYZE history")
