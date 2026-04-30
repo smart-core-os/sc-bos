@@ -50,7 +50,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
-	"github.com/smart-core-os/sc-bos/pkg/app/audit"
+	"github.com/smart-core-os/sc-bos/internal/audit"
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ops/cloudpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
