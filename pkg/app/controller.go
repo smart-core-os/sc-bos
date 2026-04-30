@@ -314,6 +314,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		return next
 	}
 	pol := configPolicy(config)
+	var auditInterceptor *policy.Interceptor
 	var auditSetup *syslog.AuditSetup
 	if al := config.AuditLog; al != nil {
 		var err error
@@ -340,12 +341,12 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 			}
 			opts = append(opts, policy.WithAuditModel(auditSetup.Model))
 		}
-		interceptor := policy.NewInterceptor(pol, opts...)
+		auditInterceptor = policy.NewInterceptor(pol, opts...)
 		grpcOpts = append(grpcOpts,
-			grpc.ChainUnaryInterceptor(interceptor.GRPCUnaryInterceptor()),
-			grpc.ChainStreamInterceptor(interceptor.GRPCStreamingInterceptor()),
+			grpc.ChainUnaryInterceptor(auditInterceptor.GRPCUnaryInterceptor()),
+			grpc.ChainStreamInterceptor(auditInterceptor.GRPCStreamingInterceptor()),
 		)
-		httpAuth = interceptor.HTTPInterceptor
+		httpAuth = auditInterceptor.HTTPInterceptor
 	}
 
 	// here we set up our support for runtime added RPCs.
@@ -504,6 +505,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	c.Defer(closeHealthStore)
 	if cloudDataRoot != nil {
 		c.Defer(cloudDataRoot.Close)
+	}
+	if auditInterceptor != nil {
+		c.Defer(auditInterceptor.Close)
 	}
 	if auditSetup != nil {
 		c.Defer(func() error {

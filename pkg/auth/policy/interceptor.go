@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"go.uber.org/zap"
@@ -29,6 +31,10 @@ type Interceptor struct {
 	auditModel  *logpb.Model
 	policy      Policy
 	verifier    token.Validator
+
+	auditQueue chan auditRecord
+	auditDone  chan struct{}
+	closeOnce  sync.Once
 }
 
 func NewInterceptor(policy Policy, opts ...InterceptorOption) *Interceptor {
@@ -39,7 +45,31 @@ func NewInterceptor(policy Policy, opts ...InterceptorOption) *Interceptor {
 	for _, o := range opts {
 		o(interceptor)
 	}
+	if interceptor.auditLogger != nil || interceptor.auditModel != nil {
+		interceptor.auditQueue = make(chan auditRecord, 1024)
+		interceptor.auditDone = make(chan struct{})
+		go interceptor.runAuditWorker()
+	}
 	return interceptor
+}
+
+// Close drains and shuts down the background audit worker. Safe to call more than once.
+// Must be called before closing or syncing the audit logger.
+func (i *Interceptor) Close() error {
+	if i.auditQueue != nil {
+		i.closeOnce.Do(func() {
+			close(i.auditQueue)
+			<-i.auditDone
+		})
+	}
+	return nil
+}
+
+func (i *Interceptor) runAuditWorker() {
+	defer close(i.auditDone)
+	for rec := range i.auditQueue {
+		i.doWriteAuditEntry(rec)
+	}
 }
 
 func (i *Interceptor) HTTPInterceptor(handler http.Handler) http.Handler {
@@ -334,56 +364,88 @@ type auditField struct {
 	value string
 }
 
-// writeAuditEntry records a single audit event to the configured audit sinks.
-// outcome is "allowed" or "denied". extra carries protocol-specific fields
-// (e.g. service+method for gRPC, path+httpMethod for HTTP).
+// auditRecord is a self-contained snapshot of an audit event. All fields are
+// value types so the record is safe to pass to the background worker without
+// holding references to RPC-time objects.
+type auditRecord struct {
+	ts          time.Time
+	outcome     string
+	addr        string
+	subject     string
+	name        string
+	certValid   bool
+	certSubject string
+	hasToken    bool
+	extra       []auditField
+}
+
+// writeAuditEntry snapshots the event and enqueues it for the background worker.
+// It returns immediately; the actual file/model writes happen off the RPC path.
 func (i *Interceptor) writeAuditEntry(outcome string, creds *verifiedCreds, addr string, extra ...auditField) {
-	if i.auditLogger == nil && i.auditModel == nil {
+	if i.auditQueue == nil {
 		return
 	}
-	subject, name := "", ""
-	if creds.tokenClaims != nil {
-		subject = creds.tokenClaims.Subject
-		name = creds.tokenClaims.Name
+	rec := auditRecord{
+		ts:      time.Now(),
+		outcome: outcome,
+		addr:    addr,
+		extra:   extra,
 	}
-	certSubjectStr := certSubject(creds.cert)
-	hasToken := creds.tokenClaims != nil
+	if creds != nil {
+		rec.certValid = creds.certValid
+		rec.certSubject = certSubject(creds.cert)
+		rec.hasToken = creds.tokenClaims != nil
+		if creds.tokenClaims != nil {
+			rec.subject = creds.tokenClaims.Subject
+			rec.name = creds.tokenClaims.Name
+		}
+	}
+	// Non-blocking send; drop if worker can't keep up rather than slowing RPCs.
+	select {
+	case i.auditQueue <- rec:
+	default:
+		i.logger.Warn("audit queue full, dropping audit entry")
+	}
+}
 
+// doWriteAuditEntry performs the actual I/O for a queued audit record.
+// Called only from the background worker goroutine.
+func (i *Interceptor) doWriteAuditEntry(rec auditRecord) {
 	if i.auditLogger != nil {
-		fields := make([]zap.Field, 0, 7+len(extra))
-		fields = append(fields, zap.String("outcome", outcome))
-		for _, f := range extra {
+		fields := make([]zap.Field, 0, 7+len(rec.extra))
+		fields = append(fields, zap.String("outcome", rec.outcome))
+		for _, f := range rec.extra {
 			fields = append(fields, zap.String(f.key, f.value))
 		}
 		fields = append(fields,
-			zap.String("peer", addr),
-			zap.String("subject", subject),
-			zap.String("name", name),
-			zap.Bool("cert", creds.certValid),
-			zap.String("certSubject", certSubjectStr),
-			zap.Bool("token", hasToken),
+			zap.String("peer", rec.addr),
+			zap.String("subject", rec.subject),
+			zap.String("name", rec.name),
+			zap.Bool("cert", rec.certValid),
+			zap.String("certSubject", rec.certSubject),
+			zap.Bool("token", rec.hasToken),
 		)
 		i.auditLogger.Info("write", fields...)
 	}
 
 	if i.auditModel != nil {
 		lvl := logpb.Level_LEVEL_INFO
-		if outcome == "denied" {
+		if rec.outcome == "denied" {
 			lvl = logpb.Level_LEVEL_WARN
 		}
-		allFields := make(map[string]string, 7+len(extra))
-		allFields["outcome"] = outcome
-		allFields["peer"] = addr
-		allFields["subject"] = subject
-		allFields["name"] = name
-		allFields["cert"] = strconv.FormatBool(creds.certValid)
-		allFields["certSubject"] = certSubjectStr
-		allFields["token"] = strconv.FormatBool(hasToken)
-		for _, f := range extra {
+		allFields := make(map[string]string, 7+len(rec.extra))
+		allFields["outcome"] = rec.outcome
+		allFields["peer"] = rec.addr
+		allFields["subject"] = rec.subject
+		allFields["name"] = rec.name
+		allFields["cert"] = strconv.FormatBool(rec.certValid)
+		allFields["certSubject"] = rec.certSubject
+		allFields["token"] = strconv.FormatBool(rec.hasToken)
+		for _, f := range rec.extra {
 			allFields[f.key] = f.value
 		}
 		i.auditModel.AppendMessage(&logpb.LogMessage{
-			Timestamp: timestamppb.Now(),
+			Timestamp: timestamppb.New(rec.ts),
 			Level:     lvl,
 			Logger:    "audit",
 			Message:   "write",

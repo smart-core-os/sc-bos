@@ -213,6 +213,7 @@ func TestInterceptor_AuditLogger(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpdateOnOff: %v", err)
 	}
+	interceptor.Close() // drain the async audit queue before asserting
 	if n := logs.Len(); n != 1 {
 		t.Errorf("UpdateOnOff: expected 1 audit entry, got %d", n)
 	} else {
@@ -263,6 +264,7 @@ func TestInterceptor_AuditLogger_DeniedWrite(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected UpdateOnOff to be denied")
 	}
+	interceptor.Close() // drain the async audit queue before asserting
 	if n := logs.Len(); n != 1 {
 		t.Errorf("expected 1 audit entry for denied write, got %d", n)
 	} else {
@@ -314,6 +316,7 @@ func TestInterceptor_AuditModel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpdateOnOff: %v", err)
 	}
+	interceptor.Close() // drain the async audit queue before asserting
 	msgs := model.TailMessages(10)
 	if n := len(msgs); n != 1 {
 		t.Errorf("UpdateOnOff: expected 1 model entry, got %d", n)
