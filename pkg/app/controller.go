@@ -327,9 +327,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		if pol == nil {
 			// No access policy — inject allow-all so the interceptor runs for audit logging only.
 			logger.Warn("no access policy configured; running interceptor for audit logging only (all requests allowed)")
-			pol = policy.Func(func(_ context.Context, _ string, _ policy.Attributes) (rego.ResultSet, error) {
-				return rego.ResultSet{{Expressions: []*rego.ExpressionValue{{Value: true, Text: "allow"}}}}, nil
-			})
+			pol = policy.AllowAll
 		}
 		opts := []policy.InterceptorOption{
 			policy.WithLogger(logger.Named("policy")),
@@ -507,12 +505,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		c.Defer(auditInterceptor.Close)
 	}
 	if auditSetup != nil {
-		c.Defer(func() error {
-			if auditSetup.Logger != nil {
-				_ = auditSetup.Logger.Sync()
-			}
-			return auditSetup.Close()
-		})
+		c.Defer(auditSetup.Close)
 	}
 	c.Defer(cloudStore.Close)
 	return c, nil

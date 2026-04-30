@@ -128,9 +128,11 @@ func (a *Setup) StartMetadataRefresh(ctx context.Context, logger *zap.Logger) {
 	}()
 }
 
-// Close releases file resources held by the Setup.
-// The caller should call Logger.Sync() before Close.
+// Close syncs and releases all file resources held by the Setup.
 func (a *Setup) Close() error {
+	if a.Logger != nil {
+		_ = a.Logger.Sync()
+	}
 	if a.closer != nil {
 		return a.closer.Close()
 	}

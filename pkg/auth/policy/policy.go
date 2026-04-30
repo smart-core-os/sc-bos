@@ -69,6 +69,11 @@ func (f Func) EvalPolicy(ctx context.Context, query string, input Attributes) (r
 	return f(ctx, query, input)
 }
 
+// AllowAll is a Policy that permits every request.
+var AllowAll Policy = Func(func(_ context.Context, _ string, _ Attributes) (rego.ResultSet, error) {
+	return rego.ResultSet{{Expressions: []*rego.ExpressionValue{{Value: true, Text: "allow"}}}}, nil
+})
+
 // Validate will validate a set of decision attributes against a policy.
 // It uses a hierarchical query system based on the service's name and package, querying the policy from most specific
 // to least specific until the query returns a result.

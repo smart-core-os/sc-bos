@@ -172,7 +172,7 @@ func TestInterceptor_AuditSink(t *testing.T) {
 	sink := &captureSink{}
 
 	lis := bufconn.Listen(1024 * 1024)
-	interceptor := NewInterceptor(allowAll{}, WithAuditSink(sink))
+	interceptor := NewInterceptor(AllowAll, WithAuditSink(sink))
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(interceptor.GRPCUnaryInterceptor()),
 		grpc.ChainStreamInterceptor(interceptor.GRPCStreamingInterceptor()),
@@ -287,13 +287,6 @@ func (s *captureSink) all() []*logpb.LogMessage {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return append([]*logpb.LogMessage(nil), s.msgs...)
-}
-
-// allowAll is a Policy that permits every request.
-type allowAll struct{}
-
-func (allowAll) EvalPolicy(_ context.Context, _ string, _ Attributes) (rego.ResultSet, error) {
-	return rego.ResultSet{{Expressions: []*rego.ExpressionValue{{Value: true}}}}, nil
 }
 
 // denyAll is a Policy that rejects every request.
