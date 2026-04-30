@@ -3,7 +3,6 @@ package gallagher
 import (
 	"context"
 	"fmt"
-	"os"
 	"path"
 	"time"
 
@@ -26,9 +25,10 @@ const (
 
 type Driver struct {
 	*service.Service[config.Root]
-	announcer node.Announcer
-	logger    *zap.Logger
-	ticker    *time.Ticker
+	announcer   node.Announcer
+	logger      *zap.Logger
+	ticker      *time.Ticker
+	systemCheck service.SystemCheck
 }
 
 var Factory driver.Factory = factory{}
@@ -38,10 +38,17 @@ type factory struct{}
 func (f factory) New(services driver.Services) service.Lifecycle {
 	logger := services.Logger.Named(DriverName)
 	d := &Driver{
-		announcer: services.Node,
+		announcer:   services.Node,
+		systemCheck: services.SystemCheck,
 	}
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
+		service.WithParser(config.ReadBytes),
+		service.WithOnStop[config.Root](func() {
+			if d.systemCheck != nil {
+				d.systemCheck.Dispose()
+			}
+		}),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
 			logContext.LogTo("applyConfig", logger)
 		})),
@@ -52,7 +59,6 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
-	cfg.ApplyDefaults()
 	announcer, undo := node.AnnounceScope(d.announcer)
 	grp, ctx := errgroup.WithContext(ctx)
 
@@ -61,25 +67,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 	d.ticker = time.NewTicker(cfg.UdmiExportInterval.Duration)
 
-	if cfg.HTTP == nil {
-		d.logger.Error("http config is not set")
-		return fmt.Errorf("gallagher HTTP config is not set")
-	}
-
-	if cfg.HTTP.BaseURL == "" {
-		d.logger.Error("baseURL is not set")
-		return fmt.Errorf("gallagher BaseURL is not set")
-	}
-
-	bytes, err := os.ReadFile(cfg.HTTP.ApiKeyFile)
+	client, err := newHttpClient(cfg.HTTP.BaseURL, cfg.HTTP.ApiKey, cfg.CaPath, cfg.ClientCertPath, cfg.ClientKeyPath, d.systemCheck)
 	if err != nil {
-		return fmt.Errorf("error reading api key file: %w", err)
-	}
-	client, err := newHttpClient(cfg.HTTP.BaseURL, string(bytes), cfg.CaPath, cfg.ClientCertPath, cfg.ClientKeyPath)
-
-	if client == nil {
-		d.logger.Error("failed to create client", zap.Error(err))
-		return nil
+		return fmt.Errorf("failed to create client: %w", err)
 	}
 
 	cc := newCardholderController(client, cfg.TopicPrefix, d.logger)

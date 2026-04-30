@@ -1,6 +1,9 @@
 package config
 
 import (
+	"encoding/json"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
@@ -45,9 +48,35 @@ type HTTP struct {
 	// must include the /api suffix
 	BaseURL    string `json:"baseUrl,omitempty"`
 	ApiKeyFile string `json:"apiKeyFile,omitempty"`
+	ApiKey     string `json:"-"`
+}
+
+func ReadBytes(data []byte) (Root, error) {
+	var cfg Root
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return cfg, err
+	}
+
+	if cfg.HTTP == nil {
+		return cfg, fmt.Errorf("HTTP config is not set")
+	}
+
+	if cfg.HTTP.BaseURL == "" {
+		return cfg, fmt.Errorf("BaseURL is not set")
+	}
+
+	bytes, err := os.ReadFile(cfg.HTTP.ApiKeyFile)
+	if err != nil {
+		return cfg, fmt.Errorf("error reading api key file: %w", err)
+	}
+	cfg.HTTP.ApiKey = string(bytes)
+
+	cfg.ApplyDefaults()
+	return cfg, nil
 }
 
 func (cfg *Root) ApplyDefaults() {
+
 	if cfg.RefreshCardholders == nil {
 		cfg.RefreshCardholders = jsontypes.MustParseSchedule("* * * * *")
 	}
