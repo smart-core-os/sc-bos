@@ -16,8 +16,7 @@ import (
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	//lint:ignore SA1019 the old OPA interface remains supported - we may migrate in future
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/rs/cors"
 	"github.com/timshannon/bolthold"
 	"go.uber.org/multierr"

@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/rego"
-	"github.com/open-policy-agent/opa/storage"
-	"github.com/open-policy-agent/opa/storage/inmem"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/storage"
+	"github.com/open-policy-agent/opa/v1/storage/inmem"
 
 	"github.com/smart-core-os/sc-bos/pkg/node/alltraits"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -50,12 +50,11 @@ func newCachedStatic(compiler *ast.Compiler) *cachedStatic {
 }
 
 func (p *cachedStatic) EvalPolicy(ctx context.Context, query string, input Attributes) (rego.ResultSet, error) {
-	partial, err := p.loadPartialCached(ctx, query)
+	pq, err := p.loadPreparedCached(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-
-	return partial.Rego(rego.Input(input)).Eval(ctx)
+	return pq.Eval(ctx, rego.EvalInput(input))
 }
 
 func (p *cachedStatic) getOrCreateCacheEntry(query string) *regoCacheEntry {
@@ -73,11 +72,11 @@ func (p *cachedStatic) getOrCreateCacheEntry(query string) *regoCacheEntry {
 // Results are cached; the partial evaluation is performed once the first time and re-used for subsequent calls.
 // If the provided context is cancelled before the result is ready, the process will continue in the background and
 // the context error is returned.
-// If loadPartialCached returns a non-context error, then future calls with the same query will always return the same error.
-func (p *cachedStatic) loadPartialCached(ctx context.Context, query string) (rego.PartialResult, error) {
+// If loadPreparedCached returns a non-context error, then future calls with the same query will always return the same error.
+func (p *cachedStatic) loadPreparedCached(ctx context.Context, query string) (rego.PreparedEvalQuery, error) {
 	entry := p.getOrCreateCacheEntry(query)
 
-	// each cache entry only gets one change to compile - it's a deterministic process, so if it fails once there's no
+	// each cache entry only gets one chance to compile - it's a deterministic process, so if it fails once there's no
 	// point trying again later
 	entry.once.Do(func() {
 		// run asynchronously so the compilation can complete in the background if ctx is cancelled early
@@ -102,21 +101,21 @@ func (p *cachedStatic) loadPartialCached(ctx context.Context, query string) (reg
 				rego.Query(query),
 				rego.Store(defaultStore),
 			)
-			entry.partialResult, entry.err = r.PartialResult(bgctx)
+			entry.preparedQuery, entry.err = r.PrepareForEval(bgctx, rego.WithPartialEval())
 		}()
 	})
 	select {
 	case <-entry.done:
-		return entry.partialResult, entry.err
+		return entry.preparedQuery, entry.err
 	case <-ctx.Done():
-		return rego.PartialResult{}, ctx.Err()
+		return rego.PreparedEvalQuery{}, ctx.Err()
 	}
 }
 
 type regoCacheEntry struct {
 	once          sync.Once
 	done          chan struct{}
-	partialResult rego.PartialResult
+	preparedQuery rego.PreparedEvalQuery
 	err           error
 }
 

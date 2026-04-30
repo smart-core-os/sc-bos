@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/rego"
 	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"

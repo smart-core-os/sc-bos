@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/rego"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

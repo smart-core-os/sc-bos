@@ -2,7 +2,7 @@
 
 TL;DR admins can do anything anywhere, zones are restricted by name, roles restrict permissions.
 
-Test these rules by running `opa test . --v0-compatible` from this directory.
+Test these rules by running `opa test .` from this directory.
 
 We've split the policies into rules and utilities:
 
