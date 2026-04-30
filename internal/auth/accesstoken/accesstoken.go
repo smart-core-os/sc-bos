@@ -134,6 +134,8 @@ func (ts *Source) ValidateAccessToken(_ context.Context, tokenStr string) (*toke
 		tokenPermissions = append(tokenPermissions, pa.ToTokenPermissionAssignment())
 	}
 	return &token.Claims{
+		Subject:     jwtClaims.Subject,
+		Name:        customClaims.Name,
 		SystemRoles: customClaims.SystemRoles,
 		IsService:   true,
 		Permissions: tokenPermissions,

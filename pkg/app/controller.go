@@ -11,6 +11,7 @@ import (
 	"net/http/pprof"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -49,6 +50,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/internal/audit"
+	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ops/cloudpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
@@ -310,16 +313,35 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	httpAuth := func(next http.Handler) http.Handler {
 		return next
 	}
-	if pol := configPolicy(config); pol != nil {
-		interceptor := policy.NewInterceptor(pol,
+	pol := configPolicy(config)
+	var auditInterceptor *policy.Interceptor
+	var auditSetup *audit.Setup
+	if al := config.AuditLog; al != nil {
+		var err error
+		auditSetup, err = audit.NewSetup(al.Filename, al.MaxSizeMB, al.MaxAgeDays, al.MaxBackups, al.Compress)
+		if err != nil {
+			logger.Error("failed to open audit log file, continuing with in-memory audit only", zap.String("file", al.Filename), zap.Error(err))
+		}
+	}
+	if pol != nil || auditSetup != nil {
+		if pol == nil {
+			// No access policy — inject allow-all so the interceptor runs for audit logging only.
+			logger.Warn("no access policy configured; running interceptor for audit logging only (all requests allowed)")
+			pol = policy.AllowAll
+		}
+		opts := []policy.InterceptorOption{
 			policy.WithLogger(logger.Named("policy")),
 			policy.WithTokenVerifier(tokenValidator),
-		)
+		}
+		if auditSetup != nil {
+			opts = append(opts, policy.WithAuditSink(auditSetup))
+		}
+		auditInterceptor = policy.NewInterceptor(pol, opts...)
 		grpcOpts = append(grpcOpts,
-			grpc.ChainUnaryInterceptor(interceptor.GRPCUnaryInterceptor()),
-			grpc.ChainStreamInterceptor(interceptor.GRPCStreamingInterceptor()),
+			grpc.ChainUnaryInterceptor(auditInterceptor.GRPCUnaryInterceptor()),
+			grpc.ChainStreamInterceptor(auditInterceptor.GRPCStreamingInterceptor()),
 		)
-		httpAuth = interceptor.HTTPInterceptor
+		httpAuth = auditInterceptor.HTTPInterceptor
 	}
 
 	// here we set up our support for runtime added RPCs.
@@ -378,6 +400,28 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	mux := http.NewServeMux()
 	// Devices API aux routes
 	devicesApi.RegisterHTTPMux(mux)
+
+	// Audit log LogApi trait
+	if auditSetup != nil {
+		auditDLPath := "/__/audit-log/download"
+		urlBase := ""
+		if hostPort, err := config.ExternalHTTPEndpoint(); err == nil {
+			urlBase = "https://" + hostPort
+		} else {
+			logger.Warn("audit log download URLs will be relative; set externalAddress to generate absolute URLs", zap.Error(err))
+		}
+		auditSetup.RegisterHTTP(mux, auditDLPath)
+		auditSrv := auditSetup.NewModelServer(urlBase, auditDLPath)
+		auditSetup.StartMetadataRefresh(ctx, logger.Named("audit"))
+
+		auditLogName := "audit-log"
+		if rootNode.Name() != "" {
+			auditLogName = path.Join(rootNode.Name(), "audit-log")
+		}
+		rootNode.Announce(auditLogName,
+			node.HasTrait(logpb.TraitName, node.WithClients(logpb.WrapApi(auditSrv))),
+		)
+	}
 
 	// Static site hosting
 	for _, site := range config.StaticHosting {
@@ -454,6 +498,15 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	c.Defer(manager.Close)
 	c.Defer(store.Close)
 	c.Defer(closeHealthStore)
+	if cloudDataRoot != nil {
+		c.Defer(cloudDataRoot.Close)
+	}
+	if auditInterceptor != nil {
+		c.Defer(auditInterceptor.Close)
+	}
+	if auditSetup != nil {
+		c.Defer(auditSetup.Close)
+	}
 	c.Defer(cloudStore.Close)
 	return c, nil
 }

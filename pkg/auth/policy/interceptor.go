@@ -5,7 +5,10 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"go.uber.org/zap"
@@ -15,15 +18,27 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 )
 
+// AuditSink receives pre-formatted audit log entries. Implementations must be safe for concurrent use.
+type AuditSink interface {
+	Write(msg *logpb.LogMessage)
+}
+
 type Interceptor struct {
-	logger   *zap.Logger
-	policy   Policy
-	verifier token.Validator
+	logger    *zap.Logger
+	auditSink AuditSink
+	policy    Policy
+	verifier  token.Validator
+
+	auditQueue chan auditRecord
+	auditDone  chan struct{}
+	closeOnce  sync.Once
 }
 
 func NewInterceptor(policy Policy, opts ...InterceptorOption) *Interceptor {
@@ -34,7 +49,31 @@ func NewInterceptor(policy Policy, opts ...InterceptorOption) *Interceptor {
 	for _, o := range opts {
 		o(interceptor)
 	}
+	if interceptor.auditSink != nil {
+		interceptor.auditQueue = make(chan auditRecord, 1024)
+		interceptor.auditDone = make(chan struct{})
+		go interceptor.runAuditWorker()
+	}
 	return interceptor
+}
+
+// Close drains and shuts down the background audit worker. Safe to call more than once.
+// Must be called before closing or syncing the audit logger.
+func (i *Interceptor) Close() error {
+	if i.auditQueue != nil {
+		i.closeOnce.Do(func() {
+			close(i.auditQueue)
+			<-i.auditDone
+		})
+	}
+	return nil
+}
+
+func (i *Interceptor) runAuditWorker() {
+	defer close(i.auditDone)
+	for rec := range i.auditQueue {
+		i.doWriteAuditEntry(rec)
+	}
 }
 
 func (i *Interceptor) HTTPInterceptor(handler http.Handler) http.Handler {
@@ -185,6 +224,17 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 			zap.Strings("queries", queries),
 		)
 	}
+	// Only audit once per RPC, not for every message on an open client/bidirectional stream.
+	if isWriteMethod(method) && !stream.Open {
+		outcome := "allowed"
+		if err != nil {
+			outcome = "denied"
+		}
+		i.writeAuditEntry(outcome, creds, addr,
+			auditField{"service", service},
+			auditField{"method", method},
+		)
+	}
 	return creds, err
 }
 
@@ -232,6 +282,16 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 			zap.Strings("queries", queries),
 		)
 	}
+	if isHTTPWriteMethod(r.Method) {
+		outcome := "allowed"
+		if err != nil {
+			outcome = "denied"
+		}
+		i.writeAuditEntry(outcome, creds, addr,
+			auditField{"path", r.URL.Path},
+			auditField{"httpMethod", r.Method},
+		)
+	}
 	return creds, err
 }
 
@@ -247,6 +307,10 @@ func WithTokenVerifier(tv token.Validator) InterceptorOption {
 	return func(interceptor *Interceptor) {
 		interceptor.verifier = tv
 	}
+}
+
+func WithAuditSink(s AuditSink) InterceptorOption {
+	return func(i *Interceptor) { i.auditSink = s }
 }
 
 type verifiedCreds struct {
@@ -292,4 +356,107 @@ func httpPeerCert(r *http.Request) *x509.Certificate {
 		return nil
 	}
 	return r.TLS.VerifiedChains[0][0]
+}
+
+// auditField is a protocol-specific key/value pair appended to every audit entry.
+type auditField struct {
+	key   string
+	value string
+}
+
+// auditRecord is a self-contained snapshot of an audit event. All fields are
+// value types so the record is safe to pass to the background worker without
+// holding references to RPC-time objects.
+type auditRecord struct {
+	ts          time.Time
+	outcome     string
+	addr        string
+	subject     string
+	name        string
+	certValid   bool
+	certSubject string
+	hasToken    bool
+	extra       []auditField
+}
+
+// writeAuditEntry snapshots the event and enqueues it for the background worker.
+// It returns immediately; the actual file/model writes happen off the RPC path.
+func (i *Interceptor) writeAuditEntry(outcome string, creds *verifiedCreds, addr string, extra ...auditField) {
+	if i.auditQueue == nil {
+		return
+	}
+	rec := auditRecord{
+		ts:      time.Now(),
+		outcome: outcome,
+		addr:    addr,
+		extra:   extra,
+	}
+	if creds != nil {
+		rec.certValid = creds.certValid
+		rec.certSubject = certSubject(creds.cert)
+		rec.hasToken = creds.tokenClaims != nil
+		if creds.tokenClaims != nil {
+			rec.subject = creds.tokenClaims.Subject
+			rec.name = creds.tokenClaims.Name
+		}
+	}
+	i.auditQueue <- rec
+}
+
+// doWriteAuditEntry builds a LogMessage from the queued record and passes it to the sink.
+// Called only from the background worker goroutine.
+func (i *Interceptor) doWriteAuditEntry(rec auditRecord) {
+	lvl := logpb.Level_LEVEL_INFO
+	if rec.outcome == "denied" {
+		lvl = logpb.Level_LEVEL_WARN
+	}
+	fields := make(map[string]string, 7+len(rec.extra))
+	fields["outcome"] = rec.outcome
+	fields["peer"] = rec.addr
+	fields["subject"] = rec.subject
+	fields["name"] = rec.name
+	fields["cert"] = strconv.FormatBool(rec.certValid)
+	fields["certSubject"] = rec.certSubject
+	fields["token"] = strconv.FormatBool(rec.hasToken)
+	for _, f := range rec.extra {
+		fields[f.key] = f.value
+	}
+	i.auditSink.Write(&logpb.LogMessage{
+		Timestamp: timestamppb.New(rec.ts),
+		Level:     lvl,
+		Logger:    "audit",
+		Message:   "write",
+		Fields:    fields,
+	})
+}
+
+// isWriteMethod reports whether the gRPC method name represents a mutating operation.
+// It returns true for any method that does not begin with a known read-only prefix.
+//
+// The read-only prefixes cover all current SC-BOS proto read methods. Non-standard
+// method names in the codebase (Identify, ConfigureService, RegenerateSecret,
+// OnMessage) are all mutating and correctly classified as writes by this function.
+func isWriteMethod(method string) bool {
+	for _, prefix := range []string{"Get", "Pull", "Describe", "List"} {
+		if strings.HasPrefix(method, prefix) {
+			return false
+		}
+	}
+	return true
+}
+
+func isHTTPWriteMethod(method string) bool {
+	switch method {
+	case http.MethodGet, http.MethodHead, http.MethodOptions:
+		return false
+	default:
+		return true
+	}
+}
+
+func certSubject(cert *x509.Certificate) string {
+	if cert == nil {
+		return ""
+	}
+	return cert.Subject.String()
 }

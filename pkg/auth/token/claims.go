@@ -9,8 +9,10 @@ import (
 )
 
 type Claims struct {
-	SystemRoles []string               `json:"system_roles"` // The built-in system roles that this token is authorized for
-	IsService   bool                   `json:"is_service"`   // True if the subject is an application acting on its own behalf, false if it's a user
+	Subject     string                 `json:"subject,omitempty"`    // JWT sub — unique user/service ID
+	Name        string                 `json:"name,omitempty"`       // Human-readable: preferred_username (Keycloak) or display name (file account)
+	SystemRoles []string               `json:"system_roles"`         // The built-in system roles that this token is authorized for
+	IsService   bool                   `json:"is_service"`           // True if the subject is an application acting on its own behalf, false if it's a user
 	Permissions []PermissionAssignment `json:"permissions"`
 }
 
