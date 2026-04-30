@@ -400,12 +400,7 @@ func (i *Interceptor) writeAuditEntry(outcome string, creds *verifiedCreds, addr
 			rec.name = creds.tokenClaims.Name
 		}
 	}
-	// Non-blocking send; drop if worker can't keep up rather than slowing RPCs.
-	select {
-	case i.auditQueue <- rec:
-	default:
-		i.logger.Warn("audit queue full, dropping audit entry")
-	}
+	i.auditQueue <- rec
 }
 
 // doWriteAuditEntry builds a LogMessage from the queued record and passes it to the sink.
