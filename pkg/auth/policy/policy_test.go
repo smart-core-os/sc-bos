@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/rego"
 
 	"github.com/smart-core-os/sc-bos/internal/auth/permission"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
