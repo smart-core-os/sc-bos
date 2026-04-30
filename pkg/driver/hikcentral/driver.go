@@ -30,14 +30,20 @@ type factory struct{}
 
 func (f factory) New(services driver.Services) service.Lifecycle {
 	d := &Driver{
-		announcer: node.NewReplaceAnnouncer(services.Node),
-		health:    services.Health,
-		logger:    services.Logger.Named(DriverName),
+		announcer:   node.NewReplaceAnnouncer(services.Node),
+		health:      services.Health,
+		logger:      services.Logger.Named(DriverName),
+		systemCheck: services.SystemCheck,
 	}
 
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
 		service.WithParser(config.ReadBytes),
+		service.WithOnStop[config.Root](func() {
+			if d.systemCheck != nil {
+				d.systemCheck.Dispose()
+			}
+		}),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
 			logContext.LogTo("applyConfig", d.logger)
 		}), service.RetryWithMinDelay(5*time.Second), service.RetryWithInitialDelay(5*time.Second)),
@@ -49,9 +55,10 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 type Driver struct {
 	*service.Service[config.Root]
 
-	announcer *node.ReplaceAnnouncer
-	health    *healthpb.Checks
-	logger    *zap.Logger
+	announcer   *node.ReplaceAnnouncer
+	health      *healthpb.Checks
+	logger      *zap.Logger
+	systemCheck service.SystemCheck
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
@@ -59,7 +66,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	rootAnnouncer := d.announcer.Replace(ctx)
 	logger := d.logger.With(zap.String("host", cfg.API.Address))
 
-	client := newClient(cfg.API)
+	client := newClient(cfg.API, d.systemCheck)
 	client.httpClient.Transport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,

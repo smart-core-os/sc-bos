@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/api"
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 const resourcePrefix = "/artemis/api/resource/v1"
@@ -25,14 +27,27 @@ func (e *badStatusError) Error() string {
 	return fmt.Sprintf("unexpected status code %d: %s", e.statusCode, e.status)
 }
 
-type client struct {
-	address    string
-	appKey     string
-	secret     string
-	httpClient *http.Client
+// serverError wraps errors that indicate the HikCentral server itself is unreachable or broken
+// (network failures, HTTP 5xx). Used to distinguish server-level failures from per-camera errors.
+type serverError struct{ err error }
+
+func (e *serverError) Error() string { return e.err.Error() }
+func (e *serverError) Unwrap() error { return e.err }
+
+func isServerError(err error) bool {
+	var se *serverError
+	return errors.As(err, &se)
 }
 
-func newClient(conf *config.API) *client {
+type client struct {
+	address     string
+	appKey      string
+	secret      string
+	httpClient  *http.Client
+	systemCheck service.SystemCheck
+}
+
+func newClient(conf *config.API, systemCheck service.SystemCheck) *client {
 	return &client{
 		address: conf.Address,
 		appKey:  conf.AppKey,
@@ -40,6 +55,21 @@ func newClient(conf *config.API) *client {
 		httpClient: &http.Client{
 			Timeout: conf.Timeout.Duration,
 		},
+		systemCheck: systemCheck,
+	}
+}
+
+func (c *client) updateSystemCheck(err error) {
+	if c.systemCheck == nil {
+		return
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return
+	}
+	if isServerError(err) {
+		c.systemCheck.MarkFailed(err)
+	} else {
+		c.systemCheck.MarkRunning()
 	}
 }
 
@@ -73,6 +103,7 @@ func (c *client) listEvents(ctx context.Context, req *api.EventsRequest, fc *hea
 func makeReqWrapper[R any, T any](ctx context.Context, client *client, path string, r *R, fc *healthpb.FaultCheck) (*T, error) {
 	t, err := makeReq[R, T](ctx, client, path, r)
 	updateReliability(ctx, err, fc)
+	client.updateSystemCheck(err)
 	return t, err
 }
 
@@ -99,12 +130,16 @@ func makeReq[R any, T any](ctx context.Context, client *client, path string, r *
 
 	resp, err := client.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("req.do: %w", err)
+		return nil, &serverError{fmt.Errorf("req.do: %w", err)}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, &badStatusError{statusCode: resp.StatusCode, status: resp.Status}
+		badStatus := &badStatusError{statusCode: resp.StatusCode, status: resp.Status}
+		if resp.StatusCode >= 500 || resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+			return nil, &serverError{badStatus}
+		}
+		return nil, badStatus
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
