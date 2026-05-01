@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package smartcore.bos.dataretention.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/dataretentionpb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// DataRetentionApi provides access to data retention utilisation stats and administrative actions.
+service DataRetentionApi {
+  rpc GetDataRetention(GetDataRetentionRequest) returns (DataRetention);
+  rpc PullDataRetention(PullDataRetentionRequest) returns (stream PullDataRetentionResponse);
+
+  // Remove stored data. If before is set, only records older than that time are removed;
+  // if absent, all records are removed.
+  rpc PurgeDataRetention(PurgeDataRetentionRequest) returns (PurgeDataRetentionResponse);
+  // Compact/optimise storage (GC, VACUUM, repack).
+  rpc CompactDataRetention(CompactDataRetentionRequest) returns (CompactDataRetentionResponse);
+}
+
+// DataRetentionInfo provides metadata about what a device supports for the data retention trait.
+service DataRetentionInfo {
+  rpc DescribeDataRetention(DescribeDataRetentionRequest) returns (DataRetentionSupport);
+}
+
+// DataRetention represents the current state of a data retention resource.
+message DataRetention {
+  // Byte-based measurement (disk space, file size, DB tablespace, etc.)
+  DataRetentionBytes bytes = 1;
+  // Item-based measurement (rows, records, files, log entries, etc.)
+  DataRetentionItems items = 2;
+}
+
+// DataRetentionBytes describes storage consumption measured in bytes.
+message DataRetentionBytes {
+  // Bytes currently in use.
+  optional uint64 used = 1;
+  // Total capacity in bytes. Omit if unlimited or unknown.
+  optional uint64 capacity = 2;
+}
+
+// DataRetentionItems describes storage consumption measured in discrete items
+// (rows, records, files, log entries, etc.).
+message DataRetentionItems {
+  // Number of items currently stored.
+  optional uint64 used = 1;
+  // Maximum item count. Omit if unlimited or unknown.
+  optional uint64 capacity = 2;
+}
+
+// DataRetentionSupport describes the capabilities of a device implementing the data retention trait.
+message DataRetentionSupport {
+  bool can_purge   = 1;
+  // Field 2 reserved (was can_delete_old, merged into can_purge).
+  bool can_compact = 3;
+  // Field 4 reserved (was can_spring_clean, removed — clients call Purge then Compact).
+  // Singular name for the item unit when items is populated (e.g. "row", "record", "file").
+  string item_name = 5;
+}
+
+message GetDataRetentionRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullDataRetentionRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  bool updates_only = 3;
+}
+
+message PullDataRetentionResponse {
+  repeated Change changes = 1;
+
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    DataRetention data_retention = 3;
+  }
+}
+
+message PurgeDataRetentionRequest {
+  string name = 1;
+  // If set, only records recorded before this time are removed. If absent, all records are removed.
+  optional google.protobuf.Timestamp before = 2;
+}
+
+message PurgeDataRetentionResponse {
+  optional uint64 freed_item_count = 1;
+  optional uint64 freed_byte_count = 2;
+  string message = 3;
+}
+
+message CompactDataRetentionRequest {
+  string name = 1;
+}
+
+message CompactDataRetentionResponse {
+  optional uint64 freed_byte_count = 1;
+  string message = 2;
+}
+
+message DescribeDataRetentionRequest {
+  string name = 1;
+}

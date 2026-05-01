@@ -16,6 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/channelpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/colorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/countpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/dataretentionpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/driver/dalipb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
@@ -95,6 +96,7 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	anprcamerapb.TraitName:     {anprcamerapb.AnprCameraApi_ServiceDesc},
 	buttonpb.TraitName:         {buttonpb.ButtonApi_ServiceDesc},
 	dalipb.TraitName:           {dalipb.DaliApi_ServiceDesc},
+	dataretentionpb.TraitName:  {dataretentionpb.DataRetentionApi_ServiceDesc, dataretentionpb.DataRetentionInfo_ServiceDesc},
 	emergencylightpb.TraitName: {dalipb.DaliApi_ServiceDesc, emergencylightpb.EmergencyLightApi_ServiceDesc},
 	healthpb.TraitName:         {healthpb.HealthApi_ServiceDesc, healthpb.HealthHistory_ServiceDesc},
 	meterpb.TraitName:          {meterpb.MeterApi_ServiceDesc, meterpb.MeterInfo_ServiceDesc, meterpb.MeterHistory_ServiceDesc},
