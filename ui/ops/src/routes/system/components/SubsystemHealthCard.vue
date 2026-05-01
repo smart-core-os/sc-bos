@@ -32,7 +32,10 @@
       <template v-if="displayGroups.length > 0">
         <template v-for="group in displayGroups" :key="group.key">
           <!-- Group header row (only when the config entry is a named group) -->
-          <div v-if="group.label" class="group-header d-flex align-center py-1 mt-1">
+          <div
+              v-if="group.label"
+              class="group-header d-flex align-center py-1 mt-1 group-header--clickable"
+              @click="toggleGroup(group.key)">
             <normality-icon :model-value="{ normality: worstNormality(group.allItems) }" size="12" class="mr-1"/>
             <reliability-icon :model-value="{ reliability: { state: worstReliabilityState(group.allItems) } }" size="12" class="mr-2"/>
             <span class="text-caption font-weight-medium text-medium-emphasis flex-grow-1 text-truncate" :title="group.label">
@@ -41,95 +44,103 @@
             <span class="text-caption text-medium-emphasis flex-shrink-0 ml-1">
               {{ checkCountLabel(group.allItems) }}
             </span>
+            <v-icon
+                size="14"
+                class="ml-1 flex-shrink-0 expand-chevron"
+                :class="{ 'expand-chevron--open': !collapsedGroups.has(group.key) }">
+              mdi-chevron-down
+            </v-icon>
           </div>
 
-          <!-- Check entries; indented when inside a named group -->
-          <div :class="group.label ? 'pl-3' : ''">
-            <div v-for="entry in group.entries" :key="entry.check.name" style="position: relative;">
-              <!-- Clickable summary row -->
-              <div
-                  class="d-flex align-center check-row py-1"
-                  :class="{ 'check-row--expandable': hasDetail(entry) }"
-                  @click="hasDetail(entry) && toggleExpand(entry.check.name)">
-                <normality-icon :model-value="{ normality: worstNormality(entry.items) }" size="14" class="mr-1"/>
-                <reliability-icon :model-value="{ reliability: { state: worstReliabilityState(entry.items) } }" size="14" class="mr-2"/>
-                <span class="text-caption text-truncate flex-grow-1" :title="entry.check.displayName ?? entry.check.name">
-                  {{ entry.check.displayName ?? entry.check.name }}
-                </span>
-                <span class="text-caption text-medium-emphasis flex-shrink-0 ml-1">
-                  {{ checkCountLabel(entry.items) }}
-                </span>
-                <v-icon
-                    v-if="hasDetail(entry)"
-                    size="14"
-                    class="ml-1 flex-shrink-0 expand-chevron"
-                    :class="{ 'expand-chevron--open': expandedChecks.has(entry.check.name) }">
-                  mdi-chevron-down
-                </v-icon>
-              </div>
+          <!-- Check entries; indented when inside a named group; collapsed when the group header is toggled -->
+          <v-expand-transition>
+            <div v-if="!group.label || !collapsedGroups.has(group.key)" :class="group.label ? 'pl-3' : ''">
+              <div v-for="entry in group.entries" :key="entry.check.name" style="position: relative;">
+                <!-- Clickable summary row -->
+                <div
+                    class="d-flex align-center check-row py-1"
+                    :class="{ 'check-row--expandable': hasDetail(entry) }"
+                    @click="hasDetail(entry) && toggleExpand(entry.check.name)">
+                  <normality-icon :model-value="{ normality: worstNormality(entry.items) }" size="14" class="mr-1"/>
+                  <reliability-icon :model-value="{ reliability: { state: worstReliabilityState(entry.items) } }" size="14" class="mr-2"/>
+                  <span class="text-caption text-truncate flex-grow-1" :title="entry.check.displayName ?? entry.check.name">
+                    {{ entry.check.displayName ?? entry.check.name }}
+                  </span>
+                  <span class="text-caption text-medium-emphasis flex-shrink-0 ml-1">
+                    {{ checkCountLabel(entry.items) }}
+                  </span>
+                  <v-icon
+                      v-if="hasDetail(entry)"
+                      size="14"
+                      class="ml-1 flex-shrink-0 expand-chevron"
+                      :class="{ 'expand-chevron--open': expandedChecks.has(entry.check.name) }">
+                    mdi-chevron-down
+                  </v-icon>
+                </div>
 
-              <!-- Expandable detail -->
-              <v-expand-transition>
-                <div v-if="expandedChecks.has(entry.check.name)" class="check-detail pb-1">
-                  <template v-for="item in entry.items" :key="item.id">
-                    <!-- Item header when multiple checks exist under this entry -->
-                    <div v-if="entry.items.length > 1" class="text-caption font-weight-medium text-medium-emphasis mt-1 mb-0-5">
-                      {{ item.displayName || item.id }}
-                    </div>
-                    <!-- Description -->
-                    <div v-if="item.description" class="detail-line text-caption text-medium-emphasis">
-                      <v-icon size="12" class="mr-1">mdi-information-outline</v-icon>
-                      {{ item.description }}
-                    </div>
-                    <!-- Reliability state + offline-since timestamp -->
-                    <template v-if="item.reliability && item.reliability.state > reliableState">
-                      <div class="detail-line text-caption text-error">
-                        <v-icon size="12" class="mr-1" color="error">mdi-lan-disconnect</v-icon>
-                        {{ reliabilityStateToString(item.reliability.state) }}
-                        <span v-if="item.reliability.unreliableTime" class="text-medium-emphasis ml-1">
-                          since {{ formatTimestamp(item.reliability.unreliableTime) }}
-                        </span>
+                <!-- Expandable detail -->
+                <v-expand-transition>
+                  <div v-if="expandedChecks.has(entry.check.name)" class="check-detail pb-1">
+                    <template v-for="item in entry.items" :key="item.id">
+                      <!-- Item header when multiple checks exist under this entry -->
+                      <div v-if="entry.items.length > 1" class="text-caption font-weight-medium text-medium-emphasis mt-1 mb-0-5">
+                        {{ item.displayName || item.id }}
                       </div>
-                      <!-- Last error message -->
-                      <div v-if="item.reliability.lastError" class="detail-line text-caption text-error">
-                        <v-icon size="12" class="mr-1" color="error">mdi-alert-circle-outline</v-icon>
-                        {{ toSentenceCase(item.reliability.lastError.summaryText) }}
-                        <span v-if="item.reliability.lastError.detailsText" class="text-medium-emphasis d-block ml-4">
-                          {{ item.reliability.lastError.detailsText }}
-                        </span>
+                      <!-- Description -->
+                      <div v-if="item.description" class="detail-line text-caption text-medium-emphasis">
+                        <v-icon size="12" class="mr-1">mdi-information-outline</v-icon>
+                        {{ item.description }}
                       </div>
-                      <!-- Root cause -->
-                      <div v-if="item.reliability.cause" class="detail-line text-caption text-medium-emphasis">
-                        <v-icon size="12" class="mr-1">mdi-transit-connection-variant</v-icon>
-                        Caused by: {{ item.reliability.cause.displayName || item.reliability.cause.name }}
-                        <span v-if="item.reliability.cause.error && item.reliability.cause.error.summaryText" class="d-block ml-4">
-                          {{ toSentenceCase(item.reliability.cause.error.summaryText) }}
+                      <!-- Reliability state + offline-since timestamp -->
+                      <template v-if="item.reliability && item.reliability.state > reliableState">
+                        <div class="detail-line text-caption text-error">
+                          <v-icon size="12" class="mr-1" color="error">mdi-lan-disconnect</v-icon>
+                          {{ reliabilityStateToString(item.reliability.state) }}
+                          <span v-if="item.reliability.unreliableTime" class="text-medium-emphasis ml-1">
+                            since {{ formatTimestamp(item.reliability.unreliableTime) }}
+                          </span>
+                        </div>
+                        <!-- Last error message -->
+                        <div v-if="item.reliability.lastError" class="detail-line text-caption text-error">
+                          <v-icon size="12" class="mr-1" color="error">mdi-alert-circle-outline</v-icon>
+                          {{ toSentenceCase(item.reliability.lastError.summaryText) }}
+                          <span v-if="item.reliability.lastError.detailsText" class="text-medium-emphasis d-block ml-4">
+                            {{ item.reliability.lastError.detailsText }}
+                          </span>
+                        </div>
+                        <!-- Root cause -->
+                        <div v-if="item.reliability.cause" class="detail-line text-caption text-medium-emphasis">
+                          <v-icon size="12" class="mr-1">mdi-transit-connection-variant</v-icon>
+                          Caused by: {{ item.reliability.cause.displayName || item.reliability.cause.name }}
+                          <span v-if="item.reliability.cause.error && item.reliability.cause.error.summaryText" class="d-block ml-4">
+                            {{ toSentenceCase(item.reliability.cause.error.summaryText) }}
+                          </span>
+                        </div>
+                      </template>
+                      <!-- Abnormal-since timestamp (for normality issues unrelated to reliability) -->
+                      <div
+                          v-else-if="item.normality > normalNormality && item.abnormalTime"
+                          class="detail-line text-caption text-warning">
+                        <v-icon size="12" class="mr-1" color="warning">mdi-clock-alert-outline</v-icon>
+                        Abnormal since {{ formatTimestamp(item.abnormalTime) }}
+                      </div>
+                      <!-- Faults -->
+                      <div
+                          v-for="(fault, fi) in item.faults?.currentFaultsList"
+                          :key="fi"
+                          class="detail-line text-caption text-warning">
+                        <v-icon size="12" class="mr-1" color="warning">mdi-alert-outline</v-icon>
+                        {{ toSentenceCase(fault.summaryText) }}
+                        <span v-if="fault.detailsText" class="text-medium-emphasis d-block ml-4">
+                          {{ fault.detailsText }}
                         </span>
                       </div>
                     </template>
-                    <!-- Abnormal-since timestamp (for normality issues unrelated to reliability) -->
-                    <div
-                        v-else-if="item.normality > normalNormality && item.abnormalTime"
-                        class="detail-line text-caption text-warning">
-                      <v-icon size="12" class="mr-1" color="warning">mdi-clock-alert-outline</v-icon>
-                      Abnormal since {{ formatTimestamp(item.abnormalTime) }}
-                    </div>
-                    <!-- Faults -->
-                    <div
-                        v-for="(fault, fi) in item.faults?.currentFaultsList"
-                        :key="fi"
-                        class="detail-line text-caption text-warning">
-                      <v-icon size="12" class="mr-1" color="warning">mdi-alert-outline</v-icon>
-                      {{ toSentenceCase(fault.summaryText) }}
-                      <span v-if="fault.detailsText" class="text-medium-emphasis d-block ml-4">
-                        {{ fault.detailsText }}
-                      </span>
-                    </div>
-                  </template>
-                </div>
-              </v-expand-transition>
+                  </div>
+                </v-expand-transition>
+              </div>
             </div>
-          </div>
+          </v-expand-transition>
         </template>
       </template>
       <div v-else class="text-caption text-medium-emphasis" style="position: relative;">
@@ -262,6 +273,18 @@ function hasDetail(entry) {
 }
 
 const expandedChecks = ref(new Set());
+const collapsedGroups = ref(new Set());
+
+/** @param {string} key */
+function toggleGroup(key) {
+  const next = new Set(collapsedGroups.value);
+  if (next.has(key)) {
+    next.delete(key);
+  } else {
+    next.add(key);
+  }
+  collapsedGroups.value = next;
+}
 
 /** @param {string} name */
 function toggleExpand(name) {
@@ -354,6 +377,15 @@ const accentColor = computed(() => {
 
 .group-header:not(:first-child) {
   margin-top: 6px !important;
+}
+
+.group-header--clickable {
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.group-header--clickable:hover {
+  background: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 .check-row:not(:last-child) {
