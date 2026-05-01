@@ -1,7 +1,5 @@
 package scutil.token
 
-import future.keywords.in
-
 roles := {
   "admin", # unrestricted user access
   "commissioner",
@@ -11,34 +9,34 @@ roles := {
   "viewer"
 }
 
-valid_claims = claims {
+valid_claims := claims if {
   input.token_valid
   claims := input.token_claims
 }
 
-token_roles = roles {
+token_roles := roles if {
   claims := valid_claims
   roles := claims.roles
 }
 
-token_permission_assignments = assignments {
+token_permission_assignments := assignments if {
   claims := valid_claims
   assignments := claims.permissions
 }
 
-token_has_role(role) {
+token_has_role(role) if {
   role in roles
   claims := valid_claims
   claims.system_roles[_] == role
 }
 
-token_has_permission_direct(permission) {
+token_has_permission_direct(permission) if {
   some assignment in token_permission_assignments
   assignment.permission == permission
   not assignment.scoped
 }
 
-token_has_permission_direct(permission) {
+token_has_permission_direct(permission) if {
   some assignment in token_permission_assignments
   assignment.permission == permission
   assignment.scoped
@@ -46,7 +44,7 @@ token_has_permission_direct(permission) {
   startswith(input.request.name, concat("/", [assignment.resource, ""]))
 }
 
-token_has_permission_direct(permission) {
+token_has_permission_direct(permission) if {
   some assignment in token_permission_assignments
   assignment.permission == permission
   assignment.scoped
@@ -54,11 +52,11 @@ token_has_permission_direct(permission) {
   input.request.name == assignment.resource
 }
 
-token_has_permission(permission) {
+token_has_permission(permission) if {
   token_has_permission_direct(permission)
 }
 
-token_has_permission(permission) {
+token_has_permission(permission) if {
   some parent_permission
   permission in inherit_permissions[parent_permission]
   token_has_permission_direct(parent_permission)

@@ -9,8 +9,8 @@ import (
 
 	"sync"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -300,21 +300,19 @@ var regoFiles = map[string]string{
 	"smartcore.rego": `package smartcore
 
 # This simple rule allows any request whose name is "allow", all other requests are denied
-allow {
-	input.request.name == "allow"
-}
+allow if input.request.name == "allow"
 `,
 	"smartcore.bos.onoff.v1.OnOffApi.rego": `package smartcore.bos.onoff.v1.OnOffApi
 
 # This rule allows people to turn any device on (but not off)
-allow {
+allow if {
 	input.method == "UpdateOnOff"
 	input.request.onOff.state == "ON"
 }
 `,
 	"http.rego": `package http
 
-allow { input.method == "GET" }
-allow { input.path == "/foo" }
+allow if input.method == "GET"
+allow if input.path == "/foo"
 `,
 }

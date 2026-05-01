@@ -3,7 +3,7 @@ package smartcore.bos.alert.v1.AlertApi
 import data.scutil.token.token_has_role
 import data.scutil.rpc.verb_match
 
-allow {
+allow if {
   token_has_role("operator")
   verb_match({"Acknowledge", "Unacknowledge"})
 }
