@@ -14,6 +14,25 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
+// testBackend is a Backend implementation for tests.
+type testBackend struct {
+	purge func(ctx context.Context, before *time.Time) (uint64, error)
+}
+
+func (b *testBackend) Purge(ctx context.Context, before *time.Time) (uint64, error) {
+	return b.purge(ctx, before)
+}
+
+// compactBackend extends testBackend with Compact support.
+type compactBackend struct {
+	testBackend
+	compact func(ctx context.Context) error
+}
+
+func (b *compactBackend) Compact(ctx context.Context) error {
+	return b.compact(ctx)
+}
+
 func TestModelServer_GetDataRetention(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -23,7 +42,7 @@ func TestModelServer_GetDataRetention(t *testing.T) {
 	_, _ = model.SetDataRetention(&DataRetention{
 		Bytes: &DataRetentionBytes{Used: &used},
 	})
-	server := NewModelServer(model)
+	server := NewModelServer(model, nil)
 	conn := wrap.ServerToClient(DataRetentionApi_ServiceDesc, server)
 	client := NewDataRetentionApiClient(conn)
 
@@ -46,7 +65,7 @@ func TestModelServer_PullDataRetention(t *testing.T) {
 	_, _ = model.SetDataRetention(&DataRetention{
 		Bytes: &DataRetentionBytes{Used: &used},
 	})
-	server := NewModelServer(model)
+	server := NewModelServer(model, nil)
 	conn := wrap.ServerToClient(DataRetentionApi_ServiceDesc, server)
 	client := NewDataRetentionApiClient(conn)
 
@@ -55,7 +74,6 @@ func TestModelServer_PullDataRetention(t *testing.T) {
 		t.Fatalf("PullDataRetention: %v", err)
 	}
 
-	// Receive initial value
 	res, err := stream.Recv()
 	if err != nil {
 		t.Fatalf("initial Recv: %v", err)
@@ -64,7 +82,6 @@ func TestModelServer_PullDataRetention(t *testing.T) {
 		t.Errorf("expected initial used=%d, got %v", used, res.Changes)
 	}
 
-	// Update and receive streaming change
 	newUsed := uint64(2048)
 	go func() {
 		_, _ = model.SetDataRetention(&DataRetention{
@@ -85,18 +102,18 @@ func TestModelServer_PurgeDataRetention(t *testing.T) {
 	defer cancel()
 
 	freed := uint64(42)
-	var gotBefore *timestamppb.Timestamp
-	handler := func(_ context.Context, req *PurgeDataRetentionRequest) (*PurgeDataRetentionResponse, error) {
-		gotBefore = req.Before
-		return &PurgeDataRetentionResponse{FreedItemCount: &freed}, nil
+	var gotBefore *time.Time
+	backend := &testBackend{
+		purge: func(_ context.Context, before *time.Time) (uint64, error) {
+			gotBefore = before
+			return freed, nil
+		},
 	}
 
-	model := NewModel()
-	server := NewModelServer(model, WithPurgeHandler(handler))
+	server := NewModelServer(NewModel(), backend)
 	conn := wrap.ServerToClient(DataRetentionApi_ServiceDesc, server)
 	client := NewDataRetentionApiClient(conn)
 
-	// Purge all (no before)
 	resp, err := client.PurgeDataRetention(ctx, &PurgeDataRetentionRequest{})
 	if err != nil {
 		t.Fatalf("PurgeDataRetention: %v", err)
@@ -114,15 +131,16 @@ func TestModelServer_PurgeDataRetention_WithBefore(t *testing.T) {
 	defer cancel()
 
 	freed := uint64(10)
-	wantBefore := time.Now().Add(-7 * 24 * time.Hour)
-	var gotBefore *timestamppb.Timestamp
-	handler := func(_ context.Context, req *PurgeDataRetentionRequest) (*PurgeDataRetentionResponse, error) {
-		gotBefore = req.Before
-		return &PurgeDataRetentionResponse{FreedItemCount: &freed}, nil
+	wantBefore := time.Now().Add(-7 * 24 * time.Hour).UTC().Truncate(time.Microsecond)
+	var gotBefore *time.Time
+	backend := &testBackend{
+		purge: func(_ context.Context, before *time.Time) (uint64, error) {
+			gotBefore = before
+			return freed, nil
+		},
 	}
 
-	model := NewModel()
-	server := NewModelServer(model, WithPurgeHandler(handler))
+	server := NewModelServer(NewModel(), backend)
 	conn := wrap.ServerToClient(DataRetentionApi_ServiceDesc, server)
 	client := NewDataRetentionApiClient(conn)
 
@@ -135,20 +153,19 @@ func TestModelServer_PurgeDataRetention_WithBefore(t *testing.T) {
 	if gotBefore == nil {
 		t.Fatal("expected before to be set")
 	}
-	if !gotBefore.AsTime().Equal(wantBefore.UTC()) {
-		t.Errorf("expected before=%v, got %v", wantBefore, gotBefore.AsTime())
+	if !gotBefore.Equal(wantBefore) {
+		t.Errorf("expected before=%v, got %v", wantBefore, *gotBefore)
 	}
 	if resp.FreedItemCount == nil || *resp.FreedItemCount != freed {
 		t.Errorf("expected FreedItemCount=%d, got %v", freed, resp.FreedItemCount)
 	}
 }
 
-func TestModelServer_PurgeDataRetention_NoHandler(t *testing.T) {
+func TestModelServer_PurgeDataRetention_NoBackend(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	model := NewModel()
-	server := NewModelServer(model)
+	server := NewModelServer(NewModel(), nil)
 	conn := wrap.ServerToClient(DataRetentionApi_ServiceDesc, server)
 	client := NewDataRetentionApiClient(conn)
 
@@ -162,31 +179,32 @@ func TestModelServer_CompactDataRetention(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	freed := uint64(1024)
-	handler := func(_ context.Context, _ *CompactDataRetentionRequest) (*CompactDataRetentionResponse, error) {
-		return &CompactDataRetentionResponse{FreedByteCount: &freed}, nil
+	compacted := false
+	backend := &compactBackend{
+		testBackend: testBackend{purge: func(_ context.Context, _ *time.Time) (uint64, error) { return 0, nil }},
+		compact:     func(_ context.Context) error { compacted = true; return nil },
 	}
 
-	model := NewModel()
-	server := NewModelServer(model, WithCompactHandler(handler))
+	server := NewModelServer(NewModel(), backend)
 	conn := wrap.ServerToClient(DataRetentionApi_ServiceDesc, server)
 	client := NewDataRetentionApiClient(conn)
 
-	resp, err := client.CompactDataRetention(ctx, &CompactDataRetentionRequest{})
+	_, err := client.CompactDataRetention(ctx, &CompactDataRetentionRequest{})
 	if err != nil {
 		t.Fatalf("CompactDataRetention: %v", err)
 	}
-	if resp.FreedByteCount == nil || *resp.FreedByteCount != freed {
-		t.Errorf("expected FreedByteCount=%d, got %v", freed, resp.FreedByteCount)
+	if !compacted {
+		t.Error("expected Compact to be called")
 	}
 }
 
-func TestModelServer_CompactDataRetention_NoHandler(t *testing.T) {
+func TestModelServer_CompactDataRetention_NoCompact(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	model := NewModel()
-	server := NewModelServer(model)
+	// testBackend does not implement Compacter
+	backend := &testBackend{purge: func(_ context.Context, _ *time.Time) (uint64, error) { return 0, nil }}
+	server := NewModelServer(NewModel(), backend)
 	conn := wrap.ServerToClient(DataRetentionApi_ServiceDesc, server)
 	client := NewDataRetentionApiClient(conn)
 
@@ -200,20 +218,47 @@ func TestModelServer_DescribeDataRetention(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	support := &DataRetentionSupport{
-		CanPurge: true,
-		ItemName: "record",
-	}
-	model := NewModel()
-	server := NewModelServer(model, WithDataRetentionSupport(support))
-	conn := wrap.ServerToClient(DataRetentionInfo_ServiceDesc, server)
-	client := NewDataRetentionInfoClient(conn)
+	t.Run("nil backend", func(t *testing.T) {
+		server := NewModelServer(NewModel(), nil)
+		conn := wrap.ServerToClient(DataRetentionInfo_ServiceDesc, server)
+		got, err := NewDataRetentionInfoClient(conn).DescribeDataRetention(ctx, &DescribeDataRetentionRequest{})
+		if err != nil {
+			t.Fatalf("DescribeDataRetention: %v", err)
+		}
+		want := &DataRetentionSupport{}
+		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+			t.Errorf("mismatch (-want +got):\n%s", diff)
+		}
+	})
 
-	got, err := client.DescribeDataRetention(ctx, &DescribeDataRetentionRequest{})
-	if err != nil {
-		t.Fatalf("DescribeDataRetention: %v", err)
-	}
-	if diff := cmp.Diff(support, got, protocmp.Transform()); diff != "" {
-		t.Errorf("DescribeDataRetention mismatch (-want +got):\n%s", diff)
-	}
+	t.Run("purge only", func(t *testing.T) {
+		backend := &testBackend{purge: func(_ context.Context, _ *time.Time) (uint64, error) { return 0, nil }}
+		server := NewModelServer(NewModel(), backend, WithItemName("record"))
+		conn := wrap.ServerToClient(DataRetentionInfo_ServiceDesc, server)
+		got, err := NewDataRetentionInfoClient(conn).DescribeDataRetention(ctx, &DescribeDataRetentionRequest{})
+		if err != nil {
+			t.Fatalf("DescribeDataRetention: %v", err)
+		}
+		want := &DataRetentionSupport{CanPurge: true, ItemName: "record"}
+		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+			t.Errorf("mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("purge and compact", func(t *testing.T) {
+		backend := &compactBackend{
+			testBackend: testBackend{purge: func(_ context.Context, _ *time.Time) (uint64, error) { return 0, nil }},
+			compact:     func(_ context.Context) error { return nil },
+		}
+		server := NewModelServer(NewModel(), backend, WithItemName("row"))
+		conn := wrap.ServerToClient(DataRetentionInfo_ServiceDesc, server)
+		got, err := NewDataRetentionInfoClient(conn).DescribeDataRetention(ctx, &DescribeDataRetentionRequest{})
+		if err != nil {
+			t.Fatalf("DescribeDataRetention: %v", err)
+		}
+		want := &DataRetentionSupport{CanPurge: true, CanCompact: true, ItemName: "row"}
+		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+			t.Errorf("mismatch (-want +got):\n%s", diff)
+		}
+	})
 }

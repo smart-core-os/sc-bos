@@ -2,7 +2,7 @@ package dataretentionpb
 
 import (
 	"context"
-	"sync/atomic"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -12,30 +12,34 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
-// PurgeHandler is called by ModelServer to delete stored data.
-// If req.Before is nil, all records are removed; otherwise only records older than req.Before.
-type PurgeHandler func(ctx context.Context, req *PurgeDataRetentionRequest) (*PurgeDataRetentionResponse, error)
+// Backend handles storage operations for the data retention trait.
+// All operations target the same underlying store.
+type Backend interface {
+	// Purge deletes stored data. If before is nil, all data is removed;
+	// otherwise only data recorded before *before is removed.
+	// Returns the number of freed items.
+	Purge(ctx context.Context, before *time.Time) (freedItems uint64, err error)
+}
 
-// CompactHandler is called by ModelServer to compact/optimise storage.
-type CompactHandler func(ctx context.Context, req *CompactDataRetentionRequest) (*CompactDataRetentionResponse, error)
+// Compacter may be implemented by a Backend that supports storage compaction.
+type Compacter interface {
+	Compact(ctx context.Context) error
+}
 
 // ModelServer implements DataRetentionApiServer and DataRetentionInfoServer backed by a Model.
 type ModelServer struct {
 	UnimplementedDataRetentionApiServer
 	UnimplementedDataRetentionInfoServer
 
-	model          *Model
-	purgeHandler   PurgeHandler
-	compactHandler CompactHandler
-	support        *DataRetentionSupport
-
-	subscribers atomic.Int32
+	model    *Model
+	backend  Backend
+	itemName string
 }
 
-// NewModelServer creates a ModelServer backed by the given Model.
-// Provide optional functional options to configure handler and info behaviour.
-func NewModelServer(model *Model, opts ...ModelServerOption) *ModelServer {
-	s := &ModelServer{model: model}
+// NewModelServer creates a ModelServer backed by the given Model and Backend.
+// backend may be nil, in which case all mutating RPCs return Unimplemented.
+func NewModelServer(model *Model, backend Backend, opts ...ModelServerOption) *ModelServer {
+	s := &ModelServer{model: model, backend: backend}
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -45,19 +49,10 @@ func NewModelServer(model *Model, opts ...ModelServerOption) *ModelServer {
 // ModelServerOption is a functional option for NewModelServer.
 type ModelServerOption func(*ModelServer)
 
-// WithPurgeHandler sets the handler invoked by PurgeDataRetention.
-func WithPurgeHandler(h PurgeHandler) ModelServerOption {
-	return func(s *ModelServer) { s.purgeHandler = h }
-}
-
-// WithCompactHandler sets the handler invoked by CompactDataRetention.
-func WithCompactHandler(h CompactHandler) ModelServerOption {
-	return func(s *ModelServer) { s.compactHandler = h }
-}
-
-// WithDataRetentionSupport sets the DataRetentionSupport returned by DescribeDataRetention.
-func WithDataRetentionSupport(sup *DataRetentionSupport) ModelServerOption {
-	return func(s *ModelServer) { s.support = sup }
+// WithItemName sets the singular item name reported by DescribeDataRetention
+// (e.g. "row", "record", "file").
+func WithItemName(name string) ModelServerOption {
+	return func(s *ModelServer) { s.itemName = name }
 }
 
 // Register registers both services on the given gRPC server.
@@ -78,8 +73,6 @@ func (s *ModelServer) GetDataRetention(_ context.Context, req *GetDataRetentionR
 
 // PullDataRetention implements DataRetentionApiServer.
 func (s *ModelServer) PullDataRetention(req *PullDataRetentionRequest, server DataRetentionApi_PullDataRetentionServer) error {
-	s.subscribers.Add(1)
-	defer s.subscribers.Add(-1)
 	for change := range s.model.PullDataRetention(server.Context(), resource.WithReadMask(req.ReadMask), resource.WithUpdatesOnly(req.UpdatesOnly)) {
 		msg := &PullDataRetentionResponse{
 			Changes: []*PullDataRetentionResponse_Change{{
@@ -97,24 +90,40 @@ func (s *ModelServer) PullDataRetention(req *PullDataRetentionRequest, server Da
 
 // PurgeDataRetention implements DataRetentionApiServer.
 func (s *ModelServer) PurgeDataRetention(ctx context.Context, req *PurgeDataRetentionRequest) (*PurgeDataRetentionResponse, error) {
-	if s.purgeHandler == nil {
+	if s.backend == nil {
 		return nil, status.Error(codes.Unimplemented, "PurgeDataRetention not supported")
 	}
-	return s.purgeHandler(ctx, req)
+	var before *time.Time
+	if req.Before != nil {
+		t := req.Before.AsTime()
+		before = &t
+	}
+	freed, err := s.backend.Purge(ctx, before)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "purge: %v", err)
+	}
+	return &PurgeDataRetentionResponse{FreedItemCount: &freed}, nil
 }
 
 // CompactDataRetention implements DataRetentionApiServer.
-func (s *ModelServer) CompactDataRetention(ctx context.Context, req *CompactDataRetentionRequest) (*CompactDataRetentionResponse, error) {
-	if s.compactHandler == nil {
+func (s *ModelServer) CompactDataRetention(ctx context.Context, _ *CompactDataRetentionRequest) (*CompactDataRetentionResponse, error) {
+	c, ok := s.backend.(Compacter)
+	if !ok {
 		return nil, status.Error(codes.Unimplemented, "CompactDataRetention not supported")
 	}
-	return s.compactHandler(ctx, req)
+	if err := c.Compact(ctx); err != nil {
+		return nil, status.Errorf(codes.Internal, "compact: %v", err)
+	}
+	return &CompactDataRetentionResponse{}, nil
 }
 
 // DescribeDataRetention implements DataRetentionInfoServer.
+// Capabilities are derived from the backend's interface implementation.
 func (s *ModelServer) DescribeDataRetention(_ context.Context, _ *DescribeDataRetentionRequest) (*DataRetentionSupport, error) {
-	if s.support == nil {
-		return &DataRetentionSupport{}, nil
-	}
-	return s.support, nil
+	_, canCompact := s.backend.(Compacter)
+	return &DataRetentionSupport{
+		CanPurge:   s.backend != nil,
+		CanCompact: canCompact,
+		ItemName:   s.itemName,
+	}, nil
 }

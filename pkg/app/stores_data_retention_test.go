@@ -5,9 +5,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/history/sqlitestore"
@@ -67,7 +64,7 @@ func TestUpdateSqliteDataRetentionModel_DiskCapacity(t *testing.T) {
 	}
 }
 
-func TestSqlitePurgeHandler_All(t *testing.T) {
+func TestSqliteBackend_Purge_All(t *testing.T) {
 	ctx := t.Context()
 	s := stores.New(&stores.Config{DataDir: t.TempDir()})
 	t.Cleanup(func() { _ = s.Close() })
@@ -83,13 +80,13 @@ func TestSqlitePurgeHandler_All(t *testing.T) {
 		}
 	}
 
-	handler := sqlitePurgeHandler(s)
-	resp, err := handler(ctx, &dataretentionpb.PurgeDataRetentionRequest{})
+	b := &sqliteBackend{stores: s}
+	freed, err := b.Purge(ctx, nil)
 	if err != nil {
-		t.Fatalf("PurgeDataRetention: %v", err)
+		t.Fatalf("Purge: %v", err)
 	}
-	if resp.FreedItemCount == nil || *resp.FreedItemCount != 5 {
-		t.Errorf("expected FreedItemCount=5, got %v", resp.FreedItemCount)
+	if freed != 5 {
+		t.Errorf("expected freed=5, got %d", freed)
 	}
 
 	count, err := db.TotalCount(ctx)
@@ -101,7 +98,7 @@ func TestSqlitePurgeHandler_All(t *testing.T) {
 	}
 }
 
-func TestSqlitePurgeHandler_WithBefore(t *testing.T) {
+func TestSqliteBackend_Purge_WithBefore(t *testing.T) {
 	ctx := t.Context()
 	retention := 7 * 24 * time.Hour
 	s := stores.New(&stores.Config{DataDir: t.TempDir()})
@@ -112,7 +109,6 @@ func TestSqlitePurgeHandler_WithBefore(t *testing.T) {
 		t.Fatalf("SqliteHistory: %v", err)
 	}
 
-	// Insert a record older than the retention period
 	_, err = db.Insert(ctx, sqlitestore.Record{
 		Source:     "test",
 		Payload:    []byte("old"),
@@ -122,22 +118,19 @@ func TestSqlitePurgeHandler_WithBefore(t *testing.T) {
 		t.Fatalf("Insert old record: %v", err)
 	}
 
-	// Insert a recent record
 	store := db.OpenStore("test")
 	if _, err := store.Append(ctx, []byte("new")); err != nil {
 		t.Fatalf("Append new record: %v", err)
 	}
 
 	cutoff := time.Now().Add(-retention)
-	handler := sqlitePurgeHandler(s)
-	resp, err := handler(ctx, &dataretentionpb.PurgeDataRetentionRequest{
-		Before: timestamppb.New(cutoff),
-	})
+	b := &sqliteBackend{stores: s}
+	freed, err := b.Purge(ctx, &cutoff)
 	if err != nil {
-		t.Fatalf("PurgeDataRetention: %v", err)
+		t.Fatalf("Purge: %v", err)
 	}
-	if resp.FreedItemCount == nil || *resp.FreedItemCount != 1 {
-		t.Errorf("expected FreedItemCount=1, got %v", resp.FreedItemCount)
+	if freed != 1 {
+		t.Errorf("expected freed=1, got %d", freed)
 	}
 
 	count, err := db.TotalCount(ctx)
@@ -151,14 +144,12 @@ func TestSqlitePurgeHandler_WithBefore(t *testing.T) {
 
 func TestUpdatePostgresDataRetentionModel_NotConfigured(t *testing.T) {
 	ctx := t.Context()
-	// Stores with no postgres config — should log and return without updating the model.
 	s := stores.New(&stores.Config{DataDir: t.TempDir()})
 	t.Cleanup(func() { _ = s.Close() })
 
 	model := dataretentionpb.NewModel()
 	updatePostgresDataRetentionModel(ctx, s, model, &postgresRowCountCache{}, zap.NewNop())
 
-	// Model should be empty (default zero value) since postgres is not configured.
 	got, err := model.GetDataRetention()
 	if err != nil {
 		t.Fatalf("GetDataRetention: %v", err)
@@ -168,28 +159,25 @@ func TestUpdatePostgresDataRetentionModel_NotConfigured(t *testing.T) {
 	}
 }
 
-func TestPostgresPurgeHandler_NotConfigured(t *testing.T) {
+func TestPostgresBackend_Purge_NotConfigured(t *testing.T) {
 	ctx := t.Context()
 	s := stores.New(&stores.Config{DataDir: t.TempDir()})
 	t.Cleanup(func() { _ = s.Close() })
 
-	handler := postgresPurgeHandler(s)
-	_, err := handler(ctx, &dataretentionpb.PurgeDataRetentionRequest{})
+	b := &postgresBackend{stores: s}
+	_, err := b.Purge(ctx, nil)
 	if err == nil {
 		t.Fatal("expected error when postgres not configured, got nil")
 	}
-	if st, ok := status.FromError(err); !ok || st.Code() != codes.Internal {
-		t.Errorf("expected Internal, got %v", err)
-	}
 }
 
-func TestPostgresCompactHandler_NotConfigured(t *testing.T) {
+func TestPostgresBackend_Compact_NotConfigured(t *testing.T) {
 	ctx := t.Context()
 	s := stores.New(&stores.Config{DataDir: t.TempDir()})
 	t.Cleanup(func() { _ = s.Close() })
 
-	handler := postgresCompactHandler(s)
-	_, err := handler(ctx, &dataretentionpb.CompactDataRetentionRequest{})
+	b := &postgresBackend{stores: s}
+	err := b.Compact(ctx)
 	if err == nil {
 		t.Fatal("expected error when postgres not configured, got nil")
 	}

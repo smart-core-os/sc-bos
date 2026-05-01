@@ -2,14 +2,12 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -39,12 +37,8 @@ func startStoresDataRetentionTraits(ctx context.Context, n *node.Node, nodeName 
 
 func announceSqliteDataRetentionTraits(ctx context.Context, n *node.Node, nodeName string, s *stores.Stores, dataDir string, logger *zap.Logger) node.Undo {
 	model := dataretentionpb.NewModel()
-	server := dataretentionpb.NewModelServer(model,
-		dataretentionpb.WithPurgeHandler(sqlitePurgeHandler(s)),
-		dataretentionpb.WithDataRetentionSupport(&dataretentionpb.DataRetentionSupport{
-			CanPurge: true,
-			ItemName: "record",
-		}),
+	server := dataretentionpb.NewModelServer(model, &sqliteBackend{stores: s},
+		dataretentionpb.WithItemName("record"),
 	)
 
 	name := path.Join(nodeName, "stores/history")
@@ -101,41 +95,34 @@ func updateSqliteDataRetentionModel(ctx context.Context, s *stores.Stores, model
 	})
 }
 
-// sqlitePurgeHandler deletes stored history records.
-// If req.Before is nil, all records are removed; otherwise only records older than req.Before.
-func sqlitePurgeHandler(s *stores.Stores) dataretentionpb.PurgeHandler {
-	return func(ctx context.Context, req *dataretentionpb.PurgeDataRetentionRequest) (*dataretentionpb.PurgeDataRetentionResponse, error) {
-		db, err := s.SqliteHistory(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to get sqlite history store: %v", err)
-		}
-		if req.Before == nil {
-			deleted, err := db.Clear(ctx)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "purge failed: %v", err)
-			}
-			deletedU := uint64(deleted)
-			return &dataretentionpb.PurgeDataRetentionResponse{FreedItemCount: &deletedU}, nil
-		}
-		deleted, err := db.TrimTime(ctx, "", req.Before.AsTime())
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "purge failed: %v", err)
-		}
-		deletedU := uint64(deleted)
-		return &dataretentionpb.PurgeDataRetentionResponse{FreedItemCount: &deletedU}, nil
+// sqliteBackend implements dataretentionpb.Backend for the SQLite history store.
+type sqliteBackend struct {
+	stores *stores.Stores
+}
+
+func (b *sqliteBackend) Purge(ctx context.Context, before *time.Time) (uint64, error) {
+	db, err := b.stores.SqliteHistory(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("sqlite history: %w", err)
 	}
+	if before == nil {
+		deleted, err := db.Clear(ctx)
+		if err != nil {
+			return 0, err
+		}
+		return uint64(deleted), nil
+	}
+	deleted, err := db.TrimTime(ctx, "", *before)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(deleted), nil
 }
 
 func announcePostgresDataRetentionTraits(ctx context.Context, n *node.Node, nodeName string, s *stores.Stores, logger *zap.Logger) node.Undo {
 	model := dataretentionpb.NewModel()
-	server := dataretentionpb.NewModelServer(model,
-		dataretentionpb.WithPurgeHandler(postgresPurgeHandler(s)),
-		dataretentionpb.WithCompactHandler(postgresCompactHandler(s)),
-		dataretentionpb.WithDataRetentionSupport(&dataretentionpb.DataRetentionSupport{
-			CanPurge:   true,
-			CanCompact: true,
-			ItemName:   "row",
-		}),
+	server := dataretentionpb.NewModelServer(model, &postgresBackend{stores: s},
+		dataretentionpb.WithItemName("row"),
 	)
 
 	name := path.Join(nodeName, "stores/postgres")
@@ -215,50 +202,43 @@ func updatePostgresDataRetentionModel(ctx context.Context, s *stores.Stores, mod
 	_, _ = model.SetDataRetention(retention)
 }
 
-// postgresPurgeHandler deletes stored history rows.
-// If req.Before is nil, all rows are removed; otherwise only rows older than req.Before.
-func postgresPurgeHandler(s *stores.Stores) dataretentionpb.PurgeHandler {
-	return func(ctx context.Context, req *dataretentionpb.PurgeDataRetentionRequest) (*dataretentionpb.PurgeDataRetentionResponse, error) {
-		_, w, _, err := s.Postgres()
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to get postgres store: %v", err)
-		}
-		deleted, err := postgresDelete(ctx, w, req.Before)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "purge failed: %v", err)
-		}
-		return &dataretentionpb.PurgeDataRetentionResponse{FreedItemCount: &deleted}, nil
+// postgresBackend implements dataretentionpb.Backend and dataretentionpb.Compacter
+// for the Postgres history store.
+type postgresBackend struct {
+	stores *stores.Stores
+}
+
+func (b *postgresBackend) Purge(ctx context.Context, before *time.Time) (uint64, error) {
+	_, w, _, err := b.stores.Postgres()
+	if err != nil {
+		return 0, fmt.Errorf("postgres: %w", err)
 	}
+	return postgresDelete(ctx, w, before)
+}
+
+func (b *postgresBackend) Compact(ctx context.Context) error {
+	_, w, _, err := b.stores.Postgres()
+	if err != nil {
+		return fmt.Errorf("postgres: %w", err)
+	}
+	_, err = w.Exec(ctx, "VACUUM ANALYZE history")
+	return err
 }
 
 // postgresDelete deletes history rows. If before is nil, all rows are removed;
-// otherwise only rows with create_time < before.AsTime().
-func postgresDelete(ctx context.Context, w *pgxpool.Pool, before *timestamppb.Timestamp) (uint64, error) {
+// otherwise only rows with create_time < *before.
+func postgresDelete(ctx context.Context, w *pgxpool.Pool, before *time.Time) (uint64, error) {
 	var sql string
 	var args []any
 	if before == nil {
 		sql = "DELETE FROM history"
 	} else {
 		sql = "DELETE FROM history WHERE create_time < $1"
-		args = append(args, before.AsTime())
+		args = append(args, *before)
 	}
 	tag, err := w.Exec(ctx, sql, args...)
 	if err != nil {
 		return 0, err
 	}
 	return uint64(tag.RowsAffected()), nil
-}
-
-func postgresCompactHandler(s *stores.Stores) dataretentionpb.CompactHandler {
-	return func(ctx context.Context, _ *dataretentionpb.CompactDataRetentionRequest) (*dataretentionpb.CompactDataRetentionResponse, error) {
-		_, w, _, err := s.Postgres()
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to get postgres store: %v", err)
-		}
-		_, err = w.Exec(ctx, "VACUUM ANALYZE history")
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "compact failed: %v", err)
-		}
-		return &dataretentionpb.CompactDataRetentionResponse{}, nil
-	}
 }
