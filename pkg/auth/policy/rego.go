@@ -31,15 +31,21 @@ func (p *static) EvalPolicy(ctx context.Context, query string, input Attributes)
 }
 
 type cachedStatic struct {
-	compiler *ast.Compiler
-	cache    map[string]*regoCacheEntry
-	cacheM   sync.Mutex
+	modules map[string]*ast.Module
+	cache   map[string]*regoCacheEntry
+	cacheM  sync.Mutex
 }
 
 func newCachedStatic(compiler *ast.Compiler) *cachedStatic {
+	// Create a defensive shallow copy of the module map so cachedStatic owns
+	// a snapshot, protecting against external mutations.
+	modules := make(map[string]*ast.Module, len(compiler.Modules))
+	for k, v := range compiler.Modules {
+		modules[k] = v
+	}
 	return &cachedStatic{
-		cache:    make(map[string]*regoCacheEntry),
-		compiler: compiler,
+		cache:   make(map[string]*regoCacheEntry),
+		modules: modules,
 	}
 }
 
@@ -52,18 +58,30 @@ func (p *cachedStatic) EvalPolicy(ctx context.Context, query string, input Attri
 	return partial.Rego(rego.Input(input)).Eval(ctx)
 }
 
+func (p *cachedStatic) getCacheEntry(query string) (*regoCacheEntry, bool) {
+	p.cacheM.Lock()
+	defer p.cacheM.Unlock()
+	entry, ok := p.cache[query]
+	return entry, ok
+}
+
+func (p *cachedStatic) setCacheEntry(query string) *regoCacheEntry {
+	entry := &regoCacheEntry{done: make(chan struct{})}
+	p.cacheM.Lock()
+	defer p.cacheM.Unlock()
+	p.cache[query] = entry
+	return entry
+}
+
 // Results are cached; the partial evaluation is performed once the first time and re-used for subsequent calls.
 // If the provided context is cancelled before the result is ready, the process will continue in the background and
 // the context error is returned.
 // If loadPartialCached returns a non-context error, then future calls with the same query will always return the same error.
 func (p *cachedStatic) loadPartialCached(ctx context.Context, query string) (rego.PartialResult, error) {
-	p.cacheM.Lock()
-	entry, ok := p.cache[query]
+	entry, ok := p.getCacheEntry(query)
 	if !ok {
-		entry = &regoCacheEntry{done: make(chan struct{})}
-		p.cache[query] = entry
+		entry = p.setCacheEntry(query)
 	}
-	p.cacheM.Unlock()
 
 	// each cache entry only gets one change to compile - it's a deterministic process, so if it fails once there's no
 	// point trying again later
@@ -74,8 +92,19 @@ func (p *cachedStatic) loadPartialCached(ctx context.Context, query string) (reg
 			// if a policy file takes more than 5 seconds to compile, something is wrong with it
 			bgctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
+
+			// Compile a fresh compiler from the cached modules to avoid PartialResult
+			// mutating shared compiler state across concurrent evaluations.
+			compiler := ast.NewCompiler()
+			compiler.Compile(p.modules)
+
+			if compiler.Failed() {
+				entry.err = compiler.Errors
+				return
+			}
+
 			r := rego.New(
-				rego.Compiler(p.compiler),
+				rego.Compiler(compiler),
 				rego.Query(query),
 				rego.Store(defaultStore),
 			)
