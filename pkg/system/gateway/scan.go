@@ -318,9 +318,43 @@ func (s *System) reflectNode(ctx context.Context, node *remoteNode) error {
 	}
 
 	// we now can fully describe the remote service
-	node.Services.Replace(remoteServices)
+	// Only replace if the services have actually changed to avoid triggering unnecessary announcements.
+	// This is critical to prevent a hot loop when devices use custom Smart Core traits:
+	// - reflectNode is polled every 10 seconds
+	// - For custom traits, reflection returns file descriptors each time
+	// - node.Services.Replace() would trigger service change events even when nothing changed
+	// - This causes continuous re-announcements (hot loop) for custom trait services
+	// By comparing service names first, we avoid Replace() when the service set is identical.
+	if !servicesEqual(node, remoteServices) {
+		node.Services.Replace(remoteServices)
+	}
 
 	return nil
+}
+
+// servicesEqual returns true if the services in node match remoteServices.
+// This comparison uses service full names because reflect.DeepEqual on protoreflect.ServiceDescriptor
+// can incorrectly report inequality for identical services due to pointer/implementation differences.
+func servicesEqual(node *remoteNode, remoteServices []protoreflect.ServiceDescriptor) bool {
+	if node.Services.Len() != len(remoteServices) {
+		return false
+	}
+
+	// build a set of current service names for comparison
+	currentNames := make(map[string]struct{}, node.Services.Len())
+	node.Services.All(func(_ int, svc protoreflect.ServiceDescriptor) bool {
+		currentNames[string(svc.FullName())] = struct{}{}
+		return true
+	})
+
+	// check if all remote services are in current services
+	for _, svc := range remoteServices {
+		if _, ok := currentNames[string(svc.FullName())]; !ok {
+			return false
+		}
+	}
+
+	return true
 }
 
 // retry semantics for long-running tasks that can succeed and fail at the same time
