@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v7.34.0
-// source: smartcore/bos/data_retention/v1/data_retention.proto
+// source: smartcore/bos/dataretention/v1/data_retention.proto
 
 package dataretentionpb
 
@@ -19,12 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DataRetentionApi_GetDataRetention_FullMethodName         = "/smartcore.bos.data_retention.v1.DataRetentionApi/GetDataRetention"
-	DataRetentionApi_PullDataRetention_FullMethodName        = "/smartcore.bos.data_retention.v1.DataRetentionApi/PullDataRetention"
-	DataRetentionApi_ClearDataRetention_FullMethodName       = "/smartcore.bos.data_retention.v1.DataRetentionApi/ClearDataRetention"
-	DataRetentionApi_DeleteOldDataRetention_FullMethodName   = "/smartcore.bos.data_retention.v1.DataRetentionApi/DeleteOldDataRetention"
-	DataRetentionApi_CompactDataRetention_FullMethodName     = "/smartcore.bos.data_retention.v1.DataRetentionApi/CompactDataRetention"
-	DataRetentionApi_SpringCleanDataRetention_FullMethodName = "/smartcore.bos.data_retention.v1.DataRetentionApi/SpringCleanDataRetention"
+	DataRetentionApi_GetDataRetention_FullMethodName     = "/smartcore.bos.dataretention.v1.DataRetentionApi/GetDataRetention"
+	DataRetentionApi_PullDataRetention_FullMethodName    = "/smartcore.bos.dataretention.v1.DataRetentionApi/PullDataRetention"
+	DataRetentionApi_PurgeDataRetention_FullMethodName   = "/smartcore.bos.dataretention.v1.DataRetentionApi/PurgeDataRetention"
+	DataRetentionApi_CompactDataRetention_FullMethodName = "/smartcore.bos.dataretention.v1.DataRetentionApi/CompactDataRetention"
 )
 
 // DataRetentionApiClient is the client API for DataRetentionApi service.
@@ -35,14 +33,11 @@ const (
 type DataRetentionApiClient interface {
 	GetDataRetention(ctx context.Context, in *GetDataRetentionRequest, opts ...grpc.CallOption) (*DataRetention, error)
 	PullDataRetention(ctx context.Context, in *PullDataRetentionRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PullDataRetentionResponse], error)
-	// Remove all records from this data retention resource.
-	ClearDataRetention(ctx context.Context, in *ClearDataRetentionRequest, opts ...grpc.CallOption) (*ClearDataRetentionResponse, error)
-	// Remove records older than retention_period. retention_period must be positive.
-	DeleteOldDataRetention(ctx context.Context, in *DeleteOldDataRetentionRequest, opts ...grpc.CallOption) (*DeleteOldDataRetentionResponse, error)
-	// Compact/optimise storage (GC, VACUUM, repack). No-op if not supported.
+	// Remove stored data. If before is set, only records older than that time are removed;
+	// if absent, all records are removed.
+	PurgeDataRetention(ctx context.Context, in *PurgeDataRetentionRequest, opts ...grpc.CallOption) (*PurgeDataRetentionResponse, error)
+	// Compact/optimise storage (GC, VACUUM, repack).
 	CompactDataRetention(ctx context.Context, in *CompactDataRetentionRequest, opts ...grpc.CallOption) (*CompactDataRetentionResponse, error)
-	// Delete old records and compact storage in one operation (spring clean).
-	SpringCleanDataRetention(ctx context.Context, in *SpringCleanDataRetentionRequest, opts ...grpc.CallOption) (*SpringCleanDataRetentionResponse, error)
 }
 
 type dataRetentionApiClient struct {
@@ -82,20 +77,10 @@ func (c *dataRetentionApiClient) PullDataRetention(ctx context.Context, in *Pull
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type DataRetentionApi_PullDataRetentionClient = grpc.ServerStreamingClient[PullDataRetentionResponse]
 
-func (c *dataRetentionApiClient) ClearDataRetention(ctx context.Context, in *ClearDataRetentionRequest, opts ...grpc.CallOption) (*ClearDataRetentionResponse, error) {
+func (c *dataRetentionApiClient) PurgeDataRetention(ctx context.Context, in *PurgeDataRetentionRequest, opts ...grpc.CallOption) (*PurgeDataRetentionResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ClearDataRetentionResponse)
-	err := c.cc.Invoke(ctx, DataRetentionApi_ClearDataRetention_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *dataRetentionApiClient) DeleteOldDataRetention(ctx context.Context, in *DeleteOldDataRetentionRequest, opts ...grpc.CallOption) (*DeleteOldDataRetentionResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteOldDataRetentionResponse)
-	err := c.cc.Invoke(ctx, DataRetentionApi_DeleteOldDataRetention_FullMethodName, in, out, cOpts...)
+	out := new(PurgeDataRetentionResponse)
+	err := c.cc.Invoke(ctx, DataRetentionApi_PurgeDataRetention_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,16 +97,6 @@ func (c *dataRetentionApiClient) CompactDataRetention(ctx context.Context, in *C
 	return out, nil
 }
 
-func (c *dataRetentionApiClient) SpringCleanDataRetention(ctx context.Context, in *SpringCleanDataRetentionRequest, opts ...grpc.CallOption) (*SpringCleanDataRetentionResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SpringCleanDataRetentionResponse)
-	err := c.cc.Invoke(ctx, DataRetentionApi_SpringCleanDataRetention_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // DataRetentionApiServer is the server API for DataRetentionApi service.
 // All implementations must embed UnimplementedDataRetentionApiServer
 // for forward compatibility.
@@ -130,14 +105,11 @@ func (c *dataRetentionApiClient) SpringCleanDataRetention(ctx context.Context, i
 type DataRetentionApiServer interface {
 	GetDataRetention(context.Context, *GetDataRetentionRequest) (*DataRetention, error)
 	PullDataRetention(*PullDataRetentionRequest, grpc.ServerStreamingServer[PullDataRetentionResponse]) error
-	// Remove all records from this data retention resource.
-	ClearDataRetention(context.Context, *ClearDataRetentionRequest) (*ClearDataRetentionResponse, error)
-	// Remove records older than retention_period. retention_period must be positive.
-	DeleteOldDataRetention(context.Context, *DeleteOldDataRetentionRequest) (*DeleteOldDataRetentionResponse, error)
-	// Compact/optimise storage (GC, VACUUM, repack). No-op if not supported.
+	// Remove stored data. If before is set, only records older than that time are removed;
+	// if absent, all records are removed.
+	PurgeDataRetention(context.Context, *PurgeDataRetentionRequest) (*PurgeDataRetentionResponse, error)
+	// Compact/optimise storage (GC, VACUUM, repack).
 	CompactDataRetention(context.Context, *CompactDataRetentionRequest) (*CompactDataRetentionResponse, error)
-	// Delete old records and compact storage in one operation (spring clean).
-	SpringCleanDataRetention(context.Context, *SpringCleanDataRetentionRequest) (*SpringCleanDataRetentionResponse, error)
 	mustEmbedUnimplementedDataRetentionApiServer()
 }
 
@@ -154,17 +126,11 @@ func (UnimplementedDataRetentionApiServer) GetDataRetention(context.Context, *Ge
 func (UnimplementedDataRetentionApiServer) PullDataRetention(*PullDataRetentionRequest, grpc.ServerStreamingServer[PullDataRetentionResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method PullDataRetention not implemented")
 }
-func (UnimplementedDataRetentionApiServer) ClearDataRetention(context.Context, *ClearDataRetentionRequest) (*ClearDataRetentionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ClearDataRetention not implemented")
-}
-func (UnimplementedDataRetentionApiServer) DeleteOldDataRetention(context.Context, *DeleteOldDataRetentionRequest) (*DeleteOldDataRetentionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteOldDataRetention not implemented")
+func (UnimplementedDataRetentionApiServer) PurgeDataRetention(context.Context, *PurgeDataRetentionRequest) (*PurgeDataRetentionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PurgeDataRetention not implemented")
 }
 func (UnimplementedDataRetentionApiServer) CompactDataRetention(context.Context, *CompactDataRetentionRequest) (*CompactDataRetentionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CompactDataRetention not implemented")
-}
-func (UnimplementedDataRetentionApiServer) SpringCleanDataRetention(context.Context, *SpringCleanDataRetentionRequest) (*SpringCleanDataRetentionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SpringCleanDataRetention not implemented")
 }
 func (UnimplementedDataRetentionApiServer) mustEmbedUnimplementedDataRetentionApiServer() {}
 func (UnimplementedDataRetentionApiServer) testEmbeddedByValue()                          {}
@@ -216,38 +182,20 @@ func _DataRetentionApi_PullDataRetention_Handler(srv interface{}, stream grpc.Se
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type DataRetentionApi_PullDataRetentionServer = grpc.ServerStreamingServer[PullDataRetentionResponse]
 
-func _DataRetentionApi_ClearDataRetention_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClearDataRetentionRequest)
+func _DataRetentionApi_PurgeDataRetention_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PurgeDataRetentionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DataRetentionApiServer).ClearDataRetention(ctx, in)
+		return srv.(DataRetentionApiServer).PurgeDataRetention(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DataRetentionApi_ClearDataRetention_FullMethodName,
+		FullMethod: DataRetentionApi_PurgeDataRetention_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataRetentionApiServer).ClearDataRetention(ctx, req.(*ClearDataRetentionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DataRetentionApi_DeleteOldDataRetention_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteOldDataRetentionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DataRetentionApiServer).DeleteOldDataRetention(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DataRetentionApi_DeleteOldDataRetention_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataRetentionApiServer).DeleteOldDataRetention(ctx, req.(*DeleteOldDataRetentionRequest))
+		return srv.(DataRetentionApiServer).PurgeDataRetention(ctx, req.(*PurgeDataRetentionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -270,29 +218,11 @@ func _DataRetentionApi_CompactDataRetention_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DataRetentionApi_SpringCleanDataRetention_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SpringCleanDataRetentionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DataRetentionApiServer).SpringCleanDataRetention(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DataRetentionApi_SpringCleanDataRetention_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataRetentionApiServer).SpringCleanDataRetention(ctx, req.(*SpringCleanDataRetentionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // DataRetentionApi_ServiceDesc is the grpc.ServiceDesc for DataRetentionApi service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var DataRetentionApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.data_retention.v1.DataRetentionApi",
+	ServiceName: "smartcore.bos.dataretention.v1.DataRetentionApi",
 	HandlerType: (*DataRetentionApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -300,20 +230,12 @@ var DataRetentionApi_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DataRetentionApi_GetDataRetention_Handler,
 		},
 		{
-			MethodName: "ClearDataRetention",
-			Handler:    _DataRetentionApi_ClearDataRetention_Handler,
-		},
-		{
-			MethodName: "DeleteOldDataRetention",
-			Handler:    _DataRetentionApi_DeleteOldDataRetention_Handler,
+			MethodName: "PurgeDataRetention",
+			Handler:    _DataRetentionApi_PurgeDataRetention_Handler,
 		},
 		{
 			MethodName: "CompactDataRetention",
 			Handler:    _DataRetentionApi_CompactDataRetention_Handler,
-		},
-		{
-			MethodName: "SpringCleanDataRetention",
-			Handler:    _DataRetentionApi_SpringCleanDataRetention_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -323,11 +245,11 @@ var DataRetentionApi_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "smartcore/bos/data_retention/v1/data_retention.proto",
+	Metadata: "smartcore/bos/dataretention/v1/data_retention.proto",
 }
 
 const (
-	DataRetentionInfo_DescribeDataRetention_FullMethodName = "/smartcore.bos.data_retention.v1.DataRetentionInfo/DescribeDataRetention"
+	DataRetentionInfo_DescribeDataRetention_FullMethodName = "/smartcore.bos.dataretention.v1.DataRetentionInfo/DescribeDataRetention"
 )
 
 // DataRetentionInfoClient is the client API for DataRetentionInfo service.
@@ -420,7 +342,7 @@ func _DataRetentionInfo_DescribeDataRetention_Handler(srv interface{}, ctx conte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var DataRetentionInfo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.bos.data_retention.v1.DataRetentionInfo",
+	ServiceName: "smartcore.bos.dataretention.v1.DataRetentionInfo",
 	HandlerType: (*DataRetentionInfoServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -429,5 +351,5 @@ var DataRetentionInfo_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "smartcore/bos/data_retention/v1/data_retention.proto",
+	Metadata: "smartcore/bos/dataretention/v1/data_retention.proto",
 }

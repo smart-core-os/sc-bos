@@ -2,14 +2,13 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.34.0
-// source: smartcore/bos/data_retention/v1/data_retention.proto
+// source: smartcore/bos/dataretention/v1/data_retention.proto
 
 package dataretentionpb
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
@@ -37,7 +36,7 @@ type DataRetention struct {
 
 func (x *DataRetention) Reset() {
 	*x = DataRetention{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[0]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -49,7 +48,7 @@ func (x *DataRetention) String() string {
 func (*DataRetention) ProtoMessage() {}
 
 func (x *DataRetention) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[0]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +61,7 @@ func (x *DataRetention) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataRetention.ProtoReflect.Descriptor instead.
 func (*DataRetention) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{0}
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *DataRetention) GetBytes() *DataRetentionBytes {
@@ -85,16 +84,14 @@ type DataRetentionBytes struct {
 	// Bytes currently in use.
 	Used *uint64 `protobuf:"varint,1,opt,name=used,proto3,oneof" json:"used,omitempty"`
 	// Total capacity in bytes. Omit if unlimited or unknown.
-	Capacity *uint64 `protobuf:"varint,2,opt,name=capacity,proto3,oneof" json:"capacity,omitempty"`
-	// Utilization as a percentage (0–100).
-	Utilization   *float32 `protobuf:"fixed32,3,opt,name=utilization,proto3,oneof" json:"utilization,omitempty"`
+	Capacity      *uint64 `protobuf:"varint,2,opt,name=capacity,proto3,oneof" json:"capacity,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DataRetentionBytes) Reset() {
 	*x = DataRetentionBytes{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[1]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -106,7 +103,7 @@ func (x *DataRetentionBytes) String() string {
 func (*DataRetentionBytes) ProtoMessage() {}
 
 func (x *DataRetentionBytes) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[1]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -119,7 +116,7 @@ func (x *DataRetentionBytes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataRetentionBytes.ProtoReflect.Descriptor instead.
 func (*DataRetentionBytes) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{1}
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *DataRetentionBytes) GetUsed() uint64 {
@@ -136,13 +133,6 @@ func (x *DataRetentionBytes) GetCapacity() uint64 {
 	return 0
 }
 
-func (x *DataRetentionBytes) GetUtilization() float32 {
-	if x != nil && x.Utilization != nil {
-		return *x.Utilization
-	}
-	return 0
-}
-
 // DataRetentionItems describes storage consumption measured in discrete items
 // (rows, records, files, log entries, etc.).
 type DataRetentionItems struct {
@@ -150,16 +140,14 @@ type DataRetentionItems struct {
 	// Number of items currently stored.
 	Used *uint64 `protobuf:"varint,1,opt,name=used,proto3,oneof" json:"used,omitempty"`
 	// Maximum item count. Omit if unlimited or unknown.
-	Capacity *uint64 `protobuf:"varint,2,opt,name=capacity,proto3,oneof" json:"capacity,omitempty"`
-	// Utilization as a percentage (0–100).
-	Utilization   *float32 `protobuf:"fixed32,3,opt,name=utilization,proto3,oneof" json:"utilization,omitempty"`
+	Capacity      *uint64 `protobuf:"varint,2,opt,name=capacity,proto3,oneof" json:"capacity,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DataRetentionItems) Reset() {
 	*x = DataRetentionItems{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[2]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -171,7 +159,7 @@ func (x *DataRetentionItems) String() string {
 func (*DataRetentionItems) ProtoMessage() {}
 
 func (x *DataRetentionItems) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[2]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -184,7 +172,7 @@ func (x *DataRetentionItems) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataRetentionItems.ProtoReflect.Descriptor instead.
 func (*DataRetentionItems) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{2}
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *DataRetentionItems) GetUsed() uint64 {
@@ -201,20 +189,13 @@ func (x *DataRetentionItems) GetCapacity() uint64 {
 	return 0
 }
 
-func (x *DataRetentionItems) GetUtilization() float32 {
-	if x != nil && x.Utilization != nil {
-		return *x.Utilization
-	}
-	return 0
-}
-
 // DataRetentionSupport describes the capabilities of a device implementing the data retention trait.
 type DataRetentionSupport struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	CanClear       bool                   `protobuf:"varint,1,opt,name=can_clear,json=canClear,proto3" json:"can_clear,omitempty"`
-	CanDeleteOld   bool                   `protobuf:"varint,2,opt,name=can_delete_old,json=canDeleteOld,proto3" json:"can_delete_old,omitempty"`
-	CanCompact     bool                   `protobuf:"varint,3,opt,name=can_compact,json=canCompact,proto3" json:"can_compact,omitempty"`
-	CanSpringClean bool                   `protobuf:"varint,4,opt,name=can_spring_clean,json=canSpringClean,proto3" json:"can_spring_clean,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	CanPurge bool                   `protobuf:"varint,1,opt,name=can_purge,json=canPurge,proto3" json:"can_purge,omitempty"`
+	// Field 2 reserved (was can_delete_old, merged into can_purge).
+	CanCompact bool `protobuf:"varint,3,opt,name=can_compact,json=canCompact,proto3" json:"can_compact,omitempty"`
+	// Field 4 reserved (was can_spring_clean, removed — clients call Purge then Compact).
 	// Singular name for the item unit when items is populated (e.g. "row", "record", "file").
 	ItemName      string `protobuf:"bytes,5,opt,name=item_name,json=itemName,proto3" json:"item_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -223,7 +204,7 @@ type DataRetentionSupport struct {
 
 func (x *DataRetentionSupport) Reset() {
 	*x = DataRetentionSupport{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[3]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -235,7 +216,7 @@ func (x *DataRetentionSupport) String() string {
 func (*DataRetentionSupport) ProtoMessage() {}
 
 func (x *DataRetentionSupport) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[3]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -248,19 +229,12 @@ func (x *DataRetentionSupport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataRetentionSupport.ProtoReflect.Descriptor instead.
 func (*DataRetentionSupport) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{3}
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *DataRetentionSupport) GetCanClear() bool {
+func (x *DataRetentionSupport) GetCanPurge() bool {
 	if x != nil {
-		return x.CanClear
-	}
-	return false
-}
-
-func (x *DataRetentionSupport) GetCanDeleteOld() bool {
-	if x != nil {
-		return x.CanDeleteOld
+		return x.CanPurge
 	}
 	return false
 }
@@ -268,13 +242,6 @@ func (x *DataRetentionSupport) GetCanDeleteOld() bool {
 func (x *DataRetentionSupport) GetCanCompact() bool {
 	if x != nil {
 		return x.CanCompact
-	}
-	return false
-}
-
-func (x *DataRetentionSupport) GetCanSpringClean() bool {
-	if x != nil {
-		return x.CanSpringClean
 	}
 	return false
 }
@@ -296,7 +263,7 @@ type GetDataRetentionRequest struct {
 
 func (x *GetDataRetentionRequest) Reset() {
 	*x = GetDataRetentionRequest{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[4]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -308,7 +275,7 @@ func (x *GetDataRetentionRequest) String() string {
 func (*GetDataRetentionRequest) ProtoMessage() {}
 
 func (x *GetDataRetentionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[4]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -321,7 +288,7 @@ func (x *GetDataRetentionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDataRetentionRequest.ProtoReflect.Descriptor instead.
 func (*GetDataRetentionRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{4}
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetDataRetentionRequest) GetName() string {
@@ -349,7 +316,7 @@ type PullDataRetentionRequest struct {
 
 func (x *PullDataRetentionRequest) Reset() {
 	*x = PullDataRetentionRequest{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[5]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -361,7 +328,7 @@ func (x *PullDataRetentionRequest) String() string {
 func (*PullDataRetentionRequest) ProtoMessage() {}
 
 func (x *PullDataRetentionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[5]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -374,7 +341,7 @@ func (x *PullDataRetentionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullDataRetentionRequest.ProtoReflect.Descriptor instead.
 func (*PullDataRetentionRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{5}
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PullDataRetentionRequest) GetName() string {
@@ -407,7 +374,7 @@ type PullDataRetentionResponse struct {
 
 func (x *PullDataRetentionResponse) Reset() {
 	*x = PullDataRetentionResponse{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[6]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -419,7 +386,7 @@ func (x *PullDataRetentionResponse) String() string {
 func (*PullDataRetentionResponse) ProtoMessage() {}
 
 func (x *PullDataRetentionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[6]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -432,7 +399,7 @@ func (x *PullDataRetentionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullDataRetentionResponse.ProtoReflect.Descriptor instead.
 func (*PullDataRetentionResponse) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{6}
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PullDataRetentionResponse) GetChanges() []*PullDataRetentionResponse_Change {
@@ -442,28 +409,30 @@ func (x *PullDataRetentionResponse) GetChanges() []*PullDataRetentionResponse_Ch
 	return nil
 }
 
-type ClearDataRetentionRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+type PurgeDataRetentionRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// If set, only records recorded before this time are removed. If absent, all records are removed.
+	Before        *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=before,proto3,oneof" json:"before,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ClearDataRetentionRequest) Reset() {
-	*x = ClearDataRetentionRequest{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[7]
+func (x *PurgeDataRetentionRequest) Reset() {
+	*x = PurgeDataRetentionRequest{}
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ClearDataRetentionRequest) String() string {
+func (x *PurgeDataRetentionRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ClearDataRetentionRequest) ProtoMessage() {}
+func (*PurgeDataRetentionRequest) ProtoMessage() {}
 
-func (x *ClearDataRetentionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[7]
+func (x *PurgeDataRetentionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -474,131 +443,26 @@ func (x *ClearDataRetentionRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ClearDataRetentionRequest.ProtoReflect.Descriptor instead.
-func (*ClearDataRetentionRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{7}
+// Deprecated: Use PurgeDataRetentionRequest.ProtoReflect.Descriptor instead.
+func (*PurgeDataRetentionRequest) Descriptor() ([]byte, []int) {
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ClearDataRetentionRequest) GetName() string {
+func (x *PurgeDataRetentionRequest) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-type ClearDataRetentionResponse struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	FreedItemCount *uint64                `protobuf:"varint,1,opt,name=freed_item_count,json=freedItemCount,proto3,oneof" json:"freed_item_count,omitempty"`
-	FreedByteCount *uint64                `protobuf:"varint,2,opt,name=freed_byte_count,json=freedByteCount,proto3,oneof" json:"freed_byte_count,omitempty"`
-	Message        string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *ClearDataRetentionResponse) Reset() {
-	*x = ClearDataRetentionResponse{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ClearDataRetentionResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ClearDataRetentionResponse) ProtoMessage() {}
-
-func (x *ClearDataRetentionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[8]
+func (x *PurgeDataRetentionRequest) GetBefore() *timestamppb.Timestamp {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ClearDataRetentionResponse.ProtoReflect.Descriptor instead.
-func (*ClearDataRetentionResponse) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *ClearDataRetentionResponse) GetFreedItemCount() uint64 {
-	if x != nil && x.FreedItemCount != nil {
-		return *x.FreedItemCount
-	}
-	return 0
-}
-
-func (x *ClearDataRetentionResponse) GetFreedByteCount() uint64 {
-	if x != nil && x.FreedByteCount != nil {
-		return *x.FreedByteCount
-	}
-	return 0
-}
-
-func (x *ClearDataRetentionResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-type DeleteOldDataRetentionRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Name            string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	RetentionPeriod *durationpb.Duration   `protobuf:"bytes,2,opt,name=retention_period,json=retentionPeriod,proto3" json:"retention_period,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *DeleteOldDataRetentionRequest) Reset() {
-	*x = DeleteOldDataRetentionRequest{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteOldDataRetentionRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteOldDataRetentionRequest) ProtoMessage() {}
-
-func (x *DeleteOldDataRetentionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteOldDataRetentionRequest.ProtoReflect.Descriptor instead.
-func (*DeleteOldDataRetentionRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *DeleteOldDataRetentionRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *DeleteOldDataRetentionRequest) GetRetentionPeriod() *durationpb.Duration {
-	if x != nil {
-		return x.RetentionPeriod
+		return x.Before
 	}
 	return nil
 }
 
-type DeleteOldDataRetentionResponse struct {
+type PurgeDataRetentionResponse struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	FreedItemCount *uint64                `protobuf:"varint,1,opt,name=freed_item_count,json=freedItemCount,proto3,oneof" json:"freed_item_count,omitempty"`
 	FreedByteCount *uint64                `protobuf:"varint,2,opt,name=freed_byte_count,json=freedByteCount,proto3,oneof" json:"freed_byte_count,omitempty"`
@@ -607,21 +471,21 @@ type DeleteOldDataRetentionResponse struct {
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *DeleteOldDataRetentionResponse) Reset() {
-	*x = DeleteOldDataRetentionResponse{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[10]
+func (x *PurgeDataRetentionResponse) Reset() {
+	*x = PurgeDataRetentionResponse{}
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteOldDataRetentionResponse) String() string {
+func (x *PurgeDataRetentionResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteOldDataRetentionResponse) ProtoMessage() {}
+func (*PurgeDataRetentionResponse) ProtoMessage() {}
 
-func (x *DeleteOldDataRetentionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[10]
+func (x *PurgeDataRetentionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -632,26 +496,26 @@ func (x *DeleteOldDataRetentionResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteOldDataRetentionResponse.ProtoReflect.Descriptor instead.
-func (*DeleteOldDataRetentionResponse) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{10}
+// Deprecated: Use PurgeDataRetentionResponse.ProtoReflect.Descriptor instead.
+func (*PurgeDataRetentionResponse) Descriptor() ([]byte, []int) {
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *DeleteOldDataRetentionResponse) GetFreedItemCount() uint64 {
+func (x *PurgeDataRetentionResponse) GetFreedItemCount() uint64 {
 	if x != nil && x.FreedItemCount != nil {
 		return *x.FreedItemCount
 	}
 	return 0
 }
 
-func (x *DeleteOldDataRetentionResponse) GetFreedByteCount() uint64 {
+func (x *PurgeDataRetentionResponse) GetFreedByteCount() uint64 {
 	if x != nil && x.FreedByteCount != nil {
 		return *x.FreedByteCount
 	}
 	return 0
 }
 
-func (x *DeleteOldDataRetentionResponse) GetMessage() string {
+func (x *PurgeDataRetentionResponse) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
@@ -667,7 +531,7 @@ type CompactDataRetentionRequest struct {
 
 func (x *CompactDataRetentionRequest) Reset() {
 	*x = CompactDataRetentionRequest{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[11]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -679,7 +543,7 @@ func (x *CompactDataRetentionRequest) String() string {
 func (*CompactDataRetentionRequest) ProtoMessage() {}
 
 func (x *CompactDataRetentionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[11]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -692,7 +556,7 @@ func (x *CompactDataRetentionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompactDataRetentionRequest.ProtoReflect.Descriptor instead.
 func (*CompactDataRetentionRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{11}
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CompactDataRetentionRequest) GetName() string {
@@ -712,7 +576,7 @@ type CompactDataRetentionResponse struct {
 
 func (x *CompactDataRetentionResponse) Reset() {
 	*x = CompactDataRetentionResponse{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[12]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -724,7 +588,7 @@ func (x *CompactDataRetentionResponse) String() string {
 func (*CompactDataRetentionResponse) ProtoMessage() {}
 
 func (x *CompactDataRetentionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[12]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -737,7 +601,7 @@ func (x *CompactDataRetentionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompactDataRetentionResponse.ProtoReflect.Descriptor instead.
 func (*CompactDataRetentionResponse) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{12}
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CompactDataRetentionResponse) GetFreedByteCount() uint64 {
@@ -754,118 +618,6 @@ func (x *CompactDataRetentionResponse) GetMessage() string {
 	return ""
 }
 
-type SpringCleanDataRetentionRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Name            string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	RetentionPeriod *durationpb.Duration   `protobuf:"bytes,2,opt,name=retention_period,json=retentionPeriod,proto3,oneof" json:"retention_period,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *SpringCleanDataRetentionRequest) Reset() {
-	*x = SpringCleanDataRetentionRequest{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SpringCleanDataRetentionRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SpringCleanDataRetentionRequest) ProtoMessage() {}
-
-func (x *SpringCleanDataRetentionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SpringCleanDataRetentionRequest.ProtoReflect.Descriptor instead.
-func (*SpringCleanDataRetentionRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *SpringCleanDataRetentionRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *SpringCleanDataRetentionRequest) GetRetentionPeriod() *durationpb.Duration {
-	if x != nil {
-		return x.RetentionPeriod
-	}
-	return nil
-}
-
-type SpringCleanDataRetentionResponse struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	FreedItemCount *uint64                `protobuf:"varint,1,opt,name=freed_item_count,json=freedItemCount,proto3,oneof" json:"freed_item_count,omitempty"`
-	FreedByteCount *uint64                `protobuf:"varint,2,opt,name=freed_byte_count,json=freedByteCount,proto3,oneof" json:"freed_byte_count,omitempty"`
-	Message        string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *SpringCleanDataRetentionResponse) Reset() {
-	*x = SpringCleanDataRetentionResponse{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SpringCleanDataRetentionResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SpringCleanDataRetentionResponse) ProtoMessage() {}
-
-func (x *SpringCleanDataRetentionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SpringCleanDataRetentionResponse.ProtoReflect.Descriptor instead.
-func (*SpringCleanDataRetentionResponse) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *SpringCleanDataRetentionResponse) GetFreedItemCount() uint64 {
-	if x != nil && x.FreedItemCount != nil {
-		return *x.FreedItemCount
-	}
-	return 0
-}
-
-func (x *SpringCleanDataRetentionResponse) GetFreedByteCount() uint64 {
-	if x != nil && x.FreedByteCount != nil {
-		return *x.FreedByteCount
-	}
-	return 0
-}
-
-func (x *SpringCleanDataRetentionResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
 type DescribeDataRetentionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -875,7 +627,7 @@ type DescribeDataRetentionRequest struct {
 
 func (x *DescribeDataRetentionRequest) Reset() {
 	*x = DescribeDataRetentionRequest{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[15]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -887,7 +639,7 @@ func (x *DescribeDataRetentionRequest) String() string {
 func (*DescribeDataRetentionRequest) ProtoMessage() {}
 
 func (x *DescribeDataRetentionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[15]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -900,7 +652,7 @@ func (x *DescribeDataRetentionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DescribeDataRetentionRequest.ProtoReflect.Descriptor instead.
 func (*DescribeDataRetentionRequest) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{15}
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DescribeDataRetentionRequest) GetName() string {
@@ -921,7 +673,7 @@ type PullDataRetentionResponse_Change struct {
 
 func (x *PullDataRetentionResponse_Change) Reset() {
 	*x = PullDataRetentionResponse_Change{}
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[16]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -933,7 +685,7 @@ func (x *PullDataRetentionResponse_Change) String() string {
 func (*PullDataRetentionResponse_Change) ProtoMessage() {}
 
 func (x *PullDataRetentionResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[16]
+	mi := &file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -946,7 +698,7 @@ func (x *PullDataRetentionResponse_Change) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullDataRetentionResponse_Change.ProtoReflect.Descriptor instead.
 func (*PullDataRetentionResponse_Change) Descriptor() ([]byte, []int) {
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP(), []int{6, 0}
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP(), []int{6, 0}
 }
 
 func (x *PullDataRetentionResponse_Change) GetName() string {
@@ -970,34 +722,28 @@ func (x *PullDataRetentionResponse_Change) GetDataRetention() *DataRetention {
 	return nil
 }
 
-var File_smartcore_bos_data_retention_v1_data_retention_proto protoreflect.FileDescriptor
+var File_smartcore_bos_dataretention_v1_data_retention_proto protoreflect.FileDescriptor
 
-const file_smartcore_bos_data_retention_v1_data_retention_proto_rawDesc = "" +
+const file_smartcore_bos_dataretention_v1_data_retention_proto_rawDesc = "" +
 	"\n" +
-	"4smartcore/bos/data_retention/v1/data_retention.proto\x12\x1fsmartcore.bos.data_retention.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa5\x01\n" +
-	"\rDataRetention\x12I\n" +
-	"\x05bytes\x18\x01 \x01(\v23.smartcore.bos.data_retention.v1.DataRetentionBytesR\x05bytes\x12I\n" +
-	"\x05items\x18\x02 \x01(\v23.smartcore.bos.data_retention.v1.DataRetentionItemsR\x05items\"\x9b\x01\n" +
+	"3smartcore/bos/dataretention/v1/data_retention.proto\x12\x1esmartcore.bos.dataretention.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa3\x01\n" +
+	"\rDataRetention\x12H\n" +
+	"\x05bytes\x18\x01 \x01(\v22.smartcore.bos.dataretention.v1.DataRetentionBytesR\x05bytes\x12H\n" +
+	"\x05items\x18\x02 \x01(\v22.smartcore.bos.dataretention.v1.DataRetentionItemsR\x05items\"d\n" +
 	"\x12DataRetentionBytes\x12\x17\n" +
 	"\x04used\x18\x01 \x01(\x04H\x00R\x04used\x88\x01\x01\x12\x1f\n" +
-	"\bcapacity\x18\x02 \x01(\x04H\x01R\bcapacity\x88\x01\x01\x12%\n" +
-	"\vutilization\x18\x03 \x01(\x02H\x02R\vutilization\x88\x01\x01B\a\n" +
+	"\bcapacity\x18\x02 \x01(\x04H\x01R\bcapacity\x88\x01\x01B\a\n" +
 	"\x05_usedB\v\n" +
-	"\t_capacityB\x0e\n" +
-	"\f_utilization\"\x9b\x01\n" +
+	"\t_capacity\"d\n" +
 	"\x12DataRetentionItems\x12\x17\n" +
 	"\x04used\x18\x01 \x01(\x04H\x00R\x04used\x88\x01\x01\x12\x1f\n" +
-	"\bcapacity\x18\x02 \x01(\x04H\x01R\bcapacity\x88\x01\x01\x12%\n" +
-	"\vutilization\x18\x03 \x01(\x02H\x02R\vutilization\x88\x01\x01B\a\n" +
+	"\bcapacity\x18\x02 \x01(\x04H\x01R\bcapacity\x88\x01\x01B\a\n" +
 	"\x05_usedB\v\n" +
-	"\t_capacityB\x0e\n" +
-	"\f_utilization\"\xc1\x01\n" +
+	"\t_capacity\"q\n" +
 	"\x14DataRetentionSupport\x12\x1b\n" +
-	"\tcan_clear\x18\x01 \x01(\bR\bcanClear\x12$\n" +
-	"\x0ecan_delete_old\x18\x02 \x01(\bR\fcanDeleteOld\x12\x1f\n" +
+	"\tcan_purge\x18\x01 \x01(\bR\bcanPurge\x12\x1f\n" +
 	"\vcan_compact\x18\x03 \x01(\bR\n" +
-	"canCompact\x12(\n" +
-	"\x10can_spring_clean\x18\x04 \x01(\bR\x0ecanSpringClean\x12\x1b\n" +
+	"canCompact\x12\x1b\n" +
 	"\titem_name\x18\x05 \x01(\tR\bitemName\"f\n" +
 	"\x17GetDataRetentionRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
@@ -1005,26 +751,19 @@ const file_smartcore_bos_data_retention_v1_data_retention_proto_rawDesc = "" +
 	"\x18PullDataRetentionRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xab\x02\n" +
-	"\x19PullDataRetentionResponse\x12[\n" +
-	"\achanges\x18\x01 \x03(\v2A.smartcore.bos.data_retention.v1.PullDataRetentionResponse.ChangeR\achanges\x1a\xb0\x01\n" +
+	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xa9\x02\n" +
+	"\x19PullDataRetentionResponse\x12Z\n" +
+	"\achanges\x18\x01 \x03(\v2@.smartcore.bos.dataretention.v1.PullDataRetentionResponse.ChangeR\achanges\x1a\xaf\x01\n" +
 	"\x06Change\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\x12U\n" +
-	"\x0edata_retention\x18\x03 \x01(\v2..smartcore.bos.data_retention.v1.DataRetentionR\rdataRetention\"/\n" +
-	"\x19ClearDataRetentionRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"\xbe\x01\n" +
-	"\x1aClearDataRetentionResponse\x12-\n" +
-	"\x10freed_item_count\x18\x01 \x01(\x04H\x00R\x0efreedItemCount\x88\x01\x01\x12-\n" +
-	"\x10freed_byte_count\x18\x02 \x01(\x04H\x01R\x0efreedByteCount\x88\x01\x01\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessageB\x13\n" +
-	"\x11_freed_item_countB\x13\n" +
-	"\x11_freed_byte_count\"y\n" +
-	"\x1dDeleteOldDataRetentionRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12D\n" +
-	"\x10retention_period\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x0fretentionPeriod\"\xc2\x01\n" +
-	"\x1eDeleteOldDataRetentionResponse\x12-\n" +
+	"changeTime\x12T\n" +
+	"\x0edata_retention\x18\x03 \x01(\v2-.smartcore.bos.dataretention.v1.DataRetentionR\rdataRetention\"s\n" +
+	"\x19PurgeDataRetentionRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
+	"\x06before\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x06before\x88\x01\x01B\t\n" +
+	"\a_before\"\xbe\x01\n" +
+	"\x1aPurgeDataRetentionResponse\x12-\n" +
 	"\x10freed_item_count\x18\x01 \x01(\x04H\x00R\x0efreedItemCount\x88\x01\x01\x12-\n" +
 	"\x10freed_byte_count\x18\x02 \x01(\x04H\x01R\x0efreedByteCount\x88\x01\x01\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessageB\x13\n" +
@@ -1035,122 +774,98 @@ const file_smartcore_bos_data_retention_v1_data_retention_proto_rawDesc = "" +
 	"\x1cCompactDataRetentionResponse\x12-\n" +
 	"\x10freed_byte_count\x18\x01 \x01(\x04H\x00R\x0efreedByteCount\x88\x01\x01\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessageB\x13\n" +
-	"\x11_freed_byte_count\"\x95\x01\n" +
-	"\x1fSpringCleanDataRetentionRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12I\n" +
-	"\x10retention_period\x18\x02 \x01(\v2\x19.google.protobuf.DurationH\x00R\x0fretentionPeriod\x88\x01\x01B\x13\n" +
-	"\x11_retention_period\"\xc4\x01\n" +
-	" SpringCleanDataRetentionResponse\x12-\n" +
-	"\x10freed_item_count\x18\x01 \x01(\x04H\x00R\x0efreedItemCount\x88\x01\x01\x12-\n" +
-	"\x10freed_byte_count\x18\x02 \x01(\x04H\x01R\x0efreedByteCount\x88\x01\x01\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessageB\x13\n" +
-	"\x11_freed_item_countB\x13\n" +
 	"\x11_freed_byte_count\"2\n" +
 	"\x1cDescribeDataRetentionRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name2\x83\a\n" +
-	"\x10DataRetentionApi\x12|\n" +
-	"\x10GetDataRetention\x128.smartcore.bos.data_retention.v1.GetDataRetentionRequest\x1a..smartcore.bos.data_retention.v1.DataRetention\x12\x8c\x01\n" +
-	"\x11PullDataRetention\x129.smartcore.bos.data_retention.v1.PullDataRetentionRequest\x1a:.smartcore.bos.data_retention.v1.PullDataRetentionResponse0\x01\x12\x8d\x01\n" +
-	"\x12ClearDataRetention\x12:.smartcore.bos.data_retention.v1.ClearDataRetentionRequest\x1a;.smartcore.bos.data_retention.v1.ClearDataRetentionResponse\x12\x99\x01\n" +
-	"\x16DeleteOldDataRetention\x12>.smartcore.bos.data_retention.v1.DeleteOldDataRetentionRequest\x1a?.smartcore.bos.data_retention.v1.DeleteOldDataRetentionResponse\x12\x93\x01\n" +
-	"\x14CompactDataRetention\x12<.smartcore.bos.data_retention.v1.CompactDataRetentionRequest\x1a=.smartcore.bos.data_retention.v1.CompactDataRetentionResponse\x12\x9f\x01\n" +
-	"\x18SpringCleanDataRetention\x12@.smartcore.bos.data_retention.v1.SpringCleanDataRetentionRequest\x1aA.smartcore.bos.data_retention.v1.SpringCleanDataRetentionResponse2\xa3\x01\n" +
-	"\x11DataRetentionInfo\x12\x8d\x01\n" +
-	"\x15DescribeDataRetention\x12=.smartcore.bos.data_retention.v1.DescribeDataRetentionRequest\x1a5.smartcore.bos.data_retention.v1.DataRetentionSupportB;Z9github.com/smart-core-os/sc-bos/pkg/proto/dataretentionpbb\x06proto3"
+	"\x04name\x18\x01 \x01(\tR\x04name2\xbd\x04\n" +
+	"\x10DataRetentionApi\x12z\n" +
+	"\x10GetDataRetention\x127.smartcore.bos.dataretention.v1.GetDataRetentionRequest\x1a-.smartcore.bos.dataretention.v1.DataRetention\x12\x8a\x01\n" +
+	"\x11PullDataRetention\x128.smartcore.bos.dataretention.v1.PullDataRetentionRequest\x1a9.smartcore.bos.dataretention.v1.PullDataRetentionResponse0\x01\x12\x8b\x01\n" +
+	"\x12PurgeDataRetention\x129.smartcore.bos.dataretention.v1.PurgeDataRetentionRequest\x1a:.smartcore.bos.dataretention.v1.PurgeDataRetentionResponse\x12\x91\x01\n" +
+	"\x14CompactDataRetention\x12;.smartcore.bos.dataretention.v1.CompactDataRetentionRequest\x1a<.smartcore.bos.dataretention.v1.CompactDataRetentionResponse2\xa1\x01\n" +
+	"\x11DataRetentionInfo\x12\x8b\x01\n" +
+	"\x15DescribeDataRetention\x12<.smartcore.bos.dataretention.v1.DescribeDataRetentionRequest\x1a4.smartcore.bos.dataretention.v1.DataRetentionSupportB;Z9github.com/smart-core-os/sc-bos/pkg/proto/dataretentionpbb\x06proto3"
 
 var (
-	file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescOnce sync.Once
-	file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescData []byte
+	file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescOnce sync.Once
+	file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescData []byte
 )
 
-func file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescGZIP() []byte {
-	file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescOnce.Do(func() {
-		file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_data_retention_v1_data_retention_proto_rawDesc), len(file_smartcore_bos_data_retention_v1_data_retention_proto_rawDesc)))
+func file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescGZIP() []byte {
+	file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescOnce.Do(func() {
+		file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_smartcore_bos_dataretention_v1_data_retention_proto_rawDesc), len(file_smartcore_bos_dataretention_v1_data_retention_proto_rawDesc)))
 	})
-	return file_smartcore_bos_data_retention_v1_data_retention_proto_rawDescData
+	return file_smartcore_bos_dataretention_v1_data_retention_proto_rawDescData
 }
 
-var file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
-var file_smartcore_bos_data_retention_v1_data_retention_proto_goTypes = []any{
-	(*DataRetention)(nil),                    // 0: smartcore.bos.data_retention.v1.DataRetention
-	(*DataRetentionBytes)(nil),               // 1: smartcore.bos.data_retention.v1.DataRetentionBytes
-	(*DataRetentionItems)(nil),               // 2: smartcore.bos.data_retention.v1.DataRetentionItems
-	(*DataRetentionSupport)(nil),             // 3: smartcore.bos.data_retention.v1.DataRetentionSupport
-	(*GetDataRetentionRequest)(nil),          // 4: smartcore.bos.data_retention.v1.GetDataRetentionRequest
-	(*PullDataRetentionRequest)(nil),         // 5: smartcore.bos.data_retention.v1.PullDataRetentionRequest
-	(*PullDataRetentionResponse)(nil),        // 6: smartcore.bos.data_retention.v1.PullDataRetentionResponse
-	(*ClearDataRetentionRequest)(nil),        // 7: smartcore.bos.data_retention.v1.ClearDataRetentionRequest
-	(*ClearDataRetentionResponse)(nil),       // 8: smartcore.bos.data_retention.v1.ClearDataRetentionResponse
-	(*DeleteOldDataRetentionRequest)(nil),    // 9: smartcore.bos.data_retention.v1.DeleteOldDataRetentionRequest
-	(*DeleteOldDataRetentionResponse)(nil),   // 10: smartcore.bos.data_retention.v1.DeleteOldDataRetentionResponse
-	(*CompactDataRetentionRequest)(nil),      // 11: smartcore.bos.data_retention.v1.CompactDataRetentionRequest
-	(*CompactDataRetentionResponse)(nil),     // 12: smartcore.bos.data_retention.v1.CompactDataRetentionResponse
-	(*SpringCleanDataRetentionRequest)(nil),  // 13: smartcore.bos.data_retention.v1.SpringCleanDataRetentionRequest
-	(*SpringCleanDataRetentionResponse)(nil), // 14: smartcore.bos.data_retention.v1.SpringCleanDataRetentionResponse
-	(*DescribeDataRetentionRequest)(nil),     // 15: smartcore.bos.data_retention.v1.DescribeDataRetentionRequest
-	(*PullDataRetentionResponse_Change)(nil), // 16: smartcore.bos.data_retention.v1.PullDataRetentionResponse.Change
-	(*fieldmaskpb.FieldMask)(nil),            // 17: google.protobuf.FieldMask
-	(*durationpb.Duration)(nil),              // 18: google.protobuf.Duration
-	(*timestamppb.Timestamp)(nil),            // 19: google.protobuf.Timestamp
+var file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_smartcore_bos_dataretention_v1_data_retention_proto_goTypes = []any{
+	(*DataRetention)(nil),                    // 0: smartcore.bos.dataretention.v1.DataRetention
+	(*DataRetentionBytes)(nil),               // 1: smartcore.bos.dataretention.v1.DataRetentionBytes
+	(*DataRetentionItems)(nil),               // 2: smartcore.bos.dataretention.v1.DataRetentionItems
+	(*DataRetentionSupport)(nil),             // 3: smartcore.bos.dataretention.v1.DataRetentionSupport
+	(*GetDataRetentionRequest)(nil),          // 4: smartcore.bos.dataretention.v1.GetDataRetentionRequest
+	(*PullDataRetentionRequest)(nil),         // 5: smartcore.bos.dataretention.v1.PullDataRetentionRequest
+	(*PullDataRetentionResponse)(nil),        // 6: smartcore.bos.dataretention.v1.PullDataRetentionResponse
+	(*PurgeDataRetentionRequest)(nil),        // 7: smartcore.bos.dataretention.v1.PurgeDataRetentionRequest
+	(*PurgeDataRetentionResponse)(nil),       // 8: smartcore.bos.dataretention.v1.PurgeDataRetentionResponse
+	(*CompactDataRetentionRequest)(nil),      // 9: smartcore.bos.dataretention.v1.CompactDataRetentionRequest
+	(*CompactDataRetentionResponse)(nil),     // 10: smartcore.bos.dataretention.v1.CompactDataRetentionResponse
+	(*DescribeDataRetentionRequest)(nil),     // 11: smartcore.bos.dataretention.v1.DescribeDataRetentionRequest
+	(*PullDataRetentionResponse_Change)(nil), // 12: smartcore.bos.dataretention.v1.PullDataRetentionResponse.Change
+	(*fieldmaskpb.FieldMask)(nil),            // 13: google.protobuf.FieldMask
+	(*timestamppb.Timestamp)(nil),            // 14: google.protobuf.Timestamp
 }
-var file_smartcore_bos_data_retention_v1_data_retention_proto_depIdxs = []int32{
-	1,  // 0: smartcore.bos.data_retention.v1.DataRetention.bytes:type_name -> smartcore.bos.data_retention.v1.DataRetentionBytes
-	2,  // 1: smartcore.bos.data_retention.v1.DataRetention.items:type_name -> smartcore.bos.data_retention.v1.DataRetentionItems
-	17, // 2: smartcore.bos.data_retention.v1.GetDataRetentionRequest.read_mask:type_name -> google.protobuf.FieldMask
-	17, // 3: smartcore.bos.data_retention.v1.PullDataRetentionRequest.read_mask:type_name -> google.protobuf.FieldMask
-	16, // 4: smartcore.bos.data_retention.v1.PullDataRetentionResponse.changes:type_name -> smartcore.bos.data_retention.v1.PullDataRetentionResponse.Change
-	18, // 5: smartcore.bos.data_retention.v1.DeleteOldDataRetentionRequest.retention_period:type_name -> google.protobuf.Duration
-	18, // 6: smartcore.bos.data_retention.v1.SpringCleanDataRetentionRequest.retention_period:type_name -> google.protobuf.Duration
-	19, // 7: smartcore.bos.data_retention.v1.PullDataRetentionResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	0,  // 8: smartcore.bos.data_retention.v1.PullDataRetentionResponse.Change.data_retention:type_name -> smartcore.bos.data_retention.v1.DataRetention
-	4,  // 9: smartcore.bos.data_retention.v1.DataRetentionApi.GetDataRetention:input_type -> smartcore.bos.data_retention.v1.GetDataRetentionRequest
-	5,  // 10: smartcore.bos.data_retention.v1.DataRetentionApi.PullDataRetention:input_type -> smartcore.bos.data_retention.v1.PullDataRetentionRequest
-	7,  // 11: smartcore.bos.data_retention.v1.DataRetentionApi.ClearDataRetention:input_type -> smartcore.bos.data_retention.v1.ClearDataRetentionRequest
-	9,  // 12: smartcore.bos.data_retention.v1.DataRetentionApi.DeleteOldDataRetention:input_type -> smartcore.bos.data_retention.v1.DeleteOldDataRetentionRequest
-	11, // 13: smartcore.bos.data_retention.v1.DataRetentionApi.CompactDataRetention:input_type -> smartcore.bos.data_retention.v1.CompactDataRetentionRequest
-	13, // 14: smartcore.bos.data_retention.v1.DataRetentionApi.SpringCleanDataRetention:input_type -> smartcore.bos.data_retention.v1.SpringCleanDataRetentionRequest
-	15, // 15: smartcore.bos.data_retention.v1.DataRetentionInfo.DescribeDataRetention:input_type -> smartcore.bos.data_retention.v1.DescribeDataRetentionRequest
-	0,  // 16: smartcore.bos.data_retention.v1.DataRetentionApi.GetDataRetention:output_type -> smartcore.bos.data_retention.v1.DataRetention
-	6,  // 17: smartcore.bos.data_retention.v1.DataRetentionApi.PullDataRetention:output_type -> smartcore.bos.data_retention.v1.PullDataRetentionResponse
-	8,  // 18: smartcore.bos.data_retention.v1.DataRetentionApi.ClearDataRetention:output_type -> smartcore.bos.data_retention.v1.ClearDataRetentionResponse
-	10, // 19: smartcore.bos.data_retention.v1.DataRetentionApi.DeleteOldDataRetention:output_type -> smartcore.bos.data_retention.v1.DeleteOldDataRetentionResponse
-	12, // 20: smartcore.bos.data_retention.v1.DataRetentionApi.CompactDataRetention:output_type -> smartcore.bos.data_retention.v1.CompactDataRetentionResponse
-	14, // 21: smartcore.bos.data_retention.v1.DataRetentionApi.SpringCleanDataRetention:output_type -> smartcore.bos.data_retention.v1.SpringCleanDataRetentionResponse
-	3,  // 22: smartcore.bos.data_retention.v1.DataRetentionInfo.DescribeDataRetention:output_type -> smartcore.bos.data_retention.v1.DataRetentionSupport
-	16, // [16:23] is the sub-list for method output_type
-	9,  // [9:16] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+var file_smartcore_bos_dataretention_v1_data_retention_proto_depIdxs = []int32{
+	1,  // 0: smartcore.bos.dataretention.v1.DataRetention.bytes:type_name -> smartcore.bos.dataretention.v1.DataRetentionBytes
+	2,  // 1: smartcore.bos.dataretention.v1.DataRetention.items:type_name -> smartcore.bos.dataretention.v1.DataRetentionItems
+	13, // 2: smartcore.bos.dataretention.v1.GetDataRetentionRequest.read_mask:type_name -> google.protobuf.FieldMask
+	13, // 3: smartcore.bos.dataretention.v1.PullDataRetentionRequest.read_mask:type_name -> google.protobuf.FieldMask
+	12, // 4: smartcore.bos.dataretention.v1.PullDataRetentionResponse.changes:type_name -> smartcore.bos.dataretention.v1.PullDataRetentionResponse.Change
+	14, // 5: smartcore.bos.dataretention.v1.PurgeDataRetentionRequest.before:type_name -> google.protobuf.Timestamp
+	14, // 6: smartcore.bos.dataretention.v1.PullDataRetentionResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	0,  // 7: smartcore.bos.dataretention.v1.PullDataRetentionResponse.Change.data_retention:type_name -> smartcore.bos.dataretention.v1.DataRetention
+	4,  // 8: smartcore.bos.dataretention.v1.DataRetentionApi.GetDataRetention:input_type -> smartcore.bos.dataretention.v1.GetDataRetentionRequest
+	5,  // 9: smartcore.bos.dataretention.v1.DataRetentionApi.PullDataRetention:input_type -> smartcore.bos.dataretention.v1.PullDataRetentionRequest
+	7,  // 10: smartcore.bos.dataretention.v1.DataRetentionApi.PurgeDataRetention:input_type -> smartcore.bos.dataretention.v1.PurgeDataRetentionRequest
+	9,  // 11: smartcore.bos.dataretention.v1.DataRetentionApi.CompactDataRetention:input_type -> smartcore.bos.dataretention.v1.CompactDataRetentionRequest
+	11, // 12: smartcore.bos.dataretention.v1.DataRetentionInfo.DescribeDataRetention:input_type -> smartcore.bos.dataretention.v1.DescribeDataRetentionRequest
+	0,  // 13: smartcore.bos.dataretention.v1.DataRetentionApi.GetDataRetention:output_type -> smartcore.bos.dataretention.v1.DataRetention
+	6,  // 14: smartcore.bos.dataretention.v1.DataRetentionApi.PullDataRetention:output_type -> smartcore.bos.dataretention.v1.PullDataRetentionResponse
+	8,  // 15: smartcore.bos.dataretention.v1.DataRetentionApi.PurgeDataRetention:output_type -> smartcore.bos.dataretention.v1.PurgeDataRetentionResponse
+	10, // 16: smartcore.bos.dataretention.v1.DataRetentionApi.CompactDataRetention:output_type -> smartcore.bos.dataretention.v1.CompactDataRetentionResponse
+	3,  // 17: smartcore.bos.dataretention.v1.DataRetentionInfo.DescribeDataRetention:output_type -> smartcore.bos.dataretention.v1.DataRetentionSupport
+	13, // [13:18] is the sub-list for method output_type
+	8,  // [8:13] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
-func init() { file_smartcore_bos_data_retention_v1_data_retention_proto_init() }
-func file_smartcore_bos_data_retention_v1_data_retention_proto_init() {
-	if File_smartcore_bos_data_retention_v1_data_retention_proto != nil {
+func init() { file_smartcore_bos_dataretention_v1_data_retention_proto_init() }
+func file_smartcore_bos_dataretention_v1_data_retention_proto_init() {
+	if File_smartcore_bos_dataretention_v1_data_retention_proto != nil {
 		return
 	}
-	file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[1].OneofWrappers = []any{}
-	file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[2].OneofWrappers = []any{}
-	file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[8].OneofWrappers = []any{}
-	file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[10].OneofWrappers = []any{}
-	file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[12].OneofWrappers = []any{}
-	file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[13].OneofWrappers = []any{}
-	file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes[14].OneofWrappers = []any{}
+	file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[1].OneofWrappers = []any{}
+	file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[2].OneofWrappers = []any{}
+	file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[7].OneofWrappers = []any{}
+	file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[8].OneofWrappers = []any{}
+	file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes[10].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_data_retention_v1_data_retention_proto_rawDesc), len(file_smartcore_bos_data_retention_v1_data_retention_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_dataretention_v1_data_retention_proto_rawDesc), len(file_smartcore_bos_dataretention_v1_data_retention_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_smartcore_bos_data_retention_v1_data_retention_proto_goTypes,
-		DependencyIndexes: file_smartcore_bos_data_retention_v1_data_retention_proto_depIdxs,
-		MessageInfos:      file_smartcore_bos_data_retention_v1_data_retention_proto_msgTypes,
+		GoTypes:           file_smartcore_bos_dataretention_v1_data_retention_proto_goTypes,
+		DependencyIndexes: file_smartcore_bos_dataretention_v1_data_retention_proto_depIdxs,
+		MessageInfos:      file_smartcore_bos_dataretention_v1_data_retention_proto_msgTypes,
 	}.Build()
-	File_smartcore_bos_data_retention_v1_data_retention_proto = out.File
-	file_smartcore_bos_data_retention_v1_data_retention_proto_goTypes = nil
-	file_smartcore_bos_data_retention_v1_data_retention_proto_depIdxs = nil
+	File_smartcore_bos_dataretention_v1_data_retention_proto = out.File
+	file_smartcore_bos_dataretention_v1_data_retention_proto_goTypes = nil
+	file_smartcore_bos_dataretention_v1_data_retention_proto_depIdxs = nil
 }

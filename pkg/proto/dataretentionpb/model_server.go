@@ -12,29 +12,22 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
-// ClearHandler is called by ModelServer to clear all records from the data retention resource.
-type ClearHandler func(ctx context.Context, req *ClearDataRetentionRequest) (*ClearDataRetentionResponse, error)
-
-// DeleteOldHandler is called by ModelServer to delete records older than the given retention period.
-type DeleteOldHandler func(ctx context.Context, req *DeleteOldDataRetentionRequest) (*DeleteOldDataRetentionResponse, error)
+// PurgeHandler is called by ModelServer to delete stored data.
+// If req.Before is nil, all records are removed; otherwise only records older than req.Before.
+type PurgeHandler func(ctx context.Context, req *PurgeDataRetentionRequest) (*PurgeDataRetentionResponse, error)
 
 // CompactHandler is called by ModelServer to compact/optimise storage.
 type CompactHandler func(ctx context.Context, req *CompactDataRetentionRequest) (*CompactDataRetentionResponse, error)
-
-// SpringCleanHandler is called by ModelServer to delete old records and compact storage in one operation.
-type SpringCleanHandler func(ctx context.Context, req *SpringCleanDataRetentionRequest) (*SpringCleanDataRetentionResponse, error)
 
 // ModelServer implements DataRetentionApiServer and DataRetentionInfoServer backed by a Model.
 type ModelServer struct {
 	UnimplementedDataRetentionApiServer
 	UnimplementedDataRetentionInfoServer
 
-	model              *Model
-	clearHandler       ClearHandler
-	deleteOldHandler   DeleteOldHandler
-	compactHandler     CompactHandler
-	springCleanHandler SpringCleanHandler
-	support            *DataRetentionSupport
+	model          *Model
+	purgeHandler   PurgeHandler
+	compactHandler CompactHandler
+	support        *DataRetentionSupport
 
 	subscribers atomic.Int32
 }
@@ -52,24 +45,14 @@ func NewModelServer(model *Model, opts ...ModelServerOption) *ModelServer {
 // ModelServerOption is a functional option for NewModelServer.
 type ModelServerOption func(*ModelServer)
 
-// WithClearHandler sets the handler invoked by ClearDataRetention.
-func WithClearHandler(h ClearHandler) ModelServerOption {
-	return func(s *ModelServer) { s.clearHandler = h }
-}
-
-// WithDeleteOldHandler sets the handler invoked by DeleteOldDataRetention.
-func WithDeleteOldHandler(h DeleteOldHandler) ModelServerOption {
-	return func(s *ModelServer) { s.deleteOldHandler = h }
+// WithPurgeHandler sets the handler invoked by PurgeDataRetention.
+func WithPurgeHandler(h PurgeHandler) ModelServerOption {
+	return func(s *ModelServer) { s.purgeHandler = h }
 }
 
 // WithCompactHandler sets the handler invoked by CompactDataRetention.
 func WithCompactHandler(h CompactHandler) ModelServerOption {
 	return func(s *ModelServer) { s.compactHandler = h }
-}
-
-// WithSpringCleanHandler sets the handler invoked by SpringCleanDataRetention.
-func WithSpringCleanHandler(h SpringCleanHandler) ModelServerOption {
-	return func(s *ModelServer) { s.springCleanHandler = h }
 }
 
 // WithDataRetentionSupport sets the DataRetentionSupport returned by DescribeDataRetention.
@@ -112,20 +95,12 @@ func (s *ModelServer) PullDataRetention(req *PullDataRetentionRequest, server Da
 	return nil
 }
 
-// ClearDataRetention implements DataRetentionApiServer.
-func (s *ModelServer) ClearDataRetention(ctx context.Context, req *ClearDataRetentionRequest) (*ClearDataRetentionResponse, error) {
-	if s.clearHandler == nil {
-		return nil, status.Error(codes.Unimplemented, "ClearDataRetention not supported")
+// PurgeDataRetention implements DataRetentionApiServer.
+func (s *ModelServer) PurgeDataRetention(ctx context.Context, req *PurgeDataRetentionRequest) (*PurgeDataRetentionResponse, error) {
+	if s.purgeHandler == nil {
+		return nil, status.Error(codes.Unimplemented, "PurgeDataRetention not supported")
 	}
-	return s.clearHandler(ctx, req)
-}
-
-// DeleteOldDataRetention implements DataRetentionApiServer.
-func (s *ModelServer) DeleteOldDataRetention(ctx context.Context, req *DeleteOldDataRetentionRequest) (*DeleteOldDataRetentionResponse, error) {
-	if s.deleteOldHandler == nil {
-		return nil, status.Error(codes.Unimplemented, "DeleteOldDataRetention not supported")
-	}
-	return s.deleteOldHandler(ctx, req)
+	return s.purgeHandler(ctx, req)
 }
 
 // CompactDataRetention implements DataRetentionApiServer.
@@ -134,14 +109,6 @@ func (s *ModelServer) CompactDataRetention(ctx context.Context, req *CompactData
 		return nil, status.Error(codes.Unimplemented, "CompactDataRetention not supported")
 	}
 	return s.compactHandler(ctx, req)
-}
-
-// SpringCleanDataRetention implements DataRetentionApiServer.
-func (s *ModelServer) SpringCleanDataRetention(ctx context.Context, req *SpringCleanDataRetentionRequest) (*SpringCleanDataRetentionResponse, error) {
-	if s.springCleanHandler == nil {
-		return nil, status.Error(codes.Unimplemented, "SpringCleanDataRetention not supported")
-	}
-	return s.springCleanHandler(ctx, req)
 }
 
 // DescribeDataRetention implements DataRetentionInfoServer.

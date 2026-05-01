@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -39,12 +40,10 @@ func startStoresDataRetentionTraits(ctx context.Context, n *node.Node, nodeName 
 func announceSqliteDataRetentionTraits(ctx context.Context, n *node.Node, nodeName string, s *stores.Stores, dataDir string, logger *zap.Logger) node.Undo {
 	model := dataretentionpb.NewModel()
 	server := dataretentionpb.NewModelServer(model,
-		dataretentionpb.WithClearHandler(sqliteClearHandler(s)),
-		dataretentionpb.WithDeleteOldHandler(sqliteDeleteOldHandler(s)),
+		dataretentionpb.WithPurgeHandler(sqlitePurgeHandler(s)),
 		dataretentionpb.WithDataRetentionSupport(&dataretentionpb.DataRetentionSupport{
-			CanClear:     true,
-			CanDeleteOld: true,
-			ItemName:     "record",
+			CanPurge: true,
+			ItemName: "record",
 		}),
 	)
 
@@ -92,9 +91,8 @@ func updateSqliteDataRetentionModel(ctx context.Context, s *stores.Stores, model
 	usedItems := uint64(count)
 
 	bytesMsg := &dataretentionpb.DataRetentionBytes{Used: &used}
-	if cap, util, ok := sqliteDiskCapacity(dataDir, used); ok {
+	if cap, _, ok := sqliteDiskCapacity(dataDir, used); ok {
 		bytesMsg.Capacity = &cap
-		bytesMsg.Utilization = &util
 	}
 
 	_, _ = model.SetDataRetention(&dataretentionpb.DataRetention{
@@ -103,57 +101,40 @@ func updateSqliteDataRetentionModel(ctx context.Context, s *stores.Stores, model
 	})
 }
 
-func sqliteClearHandler(s *stores.Stores) dataretentionpb.ClearHandler {
-	return func(ctx context.Context, _ *dataretentionpb.ClearDataRetentionRequest) (*dataretentionpb.ClearDataRetentionResponse, error) {
+// sqlitePurgeHandler deletes stored history records.
+// If req.Before is nil, all records are removed; otherwise only records older than req.Before.
+func sqlitePurgeHandler(s *stores.Stores) dataretentionpb.PurgeHandler {
+	return func(ctx context.Context, req *dataretentionpb.PurgeDataRetentionRequest) (*dataretentionpb.PurgeDataRetentionResponse, error) {
 		db, err := s.SqliteHistory(ctx)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to get sqlite history store: %v", err)
 		}
-		deleted, err := db.Clear(ctx)
+		if req.Before == nil {
+			deleted, err := db.Clear(ctx)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "purge failed: %v", err)
+			}
+			deletedU := uint64(deleted)
+			return &dataretentionpb.PurgeDataRetentionResponse{FreedItemCount: &deletedU}, nil
+		}
+		deleted, err := db.TrimTime(ctx, "", req.Before.AsTime())
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "clear failed: %v", err)
+			return nil, status.Errorf(codes.Internal, "purge failed: %v", err)
 		}
 		deletedU := uint64(deleted)
-		return &dataretentionpb.ClearDataRetentionResponse{FreedItemCount: &deletedU}, nil
-	}
-}
-
-func sqliteDeleteOldHandler(s *stores.Stores) dataretentionpb.DeleteOldHandler {
-	return func(ctx context.Context, req *dataretentionpb.DeleteOldDataRetentionRequest) (*dataretentionpb.DeleteOldDataRetentionResponse, error) {
-		if req.RetentionPeriod == nil {
-			return nil, status.Error(codes.InvalidArgument, "retention_period must be set to a positive value")
-		}
-		d := req.RetentionPeriod.AsDuration()
-		if d <= 0 {
-			return nil, status.Error(codes.InvalidArgument, "retention_period must be positive")
-		}
-		db, err := s.SqliteHistory(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to get sqlite history store: %v", err)
-		}
-		cutoff := time.Now().Add(-d)
-		deleted, err := db.TrimTime(ctx, "", cutoff)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "delete_old failed: %v", err)
-		}
-		deletedU := uint64(deleted)
-		return &dataretentionpb.DeleteOldDataRetentionResponse{FreedItemCount: &deletedU}, nil
+		return &dataretentionpb.PurgeDataRetentionResponse{FreedItemCount: &deletedU}, nil
 	}
 }
 
 func announcePostgresDataRetentionTraits(ctx context.Context, n *node.Node, nodeName string, s *stores.Stores, logger *zap.Logger) node.Undo {
 	model := dataretentionpb.NewModel()
 	server := dataretentionpb.NewModelServer(model,
-		dataretentionpb.WithClearHandler(postgresClearHandler(s)),
-		dataretentionpb.WithDeleteOldHandler(postgresDeleteOldHandler(s)),
+		dataretentionpb.WithPurgeHandler(postgresPurgeHandler(s)),
 		dataretentionpb.WithCompactHandler(postgresCompactHandler(s)),
-		dataretentionpb.WithSpringCleanHandler(postgresSpringCleanHandler(s)),
 		dataretentionpb.WithDataRetentionSupport(&dataretentionpb.DataRetentionSupport{
-			CanClear:       true,
-			CanDeleteOld:   true,
-			CanCompact:     true,
-			CanSpringClean: true,
-			ItemName:       "row",
+			CanPurge:   true,
+			CanCompact: true,
+			ItemName:   "row",
 		}),
 	)
 
@@ -234,46 +215,34 @@ func updatePostgresDataRetentionModel(ctx context.Context, s *stores.Stores, mod
 	_, _ = model.SetDataRetention(retention)
 }
 
-func postgresClearHandler(s *stores.Stores) dataretentionpb.ClearHandler {
-	return func(ctx context.Context, _ *dataretentionpb.ClearDataRetentionRequest) (*dataretentionpb.ClearDataRetentionResponse, error) {
+// postgresPurgeHandler deletes stored history rows.
+// If req.Before is nil, all rows are removed; otherwise only rows older than req.Before.
+func postgresPurgeHandler(s *stores.Stores) dataretentionpb.PurgeHandler {
+	return func(ctx context.Context, req *dataretentionpb.PurgeDataRetentionRequest) (*dataretentionpb.PurgeDataRetentionResponse, error) {
 		_, w, _, err := s.Postgres()
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to get postgres store: %v", err)
 		}
-		tag, err := w.Exec(ctx, "DELETE FROM history")
+		deleted, err := postgresDelete(ctx, w, req.Before)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "clear failed: %v", err)
+			return nil, status.Errorf(codes.Internal, "purge failed: %v", err)
 		}
-		deletedU := uint64(tag.RowsAffected())
-		return &dataretentionpb.ClearDataRetentionResponse{FreedItemCount: &deletedU}, nil
+		return &dataretentionpb.PurgeDataRetentionResponse{FreedItemCount: &deleted}, nil
 	}
 }
 
-func postgresDeleteOldHandler(s *stores.Stores) dataretentionpb.DeleteOldHandler {
-	return func(ctx context.Context, req *dataretentionpb.DeleteOldDataRetentionRequest) (*dataretentionpb.DeleteOldDataRetentionResponse, error) {
-		if req.RetentionPeriod == nil {
-			return nil, status.Error(codes.InvalidArgument, "retention_period must be set to a positive value")
-		}
-		d := req.RetentionPeriod.AsDuration()
-		if d <= 0 {
-			return nil, status.Error(codes.InvalidArgument, "retention_period must be positive")
-		}
-		_, w, _, err := s.Postgres()
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to get postgres store: %v", err)
-		}
-		deleted, err := postgresDeleteOld(ctx, w, d)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "delete_old failed: %v", err)
-		}
-		return &dataretentionpb.DeleteOldDataRetentionResponse{FreedItemCount: &deleted}, nil
+// postgresDelete deletes history rows. If before is nil, all rows are removed;
+// otherwise only rows with create_time < before.AsTime().
+func postgresDelete(ctx context.Context, w *pgxpool.Pool, before *timestamppb.Timestamp) (uint64, error) {
+	var sql string
+	var args []any
+	if before == nil {
+		sql = "DELETE FROM history"
+	} else {
+		sql = "DELETE FROM history WHERE create_time < $1"
+		args = append(args, before.AsTime())
 	}
-}
-
-// postgresDeleteOld deletes history records older than d and returns the number of rows removed.
-func postgresDeleteOld(ctx context.Context, w *pgxpool.Pool, d time.Duration) (uint64, error) {
-	cutoff := time.Now().Add(-d)
-	tag, err := w.Exec(ctx, "DELETE FROM history WHERE create_time < $1", cutoff)
+	tag, err := w.Exec(ctx, sql, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -291,35 +260,5 @@ func postgresCompactHandler(s *stores.Stores) dataretentionpb.CompactHandler {
 			return nil, status.Errorf(codes.Internal, "compact failed: %v", err)
 		}
 		return &dataretentionpb.CompactDataRetentionResponse{}, nil
-	}
-}
-
-func postgresSpringCleanHandler(s *stores.Stores) dataretentionpb.SpringCleanHandler {
-	return func(ctx context.Context, req *dataretentionpb.SpringCleanDataRetentionRequest) (*dataretentionpb.SpringCleanDataRetentionResponse, error) {
-		_, w, _, err := s.Postgres()
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to get postgres store: %v", err)
-		}
-
-		resp := &dataretentionpb.SpringCleanDataRetentionResponse{}
-
-		if req.RetentionPeriod != nil {
-			d := req.RetentionPeriod.AsDuration()
-			if d <= 0 {
-				return nil, status.Error(codes.InvalidArgument, "retention_period must be positive")
-			}
-			deleted, err := postgresDeleteOld(ctx, w, d)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "delete_old failed: %v", err)
-			}
-			resp.FreedItemCount = &deleted
-		}
-
-		_, err = w.Exec(ctx, "VACUUM ANALYZE history")
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "compact failed: %v", err)
-		}
-
-		return resp, nil
 	}
 }

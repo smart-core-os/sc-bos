@@ -150,22 +150,13 @@ func (r *ApiRouter) PullDataRetention(request *PullDataRetentionRequest, server 
 	}
 }
 
-func (r *ApiRouter) ClearDataRetention(ctx context.Context, request *ClearDataRetentionRequest) (*ClearDataRetentionResponse, error) {
+func (r *ApiRouter) PurgeDataRetention(ctx context.Context, request *PurgeDataRetentionRequest) (*PurgeDataRetentionResponse, error) {
 	child, err := r.GetDataRetentionApiClient(request.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	return child.ClearDataRetention(ctx, request)
-}
-
-func (r *ApiRouter) DeleteOldDataRetention(ctx context.Context, request *DeleteOldDataRetentionRequest) (*DeleteOldDataRetentionResponse, error) {
-	child, err := r.GetDataRetentionApiClient(request.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	return child.DeleteOldDataRetention(ctx, request)
+	return child.PurgeDataRetention(ctx, request)
 }
 
 func (r *ApiRouter) CompactDataRetention(ctx context.Context, request *CompactDataRetentionRequest) (*CompactDataRetentionResponse, error) {
@@ -175,13 +166,4 @@ func (r *ApiRouter) CompactDataRetention(ctx context.Context, request *CompactDa
 	}
 
 	return child.CompactDataRetention(ctx, request)
-}
-
-func (r *ApiRouter) SpringCleanDataRetention(ctx context.Context, request *SpringCleanDataRetentionRequest) (*SpringCleanDataRetentionResponse, error) {
-	child, err := r.GetDataRetentionApiClient(request.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	return child.SpringCleanDataRetention(ctx, request)
 }

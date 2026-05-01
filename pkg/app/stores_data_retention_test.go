@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/history/sqlitestore"
@@ -65,12 +65,9 @@ func TestUpdateSqliteDataRetentionModel_DiskCapacity(t *testing.T) {
 	if got.Bytes.Capacity == nil || *got.Bytes.Capacity == 0 {
 		t.Error("expected non-zero bytes.capacity from disk stats")
 	}
-	if got.Bytes.Utilization == nil {
-		t.Error("expected bytes.utilization to be populated")
-	}
 }
 
-func TestSqliteClearHandler(t *testing.T) {
+func TestSqlitePurgeHandler_All(t *testing.T) {
 	ctx := t.Context()
 	s := stores.New(&stores.Config{DataDir: t.TempDir()})
 	t.Cleanup(func() { _ = s.Close() })
@@ -86,10 +83,10 @@ func TestSqliteClearHandler(t *testing.T) {
 		}
 	}
 
-	handler := sqliteClearHandler(s)
-	resp, err := handler(ctx, &dataretentionpb.ClearDataRetentionRequest{})
+	handler := sqlitePurgeHandler(s)
+	resp, err := handler(ctx, &dataretentionpb.PurgeDataRetentionRequest{})
 	if err != nil {
-		t.Fatalf("ClearDataRetention: %v", err)
+		t.Fatalf("PurgeDataRetention: %v", err)
 	}
 	if resp.FreedItemCount == nil || *resp.FreedItemCount != 5 {
 		t.Errorf("expected FreedItemCount=5, got %v", resp.FreedItemCount)
@@ -100,11 +97,11 @@ func TestSqliteClearHandler(t *testing.T) {
 		t.Fatalf("TotalCount: %v", err)
 	}
 	if count != 0 {
-		t.Errorf("expected 0 records after clear, got %d", count)
+		t.Errorf("expected 0 records after purge, got %d", count)
 	}
 }
 
-func TestSqliteDeleteOldHandler(t *testing.T) {
+func TestSqlitePurgeHandler_WithBefore(t *testing.T) {
 	ctx := t.Context()
 	retention := 7 * 24 * time.Hour
 	s := stores.New(&stores.Config{DataDir: t.TempDir()})
@@ -131,12 +128,13 @@ func TestSqliteDeleteOldHandler(t *testing.T) {
 		t.Fatalf("Append new record: %v", err)
 	}
 
-	handler := sqliteDeleteOldHandler(s)
-	resp, err := handler(ctx, &dataretentionpb.DeleteOldDataRetentionRequest{
-		RetentionPeriod: durationpb.New(retention),
+	cutoff := time.Now().Add(-retention)
+	handler := sqlitePurgeHandler(s)
+	resp, err := handler(ctx, &dataretentionpb.PurgeDataRetentionRequest{
+		Before: timestamppb.New(cutoff),
 	})
 	if err != nil {
-		t.Fatalf("DeleteOldDataRetention: %v", err)
+		t.Fatalf("PurgeDataRetention: %v", err)
 	}
 	if resp.FreedItemCount == nil || *resp.FreedItemCount != 1 {
 		t.Errorf("expected FreedItemCount=1, got %v", resp.FreedItemCount)
@@ -148,21 +146,6 @@ func TestSqliteDeleteOldHandler(t *testing.T) {
 	}
 	if count != 1 {
 		t.Errorf("expected 1 record remaining, got %d", count)
-	}
-}
-
-func TestSqliteDeleteOldHandler_NoRetention(t *testing.T) {
-	ctx := t.Context()
-	s := stores.New(&stores.Config{DataDir: t.TempDir()})
-	t.Cleanup(func() { _ = s.Close() })
-
-	handler := sqliteDeleteOldHandler(s)
-	_, err := handler(ctx, &dataretentionpb.DeleteOldDataRetentionRequest{})
-	if err == nil {
-		t.Fatal("expected error when retention_period not set")
-	}
-	if st, ok := status.FromError(err); !ok || st.Code() != codes.InvalidArgument {
-		t.Errorf("expected InvalidArgument, got %v", err)
 	}
 }
 
@@ -185,29 +168,18 @@ func TestUpdatePostgresDataRetentionModel_NotConfigured(t *testing.T) {
 	}
 }
 
-func TestPostgresClearHandler_NotConfigured(t *testing.T) {
+func TestPostgresPurgeHandler_NotConfigured(t *testing.T) {
 	ctx := t.Context()
 	s := stores.New(&stores.Config{DataDir: t.TempDir()})
 	t.Cleanup(func() { _ = s.Close() })
 
-	handler := postgresClearHandler(s)
-	_, err := handler(ctx, &dataretentionpb.ClearDataRetentionRequest{})
+	handler := postgresPurgeHandler(s)
+	_, err := handler(ctx, &dataretentionpb.PurgeDataRetentionRequest{})
 	if err == nil {
 		t.Fatal("expected error when postgres not configured, got nil")
 	}
-}
-
-func TestPostgresDeleteOldHandler_NotConfigured(t *testing.T) {
-	ctx := t.Context()
-	s := stores.New(&stores.Config{DataDir: t.TempDir()})
-	t.Cleanup(func() { _ = s.Close() })
-
-	handler := postgresDeleteOldHandler(s)
-	_, err := handler(ctx, &dataretentionpb.DeleteOldDataRetentionRequest{
-		RetentionPeriod: durationpb.New(24 * time.Hour),
-	})
-	if err == nil {
-		t.Fatal("expected error when postgres not configured, got nil")
+	if st, ok := status.FromError(err); !ok || st.Code() != codes.Internal {
+		t.Errorf("expected Internal, got %v", err)
 	}
 }
 
@@ -218,18 +190,6 @@ func TestPostgresCompactHandler_NotConfigured(t *testing.T) {
 
 	handler := postgresCompactHandler(s)
 	_, err := handler(ctx, &dataretentionpb.CompactDataRetentionRequest{})
-	if err == nil {
-		t.Fatal("expected error when postgres not configured, got nil")
-	}
-}
-
-func TestPostgresSpringCleanHandler_NotConfigured(t *testing.T) {
-	ctx := t.Context()
-	s := stores.New(&stores.Config{DataDir: t.TempDir()})
-	t.Cleanup(func() { _ = s.Close() })
-
-	handler := postgresSpringCleanHandler(s)
-	_, err := handler(ctx, &dataretentionpb.SpringCleanDataRetentionRequest{})
 	if err == nil {
 		t.Fatal("expected error when postgres not configured, got nil")
 	}
