@@ -11,6 +11,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 // device represents an OPC UA device that subscribes to variable nodes and updates trait implementations.
@@ -23,17 +24,19 @@ type device struct {
 
 	eventHandlers []EventHandler
 
-	faultCheck *healthpb.FaultCheck
+	faultCheck  *healthpb.FaultCheck
+	systemCheck service.SystemCheck
 }
 
 // newDevice creates a new device instance for the given configuration.
 // Trait implementations (Electric, Meter, Transport, udmi) must be assigned separately before calling run.
-func newDevice(conf *config.Device, logger *zap.Logger, client *Client, check *healthpb.FaultCheck) *device {
+func newDevice(conf *config.Device, logger *zap.Logger, client *Client, check *healthpb.FaultCheck, systemCheck service.SystemCheck) *device {
 	return &device{
-		client:     client,
-		conf:       conf,
-		faultCheck: check,
-		logger:     logger,
+		client:      client,
+		conf:        conf,
+		faultCheck:  check,
+		logger:      logger,
+		systemCheck: systemCheck,
 	}
 }
 
@@ -71,6 +74,14 @@ func (d *device) subscribe(ctx context.Context) error {
 // It handles both DataChangeNotification (variable value changes) and EventNotificationList (OPC UA events).
 // Values with non-OK status codes are logged as warnings and not passed to trait handlers.
 func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificationData, node *ua.NodeID) {
+	if event.Error != nil {
+		if d.systemCheck != nil {
+			d.systemCheck.MarkFailed(event.Error)
+		}
+		d.logger.Warn("OPC UA server connection error", zap.Stringer("node", node), zap.Error(event.Error))
+		return
+	}
+
 	switch x := event.Value.(type) {
 	case *ua.DataChangeNotification:
 		for _, item := range x.MonitoredItems {
@@ -81,6 +92,9 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 
 			if errors.Is(item.Value.Status, ua.StatusOK) {
 				d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
+				if d.systemCheck != nil {
+					d.systemCheck.MarkRunning()
+				}
 				value := item.Value.Value.Value()
 				d.handleTraitEvent(ctx, node, value)
 			} else {
@@ -95,6 +109,9 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 				if errors.Is(field.StatusCode(), ua.StatusOK) {
 					value := field.Value()
 					d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
+					if d.systemCheck != nil {
+						d.systemCheck.MarkRunning()
+					}
 					d.handleTraitEvent(ctx, node, value)
 				} else {
 					setPointReadNotOk(ctx, node.String(), field.StatusCode(), d.faultCheck)

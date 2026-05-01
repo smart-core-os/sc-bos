@@ -1,21 +1,26 @@
 package gallagher
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 type Client struct {
-	BaseURL    string
-	HTTPClient *http.Client
-	ApiKey     string
+	BaseURL     string
+	HTTPClient  *http.Client
+	ApiKey      string
+	systemCheck service.SystemCheck
 }
 
-func newHttpClient(baseURL string, apiKey string, caPath string, certPath string, keyPath string) (*Client, error) {
+func newHttpClient(baseURL string, apiKey string, caPath string, certPath string, keyPath string, systemCheck service.SystemCheck) (*Client, error) {
 
 	caCert, err := os.ReadFile(caPath)
 	if err != nil {
@@ -36,8 +41,23 @@ func newHttpClient(baseURL string, apiKey string, caPath string, certPath string
 				},
 			},
 		},
-		ApiKey: apiKey,
+		ApiKey:      apiKey,
+		systemCheck: systemCheck,
 	}, nil
+}
+
+func (c *Client) updateSystemCheck(err error) {
+	if c.systemCheck == nil {
+		return
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return
+	}
+	if err != nil {
+		c.systemCheck.MarkFailed(err)
+	} else {
+		c.systemCheck.MarkRunning()
+	}
 }
 
 func (c *Client) getUrl(p string) string {
@@ -55,17 +75,22 @@ func (c *Client) doRequest(url string) ([]byte, error) {
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
+		c.updateSystemCheck(err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
+		c.updateSystemCheck(err)
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("response status: %d %s", resp.StatusCode, resp.Status)
+		err = fmt.Errorf("response status: %d %s", resp.StatusCode, resp.Status)
+		c.updateSystemCheck(err)
+		return nil, err
 	}
+	c.updateSystemCheck(nil)
 	return bytes, nil
 }
