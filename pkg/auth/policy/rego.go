@@ -58,18 +58,15 @@ func (p *cachedStatic) EvalPolicy(ctx context.Context, query string, input Attri
 	return partial.Rego(rego.Input(input)).Eval(ctx)
 }
 
-func (p *cachedStatic) getCacheEntry(query string) (*regoCacheEntry, bool) {
+func (p *cachedStatic) getOrCreateCacheEntry(query string) *regoCacheEntry {
 	p.cacheM.Lock()
 	defer p.cacheM.Unlock()
-	entry, ok := p.cache[query]
-	return entry, ok
-}
 
-func (p *cachedStatic) setCacheEntry(query string) *regoCacheEntry {
-	entry := &regoCacheEntry{done: make(chan struct{})}
-	p.cacheM.Lock()
-	defer p.cacheM.Unlock()
-	p.cache[query] = entry
+	entry, ok := p.cache[query]
+	if !ok {
+		entry = &regoCacheEntry{done: make(chan struct{})}
+		p.cache[query] = entry
+	}
 	return entry
 }
 
@@ -78,10 +75,7 @@ func (p *cachedStatic) setCacheEntry(query string) *regoCacheEntry {
 // the context error is returned.
 // If loadPartialCached returns a non-context error, then future calls with the same query will always return the same error.
 func (p *cachedStatic) loadPartialCached(ctx context.Context, query string) (rego.PartialResult, error) {
-	entry, ok := p.getCacheEntry(query)
-	if !ok {
-		entry = p.setCacheEntry(query)
-	}
+	entry := p.getOrCreateCacheEntry(query)
 
 	// each cache entry only gets one change to compile - it's a deterministic process, so if it fails once there's no
 	// point trying again later
