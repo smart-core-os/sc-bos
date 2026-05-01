@@ -293,7 +293,7 @@ func (l *Light) refreshData(ctx context.Context) {
 }
 
 // queryDevice runs queries on a schedule to check the statuses of the device.
-func (l *Light) queryDevice(ctx context.Context, t time.Duration, fc *healthpb.FaultCheck) error {
+func (l *Light) queryDevice(ctx context.Context, t time.Duration, fc *healthpb.FaultCheck, ctrlHealth *controllerHealth) error {
 
 	ticker := time.NewTicker(t)
 	defer ticker.Stop()
@@ -311,6 +311,13 @@ func (l *Light) queryDevice(ctx context.Context, t time.Duration, fc *healthpb.F
 			}
 			l.helvarnetStatus = s
 			updateDeviceFaults(ctx, l.helvarnetStatus, fc)
+			if ctrlHealth != nil {
+				if l.helvarnetStatus < 0 {
+					ctrlHealth.setFailing(ctx, l.conf.Name)
+				} else {
+					ctrlHealth.setOK(ctx, l.conf.Name)
+				}
+			}
 		}
 	}
 }

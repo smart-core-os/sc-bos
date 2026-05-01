@@ -65,6 +65,22 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	grp, ctx := errgroup.WithContext(ctx)
 	d.clients = make(map[string]*tcpClient)
 	faultChecks := make(map[string]*healthpb.FaultCheck)
+	controllerChecks := make(map[string]*controllerHealth)
+
+	getOrCreateControllerCheck := func(ip string) *controllerHealth {
+		if ch, ok := controllerChecks[ip]; ok {
+			return ch
+		}
+		key := cfg.Name + "/" + ip
+		fc, err := d.health.NewFaultCheck(key, getControllerHealthCheck())
+		if err != nil {
+			d.logger.Error("failed to create controller health check", zap.String("ip", ip), zap.Error(err))
+			return nil
+		}
+		ch := newControllerHealth(fc, cfg.ControllerHealthThreshold)
+		controllerChecks[ip] = ch
+		return ch
+	}
 
 	createFaultCheck := func(name string) *healthpb.FaultCheck {
 		faultCheck, ok := faultChecks[name]
@@ -123,6 +139,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		lum := newLight(d.clients[l.IpAddress], d.logger, l, d.database, false)
 
 		faultCheck := createFaultCheck(l.Name)
+		ctrlHealth := getOrCreateControllerCheck(l.IpAddress)
+		if ctrlHealth != nil {
+			ctrlHealth.register(l.Name)
+		}
 
 		rootAnnouncer.Announce(l.Name,
 			node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(lum)),
@@ -131,7 +151,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasTrait(udmipb.TraitName),
 			node.HasMetadata(l.Meta))
 		grp.Go(func() error {
-			return lum.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck)
+			return lum.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck, ctrlHealth)
 		})
 
 	}
@@ -171,6 +191,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 
 		faultCheck := createFaultCheck(em.Name)
+		ctrlHealth := getOrCreateControllerCheck(em.IpAddress)
+		if ctrlHealth != nil {
+			ctrlHealth.register(em.Name)
+		}
 
 		rootAnnouncer.Announce(em.Name,
 			node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(emergencyLight)),
@@ -181,7 +205,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasTrait(udmipb.TraitName),
 			node.HasMetadata(em.Meta))
 		grp.Go(func() error {
-			return emergencyLight.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck)
+			return emergencyLight.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck, ctrlHealth)
 		})
 	}
 
@@ -194,6 +218,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		for _, fc := range faultChecks {
 			fc.Dispose()
+		}
+		for _, ch := range controllerChecks {
+			ch.faultCheck.Dispose()
 		}
 		if err != nil {
 			d.logger.Error("run error", zap.Error(err))
