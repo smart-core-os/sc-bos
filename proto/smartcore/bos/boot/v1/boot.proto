@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package smartcore.bos.boot.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/bootpb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "smartcore/bos/actor/v1/actor.proto";
+
+// BootApi provides the ability to reboot a device or process and query its boot state.
+service BootApi {
+  // GetBootState returns the current boot state including boot time.
+  rpc GetBootState(GetBootStateRequest) returns (BootState);
+  // PullBootState streams changes to the boot state.
+  rpc PullBootState(PullBootStateRequest) returns (stream PullBootStateResponse);
+  // Reboot schedules a reboot of the device or process.
+  // A successful response confirms the reboot has been accepted; the actual reboot occurs
+  // shortly after the response is delivered. Callers should expect to lose connectivity
+  // to the target immediately after receiving the response.
+  rpc Reboot(RebootRequest) returns (RebootResponse);
+}
+
+message BootState {
+  // When the device or process last started.
+  google.protobuf.Timestamp boot_time = 1;
+  // The reason for the last reboot, if known.
+  string last_reboot_reason = 2;
+  // The actor who triggered the last reboot, if known.
+  smartcore.bos.actor.v1.Actor last_reboot_actor = 3;
+}
+
+message GetBootStateRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message PullBootStateRequest {
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+  // By default, PullBootState sends the initial BootState when the stream opens, followed by changes.
+  // Setting updates_only true will disable this behaviour, sending only when the BootState changes.
+  bool updates_only = 3;
+}
+
+message PullBootStateResponse {
+  message Change {
+    string name = 1;
+    google.protobuf.Timestamp change_time = 2;
+    BootState boot_state = 3;
+  }
+
+  repeated Change changes = 1;
+}
+
+message RebootRequest {
+  string name = 1;
+  // Optional reason for the reboot, recorded in history.
+  string reason = 2;
+  // The actor requesting the reboot, if known.
+  smartcore.bos.actor.v1.Actor actor = 3;
+}
+
+message RebootResponse {
+  // The time the reboot is expected to occur.
+  // This may be in the future if the system requires a grace period.
+  google.protobuf.Timestamp reboot_time = 1;
+}

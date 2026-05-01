@@ -78,6 +78,9 @@
                          @click="onForgetNode(node.grpcAddress)">
               <v-list-item-title class="text-error">Forget Node</v-list-item-title>
             </v-list-item>
+            <v-list-item v-if="canReboot" link @click="showRebootDialog = true">
+              <v-list-item-title class="text-warning">Reboot Node</v-list-item-title>
+            </v-list-item>
           </v-list>
         </v-menu>
       </div>
@@ -238,8 +241,56 @@
           </div>
         </template>
       </with-resource-use>
+
+      <!-- Boot info -->
+      <template v-if="bootState">
+        <v-divider class="mt-2 mb-3"/>
+        <div class="resource-use">
+          <div class="resource-section-label">Last boot</div>
+          <div v-if="uptime" class="resource-row">
+            <span class="resource-label">Uptime</span>
+            <span class="resource-value" style="width: auto">{{ uptime }}</span>
+          </div>
+          <div v-if="bootState.lastRebootReason" class="resource-row">
+            <span class="resource-label">Reason</span>
+            <span class="resource-value text-truncate" style="width: auto" :title="bootState.lastRebootReason">
+              {{ bootState.lastRebootReason }}
+            </span>
+          </div>
+          <div v-if="bootState.lastRebootActor?.displayName" class="resource-row">
+            <span class="resource-label">Actor</span>
+            <span class="resource-value text-truncate" style="width: auto"
+                  :title="bootState.lastRebootActor.displayName">
+              {{ bootState.lastRebootActor.displayName }}
+            </span>
+          </div>
+        </div>
+      </template>
     </v-card-text>
   </v-card>
+
+  <v-dialog v-model="showRebootDialog" max-width="400px">
+    <v-card>
+      <v-card-title>Reboot {{ node.name }}?</v-card-title>
+      <v-card-text>
+        <p class="mb-2 text-body-2">
+          The node will exit and be restarted by its supervisor.
+          You may lose connection briefly.
+        </p>
+        <v-text-field v-model="rebootReason" label="Reason (optional)" density="compact"/>
+        <v-alert v-if="rebootTracker.error" type="error" density="compact" class="mt-2">
+          {{ rebootTracker.error }}
+        </v-alert>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer/>
+        <v-btn @click="showRebootDialog = false">Cancel</v-btn>
+        <v-btn color="warning" :loading="rebootTracker.loading" @click="confirmReboot">
+          Reboot
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup>
@@ -249,11 +300,19 @@ import {newResourceValue} from '@/api/resource.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
 import {useHasHubSystem, usePullService, usePullServiceMetadata} from '@/composables/services.js';
 import {NodeRole, useCohortStore} from '@/stores/cohort.js';
+import {usePullService, usePullServiceMetadata} from '@/composables/services.js';
+import {pullBootState, reboot} from '@/api/sc/traits/boot.js';
+import {closeResource, newResourceValue} from '@/api/resource.js';
+import useAuthSetup from '@/composables/useAuthSetup.js';
+import {useAccountStore} from '@/stores/account.js';
+import {NodeRole} from '@/stores/cohort.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
 import {CloudConnection} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb';
 import {computed, onScopeDispose, reactive, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
 import LinkCloudDialog from './LinkCloudDialog.vue';
+import {watchResource} from '@/util/traits.js';
+import {computed, onScopeDispose, reactive, ref} from 'vue';
 
 const props = defineProps({
   node: {
@@ -280,6 +339,10 @@ const cohortStore = useCohortStore();
 const connectedViaHub = computed(() =>
   cohortStore.cohortNodes.find(n => n.isServer)?.role === NodeRole.HUB
 );
+
+const {hasAnyRole} = useAuthSetup();
+const canReboot = computed(() => hasAnyRole('admin', 'superAdmin'));
+const accountStore = useAccountStore();
 
 const nodeDetails = reactive({
   automations: usePullServiceMetadata(
@@ -373,6 +436,56 @@ const utilizationColor = (value) => {
   if (value >= 60) return 'warning';
   return 'success';
 };
+
+// Boot state stream
+const bootResource = reactive(newResourceValue());
+onScopeDispose(() => closeResource(bootResource));
+watchResource(
+    () => ({name: props.node.name}),
+    () => false,
+    (req) => {
+      pullBootState(req, bootResource);
+      return () => closeResource(bootResource);
+    }
+);
+const bootState = computed(() => bootResource.value);
+
+const now = ref(Date.now());
+const uptimeInterval = setInterval(() => { now.value = Date.now(); }, 1000);
+onScopeDispose(() => clearInterval(uptimeInterval));
+
+const uptime = computed(() => {
+  const bt = bootState.value?.bootTime;
+  if (!bt) return null;
+  const bootMs = (bt.seconds * 1000) + Math.floor(bt.nanos / 1e6);
+  const diff = Math.floor((now.value - bootMs) / 1000);
+  const d = Math.floor(diff / 86400);
+  const h = Math.floor((diff % 86400) / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+});
+
+// Reboot dialog
+const showRebootDialog = ref(false);
+const rebootReason = ref('');
+const rebootTracker = reactive({loading: false, response: null, error: null});
+
+/** Sends the reboot request and closes the dialog on success. */
+function confirmReboot() {
+  const actor = (accountStore.email || accountStore.fullName)
+      ? {displayName: accountStore.fullName, email: accountStore.email}
+      : undefined;
+  reboot({name: props.node.name, reason: rebootReason.value, actor}, rebootTracker)
+      .then(() => {
+        showRebootDialog.value = false;
+        rebootReason.value = '';
+      })
+      .catch(() => { /* error shown in dialog via rebootTracker.error */ });
+}
 </script>
 
 <style scoped>
