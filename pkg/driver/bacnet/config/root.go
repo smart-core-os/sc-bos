@@ -46,6 +46,10 @@ type Root struct {
 	// SystemHealth represents the system-level health check configuration. If not configured,
 	// occupant and equipment impact will default to UNSPECIFIED.
 	SystemHealth Health `json:"systemHealth"`
+
+	// ControllerHealthThreshold is the % proportion of devices on a BACnet controller (IP address)
+	// that must be failing before the controller itself is marked unhealthy. Range [0, 100], default 50%
+	ControllerHealthThreshold int `json:"controllerHealthThreshold,omitempty"`
 }
 
 // ReadFile reads from the named file a config Root.
@@ -73,8 +77,9 @@ func ReadBytes(data []byte) (root Root, err error) {
 
 func Defaults() Root {
 	return Root{
-		DeviceNamePrefix: "bacnet/device/",
-		ObjectNamePrefix: "obj/",
+		DeviceNamePrefix:          "bacnet/device/",
+		ObjectNamePrefix:          "obj/",
+		ControllerHealthThreshold: 50,
 	}
 }
 
