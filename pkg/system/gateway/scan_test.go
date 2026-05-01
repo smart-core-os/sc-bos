@@ -20,6 +20,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -673,6 +675,233 @@ func assertChanVal[T any](t *testing.T, ch <-chan T, fn func(T)) {
 		t.Fatalf("expected value from channel, but none available")
 	}
 }
+
+func TestServicesEqual(t *testing.T) {
+	// Helper to get a real service descriptor for testing
+	getServiceDesc := func(t *testing.T, fullName string) protoreflect.ServiceDescriptor {
+		t.Helper()
+		desc, err := protoregistry.GlobalFiles.FindDescriptorByName(protoreflect.FullName(fullName))
+		if err != nil {
+			t.Fatalf("failed to find service descriptor for %q: %v", fullName, err)
+		}
+		svcDesc, ok := desc.(protoreflect.ServiceDescriptor)
+		if !ok {
+			t.Fatalf("%q is not a service descriptor", fullName)
+		}
+		return svcDesc
+	}
+
+	tests := []struct {
+		name           string
+		nodeServices   []string // service full names in the node
+		remoteServices []string // service full names to compare
+		want           bool
+	}{
+		{
+			name:           "empty sets are equal",
+			nodeServices:   []string{},
+			remoteServices: []string{},
+			want:           true,
+		},
+		{
+			name: "identical services - prevents hot loop on repeated reflection polling",
+			// This is the PRIMARY test case for the hot loop fix.
+			// When reflectNode() is called every 10 seconds (via poll), it fetches service
+			// descriptors via gRPC reflection. For custom project traits (e.g., "smartcore.vanti.UKPowerApi"),
+			// the reflection API returns file descriptors each time. Without servicesEqual(),
+			// node.Services.Replace() would be called every poll cycle, triggering service
+			// change events even though nothing changed, causing continuous re-announcements.
+			// servicesEqual() compares by FullName() which is stable across reflection calls.
+			nodeServices: []string{
+				"smartcore.bos.onoff.v1.OnOffApi",
+				"smartcore.bos.meter.v1.MeterApi",
+			},
+			remoteServices: []string{
+				"smartcore.bos.onoff.v1.OnOffApi",
+				"smartcore.bos.meter.v1.MeterApi",
+			},
+			want: true,
+		},
+		{
+			name: "order doesn't matter - services can be in any order",
+			// Custom traits returned from reflection may come in different orders.
+			// The comparison must be order-independent to avoid false negatives.
+			nodeServices: []string{
+				"smartcore.bos.meter.v1.MeterApi",
+				"smartcore.bos.onoff.v1.OnOffApi",
+			},
+			remoteServices: []string{
+				"smartcore.bos.onoff.v1.OnOffApi",
+				"smartcore.bos.meter.v1.MeterApi",
+			},
+			want: true,
+		},
+		{
+			name: "multiple services with similar names - tests FullName uniqueness",
+			// Custom project traits often have similar naming patterns (e.g., FooApi, FooInfo, FooHistory).
+			// The comparison must correctly distinguish between them.
+			nodeServices: []string{
+				"smartcore.bos.onoff.v1.OnOffApi",
+				"smartcore.bos.onoff.v1.OnOffInfo",
+				"smartcore.bos.meter.v1.MeterApi",
+				"smartcore.bos.meter.v1.MeterInfo",
+			},
+			remoteServices: []string{
+				"smartcore.bos.onoff.v1.OnOffApi",
+				"smartcore.bos.onoff.v1.OnOffInfo",
+				"smartcore.bos.meter.v1.MeterApi",
+				"smartcore.bos.meter.v1.MeterInfo",
+			},
+			want: true,
+		},
+		{
+			name:           "different number of services",
+			nodeServices:   []string{"smartcore.bos.onoff.v1.OnOffApi"},
+			remoteServices: []string{"smartcore.bos.onoff.v1.OnOffApi", "smartcore.bos.meter.v1.MeterApi"},
+			want:           false,
+		},
+		{
+			name:           "different services",
+			nodeServices:   []string{"smartcore.bos.onoff.v1.OnOffApi"},
+			remoteServices: []string{"smartcore.bos.meter.v1.MeterApi"},
+			want:           false,
+		},
+		{
+			name: "extra service in remote - device gained new trait",
+			// Simulates when a device adds a new custom trait.
+			// This should trigger Replace() to announce the new service.
+			nodeServices: []string{
+				"smartcore.bos.onoff.v1.OnOffApi",
+			},
+			remoteServices: []string{
+				"smartcore.bos.onoff.v1.OnOffApi",
+				"smartcore.bos.devices.v1.DevicesApi",
+			},
+			want: false,
+		},
+		{
+			name: "missing service in remote - device lost trait",
+			// Simulates when a device removes a custom trait.
+			// This should trigger Replace() to unannounce the removed service.
+			nodeServices: []string{
+				"smartcore.bos.onoff.v1.OnOffApi",
+				"smartcore.bos.devices.v1.DevicesApi",
+			},
+			remoteServices: []string{
+				"smartcore.bos.onoff.v1.OnOffApi",
+			},
+			want: false,
+		},
+		{
+			name: "single service mismatch in many - detects subtle differences",
+			// With many custom traits, a single trait change must be detected.
+			// This ensures we don't miss updates when dealing with devices that
+			// have many custom project-specific traits.
+			nodeServices: []string{
+				"smartcore.bos.onoff.v1.OnOffApi",
+				"smartcore.bos.meter.v1.MeterApi",
+				"smartcore.bos.devices.v1.DevicesApi",
+			},
+			remoteServices: []string{
+				"smartcore.bos.onoff.v1.OnOffApi",
+				"smartcore.bos.meter.v1.MeterApi",
+				"smartcore.bos.emergency.v1.EmergencyApi", // Different service
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock node with the specified services
+			rn := newRemoteNode("test-node", nil)
+			for _, svcName := range tt.nodeServices {
+				rn.Services.Set(getServiceDesc(t, svcName))
+			}
+
+			// Create remote services list
+			remoteServices := make([]protoreflect.ServiceDescriptor, 0, len(tt.remoteServices))
+			for _, svcName := range tt.remoteServices {
+				remoteServices = append(remoteServices, getServiceDesc(t, svcName))
+			}
+
+			// Test
+			got := servicesEqual(rn, remoteServices)
+			if got != tt.want {
+				t.Errorf("servicesEqual() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestServicesEqual_CustomTraitScenario tests the behavior with service descriptors that simulate
+// custom project traits. While we can't create mock ServiceDescriptors due to unexported interface methods,
+// this test documents the real-world scenario and validates the comparison logic works correctly.
+//
+// In production, custom project traits are discovered via gRPC reflection and follow the naming pattern:
+//   - "smartcore.vanti.UKPowerApi" (Vanti project-specific UK power monitoring)
+//   - "smartcore.customer.BuildingSystemApi" (Customer project-specific building system)
+//   - "smartcore.projectrepo.SpecialSensorApi" (Generic project-specific sensor)
+//
+// The key insight is that servicesEqual() compares services by FullName() which remains stable across
+// reflection calls, preventing the hot loop even though the ServiceDescriptor instances differ.
+func TestServicesEqual_CustomTraitScenario(t *testing.T) {
+	// Simulate a device with both standard and "custom" traits
+	// In reality, custom traits would have names like:
+	//   - "smartcore.vanti.UKPowerApi"
+	//   - "smartcore.customer.BuildingSystemApi"
+	//   - "smartcore.projectrepo.SpecialSensorApi"
+	// These are fetched via reflection and would have identical FullNames on repeated polls.
+
+	// Get some real service descriptors
+	onOffDesc, _ := protoregistry.GlobalFiles.FindDescriptorByName("smartcore.bos.onoff.v1.OnOffApi")
+	meterDesc, _ := protoregistry.GlobalFiles.FindDescriptorByName("smartcore.bos.meter.v1.MeterApi")
+	devicesDesc, _ := protoregistry.GlobalFiles.FindDescriptorByName("smartcore.bos.devices.v1.DevicesApi")
+
+	onOffSvc := onOffDesc.(protoreflect.ServiceDescriptor)
+	meterSvc := meterDesc.(protoreflect.ServiceDescriptor)
+	devicesSvc := devicesDesc.(protoreflect.ServiceDescriptor)
+
+	rn := newRemoteNode("test-node", nil)
+
+	// Initial state: device has standard traits
+	rn.Services.Set(onOffSvc)
+	rn.Services.Set(meterSvc)
+
+	// First reflection poll - same services returned
+	remoteServices := []protoreflect.ServiceDescriptor{onOffSvc, meterSvc}
+	if !servicesEqual(rn, remoteServices) {
+		t.Error("Expected services to be equal on first poll (hot loop prevention)")
+	}
+
+	// Second reflection poll - SAME services but potentially different descriptor instances
+	// In production with custom traits, reflection would return new instances with same FullName
+	// We simulate this by calling FindDescriptorByName again (gets same descriptor from registry)
+	onOffDesc2, _ := protoregistry.GlobalFiles.FindDescriptorByName("smartcore.bos.onoff.v1.OnOffApi")
+	meterDesc2, _ := protoregistry.GlobalFiles.FindDescriptorByName("smartcore.bos.meter.v1.MeterApi")
+	remoteServices2 := []protoreflect.ServiceDescriptor{
+		onOffDesc2.(protoreflect.ServiceDescriptor),
+		meterDesc2.(protoreflect.ServiceDescriptor),
+	}
+	if !servicesEqual(rn, remoteServices2) {
+		t.Error("Expected services to be equal on second poll even with potentially different instances")
+	}
+
+	// Device adds a new trait (simulates custom trait being added)
+	remoteServices3 := []protoreflect.ServiceDescriptor{onOffSvc, meterSvc, devicesSvc}
+	if servicesEqual(rn, remoteServices3) {
+		t.Error("Expected services to be different when new trait added")
+	}
+
+	// Update node state
+	rn.Services.Replace(remoteServices3)
+
+	// Third poll - verify the new state is recognized as equal
+	if !servicesEqual(rn, remoteServices3) {
+		t.Error("Expected services to be equal after update")
+	}
+}
+
 
 func newLocalConn(t *testing.T) (*bufconn.Listener, *grpc.ClientConn) {
 	t.Helper()
