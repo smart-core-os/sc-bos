@@ -7,17 +7,17 @@
           <v-btn
               v-bind="menuProps"
               :disabled="blockActions"
-              size="small"
+              size="large"
               variant="tonal"
               prepend-icon="mdi-playlist-check">
-            {{ currentPresetTitle || 'Presets' }}
+            {{ selectedPreset?.title || 'Presets' }}
           </v-btn>
         </template>
         <v-list density="compact" class="presets-list">
           <v-list-item
               v-for="preset in presets"
               :key="preset.name"
-              :active="preset.title === currentPresetTitle"
+              :active="preset.title === selectedPreset?.title"
               color="accent"
               @click="setPreset(preset)">
             <v-list-item-title>{{ preset.title || preset.name }}</v-list-item-title>
@@ -48,7 +48,7 @@
           <v-icon size="35">mdi-lightbulb-outline</v-icon>
         </template>
         <template #append>
-          <span class="text-h5 mr-1">{{ brightness }}%</span>
+          <span class="text-h5 mr-1">{{ `${brightness}%` }}</span>
         </template>
       </v-slider>
     </v-card-text>
@@ -78,12 +78,30 @@ const props = defineProps({
 });
 const {blockActions} = useAuthSetup();
 
+const selectedPreset = ref(null); // LightPreset.AsObject | null
+
+// When a preset is active, brightness is read/written against the preset's light group
+// (e.g. zones/floor-2/desks) rather than the whole zone. Without a preset, this is
+// just props.name and the zone itself is the target.
+const dimmerGroupName = computed(() => {
+  if (selectedPreset.value && props.name) {
+    return `${props.name}/${selectedPreset.value.name}`;
+  }
+  return props.name;
+});
+
+// reset selected preset when the zone changes
+watch(() => props.name, (name, oldName) => {
+  if (oldName !== undefined) {
+    selectedPreset.value = null;
+  }
+});
+
 const lightValue = reactive(
     /** @type {ResourceValue<Brightness.AsObject, PullBrightnessResponse.AsObject>} */
     newResourceValue());
 
-// if device name changes
-watch(() => props.name, async (name) => {
+watch(dimmerGroupName, async (name) => {
   // close existing stream if present
   closeResource(lightValue);
   // create new stream
@@ -129,7 +147,7 @@ const updateValue = reactive(
 function updateLight(value) {
   /* @type {UpdateBrightnessRequest.AsObject} */
   const req = {
-    name: props.name,
+    name: dimmerGroupName.value,
     brightness: {
       levelPercent: Math.min(100, Math.round(value))
     }
@@ -179,6 +197,7 @@ const hasLightAutoSwitch = computed(() => {
 
 const brightnessSupport = reactive(newActionTracker());
 
+// preset list always fetched from the zone itself, not the light group
 watch(() => props.name, (name) => {
   if (name && name !== '') {
     describeBrightness({name}, brightnessSupport);
@@ -186,7 +205,14 @@ watch(() => props.name, (name) => {
 }, {immediate: true});
 
 const presets = computed(() => brightnessSupport.response?.presetsList ?? []);
-const currentPresetTitle = computed(() => value.value?.preset?.title ?? '');
+
+// Re-fetch presets when the brightness stream reconnects but presets are missing.
+// This handles restarts where the one-shot describeBrightness call failed on mount.
+watch(() => lightValue.value, (val) => {
+  if (val && !brightnessSupport.response && !brightnessSupport.loading && props.name) {
+    describeBrightness({name: props.name}, brightnessSupport);
+  }
+});
 
 /**
  * @param {LightPreset.AsObject} preset
@@ -197,6 +223,8 @@ function setPreset(preset) {
     name: props.name,
     brightness: {preset}
   }, updateValue);
+  localValue.value = {levelPercent: 100};
+  selectedPreset.value = preset;
 }
 
 const manualTimeoutHandle = ref(0);
