@@ -106,7 +106,7 @@ func writeToDir(dir string, floor string, scPrefix string, bacnetCfg *ConfigForF
 	// copy over any customisations we have made
 	driverCfg = bacnetCfg.Root
 	driverCfg.BaseConfig = driver.BaseConfig{
-		Name: path.Join(scPrefix, fmt.Sprintf("floor-%s", floor), "drivers", subsystem),
+		Name: path.Join(scPrefix, "floors", floor, "drivers", subsystem),
 		Type: DriverName,
 	}
 
