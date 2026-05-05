@@ -117,6 +117,9 @@ func (c *controllerHealth) register(name string) {
 func (c *controllerHealth) setFailing(ctx context.Context, name string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.states[name] {
+		return
+	}
 	c.states[name] = true
 	c.recalculate(ctx)
 }
@@ -125,6 +128,9 @@ func (c *controllerHealth) setFailing(ctx context.Context, name string) {
 func (c *controllerHealth) setOK(ctx context.Context, name string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if !c.states[name] {
+		return
+	}
 	c.states[name] = false
 	c.recalculate(ctx)
 }
