@@ -41,7 +41,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/app/logcapture"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
-	"github.com/smart-core-os/sc-bos/pkg/system/dataretention"
+	"github.com/smart-core-os/sc-bos/pkg/history/dataretention"
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
 	"github.com/smart-core-os/sc-bos/pkg/manage/enrollment"

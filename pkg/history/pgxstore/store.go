@@ -285,27 +285,26 @@ func (s slice) readRangeClause(clauses []string, args []any) ([]string, []any, e
 	return clauses, args, nil
 }
 
-// TotalSize returns the total disk usage of the history table in bytes.
-// Uses pg_total_relation_size which includes table data, indices, and TOAST.
-func (s *Store) TotalSize(ctx context.Context) (int64, error) {
+// TotalSize returns the total disk usage of the history table in bytes,
+// including indices and TOAST. Operates across all sources.
+func TotalSize(ctx context.Context, pool *pgxpool.Pool) (int64, error) {
 	var sizeBytes int64
-	err := s.pool.QueryRow(ctx, "SELECT pg_total_relation_size('history')").Scan(&sizeBytes)
+	err := pool.QueryRow(ctx, "SELECT pg_total_relation_size('history')").Scan(&sizeBytes)
 	return sizeBytes, err
 }
 
-// ApproxCount returns an approximate live row count for the history table.
-// It reads n_live_tup from pg_stat_user_tables which is updated by autovacuum/ANALYZE
-// and is O(1) — no sequential table scan is performed.
-func (s *Store) ApproxCount(ctx context.Context) (int64, error) {
+// ApproxCount returns an approximate live row count for the history table across
+// all sources. Reads n_live_tup from pg_stat_user_tables — O(1), no table scan.
+func ApproxCount(ctx context.Context, pool *pgxpool.Pool) (int64, error) {
 	var n int64
-	err := s.pool.QueryRow(ctx, "SELECT n_live_tup FROM pg_stat_user_tables WHERE relname = 'history'").Scan(&n)
+	err := pool.QueryRow(ctx, "SELECT n_live_tup FROM pg_stat_user_tables WHERE relname = 'history'").Scan(&n)
 	return n, err
 }
 
-// Delete removes history rows. If before is nil all rows are deleted;
-// otherwise only rows with create_time < *before are removed.
+// DeleteAll removes history rows across all sources. If before is nil all rows
+// are deleted; otherwise only rows with create_time < *before are removed.
 // Returns the number of deleted rows.
-func (s *Store) Delete(ctx context.Context, before *time.Time) (uint64, error) {
+func DeleteAll(ctx context.Context, pool *pgxpool.Pool, before *time.Time) (uint64, error) {
 	var sql string
 	var args []any
 	if before == nil {
@@ -314,7 +313,7 @@ func (s *Store) Delete(ctx context.Context, before *time.Time) (uint64, error) {
 		sql = "DELETE FROM history WHERE create_time < $1"
 		args = append(args, *before)
 	}
-	tag, err := s.pool.Exec(ctx, sql, args...)
+	tag, err := pool.Exec(ctx, sql, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -322,8 +321,8 @@ func (s *Store) Delete(ctx context.Context, before *time.Time) (uint64, error) {
 }
 
 // Vacuum runs VACUUM ANALYZE on the history table to reclaim space and update statistics.
-func (s *Store) Vacuum(ctx context.Context) error {
-	_, err := s.pool.Exec(ctx, "VACUUM ANALYZE history")
+func Vacuum(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "VACUUM ANALYZE history")
 	return err
 }
 

@@ -56,13 +56,9 @@ func updatePostgresModel(ctx context.Context, s *stores.Stores, model *datareten
 		return
 	}
 
-	// Construct a minimal Store to access the new query methods.
-	// We use the read pool; these queries are read-only.
-	store := pgxstore.NewStoreFromPool("", r)
-
 	retention := &dataretentionpb.DataRetention{}
 
-	sizeBytes, err := store.TotalSize(ctx)
+	sizeBytes, err := pgxstore.TotalSize(ctx, r)
 	if err != nil {
 		logger.Warn("failed to query postgres history size", zap.Error(err))
 	} else {
@@ -71,7 +67,7 @@ func updatePostgresModel(ctx context.Context, s *stores.Stores, model *datareten
 	}
 
 	// ApproxCount reads n_live_tup from pg_stat_user_tables — O(1), no sequential scan.
-	n, err := store.ApproxCount(ctx)
+	n, err := pgxstore.ApproxCount(ctx, r)
 	if err != nil {
 		logger.Warn("failed to query postgres history row count", zap.Error(err))
 	} else {
@@ -93,8 +89,7 @@ func (b *postgresBackend) Purge(ctx context.Context, before *time.Time) (uint64,
 	if err != nil {
 		return 0, fmt.Errorf("postgres: %w", err)
 	}
-	store := pgxstore.NewStoreFromPool("", w)
-	return store.Delete(ctx, before)
+	return pgxstore.DeleteAll(ctx, w, before)
 }
 
 func (b *postgresBackend) Compact(ctx context.Context) error {
@@ -102,6 +97,5 @@ func (b *postgresBackend) Compact(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("postgres: %w", err)
 	}
-	store := pgxstore.NewStoreFromPool("", w)
-	return store.Vacuum(ctx)
+	return pgxstore.Vacuum(ctx, w)
 }
