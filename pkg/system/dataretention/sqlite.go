@@ -15,7 +15,7 @@ import (
 func announceSqlite(ctx context.Context, n *node.Node, name string, s *stores.Stores, dataDir string, logger *zap.Logger) node.Undo {
 	model := dataretentionpb.NewModel()
 	server := dataretentionpb.NewModelServer(model, &sqliteBackend{stores: s},
-		dataretentionpb.WithItemName("record"),
+		dataretentionpb.WithItemName("row"),
 	)
 
 	undo := n.Announce(name, node.HasTrait(dataretentionpb.TraitName, node.WithClients(dataretentionpb.WrapApi(server))))
