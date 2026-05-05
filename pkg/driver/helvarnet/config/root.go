@@ -52,6 +52,9 @@ type Root struct {
 	// RetrySleepDuration is the duration to wait before retrying a failed operation, defaults 500 microseconds.
 	// It is unlikely that this value needs to be changed, if it is, it is recommended to keep it low.
 	RetrySleepDuration *jsontypes.Duration `json:"retrySleepDuration,omitempty,omitzero"`
+	// ControllerHealthThreshold is the % of devices on a controller (IP address) that must be
+	// failing before the controller itself is marked unhealthy. Range [0, 100], default 50.
+	ControllerHealthThreshold int `json:"controllerHealthThreshold,omitempty"`
 }
 
 // Device represents a HelvarNet device, which can be a light, lighting group, or PIR sensor.
@@ -132,6 +135,10 @@ func ParseConfig(data []byte) (Root, error) {
 
 	if root.RetrySleepDuration == nil {
 		root.RetrySleepDuration = &jsontypes.Duration{Duration: 500 * time.Microsecond}
+	}
+
+	if root.ControllerHealthThreshold == 0 {
+		root.ControllerHealthThreshold = 50
 	}
 
 	for _, device := range root.EmergencyLights {
