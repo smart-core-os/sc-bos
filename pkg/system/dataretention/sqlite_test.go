@@ -1,4 +1,4 @@
-package app
+package dataretention
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/dataretentionpb"
 )
 
-func TestUpdateSqliteDataRetentionModel(t *testing.T) {
+func TestUpdateSqliteModel(t *testing.T) {
 	ctx := t.Context()
 	tmpDir := t.TempDir()
 	s := stores.New(&stores.Config{DataDir: tmpDir})
@@ -29,7 +29,7 @@ func TestUpdateSqliteDataRetentionModel(t *testing.T) {
 	}
 
 	model := dataretentionpb.NewModel()
-	updateSqliteDataRetentionModel(ctx, s, model, tmpDir, zap.NewNop())
+	updateSqliteModel(ctx, s, model, tmpDir, zap.NewNop())
 
 	got, err := model.GetDataRetention()
 	if err != nil {
@@ -43,14 +43,14 @@ func TestUpdateSqliteDataRetentionModel(t *testing.T) {
 	}
 }
 
-func TestUpdateSqliteDataRetentionModel_DiskCapacity(t *testing.T) {
+func TestUpdateSqliteModel_DiskCapacity(t *testing.T) {
 	ctx := t.Context()
 	tmpDir := t.TempDir()
 	s := stores.New(&stores.Config{DataDir: tmpDir})
 	t.Cleanup(func() { _ = s.Close() })
 
 	model := dataretentionpb.NewModel()
-	updateSqliteDataRetentionModel(ctx, s, model, tmpDir, zap.NewNop())
+	updateSqliteModel(ctx, s, model, tmpDir, zap.NewNop())
 
 	got, err := model.GetDataRetention()
 	if err != nil {
@@ -139,46 +139,5 @@ func TestSqliteBackend_Purge_WithBefore(t *testing.T) {
 	}
 	if count != 1 {
 		t.Errorf("expected 1 record remaining, got %d", count)
-	}
-}
-
-func TestUpdatePostgresDataRetentionModel_NotConfigured(t *testing.T) {
-	ctx := t.Context()
-	s := stores.New(&stores.Config{DataDir: t.TempDir()})
-	t.Cleanup(func() { _ = s.Close() })
-
-	model := dataretentionpb.NewModel()
-	updatePostgresDataRetentionModel(ctx, s, model, &postgresRowCountCache{}, zap.NewNop())
-
-	got, err := model.GetDataRetention()
-	if err != nil {
-		t.Fatalf("GetDataRetention: %v", err)
-	}
-	if got.Bytes != nil || got.Items != nil {
-		t.Errorf("expected empty data retention model when postgres not configured, got %v", got)
-	}
-}
-
-func TestPostgresBackend_Purge_NotConfigured(t *testing.T) {
-	ctx := t.Context()
-	s := stores.New(&stores.Config{DataDir: t.TempDir()})
-	t.Cleanup(func() { _ = s.Close() })
-
-	b := &postgresBackend{stores: s}
-	_, err := b.Purge(ctx, nil)
-	if err == nil {
-		t.Fatal("expected error when postgres not configured, got nil")
-	}
-}
-
-func TestPostgresBackend_Compact_NotConfigured(t *testing.T) {
-	ctx := t.Context()
-	s := stores.New(&stores.Config{DataDir: t.TempDir()})
-	t.Cleanup(func() { _ = s.Close() })
-
-	b := &postgresBackend{stores: s}
-	err := b.Compact(ctx)
-	if err == nil {
-		t.Fatal("expected error when postgres not configured, got nil")
 	}
 }
