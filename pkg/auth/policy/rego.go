@@ -3,10 +3,10 @@ package policy
 import (
 	"context"
 	"embed"
+	"encoding/base32"
 	"io/fs"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
@@ -21,6 +21,14 @@ type static struct {
 	compiler *ast.Compiler
 }
 
+func newStatic(modules map[string]*ast.Module) (*static, error) {
+	compiler, err := compile(modules)
+	if err != nil {
+		return nil, err
+	}
+	return &static{compiler: compiler}, nil
+}
+
 func (p *static) EvalPolicy(ctx context.Context, query string, input Attributes) (rego.ResultSet, error) {
 	return rego.New(
 		rego.Compiler(p.compiler),
@@ -30,97 +38,109 @@ func (p *static) EvalPolicy(ctx context.Context, query string, input Attributes)
 	).Eval(ctx)
 }
 
-type cachedStatic struct {
+type pool struct {
 	modules map[string]*ast.Module
-	cache   map[string]*regoCacheEntry
-	cacheM  sync.Mutex
+	pool    sync.Pool // of *cache
 }
 
-func newCachedStatic(compiler *ast.Compiler) *cachedStatic {
-	// Create a defensive deep copy of the module map so cachedStatic owns
-	// a snapshot, protecting against external mutations.
-	modules := make(map[string]*ast.Module, len(compiler.Modules))
-	for k, v := range compiler.Modules {
-		modules[k] = v.Copy()
-	}
-	return &cachedStatic{
-		cache:   make(map[string]*regoCacheEntry),
+func newPool(modules map[string]*ast.Module) (*pool, error) {
+	p := &pool{
 		modules: modules,
 	}
-}
+	p.pool.New = p.factory
 
-func (p *cachedStatic) EvalPolicy(ctx context.Context, query string, input Attributes) (rego.ResultSet, error) {
-	pq, err := p.loadPreparedCached(ctx, query)
+	// check that the files provided can be used to construct a valid compiler etc.
+	// if this succeeds then all future newPoolEntry calls will also succeed because it's deterministic
+	//
+	// this also pre-fills the pool, decreasing first-request latency
+	first, err := newCache(modules)
 	if err != nil {
 		return nil, err
 	}
-	return pq.Eval(ctx, rego.EvalInput(input))
+	p.pool.Put(first)
+
+	return p, nil
 }
 
-func (p *cachedStatic) getOrCreateCacheEntry(query string) *regoCacheEntry {
-	p.cacheM.Lock()
-	defer p.cacheM.Unlock()
+func (p *pool) EvalPolicy(ctx context.Context, query string, input Attributes) (rego.ResultSet, error) {
+	c := p.pool.Get().(*cache)
+	defer p.pool.Put(c)
+	return c.EvalPolicy(ctx, query, input)
+}
 
-	entry, ok := p.cache[query]
-	if !ok {
-		entry = &regoCacheEntry{done: make(chan struct{})}
-		p.cache[query] = entry
+// wraps newCache with correct return type
+// panics if newCache fails (after pool has been initialised, it should be impossible)
+func (p *pool) factory() any {
+	c, err := newCache(p.modules)
+	if err != nil {
+		panic(err)
 	}
-	return entry
+	return c
 }
 
-// Results are cached; the partial evaluation is performed once the first time and re-used for subsequent calls.
-// If the provided context is cancelled before the result is ready, the process will continue in the background and
-// the context error is returned.
-// If loadPreparedCached returns a non-context error, then future calls with the same query will always return the same error.
-func (p *cachedStatic) loadPreparedCached(ctx context.Context, query string) (rego.PreparedEvalQuery, error) {
-	entry := p.getOrCreateCacheEntry(query)
+// cache implements Policy in a non-concurrency-safe way - it must only be used by one goroutine at a time.
+// Therefore, it must not be exposed outside the package - use pool to get a thread-safe pool of caches.
+type cache struct {
+	compiler *ast.Compiler
+	cache    map[string]cacheEntry // keyed by query
+}
 
-	// each cache entry only gets one chance to compile - it's a deterministic process, so if it fails once there's no
-	// point trying again later
-	entry.once.Do(func() {
-		// run asynchronously so the compilation can complete in the background if ctx is cancelled early
-		go func() {
-			defer close(entry.done)
-			// if a policy file takes more than 5 seconds to compile, something is wrong with it
-			bgctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-
-			// Compile a fresh compiler from the cached modules to avoid PartialResult
-			// mutating shared compiler state across concurrent evaluations.
-			compiler := ast.NewCompiler()
-			compiler.Compile(p.modules)
-
-			if compiler.Failed() {
-				entry.err = compiler.Errors
-				return
-			}
-
-			r := rego.New(
-				rego.Compiler(compiler),
-				rego.Query(query),
-				rego.Store(defaultStore),
-			)
-			entry.preparedQuery, entry.err = r.PrepareForEval(bgctx, rego.WithPartialEval())
-		}()
-	})
-	select {
-	case <-entry.done:
-		return entry.preparedQuery, entry.err
-	case <-ctx.Done():
-		return rego.PreparedEvalQuery{}, ctx.Err()
+func newCache(modules map[string]*ast.Module) (*cache, error) {
+	compiler, err := compile(modules)
+	if err != nil {
+		return nil, err
 	}
+
+	return &cache{
+		compiler: compiler,
+		cache:    make(map[string]cacheEntry),
+	}, nil
 }
 
-type regoCacheEntry struct {
-	once          sync.Once
-	done          chan struct{}
-	preparedQuery rego.PreparedEvalQuery
+func (c *cache) EvalPolicy(ctx context.Context, query string, input Attributes) (rego.ResultSet, error) {
+	ce := c.getOrCreateCacheEntry(ctx, query)
+	if ce.err != nil {
+		return nil, ce.err
+	}
+	r := ce.partialResult.Rego(
+		rego.Input(input),
+	)
+
+	return r.Eval(ctx)
+}
+
+func (c *cache) getOrCreateCacheEntry(ctx context.Context, query string) cacheEntry {
+	ce, ok := c.cache[query]
+	if ok {
+		return ce
+	}
+
+	r := rego.New(
+		rego.Query(query),
+		rego.Compiler(c.compiler),
+		rego.Store(defaultStore),
+		// Partial evaluation stores some data inside the compiler.
+		// To avoid collisions, each partial evaluation must have a different partial namespace.
+		// We run partial evaluation once for each query, so calculate namespace from that.
+		rego.PartialNamespace(encodeNamespace(query)),
+	)
+	ce.partialResult, ce.err = r.PartialResult(ctx)
+	if ce.err != nil && ctx.Err() != nil {
+		// the partial evaluation failed, but it's probably because the context was cancelled
+		// don't save in the cache, we might succeed next time.
+		return ce
+	}
+	c.cache[query] = ce
+	return ce
+}
+
+type cacheEntry struct {
+	partialResult rego.PartialResult
 	err           error
 }
 
-func compileFS(sources fs.FS) (*ast.Compiler, error) {
-	files := make(map[string]string)
+func parseFS(sources fs.FS) (map[string]*ast.Module, error) {
+	modules := make(map[string]*ast.Module)
 	err := fs.WalkDir(sources, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -134,33 +154,44 @@ func compileFS(sources fs.FS) (*ast.Compiler, error) {
 			return err
 		}
 
-		files[path] = string(contents)
+		mod, err := ast.ParseModule(path, string(contents))
+		if err != nil {
+			return err
+		}
+
+		modules[path] = mod
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
+	return modules, nil
+}
 
-	c, err := ast.CompileModules(files)
-	if err != nil {
-		return nil, err
+// compile modules in a fresh compiler and check errors
+func compile(modules map[string]*ast.Module) (*ast.Compiler, error) {
+	compiler := ast.NewCompiler()
+	compiler.Compile(modules)
+	if compiler.Failed() {
+		return nil, compiler.Errors
 	}
-	return c, nil
+	return compiler, nil
 }
 
 var (
 	//go:embed default
 	defaultPolicyFS embed.FS
-	defaultCompiler *ast.Compiler
+	defaultModules  map[string]*ast.Module
 	defaultStore    storage.Store
 )
 
 func init() {
-	compiler, err := compileFS(defaultPolicyFS)
+	mods, err := parseFS(defaultPolicyFS)
 	if err != nil {
+		// default (bundled) policies are assumed to be error-free
 		panic(err)
 	}
-	defaultCompiler = compiler
+	defaultModules = mods
 	defaultStore = inmem.NewFromObject(map[string]any{
 		"system": systemData{
 			KnownTraits: builtinTraits(),
@@ -187,28 +218,35 @@ func builtinTraits() []knownTrait {
 }
 
 func Default(cached bool) Policy {
+	var p Policy
+	var err error
 	if cached {
-		return newCachedStatic(defaultCompiler)
+		p, err = newPool(defaultModules)
+	} else {
+		p, err = newStatic(defaultModules)
 	}
-	return &static{compiler: defaultCompiler}
+	if err != nil {
+		// default (bundled) modules are assumed to be error-free
+		panic(err)
+	}
+	return p
 }
 
-// FromFS returns a Policy from the .rego files in the provided FS.
 func FromFS(f fs.FS, opts ...FsOpt) (Policy, error) {
 	cfg := fsOpts{cached: true}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
 
-	compiler, err := compileFS(f)
+	mods, err := parseFS(f)
 	if err != nil {
 		return nil, err
 	}
 
 	if cfg.cached {
-		return newCachedStatic(compiler), nil
+		return newPool(mods)
 	}
-	return &static{compiler: compiler}, nil
+	return newStatic(mods)
 }
 
 // FsOpt configures FromFS.
@@ -232,4 +270,10 @@ type systemData struct {
 type knownTrait struct {
 	Name         trait.Name `json:"name"`
 	GRPCServices []string   `json:"grpc_services"`
+}
+
+// encodes an arbitrary string such that it's valid as a Rego namespace component (alphanumeric + underscore)
+func encodeNamespace(str string) string {
+	enc := base32.StdEncoding.WithPadding('_')
+	return enc.EncodeToString([]byte(str))
 }
