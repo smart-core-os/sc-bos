@@ -3,7 +3,9 @@ package policy
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -40,7 +42,8 @@ func TestValidate(t *testing.T) {
 		attr          Attributes
 		responses     map[string]rego.ResultSet
 		expectErr     error
-		expectQueries []string
+		expectQueries []string // queries called on the policy
+		expectTried   []string // queries returned in the tried slice
 	}
 
 	cases := map[string]testCase{
@@ -51,6 +54,12 @@ func TestValidate(t *testing.T) {
 			},
 			expectErr: ErrUnauthenticated,
 			expectQueries: []string{
+				"data.foo.bar.baz.allow",
+				"data.foo.bar.allow",
+				"data.foo.allow",
+				"data.grpc_default.allow",
+			},
+			expectTried: []string{
 				"data.foo.bar.baz.allow",
 				"data.foo.bar.allow",
 				"data.foo.allow",
@@ -72,6 +81,10 @@ func TestValidate(t *testing.T) {
 				"data.foo.bar.baz.allow",
 				"data.foo.bar.allow",
 			},
+			expectTried: []string{
+				"data.foo.bar.baz.allow",
+				"data.foo.bar.allow",
+			},
 		},
 		"ShortCircuit_Negative": {
 			attr: Attributes{
@@ -85,6 +98,10 @@ func TestValidate(t *testing.T) {
 			},
 			expectErr: ErrUnauthenticated,
 			expectQueries: []string{
+				"data.foo.bar.baz.allow",
+				"data.foo.bar.allow",
+			},
+			expectTried: []string{
 				"data.foo.bar.baz.allow",
 				"data.foo.bar.allow",
 			},
@@ -103,6 +120,9 @@ func TestValidate(t *testing.T) {
 			expectQueries: []string{
 				"data.foo.bar.baz.allow",
 			},
+			expectTried: []string{
+				"data.foo.bar.baz.allow",
+			},
 		},
 		"PermissionDenied_cert": {
 			attr: Attributes{
@@ -118,18 +138,24 @@ func TestValidate(t *testing.T) {
 			expectQueries: []string{
 				"data.foo.bar.baz.allow",
 			},
+			expectTried: []string{
+				"data.foo.bar.baz.allow",
+			},
 		},
 	}
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
 			policy := &mockPolicy{responses: c.responses}
-			_, err := Validate(context.Background(), policy, c.attr)
+			tried, err := Validate(context.Background(), policy, c.attr)
 			if !errors.Is(err, c.expectErr) {
 				t.Errorf("unexpected error: %v", err)
 			}
 			if diff := cmp.Diff(c.expectQueries, policy.queries); diff != "" {
 				t.Errorf("wrong query sequence (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(c.expectTried, tried); diff != "" {
+				t.Errorf("wrong tried slice (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -228,4 +254,94 @@ func TestDefaultPolicy_Traits(t *testing.T) {
 	if !errors.Is(err, ErrPermissionDenied) {
 		t.Errorf("%s: expected permission denied, got: %v", attrs.Service, err)
 	}
+}
+
+// benchmarkScenarios is a mix of realistic server requests that exercise different
+// hierarchy depths and auth contexts, representative of a loaded BOS server:
+//
+//   - 1-query path:  operator + TenantApi write verb (stops at the specific-package rule)
+//   - 3-query path:  token/cert + trait API (falls through to data.smartcore.allow)
+//   - 5-query path:  TenantApi reads/writes by various roles (walks all BOS layers to data.smartcore.allow)
+//   - full-walk:     unauthenticated request (all queries empty, walks the complete hierarchy)
+var benchmarkScenarios = []Attributes{
+	// 1-query stop: operator + TenantApi verb that matches the specific-package rule
+	{
+		Protocol: ProtocolGRPC, Service: "smartcore.bos.tenants.v1.TenantApi", Method: "AddTenant",
+		Request: json.RawMessage(`{"name":"test"}`), TokenPresent: true, TokenValid: true,
+		TokenClaims: token.Claims{SystemRoles: []string{"operator"}},
+	},
+	// 3-query stop: admin reads a trait (falls through traits package, stops at smartcore.allow)
+	{
+		Protocol: ProtocolGRPC, Service: "smartcore.traits.OnOff", Method: "GetOnOff",
+		Request: json.RawMessage(`{"name":"devices/light1"}`), TokenPresent: true, TokenValid: true,
+		TokenClaims: token.Claims{SystemRoles: []string{"admin"}},
+	},
+	// 3-query stop: operator writes a trait
+	{
+		Protocol: ProtocolGRPC, Service: "smartcore.traits.OnOff", Method: "UpdateOnOff",
+		Request: json.RawMessage(`{"name":"devices/light1","onOff":{"state":"ON"}}`), TokenPresent: true, TokenValid: true,
+		TokenClaims: token.Claims{SystemRoles: []string{"operator"}},
+	},
+	// 3-query stop: viewer reads a trait
+	{
+		Protocol: ProtocolGRPC, Service: "smartcore.traits.Brightness", Method: "GetBrightness",
+		Request: json.RawMessage(`{"name":"devices/light2"}`), TokenPresent: true, TokenValid: true,
+		TokenClaims: token.Claims{SystemRoles: []string{"viewer"}},
+	},
+	// 3-query stop: certificate auth reads a trait (cert rule fires at smartcore.allow)
+	{
+		Protocol: ProtocolGRPC, Service: "smartcore.traits.OnOff", Method: "GetOnOff",
+		Request:            json.RawMessage(`{"name":"devices/light3"}`),
+		CertificatePresent: true, CertificateValid: true,
+	},
+	// 5-query stop: operator reads from TenantApi (verb doesn't match specific-package rule;
+	// falls all the way through BOS layers to smartcore.allow via operator+read)
+	{
+		Protocol: ProtocolGRPC, Service: "smartcore.bos.tenants.v1.TenantApi", Method: "GetTenant",
+		Request: json.RawMessage(`{"name":"test"}`), TokenPresent: true, TokenValid: true,
+		TokenClaims: token.Claims{SystemRoles: []string{"operator"}},
+	},
+	// 5-query stop: admin deletes from TenantApi (no admin rule in specific package;
+	// walks to smartcore.allow where admin is unconditionally allowed)
+	{
+		Protocol: ProtocolGRPC, Service: "smartcore.bos.tenants.v1.TenantApi", Method: "DeleteCredential",
+		Request: json.RawMessage(`{"name":"test"}`), TokenPresent: true, TokenValid: true,
+		TokenClaims: token.Claims{SystemRoles: []string{"admin"}},
+	},
+	// full-walk: unauthenticated — no rule fires anywhere, exhausts the entire hierarchy
+	{
+		Protocol: ProtocolGRPC, Service: "smartcore.traits.OnOff", Method: "GetOnOff",
+		Request: json.RawMessage(`{"name":"devices/light4"}`),
+	},
+}
+
+func BenchmarkValidate_Concurrent(b *testing.B) {
+	const goroutines = 16
+
+	run := func(b *testing.B, policy Policy) {
+		var wg sync.WaitGroup
+		work := make(chan Attributes)
+		for range goroutines {
+			wg.Go(func() {
+				for attr := range work {
+					_, _ = Validate(b.Context(), policy, attr)
+				}
+			})
+		}
+
+		b.ResetTimer()
+		for i := range b.N {
+			attr := benchmarkScenarios[i%len(benchmarkScenarios)]
+			work <- attr
+		}
+		close(work)
+		wg.Wait()
+	}
+
+	b.Run("static", func(b *testing.B) {
+		run(b, Default(false))
+	})
+	b.Run("cachedStatic", func(b *testing.B) {
+		run(b, Default(true))
+	})
 }
