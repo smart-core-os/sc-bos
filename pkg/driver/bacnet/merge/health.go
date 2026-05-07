@@ -29,7 +29,12 @@ type CheckConfig struct {
 	Source *config.ValueSource `json:"source,omitempty"`
 	// If true, and measured value is true, the alarm is active.
 	// If false, and measured value is false, the alarm is active.
-	ActiveHigh *bool `json:"activeHigh,omitempty"`
+	ActiveHigh *bool  `json:"activeHigh,omitempty"`
+	Summary    string `json:"summary,omitempty"`
+	// OKValue switches the check to error code mode. The BACnet point value is read as an
+	// integer and compared to OKValue. If they differ, a fault is raised with the actual
+	// read value surfaced in the description. Takes precedence over ActiveHigh when set.
+	OKValue *int64 `json:"okValue,omitempty"`
 }
 
 const defaultActiveHigh = true
@@ -47,7 +52,7 @@ func readHealthConfig(raw []byte) (cfg healthConfig, err error) {
 		if check.Source == nil {
 			return cfg, fmt.Errorf("health check %q is missing required field 'source'", name)
 		}
-		if check.ActiveHigh == nil {
+		if check.OKValue == nil && check.ActiveHigh == nil {
 			check.ActiveHigh = new(bool)
 			*check.ActiveHigh = defaultActiveHigh
 		}
@@ -101,7 +106,7 @@ func (h *Health) initializeChecks() error {
 			continue
 		}
 
-		check, err := h.checks.NewFaultCheck(bmsPointName, &healthpb.HealthCheck{
+		check, err := h.checks.NewFaultCheck(h.config.Name, &healthpb.HealthCheck{
 			Id:              cc.Id,
 			DisplayName:     cc.DisplayName,
 			Description:     cc.Description,
@@ -140,7 +145,7 @@ func (h *Health) pollPeer(ctx context.Context) error {
 	var readValues []config.ValueSource
 	var requestNames []string
 
-	readProcessor := func(source *config.ValueSource, activeHigh bool, id, pointName, errorCode string) {
+	readProcessor := func(source *config.ValueSource, activeHigh bool, id, pointName, errorCode, summary string) {
 		readValues = append(readValues, *source)
 		requestNames = append(requestNames, pointName)
 		resProcessors = append(resProcessors, func(response any) error {
@@ -151,7 +156,7 @@ func (h *Health) pollPeer(ctx context.Context) error {
 
 			if measured == activeHigh {
 				if check, ok := h.DeviceChecks[id]; ok {
-					raisePointAlarm(pointName, errorCode, "Alarm Detected", check)
+					raisePointAlarm(pointName, errorCode, summary, fmt.Sprintf("%v", response), check)
 				} else {
 					h.logger.Warn("no fault check configured for " + pointName)
 				}
@@ -164,8 +169,38 @@ func (h *Health) pollPeer(ctx context.Context) error {
 		})
 	}
 
+	readErrorCodeProcessor := func(source *config.ValueSource, okValue int64, id, pointName, errorCode, summary string) {
+		readValues = append(readValues, *source)
+		requestNames = append(requestNames, pointName)
+		resProcessors = append(resProcessors, func(response any) error {
+			val, err := comm.IntValue(response)
+			if err != nil {
+				return comm.ErrReadProperty{Prop: pointName, Cause: err}
+			}
+			check, ok := h.DeviceChecks[id]
+			if !ok {
+				h.logger.Warn("no fault check configured for " + pointName)
+				return nil
+			}
+			if val != okValue {
+				raisePointAlarm(pointName, errorCode, summary, fmt.Sprintf("%d", val), check)
+			} else {
+				removePointAlarm(errorCode, check)
+			}
+			return nil
+		})
+	}
+
 	for _, checkCfg := range h.config.Checks {
-		readProcessor(checkCfg.Source, *checkCfg.ActiveHigh, checkCfg.Id, checkCfg.DisplayName, checkCfg.ErrorCode)
+		summary := checkCfg.Summary
+		if summary == "" {
+			summary = "Error Detected"
+		}
+		if checkCfg.OKValue != nil {
+			readErrorCodeProcessor(checkCfg.Source, *checkCfg.OKValue, checkCfg.Id, checkCfg.DisplayName, checkCfg.ErrorCode, summary)
+		} else {
+			readProcessor(checkCfg.Source, *checkCfg.ActiveHigh, checkCfg.Id, checkCfg.DisplayName, checkCfg.ErrorCode, summary)
+		}
 	}
 
 	responses := comm.ReadProperties(ctx, h.client, h.known, readValues...)
