@@ -40,7 +40,8 @@ func TestValidate(t *testing.T) {
 		attr          Attributes
 		responses     map[string]rego.ResultSet
 		expectErr     error
-		expectQueries []string
+		expectQueries []string // queries called on the policy
+		expectTried   []string // queries returned in the tried slice
 	}
 
 	cases := map[string]testCase{
@@ -51,6 +52,12 @@ func TestValidate(t *testing.T) {
 			},
 			expectErr: ErrUnauthenticated,
 			expectQueries: []string{
+				"data.foo.bar.baz.allow",
+				"data.foo.bar.allow",
+				"data.foo.allow",
+				"data.grpc_default.allow",
+			},
+			expectTried: []string{
 				"data.foo.bar.baz.allow",
 				"data.foo.bar.allow",
 				"data.foo.allow",
@@ -72,6 +79,10 @@ func TestValidate(t *testing.T) {
 				"data.foo.bar.baz.allow",
 				"data.foo.bar.allow",
 			},
+			expectTried: []string{
+				"data.foo.bar.baz.allow",
+				"data.foo.bar.allow",
+			},
 		},
 		"ShortCircuit_Negative": {
 			attr: Attributes{
@@ -85,6 +96,10 @@ func TestValidate(t *testing.T) {
 			},
 			expectErr: ErrUnauthenticated,
 			expectQueries: []string{
+				"data.foo.bar.baz.allow",
+				"data.foo.bar.allow",
+			},
+			expectTried: []string{
 				"data.foo.bar.baz.allow",
 				"data.foo.bar.allow",
 			},
@@ -103,6 +118,9 @@ func TestValidate(t *testing.T) {
 			expectQueries: []string{
 				"data.foo.bar.baz.allow",
 			},
+			expectTried: []string{
+				"data.foo.bar.baz.allow",
+			},
 		},
 		"PermissionDenied_cert": {
 			attr: Attributes{
@@ -118,18 +136,24 @@ func TestValidate(t *testing.T) {
 			expectQueries: []string{
 				"data.foo.bar.baz.allow",
 			},
+			expectTried: []string{
+				"data.foo.bar.baz.allow",
+			},
 		},
 	}
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
 			policy := &mockPolicy{responses: c.responses}
-			_, err := Validate(context.Background(), policy, c.attr)
+			tried, err := Validate(context.Background(), policy, c.attr)
 			if !errors.Is(err, c.expectErr) {
 				t.Errorf("unexpected error: %v", err)
 			}
 			if diff := cmp.Diff(c.expectQueries, policy.queries); diff != "" {
 				t.Errorf("wrong query sequence (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(c.expectTried, tried); diff != "" {
+				t.Errorf("wrong tried slice (-want +got):\n%s", diff)
 			}
 		})
 	}
