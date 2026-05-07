@@ -1,7 +1,7 @@
 <template>
   <span>
     <metadata-card/>
-    <with-health-checks v-if="healthExperiment && traits['smartcore.bos.Health']" :name="deviceId" v-slot="{resource}">
+    <with-health-checks v-if="traits['smartcore.bos.Health']" :name="deviceId" v-slot="{resource}">
       <v-divider class="mt-4 mb-1"/>
       <health-checks-card v-bind="resource"/>
     </with-health-checks>
@@ -78,7 +78,6 @@
 </template>
 
 <script setup>
-import {useExperiment} from '@/composables/experiments.js';
 import AirQualityCard from '@/traits/airQuality/AirQualityCard.vue';
 import WithAirQuality from '@/traits/airQuality/WithAirQuality.vue';
 import AirTemperatureCard from '@/traits/airTemperature/AirTemperatureCard.vue';
@@ -123,5 +122,4 @@ defineProps({
   }
 });
 
-const healthExperiment = useExperiment('health');
 </script>

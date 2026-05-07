@@ -8,6 +8,18 @@
     <v-card-text>
       <reliability-time-text :model-value="props.modelValue"/>
     </v-card-text>
+    <v-card-text v-if="currentFaults.length > 0" class="py-0">
+      <h4 class="text-caption">{{ currentFaults.length === 1 ? 'Fault:' : 'Faults:' }}</h4>
+      <div v-for="fault in currentFaults" :key="fault.code?.code ?? fault.summaryText" class="ml-1">
+        <span>{{ fault.summaryText }}</span>
+        <div v-if="fault.detailsText" class="ml-1 text-caption text-medium-emphasis">{{ fault.detailsText }}</div>
+      </div>
+    </v-card-text>
+    <v-card-text v-if="errorSummary" class="py-0">
+      <h4 class="text-caption">Error:</h4>
+      <span class="ml-1">{{ errorSummary }}</span>
+      <div v-if="errorDetails" class="ml-1 text-caption text-medium-emphasis">{{ errorDetails }}</div>
+    </v-card-text>
     <v-card-text v-if="hasBounds">
       <h4 class="text-caption">Measured value:</h4>
       <bounds-text :model-value="props.modelValue" class="ml-1"/>
@@ -38,6 +50,9 @@ const name = computed(() => props.modelValue?.displayName ?? props.modelValue?.i
 const description = computed(() => props.modelValue?.description);
 
 const hasBounds = computed(() => Boolean(props.modelValue?.bounds));
+const currentFaults = computed(() => props.modelValue?.faults?.currentFaultsList ?? []);
+const errorSummary = computed(() => props.modelValue?.reliability?.lastError?.summaryText ?? null);
+const errorDetails = computed(() => props.modelValue?.reliability?.lastError?.detailsText ?? null);
 </script>
 
 <style scoped>
