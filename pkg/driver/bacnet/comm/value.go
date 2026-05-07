@@ -262,6 +262,10 @@ func IntValue(data any) (int64, error) {
 		return int64(v), nil
 	case int32:
 		return int64(v), nil
+	case float32:
+		return int64(v), nil
+	case float64:
+		return int64(v), nil
 	}
 
 	return 0, fmt.Errorf("unsupported conversion %T -> int for val %v", data, data)

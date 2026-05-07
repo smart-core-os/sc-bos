@@ -97,10 +97,10 @@ func updateTraitFaultCheck(ctx context.Context, faultCheck *healthpb.FaultCheck,
 	})
 }
 
-func raisePointAlarm(point string, code string, summary string, fc *healthpb.FaultCheck) {
+func raisePointAlarm(point string, code string, summary string, value string, fc *healthpb.FaultCheck) {
 	fc.AddOrUpdateFault(&healthpb.HealthCheck_Error{
 		SummaryText: summary,
-		DetailsText: "An alarm has been detected on point: " + point,
+		DetailsText: fmt.Sprintf("Error on point %q, value: %s", point, value),
 		Code: &healthpb.HealthCheck_Error_Code{
 			Code:   code,
 			System: SystemName,
