@@ -62,6 +62,15 @@ type Policy interface {
 	EvalPolicy(ctx context.Context, query string, input Attributes) (rego.ResultSet, error)
 }
 
+type MultiEvalPolicy interface {
+	// EvalPolicyQueries is an optimised alternative to Policy.EvalPolicy for use when multiple queries needs to
+	// be evaluated on the same policy.
+	// Queries are evaluated in sequence. For the first query producing a non-empty result set, its result and query
+	// index are returned.
+	// If no query produces a non-empty result set, returns -1 and an empty result set.
+	EvalPolicyQueries(ctx context.Context, queries []string, input Attributes) (int, rego.ResultSet, error)
+}
+
 // Func implements Policy by calling a function.
 type Func func(ctx context.Context, query string, input Attributes) (rego.ResultSet, error)
 
@@ -96,23 +105,41 @@ var AllowAll Policy = Func(func(_ context.Context, _ string, _ Attributes) (rego
 //   - data.foo.bar.allow
 //   - data.foo.allow
 //   - data.grpc_default.allow
+//
+// If policy implements MultiEvalPolicy, Validate will take advantage of that for improved performance.
 func Validate(ctx context.Context, policy Policy, attr Attributes) (tried []string, err error) {
 	queries := queryHierarchy(attr.Protocol, attr.Service)
-	for i, query := range queries {
-		result, err := policy.EvalPolicy(ctx, query, attr)
-		if err != nil {
-			return queries[:i+1], err
-		}
-
-		if len(result) > 0 {
-			if result.Allowed() {
-				return queries[:i+1], nil
-			} else {
-				return queries[:i+1], authError(attr)
-			}
+	i, result, err := evalPolicyMultiple(ctx, policy, queries, attr)
+	if err != nil {
+		return queries[:i+1], err
+	}
+	if len(result) > 0 {
+		if result.Allowed() {
+			return queries[:i+1], nil
+		} else {
+			return queries[:i+1], authError(attr)
 		}
 	}
 	return queries, authError(attr)
+}
+
+// calls MultiEvalPolicy.EvalPolicyMultiple if available, otherwise falls back to calling Policy.EvalPolicy in a loop
+// return values the same as MultiEvalPolicy.EvalPolicyMultiple
+func evalPolicyMultiple(ctx context.Context, policy Policy, queries []string, attr Attributes) (int, rego.ResultSet, error) {
+	if pm, ok := policy.(MultiEvalPolicy); ok {
+		return pm.EvalPolicyQueries(ctx, queries, attr)
+	}
+
+	for i, query := range queries {
+		result, err := policy.EvalPolicy(ctx, query, attr)
+		if err != nil {
+			return i, rego.ResultSet{}, err
+		}
+		if len(result) > 0 {
+			return i, result, nil
+		}
+	}
+	return -1, rego.ResultSet{}, nil
 }
 
 func queryHierarchy(protocol Protocol, service string) (queries []string) {

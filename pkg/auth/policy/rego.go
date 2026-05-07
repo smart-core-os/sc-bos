@@ -68,6 +68,23 @@ func (p *pool) EvalPolicy(ctx context.Context, query string, input Attributes) (
 	return c.EvalPolicy(ctx, query, input)
 }
 
+func (p *pool) EvalPolicyQueries(ctx context.Context, queries []string, input Attributes) (int, rego.ResultSet, error) {
+	c := p.pool.Get().(*cache)
+	defer p.pool.Put(c)
+
+	for i, query := range queries {
+		rs, err := c.EvalPolicy(ctx, query, input)
+		if err != nil {
+			return i, rs, err
+		}
+
+		if len(rs) > 0 {
+			return i, rs, nil
+		}
+	}
+	return -1, rego.ResultSet{}, nil
+}
+
 // wraps newCache with correct return type
 // panics if newCache fails (after pool has been initialised, it should be impossible)
 func (p *pool) factory() any {
