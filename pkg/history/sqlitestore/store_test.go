@@ -713,3 +713,64 @@ func TestStore_Append(t *testing.T) {
 		{Source: source, CreateTime: record.CreateTime, Payload: []byte("test-payload")},
 	})
 }
+
+func TestDatabase_TotalCount(t *testing.T) {
+	db := newTestMemDB(t)
+	ctx := t.Context()
+
+	count, err := db.TotalCount(ctx)
+	if err != nil {
+		t.Fatalf("TotalCount on empty db: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("expected 0, got %d", count)
+	}
+
+	originTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	records := []Record{
+		{Source: "src1", CreateTime: originTime, Payload: []byte("a")},
+		{Source: "src1", CreateTime: originTime.Add(time.Millisecond), Payload: []byte("b")},
+		{Source: "src2", CreateTime: originTime.Add(2 * time.Millisecond), Payload: []byte("c")},
+	}
+	if err := db.InsertBulk(ctx, records); err != nil {
+		t.Fatalf("InsertBulk: %v", err)
+	}
+
+	count, err = db.TotalCount(ctx)
+	if err != nil {
+		t.Fatalf("TotalCount: %v", err)
+	}
+	if count != 3 {
+		t.Errorf("expected 3, got %d", count)
+	}
+}
+
+func TestDatabase_Clear(t *testing.T) {
+	db := newTestMemDB(t)
+	ctx := t.Context()
+
+	originTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	records := []Record{
+		{Source: "src1", CreateTime: originTime, Payload: []byte("a")},
+		{Source: "src2", CreateTime: originTime.Add(time.Millisecond), Payload: []byte("b")},
+	}
+	if err := db.InsertBulk(ctx, records); err != nil {
+		t.Fatalf("InsertBulk: %v", err)
+	}
+
+	deleted, err := db.Clear(ctx)
+	if err != nil {
+		t.Fatalf("Clear: %v", err)
+	}
+	if deleted != 2 {
+		t.Errorf("expected 2 deleted, got %d", deleted)
+	}
+
+	count, err := db.TotalCount(ctx)
+	if err != nil {
+		t.Fatalf("TotalCount after clear: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("expected 0 records after clear, got %d", count)
+	}
+}

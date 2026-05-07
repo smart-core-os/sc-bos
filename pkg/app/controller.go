@@ -42,6 +42,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/app/logcapture"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
+	"github.com/smart-core-os/sc-bos/pkg/history/dataretention"
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
 	"github.com/smart-core-os/sc-bos/pkg/manage/enrollment"
@@ -609,6 +610,9 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	// metadata associated with the node itself
 	// we don't support changing metadata while running
 	c.Node.Announce(c.Node.Name(), node.HasMetadata(initialConfig.Metadata))
+
+	storeUndo := dataretention.Start(ctx, c.Node, c.SystemConfig.Name, c.Stores, c.SystemConfig.Stores, c.Logger)
+	defer storeUndo()
 
 	group, ctx := errgroup.WithContext(ctx)
 	if c.Enrollment != nil {
