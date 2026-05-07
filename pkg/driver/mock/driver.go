@@ -32,6 +32,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/fluidflowpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hailpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/inputselectpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lockunlockpb"
@@ -264,6 +265,9 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		return []node.Feature{node.HasServer(fanspeedpb.RegisterFanSpeedApiServer, fanspeedpb.FanSpeedApiServer(fanspeedpb.NewModelServer(model)))}, auto.FanSpeed(model, presets...)
 	case trait.Hail:
 		return []node.Feature{node.HasServer(hailpb.RegisterHailApiServer, hailpb.HailApiServer(hailpb.NewModelServer(hailpb.NewModel())))}, nil
+	case healthpb.TraitName:
+		model := healthpb.NewModel()
+		return []node.Feature{node.HasServer(healthpb.RegisterHealthApiServer, healthpb.HealthApiServer(healthpb.NewModelServer(model)))}, auto.HealthAuto(model)
 	case trait.InputSelect:
 		model := inputselectpb.NewModel()
 		return []node.Feature{node.HasServer(inputselectpb.RegisterInputSelectApiServer, inputselectpb.InputSelectApiServer(inputselectpb.NewModelServer(model)))}, auto.InputSelectAuto(model)
