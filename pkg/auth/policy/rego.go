@@ -86,8 +86,8 @@ func (p *cachedStatic) loadPreparedCached(ctx context.Context, query string) (re
 			bgctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
-			// Compile a fresh compiler from the cached modules to avoid PartialResult
-			// mutating shared compiler state across concurrent evaluations.
+			// Compile a fresh compiler from the cached modules so the prepared
+			// query owns its compiler and isn't mutated by concurrent evaluations.
 			compiler := ast.NewCompiler()
 			compiler.Compile(p.modules)
 
@@ -101,7 +101,7 @@ func (p *cachedStatic) loadPreparedCached(ctx context.Context, query string) (re
 				rego.Query(query),
 				rego.Store(defaultStore),
 			)
-			entry.preparedQuery, entry.err = r.PrepareForEval(bgctx, rego.WithPartialEval())
+			entry.preparedQuery, entry.err = r.PrepareForEval(bgctx)
 		}()
 	})
 	select {
