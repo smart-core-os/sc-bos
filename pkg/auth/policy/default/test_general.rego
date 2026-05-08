@@ -146,3 +146,118 @@ test_bos_zone_mismatch if {
     with input as tenant_request("smartcore.bos.light.v1.LightApi", "GetBrightness", {"name": "zone/2"}, ["zone/1"])
     with data.system.known_traits as mock_known_traits
 }
+
+# --- CloudConnectionApi: mutations restricted to admin / cert; reads gated on trait:read ---
+
+cert_request(service, method, request) := result if {
+  result := {
+    "service": service,
+    "method": method,
+    "stream": {"is_server_stream": false, "is_client_stream": false, "open": false},
+    "request": request,
+    "certificate_present": true,
+    "certificate_valid": true,
+    "certificate": {},
+    "token_present": false,
+    "token_valid": false,
+    "token_claims": null
+  }
+}
+
+permission_request(service, method, request, permissions) := result if {
+  result := {
+    "service": service,
+    "method": method,
+    "stream": {"is_server_stream": false, "is_client_stream": false, "open": false},
+    "request": request,
+    "certificate_present": false,
+    "certificate_valid": false,
+    "certificate": null,
+    "token_present": true,
+    "token_valid": true,
+    "token_claims": {
+      "system_roles": [],
+      "is_service": true,
+      "permissions": [ {"permission": p, "scoped": false} | p := permissions[_] ]
+    }
+  }
+}
+
+cloud_service := "smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi"
+
+test_cloud_admin_Register if {
+  data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as user_request(cloud_service, "RegisterCloudConnection", {}, ["admin"])
+}
+test_cloud_super_admin_Unlink if {
+  data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as user_request(cloud_service, "UnlinkCloudConnection", {}, ["super-admin"])
+}
+test_cloud_cert_Register if {
+  data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as cert_request(cloud_service, "RegisterCloudConnection", {})
+}
+test_cloud_cert_Unlink if {
+  data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as cert_request(cloud_service, "UnlinkCloudConnection", {})
+}
+
+# trait:write must NOT be sufficient for mutating cloud connection ops —
+# only admin role and cert auth can register/unlink.
+test_cloud_trait_write_Register_denied if {
+  not data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as permission_request(cloud_service, "RegisterCloudConnection", {}, ["trait:write"])
+}
+test_cloud_trait_star_Unlink_denied if {
+  not data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as permission_request(cloud_service, "UnlinkCloudConnection", {}, ["trait:*"])
+}
+# Legacy named roles do not grant mutating access either.
+# Commissioners get unrestricted access via smartcore.allow, but the
+# service-level `default allow := false` short-circuits the hierarchy.
+test_cloud_commissioner_Register_denied if {
+  not data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as user_request(cloud_service, "RegisterCloudConnection", {}, ["commissioner"])
+}
+test_cloud_operator_Unlink_denied if {
+  not data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as user_request(cloud_service, "UnlinkCloudConnection", {}, ["operator"])
+}
+
+# Read ops are gated on trait:read; trait:write satisfies this via inheritance.
+test_cloud_trait_read_Get if {
+  data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as permission_request(cloud_service, "GetCloudConnection", {}, ["trait:read"])
+}
+test_cloud_trait_read_Pull if {
+  data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as permission_request(cloud_service, "PullCloudConnection", {}, ["trait:read"])
+}
+test_cloud_trait_read_GetDefaults if {
+  data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as permission_request(cloud_service, "GetCloudConnectionDefaults", {}, ["trait:read"])
+}
+test_cloud_trait_write_Get if {
+  data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as permission_request(cloud_service, "GetCloudConnection", {}, ["trait:write"])
+}
+
+# Test op is gated on trait:write — trait:read is insufficient.
+test_cloud_trait_write_Test if {
+  data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as permission_request(cloud_service, "TestCloudConnection", {}, ["trait:write"])
+}
+test_cloud_trait_read_Test_denied if {
+  not data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as permission_request(cloud_service, "TestCloudConnection", {}, ["trait:read"])
+}
+
+# Tokens with no relevant permissions can do nothing here.
+test_cloud_no_perms_Get_denied if {
+  not data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as permission_request(cloud_service, "GetCloudConnection", {}, [])
+}
+test_cloud_no_perms_Test_denied if {
+  not data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
+    with input as permission_request(cloud_service, "TestCloudConnection", {}, [])
+}
