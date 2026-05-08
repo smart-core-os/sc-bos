@@ -37,11 +37,11 @@ type cachedStatic struct {
 }
 
 func newCachedStatic(compiler *ast.Compiler) *cachedStatic {
-	// Create a defensive shallow copy of the module map so cachedStatic owns
+	// Create a defensive deep copy of the module map so cachedStatic owns
 	// a snapshot, protecting against external mutations.
 	modules := make(map[string]*ast.Module, len(compiler.Modules))
 	for k, v := range compiler.Modules {
-		modules[k] = v
+		modules[k] = v.Copy()
 	}
 	return &cachedStatic{
 		cache:   make(map[string]*regoCacheEntry),
@@ -189,18 +189,40 @@ func builtinTraits() []knownTrait {
 func Default(cached bool) Policy {
 	if cached {
 		return newCachedStatic(defaultCompiler)
-	} else {
-		return &static{compiler: defaultCompiler}
 	}
+	return &static{compiler: defaultCompiler}
 }
 
-func FromFS(f fs.FS) (Policy, error) {
+// FromFS returns a Policy from the .rego files in the provided FS.
+func FromFS(f fs.FS, opts ...FsOpt) (Policy, error) {
+	cfg := fsOpts{cached: true}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
 	compiler, err := compileFS(f)
 	if err != nil {
 		return nil, err
 	}
 
-	return newCachedStatic(compiler), nil
+	if cfg.cached {
+		return newCachedStatic(compiler), nil
+	}
+	return &static{compiler: compiler}, nil
+}
+
+// FsOpt configures FromFS.
+type FsOpt func(*fsOpts)
+
+type fsOpts struct {
+	cached bool
+}
+
+// WithCached enables or disables caching compiled rego modules. Caching is enabled by default.
+func WithCached(cached bool) FsOpt {
+	return func(o *fsOpts) {
+		o.cached = cached
+	}
 }
 
 type systemData struct {
