@@ -1,0 +1,25 @@
+name: Test Rego policies
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pkg/auth/policy/default/**/*.rego'
+
+  pull_request:
+    paths:
+      - 'pkg/auth/policy/default/**/*.rego'
+
+jobs:
+  test-all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      - name: Run OPA Tests
+        working-directory: ./pkg/auth/policy/default
+        run: opa test -v .
