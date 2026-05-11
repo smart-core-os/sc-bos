@@ -15,8 +15,13 @@
       <v-list-item class="py-1" v-for="(value, key) in messagePayload" :key="key" lines="one">
         <v-list-item-title class="text-body-small text-capitalize flex-fill">{{ key }}</v-list-item-title>
         <template #append>
-          <v-list-item-subtitle class="text-capitalize text-end flex-fill text-body-1">
-            {{ value['present_value'] ?? value }}
+          <v-list-item-subtitle
+              v-if="isStructured(displayValue(value))"
+              class="text-end flex-fill text-body-2 udmi-json">
+            <pre class="ma-0">{{ JSON.stringify(displayValue(value), null, 2) }}</pre>
+          </v-list-item-subtitle>
+          <v-list-item-subtitle v-else class="text-capitalize text-end flex-fill text-body-1">
+            {{ displayValue(value) }}
           </v-list-item-subtitle>
         </template>
       </v-list-item>
@@ -47,6 +52,21 @@ const messagePayload = computed(() => {
   return JSON.parse(message.value.payload);
 });
 
+const displayValue = (value) => {
+  let v = value?.present_value ?? value;
+  if (typeof v === 'string') {
+    const trimmed = v.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        return JSON.parse(trimmed);
+      } catch { /* not JSON, fall through */ }
+    }
+  }
+  return v;
+};
+
+const isStructured = (v) => v !== null && typeof v === 'object';
+
 // UI error handling
 const errorStore = useErrorStore();
 let unwatchMessageError;
@@ -75,5 +95,20 @@ onUnmounted(() => {
 <style scoped>
 .v-list-item {
   min-height: auto;
+}
+.udmi-json {
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+  display: block;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+.udmi-json pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--v-font-family-monospace, monospace);
+  text-align: left;
+  margin: 0;
 }
 </style>
