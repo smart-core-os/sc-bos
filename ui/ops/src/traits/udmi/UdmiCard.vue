@@ -18,7 +18,19 @@
           <v-list-item-subtitle
               v-if="isStructured(displayValue(value))"
               class="text-end flex-fill text-body-2 udmi-json">
-            <pre class="ma-0">{{ JSON.stringify(displayValue(value), null, 2) }}</pre>
+            <div class="d-flex align-center justify-end ga-1">
+              <span v-if="collapsed[key]" class="text-medium-emphasis">
+                {{ summaryOf(displayValue(value)) }}
+              </span>
+              <v-btn
+                  size="x-small"
+                  variant="text"
+                  density="compact"
+                  :icon="collapsed[key] ? 'mdi-chevron-right' : 'mdi-chevron-down'"
+                  :aria-label="collapsed[key] ? 'Expand' : 'Collapse'"
+                  @click="toggle(key)"/>
+            </div>
+            <pre v-if="!collapsed[key]" class="ma-0">{{ JSON.stringify(displayValue(value), null, 2) }}</pre>
           </v-list-item-subtitle>
           <v-list-item-subtitle v-else class="text-capitalize text-end flex-fill text-body-1">
             {{ displayValue(value) }}
@@ -67,6 +79,16 @@ const displayValue = (value) => {
 
 const isStructured = (v) => v !== null && typeof v === 'object';
 
+const collapsed = reactive({});
+const toggle = (key) => {
+  collapsed[key] = !collapsed[key];
+};
+const summaryOf = (v) => {
+  if (Array.isArray(v)) return `[…] (${v.length})`;
+  const keys = Object.keys(v);
+  return `{…} (${keys.length})`;
+};
+
 // UI error handling
 const errorStore = useErrorStore();
 let unwatchMessageError;
@@ -107,7 +129,7 @@ onUnmounted(() => {
 .udmi-json pre {
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: var(--v-font-family-monospace, monospace);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   text-align: left;
   margin: 0;
 }
