@@ -25,6 +25,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
@@ -333,6 +334,8 @@ func (a *automation) createCollector(store history.Store, traitName trait.Name) 
 		return node.HasServer(meterpb.RegisterMeterHistoryServer, meterpb.MeterHistoryServer(historypb.NewMeterServer(store))), a.collectMeterReadingChanges, nil
 	case trait.OccupancySensor:
 		return node.HasServer(occupancysensorpb.RegisterOccupancySensorHistoryServer, occupancysensorpb.OccupancySensorHistoryServer(historypb.NewOccupancySensorServer(store))), a.collectOccupancyChanges, nil
+	case bootpb.TraitName:
+		return node.HasServer(bootpb.RegisterBootHistoryServer, bootpb.BootHistoryServer(historypb.NewBootServer(store))), a.collectBootRecordChanges, nil
 	case resourceusepb.TraitName:
 		return node.HasServer(resourceusepb.RegisterResourceUseHistoryServer, resourceusepb.ResourceUseHistoryServer(historypb.NewResourceUseServer(store))), a.collectResourceUseChanges, nil
 	case soundsensorpb.TraitName:
