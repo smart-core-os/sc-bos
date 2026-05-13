@@ -29,6 +29,11 @@ export class Brightness extends jspb.Message {
   hasTargetPreset(): boolean;
   clearTargetPreset(): Brightness;
 
+  getConfidence(): number;
+  setConfidence(value: number): Brightness;
+  hasConfidence(): boolean;
+  clearConfidence(): Brightness;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Brightness.AsObject;
   static toObject(includeInstance: boolean, msg: Brightness): Brightness.AsObject;
@@ -44,7 +49,13 @@ export namespace Brightness {
     brightnessTween?: smartcore_bos_types_v1_tween_pb.Tween.AsObject;
     targetLevelPercent: number;
     targetPreset?: LightPreset.AsObject;
+    confidence?: number;
   };
+
+  export enum ConfidenceCase {
+    _CONFIDENCE_NOT_SET = 0,
+    CONFIDENCE = 6,
+  }
 }
 
 export class LightPreset extends jspb.Message {
