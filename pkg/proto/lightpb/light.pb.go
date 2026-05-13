@@ -46,7 +46,12 @@ type Brightness struct {
 	// The target level_percent. Ignored on write. On read zero values should be ignored iff target_preset is present.
 	TargetLevelPercent float32 `protobuf:"fixed32,4,opt,name=target_level_percent,json=targetLevelPercent,proto3" json:"target_level_percent,omitempty"`
 	// The target preset. Ignored on write. If present ignore target_level_percent
-	TargetPreset  *LightPreset `protobuf:"bytes,5,opt,name=target_preset,json=targetPreset,proto3" json:"target_preset,omitempty"`
+	TargetPreset *LightPreset `protobuf:"bytes,5,opt,name=target_preset,json=targetPreset,proto3" json:"target_preset,omitempty"`
+	// The confidence in the reported level_percent as a percentage. [0-100].
+	// Absent means confidence is not reported; treat the level as fully confident.
+	// A value of 0 means the level is unknown.
+	// Values below 20 indicate low confidence and the level should be shown with a caveat.
+	Confidence    *float32 `protobuf:"fixed32,6,opt,name=confidence,proto3,oneof" json:"confidence,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -114,6 +119,13 @@ func (x *Brightness) GetTargetPreset() *LightPreset {
 		return x.TargetPreset
 	}
 	return nil
+}
+
+func (x *Brightness) GetConfidence() float32 {
+	if x != nil && x.Confidence != nil {
+		return *x.Confidence
+	}
+	return 0
 }
 
 type LightPreset struct {
@@ -594,14 +606,18 @@ var File_smartcore_bos_light_v1_light_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_light_v1_light_proto_rawDesc = "" +
 	"\n" +
-	"\"smartcore/bos/light/v1/light.proto\x12\x16smartcore.bos.light.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\x1a#smartcore/bos/types/v1/number.proto\x1a\"smartcore/bos/types/v1/tween.proto\"\xb4\x02\n" +
+	"\"smartcore/bos/light/v1/light.proto\x12\x16smartcore.bos.light.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\x1a#smartcore/bos/types/v1/number.proto\x1a\"smartcore/bos/types/v1/tween.proto\"\xe8\x02\n" +
 	"\n" +
 	"Brightness\x12#\n" +
 	"\rlevel_percent\x18\x01 \x01(\x02R\flevelPercent\x12;\n" +
 	"\x06preset\x18\x02 \x01(\v2#.smartcore.bos.light.v1.LightPresetR\x06preset\x12H\n" +
 	"\x10brightness_tween\x18\x03 \x01(\v2\x1d.smartcore.bos.types.v1.TweenR\x0fbrightnessTween\x120\n" +
 	"\x14target_level_percent\x18\x04 \x01(\x02R\x12targetLevelPercent\x12H\n" +
-	"\rtarget_preset\x18\x05 \x01(\v2#.smartcore.bos.light.v1.LightPresetR\ftargetPreset\"7\n" +
+	"\rtarget_preset\x18\x05 \x01(\v2#.smartcore.bos.light.v1.LightPresetR\ftargetPreset\x12#\n" +
+	"\n" +
+	"confidence\x18\x06 \x01(\x02H\x00R\n" +
+	"confidence\x88\x01\x01B\r\n" +
+	"\v_confidence\"7\n" +
 	"\vLightPreset\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\"\x84\x02\n" +
@@ -706,6 +722,7 @@ func file_smartcore_bos_light_v1_light_proto_init() {
 	if File_smartcore_bos_light_v1_light_proto != nil {
 		return
 	}
+	file_smartcore_bos_light_v1_light_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -21,7 +21,13 @@
         <v-icon>{{ icon }}</v-icon>
       </template>
       <template #append>
-        <span class="text-body-1 slider-label">{{ levelStr }}</span>
+        <v-tooltip v-if="lowConfidence" location="top">
+          <template #activator="{ props: tooltipProps }">
+            <span v-bind="tooltipProps" class="text-body-1 slider-label">{{ levelStr }}*</span>
+          </template>
+          Low confidence reading
+        </v-tooltip>
+        <span v-else class="text-body-1 slider-label">{{ levelStr }}</span>
       </template>
     </v-slider>
     <v-card-actions class="px-4">
@@ -86,7 +92,7 @@ const props = defineProps({
 const {value, loading: pullLoading} = usePullBrightness(() => props.name);
 const {response: support, loading: supportLoading} = useDescribeBrightness(() => props.name);
 const {updateBrightness, loading: updateLoading} = useUpdateBrightness(() => props.name);
-const {levelStr, level, icon, presets, currentPresetTitle} = useBrightness(value, support);
+const {levelStr, level, icon, lowConfidence, presets, currentPresetTitle} = useBrightness(value, support);
 
 const loading = computed(() => pullLoading.value || supportLoading.value || updateLoading.value);
 
