@@ -14,13 +14,17 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"golang.org/x/exp/slices"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -231,6 +235,214 @@ func (ct *csvTester) assertNoRow(name string) {
 	ct.t.Helper()
 	if r, ok := ct.rowsByName[name]; ok {
 		ct.t.Errorf("expected no row with name %q, got %v", name, r)
+	}
+}
+
+// TestServer_DownloadDevicesHTTPHandler_history exercises the historical-data
+// path: a meter device with a stub history server and a request carrying a
+// History period should render a CSV with a timestamp column and one row per
+// historical record.
+func TestServer_DownloadDevicesHTTPHandler_history(t *testing.T) {
+	n := node.New("test")
+
+	meterDevice := meterpb.NewModel()
+	_, _ = meterDevice.UpdateMeterReading(&meterpb.MeterReading{Usage: 0})
+	historyStart := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	records := []*meterpb.MeterReadingRecord{
+		{RecordTime: timestamppb.New(historyStart), MeterReading: &meterpb.MeterReading{Usage: 100}},
+		{RecordTime: timestamppb.New(historyStart.Add(time.Hour)), MeterReading: &meterpb.MeterReading{Usage: 150}},
+		{RecordTime: timestamppb.New(historyStart.Add(2 * time.Hour)), MeterReading: &meterpb.MeterReading{Usage: 220}},
+	}
+	n.Announce("d1",
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterDevice))),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
+			UsageUnit: "tests per second",
+		}})),
+		node.HasServer(meterpb.RegisterMeterHistoryServer, meterpb.MeterHistoryServer(&stubMeterHistory{records: records})),
+		node.HasTrait(meterpb.TraitName),
+		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "01"}}),
+	)
+
+	s := NewServer(n, WithDownloadUrlBase(url.URL{Path: "/dl/devices"}))
+
+	devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{
+		History: &timepb.Period{
+			StartTime: timestamppb.New(historyStart),
+			EndTime:   timestamppb.New(historyStart.Add(3 * time.Hour)),
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest("GET", devicesUrl.Url, nil)
+	rec := httptest.NewRecorder()
+	s.DownloadDevicesHTTPHandler(rec, req)
+
+	res := rec.Result()
+	if res.StatusCode != 200 {
+		t.Fatalf("HTTP status code: expected 200, got %d", res.StatusCode)
+	}
+	ct := newCsvTester(t, res.Body)
+
+	// History mode must include a timestamp column, and it should come first.
+	tsIdx, ok := ct.headerIndex["timestamp"]
+	if !ok {
+		t.Fatalf("expected timestamp column in history mode, headers=%v", ct.headerRow)
+	}
+	if tsIdx != 0 {
+		t.Fatalf("expected timestamp to be first column, got index %d (headers=%v)", tsIdx, ct.headerRow)
+	}
+
+	// One row per historical record.
+	if len(ct.rows) != len(records) {
+		t.Fatalf("expected %d rows, got %d", len(records), len(ct.rows))
+	}
+
+	usageIdx, ok := ct.headerIndex["meter.usage"]
+	if !ok {
+		t.Fatalf("expected meter.usage column, headers=%v", ct.headerRow)
+	}
+	wantUsage := []string{"100.000", "150.000", "220.000"}
+	for i, row := range ct.rows {
+		if row[usageIdx] != wantUsage[i] {
+			t.Errorf("row %d meter.usage: want %q, got %q", i, wantUsage[i], row[usageIdx])
+		}
+		// Timestamp should parse and lie within the requested period.
+		if _, err := time.Parse(time.DateTime, row[tsIdx]); err != nil {
+			t.Errorf("row %d timestamp %q does not parse as %q: %v", i, row[tsIdx], time.DateTime, err)
+		}
+	}
+}
+
+type stubMeterHistory struct {
+	meterpb.UnimplementedMeterHistoryServer
+	records []*meterpb.MeterReadingRecord
+}
+
+func (s *stubMeterHistory) ListMeterReadingHistory(_ context.Context, _ *meterpb.ListMeterReadingHistoryRequest) (*meterpb.ListMeterReadingHistoryResponse, error) {
+	return &meterpb.ListMeterReadingHistoryResponse{MeterReadingRecords: s.records}, nil
+}
+
+// TestServer_DownloadDevicesHTTPHandler_mux exercises Server.RegisterHTTPMux:
+// the handler is registered with an http.ServeMux at the configured download
+// path, served via httptest, and reached over HTTP at the URL returned by
+// GetDownloadDevicesUrl. Verifies the mux mount-path wiring end-to-end.
+func TestServer_DownloadDevicesHTTPHandler_mux(t *testing.T) {
+	n := node.New("test")
+	meterDevice := meterpb.NewModel()
+	_, _ = meterDevice.UpdateMeterReading(&meterpb.MeterReading{Usage: 42})
+	n.Announce("d1",
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterDevice))),
+		node.HasTrait(meterpb.TraitName),
+		node.HasMetadata(&metadatapb.Metadata{}),
+	)
+
+	s := NewServer(n, WithDownloadUrlBase(url.URL{Path: "/dl/devices"}))
+
+	mux := http.NewServeMux()
+	s.RegisterHTTPMux(mux)
+
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// devicesUrl.Url is path-only because the base URL has no scheme/host.
+	resp, err := http.Get(srv.URL + devicesUrl.Url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("HTTP status code: expected 200, got %d", resp.StatusCode)
+	}
+	ct := newCsvTester(t, resp.Body)
+	ct.assertCellValue("d1", "name", "d1")
+	ct.assertCellValue("d1", "meter.usage", "42.000")
+}
+
+// TestServer_DownloadDevicesHTTPHandler_traitGetError verifies that when a
+// trait's get function returns an error (e.g. the trait is advertised but no
+// server is registered for it), the failure is surfaced as "ERR: ..." in the
+// first column for that trait rather than aborting the response.
+func TestServer_DownloadDevicesHTTPHandler_traitGetError(t *testing.T) {
+	n := node.New("test")
+	// d1 advertises the meter trait but has no MeterApiServer registered.
+	// Any get against it returns codes.Unimplemented.
+	n.Announce("d1",
+		node.HasTrait(meterpb.TraitName),
+		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "07"}}),
+	)
+
+	s := NewServer(n, WithDownloadUrlBase(url.URL{Path: "/dl/devices"}))
+
+	devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest("GET", devicesUrl.Url, nil)
+	rec := httptest.NewRecorder()
+	s.DownloadDevicesHTTPHandler(rec, req)
+
+	res := rec.Result()
+	if res.StatusCode != 200 {
+		t.Fatalf("HTTP status code: expected 200, got %d", res.StatusCode)
+	}
+	ct := newCsvTester(t, res.Body)
+	ct.assertCellValue("d1", "name", "d1")
+	ct.assertCellValue("d1", "md.location.floor", "07") // unaffected by trait failure
+	row, ok := ct.rowsByName["d1"]
+	if !ok {
+		t.Fatal("missing d1 row")
+	}
+	idx, ok := ct.headerIndex["meter.usage"]
+	if !ok {
+		t.Fatalf("expected meter.usage column, headers=%v", ct.headerRow)
+	}
+	if !strings.HasPrefix(row[idx], "ERR:") {
+		t.Errorf("expected meter.usage to start with ERR:, got %q", row[idx])
+	}
+}
+
+// GetDownloadDevicesUrl rejects unsupported media types, over-long filenames,
+// and queries with too many string_in entries with InvalidArgument before any
+// signing or routing work happens.
+func TestServer_GetDownloadDevicesUrl_validation(t *testing.T) {
+	s := NewServer(node.New("test"))
+
+	tooManyStrings := make([]string, 101)
+	for i := range tooManyStrings {
+		tooManyStrings[i] = "x"
+	}
+
+	cases := map[string]*devicespb.GetDownloadDevicesUrlRequest{
+		"unsupported media type": {MediaType: "application/json"},
+		"filename too long":      {Filename: strings.Repeat("a", 256)},
+		"query string_in too big": {
+			Query: &devicespb.Device_Query{
+				Conditions: []*devicespb.Device_Query_Condition{
+					{Field: "metadata.location.floor", Value: &devicespb.Device_Query_Condition_StringIn{
+						StringIn: &devicespb.Device_Query_StringList{Strings: tooManyStrings},
+					}},
+				},
+			},
+		},
+	}
+	for name, req := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := s.GetDownloadDevicesUrl(context.Background(), req)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if got := status.Code(err); got != codes.InvalidArgument {
+				t.Fatalf("expected InvalidArgument, got %s: %v", got, err)
+			}
+		})
 	}
 }
 
