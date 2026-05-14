@@ -53,24 +53,24 @@ func (ks *RemoteKeySet) VerifySignature(ctx context.Context, jws string) (payloa
 	keySet := ks.cache
 	ks.m.RUnlock()
 
-	payload, err = verifyJWSWithKeySet(sig, keySet)
-	if err == nil {
+	payload, verifyErr := verifyJWSWithKeySet(sig, keySet)
+	if verifyErr == nil {
 		return payload, nil
-	} else if !errors.Is(err, ErrKeyNotFound) {
-		// the JWS failed to verify, and it wasn't because of a missing key
-		return nil, err
 	}
 
-	// The JWS failed to verify because the key we need is not cached; try getting it
+	// Refresh the key cache regardless of whether the error was ErrKeyNotFound or a
+	// cryptographic failure. A cryptographic error can occur after key rotation when
+	// the cache holds a key with the right ID but stale material; without refreshing,
+	// verification would fail permanently until ErrKeyNotFound happened to fire first.
 	keySet, err = ks.updateKeys(ctx)
 	if errors.Is(err, ErrUpdateTooSoon) {
-		// We can't update at the moment, so just report that the key wasn't found.
-		return nil, ErrKeyNotFound
+		// Can't refresh yet; return the original verification error.
+		return nil, verifyErr
 	} else if err != nil {
 		return nil, err
 	}
 
-	// try verification again
+	// try verification again with fresh keys
 	return verifyJWSWithKeySet(sig, keySet)
 }
 
