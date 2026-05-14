@@ -16,11 +16,10 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/sc-bos/pkg/gentrait/bootpb"
 	"github.com/smart-core-os/sc-bos/pkg/history/memstore"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
-	proto "github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/historypb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/system"
@@ -113,14 +112,14 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 		}
 	}()
 
-	model := bootpb.NewModel(resource.WithInitialValue(&proto.BootState{
+	model := bootpb.NewModel(resource.WithInitialValue(&bootpb.BootState{
 		BootTime:         timestamppb.New(bootTime),
 		LastRebootReason: lastReason,
 		LastRebootActor:  lastActor,
 	}))
 
 	server := bootpb.NewModelServer(model)
-	server.OnReboot = func(ctx context.Context, req *proto.RebootRequest) error {
+	server.OnReboot = func(ctx context.Context, req *bootpb.RebootRequest) error {
 		mu.Lock()
 		defer mu.Unlock()
 		rebootWritten = true
@@ -134,8 +133,8 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 	histServer := historypb.NewBootServer(store)
 
 	announcer.Announce(s.nodeName,
-		node.HasServer(proto.RegisterBootApiServer, proto.BootApiServer(server)),
-		node.HasServer(proto.RegisterBootHistoryServer, proto.BootHistoryServer(histServer)),
+		node.HasServer(bootpb.RegisterBootApiServer, bootpb.BootApiServer(server)),
+		node.HasServer(bootpb.RegisterBootHistoryServer, bootpb.BootHistoryServer(histServer)),
 		node.HasTrait(bootpb.TraitName),
 	)
 
@@ -144,7 +143,7 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 
 // onReboot is called by the ModelServer when a Reboot RPC is received.
 // It records the event then schedules a clean process exit.
-func (s *System) onReboot(_ context.Context, req *proto.RebootRequest) error {
+func (s *System) onReboot(_ context.Context, req *bootpb.RebootRequest) error {
 	st := rebootState{Reason: req.Reason, CleanExit: true}
 	if req.Actor != nil {
 		actorJSON, err := protojson.Marshal(req.Actor)
