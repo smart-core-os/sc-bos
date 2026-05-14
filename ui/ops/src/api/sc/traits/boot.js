@@ -62,7 +62,7 @@ function pullBootStateRequestFromObject(obj) {
 function rebootRequestFromObject(obj) {
   if (!obj) return undefined;
   const dst = new RebootRequest();
-  setProperties(dst, obj, 'name', 'reason');
+  setProperties(dst, obj, 'name', 'reason', 'force');
   dst.setActor(actorFromObject(obj.actor));
   return dst;
 }

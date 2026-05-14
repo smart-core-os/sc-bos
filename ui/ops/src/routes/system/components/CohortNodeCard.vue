@@ -278,13 +278,24 @@
           You may lose connection briefly.
         </p>
         <v-text-field v-model="rebootReason" label="Reason (optional)" density="compact"/>
+        <v-checkbox
+            v-model="forceReboot"
+            label="Force reboot"
+            density="compact"
+            color="error"
+            hide-details
+            class="mt-1"/>
+        <v-alert v-if="forceReboot" type="warning" density="compact" class="mt-2" variant="tonal">
+          Force reboot skips graceful shutdown. In-flight requests will be dropped and buffers may not be flushed.
+          Only use this if the node is unresponsive to a normal reboot.
+        </v-alert>
         <v-alert v-if="rebootTracker.error" type="error" density="compact" class="mt-2">
           {{ rebootTracker.error }}
         </v-alert>
       </v-card-text>
       <v-card-actions>
         <v-spacer/>
-        <v-btn @click="showRebootDialog = false">Cancel</v-btn>
+        <v-btn @click="showRebootDialog = false; forceReboot = false">Cancel</v-btn>
         <v-btn color="warning" :loading="rebootTracker.loading" @click="confirmReboot">
           Reboot
         </v-btn>
@@ -468,6 +479,7 @@ const uptime = computed(() => {
 // Reboot dialog
 const showRebootDialog = ref(false);
 const rebootReason = ref('');
+const forceReboot = ref(false);
 const rebootTracker = reactive({loading: false, response: null, error: null});
 
 /** Sends the reboot request and closes the dialog on success. */
@@ -475,10 +487,11 @@ function confirmReboot() {
   const actor = (accountStore.email || accountStore.fullName)
       ? {displayName: accountStore.fullName, email: accountStore.email}
       : undefined;
-  reboot({name: props.node.name, reason: rebootReason.value, actor}, rebootTracker)
+  reboot({name: props.node.name, reason: rebootReason.value, force: forceReboot.value, actor}, rebootTracker)
       .then(() => {
         showRebootDialog.value = false;
         rebootReason.value = '';
+        forceReboot.value = false;
       })
       .catch(() => { /* error shown in dialog via rebootTracker.error */ });
 }
