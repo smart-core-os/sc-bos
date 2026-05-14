@@ -10,7 +10,6 @@ import {computed} from 'vue';
  * @return {{
  * roles: import('vue').ComputedRef<string[]>,
  * accessLevel: (function(string): boolean),
- * hasAnyRole: (function(...string): boolean),
  * hasNoAccess: (function(string): boolean),
  * isLoggedIn: import('vue').ComputedRef<boolean>,
  * blockActions: import('vue').ComputedRef<boolean>,
@@ -113,7 +112,6 @@ export default function() {
   return {
     roles,
     accessLevel,
-    hasAnyRole,
     hasNoAccess,
     isLoggedIn,
     blockActions,
