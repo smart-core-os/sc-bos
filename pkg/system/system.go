@@ -51,6 +51,10 @@ type Services struct {
 	// Provided by the controller when using pkg/app/logcapture.
 	AddLogCore func(core zapcore.Core) func()
 
+	// RequestReboot, if non-nil, requests a clean controller restart allowing deferred
+	// cleanups and in-flight RPCs to finish before the process exits.
+	RequestReboot func()
+
 	// LogLevel is the zap.AtomicLevel controlling the controller's root logger.
 	// Systems can read and update the live log level via this handle.
 	LogLevel *zap.AtomicLevel

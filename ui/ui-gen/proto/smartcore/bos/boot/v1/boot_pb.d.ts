@@ -150,6 +150,9 @@ export class RebootRequest extends jspb.Message {
   hasActor(): boolean;
   clearActor(): RebootRequest;
 
+  getForce(): boolean;
+  setForce(value: boolean): RebootRequest;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): RebootRequest.AsObject;
   static toObject(includeInstance: boolean, msg: RebootRequest): RebootRequest.AsObject;
@@ -163,6 +166,7 @@ export namespace RebootRequest {
     name: string;
     reason: string;
     actor?: smartcore_bos_actor_v1_actor_pb.Actor.AsObject;
+    force: boolean;
   };
 }
 

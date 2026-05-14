@@ -28,7 +28,7 @@ const (
 // BootRecord is a record of a single reboot.
 type BootRecord struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The time the reboot was initiated.
+	// The time the process started after the reboot (i.e. boot time, not initiation time).
 	RebootTime *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=reboot_time,json=rebootTime,proto3" json:"reboot_time,omitempty"`
 	// The reason for the reboot, if provided.
 	Reason string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`

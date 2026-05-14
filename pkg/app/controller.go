@@ -589,6 +589,8 @@ type Controller struct {
 	ManagerConn     node.Remote
 
 	deferred []Deferred
+
+	rebootCh chan struct{} // signals a requested clean reboot; set in Run
 }
 
 type Deferred func() error
@@ -614,6 +616,15 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	defer storeUndo()
 
 	group, ctx := errgroup.WithContext(ctx)
+	c.rebootCh = make(chan struct{}, 1)
+	group.Go(func() error {
+		select {
+		case <-c.rebootCh:
+			return restartNowError{}
+		case <-ctx.Done():
+			return nil
+		}
+	})
 	if c.Enrollment != nil {
 		group.Go(func() error {
 			return c.Enrollment.AutoRenew(ctx)

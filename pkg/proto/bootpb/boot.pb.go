@@ -251,7 +251,10 @@ type RebootRequest struct {
 	// Optional reason for the reboot, recorded in history.
 	Reason string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
 	// The actor requesting the reboot, if known.
-	Actor         *actorpb.Actor `protobuf:"bytes,3,opt,name=actor,proto3" json:"actor,omitempty"`
+	Actor *actorpb.Actor `protobuf:"bytes,3,opt,name=actor,proto3" json:"actor,omitempty"`
+	// If true, request an immediate reboot without waiting for a graceful shutdown.
+	// By default (false) the device or process will attempt a clean shutdown before restarting.
+	Force         bool `protobuf:"varint,4,opt,name=force,proto3" json:"force,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -305,6 +308,13 @@ func (x *RebootRequest) GetActor() *actorpb.Actor {
 		return x.Actor
 	}
 	return nil
+}
+
+func (x *RebootRequest) GetForce() bool {
+	if x != nil {
+		return x.Force
+	}
+	return false
 }
 
 type RebootResponse struct {
@@ -436,11 +446,12 @@ const file_smartcore_bos_boot_v1_boot_proto_rawDesc = "" +
 	"\vchange_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"changeTime\x12?\n" +
 	"\n" +
-	"boot_state\x18\x03 \x01(\v2 .smartcore.bos.boot.v1.BootStateR\tbootState\"p\n" +
+	"boot_state\x18\x03 \x01(\v2 .smartcore.bos.boot.v1.BootStateR\tbootState\"\x86\x01\n" +
 	"\rRebootRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\x123\n" +
-	"\x05actor\x18\x03 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\x05actor\"M\n" +
+	"\x05actor\x18\x03 \x01(\v2\x1d.smartcore.bos.actor.v1.ActorR\x05actor\x12\x14\n" +
+	"\x05force\x18\x04 \x01(\bR\x05force\"M\n" +
 	"\x0eRebootResponse\x12;\n" +
 	"\vreboot_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"rebootTime2\xac\x02\n" +

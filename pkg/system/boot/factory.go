@@ -51,18 +51,20 @@ type rebootState struct {
 type System struct {
 	*service.Service[config]
 
-	nodeName  string
-	announcer *node.ReplaceAnnouncer
-	logger    *zap.Logger
-	dataDir   string
+	nodeName      string
+	announcer     *node.ReplaceAnnouncer
+	logger        *zap.Logger
+	dataDir       string
+	requestReboot func()
 }
 
 func NewSystem(services system.Services) *System {
 	s := &System{
-		nodeName:  services.Node.Name(),
-		announcer: node.NewReplaceAnnouncer(services.Node),
-		logger:    services.Logger.Named("boot"),
-		dataDir:   services.DataDir,
+		nodeName:      services.Node.Name(),
+		announcer:     node.NewReplaceAnnouncer(services.Node),
+		logger:        services.Logger.Named("boot"),
+		dataDir:       services.DataDir,
+		requestReboot: services.RequestReboot,
 	}
 	s.Service = service.New(service.MonoApply(s.applyConfig))
 	return s
@@ -164,10 +166,14 @@ func (s *System) onReboot(_ context.Context, req *bootpb.RebootRequest) error {
 		zap.String("actor", req.GetActor().GetDisplayName()),
 	)
 
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		os.Exit(0)
-	}()
+	if req.Force || s.requestReboot == nil {
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			os.Exit(0)
+		}()
+	} else {
+		s.requestReboot()
+	}
 
 	return nil
 }

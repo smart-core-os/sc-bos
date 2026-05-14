@@ -123,6 +123,15 @@ func (c *Controller) startSystems() (*service.Map, error) {
 	if c.LogCapture != nil {
 		ctxServices.AddLogCore = c.LogCapture.Add
 	}
+	if c.rebootCh != nil {
+		rebootCh := c.rebootCh
+		ctxServices.RequestReboot = func() {
+			select {
+			case rebootCh <- struct{}{}:
+			default:
+			}
+		}
+	}
 	m := service.NewMap(func(_, kind string) (service.Lifecycle, error) {
 		f, ok := c.SystemConfig.SystemFactories[kind]
 		if !ok {

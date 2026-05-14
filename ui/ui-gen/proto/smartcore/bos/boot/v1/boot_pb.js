@@ -1225,7 +1225,8 @@ proto.smartcore.bos.boot.v1.RebootRequest.toObject = function(includeInstance, m
   var f, obj = {
 name: jspb.Message.getFieldWithDefault(msg, 1, ""),
 reason: jspb.Message.getFieldWithDefault(msg, 2, ""),
-actor: (f = msg.getActor()) && smartcore_bos_actor_v1_actor_pb.Actor.toObject(includeInstance, f)
+actor: (f = msg.getActor()) && smartcore_bos_actor_v1_actor_pb.Actor.toObject(includeInstance, f),
+force: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
   };
 
   if (includeInstance) {
@@ -1274,6 +1275,10 @@ proto.smartcore.bos.boot.v1.RebootRequest.deserializeBinaryFromReader = function
       var value = new smartcore_bos_actor_v1_actor_pb.Actor;
       reader.readMessage(value,smartcore_bos_actor_v1_actor_pb.Actor.deserializeBinaryFromReader);
       msg.setActor(value);
+      break;
+    case 4:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setForce(value);
       break;
     default:
       reader.skipField();
@@ -1324,6 +1329,13 @@ proto.smartcore.bos.boot.v1.RebootRequest.serializeBinaryToWriter = function(mes
       3,
       f,
       smartcore_bos_actor_v1_actor_pb.Actor.serializeBinaryToWriter
+    );
+  }
+  f = message.getForce();
+  if (f) {
+    writer.writeBool(
+      4,
+      f
     );
   }
 };
@@ -1399,6 +1411,24 @@ proto.smartcore.bos.boot.v1.RebootRequest.prototype.clearActor = function() {
  */
 proto.smartcore.bos.boot.v1.RebootRequest.prototype.hasActor = function() {
   return jspb.Message.getField(this, 3) != null;
+};
+
+
+/**
+ * optional bool force = 4;
+ * @return {boolean}
+ */
+proto.smartcore.bos.boot.v1.RebootRequest.prototype.getForce = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 4, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.smartcore.bos.boot.v1.RebootRequest} returns this
+ */
+proto.smartcore.bos.boot.v1.RebootRequest.prototype.setForce = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 4, value);
 };
 
 

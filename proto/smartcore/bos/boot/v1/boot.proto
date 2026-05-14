@@ -59,6 +59,9 @@ message RebootRequest {
   string reason = 2;
   // The actor requesting the reboot, if known.
   smartcore.bos.actor.v1.Actor actor = 3;
+  // If true, request an immediate reboot without waiting for a graceful shutdown.
+  // By default (false) the device or process will attempt a clean shutdown before restarting.
+  bool force = 4;
 }
 
 message RebootResponse {
