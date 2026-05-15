@@ -309,11 +309,13 @@ import {pullCloudConnection, CloudErrMessage} from '@/api/ui/cloud-connection.js
 import {getDownloadLogUrl} from '@/api/ui/log.js';
 import {closeResource, newResourceValue} from '@/api/resource.js';
 import {pullBootState, reboot} from '@/api/sc/traits/boot.js';
+import {timestampToDate} from '@/api/convpb.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
 import {useHasHubSystem, usePullService, usePullServiceMetadata} from '@/composables/services.js';
 import useAuthSetup from '@/composables/useAuthSetup.js';
 import {useAccountStore} from '@/stores/account.js';
 import {NodeRole, useCohortStore} from '@/stores/cohort.js';
+import {decomposeDuration} from '@/util/date.js';
 import {watchResource} from '@/util/traits.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
 import {CloudConnection} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb';
@@ -464,16 +466,11 @@ onScopeDispose(() => clearInterval(uptimeInterval));
 const uptime = computed(() => {
   const bt = bootState.value?.bootTime;
   if (!bt) return null;
-  const bootMs = (Number(bt.seconds) * 1000) + Math.floor(bt.nanos / 1e6);
-  const diff = Math.floor((now.value - bootMs) / 1000);
-  const d = Math.floor(diff / 86400);
-  const h = Math.floor((diff % 86400) / 3600);
-  const m = Math.floor((diff % 3600) / 60);
-  const s = diff % 60;
-  if (d > 0) return `${d}d ${h}h ${m}m`;
-  if (h > 0) return `${h}h ${m}m ${s}s`;
-  if (m > 0) return `${m}m ${s}s`;
-  return `${s}s`;
+  const {days, hours, minutes, seconds} = decomposeDuration(now.value - timestampToDate(bt).getTime());
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
 });
 
 // Reboot dialog
