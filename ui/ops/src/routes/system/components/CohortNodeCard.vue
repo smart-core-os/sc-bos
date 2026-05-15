@@ -252,13 +252,13 @@
             <span class="resource-value" style="width: auto">{{ uptime }}</span>
           </div>
           <div v-if="bootState.lastRebootReason" class="resource-row">
-            <span class="resource-label">Reason</span>
+            <span class="resource-label">Reboot reason</span>
             <span class="resource-value text-truncate" style="width: auto" :title="bootState.lastRebootReason">
               {{ bootState.lastRebootReason }}
             </span>
           </div>
           <div v-if="bootState.lastRebootActor?.displayName" class="resource-row">
-            <span class="resource-label">Actor</span>
+            <span class="resource-label">Rebooted by</span>
             <span class="resource-value text-truncate" style="width: auto"
                   :title="bootState.lastRebootActor.displayName">
               {{ bootState.lastRebootActor.displayName }}
