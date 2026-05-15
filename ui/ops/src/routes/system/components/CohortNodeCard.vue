@@ -315,7 +315,8 @@ import {useHasHubSystem, usePullService, usePullServiceMetadata} from '@/composa
 import useAuthSetup from '@/composables/useAuthSetup.js';
 import {useAccountStore} from '@/stores/account.js';
 import {NodeRole, useCohortStore} from '@/stores/cohort.js';
-import {decomposeDuration} from '@/util/date.js';
+import {decomposeDuration, SECOND} from '@/util/date.js';
+import {useNow} from '@/components/now.js';
 import {watchResource} from '@/util/traits.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
 import {CloudConnection} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb';
@@ -459,14 +460,12 @@ watchResource(
 );
 const bootState = computed(() => bootResource.value);
 
-const now = ref(Date.now());
-const uptimeInterval = setInterval(() => { now.value = Date.now(); }, 1000);
-onScopeDispose(() => clearInterval(uptimeInterval));
+const {now} = useNow(SECOND);
 
 const uptime = computed(() => {
   const bt = bootState.value?.bootTime;
   if (!bt) return null;
-  const {days, hours, minutes, seconds} = decomposeDuration(now.value - timestampToDate(bt).getTime());
+  const {days, hours, minutes, seconds} = decomposeDuration(now.value - timestampToDate(bt));
   if (days > 0) return `${days}d ${hours}h ${minutes}m`;
   if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
   if (minutes > 0) return `${minutes}m ${seconds}s`;
