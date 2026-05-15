@@ -104,16 +104,6 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 	var mu sync.Mutex
 	var rebootWritten bool
 
-	// On graceful shutdown, write a clean-exit marker so a planned stop isn't treated as a crash.
-	go func() {
-		<-ctx.Done()
-		mu.Lock()
-		defer mu.Unlock()
-		if !rebootWritten {
-			_ = s.writeStateFile(rebootState{CleanExit: true})
-		}
-	}()
-
 	model := bootpb.NewModel(resource.WithInitialValue(&bootpb.BootState{
 		BootTime:         timestamppb.New(bootTime),
 		LastRebootReason: lastReason,
@@ -140,6 +130,15 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 		node.HasTrait(bootpb.TraitName),
 	)
 
+	// Block until shutdown. Writing the clean-exit marker here (rather than in a
+	// goroutine) ensures the file is on disk before applyConfig returns and the
+	// process is free to exit.
+	<-ctx.Done()
+	mu.Lock()
+	defer mu.Unlock()
+	if !rebootWritten {
+		_ = s.writeStateFile(rebootState{CleanExit: true})
+	}
 	return nil
 }
 
@@ -168,6 +167,9 @@ func (s *System) onReboot(_ context.Context, req *bootpb.RebootRequest) error {
 
 	if req.Force || s.requestReboot == nil {
 		go func() {
+			// Give the gRPC response time to be flushed to the client before
+			// we kill the connection by exiting. 100ms is generous for a local
+			// write; callers should treat a dropped connection as success anyway.
 			time.Sleep(100 * time.Millisecond)
 			os.Exit(0)
 		}()
