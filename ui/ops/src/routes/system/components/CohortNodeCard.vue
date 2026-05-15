@@ -274,7 +274,7 @@
       <v-card-title>Reboot {{ node.name }}?</v-card-title>
       <v-card-text>
         <p class="mb-2 text-body-2">
-          The node will exit and be restarted by its supervisor.
+          The node will now be restarted.
           You may lose connection briefly.
         </p>
         <v-text-field v-model="rebootReason" label="Reason (optional)" density="compact"/>
