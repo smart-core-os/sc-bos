@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"crypto/x509/pkix"
 	"fmt"
 	"net/http"
@@ -590,7 +591,7 @@ type Controller struct {
 
 	deferred []Deferred
 
-	rebootCh chan struct{} // signals a requested clean reboot; set in Run
+	rebootCh chan string // signals a requested clean reboot; set in Run; value is the reason (empty if boot system handled the state file)
 }
 
 type Deferred func() error
@@ -607,6 +608,9 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 			err = multierr.Append(err, d())
 		}
 	}()
+	defer func() {
+		writeControllerRebootState(c.SystemConfig.DataDir, err)
+	}()
 
 	// metadata associated with the node itself
 	// we don't support changing metadata while running
@@ -616,11 +620,11 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	defer storeUndo()
 
 	group, ctx := errgroup.WithContext(ctx)
-	c.rebootCh = make(chan struct{}, 1)
+	c.rebootCh = make(chan string, 1)
 	group.Go(func() error {
 		select {
-		case <-c.rebootCh:
-			return restartNowError{}
+		case reason := <-c.rebootCh:
+			return restartNowError{reason: reason}
 		case <-ctx.Done():
 			return nil
 		}
@@ -639,7 +643,7 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 			needRestart := cloud.AutoPoll(ctx, c.Cloud, pollInterval, c.Logger.Named("cloud.auto-poll"))
 			if needRestart {
 				c.Logger.Info("triggering automatic restart to apply new deployment")
-				return restartNowError{}
+				return restartNowError{reason: "automatic restart to install deployment"}
 			}
 			return nil
 		})
@@ -695,7 +699,9 @@ const (
 )
 
 // a sentinel error type - does not indicate an actual error, but a request to restart the controller immediately
-type restartNowError struct{}
+type restartNowError struct {
+	reason string
+}
 
 func (e restartNowError) Error() string {
 	return "automatic restart triggered"
@@ -703,4 +709,38 @@ func (e restartNowError) Error() string {
 
 func (e restartNowError) ExitCode() int {
 	return 0
+}
+
+// controllerRebootState is the on-disk format for persisting the last reboot/shutdown reason across restarts.
+// Must match the format used by pkg/system/boot.
+type controllerRebootState struct {
+	Reason    string `json:"reason,omitempty"`
+	CleanExit bool   `json:"cleanExit,omitempty"`
+}
+
+// writeControllerRebootState writes the reboot state file based on how Controller.Run exited.
+// Only writes for clean exits (graceful shutdown or deployment restart with a known reason).
+// When the exit was triggered via the Boot RPC, the boot system has already written the state
+// file (with actor info included), so we skip to avoid overwriting it.
+func writeControllerRebootState(dataDir string, err error) {
+	if dataDir == "" {
+		return
+	}
+	var st controllerRebootState
+	switch e := err.(type) {
+	case nil:
+		st = controllerRebootState{CleanExit: true}
+	case restartNowError:
+		if e.reason == "" {
+			return // boot system wrote the state file (with actor); don't overwrite
+		}
+		st = controllerRebootState{Reason: e.reason, CleanExit: true}
+	default:
+		return // unexpected error; leave in-progress marker as crash indicator
+	}
+	data, err := json.Marshal(st)
+	if err != nil {
+		return
+	}
+	_ = os.WriteFile(filepath.Join(dataDir, "reboot-state.json"), data, 0o644)
 }

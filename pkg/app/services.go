@@ -127,7 +127,7 @@ func (c *Controller) startSystems() (*service.Map, error) {
 		rebootCh := c.rebootCh
 		ctxServices.RequestReboot = func() {
 			select {
-			case rebootCh <- struct{}{}:
+			case rebootCh <- "":
 			default:
 			}
 		}

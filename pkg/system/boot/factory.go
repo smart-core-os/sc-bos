@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
@@ -97,13 +96,6 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 		s.logger.Warn("failed to write reboot state", zap.Error(err))
 	}
 
-	// mu and rebootWritten coordinate the two paths that write the state file:
-	// onReboot (planned exit) and the ctx-done goroutine (graceful shutdown).
-	// Holding the mutex during the write prevents the goroutine from overwriting
-	// the reboot reason/actor with a plain {CleanExit:true} marker.
-	var mu sync.Mutex
-	var rebootWritten bool
-
 	model := bootpb.NewModel(resource.WithInitialValue(&bootpb.BootState{
 		BootTime:         timestamppb.New(bootTime),
 		LastRebootReason: lastReason,
@@ -111,12 +103,7 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 	}))
 
 	server := bootpb.NewModelServer(model)
-	server.OnReboot = func(ctx context.Context, req *bootpb.RebootRequest) error {
-		mu.Lock()
-		defer mu.Unlock()
-		rebootWritten = true
-		return s.onReboot(ctx, req)
-	}
+	server.OnReboot = s.onReboot
 
 	// In-memory store for history within the current session.
 	// If the operator configures a `history` auto with trait=smartcore.bos.Boot,
@@ -130,15 +117,10 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 		node.HasTrait(bootpb.TraitName),
 	)
 
-	// Block until shutdown. Writing the clean-exit marker here (rather than in a
-	// goroutine) ensures the file is on disk before applyConfig returns and the
-	// process is free to exit.
+	// Block until shutdown. The clean-exit state file write is handled by
+	// Controller.Run's defer, which covers both graceful shutdown and deployment
+	// restarts. onReboot handles the Boot RPC path (writing reason + actor).
 	<-ctx.Done()
-	mu.Lock()
-	defer mu.Unlock()
-	if !rebootWritten {
-		_ = s.writeStateFile(rebootState{CleanExit: true})
-	}
 	return nil
 }
 
