@@ -66,9 +66,7 @@ func (c *client) updateSystemCheck(err error) {
 	// Only server-level errors (network failures, HTTP 5xx) degrade system health;
 	// per-camera errors should not mark the whole server as failed.
 	if isServerError(err) {
-		if c.systemCheck != nil {
-			c.systemCheck.MarkFailed(err)
-		}
+		service.UpdateSystemCheck(c.systemCheck, err)
 		return
 	}
 	service.UpdateSystemCheck(c.systemCheck, nil)

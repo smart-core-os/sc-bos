@@ -130,7 +130,6 @@ func getControllerHealthCheck() *healthpb.HealthCheck {
 	}
 }
 
-
 func setDeviceFaults(statuses []State, fc *healthpb.FaultCheck) {
 	// Add or update all current faults from the device
 	for _, s := range statuses {
