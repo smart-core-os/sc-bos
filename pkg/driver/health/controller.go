@@ -14,11 +14,11 @@ type healthState int
 
 const (
 	stateUnknown healthState = iota
+	stateOk
 	stateFailing
-	stateOK
 )
 
-// ControllerHealth aggregates per-device health states for a single controller (identified by IP address).
+// ControllerHealth aggregates per-device health states for a single controller.
 // When the proportion of failing devices reaches the threshold, the controller's FaultCheck is marked unhealthy.
 type ControllerHealth struct {
 	faultCheck *healthpb.FaultCheck
@@ -63,14 +63,14 @@ func (c *ControllerHealth) SetFailing(ctx context.Context, name string) {
 	c.recalculate(ctx)
 }
 
-// SetOK marks the named device as healthy and recalculates controller health.
-func (c *ControllerHealth) SetOK(ctx context.Context, name string) {
+// SetOk marks the named device as healthy and recalculates controller health.
+func (c *ControllerHealth) SetOk(ctx context.Context, name string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.states[name] == stateOK {
+	if c.states[name] == stateOk {
 		return
 	}
-	c.states[name] = stateOK
+	c.states[name] = stateOk
 	c.recalculate(ctx)
 }
 

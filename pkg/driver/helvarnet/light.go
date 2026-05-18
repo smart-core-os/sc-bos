@@ -19,8 +19,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
-	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
 	driverhealth "github.com/smart-core-os/sc-bos/pkg/driver/health"
+	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
@@ -316,7 +316,7 @@ func (l *Light) queryDevice(ctx context.Context, t time.Duration, fc *healthpb.F
 				if l.helvarnetStatus < 0 {
 					ctrlHealth.SetFailing(ctx, l.conf.Name)
 				} else {
-					ctrlHealth.SetOK(ctx, l.conf.Name)
+					ctrlHealth.SetOk(ctx, l.conf.Name)
 				}
 			}
 		}

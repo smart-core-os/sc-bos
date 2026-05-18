@@ -329,7 +329,7 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 		}
 	}
 	if ctrlHealth != nil {
-		ctrlHealth.SetOK(ctx, scDeviceName)
+		ctrlHealth.SetOk(ctx, scDeviceName)
 	}
 
 	d.storeDevice(deviceName, bacDevice, device.DefaultWritePriority)
@@ -345,7 +345,7 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 			if reqErr != nil {
 				ctrlHealth.SetFailing(rCtx, scDeviceName)
 			} else {
-				ctrlHealth.SetOK(rCtx, scDeviceName)
+				ctrlHealth.SetOk(rCtx, scDeviceName)
 			}
 		}
 	}

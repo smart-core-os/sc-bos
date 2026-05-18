@@ -49,13 +49,13 @@ func TestControllerHealth_TwoDevices_50Threshold(t *testing.T) {
 	}
 
 	// 1/2 = 50% meets threshold → still unhealthy
-	ch.SetOK(ctx, "dev1")
+	ch.SetOk(ctx, "dev1")
 	if !isUnhealthy(r) {
 		t.Error("expected controller still unhealthy at exactly 50% (1/2)")
 	}
 
 	// 0/2 = 0% → healthy
-	ch.SetOK(ctx, "dev2")
+	ch.SetOk(ctx, "dev2")
 	if isUnhealthy(r) {
 		t.Error("expected controller healthy when no devices fail")
 	}
@@ -81,7 +81,7 @@ func TestControllerHealth_ThreeDevices_50Threshold(t *testing.T) {
 	}
 
 	// recover one → 1/3 < 50% → healthy again
-	ch.SetOK(ctx, "dev2")
+	ch.SetOk(ctx, "dev2")
 	if isUnhealthy(r) {
 		t.Error("expected controller healthy after recovering to 1/3 failing")
 	}
@@ -99,10 +99,10 @@ func TestControllerHealth_RegisterIdempotent(t *testing.T) {
 		t.Error("expected unhealthy after SetFailing")
 	}
 
-	// single SetOK should restore health — proves only one slot was registered
-	ch.SetOK(ctx, "dev1")
+	// single SetOk should restore health — proves only one slot was registered
+	ch.SetOk(ctx, "dev1")
 	if isUnhealthy(r) {
-		t.Error("expected controller healthy after single SetOK (duplicate register must not double-count)")
+		t.Error("expected controller healthy after single SetOk (duplicate register must not double-count)")
 	}
 }
 
