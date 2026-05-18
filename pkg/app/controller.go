@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
@@ -726,15 +727,18 @@ func writeControllerRebootState(dataDir string, err error) {
 	if dataDir == "" {
 		return
 	}
+	// Use errors.As so wrapping (e.g. multierr) doesn't silently fall through to the
+	// default case and skip writing the state file.
 	var st controllerRebootState
-	switch e := err.(type) {
-	case nil:
+	var rne restartNowError
+	switch {
+	case err == nil:
 		st = controllerRebootState{CleanExit: true}
-	case restartNowError:
-		if e.reason == "" {
+	case errors.As(err, &rne):
+		if rne.reason == "" {
 			return // boot system wrote the state file (with actor); don't overwrite
 		}
-		st = controllerRebootState{Reason: e.reason, CleanExit: true}
+		st = controllerRebootState{Reason: rne.reason, CleanExit: true}
 	default:
 		return // unexpected error; leave in-progress marker as crash indicator
 	}
