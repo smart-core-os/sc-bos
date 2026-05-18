@@ -25,8 +25,9 @@ type ControllerHealth struct {
 	threshold  int    // [0,100]: % of failing devices that triggers unhealthy
 	systemName string // used in error code System field
 
-	mu     sync.Mutex
-	states map[string]healthState // device name → current state
+	mu           sync.Mutex
+	states       map[string]healthState // device name → current state
+	failingCount int
 }
 
 func NewControllerHealth(fc *healthpb.FaultCheck, threshold int, systemName string) *ControllerHealth {
@@ -60,6 +61,7 @@ func (c *ControllerHealth) SetFailing(ctx context.Context, name string) {
 		return
 	}
 	c.states[name] = stateFailing
+	c.failingCount++
 	c.recalculate(ctx)
 }
 
@@ -67,10 +69,14 @@ func (c *ControllerHealth) SetFailing(ctx context.Context, name string) {
 func (c *ControllerHealth) SetOk(ctx context.Context, name string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.states[name] == stateOk {
+	prev := c.states[name]
+	if prev == stateOk {
 		return
 	}
 	c.states[name] = stateOk
+	if prev == stateFailing {
+		c.failingCount--
+	}
 	c.recalculate(ctx)
 }
 
@@ -80,12 +86,7 @@ func (c *ControllerHealth) recalculate(ctx context.Context) {
 	if total == 0 {
 		return
 	}
-	failingCount := 0
-	for _, state := range c.states {
-		if state == stateFailing {
-			failingCount++
-		}
-	}
+	failingCount := c.failingCount
 	code := &healthpb.HealthCheck_Error_Code{
 		Code:   controllerUnhealthy,
 		System: c.systemName,
