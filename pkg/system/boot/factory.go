@@ -147,7 +147,7 @@ func (s *System) onReboot(_ context.Context, req *bootpb.RebootRequest) error {
 		zap.String("actor", req.GetActor().GetDisplayName()),
 	)
 
-	if req.Force || s.requestReboot == nil {
+	if req.Force {
 		go func() {
 			// Give the gRPC response time to be flushed to the client before
 			// we kill the connection by exiting. 100ms is generous for a local
@@ -186,5 +186,10 @@ func (s *System) writeStateFile(st rebootState) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.stateFilePath(), data, 0o644)
+	dst := s.stateFilePath()
+	tmp := dst + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+		return err
+	}
+	return os.Rename(tmp, dst)
 }

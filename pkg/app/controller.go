@@ -738,9 +738,14 @@ func writeControllerRebootState(dataDir string, err error) {
 	default:
 		return // unexpected error; leave in-progress marker as crash indicator
 	}
-	data, err := json.Marshal(st)
-	if err != nil {
+	data, merr := json.Marshal(st)
+	if merr != nil {
 		return
 	}
-	_ = os.WriteFile(filepath.Join(dataDir, "reboot-state.json"), data, 0o644)
+	dst := filepath.Join(dataDir, "reboot-state.json")
+	tmp := dst + ".tmp"
+	if werr := os.WriteFile(tmp, data, 0o644); werr != nil {
+		return
+	}
+	_ = os.Rename(tmp, dst)
 }
