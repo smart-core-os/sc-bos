@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/merge"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
@@ -12,8 +11,7 @@ import (
 )
 
 const (
-	DeviceUnreachable   = "DeviceUnreachable"
-	ControllerUnhealthy = "ControllerUnhealthy"
+	DeviceUnreachable = "DeviceUnreachable"
 )
 
 func createDeviceHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, equipment healthpb.HealthCheck_EquipmentImpact) *healthpb.HealthCheck {
@@ -86,87 +84,3 @@ func createControllerHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, e
 	}
 }
 
-type healthState int
-
-const (
-	unknown healthState = iota
-	failing
-	ok
-)
-
-// controllerHealth aggregates per-device health states for a single BACnet controller (IP address).
-// When the proportion of failing devices reaches the threshold, the controller's FaultCheck is marked unhealthy.
-type controllerHealth struct {
-	faultCheck *healthpb.FaultCheck
-	threshold  int // [0,100]: % proportion of failing devices that triggers unhealthy
-
-	mu     sync.Mutex
-	states map[string]healthState // device name → failing if currently failing
-}
-
-func newControllerHealth(fc *healthpb.FaultCheck, threshold int) *controllerHealth {
-	return &controllerHealth{
-		faultCheck: fc,
-		threshold:  threshold,
-		states:     make(map[string]healthState),
-	}
-}
-
-// register adds a device to controller tracking. Idempotent — safe to call multiple times.
-func (c *controllerHealth) register(name string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if _, exists := c.states[name]; !exists {
-		c.states[name] = unknown
-	}
-}
-
-// setFailing marks the named device as failing and recalculates controller health.
-func (c *controllerHealth) setFailing(ctx context.Context, name string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.states[name] == failing {
-		return
-	}
-	c.states[name] = failing
-	c.recalculate(ctx)
-}
-
-// setOK marks the named device as healthy and recalculates controller health.
-func (c *controllerHealth) setOK(ctx context.Context, name string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.states[name] == ok {
-		return
-	}
-	c.states[name] = ok
-	c.recalculate(ctx)
-}
-
-// recalculate must be called with c.mu held.
-func (c *controllerHealth) recalculate(ctx context.Context) {
-	total := len(c.states)
-	if total == 0 {
-		return
-	}
-	failingCount := 0
-	for _, state := range c.states {
-		if state == failing {
-			failingCount++
-		}
-	}
-	ratio := failingCount * 100 / total
-	if ratio >= c.threshold {
-		c.faultCheck.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
-			State: healthpb.HealthCheck_Reliability_CONN_TRANSIENT_FAILURE,
-			LastError: &healthpb.HealthCheck_Error{
-				SummaryText: fmt.Sprintf("%d/%d devices on controller are failing", failingCount, total),
-				Code:        statusToHealthCode(ControllerUnhealthy),
-			},
-		})
-	} else {
-		c.faultCheck.RemoveFault(&healthpb.HealthCheck_Error{
-			Code: statusToHealthCode(ControllerUnhealthy),
-		})
-	}
-}
