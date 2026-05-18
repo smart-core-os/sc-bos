@@ -1,10 +1,8 @@
 package gallagher
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -46,20 +44,6 @@ func newHttpClient(baseURL string, apiKey string, caPath string, certPath string
 	}, nil
 }
 
-func (c *Client) updateSystemCheck(err error) {
-	if c.systemCheck == nil {
-		return
-	}
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return
-	}
-	if err != nil {
-		c.systemCheck.MarkFailed(err)
-	} else {
-		c.systemCheck.MarkRunning()
-	}
-}
-
 func (c *Client) getUrl(p string) string {
 	return fmt.Sprintf("%s/%s", c.BaseURL, p)
 }
@@ -75,22 +59,22 @@ func (c *Client) doRequest(url string) ([]byte, error) {
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		c.updateSystemCheck(err)
+		service.UpdateSystemCheck(c.systemCheck, err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		c.updateSystemCheck(err)
+		service.UpdateSystemCheck(c.systemCheck, err)
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("response status: %d %s", resp.StatusCode, resp.Status)
-		c.updateSystemCheck(err)
+		service.UpdateSystemCheck(c.systemCheck, err)
 		return nil, err
 	}
-	c.updateSystemCheck(nil)
+	service.UpdateSystemCheck(c.systemCheck, nil)
 	return bytes, nil
 }

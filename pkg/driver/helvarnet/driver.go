@@ -11,6 +11,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
+	driverhealth "github.com/smart-core-os/sc-bos/pkg/driver/health"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
@@ -65,9 +66,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	grp, ctx := errgroup.WithContext(ctx)
 	d.clients = make(map[string]*tcpClient)
 	faultChecks := make(map[string]*healthpb.FaultCheck)
-	controllerChecks := make(map[string]*controllerHealth)
+	controllerChecks := make(map[string]*driverhealth.ControllerHealth)
 
-	getOrCreateControllerCheck := func(ip string) *controllerHealth {
+	getOrCreateControllerCheck := func(ip string) *driverhealth.ControllerHealth {
 		if ch, ok := controllerChecks[ip]; ok {
 			return ch
 		}
@@ -77,7 +78,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			d.logger.Error("failed to create controller health check", zap.String("ip", ip), zap.Error(err))
 			return nil
 		}
-		ch := newControllerHealth(fc, cfg.ControllerHealthThreshold)
+		ch := driverhealth.NewControllerHealth(fc, cfg.ControllerHealthThreshold, SystemName)
 		controllerChecks[ip] = ch
 		return ch
 	}
@@ -141,7 +142,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		faultCheck := createFaultCheck(l.Name)
 		ctrlHealth := getOrCreateControllerCheck(l.IpAddress)
 		if ctrlHealth != nil {
-			ctrlHealth.register(l.Name)
+			ctrlHealth.Register(l.Name)
 		}
 
 		rootAnnouncer.Announce(l.Name,
@@ -193,7 +194,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		faultCheck := createFaultCheck(em.Name)
 		ctrlHealth := getOrCreateControllerCheck(em.IpAddress)
 		if ctrlHealth != nil {
-			ctrlHealth.register(em.Name)
+			ctrlHealth.Register(em.Name)
 		}
 
 		rootAnnouncer.Announce(em.Name,
@@ -220,7 +221,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			fc.Dispose()
 		}
 		for _, ch := range controllerChecks {
-			ch.faultCheck.Dispose()
+			ch.Dispose()
 		}
 		if err != nil {
 			d.logger.Error("run error", zap.Error(err))

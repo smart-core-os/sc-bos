@@ -200,24 +200,18 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root) (*opcua.Client, error) {
 	opcClient, err := opcua.NewClient(cfg.Conn.Endpoint)
 	if err != nil {
-		if d.systemCheck != nil {
-			d.systemCheck.MarkFailed(err)
-		}
+		service.UpdateSystemCheck(d.systemCheck, err)
 		d.logger.Error("error creating new client", zap.Error(err))
 		return nil, err
 	}
 
 	err = opcClient.Connect(ctx)
 	if err != nil {
-		if d.systemCheck != nil {
-			d.systemCheck.MarkFailed(err)
-		}
+		service.UpdateSystemCheck(d.systemCheck, err)
 		d.logger.Error("error connecting to opc ua server", zap.Error(err))
 		return nil, err
 	}
-	if d.systemCheck != nil {
-		d.systemCheck.MarkRunning()
-	}
+	service.UpdateSystemCheck(d.systemCheck, nil)
 	return opcClient, nil
 }
 

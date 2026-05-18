@@ -60,17 +60,18 @@ func newClient(conf *config.API, systemCheck service.SystemCheck) *client {
 }
 
 func (c *client) updateSystemCheck(err error) {
-	if c.systemCheck == nil {
-		return
-	}
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return
 	}
+	// Only server-level errors (network failures, HTTP 5xx) degrade system health;
+	// per-camera errors should not mark the whole server as failed.
 	if isServerError(err) {
-		c.systemCheck.MarkFailed(err)
-	} else {
-		c.systemCheck.MarkRunning()
+		if c.systemCheck != nil {
+			c.systemCheck.MarkFailed(err)
+		}
+		return
 	}
+	service.UpdateSystemCheck(c.systemCheck, nil)
 }
 
 func (c *client) listCameraInfo(ctx context.Context, req *api.CamerasRequest, fc *healthpb.FaultCheck) (*api.CamerasResponse, error) {
