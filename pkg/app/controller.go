@@ -121,6 +121,8 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		)
 	}
 
+	// CloudConnectionApi is announced directly (not via a system plugin) so the Ops UI can always
+	// read cloud status and initiate enrollment, even before any systems have started.
 	rootNode.Announce(cName,
 		node.HasServer[cloudpb.CloudConnectionApiServer](cloudpb.RegisterCloudConnectionApiServer, opscloud.NewCloudConnectionServer(ci.Conn, cName, ci.RegisterURL)),
 	)
@@ -288,6 +290,8 @@ func loadAppConfig(ctx context.Context, config sysconf.Config, ci cloudInfo, log
 func initPKI(config sysconf.Config, nodeName string, logger *zap.Logger) (pkiInfo, error) {
 	certConfig := config.CertConfig
 
+	// key is created on first run and reused across restarts; it is shared by all TLS sources
+	// (enrollment, file-based, and self-signed) and is also used during the enrollment process.
 	key, keyPEM, err := pki.LoadOrGeneratePrivateKey(files.Path(config.DataDir, certConfig.KeyFile), logger)
 	if err != nil {
 		return pkiInfo{}, err
@@ -328,6 +332,8 @@ func initPKI(config sysconf.Config, nodeName string, logger *zap.Logger) (pkiInf
 	for _, s := range config.SANs {
 		selfSignedOpts = append(selfSignedOpts, pki.WithSAN(netutil.StripPort(s)))
 	}
+	// selfSignedSource is a fallback when no enrolled or file-based cert is available.
+	// It is shared by both the gRPC and HTTP TLS stacks (see httpCertSource below).
 	selfSignedSource := pki.CacheSource(
 		pki.SelfSignedSourceT(key, &x509.Certificate{
 			Subject:               pkix.Name{CommonName: ssCommonName, Organization: []string{"Smart Core BOS"}},
@@ -386,6 +392,9 @@ func initPKI(config sysconf.Config, nodeName string, logger *zap.Logger) (pkiInf
 }
 
 func initAuth(config sysconf.Config, logger *zap.Logger) authInfo {
+	// tokenValidator is populated at runtime by system plugins, each registering support for a different
+	// token issuer (e.g. Keycloak, local accounts). Claims from validated tokens are forwarded to the
+	// policy engine alongside each request.
 	tokenValidator := &token.ValidatorSet{}
 	httpAuth := func(next http.Handler) http.Handler { return next }
 
@@ -429,6 +438,10 @@ func initAuth(config sysconf.Config, logger *zap.Logger) authInfo {
 func buildGRPCServer(rootNode *node.Node, nodeRouter *router.Router, pi pkiInfo, ai authInfo) (*grpc.Server, *reflectionapi.Server) {
 	var grpcOpts []grpc.ServerOption
 
+	// migrationInterceptor rewrites old unversioned service paths to their new versioned equivalents,
+	// allowing old clients to communicate with new servers during a rolling upgrade.
+	// It must be registered before CorrectStreamInfo so that paths are already rewritten
+	// by the time CorrectStreamInfo records the canonical /service/method.
 	migrationInterceptor := protopkg.NewOldToNewInterceptor()
 	grpcOpts = append(grpcOpts,
 		grpc.ChainUnaryInterceptor(migrationInterceptor.UnaryInterceptor()),
