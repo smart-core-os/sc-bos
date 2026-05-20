@@ -12,6 +12,7 @@ package airthings
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync"
 
@@ -24,10 +25,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/pkg/util/statusmap"
 )
 
 const DriverName = "airthings"
@@ -76,8 +76,6 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 	d.client = ccConfig.Client(ctx)
 
-	status := statusmap.NewMap(announcer)
-
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, location := range cfg.Locations {
 		ll := local.NewLocation()
@@ -88,11 +86,14 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		for _, device := range location.Devices {
 			n := device.Name
 			announcer.Announce(n, node.HasMetadata(device.Metadata), node.HasDeviceType(metadatapb.Metadata_DEVICE))
-			status.UpdateProblem(n, &statuspb.StatusLog_Problem{
-				Level:       statuspb.StatusLog_NOMINAL,
+			_, hErr := d.Health.NewFaultCheck(n, &healthpb.HealthCheck{
+				Id:          "setup",
+				DisplayName: "Device Setup",
 				Description: "Device configured successfully",
-				Name:        n + ":setup",
 			})
+			if hErr != nil && !errors.Is(hErr, healthpb.ErrAlreadyExists) {
+				d.logger.Error("failed to create health check", zap.String("device", n), zap.Error(hErr))
+			}
 			err = d.announceDevice(ctx, announcer, device, ll)
 			if err != nil {
 				return err // failure of configuration, not runtime
