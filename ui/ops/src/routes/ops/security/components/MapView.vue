@@ -32,14 +32,11 @@
                   :name="door.name"
                   :paused="!live"
                   v-slot="{ resource: accessResource }">
-                <with-status :name="door.name" :paused="!live" v-slot="{ resource: statusResource }">
-                  <door-color
-                      :name="door.name"
-                      :access-attempt="accessResource.value"
-                      :status-log="statusResource.value"
-                      class="door-status-tracker__item"
-                      @update-fill="setDoorFill"/>
-                </with-status>
+                <door-color
+                    :name="door.name"
+                    :access-attempt="accessResource.value"
+                    class="door-status-tracker__item"
+                    @update-fill="setDoorFill"/>
               </with-access>
               <!-- If door has no Access data reading and has OpenClose reading -->
               <with-open-close
@@ -47,14 +44,11 @@
                   :name="door.name"
                   :paused="!live"
                   v-slot="{ resource: openCloseResource }">
-                <with-status :name="door.name" :paused="!live" v-slot="{ resource: statusResource }">
-                  <door-color
-                      :name="door.name"
-                      :open-close="openCloseResource.value"
-                      :status-log="statusResource.value"
-                      class="door-status-tracker__item"
-                      @update-stroke="setDoorStroke"/>
-                </with-status>
+                <door-color
+                    :name="door.name"
+                    :open-close="openCloseResource.value"
+                    class="door-status-tracker__item"
+                    @update-stroke="setDoorStroke"/>
               </with-open-close>
               <!-- If door has Access data reading and has OpenClose reading -->
               <with-access
@@ -63,16 +57,13 @@
                   :paused="!live"
                   v-slot="{ resource: accessResource }">
                 <with-open-close :name="door.name" :paused="!live" v-slot="{ resource: openCloseResource }">
-                  <with-status :name="door.name" :paused="!live" v-slot="{ resource: statusResource }">
-                    <door-color
-                        :name="door.name"
-                        :access-attempt="accessResource.value"
-                        :open-close="openCloseResource.value"
-                        :status-log="statusResource.value"
-                        class="door-status-tracker__item"
-                        @update-fill="setDoorFill"
-                        @update-stroke="setDoorStroke"/>
-                  </with-status>
+                  <door-color
+                      :name="door.name"
+                      :access-attempt="accessResource.value"
+                      :open-close="openCloseResource.value"
+                      class="door-status-tracker__item"
+                      @update-fill="setDoorFill"
+                      @update-stroke="setDoorStroke"/>
                 </with-open-close>
               </with-access>
             </hot-point>
@@ -91,7 +82,6 @@ import DoorColor from '@/routes/ops/security/components/DoorColor.vue';
 import {useUiConfigStore} from '@/stores/uiConfig.js';
 import WithAccess from '@/traits/access/WithAccess.vue';
 import WithOpenClose from '@/traits/openClose/WithOpenClose.vue';
-import WithStatus from '@/traits/status/WithStatus.vue';
 import {subPath} from '@/util/path.js';
 import {convertSVGToPercentage} from '@/util/svg';
 import {computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch} from 'vue';

@@ -29,7 +29,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/onoff"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/openclose"
 	"github.com/smart-core-os/sc-bos/pkg/zone/feature/soundsensor"
-	"github.com/smart-core-os/sc-bos/pkg/zone/feature/status"
 )
 
 // DefaultFeatures lists all the default features for an area.
@@ -46,7 +45,6 @@ var DefaultFeatures = []zone.Factory{
 	onoff.Feature,
 	openclose.Feature,
 	soundsensor.Feature,
-	status.Feature,
 }
 
 // Factory builds a generic area using DefaultFeatures.
