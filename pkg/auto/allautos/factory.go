@@ -16,8 +16,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto/resetenterleave"
 	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter"
 	"github.com/smart-core-os/sc-bos/pkg/auto/setpointhealth"
-	"github.com/smart-core-os/sc-bos/pkg/auto/statusalerts"
-	"github.com/smart-core-os/sc-bos/pkg/auto/statusemail"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 )
 
@@ -37,8 +35,6 @@ func Factories() map[string]auto.Factory {
 		resetenterleave.AutoName:    resetenterleave.Factory,
 		sccexporter.AutoName:        sccexporter.Factory,
 		setpointhealth.AutoName:     setpointhealth.Factory,
-		statusalerts.AutoName:       statusalerts.Factory,
-		statusemail.AutoName:        statusemail.Factory,
 		udmi.AutoType:               udmi.Factory,
 		exporthttp.AutoName:         exporthttp.Factory,
 	}
