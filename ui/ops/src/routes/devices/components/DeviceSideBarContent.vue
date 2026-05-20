@@ -5,10 +5,6 @@
       <v-divider class="mt-4 mb-1"/>
       <health-checks-card v-bind="resource"/>
     </with-health-checks>
-    <with-status v-if="traits['smartcore.bos.Status']" :name="deviceId" v-slot="{resource}">
-      <v-divider class="mt-4 mb-1"/>
-      <status-log-card v-bind="resource"/>
-    </with-status>
     <with-air-temperature v-if="traits['smartcore.traits.AirTemperature']" :name="deviceId" v-slot="{resource, update}">
       <v-divider class="mt-4 mb-1"/>
       <air-temperature-card v-bind="resource" @update-air-temperature="update"/>
@@ -101,8 +97,6 @@ import OnOffCard from '@/traits/onOff/OnOffCard.vue';
 import WithOnOff from '@/traits/onOff/WithOnOff.vue';
 import OpenCloseCard from '@/traits/openClose/OpenCloseCard.vue';
 import WithOpenClose from '@/traits/openClose/WithOpenClose.vue';
-import StatusLogCard from '@/traits/status/StatusLogCard.vue';
-import WithStatus from '@/traits/status/WithStatus.vue';
 import TemperatureCard from '@/traits/temperature/TemperatureCard.vue';
 import WithTemperature from '@/traits/temperature/WithTemperature.vue';
 import TransportCard from '@/traits/transport/TransportCard.vue';

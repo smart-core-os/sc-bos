@@ -17,19 +17,12 @@ const props = defineProps({
   openClose: {
     type: Object,
     default: () => ({})
-  },
-  statusLog: {
-    type: Object,
-    default: () => ({})
   }
 });
 
 const emit = defineEmits(['updateFill', 'updateStroke']);
 
-const {color} = useStatus(
-    () => props.accessAttempt,
-    () => props.statusLog
-);
+const {color} = useStatus(() => props.accessAttempt);
 
 const setDoorColor = computed(() => {
   if (props.openClose?.statesList?.[0]) {
