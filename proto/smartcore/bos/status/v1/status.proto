@@ -1,3 +1,5 @@
+// Deprecated: The status trait is superseded by the health trait (smartcore.bos.health.v1).
+// Migrate consumers to use HealthApi instead.
 syntax = "proto3";
 
 package smartcore.bos.status.v1;
@@ -9,7 +11,10 @@ import "google/protobuf/timestamp.proto";
 
 // Provides access to device status and problems.
 // Any device or group may implement this trait to provide visibility into the function of the device.
+//
+// Deprecated: Use the health trait (smartcore.bos.health.v1) instead.
 service StatusApi {
+  option deprecated = true;
   rpc GetCurrentStatus(GetCurrentStatusRequest) returns (StatusLog);
   rpc PullCurrentStatus(PullCurrentStatusRequest) returns (stream PullCurrentStatusResponse);
 }
