@@ -66,17 +66,10 @@ const PostgresNodeStatus = defineComponent({
         const pctStr = utilization != null ? ` (${utilization.toFixed(1)}%)` : '';
         const bytesLabel = `${usedStr}${totalStr}${pctStr}`;
 
-        const itemsLabel = s.items?.used != null
-            ? `${s.items.used.toLocaleString()}${s.items.capacity != null ? ` / ${s.items.capacity.toLocaleString()}` : ''} rows`
-            : null;
-
         return h('div', {class: 'pg-node-row'}, [
           h('v-icon', {size: 10, color: 'success', class: 'pg-status-dot'}, () => 'mdi-circle'),
           h('span', {class: 'pg-node-name', title: props.node.name}, props.node.name),
-          h('div', {class: 'pg-node-stats'}, [
-            h('span', {class: 'pg-stat'}, bytesLabel),
-            itemsLabel ? h('span', {class: 'pg-stat'}, itemsLabel) : null
-          ])
+          h('span', {class: 'pg-stat'}, bytesLabel)
         ]);
       }
 
@@ -129,13 +122,6 @@ const PostgresNodeStatus = defineComponent({
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.pg-node-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
 }
 
 .pg-stat {
