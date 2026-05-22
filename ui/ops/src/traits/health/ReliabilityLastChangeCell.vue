@@ -31,7 +31,7 @@ const newestReliableCheck = computed(() => {
 const oldestUnreliableCheck = computed(() => {
   const checks = props.modelValue?.healthChecksList ?? [];
   return checks
-    .filter(check => check.reliability?.state !== HealthCheck.Reliability.State.RELIABLE)
+    .filter(check => check.reliability?.state > HealthCheck.Reliability.State.RELIABLE)
     .reduce((oldest, check) => {
       if (!oldest) return check;
       const checkTime = timestampToDate(check.reliability?.unreliableTime);
