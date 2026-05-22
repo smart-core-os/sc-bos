@@ -16,6 +16,7 @@ import (
 	mockcfg "github.com/smart-core-os/sc-bos/pkg/driver/mock/config"
 	"github.com/smart-core-os/sc-bos/pkg/history/pgxstore"
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	airqualitycfg "github.com/smart-core-os/sc-bos/pkg/zone/feature/airquality/config"
@@ -34,14 +35,21 @@ var (
 )
 
 func init() {
-	flag.DurationVar(&lookBack, "look-back", time.Hour*24*30*2, "amount of time to populate database history for starting from now, going backwards")
+	flag.DurationVar(&lookBack, "look-back", time.Hour*24*30*2, "amount of time to populate database history for starting from now, going backwards; defaults to 13 months for nabers-* profiles")
 	flag.StringVar(&dbUrl, "db-url", "postgres://postgres:postgres@localhost:5432/smart_core", "database url")
 	flag.StringVar(&app, "appconf", "app.conf.json", "app configuration file")
-	flag.StringVar(&profileName, "profile", "office", "building profile to use when generating data (available: office)")
+	flag.StringVar(&profileName, "profile", "office", "building profile to use when generating data (available: office, nabers-excellent, nabers-ok, nabers-poor)")
 }
 
 func main() {
 	flag.Parse()
+
+	var lookBackSet bool
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "look-back" {
+			lookBackSet = true
+		}
+	})
 
 	profile, ok := Profiles[profileName]
 	if !ok {
@@ -51,6 +59,10 @@ func main() {
 		}
 		fmt.Println()
 		return
+	}
+
+	if !lookBackSet && profile.NabersOnly {
+		lookBack = 13 * 30 * 24 * time.Hour
 	}
 
 	appConf, err := appconf.LoadLocalConfig(path.Dir(app), path.Base(app))
@@ -97,16 +109,6 @@ func main() {
 	wg := &sync.WaitGroup{}
 
 	wg.Go(func() {
-		for _, d := range sd.airQuality {
-			err = SeedAirQuality(ctx, db, d, profile, lookBack)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Printf("seeded air quality device %s\n", d)
-		}
-	})
-
-	wg.Go(func() {
 		for _, d := range sd.meter {
 			err = SeedMeter(ctx, db, d, profile, lookBack)
 			if err != nil {
@@ -116,55 +118,67 @@ func main() {
 		}
 	})
 
-	wg.Go(func() {
-		for _, d := range sd.electric {
-			err = SeedElectric(ctx, db, d, profile, lookBack)
-			if err != nil {
-				panic(err)
+	if !profile.NabersOnly {
+		wg.Go(func() {
+			for _, d := range sd.airQuality {
+				err = SeedAirQuality(ctx, db, d, profile, lookBack)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("seeded air quality device %s\n", d)
 			}
-			fmt.Printf("seeded electric device %s\n", d)
-		}
-	})
+		})
 
-	wg.Go(func() {
-		for _, d := range sd.airTemperature {
-			err = SeedAirTemperature(ctx, db, d, profile, lookBack)
-			if err != nil {
-				panic(err)
+		wg.Go(func() {
+			for _, d := range sd.electric {
+				err = SeedElectric(ctx, db, d, profile, lookBack)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("seeded electric device %s\n", d)
 			}
-			fmt.Printf("seeded air temperature device %s\n", d)
-		}
-	})
+		})
 
-	wg.Go(func() {
-		for _, d := range sd.soundSensor {
-			err = SeedSoundSensor(ctx, db, d, profile, lookBack)
-			if err != nil {
-				panic(err)
+		wg.Go(func() {
+			for _, d := range sd.airTemperature {
+				err = SeedAirTemperature(ctx, db, d, profile, lookBack)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("seeded air temperature device %s\n", d)
 			}
-			fmt.Printf("seeded sound sensor device %s\n", d)
-		}
-	})
+		})
 
-	wg.Go(func() {
-		for _, d := range sd.occupancy {
-			err = SeedOccupancy(ctx, db, d, profile, lookBack)
-			if err != nil {
-				panic(err)
+		wg.Go(func() {
+			for _, d := range sd.soundSensor {
+				err = SeedSoundSensor(ctx, db, d, profile, lookBack)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("seeded sound sensor device %s\n", d)
 			}
-			fmt.Printf("seeded occupancy device %s\n", d)
-		}
-	})
+		})
 
-	wg.Go(func() {
-		for _, d := range sd.allocation {
-			err = SeedAllocation(ctx, db, d, profile, lookBack)
-			if err != nil {
-				panic(err)
+		wg.Go(func() {
+			for _, d := range sd.occupancy {
+				err = SeedOccupancy(ctx, db, d, profile, lookBack)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("seeded occupancy device %s\n", d)
 			}
-			fmt.Printf("seeded allocation device %s\n", d)
-		}
-	})
+		})
+
+		wg.Go(func() {
+			for _, d := range sd.allocation {
+				err = SeedAllocation(ctx, db, d, profile, lookBack)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("seeded allocation device %s\n", d)
+			}
+		})
+	}
 
 	wg.Wait()
 }
@@ -283,7 +297,7 @@ func parseDeviceConfig(sd *seedDevices, appConf *appconf.Config) error {
 					sd.airQuality = append(sd.airQuality, device.Name)
 				case trait.Electric:
 					sd.electric = append(sd.electric, device.Name)
-				case trait.Meter:
+				case trait.Meter, meterpb.TraitName:
 					sd.meter = append(sd.meter, device.Name)
 				case trait.AirTemperature:
 					sd.airTemperature = append(sd.airTemperature, device.Name)
