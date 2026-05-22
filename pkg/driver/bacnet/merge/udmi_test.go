@@ -18,7 +18,8 @@ func Test_pointsToPointSet_sanitisesNaNAndInf(t *testing.T) {
 		"str":    udmi.PointValue{PresentValue: "hello"},
 	}
 
-	msg, err := um.pointsToPointSet("topic", points)
+	um.config.TopicPrefix = "topic"
+	msg, err := um.pointsToPointSet(points)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
