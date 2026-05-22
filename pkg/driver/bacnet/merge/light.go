@@ -224,3 +224,5 @@ func (l *light) findSceneByName(name string) (*sceneCfg, error) {
 	}
 	return nil, errSceneNotFound
 }
+
+func (l *light) PollTask() *task.Intermittent { return l.pollTask }

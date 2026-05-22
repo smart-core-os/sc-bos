@@ -238,3 +238,5 @@ func newModeInfoServer(cfg modeConfig) *modepb.InfoServer {
 		},
 	}
 }
+
+func (t *mode) PollTask() *task.Intermittent { return t.pollTask }

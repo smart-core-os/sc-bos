@@ -198,3 +198,5 @@ func (t *emergencyImpl) pollPeer(ctx context.Context) (*emergencypb.Emergency, e
 
 	return t.model.UpdateEmergency(ctx, &emergencypb.UpdateEmergencyRequest{Emergency: data})
 }
+
+func (t *emergencyImpl) PollTask() *task.Intermittent { return t.pollTask }

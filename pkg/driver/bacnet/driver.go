@@ -319,6 +319,10 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 		return fmt.Errorf("device comm handshake: %w", ctxerr.Cause(ctx, err))
 	}
 
+	if deviceHealth != nil {
+		deviceHealth.MarkRunning()
+	}
+
 	// For WhoIs-discovered devices the controller IP is only known after findDevice succeeds.
 	if ctrlHealth == nil {
 		if udpAddr, addrErr := bacDevice.Addr.UDPAddr(); addrErr == nil {

@@ -183,3 +183,5 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*airqualitysensorpb.A
 	}
 	return aq.model.UpdateAirQuality(data)
 }
+
+func (aq *airQualitySensor) PollTask() *task.Intermittent { return aq.pollTask }
