@@ -25,10 +25,26 @@ import (
 
 const UdmiMergeName = "udmi"
 
+// DefaultEventsTopicSuffix is appended to TopicPrefix when no TopicSuffix is configured.
+// The UDMI spec (6.4) uses "/events/pointset"; this default preserves the legacy
+// "/event/pointset/points" topic for backward compatibility.
+const DefaultEventsTopicSuffix = "/event/pointset/points"
+
 type UdmiMergeConfig struct {
 	config.Trait
-	TopicPrefix string                         `json:"topicPrefix,omitempty"`
+	TopicPrefix string `json:"topicPrefix,omitempty"`
+	// TopicSuffix is appended to TopicPrefix to form the MQTT topic for pointset events.
+	// Defaults to DefaultEventsTopicSuffix. Set to "/events/pointset" for UDMI spec compliance.
+	TopicSuffix *string                        `json:"topicSuffix,omitempty"`
 	Points      map[string]*config.ValueSource `json:"points"`
+}
+
+// EventsTopicSuffix returns the configured topic suffix or the default if unset.
+func (c UdmiMergeConfig) EventsTopicSuffix() string {
+	if c.TopicSuffix == nil {
+		return DefaultEventsTopicSuffix
+	}
+	return *c.TopicSuffix
 }
 
 func readUdmiMergeConfig(raw []byte) (cfg UdmiMergeConfig, err error) {
@@ -134,7 +150,7 @@ func (f *udmiMerge) GetExportMessage(ctx context.Context, request *udmipb.GetExp
 		if len(points) == 0 {
 			return nil, status.Error(codes.Unavailable, "no recent events")
 		}
-		return f.pointsToPointSet(f.config.TopicPrefix, points)
+		return f.pointsToPointSet(points)
 	case msg := <-events:
 		return msg.Message, nil
 	}
@@ -150,7 +166,7 @@ func (f *udmiMerge) PullExportMessages(request *udmipb.PullExportMessagesRequest
 		points := f.points
 		f.pointsLock.Unlock()
 		if len(points) > 0 {
-			msg, err := f.pointsToPointSet(f.config.TopicPrefix, points)
+			msg, err := f.pointsToPointSet(points)
 			if err != nil {
 				return err
 			}
@@ -217,7 +233,7 @@ func (f *udmiMerge) pollPeer(ctx context.Context) error {
 	f.pointsLock.Unlock()
 	if hasUpdate {
 		// send the update
-		msg, err := f.pointsToPointSet(f.config.TopicPrefix, events)
+		msg, err := f.pointsToPointSet(events)
 		if err != nil {
 			return err
 		}
@@ -239,7 +255,7 @@ func sanitise(points udmi.PointsEvent) {
 	}
 }
 
-func (f *udmiMerge) pointsToPointSet(topicPrefix string, points udmi.PointsEvent) (*udmipb.MqttMessage, error) {
+func (f *udmiMerge) pointsToPointSet(points udmi.PointsEvent) (*udmipb.MqttMessage, error) {
 
 	sanitise(points)
 
@@ -248,7 +264,7 @@ func (f *udmiMerge) pointsToPointSet(topicPrefix string, points udmi.PointsEvent
 		return nil, err
 	}
 	return &udmipb.MqttMessage{
-		Topic:   topicPrefix + "/event/pointset/points",
+		Topic:   f.config.TopicPrefix + f.config.EventsTopicSuffix(),
 		Payload: string(b),
 	}, nil
 }
