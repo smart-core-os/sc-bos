@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 	"sync"
+	"time"
 )
 
 // StartFn is called by an Intermittent to start a background operation.
@@ -68,4 +69,33 @@ func (t *Intermittent) Attach(listener context.Context) error {
 	}()
 
 	return nil
+}
+
+// IdleKeepAlive immediately runs the operation once for runFor, then re-runs it
+// every idleFor thereafter, ensuring the operation stays fresh even with no active listeners.
+// If listeners are already attached when a run starts, Attach is a no-op increment
+// and the running operation is unaffected.
+// Runs until ctx is done.
+func (t *Intermittent) IdleKeepAlive(ctx context.Context, idleFor, runFor time.Duration) {
+	go func() {
+		t.runOnce(ctx, runFor)
+		timer := time.NewTimer(idleFor)
+		defer timer.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-timer.C:
+				t.runOnce(ctx, runFor)
+				timer.Reset(idleFor)
+			}
+		}
+	}()
+}
+
+func (t *Intermittent) runOnce(ctx context.Context, runFor time.Duration) {
+	attachCtx, cancel := context.WithTimeout(ctx, runFor)
+	defer cancel()
+	_ = t.Attach(attachCtx)
+	<-attachCtx.Done()
 }

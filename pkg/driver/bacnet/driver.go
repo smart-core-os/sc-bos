@@ -262,6 +262,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			announcer = node.AnnounceFeatures(announcer, node.HasMetadata(trait.Metadata))
 		}
 		impl.AnnounceSelf(announcer)
+		if p, ok := impl.(merge.PollTaskProvider); ok {
+			p.PollTask().IdleKeepAlive(ctx, trait.PollKeepAliveDuration(), time.Minute)
+		}
 
 		d.checks = append(d.checks, faultCheck)
 	}
