@@ -5,6 +5,6 @@
     "secrets": [
       {"hash": "$2a$10$5TuFBNbp8JrNBjGYpp938uBw5eQ53QkZh/.ZqGjvjkGHeRzd3xtca"}
     ],
-    "roles": ["superAdmin", "admin"]
+    "roles": ["super-admin", "admin"]
   }
 ]
