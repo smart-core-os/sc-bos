@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -39,6 +38,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/internal/util/pki/expire"
 	"github.com/smart-core-os/sc-bos/pkg/app/files"
+	"github.com/smart-core-os/sc-bos/pkg/system/boot"
 	http2 "github.com/smart-core-os/sc-bos/pkg/app/http"
 	"github.com/smart-core-os/sc-bos/pkg/app/logcapture"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
@@ -712,44 +712,25 @@ func (e restartNowError) ExitCode() int {
 	return 0
 }
 
-// controllerRebootState is the on-disk format for persisting the last reboot/shutdown reason across restarts.
-// Must match the format used by pkg/system/boot.
-type controllerRebootState struct {
-	Reason    string `json:"reason,omitempty"`
-	CleanExit bool   `json:"cleanExit,omitempty"`
-}
-
 // writeControllerRebootState writes the reboot state file based on how Controller.Run exited.
 // Only writes for clean exits (graceful shutdown or deployment restart with a known reason).
 // When the exit was triggered via the Boot RPC, the boot system has already written the state
 // file (with actor info included), so we skip to avoid overwriting it.
 func writeControllerRebootState(dataDir string, err error) {
-	if dataDir == "" {
-		return
-	}
 	// Use errors.As so wrapping (e.g. multierr) doesn't silently fall through to the
 	// default case and skip writing the state file.
-	var st controllerRebootState
+	var st boot.RebootState
 	var rne restartNowError
 	switch {
 	case err == nil:
-		st = controllerRebootState{CleanExit: true}
+		st = boot.RebootState{CleanExit: true}
 	case errors.As(err, &rne):
 		if rne.reason == "" {
 			return // boot system wrote the state file (with actor); don't overwrite
 		}
-		st = controllerRebootState{Reason: rne.reason, CleanExit: true}
+		st = boot.RebootState{Reason: rne.reason, CleanExit: true}
 	default:
 		return // unexpected error; leave in-progress marker as crash indicator
 	}
-	data, merr := json.Marshal(st)
-	if merr != nil {
-		return
-	}
-	dst := filepath.Join(dataDir, "reboot-state.json")
-	tmp := dst + ".tmp"
-	if werr := os.WriteFile(tmp, data, 0o644); werr != nil {
-		return
-	}
-	_ = os.Rename(tmp, dst)
+	_ = boot.WriteStateFile(dataDir, st)
 }

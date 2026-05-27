@@ -1,11 +1,12 @@
 package app
 
 import (
-	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/smart-core-os/sc-bos/pkg/system/boot"
 )
 
 func TestWriteControllerRebootState_nilErr(t *testing.T) {
@@ -65,15 +66,11 @@ func TestWriteControllerRebootState_emptyDataDir(t *testing.T) {
 }
 
 // readRebootStateFile reads and deserialises the state file written by writeControllerRebootState.
-func readRebootStateFile(t *testing.T, dir string) controllerRebootState {
+func readRebootStateFile(t *testing.T, dir string) boot.RebootState {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(dir, "reboot-state.json"))
+	st, err := boot.ReadStateFile(dir)
 	if err != nil {
 		t.Fatalf("state file not written: %v", err)
-	}
-	var st controllerRebootState
-	if err := json.Unmarshal(data, &st); err != nil {
-		t.Fatalf("unmarshal state file: %v", err)
 	}
 	return st
 }

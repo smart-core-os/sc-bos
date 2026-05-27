@@ -5,9 +5,7 @@ package boot
 
 import (
 	"context"
-	"encoding/json"
 	"os"
-	"path/filepath"
 	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
@@ -39,13 +37,6 @@ func (factory) New(services system.Services) service.Lifecycle {
 // config is empty because no configuration is required for this system plugin.
 type config struct{}
 
-// rebootState is the on-disk format for persisting the last reboot reason/actor across restarts.
-type rebootState struct {
-	Reason    string          `json:"reason,omitempty"`
-	Actor     json.RawMessage `json:"actor,omitempty"`
-	CleanExit bool            `json:"cleanExit,omitempty"`
-}
-
 // System implements the Boot trait for this sc-bos process.
 type System struct {
 	*service.Service[config]
@@ -75,7 +66,7 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 	// Load persisted state from before the last restart.
 	var lastReason string
 	var lastActor *actorpb.Actor
-	if st, err := s.readStateFile(); err == nil {
+	if st, err := ReadStateFile(s.dataDir); err == nil {
 		if !st.CleanExit {
 			// File exists but clean-exit flag was never set — previous run crashed.
 			lastReason = "unexpected process exit"
@@ -92,7 +83,7 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 	}
 
 	// Mark this run as in-progress; if we crash the next startup will see CleanExit=false.
-	if err := s.writeStateFile(rebootState{}); err != nil {
+	if err := WriteStateFile(s.dataDir, RebootState{}); err != nil {
 		s.logger.Warn("failed to write reboot state", zap.Error(err))
 	}
 
@@ -127,7 +118,7 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 // onReboot is called by the ModelServer when a Reboot RPC is received.
 // It records the event then schedules a clean process exit.
 func (s *System) onReboot(_ context.Context, req *bootpb.RebootRequest) error {
-	st := rebootState{Reason: req.Reason, CleanExit: true}
+	st := RebootState{Reason: req.Reason, CleanExit: true}
 	if req.Actor != nil {
 		actorJSON, err := protojson.Marshal(req.Actor)
 		if err != nil {
@@ -138,7 +129,7 @@ func (s *System) onReboot(_ context.Context, req *bootpb.RebootRequest) error {
 	}
 
 	// Persist reason and actor so they survive the restart.
-	if err := s.writeStateFile(st); err != nil {
+	if err := WriteStateFile(s.dataDir, st); err != nil {
 		s.logger.Warn("failed to persist reboot state", zap.Error(err))
 	}
 
@@ -162,34 +153,3 @@ func (s *System) onReboot(_ context.Context, req *bootpb.RebootRequest) error {
 	return nil
 }
 
-func (s *System) stateFilePath() string {
-	return filepath.Join(s.dataDir, "reboot-state.json")
-}
-
-func (s *System) readStateFile() (rebootState, error) {
-	data, err := os.ReadFile(s.stateFilePath())
-	if err != nil {
-		return rebootState{}, err
-	}
-	var st rebootState
-	if err := json.Unmarshal(data, &st); err != nil {
-		return rebootState{}, err
-	}
-	return st, nil
-}
-
-func (s *System) writeStateFile(st rebootState) error {
-	if s.dataDir == "" {
-		return nil
-	}
-	data, err := json.Marshal(st)
-	if err != nil {
-		return err
-	}
-	dst := s.stateFilePath()
-	tmp := dst + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, dst)
-}

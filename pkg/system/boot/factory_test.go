@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -69,13 +70,13 @@ func waitBootState(t *testing.T, n *node.Node, name string) *bootpb.BootState {
 
 func TestSystem_stateFile_roundtrip(t *testing.T) {
 	s, _ := newTestSystem(t)
-	want := rebootState{Reason: "scheduled-maintenance", CleanExit: true}
-	if err := s.writeStateFile(want); err != nil {
-		t.Fatalf("writeStateFile: %v", err)
+	want := RebootState{Reason: "scheduled-maintenance", CleanExit: true}
+	if err := WriteStateFile(s.dataDir, want); err != nil {
+		t.Fatalf("WriteStateFile: %v", err)
 	}
-	got, err := s.readStateFile()
+	got, err := ReadStateFile(s.dataDir)
 	if err != nil {
-		t.Fatalf("readStateFile: %v", err)
+		t.Fatalf("ReadStateFile: %v", err)
 	}
 	if got.Reason != want.Reason || got.CleanExit != want.CleanExit {
 		t.Errorf("got %+v, want %+v", got, want)
@@ -89,13 +90,13 @@ func TestSystem_stateFile_withActor(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal actor: %v", err)
 	}
-	want := rebootState{Reason: "actor-test", CleanExit: true, Actor: actorJSON}
-	if err := s.writeStateFile(want); err != nil {
-		t.Fatalf("writeStateFile: %v", err)
+	want := RebootState{Reason: "actor-test", CleanExit: true, Actor: actorJSON}
+	if err := WriteStateFile(s.dataDir, want); err != nil {
+		t.Fatalf("WriteStateFile: %v", err)
 	}
-	got, err := s.readStateFile()
+	got, err := ReadStateFile(s.dataDir)
 	if err != nil {
-		t.Fatalf("readStateFile: %v", err)
+		t.Fatalf("ReadStateFile: %v", err)
 	}
 	if got.Reason != want.Reason || got.CleanExit != want.CleanExit {
 		t.Errorf("got %+v, want %+v", got, want)
@@ -111,27 +112,26 @@ func TestSystem_stateFile_withActor(t *testing.T) {
 
 func TestSystem_stateFile_missing(t *testing.T) {
 	s, _ := newTestSystem(t)
-	_, err := s.readStateFile()
+	_, err := ReadStateFile(s.dataDir)
 	if err == nil {
-		t.Error("readStateFile: expected error for missing file, got nil")
+		t.Error("ReadStateFile: expected error for missing file, got nil")
 	}
 }
 
 func TestSystem_stateFile_malformed(t *testing.T) {
 	s, _ := newTestSystem(t)
-	if err := os.WriteFile(s.stateFilePath(), []byte("not-json{"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(s.dataDir, "reboot-state.json"), []byte("not-json{"), 0o644); err != nil {
 		t.Fatalf("setup: %v", err)
 	}
-	_, err := s.readStateFile()
+	_, err := ReadStateFile(s.dataDir)
 	if err == nil {
-		t.Error("readStateFile: expected error for malformed JSON, got nil")
+		t.Error("ReadStateFile: expected error for malformed JSON, got nil")
 	}
 }
 
 func TestSystem_writeStateFile_emptyDataDir(t *testing.T) {
-	s := &System{dataDir: ""}
-	if err := s.writeStateFile(rebootState{CleanExit: true}); err != nil {
-		t.Errorf("writeStateFile with empty dataDir: %v", err)
+	if err := WriteStateFile("", RebootState{CleanExit: true}); err != nil {
+		t.Errorf("WriteStateFile with empty dataDir: %v", err)
 	}
 }
 
@@ -153,9 +153,9 @@ func TestSystem_onReboot_graceful(t *testing.T) {
 		t.Fatal("requestReboot was not called")
 	}
 
-	st, err := s.readStateFile()
+	st, err := ReadStateFile(s.dataDir)
 	if err != nil {
-		t.Fatalf("readStateFile: %v", err)
+		t.Fatalf("ReadStateFile: %v", err)
 	}
 	if st.Reason != "graceful-test" || !st.CleanExit {
 		t.Errorf("state = %+v, want Reason=%q CleanExit=true", st, "graceful-test")
@@ -170,9 +170,9 @@ func TestSystem_onReboot_withActor(t *testing.T) {
 		t.Fatalf("onReboot: %v", err)
 	}
 
-	st, err := s.readStateFile()
+	st, err := ReadStateFile(s.dataDir)
 	if err != nil {
-		t.Fatalf("readStateFile: %v", err)
+		t.Fatalf("ReadStateFile: %v", err)
 	}
 	if len(st.Actor) == 0 {
 		t.Fatal("actor not written to state file")
@@ -190,7 +190,7 @@ func TestSystem_onReboot_stateWrittenBeforeReboot(t *testing.T) {
 	s, _ := newTestSystem(t)
 	var stateOK bool
 	s.requestReboot = func() {
-		st, err := s.readStateFile()
+		st, err := ReadStateFile(s.dataDir)
 		stateOK = err == nil && st.Reason == "order-test" && st.CleanExit
 	}
 
@@ -221,7 +221,7 @@ func TestSystem_applyConfig_firstBoot(t *testing.T) {
 func TestSystem_applyConfig_crashDetection(t *testing.T) {
 	// State file exists but CleanExit is false (zero value) → detected as crash.
 	s, n := newTestSystem(t)
-	if err := s.writeStateFile(rebootState{}); err != nil { // CleanExit=false
+	if err := WriteStateFile(s.dataDir, RebootState{}); err != nil { // CleanExit=false
 		t.Fatalf("setup: %v", err)
 	}
 	startApplyConfig(t, s)
@@ -235,7 +235,7 @@ func TestSystem_applyConfig_crashDetection(t *testing.T) {
 func TestSystem_applyConfig_cleanReboot(t *testing.T) {
 	// State file has CleanExit=true and a reason → reason propagated to BootState.
 	s, n := newTestSystem(t)
-	if err := s.writeStateFile(rebootState{Reason: "scheduled maintenance", CleanExit: true}); err != nil {
+	if err := WriteStateFile(s.dataDir, RebootState{Reason: "scheduled maintenance", CleanExit: true}); err != nil {
 		t.Fatalf("setup: %v", err)
 	}
 	startApplyConfig(t, s)
@@ -253,7 +253,7 @@ func TestSystem_applyConfig_actorRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal actor: %v", err)
 	}
-	if err := s.writeStateFile(rebootState{Reason: "operator-restart", CleanExit: true, Actor: actorJSON}); err != nil {
+	if err := WriteStateFile(s.dataDir, RebootState{Reason: "operator-restart", CleanExit: true, Actor: actorJSON}); err != nil {
 		t.Fatalf("setup: %v", err)
 	}
 	startApplyConfig(t, s)
@@ -269,18 +269,18 @@ func TestSystem_applyConfig_actorRoundTrip(t *testing.T) {
 func TestSystem_applyConfig_writesInProgressMarker(t *testing.T) {
 	// applyConfig overwrites any prior state with the in-progress marker {} on startup.
 	s, n := newTestSystem(t)
-	if err := s.writeStateFile(rebootState{Reason: "old-reason", CleanExit: true}); err != nil {
+	if err := WriteStateFile(s.dataDir, RebootState{Reason: "old-reason", CleanExit: true}); err != nil {
 		t.Fatalf("setup: %v", err)
 	}
 	startApplyConfig(t, s)
 	// waitBootState ensures applyConfig has announced (i.e., has already written the marker).
 	waitBootState(t, n, "test-node")
 
-	data, err := os.ReadFile(s.stateFilePath())
+	data, err := os.ReadFile(filepath.Join(s.dataDir, "reboot-state.json"))
 	if err != nil {
-		t.Fatalf("readStateFile: %v", err)
+		t.Fatalf("ReadStateFile: %v", err)
 	}
-	var st rebootState
+	var st RebootState
 	if err := json.Unmarshal(data, &st); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
