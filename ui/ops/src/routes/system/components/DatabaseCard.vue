@@ -24,63 +24,15 @@
 </template>
 
 <script setup>
-import {usePullDataRetention} from '@/traits/dataRetention/data-retention.js';
+import PostgresNodeStatus from './PostgresNodeStatus.vue';
 import {useCohortStore} from '@/stores/cohort.js';
-import {formatBytes} from '@/util/number.js';
 import {storeToRefs} from 'pinia';
-import {computed, defineComponent, h, reactive, watch} from 'vue';
+import {computed, reactive} from 'vue';
 
 const {cohortNodes} = storeToRefs(useCohortStore());
 
 const nodeHasPostgres = reactive({});
 const hasAnyPostgres = computed(() => Object.values(nodeHasPostgres).some(Boolean));
-
-
-const PostgresNodeStatus = defineComponent({
-  props: {
-    node: {type: Object, default: () => null}
-  },
-  emits: ['update:active'],
-  setup(props, {emit}) {
-    const resource = reactive(usePullDataRetention(
-        computed(() => props.node.name + '/stores/postgres'),
-        () => false
-    ));
-
-    watch(
-        () => !!resource.value && !resource.streamError,
-        (active) => emit('update:active', active),
-        {immediate: true}
-    );
-
-    return () => {
-      if (resource.streamError || !resource.value) return null;
-
-      if (resource.value.bytes) {
-        const s = resource.value;
-        const utilization = (s.bytes?.used != null && s.bytes?.capacity != null && s.bytes.capacity > 0)
-            ? (s.bytes.used / s.bytes.capacity) * 100
-            : null;
-        const usedStr = formatBytes(s.bytes?.used);
-        const totalStr = s.bytes?.capacity != null ? ` / ${formatBytes(s.bytes.capacity)}` : '';
-        const pctStr = utilization != null ? ` (${utilization.toFixed(1)}%)` : '';
-        const bytesLabel = `${usedStr}${totalStr}${pctStr}`;
-
-        return h('div', {class: 'pg-node-row'}, [
-          h('v-icon', {size: 10, color: 'success', class: 'pg-status-dot'}, () => 'mdi-circle'),
-          h('span', {class: 'pg-node-name', title: props.node.name}, props.node.name),
-          h('span', {class: 'pg-stat'}, bytesLabel)
-        ]);
-      }
-
-      return h('div', {class: 'pg-node-row pg-node-row--error'}, [
-        h('v-icon', {size: 10, color: 'error', class: 'pg-status-dot'}, () => 'mdi-circle'),
-        h('span', {class: 'pg-node-name', title: props.node.name}, props.node.name),
-        h('span', {class: 'pg-stat text-error'}, 'disconnected')
-      ]);
-    };
-  }
-});
 </script>
 
 <style scoped>
@@ -99,34 +51,5 @@ const PostgresNodeStatus = defineComponent({
   color: #336791 !important;
   pointer-events: none;
   user-select: none;
-}
-
-.pg-node-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  margin-bottom: 6px;
-  font-size: 11px;
-  position: relative;
-}
-
-.pg-status-dot {
-  margin-top: 1px;
-  flex-shrink: 0;
-}
-
-.pg-node-name {
-  font-weight: 500;
-  flex-shrink: 0;
-  max-width: 90px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.pg-stat {
-  opacity: 0.65;
-  font-size: 10px;
-  white-space: nowrap;
 }
 </style>
