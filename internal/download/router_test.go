@@ -415,6 +415,61 @@ func TestRouter_DuplicateHandleReplaces(t *testing.T) {
 	}
 }
 
+func TestRouter_SecurityHeadersOnEveryResponse(t *testing.T) {
+	rt := newTestRouter(t)
+	rt.HandleFunc("ok", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	okURL, _, err := rt.GenerateURL("ok", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cases := map[string]string{
+		"success (200)":    okURL,
+		"missing token":    "/download/",
+		"unknown type":     mustGenerateURL(t, rt, "unregistered"),
+		"malformed token":  "/download/not-a-token",
+		"tampered token":   mustTamperToken(t, okURL),
+	}
+	for name, path := range cases {
+		t.Run(name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", path, nil)
+			rec := httptest.NewRecorder()
+			rt.ServeHTTP(rec, req)
+			if got := rec.Header().Get("X-Content-Type-Options"); got != "nosniff" {
+				t.Errorf("X-Content-Type-Options: got %q want nosniff (status=%d)", got, rec.Code)
+			}
+			if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+				t.Errorf("Cache-Control: got %q want no-store (status=%d)", got, rec.Code)
+			}
+		})
+	}
+}
+
+func mustGenerateURL(t *testing.T, rt *Router, typ string) string {
+	t.Helper()
+	u, _, err := rt.GenerateURL(typ, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return u
+}
+
+func mustTamperToken(t *testing.T, dlURL string) string {
+	t.Helper()
+	prefix := "/download/"
+	body := dlURL[len(prefix):]
+	delim := strings.Index(body, ".")
+	sigBytes, err := base64.RawURLEncoding.DecodeString(body[delim+1:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	sigBytes[0] ^= 0xff
+	return prefix + body[:delim+1] + base64.RawURLEncoding.EncodeToString(sigBytes)
+}
+
 func TestRouter_TypeCannotBeForgedViaURL(t *testing.T) {
 	// A token issued for type A should not be dispatchable as type B by URL
 	// manipulation: the type is inside the signed envelope, not the URL.

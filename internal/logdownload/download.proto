@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package smartcore.bos.internal.logdownload;
+
+option go_package = "github.com/smart-core-os/sc-bos/internal/logdownload";
+
+// DownloadToken is the payload of a signed download URL produced for log-style
+// file downloads. It carries the file paths resolved at URL-generation time so
+// the HTTP handler can stream them without re-globbing.
+message DownloadToken {
+  // file_path is the single file to stream when include_rotated was false.
+  string file_path = 1;
+  // zip_files lists the files to bundle into a zip when include_rotated was true.
+  repeated string zip_files = 2;
+}

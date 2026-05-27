@@ -112,6 +112,7 @@ func (c *Controller) startSystems() (*service.Map, error) {
 		Stores:           c.Stores,
 		Accounts:         c.Accounts,
 		HTTPMux:          c.Mux,
+		DownloadRouter:   c.DownloadRouter,
 		TokenValidators:  c.TokenValidators,
 		ReflectionServer: c.ReflectionServer,
 		GRPCCerts:        c.GRPCCerts,

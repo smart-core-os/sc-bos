@@ -23,6 +23,6 @@
 //
 // The type string passed to Handle is embedded verbatim in every URL the
 // router signs. Use stable identifiers chosen at the consumer
-// (e.g. "devices-csv", "log-file") — they are part of the wire format and
-// changing one invalidates outstanding URLs.
+// (e.g. "devices-csv", "system-log", "audit-log") — they are part of the wire
+// format and changing one invalidates outstanding URLs.
 package download

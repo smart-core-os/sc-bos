@@ -3,7 +3,6 @@ package log
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	"go.uber.org/zap"
@@ -45,38 +44,18 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	// Create the gRPC server backed by this model.
 	srv := logpb.NewModelServer(model)
 
-	// Wire download URL generation if an HTTP mux is available.
-	if s.services.HTTPMux != nil && cfg.LogFilePath != "" {
-		// Update the allowed directory on every config apply so the handler
-		// always enforces the current log root, even after a reload.
+	// Wire download URL generation against the shared signed-URL router. The
+	// handler is (re-)registered each apply with a closure capturing the
+	// current config's allowed dir; Router.Handle replaces the previous
+	// handler in place.
+	if s.services.DownloadRouter != nil && cfg.LogFilePath != "" {
 		allowedDir := logdownload.LogAllowedDir(cfg.LogFilePath, cfg.LogDir)
-		s.downloadAllowedDir.Store(&allowedDir)
-
-		// Register the HTTP handler exactly once. Subsequent applyConfig calls
-		// (e.g. on config reload via MonoApply) reuse the same registration so
-		// that http.ServeMux does not panic on duplicate patterns. The HMAC key
-		// is generated once in NewSystem so previously issued URLs remain valid.
-		s.httpOnce.Do(func() {
-			s.registeredDLPath = cfg.DownloadPath()
-			s.services.HTTPMux.HandleFunc(s.registeredDLPath, func(w http.ResponseWriter, r *http.Request) {
-				var dir string
-				if p := s.downloadAllowedDir.Load(); p != nil {
-					dir = *p
-				}
-				logdownload.ServeLogDownload(w, r, s.downloadKey, dir)
-			})
+		glob, logDir := cfg.LogFilePath, cfg.LogDir
+		s.services.DownloadRouter.Handle(DownloadType, &logdownload.FileDownloadHandler{
+			AllowedDir: func() string { return allowedDir },
 		})
-
-		ttl := time.Duration(cfg.URLTTLSecondsOrDefault()) * time.Second
-		urlBase := cfg.HTTPDownloadURLBase
-		if urlBase == "" && s.services.HTTPEndpoint != "" {
-			urlBase = "https://" + s.services.HTTPEndpoint
-		}
-		key := s.downloadKey
-		dlPath := s.registeredDLPath
-
-		srv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
-			return logdownload.GetDownloadLogURL(req, cfg.LogFilePath, cfg.LogDir, urlBase, dlPath, key, ttl)
+		srv.GetDownloadLogUrlFunc = func(_ context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
+			return logdownload.GenerateFileDownloadURL(req, glob, logDir, s.services.DownloadRouter, DownloadType)
 		}
 	}
 

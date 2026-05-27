@@ -169,7 +169,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	}
 
 	mux := buildHTTPMux(config, downloadRouter, ai.HTTPAuth, logger)
-	setupAuditLog(ctx, config, mux, rootNode, ai.AuditSetup, logger)
+	setupAuditLog(ctx, downloadRouter, rootNode, ai.AuditSetup, logger)
 	httpServer := buildHTTPServer(config, pi, grpcServer, mux)
 
 	logLevel := config.Logger.Level
@@ -531,21 +531,14 @@ func buildHTTPMux(config sysconf.Config, downloadRouter *download.Router, httpAu
 	return mux
 }
 
-// setupAuditLog registers the audit log HTTP download route, starts the background metadata refresh goroutine,
-// and announces the audit-log device on the node so it appears as a Log trait.
-func setupAuditLog(ctx context.Context, config sysconf.Config, mux *http.ServeMux, rootNode *node.Node, auditSetup *audit.Setup, logger *zap.Logger) {
+// setupAuditLog wires the audit log subsystem against the shared download router,
+// starts the background metadata refresh goroutine, and announces the audit-log
+// device on the node so it appears as a Log trait.
+func setupAuditLog(ctx context.Context, downloadRouter *download.Router, rootNode *node.Node, auditSetup *audit.Setup, logger *zap.Logger) {
 	if auditSetup == nil {
 		return
 	}
-	auditDLPath := "/__/audit-log/download"
-	urlBase := ""
-	if hostPort, err := config.ExternalHTTPEndpoint(); err == nil {
-		urlBase = "https://" + hostPort
-	} else {
-		logger.Warn("audit log download URLs will be relative; set externalAddress to generate absolute URLs", zap.Error(err))
-	}
-	auditSetup.RegisterHTTP(mux, auditDLPath)
-	auditSrv := auditSetup.NewModelServer(urlBase, auditDLPath)
+	auditSrv := auditSetup.NewModelServer(downloadRouter)
 	auditSetup.StartMetadataRefresh(ctx, logger.Named("audit"))
 
 	auditLogName := "audit-log"

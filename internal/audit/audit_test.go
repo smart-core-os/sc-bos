@@ -2,6 +2,7 @@ package audit
 
 import (
 	"context"
+	"crypto/rand"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/smart-core-os/sc-bos/internal/download"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 )
@@ -27,8 +29,6 @@ type harness struct {
 	fetch  func(t *testing.T, u string) *http.Response
 }
 
-const auditDLPath = "/__/audit-log/download"
-
 func newHarness(t *testing.T, filename string) *harness {
 	t.Helper()
 	setup, err := NewSetup(filename, 0, 0, 0, false)
@@ -37,9 +37,8 @@ func newHarness(t *testing.T, filename string) *harness {
 	}
 	t.Cleanup(func() { _ = setup.Close() })
 
-	mux := http.NewServeMux()
-	setup.RegisterHTTP(mux, auditDLPath)
-	srv := setup.NewModelServer("", auditDLPath)
+	router := newDownloadRouter(t)
+	srv := setup.NewModelServer(router)
 
 	n := node.New("test")
 	n.Announce(n.Name(), node.HasServer(logpb.RegisterLogApiServer, logpb.LogApiServer(srv)))
@@ -56,13 +55,26 @@ func newHarness(t *testing.T, filename string) *harness {
 		}
 		req := httptest.NewRequest("GET", target, nil)
 		rec := httptest.NewRecorder()
-		mux.ServeHTTP(rec, req)
+		router.ServeHTTP(rec, req)
 		return rec.Result()
 	}
 	return &harness{
 		client: logpb.NewLogApiClient(n.ClientConn()),
 		fetch:  fetch,
 	}
+}
+
+func newDownloadRouter(t *testing.T) *download.Router {
+	t.Helper()
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		t.Fatal(err)
+	}
+	return download.NewRouter(
+		download.NewHMACSigner(key),
+		download.WithBaseURL("/download"),
+		download.WithTTL(15*time.Minute),
+	)
 }
 
 // writeFile writes name with content into dir, replacing any existing file.

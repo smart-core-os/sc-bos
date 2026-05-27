@@ -151,6 +151,11 @@ func (rt *Router) GenerateURL(typ string, payload []byte) (downloadURL string, e
 // base URL from r.URL.Path itself — mount with mux.Handle, no StripPrefix
 // wrapper needed.
 func (rt *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Apply to every response (success and error): browsers must not sniff
+	// the response body type, and intermediaries must not cache.
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Cache-Control", "no-store")
+
 	token, ok := strings.CutPrefix(r.URL.Path, rt.base.Path)
 	if !ok || token == "" {
 		http.NotFound(w, r)
