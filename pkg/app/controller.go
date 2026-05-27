@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
@@ -38,6 +39,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/internal/util/pki/expire"
 	"github.com/smart-core-os/sc-bos/pkg/app/files"
+	"github.com/smart-core-os/sc-bos/pkg/system/boot"
 	http2 "github.com/smart-core-os/sc-bos/pkg/app/http"
 	"github.com/smart-core-os/sc-bos/pkg/app/logcapture"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
@@ -655,6 +657,8 @@ type Controller struct {
 	ManagerConn     node.Remote
 
 	deferred []Deferred
+
+	rebootCh chan string // signals a requested clean reboot; set in Run; value is the reason (empty if boot system handled the state file)
 }
 
 type Deferred func() error
@@ -671,6 +675,9 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 			err = multierr.Append(err, d())
 		}
 	}()
+	defer func() {
+		writeControllerRebootState(c.SystemConfig.DataDir, err)
+	}()
 
 	// metadata associated with the node itself
 	// we don't support changing metadata while running
@@ -680,6 +687,15 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	defer storeUndo()
 
 	group, ctx := errgroup.WithContext(ctx)
+	c.rebootCh = make(chan string, 1)
+	group.Go(func() error {
+		select {
+		case reason := <-c.rebootCh:
+			return restartNowError{reason: reason}
+		case <-ctx.Done():
+			return nil
+		}
+	})
 	if c.Enrollment != nil {
 		group.Go(func() error {
 			return c.Enrollment.AutoRenew(ctx)
@@ -694,7 +710,7 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 			needRestart := cloud.AutoPoll(ctx, c.Cloud, pollInterval, c.Logger.Named("cloud.auto-poll"))
 			if needRestart {
 				c.Logger.Info("triggering automatic restart to apply new deployment")
-				return restartNowError{}
+				return restartNowError{reason: "automatic restart to install deployment"}
 			}
 			return nil
 		})
@@ -750,7 +766,9 @@ const (
 )
 
 // a sentinel error type - does not indicate an actual error, but a request to restart the controller immediately
-type restartNowError struct{}
+type restartNowError struct {
+	reason string
+}
 
 func (e restartNowError) Error() string {
 	return "automatic restart triggered"
@@ -758,4 +776,27 @@ func (e restartNowError) Error() string {
 
 func (e restartNowError) ExitCode() int {
 	return 0
+}
+
+// writeControllerRebootState writes the reboot state file based on how Controller.Run exited.
+// Only writes for clean exits (graceful shutdown or deployment restart with a known reason).
+// When the exit was triggered via the Boot RPC, the boot system has already written the state
+// file (with actor info included), so we skip to avoid overwriting it.
+func writeControllerRebootState(dataDir string, err error) {
+	// Use errors.As so wrapping (e.g. multierr) doesn't silently fall through to the
+	// default case and skip writing the state file.
+	var st boot.RebootState
+	var rne restartNowError
+	switch {
+	case err == nil:
+		st = boot.RebootState{CleanExit: true}
+	case errors.As(err, &rne):
+		if rne.reason == "" {
+			return // boot system wrote the state file (with actor); don't overwrite
+		}
+		st = boot.RebootState{Reason: rne.reason, CleanExit: true}
+	default:
+		return // unexpected error; leave in-progress marker as crash indicator
+	}
+	_ = boot.WriteStateFile(dataDir, st)
 }

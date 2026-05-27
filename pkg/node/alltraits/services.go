@@ -11,6 +11,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/allocationpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/anprcamerapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/bookingpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/buttonpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/channelpb"
@@ -91,6 +92,7 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 
 	// sc-bos private traits
 	allocationpb.TraitName:     {allocationpb.AllocationApi_ServiceDesc, allocationpb.AllocationHistory_ServiceDesc},
+	bootpb.TraitName:           {bootpb.BootApi_ServiceDesc, bootpb.BootHistory_ServiceDesc},
 	logpb.TraitName:            {logpb.LogApi_ServiceDesc},
 	accesspb.TraitName:         {accesspb.AccessApi_ServiceDesc},
 	anprcamerapb.TraitName:     {anprcamerapb.AnprCameraApi_ServiceDesc},
