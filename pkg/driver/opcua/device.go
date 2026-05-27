@@ -75,9 +75,7 @@ func (d *device) subscribe(ctx context.Context) error {
 // Values with non-OK status codes are logged as warnings and not passed to trait handlers.
 func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificationData, node *ua.NodeID) {
 	if event.Error != nil {
-		if d.systemCheck != nil {
-			d.systemCheck.MarkFailed(event.Error)
-		}
+		service.UpdateSystemCheck(d.systemCheck, event.Error)
 		d.logger.Warn("OPC UA server connection error", zap.Stringer("node", node), zap.Error(event.Error))
 		return
 	}
@@ -92,9 +90,7 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 
 			if errors.Is(item.Value.Status, ua.StatusOK) {
 				d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
-				if d.systemCheck != nil {
-					d.systemCheck.MarkRunning()
-				}
+				service.UpdateSystemCheck(d.systemCheck, nil)
 				value := item.Value.Value.Value()
 				d.handleTraitEvent(ctx, node, value)
 			} else {
@@ -109,9 +105,7 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 				if errors.Is(field.StatusCode(), ua.StatusOK) {
 					value := field.Value()
 					d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
-					if d.systemCheck != nil {
-						d.systemCheck.MarkRunning()
-					}
+					service.UpdateSystemCheck(d.systemCheck, nil)
 					d.handleTraitEvent(ctx, node, value)
 				} else {
 					setPointReadNotOk(ctx, node.String(), field.StatusCode(), d.faultCheck)

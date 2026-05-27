@@ -183,6 +183,7 @@ export function useServiceConfig(beforeEdit = (v) => v, beforeSave = (v) => v) {
     remoteModel: configParsed,
     configModel: localChanges,
     readonly: blockActions,
+    doSave,
 
     serviceID,
     serviceType,

@@ -509,6 +509,7 @@ func testReflection(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 		{Name: "smartcore.bos.health.v1.HealthHistory"},
 		{Name: "smartcore.bos.hub.v1.HubApi"},
 		{Name: "smartcore.bos.metadata.v1.MetadataApi"},
+		{Name: "smartcore.bos.mock.v1.MockDeviceApi"},
 		{Name: "smartcore.bos.onoff.v1.OnOffApi"},
 		{Name: "smartcore.bos.onoff.v1.OnOffInfo"},
 		{Name: "smartcore.bos.parent.v1.ParentApi"},

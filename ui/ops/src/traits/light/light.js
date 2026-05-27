@@ -118,6 +118,8 @@ export function useUpdateBrightness(name) {
  *   level: ComputedRef<number>,
  *   levelStr: ComputedRef<string>,
  *   icon: ComputedRef<string>,
+ *   confidence: ComputedRef<number|null>,
+ *   lowConfidence: ComputedRef<boolean>,
  *   presets: ComputedRef<Array<LightPreset.AsObject>>
  * }}
  */
@@ -128,9 +130,18 @@ export function useBrightness(value, support = null) {
   /** @type {ComputedRef<number>} */
   const level = computed(() => _v.value?.levelPercent || 0);
 
+  // null = omitted (no confidence reported), 0 = unknown, 1-100 = percentage confidence
+  /** @type {ComputedRef<number|null>} */
+  const confidence = computed(() => _v.value?.confidence ?? null);
+
+  /** @type {ComputedRef<boolean>} */
+  const lowConfidence = computed(() => confidence.value !== null && confidence.value > 0 && confidence.value < 20);
+
   /** @type {ComputedRef<string>} */
   const levelStr = computed(() => {
-    if (level.value === 0) {
+    if (confidence.value === 0) {
+      return 'Unknown';
+    } else if (level.value === 0) {
       return 'Off';
     } else if (level.value === 100) {
       return 'Max';
@@ -167,6 +178,8 @@ export function useBrightness(value, support = null) {
     level,
     levelStr,
     icon,
+    confidence,
+    lowConfidence,
     presets,
     currentPresetTitle
   };

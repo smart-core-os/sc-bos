@@ -23,6 +23,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/ctxerr"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/merge"
+	driverhealth "github.com/smart-core-os/sc-bos/pkg/driver/health"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
@@ -60,7 +61,7 @@ type Driver struct {
 	healthTasks []task.StopFn
 
 	controllerMu      sync.Mutex
-	controllerHealths map[string]*controllerHealth
+	controllerHealths map[string]*driverhealth.ControllerHealth
 }
 
 func NewDriver(services driver.Services) *Driver {
@@ -97,7 +98,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	d.controllerMu.Lock()
-	d.controllerHealths = make(map[string]*controllerHealth)
+	d.controllerHealths = make(map[string]*driverhealth.ControllerHealth)
 	d.controllerMu.Unlock()
 
 	devices := known.SyncContext(d.mu.RLocker(), d.devices)
@@ -132,13 +133,13 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		// For devices with a known IP, eagerly register them with their controller check.
 		// WhoIs devices (no Comm.IP) are registered lazily inside configureDevice.
-		var ctrlHealth *controllerHealth
+		var ctrlHealth *driverhealth.ControllerHealth
 		if device.Comm != nil && device.Comm.IP != nil {
 			ctrlHealth, err = d.getOrCreateControllerCheck(ctx, cfg, device.Comm.IP.Addr())
 			if err != nil {
 				logger.Error("failed to create controller health check", zap.Error(err))
 			} else {
-				ctrlHealth.register(scDeviceName)
+				ctrlHealth.Register(scDeviceName)
 			}
 		}
 
@@ -272,28 +273,22 @@ func (d *Driver) initClient(ctx context.Context, cfg config.Root, systemCheck se
 	client, err := gobacnet.NewClient(cfg.LocalInterface, int(cfg.LocalPort),
 		gobacnet.WithMaxConcurrentTransactions(cfg.MaxConcurrentTransactions), gobacnet.WithLogLevel(logrus.InfoLevel))
 	if err != nil {
-		if systemCheck != nil {
-			systemCheck.MarkFailed(fmt.Errorf("failed to create BACnet client: %w", err))
-		}
+		service.UpdateSystemCheck(systemCheck, fmt.Errorf("failed to create BACnet client: %w", err))
 		return err
 	}
 	d.client = client
 	if address, err := client.LocalUDPAddress(); err != nil {
-		if systemCheck != nil {
-			systemCheck.MarkFailed(fmt.Errorf("failed to get local UDP address: %w", err))
-		}
+		service.UpdateSystemCheck(systemCheck, fmt.Errorf("failed to get local UDP address: %w", err))
 		return err
 	} else {
 		d.logger.Debug("bacnet client configured", zap.Stringer("local", address),
 			zap.String("localInterface", cfg.LocalInterface), zap.Uint16("localPort", cfg.LocalPort))
 	}
-	if systemCheck != nil {
-		systemCheck.MarkRunning()
-	}
+	service.UpdateSystemCheck(systemCheck, nil)
 	return nil
 }
 
-func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announcer, cfg config.Root, device config.Device, devices known.Context, deviceHealth *healthpb.FaultCheck, ctrlHealth *controllerHealth, logger *zap.Logger) error {
+func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announcer, cfg config.Root, device config.Device, devices known.Context, deviceHealth *healthpb.FaultCheck, ctrlHealth *driverhealth.ControllerHealth, logger *zap.Logger) error {
 	deviceName := adapt.DeviceName(device)
 	scDeviceName := cfg.DeviceNamePrefix + deviceName
 
@@ -315,7 +310,7 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 			})
 		}
 		if ctrlHealth != nil {
-			ctrlHealth.setFailing(ctx, scDeviceName)
+			ctrlHealth.SetFailing(ctx, scDeviceName)
 		}
 
 		return fmt.Errorf("device comm handshake: %w", ctxerr.Cause(ctx, err))
@@ -328,13 +323,13 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 			if ok {
 				ctrlHealth, _ = d.getOrCreateControllerCheck(ctx, cfg, ip.Unmap())
 				if ctrlHealth != nil {
-					ctrlHealth.register(scDeviceName)
+					ctrlHealth.Register(scDeviceName)
 				}
 			}
 		}
 	}
 	if ctrlHealth != nil {
-		ctrlHealth.setOK(ctx, scDeviceName)
+		ctrlHealth.SetOk(ctx, scDeviceName)
 	}
 
 	d.storeDevice(deviceName, bacDevice, device.DefaultWritePriority)
@@ -348,9 +343,9 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 		updateRequestErrorStatus(rCtx, dh, name, request, reqErr)
 		if ctrlHealth != nil {
 			if reqErr != nil {
-				ctrlHealth.setFailing(rCtx, scDeviceName)
+				ctrlHealth.SetFailing(rCtx, scDeviceName)
 			} else {
-				ctrlHealth.setOK(rCtx, scDeviceName)
+				ctrlHealth.SetOk(rCtx, scDeviceName)
 			}
 		}
 	}
@@ -454,15 +449,15 @@ func (d *Driver) dispose() {
 
 	d.controllerMu.Lock()
 	for _, ch := range d.controllerHealths {
-		ch.faultCheck.Dispose()
+		ch.Dispose()
 	}
 	d.controllerHealths = nil
 	d.controllerMu.Unlock()
 }
 
-// getOrCreateControllerCheck returns the controllerHealth for the given IP, creating it if needed.
-// The returned controllerHealth is already stored in d.controllerHealths.
-func (d *Driver) getOrCreateControllerCheck(ctx context.Context, cfg config.Root, ip netip.Addr) (*controllerHealth, error) {
+// getOrCreateControllerCheck returns the ControllerHealth for the given IP, creating it if needed.
+// The returned ControllerHealth is already stored in d.controllerHealths.
+func (d *Driver) getOrCreateControllerCheck(ctx context.Context, cfg config.Root, ip netip.Addr) (*driverhealth.ControllerHealth, error) {
 	key := cfg.Name + "/" + ip.String()
 	d.controllerMu.Lock()
 	defer d.controllerMu.Unlock()
@@ -473,7 +468,7 @@ func (d *Driver) getOrCreateControllerCheck(ctx context.Context, cfg config.Root
 	if err != nil {
 		return nil, err
 	}
-	ch := newControllerHealth(fc, cfg.ControllerHealthThreshold)
+	ch := driverhealth.NewControllerHealth(fc, cfg.ControllerHealthThreshold, merge.SystemName)
 	d.controllerHealths[key] = ch
 	return ch, nil
 }

@@ -15,4 +15,6 @@ type Root struct {
 	DiscoverSources bool `json:"discoverSources,omitempty"`
 	// the names to use for rpc requests to UdmiService
 	Sources []string `json:"sources,omitempty"`
+	// Retained, when true, configures the MQTT publisher to publish messages with the retained flag set.
+	Retained bool `json:"retained,omitempty"`
 }

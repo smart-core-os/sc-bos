@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package smartcore.bos.mock.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/mockpb";
+
+// MockDeviceApi provides direct control over mock device trait values for testing.
+// This service is only available on devices managed by the mock driver.
+service MockDeviceApi {
+  // ForceTraitValue overrides the current value of one or more traits on a named mock device.
+  rpc ForceTraitValue(ForceTraitValuesRequest) returns (ForceTraitValuesResponse);
+  // SetDeviceAutomation starts or stops named automations on a mock device.
+  // Empty automations list is a no-op.
+  rpc SetDeviceAutomation(SetDeviceAutomationsRequest) returns (SetDeviceAutomationsResponse);
+}
+
+// ForceTraitValuesRequest sets the live value of one or more traits on a named mock device.
+message ForceTraitValuesRequest {
+  // name is the device name, e.g. "ac1/dev1".
+  string name = 1;
+  // values lists the traits to force and their new values; applied in order.
+  repeated TraitValue values = 2;
+}
+
+// TraitValue pairs a trait with a protojson-encoded resource value.
+message TraitValue {
+  // trait is the fully-qualified trait name, e.g. "smartcore.traits.OccupancySensor".
+  string trait = 1;
+  // value_protojson is the trait resource encoded as protojson,
+  // e.g. for OccupancySensor: {"state":"OCCUPIED"}
+  string value_protojson = 2;
+}
+
+message ForceTraitValuesResponse {}
+
+// SetDeviceAutomationsRequest starts or stops named automations on a mock device.
+message SetDeviceAutomationsRequest {
+  // name is the device name, e.g. "ac1/dev1".
+  string name = 1;
+  // automations lists the trait automations to start or stop.
+  // An empty list is a no-op.
+  repeated TraitAutomation automations = 2;
+}
+
+// TraitAutomation selects one or more automations and sets their active state.
+message TraitAutomation {
+  // trait is the fully-qualified trait name.
+  // Empty means all traits on the device.
+  string trait = 1;
+  // id identifies the specific automation within this trait.
+  // Empty means all automations for the matched trait(s).
+  string id = 2;
+  // active controls whether the automation should be running.
+  bool active = 3;
+}
+
+message SetDeviceAutomationsResponse {}

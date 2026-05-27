@@ -93,21 +93,29 @@
 
       <!-- Service stats -->
       <div v-if="!connectedViaHub" class="stat-grid">
-        <div
+        <v-tooltip
             v-for="(response, service) in nodeDetails"
             :key="service"
-            class="stat-box"
-            :class="{'stat-box--error': response.streamError}">
-          <div class="stat-value">
-            <template v-if="response.streamError">
-              <v-icon size="14" color="error">mdi-alert-circle-outline</v-icon>
-            </template>
-            <template v-else>
-              {{ response.value?.totalActiveCount ?? '—' }}
-            </template>
-          </div>
-          <div class="stat-label">{{ service }}</div>
-        </div>
+            :disabled="!response.streamError"
+            :text="serviceErrorMessage(response.streamError)"
+            location="bottom">
+          <template #activator="{ props: _props }">
+            <div
+                v-bind="_props"
+                class="stat-box"
+                :class="{'stat-box--error': response.streamError}">
+              <div class="stat-value">
+                <template v-if="response.streamError">
+                  <v-icon size="14" color="error">mdi-alert-circle-outline</v-icon>
+                </template>
+                <template v-else>
+                  {{ response.value?.totalActiveCount ?? '—' }}
+                </template>
+              </div>
+              <div class="stat-label">{{ service }}</div>
+            </div>
+          </template>
+        </v-tooltip>
       </div>
 
       <!-- Resource usage -->
@@ -491,6 +499,11 @@ function confirmReboot() {
       })
       .catch(() => { /* error shown in dialog via rebootTracker.error */ });
 }
+
+const serviceErrorMessage = (streamError) => {
+  if (!streamError) return '';
+  return streamError.error?.message || streamError.message || 'Failed to load service metadata';
+};
 </script>
 
 <style scoped>

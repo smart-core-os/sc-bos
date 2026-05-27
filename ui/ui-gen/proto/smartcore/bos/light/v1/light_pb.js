@@ -259,7 +259,8 @@ levelPercent: jspb.Message.getFloatingPointFieldWithDefault(msg, 1, 0.0),
 preset: (f = msg.getPreset()) && proto.smartcore.bos.light.v1.LightPreset.toObject(includeInstance, f),
 brightnessTween: (f = msg.getBrightnessTween()) && smartcore_bos_types_v1_tween_pb.Tween.toObject(includeInstance, f),
 targetLevelPercent: jspb.Message.getFloatingPointFieldWithDefault(msg, 4, 0.0),
-targetPreset: (f = msg.getTargetPreset()) && proto.smartcore.bos.light.v1.LightPreset.toObject(includeInstance, f)
+targetPreset: (f = msg.getTargetPreset()) && proto.smartcore.bos.light.v1.LightPreset.toObject(includeInstance, f),
+confidence: (f = jspb.Message.getOptionalFloatingPointField(msg, 6)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -318,6 +319,10 @@ proto.smartcore.bos.light.v1.Brightness.deserializeBinaryFromReader = function(m
       var value = new proto.smartcore.bos.light.v1.LightPreset;
       reader.readMessage(value,proto.smartcore.bos.light.v1.LightPreset.deserializeBinaryFromReader);
       msg.setTargetPreset(value);
+      break;
+    case 6:
+      var value = /** @type {number} */ (reader.readFloat());
+      msg.setConfidence(value);
       break;
     default:
       reader.skipField();
@@ -384,6 +389,13 @@ proto.smartcore.bos.light.v1.Brightness.serializeBinaryToWriter = function(messa
       5,
       f,
       proto.smartcore.bos.light.v1.LightPreset.serializeBinaryToWriter
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 6));
+  if (f != null) {
+    writer.writeFloat(
+      6,
+      f
     );
   }
 };
@@ -533,6 +545,42 @@ proto.smartcore.bos.light.v1.Brightness.prototype.clearTargetPreset = function()
  */
 proto.smartcore.bos.light.v1.Brightness.prototype.hasTargetPreset = function() {
   return jspb.Message.getField(this, 5) != null;
+};
+
+
+/**
+ * optional float confidence = 6;
+ * @return {number}
+ */
+proto.smartcore.bos.light.v1.Brightness.prototype.getConfidence = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 6, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.light.v1.Brightness} returns this
+ */
+proto.smartcore.bos.light.v1.Brightness.prototype.setConfidence = function(value) {
+  return jspb.Message.setField(this, 6, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.light.v1.Brightness} returns this
+ */
+proto.smartcore.bos.light.v1.Brightness.prototype.clearConfidence = function() {
+  return jspb.Message.setField(this, 6, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.light.v1.Brightness.prototype.hasConfidence = function() {
+  return jspb.Message.getField(this, 6) != null;
 };
 
 

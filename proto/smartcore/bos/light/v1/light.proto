@@ -52,6 +52,12 @@ message Brightness {
   float target_level_percent = 4;
   // The target preset. Ignored on write. If present ignore target_level_percent
   LightPreset target_preset = 5;
+
+  // The confidence in the reported level_percent as a percentage. [0-100].
+  // Absent means confidence is not reported; treat the level as fully confident.
+  // A value of 0 means the level is unknown.
+  // Values below 20 indicate low confidence and the level should be shown with a caveat.
+  optional float confidence = 6;
 }
 
 message LightPreset {
