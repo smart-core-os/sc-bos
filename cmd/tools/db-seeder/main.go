@@ -38,7 +38,7 @@ func init() {
 	flag.DurationVar(&lookBack, "look-back", time.Hour*24*30*2, "amount of time to populate database history for starting from now, going backwards; defaults to 13 months for nabers-* profiles")
 	flag.StringVar(&dbUrl, "db-url", "postgres://postgres:postgres@localhost:5432/smart_core", "database url")
 	flag.StringVar(&app, "appconf", "app.conf.json", "app configuration file")
-	flag.StringVar(&profileName, "profile", "office", "building profile to use when generating data (available: office, nabers-excellent, nabers-ok, nabers-poor)")
+	flag.StringVar(&profileName, "profile", "office", "building profile to use when generating data (available: office, nabers-excellent, nabers-ok, nabers-poor, nabers-excellent-env, nabers-ok-env, nabers-poor-env)")
 }
 
 func main() {
@@ -61,7 +61,7 @@ func main() {
 		return
 	}
 
-	if !lookBackSet && profile.NabersOnly {
+	if !lookBackSet && (profile.NabersOnly || profile.SkipMeter) {
 		lookBack = 13 * 30 * 24 * time.Hour
 	}
 
@@ -108,15 +108,17 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 
-	wg.Go(func() {
-		for _, d := range sd.meter {
-			err = SeedMeter(ctx, db, d, profile, lookBack)
-			if err != nil {
-				panic(err)
+	if !profile.SkipMeter {
+		wg.Go(func() {
+			for _, d := range sd.meter {
+				err = SeedMeter(ctx, db, d, profile, lookBack)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("seeded meter device %s\n", d)
 			}
-			fmt.Printf("seeded meter device %s\n", d)
-		}
-	})
+		})
+	}
 
 	if !profile.NabersOnly {
 		wg.Go(func() {
