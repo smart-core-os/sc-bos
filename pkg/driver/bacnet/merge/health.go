@@ -9,7 +9,7 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -61,7 +61,7 @@ func readHealthConfig(raw []byte) (cfg healthConfig, err error) {
 }
 
 type Health struct {
-	client     *gobacnet.Client
+	client     bclient.Client
 	known      known.Context
 	checks     *healthpb.Checks
 	faultCheck *healthpb.FaultCheck
@@ -73,7 +73,7 @@ type Health struct {
 	PollTask     *task.Intermittent
 }
 
-func NewHealth(client *gobacnet.Client, known known.Context, checks *healthpb.Checks, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*Health, error) {
+func NewHealth(client bclient.Client, known known.Context, checks *healthpb.Checks, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*Health, error) {
 	cfg, err := readHealthConfig(config.Raw)
 	if err != nil {
 		return nil, err

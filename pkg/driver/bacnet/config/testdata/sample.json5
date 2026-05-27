@@ -7,6 +7,44 @@
   // The port the BACnet client accepts UDP response messages on.
   // The driver will bind to all network interfaces on this port
   localPort: 47808,
+  // secureConnect, when present, switches the driver from BACnet/IP (UDP) to BACnet/SC: it connects to a
+  // BACnet/SC hub over a secure websocket using mutual TLS. localInterface and localPort above are ignored.
+  // Omit this block entirely for BACnet/IP.
+  //
+  // Devices are still listed under `devices` below, but on BACnet/SC you normally locate them by Who-Is on
+  // their device `id` (omit `comm.ip`) - the hub routes by virtual MAC, not IP address.
+  secureConnect: {
+    // Websocket URI of the primary BACnet/SC hub. Required. Use wss:// in production (mutual TLS).
+    // Ask the commissioning engineers for the exact host, port and path.
+    primaryHubURI: 'wss://hub.example.com:47808',
+    // Optional secondary hub. The driver fails over to it when the primary connection drops, then back.
+    failoverHubURI: 'wss://hub2.example.com:47808',
+    // Mutual TLS. BACnet/SC authenticates both ends, so you need all three of:
+    tls: {
+      // This node's operational certificate + private key, issued by the network's CA.
+      // Each may be inline PEM or a path to a PEM file (paths resolve relative to the config dir).
+      certificates: [
+        {certificate: '/run/secrets/bsc-cert.pem', privateKey: '/run/secrets/bsc-key.pem'}
+      ],
+      // The CA certificate that signed the hub's server certificate, so the driver can verify the hub.
+      rootCAs: '/run/secrets/bsc-ca.pem',
+      // Skip hub certificate verification. Testing only - never set in production.
+      insecureSkipVerify: false
+    },
+    // This node's BACnet/SC device UUID (RFC 4122). Generated randomly and logged if omitted.
+    // Provide the assigned value if the hub allow-lists nodes by UUID.
+    deviceUUID: '1b671a64-40d5-491e-99b0-da01ff1f3341',
+    // This node's 6-octet virtual MAC, as hex (optionally colon separated). Random if omitted.
+    // Provide the assigned value if the hub allow-lists nodes by VMAC.
+    vmac: '010203040506',
+    // Largest BVLC / NPDU this node accepts, advertised during the connect handshake. Default 1497.
+    maxBVLCLength: 1497,
+    maxNPDULength: 1497,
+    // How often to send a keepalive heartbeat on an idle connection. Default 30s.
+    heartbeatInterval: '30s',
+    // Bounds the websocket dial plus connect handshake. Default 10s.
+    connectTimeout: '10s'
+  },
   // Discovery allows us to adjust how device discovery works, if we have to use it.
   discovery: {
     // Min device identifier we search for.

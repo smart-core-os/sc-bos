@@ -7,7 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -28,7 +28,7 @@ const (
 	SystemName = "BACnet"
 )
 
-func IntoTrait(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, traitConfig config.RawTrait, logger *zap.Logger) (node.SelfAnnouncer, error) {
+func IntoTrait(client bclient.Client, devices known.Context, faultCheck *healthpb.FaultCheck, traitConfig config.RawTrait, logger *zap.Logger) (node.SelfAnnouncer, error) {
 	// todo: implement some traits that pull data from different bacnet devices.
 	switch traitConfig.Kind {
 	case trait.AirQualitySensor:

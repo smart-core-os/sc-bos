@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/gobacnet/property"
 	bactypes "github.com/smart-core-os/gobacnet/types"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/rpc"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -18,7 +18,7 @@ import (
 )
 
 // Device adapts a bacnet Device into a Smart Core traits and other apis.
-func Device(name string, client *gobacnet.Client, device bactypes.Device, known known.Context, deviceHealth *healthpb.FaultCheck, errFn errFn) node.SelfAnnouncer {
+func Device(name string, client bclient.Client, device bactypes.Device, known known.Context, deviceHealth *healthpb.FaultCheck, errFn errFn) node.SelfAnnouncer {
 	return &DeviceBacnetService{
 		name:         name,
 		client:       client,
@@ -37,7 +37,7 @@ type DeviceBacnetService struct {
 	rpc.UnimplementedBacnetDriverServiceServer
 
 	name   string
-	client *gobacnet.Client
+	client bclient.Client
 	device bactypes.Device
 	known  known.Context
 

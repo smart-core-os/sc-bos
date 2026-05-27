@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -38,7 +38,7 @@ func readOnOffConfig(raw []byte) (cfg onOffCfg, err error) {
 }
 
 type onOff struct {
-	client     *gobacnet.Client
+	client     bclient.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -49,7 +49,7 @@ type onOff struct {
 	pollTask *task.Intermittent
 }
 
-func newOnOff(client *gobacnet.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*onOff, error) {
+func newOnOff(client bclient.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*onOff, error) {
 	cfg, err := readOnOffConfig(config.Raw)
 	if err != nil {
 		return nil, err

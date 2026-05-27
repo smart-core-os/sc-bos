@@ -19,10 +19,12 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/block"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/adapt"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/ctxerr"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/merge"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/sc"
 	driverhealth "github.com/smart-core-os/sc-bos/pkg/driver/health"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
@@ -50,7 +52,7 @@ type Driver struct {
 	logger    *zap.Logger
 
 	*service.Service[config.Root]
-	client *gobacnet.Client // How we interact with bacnet systems
+	client bclient.Client // How we interact with bacnet systems (BACnet/IP or BACnet/SC)
 
 	mu      sync.RWMutex
 	devices *known.Map
@@ -270,6 +272,10 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 }
 
 func (d *Driver) initClient(ctx context.Context, cfg config.Root, systemCheck service.SystemCheck) error {
+	if cfg.SecureConnect != nil {
+		return d.initSecureClient(cfg, systemCheck)
+	}
+
 	client, err := gobacnet.NewClient(cfg.LocalInterface, int(cfg.LocalPort),
 		gobacnet.WithMaxConcurrentTransactions(cfg.MaxConcurrentTransactions), gobacnet.WithLogLevel(logrus.InfoLevel))
 	if err != nil {
@@ -284,6 +290,19 @@ func (d *Driver) initClient(ctx context.Context, cfg config.Root, systemCheck se
 		d.logger.Debug("bacnet client configured", zap.Stringer("local", address),
 			zap.String("localInterface", cfg.LocalInterface), zap.Uint16("localPort", cfg.LocalPort))
 	}
+	service.UpdateSystemCheck(systemCheck, nil)
+	return nil
+}
+
+// initSecureClient sets up a BACnet/SC (secure websocket) client connected to a hub.
+func (d *Driver) initSecureClient(cfg config.Root, systemCheck service.SystemCheck) error {
+	client, err := sc.NewClient(*cfg.SecureConnect, cfg.MaxConcurrentTransactions, d.logger)
+	if err != nil {
+		service.UpdateSystemCheck(systemCheck, fmt.Errorf("failed to create BACnet/SC client: %w", err))
+		return err
+	}
+	d.client = client
+	d.logger.Debug("bacnet/sc client configured", zap.String("primaryHub", cfg.SecureConnect.PrimaryHubURI))
 	service.UpdateSystemCheck(systemCheck, nil)
 	return nil
 }
@@ -424,8 +443,9 @@ func (d *Driver) Clear() {
 	d.mu.Unlock()
 	if d.client != nil {
 		// Important: without this, stopping the bacnet driver closes os.Stderr by default!
-		if d.client.Log.Out == os.Stderr {
-			d.client.Log.Out = io.Discard
+		// Only the gobacnet (BACnet/IP) client owns this logger; the SC client does not.
+		if gc, ok := d.client.(*gobacnet.Client); ok && gc.Log.Out == os.Stderr {
+			gc.Log.Out = io.Discard
 		}
 		d.client.Close()
 		d.client = nil

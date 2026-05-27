@@ -7,7 +7,7 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -77,7 +77,7 @@ func readAirTemperatureConfig(raw []byte) (cfg airTemperatureConfig, err error) 
 }
 
 type airTemperature struct {
-	client     *gobacnet.Client
+	client     bclient.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -88,7 +88,7 @@ type airTemperature struct {
 	pollTask *task.Intermittent
 }
 
-func newAirTemperature(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airTemperature, error) {
+func newAirTemperature(client bclient.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airTemperature, error) {
 	cfg, err := readAirTemperatureConfig(config.Raw)
 	if err != nil {
 		return nil, err

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/smart-core-os/gobacnet"
 	bactypes "github.com/smart-core-os/gobacnet/types"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 )
@@ -14,7 +14,7 @@ func (d *Driver) findDevice(ctx context.Context, device config.Device) (bactypes
 	return FindDevice(ctx, d.client, device)
 }
 
-func FindDevice(ctx context.Context, client *gobacnet.Client, device config.Device) (bactypes.Device, error) {
+func FindDevice(ctx context.Context, client bclient.Client, device config.Device) (bactypes.Device, error) {
 	fail := func(err error) (bactypes.Device, error) {
 		return bactypes.Device{}, err
 	}

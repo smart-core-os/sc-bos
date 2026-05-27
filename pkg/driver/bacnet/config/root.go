@@ -24,6 +24,11 @@ type Root struct {
 	LocalInterface string `json:"localInterface,omitempty"`
 	LocalPort      uint16 `json:"localPort,omitempty"`
 
+	// SecureConnect, when set, makes the driver communicate over BACnet/SC (secure
+	// websockets to a hub) instead of BACnet/IP. LocalInterface and LocalPort are
+	// ignored in this mode.
+	SecureConnect *SecureConnect `json:"secureConnect,omitempty"`
+
 	MaxConcurrentTransactions uint8 `json:"maxConcurrentTransactions,omitempty"`
 
 	Discovery                *Discovery `json:"discovery,omitempty"`
@@ -173,6 +178,7 @@ func (d DestinationAddress) Bytes() ([]byte, error) {
 
 var Blocks = []block.Block{
 	{Path: []string{"metadata"}, Blocks: mdblock.Categories},
+	{Path: []string{"secureConnect"}},
 	{
 		Path: []string{"devices"},
 		Key:  "id",

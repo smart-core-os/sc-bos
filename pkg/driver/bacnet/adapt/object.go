@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/smart-core-os/gobacnet"
 	bactypes "github.com/smart-core-os/gobacnet/types"
 	"github.com/smart-core-os/gobacnet/types/objecttype"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/rpc"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -16,7 +16,7 @@ import (
 type errFn func(ctx context.Context, health *healthpb.FaultCheck, name, request string, err error)
 
 // Object adapts a bacnet object into one or more smart core named traits.
-func Object(prefix string, client *gobacnet.Client, device bactypes.Device, object config.Object, deviceHealth *healthpb.FaultCheck, errFn errFn) (node.SelfAnnouncer, error) {
+func Object(prefix string, client bclient.Client, device bactypes.Device, object config.Object, deviceHealth *healthpb.FaultCheck, errFn errFn) (node.SelfAnnouncer, error) {
 	switch object.ID.Type {
 	case objecttype.BinaryValue, objecttype.BinaryOutput, objecttype.BinaryInput:
 		return BinaryObject(prefix, client, device, object, deviceHealth, errFn)

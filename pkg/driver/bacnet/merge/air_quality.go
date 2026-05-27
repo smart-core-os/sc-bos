@@ -7,7 +7,7 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -38,7 +38,7 @@ func readAirQualitySensorConfig(raw []byte) (cfg airQualityConfig, err error) {
 }
 
 type airQualitySensor struct {
-	client     *gobacnet.Client
+	client     bclient.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -49,7 +49,7 @@ type airQualitySensor struct {
 	pollTask *task.Intermittent
 }
 
-func newAirQualitySensor(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airQualitySensor, error) {
+func newAirQualitySensor(client bclient.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airQualitySensor, error) {
 	cfg, err := readAirQualitySensorConfig(config.Raw)
 	if err != nil {
 		return nil, err

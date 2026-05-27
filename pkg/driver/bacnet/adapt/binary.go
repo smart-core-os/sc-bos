@@ -6,9 +6,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/gobacnet/property"
 	bactypes "github.com/smart-core-os/gobacnet/types"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
@@ -17,7 +17,7 @@ import (
 )
 
 // BinaryObject adapts a binary bacnet object as smart core traits.
-func BinaryObject(prefix string, client *gobacnet.Client, device bactypes.Device, object config.Object, deviceHealth *healthpb.FaultCheck, errFn errFn) (node.SelfAnnouncer, error) {
+func BinaryObject(prefix string, client bclient.Client, device bactypes.Device, object config.Object, deviceHealth *healthpb.FaultCheck, errFn errFn) (node.SelfAnnouncer, error) {
 	switch object.Trait {
 	case "":
 		return nil, ErrNoDefault
@@ -42,7 +42,7 @@ func BinaryObject(prefix string, client *gobacnet.Client, device bactypes.Device
 
 type binaryOnOff struct {
 	prefix string
-	client *gobacnet.Client
+	client bclient.Client
 	device bactypes.Device
 	object config.Object
 

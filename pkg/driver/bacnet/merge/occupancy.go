@@ -7,7 +7,7 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/gobacnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -33,7 +33,7 @@ var _ occupancysensorpb.OccupancySensorApiServer = (*occupancy)(nil)
 type occupancy struct {
 	occupancysensorpb.UnimplementedOccupancySensorApiServer
 
-	client     *gobacnet.Client
+	client     bclient.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -44,7 +44,7 @@ type occupancy struct {
 	pollTask *task.Intermittent
 }
 
-func newOccupancy(client *gobacnet.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
+func newOccupancy(client bclient.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
 	cfg, err := readOccupancyConfig(config.Raw)
 	if err != nil {
 		return nil, err

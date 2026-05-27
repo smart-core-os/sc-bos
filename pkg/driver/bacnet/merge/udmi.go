@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -57,7 +57,7 @@ func readUdmiMergeConfig(raw []byte) (cfg UdmiMergeConfig, err error) {
 // control is implemented via OnMessage, only points present in the config are controllable.
 type udmiMerge struct {
 	udmipb.UnimplementedUdmiServiceServer
-	client     *gobacnet.Client
+	client     bclient.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -71,7 +71,7 @@ type udmiMerge struct {
 	points     udmi.PointsEvent
 }
 
-func newUdmiMerge(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*udmiMerge, error) {
+func newUdmiMerge(client bclient.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*udmiMerge, error) {
 	cfg, err := readUdmiMergeConfig(config.Raw)
 	if err != nil {
 		return nil, err

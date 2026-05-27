@@ -32,6 +32,38 @@ JSON (not json5), but the json5 helps with documenting the properties available.
 }
 ```
 
+## BACnet/SC (secure connect)
+
+The driver can talk BACnet/SC instead of BACnet/IP by setting the `secureConnect` config block. In this mode it
+connects to a BACnet/SC hub over a secure websocket (wss) using mutual TLS rather than opening a UDP socket;
+`localInterface`/`localPort` are ignored. Devices are configured as usual but are normally located by Who-Is on their
+device instance id (omit `comm.ip`), as the hub routes by virtual MAC (VMAC).
+
+Only the data link differs: NPDU/APDU encoding and the trait mappings are shared with BACnet/IP. The implementation
+lives in the [sc](sc) package (BVLC-SC framing, websocket/TLS transport, connect handshake, heartbeat and hub
+failover); the driver selects between clients via the [bclient.Client](bclient/bclient.go) interface.
+
+```json
+{
+  "type": "bacnet", "name": "MyDriverImpl",
+  "secureConnect": {
+    "primaryHubURI": "wss://hub.example.com:47808",
+    "failoverHubURI": "wss://hub2.example.com:47808",
+    "deviceUUID": "1b671a64-40d5-491e-99b0-da01ff1f3341",
+    "tls": {
+      "certificates": [{"certificate": "/run/secrets/bsc-cert.pem", "privateKey": "/run/secrets/bsc-key.pem"}],
+      "rootCAs": "/run/secrets/bsc-ca.pem"
+    }
+  },
+  "devices": [
+    {"id": 10002, "objects": [{"id": "BinaryValue:1", "trait": "smartcore.traits.OnOff"}]}
+  ]
+}
+```
+
+`deviceUUID` and `vmac` are generated randomly (and logged) if omitted. `maxBVLCLength`/`maxNPDULength` default to
+1497, `heartbeatInterval` to 30s and `connectTimeout` to 10s. TLS 1.2 is enforced as the minimum version.
+
 ## BACnet - Smart Core Mapping
 
 The driver does not make any assumptions about which objects implement which traits. If an object does map well to the

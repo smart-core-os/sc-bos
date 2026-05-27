@@ -8,8 +8,8 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/gobacnet/enum/lifesafetystate"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/bclient"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -57,7 +57,7 @@ func readEmergencyConfig(raw []byte) (cfg emergencyConfig, err error) {
 }
 
 type emergencyImpl struct {
-	client     *gobacnet.Client
+	client     bclient.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -68,7 +68,7 @@ type emergencyImpl struct {
 	pollTask *task.Intermittent
 }
 
-func newEmergency(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*emergencyImpl, error) {
+func newEmergency(client bclient.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*emergencyImpl, error) {
 	cfg, err := readEmergencyConfig(config.Raw)
 	if err != nil {
 		return nil, err
