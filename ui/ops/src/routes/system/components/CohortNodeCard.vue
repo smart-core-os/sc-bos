@@ -337,61 +337,11 @@ import {useNow} from '@/components/now.js';
 import {watchResource} from '@/util/traits.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
 import {CloudConnection} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb';
-import {computed, defineComponent, h, onScopeDispose, reactive, ref, watch} from 'vue';
+import {computed, onScopeDispose, reactive, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
 import LinkCloudDialog from './LinkCloudDialog.vue';
+import RetentionRows from './RetentionRows.vue';
 import WithDataRetention from '@/traits/dataRetention/WithDataRetention.vue';
-import {formatBytes} from '@/util/number.js';
-
-const RetentionRows = defineComponent({
-  props: {
-    retention: {type: Object, default: () => null},
-    itemLabel: {type: String, default: 'item'}
-  },
-  setup(props) {
-    return () => {
-      const s = props.retention;
-      if (!s) return null;
-      const rows = [];
-
-      if (s.bytes != null) {
-        const utilization = (s.bytes.used != null && s.bytes.capacity != null && s.bytes.capacity > 0)
-            ? (s.bytes.used / s.bytes.capacity) * 100
-            : null;
-        const bar = utilization != null
-            ? h('v-progress-linear', {
-              modelValue: utilization,
-              color: utilization >= 80 ? 'error' : utilization >= 60 ? 'warning' : 'success',
-              height: 3,
-              rounded: true,
-              class: 'resource-bar'
-            })
-            : null;
-        const usedStr = formatBytes(s.bytes.used);
-        const totalStr = s.bytes.capacity != null ? ` / ${formatBytes(s.bytes.capacity)}` : '';
-        const pctStr = utilization != null ? ` (${utilization.toFixed(1)}%)` : '';
-        const val = `${usedStr}${totalStr}${pctStr}`;
-        rows.push(h('div', {class: 'resource-row'}, [
-          h('span', {class: 'resource-label'}, 'Used: '),
-          bar,
-          h('span', {class: 'resource-value', style: 'width: auto'}, val)
-        ]));
-      }
-
-      if (s.items?.used != null) {
-        const totalItems = s.items.capacity != null
-            ? ` / ${s.items.capacity.toLocaleString()}`
-            : '';
-        rows.push(h('div', {class: 'resource-row'}, [
-          h('span', {class: 'resource-label'}, 'Items: '),
-          h('span', {class: 'resource-value', style: 'width: auto'}, `${s.items.used.toLocaleString()}${totalItems} ${props.itemLabel}s`)
-        ]));
-      }
-
-      return h('div', rows);
-    };
-  }
-});
 
 const props = defineProps({
   node: {
