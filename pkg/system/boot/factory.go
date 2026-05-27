@@ -1,6 +1,7 @@
 // Package boot implements the Boot trait for the sc-bos process itself.
-// When enabled, it records the process boot time and handles reboot requests by
-// calling os.Exit(0), relying on the process supervisor (e.g. systemd) to restart it.
+// It exposes the process boot time, last-reboot reason and actor, and a Reboot RPC.
+// Normal reboots call the registered requestReboot callback for a clean shutdown;
+// force reboots call os.Exit(0) directly, relying on the supervisor (e.g. systemd) to restart.
 package boot
 
 import (
@@ -108,10 +109,6 @@ func (s *System) applyConfig(ctx context.Context, _ config) error {
 		node.HasTrait(bootpb.TraitName),
 	)
 
-	// Block until shutdown. The clean-exit state file write is handled by
-	// Controller.Run's defer, which covers both graceful shutdown and deployment
-	// restarts. onReboot handles the Boot RPC path (writing reason + actor).
-	<-ctx.Done()
 	return nil
 }
 
