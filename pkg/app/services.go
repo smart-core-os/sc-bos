@@ -290,6 +290,24 @@ func announceServices[M ~map[string]T, T any](c *Controller, name string, servic
 	return announceNodeServer(c.Node, name, srv)
 }
 
+func announceAutoDeviceTypes(ctx context.Context, n *node.Node, m *service.Map) {
+	undos := make(map[string]node.Undo)
+	now, changes := m.GetAndListenState(ctx)
+	for _, record := range now {
+		undos[record.Id] = n.Announce(record.Id, node.HasDeviceType(metadatapb.Metadata_AUTOMATION))
+	}
+	for change := range changes {
+		if change.NewValue == nil {
+			if undo, ok := undos[change.OldValue.Id]; ok {
+				undo()
+				delete(undos, change.OldValue.Id)
+			}
+		} else if _, ok := undos[change.NewValue.Id]; !ok {
+			undos[change.NewValue.Id] = n.Announce(change.NewValue.Id, node.HasDeviceType(metadatapb.Metadata_AUTOMATION))
+		}
+	}
+}
+
 func announceAutoServices[M ~map[string]T, T any](c *Controller, services *service.Map, factories M) node.Undo {
 	// special because the config name isn't the name we announce as
 	srv := serviceapi.NewApi(services,

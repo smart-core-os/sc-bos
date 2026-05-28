@@ -240,6 +240,8 @@ func (m *Map) Listen(ctx context.Context) <-chan *Change {
 	return m.bus.Listen(ctx)
 }
 
+// GetAndListen returns a snapshot of all current records and a channel that receives subsequent record changes.
+// The channel is closed when ctx is done. A nil Change.NewValue indicates the record was removed.
 func (m *Map) GetAndListen(ctx context.Context) ([]*Record, <-chan *Change) {
 	// must listen before getting values
 	ch := m.bus.Listen(ctx)
@@ -266,6 +268,9 @@ func (m *Map) GetAndListen(ctx context.Context) ([]*Record, <-chan *Change) {
 	return values, out
 }
 
+// GetAndListenState returns a snapshot of all current service states and a channel that receives subsequent state
+// changes. The channel is closed when ctx is done. Each record in the snapshot and each StateChange.NewValue
+// represents a service that exists in the map; a nil NewValue indicates the service was removed.
 func (m *Map) GetAndListenState(ctx context.Context) ([]*StateRecord, <-chan *StateChange) {
 	var states []*StateRecord
 	out := make(chan *StateChange)

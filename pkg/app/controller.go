@@ -747,6 +747,7 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	}
 	announceAutoServices(c, autoServices, c.SystemConfig.AutoFactories)
 	go logServiceMapChanges(ctx, c.Logger.Named("auto"), autoServices)
+	go announceAutoDeviceTypes(ctx, c.Node, autoServices)
 	// load and start the zones
 	zoneServices, err := c.startZones(initialConfig.Zones)
 	if err != nil {
