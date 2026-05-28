@@ -9,7 +9,7 @@ import {usePullFanSpeed} from '@/traits/fanSpeed/fanSpeed.js';
 import {usePollBrightness, usePullBrightness} from '@/traits/light/light.js';
 import {usePullMeterReading} from '@/traits/meter/meter.js';
 import {usePullOccupancy} from '@/traits/occupancy/occupancy.js';
-import {usePullOpenClosePositions} from '@/traits/openClose/openClose.js';
+import {usePullOpenClose} from '@/traits/openClose/openClose.js';
 import {usePullCurrentStatus} from '@/traits/status/status.js';
 import {computed} from 'vue';
 
@@ -63,8 +63,8 @@ export const pullTraitByType = {
   'smartcore.bos.Meter:Reading': usePullMeterReading,
   'smartcore.traits.OccupancySensor': usePullOccupancy,
   'smartcore.traits.OccupancySensor:Occupancy': usePullOccupancy,
-  'smartcore.traits.OpenClose': usePullOpenClosePositions,
-  'smartcore.traits.OpenClose:Position': usePullOpenClosePositions,
+  'smartcore.traits.OpenClose': usePullOpenClose,
+  'smartcore.traits.OpenClose:Position': usePullOpenClose,
   'smartcore.bos.Status': usePullCurrentStatus,
   'smartcore.bos.Status:CurrentStatus': usePullCurrentStatus
 };

@@ -31,7 +31,7 @@ import {computed, onScopeDispose, reactive, toRefs, toValue} from 'vue';
  * @param {MaybeRefOrGetter<boolean>=} paused
  * @return {ToRefs<ResourceValue<OpenClosePositions.AsObject, PullOpenClosePositionsResponse>>}
  */
-export function usePullOpenClosePositions(query, paused = false) {
+export function usePullOpenClose(query, paused = false) {
   const openCloseValue = reactive(
       /** @type {ResourceValue<OpenClosePositions.AsObject, PullOpenClosePositionsResponse>} */
       newResourceValue()
@@ -58,10 +58,10 @@ export function usePullOpenClosePositions(query, paused = false) {
  *   loading: Ref<boolean>,
  *   response: Ref<OpenClosePositions.AsObject|null>,
  *   error: Ref<*>,
- *   updatePositions: (req: Partial<UpdateOpenClosePositionsRequest.AsObject>|Partial<OpenClosePositions.AsObject>) => Promise<OpenClosePositions.AsObject>
+ *   updateOpenClose: (req: Partial<UpdateOpenClosePositionsRequest.AsObject>|Partial<OpenClosePositions.AsObject>) => Promise<OpenClosePositions.AsObject>
  * }}
  */
-export function useUpdateOpenClosePositions(name) {
+export function useUpdateOpenClose(name) {
   const tracker = reactive(
       /** @type {ActionTracker<OpenClosePositions.AsObject>} */
       newActionTracker()
@@ -81,7 +81,7 @@ export function useUpdateOpenClosePositions(name) {
 
   return {
     ...toRefs(tracker),
-    updatePositions: (req) => {
+    updateOpenClose: (req) => {
       return updateOpenClosePositions(toRequestObject(req), tracker);
     }
   };
@@ -91,7 +91,7 @@ export function useUpdateOpenClosePositions(name) {
  * @param {MaybeRefOrGetter<string|DescribePositionsRequest.AsObject>} query
  * @return {ToRefs<ActionTracker<PositionsSupport.AsObject>>}
  */
-export function useDescribePositions(query) {
+export function useDescribeOpenClose(query) {
   const tracker = reactive(
       /** @type {ActionTracker<PositionsSupport.AsObject>} */
       newActionTracker()
@@ -121,7 +121,7 @@ export function useDescribePositions(query) {
  *   openPercent: ComputedRef<number|undefined>,
  *   state: ComputedRef<OpenClosePosition.AsObject>}}
  */
-export function useOpenClosePositions(value) {
+export function useOpenClose(value) {
   const _v = computed(() => toValue(value));
 
   const state = computed(() => _v.value?.statesList[0]);

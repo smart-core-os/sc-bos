@@ -11,7 +11,7 @@
 
 <script setup>
 import StatusAlert from '@/components/StatusAlert.vue';
-import {useOpenClosePositions} from '@/traits/openClose/openClose.js';
+import {useOpenClose} from '@/traits/openClose/openClose.js';
 import {computed} from 'vue';
 
 const props = defineProps({
@@ -29,7 +29,7 @@ const props = defineProps({
   }
 });
 
-const {openStr, openIcon, openClass} = useOpenClosePositions(() => props.value);
+const {openStr, openIcon, openClass} = useOpenClose(() => props.value);
 const doorState = computed(() => {
   return {
     icon: openIcon.value,

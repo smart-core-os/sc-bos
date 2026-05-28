@@ -1,11 +1,11 @@
 <template>
   <div>
-    <slot :resource="openCloseValue" :info="info" :update="doUpdatePositions" :update-tracker="updateTracker"/>
+    <slot :resource="openCloseValue" :info="info" :update="doUpdateOpenClose" :update-tracker="updateTracker"/>
   </div>
 </template>
 
 <script setup>
-import {useDescribePositions, usePullOpenClosePositions, useUpdateOpenClosePositions} from '@/traits/openClose/openClose.js';
+import {useDescribeOpenClose, usePullOpenClose, useUpdateOpenClose} from '@/traits/openClose/openClose.js';
 import {reactive} from 'vue';
 
 const props = defineProps({
@@ -24,8 +24,8 @@ const props = defineProps({
   }
 });
 
-const openCloseValue = reactive(usePullOpenClosePositions(() => props.request ?? props.name, () => props.paused));
-const info = reactive(useDescribePositions(() => props.name));
-const updateTracker = reactive(useUpdateOpenClosePositions(() => props.name));
-const doUpdatePositions = updateTracker.updatePositions;
+const openCloseValue = reactive(usePullOpenClose(() => props.request ?? props.name, () => props.paused));
+const info = reactive(useDescribeOpenClose(() => props.name));
+const updateTracker = reactive(useUpdateOpenClose(() => props.name));
+const doUpdateOpenClose = updateTracker.updateOpenClose;
 </script>

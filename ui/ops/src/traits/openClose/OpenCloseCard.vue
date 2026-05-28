@@ -43,7 +43,7 @@
 
 <script setup>
 import useAuthSetup from '@/composables/useAuthSetup';
-import {useOpenClosePositions} from '@/traits/openClose/openClose.js';
+import {useOpenClose} from '@/traits/openClose/openClose.js';
 import {computed, ref, watch} from 'vue';
 
 const {blockActions} = useAuthSetup();
@@ -67,10 +67,10 @@ const props = defineProps({
   }
 });
 const emit = defineEmits([
-  'updatePositions' // OpenClosePositions.AsObject
+  'updateOpenClose' // OpenClosePositions.AsObject
 ]);
 
-const {state, openStr, openPercent} = useOpenClosePositions(() => props.value);
+const {state, openStr, openPercent} = useOpenClose(() => props.value);
 
 const support = computed(() => props.info?.response ?? props.info ?? null);
 const presets = computed(() => support.value?.presetsList ?? []);
@@ -114,7 +114,7 @@ function onSliderEnd(v) {
   // fields like resistance / target_open_percent / open_percent_tween aren't
   // reset to defaults.
   const direction = state.value?.direction ?? 0;
-  emit('updatePositions', {
+  emit('updateOpenClose', {
     states: {statesList: [{openPercent: v, direction}]},
     updateMask: {pathsList: ['states.open_percent']}
   });
@@ -125,6 +125,6 @@ function onSliderEnd(v) {
  */
 function setPreset(name) {
   if (!name) return;
-  emit('updatePositions', {preset: {name}});
+  emit('updateOpenClose', {preset: {name}});
 }
 </script>

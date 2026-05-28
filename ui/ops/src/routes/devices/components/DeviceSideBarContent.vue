@@ -26,7 +26,7 @@
           :info="info"
           :update-tracker="updateTracker"
           :name="deviceId"
-          @update-positions="update"/>
+          @update-open-close="update"/>
     </with-open-close>
     <with-air-quality v-if="traits['smartcore.traits.AirQualitySensor']" :name="deviceId" v-slot="{resource}">
       <v-divider class="mt-4 mb-1"/>
