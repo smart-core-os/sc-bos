@@ -157,7 +157,7 @@ func (azc *AccessZoneController) refreshAccessZones(announcer node.Announcer, sc
 				node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(z)),
 				node.HasTrait(accesspb.TraitName),
 			))
-			z.undo = append(z.undo, announcer.Announce(z.ScName, node.HasMetadata(z.Meta)))
+			z.undo = append(z.undo, announcer.Announce(z.ScName, node.HasMetadata(z.Meta), node.HasDeviceType(metadatapb.Metadata_VIRTUAL)))
 			azc.zones[id] = z
 		}
 		azc.getAccessZoneDetails(azc.zones[id])

@@ -130,7 +130,7 @@ func (dc *DoorController) refreshDoors(announcer node.Announcer, scNamePrefix st
 				},
 			}
 
-			d.Undo = append(d.Undo, announcer.Announce(d.ScName, node.HasMetadata(d.Meta)))
+			d.Undo = append(d.Undo, announcer.Announce(d.ScName, node.HasMetadata(d.Meta), node.HasDeviceType(metadatapb.Metadata_DEVICE)))
 			dc.doors[id] = d
 		}
 	}

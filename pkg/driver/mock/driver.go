@@ -147,6 +147,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		undos = append(undos, d.announcer.Announce(dt.name,
 			node.HasMetadata(device.Metadata),
 			node.HasServer(mockpb.RegisterMockDeviceApiServer, mockpb.MockDeviceApiServer(d.controller)),
+			node.HasDeviceType(metadatapb.Metadata_DEVICE),
 		))
 
 		for _, traitMd := range device.Traits {

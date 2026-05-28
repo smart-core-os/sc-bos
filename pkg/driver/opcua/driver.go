@@ -21,6 +21,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
@@ -86,11 +87,11 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	client := NewClient(opcClient, d.logger, cfg.Conn.SubscriptionInterval.Duration, cfg.Conn.ClientId)
 
-	a.Announce(cfg.Name, node.HasMetadata(cfg.Meta))
+	a.Announce(cfg.Name, node.HasMetadata(cfg.Meta), node.HasDeviceType(metadatapb.Metadata_SERVICE))
 
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, dev := range cfg.Devices {
-		allFeatures := []node.Feature{node.HasMetadata(dev.Meta)}
+		allFeatures := []node.Feature{node.HasMetadata(dev.Meta), node.HasDeviceType(metadatapb.Metadata_DEVICE)}
 
 		faultCheck, err := d.health.NewFaultCheck(dev.Name, getDeviceHealthCheck(dev.Health.OccupantImpact.ToProto(), dev.Health.EquipmentImpact.ToProto()))
 		if err != nil {

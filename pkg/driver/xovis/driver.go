@@ -20,6 +20,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
@@ -89,7 +90,7 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 
 	// announce new devices
 	for _, dev := range conf.Devices {
-		features := []node.Feature{node.HasMetadata(dev.Metadata)}
+		features := []node.Feature{node.HasMetadata(dev.Metadata), node.HasDeviceType(metadatapb.Metadata_DEVICE)}
 
 		faultCheck, err := d.health.NewFaultCheck(dev.Name, commsHealthCheck)
 		if err != nil {

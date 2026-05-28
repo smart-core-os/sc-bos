@@ -13,6 +13,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/brightnesssensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
@@ -83,6 +84,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		node.HasTrait(soundsensorpb.TraitName),
 		node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(d.udmiServiceServer)),
 		node.HasTrait(udmipb.TraitName),
+		node.HasDeviceType(metadatapb.Metadata_DEVICE),
 	)
 
 	faultCheck, err := d.health.NewFaultCheck(cfg.Name, commsHealthCheck)
