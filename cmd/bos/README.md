@@ -1,28 +1,41 @@
-Area Controller Command
-=======================
+SC-BOS Command
+===============
 
-This command runs a sample Area Controller instance. Area controllers are usually physically located near or in an area
-of a building and provide features and functionality related to that area. For example they might connect to a local
-lighting controller and provide out-of-hours power control for those lights.
+This is the main Smart Core Building Operating System (SC-BOS) executable. SC-BOS instances can be configured to run in
+different roles depending on their location and purpose:
 
-The area controller is configured via command line arguments or via configuration files. There's two levels of
-configuration, one to configure the features of the controller and another to configure the runtime. Think "which port
-should https be served on" vs "configure a BACnet device on 1.2.3.4:47808".
-See [pkg/app/sysconf](../../pkg/app/sysconf) for system config, and [pkg/app/appconf](../../pkg/app/appconf) for runtime
-config.
+- **Area Controller** - physically located near or in an area of a building, connects to local devices and provides
+  area-specific features (e.g., connecting to a local lighting controller)
+- **Building Controller** - provides building-wide functionality like global automation, account management, and
+  certificate authority services
+- **Edge Gateway** - exposes external APIs and aggregates data from multiple controllers, typically without direct device
+  integrations
 
-The area controller looks for config files in the config dir (e.g. `.conf`), and stores local data in the data directory 
-(usually `.data`), which includes local caches of data and any generated certificates. The data directory will be 
-created on first run.
+The same `bos` binary is used for all roles - the behavior is determined by the configuration files.
+
+## Configuration
+
+The controller is configured via command line arguments and configuration files. There are two levels of configuration:
+
+- **System config** (`system.conf.json`) - runtime settings like which ports to serve on, database connections, enabled
+  systems
+- **App config** (`app.conf.json`) - application-level settings like drivers, automations, zones
+
+See [pkg/app/sysconf](../../pkg/app/sysconf) for system config documentation,
+and [pkg/app/appconf](../../pkg/app/appconf) for app config documentation.
+
+The controller looks for config files in the config directory (e.g. `.conf`), and stores local data in the data
+directory (usually `.data`), which includes local caches and generated certificates. The data directory is created on
+first run if it doesn't exist.
 
 ## Config Directory
 
-- `system.json`, `system.conf.json` - System config for the controller, ports, features, db connections, etc
+- `system.json`, `system.conf.json` - System config for the controller: ports, features, database connections, etc.
 - `app.conf.json` - App config including drivers, automations, zones, etc.
-- `tenants.json` - a json list of tenants and their hashed client secrets. Used by
-  the [authn system](../../pkg/system/authn) as one option for how to validate credentials (client_id, client_secret)
-- `users.json` - a json list of users and their hashed passwords. Used by the [authn system](../../pkg/system/authn) as
-  one option for how to validate users credentials (username, password)
+- `tenants.json` - a JSON list of tenants and their hashed client secrets. Used by
+  the [authn system](../../pkg/system/authn) as one option for validating credentials (client_id, client_secret)
+- `users.json` - a JSON list of users and their hashed passwords. Used by the [authn system](../../pkg/system/authn) as
+  one option for validating user credentials (username, password)
 
 ## Data Directory
 
@@ -62,8 +75,18 @@ certificates can be customised in the system config.
 
 ## Building and Running
 
-The area controller can be built, run, and tested using standard `go build`, `go run`, or `go test` commands
+SC-BOS can be built, run, and tested using standard `go build`, `go run`, or `go test` commands:
 
 ```shell
+# Run with default settings
 go run github.com/smart-core-os/sc-bos/cmd/bos
+
+# Run with custom configuration
+go run ./cmd/bos --appconf example/config/vanti-ugs/app.conf.json --sysconf example/config/vanti-ugs/system.conf.json --data .data/vanti-ugs
+
+# Build a binary
+go build -o sc-bos ./cmd/bos
 ```
+
+See the [example configurations](../../example/config/) for working examples of different controller setups.
+
