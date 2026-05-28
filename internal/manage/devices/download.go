@@ -2,22 +2,16 @@ package devices
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/csv"
-	"errors"
 	"fmt"
 	"iter"
 	"maps"
 	"net/http"
-	"net/url"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/NYTimes/gziphandler"
-	"github.com/go-jose/go-jose/v4"
-	"github.com/go-jose/go-jose/v4/jwt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -26,6 +20,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/internal/download"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
@@ -34,10 +29,6 @@ import (
 )
 
 //go:generate protoc -I . -I ../../../proto --go_out=paths=source_relative:. download.proto
-
-type tokenClaims struct {
-	Body string `json:"b"`
-}
 
 func (s *Server) GetDownloadDevicesUrl(_ context.Context, request *devicespb.GetDownloadDevicesUrlRequest) (*devicespb.DownloadDevicesUrl, error) {
 	// validate
@@ -55,26 +46,29 @@ func (s *Server) GetDownloadDevicesUrl(_ context.Context, request *devicespb.Get
 		return nil, status.Errorf(codes.InvalidArgument, "filename longer than 255")
 	}
 
-	expireAfter := s.now().Add(s.downloadExpiry)
-	tokenStr, err := s.signAndSerializeDownloadToken(&DownloadToken{Request: request}, expireAfter)
-	if err != nil {
-		return nil, err
+	if s.urlGenerator == nil {
+		return nil, status.Error(codes.Unavailable, "download URL generation is not configured")
 	}
 
-	u := s.downloadUrlBase
-	if err := s.writeDownloadToken(&u, tokenStr); err != nil {
-		return nil, err
+	payload, err := proto.Marshal(&DownloadToken{Request: request})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "marshal download token: %v", err)
+	}
+	downloadURL, expiresAt, err := s.urlGenerator.GenerateURL(DownloadType, payload)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "generate url: %v", err)
 	}
 	return &devicespb.DownloadDevicesUrl{
 		Filename:        request.Filename,
-		Url:             u.String(),
+		Url:             downloadURL,
 		MediaType:       request.MediaType,
-		ExpireAfterTime: timestamppb.New(expireAfter),
+		ExpireAfterTime: timestamppb.New(expiresAt),
 	}, nil
 }
 
-// DownloadDevicesHTTPHandler responds to HTTP request urls returned by GetDownloadDevicesUrl.
-// Requests must include a valid download token.
+// ServeHTTP responds to HTTP requests for download URLs returned by GetDownloadDevicesUrl.
+// Register *Server against a download.Router under DownloadType; the router invokes it
+// after verifying the token's signature and expiry, with the payload on the request context.
 //
 // CSV responses will include a header as the first row, for which columns are sorted alphabetically and grouped by md.name then md.* then *.
 // For metadata columns each device is inspected to find all non-empty fields, each of which is included as a column in the md.* group.
@@ -83,26 +77,18 @@ func (s *Server) GetDownloadDevicesUrl(_ context.Context, request *devicespb.Get
 // Typical column names are dot separated property paths, e.g. md.location.floor, access.grant, or meter.usage.
 //
 // Devices that have no traits or metadata (excluding their name and that they implement the metadata trait) are excluded from the response.
-func (s *Server) DownloadDevicesHTTPHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. parse and validate the request
-	tokenStr, err := s.readDownloadToken(r)
-	if err != nil {
-		http.Error(w, "invalid download token", http.StatusUnauthorized)
-		return
-	}
+//
+// CSV data compresses well so the response is gzipped when the client advertises support via Accept-Encoding.
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	gziphandler.GzipHandler(http.HandlerFunc(s.handleDownload)).ServeHTTP(w, r)
+}
 
-	writeErr := func(err error) {
-		var httpErr httpError
-		if errors.As(err, &httpErr) {
-			http.Error(w, httpErr.msg, httpErr.code)
-			return
-		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	token, err := s.parseAndValidateDownloadToken(tokenStr)
-	if err != nil {
-		writeErr(err)
+func (s *Server) handleDownload(w http.ResponseWriter, r *http.Request) {
+	// 1. decode the download token from the verified payload
+	payload := download.PayloadFromContext(r.Context())
+	token := &DownloadToken{}
+	if err := proto.Unmarshal(payload, token); err != nil {
+		http.Error(w, "corrupt download token", http.StatusBadRequest)
 		return
 	}
 
@@ -110,7 +96,7 @@ func (s *Server) DownloadDevicesHTTPHandler(w http.ResponseWriter, r *http.Reque
 	traitInfo := s.getTraitInfo()
 	deviceList, headers, err := s.listDevicesAndHeaders(token, traitInfo)
 	if err != nil {
-		writeErr(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -362,58 +348,6 @@ func (s *Server) writeHistoryDataByTime(ctx context.Context, out writer, sources
 	}
 }
 
-func (s *Server) signAndSerializeDownloadToken(tokenBody *DownloadToken, expireAfter time.Time) (string, error) {
-	tokenBodyStr, err := downloadTokenToString(tokenBody)
-	if err != nil {
-		return "", status.Errorf(codes.Unavailable, "token body creation error: %v", err)
-	}
-
-	key, err := s.downloadKey()
-	if err != nil {
-		return "", status.Errorf(codes.Unavailable, "token key creation error: %v", err)
-	}
-
-	// using JWT/JOSE here for the signing/key gen means we can also use it later for validation
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, (&jose.SignerOptions{}).WithType("JWT"))
-	if err != nil {
-		return "", status.Errorf(codes.Unavailable, "token signer creation error: %v", err)
-	}
-
-	jwtClaims := &jwt.Claims{Expiry: jwt.NewNumericDate(expireAfter)}
-	tokenClaims := tokenClaims{Body: tokenBodyStr}
-	tokenStr, err := jwt.Signed(signer).Claims(tokenClaims).Claims(jwtClaims).Serialize()
-	if err != nil {
-		return "", status.Errorf(codes.Unavailable, "token serialization error: %v", err)
-	}
-	return tokenStr, nil
-}
-
-func (s *Server) parseAndValidateDownloadToken(tokenStr string) (*DownloadToken, error) {
-	key, err := s.downloadKey()
-	if err != nil {
-		return nil, httpError{code: http.StatusInternalServerError, msg: "failed to read signing key"}
-	}
-
-	jwtToken, err := jwt.ParseSigned(tokenStr, []jose.SignatureAlgorithm{jose.HS256})
-	if err != nil {
-		return nil, httpError{code: http.StatusUnauthorized, msg: "invalid token"}
-	}
-	jwtClaims := &jwt.Claims{}
-	var tokenClaims tokenClaims
-	if err := jwtToken.Claims(key, jwtClaims, &tokenClaims); err != nil {
-		return nil, httpError{code: http.StatusUnauthorized, msg: "untrusted token"}
-	}
-	if err := jwtClaims.ValidateWithLeeway(jwt.Expected{Time: s.now()}, s.downloadExpiryLeeway); err != nil {
-		return nil, httpError{code: http.StatusUnauthorized, msg: "token expired"}
-	}
-
-	token, err := downloadTokenFromString(tokenClaims.Body)
-	if err != nil {
-		return nil, httpError{code: http.StatusUnauthorized, msg: "corrupted download token"}
-	}
-	return token, nil
-}
-
 func (s *Server) listDevicesAndHeaders(token *DownloadToken, traitInfo map[string]traitInfo) (devices []*devicespb.Device, headers []string, err error) {
 	devices = s.m.ListDevices(
 		resource.WithInclude(func(id string, item proto.Message) bool {
@@ -518,7 +452,7 @@ func collectMetadataHeaders(dst map[string]struct{}, deviceList []*devicespb.Dev
 			return nil
 		})
 		if err != nil {
-			return httpError{http.StatusInternalServerError, "failed to collect headers"}
+			return err
 		}
 	}
 	// we process these separately
@@ -643,100 +577,4 @@ func protoPathToHeader(p protopath.Path) string {
 		parts[0] = "md" // shorten metadata to md as it's a common field
 	}
 	return strings.Join(parts, ".")
-}
-
-func (s *Server) RegisterHTTPMux(mux *http.ServeMux) {
-	mux.Handle(s.downloadUrlBase.Path, gziphandler.GzipHandler(http.HandlerFunc(s.DownloadDevicesHTTPHandler)))
-}
-
-func newHMACKeyGen(size int) func() ([]byte, error) {
-	// todo: support key rotation that doesn't invalidate unexpired tokens,
-	//  I expect the sig will need to change to func(string)(string, []byte, error)
-	key := make([]byte, size)
-	var err error
-	_, err = rand.Read(key)
-	return func() ([]byte, error) {
-		return key, err
-	}
-}
-
-// DownloadTokenWriter is a function that writes a download token to a URL.
-type DownloadTokenWriter = func(dst *url.URL, token string) error
-
-// DownloadTokenReader is a function that reads a download token from a URL.
-type DownloadTokenReader = func(*http.Request) (string, error)
-
-func WithDownloadTokenCodec(w DownloadTokenWriter, r DownloadTokenReader) Option {
-	return func(s *Server) {
-		s.downloadTokenWriter = w
-		s.downloadTokenReader = r
-	}
-}
-
-func WithDownloadUrlBase(base url.URL) Option {
-	return func(s *Server) {
-		s.downloadUrlBase = base
-	}
-}
-
-func WithHMACKeyGen(keyGen func() ([]byte, error)) Option {
-	return func(s *Server) {
-		s.downloadKey = keyGen
-	}
-}
-
-// readDownloadToken is the default implementation of DownloadTokenReader.
-func readDownloadToken(r *http.Request) (string, error) {
-	return r.URL.Query().Get("ddt"), nil
-}
-
-func (s *Server) readDownloadToken(r *http.Request) (string, error) {
-	if s.downloadTokenReader == nil {
-		return readDownloadToken(r)
-	}
-	return s.downloadTokenReader(r)
-}
-
-// writeDownloadToken is the default implementation of DownloadTokenWriter.
-func writeDownloadToken(dst *url.URL, token string) error {
-	q := dst.Query()
-	q.Set("ddt", token)
-	dst.RawQuery = q.Encode()
-	return nil
-}
-
-func (s *Server) writeDownloadToken(dst *url.URL, token string) error {
-	if s.downloadTokenWriter == nil {
-		return writeDownloadToken(dst, token)
-	}
-	return s.downloadTokenWriter(dst, token)
-}
-
-func downloadTokenToString(token *DownloadToken) (string, error) {
-	data, err := proto.Marshal(token)
-	if err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(data), nil
-}
-
-func downloadTokenFromString(token string) (*DownloadToken, error) {
-	data, err := base64.RawURLEncoding.DecodeString(token)
-	if err != nil {
-		return nil, err
-	}
-	var dt DownloadToken
-	if err := proto.Unmarshal(data, &dt); err != nil {
-		return nil, err
-	}
-	return &dt, nil
-}
-
-type httpError struct {
-	code int
-	msg  string
-}
-
-func (h httpError) Error() string {
-	return http.StatusText(h.code) + ": " + h.msg
 }

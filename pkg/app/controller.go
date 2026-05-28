@@ -1,7 +1,6 @@
 package app
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -10,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/pprof"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -29,6 +27,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/account"
 	"github.com/smart-core-os/sc-bos/internal/audit"
 	"github.com/smart-core-os/sc-bos/internal/cloud"
+	"github.com/smart-core-os/sc-bos/internal/download"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	opscloud "github.com/smart-core-os/sc-bos/internal/opsapi"
@@ -39,7 +38,6 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/internal/util/pki/expire"
 	"github.com/smart-core-os/sc-bos/pkg/app/files"
-	"github.com/smart-core-os/sc-bos/pkg/system/boot"
 	http2 "github.com/smart-core-os/sc-bos/pkg/app/http"
 	"github.com/smart-core-os/sc-bos/pkg/app/logcapture"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
@@ -56,6 +54,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ops/cloudpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/system/boot"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
@@ -158,14 +157,18 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 
 	grpcServer, reflectionServer := buildGRPCServer(rootNode, nodeRouter, pi, ai)
 
-	devicesApi := buildDevicesAPI(config, rootNode, nodeRouter, logger)
+	downloadRouter, err := buildDownloadRouter(config, logger)
+	if err != nil {
+		return nil, err
+	}
+	devicesApi := buildDevicesAPI(rootNode, nodeRouter, downloadRouter)
 
 	checkRegistry, closeHealthStore, err := setupHealthRegistry(ctx, config, deviceStore, rootNode, logger.Named("health"))
 	if err != nil {
 		return nil, err
 	}
 
-	mux := buildHTTPMux(config, devicesApi, ai.HTTPAuth, logger)
+	mux := buildHTTPMux(config, downloadRouter, ai.HTTPAuth, logger)
 	setupAuditLog(ctx, config, mux, rootNode, ai.AuditSetup, logger)
 	httpServer := buildHTTPServer(config, pi, grpcServer, mux)
 
@@ -193,6 +196,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		Mux:              mux,
 		GRPC:             grpcServer,
 		HTTP:             httpServer,
+		DownloadRouter:   downloadRouter,
 		ClientTLSConfig:  pi.GRPCClient,
 		ManagerConn:      manager,
 	}
@@ -469,38 +473,42 @@ func buildGRPCServer(rootNode *node.Node, nodeRouter *router.Router, pi pkiInfo,
 	return grpcServer, reflectionServer
 }
 
-func buildDevicesAPI(config sysconf.Config, rootNode *node.Node, nodeRouter *router.Router, logger *zap.Logger) *devices.Server {
-	var devicesApiOpts []devices.Option
+// where download router is mounted
+const downloadPathPrefix = "/download"
+
+// buildDownloadRouter constructs the shared signed-URL router used by every
+// subsystem that issues capability-style download URLs (devices CSV exports,
+// audit log exports, system log exports). All such subsystems register handlers
+// on this single router and share its HMAC key and URL prefix.
+func buildDownloadRouter(config sysconf.Config, logger *zap.Logger) (*download.Router, error) {
+	downloadBaseURL := downloadPathPrefix
 	if hostPort, err := config.ExternalHTTPEndpoint(); err == nil {
-		devicesApiOpts = append(devicesApiOpts, devices.WithDownloadUrlBase(url.URL{
-			Scheme: "https",
-			Host:   hostPort,
-			Path:   "/dl/devices",
-		}))
+		downloadBaseURL = "https://" + hostPort + downloadPathPrefix
 	} else {
 		logger.Error("failed to determine external http endpoint - download URLs unavailable", zap.Error(err))
 	}
-
-	if config.Devices != nil && config.Devices.DownloadHMACKeyFile != "" {
-		hmacKey, err := os.ReadFile(config.Devices.DownloadHMACKeyFile)
-		if err != nil {
-			logger.Warn("failed to read download HMAC key file, using random HMAC key generator", zap.Error(err))
-		} else {
-			hmacKey = bytes.TrimSpace(hmacKey)
-			devicesApiOpts = append(devicesApiOpts, devices.WithHMACKeyGen(func() ([]byte, error) {
-				return hmacKey, nil
-			}))
-		}
+	downloadKey, err := config.ResolveDownloadHMACKey(logger)
+	if err != nil {
+		return nil, err
 	}
+	return download.NewRouter(
+		download.NewHMACSigner(downloadKey),
+		download.WithBaseURL(downloadBaseURL),
+		download.WithTTL(time.Hour),
+	), nil
+}
 
-	devicesApi := devices.NewServer(rootNode, devicesApiOpts...)
+func buildDevicesAPI(rootNode *node.Node, nodeRouter *router.Router, downloadRouter *download.Router) *devices.Server {
+	devicesApi := devices.NewServer(rootNode, devices.WithURLGenerator(downloadRouter))
 	devicesApi.Register(nodeRouter)
+	downloadRouter.Handle(devices.DownloadType, devicesApi)
 	return devicesApi
 }
 
-func buildHTTPMux(config sysconf.Config, devicesApi *devices.Server, httpAuth func(http.Handler) http.Handler, logger *zap.Logger) *http.ServeMux {
+func buildHTTPMux(config sysconf.Config, downloadRouter *download.Router, httpAuth func(http.Handler) http.Handler, logger *zap.Logger) *http.ServeMux {
 	mux := http.NewServeMux()
-	devicesApi.RegisterHTTPMux(mux)
+	// Shared download endpoint. Handlers compress their own responses when appropriate.
+	mux.Handle(downloadPathPrefix+"/", downloadRouter)
 
 	for _, site := range config.StaticHosting {
 		handler := http2.NewStaticHandler(site.FilePath)
@@ -648,9 +656,10 @@ type Controller struct {
 
 	ReflectionServer *reflectionapi.Server
 
-	Mux  *http.ServeMux
-	GRPC *grpc.Server
-	HTTP *http.Server
+	Mux            *http.ServeMux
+	GRPC           *grpc.Server
+	HTTP           *http.Server
+	DownloadRouter *download.Router
 
 	PrivateKey      pki.PrivateKey
 	ClientTLSConfig *tls.Config

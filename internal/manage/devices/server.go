@@ -4,7 +4,6 @@ package devices
 
 import (
 	"context"
-	"net/url"
 	"sort"
 	"time"
 
@@ -19,6 +18,17 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/resources"
 )
 
+// DownloadType is the type string callers use when registering this server's
+// HandleDownload against a download.Router. It is also passed in every URL
+// generated through the URLGenerator.
+const DownloadType = "devices-csv"
+
+// URLGenerator issues capability URLs for downloads. *download.Router from
+// the internal/download package satisfies this interface.
+type URLGenerator interface {
+	GenerateURL(typ string, payload []byte) (url string, expiresAt time.Time, err error)
+}
+
 type Server struct {
 	devicespb.UnimplementedDevicesApiServer
 
@@ -28,13 +38,8 @@ type Server struct {
 	m   Model
 	now func() time.Time
 
-	downloadUrlBase      url.URL // defaults to /dl/devices
-	downloadTokenWriter  DownloadTokenWriter
-	downloadTokenReader  DownloadTokenReader
-	downloadKey          func() ([]byte, error) // initialise using WithHMACKeyGen if keys need to persist between nodes across the SmartCore cohort
-	downloadExpiry       time.Duration          // defaults to 1 hour
-	downloadExpiryLeeway time.Duration          // defaults to 1 minute
-	downloadPageTimeout  time.Duration          // defaults to 10 seconds, applies to get and history cursor calls
+	urlGenerator        URLGenerator  // set via WithURLGenerator; if nil, GetDownloadDevicesUrl is unavailable
+	downloadPageTimeout time.Duration // defaults to 10 seconds, applies to get and history cursor calls
 }
 
 // Collection contains a list of devices.
@@ -51,18 +56,26 @@ type Model interface {
 
 func NewServer(m Model, opts ...Option) *Server {
 	s := &Server{
-		m:                    m,
-		now:                  time.Now,
-		downloadUrlBase:      url.URL{Path: "/dl/devices"},
-		downloadExpiry:       time.Hour,
-		downloadExpiryLeeway: time.Minute,
-		downloadKey:          newHMACKeyGen(64),
-		downloadPageTimeout:  10 * time.Second,
+		m:                   m,
+		now:                 time.Now,
+		downloadPageTimeout: 10 * time.Second,
 	}
 	for _, opt := range opts {
 		opt(s)
 	}
 	return s
+}
+
+// WithURLGenerator enables download URL generation by supplying a
+// URLGenerator (typically a *download.Router). The caller is responsible for
+// registering Server.HandleDownload against the underlying router under
+// DownloadType, so that URLs issued by the Server can be served.
+// If this option is not supplied, GetDownloadDevicesUrl returns
+// codes.Unavailable.
+func WithURLGenerator(g URLGenerator) Option {
+	return func(s *Server) {
+		s.urlGenerator = g
+	}
 }
 
 func (s *Server) Register(server grpc.ServiceRegistrar) {

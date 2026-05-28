@@ -2,13 +2,14 @@ package devices
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/csv"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -19,6 +20,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/internal/download"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
@@ -28,6 +30,35 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
+
+// newDownloadRouter builds a download.Router with a fresh random key for use
+// in tests. The base URL is a path-only "/download" so generated URLs are
+// root-relative, which httptest accepts directly.
+func newDownloadRouter(t *testing.T) *download.Router {
+	t.Helper()
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		t.Fatal(err)
+	}
+	return download.NewRouter(
+		download.NewHMACSigner(key),
+		download.WithBaseURL("/download"),
+		download.WithTTL(time.Hour),
+	)
+}
+
+// newDownloadedServer builds a Server with a fresh download.Router fully wired
+// up: the Server generates URLs through it, and the Server itself is registered
+// against it under DownloadType. Returns both so tests can call Router.ServeHTTP
+// directly.
+func newDownloadedServer(t *testing.T, m Model, opts ...Option) (*Server, *download.Router) {
+	t.Helper()
+	rt := newDownloadRouter(t)
+	opts = append(opts, WithURLGenerator(rt))
+	s := NewServer(m, opts...)
+	rt.Handle(DownloadType, s)
+	return s, rt
+}
 
 func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 	now := time.Unix(0, 0)
@@ -56,12 +87,7 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "02"}}),
 	)
 
-	s := NewServer(n,
-		WithDownloadUrlBase(url.URL{Scheme: "https", Host: "example.com", Path: "/dl/devices"}),
-		WithNow(func() time.Time {
-			return now
-		}),
-	)
+	s, rt := newDownloadedServer(t, n, WithNow(func() time.Time { return now }))
 
 	devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{
 		Query: &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
@@ -74,7 +100,7 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 
 	req := httptest.NewRequest("GET", devicesUrl.Url, nil)
 	rec := httptest.NewRecorder()
-	s.DownloadDevicesHTTPHandler(rec, req)
+	rt.ServeHTTP(rec, req)
 
 	res := rec.Result()
 	if res.StatusCode != 200 {
@@ -93,49 +119,47 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 
 func TestServer_DownloadDevicesHTTPHandler_validation(t *testing.T) {
 	t.Run("expired", func(t *testing.T) {
-		now := time.Unix(0, 0)
-		s := NewServer(
-			node.New("test"),
-			WithNow(func() time.Time { return now }),
-		)
+		synctest.Test(t, func(t *testing.T) {
+			rt := newDownloadRouter(t)
+			s := NewServer(node.New("test"), WithURLGenerator(rt))
 
-		devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{})
-		if err != nil {
-			t.Fatal(err)
-		}
-		now = now.Add(s.downloadExpiry + s.downloadExpiryLeeway + time.Second)
+			devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{})
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		req := httptest.NewRequest("GET", devicesUrl.Url, nil)
-		rec := httptest.NewRecorder()
-		s.DownloadDevicesHTTPHandler(rec, req)
+			// Cross the TTL boundary.
+			time.Sleep(time.Hour + time.Minute)
 
-		res := rec.Result()
-		if res.StatusCode != http.StatusUnauthorized {
-			t.Fatalf("HTTP status code: expected %d, got %d", http.StatusUnauthorized, res.StatusCode)
-		}
+			req := httptest.NewRequest("GET", devicesUrl.Url, nil)
+			rec := httptest.NewRecorder()
+			rt.ServeHTTP(rec, req)
+
+			res := rec.Result()
+			if res.StatusCode != http.StatusUnauthorized {
+				t.Fatalf("HTTP status code: expected %d, got %d", http.StatusUnauthorized, res.StatusCode)
+			}
+		})
 	})
 
 	t.Run("no token", func(t *testing.T) {
-		s := NewServer(node.New("test"))
-		req := httptest.NewRequest("GET", "/dl/devices", nil)
+		rt := newDownloadRouter(t)
+		// Path matches the mount prefix but has no token segment after it.
+		req := httptest.NewRequest("GET", "/download/", nil)
 		rec := httptest.NewRecorder()
-		s.DownloadDevicesHTTPHandler(rec, req)
+		rt.ServeHTTP(rec, req)
 
 		res := rec.Result()
-		if res.StatusCode != http.StatusUnauthorized {
-			t.Fatalf("HTTP status code: expected %d, got %d", http.StatusUnauthorized, res.StatusCode)
+		if res.StatusCode != http.StatusNotFound {
+			t.Fatalf("HTTP status code: expected %d, got %d", http.StatusNotFound, res.StatusCode)
 		}
 	})
 
 	t.Run("invalid token", func(t *testing.T) {
-		s := NewServer(node.New("test"))
-		u := s.downloadUrlBase // copy
-		if err := writeDownloadToken(&u, "invalid"); err != nil {
-			t.Fatal(err)
-		}
-		req := httptest.NewRequest("GET", u.String(), nil)
+		rt := newDownloadRouter(t)
+		req := httptest.NewRequest("GET", "/download/not-a-valid-token", nil)
 		rec := httptest.NewRecorder()
-		s.DownloadDevicesHTTPHandler(rec, req)
+		rt.ServeHTTP(rec, req)
 
 		res := rec.Result()
 		if res.StatusCode != http.StatusUnauthorized {
@@ -144,19 +168,33 @@ func TestServer_DownloadDevicesHTTPHandler_validation(t *testing.T) {
 	})
 
 	t.Run("change of key", func(t *testing.T) {
-		s := NewServer(node.New("test"))
-		devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{})
+		// Two independent Routers means two independent random HMAC keys.
+		signRouter := newDownloadRouter(t)
+		verifyRouter := newDownloadRouter(t)
+		signer := NewServer(node.New("test"), WithURLGenerator(signRouter))
+
+		devicesUrl, err := signer.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{})
 		if err != nil {
 			t.Fatal(err)
 		}
-		s.downloadKey = newHMACKeyGen(64) // force a new key
 		req := httptest.NewRequest("GET", devicesUrl.Url, nil)
 		rec := httptest.NewRecorder()
-		s.DownloadDevicesHTTPHandler(rec, req)
+		verifyRouter.ServeHTTP(rec, req)
 
 		res := rec.Result()
 		if res.StatusCode != http.StatusUnauthorized {
 			t.Fatalf("HTTP status code: expected %d, got %d", http.StatusUnauthorized, res.StatusCode)
+		}
+	})
+
+	t.Run("downloads disabled when no router", func(t *testing.T) {
+		s := NewServer(node.New("test"))
+		_, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{})
+		if err == nil {
+			t.Fatal("expected error from GetDownloadDevicesUrl, got nil")
+		}
+		if got := status.Code(err); got != codes.Unavailable {
+			t.Fatalf("expected codes.Unavailable, got %s: %v", got, err)
 		}
 	})
 }
@@ -263,7 +301,9 @@ func TestServer_DownloadDevicesHTTPHandler_history(t *testing.T) {
 		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "01"}}),
 	)
 
-	s := NewServer(n, WithDownloadUrlBase(url.URL{Path: "/dl/devices"}))
+	dr := newDownloadRouter(t)
+	s := NewServer(n, WithURLGenerator(dr))
+	dr.Handle(DownloadType, s)
 
 	devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{
 		History: &timepb.Period{
@@ -277,7 +317,7 @@ func TestServer_DownloadDevicesHTTPHandler_history(t *testing.T) {
 
 	req := httptest.NewRequest("GET", devicesUrl.Url, nil)
 	rec := httptest.NewRecorder()
-	s.DownloadDevicesHTTPHandler(rec, req)
+	dr.ServeHTTP(rec, req)
 
 	res := rec.Result()
 	if res.StatusCode != 200 {
@@ -324,10 +364,10 @@ func (s *stubMeterHistory) ListMeterReadingHistory(_ context.Context, _ *meterpb
 	return &meterpb.ListMeterReadingHistoryResponse{MeterReadingRecords: s.records}, nil
 }
 
-// TestServer_DownloadDevicesHTTPHandler_mux exercises Server.RegisterHTTPMux:
-// the handler is registered with an http.ServeMux at the configured download
-// path, served via httptest, and reached over HTTP at the URL returned by
-// GetDownloadDevicesUrl. Verifies the mux mount-path wiring end-to-end.
+// TestServer_DownloadDevicesHTTPHandler_mux mounts the shared download.Router
+// on an http.ServeMux at "/download/", brings it up via httptest, and fetches
+// the URL returned by GetDownloadDevicesUrl over real HTTP. Exercises the
+// mount-path wiring end-to-end.
 func TestServer_DownloadDevicesHTTPHandler_mux(t *testing.T) {
 	n := node.New("test")
 	meterDevice := meterpb.NewModel()
@@ -338,10 +378,12 @@ func TestServer_DownloadDevicesHTTPHandler_mux(t *testing.T) {
 		node.HasMetadata(&metadatapb.Metadata{}),
 	)
 
-	s := NewServer(n, WithDownloadUrlBase(url.URL{Path: "/dl/devices"}))
+	dr := newDownloadRouter(t)
+	s := NewServer(n, WithURLGenerator(dr))
+	dr.Handle(DownloadType, s)
 
 	mux := http.NewServeMux()
-	s.RegisterHTTPMux(mux)
+	mux.Handle("/download/", dr)
 
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
@@ -378,7 +420,9 @@ func TestServer_DownloadDevicesHTTPHandler_traitGetError(t *testing.T) {
 		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "07"}}),
 	)
 
-	s := NewServer(n, WithDownloadUrlBase(url.URL{Path: "/dl/devices"}))
+	dr := newDownloadRouter(t)
+	s := NewServer(n, WithURLGenerator(dr))
+	dr.Handle(DownloadType, s)
 
 	devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{})
 	if err != nil {
@@ -387,7 +431,7 @@ func TestServer_DownloadDevicesHTTPHandler_traitGetError(t *testing.T) {
 
 	req := httptest.NewRequest("GET", devicesUrl.Url, nil)
 	rec := httptest.NewRecorder()
-	s.DownloadDevicesHTTPHandler(rec, req)
+	dr.ServeHTTP(rec, req)
 
 	res := rec.Result()
 	if res.StatusCode != 200 {
