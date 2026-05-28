@@ -87,7 +87,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	client := NewClient(opcClient, d.logger, cfg.Conn.SubscriptionInterval.Duration, cfg.Conn.ClientId)
 
-	a.Announce(cfg.Name, node.HasMetadata(cfg.Meta), node.HasDeviceType(metadatapb.Metadata_SERVICE))
+	a.Announce(cfg.Name, node.HasMetadata(cfg.Meta))
 
 	grp, ctx := errgroup.WithContext(ctx)
 	for _, dev := range cfg.Devices {

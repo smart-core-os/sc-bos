@@ -94,7 +94,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer.Announce(cfg.ScNamePrefix,
 		node.HasServer(securityeventpb.RegisterSecurityEventApiServer, securityeventpb.SecurityEventApiServer(sc)),
 		node.HasTrait(securityeventpb.TraitName),
-		node.HasDeviceType(metadatapb.Metadata_SERVICE),
+		node.HasDeviceType(metadatapb.Metadata_VIRTUAL),
 	)
 	grp.Go(func() error {
 		return sc.run(ctx, cfg.RefreshAlarms)
