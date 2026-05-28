@@ -62,6 +62,6 @@ This setup gives you a complete, working environment with realistic mock data fo
 
 If you need to connect to a different local area controller, create a `.env.local` file in this directory with:
 ```properties
-VITE_GRPC_ENDPOINT=https://localhost:23557
+VITE_GRPC_ENDPOINT=https://localhost:8443
 ```
 
