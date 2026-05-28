@@ -11,6 +11,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
@@ -114,4 +115,10 @@ func removePointAlarm(code string, fc *healthpb.FaultCheck) {
 			Code: code,
 		},
 	})
+}
+
+// PollTaskProvider is implemented by traits that expose their background poll task,
+// allowing the driver to attach keepalive behaviour independently of client subscriptions.
+type PollTaskProvider interface {
+	PollTask() *task.Intermittent
 }

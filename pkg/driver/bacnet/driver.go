@@ -256,6 +256,9 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		announcer := node.AnnounceFeatures(rootAnnouncer, node.HasDeviceType(metadatapb.Metadata_DEVICE), node.HasMetadata(trait.Metadata))
 		impl.AnnounceSelf(announcer)
+		if p, ok := impl.(merge.PollTaskProvider); ok {
+			p.PollTask().IdleKeepAlive(ctx, trait.PollKeepAliveDuration(), time.Minute)
+		}
 
 		d.checks = append(d.checks, faultCheck)
 	}
@@ -308,6 +311,10 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 		}
 
 		return fmt.Errorf("device comm handshake: %w", ctxerr.Cause(ctx, err))
+	}
+
+	if deviceHealth != nil {
+		deviceHealth.MarkRunning()
 	}
 
 	// For WhoIs-discovered devices the controller IP is only known after findDevice succeeds.

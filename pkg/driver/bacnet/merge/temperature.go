@@ -153,3 +153,5 @@ func (t *temperature) pollPeer(ctx context.Context) (*temperaturepb.Temperature,
 	}
 	return t.model.UpdateTemperature(data)
 }
+
+func (t *temperature) PollTask() *task.Intermittent { return t.pollTask }
