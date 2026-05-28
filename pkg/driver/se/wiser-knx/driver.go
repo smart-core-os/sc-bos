@@ -10,6 +10,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -61,9 +62,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg Config) error {
 	d.client = NewInsecureClient(cfg.Host, cfg.Username, pass)
 
 	for _, dev := range cfg.Devices {
-		if dev.Metadata != nil {
-			announcer.Announce(dev.Name, node.HasMetadata(dev.Metadata))
-		}
+		announcer.Announce(dev.Name, node.HasDeviceType(metadatapb.Metadata_DEVICE), node.HasMetadata(dev.Metadata))
 
 		if dev.Address == "" && len(dev.Addresses) == 0 {
 			return fmt.Errorf("address or addresses is required")

@@ -9,6 +9,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/shelly/trv/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -50,6 +51,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		announcer.Announce(device.Name,
 			node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(trv.airTemperatureServer)),
 			node.HasTrait(trait.AirTemperature),
+			node.HasDeviceType(metadatapb.Metadata_DEVICE),
 		)
 	}
 

@@ -12,6 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -93,6 +94,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	announcer.Announce(cfg.ScNamePrefix,
 		node.HasServer(securityeventpb.RegisterSecurityEventApiServer, securityeventpb.SecurityEventApiServer(sc)),
 		node.HasTrait(securityeventpb.TraitName),
+		node.HasDeviceType(metadatapb.Metadata_VIRTUAL),
 	)
 	grp.Go(func() error {
 		return sc.run(ctx, cfg.RefreshAlarms)
@@ -103,6 +105,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		announcer.Announce(path.Join(cfg.ScNamePrefix, "occupancy"),
 			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancyCtrl)),
 			node.HasTrait(trait.OccupancySensor),
+			node.HasDeviceType(metadatapb.Metadata_VIRTUAL),
 		)
 		grp.Go(func() error {
 			if err := occupancyCtrl.run(ctx); err != nil {
