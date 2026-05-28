@@ -51,6 +51,11 @@ const props = defineProps({
     type: String,
     default: 'week'
   },
+  // 'bar' | 'line' — primary dataset chart type
+  chartType: {
+    type: String,
+    default: 'bar'
+  },
 });
 
 const _start = useLocalProp(toRef(props, 'start'));
@@ -178,15 +183,26 @@ const chartData = computed(() => {
     });
   }
 
-  // Add current dataset as blue bars
+  // Add current dataset as bar or line depending on chartType
+  const isLine = props.chartType === 'line';
   datasets.push({
-    type: 'bar',
+    type: isLine ? 'line' : 'bar',
     label: props.showBaseline ? 'Current' : 'Total People Count',
     data: totalOccupancyCounts.value.map(data => ({x: data.x, y: data.y})),
     dates: totalOccupancyCounts.value.map(data => data.x),
-    backgroundColor: props.showBaseline ? '#2196F399' : undefined,
-    borderColor: props.showBaseline ? '#2196F3' : undefined,
-    borderWidth: props.showBaseline ? 1 : undefined,
+    ...(isLine ? {
+      borderColor: '#2196F3',
+      backgroundColor: 'rgba(33,150,243,0.15)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderWidth: 2,
+    } : {
+      backgroundColor: props.showBaseline ? '#2196F399' : undefined,
+      borderColor: props.showBaseline ? '#2196F3' : undefined,
+      borderWidth: props.showBaseline ? 1 : undefined,
+    }),
   });
 
   return {
