@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package smartcore.bos.internal.download;
+
+option go_package = "github.com/smart-core-os/sc-bos/internal/download";
+
+import "google/protobuf/timestamp.proto";
+
+// Envelope is the signed portion of a download token. The signature is
+// computed over the marshalled bytes of this message and concatenated to the
+// URL with a "." delimiter; see package internal/download.
+message Envelope {
+  // type identifies which registered handler should serve the download.
+  string type = 1;
+  // payload is opaque to the download package; typically a marshalled proto
+  // chosen by the handler implementation.
+  bytes payload = 2;
+  // expiry is the absolute time after which the token is rejected.
+  google.protobuf.Timestamp expiry = 3;
+}
