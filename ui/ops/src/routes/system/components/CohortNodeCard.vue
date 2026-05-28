@@ -274,6 +274,15 @@
           </div>
         </div>
       </template>
+
+      <!-- Data Retention -->
+      <with-data-retention :name="node.name + '/stores/history'" v-slot="{ resource: historyRetention }">
+        <template v-if="!historyRetention.streamError && historyRetention.value">
+          <v-divider class="my-3"/>
+          <div class="resource-section-label">History Store</div>
+          <retention-rows :retention="historyRetention.value" item-label="record"/>
+        </template>
+      </with-data-retention>
     </v-card-text>
   </v-card>
 
@@ -331,6 +340,8 @@ import {CloudConnection} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/
 import {computed, onScopeDispose, reactive, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
 import LinkCloudDialog from './LinkCloudDialog.vue';
+import RetentionRows from './RetentionRows.vue';
+import WithDataRetention from '@/traits/dataRetention/WithDataRetention.vue';
 
 const props = defineProps({
   node: {

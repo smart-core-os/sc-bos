@@ -1,6 +1,5 @@
 import * as jspb from 'google-protobuf'
 
-import * as google_protobuf_duration_pb from 'google-protobuf/google/protobuf/duration_pb'; // proto import: "google/protobuf/duration.proto"
 import * as google_protobuf_field_mask_pb from 'google-protobuf/google/protobuf/field_mask_pb'; // proto import: "google/protobuf/field_mask.proto"
 import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
 
@@ -42,11 +41,6 @@ export class DataRetentionBytes extends jspb.Message {
   hasCapacity(): boolean;
   clearCapacity(): DataRetentionBytes;
 
-  getUtilization(): number;
-  setUtilization(value: number): DataRetentionBytes;
-  hasUtilization(): boolean;
-  clearUtilization(): DataRetentionBytes;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DataRetentionBytes.AsObject;
   static toObject(includeInstance: boolean, msg: DataRetentionBytes): DataRetentionBytes.AsObject;
@@ -59,7 +53,6 @@ export namespace DataRetentionBytes {
   export type AsObject = {
     used?: number;
     capacity?: number;
-    utilization?: number;
   };
 
   export enum UsedCase {
@@ -70,11 +63,6 @@ export namespace DataRetentionBytes {
   export enum CapacityCase {
     _CAPACITY_NOT_SET = 0,
     CAPACITY = 2,
-  }
-
-  export enum UtilizationCase {
-    _UTILIZATION_NOT_SET = 0,
-    UTILIZATION = 3,
   }
 }
 
@@ -89,11 +77,6 @@ export class DataRetentionItems extends jspb.Message {
   hasCapacity(): boolean;
   clearCapacity(): DataRetentionItems;
 
-  getUtilization(): number;
-  setUtilization(value: number): DataRetentionItems;
-  hasUtilization(): boolean;
-  clearUtilization(): DataRetentionItems;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DataRetentionItems.AsObject;
   static toObject(includeInstance: boolean, msg: DataRetentionItems): DataRetentionItems.AsObject;
@@ -106,7 +89,6 @@ export namespace DataRetentionItems {
   export type AsObject = {
     used?: number;
     capacity?: number;
-    utilization?: number;
   };
 
   export enum UsedCase {
@@ -118,25 +100,14 @@ export namespace DataRetentionItems {
     _CAPACITY_NOT_SET = 0,
     CAPACITY = 2,
   }
-
-  export enum UtilizationCase {
-    _UTILIZATION_NOT_SET = 0,
-    UTILIZATION = 3,
-  }
 }
 
 export class DataRetentionSupport extends jspb.Message {
-  getCanClear(): boolean;
-  setCanClear(value: boolean): DataRetentionSupport;
-
-  getCanDeleteOld(): boolean;
-  setCanDeleteOld(value: boolean): DataRetentionSupport;
+  getCanPurge(): boolean;
+  setCanPurge(value: boolean): DataRetentionSupport;
 
   getCanCompact(): boolean;
   setCanCompact(value: boolean): DataRetentionSupport;
-
-  getCanSpringClean(): boolean;
-  setCanSpringClean(value: boolean): DataRetentionSupport;
 
   getItemName(): string;
   setItemName(value: string): DataRetentionSupport;
@@ -151,10 +122,8 @@ export class DataRetentionSupport extends jspb.Message {
 
 export namespace DataRetentionSupport {
   export type AsObject = {
-    canClear: boolean;
-    canDeleteOld: boolean;
+    canPurge: boolean;
     canCompact: boolean;
-    canSpringClean: boolean;
     itemName: string;
   };
 }
@@ -262,111 +231,58 @@ export namespace PullDataRetentionResponse {
 
 }
 
-export class ClearDataRetentionRequest extends jspb.Message {
+export class PurgeDataRetentionRequest extends jspb.Message {
   getName(): string;
-  setName(value: string): ClearDataRetentionRequest;
+  setName(value: string): PurgeDataRetentionRequest;
+
+  getBefore(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setBefore(value?: google_protobuf_timestamp_pb.Timestamp): PurgeDataRetentionRequest;
+  hasBefore(): boolean;
+  clearBefore(): PurgeDataRetentionRequest;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ClearDataRetentionRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: ClearDataRetentionRequest): ClearDataRetentionRequest.AsObject;
-  static serializeBinaryToWriter(message: ClearDataRetentionRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ClearDataRetentionRequest;
-  static deserializeBinaryFromReader(message: ClearDataRetentionRequest, reader: jspb.BinaryReader): ClearDataRetentionRequest;
+  toObject(includeInstance?: boolean): PurgeDataRetentionRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: PurgeDataRetentionRequest): PurgeDataRetentionRequest.AsObject;
+  static serializeBinaryToWriter(message: PurgeDataRetentionRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PurgeDataRetentionRequest;
+  static deserializeBinaryFromReader(message: PurgeDataRetentionRequest, reader: jspb.BinaryReader): PurgeDataRetentionRequest;
 }
 
-export namespace ClearDataRetentionRequest {
+export namespace PurgeDataRetentionRequest {
   export type AsObject = {
     name: string;
-  };
-}
-
-export class ClearDataRetentionResponse extends jspb.Message {
-  getFreedItemCount(): number;
-  setFreedItemCount(value: number): ClearDataRetentionResponse;
-  hasFreedItemCount(): boolean;
-  clearFreedItemCount(): ClearDataRetentionResponse;
-
-  getFreedByteCount(): number;
-  setFreedByteCount(value: number): ClearDataRetentionResponse;
-  hasFreedByteCount(): boolean;
-  clearFreedByteCount(): ClearDataRetentionResponse;
-
-  getMessage(): string;
-  setMessage(value: string): ClearDataRetentionResponse;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ClearDataRetentionResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: ClearDataRetentionResponse): ClearDataRetentionResponse.AsObject;
-  static serializeBinaryToWriter(message: ClearDataRetentionResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ClearDataRetentionResponse;
-  static deserializeBinaryFromReader(message: ClearDataRetentionResponse, reader: jspb.BinaryReader): ClearDataRetentionResponse;
-}
-
-export namespace ClearDataRetentionResponse {
-  export type AsObject = {
-    freedItemCount?: number;
-    freedByteCount?: number;
-    message: string;
+    before?: google_protobuf_timestamp_pb.Timestamp.AsObject;
   };
 
-  export enum FreedItemCountCase {
-    _FREED_ITEM_COUNT_NOT_SET = 0,
-    FREED_ITEM_COUNT = 1,
-  }
-
-  export enum FreedByteCountCase {
-    _FREED_BYTE_COUNT_NOT_SET = 0,
-    FREED_BYTE_COUNT = 2,
+  export enum BeforeCase {
+    _BEFORE_NOT_SET = 0,
+    BEFORE = 2,
   }
 }
 
-export class DeleteOldDataRetentionRequest extends jspb.Message {
-  getName(): string;
-  setName(value: string): DeleteOldDataRetentionRequest;
-
-  getRetentionPeriod(): google_protobuf_duration_pb.Duration | undefined;
-  setRetentionPeriod(value?: google_protobuf_duration_pb.Duration): DeleteOldDataRetentionRequest;
-  hasRetentionPeriod(): boolean;
-  clearRetentionPeriod(): DeleteOldDataRetentionRequest;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): DeleteOldDataRetentionRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: DeleteOldDataRetentionRequest): DeleteOldDataRetentionRequest.AsObject;
-  static serializeBinaryToWriter(message: DeleteOldDataRetentionRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): DeleteOldDataRetentionRequest;
-  static deserializeBinaryFromReader(message: DeleteOldDataRetentionRequest, reader: jspb.BinaryReader): DeleteOldDataRetentionRequest;
-}
-
-export namespace DeleteOldDataRetentionRequest {
-  export type AsObject = {
-    name: string;
-    retentionPeriod?: google_protobuf_duration_pb.Duration.AsObject;
-  };
-}
-
-export class DeleteOldDataRetentionResponse extends jspb.Message {
+export class PurgeDataRetentionResponse extends jspb.Message {
   getFreedItemCount(): number;
-  setFreedItemCount(value: number): DeleteOldDataRetentionResponse;
+  setFreedItemCount(value: number): PurgeDataRetentionResponse;
   hasFreedItemCount(): boolean;
-  clearFreedItemCount(): DeleteOldDataRetentionResponse;
+  clearFreedItemCount(): PurgeDataRetentionResponse;
 
   getFreedByteCount(): number;
-  setFreedByteCount(value: number): DeleteOldDataRetentionResponse;
+  setFreedByteCount(value: number): PurgeDataRetentionResponse;
   hasFreedByteCount(): boolean;
-  clearFreedByteCount(): DeleteOldDataRetentionResponse;
+  clearFreedByteCount(): PurgeDataRetentionResponse;
 
   getMessage(): string;
-  setMessage(value: string): DeleteOldDataRetentionResponse;
+  setMessage(value: string): PurgeDataRetentionResponse;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): DeleteOldDataRetentionResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: DeleteOldDataRetentionResponse): DeleteOldDataRetentionResponse.AsObject;
-  static serializeBinaryToWriter(message: DeleteOldDataRetentionResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): DeleteOldDataRetentionResponse;
-  static deserializeBinaryFromReader(message: DeleteOldDataRetentionResponse, reader: jspb.BinaryReader): DeleteOldDataRetentionResponse;
+  toObject(includeInstance?: boolean): PurgeDataRetentionResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: PurgeDataRetentionResponse): PurgeDataRetentionResponse.AsObject;
+  static serializeBinaryToWriter(message: PurgeDataRetentionResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PurgeDataRetentionResponse;
+  static deserializeBinaryFromReader(message: PurgeDataRetentionResponse, reader: jspb.BinaryReader): PurgeDataRetentionResponse;
 }
 
-export namespace DeleteOldDataRetentionResponse {
+export namespace PurgeDataRetentionResponse {
   export type AsObject = {
     freedItemCount?: number;
     freedByteCount?: number;
@@ -428,75 +344,6 @@ export namespace CompactDataRetentionResponse {
   export enum FreedByteCountCase {
     _FREED_BYTE_COUNT_NOT_SET = 0,
     FREED_BYTE_COUNT = 1,
-  }
-}
-
-export class SpringCleanDataRetentionRequest extends jspb.Message {
-  getName(): string;
-  setName(value: string): SpringCleanDataRetentionRequest;
-
-  getRetentionPeriod(): google_protobuf_duration_pb.Duration | undefined;
-  setRetentionPeriod(value?: google_protobuf_duration_pb.Duration): SpringCleanDataRetentionRequest;
-  hasRetentionPeriod(): boolean;
-  clearRetentionPeriod(): SpringCleanDataRetentionRequest;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): SpringCleanDataRetentionRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: SpringCleanDataRetentionRequest): SpringCleanDataRetentionRequest.AsObject;
-  static serializeBinaryToWriter(message: SpringCleanDataRetentionRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): SpringCleanDataRetentionRequest;
-  static deserializeBinaryFromReader(message: SpringCleanDataRetentionRequest, reader: jspb.BinaryReader): SpringCleanDataRetentionRequest;
-}
-
-export namespace SpringCleanDataRetentionRequest {
-  export type AsObject = {
-    name: string;
-    retentionPeriod?: google_protobuf_duration_pb.Duration.AsObject;
-  };
-
-  export enum RetentionPeriodCase {
-    _RETENTION_PERIOD_NOT_SET = 0,
-    RETENTION_PERIOD = 2,
-  }
-}
-
-export class SpringCleanDataRetentionResponse extends jspb.Message {
-  getFreedItemCount(): number;
-  setFreedItemCount(value: number): SpringCleanDataRetentionResponse;
-  hasFreedItemCount(): boolean;
-  clearFreedItemCount(): SpringCleanDataRetentionResponse;
-
-  getFreedByteCount(): number;
-  setFreedByteCount(value: number): SpringCleanDataRetentionResponse;
-  hasFreedByteCount(): boolean;
-  clearFreedByteCount(): SpringCleanDataRetentionResponse;
-
-  getMessage(): string;
-  setMessage(value: string): SpringCleanDataRetentionResponse;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): SpringCleanDataRetentionResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: SpringCleanDataRetentionResponse): SpringCleanDataRetentionResponse.AsObject;
-  static serializeBinaryToWriter(message: SpringCleanDataRetentionResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): SpringCleanDataRetentionResponse;
-  static deserializeBinaryFromReader(message: SpringCleanDataRetentionResponse, reader: jspb.BinaryReader): SpringCleanDataRetentionResponse;
-}
-
-export namespace SpringCleanDataRetentionResponse {
-  export type AsObject = {
-    freedItemCount?: number;
-    freedByteCount?: number;
-    message: string;
-  };
-
-  export enum FreedItemCountCase {
-    _FREED_ITEM_COUNT_NOT_SET = 0,
-    FREED_ITEM_COUNT = 1,
-  }
-
-  export enum FreedByteCountCase {
-    _FREED_BYTE_COUNT_NOT_SET = 0,
-    FREED_BYTE_COUNT = 2,
   }
 }
 
