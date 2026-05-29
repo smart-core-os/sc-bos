@@ -187,7 +187,7 @@ const chartData = computed(() => {
   const isLine = props.chartType === 'line';
   datasets.push({
     type: isLine ? 'line' : 'bar',
-    label: props.showBaseline ? 'Current' : 'Total People Count',
+    label: props.showBaseline ? 'People' : 'Total People Count',
     data: totalOccupancyCounts.value.map(data => ({x: data.x, y: data.y})),
     dates: totalOccupancyCounts.value.map(data => data.x),
     ...(isLine ? {

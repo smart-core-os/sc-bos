@@ -43,9 +43,9 @@
     <div v-if="props.showBaseline" class="d-flex ga-8 justify-center pb-3 text-caption opacity-70">
       <span class="d-flex align-center ga-3">
         <span class="legend-dot" :style="{background: currentColor}"/>
-        Current
+        People
       </span>
-      <span class="d-flex align-center ga-3">
+      <span class="d-flex align-center ga-3" v-tooltip:top="priorPeriodTooltip" style="cursor: default">
         <span class="legend-line"/>
         Prior period
       </span>
@@ -127,6 +127,12 @@ const {summaryPct} = useOccupancyNormalized(
 );
 
 const currentColor = vColors.blue.base;
+
+const priorPeriodTooltip = computed(() => {
+  const labels = {day: 'yesterday', week: 'last week', month: 'last month'};
+  const label = labels[props.baselineShift] ?? 'the prior period';
+  return `Compared to ${label}`;
+});
 
 const onDownloadClick = async () => {
   if (!props.downloadEnterLeave) {
