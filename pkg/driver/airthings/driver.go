@@ -24,6 +24,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/statusmap"
@@ -86,7 +87,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		for _, device := range location.Devices {
 			n := device.Name
-			announcer.Announce(n, node.HasMetadata(device.Metadata))
+			announcer.Announce(n, node.HasMetadata(device.Metadata), node.HasDeviceType(metadatapb.Metadata_DEVICE))
 			status.UpdateProblem(n, &statuspb.StatusLog_Problem{
 				Level:       statuspb.StatusLog_NOMINAL,
 				Description: "Device configured successfully",

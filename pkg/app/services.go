@@ -112,6 +112,7 @@ func (c *Controller) startSystems() (*service.Map, error) {
 		Stores:           c.Stores,
 		Accounts:         c.Accounts,
 		HTTPMux:          c.Mux,
+		DownloadRouter:   c.DownloadRouter,
 		TokenValidators:  c.TokenValidators,
 		ReflectionServer: c.ReflectionServer,
 		GRPCCerts:        c.GRPCCerts,
@@ -122,6 +123,15 @@ func (c *Controller) startSystems() (*service.Map, error) {
 	}
 	if c.LogCapture != nil {
 		ctxServices.AddLogCore = c.LogCapture.Add
+	}
+	if c.rebootCh != nil {
+		rebootCh := c.rebootCh
+		ctxServices.RequestReboot = func() {
+			select {
+			case rebootCh <- "":
+			default:
+			}
+		}
 	}
 	m := service.NewMap(func(_, kind string) (service.Lifecycle, error) {
 		f, ok := c.SystemConfig.SystemFactories[kind]

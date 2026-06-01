@@ -1,43 +1,31 @@
-// Package logdownload provides shared utilities for serving rotating log files
-// over HTTP with short-lived signed download tokens.
-// It is used by both the log system plugin and the audit log subsystem.
+// Package logdownload provides shared utilities for serving log-style file
+// downloads over the internal/download signed-URL router.
+//
+// Consumers (pkg/system/log, internal/audit) register a FileDownloadHandler
+// on the shared router and mint URLs through GenerateFileDownloadURL. The
+// remaining exported helpers cover file resolution, content-type detection,
+// allowed-dir validation, and ring-buffer metadata refresh — all
+// log-specific concerns that fall outside the generic download router.
 package logdownload
 
 import (
 	"archive/zip"
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"mime"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/go-jose/go-jose/v4"
-	josejwt "github.com/go-jose/go-jose/v4/jwt"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 )
 
-// NewHMACKey generates a random 32-byte HMAC key for signing download tokens.
-func NewHMACKey() []byte {
-	key := make([]byte, 32)
-	if _, err := rand.Read(key); err != nil {
-		panic("logdownload: failed to generate HMAC key: " + err.Error())
-	}
-	return key
-}
-
 // LogAllowedDir returns the directory under which log files are expected,
-// derived from config. The result is used by ServeLogDownload to validate
-// paths embedded in download tokens before opening them.
+// derived from config. The result is used to validate paths embedded in
+// signed download tokens before opening them.
 func LogAllowedDir(logFilePath, logDir string) string {
 	if logDir != "" {
 		return filepath.Clean(logDir)
@@ -48,78 +36,40 @@ func LogAllowedDir(logFilePath, logDir string) string {
 	return ""
 }
 
-// GetDownloadLogURL generates a signed download URL for the log file(s) matching
-// glob / logDir. urlBase is prepended to downloadPath when forming absolute URLs.
-func GetDownloadLogURL(
-	req *logpb.GetDownloadLogUrlRequest,
-	glob, logDir, urlBase, downloadPath string,
-	key []byte,
-	ttl time.Duration,
-) (*logpb.GetDownloadLogUrlResponse, error) {
-	if req.IncludeRotated {
-		var files []string
-		if logDir != "" {
-			entries, err := os.ReadDir(logDir)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "read log dir: %v", err)
-			}
-			for _, e := range entries {
-				if !e.Type().IsRegular() {
-					continue
-				}
-				files = append(files, filepath.Join(logDir, e.Name()))
-			}
-		} else {
-			var err error
-			files, err = filepath.Glob(glob)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "glob log files: %v", err)
-			}
-		}
-		if len(files) == 0 {
-			return &logpb.GetDownloadLogUrlResponse{}, nil
-		}
-		tokenStr, err := signDownloadToken(downloadClaims{ZipFiles: files}, key, time.Now().Add(ttl))
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "sign token: %v", err)
-		}
-		u, err := buildDownloadURL(urlBase, downloadPath, tokenStr)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "build url: %v", err)
-		}
-		return &logpb.GetDownloadLogUrlResponse{Files: []*logpb.GetDownloadLogUrlResponse_LogFile{{
-			Url:         u,
-			Filename:    "logs.zip",
-			ContentType: "application/zip",
-		}}}, nil
-	}
-
+// ResolveLatestLogFile returns the lexically-last file matching glob.
+// Returns "" with no error when nothing matches. Lumberjack-style rotated files
+// have lexically-ordered timestamp suffixes so the last match is the most
+// recent file.
+func ResolveLatestLogFile(glob string) (string, error) {
 	files, err := filepath.Glob(glob)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "glob log files: %v", err)
+		return "", err
 	}
 	if len(files) == 0 {
-		return &logpb.GetDownloadLogUrlResponse{}, nil
+		return "", nil
 	}
-	fp := files[len(files)-1]
-	info, err := os.Stat(fp)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "stat log file: %v", err)
+	return files[len(files)-1], nil
+}
+
+// ResolveRotatedLogFiles returns the set of log files to bundle into a zip.
+// When logDir is set, lists all regular files in it; otherwise resolves glob.
+// Returns nil when no files are found.
+func ResolveRotatedLogFiles(glob, logDir string) ([]string, error) {
+	if logDir != "" {
+		entries, err := os.ReadDir(logDir)
+		if err != nil {
+			return nil, err
+		}
+		var files []string
+		for _, e := range entries {
+			if !e.Type().IsRegular() {
+				continue
+			}
+			files = append(files, filepath.Join(logDir, e.Name()))
+		}
+		return files, nil
 	}
-	tokenStr, err := signDownloadToken(downloadClaims{FilePath: fp}, key, time.Now().Add(ttl))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "sign token: %v", err)
-	}
-	u, err := buildDownloadURL(urlBase, downloadPath, tokenStr)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "build url: %v", err)
-	}
-	return &logpb.GetDownloadLogUrlResponse{Files: []*logpb.GetDownloadLogUrlResponse_LogFile{{
-		Url:         u,
-		Filename:    filepath.Base(fp),
-		SizeBytes:   info.Size(),
-		ContentType: DetectContentType(fp),
-	}}}, nil
+	return filepath.Glob(glob)
 }
 
 // RefreshMetadata scans the log files matching glob / logDir and updates the
@@ -167,36 +117,11 @@ func RefreshMetadata(model *logpb.Model, glob, logDir string, logger *zap.Logger
 	})
 }
 
-// ServeLogDownload is the HTTP handler for log file downloads.
-// It validates the signed JWT in the "dlt" query parameter and streams
-// the requested file or zip archive. key is the HMAC signing key;
-// allowedDir restricts which files may be served (empty = unrestricted).
-func ServeLogDownload(w http.ResponseWriter, r *http.Request, key []byte, allowedDir string) {
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.Header().Set("Cache-Control", "no-store")
-
-	tokenB64 := r.URL.Query().Get("dlt")
-	if tokenB64 == "" {
-		http.Error(w, "missing download token", http.StatusUnauthorized)
-		return
-	}
-	tokenStr, err := base64.RawURLEncoding.DecodeString(tokenB64)
-	if err != nil {
-		http.Error(w, "invalid download token", http.StatusUnauthorized)
-		return
-	}
-	claims, err := parseDownloadToken(string(tokenStr), key)
-	if err != nil {
-		http.Error(w, "invalid or expired download token", http.StatusUnauthorized)
-		return
-	}
-
-	if len(claims.ZipFiles) > 0 {
-		serveZipDownload(w, claims.ZipFiles, allowedDir)
-		return
-	}
-
-	fp := filepath.Clean(claims.FilePath)
+// ServeFile streams filePath as an HTTP download response, setting
+// Content-Type, Content-Disposition, and Content-Length. allowedDir restricts
+// which files may be served (empty disables the check).
+func ServeFile(w http.ResponseWriter, _ *http.Request, filePath, allowedDir string) {
+	fp := filepath.Clean(filePath)
 	if !isUnderDir(fp, allowedDir) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
@@ -220,89 +145,9 @@ func ServeLogDownload(w http.ResponseWriter, r *http.Request, key []byte, allowe
 	_, _ = io.Copy(w, f)
 }
 
-// DetectContentType returns the MIME type for the given filename based on its extension.
-func DetectContentType(fp string) string {
-	switch {
-	case strings.HasSuffix(fp, ".gz"):
-		return "application/gzip"
-	case strings.HasSuffix(fp, ".zst"):
-		return "application/zstd"
-	case strings.HasSuffix(fp, ".bz2"):
-		return "application/x-bzip2"
-	default:
-		ct := mime.TypeByExtension(filepath.Ext(fp))
-		if ct == "" {
-			return "text/plain"
-		}
-		return ct
-	}
-}
-
-// --------------------------------------------------------------------------
-// Internal helpers
-// --------------------------------------------------------------------------
-
-type downloadClaims struct {
-	FilePath string   `json:"fp,omitempty"`
-	ZipFiles []string `json:"zf,omitempty"`
-}
-
-type downloadJWTClaims struct {
-	josejwt.Claims
-	Body downloadClaims `json:"b"`
-}
-
-func signDownloadToken(body downloadClaims, key []byte, expiry time.Time) (string, error) {
-	signer, err := jose.NewSigner(
-		jose.SigningKey{Algorithm: jose.HS256, Key: key},
-		(&jose.SignerOptions{}).WithType("JWT"),
-	)
-	if err != nil {
-		return "", err
-	}
-	claims := downloadJWTClaims{
-		Claims: josejwt.Claims{Expiry: josejwt.NewNumericDate(expiry)},
-		Body:   body,
-	}
-	return josejwt.Signed(signer).Claims(claims).Serialize()
-}
-
-func parseDownloadToken(tokenStr string, key []byte) (*downloadClaims, error) {
-	tok, err := josejwt.ParseSigned(tokenStr, []jose.SignatureAlgorithm{jose.HS256})
-	if err != nil {
-		return nil, err
-	}
-	var claims downloadJWTClaims
-	if err := tok.Claims(key, &claims); err != nil {
-		return nil, err
-	}
-	if err := claims.ValidateWithLeeway(josejwt.Expected{Time: time.Now()}, time.Minute); err != nil {
-		return nil, err
-	}
-	return &claims.Body, nil
-}
-
-func buildDownloadURL(urlBase, downloadPath, tokenStr string) (string, error) {
-	base := urlBase
-	if base == "" {
-		base = downloadPath
-	}
-	u, err := url.Parse(base)
-	if err != nil {
-		return "", err
-	}
-	if !strings.HasPrefix(u.Path, "/") {
-		u.Path = downloadPath
-	} else if u.Path == "" {
-		u.Path = downloadPath
-	}
-	q := u.Query()
-	q.Set("dlt", base64.RawURLEncoding.EncodeToString([]byte(tokenStr)))
-	u.RawQuery = q.Encode()
-	return u.String(), nil
-}
-
-func serveZipDownload(w http.ResponseWriter, files []string, allowedDir string) {
+// ServeZip streams a zip archive containing files as the HTTP response. Each
+// file is filtered through allowedDir before inclusion.
+func ServeZip(w http.ResponseWriter, files []string, allowedDir string) {
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", `attachment; filename="logs.zip"`)
 
@@ -337,6 +182,24 @@ func serveZipDownload(w http.ResponseWriter, files []string, allowedDir string) 
 		}
 		_, _ = io.Copy(fw, f)
 		f.Close()
+	}
+}
+
+// DetectContentType returns the MIME type for the given filename based on its extension.
+func DetectContentType(fp string) string {
+	switch {
+	case strings.HasSuffix(fp, ".gz"):
+		return "application/gzip"
+	case strings.HasSuffix(fp, ".zst"):
+		return "application/zstd"
+	case strings.HasSuffix(fp, ".bz2"):
+		return "application/x-bzip2"
+	default:
+		ct := mime.TypeByExtension(filepath.Ext(fp))
+		if ct == "" {
+			return "text/plain"
+		}
+		return ct
 	}
 }
 

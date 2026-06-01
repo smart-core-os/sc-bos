@@ -35,6 +35,7 @@
       }
     },
     "tenants": {"storage": {"type": "postgres"}},
+    "boot": {},
     "resourceUse": {}
   },
   "auditLog": {

@@ -39,6 +39,16 @@ type Trait struct {
 	// Each trait can have its own health check configuration.
 	// If not configured, occupant and equipment impact will default to UNSPECIFIED.
 	Health Health `json:"health"`
+	// PollKeepAlive is the interval between background keep-alive polls when no listeners are active.
+	// Defaults to 5m.
+	PollKeepAlive *Duration `json:"pollKeepAlive,omitempty"`
+}
+
+func (t *Trait) PollKeepAliveDuration() time.Duration {
+	if t.PollKeepAlive != nil && t.PollKeepAlive.Duration != 0 {
+		return t.PollKeepAlive.Duration
+	}
+	return 5 * time.Minute
 }
 
 func (t *Trait) PollPeriodDuration() time.Duration {

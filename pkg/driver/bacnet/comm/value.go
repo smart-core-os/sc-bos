@@ -250,6 +250,11 @@ func IntValue(data any) (int64, error) {
 	switch v := data.(type) {
 	case error:
 		return 0, v
+	case bool:
+		if v {
+			return 1, nil
+		}
+		return 0, nil
 	case uint8:
 		return int64(v), nil
 	case uint16:

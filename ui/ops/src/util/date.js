@@ -5,6 +5,21 @@ export const HOUR = 60 * MINUTE;
 export const DAY = 24 * HOUR;
 
 /**
+ * Decomposes a duration in milliseconds into its constituent parts.
+ *
+ * @param {number} ms - duration in milliseconds
+ * @return {{days: number, hours: number, minutes: number, seconds: number, milliseconds: number}}
+ */
+export function decomposeDuration(ms) {
+  const days = Math.floor(ms / DAY);
+  const hours = Math.floor((ms % DAY) / HOUR);
+  const minutes = Math.floor((ms % HOUR) / MINUTE);
+  const seconds = Math.floor((ms % MINUTE) / SECOND);
+  const milliseconds = ms % SECOND;
+  return {days, hours, minutes, seconds, milliseconds};
+}
+
+/**
  * Compares two dates in ascending order.
  * Null values are compared after non-null values.
  *

@@ -141,3 +141,5 @@ func (e *energyStorage) pollPeer(ctx context.Context) (*energystoragepb.EnergyLe
 
 	return e.model.UpdateEnergyLevel(data)
 }
+
+func (e *energyStorage) PollTask() *task.Intermittent { return e.pollTask }

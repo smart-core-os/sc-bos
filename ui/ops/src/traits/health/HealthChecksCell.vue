@@ -15,7 +15,7 @@ const props = defineProps({
 });
 
 const totalCount = computed(() => props.modelValue?.length ?? 0);
-const abnormalCount = computed(() => props.modelValue?.filter(check => check.normality !== HealthCheck.Normality.NORMAL).length ?? 0);
+const abnormalCount = computed(() => props.modelValue?.filter(check => check.normality > HealthCheck.Normality.NORMAL).length ?? 0);
 const hasChecks = computed(() => totalCount.value > 0);
 const hasAbnormal = computed(() => abnormalCount.value > 0);
 

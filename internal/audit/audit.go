@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -16,9 +15,14 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
+	"github.com/smart-core-os/sc-bos/internal/download"
 	"github.com/smart-core-os/sc-bos/internal/logdownload"
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 )
+
+// DownloadType identifies audit-log download URLs on the shared download.Router.
+// Stable wire-format identifier; changing it invalidates outstanding URLs.
+const DownloadType = "audit-log"
 
 // Setup holds the initialised audit log subsystem. Create with NewSetup;
 // always call Close on shutdown (after calling Logger.Sync if non-nil).
@@ -29,9 +33,9 @@ type Setup struct {
 	// Model holds the in-memory ring buffer of audit entries. Always non-nil.
 	Model *logpb.Model
 
-	downloadKey []byte
-	filename    string
-	closer      io.Closer
+	filename   string
+	allowedDir string
+	closer     io.Closer
 }
 
 // NewSetup creates the audit log subsystem.
@@ -53,8 +57,8 @@ func NewSetup(filename string, maxSizeMB, maxAgeDays, maxBackups int, compress b
 	}
 	a.Logger = logger
 	a.closer = closer
-	a.downloadKey = logdownload.NewHMACKey()
 	a.filename = filename
+	a.allowedDir = filepath.Dir(filename)
 	return a, nil
 }
 
@@ -77,30 +81,24 @@ func (a *Setup) Write(msg *logpb.LogMessage) {
 	a.Model.AppendMessage(msg)
 }
 
-// RegisterHTTP installs the audit-log file download handler on mux at dlPath.
-// Does nothing when no filename was configured.
-func (a *Setup) RegisterHTTP(mux *http.ServeMux, dlPath string) {
-	if a.filename == "" {
-		return
-	}
-	allowedDir := filepath.Dir(a.filename)
-	key := a.downloadKey
-	mux.HandleFunc(dlPath, func(w http.ResponseWriter, r *http.Request) {
-		logdownload.ServeLogDownload(w, r, key, allowedDir)
-	})
-}
-
 // NewModelServer returns a LogApi ModelServer backed by this Setup's model.
-// When dlPath is non-empty and a file was configured, GetDownloadLogUrl is
-// wired up with a 15-minute token TTL.
-func (a *Setup) NewModelServer(urlBase, dlPath string) *logpb.ModelServer {
+// When a download router is supplied and a file was configured, the audit log
+// download handler is registered on the router under DownloadType, and
+// GetDownloadLogUrl is wired to mint URLs that serve from it.
+func (a *Setup) NewModelServer(router *download.Router) *logpb.ModelServer {
 	srv := logpb.NewModelServer(a.Model)
-	if a.filename != "" && dlPath != "" {
-		ttl := 15 * time.Minute
-		key, filename := a.downloadKey, a.filename
-		srv.GetDownloadLogUrlFunc = func(ctx context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
-			return logdownload.GetDownloadLogURL(req, filename, "", urlBase, dlPath, key, ttl)
-		}
+	if a.filename == "" || router == nil {
+		return srv
+	}
+
+	allowedDir := a.allowedDir
+	router.Handle(DownloadType, &logdownload.FileDownloadHandler{
+		AllowedDir: func() string { return allowedDir },
+	})
+
+	filename := a.filename
+	srv.GetDownloadLogUrlFunc = func(_ context.Context, req *logpb.GetDownloadLogUrlRequest) (*logpb.GetDownloadLogUrlResponse, error) {
+		return logdownload.GenerateFileDownloadURL(req, filename, "", router, DownloadType)
 	}
 	return srv
 }

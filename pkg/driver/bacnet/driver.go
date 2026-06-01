@@ -91,9 +91,7 @@ func NewDriver(services driver.Services) *Driver {
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	// AnnounceContext only makes sense if using MonoApply, which we are in NewDriver
 	rootAnnouncer := d.announcer.Replace(ctx)
-	if cfg.Metadata != nil {
-		rootAnnouncer = node.AnnounceFeatures(rootAnnouncer, node.HasMetadata(cfg.Metadata))
-	}
+	rootAnnouncer = node.AnnounceFeatures(rootAnnouncer, node.HasMetadata(cfg.Metadata))
 	// we start fresh each time config is updated
 	d.Clear()
 
@@ -264,11 +262,11 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			continue
 		}
 
-		announcer := rootAnnouncer
-		if trait.Metadata != nil {
-			announcer = node.AnnounceFeatures(announcer, node.HasMetadata(trait.Metadata))
-		}
+		announcer := node.AnnounceFeatures(rootAnnouncer, node.HasDeviceType(metadatapb.Metadata_DEVICE), node.HasMetadata(trait.Metadata))
 		impl.AnnounceSelf(announcer)
+		if p, ok := impl.(merge.PollTaskProvider); ok {
+			p.PollTask().IdleKeepAlive(ctx, trait.PollKeepAliveDuration(), time.Minute)
+		}
 
 		d.checks = append(d.checks, faultCheck)
 	}
@@ -338,6 +336,10 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 		}
 
 		return fmt.Errorf("device comm handshake: %w", ctxerr.Cause(ctx, err))
+	}
+
+	if deviceHealth != nil {
+		deviceHealth.MarkRunning()
 	}
 
 	// For WhoIs-discovered devices the controller IP is only known after findDevice succeeds.
@@ -417,10 +419,7 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 			continue
 		}
 
-		announcer := rootAnnouncer
-		if object.co.Metadata != nil {
-			announcer = node.AnnounceFeatures(announcer, node.HasMetadata(object.co.Metadata))
-		}
+		announcer := node.AnnounceFeatures(rootAnnouncer, node.HasMetadata(object.co.Metadata))
 		impl.AnnounceSelf(announcer)
 	}
 

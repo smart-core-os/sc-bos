@@ -126,3 +126,5 @@ func (s *soundSensor) pollPeer(ctx context.Context) (*soundsensorpb.SoundLevel, 
 	}
 	return s.model.UpdateSoundLevel(data)
 }
+
+func (s *soundSensor) PollTask() *task.Intermittent { return s.pollTask }

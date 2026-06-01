@@ -156,3 +156,5 @@ func (o *onOff) pollPeer(ctx context.Context) (*onoffpb.OnOff, error) {
 	}
 	return o.model.UpdateOnOff(data)
 }
+
+func (o *onOff) PollTask() *task.Intermittent { return o.pollTask }

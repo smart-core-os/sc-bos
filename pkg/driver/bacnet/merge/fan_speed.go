@@ -139,3 +139,5 @@ func (t *fanSpeed) pollPeer(ctx context.Context) (*fanspeedpb.FanSpeed, error) {
 	}
 	return t.model.UpdateFanSpeed(data)
 }
+
+func (t *fanSpeed) PollTask() *task.Intermittent { return t.pollTask }

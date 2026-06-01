@@ -273,3 +273,5 @@ func (se *securityEvent) cfgDefaults(data *securityeventpb.SecurityEvent) {
 		}
 	}
 }
+
+func (s *securityEventImpl) PollTask() *task.Intermittent { return s.pollTask }

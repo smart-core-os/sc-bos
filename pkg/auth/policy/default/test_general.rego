@@ -261,3 +261,64 @@ test_cloud_no_perms_Test_denied if {
   not data.smartcore.bos.ops.cloud.v1alpha.CloudConnectionApi.allow
     with input as permission_request(cloud_service, "TestCloudConnection", {}, [])
 }
+
+# --- BootApi: Reboot restricted to admin/cert/commissioner; trait:write is not sufficient ---
+
+boot_service := "smartcore.bos.boot.v1.BootApi"
+
+# Admin, super-admin, cert, and commissioner have unrestricted access (including Reboot).
+test_boot_admin_Reboot if {
+  data.smartcore.bos.boot.v1.BootApi.allow
+    with input as user_request(boot_service, "Reboot", {}, ["admin"])
+}
+test_boot_super_admin_Reboot if {
+  data.smartcore.bos.boot.v1.BootApi.allow
+    with input as user_request(boot_service, "Reboot", {}, ["super-admin"])
+}
+test_boot_cert_Reboot if {
+  data.smartcore.bos.boot.v1.BootApi.allow
+    with input as cert_request(boot_service, "Reboot", {})
+}
+test_boot_commissioner_Reboot if {
+  data.smartcore.bos.boot.v1.BootApi.allow
+    with input as user_request(boot_service, "Reboot", {}, ["commissioner"])
+}
+
+# trait:write is NOT sufficient to trigger Reboot — the service-level
+# `default allow := false` short-circuits the hierarchy before the blanket
+# smartcore.bos.allow trait:write rule is ever reached.
+test_boot_trait_write_Reboot_denied if {
+  not data.smartcore.bos.boot.v1.BootApi.allow
+    with input as permission_request(boot_service, "Reboot", {}, ["trait:write"])
+}
+test_boot_trait_star_Reboot_denied if {
+  not data.smartcore.bos.boot.v1.BootApi.allow
+    with input as permission_request(boot_service, "Reboot", {}, ["trait:*"])
+}
+test_boot_operator_Reboot_denied if {
+  not data.smartcore.bos.boot.v1.BootApi.allow
+    with input as user_request(boot_service, "Reboot", {}, ["operator"])
+}
+test_boot_viewer_Reboot_denied if {
+  not data.smartcore.bos.boot.v1.BootApi.allow
+    with input as user_request(boot_service, "Reboot", {}, ["viewer"])
+}
+
+# Operators, viewers, and trait:read can read boot state.
+test_boot_operator_GetBootState if {
+  data.smartcore.bos.boot.v1.BootApi.allow
+    with input as user_request(boot_service, "GetBootState", {}, ["operator"])
+}
+test_boot_viewer_PullBootState if {
+  data.smartcore.bos.boot.v1.BootApi.allow
+    with input as user_request(boot_service, "PullBootState", {}, ["viewer"])
+}
+test_boot_trait_read_GetBootState if {
+  data.smartcore.bos.boot.v1.BootApi.allow
+    with input as permission_request(boot_service, "GetBootState", {}, ["trait:read"])
+}
+# trait:write inherits trait:read, so reads are also allowed.
+test_boot_trait_write_GetBootState if {
+  data.smartcore.bos.boot.v1.BootApi.allow
+    with input as permission_request(boot_service, "GetBootState", {}, ["trait:write"])
+}

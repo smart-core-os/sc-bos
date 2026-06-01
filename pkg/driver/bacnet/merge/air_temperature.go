@@ -356,3 +356,5 @@ func updateMode(modeCfg *airTempModeConfig, data *modeDataPoints, airTemp *airte
 
 	airTemp.Mode = m
 }
+
+func (t *airTemperature) PollTask() *task.Intermittent { return t.pollTask }

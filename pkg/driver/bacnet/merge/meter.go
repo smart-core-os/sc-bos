@@ -127,3 +127,5 @@ func (t *meterTrait) pollPeer(ctx context.Context) (*meterpb.MeterReading, error
 	}
 	return t.model.UpdateMeterReading(data)
 }
+
+func (t *meterTrait) PollTask() *task.Intermittent { return t.pollTask }

@@ -78,6 +78,8 @@ type Config struct {
 
 	Devices *Devices `json:"devices,omitempty"`
 
+	Download *Download `json:"download,omitempty"`
+
 	DisablePprof bool `json:"disablePprof"` // don't register net/http/pprof handlers
 
 	Health *Health `json:"health,omitempty"`
@@ -104,7 +106,21 @@ type Devices struct {
 	// DownloadHMACKeyFile is a path to a file that contains the HMAC key used to sign and verify download requests.
 	// This key can be shared securely between nodes in a SmartCore cohort to allow re-use of cryptographic signatures.
 	// If not specified, the app.Controller will use a HMAC key that is randomly generated on each startup.
+	//
+	// This field remains for backwards compatibility and is consulted only when Config.Download.HMACKeyFile is unset.
 	DownloadHMACKeyFile string `json:"downloadHMACKeyFile,omitempty"`
+}
+
+// Download configures the shared download URL machinery used by all
+// subsystems that issue capability-style download URLs (devices CSV exports,
+// audit log exports, etc.).
+type Download struct {
+	// HMACKeyFile is the path to a file containing the HMAC key used to sign
+	// and verify download URLs. This key can be shared securely between nodes
+	// in a SmartCore cohort to allow re-use of cryptographic signatures.
+	// If not specified (and no legacy Devices.DownloadHMACKeyFile is set
+	// either), the app.Controller generates a random key at startup.
+	HMACKeyFile string `json:"hmacKeyFile,omitempty"`
 }
 
 // DriverConfigBlocks returns a map of driver type to a block list that describes the config for that driver.

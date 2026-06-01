@@ -182,3 +182,5 @@ func (a *access) GetAccessGrant(context.Context, *accesspb.GetAccessGrantsReques
 func (a *access) ListAccessGrants(context.Context, *accesspb.ListAccessGrantsRequest) (*accesspb.ListAccessGrantsResponse, error) {
 	return nil, errors.New("method ListAccessGrants not implemented")
 }
+
+func (a *access) PollTask() *task.Intermittent { return a.pollTask }

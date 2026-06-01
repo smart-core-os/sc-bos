@@ -1,15 +1,14 @@
 package app
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -28,6 +27,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/account"
 	"github.com/smart-core-os/sc-bos/internal/audit"
 	"github.com/smart-core-os/sc-bos/internal/cloud"
+	"github.com/smart-core-os/sc-bos/internal/download"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	opscloud "github.com/smart-core-os/sc-bos/internal/opsapi"
@@ -54,6 +54,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ops/cloudpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/system/boot"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
@@ -156,15 +157,19 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 
 	grpcServer, reflectionServer := buildGRPCServer(rootNode, nodeRouter, pi, ai)
 
-	devicesApi := buildDevicesAPI(config, rootNode, nodeRouter, logger)
+	downloadRouter, err := buildDownloadRouter(config, logger)
+	if err != nil {
+		return nil, err
+	}
+	devicesApi := buildDevicesAPI(rootNode, nodeRouter, downloadRouter)
 
 	checkRegistry, closeHealthStore, err := setupHealthRegistry(ctx, config, deviceStore, rootNode, logger.Named("health"))
 	if err != nil {
 		return nil, err
 	}
 
-	mux := buildHTTPMux(config, devicesApi, ai.HTTPAuth, logger)
-	setupAuditLog(ctx, config, mux, rootNode, ai.AuditSetup, logger)
+	mux := buildHTTPMux(config, downloadRouter, ai.HTTPAuth, logger)
+	setupAuditLog(ctx, downloadRouter, rootNode, ai.AuditSetup, logger)
 	httpServer := buildHTTPServer(config, pi, grpcServer, mux)
 
 	logLevel := config.Logger.Level
@@ -191,6 +196,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		Mux:              mux,
 		GRPC:             grpcServer,
 		HTTP:             httpServer,
+		DownloadRouter:   downloadRouter,
 		ClientTLSConfig:  pi.GRPCClient,
 		ManagerConn:      manager,
 	}
@@ -467,38 +473,42 @@ func buildGRPCServer(rootNode *node.Node, nodeRouter *router.Router, pi pkiInfo,
 	return grpcServer, reflectionServer
 }
 
-func buildDevicesAPI(config sysconf.Config, rootNode *node.Node, nodeRouter *router.Router, logger *zap.Logger) *devices.Server {
-	var devicesApiOpts []devices.Option
+// where download router is mounted
+const downloadPathPrefix = "/download"
+
+// buildDownloadRouter constructs the shared signed-URL router used by every
+// subsystem that issues capability-style download URLs (devices CSV exports,
+// audit log exports, system log exports). All such subsystems register handlers
+// on this single router and share its HMAC key and URL prefix.
+func buildDownloadRouter(config sysconf.Config, logger *zap.Logger) (*download.Router, error) {
+	downloadBaseURL := downloadPathPrefix
 	if hostPort, err := config.ExternalHTTPEndpoint(); err == nil {
-		devicesApiOpts = append(devicesApiOpts, devices.WithDownloadUrlBase(url.URL{
-			Scheme: "https",
-			Host:   hostPort,
-			Path:   "/dl/devices",
-		}))
+		downloadBaseURL = "https://" + hostPort + downloadPathPrefix
 	} else {
 		logger.Error("failed to determine external http endpoint - download URLs unavailable", zap.Error(err))
 	}
-
-	if config.Devices != nil && config.Devices.DownloadHMACKeyFile != "" {
-		hmacKey, err := os.ReadFile(config.Devices.DownloadHMACKeyFile)
-		if err != nil {
-			logger.Warn("failed to read download HMAC key file, using random HMAC key generator", zap.Error(err))
-		} else {
-			hmacKey = bytes.TrimSpace(hmacKey)
-			devicesApiOpts = append(devicesApiOpts, devices.WithHMACKeyGen(func() ([]byte, error) {
-				return hmacKey, nil
-			}))
-		}
+	downloadKey, err := config.ResolveDownloadHMACKey(logger)
+	if err != nil {
+		return nil, err
 	}
+	return download.NewRouter(
+		download.NewHMACSigner(downloadKey),
+		download.WithBaseURL(downloadBaseURL),
+		download.WithTTL(time.Hour),
+	), nil
+}
 
-	devicesApi := devices.NewServer(rootNode, devicesApiOpts...)
+func buildDevicesAPI(rootNode *node.Node, nodeRouter *router.Router, downloadRouter *download.Router) *devices.Server {
+	devicesApi := devices.NewServer(rootNode, devices.WithURLGenerator(downloadRouter))
 	devicesApi.Register(nodeRouter)
+	downloadRouter.Handle(devices.DownloadType, devicesApi)
 	return devicesApi
 }
 
-func buildHTTPMux(config sysconf.Config, devicesApi *devices.Server, httpAuth func(http.Handler) http.Handler, logger *zap.Logger) *http.ServeMux {
+func buildHTTPMux(config sysconf.Config, downloadRouter *download.Router, httpAuth func(http.Handler) http.Handler, logger *zap.Logger) *http.ServeMux {
 	mux := http.NewServeMux()
-	devicesApi.RegisterHTTPMux(mux)
+	// Shared download endpoint. Handlers compress their own responses when appropriate.
+	mux.Handle(downloadPathPrefix+"/", downloadRouter)
 
 	for _, site := range config.StaticHosting {
 		handler := http2.NewStaticHandler(site.FilePath)
@@ -521,21 +531,14 @@ func buildHTTPMux(config sysconf.Config, devicesApi *devices.Server, httpAuth fu
 	return mux
 }
 
-// setupAuditLog registers the audit log HTTP download route, starts the background metadata refresh goroutine,
-// and announces the audit-log device on the node so it appears as a Log trait.
-func setupAuditLog(ctx context.Context, config sysconf.Config, mux *http.ServeMux, rootNode *node.Node, auditSetup *audit.Setup, logger *zap.Logger) {
+// setupAuditLog wires the audit log subsystem against the shared download router,
+// starts the background metadata refresh goroutine, and announces the audit-log
+// device on the node so it appears as a Log trait.
+func setupAuditLog(ctx context.Context, downloadRouter *download.Router, rootNode *node.Node, auditSetup *audit.Setup, logger *zap.Logger) {
 	if auditSetup == nil {
 		return
 	}
-	auditDLPath := "/__/audit-log/download"
-	urlBase := ""
-	if hostPort, err := config.ExternalHTTPEndpoint(); err == nil {
-		urlBase = "https://" + hostPort
-	} else {
-		logger.Warn("audit log download URLs will be relative; set externalAddress to generate absolute URLs", zap.Error(err))
-	}
-	auditSetup.RegisterHTTP(mux, auditDLPath)
-	auditSrv := auditSetup.NewModelServer(urlBase, auditDLPath)
+	auditSrv := auditSetup.NewModelServer(downloadRouter)
 	auditSetup.StartMetadataRefresh(ctx, logger.Named("audit"))
 
 	auditLogName := "audit-log"
@@ -646,15 +649,18 @@ type Controller struct {
 
 	ReflectionServer *reflectionapi.Server
 
-	Mux  *http.ServeMux
-	GRPC *grpc.Server
-	HTTP *http.Server
+	Mux            *http.ServeMux
+	GRPC           *grpc.Server
+	HTTP           *http.Server
+	DownloadRouter *download.Router
 
 	PrivateKey      pki.PrivateKey
 	ClientTLSConfig *tls.Config
 	ManagerConn     node.Remote
 
 	deferred []Deferred
+
+	rebootCh chan string // signals a requested clean reboot; set in Run; value is the reason (empty if boot system handled the state file)
 }
 
 type Deferred func() error
@@ -671,6 +677,9 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 			err = multierr.Append(err, d())
 		}
 	}()
+	defer func() {
+		writeControllerRebootState(c.SystemConfig.DataDir, err)
+	}()
 
 	// metadata associated with the node itself
 	// we don't support changing metadata while running
@@ -680,6 +689,15 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	defer storeUndo()
 
 	group, ctx := errgroup.WithContext(ctx)
+	c.rebootCh = make(chan string, 1)
+	group.Go(func() error {
+		select {
+		case reason := <-c.rebootCh:
+			return restartNowError{reason: reason}
+		case <-ctx.Done():
+			return nil
+		}
+	})
 	if c.Enrollment != nil {
 		group.Go(func() error {
 			return c.Enrollment.AutoRenew(ctx)
@@ -694,7 +712,7 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 			needRestart := cloud.AutoPoll(ctx, c.Cloud, pollInterval, c.Logger.Named("cloud.auto-poll"))
 			if needRestart {
 				c.Logger.Info("triggering automatic restart to apply new deployment")
-				return restartNowError{}
+				return restartNowError{reason: "automatic restart to install deployment"}
 			}
 			return nil
 		})
@@ -750,7 +768,9 @@ const (
 )
 
 // a sentinel error type - does not indicate an actual error, but a request to restart the controller immediately
-type restartNowError struct{}
+type restartNowError struct {
+	reason string
+}
 
 func (e restartNowError) Error() string {
 	return "automatic restart triggered"
@@ -758,4 +778,27 @@ func (e restartNowError) Error() string {
 
 func (e restartNowError) ExitCode() int {
 	return 0
+}
+
+// writeControllerRebootState writes the reboot state file based on how Controller.Run exited.
+// Only writes for clean exits (graceful shutdown or deployment restart with a known reason).
+// When the exit was triggered via the Boot RPC, the boot system has already written the state
+// file (with actor info included), so we skip to avoid overwriting it.
+func writeControllerRebootState(dataDir string, err error) {
+	// Use errors.As so wrapping (e.g. multierr) doesn't silently fall through to the
+	// default case and skip writing the state file.
+	var st boot.RebootState
+	var rne restartNowError
+	switch {
+	case err == nil:
+		st = boot.RebootState{CleanExit: true}
+	case errors.As(err, &rne):
+		if rne.reason == "" {
+			return // boot system wrote the state file (with actor); don't overwrite
+		}
+		st = boot.RebootState{Reason: rne.reason, CleanExit: true}
+	default:
+		return // unexpected error; leave in-progress marker as crash indicator
+	}
+	_ = boot.WriteStateFile(dataDir, st)
 }

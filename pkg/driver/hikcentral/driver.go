@@ -15,6 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ptzpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
@@ -93,6 +94,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasTrait(trait.Ptz),
 			node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(cam)),
 			node.HasTrait(udmipb.TraitName),
+			node.HasDeviceType(metadatapb.Metadata_DEVICE),
 		)
 		cameras = append(cameras, cam)
 	}

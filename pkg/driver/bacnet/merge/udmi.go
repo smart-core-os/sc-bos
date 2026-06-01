@@ -268,3 +268,5 @@ func (f *udmiMerge) pointsToPointSet(points udmi.PointsEvent) (*udmipb.MqttMessa
 		Payload: string(b),
 	}, nil
 }
+
+func (f *udmiMerge) PollTask() *task.Intermittent { return f.pollTask }

@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/smart-core-os/sc-bos/internal/account"
+	"github.com/smart-core-os/sc-bos/internal/download"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
@@ -32,6 +33,7 @@ type Services struct {
 	Stores          *stores.Stores
 	Accounts        *account.Store
 	HTTPMux         *http.ServeMux      // to allow systems to serve http requests
+	DownloadRouter  *download.Router    // shared signed-URL router for systems that serve file downloads
 	TokenValidators *token.ValidatorSet // to allow systems to contribute towards client validation
 
 	ReflectionServer *reflectionapi.Server // to allow systems to contribute types towards the reflection api
@@ -50,6 +52,10 @@ type Services struct {
 	// Returns a cancel function that deregisters the core.
 	// Provided by the controller when using pkg/app/logcapture.
 	AddLogCore func(core zapcore.Core) func()
+
+	// RequestReboot, if non-nil, requests a clean controller restart allowing deferred
+	// cleanups and in-flight RPCs to finish before the process exits.
+	RequestReboot func()
 
 	// LogLevel is the zap.AtomicLevel controlling the controller's root logger.
 	// Systems can read and update the live log level via this handle.

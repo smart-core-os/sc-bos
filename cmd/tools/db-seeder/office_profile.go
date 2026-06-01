@@ -10,6 +10,9 @@ import (
 // It drives both the time-of-day load curve and the realistic ranges for each trait.
 // New profiles can be added to the Profiles map to model different building types.
 type OfficeProfile struct {
+	NabersOnly bool // when true, only meter data is seeded (skips air quality, electric, temperature, sound, occupancy, allocation)
+	SkipMeter  bool // when true, meter data is skipped; seeds only air quality, electric, temperature, sound, occupancy, allocation
+
 	Schedule    ScheduleProfile
 	Occupancy   OccupancyProfile
 	Meter       MeterProfile
