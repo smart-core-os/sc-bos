@@ -12,7 +12,8 @@
   // Omit this block entirely for BACnet/IP.
   //
   // Devices are still listed under `devices` below, but on BACnet/SC you normally locate them by Who-Is on
-  // their device `id` (omit `comm.ip`) - the hub routes by virtual MAC, not IP address.
+  // their device `id` — omit the device's `comm` block entirely (an empty `"comm": {}` works too; the driver
+  // treats them the same). The hub routes by virtual MAC, not IP address.
   secureConnect: {
     // Websocket URI of the primary BACnet/SC hub. Required. Use wss:// in production (mutual TLS).
     // Ask the commissioning engineers for the exact host, port and path.

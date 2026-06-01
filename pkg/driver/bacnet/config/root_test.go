@@ -75,6 +75,29 @@ func TestDestinationAddress_Bytes(t *testing.T) {
 	}
 }
 
+func TestComm_IsEmpty(t *testing.T) {
+	ip := netip.AddrPortFrom(netip.AddrFrom4([4]byte{10, 11, 12, 13}), 0xBAC0)
+	cases := []struct {
+		name string
+		in   *Comm
+		want bool
+	}{
+		{"nil", nil, true},
+		{"zero", &Comm{}, true},
+		{"empty destination", &Comm{Destination: &Destination{}}, true},
+		{"ip set", &Comm{IP: &ip}, false},
+		{"network set", &Comm{Destination: &Destination{Network: 50012}}, false},
+		{"destination address set", &Comm{Destination: &Destination{Address: "11"}}, false},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.in.IsEmpty(); got != tt.want {
+				t.Errorf("IsEmpty() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestComm_ToAddress(t *testing.T) {
 	ip := netip.AddrPortFrom(netip.AddrFrom4([4]byte{10, 11, 12, 13}), 0xBAC0)
 	tests := []struct {

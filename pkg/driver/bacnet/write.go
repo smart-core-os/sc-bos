@@ -115,7 +115,7 @@ func writeToDir(dir string, floor string, scPrefix string, bacnetCfg *ConfigForF
 		EquipmentImpact: config.EquipmentImpact(healthpb.HealthCheck_NO_EQUIPMENT_IMPACT),
 	}
 
-	driverCfg.Devices = bacnetCfg.Devices
+	driverCfg.Devices = normaliseDevicesForOutput(bacnetCfg.Devices)
 
 	for _, t := range bacnetCfg.Traits {
 		rawTrait, err := marshalTrait(t)
@@ -196,6 +196,24 @@ func marshalDriver(data config.Root) (driver.RawConfig, error) {
 		BaseConfig: d,
 		Raw:        raw,
 	}, nil
+}
+
+// normaliseDevicesForOutput drops empty Comm structs (`&Comm{}` with no IP and
+// no destination) so the marshalled JSON omits "comm" entirely on devices that
+// rely on Who-Is discovery - typically the BACnet/SC case. The originals are
+// not mutated.
+func normaliseDevicesForOutput(devices []config.Device) []config.Device {
+	if len(devices) == 0 {
+		return devices
+	}
+	out := make([]config.Device, len(devices))
+	for i, d := range devices {
+		if d.Comm.IsEmpty() {
+			d.Comm = nil
+		}
+		out[i] = d
+	}
+	return out
 }
 
 func sortDevices(devices []config.Device) {

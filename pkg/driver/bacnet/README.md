@@ -34,7 +34,7 @@ The driver interprets [config](config/root.go) and sets up connections to BACnet
 
 ## BACnet/SC (secure connect)
 
-Setting `secureConnect` switches the driver to talk to a BACnet/SC hub over a secure websocket using mutual TLS instead of opening a UDP socket; `localInterface`/`localPort` are ignored. Devices are configured as usual but are normally located by Who-Is on their instance id (omit `comm.ip`) since the hub routes by VMAC, not IP.
+Setting `secureConnect` switches the driver to talk to a BACnet/SC hub over a secure websocket using mutual TLS instead of opening a UDP socket; `localInterface`/`localPort` are ignored. Devices are configured as usual but are normally located by Who-Is on their instance id — **omit the device's `comm` block entirely** since the hub routes by VMAC, not IP. (An empty `"comm": {}` works too — it's treated the same as omitted — but the convention is to leave it out.)
 
 Only the data link differs: NPDU/APDU encoding, trait mappings and adapt/merge are shared with BACnet/IP. The SC implementation (BVLC-SC framing, websocket/TLS transport, connect handshake, heartbeat, hub failover) lives in the [sc](sc) package; the driver selects between clients via [`bclient.Client`](bclient/bclient.go).
 

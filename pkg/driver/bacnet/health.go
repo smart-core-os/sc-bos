@@ -83,4 +83,3 @@ func createControllerHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, e
 		EquipmentImpact: equipment,
 	}
 }
-

@@ -136,6 +136,23 @@ type Comm struct {
 	Destination *Destination `json:"destination,omitempty"`
 }
 
+// IsEmpty reports whether c carries no addressing information at all (no IP
+// and no destination network/address). An empty Comm is equivalent to omitting
+// it from config: the device should be located via discovery (Who-Is) rather
+// than addressed directly. The receiver may be nil.
+func (c *Comm) IsEmpty() bool {
+	if c == nil {
+		return true
+	}
+	if c.IP != nil {
+		return false
+	}
+	if c.Destination != nil && (c.Destination.Network != 0 || c.Destination.Address != "") {
+		return false
+	}
+	return true
+}
+
 func (c *Comm) ToAddress() (bactypes.Address, error) {
 	var addr bactypes.Address
 	if c.IP != nil {

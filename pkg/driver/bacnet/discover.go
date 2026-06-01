@@ -19,7 +19,10 @@ func FindDevice(ctx context.Context, client bclient.Client, device config.Device
 		return bactypes.Device{}, err
 	}
 
-	if device.Comm == nil {
+	// Treat an empty Comm (e.g. `"comm": {}` in JSON) the same as an omitted
+	// one: fall back to Who-Is discovery rather than firing a unicast read at a
+	// zero address.
+	if device.Comm.IsEmpty() {
 		id := device.ID
 		is, err := client.WhoIs(ctx, int(id), int(id))
 		if err != nil {

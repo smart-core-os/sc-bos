@@ -110,8 +110,13 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	for _, device := range cfg.Devices {
 		// make sure to retry setting up devices in case they aren't yet online but might be in the future
 		deviceName := adapt.DeviceName(device)
+		// device.Comm may be nil for Who-Is discovered devices; format defensively.
+		addrStr := ""
+		if device.Comm != nil && device.Comm.IP != nil {
+			addrStr = device.Comm.IP.String()
+		}
 		logger := d.logger.With(zap.String("device", deviceName), zap.Uint32("deviceId", uint32(device.ID)),
-			zap.Stringer("address", device.Comm.IP))
+			zap.String("address", addrStr))
 
 		// allow status reporting for this device
 		scDeviceName := cfg.DeviceNamePrefix + deviceName

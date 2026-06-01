@@ -11,7 +11,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
@@ -20,6 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 

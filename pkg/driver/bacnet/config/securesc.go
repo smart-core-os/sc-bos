@@ -14,8 +14,9 @@ import (
 // opening a UDP socket.
 //
 // Devices are still configured under Root.Devices; on BACnet/SC they are normally
-// located by Who-Is on their device instance id (omit the device comm.ip), as the
-// hub routes messages by virtual MAC (VMAC) rather than IP address.
+// located by Who-Is on their device instance id. Omit the device's `comm` block
+// entirely (an empty `"comm": {}` is treated the same), as the hub routes messages
+// by virtual MAC (VMAC) rather than IP address.
 type SecureConnect struct {
 	// PrimaryHubURI is the websocket URI of the primary BACnet/SC hub, e.g.
 	// "wss://hub.example.com:47808". Required.
