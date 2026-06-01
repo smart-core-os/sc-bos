@@ -120,7 +120,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		// device.Metadata (if any) merged with this driver's standard extras
 		// (Appearance.Title, More["mqtt_topic"], More["point_map"]).
 		if md := effectiveDeviceMetadata(cfg, device); md != nil {
-			rootAnnouncer.Announce(device.Name, node.HasMetadata(md))
+			rootAnnouncer.Announce(device.Name, node.HasDeviceType(metadatapb.Metadata_DEVICE), node.HasMetadata(md))
 		}
 
 		faultCheck, err := d.health.NewFaultCheck(scDeviceName, createDeviceHealthCheck(device.Health.OccupantImpact.ToProto(), device.Health.EquipmentImpact.ToProto()))

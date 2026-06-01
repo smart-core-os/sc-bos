@@ -53,8 +53,6 @@ func (v VMAC) String() string {
 	return hex.EncodeToString(v[:])
 }
 
-func (v VMAC) isBroadcast() bool { return v == BroadcastVMAC }
-
 // addressToVMAC derives the destination VMAC for a gobacnet address.
 // A broadcast address maps to BroadcastVMAC; otherwise the 6-octet MAC of the
 // address (populated from the originating VMAC of received messages) is used.
