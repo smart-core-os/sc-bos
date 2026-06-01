@@ -423,9 +423,13 @@ func Test_automation_applyConfigDevices_remove(t *testing.T) {
 		}
 		synctest.Wait()
 
+		// occ1 still exists as a device (announced with the OccupancySensor trait
+		// independently of this automation), so once the automation removes its
+		// history route the router reports the history service as Unimplemented for
+		// the known device rather than NotFound.
 		_, err = cli.ListOccupancyHistory(t.Context(), &occupancysensorpb.ListOccupancyHistoryRequest{Name: "occ1", PageSize: 100})
-		if status.Code(err) != codes.NotFound {
-			t.Fatalf("expected NotFound after remove, got %v", err)
+		if status.Code(err) != codes.Unimplemented {
+			t.Fatalf("expected Unimplemented after remove, got %v", err)
 		}
 	})
 }
