@@ -124,6 +124,21 @@ func (c *Client) Close() {
 	c.link.close()
 }
 
+// OurVMAC reports this node's virtual MAC address (used as the originating VMAC
+// in BVLC-SC frames sent to the hub).
+func (c *Client) OurVMAC() VMAC { return c.link.our }
+
+// HubVMAC reports the hub's virtual MAC address learned during the connect
+// handshake. Returns the zero VMAC if not currently connected.
+func (c *Client) HubVMAC() VMAC {
+	c.link.mu.Lock()
+	defer c.link.mu.Unlock()
+	return c.link.hubVMAC
+}
+
+// DeviceUUID reports this node's BACnet/SC device UUID.
+func (c *Client) DeviceUUID() [16]byte { return c.link.uuid }
+
 // handleNPDU routes a received NPDU to the waiting transaction (confirmed
 // responses) or the unconfirmed manager (I-Am). It mirrors gobacnet's
 // Client.handleMsg, minus the BVLC/UDP handling which the datalink performs.
