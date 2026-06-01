@@ -170,6 +170,14 @@ func (d DeviceRef) Lookup(ctx known.Context) (bactypes.Device, error) {
 	return ctx.LookupDeviceByID(d.id)
 }
 
+// Name returns the device name this ref was constructed with (empty if it was
+// created from a numeric id instead).
+func (d DeviceRef) Name() string { return d.name }
+
+// InstanceID returns the device instance id this ref was constructed with
+// (zero if it was created from a name instead).
+func (d DeviceRef) InstanceID() bactypes.ObjectInstance { return d.id }
+
 func (d DeviceRef) MarshalJSON() ([]byte, error) {
 	if d.name != "" {
 		return json.Marshal(d.name)
@@ -214,6 +222,14 @@ func (o ObjectRef) Lookup(device bactypes.Device, ctx known.Context) (bactypes.O
 	}
 	return ctx.LookupObjectByID(device, bactypes.ObjectID(o.id))
 }
+
+// Name returns the object name this ref was constructed with (empty if it was
+// created from an object id instead).
+func (o ObjectRef) Name() string { return o.name }
+
+// ID returns the object id this ref was constructed with (zero ObjectID if it
+// was created from a name instead).
+func (o ObjectRef) ID() ObjectID { return o.id }
 
 func (o ObjectRef) MarshalJSON() ([]byte, error) {
 	if o.name != "" {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/gobacnet"
 	bactypes "github.com/smart-core-os/gobacnet/types"
@@ -24,10 +25,12 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/ctxerr"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/merge"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/pointmap"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/sc"
 	driverhealth "github.com/smart-core-os/sc-bos/pkg/driver/health"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
@@ -115,9 +118,11 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		// allow status reporting for this device
 		scDeviceName := cfg.DeviceNamePrefix + deviceName
 
-		// even if devices are offline, they still have metadata
-		if device.Metadata != nil {
-			rootAnnouncer.Announce(device.Name, node.HasMetadata(device.Metadata))
+		// Even if devices are offline they still get metadata: the operator's
+		// device.Metadata (if any) merged with this driver's standard extras
+		// (Appearance.Title, More["mqtt_topic"], More["point_map"]).
+		if md := effectiveDeviceMetadata(cfg, device); md != nil {
+			rootAnnouncer.Announce(device.Name, node.HasMetadata(md))
 		}
 
 		faultCheck, err := d.health.NewFaultCheck(scDeviceName, createDeviceHealthCheck(device.Health.OccupantImpact.ToProto(), device.Health.EquipmentImpact.ToProto()))
@@ -353,8 +358,8 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 
 	d.storeDevice(deviceName, bacDevice, device.DefaultWritePriority)
 
-	if device.Metadata != nil {
-		rootAnnouncer = node.AnnounceFeatures(rootAnnouncer, node.HasMetadata(device.Metadata))
+	if md := effectiveDeviceMetadata(cfg, device); md != nil {
+		rootAnnouncer = node.AnnounceFeatures(rootAnnouncer, node.HasMetadata(md))
 	}
 
 	// Wrap the per-request error callback to also update controller-level health.
@@ -491,4 +496,57 @@ func (d *Driver) getOrCreateControllerCheck(ctx context.Context, cfg config.Root
 	ch := driverhealth.NewControllerHealth(fc, cfg.ControllerHealthThreshold, merge.SystemName)
 	d.controllerHealths[key] = ch
 	return ch, nil
+}
+
+// effectiveDeviceMetadata returns the metadata to announce for device, merging
+// any operator-provided device.Metadata with this driver's standard extras:
+//   - Appearance.Title defaults to device.Title (the device's native/vendor
+//     name when the operator has captured it) and falls back to the announced
+//     device name. Existing Title in device.Metadata is preserved.
+//   - More["mqtt_topic"] is the base UDMI topic "<MqttTopicPrefix>/<deviceName>".
+//   - More["point_map"] is the JSON catalogue of MQTT points published for this
+//     device (derived from UDMI traits in cfg by pointmap.ForDevice).
+//
+// Existing More entries on device.Metadata are not overwritten - the operator
+// can override any of our defaults from config. Returns nil only when there is
+// genuinely nothing to announce.
+func effectiveDeviceMetadata(cfg config.Root, device config.Device) *metadatapb.Metadata {
+	deviceName := adapt.DeviceName(device)
+	points := pointmap.ForDevice(cfg, device)
+	extras := pointmap.More(pointmap.TopicFor(cfg.MqttTopicPrefix, deviceName), points)
+
+	var md *metadatapb.Metadata
+	if device.Metadata != nil {
+		md = proto.Clone(device.Metadata).(*metadatapb.Metadata)
+	} else {
+		md = &metadatapb.Metadata{}
+	}
+
+	if md.Appearance == nil {
+		md.Appearance = &metadatapb.Metadata_Appearance{}
+	}
+	if md.Appearance.Title == "" {
+		if device.Title != "" {
+			md.Appearance.Title = device.Title
+		} else {
+			md.Appearance.Title = deviceName
+		}
+	}
+
+	if len(extras) > 0 {
+		if md.More == nil {
+			md.More = make(map[string]string, len(extras))
+		}
+		for k, v := range extras {
+			if _, exists := md.More[k]; exists {
+				continue // respect any operator-provided override
+			}
+			md.More[k] = v
+		}
+	}
+
+	if md.Membership == nil && md.Appearance.Title == "" && len(md.More) == 0 {
+		return nil
+	}
+	return md
 }

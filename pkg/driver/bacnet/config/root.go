@@ -38,6 +38,19 @@ type Root struct {
 	DeviceNamePrefix string `json:"deviceNamePrefix"` // defaults to "bacnet/device/" if absent in json or using Defaults
 	ObjectNamePrefix string `json:"objectNamePrefix"` // defaults to "obj/" if absent in json, or using Defaults
 
+	// MqttTopicPrefix is the base MQTT topic prefix this driver advertises for each
+	// announced device's metadata (Metadata.More["mqtt_topic"] = "<MqttTopicPrefix>/<deviceName>").
+	// It is independent of any per-trait UDMI topicPrefix used for publishing pointset events.
+	MqttTopicPrefix string `json:"mqttTopicPrefix,omitempty"`
+
+	// PointSpecs supplements the per-device point_map catalogue announced in each
+	// device's Metadata. It is keyed by the MQTT point name used in a UDMI trait's
+	// `points` map; any UDMI point that matches a key here inherits the spec /
+	// meaning / type / unit / access fields. Points without a matching key still
+	// appear in point_map but with spec defaulting to the MQTT name and access
+	// inferred from the BACnet object type.
+	PointSpecs map[string]PointSpec `json:"pointSpecs,omitempty"`
+
 	DiscoverObjects bool `json:"discoverObjects,omitempty"`
 
 	COV *COV `json:"cov,omitempty"`
