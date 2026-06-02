@@ -282,7 +282,9 @@ func TestSystem_Download_NoMatchingFiles(t *testing.T) {
 	}
 }
 
-// A tampered token in the URL is rejected with 401.
+// A tampered token in the URL is rejected with 401. The token is <base64(envelope)>.<base64(signature)> -
+// corrupting either part must break verification.
+// Even a single-character change to either envelope or signature should cause HMAC verification to fail.
 func TestSystem_Download_TamperedURL(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "app.log", "contents")
@@ -296,14 +298,27 @@ func TestSystem_Download_TamperedURL(t *testing.T) {
 	}
 	good := resp.Files[0].Url
 
-	// Tamper the last character of the URL. With base64url encoding, flipping one
-	// character of the token corrupts either the envelope or the signature.
-	tampered := good[:len(good)-1] + altChar(good[len(good)-1])
+	// Split the URL into <prefix>/<envelope>.<signature>
+	slash := strings.LastIndexByte(good, '/')
+	prefix, token := good[:slash+1], good[slash+1:]
+	envelope, signature, ok := strings.Cut(token, ".")
+	if !ok {
+		t.Fatalf("token %q unexpected format", token)
+	}
 
-	httpResp := h.fetch(t, tampered)
-	defer httpResp.Body.Close()
-	if httpResp.StatusCode != http.StatusUnauthorized {
-		t.Errorf("status = %d, want 401", httpResp.StatusCode)
+	// test case -> URL to fetch - each with 1 part corrupted
+	cases := map[string]string{
+		"envelope":  prefix + corrupt(envelope) + "." + signature,
+		"signature": prefix + envelope + "." + corrupt(signature),
+	}
+	for name, corrupted := range cases {
+		t.Run(name, func(t *testing.T) {
+			httpResp := h.fetch(t, corrupted)
+			_ = httpResp.Body.Close()
+			if httpResp.StatusCode != http.StatusUnauthorized {
+				t.Errorf("status = %d, want 401", httpResp.StatusCode)
+			}
+		})
 	}
 }
 
@@ -433,11 +448,18 @@ func mapsEqual(a, b map[string]string) bool {
 	return true
 }
 
-// altChar returns a different printable URL-safe character than c, used by
-// TestSystem_Download_TamperedURL to flip a single byte of a token.
-func altChar(c byte) string {
-	if c == 'A' {
-		return "B"
+// Alters a base64 string by replacing its first character with a different URL-safe character.
+// It's important we don't alter the last character because that can carry fewer bits, so some character changes
+// might not result in different bytes after decoding.
+func corrupt(s string) string {
+	if s == "" {
+		return ""
 	}
-	return "A"
+	first := s[0]
+	if first == 'A' {
+		first = 'B'
+	} else {
+		first = 'A'
+	}
+	return string(first) + s[1:]
 }
