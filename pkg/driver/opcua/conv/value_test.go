@@ -250,6 +250,68 @@ func TestToString(t *testing.T) {
 	}
 }
 
+func TestToEnumString(t *testing.T) {
+	// e.g. a Kone lift position index that includes dummy floors mapped to real floor labels.
+	floorMap := map[string]string{
+		"0": "G",
+		"1": "1",
+		"2": "2",
+		"4": "3",
+	}
+
+	tests := []struct {
+		name      string
+		input     any
+		enum      map[string]string
+		want      string
+		wantError bool
+	}{
+		{
+			name:  "maps int value to real floor",
+			input: int32(4),
+			enum:  floorMap,
+			want:  "3",
+		},
+		{
+			name:  "maps string value to real floor",
+			input: "0",
+			enum:  floorMap,
+			want:  "G",
+		},
+		{
+			name:  "value not in enum falls back to raw string",
+			input: int32(9),
+			enum:  floorMap,
+			want:  "9",
+		},
+		{
+			name:  "nil enum returns raw string",
+			input: int32(5),
+			enum:  nil,
+			want:  "5",
+		},
+		{
+			name:      "unconvertible value returns error",
+			input:     true,
+			enum:      floorMap,
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ToEnumString(tt.input, tt.enum)
+			if (err != nil) != tt.wantError {
+				t.Errorf("ToEnumString() error = %v, wantError %v", err, tt.wantError)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ToEnumString() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestToTraitEnum(t *testing.T) {
 	enumMap := map[string]string{
 		"0": "OPEN",
