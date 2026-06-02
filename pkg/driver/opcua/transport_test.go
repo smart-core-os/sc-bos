@@ -84,6 +84,24 @@ func TestTransport_handleTransportEvent(t *testing.T) {
 			wantValue:  "3",
 		},
 		{
+			// Kone reports a raw position index that includes dummy floors; the enum maps it to the real floor.
+			name:       "actual position with enum mapping dummy floors",
+			config:     `{"kind":"smartcore.bos.Transport","actualPosition":{"nodeId":"ns=2;s=Position","enum":{"0":"G","1":"1","2":"2","4":"3"}}}`,
+			nodeId:     "ns=2;s=Position",
+			value:      int32(4),
+			checkField: "actualPosition",
+			wantValue:  "3",
+		},
+		{
+			// A value not present in the enum falls back to its raw string representation.
+			name:       "actual position with enum falls back to raw value",
+			config:     `{"kind":"smartcore.bos.Transport","actualPosition":{"nodeId":"ns=2;s=Position","enum":{"0":"G","1":"1"}}}`,
+			nodeId:     "ns=2;s=Position",
+			value:      int32(9),
+			checkField: "actualPosition",
+			wantValue:  "9",
+		},
+		{
 			name:       "load",
 			config:     `{"kind":"smartcore.bos.Transport","load":{"nodeId":"ns=2;s=Load"}}`,
 			nodeId:     "ns=2;s=Load",
@@ -122,6 +140,15 @@ func TestTransport_handleTransportEvent(t *testing.T) {
 			value:      int32(7),
 			checkField: "nextDestinations",
 			wantValue:  "7",
+		},
+		{
+			// Dummy-floor mapping applies to destinations the same way as the actual position.
+			name:       "next destinations - single floor with enum mapping dummy floors",
+			config:     `{"kind":"smartcore.bos.Transport","nextDestinations":[{"type":"SingleFloor","source":{"nodeId":"ns=2;s=Next","enum":{"0":"G","1":"1","2":"2","4":"3"}}}]}`,
+			nodeId:     "ns=2;s=Next",
+			value:      int32(4),
+			checkField: "nextDestinations",
+			wantValue:  "3",
 		},
 	}
 
