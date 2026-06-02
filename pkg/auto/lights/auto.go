@@ -211,9 +211,6 @@ func (b *BrightnessAutomation) processStateChanges(ctx context.Context, readStat
 				)
 				// reset retries to prevent too many repeated attempts
 				retryCounter = 0
-				if !cancelRetry() {
-					<-retry
-				}
 			} else {
 				b.logger.Error("processState failed; scheduling retry",
 					zap.Error(err),
