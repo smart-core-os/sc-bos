@@ -209,11 +209,7 @@ func (b *BrightnessAutomation) processStateChanges(ctx context.Context, readStat
 					zap.Error(err),
 					zap.Int("retryCounter", retryCounter),
 				)
-				// reset retries to prevent too many repeated attempts.
-				// We only get here from the <-retry branch, so the retry timer has
-				// already fired and been drained, and a fresh timer is scheduled
-				// below; there is nothing to cancel or drain here. (Calling
-				// cancelRetry()+<-retry would block, as the channel is already empty.)
+				// reset retries to prevent too many repeated attempts
 				retryCounter = 0
 			} else {
 				b.logger.Error("processState failed; scheduling retry",
