@@ -10,8 +10,8 @@
           <v-list-item-title class="text-body-small text-capitalize">
             {{ camelToSentence(key) }}
           </v-list-item-title>
-          <v-list-item-subtitle class="text-subtitle-1 py-1 font-weight-medium text-wrap ml-2">
-            {{ val }}
+          <v-list-item-subtitle class="text-subtitle-1 py-1 font-weight-medium text-wrap ml-2 metadata-value">
+            <structured-value :value="val"/>
           </v-list-item-subtitle>
         </v-list-item>
       </v-col>
@@ -21,15 +21,15 @@
           <v-list-item-title class="text-body-small text-capitalize">
             {{ camelToSentence(subKey) }}
           </v-list-item-title>
-          <v-row class="py-0">
-            <v-col v-for="(val, key) in subValue" :key="key" cols="align-self">
+          <v-row class="py-0 flex-column">
+            <v-col v-for="(val, key) in subValue" :key="key" cols="12" class="py-0">
               <v-list-item-subtitle class="py-1 mx-2">
                 <v-col cols="align-self">
                   <v-row class="text-capitalize text-caption">
                     {{ camelToSentence(key) }}
                   </v-row>
                   <v-row class="text-subtitle-1">
-                    {{ val }}
+                    <structured-value :value="val"/>
                   </v-row>
                 </v-col>
               </v-list-item-subtitle>
@@ -42,6 +42,7 @@
 </template>
 
 <script setup>
+import StructuredValue from '@/components/StructuredValue.vue';
 import {useSidebarStore} from '@/stores/sidebar';
 import {camelToSentence} from '@/util/string';
 import {computed} from 'vue';
@@ -113,5 +114,15 @@ const deviceInfo = computed(() => {
 <style scoped>
 .v-list-item {
   min-height: auto;
+}
+
+/* allow structured (JSON) values to expand beyond the subtitle's default line clamp */
+.metadata-value {
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+  display: block;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
 }
 </style>
