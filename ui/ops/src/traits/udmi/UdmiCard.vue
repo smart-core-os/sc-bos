@@ -45,6 +45,7 @@
 <script setup>
 
 import {closeResource, newResourceValue} from '@/api/resource';
+import JSON5 from 'json5';
 import {pullExportMessages} from '@/api/sc/traits/udmi';
 import {useErrorStore} from '@/components/ui-error/error';
 import {computed, onMounted, onUnmounted, reactive, watch} from 'vue';
@@ -70,8 +71,8 @@ const displayValue = (value) => {
     const trimmed = v.trim();
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
       try {
-        return JSON.parse(trimmed);
-      } catch { /* not JSON, fall through */ }
+        return JSON5.parse(trimmed);
+      } catch { /* not JSON(5), fall through */ }
     }
   }
   return v;
