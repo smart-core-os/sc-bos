@@ -75,6 +75,7 @@ func (d *device) subscribe(ctx context.Context) error {
 // Values with non-OK status codes are logged as warnings and not passed to trait handlers.
 func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificationData, node *ua.NodeID) {
 	if event.Error != nil {
+		d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(event.Error))
 		service.UpdateSystemCheck(d.systemCheck, event.Error)
 		d.logger.Warn("OPC UA server connection error", zap.Stringer("node", node), zap.Error(event.Error))
 		return

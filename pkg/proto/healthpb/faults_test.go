@@ -414,8 +414,8 @@ func TestFaultCheck_MarkFailed(t *testing.T) {
 			if got := fc.check.GetNormality(); got != HealthCheck_ABNORMAL {
 				t.Errorf("MarkFailed() normality = %v, want %v", got, HealthCheck_ABNORMAL)
 			}
-			if got := fc.check.GetReliability().GetState(); got != HealthCheck_Reliability_RELIABLE {
-				t.Errorf("MarkFailed() reliability = %v, want %v", got, HealthCheck_Reliability_RELIABLE)
+			if got := fc.check.GetReliability().GetState(); got != HealthCheck_Reliability_BAD_RESPONSE {
+				t.Errorf("MarkFailed() reliability = %v, want %v", got, HealthCheck_Reliability_BAD_RESPONSE)
 			}
 		})
 	}
