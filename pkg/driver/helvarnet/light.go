@@ -53,15 +53,18 @@ type Light struct {
 	database      *bolthold.Store
 	testResultSet *resource.Value // *emergencylightpb.TestResultSet
 	isEm          bool
+	// location is the timezone the device's clock is set to, used to correct device-reported times to UTC
+	location *time.Location
 }
 
-func newLight(client *tcpClient, l *zap.Logger, conf *config.Device, db *bolthold.Store, em bool) *Light {
+func newLight(client *tcpClient, l *zap.Logger, conf *config.Device, db *bolthold.Store, em bool, loc *time.Location) *Light {
 	return &Light{
 		brightness: resource.NewValue(resource.WithInitialValue(&lightpb.Brightness{}), resource.WithNoDuplicates()),
 		client:     client,
 		conf:       conf,
 		database:   db,
 		isEm:       em,
+		location:   loc,
 		logger:     l,
 		testResultSet: resource.NewValue(resource.WithInitialValue(&emergencylightpb.TestResultSet{
 			DurationTest: &emergencylightpb.EmergencyTestResult{},
@@ -453,7 +456,10 @@ func (l *Light) getDurationTestResult(ctx context.Context) (*EmergencyState, err
 }
 
 // parseGetCompletionTimeResponse parses the response from the device for the completion time of a function/duration test.
-func parseGetCompletionTimeResponse(r string) (*time.Time, error) {
+//
+// The device reports epoch seconds derived from its local wall-clock, so when loc is set the reported
+// time is re-interpreted in that timezone to recover the correct UTC instant.
+func parseGetCompletionTimeResponse(r string, loc *time.Location) (*time.Time, error) {
 	// example response ?V:1,C:170,@10.106.4.40=1754495355#
 	// the time is seconds in the Linux epoch
 	split := strings.Split(r, "=")
@@ -473,6 +479,12 @@ func parseGetCompletionTimeResponse(r string) (*time.Time, error) {
 	if t.IsZero() {
 		return nil, fmt.Errorf("function test completion time is zero")
 	}
+	if loc != nil {
+		// the epoch seconds encode the device's local wall-clock, take that wall-clock and
+		// place it in the device's timezone to get the true instant
+		wall := t.UTC()
+		t = time.Date(wall.Year(), wall.Month(), wall.Day(), wall.Hour(), wall.Minute(), wall.Second(), 0, loc)
+	}
 	return &t, nil
 }
 
@@ -487,7 +499,7 @@ func (l *Light) getFunctionTestCompletionTime(ctx context.Context) (*time.Time, 
 		return nil, err
 	}
 
-	return parseGetCompletionTimeResponse(r)
+	return parseGetCompletionTimeResponse(r, l.location)
 }
 
 // getDurationTestCompletionTime queries the device for the finish time of the last duration test.
@@ -501,7 +513,7 @@ func (l *Light) getDurationTestCompletionTime(ctx context.Context) (*time.Time, 
 		return nil, err
 	}
 
-	return parseGetCompletionTimeResponse(r)
+	return parseGetCompletionTimeResponse(r, l.location)
 }
 
 func (l *Light) StartFunctionTest(ctx context.Context, _ *emergencylightpb.StartEmergencyTestRequest) (*emergencylightpb.StartEmergencyTestResponse, error) {
