@@ -2,7 +2,8 @@
   <div>
     <template v-if="canChooseKeyCloak">
       <v-card-text class="text-center mx-auto" style="max-width: 320px;">
-        Please sign in to the Smart Core Operator App to unlock all features.
+        Sign in with your organisation account (SSO) — includes Azure Active Directory, Keycloak,
+        and other identity providers.
       </v-card-text>
       <v-card-actions class="justify-center mt-4">
         <v-btn
@@ -12,7 +13,7 @@
             block
             size="large"
             class="text-body-1 font-weight-bold">
-          Sign in
+          Sign in with SSO
         </v-btn>
       </v-card-actions>
       <template v-if="canChooseDevice">
@@ -29,7 +30,7 @@
 
     <template v-else-if="canChooseDevice">
       <v-card-text class="text-center mx-auto" style="max-width: 320px;">
-        Please sign in to the Smart Core Operator App to unlock all features.
+        Sign in to the Smart Core Operator App to unlock all features.
       </v-card-text>
       <v-card-actions class="justify-center mt-4">
         <v-btn
