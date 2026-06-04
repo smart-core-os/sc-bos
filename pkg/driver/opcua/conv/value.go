@@ -79,6 +79,27 @@ func ToString(data any) (string, error) {
 	return "", fmt.Errorf("unsupported conversion %T -> string for val %v", data, data)
 }
 
+// ToEnumString converts a value to its string representation, applying the enum
+// mapping if one is provided.
+//
+// When enum is non-nil and contains an entry keyed by the value's string
+// representation, the mapped string is returned. This lets raw OPC UA values be
+// remapped onto meaningful labels - for example mapping a lift's actual position
+// index (which may include Kone "dummy floors") onto the real floor number.
+//
+// If enum is nil, or has no entry for the value, the plain string representation
+// is returned unchanged, preserving behaviour for sources configured without an enum.
+func ToEnumString(data any, enum map[string]string) (string, error) {
+	s, err := ToString(data)
+	if err != nil {
+		return "", err
+	}
+	if v, ok := enum[s]; ok {
+		return v, nil
+	}
+	return s, nil
+}
+
 // ToTraitEnum takes the value read from the OPC UA node and looks up the value in the enum map defined in the config.
 // If value is found, this value is then used to look up the enum value in the proto pb <EnumName>_value field.
 func ToTraitEnum[T constraints.Integer](data any, enum map[string]string, traitMap map[string]int32) (T, error) {

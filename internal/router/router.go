@@ -306,10 +306,12 @@ func (r *Router) ResolveMethod(fullName string) (Method, error) {
 
 	connResolver := ConnResolverFunc(func(mr MsgRecver) (grpc.ClientConnInterface, error) {
 		var candidates []routeID // what routes should we try to match?
+		var key string
 
 		if keyFunc, exists := service.keys[methodName]; exists {
 			// we can route by key
-			key, err := keyFunc(mr)
+			var err error
+			key, err = keyFunc(mr)
 			if err != nil {
 				return nil, err
 			}
@@ -338,6 +340,16 @@ func (r *Router) ResolveMethod(fullName string) (Method, error) {
 		for _, candidate := range candidates {
 			if conn, exists := r.routes[candidate]; exists {
 				return conn, nil
+			}
+		}
+
+		// If the key is known (has routes for other services), the device exists but doesn't
+		// implement this service — return Unimplemented rather than NotFound.
+		if key != "" {
+			for id := range r.routes {
+				if id.Key == key {
+					return nil, status.Error(codes.Unimplemented, "service not implemented for device")
+				}
 			}
 		}
 

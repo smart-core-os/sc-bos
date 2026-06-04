@@ -3,7 +3,6 @@ package opcua
 import (
 	"context"
 	"encoding/json"
-	"strconv"
 
 	"github.com/gopcua/opcua/ua"
 	"go.uber.org/zap"
@@ -78,7 +77,7 @@ func (t *Transport) PullTransport(_ *transportpb.PullTransportRequest, server tr
 func (t *Transport) handleEvent(_ context.Context, node *ua.NodeID, value any) {
 	old := t.transport.Get().(*transportpb.Transport)
 	if t.cfg.ActualPosition != nil && nodeIdsAreEqual(t.cfg.ActualPosition.NodeId, node) {
-		floor, err := conv.ToString(value)
+		floor, err := conv.ToEnumString(value, t.cfg.ActualPosition.Enum)
 		if err != nil {
 			t.logger.Error("failed to convert ActualPosition event", zap.String("device", t.scName), zap.Error(err))
 			return
@@ -106,18 +105,18 @@ func (t *Transport) handleEvent(_ context.Context, node *ua.NodeID, value any) {
 	if t.cfg.NextDestinations != nil {
 		for i, dest := range t.cfg.NextDestinations {
 			if dest.Type == config.SingleFloor && nodeIdsAreEqual(dest.Source.NodeId, node) {
-				floor, err := conv.IntValue(value)
+				floor, err := conv.ToEnumString(value, dest.Source.Enum)
 				if err != nil {
 					t.logger.Error("failed to convert NextDestinations event", zap.String("device", t.scName), zap.Error(err))
 					return
 				}
 				if i >= len(old.NextDestinations) {
 					old.NextDestinations = append(old.NextDestinations, &transportpb.Transport_Location{
-						Floor: strconv.Itoa(floor),
+						Floor: floor,
 					})
 				} else {
 					old.NextDestinations[i] = &transportpb.Transport_Location{
-						Floor: strconv.Itoa(floor),
+						Floor: floor,
 					}
 				}
 			}
