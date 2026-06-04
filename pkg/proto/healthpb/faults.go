@@ -2,6 +2,7 @@ package healthpb
 
 import (
 	"cmp"
+	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -130,10 +131,14 @@ func (c *FaultCheck) MarkRunning() {
 }
 
 // MarkFailed marks the check as unhealthy with the given error.
+// It sets normality to ABNORMAL and also updates reliability to reflect the error type
+// (e.g. NO_RESPONSE for timeouts, BAD_RESPONSE for other errors) so that connectivity
+// failures are visible in both the normality and reliability fields.
 func (c *FaultCheck) MarkFailed(err error) {
 	c.SetFault(&HealthCheck_Error{
 		SummaryText: err.Error(),
 	})
+	c.UpdateReliability(context.Background(), ReliabilityFromErr(err))
 }
 
 func (c *FaultCheck) writeFaults(f func(old []*HealthCheck_Error) []*HealthCheck_Error) {
