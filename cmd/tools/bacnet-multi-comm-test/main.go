@@ -38,6 +38,7 @@ var (
 	discoverObjects = flag.Bool("discover-objects", false, "discover objects for devices that don't have them configured, overrides similar setting in config")
 	timeout         = flag.Duration("timeout", time.Second*4, "timeout for requests")
 	localPort       = flag.Int("local-port", 0, "local port to use for bacnet requests, overrides any found in config")
+	writesFile      = flag.String("writes-file", "", "optional JSON file describing WriteProperty operations to execute after reads; see writes.go for the schema")
 )
 
 const concurrency = 10
@@ -75,6 +76,13 @@ func run() error {
 		return err
 	}
 	results := make(map[string][]*result, len(bacnetConfigs))
+
+	writes, err := loadWrites(*writesFile)
+	if err != nil {
+		return fmt.Errorf("load writes: %w", err)
+	}
+	writesByDev := writesByDevice(writes)
+	var writeOps []writeResult
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
@@ -182,12 +190,37 @@ func run() error {
 			}
 			// Fetch the object properties for the objects and record them in the results
 			readAllObjectProps(ctx, client, dev, res, key, cfgObjects, results)
+
+			// Execute any writes targeted at this device on the same connection.
+			if ops := writesByDev[uint32(dev.ID.Instance)]; len(ops) > 0 {
+				writeOps = append(writeOps, executeWrites(ctx, client, dev, ops)...)
+				delete(writesByDev, uint32(dev.ID.Instance))
+			}
 		}
 		client.Close()
 	}
 
-	fileName := *resultsFile + "_" + time.Now().Format("2006-01-02T15_04") + ".csv"
-	return writeResults(fileName, results)
+	// Surface writes whose target device id was not encountered in any config.
+	for devID, ops := range writesByDev {
+		for _, op := range ops {
+			log.Printf("WRITE device=%d obj=%s SKIPPED: device not present in any loaded config", devID, op.ObjectID)
+			writeOps = append(writeOps, failed(op, fmt.Errorf("device %d not present in any loaded config", devID)))
+		}
+	}
+
+	stamp := time.Now().Format("2006-01-02T15_04")
+	fileName := *resultsFile + "_" + stamp + ".csv"
+	if err := writeResults(fileName, results); err != nil {
+		return err
+	}
+	if len(writeOps) > 0 {
+		writesCSV := *resultsFile + "_writes_" + stamp + ".csv"
+		if err := writeWriteResults(writesCSV, writeOps); err != nil {
+			return fmt.Errorf("write writes-results: %w", err)
+		}
+		log.Printf("write results: %s (%d ops)", writesCSV, len(writeOps))
+	}
+	return nil
 }
 
 func readAllObjectProps(ctx context.Context, client *gobacnet.Client, dev bactypes.Device, baseResult *result, key string, cfgObjects []config.Object, results map[string][]*result) {
