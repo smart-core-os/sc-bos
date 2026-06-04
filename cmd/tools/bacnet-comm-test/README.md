@@ -5,14 +5,14 @@ A diagnostic tool for testing connectivity to a BACnet/IP device. It connects to
 ## Usage
 
 ```
-bacnet-comm-test <nic[:port]> <server[:port]> [device] [-write Type:instance=value] [-priority 1-16]
+bacnet-comm-test -nic <nic[:port]> -server <server[:port]> [-device <instance>] [-write Type:instance=value] [-priority 1-16]
 ```
 
-| Argument | Description |
+| Flag | Description |
 |---|---|
-| `nic[:port]` | Local network interface name and optional UDP port to bind (default port: 47808) |
-| `server[:port]` | BACnet device IP address and optional port (default port: 47808) |
-| `device` | BACnet device instance number (default: 4194303, the wildcard) |
+| `-nic nic[:port]` | Local network interface name and optional UDP port to bind (default port: 47808) |
+| `-server server[:port]` | BACnet device IP address and optional port (default port: 47808) |
+| `-device instance` | BACnet device instance number (default: 4194303, the wildcard) |
 | `-write Type:instance=value` | Write a value to an object's present-value after reading (optional) |
 | `-priority 1-16` | BACnet write priority (default: 8 — Manual Operator) |
 
@@ -21,7 +21,7 @@ bacnet-comm-test <nic[:port]> <server[:port]> [device] [-write Type:instance=val
 The default local port is 47808 (the standard BACnet port). If another process on your machine is already using that port — for example a BACnet simulator — you will receive no responses. Use a different local port to avoid the conflict:
 
 ```
-bacnet-comm-test "WiFi:47809" 10.104.20.204:56923 393219
+bacnet-comm-test -nic "WiFi:47809" -server 10.104.20.204:56923 -device 393219
 ```
 
 ### Finding the right interface
@@ -39,43 +39,43 @@ On Linux, use the interface name from `ip addr` (e.g. `eth0`).
 Connect to a device on the standard BACnet port, using the wildcard device ID:
 
 ```
-bacnet-comm-test eth0 192.168.1.100
+bacnet-comm-test -nic eth0 -server 192.168.1.100
 ```
 
 Connect to a device on a non-standard port with a known device instance:
 
 ```
-bacnet-comm-test eth0 192.168.1.100:56923 393219
+bacnet-comm-test -nic eth0 -server 192.168.1.100:56923 -device 393219
 ```
 
 Connect using a named Windows interface and a non-default local port:
 
 ```
-bacnet-comm-test "WiFi:47809" 10.104.20.204:56923 393219
+bacnet-comm-test -nic "WiFi:47809" -server 10.104.20.204:56923 -device 393219
 ```
 
 Write a float value to an analog object:
 
 ```
-bacnet-comm-test "WiFi:47809" 10.104.20.204:56923 393219 -write AnalogValue:1=21.5
+bacnet-comm-test -nic "WiFi:47809" -server 10.104.20.204:56923 -device 393219 -write AnalogValue:1=21.5
 ```
 
 Write a boolean value to a binary object:
 
 ```
-bacnet-comm-test "WiFi:47809" 10.104.20.204:56923 393219 -write BinaryValue:0=true
+bacnet-comm-test -nic "WiFi:47809" -server 10.104.20.204:56923 -device 393219 -write BinaryValue:0=true
 ```
 
 Write an integer value to a multi-state object:
 
 ```
-bacnet-comm-test "WiFi:47809" 10.104.20.204:56923 393219 -write MultiStateValue:2=3
+bacnet-comm-test -nic "WiFi:47809" -server 10.104.20.204:56923 -device 393219 -write MultiStateValue:2=3
 ```
 
 Override the write priority:
 
 ```
-bacnet-comm-test "WiFi:47809" 10.104.20.204:56923 393219 -write AnalogValue:1=21.5 -priority 16
+bacnet-comm-test -nic "WiFi:47809" -server 10.104.20.204:56923 -device 393219 -write AnalogValue:1=21.5 -priority 16
 ```
 
 ### Write value types

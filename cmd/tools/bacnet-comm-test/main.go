@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -20,40 +21,24 @@ import (
 )
 
 func main() {
-	args := os.Args
-	if l := len(args); l < 3 || l > 7 {
-		log.Fatalf("Usage: <cmd> nic[:port] server[:port] [device] [-write Type:instance=value] [-priority 1-16]")
+	nicPort := flag.String("nic", "", "local network interface name and optional UDP port (e.g. eth0 or \"WiFi:47809\")")
+	serverPort := flag.String("server", "", "BACnet device IP address and optional port (e.g. 192.168.1.100 or 192.168.1.100:56923)")
+	deviceStr := flag.String("device", "4194303", "BACnet device instance number (default: 4194303 wildcard)")
+	writeSpec := flag.String("write", "", "write a present value after reading: Type:instance=value")
+	writePriorityFlag := flag.Uint("priority", 8, "BACnet write priority 1-16 (default: 8, Manual Operator)")
+	flag.Parse()
+
+	if *nicPort == "" || *serverPort == "" {
+		flag.Usage()
+		os.Exit(1)
 	}
-	nicPort, serverPort := args[1], args[2]
-	deviceStr := "4194303"
-	writeSpec := ""
-	writePriority := uint(8)
-	for i := 3; i < len(args); i++ {
-		if strings.HasPrefix(args[i], "-write=") {
-			writeSpec = strings.TrimPrefix(args[i], "-write=")
-		} else if args[i] == "-write" && i+1 < len(args) {
-			i++
-			writeSpec = args[i]
-		} else if strings.HasPrefix(args[i], "-priority=") {
-			p, err := strconv.ParseUint(strings.TrimPrefix(args[i], "-priority="), 10, 8)
-			if err != nil || p < 1 || p > 16 {
-				log.Fatal("bad priority: must be 1-16")
-			}
-			writePriority = uint(p)
-		} else if args[i] == "-priority" && i+1 < len(args) {
-			i++
-			p, err := strconv.ParseUint(args[i], 10, 8)
-			if err != nil || p < 1 || p > 16 {
-				log.Fatal("bad priority: must be 1-16")
-			}
-			writePriority = uint(p)
-		} else if deviceStr == "4194303" {
-			deviceStr = args[i]
-		}
+	if *writePriorityFlag < 1 || *writePriorityFlag > 16 {
+		log.Fatal("bad priority: must be 1-16")
 	}
+	writePriority := *writePriorityFlag
 
 	localPort := 0 // defaults to 47808
-	nic, localPortStr, _ := strings.Cut(nicPort, ":")
+	nic, localPortStr, _ := strings.Cut(*nicPort, ":")
 	if localPortStr != "" {
 		var err error
 		localPort, err = strconv.Atoi(localPortStr)
@@ -62,9 +47,9 @@ func main() {
 		}
 	}
 
-	deviceNum, err := strconv.ParseInt(deviceStr, 10, 32)
+	deviceNum, err := strconv.ParseInt(*deviceStr, 10, 32)
 	if err != nil {
-		log.Fatal("bad device", deviceStr, err)
+		log.Fatal("bad device", *deviceStr, err)
 	}
 
 	client, err := gobacnet.NewClient(nic, localPort)
@@ -73,7 +58,7 @@ func main() {
 	}
 	defer client.Close()
 
-	uri, err := url.ParseRequestURI("bacnet://" + serverPort)
+	uri, err := url.ParseRequestURI("bacnet://" + *serverPort)
 	if err != nil {
 		log.Fatal("server", err)
 	}
@@ -142,14 +127,14 @@ func main() {
 	}
 	fmt.Printf("\nTotal: %d objects\n", len(entries))
 
-	if writeSpec == "" {
+	if *writeSpec == "" {
 		return
 	}
 
 	// Parse -write Type:instance=value
-	keyPart, rawValue, ok := strings.Cut(writeSpec, "=")
+	keyPart, rawValue, ok := strings.Cut(*writeSpec, "=")
 	if !ok {
-		log.Fatalf("-write: expected Type:instance=value, got %q", writeSpec)
+		log.Fatalf("-write: expected Type:instance=value, got %q", *writeSpec)
 	}
 	typePart, instancePart, ok := strings.Cut(keyPart, ":")
 	if !ok {
