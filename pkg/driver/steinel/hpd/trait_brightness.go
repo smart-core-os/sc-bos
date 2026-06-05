@@ -29,9 +29,9 @@ func newBrightnessSensor(client *Client, logger *zap.Logger) *brightnessSensor {
 	}
 }
 
-func (b *brightnessSensor) GetAmbientBrightness(context.Context, *brightnesssensorpb.GetAmbientBrightnessRequest) (*brightnesssensorpb.AmbientBrightness, error) {
+func (b *brightnessSensor) GetAmbientBrightness(ctx context.Context, _ *brightnesssensorpb.GetAmbientBrightnessRequest) (*brightnesssensorpb.AmbientBrightness, error) {
 	response := SensorResponse{}
-	if err := doGetRequest(b.client, &response, "sensor"); err != nil {
+	if err := doGetRequest(ctx, b.client, &response, "sensor"); err != nil {
 		return nil, err
 	}
 	if err := b.getUpdate(&response); err != nil {

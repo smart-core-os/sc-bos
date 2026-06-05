@@ -2,9 +2,11 @@ package hpd
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"sync"
 
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd/config"
@@ -46,64 +48,86 @@ type Driver struct {
 	health    *healthpb.Checks
 	logger    *zap.Logger
 
-	client *Client
-
-	airQualitySensor *AirQualitySensor
-	brightnessSensor *brightnessSensor
-	occupancy        *Occupancy
-	soundSensor      *soundSensor
-	temperature      *TemperatureSensor
-
-	udmiServiceServer *UdmiServiceServer
+	// devicesStopped waits until the devices set up by the previous applyConfig have
+	// stopped and released their health checks. nil before the first apply.
+	devicesStopped func()
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
+	if d.devicesStopped != nil {
+		// MonoApply has cancelled the previous apply's context, but its devices release
+		// their health checks asynchronously as they stop. Wait for them so re-registering
+		// the checks below doesn't fail with ErrAlreadyExists.
+		d.devicesStopped()
+	}
 	announcer := d.announcer.Replace(ctx)
-	grp, ctx := errgroup.WithContext(ctx)
 
-	d.client = newInsecureClient(cfg.IpAddress, cfg.Password)
+	var wg sync.WaitGroup
+	d.devicesStopped = wg.Wait
 
-	d.airQualitySensor = newAirQualitySensor(d.client, d.logger.Named("AirQualityValue").With(zap.String("ipAddress", cfg.IpAddress)))
-	d.brightnessSensor = newBrightnessSensor(d.client, d.logger.Named("Brightness").With(zap.String("ipAddress", cfg.IpAddress)))
-	d.occupancy = newOccupancySensor(d.client, d.logger.Named("Occupancy").With(zap.String("ipAddress", cfg.IpAddress)))
-	d.soundSensor = newSoundSensor(d.client, d.logger.Named("soundSensor").With(zap.String("ipAddress", cfg.IpAddress)))
-	d.temperature = newTemperatureSensor(d.client, d.logger.Named("Temperature").With(zap.String("ipAddress", cfg.IpAddress)))
-	d.udmiServiceServer = newUdmiServiceServer(d.logger.Named("UdmiServiceServer"), d.airQualitySensor.AirQualityValue, d.occupancy.OccupancyValue, d.temperature.TemperatureValue, cfg.UDMITopicPrefix)
+	var errs []error
+	for _, devCfg := range cfg.Devices {
+		if err := d.applyDeviceConfig(ctx, announcer, &wg, devCfg); err != nil {
+			// one bad device shouldn't stop the others from running
+			d.logger.Error("failed to set up device", zap.String("device", devCfg.Name), zap.Error(err))
+			errs = append(errs, fmt.Errorf("%s: %w", devCfg.Name, err))
+		}
+	}
+	if len(errs) > 0 && len(errs) == len(cfg.Devices) {
+		// no device made it, surface that via the service status
+		return errors.Join(errs...)
+	}
+	return nil
+}
 
-	announcer.Announce(cfg.Name,
-		node.HasMetadata(cfg.Metadata),
-		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(d.airQualitySensor)),
-		node.HasTrait(trait.AirQualitySensor),
-		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(d.temperature)),
-		node.HasTrait(trait.AirTemperature),
-		node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, brightnesssensorpb.BrightnessSensorApiServer(d.brightnessSensor)),
-		node.HasTrait(trait.BrightnessSensor),
-		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(d.occupancy)),
-		node.HasTrait(trait.OccupancySensor),
-		node.HasServer(soundsensorpb.RegisterSoundSensorApiServer, soundsensorpb.SoundSensorApiServer(d.soundSensor)),
-		node.HasTrait(soundsensorpb.TraitName),
-		node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(d.udmiServiceServer)),
-		node.HasTrait(udmipb.TraitName),
-		node.HasDeviceType(metadatapb.Metadata_DEVICE),
-	)
+func (d *Driver) applyDeviceConfig(ctx context.Context, announcer node.Announcer, wg *sync.WaitGroup, cfg config.Device) error {
+	logger := d.logger.With(zap.String("device", cfg.Name), zap.String("ipAddress", cfg.IpAddress))
+	client := newInsecureClient(cfg.IpAddress, cfg.ResolvedPassword())
 
-	faultCheck, err := d.health.NewFaultCheck(cfg.Name, commsHealthCheck)
+	airQualitySensor := newAirQualitySensor(client, logger.Named("AirQualityValue"))
+	brightnessSensor := newBrightnessSensor(client, logger.Named("Brightness"))
+	occupancy := newOccupancySensor(client, logger.Named("Occupancy"))
+	soundSensor := newSoundSensor(client, logger.Named("soundSensor"))
+	temperature := newTemperatureSensor(client, logger.Named("Temperature"))
+
+	faultCheck, err := d.health.NewFaultCheck(cfg.Name, commsHealthCheck())
 	if err != nil {
-		d.logger.Error("failed to create health check", zap.String("device", cfg.Name), zap.Error(err))
-		return err
+		return fmt.Errorf("failed to create health check: %w", err)
 	}
 
-	poller := newPoller(d.client, cfg.PollInterval.Duration, d.logger.Named("SteinelPoller").With(zap.String("ipAddress", cfg.IpAddress)), faultCheck, d.airQualitySensor, d.occupancy, d.temperature)
+	features := []node.Feature{
+		node.HasMetadata(cfg.Metadata),
+		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(airQualitySensor)),
+		node.HasTrait(trait.AirQualitySensor),
+		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(temperature)),
+		node.HasTrait(trait.AirTemperature),
+		node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, brightnesssensorpb.BrightnessSensorApiServer(brightnessSensor)),
+		node.HasTrait(trait.BrightnessSensor),
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancy)),
+		node.HasTrait(trait.OccupancySensor),
+		node.HasServer(soundsensorpb.RegisterSoundSensorApiServer, soundsensorpb.SoundSensorApiServer(soundSensor)),
+		node.HasTrait(soundsensorpb.TraitName),
+		node.HasDeviceType(metadatapb.Metadata_DEVICE),
+	}
+	if cfg.UDMITopicPrefix != "" {
+		// without a topic prefix devices would all export to the same MQTT topic, so no prefix means no UDMI
+		udmiServiceServer := newUdmiServiceServer(logger.Named("UdmiServiceServer"),
+			airQualitySensor.AirQualityValue, occupancy.OccupancyValue, temperature.TemperatureValue, cfg.UDMITopicPrefix)
+		features = append(features,
+			node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(udmiServiceServer)),
+			node.HasTrait(udmipb.TraitName),
+		)
+	}
+	announcer.Announce(cfg.Name, features...)
 
-	grp.Go(func() error {
-		poller.startPoll(ctx)
-		return nil
-	})
+	poller := newPoller(client, cfg.PollInterval.Or(config.DefaultPollInterval), logger.Named("SteinelPoller"), faultCheck, airQualitySensor, occupancy, temperature)
 
+	wg.Add(1)
 	go func() {
-		_ = grp.Wait() // won't error in current implementation
-		faultCheck.Dispose()
-		d.client.Client.CloseIdleConnections()
+		defer wg.Done()
+		defer client.Client.CloseIdleConnections()
+		defer faultCheck.Dispose()
+		poller.startPoll(ctx)
 	}()
 
 	return nil

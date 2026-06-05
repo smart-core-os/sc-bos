@@ -1,12 +1,14 @@
 package hpd
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type Client struct {
@@ -51,13 +53,14 @@ func getAllowedCiphers() []uint16 {
 
 // newInsecureClient creates a Client that connects over HTTPS but does not verify the server certificate.
 func newInsecureClient(host string, password string) *Client {
-	client := &Client{
+	return &Client{
 		BaseURL: url.URL{
 			Scheme: "https",
 			Host:   host,
 			Path:   "/rest",
 		},
 		Client: &http.Client{
+			Timeout: 30 * time.Second,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
 					InsecureSkipVerify: true,
@@ -65,13 +68,8 @@ func newInsecureClient(host string, password string) *Client {
 				},
 			},
 		},
+		Password: password,
 	}
-	if len(password) > 0 {
-		client.Password = password
-	} else {
-		client.Password = "Steinel123"
-	}
-	return client
 }
 
 func (c *Client) newRequest(method string, endpoint string) *http.Request {
@@ -130,8 +128,8 @@ type SensorResponse struct {
 	IAQ                          int     `json:"IAQ,omitempty"`
 }
 
-func doGetRequest(conn *Client, target any, endpoint string) error {
-	req := conn.newRequest("GET", endpoint)
+func doGetRequest(ctx context.Context, conn *Client, target any, endpoint string) error {
+	req := conn.newRequest("GET", endpoint).WithContext(ctx)
 
 	req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(":"+conn.Password)))
 

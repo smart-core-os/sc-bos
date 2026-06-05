@@ -28,9 +28,9 @@ func newSoundSensor(client *Client, logger *zap.Logger) *soundSensor {
 	}
 }
 
-func (s *soundSensor) GetSoundLevel(context.Context, *soundsensorpb.GetSoundLevelRequest) (*soundsensorpb.SoundLevel, error) {
+func (s *soundSensor) GetSoundLevel(ctx context.Context, _ *soundsensorpb.GetSoundLevelRequest) (*soundsensorpb.SoundLevel, error) {
 	response := SensorResponse{}
-	if err := doGetRequest(s.client, &response, "sensor"); err != nil {
+	if err := doGetRequest(ctx, s.client, &response, "sensor"); err != nil {
 		return nil, err
 	}
 	if err := s.getUpdate(&response); err != nil {

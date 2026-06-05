@@ -34,9 +34,9 @@ func newAirQualitySensor(client *Client, logger *zap.Logger) *AirQualitySensor {
 	}
 }
 
-func (a *AirQualitySensor) GetAirQuality(_ context.Context, _ *airqualitysensorpb.GetAirQualityRequest) (*airqualitysensorpb.AirQuality, error) {
+func (a *AirQualitySensor) GetAirQuality(ctx context.Context, _ *airqualitysensorpb.GetAirQualityRequest) (*airqualitysensorpb.AirQuality, error) {
 	response := SensorResponse{}
-	if err := doGetRequest(a.client, &response, "sensor"); err != nil {
+	if err := doGetRequest(ctx, a.client, &response, "sensor"); err != nil {
 		return nil, err
 	}
 	if err := a.GetUpdate(&response); err != nil {
