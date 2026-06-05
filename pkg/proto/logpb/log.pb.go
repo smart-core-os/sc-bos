@@ -345,7 +345,9 @@ type PullLogMessagesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Number of buffered messages to replay before streaming live.
-	// Analogous to tail -n <count>. Default: 200. Max: 1000.
+	// Analogous to tail -n <count>. When min_level or field_filter are set, up
+	// to this many MATCHING messages are replayed, scanning older buffer
+	// entries as needed. Default: 200. Max: 1000.
 	InitialCount int32 `protobuf:"varint,2,opt,name=initial_count,json=initialCount,proto3" json:"initial_count,omitempty"`
 	// If true, skip the initial replay and stream from now onwards only.
 	UpdatesOnly bool `protobuf:"varint,3,opt,name=updates_only,json=updatesOnly,proto3" json:"updates_only,omitempty"`
@@ -353,8 +355,13 @@ type PullLogMessagesRequest struct {
 	MinLevel Level `protobuf:"varint,4,opt,name=min_level,json=minLevel,proto3,enum=smartcore.bos.log.v1.Level" json:"min_level,omitempty"`
 	// Optional: filter by logger name prefix.
 	// Reserved for future use; server may return UNIMPLEMENTED if used.
-	LoggerFilter  string                 `protobuf:"bytes,5,opt,name=logger_filter,json=loggerFilter,proto3" json:"logger_filter,omitempty"`
-	ReadMask      *fieldmaskpb.FieldMask `protobuf:"bytes,6,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
+	LoggerFilter string                 `protobuf:"bytes,5,opt,name=logger_filter,json=loggerFilter,proto3" json:"logger_filter,omitempty"`
+	ReadMask     *fieldmaskpb.FieldMask `protobuf:"bytes,6,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
+	// Optional: filter by structured field values. A message matches only when
+	// every entry here equals the corresponding entry in the message's fields
+	// map (exact match, AND semantics). An empty map matches all messages.
+	// Combined with min_level (both must pass).
+	FieldFilter   map[string]string `protobuf:"bytes,7,rep,name=field_filter,json=fieldFilter,proto3" json:"field_filter,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -427,6 +434,13 @@ func (x *PullLogMessagesRequest) GetLoggerFilter() string {
 func (x *PullLogMessagesRequest) GetReadMask() *fieldmaskpb.FieldMask {
 	if x != nil {
 		return x.ReadMask
+	}
+	return nil
+}
+
+func (x *PullLogMessagesRequest) GetFieldFilter() map[string]string {
+	if x != nil {
+		return x.FieldFilter
 	}
 	return nil
 }
@@ -964,7 +978,7 @@ type PullLogMessagesResponse_Change struct {
 
 func (x *PullLogMessagesResponse_Change) Reset() {
 	*x = PullLogMessagesResponse_Change{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[16]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -976,7 +990,7 @@ func (x *PullLogMessagesResponse_Change) String() string {
 func (*PullLogMessagesResponse_Change) ProtoMessage() {}
 
 func (x *PullLogMessagesResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[16]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1024,7 +1038,7 @@ type PullLogLevelResponse_Change struct {
 
 func (x *PullLogLevelResponse_Change) Reset() {
 	*x = PullLogLevelResponse_Change{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[17]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1036,7 +1050,7 @@ func (x *PullLogLevelResponse_Change) String() string {
 func (*PullLogLevelResponse_Change) ProtoMessage() {}
 
 func (x *PullLogLevelResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[17]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1084,7 +1098,7 @@ type PullLogMetadataResponse_Change struct {
 
 func (x *PullLogMetadataResponse_Change) Reset() {
 	*x = PullLogMetadataResponse_Change{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[18]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1096,7 +1110,7 @@ func (x *PullLogMetadataResponse_Change) String() string {
 func (*PullLogMetadataResponse_Change) ProtoMessage() {}
 
 func (x *PullLogMetadataResponse_Change) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[18]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1149,7 +1163,7 @@ type GetDownloadLogUrlResponse_LogFile struct {
 
 func (x *GetDownloadLogUrlResponse_LogFile) Reset() {
 	*x = GetDownloadLogUrlResponse_LogFile{}
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[19]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1161,7 +1175,7 @@ func (x *GetDownloadLogUrlResponse_LogFile) String() string {
 func (*GetDownloadLogUrlResponse_LogFile) ProtoMessage() {}
 
 func (x *GetDownloadLogUrlResponse_LogFile) ProtoReflect() protoreflect.Message {
-	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[19]
+	mi := &file_smartcore_bos_log_v1_log_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1232,14 +1246,18 @@ const file_smartcore_bos_log_v1_log_proto_rawDesc = "" +
 	"\vLogMetadata\x12(\n" +
 	"\x10total_size_bytes\x18\x01 \x01(\x03R\x0etotalSizeBytes\x12\x1d\n" +
 	"\n" +
-	"file_count\x18\x02 \x01(\x05R\tfileCount\"\x8c\x02\n" +
+	"file_count\x18\x02 \x01(\x05R\tfileCount\"\xae\x03\n" +
 	"\x16PullLogMessagesRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12#\n" +
 	"\rinitial_count\x18\x02 \x01(\x05R\finitialCount\x12!\n" +
 	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\x128\n" +
 	"\tmin_level\x18\x04 \x01(\x0e2\x1b.smartcore.bos.log.v1.LevelR\bminLevel\x12#\n" +
 	"\rlogger_filter\x18\x05 \x01(\tR\floggerFilter\x127\n" +
-	"\tread_mask\x18\x06 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x83\x02\n" +
+	"\tread_mask\x18\x06 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12`\n" +
+	"\ffield_filter\x18\a \x03(\v2=.smartcore.bos.log.v1.PullLogMessagesRequest.FieldFilterEntryR\vfieldFilter\x1a>\n" +
+	"\x10FieldFilterEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x83\x02\n" +
 	"\x17PullLogMessagesResponse\x12N\n" +
 	"\achanges\x18\x01 \x03(\v24.smartcore.bos.log.v1.PullLogMessagesResponse.ChangeR\achanges\x1a\x97\x01\n" +
 	"\x06Change\x12\x12\n" +
@@ -1322,7 +1340,7 @@ func file_smartcore_bos_log_v1_log_proto_rawDescGZIP() []byte {
 }
 
 var file_smartcore_bos_log_v1_log_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_smartcore_bos_log_v1_log_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_smartcore_bos_log_v1_log_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_smartcore_bos_log_v1_log_proto_goTypes = []any{
 	(Level)(0),                                // 0: smartcore.bos.log.v1.Level
 	(*SourceLocation)(nil),                    // 1: smartcore.bos.log.v1.SourceLocation
@@ -1341,58 +1359,60 @@ var file_smartcore_bos_log_v1_log_proto_goTypes = []any{
 	(*GetDownloadLogUrlRequest)(nil),          // 14: smartcore.bos.log.v1.GetDownloadLogUrlRequest
 	(*GetDownloadLogUrlResponse)(nil),         // 15: smartcore.bos.log.v1.GetDownloadLogUrlResponse
 	nil,                                       // 16: smartcore.bos.log.v1.LogMessage.FieldsEntry
-	(*PullLogMessagesResponse_Change)(nil),    // 17: smartcore.bos.log.v1.PullLogMessagesResponse.Change
-	(*PullLogLevelResponse_Change)(nil),       // 18: smartcore.bos.log.v1.PullLogLevelResponse.Change
-	(*PullLogMetadataResponse_Change)(nil),    // 19: smartcore.bos.log.v1.PullLogMetadataResponse.Change
-	(*GetDownloadLogUrlResponse_LogFile)(nil), // 20: smartcore.bos.log.v1.GetDownloadLogUrlResponse.LogFile
-	(*timestamppb.Timestamp)(nil),             // 21: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),             // 22: google.protobuf.FieldMask
-	(*durationpb.Duration)(nil),               // 23: google.protobuf.Duration
+	nil,                                       // 17: smartcore.bos.log.v1.PullLogMessagesRequest.FieldFilterEntry
+	(*PullLogMessagesResponse_Change)(nil),    // 18: smartcore.bos.log.v1.PullLogMessagesResponse.Change
+	(*PullLogLevelResponse_Change)(nil),       // 19: smartcore.bos.log.v1.PullLogLevelResponse.Change
+	(*PullLogMetadataResponse_Change)(nil),    // 20: smartcore.bos.log.v1.PullLogMetadataResponse.Change
+	(*GetDownloadLogUrlResponse_LogFile)(nil), // 21: smartcore.bos.log.v1.GetDownloadLogUrlResponse.LogFile
+	(*timestamppb.Timestamp)(nil),             // 22: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),             // 23: google.protobuf.FieldMask
+	(*durationpb.Duration)(nil),               // 24: google.protobuf.Duration
 }
 var file_smartcore_bos_log_v1_log_proto_depIdxs = []int32{
-	21, // 0: smartcore.bos.log.v1.LogMessage.timestamp:type_name -> google.protobuf.Timestamp
+	22, // 0: smartcore.bos.log.v1.LogMessage.timestamp:type_name -> google.protobuf.Timestamp
 	0,  // 1: smartcore.bos.log.v1.LogMessage.level:type_name -> smartcore.bos.log.v1.Level
 	16, // 2: smartcore.bos.log.v1.LogMessage.fields:type_name -> smartcore.bos.log.v1.LogMessage.FieldsEntry
 	1,  // 3: smartcore.bos.log.v1.LogMessage.source_location:type_name -> smartcore.bos.log.v1.SourceLocation
 	0,  // 4: smartcore.bos.log.v1.LogLevel.level:type_name -> smartcore.bos.log.v1.Level
 	0,  // 5: smartcore.bos.log.v1.PullLogMessagesRequest.min_level:type_name -> smartcore.bos.log.v1.Level
-	22, // 6: smartcore.bos.log.v1.PullLogMessagesRequest.read_mask:type_name -> google.protobuf.FieldMask
-	17, // 7: smartcore.bos.log.v1.PullLogMessagesResponse.changes:type_name -> smartcore.bos.log.v1.PullLogMessagesResponse.Change
-	22, // 8: smartcore.bos.log.v1.GetLogLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
-	22, // 9: smartcore.bos.log.v1.PullLogLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
-	18, // 10: smartcore.bos.log.v1.PullLogLevelResponse.changes:type_name -> smartcore.bos.log.v1.PullLogLevelResponse.Change
-	3,  // 11: smartcore.bos.log.v1.UpdateLogLevelRequest.log_level:type_name -> smartcore.bos.log.v1.LogLevel
-	22, // 12: smartcore.bos.log.v1.UpdateLogLevelRequest.update_mask:type_name -> google.protobuf.FieldMask
-	22, // 13: smartcore.bos.log.v1.GetLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	22, // 14: smartcore.bos.log.v1.PullLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
-	19, // 15: smartcore.bos.log.v1.PullLogMetadataResponse.changes:type_name -> smartcore.bos.log.v1.PullLogMetadataResponse.Change
-	23, // 16: smartcore.bos.log.v1.GetDownloadLogUrlRequest.url_ttl:type_name -> google.protobuf.Duration
-	20, // 17: smartcore.bos.log.v1.GetDownloadLogUrlResponse.files:type_name -> smartcore.bos.log.v1.GetDownloadLogUrlResponse.LogFile
-	21, // 18: smartcore.bos.log.v1.PullLogMessagesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	2,  // 19: smartcore.bos.log.v1.PullLogMessagesResponse.Change.messages:type_name -> smartcore.bos.log.v1.LogMessage
-	21, // 20: smartcore.bos.log.v1.PullLogLevelResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	3,  // 21: smartcore.bos.log.v1.PullLogLevelResponse.Change.log_level:type_name -> smartcore.bos.log.v1.LogLevel
-	21, // 22: smartcore.bos.log.v1.PullLogMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	4,  // 23: smartcore.bos.log.v1.PullLogMetadataResponse.Change.log_metadata:type_name -> smartcore.bos.log.v1.LogMetadata
-	5,  // 24: smartcore.bos.log.v1.LogApi.PullLogMessages:input_type -> smartcore.bos.log.v1.PullLogMessagesRequest
-	7,  // 25: smartcore.bos.log.v1.LogApi.GetLogLevel:input_type -> smartcore.bos.log.v1.GetLogLevelRequest
-	8,  // 26: smartcore.bos.log.v1.LogApi.PullLogLevel:input_type -> smartcore.bos.log.v1.PullLogLevelRequest
-	10, // 27: smartcore.bos.log.v1.LogApi.UpdateLogLevel:input_type -> smartcore.bos.log.v1.UpdateLogLevelRequest
-	11, // 28: smartcore.bos.log.v1.LogApi.GetLogMetadata:input_type -> smartcore.bos.log.v1.GetLogMetadataRequest
-	12, // 29: smartcore.bos.log.v1.LogApi.PullLogMetadata:input_type -> smartcore.bos.log.v1.PullLogMetadataRequest
-	14, // 30: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:input_type -> smartcore.bos.log.v1.GetDownloadLogUrlRequest
-	6,  // 31: smartcore.bos.log.v1.LogApi.PullLogMessages:output_type -> smartcore.bos.log.v1.PullLogMessagesResponse
-	3,  // 32: smartcore.bos.log.v1.LogApi.GetLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
-	9,  // 33: smartcore.bos.log.v1.LogApi.PullLogLevel:output_type -> smartcore.bos.log.v1.PullLogLevelResponse
-	3,  // 34: smartcore.bos.log.v1.LogApi.UpdateLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
-	4,  // 35: smartcore.bos.log.v1.LogApi.GetLogMetadata:output_type -> smartcore.bos.log.v1.LogMetadata
-	13, // 36: smartcore.bos.log.v1.LogApi.PullLogMetadata:output_type -> smartcore.bos.log.v1.PullLogMetadataResponse
-	15, // 37: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:output_type -> smartcore.bos.log.v1.GetDownloadLogUrlResponse
-	31, // [31:38] is the sub-list for method output_type
-	24, // [24:31] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	23, // 6: smartcore.bos.log.v1.PullLogMessagesRequest.read_mask:type_name -> google.protobuf.FieldMask
+	17, // 7: smartcore.bos.log.v1.PullLogMessagesRequest.field_filter:type_name -> smartcore.bos.log.v1.PullLogMessagesRequest.FieldFilterEntry
+	18, // 8: smartcore.bos.log.v1.PullLogMessagesResponse.changes:type_name -> smartcore.bos.log.v1.PullLogMessagesResponse.Change
+	23, // 9: smartcore.bos.log.v1.GetLogLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
+	23, // 10: smartcore.bos.log.v1.PullLogLevelRequest.read_mask:type_name -> google.protobuf.FieldMask
+	19, // 11: smartcore.bos.log.v1.PullLogLevelResponse.changes:type_name -> smartcore.bos.log.v1.PullLogLevelResponse.Change
+	3,  // 12: smartcore.bos.log.v1.UpdateLogLevelRequest.log_level:type_name -> smartcore.bos.log.v1.LogLevel
+	23, // 13: smartcore.bos.log.v1.UpdateLogLevelRequest.update_mask:type_name -> google.protobuf.FieldMask
+	23, // 14: smartcore.bos.log.v1.GetLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	23, // 15: smartcore.bos.log.v1.PullLogMetadataRequest.read_mask:type_name -> google.protobuf.FieldMask
+	20, // 16: smartcore.bos.log.v1.PullLogMetadataResponse.changes:type_name -> smartcore.bos.log.v1.PullLogMetadataResponse.Change
+	24, // 17: smartcore.bos.log.v1.GetDownloadLogUrlRequest.url_ttl:type_name -> google.protobuf.Duration
+	21, // 18: smartcore.bos.log.v1.GetDownloadLogUrlResponse.files:type_name -> smartcore.bos.log.v1.GetDownloadLogUrlResponse.LogFile
+	22, // 19: smartcore.bos.log.v1.PullLogMessagesResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	2,  // 20: smartcore.bos.log.v1.PullLogMessagesResponse.Change.messages:type_name -> smartcore.bos.log.v1.LogMessage
+	22, // 21: smartcore.bos.log.v1.PullLogLevelResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	3,  // 22: smartcore.bos.log.v1.PullLogLevelResponse.Change.log_level:type_name -> smartcore.bos.log.v1.LogLevel
+	22, // 23: smartcore.bos.log.v1.PullLogMetadataResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	4,  // 24: smartcore.bos.log.v1.PullLogMetadataResponse.Change.log_metadata:type_name -> smartcore.bos.log.v1.LogMetadata
+	5,  // 25: smartcore.bos.log.v1.LogApi.PullLogMessages:input_type -> smartcore.bos.log.v1.PullLogMessagesRequest
+	7,  // 26: smartcore.bos.log.v1.LogApi.GetLogLevel:input_type -> smartcore.bos.log.v1.GetLogLevelRequest
+	8,  // 27: smartcore.bos.log.v1.LogApi.PullLogLevel:input_type -> smartcore.bos.log.v1.PullLogLevelRequest
+	10, // 28: smartcore.bos.log.v1.LogApi.UpdateLogLevel:input_type -> smartcore.bos.log.v1.UpdateLogLevelRequest
+	11, // 29: smartcore.bos.log.v1.LogApi.GetLogMetadata:input_type -> smartcore.bos.log.v1.GetLogMetadataRequest
+	12, // 30: smartcore.bos.log.v1.LogApi.PullLogMetadata:input_type -> smartcore.bos.log.v1.PullLogMetadataRequest
+	14, // 31: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:input_type -> smartcore.bos.log.v1.GetDownloadLogUrlRequest
+	6,  // 32: smartcore.bos.log.v1.LogApi.PullLogMessages:output_type -> smartcore.bos.log.v1.PullLogMessagesResponse
+	3,  // 33: smartcore.bos.log.v1.LogApi.GetLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
+	9,  // 34: smartcore.bos.log.v1.LogApi.PullLogLevel:output_type -> smartcore.bos.log.v1.PullLogLevelResponse
+	3,  // 35: smartcore.bos.log.v1.LogApi.UpdateLogLevel:output_type -> smartcore.bos.log.v1.LogLevel
+	4,  // 36: smartcore.bos.log.v1.LogApi.GetLogMetadata:output_type -> smartcore.bos.log.v1.LogMetadata
+	13, // 37: smartcore.bos.log.v1.LogApi.PullLogMetadata:output_type -> smartcore.bos.log.v1.PullLogMetadataResponse
+	15, // 38: smartcore.bos.log.v1.LogApi.GetDownloadLogUrl:output_type -> smartcore.bos.log.v1.GetDownloadLogUrlResponse
+	32, // [32:39] is the sub-list for method output_type
+	25, // [25:32] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_log_v1_log_proto_init() }
@@ -1406,7 +1426,7 @@ func file_smartcore_bos_log_v1_log_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_log_v1_log_proto_rawDesc), len(file_smartcore_bos_log_v1_log_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   20,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

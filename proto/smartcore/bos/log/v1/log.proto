@@ -83,7 +83,9 @@ message LogMetadata {
 message PullLogMessagesRequest {
   string name = 1;
   // Number of buffered messages to replay before streaming live.
-  // Analogous to tail -n <count>. Default: 200. Max: 1000.
+  // Analogous to tail -n <count>. When min_level or field_filter are set, up
+  // to this many MATCHING messages are replayed, scanning older buffer
+  // entries as needed. Default: 200. Max: 1000.
   int32 initial_count = 2;
   // If true, skip the initial replay and stream from now onwards only.
   bool updates_only = 3;
@@ -93,6 +95,11 @@ message PullLogMessagesRequest {
   // Reserved for future use; server may return UNIMPLEMENTED if used.
   string logger_filter = 5;
   google.protobuf.FieldMask read_mask = 6;
+  // Optional: filter by structured field values. A message matches only when
+  // every entry here equals the corresponding entry in the message's fields
+  // map (exact match, AND semantics). An empty map matches all messages.
+  // Combined with min_level (both must pass).
+  map<string, string> field_filter = 7;
 }
 
 message PullLogMessagesResponse {
