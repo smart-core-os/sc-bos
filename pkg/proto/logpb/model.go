@@ -2,6 +2,7 @@ package logpb
 
 import (
 	"context"
+	"slices"
 	"sync"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
@@ -91,17 +92,14 @@ func (m *Model) TailMatching(n int, match func(*LogMessage) bool) []*LogMessage 
 	cap := len(m.buf)
 	// Walk newest -> oldest collecting matches, then reverse into
 	// chronological order.
-	var rev []*LogMessage
-	for i := 0; i < m.bufSize && len(rev) < n; i++ {
+	var result []*LogMessage
+	for i := 0; i < m.bufSize && len(result) < n; i++ {
 		msg := m.buf[(m.bufHead-1-i+cap)%cap]
 		if match == nil || match(msg) {
-			rev = append(rev, msg)
+			result = append(result, msg)
 		}
 	}
-	result := make([]*LogMessage, len(rev))
-	for i, msg := range rev {
-		result[len(rev)-1-i] = msg
-	}
+	slices.Reverse(result)
 	return result
 }
 
