@@ -139,7 +139,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			d.clients[l.IpAddress] = newTcpClient(tcpAddr, d.logger, &cfg)
 		}
 
-		lum := newLight(d.clients[l.IpAddress], d.logger, l, d.database, false)
+		lum := newLight(d.clients[l.IpAddress], d.logger, l, d.database, false, cfg.Location)
 
 		faultCheck := createFaultCheck(l.Name)
 		ctrlHealth := getOrCreateControllerCheck(l.IpAddress)
@@ -189,7 +189,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			}
 			d.clients[em.IpAddress] = newTcpClient(tcpAddr, d.logger, &cfg)
 		}
-		emergencyLight := newLight(d.clients[em.IpAddress], d.logger, em, d.database, true)
+		emergencyLight := newLight(d.clients[em.IpAddress], d.logger, em, d.database, true, cfg.Location)
 		err := emergencyLight.loadTestResults()
 		if err != nil {
 			d.logger.Error("loadTestResults error", zap.Error(err))

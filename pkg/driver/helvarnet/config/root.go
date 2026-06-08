@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
@@ -55,6 +56,14 @@ type Root struct {
 	// ControllerHealthThreshold is the % of devices on a controller (IP address) that must be
 	// failing before the controller itself is marked unhealthy. Range [0, 100], default 50.
 	ControllerHealthThreshold int `json:"controllerHealthThreshold,omitempty"`
+	// Timezone is the IANA timezone name (e.g. "Europe/London") the routers' clocks are set to.
+	// Helvar routers report times, like emergency test completion times, as epoch seconds derived from
+	// their local wall-clock. When set, reported times are re-interpreted in this timezone so the API
+	// exposes the correct UTC instant. Defaults to UTC, i.e. reported times are taken as true epoch seconds.
+	Timezone string `json:"timezone,omitempty"`
+
+	// Location is the parsed Timezone, populated by ParseConfig.
+	Location *time.Location `json:"-"`
 }
 
 // Device represents a HelvarNet device, which can be a light, lighting group, or PIR sensor.
@@ -139,6 +148,15 @@ func ParseConfig(data []byte) (Root, error) {
 
 	if root.ControllerHealthThreshold == 0 {
 		root.ControllerHealthThreshold = 50
+	}
+
+	root.Location = time.UTC
+	if root.Timezone != "" {
+		loc, err := time.LoadLocation(root.Timezone)
+		if err != nil {
+			return Root{}, fmt.Errorf("invalid timezone %q: %w", root.Timezone, err)
+		}
+		root.Location = loc
 	}
 
 	for _, device := range root.EmergencyLights {
