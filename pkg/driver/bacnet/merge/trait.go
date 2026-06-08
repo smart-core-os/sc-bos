@@ -85,15 +85,12 @@ func updateTraitFaultCheck(ctx context.Context, faultCheck *healthpb.FaultCheck,
 		descriptions = append(descriptions, err.Error())
 
 	}
-	faultCheck.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
-		State: healthpb.HealthCheck_Reliability_UNRELIABLE,
-		LastError: &healthpb.HealthCheck_Error{
-			SummaryText: fmt.Sprintf("%s[%s] has %d errors", name, trait.String(), len(errs)),
-			DetailsText: fmt.Sprintf("Trait %s errors: %s", trait, strings.Join(descriptions, "; ")),
-			Code: &healthpb.HealthCheck_Error_Code{
-				Code:   BacNetCommsError,
-				System: SystemName,
-			},
+	faultCheck.SetFault(&healthpb.HealthCheck_Error{
+		SummaryText: fmt.Sprintf("%s[%s] has %d errors", name, trait.String(), len(errs)),
+		DetailsText: fmt.Sprintf("Trait %s errors: %s", trait, strings.Join(descriptions, "; ")),
+		Code: &healthpb.HealthCheck_Error_Code{
+			Code:   BacNetCommsError,
+			System: SystemName,
 		},
 	})
 }
