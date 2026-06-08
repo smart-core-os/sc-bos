@@ -74,6 +74,9 @@ func TestSecureConnect_Validate(t *testing.T) {
 		{name: "wss cert but no CA and no skip", in: SecureConnect{PrimaryHubURI: "wss://hub.example.com:47808", TLS: certNoCA}, wantErr: true},
 		{name: "wss cert no CA but skip verify", in: SecureConnect{PrimaryHubURI: "wss://hub.example.com:47808", TLS: jsontypes.TLSConfig{Certificates: clientCert, InsecureSkipVerify: true}}, wantErr: false},
 		{name: "wss complete", in: SecureConnect{PrimaryHubURI: "wss://hub.example.com:47808", TLS: fullTLS}, wantErr: false},
+		{name: "server-auth-only with configured CA", in: SecureConnect{PrimaryHubURI: "wss://hub.example.com:47808", ServerAuthOnly: true, TLS: jsontypes.TLSConfig{RootCAs: "ca-pem"}}, wantErr: false},
+		{name: "server-auth-only with system roots", in: SecureConnect{PrimaryHubURI: "wss://hub.example.com:47808", ServerAuthOnly: true}, wantErr: false},
+		{name: "server-auth-only but cert supplied conflicts", in: SecureConnect{PrimaryHubURI: "wss://hub.example.com:47808", ServerAuthOnly: true, TLS: fullTLS}, wantErr: true},
 		{name: "ws no tls allowed", in: SecureConnect{PrimaryHubURI: "ws://127.0.0.1:8080"}, wantErr: false},
 		{name: "bad failover", in: SecureConnect{PrimaryHubURI: "ws://127.0.0.1:8080", FailoverHubURI: "nonsense"}, wantErr: true},
 	}

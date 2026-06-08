@@ -31,6 +31,14 @@ type SecureConnect struct {
 	// the hub's certificate (RootCAs).
 	TLS jsontypes.TLSConfig `json:"tls,omitempty"`
 
+	// ServerAuthOnly connects with server-authentication-only TLS: this node
+	// verifies the hub but presents no client certificate. BACnet/SC normally
+	// mandates mutual TLS, so this is a deliberate downgrade for hubs configured
+	// for one-way TLS - the hub then cannot cryptographically identify this node
+	// and must rely on network controls and VMAC instead. Ignored for ws:// (no
+	// TLS). When false (the default) a client certificate is required.
+	ServerAuthOnly bool `json:"serverAuthOnly,omitempty"`
+
 	// DeviceUUID is this node's BACnet/SC device UUID (RFC 4122). If empty a random
 	// UUID is generated on startup and logged.
 	DeviceUUID string `json:"deviceUUID,omitempty"`
@@ -69,19 +77,32 @@ func (s *SecureConnect) Validate() error {
 		}
 	}
 
-	// wss:// is mutual TLS: this node needs a client certificate, and a way to
-	// verify the hub. ws:// (no TLS) is permitted for local testing only.
+	// wss:// is mutual TLS by default: this node needs a client certificate, and a
+	// way to verify the hub. ServerAuthOnly drops the client certificate (the hub
+	// then verifies us by network controls + VMAC, not cryptographically). ws://
+	// (no TLS) is permitted for local testing only.
 	if hubScheme(s.PrimaryHubURI) == "wss" {
-		if len(s.TLS.Certificates) == 0 {
-			return errors.New("secureConnect.tls.certificates is required for wss:// (BACnet/SC uses mutual TLS): provide this node's client certificate and private key")
-		}
-		for i, c := range s.TLS.Certificates {
-			if c.Certificate == "" || c.PrivateKey == "" {
-				return fmt.Errorf("secureConnect.tls.certificates[%d] needs both certificate and privateKey", i)
+		if s.ServerAuthOnly {
+			// Server-auth-only deliberately sends no client certificate; supplying
+			// one alongside the flag is contradictory.
+			if len(s.TLS.Certificates) > 0 {
+				return errors.New("secureConnect.serverAuthOnly is set but tls.certificates were provided; remove one (server-auth-only presents no client certificate)")
 			}
-		}
-		if len(s.TLS.RootCAs) == 0 && !s.TLS.InsecureSkipVerify {
-			return errors.New("secureConnect.tls.rootCAs is required to verify the hub (or set tls.insecureSkipVerify for testing only)")
+			// Empty rootCAs falls back to the system trust store, which pairs with a
+			// public-CA hub for a zero-cert-files deployment. We still verify the hub
+			// (insecureSkipVerify disables that, for testing only).
+		} else {
+			if len(s.TLS.Certificates) == 0 {
+				return errors.New("secureConnect.tls.certificates is required for wss:// (BACnet/SC uses mutual TLS): provide this node's client certificate and private key, or set secureConnect.serverAuthOnly for a hub configured for one-way TLS")
+			}
+			for i, c := range s.TLS.Certificates {
+				if c.Certificate == "" || c.PrivateKey == "" {
+					return fmt.Errorf("secureConnect.tls.certificates[%d] needs both certificate and privateKey", i)
+				}
+			}
+			if len(s.TLS.RootCAs) == 0 && !s.TLS.InsecureSkipVerify {
+				return errors.New("secureConnect.tls.rootCAs is required to verify the hub (or set tls.insecureSkipVerify for testing only)")
+			}
 		}
 	}
 	return nil

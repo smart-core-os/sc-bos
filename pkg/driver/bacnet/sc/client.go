@@ -109,10 +109,25 @@ func NewClient(cfg config.SecureConnect, maxConcurrent uint8, logger *zap.Logger
 		log:            logger,
 		onNPDU:         c.handleNPDU,
 	}
+	// Surface the TLS posture so a non-spec mutual-TLS downgrade is auditable in
+	// the field rather than silent.
+	tlsMode := "mutual"
+	if len(tlsConfig.Certificates) == 0 {
+		tlsMode = "server-only"
+	}
+	tlsTrust := "configured-ca"
+	switch {
+	case tlsConfig.InsecureSkipVerify:
+		tlsTrust = "insecure-skip-verify"
+	case tlsConfig.RootCAs == nil:
+		tlsTrust = "system-roots"
+	}
 	logger.Info("bacnet/sc client starting",
 		zap.Strings("hubs", uris),
 		zap.Stringer("vmac", vmac),
-		zap.String("deviceUUID", uuid.UUID(devUUID).String()))
+		zap.String("deviceUUID", uuid.UUID(devUUID).String()),
+		zap.String("tlsMode", tlsMode),
+		zap.String("tlsTrust", tlsTrust))
 	if err := c.link.start(); err != nil {
 		return nil, fmt.Errorf("connect to bacnet/sc hub: %w", err)
 	}
