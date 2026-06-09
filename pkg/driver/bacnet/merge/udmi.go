@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"math"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.uber.org/multierr"
@@ -31,6 +33,13 @@ const UdmiMergeName = "udmi"
 // "/event/pointset/points" topic for backward compatibility.
 const DefaultEventsTopicSuffix = "/event/pointset/points"
 
+// Default state/metadata topic suffixes, matching the rest of the JLL UDMI
+// deployment (validator accepts both "/metadata" and "/metadata.json").
+const (
+	DefaultStateTopicSuffix    = "/state"
+	DefaultMetadataTopicSuffix = "/metadata.json"
+)
+
 type UdmiMergeConfig struct {
 	config.Trait
 	TopicPrefix string `json:"topicPrefix,omitempty"`
@@ -39,8 +48,23 @@ type UdmiMergeConfig struct {
 	TopicSuffix *string `json:"topicSuffix,omitempty"`
 	// UDMIVersion is the schema version stamped into the pointset envelope.
 	// Only used when the envelope is emitted (see EmitEnvelope); defaults to udmi.PointsetVersion.
-	UDMIVersion string                         `json:"udmiVersion,omitempty"`
-	Points      map[string]*config.ValueSource `json:"points"`
+	UDMIVersion string `json:"udmiVersion,omitempty"`
+	// EmitStateMetadata enables publishing UDMI state (state.json) and metadata
+	// (metadata.json) messages alongside pointset events. Off by default.
+	EmitStateMetadata bool `json:"emitStateMetadata,omitempty"`
+	// StateTopicSuffix / MetadataTopicSuffix override the default topic suffixes
+	// used when EmitStateMetadata is set.
+	StateTopicSuffix    *string `json:"stateTopicSuffix,omitempty"`
+	MetadataTopicSuffix *string `json:"metadataTopicSuffix,omitempty"`
+	// Hardware overrides the make/model reported in state.system.hardware.
+	Hardware *UdmiHardware                  `json:"hardware,omitempty"`
+	Points   map[string]*config.ValueSource `json:"points"`
+}
+
+// UdmiHardware configures the state.system.hardware make/model of a device.
+type UdmiHardware struct {
+	Make  string `json:"make,omitempty"`
+	Model string `json:"model,omitempty"`
 }
 
 // EventsTopicSuffix returns the configured topic suffix or the default if unset.
@@ -49,6 +73,38 @@ func (c UdmiMergeConfig) EventsTopicSuffix() string {
 		return DefaultEventsTopicSuffix
 	}
 	return *c.TopicSuffix
+}
+
+// StateTopic / MetadataTopic return the full MQTT topics for state and metadata.
+func (c UdmiMergeConfig) StateTopic() string {
+	suffix := DefaultStateTopicSuffix
+	if c.StateTopicSuffix != nil {
+		suffix = *c.StateTopicSuffix
+	}
+	return c.TopicPrefix + suffix
+}
+
+func (c UdmiMergeConfig) MetadataTopic() string {
+	suffix := DefaultMetadataTopicSuffix
+	if c.MetadataTopicSuffix != nil {
+		suffix = *c.MetadataTopicSuffix
+	}
+	return c.TopicPrefix + suffix
+}
+
+// hardware returns the make/model for state.system.hardware, applying defaults
+// where unconfigured (state_system.json requires both to be non-empty).
+func (c UdmiMergeConfig) hardware() udmi.SystemHardware {
+	h := udmi.SystemHardware{Make: "Vanti", Model: "Smart Core BACnet"}
+	if c.Hardware != nil {
+		if c.Hardware.Make != "" {
+			h.Make = c.Hardware.Make
+		}
+		if c.Hardware.Model != "" {
+			h.Model = c.Hardware.Model
+		}
+	}
+	return h
 }
 
 // EmitEnvelope reports whether pointset payloads should be wrapped in the UDMI
@@ -90,6 +146,13 @@ type udmiMerge struct {
 	// protect the points value
 	pointsLock sync.Mutex
 	points     udmi.PointsEvent
+
+	// operational tracks whether the most recent poll reached the device; it
+	// drives the UDMI state message's system.operation.operational field.
+	// hasPolled guards the zero value so we don't report a false outage before
+	// the first poll completes.
+	operational atomic.Bool
+	hasPolled   atomic.Bool
 }
 
 func newUdmiMerge(client bclient.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*udmiMerge, error) {
@@ -181,6 +244,20 @@ func (f *udmiMerge) PullExportMessages(request *udmipb.PullExportMessagesRequest
 	events := f.bus.Listen(server.Context())
 	_ = f.pollTask.Attach(server.Context())
 
+	// Announce the device model and current status up front, so a (re)connecting
+	// subscriber gets metadata and state without waiting for the next change.
+	if f.config.EmitStateMetadata {
+		for _, build := range []func() (*udmipb.MqttMessage, error){f.metadataMessage, f.stateMessage} {
+			msg, err := build()
+			if err != nil {
+				return err
+			}
+			if err := server.Send(&udmipb.PullExportMessagesResponse{Name: request.Name, Message: msg}); err != nil {
+				return err
+			}
+		}
+	}
+
 	// initial value
 	if request.IncludeLast {
 		f.pointsLock.Lock()
@@ -233,7 +310,20 @@ func (f *udmiMerge) pollPeer(ctx context.Context) error {
 	}
 
 	updateTraitFaultCheck(ctx, f.faultCheck, f.config.Name, udmipb.TraitName, errs)
-	if len(errs) == len(f.config.Points) {
+
+	// Surface poll health as a UDMI state message whenever it changes (and on the
+	// first poll), so a device that can't be reached reports operational=false
+	// rather than going silent behind a stale pointset.
+	allFailed := len(errs) == len(f.config.Points)
+	if f.config.EmitStateMetadata && f.setOperational(!allFailed) {
+		if msg, err := f.stateMessage(); err != nil {
+			f.logger.Warn("failed to build udmi state message", zap.Error(err))
+		} else {
+			f.bus.Send(ctx, &udmipb.PullExportMessagesResponse{Name: f.config.Name, Message: msg})
+		}
+	}
+
+	if allFailed {
 		err := multierr.Combine(errs...)
 		return err
 	}
@@ -299,6 +389,63 @@ func (f *udmiMerge) pointsToPointSet(points udmi.PointsEvent) (*udmipb.MqttMessa
 		Topic:   f.config.TopicPrefix + f.config.EventsTopicSuffix(),
 		Payload: string(b),
 	}, nil
+}
+
+// site extracts the BDNS site code from a "JLL/<site>/<system>/<device>" topic
+// prefix, or "" if the prefix doesn't have that shape.
+func site(topicPrefix string) string {
+	parts := strings.Split(topicPrefix, "/")
+	if len(parts) < 2 {
+		return ""
+	}
+	return parts[1]
+}
+
+// metadataMessage builds the UDMI metadata (metadata.json) message describing
+// the device's model.
+func (f *udmiMerge) metadataMessage() (*udmipb.MqttMessage, error) {
+	sys := udmi.MetadataSystem{Name: f.config.Name}
+	if s := site(f.config.TopicPrefix); s != "" {
+		sys.Location = &udmi.MetadataLocation{Site: s}
+	}
+	b, err := json.Marshal(udmi.MetadataEvent{
+		Timestamp: time.Now().UTC(),
+		Version:   f.config.Version(),
+		System:    sys,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &udmipb.MqttMessage{Topic: f.config.MetadataTopic(), Payload: string(b)}, nil
+}
+
+// stateMessage builds the UDMI state (state.json) message reporting the device's
+// current operational status (true once a poll has reached the device).
+func (f *udmiMerge) stateMessage() (*udmipb.MqttMessage, error) {
+	now := time.Now().UTC()
+	b, err := json.Marshal(udmi.StateEvent{
+		Timestamp: now,
+		Version:   f.config.Version(),
+		System: udmi.StateSystem{
+			SerialNo:   f.config.Name,
+			LastConfig: now,
+			Hardware:   f.config.hardware(),
+			Software:   map[string]string{"driver": "bacnet"},
+			Operation:  udmi.SystemOperation{Operational: f.operational.Load()},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &udmipb.MqttMessage{Topic: f.config.StateTopic(), Payload: string(b)}, nil
+}
+
+// setOperational records the latest poll outcome and returns true if the state
+// changed (so a fresh state message should be published).
+func (f *udmiMerge) setOperational(ok bool) (changed bool) {
+	first := !f.hasPolled.Swap(true)
+	prev := f.operational.Swap(ok)
+	return first || prev != ok
 }
 
 func (f *udmiMerge) PollTask() *task.Intermittent { return f.pollTask }
