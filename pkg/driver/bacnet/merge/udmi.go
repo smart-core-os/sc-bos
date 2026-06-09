@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"sync"
+	"time"
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -35,7 +36,10 @@ type UdmiMergeConfig struct {
 	TopicPrefix string `json:"topicPrefix,omitempty"`
 	// TopicSuffix is appended to TopicPrefix to form the MQTT topic for pointset events.
 	// Defaults to DefaultEventsTopicSuffix. Set to "/events/pointset" for UDMI spec compliance.
-	TopicSuffix *string                        `json:"topicSuffix,omitempty"`
+	TopicSuffix *string `json:"topicSuffix,omitempty"`
+	// UDMIVersion is the schema version stamped into the pointset envelope.
+	// Only used when the envelope is emitted (see EmitEnvelope); defaults to udmi.PointsetVersion.
+	UDMIVersion string                         `json:"udmiVersion,omitempty"`
 	Points      map[string]*config.ValueSource `json:"points"`
 }
 
@@ -45,6 +49,23 @@ func (c UdmiMergeConfig) EventsTopicSuffix() string {
 		return DefaultEventsTopicSuffix
 	}
 	return *c.TopicSuffix
+}
+
+// EmitEnvelope reports whether pointset payloads should be wrapped in the UDMI
+// {timestamp, version, points} envelope. The legacy DefaultEventsTopicSuffix keeps
+// the bare points-map shape for backward compatibility; the UDMI-spec "/events/pointset"
+// topic (and any other explicit suffix) gets the compliant envelope.
+func (c UdmiMergeConfig) EmitEnvelope() bool {
+	return c.EventsTopicSuffix() != DefaultEventsTopicSuffix
+}
+
+// Version returns the UDMI schema version to stamp into the envelope, or the
+// default when unconfigured.
+func (c UdmiMergeConfig) Version() string {
+	if c.UDMIVersion != "" {
+		return c.UDMIVersion
+	}
+	return udmi.PointsetVersion
 }
 
 func readUdmiMergeConfig(raw []byte) (cfg UdmiMergeConfig, err error) {
@@ -259,7 +280,18 @@ func (f *udmiMerge) pointsToPointSet(points udmi.PointsEvent) (*udmipb.MqttMessa
 
 	sanitise(points)
 
-	b, err := json.Marshal(points)
+	// On the UDMI-spec topic, wrap the points in the {timestamp, version, points}
+	// envelope events_pointset.json requires; the bare points map fails schema
+	// validation. The legacy topic keeps the bare map for backward compatibility.
+	var payload any = points
+	if f.config.EmitEnvelope() {
+		payload = udmi.PointsetEvent{
+			Timestamp: time.Now().UTC(),
+			Version:   f.config.Version(),
+			Points:    points,
+		}
+	}
+	b, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
 	}
