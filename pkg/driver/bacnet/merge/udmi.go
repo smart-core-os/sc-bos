@@ -33,7 +33,7 @@ const UdmiMergeName = "udmi"
 // "/event/pointset/points" topic for backward compatibility.
 const DefaultEventsTopicSuffix = "/event/pointset/points"
 
-// Default state/metadata topic suffixes, matching the rest of the JLL UDMI
+// Default state/metadata topic suffixes, matching the rest of the UDMI
 // deployment (validator accepts both "/metadata" and "/metadata.json").
 const (
 	DefaultStateTopicSuffix    = "/state"
@@ -149,10 +149,7 @@ type udmiMerge struct {
 
 	// operational tracks whether the most recent poll reached the device; it
 	// drives the UDMI state message's system.operation.operational field.
-	// hasPolled guards the zero value so we don't report a false outage before
-	// the first poll completes.
 	operational atomic.Bool
-	hasPolled   atomic.Bool
 }
 
 func newUdmiMerge(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*udmiMerge, error) {
@@ -311,16 +308,15 @@ func (f *udmiMerge) pollPeer(ctx context.Context) error {
 
 	updateTraitFaultCheck(ctx, f.faultCheck, f.config.Name, udmipb.TraitName, errs)
 
-	// Surface poll health as a UDMI state message whenever it changes (and on the
-	// first poll), so a device that can't be reached reports operational=false
-	// rather than going silent behind a stale pointset.
+	// Re-emit state and metadata every poll (not just on change/connect), so a
+	// point-in-time subscriber reliably sees them rather than only catching the
+	// pair published at stream connect. state reports current poll health, including
+	// operational=false when the device is unreachable, so it runs before the
+	// all-failed return below.
 	allFailed := len(errs) == len(f.config.Points)
-	if f.config.EmitStateMetadata && f.setOperational(!allFailed) {
-		if msg, err := f.stateMessage(); err != nil {
-			f.logger.Warn("failed to build udmi state message", zap.Error(err))
-		} else {
-			f.bus.Send(ctx, &udmipb.PullExportMessagesResponse{Name: f.config.Name, Message: msg})
-		}
+	f.operational.Store(!allFailed)
+	if f.config.EmitStateMetadata {
+		f.sendStateMetadata(ctx)
 	}
 
 	if allFailed {
@@ -391,7 +387,7 @@ func (f *udmiMerge) pointsToPointSet(points udmi.PointsEvent) (*udmipb.MqttMessa
 	}, nil
 }
 
-// site extracts the BDNS site code from a "JLL/<site>/<system>/<device>" topic
+// site extracts the BDNS site code from a "<client>/<site>/<system>/<device>" topic
 // prefix, or "" if the prefix doesn't have that shape.
 func site(topicPrefix string) string {
 	parts := strings.Split(topicPrefix, "/")
@@ -440,12 +436,17 @@ func (f *udmiMerge) stateMessage() (*udmipb.MqttMessage, error) {
 	return &udmipb.MqttMessage{Topic: f.config.StateTopic(), Payload: string(b)}, nil
 }
 
-// setOperational records the latest poll outcome and returns true if the state
-// changed (so a fresh state message should be published).
-func (f *udmiMerge) setOperational(ok bool) (changed bool) {
-	first := !f.hasPolled.Swap(true)
-	prev := f.operational.Swap(ok)
-	return first || prev != ok
+// sendStateMetadata publishes the current metadata and state messages to the
+// export bus. Called each poll so subscribers reliably see them at pointset
+// cadence rather than only at stream connect.
+func (f *udmiMerge) sendStateMetadata(ctx context.Context) {
+	for _, build := range []func() (*udmipb.MqttMessage, error){f.metadataMessage, f.stateMessage} {
+		if msg, err := build(); err != nil {
+			f.logger.Warn("failed to build udmi state/metadata message", zap.Error(err))
+		} else {
+			f.bus.Send(ctx, &udmipb.PullExportMessagesResponse{Name: f.config.Name, Message: msg})
+		}
+	}
 }
 
 func (f *udmiMerge) PollTask() *task.Intermittent { return f.pollTask }
