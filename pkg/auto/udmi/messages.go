@@ -1,6 +1,20 @@
 package udmi
 
-// PointsEvent presents the JSON payload of a UDMI Event message
+import "time"
+
+// PointsetVersion is the UDMI schema version stamped into pointset events.
+const PointsetVersion = "1.5.2"
+
+// PointsetEvent is the JSON payload of a UDMI pointset event message: the
+// {timestamp, version, points} envelope required by events_pointset.json.
+// see https://faucetsdn.github.io/udmi/docs/messages/pointset.html#event
+type PointsetEvent struct {
+	Timestamp time.Time   `json:"timestamp"`
+	Version   string      `json:"version"`
+	Points    PointsEvent `json:"points"`
+}
+
+// PointsEvent is the map of point name to value carried under PointsetEvent.points.
 // see https://faucetsdn.github.io/udmi/docs/messages/pointset.html#event
 type PointsEvent map[string]PointValue
 
