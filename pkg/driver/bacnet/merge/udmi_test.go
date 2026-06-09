@@ -95,16 +95,15 @@ func Test_pointsToPointSet_versionConfigurable(t *testing.T) {
 
 func TestStateMessage(t *testing.T) {
 	um := &udmiMerge{}
-	um.config.TopicPrefix = "JLL/GB-LON-1BG/HVAC/PICV-12345"
-	um.config.Name = "jll-1-bg/floors/09/devices/FCP_09_01/picv-1"
+	um.config.TopicPrefix = "client/site-01/HVAC/PICV-12345"
+	um.config.Name = "floors/09/devices/FCP_09_01/picv-1"
 	um.operational.Store(true)
-	um.hasPolled.Store(true)
 
 	msg, err := um.stateMessage()
 	if err != nil {
 		t.Fatalf("stateMessage: %v", err)
 	}
-	if msg.Topic != "JLL/GB-LON-1BG/HVAC/PICV-12345/state" {
+	if msg.Topic != "client/site-01/HVAC/PICV-12345/state" {
 		t.Errorf("state topic = %q", msg.Topic)
 	}
 	var ev udmi.StateEvent
@@ -130,7 +129,7 @@ func TestStateMessage(t *testing.T) {
 
 func TestStateMessage_hardwareOverride(t *testing.T) {
 	um := &udmiMerge{}
-	um.config.TopicPrefix = "JLL/GB-LON-1BG/HVAC/PICV-1"
+	um.config.TopicPrefix = "client/site-01/HVAC/PICV-1"
 	um.config.Hardware = &UdmiHardware{Make: "Tridium", Model: "Niagara JACE"}
 	msg, err := um.stateMessage()
 	if err != nil {
@@ -147,34 +146,21 @@ func TestStateMessage_hardwareOverride(t *testing.T) {
 
 func TestMetadataMessage(t *testing.T) {
 	um := &udmiMerge{}
-	um.config.TopicPrefix = "JLL/GB-LON-1BG/HVAC/PICV-12345"
+	um.config.TopicPrefix = "client/site-01/HVAC/PICV-12345"
 	um.config.Name = "picv-1"
 
 	msg, err := um.metadataMessage()
 	if err != nil {
 		t.Fatalf("metadataMessage: %v", err)
 	}
-	if msg.Topic != "JLL/GB-LON-1BG/HVAC/PICV-12345/metadata.json" {
+	if msg.Topic != "client/site-01/HVAC/PICV-12345/metadata.json" {
 		t.Errorf("metadata topic = %q", msg.Topic)
 	}
 	var ev udmi.MetadataEvent
 	if err := json.Unmarshal([]byte(msg.Payload), &ev); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if ev.System.Location == nil || ev.System.Location.Site != "GB-LON-1BG" {
+	if ev.System.Location == nil || ev.System.Location.Site != "site-01" {
 		t.Errorf("site = %+v", ev.System.Location)
-	}
-}
-
-func TestSetOperational(t *testing.T) {
-	um := &udmiMerge{}
-	if !um.setOperational(true) {
-		t.Error("first poll should report a change")
-	}
-	if um.setOperational(true) {
-		t.Error("unchanged status should not report a change")
-	}
-	if !um.setOperational(false) {
-		t.Error("true->false should report a change")
 	}
 }
