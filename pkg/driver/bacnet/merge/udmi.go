@@ -308,15 +308,17 @@ func (f *udmiMerge) pollPeer(ctx context.Context) error {
 
 	updateTraitFaultCheck(ctx, f.faultCheck, f.config.Name, udmipb.TraitName, errs)
 
-	// Re-emit state and metadata every poll (not just on change/connect), so a
-	// point-in-time subscriber reliably sees them rather than only catching the
-	// pair published at stream connect. state reports current poll health, including
-	// operational=false when the device is unreachable, so it runs before the
-	// all-failed return below.
+	// Re-publish state only when operational changes, mirroring the pointset
+	// hasUpdate behaviour below. Metadata is effectively static and isn't
+	// re-published per poll at all; (re)connecting subscribers get both metadata
+	// and state up front from PullExportMessages. This runs before the all-failed
+	// return below so an operational=false transition is reported when the device
+	// becomes unreachable.
 	allFailed := len(errs) == len(f.config.Points)
-	f.operational.Store(!allFailed)
-	if f.config.EmitStateMetadata {
-		f.sendStateMetadata(ctx)
+	operational := !allFailed
+	prevOperational := f.operational.Swap(operational)
+	if f.config.EmitStateMetadata && operational != prevOperational {
+		f.sendState(ctx)
 	}
 
 	if allFailed {
@@ -436,17 +438,16 @@ func (f *udmiMerge) stateMessage() (*udmipb.MqttMessage, error) {
 	return &udmipb.MqttMessage{Topic: f.config.StateTopic(), Payload: string(b)}, nil
 }
 
-// sendStateMetadata publishes the current metadata and state messages to the
-// export bus. Called each poll so subscribers reliably see them at pointset
-// cadence rather than only at stream connect.
-func (f *udmiMerge) sendStateMetadata(ctx context.Context) {
-	for _, build := range []func() (*udmipb.MqttMessage, error){f.metadataMessage, f.stateMessage} {
-		if msg, err := build(); err != nil {
-			f.logger.Warn("failed to build udmi state/metadata message", zap.Error(err))
-		} else {
-			f.bus.Send(ctx, &udmipb.PullExportMessagesResponse{Name: f.config.Name, Message: msg})
-		}
+// sendState publishes the current state message to the export bus. Called from
+// pollPeer only when system.operation.operational changes, so existing
+// subscribers see the device go (un)reachable without a message every poll.
+func (f *udmiMerge) sendState(ctx context.Context) {
+	msg, err := f.stateMessage()
+	if err != nil {
+		f.logger.Warn("failed to build udmi state message", zap.Error(err))
+		return
 	}
+	f.bus.Send(ctx, &udmipb.PullExportMessagesResponse{Name: f.config.Name, Message: msg})
 }
 
 func (f *udmiMerge) PollTask() *task.Intermittent { return f.pollTask }
