@@ -70,7 +70,7 @@ func IntoTrait(client bclient.Client, devices known.Context, faultCheck *healthp
 	return nil, ErrTraitNotSupported
 }
 
-func updateTraitFaultCheck(ctx context.Context, faultCheck *healthpb.FaultCheck, name string, trait trait.Name, errs []error) {
+func updateTraitFaultCheck(_ context.Context, faultCheck *healthpb.FaultCheck, name string, trait trait.Name, errs []error) {
 	if faultCheck == nil {
 		return
 	}
