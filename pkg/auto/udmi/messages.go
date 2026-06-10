@@ -97,8 +97,9 @@ type MetadataSystem struct {
 	Location *MetadataLocation `json:"location,omitempty"`
 }
 
-// MetadataLocation describes where the device is installed; site is required
-// when location is present and must match ^[A-Z]{2}-[A-Z]{3,4}-[A-Z0-9]{2,9}$.
+// MetadataLocation describes where the device is installed. The UDMI schema
+// constrains site to ^[A-Z]{2}-[A-Z]{3,4}-[A-Z0-9]{2,9}$, but we don't enforce
+// that here: the caller is responsible for supplying a conformant site code.
 type MetadataLocation struct {
 	Site string `json:"site"`
 }
