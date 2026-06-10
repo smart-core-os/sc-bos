@@ -59,21 +59,11 @@
           placeholder="Search logs…"
           prepend-inner-icon="mdi-magnify"
           style="max-width: 500px"/>
-      <v-btn class="ml-2" size="small" variant="tonal" @click="messages = []">Clear</v-btn>
+      <v-btn class="ml-2" size="small" variant="tonal" @click="clearMessages">Clear</v-btn>
       <v-chip v-if="streamError" class="ml-2" color="error" size="small">{{ streamError.message }}</v-chip>
     </v-row>
 
-    <div ref="logEl" class="log-viewport flex-grow-1 mx-4 mb-4">
-      <div
-          v-for="msg in filteredMessages"
-          :key="msg._key"
-          class="log-line">
-        <span class="log-time">{{ formatTime(msg.timestamp) }}</span>
-        <span :class="['log-level', `text-${levelColor[msg.level] ?? 'white'}`]">{{ levelName[msg.level] ?? '?' }}</span>
-        <span class="log-logger">{{ msg.logger }}:</span>
-        <span class="log-msg">{{ msg.message }}{{ formatFields(msg.fieldsMap) }}</span>
-      </div>
-    </div>
+    <log-viewport :messages="filteredMessages" class="flex-grow-1 mx-4 mb-4"/>
   </div>
 </template>
 
@@ -83,9 +73,12 @@ import {closeResource, newResourceValue} from '@/api/resource.js';
 import {getService} from '@/api/ui/services.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
 import useAuthSetup from '@/composables/useAuthSetup.js';
+import LogViewport from '@/routes/system/components/log/LogViewport.vue';
+import {levelName} from '@/routes/system/components/log/format.js';
+import {useLogBuffer} from '@/routes/system/components/log/useLogBuffer.js';
 import {useCohortStore} from '@/stores/cohort.js';
 import {storeToRefs} from 'pinia';
-import {computed, nextTick, onUnmounted, reactive, ref, watch} from 'vue';
+import {computed, onUnmounted, reactive, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 
 const route = useRoute();
@@ -112,19 +105,17 @@ const nodeNames = computed(() =>
 
 const selectedNode = ref(route.query.node ?? null);
 
-const messages = ref([]);
-const messageCount = ref(0); // incremented on each batch; watched for auto-scroll
 const search = ref('');
 const streamError = ref(null);
-const logEl = ref(null);
 const metadata = ref(null);
 const selectedLevel = ref(null);
 const levelError = ref(null);
 const downloadError = ref(null);
-let _keyCounter = 0;
 const messagesResource = reactive(newResourceValue());
 const levelResource = reactive(newResourceValue());
 const metadataResource = reactive(newResourceValue());
+
+const {messages, clear: clearMessages} = useLogBuffer(messagesResource, {max: 2000});
 
 const levelOptions = [
   {label: 'DEBUG', value: 1},
@@ -132,9 +123,6 @@ const levelOptions = [
   {label: 'WARN', value: 3},
   {label: 'ERROR', value: 4}
 ];
-
-const levelColor = {1: 'grey', 2: 'blue', 3: 'amber', 4: 'red'};
-const levelName = {1: 'DBG', 2: 'INF', 3: 'WRN', 4: 'ERR'};
 
 const filteredMessages = computed(() => {
   if (!search.value) return messages.value;
@@ -145,25 +133,6 @@ const filteredMessages = computed(() => {
       levelName[m.level]?.toLowerCase().includes(q)
   );
 });
-
-/**
- * @param {Array<[string, *]>} fieldsMap
- * @return {string}
- */
-function formatFields(fieldsMap) {
-  if (!fieldsMap?.length) return '';
-  return '\t' + JSON.stringify(Object.fromEntries(fieldsMap));
-}
-
-/**
- * @param {{seconds: number}|null} timestamp
- * @return {string}
- */
-function formatTime(timestamp) {
-  if (!timestamp) return '--:--.---';
-  const ms = (timestamp.seconds * 1000) + Math.floor((timestamp.nanos ?? 0) / 1e6);
-  return new Date(ms).toLocaleTimeString(undefined, {fractionalSecondDigits: 3});
-}
 
 /**
  * @param {number|null} bytes
@@ -182,7 +151,7 @@ function formatBytes(bytes) {
  */
 async function startStreams(name) {
   cancelStreams();
-  messages.value = [];
+  clearMessages();
   streamError.value = null;
   metadata.value = null;
   selectedLevel.value = null;
@@ -212,18 +181,6 @@ function cancelStreams() {
   closeResource(metadataResource);
 }
 
-// Append each incoming batch to the local message buffer.
-watch(() => messagesResource.value, (batch) => {
-  if (!batch?.length) return;
-  for (const m of batch) {
-    m._key = _keyCounter++;
-    messages.value.push(m);
-  }
-  if (messages.value.length > 2000) {
-    messages.value.splice(0, messages.value.length - 2000);
-  }
-  messageCount.value++;
-});
 watch(() => messagesResource.streamError, err => { streamError.value = err?.error ?? null; });
 
 watch(() => levelResource.value, lvl => { if (lvl != null) selectedLevel.value = lvl; });
@@ -238,16 +195,6 @@ watch(selectedNode, (name) => {
     cancelStreams();
   }
 }, {immediate: true});
-
-watch(messageCount, () => {
-  nextTick(() => {
-    if (!logEl.value) return;
-    const el = logEl.value;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 100) {
-      el.scrollTop = el.scrollHeight;
-    }
-  });
-});
 
 /**
  * @param {string|null} name
@@ -309,42 +256,5 @@ onUnmounted(() => cancelStreams());
 .logs-page {
   height: 100%;
   overflow: hidden;
-}
-
-.log-viewport {
-  overflow-y: auto;
-  background: #1e1e1e;
-  font-family: monospace;
-  font-size: 12px;
-  padding: 8px;
-  border-radius: 4px;
-}
-
-.log-line {
-  display: flex;
-  gap: 6px;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.log-time {
-  color: #888;
-  flex-shrink: 0;
-}
-
-.log-level {
-  flex-shrink: 0;
-  width: 4ch;
-  font-weight: bold;
-}
-
-.log-logger {
-  color: #aaa;
-  flex-shrink: 0;
-}
-
-.log-msg {
-  color: #eee;
 }
 </style>

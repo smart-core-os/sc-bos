@@ -103,6 +103,79 @@ func TestTailMessages_chronologicalOrder(t *testing.T) {
 	}
 }
 
+// ---- Ring buffer: tail with match -----------------------------------------------
+
+// matchMsg matches messages whose Message equals text.
+func matchMsg(text string) func(*LogMessage) bool {
+	return func(m *LogMessage) bool { return m.Message == text }
+}
+
+func TestTailMatching_nilMatchEqualsTail(t *testing.T) {
+	m := NewModel(4)
+	for _, s := range []string{"a", "b", "c", "d", "e"} {
+		m.AppendMessage(msg(s))
+	}
+
+	got := messages(m.TailMatching(3, nil))
+	want := messages(m.TailMessages(3))
+	if !sliceEq(got, want) {
+		t.Errorf("TailMatching(3, nil) = %v, want %v", got, want)
+	}
+}
+
+func TestTailMatching_skipsNonMatching(t *testing.T) {
+	m := NewModel(8)
+	// Interleave matching ("m") and non-matching ("x") entries.
+	for _, s := range []string{"m1", "x", "m2", "x", "m3", "x"} {
+		if s == "x" {
+			m.AppendMessage(msg("x"))
+		} else {
+			m.AppendMessage(&LogMessage{Message: s, Fields: map[string]string{"k": "v"}})
+		}
+	}
+
+	got := messages(m.TailMatching(2, func(lm *LogMessage) bool { return lm.GetFields()["k"] == "v" }))
+	want := []string{"m2", "m3"} // 2 newest matching, chronological order
+	if !sliceEq(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+func TestTailMatching_fewerMatchesThanN(t *testing.T) {
+	m := NewModel(8)
+	for _, s := range []string{"x", "hit", "x", "x"} {
+		m.AppendMessage(msg(s))
+	}
+
+	got := messages(m.TailMatching(5, matchMsg("hit")))
+	want := []string{"hit"}
+	if !sliceEq(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+func TestTailMatching_wrapAround(t *testing.T) {
+	m := NewModel(3)
+	// "hit1" is evicted by wrap-around; only "hit2" and "hit3" remain buffered.
+	for _, s := range []string{"hit1", "x", "hit2", "hit3", "x"} {
+		m.AppendMessage(msg(s))
+	}
+
+	got := messages(m.TailMatching(5, func(lm *LogMessage) bool { return lm.Message != "x" }))
+	want := []string{"hit2", "hit3"}
+	if !sliceEq(got, want) {
+		t.Errorf("wrap-around: got %v, want %v", got, want)
+	}
+}
+
+func TestTailMatching_zero(t *testing.T) {
+	m := NewModel(8)
+	m.AppendMessage(msg("a"))
+	if got := m.TailMatching(0, nil); got != nil {
+		t.Errorf("TailMatching(0): got %v, want nil", got)
+	}
+}
+
 // ---- Subscribe / cancel lifecycle -----------------------------------------------
 
 func TestSubscribe_receivesMessage(t *testing.T) {

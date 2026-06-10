@@ -52,19 +52,18 @@ func (s *ModelServer) PullLogMessages(request *PullLogMessagesRequest, server Lo
 	ch, cancel := s.model.Subscribe()
 	defer cancel()
 
-	initial := s.model.TailMessages(n)
+	initial := s.model.TailMatching(n, func(m *LogMessage) bool {
+		return matchesMinLevel(m, request.MinLevel) && matchesFieldFilter(m, request.FieldFilter)
+	})
 	if len(initial) > 0 {
-		filtered := filterMessages(initial, request.MinLevel)
-		if len(filtered) > 0 {
-			if err := server.Send(&PullLogMessagesResponse{
-				Changes: []*PullLogMessagesResponse_Change{{
-					Name:       request.Name,
-					ChangeTime: timestamppb.Now(),
-					Messages:   filtered,
-				}},
-			}); err != nil {
-				return err
-			}
+		if err := server.Send(&PullLogMessagesResponse{
+			Changes: []*PullLogMessagesResponse_Change{{
+				Name:       request.Name,
+				ChangeTime: timestamppb.Now(),
+				Messages:   initial,
+			}},
+		}); err != nil {
+			return err
 		}
 	}
 
@@ -77,7 +76,7 @@ func (s *ModelServer) PullLogMessages(request *PullLogMessagesRequest, server Lo
 			if !ok {
 				return nil
 			}
-			filtered := filterMessages(batch, request.MinLevel)
+			filtered := filterMessages(batch, request.MinLevel, request.FieldFilter)
 			if len(filtered) == 0 {
 				continue
 			}
@@ -94,17 +93,34 @@ func (s *ModelServer) PullLogMessages(request *PullLogMessagesRequest, server Lo
 	}
 }
 
-func filterMessages(msgs []*LogMessage, minLevel Level) []*LogMessage {
-	if minLevel == Level_LEVEL_UNSPECIFIED {
+func filterMessages(msgs []*LogMessage, minLevel Level, fieldFilter map[string]string) []*LogMessage {
+	if minLevel == Level_LEVEL_UNSPECIFIED && len(fieldFilter) == 0 {
 		return msgs
 	}
 	out := msgs[:0:0] // reuse underlying array header but don't share
 	for _, m := range msgs {
-		if m.Level >= minLevel {
+		if matchesMinLevel(m, minLevel) && matchesFieldFilter(m, fieldFilter) {
 			out = append(out, m)
 		}
 	}
 	return out
+}
+
+// matchesMinLevel reports whether m's level is at least minLevel.
+// LEVEL_UNSPECIFIED matches everything.
+func matchesMinLevel(m *LogMessage, minLevel Level) bool {
+	return minLevel == Level_LEVEL_UNSPECIFIED || m.Level >= minLevel
+}
+
+// matchesFieldFilter reports whether m's fields contain every key/value pair
+// in filter (exact match). An empty/nil filter matches everything.
+func matchesFieldFilter(m *LogMessage, filter map[string]string) bool {
+	for k, v := range filter {
+		if got, ok := m.GetFields()[k]; !ok || got != v {
+			return false
+		}
+	}
+	return true
 }
 
 // GetLogLevel returns the current log level.

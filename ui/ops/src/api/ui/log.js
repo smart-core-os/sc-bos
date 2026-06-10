@@ -14,12 +14,25 @@ import {
 const apiClient = (endpoint) => new LogApiPromiseClient(endpoint, null, clientOptions());
 
 /**
+ * Well-known log field keys the server attaches to service lifecycle loggers,
+ * for use with PullLogMessagesRequest.fieldFilter.
+ * Must match loggerWithServiceInfo in pkg/app/services.go.
+ */
+export const logFields = {
+  serviceId: 'service.id',
+  serviceKind: 'service.kind'
+};
+
+/**
  * Opens a server-streaming connection for log messages, with automatic retry.
  * Each incoming batch is delivered as resource.value (an array of LogMessage.AsObject).
  * The caller should accumulate batches; resource.value is the latest batch, not the full history.
  * Call closeResource(resource) to stop the stream.
  *
- * @param {Partial<PullLogMessagesRequest.AsObject>} request
+ * request.fieldFilter is a plain object of field key/value pairs; only messages whose
+ * fields contain ALL of those entries are returned (exact match, AND semantics).
+ *
+ * @param {Partial<PullLogMessagesRequest.AsObject> & {fieldFilter?: Record<string, string>}} request
  * @param {import('@/api/resource.js').ResourceValue} resource
  */
 export function pullLogMessages(request, resource) {
@@ -29,6 +42,14 @@ export function pullLogMessages(request, resource) {
     if (request?.name) req.setName(request.name);
     if (request?.initialCount) req.setInitialCount(request.initialCount);
     if (request?.updatesOnly) req.setUpdatesOnly(request.updatesOnly);
+    if (request?.minLevel != null) req.setMinLevel(request.minLevel);
+    if (request?.fieldFilter) {
+      const m = req.getFieldFilterMap();
+      for (const [k, v] of Object.entries(request.fieldFilter)) {
+        if (v == null) continue; // an unset value would serialise to "" and match nothing
+        m.set(k, v);
+      }
+    }
     const stream = api.pullLogMessages(req);
     stream.on('data', (msg) => {
       for (const change of msg.getChangesList()) {
