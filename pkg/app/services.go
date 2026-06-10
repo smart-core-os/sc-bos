@@ -230,8 +230,15 @@ func logServiceRecordChange(logger *zap.Logger, oldVal, newVal *service.StateRec
 	}
 }
 
+// Log field keys attached to service lifecycle loggers.
+// Clients filter PullLogMessages on these keys; keep in sync with logFields in ui/ops/src/api/ui/log.js.
+const (
+	logFieldServiceID   = "service.id"
+	logFieldServiceKind = "service.kind"
+)
+
 func loggerWithServiceInfo(logger *zap.Logger, id, kind string) *zap.Logger {
-	return logger.With(zap.String("service.id", id), zap.String("service.kind", kind))
+	return logger.With(zap.String(logFieldServiceID, id), zap.String(logFieldServiceKind, kind))
 }
 
 func healthChecksForService(r *healthpb.Registry, id, kind string) *healthpb.Checks {

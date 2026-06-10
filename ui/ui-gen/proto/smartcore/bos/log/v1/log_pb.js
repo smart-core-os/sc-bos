@@ -1318,7 +1318,8 @@ initialCount: jspb.Message.getFieldWithDefault(msg, 2, 0),
 updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
 minLevel: jspb.Message.getFieldWithDefault(msg, 4, 0),
 loggerFilter: jspb.Message.getFieldWithDefault(msg, 5, ""),
-readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toObject(includeInstance, f)
+readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toObject(includeInstance, f),
+fieldFilterMap: (f = msg.getFieldFilterMap()) ? f.toObject(includeInstance, undefined) : []
   };
 
   if (includeInstance) {
@@ -1379,6 +1380,12 @@ proto.smartcore.bos.log.v1.PullLogMessagesRequest.deserializeBinaryFromReader = 
       var value = new google_protobuf_field_mask_pb.FieldMask;
       reader.readMessage(value,google_protobuf_field_mask_pb.FieldMask.deserializeBinaryFromReader);
       msg.setReadMask(value);
+      break;
+    case 7:
+      var value = msg.getFieldFilterMap();
+      reader.readMessage(value, function(message, reader) {
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readStringRequireUtf8, jspb.BinaryReader.prototype.readStringRequireUtf8, null, "", "");
+         });
       break;
     default:
       reader.skipField();
@@ -1451,6 +1458,15 @@ proto.smartcore.bos.log.v1.PullLogMessagesRequest.serializeBinaryToWriter = func
       f,
       google_protobuf_field_mask_pb.FieldMask.serializeBinaryToWriter
     );
+  }
+  f = message.getFieldFilterMap(true);
+  if (f && f.getLength() > 0) {
+jspb.internal.public_for_gencode.serializeMapToBinary(
+    message.getFieldFilterMap(true),
+    7,
+    writer,
+    jspb.BinaryWriter.prototype.writeString,
+    jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -1579,6 +1595,29 @@ proto.smartcore.bos.log.v1.PullLogMessagesRequest.prototype.clearReadMask = func
  */
 proto.smartcore.bos.log.v1.PullLogMessagesRequest.prototype.hasReadMask = function() {
   return jspb.Message.getField(this, 6) != null;
+};
+
+
+/**
+ * map<string, string> field_filter = 7;
+ * @param {boolean=} opt_noLazyCreate Do not create the map if
+ * empty, instead returning `undefined`
+ * @return {!jspb.Map<string,string>}
+ */
+proto.smartcore.bos.log.v1.PullLogMessagesRequest.prototype.getFieldFilterMap = function(opt_noLazyCreate) {
+  return /** @type {!jspb.Map<string,string>} */ (
+      jspb.Message.getMapField(this, 7, opt_noLazyCreate,
+      null));
+};
+
+
+/**
+ * Clears values from the map. The map will be non-null.
+ * @return {!proto.smartcore.bos.log.v1.PullLogMessagesRequest} returns this
+ */
+proto.smartcore.bos.log.v1.PullLogMessagesRequest.prototype.clearFieldFilterMap = function() {
+  this.getFieldFilterMap().clear();
+  return this;
 };
 
 

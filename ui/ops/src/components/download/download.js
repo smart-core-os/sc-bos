@@ -129,6 +129,22 @@ export async function triggerDownload(qual = 'devices', query, history = null, t
 }
 
 /**
+ * Triggers a browser download of in-memory text as a file.
+ *
+ * @param {string} text
+ * @param {string} filename
+ * @param {string} [mime]
+ */
+export function triggerTextDownload(text, filename, mime = 'text/plain') {
+  const url = URL.createObjectURL(new Blob([text], {type: mime}));
+  try {
+    triggerDownloadFromUrl(url, filename);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/**
  * Triggers a browser download for the given URL and filename.
  *
  * @param {string} url
