@@ -163,4 +163,9 @@ func TestMetadataMessage(t *testing.T) {
 	if ev.System.Location == nil || ev.System.Location.Site != "site-01" {
 		t.Errorf("site = %+v", ev.System.Location)
 	}
+	// system.name is the UDMI device id (the topic's device segment), not the
+	// Smart Core device name (config.Name = "picv-1").
+	if ev.System.Name != "PICV-12345" {
+		t.Errorf("system.name = %q, want %q", ev.System.Name, "PICV-12345")
+	}
 }

@@ -399,10 +399,19 @@ func site(topicPrefix string) string {
 	return parts[1]
 }
 
+// device extracts the UDMI device id (the trailing "<device>" segment) from a
+// "<client>/<site>/<system>/<device>" topic prefix, or "" if the prefix is empty.
+// This is the device's identity on MQTT/in the UDMI registry, which is what the
+// metadata describes — not f.config.Name, which is the Smart Core device name.
+func device(topicPrefix string) string {
+	parts := strings.Split(topicPrefix, "/")
+	return parts[len(parts)-1]
+}
+
 // metadataMessage builds the UDMI metadata (metadata.json) message describing
 // the device's model.
 func (f *udmiMerge) metadataMessage() (*udmipb.MqttMessage, error) {
-	sys := udmi.MetadataSystem{Name: f.config.Name}
+	sys := udmi.MetadataSystem{Name: device(f.config.TopicPrefix)}
 	if s := site(f.config.TopicPrefix); s != "" {
 		sys.Location = &udmi.MetadataLocation{Site: s}
 	}
