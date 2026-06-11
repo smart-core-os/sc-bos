@@ -113,8 +113,8 @@ func TestStateMessage(t *testing.T) {
 	if ev.Version != udmi.PointsetVersion || ev.Timestamp.IsZero() {
 		t.Errorf("missing version/timestamp: %+v", ev)
 	}
-	if ev.System.SerialNo != um.config.Name {
-		t.Errorf("serial_no = %q", ev.System.SerialNo)
+	if ev.System.SerialNo != "" {
+		t.Errorf("serial_no = %q, want empty (merge devices have no hardware serial)", ev.System.SerialNo)
 	}
 	if ev.System.Hardware.Make == "" || ev.System.Hardware.Model == "" {
 		t.Errorf("hardware make/model required, got %+v", ev.System.Hardware)
