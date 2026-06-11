@@ -31,9 +31,9 @@ func newTemperatureSensor(client *Client, logger *zap.Logger) *TemperatureSensor
 	}
 }
 
-func (a *TemperatureSensor) GetAirTemperature(_ context.Context, _ *airtemperaturepb.GetAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
+func (a *TemperatureSensor) GetAirTemperature(ctx context.Context, _ *airtemperaturepb.GetAirTemperatureRequest) (*airtemperaturepb.AirTemperature, error) {
 	response := SensorResponse{}
-	if err := doGetRequest(a.client, &response, "sensor"); err != nil {
+	if err := doGetRequest(ctx, a.client, &response, "sensor"); err != nil {
 		return nil, err
 	}
 	if err := a.GetUpdate(&response); err != nil {
