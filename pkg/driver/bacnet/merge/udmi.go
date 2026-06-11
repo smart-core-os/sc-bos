@@ -425,7 +425,8 @@ func (f *udmiMerge) stateMessage() (*udmipb.MqttMessage, error) {
 		Timestamp: now,
 		Version:   f.config.Version(),
 		System: udmi.StateSystem{
-			SerialNo:   f.config.Name,
+			// serial_no is left empty: a merge device is a logical grouping of
+			// BACnet objects with no single hardware serial.
 			LastConfig: now,
 			Hardware:   f.config.hardware(),
 			Software:   map[string]string{"driver": "bacnet"},
