@@ -122,13 +122,11 @@ func (d *Driver) applyDeviceConfig(ctx context.Context, announcer node.Announcer
 
 	poller := newPoller(client, cfg.PollInterval.Or(config.DefaultPollInterval), logger.Named("SteinelPoller"), faultCheck, airQualitySensor, occupancy, temperature)
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		defer client.Client.CloseIdleConnections()
 		defer faultCheck.Dispose()
 		poller.startPoll(ctx)
-	}()
+	})
 
 	return nil
 }
