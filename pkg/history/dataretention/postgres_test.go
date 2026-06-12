@@ -15,7 +15,7 @@ func TestUpdatePostgresModel_NotConfigured(t *testing.T) {
 	t.Cleanup(func() { _ = s.Close() })
 
 	model := dataretentionpb.NewModel()
-	updatePostgresModel(ctx, s, model, zap.NewNop())
+	updatePostgresModel(ctx, s, model, nil, 0, zap.NewNop())
 
 	got, err := model.GetDataRetention()
 	if err != nil {
