@@ -1,0 +1,10 @@
+{
+  "listenHTTPS": ":8443",
+  "cors": {
+    "debugMode": true,
+    "corsOrigins": ["*"]
+  },
+  "staticHosting": [
+    {"path": "/__/sim-building/", "filePath": "./example/config/sim-building"}
+  ]
+}

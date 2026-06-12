@@ -1,0 +1,19 @@
+{
+  "features": {
+    "auth": {
+      "third-party": false,
+      "users": false
+    },
+    "devices": true,
+    "ops": false,
+    "automations": true,
+    "system": true
+  },
+  "config": {
+    "home": "/devices",
+    "auth": {"disabled": true},
+    "theme": {
+      "appBranding": {"brandName": "Simulated Building"}
+    }
+  }
+}

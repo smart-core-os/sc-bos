@@ -1,0 +1,127 @@
+{
+  "name": "sim-building",
+  "metadata": {
+    "appearance": {
+      "title": "Simulated Building"
+    }
+  },
+  "drivers": [
+    {
+      "name": "sim/demo/driver",
+      "type": "sim",
+      "namePrefix": "sim/demo",
+      "timeMultiplier": 288,
+      "tickInterval": "5s",
+      "baseLoadW": 5000,
+      "workingHours": {"start": 8, "end": 18, "days": ["Mon", "Tue", "Wed", "Thu", "Fri"]},
+      "healthCheck": {"faultProbability": 0.05},
+      "floors": [
+        {
+          "name": "ground",
+          "title": "Ground Floor",
+          "maxOccupancy": 60,
+          "rooms": [
+            {
+              "name": "open-plan",
+              "title": "Open Plan",
+              "archetypes": [
+                {"type": "lighting", "count": 6},
+                {"type": "fcu", "count": 2, "setPointC": 21},
+                {"type": "pir"},
+                {"type": "brightness"},
+                {"type": "airquality"}
+              ]
+            },
+            {
+              "name": "meeting-1",
+              "title": "Meeting Room 1",
+              "maxOccupancy": 8,
+              "archetypes": [
+                {"type": "lighting", "count": 2},
+                {"type": "fcu", "setPointC": 21},
+                {"type": "pir"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "first",
+          "title": "First Floor",
+          "maxOccupancy": 40,
+          "rooms": [
+            {
+              "name": "open-plan",
+              "title": "Open Plan",
+              "archetypes": [
+                {"type": "lighting", "count": 4},
+                {"type": "fcu", "count": 2, "setPointC": 22},
+                {"type": "pir"},
+                {"type": "brightness"}
+              ]
+            },
+            {
+              "name": "meeting-1",
+              "title": "Meeting Room 1",
+              "maxOccupancy": 6,
+              "archetypes": [
+                {"type": "lighting", "count": 2},
+                {"type": "pir"}
+              ]
+            }
+          ]
+        }
+      ],
+      "buildingDevices": [
+        {"type": "meter", "title": "Main Incomer"},
+        {"type": "electric", "title": "Main Incomer"}
+      ]
+    }
+  ],
+  "zones": [
+    {
+      "name": "sim/demo/zones/ground",
+      "type": "area",
+      "metadata": {"appearance": {"title": "Ground Floor"}, "membership": {"subsystem": "zones"}},
+      "lights": [
+        "sim/demo/ground/open-plan/lighting-01", "sim/demo/ground/open-plan/lighting-02",
+        "sim/demo/ground/open-plan/lighting-03", "sim/demo/ground/open-plan/lighting-04",
+        "sim/demo/ground/open-plan/lighting-05", "sim/demo/ground/open-plan/lighting-06",
+        "sim/demo/ground/meeting-1/lighting-01", "sim/demo/ground/meeting-1/lighting-02"
+      ],
+      "thermostats": [
+        "sim/demo/ground/open-plan/fcu-01", "sim/demo/ground/open-plan/fcu-02",
+        "sim/demo/ground/meeting-1/fcu-01"
+      ],
+      "occupancySensors": [
+        "sim/demo/ground/open-plan/pir-01", "sim/demo/ground/meeting-1/pir-01"
+      ],
+      "airQualitySensors": ["sim/demo/ground/open-plan/airquality-01"]
+    },
+    {
+      "name": "sim/demo/zones/first",
+      "type": "area",
+      "metadata": {"appearance": {"title": "First Floor"}, "membership": {"subsystem": "zones"}},
+      "lights": [
+        "sim/demo/first/open-plan/lighting-01", "sim/demo/first/open-plan/lighting-02",
+        "sim/demo/first/open-plan/lighting-03", "sim/demo/first/open-plan/lighting-04",
+        "sim/demo/first/meeting-1/lighting-01", "sim/demo/first/meeting-1/lighting-02"
+      ],
+      "thermostats": [
+        "sim/demo/first/open-plan/fcu-01", "sim/demo/first/open-plan/fcu-02"
+      ],
+      "occupancySensors": [
+        "sim/demo/first/open-plan/pir-01", "sim/demo/first/meeting-1/pir-01"
+      ]
+    },
+    {
+      "name": "sim/demo/zones/building",
+      "type": "area",
+      "metadata": {"appearance": {"title": "Whole Building"}, "membership": {"subsystem": "zones"}},
+      "lights": ["sim/demo/zones/ground", "sim/demo/zones/first"],
+      "thermostats": ["sim/demo/zones/ground", "sim/demo/zones/first"],
+      "occupancySensors": ["sim/demo/zones/ground", "sim/demo/zones/first"],
+      "meters": ["sim/demo/building/meter-01"],
+      "electrics": ["sim/demo/building/electric-01"]
+    }
+  ]
+}
