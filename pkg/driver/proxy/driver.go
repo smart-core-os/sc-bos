@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/proxy/config"
@@ -174,16 +175,46 @@ func (p *proxy) announceExplicitDevices(devices []config.Device) {
 
 func (p *proxy) announceChanges(changes <-chan *devicespb.PullDevicesResponse_Change) {
 	announced := announcedTraits{}
+	metadata := announcedMetadata{}
 	defer announced.deleteAll()
+	defer metadata.deleteAll()
 	for change := range changes {
-		p.announceChange(announced, change)
+		p.announceChange(announced, metadata, change)
 	}
 }
 
-func (p *proxy) announceChange(announced announcedTraits, change *devicespb.PullDevicesResponse_Change) {
+func (p *proxy) announceChange(announced announcedTraits, metadata announcedMetadata, change *devicespb.PullDevicesResponse_Change) {
 	needAnnouncing := announced.updateDevice(change.OldValue, change.NewValue)
 	deviceName := change.GetNewValue().GetName() // nil safe way to get the name
 	p.announceTraits(announced, deviceName, needAnnouncing)
+	p.announceMetadata(metadata, change.OldValue, change.NewValue)
+}
+
+// announceMetadata announces the full metadata for a device so that GetMetadata served by this
+// node returns the remote node's metadata (appearance, location, membership, device type, ...)
+// and not just the auto-generated trait list.
+//
+// The node serves the Metadata trait from its local devices collection rather than proxying it
+// (MetadataApi is registered as an unrouted service, see node.New), so the remote metadata must be
+// merged into that collection explicitly - announcing trait clients alone is not enough.
+func (p *proxy) announceMetadata(metadata announcedMetadata, oldDevice, newDevice *devicespb.Device) {
+	if p.skipDevice {
+		return // discovery, and therefore metadata, is suppressed for this node
+	}
+	if newDevice == nil {
+		if oldDevice != nil {
+			metadata.delete(oldDevice.GetName())
+		}
+		return
+	}
+	if oldDevice != nil && proto.Equal(oldDevice.GetMetadata(), newDevice.GetMetadata()) {
+		return // metadata unchanged, leave the existing announcement in place
+	}
+	name := newDevice.GetName()
+	metadata.delete(name) // remove any previous announcement before re-announcing
+	if md := newDevice.GetMetadata(); md != nil {
+		metadata.add(name, p.announcer.Announce(name, node.HasMetadata(md)))
+	}
 }
 
 // Announces traitNames for a deviceName.
@@ -213,6 +244,28 @@ func (p *proxy) announceTraits(announced announcedTraits, deviceName string, tra
 func (p *proxy) Close() error {
 	p.shutdown()
 	return p.conn.Close()
+}
+
+// announcedMetadata tracks the metadata announcement made per device name so it can be updated
+// or removed as the remote node's devices change.
+type announcedMetadata map[string]node.Undo
+
+func (a announcedMetadata) add(name string, undo node.Undo) {
+	a[name] = undo
+}
+
+func (a announcedMetadata) delete(name string) {
+	if undo, ok := a[name]; ok {
+		undo()
+		delete(a, name)
+	}
+}
+
+func (a announcedMetadata) deleteAll() {
+	for name, undo := range a {
+		undo()
+		delete(a, name)
+	}
 }
 
 // deviceTrait is used as a map key to uniquely identify a device+trait pair.
