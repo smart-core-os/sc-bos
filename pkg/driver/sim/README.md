@@ -90,10 +90,26 @@ roughly five wall-clock minutes, so the history charts fill quickly.
 History is stored in Postgres (matching the other example configs), so the example needs the
 dev database running (`podman compose up -d`) — see the project README for details.
 
+## Forcing values
+
+Lighting, FCU and occupancy devices expose the `MockDeviceApi` (`smartcore.bos.mock.v1`), the same
+service the mock driver uses, so you can drive the simulation live:
+
+- `ForceTraitValue` sets a room input — occupancy (people count), air-temperature set point,
+  lighting level or fan speed. Unlike the mock driver, the forced value becomes a **simulation
+  input**: the engine keeps running and the rest of the building responds to it (forcing a room's
+  occupancy still drives its lighting, FCU load, CO2, metered energy and so on).
+- `SetDeviceAutomation` toggles whether the engine drives that input: `active=false` freezes it at
+  its current value, `active=true` releases it back to the simulation.
+
+Derived outputs (electrical demand, metering, brightness, air quality, motion, enter/leave) follow
+from those inputs and cannot be forced directly — `ForceTraitValue` rejects them and points at the
+input that drives them.
+
 ## Notes
 
-- The simulation is the single source of truth; there is no per-device force/control API as in
-  the mock driver (the engine would overwrite forced values on the next tick).
+- The simulation owns all device state and recomputes it every tick; forced values are inputs to
+  that model (see above) rather than overwrites of a device's output.
 - The random source is seeded (config `seed`, default fixed) so runs are reproducible. The
   optional `healthCheck` fault simulation is intentionally not seeded — fault timing varies
   from run to run.

@@ -19,6 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/mockpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/motionsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
@@ -98,6 +99,7 @@ func Expand(cfg config.Root, scaler scale.Time, start time.Time) (*Building, []D
 	}
 
 	b := NewBuilding(start, scaler, cfg.BaseLoadW, cfg.Seed, floors)
+	ctrl := newController(b)
 
 	// Device numbering is keyed by location+type rather than per archetype entry,
 	// so a room listing the same type twice (e.g. to mix titles or rated powers)
@@ -106,7 +108,7 @@ func Expand(cfg config.Root, scaler scale.Time, start time.Time) (*Building, []D
 	var devices []Device
 	for _, rb := range built {
 		for _, a := range rb.rc.Archetypes {
-			ds, err := expandArchetype(cfg.NamePrefix, b, rb.fc, rb.rc, rb.room, a, counters)
+			ds, err := expandArchetype(cfg.NamePrefix, b, ctrl, rb.fc, rb.rc, rb.room, a, counters)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -115,7 +117,7 @@ func Expand(cfg config.Root, scaler scale.Time, start time.Time) (*Building, []D
 	}
 	// Building-level devices (meter, electric) read whole-building aggregates.
 	for _, a := range cfg.BuildingDevices {
-		ds, err := expandArchetype(cfg.NamePrefix, b, config.Floor{Name: "building", Title: "Building"}, config.Room{}, nil, a, counters)
+		ds, err := expandArchetype(cfg.NamePrefix, b, ctrl, config.Floor{Name: "building", Title: "Building"}, config.Room{}, nil, a, counters)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -126,7 +128,7 @@ func Expand(cfg config.Root, scaler scale.Time, start time.Time) (*Building, []D
 
 // expandArchetype generates Count devices for one archetype, registering each
 // device's updaters on the building. room is nil for building-level devices.
-func expandArchetype(prefix string, b *Building, fc config.Floor, rc config.Room, room *Room, a config.Archetype, counters map[string]int) ([]Device, error) {
+func expandArchetype(prefix string, b *Building, ctrl *controller, fc config.Floor, rc config.Room, room *Room, a config.Archetype, counters map[string]int) ([]Device, error) {
 	var dir string
 	if room != nil {
 		dir = fmt.Sprintf("%s/%s/%s", prefix, fc.Name, rc.Name)
@@ -134,6 +136,7 @@ func expandArchetype(prefix string, b *Building, fc config.Floor, rc config.Room
 		dir = fmt.Sprintf("%s/building", prefix)
 	}
 	key := dir + "/" + a.Type
+	forceable := archetypes[a.Type].Forceable
 
 	var devices []Device
 	for i := 0; i < count(a); i++ {
@@ -147,6 +150,12 @@ func expandArchetype(prefix string, b *Building, fc config.Floor, rc config.Room
 		}
 		for _, u := range updaters {
 			b.AddUpdater(u)
+		}
+		// A forceable device (lighting, fcu, occupancy) exposes the MockDeviceApi so
+		// its room input can be driven live; the engine then responds via the coupling.
+		if room != nil && len(forceable) > 0 {
+			ctrl.register(name, room, forceable)
+			features = append(features, node.HasServer(mockpb.RegisterMockDeviceApiServer, mockpb.MockDeviceApiServer(ctrl)))
 		}
 		devices = append(devices, Device{
 			Name:     name,
@@ -169,6 +178,10 @@ type archetypeDesc struct {
 	RoomScoped      bool // reads per-room state, so cannot be a building-level device
 	OccupancyDriven bool // readings come entirely from room occupancy
 	Build           buildFunc
+	// Forceable maps the archetype's input traits to the engine override they drive
+	// via the MockDeviceApi. Output-only archetypes (derived from the simulation)
+	// leave this nil and expose no MockDeviceApi.
+	Forceable map[trait.Name]roomOverride
 }
 
 // buildFunc constructs the trait servers (as node Features) and the per-tick
@@ -176,10 +189,14 @@ type archetypeDesc struct {
 type buildFunc func(a config.Archetype, room *Room) (features []node.Feature, updaters []Updater)
 
 var archetypeList = []archetypeDesc{
-	{Type: ArchetypeLighting, DisplayName: "Light", Subsystem: "lighting", RoomScoped: true, Build: buildLighting},
-	{Type: ArchetypeFCU, DisplayName: "Fan Coil Unit", Subsystem: "hvac", RoomScoped: true, Build: buildFCU},
-	{Type: ArchetypePIR, DisplayName: "Occupancy Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildOccupancy},
-	{Type: ArchetypeOccupancy, DisplayName: "Occupancy Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildOccupancy},
+	{Type: ArchetypeLighting, DisplayName: "Light", Subsystem: "lighting", RoomScoped: true, Build: buildLighting,
+		Forceable: map[trait.Name]roomOverride{trait.Light: overrideLight}},
+	{Type: ArchetypeFCU, DisplayName: "Fan Coil Unit", Subsystem: "hvac", RoomScoped: true, Build: buildFCU,
+		Forceable: map[trait.Name]roomOverride{trait.AirTemperature: overrideSetPoint, trait.FanSpeed: overrideFan}},
+	{Type: ArchetypePIR, DisplayName: "Occupancy Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildOccupancy,
+		Forceable: map[trait.Name]roomOverride{trait.OccupancySensor: overrideOccupancy}},
+	{Type: ArchetypeOccupancy, DisplayName: "Occupancy Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildOccupancy,
+		Forceable: map[trait.Name]roomOverride{trait.OccupancySensor: overrideOccupancy}},
 	{Type: ArchetypeMotion, DisplayName: "Motion Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildMotion},
 	{Type: ArchetypeBrightness, DisplayName: "Brightness Sensor", Subsystem: "sensors", RoomScoped: true, Build: buildBrightness},
 	{Type: ArchetypeAirQuality, DisplayName: "Air Quality Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildAirQuality},
@@ -265,7 +282,7 @@ func buildFCU(_ config.Archetype, room *Room) (features []node.Feature, updaters
 		_, _ = atModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &typespb.Temperature{ValueCelsius: room.TempC},
 			TemperatureGoal: &airtemperaturepb.AirTemperature_TemperatureSetPoint{
-				TemperatureSetPoint: &typespb.Temperature{ValueCelsius: room.SetPointC},
+				TemperatureSetPoint: &typespb.Temperature{ValueCelsius: room.setPoint()},
 			},
 		})
 		_, _ = fanModel.UpdateFanSpeed(&fanspeedpb.FanSpeed{Percentage: float32(room.FanPct)})
