@@ -56,7 +56,8 @@
                 {"type": "lighting", "count": 4},
                 {"type": "fcu", "count": 2, "setPointC": 22},
                 {"type": "pir"},
-                {"type": "brightness"}
+                {"type": "brightness"},
+                {"type": "airquality"}
               ]
             },
             {
@@ -111,7 +112,8 @@
       ],
       "occupancySensors": [
         "sim/demo/first/open-plan/pir-01", "sim/demo/first/meeting-1/pir-01"
-      ]
+      ],
+      "airQualitySensors": ["sim/demo/first/open-plan/airquality-01"]
     },
     {
       "name": "sim/demo/zones/building",
@@ -120,8 +122,89 @@
       "lights": ["sim/demo/zones/ground", "sim/demo/zones/first"],
       "thermostats": ["sim/demo/zones/ground", "sim/demo/zones/first"],
       "occupancySensors": ["sim/demo/zones/ground", "sim/demo/zones/first"],
+      "airQualitySensors": ["sim/demo/zones/ground", "sim/demo/zones/first"],
       "meters": ["sim/demo/building/meter-01"],
       "electrics": ["sim/demo/building/electric-01"]
+    }
+  ],
+  "automation": [
+    {
+      "name": "sim/demo/automation/electric-history/building",
+      "type": "history",
+      "source": {"name": "sim/demo/zones/building", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/electric-history/main-incomer",
+      "type": "history",
+      "source": {"name": "sim/demo/building/electric-01", "trait": "smartcore.traits.Electric"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/meter-history/building",
+      "type": "history",
+      "source": {"name": "sim/demo/zones/building", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/meter-history/main-incomer",
+      "type": "history",
+      "source": {"name": "sim/demo/building/meter-01", "trait": "smartcore.bos.Meter"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/occupancy-history/building",
+      "type": "history",
+      "source": {"name": "sim/demo/zones/building", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/occupancy-history/ground",
+      "type": "history",
+      "source": {"name": "sim/demo/zones/ground", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/occupancy-history/first",
+      "type": "history",
+      "source": {"name": "sim/demo/zones/first", "trait": "smartcore.traits.OccupancySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/air-temperature-history/building",
+      "type": "history",
+      "source": {"name": "sim/demo/zones/building", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/air-temperature-history/ground",
+      "type": "history",
+      "source": {"name": "sim/demo/zones/ground", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/air-temperature-history/first",
+      "type": "history",
+      "source": {"name": "sim/demo/zones/first", "trait": "smartcore.traits.AirTemperature"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/air-quality-history/building",
+      "type": "history",
+      "source": {"name": "sim/demo/zones/building", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/air-quality-history/ground",
+      "type": "history",
+      "source": {"name": "sim/demo/zones/ground", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
+    },
+    {
+      "name": "sim/demo/automation/air-quality-history/first",
+      "type": "history",
+      "source": {"name": "sim/demo/zones/first", "trait": "smartcore.traits.AirQualitySensor"},
+      "storage": {"type": "postgres"}
     }
   ]
 }

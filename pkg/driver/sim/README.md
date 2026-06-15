@@ -80,9 +80,15 @@ stable under large time steps.
 
 ## Example
 
-A self-contained two-floor example lives at
+A two-floor example lives at
 [`example/config/sim-building/app.conf.json`](../../../example/config/sim-building/app.conf.json),
-including zones so the data aggregates in the ops UI.
+including zones so the data aggregates in the ops UI. It also configures `history` automations
+and an ops dashboard (`ui-config.json`) so the simulated data is visible as power, occupancy,
+air-temperature and air-quality charts. With `timeMultiplier: 288` a simulated day passes in
+roughly five wall-clock minutes, so the history charts fill quickly.
+
+History is stored in Postgres (matching the other example configs), so the example needs the
+dev database running (`podman compose up -d`) — see the project README for details.
 
 ## Notes
 

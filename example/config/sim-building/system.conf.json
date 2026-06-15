@@ -6,5 +6,11 @@
   },
   "staticHosting": [
     {"path": "/__/sim-building/", "filePath": "./example/config/sim-building"}
-  ]
+  ],
+  "stores": {
+    "postgres": {
+      "uri": "postgres://postgres@localhost:5432/smart_core",
+      "passwordFile": "./.data/secrets/postgres-password"
+    }
+  }
 }
