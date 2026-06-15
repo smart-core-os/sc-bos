@@ -549,13 +549,6 @@ func count(a config.Archetype) int {
 	return a.Count
 }
 
-// roomScoped reports whether an archetype belongs to a specific room and reads
-// per-room state. These cannot be configured as building-level devices (where
-// room is nil); only meter, electric and enterleave aggregate at the building.
-func roomScoped(typ string) bool {
-	return archetypes[typ].RoomScoped
-}
-
 func ratedPower(a config.Archetype, def float64) float64 {
 	if a.RatedPowerW > 0 {
 		return a.RatedPowerW
