@@ -138,9 +138,10 @@ func proxyTLSConfig(tlsConfig *tls.Config, n config.Node) *tls.Config {
 	return tlsConfig
 }
 
-// proxy manages updates to the announced traits of any proxied devices for a single node.
+// proxy manages updates to the announced traits and metadata of any proxied devices for a single node.
 // At a high level it subscribes to changes in the node's devices,
-// when new devices are added, it announces them on this node,
+// when new devices are added, it announces their traits and metadata on this node,
+// when their metadata changes, it re-announces it,
 // when devices are removed, it removes them from this node too.
 type proxy struct {
 	config     config.Node
