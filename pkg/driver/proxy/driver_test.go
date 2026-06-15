@@ -95,10 +95,11 @@ func Test_proxy_announceChange(t *testing.T) {
 		logger:    zap.NewNop(),
 	}
 	known := announcedTraits{}
+	knownMetadata := announcedMetadata{}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			proxy.announceChange(known, tt.change)
+			proxy.announceChange(known, knownMetadata, tt.change)
 
 			for _, ct := range tt.wantPresent {
 				if _, ok := known[ct]; !ok {
@@ -113,6 +114,96 @@ func Test_proxy_announceChange(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_proxy_announceMetadata(t *testing.T) {
+	dev := func(name, title string) *devicespb.Device {
+		return &devicespb.Device{
+			Name:     name,
+			Metadata: &metadatapb.Metadata{Appearance: &metadatapb.Metadata_Appearance{Title: title}},
+		}
+	}
+
+	t.Run("announces metadata for new device", func(t *testing.T) {
+		announcer := &testAnnouncer{}
+		p := &proxy{announcer: announcer, logger: zap.NewNop()}
+		meta := announcedMetadata{}
+
+		p.announceMetadata(meta, nil, dev("device01", "Device 01"))
+
+		if _, ok := meta["device01"]; !ok {
+			t.Fatalf("expected device01 metadata to be tracked, got %v", meta)
+		}
+		if len(*announcer) != 1 {
+			t.Fatalf("expected 1 announcement, got %d", len(*announcer))
+		}
+		if got := (*announcer)[0].name; got != "device01" {
+			t.Errorf("announced name = %q, want device01", got)
+		}
+	})
+
+	t.Run("unchanged metadata is not re-announced", func(t *testing.T) {
+		announcer := &testAnnouncer{}
+		p := &proxy{announcer: announcer, logger: zap.NewNop()}
+		meta := announcedMetadata{}
+
+		old := dev("device01", "Device 01")
+		p.announceMetadata(meta, nil, old)
+		p.announceMetadata(meta, old, dev("device01", "Device 01"))
+
+		if len(*announcer) != 1 {
+			t.Fatalf("expected metadata to be announced once, got %d announcements", len(*announcer))
+		}
+	})
+
+	t.Run("changed metadata is re-announced", func(t *testing.T) {
+		announcer := &testAnnouncer{}
+		p := &proxy{announcer: announcer, logger: zap.NewNop()}
+		meta := announcedMetadata{}
+
+		old := dev("device01", "Device 01")
+		p.announceMetadata(meta, nil, old)
+		p.announceMetadata(meta, old, dev("device01", "Renamed"))
+
+		if len(*announcer) != 2 {
+			t.Fatalf("expected metadata to be announced twice, got %d", len(*announcer))
+		}
+		if (*announcer)[0].undone != 1 {
+			t.Errorf("expected the stale metadata announcement to be undone once, got %d", (*announcer)[0].undone)
+		}
+	})
+
+	t.Run("removed device undoes metadata", func(t *testing.T) {
+		announcer := &testAnnouncer{}
+		p := &proxy{announcer: announcer, logger: zap.NewNop()}
+		meta := announcedMetadata{}
+
+		old := dev("device01", "Device 01")
+		p.announceMetadata(meta, nil, old)
+		p.announceMetadata(meta, old, nil)
+
+		if _, ok := meta["device01"]; ok {
+			t.Errorf("expected device01 metadata to be forgotten, got %v", meta)
+		}
+		if (*announcer)[0].undone != 1 {
+			t.Errorf("expected metadata announcement to be undone, got %d", (*announcer)[0].undone)
+		}
+	})
+
+	t.Run("skipDevice suppresses metadata", func(t *testing.T) {
+		announcer := &testAnnouncer{}
+		p := &proxy{announcer: announcer, logger: zap.NewNop(), skipDevice: true}
+		meta := announcedMetadata{}
+
+		p.announceMetadata(meta, nil, dev("device01", "Device 01"))
+
+		if len(*announcer) != 0 {
+			t.Fatalf("expected no announcements when skipDevice is set, got %d", len(*announcer))
+		}
+		if len(meta) != 0 {
+			t.Errorf("expected no tracked metadata when skipDevice is set, got %v", meta)
+		}
+	})
 }
 
 func TestAnnouncedTraits_UpdateDevice(t *testing.T) {
