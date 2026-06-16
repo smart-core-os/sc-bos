@@ -33,11 +33,28 @@ message DataRetention {
 }
 
 // DataRetentionBytes describes storage consumption measured in bytes.
+//
+// The fields partition the storage backing this store:
+//   capacity = used + other_used + available + reserved
+// where reserved is space that exists but this store cannot use (e.g. filesystem
+// blocks reserved for root). When the relevant fields are present, clients can derive:
+//   space free to this store = available
+//   store fullness           = used / (used + available)                          // 0 when empty, 100 when this store can grow no further
+//   disk fullness (df Use%)  = (used + other_used) / (used + other_used + available)
 message DataRetentionBytes {
-  // Bytes currently in use.
+  // Bytes currently in use by this data store.
   optional uint64 used = 1;
-  // Total capacity in bytes. Omit if unlimited or unknown.
+  // Total capacity in bytes of the volume backing this store: the effective limit it
+  // can grow into. For a filesystem-backed store this is the size of the containing
+  // filesystem, which reflects a volume/quota limit when that limit is enforced at the
+  // filesystem level. Omit if unlimited or unknown.
   optional uint64 capacity = 2;
+  // Bytes used by other data sharing the same volume (i.e. not this data store).
+  optional uint64 other_used = 3;
+  // Bytes this store can still write before reaching capacity. Excludes space that
+  // exists but is unusable by this store (e.g. filesystem blocks reserved for root),
+  // so it may be less than capacity - used - other_used. Omit if unknown.
+  optional uint64 available = 4;
 }
 
 // DataRetentionItems describes storage consumption measured in discrete items

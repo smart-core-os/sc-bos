@@ -62,6 +62,12 @@ func TestUpdateSqliteModel_DiskCapacity(t *testing.T) {
 	if got.Bytes.Capacity == nil || *got.Bytes.Capacity == 0 {
 		t.Error("expected non-zero bytes.capacity from disk stats")
 	}
+	if got.Bytes.OtherUsed == nil {
+		t.Error("expected bytes.other_used to be populated from disk stats")
+	}
+	if got.Bytes.Available == nil {
+		t.Error("expected bytes.available to be populated from disk stats")
+	}
 }
 
 func TestSqliteBackend_Purge_All(t *testing.T) {
