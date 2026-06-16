@@ -91,6 +91,34 @@ export function countChecks(checks) {
 }
 
 /**
+ * Format a float for the health UI with magnitude-scaled precision.
+ *
+ * The shared format() helper renders 2 significant figures, which drops the
+ * decimal for two-digit values (60.4 -> "60", 24.3 -> "24"). For an out-of-bounds
+ * health check that made the measured value render identically to its bound, e.g.
+ * the nonsensical "24>24°C". Here we keep a decimal for two-digit values while
+ * trimming trailing zeros and keeping larger (ppm) and smaller (VOC) magnitudes sensible.
+ *
+ * @param {number} num
+ * @param {string|null} [unit]
+ * @return {string}
+ */
+function formatHealthFloat(num, unit = null) {
+  let numStr = '-';
+  if (num != null && !Number.isNaN(num)) {
+    const abs = Math.abs(num);
+    const maximumFractionDigits = abs >= 100 ? 0 : abs >= 10 ? 1 : abs >= 1 ? 2 : 3;
+    numStr = num.toLocaleString(undefined, {maximumFractionDigits});
+  }
+  if (unit) {
+    // spacing mirrors format() in @/util/number.js
+    const sp = (unit === '%' || unit === '"' || unit === '\'' || unit[0] === '°') ? '' : ' ';
+    return `${numStr}${sp}${unit}`;
+  }
+  return numStr;
+}
+
+/**
  *
  * @param {import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb').HealthCheck.Value.AsObject} val
  * @param {string|null} [unit]
@@ -107,7 +135,7 @@ export function valueToString(val, unit = null) {
     return format(val.uintValue, unit);
   }
   if (hasOneOf(val, 'floatValue')) {
-    return format(val.floatValue, unit);
+    return formatHealthFloat(val.floatValue, unit);
   }
   if (hasOneOf(val, 'stringValue')) {
     return val.stringValue || '-'; // always have a string
