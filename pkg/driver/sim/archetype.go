@@ -177,32 +177,53 @@ type archetypeDesc struct {
 	Subsystem       string
 	RoomScoped      bool // reads per-room state, so cannot be a building-level device
 	OccupancyDriven bool // readings come entirely from room occupancy
-	Build           buildFunc
+	// Traits is the set of SmartCore traits a device of this archetype exposes. It
+	// is the authoritative definition of the archetype's capabilities, expressed in
+	// the standard trait vocabulary rather than a driver-private string: the
+	// expansion announces exactly these traits (see buildArchetype), and every
+	// Forceable input trait must appear here. An archetype is therefore a named
+	// device type composed of multiple SmartCore traits — e.g. an fcu is
+	// {AirTemperature, FanSpeed, OnOff, Status} — which a config UI can read to
+	// present archetypes in terms of the trait standard.
+	Traits []trait.Name
+	Build  buildFunc
 	// Forceable maps the archetype's input traits to the engine override they drive
 	// via the MockDeviceApi. Output-only archetypes (derived from the simulation)
-	// leave this nil and expose no MockDeviceApi.
+	// leave this nil and expose no MockDeviceApi. Its keys are always a subset of Traits.
 	Forceable map[trait.Name]roomOverride
 }
 
 // buildFunc constructs the trait servers (as node Features) and the per-tick
-// updaters for one device of an archetype. room is nil for building-level devices.
+// updaters for one device of an archetype. The HasTrait features are added by
+// buildArchetype from the descriptor's Traits, so Build returns servers only.
+// room is nil for building-level devices.
 type buildFunc func(a config.Archetype, room *Room) (features []node.Feature, updaters []Updater)
 
 var archetypeList = []archetypeDesc{
 	{Type: ArchetypeLighting, DisplayName: "Light", Subsystem: "lighting", RoomScoped: true, Build: buildLighting,
+		Traits:    []trait.Name{trait.Light, statuspb.TraitName},
 		Forceable: map[trait.Name]roomOverride{trait.Light: overrideLight}},
 	{Type: ArchetypeFCU, DisplayName: "Fan Coil Unit", Subsystem: "hvac", RoomScoped: true, Build: buildFCU,
+		Traits:    []trait.Name{trait.AirTemperature, trait.FanSpeed, trait.OnOff, statuspb.TraitName},
 		Forceable: map[trait.Name]roomOverride{trait.AirTemperature: overrideSetPoint, trait.FanSpeed: overrideFan}},
 	{Type: ArchetypePIR, DisplayName: "Occupancy Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildOccupancy,
+		Traits:    []trait.Name{trait.OccupancySensor},
 		Forceable: map[trait.Name]roomOverride{trait.OccupancySensor: overrideOccupancy}},
 	{Type: ArchetypeOccupancy, DisplayName: "Occupancy Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildOccupancy,
+		Traits:    []trait.Name{trait.OccupancySensor},
 		Forceable: map[trait.Name]roomOverride{trait.OccupancySensor: overrideOccupancy}},
-	{Type: ArchetypeMotion, DisplayName: "Motion Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildMotion},
-	{Type: ArchetypeBrightness, DisplayName: "Brightness Sensor", Subsystem: "sensors", RoomScoped: true, Build: buildBrightness},
-	{Type: ArchetypeAirQuality, DisplayName: "Air Quality Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildAirQuality},
-	{Type: ArchetypeEnterLeave, DisplayName: "Access Reader", Subsystem: "acs", OccupancyDriven: true, Build: buildEnterLeave},
-	{Type: ArchetypeMeter, DisplayName: "Meter", Subsystem: "metering", Build: buildMeter},
-	{Type: ArchetypeElectric, DisplayName: "Electricity Meter", Subsystem: "metering", Build: buildElectric},
+	{Type: ArchetypeMotion, DisplayName: "Motion Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildMotion,
+		Traits: []trait.Name{trait.MotionSensor}},
+	{Type: ArchetypeBrightness, DisplayName: "Brightness Sensor", Subsystem: "sensors", RoomScoped: true, Build: buildBrightness,
+		Traits: []trait.Name{trait.BrightnessSensor}},
+	{Type: ArchetypeAirQuality, DisplayName: "Air Quality Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildAirQuality,
+		Traits: []trait.Name{trait.AirQualitySensor}},
+	{Type: ArchetypeEnterLeave, DisplayName: "Access Reader", Subsystem: "acs", OccupancyDriven: true, Build: buildEnterLeave,
+		Traits: []trait.Name{trait.EnterLeaveSensor}},
+	{Type: ArchetypeMeter, DisplayName: "Meter", Subsystem: "metering", Build: buildMeter,
+		Traits: []trait.Name{meterpb.TraitName}},
+	{Type: ArchetypeElectric, DisplayName: "Electricity Meter", Subsystem: "metering", Build: buildElectric,
+		Traits: []trait.Name{trait.Electric}},
 }
 
 // archetypes indexes archetypeList by Type, panicking on a duplicate so a
@@ -213,6 +234,17 @@ var archetypes = func() map[string]archetypeDesc {
 	for _, d := range archetypeList {
 		if _, dup := m[d.Type]; dup {
 			panic(fmt.Sprintf("sim: duplicate archetype type %q", d.Type))
+		}
+		// A forceable input must be a trait the archetype actually exposes, so the
+		// declared trait set stays the single source of truth for its capabilities.
+		declared := make(map[trait.Name]bool, len(d.Traits))
+		for _, tn := range d.Traits {
+			declared[tn] = true
+		}
+		for tn := range d.Forceable {
+			if !declared[tn] {
+				panic(fmt.Sprintf("sim: archetype %q forces trait %q it does not declare in Traits", d.Type, tn))
+			}
 		}
 		m[d.Type] = d
 	}
@@ -233,6 +265,12 @@ func buildArchetype(a config.Archetype, room *Room) (features []node.Feature, up
 		return nil, nil, "", fmt.Errorf("archetype %q is room-scoped and cannot be used as a building-level device", a.Type)
 	}
 	features, updaters = desc.Build(a, room)
+	// Announce the archetype's traits from its descriptor rather than from each
+	// Build func, so the registry's Traits is the single source of truth for what
+	// the device exposes (Build returns the trait servers only).
+	for _, tn := range desc.Traits {
+		features = append(features, node.HasTrait(tn))
+	}
 	return features, updaters, desc.Subsystem, nil
 }
 
@@ -255,7 +293,6 @@ func buildLighting(_ config.Archetype, room *Room) (features []node.Feature, upd
 	features = []node.Feature{
 		node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(server)),
 		node.HasServer(lightpb.RegisterLightInfoServer, lightpb.LightInfoServer(server)),
-		node.HasTrait(trait.Light),
 	}
 	features = append(features, statusFeatures()...)
 	updaters = []Updater{updaterFunc(func(now time.Time, b *Building) {
@@ -271,11 +308,8 @@ func buildFCU(_ config.Archetype, room *Room) (features []node.Feature, updaters
 	onModel := onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}), resource.WithNoDuplicates())
 	features = []node.Feature{
 		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(airtemperaturepb.NewModelServer(atModel))),
-		node.HasTrait(trait.AirTemperature),
 		node.HasServer(fanspeedpb.RegisterFanSpeedApiServer, fanspeedpb.FanSpeedApiServer(fanspeedpb.NewModelServer(fanModel))),
-		node.HasTrait(trait.FanSpeed),
 		node.HasServer(onoffpb.RegisterOnOffApiServer, onoffpb.OnOffApiServer(onoffpb.NewModelServer(onModel))),
-		node.HasTrait(trait.OnOff),
 	}
 	features = append(features, statusFeatures()...)
 	updaters = []Updater{updaterFunc(func(now time.Time, b *Building) {
@@ -299,7 +333,6 @@ func buildOccupancy(_ config.Archetype, room *Room) (features []node.Feature, up
 	model := occupancysensorpb.NewModel(resource.WithNoDuplicates())
 	features = []node.Feature{
 		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(model))),
-		node.HasTrait(trait.OccupancySensor),
 	}
 	updaters = []Updater{updaterFunc(func(now time.Time, b *Building) {
 		occ := &occupancysensorpb.Occupancy{PeopleCount: int32(room.Occupants)}
@@ -317,7 +350,6 @@ func buildMotion(_ config.Archetype, room *Room) (features []node.Feature, updat
 	model := motionsensorpb.NewModel(resource.WithNoDuplicates())
 	features = []node.Feature{
 		node.HasServer(motionsensorpb.RegisterMotionSensorApiServer, motionsensorpb.MotionSensorApiServer(motionsensorpb.NewModelServer(model))),
-		node.HasTrait(trait.MotionSensor),
 	}
 	// Emit only on a transition. StateChangeTime would otherwise be re-stamped every
 	// tick, making each message distinct and defeating the model's deduplication.
@@ -340,7 +372,6 @@ func buildBrightness(_ config.Archetype, room *Room) (features []node.Feature, u
 	model := brightnesssensorpb.NewModel(resource.WithNoDuplicates())
 	features = []node.Feature{
 		node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, brightnesssensorpb.BrightnessSensorApiServer(brightnesssensorpb.NewModelServer(model))),
-		node.HasTrait(trait.BrightnessSensor),
 	}
 	updaters = []Updater{updaterFunc(func(now time.Time, b *Building) {
 		// Lux = daylight through the windows + the room's own electric lighting.
@@ -356,7 +387,6 @@ func buildAirQuality(_ config.Archetype, room *Room) (features []node.Feature, u
 	model := airqualitysensorpb.NewModel(resource.WithNoDuplicates())
 	features = []node.Feature{
 		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(model))),
-		node.HasTrait(trait.AirQualitySensor),
 	}
 	updaters = []Updater{updaterFunc(func(now time.Time, b *Building) {
 		co2 := float32(room.CO2ppm)
@@ -379,7 +409,6 @@ func buildEnterLeave(_ config.Archetype, room *Room) (features []node.Feature, u
 	model := enterleavesensorpb.NewModel()
 	features = []node.Feature{
 		node.HasServer(enterleavesensorpb.RegisterEnterLeaveSensorApiServer, enterleavesensorpb.EnterLeaveSensorApiServer(enterleavesensorpb.NewModelServer(model))),
-		node.HasTrait(trait.EnterLeaveSensor),
 	}
 	// Building-level enter/leave aggregates all rooms; room-level tracks just its room.
 	var lastEnter, lastLeave int64
@@ -428,7 +457,6 @@ func buildMeter(_ config.Archetype, _ *Room) (features []node.Feature, updaters 
 	features = []node.Feature{
 		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(model))),
 		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(info)),
-		node.HasTrait(meterpb.TraitName),
 	}
 	updaters = []Updater{updaterFunc(func(now time.Time, b *Building) {
 		_, _ = model.UpdateMeterReading(&meterpb.MeterReading{
@@ -444,7 +472,6 @@ func buildElectric(_ config.Archetype, _ *Room) (features []node.Feature, update
 	model := electricpb.NewModel(resource.WithNoDuplicates())
 	features = []node.Feature{
 		node.HasServer(electricpb.RegisterElectricApiServer, electricpb.ElectricApiServer(electricpb.NewModelServer(model))),
-		node.HasTrait(trait.Electric),
 	}
 	const voltage, pf float32 = 240, 0.95
 	// Constant for every tick, so box/compute them once per device rather than
@@ -476,15 +503,15 @@ var fanPresets = []fanspeedpb.Preset{
 	{Name: "full", Percentage: 100},
 }
 
-// statusFeatures adds a Status trait reporting a static NOMINAL state. The
+// statusFeatures adds a Status server reporting a static NOMINAL state. The
 // simulation does not vary per-device health (driver-level health does), so it
-// registers no updater.
+// registers no updater. The Status trait itself is declared on the archetype
+// descriptor (Traits) for the archetypes that include this server.
 func statusFeatures() []node.Feature {
 	model := statuspb.NewModel()
 	_, _ = model.UpdateProblem(&statuspb.StatusLog_Problem{Level: statuspb.StatusLog_NOMINAL, Description: "All systems operational"})
 	return []node.Feature{
 		node.HasServer(statuspb.RegisterStatusApiServer, statuspb.StatusApiServer(statuspb.NewModelServer(model))),
-		node.HasTrait(statuspb.TraitName),
 	}
 }
 

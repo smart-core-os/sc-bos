@@ -56,6 +56,11 @@ A room's `maxOccupancy` defaults to an even share of its floor's `maxOccupancy`.
 
 ### Archetypes
 
+An archetype is a named device *type* defined as a set of SmartCore traits (some,
+like `fcu`, are composites of several), together with the simulation coupling that
+drives them. The trait set is the archetype's authoritative capability list — the
+table below mirrors what each `type` declares in the driver's archetype registry.
+
 | `type`       | Traits                                  | Coupling |
 |--------------|-----------------------------------------|----------|
 | `lighting`   | Light, Status                           | level follows occupancy + working hours, dimmed by daylight; contributes lighting watts |
