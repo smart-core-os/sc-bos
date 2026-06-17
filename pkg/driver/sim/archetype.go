@@ -23,7 +23,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/motionsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -183,7 +182,7 @@ type archetypeDesc struct {
 	// expansion announces exactly these traits (see buildArchetype), and every
 	// Forceable input trait must appear here. An archetype is therefore a named
 	// device type composed of multiple SmartCore traits — e.g. an fcu is
-	// {AirTemperature, FanSpeed, OnOff, Status} — which a config UI can read to
+	// {AirTemperature, FanSpeed, OnOff} — which a config UI can read to
 	// present archetypes in terms of the trait standard.
 	Traits []trait.Name
 	Build  buildFunc
@@ -201,10 +200,10 @@ type buildFunc func(a config.Archetype, room *Room) (features []node.Feature, up
 
 var archetypeList = []archetypeDesc{
 	{Type: ArchetypeLighting, DisplayName: "Light", Subsystem: "lighting", RoomScoped: true, Build: buildLighting,
-		Traits:    []trait.Name{trait.Light, statuspb.TraitName},
+		Traits:    []trait.Name{trait.Light},
 		Forceable: map[trait.Name]roomOverride{trait.Light: overrideLight}},
 	{Type: ArchetypeFCU, DisplayName: "Fan Coil Unit", Subsystem: "hvac", RoomScoped: true, Build: buildFCU,
-		Traits:    []trait.Name{trait.AirTemperature, trait.FanSpeed, trait.OnOff, statuspb.TraitName},
+		Traits:    []trait.Name{trait.AirTemperature, trait.FanSpeed, trait.OnOff},
 		Forceable: map[trait.Name]roomOverride{trait.AirTemperature: overrideSetPoint, trait.FanSpeed: overrideFan}},
 	{Type: ArchetypePIR, DisplayName: "Occupancy Sensor", Subsystem: "sensors", RoomScoped: true, OccupancyDriven: true, Build: buildOccupancy,
 		Traits:    []trait.Name{trait.OccupancySensor},
@@ -294,7 +293,6 @@ func buildLighting(_ config.Archetype, room *Room) (features []node.Feature, upd
 		node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(server)),
 		node.HasServer(lightpb.RegisterLightInfoServer, lightpb.LightInfoServer(server)),
 	}
-	features = append(features, statusFeatures()...)
 	updaters = []Updater{updaterFunc(func(now time.Time, b *Building) {
 		_, _ = model.UpdateBrightness(&lightpb.Brightness{LevelPercent: float32(room.LightLevel)},
 			resource.WithUpdatePaths("level_percent"))
@@ -311,7 +309,6 @@ func buildFCU(_ config.Archetype, room *Room) (features []node.Feature, updaters
 		node.HasServer(fanspeedpb.RegisterFanSpeedApiServer, fanspeedpb.FanSpeedApiServer(fanspeedpb.NewModelServer(fanModel))),
 		node.HasServer(onoffpb.RegisterOnOffApiServer, onoffpb.OnOffApiServer(onoffpb.NewModelServer(onModel))),
 	}
-	features = append(features, statusFeatures()...)
 	updaters = []Updater{updaterFunc(func(now time.Time, b *Building) {
 		_, _ = atModel.UpdateAirTemperature(&airtemperaturepb.AirTemperature{
 			AmbientTemperature: &typespb.Temperature{ValueCelsius: room.TempC},
@@ -501,18 +498,6 @@ var fanPresets = []fanspeedpb.Preset{
 	{Name: "med", Percentage: 40},
 	{Name: "high", Percentage: 75},
 	{Name: "full", Percentage: 100},
-}
-
-// statusFeatures adds a Status server reporting a static NOMINAL state. The
-// simulation does not vary per-device health (driver-level health does), so it
-// registers no updater. The Status trait itself is declared on the archetype
-// descriptor (Traits) for the archetypes that include this server.
-func statusFeatures() []node.Feature {
-	model := statuspb.NewModel()
-	_, _ = model.UpdateProblem(&statuspb.StatusLog_Problem{Level: statuspb.StatusLog_NOMINAL, Description: "All systems operational"})
-	return []node.Feature{
-		node.HasServer(statuspb.RegisterStatusApiServer, statuspb.StatusApiServer(statuspb.NewModelServer(model))),
-	}
 }
 
 // enterLeaveTotals returns the enter/leave totals for room, or the whole-building

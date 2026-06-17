@@ -63,8 +63,8 @@ table below mirrors what each `type` declares in the driver's archetype registry
 
 | `type`       | Traits                                  | Coupling |
 |--------------|-----------------------------------------|----------|
-| `lighting`   | Light, Status                           | level follows occupancy + working hours, dimmed by daylight; contributes lighting watts |
-| `fcu`        | AirTemperature, FanSpeed, OnOff, Status | fan ramps with occupancy; temperature responds to occupant heat vs. fan cooling; contributes FCU watts |
+| `lighting`   | Light                                   | level follows occupancy + working hours, dimmed by daylight; contributes lighting watts |
+| `fcu`        | AirTemperature, FanSpeed, OnOff         | fan ramps with occupancy; temperature responds to occupant heat vs. fan cooling; contributes FCU watts |
 | `pir` / `occupancy` | OccupancySensor                  | people count / state from room occupants |
 | `motion`     | MotionSensor                            | detected while the room is occupied |
 | `brightness` | BrightnessSensor                        | daylight through windows + electric light contribution |

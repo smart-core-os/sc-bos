@@ -8,7 +8,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/sim/scale"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
@@ -18,8 +17,8 @@ import (
 // source of truth for what it exposes.
 func TestArchetypeTraitsDeclared(t *testing.T) {
 	cases := map[string][]trait.Name{
-		ArchetypeFCU:        {trait.AirTemperature, trait.FanSpeed, trait.OnOff, statuspb.TraitName},
-		ArchetypeLighting:   {trait.Light, statuspb.TraitName},
+		ArchetypeFCU:        {trait.AirTemperature, trait.FanSpeed, trait.OnOff},
+		ArchetypeLighting:   {trait.Light},
 		ArchetypePIR:        {trait.OccupancySensor},
 		ArchetypeMeter:      {meterpb.TraitName},
 		ArchetypeElectric:   {trait.Electric},
@@ -69,7 +68,7 @@ func TestExpand_AnnouncesDeclaredTraits(t *testing.T) {
 	}
 
 	const fcuName = "sim/demo/g/r/fcu-01"
-	want := []trait.Name{trait.AirTemperature, trait.FanSpeed, trait.OnOff, statuspb.TraitName}
+	want := []trait.Name{trait.AirTemperature, trait.FanSpeed, trait.OnOff}
 	for _, dev := range n.ListDevices() {
 		if dev.GetName() != fcuName {
 			continue
