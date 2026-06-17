@@ -55,6 +55,14 @@
                 "source": "sim/demo/zones/building",
                 "metric": "score"
               }
+            },
+            {
+              "component": "builtin:health/HealthCheckTable",
+              "props": {
+                "conditions": [
+                  {"field": "name", "stringEqual": "sim/demo/driver"}
+                ]
+              }
             }
           ],
           "after": [
