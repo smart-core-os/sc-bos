@@ -13,6 +13,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/proxy"
 	seWiserKnx "github.com/smart-core-os/sc-bos/pkg/driver/se/wiser-knx"
 	shellyTrv "github.com/smart-core-os/sc-bos/pkg/driver/shelly/trv"
+	"github.com/smart-core-os/sc-bos/pkg/driver/sim"
 	steinelHpd "github.com/smart-core-os/sc-bos/pkg/driver/steinel/hpd"
 	"github.com/smart-core-os/sc-bos/pkg/driver/xovis"
 )
@@ -30,6 +31,7 @@ func Factories() map[string]driver.Factory {
 		pestsense.DriverName:  pestsense.Factory,
 		proxy.DriverName:      proxy.Factory,
 		seWiserKnx.DriverName: seWiserKnx.Factory,
+		sim.DriverName:        sim.Factory,
 		shellyTrv.DriverName:  shellyTrv.Factory,
 		steinelHpd.DriverName: steinelHpd.Factory,
 		xovis.DriverName:      xovis.Factory,
