@@ -27,21 +27,31 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
 )
 
-// clientEnv holds test fixtures for DeploymentUpdater tests.
+// clientEnv holds test fixtures for ConfigUpdater tests.
 type clientEnv struct {
-	testServer *httptest.Server
-	httpClient *http.Client
-	caPool     *x509.CertPool // sim dev-CA pool, for building mTLS clients
-	storeDir   *os.Root
-	store      *DeploymentStore
-	storePath  string // temp dir absolute path for filesystem assertions
-	updater    *DeploymentUpdater
-	nodeID     int64
+	testServer   *httptest.Server
+	httpClient   *http.Client
+	caPool       *x509.CertPool // sim dev-CA pool, for building mTLS clients
+	storeDir     *os.Root
+	store        *DeploymentStore
+	storePath    string // temp dir absolute path for filesystem assertions
+	updater      *ConfigUpdater
+	conn         *Conn         // drives the config flow over the production Conn.Update path
+	client       Client        // the same Client backing updater
+	registration *Registration // registration backing client
+	nodeID       int64
+	platform     Platform
 }
 
-// setupClientEnv creates a test environment: an mTLS sim server, a node enrolled
-// via the CSR exchange, and a DeploymentUpdater whose client presents the issued
-// certificate.
+// fake the platform as always being these so that tests run the same on all runners
+const (
+	testOS   = "linux"
+	testArch = "arm64"
+)
+
+// setupClientEnv creates a test environment: an mTLS sim server, a node enrolled via the CSR
+// exchange, and a ConfigUpdater whose client presents the issued certificate. The config flow is
+// exercised through the production Conn.Update path.
 func setupClientEnv(t *testing.T) *clientEnv {
 	t.Helper()
 
@@ -58,9 +68,12 @@ func setupClientEnv(t *testing.T) *clientEnv {
 
 	// Create node
 	var created sim.Node
+	platform := Platform{OS: testOS, Arch: testArch} // use a fixed platform so tests always run the same
 	resp = doSimRequest(t, client, "POST", ts.URL+"/api/v1/management/nodes", map[string]any{
 		"hostname": "test-node",
 		"siteId":   strconv.FormatInt(site.ID, 10),
+		"os":       platform.OS,
+		"arch":     platform.Arch,
 	}, &created)
 	if resp.StatusCode != http.StatusCreated {
 		t.Fatalf("create node: expected 201, got %d", resp.StatusCode)
@@ -87,24 +100,48 @@ func setupClientEnv(t *testing.T) *clientEnv {
 	}
 	t.Cleanup(func() { _ = storeDir.Close() })
 
-	httpClient := NewHTTPClient(cred, ts.URL, WithServerRootCAs(apiServer.CACertPool()))
+	httpClient := NewHTTPClient(cred, ts.URL,
+		WithServerRootCAs(apiServer.CACertPool()),
+	)
 	store := NewDeploymentStore(storeDir)
-	updater := NewDeploymentUpdater(store, httpClient)
+	updater := NewConfigUpdater(store, httpClient)
 
-	return &clientEnv{
-		testServer: ts,
-		httpClient: client,
-		caPool:     apiServer.CACertPool(),
-		storeDir:   storeDir,
-		store:      store,
-		storePath:  storePath,
-		updater:    updater,
-		nodeID:     created.ID,
+	env := &clientEnv{
+		testServer:   ts,
+		httpClient:   client,
+		caPool:       apiServer.CACertPool(),
+		storeDir:     storeDir,
+		store:        store,
+		storePath:    storePath,
+		updater:      updater,
+		client:       httpClient,
+		registration: cred,
+		nodeID:       created.ID,
+		platform:     platform,
 	}
+	env.conn = connForClient(t, env, httpClient, WithPlatform(platform))
+	return env
 }
 
-// newTLSSim starts an in-memory sim served over TLS (mTLS accept mode) and
-// returns the server, the *sim.Server (for its CA pool), and the backing store.
+// connForClient opens a Conn over env's deployment store that checks in using client. The config
+// flow is exercised through the production Conn.Update path (no binary updater configured, so the
+// binary channel is a no-op).
+func connForClient(t *testing.T, env *clientEnv, client Client, opts ...ConnOption) *Conn {
+	t.Helper()
+	regStore := NewFileRegistrationStore(filepath.Join(t.TempDir(), "registration.json"))
+	if err := regStore.Save(context.Background(), env.registration); err != nil {
+		t.Fatalf("save registration: %v", err)
+	}
+	opts = append(opts, WithClientFactory(func(*Registration) Client { return client }))
+	conn, err := OpenConn(context.Background(), regStore, env.store, env.testServer.URL, opts...)
+	if err != nil {
+		t.Fatalf("OpenConn: %v", err)
+	}
+	return conn
+}
+
+// newTLSSim starts an in-memory sim served over TLS (mTLS accept mode) and returns the server,
+// the *sim.Server (for its CA pool), and the backing store.
 func newTLSSim(t *testing.T) (*httptest.Server, *sim.Server, *store.Store) {
 	t.Helper()
 	logger := zap.NewNop()
@@ -227,6 +264,7 @@ func createConfigVersion(t *testing.T, client *http.Client, baseURL string, node
 	var cv sim.ConfigVersion
 	resp := doSimRequest(t, client, "POST", baseURL+"/api/v1/management/config-versions", map[string]any{
 		"nodeId":      strconv.FormatInt(nodeID, 10),
+		"version":     "1.0.0",
 		"description": "test config",
 		"payload":     payload,
 	}, &cv)
@@ -239,8 +277,8 @@ func createConfigVersion(t *testing.T, client *http.Client, baseURL string, node
 // createPendingDeployment creates a PENDING deployment for the given config version ID and returns the deployment ID.
 func createPendingDeployment(t *testing.T, client *http.Client, baseURL string, configVersionID int64) int64 {
 	t.Helper()
-	var dep sim.Deployment
-	resp := doSimRequest(t, client, "POST", baseURL+"/api/v1/management/deployments", map[string]any{
+	var dep sim.ConfigDeployment
+	resp := doSimRequest(t, client, "POST", baseURL+"/api/v1/management/config-deployments", map[string]any{
 		"configVersionId": strconv.FormatInt(configVersionID, 10),
 		"status":          "pending",
 	}, &dep)
@@ -251,11 +289,11 @@ func createPendingDeployment(t *testing.T, client *http.Client, baseURL string, 
 }
 
 // getDeployment fetches a deployment by ID.
-func getDeployment(t *testing.T, client *http.Client, baseURL string, deploymentID int64) sim.Deployment {
+func getDeployment(t *testing.T, client *http.Client, baseURL string, deploymentID int64) sim.ConfigDeployment {
 	t.Helper()
-	var dep sim.Deployment
+	var dep sim.ConfigDeployment
 	resp := doSimRequest(t, client, "GET",
-		fmt.Sprintf("%s/api/v1/management/deployments/%d", baseURL, deploymentID),
+		fmt.Sprintf("%s/api/v1/management/config-deployments/%d", baseURL, deploymentID),
 		nil, &dep)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("get deployment: expected 200, got %d", resp.StatusCode)
@@ -429,7 +467,7 @@ func TestPoll(t *testing.T) {
 	t.Run("no deployment available", func(t *testing.T) {
 		env := setupClientEnv(t)
 
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
@@ -445,7 +483,7 @@ func TestPoll(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
@@ -458,8 +496,8 @@ func TestPoll(t *testing.T) {
 			t.Fatal("expected installing symlink to exist")
 		}
 		target := readSymlinkTarget(t, env.storePath, "deployments/installing")
-		if target != fmt.Sprintf("%d", depID) {
-			t.Errorf("installing symlink target = %q, want %q", target, fmt.Sprintf("%d", depID))
+		if target != fmt.Sprintf("c-%d", depID) {
+			t.Errorf("installing symlink target = %q, want %q", target, fmt.Sprintf("c-%d", depID))
 		}
 
 		// Extracted files should be readable at deployments/<id>/config-version/
@@ -474,7 +512,7 @@ func TestPoll(t *testing.T) {
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
 		// First poll: installs deployment
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("first PollOnce: %v", err)
 		}
 
@@ -484,7 +522,7 @@ func TestPoll(t *testing.T) {
 		}
 
 		// Second poll: no new deployment (completed one is gone from active list)
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("second PollOnce: %v", err)
 		}
@@ -501,7 +539,7 @@ func TestPoll(t *testing.T) {
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
 		// First poll marks installing
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("first PollOnce: %v", err)
 		}
@@ -510,7 +548,7 @@ func TestPoll(t *testing.T) {
 		}
 
 		// Second poll without commit — already installing, should return needReboot=true
-		needReboot, err = env.updater.Update(ctx)
+		needReboot, err = env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("second PollOnce: %v", err)
 		}
@@ -525,7 +563,7 @@ func TestPoll(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, []byte("not a tarball"))
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err == nil {
 			t.Error("expected error for invalid tarball payload, got nil")
 		}
@@ -551,7 +589,7 @@ func TestPoll(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 		if err := env.updater.CommitInstall(ctx); err != nil {
@@ -562,12 +600,12 @@ func TestPoll(t *testing.T) {
 		// deployment that is already active. This can happen if the process is interrupted
 		// between clearing the installing mark and setting the active mark in CommitInstall.
 		installingLink := filepath.Join(env.storePath, "deployments", "installing")
-		if err := os.Symlink(fmt.Sprintf("%d", depID), installingLink); err != nil {
+		if err := os.Symlink(fmt.Sprintf("c-%d", depID), installingLink); err != nil {
 			t.Fatalf("create corrupted installing symlink: %v", err)
 		}
 
 		// PollOnce should detect and recover from the corruption.
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("PollOnce with corrupted store: %v", err)
 		}
@@ -581,18 +619,52 @@ func TestPoll(t *testing.T) {
 		}
 	})
 
+	t.Run("re-reports applied when the server still offers the active deployment", func(t *testing.T) {
+		env := setupClientEnv(t)
+
+		payload := txtarToTarGZ(t, "single.txtar")
+		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
+		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
+
+		// First poll installs the deployment; the server moves it to in_progress.
+		if _, err := env.conn.Update(ctx); err != nil {
+			t.Fatalf("first PollOnce: %v", err)
+		}
+
+		// Simulate a commit whose applied report was lost: mark the deployment active locally and drop
+		// the installing mark, without the server ever seeing applied. It stays in_progress server-side.
+		base := filepath.Join(env.storePath, "deployments")
+		if err := os.Symlink(fmt.Sprintf("c-%d", depID), filepath.Join(base, "active")); err != nil {
+			t.Fatalf("mark active: %v", err)
+		}
+		if err := os.Remove(filepath.Join(base, "installing")); err != nil {
+			t.Fatalf("clear installing: %v", err)
+		}
+		if got := getDeployment(t, env.httpClient, env.testServer.URL, depID).Status; got != "in_progress" {
+			t.Fatalf("precondition: server deployment status = %q, want in_progress", got)
+		}
+
+		// The next poll must re-report applied and complete the deployment (self-heal), not stay silent.
+		if needReboot, err := env.conn.Update(ctx); err != nil || needReboot {
+			t.Fatalf("second PollOnce: needReboot=%v err=%v", needReboot, err)
+		}
+		if got := getDeployment(t, env.httpClient, env.testServer.URL, depID).Status; got != "completed" {
+			t.Errorf("server deployment status = %q, want completed (self-healed)", got)
+		}
+	})
+
 	t.Run("server auth error", func(t *testing.T) {
 		env := setupClientEnv(t)
 
-		// A credential the sim CA never issued — its client certificate does not
-		// chain to the server's ClientCAs, so the mTLS handshake/guard rejects it.
+		// A credential the sim CA never issued — its client certificate does not chain to the
+		// server's ClientCAs, so the mTLS handshake/guard rejects it.
 		bogus := testRegistration(t, "999999")
 		badHTTPClient := NewHTTPClient(bogus, env.testServer.URL, WithServerRootCAs(env.caPool))
-		badUpdater := NewDeploymentUpdater(env.store, badHTTPClient)
+		badConn := connForClient(t, env, badHTTPClient)
 
-		_, err := badUpdater.Update(ctx)
+		_, err := badConn.Update(ctx)
 		if err == nil {
-			t.Error("expected error with an unrecognised client certificate, got nil")
+			t.Error("expected error with wrong secret, got nil")
 		}
 	})
 }
@@ -607,7 +679,7 @@ func TestCommit(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 
@@ -620,8 +692,8 @@ func TestCommit(t *testing.T) {
 			t.Fatal("expected active symlink to exist after commit")
 		}
 		activeTarget := readSymlinkTarget(t, env.storePath, "deployments/active")
-		if activeTarget != fmt.Sprintf("%d", depID) {
-			t.Errorf("active symlink target = %q, want %q", activeTarget, fmt.Sprintf("%d", depID))
+		if activeTarget != fmt.Sprintf("c-%d", depID) {
+			t.Errorf("active symlink target = %q, want %q", activeTarget, fmt.Sprintf("c-%d", depID))
 		}
 
 		// Installing symlink should be gone
@@ -643,7 +715,7 @@ func TestCommit(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 
@@ -661,14 +733,14 @@ func TestCommit(t *testing.T) {
 		cvID1 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload1)
 		depID1 := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID1)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce v1: %v", err)
 		}
 		if err := env.updater.CommitInstall(ctx); err != nil {
 			t.Fatalf("CommitInstall v1: %v", err)
 		}
 
-		dep1Dir := filepath.Join(env.storePath, "deployments", fmt.Sprintf("%d", depID1))
+		dep1Dir := filepath.Join(env.storePath, "deployments", fmt.Sprintf("c-%d", depID1))
 		if _, err := os.Stat(dep1Dir); err != nil {
 			t.Fatalf("v1 deployment dir should exist after commit: %v", err)
 		}
@@ -678,7 +750,7 @@ func TestCommit(t *testing.T) {
 		cvID2 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload2)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID2)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce v2: %v", err)
 		}
 		if err := env.updater.CommitInstall(ctx); err != nil {
@@ -703,7 +775,7 @@ func TestRollback(t *testing.T) {
 		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
 		// starts installing
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 
@@ -734,7 +806,7 @@ func TestRollback(t *testing.T) {
 		cvID1 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload1)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID1)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce v1: %v", err)
 		}
 		if err := env.updater.CommitInstall(ctx); err != nil {
@@ -746,7 +818,7 @@ func TestRollback(t *testing.T) {
 		cvID2 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload2)
 		depID2 := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID2)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce v2: %v", err)
 		}
 
@@ -779,7 +851,7 @@ func TestRollback(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 
@@ -815,7 +887,7 @@ func TestInstallingConfig(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 
@@ -843,7 +915,7 @@ func TestDownloadPayload_InsecureURLBlocked(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	// API origin is a different HTTPS host so downloads from ts go through plainHTTP.
+	// checkInEndpoint uses a different HTTPS host so downloads from ts go through plainHTTP.
 	client := NewHTTPClient(nil, "https://other-host", WithHTTPClient(ts.Client()))
 
 	tests := []struct {
@@ -893,7 +965,7 @@ func TestDownloadPayload_Authorization(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	// API origin is on a different host than ts, so downloads from ts should not include auth.
+	// checkInEndpoint is on a different host than ts, so downloads from ts should not include auth.
 	client := NewHTTPClient(nil, "http://other-host", WithHTTPClient(ts.Client()))
 
 	rc, err := client.DownloadPayload(context.Background(), ts.URL+"/payload.tar.gz")
@@ -928,7 +1000,7 @@ func TestActiveConfig(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 		if err := env.updater.CommitInstall(ctx); err != nil {

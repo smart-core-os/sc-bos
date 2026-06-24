@@ -67,6 +67,9 @@ jobs:
           file: Dockerfile
           # only push if not running locally using act
           push: ${{ !env.ACT }}
+          # embed the calculated version inside the image
+          build-args: |
+            GIT_VERSION=${{ inputs.override_tag || steps.meta.outputs.version }}
           tags: ${{ inputs.override_tag || steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64

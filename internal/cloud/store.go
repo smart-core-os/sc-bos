@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -22,7 +23,15 @@ const (
 
 	dirDeployments   = "deployments"
 	dirConfigVersion = "config-version"
+	fileVersionMeta  = "version.json"
 )
+
+// ConfigVersion identifies the config version a deployment carries. It is persisted alongside the
+// deployment so the node can report what config version it is running after a reboot.
+type ConfigVersion struct {
+	ID      string `json:"versionId"`
+	Version string `json:"version"`
+}
 
 // FS is a closeable fs.FS returned by DeploymentStore config accessors.
 type FS interface {
@@ -126,10 +135,41 @@ func (s *DeploymentStore) ActiveConfig() (FS, error) {
 	return s.extractedConfigByMark(markActive)
 }
 
-// WriteInstalling extracts the tar.gz payload into a new per-deployment directory
-// and marks it as the installing deployment. On failure, the partial directory is
-// removed (or renamed if WithPreserveDownloads is set).
-func (s *DeploymentStore) WriteInstalling(ctx context.Context, deploymentID string, payload io.Reader) error {
+// ActiveVersion returns the config version the active deployment carries. It returns a zero
+// ConfigVersion when there is no active deployment, or when the deployment predates version
+// recording (no metadata file).
+func (s *DeploymentStore) ActiveVersion() (ConfigVersion, error) {
+	root, err := s.deploymentRootByMark(markActive)
+	if errors.Is(err, os.ErrNotExist) {
+		return ConfigVersion{}, nil
+	} else if err != nil {
+		return ConfigVersion{}, err
+	}
+	defer func() {
+		_ = root.Close()
+	}()
+
+	f, err := root.Open(fileVersionMeta)
+	if errors.Is(err, os.ErrNotExist) {
+		return ConfigVersion{}, nil
+	} else if err != nil {
+		return ConfigVersion{}, fmt.Errorf("open version metadata: %w", err)
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	var version ConfigVersion
+	if err := json.NewDecoder(f).Decode(&version); err != nil {
+		return ConfigVersion{}, fmt.Errorf("decode version metadata: %w", err)
+	}
+	return version, nil
+}
+
+// WriteInstalling extracts the tar.gz payload into a new per-deployment directory, records the
+// config version it carries, and marks it as the installing deployment. On failure, the partial
+// directory is removed (or renamed if WithPreserveDownloads is set).
+func (s *DeploymentStore) WriteInstalling(ctx context.Context, deploymentID string, version ConfigVersion, payload io.Reader) error {
 	if !s.lock(ctx) {
 		return ctx.Err()
 	}
@@ -144,11 +184,16 @@ func (s *DeploymentStore) WriteInstalling(ctx context.Context, deploymentID stri
 		_ = dstDir.Close()
 		if deleteDstDir {
 			dir := s.deploymentDirPath(deploymentID)
-			if err := s.dir.Remove(dir); err != nil {
-				s.logger.Warn("failed to delete empty directory")
+			if err := s.dir.RemoveAll(dir); err != nil {
+				s.logger.Warn("failed to delete discarded deployment directory")
 			}
 		}
 	}()
+
+	if err := writeVersionMeta(dstDir, version); err != nil {
+		deleteDstDir = true
+		return fmt.Errorf("write version metadata: %w", err)
+	}
 
 	extractedName := dirConfigVersion
 	err = dstDir.MkdirAll(extractedName, 0755)
@@ -276,6 +321,18 @@ func (s *DeploymentStore) extractedConfigByMark(name string) (FS, error) {
 		return nil, fmt.Errorf("open extracted config version directory: %w", err)
 	}
 	return &rootFS{FS: extractedRoot.FS(), root: extractedRoot}, nil
+}
+
+// writeVersionMeta records the config version a deployment carries, as version.json in its directory.
+func writeVersionMeta(dstDir *os.Root, version ConfigVersion) error {
+	f, err := dstDir.Create(fileVersionMeta)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+	return json.NewEncoder(f).Encode(version)
 }
 
 func (s *DeploymentStore) mark(name string, deploymentID string) error {

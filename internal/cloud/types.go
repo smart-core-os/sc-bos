@@ -8,66 +8,90 @@ import (
 	"time"
 )
 
-// CheckInRequest is the optional request body for the check-in endpoint.
+// CheckInRequest is the check-in request body. A zero Running with no Progress is a valid "just
+// checking in" request.
 type CheckInRequest struct {
-	CurrentDeployment    *CheckInDeploymentRef        `json:"currentDeployment,omitempty"`
-	InstallingDeployment *CheckInInstallingDeployment `json:"installingDeployment,omitempty"`
-	FailedDeployment     *CheckInFailedDeployment     `json:"failedDeployment,omitempty"`
+	Running  RunningState     `json:"running"`
+	Progress []ProgressReport `json:"progress,omitempty"`
 }
 
-// CheckInDeploymentRef references a deployment by ID.
-type CheckInDeploymentRef struct {
-	ID string `json:"id"`
+// RunningState reports what the node is currently running, plus its platform. Every field is optional.
+type RunningState struct {
+	Config   *RunningArtefact `json:"config,omitempty"`
+	Binary   *RunningArtefact `json:"binary,omitempty"`
+	Platform *Platform        `json:"platform,omitempty"`
 }
 
-// CheckInInstallingDeployment references a deployment being installed, optionally with error and attempt info.
-type CheckInInstallingDeployment struct {
-	ID       string `json:"id"`
-	Error    string `json:"error,omitempty"`
-	Attempts int    `json:"attempts,omitempty"`
+// RunningArtefact identifies the version a stream is currently running. VersionID and Hash are
+// best-effort drift identity and may be empty.
+type RunningArtefact struct {
+	Version   string `json:"version,omitempty"`
+	VersionID string `json:"versionId,omitempty"`
+	Hash      string `json:"hash,omitempty"`
 }
 
-// CheckInFailedDeployment reports a deployment that failed.
-type CheckInFailedDeployment struct {
-	ID     string `json:"id"`
-	Reason string `json:"reason,omitempty"`
+// Platform is the node's runtime platform (GOOS/GOARCH).
+type Platform struct {
+	OS   string `json:"os"`
+	Arch string `json:"arch"`
 }
 
-// CheckInResponse is returned from the check-in endpoint.
+// Progress states reported for an in-flight deployment.
+const (
+	ProgressInstalling = "installing"
+	ProgressApplied    = "applied"
+	ProgressFailed     = "failed"
+)
+
+// ProgressReport updates one in-flight deployment identified by its opaque DeploymentID. Error is a
+// transient error (paired with installing); Reason is a terminal reason (paired with failed).
+type ProgressReport struct {
+	DeploymentID string `json:"deploymentId"`
+	State        string `json:"state"`
+	Attempts     int    `json:"attempts,omitempty"`
+	Error        string `json:"error,omitempty"`
+	Reason       string `json:"reason,omitempty"`
+}
+
+// CheckInResponse is returned from the check-in endpoint. LatestConfig and LatestBinary are present
+// only when that stream has a non-terminal target this node has not yet reached.
 type CheckInResponse struct {
 	CheckIn      NodeCheckIn   `json:"checkIn"`
-	LatestConfig *LatestConfig `json:"latestConfig,omitempty"`
+	LatestConfig *LatestStream `json:"latestConfig,omitempty"`
+	LatestBinary *LatestStream `json:"latestBinary,omitempty"`
+}
+
+// LatestStream is the deployment a stream (config or binary) wants this node to reach, together with
+// the version it targets. Its shape is identical for both streams.
+type LatestStream struct {
+	Deployment StreamDeployment  `json:"deployment"`
+	Version    VersionProjection `json:"version"`
+}
+
+// StreamDeployment identifies the offered deployment. ID is opaque and is echoed back verbatim when
+// reporting progress on it.
+type StreamDeployment struct {
+	ID        string `json:"id"`
+	Artefact  string `json:"artefact"` // "config" or "binary"
+	VersionID string `json:"versionId"`
+	Status    string `json:"status"`
+}
+
+// VersionProjection is the artefact version a deployment targets: where to download it and how to
+// verify it. Checksum, when set, is a type-prefixed "<algo>:<base64>" digest of the payload.
+type VersionProjection struct {
+	ID          string    `json:"id"`
+	Version     string    `json:"version"`
+	Description string    `json:"description"`
+	PayloadURL  string    `json:"payloadUrl"`
+	Checksum    string    `json:"checksum,omitempty"`
+	CreateTime  time.Time `json:"createTime"`
 }
 
 // NodeCheckIn is the JSON representation of a node check-in.
 type NodeCheckIn struct {
 	NodeID      string    `json:"nodeId"`
 	CheckInTime time.Time `json:"checkInTime"`
-}
-
-// LatestConfig bundles the active deployment with its config version.
-type LatestConfig struct {
-	Deployment    Deployment    `json:"deployment"`
-	ConfigVersion ConfigVersion `json:"configVersion"`
-}
-
-// Deployment is the JSON representation of a deployment.
-type Deployment struct {
-	ID              string     `json:"id"`
-	ConfigVersionID string     `json:"configVersionId"`
-	Status          string     `json:"status"`
-	StartTime       time.Time  `json:"startTime"`
-	FinishedTime    *time.Time `json:"finishedTime,omitempty"`
-	Reason          string     `json:"reason,omitempty"`
-}
-
-// ConfigVersion is the JSON representation of a config version.
-type ConfigVersion struct {
-	ID          string    `json:"id"`
-	NodeID      string    `json:"nodeId"`
-	Description string    `json:"description"`
-	PayloadURL  string    `json:"payloadUrl"`
-	CreateTime  time.Time `json:"createTime"`
 }
 
 // APIError represents an error response from the API.

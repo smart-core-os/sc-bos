@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 	"sync"
 	"time"
 
@@ -37,9 +38,9 @@ type ConnState struct {
 // ConnOption configures a Conn.
 type ConnOption func(*Conn)
 
-// WithUpdaterOptions appends opts to the UpdaterOption slice forwarded to each
-// newly-created DeploymentUpdater.
-func WithUpdaterOptions(opts ...UpdaterOption) ConnOption {
+// WithConfigUpdaterOptions appends opts to the ConfigUpdaterOption slice forwarded to each
+// newly-created ConfigUpdater.
+func WithConfigUpdaterOptions(opts ...ConfigUpdaterOption) ConnOption {
 	return func(c *Conn) { c.updaterOpts = append(c.updaterOpts, opts...) }
 }
 
@@ -56,17 +57,33 @@ func WithClientOptions(opts ...HTTPClientOption) ConnOption {
 	return func(c *Conn) { c.clientOpts = append(c.clientOpts, opts...) }
 }
 
+// WithBinaryUpdater enables the binary channel on the shared poll check-in, dispatching the
+// latestBinary block to u. When unset the binary channel is not reported and latestBinary is ignored.
+func WithBinaryUpdater(u *BinaryUpdater) ConnOption {
+	return func(c *Conn) { c.binaryUpdater = u }
+}
+
+// WithPlatform overrides the platform details reported by this Conn when it checks in.
+// Defaults to runtime.GOOS and runtime.GOARCH.
+func WithPlatform(platform Platform) ConnOption {
+	return func(c *Conn) {
+		c.platform = platform
+	}
+}
+
 // Conn manages the lifecycle of a cloud connection.
 // It tracks the current Registration, broadcasts ConnState changes, and owns a
-// DeploymentUpdater that is rebuilt whenever the Registration changes.
+// ConfigUpdater that is rebuilt whenever the Registration changes.
 // Methods are safe to call concurrently.
 type Conn struct {
 	// Immutable after construction — no locking required.
-	regStore    RegistrationStore
-	depStore    *DeploymentStore
-	newClient   func(*Registration) Client
-	updaterOpts []UpdaterOption
-	clientOpts  []HTTPClientOption
+	regStore      RegistrationStore
+	depStore      *DeploymentStore
+	newClient     func(*Registration) Client
+	updaterOpts   []ConfigUpdaterOption
+	clientOpts    []HTTPClientOption
+	binaryUpdater *BinaryUpdater // nil when the binary channel is disabled
+	platform      Platform       // reported to cloud
 
 	// serial is a binary semaphore (buffered channel of size 1, pre-filled).
 	// Acquire with lockSerial; release with unlockSerial.
@@ -74,17 +91,21 @@ type Conn struct {
 	// modifies the stores.
 	serial chan struct{}
 
-	// client and updater are the active Client and DeploymentUpdater; nil when
+	// client and updater are the active Client and ConfigUpdater; nil when
 	// unconfigured. Protected by serial. client renews the certificate in place
 	// (hot reload), so it survives a renewal — only a new enrollment replaces it.
 	client  Client
-	updater *DeploymentUpdater
+	updater *ConfigUpdater
 
 	// baseURL is the SCC API origin the active client targets (check-in/renew).
 	// It defaults to the origin of the configured register URL but follows the
 	// origin a successful Register enrolled against, so the client always talks to
 	// the server that issued the certificate. Protected by serial.
 	baseURL string
+
+	// Counts failures for the deployment currently in progress. Protected by serial.
+	failingDeployment string // which deployment failedAttempts applies to
+	failedAttempts    int
 
 	// mu protects state. Read-only operations (State, PullState) acquire only mu,
 	// never serial, so they never block on long-running server calls.
@@ -98,7 +119,7 @@ type Conn struct {
 // the SCC API origin (e.g. the configured register URL); OpenConn reduces it to
 // its scheme://host origin, to which the check-in and renew paths are appended.
 // A persisted registration's own endpoint takes precedence once loaded. depStore
-// is used to construct a DeploymentUpdater whenever a Registration is loaded or set.
+// is used to construct a ConfigUpdater whenever a Registration is loaded or set.
 func OpenConn(ctx context.Context, regStore RegistrationStore, depStore *DeploymentStore, baseURL string, opts ...ConnOption) (*Conn, error) {
 	serial := make(chan struct{}, 1)
 	serial <- struct{}{} // initialise as unlocked
@@ -120,6 +141,12 @@ func OpenConn(ctx context.Context, regStore RegistrationStore, depStore *Deploym
 		c.newClient = func(cred *Registration) Client {
 			return NewHTTPClient(cred, c.baseURL, c.clientOpts...)
 		}
+	}
+	if c.platform.OS == "" {
+		c.platform.OS = runtime.GOOS
+	}
+	if c.platform.Arch == "" {
+		c.platform.Arch = runtime.GOARCH
 	}
 	if err := c.start(ctx); err != nil {
 		return nil, err
@@ -145,14 +172,14 @@ func (c *Conn) start(ctx context.Context) error {
 	}
 	// no locking required as start is only called during construction
 	c.client = c.newClient(reg)
-	c.updater = NewDeploymentUpdater(c.depStore, c.client, c.updaterOpts...)
+	c.updater = NewConfigUpdater(c.depStore, c.client, c.updaterOpts...)
 	st := c.updateState(ConnState{Connectivity: Connecting, Registration: reg})
 	c.bus.Send(ctx, st)
 	return nil
 }
 
 // Register persists the supplied registration and updates internal state.
-// A new Client and DeploymentUpdater are created for it. The registration
+// A new Client and ConfigUpdater are created for it. The registration
 // carries the API endpoint it was issued against (Registration.APIEndpoint);
 // that origin becomes the one the client uses for check-in and renewal, so
 // those always reach the server that issued the certificate — including after a
@@ -169,7 +196,7 @@ func (c *Conn) Register(ctx context.Context, reg *Registration) (ConnState, erro
 
 	// check that the new registration will actually work before saving it
 	newClient := c.newClient(reg)
-	newUpdater := NewDeploymentUpdater(c.depStore, newClient, c.updaterOpts...)
+	newUpdater := NewConfigUpdater(c.depStore, newClient, c.updaterOpts...)
 	if err := newUpdater.CheckIn(ctx); err != nil {
 		return ConnState{}, &CredentialCheckError{Err: err}
 	}
@@ -290,9 +317,41 @@ func (c *Conn) PullState(ctx context.Context) (ConnState, <-chan ConnState) {
 	return initial, changes
 }
 
-// Update performs a deployment check-in using the current credential.
+// WaitConnected blocks until the connection has had a successful check-in (Connectivity == Connected),
+// or ctx is done. It returns nil once connected, otherwise ctx.Err(). If the connection is already
+// Connected it returns immediately.
+func (c *Conn) WaitConnected(ctx context.Context) error {
+	// Scope the subscription to a child ctx we cancel on return, so the bus drops our listener.
+	// Otherwise, with a long-lived ctx, the leaked undrained listener blocks later check-in broadcasts.
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	state, changes := c.PullState(ctx)
+	if state.Connectivity == Connected {
+		return nil
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case st, ok := <-changes:
+			if !ok {
+				return ctx.Err()
+			}
+			if st.Connectivity == Connected {
+				return nil
+			}
+		}
+	}
+}
+
+// Update performs a single shared check-in using the current registration and dispatches the
+// response to both channels: the config channel (ConfigUpdater) and, when enabled, the update
+// channel (BinaryUpdater). One check-in carries both channels' current state.
 // Returns ErrNotRegistered when no credential is active.
 // The check-in outcome is recorded internally so that State/PullState reflect it.
+//
+// needReboot reflects the config channel only; the binary channel that records an install intent does
+// not itself trigger a reboot here (the Supervisor restarts BOS in a later phase).
 func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	if !c.lockSerial(ctx) {
 		return false, ctx.Err()
@@ -307,9 +366,100 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	cred := c.state.Registration
 	c.mu.Unlock()
 
-	needReboot, err = u.Update(ctx)
-	c.recordCheckIn(cred, time.Now(), err)
-	return needReboot, err
+	// record whatever happens in this check-in
+	defer func() { c.recordCheckIn(cred, time.Now(), err) }()
+
+	// Build the combined request: the config stream's progress, this node's platform, and the binary
+	// version it runs. Perform one check-in, then dispatch the response to each handler.
+	// Note: this doesn't include binary update progress, that happens in a separate check-in based on info
+	// from the supervisor.
+	req, err := u.CheckInRequest(ctx)
+	if err != nil {
+		return false, err
+	}
+	req.Running.Platform = new(c.platform)
+	if c.binaryUpdater != nil {
+		req.Running.Binary = c.binaryUpdater.runningBinary()
+	}
+
+	resp, err := u.client.CheckIn(ctx, req)
+	if err != nil {
+		return false, fmt.Errorf("check-in: %w", err)
+	}
+
+	// both channels report their status to the cloud first
+	// as part of this process, we also find out which channel(s) have an update to install
+	cfg, err := u.reportConfig(ctx, resp)
+	if err != nil {
+		return false, fmt.Errorf("handle config: %w", err)
+	}
+	needReboot = cfg.inFlight
+
+	var bin installState
+	if c.binaryUpdater != nil {
+		supStatus, serr := c.binaryUpdater.updateStatus(ctx)
+		if serr != nil {
+			return needReboot, fmt.Errorf("get supervisor update status: %w", serr)
+		}
+		if bin, err = c.binaryUpdater.reportBinary(ctx, u.client, resp, supStatus); err != nil {
+			return needReboot, fmt.Errorf("handle update: %w", err)
+		}
+	}
+
+	// process any update available, prioritising config
+	switch {
+	case cfg.inFlight || bin.inFlight:
+		// An install is already running; let it settle before starting another.
+	case cfg.startable:
+		needReboot, err = u.installConfig(ctx, resp.LatestConfig)
+		if err = c.capInstall(ctx, u.client, resp.LatestConfig.Deployment.ID, err); err != nil {
+			return needReboot, fmt.Errorf("handle config: %w", err)
+		}
+	case bin.startable:
+		err = c.binaryUpdater.installBinary(ctx, u.client, resp.LatestBinary)
+		if err = c.capInstall(ctx, u.client, resp.LatestBinary.Deployment.ID, err); err != nil {
+			return needReboot, fmt.Errorf("handle update: %w", err)
+		}
+	}
+	return needReboot, nil
+}
+
+// how many transient install failures to permit before giving up on a deployment permanently.
+const maxInstallAttempts = 3
+
+// capInstall records the outcome of an install attempt for install attempt capping.
+//
+// If the installation was successful (based on err == nil), clears the failedAttempts counter
+// and returns nil.
+//
+// If the installation failed but the failure cap hasn't been reached yet, increments the counter
+// and returns the error unchanged.
+//
+// # Otherwise, when
+//
+// It returns
+// err unchanged while retries remain, so a still-failing check-in is recorded as failed; on the
+// maxInstallAttempts-th consecutive failure it reports the deployment permanently failed and returns nil
+// so the deployment stops being offered and the connection can recover.
+func (c *Conn) capInstall(ctx context.Context, client Client, deploymentID string, err error) error {
+	if err == nil {
+		c.failingDeployment, c.failedAttempts = "", 0
+		return nil
+	}
+	if deploymentID != c.failingDeployment {
+		c.failingDeployment, c.failedAttempts = deploymentID, 0
+	}
+	c.failedAttempts++
+	if c.failedAttempts < maxInstallAttempts {
+		return err
+	}
+	c.failingDeployment, c.failedAttempts = "", 0
+	reason := fmt.Sprintf("install failed after %d attempts", maxInstallAttempts)
+	if _, rerr := client.CheckIn(ctx, CheckInRequest{Progress: []ProgressReport{
+		{DeploymentID: deploymentID, State: ProgressFailed, Reason: reason}}}); rerr != nil {
+		return errors.Join(err, rerr)
+	}
+	return nil
 }
 
 // CommitInstall marks the installing deployment as active and reports the result.

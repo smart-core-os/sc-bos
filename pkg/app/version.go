@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+	"os"
 	"runtime/debug"
 )
 
 var Version VersionInfo
+
+// buildVersion is injected at build time
+//
+//	-ldflags "-X github.com/smart-core-os/sc-bos/pkg/app.buildVersion=<version>"
+var buildVersion string
 
 func init() {
 	Version = VersionInfo{}
@@ -19,6 +25,23 @@ func init() {
 
 type VersionInfo struct {
 	*debug.BuildInfo
+}
+
+// EffectiveVersion returns the resolved version of BOS. This is suitable for reporting the running BOS version to
+// e.g. the cloud update system.
+//
+// In order of highest to lowest priority, it returns:
+//   - The value of the BOS_VERSION_OVERRIDE environment variable
+//   - The value of link-time variable github.com/smart-core-os/sc-bos/pkg/app.buildVersion
+//
+// It returns "" when neither is set. It deliberately does not fall back to the main Go module version,
+// which is "(devel)" for an unstamped build - a value the update system must never Commit as the running
+// version, since it can never match a cloud artefact's version.
+func EffectiveVersion() string {
+	if override := os.Getenv("BOS_VERSION_OVERRIDE"); override != "" {
+		return override
+	}
+	return buildVersion
 }
 
 func (v VersionInfo) ServeHTTP(w http.ResponseWriter, request *http.Request) {

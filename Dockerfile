@@ -41,11 +41,13 @@ COPY pkg ./pkg/
 
 # set by the build engine
 ARG TARGETARCH
+ARG GIT_VERSION="(unknown)"
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV GOARCH=$TARGETARCH
+# inject build version into executable
 RUN --mount=type=cache,target=/go/pkg/mod \
-    go build -o sc-bos ./cmd/bos
+    go build -ldflags "-X github.com/smart-core-os/sc-bos/pkg/app.buildVersion=$GIT_VERSION" -o sc-bos ./cmd/bos
 
 FROM alpine:3.23
 LABEL vendor="Vanti Ltd"
